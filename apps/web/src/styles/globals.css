@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+input[type="number"]::-webkit-inner-spin-button {
+  display: none;
+}
+
+.Calendar {
+  max-width: 300px !important;
+  border-radius: 0 0 1rem 1rem !important;
+  border: 1px solid #d7dcde !important;
+  margin: 0 auto !important;
+}
+
+@media (max-width: 768px) {
+  .Calendar {
+    min-width: 100% !important;
+  }
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+.fade-in {
+  animation: fade-in-animation 0.5s ease-in-out;
+}
+
+@keyframes fade-in-animation {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.fade-out {
+  animation: fade-out-animation 0.5s ease-in-out;
+}
+
+@keyframes fade-out-animation {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+button {
+  cursor: pointer;
+}

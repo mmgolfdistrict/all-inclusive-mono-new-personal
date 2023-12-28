@@ -1,0 +1,30 @@
+{
+    "name": "@golf-district/auth-proxy",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "build": "nitro build",
+        "clean": "rm -rf .turbo node_modules",
+        "dev": "nitro dev --port 3001",
+        "lint": "eslint .",
+        "format": "prettier --check \"**/*.{mjs,ts,md,json}\"",
+        "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "@auth/core": "^0.18.0"
+    },
+    "devDependencies": {
+        "@golf-district/eslint-config": "^0.1.0",
+        "@golf-district/tsconfig": "^0.1.0",
+        "eslint": "^8.53.0",
+        "nitropack": "^2.7.2",
+        "prettier": "^3.0.3",
+        "typescript": "^5.2.2"
+    },
+    "eslintConfig": {
+        "root": true,
+        "extends": [
+            "@golf-district/eslint-config/base"
+        ]
+    }
+}

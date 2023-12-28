@@ -1,0 +1,12 @@
+{
+  "extends": "@golf-district/tsconfig/nextjs.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "node_modules/.cache/tsbuildinfo.json",
+    "target": "ES2018",
+    "module": "CommonJS",
+    "lib": ["es2018"],
+    "strict": true
+  },
+  "include": ["."],
+  "exclude": ["node_modules"]
+}

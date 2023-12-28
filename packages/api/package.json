@@ -1,0 +1,37 @@
+{
+  "name": "@golf-district/api",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "scripts": {
+    "clean": "rm -rf .turbo node_modules",
+    "lint": "eslint .",
+    "format": "prettier --check \"**/*.{mjs,ts,md,json}\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@golf-district/auth": "^0.1.0",
+    "@golf-district/shared": "^0.1.0",
+    "@trpc/client": "^10.40.0",
+    "@trpc/server": "^10.40.0",
+    "superjson": "^1.13.3",
+    "zod": "^3.21.4"
+  },
+  "devDependencies": {
+    "@golf-district/eslint-config": "^0.1.0",
+    "@golf-district/tsconfig": "^0.1.0",
+    "eslint": "^8.50.0",
+    "prettier": "^3.0.3",
+    "typescript": "^5.2.2"
+  },
+  "eslintConfig": {
+    "root": true,
+    "extends": [
+      "@golf-district/eslint-config/base"
+    ]
+  }
+}

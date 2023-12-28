@@ -1,0 +1,243 @@
+"use client";
+
+import { useCourseContext } from "~/contexts/CourseContext";
+import { useUserContext } from "~/contexts/UserContext";
+import { api } from "~/utils/api";
+import { formatMoney, getTime } from "~/utils/formatters";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "react-toastify";
+import { Avatar } from "../avatar";
+import { FilledButton } from "../buttons/filled-button";
+import { OutlineButton } from "../buttons/outline-button";
+import { Heart } from "../icons/heart";
+import { Hidden } from "../icons/hidden";
+import { OutlineClub } from "../icons/outline-club";
+import { ChoosePlayers } from "../input/choose-players";
+import { MakeAnOffer } from "../watchlist-page/make-an-offer";
+
+const PlayersOptions = ["1", "2", "3", "4"];
+
+export const TeeTime = ({
+  time,
+  canChoosePlayer,
+  players,
+  price,
+  isOwned,
+  isForSale,
+  soldById,
+  soldByImage,
+  soldByName,
+  availableSlots,
+  teeTimeId,
+  isLiked,
+  status,
+  minimumOfferPrice,
+  bookingIds,
+  listingId,
+  firstHandPurchasePrice,
+}: {
+  time: string;
+  canChoosePlayer: boolean;
+  players: string;
+  price: number;
+  isOwned: boolean;
+  isForSale: boolean;
+  soldById: string;
+  soldByImage: string;
+  soldByName: string;
+  availableSlots: number;
+  teeTimeId: string;
+  isLiked: boolean;
+  status: "UNLISTED" | "FIRST_HAND" | "SECOND_HAND";
+  minimumOfferPrice: number | undefined;
+  bookingIds: string[];
+  listingId: string | undefined;
+  firstHandPurchasePrice: number | undefined;
+}) => {
+  const [selectedPlayers, setSelectedPlayers] = useState<string>("1");
+  const { course } = useCourseContext();
+  const courseId = course?.id;
+  const timezoneCorrection = course?.timezoneCorrection;
+  const [isMakeAnOfferOpen, setIsMakeAnOfferOpen] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (isMakeAnOfferOpen) {
+      document.body.classList.add("overflow-hidden");
+    } else {
+      document.body.classList.remove("overflow-hidden");
+    }
+  }, [isMakeAnOfferOpen]);
+
+  const { user } = useUserContext();
+  const router = useRouter();
+
+  const toggleWatchlist = api.watchlist.toggleWatchlist.useMutation();
+  const [optimisticLike, setOptimisticLike] = useState(isLiked);
+
+  const addToWatchlist = async () => {
+    if (!user) {
+      void router.push("/login");
+      return;
+    }
+    try {
+      await toggleWatchlist.mutateAsync({
+        teeTimeId: teeTimeId,
+      });
+      setOptimisticLike(!optimisticLike);
+    } catch (error) {
+      toast.error((error as Error)?.message ?? "Error adding to watchlist");
+      console.log(error);
+    }
+  };
+  const buyTeeTime = () => {
+    if (!user) {
+      void router.push("/login");
+    }
+    if (status === "FIRST_HAND") {
+      void router.push(
+        `/${course?.id}/checkout?teeTimeId=${teeTimeId}&playerCount=${selectedPlayers}`
+      );
+    }
+    if (status === "SECOND_HAND") {
+      void router.push(
+        `/${course?.id}/checkout?listingId=${listingId}&playerCount=${selectedPlayers}`
+      );
+    }
+  };
+
+  const makeAnOffer = () => {
+    setIsMakeAnOfferOpen(true);
+  };
+
+  const href = useMemo(() => {
+    if (status === "FIRST_HAND") {
+      return `/${courseId}/${teeTimeId}`;
+    }
+    if (status === "SECOND_HAND") {
+      return `/${courseId}/${teeTimeId}/listing/${listingId}`;
+    }
+    return `/${courseId}/${teeTimeId}/owner/${soldById}`;
+  }, [status, listingId, teeTimeId, courseId, soldById]);
+
+  const isSuggested = status === "UNLISTED";
+
+  useEffect(() => {
+    if (status !== "FIRST_HAND") {
+      setSelectedPlayers(availableSlots.toString());
+    }
+  }, [status, availableSlots]);
+
+  return (
+    <div className="rounded-xl bg-secondary-white">
+      <div className="border-b border-stroke">
+        <div className="flex justify-between p-3">
+          <div className="font-semibold">
+            {getTime(time, timezoneCorrection)}
+          </div>
+          {status === "UNLISTED" ? <Hidden className="w-[20px]" /> : null}
+        </div>
+      </div>
+      <div className="flex flex-col gap-4 p-3  text-[14px]">
+        <div className="flex items-center gap-1">
+          <Avatar src={soldByImage} />
+
+          <div className="whitespace-nowrap pr-1">
+            {isOwned ? "Owned" : "Sold"} by
+          </div>
+          {isOwned ? (
+            <Link
+              href={`/${courseId}/profile/${soldById}`}
+              className="text-primary"
+            >
+              {soldByName}
+            </Link>
+          ) : (
+            <div>{soldByName}</div>
+          )}
+        </div>
+        <div className="flex min-h-[31px] items-center gap-2">
+          <OutlineClub />
+          {canChoosePlayer ? (
+            <ChoosePlayers
+              players={selectedPlayers}
+              setPlayers={setSelectedPlayers}
+              playersOptions={PlayersOptions}
+              availableSlots={availableSlots}
+              isDisabled={status === "SECOND_HAND"}
+            />
+          ) : (
+            players && (
+              <div>
+                {players} golfer{parseInt(players) > 1 ? "s" : ""}
+              </div>
+            )
+          )}
+        </div>
+        <div className="flex flex-col gap-1 relative">
+          {isSuggested ? (
+            <div className="absolute -top-3.5 text-[12px] text-primary-gray">
+              Suggested
+            </div>
+          ) : null}
+          <div className="flex items-center">
+            <div className="text-[20px] font-semibold text-secondary-black">
+              {isSuggested && firstHandPurchasePrice
+                ? formatMoney((firstHandPurchasePrice * 13) / 10)
+                : formatMoney(price)}
+            </div>
+            <div className="text-[16px] text-primary-gray"> /golfer</div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1">
+          <OutlineButton className="px-[.5rem] py-2" onClick={addToWatchlist}>
+            <Heart
+              className={`w-[18px]`}
+              fill={optimisticLike ? "#40942A" : undefined}
+            />
+          </OutlineButton>
+          <Link href={href}>
+            <OutlineButton>Details</OutlineButton>
+          </Link>
+          {soldById === user?.id ? (
+            <Link href={`/${course?.id}/my-tee-box`}>
+              <FilledButton className="whitespace-nowrap">Manage</FilledButton>
+            </Link>
+          ) : (
+            <>
+              {isSuggested ? (
+                <FilledButton
+                  className="whitespace-nowrap"
+                  onClick={makeAnOffer}
+                >
+                  Make an Offer
+                </FilledButton>
+              ) : (
+                <FilledButton
+                  className="whitespace-nowrap"
+                  onClick={buyTeeTime}
+                >
+                  Buy
+                </FilledButton>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+      {isMakeAnOfferOpen && (
+        <MakeAnOffer
+          isMakeAnOfferOpen={isMakeAnOfferOpen}
+          setIsMakeAnOfferOpen={setIsMakeAnOfferOpen}
+          availableSlots={availableSlots}
+          courseName={course?.name ?? ""}
+          courseImage={course?.logo ?? ""}
+          date={time}
+          minimumOfferPrice={minimumOfferPrice ?? 0}
+          bookingIds={bookingIds ?? []}
+        />
+      )}
+    </div>
+  );
+};

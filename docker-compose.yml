@@ -1,0 +1,36 @@
+version: "3.8"
+
+services:
+  vttestserver:
+    image: vitess/vttestserver:mysql80
+    ports:
+      - "33577:33577"
+    environment:
+      - KEYSPACES=test,unsharded
+      - NUM_SHARDS=1,0
+      - PORT=33574
+      - MYSQL_MAX_CONNECTIONS=70000
+      - MYSQL_BIND_HOST=0.0.0.0
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h127.0.0.1", "-P33577"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
+
+  cache-redis:
+    container_name: golf-district-cache-redis
+    image: redis:alpine3.17
+    restart: always
+    command: redis-server --save 20 1 --loglevel warning --requirepass redis
+    expose:
+      - 6379
+    ports:
+      - 6379:6379
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 50M
+        reservations:
+          cpus: "0.25"
+          memory: 20M

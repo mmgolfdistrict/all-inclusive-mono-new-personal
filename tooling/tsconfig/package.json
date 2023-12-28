@@ -1,0 +1,16 @@
+{
+  "name": "@golf-district/tsconfig",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "clean": "rm -rf .turbo node_modules"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "base.json",
+    "nextjs.json"
+  ]
+}

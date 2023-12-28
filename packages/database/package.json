@@ -1,0 +1,38 @@
+{
+  "name": "@golf-district/database",
+  "version": "0.1.0",
+  "private": true,
+  "description": "",
+  "keywords": [],
+  "license": "ISC",
+  "author": "",
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "scripts": {
+    "clean": "rm -rf .turbo node_modules",
+    "format": "prettier --check \"**/*.{mjs,ts,md,json}\"",
+    "lint": "eslint .",
+    "push": "drizzle-kit push:mysql",
+    "studio": "drizzle-kit studio",
+    "typecheck": "tsc --noEmit"
+  },
+  "eslintConfig": {
+    "extends": [
+      "@golf-district/eslint-config/base"
+    ],
+    "root": true
+  },
+  "dependencies": {
+    "@golf-district/eslint-config": "^0.1.0",
+    "@golf-district/tsconfig": "^0.1.0",
+    "@planetscale/database": "^1.11.0",
+    "drizzle-orm": "^0.29.0",
+    "typescript": "^5.2.2"
+  },
+  "devDependencies": {
+    "@faker-js/faker": "^8.3.1",
+    "dotenv-cli": "^7.3.0",
+    "drizzle-kit": "^0.20.6",
+    "mysql2": "^3.6.5"
+  }
+}

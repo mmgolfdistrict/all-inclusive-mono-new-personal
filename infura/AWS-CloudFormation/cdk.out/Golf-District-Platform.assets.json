@@ -1,0 +1,19 @@
+{
+  "version": "34.0.0",
+  "files": {
+    "94e7ad7195f4b6205ad56b49fb9de5956d1b1e047294d33aa963376091b06271": {
+      "source": {
+        "path": "Golf-District-Platform.template.json",
+        "packaging": "file"
+      },
+      "destinations": {
+        "current_account-current_region": {
+          "bucketName": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}",
+          "objectKey": "94e7ad7195f4b6205ad56b49fb9de5956d1b1e047294d33aa963376091b06271.json",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-file-publishing-role-${AWS::AccountId}-${AWS::Region}"
+        }
+      }
+    }
+  },
+  "dockerImages": {}
+}

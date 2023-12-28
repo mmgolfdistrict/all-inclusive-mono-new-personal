@@ -1,0 +1,34 @@
+{
+  "name": "@golf-district/aws-cloudformation",
+  "version": "1.0.0",
+  "description": "",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bin": {
+    "aws-stack": "src/index.ts"
+  },
+  "scripts": {
+    "bootstrap": "cdk bootstrap",
+    "deploy": "cdk deploy",
+    "clean": "rm -rf .turbo node_modules",
+    "format": "prettier --check \"**/*.{mjs,ts,md,json}\"",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "@golf-district/tsconfig": "^0.1.0",
+    "aws-cdk-lib": "^2.96.1",
+    "constructs": "^10.2.70",
+    "eslint": "^8.50.0",
+    "source-map-support": "^0.5.21",
+    "typescript": "^5.2.2",
+    "yargs": "^17.7.2"
+  },
+  "eslintConfig": {
+    "root": true,
+    "extends": [
+      "@golf-district/eslint-config/base"
+    ]
+  }
+}

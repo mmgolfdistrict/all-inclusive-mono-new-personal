@@ -1,0 +1,27 @@
+{
+  "extends": "@golf-district/tsconfig/nextjs.json",
+  "compilerOptions": {
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "strictNullChecks": true,
+    "baseUrl": ".",
+    "paths": {
+      "~/*": ["./src/*"]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    "next-config.mjs",
+    "postcss.config.cjs",
+    ".eslintrc.cjs",
+    "../../packages/shared/src/schema/register-schema.ts",
+    "env.mjs"
+  ],
+  "exclude": ["node_modules"]
+}

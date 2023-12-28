@@ -1,0 +1,4 @@
+{
+    "extends": "@golf-district/tsconfig/base.json",
+    "include": ["routes"]
+  }

@@ -1,0 +1,881 @@
+import { randomBytes, randomUUID } from "crypto";
+import { and, eq, or } from "@golf-district/database";
+import type { Db } from "@golf-district/database";
+import { assets } from "@golf-district/database/schema/assets";
+import { bookings } from "@golf-district/database/schema/bookings";
+import type { InsertUser, SelectUser } from "@golf-district/database/schema/users";
+import { users } from "@golf-district/database/schema/users";
+import {
+  assetToURL,
+  containsBadWords,
+  currentUtcTimestamp,
+  isValidEmail,
+  isValidPassword,
+} from "@golf-district/shared";
+import Logger from "@golf-district/shared/src/logger";
+import bcrypt from "bcryptjs";
+import { alias } from "drizzle-orm/mysql-core";
+import { generateUtcTimestamp } from "../../helpers";
+import type { NotificationService } from "../notification/notification.service";
+
+export interface UserCreationData {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  handle: string;
+  location?: string;
+}
+
+interface UserUpdateData {
+  handle?: string | null;
+  name?: string | null;
+  profileVisibility?: "PUBLIC" | "PRIVATE";
+  profilePictureAssetId?: string | null;
+  bannerImageAssetId?: string | null;
+  location?: string | null;
+  phoneNotifications?: boolean | null;
+  emailNotifications?: boolean | null;
+}
+
+/**
+ * Service class for user-related operations.
+ */
+export class UserService {
+  //private readonly filter: Filter;
+  private readonly logger = Logger(UserService.name);
+
+  /**
+   * Constructor for the `UserService` class.
+   *
+   * @param {Db} database - The database instance.
+   * @param {NotificationService} notificationsService - The notification service instance.
+   * @example
+   * const userService = new UserService(database, notificationService);
+   */
+  constructor(protected readonly database: Db, private readonly notificationsService: NotificationService) {
+    //this.filter = new Filter();
+  }
+
+  //@TODO invite users takes in an array or user ids or emails
+  //@TODO my tee time history teetime purchased in the past
+
+  /**
+   * Asynchronously registers a new user without utilizing OAuth.
+   * This method is for non-OAuth users and the usage is discouraged due to potential security implications.
+   *
+   * @param data - An object containing user creation data:
+   *   - `email`: The email address of the user, which must be in a valid email format.
+   *   - `password`: The password for the user, which must pass certain format validations.
+   *   - `firstName`: The first name of the user.
+   *   - `lastName`: The last name of the user.
+   *   - `location`: The location of the user.
+   *   - `handle`: The unique username/handle for the user.
+   *
+   * @returns Promise<void> - A promise that resolves when the user is successfully created and inserted into the database.
+   *
+   * @throws
+   *   - `Error("Invalid email format")`: If the provided email does not adhere to valid email formats.
+   *   - `Error("Invalid password format due to profanity filter")`: If the provided password fails format validation, which may involve a profanity filter.
+   *   - `Error("Invalid username due to profanity filter")`: If the provided username/handle fails due to containing prohibited words.
+   *   - `Error("Invalid first name due to profanity filter")`: If the provided first name fails due to containing prohibited words.
+   *   - `Error("Invalid last name due to profanity filter")`: If the provided last name fails due to containing prohibited words.
+   *   - `Error("Email already exists")`: If an existing user already has the provided email.
+   *   - `Error("Username already exists")`: If an existing user already has the provided handle.
+   *
+   * @example
+   *   createUser({
+   *     email: 'user@example.com',
+   *     password: 'SecureP@ssw0rd!',
+   *     firstName: 'John',
+   *     lastName: 'Doe',
+   *     location: 'City, Country',
+   *     handel: 'johnDoe123'
+   *   });
+   */
+  createUser = async (data: UserCreationData): Promise<void> => {
+    this.logger.info(`createUser called`);
+    if (!isValidEmail(data.email)) {
+      this.logger.warn(`Invalid email format: ${data.email}`);
+      throw new Error("Invalid email format");
+    }
+    if (!(await this.isValidHandle(data.handle))) {
+      this.logger.warn(`Invalid handle format: ${data.handle}`);
+      throw new Error("Invalid handle format");
+    }
+    if (isValidPassword(data.password).score != 10) {
+      this.logger.warn("Invalid password");
+      throw new Error("Invalid password");
+    }
+    // if (containsBadWords(data.firstName, this.filter)) {
+    //   this.logger.warn(`Invalid first name: ${data.firstName}`);
+    //   throw new Error("Invalid first name due to profanity filter");
+    // }
+    // if (containsBadWords(data.lastName, this.filter)) {
+    //   this.logger.warn(`Invalid last name: ${data.lastName}`);
+    //   throw new Error("Invalid last name due to profanity filter");
+    // }
+    const [existingUserWithEmail] = await this.database
+      .select()
+      .from(users)
+      .where(eq(users.email, data.email));
+    if (existingUserWithEmail) {
+      if (existingUserWithEmail.email == data.email) {
+        this.logger.warn(`Email already exists: ${data.email}`);
+        throw new Error("Email already exists");
+      }
+    }
+    const verificationToken = randomBytes(32).toString("hex");
+    const hashedVerificationToken = await bcrypt.hash(verificationToken, 10);
+    await this.insertUser(data, hashedVerificationToken);
+    await this.notificationsService.sendEmail(data.email, "Verify your email", `${verificationToken}`);
+  };
+
+  /**
+   * Retrieves bookings owned by a user for a specific tee time.
+   *
+   * @param {string} teeTimeId - The unique identifier of the tee time.
+   * @param {string} [userId] - The unique identifier of the user. If not provided, the result will indicate that the connected user is not the owner and return an empty array of bookings.
+   * @returns {Promise<{ connectedUserIsOwner: boolean; bookings: string[] }>} A promise that resolves to an object containing information about the ownership and bookings.
+   * @throws {Error} Throws an error if there is an issue retrieving bookings from the database.
+   * @example
+   * const teeTimeId = "exampleTeeTimeId";
+   * const userId = "exampleUserId";
+   * const result = await getBookingsOwnedForTeeTime(teeTimeId, userId);
+   * // result: { connectedUserIsOwner: true, bookings: ["bookingId1", "bookingId2"] }
+   */
+  getBookingsOwnedForTeeTime = async (teeTimeId: string, userId?: string) => {
+    if (!userId) {
+      return {
+        connectedUserIsOwner: false,
+        bookings: [],
+      };
+    }
+    const data = await this.database
+      .select({
+        bookingId: bookings.id,
+      })
+      .from(bookings)
+      .where(and(eq(bookings.teeTimeId, teeTimeId), eq(bookings.ownerId, userId)))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error retrieving bookings: ${err}`);
+        throw new Error("Error retrieving bookings");
+      });
+    if (!data || data.length == 0) {
+      return {
+        connectedUserIsOwner: false,
+        bookings: [],
+      };
+    }
+    const res = {
+      connectedUserIsOwner: true,
+      bookings: [""],
+    };
+    data.map((_data) => {
+      if (!res.bookings[0]) {
+        res.bookings[0] = _data.bookingId;
+      } else {
+        res.bookings.push(_data.bookingId);
+      }
+    });
+    return res;
+  };
+
+  /**
+   * Asynchronously verifies a user's email address.
+   *
+   * This method performs several checks to validate the user and the provided verification token.
+   * Upon successful verification, the user's email is marked as verified in the database,
+   * and relevant verification fields are updated or cleared.
+   *
+   * @param userId - A string representing the unique identifier of the user attempting to verify their email.
+   * @param token - A string representing the verification token provided by the user.
+   *
+   * @returns {Promise<void>} A promise that resolves when the email verification is successfully processed.
+   *
+   * @throws
+   *   - `Error("User not found")`: If no user is found with the provided `userId`.
+   *   - `Error("User email already verified")`: If the user’s email is already verified (indicated by the absence of a `verificationRequestToken`).
+   *   - `Error("Verification token expired")`: If the provided verification token has expired, determined by comparing `verificationRequestExpiry` with the current UTC timestamp.
+   *   - `Error("Invalid verification token")`: If the provided `token` does not match the stored `verificationRequestToken` for the user.
+   *   - `Error("Unexpected response structure from Amazon Location Service")`: If an unexpected structure is returned from the database during verification (a safeguard).
+   *
+   * @example
+   *   verifyUserEmail('user123id', 'secureverificationtoken');
+   */
+  verifyUserEmail = async (userId: string, token: string): Promise<void> => {
+    this.logger.info(`verifyUserEmail called with userId: ${userId} and token: ${token}`);
+    const [user] = await this.database.select().from(users).where(eq(users.id, userId));
+    if (!user) {
+      this.logger.warn(`User not found: ${userId}`);
+      throw new Error("User not found");
+    }
+    if (!user.verificationRequestToken) {
+      this.logger.warn(`User email already verified: ${userId}`);
+      throw new Error("User email already verified");
+    }
+    if (user.verificationRequestExpiry && user.verificationRequestExpiry < currentUtcTimestamp()) {
+      this.logger.warn(`Verification token expired: ${userId}`);
+      throw new Error("Verification token expired");
+    }
+    const valid = await bcrypt.compare(token, user.verificationRequestToken);
+    if (!valid) {
+      this.logger.warn(`Invalid verification token: ${userId}`);
+      throw new Error("Invalid verification token");
+    }
+
+    await this.database
+      .update(users)
+      .set({
+        emailVerified: currentUtcTimestamp(),
+        verificationRequestToken: null,
+        verificationRequestExpiry: null,
+      })
+      .where(eq(users.id, userId))
+      .execute();
+  };
+
+  /**
+   * Asynchronously updates a user's information in the database.
+   *
+   * This method performs validations and checks on the provided data such as handle format,
+   * name validation against a profanity filter, and asset ID verification.
+   * Upon successful validation, the user's information is updated in the database.
+   *
+   * @param {UserUpdateData} data - Object containing the user's information to be updated.
+   *
+   * @returns {Promise<void>} Promise that resolves when the user's information is successfully updated.
+   *
+   * @throws
+   *   - `Error("Invalid handle format")`: If the provided `handle` does not pass the format validation.
+   *   - `Error("Invalid name due to profanity filter")`: If the provided `name` does not pass the profanity filter check.
+   *   - `Error("Error recovering asset: [assetId]")`: If there is an error retrieving the asset identified by `[assetId]` from the database.
+   *   - `Error("Asset not found: [assetId]")`: If the asset identified by `[assetId]` is not found in the database.
+   *   - `Error("Error updating user")`: If there is a database error during the user update operation.
+   *
+   * @example
+   *   updateUser({
+   *     userId: 'user123id',
+   *     handle: 'newHandle',
+   *     name: 'New Name',
+   *     profileVisibility: 'public',
+   *     profilePictureAssetId: 'asset123id',
+   *     bannerImageAssetId: 'asset456id',
+   *     location: '1600 Amphitheatre Parkway, Mountain View, CA',
+   *     phoneNotifications: true,
+   *     emailNotifications: false
+   *   });
+   */
+  updateUser = async (userId: string, data: UserUpdateData): Promise<void> => {
+    this.logger.info(`updateUser called for user: ${userId}`);
+    if (data.handle) {
+      if (!(await this.isValidHandle(data.handle))) {
+        this.logger.warn(`Invalid handle format: ${data.handle}`);
+        throw new Error("Invalid handle format");
+      }
+    }
+    // if (data.name) {
+    //   if (containsBadWords(data.name, this.filter)) {
+    //     this.logger.warn(`Invalid name: ${data.name}`);
+    //     throw new Error("Invalid name due to profanity filter");
+    //   }
+    // }
+    if (data.bannerImageAssetId) {
+      const [bannerAsset] = await this.database
+        .select()
+        .from(assets)
+        .where(and(eq(assets.id, data.bannerImageAssetId), eq(assets.createdById, userId)))
+        .catch((err) => {
+          this.logger.error(`Error recovering asset: ${data.bannerImageAssetId}, Error: ${err}`);
+          throw new Error(`Error recovering asset: ${data.bannerImageAssetId}`);
+        });
+      if (!bannerAsset) {
+        this.logger.warn(`Asset not found: ${data.bannerImageAssetId}`);
+        throw new Error(`Asset not found: ${data.bannerImageAssetId}`);
+      }
+    }
+    if (data.profilePictureAssetId) {
+      const [profileAsset] = await this.database
+        .select()
+        .from(assets)
+        .where(and(eq(assets.id, data.profilePictureAssetId), eq(assets.createdById, userId)))
+        .execute()
+        .catch((err) => {
+          this.logger.error(`Error recovering asset: ${data.profilePictureAssetId}, Error: ${err}`);
+          throw new Error(`Error recovering asset: ${data.profilePictureAssetId}`);
+        });
+      if (!profileAsset) {
+        this.logger.warn(`Asset not found: ${data.profilePictureAssetId}`);
+        throw new Error(`Asset not found: ${data.profilePictureAssetId}`);
+      }
+    }
+    if (data.location) {
+      //TODO: validate location with geocode service
+    }
+
+    const updateData: Partial<InsertUser> = {
+      updatedAt: currentUtcTimestamp(),
+    };
+    if (Object.prototype.hasOwnProperty.call(data, "handle")) updateData.handle = data.handle;
+    if (Object.prototype.hasOwnProperty.call(data, "name")) updateData.name = data.name;
+    if (Object.prototype.hasOwnProperty.call(data, "profileVisibility"))
+      updateData.profileVisibility = data.profileVisibility;
+    if (Object.prototype.hasOwnProperty.call(data, "profilePictureAssetId"))
+      updateData.image = data.profilePictureAssetId;
+    if (Object.prototype.hasOwnProperty.call(data, "bannerImageAssetId"))
+      updateData.bannerImage = data.bannerImageAssetId;
+    if (Object.prototype.hasOwnProperty.call(data, "location")) updateData.location = data.location;
+    if (Object.prototype.hasOwnProperty.call(data, "phoneNotifications"))
+      updateData.phoneNotifications = data.phoneNotifications ? true : false;
+    if (Object.prototype.hasOwnProperty.call(data, "emailNotifications"))
+      updateData.emailNotifications = data.emailNotifications ? true : false;
+
+    await this.database
+      .update(users)
+      .set(updateData)
+      .where(eq(users.id, userId))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error updating user: ${userId} - ${err}`);
+        throw new Error("Error updating user");
+      });
+  };
+
+  /**
+   * Asynchronously requests an email update for a user and sends a verification email.
+   *
+   * This method validates the provided email, retrieves the user from the database, generates a verification token,
+   * updates the user's record with the new email and verification token, and sends a verification email to the new address.
+   *
+   * @param {string} userId - A string representing the unique identifier of the user requesting the email update.
+   * @param {string} email - A string representing the new email address to be updated for the user.
+   *
+   * @returns {Promise<void>} A promise that resolves when the verification email has been sent.
+   *
+   * @throws
+   *   - `Error("Invalid email format")`: If the provided `email` does not pass the format validation.
+   *   - `Error("User not found")`: If no user is found with the provided `userId`.
+   *
+   * @example
+   *   requestEmailUpdate('user123id', 'newemail@example.com');
+   *
+   * @see {@link isValidEmail} for the email validation logic.
+   * @see {@link generateUtcTimestamp} for generating the verification token expiration timestamp.
+   */
+  requestEmailUpdate = async (userId: string, email: string): Promise<void> => {
+    this.logger.info(`requestEmailUpdate called with userId: ${userId}`);
+    if (!isValidEmail(email)) {
+      this.logger.warn(`Invalid email format: ${email}`);
+      throw new Error("Invalid email format");
+    }
+    const [user] = await this.database.select().from(users).where(eq(users.id, userId));
+    if (!user) {
+      this.logger.warn(`User not found: ${userId}`);
+      throw new Error("User not found");
+    }
+    this.logger.debug(`uploading emailVerificationToken for user: ${userId}`);
+    const verificationToken = randomBytes(32).toString("hex");
+    const hashedVerificationToken = await bcrypt.hash(verificationToken, 10);
+    await this.database
+      .update(users)
+      .set({
+        verificationRequestToken: hashedVerificationToken,
+        verificationRequestExpiry: generateUtcTimestamp(90),
+        updatedEmail: email,
+      })
+      .where(eq(users.id, userId))
+      .execute();
+    this.logger.debug(`emailVerificationToken uploaded for user: ${userId}`);
+    await this.notificationsService
+      .sendEmail(email, "Verify your email", `${verificationToken}`)
+      .catch((err) => {
+        this.logger.error(`Error sending email: ${err}`);
+        throw new Error("Error sending email");
+      });
+  };
+
+  /**
+   * Asynchronously executes an email update for a user upon verification.
+   *
+   * This method retrieves the user from the database using the provided `userId`, validates the provided verification token,
+   * and, if valid, updates the user's email address in the database. The method ensures that the token is not expired and matches
+   * the stored token for security. After updating the email, related verification fields in the database are cleared.
+   *
+   * @param {string} userId - A string representing the unique identifier of the user attempting to update their email.
+   * @param {string} token - A string representing the verification token provided by the user.
+   *
+   * @returns {Promise<void>} A promise that resolves when the email address has been updated in the database.
+   *
+   * @throws
+   *   - `Error("User not found")`: If no user is found with the provided `userId`.
+   *   - `Error("Verification token expired")`: If the stored `verificationRequestExpiry` is in the past at the time of the function call.
+   *   - `Error("Invalid verification token")`: If the provided `token` does not match the stored `verificationRequestToken` for the user.
+   *
+   * @example
+   *   executeEmailUpdate('user123id', 'secureverificationtoken');
+   */
+  executeEmailUpdate = async (userId: string, token: string): Promise<void> => {
+    this.logger.info(`executeEmailUpdate called with userId: ${userId} and token: ${token}`);
+    const [user] = await this.database.select().from(users).where(eq(users.id, userId));
+    if (!user) {
+      this.logger.warn(`User not found: ${userId}`);
+      throw new Error("User not found");
+    }
+    if (user.verificationRequestExpiry && user.verificationRequestExpiry < currentUtcTimestamp()) {
+      this.logger.warn(`Verification token expired: ${userId}`);
+      throw new Error("Verification token expired");
+    }
+    const valid = await bcrypt.compare(token, user.verificationRequestToken!).catch((err) => {
+      this.logger.error(`Error comparing token: ${err}`);
+      throw new Error("Error comparing token");
+    });
+    if (!valid) {
+      this.logger.warn(`Invalid verification token: ${userId}`);
+      throw new Error("Invalid verification token");
+    }
+    await this.database
+      .update(users)
+      .set({
+        email: user.updatedEmail,
+        updatedEmail: null,
+        verificationRequestToken: null,
+        verificationRequestExpiry: null,
+        updatedAt: currentUtcTimestamp(),
+      })
+      .where(eq(users.id, userId))
+      .execute();
+    this.logger.debug(`email updated for user: ${userId}`);
+  };
+
+  /**
+   * Asynchronously initiates a password reset process for a user.
+   *
+   * This method retrieves the user from the database using the provided `handleOrEmail`, generates a secure token,
+   * and sends an email to the user with a link to reset their password. The token is hashed and stored in the database
+   * with an expiry time, ensuring that password reset links are time-limited for security.
+   *
+   * @param {string} handleOrEmail - A string representing the user's handle or email address.
+   *
+   * @returns {Promise<void>} A promise that resolves when the email has been sent and the database has been updated.
+   *
+   * @throws
+   *   - `Error("User not found")`: If no user is found with the provided `handleOrEmail`.
+   *   - `Error("User does not have an email")`: If the user's email field is null or undefined in the database.
+   *   - `Error("User email not verified")`: If the user's email has not been verified.
+   *
+   * @example
+   *   forgotPasswordRequest('userHandleOrEmail@example.com');
+   *
+   */
+  forgotPasswordRequest = async (handleOrEmail: string): Promise<void> => {
+    const [user] = await this.database
+      .select()
+      .from(users)
+      .where(or(eq(users.handle, handleOrEmail), eq(users.email, handleOrEmail)));
+    if (!user) {
+      this.logger.warn(`User not found: ${handleOrEmail}`);
+      throw new Error("User not found");
+    }
+    if (!user.email) {
+      this.logger.warn(`User email does not exists: ${handleOrEmail}`);
+      throw new Error("User does not have an email");
+    }
+    if (!user.emailVerified) {
+      this.logger.warn(`User email not verified: ${handleOrEmail}`);
+      throw new Error("User email not verified");
+    }
+    const verificationToken = randomBytes(32).toString("hex");
+    const hashedVerificationToken = await bcrypt.hash(verificationToken, 10);
+    await this.database
+      .update(users)
+      .set({
+        forgotPasswordToken: hashedVerificationToken,
+        forgotPasswordTokenExpiry: generateUtcTimestamp(90),
+      })
+      .where(eq(users.id, user.id))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error updating forgotPasswordToken for user: ${user.id} - ${err}`);
+      });
+
+    await this.notificationsService
+      .sendEmail(
+        user.email,
+        "Reset your password",
+        `/reset-password?user=${user.id}&token=${verificationToken}`
+      )
+      .catch((err) => {
+        this.logger.error(`Error sending email: ${err}`);
+        throw new Error("Error sending email");
+      });
+  };
+
+  /**
+   * Asynchronously executes a password reset for a user.
+   *
+   * This method validates the provided parameters and, if they are valid, updates the user's password in the database.
+   * Several checks ensure the request is valid and secure, including token validation and expiry check.
+   *
+   * @param {string} userId - A string representing the unique identifier of the user attempting to reset their password.
+   * @param {string} token - A string representing the verification token provided by the user.
+   * @param {string} newPassword - A string containing the user's desired new password.
+   *
+   * @returns {Promise<void>} A promise that resolves when the password has been successfully updated.
+   *
+   * @throws
+   *   - `Error("Invalid password format")`: If `newPassword` does not meet the specified criteria for a valid password.
+   *   - `Error("User not found")`: If no user is found with the provided `userId`.
+   *   - `Error("User has no forgotPassword request")`: If the user does not have an active password reset request (indicated by the absence of a `forgotPasswordToken`).
+   *   - `Error("Verification token expired")`: If the provided verification token has expired, determined by comparing `forgotPasswordTokenExpiry` with the current UTC timestamp.
+   *   - `Error("Invalid verification token")`: If the provided `token` does not match the stored `forgotPasswordToken` for the user.
+   *   - `Error("Error updating password")`: If an error occurs while updating the password in the database.
+   *
+   * @example
+   *   executeForgotPassword('user123id', 'secureverificationtoken', 'newSecurePassword123');
+   */
+  executeForgotPassword = async (userId: string, token: string, newPassword: string): Promise<void> => {
+    this.logger.info(`executeForgotPassword called with userId: ${userId}`);
+    if (isValidPassword(newPassword).score < 8) {
+      this.logger.warn(`Invalid password format: ${newPassword}`);
+      throw new Error("Invalid password format");
+    }
+    const [user] = await this.database.select().from(users).where(eq(users.id, userId));
+
+    if (!user) {
+      this.logger.warn(`User not found: ${userId}`);
+      throw new Error("User not found");
+    }
+
+    if (!user.forgotPasswordToken || !user.forgotPasswordTokenExpiry) {
+      this.logger.warn(`User has no forgotPassword request: ${userId}`);
+      throw new Error("User has no forgotPassword request");
+    }
+
+    if (user.forgotPasswordTokenExpiry && user.forgotPasswordTokenExpiry < currentUtcTimestamp()) {
+      this.logger.warn(`Verification token expired: ${userId}`);
+      throw new Error("Verification token expired");
+    }
+    const valid = await bcrypt.compare(token, user.forgotPasswordToken);
+    if (!valid) {
+      this.logger.warn(`Invalid verification token: ${userId}`);
+      throw new Error("Invalid verification token");
+    }
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await this.database
+      .update(users)
+      .set({
+        gdPassword: hashedPassword,
+        forgotPasswordToken: null,
+        forgotPasswordTokenExpiry: null,
+        updatedAt: currentUtcTimestamp(),
+      })
+      .where(eq(users.id, userId))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error updating password for user: ${userId} - ${err}`);
+        throw new Error("Error updating password");
+      });
+  };
+
+  /**
+   * Asynchronously updates the password of a user.
+   *
+   * This method validates the provided parameters and, if they are valid, updates the user's password in the database.
+   * The function allows for setting a new password if one doesn't exist or updating the existing password after validating the old one.
+   * Various checks and validations are performed to ensure the security and reliability of the operation.
+   *
+   * @param {string} userId - A string representing the unique identifier of the user whose password is to be updated.
+   * @param {string} oldPassword - A string representing the user's current password. Used for validation when updating the password.
+   * @param {string} newPassword - A string containing the user's desired new password.
+   *
+   * @returns {Promise<void>} A promise that resolves when the password has been successfully updated.
+   *
+   * @throws
+   *   - `Error("User not found")`: If no user is found with the provided `userId`.
+   *   - `Error("Invalid password format")`: If `newPassword` does not meet the specified criteria for a valid password.
+   *   - `Error("Error setting password")`: If an error occurs while initially setting the password in the database.
+   *   - `Error("Invalid password")`: If the provided `oldPassword` does not match the stored password for the user.
+   *   - `Error("Error updating password")`: If an error occurs while updating the password in the database.
+   *
+   * @example
+   *   updatePassword('user123id', 'currentPassword123', 'newSecurePassword123');
+   * @see {@link isValidPassword} for the password validation logic.
+   */
+  updatePassword = async (userId: string, oldPassword: string, newPassword: string): Promise<void> => {
+    const [user] = await this.database.select().from(users).where(eq(users.id, userId));
+    if (!user) {
+      this.logger.warn(`User not found: ${userId}`);
+      throw new Error("User not found");
+    }
+    if (isValidPassword(newPassword).score >= 10) {
+      this.logger.warn(`Invalid password format: ${newPassword}`);
+      throw new Error("Invalid password format");
+    }
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    if (!user.gdPassword) {
+      this.logger.debug(`Setting new password for user: ${userId}`);
+      await this.database
+        .update(users)
+        .set({
+          gdPassword: hashedPassword,
+          updatedAt: currentUtcTimestamp(),
+        })
+        .where(eq(users.id, userId))
+        .execute()
+        .catch((err) => {
+          this.logger.error(`Error setting password for user: ${userId} - ${err}`);
+          throw new Error("Error setting password");
+        });
+    } else {
+      const valid = await bcrypt.compare(oldPassword, user.gdPassword);
+      if (!valid) {
+        this.logger.warn(`Invalid password: ${userId}`);
+        throw new Error("Invalid password");
+      }
+      this.logger.debug(`Updating password for user: ${userId}`);
+      await this.database
+        .update(users)
+        .set({
+          gdPassword: hashedPassword,
+          updatedAt: currentUtcTimestamp(),
+        })
+        .where(eq(users.id, userId))
+        .execute()
+        .catch((err) => {
+          this.logger.error(`Error updating password for user: ${userId} - ${err}`);
+          throw new Error("Error updating password");
+        });
+    }
+  };
+
+  /**
+   * Asynchronously validates a user handle.
+   *
+   * This method checks whether a provided user handle is valid based on specific criteria:
+   * - It should not already exist in the database.
+   * - It should not contain any words flagged by a predefined filter.
+   *
+   * If the handle does not meet these criteria, the function throws an error with a message indicating the reason.
+   * If the handle is valid, it returns `true`.
+   *
+   * @param {string} handle - A string representing the user handle to be validated.
+   *
+   * @returns {Promise<boolean>} A promise that resolves to `true` if the handle is valid.
+   *
+   * @throws
+   *   - `Error("Handle already exists")`: If the `handle` is already associated with a user in the database.
+   *   - `Error("Handle contains bad words")`: If the `handle` contains words flagged by the bad words filter.
+   *
+   * @example
+   *   isValidHandle('newUserHandle123').then((isValid) => {
+   *     if (isValid) {
+   *       console.log('The handle is valid!');
+   *     }
+   *   }).catch((error) => {
+   *     console.error(`Handle validation failed: ${error.message}`);
+   *   });
+   * @see {@link containsBadWords} for the bad words filter logic.
+   */
+  isValidHandle = async (handle: string): Promise<boolean> => {
+    this.logger.info(`isValidHandle called with handle: ${handle}`);
+    if (handle.length < 3 || handle.length > 20) {
+      this.logger.debug(`Handle length is invalid: ${handle}`);
+      //throw new Error("Handle length is invalid");
+      return false;
+    }
+    if (isValidEmail(handle)) {
+      this.logger.debug(`Handle is an email: ${handle}`);
+      //throw new Error("Handle is an email");
+      return false;
+    }
+    const [user] = await this.database.select().from(users).where(eq(users.handle, handle));
+    if (user) {
+      this.logger.debug(`Handle already exists: ${handle}`);
+      //throw new Error("Handle already exists");
+      return false;
+    }
+    // if (!containsBadWords(handle, this.filter)) {
+    //   this.logger.debug(`Handle contains bad words: ${handle}`);
+    //   throw new Error("Handle contains bad words");
+    // }
+    return true;
+  };
+
+  /**
+   * Asynchronously inserts a new user into the database.
+   *
+   * This method takes user creation data and a verification token as input, constructs the user object,
+   * and inserts it into the database. The password and verification token are securely hashed using bcrypt
+   * before being stored.
+   *
+   * @param {UserCreationData} data - An object containing the user's data. The object structure is as follows:
+   *   - `firstName`: The user's first name.
+   *   - `lastName`: The user's last name.
+   *   - `handle`: The user's handle.
+   *   - `email`: The user's email address.
+   *   - `password`: The user's password.
+   *   - `location`: The user's location (optional).
+   * @param {string} verificationToken - A string representing the verification token associated with the user.
+   *
+   * @returns {Promise<void>} A promise that resolves when the user data is successfully inserted into the database.
+   *
+   * @example
+   *   const userData = {
+   *     firstName: 'John',
+   *     lastName: 'Doe',
+   *     handle: 'johnDoe123',
+   *     email: 'john@example.com',
+   *     password: 'securePassword123',
+   *     location: '123 Main St, Anytown, USA'
+   *   };
+   *   const verificationToken = 'secureVerificationToken';
+   *
+   *   insertUser(userData, verificationToken).then(() => {
+   *     console.log('User inserted successfully!');
+   *   }).catch((error) => {
+   *     console.error(`Failed to insert user: ${error.message}`);
+   *   });
+   */
+  insertUser = async (data: UserCreationData, verificationToken: string): Promise<void> => {
+    await this.database
+      .insert(users)
+      .values({
+        id: randomUUID(),
+        name: `${data.firstName} ${data.lastName}`,
+        handle: data.handle,
+        email: data.email,
+        gdPassword: await bcrypt.hash(data.password, 10),
+        address: data.location,
+        verificationRequestToken: await bcrypt.hash(verificationToken, 10),
+        verificationRequestExpiry: generateUtcTimestamp(90), //90 minutes
+        createdAt: currentUtcTimestamp(),
+        updatedAt: currentUtcTimestamp(),
+      })
+      .execute();
+  };
+
+  /**
+   * Retrieves user information by user ID.
+   *
+   * @param {string | undefined} callerId - The unique identifier of the caller. If undefined, the result will include only public information. If provided and not the same as the user being queried, additional filtering will be applied.
+   * @param {string} userId - The unique identifier of the user.
+   * @returns {Promise<{ id: string; // additional user properties...; profilePicture: string; bannerPicture: string }>} A promise that resolves to user information including profile and banner pictures.
+   * @throws {Error} Throws an error if the user is not found.
+   * @example
+   * const callerId = "exampleCallerId";
+   * const userId = "exampleUserId";
+   * const result = await getUserById(callerId, userId);
+   * // result: { id: "exampleUserId", // additional user properties..., profilePicture: "/defaults/default-profile.webp", bannerPicture: "/defaults/default-banner.webp" }
+   */
+  getUserById = async (callerId: string | undefined, userId: string) => {
+    // console.log("getUserById called with userId: ", userId);
+    // console.log("getUserById called with callerId: ", callerId);
+    const profileAsset = alias(assets, "profileAsset");
+    const bannerAsset = alias(assets, "bannerAsset");
+
+    const [data] = await this.database
+      .select({
+        user: users,
+        profileImage: {
+          assetId: profileAsset.id,
+          assetKey: profileAsset.key,
+          assetCdn: profileAsset.cdn,
+          assetExtension: profileAsset.extension,
+        },
+        bannerImage: {
+          assetId: bannerAsset.id,
+          assetKey: bannerAsset.key,
+          assetCdn: bannerAsset.cdn,
+          assetExtension: bannerAsset.extension,
+        },
+      })
+      .from(users)
+      .leftJoin(profileAsset, eq(users.image, profileAsset.id))
+      .leftJoin(bannerAsset, eq(users.bannerImage, bannerAsset.id))
+      .where(eq(users.id, userId))
+      .limit(1)
+      .execute();
+    if (!data) {
+      this.logger.warn(`User not found: ${userId}`);
+      throw new Error("User not found");
+    }
+    const { user, profileImage, bannerImage } = data;
+    let profilePicture = "";
+    let bannerPicture = "";
+    if (!profileImage) {
+      profilePicture = "/defaults/default-profile.webp";
+    } else {
+      profilePicture = assetToURL({
+        key: profileImage.assetKey,
+        cdn: profileImage.assetCdn,
+        extension: profileImage.assetExtension,
+      });
+    }
+    if (!bannerImage) {
+      bannerPicture = "/defaults/default-banner.webp";
+    } else {
+      bannerPicture = assetToURL({
+        key: bannerImage.assetKey,
+        cdn: bannerImage.assetCdn,
+        extension: bannerImage.assetExtension,
+      });
+    }
+    if (callerId == userId) {
+      return {
+        ...user,
+        profilePicture,
+        bannerPicture,
+      };
+    }
+    ///@TODO If callers is not the user additional filtering is needed to remove secrets
+    else {
+      if (user.profileVisibility == "PUBLIC") {
+        return {
+          ...user,
+          profilePicture,
+          bannerPicture,
+        };
+      } else {
+        //remove and replace data for a private profile
+        return {
+          ...user,
+          profilePicture,
+          bannerPicture,
+        };
+      }
+    }
+  };
+
+  /**
+   * Retrieves the tee time history for a user.
+   *
+   * @param {string} userId - The unique identifier of the user.
+   * @param {string} courseId - The unique identifier of the course.
+   * @returns {Promise<void>} A promise that resolves once the tee time history is retrieved.
+   * @throws {Error} Throws an error if there is an issue retrieving the tee time history.
+   * @example
+   * const userId = "exampleUserId";
+   * const courseId = "exampleCourseId";
+   * await getTeeTimeHistoryForUser(userId, courseId);
+   */
+  getTeeTimeHistoryForUser = async (userId: string, courseId: string) => {};
+
+  /**
+   * Retrieves upcoming tee times for a user.
+   *
+   * @param {string} userId - The unique identifier of the user.
+   * @param {string} courseId - The unique identifier of the course.
+   * @param {number} take - The number of upcoming tee times to retrieve.
+   * @param {string} [cursor] - Optional cursor for pagination.
+   * @returns {Promise<void>} A promise that resolves once the upcoming tee times are retrieved.
+   * @throws {Error} Throws an error if there is an issue retrieving the upcoming tee times.
+   * @example
+   * const userId = "exampleUserId";
+   * const courseId = "exampleCourseId";
+   * const take = 5;
+   * const cursor = "exampleCursor";
+   * await getUpcomingTeeTimesForUser(userId, courseId, take, cursor);
+   */
+  getUpcomingTeeTimesForUser = async (userId: string, courseId: string, take: number, cursor?: string) => {};
+}

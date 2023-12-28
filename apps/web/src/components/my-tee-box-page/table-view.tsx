@@ -1,0 +1,110 @@
+"use client";
+
+import * as Tabs from "@radix-ui/react-tabs";
+import { useCourseContext } from "~/contexts/CourseContext";
+import { useUserContext } from "~/contexts/UserContext";
+import { api } from "~/utils/api";
+import { OpenSection } from "~/utils/tee-box-helper";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { type ReactNode } from "react";
+import { Badge } from "../badge";
+import { MyListedTeeTimes } from "./my-listed-tee-times";
+import { OffersReceived } from "./offers-received";
+import { OffersSent } from "./offers-sent";
+import { Owned } from "./owned";
+import { TransactionHistory } from "./transaction-history";
+
+export const TableView = () => {
+  const { course } = useCourseContext();
+  const courseId = course?.id;
+  const params = useSearchParams();
+  const section = OpenSection.includes(params?.get("section") ?? "")
+    ? params?.get("section")
+    : "owned";
+  const { user } = useUserContext();
+
+  const { data: unreadOffers, refetch } =
+    api.user.getUnreadOffersForCourse.useQuery(
+      {
+        courseId: courseId ?? "",
+      },
+      {
+        enabled: user !== undefined && courseId !== undefined,
+      }
+    );
+
+  const readOffers = api.user.readOffersForCourse.useMutation();
+
+  const markAsRead = async () => {
+    if (!courseId) return;
+    try {
+      await readOffers.mutateAsync({
+        courseId: courseId,
+      });
+      await refetch();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  return (
+    <Tabs.Root value={section ?? "owned"}>
+      <Tabs.List className="flex gap-10 overflow-x-auto border-b border-stroke bg-white px-6 pt-4 md:rounded-t-xl">
+        <TabTrigger value={"owned"}>Owned</TabTrigger>
+        <TabTrigger value={"my-listed-tee-times"}>
+          My Listed Tee Times
+        </TabTrigger>
+        <TabTrigger value={"offers-sent"}>Offers Sent</TabTrigger>
+        <TabTrigger value={"offers-received"} handleClick={markAsRead}>
+          Offers Received{" "}
+          {unreadOffers && unreadOffers > 0 ? (
+            <Badge className="py-[.15rem] text-[12px]">{unreadOffers}</Badge>
+          ) : null}
+        </TabTrigger>
+        <TabTrigger value={"transaction-history"}>
+          Transaction History
+        </TabTrigger>
+      </Tabs.List>
+      <Tabs.Content value="owned" className="bg-white p-2">
+        <Owned />
+      </Tabs.Content>
+      <Tabs.Content value="my-listed-tee-times" className="bg-white p-2">
+        <MyListedTeeTimes />
+      </Tabs.Content>
+      <Tabs.Content value="offers-sent" className="bg-white p-2">
+        <OffersSent />
+      </Tabs.Content>
+      <Tabs.Content value="offers-received" className="bg-white p-2">
+        <OffersReceived />
+      </Tabs.Content>
+      <Tabs.Content value="transaction-history" className="bg-white p-2">
+        <TransactionHistory />
+      </Tabs.Content>
+    </Tabs.Root>
+  );
+};
+
+const TabTrigger = ({
+  value,
+  children,
+  handleClick,
+}: {
+  value: string;
+  children: ReactNode;
+  handleClick?: () => Promise<void>;
+}) => {
+  return (
+    <Link
+      href={`?section=${value}`}
+      onClick={handleClick ? () => void handleClick() : undefined}
+    >
+      <Tabs.Trigger
+        value={value}
+        className="flex items-center gap-2 whitespace-nowrap pb-4 text-[16px] text-secondary-black outline-none data-[state=active]:border-b-2 data-[state=active]:border-black md:text-[24px]"
+      >
+        {children}
+      </Tabs.Trigger>
+    </Link>
+  );
+};

@@ -1,0 +1,1894 @@
+import { randomUUID } from "crypto";
+import { and, desc, eq, gte, inArray, or, sql, type Db } from "@golf-district/database";
+import { assets } from "@golf-district/database/schema/assets";
+import { bookings } from "@golf-district/database/schema/bookings";
+import { courses } from "@golf-district/database/schema/courses";
+import type { InsertList } from "@golf-district/database/schema/lists";
+import { lists } from "@golf-district/database/schema/lists";
+import { offers } from "@golf-district/database/schema/offers";
+import { providerCourseLink } from "@golf-district/database/schema/providersCourseLink";
+import { teeTimes } from "@golf-district/database/schema/teeTimes";
+import { transfers } from "@golf-district/database/schema/transfers";
+import { userBookingOffers } from "@golf-district/database/schema/userBookingOffers";
+import { users } from "@golf-district/database/schema/users";
+import { currentUtcTimestamp, dateToUtcTimestamp } from "@golf-district/shared";
+import Logger from "@golf-district/shared/src/logger";
+import { alias } from "drizzle-orm/mysql-core";
+import type { NotificationService } from "../notification/notification.service";
+import type { HyperSwitchService } from "../payment-processor/hyperswitch.service";
+import type { Customer, ProviderService } from "../tee-sheet-provider/providers.service";
+import type { TokenizeService } from "../token/tokenize.service";
+
+interface TeeTimeData {
+  courseId: string;
+  courseName: string;
+  courseLogo: string;
+  date: string;
+  firstHandPrice: number;
+  golfers: string[];
+  bookingIds: string[];
+  purchasedFor: number | null;
+  status: string;
+  listingId: string | null;
+  listedSpots: string[] | null;
+  offers: number;
+  listPrice: number | null;
+  minimumOfferPrice: number;
+}
+
+type InviteFriend = {
+  id: string;
+  handle: string | null;
+  name: string | null;
+  email: string | null;
+};
+interface OwnedTeeTimeData {
+  courseId: string;
+  courseName: string;
+  courseLogo: string;
+  date: string;
+  firstHandPrice: number;
+  golfers: InviteFriend[] | string[];
+  bookingIds: string[];
+  purchasedFor: number | null;
+  status: string;
+  listingId: string | null;
+  listedSpots: string[] | null;
+  offers: number;
+  listPrice: number | null;
+  minimumOfferPrice: number;
+}
+
+interface ListingData {
+  courseId: string;
+  listingId: string | null;
+  courseName: string;
+  courseLogo: string;
+  date: string;
+  firstHandPrice: number;
+  miniumOfferPrice: number;
+  listPrice: number | null;
+  status: string;
+  listedSpots: string[] | null;
+}
+
+interface TransferData {
+  courseId: string;
+  courseName: string;
+  courseLogo: string;
+  date: string;
+  firstHandPrice: number;
+  pricePerGolfer: number[];
+  golfers: string[];
+  bookingIds: string[];
+  status: string;
+}
+
+/**
+ * Service for managing bookings and transaction history.
+ */
+export class BookingService {
+  private logger = Logger(BookingService.name);
+  /**
+   * Constructor for BookingService.
+   * @param {Db} database - The database instance.
+   * @param {string} hyperSwitchApiKey - The API key for HyperSwitchService.
+   * @example
+   * // Example usage:
+   * const bookingService = new BookingService(dbInstance, "yourHyperSwitchApiKey");
+   */
+  constructor(
+    private readonly database: Db,
+    private readonly tokenizeService: TokenizeService,
+    private readonly providerService: ProviderService,
+    private readonly notificationService: NotificationService
+  ) {}
+
+  /**
+   * Get transaction history for a user and course.
+   * @param {string} userId - The ID of the user.
+   * @param {string} courseId - The ID of the course.
+   * @param {number} [limit=10] - The maximum number of records to return.
+   * @param {string | undefined} cursor - The cursor for pagination.
+   * @returns {Promise<Record<string, TransferData>>} - The transaction history data.
+   * @example
+   * // Example usage:
+   * const userId = "user123";
+   * const courseId = "course456";
+   * const limit = 10;
+   * const cursor = "abc";
+   * const transactionHistory = await bookingService.getTransactionHistory(userId, courseId, limit, cursor);
+   */
+  getTransactionHistory = async (
+    userId: string,
+    courseId: string,
+    limit = 10,
+    cursor: string | undefined
+  ) => {
+    this.logger.info(`getTransactionHistory called with userId: ${userId}`);
+    const data = await this.database
+      .select({
+        transferId: transfers.id,
+        teeTimeId: bookings.teeTimeId,
+        date: teeTimes.date,
+        courseId: teeTimes.courseId,
+        courseName: courses.name,
+        greenFee: teeTimes.greenFee,
+        teeTimeImage: {
+          key: assets.key,
+          cdnUrl: assets.cdn,
+          extension: assets.extension,
+        },
+        listing: lists.id,
+        players: bookings.nameOnBooking,
+        bookingId: bookings.id,
+        amount: transfers.amount,
+        from: transfers.fromUserId,
+        transfersDate: transfers.createdAt,
+      })
+      .from(transfers)
+      .innerJoin(bookings, eq(bookings.id, transfers.bookingId))
+      .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
+      .innerJoin(courses, eq(courses.id, teeTimes.courseId))
+      .leftJoin(lists, eq(lists.teeTimeId, teeTimes.id))
+      .leftJoin(assets, eq(assets.id, courses.logoId))
+      .leftJoin(userBookingOffers, eq(userBookingOffers.bookingId, bookings.id))
+      .where(or(eq(transfers.toUserId, userId), eq(transfers.fromUserId, userId)))
+      .orderBy(desc(transfers.createdAt))
+      .execute();
+    if (!data.length) {
+      this.logger.info(`No tee times found for user: ${userId}`);
+      return [];
+    }
+
+    const combinedData: Record<string, TransferData> = {};
+    data.forEach((teeTime) => {
+      if (!combinedData[teeTime.transferId]) {
+        combinedData[teeTime.transferId] = {
+          courseId,
+          courseName: teeTime.courseName,
+          courseLogo: teeTime.teeTimeImage
+            ? `https://${teeTime.teeTimeImage.cdnUrl}/${teeTime.teeTimeImage.key}.${teeTime.teeTimeImage.extension}`
+            : "/defaults/default-course.webp",
+          date: teeTime.date ? teeTime.date : "",
+          firstHandPrice: teeTime.greenFee ? teeTime.greenFee : 0,
+          golfers: [teeTime.players],
+          pricePerGolfer: [teeTime.amount],
+          bookingIds: [teeTime.bookingId],
+          status: teeTime.from === userId ? "SOLD" : "PURCHASED",
+        };
+      } else {
+        const currentEntry = combinedData[teeTime.transferId];
+        if (currentEntry) {
+          currentEntry.golfers.push(teeTime.players);
+          currentEntry.pricePerGolfer.push(teeTime.amount);
+          currentEntry.bookingIds.push(teeTime.bookingId);
+        }
+      }
+    });
+    return combinedData;
+  };
+
+  /**
+   * Get tee times listed by the user for a specific course.
+   * @param {string} userId - The ID of the user.
+   * @param {string} courseId - The ID of the course.
+   * @param {number} [limit=10] - The maximum number of records to return.
+   * @param {string | undefined} cursor - The cursor for pagination.
+   * @returns {Promise<Record<string, ListingData>>} - The tee times listed by the user.
+   * @example
+   * // Example usage:
+   * const userId = "user123";
+   * const courseId = "course456";
+   * const limit = 10;
+   * const listedTeeTimes = await bookingService.getMyListedTeeTimes(userId, courseId, limit);
+   */
+  getMyListedTeeTimes = async (userId: string, courseId: string, limit = 10, cursor?: string) => {
+    this.logger.info(`getMyListedTeeTimes called with userId: ${userId}`);
+    const data = await this.database
+      .select({
+        bookingId: bookings.id,
+        courseName: courses.name,
+        date: teeTimes.date,
+        teeTimeImage: {
+          key: assets.key,
+          cdnUrl: assets.cdn,
+          extension: assets.extension,
+        },
+        listingId: bookings.listId,
+        teeTimesId: teeTimes.id,
+        listPrice: lists.listPrice,
+        greenFee: teeTimes.greenFee,
+        minimumOfferPrice: bookings.minimumOfferPrice,
+      })
+      .from(bookings)
+      .innerJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
+      .innerJoin(courses, eq(courses.id, teeTimes.courseId))
+      .innerJoin(assets, eq(assets.id, courses.logoId))
+      .innerJoin(lists, and(eq(lists.teeTimeId, teeTimes.id), eq(lists.isDeleted, false)))
+      .where(and(eq(bookings.isListed, true), eq(teeTimes.courseId, courseId), eq(bookings.ownerId, userId)))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error retrieving tee times: ${err}`);
+        throw new Error("Error retrieving tee times");
+      });
+    const combinedData: Record<string, ListingData> = {};
+    data.forEach((teeTime) => {
+      if (teeTime.teeTimesId) {
+        if (!combinedData[teeTime.teeTimesId]) {
+          combinedData[teeTime.teeTimesId] = {
+            courseId,
+            listingId: teeTime.listingId,
+            courseName: teeTime.courseName ? teeTime.courseName : "",
+            courseLogo: teeTime.teeTimeImage
+              ? `https://${teeTime.teeTimeImage.cdnUrl}/${teeTime.teeTimeImage.key}.${teeTime.teeTimeImage.extension}`
+              : "/defaults/default-course.webp",
+            date: teeTime.date ? teeTime.date : "",
+            firstHandPrice: teeTime.greenFee ? teeTime.greenFee : 0,
+            miniumOfferPrice: teeTime.minimumOfferPrice ? teeTime.minimumOfferPrice : 0,
+            listPrice: teeTime.listPrice,
+            status: "LISTED",
+            listedSpots: [teeTime.bookingId],
+          };
+        } else {
+          const currentEntry = combinedData[teeTime.teeTimesId];
+          if (currentEntry) {
+            if (currentEntry.listedSpots) {
+              currentEntry.listedSpots.push(teeTime.bookingId);
+            } else {
+              currentEntry.listedSpots = [teeTime.bookingId];
+            }
+          }
+        }
+      }
+    });
+    return combinedData;
+  };
+
+  /**
+   * Get the purchase history for a specific tee time.
+   * @param {string} teeTimeId - The ID of the tee time.
+   * @returns {Promise<HistoryData[]>} - The purchase history for the tee time.
+   * @example
+   * // Example usage:
+   * const teeTimeId = "teeTime789";
+   * const teeTimeHistory = await bookingService.getTeeTimeHistory(teeTimeId);
+   */
+  getTeeTimeHistory = async (teeTimeId: string) => {
+    this.logger.info(`getTeeTimeHistory called with teeTimeId: ${teeTimeId}`);
+    const data = await this.database
+      .select({
+        bookingId: bookings.id,
+        courseId: bookings.courseId,
+        purchasedById: transfers.fromUserId,
+        purchasedByName: users.name,
+        purchaseAmount: transfers.amount,
+        purchasedAt: transfers.createdAt,
+        purchasedByImage: {
+          key: assets.key,
+          cdnUrl: assets.cdn,
+          extension: assets.extension,
+        },
+      })
+      .from(bookings)
+      .where(eq(bookings.teeTimeId, teeTimeId))
+      .innerJoin(transfers, eq(transfers.bookingId, bookings.id))
+      .innerJoin(users, eq(users.id, transfers.toUserId))
+      .leftJoin(assets, eq(assets.id, users.image))
+      //.groupBy(bookings.teeTimeId)
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error retrieving tee time history: ${err}`);
+        throw new Error("Error retrieving tee time history");
+      });
+    if (!data.length) {
+      this.logger.info(`No history found for tee time: ${teeTimeId}`);
+      return [];
+    }
+    //map the data to a new obj before
+    const res = data.map((booking) => {
+      return {
+        courseId: booking.courseId,
+        bookingId: booking.bookingId,
+        purchasedById: booking.purchasedById,
+        purchasedByName: booking.purchasedByName,
+        purchaseAmount: booking.purchaseAmount,
+        purchasedAt: booking.purchasedAt,
+        purchasedByImage: booking.purchasedByImage
+          ? `https://${booking.purchasedByImage.cdnUrl}/${booking.purchasedByImage.key}.${booking.purchasedByImage.extension}`
+          : "/defaults/default-profile.webp",
+      };
+    });
+    return res;
+  };
+
+  /**
+   * Get the IDs of bookings owned by a user for a specific tee time.
+   * @param {string} userId - The ID of the user.
+   * @param {string} teeTimeId - The ID of the tee time.
+   * @returns {Promise<string[]>} - The IDs of owned bookings.
+   * @example
+   * // Example usage:
+   * const userId = "user123";
+   * const teeTimeId = "teeTime789";
+   * const ownedBookings = await bookingService.getOwnedBookingsForTeeTime(userId, teeTimeId);
+   */
+  getOwnedBookingsForTeeTime = async (userId: string, teeTimeId: string) => {
+    this.logger.info(`getOwnedBookingsForTeeTime called with userId: ${userId}`);
+    const data = await this.database
+      .select({
+        id: bookings.id,
+      })
+      .from(bookings)
+      .where(and(eq(bookings.ownerId, userId), eq(bookings.teeTimeId, teeTimeId)))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error retrieving bookings: ${err}`);
+        throw new Error("Error retrieving bookings");
+      });
+    if (!data.length) {
+      return [];
+    }
+    return data.map((booking) => booking.id);
+  };
+  getOwnedTeeTimes = async (userId: string, courseId: string, limit = 10, cursor: string | undefined) => {
+    this.logger.info(`getOwnedTeeTimes called with userId: ${userId}`);
+    const data = await this.database
+      .select({
+        id: teeTimes.id,
+        date: teeTimes.date,
+        courseId: teeTimes.courseId,
+        courseName: courses.name,
+        greenFee: teeTimes.greenFee,
+        lastHighestSale: sql<number | null>`MAX(${transfers.amount})`,
+        teeTimeImage: {
+          key: assets.key,
+          cdnUrl: assets.cdn,
+          extension: assets.extension,
+        },
+        listing: lists.id,
+        listingIsDeleted: lists.isDeleted,
+        players: bookings.nameOnBooking,
+        bookingId: bookings.id,
+        offers: sql<number>`COUNT(DISTINCT${userBookingOffers.offerId})`,
+        golferCount: sql<number | null>`COUNT(DISTINCT ${bookings.ownerId})`,
+        listPrice: lists.listPrice,
+        bookingListed: bookings.isListed,
+        minimumOfferPrice: bookings.minimumOfferPrice,
+      })
+      .from(teeTimes)
+      .innerJoin(bookings, eq(bookings.teeTimeId, teeTimes.id))
+      .innerJoin(courses, eq(courses.id, teeTimes.courseId))
+      .leftJoin(lists, and(eq(lists.teeTimeId, teeTimes.id), eq(lists.isDeleted, false)))
+      .leftJoin(assets, eq(assets.id, courses.logoId))
+      .leftJoin(userBookingOffers, eq(userBookingOffers.bookingId, bookings.id))
+      .leftJoin(transfers, eq(transfers.bookingId, bookings.id))
+      .where(
+        and(
+          eq(bookings.ownerId, userId),
+          eq(teeTimes.courseId, courseId),
+          gte(teeTimes.date, currentUtcTimestamp())
+        )
+      )
+      .groupBy(
+        teeTimes.id,
+        teeTimes.date,
+        teeTimes.courseId,
+        courses.name,
+        teeTimes.greenFee,
+        assets.key,
+        assets.cdn,
+        assets.extension,
+        bookings.nameOnBooking,
+        lists.id,
+        bookings.id,
+        lists.listPrice
+      )
+      .orderBy(desc(teeTimes.date))
+      .execute();
+    if (!data.length) {
+      this.logger.info(`No tee times found for user: ${userId}`);
+      return [];
+    }
+    const combinedData: Record<string, OwnedTeeTimeData> = {};
+    data.forEach((teeTime) => {
+      if (!combinedData[teeTime.id]) {
+        combinedData[teeTime.id] = {
+          courseId,
+          courseName: teeTime.courseName,
+          courseLogo: teeTime.teeTimeImage
+            ? `https://${teeTime.teeTimeImage.cdnUrl}/${teeTime.teeTimeImage.key}.${teeTime.teeTimeImage.extension}`
+            : "/defaults/default-course.webp",
+          date: teeTime.date,
+          firstHandPrice: teeTime.greenFee,
+          golfers: [teeTime.players],
+          purchasedFor: teeTime.lastHighestSale,
+          bookingIds: [teeTime.bookingId],
+          status: teeTime.listing && !teeTime.listingIsDeleted ? "LISTED" : "UNLISTED",
+          offers: teeTime.offers ? parseInt(teeTime.offers.toString()) : 0,
+          listingId: teeTime.listing && !teeTime.listingIsDeleted ? teeTime.listing : null,
+          listedSpots: teeTime.listing && !teeTime.listingIsDeleted ? [teeTime.bookingId] : null,
+          listPrice: teeTime.listPrice,
+          minimumOfferPrice: teeTime.minimumOfferPrice,
+        };
+      } else {
+        const currentEntry = combinedData[teeTime.id];
+        if (currentEntry) {
+          // Update the existing entry
+          // @ts-ignore
+          currentEntry.golfers.push(teeTime.players);
+          currentEntry.bookingIds.push(teeTime.bookingId);
+          if (teeTime.offers) {
+            currentEntry.offers = currentEntry.offers
+              ? parseInt(currentEntry.offers.toString()) + parseInt(teeTime.offers.toString())
+              : 0;
+          }
+          if (teeTime.listing && !teeTime.listingIsDeleted) {
+            currentEntry.status = "LISTED";
+            currentEntry.listingId = teeTime.listing;
+            if (teeTime.bookingListed) {
+              currentEntry.listedSpots
+                ? currentEntry.listedSpots.push(teeTime.bookingId)
+                : [teeTime.bookingId];
+            }
+          }
+          if (
+            teeTime.lastHighestSale &&
+            (!currentEntry.purchasedFor || teeTime.lastHighestSale > currentEntry.purchasedFor)
+          ) {
+            currentEntry.purchasedFor = teeTime.lastHighestSale;
+          }
+        }
+      }
+    });
+    // console.log(combinedData);
+    for (const t of Object.values(combinedData)) {
+      const namesOnBooking = t.golfers.filter((golfer) => golfer !== "Guest");
+
+      const foundUsersForBooking: {
+        id: string;
+        handle: string | null;
+        name: string | null;
+        email: string | null;
+      }[] = [];
+      if (namesOnBooking.length > 0) {
+        for (const _name of namesOnBooking) {
+          const userData = await this.database
+            .select({
+              id: users.id,
+              handle: users.handle,
+              name: users.name,
+              email: users.email,
+            })
+            .from(users)
+            .where(eq(users.name, _name as string))
+            .execute()
+            .catch((err) => {
+              this.logger.error(`Error retrieving user: ${err}`);
+              throw new Error("Error retrieving user");
+            });
+          if (userData[0]) {
+            foundUsersForBooking.push(userData[0]);
+          }
+        }
+      }
+      //x will be a string of Guest or a name until its turned into an object here
+      // @ts-ignore
+      t.golfers = t.golfers.map((x: string) => {
+        if (foundUsersForBooking.length > 0) {
+          const user = foundUsersForBooking.find((user) => x.toLowerCase() === user.name?.toLowerCase());
+          if (user) {
+            return {
+              id: user.id,
+              handle: user.handle,
+              name: user.name,
+              email: user.email,
+            };
+          }
+        }
+        return {
+          id: "",
+          handle: "",
+          name: x,
+          email: "",
+        };
+      });
+    }
+    return combinedData;
+  };
+
+  /**
+   * Lists a booking for sale.
+   * @todo add validation for max price
+   * @param userId - The ID of the user listing the booking.
+   * @param listPrice - The price at which the booking is listed.
+   * @param bookingIds - IDs of the bookings being listed.
+   * @param courseId - ID of the course for the bookings.
+   * @param endTime - End time for the booking listing.
+   * @returns A promise that resolves when the operation completes.
+   * @throws Error - Throws an error if end time is before start time, if the user does not own a tee time, or if other conditions like allowed players are not met.
+   */
+  createListingForBookings = async (
+    userId: string,
+    listPrice: number,
+    bookingIds: string[],
+    endTime: Date
+  ) => {
+    this.logger.info(`createListingForBookings called with userId: ${userId}`);
+    if (new Date().getTime() >= endTime.getTime()) {
+      this.logger.warn("End time cannot be before current time");
+      throw new Error("End time cannot be before current time");
+    }
+    if (!bookingIds.length) {
+      this.logger.warn(`No bookings specified.`);
+      throw new Error("No bookings specified.");
+    }
+    const ownedBookings = await this.database
+      .select({
+        id: bookings.id,
+        courseId: bookings.courseId,
+        teeTimeId: bookings.teeTimeId,
+        isListed: bookings.isListed,
+      })
+      .from(bookings)
+      .where(and(eq(bookings.ownerId, userId), inArray(bookings.id, bookingIds)))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error retrieving bookings: ${err}`);
+        throw new Error("Error retrieving bookings");
+      });
+    if (ownedBookings.length !== bookingIds.length || !ownedBookings[0]) {
+      this.logger.debug(`Owned bookings: ${JSON.stringify(ownedBookings)}`);
+      this.logger.warn(`User ${userId} does not own all specified bookings.`);
+      throw new Error("User does not own all specified bookings.");
+    }
+    if (ownedBookings.length > 4) {
+      this.logger.warn(`Cannot list more than 4 bookings.`);
+      throw new Error("Cannot list more than 4 bookings.");
+    }
+    for (const booking of ownedBookings) {
+      if (booking.isListed) {
+        this.logger.warn(`Booking ${booking.id} is already listed.`);
+        throw new Error(`One or more bookings from this tee time is already listed.`);
+      }
+    }
+    //validate that all bookings are for the same course
+    const courseIds = new Set(ownedBookings.map((booking) => booking.courseId));
+    if (courseIds.size > 1) {
+      this.logger.warn(`Bookings are not for the same course.`);
+      throw new Error("Bookings are not for the same course.");
+    }
+    //validate that each booking is for the same tee time
+    const teeTimeIds = new Set(ownedBookings.map((booking) => booking.teeTimeId));
+    if (teeTimeIds.size > 1) {
+      this.logger.warn(`Bookings are not for the same tee time.`);
+      throw new Error("Bookings are not for the same tee time.");
+    }
+
+    const [firstBooking] = ownedBookings;
+    const courseId = firstBooking.courseId;
+
+    const toCreate: InsertList = {
+      id: randomUUID(),
+      userId: userId,
+      listPrice: listPrice,
+      teeTimeId: firstBooking.teeTimeId,
+      endTime: dateToUtcTimestamp(endTime),
+      courseId: courseId,
+      status: "PENDING",
+      isDeleted: false,
+      splitTeeTime: false,
+    };
+    await this.database
+      .transaction(async (transaction) => {
+        for (const id of bookingIds) {
+          await transaction
+            .update(bookings)
+            .set({
+              isListed: true,
+              listId: toCreate.id,
+            })
+            .where(eq(bookings.id, id))
+            .execute()
+            .catch((err) => {
+              this.logger.error(`Error updating bookingId: ${id}: ${err}`);
+              transaction.rollback();
+            });
+        }
+        //create listing
+        await transaction
+          .insert(lists)
+          .values(toCreate)
+          .execute()
+          .catch((err) => {
+            this.logger.error(`Error creating listing: ${err}`);
+            transaction.rollback();
+          });
+      })
+      .catch((err) => {
+        this.logger.error(`Transaction rolled backError creating listing: ${err}`);
+        throw new Error("Error creating listing");
+      });
+    this.logger.info(`Listings created successfully. for user ${userId} teeTimeId ${firstBooking.teeTimeId}`);
+    this.notificationService.createNotification(
+      userId,
+      "LISTING_CREATED",
+      `Listing creation successful`,
+      courseId
+    );
+
+    return { success: true, body: { listingId: toCreate.id }, message: "Listings created successfully." };
+  };
+
+  /**
+   * Cancel a pending listing and update associated bookings.
+   * @param {string} userId - The ID of the user canceling the listing.
+   * @param {string} listingId - The ID of the listing to be canceled.
+   * @returns {Promise<void>} - Resolves when the listing is successfully canceled.
+   * @throws {Error} - Throws an error if the listing is not found, is not pending, or is already deleted.
+   * @example
+   * // Example usage:
+   * const userId = "user123";
+   * const listingId = "listing456";
+   * await bookingService.cancelListing(userId, listingId);
+   */
+  cancelListing = async (userId: string, listingId: string) => {
+    this.logger.info(`cancelListing called with userId: ${userId}`);
+    const [listing] = await this.database
+      .select({
+        id: lists.id,
+        userId: lists.userId,
+        status: lists.status,
+        isDeleted: lists.isDeleted,
+      })
+      .from(lists)
+      .where(and(eq(lists.id, listingId), eq(lists.userId, userId)))
+      .limit(1)
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error retrieving listing: ${err}`);
+        throw new Error("Error retrieving listing");
+      });
+    if (!listing) {
+      this.logger.warn(`Listing not found. Either listing does not exist or user does not own listing.`);
+      throw new Error("Owned listing not found");
+    }
+    if (listing.status !== "PENDING") {
+      this.logger.warn(`Listing is not pending.`);
+      throw new Error("Listing is not pending");
+    }
+    if (listing.isDeleted) {
+      this.logger.warn(`Listing is already deleted.`);
+      throw new Error("Listing is already deleted");
+    }
+    const bookingIds = await this.database
+      .select({
+        id: bookings.id,
+      })
+      .from(bookings)
+      .where(eq(bookings.listId, listingId))
+      .execute();
+    await this.database.transaction(async (trx) => {
+      await trx
+        .update(lists)
+        .set({
+          isDeleted: true,
+        })
+        .where(eq(lists.id, listingId))
+        .execute()
+        .catch((err) => {
+          this.logger.error(`Error deleting listing: ${err}`);
+          trx.rollback();
+        });
+      for (const booking of bookingIds) {
+        await trx
+          .update(bookings)
+          .set({
+            isListed: false,
+            listId: null,
+          })
+          .where(eq(bookings.id, booking.id))
+          .execute()
+          .catch((err) => {
+            this.logger.error(`Error updating bookingId: ${booking.id}: ${err}`);
+            trx.rollback();
+          });
+      }
+    });
+  };
+
+  /**
+   * Update a pending listing with new information.
+   * @param {string} userId - The ID of the user updating the listing.
+   * @param {number} listPrice - The updated list price for the listing.
+   * @param {string[]} bookingIds - An array of booking IDs to be associated with the listing.
+   * @param {Date} endTime - The updated end time for the listing.
+   * @param {string} listingId - The ID of the listing to be updated.
+   * @returns {Promise<void>} - Resolves when the listing is successfully updated.
+   * @throws {Error} - Throws an error if the end time is before the current time,
+   *                   if no bookings are specified, if the user does not own all specified bookings,
+   *                   if more than 4 bookings are specified, if bookings are not for the same course,
+   *                   if bookings are not for the same tee time, or if there is an error updating the listing.
+   * @example
+   * // Example usage:
+   * const userId = "user123";
+   * const listPrice = 50;
+   * const bookingIds = ["booking1", "booking2"];
+   * const endTime = new Date("2023-12-31T23:59:59");
+   * const listingId = "listing456";
+   * await bookingService.updateListing(userId, listPrice, bookingIds, endTime, listingId);
+   */
+  updateListing = async (
+    userId: string,
+    listPrice: number,
+    bookingIds: string[],
+    endTime: Date,
+    listingId: string
+  ) => {
+    this.logger.info(`updateListing called with userId: ${userId}`);
+    if (new Date().getTime() >= endTime.getTime()) {
+      this.logger.warn("End time cannot be before current time");
+      throw new Error("End time cannot be before current time");
+    }
+    if (!bookingIds.length) {
+      this.logger.warn(`No bookings specified.`);
+      throw new Error("No bookings specified.");
+    }
+    const [listing] = await this.database
+      .select({
+        id: lists.id,
+        userId: lists.userId,
+        status: lists.status,
+        isDeleted: lists.isDeleted,
+      })
+      .from(lists)
+      .where(and(eq(lists.id, listingId), eq(lists.userId, userId)))
+      .limit(1)
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error retrieving listing: ${err}`);
+        throw new Error("Error retrieving listing");
+      });
+    if (!listing) {
+      this.logger.warn(`Listing not found. Either listing does not exist or user does not own listing.`);
+      throw new Error("Owned listing not found");
+    }
+    if (listing.status !== "PENDING") {
+      this.logger.warn(`Listing is not pending.`);
+      throw new Error("Listing is not pending");
+    }
+    if (listing.isDeleted) {
+      this.logger.warn(`Listing is already deleted.`);
+      throw new Error("Listing is already deleted");
+    }
+    const ownedBookings = await this.database
+      .select({
+        id: bookings.id,
+        courseId: bookings.courseId,
+        teeTimeId: bookings.teeTimeId,
+      })
+      .from(bookings)
+      .where(and(eq(bookings.ownerId, userId), inArray(bookings.id, bookingIds)))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error retrieving bookings: ${err}`);
+        throw new Error("Error retrieving bookings");
+      });
+
+    if (ownedBookings.length !== bookingIds.length || !ownedBookings[0]) {
+      this.logger.debug(`Owned bookings: ${JSON.stringify(ownedBookings)}`);
+      this.logger.warn(`User ${userId} does not own all specified bookings.`);
+      throw new Error("User does not own all specified bookings.");
+    }
+    if (ownedBookings.length > 4) {
+      this.logger.warn(`Cannot list more than 4 bookings.`);
+      throw new Error("Cannot list more than 4 bookings.");
+    }
+    //validate that all bookings are for the same course
+    const courseIds = new Set(ownedBookings.map((booking) => booking.courseId));
+    if (courseIds.size > 1) {
+      this.logger.warn(`Bookings are not for the same course.`);
+      throw new Error("Bookings are not for the same course.");
+    }
+    //validate that each booking is for the same tee time
+    const teeTimeIds = new Set(ownedBookings.map((booking) => booking.teeTimeId));
+    if (teeTimeIds.size > 1) {
+      this.logger.warn(`Bookings are not for the same tee time.`);
+      throw new Error("Bookings are not for the same tee time.");
+    }
+
+    const listingBookingIds = await this.database
+      .select({
+        id: bookings.id,
+      })
+      .from(bookings)
+      .where(eq(bookings.listId, listingId))
+      .execute();
+    const bookingsToRemove = listingBookingIds.filter((booking) => !bookingIds.includes(booking.id));
+    const toCreate: InsertList = {
+      id: randomUUID(),
+      userId: userId,
+      listPrice: listPrice,
+      teeTimeId: ownedBookings[0].teeTimeId,
+      endTime: dateToUtcTimestamp(endTime),
+      courseId: ownedBookings[0].courseId,
+      status: "PENDING",
+      isDeleted: false,
+      splitTeeTime: false,
+    };
+    await this.database
+      .transaction(async (trx) => {
+        //delete the old listing
+        await trx
+          .update(lists)
+          .set({
+            isDeleted: true,
+          })
+          .where(eq(lists.id, listingId))
+          .execute()
+          .catch((err) => {
+            this.logger.error(`Error deleting listing: ${err}`);
+            trx.rollback();
+          });
+        //create a new listing
+        await trx
+          .insert(lists)
+          .values(toCreate)
+          .execute()
+          .catch((err) => {
+            this.logger.error(`Error creating listing: ${err}`);
+            trx.rollback();
+          });
+        //update all bookings
+        for (const id of bookingIds) {
+          await trx
+            .update(bookings)
+            .set({
+              isListed: true,
+              listId: toCreate.id,
+            })
+            .where(eq(bookings.id, id))
+            .execute()
+            .catch((err) => {
+              this.logger.error(`Error updating bookingId: ${id}: ${err}`);
+              trx.rollback();
+            });
+        }
+        //remove bookings from old listing
+        for (const booking of bookingsToRemove) {
+          await trx
+            .update(bookings)
+            .set({
+              isListed: false,
+              listId: null,
+            })
+            .where(eq(bookings.id, booking.id))
+            .execute()
+            .catch((err) => {
+              this.logger.error(`Error updating bookingId: ${booking.id}: ${err}`);
+              trx.rollback();
+            });
+        }
+      })
+      .catch((err) => {
+        this.logger.error(`Error updating listing: ${err}`);
+        throw new Error("Error updating listing");
+      });
+  };
+
+  teeTimeAvailableFirsthandSpots = async (listingId: string) => {
+    const [teeTime] = await this.database
+      .select({ availableFirstHandSpots: teeTimes.availableFirstHandSpots })
+      .from(teeTimes)
+      .where(eq(teeTimes.id, listingId))
+      .execute();
+    if (teeTime?.availableFirstHandSpots) {
+      return teeTime.availableFirstHandSpots;
+    }
+    return 0;
+  };
+
+  /**
+   * Creates an offer for a set of bookings with a specified price and expiration.
+   * @TODO payment intent
+   * @param bookingIds - An array of booking IDs for which the offer is being created.
+   * @param price - The offer price.
+   * @param expiration - The expiration date and time for the offer.
+   * @returns A promise that resolves to an array of created offers.
+   * @throws Error - Throws an error if one or more bookings are not found or if a booking is not active.
+   */
+  createOfferOnBookings = async (userId: string, bookingIds: string[], price: number, expiration: Date) => {
+    this.logger.info(`createOfferOnBookings called with userId: ${userId}`);
+    if (!bookingIds.length) {
+      this.logger.warn(`No bookings specified.`);
+      throw new Error("No bookings specified.");
+    }
+    const data = await this.database
+      .select({
+        id: bookings.id,
+        courseId: bookings.courseId,
+        teeTimeId: bookings.teeTimeId,
+        minimumOfferPrice: bookings.minimumOfferPrice,
+      })
+      .from(bookings)
+      .where(inArray(bookings.id, bookingIds))
+      .leftJoin(lists, eq(lists.id, bookings.listId))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error retrieving bookings: ${err}`);
+        throw new Error("Error retrieving bookings");
+      });
+    console.log(data);
+    if (!data.length || data.length !== bookingIds.length || !data[0]) {
+      this.logger.warn(`No bookings found.`);
+      throw new Error("No bookings found");
+    }
+    const firstTeeTime = data[0].teeTimeId;
+    const courseId = data[0].courseId;
+    if (!data.every((booking) => booking.teeTimeId === firstTeeTime)) {
+      throw new Error("All bookings must be under the same tee time.");
+    }
+    //price must to higher than the largest minimum offer price
+
+    const minimumOfferPrice = Math.max(...data.map((booking) => booking.minimumOfferPrice));
+    if (price < minimumOfferPrice) {
+      throw new Error("Offer price must be higher than the minimum offer price.");
+    }
+    // const paymentMethod = await this.hyperSwitchService.retrievePaymentMethods(userId, {type: "card"});
+    // console.log(paymentMethod?.data[0])
+    //  const paymentIntent= await this.hyperSwitchService.createPaymentIntent({
+    //   customer: {
+    //     id: userId,
+    //   },
+    //   amount: price,
+    //   capture_method: "manual",
+    //   currency: "USD",
+    //   payment_method_type: 'card',
+    //   pa
+
+    //   payment_token:paymentMethod?.data[0].id
+    // });
+
+    // // console.log(paymentIntent);
+    // const  accept = await this.hyperSwitchService.capturePaymentIntent("pay_mZIlZE09HO2bnRHQU0yP");
+    // console.log(accept)
+    // return
+    // //make sure al the bookings are active , owned by one user, and are under one course and tee time
+    await this.database.transaction(async (trx) => {
+      const offerId = randomUUID();
+      await trx
+        .insert(offers)
+        .values({
+          id: offerId,
+          buyerId: userId,
+          price: price,
+          paymentIntentId: "@TODO",
+          expiresAt: dateToUtcTimestamp(expiration),
+          status: "PENDING",
+          courseId: courseId,
+        })
+        .execute()
+        .catch((err) => {
+          this.logger.error(`Error creating offer: ${err}`);
+          throw new Error("Error creating offer");
+        });
+      await trx
+        .insert(userBookingOffers)
+        .values(
+          bookingIds.map((bookingId) => ({
+            offerId: offerId,
+            bookingId: bookingId,
+          }))
+        )
+        .execute()
+        .catch((err) => {
+          this.logger.error(`Error creating booking offer: ${err}`);
+          throw new Error("Error creating booking offer");
+        });
+    });
+    const [activeOffers] = await this.database
+      .select({
+        count: sql<number>`COUNT(*)`,
+      })
+      .from(offers)
+      .where(
+        and(
+          eq(offers.buyerId, userId),
+          eq(offers.status, "PENDING"),
+          eq(offers.isDeleted, false),
+          eq(offers.courseId, courseId),
+          gte(offers.expiresAt, dateToUtcTimestamp(new Date()))
+        )
+      )
+      .limit(1)
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error retrieving offers: ${err}`);
+        throw new Error("Error active offers");
+      });
+
+    if (activeOffers && activeOffers.count > 1) {
+      return { success: true, message: `You have ${activeOffers.count} for this course` };
+    }
+    //@TODO create notification
+
+    return { success: true, message: "Offer created successfully." };
+  };
+
+  /**
+   * Cancel a pending offer on a booking.
+   * @param {string} userId - The ID of the user canceling the offer.
+   * @param {string} offerId - The ID of the offer to be canceled.
+   * @returns {Promise<void>} - Resolves when the offer is successfully canceled.
+   * @throws {Error} - Throws an error if the offer is not found, if the user does not own the offer,
+   *                   if the offer is not pending, if the offer is already deleted,
+   *                   or if there is an error canceling the offer.
+   * @example
+   * // Example usage:
+   * const userId = "user123";
+   * const offerId = "offer456";
+   * await bookingService.cancelOfferOnBooking(userId, offerId);
+   */
+  cancelOfferOnBooking = async (userId: string, offerId: string) => {
+    this.logger.info(`cancelOfferOnBooking called with userId: ${userId}`);
+    const offerData = await this.database
+      .select({
+        buyerId: offers.buyerId,
+        status: offers.status,
+        isDeleted: offers.isDeleted,
+        linkedBookingOffer: userBookingOffers.bookingId,
+      })
+      .from(offers)
+      .leftJoin(userBookingOffers, eq(userBookingOffers.offerId, offers.id))
+      .where(eq(offers.id, offerId))
+      .limit(1)
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error retrieving offer: ${err}`);
+        throw new Error("Error retrieving offer");
+      });
+    if (!offerData?.[0]) {
+      this.logger.warn(`Offer not found.`);
+      throw new Error("Offer not found");
+    }
+    const bookingIds = offerData.map((offers) => offers.linkedBookingOffer);
+    const { buyerId, status, isDeleted } = offerData[0];
+    if (buyerId !== userId) {
+      this.logger.warn(`User does not own offer.`);
+      throw new Error("User does not own offer");
+    }
+    if (status !== "PENDING") {
+      this.logger.warn(`Offer is not pending.`);
+      throw new Error("Offer is not pending");
+    }
+    if (isDeleted) {
+      this.logger.warn(`Offer is already deleted.`);
+      throw new Error("Offer is already deleted");
+    }
+    await this.database.transaction(async (trx) => {
+      await trx
+        .update(offers)
+        .set({
+          isDeleted: true,
+        })
+        .where(eq(offers.id, offerId))
+        .execute()
+        .catch((err) => {
+          this.logger.error(`Error deleting offer: ${err}`);
+          trx.rollback();
+        });
+      await trx
+        .update(userBookingOffers)
+        .set({ isDeleted: true })
+        .where(
+          and(
+            inArray(userBookingOffers.bookingId, bookingIds as string[]),
+            eq(userBookingOffers.offerId, offerId)
+          )
+        )
+        .execute()
+        .catch((err) => {
+          this.logger.error(`Error deleting booking offer: ${err}`);
+          trx.rollback();
+        });
+    });
+  };
+  /**
+   * Accepts an offer for a booking.
+   *
+   * @param userId - The ID of the user accepting the offer.
+   * @param offerId - The ID of the offer.
+   * @returns A promise that resolves to the updated offer with status set to `ACCEPTED`.
+   * @throws Error - Throws an error if the booking is not found or is not active.
+   */
+  acceptOffer = async (userId: string, offerId: string) => {
+    this.logger.info(`acceptOffer called with userId: ${userId}`);
+    const offer = await this.database
+      .select({
+        id: offers.id,
+        buyerId: offers.buyerId,
+        bookingIds: userBookingOffers.bookingId,
+        bookingOwnerId: bookings.ownerId,
+        price: offers.price,
+        listingId: sql`CASE WHEN ${bookings.listId} IS NOT NULL THEN ${lists.id} ELSE NULL END`,
+      })
+      .from(offers)
+      .where(eq(offers.id, offerId))
+      .leftJoin(userBookingOffers, eq(userBookingOffers.offerId, offers.id))
+      .leftJoin(bookings, eq(bookings.id, userBookingOffers.bookingId))
+      .leftJoin(lists, eq(lists.id, bookings.listId))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error retrieving offer: ${err}`);
+        throw new Error("Error retrieving offer");
+      });
+
+    if (!offer?.[0]) {
+      this.logger.warn(`Offer not found.`);
+      throw new Error("Offer not found");
+    }
+    const bookingIds = offer.map((offers) => offers.bookingIds);
+    const { price, buyerId } = offer[0];
+    //if the user does not own each booking then return error
+    const bookingsOwner = offer.map((offers) => offers.bookingOwnerId);
+    const listingIds = offer.map((offers) => offers.listingId);
+    if (!bookingsOwner.every((id) => id === userId)) {
+      this.logger.warn(`User does not own all bookings.`);
+      throw new Error("User does not own all bookings");
+    }
+    //check that booking ids are not null or empty
+    if (!bookingIds.length || !bookingIds[0]?.length) {
+      this.logger.warn(`Booking not found.`);
+      throw new Error("Booking not found");
+    }
+    //@TODO capture payment intent
+
+    // await this.hyperSwitchService.capturePaymentIntent(buyerId, price);
+    this.tokenizeService.transferBookings(bookingsOwner[0]!, bookingIds as string[], buyerId, price);
+
+    //accept the offer
+    await this.database.transaction(async (trx) => {
+      await trx
+        .update(offers)
+        .set({
+          status: "ACCEPTED",
+        })
+        .where(eq(offers.id, offerId))
+        .execute()
+        .catch((err) => {
+          this.logger.error(`Error accepting offer: ${err}`);
+          trx.rollback();
+        });
+      await trx
+        .update(userBookingOffers)
+        .set({ status: "ACCEPTED" })
+        .where(
+          and(
+            inArray(userBookingOffers.bookingId, bookingIds as string[]),
+            eq(userBookingOffers.offerId, offerId)
+          )
+        )
+        .execute()
+        .catch((err) => {
+          this.logger.error(`Error accepting booking offer: ${err}`);
+          trx.rollback();
+        });
+      //delete all listing associated with purchased bookings
+      if (listingIds) {
+        await trx
+          .update(lists)
+          .set({ isDeleted: true })
+          .where(and(inArray(lists.id, listingIds as string[])))
+          .execute()
+          .catch((err) => {
+            this.logger.error(`Error deleting listing: ${err}`);
+            trx.rollback();
+          });
+        await trx
+          .update(bookings)
+          .set({ isListed: false, listId: null })
+          .where(and(inArray(bookings.id, bookingIds as string[])))
+          .execute()
+          .catch((err) => {
+            this.logger.error(`Error deleting listing: ${err}`);
+            trx.rollback();
+          });
+      }
+    });
+    //@TODO create notification
+
+    return { success: true, message: "Offer accepted successfully." };
+  };
+
+  /**
+   * Reject a pending offer on a booking.
+   * @param {string} userId - The ID of the user rejecting the offer.
+   * @param {string} offerId - The ID of the offer to be rejected.
+   * @returns {Promise<{ success: boolean, message: string }>} - Resolves with a success message
+   * if the offer is successfully rejected.
+   * @throws {Error} - Throws an error if the offer is not found, or if there is an error rejecting the offer.
+   * @example
+   * // Example usage:
+   * const userId = "user123";
+   * const offerId = "offer456";
+   * const result = await bookingService.rejectOffer(userId, offerId);
+   * // result: { success: true, message: "Offer accepted successfully." }
+   */
+  rejectOffer = async (userId: string, offerId: string) => {
+    this.logger.info(`rejectOffer called with userId: ${userId}`);
+    const offer = await this.database
+      .select({
+        id: offers.id,
+        buyerId: offers.buyerId,
+        bookingIds: userBookingOffers.bookingId,
+        bookingOwnerId: bookings.ownerId,
+      })
+      .from(offers)
+      .where(eq(offers.id, offerId))
+      .leftJoin(userBookingOffers, eq(userBookingOffers.offerId, offers.id))
+      .leftJoin(bookings, eq(bookings.id, userBookingOffers.bookingId))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error retrieving offer: ${err}`);
+        throw new Error("Error retrieving offer");
+      });
+    if (!offer) {
+      this.logger.warn(`Offer not found.`);
+      throw new Error("Offer not found");
+    }
+    const bookingIds = offer.map((offers) => offers.bookingIds);
+    const bookingsOwned = offer.map((offers) => offers.bookingOwnerId);
+    if (!bookingsOwned.every((ownerId) => ownerId === userId)) {
+      this.logger.warn(`User does not own all bookings.`);
+      throw new Error("User does not own all bookings");
+    }
+
+    //reject the offer
+    await this.database.transaction(async (trx) => {
+      await trx
+        .update(offers)
+        .set({
+          status: "REJECTED",
+        })
+        .where(eq(offers.id, offerId))
+        .execute()
+        .catch((err) => {
+          this.logger.error(`Error accepting offer: ${err}`);
+          throw new Error("Error accepting offer");
+        });
+      //update userBookingOffers
+      await trx
+        .update(userBookingOffers)
+        .set({ status: "REJECTED" })
+        .where(
+          and(
+            inArray(userBookingOffers.bookingId, bookingIds as string[]),
+            eq(userBookingOffers.offerId, offerId)
+          )
+        );
+    });
+    //@TODO create notification
+
+    return { success: true, message: "Offer accepted successfully." };
+  };
+
+  /**
+   * Retrieves all offers associated with a booking.
+   *
+   * @param bookingId - The ID of the booking.
+   * @returns A promise that resolves to an array of offers.
+   */
+  getOffersForBooking = async (bookingId: string, limit = 10, cursor?: string) => {
+    this.logger.info(`getOffersForBooking called with bookingId: ${bookingId}`);
+    const userImage = alias(assets, "userImage");
+    const courseImage = alias(assets, "courseImage");
+
+    const data = await this.database
+      .select({
+        id: offers.id,
+        expiresAt: offers.expiresAt,
+        price: offers.price,
+        createdAt: offers.createdAt,
+        status: offers.status,
+        isDeclined: offers.isDeclined,
+        isAccepted: offers.isAccepted,
+        isDeleted: offers.isDeleted,
+        buyerId: offers.buyerId,
+        courseId: offers.courseId,
+        courseName: courses.name,
+        teeTimeDate: teeTimes.date,
+        teeTimeId: teeTimes.id,
+        originalGreenFee: teeTimes.greenFee,
+        lastHighestSale: sql<number | null>`MAX(${transfers.amount})`,
+        courseImage: {
+          key: courseImage.key,
+          cdnUrl: courseImage.cdn,
+          extension: courseImage.extension,
+        },
+        offeredBy: {
+          userId: users.id,
+          name: users.name,
+          handle: users.handle,
+          key: userImage.key,
+          cdnUrl: userImage.cdn,
+          extension: userImage.extension,
+        },
+        golferCount: sql<number | null>`COUNT(DISTINCT ${userBookingOffers.bookingId})`,
+      })
+      .from(offers)
+      .innerJoin(userBookingOffers, eq(userBookingOffers.offerId, offers.id))
+      .innerJoin(bookings, eq(bookings.id, userBookingOffers.bookingId))
+      .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
+      .leftJoin(users, eq(users.id, offers.buyerId))
+      .innerJoin(courses, eq(courses.id, bookings.courseId))
+      .leftJoin(courseImage, eq(courseImage.courseId, courses.logoId))
+      .leftJoin(userImage, eq(userImage.id, users.image))
+      .leftJoin(transfers, eq(transfers.bookingId, bookings.id))
+      .where(
+        and(
+          eq(bookings.id, bookingId),
+          eq(offers.isDeleted, false),
+          gte(teeTimes.date, currentUtcTimestamp())
+        )
+      )
+      .groupBy(
+        offers.id,
+        offers.expiresAt,
+        offers.price,
+        offers.createdAt,
+        offers.status,
+        offers.isDeclined,
+        offers.isAccepted,
+        offers.isDeleted,
+        offers.buyerId,
+        offers.courseId,
+        courses.name,
+        teeTimes.date,
+        teeTimes.id,
+        courseImage.key,
+        courseImage.cdn,
+        courseImage.extension,
+        users.id,
+        users.name,
+        userImage.key,
+        userImage.cdn,
+        userImage.extension
+      )
+      .orderBy(desc(offers.createdAt))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error retrieving offers: ${err}`);
+        throw new Error("Error retrieving offers");
+      });
+
+    const res = data.map((offer) => ({
+      offer: {
+        details: {
+          courseName: offer.courseName,
+          teeTimeDate: offer.teeTimeDate,
+          teeTimeId: offer.teeTimeId,
+          courseImage: offer.courseImage
+            ? `https://${offer.courseImage.cdnUrl}/${offer.courseImage.key}.${offer.courseImage.extension}`
+            : "/defaults/default-course.webp",
+        },
+        offeredBy: {
+          userId: offer.offeredBy.userId,
+          name: offer.offeredBy.name,
+          handle: offer.offeredBy.handle,
+          image: offer.offeredBy.key
+            ? `https://${offer.offeredBy.cdnUrl}/${offer.offeredBy.key}.${offer.offeredBy.extension}`
+            : "/defaults/default-profile.webp",
+        },
+        amountOffered: offer.price,
+        originalPrice: offer.originalGreenFee,
+        lastHighestSale: offer.lastHighestSale,
+        golfers: offer.golferCount,
+        status: offer.status,
+        expiresAt: offer.expiresAt,
+        offerId: offer.id,
+      },
+    }));
+    return res;
+  };
+
+  /**
+   * Retrieve offers sent by a user for a specific course.
+   * @param {string} userId - The ID of the user sending the offers.
+   * @param {string} courseId - The ID of the course for which offers are being retrieved.
+   * @param {number} [limit=10] - The maximum number of offers to retrieve. Default is 10.
+   * @param {string | null} [cursor] - A cursor for pagination.
+   * @returns {Promise<{ offer: OfferData }[]>} - Resolves with an array of offer data for the specified user and course.
+   * @throws {Error} - Throws an error if there is an issue retrieving the offers.
+   * @example
+   * // Example usage:
+   * const userId = "user123";
+   * const courseId = "course456";
+   * const limit = 5;
+   * const result = await bookingService.getOfferSentForUser(userId, courseId, limit);
+   * // result: [{ offer: OfferData }, { offer: OfferData }, ...]
+   */
+  async getOfferSentForUser(userId: string, courseId: string, limit = 10, cursor?: string | null) {
+    this.logger.info(`getOfferSentForUser called with userId: ${userId}`);
+    const userImage = alias(assets, "userImage");
+    const ownerImage = alias(assets, "ownerImage");
+    const bookingOwner = alias(users, "bookingOwner");
+    const courseImage = alias(assets, "courseImage");
+    const userBooking = alias(bookings, "userBooking");
+
+    const data = await this.database
+      .select({
+        id: offers.id,
+        expiresAt: offers.expiresAt,
+        price: offers.price,
+        createdAt: offers.createdAt,
+        status: offers.status,
+        isDeclined: offers.isDeclined,
+        isAccepted: offers.isAccepted,
+        isDeleted: offers.isDeleted,
+        buyerId: offers.buyerId,
+        courseId: offers.courseId,
+        courseName: courses.name,
+        teeTimeDate: teeTimes.date,
+        teeTimeId: teeTimes.id,
+        originalGreenFee: teeTimes.greenFee,
+        lastHighestSale: sql<number | null>`MAX(${transfers.amount})`,
+        courseImage: {
+          key: courseImage.key,
+          cdnUrl: courseImage.cdn,
+          extension: courseImage.extension,
+        },
+        ownedBy: {
+          userId: bookingOwner.id,
+          name: bookingOwner.name,
+          handle: bookingOwner.handle,
+          key: ownerImage.key,
+          cdnUrl: ownerImage.cdn,
+          extension: ownerImage.extension,
+        },
+        offeredBy: {
+          userId: users.id,
+          name: users.name,
+          handle: users.handle,
+          key: userImage.key,
+          cdnUrl: userImage.cdn,
+          extension: userImage.extension,
+        },
+        golferCount: sql<number | null>`COUNT(DISTINCT ${userBookingOffers.bookingId})`,
+      })
+      .from(offers)
+      .innerJoin(userBookingOffers, eq(userBookingOffers.offerId, offers.id))
+      .innerJoin(bookings, eq(bookings.id, userBookingOffers.bookingId))
+      .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
+      .innerJoin(userBooking, eq(userBooking.teeTimeId, bookings.teeTimeId))
+      .leftJoin(users, eq(users.id, offers.buyerId))
+      .innerJoin(courses, eq(courses.id, bookings.courseId))
+      .leftJoin(courseImage, eq(courseImage.id, courses.logoId))
+      .leftJoin(userImage, eq(userImage.id, users.image))
+      .leftJoin(transfers, eq(transfers.bookingId, bookings.id))
+      .leftJoin(bookingOwner, eq(bookingOwner.id, userBooking.ownerId))
+      .leftJoin(ownerImage, eq(ownerImage.id, bookingOwner.image))
+      .where(
+        and(
+          eq(offers.buyerId, userId),
+          eq(offers.isDeleted, false),
+          eq(offers.courseId, courseId)
+          //gte(teeTimes.date, currentUtcTimestamp())
+        )
+      )
+      .groupBy(
+        offers.id,
+        offers.expiresAt,
+        offers.price,
+        offers.createdAt,
+        offers.status,
+        offers.isDeclined,
+        offers.isAccepted,
+        offers.isDeleted,
+        offers.buyerId,
+        offers.courseId,
+        courses.name,
+        teeTimes.date,
+        teeTimes.id,
+        courseImage.key,
+        courseImage.cdn,
+        courseImage.extension,
+        users.id,
+        users.name,
+        userImage.key,
+        userImage.cdn,
+        userImage.extension,
+        ownerImage.key,
+        ownerImage.cdn,
+        ownerImage.extension,
+        bookingOwner.id,
+        bookingOwner.name,
+        bookingOwner.handle
+      )
+      .orderBy(desc(offers.expiresAt))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error retrieving offers: ${err}`);
+        throw new Error("Error retrieving offers");
+      });
+
+    const res = data.map((offer) => ({
+      offer: {
+        courseId: offer.courseId,
+        details: {
+          courseName: offer.courseName,
+          teeTimeDate: offer.teeTimeDate,
+          teeTimeId: offer.teeTimeId,
+          courseImage: offer.courseImage
+            ? `https://${offer.courseImage.cdnUrl}/${offer.courseImage.key}.${offer.courseImage.extension}`
+            : "/defaults/default-course.webp",
+        },
+        offeredBy: {
+          userId: offer.offeredBy.userId,
+          name: offer.offeredBy.name,
+          handle: offer.offeredBy.handle,
+          image: offer.offeredBy.key
+            ? `https://${offer.offeredBy.cdnUrl}/${offer.offeredBy.key}.${offer.offeredBy.extension}`
+            : "/defaults/default-profile.webp",
+        },
+        ownedBy: {
+          userId: offer.ownedBy.userId,
+          name: offer.ownedBy.name,
+          handle: offer.ownedBy.handle,
+          image: offer.ownedBy.key
+            ? `https://${offer.ownedBy.cdnUrl}/${offer.ownedBy.key}.${offer.ownedBy.extension}`
+            : "/defaults/default-profile.webp",
+        },
+        offerAmount: offer.price,
+        originalPrice: offer.originalGreenFee,
+        lastHighestSale: offer.lastHighestSale,
+        golfers: offer.golferCount,
+        status: offer.status,
+        expiresAt: offer.expiresAt,
+        offerId: offer.id,
+      },
+    }));
+    return res;
+  }
+
+  /**
+   * Retrieves all offers created by a user.
+   *
+   * @param userId - The ID of the user.
+   * @returns A promise that resolves to an array of offers.
+   */
+  async getOfferReceivedForUser(userId: string, courseId: string, limit = 10, cursor?: string | null) {
+    this.logger.info(`getOfferReceivedForUser called with userId: ${userId}`);
+    const userImage = alias(assets, "userImage");
+    const courseImage = alias(assets, "courseImage");
+    const userBooking = alias(bookings, "userBooking");
+    const data = await this.database
+      .select({
+        id: offers.id,
+        expiresAt: offers.expiresAt,
+        price: offers.price,
+        createdAt: offers.createdAt,
+        status: offers.status,
+        isDeclined: offers.isDeclined,
+        isAccepted: offers.isAccepted,
+        isDeleted: offers.isDeleted,
+        buyerId: offers.buyerId,
+        courseId: offers.courseId,
+        courseName: courses.name,
+        teeTimeDate: teeTimes.date,
+        teeTimeId: teeTimes.id,
+        originalGreenFee: teeTimes.greenFee,
+        lastHighestSale: sql<number | null>`MAX(${transfers.amount})`,
+        courseImage: {
+          key: courseImage.key,
+          cdnUrl: courseImage.cdn,
+          extension: courseImage.extension,
+        },
+        offeredBy: {
+          userId: users.id,
+          name: users.name,
+          handle: users.handle,
+          key: userImage.key,
+          cdnUrl: userImage.cdn,
+          extension: userImage.extension,
+        },
+        golferCount: sql<number | null>`COUNT(DISTINCT ${userBookingOffers.bookingId})`,
+      })
+      .from(offers)
+      .leftJoin(userBookingOffers, eq(userBookingOffers.offerId, offers.id))
+      .leftJoin(bookings, eq(bookings.id, userBookingOffers.bookingId))
+      .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
+      .leftJoin(userBooking, eq(userBooking.ownerId, userId))
+      .leftJoin(users, eq(users.id, offers.buyerId))
+      .leftJoin(courses, eq(courses.id, bookings.courseId))
+      .leftJoin(courseImage, eq(courseImage.id, courses.logoId))
+      .leftJoin(userImage, eq(userImage.id, users.image))
+      .leftJoin(transfers, eq(transfers.bookingId, bookings.id))
+      .where(
+        and(
+          eq(offers.courseId, courseId),
+          eq(offers.isDeleted, false),
+          eq(offers.status, "PENDING"),
+          eq(bookings.ownerId, userId),
+          gte(teeTimes.date, currentUtcTimestamp())
+        )
+      )
+      .groupBy(
+        offers.id,
+        offers.expiresAt,
+        offers.price,
+        offers.createdAt,
+        offers.status,
+        offers.isDeclined,
+        offers.isAccepted,
+        offers.isDeleted,
+        offers.buyerId,
+        offers.courseId,
+        courses.name,
+        teeTimes.date,
+        teeTimes.id,
+        courseImage.key,
+        courseImage.cdn,
+        courseImage.extension,
+        users.id,
+        users.name,
+        userImage.key,
+        userImage.cdn,
+        userImage.extension
+      )
+      .orderBy(desc(offers.expiresAt))
+
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error retrieving offers: ${err}`);
+        throw new Error("Error retrieving offers");
+      });
+
+    const res = data.map((offer) => ({
+      offer: {
+        courseId,
+        details: {
+          courseName: offer.courseName,
+          teeTimeDate: offer.teeTimeDate,
+          teeTimeId: offer.teeTimeId,
+          courseImage: offer.courseImage
+            ? `https://${offer.courseImage.cdnUrl}/${offer.courseImage.key}.${offer.courseImage.extension}`
+            : "/defaults/default-course.webp",
+        },
+        offeredBy: {
+          userId: offer.offeredBy.userId,
+          name: offer.offeredBy.name,
+          handle: offer.offeredBy.handle,
+          image: offer.offeredBy.key
+            ? `https://${offer.offeredBy.cdnUrl}/${offer.offeredBy.key}.${offer.offeredBy.extension}`
+            : "/defaults/default-profile.webp",
+        },
+        amountOffered: offer.price,
+        originalPrice: offer.originalGreenFee,
+        lastHighestSale: offer.lastHighestSale,
+        golfers: offer.golferCount,
+        status: offer.status,
+        expiresAt: offer.expiresAt,
+        offerId: offer.id,
+      },
+    }));
+    return res;
+  }
+
+  /**
+   * Update the names associated with a list of bookings owned by a user.
+   * @param {string} userId - The ID of the user who owns the bookings.
+   * @param {string[]} bookingIds - An array of booking IDs to be updated.
+   * @param {string[]} usersToAdd - An array of user ids to be associated with each booking.
+   * @returns {Promise<void>} - Resolves once the names on the bookings are successfully updated.
+   * @throws {Error} - Throws an error if there is an issue retrieving or updating the bookings.
+   * @example
+   * @TODO add sorting for names guest should be last
+   * // Example usage:
+   * const userId = "user123";
+   * const bookingIds = ["bookingId1", "bookingId2"];
+   * const names = ["New Name 1", "New Name 2"];
+   * await bookingService.updateNamesOnBookings(userId, bookingIds, names);
+   */
+  updateNamesOnBookings = async (userId: string, bookingIds: string[], userIds: string[]) => {
+    this.logger.info(`updateNamesOnBookings called with userId: ${userId}`);
+    const data = await this.database
+      .select({
+        id: bookings.id,
+        nameOnBooking: bookings.nameOnBooking,
+        internalId: providerCourseLink.internalId,
+        providerCourseId: providerCourseLink.providerCourseId,
+        providerTeeSheetId: providerCourseLink.providerTeeSheetId,
+        courseId: teeTimes.courseId,
+        providerBookingId: bookings.providerBookingId,
+        providerId: teeTimes.soldByProvider,
+      })
+      .from(bookings)
+      .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
+      .leftJoin(
+        providerCourseLink,
+        and(
+          eq(providerCourseLink.courseId, bookings.courseId),
+          eq(providerCourseLink.providerId, teeTimes.soldByProvider)
+        )
+      )
+      .where(and(eq(bookings.ownerId, userId), inArray(bookings.id, bookingIds)))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error retrieving bookings: ${err}`);
+        throw new Error("Error retrieving bookings");
+      });
+    if (!data.length || data.length !== bookingIds.length || !data[0]) {
+      this.logger.warn(`No bookings found. or user does not own all bookings`);
+      throw new Error("No bookings found");
+    }
+    const firstBooking = data[0];
+    if (!firstBooking) {
+      throw new Error("bookings not found");
+    }
+    const { token, provider } = await this.providerService.getProviderAndKey(
+      firstBooking.internalId!,
+      firstBooking.courseId!
+    );
+    //get user profiles for each user to be added
+    //@TODO update typing here
+    if (userIds.length > 0) {
+      const customers: Customer[] = [];
+
+      for (const id of userIds) {
+        if (!firstBooking.providerId || !firstBooking.providerCourseId || !firstBooking.courseId) {
+          throw new Error("provider id, course id, or provider course id not found");
+        }
+        try {
+          const customerData = await this.providerService.createCustomer(
+            firstBooking.courseId,
+            firstBooking.providerId,
+            firstBooking.providerCourseId,
+            id,
+            provider,
+            token
+          );
+          customers.push(customerData);
+        } catch (error) {
+          console.log("Error creating customer", error);
+          throw new Error("Error creating customer");
+        }
+      }
+
+      for (let i = 0; i < customers.length; i++) {
+        try {
+          if (data[i]?.providerBookingId === undefined) {
+            throw new Error("Provider booking id not found");
+          }
+          await provider.updateTeeTime(
+            token,
+            firstBooking.providerCourseId!,
+            firstBooking.providerTeeSheetId!,
+            data[i]?.providerBookingId!,
+            {
+              data: {
+                type: "bookedPlayer",
+                id: data[i]?.providerBookingId,
+                attributes: {
+                  name: customers[i]?.name,
+                  personId: customers[i]?.customerId,
+                },
+              },
+            }
+          );
+        } catch (error) {
+          console.log("Error updating tee time", error);
+          throw new Error("Error updating tee time");
+        }
+      }
+
+      //update the name on each booking
+      // for (const booking of data) {
+      //   await this.database
+      //     .update(bookings)
+      //     .set({
+      //       nameOnBooking: names[bookingIds.indexOf(booking.id)],
+      //     })
+      //     .where(eq(bookings.id, booking.id))
+      //     .execute()
+      //     .catch((err) => {
+      //       this.logger.error(`Error updating bookingId: ${booking.id}: ${err}`);
+      //       throw new Error("Error updating bookingId");
+      //     });
+      // }
+
+      await Promise.all(
+        data.map((booking, index) => {
+          if (!customers[index]?.name) {
+            return;
+          }
+          this.database
+            .update(bookings)
+            .set({
+              nameOnBooking: customers[index]?.name!,
+            })
+            .where(eq(bookings.id, booking.id))
+            .execute()
+            .catch((err) => {
+              console.log("Error setting names on booking: ", err);
+            });
+        })
+      );
+    }
+  };
+
+  /**
+   * Set the minimum offer price for all bookings owned by a user for a specific tee time.
+   * @param {string} userId - The ID of the user who owns the bookings.
+   * @param {string} teeTimeId - The ID of the tee time for which the minimum offer price is to be set.
+   * @param {number} minimumOfferPrice - The new minimum offer price to be set.
+   * @returns {Promise<void>} - Resolves once the minimum offer prices are successfully updated.
+   * @throws {Error} - Throws an error if there is an issue retrieving or updating the bookings.
+   * @example
+   * // Example usage:
+   * const userId = "user123";
+   * const teeTimeId = "teeTime123";
+   * const minimumOfferPrice = 50.0;
+   * await bookingService.setMinimumOfferPrice(userId, teeTimeId, minimumOfferPrice);
+   */
+  setMinimumOfferPrice = async (userId: string, teeTimeId: string, minimumOfferPrice: number) => {
+    let message: string | undefined;
+    await this.database.transaction(async (trx) => {
+      //find all booking for this tee time owned by this user
+      const data = await this.database
+        .select({
+          id: bookings.id,
+        })
+        .from(bookings)
+        .where(and(eq(bookings.ownerId, userId), eq(bookings.teeTimeId, teeTimeId)))
+        .execute()
+        .catch((err) => {
+          this.logger.error(`Error retrieving bookings: ${err}`);
+          message = "Error retrieving bookings";
+          trx.rollback();
+        });
+      if (!data || !data.length) {
+        this.logger.warn(`No bookings found.`);
+        message = "No bookings found";
+        throw new Error("No bookings found");
+      }
+      //update minimum offer price on each booking
+      for (const booking of data) {
+        await trx
+          .update(bookings)
+          .set({
+            minimumOfferPrice: minimumOfferPrice,
+          })
+          .where(eq(bookings.id, booking.id))
+          .execute()
+          .catch((err) => {
+            this.logger.error(`Error updating bookingId: ${booking.id}: ${err}`);
+            message = "Error updating bookingId";
+            trx.rollback();
+          });
+      }
+    });
+    if (message) {
+      throw new Error(message);
+    }
+  };
+}

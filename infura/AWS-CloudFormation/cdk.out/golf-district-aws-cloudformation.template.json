@@ -1,0 +1,498 @@
+{
+ "Resources": {
+  "GolfDistrictBucket2BC0DA6A": {
+   "Type": "AWS::S3::Bucket",
+   "Properties": {
+    "CorsConfiguration": {
+     "CorsRules": [
+      {
+       "AllowedHeaders": [
+        "*"
+       ],
+       "AllowedMethods": [
+        "POST"
+       ],
+       "AllowedOrigins": [
+        "*"
+       ]
+      }
+     ]
+    }
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "golf-district-aws-cloudformation/Golf-District-Bucket/Resource"
+   }
+  },
+  "GolfDistrictBucketPolicy8A07168B": {
+   "Type": "AWS::S3::BucketPolicy",
+   "Properties": {
+    "Bucket": {
+     "Ref": "GolfDistrictBucket2BC0DA6A"
+    },
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": "s3:GetObject",
+       "Effect": "Allow",
+       "Principal": {
+        "CanonicalUser": {
+         "Fn::GetAtt": [
+          "golfdistrictidentity6BBC8100",
+          "S3CanonicalUserId"
+         ]
+        },
+        "Service": "lambda.amazonaws.com"
+       },
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          {
+           "Fn::GetAtt": [
+            "GolfDistrictBucket2BC0DA6A",
+            "Arn"
+           ]
+          },
+          "/*"
+         ]
+        ]
+       }
+      },
+      {
+       "Action": "s3:GetBucketTagging",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       },
+       "Resource": {
+        "Fn::GetAtt": [
+         "GolfDistrictBucket2BC0DA6A",
+         "Arn"
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "golf-district-aws-cloudformation/Golf-District-Bucket/Policy/Resource"
+   }
+  },
+  "golfdistrictidentity6BBC8100": {
+   "Type": "AWS::CloudFront::CloudFrontOriginAccessIdentity",
+   "Properties": {
+    "CloudFrontOriginAccessIdentityConfig": {
+     "Comment": "golf-district-identity"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "golf-district-aws-cloudformation/golf-district-identity/Resource"
+   }
+  },
+  "golfdistrictdistributionCFDistribution49695AF1": {
+   "Type": "AWS::CloudFront::Distribution",
+   "Properties": {
+    "DistributionConfig": {
+     "DefaultCacheBehavior": {
+      "AllowedMethods": [
+       "GET",
+       "HEAD"
+      ],
+      "CachedMethods": [
+       "GET",
+       "HEAD"
+      ],
+      "Compress": true,
+      "ForwardedValues": {
+       "Cookies": {
+        "Forward": "none"
+       },
+       "QueryString": false
+      },
+      "TargetOriginId": "origin1",
+      "ViewerProtocolPolicy": "redirect-to-https"
+     },
+     "DefaultRootObject": "index.html",
+     "Enabled": true,
+     "HttpVersion": "http2",
+     "IPV6Enabled": true,
+     "Origins": [
+      {
+       "ConnectionAttempts": 3,
+       "ConnectionTimeout": 10,
+       "DomainName": {
+        "Fn::GetAtt": [
+         "GolfDistrictBucket2BC0DA6A",
+         "RegionalDomainName"
+        ]
+       },
+       "Id": "origin1",
+       "S3OriginConfig": {
+        "OriginAccessIdentity": {
+         "Fn::Join": [
+          "",
+          [
+           "origin-access-identity/cloudfront/",
+           {
+            "Ref": "golfdistrictidentity6BBC8100"
+           }
+          ]
+         ]
+        }
+       }
+      }
+     ],
+     "PriceClass": "PriceClass_100",
+     "ViewerCertificate": {
+      "CloudFrontDefaultCertificate": true
+     }
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "golf-district-aws-cloudformation/golf-district-distribution/CFDistribution"
+   }
+  },
+  "golfdistrictplaceindex": {
+   "Type": "AWS::Location::PlaceIndex",
+   "Properties": {
+    "DataSource": "Esri",
+    "IndexName": "Gold-District-GeoCode-Index"
+   },
+   "Metadata": {
+    "aws:cdk:path": "golf-district-aws-cloudformation/golf-district-place-index"
+   }
+  },
+  "GoldDistrictApplication9C32AA13": {
+   "Type": "AWS::IAM::User",
+   "Metadata": {
+    "aws:cdk:path": "golf-district-aws-cloudformation/GoldDistrictApplication/Resource"
+   }
+  },
+  "GoldDistrictApplicationDefaultPolicy8F721A2A": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": "geo:SearchPlaceIndexForText",
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "golfdistrictplaceindex",
+         "IndexArn"
+        ]
+       }
+      },
+      {
+       "Action": [
+        "s3:GetObject",
+        "s3:ListBucket",
+        "s3:PutObject"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          {
+           "Fn::GetAtt": [
+            "GolfDistrictBucket2BC0DA6A",
+            "Arn"
+           ]
+          },
+          "/*"
+         ]
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "GoldDistrictApplicationDefaultPolicy8F721A2A",
+    "Users": [
+     {
+      "Ref": "GoldDistrictApplication9C32AA13"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "golf-district-aws-cloudformation/GoldDistrictApplication/DefaultPolicy/Resource"
+   }
+  },
+  "GoldDistrictApplicationAccessKey": {
+   "Type": "AWS::IAM::AccessKey",
+   "Properties": {
+    "UserName": {
+     "Ref": "GoldDistrictApplication9C32AA13"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "golf-district-aws-cloudformation/GoldDistrictApplicationAccessKey"
+   }
+  },
+  "CDKMetadata": {
+   "Type": "AWS::CDK::Metadata",
+   "Properties": {
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/21QQU4DMQx8C/esgSIOPUJRpaqHVq0QR5R13MrdNEFxQqmi/TubDWI5cJoZe0aeZAbzOdzf6Is0aLrGcgt5HzV2ahi9Z3mA/Jywo6gWB/fDKmy9ZbxO46p7hdYncwjeRcibwEd2T4gksjLkIscxsSieZfH87/hdv1H7whIDtymydyX7V/fKetSFwbDZWo20coa+FOsz5FehUBIjTnUnVs+u6dr3RW5S/EjjQ3ckPgWksat3husx5w3BSW4/Z3fwOPzaSZibkIbSZ4JdxW9R/Q5YUQEAAA=="
+   },
+   "Metadata": {
+    "aws:cdk:path": "golf-district-aws-cloudformation/CDKMetadata/Default"
+   },
+   "Condition": "CDKMetadataAvailable"
+  }
+ },
+ "Outputs": {
+  "golfdistrictDistribution": {
+   "Value": {
+    "Fn::GetAtt": [
+     "golfdistrictdistributionCFDistribution49695AF1",
+     "DomainName"
+    ]
+   }
+  },
+  "golfdistrictplatformAccessKeyId": {
+   "Value": {
+    "Ref": "GoldDistrictApplicationAccessKey"
+   }
+  },
+  "golfdistrictplatformSecretAccessKey": {
+   "Value": {
+    "Fn::GetAtt": [
+     "GoldDistrictApplicationAccessKey",
+     "SecretAccessKey"
+    ]
+   }
+  }
+ },
+ "Conditions": {
+  "CDKMetadataAvailable": {
+   "Fn::Or": [
+    {
+     "Fn::Or": [
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "af-south-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-east-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-northeast-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-northeast-2"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-south-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-southeast-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-southeast-2"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ca-central-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "cn-north-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "cn-northwest-1"
+       ]
+      }
+     ]
+    },
+    {
+     "Fn::Or": [
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "eu-central-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "eu-north-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "eu-south-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "eu-west-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "eu-west-2"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "eu-west-3"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "me-south-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "sa-east-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "us-east-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "us-east-2"
+       ]
+      }
+     ]
+    },
+    {
+     "Fn::Or": [
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "us-west-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "us-west-2"
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "Parameters": {
+  "BootstrapVersion": {
+   "Type": "AWS::SSM::Parameter::Value<String>",
+   "Default": "/cdk-bootstrap/hnb659fds/version",
+   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+  }
+ },
+ "Rules": {
+  "CheckBootstrapVersion": {
+   "Assertions": [
+    {
+     "Assert": {
+      "Fn::Not": [
+       {
+        "Fn::Contains": [
+         [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+         ],
+         {
+          "Ref": "BootstrapVersion"
+         }
+        ]
+       }
+      ]
+     },
+     "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+    }
+   ]
+  }
+ }
+}

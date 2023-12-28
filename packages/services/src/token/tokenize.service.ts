@@ -1,0 +1,303 @@
+import { randomUUID } from "crypto";
+import type { Db } from "@golf-district/database";
+import { and, eq, inArray } from "@golf-district/database";
+import { bookings, InsertBooking } from "@golf-district/database/schema/bookings";
+import { entities } from "@golf-district/database/schema/entities";
+import { teeTimes } from "@golf-district/database/schema/teeTimes";
+import { InsertTransfer, transfers } from "@golf-district/database/schema/transfers";
+import { currentUtcTimestamp } from "@golf-district/shared";
+import Logger from "@golf-district/shared/src/logger";
+import { textChangeRangeIsUnchanged } from "typescript";
+import { NotificationService } from "../notification/notification.service";
+
+/**
+ * Service class for handling booking tokenization, transfers, and updates.
+ */
+export class TokenizeService {
+  private logger = Logger(TokenizeService.name);
+
+  /**
+   * Constructor for the `TokenizeService` class.
+   *
+   * @param {Db} database - The database instance.
+   * @example
+   * const tokenizeService = new TokenizeService(database);
+   */
+  constructor(private readonly database: Db, private readonly notificationService: NotificationService) {}
+  /**
+   * Tokenize a booking for a user. This function either books an existing tee time or creates a new one based on the provided details.
+   *
+   * @param userId - The unique identifier of the user initiating the booking.
+   * @param expiration - The date and time when the booking will expire.
+   * @param numberOfHoles - The number of holes the user wants to play.
+   * @param courseId - The unique identifier of the course where the booking is made.
+   * @param purchasedFor - The amount for which the booking was purchased.
+   * @param teeTimeInfo - Optional information related to the tee time. It can contain:
+   *   - `teeTimeId`: An existing tee time ID if booking an existing slot.
+   *   - `numberOfPlayers`: The number of players for the tee time.
+   *   - `override`: Overrides for the booking details, which can include:
+   *     - `carts`: Number of carts required.
+   *     - `numberOfHoles`: Number of holes if different from the main parameter.
+   *     - `maxBookings`: Maximum bookings allowed for the tee time.
+   *     - `entityId`: Entity associated with the tee time.
+   * @returns A promise that resolves once the booking is successfully tokenized.
+   * @throws Error - Throws an error if:
+   *   - The userId is not provided.
+   *   - The specified tee time does not exist.
+   *   - The maximum bookings for a tee time have been reached.
+   *   - There are issues interacting with the underlying data store (Prisma).
+   */
+  async tokenizeBooking(
+    userId: string,
+    purchasePrice: number,
+    players: number, //how many bookings to make
+    providerBookingIds: string[], //the tee time ids to book
+    providerTeeTimeId: string, //all tee times to be tokenized are purchased from a provider
+    withCart?: boolean
+  ): Promise<void> {
+    this.logger.info(`tokenizeBooking tokenizing booking id: ${providerTeeTimeId} for user: ${userId}`);
+    //@TODO add this to the transaction
+    const [existingTeeTime] = await this.database
+      .select({
+        id: teeTimes.id,
+        entityId: teeTimes.entityId,
+        date: teeTimes.date,
+        courseId: teeTimes.courseId,
+        numberOfHoles: teeTimes.numberOfHoles,
+        availableFirstHandSpots: teeTimes.availableFirstHandSpots,
+        availableSecondHandSpots: teeTimes.availableSecondHandSpots,
+      })
+      .from(teeTimes)
+      .where(eq(teeTimes.id, providerTeeTimeId))
+      .leftJoin(entities, eq(teeTimes.entityId, entities.id))
+      .execute()
+      .catch((err) => {
+        this.logger.error(err);
+        return [];
+      });
+    if (!existingTeeTime) {
+      //how has a booking been created for a tee time that does not exist? big problem
+      this.logger.fatal(`TeeTime with ID: ${providerTeeTimeId} does not exist.`);
+      throw new Error(`TeeTime with ID: ${providerTeeTimeId} does not exist.`);
+    }
+    if (existingTeeTime.availableFirstHandSpots < players) {
+      this.logger.fatal(`TeeTime with ID: ${providerTeeTimeId} does not have enough spots.`);
+      throw new Error(`TeeTime with ID: ${providerTeeTimeId} does not have enough spots.`);
+    }
+    const bookingsToCreate: InsertBooking[] = [];
+    const transfersToCreate: InsertTransfer[] = [];
+    for (let i = 0; i < players; i++) {
+      const bookingId = randomUUID();
+      bookingsToCreate.push({
+        id: bookingId,
+        purchasedAt: currentUtcTimestamp(),
+        purchasedPrice: purchasePrice,
+        time: existingTeeTime.date,
+        providerBookingId: providerBookingIds[i] as string,
+        withCart: withCart,
+        isListed: false,
+        numberOfHoles: existingTeeTime.numberOfHoles,
+        minimumOfferPrice: 0,
+        ownerId: userId,
+        courseId: existingTeeTime.courseId,
+        teeTimeId: existingTeeTime.id,
+        nameOnBooking: "Guest",
+        includesCart: withCart,
+        listId: null,
+        entityId: existingTeeTime.entityId,
+      });
+      transfersToCreate.push({
+        id: randomUUID(),
+        amount: purchasePrice,
+        bookingId: bookingId,
+        fromUserId: "0x000", //first hand sales are from the platform
+        toUserId: userId,
+        courseId: existingTeeTime.courseId,
+      });
+    }
+    //create all booking in a transaction to ensure atomicity
+    await this.database.transaction(async (tx) => {
+      //create each booking
+      await tx
+        .insert(bookings)
+        .values(bookingsToCreate)
+        .execute()
+        .catch((err) => {
+          this.logger.error(err);
+          tx.rollback();
+        });
+      await tx
+        .update(teeTimes)
+        .set({
+          availableSecondHandSpots: existingTeeTime.availableSecondHandSpots + players,
+          availableFirstHandSpots: existingTeeTime.availableFirstHandSpots - players,
+        })
+        .where(eq(teeTimes.id, existingTeeTime.id))
+        .execute();
+      await tx
+        .insert(transfers)
+        .values(transfersToCreate)
+        .execute()
+        .catch((err) => {
+          this.logger.error(err);
+          tx.rollback();
+        });
+    });
+    const message = `
+    ${players} tee times have been purchased for ${existingTeeTime.date} at ${existingTeeTime.courseId}
+    price per booking: ${purchasePrice} 
+
+    ${providerBookingIds}
+
+    This is a first party purchase from the course
+    `;
+    await this.notificationService.createNotification(
+      userId,
+      "TeeTimes Purchased",
+      message,
+      existingTeeTime.courseId
+    );
+  }
+
+  /**
+   * Transfers a bookings from one user to another.
+   * @param userId - The ID of the user initiating the transfer.
+   * @param bookingId - array ID of the booking.
+   * @param newUserId - The ID of the user to whom the booking is being transferred.
+   * @returns A promise that resolves to the updated booking.
+   */
+  transferBookings = async (userId: string, bookingIds: string[], newOwnerId: string, price: number) => {
+    //validate the user owns each booking
+    const bookingsToTransfer = await this.database
+      .select({
+        id: bookings.id,
+        ownerId: bookings.ownerId,
+        courseId: bookings.courseId,
+      })
+      .from(bookings)
+      .where(and(inArray(bookings.id, bookingIds), eq(bookings.ownerId, userId)))
+      .execute()
+      .catch((err) => {
+        this.logger.error(err);
+        throw new Error(`Error finding bookings with id: ${bookingIds}`);
+      });
+    if (!bookingsToTransfer) {
+      throw new Error("No bookings found to transfer");
+    }
+    if (bookingsToTransfer.length !== bookingIds.length) {
+      throw new Error("Not all bookings found to transfer");
+    }
+    if (!bookingsToTransfer.every((booking) => booking.ownerId === userId)) {
+      throw new Error("Not all bookings found to transfer belong to the user");
+    }
+    //transfer the bookings
+    await this.database.transaction(async (tx) => {
+      for (const booking of bookingsToTransfer) {
+        await tx
+          .update(bookings)
+          .set({
+            ownerId: newOwnerId,
+            nameOnBooking: "guest",
+          })
+          .where(eq(bookings.id, booking.id))
+          .execute()
+          .catch((err) => {
+            this.logger.error(err);
+            tx.rollback();
+          });
+        await tx
+          .insert(transfers)
+          .values({
+            id: randomUUID(),
+            amount: price,
+            bookingId: booking.id,
+            fromUserId: userId,
+            toUserId: newOwnerId,
+            courseId: booking.courseId,
+          })
+          .execute()
+          .catch((err) => {
+            this.logger.error(err);
+            tx.rollback();
+          });
+      }
+    });
+
+    const message1 = `
+    ${bookingIds.length} tee times have been transferred to you This is to the new owner of the bookings the provider ids: ${bookingIds}
+    `;
+    await this.notificationService.createNotification(
+      newOwnerId,
+      "TeeTimes Purchased",
+      message1,
+      bookingsToTransfer[0]?.courseId as string
+    );
+
+    const message2 = `
+    ${bookingIds.length} bookings have been purchased this is to the old owner of the bookings
+    Transfers bookings: 
+    `;
+    await this.notificationService.createNotification(
+      userId,
+      "TeeTimes Sold",
+      message2,
+      bookingsToTransfer[0]?.courseId as string
+    );
+  };
+
+  /**
+   * Adds names to owned bookings.
+   *
+   * @param userId - The ID of the user updating the booking names.
+   * @param bookingIds - An array of booking IDs to be updated.
+   * @param names - An array of names to be added to the corresponding bookings.
+   * @returns A promise that resolves once the names are added to the bookings.
+   * @throws Error - Throws an error if there are issues interacting with the data store (Prisma).
+   * @example
+   * await tokenizeService.addNamesToOwnedBookings("user123", ["booking123", "booking456"], ["John", "Jane"]);
+   */
+  addNamesToOwnedBookings = async (
+    userId: string,
+    bookingIds: string[],
+    names: { name: string; playerId?: string }[]
+  ) => {
+    //validate teh user owns each booking
+    const data = await this.database
+      .select({
+        ownerId: bookings.ownerId,
+      })
+      .from(bookings)
+      .where(and(inArray(bookings.id, bookingIds), eq(bookings.ownerId, userId)));
+    if (!data) {
+      this.logger.warn(`No bookings found to update`);
+      throw new Error("No bookings found to update");
+    }
+    if (data.length !== bookingIds.length) {
+      this.logger.warn(`Not all owned by user`);
+      throw new Error("Not all bookings found to update");
+    }
+    const golfDistrictPlayers = names.map((name) => name.playerId);
+    //const playerNames
+    await this.database
+      .transaction(async (tx) => {
+        for (let i = 0; i < bookingIds.length; i++) {
+          const toUpdate = bookingIds[i]!;
+          await tx
+            .update(bookings)
+            .set({
+              nameOnBooking: names[i]?.name,
+            })
+            .where(eq(bookings.id, toUpdate))
+            .execute()
+            .catch((err) => {
+              this.logger.error(err);
+              throw new Error(`Error updating booking with id: ${bookingIds[i]}`);
+            });
+        }
+      })
+      .catch((err) => {
+        this.logger.error(err);
+        throw new Error(`Error updating booking with id: ${bookingIds}`);
+      });
+  };
+}

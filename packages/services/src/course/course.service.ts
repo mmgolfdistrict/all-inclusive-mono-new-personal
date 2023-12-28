@@ -1,0 +1,501 @@
+import { randomUUID } from "crypto";
+import type { Db } from "@golf-district/database";
+import { and, desc, eq, isNull, sql } from "@golf-district/database";
+import { assets } from "@golf-district/database/schema/assets";
+import { courseAssets } from "@golf-district/database/schema/courseAssets";
+import { courses } from "@golf-district/database/schema/courses";
+import type { InsertCourses } from "@golf-district/database/schema/courses";
+import { entities } from "@golf-district/database/schema/entities";
+import { lists } from "@golf-district/database/schema/lists";
+import { teeTimes } from "@golf-district/database/schema/teeTimes";
+import { getApexDomain, validDomainRegex } from "@golf-district/shared";
+import Logger from "@golf-district/shared/src/logger";
+import { DomainService } from "../domain/domain.service";
+
+/**
+ * Service handling course-related operations.
+ * Extends `DomainService` and provides functionality to retrieve course information,
+ * get images associated with a course, and update course details.
+ */
+export class CourseService extends DomainService {
+  /**
+   * Constructs a new `CourseService`.
+   * @param {Db} database - The database instance.
+   * @param {string} PROJECT_ID_VERCEL - Vercel project ID.
+   * @param {string} TEAM_ID_VERCEL - Vercel team ID.
+   * @param {string} AUTH_BEARER_TOKEN - Bearer token for authentication.
+   * @example
+   * const courseService = new CourseService(database, "project_id", "team_id", "bearer_token");
+   */
+  constructor(
+    private readonly database: Db,
+    PROJECT_ID_VERCEL: string,
+    TEAM_ID_VERCEL: string,
+    AUTH_BEARER_TOKEN: string
+  ) {
+    super(PROJECT_ID_VERCEL, TEAM_ID_VERCEL, AUTH_BEARER_TOKEN, Logger(CourseService.name));
+  }
+
+  /**
+   * Retrieves a course by its ID.
+   *
+   * This function fetches and returns the course associated with the provided course ID.
+   * If no course is found, it returns `null`.
+   *
+   * @param courseId - The ID of the course to retrieve.
+   * @returns A promise that resolves to the course object if found, or `null` if not found.
+   * @throws Will throw an error if the query fails.
+   */
+  getCourseById = async (courseId: string) => {
+    const [results] = await this.database
+      .select({
+        id: courses.id,
+        name: courses.name,
+        address: courses.address,
+        description: courses.description,
+        longitude: courses.longitude,
+        latitude: courses.latitude,
+        forecastApi: courses.forecastApi,
+        charityName: courses.charityName,
+        charityDescription: courses.charityDescription,
+        convenanceFees: courses.convenanceFees,
+        markup: courses.markup,
+        openTime: courses.openTime,
+        closeTime: courses.closeTime,
+        supportCharity: courses.supportCharity,
+        supportSensibleWeather: courses.supportSensibleWeather,
+        timezoneCorrection: courses.timezoneCorrection,
+        furthestDayToBook: courses.furthestDayToBook,
+        highestListedTeeTime: sql<number>`MAX(${lists.listPrice})`,
+        lowestListedTeeTime: sql<number>`MIN(${lists.listPrice})`,
+        highestPrimarySaleTeeTime: sql<number>`MAX(${teeTimes.greenFee})`,
+        lowestPrimarySaleTeeTime: sql<number>`MIN(${teeTimes.greenFee})`,
+      })
+      .from(courses)
+      .leftJoin(lists, eq(courses.id, lists.courseId))
+      .leftJoin(teeTimes, eq(courses.id, teeTimes.courseId))
+      .where(and(eq(courses.id, courseId), eq(courses.isDeleted, false)))
+      .limit(1)
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error getting course by ID: ${err}`);
+        throw new Error("Error getting course");
+      });
+    if (!results) return null;
+    const res = {
+      ...results,
+      highestListedTeeTime: results.highestListedTeeTime ?? 0,
+      lowestListedTeeTime: results.lowestListedTeeTime ?? 0,
+      highestPrimarySaleTeeTime: results.highestPrimarySaleTeeTime ?? 0,
+      lowestPrimarySaleTeeTime: results.lowestPrimarySaleTeeTime ?? 0,
+    };
+
+    return res;
+  };
+
+  /**
+   * Retrieves images associated with a course.
+   * @param {string} courseId - The ID of the course.
+   * @returns {Promise<{ logo: string, images: string[] }>} A promise resolving to an object with course images.
+   * @throws Will throw an error if the query fails.
+   * @example
+   * const courseId = "course123";
+   * const courseImages = await courseService.getImagesForCourse(courseId);
+   */
+  getImagesForCourse = async (courseId: string) => {
+    const logo = await this.database
+      .select({
+        id: assets.id,
+        key: assets.key,
+        cdn: assets.cdn,
+        extension: assets.extension,
+      })
+      .from(assets)
+      .where(and(eq(assets.courseId, courseId), isNull(assets.courseAssetId)))
+      .limit(1)
+      .execute();
+
+    const images = await this.database
+      .select({
+        id: assets.id,
+        coursesId: assets.courseId,
+        key: assets.key,
+        cdn: assets.cdn,
+        extension: assets.extension,
+        order: courseAssets.order,
+        courseLogoId: courses.logoId,
+      })
+      .from(assets)
+      .leftJoin(courseAssets, eq(assets.id, courseAssets.assetId))
+      .leftJoin(courses, eq(assets.courseId, courses.id))
+      .where(and(eq(assets.courseId, courseId), eq(assets.courseAssetId, courseAssets.id)))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error getting images for course: ${err}`);
+        throw new Error("Error getting images");
+      });
+    return {
+      logo: logo[0]
+        ? `https://${logo[0].cdn}/${logo[0].key}.${logo[0].extension}`
+        : "/defaults/default-profile.webp",
+      images: images
+        .filter((i) => i.coursesId === courseId && i.id !== i.courseLogoId)
+        .sort((a, b) => {
+          const orderA = a.order !== null ? a.order : Number.MAX_SAFE_INTEGER;
+          const orderB = b.order !== null ? b.order : Number.MAX_SAFE_INTEGER;
+          return orderA - orderB;
+        })
+        .map(({ key, cdn, extension }) => `https://${cdn}/${key}.${extension}`),
+    };
+  };
+
+  /**
+   * Updates course information.
+   * @param {string} courseId - The ID of the course to update.
+   * @param {Object} options - Options for updating course details.
+   * @param {string} [options.name] - The new name of the course.
+   * @param {string} [options.logoAssetId] - The asset ID for the new course logo.
+   * @param {string} [options.openingHours] - The updated opening hours of the course.
+   * @param {string} [options.closingHours] - The updated closing hours of the course.
+   * @param {string} [options.privacyPolicy] - The updated privacy policy of the course.
+   * @param {boolean} [options.supportSensibleWeather] - Indicates whether the course supports sensible weather.
+   * @param {Object} [options.charity] - Charity-related options.
+   * @param {boolean} [options.charity.supportCharity] - Indicates whether the course supports charity.
+   * @param {string} [options.charity.charityName] - The name of the supported charity.
+   * @param {string} [options.charity.charityDescription] - The description of the supported charity.
+   * @throws Will throw an error if the update fails or if an asset for the logo does not exist.
+   * @example
+   * const courseId = "course123";
+   * const updateOptions = {
+   *   name: "New Course Name",
+   *   logoAssetId: "asset456",
+   *   openingHours: "08:00",
+   *   closingHours: "18:00",
+   *   privacyPolicy: "Updated privacy policy.",
+   *   supportSensibleWeather: true,
+   *   charity: {
+   *     supportCharity: true,
+   *     charityName: "Charity Name",
+   *     charityDescription: "Charity Description",
+   *   },
+   * };
+   * await courseService.updateCourseInfo(courseId, updateOptions);
+   */
+  updateCourseInfo = async (
+    courseId: string,
+    options: {
+      name?: string;
+      logoAssetId?: string;
+      openingHours?: string;
+      closingHours?: string;
+      privacyPolicy?: string;
+      supportSensibleWeather?: boolean;
+      charity?: {
+        supportCharity?: boolean;
+        charityName?: string;
+        charityDescription?: string;
+      };
+    }
+  ) => {
+    this.logger.info(`Updating course ${courseId} with options: ${JSON.stringify(options)}`);
+    if (options.logoAssetId) {
+      const logo = await this.database
+        .select()
+        .from(assets)
+        .where(eq(assets.id, options.logoAssetId))
+        .catch((err) => {
+          this.logger.error(`Error getting asset: ${err}`);
+          throw new Error("Error getting asset");
+        });
+      if (!logo[0]) {
+        this.logger.warn(`Asset ${options.logoAssetId} does not exist`);
+        throw new Error("Asset for logo does not exist");
+      }
+    }
+    await this.database
+      .update(courses)
+      .set({
+        name: options.name,
+        logoId: options.logoAssetId,
+        openTime: options.openingHours,
+        closeTime: options.closingHours,
+        privacyPolicy: options.privacyPolicy,
+        supportSensibleWeather: options.supportSensibleWeather,
+        supportCharity: options.charity?.supportCharity,
+        charityName: options.charity?.charityName,
+        charityDescription: options.charity?.charityDescription,
+      })
+      .where(eq(courses.id, courseId))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error updating course: ${err}`);
+        throw new Error("Error updating course");
+      });
+  };
+
+  /**
+   * Add assets to a course.
+   *
+   * This function allows users to add multiple assets to a course while maintaining a specific order.
+   * The assets will be ordered based on their position in the provided array.
+   *
+   * @param courseId - The ID of the course to which the assets will be added.
+   * @param assetIds - An array of asset IDs to be added to the course. The order in the array will be the order in the course.
+   * @throws Will throw an error if there's an issue adding the assets to the course (e.g., database error, invalid course ID, etc.).
+   */
+  async addAssetsToCourse(courseId: string, assetIds: string[]): Promise<void> {
+    const highestOrderQuery = this.database
+      .select({ order: courseAssets.order })
+      .from(courseAssets)
+      .where(eq(courseAssets.courseId, courseId))
+      .orderBy(desc(courseAssets.order))
+      .limit(1);
+
+    let highestExistingOrder = (
+      await highestOrderQuery.execute().catch((err) => {
+        this.logger.error(`Error getting highest order: ${err}`);
+        throw new Error("Error getting highest order");
+      })
+    )[0]?.order;
+
+    if (highestExistingOrder === undefined) {
+      highestExistingOrder = -1;
+    }
+    for (const assetId of assetIds) {
+      const existingAsset = await this.database
+        .select()
+        .from(courseAssets)
+        .where(and(eq(courseAssets.courseId, courseId), eq(courseAssets.assetId, assetId)))
+        .execute()
+        .catch((err) => {
+          this.logger.error(`Error checking existing course asset: ${err}`);
+          throw new Error("Error checking existing course asset");
+        });
+      if (existingAsset[0]) {
+        this.logger.warn(`Asset ${assetId} is already associated with course ${courseId}`);
+        continue;
+      }
+
+      highestExistingOrder++;
+      await this.database
+        .insert(courseAssets)
+        .values({
+          id: randomUUID(),
+          courseId: courseId,
+          assetId: assetId,
+          order: highestExistingOrder,
+        })
+        .execute()
+        .catch((err) => {
+          this.logger.error(`Error adding course asset: ${err}`);
+          throw new Error("Error adding course asset");
+        });
+    }
+  }
+
+  /**
+   * Update the order of assets for a specific course.
+   * @notice This function is also used to remove assets from a course.
+   * This function updates the order of assets associated with a specific course, based on the order
+   * of asset IDs provided in the input array. The function does not add or remove assets, and
+   * expects all asset IDs to already be associated with the course.
+   *
+   * @param courseId - The ID of the course for which the asset order will be updated.
+   * @param assetIds - An array of asset IDs, ordered as they should appear in the course.
+   * @throws Will throw an error if there's an issue updating the assets' order (e.g., database error, invalid course ID, etc.).
+   */
+  /**
+   * Update the order of assets for a specific course.
+   *
+   * @param courseId - The ID of the course.
+   * @param assetIds - An array of asset IDs, ordered as they should appear in the course.
+   * @throws Will throw an error if there's an issue updating the assets' order.
+   */
+  updateAssetsOrder = async (courseId: string, assetIds: string[]): Promise<void> => {
+    // Validate that all provided asset IDs are associated with the course
+    const existingAssetIds = await this.database
+      .select({ assetId: courseAssets.assetId })
+      .from(courseAssets)
+      .where(eq(courseAssets.courseId, courseId))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error fetching existing asset IDs: ${err}`);
+        throw new Error("Error validating asset IDs");
+      });
+    const existingAssetIdsSet = new Set(existingAssetIds.map((a) => a.assetId));
+    assetIds.forEach((id) => {
+      if (!existingAssetIdsSet.has(id)) {
+        throw new Error(`Asset ID ${id} is not associated with the course ${courseId}`);
+      }
+    });
+
+    await this.database
+      .transaction(async (tx) => {
+        for (let order = 0; order < assetIds.length; order++) {
+          const assetId = assetIds[order];
+          if (!assetId) {
+            this.logger.warn(`Skipping update for undefined asset ID at order ${order}`);
+            continue;
+          }
+          await tx
+            .update(courseAssets)
+            .set({ order: order })
+            .where(and(eq(courseAssets.courseId, courseId), eq(courseAssets.assetId, assetId)));
+        }
+      })
+      .catch((err) => {
+        this.logger.error(`Error updating asset order: ${err}`);
+        throw new Error("Error updating asset order");
+      });
+  };
+
+  /**
+   * Create a new course with the provided data.
+   *
+   * @param data - An object containing the course data to be inserted.
+   * @throws Will throw an error if there's an issue creating the course.
+   */
+  async createCourse(data: {
+    name: string;
+    logoAssetId?: string;
+    openingHours?: string;
+    closingHours?: string;
+    privacyPolicy?: string;
+    supportSensibleWeather?: boolean;
+    charity?: {
+      supportCharity: boolean;
+      charityName: string;
+      charityDescription: string;
+    };
+  }): Promise<void> {
+    if (!data.name) {
+      this.logger.error("Error creating course: name is required");
+      throw new Error("Error creating course: name is required");
+    }
+    const courseData: InsertCourses = {
+      id: randomUUID(),
+      name: data.name,
+      logoId: data.logoAssetId,
+      openTime: data.openingHours ? data.openingHours : null,
+      closeTime: data.closingHours ? data.closingHours : null,
+      privacyPolicy: data.privacyPolicy ? data.privacyPolicy : null,
+      supportSensibleWeather: data.supportSensibleWeather,
+    };
+
+    if (data.charity?.supportCharity) {
+      courseData.supportCharity = true;
+      courseData.charityName = data.charity.charityName ? data.charity.charityName : null;
+      courseData.charityDescription = data.charity.charityDescription
+        ? data.charity.charityDescription
+        : null;
+    }
+
+    await this.database
+      .insert(courses)
+      .values(courseData)
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error creating course: ${err}`);
+        throw new Error("Error creating course");
+      });
+  }
+
+  /**
+   * Updates the custom domain associated with an entity.
+   *
+   * This function allows updating the custom domain associated with a given entity.
+   * The custom domain can be set, removed (if an empty string is provided), or validated for specific conditions.
+   *
+   * @param {string} entityId - The ID of the entity to update.
+   * @param {string | ""} domain - The new custom domain. Provide an empty string to remove the domain.
+   * @throws Will throw an error if the provided domain is not valid, or if there is an issue updating the entity or adding/removing domains from Vercel.
+   * @example
+   * // Update entity with ID 'entity123' to use the custom domain 'example.com'.
+   * await updateCourseDomain('entity123', 'example.com');
+   *
+   * // Remove the custom domain from the entity with ID 'entity456'.
+   * await updateCourseDomain('entity456', '');
+   */
+  updateCourseDomain = async (
+    entityId: string,
+    domain: string | "" //remove domain if empty string
+  ) => {
+    this.logger.info(`Updating entity ${entityId} with domain ${domain}`);
+    const courseDomain = await this.database
+      .select({ customDomain: entities.customDomain })
+      .from(entities)
+      .where(eq(entities.id, entityId))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error getting course: ${err}`);
+        throw new Error("Error getting course");
+      });
+
+    if (domain.includes("vercel.pub")) {
+      this.logger.warn(`Domain ${domain} is not valid vercel.pub domain`);
+      throw new Error(`Domain ${domain} is not valid vercel.pud domain`);
+    } else if (validDomainRegex().test(domain)) {
+      //update the entity with the new domain
+      await this.database
+        .update(entities)
+        .set({
+          customDomain: domain,
+        })
+        .where(eq(entities.id, entityId))
+        .execute()
+        .catch((err) => {
+          this.logger.error(`Error updating course: ${err}`);
+          throw new Error("Error updating course");
+        });
+      //add both domains to vercel
+      await Promise.all([
+        await this.addDomainToVercel(domain),
+        await this.addDomainToVercel(`www.${domain}`),
+      ]).catch((err) => {
+        this.logger.error(`Error adding domains to vercel: ${err}`);
+        throw new Error(`Error adding domains to vercel: ${err}`);
+      });
+    }
+    // "" remove the domain from the entity
+    else if (domain == "") {
+      await this.database
+        .update(entities)
+        .set({
+          customDomain: null,
+        })
+        .where(eq(courses.id, entityId))
+        .execute()
+        .catch((err) => {
+          this.logger.error(`Error updating course: ${err}`);
+          throw new Error("Error updating course");
+        });
+      //the custom dolman has been updated remove the old domain from the vercel
+      if (courseDomain[0]?.customDomain && courseDomain[0]?.customDomain !== domain) {
+        const apexDomain = getApexDomain(`htttps://${courseDomain[0]?.customDomain}`);
+        const domainCount = await this.database
+          .select({
+            count: sql<number>`COUNT(*)`,
+          })
+          .from(entities)
+          .execute()
+          .catch((err) => {
+            this.logger.error(`Error getting course: ${err}`);
+            throw new Error("Error getting course");
+          });
+        //Domain is only use by this site remove it form the team
+        if (!domainCount[0]?.count || domainCount[0]?.count === 0) {
+          await this.removeDomainFromVercelTeam(apexDomain).catch((err) => {
+            this.logger.error(`Error removing domain from vercel team: ${err}`);
+            throw new Error(`Error removing domain from vercel team: ${err}`);
+          });
+          //Domain is used by other sites remove it from the project
+        } else {
+          await this.removeDomainFromVercelProject(courseDomain[0]?.customDomain).catch((err) => {
+            this.logger.error(`Error removing domain from vercel team: ${err}`);
+            throw new Error(`Error removing domain from vercel team: ${err}`);
+          });
+        }
+      }
+    }
+  };
+}

@@ -1,0 +1,30 @@
+{
+  "name": "@golf-district/shared",
+  "version": "0.1.0",
+  "description": "",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "clean": "rm -rf .turbo node_modules",
+    "lint": "eslint .",
+    "format": "prettier --check \"**/*.{mjs,ts,md,json}\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@golf-district/database": "^0.1.0",
+    "dayjs": "^1.11.10",
+    "pino": "^8.16.0",
+    "pino-pretty": "^10.2.3",
+    "typescript": "^5.2.2"
+  },
+  "eslintConfig": {
+    "root": true,
+    "extends": [
+      "@golf-district/eslint-config/base"
+    ]
+  }
+}

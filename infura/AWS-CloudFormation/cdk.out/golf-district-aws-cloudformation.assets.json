@@ -1,0 +1,19 @@
+{
+  "version": "34.0.0",
+  "files": {
+    "cdd3b9b6d90b1f39760168021a25f4ac69bdf7bfe044e1bd3c6e870a9856a6b4": {
+      "source": {
+        "path": "golf-district-aws-cloudformation.template.json",
+        "packaging": "file"
+      },
+      "destinations": {
+        "current_account-current_region": {
+          "bucketName": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}",
+          "objectKey": "cdd3b9b6d90b1f39760168021a25f4ac69bdf7bfe044e1bd3c6e870a9856a6b4.json",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-file-publishing-role-${AWS::AccountId}-${AWS::Region}"
+        }
+      }
+    }
+  },
+  "dockerImages": {}
+}

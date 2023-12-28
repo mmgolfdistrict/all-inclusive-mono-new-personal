@@ -1,0 +1,51 @@
+{
+  "name": "golf-district-platform",
+  "version": "1.0.0",
+  "description": "",
+  "keywords": [],
+  "license": "ISC",
+  "author": "",
+  "main": "index.js",
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "tooling/*",
+    "infura/*"
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "clean:workspaces": "turbo clean",
+    "compile": "turbo run compile",
+    "dev": "dotenv -- turbo dev --parallel --filter=golf-district-platforms",
+    "dev:tunnel": "dotenv -- turbo dev --parallel",
+    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,md,css}\"",
+    "lint": "turbo run lint",
+    "pre-commit": "lint-staged",
+    "prepare": "husky install",
+    "prettier-check": "prettier --check \"**/*.{js,jsx,ts,tsx,md,css}\" --ignore-path .prettierignore",
+    "test": "turbo run test",
+    "typecheck": "turbo typecheck"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,md,css}": [
+      "eslint --fix",
+      "prettier --write"
+    ]
+  },
+  "dependencies": {
+    "dotenv-cli": "^7.3.0",
+    "prettier": "^2.8.8",
+    "turbo": "^1.10.14",
+    "typescript": "^5.2.2"
+  },
+  "devDependencies": {
+    "eslint": "^8.45.0",
+    "eslint-config-custom": "*",
+    "husky": "^8.0.3",
+    "lint-staged": "^13.2.3"
+  },
+  "packageManager": "npm@9.8.0",
+  "engines": {
+    "node": ">=20"
+  }
+}

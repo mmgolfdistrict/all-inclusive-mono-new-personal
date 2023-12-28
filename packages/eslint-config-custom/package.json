@@ -1,0 +1,13 @@
+{
+  "name": "@golf-district/eslint-config",
+  "license": "MIT",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "clean": "rm -rf .turbo node_modules"
+  },
+  "devDependencies": {
+    "@vercel/style-guide": "^5.0.0",
+    "eslint-config-turbo": "^1.10.12"
+  }
+}

@@ -1,0 +1,429 @@
+{
+  "version": "tree-0.1",
+  "tree": {
+    "id": "App",
+    "path": "",
+    "children": {
+      "golf-district-aws-cloudformation": {
+        "id": "golf-district-aws-cloudformation",
+        "path": "golf-district-aws-cloudformation",
+        "children": {
+          "Golf-District-Bucket": {
+            "id": "Golf-District-Bucket",
+            "path": "golf-district-aws-cloudformation/Golf-District-Bucket",
+            "children": {
+              "Resource": {
+                "id": "Resource",
+                "path": "golf-district-aws-cloudformation/Golf-District-Bucket/Resource",
+                "attributes": {
+                  "aws:cdk:cloudformation:type": "AWS::S3::Bucket",
+                  "aws:cdk:cloudformation:props": {
+                    "corsConfiguration": {
+                      "corsRules": [
+                        {
+                          "allowedHeaders": [
+                            "*"
+                          ],
+                          "allowedMethods": [
+                            "POST"
+                          ],
+                          "allowedOrigins": [
+                            "*"
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_s3.CfnBucket",
+                  "version": "2.99.1"
+                }
+              },
+              "Policy": {
+                "id": "Policy",
+                "path": "golf-district-aws-cloudformation/Golf-District-Bucket/Policy",
+                "children": {
+                  "Resource": {
+                    "id": "Resource",
+                    "path": "golf-district-aws-cloudformation/Golf-District-Bucket/Policy/Resource",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::S3::BucketPolicy",
+                      "aws:cdk:cloudformation:props": {
+                        "bucket": {
+                          "Ref": "GolfDistrictBucket2BC0DA6A"
+                        },
+                        "policyDocument": {
+                          "Statement": [
+                            {
+                              "Action": "s3:GetObject",
+                              "Effect": "Allow",
+                              "Principal": {
+                                "CanonicalUser": {
+                                  "Fn::GetAtt": [
+                                    "golfdistrictidentity6BBC8100",
+                                    "S3CanonicalUserId"
+                                  ]
+                                },
+                                "Service": "lambda.amazonaws.com"
+                              },
+                              "Resource": {
+                                "Fn::Join": [
+                                  "",
+                                  [
+                                    {
+                                      "Fn::GetAtt": [
+                                        "GolfDistrictBucket2BC0DA6A",
+                                        "Arn"
+                                      ]
+                                    },
+                                    "/*"
+                                  ]
+                                ]
+                              }
+                            },
+                            {
+                              "Action": "s3:GetBucketTagging",
+                              "Effect": "Allow",
+                              "Principal": {
+                                "Service": "lambda.amazonaws.com"
+                              },
+                              "Resource": {
+                                "Fn::GetAtt": [
+                                  "GolfDistrictBucket2BC0DA6A",
+                                  "Arn"
+                                ]
+                              }
+                            }
+                          ],
+                          "Version": "2012-10-17"
+                        }
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_s3.CfnBucketPolicy",
+                      "version": "2.99.1"
+                    }
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_s3.BucketPolicy",
+                  "version": "2.99.1"
+                }
+              }
+            },
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.aws_s3.Bucket",
+              "version": "2.99.1"
+            }
+          },
+          "golf-district-identity": {
+            "id": "golf-district-identity",
+            "path": "golf-district-aws-cloudformation/golf-district-identity",
+            "children": {
+              "Resource": {
+                "id": "Resource",
+                "path": "golf-district-aws-cloudformation/golf-district-identity/Resource",
+                "attributes": {
+                  "aws:cdk:cloudformation:type": "AWS::CloudFront::CloudFrontOriginAccessIdentity",
+                  "aws:cdk:cloudformation:props": {
+                    "cloudFrontOriginAccessIdentityConfig": {
+                      "comment": "golf-district-identity"
+                    }
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_cloudfront.CfnCloudFrontOriginAccessIdentity",
+                  "version": "2.99.1"
+                }
+              }
+            },
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.aws_cloudfront.OriginAccessIdentity",
+              "version": "2.99.1"
+            }
+          },
+          "golf-district-distribution": {
+            "id": "golf-district-distribution",
+            "path": "golf-district-aws-cloudformation/golf-district-distribution",
+            "children": {
+              "CFDistribution": {
+                "id": "CFDistribution",
+                "path": "golf-district-aws-cloudformation/golf-district-distribution/CFDistribution",
+                "attributes": {
+                  "aws:cdk:cloudformation:type": "AWS::CloudFront::Distribution",
+                  "aws:cdk:cloudformation:props": {
+                    "distributionConfig": {
+                      "enabled": true,
+                      "defaultRootObject": "index.html",
+                      "httpVersion": "http2",
+                      "priceClass": "PriceClass_100",
+                      "ipv6Enabled": true,
+                      "origins": [
+                        {
+                          "id": "origin1",
+                          "domainName": {
+                            "Fn::GetAtt": [
+                              "GolfDistrictBucket2BC0DA6A",
+                              "RegionalDomainName"
+                            ]
+                          },
+                          "s3OriginConfig": {
+                            "originAccessIdentity": {
+                              "Fn::Join": [
+                                "",
+                                [
+                                  "origin-access-identity/cloudfront/",
+                                  {
+                                    "Ref": "golfdistrictidentity6BBC8100"
+                                  }
+                                ]
+                              ]
+                            }
+                          },
+                          "connectionAttempts": 3,
+                          "connectionTimeout": 10
+                        }
+                      ],
+                      "defaultCacheBehavior": {
+                        "allowedMethods": [
+                          "GET",
+                          "HEAD"
+                        ],
+                        "cachedMethods": [
+                          "GET",
+                          "HEAD"
+                        ],
+                        "compress": true,
+                        "forwardedValues": {
+                          "queryString": false,
+                          "cookies": {
+                            "forward": "none"
+                          }
+                        },
+                        "targetOriginId": "origin1",
+                        "viewerProtocolPolicy": "redirect-to-https"
+                      },
+                      "viewerCertificate": {
+                        "cloudFrontDefaultCertificate": true
+                      }
+                    }
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_cloudfront.CfnDistribution",
+                  "version": "2.99.1"
+                }
+              }
+            },
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.aws_cloudfront.CloudFrontWebDistribution",
+              "version": "2.99.1"
+            }
+          },
+          "golf-district-place-index": {
+            "id": "golf-district-place-index",
+            "path": "golf-district-aws-cloudformation/golf-district-place-index",
+            "attributes": {
+              "aws:cdk:cloudformation:type": "AWS::Location::PlaceIndex",
+              "aws:cdk:cloudformation:props": {
+                "dataSource": "Esri",
+                "indexName": "Gold-District-GeoCode-Index"
+              }
+            },
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.aws_location.CfnPlaceIndex",
+              "version": "2.99.1"
+            }
+          },
+          "GoldDistrictApplication": {
+            "id": "GoldDistrictApplication",
+            "path": "golf-district-aws-cloudformation/GoldDistrictApplication",
+            "children": {
+              "Resource": {
+                "id": "Resource",
+                "path": "golf-district-aws-cloudformation/GoldDistrictApplication/Resource",
+                "attributes": {
+                  "aws:cdk:cloudformation:type": "AWS::IAM::User",
+                  "aws:cdk:cloudformation:props": {}
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_iam.CfnUser",
+                  "version": "2.99.1"
+                }
+              },
+              "DefaultPolicy": {
+                "id": "DefaultPolicy",
+                "path": "golf-district-aws-cloudformation/GoldDistrictApplication/DefaultPolicy",
+                "children": {
+                  "Resource": {
+                    "id": "Resource",
+                    "path": "golf-district-aws-cloudformation/GoldDistrictApplication/DefaultPolicy/Resource",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::IAM::Policy",
+                      "aws:cdk:cloudformation:props": {
+                        "policyDocument": {
+                          "Statement": [
+                            {
+                              "Action": "geo:SearchPlaceIndexForText",
+                              "Effect": "Allow",
+                              "Resource": {
+                                "Fn::GetAtt": [
+                                  "golfdistrictplaceindex",
+                                  "IndexArn"
+                                ]
+                              }
+                            },
+                            {
+                              "Action": [
+                                "s3:GetObject",
+                                "s3:ListBucket",
+                                "s3:PutObject"
+                              ],
+                              "Effect": "Allow",
+                              "Resource": {
+                                "Fn::Join": [
+                                  "",
+                                  [
+                                    {
+                                      "Fn::GetAtt": [
+                                        "GolfDistrictBucket2BC0DA6A",
+                                        "Arn"
+                                      ]
+                                    },
+                                    "/*"
+                                  ]
+                                ]
+                              }
+                            }
+                          ],
+                          "Version": "2012-10-17"
+                        },
+                        "policyName": "GoldDistrictApplicationDefaultPolicy8F721A2A",
+                        "users": [
+                          {
+                            "Ref": "GoldDistrictApplication9C32AA13"
+                          }
+                        ]
+                      }
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_iam.CfnPolicy",
+                      "version": "2.99.1"
+                    }
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_iam.Policy",
+                  "version": "2.99.1"
+                }
+              }
+            },
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.aws_iam.User",
+              "version": "2.99.1"
+            }
+          },
+          "GoldDistrictApplicationAccessKey": {
+            "id": "GoldDistrictApplicationAccessKey",
+            "path": "golf-district-aws-cloudformation/GoldDistrictApplicationAccessKey",
+            "attributes": {
+              "aws:cdk:cloudformation:type": "AWS::IAM::AccessKey",
+              "aws:cdk:cloudformation:props": {
+                "userName": {
+                  "Ref": "GoldDistrictApplication9C32AA13"
+                }
+              }
+            },
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.aws_iam.CfnAccessKey",
+              "version": "2.99.1"
+            }
+          },
+          "golf-district-Distribution": {
+            "id": "golf-district-Distribution",
+            "path": "golf-district-aws-cloudformation/golf-district-Distribution",
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.CfnOutput",
+              "version": "2.99.1"
+            }
+          },
+          "@golf-district-platform--AccessKeyId": {
+            "id": "@golf-district-platform--AccessKeyId",
+            "path": "golf-district-aws-cloudformation/@golf-district-platform--AccessKeyId",
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.CfnOutput",
+              "version": "2.99.1"
+            }
+          },
+          "@golf-district-platform--SecretAccessKey": {
+            "id": "@golf-district-platform--SecretAccessKey",
+            "path": "golf-district-aws-cloudformation/@golf-district-platform--SecretAccessKey",
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.CfnOutput",
+              "version": "2.99.1"
+            }
+          },
+          "CDKMetadata": {
+            "id": "CDKMetadata",
+            "path": "golf-district-aws-cloudformation/CDKMetadata",
+            "children": {
+              "Default": {
+                "id": "Default",
+                "path": "golf-district-aws-cloudformation/CDKMetadata/Default",
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.CfnResource",
+                  "version": "2.99.1"
+                }
+              },
+              "Condition": {
+                "id": "Condition",
+                "path": "golf-district-aws-cloudformation/CDKMetadata/Condition",
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.CfnCondition",
+                  "version": "2.99.1"
+                }
+              }
+            },
+            "constructInfo": {
+              "fqn": "constructs.Construct",
+              "version": "10.2.70"
+            }
+          },
+          "BootstrapVersion": {
+            "id": "BootstrapVersion",
+            "path": "golf-district-aws-cloudformation/BootstrapVersion",
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.CfnParameter",
+              "version": "2.99.1"
+            }
+          },
+          "CheckBootstrapVersion": {
+            "id": "CheckBootstrapVersion",
+            "path": "golf-district-aws-cloudformation/CheckBootstrapVersion",
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.CfnRule",
+              "version": "2.99.1"
+            }
+          }
+        },
+        "constructInfo": {
+          "fqn": "aws-cdk-lib.Stack",
+          "version": "2.99.1"
+        }
+      },
+      "Tree": {
+        "id": "Tree",
+        "path": "Tree",
+        "constructInfo": {
+          "fqn": "constructs.Construct",
+          "version": "10.2.70"
+        }
+      }
+    },
+    "constructInfo": {
+      "fqn": "aws-cdk-lib.App",
+      "version": "2.99.1"
+    }
+  }
+}

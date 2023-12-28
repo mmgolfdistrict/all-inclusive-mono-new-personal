@@ -1,0 +1,156 @@
+import { eq, or } from "@golf-district/database";
+import type { Db } from "@golf-district/database";
+import { assets } from "@golf-district/database/schema/assets";
+import { users } from "@golf-district/database/schema/users";
+import type { SelectUser } from "@golf-district/database/schema/users";
+import { assetToURL, currentUtcTimestamp } from "@golf-district/shared";
+import Logger from "@golf-district/shared/src/logger";
+import bcrypt from "bcryptjs";
+
+export class AuthService {
+  private readonly logger = Logger(AuthService.name);
+
+  /**
+   * Constructs an instance of the `AuthService`.
+   *
+   * @param database - A database instance or connector used for user data retrieval and update operations.
+   */
+  constructor(private readonly database: Db) {}
+
+  /**
+   * Asynchronously authenticates a user with the provided handle/email and password.
+   *
+   * This method checks whether a user exists with the provided handle or email,
+   * ensures the email is verified, validates the password, and updates the last successful login timestamp
+   * in the database upon successful authentication. It behaves differently in production and non-production environments:
+   * - In production, it will log warnings and return null for various failure cases.
+   * - In non-production environments, it will throw errors for the same failure cases.
+   *
+   * @param handleOrEmail - A string representing either the user handle or email used for attempting authentication.
+   * @param password - A string representing the password provided by the user attempting to authenticate.
+   *
+   * @returns {Promise<SelectUser | null>}
+   *   A promise that resolves to the authenticated user's data or null if authentication fails.
+   *   - Returns the user data if authentication is successful.
+   *   - Returns null if any of the following occurs (in production):
+   *     - No user is found.
+   *     - User email is not verified.
+   *     - User has no password.
+   *     - Password is invalid.
+   *   - In non-production environments, instead of returning null, it throws corresponding errors for the above cases.
+   *
+   * @throws (only in non-production environments)
+   *   - `Error("User not found")`: If no user is found with the provided `handleOrEmail`.
+   *   - `Error("User email not verified")`: If the user found has not verified their email address.
+   *   - `Error("User has no password")`: If the user found does not have a password set in the database (might indicate a social login user).
+   *   - `Error("Invalid password")`: If the provided `password` does not match the stored password for the user.
+   *
+   * @example
+   *   authenticateUser('johnDoe123', 'SecureP@ssw0rd!');
+   */
+  authenticateUser = async (handleOrEmail: string, password: string) => {
+    const [data] = await this.database
+      .select({
+        user: users,
+        asset: {
+          assetId: assets.id,
+          assetKey: assets.key,
+          assetCdn: assets.cdn,
+          assetExtension: assets.extension,
+        },
+      })
+      .from(users)
+      .where(or(eq(users.handle, handleOrEmail), eq(users.email, handleOrEmail)))
+      .leftJoin(assets, eq(users.image, assets.id))
+      .execute();
+    console.log(handleOrEmail, data);
+    if (!data) {
+      this.logger.warn(`User not found: ${handleOrEmail}`);
+      if (process.env.NODE_ENV !== "production") {
+        throw new Error("User not found");
+      }
+      return null;
+    }
+    if (!data.user.emailVerified) {
+      this.logger.warn(`User email not verified: ${handleOrEmail}`);
+      if (process.env.NODE_ENV !== "production") {
+        throw new Error("User email not verified");
+      }
+      return null;
+    }
+    if (!data.user.gdPassword) {
+      this.logger.warn(`User has no password: ${handleOrEmail}`);
+      if (process.env.NODE_ENV !== "production") {
+        throw new Error("User has no password");
+      }
+      return null;
+    }
+
+    const valid = await bcrypt.compare(password, data.user.gdPassword);
+    if (!valid) {
+      this.logger.warn(`Invalid password: ${handleOrEmail}`);
+      if (process.env.NODE_ENV !== "production") {
+        throw new Error("Invalid password");
+      }
+      return null;
+    }
+    await this.database
+      .update(users)
+      .set({
+        lastSuccessfulLogin: currentUtcTimestamp(),
+      })
+      .where(eq(users.id, data.user.id))
+      .execute()
+      .then(() => {
+        this.logger.info(`Updated lastSuccessfulLogin for user: ${handleOrEmail}`);
+        return data.user;
+      });
+    let profilePicture = "";
+    if (!data.asset) {
+      profilePicture = "/defaults/default-banner.webp";
+    } else {
+      profilePicture = assetToURL({
+        key: data.asset.assetKey,
+        cdn: data.asset.assetCdn,
+        extension: data.asset.assetExtension,
+      });
+    }
+    return {
+      ...data.user,
+      profilePicture,
+    };
+  };
+
+  //incomplete
+  // verify2FA = async (
+  //   userId: string,
+  //   verificationToken: string
+  // ): Promise<boolean> => {
+  //   const user = await this.database
+  //     .select()
+  //     .from(users)
+  //     .where(eq(users.id, userId));
+  //   if (!user[0]) {
+  //     this.logger.warn(`User not found: ${userId}`);
+  //     if (process.env.NODE_ENV !== "production") {
+  //       throw new Error("User not found");
+  //     }
+  //     return false;
+  //   }
+  //   if (!user[0].emailVerified) {
+  //     this.logger.warn(`User email not verified: ${userId}`);
+  //     if (process.env.NODE_ENV !== "production") {
+  //       throw new Error("User email not verified");
+  //     }
+  //     return false;
+  //   }
+  //   if (!user[0].gdPassword) {
+  //     this.logger.warn(`User has no password: ${userId}`);
+  //     if (process.env.NODE_ENV !== "production") {
+  //       throw new Error("User has no password");
+  //     }
+  //     return false;
+  //   }
+  //   return true;
+  // };
+}

@@ -1,0 +1,201 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+import {
+  UnifiedCheckout,
+  useHyper,
+  useWidgets,
+} from "@juspay-tech/react-hyper-js";
+import { useCourseContext } from "~/contexts/CourseContext";
+import { useRouter } from "next/navigation";
+import { useEffect, useState, type FormEvent } from "react";
+import { FilledButton } from "../buttons/filled-button";
+import styles from "./checkout.module.css";
+
+export const CheckoutForm = ({
+  isBuyNowAuction,
+  amountToPay,
+  teeTimeId,
+}: {
+  isBuyNowAuction: boolean;
+  amountToPay: number;
+  teeTimeId: string;
+}) => {
+  const { course } = useCourseContext();
+  const unifiedCheckoutOptions = {
+    wallets: {
+      walletReturnUrl: isBuyNowAuction
+        ? `${window.location.origin}/${course?.id}/auctions/confirmation`
+        : `${window.location.origin}/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}`,
+      applePay: "auto",
+      googlePay: "auto",
+    },
+    paymentMethodOrder: ["google_pay", "apple_pay", "card"],
+    fields: {
+      billingDetails: {
+        name: "auto",
+        email: "never",
+        phone: "never",
+        address: {
+          line1: "auto",
+          line2: "never",
+          city: "auto",
+          state: "auto",
+          country: "auto",
+          postal_code: "auto",
+        },
+      },
+    },
+  };
+  const hyper = useHyper();
+  const widgets = useWidgets();
+
+  const router = useRouter();
+
+  const [isLoading, setIsLoading] = useState(false);
+  // const [isPaymentCompleted, setIsPaymentCompleted] = useState(false);
+  const [message, setMessage] = useState("");
+  const [promoCode, setPromoCode] = useState<string>("");
+
+  const handlePaymentStatus = (status: string) => {
+    switch (status) {
+      case "succeeded":
+        setMessage("Successful");
+        break;
+      case "processing":
+        setMessage("Your payment is processing.");
+        break;
+      case "requires_payment_method":
+        setMessage("Your payment was not successful, please try again.");
+        break;
+      case "":
+        break;
+      default:
+        setMessage("Something went wrong.");
+        break;
+    }
+  };
+
+  useEffect(() => {
+    if (!hyper) {
+      return;
+    }
+
+    const clientSecret = new URLSearchParams(window.location.search).get(
+      "payment_intent_client_secret"
+    );
+
+    if (!clientSecret) {
+      return;
+    }
+
+    hyper.retrievePaymentIntent(clientSecret).then((resp) => {
+      const status = resp?.paymentIntent?.status;
+      if (status) {
+        handlePaymentStatus(resp?.paymentIntent?.status);
+      }
+    });
+  });
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    setIsLoading(true);
+
+    const response = await hyper.confirmPayment({
+      widgets,
+      confirmParams: {
+        // Make sure to change this to your payment completion page
+        return_url: isBuyNowAuction
+          ? `${window.location.origin}/${course?.id}/auctions/confirmation`
+          : `${window.location.origin}/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}`,
+      },
+      redirect: "if_required",
+    });
+
+    if (response) {
+      if (response.status === "succeeded") {
+        console.log(response);
+        setMessage("Payment Successful");
+        isBuyNowAuction
+          ? router.push(`/${course?.id}/auctions/confirmation`)
+          : router.push(
+              `/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}`
+            );
+      } else if (response.error) {
+        setMessage(response.error.message);
+      } else {
+        setMessage("An unexpected error occurred.");
+      }
+    } else {
+      setMessage("An unexpected error occurred.");
+    }
+
+    setIsLoading(false);
+    // setIsPaymentCompleted(true);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="">
+      <UnifiedCheckout id="unified-checkout" options={unifiedCheckoutOptions} />
+      <div className="flex w-full flex-col gap-2 bg-white p-4 rounded-lg my-2">
+        {isBuyNowAuction ? null : (
+          <div className={`flex flex-col gap-1`}>
+            <label
+              className="text-[14px] text-primary-gray"
+              htmlFor={"promo-code"}
+            >
+              Promo code
+            </label>
+            <input
+              id="promo-code"
+              className="rounded-lg bg-secondary-white px-4 py-3 text-[14px] text-gray-500 outline-none"
+              value={promoCode}
+              onChange={(e) => setPromoCode(e.target.value)}
+              placeholder="Enter promo code"
+            />
+          </div>
+        )}
+        <div className="flex justify-between">
+          <div>
+            Subtotal
+            {isBuyNowAuction ? null : `(1 item)`}
+          </div>
+
+          <div>
+            $
+            {amountToPay.toLocaleString("en-US", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
+          </div>
+        </div>
+        <div className="flex justify-between">
+          <div>Tax</div>
+          <div>$0.00</div>
+        </div>
+        <div className="flex justify-between">
+          <div>Total</div>
+          <div>
+            $
+            {amountToPay.toLocaleString("en-US", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
+          </div>
+        </div>
+      </div>
+
+      <FilledButton
+        className={`w-full rounded-full`}
+        disabled={!hyper || !widgets}
+      >
+        {isLoading ? "Loading..." : <>Pay Now</>}
+      </FilledButton>
+      {/* Show any error or success messages */}
+      {message && (
+        <div id="payment-message" className={styles.paymentMessage}>
+          {message}
+        </div>
+      )}
+    </form>
+  );
+};
