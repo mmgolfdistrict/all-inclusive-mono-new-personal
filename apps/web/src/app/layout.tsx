@@ -81,79 +81,24 @@ export const metadata: Metadata = {
 //   };
 // }
 
-// export async function generateStaticParams() {
-//   const [subdomains, customDomains] = await Promise.all([
-//     prisma.site.findMany({
-//       select: {
-//         subdomain: true,
-//       },
-//     }),
-//     prisma.site.findMany({
-//       where: {
-//         NOT: {
-//           customDomain: null,
-//         },
-//       },
-//       select: {
-//         customDomain: true,
-//       },
-//     }),
-//   ]);
-
-//   const allPaths = [
-//     ...subdomains.map(({ subdomain }) => subdomain),
-//     ...customDomains.map(({ customDomain }) => customDomain),
-//   ].filter((path) => path) as Array<string>;
-
-//   return allPaths.map((domain) => ({
-//     params: {
-//       domain,
-//     },
-//   }));
-// }
-
-// export async function generateStaticParams() {
-//   return await ssrGetStaticPaths();
-// }
-
 export const dynamic = "force-dynamic";
 
 export default async function RootLayout({
-  params,
   children,
 }: {
-  params: { domain: string };
   children: ReactNode;
 }) {
-  // console.log("params", params);
-  // const host = headers().get("host");
-  // const origin = headers().values();
-  // console.log("origin", origin);
-  // const domain = host?.split(":")[0];
+  const host = headers().get("host");
 
-  // const domain1 = decodeURIComponent(host);
-  // console.log("host", host);
-  // console.log("domain1", domain1);
-  // // const { domain } = params;
-  // // console.log("domain", domain);
-  // // const data = await getSiteData(domain);
-  // const data = await ssrGetEntityByDomain("localhost", "");
-  // console.log(data);
+  const domain = host?.split(":")?.[0]; //split on : to get localhost
 
-  // if (!data) {
-  //   notFound();
-  // }
+  if (!domain) {
+    notFound();
+  }
 
-  // // Optional: Redirect to custom domain if it exists
-  // if (
-  //   domain.endsWith(`.${process.env.NEXT_PUBLIC_ROOT_DOMAIN}`) &&
-  //   data.customDomain &&
-  //   process.env.REDIRECT_TO_CUSTOM_DOMAIN_IF_EXISTS === "true"
-  // ) {
-  //   return redirect(`https://${data.customDomain}`);
-  // }
+  const domainDecoded = decodeURIComponent(domain);
 
-  const entityData = await ssrGetEntityByDomain("localhost", "");
+  const entityData = await ssrGetEntityByDomain(domainDecoded, "");
 
   if (!entityData) {
     notFound();

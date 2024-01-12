@@ -66,10 +66,12 @@ export class EntityService {
         .where(not(isNull(entities.customDomain)))
         .execute(),
     ]);
+
     const allPaths = [
       ...subdomains.map(({ subdomain }) => subdomain),
       ...customDomains.map(({ customDomain }) => customDomain),
     ].filter((path) => path) as string[];
+
     return allPaths.map((domain) => ({
       params: {
         domain,
