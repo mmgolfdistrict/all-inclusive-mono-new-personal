@@ -272,7 +272,7 @@ export default function CourseHomePage() {
           {/* mobile  for filter/sort */}
           <FilterSort toggleFilters={toggleFilters} toggleSort={toggleSort} />
         </div>
-        <div className="flex w-full flex-col gap-4 overflow-x-hidden pr-0 md:pr-6">
+        <div className="flex w-full flex-col gap-1 md:gap-4 overflow-x-hidden pr-0 md:pr-6">
           <div className="flex justify-between gap-4  px-4 md:px-0">
             <div className="text-secondary-black">
               Showing {amountOfTeeTimes ?? "0"} tee times{" "}

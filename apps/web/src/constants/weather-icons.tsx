@@ -14,38 +14,52 @@ import { Snow } from "../components/icons/weather/snow";
 
 export const WeatherIcons: Record<IconCodeType, ReactNode> = {
   "": <></>,
-  skc: <Sunny className="h-[30px] w-[30px]" />,
-  few: <PartlyCloudy className="h-[30px] w-[30px]" />,
-  sct: <PartlyCloudy className="h-[30px] w-[30px]" />,
-  bkn: <CloudyClearAtTime className="h-[30px] w-[30px]" />,
-  ovc: <Cloudy className="h-[30px] w-[30px]" />,
-  wind_skc: <Wind className="h-[30px] w-[30px]" />,
-  wind_few: <Wind className="h-[30px] w-[30px]" />,
-  wind_sct: <Wind className="h-[30px] w-[30px]" />,
-  wind_bkn: <Wind className="h-[30px] w-[30px]" />,
-  wind_ovc: <Wind className="h-[30px] w-[30px]" />,
-  snow: <Snow className="h-[30px] w-[30px]" />,
-  rain_snow: <Snow className="h-[30px] w-[30px]" />,
-  rain_sleet: <Snow className="h-[30px] w-[30px]" />,
-  snow_sleet: <Snow className="h-[30px] w-[30px]" />,
-  fzra: <LightRain className="h-[30px] w-[30px]" />,
-  rain_fzra: <LightRain className="h-[30px] w-[30px]" />,
-  snow_fzra: <LightRain className="h-[30px] w-[30px]" />,
-  sleet: <Hail className="h-[30px] w-[30px]" />,
-  rain: <LightRain className="h-[30px] w-[30px]" />,
-  rain_showers: <ScatteredShowers className="h-[30px] w-[30px]" />,
-  rain_showers_hi: <LightRain className="h-[30px] w-[30px]" />,
-  tsra: <HeavyRain className="h-[30px] w-[30px]" />,
-  tsra_sct: <HeavyRain className="h-[30px] w-[30px]" />,
-  tsra_hi: <HeavyRain className="h-[30px] w-[30px]" />,
-  tornado: <Wind className="h-[30px] w-[30px]" />,
-  hurricane: <HeavyRain className="h-[30px] w-[30px]" />,
-  tropical_storm: <HeavyRain className="h-[30px] w-[30px]" />,
-  dust: <Fog className="h-[30px] w-[30px]" />,
-  smoke: <Fog className="h-[30px] w-[30px]" />,
-  haze: <Fog className="h-[30px] w-[30px]" />,
-  hot: <Sunny className="h-[30px] w-[30px]" />,
-  cold: <Sunny className="h-[30px] w-[30px]" />,
-  blizzard: <Snow className="h-[30px] w-[30px]" />,
-  fog: <Fog className="h-[30px] w-[30px]" />,
+  skc: <Sunny className="md:h-[30px] md:w-[30px] h-[20px] w-[20px]" />,
+  few: <PartlyCloudy className="md:h-[30px] md:w-[30px] h-[20px] w-[20px]" />,
+  sct: <PartlyCloudy className="md:h-[30px] md:w-[30px] h-[20px] w-[20px]" />,
+  bkn: (
+    <CloudyClearAtTime className="md:h-[30px] md:w-[30px] h-[20px] w-[20px]" />
+  ),
+  ovc: <Cloudy className="md:h-[30px] md:w-[30px] h-[20px] w-[20px]" />,
+  wind_skc: <Wind className="md:h-[30px] md:w-[30px] h-[20px] w-[20px]" />,
+  wind_few: <Wind className="md:h-[30px] md:w-[30px] h-[20px] w-[20px]" />,
+  wind_sct: <Wind className="md:h-[30px] md:w-[30px] h-[20px] w-[20px]" />,
+  wind_bkn: <Wind className="md:h-[30px] md:w-[30px] h-[20px] w-[20px]" />,
+  wind_ovc: <Wind className="md:h-[30px] md:w-[30px] h-[20px] w-[20px]" />,
+  snow: <Snow className="md:h-[30px] md:w-[30px] h-[20px] w-[20px]" />,
+  rain_snow: <Snow className="md:h-[30px] md:w-[30px] h-[20px] w-[20px]" />,
+  rain_sleet: <Snow className="md:h-[30px] md:w-[30px] h-[20px] w-[20px]" />,
+  snow_sleet: <Snow className="md:h-[30px] md:w-[30px] h-[20px] w-[20px]" />,
+  fzra: <LightRain className="md:h-[30px] md:w-[30px] h-[20px] w-[20px]" />,
+  rain_fzra: (
+    <LightRain className="md:h-[30px] md:w-[30px] h-[20px] w-[20px]" />
+  ),
+  snow_fzra: (
+    <LightRain className="md:h-[30px] md:w-[30px] h-[20px] w-[20px]" />
+  ),
+  sleet: <Hail className="md:h-[30px] md:w-[30px] h-[20px] w-[20px]" />,
+  rain: <LightRain className="md:h-[30px] md:w-[30px] h-[20px] w-[20px]" />,
+  rain_showers: (
+    <ScatteredShowers className="md:h-[30px] md:w-[30px] h-[20px] w-[20px]" />
+  ),
+  rain_showers_hi: (
+    <LightRain className="md:h-[30px] md:w-[30px] h-[20px] w-[20px]" />
+  ),
+  tsra: <HeavyRain className="md:h-[30px] md:w-[30px] h-[20px] w-[20px]" />,
+  tsra_sct: <HeavyRain className="md:h-[30px] md:w-[30px] h-[20px] w-[20px]" />,
+  tsra_hi: <HeavyRain className="md:h-[30px] md:w-[30px] h-[20px] w-[20px]" />,
+  tornado: <Wind className="md:h-[30px] md:w-[30px] h-[20px] w-[20px]" />,
+  hurricane: (
+    <HeavyRain className="md:h-[30px] md:w-[30px] h-[20px] w-[20px]" />
+  ),
+  tropical_storm: (
+    <HeavyRain className="md:h-[30px] md:w-[30px] h-[20px] w-[20px]" />
+  ),
+  dust: <Fog className="md:h-[30px] md:w-[30px] h-[20px] w-[20px]" />,
+  smoke: <Fog className="md:h-[30px] md:w-[30px] h-[20px] w-[20px]" />,
+  haze: <Fog className="md:h-[30px] md:w-[30px] h-[20px] w-[20px]" />,
+  hot: <Sunny className="md:h-[30px] md:w-[30px] h-[20px] w-[20px]" />,
+  cold: <Sunny className="md:h-[30px] md:w-[30px] h-[20px] w-[20px]" />,
+  blizzard: <Snow className="md:h-[30px] md:w-[30px] h-[20px] w-[20px]" />,
+  fog: <Fog className="md:h-[30px] md:w-[30px] h-[20px] w-[20px]" />,
 };

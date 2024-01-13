@@ -44,16 +44,16 @@ export const DailyTeeTimes = ({
 
   return (
     <div
-      className="flex flex-col gap-4 bg-white px-4 py-3 md:rounded-xl md:px-8 md:py-6"
+      className="flex flex-col gap-1 md:gap-4 bg-white px-4 py-2 md:rounded-xl md:px-8 md:py-6 "
       {...props}
     >
       <div className="flex flex-wrap justify-between gap-2">
         {/* dont add utcOffset to this, the cleaned yyyy-mm-dd is being passed here */}
-        <div className="text-lg">{dayMonthDate(date)}</div>
+        <div className="text-[13px] md:text-lg">{dayMonthDate(date)}</div>
         {weatherDesciption !== "" ? (
           <div className="flex items-center gap-1">
             <div>{weatherIcon}</div>
-            <div>{temperature}°F</div>
+            <div className="text-[12px] md:text-[16px]">{temperature}°F</div>
             <div className="hidden text-sm text-primary-gray md:block">
               {weatherDesciption}
             </div>
@@ -63,7 +63,7 @@ export const DailyTeeTimes = ({
         )}
       </div>
       <div
-        className="scrollbar-none relative flex gap-4 overflow-x-auto overflow-y-hidden"
+        className="scrollbar-none relative flex gap-2 md:gap-4 overflow-x-auto overflow-y-hidden"
         ref={overflowRef}
         onMouseDown={onMouseDown}
       >

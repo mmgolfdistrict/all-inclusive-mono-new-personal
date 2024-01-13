@@ -7,12 +7,14 @@ export const ChoosePlayers = ({
   playersOptions,
   availableSlots,
   isDisabled,
+  className,
 }: {
   players: string;
   setPlayers: (v: string) => void;
   playersOptions: string[];
   availableSlots: number;
   isDisabled?: boolean;
+  className?: string;
 }) => {
   return (
     <ToggleGroup.Root
@@ -38,7 +40,9 @@ export const ChoosePlayers = ({
               : "border-b border-r border-t border-stroke"
           } px-[1rem] py-[.25rem] ${
             availableSlots < index + 1 ? "opacity-50 cursor-not-allowed" : ""
-          } ${isDisabled ? "opacity-50 cursor-not-allowed" : ""}`}
+          } ${isDisabled ? "opacity-50 cursor-not-allowed" : ""} ${
+            className ?? ""
+          }`}
         />
       ))}
     </ToggleGroup.Root>
