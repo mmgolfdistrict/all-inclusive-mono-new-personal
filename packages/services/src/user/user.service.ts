@@ -3,6 +3,10 @@ import { and, eq, gt, gte, lt, or } from "@golf-district/database";
 import type { Db } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import { bookings } from "@golf-district/database/schema/bookings";
+import { courses } from "@golf-district/database/schema/courses";
+import { favorites } from "@golf-district/database/schema/favorites";
+import { lists } from "@golf-district/database/schema/lists";
+import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import type { InsertUser, SelectUser } from "@golf-district/database/schema/users";
 import { users } from "@golf-district/database/schema/users";
 import {
@@ -17,10 +21,6 @@ import bcrypt from "bcryptjs";
 import { alias } from "drizzle-orm/mysql-core";
 import { generateUtcTimestamp } from "../../helpers";
 import type { NotificationService } from "../notification/notification.service";
-import { favorites } from "@golf-district/database/schema/favorites";
-import { courses } from "@golf-district/database/schema/courses";
-import { teeTimes } from "@golf-district/database/schema/teeTimes";
-import { lists } from "@golf-district/database/schema/lists";
 
 export interface UserCreationData {
   email: string;
@@ -57,10 +57,7 @@ export class UserService {
    * @example
    * const userService = new UserService(database, notificationService);
    */
-  constructor(
-    protected readonly database: Db,
-    private readonly notificationsService: NotificationService
-  ) {
+  constructor(protected readonly database: Db, private readonly notificationsService: NotificationService) {
     //this.filter = new Filter();
   }
 
