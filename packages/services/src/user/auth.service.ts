@@ -63,7 +63,6 @@ export class AuthService {
       .where(or(eq(users.handle, handleOrEmail), eq(users.email, handleOrEmail)))
       .leftJoin(assets, eq(users.image, assets.id))
       .execute();
-    console.log(handleOrEmail, data);
     if (!data) {
       this.logger.warn(`User not found: ${handleOrEmail}`);
       if (process.env.NODE_ENV !== "production") {
