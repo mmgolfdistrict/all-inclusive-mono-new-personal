@@ -19,9 +19,7 @@
     ".next/types/**/*.ts",
     "next-config.mjs",
     "postcss.config.cjs",
-    ".eslintrc.cjs",
-    "../../packages/shared/src/schema/register-schema.ts",
-    "env.mjs"
+    ".eslintrc.cjs"
   ],
   "exclude": ["node_modules"]
 }

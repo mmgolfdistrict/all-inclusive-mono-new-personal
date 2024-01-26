@@ -1,4 +1,5 @@
 import Logger from "@golf-district/shared/src/logger";
+import { JsonArrAppendCommand } from "@upstash/redis/types/pkg/commands/json_arrappend";
 import type {
   BookingCreationData,
   BookingResponse,

@@ -5,8 +5,8 @@ export const Slider = (props: RadixSlider.SliderProps) => {
     <form>
       <RadixSlider.Root
         className="relative flex h-5 w-full touch-none select-none items-center"
-        {...props}
         minStepsBetweenThumbs={1}
+        {...props}
       >
         <RadixSlider.Track className="relative h-[8px] grow rounded-full bg-stroke">
           <RadixSlider.Range className="absolute h-full rounded-full bg-primary" />

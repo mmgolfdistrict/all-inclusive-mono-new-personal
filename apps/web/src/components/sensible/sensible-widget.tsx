@@ -110,7 +110,7 @@ export const SensibleWidget = memo(
           handleShouldAddSensible(true);
         });
         // @ts-ignore
-        Sensible.setUnselectGuaranteeCallback((quote) => {
+        Sensible.setUnselectGuaranteeCallback(() => {
           setSensibleData(undefined);
           handleShouldAddSensible(false);
         });

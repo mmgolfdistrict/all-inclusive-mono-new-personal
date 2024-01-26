@@ -1,5 +1,7 @@
+import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
 import { and, eq, gte } from "@golf-district/database";
+import { customerCarts } from "@golf-district/database/schema/customerCart";
 import { lists } from "@golf-district/database/schema/lists";
 import { providerCourseLink } from "@golf-district/database/schema/providersCourseLink";
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
@@ -115,6 +117,7 @@ export class CheckoutService {
     }
     const errors = await this.validateCartItems(customerCart);
     console.log("errors ", JSON.stringify(errors));
+
     // if (errors.length > 0) {
     //   const message = errors.map((message) => message.errorType)
     //   throw new Error(errors);
@@ -141,6 +144,14 @@ export class CheckoutService {
         this.logger.error(` ${err}`);
         throw new Error(`Error creating payment intent: ${err}`);
       });
+    //save customerCart to database
+    await this.database.insert(customerCarts).values({
+      id: randomUUID(),
+      userId: userId,
+      courseId: customerCart.courseId,
+      paymentId: paymentIntent.payment_id,
+      cart: customerCart.cart,
+    });
     return {
       clientSecret: paymentIntent.client_secret,
     };

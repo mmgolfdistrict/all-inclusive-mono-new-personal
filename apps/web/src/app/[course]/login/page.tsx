@@ -9,6 +9,7 @@ import { Facebook } from "~/components/icons/facebook";
 import { Google } from "~/components/icons/google";
 import { Input } from "~/components/input/input";
 import { useAppContext } from "~/contexts/AppContext";
+import { useCourseContext } from "~/contexts/CourseContext";
 import { loginSchema, type LoginSchemaType } from "~/schema/login-schema";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -22,6 +23,7 @@ export default function Login() {
   const { prevPath } = useAppContext();
   const searchParams = useSearchParams();
   const loginError = searchParams.get("error");
+  const { course } = useCourseContext();
 
   useEffect(() => {
     if (loginError === "CallbackRouteError") {
@@ -40,16 +42,30 @@ export default function Login() {
   });
 
   const onSubmit: SubmitHandler<LoginSchemaType> = async (data) => {
-    console.log("data to submit", data);
     try {
-      await signIn("Credentials", {
-        callbackUrl: `${window.location.origin}${prevPath ?? "/"}`,
-        redirect: true,
+      const res = await signIn("credentials", {
+        callbackUrl: `${window.location.origin}${
+          !prevPath?.includes("/login") ? prevPath : "/"
+        }`,
+        redirect: false,
         email: data.email,
         password: data.password,
       });
+      if (res?.error) {
+        toast.error("The email or password you entered is incorrect.");
+        setValue("password", "");
+      } else if (!res?.error && res?.ok) {
+        window.location.reload();
+        window.location.href = `${window.location.origin}${
+          !prevPath?.includes("/login") ? prevPath : "/"
+        }`;
+      }
     } catch (error) {
       console.log(error);
+      toast.error(
+        (error as Error)?.message ??
+          "An error occurred logging in, try another option."
+      );
     }
   };
 
@@ -72,7 +88,7 @@ export default function Login() {
   const facebookSignIn = () => {
     void signIn("github", {
       callbackUrl: `${window.location.origin}${
-        prevPath !== "/login" ? prevPath : "/"
+        !prevPath?.includes("/login") ? prevPath : "/"
       }`,
       redirect: true,
     });
@@ -82,7 +98,7 @@ export default function Login() {
     try {
       await signIn("google", {
         callbackUrl: `${window.location.origin}${
-          prevPath !== "/login" ? prevPath : "/"
+          !prevPath?.includes("/login") ? prevPath : "/"
         }`,
         redirect: true,
       });
@@ -141,7 +157,10 @@ export default function Login() {
             name="password"
             error={errors.password?.message}
           />
-          <Link className="text-[12px] text-primary" href="/forgot-password">
+          <Link
+            className="text-[12px] text-primary"
+            href={`/${course?.id}/forgot-password`}
+          >
             Forgot password?
           </Link>
           <ReCAPTCHA
@@ -155,7 +174,7 @@ export default function Login() {
       </section>
       <div className="pt-4 text-center text-[14px] text-primary-gray">
         Dont&apos;t have an account?{" "}
-        <Link className="text-primary" href="/register">
+        <Link className="text-primary" href={`/${course?.id}/register`}>
           Sign Up
         </Link>{" "}
         instead

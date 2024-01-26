@@ -29,7 +29,7 @@ export const TeeTimeDetails = ({
   props?: ComponentProps<"div">;
 }) => {
   const [players, setPlayers] = useState<string>("1");
-  const [value, copy] = useCopyToClipboard();
+  const [, copy] = useCopyToClipboard();
   const [isCopied, setIsCopied] = useState<boolean>(false);
 
   const { data, isLoading, error, isError, refetch } =
@@ -60,7 +60,7 @@ export const TeeTimeDetails = ({
 
   const buyTeeTime = () => {
     if (!user) {
-      void router.push("/login");
+      void router.push(`/${course?.id}/login`);
     } else {
       void router.push(
         `/${course?.id}/checkout?teeTimeId=${teeTimeId}&playerCount=${players}`
@@ -70,7 +70,7 @@ export const TeeTimeDetails = ({
 
   const addToWatchlist = async () => {
     if (!user) {
-      void router.push("/login");
+      void router.push(`/${course?.id}/login`);
       return;
     }
     try {

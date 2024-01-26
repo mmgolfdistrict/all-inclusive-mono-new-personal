@@ -42,11 +42,10 @@ export const ManageOwnedTeeTime = ({
   const debouncedValue = useDebounce<string>(newFriend, 500);
   const { course } = useCourseContext();
 
-  const { data, isLoading, isError, error } =
-    api.searchRouter.searchUsers.useQuery(
-      { searchText: debouncedValue },
-      { enabled: debouncedValue?.length > 0 }
-    );
+  const { data } = api.searchRouter.searchUsers.useQuery(
+    { searchText: debouncedValue },
+    { enabled: debouncedValue?.length > 0 }
+  );
 
   const updateNames = api.teeBox.updateNamesOnBookings.useMutation();
   const updateMinimumOfferPrice = api.teeBox.setMinimumOfferPrice.useMutation();

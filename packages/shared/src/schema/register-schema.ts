@@ -12,7 +12,9 @@ export const registerSchema = z
       .min(1, { message: "Password is required" })
       .min(8, { message: "Password must have more than 8 characters" }),
     confirmPassword: z.string().min(1, { message: "Password confirmation is required" }),
-    ReCAPTCHA: z.string().min(1, { message: "ReCAPTCHA is required" }),
+    ReCAPTCHA: z.string().optional(),
+    redirectHref: z.string().url(),
+    // ReCAPTCHA: z.string().min(1, { message: "ReCAPTCHA is required" }),
   })
   .refine((data) => data.password === data.confirmPassword, {
     path: ["confirmPassword"],

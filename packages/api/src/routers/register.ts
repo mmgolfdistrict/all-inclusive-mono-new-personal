@@ -11,6 +11,7 @@ export const registerRouter = createTRPCRouter({
       firstName: input.firstName,
       lastName: input.lastName,
       handle: input.username,
+      redirectHref: input.redirectHref,
     };
     return await ctx.serviceFactory.getUserService().createUser(createUserData);
   }),

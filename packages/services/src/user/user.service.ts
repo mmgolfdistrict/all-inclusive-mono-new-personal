@@ -1,13 +1,15 @@
 import { randomBytes, randomUUID } from "crypto";
-import { and, eq, gt, gte, lt, or } from "@golf-district/database";
+import { and, eq, gt, lt, or } from "@golf-district/database";
 import type { Db } from "@golf-district/database";
+import { accounts } from "@golf-district/database/schema/accounts";
 import { assets } from "@golf-district/database/schema/assets";
 import { bookings } from "@golf-district/database/schema/bookings";
 import { courses } from "@golf-district/database/schema/courses";
+import { entities } from "@golf-district/database/schema/entities";
 import { favorites } from "@golf-district/database/schema/favorites";
 import { lists } from "@golf-district/database/schema/lists";
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
-import type { InsertUser, SelectUser } from "@golf-district/database/schema/users";
+import type { InsertUser } from "@golf-district/database/schema/users";
 import { users } from "@golf-district/database/schema/users";
 import {
   assetToURL,
@@ -29,6 +31,7 @@ export interface UserCreationData {
   lastName: string;
   handle: string;
   location?: string;
+  redirectHref?: string;
 }
 
 interface UserUpdateData {
@@ -41,7 +44,16 @@ interface UserUpdateData {
   phoneNotifications?: boolean | null;
   emailNotifications?: boolean | null;
 }
+type TeeTimeEntry = {
+  teeTimeId: string;
+  date: string | null;
+  courseName: string | null;
+  courseId: string;
+  courseImage: string;
+};
 
+// Define the type for the map
+type UniqueTeeTimesMap = Map<string, TeeTimeEntry>;
 /**
  * Service class for user-related operations.
  */
@@ -75,6 +87,7 @@ export class UserService {
    *   - `lastName`: The last name of the user.
    *   - `location`: The location of the user.
    *   - `handle`: The unique username/handle for the user.
+   *   - `redirectHref`: The url to redirect to.
    *
    * @returns Promise<void> - A promise that resolves when the user is successfully created and inserted into the database.
    *
@@ -132,7 +145,31 @@ export class UserService {
     const verificationToken = randomBytes(32).toString("hex");
     const hashedVerificationToken = await bcrypt.hash(verificationToken, 10);
     await this.insertUser(data, hashedVerificationToken);
-    await this.notificationsService.sendEmail(data.email, "Verify your email", `${verificationToken}`);
+    const user = await this.getUserByEmail(data.email);
+    if (!user?.id) {
+      this.logger.warn(`User not found: ${data.email}`);
+      throw new Error("User not found");
+    }
+    if (!data.redirectHref) {
+      this.logger.warn(`No redirectHref provided`);
+      throw new Error("No redirect url provided");
+    }
+    await this.notificationsService.sendEmail(
+      data.email,
+      "Verify your email",
+      `${encodeURI(data?.redirectHref)}/verify?userId=${encodeURIComponent(
+        user?.id
+      )}&verificationToken=${encodeURIComponent(verificationToken)}`
+    );
+  };
+
+  getUserByEmail = async (email: string) => {
+    const [user] = await this.database.select().from(users).where(eq(users.email, email));
+    if (!user) {
+      this.logger.warn(`User not found: ${email}`);
+      throw new Error("User not found");
+    }
+    return user;
   };
 
   /**
@@ -220,10 +257,12 @@ export class UserService {
       throw new Error("User email already verified");
     }
     if (user.verificationRequestExpiry && user.verificationRequestExpiry < currentUtcTimestamp()) {
+      await this.deleteUserById(userId);
       this.logger.warn(`Verification token expired: ${userId}`);
-      throw new Error("Verification token expired");
+      throw new Error("Verification token expired, must create account again");
     }
     const valid = await bcrypt.compare(token, user.verificationRequestToken);
+
     if (!valid) {
       this.logger.warn(`Invalid verification token: ${userId}`);
       throw new Error("Invalid verification token");
@@ -238,6 +277,15 @@ export class UserService {
       })
       .where(eq(users.id, userId))
       .execute();
+  };
+
+  deleteUserById = async (userId: string) => {
+    try {
+      await this.database.delete(users).where(eq(users.id, userId)).execute();
+    } catch (error) {
+      this.logger.error(`Error deleting user: ${userId} - ${(error as Error)?.message}`);
+      throw new Error("Error deleting user from expired email verification token");
+    }
   };
 
   /**
@@ -472,7 +520,7 @@ export class UserService {
    *   forgotPasswordRequest('userHandleOrEmail@example.com');
    *
    */
-  forgotPasswordRequest = async (handleOrEmail: string): Promise<void> => {
+  forgotPasswordRequest = async (redirectHref: string, handleOrEmail: string): Promise<void> => {
     const [user] = await this.database
       .select()
       .from(users)
@@ -507,7 +555,9 @@ export class UserService {
       .sendEmail(
         user.email,
         "Reset your password",
-        `/reset-password?user=${user.id}&token=${verificationToken}`
+        `${encodeURI(redirectHref)}/reset-password?userId=${encodeURIComponent(
+          user?.id
+        )}&verificationToken=${encodeURIComponent(verificationToken)}`
       )
       .catch((err) => {
         this.logger.error(`Error sending email: ${err}`);
@@ -713,13 +763,15 @@ export class UserService {
    * and inserts it into the database. The password and verification token are securely hashed using bcrypt
    * before being stored.
    *
-   * @param {UserCreationData} data - An object containing the user's data. The object structure is as follows:
+   * @param {
+   * } data - An object containing the user's data. The object structure is as follows:
    *   - `firstName`: The user's first name.
    *   - `lastName`: The user's last name.
    *   - `handle`: The user's handle.
    *   - `email`: The user's email address.
    *   - `password`: The user's password.
    *   - `location`: The user's location (optional).
+   *   - `redirectHref`: The url to redirect to (optional).
    * @param {string} verificationToken - A string representing the verification token associated with the user.
    *
    * @returns {Promise<void>} A promise that resolves when the user data is successfully inserted into the database.
@@ -751,7 +803,7 @@ export class UserService {
         email: data.email,
         gdPassword: await bcrypt.hash(data.password, 10),
         address: data.location,
-        verificationRequestToken: await bcrypt.hash(verificationToken, 10),
+        verificationRequestToken: verificationToken,
         verificationRequestExpiry: generateUtcTimestamp(90), //90 minutes
         createdAt: currentUtcTimestamp(),
         updatedAt: currentUtcTimestamp(),
@@ -775,7 +827,7 @@ export class UserService {
    * const result = await getUserById(callerId, userId);
    * // result: { id: "exampleUserId", // additional user properties..., profilePicture: "/defaults/default-profile.webp", bannerPicture: "/defaults/default-banner.webp" }
    */
-  getUserById = async (callerId: string | undefined, userId: string) => {
+  getUserById = async (userId: string, callerId?: string) => {
     console.log("getUserById called with userId: ", userId);
     console.log("callerId: ", callerId);
 
@@ -812,36 +864,40 @@ export class UserService {
     }
 
     const { user, profileImage, bannerImage } = data;
-    let profilePicture = profileImage
+    const profilePicture = profileImage
       ? assetToURL({
           key: profileImage.assetKey,
           cdn: profileImage.assetCdn,
           extension: profileImage.assetExtension,
         })
       : "/defaults/default-profile.webp";
-    let bannerPicture = bannerImage
+    const bannerPicture = bannerImage
       ? assetToURL({
           key: bannerImage.assetKey,
           cdn: bannerImage.assetCdn,
           extension: bannerImage.assetExtension,
         })
       : "/defaults/default-banner.webp";
+    let res;
 
     // If the caller is the user or the profile is public, return full details
     if (callerId === userId || user.profileVisibility === "PUBLIC") {
-      return {
+      console.log("public");
+      res = {
         ...user,
         profilePicture,
         bannerPicture,
       };
     } else {
       // If the profile is private and the caller is not the user, return limited details
-      return {
+      console.log("private");
+      res = {
         id: user.id,
         profilePicture,
         bannerPicture,
       };
     }
+    return res;
   };
 
   /**
@@ -862,13 +918,7 @@ export class UserService {
    * const cursor = "exampleCursor";
    * await getUpcomingTeeTimesForUser(userId, courseId, take, cursor);
    */
-  getUpcomingTeeTimesForUser = async (
-    userId: string,
-    callerId: string,
-    courseId: string,
-    take: number,
-    cursor?: string
-  ) => {
+  getUpcomingTeeTimesForUser = async (userId: string, courseId: string, callerId?: string) => {
     let userProfileVisibility = "PUBLIC";
     if (callerId !== userId) {
       const [userProfile] = await this.database
@@ -878,7 +928,6 @@ export class UserService {
         .execute();
       userProfileVisibility = userProfile?.userProfileVisibility || "PUBLIC"; // Default to PUBLIC if visibility is undefined
     }
-    //build where clause here
     if (callerId !== userId) {
       const [userProfile] = await this.database
         .select({ userProfileVisibility: users.profileVisibility })
@@ -919,7 +968,6 @@ export class UserService {
         golfers: bookings.nameOnBooking,
         listed: bookings.isListed,
         listPrice: lists.listPrice,
-        minimunOfferPrice: lists.minimumOfferPrice,
         profilePicture: {
           key: assets.key,
           cdnUrl: assets.cdn,
@@ -935,8 +983,8 @@ export class UserService {
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
       .where(whereClause)
       .orderBy(bookings.time)
-      .limit(take)
       .execute();
+    console.log("upcomingTeeTimeData", upcomingTeeTimeData);
 
     if (!upcomingTeeTimeData || upcomingTeeTimeData.length === 0) {
       return [];
@@ -984,39 +1032,84 @@ export class UserService {
    * await getTeeTimeHistoryForUser(userId, courseId);
    */
   getTeeTimeHistoryForUser = async (userId: string, courseId: string) => {
+    console.log("getTeeTimeHistoryForUser called with userId: ", userId);
+    console.log("courseId: ", courseId);
+
+    const [entity] = await this.database
+      .select({ entityId: courses.entityId })
+      .from(courses)
+      .leftJoin(entities, eq(entities.id, courses.entityId))
+      .where(eq(courses.id, courseId));
+
+    if (!entity || !entity.entityId) {
+      throw new Error("Course not found");
+    }
+
     const teeTimeHistoryData = await this.database
       .select({
         teeTimeId: bookings.teeTimeId,
         date: teeTimes.date,
         courseName: courses.name,
         courseId: bookings.courseId,
+        courseImage: {
+          key: assets.key,
+          cdnUrl: assets.cdn,
+          extension: assets.extension,
+        },
       })
       .from(bookings)
       .leftJoin(courses, eq(courses.id, bookings.courseId))
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
+      .leftJoin(assets, eq(assets.id, courses.logoId))
       .where(
         and(
-          eq(bookings.courseId, courseId),
-          eq(bookings.nameOnBooking, userId),
+          eq(courses.entityId, entity.entityId),
+          or(eq(bookings.ownerId, userId), eq(bookings.nameOnBooking, userId)),
           lt(bookings.time, currentUtcTimestamp())
         )
       )
       .orderBy(bookings.time)
+
       .execute();
 
     if (!teeTimeHistoryData || teeTimeHistoryData.length === 0) {
+      this.logger.debug(`No tee time history found for user: ${userId}`);
       return [];
     }
+    const uniqueTeeTimes: UniqueTeeTimesMap = new Map();
+    teeTimeHistoryData.forEach((booking) => {
+      if (!uniqueTeeTimes.has(booking.teeTimeId)) {
+        uniqueTeeTimes.set(booking.teeTimeId, {
+          teeTimeId: booking.teeTimeId,
+          date: booking.date,
+          courseName: booking.courseName,
+          courseId: booking.courseId,
+          courseImage: booking.courseImage
+            ? `https://${booking.courseImage.cdnUrl}/${booking.courseImage.key}.${booking.courseImage.extension}`
+            : "/defaults/default-course.webp",
+        });
+      }
+    });
+    const formattedData = Array.from(uniqueTeeTimes.values());
+    return formattedData;
+  };
 
-    const formattedData = teeTimeHistoryData.map((booking) => {
-      return {
-        teeTimeId: booking.teeTimeId,
-        date: booking.date,
-        courseName: booking.courseName,
-        courseId: booking.courseId,
-      };
+  /**
+   * Retrieves OAuth providers associated with a given user ID.
+   * @param userId - The ID of the user.
+   * @returns An array of provider names.
+   */
+  getProvidersByUserId = async (userId: string) => {
+    const providers = await this.database
+      .select({ provider: accounts.provider })
+      .from(accounts)
+      .where(eq(accounts.userId, userId))
+      .execute();
+
+    const cleanedProviders = providers?.map((provider) => {
+      return provider.provider;
     });
 
-    return formattedData;
+    return cleanedProviders;
   };
 }

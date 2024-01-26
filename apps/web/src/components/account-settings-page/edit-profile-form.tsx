@@ -66,7 +66,7 @@ export const EditProfileForm = () => {
   const upload = useCallback(
     async (file: File, type: "image" | "bannerImage") => {
       const data = await uploadMedia(file);
-      console.log(data);
+
       if (!data) return;
       if (type === "image") {
         setProfilePhoto(data?.assetUrl);
@@ -119,7 +119,7 @@ export const EditProfileForm = () => {
     if (
       bannerFile !== undefined &&
       !isLoading &&
-      userData?.bannerImage !== bannerImage
+      userData?.bannerPicture !== bannerImage
     ) {
       void upload(bannerFile, "bannerImage");
     }
@@ -136,7 +136,7 @@ export const EditProfileForm = () => {
     if (isUploading) return;
     try {
       const prevData = {
-        name: userData?.name,
+        name: userData?.name ?? "",
         email: userData?.email,
         handle: userData?.handle,
         location: userData?.location,

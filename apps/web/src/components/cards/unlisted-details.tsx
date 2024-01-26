@@ -35,7 +35,7 @@ export const UnlistedDetails = ({
   props?: ComponentProps<"div">;
 }) => {
   const [players, setPlayers] = useState<string>("1");
-  const [value, copy] = useCopyToClipboard();
+  const [, copy] = useCopyToClipboard();
   const [isCopied, setIsCopied] = useState<boolean>(false);
   const [isMakeAnOfferOpen, setIsMakeAnOfferOpen] = useState<boolean>(false);
   const [isListTeeTimeOpen, setIsListTeeTimeOpen] = useState<boolean>(false);
@@ -87,7 +87,7 @@ export const UnlistedDetails = ({
 
   const addToWatchlist = async () => {
     if (!user) {
-      void router.push("/login");
+      void router.push(`/${course?.id}/login`);
       return;
     }
     try {

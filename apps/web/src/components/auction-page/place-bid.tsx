@@ -144,7 +144,7 @@ export const PlaceBid = ({
                     href={
                       user
                         ? `/${courseId}/account-settings/${user?.id}#payment-method`
-                        : "/login"
+                        : `/${courseId}/login`
                     }
                     onClick={() => setIsPlaceBidOpen(false)}
                   >

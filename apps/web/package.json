@@ -47,7 +47,7 @@
     "edge-runtime": "^2.5.4",
     "follow-redirects": "^1.15.3",
     "framer-motion": "^10.16.1",
-    "next": "13.4.19",
+    "next": "14.0.4",
     "payment": "^2.4.6",
     "react": "18.2.0",
     "react-dom": "18.2.0",

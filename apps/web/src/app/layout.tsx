@@ -10,7 +10,7 @@
 // import { Metadata } from "next";
 import { type ReactNode } from "react";
 import "~/styles/globals.css";
-import { ssrGetEntityByDomain, ssrGetStaticPaths } from "@golf-district/api";
+import { ssrGetEntityByDomain } from "@golf-district/api";
 import { Layout } from "~/components/layout";
 import { fontMapper } from "~/styles/fonts";
 import { type Metadata } from "next";
@@ -100,17 +100,13 @@ export default async function RootLayout({
 
   const entityData = await ssrGetEntityByDomain(domainDecoded, "");
 
-  if (!entityData) {
+  if (!entityData.id) {
     notFound();
   }
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${
-          fontMapper[entityData?.font ?? "font-inter"]
-        } bg-secondary-white`}
-      >
+      <body className={`${fontMapper[entityData?.font ?? "font-inter"]}`}>
         <Providers entityData={entityData}>
           <Layout>{children}</Layout>
         </Providers>

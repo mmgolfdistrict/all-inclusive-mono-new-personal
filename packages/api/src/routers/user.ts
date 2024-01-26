@@ -1,4 +1,6 @@
+import { forgotPasswordSchema } from "@golf-district/shared/src/schema/forgot-password-schema";
 import { z } from "zod";
+import { resetPasswordSchema } from "../../../shared/src/schema/reset-password-schema";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 export const userRouter = createTRPCRouter({
@@ -9,7 +11,7 @@ export const userRouter = createTRPCRouter({
       })
     )
     .query(async ({ ctx, input }) => {
-      return await ctx.serviceFactory.getUserService().getUserById(ctx.session?.user.id, input.userId);
+      return await ctx.serviceFactory.getUserService().getUserById(input.userId, ctx.session?.user.id);
     }),
   getUnreadOffersForCourse: publicProcedure
     .input(
@@ -70,5 +72,32 @@ export const userRouter = createTRPCRouter({
       return await ctx.serviceFactory
         .getUserService()
         .getBookingsOwnedForTeeTime(input.teeTimeId, ctx?.session?.user.id);
+    }),
+  forgotPasswordRequest: publicProcedure.input(forgotPasswordSchema).mutation(async ({ ctx, input }) => {
+    return await ctx.serviceFactory.getUserService().forgotPasswordRequest(input.redirectHref, input.email);
+  }),
+  executeForgotPassword: publicProcedure.input(resetPasswordSchema).mutation(async ({ ctx, input }) => {
+    return await ctx.serviceFactory
+      .getUserService()
+      .executeForgotPassword(input.userId, input.verificationToken, input.password);
+  }),
+  getUpcomingTeeTimesForUser: publicProcedure
+    .input(z.object({ userId: z.string(), courseId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      return await ctx.serviceFactory
+        .getUserService()
+        .getUpcomingTeeTimesForUser(input.userId, input.courseId, ctx.session?.user.id);
+    }),
+  getTeeTimeHistoryForUser: protectedProcedure
+    .input(z.object({ courseId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      return await ctx.serviceFactory
+        .getUserService()
+        .getTeeTimeHistoryForUser(ctx.session.user.id, input.courseId);
+    }),
+  getProvidersByUserId: protectedProcedure
+    .input(z.object({ userId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      return await ctx.serviceFactory.getUserService().getProvidersByUserId(input.userId);
     }),
 });

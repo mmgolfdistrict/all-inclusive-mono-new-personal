@@ -6,6 +6,7 @@ import * as bids from "./bids";
 import * as bookings from "./bookings";
 import * as courseAssets from "./courseAssets";
 import * as courses from "./courses";
+import * as customerCart from "./customerCart";
 import * as entities from "./entities";
 import * as entityAdmins from "./entityAdmins";
 import * as favorites from "./favorites";
@@ -48,4 +49,5 @@ export const schema = {
   ...offers,
   ...offerRead,
   ...userProviderCourseLink,
+  ...customerCart,
 };

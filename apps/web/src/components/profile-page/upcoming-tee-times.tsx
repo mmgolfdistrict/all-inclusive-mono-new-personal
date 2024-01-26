@@ -1,15 +1,22 @@
 "use client";
 
 import { useOverflowCheck } from "~/hooks/useOverflowCheck";
-import { useRef, type ReactNode } from "react";
+import { api } from "~/utils/api";
+import { useEffect, useRef } from "react";
+import { TeeTime } from "../cards/tee-time";
+import { Skeleton } from "../course-page/skeleton";
 import { LeftChevron } from "../icons/left-chevron";
 
-export const UpcomingTeeTimes = ({ children }: { children: ReactNode }) => {
+export const UpcomingTeeTimes = ({
+  courseId,
+  userId,
+}: {
+  courseId: string;
+  userId: string;
+}) => {
   const overflowRef = useRef<HTMLDivElement>(null);
-  const { isOverflowingLeft, isOverflowingRight } = useOverflowCheck(
-    overflowRef,
-    []
-  );
+  const { isOverflowingLeft, isOverflowingRight, handleOverflowCheck } =
+    useOverflowCheck(overflowRef, []);
 
   const scrollRight = () => {
     overflowRef.current?.classList.add("scroll-smooth");
@@ -23,12 +30,17 @@ export const UpcomingTeeTimes = ({ children }: { children: ReactNode }) => {
     overflowRef.current?.classList.remove("scroll-smooth");
   };
 
+  const { data, isLoading, error, isError } =
+    api.user.getUpcomingTeeTimesForUser.useQuery({ courseId, userId });
+
+  useEffect(() => {
+    handleOverflowCheck();
+  }, [data, isLoading, error]);
+
   return (
-    <div
-      className={`flex flex-col gap-4 bg-white px-4 py-3 md:rounded-xl md:px-8 md:py-6`}
-    >
-      <div className="text-[18px] text-secondary-black md:text-[24px]">
-        Upcoming tee times
+    <div className="flex w-full flex-col gap-4 bg-white md:rounded-xl">
+      <div className="stroke flex justify-between gap-4 border-b px-4 py-3 md:px-6 md:py-4">
+        <div className="text-lg font-semibold">Upcoming tee times</div>
       </div>
       <div
         className="scrollbar-none relative flex gap-4 overflow-x-auto overflow-y-hidden"
@@ -44,7 +56,43 @@ export const UpcomingTeeTimes = ({ children }: { children: ReactNode }) => {
             </button>
           </div>
         )}
-        {children}
+        {isLoading ? (
+          Array(3)
+            .fill(null)
+            .map((_, idx) => <Skeleton key={idx} />)
+        ) : isError && error ? (
+          <div className="flex justify-center items-center h-[200px]">
+            <div className="text-center">Error: {error?.message}</div>
+          </div>
+        ) : !data || data?.length === 0 ? (
+          <div className="flex flex-col items-center w-full justify-center gap-4 px-4 pb-2 h-[200px] text-[14px] md:px-6 md:pb-3">
+            <div className="text-center">No tee times found.</div>
+          </div>
+        ) : (
+          data?.map((i, idx) => (
+            <TeeTime
+              time={i.date ?? ""}
+              key={idx}
+              canChoosePlayer={i.availableSlots > 0}
+              players={String(4 - i.availableSlots)}
+              price={i.pricePerGolfer}
+              isOwned={!i.isListed}
+              soldById={i.soldById}
+              soldByImage={i.soldByImage}
+              soldByName={i.soldByName}
+              availableSlots={i.availableSlots}
+              teeTimeId={i.teeTimeId}
+              isLiked={i.userWatchListed}
+              status={"UNLISTED"}
+              // fix status
+              minimumOfferPrice={i.minimumOfferPrice}
+              bookingIds={i.bookings}
+              listingId={""}
+              // fix listingId
+              firstHandPurchasePrice={i.purchasedFor}
+            />
+          ))
+        )}
         {isOverflowingRight && (
           <div className="sticky right-2 flex items-center justify-center md:right-5">
             <button

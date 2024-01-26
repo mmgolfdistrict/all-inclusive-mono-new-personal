@@ -99,14 +99,13 @@ export const CourseNav = () => {
               <UserInNav />
             </div>
           ) : (
-            <Link href="/login">
+            <Link href={`/${course?.id}/login`}>
               <FilledButton className="hidden md:block">Log In</FilledButton>
             </Link>
           )}
         </div>
       </div>
 
-      {/* course nav */}
       <div className={`w-full bg-white border-b border-stroke`}>
         <div className="flex w-full justify-center bg-white p-2 md:p-4">
           <div className="flex justify-between gap-4 md:gap-8">
@@ -130,7 +129,7 @@ export const CourseNav = () => {
               href={
                 user
                   ? `/${courseId}/my-tee-box?section=offers-received`
-                  : "/login"
+                  : `/${course?.id}/login`
               }
               text="My Offers"
               icon={
@@ -147,6 +146,7 @@ export const CourseNav = () => {
           </div>
         </div>
       </div>
+
       <SideBar
         isSideBarOpen={isSideBarOpen}
         setIsSideBarOpen={setIsSideBarOpen}

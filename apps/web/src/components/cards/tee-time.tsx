@@ -25,7 +25,6 @@ export const TeeTime = ({
   players,
   price,
   isOwned,
-  isForSale,
   soldById,
   soldByImage,
   soldByName,
@@ -43,7 +42,6 @@ export const TeeTime = ({
   players: string;
   price: number;
   isOwned: boolean;
-  isForSale: boolean;
   soldById: string;
   soldByImage: string;
   soldByName: string;
@@ -78,7 +76,7 @@ export const TeeTime = ({
 
   const addToWatchlist = async () => {
     if (!user) {
-      void router.push("/login");
+      void router.push(`/${course?.id}/login`);
       return;
     }
     try {
@@ -93,7 +91,7 @@ export const TeeTime = ({
   };
   const buyTeeTime = () => {
     if (!user) {
-      void router.push("/login");
+      void router.push(`/${course?.id}/login`);
     }
     if (status === "FIRST_HAND") {
       void router.push(
@@ -130,7 +128,7 @@ export const TeeTime = ({
   }, [status, availableSlots]);
 
   return (
-    <div className="md:rounded-xl rounded-lg bg-secondary-white">
+    <div className="md:rounded-xl rounded-lg bg-secondary-white w-fit">
       <div className="border-b border-stroke">
         <div className="flex justify-between py-1 px-3 md:p-3">
           <div className="font-semibold text-[12px] md:text-[16px]">

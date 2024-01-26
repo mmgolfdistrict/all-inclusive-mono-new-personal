@@ -23,7 +23,7 @@ export const UserInNav = () => {
   );
 
   const logOutUser = async () => {
-    await signOut();
+    await signOut({ callbackUrl: `${window.location.origin}` });
   };
 
   return (
@@ -32,7 +32,11 @@ export const UserInNav = () => {
         <DropdownMenu.Trigger className="outline-none">
           <div className="flex gap-1">
             <Avatar
-              src={imageUrl ?? "/defaults/default-profile.webp"}
+              src={
+                user?.image?.includes("https://")
+                  ? user?.image
+                  : imageUrl ?? "/defaults/default-profile.webp"
+              }
               name={user?.name}
             />
             <DownChevron className="w-[12px]" fill={"#40942A"} />

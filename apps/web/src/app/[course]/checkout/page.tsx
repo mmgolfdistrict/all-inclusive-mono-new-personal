@@ -90,6 +90,7 @@ export default function Checkout({
         {
           name: "Golf District Tee Time",
           id: teeTimeId ?? data?.teeTimeId,
+          courseId: course?.id,
           price: Number(data?.pricePerGolfer * 100) * amountOfPlayers, //int
           image: "", //
           currency: "USD", //USD

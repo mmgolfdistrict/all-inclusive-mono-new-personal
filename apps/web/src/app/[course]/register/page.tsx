@@ -12,8 +12,10 @@ import { Hidden } from "~/components/icons/hidden";
 import { Refresh } from "~/components/icons/refresh";
 import { Visible } from "~/components/icons/visible";
 import { Input } from "~/components/input/input";
+import { useCourseContext } from "~/contexts/CourseContext";
 import { api } from "~/utils/api";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   createRef,
   useEffect,
@@ -23,10 +25,12 @@ import {
 } from "react";
 import ReCAPTCHA from "react-google-recaptcha";
 import { useForm, type SubmitHandler } from "react-hook-form";
+import { toast } from "react-toastify";
 import { generateUsername } from "unique-username-generator";
 import { useDebounce } from "usehooks-ts";
 
 export default function RegisterPage() {
+  const { course } = useCourseContext();
   const [location, setLocation] = useState<string>("");
   const debouncedLocation = useDebounce<string>(location, 500);
   const cities = api.places.getCity.useQuery({ city: debouncedLocation });
@@ -37,6 +41,7 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showConfirmPassword, setShowConfirmPassword] =
     useState<boolean>(false);
+  const router = useRouter();
 
   const {
     register,
@@ -56,12 +61,24 @@ export default function RegisterPage() {
     genUsername();
   }, []);
 
+  useEffect(() => {
+    const href = window.location.href;
+    const cleanedHref = href.split("/register")[0];
+    if (!cleanedHref) return;
+    setValue("redirectHref", cleanedHref);
+  }, []);
+
   const onSubmit: SubmitHandler<RegisterSchemaType> = async (data) => {
     console.log("data to submit", data);
+    if (isSubmitting) return;
+    if (registerUser.isLoading) return;
+    if (registerUser.isSuccess) return;
     try {
-      const res = await registerUser.mutateAsync(data);
-      console.log(res);
+      await registerUser.mutateAsync(data);
+
+      router.push(`/${course?.id}/verify-email`);
     } catch (error) {
+      toast.error((error as Error)?.message ?? "Error registering user.");
       console.log(error);
     }
   };
@@ -236,17 +253,19 @@ export default function RegisterPage() {
           )}
 
           <FilledButton
-            className="w-full rounded-full"
+            className={`w-full rounded-full ${
+              isSubmitting ? "animate-pulse cursor-not-allopwed" : ""
+            }`}
             type="submit"
             disabled={isSubmitting}
           >
-            Register
+            {isSubmitting ? "Registering..." : "Register"}
           </FilledButton>
         </form>
       </section>
       <div className="pt-4 text-center text-[14px] text-primary-gray">
         Already have an account?{" "}
-        <Link className="text-primary" href="/login">
+        <Link className="text-primary" href={`/${course?.id}/login`}>
           Sign In
         </Link>{" "}
         instead

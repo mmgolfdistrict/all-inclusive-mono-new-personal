@@ -6,6 +6,7 @@ import { db, tableCreator } from "@golf-district/database";
 import { AuthService } from "@golf-district/service";
 import NextAuth from "next-auth";
 import type { DefaultSession, NextAuthConfig } from "next-auth";
+import ts from "typescript";
 
 // @TODO - update to use env validation
 //import { env } from "./env.mjs";
@@ -39,18 +40,18 @@ export const authConfig: NextAuthConfig = {
       clientSecret: process.env.AUTH_GITHUB_SECRET,
     }),
     CredentialsProvider({
-      name: "Credentials",
+      name: "credentials",
       credentials: {
-        username: { label: "Username", type: "text", placeholder: "jsmith" },
+        email: { label: "Email", type: "text" },
         password: { label: "Password", type: "password" },
       },
-      authorize: async (credentials) => {
-        if (!credentials.username || !credentials.password) {
+      async authorize(credentials) {
+        if (!credentials.email || !credentials.password) {
           return null;
         }
         const authService = new AuthService(db);
         const data = await authService.authenticateUser(
-          credentials.username as string,
+          credentials.email as string,
           credentials.password as string
         );
         if (!data) {
@@ -59,21 +60,21 @@ export const authConfig: NextAuthConfig = {
         return {
           id: data.id,
           email: data.email,
-          picture: data.profilePicture,
+          image: data.profilePicture,
           name: data.name,
         };
       },
     }),
   ],
   pages: {
-    signIn: `/login`,
-    verifyRequest: `/login`,
-    error: `/login`,
-    newUser: `/profile?new`, //this will call the create customer endpoint
+    // signIn: `/login`,
+    // verifyRequest: `/login`,
+    error: `/auth-error`,
+    // newUser: `/profile?new`, //this will call the create customer endpoint
   },
-  // session: {
-  //   strategy: "jwt",
-  // },
+  session: {
+    strategy: "jwt",
+  },
   // cookies: {
   //   sessionToken: {
   //     name: `${DEPLOYMENT ? "__Secure-" : ""}auth-js.session-token`,
@@ -88,27 +89,33 @@ export const authConfig: NextAuthConfig = {
   // },
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
-    // jwt: ({ trigger, session, token, user }) => {
-    //   if (trigger === "update" && session) {
-    //     (token?.user as any).image = session.image;
-    //   }
-    //   if (user) {
-    //     token.id = user.id;
-    //     token.email = user.email;
-    //     token.user = user;
-    //     // @ts-expect-error
+    jwt: ({ trigger, session, token, user }) => {
+      if (user) {
+        token.id = user.id;
+        token.email = user.email;
+        token.user = user;
+        token.picture = user.image;
+        token.image = (token?.user as { image?: string })?.image ?? undefined;
+      }
 
-    //     token.picture = user.picture;
-    //   }
-    //   return token;
-    // },
-    session: ({ session, user }) => ({
-      ...session,
-      user: {
-        ...session.user,
-        id: user.id,
-      },
-    }),
+      if (trigger === "update" && session?.image && token) {
+        token.picture = session.image;
+        token.image = session.image;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (token.user as any).image = session.image;
+      }
+
+      return token;
+    },
+    session: ({ session, token }) => {
+      return {
+        ...session,
+        user: {
+          ...session?.user,
+          id: token?.id,
+        },
+      };
+    },
   },
 };
 

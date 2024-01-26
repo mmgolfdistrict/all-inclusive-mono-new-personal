@@ -26,9 +26,9 @@ export function OPTIONS() {
 const handler = auth(async (req) => {
   const response = await fetchRequestHandler({
     endpoint: "/api/trpc",
-    router: appRouter,
     req,
-    createContext: () => createTRPCContext({ auth: req.auth, req }),
+    router: appRouter,
+    createContext: async () => await createTRPCContext({ auth: req.auth, req }),
 
     onError({ error, path }) {
       console.error(`>>> tRPC Error on '${path}'`, error);
@@ -37,6 +37,7 @@ const handler = auth(async (req) => {
 
   setCorsHeaders(response);
   return response;
-});
+}) as unknown as () => Promise<Response> | undefined;
 
-export { handler as GET, handler as POST };
+export const GET = handler;
+export const POST = handler;

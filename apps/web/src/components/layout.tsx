@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { Footer } from "./footer/footer";
 import { MainNav } from "./nav/main-nav";
 
@@ -15,6 +15,7 @@ const AllowedPathsForMainNav = [
   "/forgot-password",
   "/faq",
   "/about-us",
+  "/auth-error",
 ];
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
@@ -25,14 +26,30 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
     html?.scrollTo(0, 0);
   }, [pathname]);
 
+  const topPadding = useMemo(() => {
+    if (pathname.includes("admin")) {
+      return "";
+    } else {
+      return "pt-[67px] md:pt-[89px]";
+    }
+  }, [pathname]);
+
+  const bgColor = useMemo(() => {
+    if (pathname.includes("admin")) {
+      return "bg-[#FFFFFF]";
+    } else {
+      return "bg-secondary-white";
+    }
+  }, [pathname]);
+
   return (
-    <div className="relative flex w-full flex-col bg-secondary-white">
+    <div className={`relative flex w-full flex-col ${bgColor}`}>
       {AllowedPathsForMainNav.includes(pathname) ? <MainNav /> : null}
 
-      <div className="min-h-[100dvh] bg-secondary-white pt-[67px]  md:pt-[89px]">
+      <div className={`min-h-[100dvh] ${bgColor} ${topPadding}`}>
         {children}
       </div>
-      <Footer />
+      {pathname.includes("admin") ? null : <Footer />}
     </div>
   );
 };

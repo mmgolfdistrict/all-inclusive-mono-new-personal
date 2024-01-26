@@ -1,9 +1,10 @@
 import { isEqual } from "@golf-district/shared";
 import { loadHyper } from "@juspay-tech/hyper-js";
 import { HyperElements } from "@juspay-tech/react-hyper-js";
+import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Spinner } from "../loading/spinner";
 import { CheckoutForm } from "./checkout-form";
 
@@ -35,20 +36,24 @@ export const HyperSwitch = ({
 }) => {
   const [options, setOptions] = useState<Options | undefined>(undefined);
   const { user } = useUserContext();
+  const { course } = useCourseContext();
   const checkout = api.checkout.buildCheckoutSession.useMutation();
   const amountToPay =
     //@ts-ignore
     cartData.reduce((acc: number, i) => acc + i.price, 0) / 100;
   const [localCartData, setLocalCartData] = useState<unknown[]>(cartData);
   const [error, setError] = useState<undefined | string>(undefined);
+  const callingRef = useRef<boolean>(false);
 
   const buildSession = async () => {
     if (!user) return;
     try {
+      callingRef.current = true;
       setError(undefined);
       const data = (await checkout.mutateAsync({
         userId: user.id,
         customerId: user.id,
+        courseId: course?.id ?? "",
         name: user?.name ?? "",
         email: user.email ?? "",
         phone: "1234567890",
@@ -63,7 +68,9 @@ export const HyperSwitch = ({
         },
       });
       setLocalCartData(cartData);
+      callingRef.current = false;
     } catch (error) {
+      callingRef.current = false;
       console.log(error.message);
       setError(
         (error?.message as string) ??
@@ -73,6 +80,7 @@ export const HyperSwitch = ({
   };
 
   useEffect(() => {
+    if (callingRef.current) return;
     if (!user) return;
     let isEqualCompare = true;
     for (let i = 0; i < cartData.length; i++) {
