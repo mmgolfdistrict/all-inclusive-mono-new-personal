@@ -179,9 +179,15 @@ export class SearchService {
     if (!unlistedBookingData || !firstBooking?.courseId || !firstBooking.date) {
       return null;
     }
-    const forecast = await this.weatherService.getForecast(firstBooking.courseId);
-    const teeTimeDate = new Date(firstBooking.date);
-    const weather = this.matchForecastToTeeTime(teeTimeDate, forecast);
+    const forecast = await this.weatherService.getForecast(firstBooking.courseId).catch((err) => {
+      this.logger.error("error getting forecast", err);
+      return [];
+    });
+    let weather;
+    if (forecast) {
+      const teeTimeDate = new Date(firstBooking.date);
+      weather = this.matchForecastToTeeTime(teeTimeDate, forecast);
+    }
     const res = {
       soldById: ownerId,
       soldByName: firstBooking.ownerHandle ? firstBooking.ownerHandle : "Anonymous",
@@ -204,7 +210,7 @@ export class SearchService {
       bookings: unlistedBookingData.map((booking) => {
         return booking.id;
       }),
-      weather,
+      weather: weather ? weather : null,
     };
     return res;
   };

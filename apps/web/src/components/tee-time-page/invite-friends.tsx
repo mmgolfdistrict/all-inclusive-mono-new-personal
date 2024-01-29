@@ -18,8 +18,8 @@ export const InviteFriends = ({
 }) => {
   const {
     data: bookingData,
-    isLoading: isLoadingBookingData,
-    isError: isErrorBookingData,
+    // isLoading: isLoadingBookingData,
+    // isError: isErrorBookingData,
   } = api.user.getBookingsOwnedForTeeTime.useQuery(
     { teeTimeId },
     {

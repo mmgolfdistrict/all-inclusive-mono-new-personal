@@ -1,10 +1,10 @@
 import { processForeUpWebhook } from "@golf-district/api";
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 export const maxDuration = 300; //5min timeout
 export const dynamic = "force-dynamic";
 
-export async function POST(req: NextRequest) {
+export async function POST() {
   await processForeUpWebhook();
   return NextResponse.json({ ok: true });
 }

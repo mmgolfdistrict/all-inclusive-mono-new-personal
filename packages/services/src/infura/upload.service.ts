@@ -6,9 +6,9 @@ import {
   UploadPartCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { Db } from "@golf-district/database";
+import type { Db } from "@golf-district/database";
 import Logger from "@golf-district/shared/src/logger";
-import { ImageService } from "./image.service";
+import type { ImageService } from "./image.service";
 
 export interface Part {
   ETag: string;
@@ -95,7 +95,7 @@ export class UploadService {
     this.logger.info(`createPresignedUploadURL called with fileName: ${originalFileName}`);
     const extension = originalFileName.split(".").pop()?.toLowerCase();
     this.logger.debug(`createPresignedUploadURL extension: ${extension}`);
-    const allowedExtensions = ["jpg", "jpeg", "png", "gif"];
+    const allowedExtensions = ["jpg", "jpeg", "png", "gif", "webp"];
     if (!allowedExtensions.includes(extension!)) {
       this.logger.warn(`Invalid file type. Only image files are accepted. fileName: ${originalFileName}`);
       throw new Error("Invalid file type. Only image files are accepted.");

@@ -13,6 +13,7 @@ interface UserContextType {
   refetchMe: () => Promise<
     QueryObserverResult<
       Session | null,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       TRPCClientErrorLike<BuildProcedure<"query", any, unknown>>
     >
   >;
@@ -25,6 +26,7 @@ const UserContext = createContext<UserContextType>({
     Promise.resolve(
       {} as QueryObserverResult<
         Session | null,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         TRPCClientErrorLike<BuildProcedure<"query", any, unknown>>
       >
     ),

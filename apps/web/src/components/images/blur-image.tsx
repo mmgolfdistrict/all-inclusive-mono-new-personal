@@ -14,7 +14,7 @@ export const BlurImage = (props: ComponentProps<typeof Image>) => {
         ${props?.className ?? ""}
         ${isLoading ? "scale-105 blur-lg" : "scale-100 blur-0"}
       `}
-      onLoadingComplete={() => setLoading(false)}
+      onLoad={() => setLoading(false)}
       {...props}
       alt={props.alt}
     />

@@ -233,7 +233,7 @@ export const Filters = () => {
         <Slider
           min={lowestPrice}
           max={highestPrice}
-          step={100}
+          step={10}
           value={localPriceRange}
           onPointerUp={() => {
             handleSetPriceRange();

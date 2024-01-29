@@ -1,13 +1,12 @@
 import { useCheckoutContext } from "~/contexts/CheckoutContext";
 import { useCourseContext } from "~/contexts/CourseContext";
-import { useUpdateSearchParams } from "~/hooks/useUpdateSearchParams";
 import { formatMoney, formatTime } from "~/utils/formatters";
 import {
   type SearchObject,
   type SensibleDataToMountCompType,
 } from "~/utils/types";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import placeholderImage from "../../../public/placeholders/course.png";
 import { Avatar } from "../avatar";
 import { OutlineClub } from "../icons/outline-club";
@@ -86,7 +85,6 @@ export const CheckoutItem = ({
             choosePlayers={choosePlayers}
             soldByImage={teeTime?.soldByImage}
             soldByName={teeTime?.soldByName}
-            soldById={teeTime?.soldById}
             pricePerGolfer={teeTime?.pricePerGolfer}
             isLoading={isLoading || teeTime === undefined || teeTime === null}
             availableSlots={teeTime?.availableSlots}
@@ -103,7 +101,6 @@ export const CheckoutItem = ({
         soldByImage={teeTime?.soldByImage}
         pricePerGolfer={teeTime?.pricePerGolfer}
         soldByName={teeTime?.soldByName}
-        soldById={teeTime?.soldById}
         isLoading={isLoading || teeTime === undefined || teeTime === null}
         availableSlots={teeTime?.availableSlots}
         isSecondHand={teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND"}
@@ -169,7 +166,6 @@ const Data = ({
   choosePlayers,
   soldByImage,
   soldByName,
-  soldById,
   pricePerGolfer,
   isLoading,
   availableSlots,
@@ -182,7 +178,6 @@ const Data = ({
   choosePlayers: (amount: string) => void;
   soldByImage?: string;
   soldByName?: string;
-  soldById?: string;
   pricePerGolfer?: number;
   isLoading: boolean;
   availableSlots?: number;

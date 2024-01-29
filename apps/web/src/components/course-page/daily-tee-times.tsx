@@ -68,7 +68,7 @@ export const DailyTeeTimes = ({
         onMouseDown={onMouseDown}
       >
         {isOverflowingLeft && (
-          <div className="sticky left-2 flex items-center justify-center md:left-5">
+          <div className="sticky left-2 z-[2] flex items-center justify-center md:left-5">
             <button
               onClick={scrollLeft}
               className="flex h-fit items-center justify-center rounded-full bg-white p-2 shadow-overflow-indicator"
@@ -87,7 +87,6 @@ export const DailyTeeTimes = ({
               players={String(4 - i.availableSlots)}
               firstHandPurchasePrice={i?.firstHandPurchasePrice}
               price={i.pricePerGolfer}
-              isForSale={i?.isListed}
               isOwned={
                 i?.firstOrSecondHandTeeTime === "SECOND_HAND" ||
                 i?.firstOrSecondHandTeeTime === "UNLISTED"
@@ -107,7 +106,7 @@ export const DailyTeeTimes = ({
           <div className="text-center">No times for this date</div>
         )}
         {isOverflowingRight && (
-          <div className="sticky right-2 flex items-center justify-center md:right-5">
+          <div className="sticky right-2 z-[2] flex items-center justify-center md:right-5">
             <button
               onClick={scrollRight}
               className="flex h-fit items-center justify-center rounded-full bg-white p-2 shadow-overflow-indicator"

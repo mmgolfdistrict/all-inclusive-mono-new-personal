@@ -74,6 +74,7 @@ export const ProductDataSchema = z.union([
 export const CustomerCartSchema = z.object({
   userId: z.string(),
   customerId: z.string(),
+  courseId: z.string(),
   name: z.string(),
   email: z.string(),
   phone: z.string().nullable(),

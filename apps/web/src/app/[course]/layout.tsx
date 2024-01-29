@@ -22,7 +22,7 @@ export default async function CoursePageLayout({
 
   const courseImages = await getCourseImages(courseId);
 
-  if (!courseData) {
+  if (!courseData?.id) {
     notFound();
   }
 

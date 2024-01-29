@@ -66,7 +66,7 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
           <div className="flex  items-center justify-between px-2 py-2">
             <div className="flex items-center gap-2">
               {user ? null : (
-                <Link href="/login" onClick={toggleSidebar}>
+                <Link href={`/${courseId}/login`} onClick={toggleSidebar}>
                   <FilledButton>Log In</FilledButton>
                 </Link>
               )}
@@ -110,7 +110,7 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
                 href={
                   user
                     ? `/${courseId}/my-tee-box?section=offers-received`
-                    : "/login"
+                    : `/${courseId}/login`
                 }
                 text="My Offers"
                 onClick={() => {

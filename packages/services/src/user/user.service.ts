@@ -1,9 +1,15 @@
 import { randomBytes, randomUUID } from "crypto";
-import { and, eq, or } from "@golf-district/database";
+import { and, eq, gt, lt, or } from "@golf-district/database";
 import type { Db } from "@golf-district/database";
+import { accounts } from "@golf-district/database/schema/accounts";
 import { assets } from "@golf-district/database/schema/assets";
 import { bookings } from "@golf-district/database/schema/bookings";
-import type { InsertUser, SelectUser } from "@golf-district/database/schema/users";
+import { courses } from "@golf-district/database/schema/courses";
+import { entities } from "@golf-district/database/schema/entities";
+import { favorites } from "@golf-district/database/schema/favorites";
+import { lists } from "@golf-district/database/schema/lists";
+import { teeTimes } from "@golf-district/database/schema/teeTimes";
+import type { InsertUser } from "@golf-district/database/schema/users";
 import { users } from "@golf-district/database/schema/users";
 import {
   assetToURL,
@@ -25,6 +31,7 @@ export interface UserCreationData {
   lastName: string;
   handle: string;
   location?: string;
+  redirectHref?: string;
 }
 
 interface UserUpdateData {
@@ -37,7 +44,16 @@ interface UserUpdateData {
   phoneNotifications?: boolean | null;
   emailNotifications?: boolean | null;
 }
+type TeeTimeEntry = {
+  teeTimeId: string;
+  date: string | null;
+  courseName: string | null;
+  courseId: string;
+  courseImage: string;
+};
 
+// Define the type for the map
+type UniqueTeeTimesMap = Map<string, TeeTimeEntry>;
 /**
  * Service class for user-related operations.
  */
@@ -71,6 +87,7 @@ export class UserService {
    *   - `lastName`: The last name of the user.
    *   - `location`: The location of the user.
    *   - `handle`: The unique username/handle for the user.
+   *   - `redirectHref`: The url to redirect to.
    *
    * @returns Promise<void> - A promise that resolves when the user is successfully created and inserted into the database.
    *
@@ -128,7 +145,31 @@ export class UserService {
     const verificationToken = randomBytes(32).toString("hex");
     const hashedVerificationToken = await bcrypt.hash(verificationToken, 10);
     await this.insertUser(data, hashedVerificationToken);
-    await this.notificationsService.sendEmail(data.email, "Verify your email", `${verificationToken}`);
+    const user = await this.getUserByEmail(data.email);
+    if (!user?.id) {
+      this.logger.warn(`User not found: ${data.email}`);
+      throw new Error("User not found");
+    }
+    if (!data.redirectHref) {
+      this.logger.warn(`No redirectHref provided`);
+      throw new Error("No redirect url provided");
+    }
+    await this.notificationsService.sendEmail(
+      data.email,
+      "Verify your email",
+      `${encodeURI(data?.redirectHref)}/verify?userId=${encodeURIComponent(
+        user?.id
+      )}&verificationToken=${encodeURIComponent(verificationToken)}`
+    );
+  };
+
+  getUserByEmail = async (email: string) => {
+    const [user] = await this.database.select().from(users).where(eq(users.email, email));
+    if (!user) {
+      this.logger.warn(`User not found: ${email}`);
+      throw new Error("User not found");
+    }
+    return user;
   };
 
   /**
@@ -216,10 +257,12 @@ export class UserService {
       throw new Error("User email already verified");
     }
     if (user.verificationRequestExpiry && user.verificationRequestExpiry < currentUtcTimestamp()) {
+      await this.deleteUserById(userId);
       this.logger.warn(`Verification token expired: ${userId}`);
-      throw new Error("Verification token expired");
+      throw new Error("Verification token expired, must create account again");
     }
     const valid = await bcrypt.compare(token, user.verificationRequestToken);
+
     if (!valid) {
       this.logger.warn(`Invalid verification token: ${userId}`);
       throw new Error("Invalid verification token");
@@ -234,6 +277,15 @@ export class UserService {
       })
       .where(eq(users.id, userId))
       .execute();
+  };
+
+  deleteUserById = async (userId: string) => {
+    try {
+      await this.database.delete(users).where(eq(users.id, userId)).execute();
+    } catch (error) {
+      this.logger.error(`Error deleting user: ${userId} - ${(error as Error)?.message}`);
+      throw new Error("Error deleting user from expired email verification token");
+    }
   };
 
   /**
@@ -468,7 +520,7 @@ export class UserService {
    *   forgotPasswordRequest('userHandleOrEmail@example.com');
    *
    */
-  forgotPasswordRequest = async (handleOrEmail: string): Promise<void> => {
+  forgotPasswordRequest = async (redirectHref: string, handleOrEmail: string): Promise<void> => {
     const [user] = await this.database
       .select()
       .from(users)
@@ -503,7 +555,9 @@ export class UserService {
       .sendEmail(
         user.email,
         "Reset your password",
-        `/reset-password?user=${user.id}&token=${verificationToken}`
+        `${encodeURI(redirectHref)}/reset-password?userId=${encodeURIComponent(
+          user?.id
+        )}&verificationToken=${encodeURIComponent(verificationToken)}`
       )
       .catch((err) => {
         this.logger.error(`Error sending email: ${err}`);
@@ -709,13 +763,15 @@ export class UserService {
    * and inserts it into the database. The password and verification token are securely hashed using bcrypt
    * before being stored.
    *
-   * @param {UserCreationData} data - An object containing the user's data. The object structure is as follows:
+   * @param {
+   * } data - An object containing the user's data. The object structure is as follows:
    *   - `firstName`: The user's first name.
    *   - `lastName`: The user's last name.
    *   - `handle`: The user's handle.
    *   - `email`: The user's email address.
    *   - `password`: The user's password.
    *   - `location`: The user's location (optional).
+   *   - `redirectHref`: The url to redirect to (optional).
    * @param {string} verificationToken - A string representing the verification token associated with the user.
    *
    * @returns {Promise<void>} A promise that resolves when the user data is successfully inserted into the database.
@@ -747,7 +803,7 @@ export class UserService {
         email: data.email,
         gdPassword: await bcrypt.hash(data.password, 10),
         address: data.location,
-        verificationRequestToken: await bcrypt.hash(verificationToken, 10),
+        verificationRequestToken: verificationToken,
         verificationRequestExpiry: generateUtcTimestamp(90), //90 minutes
         createdAt: currentUtcTimestamp(),
         updatedAt: currentUtcTimestamp(),
@@ -756,9 +812,12 @@ export class UserService {
   };
 
   /**
-   * Retrieves user information by user ID.
+   * Retrieves user information by user ID. If the caller's ID is provided, additional filtering is applied based on privacy settings.
+   * When the profile is public, upcoming tee times and play history are accessible.
+   * For private profiles, only for-sale tee times in the upcoming window are visible.
+   * The function returns user details including profile and banner pictures.
    *
-   * @param {string | undefined} callerId - The unique identifier of the caller. If undefined, the result will include only public information. If provided and not the same as the user being queried, additional filtering will be applied.
+   * @param {string | undefined} callerId - The unique identifier of the caller. If undefined, only public information is returned. Additional filtering applies if different from the user being queried.
    * @param {string} userId - The unique identifier of the user.
    * @returns {Promise<{ id: string; // additional user properties...; profilePicture: string; bannerPicture: string }>} A promise that resolves to user information including profile and banner pictures.
    * @throws {Error} Throws an error if the user is not found.
@@ -768,12 +827,14 @@ export class UserService {
    * const result = await getUserById(callerId, userId);
    * // result: { id: "exampleUserId", // additional user properties..., profilePicture: "/defaults/default-profile.webp", bannerPicture: "/defaults/default-banner.webp" }
    */
-  getUserById = async (callerId: string | undefined, userId: string) => {
-    // console.log("getUserById called with userId: ", userId);
-    // console.log("getUserById called with callerId: ", callerId);
+  getUserById = async (userId: string, callerId?: string) => {
+    console.log("getUserById called with userId: ", userId);
+    console.log("callerId: ", callerId);
+
     const profileAsset = alias(assets, "profileAsset");
     const bannerAsset = alias(assets, "bannerAsset");
 
+    // Fetch user and related assets data
     const [data] = await this.database
       .select({
         user: users,
@@ -796,73 +857,53 @@ export class UserService {
       .where(eq(users.id, userId))
       .limit(1)
       .execute();
+
     if (!data) {
       this.logger.warn(`User not found: ${userId}`);
       throw new Error("User not found");
     }
+
     const { user, profileImage, bannerImage } = data;
-    let profilePicture = "";
-    let bannerPicture = "";
-    if (!profileImage) {
-      profilePicture = "/defaults/default-profile.webp";
-    } else {
-      profilePicture = assetToURL({
-        key: profileImage.assetKey,
-        cdn: profileImage.assetCdn,
-        extension: profileImage.assetExtension,
-      });
-    }
-    if (!bannerImage) {
-      bannerPicture = "/defaults/default-banner.webp";
-    } else {
-      bannerPicture = assetToURL({
-        key: bannerImage.assetKey,
-        cdn: bannerImage.assetCdn,
-        extension: bannerImage.assetExtension,
-      });
-    }
-    if (callerId == userId) {
-      return {
+    const profilePicture = profileImage
+      ? assetToURL({
+          key: profileImage.assetKey,
+          cdn: profileImage.assetCdn,
+          extension: profileImage.assetExtension,
+        })
+      : "/defaults/default-profile.webp";
+    const bannerPicture = bannerImage
+      ? assetToURL({
+          key: bannerImage.assetKey,
+          cdn: bannerImage.assetCdn,
+          extension: bannerImage.assetExtension,
+        })
+      : "/defaults/default-banner.webp";
+    let res;
+
+    // If the caller is the user or the profile is public, return full details
+    if (callerId === userId || user.profileVisibility === "PUBLIC") {
+      console.log("public");
+      res = {
         ...user,
         profilePicture,
         bannerPicture,
       };
+    } else {
+      // If the profile is private and the caller is not the user, return limited details
+      console.log("private");
+      res = {
+        id: user.id,
+        profilePicture,
+        bannerPicture,
+      };
     }
-    ///@TODO If callers is not the user additional filtering is needed to remove secrets
-    else {
-      if (user.profileVisibility == "PUBLIC") {
-        return {
-          ...user,
-          profilePicture,
-          bannerPicture,
-        };
-      } else {
-        //remove and replace data for a private profile
-        return {
-          ...user,
-          profilePicture,
-          bannerPicture,
-        };
-      }
-    }
+    return res;
   };
 
   /**
-   * Retrieves the tee time history for a user.
-   *
-   * @param {string} userId - The unique identifier of the user.
-   * @param {string} courseId - The unique identifier of the course.
-   * @returns {Promise<void>} A promise that resolves once the tee time history is retrieved.
-   * @throws {Error} Throws an error if there is an issue retrieving the tee time history.
-   * @example
-   * const userId = "exampleUserId";
-   * const courseId = "exampleCourseId";
-   * await getTeeTimeHistoryForUser(userId, courseId);
-   */
-  getTeeTimeHistoryForUser = async (userId: string, courseId: string) => {};
-
-  /**
-   * Retrieves upcoming tee times for a user.
+   * Retrieves upcoming tee times for a user, including both tee times owned by the user and those where the user is added as a golfer.
+   * The function returns standardized tee time tiles with relevant actions like "SELL", "Details", "Manage".
+   * Tee times that are sold before play or where the user's name is removed are not included.
    *
    * @param {string} userId - The unique identifier of the user.
    * @param {string} courseId - The unique identifier of the course.
@@ -877,5 +918,198 @@ export class UserService {
    * const cursor = "exampleCursor";
    * await getUpcomingTeeTimesForUser(userId, courseId, take, cursor);
    */
-  getUpcomingTeeTimesForUser = async (userId: string, courseId: string, take: number, cursor?: string) => {};
+  getUpcomingTeeTimesForUser = async (userId: string, courseId: string, callerId?: string) => {
+    let userProfileVisibility = "PUBLIC";
+    if (callerId !== userId) {
+      const [userProfile] = await this.database
+        .select({ userProfileVisibility: users.profileVisibility })
+        .from(users)
+        .where(eq(users.id, userId))
+        .execute();
+      userProfileVisibility = userProfile?.userProfileVisibility || "PUBLIC"; // Default to PUBLIC if visibility is undefined
+    }
+    if (callerId !== userId) {
+      const [userProfile] = await this.database
+        .select({ userProfileVisibility: users.profileVisibility })
+        .from(users)
+        .where(eq(users.id, userId))
+        .execute();
+      userProfileVisibility = userProfile?.userProfileVisibility || "PUBLIC";
+    }
+
+    // Building the where clause
+    let whereClause = and(eq(bookings.courseId, courseId), gt(bookings.time, currentUtcTimestamp()));
+
+    if (userProfileVisibility === "PUBLIC") {
+      whereClause = and(whereClause, or(eq(bookings.ownerId, userId), eq(bookings.nameOnBooking, userId)));
+    } else {
+      // Profile is PRIVATE
+      whereClause = and(
+        whereClause,
+        eq(bookings.isListed, true) // Show only listed tee times
+      );
+    }
+    const upcomingTeeTimeData = await this.database
+      .select({
+        id: bookings.id,
+        ownerId: bookings.ownerId,
+        teeTimeId: bookings.teeTimeId,
+        time: teeTimes.time,
+        date: teeTimes.date,
+        numberOfHoles: bookings.numberOfHoles,
+        courseName: courses.name,
+        courseId: bookings.courseId,
+        withCart: bookings.withCart,
+        ownerHandle: users.handle,
+        favorites: favorites.id,
+        firstHandPrice: teeTimes.greenFee,
+        minimumOfferPrice: bookings.minimumOfferPrice,
+        purchasedFor: bookings.purchasedPrice,
+        golfers: bookings.nameOnBooking,
+        listed: bookings.isListed,
+        listPrice: lists.listPrice,
+        profilePicture: {
+          key: assets.key,
+          cdnUrl: assets.cdn,
+          extension: assets.extension,
+        },
+      })
+      .from(bookings)
+      .leftJoin(users, eq(users.id, bookings.ownerId))
+      .leftJoin(assets, eq(assets.id, users.image))
+      .leftJoin(lists, eq(lists.teeTimeId, bookings.teeTimeId))
+      .leftJoin(favorites, and(eq(favorites.teeTimeId, bookings.teeTimeId), eq(favorites.userId, userId)))
+      .leftJoin(courses, eq(courses.id, bookings.courseId))
+      .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
+      .where(whereClause)
+      .orderBy(bookings.time)
+      .execute();
+    console.log("upcomingTeeTimeData", upcomingTeeTimeData);
+
+    if (!upcomingTeeTimeData || upcomingTeeTimeData.length === 0) {
+      return [];
+    }
+
+    // Processing data to format the response
+    const formattedData = upcomingTeeTimeData.map((booking) => {
+      return {
+        soldById: booking.ownerId,
+        soldByName: booking.ownerHandle ? booking.ownerHandle : "Anonymous",
+        soldByImage: booking.profilePicture
+          ? `https://${booking.profilePicture.cdnUrl}/${booking.profilePicture.key}.${booking.profilePicture.extension}`
+          : "/defaults/default-profile.webp",
+        availableSlots: upcomingTeeTimeData.length,
+        pricePerGolfer: 0,
+        teeTimeId: booking.teeTimeId,
+        date: booking.date,
+        time: booking.time ? booking.time : 2400,
+        userWatchListed: booking.favorites ? true : false,
+        includesCart: booking.withCart ? booking.withCart : false,
+        teeTimeOwnedByCaller: booking.ownerId === userId ? true : false,
+        isListed: booking.listed,
+        listsPrice: booking.listPrice,
+        minimumOfferPrice: booking.minimumOfferPrice ?? 0,
+        firstHandPrice: booking.firstHandPrice ?? 0,
+        golfers: booking.golfers ? [booking.golfers] : [],
+        purchasedFor: booking.purchasedFor ?? 0,
+        bookings: upcomingTeeTimeData.map((item) => item.id),
+      };
+    });
+
+    return formattedData;
+  };
+  /**
+   * Retrieves the play history for a user at a specific golf course. This includes the course name and the date of play.
+   * It does not include tee times that were sold before play or where the user's name was removed prior to the tee time.
+   *
+   * @param {string} userId - The unique identifier of the user.
+   * @param {string} courseId - The unique identifier of the course.
+   * @returns {Promise<void>} A promise that resolves once the play history is retrieved.
+   * @throws {Error} Throws an error if there is an issue retrieving the play history.
+   * @example
+   * const userId = "exampleUserId";
+   * const courseId = "exampleCourseId";
+   * await getTeeTimeHistoryForUser(userId, courseId);
+   */
+  getTeeTimeHistoryForUser = async (userId: string, courseId: string) => {
+    console.log("getTeeTimeHistoryForUser called with userId: ", userId);
+    console.log("courseId: ", courseId);
+
+    const [entity] = await this.database
+      .select({ entityId: courses.entityId })
+      .from(courses)
+      .leftJoin(entities, eq(entities.id, courses.entityId))
+      .where(eq(courses.id, courseId));
+
+    if (!entity || !entity.entityId) {
+      throw new Error("Course not found");
+    }
+
+    const teeTimeHistoryData = await this.database
+      .select({
+        teeTimeId: bookings.teeTimeId,
+        date: teeTimes.date,
+        courseName: courses.name,
+        courseId: bookings.courseId,
+        courseImage: {
+          key: assets.key,
+          cdnUrl: assets.cdn,
+          extension: assets.extension,
+        },
+      })
+      .from(bookings)
+      .leftJoin(courses, eq(courses.id, bookings.courseId))
+      .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
+      .leftJoin(assets, eq(assets.id, courses.logoId))
+      .where(
+        and(
+          eq(courses.entityId, entity.entityId),
+          or(eq(bookings.ownerId, userId), eq(bookings.nameOnBooking, userId)),
+          lt(bookings.time, currentUtcTimestamp())
+        )
+      )
+      .orderBy(bookings.time)
+
+      .execute();
+
+    if (!teeTimeHistoryData || teeTimeHistoryData.length === 0) {
+      this.logger.debug(`No tee time history found for user: ${userId}`);
+      return [];
+    }
+    const uniqueTeeTimes: UniqueTeeTimesMap = new Map();
+    teeTimeHistoryData.forEach((booking) => {
+      if (!uniqueTeeTimes.has(booking.teeTimeId)) {
+        uniqueTeeTimes.set(booking.teeTimeId, {
+          teeTimeId: booking.teeTimeId,
+          date: booking.date,
+          courseName: booking.courseName,
+          courseId: booking.courseId,
+          courseImage: booking.courseImage
+            ? `https://${booking.courseImage.cdnUrl}/${booking.courseImage.key}.${booking.courseImage.extension}`
+            : "/defaults/default-course.webp",
+        });
+      }
+    });
+    const formattedData = Array.from(uniqueTeeTimes.values());
+    return formattedData;
+  };
+
+  /**
+   * Retrieves OAuth providers associated with a given user ID.
+   * @param userId - The ID of the user.
+   * @returns An array of provider names.
+   */
+  getProvidersByUserId = async (userId: string) => {
+    const providers = await this.database
+      .select({ provider: accounts.provider })
+      .from(accounts)
+      .where(eq(accounts.userId, userId))
+      .execute();
+
+    const cleanedProviders = providers?.map((provider) => {
+      return provider.provider;
+    });
+
+    return cleanedProviders;
+  };
 }

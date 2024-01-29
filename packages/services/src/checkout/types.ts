@@ -13,6 +13,7 @@ export enum CartValidationErrors {
 
 export interface CustomerCart {
   userId: string;
+  courseId: string;
   customerId: string;
   name: string;
   email: string;

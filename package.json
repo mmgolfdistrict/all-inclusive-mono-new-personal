@@ -17,6 +17,7 @@
     "clean:workspaces": "turbo clean",
     "compile": "turbo run compile",
     "dev": "dotenv -- turbo dev --parallel --filter=golf-district-platforms",
+    "dev:admin": "dotenv -- turbo dev --parallel --filter=golf-district-admin",
     "dev:tunnel": "dotenv -- turbo dev --parallel",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,md,css}\"",
     "lint": "turbo run lint",

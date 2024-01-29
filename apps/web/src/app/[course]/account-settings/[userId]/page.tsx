@@ -10,9 +10,10 @@ import { ProfileDetails } from "~/components/profile-page/profile-details";
 export default function ManangeProfile({
   params,
 }: {
-  params: { course: string };
+  params: { course: string; userId: string };
 }) {
   const courseId = params.course;
+  const userId = params.userId;
   return (
     <main className="bg-secondary-white py-4 md:py-6 ">
       <div className="mx-auto flex items-center justify-between px-4 md:max-w-[1360px] md:px-6">
@@ -25,7 +26,7 @@ export default function ManangeProfile({
             <BalanceHistory />
           </div>
 
-          <ConnectAccount />
+          <ConnectAccount userId={userId} />
         </div>
         <div className="flex h-full flex-col gap-4 md:flex-row">
           <PrivacySettings />
