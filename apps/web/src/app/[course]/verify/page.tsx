@@ -1,10 +1,11 @@
 "use client";
 
+import { FilledButton } from "~/components/buttons/filled-button";
 import { Spinner } from "~/components/loading/spinner";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { api } from "~/utils/api";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 
@@ -13,10 +14,10 @@ export default function Verify() {
   const params = useSearchParams();
   const userId = params.get("userId");
   const verificationToken = params.get("verificationToken");
+  const [isSuccess, setIsSuccess] = useState<boolean>(false);
 
   const verifyEmail = api.register.verifyEmail.useMutation();
 
-  const router = useRouter();
   const callingRef = useRef<boolean>(false);
   const [error, setError] = useState<string | undefined>(undefined);
 
@@ -25,9 +26,8 @@ export default function Verify() {
     try {
       callingRef.current = true;
       await verifyEmail.mutateAsync({ userId, token: verificationToken });
-      toast.success("Your email address has been verified!");
+      setIsSuccess(true);
       callingRef.current = false;
-      router.push(`/${course?.id}/login`);
     } catch (error) {
       callingRef.current = false;
       setError((error as Error)?.message ?? "An unexpected error occurred.");
@@ -46,31 +46,37 @@ export default function Verify() {
       !verifyEmail.isError &&
       !verifyEmail.isSuccess &&
       !callingRef.current &&
-      !error
+      !error &&
+      !isSuccess
     ) {
       void verifyUser();
     }
-  }, [verificationToken, userId, verifyEmail, error]);
+  }, [verificationToken, userId, verifyEmail, error, isSuccess]);
 
   return (
     <main className="bg-secondary-white py-4 md:py-6">
       <section className="mx-auto mt-6 flex w-full text-center flex-col gap-2 bg-white p-5 sm:max-w-[500px] sm:rounded-xl sm:p-6">
         <h1 className="text-[24px] md:text-[32px]">
-          {verifyEmail.isLoading && !error
+          {verifyEmail.isLoading && !isSuccess && !error
             ? "Verifying Email..."
-            : verifyEmail.isSuccess
+            : isSuccess
             ? "Verified Email!"
             : error
             ? "Something went wrong."
             : "Verify Your Email Address"}
         </h1>
         <div className="text-primary-gray">
-          {verifyEmail.isLoading && !error ? (
+          {verifyEmail.isLoading && !error && !isSuccess ? (
             <div className="w-[100px] mx-auto">
               <Spinner className="h-[50px]" />
             </div>
-          ) : verifyEmail.isSuccess ? (
-            "Your email address has been verified!"
+          ) : isSuccess ? (
+            <div className="flex flex-col gap-2 items-center">
+              <div>Your email address has been verified!</div>
+              <Link href={`/${course?.id}/login`}>
+                <FilledButton>Login</FilledButton>
+              </Link>
+            </div>
           ) : error ? (
             error
           ) : (

@@ -7,6 +7,7 @@ interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   children: ReactNode;
+  className?: string;
 }
 
 const backdropVariants = {
@@ -19,7 +20,12 @@ const modalVariants = {
   visible: { opacity: 1, scale: 1 },
 };
 
-export const ModalWrapper: FC<ModalProps> = ({ isOpen, onClose, children }) => {
+export const ModalWrapper: FC<ModalProps> = ({
+  isOpen,
+  onClose,
+  children,
+  className,
+}) => {
   const modalRef = useRef<HTMLDivElement>(null);
 
   const handleClickOutside = () => {
@@ -48,7 +54,11 @@ export const ModalWrapper: FC<ModalProps> = ({ isOpen, onClose, children }) => {
             ref={modalRef}
             transition={{ duration: 0.2 }}
           >
-            <div className="overflow-y-auto max-h-[100dvh] pt-12 pb-6 relative">
+            <div
+              className={`overflow-y-auto max-h-[100dvh] pt-12 pb-6 relative ${
+                className ?? ""
+              }`}
+            >
               <button className="absolute top-2 right-0 p-2" onClick={onClose}>
                 <Close className="w-[20px] h-[20px]" />
               </button>

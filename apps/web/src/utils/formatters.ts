@@ -111,7 +111,7 @@ export const fullDate = (timestamp: string, utcOffset = 0): string => {
 };
 
 export const dayMonthDate = (date: string): string => {
-  return dayjs(date).format("dddd, MMM D");
+  return dayjs.utc(date).format("dddd, MMM D");
 };
 
 export const getTime = (date: string, utcOffset = 0): string => {

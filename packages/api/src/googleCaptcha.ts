@@ -25,12 +25,18 @@ interface IGoogleCaptchaResponse {
  * @throws Will throw an error if there's any issue with the verification request.
  */
 export const verifyCaptcha = async (captchaToken: string): Promise<boolean> => {
-  const response = await fetch(
-    `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.GOOGLE_CAPTCHA_SECRET}&response=${captchaToken}`,
-    {
-      method: "POST",
-    }
-  );
-  const data: IGoogleCaptchaResponse = (await response.json()) as IGoogleCaptchaResponse;
-  return data.success;
+  try {
+    const response = await fetch(
+      `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${captchaToken}`,
+      {
+        method: "POST",
+      }
+    );
+    const data: IGoogleCaptchaResponse = (await response.json()) as IGoogleCaptchaResponse;
+
+    return data.success;
+  } catch (error) {
+    console.error(error);
+    return false;
+  }
 };

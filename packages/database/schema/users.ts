@@ -60,6 +60,9 @@ export const users = mySqlTable(
     }),
     hyperswitchCustomerId: varchar("hyperswitchCustomerId", { length: 191 }),
     stripeConnectAccountId: varchar("stripeConnectAccountId", { length: 191 }),
+    stripeConnectAccountStatus: mysqlEnum("stripeConnectAccountStatus", ["CONNECTED", "DISCONNECTED"])
+      .default("DISCONNECTED")
+      .notNull(),
     phoneNotifications: boolean("phoneNotifications").default(true).notNull(),
     phoneNumber: varchar("phoneNumber", { length: 191 }),
     emailNotifications: boolean("emailNotifications").default(true).notNull(),

@@ -13,6 +13,7 @@ import { Calendar } from "@taak/react-modern-calendar-datepicker";
 import { useCourseContext } from "~/contexts/CourseContext";
 import type { DateType, GolferType, HoleType } from "~/contexts/FiltersContext";
 import { useFiltersContext } from "~/contexts/FiltersContext";
+import { api } from "~/utils/api";
 import { getDisabledDays } from "~/utils/calendar";
 
 const DateOptions = [
@@ -49,7 +50,7 @@ export const Filters = () => {
     setShowUnlisted,
     includesCart,
     setIncludesCart,
-    priceRange,
+    // priceRange,
     setPriceRange,
     startTime,
     setStartTime,
@@ -58,6 +59,13 @@ export const Filters = () => {
     startTimeOptions,
   } = useFiltersContext();
   const { course } = useCourseContext();
+  const { data } = api.searchRouter.findBlackoutDates.useQuery(
+    // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+    { courseId: course?.id! },
+    { enabled: course?.id !== undefined }
+  );
+
+  const blackOutDays = disabledDays.concat(data ?? []);
 
   const highestPrice = useMemo(() => {
     if (!course) return 0;
@@ -133,7 +141,7 @@ export const Filters = () => {
                   onChange={setSelectedDay}
                   colorPrimary="#40942A"
                   minimumDate={minimumDate}
-                  disabledDays={disabledDays}
+                  disabledDays={blackOutDays}
                 />
               ) : null}
             </Fragment>

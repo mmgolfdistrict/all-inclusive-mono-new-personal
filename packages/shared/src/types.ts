@@ -73,7 +73,7 @@ export type FullCourseType = {
   forecastApi: string | null;
   charityName: string | null;
   charityDescription: string | null;
-  convenanceFees: number | null;
+  convenienceFees: number | null;
   markup: number | null;
   openTime: string | null;
   closeTime: string | null;
@@ -104,4 +104,78 @@ export type WatchlistItem = {
   ownedById: string;
   listId?: string;
   minimumOfferPrice: number;
+};
+
+export interface BookingGroup {
+  soldById: string;
+  soldByName: string;
+  soldByImage: string;
+  availableSlots: number;
+  pricePerGolfer: number;
+  teeTimeId: string;
+  date: string | null;
+  time: number;
+  listingId: string | null;
+  userWatchListed: boolean;
+  includesCart: boolean;
+  teeTimeOwnedByCaller: boolean;
+  listsPrice: string | null;
+  teeTimeStatus: "LISTED" | "UNLISTED";
+  minimumOfferPrice: number;
+  firstHandPrice: number;
+  golfers: string[];
+  purchasedFor: number;
+  bookings: string[];
+}
+
+export type GroupedBookings = Record<string, BookingGroup>;
+
+export enum TeeTimeType {
+  FIRST_HAND = "FIRST_HAND",
+  SECOND_HAND = "SECOND_HAND",
+  UNLISTED = "UNLISTED",
+}
+
+export type SearchObject = {
+  soldById: string;
+  soldByName: string;
+  soldByImage: string;
+  availableSlots: number;
+  pricePerGolfer: number;
+  teeTimeId: string;
+  date: string; //day of tee time
+  time: number; //military time
+  includesCart: boolean;
+  firstOrSecondHandTeeTime: TeeTimeType;
+  isListed: boolean; //false if the booking is unlisted
+  userWatchListed: boolean;
+  weather: {
+    temperature: number;
+    shortForecast: string;
+    name: string;
+    iconCode: IconCodeType;
+  };
+  listingId?: string;
+  bookingIds?: string[];
+  minimumOfferPrice?: number;
+  firstHandPurchasePrice?: number;
+};
+
+export type CombinedObject = {
+  soldById: string;
+  soldByName: string;
+  soldByImage: string;
+  availableSlots: number;
+  pricePerGolfer: number;
+  teeTimeId: string;
+  date: string; //day of tee time
+  time: number; //military time
+  includesCart: boolean;
+  firstOrSecondHandTeeTime: TeeTimeType;
+  isListed: boolean; //false if the booking is unlisted
+  userWatchListed: boolean;
+  listingId?: string;
+  bookingIds: string[];
+  minimumOfferPrice?: number;
+  firstHandPurchasePrice?: number;
 };

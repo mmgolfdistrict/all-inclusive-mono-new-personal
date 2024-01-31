@@ -14,7 +14,12 @@ export const ConnectAccount = ({ userId }: { userId: string }) => {
   const pathname = usePathname();
 
   const facebookConnect = async () => {
-    await signIn("github", {
+    await signIn("facebook", {
+      callbackUrl: `${window.location.origin}${pathname}`,
+    });
+  };
+  const appleConnect = async () => {
+    await signIn("apple", {
       callbackUrl: `${window.location.origin}${pathname}`,
     });
   };
@@ -29,6 +34,13 @@ export const ConnectAccount = ({ userId }: { userId: string }) => {
     }
   };
 
+  const hasProvidersSetUp =
+    process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
+    process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
+    process.env.NEXT_PUBLIC_APPLE_ID;
+
+  if (!hasProvidersSetUp) return null;
+
   return (
     <section className="h-inherit mx-auto flex w-full flex-col gap-4 bg-white px-3 py-2 md:w-[50%] md:rounded-xl md:p-6 md:py-4">
       <h3 className="text-[18px] md:text-[24px]">Connect Account</h3>
@@ -40,7 +52,8 @@ export const ConnectAccount = ({ userId }: { userId: string }) => {
         </p>
       ) : (
         <>
-          {data?.some((provider) => provider === "google") ? null : (
+          {data?.some((provider) => provider !== "google") ? null : process.env
+              .NEXT_PUBLIC_GOOGLE_CLIENT_ID ? (
             <div className="w-full rounded-lg shadow-outline">
               <SquareButton
                 onClick={googleConnect}
@@ -50,14 +63,19 @@ export const ConnectAccount = ({ userId }: { userId: string }) => {
                 Connect Google
               </SquareButton>
             </div>
-          )}
-          {data?.some((provider) => provider === "apple") ? null : (
-            <SquareButton className="flex items-center justify-center gap-3 bg-black text-white">
+          ) : null}
+          {data?.some((provider) => provider === "apple") ? null : process.env
+              .NEXT_PUBLIC_APPLE_ID ? (
+            <SquareButton
+              onClick={appleConnect}
+              className="flex items-center justify-center gap-3 bg-black text-white"
+            >
               <Apple className="w-[24px]" />
               Connect Apple
             </SquareButton>
-          )}
-          {data?.some((provider) => provider === "github") ? null : (
+          ) : null}
+          {data?.some((provider) => provider === "facebook") ? null : process
+              .env.NEXT_PUBLIC_FACEBOOK_CLIENT_ID ? (
             <SquareButton
               onClick={facebookConnect}
               className="flex items-center justify-center gap-3 bg-facebook text-white"
@@ -65,7 +83,7 @@ export const ConnectAccount = ({ userId }: { userId: string }) => {
               <Facebook className="w-[24px]" />
               Connect Facebook
             </SquareButton>
-          )}
+          ) : null}
         </>
       )}
     </section>

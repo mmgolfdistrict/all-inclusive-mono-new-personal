@@ -1,15 +1,16 @@
+import AppleProvider from "@auth/core/providers/apple";
 import CredentialsProvider from "@auth/core/providers/credentials";
 import GitHubProvider from "@auth/core/providers/github";
 import GoogleProvider from "@auth/core/providers/google";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { db, tableCreator } from "@golf-district/database";
-import { AuthService } from "@golf-district/service";
+import { AuthService, NotificationService } from "@golf-district/service";
 import NextAuth from "next-auth";
 import type { DefaultSession, NextAuthConfig } from "next-auth";
-import ts from "typescript";
-
+import FacebookProvider from "next-auth/providers/facebook";
 // @TODO - update to use env validation
 //import { env } from "./env.mjs";
+import { verifyCaptcha } from "../api/src/googleCaptcha";
 
 const DEPLOYMENT = !!process.env.VERCEL_URL;
 export type { Session } from "next-auth";
@@ -32,24 +33,54 @@ export const authConfig: NextAuthConfig = {
   redirectProxyUrl: process.env.AUTH_REDIRECT_PROXY_URL,
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    }),
+    AppleProvider({
+      clientId: process.env.NEXT_PUBLIC_APPLE_ID,
+      clientSecret: process.env.APPLE_SECRET ?? "",
+    }),
+    FacebookProvider({
+      clientId: process.env.NEXT_PUBLIC_FACEBOOK_CLIENT_ID,
+      clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
     }),
     GitHubProvider({
       clientId: process.env.AUTH_GITHUB_ID,
       clientSecret: process.env.AUTH_GITHUB_SECRET,
     }),
+
     CredentialsProvider({
       name: "credentials",
       credentials: {
         email: { label: "Email", type: "text" },
         password: { label: "Password", type: "password" },
+        ReCAPTCHA: { label: "ReCAPTCHA", type: "text" },
       },
       async authorize(credentials) {
-        if (!credentials.email || !credentials.password) {
+        if (!credentials.email || !credentials.password || !credentials.ReCAPTCHA) {
           return null;
         }
-        const authService = new AuthService(db);
+        const captchaToken = credentials.ReCAPTCHA as string;
+
+        const isNotRobot = await verifyCaptcha(captchaToken);
+        //if the captcha is not valid, return null
+        if (!isNotRobot) {
+          return null;
+        }
+        const notificationService = new NotificationService(
+          db,
+          process.env.TWILLIO_PHONE_NUMBER!,
+          process.env.SENDGRID_EMAIL!,
+          process.env.TWILLIO_ACCOUNT_SID!,
+          process.env.TWILLIO_AUTH_TOKEN!,
+          process.env.SENDGRID_API_KEY!
+        );
+        const authService = new AuthService(
+          db,
+          notificationService,
+          process.env.REDIS_URL!,
+          process.env.REDIS_TOKEN!
+        );
         const data = await authService.authenticateUser(
           credentials.email as string,
           credentials.password as string
@@ -58,10 +89,10 @@ export const authConfig: NextAuthConfig = {
           return null;
         }
         return {
-          id: data.id,
-          email: data.email,
-          image: data.profilePicture,
-          name: data.name,
+          id: data?.id,
+          email: data?.email,
+          image: data?.profilePicture,
+          name: data?.name,
         };
       },
     }),
@@ -91,7 +122,7 @@ export const authConfig: NextAuthConfig = {
   callbacks: {
     jwt: ({ trigger, session, token, user }) => {
       if (user) {
-        token.id = user.id;
+        token.id = user?.id;
         token.email = user.email;
         token.user = user;
         token.picture = user.image;

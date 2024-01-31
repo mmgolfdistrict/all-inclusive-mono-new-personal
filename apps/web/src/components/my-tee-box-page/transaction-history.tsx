@@ -175,8 +175,8 @@ const TableRow = ({
         </div>
       </td>
       <td className="whitespace-nowrap px-4 py-3">
-        {formatMoney(purchasePrice)}
-        <span className="font-[300]">/golfer</span>
+        {formatMoney(purchasePrice * golfers.length)}
+        <span className="font-[300]">Transaction Total</span>
       </td>
       <td className="whitespace-nowrap px-4 py-3">
         {golfers.length > 2

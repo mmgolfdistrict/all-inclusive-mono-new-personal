@@ -1,5 +1,5 @@
 import { randomBytes, randomUUID } from "crypto";
-import { and, eq, gt, lt, or } from "@golf-district/database";
+import { and, eq, gt, is, lt, or } from "@golf-district/database";
 import type { Db } from "@golf-district/database";
 import { accounts } from "@golf-district/database/schema/accounts";
 import { assets } from "@golf-district/database/schema/assets";
@@ -11,6 +11,7 @@ import { lists } from "@golf-district/database/schema/lists";
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import type { InsertUser } from "@golf-district/database/schema/users";
 import { users } from "@golf-district/database/schema/users";
+import type { BookingGroup, GroupedBookings } from "@golf-district/shared";
 import {
   assetToURL,
   containsBadWords,
@@ -21,6 +22,7 @@ import {
 import Logger from "@golf-district/shared/src/logger";
 import bcrypt from "bcryptjs";
 import { alias } from "drizzle-orm/mysql-core";
+import { verifyCaptcha } from "../../../api/src/googleCaptcha";
 import { generateUtcTimestamp } from "../../helpers";
 import type { NotificationService } from "../notification/notification.service";
 
@@ -32,6 +34,7 @@ export interface UserCreationData {
   handle: string;
   location?: string;
   redirectHref?: string;
+  ReCAPTCHA: string;
 }
 
 interface UserUpdateData {
@@ -120,9 +123,15 @@ export class UserService {
       this.logger.warn(`Invalid handle format: ${data.handle}`);
       throw new Error("Invalid handle format");
     }
-    if (isValidPassword(data.password).score != 10) {
+    if (isValidPassword(data.password).score < 8) {
       this.logger.warn("Invalid password");
       throw new Error("Invalid password");
+    }
+    const isNotRobot = await verifyCaptcha(data.ReCAPTCHA);
+    //if the captcha is not valid, return null
+    if (!isNotRobot) {
+      this.logger.error(`Invalid captcha`);
+      throw new Error("Invalid captcha");
     }
     // if (containsBadWords(data.firstName, this.filter)) {
     //   this.logger.warn(`Invalid first name: ${data.firstName}`);
@@ -172,6 +181,40 @@ export class UserService {
     return user;
   };
 
+  inviteUser = async (userId: string, emailOrPhoneNumber: string) => {
+    const [user] = await this.database
+      .select({
+        handle: users.handle,
+      })
+      .from(users)
+      .where(eq(users.id, userId));
+    if (!user) {
+      this.logger.warn(`User not found: ${userId}`);
+      throw new Error("User not found");
+    }
+    //determine if email or phone number
+
+    const phoneRegex = /^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$/;
+    if (isValidEmail(emailOrPhoneNumber)) {
+      await this.notificationsService.sendEmail(
+        emailOrPhoneNumber,
+        "You've been invited to Golf District",
+        `${user.handle} has invited to Golf District. link`
+      );
+      return;
+    }
+    if (phoneRegex.test(emailOrPhoneNumber)) {
+      const userName = user.handle;
+      await this.notificationsService.sendSMS(
+        emailOrPhoneNumber,
+        `${userName} has invited to Golf District link`
+      );
+      return;
+    } else {
+      throw new Error("Invalid email or phone number");
+    }
+  };
+
   /**
    * Retrieves bookings owned by a user for a specific tee time.
    *
@@ -195,6 +238,7 @@ export class UserService {
     const data = await this.database
       .select({
         bookingId: bookings.id,
+        nameOnBooking: bookings.nameOnBooking,
       })
       .from(bookings)
       .where(and(eq(bookings.teeTimeId, teeTimeId), eq(bookings.ownerId, userId)))
@@ -209,18 +253,65 @@ export class UserService {
         bookings: [],
       };
     }
-    const res = {
-      connectedUserIsOwner: true,
-      bookings: [""],
-    };
-    data.map((_data) => {
-      if (!res.bookings[0]) {
-        res.bookings[0] = _data.bookingId;
-      } else {
-        res.bookings.push(_data.bookingId);
+
+    const namesOnBooking = data.filter((i) => i.nameOnBooking !== "Guest");
+    const foundUsersForBooking: {
+      id: string;
+      handle: string | null;
+      name: string | null;
+      email: string | null;
+    }[] = [];
+    if (namesOnBooking.length > 0) {
+      for (const _name of namesOnBooking) {
+        const userData = await this.database
+          .select({
+            id: users.id,
+            handle: users.handle,
+            name: users.name,
+            email: users.email,
+          })
+          .from(users)
+          .where(eq(users.name, _name.nameOnBooking))
+          .execute()
+          .catch((err) => {
+            this.logger.error(`Error retrieving user: ${err}`);
+            throw new Error("Error retrieving user");
+          });
+        if (userData[0]) {
+          foundUsersForBooking.push(userData[0]);
+        }
       }
+    }
+
+    const cleanedData = data.map((i) => {
+      if (foundUsersForBooking.length > 0) {
+        const user = foundUsersForBooking.find(
+          (user) => i.nameOnBooking.toLowerCase() === user.name?.toLowerCase()
+        );
+        if (user) {
+          return {
+            id: user.id,
+            handle: user.handle,
+            name: user.name,
+            email: user.email,
+          };
+        }
+      }
+      return {
+        id: "",
+        handle: "",
+        name: i.nameOnBooking,
+        email: "",
+      };
     });
-    return res;
+
+    const bookingIds = data.map((i) => i.bookingId);
+
+    return {
+      connectedUserIsOwner: true,
+      bookings: cleanedData,
+      bookingIds,
+    };
   };
 
   /**
@@ -277,6 +368,18 @@ export class UserService {
       })
       .where(eq(users.id, userId))
       .execute();
+    if (user?.email) {
+      //send welcome email
+      try {
+        await this.notificationsService.sendEmail(
+          user?.email,
+          "Welcome to Golf District",
+          `Welcome! This is the official welcome email from Golf District.`
+        );
+      } catch (error) {
+        throw new Error("Error sending welcome email");
+      }
+    }
   };
 
   deleteUserById = async (userId: string) => {
@@ -369,7 +472,14 @@ export class UserService {
     const updateData: Partial<InsertUser> = {
       updatedAt: currentUtcTimestamp(),
     };
-    if (Object.prototype.hasOwnProperty.call(data, "handle")) updateData.handle = data.handle;
+    if (Object.prototype.hasOwnProperty.call(data, "handle")) {
+      updateData.handle = data.handle;
+      await this.notificationsService.createNotification(
+        userId,
+        "Handle updated",
+        `Your handle has been updated to ${data.handle}`
+      );
+    }
     if (Object.prototype.hasOwnProperty.call(data, "name")) updateData.name = data.name;
     if (Object.prototype.hasOwnProperty.call(data, "profileVisibility"))
       updateData.profileVisibility = data.profileVisibility;
@@ -520,22 +630,35 @@ export class UserService {
    *   forgotPasswordRequest('userHandleOrEmail@example.com');
    *
    */
-  forgotPasswordRequest = async (redirectHref: string, handleOrEmail: string): Promise<void> => {
+  forgotPasswordRequest = async (
+    redirectHref: string,
+    handleOrEmail: string,
+    ReCAPTCHA: string
+  ): Promise<void> => {
+    const isNotRobot = await verifyCaptcha(ReCAPTCHA);
+    if (!isNotRobot) {
+      this.logger.error(`Invalid captcha`);
+      throw new Error("Invalid captcha");
+    }
+
     const [user] = await this.database
       .select()
       .from(users)
       .where(or(eq(users.handle, handleOrEmail), eq(users.email, handleOrEmail)));
     if (!user) {
       this.logger.warn(`User not found: ${handleOrEmail}`);
-      throw new Error("User not found");
+      // throw new Error("User not found");
+      return;
     }
     if (!user.email) {
       this.logger.warn(`User email does not exists: ${handleOrEmail}`);
-      throw new Error("User does not have an email");
+      // throw new Error("User does not have an email");
+      return;
     }
     if (!user.emailVerified) {
       this.logger.warn(`User email not verified: ${handleOrEmail}`);
-      throw new Error("User email not verified");
+      // throw new Error("User email not verified");
+      return;
     }
     const verificationToken = randomBytes(32).toString("hex");
     const hashedVerificationToken = await bcrypt.hash(verificationToken, 10);
@@ -603,7 +726,7 @@ export class UserService {
 
     if (!user.forgotPasswordToken || !user.forgotPasswordTokenExpiry) {
       this.logger.warn(`User has no forgotPassword request: ${userId}`);
-      throw new Error("User has no forgotPassword request");
+      throw new Error("Forgot password request already used.");
     }
 
     if (user.forgotPasswordTokenExpiry && user.forgotPasswordTokenExpiry < currentUtcTimestamp()) {
@@ -630,6 +753,17 @@ export class UserService {
         this.logger.error(`Error updating password for user: ${userId} - ${err}`);
         throw new Error("Error updating password");
       });
+    if (user?.email) {
+      try {
+        await this.notificationsService.sendEmail(
+          user?.email,
+          "Golf District - Password Reset Successful",
+          `Successfully reset your password.`
+        );
+      } catch (error) {
+        throw new Error("Error sending welcome email");
+      }
+    }
   };
 
   /**
@@ -662,7 +796,7 @@ export class UserService {
       this.logger.warn(`User not found: ${userId}`);
       throw new Error("User not found");
     }
-    if (isValidPassword(newPassword).score >= 10) {
+    if (isValidPassword(newPassword).score < 8) {
       this.logger.warn(`Invalid password format: ${newPassword}`);
       throw new Error("Invalid password format");
     }
@@ -882,7 +1016,6 @@ export class UserService {
 
     // If the caller is the user or the profile is public, return full details
     if (callerId === userId || user.profileVisibility === "PUBLIC") {
-      console.log("public");
       res = {
         ...user,
         profilePicture,
@@ -890,11 +1023,14 @@ export class UserService {
       };
     } else {
       // If the profile is private and the caller is not the user, return limited details
-      console.log("private");
       res = {
         id: user.id,
         profilePicture,
         bannerPicture,
+        handle: user.handle,
+        name: user.name,
+        location: user.location,
+        profileVisibility: user.profileVisibility,
       };
     }
     return res;
@@ -920,7 +1056,9 @@ export class UserService {
    */
   getUpcomingTeeTimesForUser = async (userId: string, courseId: string, callerId?: string) => {
     let userProfileVisibility = "PUBLIC";
+    let showGolfers = true;
     if (callerId !== userId) {
+      this.logger.debug("callerId is not userId");
       const [userProfile] = await this.database
         .select({ userProfileVisibility: users.profileVisibility })
         .from(users)
@@ -928,26 +1066,25 @@ export class UserService {
         .execute();
       userProfileVisibility = userProfile?.userProfileVisibility || "PUBLIC"; // Default to PUBLIC if visibility is undefined
     }
-    if (callerId !== userId) {
-      const [userProfile] = await this.database
-        .select({ userProfileVisibility: users.profileVisibility })
-        .from(users)
-        .where(eq(users.id, userId))
-        .execute();
-      userProfileVisibility = userProfile?.userProfileVisibility || "PUBLIC";
-    }
-
     // Building the where clause
-    let whereClause = and(eq(bookings.courseId, courseId), gt(bookings.time, currentUtcTimestamp()));
+    let whereClause = and(eq(bookings.courseId, courseId), gt(teeTimes.date, currentUtcTimestamp()));
 
-    if (userProfileVisibility === "PUBLIC") {
-      whereClause = and(whereClause, or(eq(bookings.ownerId, userId), eq(bookings.nameOnBooking, userId)));
-    } else {
+    if (userProfileVisibility === "PUBLIC" && callerId !== userId) {
+      this.logger.debug("Profile is PUBLIC");
+      showGolfers = false;
+      whereClause = and(whereClause, eq(bookings.ownerId, userId));
+    } else if (userProfileVisibility === "PRIVATE" && callerId !== userId) {
+      this.logger.debug("Profile is PRIVATE");
+      showGolfers = false;
       // Profile is PRIVATE
       whereClause = and(
         whereClause,
         eq(bookings.isListed, true) // Show only listed tee times
       );
+    } else {
+      // callerId === userId
+      this.logger.debug("caller is user including additional data");
+      whereClause = and(whereClause, or(eq(bookings.ownerId, userId), eq(bookings.nameOnBooking, userId)));
     }
     const upcomingTeeTimeData = await this.database
       .select({
@@ -968,6 +1105,7 @@ export class UserService {
         golfers: bookings.nameOnBooking,
         listed: bookings.isListed,
         listPrice: lists.listPrice,
+        listingId: lists.id,
         profilePicture: {
           key: assets.key,
           cdnUrl: assets.cdn,
@@ -984,39 +1122,53 @@ export class UserService {
       .where(whereClause)
       .orderBy(bookings.time)
       .execute();
-    console.log("upcomingTeeTimeData", upcomingTeeTimeData);
 
     if (!upcomingTeeTimeData || upcomingTeeTimeData.length === 0) {
       return [];
     }
+    const groupedBookings: GroupedBookings = {};
+    upcomingTeeTimeData.forEach((booking) => {
+      const key = booking.teeTimeId;
 
-    // Processing data to format the response
-    const formattedData = upcomingTeeTimeData.map((booking) => {
-      return {
-        soldById: booking.ownerId,
-        soldByName: booking.ownerHandle ? booking.ownerHandle : "Anonymous",
-        soldByImage: booking.profilePicture
-          ? `https://${booking.profilePicture.cdnUrl}/${booking.profilePicture.key}.${booking.profilePicture.extension}`
-          : "/defaults/default-profile.webp",
-        availableSlots: upcomingTeeTimeData.length,
-        pricePerGolfer: 0,
-        teeTimeId: booking.teeTimeId,
-        date: booking.date,
-        time: booking.time ? booking.time : 2400,
-        userWatchListed: booking.favorites ? true : false,
-        includesCart: booking.withCart ? booking.withCart : false,
-        teeTimeOwnedByCaller: booking.ownerId === userId ? true : false,
-        isListed: booking.listed,
-        listsPrice: booking.listPrice,
-        minimumOfferPrice: booking.minimumOfferPrice ?? 0,
-        firstHandPrice: booking.firstHandPrice ?? 0,
-        golfers: booking.golfers ? [booking.golfers] : [],
-        purchasedFor: booking.purchasedFor ?? 0,
-        bookings: upcomingTeeTimeData.map((item) => item.id),
-      };
+      if (!groupedBookings[key]) {
+        groupedBookings[key] = {
+          soldById: booking.ownerId,
+          soldByName: booking.ownerHandle ? booking.ownerHandle : "Anonymous",
+          soldByImage: booking.profilePicture
+            ? `https://${booking.profilePicture.cdnUrl}/${booking.profilePicture.key}.${booking.profilePicture.extension}`
+            : "/defaults/default-profile.webp",
+          availableSlots: booking.listed ? 1 : 0,
+          pricePerGolfer: booking.listPrice ? booking.listPrice : 0,
+          teeTimeId: booking.teeTimeId,
+          date: booking.date ? booking.date : "",
+          time: booking.time ? booking.time : 2400,
+          userWatchListed: booking.favorites ? true : false,
+          includesCart: booking.withCart ? booking.withCart : false,
+          teeTimeOwnedByCaller: booking.ownerId === userId ? true : false,
+          listsPrice: booking.listed ? booking.listingId : null,
+          teeTimeStatus: booking.listed ? "LISTED" : "UNLISTED",
+          listingId: booking.listed ? booking.listingId : null,
+          minimumOfferPrice: booking.minimumOfferPrice ?? 0,
+          firstHandPrice: booking.firstHandPrice ?? 0,
+          purchasedFor: booking.purchasedFor ?? 0,
+          golfers: showGolfers && booking.golfers ? [booking.golfers] : [],
+          bookings: [booking.id],
+        };
+      } else {
+        const group = groupedBookings[key]!;
+        group.bookings.push(booking.id);
+        if (bookings.isListed) {
+          group.availableSlots += 1;
+        }
+        if (showGolfers) {
+          group.golfers.push(booking.golfers);
+        }
+      }
     });
 
-    return formattedData;
+    const groupedBookingsArr = Object.values(groupedBookings);
+
+    return groupedBookingsArr;
   };
   /**
    * Retrieves the play history for a user at a specific golf course. This includes the course name and the date of play.
@@ -1032,8 +1184,8 @@ export class UserService {
    * await getTeeTimeHistoryForUser(userId, courseId);
    */
   getTeeTimeHistoryForUser = async (userId: string, courseId: string) => {
-    console.log("getTeeTimeHistoryForUser called with userId: ", userId);
-    console.log("courseId: ", courseId);
+    this.logger.debug("getTeeTimeHistoryForUser called with userId: ", userId);
+    this.logger.debug("courseId: ", courseId);
 
     const [entity] = await this.database
       .select({ entityId: courses.entityId })
@@ -1041,7 +1193,7 @@ export class UserService {
       .leftJoin(entities, eq(entities.id, courses.entityId))
       .where(eq(courses.id, courseId));
 
-    if (!entity || !entity.entityId) {
+    if (!entity?.entityId) {
       throw new Error("Course not found");
     }
 

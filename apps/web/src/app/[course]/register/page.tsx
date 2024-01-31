@@ -69,7 +69,6 @@ export default function RegisterPage() {
   }, []);
 
   const onSubmit: SubmitHandler<RegisterSchemaType> = async (data) => {
-    console.log("data to submit", data);
     if (isSubmitting) return;
     if (registerUser.isLoading) return;
     if (registerUser.isSuccess) return;
@@ -90,13 +89,6 @@ export default function RegisterPage() {
       return;
     }
     setValue("ReCAPTCHA", captchaCode);
-    // console.log(captchaCode);
-    // Else reCAPTCHA was executed successfully so proceed with the
-    // alert
-    // alert(`approved`);
-    // Reset the reCAPTCHA so that it can be executed again if user
-    // submits another email.
-    // void recaptchaRef.current?.reset();
   };
 
   const passwordFeedback = useMemo(() => {

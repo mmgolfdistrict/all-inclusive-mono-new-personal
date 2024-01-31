@@ -22,6 +22,7 @@ export const Avatar = ({
         className={`h-full w-full rounded-full object-cover`}
         src={src ?? "/defaults/default-profile.webp"}
         alt="user"
+        draggable={false}
         onLoadingStatusChange={(status) => {
           if (status === "loaded") {
             setLoading(false);

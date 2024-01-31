@@ -1,19 +1,23 @@
 import { db } from "@golf-district/database";
 import {
+  BookingService,
   CourseService,
   EntityService,
   ForeUpWebhookService,
   HyperSwitchWebhookService,
   NotificationService,
   ProviderService,
+  StripeConnectWebhookService,
+  StripeService,
   TokenizeService,
+  UpdateWithdrawableBalance,
 } from "@golf-district/service";
 import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "./src/root";
 
 export { appRouter, type AppRouter } from "./src/root";
 export { createTRPCContext } from "./src/trpc";
-
+export { verifySignatureAppRouter } from "@golf-district/service";
 export type RouterInputs = inferRouterInputs<AppRouter>;
 
 export type RouterOutputs = inferRouterOutputs<AppRouter>;
@@ -75,6 +79,47 @@ export const processForeUpWebhook = async () => {
   });
 };
 
+export const processStripeWebhook = async (req: any, sig: string) => {
+  const stripeService = new StripeService(process.env.STRIPE_SECRET_KEY!);
+  const notificationService = new NotificationService(
+    db,
+    process.env.TWILLIO_PHONE_NUMBER!,
+    process.env.SENDGRID_EMAIL!,
+    process.env.TWILLIO_ACCOUNT_SID!,
+    process.env.TWILLIO_AUTH_TOKEN!,
+    process.env.SENDGRID_API_KEY!
+  );
+  const stripeConnectWebhookService = new StripeConnectWebhookService(
+    db,
+    notificationService,
+    stripeService,
+    process.env.STRIPE_WEBHOOK_ENDPOINT_SECRET!
+  );
+  await stripeConnectWebhookService.processWebhook(req, sig).catch((error) => {
+    console.log(error);
+  });
+};
+
+export const processUpdateWithdrawableBalance = async (req: { userId: string; amount: number }) => {
+  const notificationService = new NotificationService(
+    db,
+    process.env.TWILLIO_PHONE_NUMBER!,
+    process.env.SENDGRID_EMAIL!,
+    process.env.TWILLIO_ACCOUNT_SID!,
+    process.env.TWILLIO_AUTH_TOKEN!,
+    process.env.SENDGRID_API_KEY!
+  );
+  const updateWithdrawableBalanceService = new UpdateWithdrawableBalance(
+    db,
+    notificationService,
+    process.env.QSTASH_CURRENT_SIGNING_KEY!,
+    process.env.QSTASH_NEXT_SIGNING_KEY!
+  );
+  await updateWithdrawableBalanceService.processWebhook(req).catch((error) => {
+    console.log(error);
+  });
+};
+
 export const processHyperSwitchWebhook = async (req: any) => {
   const notificationService = new NotificationService(
     db,
@@ -95,11 +140,14 @@ export const processHyperSwitchWebhook = async (req: any) => {
     process.env.REDIS_TOKEN!,
     credentials
   );
+  const bookingService = new BookingService(db, tokenizeService, providerService, notificationService);
   const hyperSwitchWebhookService = new HyperSwitchWebhookService(
     db,
     tokenizeService,
     providerService,
-    notificationService
+    notificationService,
+    bookingService,
+    process.env.QSTASH_TOKEN!
   );
   await hyperSwitchWebhookService.processWebhook(req).catch((error) => {
     console.log(error);

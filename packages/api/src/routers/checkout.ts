@@ -55,6 +55,18 @@ export const checkoutRouter = createTRPCRouter({
         .getHyperSwitchService()
         .retrievePaymentMethods(ctx.session.user.id, input.params);
     }),
+  validatePromoCode: protectedProcedure
+    .input(
+      z.object({
+        promoCode: z.string(),
+        courseId: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return await ctx.serviceFactory
+        .getCheckoutService()
+        .validatePromoCode(ctx.session.user.id, input.promoCode, input.courseId);
+    }),
   createPaymentMethod: protectedProcedure
     .input(
       z.object({

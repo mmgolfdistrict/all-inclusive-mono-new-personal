@@ -30,9 +30,13 @@ export const useOverflowCheck = (
     };
     const currentRef = ref.current;
     currentRef?.addEventListener("scroll", handleScroll);
+    window?.addEventListener("resize", handleScroll);
+    window?.addEventListener("scroll", handleScroll);
 
     return () => {
       currentRef?.removeEventListener("scroll", handleScroll);
+      window?.removeEventListener("resize", handleScroll);
+      window?.removeEventListener("scroll", handleScroll);
     };
   }, [ref, ...deps]);
 

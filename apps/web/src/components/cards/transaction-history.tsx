@@ -4,27 +4,46 @@ import { useCourseContext } from "~/contexts/CourseContext";
 import { api } from "~/utils/api";
 import { formatMoney, fullDate } from "~/utils/formatters";
 import Link from "next/link";
-// import { useState } from "react";
+import { useState } from "react";
 import { Avatar } from "../avatar";
-
-// import { OutlineButton } from "../buttons/outline-button";
+import { Heart } from "../icons/heart";
+import { ModalWrapper } from "../modal/modal-wrapper";
 
 export const TransactionHistory = ({ teeTimeId }: { teeTimeId: string }) => {
-  // const [amount, setAmount] = useState<number>(4);
   const { data, isLoading, error, isError } =
     api.history.getHistoryForTeeTime.useQuery({
       teeTimeId: teeTimeId,
     });
+  const { data: watcherData } = api.searchRouter.getTeeTimeById.useQuery({
+    teeTimeId: teeTimeId,
+  });
+  const [isViewWatchersOpen, setIsViewWatchersOpen] = useState<boolean>(false);
+
   const { course } = useCourseContext();
 
-  //   const loadMore = () => {
-  //   setAmount(amount + 4);
-  // };
+  const watchers = watcherData?.watchers ?? [];
+
+  const openWatchers = () => {
+    setIsViewWatchersOpen(true);
+  };
+
+  const closeWatchers = () => {
+    setIsViewWatchersOpen(false);
+  };
 
   return (
     <div className="flex w-full flex-col gap-4 bg-white md:rounded-xl">
-      <div className="stroke flex justify-between gap-4 border-b px-4 py-3 md:px-6 md:py-4">
+      <div className="stroke flex justify-between gap-4 border-b px-4 py-3 items-center md:px-6 md:py-4">
         <div className="text-lg font-semibold">Transaction History</div>
+        {watchers?.length > 0 ? (
+          <button
+            onClick={openWatchers}
+            className="flex text-sm gap-[2px] items-center border border-stroke rounded-md px-2"
+          >
+            <Heart className={`w-[13px] md:w-[18px]`} fill={"#40942A"} />
+            {watchers.length === 10 ? "10+" : watchers.length}
+          </button>
+        ) : null}
       </div>
       <div className="flex max-w-full flex-col gap-4 overflow-auto px-4 pb-2 text-[14px] md:px-6 md:pb-3">
         {isLoading ? (
@@ -71,6 +90,33 @@ export const TransactionHistory = ({ teeTimeId }: { teeTimeId: string }) => {
           </OutlineButton>
         ) : null} */}
       </div>
+      {isViewWatchersOpen ? (
+        <ModalWrapper
+          isOpen={isViewWatchersOpen}
+          onClose={closeWatchers}
+          className="pt-4"
+        >
+          <div className="flex flex-col gap-4">
+            <h1>Current Watchers</h1>
+            <div className="w-full max-h-[300px] overflow-auto">
+              {watchers?.map((watcher, idx) => (
+                <Link
+                  href={`/${course?.id}/profile/${watcher?.userId}`}
+                  key={idx}
+                  target={"_blank"}
+                  rel={"noopener noreferrer"}
+                  className={`flex max-w-[98%] w-full gap-2 items-center p-2 ${
+                    idx !== watchers.length - 1 ? "border-b border-stroke" : ""
+                  }`}
+                >
+                  <Avatar src={watcher.image ?? ""} />
+                  <div>{watcher.handle}</div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </ModalWrapper>
+      ) : null}
     </div>
   );
 };

@@ -8,11 +8,14 @@ import type { InsertTeeTimes } from "@golf-district/database/schema/teeTimes";
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import { dateToUtcTimestamp, isEqual, normalizeDateToUnixTimestamp } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
-import daysj from "dayjs";
 import dayjs from "dayjs";
+import dayjs1 from "dayjs";
+import UTC from "dayjs/plugin/utc";
 // import { isEqual } from "lodash";
 import type { ProviderService } from "../tee-sheet-provider/providers.service";
 import type { ProviderAPI } from "../tee-sheet-provider/sheet-providers";
+
+dayjs1.extend(UTC);
 
 interface IndexingSchedule {
   day: number;
@@ -107,7 +110,7 @@ export class ForeUpWebhookService {
     // let teeTimesToRemove: InsertTeeTimes[] = [];
 
     for (let i = 0; i < 30; i++) {
-      const dayToCheck = daysj(baseDate).add(i, "day").format("YYYY-MM-DD"); //adds i days to the base date - base date is current date
+      const dayToCheck = dayjs(baseDate).add(i, "day").format("YYYY-MM-DD"); //adds i days to the base date - base date is current date
 
       const indexResult = await this.indexDay(
         dayToCheck,
@@ -177,22 +180,20 @@ export class ForeUpWebhookService {
     console.log(`Upserting ${teeTimesToUpsert.length} tee times`);
     for (const teeTime of teeTimesToUpsert) {
       await this.database
-        .insert(teeTimes)
-        .values(teeTime)
-        .onDuplicateKeyUpdate({
-          set: {
-            numberOfHoles: teeTime.numberOfHoles,
-            maxPlayersPerBooking: teeTime.maxPlayersPerBooking,
-            availableFirstHandSpots: teeTime.availableFirstHandSpots,
-            greenFee: teeTime.greenFee,
-            cartFee: teeTime.cartFee,
-            greenFeeTax: teeTime.greenFeeTax,
-            cartFeeTax: teeTime.cartFeeTax,
-            date: teeTime.date,
-            time: teeTime.time,
-            providerDate: teeTime.providerDate,
-          },
+        .update(teeTimes)
+        .set({
+          numberOfHoles: teeTime.numberOfHoles,
+          maxPlayersPerBooking: teeTime.maxPlayersPerBooking,
+          availableFirstHandSpots: teeTime.availableFirstHandSpots,
+          greenFee: teeTime.greenFee,
+          cartFee: teeTime.cartFee,
+          greenFeeTax: teeTime.greenFeeTax,
+          cartFeeTax: teeTime.cartFeeTax,
+          date: dateToUtcTimestamp(new Date(teeTime.date)),
+          time: teeTime.time,
+          providerDate: teeTime.providerDate,
         })
+        .where(eq(teeTimes.id, teeTime.id))
         .execute()
         .catch((err) => {
           this.logger.error(err);
@@ -296,9 +297,9 @@ export class ForeUpWebhookService {
       const maxPlayers = Math.max(...attributes.allowedGroupSizes);
 
       // format of attributes.time -> 2023-12-20T01:28:00-07:00
-      const hours = Number(attributes.time?.split("T")?.[1]?.split(":")?.[0]);
-      const minutes = Number(attributes.time?.split("T")?.[1]?.split(":")?.[1]?.split(":")?.[0]);
-      const militaryTime = hours * 100 + minutes;
+      const militaryTime = Number(dayjs1.utc(attributes.time).format("Hmm"));
+      // console.log("data", attributes.time);
+      // console.log("militaryTime", militaryTime);
 
       const indexedTeeTime = existingTeeTimesForThisDay.find(
         (obj) => teeTimeResponse.id === obj.providerTeeTimeId
@@ -344,8 +345,10 @@ export class ForeUpWebhookService {
         };
         if (isEqual(indexedTeeTime, providerTeeTimeMatchingKeys)) {
           // no changes to tee time do nothing
+
           return;
         } else {
+          // console.log("providerTeeTime to upsert", providerTeeTime);
           teeTimesToUpsert.push(providerTeeTime);
         }
       } else {

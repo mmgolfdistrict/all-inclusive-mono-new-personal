@@ -104,6 +104,33 @@ export class BookingService {
     private readonly notificationService: NotificationService
   ) {}
 
+  createCounterOffer = async (userId: string, bookingIds: string[], offerId: string, amount: number) => {
+    //find owner of each booking
+    const bookingOwners = await this.database
+      .select({
+        id: bookings.id,
+        ownerId: bookings.ownerId,
+      })
+      .from(bookings)
+      .where(inArray(bookings.id, bookingIds))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error retrieving bookings: ${err}`);
+        throw new Error("Error retrieving bookings");
+      });
+    if (!bookingOwners.length) {
+      this.logger.warn(`No bookings found.`);
+      throw new Error("No bookings found.");
+    }
+    //check that all bookings are owned by the same user
+    const ownerIds = new Set(bookingOwners.map((booking) => booking.ownerId));
+    if (ownerIds.size > 1) {
+      this.logger.warn(`Bookings are not owned by the same user.`);
+      throw new Error("Bookings are not owned by the same user.");
+    }
+    //two cases if the user is the owner of the bookings
+  };
+
   /**
    * Get transaction history for a user and course.
    * @param {string} userId - The ID of the user.
@@ -929,6 +956,7 @@ export class BookingService {
         courseId: bookings.courseId,
         teeTimeId: bookings.teeTimeId,
         minimumOfferPrice: bookings.minimumOfferPrice,
+        ownerId: bookings.ownerId,
       })
       .from(bookings)
       .where(inArray(bookings.id, bookingIds))
@@ -938,7 +966,6 @@ export class BookingService {
         this.logger.error(`Error retrieving bookings: ${err}`);
         throw new Error("Error retrieving bookings");
       });
-    console.log(data);
     if (!data.length || data.length !== bookingIds.length || !data[0]) {
       this.logger.warn(`No bookings found.`);
       throw new Error("No bookings found");
@@ -1027,11 +1054,22 @@ export class BookingService {
         throw new Error("Error active offers");
       });
 
+    await this.notificationService.createNotification(
+      userId,
+      "OFFER_CREATED",
+      `Offer creation successful`,
+      courseId
+    );
+    await this.notificationService.createNotification(
+      data[0].ownerId,
+      "NEW_OFFER",
+      `someone has created an offer for your booking`,
+      courseId
+    );
+
     if (activeOffers && activeOffers.count > 1) {
       return { success: true, message: `You have ${activeOffers.count} for this course` };
     }
-    //@TODO create notification
-
     return { success: true, message: "Offer created successfully." };
   };
 

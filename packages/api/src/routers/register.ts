@@ -12,6 +12,7 @@ export const registerRouter = createTRPCRouter({
       lastName: input.lastName,
       handle: input.username,
       redirectHref: input.redirectHref,
+      ReCAPTCHA: input.ReCAPTCHA,
     };
     return await ctx.serviceFactory.getUserService().createUser(createUserData);
   }),

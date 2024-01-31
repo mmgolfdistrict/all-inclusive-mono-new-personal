@@ -78,6 +78,7 @@ export const CustomerCartSchema = z.object({
   name: z.string(),
   email: z.string(),
   phone: z.string().nullable(),
+  promoCode: z.string().nullable().optional(),
   phone_country_code: z.string().nullable(),
   cart: z.array(ProductDataSchema),
 });

@@ -14,6 +14,7 @@ import { mySqlTable } from "./_table";
 import { assets } from "./assets";
 import { bookings } from "./bookings";
 import { courseAssets } from "./courseAssets";
+import { coursePromoCodeLink } from "./coursePromoCodeLink";
 import { entities } from "./entities";
 import { favorites } from "./favorites";
 import { lists } from "./lists";
@@ -64,6 +65,7 @@ export const coursesRelations = relations(courses, ({ one, many }) => ({
   transfer: many(transfers),
   favorite: many(favorites),
   booking: many(bookings),
+  coursePromoCodeLink: many(coursePromoCodeLink),
   entity: one(entities, {
     fields: [courses.entityId],
     references: [entities.id],

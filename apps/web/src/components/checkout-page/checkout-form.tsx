@@ -28,7 +28,7 @@ export const CheckoutForm = ({
       applePay: "auto",
       googlePay: "auto",
     },
-    paymentMethodOrder: ["google_pay", "apple_pay", "card"],
+    paymentMethodOrder: ["card", "google_pay", "apple_pay"],
     fields: {
       billingDetails: {
         name: "auto",

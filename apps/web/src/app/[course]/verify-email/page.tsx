@@ -13,7 +13,7 @@ export default function VerifyEmail() {
           Verify Your Email Address
         </h1>
         <p className="text-primary-gray">
-          An verification link was just sent to the email provided. Please open
+          A verification link was just sent to the email provided. Please open
           the email and click the verify button.
         </p>
       </section>

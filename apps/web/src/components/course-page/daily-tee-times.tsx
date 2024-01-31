@@ -1,40 +1,151 @@
-import { useOverflowCheck } from "~/hooks/useOverflowCheck";
+import { WeatherIcons } from "~/constants/weather-icons";
+import { useCourseContext } from "~/contexts/CourseContext";
+import { useFiltersContext } from "~/contexts/FiltersContext";
+import { api } from "~/utils/api";
 import { dayMonthDate } from "~/utils/formatters";
-import type { SearchObject } from "~/utils/types";
-import { useRef, type ComponentProps, type ReactNode } from "react";
+import { useEffect, useRef } from "react";
+import { useIntersectionObserver } from "usehooks-ts";
 import { useDraggableScroll } from "../../hooks/useDraggableScroll";
 import { TeeTime } from "../cards/tee-time";
 import { LeftChevron } from "../icons/left-chevron";
+import { TeeTimeSkeleton } from "./tee-time-skeleton";
 
 export const DailyTeeTimes = ({
   date,
-  weatherDesciption,
-  temperature,
-  weatherIcon,
-  teeTimes,
-  ...props
+  minDate,
+  maxDate,
+  setError,
+  updateCount,
 }: {
   date: string;
-  weatherIcon: ReactNode;
-  temperature: number;
-  weatherDesciption: string;
-  teeTimes?: SearchObject[];
-  props?: ComponentProps<"div">;
+  minDate: string;
+  maxDate: string;
+  setError: (t: string | null) => void;
+  updateCount: (balance: number) => void;
 }) => {
   const overflowRef = useRef<HTMLDivElement>(null);
-  const { isOverflowingLeft, isOverflowingRight } = useOverflowCheck(
-    overflowRef,
-    []
-  );
+  const nextPageRef = useRef<HTMLDivElement>(null);
   const { onMouseDown } = useDraggableScroll(overflowRef, {
     direction: "horizontal",
   });
 
-  const scrollRight = () => {
+  const entry = useIntersectionObserver(nextPageRef, {});
+  const isVisible = !!entry?.isIntersecting;
+
+  const { course } = useCourseContext();
+  const {
+    showUnlisted,
+    includesCart,
+    golfers,
+    holes,
+    priceRange,
+    startTime,
+    sortValue,
+  } = useFiltersContext();
+  const teeTimeStartTime = startTime[0];
+  const teeTimeEndTime = startTime[1] + 59;
+
+  const { data: weather, isLoading: isLoadingWeather } =
+    api.searchRouter.getWeatherForDay.useQuery(
+      {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+        courseId: course?.id!,
+        date,
+      },
+      {
+        enabled: course?.id !== undefined && date !== undefined,
+      }
+    );
+
+  const take = 5;
+
+  const {
+    data: teeTimeData,
+    isLoading,
+    isFetchedAfterMount,
+    isFetchingNextPage,
+    fetchNextPage,
+    error,
+  } = api.searchRouter.getTeeTimesForDay.useInfiniteQuery(
+    {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+      courseId: course?.id!,
+      date,
+      minDate,
+      maxDate,
+      startTime: teeTimeStartTime,
+      endTime: teeTimeEndTime,
+      holes: holes === "Any" || holes === "18" ? 18 : 9,
+      showUnlisted,
+      includesCart,
+      golfers: golfers === "Any" ? 1 : golfers,
+      lowerPrice: priceRange[0]!,
+      upperPrice: priceRange[1]!,
+      sortTime:
+        sortValue === "Sort by time - Early to Late"
+          ? "asc"
+          : sortValue === "Sort by time - Late to Early"
+          ? "desc"
+          : "asc",
+      sortPrice:
+        sortValue === "Sort by price - Low to High"
+          ? "asc"
+          : sortValue === "Sort by price - High to Low"
+          ? "desc"
+          : "asc",
+      take,
+    },
+    {
+      getNextPageParam: (lastPage) => {
+        if (lastPage?.results?.length === 0) return null;
+        if (lastPage?.results?.length < take) return null;
+        let c = lastPage.cursor ?? 1;
+        c = c + 1;
+        return c;
+      },
+      enabled: course?.id !== undefined && date !== undefined,
+    }
+  );
+
+  useEffect(() => {
+    setError(error?.message ?? null);
+  }, [error]);
+
+  useEffect(() => {
+    const num = teeTimeData?.pages[teeTimeData?.pages?.length - 1]?.count;
+    if (!isLoading && isFetchedAfterMount) {
+      if (num !== undefined) {
+        updateCount(num);
+      } else {
+        updateCount(0);
+      }
+    }
+  }, [teeTimeData, isLoading, isFetchedAfterMount]);
+
+  const allTeeTimes =
+    teeTimeData?.pages[teeTimeData?.pages?.length - 1]?.results ?? [];
+
+  const scrollRight = async () => {
+    if (!isLoading) {
+      await fetchNextPage();
+    }
     overflowRef.current?.classList.add("scroll-smooth");
     overflowRef.current?.scrollBy({ left: 325 });
     overflowRef.current?.classList.remove("scroll-smooth");
   };
+
+  const getNextPage = async () => {
+    if (!isLoading && !isFetchingNextPage) {
+      console.log("getting next page");
+      await fetchNextPage();
+    }
+  };
+
+  useEffect(() => {
+    if (isVisible) {
+      void getNextPage();
+    }
+  }, [isVisible]);
 
   const scrollLeft = () => {
     overflowRef.current?.classList.add("scroll-smooth");
@@ -42,43 +153,46 @@ export const DailyTeeTimes = ({
     overflowRef.current?.classList.remove("scroll-smooth");
   };
 
+  if (!isLoading && isFetchedAfterMount && allTeeTimes.length === 0) {
+    return null;
+  }
+
   return (
-    <div
-      className="flex flex-col gap-1 md:gap-4 bg-white px-4 py-2 md:rounded-xl md:px-8 md:py-6 "
-      {...props}
-    >
+    <div className="flex flex-col gap-1 md:gap-4 bg-white px-4 py-2 md:rounded-xl md:px-8 md:py-6">
       <div className="flex flex-wrap justify-between gap-2">
-        {/* dont add utcOffset to this, the cleaned yyyy-mm-dd is being passed here */}
         <div className="text-[13px] md:text-lg">{dayMonthDate(date)}</div>
-        {weatherDesciption !== "" ? (
+        {isLoadingWeather && !weather ? (
+          <div className="h-8 w-[30%] bg-gray-200 rounded-md  animate-pulse" />
+        ) : weather && !isLoadingWeather ? (
           <div className="flex items-center gap-1">
-            <div>{weatherIcon}</div>
-            <div className="text-[12px] md:text-[16px]">{temperature}°F</div>
+            <div>{WeatherIcons[weather?.iconCode ?? ""]}</div>
+            <div className="text-[12px] md:text-[16px]">
+              {weather?.temperature !== 0 ? `${weather?.temperature}°F` : ""}
+            </div>
             <div className="hidden text-sm text-primary-gray md:block">
-              {weatherDesciption}
+              {weather?.shortForecast ?? ""}
             </div>
           </div>
         ) : (
           <div />
         )}
       </div>
-      <div
-        className="scrollbar-none relative flex gap-2 md:gap-4 overflow-x-auto overflow-y-hidden"
-        ref={overflowRef}
-        onMouseDown={onMouseDown}
-      >
-        {isOverflowingLeft && (
-          <div className="sticky left-2 z-[2] flex items-center justify-center md:left-5">
-            <button
-              onClick={scrollLeft}
-              className="flex h-fit items-center justify-center rounded-full bg-white p-2 shadow-overflow-indicator"
-            >
-              <LeftChevron fill="#40942A" className="w-[21px]" />
-            </button>
-          </div>
-        )}
-        {teeTimes && teeTimes.length > 0 ? (
-          teeTimes?.map((i, idx) => (
+      <div className="relative">
+        <div className="absolute top-1/2 hidden md:block -translate-y-1/2 z-[2] flex items-center justify-center -left-1 md:-left-6">
+          <button
+            onClick={scrollLeft}
+            className="flex h-fit items-center justify-center rounded-full bg-white p-2 shadow-overflow-indicator"
+          >
+            <LeftChevron fill="#40942A" className="w-[21px]" />
+          </button>
+        </div>
+
+        <div
+          className="scrollbar-none w-full flex overflow-x-auto overflow-y-hidden gap-4"
+          ref={overflowRef}
+          onMouseDown={onMouseDown}
+        >
+          {allTeeTimes?.map((i, idx) => (
             <TeeTime
               time={i.date}
               key={idx}
@@ -87,10 +201,7 @@ export const DailyTeeTimes = ({
               players={String(4 - i.availableSlots)}
               firstHandPurchasePrice={i?.firstHandPurchasePrice}
               price={i.pricePerGolfer}
-              isOwned={
-                i?.firstOrSecondHandTeeTime === "SECOND_HAND" ||
-                i?.firstOrSecondHandTeeTime === "UNLISTED"
-              }
+              isOwned={i?.isOwned}
               soldById={i?.soldById}
               soldByImage={i?.soldByImage}
               soldByName={i?.soldByName}
@@ -101,20 +212,29 @@ export const DailyTeeTimes = ({
               bookingIds={i?.bookingIds ?? []}
               listingId={i?.listingId}
             />
-          ))
-        ) : (
-          <div className="text-center">No times for this date</div>
-        )}
-        {isOverflowingRight && (
-          <div className="sticky right-2 z-[2] flex items-center justify-center md:right-5">
-            <button
-              onClick={scrollRight}
-              className="flex h-fit items-center justify-center rounded-full bg-white p-2 shadow-overflow-indicator"
-            >
-              <LeftChevron fill="#40942A" className="w-[21px] rotate-180" />
-            </button>
+          ))}
+          <div
+            ref={nextPageRef}
+            className="h-[50px] w-[1px] text-[1px] text-white"
+          >
+            Loading
           </div>
-        )}
+
+          {isLoading || isFetchingNextPage || !isFetchedAfterMount
+            ? Array(5)
+                .fill(null)
+                .map((_, idx) => <TeeTimeSkeleton key={idx} />)
+            : null}
+        </div>
+
+        <div className="absolute z-[2] hidden md:block top-1/2 -translate-y-1/2 flex items-center justify-center -right-1 md:-right-6">
+          <button
+            onClick={scrollRight}
+            className="flex h-fit items-center justify-center rounded-full bg-white p-2 shadow-overflow-indicator"
+          >
+            <LeftChevron fill="#40942A" className="w-[21px] rotate-180" />
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -33,6 +33,7 @@ type UserType = {
   entityId: string | null;
   profilePicture: string;
   bannerPicture: string;
+  stripeConnectAccountStatus: "DISCONNECTED" | "CONNECTED";
 };
 
 export const useUser = (userId?: string) => {

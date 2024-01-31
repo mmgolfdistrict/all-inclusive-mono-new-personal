@@ -6,16 +6,23 @@ import type { SelectUser } from "@golf-district/database/schema/users";
 import { assetToURL, currentUtcTimestamp } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
 import bcrypt from "bcryptjs";
+import { CacheService } from "../infura/cache.service";
+import { NotificationService } from "../notification/notification.service";
 
-export class AuthService {
-  private readonly logger = Logger(AuthService.name);
-
+export class AuthService extends CacheService {
   /**
    * Constructs an instance of the `AuthService`.
    *
    * @param database - A database instance or connector used for user data retrieval and update operations.
    */
-  constructor(private readonly database: Db) {}
+  constructor(
+    private readonly database: Db,
+    private readonly notificationService: NotificationService,
+    redisUrl: string,
+    redisToken: string
+  ) {
+    super(redisUrl, redisToken, Logger(AuthService.name));
+  }
 
   /**
    * Asynchronously authenticates a user with the provided handle/email and password.
@@ -91,8 +98,16 @@ export class AuthService {
       if (process.env.NODE_ENV !== "production") {
         throw new Error("Invalid password");
       }
-      return null;
+      const signInAttempts = await this.incrementOrSetKey(`signinAttempts:${data.user.id}`);
+      if (signInAttempts >= 3) {
+        await this.notificationService.sendEmail(
+          data.user.id,
+          "Suspicious activity detected",
+          `We have detected suspicious activity on your account. If you are not the one attempting to login, please contact support immediately.`
+        );
+      }
     }
+    await this.invalidateCache(`signinAttempts:${data.user.id}`);
     await this.database
       .update(users)
       .set({

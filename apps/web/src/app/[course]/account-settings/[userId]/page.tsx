@@ -23,7 +23,7 @@ export default function ManangeProfile({
         <ProfileDetails />
         <div className="flex h-full flex-col gap-4 md:flex-row w-full">
           <div className="w-full md:w-[50%] h-inherit">
-            <BalanceHistory />
+            <BalanceHistory userId={userId} />
           </div>
 
           <ConnectAccount userId={userId} />

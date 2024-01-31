@@ -37,6 +37,10 @@ export default function ForgotPassword() {
   }, []);
 
   const onSubmit: SubmitHandler<ForgotPasswordSchemaType> = async (data) => {
+    if (!data.ReCAPTCHA) {
+      toast.info("Please verify you are not a robot.");
+      return;
+    }
     if (forgotFn.isSuccess) return;
     if (forgotFn.isLoading) return;
     try {
@@ -57,13 +61,6 @@ export default function ForgotPassword() {
       return;
     }
     setValue("ReCAPTCHA", captchaCode);
-    // console.log(captchaCode);
-    // Else reCAPTCHA was executed successfully so proceed with the
-    // alert
-    // alert(`approved`);
-    // Reset the reCAPTCHA so that it can be executed again if user
-    // submits another email.
-    // void recaptchaRef.current?.reset();
   };
 
   return (
@@ -74,8 +71,9 @@ export default function ForgotPassword() {
       <section className="mx-auto flex w-full flex-col gap-2 bg-white p-5 sm:max-w-[500px] sm:rounded-xl sm:p-6">
         {forgotFn.isSuccess ? (
           <div className="text-[16px] text-center fade-in text-primary-gray">
-            An reset password link was just sent to the email provided. Please
-            open the email and click the reset button.
+            If your email exists in our system then you should receive a
+            password reset link. Please open the email and click the reset
+            button.
           </div>
         ) : (
           <>
@@ -101,6 +99,11 @@ export default function ForgotPassword() {
                 onChange={onReCAPTCHAChange}
                 ref={recaptchaRef}
               />
+              {errors?.ReCAPTCHA?.message && (
+                <div className="text-[12px] text-red">
+                  {errors.ReCAPTCHA?.message}
+                </div>
+              )}
               <FilledButton
                 className={`w-full rounded-full ${
                   forgotFn.isLoading ? "animate-pulse cursor-not-allopwed" : ""
