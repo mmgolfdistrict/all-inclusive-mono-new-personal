@@ -55,7 +55,7 @@ export const UpcomingTeeTimes = ({
           </div>
         )}
         <div
-          className="scrollbar-none flex gap-4 overflow-x-auto overflow-y-hidden md:px-6 px-4 w-full "
+          className="scrollbar-none flex gap-4 overflow-x-auto overflow-y-hidden md:px-6 px-4 w-full pb-3"
           ref={overflowRef}
         >
           {isLoading ? (

@@ -164,7 +164,7 @@ export const UnlistedDetails = ({
             <Avatar src={data?.soldByImage} />
             <div>Sold by</div>
             <Link
-              href={`/${course?.id}/profile${data?.soldById}`}
+              href={`/${course?.id}/profile/${data?.soldById}`}
               className="text-primary"
             >
               {data?.soldByName}

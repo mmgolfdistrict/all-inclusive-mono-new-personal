@@ -164,12 +164,12 @@ export const TeeTime = ({
             {isOwned ? (
               <Link
                 href={`/${courseId}/profile/${soldById}`}
-                className="text-primary"
+                className="text-primary text-ellipsis"
               >
                 {soldByName}
               </Link>
             ) : (
-              <div>{soldByName}</div>
+              <div className="whitespace-nowrap">{soldByName}</div>
             )}
           </div>
           <div className="flex md:min-h-[31px] items-center gap-2">

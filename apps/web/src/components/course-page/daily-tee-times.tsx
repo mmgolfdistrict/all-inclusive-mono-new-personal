@@ -136,7 +136,6 @@ export const DailyTeeTimes = ({
 
   const getNextPage = async () => {
     if (!isLoading && !isFetchingNextPage) {
-      console.log("getting next page");
       await fetchNextPage();
     }
   };

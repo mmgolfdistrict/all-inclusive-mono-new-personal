@@ -374,7 +374,7 @@ export class CheckoutService {
     courseId: string
   ): Promise<{
     discount: number;
-    type: string;
+    type: "PERCENTAGE" | "AMOUNT";
   }> => {
     const [data] = await this.database
       .select({

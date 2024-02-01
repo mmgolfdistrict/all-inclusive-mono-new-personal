@@ -122,3 +122,16 @@ export const getTime = (date: string, utcOffset = 0): string => {
 export const cleanTimeString = (timestamp: string): string => {
   return timestamp.replace(" ", "T") + "Z";
 };
+
+export const getPromoCodePrice = (
+  currentPrice: number,
+  discount: number,
+  type: "PERCENTAGE" | "AMOUNT"
+) => {
+  if (discount === 0) return currentPrice;
+  if (type === "PERCENTAGE") {
+    const discountAmount = (currentPrice * discount) / 100;
+    return Number((currentPrice - discountAmount).toFixed(2));
+  }
+  return Number((currentPrice - discount).toFixed(2));
+};

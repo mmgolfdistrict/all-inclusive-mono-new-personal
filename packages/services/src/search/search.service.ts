@@ -707,6 +707,7 @@ export class SearchService {
           gte(teeTimes.date, currentTimePlus30Min),
           between(teeTimes.date, startDate, endDate),
           eq(teeTimes.courseId, courseId),
+
           eq(bookings.includesCart, includesCart),
           eq(teeTimes.numberOfHoles, holes),
           firstHandResults && firstHandResults?.length > 0
@@ -715,7 +716,7 @@ export class SearchService {
                 firstHandResults?.map((t) => t.id)
               )
             : isNotNull(bookings.teeTimeId),
-          eq(bookings.isListed, showUnlisted)
+          showUnlisted ? isNotNull(bookings.isListed) : isNull(bookings.isListed)
         )
       )
       .orderBy(
@@ -758,20 +759,22 @@ export class SearchService {
               listingId: booking.listingId ?? undefined,
             };
           } else {
+            // @ts-expect-error
             acc[teeTimeId].availableSlots++;
             acc[teeTimeId]?.bookingIds?.push(booking?.id);
           }
         }
         return acc;
       },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      {} as Record<string, any>
+
+      {} as Record<string, CombinedObject>
     );
 
-    const secondHandResults = Object.values(groupedSecondHandData);
+    const secondHandResults = Object.values(groupedSecondHandData).filter((i) => i.availableSlots >= golfers);
     const secondHandCount = secondHandResults.length;
 
     //combine first and second hand results according to sort params
+    // @ts-expect-error
     const combinedResults = firstHandResults.concat(secondHandResults);
     //sort combined results
     const sortedResults = combinedResults.sort((a, b) => {

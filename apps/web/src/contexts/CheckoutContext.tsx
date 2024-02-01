@@ -18,6 +18,8 @@ interface CheckoutContextType {
   >;
   amountOfPlayers: number;
   setAmountOfPlayers: Dispatch<SetStateAction<number>>;
+  promoCode: string;
+  handlePromoCode: (code: string) => void;
 }
 
 const CheckoutContext = createContext<CheckoutContextType>({
@@ -27,6 +29,8 @@ const CheckoutContext = createContext<CheckoutContextType>({
   setSensibleData: () => undefined,
   amountOfPlayers: 1,
   setAmountOfPlayers: () => undefined,
+  promoCode: "",
+  handlePromoCode: () => undefined,
 });
 
 export const CheckoutWrapper = ({ children }: { children: ReactNode }) => {
@@ -39,6 +43,11 @@ export const CheckoutWrapper = ({ children }: { children: ReactNode }) => {
   const handleShouldAddSensible = (bool: boolean) => {
     setShouldAddSensible(bool);
   };
+  const [promoCode, setPromoCode] = useState<string>("");
+
+  const handlePromoCode = (code: string) => {
+    setPromoCode(code);
+  };
 
   const settings = {
     shouldAddSensible,
@@ -47,6 +56,8 @@ export const CheckoutWrapper = ({ children }: { children: ReactNode }) => {
     setSensibleData,
     amountOfPlayers,
     setAmountOfPlayers,
+    promoCode,
+    handlePromoCode,
   };
 
   return (
