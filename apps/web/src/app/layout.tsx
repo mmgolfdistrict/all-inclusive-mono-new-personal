@@ -99,10 +99,7 @@ export default async function RootLayout({
 
   const domainDecoded = decodeURIComponent(domain);
 
-  const entityData = await ssrGetEntityByDomain(
-    "golf-district-platform-git-foreup-int-solidity-frontend.vercel.app",
-    ""
-  );
+  const entityData = await ssrGetEntityByDomain(domainDecoded, "");
 
   if (!entityData?.id) {
     notFound();
