@@ -1,5 +1,5 @@
 export const TeeTimeSkeleton = () => (
-  <div className="rounded-xl bg-secondary-white md:min-w-[270px]">
+  <div className="rounded-xl bg-secondary-white min-w-[228px] md:min-w-[302px]">
     <div className="border-b border-stroke">
       <div className="flex justify-between py-1.5 px-3 md:p-3">
         <div className="h-4 md:h-8 w-[30%] bg-gray-200 rounded-md  animate-pulse" />
@@ -20,7 +20,7 @@ export const TeeTimeSkeleton = () => (
         <div className="h-8 w-[60%] bg-gray-200 rounded-md  animate-pulse" />
       </div>
       <div className="flex flex-col gap-1 relative">
-        <div className="h-4 md:h-8 w-[45%] bg-gray-200 rounded-md  animate-pulse" />
+        <div className="h-4 md:h-6 w-[45%] bg-gray-200 rounded-md  animate-pulse" />
       </div>
 
       <div className="flex items-center gap-1 hidden md:flex">

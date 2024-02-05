@@ -3,7 +3,7 @@
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
-import { formatMoney, getTime } from "~/utils/formatters";
+import { formatMoney, formatTime, getTime } from "~/utils/formatters";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
@@ -137,7 +137,7 @@ export const TeeTime = ({
     <>
       {children}
       <div
-        className={`md:rounded-xl rounded-lg bg-secondary-white w-fit ${
+        className={`md:rounded-xl rounded-lg bg-secondary-white w-fit min-w-[228px] md:min-w-[302px] ${
           className ?? ""
         }`}
       >
@@ -159,9 +159,9 @@ export const TeeTime = ({
             />
 
             <div className="whitespace-nowrap md:pr-1">
-              {isOwned ? "Owned" : "Sold"} by
+              {isOwned || status === "UNLISTED" ? "Owned" : "Sold"} by
             </div>
-            {isOwned ? (
+            {isOwned || status === "SECOND_HAND" ? (
               <Link
                 href={`/${courseId}/profile/${soldById}`}
                 className="text-primary text-ellipsis"
@@ -237,7 +237,7 @@ export const TeeTime = ({
               <>
                 {isSuggested ? (
                   <FilledButton
-                    className="whitespace-nowrap !min-w-[82px] md:min-w-[110px]"
+                    className="whitespace-nowrap !px-3 !min-w-[82px] md:min-w-[110px]"
                     onClick={makeAnOffer}
                   >
                     Make an Offer

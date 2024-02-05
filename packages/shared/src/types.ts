@@ -170,6 +170,7 @@ export type CombinedObject = {
   teeTimeId: string;
   date: string; //day of tee time
   time: number; //military time
+  isOwned: boolean;
   includesCart: boolean;
   firstOrSecondHandTeeTime: TeeTimeType;
   isListed: boolean; //false if the booking is unlisted

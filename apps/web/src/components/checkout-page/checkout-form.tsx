@@ -34,21 +34,6 @@ export const CheckoutForm = ({
       isUseBillingAddress: true,
       usePrefilledValues: "never", // or "auto",
     },
-    fields: {
-      billingDetails: {
-        name: "auto",
-        email: "never",
-        phone: "never",
-        address: {
-          line1: "auto",
-          line2: "never",
-          city: "auto",
-          state: "auto",
-          country: "auto",
-          postal_code: "auto",
-        },
-      },
-    },
   };
   const hyper = useHyper();
   const widgets = useWidgets();

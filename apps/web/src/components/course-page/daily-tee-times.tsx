@@ -93,6 +93,7 @@ export const DailyTeeTimes = ({
           : sortValue === "Sort by price - High to Low"
           ? "desc"
           : "asc",
+      timezoneCorrection: course?.timezoneCorrection,
       take,
     },
     {

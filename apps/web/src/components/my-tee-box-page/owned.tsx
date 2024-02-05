@@ -257,7 +257,7 @@ const TableRow = ({
               golfers.length - 2 === 1 ? "golfers" : "golfers"
             }`
           : golfers.map((i, idx) => {
-              if (idx === 0) return "You";
+              if (idx === 0) return "You ";
               if (golfers.length === 1) return "You";
               if (idx === golfers.length - 1) return `& ${i.name}`;
               if (idx === golfers.length - 2) return `${i.name} `;

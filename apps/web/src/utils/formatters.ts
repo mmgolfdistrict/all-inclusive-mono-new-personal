@@ -92,7 +92,9 @@ export const formatTime = (
   showFullDayOfTheWeek?: boolean,
   utcOffset = 0
 ): string => {
-  const cleanTimeString = timestamp.replace(" ", "T") + "Z";
+  const cleanTimeString = !timestamp.includes("T")
+    ? timestamp.replace(" ", "T") + "Z"
+    : timestamp;
   if (showFullDayOfTheWeek) {
     return dayjs
       .utc(cleanTimeString)
@@ -106,21 +108,30 @@ export const formatTime = (
 };
 
 export const fullDate = (timestamp: string, utcOffset = 0): string => {
-  const cleanTimeString = timestamp.replace(" ", "T") + "Z";
+  const cleanTimeString = !timestamp.includes("T")
+    ? timestamp.replace(" ", "T") + "Z"
+    : timestamp;
   return dayjs.utc(cleanTimeString).utcOffset(utcOffset).format("M/D/YYYY");
 };
 
 export const dayMonthDate = (date: string): string => {
-  return dayjs.utc(date).format("dddd, MMM D");
+  const cleanTimeString = !date.includes("T")
+    ? date.replace(" ", "T") + "Z"
+    : date;
+  return dayjs.utc(cleanTimeString).format("dddd, MMM D");
 };
 
 export const getTime = (date: string, utcOffset = 0): string => {
-  const cleanTimeString = date.replace(" ", "T") + "Z";
+  const cleanTimeString = !date.includes("T")
+    ? date.replace(" ", "T") + "Z"
+    : date;
   return dayjs.utc(cleanTimeString).utcOffset(utcOffset).format("h:mm A");
 };
 
 export const cleanTimeString = (timestamp: string): string => {
-  return timestamp.replace(" ", "T") + "Z";
+  return !timestamp.includes("T")
+    ? timestamp.replace(" ", "T") + "Z"
+    : timestamp;
 };
 
 export const getPromoCodePrice = (

@@ -9,13 +9,9 @@ import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import { dateToUtcTimestamp, isEqual, normalizeDateToUnixTimestamp } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
 import dayjs from "dayjs";
-import dayjs1 from "dayjs";
-import UTC from "dayjs/plugin/utc";
 // import { isEqual } from "lodash";
 import type { ProviderService } from "../tee-sheet-provider/providers.service";
 import type { ProviderAPI } from "../tee-sheet-provider/sheet-providers";
-
-dayjs1.extend(UTC);
 
 interface IndexingSchedule {
   day: number;
@@ -180,20 +176,22 @@ export class ForeUpWebhookService {
     console.log(`Upserting ${teeTimesToUpsert.length} tee times`);
     for (const teeTime of teeTimesToUpsert) {
       await this.database
-        .update(teeTimes)
-        .set({
-          numberOfHoles: teeTime.numberOfHoles,
-          maxPlayersPerBooking: teeTime.maxPlayersPerBooking,
-          availableFirstHandSpots: teeTime.availableFirstHandSpots,
-          greenFee: teeTime.greenFee,
-          cartFee: teeTime.cartFee,
-          greenFeeTax: teeTime.greenFeeTax,
-          cartFeeTax: teeTime.cartFeeTax,
-          date: dateToUtcTimestamp(new Date(teeTime.date)),
-          time: teeTime.time,
-          providerDate: teeTime.providerDate,
+        .insert(teeTimes)
+        .values(teeTime)
+        .onDuplicateKeyUpdate({
+          set: {
+            numberOfHoles: teeTime.numberOfHoles,
+            maxPlayersPerBooking: teeTime.maxPlayersPerBooking,
+            availableFirstHandSpots: teeTime.availableFirstHandSpots,
+            greenFee: teeTime.greenFee,
+            cartFee: teeTime.cartFee,
+            greenFeeTax: teeTime.greenFeeTax,
+            cartFeeTax: teeTime.cartFeeTax,
+            date: teeTime.date,
+            time: teeTime.time,
+            providerDate: teeTime.providerDate,
+          },
         })
-        .where(eq(teeTimes.id, teeTime.id))
         .execute()
         .catch((err) => {
           this.logger.error(err);
@@ -217,7 +215,8 @@ export class ForeUpWebhookService {
 
     // const startOfDay = new Date(formattedDate + "T00:00:00");
     // const endOfDay = new Date(formattedDate + "T23:59:59");
-
+    const startDate = dayjs(formattedDate).utc().hour(0).minute(0).second(0).millisecond(0).toISOString();
+    const endDate = dayjs(formattedDate).utc().hour(23).minute(59).second(59).millisecond(999).toISOString();
     // Retrieve existing tee times
     const existingTeeTimesForThisDay = await this.database
       .select({
@@ -242,8 +241,8 @@ export class ForeUpWebhookService {
       .where(
         and(
           eq(teeTimes.courseId, courseId),
-          sql`DATE(${teeTimes.providerDate}) = ${formattedDate}`
-          // between(teeTimes.date, dateToUtcTimestamp(startOfDay), dateToUtcTimestamp(endOfDay))
+          // sql`DATE(${teeTimes.providerDate}) = ${formattedDate}`
+          between(teeTimes.providerDate, startDate, endDate)
         )
       )
       .execute()
@@ -297,9 +296,9 @@ export class ForeUpWebhookService {
       const maxPlayers = Math.max(...attributes.allowedGroupSizes);
 
       // format of attributes.time -> 2023-12-20T01:28:00-07:00
-      const militaryTime = Number(dayjs1.utc(attributes.time).format("Hmm"));
-      // console.log("data", attributes.time);
-      // console.log("militaryTime", militaryTime);
+      const hours = Number(attributes.time?.split("T")?.[1]?.split(":")?.[0]);
+      const minutes = Number(attributes.time?.split("T")?.[1]?.split(":")?.[1]?.split(":")?.[0]);
+      const militaryTime = hours * 100 + minutes;
 
       const indexedTeeTime = existingTeeTimesForThisDay.find(
         (obj) => teeTimeResponse.id === obj.providerTeeTimeId
@@ -345,10 +344,8 @@ export class ForeUpWebhookService {
         };
         if (isEqual(indexedTeeTime, providerTeeTimeMatchingKeys)) {
           // no changes to tee time do nothing
-
           return;
         } else {
-          // console.log("providerTeeTime to upsert", providerTeeTime);
           teeTimesToUpsert.push(providerTeeTime);
         }
       } else {
