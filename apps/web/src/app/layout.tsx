@@ -11,7 +11,6 @@
 import { type ReactNode } from "react";
 import "~/styles/globals.css";
 import { ssrGetEntityByDomain } from "@golf-district/api";
-// import { Analytics } from "@vercel/analytics/react";
 import { Layout } from "~/components/layout";
 import { fontMapper } from "~/styles/fonts";
 import { type Metadata } from "next";
@@ -109,12 +108,7 @@ export default async function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${fontMapper[entityData?.font ?? "font-inter"]}`}>
         <Providers entityData={entityData}>
-          <Layout>
-            {/*
-            <Analytics />
-            */}
-            {children}
-          </Layout>
+          <Layout>{children}</Layout>
         </Providers>
       </body>
     </html>
