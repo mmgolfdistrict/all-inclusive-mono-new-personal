@@ -724,7 +724,8 @@ export class SearchService {
                 firstHandResults?.map((t) => t.id)
               )
             : isNotNull(bookings.teeTimeId),
-          showUnlisted ? isNull(bookings.isListed) : isNotNull(bookings.isListed)
+          eq(bookings.isListed, !showUnlisted)
+          // !showUnlisted ? isNull(bookings.isListed) : isNotNull(bookings.isListed)
         )
       )
       .orderBy(

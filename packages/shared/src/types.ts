@@ -71,8 +71,6 @@ export type FullCourseType = {
   longitude: number | null;
   latitude: number | null;
   forecastApi: string | null;
-  charityName: string | null;
-  charityDescription: string | null;
   convenienceFees: number | null;
   markup: number | null;
   openTime: string | null;

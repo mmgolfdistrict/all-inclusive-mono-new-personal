@@ -103,7 +103,7 @@ export const MakeAnOffer = ({
       });
       toast.success(
         res.message
-          ? `${res.message}. You must cancel your offers in "my offers" or you are otherwise responsible for all accepted offers.`
+          ? `${res.message} You must cancel your offers in "My Offers" or you are otherwise responsible for all accepted offers.`
           : "Offer sent successfully"
       );
       setIsMakeAnOfferOpen(false);

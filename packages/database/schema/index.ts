@@ -4,10 +4,13 @@ import * as auctionAssets from "./auctionAssets";
 import * as auctions from "./auctions";
 import * as bids from "./bids";
 import * as bookings from "./bookings";
+import * as charities from "./charities";
+import * as charityCourseLink from "./charityCourseLink";
 import * as courseAssets from "./courseAssets";
 import * as coursePromoCodeLink from "./coursePromoCodeLink";
 import * as courses from "./courses";
 import * as customerCart from "./customerCart";
+import * as donations from "./donations";
 import * as entities from "./entities";
 import * as entityAdmins from "./entityAdmins";
 import * as favorites from "./favorites";
@@ -58,4 +61,7 @@ export const schema = {
   ...promoCodes,
   ...coursePromoCodeLink,
   ...userPromoCodeLink,
+  ...charities,
+  ...charityCourseLink,
+  ...donations,
 };

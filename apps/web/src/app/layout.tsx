@@ -1,21 +1,11 @@
-// import Image from "next/image";
-// import Link from "next/link";
-
-// import prisma from "@/lib/prisma";
-// import CTA from "@/components/cta";
-// import ReportAbuse from "@/components/report-abuse";
-// import { notFound, redirect } from "next/navigation";
-// import { getSiteData } from "@/lib/fetchers";
-// import { fontMapper } from "@/styles/fonts";
-// import { Metadata } from "next";
 import { type ReactNode } from "react";
 import "~/styles/globals.css";
 import { ssrGetEntityByDomain } from "@golf-district/api";
+import { Analytics } from "@vercel/analytics/react";
 import { Layout } from "~/components/layout";
 import { fontMapper } from "~/styles/fonts";
 import { type Metadata } from "next";
 import { headers } from "next/headers";
-import { notFound } from "next/navigation";
 import Providers from "./providers";
 
 const title = "Golf District Platforms";
@@ -92,24 +82,26 @@ export default async function RootLayout({
 
   const domain = host?.split(":")?.[0]; //split on : to get localhost
 
-  if (!domain) {
-    notFound();
-  }
-
-  const domainDecoded = decodeURIComponent(domain);
+  const domainDecoded = decodeURIComponent(domain!);
 
   const entityData = await ssrGetEntityByDomain(domainDecoded, "");
-
-  if (!entityData?.id) {
-    notFound();
-  }
 
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${fontMapper[entityData?.font ?? "font-inter"]}`}>
-        <Providers entityData={entityData}>
-          <Layout>{children}</Layout>
-        </Providers>
+        {!entityData?.id ? (
+          <div className="flex items-center flex-col justify-center mt-20">
+            <h2 className="font-bold">No Entity Found</h2>
+            <p>There is no connected entity for this domain.</p>
+          </div>
+        ) : (
+          <Providers entityData={entityData}>
+            <Layout>
+              <Analytics />
+              {children}
+            </Layout>
+          </Providers>
+        )}
       </body>
     </html>
   );

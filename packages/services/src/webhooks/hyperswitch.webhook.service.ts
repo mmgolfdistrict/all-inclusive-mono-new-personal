@@ -1,7 +1,10 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
+import { randomUUID } from "crypto";
 import { and, Db, eq } from "@golf-district/database";
 import { bookings } from "@golf-district/database/schema/bookings";
+import { charityCourseLink } from "@golf-district/database/schema/charityCourseLink";
 import { customerCarts } from "@golf-district/database/schema/customerCart";
+import { donations } from "@golf-district/database/schema/donations";
 import { lists } from "@golf-district/database/schema/lists";
 import { promoCodes } from "@golf-district/database/schema/promoCodes";
 import { providerCourseLink } from "@golf-district/database/schema/providersCourseLink";
@@ -387,10 +390,30 @@ export class HyperSwitchWebhookService {
     // Logic for handling first-hand items
     // ...
   };
+
   handleCharityItem = async (item: CharityProduct, amountReceived: number, customer_id: string) => {
     // Logic for handling first-hand items
-    // ...
+    const [courseCharity] = await this.database
+      .select({ courseCharityId: charityCourseLink.charityId })
+      .from(charityCourseLink)
+      .where(eq(charityCourseLink.courseId, item.product_data.metadata.charity_id))
+      .limit(1)
+      .execute();
+    if (!courseCharity || !courseCharity.courseCharityId) {
+      this.logger.fatal(
+        `no course charity id found for charity id: ${item.product_data.metadata.charity_id}, courseId: ${item.product_data.metadata.charity_id}`
+      );
+      throw new Error(`Error finding course charity id`);
+    }
+    await this.database.insert(donations).values({
+      id: randomUUID(),
+      amount: amountReceived,
+      userId: customer_id,
+      charityId: item.product_data.metadata.charity_id,
+      courseCharityId: courseCharity.courseCharityId,
+    });
   };
+
   handleSensibleItem = async (item: SensibleProduct, amountReceived: number, customer_id: string) => {
     // Logic for handling first-hand items
     // ...

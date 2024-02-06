@@ -3,7 +3,7 @@
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
-import { formatMoney, formatTime, getTime } from "~/utils/formatters";
+import { formatMoney, getTime } from "~/utils/formatters";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactNode } from "react";

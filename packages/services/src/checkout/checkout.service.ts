@@ -1,7 +1,10 @@
 import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
 import { and, eq, gte, inArray, sql } from "@golf-district/database";
+import { assets } from "@golf-district/database/schema/assets";
 import { bookings } from "@golf-district/database/schema/bookings";
+import { charities } from "@golf-district/database/schema/charities";
+import { charityCourseLink } from "@golf-district/database/schema/charityCourseLink";
 import { coursePromoCodeLink } from "@golf-district/database/schema/coursePromoCodeLink";
 import { courses } from "@golf-district/database/schema/courses";
 import { customerCarts } from "@golf-district/database/schema/customerCart";
@@ -146,6 +149,7 @@ export class CheckoutService {
     //   throw new Error(`Error calculating tax: ${err}`);
     // });
     //@TODO: metadata to include sensible
+    //@TODO: update total form discount
     const paymentIntent = await this.hyperSwitch
       .createPaymentIntent({
         // @ts-ignore
@@ -197,6 +201,7 @@ export class CheckoutService {
    */
   validateCartItems = async (customerCart: CustomerCart): Promise<CartValidationError[]> => {
     const errors: CartValidationError[] = [];
+    const courseId = customerCart.courseId;
 
     for (const item of customerCart.cart) {
       switch (item.product_data.metadata.type) {
@@ -216,7 +221,7 @@ export class CheckoutService {
           errors.push(...(await this.validateOfferItem(item as Offer)));
           break;
         case "charity":
-          errors.push(...(await this.validateCharityItem(item as CharityProduct)));
+          errors.push(...(await this.validateCharityItem(item as CharityProduct, courseId)));
           break;
         default:
           this.logger.error(`Unknown product type: ${item.product_data.metadata}`);
@@ -362,9 +367,26 @@ export class CheckoutService {
     return errors;
   };
 
-  validateCharityItem = async (item: CharityProduct): Promise<CartValidationError[]> => {
+  validateCharityItem = async (item: CharityProduct, courseId: string): Promise<CartValidationError[]> => {
     const errors: CartValidationError[] = [];
-    //@TODO
+    const [data] = await this.database
+      .select({
+        id: charities.id,
+      })
+      .from(charityCourseLink)
+      .leftJoin(
+        charities,
+        and(eq(charityCourseLink.charityId, charities.id), eq(charityCourseLink.courseId, courseId))
+      )
+      .where(eq(courses.id, courseId))
+      .limit(1)
+      .execute();
+    if (!data) {
+      errors.push({
+        errorType: CartValidationErrors.CHARITY_NOT_ACTIVE,
+        product_id: item.id,
+      });
+    }
     return errors;
   };
 

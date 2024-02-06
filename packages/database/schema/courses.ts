@@ -32,8 +32,6 @@ export const courses = mySqlTable(
     longitude: double("longitude"),
     latitude: double("latitude"),
     forecastApi: text("forecastApi"),
-    charityName: varchar("charityName", { length: 191 }),
-    charityDescription: text("charityDescription"),
     privacyPolicy: text("privacyPolicy"),
     termsAndConditions: text("termsAndConditions"),
     convenanceFees: int("convenanceFees"),
