@@ -1,12 +1,10 @@
 import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
 import { and, eq, gte, inArray, sql } from "@golf-district/database";
-import { assets } from "@golf-district/database/schema/assets";
 import { bookings } from "@golf-district/database/schema/bookings";
 import { charities } from "@golf-district/database/schema/charities";
 import { charityCourseLink } from "@golf-district/database/schema/charityCourseLink";
 import { coursePromoCodeLink } from "@golf-district/database/schema/coursePromoCodeLink";
-import { courses } from "@golf-district/database/schema/courses";
 import { customerCarts } from "@golf-district/database/schema/customerCart";
 import { lists } from "@golf-district/database/schema/lists";
 import { promoCodes } from "@golf-district/database/schema/promoCodes";
@@ -46,6 +44,7 @@ export interface CheckoutServiceConfig {
   redisToken: string;
   hyperSwitchApiKey: string;
   foreUpApiKey: string;
+  profileId: string;
 }
 
 /**
@@ -57,6 +56,7 @@ export class CheckoutService {
   private auctionService: AuctionService;
   private readonly logger = Logger(CheckoutService.name);
   private hyperSwitch: HyperSwitchService;
+  private readonly profileId: string;
   //private stripeService: StripeService;
 
   /**
@@ -74,6 +74,7 @@ export class CheckoutService {
   ) {
     this.hyperSwitch = new HyperSwitchService(config.hyperSwitchApiKey);
     this.auctionService = new AuctionService(database, this.hyperSwitch);
+    this.profileId = config.profileId;
     //this.stripeService = new StripeService(config.stripeApiKey);
   }
 
@@ -157,6 +158,7 @@ export class CheckoutService {
         // name: user.name,
         amount: total,
         currency: "USD",
+        profile_id: this.profileId,
         // @ts-ignore
         metadata: customerCart.courseId,
       })
@@ -378,9 +380,13 @@ export class CheckoutService {
         charities,
         and(eq(charityCourseLink.charityId, charities.id), eq(charityCourseLink.courseId, courseId))
       )
-      .where(eq(courses.id, courseId))
+      .where(eq(charityCourseLink.courseId, courseId))
       .limit(1)
-      .execute();
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error validatin charity item: ${err}`);
+        throw new Error("Error validatin charity item");
+      });
     if (!data) {
       errors.push({
         errorType: CartValidationErrors.CHARITY_NOT_ACTIVE,

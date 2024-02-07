@@ -84,7 +84,10 @@ export default async function RootLayout({
 
   const domainDecoded = decodeURIComponent(domain!);
 
-  const entityData = await ssrGetEntityByDomain(domainDecoded, "");
+  const entityData = await ssrGetEntityByDomain(
+    "golfdistrict-stage2.vercel.app",
+    ""
+  );
 
   return (
     <html lang="en" suppressHydrationWarning>

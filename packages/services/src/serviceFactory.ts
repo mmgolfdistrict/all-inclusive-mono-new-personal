@@ -44,6 +44,7 @@ export interface ServiceConfig {
   vercel_teamId: string;
   vercel_authBearerToken: string;
   hyperSwitchApiKey: string;
+  hyperSwitchProfileId: string;
   foreUpApiKey: string;
   stripeApiKey: string;
   foreupUsername: string;
@@ -169,6 +170,7 @@ export class ServiceFactory {
         redisToken: this.config.redisToken,
         hyperSwitchApiKey: this.config.hyperSwitchApiKey,
         foreUpApiKey: this.config.foreUpApiKey,
+        profileId: this.config.hyperSwitchProfileId,
       },
       this.getForeupWebhookService(),
       this.getProviderService()

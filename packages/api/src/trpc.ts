@@ -38,6 +38,7 @@ const serviceFactoryConfig: ServiceConfig = {
   sensible_client_Id: process.env.SENSIBLE_CLIENT_ID ?? "",
   sensible_client_secret: process.env.SENSIBLE_CLIENT_SECRET ?? "",
   hyperSwitchApiKey: process.env.HYPERSWITCH_API_KEY ?? "",
+  hyperSwitchProfileId: process.env.HYPERSWITCH_PROFILE_ID ?? "",
   foreUpApiKey: process.env.FOREUP_API_KEY ?? "",
   stripeApiKey: process.env.STRIPE_SECRET_KEY ?? "",
   foreupUsername: process.env.FOREUP_USERNAME ?? "",
