@@ -2,6 +2,8 @@ import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
 import { and, desc, eq, isNull, sql } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
+import { charities } from "@golf-district/database/schema/charities";
+import { charityCourseLink } from "@golf-district/database/schema/charityCourseLink";
 import { courseAssets } from "@golf-district/database/schema/courseAssets";
 import { courses } from "@golf-district/database/schema/courses";
 import type { InsertCourses } from "@golf-district/database/schema/courses";
@@ -56,9 +58,7 @@ export class CourseService extends DomainService {
         longitude: courses.longitude,
         latitude: courses.latitude,
         forecastApi: courses.forecastApi,
-        charityName: courses.charityName,
-        charityDescription: courses.charityDescription,
-        convenanceFees: courses.convenanceFees,
+        convenienceFees: courses.convenanceFees,
         markup: courses.markup,
         openTime: courses.openTime,
         closeTime: courses.closeTime,
@@ -89,8 +89,73 @@ export class CourseService extends DomainService {
       highestPrimarySaleTeeTime: results.highestPrimarySaleTeeTime ?? 0,
       lowestPrimarySaleTeeTime: results.lowestPrimarySaleTeeTime ?? 0,
     };
+    if (results.supportCharity) {
+      const data = await this.database
+        .select({
+          charityDescription: charities.description,
+          charityName: charities.name,
+          charityLogo: {
+            id: assets.id,
+            key: assets.key,
+            cdn: assets.cdn,
+            extension: assets.extension,
+          },
+        })
+        .from(charityCourseLink)
+        .leftJoin(assets, eq(charities.logoAssetId, assets.id))
+        .leftJoin(charities, eq(charityCourseLink.charityId, charities.id))
+        .where(eq(courses.id, courseId))
+        .execute()
+        .catch((err) => {
+          this.logger.error(`Error getting charity for course: ${err}`);
+          throw new Error("Error getting charity");
+        });
 
+      const supportedCharities = data.map((d) => ({
+        charityLogo: d.charityLogo
+          ? `https://${d.charityLogo.cdn}/${d.charityLogo.key}.${d.charityLogo.extension}`
+          : "/defaults/default-profile.webp",
+        charityDescription: d.charityDescription,
+        charityName: d.charityName,
+      }));
+      return {
+        ...res,
+        supportedCharities,
+      };
+    }
     return res;
+  };
+
+  getSupportedCharitiesForCourseId = async (courseId: string) => {
+    const data = await this.database
+      .select({
+        charityDescription: charities.description,
+        charityName: charities.name,
+        charityLogo: {
+          id: assets.id,
+          key: assets.key,
+          cdn: assets.cdn,
+          extension: assets.extension,
+        },
+      })
+      .from(charityCourseLink)
+      .leftJoin(assets, eq(charities.logoAssetId, assets.id))
+      .leftJoin(charities, eq(charityCourseLink.charityId, charities.id))
+      .where(eq(courses.id, courseId))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error getting charity for course: ${err}`);
+        throw new Error("Error getting charity");
+      });
+
+    const supportedCharities = data.map((d) => ({
+      charityLogo: d.charityLogo
+        ? `https://${d.charityLogo.cdn}/${d.charityLogo.key}.${d.charityLogo.extension}`
+        : "/defaults/default-profile.webp",
+      charityDescription: d.charityDescription,
+      charityName: d.charityName,
+    }));
+    return supportedCharities;
   };
 
   /**
@@ -190,11 +255,7 @@ export class CourseService extends DomainService {
       closingHours?: string;
       privacyPolicy?: string;
       supportSensibleWeather?: boolean;
-      charity?: {
-        supportCharity?: boolean;
-        charityName?: string;
-        charityDescription?: string;
-      };
+      supportCharity?: boolean;
     }
   ) => {
     this.logger.info(`Updating course ${courseId} with options: ${JSON.stringify(options)}`);
@@ -221,9 +282,7 @@ export class CourseService extends DomainService {
         closeTime: options.closingHours,
         privacyPolicy: options.privacyPolicy,
         supportSensibleWeather: options.supportSensibleWeather,
-        supportCharity: options.charity?.supportCharity,
-        charityName: options.charity?.charityName,
-        charityDescription: options.charity?.charityDescription,
+        supportCharity: options.supportCharity,
       })
       .where(eq(courses.id, courseId))
       .execute()
@@ -384,10 +443,6 @@ export class CourseService extends DomainService {
 
     if (data.charity?.supportCharity) {
       courseData.supportCharity = true;
-      courseData.charityName = data.charity.charityName ? data.charity.charityName : null;
-      courseData.charityDescription = data.charity.charityDescription
-        ? data.charity.charityDescription
-        : null;
     }
 
     await this.database
@@ -482,7 +537,7 @@ export class CourseService extends DomainService {
             this.logger.error(`Error getting course: ${err}`);
             throw new Error("Error getting course");
           });
-        //Domain is only use by this site remove it form the team
+        //Domain is only use by this site remove it from the team
         if (!domainCount[0]?.count || domainCount[0]?.count === 0) {
           await this.removeDomainFromVercelTeam(apexDomain).catch((err) => {
             this.logger.error(`Error removing domain from vercel team: ${err}`);

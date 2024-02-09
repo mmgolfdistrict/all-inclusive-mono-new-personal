@@ -1,54 +1,65 @@
 "use client";
 
 import { formatQueryDate } from "@golf-district/shared";
+import { FilledButton } from "~/components/buttons/filled-button";
 import { FilterSort } from "~/components/buttons/filters-sort";
 import { GoBack } from "~/components/buttons/go-back";
-import { OutlineButton } from "~/components/buttons/outline-button";
 import { CourseBanner } from "~/components/course-page/course-banner";
 import { CourseTitle } from "~/components/course-page/course-title";
 import { DailyTeeTimes } from "~/components/course-page/daily-tee-times";
 import { Filters } from "~/components/course-page/filters";
 import { MobileFilters } from "~/components/course-page/mobile-filters";
-import {
-  MobileSort,
-  SortOptions,
-  type SortType,
-} from "~/components/course-page/mobile-sort";
-import { Skeleton } from "~/components/course-page/skeleton";
+import { MobileSort, SortOptions } from "~/components/course-page/mobile-sort";
+import { ChevronUp } from "~/components/icons/chevron-up";
 import { Select } from "~/components/input/select";
-import { Spinner } from "~/components/loading/spinner";
-import { WeatherIcons } from "~/constants/weather-icons";
 import { useAppContext } from "~/contexts/AppContext";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useFiltersContext } from "~/contexts/FiltersContext";
 import { api } from "~/utils/api";
-import type { SearchObject } from "~/utils/types";
 import dayjs from "dayjs";
+import RelativeTime from "dayjs/plugin/relativeTime";
 import Weekday from "dayjs/plugin/weekday";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ViewportList } from "react-viewport-list";
 import { useMediaQuery } from "usehooks-ts";
 
 dayjs.extend(Weekday);
+dayjs.extend(RelativeTime);
 
 export default function CourseHomePage() {
-  const {
-    showUnlisted,
-    includesCart,
-    golfers,
-    holes,
-    priceRange,
-    startTime,
-    dateType,
-    selectedDay,
-  } = useFiltersContext();
+  const ref = useRef<HTMLDivElement | null>(null);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const { dateType, selectedDay, sortValue, handleSetSortValue } =
+    useFiltersContext();
   const { entity } = useAppContext();
   const { course } = useCourseContext();
+  const [error, setError] = useState<string | null>(null);
+  const [count, setCount] = useState<number>(0);
+
+  const updateCount = (balance: number) => {
+    setCount(balance);
+  };
+
+  const { data: farthestDateOut } =
+    api.searchRouter.getFarthestTeeTimeDate.useQuery(
+      {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+        courseId: course?.id!,
+        order: "desc",
+      },
+      {
+        enabled: course?.id !== undefined,
+      }
+    );
 
   const startDate = useMemo(() => {
     if (dateType === "All") {
       return formatQueryDate(new Date());
     } else if (dateType === "Today") {
-      return formatQueryDate(new Date());
+      // return formatQueryDate(new Date());
+      return dayjs
+        .utc(formatQueryDate(new Date()))
+        .utcOffset(course?.timezoneCorrection ?? 0);
     } else if (dateType === "This Week") {
       return formatQueryDate(new Date());
     } else if (dateType === "This Weekend") {
@@ -67,17 +78,13 @@ export default function CourseHomePage() {
 
   const endDate = useMemo(() => {
     if (dateType === "All") {
-      return formatQueryDate(dayjs().date(360).toDate()); //360 days out
+      return formatQueryDate(dayjs(farthestDateOut).toDate());
     } else if (dateType === "Today") {
-      return formatQueryDate(dayjs().add(1, "day").toDate());
+      return formatQueryDate(dayjs().toDate());
     } else if (dateType === "This Week") {
-      const today = new Date();
-      const day = today.getDay();
-      const diff = today.getDate() - day + (day === 0 ? -6 : 1);
-      const newDate = diff + 7;
-      return formatQueryDate(dayjs().date(newDate).toDate());
+      return formatQueryDate(dayjs().day(7).toDate());
     } else if (dateType === "This Weekend") {
-      return formatQueryDate(dayjs().day(8).toDate());
+      return formatQueryDate(dayjs().day(7).toDate());
     } else if (dateType === "This Month") {
       const date = new Date();
       const daysInMonth = new Date(
@@ -86,89 +93,82 @@ export default function CourseHomePage() {
         0
       ).getDate();
 
-      return formatQueryDate(
-        dayjs()
-          .date(daysInMonth + 1)
-          .toDate()
-      );
+      return dayjs()
+        .date(daysInMonth)
+        .utc()
+        .hour(23)
+        .minute(59)
+        .second(59)
+        .millisecond(999)
+        .toDate();
     } else if (dateType === "Furthest Day Out To Book") {
-      return formatQueryDate(dayjs().date(360).toDate()); //360 days out
+      // return formatQueryDate(dayjs(farthestDateOut).toDate());
+      return dayjs(farthestDateOut)
+        .utc()
+        .hour(23)
+        .minute(59)
+        .second(59)
+        .millisecond(999)
+        .toDate();
     } else if (dateType === "Custom") {
       if (!selectedDay.to) {
         if (selectedDay.from) {
-          const dateString = `${selectedDay.from.year}-${
-            selectedDay.from.month
-          }-${selectedDay.from.day + 1}`;
+          const dateString = `${selectedDay.from.year}-${selectedDay.from.month}-${selectedDay.from.day}`;
           return formatQueryDate(dayjs(dateString).toDate());
         } else {
-          return formatQueryDate(dayjs().add(1, "day").toDate());
+          return formatQueryDate(dayjs().toDate());
         }
       }
 
-      const dateString = `${selectedDay.to.year}-${selectedDay.to.month}-${
-        selectedDay.to.day + 1
-      }`;
+      const dateString = `${selectedDay.to.year}-${selectedDay.to.month}-${selectedDay.to.day}`;
       return formatQueryDate(dayjs(dateString).toDate());
     }
     return formatQueryDate(dayjs().date(360).toDate()); //360 days out
-  }, [dateType, selectedDay]);
+  }, [dateType, selectedDay, farthestDateOut]);
 
-  const {
-    data: teeTimeData,
-    fetchNextPage,
-    isLoading,
-    isError,
-    isFetchingNextPage,
-    error,
-  } = api.searchRouter.courseSearch.useInfiniteQuery(
-    {
-      courseId: course?.id ?? "",
-      startDate: startDate,
-      endDate: endDate,
-      startTime: startTime[0],
-      endTime: startTime[1],
-      holes: holes === "Any" || holes === "18" ? 18 : 9,
-      golfers: golfers === "Any" ? 1 : golfers,
-      showUnlisted: showUnlisted,
-      withCart: includesCart,
-      lowerPrice: priceRange[0]!,
-      upperPrice: priceRange[1]!,
-      orderBy: dateType === "Furthest Day Out To Book" ? "desc" : "asc",
-    },
-    {
-      getNextPageParam: (lastPage) => {
-        if (lastPage?.cursor && lastPage?.hasMore) {
-          const dateFromCursor = new Date(lastPage.cursor);
-          if (dateType === "Furthest Day Out To Book") {
-            return new Date(
-              dateFromCursor.setDate(dateFromCursor.getDate() - 3)
-            ); //subtract 3 days
-          }
-          return new Date(dateFromCursor.setDate(dateFromCursor.getDate() + 3)); //add 3 more days
-        }
-        return;
-      },
-      enabled: !!course?.id,
+  const TAKE = 4;
+
+  const [take, setTake] = useState<number>(TAKE);
+  const [pageNumber, setPageNumber] = useState<number>(1);
+
+  const utcStartDate = dayjs
+    .utc(startDate)
+    .utcOffset(course?.timezoneCorrection ?? 0);
+
+  const utcEndDate = dayjs
+    .utc(endDate)
+    .utcOffset(course?.timezoneCorrection ?? 0);
+
+  const daysData = useMemo(() => {
+    const amountOfDays = dayjs(utcEndDate).diff(utcStartDate, "day");
+
+    const daysToTake = amountOfDays > take ? take : amountOfDays;
+
+    const arrayOfDates: string[] = [];
+    for (let i = 0; i <= daysToTake; i++) {
+      if (dateType === "Furthest Day Out To Book") {
+        let date = utcEndDate;
+        date = date.subtract(i, "day");
+        //if day is today stop loop
+        if (date.add(1, "day").isSame(dayjs(), "day")) break;
+        arrayOfDates.push(date.toString());
+        continue;
+      } else {
+        let date = utcStartDate;
+        date = date.add(i, "day");
+        arrayOfDates.push(date.toString());
+        continue;
+      }
     }
-  );
 
-  const amountOfTeeTimes = useMemo(() => {
-    if (!teeTimeData) return 0;
-    return (
-      teeTimeData?.pages[teeTimeData?.pages.length - 1]?.search?.length ?? 0
-    );
-  }, [teeTimeData]);
+    const amountOfPages = Math.ceil((amountOfDays + 1) / TAKE);
 
-  const hasMore = useMemo(() => {
-    if (!teeTimeData) return false;
-    return teeTimeData?.pages[teeTimeData?.pages.length - 1]?.hasMore ?? false;
-  }, [teeTimeData]);
+    return { arrayOfDates, amountOfPages };
+  }, [startDate, endDate, dateType, take]);
 
   const [showFilters, setShowFilters] = useState<boolean>(false);
   const [showSort, setShowSort] = useState<boolean>(false);
-  const [sortValue, setSortValue] = useState<SortType>(
-    "Sort by time - Early to Late"
-  );
+
   const isMobile = useMediaQuery("(max-width: 768px)");
 
   useEffect(() => {
@@ -187,57 +187,27 @@ export default function CourseHomePage() {
     setShowSort(!showSort);
   };
 
-  const setValue = (value: SortType) => {
-    setSortValue(value);
+  const pageUp = () => {
+    if (pageNumber === daysData.amountOfPages) return;
+    setPageNumber((prev) => prev + 1);
+    setTake((prev) => prev + TAKE);
+    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const teeTimesByDay = useMemo(() => {
-    if (teeTimeData) {
-      const combinedTeeTimeData =
-        teeTimeData?.pages[teeTimeData?.pages.length - 1]?.search ?? [];
+  const pageDown = () => {
+    if (pageNumber === 1) return;
+    setPageNumber((prev) => prev - 1);
+    setTake((prev) => prev - TAKE);
+    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
-      const teeTimesByDay = combinedTeeTimeData?.reduce((acc, teeTime) => {
-        const dateTime = teeTime.date.split(" ")[0];
-        if (!dateTime) return acc;
-        if (acc?.[dateTime]) {
-          acc[dateTime]?.push(teeTime);
-        } else {
-          acc[dateTime] = [teeTime];
-        }
-        return acc;
-      }, {} as Record<string, SearchObject[]>);
+  useEffect(() => {
+    setPageNumber(1);
+    setTake(TAKE);
+    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [dateType]);
 
-      if (!teeTimesByDay) return [];
-
-      const keysSortedByDate = Object.keys(teeTimesByDay).sort((a, b) => {
-        if (dateType === "Furthest Day Out To Book") {
-          return new Date(b).getTime() - new Date(a).getTime();
-        }
-        return new Date(a).getTime() - new Date(b).getTime();
-      });
-      const sortedTeeTimesByDay = keysSortedByDate.reduce(
-        (acc, date) => ({
-          ...acc,
-          [date]: teeTimesByDay[date]?.sort((a, b) => {
-            if (sortValue === "Sort by time - Early to Late") {
-              return a.time - b.time;
-            } else if (sortValue === "Sort by time - Late to Early") {
-              return b.time - a.time;
-            } else if (sortValue === "Sort by price - Low to High") {
-              // && Sort by time - Early to Late
-              return a.pricePerGolfer - b.pricePerGolfer;
-            } else {
-              // Sort by price - High to Low && Sort by time - Early to Late
-              return b.pricePerGolfer - a.pricePerGolfer;
-            }
-          }),
-        }),
-        {} as Record<string, SearchObject[]>
-      );
-
-      return sortedTeeTimesByDay;
-    }
-  }, [teeTimeData, sortValue, dateType]);
+  const datesArr = daysData?.arrayOfDates;
 
   return (
     <main className="bg-secondary-white py-4 md:py-6">
@@ -250,7 +220,11 @@ export default function CourseHomePage() {
         className="px-4 md:px-6"
       />
       <CourseBanner className="pt-4" />
-      <section className="relative flex gap-8 pl-0 pt-6 md:pl-6 md:pt-8">
+      <section className="relative flex gap-8 pl-0 pt-6 md:pl-6 md:pt-8 mx-auto max-w-[1700px] w-full">
+        <div
+          ref={scrollRef}
+          className="absolute -top-[7.5rem] md:-top-[9.2rem]"
+        />
         <div className="hidden min-w-[310px] flex-col md:flex">
           <div
             style={{
@@ -261,7 +235,7 @@ export default function CourseHomePage() {
           >
             <Select
               value={sortValue}
-              setValue={setValue}
+              setValue={handleSetSortValue}
               values={SortOptions}
             />
 
@@ -275,21 +249,17 @@ export default function CourseHomePage() {
         <div className="flex w-full flex-col gap-1 md:gap-4 overflow-x-hidden pr-0 md:pr-6">
           <div className="flex justify-between gap-4  px-4 md:px-0">
             <div className="text-secondary-black">
-              Showing {amountOfTeeTimes ?? "0"} tee times{" "}
+              Showing {count?.toLocaleString() ?? "0"} tee times{" "}
               <span className="text-sm text-primary-gray">
                 All times shown in course time zone
               </span>
             </div>
           </div>
-          {isLoading ? (
-            Array(3)
-              .fill(null)
-              .map((_, idx) => <Skeleton key={idx} />)
-          ) : isError && error ? (
+          {error ? (
             <div className="flex justify-center items-center h-[200px]">
-              <div className="text-center">Error: {error?.message}</div>
+              <div className="text-center">Error: {error}</div>
             </div>
-          ) : !teeTimesByDay || Object.keys(teeTimesByDay)?.length === 0 ? (
+          ) : datesArr?.length === 0 ? (
             <div className="flex justify-center items-center h-[200px]">
               <div className="text-center">
                 No tee times available for selected filters.
@@ -297,39 +267,52 @@ export default function CourseHomePage() {
             </div>
           ) : (
             <>
-              {Object.keys(teeTimesByDay).map((date, idx) => (
-                <DailyTeeTimes
-                  key={idx}
-                  date={date}
-                  temperature={
-                    (teeTimesByDay[date]?.[0] as SearchObject)?.weather
-                      ?.temperature ?? ""
-                  }
-                  weatherIcon={
-                    WeatherIcons[
-                      (teeTimesByDay[date]?.[0] as SearchObject)?.weather
-                        .iconCode
-                    ] ?? <></>
-                  }
-                  weatherDesciption={
-                    (teeTimesByDay[date]?.[0] as SearchObject)?.weather
-                      ?.shortForecast ?? ""
-                  }
-                  teeTimes={teeTimesByDay[date]}
-                />
-              ))}
-              {isFetchingNextPage ? (
-                <div className="mx-auto h-[100px] flex items-center justify-center">
-                  <Spinner className="w-[40px] h-[40px]" />
-                </div>
-              ) : null}
-              {hasMore && !isFetchingNextPage ? (
-                <OutlineButton
-                  className="mx-auto w-fit"
-                  onClick={() => void fetchNextPage()}
+              <div className="flex w-full flex-col gap-1 md:gap-4" ref={ref}>
+                <ViewportList
+                  viewportRef={ref}
+                  items={datesArr.slice(
+                    (pageNumber - 1) * TAKE,
+                    pageNumber * TAKE
+                  )}
                 >
-                  Load More
-                </OutlineButton>
+                  {(date, idx) => (
+                    <DailyTeeTimes
+                      setError={(e: string | null) => {
+                        setError(e);
+                      }}
+                      key={idx}
+                      date={date}
+                      updateCount={updateCount}
+                      minDate={utcStartDate.toString()}
+                      maxDate={utcEndDate.toString()}
+                    />
+                  )}
+                </ViewportList>
+              </div>
+              {daysData.amountOfPages > 1 && count > 0 ? (
+                <div className="flex items-center justify-center gap-2">
+                  <FilledButton
+                    className={`!px-3 !py-2 !min-w-fit !rounded-md ${
+                      pageNumber === 1 ? "opacity-50 cursor-not-allowed" : ""
+                    }`}
+                    onClick={pageDown}
+                  >
+                    <ChevronUp fill="#fff" className="-rotate-90" />
+                  </FilledButton>
+                  <div className="text-primary-gray px-3 py-2 bg-[#ffffff] rounded-md">
+                    {pageNumber} / {daysData.amountOfPages}
+                  </div>
+                  <FilledButton
+                    className={`!px-3 !py-2 !min-w-fit !rounded-md ${
+                      pageNumber === daysData.amountOfPages
+                        ? "opacity-50 cursor-not-allowed"
+                        : ""
+                    }`}
+                    onClick={pageUp}
+                  >
+                    <ChevronUp fill="#fff" className="rotate-90" />
+                  </FilledButton>
+                </div>
               ) : null}
             </>
           )}
@@ -340,7 +323,7 @@ export default function CourseHomePage() {
         <MobileSort
           setShowSort={setShowSort}
           toggleSort={toggleSort}
-          setSortValue={setSortValue}
+          setSortValue={handleSetSortValue}
           sortValue={sortValue}
         />
       )}

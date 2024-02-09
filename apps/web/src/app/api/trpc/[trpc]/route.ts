@@ -31,7 +31,7 @@ const handler = auth(async (req) => {
     createContext: async () => await createTRPCContext({ auth: req.auth, req }),
 
     onError({ error, path }) {
-      console.error(`>>> tRPC Error on '${path}'`, error);
+      console.error(`>>> tRPC Error on '${path ?? "unknown path"}'`, error);
     },
   });
 

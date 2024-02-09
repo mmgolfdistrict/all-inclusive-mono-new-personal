@@ -4,6 +4,15 @@ import { resetPasswordSchema } from "../../../shared/src/schema/reset-password-s
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 export const userRouter = createTRPCRouter({
+  inviteUser: protectedProcedure
+    .input(
+      z.object({
+        emailOrPhone: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return await ctx.serviceFactory.getUserService().inviteUser(ctx.session.user.id, input.emailOrPhone);
+    }),
   getUser: publicProcedure
     .input(
       z.object({
@@ -11,7 +20,7 @@ export const userRouter = createTRPCRouter({
       })
     )
     .query(async ({ ctx, input }) => {
-      return await ctx.serviceFactory.getUserService().getUserById(input.userId, ctx.session?.user.id);
+      return await ctx.serviceFactory.getUserService().getUserById(input.userId, ctx.session?.user?.id);
     }),
   getUnreadOffersForCourse: publicProcedure
     .input(
@@ -22,7 +31,7 @@ export const userRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       return await ctx.serviceFactory
         .getNotificationService()
-        .getUnreadOffersForCourse(input.courseId, ctx?.session?.user.id);
+        .getUnreadOffersForCourse(input.courseId, ctx?.session?.user?.id);
     }),
   readOffersForCourse: protectedProcedure
     .input(
@@ -74,7 +83,9 @@ export const userRouter = createTRPCRouter({
         .getBookingsOwnedForTeeTime(input.teeTimeId, ctx?.session?.user.id);
     }),
   forgotPasswordRequest: publicProcedure.input(forgotPasswordSchema).mutation(async ({ ctx, input }) => {
-    return await ctx.serviceFactory.getUserService().forgotPasswordRequest(input.redirectHref, input.email);
+    return await ctx.serviceFactory
+      .getUserService()
+      .forgotPasswordRequest(input.redirectHref, input.email, input.ReCAPTCHA);
   }),
   executeForgotPassword: publicProcedure.input(resetPasswordSchema).mutation(async ({ ctx, input }) => {
     return await ctx.serviceFactory
@@ -86,7 +97,7 @@ export const userRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       return await ctx.serviceFactory
         .getUserService()
-        .getUpcomingTeeTimesForUser(input.userId, input.courseId, ctx.session?.user.id);
+        .getUpcomingTeeTimesForUser(input.userId, input.courseId, ctx.session?.user?.id);
     }),
   getTeeTimeHistoryForUser: protectedProcedure
     .input(z.object({ courseId: z.string() }))

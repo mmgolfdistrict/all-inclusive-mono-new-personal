@@ -1,6 +1,7 @@
 "use client";
 
 import { type DayValue } from "@taak/react-modern-calendar-datepicker";
+import type { SortType } from "~/components/course-page/mobile-sort";
 import {
   createContext,
   useContext,
@@ -86,6 +87,8 @@ interface FiltersContextType {
     }>
   >;
   startTimeOptions: OperationTimeType[];
+  sortValue: SortType;
+  handleSetSortValue: (value: SortType) => void;
 }
 
 const FiltersContext = createContext<FiltersContextType>({
@@ -106,6 +109,8 @@ const FiltersContext = createContext<FiltersContextType>({
   selectedDay: startingSelectedDayRange,
   setSelectedDay: () => undefined,
   startTimeOptions: StartTimeOptions,
+  sortValue: "Sort by time - Early to Late",
+  handleSetSortValue: () => undefined,
 });
 
 export const FiltersWrapper = ({ children }: { children: ReactNode }) => {
@@ -120,6 +125,9 @@ export const FiltersWrapper = ({ children }: { children: ReactNode }) => {
     from: DayValue;
     to: DayValue;
   }>(startingSelectedDayRange);
+  const [sortValue, setSortValue] = useState<SortType>(
+    "Sort by time - Early to Late"
+  );
 
   const { course } = useCourseContext();
 
@@ -154,6 +162,10 @@ export const FiltersWrapper = ({ children }: { children: ReactNode }) => {
     }
   }, [dateType]);
 
+  const handleSetSortValue = (value: SortType) => {
+    setSortValue(value);
+  };
+
   const settings = {
     dateType,
     setDateType,
@@ -172,6 +184,8 @@ export const FiltersWrapper = ({ children }: { children: ReactNode }) => {
     selectedDay,
     setSelectedDay,
     startTimeOptions,
+    sortValue,
+    handleSetSortValue,
   };
 
   return (

@@ -9,21 +9,25 @@ import { CheckoutBreadcumbs } from "~/components/nav/checkout-breadcrumbs";
 import { useCheckoutContext } from "~/contexts/CheckoutContext";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { api } from "~/utils/api";
-import { formatMoney } from "~/utils/formatters";
+import { formatMoney, getPromoCodePrice } from "~/utils/formatters";
 import Link from "next/link";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useDebounce } from "usehooks-ts";
 
 const currentDate = formatQueryDate(new Date());
 
 export default function Checkout({
+  params,
   searchParams,
 }: {
+  params: { course: string };
   searchParams: Record<string, string | string[] | undefined>;
 }) {
+  const courseId = params.course;
   const teeTimeId = searchParams?.teeTimeId as string | undefined;
   const listingId = searchParams?.listingId as string | undefined;
   const { course } = useCourseContext();
-  const { shouldAddSensible, sensibleData, amountOfPlayers } =
+  const { shouldAddSensible, sensibleData, amountOfPlayers, promoCode } =
     useCheckoutContext();
 
   const {
@@ -56,8 +60,40 @@ export default function Checkout({
 
   const isSensibleInvalid = teeTimeDate === currentDate;
 
+  const validatePromoCode = api.checkout.validatePromoCode.useMutation();
+  const debouncedPromoCode = useDebounce(promoCode, 500);
+
+  const [promoCodePrice, setPromoCodePrice] = useState<number | undefined>(
+    undefined
+  );
+
+  const checkPromoCode = async () => {
+    const currentPrice = Number(data?.pricePerGolfer) * amountOfPlayers;
+    try {
+      const promoData = await validatePromoCode.mutateAsync({
+        promoCode: debouncedPromoCode,
+        courseId: courseId,
+      });
+      const ratedPrice = getPromoCodePrice(
+        currentPrice,
+        promoData.discount,
+        promoData.type
+      );
+      setPromoCodePrice(ratedPrice);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    if (debouncedPromoCode) {
+      void checkPromoCode();
+    }
+  }, [debouncedPromoCode]);
+
   const cartData = useMemo(() => {
     if (!data || data === null) return [];
+
     const metadata =
       saleType === "first_hand"
         ? {
@@ -74,12 +110,16 @@ export default function Checkout({
         {
           name: "Golf District Tee Time",
           id: teeTimeId ?? data?.teeTimeId,
-          price: Number(data?.pricePerGolfer * 100) * amountOfPlayers, //int
+          price:
+            debouncedPromoCode && promoCodePrice !== undefined
+              ? promoCodePrice * 100
+              : Number(data?.pricePerGolfer * 100) * amountOfPlayers, //int
           image: "", //
           currency: "USD", //USD
-          display_price: formatMoney(
-            Number(data?.pricePerGolfer) * amountOfPlayers
-          ),
+          display_price:
+            debouncedPromoCode && promoCodePrice !== undefined
+              ? formatMoney(promoCodePrice)
+              : formatMoney(Number(data?.pricePerGolfer) * amountOfPlayers),
           product_data: {
             metadata: { ...metadata },
           },
@@ -91,12 +131,16 @@ export default function Checkout({
           name: "Golf District Tee Time",
           id: teeTimeId ?? data?.teeTimeId,
           courseId: course?.id,
-          price: Number(data?.pricePerGolfer * 100) * amountOfPlayers, //int
+          price:
+            debouncedPromoCode && promoCodePrice !== undefined
+              ? promoCodePrice * 100
+              : Number(data?.pricePerGolfer * 100) * amountOfPlayers, //int
           image: "", //
           currency: "USD", //USD
-          display_price: formatMoney(
-            Number(data?.pricePerGolfer) * amountOfPlayers
-          ),
+          display_price:
+            debouncedPromoCode && promoCodePrice !== undefined
+              ? formatMoney(promoCodePrice)
+              : formatMoney(Number(data?.pricePerGolfer) * amountOfPlayers),
           product_data: {
             metadata: { ...metadata },
           },
@@ -124,6 +168,8 @@ export default function Checkout({
     shouldAddSensible,
     isSensibleInvalid,
     data,
+    debouncedPromoCode,
+    promoCodePrice,
   ]);
 
   if (isError && error) {

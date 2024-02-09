@@ -1,6 +1,7 @@
 import { auctionRouter } from "./routers/auction";
 import { authRouter } from "./routers/auth";
 import { bookingRouter } from "./routers/booking";
+import { cashOutRouter } from "./routers/cashout";
 import { checkoutRouter } from "./routers/checkout";
 import { courseRouter } from "./routers/course";
 import { domainRouter } from "./routers/domain";
@@ -39,6 +40,7 @@ export const appRouter = createTRPCRouter({
   history: historyRouter,
   watchlist: watchlistRouter,
   teeBox: bookingRouter,
+  cashOut: cashOutRouter,
 });
 
 export type AppRouter = typeof appRouter;

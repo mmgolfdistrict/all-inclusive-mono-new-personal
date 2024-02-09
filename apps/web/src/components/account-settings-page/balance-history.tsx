@@ -1,12 +1,46 @@
 "use client";
 
 import * as Tabs from "@radix-ui/react-tabs";
+import { useUser } from "~/hooks/useUser";
+import { api } from "~/utils/api";
+import { formatMoney } from "~/utils/formatters";
+import { toast } from "react-toastify";
 import { FilledButton } from "../buttons/filled-button";
 import { History } from "../icons/history";
 import { Wallet } from "../icons/wallet";
 import { TransactionHistory } from "./transaction-history";
 
-export const BalanceHistory = () => {
+export const BalanceHistory = ({ userId }: { userId: string }) => {
+  const { data: user, refetch } = useUser(userId);
+  const connectAccount = api.cashOut.createStripeAccountLink.useMutation();
+  const requestCashOut = api.cashOut.requestCashOut.useMutation();
+
+  const handleConnectAccount = async () => {
+    try {
+      const res = await connectAccount.mutateAsync({
+        accountSettingsHref: window.location.href,
+      });
+      if (res.url) {
+        //open up new tab with stripe connect link
+        window.open(res.url, "_blank");
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error((error as Error).message ?? "Could not connect account.");
+    }
+  };
+
+  const handleRequestCashOut = async () => {
+    try {
+      await requestCashOut.mutateAsync({ userId: userId });
+      toast.success("Cash out requested.");
+      await refetch();
+    } catch (error) {
+      console.log(error);
+      toast.error((error as Error).message ?? "Could not request cash out.");
+    }
+  };
+
   return (
     <Tabs.Root defaultValue="balance">
       <Tabs.List className="flex w-full justify-center gap-6  border-b border-stroke bg-white px-6 pt-2 md:justify-start md:rounded-t-xl">
@@ -27,18 +61,44 @@ export const BalanceHistory = () => {
       </Tabs.List>
       <Tabs.Content
         value="balance"
-        className="bg-white p-2 md:rounded-b-xl w-full flex items-center justify-center"
+        className="bg-white px-2 py-4 md:rounded-b-xl w-full h-full md:min-h-[220px] flex items-center justify-center"
       >
-        <div className="flex flex-col items-center justify-center gap-2">
+        <div className="flex flex-col h-full items-center justify-center gap-2">
           <div className="flex flex-col items-center gap-2 md:flex-row md:items-center">
             <div className="text-[24px] text-secondary-black md:text-[32px]">
-              $247.99
+              {formatMoney(user?.balance ?? 0 / 100)}
             </div>
-            <div className=" text-primary-gray">
-              You need to connect your account to transfer your balance.
-            </div>
+            {user?.stripeConnectAccountStatus === "CONNECTED" ? null : (
+              <div className="text-primary-gray">
+                You need to connect your account to transfer your balance.
+              </div>
+            )}
           </div>
-          <FilledButton>Connect Account</FilledButton>
+          {user?.stripeConnectAccountStatus === "CONNECTED" ? (
+            <FilledButton
+              onClick={() => void handleRequestCashOut()}
+              disabled={requestCashOut.isLoading}
+              className={`min-w-[150px] ${
+                connectAccount.isLoading
+                  ? "animate-pulse cusor-not-allowed"
+                  : ""
+              }`}
+            >
+              Cash Out
+            </FilledButton>
+          ) : (
+            <FilledButton
+              onClick={() => void handleConnectAccount()}
+              disabled={connectAccount.isLoading}
+              className={`${
+                connectAccount.isLoading
+                  ? "animate-pulse cusor-not-allowed"
+                  : ""
+              }`}
+            >
+              {connectAccount.isLoading ? "Connecting..." : "Connect Account"}
+            </FilledButton>
+          )}
         </div>
       </Tabs.Content>
       <Tabs.Content value="history" className="bg-white p-2">

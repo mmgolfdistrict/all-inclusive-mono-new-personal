@@ -1,9 +1,0 @@
-{
-  "buildCommand": "turbo run build",
-  "crons": [
-    {
-      "path": "/api/cron",
-      "schedule": "* * * * *"
-    }
-  ]
-}

@@ -90,8 +90,7 @@ export class EntityService {
    */
   getEntityFromDomain = async (domain: string, rootDomain: string) => {
     const subdomain = domain.endsWith(`.${rootDomain}`) ? domain.replace(`.${rootDomain}`, "") : null;
-    this.logger.info(`getEntityFromDomain called with subdomain: ${subdomain}`);
-    // console.log("domain", domain);
+    this.logger.debug(`getEntityFromDomain called for: ${subdomain ? subdomain : domain}`);
 
     const query = this.database
       .select({

@@ -9,7 +9,8 @@ const Errors = {
   OAuthCreateAccount: "Could not create OAuth provider user in the database.",
   EmailCreateAccount: "Could not create email provider user in the database.",
   Callback: "Error in the OAuth callback handler route",
-  CallbackRouteError: "The account is already associated with another user",
+  CallbackRouteError:
+    "The account is already associated with another user. You can link it from the account settings page if you use the original login method.",
   OAuthAccountNotLinked:
     "If the email on the account is already linked, but not with this OAuth account",
   EmailSignin: "Sending the e-mail with the verification token failed",
@@ -26,9 +27,9 @@ export default function AuthError() {
   const errorKey = query.get("error");
 
   return (
-    <div className="flex items-center flex-col justify-center mt-20">
+    <div className="flex items-center text-center flex-col justify-center mt-20">
       <h2 className="text-xl font-bold">An Error Occurred</h2>
-      <p className="pb-4">
+      <p className="pb-4 max-w-[400px]">
         {Errors[errorKey as keyof typeof Errors] ??
           "An error occurred in authorization."}
       </p>

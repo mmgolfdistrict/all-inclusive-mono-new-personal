@@ -45,7 +45,7 @@ export const MakeAnOffer = ({
   minimumOfferPrice,
   bookingIds,
 }: SideBarProps) => {
-  const [offerPrice, setOfferPrice] = useState<number>(300);
+  const [offerPrice, setOfferPrice] = useState<number>(0);
   const [players, setPlayers] = useState<PlayerType>("1");
 
   const makeOffer = api.teeBox.createOfferOnBookings.useMutation();
@@ -103,7 +103,7 @@ export const MakeAnOffer = ({
       });
       toast.success(
         res.message
-          ? `${res.message}. You must cancel your offers in "my offers" or you are otherwise responsible for all accepted offers.`
+          ? `${res.message} You must cancel your offers in "My Offers" or you are otherwise responsible for all accepted offers.`
           : "Offer sent successfully"
       );
       setIsMakeAnOfferOpen(false);

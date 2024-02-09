@@ -230,13 +230,16 @@ const TableRow = ({
               {formatTime(date, false, timezoneCorrection)}
             </div>
             {type === "FIRST_PARTY" ? (
-              <div className="whitespace-nowrap">Owned by {ownedByName}</div>
+              <div className="whitespace-nowrap">Sold by {ownedByName}</div>
             ) : (
               <Link
                 href={`/${courseId}/profile/${ownedById}`}
                 className="whitespace-nowrap"
               >
-                Owned by <span className="text-primary">{ownedByName}</span>
+                {type === "SECOND_HAND" && status === "LISTED"
+                  ? "Listed"
+                  : "Owned"}{" "}
+                by <span className="text-primary">{ownedByName}</span>
               </Link>
             )}
           </div>

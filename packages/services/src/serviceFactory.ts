@@ -4,6 +4,7 @@ import {
   AuthService,
   BookingService,
   CacheService,
+  CashOutService,
   CheckoutService,
   CourseService,
   DomainService,
@@ -16,6 +17,7 @@ import {
   NotificationService,
   SearchService,
   SensibleService,
+  StripeService,
   TokenizeService,
   UploadService,
   UserService,
@@ -42,6 +44,7 @@ export interface ServiceConfig {
   vercel_teamId: string;
   vercel_authBearerToken: string;
   hyperSwitchApiKey: string;
+  hyperSwitchProfileId: string;
   foreUpApiKey: string;
   stripeApiKey: string;
   foreupUsername: string;
@@ -51,6 +54,7 @@ export interface ServiceConfig {
   sensible_client_Id: string;
   sensible_client_secret: string;
   sensible_audience: string;
+  upStashClientToken: string;
 }
 
 /**
@@ -166,6 +170,7 @@ export class ServiceFactory {
         redisToken: this.config.redisToken,
         hyperSwitchApiKey: this.config.hyperSwitchApiKey,
         foreUpApiKey: this.config.foreUpApiKey,
+        profileId: this.config.hyperSwitchProfileId,
       },
       this.getForeupWebhookService(),
       this.getProviderService()
@@ -275,7 +280,12 @@ export class ServiceFactory {
    * @returns An instance of AuthService.
    */
   getAuthService = (): AuthService => {
-    return new AuthService(this.config.database);
+    return new AuthService(
+      this.config.database,
+      this.getNotificationService(),
+      this.config.redisUrl,
+      this.config.redisToken
+    );
   };
 
   /**
@@ -303,7 +313,16 @@ export class ServiceFactory {
       this.config.database,
       this.getTokenizerService(),
       this.getProviderService(),
-      this.getNotificationService()
+      this.getNotificationService(),
+      this.getBookingService(),
+      this.config.upStashClientToken
     );
+  };
+  getStripeService = (): StripeService => {
+    return new StripeService(this.config.stripeApiKey);
+  };
+
+  getCashOutService = (): CashOutService => {
+    return new CashOutService(this.config.database, this.getStripeService(), this.getNotificationService());
   };
 }

@@ -36,13 +36,17 @@ export const ManageOwnedTeeTime = ({
   selectedTeeTime,
   refetch,
 }: SideBarProps) => {
+  const { course } = useCourseContext();
   const [minimumOfferPrice, setMinimumOfferPrice] = useState<number>(200);
   const [friends, setFriends] = useState<InviteFriend[]>([]);
   const [newFriend, setNewFriend] = useState<string>("");
   const debouncedValue = useDebounce<string>(newFriend, 500);
-  const { course } = useCourseContext();
+  const [inviteFriend, setInviteFriend] = useState<string>("");
+  const [inviteSucess, setInviteSucess] = useState<boolean>(false);
 
-  const { data } = api.searchRouter.searchUsers.useQuery(
+  const invite = api.user.inviteUser.useMutation();
+
+  const { data, isLoading } = api.searchRouter.searchUsers.useQuery(
     { searchText: debouncedValue },
     { enabled: debouncedValue?.length > 0 }
   );
@@ -82,6 +86,9 @@ export const ManageOwnedTeeTime = ({
     } else {
       document.body.classList.remove("overflow-hidden");
       setMinimumOfferPrice(selectedTeeTime?.minimumOfferPrice ?? 0); //reset price
+      setNewFriend("");
+      setInviteFriend("");
+      setInviteSucess(false);
     }
   }, [isManageOwnedTeeTimeOpen, selectedTeeTime]);
 
@@ -113,11 +120,10 @@ export const ManageOwnedTeeTime = ({
       toast.error("Tee time not selected");
       return;
     }
+    if (updateNames.isLoading || updateMinimumOfferPrice.isLoading) return;
     const userIdsForBooking = friends
       .filter((friend) => friend.id !== "")
       .map((i) => i.id);
-    // console.log(selectedTeeTime?.bookingIds.slice(0, friends.length));
-    // console.log(userIdsForBooking);
     try {
       await updateNames.mutateAsync({
         bookingIds: selectedTeeTime?.bookingIds.slice(0, friends.length) ?? [],
@@ -156,6 +162,27 @@ export const ManageOwnedTeeTime = ({
 
   const handleNewFriend = (e: ChangeEvent<HTMLInputElement>) => {
     setNewFriend(e.target.value);
+  };
+
+  const inviteFriendCall = async () => {
+    if (invite.isLoading) return;
+    try {
+      await invite.mutateAsync({ emailOrPhone: inviteFriend });
+      setInviteSucess(true);
+      setInviteFriend("");
+      setTimeout(() => {
+        setNewFriend("");
+      }, 4500);
+      setTimeout(() => {
+        setInviteSucess(false);
+      }, 5000);
+    } catch (error) {
+      setInviteSucess(false);
+      setInviteFriend("");
+      toast.error(
+        (error as Error)?.message ?? "An error occurred inviting friend."
+      );
+    }
   };
 
   return (
@@ -250,15 +277,54 @@ export const ManageOwnedTeeTime = ({
                     </div>
                   </div>
                 ) : (
-                  <input
-                    value={newFriend}
-                    type="text"
-                    list="searchedFriends"
-                    onChange={handleNewFriend}
-                    onSelect={addFriend}
-                    placeholder="Username or email"
-                    className="mx-auto w-full max-w-[400px] rounded-lg bg-secondary-white px-4 py-2 flex justify-between text-[14px] font-semibold outline-none"
-                  />
+                  <>
+                    <input
+                      value={newFriend}
+                      type="text"
+                      list="searchedFriends"
+                      onChange={handleNewFriend}
+                      onSelect={addFriend}
+                      placeholder="Username or email"
+                      className="mx-auto w-full max-w-[400px] rounded-lg bg-secondary-white px-4 py-2 flex justify-between text-[14px] font-semibold outline-none"
+                    />
+                    {!isLoading &&
+                    friendList?.length === 0 &&
+                    debouncedValue.length > 0 ? (
+                      <div className="flex justify-center items-center flex-col gap-1 rounded-md w-full mx-auto max-w-[400px]">
+                        {inviteSucess ? (
+                          <div className="text-center fade-in">
+                            Friend invited successfully.
+                          </div>
+                        ) : (
+                          <>
+                            <div className="text-center fade-in">
+                              Friend not found. Invite them!
+                            </div>
+                            <div className="flex items-center gap-1 w-full fade-in">
+                              <input
+                                value={inviteFriend}
+                                type="text"
+                                onChange={(e) => {
+                                  if (invite.isLoading) return;
+                                  setInviteFriend(e.target.value);
+                                }}
+                                placeholder="Email or phone number"
+                                className="mx-auto w-full max-w-[400px] rounded-lg bg-secondary-white px-4 py-2 flex justify-between text-[14px] font-semibold outline-none"
+                              />
+                              <FilledButton
+                                className={`w-full !max-w-fit ${
+                                  invite.isLoading ? "animate-pulse" : ""
+                                }`}
+                                onClick={inviteFriendCall}
+                              >
+                                {invite.isLoading ? "Inviting..." : "Invite"}
+                              </FilledButton>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    ) : null}
+                  </>
                 )}
               </div>
 

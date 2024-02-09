@@ -5,6 +5,7 @@ import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
 import { formatMoney, formatTime } from "~/utils/formatters";
+import type { InviteFriend } from "~/utils/types";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type ComponentProps } from "react";
@@ -47,14 +48,23 @@ export const UnlistedDetails = ({
       ownerId: ownerId,
       teeTimeId: teeTimeId,
     });
+  const { data: bookingData } = api.user.getBookingsOwnedForTeeTime.useQuery(
+    { teeTimeId },
+    {
+      enabled: !!teeTimeId,
+      refetchOnMount: false,
+      refetchOnReconnect: false,
+      refetchOnWindowFocus: false,
+    }
+  );
 
   const { data: bookingIds, refetch: refetchBookingIds } =
     api.teeBox.getOwnedBookingsForTeeTime.useQuery(
       {
         teeTimeId: teeTimeId ?? "",
-        ownerId: data?.soldById,
+        ownerId: ownerId,
       },
-      { enabled: teeTimeId !== undefined && data?.soldById !== undefined }
+      { enabled: teeTimeId !== undefined && ownerId !== undefined }
     );
 
   const refetchData = async () => {
@@ -154,7 +164,7 @@ export const UnlistedDetails = ({
             <Avatar src={data?.soldByImage} />
             <div>Sold by</div>
             <Link
-              href={`/${course?.id}/profile${data?.soldById}`}
+              href={`/${course?.id}/profile/${data?.soldById}`}
               className="text-primary"
             >
               {data?.soldByName}
@@ -297,7 +307,7 @@ export const UnlistedDetails = ({
           courseId: course?.id ?? "",
           date: data?.date ?? "",
           firstHandPrice: data?.firstHandPrice ?? 0,
-          golfers: data?.golfers ?? [],
+          golfers: (bookingData?.bookings as InviteFriend[]) ?? [],
           purchasedFor: data?.purchasedFor ?? 0,
           bookingIds: bookingIds ?? [],
           status: "UNLISTED",

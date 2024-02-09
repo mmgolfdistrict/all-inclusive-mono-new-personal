@@ -8,7 +8,6 @@ import type { InsertTeeTimes } from "@golf-district/database/schema/teeTimes";
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import { dateToUtcTimestamp, isEqual, normalizeDateToUnixTimestamp } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
-import daysj from "dayjs";
 import dayjs from "dayjs";
 // import { isEqual } from "lodash";
 import type { ProviderService } from "../tee-sheet-provider/providers.service";
@@ -107,7 +106,7 @@ export class ForeUpWebhookService {
     // let teeTimesToRemove: InsertTeeTimes[] = [];
 
     for (let i = 0; i < 30; i++) {
-      const dayToCheck = daysj(baseDate).add(i, "day").format("YYYY-MM-DD"); //adds i days to the base date - base date is current date
+      const dayToCheck = dayjs(baseDate).add(i, "day").format("YYYY-MM-DD"); //adds i days to the base date - base date is current date
 
       const indexResult = await this.indexDay(
         dayToCheck,
@@ -216,7 +215,8 @@ export class ForeUpWebhookService {
 
     // const startOfDay = new Date(formattedDate + "T00:00:00");
     // const endOfDay = new Date(formattedDate + "T23:59:59");
-
+    const startDate = dayjs(formattedDate).utc().hour(0).minute(0).second(0).millisecond(0).toISOString();
+    const endDate = dayjs(formattedDate).utc().hour(23).minute(59).second(59).millisecond(999).toISOString();
     // Retrieve existing tee times
     const existingTeeTimesForThisDay = await this.database
       .select({
@@ -241,8 +241,8 @@ export class ForeUpWebhookService {
       .where(
         and(
           eq(teeTimes.courseId, courseId),
-          sql`DATE(${teeTimes.providerDate}) = ${formattedDate}`
-          // between(teeTimes.date, dateToUtcTimestamp(startOfDay), dateToUtcTimestamp(endOfDay))
+          // sql`DATE(${teeTimes.providerDate}) = ${formattedDate}`
+          between(teeTimes.providerDate, startDate, endDate)
         )
       )
       .execute()

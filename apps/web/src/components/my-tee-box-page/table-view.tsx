@@ -1,5 +1,6 @@
 "use client";
 
+import { useSession } from "@golf-district/auth/nextjs-exports";
 import * as Tabs from "@radix-ui/react-tabs";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
@@ -9,6 +10,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { type ReactNode } from "react";
 import { Badge } from "../badge";
+import { FilledButton } from "../buttons/filled-button";
 import { MyListedTeeTimes } from "./my-listed-tee-times";
 import { OffersReceived } from "./offers-received";
 import { OffersSent } from "./offers-sent";
@@ -17,6 +19,7 @@ import { TransactionHistory } from "./transaction-history";
 
 export const TableView = () => {
   const { course } = useCourseContext();
+  const { data: session } = useSession();
   const courseId = course?.id;
   const params = useSearchParams();
   const section = OpenSection.includes(params?.get("section") ?? "")
@@ -66,21 +69,33 @@ export const TableView = () => {
           Transaction History
         </TabTrigger>
       </Tabs.List>
-      <Tabs.Content value="owned" className="bg-white p-2">
-        <Owned />
-      </Tabs.Content>
-      <Tabs.Content value="my-listed-tee-times" className="bg-white p-2">
-        <MyListedTeeTimes />
-      </Tabs.Content>
-      <Tabs.Content value="offers-sent" className="bg-white p-2">
-        <OffersSent />
-      </Tabs.Content>
-      <Tabs.Content value="offers-received" className="bg-white p-2">
-        <OffersReceived />
-      </Tabs.Content>
-      <Tabs.Content value="transaction-history" className="bg-white p-2">
-        <TransactionHistory />
-      </Tabs.Content>
+      {!session ? (
+        <Tabs.Content value={section ?? "owned"} className="bg-white p-2">
+          <div className="min-h-[250px] flex items-center justify-center">
+            <Link href={`/${courseId}/login`}>
+              <FilledButton>Login to view</FilledButton>
+            </Link>
+          </div>
+        </Tabs.Content>
+      ) : (
+        <>
+          <Tabs.Content value="owned" className="bg-white p-2">
+            <Owned />
+          </Tabs.Content>
+          <Tabs.Content value="my-listed-tee-times" className="bg-white p-2">
+            <MyListedTeeTimes />
+          </Tabs.Content>
+          <Tabs.Content value="offers-sent" className="bg-white p-2">
+            <OffersSent />
+          </Tabs.Content>
+          <Tabs.Content value="offers-received" className="bg-white p-2">
+            <OffersReceived />
+          </Tabs.Content>
+          <Tabs.Content value="transaction-history" className="bg-white p-2">
+            <TransactionHistory />
+          </Tabs.Content>
+        </>
+      )}
     </Tabs.Root>
   );
 };

@@ -1,17 +1,21 @@
 "use client";
 
+import { isValidPassword } from "@golf-district/shared";
 import {
   resetPasswordSchema,
   type ResetPasswordSchemaType,
 } from "@golf-district/shared/src/schema/reset-password-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FilledButton } from "~/components/buttons/filled-button";
+import { IconButton } from "~/components/buttons/icon-button";
+import { Hidden } from "~/components/icons/hidden";
+import { Visible } from "~/components/icons/visible";
 import { Input } from "~/components/input/input";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { api } from "~/utils/api";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
 
@@ -21,12 +25,16 @@ export default function ResetPassword() {
   const params = useSearchParams();
   const userId = params.get("userId");
   const verificationToken = params.get("verificationToken");
-  const router = useRouter();
+
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [showConfirmPassword, setShowConfirmPassword] =
+    useState<boolean>(false);
 
   const {
     register,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors },
   } = useForm<ResetPasswordSchemaType>({
     // @ts-ignore
@@ -46,8 +54,6 @@ export default function ResetPassword() {
     if (resetFn.isLoading) return;
     try {
       await resetFn.mutateAsync(data);
-      toast.success("Your password has been reset!");
-      router.push(`/${course?.id}/login`);
     } catch (error) {
       console.log(error);
       toast.error(
@@ -57,39 +63,100 @@ export default function ResetPassword() {
     }
   };
 
+  const password = watch("password");
+
+  const passwordFeedback = useMemo(() => {
+    if (!password) return;
+    const feedback = isValidPassword(password).feedback;
+    return feedback;
+  }, [password]);
+
   return (
     <main className="bg-secondary-white py-4 md:py-6">
       <h1 className="pb-4 text-center text-[24px] md:pb-6 md:pt-8 md:text-[32px]">
         Reset Password
       </h1>
       <section className="mx-auto flex w-full flex-col gap-2 bg-white p-5 sm:max-w-[500px] sm:rounded-xl sm:p-6">
-        <form className="flex flex-col gap-2" onSubmit={handleSubmit(onSubmit)}>
-          <Input
-            label="Password"
-            type="password"
-            id="password"
-            placeholder="Enter your password"
-            register={register}
-            name="password"
-            error={errors.password?.message}
-          />
-          <Input
-            label="Confirm Password"
-            type="confirmPassword"
-            id="confirmPassword"
-            placeholder="Confirm your password"
-            register={register}
-            name="confirmPassword"
-            error={errors.confirmPassword?.message}
-          />
-          <FilledButton
-            className={`w-full rounded-full ${
-              resetFn.isLoading ? "animate-pulse cursor-not-allopwed" : ""
-            }`}
+        {resetFn.isSuccess ? (
+          <div className="flex flex-col gap-4 items-center">
+            <div className="text-[16px] text-center fade-in text-primary-gray">
+              Successfully reset password!
+            </div>
+            <Link href={`/${course?.id}/login`}>
+              <FilledButton>Log In</FilledButton>
+            </Link>
+          </div>
+        ) : (
+          <form
+            className="flex flex-col gap-2"
+            onSubmit={handleSubmit(onSubmit)}
           >
-            {resetFn.isLoading ? "Submitting..." : "Submit"}
-          </FilledButton>
-        </form>
+            <div className="relative">
+              <Input
+                label="Password"
+                type={showPassword ? "text" : "password"}
+                id="password"
+                placeholder="Enter your password"
+                register={register}
+                name="password"
+                error={errors.password?.message}
+              />
+              <IconButton
+                onClick={(e) => {
+                  e.preventDefault();
+                  setShowPassword(!showPassword);
+                }}
+                className={`absolute right-2 !top-[90%] border-none !bg-transparent !transform !-translate-y-[90%]`}
+              >
+                {showPassword ? (
+                  <Hidden className="h-[14px] w-[14px]" />
+                ) : (
+                  <Visible className="h-[14px] w-[14px]" />
+                )}
+              </IconButton>
+            </div>
+            {passwordFeedback && passwordFeedback.length > 0 ? (
+              <ul className={`flex flex-col gap-2 list-disc pl-4`}>
+                {passwordFeedback?.map((advice, idx) => (
+                  <li className="text-[12px] text-red" key={`${idx}+passsword`}>
+                    {advice}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            <div className="relative">
+              <Input
+                label="Confirm password"
+                type={showConfirmPassword ? "text" : "password"}
+                id="confirmPassword"
+                placeholder="Confirm your password"
+                register={register}
+                name="confirmPassword"
+                error={errors.confirmPassword?.message}
+              />
+              <IconButton
+                onClick={(e) => {
+                  e.preventDefault();
+                  setShowConfirmPassword(!showConfirmPassword);
+                }}
+                className={`absolute right-2 !top-[90%] border-none !bg-transparent !transform !-translate-y-[90%]`}
+              >
+                {showConfirmPassword ? (
+                  <Hidden className="h-[14px] w-[14px]" />
+                ) : (
+                  <Visible className="h-[14px] w-[14px]" />
+                )}
+              </IconButton>
+            </div>
+            <FilledButton
+              className={`w-full rounded-full ${
+                resetFn.isLoading ? "animate-pulse cursor-not-allopwed" : ""
+              }`}
+            >
+              {resetFn.isLoading ? "Submitting..." : "Submit"}
+            </FilledButton>
+          </form>
+        )}
       </section>
       <div className="flex max-w-fit mx-auto items-center gap-4 justify-center flex-col md:flex-row">
         <div className="pt-4 text-center text-[14px] text-primary-gray">

@@ -6,6 +6,8 @@ import { courses } from "./courses";
 import { providers } from "./providers";
 import { teeTimes } from "./teeTimes";
 
+// import { courseProviders } from './courseProviders';
+
 export const providerCourseLink = mySqlTable(
   "providerCourseLink",
   {

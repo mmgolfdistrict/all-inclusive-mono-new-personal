@@ -103,6 +103,29 @@ export class CacheService {
   };
 
   /**
+   * Increments the cache for the specified key or sets it to 1 if it doesn't exist.
+   *
+   * @param key - The key to increment or set in the cache.
+   * @returns A Promise that resolves to the updated count in the cache.
+   */
+  incrementOrSetKey = async (key: string): Promise<number> => {
+    this.logger.info(`Incrementing cache for key: ${key}`);
+    const keyExists = await this.redis.exists(key);
+    let count;
+
+    if (!keyExists) {
+      this.logger.info(`Cache miss for key: ${key}, setting to 1`);
+      await this.redis.set(key, 1);
+      count = 1;
+    } else {
+      count = await this.redis.incr(key);
+      this.logger.debug(`Cache incremented for key: ${key}`);
+    }
+
+    return count;
+  };
+
+  /**
    * Gets a specific item from the Redis cache using the provided key.
    * @param {string} key The cache key to get from Redis.
    * @returns {Promise<T | null>} A promise that resolves with the cached data or null if not found.

@@ -9,6 +9,7 @@ export enum CartValidationErrors {
   AUCTION_NOT_ACTIVE = "AUCTION_NOT_ACTIVE",
   AUCTION_BUY_NOW_PRICE_MISMATCH = "AUCTION_BUY_NOW_PRICE_MISMATCH",
   UNKNOWN_PRODUCT_TYPE = "UNKNOWN_PRODUCT_TYPE",
+  CHARITY_NOT_ACTIVE = "CHARITY_NOT_ACTIVE",
 }
 
 export interface CustomerCart {
@@ -17,6 +18,7 @@ export interface CustomerCart {
   customerId: string;
   name: string;
   email: string;
+  promoCode?: string | null | undefined;
   phone: string | null;
   phone_country_code: string | null;
   cart: ProductData[];
@@ -26,7 +28,8 @@ export type ProductData =
   | SecondHandProduct
   | SensibleProduct
   | AuctionProduct
-  | CharityProduct;
+  | CharityProduct
+  | Offer;
 
 export interface BaseProduct {
   name: string; // teeTime-course-time
@@ -37,7 +40,7 @@ export interface BaseProduct {
   display_price: string; //$4.00
 }
 
-interface FirstHandProduct extends BaseProduct {
+export interface FirstHandProduct extends BaseProduct {
   product_data: {
     metadata: {
       type: "first_hand";
@@ -47,7 +50,7 @@ interface FirstHandProduct extends BaseProduct {
   };
 }
 
-interface SecondHandProduct extends BaseProduct {
+export interface SecondHandProduct extends BaseProduct {
   product_data: {
     metadata: {
       type: "second_hand";
@@ -56,7 +59,7 @@ interface SecondHandProduct extends BaseProduct {
   };
 }
 
-interface SensibleProduct extends BaseProduct {
+export interface SensibleProduct extends BaseProduct {
   product_data: {
     metadata: {
       type: "sensible";
@@ -65,7 +68,7 @@ interface SensibleProduct extends BaseProduct {
   };
 }
 
-interface AuctionProduct extends BaseProduct {
+export interface AuctionProduct extends BaseProduct {
   product_data: {
     metadata: {
       type: "auction";
@@ -74,11 +77,21 @@ interface AuctionProduct extends BaseProduct {
   };
 }
 
-interface CharityProduct extends BaseProduct {
+export interface CharityProduct extends BaseProduct {
   product_data: {
     metadata: {
       type: "charity";
       charity_id: string;
+    };
+  };
+}
+export interface Offer extends BaseProduct {
+  product_data: {
+    metadata: {
+      type: "offer";
+      booking_ids: string[];
+      price: number;
+      expires_at: Date;
     };
   };
 }

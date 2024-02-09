@@ -38,10 +38,12 @@ const serviceFactoryConfig: ServiceConfig = {
   sensible_client_Id: process.env.SENSIBLE_CLIENT_ID ?? "",
   sensible_client_secret: process.env.SENSIBLE_CLIENT_SECRET ?? "",
   hyperSwitchApiKey: process.env.HYPERSWITCH_API_KEY ?? "",
+  hyperSwitchProfileId: process.env.HYPERSWITCH_PROFILE_ID ?? "",
   foreUpApiKey: process.env.FOREUP_API_KEY ?? "",
   stripeApiKey: process.env.STRIPE_SECRET_KEY ?? "",
   foreupUsername: process.env.FOREUP_USERNAME ?? "",
   foreupPassword: process.env.FOREUP_PASSWORD ?? "",
+  upStashClientToken: process.env.UPSTASH_CLIENT_TOKEN ?? "",
 };
 
 const createInnerTRPCContext = (opts: CreateContextOptions) => {
@@ -56,7 +58,7 @@ export const createTRPCContext = async (opts: { req?: Request; auth?: Session })
   const session = opts.auth ?? (await auth());
   const source = opts.req?.headers.get("x-trpc-source") ?? "unknown";
 
-  logger.info(">>> tRPC Request from", source, "by", session?.user.id ?? "anonymous");
+  logger.info(">>> tRPC Request from", source, "by", session?.user?.id ?? "anonymous");
 
   return createInnerTRPCContext({
     session,

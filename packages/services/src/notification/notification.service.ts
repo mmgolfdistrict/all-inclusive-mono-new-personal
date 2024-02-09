@@ -19,7 +19,7 @@ import twilio from "twilio";
  */
 export class NotificationService {
   protected logger: pino.Logger;
-  //protected twilioClient: twilio.Twilio;
+  protected twilioClient: twilio.Twilio;
   protected sendGridClient: MailService;
   protected database: Db;
 
@@ -53,7 +53,7 @@ export class NotificationService {
     logger?: pino.Logger
   ) {
     this.database = _database;
-    //this.twilioClient = twilio(twilioAccountSid, twilioAuthToken);
+    this.twilioClient = twilio(twilioAccountSid, twilioAuthToken);
     this.sendGridClient = new MailService();
     this.sendGridClient.setApiKey(sendGridApiKey);
     this.logger = logger ? logger : Logger(NotificationService.name);
@@ -117,26 +117,26 @@ export class NotificationService {
    * // Sending an SMS with body 'Hello, this is the SMS body.' to '+1234567890'.
    * await sendSMS('+1234567890', 'Hello, this is the SMS body.');
    */
-  // sendSMS = async (phoneNumber: string, body: string) => {
-  //   this.logger.info(`Sending SMS to ${phoneNumber}`);
-  //   if (process.env.NODE_ENV === "production") {
-  //     this.twilioClient.messages
-  //       .create({
-  //         to: phoneNumber,
-  //         from: this.twillio_phoneNumber,
-  //         body: body,
-  //       })
-  //       .catch((err) => {
-  //         this.logger.error(err);
-  //         throw new Error(`Failed to send SMS to: ${phoneNumber}`);
-  //       });
-  //   } else {
-  //     console.log("Sending SMS (simulated):", {
-  //       to: phoneNumber,
-  //       body: body,
-  //     });
-  //   }
-  // };
+  sendSMS = async (phoneNumber: string, body: string) => {
+    this.logger.info(`Sending SMS to ${phoneNumber}`);
+    if (process.env.NODE_ENV === "production") {
+      this.twilioClient.messages
+        .create({
+          to: phoneNumber,
+          from: this.twillio_phoneNumber,
+          body: body,
+        })
+        .catch((err) => {
+          this.logger.error(err);
+          throw new Error(`Failed to send SMS to: ${phoneNumber}`);
+        });
+    } else {
+      console.log("Sending SMS (simulated):", {
+        to: phoneNumber,
+        body: body,
+      });
+    }
+  };
 
   /**
    * Retrieves the number of unread offers for a given course and user.
@@ -259,7 +259,7 @@ export class NotificationService {
    * // Creating a notification for user with ID 'user123' with subject 'New Notification' and body 'You have a new notification.'.
    * await createNotification('user123', 'New Notification', 'You have a new notification.', 'entity123');
    */
-  createNotification = async (userId: string, subject: string, body: string, courseId: string) => {
+  createNotification = async (userId: string, subject: string, body: string, courseId?: string) => {
     const [user] = await this.database
       .select()
       .from(users)

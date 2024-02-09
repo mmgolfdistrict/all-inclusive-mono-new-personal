@@ -40,7 +40,7 @@ export const HyperSwitch = ({
   const checkout = api.checkout.buildCheckoutSession.useMutation();
   const amountToPay =
     //@ts-ignore
-    cartData.reduce((acc: number, i) => acc + i.price, 0) / 100;
+    cartData?.reduce((acc: number, i) => acc + i.price, 0) / 100;
   const [localCartData, setLocalCartData] = useState<unknown[]>(cartData);
   const [error, setError] = useState<undefined | string>(undefined);
   const callingRef = useRef<boolean>(false);
@@ -56,7 +56,7 @@ export const HyperSwitch = ({
         courseId: course?.id ?? "",
         name: user?.name ?? "",
         email: user.email ?? "",
-        phone: "1234567890",
+        phone: "",
         phone_country_code: "1",
         //@ts-ignore
         cart: cartData,

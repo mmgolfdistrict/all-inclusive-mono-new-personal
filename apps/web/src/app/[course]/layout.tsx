@@ -5,7 +5,7 @@ import { getCourseById, getCourseImages } from "@golf-district/api";
 import { CourseLayout } from "~/components/course-layout";
 import { CourseWrapper } from "~/contexts/CourseContext";
 import { FiltersWrapper } from "~/contexts/FiltersContext";
-import { notFound } from "next/navigation";
+import Link from "next/link";
 
 export default async function CoursePageLayout({
   children,
@@ -22,18 +22,26 @@ export default async function CoursePageLayout({
 
   const courseImages = await getCourseImages(courseId);
 
-  if (!courseData?.id) {
-    notFound();
-  }
-
   return (
-    <CourseWrapper courseData={courseData} courseImages={courseImages}>
-      <FiltersWrapper>
-        <div className="flex w-full flex-col">
-          <CourseNav />
-          <CourseLayout>{children}</CourseLayout>
+    <>
+      {!courseData?.id ? (
+        <div className="flex items-center flex-col justify-center mt-20">
+          <h2>No Course Found</h2>
+          <p>Could not find a course with ID: {courseId}</p>
+          <Link href="/" className="underline">
+            Return Home
+          </Link>
         </div>
-      </FiltersWrapper>
-    </CourseWrapper>
+      ) : (
+        <CourseWrapper courseData={courseData} courseImages={courseImages}>
+          <FiltersWrapper>
+            <div className="flex w-full flex-col">
+              <CourseNav />
+              <CourseLayout>{children}</CourseLayout>
+            </div>
+          </FiltersWrapper>
+        </CourseWrapper>
+      )}
+    </>
   );
 }

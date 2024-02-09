@@ -4,6 +4,7 @@ import {
   useHyper,
   useWidgets,
 } from "@juspay-tech/react-hyper-js";
+import { useCheckoutContext } from "~/contexts/CheckoutContext";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
@@ -28,7 +29,11 @@ export const CheckoutForm = ({
       applePay: "auto",
       googlePay: "auto",
     },
-    paymentMethodOrder: ["google_pay", "apple_pay", "card"],
+    paymentMethodOrder: ["card", "google_pay", "apple_pay"],
+    billingAddress: {
+      isUseBillingAddress: true,
+      usePrefilledValues: "never", // or "auto",
+    },
     fields: {
       billingDetails: {
         name: "auto",
@@ -53,7 +58,7 @@ export const CheckoutForm = ({
   const [isLoading, setIsLoading] = useState(false);
   // const [isPaymentCompleted, setIsPaymentCompleted] = useState(false);
   const [message, setMessage] = useState("");
-  const [promoCode, setPromoCode] = useState<string>("");
+  const { promoCode, handlePromoCode } = useCheckoutContext();
 
   const handlePaymentStatus = (status: string) => {
     switch (status) {
@@ -96,6 +101,7 @@ export const CheckoutForm = ({
   });
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    if (message === "Payment Successful") return;
     e.preventDefault();
 
     setIsLoading(true);
@@ -149,7 +155,7 @@ export const CheckoutForm = ({
               id="promo-code"
               className="rounded-lg bg-secondary-white px-4 py-3 text-[14px] text-gray-500 outline-none"
               value={promoCode}
-              onChange={(e) => setPromoCode(e.target.value)}
+              onChange={(e) => handlePromoCode(e.target.value)}
               placeholder="Enter promo code"
             />
           </div>
@@ -157,7 +163,7 @@ export const CheckoutForm = ({
         <div className="flex justify-between">
           <div>
             Subtotal
-            {isBuyNowAuction ? null : `(1 item)`}
+            {isBuyNowAuction ? null : ` (1 item)`}
           </div>
 
           <div>
@@ -186,7 +192,7 @@ export const CheckoutForm = ({
 
       <FilledButton
         className={`w-full rounded-full`}
-        disabled={!hyper || !widgets}
+        disabled={!hyper || !widgets || message === "Payment Successful"}
       >
         {isLoading ? "Loading..." : <>Pay Now</>}
       </FilledButton>

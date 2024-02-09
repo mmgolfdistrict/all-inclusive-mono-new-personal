@@ -125,13 +125,13 @@ export const ManageOffer = ({
               <TeeTimeItem
                 courseImage={selectedOffer?.offer.details.courseImage ?? ""}
                 courseName={selectedOffer?.offer.details.courseName ?? ""}
-                ownedByImage={selectedOffer?.offer.offeredBy.image ?? ""}
+                ownedByImage={selectedOffer?.offer.ownedBy.image ?? ""}
                 ownedByName={
-                  selectedOffer?.offer.offeredBy.name ??
-                  selectedOffer?.offer.offeredBy.handle ??
+                  selectedOffer?.offer.ownedBy.name ??
+                  selectedOffer?.offer.ownedBy.handle ??
                   ""
                 }
-                ownedById={selectedOffer?.offer.offeredBy.userId ?? ""}
+                ownedById={selectedOffer?.offer.ownedBy.userId ?? ""}
                 golferCount={selectedOffer?.offer.golfers ?? 0}
                 courseId={selectedOffer?.offer?.courseId ?? ""}
                 date={selectedOffer?.offer.details.teeTimeDate ?? ""}
