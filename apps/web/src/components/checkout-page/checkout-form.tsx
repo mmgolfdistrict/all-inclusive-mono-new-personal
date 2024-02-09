@@ -9,6 +9,8 @@ import { useCourseContext } from "~/contexts/CourseContext";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { FilledButton } from "../buttons/filled-button";
+import { CharitySelect } from "../input/charity-select";
+import { Input } from "../input/input";
 import styles from "./checkout.module.css";
 
 export const CheckoutForm = ({
@@ -34,21 +36,6 @@ export const CheckoutForm = ({
       isUseBillingAddress: true,
       usePrefilledValues: "never", // or "auto",
     },
-    fields: {
-      billingDetails: {
-        name: "auto",
-        email: "never",
-        phone: "never",
-        address: {
-          line1: "auto",
-          line2: "never",
-          city: "auto",
-          state: "auto",
-          country: "auto",
-          postal_code: "auto",
-        },
-      },
-    },
   };
   const hyper = useHyper();
   const widgets = useWidgets();
@@ -58,7 +45,15 @@ export const CheckoutForm = ({
   const [isLoading, setIsLoading] = useState(false);
   // const [isPaymentCompleted, setIsPaymentCompleted] = useState(false);
   const [message, setMessage] = useState("");
-  const { promoCode, handlePromoCode } = useCheckoutContext();
+  const {
+    promoCode,
+    handlePromoCode,
+    selectedCharity,
+    selectedCharityAmount,
+    handleSelectedCharity,
+    handleSelectedCharityAmount,
+    handleRemoveSelectedCharity,
+  } = useCheckoutContext();
 
   const handlePaymentStatus = (status: string) => {
     switch (status) {
@@ -143,6 +138,53 @@ export const CheckoutForm = ({
     <form onSubmit={handleSubmit} className="">
       <UnifiedCheckout id="unified-checkout" options={unifiedCheckoutOptions} />
       <div className="flex w-full flex-col gap-2 bg-white p-4 rounded-lg my-2">
+        {course?.supportCharity ? (
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <div>Support A Charity</div>
+              {selectedCharity ? (
+                <button
+                  onClick={handleRemoveSelectedCharity}
+                  className="text-[12px] self-end p-1 border rounded-md w-fit bg-error-stroke text-white"
+                >
+                  Remove Charity
+                </button>
+              ) : null}
+            </div>
+            <CharitySelect
+              value={selectedCharity}
+              values={course?.supportedCharities}
+              setValue={handleSelectedCharity}
+            />
+            {selectedCharity ? (
+              <div className="relative">
+                <div className="text-gray-500 text-[14px] absolute left-[.35rem] top-[2.3rem]">
+                  $
+                </div>
+                <Input
+                  label="Donation Amount"
+                  type="number"
+                  value={String(selectedCharityAmount)}
+                  name="donation-amount"
+                  onChange={(e) => {
+                    const value = e.target.value
+                      .replace("$", "")
+                      .replaceAll(",", "");
+
+                    const decimals = value.split(".")[1];
+                    if (decimals && decimals?.length > 2) return;
+
+                    const strippedLeadingZeros = value.replace(/^0+/, "");
+                    handleSelectedCharityAmount(Number(strippedLeadingZeros));
+                  }}
+                  placeholder="Enter donation amount"
+                  register={() => undefined}
+                  error=""
+                />
+              </div>
+            ) : null}
+          </div>
+        ) : null}
         {isBuyNowAuction ? null : (
           <div className={`flex flex-col gap-1`}>
             <label

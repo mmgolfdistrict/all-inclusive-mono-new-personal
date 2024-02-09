@@ -159,7 +159,7 @@ export const TeeTime = ({
             />
 
             <div className="whitespace-nowrap md:pr-1">
-              {isOwned || status === "UNLISTED" ? "Owned" : "Sold"} by
+              {status === "UNLISTED" ? "Owned" : "Sold"} by
             </div>
             {isOwned || status === "SECOND_HAND" ? (
               <Link

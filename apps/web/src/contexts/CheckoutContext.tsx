@@ -1,5 +1,6 @@
 "use client";
 
+import type { SupportedCharity } from "@golf-district/shared";
 import {
   createContext,
   useContext,
@@ -8,6 +9,7 @@ import {
   type ReactNode,
   type SetStateAction,
 } from "react";
+import { useCourseContext } from "./CourseContext";
 
 interface CheckoutContextType {
   shouldAddSensible: boolean;
@@ -20,6 +22,11 @@ interface CheckoutContextType {
   setAmountOfPlayers: Dispatch<SetStateAction<number>>;
   promoCode: string;
   handlePromoCode: (code: string) => void;
+  selectedCharity: SupportedCharity | undefined;
+  handleSelectedCharity: (charityId: string) => void;
+  selectedCharityAmount: number | null;
+  handleSelectedCharityAmount: (amount: number) => void;
+  handleRemoveSelectedCharity: () => void;
 }
 
 const CheckoutContext = createContext<CheckoutContextType>({
@@ -31,6 +38,11 @@ const CheckoutContext = createContext<CheckoutContextType>({
   setAmountOfPlayers: () => undefined,
   promoCode: "",
   handlePromoCode: () => undefined,
+  selectedCharity: undefined,
+  handleSelectedCharity: () => undefined,
+  selectedCharityAmount: null,
+  handleSelectedCharityAmount: () => undefined,
+  handleRemoveSelectedCharity: () => undefined,
 });
 
 export const CheckoutWrapper = ({ children }: { children: ReactNode }) => {
@@ -39,14 +51,37 @@ export const CheckoutWrapper = ({ children }: { children: ReactNode }) => {
     { id: string; price: number } | undefined
   >(undefined);
   const [amountOfPlayers, setAmountOfPlayers] = useState<number>(1);
+  const [selectedCharity, setSelectedCharity] = useState<
+    SupportedCharity | undefined
+  >(undefined);
+  const [selectedCharityAmount, setSelectedCharityAmount] = useState<
+    number | null
+  >(null);
+  const [promoCode, setPromoCode] = useState<string>("");
+  const { course } = useCourseContext();
 
   const handleShouldAddSensible = (bool: boolean) => {
     setShouldAddSensible(bool);
   };
-  const [promoCode, setPromoCode] = useState<string>("");
 
   const handlePromoCode = (code: string) => {
     setPromoCode(code);
+  };
+
+  const handleSelectedCharity = (charityId: string) => {
+    const charity = course?.supportedCharities?.find(
+      (c) => c.charityId === charityId
+    );
+    if (charity) setSelectedCharity(charity);
+  };
+
+  const handleRemoveSelectedCharity = () => {
+    setSelectedCharity(undefined);
+    setSelectedCharityAmount(null);
+  };
+
+  const handleSelectedCharityAmount = (amount: number) => {
+    setSelectedCharityAmount(amount);
   };
 
   const settings = {
@@ -58,6 +93,11 @@ export const CheckoutWrapper = ({ children }: { children: ReactNode }) => {
     setAmountOfPlayers,
     promoCode,
     handlePromoCode,
+    selectedCharity,
+    handleSelectedCharity,
+    selectedCharityAmount,
+    handleSelectedCharityAmount,
+    handleRemoveSelectedCharity,
   };
 
   return (

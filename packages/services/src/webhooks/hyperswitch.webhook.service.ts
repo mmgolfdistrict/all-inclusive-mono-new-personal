@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { randomUUID } from "crypto";
-import { and, Db, eq } from "@golf-district/database";
+import { and, Db, eq, not } from "@golf-district/database";
 import { bookings } from "@golf-district/database/schema/bookings";
 import { charityCourseLink } from "@golf-district/database/schema/charityCourseLink";
 import { customerCarts } from "@golf-district/database/schema/customerCart";
@@ -10,8 +10,10 @@ import { promoCodes } from "@golf-district/database/schema/promoCodes";
 import { providerCourseLink } from "@golf-district/database/schema/providersCourseLink";
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import { userPromoCodeLink } from "@golf-district/database/schema/userPromoCodeLink";
+import { users } from "@golf-district/database/schema/users";
 import Logger from "@golf-district/shared/src/logger";
 import { Client } from "@upstash/qstash/.";
+import { B } from "vitest/dist/reporters-5f784f42";
 import { BookingService } from "../booking/booking.service";
 import {
   AuctionProduct,
@@ -24,6 +26,7 @@ import {
 } from "../checkout/types";
 import { NotificationService } from "../notification/notification.service";
 import { ProviderService } from "../tee-sheet-provider/providers.service";
+import { BookingCreationData } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
 import { TokenizeService } from "../token/tokenize.service";
 import type { HyperSwitchEvent } from "./types/hyperswitch";
 
@@ -190,7 +193,7 @@ export class HyperSwitchWebhookService {
       teeTime.internalId!,
       teeTime.courseId
     );
-    const providerCustomer = await this.providerService.createCustomer(
+    const providerCustomer = await this.providerService.findOrCreateCustomer(
       teeTime.courseId,
       teeTime.providerId!,
       teeTime.providerCourseId!,
@@ -198,51 +201,53 @@ export class HyperSwitchWebhookService {
       provider,
       token
     );
+    if (!providerCustomer || !providerCustomer.playerNumber) {
+      this.logger.error(`Error creating customer`);
+      throw new Error(`Error creating customer`);
+    }
 
     //purchased from provider
     const pricePerBooking = amountReceived / item.product_data.metadata.number_of_bookings / 100;
 
     //create a provider booking for each player
-    const bookingIds: string[] = [];
+    let bookedPLayers: { accountNumber: number }[] = [];
     for (let i = 0; i < item.product_data.metadata.number_of_bookings; i++) {
-      const booking = await provider
-        .createBooking(token, teeTime.providerCourseId!, teeTime.providerTeeSheetId!, {
-          data: {
-            type: "bookings",
-            attributes: {
-              start: teeTime.providerDate,
-              holes: teeTime.holes,
-              players: 1,
-              bookedPlayers: [
-                {
-                  accountNumber: providerCustomer.playerNumber,
-                },
-              ],
-              event_type: "tee_time",
-              details: "GD Booking",
-            },
-          },
-        })
-        .catch((err) => {
-          this.logger.error(err);
-          //@TODO this email should be removed
-          this.notificationService.createNotification(
-            customer_id,
-            "Error creating booking",
-            "An error occurred while creating booking with provider",
-            teeTime.courseId
-          );
-          throw new Error(`Error creating booking`);
-        });
-      bookingIds.push(booking.data.id);
+      bookedPLayers.push({
+        accountNumber: providerCustomer.playerNumber,
+      });
     }
+    const booking = await provider
+      .createBooking(token, teeTime.providerCourseId!, teeTime.providerTeeSheetId!, {
+        data: {
+          type: "bookings",
+          attributes: {
+            start: teeTime.providerDate,
+            holes: teeTime.holes,
+            players: 1,
+            bookedPLayers,
+            event_type: "tee_time",
+            details: "GD Booking",
+          },
+        },
+      })
+      .catch((err) => {
+        this.logger.error(err);
+        //@TODO this email should be removed
+        this.notificationService.createNotification(
+          customer_id,
+          "Error creating booking",
+          "An error occurred while creating booking with provider",
+          teeTime.courseId
+        );
+        throw new Error(`Error creating booking`);
+      });
     //create tokenized bookings
     this.tokenizeService
       .tokenizeBooking(
         customer_id,
         pricePerBooking,
         item.product_data.metadata.number_of_bookings,
-        bookingIds,
+        booking.data.id,
         item.product_data.metadata.tee_time_id,
         true
       )
@@ -260,7 +265,7 @@ export class HyperSwitchWebhookService {
   };
   handleSecondHandItem = async (item: SecondHandProduct, amountReceived: number, customer_id: string) => {
     const listingId = item.product_data.metadata.second_hand_id;
-    const bookingsForListing = await this.database
+    const listedBooking = await this.database
       .select({
         id: bookings.id,
         ownerId: bookings.ownerId,
@@ -270,6 +275,7 @@ export class HyperSwitchWebhookService {
         providerCourseId: providerCourseLink.providerCourseId,
         internalId: providerCourseLink.internalId,
         providerTeeSheetId: providerCourseLink.providerTeeSheetId,
+        teeTimeId: bookings.teeTimeId,
       })
       .from(bookings)
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -282,49 +288,166 @@ export class HyperSwitchWebhookService {
       )
       .where(eq(bookings.listId, listingId))
       .execute();
-    if (bookingsForListing.length === 0) {
+
+    if (listedBooking.length === 0) {
       this.logger.fatal(`no bookings found for listing id: ${listingId}`);
       //@TODO refund user
       throw new Error(`Error finding bookings for listing id`);
     }
-    const firstBooking = bookingsForListing[0];
+    const firstBooking = listedBooking[0];
     if (!firstBooking) {
       throw new Error(`Error finding first booking for listing id`);
     }
-    const second = await this.providerService.getProviderAndKey(
+    const unListedBookings = await this.database
+      .select({ id: bookings.id })
+      .from(bookings)
+      .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
+      .where(
+        and(
+          eq(bookings.ownerId, firstBooking.ownerId),
+          eq(teeTimes.id, firstBooking.teeTimeId),
+          eq(bookings.isListed, false)
+        )
+      )
+      .execute()
+      .catch((err) => {
+        this.logger.error(err);
+        throw new Error(`Error finding all owned bookings for listing id`);
+      });
+    let newSellerBookingId: string | null = null;
+    const secondHandBookingProvider = await this.providerService.getProviderAndKey(
       firstBooking.internalId!,
       firstBooking.courseId
     );
-    const secondHandCustomer = await this.providerService.createCustomer(
+    const buyerCustomer = await this.providerService.findOrCreateCustomer(
       firstBooking.courseId,
       firstBooking.providerId!,
       firstBooking.providerCourseId!,
       customer_id,
-      second.provider,
-      second.token
+      secondHandBookingProvider.provider,
+      secondHandBookingProvider.token
     );
-    const providerId = bookingsForListing.map((booking) => booking.providerBookingId);
-    //update bookings with provider
-    providerId.forEach(async (booking) => {
-      await second.provider.updateTeeTime(
-        second.token,
+    const sellerCustomer = await this.providerService.findOrCreateCustomer(
+      firstBooking.courseId,
+      firstBooking.providerId!,
+      firstBooking.providerCourseId!,
+      firstBooking.ownerId,
+      secondHandBookingProvider.provider,
+      secondHandBookingProvider.token
+    );
+    if (!sellerCustomer || !sellerCustomer.playerNumber) {
+      this.logger.error(`Error creating or finding customer`);
+      throw new Error(`Error creating or finding customer`);
+    }
+    const providerId = listedBooking.map((booking) => booking.providerBookingId);
+    let buyerBookedPlayers: { accountNumber: number }[] = [
+      {
+        accountNumber: buyerCustomer.playerNumber!,
+      },
+    ];
+    for (let i = 0; i < listedBooking.length; i++) {
+      buyerBookedPlayers.push({
+        accountNumber: buyerCustomer.playerNumber!,
+      });
+    }
+
+    let sellerBookedPlayers: { accountNumber: number }[] = [
+      {
+        accountNumber: sellerCustomer.playerNumber!,
+      },
+    ];
+    for (let i = 0; i < unListedBookings.length; i++) {
+      sellerBookedPlayers.push({
+        accountNumber: sellerCustomer.playerNumber!,
+      });
+    }
+    //delete existing booking
+    await secondHandBookingProvider.provider
+      .deleteBooking(
+        secondHandBookingProvider.token,
         firstBooking.providerCourseId!,
         firstBooking.providerTeeSheetId!,
-        booking as string,
+        firstBooking.providerBookingId!
+      )
+      .catch((err) => {
+        this.logger.error(`Error deleting booking: ${err}`);
+        throw new Error(`Error deleting booking`);
+      });
+    //create new booking for buyer
+    let bookingIdMap: { golfDistrictId: string; providerId: string }[] = [];
+    const idToTransfer = listedBooking.map((booking) => booking.id);
+
+    try {
+      const newBooking = await secondHandBookingProvider.provider.createBooking(
+        secondHandBookingProvider.token,
+        firstBooking.providerCourseId!,
+        firstBooking.providerTeeSheetId!,
         {
           data: {
-            type: "bookedPlayer",
-            id: booking,
+            type: "bookings",
             attributes: {
-              name: secondHandCustomer.name,
-              personId: secondHandCustomer.customerId,
+              players: 1,
+              buyerBookedPlayers,
+              event_type: "tee_time",
+              details: "GD Booking",
             },
           },
         }
       );
-    });
+      idToTransfer.forEach((id) => {
+        bookingIdMap.push({ golfDistrictId: id, providerId: newBooking.data.id });
+      });
+      this.logger.debug(`Created new booking for buyer: ${newBooking.data.id}`);
+    } catch (error) {
+      this.logger.fatal(`Failed to create booking for buyer: ${error}`);
+    }
+    //create new booking for seller if they still own bookings
+
+    if (unListedBookings.length > 0) {
+      try {
+        const newBooking = await secondHandBookingProvider.provider.createBooking(
+          secondHandBookingProvider.token,
+          firstBooking.providerCourseId!,
+          firstBooking.providerTeeSheetId!,
+          {
+            data: {
+              type: "bookings",
+              attributes: {
+                players: 1,
+                sellerBookedPlayers,
+                event_type: "tee_time",
+                details: "GD Booking",
+              },
+            },
+          }
+        );
+        newSellerBookingId = newBooking.data.id;
+        unListedBookings.forEach((booking) => {
+          bookingIdMap.push({ golfDistrictId: booking.id, providerId: newBooking.data.id });
+        });
+        console.log(`Created new booking for seller: ${newBooking.data.id}`);
+      } catch (error) {
+        console.error(`Failed to create booking for seller: ${error}`);
+      }
+    }
+
+    //update booking ids for each booking
+    for (const { golfDistrictId, providerId } of bookingIdMap) {
+      try {
+        await this.database
+          .update(bookings)
+          .set({ providerBookingId: providerId })
+          .where(eq(bookings.id, golfDistrictId))
+          .execute();
+        this.logger.info(`Updated booking ${golfDistrictId} with new provider ID ${providerId}`);
+      } catch (error) {
+        this.logger.error(
+          `Failed to update booking ID ${golfDistrictId} with new provider ID ${providerId}: ${error}`
+        );
+      }
+    }
     //transfer bookings to new owner
-    const idToTransfer = bookingsForListing.map((booking) => booking.id);
+
     const price = amountReceived / idToTransfer.length / 100;
     await this.tokenizeService.transferBookings(firstBooking.ownerId, idToTransfer, customer_id, price);
     //delete listing
@@ -359,12 +482,21 @@ export class HyperSwitchWebhookService {
     //@TODO create a constant for account hold wait time based on environment
     //@TODO funds to user must be calculated sub fees
     const accountHoldWait = 60 * 1000;
-    this.notificationService.createNotification(
-      firstBooking.ownerId,
-      "Listing Sold",
-      `Your teetime has been sold for $${price} the funds will be withdrawable from your account in ${"1 min"}`,
-      firstBooking.courseId
-    );
+    if (newSellerBookingId) {
+      this.notificationService.createNotification(
+        firstBooking.ownerId,
+        "Listing Sold",
+        `Your teetime has been sold for $${price} the funds will be withdrawable from your account in ${"1 min"}, your new booking id is: ${newSellerBookingId}`,
+        firstBooking.courseId
+      );
+    } else {
+      this.notificationService.createNotification(
+        firstBooking.ownerId,
+        "Listing Sold",
+        `Your teetime has been sold for $${price} the funds will be withdrawable from your account in ${"1 min"}`,
+        firstBooking.courseId
+      );
+    }
 
     const res = await this.qStashClient.publishJSON({
       url: `https://golf-district-platform-git-foreup-int-solidity-frontend.vercel.app/api/balance`,

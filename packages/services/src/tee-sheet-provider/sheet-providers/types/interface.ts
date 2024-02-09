@@ -8,6 +8,7 @@ export type ForeUpCredentials = {
 };
 
 type ProviderCredentials = ForeUpCredentials;
+
 export interface ProviderAPI {
   providerId: string;
   logger: pino.Logger;
@@ -32,9 +33,14 @@ export interface ProviderAPI {
     bookingId: string,
     options: any
   ) => Promise<BookingResponse>;
+  deleteBooking: (token: string, courseId: string, teesheetId: string, bookingId: string) => Promise<void>; // Added deleteBooking to the interface
   getToken: () => Promise<string>;
-  createCustomer(token: string, courseId: string, customerData: CustomerCreationData): Promise<CustomerData>;
-  getCustomer(token: string, courseId: string, customerId: string): Promise<CustomerData>;
+  createCustomer: (
+    token: string,
+    courseId: string,
+    customerData: CustomerCreationData
+  ) => Promise<CustomerData>;
+  getCustomer: (token: string, courseId: string, customerId: string) => Promise<CustomerData>;
 }
 
 export abstract class BaseProvider implements ProviderAPI {
@@ -46,6 +52,7 @@ export abstract class BaseProvider implements ProviderAPI {
     this.credentials = credentials;
   }
 
+  // Abstract methods declaration
   abstract getTeeTimes(
     token: string,
     courseId: string,
@@ -67,6 +74,12 @@ export abstract class BaseProvider implements ProviderAPI {
     bookingId: string,
     options: any
   ): Promise<BookingResponse>;
+  abstract deleteBooking(
+    token: string,
+    courseId: string,
+    teesheetId: string,
+    bookingId: string
+  ): Promise<void>;
   abstract getToken: () => Promise<string>;
   abstract createCustomer(
     token: string,

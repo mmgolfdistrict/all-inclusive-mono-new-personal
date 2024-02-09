@@ -82,6 +82,13 @@ export type FullCourseType = {
   lowestListedTeeTime: number;
   highestPrimarySaleTeeTime: number;
   lowestPrimarySaleTeeTime: number;
+  supportedCharities?: SupportedCharity[];
+};
+
+export type SupportedCharity = {
+  charityDescription: string | null;
+  charityName: string | null;
+  charityId: string | null;
 };
 
 export type Course = FullCourseType & CourseImagesType;

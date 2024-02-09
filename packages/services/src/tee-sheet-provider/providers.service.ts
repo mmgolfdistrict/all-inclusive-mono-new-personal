@@ -137,7 +137,7 @@ export class ProviderService extends CacheService {
     return provider.updateTeeTime(token, courseId, teeTimeId, bookingId, options);
   }
 
-  createCustomer = async (
+  findOrCreateCustomer = async (
     courseId: string,
     providerId: string,
     providerCourseId: string,
@@ -178,7 +178,9 @@ export class ProviderService extends CacheService {
       customerId: buyer.providerCustomerId,
       name: buyer.name,
     };
-
+    if (buyer.providerAccountNumber && buyer.providerCustomerId) {
+      return customerInfo;
+    }
     if (!buyer.providerAccountNumber) {
       if (!buyer.name || !buyer.email) {
         this.logger.fatal(`user missing name or email id: ${userId}`);

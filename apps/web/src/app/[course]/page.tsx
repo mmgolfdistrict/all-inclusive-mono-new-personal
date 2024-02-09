@@ -220,7 +220,7 @@ export default function CourseHomePage() {
         className="px-4 md:px-6"
       />
       <CourseBanner className="pt-4" />
-      <section className="relative flex gap-8 pl-0 pt-6 md:pl-6 md:pt-8 mx-auto max-w-[1700px] w-full">
+      <section className="relative flex gap-8 pl-0 pt-6 md:pl-6 md:pt-8 mx-auto w-full">
         <div
           ref={scrollRef}
           className="absolute -top-[7.5rem] md:-top-[9.2rem]"

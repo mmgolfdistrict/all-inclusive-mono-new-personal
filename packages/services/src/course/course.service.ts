@@ -89,22 +89,17 @@ export class CourseService extends DomainService {
       highestPrimarySaleTeeTime: results.highestPrimarySaleTeeTime ?? 0,
       lowestPrimarySaleTeeTime: results.lowestPrimarySaleTeeTime ?? 0,
     };
+
     if (results.supportCharity) {
       const data = await this.database
         .select({
           charityDescription: charities.description,
           charityName: charities.name,
-          charityLogo: {
-            id: assets.id,
-            key: assets.key,
-            cdn: assets.cdn,
-            extension: assets.extension,
-          },
+          charityId: charities.id,
         })
         .from(charityCourseLink)
-        .leftJoin(assets, eq(charities.logoAssetId, assets.id))
         .leftJoin(charities, eq(charityCourseLink.charityId, charities.id))
-        .where(eq(courses.id, courseId))
+        .where(eq(charityCourseLink.courseId, courseId))
         .execute()
         .catch((err) => {
           this.logger.error(`Error getting charity for course: ${err}`);
@@ -112,12 +107,11 @@ export class CourseService extends DomainService {
         });
 
       const supportedCharities = data.map((d) => ({
-        charityLogo: d.charityLogo
-          ? `https://${d.charityLogo.cdn}/${d.charityLogo.key}.${d.charityLogo.extension}`
-          : "/defaults/default-profile.webp",
         charityDescription: d.charityDescription,
         charityName: d.charityName,
+        charityId: d.charityId,
       }));
+
       return {
         ...res,
         supportedCharities,
@@ -131,17 +125,11 @@ export class CourseService extends DomainService {
       .select({
         charityDescription: charities.description,
         charityName: charities.name,
-        charityLogo: {
-          id: assets.id,
-          key: assets.key,
-          cdn: assets.cdn,
-          extension: assets.extension,
-        },
+        charityId: charities.id,
       })
       .from(charityCourseLink)
-      .leftJoin(assets, eq(charities.logoAssetId, assets.id))
       .leftJoin(charities, eq(charityCourseLink.charityId, charities.id))
-      .where(eq(courses.id, courseId))
+      .where(eq(charityCourseLink.courseId, courseId))
       .execute()
       .catch((err) => {
         this.logger.error(`Error getting charity for course: ${err}`);
@@ -149,11 +137,9 @@ export class CourseService extends DomainService {
       });
 
     const supportedCharities = data.map((d) => ({
-      charityLogo: d.charityLogo
-        ? `https://${d.charityLogo.cdn}/${d.charityLogo.key}.${d.charityLogo.extension}`
-        : "/defaults/default-profile.webp",
       charityDescription: d.charityDescription,
       charityName: d.charityName,
+      charityId: d.charityId,
     }));
     return supportedCharities;
   };
