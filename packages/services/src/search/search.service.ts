@@ -720,7 +720,10 @@ export class SearchService {
           eq(bookings.includesCart, includesCart),
           eq(teeTimes.numberOfHoles, holes),
           firstHandResults && firstHandResults?.length > 0
-            ? inArray(bookings.teeTimeId, firstHandResults?.map((t) => t.id))
+            ? inArray(
+                bookings.teeTimeId,
+                firstHandResults?.map((t) => t.id)
+              )
             : isNotNull(bookings.teeTimeId),
           eq(bookings.isListed, !showUnlisted)
         )
