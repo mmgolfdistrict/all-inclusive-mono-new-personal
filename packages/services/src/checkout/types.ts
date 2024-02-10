@@ -82,6 +82,7 @@ export interface CharityProduct extends BaseProduct {
     metadata: {
       type: "charity";
       charity_id: string;
+      donation_amount: number;
     };
   };
 }

@@ -39,6 +39,31 @@ export class foreUp extends BaseProvider {
     return (await response.json()).data as TeeTimeResponse[];
   }
 
+  deleteBooking = async (
+    token: string,
+    courseId: string,
+    teesheetId: string,
+    bookingId: string
+  ): Promise<void> => {
+    const endpoint = this.getBasePoint();
+    const url = `${endpoint}/courses/${courseId}/teesheets/${teesheetId}/bookings/${bookingId}`;
+    const headers = this.getHeaders(token);
+
+    const response = await fetch(url, {
+      method: "DELETE",
+      headers: headers,
+    });
+
+    if (!response.ok) {
+      this.logger.error(`Error deleting booking: ${response.statusText}`);
+      if (response.status === 403) {
+        await this.getToken();
+      }
+      throw new Error(`Error deleting booking: ${response.statusText}`);
+    }
+    this.logger.info(`Booking deleted successfully: ${bookingId}`);
+  };
+
   async createBooking(
     token: string,
     courseId: string,

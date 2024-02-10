@@ -51,7 +51,7 @@ export class TokenizeService {
     userId: string,
     purchasePrice: number,
     players: number, //how many bookings to make
-    providerBookingIds: string[], //the tee time ids to book
+    providerBookingId: string, //the tee time ids to book
     providerTeeTimeId: string, //all tee times to be tokenized are purchased from a provider
     withCart?: boolean
   ): Promise<void> {
@@ -93,7 +93,7 @@ export class TokenizeService {
         purchasedAt: currentUtcTimestamp(),
         purchasedPrice: purchasePrice,
         time: existingTeeTime.date,
-        providerBookingId: providerBookingIds[i] as string,
+        providerBookingId: providerBookingId,
         withCart: withCart,
         isListed: false,
         numberOfHoles: existingTeeTime.numberOfHoles,
@@ -147,7 +147,7 @@ export class TokenizeService {
     ${players} tee times have been purchased for ${existingTeeTime.date} at ${existingTeeTime.courseId}
     price per booking: ${purchasePrice} 
 
-    ${providerBookingIds}
+    ${providerBookingId}
 
     This is a first party purchase from the course
     `;

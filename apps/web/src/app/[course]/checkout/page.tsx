@@ -27,8 +27,14 @@ export default function Checkout({
   const teeTimeId = searchParams?.teeTimeId as string | undefined;
   const listingId = searchParams?.listingId as string | undefined;
   const { course } = useCourseContext();
-  const { shouldAddSensible, sensibleData, amountOfPlayers, promoCode } =
-    useCheckoutContext();
+  const {
+    shouldAddSensible,
+    sensibleData,
+    amountOfPlayers,
+    promoCode,
+    selectedCharity,
+    selectedCharityAmount,
+  } = useCheckoutContext();
 
   const {
     data: teeTimeData,
@@ -62,6 +68,7 @@ export default function Checkout({
 
   const validatePromoCode = api.checkout.validatePromoCode.useMutation();
   const debouncedPromoCode = useDebounce(promoCode, 500);
+  const deboundCharityAmount = useDebounce(selectedCharityAmount, 500);
 
   const [promoCodePrice, setPromoCodePrice] = useState<number | undefined>(
     undefined
@@ -94,7 +101,7 @@ export default function Checkout({
   const cartData = useMemo(() => {
     if (!data || data === null) return [];
 
-    const metadata =
+    const metadata: Record<string, number | string | undefined | null> =
       saleType === "first_hand"
         ? {
             type: "first_hand",
@@ -105,62 +112,62 @@ export default function Checkout({
             type: "second_hand",
             second_hand_id: listingId,
           };
-    if (!shouldAddSensible || isSensibleInvalid) {
-      return [
-        {
-          name: "Golf District Tee Time",
-          id: teeTimeId ?? data?.teeTimeId,
-          price:
-            debouncedPromoCode && promoCodePrice !== undefined
-              ? promoCodePrice * 100
-              : Number(data?.pricePerGolfer * 100) * amountOfPlayers, //int
-          image: "", //
-          currency: "USD", //USD
-          display_price:
-            debouncedPromoCode && promoCodePrice !== undefined
-              ? formatMoney(promoCodePrice)
-              : formatMoney(Number(data?.pricePerGolfer) * amountOfPlayers),
-          product_data: {
-            metadata: { ...metadata },
+    const localCart = [
+      {
+        name: "Golf District Tee Time",
+        id: teeTimeId ?? data?.teeTimeId,
+        price:
+          debouncedPromoCode && promoCodePrice !== undefined
+            ? promoCodePrice * 100
+            : Number(data?.pricePerGolfer * 100) * amountOfPlayers, //int
+        image: "", //
+        currency: "USD", //USD
+        display_price:
+          debouncedPromoCode && promoCodePrice !== undefined
+            ? formatMoney(promoCodePrice)
+            : formatMoney(Number(data?.pricePerGolfer) * amountOfPlayers),
+        product_data: {
+          metadata: { ...metadata },
+        },
+      },
+    ];
+
+    if (shouldAddSensible && !isSensibleInvalid) {
+      localCart.push({
+        name: "Golf District Tee Time",
+        id: teeTimeId ?? data?.teeTimeId,
+        price: (sensibleData?.price ?? 0) * 100, //int
+        image: "", //
+        currency: "USD", //USD
+        display_price: formatMoney(sensibleData?.price ?? 0),
+        product_data: {
+          metadata: {
+            type: "sensible",
+            sensible_quote_id: sensibleData?.id,
           },
         },
-      ];
-    } else {
-      return [
-        {
-          name: "Golf District Tee Time",
-          id: teeTimeId ?? data?.teeTimeId,
-          courseId: course?.id,
-          price:
-            debouncedPromoCode && promoCodePrice !== undefined
-              ? promoCodePrice * 100
-              : Number(data?.pricePerGolfer * 100) * amountOfPlayers, //int
-          image: "", //
-          currency: "USD", //USD
-          display_price:
-            debouncedPromoCode && promoCodePrice !== undefined
-              ? formatMoney(promoCodePrice)
-              : formatMoney(Number(data?.pricePerGolfer) * amountOfPlayers),
-          product_data: {
-            metadata: { ...metadata },
-          },
-        },
-        {
-          name: "Golf District Tee Time",
-          id: teeTimeId ?? data?.teeTimeId,
-          price: (sensibleData?.price ?? 0) * 100, //int
-          image: "", //
-          currency: "USD", //USD
-          display_price: formatMoney(sensibleData?.price ?? 0),
-          product_data: {
-            metadata: {
-              type: "sensible",
-              sensible_quote_id: sensibleData?.id,
-            },
-          },
-        },
-      ];
+      });
     }
+
+    if (selectedCharity && deboundCharityAmount && deboundCharityAmount > 0) {
+      localCart.push({
+        name: "Golf District Tee Time",
+        id: teeTimeId ?? data?.teeTimeId,
+        price: deboundCharityAmount * 100, //int
+        image: "", //
+        currency: "USD", //USD
+        display_price: formatMoney(deboundCharityAmount),
+        product_data: {
+          metadata: {
+            type: "charity",
+            charity_id: selectedCharity?.charityId,
+            donation_amount: deboundCharityAmount * 100,
+          },
+        },
+      });
+    }
+
+    return localCart;
   }, [
     sensibleData,
     saleType,
@@ -170,6 +177,8 @@ export default function Checkout({
     data,
     debouncedPromoCode,
     promoCodePrice,
+    selectedCharity,
+    deboundCharityAmount,
   ]);
 
   if (isError && error) {

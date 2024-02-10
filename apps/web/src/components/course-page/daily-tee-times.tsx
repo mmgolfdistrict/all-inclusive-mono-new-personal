@@ -57,7 +57,7 @@ export const DailyTeeTimes = ({
       }
     );
 
-  const take = 5;
+  const TAKE = 8;
 
   const {
     data: teeTimeData,
@@ -94,12 +94,12 @@ export const DailyTeeTimes = ({
           ? "desc"
           : "asc",
       timezoneCorrection: course?.timezoneCorrection,
-      take,
+      take: TAKE,
     },
     {
       getNextPageParam: (lastPage) => {
         if (lastPage?.results?.length === 0) return null;
-        if (lastPage?.results?.length < take) return null;
+        if (lastPage?.results?.length < TAKE) return null;
         let c = lastPage.cursor ?? 1;
         c = c + 1;
         return c;
@@ -221,7 +221,7 @@ export const DailyTeeTimes = ({
           </div>
 
           {isLoading || isFetchingNextPage || !isFetchedAfterMount
-            ? Array(5)
+            ? Array(TAKE)
                 .fill(null)
                 .map((_, idx) => <TeeTimeSkeleton key={idx} />)
             : null}

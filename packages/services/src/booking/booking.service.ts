@@ -1797,7 +1797,7 @@ export class BookingService {
           throw new Error("provider id, course id, or provider course id not found");
         }
         try {
-          const customerData = await this.providerService.createCustomer(
+          const customerData = await this.providerService.findOrCreateCustomer(
             firstBooking.courseId,
             firstBooking.providerId,
             firstBooking.providerCourseId,

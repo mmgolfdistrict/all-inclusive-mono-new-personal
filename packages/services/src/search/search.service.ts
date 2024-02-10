@@ -589,7 +589,8 @@ export class SearchService {
           gte(teeTimes.providerDate, currentTimePlus30Min),
           between(teeTimes.providerDate, minDateSubquery, maxDateSubquery),
           eq(teeTimes.courseId, courseId),
-          gte(teeTimes.cartFee, includesCart ? 1 : 0), //cant find this column in db
+          includesCart ? gte(teeTimes.cartFee, 1) : eq(teeTimes.cartFee, 0), //currently do not have a hasCart column in tee time table
+          eq(teeTimes.numberOfHoles, holes),
           eq(teeTimes.numberOfHoles, holes),
           gt(teeTimes.availableFirstHandSpots, 0),
           or(gte(teeTimes.availableFirstHandSpots, golfers), gte(teeTimes.availableSecondHandSpots, golfers))
@@ -636,7 +637,7 @@ export class SearchService {
           gte(teeTimes.providerDate, currentTimePlus30Min),
           between(teeTimes.providerDate, startDate, endDate),
           eq(teeTimes.courseId, courseId),
-          gte(teeTimes.cartFee, includesCart ? 1 : 0), //cant find this column in db
+          includesCart ? gte(teeTimes.cartFee, 1) : eq(teeTimes.cartFee, 0), //currently do not have a hasCart column in tee time table
           eq(teeTimes.numberOfHoles, holes),
           gt(teeTimes.availableFirstHandSpots, 0),
           or(gte(teeTimes.availableFirstHandSpots, golfers), gte(teeTimes.availableSecondHandSpots, golfers))
@@ -725,7 +726,6 @@ export class SearchService {
               )
             : isNotNull(bookings.teeTimeId),
           eq(bookings.isListed, !showUnlisted)
-          // !showUnlisted ? isNull(bookings.isListed) : isNotNull(bookings.isListed)
         )
       )
       .orderBy(
@@ -758,7 +758,7 @@ export class SearchService {
               pricePerGolfer:
                 booking.listingId && booking.listPrice ? booking.listPrice : booking?.greenFee ?? 0,
               includesCart: booking?.includesCart,
-              firstOrSecondHandTeeTime: booking.listingId ? TeeTimeType.SECOND_HAND : TeeTimeType.UNLISTED,
+              firstOrSecondHandTeeTime: booking.isListed ? TeeTimeType.SECOND_HAND : TeeTimeType.UNLISTED,
               userWatchListed: booking.favorites ? true : false,
               bookingIds: [booking?.id],
               availableSlots: 1,

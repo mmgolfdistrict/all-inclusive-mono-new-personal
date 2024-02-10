@@ -57,6 +57,7 @@ export const CharityProductSchema = BaseProductSchema.extend({
     metadata: z.object({
       type: z.literal("charity"),
       charity_id: z.string(),
+      donation_amount: z.number(),
     }),
   }),
 });
