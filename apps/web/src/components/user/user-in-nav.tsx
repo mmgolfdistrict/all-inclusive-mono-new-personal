@@ -60,7 +60,7 @@ export const UserInNav = () => {
                   name={user?.name}
                 />
               </div>
-              <p className="text-lg font-medium">Tee rific, {user?.name}!</p>
+              <p className="text-lg font-medium">Welcome, {user?.name}!</p>
             </div>
             <Link href={`/${courseId}/profile/${user?.id}`}>
               <MenuItem title="Profile" />
