@@ -139,8 +139,11 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
                         src={imageUrl ?? "/defaults/default-profile.webp"}
                         name={user?.name}
                       />
-                      <div>{user?.name}</div>
+                      <div className="flex flex-col">
+                        <p className="font-bold">{user?.name}</p>
+                        <p>{user?.email}</p>
                       <div className="text-primary-gray">@{user?.name}</div>
+                      </div>
                     </div>
                   }
                   className="border-t border-stroke-secondary p-4"

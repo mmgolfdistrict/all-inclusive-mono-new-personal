@@ -46,8 +46,22 @@ export const UserInNav = () => {
         <DropdownMenu.Portal>
           <DropdownMenu.Content
             sideOffset={5}
-            className="z-20 mr-14 hidden min-w-[200px] overflow-y-auto rounded-xl border border-stroke bg-white shadow-md md:block"
+            className="z-20 mr-5 hidden min-w-[300px] overflow-y-auto rounded-xl border border-stroke bg-white shadow-md md:block"
           >
+            <div className="flex items-center flex-col px-4 py-3 border-b border-stroke">
+              <p className="text-sm">{user?.email}</p>
+              <div className="py-3">
+                <Avatar
+                  src={
+                    user?.image?.includes("https://")
+                      ? user?.image
+                      : imageUrl ?? "/defaults/default-profile.webp"
+                  }
+                  name={user?.name}
+                />
+              </div>
+              <p className="text-lg font-medium">Tee rific, {user?.name}!</p>
+            </div>
             <Link href={`/${courseId}/profile/${user?.id}`}>
               <MenuItem title="Profile" />
             </Link>
