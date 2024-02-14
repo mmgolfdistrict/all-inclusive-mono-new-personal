@@ -48,8 +48,6 @@ export const CourseNav = () => {
     setIsSideBarOpen(!isSideBarOpen);
   };
 
-  if (pathname.includes("/checkout")) return null;
-
   return (
     <div className="fixed top-0 w-full z-20">
       <div className="relative">
