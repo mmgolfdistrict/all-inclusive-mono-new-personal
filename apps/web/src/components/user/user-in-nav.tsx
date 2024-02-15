@@ -4,13 +4,23 @@ import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { Avatar } from "../avatar";
 import { DownChevron } from "../icons/down-chevron";
 
-export const UserInNav = () => {
+export const PathsThatNeedRedirect = [
+  "/account-settings",
+  "/my-tee-box",
+  "/watchlist",
+  "/checkout",
+];
+
+export const UserInNav = ({ alwaysShow }: { alwaysShow?: boolean }) => {
   const { user } = useUserContext();
   const { course } = useCourseContext();
   const courseId = course?.id;
+  const pathname = usePathname();
+  const router = useRouter();
 
   const { data: imageUrl } = api.image.getAssetUrl.useQuery(
     { assetId: user?.image ?? "" },
@@ -21,13 +31,24 @@ export const UserInNav = () => {
       refetchOnReconnect: false,
     }
   );
-
   const logOutUser = async () => {
-    await signOut({ callbackUrl: `${window.location.origin}` });
+    if (PathsThatNeedRedirect.some((i) => pathname.includes(i))) {
+      const data = await signOut({
+        callbackUrl: `/${courseId}`,
+        redirect: false,
+      });
+      router.push(data.url);
+      return;
+    }
+    const data = await signOut({
+      callbackUrl: pathname,
+      redirect: false,
+    });
+    router.push(data.url);
   };
 
   return (
-    <div className="hidden md:block">
+    <div className={`${alwaysShow ? "block" : "hidden md:block"}`}>
       <DropdownMenu.Root>
         <DropdownMenu.Trigger className="outline-none">
           <div className="flex gap-1">
@@ -46,7 +67,9 @@ export const UserInNav = () => {
         <DropdownMenu.Portal>
           <DropdownMenu.Content
             sideOffset={5}
-            className="z-20 mr-14 hidden min-w-[200px] overflow-y-auto rounded-xl border border-stroke bg-white shadow-md md:block"
+            className={`z-20 mr-14 min-w-[200px] overflow-y-auto rounded-xl border border-stroke bg-white shadow-md ${
+              alwaysShow ? "block" : "hidden md:block"
+            }`}
           >
             <Link href={`/${courseId}/profile/${user?.id}`}>
               <MenuItem title="Profile" />

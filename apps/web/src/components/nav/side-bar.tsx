@@ -1,9 +1,10 @@
-import { signOut } from "@golf-district/auth/nextjs-exports";
+import { signOut, useSession } from "@golf-district/auth/nextjs-exports";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { useSidebar } from "~/hooks/useSidebar";
 import { api } from "~/utils/api";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { type Dispatch, type SetStateAction } from "react";
 import { Avatar } from "../avatar";
 import { FilledButton } from "../buttons/filled-button";
@@ -13,6 +14,7 @@ import { Club } from "../icons/club";
 import { Marketplace } from "../icons/marketplace";
 import { MyOffers } from "../icons/my-offers";
 import { PoweredBy } from "../powered-by";
+import { PathsThatNeedRedirect } from "../user/user-in-nav";
 import { NavItem } from "./nav-item";
 
 type SideBarProps = {
@@ -24,6 +26,9 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
   const { user } = useUserContext();
   const { course } = useCourseContext();
   const courseId = course?.id;
+  const { status } = useSession();
+  const pathname = usePathname();
+  const router = useRouter();
 
   const { data: unreadOffers } = api.user.getUnreadOffersForCourse.useQuery(
     {
@@ -50,10 +55,20 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
   });
 
   const logOutUser = async () => {
-    toggleSidebar();
-    await signOut();
+    if (PathsThatNeedRedirect.some((i) => pathname.includes(i))) {
+      const data = await signOut({
+        callbackUrl: `/${courseId}`,
+        redirect: false,
+      });
+      router.push(data.url);
+      return;
+    }
+    const data = await signOut({
+      callbackUrl: pathname,
+      redirect: false,
+    });
+    router.push(data.url);
   };
-
   return (
     <>
       <aside
@@ -65,7 +80,7 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
         <div className="relative flex h-full flex-col">
           <div className="flex  items-center justify-between px-2 py-2">
             <div className="flex items-center gap-2">
-              {user ? null : (
+              {user && status === "authenticated" ? null : (
                 <Link href={`/${courseId}/login`} onClick={toggleSidebar}>
                   <FilledButton>Log In</FilledButton>
                 </Link>
@@ -108,7 +123,7 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
 
               <NavItem
                 href={
-                  user
+                  user && status === "authenticated"
                     ? `/${courseId}/my-tee-box?section=offers-received`
                     : `/${courseId}/login`
                 }
@@ -129,7 +144,7 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
                 className="border-b border-t border-stroke-secondary p-2 md:p-4"
               />
             </div>
-            {user ? (
+            {user && status === "authenticated" ? (
               <div className="flex flex-col">
                 <NavItem
                   href={`/${courseId}/profile/${user?.id}`}

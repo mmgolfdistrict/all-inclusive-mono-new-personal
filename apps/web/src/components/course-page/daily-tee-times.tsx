@@ -4,7 +4,7 @@ import { useFiltersContext } from "~/contexts/FiltersContext";
 import { api } from "~/utils/api";
 import { dayMonthDate } from "~/utils/formatters";
 import { useEffect, useRef } from "react";
-import { useIntersectionObserver } from "usehooks-ts";
+import { useElementSize, useIntersectionObserver } from "usehooks-ts";
 import { useDraggableScroll } from "../../hooks/useDraggableScroll";
 import { TeeTime } from "../cards/tee-time";
 import { LeftChevron } from "../icons/left-chevron";
@@ -31,6 +31,7 @@ export const DailyTeeTimes = ({
 
   const entry = useIntersectionObserver(nextPageRef, {});
   const isVisible = !!entry?.isIntersecting;
+  const [sizeRef, { width = 0 }] = useElementSize();
 
   const { course } = useCourseContext();
   const {
@@ -131,7 +132,7 @@ export const DailyTeeTimes = ({
       await fetchNextPage();
     }
     overflowRef.current?.classList.add("scroll-smooth");
-    overflowRef.current?.scrollBy({ left: 325 });
+    overflowRef.current?.scrollBy({ left: width });
     overflowRef.current?.classList.remove("scroll-smooth");
   };
 
@@ -149,7 +150,7 @@ export const DailyTeeTimes = ({
 
   const scrollLeft = () => {
     overflowRef.current?.classList.add("scroll-smooth");
-    overflowRef.current?.scrollBy({ left: -325 });
+    overflowRef.current?.scrollBy({ left: -`${width}` });
     overflowRef.current?.classList.remove("scroll-smooth");
   };
 
@@ -177,7 +178,7 @@ export const DailyTeeTimes = ({
           <div />
         )}
       </div>
-      <div className="relative">
+      <div className="relative" ref={sizeRef}>
         <div className="absolute top-1/2 hidden md:block -translate-y-1/2 z-[2] flex items-center justify-center -left-1 md:-left-6">
           <button
             onClick={scrollLeft}

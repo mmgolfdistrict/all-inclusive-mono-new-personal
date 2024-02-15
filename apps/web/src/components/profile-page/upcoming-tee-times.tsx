@@ -3,6 +3,7 @@
 import { useOverflowCheck } from "~/hooks/useOverflowCheck";
 import { api } from "~/utils/api";
 import { useRef } from "react";
+import { useElementSize } from "usehooks-ts";
 import { TeeTime } from "../cards/tee-time";
 import { Skeleton } from "../course-page/skeleton";
 import { LeftChevron } from "../icons/left-chevron";
@@ -19,16 +20,17 @@ export const UpcomingTeeTimes = ({
     overflowRef,
     []
   );
+  const [sizeRef, { width }] = useElementSize();
 
   const scrollRight = () => {
     overflowRef.current?.classList.add("scroll-smooth");
-    overflowRef.current?.scrollBy({ left: 325 });
+    overflowRef.current?.scrollBy({ left: width });
     overflowRef.current?.classList.remove("scroll-smooth");
   };
 
   const scrollLeft = () => {
     overflowRef.current?.classList.add("scroll-smooth");
-    overflowRef.current?.scrollBy({ left: -325 });
+    overflowRef.current?.scrollBy({ left: -`${width}` });
     overflowRef.current?.classList.remove("scroll-smooth");
   };
 
@@ -43,7 +45,7 @@ export const UpcomingTeeTimes = ({
       <div className="stroke flex justify-between gap-4 border-b px-4 py-3 md:px-6 md:py-4">
         <div className="text-lg font-semibold">Upcoming tee times</div>
       </div>
-      <div className="relative">
+      <div className="relative" ref={sizeRef}>
         {isOverflowingLeft && (
           <div className="absolute hidden sm:block left-2 top-1/2 -translate-y-1/2 flex items-center justify-center z-[2] md:left-5">
             <button
@@ -92,6 +94,7 @@ export const UpcomingTeeTimes = ({
                 bookingIds={i.bookings}
                 listingId={i.listingId ?? undefined}
                 firstHandPurchasePrice={i.purchasedFor}
+                showFullDate={true}
               />
             ))
           )}

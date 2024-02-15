@@ -13,11 +13,24 @@ import { z } from "zod";
 
 export const editProfileSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }).max(30),
-  handle: z.string().min(1, { message: "Handle is required" }).max(30),
+  handle: z
+    .string()
+    .min(1, { message: "Handle is required" })
+    .max(20)
+    .refine((handle) => !handle.includes("@"), {
+      message: "Handle cannot contain '@'",
+    }),
   email: z
     .string()
     .email({ message: "Invalid email" })
     .min(1, "Email is required"),
+  phoneNumber: z
+    .string()
+    .min(1, { message: "Phone number is required" })
+    .refine((phoneNumber) => /^\d{10}$/.test(phoneNumber), {
+      message:
+        "Invalid phone number. Please enter a valid US phone number with area code. No country code required, dashes, or spaces.",
+    }),
   location: z.string().optional(),
   profilePictureAssetId: z.string().or(z.null()).or(z.object({})).optional(),
   // .refine(

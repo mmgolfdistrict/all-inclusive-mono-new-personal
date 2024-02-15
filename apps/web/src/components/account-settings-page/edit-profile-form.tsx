@@ -14,10 +14,14 @@ import {
 } from "~/schema/edit-profile-schema";
 import { api } from "~/utils/api";
 import { useParams } from "next/navigation";
+import type { FormEvent } from "react";
 import { useCallback, useEffect, useState, type ChangeEvent } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
 import { useDebounce } from "usehooks-ts";
+import { OutlineButton } from "../buttons/outline-button";
+
+const defaultProfilePhoto = "/defaults/default-profile.webp";
 
 export const EditProfileForm = () => {
   const [location, setLocation] = useState<string>("");
@@ -84,6 +88,7 @@ export const EditProfileForm = () => {
     if (!isLoading && userData) {
       setValue("name", userData?.name ?? "");
       setValue("email", userData?.email ?? "");
+      setValue("phoneNumber", userData?.phoneNumber ?? "");
       setValue("handle", userData?.handle ?? "");
       setValue("location", userData?.location ?? "");
       setValue("profilePictureAssetId", userData?.image ?? "");
@@ -106,7 +111,13 @@ export const EditProfileForm = () => {
   useEffect(() => {
     // @ts-ignore
     const imageFile = (image as FileList)?.[0];
-    if (imageFile !== undefined && !isLoading && userData?.image !== image) {
+    if (
+      imageFile !== undefined &&
+      imageFile?.size > 0 &&
+      !isLoading &&
+      userData &&
+      userData?.image !== image
+    ) {
       void upload(imageFile, "image");
     }
   }, [image, userData, isLoading]);
@@ -118,7 +129,9 @@ export const EditProfileForm = () => {
     const bannerFile = (bannerImage as FileList)?.[0];
     if (
       bannerFile !== undefined &&
+      bannerFile?.size > 0 &&
       !isLoading &&
+      userData &&
       userData?.bannerPicture !== bannerImage
     ) {
       void upload(bannerFile, "bannerImage");
@@ -134,12 +147,14 @@ export const EditProfileForm = () => {
 
   const onSubmit: SubmitHandler<EditProfileSchemaType> = async (data) => {
     if (isUploading) return;
+
     try {
       const prevData = {
         name: userData?.name ?? "",
         email: userData?.email,
         handle: userData?.handle,
         location: userData?.location,
+        phoneNumber: userData?.phoneNumber,
         profilePictureAssetId: getKeyFromAssetUrl(userData?.image ?? ""),
         bannerImageAssetId: getKeyFromAssetUrl(userData?.bannerImage ?? ""),
       };
@@ -148,10 +163,15 @@ export const EditProfileForm = () => {
         email: data.email,
         handle: data.handle,
         location: data.location,
-        profilePictureAssetId: assetIds.profilePictureId || undefined,
+        phoneNumber: data.phoneNumber,
+        profilePictureAssetId:
+          data.profilePictureAssetId === defaultProfilePhoto
+            ? defaultProfilePhoto
+            : assetIds.profilePictureId || undefined,
         bannerImageAssetId: assetIds.bannerId || undefined,
       };
       const keys = Object.keys(dataToUpdate);
+
       keys.forEach((key) => {
         if (
           prevData[key as keyof typeof dataToUpdate] ===
@@ -168,12 +188,19 @@ export const EditProfileForm = () => {
       if (Object.keys(dataToUpdate).length === 0) {
         return;
       }
-
+      //check if profilePictureAssetId is defaultProfilePhoto and then set it to empty string if it is
+      if (dataToUpdate?.profilePictureAssetId === defaultProfilePhoto) {
+        dataToUpdate.profilePictureAssetId = "";
+      }
       await updateUser.mutateAsync({ ...dataToUpdate });
-      if (profilePhoto) {
+      if (profilePhoto && profilePhoto !== defaultProfilePhoto) {
         setProfilePhoto(null);
         await update({ image: assetIds.profilePictureId });
         setAssetIds((prev) => ({ ...prev, profilePictureId: "" }));
+      }
+      if (profilePhoto && profilePhoto === defaultProfilePhoto) {
+        await update({ image: "" });
+        setProfilePhoto(null);
       }
       if (banner) {
         setBanner(null);
@@ -188,6 +215,12 @@ export const EditProfileForm = () => {
         (error as Error)?.message ?? "An error occurred updating profile"
       );
     }
+  };
+
+  const resetProfilePicture = (e: FormEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    setProfilePhoto(defaultProfilePhoto);
+    setValue("profilePictureAssetId", defaultProfilePhoto);
   };
 
   return (
@@ -212,6 +245,15 @@ export const EditProfileForm = () => {
           register={register}
           name="email"
           error={errors.email?.message}
+        />
+        <Input
+          label="Phone Number"
+          type="tel"
+          placeholder="Enter your phone number"
+          id="phoneNumber"
+          register={register}
+          name="phoneNumber"
+          error={errors.phoneNumber?.message}
         />
         <Input
           label="Handle"
@@ -241,15 +283,26 @@ export const EditProfileForm = () => {
             <option key={idx}>{city.place_name}</option>
           ))}
         </datalist>
-        <DropMedia
-          label="Upload your profile photo"
-          id="profilePictureAssetId"
-          register={register}
-          name={"profilePictureAssetId"}
-          subtext="Suggested image size: 400x400px or larger"
-          isUploading={isUploading && userData?.image !== image}
-          src={profilePhoto}
-        />
+        <div className="flex items-end justify-between w-full gap-2">
+          <DropMedia
+            label="Upload your profile photo"
+            id="profilePictureAssetId"
+            register={register}
+            name={"profilePictureAssetId"}
+            subtext="Suggested image size: 400x400px or larger"
+            isUploading={isUploading && userData?.image !== image}
+            src={profilePhoto}
+          />
+          {userData?.profilePicture !== defaultProfilePhoto ? (
+            <OutlineButton
+              className="!px-2 !py-1 text-sm rounded-md"
+              onClick={resetProfilePicture}
+            >
+              Reset
+            </OutlineButton>
+          ) : null}
+        </div>
+
         <DropMedia
           label="Upload your background photo"
           id="bannerImageAssetId"

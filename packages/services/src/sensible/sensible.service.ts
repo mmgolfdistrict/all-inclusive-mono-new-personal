@@ -22,15 +22,15 @@ export class SensibleService extends CacheService {
   /**
    * Creates an instance of SensibleService.
    *
-   * @param {string} SENSIBLE_PARTNER_ID - Sensible partner ID.
-   * @param {string} SENSIBLE_PRODUCT_ID - Sensible product ID.
+   * @param {string} NEXT_PUBLIC_SENSIBLE_PARTNER_ID - Sensible partner ID.
+   * @param {string} NEXT_PUBLIC_SENSIBLE_PRODUCT_ID - Sensible product ID.
    * @param {string} SENSIBLE_API_KEY - Sensible API key.
    * @param {string} redisUrl - Redis URL.
    * @param {string} redisToken - Redis token.
    */
   constructor(
-    private readonly SENSIBLE_PARTNER_ID: string,
-    private readonly SENSIBLE_PRODUCT_ID: string,
+    private readonly NEXT_PUBLIC_SENSIBLE_PARTNER_ID: string,
+    private readonly NEXT_PUBLIC_SENSIBLE_PRODUCT_ID: string,
     private readonly SENSIBLE_CLIENT_SECRET: string,
     private readonly SENSIBLE_AUDIENCE: string,
     redisUrl: string,
@@ -52,7 +52,7 @@ export class SensibleService extends CacheService {
     this.logger.info("getAccessToken called");
     const payload: AccessTokenRequest = {
       grant_type: "client_credentials",
-      client_id: this.SENSIBLE_PARTNER_ID,
+      client_id: this.NEXT_PUBLIC_SENSIBLE_PARTNER_ID,
       client_secret: this.SENSIBLE_CLIENT_SECRET,
       audience: this.SENSIBLE_AUDIENCE,
     };

@@ -22,7 +22,7 @@ export default function Profile({
         <ProfileDetails />
 
         <UpcomingTeeTimes courseId={courseId} userId={userId} />
-        <TeeTimeHistory courseId={courseId} />
+        <TeeTimeHistory courseId={courseId} userId={userId} />
       </section>
     </main>
   );

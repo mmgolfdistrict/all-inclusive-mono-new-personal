@@ -174,6 +174,7 @@ export class CheckoutService {
       paymentId: paymentIntent.payment_id,
       cart: customerCart,
     });
+
     return {
       clientSecret: paymentIntent.client_secret,
     };

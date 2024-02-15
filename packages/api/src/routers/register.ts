@@ -11,6 +11,8 @@ export const registerRouter = createTRPCRouter({
       firstName: input.firstName,
       lastName: input.lastName,
       handle: input.username,
+      phoneNumber: input.phoneNumber,
+      location: input.location,
       redirectHref: input.redirectHref,
       ReCAPTCHA: input.ReCAPTCHA,
     };

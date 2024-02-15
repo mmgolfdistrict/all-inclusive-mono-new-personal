@@ -49,7 +49,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
       <div className={`min-h-[100dvh] ${bgColor} ${topPadding}`}>
         {children}
       </div>
-      {pathname.includes("admin") ? null : <Footer />}
+      <Footer />
     </div>
   );
 };

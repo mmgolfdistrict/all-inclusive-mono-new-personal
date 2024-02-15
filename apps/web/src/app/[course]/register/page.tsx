@@ -131,6 +131,15 @@ export default function RegisterPage() {
             name="email"
             error={errors.email?.message}
           />
+          <Input
+            label="Phone Number"
+            type="tel"
+            placeholder="Enter your phone number"
+            id="phoneNumber"
+            register={register}
+            name="phoneNumber"
+            error={errors.phoneNumber?.message}
+          />
           <div className="flex items-end gap-2">
             <Input
               label="Username"

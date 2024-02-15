@@ -61,6 +61,7 @@ export const TeeTimeDetails = ({
   const buyTeeTime = () => {
     if (!user) {
       void router.push(`/${course?.id}/login`);
+      return;
     } else {
       void router.push(
         `/${course?.id}/checkout?teeTimeId=${teeTimeId}&playerCount=${players}`

@@ -3,7 +3,7 @@
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
-import { formatMoney, getTime } from "~/utils/formatters";
+import { formatMoney, formatTime, getTime } from "~/utils/formatters";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
@@ -37,6 +37,7 @@ export const TeeTime = ({
   listingId,
   firstHandPurchasePrice,
   className,
+  showFullDate,
   children,
 }: {
   time: string;
@@ -56,6 +57,7 @@ export const TeeTime = ({
   listingId: string | undefined;
   firstHandPurchasePrice: number | undefined;
   className?: string;
+  showFullDate?: boolean;
   children?: ReactNode;
 }) => {
   const [selectedPlayers, setSelectedPlayers] = useState<string>("1");
@@ -96,7 +98,6 @@ export const TeeTime = ({
   const buyTeeTime = () => {
     if (!user) {
       void router.push(`/${course?.id}/login`);
-
       return;
     }
     if (status === "FIRST_HAND") {
@@ -144,7 +145,9 @@ export const TeeTime = ({
         <div className="border-b border-stroke">
           <div className="flex justify-between py-1 px-3 md:p-3">
             <div className="font-semibold text-[12px] md:text-[16px]">
-              {getTime(time, timezoneCorrection)}
+              {showFullDate
+                ? formatTime(time, true, timezoneCorrection)
+                : getTime(time, timezoneCorrection)}
             </div>
             {status === "UNLISTED" ? (
               <Hidden className="w-[12px] md:w-[20px]" />
@@ -201,8 +204,8 @@ export const TeeTime = ({
             ) : null}
             <div className="flex items-center">
               <div className="text-[15px] md:text-[20px] font-semibold text-secondary-black">
-                {isSuggested && firstHandPurchasePrice
-                  ? formatMoney((firstHandPurchasePrice * 13) / 10)
+                {isSuggested
+                  ? formatMoney(((firstHandPurchasePrice ?? price) * 13) / 10)
                   : formatMoney(price)}
               </div>
               <div className="text-[12px] md:text-[16px] text-primary-gray">
@@ -262,7 +265,9 @@ export const TeeTime = ({
             courseName={course?.name ?? ""}
             courseImage={course?.logo ?? ""}
             date={time}
-            minimumOfferPrice={minimumOfferPrice ?? 0}
+            minimumOfferPrice={
+              minimumOfferPrice ?? firstHandPurchasePrice ?? price
+            }
             bookingIds={bookingIds ?? []}
           />
         )}

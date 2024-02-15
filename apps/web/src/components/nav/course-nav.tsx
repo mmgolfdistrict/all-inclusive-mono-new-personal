@@ -1,5 +1,6 @@
 "use client";
 
+import { useSession } from "@golf-district/auth/nextjs-exports";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
@@ -26,7 +27,7 @@ export const CourseNav = () => {
   const [isSideBarOpen, setIsSideBarOpen] = useState<boolean>(false);
   const isMobile = useMediaQuery("(max-width: 768px)");
   const pathname = usePathname();
-
+  const { status } = useSession();
   const { data: unreadOffers } = api.user.getUnreadOffersForCourse.useQuery(
     {
       courseId: courseId ?? "",
@@ -94,7 +95,7 @@ export const CourseNav = () => {
             <PoweredBy id="powered-by-sidebar" />
           </div>
 
-          {user ? (
+          {user && status === "authenticated" ? (
             <div className="flex items-center gap-4">
               <UserInNav />
             </div>

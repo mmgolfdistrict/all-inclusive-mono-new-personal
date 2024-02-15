@@ -36,7 +36,6 @@ export const AddCard = ({ refetchCards }: { refetchCards: () => unknown }) => {
   const addCard = api.checkout.createPaymentMethod.useMutation();
 
   const onSubmit: SubmitHandler<CreditCardSchemaType> = async (data) => {
-    console.log("data to submit", data);
     const { cardNumber, expirationDate, type } = data;
     const cleanedCardNumber = cardNumber.replace(/\s/g, "");
     const expirationMonth = expirationDate.split("/")[0];
@@ -47,7 +46,8 @@ export const AddCard = ({ refetchCards }: { refetchCards: () => unknown }) => {
       setIsLoading(true);
       await addCard.mutateAsync({
         params: {
-          payment_method: paymentMethod,
+          payment_method: "card",
+          payment_method_type: paymentMethod,
           card: {
             card_number: cleanedCardNumber,
             card_exp_month: expirationMonth,

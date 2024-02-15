@@ -326,7 +326,12 @@ export const UnlistedDetails = ({
         courseImage={course?.logo ?? ""}
         courseName={course?.name ?? ""}
         date={data?.date ?? ""}
-        minimumOfferPrice={data?.minimumOfferPrice ?? 0}
+        minimumOfferPrice={
+          data?.minimumOfferPrice ??
+          data?.firstHandPrice ??
+          data?.purchasedFor ??
+          0
+        }
         bookingIds={bookingIds ?? []}
       />
     </div>

@@ -146,6 +146,7 @@ export class HyperSwitchService {
   createPaymentMethod = async (
     params: HyperSwitch.PaymentMethodCreateParams
   ): Promise<HyperSwitch.Response<HyperSwitch.PaymentMethod>> => {
+    console.log(params);
     return await this.hyperSwitch.paymentMethods.create(params).catch((err) => {
       this.logger.error(`Error creating payment method: ${err}`);
       throw new Error(`Error creating payment method: ${err}`);
@@ -166,6 +167,13 @@ export class HyperSwitchService {
     return await this.hyperSwitch.customers.listPaymentMethods(customerId, params).catch((err) => {
       this.logger.error(`Error retrieving payment method: ${err}`);
       return null;
+    });
+  };
+
+  removePaymentMethod = async (paymentMethodId: string) => {
+    return await this.hyperSwitch.paymentMethods.detach(paymentMethodId).catch((err) => {
+      this.logger.error(`Error removing payment method: ${err}`);
+      throw new Error(`Error removing payment method: ${err}`);
     });
   };
 }
