@@ -13,7 +13,8 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-
+    environment:
+      name: Production – golfdistrict-dev
     strategy:
       matrix:
         node-version: [21.x]
