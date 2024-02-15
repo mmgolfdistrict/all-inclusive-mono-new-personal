@@ -64,6 +64,7 @@ export const userRouter = createTRPCRouter({
         profilePictureAssetId: z.string().optional(),
         bannerImageAssetId: z.string().optional(),
         location: z.string().optional(),
+        phoneNumber: z.string().optional(),
         phoneNotifications: z.boolean().optional(),
         emailNotification: z.boolean().optional(),
       })
@@ -99,12 +100,10 @@ export const userRouter = createTRPCRouter({
         .getUserService()
         .getUpcomingTeeTimesForUser(input.userId, input.courseId, ctx.session?.user?.id);
     }),
-  getTeeTimeHistoryForUser: protectedProcedure
-    .input(z.object({ courseId: z.string() }))
+  getTeeTimeHistoryForUser: publicProcedure
+    .input(z.object({ userId: z.string(), courseId: z.string() }))
     .query(async ({ ctx, input }) => {
-      return await ctx.serviceFactory
-        .getUserService()
-        .getTeeTimeHistoryForUser(ctx.session.user.id, input.courseId);
+      return await ctx.serviceFactory.getUserService().getTeeTimeHistoryForUser(input.userId, input.courseId);
     }),
   getProvidersByUserId: protectedProcedure
     .input(z.object({ userId: z.string() }))

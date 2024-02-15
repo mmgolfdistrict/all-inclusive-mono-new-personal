@@ -61,9 +61,9 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
       </Tabs.List>
       <Tabs.Content
         value="balance"
-        className="bg-white px-2 py-4 md:rounded-b-xl w-full h-full md:min-h-[220px] flex items-center justify-center"
+        className="bg-white px-2 py-4 md:rounded-b-xl w-full h-full  flex items-center justify-center"
       >
-        <div className="flex flex-col h-full items-center justify-center gap-2">
+        <div className="flex flex-col h-full items-center justify-center gap-2 md:min-h-[220px]">
           <div className="flex flex-col items-center gap-2 md:flex-row md:items-center">
             <div className="text-[24px] text-secondary-black md:text-[32px]">
               {formatMoney(user?.balance ?? 0 / 100)}

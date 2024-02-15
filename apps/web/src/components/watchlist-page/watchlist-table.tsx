@@ -2,6 +2,7 @@
 
 import { type WatchlistItem } from "@golf-district/shared";
 import { useCourseContext } from "~/contexts/CourseContext";
+import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
 import { formatMoney, formatTime } from "~/utils/formatters";
 import Link from "next/link";
@@ -24,7 +25,7 @@ export const WatchlistTable = () => {
   >(undefined);
 
   const router = useRouter();
-
+  const { user } = useUserContext();
   const { data, isLoading, isError, error, refetch } =
     api.watchlist.getWatchlist.useQuery(
       {
@@ -56,6 +57,10 @@ export const WatchlistTable = () => {
     playerCount: "1" | "2" | "3" | "4" = "1"
   ) => {
     //only for listed or first party
+    if (!user) {
+      void router.push(`/${course?.id}/login`);
+      return;
+    }
     void router.push(
       `/${courseId}/checkout?teeTimeId=${teeTimeId}&playerCount=${playerCount}`
     );
@@ -148,7 +153,9 @@ export const WatchlistTable = () => {
         courseName={course?.name ?? ""}
         courseImage={course?.logo ?? ""}
         date={selectedTeeTime?.teeTimeExpiration ?? ""}
-        minimumOfferPrice={selectedTeeTime?.minimumOfferPrice ?? 0}
+        minimumOfferPrice={
+          selectedTeeTime?.minimumOfferPrice ?? selectedTeeTime?.price ?? 0
+        }
         bookingIds={selectedTeeTime?.bookingIds ?? []}
       />
     </>

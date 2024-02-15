@@ -30,6 +30,10 @@ export const NotificationSettings = () => {
   }, [isLoading, userData]);
 
   const updatePhoneNotifications = async (newValue: boolean) => {
+    if (newValue === true && !userData?.phoneNumber) {
+      toast.error("Please add a phone number to enable phone notifications");
+      return;
+    }
     if (isMutating) return;
     setIsByPhone(newValue);
     try {

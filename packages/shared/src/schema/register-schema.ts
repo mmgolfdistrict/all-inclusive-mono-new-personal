@@ -4,8 +4,21 @@ export const registerSchema = z
   .object({
     firstName: z.string().min(1, { message: "First name is required" }),
     lastName: z.string().min(1, { message: "Last name is required" }),
-    username: z.string().min(1, { message: "Username is required" }).max(20),
+    username: z
+      .string()
+      .min(1, { message: "Username is required" })
+      .max(20)
+      .refine((username) => !username.includes("@"), {
+        message: "Username cannot contain '@'",
+      }),
     email: z.string().email({ message: "Invalid email" }).min(1, "Email is required"),
+    phoneNumber: z
+      .string()
+      .min(1, { message: "Phone number is required" })
+      .refine((phoneNumber) => /^\d{10}$/.test(phoneNumber), {
+        message:
+          "Invalid phone number. Please enter a valid US phone number with area code. No country code required, dashes, or spaces.",
+      }),
     location: z.string().min(1, { message: "Location is required" }),
     password: z
       .string()

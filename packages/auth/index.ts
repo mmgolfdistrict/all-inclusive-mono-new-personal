@@ -129,7 +129,7 @@ export const authConfig: NextAuthConfig = {
         token.image = (token?.user as { image?: string })?.image ?? undefined;
       }
 
-      if (trigger === "update" && session?.image && token) {
+      if (trigger === "update" && session?.image !== undefined && token) {
         token.picture = session.image;
         token.image = session.image;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

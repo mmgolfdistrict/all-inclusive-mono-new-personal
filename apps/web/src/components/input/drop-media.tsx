@@ -105,7 +105,7 @@ export const DropMedia = ({
 
   return (
     <div
-      className={`flex cursor-pointer flex-col gap-1 ${
+      className={`flex cursor-pointer flex-col gap-1 w-full ${
         isUploading ? "animate-pulse" : ""
       }`}
       onDragEnter={handleDragEnter}
@@ -114,9 +114,15 @@ export const DropMedia = ({
       onClick={openFileSystem}
       id={`drop-media-${id}`}
     >
-      <label className="text-[14px] text-primary-gray" htmlFor={id}>
-        {label}
-      </label>
+      <div>
+        <label
+          className="text-[14px] cursor-pointer text-primary-gray"
+          htmlFor={id}
+        >
+          {label}
+        </label>
+        <div className="text-[12px] cursor-pointer font-thin">{subtext}</div>
+      </div>
       <div
         className={`flex items-center justify-between gap-2 rounded-lg transition-colors ${
           dragging ? " bg-secondary-white" : ""
@@ -140,7 +146,6 @@ export const DropMedia = ({
           <div className="text-sm text-primary-gray">
             Drag & drop or <span className="text-primary">browse</span>
           </div>
-          <div className="text-[12px] font-thin">{subtext}</div>
         </div>
         {imageSrc && (
           <BlurImage

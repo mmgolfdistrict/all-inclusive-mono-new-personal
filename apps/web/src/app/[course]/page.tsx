@@ -35,6 +35,7 @@ export default function CourseHomePage() {
   const { course } = useCourseContext();
   const [error, setError] = useState<string | null>(null);
   const [count, setCount] = useState<number>(0);
+  const [isFirstRender, setIsFirstRender] = useState<boolean>(true);
 
   const updateCount = (balance: number) => {
     setCount(balance);
@@ -204,6 +205,10 @@ export default function CourseHomePage() {
   useEffect(() => {
     setPageNumber(1);
     setTake(TAKE);
+    if (isFirstRender) {
+      setIsFirstRender(false);
+      return;
+    }
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [dateType]);
 

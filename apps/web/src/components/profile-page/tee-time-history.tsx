@@ -1,20 +1,34 @@
 "use client";
 
+import { useCourseContext } from "~/contexts/CourseContext";
 import { api } from "~/utils/api";
+import { formatTime } from "~/utils/formatters";
 import Link from "next/link";
 import { Avatar } from "../avatar";
 
-export const TeeTimeHistory = ({ courseId }: { courseId: string }) => {
+export const TeeTimeHistory = ({
+  userId,
+  courseId,
+}: {
+  userId: string;
+  courseId: string;
+}) => {
   const { data, isLoading, error } = api.user.getTeeTimeHistoryForUser.useQuery(
-    { courseId }
+    { userId, courseId }
   );
+  const { course } = useCourseContext();
+  const timezoneCorrection = course?.timezoneCorrection ?? 0;
 
   return (
     <div className="flex w-full flex-col gap-4 bg-white md:rounded-xl">
       <div className="stroke flex justify-between gap-4 border-b px-4 py-3 md:px-6 md:py-4">
         <div className="text-lg font-semibold">Tee Time History</div>
       </div>
-      {!isLoading && data?.length === 0 && !error ? (
+      {!isLoading && error ? (
+        <div className="flex flex-col items-center justify-center gap-4 px-4 pb-2 h-[200px] text-[14px] md:px-6 md:pb-3">
+          <div className="text-center">{error?.message}</div>
+        </div>
+      ) : !isLoading && data?.length === 0 && !error ? (
         <div className="flex flex-col items-center justify-center gap-4 px-4 pb-2 h-[200px] text-[14px] md:px-6 md:pb-3">
           <div className="text-center">No tee times found.</div>
         </div>
@@ -39,6 +53,7 @@ export const TeeTimeHistory = ({ courseId }: { courseId: string }) => {
                       iconSrc={i.courseImage}
                       key={idx}
                       courseId={i.courseId ?? ""}
+                      timezoneCorrection={timezoneCorrection}
                     />
                   ))}
             </tbody>
@@ -66,11 +81,13 @@ const TableRow = ({
   date,
   course,
   courseId,
+  timezoneCorrection,
 }: {
   course: string;
   date: string;
   iconSrc: string;
   courseId: string;
+  timezoneCorrection: number;
 }) => {
   return (
     <tr className="w-full border-b border-stroke text-primary-gray">
@@ -83,7 +100,9 @@ const TableRow = ({
           {course}
         </Link>
       </td>
-      <td className="whitespace-nowrap px-4 py-3">{date}</td>
+      <td className="whitespace-nowrap px-4 py-3 text-right">
+        {formatTime(date, true, timezoneCorrection)}
+      </td>
     </tr>
   );
 };

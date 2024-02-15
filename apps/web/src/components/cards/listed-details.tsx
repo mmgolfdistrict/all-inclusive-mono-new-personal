@@ -83,6 +83,7 @@ export const ListedDetails = ({
   const buyTeeTime = () => {
     if (!user) {
       void router.push(`/${course?.id}/login`);
+      return;
     } else {
       void router.push(
         `/${course?.id}/checkout?listingId=${listingId}&playerCount=${data?.availableSlots}`
@@ -300,7 +301,12 @@ export const ListedDetails = ({
         courseImage={course?.logo ?? ""}
         courseName={course?.name ?? ""}
         date={data?.date ?? ""}
-        minimumOfferPrice={data?.minimumOfferPrice ?? 0}
+        minimumOfferPrice={
+          data?.minimumOfferPrice ??
+          data?.firstHandPurchasePrice ??
+          data?.pricePerGolfer ??
+          0
+        }
         bookingIds={bookingIds ?? []}
       />
     </div>

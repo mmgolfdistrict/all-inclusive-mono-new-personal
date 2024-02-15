@@ -32,6 +32,7 @@ export interface UserCreationData {
   firstName: string;
   lastName: string;
   handle: string;
+  phoneNumber: string;
   location?: string;
   redirectHref?: string;
   ReCAPTCHA: string;
@@ -44,6 +45,7 @@ interface UserUpdateData {
   profilePictureAssetId?: string | null;
   bannerImageAssetId?: string | null;
   location?: string | null;
+  phoneNumber?: string | null;
   phoneNotifications?: boolean | null;
   emailNotifications?: boolean | null;
 }
@@ -492,6 +494,7 @@ export class UserService {
       updateData.phoneNotifications = data.phoneNotifications ? true : false;
     if (Object.prototype.hasOwnProperty.call(data, "emailNotifications"))
       updateData.emailNotifications = data.emailNotifications ? true : false;
+    if (Object.prototype.hasOwnProperty.call(data, "phoneNumber")) updateData.phoneNumber = data.phoneNumber;
 
     await this.database
       .update(users)
@@ -937,6 +940,7 @@ export class UserService {
         email: data.email,
         gdPassword: await bcrypt.hash(data.password, 10),
         address: data.location,
+        phoneNumber: data.phoneNumber,
         verificationRequestToken: verificationToken,
         verificationRequestExpiry: generateUtcTimestamp(90), //90 minutes
         createdAt: currentUtcTimestamp(),

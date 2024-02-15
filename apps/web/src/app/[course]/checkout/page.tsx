@@ -1,13 +1,17 @@
 "use client";
 
+import { useSession } from "@golf-district/auth/nextjs-exports";
 import { formatQueryDate } from "@golf-district/shared";
+import { FilledButton } from "~/components/buttons/filled-button";
 import { HyperSwitch } from "~/components/checkout-page/hyper-switch";
 import { OrderSummary } from "~/components/checkout-page/order-summary";
 import { BlurImage } from "~/components/images/blur-image";
 import { Spinner } from "~/components/loading/spinner";
 import { CheckoutBreadcumbs } from "~/components/nav/checkout-breadcrumbs";
+import { UserInNav } from "~/components/user/user-in-nav";
 import { useCheckoutContext } from "~/contexts/CheckoutContext";
 import { useCourseContext } from "~/contexts/CourseContext";
+import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
 import { formatMoney, getPromoCodePrice } from "~/utils/formatters";
 import Link from "next/link";
@@ -27,6 +31,9 @@ export default function Checkout({
   const teeTimeId = searchParams?.teeTimeId as string | undefined;
   const listingId = searchParams?.listingId as string | undefined;
   const { course } = useCourseContext();
+  const { user } = useUserContext();
+  const { status } = useSession();
+
   const {
     shouldAddSensible,
     sensibleData,
@@ -195,15 +202,31 @@ export default function Checkout({
   return (
     <>
       <div className="relative flex flex-col items-center gap-4 px-0 pb-8 md:px-8">
-        <Link href={`/${course?.id}`} className="w-[105px] pb-4">
-          <BlurImage
-            src={course?.logo ?? ""}
-            alt="course logo"
-            width={60}
-            height={100}
-            className="w-[50px] object-fit"
-          />
-        </Link>
+        <div className="flex p-2 justify-between w-full relative">
+          <div />
+
+          <Link
+            href={`/${course?.id}`}
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+          >
+            <BlurImage
+              src={course?.logo ?? ""}
+              alt="course logo"
+              width={50}
+              height={100}
+              className="w-[50px] object-fit"
+            />
+          </Link>
+          {user && status === "authenticated" ? (
+            <div className="flex items-center gap-4">
+              <UserInNav alwaysShow={true} />
+            </div>
+          ) : (
+            <Link href={`/${course?.id}/login`}>
+              <FilledButton>Log In</FilledButton>
+            </Link>
+          )}
+        </div>
         <CheckoutBreadcumbs status={"checkout"} />
 
         <div className="flex w-full flex-col gap-4 md:flex-row">
@@ -211,8 +234,8 @@ export default function Checkout({
             teeTime={data}
             isLoading={isLoading}
             sensibleDataToMountComp={{
-              partner_id: "58222273-8372-4f8d-a366-79613453ff93",
-              product_id: "4b1342df-0d23-456e-81de-22d62aa3cee9",
+              partner_id: process.env.NEXT_PUBLIC_SENSIBLE_PARTNER_ID ?? "",
+              product_id: process.env.NEXT_PUBLIC_SENSIBLE_PRODUCT_ID ?? "",
               coverageStartDate: formatQueryDate(new Date(data?.date ?? "")),
               coverageEndDate: formatQueryDate(new Date(data?.date ?? "")),
               currency: "USD",

@@ -978,6 +978,9 @@ export class BookingService {
     //price must to higher than the largest minimum offer price
 
     const minimumOfferPrice = Math.max(...data.map((booking) => booking.minimumOfferPrice));
+    if (price === 0) {
+      throw new Error("Offer price must be higher than 0");
+    }
     if (price < minimumOfferPrice) {
       throw new Error("Offer price must be higher than the minimum offer price.");
     }
