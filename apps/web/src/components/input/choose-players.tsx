@@ -8,6 +8,7 @@ export const ChoosePlayers = ({
   availableSlots,
   isDisabled,
   className,
+  teeTimeId,
 }: {
   players: string;
   setPlayers: (v: string) => void;
@@ -15,6 +16,7 @@ export const ChoosePlayers = ({
   availableSlots: number;
   isDisabled?: boolean;
   className?: string;
+  teeTimeId: string;
 }) => {
   return (
     <ToggleGroup.Root
@@ -32,6 +34,9 @@ export const ChoosePlayers = ({
         <Item
           key={index}
           value={value}
+          dataTestId="tee-time-player-id"
+          dataTest={teeTimeId || ""}
+          dataQa={value}
           className={`${
             index === 0
               ? "rounded-l-full border border-stroke"

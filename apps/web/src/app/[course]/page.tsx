@@ -212,7 +212,7 @@ export default function CourseHomePage() {
   return (
     <main className="bg-secondary-white py-4 md:py-6">
       <div className="flex items-center justify-between px-4 md:px-6">
-        <GoBack href="/" text={`Back to all ${entity?.name} Courses`} />
+        <GoBack href="/" text={`Back to all ${entity?.name} Courses`} dataTestId="back-course-id" />
       </div>
       <CourseTitle
         courseName={course?.name ?? ""}

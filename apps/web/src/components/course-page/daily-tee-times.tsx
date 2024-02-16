@@ -182,6 +182,8 @@ export const DailyTeeTimes = ({
           <button
             onClick={scrollLeft}
             className="flex h-fit items-center justify-center rounded-full bg-white p-2 shadow-overflow-indicator"
+            data-testid="tee-time-left-chevron-id"
+            data-qa={dayMonthDate(date)}
           >
             <LeftChevron fill="#40942A" className="w-[21px]" />
           </button>
@@ -231,6 +233,8 @@ export const DailyTeeTimes = ({
           <button
             onClick={scrollRight}
             className="flex h-fit items-center justify-center rounded-full bg-white p-2 shadow-overflow-indicator"
+            data-testid="tee-time-right-chevron-id"
+            data-qa={dayMonthDate(date)}
           >
             <LeftChevron fill="#40942A" className="w-[21px] rotate-180" />
           </button>
