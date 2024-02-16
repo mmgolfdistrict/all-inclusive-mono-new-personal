@@ -78,7 +78,7 @@ export const CourseNav = () => {
         <div
           className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transform`}
         >
-          <Link href="/">
+          <Link href="/" data-testid="course-logo-id">
             <BlurImage
               src={course?.logo ?? ""}
               alt="course logo"
@@ -112,16 +112,19 @@ export const CourseNav = () => {
               href={`/${courseId}`}
               text="Tee Times"
               icon={<Club className="w-[16px]" />}
+              data-testid="tee-time-id"
             />
             <NavItem
               href={`/${courseId}/auctions`}
               text="Auctions"
               icon={<Auction className="w-[16px]" />}
+              data-testid="auction-id"
             />
             <NavItem
               href={`/${courseId}/my-tee-box`}
               text="Sell Your Tee Time"
               icon={<Marketplace className="w-[16px]" />}
+              data-testid="sell-your-tee-time-id"
             />
 
             <NavItem
@@ -141,6 +144,7 @@ export const CourseNav = () => {
                   ) : null}
                 </div>
               }
+              data-testid="my-offer-id"
             />
           </div>
         </div>

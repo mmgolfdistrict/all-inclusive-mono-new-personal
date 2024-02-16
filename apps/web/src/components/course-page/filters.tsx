@@ -124,6 +124,8 @@ export const Filters = () => {
               <Item
                 key={index}
                 value={value}
+                dataTestId="date-filter-id"
+                dataQa={value}
                 className={`${
                   index === 0
                     ? "rounded-t-2xl border border-stroke"
@@ -151,7 +153,11 @@ export const Filters = () => {
 
       <section className="flex flex-col gap-4">
         <div className="flex items-center gap-2">
-          <Switch value={showUnlisted} setValue={setShowUnlisted} />
+          <Switch
+            value={showUnlisted}
+            setValue={setShowUnlisted}
+            data-testid={`filter-switch-not-for-sale-make-an-offer-id`}
+          />
           <div className="flex items-center gap-1 text-primary-gray">
             <Hidden className="h-[17px] w-[20px]" />
             <div className="text-[15px]">Not for Sale, Make an Offer</div>
@@ -162,7 +168,11 @@ export const Filters = () => {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Switch value={includesCart} setValue={setIncludesCart} />
+          <Switch
+            value={includesCart}
+            setValue={setIncludesCart}
+            data-testid={`filter-switch-include-cart-id`}
+          />
           <div className="flex items-center gap-1 text-primary-gray">
             <GolfCart className="h-[17px] w-[20px]" />
             <div className="text-[15px]">Includes Cart</div>
@@ -188,6 +198,8 @@ export const Filters = () => {
             <Item
               key={index}
               value={value}
+              dataTestId="hole-filter-id"
+              dataQa={value}
               className={`${
                 index === 0
                   ? "rounded-l-full border-b border-l border-t border-stroke"
@@ -218,6 +230,8 @@ export const Filters = () => {
             <Item
               key={index}
               value={value}
+              dataTestId="golfer-filter-id"
+              dataQa={value}
               className={`${
                 index === 0
                   ? "rounded-l-full border-b border-l border-t border-stroke"
@@ -249,6 +263,7 @@ export const Filters = () => {
           onValueChange={(value: [number, number]) => {
             if (value) setLocalPriceRange(value);
           }}
+          data-testid="slider-price-range-id"
         />
       </section>
       <section className="flex flex-col gap-2">
@@ -293,6 +308,7 @@ export const Filters = () => {
               }
             }
           }}
+          data-testid="slider-start-time-id"
         />
       </section>
     </div>
@@ -302,9 +318,15 @@ export const Filters = () => {
 export const Item = ({
   value,
   className,
+  dataTestId,
+  dataQa,
+  dataTest,
 }: {
   value: string;
   className?: string;
+  dataTestId: string;
+  dataQa?: string;
+  dataTest?: string;
 }) => {
   return (
     <ToggleGroup.Item
@@ -312,6 +334,9 @@ export const Item = ({
       className={`bg-white px-4 py-2 text-left text-[14px] text-primary-gray transition-colors data-[state=on]:bg-primary data-[state=on]:text-white ${
         className ?? ""
       }`}
+      data-testid={dataTestId}
+      data-qa={dataQa}
+      data-test={dataTest}
     >
       {value}
     </ToggleGroup.Item>
