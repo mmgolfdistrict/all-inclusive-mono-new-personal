@@ -22,7 +22,9 @@ import Weekday from "dayjs/plugin/weekday";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ViewportList } from "react-viewport-list";
 import { useMediaQuery } from "usehooks-ts";
-
+import { toast } from "react-toastify";
+import { useRouter } from "next/navigation";
+import { useUserContext } from "~/contexts/UserContext";
 dayjs.extend(Weekday);
 dayjs.extend(RelativeTime);
 
@@ -31,8 +33,10 @@ export default function CourseHomePage() {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const { dateType, selectedDay, sortValue, handleSetSortValue } =
     useFiltersContext();
-  const { entity } = useAppContext();
+  const { entity, alertOffersShown ,setAlertOffersShown } = useAppContext();
+  const { user } = useUserContext();
   const { course } = useCourseContext();
+  const courseId = course?.id;
   const [error, setError] = useState<string | null>(null);
   const [count, setCount] = useState<number>(0);
   const [isFirstRender, setIsFirstRender] = useState<boolean>(true);
@@ -211,7 +215,35 @@ export default function CourseHomePage() {
     }
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [dateType]);
-
+  const { data: unreadOffers } = api.user.getUnreadOffersForCourse.useQuery(
+    {
+      courseId: courseId ?? "",
+    },
+    {
+      enabled: courseId !== undefined && user?.id !== undefined,
+    }
+  );
+  const router = useRouter();
+  
+  useEffect(()=>{
+    if(!alertOffersShown && unreadOffers && Number(unreadOffers)>0  ){
+      toast.info(<span>You have {unreadOffers} offers waiting in My Offers. Review your offers if you want to sell your time, counteroffer for a higher price, or decline.</span>, {
+        position: "top-right",
+        autoClose: 10000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        onClick:()=>{ 
+          router.push(`/${courseId}/my-tee-box?section=offers-received`)
+        },
+        theme: "light",
+        });
+        setAlertOffersShown(true)
+    }
+  },[unreadOffers])
+  
   const datesArr = daysData?.arrayOfDates;
 
   return (
