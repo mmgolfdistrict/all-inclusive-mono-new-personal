@@ -1,4 +1,12 @@
-# Golf District AWS Infrastructure README
+# Setup Golf District AWS Infrastructure
+This script sets up the GOLFdistrict CDN distribution for the assets.
+
+## How to Run this
+- Install AWS CDK `npm install -g aws-cdk`
+- Configure the AWS Credentials. They should be located under ~/.aws/credentials
+- Bootstrap the CDK
+- Deploy the script `npm run deploy`
+- The above script should display the AWS key, secret and the CloudFront CDN DNS. Copy them to the .env file.
 
 ## Infrastructure Overview:
 
