@@ -8,6 +8,7 @@ Typically this is run by the SRE / CRE team member. No need to create separate b
 - Bootstrap the CDK
 - Deploy the script `npm run deploy`
 - The above script should display the AWS key, secret and the CloudFront CDN DNS. Copy them to the .env file.
+- The CloudFront CDN should be updated in the file [apps/web/next.config.mjs](../../apps/web/next.config.mjs).
 
 ## Infrastructure Overview:
 
