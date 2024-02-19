@@ -3,10 +3,11 @@
 import { type CourseType, type EntityType } from "@golf-district/shared";
 import { usePreviousPath } from "~/hooks/usePreviousPath";
 import { api } from "~/utils/api";
+import type { Dispatch, SetStateAction } from "react";
 import {
   createContext,
-  Dispatch,
-  SetStateAction,
+  // Dispatch,
+  // SetStateAction,
   useContext,
   useEffect,
   useState,
