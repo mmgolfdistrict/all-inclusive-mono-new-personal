@@ -1,8 +1,11 @@
 # Setup Golf District AWS Infrastructure
+
 This script sets up the GOLFdistrict CDN distribution for the assets.
 
 ## How to Run this
+
 Typically this is run by the SRE / CRE team member. No need to create separate buckets and CDN distributions. One is enough for all of develoment.
+
 - Install AWS CDK `npm install -g aws-cdk`
 - Configure the AWS Credentials. They should be located under ~/.aws/credentials
 - Bootstrap the CDK
