@@ -185,7 +185,7 @@ const Data = ({
   isLoading: boolean;
   availableSlots?: number;
   isSecondHand: boolean;
-  teeTimeId: string;
+  teeTimeId?: string;
 }) => {
   if (isLoading) {
     return (
