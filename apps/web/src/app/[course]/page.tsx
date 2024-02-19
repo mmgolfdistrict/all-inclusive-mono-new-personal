@@ -15,11 +15,14 @@ import { Select } from "~/components/input/select";
 import { useAppContext } from "~/contexts/AppContext";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useFiltersContext } from "~/contexts/FiltersContext";
+import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
 import dayjs from "dayjs";
 import RelativeTime from "dayjs/plugin/relativeTime";
 import Weekday from "dayjs/plugin/weekday";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "react-toastify";
 import { ViewportList } from "react-viewport-list";
 import { useMediaQuery } from "usehooks-ts";
 
@@ -31,8 +34,10 @@ export default function CourseHomePage() {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const { dateType, selectedDay, sortValue, handleSetSortValue } =
     useFiltersContext();
-  const { entity } = useAppContext();
+  const { entity, alertOffersShown, setAlertOffersShown } = useAppContext();
+  const { user } = useUserContext();
   const { course } = useCourseContext();
+  const courseId = course?.id;
   const [error, setError] = useState<string | null>(null);
   const [count, setCount] = useState<number>(0);
   const [isFirstRender, setIsFirstRender] = useState<boolean>(true);
@@ -211,13 +216,52 @@ export default function CourseHomePage() {
     }
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [dateType]);
+  const { data: unreadOffers } = api.user.getUnreadOffersForCourse.useQuery(
+    {
+      courseId: courseId ?? "",
+    },
+    {
+      enabled: courseId !== undefined && user?.id !== undefined,
+    }
+  );
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!alertOffersShown && unreadOffers && Number(unreadOffers) > 0) {
+      toast.info(
+        <span>
+          You have {unreadOffers} offers waiting in My Offers. Review your
+          offers if you want to sell your time, counteroffer for a higher price,
+          or decline.
+        </span>,
+        {
+          position: "top-right",
+          autoClose: 10000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          onClick: () => {
+            router.push(`/${courseId}/my-tee-box?section=offers-received`);
+          },
+          theme: "light",
+        }
+      );
+      setAlertOffersShown(true);
+    }
+  }, [unreadOffers]);
 
   const datesArr = daysData?.arrayOfDates;
 
   return (
     <main className="bg-secondary-white py-4 md:py-6">
       <div className="flex items-center justify-between px-4 md:px-6">
-        <GoBack href="/" text={`Back to all ${entity?.name} Courses`} dataTestId="back-course-id" />
+        <GoBack
+          href="/"
+          text={`Back to all ${entity?.name} Courses`}
+          dataTestId="back-course-id"
+        />
       </div>
       <CourseTitle
         courseName={course?.name ?? ""}

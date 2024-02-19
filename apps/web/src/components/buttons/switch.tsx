@@ -5,7 +5,7 @@ export const Switch = ({
   value,
   setValue,
   disabled,
-  dataTestId
+  dataTestId,
 }: {
   value: boolean;
   setValue: (
