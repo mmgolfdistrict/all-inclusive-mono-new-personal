@@ -20,7 +20,10 @@ export const Select = ({
 }) => {
   return (
     <RadixSelect.Root value={value} onValueChange={setValue}>
-      <RadixSelect.Trigger data-testid="select-id" className="flex h-[35px] items-center justify-between gap-2 whitespace-nowrap rounded-full border border-stroke bg-white px-4 py-2 text-[14px] outline-none data-[placeholder]:text-primary-gray">
+      <RadixSelect.Trigger
+        data-testid="select-id"
+        className="flex h-[35px] items-center justify-between gap-2 whitespace-nowrap rounded-full border border-stroke bg-white px-4 py-2 text-[14px] outline-none data-[placeholder]:text-primary-gray"
+      >
         <RadixSelect.Value placeholder="Sort by price" aria-label={value}>
           {value}
         </RadixSelect.Value>
@@ -39,7 +42,13 @@ export const Select = ({
           </RadixSelect.ScrollUpButton>
           <RadixSelect.Viewport className="">
             {values.map((item, idx) => (
-              <SelectItem value={item} key={idx} className="cursor-pointer" data-testid="select-item" data-qa={item}>
+              <SelectItem
+                value={item}
+                key={idx}
+                className="cursor-pointer"
+                data-testid="select-item"
+                data-qa={item}
+              >
                 {item}
               </SelectItem>
             ))}

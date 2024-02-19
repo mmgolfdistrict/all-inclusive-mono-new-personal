@@ -5,12 +5,12 @@ import { usePreviousPath } from "~/hooks/usePreviousPath";
 import { api } from "~/utils/api";
 import {
   createContext,
+  Dispatch,
+  SetStateAction,
   useContext,
   useEffect,
   useState,
   type ReactNode,
-  Dispatch,
-  SetStateAction,
 } from "react";
 
 interface AppContextType {
@@ -18,15 +18,15 @@ interface AppContextType {
   entity: EntityType | undefined;
   courses: CourseType[] | undefined;
   alertOffersShown: boolean;
-  setAlertOffersShown :Dispatch<SetStateAction<boolean>>;
+  setAlertOffersShown: Dispatch<SetStateAction<boolean>>;
 }
 
 const AppContext = createContext<AppContextType>({
   prevPath: null,
   entity: undefined,
   courses: undefined,
-  alertOffersShown:false,
-  setAlertOffersShown:()=>{}
+  alertOffersShown: false,
+  setAlertOffersShown: () => {},
 });
 
 export const AppWrapper = ({
@@ -58,13 +58,13 @@ export const AppWrapper = ({
     { entityId: entityId! },
     { enabled: entityId !== undefined }
   );
-  const [alertOffersShown, setAlertOffersShown ] = useState<boolean>(false)
+  const [alertOffersShown, setAlertOffersShown] = useState<boolean>(false);
   const settings = {
     prevPath,
     entity,
     courses,
     alertOffersShown,
-    setAlertOffersShown
+    setAlertOffersShown,
   };
 
   return <AppContext.Provider value={settings}>{children}</AppContext.Provider>;

@@ -10,7 +10,7 @@ export const GoBack = ({
   text,
   usePrevRoute,
   props,
-  dataTestId
+  dataTestId,
 }: {
   href: string;
   text: string;

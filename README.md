@@ -1,4 +1,5 @@
 # GOLFdistrict
+
 =======
 
 Turbo monorepo contains all the components of the GOLFdistrict platform.
@@ -16,7 +17,6 @@ npm install
 **2. Use the provided scripts to manage different aspects of the application.**
 
 ### Scripts Explained
-
 
 - **dev**: Starts the development server using Turbo.
 
