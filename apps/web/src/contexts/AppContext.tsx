@@ -26,7 +26,7 @@ const AppContext = createContext<AppContextType>({
   entity: undefined,
   courses: undefined,
   alertOffersShown: false,
-  setAlertOffersShown: () => {},
+  setAlertOffersShown: () => ({}),
 });
 
 export const AppWrapper = ({
