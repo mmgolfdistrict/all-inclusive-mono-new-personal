@@ -1,4 +1,17 @@
-# Golf District AWS Infrastructure README
+# Setup Golf District AWS Infrastructure
+
+This script sets up the GOLFdistrict CDN distribution for the assets.
+
+## How to Run this
+
+Typically this is run by the SRE / CRE team member. No need to create separate buckets and CDN distributions. One is enough for all of develoment.
+
+- Install AWS CDK `npm install -g aws-cdk`
+- Configure the AWS Credentials. They should be located under ~/.aws/credentials
+- Bootstrap the CDK
+- Deploy the script `npm run deploy`
+- The above script should display the AWS key, secret and the CloudFront CDN DNS. Copy them to the .env file.
+- The CloudFront CDN should be updated in the file [apps/web/next.config.mjs](../../apps/web/next.config.mjs).
 
 ## Infrastructure Overview:
 

@@ -183,6 +183,7 @@ export const UnlistedDetails = ({
               setPlayers={setPlayers}
               playersOptions={PlayersOptions}
               availableSlots={data?.availableSlots ?? 0}
+              teeTimeId={teeTimeId}
             />
           </div>
           <div className="flex flex-col flex-wrap justify-between gap-2 md:flex-row">

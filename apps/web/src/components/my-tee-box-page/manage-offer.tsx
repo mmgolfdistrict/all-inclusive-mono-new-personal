@@ -187,6 +187,9 @@ export const ManageOffer = ({
                           ? "rounded-r-full border border-stroke"
                           : "border-b border-l border-t border-stroke"
                       } px-[1.75rem]`}
+                      dataTestId={""}
+                      dataTest={""}
+                      dataQa={""}
                     />
                   ))}
                 </ToggleGroup.Root>

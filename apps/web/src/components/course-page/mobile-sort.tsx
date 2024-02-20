@@ -53,6 +53,9 @@ export const MobileSort = ({
                   ? "rounded-b-2xl border-b border-l border-r border-stroke"
                   : "border-b border-l border-r border-stroke"
               }`}
+              dataTestId={"sort-by-id"}
+              dataTest={""}
+              dataQa={value}
             />
           ))}
         </ToggleGroup.Root>

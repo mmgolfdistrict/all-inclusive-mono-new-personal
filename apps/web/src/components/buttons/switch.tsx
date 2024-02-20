@@ -5,16 +5,20 @@ export const Switch = ({
   value,
   setValue,
   disabled,
+  dataTestId,
 }: {
   value: boolean;
   setValue: (
     newValue: boolean
   ) => void | Promise<void> | Dispatch<SetStateAction<boolean>>;
   disabled?: boolean;
+  dataTestId?: string;
 }) => {
   return (
     <RadixSwitch.Root
       checked={value}
+      data-testid={dataTestId}
+      data-qa={value}
       onCheckedChange={(newValue) => setValue(newValue)}
       className={`relative h-[26px] w-[40px] rounded-full bg-stroke shadow-inner transition-colors data-[state=checked]:bg-primary ${
         disabled ? "opacity-60 cursor-not-allowed" : ""

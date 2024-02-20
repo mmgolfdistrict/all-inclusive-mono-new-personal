@@ -124,6 +124,8 @@ export const Filters = () => {
               <Item
                 key={index}
                 value={value}
+                dataTestId="date-filter-id"
+                dataQa={value}
                 className={`${
                   index === 0
                     ? "rounded-t-2xl border border-stroke"
@@ -196,7 +198,11 @@ export const Filters = () => {
 
       <section className="flex flex-col gap-4">
         <div className="flex items-center gap-2">
-          <Switch value={showUnlisted} setValue={setShowUnlisted} />
+          <Switch
+            value={showUnlisted}
+            setValue={setShowUnlisted}
+            dataTestId="filter-switch-not-for-sale-make-an-offer-id"
+          />
           <div className="flex items-center gap-1 text-primary-gray">
             <Hidden className="h-[17px] w-[20px]" />
             <div className="text-[15px]">Not for Sale, Make an Offer</div>
@@ -207,7 +213,11 @@ export const Filters = () => {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Switch value={includesCart} setValue={setIncludesCart} />
+          <Switch
+            value={includesCart}
+            setValue={setIncludesCart}
+            dataTestId="filter-switch-include-cart-id"
+          />
           <div className="flex items-center gap-1 text-primary-gray">
             <GolfCart className="h-[17px] w-[20px]" />
             <div className="text-[15px]">Includes Cart</div>
@@ -234,6 +244,8 @@ export const Filters = () => {
             <Item
               key={index}
               value={value}
+              dataTestId="hole-filter-id"
+              dataQa={value}
               className={`${
                 index === 0
                   ? "rounded-l-full border-b border-l border-t border-stroke"
@@ -264,6 +276,8 @@ export const Filters = () => {
             <Item
               key={index}
               value={value}
+              dataTestId="golfer-filter-id"
+              dataQa={value}
               className={`${
                 index === 0
                   ? "rounded-l-full border-b border-l border-t border-stroke"
@@ -295,6 +309,52 @@ export const Filters = () => {
           onValueChange={(value: [number, number]) => {
             if (value) setLocalPriceRange(value);
           }}
+          data-testid="slider-price-range-id"
+        />
+      </section>
+      <section className="flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <div>Start Time</div>
+          <div>
+            {
+              startTimeOptions[
+                startTimeOptions.findIndex((i) => i.value === localStartTime[0])
+              ]?.displayTime
+            }
+            -
+            {
+              startTimeOptions[
+                startTimeOptions.findIndex((i) => i.value === localStartTime[1])
+              ]?.displayTime
+            }
+          </div>
+        </div>
+        <Slider
+          min={0}
+          max={startTimeOptions.length - 1}
+          step={1}
+          value={[
+            startTimeOptions.findIndex((i) => i.value === localStartTime[0]),
+            startTimeOptions.findIndex((i) => i.value === localStartTime[1]),
+          ]}
+          onPointerUp={() => {
+            handleSetStartTime();
+          }}
+          onValueChange={(time: number[]) => {
+            if (
+              time &&
+              time.length >= 2 &&
+              typeof time[0] === "number" &&
+              typeof time[1] === "number"
+            ) {
+              const option1 = startTimeOptions[time[0]];
+              const option2 = startTimeOptions[time[1]];
+              if (option1 && option2) {
+                setLocalStartTime([option1.value, option2.value]);
+              }
+            }
+          }}
+          data-testid="slider-start-time-id"
         />
       </section>
     </div>
@@ -304,9 +364,17 @@ export const Filters = () => {
 export const Item = ({
   value,
   className,
+  dataTestId,
+  dataQa,
+  dataTest,
+  dataCy,
 }: {
   value: string;
   className?: string;
+  dataTestId: string;
+  dataQa?: string;
+  dataTest?: string;
+  dataCy?: string;
 }) => {
   return (
     <ToggleGroup.Item
@@ -314,6 +382,10 @@ export const Item = ({
       className={`bg-white px-4 py-2 text-left text-[14px] text-primary-gray transition-colors data-[state=on]:bg-primary data-[state=on]:text-white ${
         className ?? ""
       }`}
+      data-testid={dataTestId}
+      data-qa={dataQa}
+      data-test={dataTest}
+      data-cy={dataCy}
     >
       {value}
     </ToggleGroup.Item>

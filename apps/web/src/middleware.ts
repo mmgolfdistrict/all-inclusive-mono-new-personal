@@ -12,7 +12,7 @@ import type { NextRequest } from "next/server";
 // };
 
 // This function can be marked `async` if using `await` inside
-export function middleware(request: NextRequest) {
+export function middleware(_request: NextRequest) {
   // const currentURL = request.nextUrl.href;
   // const isSecureCookie = currentURL.startsWith("https://");
   // const jwToken = request.cookies.get(

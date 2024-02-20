@@ -40,7 +40,10 @@ export const CourseTitle = ({
               >
                 {courseName}
                 {hasMoreThanOneCourse ? (
-                  <LeftChevron className="w-[14px] -rotate-90 md:w-[21px]" />
+                  <LeftChevron
+                    className="w-[14px] -rotate-90 md:w-[21px]"
+                    data-testid="course-chevron-id"
+                  />
                 ) : null}
               </h1>
             </DropdownMenu.Trigger>
@@ -121,7 +124,11 @@ const MenuItem = ({
   isActive: boolean;
 }) => {
   return (
-    <DropdownMenu.Item className="flex cursor-pointer items-center justify-between px-4 py-2 outline-none hover:bg-secondary-white">
+    <DropdownMenu.Item
+      data-testid="menu-item-id"
+      data-qa={title}
+      className="flex cursor-pointer items-center justify-between px-4 py-2 outline-none hover:bg-secondary-white"
+    >
       <div>{title}</div>
       {isActive && <Check className="w-[14px]" />}
     </DropdownMenu.Item>

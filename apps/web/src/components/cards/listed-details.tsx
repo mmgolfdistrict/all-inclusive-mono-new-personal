@@ -170,6 +170,7 @@ export const ListedDetails = ({
               playersOptions={PlayersOptions}
               availableSlots={data?.availableSlots ?? 0}
               isDisabled={true}
+              teeTimeId={teeTimeId}
             />
           </div>
           <div className="flex flex-col flex-wrap justify-between gap-2 md:flex-row">

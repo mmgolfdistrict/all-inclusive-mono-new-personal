@@ -10,11 +10,13 @@ export const GoBack = ({
   text,
   usePrevRoute,
   props,
+  dataTestId,
 }: {
   href: string;
   text: string;
   props?: ComponentProps<"button">;
   usePrevRoute?: boolean;
+  dataTestId?: string;
 }) => {
   const router = useRouter();
 
@@ -22,6 +24,7 @@ export const GoBack = ({
     <Link
       href={usePrevRoute ? "" : href}
       onClick={usePrevRoute ? () => router.back() : () => undefined}
+      data-testid={dataTestId}
     >
       <button className="flex items-center gap-1" {...props}>
         <LeftChevron className="h-[14px] w-[14px]" />
