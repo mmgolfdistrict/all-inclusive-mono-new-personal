@@ -321,12 +321,14 @@ export const Item = ({
   dataTestId,
   dataQa,
   dataTest,
+  dataCy,
 }: {
   value: string;
   className?: string;
   dataTestId: string;
   dataQa?: string;
   dataTest?: string;
+  dataCy?: string;
 }) => {
   return (
     <ToggleGroup.Item
@@ -337,6 +339,7 @@ export const Item = ({
       data-testid={dataTestId}
       data-qa={dataQa}
       data-test={dataTest}
+      data-cy={dataCy}
     >
       {value}
     </ToggleGroup.Item>

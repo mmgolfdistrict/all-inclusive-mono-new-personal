@@ -222,13 +222,19 @@ export const TeeTime = ({
               onClick={addToWatchlist}
               data-testid="watch-list-id"
               data-test={teeTimeId}
+              data-qa={optimisticLike}
             >
               <Heart
                 className={`w-[13px] md:w-[18px]`}
                 fill={optimisticLike ? "#40942A" : undefined}
               />
             </OutlineButton>
-            <Link href={href} data-testid="details-id" data-test={teeTimeId}>
+            <Link
+              href={href}
+              data-testid="details-id"
+              data-test={teeTimeId}
+              data-qa={time}
+            >
               <OutlineButton className="!py-[.28rem] md:py-1.5">
                 Details
               </OutlineButton>
@@ -238,6 +244,8 @@ export const TeeTime = ({
                 href={`/${course?.id}/my-tee-box`}
                 data-testid="manage-id"
                 data-test={teeTimeId}
+                data-qa="Manage"
+                data-cy={time}
               >
                 <FilledButton className="whitespace-nowrap">
                   Manage
@@ -251,6 +259,8 @@ export const TeeTime = ({
                     onClick={makeAnOffer}
                     data-testid="make-an-offer-id"
                     data-test={teeTimeId}
+                    data-qa="Make an Offer"
+                    data-cy={time}
                   >
                     Make an Offer
                   </FilledButton>
@@ -260,6 +270,8 @@ export const TeeTime = ({
                     onClick={buyTeeTime}
                     data-testid="buy-tee-time-id"
                     data-test={teeTimeId}
+                    data-qa="Buy"
+                    data-cy={time}
                   >
                     Buy
                   </FilledButton>
