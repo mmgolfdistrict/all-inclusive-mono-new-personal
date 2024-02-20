@@ -157,7 +157,7 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
                       <div className="flex flex-col">
                         <p className="font-bold">{user?.name}</p>
                         <p>{user?.email}</p>
-                      <div className="text-primary-gray">@{user?.name}</div>
+                        <div className="text-primary-gray">@{user?.name}</div>
                       </div>
                     </div>
                   }
