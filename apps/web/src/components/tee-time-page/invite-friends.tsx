@@ -169,7 +169,11 @@ export const InviteFriends = ({
                     : "bg-secondary-white max-w-[400px]"
                 } px-4 py-1 flex justify-between text-[16px] font-semibold outline-none`}
               >
-                <div>{friend.name}</div>
+                <div>
+                  {idx === 0 && friend.name.toLowerCase() === "guest"
+                    ? "You"
+                    : friend.name}
+                </div>
                 <button onClick={() => removeFriend(idx)}>
                   <Close className="w-[20px]" />
                 </button>

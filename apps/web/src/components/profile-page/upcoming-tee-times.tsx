@@ -77,8 +77,10 @@ export const UpcomingTeeTimes = ({
               <TeeTime
                 time={i.date ?? ""}
                 key={idx}
-                canChoosePlayer={i.availableSlots > 0}
-                players={String(4 - i.availableSlots)}
+                canChoosePlayer={
+                  i.availableSlots > 0 && i.teeTimeStatus === "LISTED"
+                }
+                players={String(i.availableSlots)}
                 price={i.pricePerGolfer}
                 isOwned={true}
                 soldById={i.soldById}

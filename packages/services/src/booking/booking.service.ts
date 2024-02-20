@@ -157,7 +157,7 @@ export class BookingService {
       .select({
         transferId: transfers.id,
         teeTimeId: bookings.teeTimeId,
-        date: teeTimes.date,
+        date: teeTimes.providerDate,
         courseId: teeTimes.courseId,
         courseName: courses.name,
         greenFee: teeTimes.greenFee,
@@ -236,7 +236,7 @@ export class BookingService {
       .select({
         bookingId: bookings.id,
         courseName: courses.name,
-        date: teeTimes.date,
+        date: teeTimes.providerDate,
         teeTimeImage: {
           key: assets.key,
           cdnUrl: assets.cdn,
@@ -383,7 +383,7 @@ export class BookingService {
     const data = await this.database
       .select({
         id: teeTimes.id,
-        date: teeTimes.date,
+        date: teeTimes.providerDate,
         courseId: teeTimes.courseId,
         courseName: courses.name,
         greenFee: teeTimes.greenFee,
@@ -1489,7 +1489,7 @@ export class BookingService {
         buyerId: offers.buyerId,
         courseId: offers.courseId,
         courseName: courses.name,
-        teeTimeDate: teeTimes.date,
+        teeTimeDate: teeTimes.providerDate,
         teeTimeId: teeTimes.id,
         originalGreenFee: teeTimes.greenFee,
         lastHighestSale: sql<number | null>`MAX(${transfers.amount})`,
@@ -1635,7 +1635,7 @@ export class BookingService {
         buyerId: offers.buyerId,
         courseId: offers.courseId,
         courseName: courses.name,
-        teeTimeDate: teeTimes.date,
+        teeTimeDate: teeTimes.providerDate,
         teeTimeId: teeTimes.id,
         originalGreenFee: teeTimes.greenFee,
         lastHighestSale: sql<number | null>`MAX(${transfers.amount})`,

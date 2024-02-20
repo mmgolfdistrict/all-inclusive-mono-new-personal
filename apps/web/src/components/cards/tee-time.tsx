@@ -72,12 +72,12 @@ export const TeeTime = ({
   const [isManageOpen, setIsManageOpen] = useState<boolean>(false);
 
   useEffect(() => {
-    if (isMakeAnOfferOpen) {
+    if (isMakeAnOfferOpen || isManageOpen) {
       document.body.classList.add("overflow-hidden");
     } else {
       document.body.classList.remove("overflow-hidden");
     }
-  }, [isMakeAnOfferOpen]);
+  }, [isMakeAnOfferOpen, isManageOpen]);
 
   const { user } = useUserContext();
   const router = useRouter();
@@ -151,6 +151,10 @@ export const TeeTime = ({
   }, [status, availableSlots]);
 
   const openManage = () => {
+    if (status === "UNLISTED") {
+      router.push(`/${courseId}/my-tee-box`);
+      return;
+    }
     setIsManageOpen(true);
   };
 
@@ -250,7 +254,7 @@ export const TeeTime = ({
             </Link>
             {soldById === user?.id && session ? (
               <FilledButton onClick={openManage} className="whitespace-nowrap">
-                Manage
+                {status === "UNLISTED" ? "Sell" : "Manage"}
               </FilledButton>
             ) : (
               <>

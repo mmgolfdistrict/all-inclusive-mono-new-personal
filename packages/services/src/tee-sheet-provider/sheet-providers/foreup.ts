@@ -200,7 +200,7 @@ export class foreUp extends BaseProvider {
     });
 
     if (!response.ok) {
-      this.logger.fatal(`Error fetching token: ${endpoint} - ${response.statusText}`);
+      this.logger.fatal(`Error fetching token: ${response.statusText}`);
       throw new Error(`Error fetching token: ${response.statusText}`);
     }
 
@@ -222,7 +222,7 @@ export class foreUp extends BaseProvider {
       case "production":
         return "https://api.foreupsoftware.com/api_rest/index.php";
       default:
-        return "https://api.foreupsoftware.com/api_rest/index.php";
+        return "https://private-anon-67e30e32d1-foreup.apiary-mock.com/api_rest/index.php";
     }
   }
 }

@@ -174,7 +174,7 @@ export class SearchService {
         ownerId: bookings.ownerId,
         teeTimeId: bookings.teeTimeId,
         time: teeTimes.time,
-        date: teeTimes.date,
+        date: teeTimes.providerDate,
         numberOfHoles: bookings.numberOfHoles,
         courseName: courses.name,
         courseId: bookings.courseId,
@@ -258,7 +258,7 @@ export class SearchService {
         teeTimeId: teeTimes.id,
         courseId: teeTimes.courseId,
         time: teeTimes.time,
-        date: teeTimes.date,
+        date: teeTimes.providerDate,
         numberOfHoles: teeTimes.numberOfHoles,
         listPrice: lists.listPrice,
         courseName: courses.name,
@@ -337,6 +337,7 @@ export class SearchService {
         greenFee: teeTimes.greenFee,
         courseName: courses.name,
         favorites: favorites.id,
+        providerDate: teeTimes.providerDate,
         numberOfWatchers: sql<number>`(
           SELECT COUNT(*)
           FROM ${favorites}
@@ -397,7 +398,7 @@ export class SearchService {
       pricePerGolfer: tee.greenFee,
       teeTimeId: tee.id,
       userWatchListed: tee.favorites ? true : false,
-      date: tee.date, //day of tee time
+      date: tee.providerDate, //day of tee time
       time: tee.time, //military time
       includesCart: true,
       firstOrSecondHandTeeTime: TeeTimeType.FIRST_HAND,

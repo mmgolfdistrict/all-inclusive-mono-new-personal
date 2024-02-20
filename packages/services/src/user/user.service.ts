@@ -1098,7 +1098,7 @@ export class UserService {
         ownerId: bookings.ownerId,
         teeTimeId: bookings.teeTimeId,
         time: teeTimes.time,
-        date: teeTimes.date,
+        date: teeTimes.providerDate,
         numberOfHoles: bookings.numberOfHoles,
         courseName: courses.name,
         courseId: bookings.courseId,
@@ -1143,7 +1143,7 @@ export class UserService {
           soldByImage: booking.profilePicture
             ? `https://${booking.profilePicture.cdnUrl}/${booking.profilePicture.key}.${booking.profilePicture.extension}`
             : "/defaults/default-profile.webp",
-          availableSlots: booking.listed ? 1 : 0,
+          availableSlots: booking.listed ? 0 : 1,
           pricePerGolfer: booking.listPrice ? booking.listPrice : 0,
           teeTimeId: booking.teeTimeId,
           date: booking.date ? booking.date : "",
@@ -1164,7 +1164,7 @@ export class UserService {
         const group = groupedBookings[key]!;
         group.bookings.push(booking.id);
         if (bookings.isListed) {
-          group.availableSlots += 1;
+          group.availableSlots -= 1;
         }
         if (showGolfers) {
           group.golfers.push(booking.golfers);
@@ -1206,7 +1206,7 @@ export class UserService {
     const teeTimeHistoryData = await this.database
       .select({
         teeTimeId: bookings.teeTimeId,
-        date: teeTimes.date,
+        date: teeTimes.providerDate,
         courseName: courses.name,
         courseId: bookings.courseId,
         courseImage: {
