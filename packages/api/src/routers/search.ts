@@ -81,8 +81,8 @@ export const searchRouter = createTRPCRouter({
         lowerPrice: z.number(),
         upperPrice: z.number(),
         take: z.number().default(5),
-        sortTime: z.enum(["asc", "desc"]).default("asc"),
-        sortPrice: z.enum(["asc", "desc"]).default("asc"),
+        sortTime: z.enum(["asc", "desc", ""]).default("asc"),
+        sortPrice: z.enum(["asc", "desc", ""]).default(""),
         timezoneCorrection: z.number().default(0),
         cursor: z.number().nullish().optional(),
       })

@@ -14,7 +14,7 @@ import { Club } from "../icons/club";
 import { Marketplace } from "../icons/marketplace";
 import { MyOffers } from "../icons/my-offers";
 import { PoweredBy } from "../powered-by";
-import { PathsThatNeedRedirect } from "../user/user-in-nav";
+import { PathsThatNeedRedirectOnLogout } from "../user/user-in-nav";
 import { NavItem } from "./nav-item";
 
 type SideBarProps = {
@@ -55,7 +55,7 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
   });
 
   const logOutUser = async () => {
-    if (PathsThatNeedRedirect.some((i) => pathname.includes(i))) {
+    if (PathsThatNeedRedirectOnLogout.some((i) => pathname.includes(i))) {
       const data = await signOut({
         callbackUrl: `/${courseId}`,
         redirect: false,

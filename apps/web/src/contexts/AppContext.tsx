@@ -8,19 +8,23 @@ import {
   useContext,
   useEffect,
   useState,
+  type Dispatch,
   type ReactNode,
+  type SetStateAction,
 } from "react";
 
 interface AppContextType {
   prevPath: string | null;
   entity: EntityType | undefined;
   courses: CourseType[] | undefined;
+  setPrevPath: Dispatch<SetStateAction<string | null>>;
 }
 
 const AppContext = createContext<AppContextType>({
   prevPath: null,
   entity: undefined,
   courses: undefined,
+  setPrevPath: () => undefined,
 });
 
 export const AppWrapper = ({
@@ -30,7 +34,7 @@ export const AppWrapper = ({
   children: ReactNode;
   entityData: EntityType | undefined;
 }) => {
-  const prevPath = usePreviousPath();
+  const { prevPath, setPrevPath } = usePreviousPath();
   const [entity, setEntity] = useState<EntityType | undefined>(entityData);
 
   useEffect(() => {
@@ -57,6 +61,7 @@ export const AppWrapper = ({
     prevPath,
     entity,
     courses,
+    setPrevPath,
   };
 
   return <AppContext.Provider value={settings}>{children}</AppContext.Provider>;

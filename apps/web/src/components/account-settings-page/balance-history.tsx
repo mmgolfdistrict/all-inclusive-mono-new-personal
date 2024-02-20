@@ -96,7 +96,9 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
                   : ""
               }`}
             >
-              {connectAccount.isLoading ? "Connecting..." : "Connect Account"}
+              {connectAccount.isLoading
+                ? "Connecting..."
+                : "Connect Stripe Account"}
             </FilledButton>
           )}
         </div>

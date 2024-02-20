@@ -1,5 +1,5 @@
 import { randomBytes, randomUUID } from "crypto";
-import { and, eq, gt, is, lt, or } from "@golf-district/database";
+import { and, asc, desc, eq, gt, is, lt, or } from "@golf-district/database";
 import type { Db } from "@golf-district/database";
 import { accounts } from "@golf-district/database/schema/accounts";
 import { assets } from "@golf-district/database/schema/assets";
@@ -945,6 +945,7 @@ export class UserService {
         verificationRequestExpiry: generateUtcTimestamp(90), //90 minutes
         createdAt: currentUtcTimestamp(),
         updatedAt: currentUtcTimestamp(),
+        profileVisibility: "PRIVATE",
       })
       .execute();
   };
@@ -1083,7 +1084,8 @@ export class UserService {
       // Profile is PRIVATE
       whereClause = and(
         whereClause,
-        eq(bookings.isListed, true) // Show only listed tee times
+        eq(bookings.isListed, true), // Show only listed tee times
+        eq(bookings.ownerId, userId)
       );
     } else {
       // callerId === userId
@@ -1124,7 +1126,7 @@ export class UserService {
       .leftJoin(courses, eq(courses.id, bookings.courseId))
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
       .where(whereClause)
-      .orderBy(bookings.time)
+      .orderBy(asc(bookings.time))
       .execute();
 
     if (!upcomingTeeTimeData || upcomingTeeTimeData.length === 0) {
@@ -1224,8 +1226,7 @@ export class UserService {
           lt(bookings.time, currentUtcTimestamp())
         )
       )
-      .orderBy(bookings.time)
-
+      .orderBy(desc(bookings.time))
       .execute();
 
     if (!teeTimeHistoryData || teeTimeHistoryData.length === 0) {

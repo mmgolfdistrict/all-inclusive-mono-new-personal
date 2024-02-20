@@ -149,6 +149,51 @@ export const Filters = () => {
         </ToggleGroup.Root>
       </section>
 
+      <section className="flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <div>Start Time</div>
+          <div>
+            {
+              startTimeOptions[
+                startTimeOptions.findIndex((i) => i.value === localStartTime[0])
+              ]?.displayTime
+            }
+            -
+            {
+              startTimeOptions[
+                startTimeOptions.findIndex((i) => i.value === localStartTime[1])
+              ]?.displayTime
+            }
+          </div>
+        </div>
+        <Slider
+          min={0}
+          max={startTimeOptions.length - 1}
+          step={1}
+          value={[
+            startTimeOptions.findIndex((i) => i.value === localStartTime[0]),
+            startTimeOptions.findIndex((i) => i.value === localStartTime[1]),
+          ]}
+          onPointerUp={() => {
+            handleSetStartTime();
+          }}
+          onValueChange={(time: number[]) => {
+            if (
+              time &&
+              time.length >= 2 &&
+              typeof time[0] === "number" &&
+              typeof time[1] === "number"
+            ) {
+              const option1 = startTimeOptions[time[0]];
+              const option2 = startTimeOptions[time[1]];
+              if (option1 && option2) {
+                setLocalStartTime([option1.value, option2.value]);
+              }
+            }
+          }}
+        />
+      </section>
+
       <section className="flex flex-col gap-4">
         <div className="flex items-center gap-2">
           <Switch value={showUnlisted} setValue={setShowUnlisted} />
@@ -173,6 +218,7 @@ export const Filters = () => {
           </div>
         </div>
       </section>
+
       <section className="flex flex-col gap-2">
         <div>Holes</div>
         <ToggleGroup.Root
@@ -248,50 +294,6 @@ export const Filters = () => {
           }}
           onValueChange={(value: [number, number]) => {
             if (value) setLocalPriceRange(value);
-          }}
-        />
-      </section>
-      <section className="flex flex-col gap-2">
-        <div className="flex items-center justify-between">
-          <div>Start Time</div>
-          <div>
-            {
-              startTimeOptions[
-                startTimeOptions.findIndex((i) => i.value === localStartTime[0])
-              ]?.displayTime
-            }
-            -
-            {
-              startTimeOptions[
-                startTimeOptions.findIndex((i) => i.value === localStartTime[1])
-              ]?.displayTime
-            }
-          </div>
-        </div>
-        <Slider
-          min={0}
-          max={startTimeOptions.length - 1}
-          step={1}
-          value={[
-            startTimeOptions.findIndex((i) => i.value === localStartTime[0]),
-            startTimeOptions.findIndex((i) => i.value === localStartTime[1]),
-          ]}
-          onPointerUp={() => {
-            handleSetStartTime();
-          }}
-          onValueChange={(time: number[]) => {
-            if (
-              time &&
-              time.length >= 2 &&
-              typeof time[0] === "number" &&
-              typeof time[1] === "number"
-            ) {
-              const option1 = startTimeOptions[time[0]];
-              const option2 = startTimeOptions[time[1]];
-              if (option1 && option2) {
-                setLocalStartTime([option1.value, option2.value]);
-              }
-            }
           }}
         />
       </section>

@@ -8,8 +8,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { Avatar } from "../avatar";
 import { DownChevron } from "../icons/down-chevron";
 
-export const PathsThatNeedRedirect = [
+export const PathsThatNeedRedirectOnLogout = [
   "/account-settings",
+  "/profile",
   "/my-tee-box",
   "/watchlist",
   "/checkout",
@@ -32,7 +33,7 @@ export const UserInNav = ({ alwaysShow }: { alwaysShow?: boolean }) => {
     }
   );
   const logOutUser = async () => {
-    if (PathsThatNeedRedirect.some((i) => pathname.includes(i))) {
+    if (PathsThatNeedRedirectOnLogout.some((i) => pathname.includes(i))) {
       const data = await signOut({
         callbackUrl: `/${courseId}`,
         redirect: false,

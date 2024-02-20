@@ -86,7 +86,7 @@ export const MakeAnOffer = ({
 
   const totalOffer = useMemo(() => {
     if (!offerPrice) return 0;
-    return offerPrice * parseInt(players) - 45;
+    return offerPrice * parseInt(players) + 45;
   }, [offerPrice, players]);
 
   const sendOffer = async () => {
@@ -108,6 +108,11 @@ export const MakeAnOffer = ({
       );
       setIsMakeAnOfferOpen(false);
     } catch (error) {
+      const message = (error as Error)?.message;
+      if (message === "UNAUTHORIZED") {
+        toast.error("You must be logged in to send an offer.");
+        return;
+      }
       toast.error((error as Error)?.message ?? "Error sending offer");
     }
   };
