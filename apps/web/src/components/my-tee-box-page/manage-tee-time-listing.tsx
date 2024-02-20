@@ -32,7 +32,7 @@ type SideBarProps = {
   isManageTeeTimeListingOpen: boolean;
   setIsManageTeeTimeListingOpen: Dispatch<SetStateAction<boolean>>;
   selectedTeeTime: MyListedTeeTimeType | undefined;
-  refetch: () => Promise<unknown>;
+  refetch?: () => Promise<unknown>;
   needRedirect?: boolean;
 };
 
@@ -115,6 +115,11 @@ export const ManageTeeTimeListing = ({
     return listingPrice * parseInt(players) - 45;
   }, [listingPrice, players]);
 
+  const maxListingPrice = useMemo(() => {
+    if (!selectedTeeTime?.firstHandPrice) return 0;
+    return selectedTeeTime?.firstHandPrice * 50;
+  }, [selectedTeeTime]);
+
   const save = async () => {
     if (!selectedTeeTime?.listingId) {
       toast.error("Listing not found");
@@ -124,7 +129,15 @@ export const ManageTeeTimeListing = ({
       toast.error("Listed spots not found");
       return;
     }
-    if (totalPayout < 0) {
+    if (listingPrice > maxListingPrice) {
+      toast.info(
+        `Listing price cannot be greater than 50x the first hand price. (${formatMoney(
+          maxListingPrice
+        )}).`
+      );
+      return;
+    }
+    if (totalPayout <= 0) {
       toast.info("Listing price must be greater than $45.");
       return;
     }
@@ -137,7 +150,7 @@ export const ManageTeeTimeListing = ({
         bookingIds: bookingIds?.slice(0, parseInt(players)),
         listPrice: listingPrice,
         listingId: selectedTeeTime?.listingId,
-        endTime: new Date(selectedTeeTime?.date?.replace(" ", "T") + "Z"),
+        endTime: new Date(selectedTeeTime?.date),
       });
       toast.success("Tee time listing updated successfully");
       if (needRedirect) {
@@ -146,7 +159,7 @@ export const ManageTeeTimeListing = ({
         );
       }
       setIsManageTeeTimeListingOpen(false);
-      await refetch();
+      await refetch?.();
     } catch (error) {
       toast.error(
         (error as Error)?.message ?? "An error occurred updating listing."

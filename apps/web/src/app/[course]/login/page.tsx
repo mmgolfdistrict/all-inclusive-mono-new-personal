@@ -48,6 +48,8 @@ export default function Login() {
   const GO_TO_PREV_PATH =
     !prevPath?.includes("/login") &&
     !prevPath?.includes("verify") &&
+    !prevPath?.includes("reset-password") &&
+    !prevPath?.includes("forgot-password") &&
     !prevPath?.includes("verify-email");
 
   const onSubmit: SubmitHandler<LoginSchemaType> = async (data) => {

@@ -1,5 +1,7 @@
 "use client";
 
+import { useSession } from "@golf-district/auth/nextjs-exports";
+import { useAppContext } from "~/contexts/AppContext";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
@@ -15,6 +17,7 @@ import { Heart } from "../icons/heart";
 import { Hidden } from "../icons/hidden";
 import { OutlineClub } from "../icons/outline-club";
 import { ChoosePlayers } from "../input/choose-players";
+import { ManageTeeTimeListing } from "../my-tee-box-page/manage-tee-time-listing";
 import { MakeAnOffer } from "../watchlist-page/make-an-offer";
 
 const PlayersOptions = ["1", "2", "3", "4"];
@@ -65,17 +68,20 @@ export const TeeTime = ({
   const courseId = course?.id;
   const timezoneCorrection = course?.timezoneCorrection;
   const [isMakeAnOfferOpen, setIsMakeAnOfferOpen] = useState<boolean>(false);
+  const { data: session } = useSession();
+  const [isManageOpen, setIsManageOpen] = useState<boolean>(false);
 
   useEffect(() => {
-    if (isMakeAnOfferOpen) {
+    if (isMakeAnOfferOpen || isManageOpen) {
       document.body.classList.add("overflow-hidden");
     } else {
       document.body.classList.remove("overflow-hidden");
     }
-  }, [isMakeAnOfferOpen]);
+  }, [isMakeAnOfferOpen, isManageOpen]);
 
   const { user } = useUserContext();
   const router = useRouter();
+  const { setPrevPath } = useAppContext();
 
   const toggleWatchlist = api.watchlist.toggleWatchlist.useMutation();
   const [optimisticLike, setOptimisticLike] = useState(isLiked);
@@ -96,7 +102,17 @@ export const TeeTime = ({
     }
   };
   const buyTeeTime = () => {
-    if (!user) {
+    if (!user || !session) {
+      if (status === "FIRST_HAND") {
+        setPrevPath(
+          `/${course?.id}/checkout?teeTimeId=${teeTimeId}&playerCount=${selectedPlayers}`
+        );
+      }
+      if (status === "SECOND_HAND") {
+        setPrevPath(
+          `/${course?.id}/checkout?listingId=${listingId}&playerCount=${selectedPlayers}`
+        );
+      }
       void router.push(`/${course?.id}/login`);
       return;
     }
@@ -133,6 +149,14 @@ export const TeeTime = ({
       setSelectedPlayers(availableSlots.toString());
     }
   }, [status, availableSlots]);
+
+  const openManage = () => {
+    if (status === "UNLISTED") {
+      router.push(`/${courseId}/my-tee-box`);
+      return;
+    }
+    setIsManageOpen(true);
+  };
 
   return (
     <>
@@ -205,9 +229,7 @@ export const TeeTime = ({
             ) : null}
             <div className="flex items-center">
               <div className="text-[15px] md:text-[20px] font-semibold text-secondary-black">
-                {isSuggested
-                  ? formatMoney(((firstHandPurchasePrice ?? price) * 13) / 10)
-                  : formatMoney(price)}
+                {formatMoney(price)}
               </div>
               <div className="text-[12px] md:text-[16px] text-primary-gray">
                 {" "}
@@ -239,18 +261,10 @@ export const TeeTime = ({
                 Details
               </OutlineButton>
             </Link>
-            {soldById === user?.id ? (
-              <Link
-                href={`/${course?.id}/my-tee-box`}
-                data-testid="manage-id"
-                data-test={teeTimeId}
-                data-qa="Manage"
-                data-cy={time}
-              >
-                <FilledButton className="whitespace-nowrap">
-                  Manage
-                </FilledButton>
-              </Link>
+            {soldById === user?.id && session ? (
+              <FilledButton onClick={openManage} className="whitespace-nowrap">
+                {status === "UNLISTED" ? "Sell" : "Manage"}
+              </FilledButton>
             ) : (
               <>
                 {isSuggested ? (
@@ -292,6 +306,27 @@ export const TeeTime = ({
               minimumOfferPrice ?? firstHandPurchasePrice ?? price
             }
             bookingIds={bookingIds ?? []}
+          />
+        )}
+        {isManageOpen && (
+          <ManageTeeTimeListing
+            isManageTeeTimeListingOpen={isManageOpen}
+            setIsManageTeeTimeListingOpen={setIsManageOpen}
+            selectedTeeTime={{
+              listingId: listingId ?? "",
+              courseName: course?.name ?? "",
+              courseLogo: course?.logo ?? "",
+              courseId: courseId ?? "",
+              date: time,
+              firstHandPrice: firstHandPurchasePrice ?? 0,
+              miniumOfferPrice: minimumOfferPrice ?? 0,
+              listPrice: price,
+              status: status,
+              listedSpots: Array.from({ length: availableSlots }).fill(
+                "golfer"
+              ) as string[],
+              teeTimeId: teeTimeId,
+            }}
           />
         )}
       </div>

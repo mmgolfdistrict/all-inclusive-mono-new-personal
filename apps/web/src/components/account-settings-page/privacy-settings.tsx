@@ -87,8 +87,8 @@ export const PrivacySettings = () => {
         </ToggleGroup.Root>
         <div className="text-[12px] text-primary-gray md:text-[14px]">
           {privacy === "PUBLIC"
-            ? "Visible to everyone on the internet"
-            : "Visible to only you"}
+            ? "Everything is visible, including tee time history."
+            : "Only listed tee times are visible and tee time history is hidden will be hidden to others."}
         </div>
       </div>
     </section>
@@ -101,8 +101,8 @@ export const Item = ({
   choosePrivacy,
 }: {
   value: OptionsType;
-  className?: string;
   choosePrivacy: (value: OptionsType) => Promise<void>;
+  className?: string;
 }) => {
   return (
     <ToggleGroup.Item

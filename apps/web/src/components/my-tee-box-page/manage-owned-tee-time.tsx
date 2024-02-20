@@ -263,7 +263,11 @@ export const ManageOwnedTeeTime = ({
                         key={idx}
                         className="mx-auto w-full max-w-[400px] rounded-lg bg-secondary-white px-4 py-1 flex justify-between text-[16px] font-semibold outline-none"
                       >
-                        <div>{friend.name}</div>
+                        <div>
+                          {idx === 0 && friend.name.toLowerCase() === "guest"
+                            ? "You"
+                            : friend.name}
+                        </div>
                         <button onClick={() => removeFriend(idx)}>
                           <Close className="w-[20px]" />
                         </button>

@@ -20,8 +20,9 @@ export const usePreviousPath = () => {
   };
 
   useEffect(() => {
+    if (prevPath?.includes("checkout")) return;
     storePathValues();
   }, [pathname]);
 
-  return prevPath;
+  return { prevPath, setPrevPath };
 };

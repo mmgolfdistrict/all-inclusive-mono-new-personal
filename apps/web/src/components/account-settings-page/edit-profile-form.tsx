@@ -22,6 +22,7 @@ import { useDebounce } from "usehooks-ts";
 import { OutlineButton } from "../buttons/outline-button";
 
 const defaultProfilePhoto = "/defaults/default-profile.webp";
+const defaultBannerPhoto = "/defaults/default-banner.webp";
 
 export const EditProfileForm = () => {
   const [location, setLocation] = useState<string>("");
@@ -168,7 +169,10 @@ export const EditProfileForm = () => {
           data.profilePictureAssetId === defaultProfilePhoto
             ? defaultProfilePhoto
             : assetIds.profilePictureId || undefined,
-        bannerImageAssetId: assetIds.bannerId || undefined,
+        bannerImageAssetId:
+          data.bannerImageAssetId === defaultBannerPhoto
+            ? defaultBannerPhoto
+            : assetIds.bannerId || undefined,
       };
       const keys = Object.keys(dataToUpdate);
 
@@ -191,6 +195,9 @@ export const EditProfileForm = () => {
       //check if profilePictureAssetId is defaultProfilePhoto and then set it to empty string if it is
       if (dataToUpdate?.profilePictureAssetId === defaultProfilePhoto) {
         dataToUpdate.profilePictureAssetId = "";
+      }
+      if (dataToUpdate?.bannerImageAssetId === defaultBannerPhoto) {
+        dataToUpdate.bannerImageAssetId = "";
       }
       await updateUser.mutateAsync({ ...dataToUpdate });
       if (profilePhoto && profilePhoto !== defaultProfilePhoto) {
@@ -221,6 +228,12 @@ export const EditProfileForm = () => {
     e.preventDefault();
     setProfilePhoto(defaultProfilePhoto);
     setValue("profilePictureAssetId", defaultProfilePhoto);
+  };
+
+  const resetBanner = (e: FormEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    setBanner(defaultBannerPhoto);
+    setValue("bannerImageAssetId", defaultBannerPhoto);
   };
 
   return (
@@ -303,16 +316,27 @@ export const EditProfileForm = () => {
           ) : null}
         </div>
 
-        <DropMedia
-          label="Upload your background photo"
-          id="bannerImageAssetId"
-          isBackgroundImage={true}
-          register={register}
-          name={"bannerImageAssetId"}
-          subtext="Suggested image size: 1360x270px or larger"
-          isUploading={isUploading && userData?.bannerImage !== bannerImage}
-          src={banner}
-        />
+        <div className="flex items-end justify-between w-full gap-2">
+          <DropMedia
+            label="Upload your background photo"
+            id="bannerImageAssetId"
+            isBackgroundImage={true}
+            register={register}
+            name={"bannerImageAssetId"}
+            subtext="Suggested image size: 1360x270px or larger"
+            isUploading={isUploading && userData?.bannerImage !== bannerImage}
+            src={banner}
+          />
+          {userData?.bannerImage &&
+          userData?.bannerImage !== defaultBannerPhoto ? (
+            <OutlineButton
+              className="!px-2 !py-1 text-sm rounded-md"
+              onClick={resetBanner}
+            >
+              Reset
+            </OutlineButton>
+          ) : null}
+        </div>
         <FilledButton
           disabled={isSubmitting || isUploading}
           className={`w-full rounded-full ${

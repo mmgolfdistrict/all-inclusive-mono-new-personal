@@ -95,15 +95,16 @@ export const formatTime = (
   const cleanTimeString = !timestamp.includes("T")
     ? timestamp.replace(" ", "T") + "Z"
     : timestamp;
+  const timezone = cleanTimeString.slice(-6) ?? utcOffset;
   if (showFullDayOfTheWeek) {
     return dayjs
       .utc(cleanTimeString)
-      .utcOffset(utcOffset)
+      .utcOffset(timezone)
       .format("dddd, MMM D h:mm A");
   }
   return dayjs
     .utc(cleanTimeString)
-    .utcOffset(utcOffset)
+    .utcOffset(timezone)
     .format("dddd, MMM D h:mm A");
 };
 
@@ -125,7 +126,9 @@ export const getTime = (date: string, utcOffset = 0): string => {
   const cleanTimeString = !date.includes("T")
     ? date.replace(" ", "T") + "Z"
     : date;
-  return dayjs.utc(cleanTimeString).utcOffset(utcOffset).format("h:mm A");
+  const timezone = cleanTimeString.slice(-6) ?? utcOffset;
+
+  return dayjs.utc(cleanTimeString).utcOffset(timezone).format("h:mm A");
 };
 
 export const cleanTimeString = (timestamp: string): string => {

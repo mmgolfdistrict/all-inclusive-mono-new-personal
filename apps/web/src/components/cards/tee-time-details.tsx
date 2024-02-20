@@ -1,5 +1,6 @@
 "use client";
 
+import { useSession } from "@golf-district/auth/nextjs-exports";
 import { WeatherIcons } from "~/constants/weather-icons";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
@@ -38,6 +39,7 @@ export const TeeTimeDetails = ({
   const { user } = useUserContext();
   const router = useRouter();
   const { course } = useCourseContext();
+  const { data: session } = useSession();
 
   const toggleWatchlist = api.watchlist.toggleWatchlist.useMutation();
 
@@ -59,7 +61,7 @@ export const TeeTimeDetails = ({
   };
 
   const buyTeeTime = () => {
-    if (!user) {
+    if (!user || !session) {
       void router.push(`/${course?.id}/login`);
       return;
     } else {
@@ -70,7 +72,7 @@ export const TeeTimeDetails = ({
   };
 
   const addToWatchlist = async () => {
-    if (!user) {
+    if (!user || !session) {
       void router.push(`/${course?.id}/login`);
       return;
     }

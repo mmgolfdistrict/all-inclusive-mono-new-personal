@@ -119,7 +119,7 @@ export const ListTeeTime = ({
       await sell.mutateAsync({
         bookingIds: selectedTeeTime?.bookingIds.slice(0, parseInt(players)),
         listPrice: listingPrice,
-        endTime: new Date(selectedTeeTime?.date?.replace(" ", "T") + "Z"),
+        endTime: new Date(selectedTeeTime?.date),
       });
       toast.success(
         <div className="flex flex-col ">

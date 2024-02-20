@@ -13,7 +13,7 @@ export const PaymentInfoMangeProfile = () => {
   const removeCard = api.checkout.removePaymentMethod.useMutation();
 
   const removeMethod = async (paymentMethodId: string) => {
-    toast.info("Currently under development");
+    toast.info("Currently under development.");
     return;
     if (!paymentMethodId) return;
     if (removeCard.isLoading) return;

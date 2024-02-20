@@ -1,5 +1,6 @@
 "use client";
 
+import { useSession } from "@golf-district/auth/nextjs-exports";
 import { WeatherIcons } from "~/constants/weather-icons";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
@@ -20,7 +21,6 @@ import { Players } from "../icons/players";
 import { Share } from "../icons/share";
 import { ChoosePlayers } from "../input/choose-players";
 import { ManageTeeTimeListing } from "../my-tee-box-page/manage-tee-time-listing";
-import { MakeAnOffer } from "../watchlist-page/make-an-offer";
 
 const PlayersOptions = ["1", "2", "3", "4"];
 
@@ -36,7 +36,6 @@ export const ListedDetails = ({
   const [players, setPlayers] = useState<string>("1");
   const [, copy] = useCopyToClipboard();
   const [isCopied, setIsCopied] = useState<boolean>(false);
-  const [isMakeAnOfferOpen, setIsMakeAnOfferOpen] = useState<boolean>(false);
   const [isManageListingOpen, setIsManageListingOpen] =
     useState<boolean>(false);
 
@@ -46,21 +45,12 @@ export const ListedDetails = ({
   const { user } = useUserContext();
   const { course } = useCourseContext();
   const router = useRouter();
+  const { data: session } = useSession();
 
   const toggleWatchlist = api.watchlist.toggleWatchlist.useMutation();
 
-  const { data: bookingIds, refetch: refetchBookingsIds } =
-    api.teeBox.getOwnedBookingsForTeeTime.useQuery(
-      {
-        teeTimeId: teeTimeId ?? "",
-        ownerId: data?.soldById,
-      },
-      { enabled: teeTimeId !== undefined && data?.soldById !== undefined }
-    );
-
   const refecthData = async () => {
     await refetch();
-    await refetchBookingsIds();
   };
 
   const share = async () => {
@@ -81,7 +71,7 @@ export const ListedDetails = ({
   };
 
   const buyTeeTime = () => {
-    if (!user) {
+    if (!user || !session) {
       void router.push(`/${course?.id}/login`);
       return;
     } else {
@@ -92,7 +82,7 @@ export const ListedDetails = ({
   };
 
   const addToWatchlist = async () => {
-    if (!user) {
+    if (!user || !session) {
       void router.push(`/${course?.id}/login`);
       return;
     }
@@ -105,10 +95,6 @@ export const ListedDetails = ({
       toast.error((error as Error)?.message ?? "Error adding to watchlist");
       console.log(error);
     }
-  };
-
-  const makeAnOffer = () => {
-    setIsMakeAnOfferOpen(true);
   };
 
   useEffect(() => {
@@ -233,12 +219,6 @@ export const ListedDetails = ({
                   </div>
                   <div className="flex flex-col lg:flex-row items-center gap-2 w-full">
                     <FilledButton
-                      className="w-full whitespace-nowrap md:px-14 flex items-center justify-center !text-center"
-                      onClick={makeAnOffer}
-                    >
-                      Place Offer
-                    </FilledButton>
-                    <FilledButton
                       className="w-full whitespace-nowrap md:px-14"
                       onClick={buyTeeTime}
                     >
@@ -286,7 +266,7 @@ export const ListedDetails = ({
           courseLogo: course?.logo ?? "",
           courseId: course?.id ?? "",
           date: data?.date ?? "",
-          firstHandPrice: 0,
+          firstHandPrice: data?.firstHandPurchasePrice ?? 0,
           miniumOfferPrice: data?.minimumOfferPrice ?? 0,
           listPrice: data?.pricePerGolfer ?? 0,
           status: "LISTED",
@@ -294,21 +274,6 @@ export const ListedDetails = ({
           teeTimeId: teeTimeId,
         }}
         needRedirect={true}
-      />
-      <MakeAnOffer
-        isMakeAnOfferOpen={isMakeAnOfferOpen}
-        setIsMakeAnOfferOpen={setIsMakeAnOfferOpen}
-        availableSlots={data?.availableSlots ?? 0}
-        courseImage={course?.logo ?? ""}
-        courseName={course?.name ?? ""}
-        date={data?.date ?? ""}
-        minimumOfferPrice={
-          data?.minimumOfferPrice ??
-          data?.firstHandPurchasePrice ??
-          data?.pricePerGolfer ??
-          0
-        }
-        bookingIds={bookingIds ?? []}
       />
     </div>
   );

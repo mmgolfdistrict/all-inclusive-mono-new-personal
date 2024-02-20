@@ -241,7 +241,9 @@ export const CheckoutForm = ({
       {/* Show any error or success messages */}
       {message && (
         <div id="payment-message" className={styles.paymentMessage}>
-          {message}
+          {message === "Payment Successful"
+            ? "Payment Successful"
+            : "An error occurred processing payment."}
         </div>
       )}
     </form>

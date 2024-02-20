@@ -20,7 +20,7 @@ type SideBarProps = {
   golferCount: number | undefined;
   pricePerGolfer: number | undefined;
   listingId: string | undefined;
-  refetch: () => Promise<unknown>;
+  refetch?: () => Promise<unknown>;
   needRedirect?: boolean;
 };
 
@@ -56,7 +56,7 @@ export const CancelListing = ({
       await cancel.mutateAsync({
         listingId: listingId,
       });
-      await refetch();
+      await refetch?.();
       toast.success("Listing cancelled successfully");
       setIsCancelListingOpen(false);
       if (needRedirect) {

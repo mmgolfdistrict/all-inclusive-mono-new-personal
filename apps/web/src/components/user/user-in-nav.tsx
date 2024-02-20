@@ -8,8 +8,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { Avatar } from "../avatar";
 import { DownChevron } from "../icons/down-chevron";
 
-export const PathsThatNeedRedirect = [
+export const PathsThatNeedRedirectOnLogout = [
   "/account-settings",
+  "/profile",
   "/my-tee-box",
   "/watchlist",
   "/checkout",
@@ -32,7 +33,7 @@ export const UserInNav = ({ alwaysShow }: { alwaysShow?: boolean }) => {
     }
   );
   const logOutUser = async () => {
-    if (PathsThatNeedRedirect.some((i) => pathname.includes(i))) {
+    if (PathsThatNeedRedirectOnLogout.some((i) => pathname.includes(i))) {
       const data = await signOut({
         callbackUrl: `/${courseId}`,
         redirect: false,
@@ -71,20 +72,6 @@ export const UserInNav = ({ alwaysShow }: { alwaysShow?: boolean }) => {
               alwaysShow ? "block" : "hidden md:block"
             }`}
           >
-            <div className="flex items-center flex-col px-4 py-3 border-b border-stroke">
-              <p className="text-sm">{user?.email}</p>
-              <div className="py-3">
-                <Avatar
-                  src={
-                    user?.image?.includes("https://")
-                      ? user?.image
-                      : imageUrl ?? "/defaults/default-profile.webp"
-                  }
-                  name={user?.name}
-                />
-              </div>
-              <p className="text-lg font-medium">Welcome, {user?.name}!</p>
-            </div>
             <Link href={`/${courseId}/profile/${user?.id}`}>
               <MenuItem title="Profile" />
             </Link>

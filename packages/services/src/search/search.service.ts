@@ -174,7 +174,7 @@ export class SearchService {
         ownerId: bookings.ownerId,
         teeTimeId: bookings.teeTimeId,
         time: teeTimes.time,
-        date: teeTimes.date,
+        date: teeTimes.providerDate,
         numberOfHoles: bookings.numberOfHoles,
         courseName: courses.name,
         courseId: bookings.courseId,
@@ -258,7 +258,7 @@ export class SearchService {
         teeTimeId: teeTimes.id,
         courseId: teeTimes.courseId,
         time: teeTimes.time,
-        date: teeTimes.date,
+        date: teeTimes.providerDate,
         numberOfHoles: teeTimes.numberOfHoles,
         listPrice: lists.listPrice,
         courseName: courses.name,
@@ -267,6 +267,7 @@ export class SearchService {
         bookingId: bookings.id,
         favorites: favorites.id,
         includesCart: bookings.includesCart,
+        firstHandPrice: teeTimes.greenFee,
         image: {
           key: assets.key,
           cdnUrl: assets.cdn,
@@ -298,6 +299,7 @@ export class SearchService {
         : "/defaults/default-profile.webp",
       availableSlots: data.length,
       pricePerGolfer: firstBooking.listPrice,
+      firstHandPurchasePrice: firstBooking.firstHandPrice ?? 0,
       teeTimeId: firstBooking.teeTimeId ? firstBooking.teeTimeId : "",
       date: firstBooking.date,
       time: firstBooking.time ? firstBooking.time : 2400,
@@ -335,6 +337,7 @@ export class SearchService {
         greenFee: teeTimes.greenFee,
         courseName: courses.name,
         favorites: favorites.id,
+        providerDate: teeTimes.providerDate,
         numberOfWatchers: sql<number>`(
           SELECT COUNT(*)
           FROM ${favorites}
@@ -395,7 +398,7 @@ export class SearchService {
       pricePerGolfer: tee.greenFee,
       teeTimeId: tee.id,
       userWatchListed: tee.favorites ? true : false,
-      date: tee.date, //day of tee time
+      date: tee.providerDate, //day of tee time
       time: tee.time, //military time
       includesCart: true,
       firstOrSecondHandTeeTime: TeeTimeType.FIRST_HAND,
@@ -538,8 +541,8 @@ export class SearchService {
     lowerPrice: number,
     upperPrice: number,
     take = 5,
-    sortTime: "asc" | "desc",
-    sortPrice: "asc" | "desc",
+    sortTime: "asc" | "desc" | "",
+    sortPrice: "asc" | "desc" | "",
     timezoneCorrection: number,
     cursor?: number | null,
     _userId?: string
@@ -563,7 +566,7 @@ export class SearchService {
     const nowInCourseTimezone = dayjs().utc().utcOffset(timezoneCorrection).format("YYYY-MM-DD HH:mm:ss");
     const currentTimePlus30Min = dayjs
       .utc(nowInCourseTimezone)
-      .utcOffset(-7)
+      .utcOffset(timezoneCorrection)
       .add(30, "minutes")
       .toISOString();
 
@@ -644,10 +647,12 @@ export class SearchService {
         )
       )
       .orderBy(
-        sortPrice === "desc" //this will be ok since only one sort is allowed, it will default to time asc
+        sortPrice === "desc"
           ? desc(teeTimes.greenFee)
           : sortTime === "desc"
           ? desc(teeTimes.time)
+          : sortPrice === "asc"
+          ? asc(teeTimes.greenFee)
           : asc(teeTimes.time)
       )
       .limit(limit);
@@ -712,31 +717,30 @@ export class SearchService {
       .where(
         and(
           and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
-          between(bookings.purchasedPrice, lowerPrice, upperPrice),
+          or(
+            between(lists.listPrice, lowerPrice, upperPrice),
+            between(bookings.purchasedPrice, lowerPrice, upperPrice)
+          ),
           gte(teeTimes.providerDate, currentTimePlus30Min),
           between(teeTimes.providerDate, startDate, endDate),
           eq(teeTimes.courseId, courseId),
-
           eq(bookings.includesCart, includesCart),
           eq(teeTimes.numberOfHoles, holes),
-          firstHandResults && firstHandResults?.length > 0
-            ? inArray(
-                bookings.teeTimeId,
-                firstHandResults?.map((t) => t.id)
-              )
-            : isNotNull(bookings.teeTimeId),
-          eq(bookings.isListed, !showUnlisted)
+          showUnlisted
+            ? or(eq(bookings.isListed, false), eq(bookings.isListed, true))
+            : eq(bookings.isListed, true)
         )
       )
       .orderBy(
-        sortPrice === "desc" //this will be ok since only one sort is allowed, it will default to time asc
-          ? desc(teeTimes.greenFee)
+        sortPrice === "desc"
+          ? desc(lists.listPrice)
           : sortTime === "desc"
-          ? desc(teeTimes.time)
-          : asc(teeTimes.time)
+          ? desc(bookings.time)
+          : sortPrice === "asc"
+          ? asc(lists.listPrice)
+          : asc(bookings.time)
       );
     // .limit(limit);
-
     const secoondHandData = await secondHandBookingsQuery.execute().catch((err) => {
       this.logger.error(err);
       throw new Error(`Error getting second hand tee times for ${date}: ${err}`);
@@ -756,10 +760,13 @@ export class SearchService {
                 ? `https://${booking?.profilePicture.cdnUrl}/${booking?.profilePicture.key}.${booking?.profilePicture.extension}`
                 : "/defaults/default-profile.webp",
               pricePerGolfer:
-                booking.listingId && booking.listPrice ? booking.listPrice : booking?.greenFee ?? 0,
+                booking.listingId && booking.listPrice
+                  ? booking.listPrice
+                  : ((booking?.greenFee ?? 0) * 13) / 10,
               includesCart: booking?.includesCart,
               firstOrSecondHandTeeTime: booking.isListed ? TeeTimeType.SECOND_HAND : TeeTimeType.UNLISTED,
               userWatchListed: booking.favorites ? true : false,
+              firstHandPurchasePrice: booking?.greenFee ?? 0,
               bookingIds: [booking?.id],
               availableSlots: 1,
               date: booking?.date ?? "",
@@ -792,6 +799,8 @@ export class SearchService {
         return b.pricePerGolfer - a.pricePerGolfer;
       } else if (sortTime === "desc") {
         return b.time - a.time;
+      } else if (sortPrice === "asc") {
+        return a.pricePerGolfer - b.pricePerGolfer;
       } else {
         return a.time - b.time;
       }

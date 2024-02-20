@@ -34,13 +34,18 @@ export const ProfileDetails = () => {
           />
           <div className="flex flex-col gap-1 md:pb-3">
             <div className="flex flex-col items-center justify-center gap-1 text-[22px] md:flex-row md:gap-4 md:text-[32px]">
-              <div className="text-secondary-black">{userData?.name}</div>
+              <div className="text-secondary-black">
+                {userData?.profileVisibility === "PRIVATE"
+                  ? ""
+                  : userData?.name}
+              </div>
               <div className="-mt-2 text-primary-gray md:mt-0">
                 {userData?.handle ?? ""}
               </div>
             </div>
             <div className="flex items-center gap-1 text-primary-gray">
-              {userData?.location ? (
+              {userData?.location &&
+              userData?.profileVisibility === "PUBLIC" ? (
                 <>
                   <Location className="w-[16px] md:w-[22px]" />
                   <div>{userData?.location}</div>

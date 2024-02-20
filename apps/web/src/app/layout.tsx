@@ -28,6 +28,9 @@ export const metadata: Metadata = {
     creator: "@vercel",
   },
   metadataBase: new URL("https://vercel.pub"),
+  icons: {
+    icon: "/favicon.png",
+  },
 };
 
 // export async function generateMetadata({

@@ -1,5 +1,6 @@
 "use client";
 
+import { useSession } from "@golf-district/auth/nextjs-exports";
 import { type WatchlistItem } from "@golf-district/shared";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
@@ -24,8 +25,10 @@ export const WatchlistTable = () => {
     WatchlistItem | undefined
   >(undefined);
 
+  const { data: session } = useSession();
   const router = useRouter();
   const { user } = useUserContext();
+
   const { data, isLoading, isError, error, refetch } =
     api.watchlist.getWatchlist.useQuery(
       {
@@ -57,7 +60,7 @@ export const WatchlistTable = () => {
     playerCount: "1" | "2" | "3" | "4" = "1"
   ) => {
     //only for listed or first party
-    if (!user) {
+    if (!user || !session) {
       void router.push(`/${course?.id}/login`);
       return;
     }
@@ -78,6 +81,19 @@ export const WatchlistTable = () => {
       console.log(error);
     }
   };
+
+  if (!user || !session) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[200px] rounded-xl gap-4 bg-white p-6 text-center">
+        <div className="text-2xl font-semibold">
+          Login to view your watchlist
+        </div>
+        <Link href={`/${courseId}/login`}>
+          <FilledButton>Login</FilledButton>
+        </Link>
+      </div>
+    );
+  }
 
   if (isError && error) {
     return (
@@ -132,7 +148,12 @@ export const WatchlistTable = () => {
                     golfers={i.availableSpots}
                     status={i.status}
                     type={i.type}
-                    buyTeeTime={() => buyTeeTime(i.teeTimeId)}
+                    buyTeeTime={() =>
+                      buyTeeTime(
+                        i.teeTimeId,
+                        i.availableSpots.toString() as "1" | "2" | "3" | "4"
+                      )
+                    }
                     removeFromWatchlist={removeFromWatchlist}
                     openMakeAnOffer={() => openMakeAnOffer(i)}
                     teeTimeId={i.teeTimeId}
