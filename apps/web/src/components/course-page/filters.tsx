@@ -156,7 +156,7 @@ export const Filters = () => {
           <Switch
             value={showUnlisted}
             setValue={setShowUnlisted}
-            data-testid={`filter-switch-not-for-sale-make-an-offer-id`}
+            dataTestId="filter-switch-not-for-sale-make-an-offer-id"
           />
           <div className="flex items-center gap-1 text-primary-gray">
             <Hidden className="h-[17px] w-[20px]" />
@@ -171,7 +171,7 @@ export const Filters = () => {
           <Switch
             value={includesCart}
             setValue={setIncludesCart}
-            data-testid={`filter-switch-include-cart-id`}
+            dataTestId="filter-switch-include-cart-id"
           />
           <div className="flex items-center gap-1 text-primary-gray">
             <GolfCart className="h-[17px] w-[20px]" />
