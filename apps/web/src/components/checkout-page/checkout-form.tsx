@@ -36,6 +36,7 @@ export const CheckoutForm = ({
       isUseBillingAddress: true,
       usePrefilledValues: "never", // or "auto",
     },
+    branding: "never",
   };
   const hyper = useHyper();
   const widgets = useWidgets();
