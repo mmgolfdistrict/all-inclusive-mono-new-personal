@@ -257,11 +257,7 @@ export default function CourseHomePage() {
   return (
     <main className="bg-secondary-white py-4 md:py-6">
       <div className="flex items-center justify-between px-4 md:px-6">
-        <GoBack
-          href="/"
-          text={`Back to all ${entity?.name} Courses`}
-          dataTestId="back-course-id"
-        />
+        <GoBack href="/" text={`Back to all ${entity?.name} Courses`} />
       </div>
       <CourseTitle
         courseName={course?.name ?? ""}
@@ -345,6 +341,7 @@ export default function CourseHomePage() {
                       pageNumber === 1 ? "opacity-50 cursor-not-allowed" : ""
                     }`}
                     onClick={pageDown}
+                    data-testid="chevron-down-id"
                   >
                     <ChevronUp fill="#fff" className="-rotate-90" />
                   </FilledButton>
@@ -358,6 +355,7 @@ export default function CourseHomePage() {
                         : ""
                     }`}
                     onClick={pageUp}
+                    data-testid="chevron-up-id"
                   >
                     <ChevronUp fill="#fff" className="rotate-90" />
                   </FilledButton>

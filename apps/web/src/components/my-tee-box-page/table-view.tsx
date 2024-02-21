@@ -54,11 +54,18 @@ export const TableView = () => {
   return (
     <Tabs.Root value={section ?? "owned"}>
       <Tabs.List className="flex gap-10 overflow-x-auto border-b border-stroke bg-white px-6 pt-4 md:rounded-t-xl">
-        <TabTrigger value={"owned"}>Owned</TabTrigger>
-        <TabTrigger value={"my-listed-tee-times"}>
+        <TabTrigger value={"owned"}>
+          Owned
+        </TabTrigger>
+        <TabTrigger
+          value={"my-listed-tee-times"}
+          data-testid="my-listed-tee-time-id"
+        >
           My Listed Tee Times
         </TabTrigger>
-        <TabTrigger value={"offers-sent"}>Offers Sent</TabTrigger>
+        <TabTrigger value={"offers-sent"}>
+          Offers Sent
+        </TabTrigger>
         <TabTrigger value={"offers-received"} handleClick={markAsRead}>
           Offers Received{" "}
           {unreadOffers && unreadOffers > 0 ? (
@@ -72,7 +79,7 @@ export const TableView = () => {
       {!session ? (
         <Tabs.Content value={section ?? "owned"} className="bg-white p-2">
           <div className="min-h-[250px] flex items-center justify-center">
-            <Link href={`/${courseId}/login`}>
+            <Link href={`/${courseId}/login`} data-testid="login-to-view-id">
               <FilledButton>Login to view</FilledButton>
             </Link>
           </div>
@@ -113,6 +120,8 @@ const TabTrigger = ({
     <Link
       href={`?section=${value}`}
       onClick={handleClick ? () => void handleClick() : undefined}
+      data-testid="tab-trigger-id"
+      data-qa={value}
     >
       <Tabs.Trigger
         value={value}

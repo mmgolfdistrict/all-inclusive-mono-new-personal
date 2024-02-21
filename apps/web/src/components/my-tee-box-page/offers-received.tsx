@@ -282,6 +282,7 @@ const TableHeader = ({
         className ?? ""
       }`}
       onClick={() => (sortFn ? sortFn() : null)}
+      data-testid="table-sort-id"
     >
       <div className="flex items-center gap-1">
         {text}
@@ -343,6 +344,9 @@ const TableRow = ({
         <Link
           href={`/${courseId}/${teeTimeId}`}
           className="flex items-center gap-2"
+          data-testid="course-tee-time-id"
+          data-test={teeTimeId}
+          data-qa={courseId}
         >
           <Avatar src={iconSrc} />
           <div className="flex flex-col">
@@ -361,6 +365,9 @@ const TableRow = ({
           target="_blank"
           rel="noopenner noreferrer"
           className="flex items-center gap-2 underline"
+          data-testid="offered-by-id"
+          data-test={offeredById}
+          data-qa={courseId}
         >
           <Avatar src={offeredByImage} />
           <div className="text-primary-gray">{offeredBy}</div>
@@ -386,7 +393,7 @@ const TableRow = ({
       </td>
       <td className="whitespace-nowrap px-4 py-3">
         <div className="flex  justify-end gap-2">
-          <FilledButton onClick={openViewOffer}>View Offer</FilledButton>
+          <FilledButton onClick={openViewOffer} data-testid="view-offer-button-id">View Offer</FilledButton>
         </div>
       </td>
     </tr>

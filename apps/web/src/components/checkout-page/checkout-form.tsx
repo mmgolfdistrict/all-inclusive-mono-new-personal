@@ -180,6 +180,7 @@ export const CheckoutForm = ({
                   placeholder="Enter donation amount"
                   register={() => undefined}
                   error=""
+                  data-testid="donation-amount-id"
                 />
               </div>
             ) : null}
@@ -199,6 +200,7 @@ export const CheckoutForm = ({
               value={promoCode}
               onChange={(e) => handlePromoCode(e.target.value)}
               placeholder="Enter promo code"
+              data-testid="promo-code-input-id"
             />
           </div>
         )}
@@ -235,6 +237,7 @@ export const CheckoutForm = ({
       <FilledButton
         className={`w-full rounded-full`}
         disabled={!hyper || !widgets || message === "Payment Successful"}
+        data-testid="pay-now-id"
       >
         {isLoading ? "Loading..." : <>Pay Now</>}
       </FilledButton>

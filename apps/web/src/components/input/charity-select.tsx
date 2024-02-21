@@ -24,7 +24,10 @@ export const CharitySelect = ({
       value={(value?.charityId as string) ?? ""}
       onValueChange={setValue}
     >
-      <RadixSelect.Trigger className="flex h-[40px] items-center justify-between gap-2 whitespace-nowrap rounded-md border border-stroke bg-white px-4 py-3 text-[14px] outline-none data-[placeholder]:text-primary-gray">
+      <RadixSelect.Trigger
+        className="flex h-[40px] items-center justify-between gap-2 whitespace-nowrap rounded-md border border-stroke bg-white px-4 py-3 text-[14px] outline-none data-[placeholder]:text-primary-gray"
+        data-testid="charity-button-id"
+      >
         <RadixSelect.Value
           placeholder="Select a charity"
           aria-label={value?.charityId as string}

@@ -141,6 +141,7 @@ export const ViewOffer = ({
               aria-expanded={isViewOfferOpen}
               className="z-[2]"
               aria-label="sidebarToggle"
+              data-testid="close-button-id"
             >
               <Close className="h-[25px] w-[25px]" />
             </button>
@@ -235,16 +236,18 @@ export const ViewOffer = ({
                   }`}
                   disabled={accept.isLoading}
                   onClick={acceptOffer}
+                  data-testid="accept-button-id"
                 >
                   {accept.isLoading ? "Accepting" : "Accept"}
                 </FilledButton>
 
-                <OutlineButton onClick={openCounteroffer}>
+                <OutlineButton onClick={openCounteroffer} data-testid="counter-offer-button-id">
                   Counteroffer
                 </OutlineButton>
                 <OutlineButton
                   onClick={rejectOffer}
                   className={`${reject.isLoading ? "animate-pulse" : ""}`}
+                  data-testid="decline-button-id"
                 >
                   {reject.isLoading ? "Declining" : "Decline"}
                 </OutlineButton>
@@ -294,6 +297,9 @@ const TeeTimeItem = ({
         target="_blank"
         rel="noopenner noreferrer"
         className="flex items-center gap-4"
+        data-testid="course-offer-id"
+        data-test={offeredById}
+        data-qa={courseId}
       >
         <Avatar src={offeredByImage} />
         <div className="text-primary-gray">

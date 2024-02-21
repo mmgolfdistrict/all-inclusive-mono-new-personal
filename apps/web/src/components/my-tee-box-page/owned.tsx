@@ -236,7 +236,13 @@ const TableRow = ({
   return (
     <tr className="w-full border-b border-stroke text-primary-gray">
       <td className="gap-2 px-4 py-3">
-        <Link href={href} className="flex items-center gap-2">
+        <Link
+          href={href}
+          className="flex items-center gap-2"
+          data-testid="course-tee-time-listing-id"
+          data-test={teeTimeId}
+          data-qa={courseId}
+        >
           <Avatar src={iconSrc} />
           <div className="flex flex-col">
             <div className="whitespace-nowrap underline text-secondary-black">
@@ -279,13 +285,26 @@ const TableRow = ({
       </td>
       <td className="whitespace-nowrap px-4 py-3">
         <div className="flex w-full justify-end gap-2">
-          <OutlineButton onClick={openManageListTeeTime}>Manage</OutlineButton>
+          <OutlineButton
+            onClick={openManageListTeeTime}
+            data-testid="manage-button-id"
+          >
+            Manage
+          </OutlineButton>
           {isListed ? (
-            <FilledButton className="min-w-[145px]" onClick={openCancelListing}>
+            <FilledButton
+              className="min-w-[145px]"
+              onClick={openCancelListing}
+              data-testid="cancel-listing-button-id"
+            >
               Cancel Listing
             </FilledButton>
           ) : (
-            <FilledButton className="min-w-[145px]" onClick={openListTeeTime}>
+            <FilledButton
+              className="min-w-[145px]"
+              onClick={openListTeeTime}
+              data-testid="sell-button-id"
+            >
               Sell
             </FilledButton>
           )}

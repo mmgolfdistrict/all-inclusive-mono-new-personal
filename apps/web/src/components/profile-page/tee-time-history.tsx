@@ -95,6 +95,8 @@ const TableRow = ({
         <Link
           href={`/${courseId}`}
           className="flex items-center gap-2 cursor-pointer"
+          data-testid="course-id"
+          data-test={courseId}
         >
           <Avatar src={iconSrc} />
           {course}

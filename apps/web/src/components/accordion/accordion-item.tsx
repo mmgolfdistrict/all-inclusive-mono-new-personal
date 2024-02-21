@@ -15,7 +15,7 @@ export const AccordionItem = ({
   return (
     <Accordion.Item value={value}>
       <Accordion.Header className="flex">
-        <Accordion.Trigger className={`group w-full`}>
+        <Accordion.Trigger className={`group w-full`} data-testid="accordion-button-id">
           <div className="flex flex-1 cursor-pointer items-center justify-between bg-white p-4 text-[16px] text-secondary-black transition-all md:text-[20px] md:group-data-[state=closed]:rounded-xl md:group-data-[state=open]:rounded-t-xl">
             <div>{title}</div>
             <DownChevron

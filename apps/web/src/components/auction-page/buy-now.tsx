@@ -57,6 +57,7 @@ export const BuyNow = ({
               aria-expanded={isBuyNowOpen}
               className="z-[2]"
               aria-label="sidebarToggle"
+              data-testid="close-button-id"
             >
               <Close className="h-[25px] w-[25px]" />
             </button>
@@ -110,10 +111,10 @@ export const BuyNow = ({
                 All sales are final.
               </div>
               <div className="flex flex-col gap-2">
-                <FilledButton className="w-full" onClick={buyNow}>
+                <FilledButton className="w-full" onClick={buyNow} data-testid="buy-now-button-id">
                   Buy Now
                 </FilledButton>
-                <OutlineButton onClick={() => setIsBuyNowOpen(false)}>
+                <OutlineButton onClick={() => setIsBuyNowOpen(false)} data-testid="cancel-button-id">
                   Cancel
                 </OutlineButton>
               </div>

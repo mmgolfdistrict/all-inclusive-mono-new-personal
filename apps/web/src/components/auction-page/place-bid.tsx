@@ -90,6 +90,7 @@ export const PlaceBid = ({
               aria-expanded={isPlaceBidOpen}
               className="z-[2]"
               aria-label="sidebarToggle"
+              data-testid="close-button-id"
             >
               <Close className="h-[25px] w-[25px]" />
             </button>
@@ -147,8 +148,9 @@ export const PlaceBid = ({
                         : `/${courseId}/login`
                     }
                     onClick={() => setIsPlaceBidOpen(false)}
+                    data-testid="place-bid-id"
                   >
-                    <FilledButton className={`w-full`}>
+                    <FilledButton className={`w-full`} data-testid="add-payment-button-id">
                       Add Payment Method
                     </FilledButton>
                   </Link>
@@ -157,10 +159,11 @@ export const PlaceBid = ({
                   className={`w-full ${isPlaceBidDisabled ? "opacity-50" : ""}`}
                   disabled={isPlaceBidDisabled}
                   onClick={() => void placeBid()}
+                  data-testid="place-bid-button-id"
                 >
                   Place Bid
                 </FilledButton>
-                <OutlineButton onClick={() => setIsPlaceBidOpen(false)}>
+                <OutlineButton onClick={() => setIsPlaceBidOpen(false)} data-testid="cancel-button-id">
                   Cancel
                 </OutlineButton>
               </div>

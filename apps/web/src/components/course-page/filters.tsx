@@ -326,7 +326,7 @@ export const Item = ({
 }: {
   value: string;
   className?: string;
-  dataTestId: string;
+  dataTestId?: string;
   dataQa?: string;
   dataTest?: string;
   dataCy?: string;

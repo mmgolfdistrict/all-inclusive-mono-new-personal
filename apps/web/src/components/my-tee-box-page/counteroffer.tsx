@@ -105,6 +105,7 @@ export const Counteroffer = ({
               aria-expanded={isCounterofferOpen}
               className="z-[2]"
               aria-label="sidebarToggle"
+              data-testid="close-button-id"
             >
               <Close className="h-[25px] w-[25px]" />
             </button>
@@ -139,6 +140,7 @@ export const Counteroffer = ({
                     onChange={handleListingPrice}
                     onBlur={handleBlur}
                     className="mx-auto max-w-[300px] rounded-lg bg-secondary-white px-4 py-1 text-center text-[24px] font-semibold outline-none md:text-[32px] pl-6"
+                    data-testid="listing-price-id"
                   />
                 </div>
               </div>
@@ -159,6 +161,7 @@ export const Counteroffer = ({
                   }}
                   orientation="horizontal"
                   className="mx-auto flex"
+                  data-testid="player-button-id"
                 >
                   {PlayerOptions.map((value, index) => (
                     <Item
@@ -171,9 +174,8 @@ export const Counteroffer = ({
                           ? "rounded-r-full border border-stroke"
                           : "border-b border-l border-t border-stroke"
                       } px-[1.75rem]`}
-                      dataTestId={""}
-                      dataTest={""}
-                      dataQa={""}
+                      dataTestId="player-item-id"
+                      dataQa={value}
                     />
                   ))}
                 </ToggleGroup.Root>
@@ -204,11 +206,11 @@ export const Counteroffer = ({
                 All sales are final.
               </div>
               <div className="flex flex-col gap-2">
-                <FilledButton className="w-full" onClick={sendCounteroffer}>
+                <FilledButton className="w-full" onClick={sendCounteroffer} data-testid="send-counter-offer-button-id">
                   Send counteroffer
                 </FilledButton>
 
-                <OutlineButton onClick={() => setIsCounterofferOpen(false)}>
+                <OutlineButton onClick={() => setIsCounterofferOpen(false)} data-testid="cancel-button-id">
                   Cancel
                 </OutlineButton>
               </div>

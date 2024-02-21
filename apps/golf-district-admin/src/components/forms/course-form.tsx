@@ -291,6 +291,7 @@ export const CourseForm = ({
                   <Switch
                     value={allowsCharities}
                     setValue={setAllowsCharities}
+                    data-testid={`allow-charity-id`}
                   />
                   <div className="text-primary-gray">Allows Charities</div>
                 </div>
@@ -406,6 +407,7 @@ export const CourseForm = ({
               register={() => undefined}
               allowMultiple={false}
               src={[]}
+              dataTestId="logo-id"
             />
             <DropMedia
               label="Carousel Images"
@@ -414,6 +416,7 @@ export const CourseForm = ({
               register={() => undefined}
               allowMultiple={true}
               src={[]}
+              dataTestId="carousel-image-id"
             />
           </section>
 

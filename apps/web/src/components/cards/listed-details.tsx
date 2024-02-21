@@ -152,6 +152,7 @@ export const ListedDetails = ({
             <Link
               href={`/${course?.id}/profile/${data?.soldById}`}
               className="text-primary"
+              data-testid="sold-by-name-button-id"
             >
               {data?.soldByName}
             </Link>
@@ -191,6 +192,7 @@ export const ListedDetails = ({
                     <OutlineButton
                       onClick={() => void share()}
                       className="w-full whitespace-nowrap"
+                      data-testid="share-button-id"
                     >
                       <div className="flex items-center justify-center gap-2">
                         {isCopied ? (
@@ -207,6 +209,7 @@ export const ListedDetails = ({
                     <OutlineButton
                       className="w-full whitespace-nowrap"
                       onClick={addToWatchlist}
+                      data-testid="add-watch-list-button-id"
                     >
                       <div className="flex items-center justify-center gap-2">
                         <Heart
@@ -221,6 +224,7 @@ export const ListedDetails = ({
                     <FilledButton
                       className="w-full whitespace-nowrap md:px-14"
                       onClick={buyTeeTime}
+                      data-testid="buy-tee-time-button-id"
                     >
                       Buy
                     </FilledButton>
@@ -231,6 +235,7 @@ export const ListedDetails = ({
                   <OutlineButton
                     onClick={() => void share()}
                     className="w-full whitespace-nowrap"
+                    data-testid="share-button-id"
                   >
                     <div className="flex items-center justify-center gap-2">
                       {isCopied ? (
@@ -247,6 +252,7 @@ export const ListedDetails = ({
                   <FilledButton
                     className="w-full whitespace-nowrap md:px-8"
                     onClick={() => setIsManageListingOpen(true)}
+                    data-testid="manage-button-id"
                   >
                     Manage
                   </FilledButton>

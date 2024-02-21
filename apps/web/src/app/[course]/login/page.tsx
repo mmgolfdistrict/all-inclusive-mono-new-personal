@@ -147,6 +147,7 @@ export default function Login() {
             <SquareButton
               onClick={googleSignIn}
               className="flex w-full items-center justify-center gap-3 text-primary-gray shadow-google-btn"
+              data-testid="login-with-google-id"
             >
               <Google className="w-[24px]" />
               Log In with Google
@@ -157,6 +158,7 @@ export default function Login() {
           <SquareButton
             onClick={appleSignIn}
             className="flex items-center justify-center gap-3 bg-black text-white"
+            data-testid="login-with-apple-id"
           >
             <Apple className="w-[24px]" />
             Log In with Apple
@@ -166,6 +168,7 @@ export default function Login() {
           <SquareButton
             onClick={facebookSignIn}
             className="flex items-center justify-center gap-3 bg-facebook text-white"
+            data-testid="login-with-facebook-id"
           >
             <Facebook className="w-[24px]" />
             Log In with Facebook
@@ -187,6 +190,7 @@ export default function Login() {
             register={register}
             name="email"
             error={errors.email?.message}
+            data-testid="login-email-id"
           />
           <div className="relative">
             <Input
@@ -197,6 +201,7 @@ export default function Login() {
               register={register}
               name="password"
               error={errors.password?.message}
+              data-testid="login-password-id"
             />
             <IconButton
               onClick={(e) => {
@@ -204,6 +209,7 @@ export default function Login() {
                 setShowPassword(!showPassword);
               }}
               className={`absolute right-2 !top-[90%] border-none !bg-transparent !transform !-translate-y-[90%]`}
+              data-testid="login-show-password-id"
             >
               {showPassword ? (
                 <Hidden className="h-[14px] w-[14px]" />
@@ -215,6 +221,7 @@ export default function Login() {
           <Link
             className="text-[12px] text-primary"
             href={`/${course?.id}/forgot-password`}
+            data-testid="forgot-password-id"
           >
             Forgot password?
           </Link>
@@ -223,13 +230,14 @@ export default function Login() {
             sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ?? ""}
             onChange={onReCAPTCHAChange}
             ref={recaptchaRef}
+            data-testid="login-recaptcha-id"
           />
-          <FilledButton className="w-full rounded-full">Log In</FilledButton>
+          <FilledButton className="w-full rounded-full" data-testid="login-button-id">Log In</FilledButton>
         </form>
       </section>
       <div className="pt-4 text-center text-[14px] text-primary-gray">
         Dont&apos;t have an account?{" "}
-        <Link className="text-primary" href={`/${course?.id}/register`}>
+        <Link className="text-primary" href={`/${course?.id}/register`} data-testid="signup-button-id">
           Sign Up
         </Link>{" "}
         instead

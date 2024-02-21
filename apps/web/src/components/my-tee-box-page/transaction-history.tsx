@@ -195,7 +195,12 @@ const TableRow = ({
       </td>
       <td className="whitespace-nowrap px-4 py-3">
         <div className="flex w-full justify-end gap-2">
-          <OutlineButton onClick={openTxnDetails}>Details</OutlineButton>
+          <OutlineButton
+            onClick={openTxnDetails}
+            data-testid="details-button-id"
+          >
+            Details
+          </OutlineButton>
         </div>
       </td>
     </tr>

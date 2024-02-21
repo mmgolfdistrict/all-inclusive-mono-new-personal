@@ -15,7 +15,7 @@ export const MainNav = () => {
           <div
             className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transform`}
           >
-            <Link href="/">
+            <Link href="/" data-testid="resort-logo-id">
               <BlurImage
                 src={entity?.logo ?? ""}
                 alt={entity?.name ?? "resort logo"}

@@ -72,6 +72,7 @@ export const ManagementForm = ({
             register={() => undefined}
             allowMultiple={false}
             src={[]}
+            dataTestId="logo-id"
           />
           <Select
             values={["Lexend", "Inter"]}
@@ -117,6 +118,7 @@ export const ManagementForm = ({
             register={() => undefined}
             allowMultiple={false}
             src={[]}
+            dataTestId="404-image-id"
           />
           <div className="flex items-center justify-end gap-2 w-full mt-4">
             <OutlineButton className="min-w-[90px]">Preview</OutlineButton>

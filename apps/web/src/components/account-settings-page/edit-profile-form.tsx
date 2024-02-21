@@ -249,6 +249,7 @@ export const EditProfileForm = () => {
           disabled={true}
           register={register}
           error={errors.name?.message}
+          data-testid="profile-name-id"
         />
         <Input
           label="Email"
@@ -258,6 +259,7 @@ export const EditProfileForm = () => {
           register={register}
           name="email"
           error={errors.email?.message}
+          data-testid="profile-email-id"
         />
         <Input
           label="Phone Number"
@@ -277,6 +279,7 @@ export const EditProfileForm = () => {
           register={register}
           name={"handle"}
           error={errors.handle?.message}
+          data-testid="profile-handle-id"
         />
         <Input
           label="Location"
@@ -290,6 +293,7 @@ export const EditProfileForm = () => {
           onChange={(e: ChangeEvent<HTMLInputElement>) => {
             setLocation(e.target.value);
           }}
+          data-testid="profile-location-id"
         />
         <datalist id="places">
           {cities.data?.autocompleteCities.features.map((city, idx) => (
@@ -305,6 +309,7 @@ export const EditProfileForm = () => {
             subtext="Suggested image size: 400x400px or larger"
             isUploading={isUploading && userData?.image !== image}
             src={profilePhoto}
+            dataTestId="upload-profile-photo-id"
           />
           {userData?.profilePicture !== defaultProfilePhoto ? (
             <OutlineButton
@@ -326,6 +331,7 @@ export const EditProfileForm = () => {
             subtext="Suggested image size: 1360x270px or larger"
             isUploading={isUploading && userData?.bannerImage !== bannerImage}
             src={banner}
+            dataTestId="upload-background-photo-id"
           />
           {userData?.bannerImage &&
           userData?.bannerImage !== defaultBannerPhoto ? (
@@ -342,6 +348,7 @@ export const EditProfileForm = () => {
           className={`w-full rounded-full ${
             isSubmitting || isUploading ? "opacity-50" : ""
           }`}
+          data-testid="update-button-id"
         >
           {isSubmitting ? "Updating..." : "Update"}
         </FilledButton>

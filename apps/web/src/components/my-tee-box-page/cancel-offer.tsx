@@ -82,6 +82,7 @@ export const CancelOffer = ({
               aria-expanded={isCancelOfferOpen}
               className="z-[2]"
               aria-label="sidebarToggle"
+              data-testid="close-button-id"
             >
               <Close className="h-[25px] w-[25px]" />
             </button>
@@ -126,11 +127,12 @@ export const CancelOffer = ({
                   }`}
                   disabled={cancel.isLoading}
                   onClick={cancelOffer}
+                  data-testid="cancel-offer-button-id"
                 >
                   {cancel.isLoading ? "Cancelling Offer" : "Cancel Offer"}
                 </FilledButton>
 
-                <OutlineButton onClick={() => setIsCancelOfferOpen(false)}>
+                <OutlineButton onClick={() => setIsCancelOfferOpen(false)} data-testid="cancel-button-id">
                   Cancel
                 </OutlineButton>
               </div>
@@ -175,6 +177,9 @@ const TeeTimeItem = ({
         target="_blank"
         rel={"noopenner noreferrer"}
         className="flex items-center gap-4"
+        data-testid="owned-by-name-id"
+        data-test={ownedById}
+        data-qa={courseId}
       >
         <Avatar src={ownedByImage} />
         <div className="text-primary-gray">
