@@ -228,7 +228,7 @@ const Data = ({
               playersOptions={PlayersOptions}
               availableSlots={availableSlots ?? 0}
               isDisabled={isSecondHand}
-              teeTimeId={teeTimeId!}
+              teeTimeId={teeTimeId}
             />
           ) : (
             players && (
