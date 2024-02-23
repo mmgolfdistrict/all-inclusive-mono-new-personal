@@ -251,6 +251,8 @@ const TableRow = ({
             <Link
               href={href}
               className="whitespace-nowrap text-secondary-black underline"
+              data-testid="course-id"
+              data-qa={course}
             >
               {course}
             </Link>
@@ -263,6 +265,9 @@ const TableRow = ({
               <Link
                 href={`/${courseId}/profile/${ownedById}`}
                 className="whitespace-nowrap"
+                data-testid="owned-by-name-id"
+                data-test={ownedById}
+                data-qa={ownedByName}
               >
                 {type === "SECOND_HAND" && status === "LISTED"
                   ? "Listed"
@@ -285,19 +290,19 @@ const TableRow = ({
       </td>
       <td className="whitespace-nowrap px-4 py-3">
         <div className="flex  justify-end gap-2">
-          <Link href={href}>
+          <Link href={href} data-testid="details-button-id">
             <OutlineButton className="min-w-[155px]">Details</OutlineButton>
           </Link>
           {status === "LISTED" ? (
-            <FilledButton className="min-w-[155px]" onClick={buyTeeTime}>
+            <FilledButton className="min-w-[155px]" onClick={buyTeeTime} data-testid="buy-button-id">
               Buy
             </FilledButton>
           ) : (
-            <FilledButton className="min-w-[155px]" onClick={openMakeAnOffer}>
+            <FilledButton className="min-w-[155px]" onClick={openMakeAnOffer} data-testid="make-offer-button-id">
               Make an Offer
             </FilledButton>
           )}
-          <button onClick={() => void removeFromWatchlist(teeTimeId)}>
+          <button onClick={() => void removeFromWatchlist(teeTimeId)} data-testid="remove-watch-list-button-id">
             <Trashcan className="w-[25px] max-w-[25px]" />
           </button>
         </div>

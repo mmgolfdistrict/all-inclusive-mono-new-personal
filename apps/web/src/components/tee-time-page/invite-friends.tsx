@@ -174,7 +174,7 @@ export const InviteFriends = ({
                     ? "You"
                     : friend.name}
                 </div>
-                <button onClick={() => removeFriend(idx)}>
+                <button onClick={() => removeFriend(idx)} data-testid="remove-friend-button-id">
                   <Close className="w-[20px]" />
                 </button>
               </div>
@@ -200,6 +200,7 @@ export const InviteFriends = ({
                   : "bg-secondary-white  max-w-[400px]"
               } px-4 py-2 flex justify-between text-[14px] font-semibold outline-none`}
               list="searchedFriends2"
+              data-testid="new-friend-id"
             />
 
             {isError && error ? (
@@ -238,12 +239,14 @@ export const InviteFriends = ({
                             ? "bg-white"
                             : "bg-secondary-white max-w-[400px]"
                         } px-4 py-2 flex justify-between text-[14px] font-semibold outline-none`}
+                        data-testid="invite-friend-id"
                       />
                       <FilledButton
                         className={`w-full !max-w-fit ${
                           invite.isLoading ? "animate-pulse" : ""
                         }`}
                         onClick={inviteFriendCall}
+                        data-testid="invite-button-id"
                       >
                         {invite.isLoading ? "Inviting..." : "Invite"}
                       </FilledButton>
@@ -267,6 +270,7 @@ export const InviteFriends = ({
               updateNames.isLoading ? "animate-pulse" : ""
             }`}
             onClick={() => void save()}
+            data-testid="send-button-id"
           >
             {updateNames.isLoading ? "Sending..." : "Send"}
           </OutlineButton>

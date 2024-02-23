@@ -211,6 +211,7 @@ export const ManageOwnedTeeTime = ({
               aria-expanded={isManageOwnedTeeTimeOpen}
               className="z-[2]"
               aria-label="sidebarToggle"
+              data-testid="close-button-id"
             >
               <Close className="h-[25px] w-[25px]" />
             </button>
@@ -247,6 +248,7 @@ export const ManageOwnedTeeTime = ({
                     onChange={handleMinimumOfferPrice}
                     onBlur={handleBlur}
                     className="mx-auto max-w-[300px] rounded-lg bg-secondary-white px-4 py-1 text-center text-[24px] font-semibold outline-none md:text-[32px]"
+                    data-testid="minimum-offer-price-id"
                   />
                 </div>
               </div>
@@ -268,7 +270,7 @@ export const ManageOwnedTeeTime = ({
                             ? "You"
                             : friend.name}
                         </div>
-                        <button onClick={() => removeFriend(idx)}>
+                        <button onClick={() => removeFriend(idx)} data-testid="remove-friend-button-id">
                           <Close className="w-[20px]" />
                         </button>
                       </div>
@@ -290,6 +292,7 @@ export const ManageOwnedTeeTime = ({
                       onSelect={addFriend}
                       placeholder="Username or email"
                       className="mx-auto w-full max-w-[400px] rounded-lg bg-secondary-white px-4 py-2 flex justify-between text-[14px] font-semibold outline-none"
+                      data-testid="search-friend-id"
                     />
                     {!isLoading &&
                     friendList?.length === 0 &&
@@ -314,12 +317,14 @@ export const ManageOwnedTeeTime = ({
                                 }}
                                 placeholder="Email or phone number"
                                 className="mx-auto w-full max-w-[400px] rounded-lg bg-secondary-white px-4 py-2 flex justify-between text-[14px] font-semibold outline-none"
+                                data-testid="invite-friend-id"
                               />
                               <FilledButton
                                 className={`w-full !max-w-fit ${
                                   invite.isLoading ? "animate-pulse" : ""
                                 }`}
                                 onClick={inviteFriendCall}
+                                data-testid="invite-button-id"
                               >
                                 {invite.isLoading ? "Inviting..." : "Invite"}
                               </FilledButton>
@@ -369,12 +374,13 @@ export const ManageOwnedTeeTime = ({
                 All sales are final.
               </div>
               <div className="flex flex-col gap-2">
-                <FilledButton className="w-full" onClick={() => void save()}>
+                <FilledButton className="w-full" onClick={() => void save()} data-testid="save-button-id">
                   Save
                 </FilledButton>
 
                 <OutlineButton
                   onClick={() => setIsManageOwnedTeeTimeOpen(false)}
+                  data-testid="cancel-button-id"
                 >
                   Cancel
                 </OutlineButton>

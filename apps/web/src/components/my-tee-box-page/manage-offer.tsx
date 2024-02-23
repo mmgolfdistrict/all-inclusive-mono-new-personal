@@ -116,6 +116,7 @@ export const ManageOffer = ({
               aria-expanded={isManageOfferOpen}
               className="z-[2]"
               aria-label="sidebarToggle"
+              data-testid="close-button-id"
             >
               <Close className="h-[25px] w-[25px]" />
             </button>
@@ -156,6 +157,7 @@ export const ManageOffer = ({
                     onChange={handleListingPrice}
                     onBlur={handleBlur}
                     className="mx-auto max-w-[300px] rounded-lg bg-secondary-white px-4 py-1 text-center text-[24px] font-semibold outline-none md:text-[32px] pl-6"
+                    data-testid="listing-price-id"
                   />
                 </div>
               </div>
@@ -175,11 +177,14 @@ export const ManageOffer = ({
                   }}
                   orientation="horizontal"
                   className="mx-auto flex"
+                  data-testid="player-button-id"
                 >
                   {PlayerOptions.map((value, index) => (
                     <Item
                       key={index}
                       value={value}
+                      dataTestId="player-item-id"
+                      dataQa={value}
                       className={`${
                         index === 0
                           ? "rounded-l-full border-b border-l border-t border-stroke"
@@ -187,9 +192,6 @@ export const ManageOffer = ({
                           ? "rounded-r-full border border-stroke"
                           : "border-b border-l border-t border-stroke"
                       } px-[1.75rem]`}
-                      dataTestId={""}
-                      dataTest={""}
-                      dataQa={""}
                     />
                   ))}
                 </ToggleGroup.Root>
@@ -220,11 +222,11 @@ export const ManageOffer = ({
                 All sales are final.
               </div>
               <div className="flex flex-col gap-2">
-                <FilledButton className="w-full" onClick={updateOffer}>
+                <FilledButton className="w-full" onClick={updateOffer} data-testid="update-offer-button-id">
                   Update Offer
                 </FilledButton>
 
-                <OutlineButton onClick={() => setIsManageOfferOpen(false)}>
+                <OutlineButton onClick={() => setIsManageOfferOpen(false)} data-testid="cancel-button-id">
                   Cancel
                 </OutlineButton>
               </div>
@@ -275,6 +277,9 @@ const TeeTimeItem = ({
         target="_blank"
         rel={"noopenner noreferrer"}
         className="flex items-center gap-4"
+        data-testid="owned-by-name-button-id"
+        data-test={ownedById}
+        data-qa={ownedByName}
       >
         <Avatar src={ownedByImage} />
         <div className="text-primary-gray">

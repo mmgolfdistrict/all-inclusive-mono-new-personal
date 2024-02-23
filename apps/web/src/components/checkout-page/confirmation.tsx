@@ -38,6 +38,7 @@ export const Confirmation = ({ teeTimeId }: { teeTimeId: string }) => {
         <Link
           href={`/${course?.id}/my-tee-box`}
           className="w-full md:w-fit md:min-w-[250px]"
+          data-testid="go-to-my-tee-box-button-id"
         >
           <FilledButton className="w-full">Go To My Tee Box</FilledButton>
         </Link>

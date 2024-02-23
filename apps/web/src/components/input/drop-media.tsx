@@ -11,6 +11,7 @@ interface DropMediaProps {
   register: unknown;
   src?: string | null;
   isUploading?: boolean;
+  dataTestId?: string;
 }
 
 export const DropMedia = ({
@@ -22,6 +23,7 @@ export const DropMedia = ({
   register,
   src,
   isUploading,
+  dataTestId
 }: DropMediaProps) => {
   const [dragging, setDragging] = useState(false);
   const [imageSrc, setImageSrc] = useState<string | null>(null);
@@ -113,6 +115,7 @@ export const DropMedia = ({
       onDragLeave={handleDragLeave}
       onClick={openFileSystem}
       id={`drop-media-${id}`}
+      data-testid={dataTestId}
     >
       <div>
         <label

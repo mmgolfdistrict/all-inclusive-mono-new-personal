@@ -58,6 +58,7 @@ export const ConnectAccount = ({ userId }: { userId: string }) => {
               <SquareButton
                 onClick={googleConnect}
                 className="flex w-full items-center justify-center gap-3 text-primary-gray shadow-google-btn"
+                data-testid="connect-google-button-id"
               >
                 <Google className="w-[24px]" />
                 Connect Google
@@ -69,6 +70,7 @@ export const ConnectAccount = ({ userId }: { userId: string }) => {
             <SquareButton
               onClick={appleConnect}
               className="flex items-center justify-center gap-3 bg-black text-white"
+              data-testid="connect-apple-button-id"
             >
               <Apple className="w-[24px]" />
               Connect Apple
@@ -79,6 +81,7 @@ export const ConnectAccount = ({ userId }: { userId: string }) => {
             <SquareButton
               onClick={facebookConnect}
               className="flex items-center justify-center gap-3 bg-facebook text-white"
+              data-testid="connect-facebook-button-id"
             >
               <Facebook className="w-[24px]" />
               Connect Facebook

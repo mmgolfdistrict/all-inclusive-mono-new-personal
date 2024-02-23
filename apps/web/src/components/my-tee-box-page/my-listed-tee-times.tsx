@@ -171,6 +171,9 @@ const TableRow = ({
         <Link
           href={`/${courseId}/${teeTimeId}/listing/${listingId}`}
           className="flex items-center gap-2"
+          data-testid="course-listing-id"
+          data-test={listingId}
+          data-qa={teeTimeId}
         >
           <Avatar src={iconSrc} />
           <div className="flex flex-col">
@@ -195,7 +198,7 @@ const TableRow = ({
       </td>
       <td className="whitespace-nowrap px-4 py-3">
         <div className="flex  justify-end gap-2">
-          <OutlineButton onClick={openManageListTeeTimeListing}>
+          <OutlineButton onClick={openManageListTeeTimeListing} data-testid="manage-button-id">
             Manage
           </OutlineButton>
         </div>

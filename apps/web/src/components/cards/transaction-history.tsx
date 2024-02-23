@@ -39,6 +39,7 @@ export const TransactionHistory = ({ teeTimeId }: { teeTimeId: string }) => {
           <button
             onClick={openWatchers}
             className="flex text-sm gap-[2px] items-center border border-stroke rounded-md px-2"
+            data-testid="open-watchers-button-id"
           >
             <Heart className={`w-[13px] md:w-[18px]`} fill={"#40942A"} />
             {watchers.length === 10 ? "10+" : watchers.length}
@@ -108,6 +109,9 @@ export const TransactionHistory = ({ teeTimeId }: { teeTimeId: string }) => {
                   className={`flex max-w-[98%] w-full gap-2 items-center p-2 ${
                     idx !== watchers.length - 1 ? "border-b border-stroke" : ""
                   }`}
+                  data-testid="watcher-profile-id"
+                  data-test={watcher?.userId}
+                  data-qa={course?.id}
                 >
                   <Avatar src={watcher.image ?? ""} />
                   <div>{watcher.handle}</div>
@@ -154,6 +158,8 @@ const TableRow = ({
         <Link
           href={`/${courseId}/profile/${userId}`}
           className="flex items-center gap-2"
+          data-testid="profile-user-id"
+          data-test={userId}
         >
           <Avatar src={userImage ?? ""} />
           {user}

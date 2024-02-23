@@ -17,10 +17,10 @@ export const Footer = () => {
         <div />
       ) : (
         <div className="flex flex-col items-start gap-2 md:items-end lg:flex-row lg:items-center">
-          <Link href={`/${course?.id}}/faq`}>Help</Link>
-          <Link href={`/${course?.id}/about-us`}>About Us</Link>
-          <Link href={`/${course?.id}/privacy-policy`}>Privacy Policy</Link>
-          <Link href={`/${course?.id}/terms-of-service`}>Terms of Service</Link>
+          <Link href={`/${course?.id}}/faq`} data-testid="footer-help-id">Help</Link>
+          <Link href={`/${course?.id}/about-us`} data-testid="footer-about-us-id">About Us</Link>
+          <Link href={`/${course?.id}/privacy-policy`} data-testid="footer-privacy-policy-id">Privacy Policy</Link>
+          <Link href={`/${course?.id}/terms-of-service`} data-testid="footer-terms-of-service-id">Terms of Service</Link>
         </div>
       )}
       <div className="flex items-end gap-1 md:hidden">

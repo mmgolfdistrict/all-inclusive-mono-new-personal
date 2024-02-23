@@ -44,6 +44,7 @@ export const TransactionHistory = () => {
       <OutlineButton
         className="sticky left-1/2 mx-auto w-fit -translate-x-1/2"
         onClick={loadMore}
+        data-testid="load-more-button-id"
       >
         Load more
       </OutlineButton>

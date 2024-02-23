@@ -193,6 +193,10 @@ export const Filters = () => {
               }
             }
           }}
+          data-testid="slider-start-time-id"
+          data-qa={`${startTimeOptions.findIndex((i) => i.value === localStartTime[0])} - ${
+            startTimeOptions.findIndex((i) => i.value === localStartTime[1])
+          }`}
         />
       </section>
 
@@ -310,6 +314,7 @@ export const Filters = () => {
             if (value) setLocalPriceRange(value);
           }}
           data-testid="slider-price-range-id"
+          data-qa={`${localPriceRange?.[0]}-${localPriceRange?.[1]}`}
         />
       </section>
     </div>
@@ -326,7 +331,7 @@ export const Item = ({
 }: {
   value: string;
   className?: string;
-  dataTestId: string;
+  dataTestId?: string;
   dataQa?: string;
   dataTest?: string;
   dataCy?: string;

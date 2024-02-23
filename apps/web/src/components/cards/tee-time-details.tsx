@@ -168,6 +168,7 @@ export const TeeTimeDetails = ({
               <OutlineButton
                 onClick={() => void share()}
                 className="w-full whitespace-nowrap"
+                data-testid="share-button-id"
               >
                 <div className="flex items-center justify-center gap-2">
                   {isCopied ? (
@@ -184,6 +185,7 @@ export const TeeTimeDetails = ({
               <OutlineButton
                 className="w-full whitespace-nowrap"
                 onClick={addToWatchlist}
+                data-testid="watch-list-button-id"
               >
                 <div className="flex items-center justify-center gap-2">
                   <Heart
@@ -196,6 +198,7 @@ export const TeeTimeDetails = ({
               <FilledButton
                 className="w-full whitespace-nowrap md:px-14"
                 onClick={buyTeeTime}
+                data-testid="buy-tee-time-button-id"
               >
                 Buy
               </FilledButton>

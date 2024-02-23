@@ -199,6 +199,9 @@ const TableRow = ({
         <Link
           href={`/${courseId}/${teeTimeId}`}
           className="flex items-center gap-2"
+          data-testid="course-tee-time-id"
+          data-test={teeTimeId}
+          data-qa={courseId}
         >
           <Avatar src={iconSrc} />
           <div className="flex flex-col">
@@ -217,6 +220,9 @@ const TableRow = ({
           target="_blank"
           rel="noopenner noreferrer"
           className="flex items-center gap-2 underline"
+          data-testid="owned-by-id"
+          data-test={ownedById}
+          data-qa={courseId}
         >
           <Avatar src={ownedByImage} />
           <div className="text-primary-gray">{ownedBy}</div>
@@ -235,9 +241,9 @@ const TableRow = ({
       <td className="whitespace-nowrap px-4 py-3">
         {status === "PENDING" ? (
           <div className="flex  justify-end gap-2">
-            <OutlineButton onClick={openManageOffer}>Manage</OutlineButton>
+            <OutlineButton onClick={openManageOffer} data-testid="manage-button-id">Manage</OutlineButton>
 
-            <FilledButton onClick={openCancelOffer}>Cancel Offer</FilledButton>
+            <FilledButton onClick={openCancelOffer} data-testid="cancel-offer-button-id">Cancel Offer</FilledButton>
           </div>
         ) : null}
       </td>

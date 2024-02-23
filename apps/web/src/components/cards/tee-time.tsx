@@ -192,6 +192,7 @@ export const TeeTime = ({
               <Link
                 href={`/${courseId}/profile/${soldById}`}
                 className="text-primary text-ellipsis"
+                data-testid="sold-by-name-id"
               >
                 {soldByName}
               </Link>
