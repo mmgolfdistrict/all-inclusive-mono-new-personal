@@ -101,7 +101,6 @@ export class StripeService {
         return_url: returnUrl,
         type: "account_onboarding",
         collect: "eventually_due",
-
       })
       .catch((err) => {
         this.logger.error(`Error creating stripe account link: ${err}`);
@@ -119,7 +118,7 @@ export class StripeService {
         amount: 10,
         currency: currency,
         destination: accountId,
-        source_type:'bank_account'
+        source_type: "bank_account",
       })
       .catch((err) => {
         this.logger.error(`Error creating stripe payout: ${err}`);
