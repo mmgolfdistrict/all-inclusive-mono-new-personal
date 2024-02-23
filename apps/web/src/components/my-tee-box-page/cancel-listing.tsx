@@ -130,11 +130,11 @@ export const CancelListing = ({
                 All sales are final.
               </div>
               <div className="flex flex-col gap-2">
-                <FilledButton className="w-full" onClick={cancelListing}>
+                <FilledButton className="w-full" onClick={cancelListing} data-testid="cancel-listing-button-id">
                   Cancel Listing
                 </FilledButton>
 
-                <OutlineButton onClick={() => setIsCancelListingOpen(false)}>
+                <OutlineButton onClick={() => setIsCancelListingOpen(false)} data-testid="cancel-button-id">
                   Cancel
                 </OutlineButton>
               </div>

@@ -63,6 +63,7 @@ export const CounterofferSuccess = ({
               aria-expanded={isCounterofferSuccessOpen}
               className="z-[2]"
               aria-label="sidebarToggle"
+              data-testid="close-button-id"
             >
               <Close className="h-[25px] w-[25px]" />
             </button>
@@ -127,11 +128,12 @@ export const CounterofferSuccess = ({
                 All sales are final.
               </div>
               <div className="flex flex-col gap-2">
-                <FilledButton className="w-full" onClick={cancelCounteroffer}>
+                <FilledButton className="w-full" onClick={cancelCounteroffer} data-testid="cancel-counter-offer-id">
                   Cancel counteroffer
                 </FilledButton>
                 <OutlineButton
                   onClick={() => setIsCounterofferSuccessOpen(false)}
+                  data-testid="close-button-id"
                 >
                   Close
                 </OutlineButton>

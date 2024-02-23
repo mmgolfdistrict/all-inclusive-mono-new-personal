@@ -92,12 +92,14 @@ export default function ForgotPassword() {
                 register={register}
                 name="email"
                 error={errors.email?.message}
+                data-testid="forgot-password-email-id"
               />
               <ReCAPTCHA
                 size="normal"
                 sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ?? ""}
                 onChange={onReCAPTCHAChange}
                 ref={recaptchaRef}
+                data-testid="forgot-password-recaptcha-id"
               />
               {errors?.ReCAPTCHA?.message && (
                 <div className="text-[12px] text-red">
@@ -108,6 +110,7 @@ export default function ForgotPassword() {
                 className={`w-full rounded-full ${
                   forgotFn.isLoading ? "animate-pulse cursor-not-allopwed" : ""
                 }`}
+                data-testid="forgot-password-submit-id"
               >
                 {forgotFn.isLoading ? "Submitting..." : "Submit"}
               </FilledButton>
@@ -118,7 +121,7 @@ export default function ForgotPassword() {
       <div className="flex max-w-fit mx-auto items-center gap-4 justify-center flex-col md:flex-row">
         <div className="pt-4 text-center text-[14px] text-primary-gray">
           Don&apos;t have an account?{" "}
-          <Link className="text-primary" href={`/${course?.id}/register`}>
+          <Link className="text-primary" href={`/${course?.id}/register`} data-testid="signup-button-id">
             Sign Up
           </Link>{" "}
           instead
@@ -127,6 +130,7 @@ export default function ForgotPassword() {
         <Link
           className="text-primary  md:self-end text-[14px]"
           href={`/${course?.id}/login`}
+          data-testid="login-button-id"
         >
           Back to Login
         </Link>

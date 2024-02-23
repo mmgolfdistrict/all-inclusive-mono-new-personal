@@ -65,6 +65,7 @@ export const PrivacySettings = () => {
           }}
           orientation="horizontal"
           className="flex"
+          data-testid="privacy-button-id"
         >
           {Options.map((value: OptionsType, index) => (
             <Item
@@ -111,6 +112,8 @@ export const Item = ({
       className={`bg-white px-4 py-2 text-left capitalize text-[14px] text-primary-gray transition-colors data-[state=on]:bg-primary data-[state=on]:text-white ${
         className ?? ""
       }`}
+      data-testid="toggle-item-id"
+      data-qa={value}
     >
       {value.toLowerCase()}
     </ToggleGroup.Item>

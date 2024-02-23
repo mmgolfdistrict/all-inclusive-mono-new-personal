@@ -13,7 +13,7 @@ export const Tooltip = ({
   return (
     <RadixTooltip.Provider>
       <RadixTooltip.Root delayDuration={0}>
-        <RadixTooltip.Trigger className={`${className ?? ""}`}>
+        <RadixTooltip.Trigger className={`${className ?? ""}`} data-testid="trigger-button-id">
           {trigger}
         </RadixTooltip.Trigger>
         <RadixTooltip.Portal>

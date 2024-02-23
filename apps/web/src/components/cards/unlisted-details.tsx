@@ -166,6 +166,9 @@ export const UnlistedDetails = ({
             <Link
               href={`/${course?.id}/profile/${data?.soldById}`}
               className="text-primary"
+              data-testid="sold-by-name-id"
+              data-test={data?.soldById}
+              data-qa={course?.id}
             >
               {data?.soldByName}
             </Link>
@@ -183,6 +186,7 @@ export const UnlistedDetails = ({
               setPlayers={setPlayers}
               playersOptions={PlayersOptions}
               availableSlots={data?.availableSlots ?? 0}
+              teeTimeId={teeTimeId}
             />
           </div>
           <div className="flex flex-col flex-wrap justify-between gap-2 md:flex-row">
@@ -203,6 +207,7 @@ export const UnlistedDetails = ({
                     <OutlineButton
                       onClick={() => void share()}
                       className="w-full whitespace-nowrap"
+                      data-testid="share-button-id"
                     >
                       <div className="flex items-center justify-center gap-2">
                         {isCopied ? (
@@ -219,6 +224,7 @@ export const UnlistedDetails = ({
                     <OutlineButton
                       className="w-full whitespace-nowrap"
                       onClick={addToWatchlist}
+                      data-testid="watchlist-button-id"
                     >
                       <div className="flex items-center justify-center gap-2">
                         <Heart
@@ -233,6 +239,7 @@ export const UnlistedDetails = ({
                     <FilledButton
                       className="w-full whitespace-nowrap md:px-14 flex items-center justify-center !text-center"
                       onClick={makeAnOffer}
+                      data-testid="place-offer-button-id"
                     >
                       Place Offer
                     </FilledButton>
@@ -243,6 +250,7 @@ export const UnlistedDetails = ({
                   <OutlineButton
                     onClick={() => void share()}
                     className="w-full whitespace-nowrap"
+                    data-testid="share-button-id"
                   >
                     <div className="flex items-center justify-center gap-2">
                       {isCopied ? (
@@ -259,12 +267,14 @@ export const UnlistedDetails = ({
                   <OutlineButton
                     className="w-full whitespace-nowrap md:px-8"
                     onClick={() => setIsManageTeeTimeOpen(true)}
+                    data-testid="manage-button-id"
                   >
                     Manage
                   </OutlineButton>
                   <FilledButton
                     className="w-full whitespace-nowrap md:!min-w-[130px]"
                     onClick={() => setIsListTeeTimeOpen(true)}
+                    data-testid="sell-button-id"
                   >
                     Sell
                   </FilledButton>

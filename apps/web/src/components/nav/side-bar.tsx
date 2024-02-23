@@ -81,7 +81,7 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
           <div className="flex  items-center justify-between px-2 py-2">
             <div className="flex items-center gap-2">
               {user && status === "authenticated" ? null : (
-                <Link href={`/${courseId}/login`} onClick={toggleSidebar}>
+                <Link href={`/${courseId}/login`} onClick={toggleSidebar} data-testid="login-button-id">
                   <FilledButton>Log In</FilledButton>
                 </Link>
               )}
@@ -93,6 +93,7 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
               aria-expanded={isSideBarOpen}
               className="z-[2] p-4"
               aria-label="sidebarToggle"
+              data-testid="close-button-id"
             >
               <Close className="h-[25px] w-[25px]" />
             </button>
@@ -105,6 +106,8 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
                 icon={<Club className="w-[16px]" />}
                 className="border-t border-stroke-secondary p-2 md:p-4"
                 onClick={toggleSidebar}
+                data-testid="tee-time-course-id"
+                data-test={courseId}
               />
               <NavItem
                 href={`/${courseId}/auctions`}
@@ -112,6 +115,8 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
                 icon={<Auction className="w-[16px]" />}
                 className="border-t border-stroke-secondary p-2 md:p-4"
                 onClick={toggleSidebar}
+                data-testid="auction-id"
+                data-test={courseId}
               />
               <NavItem
                 href={`/${courseId}/my-tee-box`}
@@ -119,6 +124,8 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
                 icon={<Marketplace className="w-[16px]" />}
                 className="border-t border-stroke-secondary p-2 md:p-4"
                 onClick={toggleSidebar}
+                data-testid="my-tee-box-id"
+                data-test={courseId}
               />
 
               <NavItem
@@ -142,6 +149,8 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
                   </div>
                 }
                 className="border-b border-t border-stroke-secondary p-2 md:p-4"
+                data-testid="my-offer-id"
+                data-test={courseId}
               />
             </div>
             {user && status === "authenticated" ? (
@@ -154,36 +163,48 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
                         src={imageUrl ?? "/defaults/default-profile.webp"}
                         name={user?.name}
                       />
-                      <div>{user?.name}</div>
-                      <div className="text-primary-gray">@{user?.name}</div>
+                      <div className="flex flex-col">
+                        <p className="font-bold">{user?.name}</p>
+                        <p>{user?.email}</p>
+                        <div className="text-primary-gray">@{user?.name}</div>
+                      </div>
                     </div>
                   }
                   className="border-t border-stroke-secondary p-4"
                   onClick={toggleSidebar}
+                  data-testid="user-name-id"
+                  data-test={user?.id}
                 />
                 <NavItem
                   href={`/${courseId}/account-settings/${user?.id}`}
                   text="Account Settings"
                   className="border-t border-stroke-secondary p-4"
                   onClick={toggleSidebar}
+                  data-testid="account-setting-id"
+                  data-test={user?.id}
                 />
                 <NavItem
                   href={`/${courseId}/my-tee-box`}
                   text="My Tee Box"
                   className="border-t border-stroke-secondary p-4"
                   onClick={toggleSidebar}
+                  data-testid="my-tee-box-id"
+                  data-test={courseId}
                 />
                 <NavItem
                   href={`/${courseId}/watchlist`}
                   text="Watchlist"
                   className="border-t border-stroke-secondary p-4"
                   onClick={toggleSidebar}
+                  data-testid="watch-list-id"
+                  data-test={courseId}
                 />
                 <NavItem
                   href="/"
                   text="Log Out"
                   className="border-b border-t border-stroke-secondary p-4"
                   onClick={() => void logOutUser()}
+                  data-testid="logout-id"
                 />
               </div>
             ) : null}

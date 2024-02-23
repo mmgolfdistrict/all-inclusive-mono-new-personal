@@ -173,6 +173,7 @@ export const ListTeeTime = ({
               aria-expanded={isListTeeTimeOpen}
               className="z-[2]"
               aria-label="sidebarToggle"
+              data-testid="close-button-id"
             >
               <Close className="h-[25px] w-[25px]" />
             </button>
@@ -205,6 +206,7 @@ export const ListTeeTime = ({
                     onChange={handleListingPrice}
                     onBlur={handleBlur}
                     className="mx-auto max-w-[300px] rounded-lg bg-secondary-white px-4 py-1 text-center text-[24px] font-semibold outline-none md:text-[32px] pl-6"
+                    data-testid="listing-price-id"
                   />
                 </div>
               </div>
@@ -227,10 +229,13 @@ export const ListTeeTime = ({
                   }}
                   orientation="horizontal"
                   className="mx-auto flex"
+                  data-testid="player-button-id"
                 >
                   {PlayerOptions.map((value, index) => (
                     <Item
                       key={index}
+                      dataTestId="player-item-id"
+                      dataQa={value}
                       value={value}
                       className={`${
                         index === 0
@@ -280,11 +285,15 @@ export const ListTeeTime = ({
                 <FilledButton
                   className="w-full"
                   onClick={() => void listTeeTime()}
+                  data-testid="sell-tee-time-button-id"
                 >
                   Sell
                 </FilledButton>
 
-                <OutlineButton onClick={() => setIsListTeeTimeOpen(false)}>
+                <OutlineButton
+                  onClick={() => setIsListTeeTimeOpen(false)}
+                  data-testid="cancel-button-id"
+                >
                   Cancel
                 </OutlineButton>
               </div>

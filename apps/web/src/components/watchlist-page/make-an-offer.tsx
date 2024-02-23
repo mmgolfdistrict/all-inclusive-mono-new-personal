@@ -143,6 +143,7 @@ export const MakeAnOffer = ({
               aria-expanded={isMakeAnOfferOpen}
               className="z-[2]"
               aria-label="sidebarToggle"
+              data-testid="close-button-id"
             >
               <Close className="h-[25px] w-[25px]" />
             </button>
@@ -176,6 +177,7 @@ export const MakeAnOffer = ({
                     onChange={handleOfferPrice}
                     onBlur={handleBlur}
                     className="mx-auto max-w-[300px] rounded-lg bg-secondary-white px-4 py-1 text-center text-[24px] font-semibold outline-none md:text-[32px] pl-6"
+                    data-testid="listing-price-id"
                   />
                 </div>
               </div>
@@ -197,6 +199,7 @@ export const MakeAnOffer = ({
                   }}
                   orientation="horizontal"
                   className="mx-auto flex"
+                  data-testid="player-button-id"
                 >
                   {PlayerOptions.map((value, index) => (
                     <Item
@@ -213,6 +216,8 @@ export const MakeAnOffer = ({
                           ? "opacity-50 cursor-not-allowed"
                           : ""
                       }`}
+                      dataTestId="player-item-id"
+                      dataQa={value}
                     />
                   ))}
                 </ToggleGroup.Root>
@@ -240,11 +245,18 @@ export const MakeAnOffer = ({
                 cancel your offer before it is accepted.
               </div>
               <div className="flex flex-col gap-2">
-                <FilledButton className="w-full" onClick={sendOffer}>
+                <FilledButton
+                  className="w-full"
+                  onClick={sendOffer}
+                  data-testid="send-offer-button-id"
+                >
                   Send Offer
                 </FilledButton>
 
-                <OutlineButton onClick={() => setIsMakeAnOfferOpen(false)}>
+                <OutlineButton
+                  onClick={() => setIsMakeAnOfferOpen(false)}
+                  data-testid="cancel-button-id"
+                >
                   Cancel
                 </OutlineButton>
               </div>

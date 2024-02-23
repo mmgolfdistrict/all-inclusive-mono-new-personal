@@ -162,16 +162,30 @@ export const DailyTeeTimes = ({
   return (
     <div className="flex flex-col gap-1 md:gap-4 bg-white px-4 py-2 md:rounded-xl md:px-8 md:py-6">
       <div className="flex flex-wrap justify-between gap-2">
-        <div className="text-[13px] md:text-lg">{dayMonthDate(date)}</div>
+        <div
+          className="text-[13px] md:text-lg"
+          data-testid="date-group-id"
+          data-qa={dayMonthDate(date)}
+        >
+          {dayMonthDate(date)}
+        </div>
         {isLoadingWeather && !weather ? (
           <div className="h-8 w-[30%] bg-gray-200 rounded-md  animate-pulse" />
         ) : weather && !isLoadingWeather ? (
           <div className="flex items-center gap-1">
             <div>{WeatherIcons[weather?.iconCode ?? ""]}</div>
-            <div className="text-[12px] md:text-[16px]">
+            <div
+              className="text-[12px] md:text-[16px]"
+              data-testid="weather-degrees-id"
+              data-qa={weather?.temperature}
+            >
               {weather?.temperature !== 0 ? `${weather?.temperature}°F` : ""}
             </div>
-            <div className="hidden text-sm text-primary-gray md:block">
+            <div
+              className="hidden text-sm text-primary-gray md:block"
+              data-testid="weather-text-id"
+              data-qa={weather?.shortForecast}
+            >
               {weather?.shortForecast ?? ""}
             </div>
           </div>
@@ -184,6 +198,8 @@ export const DailyTeeTimes = ({
           <button
             onClick={scrollLeft}
             className="flex h-fit items-center justify-center rounded-full bg-white p-2 shadow-overflow-indicator"
+            data-testid="tee-time-left-chevron-id"
+            data-qa={dayMonthDate(date)}
           >
             <LeftChevron fill="#40942A" className="w-[21px]" />
           </button>
@@ -233,6 +249,8 @@ export const DailyTeeTimes = ({
           <button
             onClick={scrollRight}
             className="flex h-fit items-center justify-center rounded-full bg-white p-2 shadow-overflow-indicator"
+            data-testid="tee-time-right-chevron-id"
+            data-qa={dayMonthDate(date)}
           >
             <LeftChevron fill="#40942A" className="w-[21px] rotate-180" />
           </button>

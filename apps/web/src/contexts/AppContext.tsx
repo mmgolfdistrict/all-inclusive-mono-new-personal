@@ -18,6 +18,8 @@ interface AppContextType {
   entity: EntityType | undefined;
   courses: CourseType[] | undefined;
   setPrevPath: Dispatch<SetStateAction<string | null>>;
+  alertOffersShown: boolean;
+  setAlertOffersShown: Dispatch<SetStateAction<boolean>>;
 }
 
 const AppContext = createContext<AppContextType>({
@@ -25,6 +27,8 @@ const AppContext = createContext<AppContextType>({
   entity: undefined,
   courses: undefined,
   setPrevPath: () => undefined,
+  alertOffersShown: false,
+  setAlertOffersShown: () => ({}),
 });
 
 export const AppWrapper = ({
@@ -56,12 +60,14 @@ export const AppWrapper = ({
     { entityId: entityId! },
     { enabled: entityId !== undefined }
   );
-
+  const [alertOffersShown, setAlertOffersShown] = useState<boolean>(false);
   const settings = {
     prevPath,
     entity,
     courses,
     setPrevPath,
+    alertOffersShown,
+    setAlertOffersShown,
   };
 
   return <AppContext.Provider value={settings}>{children}</AppContext.Provider>;

@@ -89,6 +89,7 @@ export const CheckoutItem = ({
             isLoading={isLoading || teeTime === undefined || teeTime === null}
             availableSlots={teeTime?.availableSlots}
             isSecondHand={teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND"}
+            teeTimeId={teeTime?.teeTimeId}
           />
         </div>
       </div>
@@ -104,6 +105,7 @@ export const CheckoutItem = ({
         isLoading={isLoading || teeTime === undefined || teeTime === null}
         availableSlots={teeTime?.availableSlots}
         isSecondHand={teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND"}
+        teeTimeId={teeTime?.teeTimeId}
       />
       {isSensibleInvalid ? null : (
         <SensibleWidget sensibleDataToMountComp={sensibleDataToMountComp} />
@@ -170,6 +172,7 @@ const Data = ({
   isLoading,
   availableSlots,
   isSecondHand,
+  teeTimeId,
 }: {
   className: string;
   canChoosePlayer: boolean;
@@ -182,6 +185,7 @@ const Data = ({
   isLoading: boolean;
   availableSlots?: number;
   isSecondHand: boolean;
+  teeTimeId?: string | undefined;
 }) => {
   if (isLoading) {
     return (
@@ -224,6 +228,7 @@ const Data = ({
               playersOptions={PlayersOptions}
               availableSlots={availableSlots ?? 0}
               isDisabled={isSecondHand}
+              teeTimeId={teeTimeId}
             />
           ) : (
             players && (

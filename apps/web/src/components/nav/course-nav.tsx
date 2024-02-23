@@ -71,6 +71,7 @@ export const CourseNav = () => {
             <Hamburger
               onClick={toggleSideBar}
               className="h-[25px] w-[25px] cursor-pointer"
+              data-testid="hamburger-menu-id"
             />
           ) : (
             <div />
@@ -80,7 +81,7 @@ export const CourseNav = () => {
         <div
           className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transform`}
         >
-          <Link href="/">
+          <Link href="/" data-testid="course-logo-id">
             <BlurImage
               src={course?.logo ?? ""}
               alt="course logo"
@@ -101,7 +102,7 @@ export const CourseNav = () => {
             </div>
           ) : (
             <Link href={`/${course?.id}/login`}>
-              <FilledButton className="hidden md:block">Log In</FilledButton>
+              <FilledButton className="hidden md:block" data-testid="login-button-id">Log In</FilledButton>
             </Link>
           )}
         </div>
@@ -114,16 +115,22 @@ export const CourseNav = () => {
               href={`/${courseId}`}
               text="Tee Times"
               icon={<Club className="w-[16px]" />}
+              data-testid="tee-time-id"
+              data-test={courseId}
             />
             <NavItem
               href={`/${courseId}/auctions`}
               text="Auctions"
               icon={<Auction className="w-[16px]" />}
+              data-testid="auction-id"
+              data-test={courseId}
             />
             <NavItem
               href={`/${courseId}/my-tee-box`}
               text="Sell Your Tee Time"
               icon={<Marketplace className="w-[16px]" />}
+              data-testid="sell-your-tee-time-id"
+              data-test={courseId}
             />
 
             <NavItem
@@ -143,6 +150,8 @@ export const CourseNav = () => {
                   ) : null}
                 </div>
               }
+              data-testid="my-offer-id"
+              data-test={courseId}
             />
           </div>
         </div>

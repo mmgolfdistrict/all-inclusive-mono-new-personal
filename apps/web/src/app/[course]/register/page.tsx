@@ -112,6 +112,7 @@ export default function RegisterPage() {
             name="firstName"
             register={register}
             error={errors.firstName?.message}
+            data-testid="register-first-name-id"
           />
           <Input
             label="Last Name"
@@ -121,6 +122,7 @@ export default function RegisterPage() {
             name="lastName"
             register={register}
             error={errors.lastName?.message}
+            data-testid="register-last-name-id"
           />
           <Input
             label="Email"
@@ -130,6 +132,7 @@ export default function RegisterPage() {
             register={register}
             name="email"
             error={errors.email?.message}
+            data-testid="register-email-id"
           />
           <Input
             label="Phone Number"
@@ -150,6 +153,7 @@ export default function RegisterPage() {
               register={register}
               name={"username"}
               error={errors.username?.message}
+              data-testid="register-user-name-id"
             />
             <IconButton
               onClick={(e) => {
@@ -161,6 +165,7 @@ export default function RegisterPage() {
                 }, 1000);
               }}
               className={`mb-1  ${rotate ? "animate-spin" : ""}`}
+              data-testid="register-user-name-refresh-id"
             >
               <Refresh className="h-[14px] w-[14px]" />
             </IconButton>
@@ -177,6 +182,7 @@ export default function RegisterPage() {
             onChange={(e: ChangeEvent<HTMLInputElement>) => {
               setLocation(e.target.value);
             }}
+            data-testid="register-location-id"
           />
           <datalist id="places">
             {cities.data?.autocompleteCities.features.map((city, idx) => (
@@ -195,6 +201,7 @@ export default function RegisterPage() {
               onChange={(e: ChangeEvent<HTMLInputElement>) => {
                 setPassword(e.target.value);
               }}
+              data-testid="register-password-id"
             />
             <IconButton
               onClick={(e) => {
@@ -202,6 +209,7 @@ export default function RegisterPage() {
                 setShowPassword(!showPassword);
               }}
               className={`absolute right-2 !top-[90%] border-none !bg-transparent !transform !-translate-y-[90%]`}
+              data-testid="register-show-password-id"
             >
               {showPassword ? (
                 <Hidden className="h-[14px] w-[14px]" />
@@ -228,6 +236,7 @@ export default function RegisterPage() {
               register={register}
               name="confirmPassword"
               error={errors.confirmPassword?.message}
+              data-testid="register-confirm-password-id"
             />
             <IconButton
               onClick={(e) => {
@@ -235,6 +244,7 @@ export default function RegisterPage() {
                 setShowConfirmPassword(!showConfirmPassword);
               }}
               className={`absolute right-2 !top-[90%] border-none !bg-transparent !transform !-translate-y-[90%]`}
+              data-testid="register-show-confirm-password-id"
             >
               {showConfirmPassword ? (
                 <Hidden className="h-[14px] w-[14px]" />
@@ -248,6 +258,8 @@ export default function RegisterPage() {
             sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ?? ""}
             onChange={onReCAPTCHAChange}
             ref={recaptchaRef}
+            data-testid="register-recaptcha-id"
+
           />
           {errors.ReCAPTCHA?.message && (
             <p className="text-[12px] text-red">{errors.ReCAPTCHA?.message}</p>
@@ -259,6 +271,7 @@ export default function RegisterPage() {
             }`}
             type="submit"
             disabled={isSubmitting}
+            data-testid="register-button-id"
           >
             {isSubmitting ? "Registering..." : "Register"}
           </FilledButton>
@@ -266,7 +279,7 @@ export default function RegisterPage() {
       </section>
       <div className="pt-4 text-center text-[14px] text-primary-gray">
         Already have an account?{" "}
-        <Link className="text-primary" href={`/${course?.id}/login`}>
+        <Link className="text-primary" href={`/${course?.id}/login`} data-testid="signin-button-id">
           Sign In
         </Link>{" "}
         instead

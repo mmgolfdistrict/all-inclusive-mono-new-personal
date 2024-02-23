@@ -82,7 +82,7 @@ export default function ResetPassword() {
             <div className="text-[16px] text-center fade-in text-primary-gray">
               Successfully reset password!
             </div>
-            <Link href={`/${course?.id}/login`}>
+            <Link href={`/${course?.id}/login`} data-testid="login-button-id">
               <FilledButton>Log In</FilledButton>
             </Link>
           </div>
@@ -100,6 +100,7 @@ export default function ResetPassword() {
                 register={register}
                 name="password"
                 error={errors.password?.message}
+                data-testid="reset-password-id"
               />
               <IconButton
                 onClick={(e) => {
@@ -107,6 +108,7 @@ export default function ResetPassword() {
                   setShowPassword(!showPassword);
                 }}
                 className={`absolute right-2 !top-[90%] border-none !bg-transparent !transform !-translate-y-[90%]`}
+                data-testid="show-password-id"
               >
                 {showPassword ? (
                   <Hidden className="h-[14px] w-[14px]" />
@@ -133,6 +135,7 @@ export default function ResetPassword() {
                 register={register}
                 name="confirmPassword"
                 error={errors.confirmPassword?.message}
+                data-testid="reset-confirm-password-id"
               />
               <IconButton
                 onClick={(e) => {
@@ -140,6 +143,7 @@ export default function ResetPassword() {
                   setShowConfirmPassword(!showConfirmPassword);
                 }}
                 className={`absolute right-2 !top-[90%] border-none !bg-transparent !transform !-translate-y-[90%]`}
+                data-testid="show-confirm-password-id"
               >
                 {showConfirmPassword ? (
                   <Hidden className="h-[14px] w-[14px]" />
@@ -152,6 +156,7 @@ export default function ResetPassword() {
               className={`w-full rounded-full ${
                 resetFn.isLoading ? "animate-pulse cursor-not-allopwed" : ""
               }`}
+              data-testid="submit-button-id"
             >
               {resetFn.isLoading ? "Submitting..." : "Submit"}
             </FilledButton>
@@ -161,7 +166,7 @@ export default function ResetPassword() {
       <div className="flex max-w-fit mx-auto items-center gap-4 justify-center flex-col md:flex-row">
         <div className="pt-4 text-center text-[14px] text-primary-gray">
           Don&apos;t have an account?{" "}
-          <Link className="text-primary" href={`/${course?.id}/register`}>
+          <Link className="text-primary" href={`/${course?.id}/register`} data-testid="signup-button-id">
             Sign Up
           </Link>{" "}
           instead
@@ -170,6 +175,7 @@ export default function ResetPassword() {
         <Link
           className="text-primary  md:self-end text-[14px]"
           href={`/${course?.id}/login`}
+          data-testid="back-to-login-button-id"
         >
           Back to Login
         </Link>

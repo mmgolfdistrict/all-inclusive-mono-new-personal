@@ -33,7 +33,7 @@ export default function AuthError() {
         {Errors[errorKey as keyof typeof Errors] ??
           "An error occurred in authorization."}
       </p>
-      <Link href="/" className="underline">
+      <Link href="/" className="underline" data-testid="return-home-id">
         Return Home
       </Link>
     </div>

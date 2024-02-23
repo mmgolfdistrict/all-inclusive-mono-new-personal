@@ -59,7 +59,7 @@ export const ModalWrapper: FC<ModalProps> = ({
                 className ?? ""
               }`}
             >
-              <button className="absolute top-2 right-0 p-2" onClick={onClose}>
+              <button className="absolute top-2 right-0 p-2" onClick={onClose} data-testid="close-button-id">
                 <Close className="w-[20px] h-[20px]" />
               </button>
               <div className="px-4">{children}</div>

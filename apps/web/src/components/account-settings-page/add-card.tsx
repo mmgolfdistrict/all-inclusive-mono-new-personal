@@ -79,6 +79,7 @@ export const AddCard = ({ refetchCards }: { refetchCards: () => unknown }) => {
           register={register}
           error={errors.cardHolderName?.message}
           required
+          data-testid="card-holder-name-id"
         />
         <Input
           label="Card Number"
@@ -94,6 +95,7 @@ export const AddCard = ({ refetchCards }: { refetchCards: () => unknown }) => {
             const formatted = formatCreditCardNumber(e.target.value);
             setValue("cardNumber", formatted);
           }}
+          data-testid="card-number-id"
         />
         <div className="flex gap-2">
           <Input
@@ -111,6 +113,7 @@ export const AddCard = ({ refetchCards }: { refetchCards: () => unknown }) => {
               const formatted = formatExpirationDate(e.target.value);
               setValue("expirationDate", formatted);
             }}
+            data-testid="card-expiry-date-id"
           />
         </div>
         <ToggleGroup.Root
@@ -124,6 +127,7 @@ export const AddCard = ({ refetchCards }: { refetchCards: () => unknown }) => {
           }}
           orientation="horizontal"
           className="mx-auto"
+          data-testid="card-type-id"
         >
           {Options.map((value, index) => (
             <Item
@@ -146,6 +150,7 @@ export const AddCard = ({ refetchCards }: { refetchCards: () => unknown }) => {
           className={`w-full rounded-full ${
             isLoading || isSubmitting ? "opacity-20" : "opacity-100"
           }`}
+          data-testid="add-button-id"
         >
           Add
         </FilledButton>
@@ -161,6 +166,8 @@ const Item = ({ value, className }: { value: string; className?: string }) => {
       className={`bg-white capitalize px-4 py-2 text-left text-[14px] text-primary-gray transition-colors data-[state=on]:bg-primary data-[state=on]:text-white ${
         className ?? ""
       }`}
+      data-testid="toggle-item-id"
+      data-qa={value}
     >
       {value}
     </ToggleGroup.Item>

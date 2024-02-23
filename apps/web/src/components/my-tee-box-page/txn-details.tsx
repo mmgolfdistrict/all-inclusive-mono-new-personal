@@ -62,6 +62,7 @@ export const TxnDetails = ({
               aria-expanded={isTxnDetailsOpen}
               className="z-[2]"
               aria-label="sidebarToggle"
+              data-testid="close-button-id"
             >
               <Close className="h-[25px] w-[25px]" />
             </button>
@@ -115,6 +116,7 @@ export const TxnDetails = ({
                 <FilledButton
                   onClick={() => setIsTxnDetailsOpen(false)}
                   className="w-full"
+                  data-testid="close-txn-details-button-id"
                 >
                   Close
                 </FilledButton>

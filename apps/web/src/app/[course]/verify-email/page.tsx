@@ -20,7 +20,7 @@ export default function VerifyEmail() {
       <div className="flex max-w-fit mx-auto items-center gap-4 justify-center flex-col md:flex-row">
         <div className="pt-4 text-center text-[14px] text-primary-gray">
           Don&apos;t have an account?{" "}
-          <Link className="text-primary" href={`/${course?.id}/register`}>
+          <Link className="text-primary" href={`/${course?.id}/register`} data-testid="signup-button-id">
             Sign Up
           </Link>{" "}
           instead
@@ -29,6 +29,7 @@ export default function VerifyEmail() {
         <Link
           className="text-primary  md:self-end text-[14px]"
           href={`/${course?.id}/login`}
+          data-testid="back-to-login-button-id"
         >
           Back to Login
         </Link>

@@ -192,6 +192,7 @@ export const TeeTime = ({
               <Link
                 href={`/${courseId}/profile/${soldById}`}
                 className="text-primary text-ellipsis"
+                data-testid="sold-by-name-id"
               >
                 {soldByName}
               </Link>
@@ -211,6 +212,7 @@ export const TeeTime = ({
                 availableSlots={availableSlots}
                 isDisabled={status === "SECOND_HAND"}
                 className="md:px-[1rem] md:py-[.25rem] md:!text-[14px] !text-[10px] px-[.75rem] py-[.1rem]"
+                teeTimeId={teeTimeId}
               />
             ) : (
               players && (
@@ -241,13 +243,21 @@ export const TeeTime = ({
             <OutlineButton
               className="md:px-[.5rem] px-[0.375rem] py-[0.375rem] md:py-2"
               onClick={addToWatchlist}
+              data-testid="watch-list-id"
+              data-test={teeTimeId}
+              data-qa={optimisticLike}
             >
               <Heart
                 className={`w-[13px] md:w-[18px]`}
                 fill={optimisticLike ? "#40942A" : undefined}
               />
             </OutlineButton>
-            <Link href={href}>
+            <Link
+              href={href}
+              data-testid="details-id"
+              data-test={teeTimeId}
+              data-qa={time}
+            >
               <OutlineButton className="!py-[.28rem] md:py-1.5">
                 Details
               </OutlineButton>
@@ -262,6 +272,10 @@ export const TeeTime = ({
                   <FilledButton
                     className="whitespace-nowrap !px-3 !min-w-[82px] md:min-w-[110px]"
                     onClick={makeAnOffer}
+                    data-testid="make-an-offer-id"
+                    data-test={teeTimeId}
+                    data-qa="Make an Offer"
+                    data-cy={time}
                   >
                     Make an Offer
                   </FilledButton>
@@ -269,6 +283,10 @@ export const TeeTime = ({
                   <FilledButton
                     className="whitespace-nowrap !min-w-[82px] md:min-w-[110px] !py-[.28rem] md:py-1.5"
                     onClick={buyTeeTime}
+                    data-testid="buy-tee-time-id"
+                    data-test={teeTimeId}
+                    data-qa="Buy"
+                    data-cy={time}
                   >
                     Buy
                   </FilledButton>

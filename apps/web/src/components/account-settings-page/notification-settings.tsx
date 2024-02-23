@@ -84,7 +84,11 @@ export const NotificationSettings = () => {
         </p>
       </div>
       <div className="flex flex-row items-center gap-2">
-        <Switch value={isByPhone} setValue={updatePhoneNotifications} />
+        <Switch
+          value={isByPhone}
+          setValue={updatePhoneNotifications}
+          data-testid={`update-phone-not-notification-id`}
+        />
         <div className="text-[12px] text-primary-gray md:text-[14px]">
           By phone (messaging rates may apply)
         </div>
@@ -94,6 +98,7 @@ export const NotificationSettings = () => {
           disabled={true}
           value={isByEmail}
           setValue={updateEmailNotifications}
+          data-testid={`update-email-not-notification-id`}
         />
         <div className="text-[12px] text-primary-gray md:text-[14px]">
           By email

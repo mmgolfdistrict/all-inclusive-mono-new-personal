@@ -82,10 +82,12 @@ export const SensibleModal = ({
                     checked={addWeatherGuarantee}
                     onChange={toggleWeatherGuarantee}
                     className="cursor-pointer w-5 accent-primary"
+                    data-testid="weather-gurantee-id"
                   />
                   <button
                     onClick={toggleWeatherGuarantee}
                     className="cursor-pointer"
+                    data-testid="add-weather-gurantee-button-id"
                   >
                     Add Weather Guarantee
                   </button>
@@ -95,6 +97,7 @@ export const SensibleModal = ({
                     target="_blank"
                     rel="noopenner noreferrer"
                     className="underline"
+                    data-testid="learn-more-id"
                   >
                     Learn More
                   </Link>
@@ -107,6 +110,7 @@ export const SensibleModal = ({
                     target="_blank"
                     rel="noopenner noreferrer"
                     className="underline"
+                    data-testid="terms-conditions-id"
                   >
                     We believe in no surprises, read our Terms & Conditions
                   </Link>
@@ -115,6 +119,7 @@ export const SensibleModal = ({
                     target="_blank"
                     rel="noopenner noreferrer"
                     className="underline"
+                    data-testid="privacy-policy-id"
                   >
                     View our Privacy Policy
                   </Link>

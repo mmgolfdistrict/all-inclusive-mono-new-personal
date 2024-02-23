@@ -193,6 +193,7 @@ export const ManageTeeTimeListing = ({
               aria-expanded={isManageTeeTimeListingOpen}
               className="z-[2]"
               aria-label="sidebarToggle"
+              data-testid="close-button-id"
             >
               <Close className="h-[25px] w-[25px]" />
             </button>
@@ -225,6 +226,7 @@ export const ManageTeeTimeListing = ({
                     onChange={handleListingPrice}
                     onBlur={handleBlur}
                     className="mx-auto max-w-[300px] rounded-lg bg-secondary-white px-4 py-1 text-center text-[24px] font-semibold outline-none md:text-[32px] pl-6"
+                    data-testid="lsiting-price-id"
                   />
                 </div>
               </div>
@@ -247,6 +249,7 @@ export const ManageTeeTimeListing = ({
                   }}
                   orientation="horizontal"
                   className="mx-auto flex"
+                  data-testid="player-button-id"
                 >
                   {PlayerOptions.map((value, index) => (
                     <Item
@@ -263,6 +266,8 @@ export const ManageTeeTimeListing = ({
                           ? "opacity-50 cursor-not-allowed"
                           : ""
                       }`}
+                      dataTestId="player-item-id"
+                      dataQa={value}
                     />
                   ))}
                 </ToggleGroup.Root>
@@ -297,15 +302,16 @@ export const ManageTeeTimeListing = ({
                 All sales are final.
               </div>
               <div className="flex flex-col gap-2">
-                <FilledButton className="w-full" onClick={save}>
+                <FilledButton className="w-full" onClick={save} data-testid="save-button-id">
                   Save
                 </FilledButton>
-                <FilledButton className="w-full" onClick={openCancelListing}>
+                <FilledButton className="w-full" onClick={openCancelListing} data-testid="cancel-listing-button-id">
                   Cancel Listing
                 </FilledButton>
 
                 <OutlineButton
                   onClick={() => setIsManageTeeTimeListingOpen(false)}
+                  data-testid="cancel-button-id"
                 >
                   Cancel
                 </OutlineButton>

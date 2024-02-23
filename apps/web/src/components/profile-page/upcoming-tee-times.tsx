@@ -106,6 +106,7 @@ export const UpcomingTeeTimes = ({
             <button
               onClick={scrollRight}
               className="flex h-fit items-center justify-center rounded-full bg-white p-2 shadow-overflow-indicator"
+              data-testid="scroll-right-button-id"
             >
               <LeftChevron fill="#40942A" className="w-[21px] rotate-180" />
             </button>

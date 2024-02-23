@@ -74,6 +74,7 @@ export const Description = ({
       <OutlineButton
         className={`absolute bottom-5 left-1/2 mx-auto w-fit -translate-x-1/2 md:hidden`}
         onClick={toggleRead}
+        data-testid="toggle-read-button-id"
       >
         {isExpanded ? "Read Less" : "Read More"}
       </OutlineButton>

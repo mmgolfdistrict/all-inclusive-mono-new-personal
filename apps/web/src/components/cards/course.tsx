@@ -18,6 +18,9 @@ export const Course = ({
     <Link
       href={`/${courseId}`}
       className="flex w-full flex-col items-center gap-2 max-w-[720px] mx-auto"
+      data-testid="course-id"
+      data-test={courseId}
+      data-qa={courseName}
     >
       <Image
         draggable={false}

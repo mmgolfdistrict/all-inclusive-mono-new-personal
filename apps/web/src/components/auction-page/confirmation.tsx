@@ -34,6 +34,7 @@ export const Confirmation = () => {
         <Link
           href={`/${course?.id}/profile/${user?.id}`}
           className="w-full md:w-fit md:min-w-[250px]"
+          data-testid="go-to-profile-button-id"
         >
           <FilledButton className="w-full">Go to Profile</FilledButton>
         </Link>

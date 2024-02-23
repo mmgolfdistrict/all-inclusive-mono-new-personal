@@ -47,6 +47,7 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
         <Tabs.Trigger
           value="balance"
           className="flex items-center gap-2 pb-2 text-[18px] text-secondary-black outline-none data-[state=active]:border-b-2 data-[state=active]:border-black md:text-[24px]"
+          data-testid="account-balance-id"
         >
           <Wallet className="w-[23px]" />
           Balance
@@ -54,6 +55,7 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
         <Tabs.Trigger
           value="history"
           className="flex items-center gap-2 pb-2 text-[18px] text-secondary-black outline-none data-[state=active]:border-b-2 data-[state=active]:border-black md:text-[24px]"
+          data-testid="account-history-id"
         >
           <History className="w-[20px]" />
           History
@@ -83,6 +85,7 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
                   ? "animate-pulse cusor-not-allowed"
                   : ""
               }`}
+              data-testid="cash-out-button-id"
             >
               Cash Out
             </FilledButton>
@@ -95,6 +98,7 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
                   ? "animate-pulse cusor-not-allowed"
                   : ""
               }`}
+              data-testid="connect-button-id"
             >
               {connectAccount.isLoading
                 ? "Connecting..."

@@ -12,6 +12,7 @@ interface DropMediaProps {
   src?: string[];
   isUploading?: boolean;
   allowMultiple: boolean;
+  dataTestId?: string;
 }
 
 export const DropMedia = ({
@@ -23,6 +24,7 @@ export const DropMedia = ({
   src,
   isUploading,
   allowMultiple,
+  dataTestId
 }: DropMediaProps) => {
   const [dragging, setDragging] = useState(false);
   const [imageSrc, setImageSrc] = useState<string[]>([]);
@@ -133,6 +135,7 @@ export const DropMedia = ({
       onDragLeave={handleDragLeave}
       // onClick={openFileSystem}
       id={`drop-media-${id}`}
+      data-testid={dataTestId}
     >
       <label className="text-[14px] text-primary-gray" htmlFor={id}>
         {label}

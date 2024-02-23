@@ -41,6 +41,8 @@ export const MobileSort = ({
           }}
           orientation="vertical"
           className="flex flex-col"
+          data-testid="sort-button-id"
+          data-qa={sortValue}
         >
           {SortOptions.map((value, index) => (
             <Item
@@ -53,14 +55,17 @@ export const MobileSort = ({
                   ? "rounded-b-2xl border-b border-l border-r border-stroke"
                   : "border-b border-l border-r border-stroke"
               }`}
+              dataTestId={"sort-by-id"}
+              dataTest={""}
+              dataQa={value}
             />
           ))}
         </ToggleGroup.Root>
         <div className="fixed bottom-10 left-1/2 flex w-full -translate-x-1/2 gap-2 px-4">
-          <OutlineButton className="w-full" onClick={toggleSort}>
+          <OutlineButton className="w-full" onClick={toggleSort} data-testid="cancel-button-id">
             Cancel
           </OutlineButton>
-          <FilledButton className="w-full" onClick={toggleSort}>
+          <FilledButton className="w-full" onClick={toggleSort} data-testid="apply-button-id">
             Apply
           </FilledButton>
         </div>

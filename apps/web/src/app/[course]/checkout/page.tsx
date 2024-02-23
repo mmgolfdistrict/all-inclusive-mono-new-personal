@@ -216,6 +216,7 @@ export default function Checkout({
           <Link
             href={`/${course?.id}`}
             className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+            data-testid="course-logo-id"
           >
             <BlurImage
               src={course?.logo ?? ""}
@@ -230,7 +231,7 @@ export default function Checkout({
               <UserInNav alwaysShow={true} />
             </div>
           ) : (
-            <Link href={`/${course?.id}/login`}>
+            <Link href={`/${course?.id}/login`} data-testid="login-button-id">
               <FilledButton>Log In</FilledButton>
             </Link>
           )}
