@@ -166,6 +166,7 @@ export class CheckoutService {
         this.logger.error(` ${err}`);
         throw new Error(`Error creating payment intent: ${err}`);
       });
+      console.log(JSON.stringify(customerCart))
     //save customerCart to database
     await this.database.insert(customerCarts).values({
       id: randomUUID(),

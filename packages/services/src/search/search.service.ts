@@ -1,20 +1,4 @@
-import {
-  and,
-  asc,
-  between,
-  desc,
-  eq,
-  gt,
-  gte,
-  inArray,
-  isNotNull,
-  isNull,
-  like,
-  lte,
-  or,
-  sql,
-  type Db,
-} from "@golf-district/database";
+import { and, asc, between, desc, eq, gt, gte, like, lte, or, sql, type Db } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import { bookings } from "@golf-district/database/schema/bookings";
 import { courses } from "@golf-district/database/schema/courses";
@@ -23,17 +7,10 @@ import { lists } from "@golf-district/database/schema/lists";
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import { users } from "@golf-district/database/schema/users";
 import type { CombinedObject, SearchObject } from "@golf-district/shared";
-import {
-  addDays,
-  currentUtcTimestamp,
-  formatQueryDate,
-  TeeTimeType,
-  type IconCodeType,
-} from "@golf-district/shared";
+import { addDays, TeeTimeType, type IconCodeType } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
-import { isSameDay, parseISO, toDate } from "date-fns";
+import { isSameDay, parseISO } from "date-fns";
 import dayjs from "dayjs";
-import nonUTCdayjs from "dayjs";
 import UTC from "dayjs/plugin/utc";
 import { type ProviderService } from "../tee-sheet-provider/providers.service";
 import type { Forecast } from "../weather/types";
@@ -102,11 +79,14 @@ export class SearchService {
   findBlackoutDates = async (courseId: string): Promise<Day[]> => {
     // Generate a range of dates for the next 365 days
     const dates = Array.from({ length: 75 }, (_, i) => addDays(new Date(), i));
+
     const result = await this.database.execute(
       sql`SELECT DISTINCT DATE(${teeTimes.date}) as teeDate FROM ${teeTimes} WHERE ${teeTimes.courseId} = ${courseId} AND ${teeTimes.date} BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 365 DAY)`
     );
 
-    const existingTeeTimes = result.rows as TeeTimeRow[];
+    const existingTeeTimes = (result.rows as TeeTimeRow[])
+      .sort((a, b) => new Date(a.teeDate).getTime() - new Date(b.teeDate).getTime())
+      .slice(0, result.rows.length - 1);
 
     const formattedTeeTimes = existingTeeTimes.map((row) => parseISO(row.teeDate));
     const blackoutDates = dates.filter(

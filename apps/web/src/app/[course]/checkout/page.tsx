@@ -30,6 +30,7 @@ export default function Checkout({
   const courseId = params.course;
   const teeTimeId = searchParams?.teeTimeId as string | undefined;
   const listingId = searchParams?.listingId as string | undefined;
+  const playerCount = searchParams?.playerCount as string | undefined;
   const { course } = useCourseContext();
   const { user } = useUserContext();
   const { status } = useSession();
@@ -41,7 +42,14 @@ export default function Checkout({
     promoCode,
     selectedCharity,
     selectedCharityAmount,
+    setAmountOfPlayers,
   } = useCheckoutContext();
+
+  useEffect(() => {
+    if (playerCount) {
+      setAmountOfPlayers(Number(playerCount));
+    }
+  }, []);
 
   const {
     data: teeTimeData,
