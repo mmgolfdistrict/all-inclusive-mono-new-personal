@@ -46,7 +46,6 @@ export class CashOutService {
         accountSettingsHref, //refreshUrl
         accountSettingsHref //returnUrl
       );
-      console.log(res);
       return res;
     }
     if (!user.email) {

@@ -43,6 +43,11 @@ export class StripeService {
         type: "standard",
         country: "US",
         email: userEmail,
+        capabilities: {
+          transfers: {
+            requested: true,
+          },
+        },
         //we can add this back any data to auto fill however email is the only required user field
         // individual: {
         //   first_name: params.firstName,
@@ -95,6 +100,7 @@ export class StripeService {
         refresh_url: refreshUrl,
         return_url: returnUrl,
         type: "account_onboarding",
+        collect: "eventually_due",
       })
       .catch((err) => {
         this.logger.error(`Error creating stripe account link: ${err}`);
@@ -109,9 +115,10 @@ export class StripeService {
   ): Promise<Stripe.Response<Stripe.Payout>> => {
     return this.stripe.payouts
       .create({
-        amount: amount,
+        amount: 10,
         currency: currency,
         destination: accountId,
+        source_type: "bank_account",
       })
       .catch((err) => {
         this.logger.error(`Error creating stripe payout: ${err}`);

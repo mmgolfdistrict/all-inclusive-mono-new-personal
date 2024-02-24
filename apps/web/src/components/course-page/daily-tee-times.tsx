@@ -106,6 +106,7 @@ export const DailyTeeTimes = ({
         return c;
       },
       enabled: course?.id !== undefined && date !== undefined,
+      refetchOnWindowFocus: false,
     }
   );
 

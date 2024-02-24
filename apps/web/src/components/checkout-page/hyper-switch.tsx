@@ -35,9 +35,11 @@ export const HyperSwitch = ({
   teeTimeId: string;
 }) => {
   const [options, setOptions] = useState<Options | undefined>(undefined);
+  console.log("options", options);
   const { user } = useUserContext();
   const { course } = useCourseContext();
   const checkout = api.checkout.buildCheckoutSession.useMutation();
+  const [isLoadingSession, setIsLoadingSession] = useState<boolean>(false);
   const amountToPay =
     //@ts-ignore
     cartData?.reduce((acc: number, i) => acc + i.price, 0) / 100;
@@ -50,6 +52,7 @@ export const HyperSwitch = ({
     try {
       callingRef.current = true;
       setError(undefined);
+      setIsLoadingSession(true);
       const data = (await checkout.mutateAsync({
         userId: user.id,
         customerId: user.id,
@@ -68,8 +71,10 @@ export const HyperSwitch = ({
         },
       });
       setLocalCartData(cartData);
+      setIsLoadingSession(false);
       callingRef.current = false;
     } catch (error) {
+      setIsLoadingSession(false);
       callingRef.current = false;
       console.log(error.message);
       setError(
@@ -108,7 +113,9 @@ export const HyperSwitch = ({
 
   return (
     <div className="w-full md:min-w-[370px] px-2 md:px-0">
-      {options !== undefined && hyperPromise !== undefined ? (
+      {options !== undefined &&
+      hyperPromise !== undefined &&
+      !isLoadingSession ? (
         <HyperElements options={options} hyper={hyperPromise}>
           <CheckoutForm
             teeTimeId={teeTimeId}

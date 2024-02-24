@@ -2907,16 +2907,16 @@ function isUppercase(char = "") {
   }
   return char.toUpperCase() === char;
 }
-function splitByCase(str, separators) {
+function splitByCase(string_, separators) {
   const splitters = separators ?? STR_SPLITTERS;
   const parts = [];
-  if (!str || typeof str !== "string") {
+  if (!string_ || typeof string_ !== "string") {
     return parts;
   }
   let buff = "";
   let previousUpper;
   let previousSplitter;
-  for (const char of str) {
+  for (const char of string_) {
     const isSplitter = splitters.includes(char);
     if (isSplitter === true) {
       parts.push(buff);
@@ -2933,7 +2933,7 @@ function splitByCase(str, separators) {
         continue;
       }
       if (previousUpper === true && isUpper === false && buff.length > 1) {
-        const lastChar = buff.at(-1);
+        const lastChar = buff[buff.length - 1];
         parts.push(buff.slice(0, Math.max(0, buff.length - 1)));
         buff = lastChar + char;
         previousUpper = isUpper;
@@ -2947,11 +2947,11 @@ function splitByCase(str, separators) {
   parts.push(buff);
   return parts;
 }
-function kebabCase(str, joiner) {
-  return str ? (Array.isArray(str) ? str : splitByCase(str)).map((p) => p.toLowerCase()).join(joiner ?? "-") : "";
+function kebabCase(string_, joiner) {
+  return !string_ ? "" : (Array.isArray(string_) ? string_ : splitByCase(string_)).map((p) => p.toLowerCase()).join(joiner ?? "-");
 }
-function snakeCase(str) {
-  return kebabCase(str || "", "_");
+function snakeCase(string_) {
+  return kebabCase(string_, "_");
 }
 
 function klona(x) {
@@ -3835,10 +3835,10 @@ const memory = defineDriver$1(() => {
       return data.has(key);
     },
     getItem(key) {
-      return data.get(key) ?? null;
+      return data.get(key) || null;
     },
     getItemRaw(key) {
-      return data.get(key) ?? null;
+      return data.get(key) || null;
     },
     setItem(key, value) {
       data.set(key, value);
@@ -4418,7 +4418,7 @@ const storage = createStorage({});
 
 storage.mount('/assets', assets$1);
 
-storage.mount('data', unstorage_47drivers_47fs_45lite({"driver":"fsLite","base":"/Users/tylersiravo/Documents/GitHub/golf-district-platforms-nara/golf-district-platform/apps/auth-proxy/.data/kv"}));
+storage.mount('data', unstorage_47drivers_47fs_45lite({"driver":"fsLite","base":"/Users/tylersiravo/Documents/GitHub/golf-district-platforms/golf-district-platform/apps/auth-proxy/.data/kv"}));
 
 function useStorage(base = "") {
   return base ? prefixStorage(storage, base) : storage;
@@ -5094,11 +5094,11 @@ const _f4b49z = eventHandler((event) => {
   return readAsset(id);
 });
 
-const _lazy_vY3hNg = () => import('../_...auth_.mjs');
+const _lazy_goKQCg = () => import('../_...auth_.mjs');
 
 const handlers = [
   { route: '', handler: _f4b49z, lazy: false, middleware: true, method: undefined },
-  { route: '/**:auth', handler: _lazy_vY3hNg, lazy: true, middleware: false, method: undefined }
+  { route: '/**:auth', handler: _lazy_goKQCg, lazy: true, middleware: false, method: undefined }
 ];
 
 function createNitroApp() {

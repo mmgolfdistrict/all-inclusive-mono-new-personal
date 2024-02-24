@@ -89,6 +89,7 @@ export class HyperSwitchWebhookService {
     if (!amountReceived) throw new Error("Amount received not found");
     const customerCart = await this.getCustomerCartData(paymentId);
     if (customerCart.promoCode) await this.usePromoCode(customerCart.promoCode, customer_id);
+    console.log(JSON.stringify(customerCart));
 
     //@TODO validate payment amount
 
