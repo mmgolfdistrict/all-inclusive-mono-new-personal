@@ -30,8 +30,9 @@ export const ChoosePlayers = ({
       orientation="horizontal"
       className="flex"
       data-testid="player-button-id"
-      data-test={availableSlots}
-      data-qa={players}
+      data-test={teeTimeId}
+      data-qa={availableSlots}
+      data-cy={players}
     >
       {playersOptions.map((value, index) => (
         <Item
