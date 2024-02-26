@@ -224,7 +224,7 @@ export class HyperSwitchWebhookService {
           attributes: {
             start: teeTime.providerDate,
             holes: teeTime.holes,
-            players: 1,
+            players: bookedPLayers?.length,
             bookedPLayers,
             event_type: "tee_time",
             details: "GD Booking",
