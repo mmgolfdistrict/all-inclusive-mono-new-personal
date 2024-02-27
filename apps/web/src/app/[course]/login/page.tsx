@@ -232,12 +232,21 @@ export default function Login() {
             ref={recaptchaRef}
             data-testid="login-recaptcha-id"
           />
-          <FilledButton className="w-full rounded-full" data-testid="login-button-id">Log In</FilledButton>
+          <FilledButton
+            className="w-full rounded-full"
+            data-testid="login-button-id"
+          >
+            Log In
+          </FilledButton>
         </form>
       </section>
       <div className="pt-4 text-center text-[14px] text-primary-gray">
         Dont&apos;t have an account?{" "}
-        <Link className="text-primary" href={`/${course?.id}/register`} data-testid="signup-button-id">
+        <Link
+          className="text-primary"
+          href={`/${course?.id}/register`}
+          data-testid="signup-button-id"
+        >
           Sign Up
         </Link>{" "}
         instead

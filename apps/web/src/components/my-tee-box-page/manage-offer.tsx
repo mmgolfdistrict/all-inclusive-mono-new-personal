@@ -222,11 +222,18 @@ export const ManageOffer = ({
                 All sales are final.
               </div>
               <div className="flex flex-col gap-2">
-                <FilledButton className="w-full" onClick={updateOffer} data-testid="update-offer-button-id">
+                <FilledButton
+                  className="w-full"
+                  onClick={updateOffer}
+                  data-testid="update-offer-button-id"
+                >
                   Update Offer
                 </FilledButton>
 
-                <OutlineButton onClick={() => setIsManageOfferOpen(false)} data-testid="cancel-button-id">
+                <OutlineButton
+                  onClick={() => setIsManageOfferOpen(false)}
+                  data-testid="cancel-button-id"
+                >
                   Cancel
                 </OutlineButton>
               </div>

@@ -393,7 +393,12 @@ const TableRow = ({
       </td>
       <td className="whitespace-nowrap px-4 py-3">
         <div className="flex  justify-end gap-2">
-          <FilledButton onClick={openViewOffer} data-testid="view-offer-button-id">View Offer</FilledButton>
+          <FilledButton
+            onClick={openViewOffer}
+            data-testid="view-offer-button-id"
+          >
+            View Offer
+          </FilledButton>
         </div>
       </td>
     </tr>

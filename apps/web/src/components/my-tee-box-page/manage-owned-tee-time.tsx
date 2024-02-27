@@ -270,7 +270,10 @@ export const ManageOwnedTeeTime = ({
                             ? "You"
                             : friend.name}
                         </div>
-                        <button onClick={() => removeFriend(idx)} data-testid="remove-friend-button-id">
+                        <button
+                          onClick={() => removeFriend(idx)}
+                          data-testid="remove-friend-button-id"
+                        >
                           <Close className="w-[20px]" />
                         </button>
                       </div>
@@ -374,7 +377,11 @@ export const ManageOwnedTeeTime = ({
                 All sales are final.
               </div>
               <div className="flex flex-col gap-2">
-                <FilledButton className="w-full" onClick={() => void save()} data-testid="save-button-id">
+                <FilledButton
+                  className="w-full"
+                  onClick={() => void save()}
+                  data-testid="save-button-id"
+                >
                   Save
                 </FilledButton>
 

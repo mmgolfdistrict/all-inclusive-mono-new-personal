@@ -387,7 +387,7 @@ export class HyperSwitchWebhookService {
           data: {
             type: "bookings",
             attributes: {
-              players: 1,
+              players: buyerBookedPlayers.length,
               buyerBookedPlayers,
               event_type: "tee_time",
               details: "GD Booking",
@@ -414,7 +414,7 @@ export class HyperSwitchWebhookService {
             data: {
               type: "bookings",
               attributes: {
-                players: 1,
+                players: sellerBookedPlayers.length,
                 sellerBookedPlayers,
                 event_type: "tee_time",
                 details: "GD Booking",

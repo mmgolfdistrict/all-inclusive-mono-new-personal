@@ -302,10 +302,18 @@ export const ManageTeeTimeListing = ({
                 All sales are final.
               </div>
               <div className="flex flex-col gap-2">
-                <FilledButton className="w-full" onClick={save} data-testid="save-button-id">
+                <FilledButton
+                  className="w-full"
+                  onClick={save}
+                  data-testid="save-button-id"
+                >
                   Save
                 </FilledButton>
-                <FilledButton className="w-full" onClick={openCancelListing} data-testid="cancel-listing-button-id">
+                <FilledButton
+                  className="w-full"
+                  onClick={openCancelListing}
+                  data-testid="cancel-listing-button-id"
+                >
                   Cancel Listing
                 </FilledButton>
 

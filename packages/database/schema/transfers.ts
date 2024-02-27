@@ -10,6 +10,9 @@ export const transfers = mySqlTable(
   {
     id: varchar("id", { length: 36 }).notNull(),
     amount: int("amount").notNull(),
+    transactionId: varchar("transactionId", { length: 36 })
+      .notNull()
+      .default(sql`''`),
     createdAt: datetime("createdAt", { mode: "string", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),

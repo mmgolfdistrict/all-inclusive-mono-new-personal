@@ -241,7 +241,10 @@ export const ViewOffer = ({
                   {accept.isLoading ? "Accepting" : "Accept"}
                 </FilledButton>
 
-                <OutlineButton onClick={openCounteroffer} data-testid="counter-offer-button-id">
+                <OutlineButton
+                  onClick={openCounteroffer}
+                  data-testid="counter-offer-button-id"
+                >
                   Counteroffer
                 </OutlineButton>
                 <OutlineButton

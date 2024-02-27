@@ -132,7 +132,10 @@ export const CancelOffer = ({
                   {cancel.isLoading ? "Cancelling Offer" : "Cancel Offer"}
                 </FilledButton>
 
-                <OutlineButton onClick={() => setIsCancelOfferOpen(false)} data-testid="cancel-button-id">
+                <OutlineButton
+                  onClick={() => setIsCancelOfferOpen(false)}
+                  data-testid="cancel-button-id"
+                >
                   Cancel
                 </OutlineButton>
               </div>

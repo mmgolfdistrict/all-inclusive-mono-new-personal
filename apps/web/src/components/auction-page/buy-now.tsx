@@ -111,10 +111,17 @@ export const BuyNow = ({
                 All sales are final.
               </div>
               <div className="flex flex-col gap-2">
-                <FilledButton className="w-full" onClick={buyNow} data-testid="buy-now-button-id">
+                <FilledButton
+                  className="w-full"
+                  onClick={buyNow}
+                  data-testid="buy-now-button-id"
+                >
                   Buy Now
                 </FilledButton>
-                <OutlineButton onClick={() => setIsBuyNowOpen(false)} data-testid="cancel-button-id">
+                <OutlineButton
+                  onClick={() => setIsBuyNowOpen(false)}
+                  data-testid="cancel-button-id"
+                >
                   Cancel
                 </OutlineButton>
               </div>

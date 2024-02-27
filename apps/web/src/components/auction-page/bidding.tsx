@@ -148,7 +148,9 @@ export const Bidding = ({
           >
             Review Bid
           </FilledButton>
-          <OutlineButton onClick={openBuyNow} data-testid="buy-now-button-id">Buy Now</OutlineButton>
+          <OutlineButton onClick={openBuyNow} data-testid="buy-now-button-id">
+            Buy Now
+          </OutlineButton>
         </div>
       </div>
 

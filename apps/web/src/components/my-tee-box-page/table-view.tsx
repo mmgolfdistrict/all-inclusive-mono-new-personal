@@ -54,18 +54,14 @@ export const TableView = () => {
   return (
     <Tabs.Root value={section ?? "owned"}>
       <Tabs.List className="flex gap-10 overflow-x-auto border-b border-stroke bg-white px-6 pt-4 md:rounded-t-xl">
-        <TabTrigger value={"owned"}>
-          Owned
-        </TabTrigger>
+        <TabTrigger value={"owned"}>Owned</TabTrigger>
         <TabTrigger
           value={"my-listed-tee-times"}
           data-testid="my-listed-tee-time-id"
         >
           My Listed Tee Times
         </TabTrigger>
-        <TabTrigger value={"offers-sent"}>
-          Offers Sent
-        </TabTrigger>
+        <TabTrigger value={"offers-sent"}>Offers Sent</TabTrigger>
         <TabTrigger value={"offers-received"} handleClick={markAsRead}>
           Offers Received{" "}
           {unreadOffers && unreadOffers > 0 ? (

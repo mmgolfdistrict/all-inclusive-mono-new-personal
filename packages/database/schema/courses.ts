@@ -25,7 +25,7 @@ import { transfers } from "./transfers";
 export const courses = mySqlTable(
   "course",
   {
-    id: varchar("id", { length: 36 }).notNull(),
+    id: varchar("id", { length: 36 }).notNull().primaryKey(),
     name: varchar("name", { length: 191 }).notNull(),
     address: text("address"),
     description: text("description"),
@@ -51,7 +51,7 @@ export const courses = mySqlTable(
     return {
       entityIdIdx: index("Course_entityId_idx").on(table.entityId),
       providerIdIdx: index("Course_providerId_idx").on(table.providerId),
-      courseId: primaryKey(table.id),
+      courseIdIsDeletedIdx: index("Course_courseId_isDeleted_idx").on(table.id, table.isDeleted),
     };
   }
 );

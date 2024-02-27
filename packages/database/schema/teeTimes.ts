@@ -10,7 +10,7 @@ import { providerCourseLink } from "./providersCourseLink";
 export const teeTimes = mySqlTable(
   "teeTime",
   {
-    id: varchar("id", { length: 36 }).notNull().unique(),
+    id: varchar("id", { length: 36 }).notNull().unique().primaryKey(),
     providerTeeTimeId: varchar("providerTeeTimeId", { length: 191 }).notNull().unique(), //maybe int
     date: datetime("date", { mode: "string", fsp: 3 }).notNull(),
     providerDate: varchar("providerDate", { length: 191 }).notNull(),
@@ -34,7 +34,12 @@ export const teeTimes = mySqlTable(
         table.numberOfHoles
       ),
       providerTeeTimeId: index("TeeTime_providerTeeTimeId_idx").on(table.providerTeeTimeId),
-      teeTimeId: primaryKey(table.id),
+      greenFee: index("TeeTime_greenFee_idx").on(table.greenFee),
+      cartFee: index("TeeTime_cartFee_idx").on(table.cartFee),
+      providerDate: index("TeeTime_providerDate_idx").on(table.providerDate),
+      time: index("TeeTime_time_idx").on(table.time),
+      courseId: index("TeeTime_courseId_idx").on(table.courseId),
+      courseDate: index("TeeTime_courseDate_idx").on(table.courseId, table.date),
     };
   }
 );
