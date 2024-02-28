@@ -102,12 +102,7 @@ export const CourseNav = () => {
             </div>
           ) : (
             <Link href={`/${course?.id}/login`}>
-              <FilledButton
-                className="hidden md:block"
-                data-testid="login-button-id"
-              >
-                Log In
-              </FilledButton>
+              <FilledButton className="hidden md:block" data-testid="signin-button-id">Log In</FilledButton>
             </Link>
           )}
         </div>
