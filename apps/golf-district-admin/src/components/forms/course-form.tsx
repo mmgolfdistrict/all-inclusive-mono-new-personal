@@ -407,7 +407,6 @@ export const CourseForm = ({
               register={() => undefined}
               allowMultiple={false}
               src={[]}
-              dataTestId="logo-id"
             />
             <DropMedia
               label="Carousel Images"
@@ -416,7 +415,6 @@ export const CourseForm = ({
               register={() => undefined}
               allowMultiple={true}
               src={[]}
-              dataTestId="carousel-image-id"
             />
           </section>
 
