@@ -241,9 +241,19 @@ const TableRow = ({
       <td className="whitespace-nowrap px-4 py-3">
         {status === "PENDING" ? (
           <div className="flex  justify-end gap-2">
-            <OutlineButton onClick={openManageOffer} data-testid="manage-button-id">Manage</OutlineButton>
+            <OutlineButton
+              onClick={openManageOffer}
+              data-testid="manage-button-id"
+            >
+              Manage
+            </OutlineButton>
 
-            <FilledButton onClick={openCancelOffer} data-testid="cancel-offer-button-id">Cancel Offer</FilledButton>
+            <FilledButton
+              onClick={openCancelOffer}
+              data-testid="cancel-offer-button-id"
+            >
+              Cancel Offer
+            </FilledButton>
           </div>
         ) : null}
       </td>

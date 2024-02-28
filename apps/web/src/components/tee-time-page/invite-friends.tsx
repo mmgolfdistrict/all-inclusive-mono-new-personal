@@ -174,7 +174,10 @@ export const InviteFriends = ({
                     ? "You"
                     : friend.name}
                 </div>
-                <button onClick={() => removeFriend(idx)} data-testid="remove-friend-button-id">
+                <button
+                  onClick={() => removeFriend(idx)}
+                  data-testid="remove-friend-button-id"
+                >
                   <Close className="w-[20px]" />
                 </button>
               </div>

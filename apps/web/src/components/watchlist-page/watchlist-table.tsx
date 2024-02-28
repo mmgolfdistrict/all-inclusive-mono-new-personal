@@ -294,15 +294,26 @@ const TableRow = ({
             <OutlineButton className="min-w-[155px]">Details</OutlineButton>
           </Link>
           {status === "LISTED" ? (
-            <FilledButton className="min-w-[155px]" onClick={buyTeeTime} data-testid="buy-button-id">
+            <FilledButton
+              className="min-w-[155px]"
+              onClick={buyTeeTime}
+              data-testid="buy-button-id"
+            >
               Buy
             </FilledButton>
           ) : (
-            <FilledButton className="min-w-[155px]" onClick={openMakeAnOffer} data-testid="make-offer-button-id">
+            <FilledButton
+              className="min-w-[155px]"
+              onClick={openMakeAnOffer}
+              data-testid="make-offer-button-id"
+            >
               Make an Offer
             </FilledButton>
           )}
-          <button onClick={() => void removeFromWatchlist(teeTimeId)} data-testid="remove-watch-list-button-id">
+          <button
+            onClick={() => void removeFromWatchlist(teeTimeId)}
+            data-testid="remove-watch-list-button-id"
+          >
             <Trashcan className="w-[25px] max-w-[25px]" />
           </button>
         </div>

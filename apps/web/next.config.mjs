@@ -32,6 +32,12 @@ const config = {
       },
       {
         protocol: "https",
+        hostname: "d3oay9b1er2tcs.cloudfront.net",
+        port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
         hostname: "api.weather.gov",
         port: "",
         pathname: "/**",

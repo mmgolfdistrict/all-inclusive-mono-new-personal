@@ -51,7 +51,10 @@ export const UserInNav = ({ alwaysShow }: { alwaysShow?: boolean }) => {
   return (
     <div className={`${alwaysShow ? "block" : "hidden md:block"}`}>
       <DropdownMenu.Root>
-        <DropdownMenu.Trigger className="outline-none" data-testid="user-profile-id">
+        <DropdownMenu.Trigger
+          className="outline-none"
+          data-testid="user-profile-id"
+        >
           <div className="flex gap-1">
             <Avatar
               src={

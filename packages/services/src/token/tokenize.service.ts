@@ -86,6 +86,7 @@ export class TokenizeService {
     }
     const bookingsToCreate: InsertBooking[] = [];
     const transfersToCreate: InsertTransfer[] = [];
+    const transactionId = randomUUID();
     for (let i = 0; i < players; i++) {
       const bookingId = randomUUID();
       bookingsToCreate.push({
@@ -110,6 +111,7 @@ export class TokenizeService {
         id: randomUUID(),
         amount: purchasePrice,
         bookingId: bookingId,
+        transactionId: transactionId,
         fromUserId: "0x000", //first hand sales are from the platform
         toUserId: userId,
         courseId: existingTeeTime.courseId,
@@ -190,6 +192,7 @@ export class TokenizeService {
     if (!bookingsToTransfer.every((booking) => booking.ownerId === userId)) {
       throw new Error("Not all bookings found to transfer belong to the user");
     }
+    const transactionId = randomUUID();
     //transfer the bookings
     await this.database.transaction(async (tx) => {
       for (const booking of bookingsToTransfer) {
@@ -209,6 +212,7 @@ export class TokenizeService {
           .insert(transfers)
           .values({
             id: randomUUID(),
+            transactionId: transactionId,
             amount: price,
             bookingId: booking.id,
             fromUserId: userId,

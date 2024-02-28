@@ -128,7 +128,11 @@ export const CounterofferSuccess = ({
                 All sales are final.
               </div>
               <div className="flex flex-col gap-2">
-                <FilledButton className="w-full" onClick={cancelCounteroffer} data-testid="cancel-counter-offer-id">
+                <FilledButton
+                  className="w-full"
+                  onClick={cancelCounteroffer}
+                  data-testid="cancel-counter-offer-id"
+                >
                   Cancel counteroffer
                 </FilledButton>
                 <OutlineButton

@@ -35,7 +35,6 @@ export const HyperSwitch = ({
   teeTimeId: string;
 }) => {
   const [options, setOptions] = useState<Options | undefined>(undefined);
-  console.log("options", options);
   const { user } = useUserContext();
   const { course } = useCourseContext();
   const checkout = api.checkout.buildCheckoutSession.useMutation();

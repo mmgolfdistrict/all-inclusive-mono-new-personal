@@ -78,11 +78,16 @@ export class SearchService {
 
   findBlackoutDates = async (courseId: string): Promise<Day[]> => {
     // Generate a range of dates for the next 365 days
-    const dates = Array.from({ length: 75 }, (_, i) => addDays(new Date(), i));
+    const dates = Array.from({ length: 365 }, (_, i) => addDays(new Date(), i));
 
-    const result = await this.database.execute(
-      sql`SELECT DISTINCT DATE(${teeTimes.date}) as teeDate FROM ${teeTimes} WHERE ${teeTimes.courseId} = ${courseId} AND ${teeTimes.date} BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 365 DAY)`
-    );
+    const statement = sql`
+    SELECT DISTINCT DATE(date) as teeDate
+    FROM ${teeTimes}
+    WHERE courseId = ${courseId}
+      AND date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 365 DAY)
+    ORDER BY DATE(date);
+  `;
+    const result = await this.database.execute(statement);
 
     const existingTeeTimes = (result.rows as TeeTimeRow[])
       .sort((a, b) => new Date(a.teeDate).getTime() - new Date(b.teeDate).getTime())

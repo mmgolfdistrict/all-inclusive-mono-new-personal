@@ -27,6 +27,8 @@ export const lists = mySqlTable(
     return {
       courseIdIdx: index("List_courseId_idx").on(table.courseId),
       userIdIdx: index("List_userId_idx").on(table.userId),
+      listPriceIdx: index("List_listPrice_idx").on(table.listPrice),
+      courseIdIsDeletedIdx: index("List_courseId_isDeleted_idx").on(table.courseId, table.isDeleted),
     };
   }
 );

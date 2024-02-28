@@ -259,7 +259,6 @@ export default function RegisterPage() {
             onChange={onReCAPTCHAChange}
             ref={recaptchaRef}
             data-testid="register-recaptcha-id"
-
           />
           {errors.ReCAPTCHA?.message && (
             <p className="text-[12px] text-red">{errors.ReCAPTCHA?.message}</p>
@@ -279,7 +278,11 @@ export default function RegisterPage() {
       </section>
       <div className="pt-4 text-center text-[14px] text-primary-gray">
         Already have an account?{" "}
-        <Link className="text-primary" href={`/${course?.id}/login`} data-testid="signin-button-id">
+        <Link
+          className="text-primary"
+          href={`/${course?.id}/login`}
+          data-testid="signin-button-id"
+        >
           Sign In
         </Link>{" "}
         instead

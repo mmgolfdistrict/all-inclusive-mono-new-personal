@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
-import { and, desc, eq, isNull, sql } from "@golf-district/database";
+import { and, desc, eq, isNull, max, min, sql } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import { charities } from "@golf-district/database/schema/charities";
 import { charityCourseLink } from "@golf-district/database/schema/charityCourseLink";
@@ -49,7 +49,7 @@ export class CourseService extends DomainService {
    * @throws Will throw an error if the query fails.
    */
   getCourseById = async (courseId: string) => {
-    const [results] = await this.database
+    const courseDetailsQuery = this.database
       .select({
         id: courses.id,
         name: courses.name,
@@ -66,14 +66,8 @@ export class CourseService extends DomainService {
         supportSensibleWeather: courses.supportSensibleWeather,
         timezoneCorrection: courses.timezoneCorrection,
         furthestDayToBook: courses.furthestDayToBook,
-        highestListedTeeTime: sql<number>`MAX(${lists.listPrice})`,
-        lowestListedTeeTime: sql<number>`MIN(${lists.listPrice})`,
-        highestPrimarySaleTeeTime: sql<number>`MAX(${teeTimes.greenFee})`,
-        lowestPrimarySaleTeeTime: sql<number>`MIN(${teeTimes.greenFee})`,
       })
       .from(courses)
-      .leftJoin(lists, eq(courses.id, lists.courseId))
-      .leftJoin(teeTimes, eq(courses.id, teeTimes.courseId))
       .where(and(eq(courses.id, courseId), eq(courses.isDeleted, false)))
       .limit(1)
       .execute()
@@ -81,16 +75,60 @@ export class CourseService extends DomainService {
         this.logger.error(`Error getting course by ID: ${err}`);
         throw new Error("Error getting course");
       });
-    if (!results) return null;
-    const res = {
-      ...results,
-      highestListedTeeTime: results.highestListedTeeTime ?? 0,
-      lowestListedTeeTime: results.lowestListedTeeTime ?? 0,
-      highestPrimarySaleTeeTime: results.highestPrimarySaleTeeTime ?? 0,
-      lowestPrimarySaleTeeTime: results.lowestPrimarySaleTeeTime ?? 0,
+    //Get the highest and lowest tee time prices
+    //Cache if possible
+    const listTeeTimePriceQuery = this.database
+      .select({
+        highestListedTeeTime: max(lists.listPrice),
+        lowestListedTeeTime: min(lists.listPrice),
+      })
+      .from(lists)
+      .where(and(eq(lists.courseId, courseId), eq(lists.isDeleted, false)))
+      .limit(1)
+      .execute();
+    //Get the highest and lowest primary sale tee time prices
+    //Cache if possible
+    const primarySaleTeeTimePriceQuery = this.database
+      .select({
+        highestPrimarySaleTeeTime: max(teeTimes.greenFee),
+        lowestPrimarySaleTeeTime: min(teeTimes.greenFee),
+      })
+      .from(teeTimes)
+      .where(eq(teeTimes.courseId, courseId))
+      .limit(1)
+      .execute();
+
+    const [courseDetailsArray, listTeeTimePricesArray, primarySaleTeeTimePricesArray] = await Promise.all([
+      courseDetailsQuery,
+      listTeeTimePriceQuery,
+      primarySaleTeeTimePriceQuery,
+    ]);
+
+    // Destructure the first element from each resulting array
+    const courseDetails = courseDetailsArray[0];
+    const listTeeTimePrices = listTeeTimePricesArray[0];
+    const primarySaleTeeTimePrices = primarySaleTeeTimePricesArray[0];
+
+    if (!courseDetails) return null;
+
+    // Assemble the final result object
+    const result = {
+      ...courseDetails,
+      ...listTeeTimePrices,
+      ...primarySaleTeeTimePrices,
     };
 
-    if (results.supportCharity) {
+    if (!result) return null;
+
+    const res = {
+      ...result,
+      highestListedTeeTime: result.highestListedTeeTime ?? 0,
+      lowestListedTeeTime: result.lowestListedTeeTime ?? 0,
+      highestPrimarySaleTeeTime: result.highestPrimarySaleTeeTime ?? 0,
+      lowestPrimarySaleTeeTime: result.lowestPrimarySaleTeeTime ?? 0,
+    };
+
+    if (result.supportCharity) {
       const data = await this.database
         .select({
           charityDescription: charities.description,

@@ -62,10 +62,18 @@ export const MobileSort = ({
           ))}
         </ToggleGroup.Root>
         <div className="fixed bottom-10 left-1/2 flex w-full -translate-x-1/2 gap-2 px-4">
-          <OutlineButton className="w-full" onClick={toggleSort} data-testid="cancel-button-id">
+          <OutlineButton
+            className="w-full"
+            onClick={toggleSort}
+            data-testid="cancel-button-id"
+          >
             Cancel
           </OutlineButton>
-          <FilledButton className="w-full" onClick={toggleSort} data-testid="apply-button-id">
+          <FilledButton
+            className="w-full"
+            onClick={toggleSort}
+            data-testid="apply-button-id"
+          >
             Apply
           </FilledButton>
         </div>

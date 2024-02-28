@@ -23,7 +23,7 @@ export const DropMedia = ({
   register,
   src,
   isUploading,
-  dataTestId
+  dataTestId,
 }: DropMediaProps) => {
   const [dragging, setDragging] = useState(false);
   const [imageSrc, setImageSrc] = useState<string | null>(null);

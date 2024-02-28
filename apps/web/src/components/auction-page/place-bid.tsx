@@ -150,7 +150,10 @@ export const PlaceBid = ({
                     onClick={() => setIsPlaceBidOpen(false)}
                     data-testid="place-bid-id"
                   >
-                    <FilledButton className={`w-full`} data-testid="add-payment-button-id">
+                    <FilledButton
+                      className={`w-full`}
+                      data-testid="add-payment-button-id"
+                    >
                       Add Payment Method
                     </FilledButton>
                   </Link>
@@ -163,7 +166,10 @@ export const PlaceBid = ({
                 >
                   Place Bid
                 </FilledButton>
-                <OutlineButton onClick={() => setIsPlaceBidOpen(false)} data-testid="cancel-button-id">
+                <OutlineButton
+                  onClick={() => setIsPlaceBidOpen(false)}
+                  data-testid="cancel-button-id"
+                >
                   Cancel
                 </OutlineButton>
               </div>

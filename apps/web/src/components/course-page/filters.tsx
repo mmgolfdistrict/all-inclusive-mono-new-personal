@@ -194,9 +194,11 @@ export const Filters = () => {
             }
           }}
           data-testid="slider-start-time-id"
-          data-qa={`${startTimeOptions.findIndex((i) => i.value === localStartTime[0])} - ${
-            startTimeOptions.findIndex((i) => i.value === localStartTime[1])
-          }`}
+          data-qa={`${startTimeOptions.findIndex(
+            (i) => i.value === localStartTime[0]
+          )} - ${startTimeOptions.findIndex(
+            (i) => i.value === localStartTime[1]
+          )}`}
         />
       </section>
 

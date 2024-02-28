@@ -206,11 +206,18 @@ export const Counteroffer = ({
                 All sales are final.
               </div>
               <div className="flex flex-col gap-2">
-                <FilledButton className="w-full" onClick={sendCounteroffer} data-testid="send-counter-offer-button-id">
+                <FilledButton
+                  className="w-full"
+                  onClick={sendCounteroffer}
+                  data-testid="send-counter-offer-button-id"
+                >
                   Send counteroffer
                 </FilledButton>
 
-                <OutlineButton onClick={() => setIsCounterofferOpen(false)} data-testid="cancel-button-id">
+                <OutlineButton
+                  onClick={() => setIsCounterofferOpen(false)}
+                  data-testid="cancel-button-id"
+                >
                   Cancel
                 </OutlineButton>
               </div>
