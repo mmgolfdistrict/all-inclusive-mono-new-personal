@@ -10,7 +10,6 @@ import { promoCodes } from "@golf-district/database/schema/promoCodes";
 import { providerCourseLink } from "@golf-district/database/schema/providersCourseLink";
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import { userPromoCodeLink } from "@golf-district/database/schema/userPromoCodeLink";
-import { users } from "@golf-district/database/schema/users";
 import Logger from "@golf-district/shared/src/logger";
 import { Client } from "@upstash/qstash/.";
 import { B } from "vitest/dist/reporters-5f784f42";
