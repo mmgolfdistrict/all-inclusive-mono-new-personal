@@ -58,5 +58,8 @@
     "extends": [
       "@golf-district/eslint-config/base"
     ]
+  },
+  "browser": {
+    "crypto": false
   }
 }

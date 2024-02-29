@@ -1,5 +1,6 @@
 import type { Db } from "@golf-district/database";
 import {
+  AppSettingsService,
   AuctionService,
   AuthService,
   BookingService,
@@ -324,5 +325,9 @@ export class ServiceFactory {
 
   getCashOutService = (): CashOutService => {
     return new CashOutService(this.config.database, this.getStripeService(), this.getNotificationService());
+  };
+
+  getAppSettingService = (): AppSettingsService => {
+    return new AppSettingsService(this.config.database, this.getCacheService());
   };
 }

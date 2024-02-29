@@ -30,6 +30,7 @@ import * as userProviderCourseLink from "./userProviderCourseLink";
 import * as users from "./users";
 import * as verificationTokens from "./verificationTokens";
 import * as withdrawals from "./withdrawals";
+import * as appSettings from "./appSetting"
 
 export const schema = {
   ...accounts,
@@ -64,4 +65,5 @@ export const schema = {
   ...charities,
   ...charityCourseLink,
   ...donations,
+  ...appSettings
 };
