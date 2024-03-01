@@ -35,7 +35,7 @@ export interface UserCreationData {
   phoneNumber: string;
   location?: string;
   redirectHref?: string;
-  ReCAPTCHA: string;
+  ReCAPTCHA: string | undefined;
 }
 
 interface UserUpdateData {
@@ -74,7 +74,10 @@ export class UserService {
    * @example
    * const userService = new UserService(database, notificationService);
    */
-  constructor(protected readonly database: Db, private readonly notificationsService: NotificationService) {
+  constructor(
+    protected readonly database: Db,
+    private readonly notificationsService: NotificationService
+  ) {
     //this.filter = new Filter();
   }
 
@@ -129,9 +132,13 @@ export class UserService {
       this.logger.warn("Invalid password");
       throw new Error("Invalid password");
     }
-    const isNotRobot = await verifyCaptcha(data.ReCAPTCHA);
+
+    let isNotRobot;
+    if (data.ReCAPTCHA) {
+      isNotRobot = await verifyCaptcha(data.ReCAPTCHA);
+    }
     //if the captcha is not valid, return null
-    if (!isNotRobot) {
+    if (process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && !isNotRobot) {
       this.logger.error(`Invalid captcha`);
       throw new Error("Invalid captcha");
     }
@@ -636,10 +643,13 @@ export class UserService {
   forgotPasswordRequest = async (
     redirectHref: string,
     handleOrEmail: string,
-    ReCAPTCHA: string
+    ReCAPTCHA: string | undefined
   ): Promise<void> => {
-    const isNotRobot = await verifyCaptcha(ReCAPTCHA);
-    if (!isNotRobot) {
+    let isNotRobot;
+    if (ReCAPTCHA) {
+      isNotRobot = await verifyCaptcha(ReCAPTCHA);
+    }
+    if (process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && !isNotRobot) {
       this.logger.error(`Invalid captcha`);
       throw new Error("Invalid captcha");
     }
