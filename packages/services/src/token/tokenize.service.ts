@@ -8,6 +8,10 @@ import { InsertTransfer, transfers } from "@golf-district/database/schema/transf
 import { currentUtcTimestamp } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
 import { textChangeRangeIsUnchanged } from "typescript";
+import dayjs from "dayjs";
+import { courses } from "@golf-district/database/schema/courses";
+import { users } from "@golf-district/database/schema/users";
+import { customerCarts } from "@golf-district/database/schema/customerCart";
 import { NotificationService } from "../notification/notification.service";
 
 /**
@@ -23,7 +27,7 @@ export class TokenizeService {
    * @example
    * const tokenizeService = new TokenizeService(database);
    */
-  constructor(private readonly database: Db, private readonly notificationService: NotificationService) {}
+  constructor(private readonly database: Db, private readonly notificationService: NotificationService) { }
   /**
    * Tokenize a booking for a user. This function either books an existing tee time or creates a new one based on the provided details.
    *
@@ -66,10 +70,16 @@ export class TokenizeService {
         numberOfHoles: teeTimes.numberOfHoles,
         availableFirstHandSpots: teeTimes.availableFirstHandSpots,
         availableSecondHandSpots: teeTimes.availableSecondHandSpots,
+        greenFee: teeTimes.greenFee,
+        courseName: courses.name,
+        customerName: users.name,
+        entityName: entities.name,
       })
       .from(teeTimes)
       .where(eq(teeTimes.id, providerTeeTimeId))
       .leftJoin(entities, eq(teeTimes.entityId, entities.id))
+      .leftJoin(courses, eq(courses.id, teeTimes.courseId))
+      .leftJoin(users, eq(users.id, userId))
       .execute()
       .catch((err) => {
         this.logger.error(err);
@@ -88,7 +98,7 @@ export class TokenizeService {
     const transfersToCreate: InsertTransfer[] = [];
     const transactionId = randomUUID();
     for (let i = 0; i < players; i++) {
-      const bookingId = randomUUID();
+      let bookingId = randomUUID();
       bookingsToCreate.push({
         id: bookingId,
         purchasedAt: currentUtcTimestamp(),
@@ -105,7 +115,7 @@ export class TokenizeService {
         nameOnBooking: "Guest",
         includesCart: withCart,
         listId: null,
-        entityId: existingTeeTime.entityId,
+        entityId: existingTeeTime.entityId
       });
       transfersToCreate.push({
         id: randomUUID(),
@@ -153,11 +163,28 @@ export class TokenizeService {
 
     This is a first party purchase from the course
     `;
+
+    const template = {
+      CustomerFirstName: existingTeeTime.customerName?.split(" ")[0],
+      CourseName: existingTeeTime.courseName || "-",
+      GolfDistrictReservationID: bookingsToCreate?.[0]?.id || "-",
+      CourseReservationID: providerBookingId || "-",
+      FacilityName: existingTeeTime.entityName || "-",
+      PlayDateTime: dayjs(existingTeeTime.date).format("MM/DD/YYYY h:mm A") || "-",
+      NumberOfHoles: existingTeeTime.numberOfHoles,
+      GreenFees: `$${existingTeeTime.greenFee}.00` || "-",
+      TaxesAndOtherFees: `$${purchasePrice - existingTeeTime.greenFee}.00` || "-",
+      // SensibleWeatherIncluded: ,
+      PurchasedFrom: existingTeeTime.courseName || "-",
+    }
+
     await this.notificationService.createNotification(
       userId,
       "TeeTimes Purchased",
       message,
-      existingTeeTime.courseId
+      existingTeeTime.courseId,
+      process.env.SENDGRID_TEE_TIMES_PURCHASED_TEMPLATE_ID,
+      template
     );
   }
 
@@ -230,6 +257,7 @@ export class TokenizeService {
     const message1 = `
     ${bookingIds.length} tee times have been transferred to you This is to the new owner of the bookings the provider ids: ${bookingIds}
     `;
+
     await this.notificationService.createNotification(
       newOwnerId,
       "TeeTimes Purchased",

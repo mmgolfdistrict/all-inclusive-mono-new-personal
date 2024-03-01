@@ -162,9 +162,8 @@ export const TeeTime = ({
     <>
       {children}
       <div
-        className={`md:rounded-xl rounded-lg bg-secondary-white w-fit min-w-[228px] md:min-w-[302px] ${
-          className ?? ""
-        }`}
+        className={`md:rounded-xl rounded-lg bg-secondary-white w-fit min-w-[228px] md:min-w-[302px] ${className ?? ""
+          }`}
       >
         <div className="border-b border-stroke">
           <div className="flex justify-between py-1 px-3 md:p-3">
@@ -254,16 +253,22 @@ export const TeeTime = ({
             </OutlineButton>
             <Link
               href={href}
-              data-testid="details-id"
+              data-testid="details-button-id"
               data-test={teeTimeId}
-              data-qa={time}
+              data-qa={"Details"}
+              data-cy={time}
             >
               <OutlineButton className="!py-[.28rem] md:py-1.5">
                 Details
               </OutlineButton>
             </Link>
             {soldById === user?.id && session ? (
-              <FilledButton onClick={openManage} className="whitespace-nowrap">
+              <FilledButton onClick={openManage} className="whitespace-nowrap"
+                data-testid="sell-button-id"
+                data-test={teeTimeId}
+                data-qa="Buy"
+                data-cy={time}
+              >
                 {status === "UNLISTED" ? "Sell" : "Manage"}
               </FilledButton>
             ) : (

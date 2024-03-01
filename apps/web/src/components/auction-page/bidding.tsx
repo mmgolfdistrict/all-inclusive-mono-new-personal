@@ -137,6 +137,8 @@ export const Bidding = ({
               onBlur={handleBlur}
               className="w-[250px] md:w-[332px] rounded-lg bg-tertiary-gray px-4 py-1 text-center text-[24px] font-semibold text-primary outline-none md:text-[32px]"
               data-testid="auction-bid-id"
+              data-test={course?.id}
+              data-qa={course?.name}
             />
           </div>
         </div>
@@ -145,10 +147,17 @@ export const Bidding = ({
             onClick={openPlaceBid}
             className={isDisabled ? "opacity-50" : "opacity-100"}
             data-testid="review-bid-button-id"
+            data-test={course?.id}
+            data-qa={course?.name}
           >
             Review Bid
           </FilledButton>
-          <OutlineButton onClick={openBuyNow} data-testid="buy-now-button-id">
+          <OutlineButton
+            onClick={openBuyNow}
+            data-testid="buy-now-button-id"
+            data-test={course?.id}
+            data-qa={course?.name}
+          >
             Buy Now
           </OutlineButton>
         </div>
