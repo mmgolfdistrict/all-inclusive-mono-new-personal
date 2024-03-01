@@ -39,12 +39,14 @@ export default function RootPage() {
             register={() => undefined}
             placeholder="Password"
           />
-          <ReCAPTCHA
-            size="normal"
-            sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ?? ""}
-            onChange={onReCAPTCHAChange}
-            ref={recaptchaRef}
-          />
+          {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (
+            <ReCAPTCHA
+              size="normal"
+              sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ?? ""}
+              onChange={onReCAPTCHAChange}
+              ref={recaptchaRef}
+            />
+          )}
           <Link href="/reservations" className="w-full">
             <FilledButton className="w-full">Login</FilledButton>
           </Link>

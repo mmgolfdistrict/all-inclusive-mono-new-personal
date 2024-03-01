@@ -61,7 +61,9 @@ export default function Login() {
         redirect: false,
         email: data.email,
         password: data.password,
-        ReCAPTCHA: data.ReCAPTCHA,
+        ReCAPTCHA: process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY
+          ? data.ReCAPTCHA
+          : undefined,
       });
       if (res?.error) {
         toast.error("The email or password you entered is incorrect.");
@@ -83,6 +85,7 @@ export default function Login() {
 
   useEffect(() => {
     if (
+      process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY &&
       errors.ReCAPTCHA?.message &&
       !errors.email?.message &&
       !errors.password?.message
@@ -225,13 +228,15 @@ export default function Login() {
           >
             Forgot password?
           </Link>
-          <ReCAPTCHA
-            size="normal"
-            sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ?? ""}
-            onChange={onReCAPTCHAChange}
-            ref={recaptchaRef}
-            data-testid="login-recaptcha-id"
-          />
+          {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (
+            <ReCAPTCHA
+              size="normal"
+              sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ?? ""}
+              onChange={onReCAPTCHAChange}
+              ref={recaptchaRef}
+              data-testid="login-recaptcha-id"
+            />
+          )}
           <FilledButton
             className="w-full rounded-full"
             data-testid="login-button-id"
