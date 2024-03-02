@@ -92,6 +92,9 @@ export class AuthService extends CacheService {
       return null;
     }
 
+    console.log("Node Env");
+    console.log(process.env.NODE_ENV);
+
     const valid = await bcrypt.compare(password, data.user.gdPassword);
     if (!valid) {
       this.logger.warn(`Invalid password: ${handleOrEmail}`);
