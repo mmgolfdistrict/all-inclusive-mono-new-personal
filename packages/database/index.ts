@@ -20,7 +20,7 @@ export const db = drizzle(
   new Client({
     url: process.env.DATABASE_URL,
   }).connection(),
-  { schema }
+  { schema, logger: true }
 );
 
 export type Db = typeof db;
