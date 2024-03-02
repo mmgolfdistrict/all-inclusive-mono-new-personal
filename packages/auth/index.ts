@@ -57,12 +57,26 @@ export const authConfig: NextAuthConfig = {
         ReCAPTCHA: { label: "ReCAPTCHA", type: "text" },
       },
       async authorize(credentials) {
-        if (!credentials.email || !credentials.password || !credentials.ReCAPTCHA) {
-          return null;
-        }
-        const captchaToken = credentials.ReCAPTCHA as string;
+        // console.log("Credentials");
+        // console.log(credentials);
 
-        const isNotRobot = await verifyCaptcha(captchaToken);
+        if (process.env.RECAPTCHA_SECRET_KEY) {
+          if (!credentials.email || !credentials.password || !credentials.ReCAPTCHA) {
+            return null;
+          }
+        } else {
+          if (!credentials.email || !credentials.password) {
+            return null;
+          }
+        }
+        const captchaToken = process.env.RECAPTCHA_SECRET_KEY ? (credentials.ReCAPTCHA as string) : "";
+
+        const isNotRobot = process.env.RECAPTCHA_SECRET_KEY ? await verifyCaptcha(captchaToken) : true;
+
+        // console.log("RECAPTCHA_SECRET_KEY");
+        // console.log(process.env.RECAPTCHA_SECRET_KEY);
+        // console.log(isNotRobot);
+
         //if the captcha is not valid, return null
         if (!isNotRobot) {
           return null;
@@ -85,9 +99,15 @@ export const authConfig: NextAuthConfig = {
           credentials.email as string,
           credentials.password as string
         );
+
+        // console.log("data");
+        // console.log(data);
+
         if (!data) {
           return null;
         }
+
+        // console.log("Authentication successful");
         return {
           id: data?.id,
           email: data?.email,
