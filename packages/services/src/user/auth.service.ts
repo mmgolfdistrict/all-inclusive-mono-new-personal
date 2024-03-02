@@ -56,10 +56,9 @@ export class AuthService extends CacheService {
    *   authenticateUser('johnDoe123', 'SecureP@ssw0rd!');
    */
   authenticateUser = async (handleOrEmail: string, password: string) => {
-    console.log("Node Env");
-    console.log(process.env.NODE_ENV);
-    console.log(handleOrEmail);
-    console.log(password);
+    // console.log("Node Env");
+    // console.log(process.env.NODE_ENV);
+    // console.log(handleOrEmail);
 
     const [data] = await this.database
       .select({
@@ -75,8 +74,8 @@ export class AuthService extends CacheService {
       .where(or(eq(users.handle, handleOrEmail), eq(users.email, handleOrEmail)))
       .leftJoin(assets, eq(users.image, assets.id))
       .execute();
-    console.log("After retrieving data");
-    console.log(data);
+    // console.log("After retrieving data");
+    // console.log(data);
     if (!data) {
       this.logger.warn(`User not found: ${handleOrEmail}`);
       if (process.env.NODE_ENV !== "production") {
@@ -84,7 +83,7 @@ export class AuthService extends CacheService {
       }
       return null;
     }
-    console.log("User found");
+    // console.log("User found");
     if (!data.user.emailVerified) {
       this.logger.warn(`User email not verified: ${handleOrEmail}`);
       if (process.env.NODE_ENV !== "production") {
@@ -92,7 +91,7 @@ export class AuthService extends CacheService {
       }
       return null;
     }
-    console.log("EMail verified");
+    // console.log("EMail verified");
     if (!data.user.gdPassword) {
       this.logger.warn(`User has no password: ${handleOrEmail}`);
       if (process.env.NODE_ENV !== "production") {
@@ -100,11 +99,11 @@ export class AuthService extends CacheService {
       }
       return null;
     }
-    console.log("GD password found");
+    // console.log("GD password found");
 
     const valid = await bcrypt.compare(password, data.user.gdPassword);
-    console.log("Bcrypt compare");
-    console.log(valid);
+    // console.log("Bcrypt compare");
+    // console.log(valid);
     if (!valid) {
       this.logger.warn(`Invalid password: ${handleOrEmail}`);
       if (process.env.NODE_ENV !== "production") {
