@@ -57,8 +57,8 @@ export const authConfig: NextAuthConfig = {
         ReCAPTCHA: { label: "ReCAPTCHA", type: "text" },
       },
       async authorize(credentials) {
-        // console.log("Credentials");
-        // console.log(credentials);
+        console.log("Credentials");
+        console.log(credentials);
 
         if (process.env.RECAPTCHA_SECRET_KEY) {
           if (!credentials.email || !credentials.password || !credentials.ReCAPTCHA) {
@@ -73,9 +73,9 @@ export const authConfig: NextAuthConfig = {
 
         const isNotRobot = process.env.RECAPTCHA_SECRET_KEY ? await verifyCaptcha(captchaToken) : true;
 
-        // console.log("RECAPTCHA_SECRET_KEY");
-        // console.log(process.env.RECAPTCHA_SECRET_KEY);
-        // console.log(isNotRobot);
+        console.log("RECAPTCHA_SECRET_KEY");
+        console.log(process.env.RECAPTCHA_SECRET_KEY);
+        console.log(isNotRobot);
 
         //if the captcha is not valid, return null
         if (!isNotRobot) {
@@ -100,8 +100,8 @@ export const authConfig: NextAuthConfig = {
           credentials.password as string
         );
 
-        // console.log("data");
-        // console.log(data);
+        console.log("data");
+        console.log(data);
 
         if (!data) {
           return null;

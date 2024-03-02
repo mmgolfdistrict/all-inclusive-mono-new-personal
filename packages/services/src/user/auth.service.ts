@@ -56,6 +56,9 @@ export class AuthService extends CacheService {
    *   authenticateUser('johnDoe123', 'SecureP@ssw0rd!');
    */
   authenticateUser = async (handleOrEmail: string, password: string) => {
+    console.log("Node Env");
+    console.log(process.env.NODE_ENV);
+
     const [data] = await this.database
       .select({
         user: users,
@@ -91,9 +94,6 @@ export class AuthService extends CacheService {
       }
       return null;
     }
-
-    console.log("Node Env");
-    console.log(process.env.NODE_ENV);
 
     const valid = await bcrypt.compare(password, data.user.gdPassword);
     if (!valid) {
