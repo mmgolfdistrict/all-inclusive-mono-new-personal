@@ -110,6 +110,7 @@ export class AuthService extends CacheService {
       if (process.env.NODE_ENV !== "production") {
         throw new Error("Invalid password");
       }
+
       const signInAttempts = await this.incrementOrSetKey(`signinAttempts:${data.user.id}`);
       if (signInAttempts >= 3) {
         await this.notificationService.sendEmail(
@@ -118,6 +119,8 @@ export class AuthService extends CacheService {
           `We have detected suspicious activity on your account. If you are not the one attempting to login, please contact support immediately.`
         );
       }
+
+      return null;
     }
     await this.invalidateCache(`signinAttempts:${data.user.id}`);
     await this.database
