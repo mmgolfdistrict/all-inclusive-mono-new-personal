@@ -643,7 +643,8 @@ export class UserService {
   forgotPasswordRequest = async (
     redirectHref: string,
     handleOrEmail: string,
-    ReCAPTCHA: string | undefined
+    ReCAPTCHA: string | undefined,
+    courseProviderId: string | undefined
   ): Promise<void> => {
     let isNotRobot;
     if (ReCAPTCHA) {
@@ -652,6 +653,18 @@ export class UserService {
     if (process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && !isNotRobot) {
       this.logger.error(`Invalid captcha`);
       throw new Error("Invalid captcha");
+    }
+    let CourseLogoURL: string | undefined;
+    if (courseProviderId) {
+      const [course] = await this.database
+        .select()
+        .from(courses)
+        .leftJoin(assets, eq(assets.courseId, courseProviderId))
+        .where(eq(courses.logoId, assets.id));
+
+      if (course?.asset) {
+        CourseLogoURL = `https://${course.asset.cdn}/${course.asset.key}.${course.asset.extension}`;
+      }
     }
 
     const [user] = await this.database
@@ -687,18 +700,42 @@ export class UserService {
         this.logger.error(`Error updating forgotPasswordToken for user: ${user.id} - ${err}`);
       });
 
-    await this.notificationsService
-      .sendEmail(
-        user.email,
-        "Reset your password",
-        `${encodeURI(redirectHref)}/reset-password?userId=${encodeURIComponent(
-          user?.id
-        )}&verificationToken=${encodeURIComponent(verificationToken)}`
-      )
-      .catch((err) => {
-        this.logger.error(`Error sending email: ${err}`);
-        throw new Error("Error sending email");
-      });
+    const emailParams = {
+      CustomerFirstName: user.name?.split(" ")[0],
+      EMail: user.email,
+      CourseLogoURL,
+    };
+
+    if (user.gdPassword) {
+      await this.notificationsService
+        .sendEmailByTemplate(
+          user.email,
+          "Reset your password",
+          process.env.SENDGRID_FORGOT_PASSWORD_NORMAL_USER_TEMPLATE_ID!,
+          {
+            ...emailParams,
+            ForgotPasswordURL: `${encodeURI(redirectHref)}/reset-password?userId=${encodeURIComponent(
+              user?.id
+            )}&verificationToken=${encodeURIComponent(verificationToken)}`,
+          }
+        )
+        .catch((err) => {
+          this.logger.error(`Error sending email: ${err}`);
+          throw new Error("Error sending email");
+        });
+    } else {
+      await this.notificationsService
+        .sendEmailByTemplate(
+          user.email,
+          "Reset your password",
+          process.env.SENDGRID_FORGOT_PASSWORD_AUTH_USER_TEMPLATE_ID!,
+          emailParams
+        )
+        .catch((err) => {
+          this.logger.error(`Error sending email: ${err}`);
+          throw new Error("Error sending email");
+        });
+    }
   };
 
   /**
