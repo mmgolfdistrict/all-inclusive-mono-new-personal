@@ -86,7 +86,7 @@ export const userRouter = createTRPCRouter({
   forgotPasswordRequest: publicProcedure.input(forgotPasswordSchema).mutation(async ({ ctx, input }) => {
     return await ctx.serviceFactory
       .getUserService()
-      .forgotPasswordRequest(input.redirectHref, input.email, input.ReCAPTCHA);
+      .forgotPasswordRequest(input.redirectHref, input.email, input.ReCAPTCHA, input.courseProviderId);
   }),
   executeForgotPassword: publicProcedure.input(resetPasswordSchema).mutation(async ({ ctx, input }) => {
     return await ctx.serviceFactory

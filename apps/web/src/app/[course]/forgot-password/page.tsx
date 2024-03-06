@@ -44,7 +44,8 @@ export default function ForgotPassword() {
     if (forgotFn.isSuccess) return;
     if (forgotFn.isLoading) return;
     try {
-      await forgotFn.mutateAsync(data);
+      const forgotPasswordData = { ...data, courseProviderId: course?.id };
+      await forgotFn.mutateAsync(forgotPasswordData);
     } catch (error) {
       console.log(error);
       toast.error(
