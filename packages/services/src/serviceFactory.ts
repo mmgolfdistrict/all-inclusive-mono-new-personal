@@ -25,6 +25,7 @@ import {
   WeatherService,
 } from "./index";
 import { ProviderService } from "./tee-sheet-provider/providers.service";
+import { clubprophetWebhookService } from "./webhooks/clubprophet.webhook.service";
 
 export interface ServiceConfig {
   database: Db;
@@ -88,6 +89,15 @@ export class ServiceFactory {
    */
   getForeupWebhookService = (): ForeUpWebhookService => {
     return new ForeUpWebhookService(this.config.database, this.getProviderService());
+  };
+
+  /**
+   * Returns an instance of clubprophetWebhookService with the provided database and provider service.
+   * @returns An instance of clubprophetWebhookService.
+   */
+
+  getClubprophetWebhookService = (): clubprophetWebhookService => {
+    return new clubprophetWebhookService(this.config.database, this.getProviderService());
   };
 
   /**

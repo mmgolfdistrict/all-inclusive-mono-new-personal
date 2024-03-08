@@ -9,7 +9,7 @@ import { customerCarts } from "@golf-district/database/schema/customerCart";
 import { lists } from "@golf-district/database/schema/lists";
 import { promoCodes } from "@golf-district/database/schema/promoCodes";
 import { providerCourseLink } from "@golf-district/database/schema/providersCourseLink";
-import { teeTimes } from "@golf-district/database/schema/teeTimes";
+import { InsertTeeTimes, teeTimes } from "@golf-district/database/schema/teeTimes";
 import { userPromoCodeLink } from "@golf-district/database/schema/userPromoCodeLink";
 import { users } from "@golf-district/database/schema/users";
 import { currentUtcTimestamp } from "@golf-district/shared";
@@ -20,6 +20,7 @@ import { HyperSwitchService } from "../payment-processor/hyperswitch.service";
 import { SensibleService } from "../sensible/sensible.service";
 import type { ProviderService } from "../tee-sheet-provider/providers.service";
 import type { ForeUpWebhookService } from "../webhooks/foreup.webhook.service";
+import { clubprophetWebhookService } from "../webhooks/clubprophet.webhook.service";
 import type {
   AuctionProduct,
   CartValidationError,
@@ -57,6 +58,7 @@ export class CheckoutService {
   private readonly logger = Logger(CheckoutService.name);
   private hyperSwitch: HyperSwitchService;
   private readonly profileId: string;
+  private clubProphetWebhook: clubprophetWebhookService;
   //private stripeService: StripeService;
 
   /**
@@ -75,6 +77,7 @@ export class CheckoutService {
     this.hyperSwitch = new HyperSwitchService(config.hyperSwitchApiKey);
     this.auctionService = new AuctionService(database, this.hyperSwitch);
     this.profileId = config.profileId;
+    this.clubProphetWebhook = new clubprophetWebhookService(database, providerService);
     //this.stripeService = new StripeService(config.stripeApiKey);
   }
 
@@ -250,6 +253,7 @@ export class CheckoutService {
         providerTeeSheetId: providerCourseLink.providerTeeSheetId,
         providerId: teeTimes.soldByProvider,
         internalId: providerCourseLink.internalId,
+        providerCourseConfiguration: providerCourseLink.providerCourseConfiguration,
       })
       .from(teeTimes)
       .leftJoin(
@@ -275,12 +279,15 @@ export class CheckoutService {
 
     const { provider, token } = await this.providerService.getProviderAndKey(
       teeTime.internalId!,
-      teeTime.courseId
+      teeTime.courseId,
+      teeTime.providerCourseConfiguration
     );
 
     const [formattedDate] = teeTime.date.split(" ");
 
-    const { insert, upsert, remove } = await this.foreupIndexer
+    let responseFromIndexer: any = null;
+    if (provider.providerId === "club-prophet") {
+      responseFromIndexer = await this.clubProphetWebhook
       .indexDay(
         formattedDate!,
         teeTime.providerCourseId!,
@@ -291,9 +298,14 @@ export class CheckoutService {
         token,
         teeTime.entityId
       )
-      .catch(() => {
+      .catch((err) => {
+        console.log("err in indexer ======>", err.error);
         throw new Error(`Error indexing day ${formattedDate} please return to course page`);
       });
+    }
+
+    const { insert, upsert, remove } = responseFromIndexer;
+
     if (insert.length > 0 && upsert.length > 0 && remove.length > 0) {
       return errors;
     }

@@ -2,6 +2,14 @@ import Logger from "@golf-district/shared/src/logger";
 import type pino from "pino";
 import type { BookingResponse, CustomerCreationData, CustomerData, TeeTimeResponse } from "./foreup.type";
 
+import { clubprophet } from "../clubprophet";
+import type {
+  BookingResponse as BookingResponseClubProphet,
+  ClubProphetTeeTimeResponse,
+  TeeTimeResponseClubProphet,
+} from "./clubprophet.types";
+
+
 export type ForeUpCredentials = {
   username: string;
   password: string;
@@ -12,13 +20,15 @@ type ProviderCredentials = ForeUpCredentials;
 export interface ProviderAPI {
   providerId: string;
   logger: pino.Logger;
+  providerConfiguration?: any;
   getTeeTimes: (
     token: string,
     courseId: string,
     teesheetId: string,
     startTime: string,
     endTime: string,
-    date: string
+    date: string,
+    rateCode?: string
   ) => Promise<TeeTimeResponse[]>;
   createBooking: (
     token: string,
@@ -32,7 +42,7 @@ export interface ProviderAPI {
     teeTimeId: string,
     bookingId: string,
     options: any
-  ) => Promise<BookingResponse>;
+  ) => Promise<BookingResponse | BookingResponseClubProphet>;
   deleteBooking: (token: string, courseId: string, teesheetId: string, bookingId: string) => Promise<void>; // Added deleteBooking to the interface
   getToken: () => Promise<string>;
   createCustomer: (

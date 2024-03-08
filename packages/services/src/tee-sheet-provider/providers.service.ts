@@ -10,6 +10,7 @@ import Logger from "@golf-district/shared/src/logger";
 import { CacheService } from "../infura/cache.service";
 import type { ForeUpCredentials } from "./sheet-providers";
 import { foreUp, type ProviderAPI } from "./sheet-providers";
+import { clubprophet } from "./sheet-providers/clubprophet";
 import type {
   BookingResponse,
   CustomerCreationData,
@@ -41,11 +42,12 @@ export class ProviderService extends CacheService {
     private readonly database: Db,
     redisUrl: string,
     redisToken: string,
-    foreUpCredentials: ForeUpCredentials
+    foreUpCredentials: ForeUpCredentials,
+    providerConfiguration?: any
   ) {
     super(redisUrl, redisToken, Logger(ProviderService.name));
     //this will need to be refactored to allow for providers with different credentials per course
-    this.teeSheetProviders = [new foreUp(foreUpCredentials)];
+    this.teeSheetProviders = [new foreUp(foreUpCredentials), new clubprophet()]
   }
 
   /**
@@ -56,10 +58,17 @@ export class ProviderService extends CacheService {
    */
   getProviderAndKey = async (
     internalProviderIdentifier: string,
-    courseId: string
+    courseId: string,
+    providerConfiguration?: any
   ): Promise<{ provider: ProviderAPI; token: string }> => {
     this.logger.info(`getProvider called with providerId: ${internalProviderIdentifier}`);
     const provider = this.teeSheetProviders.find((p) => p.providerId === internalProviderIdentifier);
+
+    if (provider && internalProviderIdentifier == "club-prophet") {
+      // remove after adding
+      provider.providerConfiguration = providerConfiguration;
+    }
+
     if (!provider) {
       this.logger.fatal(`Provider with ID ${internalProviderIdentifier} not found`);
       throw new Error(`Provider with ID ${internalProviderIdentifier} not found`);

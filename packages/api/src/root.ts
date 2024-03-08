@@ -19,6 +19,7 @@ import { watchlistRouter } from "./routers/watchlist";
 import { weatherRouter } from "./routers/weather";
 import { webhookRouter } from "./routers/webhooks";
 import { createTRPCRouter } from "./trpc";
+import { clubProphetRouter } from "./routers/clubprophet";
 
 export const appRouter = createTRPCRouter({
   auction: auctionRouter,
@@ -41,6 +42,7 @@ export const appRouter = createTRPCRouter({
   watchlist: watchlistRouter,
   teeBox: bookingRouter,
   cashOut: cashOutRouter,
+  clubprophet: clubProphetRouter,
 });
 
 export type AppRouter = typeof appRouter;
