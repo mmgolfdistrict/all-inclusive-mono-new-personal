@@ -166,7 +166,7 @@ export class AppSettingsService {
     }
   };
 
-  get = async (internalName: any) => {
+  get = async (internalName: string): Promise<string | undefined> => {
     /* 
     Takes a single internalName as input and returns the value from the cache.
     If it does not exist in the cache, then it retrieves from the database and adds it to the cache and then returns the value.
@@ -179,7 +179,7 @@ export class AppSettingsService {
 
       const cachedData = await this.cacheService.getCache(internalName);
       if (cachedData) {
-        return cachedData;
+        return cachedData as string;
       }
 
       const appSettingsData: AppSettingsResponse = await this.db
@@ -205,7 +205,7 @@ export class AppSettingsService {
       }
       await this.cacheService.setCache(internalName, appSetting.description);
 
-      return appSetting.description;
+      return appSetting.description ?? "";
     } catch (error: any) {
       console.error("Error while bootstrapping the app-settings", error.message);
     }
