@@ -11,6 +11,7 @@ import {
   StripeService,
   TokenizeService,
   UpdateWithdrawableBalance,
+  SensibleService,
 } from "@golf-district/service";
 import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "./src/root";
@@ -141,12 +142,20 @@ export const processHyperSwitchWebhook = async (req: any) => {
     credentials
   );
   const bookingService = new BookingService(db, tokenizeService, providerService, notificationService);
+  const sensibleService = new SensibleService(
+    process.env.SENSIBLE_CLIENT_ID!,
+    process.env.SENSIBLE_CLIENT_SECRET!,
+    process.env.SENSIBLE_AUDIENCE!,
+    process.env.REDIS_URL!,
+    process.env.REDIS_TOKEN!
+  );
   const hyperSwitchWebhookService = new HyperSwitchWebhookService(
     db,
     tokenizeService,
     providerService,
     notificationService,
     bookingService,
+    sensibleService,
     process.env.QSTASH_TOKEN!
   );
   await hyperSwitchWebhookService.processWebhook(req).catch((error) => {

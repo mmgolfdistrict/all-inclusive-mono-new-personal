@@ -22,15 +22,14 @@ export class SensibleService extends CacheService {
   /**
    * Creates an instance of SensibleService.
    *
-   * @param {string} NEXT_PUBLIC_SENSIBLE_PARTNER_ID - Sensible partner ID.
-   * @param {string} NEXT_PUBLIC_SENSIBLE_PRODUCT_ID - Sensible product ID.
-   * @param {string} SENSIBLE_API_KEY - Sensible API key.
+   * @param {string} SENSIBLE_CLIENT_ID - Sensible client ID.
+   * @param {string} SENSIBLE_CLIENT_SECRET - Sensible client secret.
+   * @param {string} SENSIBLE_AUDIENCE - Sensible audience.
    * @param {string} redisUrl - Redis URL.
    * @param {string} redisToken - Redis token.
    */
   constructor(
-    private readonly NEXT_PUBLIC_SENSIBLE_PARTNER_ID: string,
-    private readonly NEXT_PUBLIC_SENSIBLE_PRODUCT_ID: string,
+    private readonly SENSIBLE_CLIENT_ID: string,
     private readonly SENSIBLE_CLIENT_SECRET: string,
     private readonly SENSIBLE_AUDIENCE: string,
     redisUrl: string,
@@ -52,7 +51,7 @@ export class SensibleService extends CacheService {
     this.logger.info("getAccessToken called");
     const payload: AccessTokenRequest = {
       grant_type: "client_credentials",
-      client_id: this.NEXT_PUBLIC_SENSIBLE_PARTNER_ID,
+      client_id: this.SENSIBLE_CLIENT_ID,
       client_secret: this.SENSIBLE_CLIENT_SECRET,
       audience: this.SENSIBLE_AUDIENCE,
     };
@@ -76,8 +75,8 @@ export class SensibleService extends CacheService {
 
     const data: AccessTokenSuccessResponse = await response.json();
 
-    this.invalidateCache("sensible_access_token");
-    this.setCache("sensible_access_token", data.access_token, data.expires_in);
+    await this.invalidateCache("sensible_access_token");
+    await this.setCache("sensible_access_token", data.access_token, data.expires_in);
   };
 
   /**
@@ -410,6 +409,9 @@ export class SensibleService extends CacheService {
       },
       body: JSON.stringify({
         price_charged: params.price_charged,
+        reservation_id: params.reservation_id,
+        lang_locale: params.lang_locale,
+        user: { name: params.user.name, email: params.user.email, phone: params.user.phone },
       }),
     });
     if (!response.ok) {

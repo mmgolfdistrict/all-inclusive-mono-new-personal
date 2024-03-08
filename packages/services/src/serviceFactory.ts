@@ -134,7 +134,6 @@ export class ServiceFactory {
   getSensibleService = (): SensibleService => {
     return new SensibleService(
       this.config.sensible_client_Id,
-      this.config.sensible_product_id,
       this.config.sensible_client_secret,
       this.config.sensible_audience,
       this.config.redisUrl,
@@ -315,6 +314,7 @@ export class ServiceFactory {
       this.getProviderService(),
       this.getNotificationService(),
       this.getBookingService(),
+      this.getSensibleService(),
       this.config.upStashClientToken
     );
   };

@@ -1,6 +1,6 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
 import { randomUUID } from "crypto";
-import { and, Db, eq, not } from "@golf-district/database";
+import type { Db } from "@golf-district/database";
+import { and, eq, not } from "@golf-district/database";
 import { bookings } from "@golf-district/database/schema/bookings";
 import { charityCourseLink } from "@golf-district/database/schema/charityCourseLink";
 import { customerCarts } from "@golf-district/database/schema/customerCart";
@@ -13,8 +13,8 @@ import { userPromoCodeLink } from "@golf-district/database/schema/userPromoCodeL
 import Logger from "@golf-district/shared/src/logger";
 import { Client } from "@upstash/qstash/.";
 import { B } from "vitest/dist/reporters-5f784f42";
-import { BookingService } from "../booking/booking.service";
-import {
+import type { BookingService } from "../booking/booking.service";
+import type {
   AuctionProduct,
   CharityProduct,
   CustomerCart,
@@ -23,11 +23,13 @@ import {
   SecondHandProduct,
   SensibleProduct,
 } from "../checkout/types";
-import { NotificationService } from "../notification/notification.service";
-import { ProviderService } from "../tee-sheet-provider/providers.service";
+import type { NotificationService } from "../notification/notification.service";
+import type { ProviderService } from "../tee-sheet-provider/providers.service";
 import { BookingCreationData } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
-import { TokenizeService } from "../token/tokenize.service";
+import type { TokenizeService } from "../token/tokenize.service";
 import type { HyperSwitchEvent } from "./types/hyperswitch";
+import type { SensibleService } from "../sensible/sensible.service";
+import { users } from "@golf-district/database/schema/users";
 
 /**
  * `HyperSwitchWebhookService` - A service for processing webhooks from HyperSwitch.
@@ -58,6 +60,7 @@ export class HyperSwitchWebhookService {
     private readonly providerService: ProviderService,
     private readonly notificationService: NotificationService,
     private readonly bookingService: BookingService,
+    private readonly sensibleService: SensibleService,
     upStashClientToken: string
   ) {
     this.qStashClient = new Client({
@@ -109,7 +112,7 @@ export class HyperSwitchWebhookService {
       .from(promoCodes)
       .where(and(eq(promoCodes.code, promoCode), eq(promoCodes.isDeleted, false)))
       .execute();
-    if (!promoCodeData || !promoCodeData.id) return;
+    if (!promoCodeData?.id) return;
     await this.database
       .insert(userPromoCodeLink)
       .values({
@@ -134,6 +137,8 @@ export class HyperSwitchWebhookService {
 
   paymentSuccessHandler = async (customerCart: CustomerCart, amountReceived: number) => {
     const customer_id: string = customerCart.customerId;
+    console.log("COMING IN HANDLER");
+    console.dir(customerCart, { depth: null });
     for (const item of customerCart.cart) {
       switch (item.product_data.metadata.type) {
         case "first_hand":
@@ -195,13 +200,13 @@ export class HyperSwitchWebhookService {
     );
     const providerCustomer = await this.providerService.findOrCreateCustomer(
       teeTime.courseId,
-      teeTime.providerId!,
+      teeTime.providerId,
       teeTime.providerCourseId!,
       customer_id,
       provider,
       token
     );
-    if (!providerCustomer || !providerCustomer.playerNumber) {
+    if (!providerCustomer?.playerNumber) {
       this.logger.error(`Error creating customer`);
       throw new Error(`Error creating customer`);
     }
@@ -210,7 +215,7 @@ export class HyperSwitchWebhookService {
     const pricePerBooking = amountReceived / item.product_data.metadata.number_of_bookings / 100;
 
     //create a provider booking for each player
-    let bookedPLayers: { accountNumber: number }[] = [];
+    const bookedPLayers: { accountNumber: number }[] = [];
     for (let i = 0; i < item.product_data.metadata.number_of_bookings; i++) {
       bookedPLayers.push({
         accountNumber: providerCustomer.playerNumber,
@@ -242,7 +247,7 @@ export class HyperSwitchWebhookService {
         throw new Error(`Error creating booking`);
       });
     //create tokenized bookings
-    this.tokenizeService
+    await this.tokenizeService
       .tokenizeBooking(
         customer_id,
         pricePerBooking,
@@ -335,12 +340,12 @@ export class HyperSwitchWebhookService {
       secondHandBookingProvider.provider,
       secondHandBookingProvider.token
     );
-    if (!sellerCustomer || !sellerCustomer.playerNumber) {
+    if (!sellerCustomer?.playerNumber) {
       this.logger.error(`Error creating or finding customer`);
       throw new Error(`Error creating or finding customer`);
     }
     const providerId = listedBooking.map((booking) => booking.providerBookingId);
-    let buyerBookedPlayers: { accountNumber: number }[] = [
+    const buyerBookedPlayers: { accountNumber: number }[] = [
       {
         accountNumber: buyerCustomer.playerNumber!,
       },
@@ -351,14 +356,14 @@ export class HyperSwitchWebhookService {
       });
     }
 
-    let sellerBookedPlayers: { accountNumber: number }[] = [
+    const sellerBookedPlayers: { accountNumber: number }[] = [
       {
-        accountNumber: sellerCustomer.playerNumber!,
+        accountNumber: sellerCustomer.playerNumber,
       },
     ];
     for (let i = 0; i < unListedBookings.length; i++) {
       sellerBookedPlayers.push({
-        accountNumber: sellerCustomer.playerNumber!,
+        accountNumber: sellerCustomer.playerNumber,
       });
     }
     //delete existing booking
@@ -367,14 +372,14 @@ export class HyperSwitchWebhookService {
         secondHandBookingProvider.token,
         firstBooking.providerCourseId!,
         firstBooking.providerTeeSheetId!,
-        firstBooking.providerBookingId!
+        firstBooking.providerBookingId
       )
       .catch((err) => {
         this.logger.error(`Error deleting booking: ${err}`);
         throw new Error(`Error deleting booking`);
       });
     //create new booking for buyer
-    let bookingIdMap: { golfDistrictId: string; providerId: string }[] = [];
+    const bookingIdMap: { golfDistrictId: string; providerId: string }[] = [];
     const idToTransfer = listedBooking.map((booking) => booking.id);
 
     try {
@@ -531,7 +536,7 @@ export class HyperSwitchWebhookService {
       .where(eq(charityCourseLink.courseId, item.product_data.metadata.charity_id))
       .limit(1)
       .execute();
-    if (!courseCharity || !courseCharity.courseCharityId) {
+    if (!courseCharity?.courseCharityId) {
       this.logger.fatal(
         `no course charity id found for charity id: ${item.product_data.metadata.charity_id}, courseId: ${item.product_data.metadata.charity_id}`
       );
@@ -548,7 +553,68 @@ export class HyperSwitchWebhookService {
 
   handleSensibleItem = async (item: SensibleProduct, amountReceived: number, customer_id: string) => {
     // Logic for handling first-hand items
-    // ...
+    try {
+      const booking = await this.getBookingDetails(item.id);
+      console.log("BOOKING", booking);
+
+      const userDetails = await this.getUserDetails(customer_id);
+
+      const quote = await this.getSensibleQuote(item.product_data.metadata.sensible_quote_id);
+      console.log("QUOTE", quote);
+
+      const acceptedQuote = await this.sensibleService.acceptQuote({
+        quoteId: quote.id,
+        price_charged: quote.suggested_price,
+        reservation_id: booking.providerBookingId,
+        lang_locale: quote.lang_locale,
+        user: {
+          email: userDetails.email!,
+          name: userDetails.name!,
+          phone: userDetails.phoneNumber!,
+        },
+        product_id: quote.product_id,
+        coverage_start_date: quote.coverage_start_date,
+        coverage_end_date: quote.coverage_end_date,
+        currency: quote.currency,
+        exposure_name: quote.exposure_name,
+        exposure_latitude: quote.exposure_latitude,
+        exposure_longitude: quote.exposure_longitude,
+        exposure_total_coverage_amount: quote.exposure_total_coverage_amount,
+      });
+      console.log("SENSIBLE_ITEM", item, amountReceived, customer_id);
+      this.logger.info("Accepted Sensible quote:", acceptedQuote);
+      return acceptedQuote;
+    } catch (error) {
+      this.logger.error("Error handling Sensible item:", error);
+      throw new Error("Failed to handle Sensible item");
+    }
+  };
+
+  getBookingDetails = async (bookingId: string) => {
+    const [booking] = await this.database.select().from(bookings).where(eq(bookings.teeTimeId, bookingId));
+
+    if (!booking) {
+      throw new Error("Booking details not found");
+    }
+    return booking;
+  };
+
+  getUserDetails = async (userId: string) => {
+    const [userDetails] = await this.database.select().from(users).where(eq(users.id, userId));
+
+    if (!userDetails) {
+      throw new Error("User details not found");
+    }
+    return userDetails;
+  };
+
+  getSensibleQuote = async (quoteId: string) => {
+    const quote = await this.sensibleService.getQuoteById(quoteId);
+
+    if (!quote) {
+      throw new Error("Quote not found");
+    }
+    return quote;
   };
 
   getCustomerCartData = async (paymentId: string) => {
@@ -558,7 +624,7 @@ export class HyperSwitchWebhookService {
       .where(eq(customerCarts.paymentId, paymentId))
       .execute();
 
-    if (!customerCartData || !customerCartData.cart) {
+    if (!customerCartData?.cart) {
       throw new Error("Invalid webhook source. Cart missing.");
     }
     return customerCartData.cart as CustomerCart;
