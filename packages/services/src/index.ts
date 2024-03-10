@@ -1,3 +1,4 @@
+export * from "./app-settings/app-settings.service";
 export * from "./infura/upload.service";
 export * from "./infura/geo.service";
 export * from "./infura/cache.service";

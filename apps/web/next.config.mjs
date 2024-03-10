@@ -9,6 +9,7 @@ const config = {
 
   experimental: {
     serverComponentsExternalPackages: ["bcrypt"],
+    instrumentationHook: true,
   },
   images: {
     remotePatterns: [
@@ -58,6 +59,7 @@ const config = {
       tls: false,
       "aws-crt": false,
     };
+    config.experiments = { ...config.experiments, topLevelAwait: true };
     config.externals.push({
       "@aws-sdk/signature-v4-multi-region":
         "commonjs @aws-sdk/signature-v4-multi-region",
