@@ -3,6 +3,7 @@ import type { Db } from "@golf-district/database";
 import { and, desc, eq, lt, sql } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import { auctions } from "@golf-district/database/schema/auctions";
+import { users } from "@golf-district/database/schema/users";
 import type { SelectAuctions } from "@golf-district/database/schema/auctions";
 import { bids } from "@golf-district/database/schema/bids";
 import { assetToURL, currentUtcTimestamp, dateToUtcTimestamp } from "@golf-district/shared";
@@ -235,6 +236,14 @@ export class AuctionService {
     //   this.logger.warn(`User ${userId} does not have a card on file with id ${paymentMethodId}`);
     //   throw new Error(`User does not have a card with id: ${paymentMethodId} on file`);
     // }
+    const [user] = await this.database
+      .select({
+        name: users.name,
+        email: users.email,
+        phoneNumber: users.phoneNumber
+      })
+      .from(users)
+      .where(eq(users.id, userId));
     //Create a payment intent
     const paymentIntent = await this.hyperSwitch
       .createPaymentIntent({
@@ -242,6 +251,9 @@ export class AuctionService {
         amount: bidAmount,
         capture_method: "manual",
         currency: "USD",
+        name: user?.name,
+        email: user?.email,
+        phoneNumber: user?.phoneNumber
         //payment_method: paymentMethodId ? paymentMethodId : paymentMethods.data[0].id,
       })
       .catch((err) => {
@@ -301,12 +313,23 @@ export class AuctionService {
       this.logger.warn(`Auction ${auctionId} does not have a buy now price`);
       throw new Error("Auction does not have a buy now price");
     }
+    const [user] = await this.database
+      .select({
+        name: users.name,
+        email: users.email,
+        phoneNumber: users.phoneNumber
+      })
+      .from(users)
+      .where(eq(users.id, userId));
     //Create payment intent with expiration charge card on file
     const paymentIntent = await this.hyperSwitch
       .createPaymentIntent({
         customer: userId,
         amount: auction.buyNowPrice,
         currency: "USD",
+        name: user?.name,
+        email: user?.email,
+        phoneNumber: user?.phoneNumber,
         metadata: {
           auction_id: auctionId,
         },
