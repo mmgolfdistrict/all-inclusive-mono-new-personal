@@ -24,6 +24,8 @@ interface TeeTimeSearchObject {
   soldByImage: string;
   availableSlots: number;
   pricePerGolfer: number;
+  greenFeeTax: number;
+  cartFeeTax: number;
   teeTimeId: string;
   date: string; //day of tee time
   time: number; //military time
@@ -323,6 +325,8 @@ export class SearchService {
         courseName: courses.name,
         favorites: favorites.id,
         providerDate: teeTimes.providerDate,
+        greenFeeTax: teeTimes.greenFeeTax,
+        cartFeeTax: teeTimes.cartFeeTax,
         numberOfWatchers: sql<number>`(
           SELECT COUNT(*)
           FROM ${favorites}
@@ -381,6 +385,8 @@ export class SearchService {
         : "/defaults/default-profile.webp",
       availableSlots: tee.firstPartySlots,
       pricePerGolfer: tee.greenFee,
+      greenFeeTax: tee.greenFeeTax,
+      cartFeeTax: tee.cartFeeTax,
       teeTimeId: tee.id,
       userWatchListed: tee.favorites ? true : false,
       date: tee.providerDate, //day of tee time

@@ -8,12 +8,21 @@ import Logger from "@golf-district/shared/src/logger";
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
-
+import { appSettingService } from "./initialization";
 interface CreateContextOptions {
   session: Session | null;
   //logger: pino.Logger;
 }
 
+let appSettings: any = {};
+await (async () => {
+  const res = await appSettingService.getMultiple(
+    "SENSIBLE_CLIENT_ID",
+    "SENSIBLE_CLIENT_SECRET",
+    "SENSIBLE_AUDIENCE"
+  );
+  appSettings = res ?? {};
+})();
 const logger = Logger("trpc");
 const serviceFactoryConfig: ServiceConfig = {
   database: db,
@@ -34,9 +43,9 @@ const serviceFactoryConfig: ServiceConfig = {
   vercel_authBearerToken: process.env.VERCEL_AUTH_BEARER_TOKEN ?? "",
   sensible_partner_id: process.env.NEXT_PUBLIC_SENSIBLE_PARTNER_ID ?? "",
   sensible_product_id: process.env.NEXT_PUBLIC_SENSIBLE_PRODUCT_ID ?? "",
-  sensible_audience: process.env.SENSIBLE_AUDIENCE ?? "",
-  sensible_client_Id: process.env.SENSIBLE_CLIENT_ID ?? "",
-  sensible_client_secret: process.env.SENSIBLE_CLIENT_SECRET ?? "",
+  sensible_audience: appSettings.SENSIBLE_AUDIENCE ?? "",
+  sensible_client_Id: appSettings.SENSIBLE_CLIENT_ID ?? "",
+  sensible_client_secret: appSettings.SENSIBLE_CLIENT_SECRET ?? "",
   hyperSwitchApiKey: process.env.HYPERSWITCH_API_KEY ?? "",
   hyperSwitchProfileId: process.env.HYPERSWITCH_PROFILE_ID ?? "",
   foreUpApiKey: process.env.FOREUP_API_KEY ?? "",
@@ -45,7 +54,6 @@ const serviceFactoryConfig: ServiceConfig = {
   foreupPassword: process.env.FOREUP_PASSWORD ?? "",
   upStashClientToken: process.env.UPSTASH_CLIENT_TOKEN ?? "",
 };
-
 const createInnerTRPCContext = (opts: CreateContextOptions) => {
   return {
     session: opts.session,
