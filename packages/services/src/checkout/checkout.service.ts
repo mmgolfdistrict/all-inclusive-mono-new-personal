@@ -120,6 +120,7 @@ export class CheckoutService {
       .select({
         name: users.name,
         email: users.email,
+        phoneNumber: users.phoneNumber
       })
       .from(users)
       .where(eq(users.id, userId));
@@ -155,7 +156,9 @@ export class CheckoutService {
       .createPaymentIntent({
         // @ts-ignore
         customer_id: customerCart.customerId,
-        // name: user.name,
+        name: user.name,
+        email: user.email,
+        phone: user.phoneNumber,
         amount: total,
         currency: "USD",
         profile_id: this.profileId,
