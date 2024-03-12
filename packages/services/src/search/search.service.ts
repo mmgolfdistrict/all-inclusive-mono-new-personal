@@ -622,7 +622,8 @@ export class SearchService {
       })
       .from(teeTimes)
       .innerJoin(courses, eq(courses.id, courseId))
-      .leftJoin(assets, and(eq(assets.courseId, teeTimes.courseId), eq(assets.id, courses.logoId)))
+      // .leftJoin(assets, and(eq(assets.courseId, teeTimes.courseId), eq(assets.id, courses.logoId)))
+      .leftJoin(assets, eq(assets.id, courses.logoId))
       .leftJoin(favorites, and(eq(favorites.teeTimeId, teeTimes.id), eq(favorites.userId, userId)))
       .where(
         and(
