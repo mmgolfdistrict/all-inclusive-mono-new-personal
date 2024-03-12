@@ -1,14 +1,13 @@
 import { auth } from "@golf-district/auth";
 import type { Session } from "@golf-district/auth";
 import { db } from "@golf-district/database";
-import { RateLimitService } from "@golf-district/service";
+import { AppSettingsService, RateLimitService } from "@golf-district/service";
 import type { ServiceConfig } from "@golf-district/service/src/serviceFactory";
 import { ServiceFactory } from "@golf-district/service/src/serviceFactory";
 import Logger from "@golf-district/shared/src/logger";
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
-import { appSettingService } from "./initialization";
 interface CreateContextOptions {
   session: Session | null;
   //logger: pino.Logger;
@@ -16,6 +15,11 @@ interface CreateContextOptions {
 
 let appSettings: any = {};
 await (async () => {
+  if (!process.env.REDIS_URL || !process.env.REDIS_TOKEN) {
+    return;
+  }
+
+  const appSettingService = new AppSettingsService(db, process.env.REDIS_URL, process.env.REDIS_TOKEN);
   const res = await appSettingService.getMultiple(
     "SENSIBLE_CLIENT_ID",
     "SENSIBLE_CLIENT_SECRET",
