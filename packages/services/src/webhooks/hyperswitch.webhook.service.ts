@@ -137,8 +137,7 @@ export class HyperSwitchWebhookService {
 
   paymentSuccessHandler = async (customerCart: CustomerCart, amountReceived: number) => {
     const customer_id: string = customerCart.customerId;
-    console.log("COMING IN HANDLER");
-    console.dir(customerCart, { depth: null });
+
     for (const item of customerCart.cart) {
       switch (item.product_data.metadata.type) {
         case "first_hand":
@@ -555,12 +554,10 @@ export class HyperSwitchWebhookService {
     // Logic for handling first-hand items
     try {
       const booking = await this.getBookingDetails(item.id);
-      console.log("BOOKING", booking);
 
       const userDetails = await this.getUserDetails(customer_id);
 
       const quote = await this.getSensibleQuote(item.product_data.metadata.sensible_quote_id);
-      console.log("QUOTE", quote);
 
       const acceptedQuote = await this.sensibleService.acceptQuote({
         quoteId: quote.id,
@@ -581,8 +578,17 @@ export class HyperSwitchWebhookService {
         exposure_longitude: quote.exposure_longitude,
         exposure_total_coverage_amount: quote.exposure_total_coverage_amount,
       });
-      console.log("SENSIBLE_ITEM", item, amountReceived, customer_id);
-      this.logger.info("Accepted Sensible quote:", acceptedQuote);
+
+      //Add guarantee details on bookings
+      if (acceptedQuote) {
+        await this.database
+          .update(bookings)
+          .set({
+            weatherGuaranteeId: acceptedQuote.id,
+            weatherGuaranteeAmount: acceptedQuote.price_charged * 100,
+          })
+          .where(eq(bookings.providerBookingId, acceptedQuote.reservation_id));
+      }
       return acceptedQuote;
     } catch (error) {
       this.logger.error("Error handling Sensible item:", error);

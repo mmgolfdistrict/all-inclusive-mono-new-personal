@@ -31,6 +31,7 @@ export type OwnedTeeTime = {
   teeTimeId: string;
   listPrice: number | null;
   minimumOfferPrice: number;
+  weatherGuaranteeAmount?: number;
 };
 
 export const Owned = () => {
@@ -117,29 +118,29 @@ export const Owned = () => {
           <tbody className={`max-h-[300px] w-full flex-col overflow-scroll`}>
             {isLoading
               ? Array(3)
-                .fill(null)
-                .map((_, idx) => <SkeletonRow key={idx} />)
+                  .fill(null)
+                  .map((_, idx) => <SkeletonRow key={idx} />)
               : ownedTeeTimes?.map((i, idx) => (
-                <TableRow
-                  course={i.courseName}
-                  date={i.date}
-                  iconSrc={i.courseLogo}
-                  key={idx}
-                  purchasePrice={i.purchasedFor ?? i.firstHandPrice}
-                  golfers={i.golfers as InviteFriend[]}
-                  status={i.status}
-                  offers={i.offers ? parseInt(i.offers) : undefined}
-                  isListed={i.status === "LISTED"}
-                  openListTeeTime={() => openListTeeTime(i)}
-                  openCancelListing={() => openCancelListing(i)}
-                  openManageListTeeTime={() => openManageListTeeTime(i)}
-                  courseId={i.courseId}
-                  teeTimeId={i.teeTimeId}
-                  listingId={i.listingId}
-                  ownerId={user?.id ?? ""}
-                  timezoneCorrection={course?.timezoneCorrection}
-                />
-              ))}
+                  <TableRow
+                    course={i.courseName}
+                    date={i.date}
+                    iconSrc={i.courseLogo}
+                    key={idx}
+                    purchasePrice={i.purchasedFor ?? i.firstHandPrice}
+                    golfers={i.golfers as InviteFriend[]}
+                    status={i.status}
+                    offers={i.offers ? parseInt(i.offers) : undefined}
+                    isListed={i.status === "LISTED"}
+                    openListTeeTime={() => openListTeeTime(i)}
+                    openCancelListing={() => openCancelListing(i)}
+                    openManageListTeeTime={() => openManageListTeeTime(i)}
+                    courseId={i.courseId}
+                    teeTimeId={i.teeTimeId}
+                    listingId={i.listingId}
+                    ownerId={user?.id ?? ""}
+                    timezoneCorrection={course?.timezoneCorrection}
+                  />
+                ))}
           </tbody>
         </table>
         {/* <OutlineButton
@@ -259,15 +260,16 @@ const TableRow = ({
       </td>
       <td className="whitespace-nowrap px-4 py-3">
         {golfers.length > 2
-          ? `You, ${golfers[1]?.name} & ${golfers.length - 2} ${golfers.length - 2 === 1 ? "golfers" : "golfers"
-          }`
+          ? `You, ${golfers[1]?.name} & ${golfers.length - 2} ${
+              golfers.length - 2 === 1 ? "golfers" : "golfers"
+            }`
           : golfers.map((i, idx) => {
-            if (idx === 0) return "You ";
-            if (golfers.length === 1) return "You";
-            if (idx === golfers.length - 1) return `& ${i.name}`;
-            if (idx === golfers.length - 2) return `${i.name} `;
-            return `${i.name}, `;
-          })}
+              if (idx === 0) return "You ";
+              if (golfers.length === 1) return "You";
+              if (idx === golfers.length - 1) return `& ${i.name}`;
+              if (idx === golfers.length - 2) return `${i.name} `;
+              return `${i.name}, `;
+            })}
       </td>
       <td className="flex items-center gap-1 whitespace-nowrap px-4 pb-3 pt-6">
         {offers ? (

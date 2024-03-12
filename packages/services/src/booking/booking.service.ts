@@ -57,6 +57,7 @@ interface OwnedTeeTimeData {
   offers: number;
   listPrice: number | null;
   minimumOfferPrice: number;
+  weatherGuaranteeAmount: number | null;
 }
 
 interface ListingData {
@@ -402,6 +403,7 @@ export class BookingService {
         listPrice: lists.listPrice,
         bookingListed: bookings.isListed,
         minimumOfferPrice: bookings.minimumOfferPrice,
+        weatherGuaranteeAmount: bookings.weatherGuaranteeAmount,
       })
       .from(teeTimes)
       .innerJoin(bookings, eq(bookings.teeTimeId, teeTimes.id))
@@ -457,6 +459,7 @@ export class BookingService {
           listedSpots: teeTime.listing && !teeTime.listingIsDeleted ? [teeTime.bookingId] : null,
           listPrice: teeTime.listPrice,
           minimumOfferPrice: teeTime.minimumOfferPrice,
+          weatherGuaranteeAmount: teeTime.weatherGuaranteeAmount,
         };
       } else {
         const currentEntry = combinedData[teeTime.id];

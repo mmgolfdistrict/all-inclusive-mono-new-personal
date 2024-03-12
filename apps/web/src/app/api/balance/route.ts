@@ -16,6 +16,7 @@ async function handler(req: NextRequest) {
   return NextResponse.json({ ok: true });
 }
 
+//@ts-expect-error
 export const POST = verifySignatureAppRouter(handler, {
   currentSigningKey: process.env.QSTASH_CURRENT_SIGNING_KEY || "sig_XYZ",
   nextSigningKey: process.env.QSTASH_NEXT_SIGNING_KEY || "sig_XYZ",
