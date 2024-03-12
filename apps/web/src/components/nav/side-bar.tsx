@@ -113,15 +113,17 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
                 data-testid="tee-time-course-id"
                 data-test={courseId}
               />
-              <NavItem
-                href={`/${courseId}/auctions`}
-                text="Auctions"
-                icon={<Auction className="w-[16px]" />}
-                className="border-t border-stroke-secondary p-2 md:p-4"
-                onClick={toggleSidebar}
-                data-testid="auction-id"
-                data-test={courseId}
-              />
+              {course?.allowAuctions === 1 && (
+                <NavItem
+                  href={`/${courseId}/auctions`}
+                  text="Auctions"
+                  icon={<Auction className="w-[16px]" />}
+                  className="border-t border-stroke-secondary p-2 md:p-4"
+                  onClick={toggleSidebar}
+                  data-testid="auction-id"
+                  data-test={courseId}
+                />
+              )}
               <NavItem
                 href={`/${courseId}/my-tee-box`}
                 text="Sell Your Tee Time"
