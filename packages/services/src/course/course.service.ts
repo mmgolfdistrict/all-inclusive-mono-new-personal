@@ -200,7 +200,8 @@ export class CourseService extends DomainService {
         extension: assets.extension,
       })
       .from(assets)
-      .where(and(eq(assets.courseId, courseId), isNull(assets.courseAssetId)))
+      .innerJoin(courses, eq(courses.logoId, assets.id))
+      .where(eq(courses.id, courseId))
       .limit(1)
       .execute();
 
