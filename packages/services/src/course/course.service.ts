@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
-import { and, desc, eq, isNull, max, min, sql } from "@golf-district/database";
+import { and, asc, desc, eq, isNull, max, min, sql } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import { charities } from "@golf-district/database/schema/charities";
 import { charityCourseLink } from "@golf-district/database/schema/charityCourseLink";
@@ -216,9 +216,12 @@ export class CourseService extends DomainService {
         courseLogoId: courses.logoId,
       })
       .from(assets)
-      .leftJoin(courseAssets, eq(assets.id, courseAssets.assetId))
-      .leftJoin(courses, eq(assets.courseId, courses.id))
-      .where(and(eq(assets.courseId, courseId), eq(assets.courseAssetId, courseAssets.id)))
+      .innerJoin(courseAssets, eq(assets.id, courseAssets.assetId))
+      // .innerJoin(courses, eq(assets.courseId, courses.id))
+      // .where(and(eq(assets.courseId, courseId), eq(assets.courseAssetId, courseAssets.id)))
+      .innerJoin(courses, eq(courseAssets.courseId, courses.id))
+      .where(eq(courses.id, courseId))
+      .orderBy(asc(courseAssets.order))
       .execute()
       .catch((err) => {
         this.logger.error(`Error getting images for course: ${err}`);
@@ -229,7 +232,7 @@ export class CourseService extends DomainService {
         ? `https://${logo[0].cdn}/${logo[0].key}.${logo[0].extension}`
         : "/defaults/default-profile.webp",
       images: images
-        .filter((i) => i.coursesId === courseId && i.id !== i.courseLogoId)
+        // .filter((i) => i.coursesId === courseId && i.id !== i.courseLogoId)
         .sort((a, b) => {
           const orderA = a.order !== null ? a.order : Number.MAX_SAFE_INTEGER;
           const orderB = b.order !== null ? b.order : Number.MAX_SAFE_INTEGER;
