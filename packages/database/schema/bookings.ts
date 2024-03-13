@@ -1,4 +1,5 @@
-import { InferInsertModel, relations, sql } from "drizzle-orm";
+import type { InferInsertModel } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import { boolean, datetime, index, int, primaryKey, unique, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 import { courses } from "./courses";
@@ -32,6 +33,8 @@ export const bookings = mySqlTable(
     includesCart: boolean("includesCart").default(false).notNull(),
     listId: varchar("listId", { length: 36 }),
     entityId: varchar("entityId", { length: 36 }),
+    weatherGuaranteeId: varchar("weatherGuaranteeId", { length: 36 }),
+    weatherGuaranteeAmount: int("weatherGuaranteeAmount").default(0),
   },
   (table) => {
     return {

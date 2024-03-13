@@ -72,7 +72,6 @@ export interface User {
   name: string;
   phone: string;
   email: string;
-  lang_locale: Locale;
 }
 
 export interface ErrorResponse {
