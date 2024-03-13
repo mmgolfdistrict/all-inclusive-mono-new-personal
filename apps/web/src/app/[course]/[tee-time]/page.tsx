@@ -1,16 +1,21 @@
+import { appSettingService } from "@golf-district/service/src/app-settings/initialized";
 import { GoBack } from "~/components/buttons/go-back";
 import { TeeTimeDetails } from "~/components/cards/tee-time-details";
 import { TransactionHistory } from "~/components/cards/transaction-history";
 import { CourseDescription } from "~/components/tee-time-page/course-description";
 import { InviteFriends } from "~/components/tee-time-page/invite-friends";
 
-export default function TeeTimePage({
+export default async function TeeTimePage({
   params,
 }: {
   params: { "tee-time": string; course: string };
 }) {
   const teeTimeId = params["tee-time"];
   const courseId = params.course;
+
+  const isTransactionHistoryVisible = await appSettingService.get(
+    "ShowTeeTimeDetailTransactionHistory"
+  );
 
   return (
     <main className="bg-secondary-white py-4 md:py-6">
@@ -27,7 +32,9 @@ export default function TeeTimePage({
           <div className="md:hidden">
             <CourseDescription />
           </div>
-          <TransactionHistory teeTimeId={teeTimeId} />
+          {"true" === isTransactionHistoryVisible?.toLowerCase() && (
+            <TransactionHistory teeTimeId={teeTimeId} />
+          )}
           <InviteFriends teeTimeId={teeTimeId} />
         </div>
       </section>
