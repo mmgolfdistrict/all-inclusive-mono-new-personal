@@ -4,6 +4,7 @@ export interface AppSetting {
   internalName: string;
   caption: string;
   description: string | null;
+  value: string | null;
   createdDateTime: string;
   lastUpdatedDateTime: string;
 }

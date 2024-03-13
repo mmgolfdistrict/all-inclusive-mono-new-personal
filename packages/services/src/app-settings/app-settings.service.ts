@@ -20,7 +20,7 @@ export class AppSettingsService {
    */
   constructor(db: Db, cacheService: CacheService);
   constructor(db: Db, redisUrl: string, redisToken: string);
-  constructor(db: Db, arg1: CacheService | string, arg2?: string, arg3?: string) {
+  constructor(db: Db, arg1: CacheService | string, arg2?: string) {
     if (typeof arg1 === "string") {
       const redisUrl = arg1;
       const redisToken = arg2!;
@@ -43,6 +43,7 @@ export class AppSettingsService {
           internalName: appSettings.internalName,
           caption: appSettings.caption,
           description: appSettings.description,
+          value: appSettings.value,
           createdDateTime: appSettings.createdDateTime,
           lastUpdatedDateTime: appSettings.lastUpdatedDateTime,
         })
@@ -65,7 +66,7 @@ export class AppSettingsService {
       await this.db.insert(appSettings).values(appSettingData);
 
       if (payload.description) {
-        await this.cacheService.setCache(payload.internalName, payload.description);
+        await this.cacheService.setCache(payload.internalName, payload.value);
       }
       console.log("Inserted app-setting: ", payload.internalName);
       return "Insertion successful";
@@ -87,11 +88,12 @@ export class AppSettingsService {
           internalName: payload.internalName,
           caption: payload.caption,
           description: payload.description,
+          value: payload.value,
         })
         .where(eq(appSettings.id, payload.id));
 
-      if (payload.description) {
-        await this.cacheService.setCache(payload.internalName, payload.description);
+      if (payload.value) {
+        await this.cacheService.setCache(payload.internalName, payload.value);
       } else {
         await this.cacheService.invalidateCache(payload.internalName);
       }
@@ -143,6 +145,7 @@ export class AppSettingsService {
           internalName: appSettings.internalName,
           caption: appSettings.caption,
           description: appSettings.description,
+          value: appSettings.value,
           createdDateTime: appSettings.createdDateTime,
           lastUpdatedDateTime: appSettings.lastUpdatedDateTime,
         })
@@ -157,8 +160,8 @@ export class AppSettingsService {
       }
 
       for (const appSetting of appSettingsData) {
-        if (appSetting.description) {
-          await this.cacheService.setCache(appSetting.internalName, appSetting.description);
+        if (appSetting.value) {
+          await this.cacheService.setCache(appSetting.internalName, appSetting.value);
         }
       }
     } catch (error: any) {
@@ -166,7 +169,7 @@ export class AppSettingsService {
     }
   };
 
-  get = async (internalName: any) => {
+  get = async (internalName: string) => {
     /* 
     Takes a single internalName as input and returns the value from the cache.
     If it does not exist in the cache, then it retrieves from the database and adds it to the cache and then returns the value.
@@ -189,6 +192,7 @@ export class AppSettingsService {
           internalName: appSettings.internalName,
           caption: appSettings.caption,
           description: appSettings.description,
+          value: appSettings.value,
           createdDateTime: appSettings.createdDateTime,
           lastUpdatedDateTime: appSettings.lastUpdatedDateTime,
         })
@@ -203,15 +207,15 @@ export class AppSettingsService {
       if (!appSetting) {
         throw new Error("Value of field isn't available");
       }
-      await this.cacheService.setCache(internalName, appSetting.description);
+      await this.cacheService.setCache(internalName, appSetting.value);
 
-      return appSetting.description;
+      return appSetting.value;
     } catch (error: any) {
       console.error("Error while bootstrapping the app-settings", error.message);
     }
   };
 
-  getMultiple = async (...internalNames: any) => {
+  getMultiple = async (...internalNames: string[]) => {
     /* Same functionality as a single get except this takes multiple internal names. */
     try {
       if (!this.cacheService) {
@@ -230,7 +234,7 @@ export class AppSettingsService {
       }
 
       if (missingNames.length > 0) {
-        const appSettingsData: any = await Promise.all(
+        const appSettingsData = await Promise.all(
           missingNames.map(async (missingName: string) => {
             const response = await this.db
               .select({
@@ -239,6 +243,7 @@ export class AppSettingsService {
                 internalName: appSettings.internalName,
                 caption: appSettings.caption,
                 description: appSettings.description,
+                value: appSettings.value,
                 createdDateTime: appSettings.createdDateTime,
                 lastUpdatedDateTime: appSettings.lastUpdatedDateTime,
               })
@@ -251,10 +256,13 @@ export class AppSettingsService {
           })
         );
         for (const appSetting of appSettingsData) {
-          if (appSetting.description) {
-            await this.cacheService.setCache(appSetting.internalName, appSetting.description);
+          if (!appSetting) {
+            continue;
           }
-          cachedData[appSetting.internalName] = appSetting.description;
+          if (appSetting.value) {
+            await this.cacheService.setCache(appSetting.internalName, appSetting.value);
+          }
+          cachedData[appSetting.internalName] = appSetting.value;
         }
       }
 
