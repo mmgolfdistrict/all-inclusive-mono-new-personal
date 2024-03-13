@@ -1,4 +1,4 @@
-import { appSettingService } from "@golf-district/api/src/initialization";
+import { appSettingService } from "@golf-district/service/src/app-settings/initialized";
 import { GoBack } from "~/components/buttons/go-back";
 import { TeeTimeDetails } from "~/components/cards/tee-time-details";
 import { TransactionHistory } from "~/components/cards/transaction-history";
