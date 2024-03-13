@@ -11,8 +11,25 @@ import { users } from "@golf-district/database/schema/users";
 import { currentUtcTimestamp } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
 import { MailService } from "@sendgrid/mail";
-import pino from "pino";
+import type pino from "pino";
 import twilio from "twilio";
+
+interface EmailParams {
+  CustomerFirstName?: string;
+  CourseName?: string;
+  GolfDistrictReservationID?: string;
+  CourseReservationID?: string;
+  FacilityName?: string;
+  PlayDateTime?: string;
+  NumberOfHoles?: number;
+  GreenFees?: string;
+  TaxesAndOtherFees?: string;
+  SensibleWeatherIncluded?: string;
+  PurchasedFrom?: string;
+  EMail?: string;
+  ForgotPasswordURL?: string;
+  CourseLogoURL?: string;
+}
 
 /**
  * Service class for handling notifications, including emails, SMS, and user notifications.
@@ -103,6 +120,22 @@ export class NotificationService {
     //     body: body,
     //   });
     // }
+  };
+
+  sendEmailByTemplate = async (email: string, subject: string, templateId: string, template: EmailParams) => {
+    this.logger.info(`Sending email to ${email}`);
+    await this.sendGridClient
+      .send({
+        to: email,
+        from: this.sendGrid_email,
+        subject,
+        templateId,
+        dynamicTemplateData: { ...template },
+      })
+      .catch((err) => {
+        this.logger.error(err);
+        throw new Error(`Failed to send email to: ${email}`);
+      });
   };
 
   /**
@@ -259,7 +292,14 @@ export class NotificationService {
    * // Creating a notification for user with ID 'user123' with subject 'New Notification' and body 'You have a new notification.'.
    * await createNotification('user123', 'New Notification', 'You have a new notification.', 'entity123');
    */
-  createNotification = async (userId: string, subject: string, body: string, courseId?: string) => {
+  createNotification = async (
+    userId: string,
+    subject: string,
+    body: string,
+    courseId?: string,
+    templateId?: string,
+    template?: EmailParams
+  ) => {
     const [user] = await this.database
       .select()
       .from(users)
@@ -298,8 +338,13 @@ export class NotificationService {
     // }
 
     if (user.emailNotifications && user.email) {
-      this.logger.debug(`Sending email to ${user.email}`);
-      await this.sendEmail(user.email, subject, body);
+      if (templateId && template) {
+        this.logger.debug(`Sending email to ${user.email}`);
+        await this.sendEmailByTemplate(user.email, subject, templateId, template);
+      } else {
+        this.logger.debug(`Sending email to ${user.email}`);
+        await this.sendEmail(user.email, subject, body);
+      }
     }
   };
 

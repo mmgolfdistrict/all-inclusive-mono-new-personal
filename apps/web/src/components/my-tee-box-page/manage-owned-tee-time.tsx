@@ -229,6 +229,7 @@ export const ManageOwnedTeeTime = ({
                   0
                 }
                 timezoneCorrection={course?.timezoneCorrection}
+                sensiblePurchasedFor={selectedTeeTime?.weatherGuaranteeAmount}
               />
               <div className={`flex flex-col gap-1 text-center w-fit mx-auto`}>
                 <label
@@ -407,6 +408,7 @@ const TeeTimeItem = ({
   golferCount,
   purchasedFor,
   timezoneCorrection,
+  sensiblePurchasedFor,
 }: {
   courseImage: string;
   courseName: string;
@@ -414,6 +416,7 @@ const TeeTimeItem = ({
   golferCount: number;
   purchasedFor: number;
   timezoneCorrection: number | undefined;
+  sensiblePurchasedFor: number | undefined;
 }) => {
   return (
     <div className="flex flex-col gap-2 rounded-xl bg-secondary-white px-4 py-5">
@@ -443,6 +446,17 @@ const TeeTimeItem = ({
           </span>
         </div>
       </div>
+      {sensiblePurchasedFor !== undefined && sensiblePurchasedFor !== 0 && (
+        <div className="flex text-[14px] font-[300]">
+          <div className="w-[55px]" />
+          <div className="text-prmiary-gray">
+            Sensible guarantee purchased for{" "}
+            <span className="font-semibold text-secondary-black">
+              {formatMoney(sensiblePurchasedFor / 100)}
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

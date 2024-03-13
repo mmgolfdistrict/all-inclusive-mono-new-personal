@@ -17,12 +17,35 @@ export const CheckoutForm = ({
   isBuyNowAuction,
   amountToPay,
   teeTimeId,
+  cartData
 }: {
   isBuyNowAuction: boolean;
   amountToPay: number;
   teeTimeId: string;
+  cartData: unknown[];
 }) => {
   const { course } = useCourseContext();
+  const greenFeeCharge =
+    //@ts-ignore
+    cartData?.filter(({ product_data }) => product_data.metadata.type === "first_hand" || product_data.metadata.type === "second_hand")?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+  const markupCharge =
+    //@ts-ignore
+    cartData?.filter(({ product_data }) => product_data.metadata.type === "markup")?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+  const convenienceCharge =
+    //@ts-ignore
+    cartData?.filter(({ product_data }) => product_data.metadata.type === "convenience_fee")?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+  const taxCharge =
+    //@ts-ignore
+    cartData?.filter(({ product_data }) => product_data.metadata.type === "taxes")?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+
+  const sensibleCharge =
+    //@ts-ignore
+    cartData?.filter(({ product_data }) => product_data.metadata.type === "sensible")?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+
+  const charityCharge =
+    //@ts-ignore
+    cartData?.filter(({ product_data }) => product_data.metadata.type === "charity")?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+
   const unifiedCheckoutOptions = {
     wallets: {
       walletReturnUrl: isBuyNowAuction
@@ -120,8 +143,8 @@ export const CheckoutForm = ({
         isBuyNowAuction
           ? router.push(`/${course?.id}/auctions/confirmation`)
           : router.push(
-              `/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}`
-            );
+            `/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}`
+          );
       } else if (response.error) {
         setMessage(response.error.message);
       } else {
@@ -213,21 +236,24 @@ export const CheckoutForm = ({
 
           <div>
             $
-            {amountToPay.toLocaleString("en-US", {
+            {(greenFeeCharge + markupCharge).toLocaleString("en-US", {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}
           </div>
         </div>
         <div className="flex justify-between">
-          <div>Tax</div>
-          <div>$0.00</div>
+          <div>Taxes & Others</div>
+          <div>${(taxCharge + sensibleCharge + charityCharge + convenienceCharge).toLocaleString("en-US", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}</div>
         </div>
         <div className="flex justify-between">
           <div>Total</div>
           <div>
             $
-            {amountToPay.toLocaleString("en-US", {
+            {(amountToPay).toLocaleString("en-US", {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}

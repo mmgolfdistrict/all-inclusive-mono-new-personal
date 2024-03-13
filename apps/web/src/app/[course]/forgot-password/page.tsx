@@ -37,14 +37,15 @@ export default function ForgotPassword() {
   }, []);
 
   const onSubmit: SubmitHandler<ForgotPasswordSchemaType> = async (data) => {
-    if (!data.ReCAPTCHA) {
+    if (process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && !data.ReCAPTCHA) {
       toast.info("Please verify you are not a robot.");
       return;
     }
     if (forgotFn.isSuccess) return;
     if (forgotFn.isLoading) return;
     try {
-      await forgotFn.mutateAsync(data);
+      const forgotPasswordData = { ...data, courseProviderId: course?.id };
+      await forgotFn.mutateAsync(forgotPasswordData);
     } catch (error) {
       console.log(error);
       toast.error(
@@ -94,18 +95,21 @@ export default function ForgotPassword() {
                 error={errors.email?.message}
                 data-testid="forgot-password-email-id"
               />
-              <ReCAPTCHA
-                size="normal"
-                sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ?? ""}
-                onChange={onReCAPTCHAChange}
-                ref={recaptchaRef}
-                data-testid="forgot-password-recaptcha-id"
-              />
-              {errors?.ReCAPTCHA?.message && (
-                <div className="text-[12px] text-red">
-                  {errors.ReCAPTCHA?.message}
-                </div>
+              {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (
+                <ReCAPTCHA
+                  size="normal"
+                  sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ?? ""}
+                  onChange={onReCAPTCHAChange}
+                  ref={recaptchaRef}
+                  data-testid="forgot-password-recaptcha-id"
+                />
               )}
+              {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY &&
+                errors?.ReCAPTCHA?.message && (
+                  <div className="text-[12px] text-red">
+                    {errors.ReCAPTCHA?.message}
+                  </div>
+                )}
               <FilledButton
                 className={`w-full rounded-full ${
                   forgotFn.isLoading ? "animate-pulse cursor-not-allopwed" : ""

@@ -39,6 +39,9 @@ const startingSelectedDayRange = {
 };
 
 const StartTimeOptions = [
+  { displayTime: "6 AM", value: 600 },
+  { displayTime: "7 AM", value: 700 },
+  { displayTime: "8 AM", value: 800 },
   { displayTime: "9 AM", value: 900 },
   { displayTime: "10 AM", value: 1000 },
   { displayTime: "11 AM", value: 1100 },

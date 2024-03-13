@@ -31,6 +31,7 @@ export type OwnedTeeTime = {
   teeTimeId: string;
   listPrice: number | null;
   minimumOfferPrice: number;
+  weatherGuaranteeAmount?: number;
 };
 
 export const Owned = () => {
@@ -288,6 +289,8 @@ const TableRow = ({
           <OutlineButton
             onClick={openManageListTeeTime}
             data-testid="manage-button-id"
+            data-test={courseId}
+            data-qa={course}
           >
             Manage
           </OutlineButton>
@@ -296,6 +299,8 @@ const TableRow = ({
               className="min-w-[145px]"
               onClick={openCancelListing}
               data-testid="cancel-listing-button-id"
+              data-test={courseId}
+              data-qa={course}
             >
               Cancel Listing
             </FilledButton>
@@ -304,6 +309,8 @@ const TableRow = ({
               className="min-w-[145px]"
               onClick={openListTeeTime}
               data-testid="sell-button-id"
+              data-test={courseId}
+              data-qa={course}
             >
               Sell
             </FilledButton>

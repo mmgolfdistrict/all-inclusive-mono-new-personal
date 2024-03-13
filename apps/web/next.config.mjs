@@ -43,6 +43,12 @@ const config = {
         port: "",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "d3oay9b1er2tcs.cloudfront.net",
+        port: "",
+        pathname: "/**",
+      },
     ],
   },
   transpilePackages: ["@juspay-tech/hyper-js", "@juspay-tech/react-hyper-js"],

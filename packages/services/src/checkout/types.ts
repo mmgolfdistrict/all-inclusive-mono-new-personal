@@ -29,7 +29,10 @@ export type ProductData =
   | SensibleProduct
   | AuctionProduct
   | CharityProduct
-  | Offer;
+  | Offer
+  | MarkupProduct
+  | ConvenienceFeeProduct
+  | TaxProduct;
 
 export interface BaseProduct {
   name: string; // teeTime-course-time
@@ -93,6 +96,27 @@ export interface Offer extends BaseProduct {
       booking_ids: string[];
       price: number;
       expires_at: Date;
+    };
+  };
+}
+export interface MarkupProduct extends BaseProduct {
+  product_data: {
+    metadata: {
+      type: "markup";
+    };
+  };
+}
+export interface ConvenienceFeeProduct extends BaseProduct {
+  product_data: {
+    metadata: {
+      type: "convenience_fee";
+    };
+  };
+}
+export interface TaxProduct extends BaseProduct {
+  product_data: {
+    metadata: {
+      type: "taxes";
     };
   };
 }

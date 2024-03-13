@@ -253,16 +253,21 @@ export default function RegisterPage() {
               )}
             </IconButton>
           </div>
-          <ReCAPTCHA
-            size="normal"
-            sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ?? ""}
-            onChange={onReCAPTCHAChange}
-            ref={recaptchaRef}
-            data-testid="register-recaptcha-id"
-          />
-          {errors.ReCAPTCHA?.message && (
-            <p className="text-[12px] text-red">{errors.ReCAPTCHA?.message}</p>
+          {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (
+            <ReCAPTCHA
+              size="normal"
+              sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ?? ""}
+              onChange={onReCAPTCHAChange}
+              ref={recaptchaRef}
+              data-testid="register-recaptcha-id"
+            />
           )}
+          {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY &&
+            errors.ReCAPTCHA?.message && (
+              <p className="text-[12px] text-red">
+                {errors.ReCAPTCHA?.message}
+              </p>
+            )}
 
           <FilledButton
             className={`w-full rounded-full ${

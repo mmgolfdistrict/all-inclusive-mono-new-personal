@@ -61,7 +61,7 @@ export const HyperSwitch = ({
         phone: "",
         phone_country_code: "1",
         //@ts-ignore
-        cart: cartData,
+        cart: cartData
       })) as CreatePaymentResponse;
       setOptions({
         clientSecret: data.clientSecret,
@@ -78,7 +78,7 @@ export const HyperSwitch = ({
       console.log(error.message);
       setError(
         (error?.message as string) ??
-          "An error occurred building checkout seesion."
+        "An error occurred building checkout seesion."
       );
     }
   };
@@ -113,13 +113,14 @@ export const HyperSwitch = ({
   return (
     <div className="w-full md:min-w-[370px] px-2 md:px-0">
       {options !== undefined &&
-      hyperPromise !== undefined &&
-      !isLoadingSession ? (
+        hyperPromise !== undefined &&
+        !isLoadingSession ? (
         <HyperElements options={options} hyper={hyperPromise}>
           <CheckoutForm
             teeTimeId={teeTimeId}
             amountToPay={amountToPay}
             isBuyNowAuction={isBuyNowAuction}
+            cartData={cartData}
           />
         </HyperElements>
       ) : (

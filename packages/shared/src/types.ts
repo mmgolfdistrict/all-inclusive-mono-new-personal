@@ -147,6 +147,8 @@ export type SearchObject = {
   soldByImage: string;
   availableSlots: number;
   pricePerGolfer: number;
+  greenFeeTax?: number;
+  cartFeeTax?: number;
   teeTimeId: string;
   date: string; //day of tee time
   time: number; //military time
