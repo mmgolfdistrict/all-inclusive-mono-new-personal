@@ -102,7 +102,12 @@ export const CourseNav = () => {
             </div>
           ) : (
             <Link href={`/${course?.id}/login`}>
-              <FilledButton className="hidden md:block" data-testid="signin-button-id">Log In</FilledButton>
+              <FilledButton
+                className="hidden md:block"
+                data-testid="signin-button-id"
+              >
+                Log In
+              </FilledButton>
             </Link>
           )}
         </div>
@@ -118,13 +123,15 @@ export const CourseNav = () => {
               data-testid="tee-time-id"
               data-test={courseId}
             />
-            <NavItem
-              href={`/${courseId}/auctions`}
-              text="Auctions"
-              icon={<Auction className="w-[16px]" />}
-              data-testid="auction-id"
-              data-test={courseId}
-            />
+            {course?.allowAuctions === 1 && (
+              <NavItem
+                href={`/${courseId}/auctions`}
+                text="Auctions"
+                icon={<Auction className="w-[16px]" />}
+                data-testid="auction-id"
+                data-test={courseId}
+              />
+            )}
             <NavItem
               href={`/${courseId}/my-tee-box`}
               text="Sell Your Tee Time"
