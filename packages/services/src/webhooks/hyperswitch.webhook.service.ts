@@ -17,11 +17,14 @@ import { BookingService } from "../booking/booking.service";
 import {
   AuctionProduct,
   CharityProduct,
+  ConvenienceFeeProduct,
   CustomerCart,
   FirstHandProduct,
+  MarkupProduct,
   Offer,
   SecondHandProduct,
   SensibleProduct,
+  TaxProduct,
 } from "../checkout/types";
 import { NotificationService } from "../notification/notification.service";
 import { ProviderService } from "../tee-sheet-provider/providers.service";
@@ -153,6 +156,15 @@ export class HyperSwitchWebhookService {
           break;
         case "sensible": //sensible is handled last
           await this.handleSensibleItem(item as SensibleProduct, amountReceived, customer_id);
+          break;
+        case "taxes": //taxes is handled last
+          await this.handleTaxItem(item as TaxProduct, amountReceived, customer_id);
+          break;
+        case "convenience_fee": //convenience is handled last
+          await this.handleConvenienceFeeItem(item as ConvenienceFeeProduct, amountReceived, customer_id);
+          break;
+        case "markup": //markup is handled last
+          await this.handleMarkupItem(item as MarkupProduct, amountReceived, customer_id);
           break;
       }
     }
@@ -548,6 +560,21 @@ export class HyperSwitchWebhookService {
 
   handleSensibleItem = async (item: SensibleProduct, amountReceived: number, customer_id: string) => {
     // Logic for handling first-hand items
+    // ...
+  };
+
+  handleMarkupItem = async (item: MarkupProduct, amountReceived: number, customer_id: string) => {
+    // Logic for handling markup items
+    // ...
+  };
+
+  handleConvenienceFeeItem = async (item: ConvenienceFeeProduct, amountReceived: number, customer_id: string) => {
+    // Logic for handling convenience fee items
+    // ...
+  };
+
+  handleTaxItem = async (item: TaxProduct, amountReceived: number, customer_id: string) => {
+    // Logic for handling tax items
     // ...
   };
 

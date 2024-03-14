@@ -127,12 +127,12 @@ export const Filters = () => {
                 dataTestId="date-filter-id"
                 dataQa={value}
                 className={`${index === 0
-                    ? "rounded-t-2xl border border-stroke"
-                    : index === DateOptions.length - 1 && dateType === "Custom"
-                      ? "border-l border-r border-stroke"
-                      : index === DateOptions.length - 1
-                        ? "rounded-b-2xl border-b border-l border-r border-stroke"
-                        : "border-b border-l border-r border-stroke"
+                  ? "rounded-t-2xl border border-stroke"
+                  : index === DateOptions.length - 1 && dateType === "Custom"
+                    ? "border-l border-r border-stroke"
+                    : index === DateOptions.length - 1
+                      ? "rounded-b-2xl border-b border-l border-r border-stroke"
+                      : "border-b border-l border-r border-stroke"
                   }`}
               />
               {dateType === "Custom" && value === "Custom" ? (
@@ -249,10 +249,10 @@ export const Filters = () => {
               dataTestId="hole-filter-id"
               dataQa={value}
               className={`${index === 0
-                  ? "rounded-l-full border-b border-l border-t border-stroke"
-                  : index === HoleOptions.length - 1
-                    ? "rounded-r-full border-b border-r border-t border-stroke"
-                    : "border border-stroke"
+                ? "rounded-l-full border-b border-l border-t border-stroke"
+                : index === HoleOptions.length - 1
+                  ? "rounded-r-full border-b border-r border-t border-stroke"
+                  : "border border-stroke"
                 } px-[2.5rem]`}
             />
           ))}
@@ -280,10 +280,10 @@ export const Filters = () => {
               dataTestId="golfer-filter-id"
               dataQa={value}
               className={`${index === 0
-                  ? "rounded-l-full border-b border-l border-t border-stroke"
-                  : index === GolferOptions.length - 1
-                    ? "rounded-r-full border border-stroke"
-                    : "border-b border-l border-t border-stroke"
+                ? "rounded-l-full border-b border-l border-t border-stroke"
+                : index === GolferOptions.length - 1
+                  ? "rounded-r-full border border-stroke"
+                  : "border-b border-l border-t border-stroke"
                 } px-[1.44rem]`}
             />
           ))}
@@ -295,7 +295,7 @@ export const Filters = () => {
             Price Range <span className="font-[300]">(per golfer)</span>
           </div>
           <div>
-            ${localPriceRange[0]}-${localPriceRange[1]}
+            ${localPriceRange[0] + (course?.markup ? course?.markup/100 : 0)}-${localPriceRange[1]}
           </div>
         </div>
         <Slider

@@ -25,9 +25,13 @@ export const CheckoutForm = ({
   cartData: unknown[];
 }) => {
   const { course } = useCourseContext();
-  const greenFeeCharge =
+
+  const primaryGreenFeeCharge =
     //@ts-ignore
-    cartData?.filter(({ product_data }) => product_data.metadata.type === "first_hand" || product_data.metadata.type === "second_hand")?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+    cartData?.filter(({ product_data }) => product_data.metadata.type === "first_hand")?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+  // const secondaryGreenFeeCharge =
+  // //@ts-ignore
+  // cartData?.filter(({ product_data }) => product_data.metadata.type === "second_hand")?.reduce((acc: number, i) => acc + i.price, 0) / 100;
   const markupCharge =
     //@ts-ignore
     cartData?.filter(({ product_data }) => product_data.metadata.type === "markup")?.reduce((acc: number, i) => acc + i.price, 0) / 100;
@@ -236,7 +240,7 @@ export const CheckoutForm = ({
 
           <div>
             $
-            {(greenFeeCharge + markupCharge).toLocaleString("en-US", {
+            {(primaryGreenFeeCharge).toLocaleString("en-US", {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}

@@ -13,6 +13,7 @@ import { courses } from "@golf-district/database/schema/courses";
 import { users } from "@golf-district/database/schema/users";
 import { customerCarts } from "@golf-district/database/schema/customerCart";
 import { NotificationService } from "../notification/notification.service";
+import { CustomerCart, ProductData } from "../checkout/types";
 
 /**
  * Service class for handling booking tokenization, transfers, and updates.
@@ -164,6 +165,28 @@ export class TokenizeService {
     This is a first party purchase from the course
     `;
 
+    const [customerCartData]: any = await this.database
+      .select({ cart: customerCarts.cart })
+      .from(customerCarts)
+      .where(eq(customerCarts.courseId, existingTeeTime.courseId))
+      .execute();
+
+    const primaryGreenFeeCharge =
+      customerCartData?.cart?.cart?.filter(({ product_data }: ProductData) => product_data.metadata.type === "first_hand")?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+
+    const convenienceCharge =
+      customerCartData?.cart?.cart?.filter(({ product_data }: ProductData) => product_data.metadata.type === "convenience_fee")?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+
+    const taxCharge =
+      customerCartData?.cart?.cart?.filter(({ product_data }: ProductData) => product_data.metadata.type === "taxes")?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+
+    const sensibleCharge =
+      customerCartData?.cart?.cart?.filter(({ product_data }: ProductData) => product_data.metadata.type === "sensible")?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+
+    const charityCharge =
+      customerCartData?.cart?.cart?.filter(({ product_data }: ProductData) => product_data.metadata.type === "charity")?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+
+
     const template = {
       CustomerFirstName: existingTeeTime.customerName?.split(" ")[0],
       CourseName: existingTeeTime.courseName || "-",
@@ -172,8 +195,8 @@ export class TokenizeService {
       FacilityName: existingTeeTime.entityName || "-",
       PlayDateTime: dayjs(existingTeeTime.date).format("MM/DD/YYYY h:mm A") || "-",
       NumberOfHoles: existingTeeTime.numberOfHoles,
-      GreenFees: `$${existingTeeTime.greenFee}.00` || "-",
-      TaxesAndOtherFees: `$${purchasePrice - existingTeeTime.greenFee}.00` || "-",
+      GreenFees: `$${primaryGreenFeeCharge}` || "-",
+      TaxesAndOtherFees: `$${taxCharge + sensibleCharge + charityCharge + convenienceCharge}` || "-",
       // SensibleWeatherIncluded: ,
       PurchasedFrom: existingTeeTime.courseName || "-",
     }
