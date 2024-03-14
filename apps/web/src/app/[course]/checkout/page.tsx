@@ -147,15 +147,15 @@ export default function Checkout({
         },
       }
     ];
-    
+
     if (data) {
       localCart.push({
         name: "Golf District Tee Time",
         id: teeTimeId ?? data?.teeTimeId,
-        price: (data?.greenFeeTax ?? 0) + (data?.cartFeeTax ?? 0), //int
+        price: ((data?.greenFeeTax ?? 0) + (data?.cartFeeTax ?? 0)) * amountOfPlayers, //int
         image: "", //
         currency: "USD", //USD
-        display_price: formatMoney((data?.greenFeeTax ?? 0) + (data?.cartFeeTax ?? 0)),
+        display_price: formatMoney(((data?.greenFeeTax ?? 0) + (data?.cartFeeTax ?? 0)) * amountOfPlayers),
         product_data: {
           metadata: {
             type: "taxes",
@@ -168,10 +168,10 @@ export default function Checkout({
       localCart.push({
         name: "Golf District Tee Time",
         id: teeTimeId ?? data?.teeTimeId,
-        price: course?.convenienceFees ?? 0, //int
+        price: (course?.convenienceFees * amountOfPlayers) ?? 0, //int
         image: "", //
         currency: "USD", //USD
-        display_price: formatMoney(course?.convenienceFees ? course?.convenienceFees / 100 : 0),
+        display_price: formatMoney((course?.convenienceFees ? course?.convenienceFees / 100 : 0) * amountOfPlayers),
         product_data: {
           metadata: {
             type: "convenience_fee",

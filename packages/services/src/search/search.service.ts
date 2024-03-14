@@ -323,6 +323,7 @@ export class SearchService {
         firstPartySlots: teeTimes.availableFirstHandSpots,
         greenFee: teeTimes.greenFee,
         courseName: courses.name,
+        markup: courses.markup,
         favorites: favorites.id,
         providerDate: teeTimes.providerDate,
         greenFeeTax: teeTimes.greenFeeTax,
@@ -384,7 +385,7 @@ export class SearchService {
         ? `https://${tee.logo.cdnUrl}/${tee.logo.key}.${tee.logo.extension}`
         : "/defaults/default-profile.webp",
       availableSlots: tee.firstPartySlots,
-      pricePerGolfer: tee.greenFee,
+      pricePerGolfer: tee.greenFee + (tee.markup ? tee.markup/100 : 0),
       greenFeeTax: tee.greenFeeTax,
       cartFeeTax: tee.cartFeeTax,
       teeTimeId: tee.id,
@@ -612,6 +613,7 @@ export class SearchService {
         secondHandSlots: teeTimes.availableSecondHandSpots,
         greenFee: teeTimes.greenFee,
         courseName: courses.name,
+        markup: courses.markup,
         cartFee: teeTimes.cartFee,
         logo: {
           key: assets.key,
@@ -670,7 +672,7 @@ export class SearchService {
         firstOrSecondHandTeeTime: TeeTimeType.FIRST_HAND,
         isListed: false,
         minimumOfferPrice: teeTime.greenFee, //add more fees?
-        pricePerGolfer: teeTime.greenFee, //add more fees?
+        pricePerGolfer: teeTime.greenFee + (teeTime.markup ? teeTime.markup/100 : 0), //add more fees?
         isOwned: false,
         firstHandPurchasePrice: 0,
         bookingIds: [],
