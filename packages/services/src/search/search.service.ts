@@ -561,7 +561,7 @@ export class SearchService {
       .utcOffset(timezoneCorrection)
       .add(30, "minutes")
       .toISOString();
-
+      
     const countSubQuery = this.database
       .select({
         id: teeTimes.id,

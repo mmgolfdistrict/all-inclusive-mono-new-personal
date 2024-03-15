@@ -146,7 +146,7 @@ export const TeeTime = ({
 
   useEffect(() => {
     if (status !== "FIRST_HAND") {
-      setSelectedPlayers(availableSlots.toString());
+      setSelectedPlayers(isOwned ? players : availableSlots.toString());
     }
   }, [status, availableSlots]);
 
@@ -208,7 +208,11 @@ export const TeeTime = ({
                 players={selectedPlayers}
                 setPlayers={setSelectedPlayers}
                 playersOptions={PlayersOptions}
-                availableSlots={availableSlots}
+                availableSlots={
+                  status === "SECOND_HAND"
+                    ? parseInt(selectedPlayers)
+                    : availableSlots
+                }
                 isDisabled={status === "SECOND_HAND"}
                 className="md:px-[1rem] md:py-[.25rem] md:!text-[14px] !text-[10px] px-[.75rem] py-[.1rem]"
                 teeTimeId={teeTimeId}

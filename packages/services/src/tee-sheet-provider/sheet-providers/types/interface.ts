@@ -1,6 +1,7 @@
 import Logger from "@golf-district/shared/src/logger";
 import type pino from "pino";
-import type { BookingResponse, CustomerCreationData, CustomerData, TeeTimeResponse } from "./foreup.type";
+import type { BookingResponse, CustomerCreationData, CustomerData, TeeTimeResponse, } from "./foreup.type";
+import { InsertBookingSlots } from "@golf-district/database/schema/bookingslots";
 
 export type ForeUpCredentials = {
   username: string;
@@ -31,7 +32,8 @@ export interface ProviderAPI {
     courseId: string,
     teeTimeId: string,
     bookingId: string,
-    options: any
+    options: any,
+    slotId:string|undefined
   ) => Promise<BookingResponse>;
   deleteBooking: (token: string, courseId: string, teesheetId: string, bookingId: string) => Promise<void>; // Added deleteBooking to the interface
   getToken: () => Promise<string>;
@@ -41,6 +43,7 @@ export interface ProviderAPI {
     customerData: CustomerCreationData
   ) => Promise<CustomerData>;
   getCustomer: (token: string, courseId: string, customerId: string) => Promise<CustomerData>;
+  getSlotIdsForBooking: (bookingId: string,slots:number,clientId:string)=>Promise<Array<InsertBookingSlots>>;
 }
 
 export abstract class BaseProvider implements ProviderAPI {
@@ -87,4 +90,5 @@ export abstract class BaseProvider implements ProviderAPI {
     customerData: CustomerCreationData
   ): Promise<CustomerData>;
   abstract getCustomer(token: string, courseId: string, customerId: string): Promise<CustomerData>;
+  abstract getSlotIdsForBooking(bookingId:string,slots:number,clientId:string):Promise<Array<InsertBookingSlots>>;
 }

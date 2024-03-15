@@ -21,7 +21,7 @@ export type OwnedTeeTime = {
   courseId: string;
   date: string;
   firstHandPrice: number;
-  golfers: InviteFriend[] | string[];
+  golfers: InviteFriend[];
   purchasedFor: number;
   bookingIds: string[];
   status: "UNLISTED" | "LISTED";
@@ -32,6 +32,7 @@ export type OwnedTeeTime = {
   listPrice: number | null;
   minimumOfferPrice: number;
   weatherGuaranteeAmount?: number;
+  selectedSlotsCount?: "1" | "2" | "3" | "4";
 };
 
 export const Owned = () => {

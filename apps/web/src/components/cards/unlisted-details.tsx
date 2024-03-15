@@ -185,7 +185,7 @@ export const UnlistedDetails = ({
               players={players}
               setPlayers={setPlayers}
               playersOptions={PlayersOptions}
-              availableSlots={data?.availableSlots ?? 0}
+              availableSlots={bookingData?.bookings?.length || 0}
               teeTimeId={teeTimeId}
             />
           </div>
@@ -291,7 +291,7 @@ export const UnlistedDetails = ({
           courseId: course?.id ?? "",
           date: data?.date ?? "",
           firstHandPrice: data?.firstHandPrice ?? 0,
-          golfers: data?.golfers ?? [],
+          golfers: (bookingData?.bookings as InviteFriend[]) ?? [],
           purchasedFor: data?.purchasedFor ?? 0,
           bookingIds: bookingIds ?? [],
           status: "UNLISTED",
@@ -332,7 +332,7 @@ export const UnlistedDetails = ({
       <MakeAnOffer
         isMakeAnOfferOpen={isMakeAnOfferOpen}
         setIsMakeAnOfferOpen={setIsMakeAnOfferOpen}
-        availableSlots={data?.availableSlots ?? 0}
+        availableSlots={bookingData?.bookings?.length || 0}
         courseImage={course?.logo ?? ""}
         courseName={course?.name ?? ""}
         date={data?.date ?? ""}

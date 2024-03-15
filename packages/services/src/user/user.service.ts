@@ -4,6 +4,7 @@ import type { Db } from "@golf-district/database";
 import { accounts } from "@golf-district/database/schema/accounts";
 import { assets } from "@golf-district/database/schema/assets";
 import { bookings } from "@golf-district/database/schema/bookings";
+import { bookingslots } from "@golf-district/database/schema/bookingslots";
 import { courses } from "@golf-district/database/schema/courses";
 import { entities } from "@golf-district/database/schema/entities";
 import { favorites } from "@golf-district/database/schema/favorites";
@@ -229,7 +230,7 @@ export class UserService {
    *
    * @param {string} teeTimeId - The unique identifier of the tee time.
    * @param {string} [userId] - The unique identifier of the user. If not provided, the result will indicate that the connected user is not the owner and return an empty array of bookings.
-   * @returns {Promise<{ connectedUserIsOwner: boolean; bookings: string[] }>} A promise that resolves to an object containing information about the ownership and bookings.
+   * @returns {Promise<{ connectedUserIsOwner: boolean; bookings:any }>} A promise that resolves to an object containing information about the ownership and bookings.
    * @throws {Error} Throws an error if there is an issue retrieving bookings from the database.
    * @example
    * const teeTimeId = "exampleTeeTimeId";
@@ -247,10 +248,15 @@ export class UserService {
     const data = await this.database
       .select({
         bookingId: bookings.id,
-        nameOnBooking: bookings.nameOnBooking,
+        nameOnBooking: bookingslots.name,
+        slotId: bookingslots.slotnumber,
+        customerId: bookingslots.customerId,
+        slotPosition: bookingslots.slotPosition,
       })
       .from(bookings)
+      .leftJoin(bookingslots, eq(bookingslots.bookingId, bookings.providerBookingId))
       .where(and(eq(bookings.teeTimeId, teeTimeId), eq(bookings.ownerId, userId)))
+      .orderBy(asc(bookingslots.slotPosition))
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving bookings: ${err}`);
@@ -263,15 +269,10 @@ export class UserService {
       };
     }
 
-    const namesOnBooking = data.filter((i) => i.nameOnBooking !== "Guest");
-    const foundUsersForBooking: {
-      id: string;
-      handle: string | null;
-      name: string | null;
-      email: string | null;
-    }[] = [];
-    if (namesOnBooking.length > 0) {
-      for (const _name of namesOnBooking) {
+    let finalData = [];
+
+    for (const unit of data) {
+      if (unit.customerId !== "") {
         const userData = await this.database
           .select({
             id: users.id,
@@ -280,45 +281,32 @@ export class UserService {
             email: users.email,
           })
           .from(users)
-          .where(eq(users.name, _name.nameOnBooking))
+          .where(eq(users.id, unit.customerId || ""))
           .execute()
           .catch((err) => {
             this.logger.error(`Error retrieving user: ${err}`);
             throw new Error("Error retrieving user");
           });
         if (userData[0]) {
-          foundUsersForBooking.push(userData[0]);
+          finalData.push({ ...userData[0], slotId: unit.slotId });
         }
+      } else {
+        finalData.push({
+          id: "",
+          name: unit.nameOnBooking?.length ? unit.nameOnBooking : "Guest",
+          email: "",
+          handle: "",
+          currentlyEditing: false,
+          slotId: unit.slotId,
+        });
       }
     }
-
-    const cleanedData = data.map((i) => {
-      if (foundUsersForBooking.length > 0) {
-        const user = foundUsersForBooking.find(
-          (user) => i.nameOnBooking.toLowerCase() === user.name?.toLowerCase()
-        );
-        if (user) {
-          return {
-            id: user.id,
-            handle: user.handle,
-            name: user.name,
-            email: user.email,
-          };
-        }
-      }
-      return {
-        id: "",
-        handle: "",
-        name: i.nameOnBooking,
-        email: "",
-      };
-    });
 
     const bookingIds = data.map((i) => i.bookingId);
 
     return {
       connectedUserIsOwner: true,
-      bookings: cleanedData,
+      bookings: finalData,
       bookingIds,
     };
   };
