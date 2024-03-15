@@ -126,14 +126,15 @@ export const Filters = () => {
                 value={value}
                 dataTestId="date-filter-id"
                 dataQa={value}
-                className={`${index === 0
-                  ? "rounded-t-2xl border border-stroke"
-                  : index === DateOptions.length - 1 && dateType === "Custom"
+                className={`${
+                  index === 0
+                    ? "rounded-t-2xl border border-stroke"
+                    : index === DateOptions.length - 1 && dateType === "Custom"
                     ? "border-l border-r border-stroke"
                     : index === DateOptions.length - 1
-                      ? "rounded-b-2xl border-b border-l border-r border-stroke"
-                      : "border-b border-l border-r border-stroke"
-                  }`}
+                    ? "rounded-b-2xl border-b border-l border-r border-stroke"
+                    : "border-b border-l border-r border-stroke"
+                }`}
               />
               {dateType === "Custom" && value === "Custom" ? (
                 <Calendar
@@ -193,8 +194,13 @@ export const Filters = () => {
             }
           }}
           data-testid="slider-start-time-id"
-          data-qa={`${startTimeOptions.find((i) => i.value === localStartTime[0])?.displayTime} - ${startTimeOptions.find((i) => i.value === localStartTime[1])?.displayTime
-            }`}
+          data-qa={`${
+            startTimeOptions.find((i) => i.value === localStartTime[0])
+              ?.displayTime
+          } - ${
+            startTimeOptions.find((i) => i.value === localStartTime[1])
+              ?.displayTime
+          }`}
         />
       </section>
 
@@ -248,12 +254,13 @@ export const Filters = () => {
               value={value}
               dataTestId="hole-filter-id"
               dataQa={value}
-              className={`${index === 0
-                ? "rounded-l-full border-b border-l border-t border-stroke"
-                : index === HoleOptions.length - 1
+              className={`${
+                index === 0
+                  ? "rounded-l-full border-b border-l border-t border-stroke"
+                  : index === HoleOptions.length - 1
                   ? "rounded-r-full border-b border-r border-t border-stroke"
                   : "border border-stroke"
-                } px-[2.5rem]`}
+              } px-[2.5rem]`}
             />
           ))}
         </ToggleGroup.Root>
@@ -279,12 +286,13 @@ export const Filters = () => {
               value={value}
               dataTestId="golfer-filter-id"
               dataQa={value}
-              className={`${index === 0
-                ? "rounded-l-full border-b border-l border-t border-stroke"
-                : index === GolferOptions.length - 1
+              className={`${
+                index === 0
+                  ? "rounded-l-full border-b border-l border-t border-stroke"
+                  : index === GolferOptions.length - 1
                   ? "rounded-r-full border border-stroke"
                   : "border-b border-l border-t border-stroke"
-                } px-[1.44rem]`}
+              } px-[1.44rem]`}
             />
           ))}
         </ToggleGroup.Root>
@@ -295,7 +303,8 @@ export const Filters = () => {
             Price Range <span className="font-[300]">(per golfer)</span>
           </div>
           <div>
-            ${localPriceRange[0] + (course?.markup ? course?.markup/100 : 0)}-${localPriceRange[1]}
+            ${localPriceRange[0] + (course?.markup ? course?.markup / 100 : 0)}
+            -${localPriceRange[1]}
           </div>
         </div>
         <Slider
@@ -335,8 +344,9 @@ export const Item = ({
   return (
     <ToggleGroup.Item
       value={value}
-      className={`bg-white px-4 py-2 text-left text-[14px] text-primary-gray transition-colors data-[state=on]:bg-primary data-[state=on]:text-white ${className ?? ""
-        }`}
+      className={`bg-white px-4 py-2 text-left text-[14px] text-primary-gray transition-colors data-[state=on]:bg-primary data-[state=on]:text-white ${
+        className ?? ""
+      }`}
       data-testid={dataTestId}
       data-qa={dataQa}
       data-test={dataTest}

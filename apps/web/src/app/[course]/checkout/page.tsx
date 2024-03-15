@@ -119,14 +119,14 @@ export default function Checkout({
     const metadata: Record<string, number | string | undefined | null> =
       saleType === "first_hand"
         ? {
-          type: "first_hand",
-          tee_time_id: teeTimeId,
-          number_of_bookings: amountOfPlayers,
-        }
+            type: "first_hand",
+            tee_time_id: teeTimeId,
+            number_of_bookings: amountOfPlayers,
+          }
         : {
-          type: "second_hand",
-          second_hand_id: listingId,
-        };
+            type: "second_hand",
+            second_hand_id: listingId,
+          };
 
     const localCart = [
       {
@@ -145,39 +145,46 @@ export default function Checkout({
         product_data: {
           metadata: { ...metadata },
         },
-      }
+      },
     ];
 
     if (data) {
       localCart.push({
         name: "Golf District Tee Time",
         id: teeTimeId ?? data?.teeTimeId,
-        price: ((data?.greenFeeTax ?? 0) + (data?.cartFeeTax ?? 0)) * amountOfPlayers, //int
+        price:
+          ((data?.greenFeeTax ?? 0) + (data?.cartFeeTax ?? 0)) *
+          amountOfPlayers, //int
         image: "", //
         currency: "USD", //USD
-        display_price: formatMoney(((data?.greenFeeTax ?? 0) + (data?.cartFeeTax ?? 0)) * amountOfPlayers),
+        display_price: formatMoney(
+          ((data?.greenFeeTax ?? 0) + (data?.cartFeeTax ?? 0)) * amountOfPlayers
+        ),
         product_data: {
           metadata: {
             type: "taxes",
           },
         },
-      })
+      });
     }
 
     if (course?.convenienceFees) {
       localCart.push({
         name: "Golf District Tee Time",
         id: teeTimeId ?? data?.teeTimeId,
-        price: (course?.convenienceFees * amountOfPlayers) ?? 0, //int
+        price: course?.convenienceFees * amountOfPlayers ?? 0, //int
         image: "", //
         currency: "USD", //USD
-        display_price: formatMoney((course?.convenienceFees ? course?.convenienceFees / 100 : 0) * amountOfPlayers),
+        display_price: formatMoney(
+          (course?.convenienceFees ? course?.convenienceFees / 100 : 0) *
+            amountOfPlayers
+        ),
         product_data: {
           metadata: {
             type: "convenience_fee",
           },
         },
-      })
+      });
     }
 
     if (course?.markup) {
@@ -193,7 +200,7 @@ export default function Checkout({
             type: "markup",
           },
         },
-      })
+      });
     }
 
     if (shouldAddSensible && !isSensibleInvalid) {
@@ -244,7 +251,7 @@ export default function Checkout({
     selectedCharity,
     deboundCharityAmount,
     course?.markup,
-    course?.convenienceFees
+    course?.convenienceFees,
   ]);
 
   if (isError && error) {

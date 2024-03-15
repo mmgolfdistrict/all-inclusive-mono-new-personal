@@ -41,7 +41,9 @@ export const HyperSwitch = ({
   const [isLoadingSession, setIsLoadingSession] = useState<boolean>(false);
   const amountToPay =
     //@ts-ignore
-    cartData?.filter(({ product_data }) => product_data.metadata.type !== "markup")?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+    cartData
+      ?.filter(({ product_data }) => product_data.metadata.type !== "markup")
+      ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
   const [localCartData, setLocalCartData] = useState<unknown[]>(cartData);
   const [error, setError] = useState<undefined | string>(undefined);
   const callingRef = useRef<boolean>(false);
@@ -61,7 +63,7 @@ export const HyperSwitch = ({
         phone: "",
         phone_country_code: "1",
         //@ts-ignore
-        cart: cartData
+        cart: cartData,
       })) as CreatePaymentResponse;
       setOptions({
         clientSecret: data.clientSecret,
@@ -78,7 +80,7 @@ export const HyperSwitch = ({
       console.log(error.message);
       setError(
         (error?.message as string) ??
-        "An error occurred building checkout seesion."
+          "An error occurred building checkout seesion."
       );
     }
   };
@@ -113,8 +115,8 @@ export const HyperSwitch = ({
   return (
     <div className="w-full md:min-w-[370px] px-2 md:px-0">
       {options !== undefined &&
-        hyperPromise !== undefined &&
-        !isLoadingSession ? (
+      hyperPromise !== undefined &&
+      !isLoadingSession ? (
         <HyperElements options={options} hyper={hyperPromise}>
           <CheckoutForm
             teeTimeId={teeTimeId}

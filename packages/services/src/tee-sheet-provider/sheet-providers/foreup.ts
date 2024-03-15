@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import Logger from "@golf-district/shared/src/logger";
 import type {
   BookingCreationData,
@@ -97,15 +98,14 @@ export class foreUp extends BaseProvider {
     courseId: string,
     teesheetId: string,
     bookingId: string,
-    options?: TeeTimeUpdateRequest
+    options?: TeeTimeUpdateRequest,
+    slotId?: string
   ): Promise<BookingResponse> {
     const endpoint = this.getBasePoint();
-    console.log("update teetime called");
     // https://api.foreupsoftware.com/api_rest/index.php/courses/courseId/teesheets/teesheetId/bookings/bookingId/bookedPlayers/bookedPlayerId
-    const url = `${endpoint}/courses/${courseId}/teesheets/${teesheetId}/bookings/${bookingId}/bookedPlayers/${bookingId}-1`;
-    // console.log(url);
-
-    // console.log(JSON.stringify(options));
+    const url = `${endpoint}/courses/${courseId}/teesheets/${teesheetId}/bookings/${bookingId}/bookedPlayers/${
+      slotId ? slotId : bookingId
+    }`;
     const headers = this.getHeaders(token);
 
     const response = await fetch(url, {
@@ -224,6 +224,22 @@ export class foreUp extends BaseProvider {
       default:
         return "https://private-anon-67e30e32d1-foreup.apiary-mock.com/api_rest/index.php";
     }
+  }
+
+  async getSlotIdsForBooking(bookingId: string, slots: number, customerId: string) {
+    const bookingSlots = [];
+    for (let i = 0; i < slots; i++) {
+      bookingSlots.push({
+        id: randomUUID(),
+        bookingId: bookingId,
+        slotnumber: bookingId + "-" + (i + 1),
+        name: i === 0 ? "" : "Guest",
+        customerId: i === 0 ? customerId : "",
+        isActive: true,
+        slotPosition: i + 1,
+      });
+    }
+    return bookingSlots;
   }
 }
 

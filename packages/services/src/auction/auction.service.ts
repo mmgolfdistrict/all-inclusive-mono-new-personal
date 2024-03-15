@@ -3,9 +3,9 @@ import type { Db } from "@golf-district/database";
 import { and, desc, eq, lt, sql } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import { auctions } from "@golf-district/database/schema/auctions";
-import { users } from "@golf-district/database/schema/users";
 import type { SelectAuctions } from "@golf-district/database/schema/auctions";
 import { bids } from "@golf-district/database/schema/bids";
+import { users } from "@golf-district/database/schema/users";
 import { assetToURL, currentUtcTimestamp, dateToUtcTimestamp } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
 import { HyperSwitchService } from "../payment-processor/hyperswitch.service";
@@ -240,7 +240,7 @@ export class AuctionService {
       .select({
         name: users.name,
         email: users.email,
-        phoneNumber: users.phoneNumber
+        phoneNumber: users.phoneNumber,
       })
       .from(users)
       .where(eq(users.id, userId));
@@ -253,7 +253,7 @@ export class AuctionService {
         currency: "USD",
         name: user?.name,
         email: user?.email,
-        phoneNumber: user?.phoneNumber
+        phoneNumber: user?.phoneNumber,
         //payment_method: paymentMethodId ? paymentMethodId : paymentMethods.data[0].id,
       })
       .catch((err) => {
@@ -317,7 +317,7 @@ export class AuctionService {
       .select({
         name: users.name,
         email: users.email,
-        phoneNumber: users.phoneNumber
+        phoneNumber: users.phoneNumber,
       })
       .from(users)
       .where(eq(users.id, userId));

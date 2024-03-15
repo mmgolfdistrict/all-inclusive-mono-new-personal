@@ -123,7 +123,7 @@ export class CheckoutService {
       .select({
         name: users.name,
         email: users.email,
-        phoneNumber: users.phoneNumber
+        phoneNumber: users.phoneNumber,
       })
       .from(users)
       .where(eq(users.id, userId));
@@ -146,9 +146,11 @@ export class CheckoutService {
     //   const message = errors.map((message) => message.errorType)
     //   throw new Error(errors);
     // }
-    const total = customerCart.cart.filter(({ product_data }) => product_data.metadata.type !== "markup").reduce((acc, item) => {
-      return acc + item.price;
-    }, 0);
+    const total = customerCart.cart
+      .filter(({ product_data }) => product_data.metadata.type !== "markup")
+      .reduce((acc, item) => {
+        return acc + item.price;
+      }, 0);
     // const tax = await this.stripeService.getTaxRate(customerCart.cart).catch((err) => {
     //   this.logger.error(`Error calculating tax: ${err}`);
     //   throw new Error(`Error calculating tax: ${err}`);
@@ -373,7 +375,7 @@ export class CheckoutService {
     //@TODO: validate quote
     return errors;
   };
-  
+
   validateTaxesItem = async (item: TaxProduct): Promise<CartValidationError[]> => {
     const errors: CartValidationError[] = [];
     //@TODO: validate quote

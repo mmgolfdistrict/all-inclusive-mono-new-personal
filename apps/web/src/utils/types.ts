@@ -90,6 +90,9 @@ export type InviteFriend = {
   handle: string;
   name: string;
   email: string;
+  slotId: string;
+  bookingId: string;
+  currentlyEditing: boolean;
 };
 
 export type SensibleDataToMountCompType = {

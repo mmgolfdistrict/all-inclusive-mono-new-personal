@@ -98,7 +98,7 @@ export const ProductDataSchema = z.union([
   SensibleProductSchema,
   AuctionProductSchema,
   CharityProductSchema,
-  TaxSchema
+  TaxSchema,
 ]);
 
 // CustomerCart schema

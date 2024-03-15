@@ -385,7 +385,7 @@ export class SearchService {
         ? `https://${tee.logo.cdnUrl}/${tee.logo.key}.${tee.logo.extension}`
         : "/defaults/default-profile.webp",
       availableSlots: tee.firstPartySlots,
-      pricePerGolfer: tee.greenFee + (tee.markup ? tee.markup/100 : 0),
+      pricePerGolfer: tee.greenFee + (tee.markup ? tee.markup / 100 : 0),
       greenFeeTax: tee.greenFeeTax,
       cartFeeTax: tee.cartFeeTax,
       teeTimeId: tee.id,
@@ -672,7 +672,7 @@ export class SearchService {
         firstOrSecondHandTeeTime: TeeTimeType.FIRST_HAND,
         isListed: false,
         minimumOfferPrice: teeTime.greenFee, //add more fees?
-        pricePerGolfer: teeTime.greenFee + (teeTime.markup ? teeTime.markup/100 : 0), //add more fees?
+        pricePerGolfer: teeTime.greenFee + (teeTime.markup ? teeTime.markup / 100 : 0), //add more fees?
         isOwned: false,
         firstHandPurchasePrice: 0,
         bookingIds: [],

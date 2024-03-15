@@ -10,6 +10,7 @@ import { promoCodes } from "@golf-district/database/schema/promoCodes";
 import { providerCourseLink } from "@golf-district/database/schema/providersCourseLink";
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import { userPromoCodeLink } from "@golf-district/database/schema/userPromoCodeLink";
+import { users } from "@golf-district/database/schema/users";
 import Logger from "@golf-district/shared/src/logger";
 import { Client } from "@upstash/qstash/.";
 import { B } from "vitest/dist/reporters-5f784f42";
@@ -27,12 +28,11 @@ import type {
   TaxProduct,
 } from "../checkout/types";
 import type { NotificationService } from "../notification/notification.service";
+import type { SensibleService } from "../sensible/sensible.service";
 import type { ProviderService } from "../tee-sheet-provider/providers.service";
 import { BookingCreationData } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
 import type { TokenizeService } from "../token/tokenize.service";
 import type { HyperSwitchEvent } from "./types/hyperswitch";
-import type { SensibleService } from "../sensible/sensible.service";
-import { users } from "@golf-district/database/schema/users";
 
 /**
  * `HyperSwitchWebhookService` - A service for processing webhooks from HyperSwitch.
@@ -226,12 +226,12 @@ export class HyperSwitchWebhookService {
     const pricePerBooking = amountReceived / item.product_data.metadata.number_of_bookings / 100;
 
     //create a provider booking for each player
-    const bookedPLayers: { accountNumber: number }[] = [];
-    for (let i = 0; i < item.product_data.metadata.number_of_bookings; i++) {
-      bookedPLayers.push({
+    let bookedPLayers: { accountNumber: number }[] = [
+      {
         accountNumber: providerCustomer.playerNumber,
-      });
-    }
+      },
+    ];
+
     const booking = await provider
       .createBooking(token, teeTime.providerCourseId!, teeTime.providerTeeSheetId!, {
         data: {
@@ -240,7 +240,7 @@ export class HyperSwitchWebhookService {
             start: teeTime.providerDate,
             holes: teeTime.holes,
             players: bookedPLayers?.length,
-            bookedPLayers,
+            bookedPlayers: bookedPLayers,
             event_type: "tee_time",
             details: "GD Booking",
           },
@@ -265,7 +265,10 @@ export class HyperSwitchWebhookService {
         item.product_data.metadata.number_of_bookings,
         booking.data.id,
         item.product_data.metadata.tee_time_id,
-        true
+        true,
+        provider,
+        token,
+        teeTime
       )
       .catch((err) => {
         this.logger.error(err);
@@ -279,6 +282,7 @@ export class HyperSwitchWebhookService {
         throw new Error(`Error creating booking`);
       });
   };
+
   handleSecondHandItem = async (item: SecondHandProduct, amountReceived: number, customer_id: string) => {
     const listingId = item.product_data.metadata.second_hand_id;
     const listedBooking = await this.database
@@ -640,7 +644,11 @@ export class HyperSwitchWebhookService {
     // ...
   };
 
-  handleConvenienceFeeItem = async (item: ConvenienceFeeProduct, amountReceived: number, customer_id: string) => {
+  handleConvenienceFeeItem = async (
+    item: ConvenienceFeeProduct,
+    amountReceived: number,
+    customer_id: string
+  ) => {
     // Logic for handling convenience fee items
     // ...
   };
