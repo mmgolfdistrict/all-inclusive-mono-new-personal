@@ -226,8 +226,17 @@ export class foreUp extends BaseProvider {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   async getSlotIdsForBooking(bookingId: string, slots: number, customerId: string) {
-    const bookingSlots = [];
+    const bookingSlots: {
+      id: string;
+      bookingId: string;
+      slotnumber: string;
+      name: string;
+      customerId: string;
+      isActive: boolean;
+      slotPosition: number;
+    }[] = [];
     for (let i = 0; i < slots; i++) {
       bookingSlots.push({
         id: randomUUID(),

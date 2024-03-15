@@ -1,4 +1,4 @@
-import { InferSelectModel } from "drizzle-orm";
+import type { InferSelectModel } from "drizzle-orm";
 import { boolean, smallint, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 

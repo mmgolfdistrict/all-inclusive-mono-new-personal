@@ -79,7 +79,7 @@ export const ManageOwnedTeeTime = ({
       friendsToSet.forEach((friend) => {
         friend.currentlyEditing = false;
       });
-      setFriends(selectedTeeTime.golfers as InviteFriend[]);
+      setFriends(selectedTeeTime.golfers);
       setMinimumOfferPrice(
         selectedTeeTime.minimumOfferPrice > 0
           ? selectedTeeTime.minimumOfferPrice
@@ -187,7 +187,7 @@ export const ManageOwnedTeeTime = ({
     // const slotIdOfRemoved=y.length?y[0]?.slotId:""
     // setNewFriend({...newFriend,slotId:slotIdOfRemoved||""})
     // setFriends(newFriends);
-    const newFriends = JSON.parse(JSON.stringify(friends));
+    const newFriends: InviteFriend[] = JSON.parse(JSON.stringify(friends));
 
     newFriends.forEach((friend) => {
       if (friend.slotId == slotId) {
@@ -223,7 +223,7 @@ export const ManageOwnedTeeTime = ({
   };
 
   const addFriendUpdated = (friendToFind: InviteFriend) => {
-    let friendsCopy = [...friends];
+    const friendsCopy = [...friends];
     friendsCopy.forEach((friend) => {
       if (friend.slotId == friendToFind.slotId) {
         (friend.email = friendToFind.email),
@@ -437,6 +437,7 @@ export const ManageOwnedTeeTime = ({
                                   {friendList.length ? (
                                     <ul className="w-full text-opacity-100 text-gray-700 shadow-md border border-solid border-gray-200 rounded-8 text-start">
                                       {friendList?.map((frnd, idx) => (
+                                        // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
                                         <li
                                           className="cursor-pointer p-4 border-b border-solid border-gray-300"
                                           onClick={() => {

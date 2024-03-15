@@ -75,7 +75,10 @@ export class UserService {
    * @example
    * const userService = new UserService(database, notificationService);
    */
-  constructor(protected readonly database: Db, private readonly notificationsService: NotificationService) {
+  constructor(
+    protected readonly database: Db,
+    private readonly notificationsService: NotificationService
+  ) {
     //this.filter = new Filter();
   }
 
@@ -266,7 +269,15 @@ export class UserService {
       };
     }
 
-    let finalData = [];
+    const finalData: {
+      id: string;
+      handle: string;
+      name: string;
+      email: string;
+      slotId: string;
+      bookingId: string;
+      currentlyEditing: boolean;
+    }[] = [];
 
     for (const unit of data) {
       if (unit.customerId !== "") {
@@ -285,7 +296,15 @@ export class UserService {
             throw new Error("Error retrieving user");
           });
         if (userData[0]) {
-          finalData.push({ ...userData[0], slotId: unit.slotId });
+          finalData.push({
+            ...userData[0],
+            name: unit.nameOnBooking?.length ? unit.nameOnBooking : "Guest",
+            email: userData[0]?.email?.length ? userData[0]?.email : "",
+            handle: userData[0]?.handle?.length ? userData[0]?.handle : "",
+            slotId: unit.slotId!,
+            currentlyEditing: false,
+            bookingId: unit.bookingId,
+          });
         }
       } else {
         finalData.push({
@@ -294,7 +313,8 @@ export class UserService {
           email: "",
           handle: "",
           currentlyEditing: false,
-          slotId: unit.slotId,
+          slotId: unit.slotId!,
+          bookingId: unit.bookingId,
         });
       }
     }

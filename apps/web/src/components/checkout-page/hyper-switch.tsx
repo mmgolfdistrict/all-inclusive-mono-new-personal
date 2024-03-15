@@ -43,7 +43,7 @@ export const HyperSwitch = ({
     //@ts-ignore
     cartData
       ?.filter(({ product_data }) => product_data.metadata.type !== "markup")
-      ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+      ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
   const [localCartData, setLocalCartData] = useState<unknown[]>(cartData);
   const [error, setError] = useState<undefined | string>(undefined);
   const callingRef = useRef<boolean>(false);
