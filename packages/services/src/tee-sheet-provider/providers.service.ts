@@ -1,11 +1,11 @@
 import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
 import { and, eq, inArray, sql } from "@golf-district/database";
+import { InsertBookingSlots } from "@golf-district/database/schema/bookingslots";
 import { providers } from "@golf-district/database/schema/providers";
 import type { SelectProviders } from "@golf-district/database/schema/providers";
 import { providerCourseLink } from "@golf-district/database/schema/providersCourseLink";
 import { userProviderCourseLink } from "@golf-district/database/schema/userProviderCourseLink";
-import { InsertBookingSlots } from "@golf-district/database/schema/bookingslots";
 import { users } from "@golf-district/database/schema/users";
 import Logger from "@golf-district/shared/src/logger";
 import { CacheService } from "../infura/cache.service";
@@ -132,7 +132,7 @@ export class ProviderService extends CacheService {
     providerId: string,
     bookingId: string,
     options: any,
-    slotId:string
+    slotId: string
   ): Promise<BookingResponse> {
     this.logger.info(`updateTeeTime called with courseId: ${courseId}`);
     const { provider, token } = await this.getProviderAndKey(providerId, courseId);
@@ -144,13 +144,12 @@ export class ProviderService extends CacheService {
     teeTimeId: string,
     providerId: string,
     bookingId: string,
-    slots:number,
-    customerId:string
-  ):Promise<InsertBookingSlots[]> {
+    slots: number,
+    customerId: string
+  ): Promise<InsertBookingSlots[]> {
     this.logger.info(`updateTeeTime called with courseId: ${courseId}`);
     const { provider } = await this.getProviderAndKey(providerId, courseId);
-    return provider.getSlotIdsForBooking(bookingId,slots,customerId);
-    
+    return provider.getSlotIdsForBooking(bookingId, slots, customerId);
   }
 
   findOrCreateCustomer = async (

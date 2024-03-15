@@ -3,18 +3,18 @@ import type { Db } from "@golf-district/database";
 import { and, eq, inArray } from "@golf-district/database";
 import { bookings, InsertBooking } from "@golf-district/database/schema/bookings";
 import { bookingslots, InsertBookingSlots } from "@golf-district/database/schema/bookingslots";
+import { courses } from "@golf-district/database/schema/courses";
+import { customerCarts } from "@golf-district/database/schema/customerCart";
 import { entities } from "@golf-district/database/schema/entities";
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import { InsertTransfer, transfers } from "@golf-district/database/schema/transfers";
+import { users } from "@golf-district/database/schema/users";
 import { currentUtcTimestamp } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
-import { textChangeRangeIsUnchanged } from "typescript";
 import dayjs from "dayjs";
-import { courses } from "@golf-district/database/schema/courses";
-import { users } from "@golf-district/database/schema/users";
-import { customerCarts } from "@golf-district/database/schema/customerCart";
-import { NotificationService } from "../notification/notification.service";
+import { textChangeRangeIsUnchanged } from "typescript";
 import { CustomerCart, ProductData } from "../checkout/types";
+import { NotificationService } from "../notification/notification.service";
 import { ProviderAPI } from "../tee-sheet-provider/sheet-providers";
 import { TeeTime } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
 
@@ -31,10 +31,7 @@ export class TokenizeService {
    * @example
    * const tokenizeService = new TokenizeService(database);
    */
-  constructor(
-    private readonly database: Db,
-    private readonly notificationService: NotificationService
-  ) {}
+  constructor(private readonly database: Db, private readonly notificationService: NotificationService) {}
   /**
    * Tokenize a booking for a user. This function either books an existing tee time or creates a new one based on the provided details.
    *

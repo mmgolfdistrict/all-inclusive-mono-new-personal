@@ -45,7 +45,9 @@ export const ListTeeTime = ({
   needsRedirect,
 }: SideBarProps) => {
   const [listingPrice, setListingPrice] = useState<number>(0);
-  const [players, setPlayers] = useState<PlayerType>(selectedTeeTime?.selectedSlotsCount||"1");
+  const [players, setPlayers] = useState<PlayerType>(
+    selectedTeeTime?.selectedSlotsCount || "1"
+  );
   const { trigger, sidebar, toggleSidebar } = useSidebar({
     isOpen: isListTeeTimeOpen,
     setIsOpen: setIsListTeeTimeOpen,
@@ -59,11 +61,11 @@ export const ListTeeTime = ({
     return selectedTeeTime?.firstHandPrice * 50;
   }, [selectedTeeTime]);
 
-  const availableSlots = selectedTeeTime?.golfers.length || 0
+  const availableSlots = selectedTeeTime?.golfers.length || 0;
 
-  useEffect(()=>{
-    setPlayers(selectedTeeTime?.selectedSlotsCount||"1");
-  },[selectedTeeTime?.selectedSlotsCount])
+  useEffect(() => {
+    setPlayers(selectedTeeTime?.selectedSlotsCount || "1");
+  }, [selectedTeeTime?.selectedSlotsCount]);
 
   useEffect(() => {
     if (isListTeeTimeOpen) {
@@ -74,7 +76,6 @@ export const ListTeeTime = ({
       // setPlayers(selectedTeeTime?.selectedSlotsCount||"1");
     }
   }, [isListTeeTimeOpen]);
-
 
   const handleFocus = () => {
     if (!listingPrice) setListingPrice(0);

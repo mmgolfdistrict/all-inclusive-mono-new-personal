@@ -1,7 +1,8 @@
 import { randomUUID } from "crypto";
-import { and, desc, asc, eq, gte, inArray, or, sql, type Db } from "@golf-district/database";
+import { and, asc, desc, eq, gte, inArray, or, sql, type Db } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import { bookings } from "@golf-district/database/schema/bookings";
+import { bookingslots } from "@golf-district/database/schema/bookingslots";
 import { courses } from "@golf-district/database/schema/courses";
 import type { InsertList } from "@golf-district/database/schema/lists";
 import { lists } from "@golf-district/database/schema/lists";
@@ -18,7 +19,6 @@ import type { NotificationService } from "../notification/notification.service";
 import type { HyperSwitchService } from "../payment-processor/hyperswitch.service";
 import type { Customer, ProviderService } from "../tee-sheet-provider/providers.service";
 import type { TokenizeService } from "../token/tokenize.service";
-import { bookingslots } from "@golf-district/database/schema/bookingslots";
 
 interface TeeTimeData {
   courseId: string;

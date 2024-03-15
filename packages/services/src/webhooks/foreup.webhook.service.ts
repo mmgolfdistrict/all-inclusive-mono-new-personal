@@ -75,10 +75,7 @@ export class ForeUpWebhookService {
    * @param {Db} database - The database instance to interact with.
    * @param {ProviderService} providerService - The provider service for fetching tee times from ForeUp.
    */
-  constructor(
-    private readonly database: Db,
-    private readonly providerService: ProviderService
-  ) {}
+  constructor(private readonly database: Db, private readonly providerService: ProviderService) {}
 
   /**
    * Handles the ForeUp webhook.

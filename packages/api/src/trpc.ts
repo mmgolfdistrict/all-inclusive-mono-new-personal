@@ -8,6 +8,7 @@ import Logger from "@golf-district/shared/src/logger";
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
+
 interface CreateContextOptions {
   session: Session | null;
   //logger: pino.Logger;

@@ -10,6 +10,7 @@ import { promoCodes } from "@golf-district/database/schema/promoCodes";
 import { providerCourseLink } from "@golf-district/database/schema/providersCourseLink";
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import { userPromoCodeLink } from "@golf-district/database/schema/userPromoCodeLink";
+import { users } from "@golf-district/database/schema/users";
 import Logger from "@golf-district/shared/src/logger";
 import { Client } from "@upstash/qstash/.";
 import { B } from "vitest/dist/reporters-5f784f42";
@@ -27,12 +28,11 @@ import type {
   TaxProduct,
 } from "../checkout/types";
 import type { NotificationService } from "../notification/notification.service";
+import type { SensibleService } from "../sensible/sensible.service";
 import type { ProviderService } from "../tee-sheet-provider/providers.service";
 import { BookingCreationData } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
 import type { TokenizeService } from "../token/tokenize.service";
 import type { HyperSwitchEvent } from "./types/hyperswitch";
-import type { SensibleService } from "../sensible/sensible.service";
-import { users } from "@golf-district/database/schema/users";
 
 /**
  * `HyperSwitchWebhookService` - A service for processing webhooks from HyperSwitch.
