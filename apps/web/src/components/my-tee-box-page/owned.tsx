@@ -128,7 +128,7 @@ export const Owned = () => {
                     iconSrc={i.courseLogo}
                     key={idx}
                     purchasePrice={i.purchasedFor ?? i.firstHandPrice}
-                    golfers={i.golfers as InviteFriend[]}
+                    golfers={i.golfers}
                     status={i.status}
                     offers={i.offers ? parseInt(i.offers) : undefined}
                     isListed={i.status === "LISTED"}

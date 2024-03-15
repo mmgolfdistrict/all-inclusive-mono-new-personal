@@ -104,7 +104,7 @@ export const InviteFriends = ({
   }, [bookingData?.bookings]);
 
   const removeFriend = (slotId: string) => {
-    const newFriends = JSON.parse(JSON.stringify(friends));
+    const newFriends: InviteFriend[] = JSON.parse(JSON.stringify(friends));
 
     newFriends.forEach((friend) => {
       if (friend.slotId == slotId) {
@@ -116,7 +116,7 @@ export const InviteFriends = ({
   };
 
   const addFriendUpdated = (friendToFind: InviteFriend) => {
-    let friendsCopy = [...friends];
+    const friendsCopy = [...friends];
     friendsCopy.forEach((friend) => {
       if (friend.slotId == friendToFind.slotId) {
         (friend.email = friendToFind.email),
@@ -286,6 +286,7 @@ export const InviteFriends = ({
                           {friendList.length ? (
                             <ul className="w-full text-opacity-100 text-gray-700 shadow-md border border-solid border-gray-200 rounded-8 text-start">
                               {friendList?.map((frnd, idx) => (
+                                // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
                                 <li
                                   className="cursor-pointer p-4 border-b border-solid border-gray-300"
                                   onClick={() => {

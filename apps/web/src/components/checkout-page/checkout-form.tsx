@@ -32,7 +32,7 @@ export const CheckoutForm = ({
       ?.filter(
         ({ product_data }) => product_data.metadata.type === "first_hand"
       )
-      ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+      ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
   // const secondaryGreenFeeCharge =
   // //@ts-ignore
   // cartData?.filter(({ product_data }) => product_data.metadata.type === "second_hand")?.reduce((acc: number, i) => acc + i.price, 0) / 100;
@@ -40,31 +40,31 @@ export const CheckoutForm = ({
     //@ts-ignore
     cartData
       ?.filter(({ product_data }) => product_data.metadata.type === "markup")
-      ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+      ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
   const convenienceCharge =
     //@ts-ignore
     cartData
       ?.filter(
         ({ product_data }) => product_data.metadata.type === "convenience_fee"
       )
-      ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+      ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
   const taxCharge =
     //@ts-ignore
     cartData
       ?.filter(({ product_data }) => product_data.metadata.type === "taxes")
-      ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+      ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
 
   const sensibleCharge =
     //@ts-ignore
     cartData
       ?.filter(({ product_data }) => product_data.metadata.type === "sensible")
-      ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+      ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
 
   const charityCharge =
     //@ts-ignore
     cartData
       ?.filter(({ product_data }) => product_data.metadata.type === "charity")
-      ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+      ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
 
   const unifiedCheckoutOptions = {
     wallets: {
