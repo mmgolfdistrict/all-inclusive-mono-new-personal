@@ -107,3 +107,65 @@ export type SensibleDataToMountCompType = {
   exposureLongitude: number;
   exposureTotalCoverageAmount: number;
 };
+export type CartProduct = {
+  name: string; // teeTime-course-time
+  id: string;
+  price: number; //int
+  image: string; //
+  currency: string; //USD
+  display_price: string; //$4.00
+  product_data: {
+    metadata:
+    FirstHandProduct
+    | SecondHandProduct
+    | SensibleProduct
+    | AuctionProduct
+    | CharityProduct
+    | Offer
+    | MarkupProduct
+    | ConvenienceFeeProduct
+    | TaxProduct;
+  }
+}
+
+export interface FirstHandProduct {
+  type: "first_hand";
+  tee_time_id: string | undefined;
+  number_of_bookings: number;
+}
+
+export interface SecondHandProduct {
+  type: "second_hand";
+  second_hand_id: string | undefined; //listing Id
+}
+
+export interface SensibleProduct {
+  type: "sensible";
+  sensible_quote_id: string | undefined;
+}
+
+export interface AuctionProduct {
+  type: "auction";
+  auction_id: string;
+}
+
+export interface CharityProduct {
+  type: "charity";
+  charity_id: string | null;
+  donation_amount: number;
+}
+export interface Offer {
+  type: "offer";
+  booking_ids: string[];
+  price: number;
+  expires_at: Date;
+}
+export interface MarkupProduct {
+  type: "markup";
+}
+export interface ConvenienceFeeProduct {
+  type: "convenience_fee";
+}
+export interface TaxProduct {
+  type: "taxes";
+}

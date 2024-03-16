@@ -17,6 +17,7 @@ import { formatMoney, getPromoCodePrice } from "~/utils/formatters";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useDebounce } from "usehooks-ts";
+import { CartProduct, FirstHandProduct, SecondHandProduct, CharityProduct, SensibleProduct, TaxProduct, MarkupProduct, ConvenienceFeeProduct, AuctionProduct, Offer } from "~/utils/types";
 
 const currentDate = formatQueryDate(new Date());
 
@@ -113,10 +114,18 @@ export default function Checkout({
     }
   }, [debouncedPromoCode]);
 
-  const cartData = useMemo(() => {
+  const cartData: CartProduct[] = useMemo(() => {
     if (!data || data === null) return [];
 
-    const metadata: Record<string, number | string | undefined | null> =
+    const metadata: FirstHandProduct
+      | SecondHandProduct
+      | SensibleProduct
+      | AuctionProduct
+      | CharityProduct
+      | Offer
+      | MarkupProduct
+      | ConvenienceFeeProduct
+      | TaxProduct =
       saleType === "first_hand"
         ? {
             type: "first_hand",
@@ -128,7 +137,7 @@ export default function Checkout({
             second_hand_id: listingId,
           };
 
-    const localCart = [
+    const localCart: CartProduct[] = [
       {
         name: "Golf District Tee Time",
         id: teeTimeId ?? data?.teeTimeId,

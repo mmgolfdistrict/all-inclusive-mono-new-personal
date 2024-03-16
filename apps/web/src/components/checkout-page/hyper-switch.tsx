@@ -7,6 +7,7 @@ import { api } from "~/utils/api";
 import { useEffect, useRef, useState } from "react";
 import { Spinner } from "../loading/spinner";
 import { CheckoutForm } from "./checkout-form";
+import { CartProduct } from "~/utils/types";
 
 type CreatePaymentResponse = {
   clientSecret: string;
@@ -30,7 +31,7 @@ export const HyperSwitch = ({
   isBuyNowAuction,
   teeTimeId,
 }: {
-  cartData: unknown[];
+  cartData: CartProduct[];
   isBuyNowAuction: boolean;
   teeTimeId: string;
 }) => {

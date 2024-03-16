@@ -234,7 +234,7 @@ export const TeeTime = ({
             ) : null}
             <div className="flex items-center">
               <div className="text-[15px] md:text-[20px] font-semibold text-secondary-black">
-                {formatMoney(price * parseInt(selectedPlayers))}
+                {formatMoney(price)}
               </div>
               <div className="text-[12px] md:text-[16px] text-primary-gray">
                 {" "}
