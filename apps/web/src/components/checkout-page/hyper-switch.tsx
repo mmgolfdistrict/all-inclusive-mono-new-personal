@@ -4,10 +4,10 @@ import { HyperElements } from "@juspay-tech/react-hyper-js";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
+import type { CartProduct } from "~/utils/types";
 import { useEffect, useRef, useState } from "react";
 import { Spinner } from "../loading/spinner";
 import { CheckoutForm } from "./checkout-form";
-import { CartProduct } from "~/utils/types";
 
 type CreatePaymentResponse = {
   clientSecret: string;
@@ -44,7 +44,7 @@ export const HyperSwitch = ({
     //@ts-ignore
     cartData
       ?.filter(({ product_data }) => product_data.metadata.type !== "markup")
-      ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+      ?.reduce((acc: number, i: CartProduct) => acc + i.price, 0) / 100;
   const [localCartData, setLocalCartData] = useState<unknown[]>(cartData);
   const [error, setError] = useState<undefined | string>(undefined);
   const callingRef = useRef<boolean>(false);
