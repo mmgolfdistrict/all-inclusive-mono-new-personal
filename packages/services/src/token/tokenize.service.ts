@@ -1,21 +1,24 @@
 import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
 import { and, eq, inArray } from "@golf-district/database";
-import { bookings, InsertBooking } from "@golf-district/database/schema/bookings";
+import type { InsertBooking } from "@golf-district/database/schema/bookings";
+import { bookings } from "@golf-district/database/schema/bookings";
 import { bookingslots, InsertBookingSlots } from "@golf-district/database/schema/bookingslots";
 import { courses } from "@golf-district/database/schema/courses";
 import { customerCarts } from "@golf-district/database/schema/customerCart";
 import { entities } from "@golf-district/database/schema/entities";
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
-import { InsertTransfer, transfers } from "@golf-district/database/schema/transfers";
+import type { InsertTransfer } from "@golf-district/database/schema/transfers";
+import { transfers } from "@golf-district/database/schema/transfers";
 import { users } from "@golf-district/database/schema/users";
 import { currentUtcTimestamp } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
 import dayjs from "dayjs";
 import { textChangeRangeIsUnchanged } from "typescript";
-import { CustomerCart, ProductData } from "../checkout/types";
-import { NotificationService } from "../notification/notification.service";
-import { ProviderAPI } from "../tee-sheet-provider/sheet-providers";
+import type { ProductData } from "../checkout/types";
+import { CustomerCart } from "../checkout/types";
+import type { NotificationService } from "../notification/notification.service";
+import type { ProviderAPI } from "../tee-sheet-provider/sheet-providers";
 import { TeeTime } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
 
 /**
@@ -31,7 +34,10 @@ export class TokenizeService {
    * @example
    * const tokenizeService = new TokenizeService(database);
    */
-  constructor(private readonly database: Db, private readonly notificationService: NotificationService) {}
+  constructor(
+    private readonly database: Db,
+    private readonly notificationService: NotificationService
+  ) {}
   /**
    * Tokenize a booking for a user. This function either books an existing tee time or creates a new one based on the provided details.
    *
@@ -117,7 +123,7 @@ export class TokenizeService {
     const bookingsToCreate: InsertBooking[] = [];
     const transfersToCreate: InsertTransfer[] = [];
     const transactionId = randomUUID();
-
+    debugger;
     const bookingId = randomUUID();
 
     bookingsToCreate.push({
@@ -150,7 +156,15 @@ export class TokenizeService {
     });
 
     //create bookings according to slot in bookingslot tables
-    const bookingSlots = (await provider?.getSlotIdsForBooking(providerBookingId, players, userId)) || [];
+    const bookingSlots =
+      (await provider?.getSlotIdsForBooking(
+        bookingId,
+        players,
+        userId,
+        providerBookingId,
+        provider.providerId,
+        existingTeeTime.courseId
+      )) || [];
 
     for (let i = 0; i < bookingSlots.length; i++) {
       if (i != 0) {
@@ -176,7 +190,6 @@ export class TokenizeService {
         );
       }
     }
-
     //create all booking in a transaction to ensure atomicity
     await this.database.transaction(async (tx) => {
       //create each booking
@@ -352,7 +365,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       newOwnerId,
       "TeeTimes Purchased",
       message1,
-      bookingsToTransfer[0]?.courseId as string
+      bookingsToTransfer[0]?.courseId
     );
 
     const message2 = `
@@ -363,7 +376,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       userId,
       "TeeTimes Sold",
       message2,
-      bookingsToTransfer[0]?.courseId as string
+      bookingsToTransfer[0]?.courseId
     );
   };
 

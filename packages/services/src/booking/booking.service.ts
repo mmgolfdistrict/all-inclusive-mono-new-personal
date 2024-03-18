@@ -428,7 +428,7 @@ export class BookingService {
       .leftJoin(assets, eq(assets.id, courses.logoId))
       .leftJoin(userBookingOffers, eq(userBookingOffers.bookingId, bookings.id))
       .leftJoin(transfers, eq(transfers.bookingId, bookings.id))
-      .leftJoin(bookingslots, eq(bookingslots.bookingId, bookings.providerBookingId))
+      .leftJoin(bookingslots, eq(bookingslots.bookingId, bookings.id))
       .where(
         and(
           eq(bookings.ownerId, userId),
@@ -500,8 +500,8 @@ export class BookingService {
           currentEntry.bookingIds.push(teeTime.bookingId);
           currentEntry.slotsData.push({
             name: teeTime.slotCustomerName,
-            customerId: teeTime.slotCustomerId as string,
-            slotId: teeTime.slotId as string,
+            customerId: teeTime.slotCustomerId!,
+            slotId: teeTime.slotId!,
           });
           if (teeTime.offers) {
             currentEntry.offers = currentEntry.offers
@@ -541,7 +541,7 @@ export class BookingService {
               email: users.email,
             })
             .from(users)
-            .where(eq(users.id, slot.customerId as string))
+            .where(eq(users.id, slot.customerId))
             .execute()
             .catch((err) => {
               this.logger.error(`Error retrieving user: ${err}`);
@@ -1897,13 +1897,13 @@ export class BookingService {
     //check if user created in fore-up or not
     // call find or create for user and update according to slot
     const customers: Customer[] = [];
-    let providerDataToUpdate: {
+    const providerDataToUpdate: {
       playerNumber: number | null;
       customerId: number | null;
       name: string | null;
       slotId: string | null;
     }[] = [];
-    for (let user of usersToUpdate) {
+    for (const user of usersToUpdate) {
       try {
         if (user.id !== "") {
           const customerData = await this.providerService.findOrCreateCustomer(
@@ -1925,7 +1925,7 @@ export class BookingService {
       }
     }
 
-    for (let user of providerDataToUpdate) {
+    for (const user of providerDataToUpdate) {
       await provider?.updateTeeTime(
         token || "",
         firstBooking?.providerCourseId || "",
