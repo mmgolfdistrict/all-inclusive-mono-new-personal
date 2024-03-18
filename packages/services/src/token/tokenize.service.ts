@@ -123,7 +123,6 @@ export class TokenizeService {
     const bookingsToCreate: InsertBooking[] = [];
     const transfersToCreate: InsertTransfer[] = [];
     const transactionId = randomUUID();
-    debugger;
     const bookingId = randomUUID();
 
     bookingsToCreate.push({

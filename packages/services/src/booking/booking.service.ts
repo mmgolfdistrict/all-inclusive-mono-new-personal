@@ -392,7 +392,6 @@ export class BookingService {
   };
   getOwnedTeeTimes = async (userId: string, courseId: string, limit = 10, cursor: string | undefined) => {
     this.logger.info(`getOwnedTeeTimes called with userId: ${userId}`);
-    debugger;
     const data = await this.database
       .select({
         id: teeTimes.id,
@@ -456,7 +455,6 @@ export class BookingService {
       )
       .orderBy(desc(teeTimes.date), asc(bookingslots.slotPosition))
       .execute();
-    debugger;
     if (!data.length) {
       this.logger.info(`No tee times found for user: ${userId}`);
       return [];

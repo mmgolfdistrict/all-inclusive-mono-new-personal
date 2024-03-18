@@ -102,7 +102,6 @@ export class foreUp extends BaseProvider {
     slotId?: string
   ): Promise<BookingResponse> {
     const endpoint = this.getBasePoint();
-    debugger;
     // https://api.foreupsoftware.com/api_rest/index.php/courses/courseId/teesheets/teesheetId/bookings/bookingId/bookedPlayers/bookedPlayerId
     const url = `${endpoint}/courses/${courseId}/teesheets/${teesheetId}/bookings/${bookingId}/bookedPlayers/${
       slotId ? slotId : bookingId
