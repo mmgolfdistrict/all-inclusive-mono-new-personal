@@ -75,10 +75,7 @@ export class UserService {
    * @example
    * const userService = new UserService(database, notificationService);
    */
-  constructor(
-    protected readonly database: Db,
-    private readonly notificationsService: NotificationService
-  ) {
+  constructor(protected readonly database: Db, private readonly notificationsService: NotificationService) {
     //this.filter = new Filter();
   }
 
@@ -254,7 +251,7 @@ export class UserService {
         slotPosition: bookingslots.slotPosition,
       })
       .from(bookings)
-      .leftJoin(bookingslots, eq(bookingslots.bookingId, bookings.providerBookingId))
+      .leftJoin(bookingslots, eq(bookingslots.bookingId, bookings.id))
       .where(and(eq(bookings.teeTimeId, teeTimeId), eq(bookings.ownerId, userId)))
       .orderBy(asc(bookingslots.slotPosition))
       .execute()

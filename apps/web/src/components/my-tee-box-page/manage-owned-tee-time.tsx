@@ -199,7 +199,6 @@ export const ManageOwnedTeeTime = ({
   };
 
   const addFriend = (e: ChangeEvent<HTMLInputElement>) => {
-    // debugger
     console.log(e.target.value);
     if (friends?.length + 1 > maxFriends) return;
     const selectedFriend = friendList?.find(

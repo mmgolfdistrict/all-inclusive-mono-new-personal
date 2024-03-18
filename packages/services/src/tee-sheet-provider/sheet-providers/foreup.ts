@@ -227,7 +227,14 @@ export class foreUp extends BaseProvider {
   }
 
   // eslint-disable-next-line @typescript-eslint/require-await
-  async getSlotIdsForBooking(bookingId: string, slots: number, customerId: string) {
+  async getSlotIdsForBooking(
+    bookingId: string,
+    slots: number,
+    customerId: string,
+    providerBookingId: string,
+    providerId: string,
+    courseId: string
+  ) {
     const bookingSlots: {
       id: string;
       bookingId: string;
@@ -241,7 +248,7 @@ export class foreUp extends BaseProvider {
       bookingSlots.push({
         id: randomUUID(),
         bookingId: bookingId,
-        slotnumber: bookingId + "-" + (i + 1),
+        slotnumber: providerBookingId + "-" + (i + 1),
         name: i === 0 ? "" : "Guest",
         customerId: i === 0 ? customerId : "",
         isActive: true,

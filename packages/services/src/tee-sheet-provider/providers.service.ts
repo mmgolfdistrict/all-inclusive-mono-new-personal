@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
 import { and, eq, inArray, sql } from "@golf-district/database";
-import { InsertBookingSlots } from "@golf-district/database/schema/bookingslots";
+import type { InsertBookingSlots } from "@golf-district/database/schema/bookingslots";
 import { providers } from "@golf-district/database/schema/providers";
 import type { SelectProviders } from "@golf-district/database/schema/providers";
 import { providerCourseLink } from "@golf-district/database/schema/providersCourseLink";
@@ -140,16 +140,23 @@ export class ProviderService extends CacheService {
   }
 
   async getSlotIdsForBooking(
-    courseId: string,
-    teeTimeId: string,
-    providerId: string,
     bookingId: string,
     slots: number,
-    customerId: string
+    customerId: string,
+    providerBookingId: string,
+    providerId: string,
+    courseId: string
   ): Promise<InsertBookingSlots[]> {
-    this.logger.info(`updateTeeTime called with courseId: ${courseId}`);
+    // this.logger.info(`updateTeeTime called with courseId: ${courseId}`);
     const { provider } = await this.getProviderAndKey(providerId, courseId);
-    return provider.getSlotIdsForBooking(bookingId, slots, customerId);
+    return provider.getSlotIdsForBooking(
+      bookingId,
+      slots,
+      customerId,
+      providerBookingId,
+      providerId,
+      courseId
+    );
   }
 
   findOrCreateCustomer = async (

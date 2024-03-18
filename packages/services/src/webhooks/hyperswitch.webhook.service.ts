@@ -76,7 +76,7 @@ export class HyperSwitchWebhookService {
    *
    * @param {HyperSwitchEvent} req - The incoming webhook event from HyperSwitch.
    * @returns {Promise<void>} - A promise that resolves once the webhook event is processed.
-   * @throws {Error} - Throws an error if the event type is unhandled.
+   * @throws {Error} - Throws an error if the event type is unhandled.f
    *
    * @example
    * ```typescript
@@ -226,7 +226,7 @@ export class HyperSwitchWebhookService {
     const pricePerBooking = amountReceived / item.product_data.metadata.number_of_bookings / 100;
 
     //create a provider booking for each player
-    let bookedPLayers: { accountNumber: number }[] = [
+    const bookedPLayers: { accountNumber: number }[] = [
       {
         accountNumber: providerCustomer.playerNumber,
       },
@@ -239,7 +239,7 @@ export class HyperSwitchWebhookService {
           attributes: {
             start: teeTime.providerDate,
             holes: teeTime.holes,
-            players: bookedPLayers?.length,
+            players: item.product_data.metadata.number_of_bookings,
             bookedPlayers: bookedPLayers,
             event_type: "tee_time",
             details: "GD Booking",

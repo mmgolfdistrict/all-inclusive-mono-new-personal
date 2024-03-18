@@ -1,4 +1,4 @@
-import { InsertBookingSlots } from "@golf-district/database/schema/bookingslots";
+import type { InsertBookingSlots } from "@golf-district/database/schema/bookingslots";
 import Logger from "@golf-district/shared/src/logger";
 import type pino from "pino";
 import type { BookingResponse, CustomerCreationData, CustomerData, TeeTimeResponse } from "./foreup.type";
@@ -46,8 +46,11 @@ export interface ProviderAPI {
   getSlotIdsForBooking: (
     bookingId: string,
     slots: number,
-    clientId: string
-  ) => Promise<Array<InsertBookingSlots>>;
+    clientId: string,
+    providerBookingId: string,
+    providerId: string,
+    courseId: string
+  ) => Promise<InsertBookingSlots[]>;
 }
 
 export abstract class BaseProvider implements ProviderAPI {
@@ -97,6 +100,9 @@ export abstract class BaseProvider implements ProviderAPI {
   abstract getSlotIdsForBooking(
     bookingId: string,
     slots: number,
-    clientId: string
-  ): Promise<Array<InsertBookingSlots>>;
+    clientId: string,
+    providerBookingId: string,
+    providerId: string,
+    courseId: string
+  ): Promise<InsertBookingSlots[]>;
 }
