@@ -576,23 +576,15 @@ export class HyperSwitchWebhookService {
       const quote = await this.getSensibleQuote(item.product_data.metadata.sensible_quote_id);
 
       const acceptedQuote = await this.sensibleService.acceptQuote({
-        quoteId: quote.id,
+        quoteId: item.product_data.metadata.sensible_quote_id,
         price_charged: quote.suggested_price,
-        reservation_id: booking.providerBookingId,
+        reservation_id: booking.id,
         lang_locale: quote.lang_locale,
         user: {
           email: userDetails.email!,
           name: userDetails.name!,
           phone: userDetails.phoneNumber!,
         },
-        product_id: quote.product_id,
-        coverage_start_date: quote.coverage_start_date,
-        coverage_end_date: quote.coverage_end_date,
-        currency: quote.currency,
-        exposure_name: quote.exposure_name,
-        exposure_latitude: quote.exposure_latitude,
-        exposure_longitude: quote.exposure_longitude,
-        exposure_total_coverage_amount: quote.exposure_total_coverage_amount,
       });
 
       //Add guarantee details on bookings
@@ -603,7 +595,7 @@ export class HyperSwitchWebhookService {
             weatherGuaranteeId: acceptedQuote.id,
             weatherGuaranteeAmount: acceptedQuote.price_charged * 100,
           })
-          .where(eq(bookings.providerBookingId, acceptedQuote.reservation_id));
+          .where(eq(bookings.id, acceptedQuote.reservation_id));
       }
       return acceptedQuote;
     } catch (error) {
