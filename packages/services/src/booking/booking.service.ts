@@ -1,7 +1,8 @@
 import { randomUUID } from "crypto";
-import { and, desc, eq, gte, inArray, or, sql, type Db } from "@golf-district/database";
+import { and, asc, desc, eq, gte, inArray, or, sql, type Db } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import { bookings } from "@golf-district/database/schema/bookings";
+import { bookingslots } from "@golf-district/database/schema/bookingslots";
 import { courses } from "@golf-district/database/schema/courses";
 import type { InsertList } from "@golf-district/database/schema/lists";
 import { lists } from "@golf-district/database/schema/lists";
@@ -41,15 +42,25 @@ type InviteFriend = {
   handle: string | null;
   name: string | null;
   email: string | null;
+  bookingId?: string | null;
+  slotId: string;
 };
+
+type SlotsData = {
+  slotId: string;
+  customerId: string;
+  name: string | null;
+};
+
 interface OwnedTeeTimeData {
   courseId: string;
   courseName: string;
   courseLogo: string;
   date: string;
   firstHandPrice: number;
-  golfers: InviteFriend[] | string[];
+  golfers: InviteFriend[];
   bookingIds: string[];
+  slotsData: SlotsData[];
   purchasedFor: number | null;
   status: string;
   listingId: string | null;
@@ -80,7 +91,7 @@ interface TransferData {
   date: string;
   firstHandPrice: number;
   pricePerGolfer: number[];
-  golfers: string[];
+  golfers: InviteFriend[];
   bookingIds: string[];
   status: string;
 }
@@ -200,7 +211,7 @@ export class BookingService {
             : "/defaults/default-course.webp",
           date: teeTime.date ? teeTime.date : "",
           firstHandPrice: teeTime.greenFee ? teeTime.greenFee : 0,
-          golfers: [teeTime.players],
+          golfers: [],
           pricePerGolfer: [teeTime.amount],
           bookingIds: [teeTime.bookingId],
           status: teeTime.from === userId ? "SOLD" : "PURCHASED",
@@ -208,7 +219,7 @@ export class BookingService {
       } else {
         const currentEntry = combinedData[teeTime.transferId];
         if (currentEntry) {
-          currentEntry.golfers.push(teeTime.players);
+          // currentEntry.golfers.push(teeTime.players);
           currentEntry.pricePerGolfer.push(teeTime.amount);
           currentEntry.bookingIds.push(teeTime.bookingId);
         }
@@ -399,11 +410,15 @@ export class BookingService {
         players: bookings.nameOnBooking,
         bookingId: bookings.id,
         offers: sql<number>`COUNT(DISTINCT${userBookingOffers.offerId})`,
-        golferCount: sql<number | null>`COUNT(DISTINCT ${bookings.ownerId})`,
+        golferCount: sql<number | null>`COUNT(${bookings.ownerId})`,
         listPrice: lists.listPrice,
         bookingListed: bookings.isListed,
         minimumOfferPrice: bookings.minimumOfferPrice,
         weatherGuaranteeAmount: bookings.weatherGuaranteeAmount,
+        slotId: bookingslots.slotnumber,
+        slotCustomerName: bookingslots.name,
+        slotCustomerId: bookingslots.customerId,
+        slotPosition: bookingslots.slotPosition,
       })
       .from(teeTimes)
       .innerJoin(bookings, eq(bookings.teeTimeId, teeTimes.id))
@@ -412,6 +427,7 @@ export class BookingService {
       .leftJoin(assets, eq(assets.id, courses.logoId))
       .leftJoin(userBookingOffers, eq(userBookingOffers.bookingId, bookings.id))
       .leftJoin(transfers, eq(transfers.bookingId, bookings.id))
+      .leftJoin(bookingslots, eq(bookingslots.bookingId, bookings.id))
       .where(
         and(
           eq(bookings.ownerId, userId),
@@ -431,9 +447,13 @@ export class BookingService {
         bookings.nameOnBooking,
         lists.id,
         bookings.id,
-        lists.listPrice
+        lists.listPrice,
+        bookingslots.slotnumber,
+        bookingslots.customerId,
+        bookingslots.name,
+        bookingslots.slotPosition
       )
-      .orderBy(desc(teeTimes.date))
+      .orderBy(desc(teeTimes.date), asc(bookingslots.slotPosition))
       .execute();
     if (!data.length) {
       this.logger.info(`No tee times found for user: ${userId}`);
@@ -450,9 +470,16 @@ export class BookingService {
             : "/defaults/default-course.webp",
           date: teeTime.date,
           firstHandPrice: teeTime.greenFee,
-          golfers: [teeTime.players],
+          golfers: [],
           purchasedFor: teeTime.lastHighestSale,
           bookingIds: [teeTime.bookingId],
+          slotsData: [
+            {
+              name: teeTime.slotCustomerName || "",
+              slotId: teeTime.slotId || "",
+              customerId: teeTime.slotCustomerId || "",
+            },
+          ],
           status: teeTime.listing && !teeTime.listingIsDeleted ? "LISTED" : "UNLISTED",
           offers: teeTime.offers ? parseInt(teeTime.offers.toString()) : 0,
           listingId: teeTime.listing && !teeTime.listingIsDeleted ? teeTime.listing : null,
@@ -462,12 +489,18 @@ export class BookingService {
           weatherGuaranteeAmount: teeTime.weatherGuaranteeAmount,
         };
       } else {
+        //  console.log("uuuuuuuuuuuuubbbbbbbbb");
         const currentEntry = combinedData[teeTime.id];
         if (currentEntry) {
           // Update the existing entry
           // @ts-ignore
           currentEntry.golfers.push(teeTime.players);
           currentEntry.bookingIds.push(teeTime.bookingId);
+          currentEntry.slotsData.push({
+            name: teeTime.slotCustomerName,
+            customerId: teeTime.slotCustomerId!,
+            slotId: teeTime.slotId!,
+          });
           if (teeTime.offers) {
             currentEntry.offers = currentEntry.offers
               ? parseInt(currentEntry.offers.toString()) + parseInt(teeTime.offers.toString())
@@ -491,18 +524,13 @@ export class BookingService {
         }
       }
     });
-    // console.log(combinedData);
-    for (const t of Object.values(combinedData)) {
-      const namesOnBooking = t.golfers.filter((golfer) => golfer !== "Guest");
+    // console.log("------------",combinedData);
 
-      const foundUsersForBooking: {
-        id: string;
-        handle: string | null;
-        name: string | null;
-        email: string | null;
-      }[] = [];
-      if (namesOnBooking.length > 0) {
-        for (const _name of namesOnBooking) {
+    for (const t of Object.values(combinedData)) {
+      const finaldata: InviteFriend[] = [];
+
+      for (const slot of t.slotsData) {
+        if (slot.customerId !== "") {
           const userData = await this.database
             .select({
               id: users.id,
@@ -511,38 +539,87 @@ export class BookingService {
               email: users.email,
             })
             .from(users)
-            .where(eq(users.name, _name as string))
+            .where(eq(users.id, slot.customerId))
             .execute()
             .catch((err) => {
               this.logger.error(`Error retrieving user: ${err}`);
               throw new Error("Error retrieving user");
             });
           if (userData[0]) {
-            foundUsersForBooking.push(userData[0]);
-          }
-        }
-      }
-      //x will be a string of Guest or a name until its turned into an object here
-      // @ts-ignore
-      t.golfers = t.golfers.map((x: string) => {
-        if (foundUsersForBooking.length > 0) {
-          const user = foundUsersForBooking.find((user) => x.toLowerCase() === user.name?.toLowerCase());
-          if (user) {
-            return {
+            const user = userData[0];
+            finaldata.push({
               id: user.id,
               handle: user.handle,
-              name: user.name,
+              name: user.name || "",
               email: user.email,
-            };
+              slotId: slot.slotId,
+            });
           }
+        } else {
+          finaldata.push({
+            id: "",
+            handle: "",
+            name: slot.name,
+            email: "",
+            slotId: slot.slotId,
+          });
         }
-        return {
-          id: "",
-          handle: "",
-          name: x,
-          email: "",
-        };
-      });
+      }
+      // t.slotsData=finaldata;
+
+      // const namesOnBooking = t.golfers.filter((golfer) => golfer !== "Guest");
+
+      // const foundUsersForBooking: {
+      //   id: string;
+      //   handle: string | null;
+      //   name: string | null;
+      //   email: string | null;
+      // }[] = [];
+      // if (namesOnBooking.length > 0) {
+      //   for (const _name of namesOnBooking) {
+      //     const userData = await this.database
+      //       .select({
+      //         id: users.id,
+      //         handle: users.handle,
+      //         name: users.name,
+      //         email: users.email,
+      //       })
+      //       .from(users)
+      //       .where(eq(users.name, _name as string))
+      //       .execute()
+      //       .catch((err) => {
+      //         this.logger.error(`Error retrieving user: ${err}`);
+      //         throw new Error("Error retrieving user");
+      //       });
+      //     if (userData[0]) {
+      //       foundUsersForBooking.push(userData[0]);
+      //     }
+      //   }
+      // }
+      //x will be a string of Guest or a name until its turned into an object here
+      // @ts-ignore
+      // t.golfers = t.golfers.map((x: string) => {
+      //   if (foundUsersForBooking.length > 0) {
+      //     const user = foundUsersForBooking.find((user) => x.toLowerCase() === user.name?.toLowerCase());
+      //     if (user) {
+      //       return {
+      //         id: user.id,
+      //         handle: user.handle,
+      //         name: user.name,
+      //         email: user.email,
+      //       };
+      //     }
+      //   }
+      //   return {
+      //     id: "",
+      //     handle: "",
+      //     name: x,
+      //     email: "",
+      //   };
+      // });
+
+      t.slotsData = finaldata;
+      t.golfers = finaldata;
     }
     return combinedData;
   };
@@ -1753,7 +1830,7 @@ export class BookingService {
    * const names = ["New Name 1", "New Name 2"];
    * await bookingService.updateNamesOnBookings(userId, bookingIds, names);
    */
-  updateNamesOnBookings = async (userId: string, bookingIds: string[], userIds: string[]) => {
+  updateNamesOnBookings = async (userId: string, usersToUpdate: InviteFriend[], bookingId: string) => {
     this.logger.info(`updateNamesOnBookings called with userId: ${userId}`);
     const data = await this.database
       .select({
@@ -1775,13 +1852,14 @@ export class BookingService {
           eq(providerCourseLink.providerId, teeTimes.soldByProvider)
         )
       )
-      .where(and(eq(bookings.ownerId, userId), inArray(bookings.id, bookingIds)))
+      .where(and(eq(bookings.ownerId, userId), eq(bookings.id, bookingId)))
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving bookings: ${err}`);
         throw new Error("Error retrieving bookings");
       });
-    if (!data.length || data.length !== bookingIds.length || !data[0]) {
+
+    if (!data.length || !data[0]) {
       this.logger.warn(`No bookings found. or user does not own all bookings`);
       throw new Error("No bookings found");
     }
@@ -1793,89 +1871,79 @@ export class BookingService {
       firstBooking.internalId!,
       firstBooking.courseId!
     );
-    //get user profiles for each user to be added
-    //@TODO update typing here
-    if (userIds.length > 0) {
-      const customers: Customer[] = [];
+    if (!firstBooking.providerId || !firstBooking.providerCourseId || !firstBooking.courseId) {
+      throw new Error("provider id, course id, or provider course id not found");
+    }
 
-      for (const id of userIds) {
-        if (!firstBooking.providerId || !firstBooking.providerCourseId || !firstBooking.courseId) {
-          throw new Error("provider id, course id, or provider course id not found");
-        }
-        try {
+    //updating bookingslots data
+    await Promise.all(
+      usersToUpdate.map((user, index) => {
+        this.database
+          .update(bookingslots)
+          .set({
+            name: user.name || "",
+            customerId: user.id || "",
+          })
+          .where(eq(bookingslots.slotnumber, user.slotId))
+          .execute()
+          .catch((err) => {
+            console.log("Error setting names on booking: ", err);
+          });
+      })
+    );
+
+    //check if user created in fore-up or not
+    // call find or create for user and update according to slot
+    const customers: Customer[] = [];
+    const providerDataToUpdate: {
+      playerNumber: number | null;
+      customerId: number | null;
+      name: string | null;
+      slotId: string | null;
+    }[] = [];
+    for (const user of usersToUpdate) {
+      try {
+        if (user.id !== "") {
           const customerData = await this.providerService.findOrCreateCustomer(
             firstBooking.courseId,
             firstBooking.providerId,
             firstBooking.providerCourseId,
-            id,
+            user.id,
             provider,
             token
           );
-          customers.push(customerData);
-        } catch (error) {
-          console.log("Error creating customer", error);
-          throw new Error("Error creating customer");
+          providerDataToUpdate.push({ ...customerData, slotId: user.slotId });
+          //update on foreup with the slotId with the personId recieved in customer
+        } else if (user.name !== "") {
+          providerDataToUpdate.push({ name: user.name, playerNumber: 0, customerId: 0, slotId: user.slotId });
         }
+      } catch (error) {
+        console.log("Error creating customer", error);
+        throw new Error("Error creating customer");
       }
+    }
 
-      for (let i = 0; i < customers.length; i++) {
-        try {
-          if (data[i]?.providerBookingId === undefined) {
-            throw new Error("Provider booking id not found");
-          }
-          await provider.updateTeeTime(
-            token,
-            firstBooking.providerCourseId!,
-            firstBooking.providerTeeSheetId!,
-            data[i]?.providerBookingId!,
-            {
-              data: {
-                type: "bookedPlayer",
-                id: data[i]?.providerBookingId,
-                attributes: {
-                  name: customers[i]?.name,
-                  personId: customers[i]?.customerId,
-                },
-              },
-            }
-          );
-        } catch (error) {
-          console.log("Error updating tee time", error);
-          throw new Error("Error updating tee time");
-        }
-      }
-
-      //update the name on each booking
-      // for (const booking of data) {
-      //   await this.database
-      //     .update(bookings)
-      //     .set({
-      //       nameOnBooking: names[bookingIds.indexOf(booking.id)],
-      //     })
-      //     .where(eq(bookings.id, booking.id))
-      //     .execute()
-      //     .catch((err) => {
-      //       this.logger.error(`Error updating bookingId: ${booking.id}: ${err}`);
-      //       throw new Error("Error updating bookingId");
-      //     });
-      // }
-
-      await Promise.all(
-        data.map((booking, index) => {
-          if (!customers[index]?.name) {
-            return;
-          }
-          this.database
-            .update(bookings)
-            .set({
-              nameOnBooking: customers[index]?.name!,
-            })
-            .where(eq(bookings.id, booking.id))
-            .execute()
-            .catch((err) => {
-              console.log("Error setting names on booking: ", err);
-            });
-        })
+    for (const user of providerDataToUpdate) {
+      await provider?.updateTeeTime(
+        token || "",
+        firstBooking?.providerCourseId || "",
+        firstBooking?.providerTeeSheetId || "",
+        firstBooking.providerBookingId,
+        {
+          data: {
+            type: "Guest",
+            id: firstBooking.providerBookingId,
+            attributes: {
+              type: "Guest",
+              name: user.name,
+              paid: false,
+              cartPaid: false,
+              noShow: false,
+              personId: user.customerId != 0 ? user.customerId : "",
+            },
+          },
+        },
+        user.slotId || ""
       );
     }
   };

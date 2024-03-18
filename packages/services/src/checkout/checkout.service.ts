@@ -24,12 +24,15 @@ import type {
   AuctionProduct,
   CartValidationError,
   CharityProduct,
+  ConvenienceFeeProduct,
   CustomerCart,
   FirstHandProduct,
+  MarkupProduct,
   Offer,
   ProductData,
   SecondHandProduct,
   SensibleProduct,
+  TaxProduct,
 } from "./types";
 import { CartValidationErrors } from "./types";
 
@@ -120,7 +123,7 @@ export class CheckoutService {
       .select({
         name: users.name,
         email: users.email,
-        phoneNumber: users.phoneNumber
+        phoneNumber: users.phoneNumber,
       })
       .from(users)
       .where(eq(users.id, userId));
@@ -143,9 +146,11 @@ export class CheckoutService {
     //   const message = errors.map((message) => message.errorType)
     //   throw new Error(errors);
     // }
-    const total = customerCart.cart.reduce((acc, item) => {
-      return acc + item.price;
-    }, 0);
+    const total = customerCart.cart
+      .filter(({ product_data }) => product_data.metadata.type !== "markup")
+      .reduce((acc, item) => {
+        return acc + item.price;
+      }, 0);
     // const tax = await this.stripeService.getTaxRate(customerCart.cart).catch((err) => {
     //   this.logger.error(`Error calculating tax: ${err}`);
     //   throw new Error(`Error calculating tax: ${err}`);
@@ -220,6 +225,15 @@ export class CheckoutService {
           break;
         case "sensible":
           errors.push(...(await this.validateSensibleItem(item as SensibleProduct)));
+          break;
+        case "markup":
+          errors.push(...(await this.validateMarkupItem(item as MarkupProduct)));
+          break;
+        case "taxes":
+          errors.push(...(await this.validateTaxesItem(item as TaxProduct)));
+          break;
+        case "convenience_fee":
+          errors.push(...(await this.validateConvenienceFeeItem(item as ConvenienceFeeProduct)));
           break;
         case "auction":
           errors.push(...(await this.validateAuctionItem(item as AuctionProduct)));
@@ -351,6 +365,24 @@ export class CheckoutService {
   };
 
   validateSensibleItem = async (item: SensibleProduct): Promise<CartValidationError[]> => {
+    const errors: CartValidationError[] = [];
+    //@TODO: validate quote
+    return errors;
+  };
+
+  validateMarkupItem = async (item: MarkupProduct): Promise<CartValidationError[]> => {
+    const errors: CartValidationError[] = [];
+    //@TODO: validate quote
+    return errors;
+  };
+
+  validateTaxesItem = async (item: TaxProduct): Promise<CartValidationError[]> => {
+    const errors: CartValidationError[] = [];
+    //@TODO: validate quote
+    return errors;
+  };
+
+  validateConvenienceFeeItem = async (item: ConvenienceFeeProduct): Promise<CartValidationError[]> => {
     const errors: CartValidationError[] = [];
     //@TODO: validate quote
     return errors;

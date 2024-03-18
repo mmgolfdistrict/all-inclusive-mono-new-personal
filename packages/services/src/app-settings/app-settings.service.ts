@@ -1,9 +1,8 @@
 import { randomUUID } from "crypto";
-
 import type { Db } from "@golf-district/database";
 import { eq } from "@golf-district/database";
-import { CacheService } from "../infura/cache.service";
 import { appSettings } from "@golf-district/database/schema/appSetting";
+import { CacheService } from "../infura/cache.service";
 import type { AppSetting, AppSettingsResponse } from "./types";
 
 export class AppSettingsService {

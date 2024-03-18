@@ -65,7 +65,7 @@ export const providerCourseLink = mySqlTable(
     day14: datetime("day14", { mode: "string", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
-    providerCourseConfiguration:text("providerCourseConfiguration")
+    providerCourseConfiguration: text("providerCourseConfiguration"),
   },
   (table) => {
     return {

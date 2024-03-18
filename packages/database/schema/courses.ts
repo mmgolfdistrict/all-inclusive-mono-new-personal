@@ -1,4 +1,5 @@
-import { InferInsertModel, InferSelectModel, relations } from "drizzle-orm";
+import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import { relations } from "drizzle-orm";
 import {
   boolean,
   datetime,
@@ -45,6 +46,7 @@ export const courses = mySqlTable(
     timezoneCorrection: int("timezoneCorrection").default(0).notNull(),
     supportCharity: boolean("supportCharity").default(false).notNull(),
     supportSensibleWeather: boolean("supportSensitiveWeather").default(false).notNull(),
+    allowAuctions: int("allowAuctions").default(0),
     isDeleted: boolean("isDeleted").default(false).notNull(),
   },
   (table) => {

@@ -45,7 +45,9 @@ export const ListTeeTime = ({
   needsRedirect,
 }: SideBarProps) => {
   const [listingPrice, setListingPrice] = useState<number>(0);
-  const [players, setPlayers] = useState<PlayerType>("1");
+  const [players, setPlayers] = useState<PlayerType>(
+    selectedTeeTime?.selectedSlotsCount || "1"
+  );
   const { trigger, sidebar, toggleSidebar } = useSidebar({
     isOpen: isListTeeTimeOpen,
     setIsOpen: setIsListTeeTimeOpen,
@@ -59,7 +61,11 @@ export const ListTeeTime = ({
     return selectedTeeTime?.firstHandPrice * 50;
   }, [selectedTeeTime]);
 
-  const availableSlots = selectedTeeTime?.bookingIds.length ?? 1;
+  const availableSlots = selectedTeeTime?.golfers.length || 0;
+
+  useEffect(() => {
+    setPlayers(selectedTeeTime?.selectedSlotsCount || "1");
+  }, [selectedTeeTime?.selectedSlotsCount]);
 
   useEffect(() => {
     if (isListTeeTimeOpen) {
@@ -67,7 +73,7 @@ export const ListTeeTime = ({
     } else {
       document.body.classList.remove("overflow-hidden");
       setListingPrice(0); //reset price
-      setPlayers("1");
+      // setPlayers(selectedTeeTime?.selectedSlotsCount||"1");
     }
   }, [isListTeeTimeOpen]);
 

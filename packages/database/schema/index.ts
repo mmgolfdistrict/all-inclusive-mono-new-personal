@@ -1,4 +1,5 @@
 import * as accounts from "./accounts";
+import * as appSettings from "./appSetting";
 import * as assets from "./assets";
 import * as auctionAssets from "./auctionAssets";
 import * as auctions from "./auctions";
@@ -30,7 +31,6 @@ import * as userProviderCourseLink from "./userProviderCourseLink";
 import * as users from "./users";
 import * as verificationTokens from "./verificationTokens";
 import * as withdrawals from "./withdrawals";
-import * as appSettings from "./appSetting"
 
 export const schema = {
   ...accounts,
@@ -65,5 +65,5 @@ export const schema = {
   ...charities,
   ...charityCourseLink,
   ...donations,
-  ...appSettings
+  ...appSettings,
 };

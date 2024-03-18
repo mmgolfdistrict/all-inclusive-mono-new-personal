@@ -108,14 +108,23 @@ export const bookingRouter = createTRPCRouter({
   updateNamesOnBookings: protectedProcedure
     .input(
       z.object({
-        bookingIds: z.array(z.string()),
-        userIds: z.array(z.string()),
+        bookingId: z.string(),
+        usersToUpdate: z.array(
+          z.object({
+            id: z.string(),
+            handle: z.string(),
+            name: z.string(),
+            email: z.string(),
+            slotId: z.string(),
+            bookingId: z.string(),
+          })
+        ),
       })
     )
     .mutation(async ({ ctx, input }) => {
       return ctx.serviceFactory
         .getBookingService()
-        .updateNamesOnBookings(ctx.session.user.id, input.bookingIds, input.userIds);
+        .updateNamesOnBookings(ctx.session.user.id, input.usersToUpdate, input.bookingId);
     }),
   updateListing: protectedProcedure
     .input(
