@@ -389,7 +389,7 @@ export class SensibleService extends CacheService {
    */
   acceptQuote = async (params: AcceptQuoteParams): Promise<AcceptQuoteSuccessResponse> => {
     this.logger.info(`acceptQuote called with params: ${JSON.stringify(params)}`);
-    let bearerToken = await this.getCache("sensible_access_token");
+    let bearerToken: string | null = await this.getCache("sensible_access_token");
     if (!bearerToken) {
       try {
         await this.getToken();
@@ -400,6 +400,17 @@ export class SensibleService extends CacheService {
         throw new Error(`Error getting access token: ${err}`);
       }
     }
+
+    console.log(JSON.stringify(params));
+    console.log(
+      JSON.stringify({
+        price_charged: params.price_charged,
+        reservation_id: params.reservation_id,
+        lang_locale: params.lang_locale,
+        user: { name: params.user.name, email: params.user.email, phone: params.user.phone },
+      })
+    );
+
     const response = await fetch(`${this.getEndpoint()}/quote/guarantee/${params.quoteId}/accept`, {
       method: "PATCH",
       headers: {
@@ -411,18 +422,27 @@ export class SensibleService extends CacheService {
         price_charged: params.price_charged,
         reservation_id: params.reservation_id,
         lang_locale: params.lang_locale,
-        user: { name: params.user.name, email: params.user.email, phone: params.user.phone },
+        //@TODO add phone number from reservation screen if not provided in the profile. GOLFdistrict owns the phone number 877-Tee-Trade & 833-Tee-Trade
+        user: { name: params.user.name, email: params.user.email, phone: params.user.phone ?? "8778338723" },
       }),
     });
+
+    console.log(response);
+
+    const responseData = await response.json();
+    console.log(responseData);
+
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorData = responseData; //await response.json();
+
       this.logger.fatal(
         `Failed to accept quote from SensibleWeather API: ${errorData.error}: ${errorData.error_description}`
       );
       throw new Error(`${errorData.error}: ${errorData.error_description}`);
     }
 
-    return (await response.json()) as AcceptQuoteSuccessResponse;
+    // return (await response.json()) as AcceptQuoteSuccessResponse;
+    return responseData as AcceptQuoteSuccessResponse;
   };
 
   /**
