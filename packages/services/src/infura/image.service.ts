@@ -76,33 +76,48 @@ export class ImageService {
       this.logger.error(`User not found: ${createdById}`);
       throw new Error("User not found");
     }
-    await this.database
-      .insert(assets)
-      .values({
-        id: randomUUID(),
-        key,
-        extension,
-        cdn,
-        createdById,
-      })
-      .execute()
-      .catch((err) => {
-        this.logger.error(err);
-        throw new Error("Error storing asset");
-      });
-    const [insertedAsset] = await this.database
+
+    const [asset] = await this.database
       .select()
       .from(assets)
-      .where(eq(assets.key, key))
+      .where(eq(assets.createdById, createdById))
       .execute()
       .catch((err) => {
-        this.logger.error("Error retrieving inserted asset", err);
-        throw new Error("Error retrieving inserted asset");
+        this.logger.error("Error retrieving fetching asset", err);
+        throw new Error("Error retrieving fetching asset");
       });
-    if (!insertedAsset) {
-      this.logger.error(`Error asset not found for key ${key}`);
-      throw new Error("Error asset not found for key ${key}");
+
+    if (asset) {
+      return asset.id;
+    } else {
+      await this.database
+        .insert(assets)
+        .values({
+          id: randomUUID(),
+          key,
+          extension,
+          cdn,
+          createdById,
+        })
+        .execute()
+        .catch((err) => {
+          this.logger.error(err);
+          throw new Error("Error storing asset");
+        });
+      const [insertedAsset] = await this.database
+        .select()
+        .from(assets)
+        .where(eq(assets.key, key))
+        .execute()
+        .catch((err) => {
+          this.logger.error("Error retrieving inserted asset", err);
+          throw new Error("Error retrieving inserted asset");
+        });
+      if (!insertedAsset) {
+        this.logger.error(`Error asset not found for key ${key}`);
+        throw new Error("Error asset not found for key ${key}");
+      }
+      return insertedAsset.id;
     }
-    return insertedAsset.id;
   };
 }
