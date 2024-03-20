@@ -61,7 +61,7 @@ export const HyperSwitch = ({
         courseId: course?.id ?? "",
         name: user?.name ?? "",
         email: user.email ?? "",
-        phone: "",
+        phone: user.phone ?? "",
         phone_country_code: "1",
         //@ts-ignore
         cart: cartData,

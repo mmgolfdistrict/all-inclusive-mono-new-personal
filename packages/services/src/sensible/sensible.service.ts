@@ -423,7 +423,7 @@ export class SensibleService extends CacheService {
         reservation_id: params.reservation_id,
         lang_locale: params.lang_locale,
         //@TODO add phone number from reservation screen if not provided in the profile. GOLFdistrict owns the phone number 877-Tee-Trade & 833-Tee-Trade
-        user: { name: params.user.name, email: params.user.email, phone: params.user.phone ?? "8778338723" },
+        user: { name: params.user.name, email: params.user.email, phone: params.user.phone || "8778338723" },
       }),
     });
 

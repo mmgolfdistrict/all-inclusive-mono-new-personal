@@ -25,6 +25,7 @@ declare module "next-auth" {
       name: string;
       email: string;
       image: string;
+      phone: string;
     } & DefaultSession["user"];
   }
 }
@@ -113,6 +114,7 @@ export const authConfig: NextAuthConfig = {
           email: data?.email,
           image: data?.profilePicture,
           name: data?.name,
+          phone: data?.phoneNumber,
         };
       },
     }),
@@ -155,7 +157,8 @@ export const authConfig: NextAuthConfig = {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (token.user as any).image = session.image;
       }
-
+      const userInfo: any = token.user;
+      token.phone = userInfo.phone;
       return token;
     },
     session: ({ session, token }) => {
