@@ -188,7 +188,7 @@ export class SensibleService extends CacheService {
    * const quoteDetails = await getQuoteById("xyz123");
    */
   getQuoteById = async (quoteId: string): Promise<GetQuoteResponse> => {
-    let bearerToken = await this.getCache("sensible_access_token");
+    let bearerToken: string | null = await this.getCache("sensible_access_token");
     if (!bearerToken) {
       try {
         await this.getToken();

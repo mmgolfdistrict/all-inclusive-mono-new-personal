@@ -573,6 +573,8 @@ export class HyperSwitchWebhookService {
 
       const userDetails = await this.getUserDetails(customer_id);
 
+      console.log(`Sensible Quote Id: ${item.product_data.metadata.sensible_quote_id}`);
+
       const quote = await this.getSensibleQuote(item.product_data.metadata.sensible_quote_id);
 
       const acceptedQuote = await this.sensibleService.acceptQuote({
