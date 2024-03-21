@@ -401,6 +401,30 @@ export class SensibleService extends CacheService {
       }
     }
 
+    // https://jsonplaceholder.typicode.com/todos
+    console.log("Before calling API https://jsonplaceholder.typicode.com/todos");
+
+    try {
+      const response = await fetch("https://jsonplaceholder.typicode.com/todos");
+      if (!response.ok) {
+        this.logger.error(
+          `Error calling API https://jsonplaceholder.typicode.com/todos: ${response.statusText}`
+        );
+        throw new Error(
+          `Error calling API https://jsonplaceholder.typicode.com/todos: ${response.statusText}`
+        );
+      }
+      const data = await response.json();
+      this.logger.info(
+        `Successfully called API https://jsonplaceholder.typicode.com/todos: ${JSON.stringify(data)}`
+      );
+    } catch (err) {
+      this.logger.error(`Error calling API https://jsonplaceholder.typicode.com/todos: ${err}`);
+    } finally {
+      console.log("After calling API https://jsonplaceholder.typicode.com/todos - 1");
+    }
+    console.log("After calling API https://jsonplaceholder.typicode.com/todos - 2");
+
     console.log(JSON.stringify(params));
     console.log(
       JSON.stringify({
