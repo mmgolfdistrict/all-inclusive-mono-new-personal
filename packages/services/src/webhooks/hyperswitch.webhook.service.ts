@@ -100,7 +100,7 @@ export class HyperSwitchWebhookService {
 
     switch (req.event_type) {
       case "payment_succeeded":
-        return this.paymentSuccessHandler(customerCart, amountReceived);
+        return this.paymentSuccessHandler(customerCart, amountReceived, paymentId);
       case "payment_failed":
         return this.paymentFailureHandler(customer_id);
       default:
@@ -138,13 +138,13 @@ export class HyperSwitchWebhookService {
    * ```
    */
 
-  paymentSuccessHandler = async (customerCart: CustomerCart, amountReceived: number) => {
+  paymentSuccessHandler = async (customerCart: CustomerCart, amountReceived: number, paymentId: string) => {
     const customer_id: string = customerCart.customerId;
 
     for (const item of customerCart.cart) {
       switch (item.product_data.metadata.type) {
         case "first_hand":
-          await this.handleFirstHandItem(item as FirstHandProduct, amountReceived, customer_id);
+          await this.handleFirstHandItem(item as FirstHandProduct, amountReceived, customer_id, paymentId);
           break;
         case "second_hand":
           await this.handleSecondHandItem(item as SecondHandProduct, amountReceived, customer_id);
@@ -173,7 +173,7 @@ export class HyperSwitchWebhookService {
       }
     }
   };
-  handleFirstHandItem = async (item: FirstHandProduct, amountReceived: number, customer_id: string) => {
+  handleFirstHandItem = async (item: FirstHandProduct, amountReceived: number, customer_id: string, paymentId: string) => {
     const [teeTime] = await this.database
       .select({
         id: teeTimes.id,
@@ -265,6 +265,7 @@ export class HyperSwitchWebhookService {
         item.product_data.metadata.number_of_bookings,
         booking.data.id,
         item.product_data.metadata.tee_time_id,
+        paymentId,
         true,
         provider,
         token,
