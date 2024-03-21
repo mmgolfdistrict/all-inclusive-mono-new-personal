@@ -248,6 +248,7 @@ export class SearchService {
         date: teeTimes.providerDate,
         numberOfHoles: teeTimes.numberOfHoles,
         listPrice: lists.listPrice,
+        listedSlots: lists.slots,
         courseName: courses.name,
         ownerHandle: users.handle,
         ownerId: users.id,
@@ -284,7 +285,7 @@ export class SearchService {
       soldByImage: firstBooking.image
         ? `https://${firstBooking.image.cdnUrl}/${firstBooking.image.key}.${firstBooking.image.extension}`
         : "/defaults/default-profile.webp",
-      availableSlots: data.length,
+      availableSlots: firstBooking.listedSlots,
       pricePerGolfer: firstBooking.listPrice,
       firstHandPurchasePrice: firstBooking.firstHandPrice ?? 0,
       teeTimeId: firstBooking.teeTimeId ? firstBooking.teeTimeId : "",
@@ -691,6 +692,7 @@ export class SearchService {
         listingId: lists.id,
         ownerName: users.handle,
         favorites: favorites.id,
+        listedSlots: lists.slots,
         listPrice: lists.listPrice,
         minimumOfferPrice: bookings.minimumOfferPrice,
         date: teeTimes.providerDate,
@@ -767,6 +769,7 @@ export class SearchService {
               time: booking?.time ?? 2400,
               minimumOfferPrice: booking.listingId ? booking?.minimumOfferPrice : 0,
               listingId: booking.listingId ?? undefined,
+              listedSlots: booking.listedSlots,
               isOwned: true,
             };
           } else {

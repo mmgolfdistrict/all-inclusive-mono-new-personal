@@ -1,3 +1,4 @@
+import type { CombinedObject } from "@golf-district/shared";
 import { WeatherIcons } from "~/constants/weather-icons";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useFiltersContext } from "~/contexts/FiltersContext";
@@ -210,7 +211,7 @@ export const DailyTeeTimes = ({
           ref={overflowRef}
           onMouseDown={onMouseDown}
         >
-          {allTeeTimes?.map((i, idx) => (
+          {allTeeTimes?.map((i: CombinedObject, idx) => (
             <TeeTime
               time={i.date}
               key={idx}
@@ -229,6 +230,7 @@ export const DailyTeeTimes = ({
               minimumOfferPrice={i?.minimumOfferPrice}
               bookingIds={i?.bookingIds ?? []}
               listingId={i?.listingId}
+              listedSlots={i?.listedSlots}
             />
           ))}
           <div

@@ -86,12 +86,19 @@ export const bookingRouter = createTRPCRouter({
         bookingIds: z.array(z.string()),
         listPrice: z.number(),
         endTime: z.date(),
+        slots: z.number(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       return ctx.serviceFactory
         .getBookingService()
-        .createListingForBookings(ctx.session.user.id, input.listPrice, input.bookingIds, input.endTime);
+        .createListingForBookings(
+          ctx.session.user.id,
+          input.listPrice,
+          input.bookingIds,
+          input.endTime,
+          input.slots
+        );
     }),
   getOwnedBookingsForTeeTime: protectedProcedure
     .input(

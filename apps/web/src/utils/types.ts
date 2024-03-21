@@ -83,6 +83,7 @@ export type SearchObject = {
   minimumOfferPrice?: number;
   bookingIds?: string[];
   listingId?: string;
+  listedSlots?: number;
 };
 
 export type InviteFriend = {

@@ -126,6 +126,7 @@ export const ListTeeTime = ({
         bookingIds: selectedTeeTime?.bookingIds.slice(0, parseInt(players)),
         listPrice: listingPrice,
         endTime: new Date(selectedTeeTime?.date),
+        slots: parseInt(players),
       });
       toast.success(
         <div className="flex flex-col ">
