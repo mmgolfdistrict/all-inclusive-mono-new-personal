@@ -431,6 +431,7 @@ export class BookingService {
       .where(
         and(
           eq(bookings.ownerId, userId),
+          eq(bookings.isActive, true),
           eq(teeTimes.courseId, courseId),
           gte(teeTimes.date, currentUtcTimestamp())
         )
@@ -489,12 +490,8 @@ export class BookingService {
           weatherGuaranteeAmount: teeTime.weatherGuaranteeAmount,
         };
       } else {
-        //  console.log("uuuuuuuuuuuuubbbbbbbbb");
         const currentEntry = combinedData[teeTime.id];
         if (currentEntry) {
-          // Update the existing entry
-          // @ts-ignore
-          currentEntry.golfers.push(teeTime.players);
           currentEntry.bookingIds.push(teeTime.bookingId);
           currentEntry.slotsData.push({
             name: teeTime.slotCustomerName,
@@ -524,8 +521,6 @@ export class BookingService {
         }
       }
     });
-    // console.log("------------",combinedData);
-
     for (const t of Object.values(combinedData)) {
       const finaldata: InviteFriend[] = [];
 
@@ -639,17 +634,25 @@ export class BookingService {
     userId: string,
     listPrice: number,
     bookingIds: string[],
-    endTime: Date
+    endTime: Date,
+    slots: number
   ) => {
     this.logger.info(`createListingForBookings called with userId: ${userId}`);
     if (new Date().getTime() >= endTime.getTime()) {
       this.logger.warn("End time cannot be before current time");
       throw new Error("End time cannot be before current time");
     }
-    if (!bookingIds.length) {
+
+    if (!slots) {
+      this.logger.warn(`Slots less than one`);
+      throw new Error("Slots less than one");
+    }
+    if (!bookingIds[0]) {
       this.logger.warn(`No bookings specified.`);
       throw new Error("No bookings specified.");
     }
+
+    const bookingId: string = bookingIds[0];
     const ownedBookings = await this.database
       .select({
         id: bookings.id,
@@ -664,10 +667,10 @@ export class BookingService {
         this.logger.error(`Error retrieving bookings: ${err}`);
         throw new Error("Error retrieving bookings");
       });
-    if (ownedBookings.length !== bookingIds.length || !ownedBookings[0]) {
+    if (!ownedBookings.length) {
       this.logger.debug(`Owned bookings: ${JSON.stringify(ownedBookings)}`);
-      this.logger.warn(`User ${userId} does not own all specified bookings.`);
-      throw new Error("User does not own all specified bookings.");
+      this.logger.warn(`User ${userId} does not own  specified bookings.`);
+      throw new Error("User does not  own specified bookings.");
     }
     if (ownedBookings.length > 4) {
       this.logger.warn(`Cannot list more than 4 bookings.`);
@@ -680,31 +683,36 @@ export class BookingService {
       }
     }
     //validate that all bookings are for the same course
-    const courseIds = new Set(ownedBookings.map((booking) => booking.courseId));
-    if (courseIds.size > 1) {
-      this.logger.warn(`Bookings are not for the same course.`);
-      throw new Error("Bookings are not for the same course.");
-    }
+    // const courseIds = new Set(ownedBookings.map((booking) => booking.courseId));
+    // if (courseIds.size > 1) {
+    //   this.logger.warn(`Bookings are not for the same course.`);
+    //   throw new Error("Bookings are not for the same course.");
+    // }
     //validate that each booking is for the same tee time
-    const teeTimeIds = new Set(ownedBookings.map((booking) => booking.teeTimeId));
-    if (teeTimeIds.size > 1) {
-      this.logger.warn(`Bookings are not for the same tee time.`);
-      throw new Error("Bookings are not for the same tee time.");
-    }
+    // const teeTimeIds = new Set(ownedBookings.map((booking) => booking.teeTimeId));
+    // if (teeTimeIds.size > 1) {
+    //   this.logger.warn(`Bookings are not for the same tee time.`);
+    //   throw new Error("Bookings are not for the same tee time.");
+    // }
 
     const [firstBooking] = ownedBookings;
+    if (!firstBooking) {
+      this.logger.warn(`Booking ${bookingId} not found.`);
+      throw new Error(`Booking ${bookingId} not found.`);
+    }
     const courseId = firstBooking.courseId;
 
     const toCreate: InsertList = {
       id: randomUUID(),
       userId: userId,
       listPrice: listPrice,
-      teeTimeId: firstBooking.teeTimeId,
+      teeTimeId: firstBooking?.teeTimeId,
       endTime: dateToUtcTimestamp(endTime),
       courseId: courseId,
       status: "PENDING",
       isDeleted: false,
       splitTeeTime: false,
+      slots,
     };
     await this.database
       .transaction(async (transaction) => {
@@ -1055,7 +1063,6 @@ export class BookingService {
     if (!data.every((booking) => booking.teeTimeId === firstTeeTime)) {
       throw new Error("All bookings must be under the same tee time.");
     }
-    //price must to higher than the largest minimum offer price
 
     const minimumOfferPrice = Math.max(...data.map((booking) => booking.minimumOfferPrice));
     if (price === 0) {
@@ -1064,26 +1071,6 @@ export class BookingService {
     if (price < minimumOfferPrice) {
       throw new Error("Offer price must be higher than the minimum offer price.");
     }
-    // const paymentMethod = await this.hyperSwitchService.retrievePaymentMethods(userId, {type: "card"});
-    // console.log(paymentMethod?.data[0])
-    //  const paymentIntent= await this.hyperSwitchService.createPaymentIntent({
-    //   customer: {
-    //     id: userId,
-    //   },
-    //   amount: price,
-    //   capture_method: "manual",
-    //   currency: "USD",
-    //   payment_method_type: 'card',
-    //   pa
-
-    //   payment_token:paymentMethod?.data[0].id
-    // });
-
-    // // console.log(paymentIntent);
-    // const  accept = await this.hyperSwitchService.capturePaymentIntent("pay_mZIlZE09HO2bnRHQU0yP");
-    // console.log(accept)
-    // return
-    // //make sure al the bookings are active , owned by one user, and are under one course and tee time
     await this.database.transaction(async (trx) => {
       const offerId = randomUUID();
       await trx

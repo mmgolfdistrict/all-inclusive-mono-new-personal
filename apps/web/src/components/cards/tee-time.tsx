@@ -34,7 +34,7 @@ export const TeeTime = ({
   availableSlots,
   teeTimeId,
   isLiked,
-  status,
+  status = "FIRST_HAND",
   minimumOfferPrice,
   bookingIds,
   listingId,
@@ -42,6 +42,7 @@ export const TeeTime = ({
   className,
   showFullDate,
   children,
+  listedSlots,
 }: {
   time: string;
   canChoosePlayer: boolean;
@@ -62,8 +63,11 @@ export const TeeTime = ({
   className?: string;
   showFullDate?: boolean;
   children?: ReactNode;
+  listedSlots?: number | null;
 }) => {
-  const [selectedPlayers, setSelectedPlayers] = useState<string>("1");
+  const [selectedPlayers, setSelectedPlayers] = useState<string>(
+    status === "UNLISTED" ? "1" : status === "FIRST_HAND" ? "1" : players
+  );
   const { course } = useCourseContext();
   const courseId = course?.id;
   const timezoneCorrection = course?.timezoneCorrection;
@@ -145,9 +149,9 @@ export const TeeTime = ({
   const isSuggested = status === "UNLISTED";
 
   useEffect(() => {
-    if (status !== "FIRST_HAND") {
-      setSelectedPlayers(isOwned ? players : availableSlots.toString());
-    }
+    // if (status === "SECOND_HAND") {
+    //   setSelectedPlayers(isOwned ? players : availableSlots.toString());
+    // }
   }, [status, availableSlots]);
 
   const openManage = () => {
@@ -204,15 +208,16 @@ export const TeeTime = ({
             <div className="scale-75 md:scale-100">
               <OutlineClub />
             </div>
+
             {canChoosePlayer ? (
               <ChoosePlayers
-                players={selectedPlayers}
+                players={
+                  status === "SECOND_HAND" ? `${listedSlots}` : selectedPlayers
+                }
                 setPlayers={setSelectedPlayers}
                 playersOptions={PlayersOptions}
                 availableSlots={
-                  status === "SECOND_HAND"
-                    ? parseInt(selectedPlayers)
-                    : availableSlots
+                  status === "SECOND_HAND" ? listedSlots || 0 : availableSlots
                 }
                 isDisabled={status === "SECOND_HAND"}
                 className="md:px-[1rem] md:py-[.25rem] md:!text-[14px] !text-[10px] px-[.75rem] py-[.1rem]"

@@ -1,5 +1,6 @@
-import { InferInsertModel, relations, sql } from "drizzle-orm";
-import { boolean, datetime, index, int, mysqlEnum, varchar } from "drizzle-orm/mysql-core";
+import type { InferInsertModel } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
+import { boolean, datetime, index, int, mysqlEnum, smallint, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 import { bookings } from "./bookings";
 import { courses } from "./courses";
@@ -22,6 +23,7 @@ export const lists = mySqlTable(
     isDeleted: boolean("isDeleted").default(false).notNull(),
     minimumOfferPrice: int("minimumOfferPrice").default(0).notNull(),
     splitTeeTime: boolean("splitTeeTime").default(false).notNull(),
+    slots: smallint("slots").default(0).notNull(),
   },
   (table) => {
     return {

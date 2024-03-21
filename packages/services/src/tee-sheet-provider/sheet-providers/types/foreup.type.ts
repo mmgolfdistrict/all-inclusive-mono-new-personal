@@ -105,6 +105,9 @@ export interface BookingResponse {
   data: {
     type: string;
     id: string;
+    ownerId?: string;
+    name?: string;
+    purchasedFor?: number;
     attributes: {
       isReround: boolean;
       type: string;

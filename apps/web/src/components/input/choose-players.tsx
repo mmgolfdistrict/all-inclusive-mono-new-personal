@@ -10,7 +10,7 @@ export const ChoosePlayers = ({
   className,
   teeTimeId,
 }: {
-  players: string;
+  players: string | number;
   setPlayers: (v: string) => void;
   playersOptions: string[];
   availableSlots: number;
@@ -21,7 +21,7 @@ export const ChoosePlayers = ({
   return (
     <ToggleGroup.Root
       type="single"
-      value={players}
+      value={players as string}
       onValueChange={(value: string) => {
         if (isDisabled) return;
         if (availableSlots < parseInt(value)) return;

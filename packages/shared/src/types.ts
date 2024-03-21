@@ -164,6 +164,7 @@ export type SearchObject = {
     iconCode: IconCodeType;
   };
   listingId?: string;
+  listedSlots?: number;
   bookingIds?: string[];
   minimumOfferPrice?: number;
   firstHandPurchasePrice?: number;
@@ -187,4 +188,5 @@ export type CombinedObject = {
   bookingIds: string[];
   minimumOfferPrice?: number;
   firstHandPurchasePrice?: number;
+  listedSlots: number | null;
 };
