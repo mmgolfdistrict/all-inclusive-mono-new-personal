@@ -159,7 +159,7 @@ export class HyperSwitchWebhookService {
           await this.handleCharityItem(item as CharityProduct, amountReceived, customer_id);
           break;
         case "sensible": //sensible is handled last
-          await this.handleSensibleItem(item as SensibleProduct, amountReceived, customer_id);
+          await this.handleSensibleItem(item as SensibleProduct, amountReceived, customer_id, customerCart);
           break;
         case "taxes": //taxes is handled last
           await this.handleTaxItem(item as TaxProduct, amountReceived, customer_id);
@@ -566,26 +566,31 @@ export class HyperSwitchWebhookService {
     });
   };
 
-  handleSensibleItem = async (item: SensibleProduct, amountReceived: number, customer_id: string) => {
+  handleSensibleItem = async (
+    item: SensibleProduct,
+    amountReceived: number,
+    customer_id: string,
+    customerCart: CustomerCart
+  ) => {
     // Logic for handling first-hand items
     try {
       const booking = await this.getBookingDetails(item.id);
 
-      const userDetails = await this.getUserDetails(customer_id);
+      // const userDetails = await this.getUserDetails(customer_id);
 
       console.log(`Sensible Quote Id: ${item.product_data.metadata.sensible_quote_id}`);
 
-      const quote = await this.getSensibleQuote(item.product_data.metadata.sensible_quote_id);
+      // const quote = await this.getSensibleQuote(item.product_data.metadata.sensible_quote_id);
 
       const acceptedQuote = await this.sensibleService.acceptQuote({
         quoteId: item.product_data.metadata.sensible_quote_id,
-        price_charged: quote.suggested_price,
+        price_charged: item.price / 100,
         reservation_id: booking.id,
-        lang_locale: quote.lang_locale,
+        lang_locale: "en_US",
         user: {
-          email: userDetails.email!,
-          name: userDetails.name!,
-          phone: userDetails.phoneNumber!,
+          email: customerCart.email,
+          name: customerCart.name,
+          phone: customerCart.phone ? `+${customerCart.phone_country_code}${customerCart.phone}` : "",
         },
       });
 
