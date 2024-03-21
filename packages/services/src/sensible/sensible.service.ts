@@ -48,6 +48,8 @@ export class SensibleService extends CacheService {
    *
    */
   getToken = async (): Promise<void> => {
+    const SENSIBLE_AUTH_URL: string = process.env.SENSIBLE_AUTH_URL!;
+
     this.logger.info("getAccessToken called");
     const payload: AccessTokenRequest = {
       grant_type: "client_credentials",
@@ -56,7 +58,7 @@ export class SensibleService extends CacheService {
       audience: this.SENSIBLE_AUDIENCE,
     };
     console.log(payload);
-    const response = await fetch("https://auth.sensibleweather.io/oauth/token", {
+    const response = await fetch(SENSIBLE_AUTH_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -522,12 +524,16 @@ export class SensibleService extends CacheService {
    * const apiEndpoint = getEndpoint();
    */
   getEndpoint = (): string => {
-    switch (process.env.NODE_ENV) {
-      case "production":
-        return "https://protect.sensibleweather.io/api/v0_1";
-      case "development":
-      default:
-        return "https://protect.sandbox.sensibleweather.io/api/v0_1";
-    }
+    const SENSIBLE_BASE_URL = process.env.SENSIBLE_BASE_URL!;
+
+    return SENSIBLE_BASE_URL;
+
+    // switch (process.env.NODE_ENV) {
+    //   case "production":
+    //     return "https://protect.sensibleweather.io/api/v0_1";
+    //   case "development":
+    //   default:
+    //     return "https://protect.sandbox.sensibleweather.io/api/v0_1";
+    // }
   };
 }
