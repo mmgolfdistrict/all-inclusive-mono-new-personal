@@ -26,6 +26,8 @@ export class foreUp extends BaseProvider {
     const url = `${endpoint}/courses/${courseId}/teesheets/${teesheetId}/teetimes?startTime=${startTime}&endTime=${endTime}&date=${date}`;
     const headers = this.getHeaders(token);
 
+    console.log(`getTeeTimes - ${url}`);
+
     const response = await fetch(url, { headers, method: "GET" });
 
     if (!response.ok) {
@@ -50,6 +52,8 @@ export class foreUp extends BaseProvider {
     const url = `${endpoint}/courses/${courseId}/teesheets/${teesheetId}/bookings/${bookingId}`;
     const headers = this.getHeaders(token);
 
+    console.log(`deleteBooking - ${url}`);
+
     const response = await fetch(url, {
       method: "DELETE",
       headers: headers,
@@ -73,6 +77,8 @@ export class foreUp extends BaseProvider {
   ): Promise<BookingResponse> {
     const endpoint = this.getBasePoint();
     const url = `${endpoint}/courses/${courseId}/teesheets/${teesheetId}/bookings`;
+
+    console.log(`createBooking - ${url}`);
 
     const headers = this.getHeaders(token);
 
@@ -108,6 +114,8 @@ export class foreUp extends BaseProvider {
     }`;
     const headers = this.getHeaders(token);
 
+    console.log(`updateTeeTime - ${url}`);
+
     const response = await fetch(url, {
       method: "PUT",
       headers: headers,
@@ -132,6 +140,9 @@ export class foreUp extends BaseProvider {
   ): Promise<CustomerData> {
     // Fetch required fields for the course
     const requiredFieldsUrl = `${this.getBasePoint()}/courses/${courseId}/settings/customerFieldSettings`;
+
+    console.log(`createCustomer - ${requiredFieldsUrl}`);
+
     const requiredFieldsResponse = await fetch(requiredFieldsUrl, {
       method: "GET",
       headers: this.getHeaders(token),
@@ -153,6 +164,8 @@ export class foreUp extends BaseProvider {
     //Create Customer
     const endpoint = this.getBasePoint();
     const url = `${endpoint}/courses/${courseId}/customers`;
+
+    console.log(`createCustomer - ${url}`);
 
     const response = await fetch(url, {
       method: "POST",
@@ -178,6 +191,8 @@ export class foreUp extends BaseProvider {
 
     const headers = this.getHeaders(token);
 
+    console.log(`getCustomer - ${url}`);
+
     const response = await fetch(url, {
       method: "GET",
       headers: headers,
@@ -193,6 +208,9 @@ export class foreUp extends BaseProvider {
 
   getToken = async (): Promise<string> => {
     const endpoint = this.getBasePoint();
+
+    console.log(`getToken - ${endpoint}`);
+
     const response = await fetch(`${endpoint}/tokens`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
