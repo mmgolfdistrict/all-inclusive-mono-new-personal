@@ -435,7 +435,12 @@ export class SensibleService extends CacheService {
       })
     );
 
-    const response = await fetch(`${this.getEndpoint()}/quote/guarantee/${params.quoteId}/accept`, {
+    const url = `${this.getEndpoint()}/quote/guarantee/${params.quoteId}/accept`;
+
+    console.log(`Sensible URL = ${url}`);
+    console.log(`Sensible Bearer Token = ${bearerToken}`);
+
+    const response = await fetch(url, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
