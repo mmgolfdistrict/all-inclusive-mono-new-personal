@@ -2,17 +2,18 @@ import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
 import { and, eq, not } from "@golf-district/database";
 import { bookings } from "@golf-district/database/schema/bookings";
+import type { InsertBooking } from "@golf-district/database/schema/bookings";
+import { bookingslots } from "@golf-district/database/schema/bookingslots";
 import { charityCourseLink } from "@golf-district/database/schema/charityCourseLink";
 import { customerCarts } from "@golf-district/database/schema/customerCart";
 import { donations } from "@golf-district/database/schema/donations";
 import { lists } from "@golf-district/database/schema/lists";
 import { promoCodes } from "@golf-district/database/schema/promoCodes";
-import { currentUtcTimestamp } from "@golf-district/shared";
 import { providerCourseLink } from "@golf-district/database/schema/providersCourseLink";
-import type { InsertBooking } from "@golf-district/database/schema/bookings";
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import { userPromoCodeLink } from "@golf-district/database/schema/userPromoCodeLink";
 import { users } from "@golf-district/database/schema/users";
+import { currentUtcTimestamp } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
 import { Client } from "@upstash/qstash/.";
 import { B } from "vitest/dist/reporters-5f784f42";
@@ -36,7 +37,6 @@ import type { BookingResponse } from "../tee-sheet-provider/sheet-providers/type
 import { BookingCreationData } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
 import type { TokenizeService } from "../token/tokenize.service";
 import type { HyperSwitchEvent } from "./types/hyperswitch";
-import { bookingslots } from "@golf-district/database/schema/bookingslots";
 
 /**
  * `HyperSwitchWebhookService` - A service for processing webhooks from HyperSwitch.
@@ -526,6 +526,14 @@ export class HyperSwitchWebhookService {
       this.logger.error(`Error deleting booking: ${err}`);
     }
 
+    await this.database
+      .update(lists)
+      .set({
+        isDeleted: true,
+      })
+      .where(eq(lists.teeTimeId, firstBooking.teeTimeId))
+      .execute();
+
     const newBookings: BookingResponse[] = [];
 
     try {
@@ -609,7 +617,7 @@ export class HyperSwitchWebhookService {
         minimumOfferPrice: 0,
         ownerId: booking.data.ownerId || "",
         courseId: firstBooking.courseId,
-        teeTimeId: firstBooking.id,
+        teeTimeId: firstBooking.teeTimeId,
         nameOnBooking: newBooking.data.name || "",
         includesCart: firstBooking.includesCart,
         listId: null,
