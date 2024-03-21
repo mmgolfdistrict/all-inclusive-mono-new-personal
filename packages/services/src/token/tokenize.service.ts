@@ -269,9 +269,6 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
 
     const taxes = taxCharge + sensibleCharge + charityCharge + convenienceCharge;
 
-    console.log("$$$", customerCartData?.cart?.cart, primaryGreenFeeCharge, customerCartData?.cart?.cart
-    ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "first_hand"));
-
     const template = {
       CustomerFirstName: existingTeeTime.customerName?.split(" ")[0],
       CourseName: existingTeeTime.courseName || "-",
