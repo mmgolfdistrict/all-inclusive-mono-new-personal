@@ -398,6 +398,7 @@ export class BookingService {
         date: teeTimes.providerDate,
         courseId: teeTimes.courseId,
         courseName: courses.name,
+        courseMarkup: courses.markup,
         greenFee: teeTimes.greenFee,
         lastHighestSale: sql<number | null>`MAX(${transfers.amount})`,
         teeTimeImage: {
@@ -470,7 +471,7 @@ export class BookingService {
             ? `https://${teeTime.teeTimeImage.cdnUrl}/${teeTime.teeTimeImage.key}.${teeTime.teeTimeImage.extension}`
             : "/defaults/default-course.webp",
           date: teeTime.date,
-          firstHandPrice: teeTime.greenFee,
+          firstHandPrice: teeTime.greenFee + (teeTime.courseMarkup ? teeTime.courseMarkup/100 : 0),
           golfers: [],
           purchasedFor: teeTime.lastHighestSale,
           bookingIds: [teeTime.bookingId],

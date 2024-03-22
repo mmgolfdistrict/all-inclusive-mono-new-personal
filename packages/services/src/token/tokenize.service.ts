@@ -64,6 +64,7 @@ export class TokenizeService {
     players: number, //how many bookings to make
     providerBookingId: string, //the tee time ids to book
     providerTeeTimeId: string, //all tee times to be tokenized are purchased from a provider
+    paymentId: string,
     withCart?: boolean,
     provider?: ProviderAPI,
     token?: string,
@@ -235,7 +236,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
     const [customerCartData]: any = await this.database
       .select({ cart: customerCarts.cart })
       .from(customerCarts)
-      .where(eq(customerCarts.courseId, existingTeeTime.courseId))
+      .where(and(eq(customerCarts.paymentId, paymentId), eq(customerCarts.courseId, existingTeeTime.courseId)))
       .execute();
 
     const primaryGreenFeeCharge =
@@ -263,6 +264,8 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
         ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "charity")
         ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
 
+    const taxes = taxCharge + sensibleCharge + charityCharge + convenienceCharge;
+
     const template = {
       CustomerFirstName: existingTeeTime.customerName?.split(" ")[0],
       CourseName: existingTeeTime.courseName || "-",
@@ -271,8 +274,14 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       FacilityName: existingTeeTime.entityName || "-",
       PlayDateTime: dayjs(existingTeeTime.date).format("MM/DD/YYYY h:mm A") || "-",
       NumberOfHoles: existingTeeTime.numberOfHoles,
-      GreenFees: `$${primaryGreenFeeCharge}` || "-",
-      TaxesAndOtherFees: `$${taxCharge + sensibleCharge + charityCharge + convenienceCharge}` || "-",
+      GreenFees: `$${primaryGreenFeeCharge.toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}` || "-",
+      TaxesAndOtherFees: `$${taxes.toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}` || "-",
       // SensibleWeatherIncluded: ,
       PurchasedFrom: existingTeeTime.courseName || "-",
     };

@@ -599,7 +599,7 @@ const TeeTimeItem = ({
         <div className="text-prmiary-gray">
           You purchased for{" "}
           <span className="font-semibold text-secondary-black">
-            {formatMoney(purchasedFor)}
+            {formatMoney(purchasedFor * golferCount)}
           </span>
         </div>
       </div>

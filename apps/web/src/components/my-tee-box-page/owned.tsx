@@ -127,7 +127,7 @@ export const Owned = () => {
                     date={i.date}
                     iconSrc={i.courseLogo}
                     key={idx}
-                    purchasePrice={i.purchasedFor ?? i.firstHandPrice}
+                    purchasePrice={(i.purchasedFor ?? i.firstHandPrice) * i.golfers.length}
                     golfers={i.golfers}
                     status={i.status}
                     offers={i.offers ? parseInt(i.offers) : undefined}
