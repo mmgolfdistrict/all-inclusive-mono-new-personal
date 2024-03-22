@@ -403,44 +403,43 @@ export class SensibleService extends CacheService {
       }
     }
 
-    // https://jsonplaceholder.typicode.com/todos
-    console.log("Before calling API https://jsonplaceholder.typicode.com/todos");
+    // console.log("Before calling API https://jsonplaceholder.typicode.com/todos");
 
-    try {
-      const response = await fetch("https://jsonplaceholder.typicode.com/todos");
-      if (!response.ok) {
-        this.logger.error(
-          `Error calling API https://jsonplaceholder.typicode.com/todos: ${response.statusText}`
-        );
-        throw new Error(
-          `Error calling API https://jsonplaceholder.typicode.com/todos: ${response.statusText}`
-        );
-      }
-      const data = await response.json();
-      this.logger.info(
-        `Successfully called API https://jsonplaceholder.typicode.com/todos: ${JSON.stringify(data)}`
-      );
-    } catch (err) {
-      this.logger.error(`Error calling API https://jsonplaceholder.typicode.com/todos: ${err}`);
-    } finally {
-      console.log("After calling API https://jsonplaceholder.typicode.com/todos - 1");
-    }
-    console.log("After calling API https://jsonplaceholder.typicode.com/todos - 2");
+    // try {
+    //   const response = await fetch("https://jsonplaceholder.typicode.com/todos");
+    //   if (!response.ok) {
+    //     this.logger.error(
+    //       `Error calling API https://jsonplaceholder.typicode.com/todos: ${response.statusText}`
+    //     );
+    //     throw new Error(
+    //       `Error calling API https://jsonplaceholder.typicode.com/todos: ${response.statusText}`
+    //     );
+    //   }
+    //   const data = await response.json();
+    //   this.logger.info(
+    //     `Successfully called API https://jsonplaceholder.typicode.com/todos: ${JSON.stringify(data)}`
+    //   );
+    // } catch (err) {
+    //   this.logger.error(`Error calling API https://jsonplaceholder.typicode.com/todos: ${err}`);
+    // } finally {
+    //   console.log("After calling API https://jsonplaceholder.typicode.com/todos - 1");
+    // }
+    // console.log("After calling API https://jsonplaceholder.typicode.com/todos - 2");
 
-    console.log(JSON.stringify(params));
-    console.log(
-      JSON.stringify({
-        price_charged: params.price_charged,
-        reservation_id: params.reservation_id,
-        lang_locale: params.lang_locale,
-        user: { name: params.user.name, email: params.user.email, phone: params.user.phone },
-      })
-    );
+    // console.log(JSON.stringify(params));
+    // console.log(
+    //   JSON.stringify({
+    //     price_charged: params.price_charged,
+    //     reservation_id: params.reservation_id,
+    //     lang_locale: params.lang_locale,
+    //     user: { name: params.user.name, email: params.user.email, phone: params.user.phone },
+    //   })
+    // );
 
     const url = `${this.getEndpoint()}/quote/guarantee/${params.quoteId}/accept`;
 
-    console.log(`Sensible URL = ${url}`);
-    console.log(`Sensible Bearer Token = ${bearerToken}`);
+    // console.log(`Sensible URL = ${url}`);
+    // console.log(`Sensible Bearer Token = ${bearerToken}`);
 
     const response = await fetch(url, {
       method: "PATCH",
