@@ -246,7 +246,7 @@ export default function Login() {
         </form>
       </section>
       <div className="pt-4 text-center text-[14px] text-primary-gray">
-        Dont&apos;t have an account?{" "}
+        Don&apos;t have an account?{" "}
         <Link
           className="text-primary"
           href={`/${course?.id}/register`}
