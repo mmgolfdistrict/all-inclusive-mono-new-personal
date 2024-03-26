@@ -45,6 +45,7 @@ export const ListTeeTime = ({
   needsRedirect,
 }: SideBarProps) => {
   const [listingPrice, setListingPrice] = useState<number>(0);
+  const [sellerServiceFee, setSellerServiceFee] = useState<number>(0);
   const [players, setPlayers] = useState<PlayerType>(
     selectedTeeTime?.selectedSlotsCount || "1"
   );
@@ -55,10 +56,20 @@ export const ListTeeTime = ({
   const sell = api.teeBox.createListingForBookings.useMutation();
   const router = useRouter();
   const { course } = useCourseContext();
+  const courseMaxSellPricePerGolferLimitPercentage = 0.3;
+  const listingSellerFeePercentage = 0.15;
+  const listingBuyerFeePercentage = 0.1;
 
   const maxListingPrice = useMemo(() => {
+    // console.log(
+    //   `selectedTeeTime?.firstHandPrice = ${selectedTeeTime?.firstHandPrice}`
+    // );
+
     if (!selectedTeeTime?.firstHandPrice) return 0;
-    return selectedTeeTime?.firstHandPrice * 50;
+    return (
+      selectedTeeTime?.firstHandPrice *
+      (1 + courseMaxSellPricePerGolferLimitPercentage)
+    );
   }, [selectedTeeTime]);
 
   const availableSlots = selectedTeeTime?.golfers.length || 0;
@@ -88,6 +99,8 @@ export const ListTeeTime = ({
   const handleListingPrice = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace("$", "").replaceAll(",", "");
 
+    // if( value.indexOf("-1") > -1) return;
+
     const decimals = value.split(".")[1];
     if (decimals && decimals?.length > 2) return;
 
@@ -96,11 +109,49 @@ export const ListTeeTime = ({
   };
 
   const totalPayout = useMemo(() => {
-    if (!listingPrice) return 0;
-    return listingPrice * parseInt(players) - 45;
+    if (!listingPrice) {
+      setSellerServiceFee(0);
+      return 0;
+    }
+    if (listingPrice <= 0) {
+      setSellerServiceFee(0);
+      return 0;
+    }
+
+    console.log(
+      `selectedTeeTime?.firstHandPrice = ${selectedTeeTime?.firstHandPrice}`
+    );
+
+    const sellerListingPricePerGolfer = parseFloat(listingPrice.toString());
+
+    const buyerListingPricePerGolfer =
+      sellerListingPricePerGolfer * (1 + listingBuyerFeePercentage);
+    const sellerFeePerGolfer =
+      sellerListingPricePerGolfer * listingSellerFeePercentage;
+    const buyerFeePerGolfer =
+      sellerListingPricePerGolfer * listingBuyerFeePercentage;
+    let totalPayoutForAllGolfers =
+      (buyerListingPricePerGolfer - buyerFeePerGolfer - sellerFeePerGolfer) *
+      parseInt(players);
+
+    // console.log(`
+    //   listingSellerFeePercentage = ${listingSellerFeePercentage},
+    //   listingBuyerFeePercentage  = ${listingBuyerFeePercentage},
+    //   buyerListingPricePerGolfer = ${buyerListingPricePerGolfer},
+    //   sellerFeePerGolfer         = ${sellerFeePerGolfer},
+    //   buyerFeePerGolfer          = ${buyerFeePerGolfer},
+    //   totalPayoutForAllGolfers   = ${totalPayoutForAllGolfers}`);
+
+    totalPayoutForAllGolfers =
+      totalPayoutForAllGolfers <= 0 ? 0 : totalPayoutForAllGolfers;
+
+    setSellerServiceFee(sellerFeePerGolfer * parseInt(players));
+
+    return totalPayoutForAllGolfers;
   }, [listingPrice, players]);
 
   const listTeeTime = async () => {
+    //You should never enter this condition.
     if (totalPayout < 0) {
       toast.info("Listing price must be greater than $45.");
       return;
@@ -109,16 +160,18 @@ export const ListTeeTime = ({
       toast.info("Invalid date on tee time.");
       return;
     }
+    console.log(
+      `listingPrice = ${listingPrice}, maxListingPrice = ${maxListingPrice}`
+    );
+
     if (listingPrice > maxListingPrice) {
       toast.info(
-        `Listing price cannot be greater than 50x the first hand price. (${formatMoney(
-          maxListingPrice
-        )}).`
+        `Listing price cannot be greater than ${formatMoney(maxListingPrice)}.`
       );
       return;
     }
-    if (listingPrice <= 0) {
-      toast.info(`Listing price must be greater than $0.00.`);
+    if (listingPrice <= 1) {
+      toast.info(`Listing price must be greater than $1.`);
       return;
     }
     try {
@@ -207,7 +260,11 @@ export const ListTeeTime = ({
                   </span>
                   <input
                     id="listingPrice"
-                    value={listingPrice?.toString()?.replace(/^0+/, "")}
+                    value={listingPrice
+                      ?.toString()
+                      ?.replace(/^0+/, "")
+                      .replace(".", "")
+                      .replace("-", "")}
                     type="number"
                     onFocus={handleFocus}
                     onChange={handleListingPrice}
@@ -277,7 +334,9 @@ export const ListTeeTime = ({
                     content="Service fee description."
                   />
                 </div>
-                <div className="text-secondary-black">{formatMoney(45)}</div>
+                <div className="text-secondary-black">
+                  {formatMoney(sellerServiceFee)}
+                </div>
               </div>
               <div className="flex justify-between">
                 <div className="font-[300] text-primary-gray">Total Payout</div>
