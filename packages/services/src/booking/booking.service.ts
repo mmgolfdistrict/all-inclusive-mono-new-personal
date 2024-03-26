@@ -1016,6 +1016,8 @@ export class BookingService {
   };
 
   checkIfTeeTimeStillListed = async (bookingId: string) => {
+    console.log(`checkIfTeeTimeStillListed: ${bookingId}`);
+
     const [booking] = await this.database
       .select({ isListed: bookings.isListed })
       .from(bookings)
