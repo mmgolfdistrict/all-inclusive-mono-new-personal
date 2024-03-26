@@ -18,7 +18,7 @@ export const OrderSummary = ({
   return (
     <section className="mx-auto flex w-full h-fit flex-col gap-4 bg-white px-3 py-2 md:rounded-xl md:p-6 md:py-4">
       <h1 className="text-center md:text-start">Order Summary</h1>
-      <div className="flex max-h-[400px] min-h-[280px] flex-col gap-4 overflow-y-auto">
+      <div className="flex flex-col gap-4">
         <CheckoutItem
           isLoading={isLoading}
           teeTime={teeTime}

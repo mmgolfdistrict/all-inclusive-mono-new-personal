@@ -236,7 +236,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
     const [customerCartData]: any = await this.database
       .select({ cart: customerCarts.cart })
       .from(customerCarts)
-      .where(and(eq(customerCarts.paymentId, paymentId), eq(customerCarts.courseId, existingTeeTime.courseId)))
+      .where(and(eq(customerCarts.courseId, existingTeeTime.courseId), eq(customerCarts.userId, userId), eq(customerCarts.paymentId, paymentId)))
       .execute();
 
     const primaryGreenFeeCharge =
