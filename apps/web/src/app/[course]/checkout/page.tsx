@@ -128,14 +128,14 @@ export default function Checkout({
       | TaxProduct =
       saleType === "first_hand"
         ? {
-            type: "first_hand",
-            tee_time_id: teeTimeId,
-            number_of_bookings: amountOfPlayers,
-          }
+          type: "first_hand",
+          tee_time_id: teeTimeId,
+          number_of_bookings: amountOfPlayers,
+        }
         : {
-            type: "second_hand",
-            second_hand_id: listingId,
-          };
+          type: "second_hand",
+          second_hand_id: listingId,
+        };
 
     const localCart: CartProduct[] = [
       {
@@ -186,7 +186,7 @@ export default function Checkout({
         currency: "USD", //USD
         display_price: formatMoney(
           (course?.convenienceFees ? course?.convenienceFees / 100 : 0) *
-            amountOfPlayers
+          amountOfPlayers
         ),
         product_data: {
           metadata: {
@@ -306,25 +306,27 @@ export default function Checkout({
         <CheckoutBreadcumbs status={"checkout"} />
 
         <div className="flex w-full flex-col gap-4 md:flex-row">
-          <OrderSummary
-            teeTime={data}
-            isLoading={isLoading}
-            sensibleDataToMountComp={{
-              partner_id: process.env.NEXT_PUBLIC_SENSIBLE_PARTNER_ID ?? "",
-              product_id: process.env.NEXT_PUBLIC_SENSIBLE_PRODUCT_ID ?? "",
-              coverageStartDate: formatQueryDate(new Date(data?.date ?? "")),
-              coverageEndDate: formatQueryDate(new Date(data?.date ?? "")),
-              currency: "USD",
-              langLocale: "en-US",
-              exposureName: course?.name ?? "",
-              exposureLatitude: course?.latitude ?? 0,
-              exposureLongitude: course?.longitude ?? 0,
-              exposureTotalCoverageAmount:
-                Number(data?.pricePerGolfer) * amountOfPlayers ?? 0,
-            }}
-            isSensibleInvalid={isSensibleInvalid}
-          />
-          <div>
+          <div className="w-3/5">
+            <OrderSummary
+              teeTime={data}
+              isLoading={isLoading}
+              sensibleDataToMountComp={{
+                partner_id: process.env.NEXT_PUBLIC_SENSIBLE_PARTNER_ID ?? "",
+                product_id: process.env.NEXT_PUBLIC_SENSIBLE_PRODUCT_ID ?? "",
+                coverageStartDate: formatQueryDate(new Date(data?.date ?? "")),
+                coverageEndDate: formatQueryDate(new Date(data?.date ?? "")),
+                currency: "USD",
+                langLocale: "en-US",
+                exposureName: course?.name ?? "",
+                exposureLatitude: course?.latitude ?? 0,
+                exposureLongitude: course?.longitude ?? 0,
+                exposureTotalCoverageAmount:
+                  Number(data?.pricePerGolfer) * amountOfPlayers ?? 0,
+              }}
+              isSensibleInvalid={isSensibleInvalid}
+            />
+          </div>
+          <div className="w-2/5">
             {isLoading || !data || data === null ? (
               <div className="flex justify-center items-center h-[200px] w-full md:min-w-[370px]">
                 <Spinner className="w-[50px] h-[50px]" />
