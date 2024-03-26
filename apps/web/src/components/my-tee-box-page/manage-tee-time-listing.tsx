@@ -63,7 +63,7 @@ export const ManageTeeTimeListing = ({
     { enabled: !!selectedTeeTime?.teeTimeId }
   );
 
-  const availableSlots = bookingIds?.length ?? 0;
+  const availableSlots = 4 - (selectedTeeTime?.listedSlotsCount || 0);
 
   useEffect(() => {
     if (selectedTeeTime) {
@@ -334,7 +334,7 @@ export const ManageTeeTimeListing = ({
         courseName={selectedTeeTime?.courseName}
         courseLogo={selectedTeeTime?.courseLogo}
         date={selectedTeeTime?.date}
-        golferCount={selectedTeeTime?.listedSpots?.length ?? 0}
+        golferCount={selectedTeeTime?.listedSlotsCount}
         pricePerGolfer={selectedTeeTime?.listPrice ?? 0}
         listingId={selectedTeeTime?.listingId ?? undefined}
         refetch={refetch}

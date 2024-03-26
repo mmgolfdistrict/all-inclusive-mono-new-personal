@@ -82,6 +82,7 @@ interface ListingData {
   listPrice: number | null;
   status: string;
   listedSpots: string[] | null;
+  listedSlotsCount: number;
 }
 
 interface TransferData {
@@ -257,6 +258,7 @@ export class BookingService {
         listingId: bookings.listId,
         teeTimesId: teeTimes.id,
         listPrice: lists.listPrice,
+        listedSlots: lists.slots,
         greenFee: teeTimes.greenFee,
         minimumOfferPrice: bookings.minimumOfferPrice,
       })
@@ -288,6 +290,7 @@ export class BookingService {
             listPrice: teeTime.listPrice,
             status: "LISTED",
             listedSpots: [teeTime.bookingId],
+            listedSlotsCount: teeTime.listedSlots,
           };
         } else {
           const currentEntry = combinedData[teeTime.teeTimesId];
@@ -471,7 +474,7 @@ export class BookingService {
             ? `https://${teeTime.teeTimeImage.cdnUrl}/${teeTime.teeTimeImage.key}.${teeTime.teeTimeImage.extension}`
             : "/defaults/default-course.webp",
           date: teeTime.date,
-          firstHandPrice: teeTime.greenFee + (teeTime.courseMarkup ? teeTime.courseMarkup/100 : 0),
+          firstHandPrice: teeTime.greenFee + (teeTime.courseMarkup ? teeTime.courseMarkup / 100 : 0),
           golfers: [],
           purchasedFor: teeTime.lastHighestSale,
           bookingIds: [teeTime.bookingId],
@@ -1010,6 +1013,16 @@ export class BookingService {
         this.logger.error(`Error updating listing: ${err}`);
         throw new Error("Error updating listing");
       });
+  };
+
+  checkIfTeeTimeStillListed = async (bookingId: string) => {
+    const [booking] = await this.database
+      .select({ isListed: bookings.isListed })
+      .from(bookings)
+      .where(eq(bookings.id, bookingId))
+      .execute();
+
+    return booking?.isListed;
   };
 
   teeTimeAvailableFirsthandSpots = async (listingId: string) => {

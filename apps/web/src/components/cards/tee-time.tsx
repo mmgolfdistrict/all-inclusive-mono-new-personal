@@ -89,6 +89,15 @@ export const TeeTime = ({
 
   const toggleWatchlist = api.watchlist.toggleWatchlist.useMutation();
   const [optimisticLike, setOptimisticLike] = useState(isLiked);
+  const { refetch: refetchCheckTeeTime } =
+    api.teeBox.checkIfTeeTimeStillListed.useQuery(
+      {
+        bookingId: bookingIds[0] || "",
+      },
+      {
+        enabled: false,
+      }
+    );
 
   const addToWatchlist = async () => {
     if (!user) {
@@ -105,7 +114,13 @@ export const TeeTime = ({
       console.log(error);
     }
   };
-  const buyTeeTime = () => {
+  const buyTeeTime = async () => {
+    const isTeeTimeAvailable = await refetchCheckTeeTime();
+    if (isTeeTimeAvailable.data && status === "SECOND_HAND") {
+      toast.error("Oops! Tee time is not available anymore");
+      return;
+    }
+
     if (!user || !session) {
       if (status === "FIRST_HAND") {
         setPrevPath(
@@ -344,6 +359,7 @@ export const TeeTime = ({
                 "golfer"
               ) as string[],
               teeTimeId: teeTimeId,
+              listedSlotsCount: availableSlots,
             }}
           />
         )}
