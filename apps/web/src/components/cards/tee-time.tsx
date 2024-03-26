@@ -119,7 +119,7 @@ export const TeeTime = ({
     console.log(`buyTeeTime, status = ${status}`);
     console.log(isTeeTimeAvailable.data);
 
-    if (isTeeTimeAvailable.data && status === "SECOND_HAND") {
+    if (!isTeeTimeAvailable.data && status === "SECOND_HAND") {
       toast.error("Oops! Tee time is not available anymore");
       return;
     }
