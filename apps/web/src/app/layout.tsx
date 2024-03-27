@@ -105,7 +105,7 @@ export default async function RootLayout({
                 <div className="bg-white p-4 rounded-md shadow-md text-center border-gray-300 mb-10">
                   <Club className="w-[16px]" />
                 </div>
-                <div className="bg-white p-8 rounded-md shadow-md text-center w-80 ml-4 mr-4">
+                <div className="bg-white p-8 rounded-md shadow-md text-center w-90 ml-4 mr-4">
                   <div className="flex items-center mb-10 justify-center">
                     <GolfDistrict
                       className="w-[180px]"
