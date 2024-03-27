@@ -306,7 +306,7 @@ export default function Checkout({
         <CheckoutBreadcumbs status={"checkout"} />
 
         <div className="flex w-full flex-col gap-4 md:flex-row">
-          <div className="w-3/5">
+          <div className="md:w-3/5">
             <OrderSummary
               teeTime={data}
               isLoading={isLoading}
@@ -326,7 +326,7 @@ export default function Checkout({
               isSensibleInvalid={isSensibleInvalid}
             />
           </div>
-          <div className="w-2/5">
+          <div className="md:w-2/5">
             {isLoading || !data || data === null ? (
               <div className="flex justify-center items-center h-[200px] w-full md:min-w-[370px]">
                 <Spinner className="w-[50px] h-[50px]" />

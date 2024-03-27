@@ -34,7 +34,7 @@ export class TokenizeService {
    * @example
    * const tokenizeService = new TokenizeService(database);
    */
-  constructor(private readonly database: Db, private readonly notificationService: NotificationService) {}
+  constructor(private readonly database: Db, private readonly notificationService: NotificationService) { }
   /**
    * Tokenize a booking for a user. This function either books an existing tee time or creates a new one based on the provided details.
    *
@@ -96,6 +96,7 @@ export class TokenizeService {
         courseName: courses.name,
         customerName: users.name,
         entityName: entities.name,
+        providerDate: teeTimes.providerDate
       })
       .from(teeTimes)
       .where(eq(teeTimes.id, providerTeeTimeId))
@@ -265,6 +266,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
         ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
 
     const taxes = taxCharge + sensibleCharge + charityCharge + convenienceCharge;
+    const dateTime = dayjs(existingTeeTime.providerDate).utcOffset('-06:00');
 
     const template = {
       CustomerFirstName: existingTeeTime.customerName?.split(" ")[0],
@@ -272,7 +274,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       GolfDistrictReservationID: bookingsToCreate?.[0]?.id || "-",
       CourseReservationID: providerBookingId || "-",
       FacilityName: existingTeeTime.entityName || "-",
-      PlayDateTime: dayjs(existingTeeTime.date).format("MM/DD/YYYY h:mm A") || "-",
+      PlayDateTime: dateTime.format("YYYY-MM-DD hh:mm A") || "-",
       NumberOfHoles: existingTeeTime.numberOfHoles,
       GreenFees: `$${primaryGreenFeeCharge.toLocaleString("en-US", {
         minimumFractionDigits: 2,
@@ -282,7 +284,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       })}` || "-",
-      // SensibleWeatherIncluded: ,
+      SensibleWeatherIncluded: sensibleCharge ? "Yes" : "No",
       PurchasedFrom: existingTeeTime.courseName || "-",
     };
 
