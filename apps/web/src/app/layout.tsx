@@ -2,6 +2,8 @@ import { type ReactNode } from "react";
 import "~/styles/globals.css";
 import { ssrGetEntityByDomain } from "@golf-district/api";
 import { Analytics } from "@vercel/analytics/react";
+import { Club } from "~/components/icons/club";
+import { GolfDistrict } from "~/components/icons/golf-district";
 import { Layout } from "~/components/layout";
 import { fontMapper } from "~/styles/fonts";
 import { type Metadata } from "next";
@@ -91,11 +93,46 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${fontMapper[entityData?.font ?? "font-inter"]}`}>
+      <body
+        className={`${
+          fontMapper[entityData?.font ?? "font-inter"]
+        } bg-gray-100`}
+      >
         {!entityData?.id ? (
           <div className="flex items-center flex-col justify-center mt-20">
-            <h2 className="font-bold">No Entity Found</h2>
-            <p>There is no connected entity for this domain.</p>
+            <div className="text-center">
+              <div className="container mx-auto flex flex-col items-center justify-center ">
+                <div className="bg-white p-4 rounded-md shadow-md text-center border-gray-300 mb-10">
+                  <Club className="w-[16px]" />
+                </div>
+                <div className="bg-white p-8 rounded-md shadow-md text-center w-80 ml-4 mr-4">
+                  <div className="flex items-center mb-10 justify-center">
+                    <GolfDistrict
+                      className="w-[180px]"
+                      id="powered-by-sidebar"
+                      color="black"
+                    />
+                  </div>
+                  <h1
+                    className={`text-3xl mb-5 ${
+                      fontMapper[entityData?.font ?? "font-inter"]
+                    }`}
+                  >
+                    Facility not found
+                  </h1>
+                  <p
+                    className={`${
+                      fontMapper[entityData?.font ?? "font-inter"]
+                    } text-md text-gray-800`}
+                  >
+                    You have reached a golf facility’s page that has
+                  </p>
+                  <p className="text-md text-gray-800">
+                    not been configured yet.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         ) : (
           <Providers entityData={entityData}>
