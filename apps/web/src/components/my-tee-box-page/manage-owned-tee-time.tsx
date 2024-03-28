@@ -548,15 +548,13 @@ export const ManageOwnedTeeTime = ({
                 All sales are final.
               </div>
               <div className="flex flex-col gap-2">
-                {course?.supportsOffers ? (
-                  <FilledButton
-                    className="w-full"
-                    onClick={() => void save()}
-                    data-testid="save-button-id"
-                  >
-                    Save
-                  </FilledButton>
-                ) : null}
+                <FilledButton
+                  className="w-full"
+                  onClick={() => void save()}
+                  data-testid="save-button-id"
+                >
+                  Save
+                </FilledButton>
 
                 <OutlineButton
                   onClick={() => setIsManageOwnedTeeTimeOpen(false)}
