@@ -61,13 +61,19 @@ export const TableView = () => {
         >
           My Listed Tee Times
         </TabTrigger>
-        <TabTrigger value={"offers-sent"}>Offers Sent</TabTrigger>
-        <TabTrigger value={"offers-received"} handleClick={markAsRead}>
-          Offers Received{" "}
-          {unreadOffers && unreadOffers > 0 ? (
-            <Badge className="py-[.15rem] text-[12px]">{unreadOffers}</Badge>
-          ) : null}
-        </TabTrigger>
+        {course?.supportsOffers ? (
+          <>
+            <TabTrigger value={"offers-sent"}>Offers Sent</TabTrigger>
+            <TabTrigger value={"offers-received"} handleClick={markAsRead}>
+              Offers Received{" "}
+              {unreadOffers && unreadOffers > 0 ? (
+                <Badge className="py-[.15rem] text-[12px]">
+                  {unreadOffers}
+                </Badge>
+              ) : null}
+            </TabTrigger>
+          </>
+        ) : null}
         <TabTrigger value={"transaction-history"}>
           Transaction History
         </TabTrigger>

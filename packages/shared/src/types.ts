@@ -84,6 +84,7 @@ export type FullCourseType = {
   lowestPrimarySaleTeeTime: number;
   supportedCharities?: SupportedCharity[];
   allowAuctions: number | null;
+  supportsOffers?: boolean;
 };
 
 export type SupportedCharity = {

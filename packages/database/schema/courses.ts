@@ -48,6 +48,7 @@ export const courses = mySqlTable(
     supportSensibleWeather: boolean("supportSensitiveWeather").default(false).notNull(),
     allowAuctions: int("allowAuctions").default(0),
     isDeleted: boolean("isDeleted").default(false).notNull(),
+    supportsOffers: boolean("supportsOffers").default(false),
   },
   (table) => {
     return {
