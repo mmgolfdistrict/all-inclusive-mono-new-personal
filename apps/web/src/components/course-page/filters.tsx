@@ -205,21 +205,23 @@ export const Filters = () => {
       </section>
 
       <section className="flex flex-col gap-4">
-        <div className="flex items-center gap-2">
-          <Switch
-            value={showUnlisted}
-            setValue={setShowUnlisted}
-            dataTestId="filter-switch-not-for-sale-make-an-offer-id"
-          />
-          <div className="flex items-center gap-1 text-primary-gray">
-            <Hidden className="h-[17px] w-[20px]" />
-            <div className="text-[15px]">Not for Sale, Make an Offer</div>
-            <Tooltip
-              trigger={<Info className="h-[14px] w-[14px]" />}
-              content="Includes unlisted tee times if checked"
+        {course?.supportsOffers ? (
+          <div className="flex items-center gap-2">
+            <Switch
+              value={showUnlisted}
+              setValue={setShowUnlisted}
+              dataTestId="filter-switch-not-for-sale-make-an-offer-id"
             />
+            <div className="flex items-center gap-1 text-primary-gray">
+              <Hidden className="h-[17px] w-[20px]" />
+              <div className="text-[15px]">Not for Sale, Make an Offer</div>
+              <Tooltip
+                trigger={<Info className="h-[14px] w-[14px]" />}
+                content="Includes unlisted tee times if checked"
+              />
+            </div>
           </div>
-        </div>
+        ) : null}
         <div className="flex items-center gap-2">
           <Switch
             value={includesCart}

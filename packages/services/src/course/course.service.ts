@@ -67,6 +67,7 @@ export class CourseService extends DomainService {
         timezoneCorrection: courses.timezoneCorrection,
         furthestDayToBook: courses.furthestDayToBook,
         allowAuctions: courses.allowAuctions,
+        supportsOffers: courses.supportsOffers,
       })
       .from(courses)
       .where(and(eq(courses.id, courseId), eq(courses.isDeleted, false)))
