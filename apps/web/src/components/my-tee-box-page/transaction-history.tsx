@@ -180,14 +180,14 @@ const TableRow = ({
       </td>
       <td className="whitespace-nowrap px-4 py-3">
         {golfers.length > 2
-          ? `${golfers[0]}, ${golfers[1]} & ${golfers.length - 2} ${
+          ? `You, Guest & ${golfers.length - 2} ${
               golfers.length - 2 === 1 ? "golfers" : "golfers"
             }`
           : golfers.map((i, idx) => {
-              if (golfers.length === 1) return i;
-              if (idx === golfers.length - 1) return `& ${i}`;
-              if (idx === golfers.length - 2) return `${i} `;
-              return `${i}, `;
+              if (golfers.length === 1) return "Guest";
+              if (idx === golfers.length - 1) return `& You`;
+              if (idx === golfers.length - 2) return `Guest `;
+              return `Guest, `;
             })}
       </td>
       <td className="flex items-center gap-1 whitespace-nowrap px-4 pb-3 pt-6 capitalize">

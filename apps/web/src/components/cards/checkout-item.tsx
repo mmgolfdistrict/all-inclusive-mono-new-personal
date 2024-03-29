@@ -240,7 +240,7 @@ const Data = ({
         </div>
         <div className="flex">
           <div className="text-[20px] font-semibold text-secondary-black">
-            {formatMoney(((pricePerGolfer ?? 1)) ?? 0)}
+            {formatMoney(pricePerGolfer ?? 1 ?? 0)}
           </div>
           <div className="text-[16px] text-primary-gray">/golfer</div>
         </div>

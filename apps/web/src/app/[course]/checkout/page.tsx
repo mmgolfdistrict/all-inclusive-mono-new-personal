@@ -14,10 +14,21 @@ import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
 import { formatMoney, getPromoCodePrice } from "~/utils/formatters";
+import type {
+  AuctionProduct,
+  CartProduct,
+  CharityProduct,
+  ConvenienceFeeProduct,
+  FirstHandProduct,
+  MarkupProduct,
+  Offer,
+  SecondHandProduct,
+  SensibleProduct,
+  TaxProduct,
+} from "~/utils/types";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useDebounce } from "usehooks-ts";
-import { CartProduct, FirstHandProduct, SecondHandProduct, CharityProduct, SensibleProduct, TaxProduct, MarkupProduct, ConvenienceFeeProduct, AuctionProduct, Offer } from "~/utils/types";
 
 const currentDate = formatQueryDate(new Date());
 
@@ -117,7 +128,8 @@ export default function Checkout({
   const cartData: CartProduct[] = useMemo(() => {
     if (!data || data === null) return [];
 
-    const metadata: FirstHandProduct
+    const metadata:
+      | FirstHandProduct
       | SecondHandProduct
       | SensibleProduct
       | AuctionProduct
@@ -128,14 +140,14 @@ export default function Checkout({
       | TaxProduct =
       saleType === "first_hand"
         ? {
-          type: "first_hand",
-          tee_time_id: teeTimeId,
-          number_of_bookings: amountOfPlayers,
-        }
+            type: "first_hand",
+            tee_time_id: teeTimeId,
+            number_of_bookings: amountOfPlayers,
+          }
         : {
-          type: "second_hand",
-          second_hand_id: listingId,
-        };
+            type: "second_hand",
+            second_hand_id: listingId,
+          };
 
     const localCart: CartProduct[] = [
       {
@@ -186,7 +198,7 @@ export default function Checkout({
         currency: "USD", //USD
         display_price: formatMoney(
           (course?.convenienceFees ? course?.convenienceFees / 100 : 0) *
-          amountOfPlayers
+            amountOfPlayers
         ),
         product_data: {
           metadata: {

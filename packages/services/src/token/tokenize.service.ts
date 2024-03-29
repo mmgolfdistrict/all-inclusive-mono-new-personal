@@ -34,7 +34,10 @@ export class TokenizeService {
    * @example
    * const tokenizeService = new TokenizeService(database);
    */
-  constructor(private readonly database: Db, private readonly notificationService: NotificationService) { }
+  constructor(
+    private readonly database: Db,
+    private readonly notificationService: NotificationService
+  ) {}
   /**
    * Tokenize a booking for a user. This function either books an existing tee time or creates a new one based on the provided details.
    *
@@ -96,7 +99,7 @@ export class TokenizeService {
         courseName: courses.name,
         customerName: users.name,
         entityName: entities.name,
-        providerDate: teeTimes.providerDate
+        providerDate: teeTimes.providerDate,
       })
       .from(teeTimes)
       .where(eq(teeTimes.id, providerTeeTimeId))
@@ -151,6 +154,7 @@ export class TokenizeService {
       fromUserId: "0x000", //first hand sales are from the platform
       toUserId: userId,
       courseId: existingTeeTime.courseId,
+      purchasedPrice: purchasePrice,
     });
 
     //create bookings according to slot in bookingslot tables
@@ -237,7 +241,13 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
     const [customerCartData]: any = await this.database
       .select({ cart: customerCarts.cart })
       .from(customerCarts)
-      .where(and(eq(customerCarts.courseId, existingTeeTime.courseId), eq(customerCarts.userId, userId), eq(customerCarts.paymentId, paymentId)))
+      .where(
+        and(
+          eq(customerCarts.courseId, existingTeeTime.courseId),
+          eq(customerCarts.userId, userId),
+          eq(customerCarts.paymentId, paymentId)
+        )
+      )
       .execute();
 
     const primaryGreenFeeCharge =
@@ -266,7 +276,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
         ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
 
     const taxes = taxCharge + sensibleCharge + charityCharge + convenienceCharge;
-    const dateTime = dayjs(existingTeeTime.providerDate).utcOffset('-06:00');
+    const dateTime = dayjs(existingTeeTime.providerDate).utcOffset("-06:00");
 
     const template = {
       CustomerFirstName: existingTeeTime.customerName?.split(" ")[0],
@@ -276,14 +286,16 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       FacilityName: existingTeeTime.entityName || "-",
       PlayDateTime: dateTime.format("YYYY-MM-DD hh:mm A") || "-",
       NumberOfHoles: existingTeeTime.numberOfHoles,
-      GreenFees: `$${primaryGreenFeeCharge.toLocaleString("en-US", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })}` || "-",
-      TaxesAndOtherFees: `$${taxes.toLocaleString("en-US", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })}` || "-",
+      GreenFees:
+        `$${primaryGreenFeeCharge.toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}` || "-",
+      TaxesAndOtherFees:
+        `$${taxes.toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}` || "-",
       SensibleWeatherIncluded: sensibleCharge ? "Yes" : "No",
       PurchasedFrom: existingTeeTime.courseName || "-",
     };
@@ -355,6 +367,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
             fromUserId: userId,
             toUserId: newOwnerId,
             courseId: booking.courseId,
+            purchasedPrice: price,
           })
           .execute()
           .catch((err) => {

@@ -7,7 +7,7 @@ import { lists } from "@golf-district/database/schema/lists";
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import { users } from "@golf-district/database/schema/users";
 import type { CombinedObject, SearchObject } from "@golf-district/shared";
-import { addDays, TeeTimeType, type IconCodeType } from "@golf-district/shared";
+import { addDays, BUYER_FEE_PERCENTAGE, TeeTimeType, type IconCodeType } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
 import { isSameDay, parseISO } from "date-fns";
 import dayjs from "dayjs";
@@ -286,7 +286,7 @@ export class SearchService {
         ? `https://${firstBooking.image.cdnUrl}/${firstBooking.image.key}.${firstBooking.image.extension}`
         : "/defaults/default-profile.webp",
       availableSlots: firstBooking.listedSlots,
-      pricePerGolfer: firstBooking.listPrice,
+      pricePerGolfer: Number((firstBooking.listPrice * (1 + BUYER_FEE_PERCENTAGE)).toFixed(2)),
       firstHandPurchasePrice: firstBooking.firstHandPrice ?? 0,
       teeTimeId: firstBooking.teeTimeId ? firstBooking.teeTimeId : "",
       date: firstBooking.date,
@@ -757,7 +757,7 @@ export class SearchService {
                 : "/defaults/default-profile.webp",
               pricePerGolfer:
                 booking.listingId && booking.listPrice
-                  ? booking.listPrice
+                  ? Number((booking.listPrice * (1 + BUYER_FEE_PERCENTAGE)).toFixed(2))
                   : ((booking?.greenFee ?? 0) * 13) / 10,
               includesCart: booking?.includesCart,
               firstOrSecondHandTeeTime: booking.isListed ? TeeTimeType.SECOND_HAND : TeeTimeType.UNLISTED,

@@ -132,7 +132,7 @@ export const TeeTime = ({
       }
       if (status === "SECOND_HAND") {
         setPrevPath(
-          `/${course?.id}/checkout?listingId=${listingId}&playerCount=${selectedPlayers}`
+          `/${course?.id}/checkout?listingId=${listingId}&playerCount=${listedSlots}`
         );
       }
       void router.push(`/${course?.id}/login`);
@@ -145,7 +145,7 @@ export const TeeTime = ({
     }
     if (status === "SECOND_HAND") {
       void router.push(
-        `/${course?.id}/checkout?listingId=${listingId}&playerCount=${selectedPlayers}`
+        `/${course?.id}/checkout?listingId=${listingId}&playerCount=${listedSlots}`
       );
     }
   };
