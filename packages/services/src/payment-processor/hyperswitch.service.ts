@@ -3,6 +3,7 @@ import Logger from "@golf-district/shared/src/logger";
 import HyperSwitch from "@juspay-tech/hyper-node";
 import type pino from "pino";
 import type { CustomerDetails } from "./types/hyperSwitch.types";
+import { UpdatePayment } from "../checkout/types";
 
 /**
  * Service for interacting with the HyperSwitch API.
@@ -76,6 +77,19 @@ export class HyperSwitchService {
     return await this.hyper.paymentIntents.create(params, options).catch((err: unknown) => {
       this.logger.error(`Error creating payment intent: ${err}`);
       throw new Error(`Error creating payment intent: ${err}`);
+    });
+  };
+
+  /**
+   * Updates a new payment intent.
+   * @param params - Parameters to update the payment intent.
+   * @returns Promise resolving to the updated payment intent's data.
+   * @throws Will throw an error if the payment intent updation fails.
+   */
+  updatePaymentIntent = async (paymentId: string, params: UpdatePayment) => {
+    return await this.hyper.paymentIntents.update(paymentId, params).catch((err: unknown) => {
+      this.logger.error(`Error updating payment intent: ${err}`);
+      throw new Error(`Error updating payment intent: ${err}`);
     });
   };
 

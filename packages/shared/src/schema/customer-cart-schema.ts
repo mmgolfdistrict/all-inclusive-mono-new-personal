@@ -111,5 +111,6 @@ export const CustomerCartSchema = z.object({
   phone: z.string().nullable(),
   promoCode: z.string().nullable().optional(),
   phone_country_code: z.string().nullable(),
+  paymentId: z.string().nullable(),
   cart: z.array(ProductDataSchema),
 });

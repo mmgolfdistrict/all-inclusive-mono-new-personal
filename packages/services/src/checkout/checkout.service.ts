@@ -108,16 +108,27 @@ export class CheckoutService {
    */
   buildCheckoutSession = async (
     userId: string,
-    customerCart: CustomerCart
-  ): Promise<{
-    clientSecret: string | null;
-  }> => {
+    customerCartData: CustomerCart,
+  ) => {
+    const { paymentId } = customerCartData;
+    let data = {};
     // const errors = await this.validateCartItems(customerCart);
     // if (errors.length > 0) {
     //   return {
     //     errors: errors,
     //   };
     // }
+    if (paymentId) {
+      data = this.updateCheckoutSession(userId, customerCartData);
+    } else {
+      data = this.createCheckoutSession(userId, customerCartData);
+    }
+    return data;
+  };
+
+  createCheckoutSession = async (userId: string, customerCartData: CustomerCart) => {
+    const { paymentId, ...customerCart } = customerCartData;
+
     this.logger.debug(`${JSON.stringify(customerCart)}`);
     const [user] = await this.database
       .select({
@@ -139,7 +150,7 @@ export class CheckoutService {
       this.logger.warn(`User name not found: ${customerCart.customerId}`);
       throw new Error(`User name not found: ${customerCart.customerId}`);
     }
-    const errors = await this.validateCartItems(customerCart);
+    const errors = await this.validateCartItems(customerCartData);
     console.log("errors ", JSON.stringify(errors));
 
     // if (errors.length > 0) {
@@ -175,7 +186,6 @@ export class CheckoutService {
         this.logger.error(` ${err}`);
         throw new Error(`Error creating payment intent: ${err}`);
       });
-    console.log(JSON.stringify(customerCart));
     //save customerCart to database
     await this.database.insert(customerCarts).values({
       id: randomUUID(),
@@ -187,6 +197,45 @@ export class CheckoutService {
 
     return {
       clientSecret: paymentIntent.client_secret,
+      paymentId: paymentIntent.payment_id
+    };
+  };
+
+  updateCheckoutSession = async (
+    userId: string,
+    customerCartData: CustomerCart
+  ) => {
+    const { paymentId, ...customerCart } = customerCartData;
+
+    const total = customerCart.cart.filter(({ product_data }) => product_data.metadata.type !== "markup")
+      .reduce((acc, item) => {
+        return acc + item.price;
+      }, 0);
+
+    const paymentIntent = await this.hyperSwitch
+      .updatePaymentIntent(paymentId || "", {
+        currency: "USD",
+        amount: total,
+        // @ts-ignore
+      })
+      .catch((err) => {
+        this.logger.error(` ${err}`);
+        throw new Error(`Error updating payment intent: ${err}`);
+      });
+
+    await this.database.update(customerCarts).set({
+      cart: customerCart,
+    })
+      .where(and(eq(customerCarts.paymentId, paymentId || ""), eq(customerCarts.userId, userId)))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error updating customer cart: ${err}`);
+        throw new Error("Error updating customer cart");
+      });
+
+    return {
+      clientSecret: paymentIntent.client_secret,
+      paymentId: paymentIntent.payment_id
     };
   };
 
