@@ -225,7 +225,7 @@ export class CheckoutService {
     await this.database.update(customerCarts).set({
       cart: customerCart,
     })
-      .where(and(eq(customerCarts.paymentId, paymentId), eq(customerCarts.userId, userId)))
+      .where(and(eq(customerCarts.paymentId, paymentId || ""), eq(customerCarts.userId, userId)))
       .execute()
       .catch((err) => {
         this.logger.error(`Error updating customer cart: ${err}`);
