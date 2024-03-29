@@ -185,7 +185,7 @@ export const CheckoutForm = ({
         {course?.supportCharity ? (
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
-              <div>Support A Charity</div>
+              <div>Support a Charity</div>
               {selectedCharity ? (
                 <button
                   onClick={handleRemoveSelectedCharity}
@@ -281,7 +281,13 @@ export const CheckoutForm = ({
           <div>Total</div>
           <div>
             $
-            {primaryGreenFeeCharge.toLocaleString("en-US", {
+            {(
+              primaryGreenFeeCharge +
+              taxCharge +
+              sensibleCharge +
+              charityCharge +
+              convenienceCharge
+            ).toLocaleString("en-US", {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}
