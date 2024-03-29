@@ -11,7 +11,7 @@ export const transfers = mySqlTable(
   {
     id: varchar("id", { length: 36 }).notNull(),
     amount: int("amount").notNull(),
-    purchasedPrice: int("purchasedPrice").notNull(),
+    purchasedPrice: int("purchasedPrice").notNull().default(0),
     transactionId: varchar("transactionId", { length: 36 })
       .notNull()
       .default(sql`''`),
