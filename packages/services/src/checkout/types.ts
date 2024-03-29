@@ -21,8 +21,15 @@ export interface CustomerCart {
   promoCode?: string | null | undefined;
   phone: string | null;
   phone_country_code: string | null;
+  paymentId: string | null;
   cart: ProductData[];
 }
+
+export interface UpdatePayment {
+  currency: string,
+  amount: number,
+}
+
 export type ProductData =
   | FirstHandProduct
   | SecondHandProduct

@@ -11,10 +11,12 @@ import { CheckoutForm } from "./checkout-form";
 
 type CreatePaymentResponse = {
   clientSecret: string;
+  paymentId: string | undefined;
 };
 
 type Options = {
   clientSecret: string;
+  paymentId: string | undefined;
   appearance: {
     theme: string;
   };
@@ -54,7 +56,7 @@ export const HyperSwitch = ({
     try {
       callingRef.current = true;
       setError(undefined);
-      setIsLoadingSession(true);
+      // setIsLoadingSession(true);
       const data = (await checkout.mutateAsync({
         userId: user.id,
         customerId: user.id,
@@ -63,20 +65,22 @@ export const HyperSwitch = ({
         email: user.email ?? "",
         phone: user.phone ?? "",
         phone_country_code: "1",
+        paymentId: options?.paymentId ? options.paymentId : null,
         //@ts-ignore
         cart: cartData,
       })) as CreatePaymentResponse;
       setOptions({
         clientSecret: data.clientSecret,
+        paymentId: data.paymentId,
         appearance: {
           theme: "default",
         },
       });
       setLocalCartData(cartData);
-      setIsLoadingSession(false);
+      // setIsLoadingSession(false);
       callingRef.current = false;
     } catch (error) {
-      setIsLoadingSession(false);
+      // setIsLoadingSession(false);
       callingRef.current = false;
       console.log(error.message);
       setError(

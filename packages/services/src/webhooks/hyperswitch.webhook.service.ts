@@ -214,7 +214,7 @@ export class HyperSwitchWebhookService {
 
     switch (req.event_type) {
       case "payment_succeeded":
-        return this.paymentSuccessHandler(customerCart, amountReceived, paymentId);
+        return this.paymentSuccessHandler(customerCart, amountReceived, paymentId, customer_id);
       case "payment_failed":
         return this.paymentFailureHandler(customer_id);
       default:
@@ -252,9 +252,8 @@ export class HyperSwitchWebhookService {
    * ```
    */
 
-  paymentSuccessHandler = async (customerCart: CustomerCart, amountReceived: number, paymentId: string) => {
-    const customer_id: string = customerCart.customerId;
-
+  paymentSuccessHandler = async (customerCart: CustomerCart, amountReceived: number, paymentId: string, customer_id: string) => {
+    // const customer_id: string = customerCart.customerId;
     for (const item of customerCart.cart) {
       switch (item.product_data.metadata.type) {
         case "first_hand":
