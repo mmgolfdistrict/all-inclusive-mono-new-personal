@@ -180,19 +180,21 @@ export class BookingService {
           extension: assets.extension,
         },
         listing: lists.id,
-        players: bookings.nameOnBooking,
+        players: bookingslots.name,
         bookingId: bookings.id,
         amount: transfers.amount,
+        purchasedPrice: transfers.purchasedPrice,
         from: transfers.fromUserId,
         transfersDate: transfers.createdAt,
       })
       .from(transfers)
       .innerJoin(bookings, eq(bookings.id, transfers.bookingId))
+      .leftJoin(bookingslots, eq(bookingslots.bookingId, bookings.id))
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
       .innerJoin(courses, eq(courses.id, teeTimes.courseId))
-      .leftJoin(lists, eq(lists.teeTimeId, teeTimes.id))
+      .leftJoin(lists, and(eq(lists.teeTimeId, teeTimes.id), eq(lists.userId, userId)))
       .leftJoin(assets, eq(assets.id, courses.logoId))
-      .leftJoin(userBookingOffers, eq(userBookingOffers.bookingId, bookings.id))
+      // .leftJoin(userBookingOffers, eq(userBookingOffers.bookingId, bookings.id))
       .where(or(eq(transfers.toUserId, userId), eq(transfers.fromUserId, userId)))
       .orderBy(desc(transfers.createdAt))
       .execute();
@@ -200,8 +202,8 @@ export class BookingService {
       this.logger.info(`No tee times found for user: ${userId}`);
       return [];
     }
-
     const combinedData: Record<string, TransferData> = {};
+    console.log(JSON.stringify(data));
     data.forEach((teeTime) => {
       if (!combinedData[teeTime.transferId]) {
         combinedData[teeTime.transferId] = {
@@ -212,16 +214,16 @@ export class BookingService {
             : "/defaults/default-course.webp",
           date: teeTime.date ? teeTime.date : "",
           firstHandPrice: teeTime.greenFee ? teeTime.greenFee : 0,
-          golfers: [],
-          pricePerGolfer: [teeTime.amount],
+          golfers: [{ id: "", email: "", handle: "", name: "", slotId: "" }],
+          pricePerGolfer: teeTime.from === userId ? [teeTime.amount] : [teeTime.purchasedPrice],
           bookingIds: [teeTime.bookingId],
           status: teeTime.from === userId ? "SOLD" : "PURCHASED",
         };
       } else {
         const currentEntry = combinedData[teeTime.transferId];
         if (currentEntry) {
-          // currentEntry.golfers.push(teeTime.players);
-          currentEntry.pricePerGolfer.push(teeTime.amount);
+          currentEntry.golfers.push({ id: "", email: "", handle: "", name: "", slotId: "" });
+          currentEntry.pricePerGolfer.push(teeTime.from === userId ? teeTime.amount : teeTime.purchasedPrice);
           currentEntry.bookingIds.push(teeTime.bookingId);
         }
       }
@@ -423,11 +425,15 @@ export class BookingService {
         slotCustomerName: bookingslots.name,
         slotCustomerId: bookingslots.customerId,
         slotPosition: bookingslots.slotPosition,
+        purchasedFor: bookings.purchasedPrice,
       })
       .from(teeTimes)
       .innerJoin(bookings, eq(bookings.teeTimeId, teeTimes.id))
       .innerJoin(courses, eq(courses.id, teeTimes.courseId))
-      .leftJoin(lists, and(eq(lists.teeTimeId, teeTimes.id), eq(lists.isDeleted, false)))
+      .leftJoin(
+        lists,
+        and(eq(lists.teeTimeId, teeTimes.id), eq(lists.isDeleted, false), eq(bookings.ownerId, lists.userId))
+      )
       .leftJoin(assets, eq(assets.id, courses.logoId))
       .leftJoin(userBookingOffers, eq(userBookingOffers.bookingId, bookings.id))
       .leftJoin(transfers, eq(transfers.bookingId, bookings.id))
@@ -465,6 +471,7 @@ export class BookingService {
       return [];
     }
     const combinedData: Record<string, OwnedTeeTimeData> = {};
+
     data.forEach((teeTime) => {
       if (!combinedData[teeTime.id]) {
         combinedData[teeTime.id] = {
@@ -476,7 +483,7 @@ export class BookingService {
           date: teeTime.date,
           firstHandPrice: teeTime.greenFee + (teeTime.courseMarkup ? teeTime.courseMarkup / 100 : 0),
           golfers: [],
-          purchasedFor: teeTime.lastHighestSale,
+          purchasedFor: Number(teeTime.purchasedFor),
           bookingIds: [teeTime.bookingId],
           slotsData: [
             {

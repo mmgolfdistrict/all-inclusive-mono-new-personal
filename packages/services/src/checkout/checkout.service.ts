@@ -157,6 +157,7 @@ export class CheckoutService {
     // });
     //@TODO: metadata to include sensible
     //@TODO: update total form discount
+
     const paymentIntent = await this.hyperSwitch
       .createPaymentIntent({
         // @ts-ignore

@@ -64,10 +64,10 @@ export const ListTeeTime = ({
     // console.log(
     //   `selectedTeeTime?.firstHandPrice = ${selectedTeeTime?.firstHandPrice}`
     // );
-
-    if (!selectedTeeTime?.firstHandPrice) return 0;
+    console.log(selectedTeeTime);
+    if (!selectedTeeTime?.purchasedFor) return 0;
     return (
-      selectedTeeTime?.firstHandPrice *
+      selectedTeeTime?.purchasedFor *
       (1 + courseMaxSellPricePerGolferLimitPercentage)
     );
   }, [selectedTeeTime]);
@@ -323,7 +323,7 @@ export const ListTeeTime = ({
                   Tee Time Price
                 </div>
                 <div className="text-secondary-black">
-                  {formatMoney(listingPrice)}
+                  {formatMoney(listingPrice * Number(players))}
                 </div>
               </div>
               <div className="flex justify-between">

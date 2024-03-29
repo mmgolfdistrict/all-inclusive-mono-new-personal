@@ -38,7 +38,7 @@ export const ManageOwnedTeeTime = ({
   refetch,
 }: SideBarProps) => {
   const { course } = useCourseContext();
-  const [minimumOfferPrice, setMinimumOfferPrice] = useState<number>(200);
+  const [minimumOfferPrice, setMinimumOfferPrice] = useState<number>(0);
   const [friends, setFriends] = useState<InviteFriend[]>([]);
   const [newFriend, setNewFriend] = useState<InviteFriend>({
     id: "",
@@ -83,7 +83,7 @@ export const ManageOwnedTeeTime = ({
       setMinimumOfferPrice(
         selectedTeeTime.minimumOfferPrice > 0
           ? selectedTeeTime.minimumOfferPrice
-          : 200
+          : selectedTeeTime.firstHandPrice
       );
     }
   }, [selectedTeeTime, isManageOwnedTeeTimeOpen]);
@@ -98,7 +98,11 @@ export const ManageOwnedTeeTime = ({
       document.body.classList.add("overflow-hidden");
     } else {
       document.body.classList.remove("overflow-hidden");
-      setMinimumOfferPrice(selectedTeeTime?.minimumOfferPrice ?? 0); //reset price
+      setMinimumOfferPrice(
+        selectedTeeTime?.minimumOfferPrice ||
+          selectedTeeTime?.firstHandPrice ||
+          0
+      ); //reset price
       setNewFriend({
         id: "",
         handle: "",

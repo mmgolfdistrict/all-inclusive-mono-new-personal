@@ -164,16 +164,15 @@ const TeeTimeItem = ({
             golfers.length === 1 ? "golfer" : "golfers"
           }`}</div>
           <div className="text-primary-gray">
-            {" "}
             {golfers.length > 2
-              ? `${golfers[0]}, ${golfers[1]} & ${golfers.length - 2} ${
+              ? `You, Guest & ${golfers.length - 2} ${
                   golfers.length - 2 === 1 ? "golfers" : "golfers"
                 }`
               : golfers.map((i, idx) => {
-                  if (golfers.length === 1) return i;
-                  if (idx === golfers.length - 1) return `& ${i}`;
-                  if (idx === golfers.length - 2) return `${i} `;
-                  return `${i}, `;
+                  if (golfers.length === 1) return "Guest";
+                  if (idx === golfers.length - 1) return `& You`;
+                  if (idx === golfers.length - 2) return `Guest `;
+                  return `Guest, `;
                 })}
           </div>
         </div>

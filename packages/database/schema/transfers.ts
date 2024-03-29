@@ -1,4 +1,5 @@
-import { InferInsertModel, relations, sql } from "drizzle-orm";
+import type { InferInsertModel } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import { datetime, index, int, primaryKey, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 import { bookings } from "./bookings";
@@ -10,6 +11,7 @@ export const transfers = mySqlTable(
   {
     id: varchar("id", { length: 36 }).notNull(),
     amount: int("amount").notNull(),
+    purchasedPrice: int("purchasedPrice").notNull(),
     transactionId: varchar("transactionId", { length: 36 })
       .notNull()
       .default(sql`''`),

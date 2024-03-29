@@ -6,13 +6,13 @@ import {
 } from "@juspay-tech/react-hyper-js";
 import { useCheckoutContext } from "~/contexts/CheckoutContext";
 import { useCourseContext } from "~/contexts/CourseContext";
+import type { CartProduct } from "~/utils/types";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { FilledButton } from "../buttons/filled-button";
 import { CharitySelect } from "../input/charity-select";
 import { Input } from "../input/input";
 import styles from "./checkout.module.css";
-import { CartProduct } from "~/utils/types";
 
 export const CheckoutForm = ({
   isBuyNowAuction,
@@ -27,20 +27,45 @@ export const CheckoutForm = ({
 }) => {
   const { course } = useCourseContext();
 
-  const primaryGreenFeeCharge =
-    cartData?.filter(({ product_data }) => product_data.metadata.type === "first_hand")?.reduce((acc: number, i) => acc + i.price, 0) / 100;
-  // const secondaryGreenFeeCharge =
-  // cartData?.filter(({ product_data }) => product_data.metadata.type === "second_hand")?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+  let primaryGreenFeeCharge = 0;
+
+  const isFirstHand = cartData?.filter(
+    ({ product_data }) => product_data.metadata.type === "first_hand"
+  );
+  if (isFirstHand.length) {
+    primaryGreenFeeCharge =
+      isFirstHand?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+  } else {
+    primaryGreenFeeCharge =
+      cartData
+        ?.filter(
+          ({ product_data }) => product_data.metadata.type === "second_hand"
+        )
+        ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+    primaryGreenFeeCharge = primaryGreenFeeCharge;
+  }
+
+  // const secondaryGreenFeeCharge = cartData?.filter(({ product_data }) => product_data.metadata.type === "second_hand")?.reduce((acc: number, i) => acc + i.price, 0) / 100;
   const convenienceCharge =
-    cartData?.filter(({ product_data }) => product_data.metadata.type === "convenience_fee")?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+    cartData
+      ?.filter(
+        ({ product_data }) => product_data.metadata.type === "convenience_fee"
+      )
+      ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
   const taxCharge =
-    cartData?.filter(({ product_data }) => product_data.metadata.type === "taxes")?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+    cartData
+      ?.filter(({ product_data }) => product_data.metadata.type === "taxes")
+      ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
 
   const sensibleCharge =
-    cartData?.filter(({ product_data }) => product_data.metadata.type === "sensible")?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+    cartData
+      ?.filter(({ product_data }) => product_data.metadata.type === "sensible")
+      ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
 
   const charityCharge =
-    cartData?.filter(({ product_data }) => product_data.metadata.type === "charity")?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+    cartData
+      ?.filter(({ product_data }) => product_data.metadata.type === "charity")
+      ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
 
   const unifiedCheckoutOptions = {
     wallets: {
@@ -257,7 +282,7 @@ export const CheckoutForm = ({
           <div>Total</div>
           <div>
             $
-            {amountToPay.toLocaleString("en-US", {
+            {primaryGreenFeeCharge.toLocaleString("en-US", {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}
