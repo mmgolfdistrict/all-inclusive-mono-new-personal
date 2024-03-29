@@ -42,7 +42,6 @@ export const CheckoutForm = ({
           ({ product_data }) => product_data.metadata.type === "second_hand"
         )
         ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
-    primaryGreenFeeCharge = primaryGreenFeeCharge;
   }
 
   // const secondaryGreenFeeCharge = cartData?.filter(({ product_data }) => product_data.metadata.type === "second_hand")?.reduce((acc: number, i) => acc + i.price, 0) / 100;

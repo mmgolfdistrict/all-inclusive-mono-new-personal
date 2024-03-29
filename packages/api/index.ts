@@ -1,5 +1,6 @@
 import { db } from "@golf-district/database";
 import {
+  AppSettingsService,
   BookingService,
   CourseService,
   EntityService,
@@ -12,7 +13,6 @@ import {
   StripeService,
   TokenizeService,
   UpdateWithdrawableBalance,
-  AppSettingsService,
 } from "@golf-district/service";
 import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "./src/root";

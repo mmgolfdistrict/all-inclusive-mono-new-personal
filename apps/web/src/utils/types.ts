@@ -117,17 +117,17 @@ export type CartProduct = {
   display_price: string; //$4.00
   product_data: {
     metadata:
-    FirstHandProduct
-    | SecondHandProduct
-    | SensibleProduct
-    | AuctionProduct
-    | CharityProduct
-    | Offer
-    | MarkupProduct
-    | ConvenienceFeeProduct
-    | TaxProduct;
-  }
-}
+      | FirstHandProduct
+      | SecondHandProduct
+      | SensibleProduct
+      | AuctionProduct
+      | CharityProduct
+      | Offer
+      | MarkupProduct
+      | ConvenienceFeeProduct
+      | TaxProduct;
+  };
+};
 
 export interface FirstHandProduct {
   type: "first_hand";
