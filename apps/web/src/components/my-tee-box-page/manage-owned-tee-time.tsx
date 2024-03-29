@@ -366,28 +366,33 @@ export const ManageOwnedTeeTime = ({
                 timezoneCorrection={course?.timezoneCorrection}
                 sensiblePurchasedFor={selectedTeeTime?.weatherGuaranteeAmount}
               />
-              <div className={`flex flex-col gap-1 text-center w-fit mx-auto`}>
-                <label
-                  htmlFor="minimumOfferPrice"
-                  className="text-[16px] text-primary-gray md:text-[18px]"
+              {course?.supportsOffers ? (
+                <div
+                  className={`flex flex-col gap-1 text-center w-fit mx-auto`}
                 >
-                  Minimum offer price per golfer
-                </label>
-                <div className="relative">
-                  <span className="absolute left-1 top-1 text-[24px] md:text-[32px]">
-                    $
-                  </span>
-                  <input
-                    value={minimumOfferPrice?.toString()?.replace(/^0+/, "")}
-                    type="number"
-                    onFocus={handleFocus}
-                    onChange={handleMinimumOfferPrice}
-                    onBlur={handleBlur}
-                    className="mx-auto max-w-[300px] rounded-lg bg-secondary-white px-4 py-1 text-center text-[24px] font-semibold outline-none md:text-[32px]"
-                    data-testid="minimum-offer-price-id"
-                  />
+                  <label
+                    htmlFor="minimumOfferPrice"
+                    className="text-[16px] text-primary-gray md:text-[18px]"
+                  >
+                    Minimum offer price per golfer
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-1 top-1 text-[24px] md:text-[32px]">
+                      $
+                    </span>
+                    <input
+                      value={minimumOfferPrice?.toString()?.replace(/^0+/, "")}
+                      type="number"
+                      onFocus={handleFocus}
+                      onChange={handleMinimumOfferPrice}
+                      onBlur={handleBlur}
+                      className="mx-auto max-w-[300px] rounded-lg bg-secondary-white px-4 py-1 text-center text-[24px] font-semibold outline-none md:text-[32px]"
+                      data-testid="minimum-offer-price-id"
+                    />
+                  </div>
                 </div>
-              </div>
+              ) : null}
+
               <div className={`flex flex-col gap-2 pb-6 text-center`}>
                 <label
                   htmlFor="friends"
@@ -511,30 +516,38 @@ export const ManageOwnedTeeTime = ({
               </div>
             </div>
             <div className="flex flex-col gap-4 px-4 pb-6">
-              <div className="flex justify-between">
-                <div className="font-[300] text-primary-gray">
-                  Tee Time Price
-                </div>
-                <div className="text-secondary-black">
-                  {formatMoney(minimumOfferPrice * friends.length)}
-                </div>
-              </div>
-              <div className="flex justify-between">
-                <div className="font-[300] text-primary-gray">
-                  Service Fee{" "}
-                  <Tooltip
-                    trigger={<Info className="h-[14px] w-[14px]" />}
-                    content="Service fee description."
-                  />
-                </div>
-                <div className="text-secondary-black">{formatMoney(45)}</div>
-              </div>
-              <div className="flex justify-between">
-                <div className="font-[300] text-primary-gray">Total Payout</div>
-                <div className="text-secondary-black">
-                  {formatMoney(totalPayout)}
-                </div>
-              </div>
+              {course?.supportsOffers ? (
+                <>
+                  <div className="flex justify-between">
+                    <div className="font-[300] text-primary-gray">
+                      Tee Time Price
+                    </div>
+                    <div className="text-secondary-black">
+                      {formatMoney(minimumOfferPrice * friends.length)}
+                    </div>
+                  </div>
+                  <div className="flex justify-between">
+                    <div className="font-[300] text-primary-gray">
+                      Service Fee{" "}
+                      <Tooltip
+                        trigger={<Info className="h-[14px] w-[14px]" />}
+                        content="Service fee description."
+                      />
+                    </div>
+                    <div className="text-secondary-black">
+                      {formatMoney(45)}
+                    </div>
+                  </div>
+                  <div className="flex justify-between">
+                    <div className="font-[300] text-primary-gray">
+                      Total Payout
+                    </div>
+                    <div className="text-secondary-black">
+                      {formatMoney(totalPayout)}
+                    </div>
+                  </div>
+                </>
+              ) : null}
               <div className="text-center text-[14px] font-[300] text-primary-gray">
                 All sales are final.
               </div>

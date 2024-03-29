@@ -139,27 +139,28 @@ export const CourseNav = () => {
               data-testid="sell-your-tee-time-id"
               data-test={courseId}
             />
-
-            <NavItem
-              href={
-                user
-                  ? `/${courseId}/my-tee-box?section=offers-received`
-                  : `/${course?.id}/login`
-              }
-              text="My Offers"
-              icon={
-                <div className="relative">
-                  <MyOffers className="w-[20px]" />
-                  {unreadOffers && unreadOffers > 0 ? (
-                    <div className="absolute -right-3.5 -top-2 md:-right-2.5 md:-top-4 flex h-5 w-5 min-w-fit select-none items-center justify-center rounded-full border-2 border-white bg-alert-red p-1 text-[10px] font-semibold text-white">
-                      {unreadOffers}
-                    </div>
-                  ) : null}
-                </div>
-              }
-              data-testid="my-offer-id"
-              data-test={courseId}
-            />
+            {course?.supportsOffers ? (
+              <NavItem
+                href={
+                  user
+                    ? `/${courseId}/my-tee-box?section=offers-received`
+                    : `/${course?.id}/login`
+                }
+                text="My Offers"
+                icon={
+                  <div className="relative">
+                    <MyOffers className="w-[20px]" />
+                    {unreadOffers && unreadOffers > 0 ? (
+                      <div className="absolute -right-3.5 -top-2 md:-right-2.5 md:-top-4 flex h-5 w-5 min-w-fit select-none items-center justify-center rounded-full border-2 border-white bg-alert-red p-1 text-[10px] font-semibold text-white">
+                        {unreadOffers}
+                      </div>
+                    ) : null}
+                  </div>
+                }
+                data-testid="my-offer-id"
+                data-test={courseId}
+              />
+            ) : null}
           </div>
         </div>
       </div>

@@ -2,6 +2,7 @@ import { CourseNav } from "~/components/nav/course-nav";
 import { type ReactNode } from "react";
 import "react-responsive-carousel/lib/styles/carousel.min.css";
 import { getCourseById, getCourseImages } from "@golf-district/api";
+import type { FullCourseType } from "@golf-district/shared";
 import { CourseLayout } from "~/components/course-layout";
 import { CourseWrapper } from "~/contexts/CourseContext";
 import { FiltersWrapper } from "~/contexts/FiltersContext";
@@ -18,7 +19,7 @@ export default async function CoursePageLayout({
 }) {
   const courseId = params.course;
 
-  const courseData = await getCourseById(courseId);
+  const courseData = (await getCourseById(courseId)) as FullCourseType;
 
   const courseImages = await getCourseImages(courseId);
 
