@@ -122,6 +122,18 @@ export class TokenizeService {
       throw new Error(`TeeTime with ID: ${providerTeeTimeId} does not have enough spots.`);
     }
 
+    const [customerCartData]: any = await this.database
+      .select({ cart: customerCarts.cart, cartId: customerCarts.id })
+      .from(customerCarts)
+      .where(
+        and(
+          eq(customerCarts.courseId, existingTeeTime.courseId),
+          eq(customerCarts.userId, userId),
+          eq(customerCarts.paymentId, paymentId)
+        )
+      )
+      .execute();
+
     const bookingsToCreate: InsertBooking[] = [];
     const transfersToCreate: InsertTransfer[] = [];
     const transactionId = randomUUID();
@@ -144,6 +156,7 @@ export class TokenizeService {
       includesCart: withCart,
       listId: null,
       entityId: existingTeeTime.entityId,
+      cartId: customerCartData?.cartId
     });
 
     transfersToCreate.push({
@@ -237,18 +250,6 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
 
     This is a first party purchase from the course
     `;
-
-    const [customerCartData]: any = await this.database
-      .select({ cart: customerCarts.cart })
-      .from(customerCarts)
-      .where(
-        and(
-          eq(customerCarts.courseId, existingTeeTime.courseId),
-          eq(customerCarts.userId, userId),
-          eq(customerCarts.paymentId, paymentId)
-        )
-      )
-      .execute();
 
     const primaryGreenFeeCharge =
       customerCartData?.cart?.cart

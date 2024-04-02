@@ -36,6 +36,7 @@ export const bookings = mySqlTable(
     weatherGuaranteeId: varchar("weatherGuaranteeId", { length: 36 }),
     weatherGuaranteeAmount: int("weatherGuaranteeAmount").default(0),
     isActive: boolean("isActive").default(true).notNull(),
+    cartId: varchar("cartId", { length: 36 }).notNull(),
   },
   (table) => {
     return {

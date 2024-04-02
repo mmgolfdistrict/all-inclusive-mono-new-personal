@@ -272,7 +272,7 @@ export class HyperSwitchWebhookService {
           await this.handleFirstHandItem(item as FirstHandProduct, amountReceived, customer_id, paymentId);
           break;
         case "second_hand":
-          await this.handleSecondHandItem(item as SecondHandProduct, amountReceived, customer_id);
+          await this.handleSecondHandItem(item as SecondHandProduct, amountReceived, customer_id, paymentId);
           break;
         case "offer":
           await this.handleOfferItem(item as Offer, amountReceived, customer_id);
@@ -451,7 +451,7 @@ export class HyperSwitchWebhookService {
     return { taxCharge, sensibleCharge, convenienceCharge, charityCharge, taxes };
   };
 
-  handleSecondHandItem = async (item: SecondHandProduct, amountReceived: number, customer_id: string) => {
+  handleSecondHandItem = async (item: SecondHandProduct, amountReceived: number, customer_id: string, paymentId: string) => {
     const listingId = item.product_data.metadata.second_hand_id;
 
     const listedSlots = await this.database
@@ -681,6 +681,12 @@ export class HyperSwitchWebhookService {
         return [];
       });
 
+    const [customerCart]: any = await this.database
+    .select({ cartId: customerCarts.id })
+    .from(customerCarts)
+    .where(eq(customerCarts.paymentId, paymentId))
+    .execute();
+
     for (const booking of newBookings) {
       const newBooking = booking;
       const bookingsToCreate: InsertBooking[] = [];
@@ -705,6 +711,7 @@ export class HyperSwitchWebhookService {
         entityId: firstBooking.entityId,
         weatherGuaranteeAmount: firstBooking.weatherGuaranteeAmount,
         weatherGuaranteeId: firstBooking.weatherGuaranteeId,
+        cartId: customerCart.cartId
       });
 
       const bookingSlots =
