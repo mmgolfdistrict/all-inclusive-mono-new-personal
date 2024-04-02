@@ -719,6 +719,15 @@ export class HyperSwitchWebhookService {
         weatherGuaranteeAmount: firstBooking.weatherGuaranteeAmount,
         weatherGuaranteeId: firstBooking.weatherGuaranteeId,
         cartId: customerCart.cartId,
+        entityId: firstBooking.entityId,
+        playerCount: 0,
+        greenFeePerPlayer: 0,
+        taxesPerPlayer: 0,
+        charityId: null,
+        totalCharityAmount: 0,
+        totalAmount: 0,
+        providerPaymentId: null,
+        weatherQuoteId: null,
       });
 
       const bookingSlots =

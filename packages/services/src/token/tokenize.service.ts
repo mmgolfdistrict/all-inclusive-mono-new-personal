@@ -132,10 +132,40 @@ export class TokenizeService {
       )
       .execute();
 
-    const bookingsToCreate: InsertBooking[] = [];
-    const transfersToCreate: InsertTransfer[] = [];
-    const transactionId = randomUUID();
-    const bookingId = randomUUID();
+    const primaryGreenFeeCharge =
+    customerCartData?.cart?.cart
+      ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "first_hand")
+      ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+
+  const convenienceCharge =
+    customerCartData?.cart?.cart
+      ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "convenience_fee")
+      ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+
+  const taxCharge =
+    customerCartData?.cart?.cart
+      ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "taxes")
+      ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+
+  const sensibleCharge =
+    customerCartData?.cart?.cart
+      ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "sensible")
+      ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+
+  const charityCharge =
+    customerCartData?.cart?.cart
+      ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "charity")
+      ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+
+  const taxes = taxCharge + sensibleCharge + charityCharge + convenienceCharge;
+
+  const total = customerCartData?.cart?.cart.filter(({ product_data }: ProductData) => product_data.metadata.type !== "markup")
+  .reduce((acc: number, item: any) =>  acc + item.price, 0);
+
+  const bookingsToCreate: InsertBooking[] = [];
+  const transfersToCreate: InsertTransfer[] = [];
+  const transactionId = randomUUID();
+  const bookingId = randomUUID();
 
     bookingsToCreate.push({
       id: bookingId,
@@ -155,6 +185,15 @@ export class TokenizeService {
       listId: null,
       // entityId: existingTeeTime.entityId,
       cartId: customerCartData?.cartId,
+      entityId: existingTeeTime.entityId,
+      playerCount: players,
+      greenFeePerPlayer: (primaryGreenFeeCharge/players) || 0,
+      taxesPerPlayer: (taxCharge/players) || 0,
+      charityId: null,
+      totalCharityAmount: charityCharge,
+      totalAmount: total || 0,
+      providerPaymentId: paymentId,
+      weatherQuoteId: null,
     });
 
     transfersToCreate.push({
@@ -249,32 +288,6 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
     This is a first party purchase from the course
     `;
 
-    const primaryGreenFeeCharge =
-      customerCartData?.cart?.cart
-        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "first_hand")
-        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
-
-    const convenienceCharge =
-      customerCartData?.cart?.cart
-        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "convenience_fee")
-        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
-
-    const taxCharge =
-      customerCartData?.cart?.cart
-        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "taxes")
-        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
-
-    const sensibleCharge =
-      customerCartData?.cart?.cart
-        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "sensible")
-        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
-
-    const charityCharge =
-      customerCartData?.cart?.cart
-        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "charity")
-        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
-
-    const taxes = taxCharge + sensibleCharge + charityCharge + convenienceCharge;
     const dateTime = dayjs(existingTeeTime.providerDate).utcOffset("-06:00");
 
     const template = {
