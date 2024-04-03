@@ -4,7 +4,7 @@ import { int, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 
 export const providerScheduleDetails = mySqlTable("providerScheduleDetails", {
-  id: varchar("id", { length: 36 }).notNull().primaryKey().unique(),
+  id: varchar("id", { length: 36 }).notNull().primaryKey(),
   fromDay: int("fromDay").notNull(),
   toDay: int("toDay").notNull(),
   interval: int("interval").notNull(),
