@@ -204,7 +204,6 @@ export class BookingService {
       return [];
     }
     const combinedData: Record<string, TransferData> = {};
-    console.log(JSON.stringify(data));
     data.forEach((teeTime) => {
       if (!combinedData[teeTime.transferId]) {
         combinedData[teeTime.transferId] = {
