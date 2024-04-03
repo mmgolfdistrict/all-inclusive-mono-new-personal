@@ -34,10 +34,7 @@ export class TokenizeService {
    * @example
    * const tokenizeService = new TokenizeService(database);
    */
-  constructor(
-    private readonly database: Db,
-    private readonly notificationService: NotificationService
-  ) {}
+  constructor(private readonly database: Db, private readonly notificationService: NotificationService) {}
   /**
    * Tokenize a booking for a user. This function either books an existing tee time or creates a new one based on the provided details.
    *

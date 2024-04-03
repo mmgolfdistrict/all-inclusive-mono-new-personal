@@ -68,6 +68,7 @@ export class CourseService extends DomainService {
         furthestDayToBook: courses.furthestDayToBook,
         allowAuctions: courses.allowAuctions,
         supportsOffers: courses.supportsOffers,
+        supportsWatchlist: courses.supportsWatchlist,
         buyerFee: courses.buyerFee,
         sellerFee: courses.sellerFee,
       })
