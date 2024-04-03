@@ -57,8 +57,8 @@ export const ListTeeTime = ({
   const router = useRouter();
   const { course } = useCourseContext();
   const courseMaxSellPricePerGolferLimitPercentage = 0.3;
-  const listingSellerFeePercentage = 0.15;
-  const listingBuyerFeePercentage = 0.1;
+  const listingSellerFeePercentage = (course?.sellerFee ?? 1) / 100;
+  const listingBuyerFeePercentage = (course?.buyerFee ?? 1) / 100;
 
   const maxListingPrice = useMemo(() => {
     // console.log(

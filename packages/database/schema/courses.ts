@@ -49,6 +49,8 @@ export const courses = mySqlTable(
     allowAuctions: int("allowAuctions").default(0),
     isDeleted: boolean("isDeleted").default(false).notNull(),
     supportsOffers: boolean("supportsOffers").default(false),
+    buyerFee: int("buyerFee").default(1).notNull(),
+    sellerFee: int("sellerFee").default(1).notNull(),
   },
   (table) => {
     return {

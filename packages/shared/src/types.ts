@@ -85,6 +85,8 @@ export type FullCourseType = {
   supportedCharities?: SupportedCharity[];
   allowAuctions: number | null;
   supportsOffers?: boolean;
+  sellerFee?: number;
+  buyerFee?: number;
 };
 
 export type SupportedCharity = {
