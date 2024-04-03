@@ -256,6 +256,8 @@ export class SearchService {
         favorites: favorites.id,
         includesCart: bookings.includesCart,
         firstHandPrice: teeTimes.greenFee,
+        buyerFee: courses.buyerFee,
+        sellerFee: courses.sellerFee,
         image: {
           key: assets.key,
           cdnUrl: assets.cdn,
@@ -286,7 +288,7 @@ export class SearchService {
         ? `https://${firstBooking.image.cdnUrl}/${firstBooking.image.key}.${firstBooking.image.extension}`
         : "/defaults/default-profile.webp",
       availableSlots: firstBooking.listedSlots,
-      pricePerGolfer: Number((firstBooking.listPrice * (1 + BUYER_FEE_PERCENTAGE)).toFixed(2)),
+      pricePerGolfer: Number((firstBooking.listPrice * (1 + firstBooking.buyerFee / 100)).toFixed(2)),
       firstHandPurchasePrice: firstBooking.firstHandPrice ?? 0,
       teeTimeId: firstBooking.teeTimeId ? firstBooking.teeTimeId : "",
       date: firstBooking.date,
@@ -615,6 +617,8 @@ export class SearchService {
         greenFee: teeTimes.greenFee,
         courseName: courses.name,
         markup: courses.markup,
+        buyerFee: courses.buyerFee,
+        sellerFee: courses.sellerFee,
         cartFee: teeTimes.cartFee,
         logo: {
           key: assets.key,
@@ -651,6 +655,19 @@ export class SearchService {
           : asc(teeTimes.time)
       )
       .limit(limit);
+    const courseData = await this.database
+      .select({
+        buyerFee: courses.buyerFee,
+        sellerFee: courses.sellerFee,
+      })
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .execute()
+      .catch(() => {});
+    let buyerFee = 0;
+    if (courseData?.length) {
+      buyerFee = (courseData[0]?.buyerFee ?? 1) / 100;
+    }
 
     const teeTimesData = await teeQuery.execute().catch((err) => {
       this.logger.error(err);
@@ -697,6 +714,7 @@ export class SearchService {
         minimumOfferPrice: bookings.minimumOfferPrice,
         date: teeTimes.providerDate,
         time: teeTimes.time,
+
         greenFee: teeTimes.greenFee,
         profilePicture: {
           key: assets.key,
@@ -757,7 +775,7 @@ export class SearchService {
                 : "/defaults/default-profile.webp",
               pricePerGolfer:
                 booking.listingId && booking.listPrice
-                  ? Number((booking.listPrice * (1 + BUYER_FEE_PERCENTAGE)).toFixed(2))
+                  ? Number((booking.listPrice * (1 + buyerFee)).toFixed(2))
                   : ((booking?.greenFee ?? 0) * 13) / 10,
               includesCart: booking?.includesCart,
               firstOrSecondHandTeeTime: booking.isListed ? TeeTimeType.SECOND_HAND : TeeTimeType.UNLISTED,

@@ -272,7 +272,7 @@ export class HyperSwitchWebhookService {
           await this.handleFirstHandItem(item as FirstHandProduct, amountReceived, customer_id, paymentId);
           break;
         case "second_hand":
-          await this.handleSecondHandItem(item as SecondHandProduct, amountReceived, customer_id);
+          await this.handleSecondHandItem(item as SecondHandProduct, amountReceived, customer_id, paymentId);
           break;
         case "offer":
           await this.handleOfferItem(item as Offer, amountReceived, customer_id);
@@ -414,7 +414,44 @@ export class HyperSwitchWebhookService {
       });
   };
 
-  handleSecondHandItem = async (item: SecondHandProduct, amountReceived: number, customer_id: string) => {
+  getCartData = async ({ courseId = "", ownerId = "" }) => {
+    const [customerCartData]: any = await this.database
+      .select({ cart: customerCarts.cart })
+      .from(customerCarts)
+      .where(and(eq(customerCarts.courseId, courseId), eq(customerCarts.userId, ownerId)))
+      .execute();
+
+    const primaryGreenFeeCharge =
+      customerCartData?.cart?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "first_hand")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+
+    const convenienceCharge =
+      customerCartData?.cart?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "convenience_fee")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+
+    const taxCharge =
+      customerCartData?.cart?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "taxes")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+
+    const sensibleCharge =
+      customerCartData?.cart?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "sensible")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+
+    const charityCharge =
+      customerCartData?.cart?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "charity")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+
+    const taxes = taxCharge + sensibleCharge + charityCharge + convenienceCharge;
+
+    return { taxCharge, sensibleCharge, convenienceCharge, charityCharge, taxes };
+  };
+
+  handleSecondHandItem = async (item: SecondHandProduct, amountReceived: number, customer_id: string, paymentId: string) => {
     const listingId = item.product_data.metadata.second_hand_id;
 
     const listedSlots = await this.database
@@ -448,6 +485,8 @@ export class HyperSwitchWebhookService {
         includesCart: bookings.includesCart,
         entityId: bookings.entityId,
         purchasedPrice: bookings.purchasedPrice,
+        weatherGuaranteeId: bookings.weatherGuaranteeId,
+        weatherGuaranteeAmount: bookings.weatherGuaranteeAmount,
       })
       .from(bookings)
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -598,6 +637,8 @@ export class HyperSwitchWebhookService {
         );
         newBookingSecond.data.ownerId = firstBooking.ownerId;
         newBookingSecond.data.purchasedFor = firstBooking.purchasedPrice;
+        newBooking.data.weatherGuaranteeId = firstBooking.weatherGuaranteeId || "";
+        newBooking.data.weatherGuaranteeAmount = firstBooking.weatherGuaranteeAmount || 0;
         newBookingSecond.data.bookingType = "SECOND";
         newBookingSecond.data.name = sellerCustomer.name || "";
         newBookings.push(newBookingSecond);
@@ -626,6 +667,8 @@ export class HyperSwitchWebhookService {
         cdn: assets.cdn,
         cdnKey: assets.key,
         extension: assets.extension,
+        buyerFee: courses.buyerFee,
+        sellerFee: courses.sellerFee,
       })
       .from(teeTimes)
       .where(eq(teeTimes.id, firstBooking.teeTimeId))
@@ -637,6 +680,12 @@ export class HyperSwitchWebhookService {
         this.logger.error(err);
         return [];
       });
+
+    const [customerCart]: any = await this.database
+    .select({ cartId: customerCarts.id })
+    .from(customerCarts)
+    .where(eq(customerCarts.paymentId, paymentId))
+    .execute();
 
     for (const booking of newBookings) {
       const newBooking = booking;
@@ -660,6 +709,9 @@ export class HyperSwitchWebhookService {
         includesCart: firstBooking.includesCart,
         listId: null,
         entityId: firstBooking.entityId,
+        weatherGuaranteeAmount: firstBooking.weatherGuaranteeAmount,
+        weatherGuaranteeId: firstBooking.weatherGuaranteeId,
+        cartId: customerCart.cartId
       });
 
       const bookingSlots =
@@ -735,56 +787,33 @@ export class HyperSwitchWebhookService {
             this.logger.error(err);
           });
       }
-      const [customerCartData]: any = await this.database
-        .select({ cart: customerCarts.cart })
-        .from(customerCarts)
-        .where(
-          and(
-            eq(customerCarts.courseId, existingTeeTime?.courseId || ""),
-            eq(customerCarts.userId, booking?.data.ownerId || "")
-          )
-        )
-        .execute();
 
-      const primaryGreenFeeCharge =
-        customerCartData?.cart?.cart
-          ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "first_hand")
-          ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+      const { taxes, sensibleCharge } = await this.getCartData({
+        courseId: existingTeeTime?.courseId,
+        ownerId: booking.data.ownerId,
+      });
 
-      const convenienceCharge =
-        customerCartData?.cart?.cart
-          ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "convenience_fee")
-          ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+      const commonTemplateData = {
+        CourseLogoURL: `https://${existingTeeTime?.cdn}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
+        CourseName: existingTeeTime?.courseName || "-",
+        FacilityName: existingTeeTime?.entityName || "-",
+        PlayDateTime: dayjs(existingTeeTime?.date).format("MM/DD/YYYY h:mm A") || "-",
+        NumberOfHoles: existingTeeTime?.numberOfHoles,
+        SellTeeTImeURL: `${process.env.APP_URL}/my-tee-box`,
+        ManageTeeTimesURL: `${process.env.APP_URL}/my-tee-box`,
+        GolfDistrictReservationID: bookingId,
+        CourseReservationID: newBooking?.data.id,
+      };
 
-      const taxCharge =
-        customerCartData?.cart?.cart
-          ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "taxes")
-          ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
-
-      const sensibleCharge =
-        customerCartData?.cart?.cart
-          ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "sensible")
-          ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
-
-      const charityCharge =
-        customerCartData?.cart?.cart
-          ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "charity")
-          ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
-
-      const taxes = taxCharge + sensibleCharge + charityCharge + convenienceCharge;
+      const buyerFee = (existingTeeTime?.buyerFee ?? 1) / 100;
+      const sellerFee = (existingTeeTime?.sellerFee ?? 1) / 100;
 
       if (newBooking.data.bookingType == "FIRST") {
         const template: any = {
-          CourseLogoURL: `https://${existingTeeTime?.cdn}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
-          CustomerFirstName: newBooking.data.name?.split(" ")[0],
-          CourseName: existingTeeTime?.courseName || "-",
-          GolfDistrictReservationID: bookingId,
-          CourseReservationID: newBooking?.data.id,
-          FacilityName: existingTeeTime?.entityName || "-",
-          PlayDateTime: dayjs(existingTeeTime?.date).format("MM/DD/YYYY h:mm A") || "-",
-          NumberOfHoles: existingTeeTime?.numberOfHoles,
+          ...commonTemplateData,
+          CustomerFirstName: buyerCustomer.name?.split(" ")[0],
           GreenFees:
-            `$${(newBooking.data.purchasedFor || 0).toLocaleString("en-US", {
+            `$${(newBooking.data.purchasedFor ?? 0).toLocaleString("en-US", {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })} / Golfer` || "-",
@@ -793,48 +822,40 @@ export class HyperSwitchWebhookService {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}` || "-",
-          // SensibleWeatherIncluded: ,
+          SensibleWeatherIncluded: sensibleCharge ? "Yes" : "No",
           PurchasedFrom: sellerCustomer.name,
         };
-        //buyer
+
         await this.notificationService.createNotification(
           booking?.data.ownerId || "",
           "TeeTimes Purchased",
           "TeeTimes Purchased",
           existingTeeTime?.courseId,
-          process.env.SENDGRID_TEE_TIMES_PURCHASED_TEMPLATE_ID || "d-82894b9885e54f98a810960373d80575",
+          process.env.SENDGRID_TEE_TIMES_PURCHASED_TEMPLATE_ID ?? "d-82894b9885e54f98a810960373d80575",
           template
         );
-        //seller
 
         if (newBookings.length === 1) {
-          const lsPrice = listPrice || 0;
+          if (firstBooking?.weatherGuaranteeId?.length) {
+            await this.sensibleService.cancelGuarantee(firstBooking?.weatherGuaranteeId || "");
+          }
+          const lsPrice = listPrice ?? 0;
+          const listedPrice = lsPrice + lsPrice * buyerFee;
+          const totalTax = lsPrice * sellerFee;
           const templateSeller: any = {
-            CourseLogoURL: `https://${existingTeeTime?.cdn}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
+            ...commonTemplateData,
             CustomerFirstName: sellerCustomer.name?.split(" ")[0],
-            CourseName: existingTeeTime?.courseName || "-",
-            GolfDistrictReservationID: bookingId,
-            CourseReservationID: newBooking?.data.id,
-            FacilityName: existingTeeTime?.entityName || "-",
-            PlayDateTime: dayjs(existingTeeTime?.date).format("MM/DD/YYYY h:mm A") || "-",
-            NumberOfHoles: existingTeeTime?.numberOfHoles,
             ListedPrice:
-              `$${(listPrice || 0).toLocaleString("en-US", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })} / Golfer` || "-",
-            GreenFees:
-              `$${(listPrice || 0).toLocaleString("en-US", {
+              `$${lsPrice.toLocaleString("en-US", {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })} / Golfer` || "-",
             TaxesAndOtherFees:
-              `$${(lsPrice * 0.15 * (listedSlotsCount || 1) || 0).toLocaleString("en-US", {
+              `$${(totalTax * (listedSlotsCount ?? 1)).toLocaleString("en-US", {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}` || "-",
-            Payout: (lsPrice - lsPrice * 0.15) * (listedSlotsCount || 1),
-            // SensibleWeatherIncluded: ,
+            Payout: (listedPrice - totalTax) * (listedSlotsCount || 1),
             PurchasedFrom: existingTeeTime?.courseName || "-",
           };
           await this.notificationService.createNotification(
@@ -847,34 +868,25 @@ export class HyperSwitchWebhookService {
           );
         }
       } else {
-        const lsPrice = listPrice || 0;
+        const lsPrice = listPrice ?? 0;
+        const listedPrice = lsPrice + lsPrice * buyerFee;
+        const totalTax = lsPrice * (buyerFee + sellerFee);
         const templateSeller: any = {
-          CourseLogoURL: `https://${existingTeeTime?.cdn}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
-          CustomerFirstName: sellerCustomer.name?.split(" ")[0],
-          CourseName: existingTeeTime?.courseName || "-",
-          GolfDistrictReservationID: bookingId,
-          CourseReservationID: newBooking?.data.id,
-          FacilityName: existingTeeTime?.entityName || "-",
-          PlayDateTime: dayjs(existingTeeTime?.date).format("MM/DD/YYYY h:mm A") || "-",
-          NumberOfHoles: existingTeeTime?.numberOfHoles,
+          ...commonTemplateData,
           SoldPlayers: listedSlotsCount,
+          CustomerFirstName: sellerCustomer.name?.split(" ")[0],
           ListedPrice:
-            `$${(listPrice || 0).toLocaleString("en-US", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })} / Golfer` || "-",
-          GreenFees:
-            `$${(listPrice || 0).toLocaleString("en-US", {
+            `$${lsPrice.toLocaleString("en-US", {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })} / Golfer` || "-",
           TaxesAndOtherFees:
-            `$${(lsPrice * 0.15 * (listedSlotsCount || 1) || 0).toLocaleString("en-US", {
+            `$${(totalTax * (listedSlotsCount ?? 1)).toLocaleString("en-US", {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}` || "-",
-          Payout: (lsPrice - lsPrice * 0.15) * (listedSlotsCount || 1),
-          // SensibleWeatherIncluded: ,
+          Payout: (listedPrice - totalTax) * (listedSlotsCount || 1),
+          SensibleWeatherIncluded: firstBooking.weatherGuaranteeId?.length ? "Yes" : "No",
           PurchasedFrom: existingTeeTime?.courseName || "-",
         };
         await this.notificationService.createNotification(

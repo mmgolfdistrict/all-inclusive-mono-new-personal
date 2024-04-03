@@ -109,6 +109,8 @@ export interface BookingResponse {
     name?: string;
     purchasedFor?: number;
     bookingType?: string;
+    weatherGuaranteeAmount?: number;
+    weatherGuaranteeId?: string;
     attributes: {
       isReround: boolean;
       type: string;

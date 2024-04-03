@@ -19,6 +19,7 @@ import type { NotificationService } from "../notification/notification.service";
 import type { HyperSwitchService } from "../payment-processor/hyperswitch.service";
 import type { Customer, ProviderService } from "../tee-sheet-provider/providers.service";
 import type { TokenizeService } from "../token/tokenize.service";
+import dayjs from "dayjs";
 
 interface TeeTimeData {
   courseId: string;
@@ -203,7 +204,6 @@ export class BookingService {
       return [];
     }
     const combinedData: Record<string, TransferData> = {};
-    console.log(JSON.stringify(data));
     data.forEach((teeTime) => {
       if (!combinedData[teeTime.transferId]) {
         combinedData[teeTime.transferId] = {
@@ -247,6 +247,8 @@ export class BookingService {
    */
   getMyListedTeeTimes = async (userId: string, courseId: string, limit = 10, cursor?: string) => {
     this.logger.info(`getMyListedTeeTimes called with userId: ${userId}`);
+    const localDateTimePlus1Hour = dayjs.utc().utcOffset(-7).add(1, "hour");
+
     const data = await this.database
       .select({
         bookingId: bookings.id,
@@ -269,7 +271,14 @@ export class BookingService {
       .innerJoin(courses, eq(courses.id, teeTimes.courseId))
       .innerJoin(assets, eq(assets.id, courses.logoId))
       .innerJoin(lists, and(eq(lists.teeTimeId, teeTimes.id), eq(lists.isDeleted, false)))
-      .where(and(eq(bookings.isListed, true), eq(teeTimes.courseId, courseId), eq(bookings.ownerId, userId)))
+      .where(
+        and(
+          eq(bookings.isListed, true),
+          eq(teeTimes.courseId, courseId),
+          eq(bookings.ownerId, userId),
+          gte(teeTimes.providerDate, localDateTimePlus1Hour.format("YYYY-MM-DDTHH:mm:ss")) //Exclude past tee times
+        )
+      )
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving tee times: ${err}`);

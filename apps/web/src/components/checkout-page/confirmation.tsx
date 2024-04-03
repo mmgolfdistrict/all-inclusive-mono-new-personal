@@ -26,13 +26,13 @@ export const Confirmation = ({ teeTimeId }: { teeTimeId: string }) => {
       />
       <h1 className="text-[24px] md:text-[32px]">Thanks for your purchase</h1>
       <p className="text-[14px] text-primary-gray md:text-[16px]">
-        Your Tee-Time will be viewable in your Profile. All purchases are final.
-        You can sell or adjust your tee-time up to 30 minutes before the
-        scheduled time.
+        Your tee time will be viewable in your My Tee Box in the Profile. All
+        purchases are final. You can sell or adjust your tee time up to 30
+        minutes before the scheduled time.
       </p>
       <p className="text-[14px] text-primary-gray md:text-[16px]">
-        Add your golfers to your tee time. You can invite your friends to your
-        tee time with the option of splitting the fare.
+        Add your golfers to your tee time. You can add their name or select them
+        using their GOLFdistrict handle or invite them via email or phone.
       </p>
       <div className="flex w-full flex-col items-center justify-center gap-2 md:flex-row">
         <Link
