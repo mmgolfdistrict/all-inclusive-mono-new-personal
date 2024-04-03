@@ -106,10 +106,7 @@ export class CheckoutService {
    * };
    * const checkoutSession = await checkoutService.buildCheckoutSession(userId, customerCart);
    */
-  buildCheckoutSession = async (
-    userId: string,
-    customerCartData: CustomerCart,
-  ) => {
+  buildCheckoutSession = async (userId: string, customerCartData: CustomerCart) => {
     const { paymentId } = customerCartData;
     let data = {};
     // const errors = await this.validateCartItems(customerCart);
@@ -197,17 +194,15 @@ export class CheckoutService {
 
     return {
       clientSecret: paymentIntent.client_secret,
-      paymentId: paymentIntent.payment_id
+      paymentId: paymentIntent.payment_id,
     };
   };
 
-  updateCheckoutSession = async (
-    userId: string,
-    customerCartData: CustomerCart
-  ) => {
+  updateCheckoutSession = async (userId: string, customerCartData: CustomerCart) => {
     const { paymentId, ...customerCart } = customerCartData;
 
-    const total = customerCart.cart.filter(({ product_data }) => product_data.metadata.type !== "markup")
+    const total = customerCart.cart
+      .filter(({ product_data }) => product_data.metadata.type !== "markup")
       .reduce((acc, item) => {
         return acc + item.price;
       }, 0);
@@ -223,9 +218,11 @@ export class CheckoutService {
         throw new Error(`Error updating payment intent: ${err}`);
       });
 
-    await this.database.update(customerCarts).set({
-      cart: customerCart,
-    })
+    await this.database
+      .update(customerCarts)
+      .set({
+        cart: customerCart,
+      })
       .where(and(eq(customerCarts.paymentId, paymentId || ""), eq(customerCarts.userId, userId)))
       .execute()
       .catch((err) => {
@@ -235,7 +232,7 @@ export class CheckoutService {
 
     return {
       clientSecret: paymentIntent.client_secret,
-      paymentId: paymentIntent.payment_id
+      paymentId: paymentIntent.payment_id,
     };
   };
 

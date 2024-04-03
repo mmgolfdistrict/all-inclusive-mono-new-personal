@@ -259,7 +259,12 @@ export class HyperSwitchWebhookService {
    * ```
    */
 
-  paymentSuccessHandler = async (customerCart: CustomerCart, amountReceived: number, paymentId: string, customer_id: string) => {
+  paymentSuccessHandler = async (
+    customerCart: CustomerCart,
+    amountReceived: number,
+    paymentId: string,
+    customer_id: string
+  ) => {
     // const customer_id: string = customerCart.customerId;
     for (const item of customerCart.cart) {
       switch (item.product_data.metadata.type) {
