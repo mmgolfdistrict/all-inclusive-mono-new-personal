@@ -230,7 +230,7 @@ export const CheckoutForm = ({
             ) : null}
           </div>
         ) : null}
-        {isBuyNowAuction ? null : (
+        {isBuyNowAuction ? null : course?.supportsPromocode ? (
           <div className={`flex flex-col gap-1`}>
             <label
               className="text-[14px] text-primary-gray"
@@ -247,7 +247,7 @@ export const CheckoutForm = ({
               data-testid="promo-code-input-id"
             />
           </div>
-        )}
+        ) : null}
         <div className="flex justify-between">
           <div>
             Subtotal

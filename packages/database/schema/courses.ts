@@ -50,6 +50,7 @@ export const courses = mySqlTable(
     isDeleted: boolean("isDeleted").default(false).notNull(),
     supportsOffers: boolean("supportsOffers").default(false),
     supportsWatchlist: boolean("supportsWatchlist").default(false),
+    supportsPromocode: boolean("supportsPromocode").default(false),
     buyerFee: int("buyerFee").default(1).notNull(),
     sellerFee: int("sellerFee").default(1).notNull(),
   },
