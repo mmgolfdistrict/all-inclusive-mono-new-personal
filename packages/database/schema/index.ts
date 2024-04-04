@@ -33,6 +33,7 @@ import * as userProviderCourseLink from "./userProviderCourseLink";
 import * as users from "./users";
 import * as verificationTokens from "./verificationTokens";
 import * as withdrawals from "./withdrawals";
+import * as jobs from "./jobs"
 
 export const schema = {
   ...accounts,
@@ -70,4 +71,5 @@ export const schema = {
   ...appSettings,
   ...providerScheduleDetails,
   ...courseScheduleDetails,
+  ...jobs
 };
