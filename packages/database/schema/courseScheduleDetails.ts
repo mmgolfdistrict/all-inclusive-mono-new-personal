@@ -7,11 +7,9 @@ export const courseScheduleDetails = mySqlTable("courseScheduleDetails", {
   id: varchar("id", { length: 36 }).notNull().primaryKey(),
   fromDay: int("fromDay").notNull(),
   toDay: int("toDay").notNull(),
-  interval: int("interval").notNull(),
+  intervalInMinutes: int("intervalInMinutes").notNull(),
   providerId: varchar("providerId", { length: 36 }).notNull(),
   courseId: varchar("courseId", { length: 36 }).notNull(),
-  jobId: varchar("jobId", { length: 64 }),
-  schedulerName: varchar("schedulerName", { length: 64 }),
 });
 
 export type SelectCourseScheduleDetails = InferSelectModel<typeof courseScheduleDetails>;

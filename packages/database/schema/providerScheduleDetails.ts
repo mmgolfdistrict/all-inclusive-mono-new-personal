@@ -7,7 +7,7 @@ export const providerScheduleDetails = mySqlTable("providerScheduleDetails", {
   id: varchar("id", { length: 36 }).notNull().primaryKey(),
   fromDay: int("fromDay").notNull(),
   toDay: int("toDay").notNull(),
-  interval: int("interval").notNull(),
+  intervalInMinutes: int("intervalInMinutes").notNull(),
   providerId: varchar("providerId", { length: 36 }).notNull(),
 });
 
