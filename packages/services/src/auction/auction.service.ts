@@ -24,7 +24,7 @@ export class AuctionService {
    *
    * @param database - The database client used to perform auction-related operations.
    */
-  constructor(private readonly database: Db, private readonly hyperSwitch: HyperSwitchService) {}
+  constructor(private readonly database: Db, private readonly hyperSwitch: HyperSwitchService) { }
 
   /**
    * Creates a new auction for a specified course ID.
@@ -222,10 +222,8 @@ export class AuctionService {
       }
     }
     //Check to make sure the user has a card on file
-    const paymentMethods = await this.hyperSwitch.retrievePaymentMethods(userId, {
-      type: "card",
-    });
-    if (!paymentMethods?.data[0] || paymentMethods.data.length === 0) {
+    const paymentMethods = await this.hyperSwitch.retrievePaymentMethods(userId);
+    if (paymentMethods && paymentMethods.length === 0) {
       this.logger.warn(`User ${userId} does not have a card on file`);
       throw new Error("User does not have a card on file");
     }

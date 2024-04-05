@@ -1,6 +1,6 @@
 "use client";
 
-import type { Card } from "~/hooks/usePaymentMethods";
+import type { CustomerPaymentMethod } from "~/hooks/usePaymentMethods";
 import { usePaymentMethods } from "~/hooks/usePaymentMethods";
 import { api } from "~/utils/api";
 import { toast } from "react-toastify";
@@ -13,8 +13,6 @@ export const PaymentInfoMangeProfile = () => {
   const removeCard = api.checkout.removePaymentMethod.useMutation();
 
   const removeMethod = async (paymentMethodId: string) => {
-    toast.info("Currently under development.");
-    return;
     if (!paymentMethodId) return;
     if (removeCard.isLoading) return;
     try {
@@ -60,24 +58,24 @@ const CardDisplay = ({
   card,
   removeMethod,
 }: {
-  card: Card;
+  card: CustomerPaymentMethod;
   removeMethod: (x: string) => Promise<void>;
 }) => {
   return (
     <div className="border border-stroke rounded-md p-3 flex flex-col gap-2">
       <div className="flex items-start flex-col gap-1">
         <div className="font-[500] text-md">Card Number</div>
-        <div className="text-sm">XXXX XXXX XXXX {card?.card?.last4}</div>
+        <div className="text-sm">XXXX XXXX XXXX {card?.card?.last4_digits}</div>
       </div>
       <div className="flex w-full justify-between items-end">
         <div className="flex flex-col gap-1">
           <div className="font-[500] text-md">Card Expiry</div>
           <div className="text-sm">
-            {card?.card?.exp_month}/{card?.card?.exp_year}
+            {card?.card?.expiry_month}/{card?.card?.expiry_year}
           </div>
         </div>
         <button
-          onClick={() => void removeMethod(card.id)}
+          onClick={() => void removeMethod(card.payment_method_id)}
           className="border border-alert-red px-3 rounded-md"
         >
           <Trashcan fill="#EE2020" className="w-[20px] h-[20px]" />
