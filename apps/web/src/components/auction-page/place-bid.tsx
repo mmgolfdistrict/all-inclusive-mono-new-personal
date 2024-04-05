@@ -46,7 +46,7 @@ export const PlaceBid = ({
       await placeBidMethod.mutateAsync({
         auctionId: "72673ea0-7e91-444c-a76a-824d518362e8",
         bid: bid,
-        paymentMethodId: cards?.[0]?.id,
+        paymentMethodId: cards?.[0]?.payment_method_id,
       });
       await refetch();
       toast.success(`Bid for ${bid} placed successfully!`);

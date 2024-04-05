@@ -2,8 +2,8 @@
 import Logger from "@golf-district/shared/src/logger";
 import HyperSwitch from "@juspay-tech/hyper-node";
 import type pino from "pino";
-import { UpdatePayment } from "../checkout/types";
-import type { CustomerDetails } from "./types/hyperSwitch.types";
+import type { UpdatePayment } from "../checkout/types";
+import type { CustomerDetails, CustomerPaymentMethod, CustomerPaymentMethodsResponse } from "./types/hyperSwitch.types";
 
 /**
  * Service for interacting with the HyperSwitch API.
@@ -12,6 +12,8 @@ export class HyperSwitchService {
   protected hyperSwitch: HyperSwitch;
   protected logger: pino.Logger;
   protected hyper: any;
+  protected hyperSwitchBaseUrl = "https://sandbox.hyperswitch.io";
+  protected hyperSwitchApiKey: string;
 
   /**
    * Constructs a new HyperSwitchService.
@@ -26,6 +28,8 @@ export class HyperSwitchService {
       apiVersion: "2020-08-27",
       typescript: true,
     });
+
+    this.hyperSwitchApiKey = hyperSwitchApiKey
   }
 
   /**
@@ -176,18 +180,37 @@ export class HyperSwitchService {
    */
   retrievePaymentMethods = async (
     customerId: string,
-    params: HyperSwitch.CustomerListPaymentMethodsParams
-  ): Promise<HyperSwitch.Response<HyperSwitch.ApiList<HyperSwitch.PaymentMethod>> | null> => {
-    return await this.hyperSwitch.customers.listPaymentMethods(customerId, params).catch((err) => {
-      this.logger.error(`Error retrieving payment method: ${err}`);
-      return null;
-    });
+  ): Promise<CustomerPaymentMethod[] | undefined> => {
+    try {
+      const url = `${this.hyperSwitchBaseUrl}/customers/${customerId}/payment_methods`
+      const options = {
+        method: 'GET',
+        headers: {
+          'api-key': this.hyperSwitchApiKey
+        }
+      };
+      const paymentMethodResponse = await fetch(url, options)
+      const paymentMethods: CustomerPaymentMethodsResponse = await paymentMethodResponse.json();
+      return paymentMethods.customer_payment_methods;
+    } catch (error) {
+      this.logger.error("Error retrieving payment methods: ", error);
+    }
   };
 
   removePaymentMethod = async (paymentMethodId: string) => {
-    return await this.hyperSwitch.paymentMethods.detach(paymentMethodId).catch((err) => {
-      this.logger.error(`Error removing payment method: ${err}`);
-      throw new Error(`Error removing payment method: ${err}`);
-    });
+    try {
+      const url = `${this.hyperSwitchBaseUrl}/payment_methods/${paymentMethodId}`
+      const options = {
+        method: 'DELETE',
+        headers: {
+          'api-key': this.hyperSwitchApiKey
+        }
+      };
+      const deletePaymentMethodResponse = await fetch(url, options)
+      const deletedMethod = await deletePaymentMethodResponse.json();
+      this.logger.info("Payment method deleted: ", deletedMethod);
+    } catch (error) {
+      this.logger.error("Error removing payment method: ", error);
+    }
   };
 }
