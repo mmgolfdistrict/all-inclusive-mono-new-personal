@@ -98,9 +98,12 @@ export const UserInNav = ({ alwaysShow }: { alwaysShow?: boolean }) => {
             <Link href={`/${courseId}/my-tee-box`}>
               <MenuItem title="My Tee Box" />
             </Link>
-            <Link href={`/${courseId}/watchlist`}>
-              <MenuItem title="Watchlist" />
-            </Link>
+            {course?.supportsWatchlist ? (
+              <Link href={`/${courseId}/watchlist`}>
+                <MenuItem title="Watchlist" />
+              </Link>
+            ) : null}
+
             <MenuItem title="Log Out" handleClick={() => void logOutUser()} />
           </DropdownMenu.Content>
         </DropdownMenu.Portal>

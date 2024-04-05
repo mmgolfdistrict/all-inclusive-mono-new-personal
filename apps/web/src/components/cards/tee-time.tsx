@@ -267,18 +267,21 @@ export const TeeTime = ({
           </div>
 
           <div className="flex items-center gap-1">
-            <OutlineButton
-              className="md:px-[.5rem] px-[0.375rem] py-[0.375rem] md:py-2"
-              onClick={addToWatchlist}
-              data-testid="watch-list-id"
-              data-test={teeTimeId}
-              data-qa={optimisticLike}
-            >
-              <Heart
-                className={`w-[13px] md:w-[18px]`}
-                fill={optimisticLike ? "#40942A" : undefined}
-              />
-            </OutlineButton>
+            {course?.supportsWatchlist ? (
+              <OutlineButton
+                className="md:px-[.5rem] px-[0.375rem] py-[0.375rem] md:py-2"
+                onClick={addToWatchlist}
+                data-testid="watch-list-id"
+                data-test={teeTimeId}
+                data-qa={optimisticLike}
+              >
+                <Heart
+                  className={`w-[13px] md:w-[18px]`}
+                  fill={optimisticLike ? "#40942A" : undefined}
+                />
+              </OutlineButton>
+            ) : null}
+
             <Link
               href={href}
               data-testid="details-button-id"

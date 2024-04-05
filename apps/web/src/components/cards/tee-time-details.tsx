@@ -182,19 +182,22 @@ export const TeeTimeDetails = ({
                   )}
                 </div>
               </OutlineButton>
-              <OutlineButton
-                className="w-full whitespace-nowrap"
-                onClick={addToWatchlist}
-                data-testid="watch-list-button-id"
-              >
-                <div className="flex items-center justify-center gap-2">
-                  <Heart
-                    className="w-[20px] min-w-[20px]"
-                    fill={data?.userWatchListed ? "#40942A" : undefined}
-                  />{" "}
-                  Watchlist
-                </div>
-              </OutlineButton>
+              {course?.supportsWatchlist ? (
+                <OutlineButton
+                  className="w-full whitespace-nowrap"
+                  onClick={addToWatchlist}
+                  data-testid="watch-list-button-id"
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <Heart
+                      className="w-[20px] min-w-[20px]"
+                      fill={data?.userWatchListed ? "#40942A" : undefined}
+                    />{" "}
+                    Watchlist
+                  </div>
+                </OutlineButton>
+              ) : null}
+
               <FilledButton
                 className="w-full whitespace-nowrap md:px-14"
                 onClick={buyTeeTime}

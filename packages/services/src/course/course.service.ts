@@ -70,6 +70,7 @@ export class CourseService extends DomainService {
         allowAuctions: courses.allowAuctions,
         supportsOffers: courses.supportsOffers,
         supportsWatchlist: courses.supportsWatchlist,
+        supportsPromocode: courses.supportsPromocode,
         buyerFee: courses.buyerFee,
         sellerFee: courses.sellerFee,
       })
@@ -89,8 +90,8 @@ export class CourseService extends DomainService {
         lowestListedTeeTime: min(lists.listPrice),
       })
       .from(lists)
-      .innerJoin(bookings,eq(bookings.listId,lists.id))
-      .leftJoin(teeTimes,eq(teeTimes.id,bookings.teeTimeId))
+      .innerJoin(bookings, eq(bookings.listId, lists.id))
+      .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
       .where(and(eq(teeTimes.courseId, courseId), eq(lists.isDeleted, false)))
       .limit(1)
       .execute();

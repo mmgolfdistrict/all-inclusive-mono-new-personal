@@ -34,11 +34,23 @@ export const TransactionHistory = () => {
     );
   const [selectedTxn, setSelectedTxn] = useState<TxnHistoryType | null>(null);
 
+  function sortByDate(objectOfObjects: TxnHistoryType[]) {
+    const arrayOfObjects: TxnHistoryType[] = objectOfObjects; //Object.values(objectOfObjects);
+    arrayOfObjects.sort((a, b) => {
+      const dateA = Number(new Date(a.date));
+      const dateB = Number(new Date(b.date));
+      return dateB - dateA;
+    });
+
+    return arrayOfObjects;
+  }
+
   const txnHistory = useMemo(() => {
     if (!data) return undefined;
-    return Object.keys(data).map((key) => {
-      return data[key] as TxnHistoryType;
-    });
+    // return Object.keys(data).map((key) => {
+    //   return data[key] as TxnHistoryType;
+    // });
+    return sortByDate(data as TxnHistoryType[]);
   }, [data]);
 
   // const loadMore = () => {
