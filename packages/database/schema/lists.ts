@@ -25,7 +25,7 @@ export const lists = mySqlTable(
     // splitTeeTime: boolean("splitTeeTime").default(false).notNull(),
     slots: smallint("slots").default(0).notNull(),
     lastUpdatedDateTime: datetime("lastUpdatedDateTime", { mode: "string", fsp: 3 })
-      .default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`)
+      .default(sql`CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)`)
       .notNull(),
   },
   (table) => {
