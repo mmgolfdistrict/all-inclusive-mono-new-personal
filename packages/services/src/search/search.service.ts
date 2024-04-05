@@ -164,8 +164,8 @@ export class SearchService {
         date: teeTimes.providerDate,
         numberOfHoles: bookings.numberOfHoles,
         courseName: courses.name,
-        courseId: bookings.courseId,
-        withCart: bookings.withCart,
+        courseId: teeTimes.courseId,
+        withCart: bookings.includesCart,
         ownerHandle: users.handle,
         favorites: favorites.id,
         firstHandPrice: teeTimes.greenFee,
@@ -182,7 +182,7 @@ export class SearchService {
       .leftJoin(users, eq(users.id, bookings.ownerId))
       .leftJoin(assets, eq(assets.id, users.image))
       .leftJoin(favorites, and(eq(favorites.teeTimeId, bookings.teeTimeId), eq(favorites.userId, userId)))
-      .leftJoin(courses, eq(courses.id, bookings.courseId))
+      .leftJoin(courses, eq(courses.id, teeTimes.courseId))
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
       .where(
         and(eq(bookings.ownerId, ownerId), eq(bookings.teeTimeId, teeTimeId), eq(bookings.isListed, false))
@@ -704,7 +704,7 @@ export class SearchService {
         ownerId: bookings.ownerId,
         teeTimeId: bookings.teeTimeId,
         numberOfHoles: bookings.numberOfHoles,
-        includesCart: bookings.withCart,
+        includesCart: bookings.includesCart,
         isListed: bookings.isListed,
         listingId: lists.id,
         ownerName: users.handle,
@@ -749,10 +749,10 @@ export class SearchService {
         sortPrice === "desc"
           ? desc(lists.listPrice)
           : sortTime === "desc"
-          ? desc(bookings.time)
+          ? desc(teeTimes.time)
           : sortPrice === "asc"
           ? asc(lists.listPrice)
-          : asc(bookings.time)
+          : asc(teeTimes.time)
       );
     // .limit(limit);
     const secoondHandData = await secondHandBookingsQuery.execute().catch((err) => {

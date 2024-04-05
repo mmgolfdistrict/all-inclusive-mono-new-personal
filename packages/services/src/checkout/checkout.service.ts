@@ -8,6 +8,7 @@ import { coursePromoCodeLink } from "@golf-district/database/schema/coursePromoC
 import { customerCarts } from "@golf-district/database/schema/customerCart";
 import { lists } from "@golf-district/database/schema/lists";
 import { promoCodes } from "@golf-district/database/schema/promoCodes";
+import { providers } from "@golf-district/database/schema/providers";
 import { providerCourseLink } from "@golf-district/database/schema/providersCourseLink";
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import { userPromoCodeLink } from "@golf-district/database/schema/userPromoCodeLink";
@@ -313,7 +314,7 @@ export class CheckoutService {
         providerCourseId: providerCourseLink.providerCourseId,
         providerTeeSheetId: providerCourseLink.providerTeeSheetId,
         providerId: teeTimes.soldByProvider,
-        internalId: providerCourseLink.internalId,
+        internalId: providers.internalId,
       })
       .from(teeTimes)
       .leftJoin(
@@ -323,6 +324,7 @@ export class CheckoutService {
           eq(providerCourseLink.providerId, teeTimes.soldByProvider)
         )
       )
+      .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))
       .where(eq(teeTimes.id, item.product_data.metadata.tee_time_id))
       .execute()
       .catch((err) => {
@@ -559,13 +561,14 @@ export class CheckoutService {
     const data = await this.database
       .select({
         id: bookings.id,
-        courseId: bookings.courseId,
+        courseId: teeTimes.courseId,
         teeTimeId: bookings.teeTimeId,
         minimumOfferPrice: bookings.minimumOfferPrice,
       })
       .from(bookings)
       .where(inArray(bookings.id, bookingIds))
       .leftJoin(lists, eq(lists.id, bookings.listId))
+      .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving bookings: ${err}`);

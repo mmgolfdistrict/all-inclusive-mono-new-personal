@@ -261,6 +261,8 @@ export class foreUp extends BaseProvider {
       customerId: string;
       isActive: boolean;
       slotPosition: number;
+      lastUpdatedDateTime: string | null;
+      createdDateTime: string | null;
     }[] = [];
     for (let i = 0; i < slots; i++) {
       bookingSlots.push({
@@ -271,6 +273,8 @@ export class foreUp extends BaseProvider {
         customerId: i === 0 ? customerId : "",
         isActive: true,
         slotPosition: i + 1,
+        lastUpdatedDateTime: null,
+        createdDateTime: null,
       });
     }
     return bookingSlots;

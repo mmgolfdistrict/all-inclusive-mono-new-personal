@@ -16,6 +16,7 @@ import * as donations from "./donations";
 import * as entities from "./entities";
 import * as entityAdmins from "./entityAdmins";
 import * as favorites from "./favorites";
+import * as jobs from "./jobs";
 import * as lists from "./lists";
 import * as notifications from "./notifications";
 import * as offerRead from "./offerRead";
@@ -33,7 +34,6 @@ import * as userProviderCourseLink from "./userProviderCourseLink";
 import * as users from "./users";
 import * as verificationTokens from "./verificationTokens";
 import * as withdrawals from "./withdrawals";
-import * as jobs from "./jobs"
 
 export const schema = {
   ...accounts,
@@ -71,5 +71,5 @@ export const schema = {
   ...appSettings,
   ...providerScheduleDetails,
   ...courseScheduleDetails,
-  ...jobs
+  ...jobs,
 };

@@ -12,6 +12,7 @@ import { donations } from "@golf-district/database/schema/donations";
 import { entities } from "@golf-district/database/schema/entities";
 import { lists } from "@golf-district/database/schema/lists";
 import { promoCodes } from "@golf-district/database/schema/promoCodes";
+import { providers } from "@golf-district/database/schema/providers";
 import { providerCourseLink } from "@golf-district/database/schema/providersCourseLink";
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import { transfers } from "@golf-district/database/schema/transfers";
@@ -313,7 +314,7 @@ export class HyperSwitchWebhookService {
         providerCourseId: providerCourseLink.providerCourseId,
         providerTeeSheetId: providerCourseLink.providerTeeSheetId,
         providerId: teeTimes.soldByProvider,
-        internalId: providerCourseLink.internalId,
+        internalId: providers.internalId,
         providerDate: teeTimes.providerDate,
         holes: teeTimes.numberOfHoles,
       })
@@ -325,6 +326,7 @@ export class HyperSwitchWebhookService {
           eq(providerCourseLink.providerId, teeTimes.soldByProvider)
         )
       )
+      .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))
       .where(eq(teeTimes.id, item.product_data.metadata.tee_time_id))
       .execute()
       .catch((err) => {
@@ -451,7 +453,12 @@ export class HyperSwitchWebhookService {
     return { taxCharge, sensibleCharge, convenienceCharge, charityCharge, taxes };
   };
 
-  handleSecondHandItem = async (item: SecondHandProduct, amountReceived: number, customer_id: string, paymentId: string) => {
+  handleSecondHandItem = async (
+    item: SecondHandProduct,
+    amountReceived: number,
+    customer_id: string,
+    paymentId: string
+  ) => {
     const listingId = item.product_data.metadata.second_hand_id;
 
     const listedSlots = await this.database
@@ -470,34 +477,36 @@ export class HyperSwitchWebhookService {
       .select({
         id: bookings.id,
         ownerId: bookings.ownerId,
-        courseId: bookings.courseId,
+        courseId: teeTimes.courseId,
         providerBookingId: bookings.providerBookingId,
         providerId: teeTimes.soldByProvider,
         providerCourseId: providerCourseLink.providerCourseId,
         providerDate: teeTimes.providerDate,
-        internalId: providerCourseLink.internalId,
+        internalId: providers.internalId,
         providerTeeSheetId: providerCourseLink.providerTeeSheetId,
         teeTimeId: bookings.teeTimeId,
         slotId: bookingslots.slotnumber,
-        time: bookings.time,
-        withCart: bookings.withCart,
+        time: teeTimes.time,
         numberOfHoles: bookings.numberOfHoles,
         includesCart: bookings.includesCart,
-        entityId: bookings.entityId,
+        entityId: teeTimes.entityId,
         purchasedPrice: bookings.purchasedPrice,
         weatherGuaranteeId: bookings.weatherGuaranteeId,
         weatherGuaranteeAmount: bookings.weatherGuaranteeAmount,
+        listId: bookings.listId,
       })
       .from(bookings)
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
       .leftJoin(bookingslots, eq(bookings.id, bookingslots.bookingId))
+      .leftJoin(courses, eq(courses.id, teeTimes.courseId))
       .leftJoin(
         providerCourseLink,
         and(
-          eq(providerCourseLink.courseId, bookings.courseId),
+          eq(providerCourseLink.courseId, teeTimes.courseId),
           eq(providerCourseLink.providerId, teeTimes.soldByProvider)
         )
       )
+      .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))
       .where(eq(bookings.listId, listingId))
       .execute();
 
@@ -512,11 +521,11 @@ export class HyperSwitchWebhookService {
 
     const { provider, token } = await this.providerService.getProviderAndKey(
       firstBooking.internalId!,
-      firstBooking.courseId
+      firstBooking.courseId ?? ""
     );
 
     const buyerCustomer = await this.providerService.findOrCreateCustomer(
-      firstBooking.courseId,
+      firstBooking.courseId ?? "",
       firstBooking.providerId!,
       firstBooking.providerCourseId!,
       customer_id,
@@ -530,7 +539,7 @@ export class HyperSwitchWebhookService {
     }
 
     const sellerCustomer = await this.providerService.findOrCreateCustomer(
-      firstBooking.courseId,
+      firstBooking.courseId ?? "",
       firstBooking.providerId!,
       firstBooking.providerCourseId!,
       firstBooking.ownerId,
@@ -578,7 +587,7 @@ export class HyperSwitchWebhookService {
       .set({
         isDeleted: true,
       })
-      .where(eq(lists.teeTimeId, firstBooking.teeTimeId))
+      .where(eq(lists.id, firstBooking.listId ?? ""))
       .execute();
 
     const newBookings: BookingResponse[] = [];
@@ -682,10 +691,10 @@ export class HyperSwitchWebhookService {
       });
 
     const [customerCart]: any = await this.database
-    .select({ cartId: customerCarts.id })
-    .from(customerCarts)
-    .where(eq(customerCarts.paymentId, paymentId))
-    .execute();
+      .select({ cartId: customerCarts.id })
+      .from(customerCarts)
+      .where(eq(customerCarts.paymentId, paymentId))
+      .execute();
 
     for (const booking of newBookings) {
       const newBooking = booking;
@@ -696,22 +705,20 @@ export class HyperSwitchWebhookService {
         id: bookingId,
         purchasedAt: currentUtcTimestamp(),
         purchasedPrice: newBooking?.data.purchasedFor || 0,
-        time: firstBooking.time,
         providerBookingId: newBooking?.data.id || "",
-        withCart: firstBooking.withCart,
         isListed: false,
         numberOfHoles: firstBooking.numberOfHoles,
         minimumOfferPrice: 0,
         ownerId: booking.data.ownerId || "",
-        courseId: firstBooking.courseId,
+        // courseId: firstBooking.courseId??"",
         teeTimeId: firstBooking.teeTimeId,
         nameOnBooking: newBooking.data.name || "",
         includesCart: firstBooking.includesCart,
         listId: null,
-        entityId: firstBooking.entityId,
+        // entityId: firstBooking.entityId,
         weatherGuaranteeAmount: firstBooking.weatherGuaranteeAmount,
         weatherGuaranteeId: firstBooking.weatherGuaranteeId,
-        cartId: customerCart.cartId
+        cartId: customerCart.cartId,
       });
 
       const bookingSlots =
@@ -721,7 +728,7 @@ export class HyperSwitchWebhookService {
           booking.data.ownerId || "",
           newBooking?.data?.id || "",
           provider.providerId,
-          firstBooking.courseId
+          firstBooking.courseId ?? ""
         )) || [];
 
       for (let i = 0; i < bookingSlots.length; i++) {
@@ -776,7 +783,7 @@ export class HyperSwitchWebhookService {
           transactionId: randomUUID(),
           fromUserId: firstBooking.ownerId || "",
           toUserId: newBooking.data.ownerId ?? "",
-          courseId: firstBooking.courseId,
+          courseId: firstBooking?.courseId ?? "",
           purchasedPrice: newBooking.data.purchasedFor ?? 0,
         });
         await this.database

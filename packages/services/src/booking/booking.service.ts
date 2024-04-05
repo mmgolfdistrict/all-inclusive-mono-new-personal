@@ -7,6 +7,7 @@ import { courses } from "@golf-district/database/schema/courses";
 import type { InsertList } from "@golf-district/database/schema/lists";
 import { lists } from "@golf-district/database/schema/lists";
 import { offers } from "@golf-district/database/schema/offers";
+import { providers } from "@golf-district/database/schema/providers";
 import { providerCourseLink } from "@golf-district/database/schema/providersCourseLink";
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import { transfers } from "@golf-district/database/schema/transfers";
@@ -14,12 +15,12 @@ import { userBookingOffers } from "@golf-district/database/schema/userBookingOff
 import { users } from "@golf-district/database/schema/users";
 import { currentUtcTimestamp, dateToUtcTimestamp } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
+import dayjs from "dayjs";
 import { alias } from "drizzle-orm/mysql-core";
 import type { NotificationService } from "../notification/notification.service";
 import type { HyperSwitchService } from "../payment-processor/hyperswitch.service";
 import type { Customer, ProviderService } from "../tee-sheet-provider/providers.service";
 import type { TokenizeService } from "../token/tokenize.service";
-import dayjs from "dayjs";
 
 interface TeeTimeData {
   courseId: string;
@@ -193,7 +194,7 @@ export class BookingService {
       .leftJoin(bookingslots, eq(bookingslots.bookingId, bookings.id))
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
       .innerJoin(courses, eq(courses.id, teeTimes.courseId))
-      .leftJoin(lists, and(eq(lists.teeTimeId, teeTimes.id), eq(lists.userId, userId)))
+      .leftJoin(lists, and(eq(bookings.teeTimeId, teeTimes.id), eq(lists.userId, userId)))
       .leftJoin(assets, eq(assets.id, courses.logoId))
       // .leftJoin(userBookingOffers, eq(userBookingOffers.bookingId, bookings.id))
       .where(or(eq(transfers.toUserId, userId), eq(transfers.fromUserId, userId)))
@@ -270,7 +271,7 @@ export class BookingService {
       .innerJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
       .innerJoin(courses, eq(courses.id, teeTimes.courseId))
       .innerJoin(assets, eq(assets.id, courses.logoId))
-      .innerJoin(lists, and(eq(lists.teeTimeId, teeTimes.id), eq(lists.isDeleted, false)))
+      .innerJoin(lists, and(eq(lists.id, bookings.listId), eq(lists.isDeleted, false)))
       .where(
         and(
           eq(bookings.isListed, true),
@@ -332,7 +333,7 @@ export class BookingService {
     const data = await this.database
       .select({
         bookingId: bookings.id,
-        courseId: bookings.courseId,
+        courseId: teeTimes.courseId,
         purchasedById: transfers.fromUserId,
         purchasedByName: users.name,
         purchaseAmount: transfers.amount,
@@ -344,6 +345,7 @@ export class BookingService {
         },
       })
       .from(bookings)
+      .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
       .where(eq(bookings.teeTimeId, teeTimeId))
       .innerJoin(transfers, eq(transfers.bookingId, bookings.id))
       .innerJoin(users, eq(users.id, transfers.toUserId))
@@ -441,7 +443,7 @@ export class BookingService {
       .innerJoin(courses, eq(courses.id, teeTimes.courseId))
       .leftJoin(
         lists,
-        and(eq(lists.teeTimeId, teeTimes.id), eq(lists.isDeleted, false), eq(bookings.ownerId, lists.userId))
+        and(eq(lists.id, bookings.listId), eq(lists.isDeleted, false), eq(bookings.ownerId, lists.userId))
       )
       .leftJoin(assets, eq(assets.id, courses.logoId))
       .leftJoin(userBookingOffers, eq(userBookingOffers.bookingId, bookings.id))
@@ -676,11 +678,12 @@ export class BookingService {
     const ownedBookings = await this.database
       .select({
         id: bookings.id,
-        courseId: bookings.courseId,
+        courseId: teeTimes.courseId,
         teeTimeId: bookings.teeTimeId,
         isListed: bookings.isListed,
       })
       .from(bookings)
+      .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
       .where(and(eq(bookings.ownerId, userId), inArray(bookings.id, bookingIds)))
       .execute()
       .catch((err) => {
@@ -720,20 +723,21 @@ export class BookingService {
       this.logger.warn(`Booking ${bookingId} not found.`);
       throw new Error(`Booking ${bookingId} not found.`);
     }
-    const courseId = firstBooking.courseId;
+    const courseId = firstBooking.courseId ?? "";
 
     const toCreate: InsertList = {
       id: randomUUID(),
       userId: userId,
       listPrice: listPrice,
-      teeTimeId: firstBooking?.teeTimeId,
-      endTime: dateToUtcTimestamp(endTime),
-      courseId: courseId,
-      status: "PENDING",
+      // teeTimeId: firstBooking?.teeTimeId,
+      // endTime: dateToUtcTimestamp(endTime),
+      // courseId: courseId,
+      // status: "PENDING",
       isDeleted: false,
-      splitTeeTime: false,
+      // splitTeeTime: false,
       slots,
     };
+    debugger;
     await this.database
       .transaction(async (transaction) => {
         for (const id of bookingIds) {
@@ -793,7 +797,7 @@ export class BookingService {
       .select({
         id: lists.id,
         userId: lists.userId,
-        status: lists.status,
+        // status: lists.status,
         isDeleted: lists.isDeleted,
       })
       .from(lists)
@@ -808,10 +812,10 @@ export class BookingService {
       this.logger.warn(`Listing not found. Either listing does not exist or user does not own listing.`);
       throw new Error("Owned listing not found");
     }
-    if (listing.status !== "PENDING") {
-      this.logger.warn(`Listing is not pending.`);
-      throw new Error("Listing is not pending");
-    }
+    // if (listing.status !== "PENDING") {
+    //   this.logger.warn(`Listing is not pending.`);
+    //   throw new Error("Listing is not pending");
+    // }
     if (listing.isDeleted) {
       this.logger.warn(`Listing is already deleted.`);
       throw new Error("Listing is already deleted");
@@ -893,7 +897,7 @@ export class BookingService {
       .select({
         id: lists.id,
         userId: lists.userId,
-        status: lists.status,
+        // status: lists.status,
         isDeleted: lists.isDeleted,
       })
       .from(lists)
@@ -908,10 +912,10 @@ export class BookingService {
       this.logger.warn(`Listing not found. Either listing does not exist or user does not own listing.`);
       throw new Error("Owned listing not found");
     }
-    if (listing.status !== "PENDING") {
-      this.logger.warn(`Listing is not pending.`);
-      throw new Error("Listing is not pending");
-    }
+    // if (listing.status !== "PENDING") {
+    //   this.logger.warn(`Listing is not pending.`);
+    //   throw new Error("Listing is not pending");
+    // }
     if (listing.isDeleted) {
       this.logger.warn(`Listing is already deleted.`);
       throw new Error("Listing is already deleted");
@@ -919,10 +923,11 @@ export class BookingService {
     const ownedBookings = await this.database
       .select({
         id: bookings.id,
-        courseId: bookings.courseId,
+        courseId: teeTimes.courseId,
         teeTimeId: bookings.teeTimeId,
       })
       .from(bookings)
+      .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
       .where(and(eq(bookings.ownerId, userId), inArray(bookings.id, bookingIds)))
       .execute()
       .catch((err) => {
@@ -964,12 +969,12 @@ export class BookingService {
       id: randomUUID(),
       userId: userId,
       listPrice: listPrice,
-      teeTimeId: ownedBookings[0].teeTimeId,
-      endTime: dateToUtcTimestamp(endTime),
-      courseId: ownedBookings[0].courseId,
-      status: "PENDING",
+      // teeTimeId: ownedBookings[0].teeTimeId,
+      // endTime: dateToUtcTimestamp(endTime),
+      // courseId: ownedBookings[0].courseId??"",
+      // status: "PENDING",
       isDeleted: false,
-      splitTeeTime: false,
+      // splitTeeTime: false,
     };
     await this.database
       .transaction(async (trx) => {
@@ -1073,12 +1078,13 @@ export class BookingService {
     const data = await this.database
       .select({
         id: bookings.id,
-        courseId: bookings.courseId,
+        courseId: teeTimes.courseId,
         teeTimeId: bookings.teeTimeId,
         minimumOfferPrice: bookings.minimumOfferPrice,
         ownerId: bookings.ownerId,
       })
       .from(bookings)
+      .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
       .where(inArray(bookings.id, bookingIds))
       .leftJoin(lists, eq(lists.id, bookings.listId))
       .execute()
@@ -1091,7 +1097,7 @@ export class BookingService {
       throw new Error("No bookings found");
     }
     const firstTeeTime = data[0].teeTimeId;
-    const courseId = data[0].courseId;
+    const courseId = data[0].courseId ?? "";
     if (!data.every((booking) => booking.teeTimeId === firstTeeTime)) {
       throw new Error("All bookings must be under the same tee time.");
     }
@@ -1480,7 +1486,7 @@ export class BookingService {
       .innerJoin(bookings, eq(bookings.id, userBookingOffers.bookingId))
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
       .leftJoin(users, eq(users.id, offers.buyerId))
-      .innerJoin(courses, eq(courses.id, bookings.courseId))
+      .innerJoin(courses, eq(courses.id, teeTimes.courseId))
       .leftJoin(courseImage, eq(courseImage.courseId, courses.logoId))
       .leftJoin(userImage, eq(userImage.id, users.image))
       .leftJoin(transfers, eq(transfers.bookingId, bookings.id))
@@ -1621,7 +1627,7 @@ export class BookingService {
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
       .innerJoin(userBooking, eq(userBooking.teeTimeId, bookings.teeTimeId))
       .leftJoin(users, eq(users.id, offers.buyerId))
-      .innerJoin(courses, eq(courses.id, bookings.courseId))
+      .innerJoin(courses, eq(courses.id, teeTimes.courseId))
       .leftJoin(courseImage, eq(courseImage.id, courses.logoId))
       .leftJoin(userImage, eq(userImage.id, users.image))
       .leftJoin(transfers, eq(transfers.bookingId, bookings.id))
@@ -1759,7 +1765,7 @@ export class BookingService {
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
       .leftJoin(userBooking, eq(userBooking.ownerId, userId))
       .leftJoin(users, eq(users.id, offers.buyerId))
-      .leftJoin(courses, eq(courses.id, bookings.courseId))
+      .leftJoin(courses, eq(courses.id, teeTimes.courseId))
       .leftJoin(courseImage, eq(courseImage.id, courses.logoId))
       .leftJoin(userImage, eq(userImage.id, users.image))
       .leftJoin(transfers, eq(transfers.bookingId, bookings.id))
@@ -1855,7 +1861,7 @@ export class BookingService {
       .select({
         id: bookings.id,
         nameOnBooking: bookings.nameOnBooking,
-        internalId: providerCourseLink.internalId,
+        internalId: providers.internalId,
         providerCourseId: providerCourseLink.providerCourseId,
         providerTeeSheetId: providerCourseLink.providerTeeSheetId,
         courseId: teeTimes.courseId,
@@ -1867,10 +1873,11 @@ export class BookingService {
       .leftJoin(
         providerCourseLink,
         and(
-          eq(providerCourseLink.courseId, bookings.courseId),
+          eq(providerCourseLink.courseId, teeTimes.courseId),
           eq(providerCourseLink.providerId, teeTimes.soldByProvider)
         )
       )
+      .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))
       .where(and(eq(bookings.ownerId, userId), eq(bookings.id, bookingId)))
       .execute()
       .catch((err) => {

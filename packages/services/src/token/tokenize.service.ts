@@ -83,6 +83,7 @@ export class TokenizeService {
   ): Promise<void> {
     this.logger.info(`tokenizeBooking tokenizing booking id: ${providerTeeTimeId} for user: ${userId}`);
     //@TODO add this to the transaction
+
     const [existingTeeTime] = await this.database
       .select({
         id: teeTimes.id,
@@ -140,20 +141,20 @@ export class TokenizeService {
       id: bookingId,
       purchasedAt: currentUtcTimestamp(),
       purchasedPrice: purchasePrice,
-      time: existingTeeTime.date,
+      // time: existingTeeTime.date,
       providerBookingId: providerBookingId,
-      withCart: withCart,
+      // withCart: withCart,
       isListed: false,
       numberOfHoles: existingTeeTime.numberOfHoles,
       minimumOfferPrice: 0,
       ownerId: userId,
-      courseId: existingTeeTime.courseId,
+      // courseId: existingTeeTime.courseId,
       teeTimeId: existingTeeTime.id,
       nameOnBooking: "Guest",
       includesCart: withCart,
       listId: null,
-      entityId: existingTeeTime.entityId,
-      cartId: customerCartData?.cartId
+      // entityId: existingTeeTime.entityId,
+      cartId: customerCartData?.cartId,
     });
 
     transfersToCreate.push({
@@ -321,9 +322,10 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       .select({
         id: bookings.id,
         ownerId: bookings.ownerId,
-        courseId: bookings.courseId,
+        courseId: teeTimes.courseId,
       })
       .from(bookings)
+      .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
       .where(and(inArray(bookings.id, bookingIds), eq(bookings.ownerId, userId)))
       .execute()
       .catch((err) => {
@@ -341,61 +343,61 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
     }
     const transactionId = randomUUID();
     //transfer the bookings
-    await this.database.transaction(async (tx) => {
-      for (const booking of bookingsToTransfer) {
-        await tx
-          .update(bookings)
-          .set({
-            ownerId: newOwnerId,
-            nameOnBooking: "Guest",
-          })
-          .where(eq(bookings.id, booking.id))
-          .execute()
-          .catch((err) => {
-            this.logger.error(err);
-            tx.rollback();
-          });
-        await tx
-          .insert(transfers)
-          .values({
-            id: randomUUID(),
-            transactionId: transactionId,
-            amount: price,
-            bookingId: booking.id,
-            fromUserId: userId,
-            toUserId: newOwnerId,
-            courseId: booking.courseId,
-            purchasedPrice: price,
-          })
-          .execute()
-          .catch((err) => {
-            this.logger.error(err);
-            tx.rollback();
-          });
-      }
-    });
+    // await this.database.transaction(async (tx) => {
+    //   for (const booking of bookingsToTransfer) {
+    //     await tx
+    //       .update(bookings)
+    //       .set({
+    //         ownerId: newOwnerId,
+    //         nameOnBooking: "Guest",
+    //       })
+    //       .where(eq(bookings.id, booking.id))
+    //       .execute()
+    //       .catch((err) => {
+    //         this.logger.error(err);
+    //         tx.rollback();
+    //       });
+    //     await tx
+    //       .insert(transfers)
+    //       .values({
+    //         id: randomUUID(),
+    //         transactionId: transactionId,
+    //         amount: price,
+    //         bookingId: booking.id,
+    //         fromUserId: userId,
+    //         toUserId: newOwnerId,
+    //         courseId: booking.courseId??"",
+    //         purchasedPrice: price,
+    //       })
+    //       .execute()
+    //       .catch((err) => {
+    //         this.logger.error(err);
+    //         tx.rollback();
+    //       });
+    //   }
+    // });
 
     const message1 = `
     ${bookingIds.length} tee times have been transferred to you This is to the new owner of the bookings the provider ids: ${bookingIds}
     `;
 
-    await this.notificationService.createNotification(
-      newOwnerId,
-      "TeeTimes Purchased",
-      message1,
-      bookingsToTransfer[0]?.courseId
-    );
+    // await this.notificationService.createNotification(
+    //   newOwnerId,
+    //   "TeeTimes Purchased",
+    //   message1,
+    //   bookingsToTransfer[0]?.courseId
+    // );
 
     const message2 = `
     ${bookingIds.length} bookings have been purchased this is to the old owner of the bookings
     Transfers bookings: 
     `;
-    await this.notificationService.createNotification(
-      userId,
-      "TeeTimes Sold",
-      message2,
-      bookingsToTransfer[0]?.courseId
-    );
+    // await this.notificationService.createNotification(
+    //   userId,
+    //   "TeeTimes Sold",
+    //   message2,
+    //   bookingsToTransfer[0]?.courseId
+    // );
   };
 
   /**

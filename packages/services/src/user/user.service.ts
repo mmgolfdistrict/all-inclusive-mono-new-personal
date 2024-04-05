@@ -1121,7 +1121,7 @@ export class UserService {
       userProfileVisibility = userProfile?.userProfileVisibility || "PUBLIC"; // Default to PUBLIC if visibility is undefined
     }
     // Building the where clause
-    let whereClause = and(eq(bookings.courseId, courseId), gt(teeTimes.date, currentUtcTimestamp()));
+    let whereClause = and(eq(teeTimes.courseId, courseId), gt(teeTimes.date, currentUtcTimestamp()));
 
     if (userProfileVisibility === "PUBLIC" && callerId !== userId) {
       this.logger.debug("Profile is PUBLIC");
@@ -1150,8 +1150,8 @@ export class UserService {
         date: teeTimes.providerDate,
         numberOfHoles: bookings.numberOfHoles,
         courseName: courses.name,
-        courseId: bookings.courseId,
-        withCart: bookings.withCart,
+        courseId: teeTimes.courseId,
+        withCart: bookings.includesCart,
         ownerHandle: users.handle,
         favorites: favorites.id,
         firstHandPrice: teeTimes.greenFee,
@@ -1170,12 +1170,12 @@ export class UserService {
       .from(bookings)
       .leftJoin(users, eq(users.id, bookings.ownerId))
       .leftJoin(assets, eq(assets.id, users.image))
-      .leftJoin(lists, eq(lists.teeTimeId, bookings.teeTimeId))
+      .leftJoin(lists, eq(lists.id, bookings.listId))
       .leftJoin(favorites, and(eq(favorites.teeTimeId, bookings.teeTimeId), eq(favorites.userId, userId)))
-      .leftJoin(courses, eq(courses.id, bookings.courseId))
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
+      .leftJoin(courses, eq(courses.id, teeTimes.courseId))
       .where(whereClause)
-      .orderBy(asc(bookings.time))
+      .orderBy(asc(bookings.purchasedAt))
       .execute();
 
     if (!upcomingTeeTimeData || upcomingTeeTimeData.length === 0) {
@@ -1257,7 +1257,7 @@ export class UserService {
         teeTimeId: bookings.teeTimeId,
         date: teeTimes.providerDate,
         courseName: courses.name,
-        courseId: bookings.courseId,
+        courseId: teeTimes.courseId,
         courseImage: {
           key: assets.key,
           cdnUrl: assets.cdn,
@@ -1265,17 +1265,17 @@ export class UserService {
         },
       })
       .from(bookings)
-      .leftJoin(courses, eq(courses.id, bookings.courseId))
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
+      .leftJoin(courses, eq(courses.id, teeTimes.courseId))
       .leftJoin(assets, eq(assets.id, courses.logoId))
       .where(
         and(
           eq(courses.entityId, entity.entityId),
           or(eq(bookings.ownerId, userId), eq(bookings.nameOnBooking, userId)),
-          lt(bookings.time, currentUtcTimestamp())
+          lt(bookings.purchasedAt, currentUtcTimestamp())
         )
       )
-      .orderBy(desc(bookings.time))
+      .orderBy(desc(bookings.purchasedAt))
       .execute();
 
     if (!teeTimeHistoryData || teeTimeHistoryData.length === 0) {
@@ -1289,7 +1289,7 @@ export class UserService {
           teeTimeId: booking.teeTimeId,
           date: booking.date,
           courseName: booking.courseName,
-          courseId: booking.courseId,
+          courseId: booking.courseId ?? "",
           courseImage: booking.courseImage
             ? `https://${booking.courseImage.cdnUrl}/${booking.courseImage.key}.${booking.courseImage.extension}`
             : "/defaults/default-course.webp",

@@ -1,5 +1,5 @@
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
   boolean,
   datetime,
@@ -35,8 +35,8 @@ export const courses = mySqlTable(
     forecastApi: text("forecastApi"),
     privacyPolicy: text("privacyPolicy"),
     termsAndConditions: text("termsAndConditions"),
-    convenanceFees: int("convenanceFees"),
-    markup: int("markup").default(0),
+    convenanceFees: int("convenientFees"),
+    markup: int("markupFeesFixed").default(0),
     openTime: datetime("openTime", { mode: "string", fsp: 3 }),
     closeTime: datetime("closeTime", { mode: "string", fsp: 3 }),
     logoId: varchar("logoId", { length: 36 }),
@@ -44,15 +44,21 @@ export const courses = mySqlTable(
     providerId: varchar("providerId", { length: 36 }),
     furthestDayToBook: int("furthestDayToBook").default(0).notNull(),
     timezoneCorrection: int("timezoneCorrection").default(0).notNull(),
-    supportCharity: boolean("supportCharity").default(false).notNull(),
-    supportSensibleWeather: boolean("supportSensitiveWeather").default(false).notNull(),
-    allowAuctions: int("allowAuctions").default(0),
+    supportCharity: boolean("supportsCharity").default(false).notNull(),
+    supportSensibleWeather: boolean("supportsWeatherGuarantee").default(false).notNull(),
+    allowAuctions: int("supportsAuctions").default(0),
     isDeleted: boolean("isDeleted").default(false).notNull(),
     supportsOffers: boolean("supportsOffers").default(false),
     supportsWatchlist: boolean("supportsWatchlist").default(false),
     supportsPromocode: boolean("supportsPromocode").default(false),
     buyerFee: int("buyerFee").default(1).notNull(),
     sellerFee: int("sellerFee").default(1).notNull(),
+    lastUpdatedDateTime: datetime("lastUpdatedDateTime", { mode: "string", fsp: 3 })
+      .default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`)
+      .notNull(),
+    createdDateTime: datetime("createdDateTime", { mode: "string", fsp: 3 })
+      .default(sql`CURRENT_TIMESTAMP(3)`)
+      .notNull(),
   },
   (table) => {
     return {

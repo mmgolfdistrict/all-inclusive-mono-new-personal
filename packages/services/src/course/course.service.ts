@@ -2,6 +2,7 @@ import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
 import { and, asc, desc, eq, isNull, max, min, sql } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
+import { bookings } from "@golf-district/database/schema/bookings";
 import { charities } from "@golf-district/database/schema/charities";
 import { charityCourseLink } from "@golf-district/database/schema/charityCourseLink";
 import { courseAssets } from "@golf-district/database/schema/courseAssets";
@@ -89,7 +90,9 @@ export class CourseService extends DomainService {
         lowestListedTeeTime: min(lists.listPrice),
       })
       .from(lists)
-      .where(and(eq(lists.courseId, courseId), eq(lists.isDeleted, false)))
+      .innerJoin(bookings, eq(bookings.listId, lists.id))
+      .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
+      .where(and(eq(teeTimes.courseId, courseId), eq(lists.isDeleted, false)))
       .limit(1)
       .execute();
     //Get the highest and lowest primary sale tee time prices
