@@ -463,6 +463,8 @@ export class HyperSwitchWebhookService {
         return acc + i.price;
       }, 0);
 
+      console.log('@@@@', primaryGreenFeeCharge, taxCharge , sensibleCharge , charityCharge , convenienceCharge, total)
+
     return { primaryGreenFeeCharge, taxCharge, sensibleCharge, convenienceCharge, charityCharge, taxes, total, cartId: customerCartData?.cartId, charityId, weatherQuoteId };
   };
 
@@ -506,8 +508,7 @@ export class HyperSwitchWebhookService {
         purchasedPrice: bookings.purchasedPrice,
         weatherGuaranteeId: bookings.weatherGuaranteeId,
         weatherGuaranteeAmount: bookings.weatherGuaranteeAmount,
-        listId: bookings.listId,
-        playerCount: bookings.playerCount
+        listId: bookings.listId
       })
       .from(bookings)
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -704,7 +705,7 @@ export class HyperSwitchWebhookService {
         return [];
       });
 
-    const { primaryGreenFeeCharge, taxes, sensibleCharge, charityCharge, total, cartId, charityId, weatherQuoteId } = await this.getCartData({
+    const { taxes, sensibleCharge, charityCharge, total, cartId, charityId, weatherQuoteId } = await this.getCartData({
       courseId: existingTeeTime?.courseId,
       ownerId: customer_id,
       paymentId
@@ -733,9 +734,9 @@ export class HyperSwitchWebhookService {
         weatherGuaranteeAmount: firstBooking.weatherGuaranteeAmount,
         weatherGuaranteeId: firstBooking.weatherGuaranteeId,
         cartId: cartId,
-        playerCount: firstBooking.playerCount,
-        greenFeePerPlayers: ((primaryGreenFeeCharge / firstBooking.playerCount) * 100)|| 0,
-        taxesPerPlayer: ((taxes / firstBooking.playerCount) * 100) || 0,
+        playerCount: listedSlotsCount || 0,
+        greenFeePerPlayers: listPrice && listedSlotsCount ? listPrice / listedSlotsCount : 0,
+        taxesPerPlayer: ((taxes / (listedSlotsCount || 0)) * 100) || 0,
         charityId: charityId || null,
         totalCharityAmount: (charityCharge * 100) || 0,
         totalAmount: (total * 100) || 0,
@@ -777,7 +778,6 @@ export class HyperSwitchWebhookService {
           );
         }
       }
-      console.log("%%% second time", bookingsToCreate);
 
       await this.database.transaction(async (tx) => {
         //create each booking

@@ -254,7 +254,6 @@ export class TokenizeService {
         );
       }
     }
-    console.log("%%% first time", bookingsToCreate);
     //create all booking in a transaction to ensure atomicity
     await this.database.transaction(async (tx) => {
       //create each booking
@@ -323,6 +322,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
         })}` || "-",
       SensibleWeatherIncluded: sensibleCharge ? "Yes" : "No",
       PurchasedFrom: existingTeeTime.courseName || "-",
+      PlayerCount: players || 0
     };
 
     await this.notificationService.createNotification(
