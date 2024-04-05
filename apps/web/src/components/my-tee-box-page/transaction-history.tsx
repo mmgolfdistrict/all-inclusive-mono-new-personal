@@ -34,8 +34,8 @@ export const TransactionHistory = () => {
     );
   const [selectedTxn, setSelectedTxn] = useState<TxnHistoryType | null>(null);
 
-  function sortByDate(objectOfObjects: TxnHistoryType[]) {
-    const arrayOfObjects: TxnHistoryType[] = objectOfObjects; //Object.values(objectOfObjects);
+  function sortByDate(objectOfObjects: Record<string, TxnHistoryType>) {
+    const arrayOfObjects: TxnHistoryType[] = Object.values(objectOfObjects);
     arrayOfObjects.sort((a, b) => {
       const dateA = Number(new Date(a.date));
       const dateB = Number(new Date(b.date));
@@ -50,7 +50,8 @@ export const TransactionHistory = () => {
     // return Object.keys(data).map((key) => {
     //   return data[key] as TxnHistoryType;
     // });
-    return sortByDate(data as TxnHistoryType[]);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    return sortByDate(data as any);
   }, [data]);
 
   // const loadMore = () => {
