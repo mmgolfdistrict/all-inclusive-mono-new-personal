@@ -34,7 +34,10 @@ export class TokenizeService {
    * @example
    * const tokenizeService = new TokenizeService(database);
    */
-  constructor(private readonly database: Db, private readonly notificationService: NotificationService) {}
+  constructor(
+    private readonly database: Db,
+    private readonly notificationService: NotificationService
+  ) {}
   /**
    * Tokenize a booking for a user. This function either books an existing tee time or creates a new one based on the provided details.
    *
@@ -83,7 +86,7 @@ export class TokenizeService {
   ): Promise<void> {
     this.logger.info(`tokenizeBooking tokenizing booking id: ${providerTeeTimeId} for user: ${userId}`);
     //@TODO add this to the transaction
-    debugger
+
     const [existingTeeTime] = await this.database
       .select({
         id: teeTimes.id,
@@ -154,7 +157,7 @@ export class TokenizeService {
       includesCart: withCart,
       listId: null,
       // entityId: existingTeeTime.entityId,
-      cartId: customerCartData?.cartId
+      cartId: customerCartData?.cartId,
     });
 
     transfersToCreate.push({
@@ -325,7 +328,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
         courseId: teeTimes.courseId,
       })
       .from(bookings)
-      .leftJoin(teeTimes,eq(teeTimes.id,bookings.teeTimeId))
+      .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
       .where(and(inArray(bookings.id, bookingIds), eq(bookings.ownerId, userId)))
       .execute()
       .catch((err) => {

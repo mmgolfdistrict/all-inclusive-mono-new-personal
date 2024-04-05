@@ -1289,7 +1289,7 @@ export class UserService {
           teeTimeId: booking.teeTimeId,
           date: booking.date,
           courseName: booking.courseName,
-          courseId: booking.courseId??"",
+          courseId: booking.courseId ?? "",
           courseImage: booking.courseImage
             ? `https://${booking.courseImage.cdnUrl}/${booking.courseImage.key}.${booking.courseImage.extension}`
             : "/defaults/default-course.webp",

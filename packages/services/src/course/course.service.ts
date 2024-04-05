@@ -2,6 +2,7 @@ import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
 import { and, asc, desc, eq, isNull, max, min, sql } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
+import { bookings } from "@golf-district/database/schema/bookings";
 import { charities } from "@golf-district/database/schema/charities";
 import { charityCourseLink } from "@golf-district/database/schema/charityCourseLink";
 import { courseAssets } from "@golf-district/database/schema/courseAssets";
@@ -13,7 +14,6 @@ import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import { getApexDomain, validDomainRegex } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
 import { DomainService } from "../domain/domain.service";
-import { bookings } from "@golf-district/database/schema/bookings";
 
 /**
  * Service handling course-related operations.

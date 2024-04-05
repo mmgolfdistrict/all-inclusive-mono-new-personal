@@ -7,6 +7,7 @@ import { courses } from "@golf-district/database/schema/courses";
 import type { InsertList } from "@golf-district/database/schema/lists";
 import { lists } from "@golf-district/database/schema/lists";
 import { offers } from "@golf-district/database/schema/offers";
+import { providers } from "@golf-district/database/schema/providers";
 import { providerCourseLink } from "@golf-district/database/schema/providersCourseLink";
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import { transfers } from "@golf-district/database/schema/transfers";
@@ -14,13 +15,12 @@ import { userBookingOffers } from "@golf-district/database/schema/userBookingOff
 import { users } from "@golf-district/database/schema/users";
 import { currentUtcTimestamp, dateToUtcTimestamp } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
+import dayjs from "dayjs";
 import { alias } from "drizzle-orm/mysql-core";
 import type { NotificationService } from "../notification/notification.service";
 import type { HyperSwitchService } from "../payment-processor/hyperswitch.service";
 import type { Customer, ProviderService } from "../tee-sheet-provider/providers.service";
 import type { TokenizeService } from "../token/tokenize.service";
-import dayjs from "dayjs";
-import { providers } from "@golf-district/database/schema/providers";
 
 interface TeeTimeData {
   courseId: string;
@@ -345,7 +345,7 @@ export class BookingService {
         },
       })
       .from(bookings)
-      .leftJoin(teeTimes,eq(teeTimes.id,bookings.teeTimeId))
+      .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
       .where(eq(bookings.teeTimeId, teeTimeId))
       .innerJoin(transfers, eq(transfers.bookingId, bookings.id))
       .innerJoin(users, eq(users.id, transfers.toUserId))
@@ -683,7 +683,7 @@ export class BookingService {
         isListed: bookings.isListed,
       })
       .from(bookings)
-      .leftJoin(teeTimes,eq(teeTimes.id,bookings.teeTimeId))
+      .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
       .where(and(eq(bookings.ownerId, userId), inArray(bookings.id, bookingIds)))
       .execute()
       .catch((err) => {
@@ -723,7 +723,7 @@ export class BookingService {
       this.logger.warn(`Booking ${bookingId} not found.`);
       throw new Error(`Booking ${bookingId} not found.`);
     }
-    const courseId = firstBooking.courseId??"";
+    const courseId = firstBooking.courseId ?? "";
 
     const toCreate: InsertList = {
       id: randomUUID(),
@@ -737,6 +737,7 @@ export class BookingService {
       // splitTeeTime: false,
       slots,
     };
+    debugger;
     await this.database
       .transaction(async (transaction) => {
         for (const id of bookingIds) {
@@ -926,7 +927,7 @@ export class BookingService {
         teeTimeId: bookings.teeTimeId,
       })
       .from(bookings)
-      .leftJoin(teeTimes,eq(teeTimes.id,bookings.teeTimeId))
+      .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
       .where(and(eq(bookings.ownerId, userId), inArray(bookings.id, bookingIds)))
       .execute()
       .catch((err) => {
@@ -1083,7 +1084,7 @@ export class BookingService {
         ownerId: bookings.ownerId,
       })
       .from(bookings)
-      .leftJoin(teeTimes,eq(teeTimes.id,bookings.teeTimeId))
+      .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
       .where(inArray(bookings.id, bookingIds))
       .leftJoin(lists, eq(lists.id, bookings.listId))
       .execute()
@@ -1096,7 +1097,7 @@ export class BookingService {
       throw new Error("No bookings found");
     }
     const firstTeeTime = data[0].teeTimeId;
-    const courseId = data[0].courseId??"";
+    const courseId = data[0].courseId ?? "";
     if (!data.every((booking) => booking.teeTimeId === firstTeeTime)) {
       throw new Error("All bookings must be under the same tee time.");
     }
@@ -1876,7 +1877,7 @@ export class BookingService {
           eq(providerCourseLink.providerId, teeTimes.soldByProvider)
         )
       )
-      .leftJoin(providers,eq(providers.id,providerCourseLink.providerId))
+      .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))
       .where(and(eq(bookings.ownerId, userId), eq(bookings.id, bookingId)))
       .execute()
       .catch((err) => {
