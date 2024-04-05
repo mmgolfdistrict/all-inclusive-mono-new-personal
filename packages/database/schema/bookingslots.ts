@@ -12,7 +12,7 @@ export const bookingslots = mySqlTable("bookingSlots", {
   isActive: boolean("isActive").default(true).notNull(),
   slotPosition: smallint("slotPosition").default(0),
   lastUpdatedDateTime: datetime("lastUpdatedDateTime", { mode: "string", fsp: 3 }).default(
-    sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`
+    sql`CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)`
   ),
   createdDateTime: datetime("createdDateTime", { mode: "string", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
 });
