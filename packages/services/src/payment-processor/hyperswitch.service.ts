@@ -2,8 +2,8 @@
 import Logger from "@golf-district/shared/src/logger";
 import HyperSwitch from "@juspay-tech/hyper-node";
 import type pino from "pino";
-import type { CustomerDetails } from "./types/hyperSwitch.types";
 import { UpdatePayment } from "../checkout/types";
+import type { CustomerDetails } from "./types/hyperSwitch.types";
 
 /**
  * Service for interacting with the HyperSwitch API.

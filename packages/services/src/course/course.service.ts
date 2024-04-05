@@ -13,6 +13,7 @@ import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import { getApexDomain, validDomainRegex } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
 import { DomainService } from "../domain/domain.service";
+import { bookings } from "@golf-district/database/schema/bookings";
 
 /**
  * Service handling course-related operations.
@@ -68,6 +69,7 @@ export class CourseService extends DomainService {
         furthestDayToBook: courses.furthestDayToBook,
         allowAuctions: courses.allowAuctions,
         supportsOffers: courses.supportsOffers,
+        supportsWatchlist: courses.supportsWatchlist,
         buyerFee: courses.buyerFee,
         sellerFee: courses.sellerFee,
       })
@@ -87,7 +89,9 @@ export class CourseService extends DomainService {
         lowestListedTeeTime: min(lists.listPrice),
       })
       .from(lists)
-      .where(and(eq(lists.courseId, courseId), eq(lists.isDeleted, false)))
+      .innerJoin(bookings,eq(bookings.listId,lists.id))
+      .leftJoin(teeTimes,eq(teeTimes.id,bookings.teeTimeId))
+      .where(and(eq(teeTimes.courseId, courseId), eq(lists.isDeleted, false)))
       .limit(1)
       .execute();
     //Get the highest and lowest primary sale tee time prices

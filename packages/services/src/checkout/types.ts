@@ -26,8 +26,8 @@ export interface CustomerCart {
 }
 
 export interface UpdatePayment {
-  currency: string,
-  amount: number,
+  currency: string;
+  amount: number;
 }
 
 export type ProductData =

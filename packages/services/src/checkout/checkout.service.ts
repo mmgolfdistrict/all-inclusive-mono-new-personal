@@ -35,6 +35,7 @@ import type {
   TaxProduct,
 } from "./types";
 import { CartValidationErrors } from "./types";
+import { providers } from "@golf-district/database/schema/providers";
 
 /**
  * Configuration options for the CheckoutService.
@@ -106,10 +107,7 @@ export class CheckoutService {
    * };
    * const checkoutSession = await checkoutService.buildCheckoutSession(userId, customerCart);
    */
-  buildCheckoutSession = async (
-    userId: string,
-    customerCartData: CustomerCart,
-  ) => {
+  buildCheckoutSession = async (userId: string, customerCartData: CustomerCart) => {
     const { paymentId } = customerCartData;
     let data = {};
     // const errors = await this.validateCartItems(customerCart);
@@ -197,17 +195,15 @@ export class CheckoutService {
 
     return {
       clientSecret: paymentIntent.client_secret,
-      paymentId: paymentIntent.payment_id
+      paymentId: paymentIntent.payment_id,
     };
   };
 
-  updateCheckoutSession = async (
-    userId: string,
-    customerCartData: CustomerCart
-  ) => {
+  updateCheckoutSession = async (userId: string, customerCartData: CustomerCart) => {
     const { paymentId, ...customerCart } = customerCartData;
 
-    const total = customerCart.cart.filter(({ product_data }) => product_data.metadata.type !== "markup")
+    const total = customerCart.cart
+      .filter(({ product_data }) => product_data.metadata.type !== "markup")
       .reduce((acc, item) => {
         return acc + item.price;
       }, 0);
@@ -223,9 +219,11 @@ export class CheckoutService {
         throw new Error(`Error updating payment intent: ${err}`);
       });
 
-    await this.database.update(customerCarts).set({
-      cart: customerCart,
-    })
+    await this.database
+      .update(customerCarts)
+      .set({
+        cart: customerCart,
+      })
       .where(and(eq(customerCarts.paymentId, paymentId || ""), eq(customerCarts.userId, userId)))
       .execute()
       .catch((err) => {
@@ -235,7 +233,7 @@ export class CheckoutService {
 
     return {
       clientSecret: paymentIntent.client_secret,
-      paymentId: paymentIntent.payment_id
+      paymentId: paymentIntent.payment_id,
     };
   };
 
@@ -316,7 +314,7 @@ export class CheckoutService {
         providerCourseId: providerCourseLink.providerCourseId,
         providerTeeSheetId: providerCourseLink.providerTeeSheetId,
         providerId: teeTimes.soldByProvider,
-        internalId: providerCourseLink.internalId,
+        internalId: providers.internalId,
       })
       .from(teeTimes)
       .leftJoin(
@@ -326,6 +324,7 @@ export class CheckoutService {
           eq(providerCourseLink.providerId, teeTimes.soldByProvider)
         )
       )
+      .leftJoin(providers,eq(providers.id,providerCourseLink.providerId))
       .where(eq(teeTimes.id, item.product_data.metadata.tee_time_id))
       .execute()
       .catch((err) => {
@@ -562,13 +561,14 @@ export class CheckoutService {
     const data = await this.database
       .select({
         id: bookings.id,
-        courseId: bookings.courseId,
+        courseId: teeTimes.courseId,
         teeTimeId: bookings.teeTimeId,
         minimumOfferPrice: bookings.minimumOfferPrice,
       })
       .from(bookings)
       .where(inArray(bookings.id, bookingIds))
       .leftJoin(lists, eq(lists.id, bookings.listId))
+      .leftJoin(teeTimes,eq(teeTimes.id,bookings.teeTimeId))
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving bookings: ${err}`);

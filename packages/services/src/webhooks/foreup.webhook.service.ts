@@ -12,6 +12,7 @@ import dayjs from "dayjs";
 // import { isEqual } from "lodash";
 import type { ProviderService } from "../tee-sheet-provider/providers.service";
 import type { ProviderAPI } from "../tee-sheet-provider/sheet-providers";
+import { providers } from "@golf-district/database/schema/providers";
 
 interface IndexingSchedule {
   day: number;
@@ -381,7 +382,7 @@ export class ForeUpWebhookService {
     const [data] = await this.database
       .select({
         courseToIndex: providerCourseLink,
-        internalId: providerCourseLink.internalId,
+        internalId: providers.internalId,
         entity: {
           id: courses.entityId,
         },
@@ -389,6 +390,7 @@ export class ForeUpWebhookService {
       .from(providerCourseLink)
       .leftJoin(courses, eq(courses.id, providerCourseLink.courseId))
       .leftJoin(entities, eq(entities.id, courses.entityId))
+      .leftJoin(providers,eq(providers.id,providerCourseLink.providerId))
       .orderBy(asc(providerCourseLink.lastIndex))
       .limit(1)
       .execute()
@@ -415,7 +417,7 @@ export class ForeUpWebhookService {
     }
 
     const { provider, token } = await this.providerService.getProviderAndKey(
-      internalId,
+      internalId??"",
       courseToIndex.courseId
     );
 
