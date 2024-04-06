@@ -17,7 +17,7 @@ export const bookings = mySqlTable(
       .notNull(),
     purchasedPrice: int("greenFeePerPlayer").notNull(),
     lastUpdatedDateTime: datetime("lastUpdatedDateTime", { mode: "string", fsp: 3 })
-      .default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP(3)`)
+      .default(sql`CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)`)
       .notNull(),
     isListed: boolean("isListed").default(false).notNull(),
     numberOfHoles: int("numberOfHoles").default(18).notNull(),
@@ -38,7 +38,9 @@ export const bookings = mySqlTable(
     charityId: varchar("charityId", { length: 36 }),
     totalCharityAmount: int("totalCharityAmount").notNull().default(0),
     totalAmount: int("totalAmount").notNull().default(0),
-    providerPaymentId: varchar("providerPaymentId", { length: 36 }).notNull().default("00000000-0000-0000-0000-000000000000"),
+    providerPaymentId: varchar("providerPaymentId", { length: 36 })
+      .notNull()
+      .default("00000000-0000-0000-0000-000000000000"),
     weatherQuoteId: varchar("weatherQuoteId", { length: 36 }),
   },
   (table) => {
