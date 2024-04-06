@@ -182,8 +182,8 @@ export class SearchService {
       .leftJoin(users, eq(users.id, bookings.ownerId))
       .leftJoin(assets, eq(assets.id, users.image))
       .leftJoin(favorites, and(eq(favorites.teeTimeId, bookings.teeTimeId), eq(favorites.userId, userId)))
-      .leftJoin(courses, eq(courses.id, teeTimes.courseId))
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
+      .leftJoin(courses, eq(courses.id, teeTimes.courseId))
       .where(
         and(eq(bookings.ownerId, ownerId), eq(bookings.teeTimeId, teeTimeId), eq(bookings.isListed, false))
       )
