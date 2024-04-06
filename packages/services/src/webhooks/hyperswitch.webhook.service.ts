@@ -416,11 +416,11 @@ export class HyperSwitchWebhookService {
       });
   };
 
-  getCartData = async ({ courseId = "", ownerId = "" }) => {
+  getCartData = async ({ courseId = "", ownerId = "", paymentId = "" }) => {
     const [customerCartData]: any = await this.database
-      .select({ cart: customerCarts.cart })
+      .select({ cart: customerCarts.cart, cartId: customerCarts.id })
       .from(customerCarts)
-      .where(and(eq(customerCarts.courseId, courseId), eq(customerCarts.userId, ownerId)))
+      .where(and(eq(customerCarts.courseId, courseId), eq(customerCarts.userId, ownerId), eq(customerCarts.paymentId, paymentId)))
       .execute();
 
     const primaryGreenFeeCharge =
@@ -448,9 +448,24 @@ export class HyperSwitchWebhookService {
         ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "charity")
         ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
 
+    const charityId =
+    customerCartData?.cart?.cart
+      ?.find(({ product_data }: ProductData) => product_data.metadata.type === "charity")?.product_data.metadata.charity_id;
+      
+    const weatherQuoteId =
+    customerCartData?.cart?.cart
+      ?.find(({ product_data }: ProductData) => product_data.metadata.type === "sensible")?.product_data.metadata.sensible_quote_id;
+    
     const taxes = taxCharge + sensibleCharge + charityCharge + convenienceCharge;
 
-    return { taxCharge, sensibleCharge, convenienceCharge, charityCharge, taxes };
+    const total = customerCartData?.cart?.cart.filter(({ product_data }: ProductData) => product_data.metadata.type !== "markup")
+      .reduce((acc: number, i: any) => {
+        return acc + i.price;
+      }, 0);
+
+      console.log('@@@@', primaryGreenFeeCharge, taxCharge , sensibleCharge , charityCharge , convenienceCharge, total)
+
+    return { primaryGreenFeeCharge, taxCharge, sensibleCharge, convenienceCharge, charityCharge, taxes, total, cartId: customerCartData?.cartId, charityId, weatherQuoteId };
   };
 
   handleSecondHandItem = async (
@@ -493,7 +508,7 @@ export class HyperSwitchWebhookService {
         purchasedPrice: bookings.purchasedPrice,
         weatherGuaranteeId: bookings.weatherGuaranteeId,
         weatherGuaranteeAmount: bookings.weatherGuaranteeAmount,
-        listId: bookings.listId,
+        listId: bookings.listId
       })
       .from(bookings)
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -690,11 +705,11 @@ export class HyperSwitchWebhookService {
         return [];
       });
 
-    const [customerCart]: any = await this.database
-      .select({ cartId: customerCarts.id })
-      .from(customerCarts)
-      .where(eq(customerCarts.paymentId, paymentId))
-      .execute();
+    const { taxes, sensibleCharge, charityCharge, total, cartId, charityId, weatherQuoteId } = await this.getCartData({
+      courseId: existingTeeTime?.courseId,
+      ownerId: customer_id,
+      paymentId
+    });
 
     for (const booking of newBookings) {
       const newBooking = booking;
@@ -718,7 +733,15 @@ export class HyperSwitchWebhookService {
         // entityId: firstBooking.entityId,
         weatherGuaranteeAmount: firstBooking.weatherGuaranteeAmount,
         weatherGuaranteeId: firstBooking.weatherGuaranteeId,
-        cartId: customerCart.cartId,
+        cartId: cartId,
+        playerCount: listedSlotsCount || 0,
+        greenFeePerPlayers: listPrice && listedSlotsCount ? listPrice / listedSlotsCount : 0,
+        taxesPerPlayer: ((taxes / (listedSlotsCount || 0)) * 100) || 0,
+        charityId: charityId || null,
+        totalCharityAmount: (charityCharge * 100) || 0,
+        totalAmount: (total * 100) || 0,
+        providerPaymentId: paymentId,
+        weatherQuoteId: weatherQuoteId || null,
       });
 
       const bookingSlots =
@@ -794,11 +817,6 @@ export class HyperSwitchWebhookService {
             this.logger.error(err);
           });
       }
-
-      const { taxes, sensibleCharge } = await this.getCartData({
-        courseId: existingTeeTime?.courseId,
-        ownerId: booking.data.ownerId,
-      });
 
       const commonTemplateData = {
         CourseLogoURL: `https://${existingTeeTime?.cdn}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,

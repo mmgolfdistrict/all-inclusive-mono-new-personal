@@ -32,6 +32,14 @@ export const bookings = mySqlTable(
     weatherGuaranteeAmount: int("weatherGuaranteeAmount").default(0),
     isActive: boolean("isActive").default(true).notNull(),
     cartId: varchar("cartId", { length: 36 }).notNull().default("00000000-0000-0000-0000-000000000000"), //Empty UUID as not accommodate existing bookings.
+    playerCount: int("playerCount").notNull().default(0),
+    greenFeePerPlayers: int("greenFeePerPlayers").notNull().default(0),
+    taxesPerPlayer: int("taxesPerPlayer").notNull().default(0),
+    charityId: varchar("charityId", { length: 36 }),
+    totalCharityAmount: int("totalCharityAmount").notNull().default(0),
+    totalAmount: int("totalAmount").notNull().default(0),
+    providerPaymentId: varchar("providerPaymentId", { length: 36 }).notNull().default("00000000-0000-0000-0000-000000000000"),
+    weatherQuoteId: varchar("weatherQuoteId", { length: 36 }),
   },
   (table) => {
     return {

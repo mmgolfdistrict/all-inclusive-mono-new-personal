@@ -35,6 +35,55 @@ export class TokenizeService {
    * const tokenizeService = new TokenizeService(database);
    */
   constructor(private readonly database: Db, private readonly notificationService: NotificationService) {}
+  getCartData = async ({ courseId = "", ownerId = "", paymentId = "" }) => {
+    const [customerCartData]: any = await this.database
+      .select({ cart: customerCarts.cart, cartId: customerCarts.id })
+      .from(customerCarts)
+      .where(and(eq(customerCarts.courseId, courseId), eq(customerCarts.userId, ownerId), eq(customerCarts.paymentId, paymentId)))
+      .execute();
+
+    const primaryGreenFeeCharge =
+      customerCartData?.cart?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "first_hand")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+
+    const convenienceCharge =
+      customerCartData?.cart?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "convenience_fee")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+
+    const taxCharge =
+      customerCartData?.cart?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "taxes")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+
+    const sensibleCharge =
+      customerCartData?.cart?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "sensible")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+
+    const charityCharge =
+      customerCartData?.cart?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "charity")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+
+    const charityId =
+    customerCartData?.cart?.cart
+      ?.find(({ product_data }: ProductData) => product_data.metadata.type === "charity")?.product_data.metadata.charity_id;
+      
+    const weatherQuoteId =
+    customerCartData?.cart?.cart
+      ?.find(({ product_data }: ProductData) => product_data.metadata.type === "sensible")?.product_data.metadata.sensible_quote_id;
+
+    const taxes = taxCharge + sensibleCharge + charityCharge + convenienceCharge;
+
+    const total = customerCartData?.cart?.cart.filter(({ product_data }: ProductData) => product_data.metadata.type !== "markup")
+      .reduce((acc: number, i: any) => {
+        return acc + i.price;
+      }, 0);
+
+    return { primaryGreenFeeCharge, taxCharge, sensibleCharge, convenienceCharge, charityCharge, taxes, total, cartId: customerCartData?.cartId, charityId, weatherQuoteId };
+  };
   /**
    * Tokenize a booking for a user. This function either books an existing tee time or creates a new one based on the provided details.
    *
@@ -120,22 +169,16 @@ export class TokenizeService {
       throw new Error(`TeeTime with ID: ${providerTeeTimeId} does not have enough spots.`);
     }
 
-    const [customerCartData]: any = await this.database
-      .select({ cart: customerCarts.cart, cartId: customerCarts.id })
-      .from(customerCarts)
-      .where(
-        and(
-          eq(customerCarts.courseId, existingTeeTime.courseId),
-          eq(customerCarts.userId, userId),
-          eq(customerCarts.paymentId, paymentId)
-        )
-      )
-      .execute();
+  const { sensibleCharge, primaryGreenFeeCharge, charityCharge, taxes, total, cartId, charityId, weatherQuoteId } = await this.getCartData({
+    courseId: existingTeeTime.courseId,
+    ownerId: userId,
+    paymentId
+  });
 
-    const bookingsToCreate: InsertBooking[] = [];
-    const transfersToCreate: InsertTransfer[] = [];
-    const transactionId = randomUUID();
-    const bookingId = randomUUID();
+  const bookingsToCreate: InsertBooking[] = [];
+  const transfersToCreate: InsertTransfer[] = [];
+  const transactionId = randomUUID();
+  const bookingId = randomUUID();
 
     bookingsToCreate.push({
       id: bookingId,
@@ -154,7 +197,15 @@ export class TokenizeService {
       includesCart: withCart,
       listId: null,
       // entityId: existingTeeTime.entityId,
-      cartId: customerCartData?.cartId,
+      cartId: cartId,
+      playerCount: players || 0,
+      greenFeePerPlayers: ((primaryGreenFeeCharge / players) * 100) || 0,
+      taxesPerPlayer: ((taxes / players) * 100) || 0,
+      charityId: charityId || null,
+      totalCharityAmount: (charityCharge * 100) || 0,
+      totalAmount: (total * 100) || 0,
+      providerPaymentId: paymentId,
+      weatherQuoteId: weatherQuoteId || null,
     });
 
     transfersToCreate.push({
@@ -249,32 +300,6 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
     This is a first party purchase from the course
     `;
 
-    const primaryGreenFeeCharge =
-      customerCartData?.cart?.cart
-        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "first_hand")
-        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
-
-    const convenienceCharge =
-      customerCartData?.cart?.cart
-        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "convenience_fee")
-        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
-
-    const taxCharge =
-      customerCartData?.cart?.cart
-        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "taxes")
-        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
-
-    const sensibleCharge =
-      customerCartData?.cart?.cart
-        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "sensible")
-        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
-
-    const charityCharge =
-      customerCartData?.cart?.cart
-        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "charity")
-        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
-
-    const taxes = taxCharge + sensibleCharge + charityCharge + convenienceCharge;
     const dateTime = dayjs(existingTeeTime.providerDate).utcOffset("-06:00");
 
     const template = {
@@ -297,6 +322,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
         })}` || "-",
       SensibleWeatherIncluded: sensibleCharge ? "Yes" : "No",
       PurchasedFrom: existingTeeTime.courseName || "-",
+      PlayerCount: players || 0
     };
 
     await this.notificationService.createNotification(
