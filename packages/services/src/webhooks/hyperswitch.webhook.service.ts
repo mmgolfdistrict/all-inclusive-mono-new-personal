@@ -267,11 +267,13 @@ export class HyperSwitchWebhookService {
     customer_id: string
   ) => {
     // const customer_id: string = customerCart.customerId;
-    for (const item of customerCart.cart) {
+    const isFirstHandBooking = customerCart.cart.some((item) => item.product_data.metadata.type ==='first_hand')
+    if(isFirstHandBooking){
+    await  this.bookingService.confirmBooking(paymentId,customer_id)
+    return;
+    }
+    for (const item of customerCart.cart) { 
       switch (item.product_data.metadata.type) {
-        case "first_hand":
-          await this.handleFirstHandItem(item as FirstHandProduct, amountReceived, customer_id, paymentId);
-          break;
         case "second_hand":
           await this.handleSecondHandItem(item as SecondHandProduct, amountReceived, customer_id, paymentId);
           break;

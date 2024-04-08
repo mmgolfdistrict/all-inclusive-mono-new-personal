@@ -6,6 +6,7 @@ import {
 } from "@juspay-tech/react-hyper-js";
 import { useCheckoutContext } from "~/contexts/CheckoutContext";
 import { useCourseContext } from "~/contexts/CourseContext";
+import { api } from "~/utils/api";
 import type { CartProduct } from "~/utils/types";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
@@ -13,17 +14,22 @@ import { FilledButton } from "../buttons/filled-button";
 import { CharitySelect } from "../input/charity-select";
 import { Input } from "../input/input";
 import styles from "./checkout.module.css";
+import type { ReserveTeeTimeResponse } from "@golf-district/shared";
 
 export const CheckoutForm = ({
   isBuyNowAuction,
   amountToPay,
   teeTimeId,
   cartData,
+  cartId,
+  teeTimeDate
 }: {
   isBuyNowAuction: boolean;
   amountToPay: number;
   teeTimeId: string;
   cartData: CartProduct[];
+  cartId: string;
+  teeTimeDate:string | undefined;
 }) => {
   const { course } = useCourseContext();
 
@@ -97,7 +103,10 @@ export const CheckoutForm = ({
     handleSelectedCharity,
     handleSelectedCharityAmount,
     handleRemoveSelectedCharity,
+    setReservationData
   } = useCheckoutContext();
+
+  const reserveBookingApi = api.teeBox.reserveBooking.useMutation();
 
   const handlePaymentStatus = (status: string) => {
     switch (status) {
@@ -144,26 +153,38 @@ export const CheckoutForm = ({
     e.preventDefault();
 
     setIsLoading(true);
-
+    let bookingResponse:ReserveTeeTimeResponse={
+      bookingId:"",
+      providerBookingId:"",
+      status:""
+    }
+    if (isFirstHand.length) {
+       bookingResponse = await reserveBookingFirstHand(cartId);
+      setReservationData({
+        golfReservationId:bookingResponse.bookingId,
+        providerReservationId:bookingResponse.providerBookingId,
+        playTime: teeTimeDate||""
+      });
+    }
     const response = await hyper.confirmPayment({
       widgets,
       confirmParams: {
         // Make sure to change this to your payment completion page
         return_url: isBuyNowAuction
           ? `${window.location.origin}/${course?.id}/auctions/confirmation`
-          : `${window.location.origin}/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}`,
+          : `${window.location.origin}/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}&bookingId=${bookingResponse.bookingId}`,
       },
       redirect: "if_required",
     });
 
     if (response) {
       if (response.status === "succeeded") {
-        console.log(response);
+       
         setMessage("Payment Successful");
         isBuyNowAuction
           ? router.push(`/${course?.id}/auctions/confirmation`)
           : router.push(
-              `/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}`
+              `/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}&bookingId=${bookingResponse.bookingId}`
             );
       } else if (response.error) {
         setMessage(response.error.message);
@@ -176,6 +197,13 @@ export const CheckoutForm = ({
 
     setIsLoading(false);
     // setIsPaymentCompleted(true);
+  };
+
+  const reserveBookingFirstHand = async (cartId: string) => {
+    const bookingResponse = await reserveBookingApi.mutateAsync({
+      cartId,
+    });
+    return bookingResponse;
   };
 
   return (

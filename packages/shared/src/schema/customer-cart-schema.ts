@@ -113,4 +113,5 @@ export const CustomerCartSchema = z.object({
   phone_country_code: z.string().nullable(),
   paymentId: z.string().nullable(),
   cart: z.array(ProductDataSchema),
+  cartId:z.string().optional()
 });

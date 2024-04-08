@@ -121,6 +121,18 @@ export const bookingRouter = createTRPCRouter({
         .getBookingService()
         .getOwnedBookingsForTeeTime(input.ownerId ?? ctx.session.user.id, input.teeTimeId);
     }),
+
+  getOwnedBookingById: protectedProcedure
+    .input(
+      z.object({
+        bookingId: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return ctx.serviceFactory
+        .getBookingService()
+        .getOwnedBookingById( ctx.session.user.id, input.bookingId);
+    }),  
   updateNamesOnBookings: protectedProcedure
     .input(
       z.object({
@@ -232,5 +244,14 @@ export const bookingRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       return ctx.serviceFactory.getBookingService().teeTimeAvailableFirsthandSpots(input.teeTimeId);
+    }),
+  reserveBooking: protectedProcedure
+    .input(
+      z.object({
+        cartId: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return ctx.serviceFactory.getBookingService().reserveBooking(ctx.session.user.id, input.cartId);
     }),
 });

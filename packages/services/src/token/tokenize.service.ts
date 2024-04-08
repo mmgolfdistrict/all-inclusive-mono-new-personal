@@ -34,12 +34,21 @@ export class TokenizeService {
    * @example
    * const tokenizeService = new TokenizeService(database);
    */
-  constructor(private readonly database: Db, private readonly notificationService: NotificationService) {}
+  constructor(
+    private readonly database: Db,
+    private readonly notificationService: NotificationService
+  ) {}
   getCartData = async ({ courseId = "", ownerId = "", paymentId = "" }) => {
     const [customerCartData]: any = await this.database
       .select({ cart: customerCarts.cart, cartId: customerCarts.id })
       .from(customerCarts)
-      .where(and(eq(customerCarts.courseId, courseId), eq(customerCarts.userId, ownerId), eq(customerCarts.paymentId, paymentId)))
+      .where(
+        and(
+          eq(customerCarts.courseId, courseId),
+          eq(customerCarts.userId, ownerId),
+          eq(customerCarts.paymentId, paymentId)
+        )
+      )
       .execute();
 
     const primaryGreenFeeCharge =
@@ -67,22 +76,34 @@ export class TokenizeService {
         ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "charity")
         ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
 
-    const charityId =
-    customerCartData?.cart?.cart
-      ?.find(({ product_data }: ProductData) => product_data.metadata.type === "charity")?.product_data.metadata.charity_id;
-      
-    const weatherQuoteId =
-    customerCartData?.cart?.cart
-      ?.find(({ product_data }: ProductData) => product_data.metadata.type === "sensible")?.product_data.metadata.sensible_quote_id;
+    const charityId = customerCartData?.cart?.cart?.find(
+      ({ product_data }: ProductData) => product_data.metadata.type === "charity"
+    )?.product_data.metadata.charity_id;
+
+    const weatherQuoteId = customerCartData?.cart?.cart?.find(
+      ({ product_data }: ProductData) => product_data.metadata.type === "sensible"
+    )?.product_data.metadata.sensible_quote_id;
 
     const taxes = taxCharge + sensibleCharge + charityCharge + convenienceCharge;
 
-    const total = customerCartData?.cart?.cart.filter(({ product_data }: ProductData) => product_data.metadata.type !== "markup")
+    const total = customerCartData?.cart?.cart
+      .filter(({ product_data }: ProductData) => product_data.metadata.type !== "markup")
       .reduce((acc: number, i: any) => {
         return acc + i.price;
       }, 0);
 
-    return { primaryGreenFeeCharge, taxCharge, sensibleCharge, convenienceCharge, charityCharge, taxes, total, cartId: customerCartData?.cartId, charityId, weatherQuoteId };
+    return {
+      primaryGreenFeeCharge,
+      taxCharge,
+      sensibleCharge,
+      convenienceCharge,
+      charityCharge,
+      taxes,
+      total,
+      cartId: customerCartData?.cartId,
+      charityId,
+      weatherQuoteId,
+    };
   };
   /**
    * Tokenize a booking for a user. This function either books an existing tee time or creates a new one based on the provided details.
@@ -128,8 +149,9 @@ export class TokenizeService {
       internalId: string | null;
       providerDate: string;
       holes: number;
-    }
-  ): Promise<void> {
+    },
+    normalizedCartData?:any
+  ): Promise<string> {
     this.logger.info(`tokenizeBooking tokenizing booking id: ${providerTeeTimeId} for user: ${userId}`);
     //@TODO add this to the transaction
 
@@ -169,16 +191,12 @@ export class TokenizeService {
       throw new Error(`TeeTime with ID: ${providerTeeTimeId} does not have enough spots.`);
     }
 
-  const { sensibleCharge, primaryGreenFeeCharge, charityCharge, taxes, total, cartId, charityId, weatherQuoteId } = await this.getCartData({
-    courseId: existingTeeTime.courseId,
-    ownerId: userId,
-    paymentId
-  });
+   
 
-  const bookingsToCreate: InsertBooking[] = [];
-  const transfersToCreate: InsertTransfer[] = [];
-  const transactionId = randomUUID();
-  const bookingId = randomUUID();
+    const bookingsToCreate: InsertBooking[] = [];
+    const transfersToCreate: InsertTransfer[] = [];
+    const transactionId = randomUUID();
+    const bookingId = randomUUID();
 
     bookingsToCreate.push({
       id: bookingId,
@@ -197,15 +215,15 @@ export class TokenizeService {
       includesCart: withCart,
       listId: null,
       // entityId: existingTeeTime.entityId,
-      cartId: cartId,
-      playerCount: players || 0,
-      greenFeePerPlayers: ((primaryGreenFeeCharge / players) * 100) || 0,
-      taxesPerPlayer: ((taxes / players) * 100) || 0,
-      charityId: charityId || null,
-      totalCharityAmount: (charityCharge * 100) || 0,
-      totalAmount: (total * 100) || 0,
+      cartId: normalizedCartData.cartId,
+      playerCount: players ?? 0,
+      
+      taxesPerPlayer: (normalizedCartData.taxes / players) * 100 ?? 0,
+      charityId: normalizedCartData.charityId ?? null,
+      totalCharityAmount: normalizedCartData.charityCharge * 100 ?? 0,
+      totalAmount: normalizedCartData.total * 100 ?? 0,
       providerPaymentId: paymentId,
-      weatherQuoteId: weatherQuoteId || null,
+      weatherQuoteId: normalizedCartData.weatherQuoteId ?? null,
     });
 
     transfersToCreate.push({
@@ -228,14 +246,14 @@ export class TokenizeService {
         providerBookingId,
         provider.providerId,
         existingTeeTime.courseId
-      )) || [];
+      )) ?? [];
 
     for (let i = 0; i < bookingSlots.length; i++) {
       if (i != 0) {
         await provider?.updateTeeTime(
-          token || "",
-          teeTime?.providerCourseId || "",
-          teeTime?.providerTeeSheetId || "",
+          token ?? "",
+          teeTime?.providerCourseId ?? "",
+          teeTime?.providerTeeSheetId ?? "",
           providerBookingId,
           {
             data: {
@@ -304,25 +322,25 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
 
     const template = {
       CustomerFirstName: existingTeeTime.customerName?.split(" ")[0],
-      CourseName: existingTeeTime.courseName || "-",
-      GolfDistrictReservationID: bookingsToCreate?.[0]?.id || "-",
-      CourseReservationID: providerBookingId || "-",
-      FacilityName: existingTeeTime.entityName || "-",
-      PlayDateTime: dateTime.format("YYYY-MM-DD hh:mm A") || "-",
+      CourseName: existingTeeTime.courseName ?? "-",
+      GolfDistrictReservationID: bookingsToCreate?.[0]?.id ?? "-",
+      CourseReservationID: providerBookingId ?? "-",
+      FacilityName: existingTeeTime.entityName ?? "-",
+      PlayDateTime: dateTime.format("YYYY-MM-DD hh:mm A") ?? "-",
       NumberOfHoles: existingTeeTime.numberOfHoles,
       GreenFees:
-        `$${primaryGreenFeeCharge.toLocaleString("en-US", {
+        `$${(purchasePrice/100).toLocaleString("en-US", {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
-        })}` || "-",
+        })}` ?? "-",
       TaxesAndOtherFees:
-        `$${taxes.toLocaleString("en-US", {
+        `$${normalizedCartData.taxes.toLocaleString("en-US", {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
-        })}` || "-",
-      SensibleWeatherIncluded: sensibleCharge ? "Yes" : "No",
-      PurchasedFrom: existingTeeTime.courseName || "-",
-      PlayerCount: players || 0
+        })}` ?? "-",
+      SensibleWeatherIncluded: normalizedCartData.sensibleCharge ? "Yes" : "No",
+      PurchasedFrom: existingTeeTime.courseName ?? "-",
+      PlayerCount: players ?? 0,
     };
 
     await this.notificationService.createNotification(
@@ -333,6 +351,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       process.env.SENDGRID_TEE_TIMES_PURCHASED_TEMPLATE_ID,
       template
     );
+    return bookingId
   }
 
   /**
@@ -480,5 +499,5 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
         this.logger.error(err);
         throw new Error(`Error updating booking with id: ${bookingIds}`);
       });
-  };
+  };  
 }

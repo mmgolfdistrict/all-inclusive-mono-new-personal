@@ -11,6 +11,12 @@ import {
 } from "react";
 import { useCourseContext } from "./CourseContext";
 
+type ReservationData={
+  golfReservationId:string;
+  providerReservationId:string;
+  playTime:string;
+}
+
 interface CheckoutContextType {
   shouldAddSensible: boolean;
   handleShouldAddSensible: (bool: boolean) => void;
@@ -27,6 +33,9 @@ interface CheckoutContextType {
   selectedCharityAmount: number | null;
   handleSelectedCharityAmount: (amount: number) => void;
   handleRemoveSelectedCharity: () => void;
+  reservationData: ReservationData;
+  setReservationData: Dispatch<SetStateAction<ReservationData>>;
+  
 }
 
 const CheckoutContext = createContext<CheckoutContextType>({
@@ -43,10 +52,22 @@ const CheckoutContext = createContext<CheckoutContextType>({
   selectedCharityAmount: null,
   handleSelectedCharityAmount: () => undefined,
   handleRemoveSelectedCharity: () => undefined,
+  reservationData: {
+    golfReservationId:"",
+    providerReservationId:"",
+    playTime:""
+  },
+  setReservationData: ()=>undefined,
+
 });
 
 export const CheckoutWrapper = ({ children }: { children: ReactNode }) => {
   const [shouldAddSensible, setShouldAddSensible] = useState<boolean>(false);
+  const [reservationData,setReservationData]=useState<ReservationData>({
+    golfReservationId:"",
+    providerReservationId:"",
+    playTime:""
+  });
   const [sensibleData, setSensibleData] = useState<
     { id: string; price: number } | undefined
   >(undefined);
@@ -98,6 +119,8 @@ export const CheckoutWrapper = ({ children }: { children: ReactNode }) => {
     selectedCharityAmount,
     handleSelectedCharityAmount,
     handleRemoveSelectedCharity,
+    reservationData,
+    setReservationData
   };
 
   return (
