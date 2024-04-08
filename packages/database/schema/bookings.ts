@@ -15,7 +15,6 @@ export const bookings = mySqlTable(
     purchasedAt: datetime("createdDateTime", { mode: "string", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
-    purchasedPrice: int("greenFeePerPlayer").notNull(),
     lastUpdatedDateTime: datetime("lastUpdatedDateTime", { mode: "string", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)`)
       .notNull(),
@@ -33,8 +32,8 @@ export const bookings = mySqlTable(
     isActive: boolean("isActive").default(true).notNull(),
     cartId: varchar("cartId", { length: 36 }).notNull().default("00000000-0000-0000-0000-000000000000"), //Empty UUID as not accommodate existing bookings.
     playerCount: int("playerCount").notNull().default(0),
-    greenFeePerPlayers: int("greenFeePerPlayers").notNull().default(0),
-    taxesPerPlayer: int("taxesPerPlayer").notNull().default(0),
+    greenFeePerPlayer: int("greenFeePerPlayer").notNull().default(0),
+    totalTaxesAmount: int("totalTaxesAmount").notNull().default(0),
     charityId: varchar("charityId", { length: 36 }),
     totalCharityAmount: int("totalCharityAmount").notNull().default(0),
     totalAmount: int("totalAmount").notNull().default(0),

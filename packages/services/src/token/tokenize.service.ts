@@ -34,7 +34,10 @@ export class TokenizeService {
    * @example
    * const tokenizeService = new TokenizeService(database);
    */
-  constructor(private readonly database: Db, private readonly notificationService: NotificationService) {}
+  constructor(
+    private readonly database: Db,
+    private readonly notificationService: NotificationService
+  ) {}
   getCartData = async ({ courseId = "", ownerId = "", paymentId = "" }) => {
     const [customerCartData]: any = await this.database
       .select({ cart: customerCarts.cart, cartId: customerCarts.id })
@@ -196,7 +199,6 @@ export class TokenizeService {
     bookingsToCreate.push({
       id: bookingId,
       purchasedAt: currentUtcTimestamp(),
-      purchasedPrice: purchasePrice,
       // time: existingTeeTime.date,
       providerBookingId: providerBookingId,
       // withCart: withCart,
@@ -212,11 +214,11 @@ export class TokenizeService {
       // entityId: existingTeeTime.entityId,
       cartId: normalizedCartData.cartId,
       playerCount: players ?? 0,
-
-      taxesPerPlayer: (normalizedCartData.taxes / players) * 100 ?? 0,
-      charityId: normalizedCartData.charityId ?? null,
-      totalCharityAmount: normalizedCartData.charityCharge * 100 ?? 0,
-      totalAmount: normalizedCartData.total * 100 ?? 0,
+      greenFeePerPlayer: (normalizedCartData.primaryGreenFeeCharge / players) * 100 || 0,
+      totalTaxesAmount: normalizedCartData.taxes * 100 || 0,
+      charityId: normalizedCartData.charityId || null,
+      totalCharityAmount: normalizedCartData.charityCharge * 100 || 0,
+      totalAmount: normalizedCartData.total || 0,
       providerPaymentId: paymentId,
       weatherQuoteId: normalizedCartData.weatherQuoteId ?? null,
     });
@@ -229,7 +231,6 @@ export class TokenizeService {
       fromUserId: "0x000", //first hand sales are from the platform
       toUserId: userId,
       courseId: existingTeeTime.courseId,
-      purchasedPrice: purchasePrice,
     });
 
     //create bookings according to slot in bookingslot tables
