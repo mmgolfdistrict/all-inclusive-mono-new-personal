@@ -166,8 +166,9 @@ export class CheckoutService {
     // });
     //@TODO: metadata to include sensible
     //@TODO: update total form discount
-   // debugger;
-   console.log("===>",total);
+    // debugger;
+    console.log("===>", total);
+    console.log("===>", parseInt(total.toString()));
     const paymentIntent = await this.hyperSwitch
       .createPaymentIntent({
         // @ts-ignore
@@ -175,7 +176,7 @@ export class CheckoutService {
         name: user.name,
         email: user.email,
         phone: user.phoneNumber,
-        amount: total,
+        amount: parseInt(total.toString()),
         currency: "USD",
         profile_id: this.profileId,
         // @ts-ignore
