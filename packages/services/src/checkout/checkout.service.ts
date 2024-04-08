@@ -107,7 +107,7 @@ export class CheckoutService {
    * };
    * const checkoutSession = await checkoutService.buildCheckoutSession(userId, customerCart);
    */
-  buildCheckoutSession = async (userId: string, customerCartData: CustomerCart) => {
+  buildCheckoutSession = async (userId: string, customerCartData: CustomerCart, cartId = "") => {
     const { paymentId } = customerCartData;
     let data = {};
     // const errors = await this.validateCartItems(customerCart);
@@ -117,7 +117,7 @@ export class CheckoutService {
     //   };
     // }
     if (paymentId) {
-      data = this.updateCheckoutSession(userId, customerCartData);
+      data = this.updateCheckoutSession(userId, customerCartData, cartId);
     } else {
       data = this.createCheckoutSession(userId, customerCartData);
     }
@@ -166,7 +166,8 @@ export class CheckoutService {
     // });
     //@TODO: metadata to include sensible
     //@TODO: update total form discount
-
+   // debugger;
+   console.log("===>",total);
     const paymentIntent = await this.hyperSwitch
       .createPaymentIntent({
         // @ts-ignore
@@ -185,8 +186,9 @@ export class CheckoutService {
         throw new Error(`Error creating payment intent: ${err}`);
       });
     //save customerCart to database
+    const cartId: string = randomUUID();
     await this.database.insert(customerCarts).values({
-      id: randomUUID(),
+      id: cartId,
       userId: userId,
       courseId: customerCart.courseId,
       paymentId: paymentIntent.payment_id,
@@ -196,10 +198,11 @@ export class CheckoutService {
     return {
       clientSecret: paymentIntent.client_secret,
       paymentId: paymentIntent.payment_id,
+      cartId: cartId,
     };
   };
 
-  updateCheckoutSession = async (userId: string, customerCartData: CustomerCart) => {
+  updateCheckoutSession = async (userId: string, customerCartData: CustomerCart, cartId: string) => {
     const { paymentId, ...customerCart } = customerCartData;
 
     const total = customerCart.cart
@@ -234,6 +237,7 @@ export class CheckoutService {
     return {
       clientSecret: paymentIntent.client_secret,
       paymentId: paymentIntent.payment_id,
+      cartId,
     };
   };
 

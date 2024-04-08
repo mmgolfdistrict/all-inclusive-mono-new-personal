@@ -4,6 +4,7 @@ import { assets } from "@golf-district/database/schema/assets";
 import { bookings } from "@golf-district/database/schema/bookings";
 import { bookingslots } from "@golf-district/database/schema/bookingslots";
 import { courses } from "@golf-district/database/schema/courses";
+import { customerCarts } from "@golf-district/database/schema/customerCart";
 import type { InsertList } from "@golf-district/database/schema/lists";
 import { lists } from "@golf-district/database/schema/lists";
 import { offers } from "@golf-district/database/schema/offers";
@@ -13,13 +14,16 @@ import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import { transfers } from "@golf-district/database/schema/transfers";
 import { userBookingOffers } from "@golf-district/database/schema/userBookingOffers";
 import { users } from "@golf-district/database/schema/users";
+import type { ReserveTeeTimeResponse } from "@golf-district/shared";
 import { currentUtcTimestamp, dateToUtcTimestamp } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
 import dayjs from "dayjs";
 import { alias } from "drizzle-orm/mysql-core";
+import type { CustomerCart, FirstHandProduct, ProductData } from "../checkout/types";
 import type { NotificationService } from "../notification/notification.service";
 import type { HyperSwitchService } from "../payment-processor/hyperswitch.service";
 import type { Customer, ProviderService } from "../tee-sheet-provider/providers.service";
+import type { BookingResponse } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
 import type { TokenizeService } from "../token/tokenize.service";
 
 interface TeeTimeData {
@@ -2028,5 +2032,264 @@ export class BookingService {
     if (message) {
       throw new Error(message);
     }
+  };
+  normalizeCartData = async ({ cartId = "", userId = "" }) => {
+    const [customerCartData]: any = await this.database
+      .select({ cart: customerCarts.cart, cartId: customerCarts.id, paymentId: customerCarts.paymentId })
+      .from(customerCarts)
+      .where(and(eq(customerCarts.id, cartId), eq(customerCarts.userId, userId)))
+      .execute();
+
+    const slotInfo = customerCartData?.cart?.cart?.filter(
+      ({ product_data }: ProductData) => product_data.metadata.type === "first_hand"
+    );
+
+    const primaryData = {
+      primaryGreenFeeCharge: slotInfo[0].price,
+      teeTimeId: slotInfo[0].product_data.metadata.tee_time_id,
+      playerCount: slotInfo[0].product_data.metadata.number_of_bookings,
+    };
+    console.log("primaryData=======>", primaryData);
+    const convenienceCharge =
+      customerCartData?.cart?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "convenience_fee")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+
+    const taxCharge =
+      customerCartData?.cart?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "taxes")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+
+    const sensibleCharge =
+      customerCartData?.cart?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "sensible")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+
+    const charityCharge =
+      customerCartData?.cart?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "charity")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+
+    const charityId = customerCartData?.cart?.cart?.find(
+      ({ product_data }: ProductData) => product_data.metadata.type === "charity"
+    )?.product_data.metadata.charity_id;
+
+    const weatherQuoteId = customerCartData?.cart?.cart?.find(
+      ({ product_data }: ProductData) => product_data.metadata.type === "sensible"
+    )?.product_data.metadata.sensible_quote_id;
+
+    const taxes = taxCharge + sensibleCharge + charityCharge + convenienceCharge;
+
+    const total =
+      customerCartData?.cart?.cart
+        .filter(({ product_data }: ProductData) => product_data.metadata.type !== "markup")
+        .reduce((acc: number, i: any) => {
+          return acc + i.price;
+        }, 0) / 100;
+
+    return {
+      ...primaryData,
+      cart: customerCartData.cart as CustomerCart,
+
+      taxCharge,
+      sensibleCharge,
+      convenienceCharge,
+      charityCharge,
+      taxes,
+      total,
+      cartId: customerCartData?.cartId,
+      charityId,
+      weatherQuoteId,
+      paymentId: customerCartData.paymentId,
+    };
+  };
+  reserveBooking = async (userId: string, cartId: string) => {
+    const {
+      cart,
+      playerCount,
+      primaryGreenFeeCharge,
+      teeTimeId,
+      taxCharge,
+      sensibleCharge,
+      convenienceCharge,
+      charityCharge,
+      taxes,
+      total,
+      charityId,
+      weatherQuoteId,
+      paymentId,
+    } = await this.normalizeCartData({
+      cartId,
+      userId,
+    });
+
+    const pricePerGolfer = primaryGreenFeeCharge / playerCount;
+
+    const [teeTime] = await this.database
+      .select({
+        id: teeTimes.id,
+        courseId: teeTimes.courseId,
+        entityId: teeTimes.entityId,
+        date: teeTimes.date,
+        providerCourseId: providerCourseLink.providerCourseId,
+        providerTeeSheetId: providerCourseLink.providerTeeSheetId,
+        providerId: teeTimes.soldByProvider,
+        internalId: providers.internalId,
+        providerDate: teeTimes.providerDate,
+        holes: teeTimes.numberOfHoles,
+      })
+      .from(teeTimes)
+      .leftJoin(
+        providerCourseLink,
+        and(
+          eq(providerCourseLink.courseId, teeTimes.courseId),
+          eq(providerCourseLink.providerId, teeTimes.soldByProvider)
+        )
+      )
+      .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))
+      .where(eq(teeTimes.id, teeTimeId as string))
+      .execute()
+      .catch((err) => {
+        this.logger.error(err);
+        throw new Error(`Error finding tee time id`);
+      });
+    if (!teeTime) {
+      this.logger.fatal(`tee time not found id: ${teeTimeId}`);
+      throw new Error(`Error finding tee time id`);
+    }
+    const { provider, token } = await this.providerService.getProviderAndKey(
+      teeTime.internalId!,
+      teeTime.courseId
+    );
+    const providerCustomer = await this.providerService.findOrCreateCustomer(
+      teeTime.courseId,
+      teeTime.providerId,
+      teeTime.providerCourseId!,
+      userId,
+      provider,
+      token
+    );
+    if (!providerCustomer?.playerNumber) {
+      this.logger.error(`Error creating customer`);
+      throw new Error(`Error creating customer`);
+    }
+
+    const bookedPLayers: { accountNumber: number }[] = [
+      {
+        accountNumber: providerCustomer.playerNumber,
+      },
+    ];
+    const booking = await provider
+      .createBooking(token, teeTime.providerCourseId!, teeTime.providerTeeSheetId!, {
+        data: {
+          type: "bookings",
+          attributes: {
+            start: teeTime.providerDate,
+            holes: teeTime.holes,
+            players: playerCount,
+            bookedPlayers: bookedPLayers,
+            event_type: "tee_time",
+            details: "GD Booking",
+          },
+        },
+      })
+      .catch((err) => {
+        this.logger.error(err);
+        //@TODO this email should be removed
+
+        throw new Error(`Error creating booking`);
+      });
+    //create tokenized bookings
+    const bookingId = await this.tokenizeService
+      .tokenizeBooking(
+        userId,
+        pricePerGolfer,
+        playerCount as number,
+        booking.data.id,
+        teeTimeId as string,
+        paymentId as string,
+        true,
+        provider,
+        token,
+        teeTime,
+        {
+          taxCharge,
+          sensibleCharge,
+          convenienceCharge,
+          charityCharge,
+          taxes,
+          total,
+          charityId,
+          weatherQuoteId,
+          cartId,
+        }
+      )
+      .catch(async (err) => {
+        this.logger.error(err);
+        //@TODO this email should be removed
+        await this.notificationService.createNotification(
+          userId,
+          "Error creating booking",
+          "An error occurred while creating booking with provider",
+          teeTime.courseId
+        );
+        throw new Error(`Error creating booking`);
+      });
+
+    return {
+      bookingId,
+      providerBookingId: booking.data.id,
+      status: "Reserved",
+    } as ReserveTeeTimeResponse;
+  };
+  confirmBooking = async (paymentId: string, userId: string) => {
+    console.log("start confirmation process", paymentId, userId);
+    const [booking] = await this.database
+      .select({
+        bookingId: bookings.id,
+        courseId: courses.id,
+      })
+      .from(bookings)
+      .innerJoin(customerCarts, eq(bookings.cartId, customerCarts.id))
+      .leftJoin(courses, eq(customerCarts.courseId, courses.id))
+      .where(and(eq(customerCarts.paymentId, paymentId), eq(bookings.ownerId, userId)))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error retrieving bookings by payment id: ${err}`);
+        throw "Error retrieving booking";
+      });
+    if (!booking) {
+      throw "Booking not found for payment id";
+    } else {
+      console.log("Set confirm status on booking id ", booking.bookingId);
+      await this.database
+        .update(bookings)
+        .set({
+          status: "CONFIRMED",
+        })
+        .where(eq(bookings.id, booking.bookingId))
+        .execute()
+        .catch((err) => {
+          this.logger.error(`Error in updating booking status ${err}`);
+        });
+    }
+  };
+
+  getOwnedBookingById = async (userId: string, bookingId: string) => {
+    const [booking] = await this.database
+      .select({
+        providerId: bookings.providerBookingId,
+        playTime: teeTimes.providerDate,
+      })
+      .from(bookings)
+      .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
+      .where(and(eq(bookings.ownerId, userId), eq(bookings.id, bookingId)))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error retrieving bookings by payment id: ${err}`);
+        throw "Error retrieving booking";
+      });
+
+    return booking;
   };
 }

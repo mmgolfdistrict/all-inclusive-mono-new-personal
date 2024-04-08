@@ -195,3 +195,9 @@ export type CombinedObject = {
   firstHandPurchasePrice?: number;
   listedSlots: number | null;
 };
+
+export type ReserveTeeTimeResponse = {
+  bookingId: string;
+  providerBookingId: string;
+  status: string;
+};

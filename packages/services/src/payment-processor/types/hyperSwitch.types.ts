@@ -39,9 +39,28 @@ export type CustomerPaymentMethod = {
   default_payment_method_set: boolean;
 };
 
-type PaymentMethodType = "card" | "card_redirect" | "wallet" | "pay_later" | "bank_redirect" | "bank_transfer" | "crypto" | "bank_debit" | "reward" | "upi" | "voucher" | "gift_card";
+type PaymentMethodType =
+  | "card"
+  | "card_redirect"
+  | "wallet"
+  | "pay_later"
+  | "bank_redirect"
+  | "bank_transfer"
+  | "crypto"
+  | "bank_debit"
+  | "reward"
+  | "upi"
+  | "voucher"
+  | "gift_card";
 
-type PaymentExperience = "redirect_to_url" | "invoke_sdk_client" | "display_qr_code" | "one_click" | "link_wallet" | "invoke_payment_app" | "display_wait_screen";
+type PaymentExperience =
+  | "redirect_to_url"
+  | "invoke_sdk_client"
+  | "display_qr_code"
+  | "one_click"
+  | "link_wallet"
+  | "invoke_payment_app"
+  | "display_wait_screen";
 
 type CardDetails = {
   scheme?: string;
@@ -60,4 +79,15 @@ type CardDetails = {
   saved_to_locker: boolean;
 };
 
-type CardNetwork = "Visa" | "Mastercard" | "AmericanExpress" | "JCB" | "DinersClub" | "Discover" | "CartesBancaires" | "UnionPay" | "Interac" | "RuPay" | "Maestro";
+type CardNetwork =
+  | "Visa"
+  | "Mastercard"
+  | "AmericanExpress"
+  | "JCB"
+  | "DinersClub"
+  | "Discover"
+  | "CartesBancaires"
+  | "UnionPay"
+  | "Interac"
+  | "RuPay"
+  | "Maestro";

@@ -12,6 +12,7 @@ import { CheckoutForm } from "./checkout-form";
 type CreatePaymentResponse = {
   clientSecret: string;
   paymentId: string | undefined;
+  cartId: string;
 };
 
 type Options = {
@@ -32,16 +33,19 @@ export const HyperSwitch = ({
   cartData,
   isBuyNowAuction,
   teeTimeId,
+  teeTimeDate,
 }: {
   cartData: CartProduct[];
   isBuyNowAuction: boolean;
   teeTimeId: string;
+  teeTimeDate: string | undefined;
 }) => {
   const [options, setOptions] = useState<Options | undefined>(undefined);
   const { user } = useUserContext();
   const { course } = useCourseContext();
   const checkout = api.checkout.buildCheckoutSession.useMutation();
   const [isLoadingSession, setIsLoadingSession] = useState<boolean>(false);
+  const [cartId, setCartId] = useState<string>("");
   const amountToPay =
     //@ts-ignore
     cartData
@@ -68,6 +72,7 @@ export const HyperSwitch = ({
         paymentId: options?.paymentId ? options.paymentId : null,
         //@ts-ignore
         cart: cartData,
+        cartId,
       })) as CreatePaymentResponse;
       setOptions({
         clientSecret: data.clientSecret,
@@ -77,6 +82,8 @@ export const HyperSwitch = ({
         },
       });
       setLocalCartData(cartData);
+      setCartId(data.cartId);
+
       // setIsLoadingSession(false);
       callingRef.current = false;
     } catch (error) {
@@ -128,6 +135,8 @@ export const HyperSwitch = ({
             amountToPay={amountToPay}
             isBuyNowAuction={isBuyNowAuction}
             cartData={cartData}
+            cartId={cartId}
+            teeTimeDate={teeTimeDate}
           />
         </HyperElements>
       ) : (
