@@ -75,7 +75,10 @@ export class UserService {
    * @example
    * const userService = new UserService(database, notificationService);
    */
-  constructor(protected readonly database: Db, private readonly notificationsService: NotificationService) {
+  constructor(
+    protected readonly database: Db,
+    private readonly notificationsService: NotificationService
+  ) {
     //this.filter = new Filter();
   }
 
@@ -1156,7 +1159,7 @@ export class UserService {
         favorites: favorites.id,
         firstHandPrice: teeTimes.greenFee,
         minimumOfferPrice: bookings.minimumOfferPrice,
-        purchasedFor: bookings.purchasedPrice,
+        purchasedFor: bookings.totalAmount,
         golfers: bookings.nameOnBooking,
         listed: bookings.isListed,
         listPrice: lists.listPrice,

@@ -213,7 +213,7 @@ export class WatchlistService {
           bookingId: bookings.id,
           soldByHandle: users.handle,
           soldById: users.id,
-          price: bookings.purchasedPrice,
+          price: bookings.totalAmount,
           minimumOfferPrice: bookings.minimumOfferPrice,
           image: {
             key: assets.key,
