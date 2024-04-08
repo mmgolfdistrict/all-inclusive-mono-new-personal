@@ -197,7 +197,7 @@ export type CombinedObject = {
 };
 
 export type ReserveTeeTimeResponse = {
-  bookingId:string,
-  providerBookingId:string,
-  status:string
-}
+  bookingId: string;
+  providerBookingId: string;
+  status: string;
+};

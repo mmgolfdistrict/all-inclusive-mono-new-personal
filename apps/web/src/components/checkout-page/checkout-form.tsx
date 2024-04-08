@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
+import type { ReserveTeeTimeResponse } from "@golf-district/shared";
 import {
   UnifiedCheckout,
   useHyper,
@@ -14,7 +15,6 @@ import { FilledButton } from "../buttons/filled-button";
 import { CharitySelect } from "../input/charity-select";
 import { Input } from "../input/input";
 import styles from "./checkout.module.css";
-import type { ReserveTeeTimeResponse } from "@golf-district/shared";
 
 export const CheckoutForm = ({
   isBuyNowAuction,
@@ -22,14 +22,14 @@ export const CheckoutForm = ({
   teeTimeId,
   cartData,
   cartId,
-  teeTimeDate
+  teeTimeDate,
 }: {
   isBuyNowAuction: boolean;
   amountToPay: number;
   teeTimeId: string;
   cartData: CartProduct[];
   cartId: string;
-  teeTimeDate:string | undefined;
+  teeTimeDate: string | undefined;
 }) => {
   const { course } = useCourseContext();
 
@@ -103,7 +103,7 @@ export const CheckoutForm = ({
     handleSelectedCharity,
     handleSelectedCharityAmount,
     handleRemoveSelectedCharity,
-    setReservationData
+    setReservationData,
   } = useCheckoutContext();
 
   const reserveBookingApi = api.teeBox.reserveBooking.useMutation();
@@ -153,17 +153,17 @@ export const CheckoutForm = ({
     e.preventDefault();
 
     setIsLoading(true);
-    let bookingResponse:ReserveTeeTimeResponse={
-      bookingId:"",
-      providerBookingId:"",
-      status:""
-    }
+    let bookingResponse: ReserveTeeTimeResponse = {
+      bookingId: "",
+      providerBookingId: "",
+      status: "",
+    };
     if (isFirstHand.length) {
-       bookingResponse = await reserveBookingFirstHand(cartId);
+      bookingResponse = await reserveBookingFirstHand(cartId);
       setReservationData({
-        golfReservationId:bookingResponse.bookingId,
-        providerReservationId:bookingResponse.providerBookingId,
-        playTime: teeTimeDate||""
+        golfReservationId: bookingResponse.bookingId,
+        providerReservationId: bookingResponse.providerBookingId,
+        playTime: teeTimeDate || "",
       });
     }
     const response = await hyper.confirmPayment({
@@ -179,7 +179,6 @@ export const CheckoutForm = ({
 
     if (response) {
       if (response.status === "succeeded") {
-       
         setMessage("Payment Successful");
         isBuyNowAuction
           ? router.push(`/${course?.id}/auctions/confirmation`)

@@ -296,7 +296,7 @@ export class NotificationService {
     userId: string,
     subject: string,
     body: string,
-    courseId?: string|null,
+    courseId?: string | null,
     templateId?: string,
     template?: EmailParams
   ) => {

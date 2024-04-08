@@ -51,7 +51,7 @@ export interface BaseProduct {
 }
 
 export interface FirstHandProduct extends BaseProduct {
-  price: number,
+  price: number;
   product_data: {
     metadata: {
       type: "first_hand";

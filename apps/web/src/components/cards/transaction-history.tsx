@@ -58,7 +58,7 @@ export const TransactionHistory = ({ teeTimeId }: { teeTimeId: string }) => {
         ) : !data || data?.length === 0 ? (
           <div className="flex justify-center items-center h-[130px]">
             <div className="text-center">
-              No transaction history for this tee time. 
+              No transaction history for this tee time.
             </div>
           </div>
         ) : (

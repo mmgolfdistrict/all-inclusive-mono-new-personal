@@ -4,6 +4,7 @@ import { assets } from "@golf-district/database/schema/assets";
 import { bookings } from "@golf-district/database/schema/bookings";
 import { bookingslots } from "@golf-district/database/schema/bookingslots";
 import { courses } from "@golf-district/database/schema/courses";
+import { customerCarts } from "@golf-district/database/schema/customerCart";
 import type { InsertList } from "@golf-district/database/schema/lists";
 import { lists } from "@golf-district/database/schema/lists";
 import { offers } from "@golf-district/database/schema/offers";
@@ -18,13 +19,12 @@ import { currentUtcTimestamp, dateToUtcTimestamp } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
 import dayjs from "dayjs";
 import { alias } from "drizzle-orm/mysql-core";
+import type { CustomerCart, FirstHandProduct, ProductData } from "../checkout/types";
 import type { NotificationService } from "../notification/notification.service";
 import type { HyperSwitchService } from "../payment-processor/hyperswitch.service";
 import type { Customer, ProviderService } from "../tee-sheet-provider/providers.service";
-import type { TokenizeService } from "../token/tokenize.service";
-import { customerCarts } from "@golf-district/database/schema/customerCart";
-import type { CustomerCart, FirstHandProduct, ProductData } from "../checkout/types";
 import type { BookingResponse } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
+import type { TokenizeService } from "../token/tokenize.service";
 
 interface TeeTimeData {
   courseId: string;
@@ -2080,11 +2080,12 @@ export class BookingService {
 
     const taxes = taxCharge + sensibleCharge + charityCharge + convenienceCharge;
 
-    const total = customerCartData?.cart?.cart
-      .filter(({ product_data }: ProductData) => product_data.metadata.type !== "markup")
-      .reduce((acc: number, i: any) => {
-        return acc + i.price;
-      }, 0)/100;
+    const total =
+      customerCartData?.cart?.cart
+        .filter(({ product_data }: ProductData) => product_data.metadata.type !== "markup")
+        .reduce((acc: number, i: any) => {
+          return acc + i.price;
+        }, 0) / 100;
 
     return {
       ...primaryData,
@@ -2192,10 +2193,10 @@ export class BookingService {
           },
         },
       })
-      .catch( (err) => {
+      .catch((err) => {
         this.logger.error(err);
         //@TODO this email should be removed
-        
+
         throw new Error(`Error creating booking`);
       });
     //create tokenized bookings
@@ -2242,17 +2243,15 @@ export class BookingService {
     } as ReserveTeeTimeResponse;
   };
   confirmBooking = async (paymentId: string, userId: string) => {
-    console.log(
-      "start confirmation process",paymentId,userId
-    );
+    console.log("start confirmation process", paymentId, userId);
     const [booking] = await this.database
       .select({
         bookingId: bookings.id,
-        courseId:courses.id
+        courseId: courses.id,
       })
       .from(bookings)
       .innerJoin(customerCarts, eq(bookings.cartId, customerCarts.id))
-      .leftJoin(courses,eq(customerCarts.courseId,courses.id))
+      .leftJoin(courses, eq(customerCarts.courseId, courses.id))
       .where(and(eq(customerCarts.paymentId, paymentId), eq(bookings.ownerId, userId)))
       .execute()
       .catch((err) => {
@@ -2262,7 +2261,7 @@ export class BookingService {
     if (!booking) {
       throw "Booking not found for payment id";
     } else {
-      console.log("Set confirm status on booking id ",booking.bookingId);
+      console.log("Set confirm status on booking id ", booking.bookingId);
       await this.database
         .update(bookings)
         .set({
@@ -2273,27 +2272,24 @@ export class BookingService {
         .catch((err) => {
           this.logger.error(`Error in updating booking status ${err}`);
         });
-       
     }
   };
 
-  getOwnedBookingById= async (userId:string,bookingId:string)=>{
-    
+  getOwnedBookingById = async (userId: string, bookingId: string) => {
     const [booking] = await this.database
-    .select({
-      providerId: bookings.providerBookingId,
-      playTime: teeTimes.providerDate
-    })
-    .from(bookings)
-    .leftJoin(teeTimes,eq(teeTimes.id,bookings.teeTimeId))
-    .where(and(eq(bookings.ownerId,userId),eq(bookings.id,bookingId)))
-    .execute()
-    .catch((err) => {
-      this.logger.error(`Error retrieving bookings by payment id: ${err}`);
-      throw "Error retrieving booking";
-    });
+      .select({
+        providerId: bookings.providerBookingId,
+        playTime: teeTimes.providerDate,
+      })
+      .from(bookings)
+      .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
+      .where(and(eq(bookings.ownerId, userId), eq(bookings.id, bookingId)))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error retrieving bookings by payment id: ${err}`);
+        throw "Error retrieving booking";
+      });
 
     return booking;
-
-  }
+  };
 }

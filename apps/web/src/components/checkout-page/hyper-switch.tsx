@@ -33,12 +33,12 @@ export const HyperSwitch = ({
   cartData,
   isBuyNowAuction,
   teeTimeId,
-  teeTimeDate
+  teeTimeDate,
 }: {
   cartData: CartProduct[];
   isBuyNowAuction: boolean;
   teeTimeId: string;
-  teeTimeDate:string | undefined;
+  teeTimeDate: string | undefined;
 }) => {
   const [options, setOptions] = useState<Options | undefined>(undefined);
   const { user } = useUserContext();
@@ -72,7 +72,7 @@ export const HyperSwitch = ({
         paymentId: options?.paymentId ? options.paymentId : null,
         //@ts-ignore
         cart: cartData,
-        cartId
+        cartId,
       })) as CreatePaymentResponse;
       setOptions({
         clientSecret: data.clientSecret,

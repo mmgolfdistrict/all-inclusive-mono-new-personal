@@ -107,7 +107,7 @@ export class CheckoutService {
    * };
    * const checkoutSession = await checkoutService.buildCheckoutSession(userId, customerCart);
    */
-  buildCheckoutSession = async (userId: string, customerCartData: CustomerCart,cartId = '') => {
+  buildCheckoutSession = async (userId: string, customerCartData: CustomerCart, cartId = "") => {
     const { paymentId } = customerCartData;
     let data = {};
     // const errors = await this.validateCartItems(customerCart);
@@ -117,8 +117,7 @@ export class CheckoutService {
     //   };
     // }
     if (paymentId) {
-      data = this.updateCheckoutSession(userId, customerCartData,cartId);
-    
+      data = this.updateCheckoutSession(userId, customerCartData, cartId);
     } else {
       data = this.createCheckoutSession(userId, customerCartData);
     }
@@ -167,7 +166,8 @@ export class CheckoutService {
     // });
     //@TODO: metadata to include sensible
     //@TODO: update total form discount
-debugger;
+   // debugger;
+   console.log("===>",total);
     const paymentIntent = await this.hyperSwitch
       .createPaymentIntent({
         // @ts-ignore
@@ -202,7 +202,7 @@ debugger;
     };
   };
 
-  updateCheckoutSession = async (userId: string, customerCartData: CustomerCart,cartId:string) => {
+  updateCheckoutSession = async (userId: string, customerCartData: CustomerCart, cartId: string) => {
     const { paymentId, ...customerCart } = customerCartData;
 
     const total = customerCart.cart
@@ -237,7 +237,7 @@ debugger;
     return {
       clientSecret: paymentIntent.client_secret,
       paymentId: paymentIntent.payment_id,
-      cartId
+      cartId,
     };
   };
 

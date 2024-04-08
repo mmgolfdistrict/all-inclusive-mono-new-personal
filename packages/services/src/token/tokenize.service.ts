@@ -34,10 +34,7 @@ export class TokenizeService {
    * @example
    * const tokenizeService = new TokenizeService(database);
    */
-  constructor(
-    private readonly database: Db,
-    private readonly notificationService: NotificationService
-  ) {}
+  constructor(private readonly database: Db, private readonly notificationService: NotificationService) {}
   getCartData = async ({ courseId = "", ownerId = "", paymentId = "" }) => {
     const [customerCartData]: any = await this.database
       .select({ cart: customerCarts.cart, cartId: customerCarts.id })
@@ -150,7 +147,7 @@ export class TokenizeService {
       providerDate: string;
       holes: number;
     },
-    normalizedCartData?:any
+    normalizedCartData?: any
   ): Promise<string> {
     this.logger.info(`tokenizeBooking tokenizing booking id: ${providerTeeTimeId} for user: ${userId}`);
     //@TODO add this to the transaction
@@ -191,8 +188,6 @@ export class TokenizeService {
       throw new Error(`TeeTime with ID: ${providerTeeTimeId} does not have enough spots.`);
     }
 
-   
-
     const bookingsToCreate: InsertBooking[] = [];
     const transfersToCreate: InsertTransfer[] = [];
     const transactionId = randomUUID();
@@ -217,7 +212,7 @@ export class TokenizeService {
       // entityId: existingTeeTime.entityId,
       cartId: normalizedCartData.cartId,
       playerCount: players ?? 0,
-      
+
       taxesPerPlayer: (normalizedCartData.taxes / players) * 100 ?? 0,
       charityId: normalizedCartData.charityId ?? null,
       totalCharityAmount: normalizedCartData.charityCharge * 100 ?? 0,
@@ -329,7 +324,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       PlayDateTime: dateTime.format("YYYY-MM-DD hh:mm A") ?? "-",
       NumberOfHoles: existingTeeTime.numberOfHoles,
       GreenFees:
-        `$${(purchasePrice/100).toLocaleString("en-US", {
+        `$${(purchasePrice / 100).toLocaleString("en-US", {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         })}` ?? "-",
@@ -351,7 +346,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       process.env.SENDGRID_TEE_TIMES_PURCHASED_TEMPLATE_ID,
       template
     );
-    return bookingId
+    return bookingId;
   }
 
   /**
@@ -499,5 +494,5 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
         this.logger.error(err);
         throw new Error(`Error updating booking with id: ${bookingIds}`);
       });
-  };  
+  };
 }

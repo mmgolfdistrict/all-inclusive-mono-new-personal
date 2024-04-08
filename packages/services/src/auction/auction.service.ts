@@ -24,7 +24,7 @@ export class AuctionService {
    *
    * @param database - The database client used to perform auction-related operations.
    */
-  constructor(private readonly database: Db, private readonly hyperSwitch: HyperSwitchService) { }
+  constructor(private readonly database: Db, private readonly hyperSwitch: HyperSwitchService) {}
 
   /**
    * Creates a new auction for a specified course ID.

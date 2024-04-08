@@ -129,10 +129,8 @@ export const bookingRouter = createTRPCRouter({
       })
     )
     .query(async ({ ctx, input }) => {
-      return ctx.serviceFactory
-        .getBookingService()
-        .getOwnedBookingById( ctx.session.user.id, input.bookingId);
-    }),  
+      return ctx.serviceFactory.getBookingService().getOwnedBookingById(ctx.session.user.id, input.bookingId);
+    }),
   updateNamesOnBookings: protectedProcedure
     .input(
       z.object({

@@ -4,7 +4,9 @@ import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const checkoutRouter = createTRPCRouter({
   buildCheckoutSession: protectedProcedure.input(CustomerCartSchema).mutation(async ({ ctx, input }) => {
-    return await ctx.serviceFactory.getCheckoutService().buildCheckoutSession(ctx.session.user.id, input,input.cartId);
+    return await ctx.serviceFactory
+      .getCheckoutService()
+      .buildCheckoutSession(ctx.session.user.id, input, input.cartId);
   }),
   retrievePaymentMethods: protectedProcedure
     .input(
@@ -13,9 +15,7 @@ export const checkoutRouter = createTRPCRouter({
       })
     )
     .query(async ({ ctx, input }) => {
-      return await ctx.serviceFactory
-        .getHyperSwitchService()
-        .retrievePaymentMethods(input.customerId);
+      return await ctx.serviceFactory.getHyperSwitchService().retrievePaymentMethods(input.customerId);
     }),
   validatePromoCode: protectedProcedure
     .input(

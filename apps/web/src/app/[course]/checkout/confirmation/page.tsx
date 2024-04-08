@@ -28,7 +28,7 @@ export default function CheckoutConfirmation() {
       </div>
       <CheckoutBreadcumbs status={"confirmation"} />
 
-      <Confirmation teeTimeId={teeTimeId!} bookingId={bookingId?? ''} />
+      <Confirmation teeTimeId={teeTimeId!} bookingId={bookingId ?? ""} />
     </div>
   );
 }
