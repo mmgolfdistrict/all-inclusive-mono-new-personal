@@ -480,15 +480,6 @@ export class HyperSwitchWebhookService {
         return acc + i.price;
       }, 0);
 
-    console.log(
-      "@@@@",
-      primaryGreenFeeCharge,
-      taxCharge,
-      sensibleCharge,
-      charityCharge,
-      convenienceCharge,
-      total
-    );
 
     return {
       primaryGreenFeeCharge,
@@ -541,7 +532,6 @@ export class HyperSwitchWebhookService {
         numberOfHoles: bookings.numberOfHoles,
         includesCart: bookings.includesCart,
         entityId: teeTimes.entityId,
-        purchasedPrice: bookings.purchasedPrice,
         weatherGuaranteeId: bookings.weatherGuaranteeId,
         weatherGuaranteeAmount: bookings.weatherGuaranteeAmount,
         listId: bookings.listId,
@@ -696,7 +686,6 @@ export class HyperSwitchWebhookService {
           }
         );
         newBookingSecond.data.ownerId = firstBooking.ownerId;
-        newBookingSecond.data.purchasedFor = firstBooking.purchasedPrice;
         newBooking.data.weatherGuaranteeId = firstBooking.weatherGuaranteeId || "";
         newBooking.data.weatherGuaranteeAmount = firstBooking.weatherGuaranteeAmount || 0;
         newBookingSecond.data.bookingType = "SECOND";
@@ -741,12 +730,11 @@ export class HyperSwitchWebhookService {
         return [];
       });
 
-    const { taxes, sensibleCharge, charityCharge, total, cartId, charityId, weatherQuoteId } =
-      await this.getCartData({
-        courseId: existingTeeTime?.courseId,
-        ownerId: customer_id,
-        paymentId,
-      });
+    const { taxes, sensibleCharge, charityCharge, total, cartId, charityId, weatherQuoteId } = await this.getCartData({
+      courseId: existingTeeTime?.courseId,
+      ownerId: customer_id,
+      paymentId
+    });
 
     for (const booking of newBookings) {
       const newBooking = booking;
@@ -756,7 +744,6 @@ export class HyperSwitchWebhookService {
       bookingsToCreate.push({
         id: bookingId,
         purchasedAt: currentUtcTimestamp(),
-        purchasedPrice: newBooking?.data.purchasedFor || 0,
         providerBookingId: newBooking?.data.id || "",
         isListed: false,
         numberOfHoles: firstBooking.numberOfHoles,
@@ -772,11 +759,11 @@ export class HyperSwitchWebhookService {
         weatherGuaranteeId: firstBooking.weatherGuaranteeId,
         cartId: cartId,
         playerCount: listedSlotsCount || 0,
-        greenFeePerPlayers: listPrice && listedSlotsCount ? listPrice / listedSlotsCount : 0,
-        taxesPerPlayer: (taxes / (listedSlotsCount || 0)) * 100 || 0,
+        greenFeePerPlayer: listPrice && listedSlotsCount ? (listPrice / listedSlotsCount) * 100 : 0,
+        totalTaxesAmount: (taxes * 100) || 0,
         charityId: charityId || null,
-        totalCharityAmount: charityCharge * 100 || 0,
-        totalAmount: total * 100 || 0,
+        totalCharityAmount: (charityCharge * 100) || 0,
+        totalAmount: total || 0,
         providerPaymentId: paymentId,
         weatherQuoteId: weatherQuoteId || null,
       });
@@ -844,7 +831,6 @@ export class HyperSwitchWebhookService {
           fromUserId: firstBooking.ownerId || "",
           toUserId: newBooking.data.ownerId ?? "",
           courseId: firstBooking?.courseId ?? "",
-          purchasedPrice: newBooking.data.purchasedFor ?? 0,
         });
         await this.database
           .insert(transfers)

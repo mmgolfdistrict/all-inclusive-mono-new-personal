@@ -731,10 +731,7 @@ export class SearchService {
       .where(
         and(
           and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
-          or(
-            between(lists.listPrice, lowerPrice, upperPrice),
-            between(bookings.purchasedPrice, lowerPrice, upperPrice)
-          ),
+          between(lists.listPrice, lowerPrice, upperPrice),
           gte(teeTimes.providerDate, currentTimePlus30Min),
           between(teeTimes.providerDate, startDate, endDate),
           eq(teeTimes.courseId, courseId),
