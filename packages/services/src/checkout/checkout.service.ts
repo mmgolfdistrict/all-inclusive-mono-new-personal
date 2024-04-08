@@ -212,6 +212,12 @@ export class CheckoutService {
         return acc + item.price;
       }, 0);
 
+    console.log(`paymentId = ${paymentId}`);
+    console.log(`total = ${total}`);
+    console.log(`userId = ${userId}`);
+    console.log(`cartId = ${cartId}`);
+    console.log(customerCartData);
+
     const paymentIntent = await this.hyperSwitch
       .updatePaymentIntent(paymentId || "", {
         currency: "USD",
