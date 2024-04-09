@@ -95,6 +95,8 @@ export const CheckoutForm = ({
   const [isLoading, setIsLoading] = useState(false);
   // const [isPaymentCompleted, setIsPaymentCompleted] = useState(false);
   const [message, setMessage] = useState("");
+  const [charityAmountError, setCharityAmountError] = useState("");
+
   const {
     promoCode,
     handlePromoCode,
@@ -151,51 +153,54 @@ export const CheckoutForm = ({
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     if (message === "Payment Successful") return;
     e.preventDefault();
-
-    setIsLoading(true);
-    let bookingResponse: ReserveTeeTimeResponse = {
-      bookingId: "",
-      providerBookingId: "",
-      status: "",
-    };
-    if (isFirstHand.length) {
-      bookingResponse = await reserveBookingFirstHand(cartId);
-      setReservationData({
-        golfReservationId: bookingResponse.bookingId,
-        providerReservationId: bookingResponse.providerBookingId,
-        playTime: teeTimeDate || "",
+    if (selectedCharity && !selectedCharityAmount) {
+      setCharityAmountError("Charity amount cannot be empty");
+    } else {
+      setIsLoading(true);
+      let bookingResponse: ReserveTeeTimeResponse = {
+        bookingId: "",
+        providerBookingId: "",
+        status: "",
+      };
+      if (isFirstHand.length) {
+        bookingResponse = await reserveBookingFirstHand(cartId);
+        setReservationData({
+          golfReservationId: bookingResponse.bookingId,
+          providerReservationId: bookingResponse.providerBookingId,
+          playTime: teeTimeDate || "",
+        });
+      }
+      const response = await hyper.confirmPayment({
+        widgets,
+        confirmParams: {
+          // Make sure to change this to your payment completion page
+          return_url: isBuyNowAuction
+            ? `${window.location.origin}/${course?.id}/auctions/confirmation`
+            : `${window.location.origin}/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}&bookingId=${bookingResponse.bookingId}`,
+        },
+        redirect: "if_required",
       });
-    }
-    const response = await hyper.confirmPayment({
-      widgets,
-      confirmParams: {
-        // Make sure to change this to your payment completion page
-        return_url: isBuyNowAuction
-          ? `${window.location.origin}/${course?.id}/auctions/confirmation`
-          : `${window.location.origin}/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}&bookingId=${bookingResponse.bookingId}`,
-      },
-      redirect: "if_required",
-    });
 
-    if (response) {
-      if (response.status === "succeeded") {
-        setMessage("Payment Successful");
-        isBuyNowAuction
-          ? router.push(`/${course?.id}/auctions/confirmation`)
-          : router.push(
-              `/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}&bookingId=${bookingResponse.bookingId}`
-            );
-      } else if (response.error) {
-        setMessage(response.error.message);
+      if (response) {
+        if (response.status === "succeeded") {
+          setMessage("Payment Successful");
+          isBuyNowAuction
+            ? router.push(`/${course?.id}/auctions/confirmation`)
+            : router.push(
+                `/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}&bookingId=${bookingResponse.bookingId}`
+              );
+        } else if (response.error) {
+          setMessage(response.error.message);
+        } else {
+          setMessage("An unexpected error occurred.");
+        }
       } else {
         setMessage("An unexpected error occurred.");
       }
-    } else {
-      setMessage("An unexpected error occurred.");
-    }
 
-    setIsLoading(false);
-    // setIsPaymentCompleted(true);
+      setIsLoading(false);
+      // setIsPaymentCompleted(true);
+    }
   };
 
   const reserveBookingFirstHand = async (cartId: string) => {
@@ -250,7 +255,7 @@ export const CheckoutForm = ({
                   }}
                   placeholder="Enter donation amount"
                   register={() => undefined}
-                  error=""
+                  error={charityAmountError}
                   data-testid="donation-amount-id"
                 />
               </div>
