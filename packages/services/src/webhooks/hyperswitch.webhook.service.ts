@@ -275,8 +275,13 @@ export class HyperSwitchWebhookService {
       const weatherGuaranteeData = customerCart.cart.filter(
         (item) => item.product_data.metadata.type === "sensible"
       );
-      if(weatherGuaranteeData.length){
-        await this.handleSensibleItem(weatherGuaranteeData[0] as SensibleProduct, amountReceived, customer_id, customerCart);
+      if (weatherGuaranteeData.length) {
+        await this.handleSensibleItem(
+          weatherGuaranteeData[0] as SensibleProduct,
+          amountReceived,
+          customer_id,
+          customerCart
+        );
       }
       return;
     }
@@ -480,7 +485,6 @@ export class HyperSwitchWebhookService {
         return acc + i.price;
       }, 0);
 
-
     return {
       primaryGreenFeeCharge,
       taxCharge,
@@ -495,16 +499,12 @@ export class HyperSwitchWebhookService {
     };
   };
 
-  handleSecondHandItem = async( 
+  handleSecondHandItem = async (
     item: SecondHandProduct,
     amountReceived: number,
     customer_id: string,
     paymentId: string
-  )=>{
-    
-    
-
-  }
+  ) => {};
 
   // handleSecondHandItem = async (
   //   item: SecondHandProduct,
@@ -1300,7 +1300,7 @@ export class HyperSwitchWebhookService {
   //   // });
   //   // console.log(res);
   // };
-  
+
   handleOfferItem = async (item: Offer, amountReceived: number, customer_id: string) => {
     await this.bookingService.createOfferOnBookings(
       customer_id,

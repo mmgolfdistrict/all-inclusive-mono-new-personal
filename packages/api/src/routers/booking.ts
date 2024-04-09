@@ -252,14 +252,16 @@ export const bookingRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       return ctx.serviceFactory.getBookingService().reserveBooking(ctx.session.user.id, input.cartId);
     }),
-    reserveSecondHandBooking:protectedProcedure
+  reserveSecondHandBooking: protectedProcedure
     .input(
       z.object({
         cartId: z.string(),
-        listingId:z.string()
+        listingId: z.string(),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      return ctx.serviceFactory.getBookingService().reserveSecondHandBooking(ctx.session.user.id, input.cartId, input.listingId);
-    }), 
+      return ctx.serviceFactory
+        .getBookingService()
+        .reserveSecondHandBooking(ctx.session.user.id, input.cartId, input.listingId);
+    }),
 });

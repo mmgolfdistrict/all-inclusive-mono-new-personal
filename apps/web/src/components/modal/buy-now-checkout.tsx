@@ -36,7 +36,6 @@ export const BuyNowCheckout = ({
           },
         ]}
         teeTimeDate={undefined}
-        
       />
     </ModalWrapper>
   );

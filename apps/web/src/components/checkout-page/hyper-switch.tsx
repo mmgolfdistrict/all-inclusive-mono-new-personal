@@ -34,13 +34,13 @@ export const HyperSwitch = ({
   isBuyNowAuction,
   teeTimeId,
   teeTimeDate,
-  listingId
+  listingId,
 }: {
   cartData: CartProduct[];
   isBuyNowAuction: boolean;
   teeTimeId: string;
   teeTimeDate: string | undefined;
-  listingId:string | undefined;
+  listingId: string | undefined;
 }) => {
   const [options, setOptions] = useState<Options | undefined>(undefined);
   const { user } = useUserContext();
