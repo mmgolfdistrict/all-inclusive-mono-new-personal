@@ -101,7 +101,7 @@ export const CancelListing = ({
             <div className="flex flex-col gap-6 px-0 sm:px-4">
               <div>
                 <div className="px-4 pb-4 text-center text-2xl font-[300] md:text-3xl">
-                  Are you sure you would like to cancel this listing?
+                  Are you sure you want to cancel this listing?
                 </div>
                 <TeeTimeItem
                   courseName={courseName ?? ""}
@@ -113,7 +113,7 @@ export const CancelListing = ({
               </div>
               <div className="flex flex-col gap-2 rounded-xl bg-secondary-white px-4 py-5 text-center">
                 <div className="font-[300] text-primary-gray">
-                  Offer price per golfer
+                  List price per golfer
                 </div>
                 <div className="text-lg md:text-2xl">
                   {formatMoney(pricePerGolfer ?? 0)}
@@ -126,9 +126,6 @@ export const CancelListing = ({
               </div>
             </div>
             <div className="flex flex-col gap-4 px-4 pb-6">
-              <div className="text-center text-[14px] font-[300] text-primary-gray">
-                All sales are final.
-              </div>
               <div className="flex flex-col gap-2">
                 <FilledButton
                   className="w-full"
