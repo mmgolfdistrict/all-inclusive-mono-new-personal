@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import { and, asc, desc, eq, gte, inArray, or, sql, type Db } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
+import type { InsertBooking} from "@golf-district/database/schema/bookings";
 import { bookings } from "@golf-district/database/schema/bookings";
 import { bookingslots } from "@golf-district/database/schema/bookingslots";
 import { courses } from "@golf-district/database/schema/courses";
@@ -11,6 +12,7 @@ import { offers } from "@golf-district/database/schema/offers";
 import { providers } from "@golf-district/database/schema/providers";
 import { providerCourseLink } from "@golf-district/database/schema/providersCourseLink";
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
+import type { InsertTransfer} from "@golf-district/database/schema/transfers";
 import { transfers } from "@golf-district/database/schema/transfers";
 import { userBookingOffers } from "@golf-district/database/schema/userBookingOffers";
 import { users } from "@golf-district/database/schema/users";
@@ -2275,6 +2277,113 @@ export class BookingService {
         });
     }
   };
+  reserveSecondHandBooking= async (userId="", cartId="",listingId="")=>{
+    const {
+      cart,
+      playerCount,
+      primaryGreenFeeCharge,
+      teeTimeId,
+      taxCharge,
+      sensibleCharge,
+      convenienceCharge,
+      charityCharge,
+      taxes,
+      total,
+      charityId,
+      weatherQuoteId,
+      paymentId,
+    } = await this.normalizeCartData({
+      cartId,
+      userId,
+    });
+
+    const [associatedBooking]=await this.database
+    .select({
+       id:bookings.id,
+       includesCart:bookings.includesCart,
+       numberOfHoles:bookings.numberOfHoles,
+       weatherGuaranteeAmount:bookings.weatherGuaranteeAmount,
+       weatherGuaranteeId:bookings.weatherGuaranteeId,
+       ownerId:bookings.ownerId,
+       listedSlotsCount:lists.slots,
+       listPrice:lists.listPrice
+    })
+    .from(bookings)
+    .leftJoin(lists,eq(lists.id,listingId))
+    .where(eq(bookings.listId,listingId))
+    .execute();
+
+    const [userData]= await this.database
+    .select({
+      handle:users.handle
+    })
+    .from(users)
+    .where(eq(users.id,userId))
+    .execute();
+    
+    const bookingId= randomUUID();
+    const bookingsToCreate: InsertBooking[] = [];
+    const transfersToCreate: InsertTransfer[] = [];
+    bookingsToCreate.push({
+      id: bookingId,
+      purchasedAt: currentUtcTimestamp(),
+      providerBookingId: "",
+      isListed: false,
+      numberOfHoles: associatedBooking?.numberOfHoles,
+      minimumOfferPrice: 0,
+      ownerId: userId ,
+      teeTimeId: teeTimeId,
+      nameOnBooking: userData?.handle??"",
+      includesCart: associatedBooking?.includesCart,
+      listId: null,
+      weatherGuaranteeAmount: sensibleCharge,
+      weatherGuaranteeId: '',
+      cartId: cartId,
+      playerCount: associatedBooking?.listedSlotsCount??0,
+      greenFeePerPlayer: associatedBooking?.listPrice && associatedBooking?.listedSlotsCount ? (associatedBooking?.listPrice / associatedBooking?.listedSlotsCount) * 100 : 0,
+      totalTaxesAmount: (taxes * 100) || 0,
+      charityId: charityId || null,
+      totalCharityAmount: (charityCharge * 100) || 0,
+      totalAmount: total || 0,
+      providerPaymentId: paymentId,
+      weatherQuoteId: weatherQuoteId || null,
+    });
+    transfersToCreate.push({
+      id: randomUUID(),
+      amount: associatedBooking?.listPrice??0,
+      bookingId: bookingId,
+      transactionId: randomUUID(),
+      fromUserId: associatedBooking?.ownerId??"",
+      toUserId: userId,
+      courseId: cart?.courseId,
+      fromBookingId:associatedBooking?.id
+    });
+   
+    await this.database.transaction(async (tx) => {
+      await tx
+        .insert(bookings)
+        .values(bookingsToCreate)
+        .execute()
+        .catch((err) => {
+          this.logger.error(err);
+          tx.rollback();
+        });
+
+        await this.database
+        .insert(transfers)
+        .values(transfersToCreate)
+        .execute()
+        .catch((err) => {
+          this.logger.error(err);
+        });
+    });
+
+    return {
+      bookingId,
+      providerBookingId: "",
+      status: "Reserved",
+    } as ReserveTeeTimeResponse;
+  }
 
   getOwnedBookingById = async (userId: string, bookingId: string) => {
     const [booking] = await this.database

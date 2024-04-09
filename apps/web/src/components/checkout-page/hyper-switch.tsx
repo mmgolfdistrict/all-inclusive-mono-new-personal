@@ -34,11 +34,13 @@ export const HyperSwitch = ({
   isBuyNowAuction,
   teeTimeId,
   teeTimeDate,
+  listingId
 }: {
   cartData: CartProduct[];
   isBuyNowAuction: boolean;
   teeTimeId: string;
   teeTimeDate: string | undefined;
+  listingId:string | undefined;
 }) => {
   const [options, setOptions] = useState<Options | undefined>(undefined);
   const { user } = useUserContext();
@@ -137,6 +139,7 @@ export const HyperSwitch = ({
             cartData={cartData}
             cartId={cartId}
             teeTimeDate={teeTimeDate}
+            listingId={listingId ?? ""}
           />
         </HyperElements>
       ) : (

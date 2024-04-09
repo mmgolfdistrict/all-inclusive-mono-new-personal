@@ -23,6 +23,7 @@ export const CheckoutForm = ({
   cartData,
   cartId,
   teeTimeDate,
+  listingId
 }: {
   isBuyNowAuction: boolean;
   amountToPay: number;
@@ -30,6 +31,7 @@ export const CheckoutForm = ({
   cartData: CartProduct[];
   cartId: string;
   teeTimeDate: string | undefined;
+  listingId:string;
 }) => {
   const { course } = useCourseContext();
 
@@ -107,6 +109,7 @@ export const CheckoutForm = ({
   } = useCheckoutContext();
 
   const reserveBookingApi = api.teeBox.reserveBooking.useMutation();
+  const reserveSecondHandBookingApi= api.teeBox.reserveSecondHandBooking.useMutation();
 
   const handlePaymentStatus = (status: string) => {
     switch (status) {
@@ -165,6 +168,8 @@ export const CheckoutForm = ({
         providerReservationId: bookingResponse.providerBookingId,
         playTime: teeTimeDate || "",
       });
+    }else{
+      // bookingResponse= await reserveSecondHandBooking(cartId,listingId);
     }
     const response = await hyper.confirmPayment({
       widgets,
@@ -203,6 +208,15 @@ export const CheckoutForm = ({
       cartId,
     });
     return bookingResponse;
+  };
+
+  const reserveSecondHandBooking = async (cartId: string,listingId:string) => {
+    // const bookingResponse = await reserveSecondHandBookingApi.mutateAsync({
+    //   cartId,
+    //   listingId
+    // });
+    // console.log(bookingResponse);
+    // return bookingResponse;
   };
 
   return (

@@ -22,6 +22,7 @@ export const transfers = mySqlTable(
     courseId: varchar("courseId", { length: 36 }).notNull(),
     fromUserId: varchar("fromUserId", { length: 36 }).notNull(),
     toUserId: varchar("toUserId", { length: 36 }).notNull(),
+    fromBookingId:varchar("bookingId", { length: 36 }),
   },
   (table) => {
     return {
