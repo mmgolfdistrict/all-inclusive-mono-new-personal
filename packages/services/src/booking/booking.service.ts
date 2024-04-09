@@ -67,7 +67,7 @@ interface OwnedTeeTimeData {
   golfers: InviteFriend[];
   bookingIds: string[];
   slotsData: SlotsData[];
-  // purchasedFor: number | null;
+  purchasedFor: number | null;
   status: string;
   listingId: string | null;
   listedSpots: string[] | null;
@@ -440,7 +440,7 @@ export class BookingService {
         slotCustomerName: bookingslots.name,
         slotCustomerId: bookingslots.customerId,
         slotPosition: bookingslots.slotPosition,
-        // purchasedFor: bookings.purchasedPrice,
+        purchasedFor: bookings.greenFeePerPlayer,
       })
       .from(teeTimes)
       .innerJoin(bookings, eq(bookings.teeTimeId, teeTimes.id))
@@ -498,7 +498,7 @@ export class BookingService {
           date: teeTime.date,
           firstHandPrice: teeTime.greenFee + (teeTime.courseMarkup ? teeTime.courseMarkup / 100 : 0),
           golfers: [],
-          // purchasedFor: Number(teeTime.purchasedFor),
+          purchasedFor: Number(teeTime.purchasedFor),
           bookingIds: [teeTime.bookingId],
           slotsData: [
             {

@@ -70,7 +70,7 @@ export const ManageTeeTimeListing = ({
       if (selectedTeeTime?.listPrice !== null) {
         setListingPrice(selectedTeeTime?.listPrice);
       }
-      setPlayers(selectedTeeTime.listedSpots?.length.toString() as PlayerType);
+      setPlayers(selectedTeeTime?.listedSlotsCount?.toString() as PlayerType);
     }
   }, [selectedTeeTime, isManageTeeTimeListingOpen]);
 
@@ -227,6 +227,7 @@ export const ManageTeeTimeListing = ({
                     onBlur={handleBlur}
                     className="mx-auto max-w-[300px] rounded-lg bg-secondary-white px-4 py-1 text-center text-[24px] font-semibold outline-none md:text-[32px] pl-6"
                     data-testid="lsiting-price-id"
+                    disabled
                   />
                 </div>
               </div>
@@ -302,13 +303,13 @@ export const ManageTeeTimeListing = ({
                 All sales are final.
               </div>
               <div className="flex flex-col gap-2">
-                <FilledButton
+                {/* <FilledButton
                   className="w-full"
                   onClick={save}
                   data-testid="save-button-id"
                 >
                   Save
-                </FilledButton>
+                </FilledButton> */}
                 <FilledButton
                   className="w-full"
                   onClick={openCancelListing}
