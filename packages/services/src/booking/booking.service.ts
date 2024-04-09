@@ -2085,12 +2085,11 @@ export class BookingService {
         .filter(({ product_data }: ProductData) => product_data.metadata.type !== "markup")
         .reduce((acc: number, i: any) => {
           return acc + i.price;
-        }, 0) / 100;
+        }, 0);
 
     return {
       ...primaryData,
       cart: customerCartData.cart as CustomerCart,
-
       taxCharge,
       sensibleCharge,
       convenienceCharge,
