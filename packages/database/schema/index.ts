@@ -34,6 +34,7 @@ import * as userProviderCourseLink from "./userProviderCourseLink";
 import * as users from "./users";
 import * as verificationTokens from "./verificationTokens";
 import * as withdrawals from "./withdrawals";
+import * as teeTimeIndexLogs from "./teeTimeIndexLogs";
 
 export const schema = {
   ...accounts,
@@ -72,4 +73,5 @@ export const schema = {
   ...providerScheduleDetails,
   ...courseScheduleDetails,
   ...jobs,
+  ...teeTimeIndexLogs
 };
