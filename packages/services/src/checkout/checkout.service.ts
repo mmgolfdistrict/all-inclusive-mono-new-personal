@@ -221,7 +221,7 @@ export class CheckoutService {
     const paymentIntent = await this.hyperSwitch
       .updatePaymentIntent(paymentId || "", {
         currency: "USD",
-        amount: total,
+        amount: parseInt(total.toString()),
         // @ts-ignore
       })
       .catch((err) => {
