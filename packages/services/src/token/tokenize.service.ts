@@ -337,6 +337,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       SensibleWeatherIncluded: normalizedCartData.sensibleCharge ? "Yes" : "No",
       PurchasedFrom: existingTeeTime.courseName ?? "-",
       PlayerCount: players ?? 0,
+      TotalAmount: `$${normalizedCartData.total ?? 0}`
     };
 
     await this.notificationService.createNotification(
