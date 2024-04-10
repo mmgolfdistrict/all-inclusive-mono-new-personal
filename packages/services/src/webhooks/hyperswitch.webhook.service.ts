@@ -730,7 +730,7 @@ export class HyperSwitchWebhookService {
         return [];
       });
 
-    const { taxes, sensibleCharge, charityCharge, total, cartId, charityId, weatherQuoteId } = await this.getCartData({
+    const { taxes, taxCharge, sensibleCharge, charityCharge, total, cartId, charityId, weatherQuoteId } = await this.getCartData({
       courseId: existingTeeTime?.courseId,
       ownerId: customer_id,
       paymentId
@@ -760,7 +760,7 @@ export class HyperSwitchWebhookService {
         cartId: cartId,
         playerCount: listedSlotsCount || 0,
         greenFeePerPlayer: listPrice && listedSlotsCount ? (listPrice / listedSlotsCount) * 100 : 0,
-        totalTaxesAmount: (taxes * 100) || 0,
+        totalTaxesAmount: (taxCharge * 100) || 0,
         charityId: charityId || null,
         totalCharityAmount: (charityCharge * 100) || 0,
         totalAmount: total || 0,
@@ -845,7 +845,7 @@ export class HyperSwitchWebhookService {
         CourseLogoURL: `https://${existingTeeTime?.cdn}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
         CourseName: existingTeeTime?.courseName || "-",
         FacilityName: existingTeeTime?.entityName || "-",
-        PlayDateTime: dayjs(existingTeeTime?.date).format("MM/DD/YYYY h:mm A") || "-",
+        PlayDateTime: dayjs(existingTeeTime?.date).utcOffset("-06:00").format("MM/DD/YYYY h:mm A") || "-",
         NumberOfHoles: existingTeeTime?.numberOfHoles,
         SellTeeTImeURL: `${process.env.APP_URL}/my-tee-box`,
         ManageTeeTimesURL: `${process.env.APP_URL}/my-tee-box`,
