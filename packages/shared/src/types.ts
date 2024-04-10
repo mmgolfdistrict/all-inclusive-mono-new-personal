@@ -73,6 +73,7 @@ export type FullCourseType = {
   forecastApi: string | null;
   convenienceFees: number | null;
   markup: number | null;
+  maxListPricePerGolferPercentage: number | undefined;
   openTime: string | null;
   closeTime: string | null;
   supportCharity: boolean;
