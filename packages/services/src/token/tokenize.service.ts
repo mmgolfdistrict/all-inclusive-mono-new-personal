@@ -215,7 +215,7 @@ export class TokenizeService {
       cartId: normalizedCartData.cartId,
       playerCount: players ?? 0,
       greenFeePerPlayer: (normalizedCartData.primaryGreenFeeCharge / players) * 100 || 0,
-      totalTaxesAmount: normalizedCartData.taxes * 100 || 0,
+      totalTaxesAmount: normalizedCartData.taxCharge * 100 || 0,
       charityId: normalizedCartData.charityId || null,
       totalCharityAmount: normalizedCartData.charityCharge * 100 || 0,
       totalAmount: normalizedCartData.total || 0,
@@ -314,15 +314,13 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
     This is a first party purchase from the course
     `;
 
-    const dateTime = dayjs(existingTeeTime.providerDate).utcOffset("-06:00");
-
     const template = {
       CustomerFirstName: existingTeeTime.customerName?.split(" ")[0],
       CourseName: existingTeeTime.courseName ?? "-",
       GolfDistrictReservationID: bookingsToCreate?.[0]?.id ?? "-",
       CourseReservationID: providerBookingId ?? "-",
       FacilityName: existingTeeTime.entityName ?? "-",
-      PlayDateTime: dateTime.format("YYYY-MM-DD hh:mm A") ?? "-",
+      PlayDateTime: dayjs(existingTeeTime.providerDate).utcOffset("-06:00").format("YYYY-MM-DD hh:mm A") ?? "-",
       NumberOfHoles: existingTeeTime.numberOfHoles,
       GreenFees:
         `$${(purchasePrice / 100).toLocaleString("en-US", {
