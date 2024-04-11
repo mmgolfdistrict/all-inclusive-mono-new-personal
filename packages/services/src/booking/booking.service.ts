@@ -2098,7 +2098,6 @@ export class BookingService {
     return {
       ...primaryData,
       cart: customerCartData.cart as CustomerCart,
-
       taxCharge,
       sensibleCharge,
       convenienceCharge,

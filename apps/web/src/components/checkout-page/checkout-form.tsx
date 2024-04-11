@@ -97,6 +97,8 @@ export const CheckoutForm = ({
   const [isLoading, setIsLoading] = useState(false);
   // const [isPaymentCompleted, setIsPaymentCompleted] = useState(false);
   const [message, setMessage] = useState("");
+  const [charityAmountError, setCharityAmountError] = useState("");
+
   const {
     promoCode,
     handlePromoCode,
@@ -155,55 +157,60 @@ export const CheckoutForm = ({
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     if (message === "Payment Successful") return;
     e.preventDefault();
-
-    setIsLoading(true);
-
-    console.log(widgets);
-    const response = await hyper.confirmPayment({
-      widgets,
-      confirmParams: {
-        // Make sure to change this to your payment completion page
-        return_url: isBuyNowAuction
-          ? `${window.location.origin}/${course?.id}/auctions/confirmation`
-          : `${window.location.origin}/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}`,
-      },
-      redirect: "if_required",
-    });
-
-    if (response) {
-      if (response.status === "succeeded") {
-        let bookingResponse: ReserveTeeTimeResponse = {
-          bookingId: "",
-          providerBookingId: "",
-          status: "",
-        };
-        if (isFirstHand.length) {
-          bookingResponse = await reserveBookingFirstHand(cartId);
-          setReservationData({
-            golfReservationId: bookingResponse.bookingId,
-            providerReservationId: bookingResponse.providerBookingId,
-            playTime: teeTimeDate || "",
-          });
-        } else {
-          bookingResponse = await reserveSecondHandBooking(cartId, listingId);
-        }
-        setMessage("Payment Successful");
-        isBuyNowAuction
-          ? router.push(`/${course?.id}/auctions/confirmation`)
-          : router.push(
-              `/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}&bookingId=${bookingResponse.bookingId}`
-            );
-      } else if (response.error) {
-        setMessage(response.error.message);
-      } else {
-        setMessage("An unexpected error occurred.");
-      }
-    } else {
-      setMessage("An unexpected error occurred.");
+    if (
+      selectedCharity &&
+      (!selectedCharityAmount || selectedCharityAmount === 0)
+    ) {
+      setCharityAmountError("Charity amount cannot be empty or zero");
     }
+    {
+      setIsLoading(true);
 
-    setIsLoading(false);
-    // setIsPaymentCompleted(true);
+      console.log(widgets);
+      const response = await hyper.confirmPayment({
+        widgets,
+        confirmParams: {
+          // Make sure to change this to your payment completion page
+          return_url: isBuyNowAuction
+            ? `${window.location.origin}/${course?.id}/auctions/confirmation`
+            : `${window.location.origin}/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}`,
+        },
+        redirect: "if_required",
+      });
+
+      if (response) {
+        if (response.status === "succeeded") {
+          let bookingResponse: ReserveTeeTimeResponse = {
+            bookingId: "",
+            providerBookingId: "",
+            status: "",
+          };
+          if (isFirstHand.length) {
+            bookingResponse = await reserveBookingFirstHand(cartId);
+            setReservationData({
+              golfReservationId: bookingResponse.bookingId,
+              providerReservationId: bookingResponse.providerBookingId,
+              playTime: teeTimeDate || "",
+            });
+          } else {
+            bookingResponse = await reserveSecondHandBooking(cartId, listingId);
+          }
+          setMessage("Payment Successful");
+          isBuyNowAuction
+            ? router.push(`/${course?.id}/auctions/confirmation`)
+            : router.push(
+                `/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}&bookingId=${bookingResponse.bookingId}`
+              );
+        } else if (response.error) {
+          setMessage(response.error.message);
+        } else {
+          setMessage("An unexpected error occurred.");
+        }
+
+        setIsLoading(false);
+        // setIsPaymentCompleted(true);
+      }
+    }
   };
 
   const reserveBookingFirstHand = async (cartId: string) => {
@@ -270,7 +277,7 @@ export const CheckoutForm = ({
                   }}
                   placeholder="Enter donation amount"
                   register={() => undefined}
-                  error=""
+                  error={charityAmountError}
                   data-testid="donation-amount-id"
                 />
               </div>

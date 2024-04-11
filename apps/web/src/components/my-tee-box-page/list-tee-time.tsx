@@ -56,7 +56,6 @@ export const ListTeeTime = ({
   const sell = api.teeBox.createListingForBookings.useMutation();
   const router = useRouter();
   const { course } = useCourseContext();
-  const courseMaxSellPricePerGolferLimitPercentage = 0.3;
   const listingSellerFeePercentage = (course?.sellerFee ?? 1) / 100;
   const listingBuyerFeePercentage = (course?.buyerFee ?? 1) / 100;
 
@@ -66,9 +65,13 @@ export const ListTeeTime = ({
     // );
     console.log(selectedTeeTime);
     if (!selectedTeeTime?.purchasedFor) return 0;
+
     return (
       selectedTeeTime?.purchasedFor *
-      (1 + courseMaxSellPricePerGolferLimitPercentage)
+      (1 +
+        (course?.maxListPricePerGolferPercentage
+          ? course?.maxListPricePerGolferPercentage / 100
+          : 0))
     );
   }, [selectedTeeTime]);
 
@@ -254,6 +257,10 @@ export const ListTeeTime = ({
                 >
                   Enter listing price per golfer
                 </label>
+                <div className="flex text-[14px] md:text-[16px]">
+                  <span className="text-primary-gray">Maximum listing price per golfer: &nbsp;</span>
+                  <span className="text-secondary-black">${maxListingPrice}</span>
+                </div>
                 <div className="relative">
                   <span className="absolute left-1 top-1 text-[24px] md:text-[32px]">
                     $

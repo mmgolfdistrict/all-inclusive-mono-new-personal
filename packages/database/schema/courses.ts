@@ -37,6 +37,7 @@ export const courses = mySqlTable(
     termsAndConditions: text("termsAndConditions"),
     convenanceFees: int("convenientFees"),
     markup: int("markupFeesFixed").default(0),
+    maxListPricePerGolferPercentage: int("maxListPricePerGolferPercentage").default(0),
     openTime: datetime("openTime", { mode: "string", fsp: 3 }),
     closeTime: datetime("closeTime", { mode: "string", fsp: 3 }),
     logoId: varchar("logoId", { length: 36 }),

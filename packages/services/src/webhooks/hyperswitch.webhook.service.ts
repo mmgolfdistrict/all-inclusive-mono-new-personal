@@ -914,6 +914,8 @@ export class HyperSwitchWebhookService {
             })}` || "-",
           SensibleWeatherIncluded: sensibleCharge ? "Yes" : "No",
           PurchasedFrom: sellerCustomer.name,
+          PlayerCount: listedSlotsCount ?? 0,
+          TotalAmount: `$${total ?? 0}`,
         };
 
         await this.notificationService.createNotification(

@@ -315,15 +315,14 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
     This is a first party purchase from the course
     `;
 
-    const dateTime = dayjs(existingTeeTime.providerDate).utcOffset("-06:00");
-
     const template = {
       CustomerFirstName: existingTeeTime.customerName?.split(" ")[0],
       CourseName: existingTeeTime.courseName ?? "-",
       GolfDistrictReservationID: bookingsToCreate?.[0]?.id ?? "-",
       CourseReservationID: providerBookingId ?? "-",
       FacilityName: existingTeeTime.entityName ?? "-",
-      PlayDateTime: dateTime.format("YYYY-MM-DD hh:mm A") ?? "-",
+      PlayDateTime:
+        dayjs(existingTeeTime.providerDate).utcOffset("-06:00").format("YYYY-MM-DD hh:mm A") ?? "-",
       NumberOfHoles: existingTeeTime.numberOfHoles,
       GreenFees:
         `$${(purchasePrice / 100).toLocaleString("en-US", {
@@ -338,7 +337,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       SensibleWeatherIncluded: normalizedCartData.sensibleCharge ? "Yes" : "No",
       PurchasedFrom: existingTeeTime.courseName ?? "-",
       PlayerCount: players ?? 0,
-      TotalAmount: normalizedCartData.total / 100,
+      TotalAmount: `$${normalizedCartData.total / 100 ?? 0}`,
     };
 
     await this.notificationService.createNotification(

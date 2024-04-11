@@ -61,6 +61,7 @@ export class CourseService extends DomainService {
         forecastApi: courses.forecastApi,
         convenienceFees: courses.convenanceFees,
         markup: courses.markup,
+        maxListPricePerGolferPercentage: courses.maxListPricePerGolferPercentage,
         openTime: courses.openTime,
         closeTime: courses.closeTime,
         supportCharity: courses.supportCharity,
