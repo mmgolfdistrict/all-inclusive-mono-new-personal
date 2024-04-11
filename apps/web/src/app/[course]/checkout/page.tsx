@@ -353,6 +353,7 @@ export default function Checkout({
                 teeTimeId={
                   teeTimeId !== undefined ? teeTimeId : listingId ?? ""
                 }
+                listingId={listingId}
                 isBuyNowAuction={false}
                 cartData={cartData}
                 teeTimeDate={teeTimeData?.date}
