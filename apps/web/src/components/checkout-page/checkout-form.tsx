@@ -157,34 +157,36 @@ export const CheckoutForm = ({
     e.preventDefault();
 
     setIsLoading(true);
-    let bookingResponse: ReserveTeeTimeResponse = {
-      bookingId: "",
-      providerBookingId: "",
-      status: "",
-    };
-    if (isFirstHand.length) {
-      bookingResponse = await reserveBookingFirstHand(cartId);
-      setReservationData({
-        golfReservationId: bookingResponse.bookingId,
-        providerReservationId: bookingResponse.providerBookingId,
-        playTime: teeTimeDate || "",
-      });
-    } else {
-      // bookingResponse= await reserveSecondHandBooking(cartId,listingId);
-    }
+
+    console.log(widgets);
     const response = await hyper.confirmPayment({
       widgets,
       confirmParams: {
         // Make sure to change this to your payment completion page
         return_url: isBuyNowAuction
           ? `${window.location.origin}/${course?.id}/auctions/confirmation`
-          : `${window.location.origin}/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}&bookingId=${bookingResponse.bookingId}`,
+          : `${window.location.origin}/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}`,
       },
       redirect: "if_required",
     });
 
     if (response) {
       if (response.status === "succeeded") {
+        let bookingResponse: ReserveTeeTimeResponse = {
+          bookingId: "",
+          providerBookingId: "",
+          status: "",
+        };
+        if (isFirstHand.length) {
+          bookingResponse = await reserveBookingFirstHand(cartId);
+          setReservationData({
+            golfReservationId: bookingResponse.bookingId,
+            providerReservationId: bookingResponse.providerBookingId,
+            playTime: teeTimeDate || "",
+          });
+        } else {
+          bookingResponse = await reserveSecondHandBooking(cartId, listingId);
+        }
         setMessage("Payment Successful");
         isBuyNowAuction
           ? router.push(`/${course?.id}/auctions/confirmation`)
@@ -215,12 +217,12 @@ export const CheckoutForm = ({
     cartId: string,
     listingId: string
   ) => {
-    // const bookingResponse = await reserveSecondHandBookingApi.mutateAsync({
-    //   cartId,
-    //   listingId
-    // });
-    // console.log(bookingResponse);
-    // return bookingResponse;
+    const bookingResponse = await reserveSecondHandBookingApi.mutateAsync({
+      cartId,
+      listingId,
+    });
+    console.log(bookingResponse);
+    return bookingResponse;
   };
 
   return (

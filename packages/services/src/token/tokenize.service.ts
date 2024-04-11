@@ -34,7 +34,10 @@ export class TokenizeService {
    * @example
    * const tokenizeService = new TokenizeService(database);
    */
-  constructor(private readonly database: Db, private readonly notificationService: NotificationService) {}
+  constructor(
+    private readonly database: Db,
+    private readonly notificationService: NotificationService
+  ) {}
   getCartData = async ({ courseId = "", ownerId = "", paymentId = "" }) => {
     const [customerCartData]: any = await this.database
       .select({ cart: customerCarts.cart, cartId: customerCarts.id })
@@ -211,7 +214,7 @@ export class TokenizeService {
       // entityId: existingTeeTime.entityId,
       cartId: normalizedCartData.cartId,
       playerCount: players ?? 0,
-      greenFeePerPlayer: (normalizedCartData.primaryGreenFeeCharge / players) * 100 || 0,
+      greenFeePerPlayer: normalizedCartData.primaryGreenFeeCharge / players || 0,
       totalTaxesAmount: normalizedCartData.taxes * 100 || 0,
       charityId: normalizedCartData.charityId || null,
       totalCharityAmount: normalizedCartData.charityCharge * 100 || 0,
@@ -223,6 +226,7 @@ export class TokenizeService {
     transfersToCreate.push({
       id: randomUUID(),
       amount: purchasePrice,
+      purchasedPrice: purchasePrice,
       bookingId: bookingId,
       transactionId: transactionId,
       fromUserId: "0x000", //first hand sales are from the platform
@@ -334,6 +338,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       SensibleWeatherIncluded: normalizedCartData.sensibleCharge ? "Yes" : "No",
       PurchasedFrom: existingTeeTime.courseName ?? "-",
       PlayerCount: players ?? 0,
+      TotalAmount: normalizedCartData.total / 100,
     };
 
     await this.notificationService.createNotification(

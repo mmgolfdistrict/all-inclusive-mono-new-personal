@@ -359,8 +359,8 @@ export const ManageOwnedTeeTime = ({
                 courseDate={selectedTeeTime?.date ?? ""}
                 golferCount={selectedTeeTime?.golfers.length ?? 0}
                 purchasedFor={
-                  selectedTeeTime?.firstHandPrice ??
                   selectedTeeTime?.purchasedFor ??
+                  selectedTeeTime?.firstHandPrice ??
                   0
                 }
                 timezoneCorrection={course?.timezoneCorrection}

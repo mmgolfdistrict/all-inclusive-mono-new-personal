@@ -69,7 +69,7 @@ interface OwnedTeeTimeData {
   golfers: InviteFriend[];
   bookingIds: string[];
   slotsData: SlotsData[];
-  // purchasedFor: number | null;
+  purchasedFor: number | null;
   status: string;
   listingId: string | null;
   listedSpots: string[] | null;
@@ -103,6 +103,7 @@ interface TransferData {
   golfers: InviteFriend[];
   bookingIds: string[];
   status: string;
+  playerCount?: number;
 }
 
 /**
@@ -181,31 +182,31 @@ export class BookingService {
         date: teeTimes.providerDate,
         courseId: teeTimes.courseId,
         courseName: courses.name,
-        greenFee: teeTimes.greenFee,
+        greenFee: bookings.greenFeePerPlayer,
         teeTimeImage: {
           key: assets.key,
           cdnUrl: assets.cdn,
           extension: assets.extension,
         },
         listing: lists.id,
-        players: bookingslots.name,
+        players: bookings.playerCount,
         bookingId: bookings.id,
         amount: transfers.amount,
-        purchasedPrice: transfers.purchasedPrice,
+        purchasedPrice: bookings.totalAmount,
         from: transfers.fromUserId,
         transfersDate: transfers.createdAt,
       })
       .from(transfers)
       .innerJoin(bookings, eq(bookings.id, transfers.bookingId))
-      .leftJoin(bookingslots, eq(bookingslots.bookingId, bookings.id))
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
       .innerJoin(courses, eq(courses.id, teeTimes.courseId))
-      .leftJoin(lists, and(eq(bookings.teeTimeId, teeTimes.id), eq(lists.userId, userId)))
+      .leftJoin(lists, eq(bookings.listId, lists.id))
       .leftJoin(assets, eq(assets.id, courses.logoId))
       // .leftJoin(userBookingOffers, eq(userBookingOffers.bookingId, bookings.id))
       .where(or(eq(transfers.toUserId, userId), eq(transfers.fromUserId, userId)))
       .orderBy(desc(transfers.createdAt))
       .execute();
+    console.log("========>", data.length);
     if (!data.length) {
       this.logger.info(`No tee times found for user: ${userId}`);
       return [];
@@ -222,9 +223,10 @@ export class BookingService {
           date: teeTime.date ? teeTime.date : "",
           firstHandPrice: teeTime.greenFee ? teeTime.greenFee : 0,
           golfers: [{ id: "", email: "", handle: "", name: "", slotId: "" }],
-          pricePerGolfer: teeTime.from === userId ? [teeTime.amount] : [teeTime.purchasedPrice],
+          pricePerGolfer: teeTime.from === userId ? [teeTime.amount / 100] : [teeTime.purchasedPrice / 100],
           bookingIds: [teeTime.bookingId],
           status: teeTime.from === userId ? "SOLD" : "PURCHASED",
+          playerCount: teeTime.players,
         };
       } else {
         const currentEntry = combinedData[teeTime.transferId];
@@ -442,7 +444,7 @@ export class BookingService {
         slotCustomerName: bookingslots.name,
         slotCustomerId: bookingslots.customerId,
         slotPosition: bookingslots.slotPosition,
-        // purchasedFor: bookings.purchasedPrice,
+        purchasedFor: bookings.greenFeePerPlayer,
       })
       .from(teeTimes)
       .innerJoin(bookings, eq(bookings.teeTimeId, teeTimes.id))
@@ -500,7 +502,7 @@ export class BookingService {
           date: teeTime.date,
           firstHandPrice: teeTime.greenFee + (teeTime.courseMarkup ? teeTime.courseMarkup / 100 : 0),
           golfers: [],
-          // purchasedFor: Number(teeTime.purchasedFor),
+          purchasedFor: Number(teeTime.purchasedFor) / 100,
           bookingIds: [teeTime.bookingId],
           slotsData: [
             {
@@ -734,7 +736,7 @@ export class BookingService {
     const toCreate: InsertList = {
       id: randomUUID(),
       userId: userId,
-      listPrice: listPrice,
+      listPrice: listPrice * 100,
       // teeTimeId: firstBooking?.teeTimeId,
       // endTime: dateToUtcTimestamp(endTime),
       // courseId: courseId,
@@ -2042,10 +2044,14 @@ export class BookingService {
       .where(and(eq(customerCarts.id, cartId), eq(customerCarts.userId, userId)))
       .execute();
 
-    const slotInfo = customerCartData?.cart?.cart?.filter(
+    let slotInfo = customerCartData?.cart?.cart?.filter(
       ({ product_data }: ProductData) => product_data.metadata.type === "first_hand"
     );
-
+    if (!slotInfo.length) {
+      slotInfo = customerCartData?.cart?.cart?.filter(
+        ({ product_data }: ProductData) => product_data.metadata.type === "second_hand"
+      );
+    }
     const primaryData = {
       primaryGreenFeeCharge: slotInfo[0].price,
       teeTimeId: slotInfo[0].product_data.metadata.tee_time_id,
@@ -2066,6 +2072,7 @@ export class BookingService {
       customerCartData?.cart?.cart
         ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "sensible")
         ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+    ``;
 
     const charityCharge =
       customerCartData?.cart?.cart
@@ -2082,12 +2089,11 @@ export class BookingService {
 
     const taxes = taxCharge + sensibleCharge + charityCharge + convenienceCharge;
 
-    const total =
-      customerCartData?.cart?.cart
-        .filter(({ product_data }: ProductData) => product_data.metadata.type !== "markup")
-        .reduce((acc: number, i: any) => {
-          return acc + i.price;
-        }, 0) / 100;
+    const total = customerCartData?.cart?.cart
+      .filter(({ product_data }: ProductData) => product_data.metadata.type !== "markup")
+      .reduce((acc: number, i: any) => {
+        return acc + i.price;
+      }, 0);
 
     return {
       ...primaryData,
@@ -2307,6 +2313,7 @@ export class BookingService {
         ownerId: bookings.ownerId,
         listedSlotsCount: lists.slots,
         listPrice: lists.listPrice,
+        teeTimeIdForBooking: bookings.teeTimeId,
       })
       .from(bookings)
       .leftJoin(lists, eq(lists.id, listingId))
@@ -2332,7 +2339,7 @@ export class BookingService {
       numberOfHoles: associatedBooking?.numberOfHoles,
       minimumOfferPrice: 0,
       ownerId: userId,
-      teeTimeId: teeTimeId,
+      teeTimeId: associatedBooking?.teeTimeIdForBooking ?? "",
       nameOnBooking: userData?.handle ?? "",
       includesCart: associatedBooking?.includesCart,
       listId: null,
@@ -2340,10 +2347,7 @@ export class BookingService {
       weatherGuaranteeId: "",
       cartId: cartId,
       playerCount: associatedBooking?.listedSlotsCount ?? 0,
-      greenFeePerPlayer:
-        associatedBooking?.listPrice && associatedBooking?.listedSlotsCount
-          ? (associatedBooking?.listPrice / associatedBooking?.listedSlotsCount) * 100
-          : 0,
+      greenFeePerPlayer: primaryGreenFeeCharge / (associatedBooking?.listedSlotsCount ?? 1) ?? 0,
       totalTaxesAmount: taxes * 100 || 0,
       charityId: charityId || null,
       totalCharityAmount: charityCharge * 100 || 0,
@@ -2361,7 +2365,6 @@ export class BookingService {
       courseId: cart?.courseId,
       fromBookingId: associatedBooking?.id,
     });
-
     await this.database.transaction(async (tx) => {
       await tx
         .insert(bookings)

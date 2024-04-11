@@ -271,24 +271,33 @@ export class HyperSwitchWebhookService {
       (item) => item.product_data.metadata.type === "first_hand"
     );
     if (isFirstHandBooking) {
-      await this.bookingService.confirmBooking(paymentId, customer_id);
-      const weatherGuaranteeData = customerCart.cart.filter(
-        (item) => item.product_data.metadata.type === "sensible"
-      );
-      if (weatherGuaranteeData.length) {
-        await this.handleSensibleItem(
-          weatherGuaranteeData[0] as SensibleProduct,
-          amountReceived,
-          customer_id,
-          customerCart
+      setTimeout(() => {
+        this.bookingService.confirmBooking(paymentId, customer_id);
+        const weatherGuaranteeData = customerCart.cart.filter(
+          (item) => item.product_data.metadata.type === "sensible"
         );
-      }
+        if (weatherGuaranteeData.length) {
+          this.handleSensibleItem(
+            weatherGuaranteeData[0] as SensibleProduct,
+            amountReceived,
+            customer_id,
+            customerCart
+          );
+        }
+      }, 30000);
+
       return;
     }
     for (const item of customerCart.cart) {
       switch (item.product_data.metadata.type) {
         case "second_hand":
-          await this.handleSecondHandItem(item as SecondHandProduct, amountReceived, customer_id, paymentId);
+          await this.handleSecondHandItem(
+            item as SecondHandProduct,
+            amountReceived,
+            customer_id,
+            paymentId,
+            item.price
+          );
           break;
         case "offer":
           await this.handleOfferItem(item as Offer, amountReceived, customer_id);
@@ -503,10 +512,486 @@ export class HyperSwitchWebhookService {
     item: SecondHandProduct,
     amountReceived: number,
     customer_id: string,
-    paymentId: string
-  ) => {};
+    paymentId: string,
+    golferPrice: number
+  ) => {
+    // console.log(item, amountReceived, customer_id, paymentId, "iuguyffuyfuy");
+    debugger;
+    const listingId = item.product_data.metadata.second_hand_id;
+    const listedSlots = await this.database
+      .select({
+        listedSlotsCount: lists.slots,
+        listedPrice: lists.listPrice,
+      })
+      .from(lists)
+      .where(eq(lists.id, listingId))
+      .execute();
 
-  // handleSecondHandItem = async (
+    const listedSlotsCount: number | undefined = listedSlots?.length ? listedSlots[0]?.listedSlotsCount : 0;
+    const listPrice: number | undefined = listedSlots?.length ? listedSlots[0]?.listedPrice : 0;
+
+    const [bookingsIds] = await this.database
+      .select({
+        id: bookings.id,
+        oldBookingId: transfers.fromBookingId,
+      })
+      .from(customerCarts)
+      .innerJoin(bookings, eq(bookings.cartId, customerCarts.id))
+      .innerJoin(transfers, eq(transfers.bookingId, bookings.id))
+      .where(eq(customerCarts.paymentId, paymentId))
+      .execute()
+      .catch((error) => {
+        throw new Error("error fetching old and new bookingId");
+      });
+
+    await this.database
+      .update(bookings)
+      .set({
+        status: "CONFIRMED",
+      })
+      .where(eq(bookings.id, bookingsIds?.id ?? ""))
+      .execute()
+      .catch((err) => {
+        throw new Error(`Error confirming booking`);
+      });
+
+    await this.database
+      .update(bookings)
+      .set({
+        status: "CANCELLED",
+        isActive: false,
+      })
+      .where(eq(bookings.id, bookingsIds?.oldBookingId ?? ""))
+      .execute()
+      .catch((err) => {
+        throw new Error(`Error cancelling old booking`);
+      });
+
+    await this.database
+      .update(lists)
+      .set({
+        isDeleted: true,
+      })
+      .where(eq(lists.id, listingId))
+      .execute();
+
+    const listedBooking = await this.database
+      .select({
+        id: bookings.id,
+        ownerId: bookings.ownerId,
+        courseId: teeTimes.courseId,
+        providerBookingId: bookings.providerBookingId,
+        providerId: teeTimes.soldByProvider,
+        providerCourseId: providerCourseLink.providerCourseId,
+        providerDate: teeTimes.providerDate,
+        internalId: providers.internalId,
+        providerTeeSheetId: providerCourseLink.providerTeeSheetId,
+        teeTimeId: bookings.teeTimeId,
+        slotId: bookingslots.slotnumber,
+        time: teeTimes.time,
+        numberOfHoles: bookings.numberOfHoles,
+        includesCart: bookings.includesCart,
+        entityId: teeTimes.entityId,
+        weatherGuaranteeId: bookings.weatherGuaranteeId,
+        weatherGuaranteeAmount: bookings.weatherGuaranteeAmount,
+        listId: bookings.listId,
+        playerCount: bookings.playerCount,
+      })
+      .from(bookings)
+      .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
+      .leftJoin(bookingslots, eq(bookings.id, bookingslots.bookingId))
+      .leftJoin(courses, eq(courses.id, teeTimes.courseId))
+      .leftJoin(
+        providerCourseLink,
+        and(
+          eq(providerCourseLink.courseId, teeTimes.courseId),
+          eq(providerCourseLink.providerId, teeTimes.soldByProvider)
+        )
+      )
+      .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))
+      .where(eq(bookings.id, bookingsIds?.oldBookingId ?? ""))
+      .execute();
+
+    if (listedBooking.length === 0) {
+      this.logger.fatal(`no bookings found for listing id: ${listingId}`);
+      throw new Error(`Error finding bookings for listing id`);
+    }
+    const firstBooking = listedBooking[0];
+    if (!firstBooking) {
+      throw new Error(`Error finding first booking for listing id`);
+    }
+
+    const { provider, token } = await this.providerService.getProviderAndKey(
+      firstBooking.internalId!,
+      firstBooking.courseId ?? ""
+    );
+
+    const buyerCustomer = await this.providerService.findOrCreateCustomer(
+      firstBooking.courseId ?? "",
+      firstBooking.providerId!,
+      firstBooking.providerCourseId!,
+      customer_id,
+      provider,
+      token
+    );
+
+    if (!buyerCustomer?.playerNumber) {
+      this.logger.error(`Error creating or finding customer`);
+      throw new Error(`Error creating or finding customer`);
+    }
+
+    const sellerCustomer = await this.providerService.findOrCreateCustomer(
+      firstBooking.courseId ?? "",
+      firstBooking.providerId!,
+      firstBooking.providerCourseId!,
+      firstBooking.ownerId,
+      provider,
+      token
+    );
+
+    if (!sellerCustomer?.playerNumber) {
+      this.logger.error(`Error creating or finding customer`);
+      throw new Error(`Error creating or finding customer`);
+    }
+
+    await provider
+      .deleteBooking(
+        token,
+        firstBooking.providerCourseId!,
+        firstBooking.providerTeeSheetId!,
+        firstBooking.providerBookingId
+      )
+      .catch((err) => {
+        this.logger.error(`Error deleting booking: ${err}`);
+        throw new Error(`Error deleting booking`);
+      });
+
+    const newBookings: BookingResponse[] = [];
+
+    try {
+      const newBooking = await provider.createBooking(
+        token,
+        firstBooking.providerCourseId!,
+        firstBooking.providerTeeSheetId!,
+        {
+          data: {
+            type: "bookings",
+            attributes: {
+              start: firstBooking.providerDate,
+              holes: firstBooking.numberOfHoles,
+              players: listedSlotsCount,
+              bookedPlayers: [
+                {
+                  personId: buyerCustomer.customerId,
+                },
+              ],
+              event_type: "tee_time",
+              details: "GD Booking",
+            },
+          },
+        }
+      );
+      newBooking.data.purchasedFor = golferPrice / (listedSlotsCount || 1) / 100;
+      newBooking.data.ownerId = customer_id;
+      newBooking.data.name = buyerCustomer.name || "";
+      newBooking.data.bookingType = "FIRST";
+      newBookings.push(newBooking);
+      if (listedSlotsCount && listedSlotsCount < firstBooking?.playerCount) {
+        const newBookingSecond = await provider.createBooking(
+          token,
+          firstBooking.providerCourseId!,
+          firstBooking.providerTeeSheetId!,
+          {
+            data: {
+              type: "bookings",
+              attributes: {
+                start: firstBooking.providerDate,
+                holes: firstBooking.numberOfHoles,
+                players: listedBooking.length - listedSlotsCount,
+                bookedPlayers: [
+                  {
+                    personId: sellerCustomer.customerId,
+                  },
+                ],
+                event_type: "tee_time",
+                details: "GD Booking",
+              },
+            },
+          }
+        );
+        newBookingSecond.data.ownerId = firstBooking.ownerId;
+        newBooking.data.weatherGuaranteeId = firstBooking.weatherGuaranteeId || "";
+        newBooking.data.weatherGuaranteeAmount = firstBooking.weatherGuaranteeAmount || 0;
+        newBookingSecond.data.bookingType = "SECOND";
+        newBookingSecond.data.name = sellerCustomer.name || "";
+        newBookings.push(newBookingSecond);
+      }
+    } catch (err) {
+      this.logger.error(`Error creating booking: ${err}`);
+    }
+
+    const [existingTeeTime] = await this.database
+      .select({
+        id: teeTimes.id,
+        entityId: teeTimes.entityId,
+        date: teeTimes.date,
+        courseId: teeTimes.courseId,
+        numberOfHoles: teeTimes.numberOfHoles,
+        availableFirstHandSpots: teeTimes.availableFirstHandSpots,
+        availableSecondHandSpots: teeTimes.availableSecondHandSpots,
+        greenFee: teeTimes.greenFee,
+        courseName: courses.name,
+        entityName: entities.name,
+        cdn: assets.cdn,
+        cdnKey: assets.key,
+        extension: assets.extension,
+        buyerFee: courses.buyerFee,
+        sellerFee: courses.sellerFee,
+        providerDate: teeTimes.providerDate,
+      })
+      .from(teeTimes)
+      .where(eq(teeTimes.id, firstBooking.teeTimeId))
+      .leftJoin(entities, eq(teeTimes.entityId, entities.id))
+      .leftJoin(courses, eq(courses.id, teeTimes.courseId))
+      .leftJoin(assets, eq(assets.id, courses.logoId))
+      .execute()
+      .catch((err) => {
+        this.logger.error(err);
+        return [];
+      });
+
+    const { taxes, sensibleCharge, charityCharge, total, cartId, charityId, weatherQuoteId } =
+      await this.getCartData({
+        courseId: existingTeeTime?.courseId,
+        ownerId: customer_id,
+        paymentId,
+      });
+
+    for (const booking of newBookings) {
+      const newBooking = booking;
+      const bookingsToCreate: InsertBooking[] = [];
+      // const transfersToCreate: InsertTransfer[] = [];
+      const bookingId = newBooking.data.bookingType === "FIRST" ? bookingsIds?.id ?? "" : randomUUID();
+      if (newBooking.data.bookingType === "SECOND") {
+        bookingsToCreate.push({
+          id: bookingId,
+          purchasedAt: currentUtcTimestamp(),
+          providerBookingId: newBooking?.data.id || "",
+          isListed: false,
+          numberOfHoles: firstBooking.numberOfHoles,
+          minimumOfferPrice: 0,
+          ownerId: booking.data.ownerId || "",
+          // courseId: firstBooking.courseId??"",
+          teeTimeId: firstBooking.teeTimeId,
+          nameOnBooking: newBooking.data.name || "",
+          includesCart: firstBooking.includesCart,
+          listId: null,
+          // entityId: firstBooking.entityId,
+          weatherGuaranteeAmount: firstBooking.weatherGuaranteeAmount,
+          weatherGuaranteeId: firstBooking.weatherGuaranteeId,
+          cartId: cartId,
+          playerCount: listedSlotsCount || 0,
+          greenFeePerPlayer: listPrice ?? 1 * 100,
+          totalTaxesAmount: taxes * 100 || 0,
+          charityId: charityId || null,
+          totalCharityAmount: charityCharge * 100 || 0,
+          totalAmount: total || 0,
+          providerPaymentId: paymentId,
+          weatherQuoteId: weatherQuoteId || null,
+        });
+      }
+
+      if (newBooking.data.bookingType === "FIRST") {
+        await this.database
+          .update(bookings)
+          .set({
+            providerBookingId: newBooking.data.id,
+          })
+          .where(eq(bookings.id, bookingId))
+          .execute()
+          .catch((err) => {
+            this.logger.error(err);
+          });
+      }
+
+      const bookingSlots =
+        (await provider?.getSlotIdsForBooking(
+          bookingId,
+          booking.data.attributes.playerCount,
+          booking.data.ownerId || "",
+          newBooking?.data?.id || "",
+          provider.providerId,
+          firstBooking.courseId ?? ""
+        )) || [];
+
+      for (let i = 0; i < bookingSlots.length; i++) {
+        if (i != 0) {
+          await provider?.updateTeeTime(
+            token || "",
+            firstBooking?.providerCourseId || "",
+            firstBooking?.providerTeeSheetId || "",
+            newBooking?.data?.id || "",
+            {
+              data: {
+                type: "Guest",
+                id: newBooking?.data?.id || "",
+                attributes: {
+                  type: "Guest",
+                  name: "Guest",
+                  paid: false,
+                  cartPaid: false,
+                  noShow: false,
+                },
+              },
+            },
+            bookingSlots[i]?.slotnumber
+          );
+        }
+      }
+
+      if (bookingsToCreate.length) {
+        await this.database.transaction(async (tx) => {
+          //create each booking
+          await tx
+            .insert(bookings)
+            .values(bookingsToCreate)
+            .execute()
+            .catch((err) => {
+              this.logger.error(err);
+              tx.rollback();
+            });
+          await tx
+            .insert(bookingslots)
+            .values(bookingSlots)
+            .execute()
+            .catch((err) => {
+              this.logger.error(err);
+              tx.rollback();
+            });
+        });
+      } else {
+        await this.database.transaction(async (tx) => {
+          //create each booking
+          await tx
+            .insert(bookingslots)
+            .values(bookingSlots)
+            .execute()
+            .catch((err) => {
+              this.logger.error(err);
+              tx.rollback();
+            });
+        });
+      }
+
+      const commonTemplateData = {
+        CourseLogoURL: `https://${existingTeeTime?.cdn}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
+        CourseName: existingTeeTime?.courseName || "-",
+        FacilityName: existingTeeTime?.entityName || "-",
+        PlayDateTime: dayjs(existingTeeTime?.providerDate).format("MM/DD/YYYY h:mm A") || "-",
+        NumberOfHoles: existingTeeTime?.numberOfHoles,
+        SellTeeTImeURL: `${process.env.APP_URL}/my-tee-box`,
+        ManageTeeTimesURL: `${process.env.APP_URL}/my-tee-box`,
+        GolfDistrictReservationID: bookingId,
+        CourseReservationID: newBooking?.data.id,
+      };
+
+      const buyerFee = (existingTeeTime?.buyerFee ?? 1) / 100;
+      const sellerFee = (existingTeeTime?.sellerFee ?? 1) / 100;
+
+      if (newBooking.data.bookingType == "FIRST") {
+        const template: any = {
+          ...commonTemplateData,
+          CustomerFirstName: buyerCustomer.name?.split(" ")[0],
+          GreenFees:
+            `$${(newBooking.data.purchasedFor ?? 0).toLocaleString("en-US", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })} / Golfer` || "-",
+          TaxesAndOtherFees:
+            `$${taxes.toLocaleString("en-US", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}` || "-",
+          SensibleWeatherIncluded: sensibleCharge ? "Yes" : "No",
+          PurchasedFrom: sellerCustomer.name,
+        };
+
+        await this.notificationService.createNotification(
+          booking?.data.ownerId || "",
+          "TeeTimes Purchased",
+          "TeeTimes Purchased",
+          existingTeeTime?.courseId,
+          process.env.SENDGRID_TEE_TIMES_PURCHASED_TEMPLATE_ID ?? "d-82894b9885e54f98a810960373d80575",
+          template
+        );
+
+        if (newBookings.length === 1) {
+          if (firstBooking?.weatherGuaranteeId?.length) {
+            await this.sensibleService.cancelGuarantee(firstBooking?.weatherGuaranteeId || "");
+          }
+          const lsPrice = listPrice ?? 0;
+          const listedPrice = lsPrice + lsPrice * buyerFee;
+          const totalTax = lsPrice * sellerFee;
+          const templateSeller: any = {
+            ...commonTemplateData,
+            CustomerFirstName: sellerCustomer.name?.split(" ")[0],
+            ListedPrice:
+              `$${lsPrice.toLocaleString("en-US", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })} / Golfer` || "-",
+            TaxesAndOtherFees:
+              `$${(totalTax * (listedSlotsCount ?? 1)).toLocaleString("en-US", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}` || "-",
+            Payout: (listedPrice - totalTax) * (listedSlotsCount || 1),
+            PurchasedFrom: existingTeeTime?.courseName || "-",
+          };
+          await this.notificationService.createNotification(
+            firstBooking.ownerId || "",
+            "TeeTimes Sold",
+            "TeeTimes Sold",
+            existingTeeTime?.courseId,
+            process.env.SENDGRID_TEE_TIMES_SOLD_TEMPLATE_ID || "d-bbadba3821cc49e38c01e84a2b0dad09",
+            templateSeller
+          );
+        }
+      } else {
+        const lsPrice = listPrice ?? 0;
+        const listedPrice = lsPrice + lsPrice * buyerFee;
+        const totalTax = lsPrice * (buyerFee + sellerFee);
+        const templateSeller: any = {
+          ...commonTemplateData,
+          SoldPlayers: listedSlotsCount,
+          CustomerFirstName: sellerCustomer.name?.split(" ")[0],
+          ListedPrice:
+            `$${lsPrice.toLocaleString("en-US", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })} / Golfer` || "-",
+          TaxesAndOtherFees:
+            `$${(totalTax * (listedSlotsCount ?? 1)).toLocaleString("en-US", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}` || "-",
+          Payout: (listedPrice - totalTax) * (listedSlotsCount || 1),
+          SensibleWeatherIncluded: firstBooking.weatherGuaranteeId?.length ? "Yes" : "No",
+          PurchasedFrom: existingTeeTime?.courseName || "-",
+        };
+        await this.notificationService.createNotification(
+          firstBooking.ownerId || "",
+          "TeeTimes Sold",
+          "TeeTimes Sold",
+          existingTeeTime?.courseId,
+          process.env.SENDGRID_TEE_TIMES_SOLD_PARTIAL_TEMPLATE_ID || "d-ef59724fe9f74e80a3768028924ea456",
+          templateSeller
+        );
+      }
+    }
+  };
+
+  // handleSecondHandItem = async (`
   //   item: SecondHandProduct,
   //   amountReceived: number,
   //   customer_id: string,
