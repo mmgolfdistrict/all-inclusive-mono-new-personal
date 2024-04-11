@@ -275,7 +275,7 @@ export class HyperSwitchWebhookService {
       const weatherGuaranteeData = customerCart.cart.filter(
         (item) => item.product_data.metadata.type === "sensible"
       );
-      if(weatherGuaranteeData.length){
+      if (weatherGuaranteeData.length) {
         await this.handleSensibleItem(weatherGuaranteeData[0] as SensibleProduct, amountReceived, customer_id, customerCart);
       }
       return;
@@ -323,7 +323,7 @@ export class HyperSwitchWebhookService {
         date: teeTimes.date,
         providerCourseId: providerCourseLink.providerCourseId,
         providerTeeSheetId: providerCourseLink.providerTeeSheetId,
-        providerId: teeTimes.soldByProvider,
+        providerId: teeTimes.courseProvider,
         internalId: providers.internalId,
         providerDate: teeTimes.providerDate,
         holes: teeTimes.numberOfHoles,
@@ -333,7 +333,7 @@ export class HyperSwitchWebhookService {
         providerCourseLink,
         and(
           eq(providerCourseLink.courseId, teeTimes.courseId),
-          eq(providerCourseLink.providerId, teeTimes.soldByProvider)
+          eq(providerCourseLink.providerId, teeTimes.courseProvider)
         )
       )
       .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))
@@ -521,7 +521,7 @@ export class HyperSwitchWebhookService {
         ownerId: bookings.ownerId,
         courseId: teeTimes.courseId,
         providerBookingId: bookings.providerBookingId,
-        providerId: teeTimes.soldByProvider,
+        providerId: teeTimes.courseProvider,
         providerCourseId: providerCourseLink.providerCourseId,
         providerDate: teeTimes.providerDate,
         internalId: providers.internalId,
@@ -544,7 +544,7 @@ export class HyperSwitchWebhookService {
         providerCourseLink,
         and(
           eq(providerCourseLink.courseId, teeTimes.courseId),
-          eq(providerCourseLink.providerId, teeTimes.soldByProvider)
+          eq(providerCourseLink.providerId, teeTimes.courseProvider)
         )
       )
       .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))
@@ -1052,7 +1052,7 @@ export class HyperSwitchWebhookService {
     //     ownerId: bookings.ownerId,
     //     courseId: bookings.courseId,
     //     providerBookingId: bookings.providerBookingId,
-    //     providerId: teeTimes.soldByProvider,
+    //     providerId: teeTimes.courseProvider,
     //     providerCourseId: providerCourseLink.providerCourseId,
     //     internalId: providerCourseLink.internalId,
     //     providerTeeSheetId: providerCourseLink.providerTeeSheetId,
@@ -1064,7 +1064,7 @@ export class HyperSwitchWebhookService {
     //     providerCourseLink,
     //     and(
     //       eq(providerCourseLink.courseId, bookings.courseId),
-    //       eq(providerCourseLink.providerId, teeTimes.soldByProvider)
+    //       eq(providerCourseLink.providerId, teeTimes.courseProvider)
     //     )
     //   )
     //   .where(eq(bookings.listId, listingId))
