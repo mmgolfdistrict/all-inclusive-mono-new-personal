@@ -26,6 +26,7 @@ import * as providers from "./providers";
 import * as providerScheduleDetails from "./providerScheduleDetails";
 import * as providerCourseLink from "./providersCourseLink";
 import * as sessions from "./sessions";
+import * as teeTimeIndexLogs from "./teeTimeIndexLogs";
 import * as teeTimes from "./teeTimes";
 import * as transfers from "./transfers";
 import * as userBookingOffers from "./userBookingOffers";
@@ -34,7 +35,6 @@ import * as userProviderCourseLink from "./userProviderCourseLink";
 import * as users from "./users";
 import * as verificationTokens from "./verificationTokens";
 import * as withdrawals from "./withdrawals";
-import * as teeTimeIndexLogs from "./teeTimeIndexLogs";
 
 export const schema = {
   ...accounts,
@@ -73,5 +73,5 @@ export const schema = {
   ...providerScheduleDetails,
   ...courseScheduleDetails,
   ...jobs,
-  ...teeTimeIndexLogs
+  ...teeTimeIndexLogs,
 };
