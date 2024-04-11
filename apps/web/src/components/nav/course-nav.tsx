@@ -100,18 +100,17 @@ export const CourseNav = () => {
             <div className="flex items-center gap-4">
               <UserInNav />
             </div>
-          ) : (
-            status == 'loading'?null:(
-              status !='authenticated' &&<Link href={`/${course?.id}/login`}>
-              <FilledButton
-                className="hidden md:block"
-                data-testid="signin-button-id"
-              >
-                 Log In
-              </FilledButton>
-            </Link>
+          ) : status == "loading" ? null : (
+            status != "authenticated" && (
+              <Link href={`/${course?.id}/login`}>
+                <FilledButton
+                  className="hidden md:block"
+                  data-testid="signin-button-id"
+                >
+                  Log In
+                </FilledButton>
+              </Link>
             )
-            
           )}
         </div>
       </div>

@@ -153,7 +153,10 @@ export const CheckoutForm = ({
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     if (message === "Payment Successful") return;
     e.preventDefault();
-    if (selectedCharity && (!selectedCharityAmount || selectedCharityAmount === 0)) {
+    if (
+      selectedCharity &&
+      (!selectedCharityAmount || selectedCharityAmount === 0)
+    ) {
       setCharityAmountError("Charity amount cannot be empty or zero");
     } else {
       setIsLoading(true);

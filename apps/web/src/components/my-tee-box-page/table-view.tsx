@@ -19,7 +19,7 @@ import { TransactionHistory } from "./transaction-history";
 
 export const TableView = () => {
   const { course } = useCourseContext();
-  const { data: session ,status} = useSession();
+  const { data: session, status } = useSession();
   const courseId = course?.id;
   const params = useSearchParams();
   const section = OpenSection.includes(params?.get("section") ?? "")
@@ -78,16 +78,16 @@ export const TableView = () => {
           Transaction History
         </TabTrigger>
       </Tabs.List>
-      {!session ?
-      status == 'loading'?
-      null: (
-        <Tabs.Content value={section ?? "owned"} className="bg-white p-2">
-          <div className="min-h-[250px] flex items-center justify-center">
-            <Link href={`/${courseId}/login`} data-testid="login-to-view-id">
-              <FilledButton>Login to view</FilledButton>
-            </Link>
-          </div>
-        </Tabs.Content>
+      {!session ? (
+        status == "loading" ? null : (
+          <Tabs.Content value={section ?? "owned"} className="bg-white p-2">
+            <div className="min-h-[250px] flex items-center justify-center">
+              <Link href={`/${courseId}/login`} data-testid="login-to-view-id">
+                <FilledButton>Login to view</FilledButton>
+              </Link>
+            </div>
+          </Tabs.Content>
+        )
       ) : (
         <>
           <Tabs.Content value="owned" className="bg-white p-2">
