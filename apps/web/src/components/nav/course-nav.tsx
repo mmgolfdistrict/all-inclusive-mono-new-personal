@@ -101,14 +101,17 @@ export const CourseNav = () => {
               <UserInNav />
             </div>
           ) : (
-            <Link href={`/${course?.id}/login`}>
+            status == 'loading'?null:(
+              status !='authenticated' &&<Link href={`/${course?.id}/login`}>
               <FilledButton
                 className="hidden md:block"
                 data-testid="signin-button-id"
               >
-                Log In
+                 Log In
               </FilledButton>
             </Link>
+            )
+            
           )}
         </div>
       </div>
