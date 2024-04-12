@@ -2080,12 +2080,11 @@ export class BookingService {
 
     const taxes = taxCharge + sensibleCharge + charityCharge + convenienceCharge;
 
-    const total =
-      customerCartData?.cart?.cart
-        .filter(({ product_data }: ProductData) => product_data.metadata.type !== "markup")
-        .reduce((acc: number, i: any) => {
-          return acc + i.price;
-        }, 0);
+    const total = customerCartData?.cart?.cart
+      .filter(({ product_data }: ProductData) => product_data.metadata.type !== "markup")
+      .reduce((acc: number, i: any) => {
+        return acc + i.price;
+      }, 0);
 
     return {
       ...primaryData,

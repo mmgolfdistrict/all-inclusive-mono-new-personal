@@ -34,10 +34,7 @@ export class TokenizeService {
    * @example
    * const tokenizeService = new TokenizeService(database);
    */
-  constructor(
-    private readonly database: Db,
-    private readonly notificationService: NotificationService
-  ) {}
+  constructor(private readonly database: Db, private readonly notificationService: NotificationService) {}
   getCartData = async ({ courseId = "", ownerId = "", paymentId = "" }) => {
     const [customerCartData]: any = await this.database
       .select({ cart: customerCarts.cart, cartId: customerCarts.id })
@@ -320,7 +317,8 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       GolfDistrictReservationID: bookingsToCreate?.[0]?.id ?? "-",
       CourseReservationID: providerBookingId ?? "-",
       FacilityName: existingTeeTime.entityName ?? "-",
-      PlayDateTime: dayjs(existingTeeTime.providerDate).utcOffset("-06:00").format("YYYY-MM-DD hh:mm A") ?? "-",
+      PlayDateTime:
+        dayjs(existingTeeTime.providerDate).utcOffset("-06:00").format("YYYY-MM-DD hh:mm A") ?? "-",
       NumberOfHoles: existingTeeTime.numberOfHoles,
       GreenFees:
         `$${(purchasePrice / 100).toLocaleString("en-US", {
@@ -335,7 +333,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       SensibleWeatherIncluded: normalizedCartData.sensibleCharge ? "Yes" : "No",
       PurchasedFrom: existingTeeTime.courseName ?? "-",
       PlayerCount: players ?? 0,
-      TotalAmount: `$${normalizedCartData.total ?? 0}`
+      TotalAmount: `$${normalizedCartData.total ?? 0}`,
     };
 
     await this.notificationService.createNotification(

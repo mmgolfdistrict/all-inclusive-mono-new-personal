@@ -8,7 +8,7 @@ export const jobs = mySqlTable("jobs", {
   courseId: varchar("courseId", { length: 36 }).notNull(),
   fromDay: int("fromDay").notNull(),
   toDay: int("toDay").notNull(),
-  intervalInMinutes: int('intervalInMinutes').notNull(),
+  intervalInMinutes: int("intervalInMinutes").notNull(),
   jobId: varchar("jobId", { length: 64 }),
   schedulerName: varchar("schedulerName", { length: 64 }),
 });

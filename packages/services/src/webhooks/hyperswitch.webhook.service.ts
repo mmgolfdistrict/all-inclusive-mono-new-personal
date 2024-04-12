@@ -275,8 +275,13 @@ export class HyperSwitchWebhookService {
       const weatherGuaranteeData = customerCart.cart.filter(
         (item) => item.product_data.metadata.type === "sensible"
       );
-      if(weatherGuaranteeData.length){
-        await this.handleSensibleItem(weatherGuaranteeData[0] as SensibleProduct, amountReceived, customer_id, customerCart);
+      if (weatherGuaranteeData.length) {
+        await this.handleSensibleItem(
+          weatherGuaranteeData[0] as SensibleProduct,
+          amountReceived,
+          customer_id,
+          customerCart
+        );
       }
       return;
     }
@@ -479,7 +484,6 @@ export class HyperSwitchWebhookService {
       .reduce((acc: number, i: any) => {
         return acc + i.price;
       }, 0);
-
 
     return {
       primaryGreenFeeCharge,
@@ -730,11 +734,12 @@ export class HyperSwitchWebhookService {
         return [];
       });
 
-    const { taxes, taxCharge, sensibleCharge, charityCharge, total, cartId, charityId, weatherQuoteId } = await this.getCartData({
-      courseId: existingTeeTime?.courseId,
-      ownerId: customer_id,
-      paymentId
-    });
+    const { taxes, taxCharge, sensibleCharge, charityCharge, total, cartId, charityId, weatherQuoteId } =
+      await this.getCartData({
+        courseId: existingTeeTime?.courseId,
+        ownerId: customer_id,
+        paymentId,
+      });
 
     for (const booking of newBookings) {
       const newBooking = booking;
@@ -760,9 +765,9 @@ export class HyperSwitchWebhookService {
         cartId: cartId,
         playerCount: listedSlotsCount || 0,
         greenFeePerPlayer: listPrice && listedSlotsCount ? (listPrice / listedSlotsCount) * 100 : 0,
-        totalTaxesAmount: (taxCharge * 100) || 0,
+        totalTaxesAmount: taxCharge * 100 || 0,
         charityId: charityId || null,
-        totalCharityAmount: (charityCharge * 100) || 0,
+        totalCharityAmount: charityCharge * 100 || 0,
         totalAmount: total || 0,
         providerPaymentId: paymentId,
         weatherQuoteId: weatherQuoteId || null,
@@ -873,7 +878,7 @@ export class HyperSwitchWebhookService {
           SensibleWeatherIncluded: sensibleCharge ? "Yes" : "No",
           PurchasedFrom: sellerCustomer.name,
           PlayerCount: listedSlotsCount ?? 0,
-          TotalAmount: `$${total ?? 0}`
+          TotalAmount: `$${total ?? 0}`,
         };
 
         await this.notificationService.createNotification(
