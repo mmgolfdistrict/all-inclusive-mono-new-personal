@@ -49,7 +49,7 @@ export const ListTeeTime = ({
   const [players, setPlayers] = useState<PlayerType>(
     selectedTeeTime?.selectedSlotsCount || "1"
   );
-  const { trigger, sidebar, toggleSidebar } = useSidebar({
+  const { toggleSidebar } = useSidebar({
     isOpen: isListTeeTimeOpen,
     setIsOpen: setIsListTeeTimeOpen,
   });
@@ -220,7 +220,7 @@ export const ListTeeTime = ({
         </div>
       )}
       <aside
-        ref={sidebar}
+        // ref={sidebar}
         className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[500px] md:h-[100dvh] ${
           isListTeeTimeOpen ? "translate-x-0" : "translate-x-full"
         }`}
@@ -230,7 +230,7 @@ export const ListTeeTime = ({
             <div className="text-lg">Sell</div>
 
             <button
-              ref={trigger}
+              // ref={trigger}
               onClick={toggleSidebar}
               aria-controls="sidebar"
               aria-expanded={isListTeeTimeOpen}

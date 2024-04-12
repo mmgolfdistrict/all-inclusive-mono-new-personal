@@ -516,7 +516,7 @@ export class HyperSwitchWebhookService {
     golferPrice: number
   ) => {
     // console.log(item, amountReceived, customer_id, paymentId, "iuguyffuyfuy");
-    debugger;
+
     const listingId = item.product_data.metadata.second_hand_id;
     const listedSlots = await this.database
       .select({
