@@ -124,7 +124,7 @@ export class BookingService {
     private readonly tokenizeService: TokenizeService,
     private readonly providerService: ProviderService,
     private readonly notificationService: NotificationService
-  ) {}
+  ) { }
 
   createCounterOffer = async (userId: string, bookingIds: string[], offerId: string, amount: number) => {
     //find owner of each booking
@@ -1874,7 +1874,7 @@ export class BookingService {
         providerTeeSheetId: providerCourseLink.providerTeeSheetId,
         courseId: teeTimes.courseId,
         providerBookingId: bookings.providerBookingId,
-        providerId: teeTimes.soldByProvider,
+        providerId: teeTimes.courseProvider,
       })
       .from(bookings)
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -1882,7 +1882,7 @@ export class BookingService {
         providerCourseLink,
         and(
           eq(providerCourseLink.courseId, teeTimes.courseId),
-          eq(providerCourseLink.providerId, teeTimes.soldByProvider)
+          eq(providerCourseLink.providerId, teeTimes.courseProvider)
         )
       )
       .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))
@@ -2140,7 +2140,7 @@ export class BookingService {
         date: teeTimes.date,
         providerCourseId: providerCourseLink.providerCourseId,
         providerTeeSheetId: providerCourseLink.providerTeeSheetId,
-        providerId: teeTimes.soldByProvider,
+        providerId: teeTimes.courseProvider,
         internalId: providers.internalId,
         providerDate: teeTimes.providerDate,
         holes: teeTimes.numberOfHoles,
@@ -2150,7 +2150,7 @@ export class BookingService {
         providerCourseLink,
         and(
           eq(providerCourseLink.courseId, teeTimes.courseId),
-          eq(providerCourseLink.providerId, teeTimes.soldByProvider)
+          eq(providerCourseLink.providerId, teeTimes.courseProvider)
         )
       )
       .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))

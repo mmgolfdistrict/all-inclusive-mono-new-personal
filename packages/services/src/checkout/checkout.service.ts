@@ -324,7 +324,7 @@ export class CheckoutService {
         date: teeTimes.date,
         providerCourseId: providerCourseLink.providerCourseId,
         providerTeeSheetId: providerCourseLink.providerTeeSheetId,
-        providerId: teeTimes.soldByProvider,
+        providerId: teeTimes.courseProvider,
         internalId: providers.internalId,
       })
       .from(teeTimes)
@@ -332,7 +332,7 @@ export class CheckoutService {
         providerCourseLink,
         and(
           eq(providerCourseLink.courseId, teeTimes.courseId),
-          eq(providerCourseLink.providerId, teeTimes.soldByProvider)
+          eq(providerCourseLink.providerId, teeTimes.courseProvider)
         )
       )
       .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))

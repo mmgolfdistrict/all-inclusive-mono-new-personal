@@ -31,7 +31,7 @@ interface IndexingSchedule {
 //   cartFee: number;
 //   greenFeeTax: number;
 //   cartFeeTax: number;
-//   soldByProvider: string;
+//   courseProvider: string;
 //   courseId: string;
 //   entityId: string;
 // }
@@ -76,7 +76,7 @@ export class ForeUpWebhookService {
    * @param {Db} database - The database instance to interact with.
    * @param {ProviderService} providerService - The provider service for fetching tee times from ForeUp.
    */
-  constructor(private readonly database: Db, private readonly providerService: ProviderService) {}
+  constructor(private readonly database: Db, private readonly providerService: ProviderService) { }
 
   /**
    * Handles the ForeUp webhook.
@@ -234,7 +234,7 @@ export class ForeUpWebhookService {
         courseId: teeTimes.courseId,
         availableFirstHandSpots: teeTimes.availableFirstHandSpots,
         availableSecondHandSpots: teeTimes.availableSecondHandSpots,
-        soldByProvider: teeTimes.soldByProvider,
+        courseProvider: teeTimes.courseProvider,
         entityId: teeTimes.entityId,
         providerDate: teeTimes.providerDate,
       })
@@ -311,7 +311,7 @@ export class ForeUpWebhookService {
           id: indexedTeeTime.id,
           courseId: courseId,
           providerTeeTimeId: teeTimeResponse.id,
-          soldByProvider: providerId,
+          courseProvider: providerId,
           numberOfHoles: attributes.holes,
           date: attributes.time,
           time: militaryTime,
@@ -339,7 +339,7 @@ export class ForeUpWebhookService {
           courseId: courseId,
           availableFirstHandSpots: attributes.availableSpots,
           availableSecondHandSpots: indexedTeeTime.availableSecondHandSpots,
-          soldByProvider: providerId,
+          courseProvider: providerId,
           providerDate: attributes.time,
           entityId: entityId ? entityId : "",
         };
@@ -355,7 +355,7 @@ export class ForeUpWebhookService {
           id: randomUUID(),
           courseId: courseId,
           providerTeeTimeId: teeTimeResponse.id,
-          soldByProvider: providerId,
+          courseProvider: providerId,
           numberOfHoles: attributes.holes,
           date: attributes.time,
           time: militaryTime,
@@ -506,7 +506,7 @@ export class ForeUpWebhookService {
   //           courseId: teeTimes.courseId,
   //           availableFirstHandSpots: teeTimes.availableFirstHandSpots,
   //           availableSecondHandSpots: teeTimes.availableSecondHandSpots,
-  //           soldByProvider: teeTimes.soldByProvider,
+  //           courseProvider: teeTimes.courseProvider,
   //           entityId: teeTimes.entityId,
   //         })
   //         .from(teeTimes)
@@ -578,7 +578,7 @@ export class ForeUpWebhookService {
   //             id: indexedTeeTime.id,
   //             courseId: courseToIndex.courseId,
   //             providerTeeTimeId: teeTimeResponse.id,
-  //             soldByProvider: courseToIndex.providerId,
+  //             courseProvider: courseToIndex.providerId,
   //             numberOfHoles: attributes.holes,
   //             date: attributes.time,
   //             time: militaryTime,
@@ -605,7 +605,7 @@ export class ForeUpWebhookService {
   //             courseId: courseToIndex.courseId,
   //             availableFirstHandSpots: attributes.availableSpots,
   //             availableSecondHandSpots: indexedTeeTime.availableSecondHandSpots,
-  //             soldByProvider: courseToIndex.providerId,
+  //             courseProvider: courseToIndex.providerId,
   //             entityId: entity.id ? entity.id : "",
   //           };
   //           if (isEqual(indexedTeeTime, providerTeeTimeMatchingKeys, "time")) {
@@ -620,7 +620,7 @@ export class ForeUpWebhookService {
   //             id: randomUUID(),
   //             courseId: courseToIndex.courseId,
   //             providerTeeTimeId: teeTimeResponse.id,
-  //             soldByProvider: courseToIndex.providerId,
+  //             courseProvider: courseToIndex.providerId,
   //             numberOfHoles: attributes.holes,
   //             date: attributes.time,
   //             time: militaryTime,

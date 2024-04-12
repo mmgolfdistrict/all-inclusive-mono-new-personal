@@ -271,21 +271,13 @@ export class HyperSwitchWebhookService {
       (item) => item.product_data.metadata.type === "first_hand"
     );
     if (isFirstHandBooking) {
-      setTimeout(() => {
-        this.bookingService.confirmBooking(paymentId, customer_id);
-        const weatherGuaranteeData = customerCart.cart.filter(
-          (item) => item.product_data.metadata.type === "sensible"
-        );
-        if (weatherGuaranteeData.length) {
-          this.handleSensibleItem(
-            weatherGuaranteeData[0] as SensibleProduct,
-            amountReceived,
-            customer_id,
-            customerCart
-          );
-        }
-      }, 30000);
-
+      await this.bookingService.confirmBooking(paymentId, customer_id);
+      const weatherGuaranteeData = customerCart.cart.filter(
+        (item) => item.product_data.metadata.type === "sensible"
+      );
+      if (weatherGuaranteeData.length) {
+        await this.handleSensibleItem(weatherGuaranteeData[0] as SensibleProduct, amountReceived, customer_id, customerCart);
+      }
       return;
     }
     for (const item of customerCart.cart) {
@@ -337,7 +329,7 @@ export class HyperSwitchWebhookService {
         date: teeTimes.date,
         providerCourseId: providerCourseLink.providerCourseId,
         providerTeeSheetId: providerCourseLink.providerTeeSheetId,
-        providerId: teeTimes.soldByProvider,
+        providerId: teeTimes.courseProvider,
         internalId: providers.internalId,
         providerDate: teeTimes.providerDate,
         holes: teeTimes.numberOfHoles,
@@ -347,7 +339,7 @@ export class HyperSwitchWebhookService {
         providerCourseLink,
         and(
           eq(providerCourseLink.courseId, teeTimes.courseId),
-          eq(providerCourseLink.providerId, teeTimes.soldByProvider)
+          eq(providerCourseLink.providerId, teeTimes.courseProvider)
         )
       )
       .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))
@@ -581,7 +573,7 @@ export class HyperSwitchWebhookService {
         ownerId: bookings.ownerId,
         courseId: teeTimes.courseId,
         providerBookingId: bookings.providerBookingId,
-        providerId: teeTimes.soldByProvider,
+        providerId: teeTimes.courseProvider,
         providerCourseId: providerCourseLink.providerCourseId,
         providerDate: teeTimes.providerDate,
         internalId: providers.internalId,
@@ -605,7 +597,7 @@ export class HyperSwitchWebhookService {
         providerCourseLink,
         and(
           eq(providerCourseLink.courseId, teeTimes.courseId),
-          eq(providerCourseLink.providerId, teeTimes.soldByProvider)
+          eq(providerCourseLink.providerId, teeTimes.courseProvider)
         )
       )
       .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))
@@ -1541,30 +1533,30 @@ export class HyperSwitchWebhookService {
 
   //   // }
 
-  //   // const listingId = item.product_data.metadata.second_hand_id;
-  //   // const listedBooking = await this.database
-  //   //   .select({
-  //   //     id: bookings.id,
-  //   //     ownerId: bookings.ownerId,
-  //   //     courseId: bookings.courseId,
-  //   //     providerBookingId: bookings.providerBookingId,
-  //   //     providerId: teeTimes.soldByProvider,
-  //   //     providerCourseId: providerCourseLink.providerCourseId,
-  //   //     internalId: providerCourseLink.internalId,
-  //   //     providerTeeSheetId: providerCourseLink.providerTeeSheetId,
-  //   //     teeTimeId: bookings.teeTimeId,
-  //   //   })
-  //   //   .from(bookings)
-  //   //   .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
-  //   //   .leftJoin(
-  //   //     providerCourseLink,
-  //   //     and(
-  //   //       eq(providerCourseLink.courseId, bookings.courseId),
-  //   //       eq(providerCourseLink.providerId, teeTimes.soldByProvider)
-  //   //     )
-  //   //   )
-  //   //   .where(eq(bookings.listId, listingId))
-  //   //   .execute();
+  // const listingId = item.product_data.metadata.second_hand_id;
+  // const listedBooking = await this.database
+  //   .select({
+  //     id: bookings.id,
+  //     ownerId: bookings.ownerId,
+  //     courseId: bookings.courseId,
+  //     providerBookingId: bookings.providerBookingId,
+  //     providerId: teeTimes.soldByProvider,
+  //     providerCourseId: providerCourseLink.providerCourseId,
+  //     internalId: providerCourseLink.internalId,
+  //     providerTeeSheetId: providerCourseLink.providerTeeSheetId,
+  //     teeTimeId: bookings.teeTimeId,
+  //   })
+  //   .from(bookings)
+  //   .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
+  //   .leftJoin(
+  //     providerCourseLink,
+  //     and(
+  //       eq(providerCourseLink.courseId, bookings.courseId),
+  //       eq(providerCourseLink.providerId, teeTimes.soldByProvider)
+  //     )
+  //   )
+  //   .where(eq(bookings.listId, listingId))
+  //   .execute();
 
   //   // if (listedBooking.length === 0) {
   //   //   this.logger.fatal(`no bookings found for listing id: ${listingId}`);
