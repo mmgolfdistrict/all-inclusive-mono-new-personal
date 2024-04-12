@@ -80,7 +80,8 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
         <div className="relative flex h-full flex-col">
           <div className="flex  items-center justify-between px-2 py-2">
             <div className="flex items-center gap-2">
-              {user && status === "authenticated" ? null : (
+              {status === "loading" ? null : user &&
+                status === "authenticated" ? null : (
                 <Link
                   href={`/${courseId}/login`}
                   onClick={toggleSidebar}

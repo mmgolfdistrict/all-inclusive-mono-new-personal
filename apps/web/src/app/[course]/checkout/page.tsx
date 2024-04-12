@@ -306,7 +306,7 @@ export default function Checkout({
               className="w-[50px] object-fit"
             />
           </Link>
-          {user && status === "authenticated" ? (
+          {status == "loading" ? null : user && status === "authenticated" ? (
             <div className="flex items-center gap-4">
               <UserInNav alwaysShow={true} />
             </div>
