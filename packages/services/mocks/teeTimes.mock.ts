@@ -15,7 +15,7 @@ export const mockTeeTimes: (typeof teeTimes.$inferInsert)[] = [
     cartFee: 100,
     greenFeeTax: 10,
     cartFeeTax: 10,
-    soldByProvider: "provider1",
+    courseProvider: "provider1",
     courseId: "course1",
     entityId: "entity1",
   },

@@ -17,6 +17,7 @@ export type TxnHistoryType = {
   golfers: string[];
   pricePerGolfer: number[];
   bookingIds: string[];
+  playerCount?: number;
   status: string; //"SOLD" | "PURCHASED" |
 };
 
@@ -116,6 +117,7 @@ export const TransactionHistory = () => {
                     key={idx}
                     purchasePrice={i.pricePerGolfer[0] ?? i.firstHandPrice}
                     golfers={i.golfers}
+                    playerCount={i.playerCount}
                     status={i.status}
                     openTxnDetails={() => openTxnDetails(i)}
                     timezoneCorrection={course?.timezoneCorrection}
@@ -162,6 +164,7 @@ const TableRow = ({
   status,
   timezoneCorrection,
   openTxnDetails,
+  playerCount = 1,
 }: {
   course: string;
   date: string;
@@ -170,6 +173,7 @@ const TableRow = ({
   purchasePrice: number;
   status: string;
   timezoneCorrection: number | undefined;
+  playerCount?: number;
   openTxnDetails: () => void;
 }) => {
   return (
@@ -192,14 +196,14 @@ const TableRow = ({
         <span className="font-[300]"> Transaction Total</span>
       </td>
       <td className="whitespace-nowrap px-4 py-3">
-        {golfers.length > 2
-          ? `You, Guest & ${golfers.length - 2} ${
-              golfers.length - 2 === 1 ? "golfers" : "golfers"
+        {playerCount > 2
+          ? `You, Guest & ${playerCount - 2} ${
+              playerCount - 2 === 1 ? "golfers" : "golfers"
             }`
           : golfers.map((i, idx) => {
-              if (golfers.length === 1) return "Guest";
-              if (idx === golfers.length - 1) return `& You`;
-              if (idx === golfers.length - 2) return `Guest `;
+              if (playerCount === 1) return "Guest";
+              if (idx === playerCount - 1) return `& You`;
+              if (idx === playerCount - 2) return `Guest `;
               return `Guest, `;
             })}
       </td>

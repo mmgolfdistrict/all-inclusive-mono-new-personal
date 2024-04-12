@@ -288,7 +288,7 @@ export class SearchService {
         ? `https://${firstBooking.image.cdnUrl}/${firstBooking.image.key}.${firstBooking.image.extension}`
         : "/defaults/default-profile.webp",
       availableSlots: firstBooking.listedSlots,
-      pricePerGolfer: Number((firstBooking.listPrice * (1 + firstBooking.buyerFee / 100)).toFixed(2)),
+      pricePerGolfer: Number((firstBooking.listPrice * (1 + firstBooking.buyerFee / 100)) / 100),
       firstHandPurchasePrice: firstBooking.firstHandPrice ?? 0,
       teeTimeId: firstBooking.teeTimeId ? firstBooking.teeTimeId : "",
       date: firstBooking.date,
@@ -772,7 +772,7 @@ export class SearchService {
                 : "/defaults/default-profile.webp",
               pricePerGolfer:
                 booking.listingId && booking.listPrice
-                  ? Number((booking.listPrice * (1 + buyerFee)).toFixed(2))
+                  ? Number((booking.listPrice * (1 + buyerFee)) / 100)
                   : ((booking?.greenFee ?? 0) * 13) / 10,
               includesCart: booking?.includesCart,
               firstOrSecondHandTeeTime: booking.isListed ? TeeTimeType.SECOND_HAND : TeeTimeType.UNLISTED,

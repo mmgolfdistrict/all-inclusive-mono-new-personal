@@ -23,6 +23,7 @@ export const CheckoutForm = ({
   cartData,
   cartId,
   teeTimeDate,
+  listingId,
 }: {
   isBuyNowAuction: boolean;
   amountToPay: number;
@@ -30,6 +31,7 @@ export const CheckoutForm = ({
   cartData: CartProduct[];
   cartId: string;
   teeTimeDate: string | undefined;
+  listingId: string;
 }) => {
   const { course } = useCourseContext();
 
@@ -109,6 +111,8 @@ export const CheckoutForm = ({
   } = useCheckoutContext();
 
   const reserveBookingApi = api.teeBox.reserveBooking.useMutation();
+  const reserveSecondHandBookingApi =
+    api.teeBox.reserveSecondHandBooking.useMutation();
 
   const handlePaymentStatus = (status: string) => {
     switch (status) {
@@ -158,34 +162,39 @@ export const CheckoutForm = ({
       (!selectedCharityAmount || selectedCharityAmount === 0)
     ) {
       setCharityAmountError("Charity amount cannot be empty or zero");
-    } else {
+    }
+    {
       setIsLoading(true);
-      let bookingResponse: ReserveTeeTimeResponse = {
-        bookingId: "",
-        providerBookingId: "",
-        status: "",
-      };
-      if (isFirstHand.length) {
-        bookingResponse = await reserveBookingFirstHand(cartId);
-        setReservationData({
-          golfReservationId: bookingResponse.bookingId,
-          providerReservationId: bookingResponse.providerBookingId,
-          playTime: teeTimeDate || "",
-        });
-      }
+
+      console.log(widgets);
       const response = await hyper.confirmPayment({
         widgets,
         confirmParams: {
           // Make sure to change this to your payment completion page
           return_url: isBuyNowAuction
             ? `${window.location.origin}/${course?.id}/auctions/confirmation`
-            : `${window.location.origin}/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}&bookingId=${bookingResponse.bookingId}`,
+            : `${window.location.origin}/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}`,
         },
         redirect: "if_required",
       });
 
       if (response) {
         if (response.status === "succeeded") {
+          let bookingResponse: ReserveTeeTimeResponse = {
+            bookingId: "",
+            providerBookingId: "",
+            status: "",
+          };
+          if (isFirstHand.length) {
+            bookingResponse = await reserveBookingFirstHand(cartId);
+            setReservationData({
+              golfReservationId: bookingResponse.bookingId,
+              providerReservationId: bookingResponse.providerBookingId,
+              playTime: teeTimeDate || "",
+            });
+          } else {
+            bookingResponse = await reserveSecondHandBooking(cartId, listingId);
+          }
           setMessage("Payment Successful");
           isBuyNowAuction
             ? router.push(`/${course?.id}/auctions/confirmation`)
@@ -197,12 +206,10 @@ export const CheckoutForm = ({
         } else {
           setMessage("An unexpected error occurred.");
         }
-      } else {
-        setMessage("An unexpected error occurred.");
-      }
 
-      setIsLoading(false);
-      // setIsPaymentCompleted(true);
+        setIsLoading(false);
+        // setIsPaymentCompleted(true);
+      }
     }
   };
 
@@ -210,6 +217,18 @@ export const CheckoutForm = ({
     const bookingResponse = await reserveBookingApi.mutateAsync({
       cartId,
     });
+    return bookingResponse;
+  };
+
+  const reserveSecondHandBooking = async (
+    cartId: string,
+    listingId: string
+  ) => {
+    const bookingResponse = await reserveSecondHandBookingApi.mutateAsync({
+      cartId,
+      listingId,
+    });
+    console.log(bookingResponse);
     return bookingResponse;
   };
 

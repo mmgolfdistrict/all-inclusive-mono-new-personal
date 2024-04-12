@@ -75,10 +75,7 @@ export class UserService {
    * @example
    * const userService = new UserService(database, notificationService);
    */
-  constructor(
-    protected readonly database: Db,
-    private readonly notificationsService: NotificationService
-  ) {
+  constructor(protected readonly database: Db, private readonly notificationsService: NotificationService) {
     //this.filter = new Filter();
   }
 
@@ -173,12 +170,20 @@ export class UserService {
       this.logger.warn(`No redirectHref provided`);
       throw new Error("No redirect url provided");
     }
-    await this.notificationsService.sendEmail(
+    // user.email,
+    // "Reset your password",
+    // process.env.SENDGRID_FORGOT_PASSWORD_AUTH_USER_TEMPLATE_ID!,
+    // emailParams
+    await this.notificationsService.sendEmailByTemplate(
       data.email,
       "Verify your email",
-      `${encodeURI(data?.redirectHref)}/verify?userId=${encodeURIComponent(
-        user?.id
-      )}&verificationToken=${encodeURIComponent(verificationToken)}`
+      process.env.SENDGRID_TEE_TIMES_VERIFY_EMAIL_TEMPLATE_ID!,
+      {
+        CustomerFirstName: data.handle,
+        VerifyURL: `${encodeURI(data?.redirectHref)}/verify?userId=${encodeURIComponent(
+          user?.id
+        )}&verificationToken=${encodeURIComponent(verificationToken)}`,
+      }
     );
   };
 
@@ -385,10 +390,13 @@ export class UserService {
     if (user?.email) {
       //send welcome email
       try {
-        await this.notificationsService.sendEmail(
+        await this.notificationsService.sendEmailByTemplate(
           user?.email,
           "Welcome to Golf District",
-          `Welcome! This is the official welcome email from Golf District.`
+          process.env.SENDGRID_TEE_TIMES_NEW_USER_TEMPLATE_ID!,
+          {
+            CustomerFirstName: user.handle ?? "",
+          }
         );
       } catch (error) {
         throw new Error("Error sending welcome email");
@@ -810,10 +818,13 @@ export class UserService {
       });
     if (user?.email) {
       try {
-        await this.notificationsService.sendEmail(
+        await this.notificationsService.sendEmailByTemplate(
           user?.email,
           "Golf District - Password Reset Successful",
-          `Successfully reset your password.`
+          process.env.SENDGRID_TEE_TIMES_PASSWORD_RESET_SUCCESSFUL_TEMPLATE_ID!,
+          {
+            CustomerFirstName: user?.handle ?? "",
+          }
         );
       } catch (error) {
         throw new Error("Error sending welcome email");
