@@ -65,14 +65,13 @@ export const ListTeeTime = ({
     // );
     console.log(selectedTeeTime);
     if (!selectedTeeTime?.purchasedFor) return 0;
+    const max = selectedTeeTime?.purchasedFor *
+    (1 +
+      (course?.maxListPricePerGolferPercentage
+        ? course?.maxListPricePerGolferPercentage / 100
+        : 0));
 
-    return (
-      selectedTeeTime?.purchasedFor *
-      (1 +
-        (course?.maxListPricePerGolferPercentage
-          ? course?.maxListPricePerGolferPercentage / 100
-          : 0))
-    );
+    return parseInt(max.toFixed(2));
   }, [selectedTeeTime]);
 
   const availableSlots = selectedTeeTime?.golfers.length || 0;
