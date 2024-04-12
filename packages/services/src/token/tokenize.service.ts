@@ -211,8 +211,8 @@ export class TokenizeService {
       // entityId: existingTeeTime.entityId,
       cartId: normalizedCartData.cartId,
       playerCount: players ?? 0,
-      greenFeePerPlayer: (normalizedCartData.primaryGreenFeeCharge / players) * 100 || 0,
-      totalTaxesAmount: normalizedCartData.taxCharge * 100 || 0,
+      greenFeePerPlayer: normalizedCartData.primaryGreenFeeCharge / players || 0,
+      totalTaxesAmount: normalizedCartData.taxes * 100 || 0,
       charityId: normalizedCartData.charityId || null,
       totalCharityAmount: normalizedCartData.charityCharge * 100 || 0,
       totalAmount: normalizedCartData.total || 0,
@@ -223,6 +223,7 @@ export class TokenizeService {
     transfersToCreate.push({
       id: randomUUID(),
       amount: purchasePrice,
+      purchasedPrice: purchasePrice,
       bookingId: bookingId,
       transactionId: transactionId,
       fromUserId: "0x000", //first hand sales are from the platform
@@ -333,7 +334,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       SensibleWeatherIncluded: normalizedCartData.sensibleCharge ? "Yes" : "No",
       PurchasedFrom: existingTeeTime.courseName ?? "-",
       PlayerCount: players ?? 0,
-      TotalAmount: `$${normalizedCartData.total ?? 0}`,
+      TotalAmount: `$${normalizedCartData.total / 100 ?? 0}`,
     };
 
     await this.notificationService.createNotification(
