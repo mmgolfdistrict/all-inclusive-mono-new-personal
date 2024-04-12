@@ -44,6 +44,7 @@ export const ManageTeeTimeListing = ({
   needRedirect,
 }: SideBarProps) => {
   const [listingPrice, setListingPrice] = useState<number>(300);
+  const [sellerServiceFee, setSellerServiceFee] = useState<number>(0);
   const [minimumListingPrice, setMinimumListingPrice] = useState<number>(200);
   const [players, setPlayers] = useState<PlayerType>("1");
 
@@ -55,6 +56,8 @@ export const ManageTeeTimeListing = ({
     useState<boolean>(false);
   const router = useRouter();
   const { course } = useCourseContext();
+  const listingSellerFeePercentage = (course?.sellerFee ?? 1) / 100;
+  const listingBuyerFeePercentage = (course?.buyerFee ?? 1) / 100;
 
   const { data: bookingIds } = api.teeBox.getOwnedBookingsForTeeTime.useQuery(
     {
@@ -110,9 +113,51 @@ export const ManageTeeTimeListing = ({
     setListingPrice(Number(strippedLeadingZeros));
   };
 
+  // const totalPayout = useMemo(() => {
+  //   if (!listingPrice) return 0;
+  //   return listingPrice * parseInt(players) - 45;
+  // }, [listingPrice, players]);
+
   const totalPayout = useMemo(() => {
-    if (!listingPrice) return 0;
-    return listingPrice * parseInt(players) - 45;
+    if (!listingPrice) {
+      setSellerServiceFee(0);
+      return 0;
+    }
+    if (listingPrice <= 0) {
+      setSellerServiceFee(0);
+      return 0;
+    }
+
+    console.log(
+      `selectedTeeTime?.firstHandPrice = ${selectedTeeTime?.firstHandPrice}`
+    );
+
+    const sellerListingPricePerGolfer = parseFloat(listingPrice.toString());
+
+    const buyerListingPricePerGolfer =
+      sellerListingPricePerGolfer * (1 + listingBuyerFeePercentage);
+    const sellerFeePerGolfer =
+      sellerListingPricePerGolfer * listingSellerFeePercentage;
+    const buyerFeePerGolfer =
+      sellerListingPricePerGolfer * listingBuyerFeePercentage;
+    let totalPayoutForAllGolfers =
+      (buyerListingPricePerGolfer - buyerFeePerGolfer - sellerFeePerGolfer) *
+      parseInt(players);
+
+    // console.log(`
+    //   listingSellerFeePercentage = ${listingSellerFeePercentage},
+    //   listingBuyerFeePercentage  = ${listingBuyerFeePercentage},
+    //   buyerListingPricePerGolfer = ${buyerListingPricePerGolfer},
+    //   sellerFeePerGolfer         = ${sellerFeePerGolfer},
+    //   buyerFeePerGolfer          = ${buyerFeePerGolfer},
+    //   totalPayoutForAllGolfers   = ${totalPayoutForAllGolfers}`);
+
+    totalPayoutForAllGolfers =
+      totalPayoutForAllGolfers <= 0 ? 0 : totalPayoutForAllGolfers;
+
+    setSellerServiceFee(sellerFeePerGolfer * parseInt(players));
+
+    return totalPayoutForAllGolfers;
   }, [listingPrice, players]);
 
   const maxListingPrice = useMemo(() => {
@@ -204,7 +249,7 @@ export const ManageTeeTimeListing = ({
                 courseImage={selectedTeeTime?.courseLogo ?? ""}
                 courseName={selectedTeeTime?.courseName ?? ""}
                 courseDate={selectedTeeTime?.date ?? ""}
-                golferCount={selectedTeeTime?.listedSpots?.length ?? 0}
+                golferCount={selectedTeeTime?.listedSlotsCount ?? 1}
                 timezoneCorrection={course?.timezoneCorrection}
               />
               <div className={`flex flex-col gap-1 text-center w-fit mx-auto`}>
@@ -280,7 +325,7 @@ export const ManageTeeTimeListing = ({
                   Tee Time Price
                 </div>
                 <div className="text-secondary-black">
-                  {formatMoney(listingPrice)}
+                  {formatMoney(listingPrice * Number(players))}
                 </div>
               </div>
               <div className="flex justify-between">
@@ -291,7 +336,9 @@ export const ManageTeeTimeListing = ({
                     content="Service fee description."
                   />
                 </div>
-                <div className="text-secondary-black">{formatMoney(45)}</div>
+                <div className="text-secondary-black">
+                  {formatMoney(sellerServiceFee)}
+                </div>
               </div>
               <div className="flex justify-between">
                 <div className="font-[300] text-primary-gray">Total Payout</div>

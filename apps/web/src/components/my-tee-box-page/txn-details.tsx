@@ -75,6 +75,7 @@ export const TxnDetails = ({
                 courseImage={selectedTxn?.courseLogo ?? ""}
                 date={selectedTxn?.date ?? ""}
                 timezoneCorrection={course?.timezoneCorrection}
+                playerCount={selectedTxn?.playerCount}
               />
 
               <div className="flex flex-col gap-2 rounded-xl bg-secondary-white px-4 py-5 text-center">
@@ -135,12 +136,14 @@ const TeeTimeItem = ({
   golfers,
   date,
   timezoneCorrection,
+  playerCount = 1,
 }: {
   courseName: string;
   courseImage: string;
   golfers: string[];
   date: string;
   timezoneCorrection: number | undefined;
+  playerCount?: number;
 }) => {
   return (
     <div className="flex flex-col gap-2 rounded-xl bg-secondary-white px-4 py-5">
@@ -160,18 +163,18 @@ const TeeTimeItem = ({
           <Players className="ml-auto w-[30px]" />
         </div>
         <div className="flex flex-col">
-          <div>{`${golfers.length} ${
-            golfers.length === 1 ? "golfer" : "golfers"
+          <div>{`${playerCount} ${
+            playerCount === 1 ? "golfer" : "golfers"
           }`}</div>
           <div className="text-primary-gray">
-            {golfers.length > 2
-              ? `You, Guest & ${golfers.length - 2} ${
-                  golfers.length - 2 === 1 ? "golfers" : "golfers"
+            {playerCount > 2
+              ? `You, Guest & ${playerCount - 2} ${
+                  playerCount - 2 === 1 ? "golfers" : "golfers"
                 }`
               : golfers.map((i, idx) => {
-                  if (golfers.length === 1) return "Guest";
-                  if (idx === golfers.length - 1) return `& You`;
-                  if (idx === golfers.length - 2) return `Guest `;
+                  if (playerCount === 1) return "Guest";
+                  if (idx === playerCount - 1) return `& You`;
+                  if (idx === playerCount - 2) return `Guest `;
                   return `Guest, `;
                 })}
           </div>
