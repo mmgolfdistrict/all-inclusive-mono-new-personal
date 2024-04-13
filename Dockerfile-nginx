@@ -1,4 +1,4 @@
-FROM node
+FROM nginx
 
 # Setup Aliases
 RUN echo "alias ll='_TMPCMD=\"ls -alh --group-directories-first\";echo \$_TMPCMD;eval \$_TMPCMD'" >> ~/.bashrc
@@ -10,25 +10,8 @@ RUN echo "Output of all commands." > /tmp/output.txt
 RUN apt-get update >> /tmp/output.txt
 RUN apt-get upgrade >> /tmp/output.txt
 RUN echo Y | apt-get install telnet; exit 0 >> /tmp/output.txt
-RUN echo Y | apt-get install iptutils-ping; exit 0 >> /tmp/output.txt
+RUN echo Y | apt-get install inetutils-ping; exit 0 >> /tmp/output.txt
 RUN echo Y | apt-get install vim; exit 0 >> /tmp/output.txt
 RUN echo Y | apt-get install uuid-runtime; exit 0 >> /tmp/output.txt
 RUN echo Y | apt-get install uuid; exit 0 >> /tmp/output.txt
-
-# Create Application Directory
-RUN mkdir /opt/apps
-RUN mkdir /opt/apps/all-inclusive-mono
-
-# Copy Files From Local Directory to Container
-COPY . /opt/apps/all-inclusive-mono
-
-# Change Current Directory to Application Directory
-WORKDIR /opt/apps/all-inclusive-mono
-
-# Install the Necessary Packages
-RUN npm install
-RUN npm run build
-
-# Run the Application
-CMD [ "npm", "run dev" ]
 

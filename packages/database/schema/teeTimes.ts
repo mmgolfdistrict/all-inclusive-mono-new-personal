@@ -21,7 +21,7 @@ export const teeTimes = mySqlTable(
     availableSecondHandSpots: int("availableSecondHandSpots").notNull(),
     greenFee: int("greenFee").notNull(),
     cartFee: int("cartFee").notNull(),
-    greenFeeTax: int("greenFeeTax").notNull(),
+    greenFeeTax: int("greenFeeTax").notNull().default(0),
     cartFeeTax: int("cartFeeTax").notNull(),
     courseProvider: varchar("courseProvider", { length: 191 }).notNull(),
     courseId: varchar("courseId", { length: 36 }).notNull(),
