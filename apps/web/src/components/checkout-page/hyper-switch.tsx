@@ -35,12 +35,14 @@ export const HyperSwitch = ({
   teeTimeId,
   teeTimeDate,
   listingId,
+  setIsLoading,
 }: {
   cartData: CartProduct[];
   isBuyNowAuction: boolean;
   teeTimeId: string;
   teeTimeDate: string | undefined;
   listingId: string | undefined;
+  setIsLoading?: (isLoading: boolean) => void;
 }) => {
   const [options, setOptions] = useState<Options | undefined>(undefined);
   const { user } = useUserContext();
@@ -115,6 +117,10 @@ export const HyperSwitch = ({
       }
     }
   }, [user, options, cartData]);
+
+  if (setIsLoading && options !== undefined && hyperPromise !== undefined) {
+    setIsLoading(false);
+  }
 
   if (error) {
     return (
