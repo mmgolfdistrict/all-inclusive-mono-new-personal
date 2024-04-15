@@ -25,7 +25,7 @@ export const CancelOffer = ({
   selectedOffer,
   refetch,
 }: SideBarProps) => {
-  const { trigger, sidebar, toggleSidebar } = useSidebar({
+  const { toggleSidebar } = useSidebar({
     isOpen: isCancelOfferOpen,
     setIsOpen: setIsCancelOfferOpen,
   });
@@ -66,7 +66,7 @@ export const CancelOffer = ({
         </div>
       )}
       <aside
-        ref={sidebar}
+        // ref={sidebar}
         className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[500px] md:h-[100dvh] ${
           isCancelOfferOpen ? "translate-x-0" : "translate-x-full"
         }`}
@@ -76,7 +76,7 @@ export const CancelOffer = ({
             <div className="text-lg">Cancel Offer</div>
 
             <button
-              ref={trigger}
+              // ref={trigger}
               onClick={toggleSidebar}
               aria-controls="sidebar"
               aria-expanded={isCancelOfferOpen}
