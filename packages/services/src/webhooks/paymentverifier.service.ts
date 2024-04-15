@@ -1,12 +1,13 @@
-import Logger from "@golf-district/shared/src/logger";
 import type { Db } from "@golf-district/database";
 import { eq, or } from "@golf-district/database";
-import type { HyperSwitchWebhookService } from "./hyperswitch.webhook.service";
 import type { InsertBooking } from "@golf-district/database/schema/bookings";
 import { bookings } from "@golf-district/database/schema/bookings";
+import Logger from "@golf-district/shared/src/logger";
 import { getDate } from "date-fns";
+import type { HyperSwitchWebhookService } from "./hyperswitch.webhook.service";
 
 export class PaymentVerifierService {
+  protected hyperSwitchBaseUrl = process.env.HYPERSWITCH_BASE_URL;
   private readonly logger = Logger(PaymentVerifierService.name);
   constructor(
     private readonly database: Db,
@@ -26,9 +27,9 @@ export class PaymentVerifierService {
     }
 
     for (const record of records) {
-      const hyperswitchEndPoint = `https://sandbox.hyperswitch.io/payments/${record.providerPaymentId}`;
+      const hyperswitchEndPoint = `${this.hyperSwitchBaseUrl}/payments/${record.providerPaymentId}`;
       const myHeaders = new Headers();
-      myHeaders.append("api-key", "snd_NYL9A7V0hbeKw16eJUAWxJ58IuX4dN4zWpHn8gcq5h5PQ2Ncw1ENGHmvYATH7dbl");
+      myHeaders.append("api-key", process.env.HYPERSWITCH_API_KEY??"");
       const requestOptions = {
         method: "GET",
         headers: myHeaders,

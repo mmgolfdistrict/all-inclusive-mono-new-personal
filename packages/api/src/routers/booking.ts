@@ -247,23 +247,25 @@ export const bookingRouter = createTRPCRouter({
     .input(
       z.object({
         cartId: z.string(),
-        payment_id:z.string(),
+        payment_id: z.string(),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      return ctx.serviceFactory.getBookingService().reserveBooking(ctx.session.user.id, input.cartId,input.payment_id);
+      return ctx.serviceFactory
+        .getBookingService()
+        .reserveBooking(ctx.session.user.id, input.cartId, input.payment_id);
     }),
   reserveSecondHandBooking: protectedProcedure
     .input(
       z.object({
         cartId: z.string(),
         listingId: z.string(),
-        payment_id:z.string(),
+        payment_id: z.string(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       return ctx.serviceFactory
         .getBookingService()
-        .reserveSecondHandBooking(ctx.session.user.id, input.cartId, input.listingId,input.payment_id);
+        .reserveSecondHandBooking(ctx.session.user.id, input.cartId, input.listingId, input.payment_id);
     }),
 });

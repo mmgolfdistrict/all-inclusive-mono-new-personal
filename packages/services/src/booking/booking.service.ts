@@ -124,7 +124,7 @@ export class BookingService {
     private readonly tokenizeService: TokenizeService,
     private readonly providerService: ProviderService,
     private readonly notificationService: NotificationService
-  ) { }
+  ) {}
 
   createCounterOffer = async (userId: string, bookingIds: string[], offerId: string, amount: number) => {
     //find owner of each booking
@@ -2110,24 +2110,24 @@ export class BookingService {
       paymentId: customerCartData.paymentId,
     };
   };
-  
-  checkIfPaymentIdIsValid= async (paymentId:string)=>{
-    const hyperswitchEndPoint = `https://sandbox.hyperswitch.io/payments/${paymentId}`;
+
+  checkIfPaymentIdIsValid = async (paymentId: string) => {
+    const hyperswitchEndPoint = `${process.env.HYPERSWITCH_BASE_URL}/payments/${paymentId}`;
     const myHeaders = new Headers();
-    myHeaders.append("api-key", "snd_NYL9A7V0hbeKw16eJUAWxJ58IuX4dN4zWpHn8gcq5h5PQ2Ncw1ENGHmvYATH7dbl");
+    myHeaders.append("api-key", process.env.HYPERSWITCH_API_KEY??"");
     const requestOptions = {
       method: "GET",
       headers: myHeaders,
     };
     const response = await fetch(hyperswitchEndPoint, requestOptions);
     const paymentData = await response.json();
-    if(paymentData.error && paymentData?.error?.type==="invalid_request"){
+    if (paymentData.error && paymentData?.error?.type === "invalid_request") {
       return false;
     }
     return true;
-  }
+  };
 
-  reserveBooking = async (userId: string, cartId: string,payment_id:string) => {
+  reserveBooking = async (userId: string, cartId: string, payment_id: string) => {
     const {
       cart,
       playerCount,
@@ -2146,9 +2146,9 @@ export class BookingService {
       cartId,
       userId,
     });
-    const isValid= await this.checkIfPaymentIdIsValid(payment_id)
-    if(!isValid){
-      throw new Error("Payment Id not is not valid")
+    const isValid = await this.checkIfPaymentIdIsValid(payment_id);
+    if (!isValid) {
+      throw new Error("Payment Id not is not valid");
     }
     const pricePerGolfer = primaryGreenFeeCharge / playerCount;
 
@@ -2302,7 +2302,7 @@ export class BookingService {
         });
     }
   };
-  reserveSecondHandBooking = async (userId = "", cartId = "", listingId = "",payment_id="") => {
+  reserveSecondHandBooking = async (userId = "", cartId = "", listingId = "", payment_id = "") => {
     const {
       cart,
       playerCount,
@@ -2322,9 +2322,9 @@ export class BookingService {
       userId,
     });
 
-    const isValid= await this.checkIfPaymentIdIsValid(payment_id)
-    if(!isValid){
-      throw new Error("Payment Id not is not valid")
+    const isValid = await this.checkIfPaymentIdIsValid(payment_id);
+    if (!isValid) {
+      throw new Error("Payment Id not is not valid");
     }
 
     const [associatedBooking] = await this.database
