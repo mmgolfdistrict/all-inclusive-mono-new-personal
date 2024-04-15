@@ -107,7 +107,7 @@ export const TxnDetails = ({
               <div className="flex justify-between">
                 <div className="font-[300] text-primary-gray">Total Payout</div>
                 <div className="text-secondary-black">
-                  {formatMoney(teeTimePrice - 45)}
+                  {formatMoney(Math.abs(teeTimePrice - 45))}
                 </div>
               </div>
               <div className="text-center text-[14px] font-[300] text-primary-gray">

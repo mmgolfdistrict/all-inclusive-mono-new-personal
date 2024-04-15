@@ -157,7 +157,7 @@ export const ManageTeeTimeListing = ({
 
     setSellerServiceFee(sellerFeePerGolfer * parseInt(players));
 
-    return totalPayoutForAllGolfers;
+    return Math.abs(totalPayoutForAllGolfers);
   }, [listingPrice, players]);
 
   const maxListingPrice = useMemo(() => {

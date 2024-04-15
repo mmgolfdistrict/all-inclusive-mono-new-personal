@@ -71,7 +71,7 @@ export const ListTeeTime = ({
         ? course?.maxListPricePerGolferPercentage / 100
         : 0));
 
-    return parseInt(max.toFixed(2));
+    return Math.round(parseInt(max.toFixed(2)));
   }, [selectedTeeTime]);
 
   const availableSlots = selectedTeeTime?.golfers.length || 0;
@@ -149,7 +149,7 @@ export const ListTeeTime = ({
 
     setSellerServiceFee(sellerFeePerGolfer * parseInt(players));
 
-    return totalPayoutForAllGolfers;
+    return Math.abs(totalPayoutForAllGolfers);
   }, [listingPrice, players]);
 
   const listTeeTime = async () => {

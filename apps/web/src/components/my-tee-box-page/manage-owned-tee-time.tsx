@@ -137,7 +137,7 @@ export const ManageOwnedTeeTime = ({
   };
 
   const totalPayout = useMemo(() => {
-    return minimumOfferPrice * friends.length - 45;
+    return Math.abs(minimumOfferPrice * friends.length - 45);
   }, [minimumOfferPrice, friends]);
 
   const save = async () => {

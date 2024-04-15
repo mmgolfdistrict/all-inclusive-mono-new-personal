@@ -70,7 +70,7 @@ export const Counteroffer = ({
 
   const totalPayout = useMemo(() => {
     if (!listingPrice) return 0;
-    return listingPrice * parseInt(players) - 45;
+    return Math.abs(listingPrice * parseInt(players) - 45);
   }, [listingPrice, players]);
 
   const sendCounteroffer = () => {
