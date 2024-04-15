@@ -14,4 +14,11 @@ RUN echo Y | apt-get install inetutils-ping; exit 0 >> /tmp/output.txt
 RUN echo Y | apt-get install vim; exit 0 >> /tmp/output.txt
 RUN echo Y | apt-get install uuid-runtime; exit 0 >> /tmp/output.txt
 RUN echo Y | apt-get install uuid; exit 0 >> /tmp/output.txt
+RUN echo Y | apt-get install systemctl; exit 0 >> /tmp/output.txt
+
+RUN echo "systemctl start nginx" >> /opt/startup.sh
+RUN echo "mv /etc/nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf.orig" >> /opt/startup.sh
+RUN chmod 777 /opt/startup.sh
+
+RUN systemctl start nginx
 
