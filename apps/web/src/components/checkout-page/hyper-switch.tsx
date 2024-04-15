@@ -35,14 +35,14 @@ export const HyperSwitch = ({
   teeTimeId,
   teeTimeDate,
   listingId,
-  setCheckIfHyperSessionIsBuild
+  setCheckIfHyperSessionIsBuild,
 }: {
   cartData: CartProduct[];
   isBuyNowAuction: boolean;
   teeTimeId: string;
   teeTimeDate: string | undefined;
   listingId: string | undefined;
-  setCheckIfHyperSessionIsBuild:Dispatch<SetStateAction<boolean>>;
+  setCheckIfHyperSessionIsBuild: Dispatch<SetStateAction<boolean>>;
 }) => {
   const [options, setOptions] = useState<Options | undefined>(undefined);
   const { user } = useUserContext();

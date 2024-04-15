@@ -103,15 +103,16 @@ export const Confirmation = ({
                   <span style={{ margin: "0 15px" }}>:</span>
                   <span>{bookingId}</span>
                 </div>
-                {
-                  bookingData?.providerId && bookingData?.providerId.length?
+                {bookingData?.providerId?.length ? (
                   <div style={{ paddingBottom: "5px" }}>
-                  <span style={{ fontWeight: 500 }}>Course Reservation Id</span>
-                  <span style={{ margin: "0 15px" }}>:</span>
-                  <span>{bookingData?.providerId}</span>
-                </div>:null
-                }
-               
+                    <span style={{ fontWeight: 500 }}>
+                      Course Reservation Id
+                    </span>
+                    <span style={{ margin: "0 15px" }}>:</span>
+                    <span>{bookingData?.providerId}</span>
+                  </div>
+                ) : null}
+
                 <div style={{ paddingBottom: "65px" }}>
                   <span style={{ fontWeight: 500 }}>Play Time</span>
                   <span style={{ margin: "0 15px" }}>:</span>

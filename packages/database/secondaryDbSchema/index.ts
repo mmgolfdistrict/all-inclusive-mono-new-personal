@@ -1,5 +1,5 @@
-import * as teeTimeIndexLogs from "./teeTimeIndexLogs"
+import * as teeTimeIndexLogs from "./teeTimeIndexLogs";
 
 export const schema = {
-    ...teeTimeIndexLogs
+  ...teeTimeIndexLogs,
 };

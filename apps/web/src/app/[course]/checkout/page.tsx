@@ -39,7 +39,8 @@ export default function Checkout({
   params: { course: string };
   searchParams: Record<string, string | string[] | undefined>;
 }) {
-  const [checkIfHyperSessionIsBuild,setCheckIfHyperSessionIsBuild]=useState(false);
+  const [checkIfHyperSessionIsBuild, setCheckIfHyperSessionIsBuild] =
+    useState(false);
   const courseId = params.course;
   const teeTimeId = searchParams?.teeTimeId as string | undefined;
   const listingId = searchParams?.listingId as string | undefined;

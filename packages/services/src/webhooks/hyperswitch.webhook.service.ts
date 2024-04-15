@@ -276,7 +276,12 @@ export class HyperSwitchWebhookService {
         (item) => item.product_data.metadata.type === "sensible"
       );
       if (weatherGuaranteeData.length) {
-        await this.handleSensibleItem(weatherGuaranteeData[0] as SensibleProduct, amountReceived, customer_id, customerCart);
+        await this.handleSensibleItem(
+          weatherGuaranteeData[0] as SensibleProduct,
+          amountReceived,
+          customer_id,
+          customerCart
+        );
       }
       return;
     }

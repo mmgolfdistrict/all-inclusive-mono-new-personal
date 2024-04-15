@@ -34,10 +34,7 @@ export class TokenizeService {
    * @example
    * const tokenizeService = new TokenizeService(database);
    */
-  constructor(
-    private readonly database: Db,
-    private readonly notificationService: NotificationService
-  ) { }
+  constructor(private readonly database: Db, private readonly notificationService: NotificationService) {}
   getCartData = async ({ courseId = "", ownerId = "", paymentId = "" }) => {
     const [customerCartData]: any = await this.database
       .select({ cart: customerCarts.cart, cartId: customerCarts.id })

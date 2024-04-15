@@ -16,6 +16,7 @@ export const BuyNowCheckout = ({
   return (
     <ModalWrapper isOpen={isOpen} onClose={onClose}>
       <HyperSwitch
+        setCheckIfHyperSessionIsBuild={()=>undefined}
         teeTimeId=""
         isBuyNowAuction={true}
         //@ts-ignore
