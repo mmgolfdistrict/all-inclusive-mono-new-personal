@@ -5,7 +5,7 @@ import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
 import type { CartProduct } from "~/utils/types";
-import { useEffect, useRef, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 import { Spinner } from "../loading/spinner";
 import { CheckoutForm } from "./checkout-form";
 
@@ -35,12 +35,14 @@ export const HyperSwitch = ({
   teeTimeId,
   teeTimeDate,
   listingId,
+  setCheckIfHyperSessionIsBuild
 }: {
   cartData: CartProduct[];
   isBuyNowAuction: boolean;
   teeTimeId: string;
   teeTimeDate: string | undefined;
   listingId: string | undefined;
+  setCheckIfHyperSessionIsBuild:Dispatch<SetStateAction<boolean>>;
 }) => {
   const [options, setOptions] = useState<Options | undefined>(undefined);
   const { user } = useUserContext();
@@ -83,6 +85,7 @@ export const HyperSwitch = ({
           theme: "default",
         },
       });
+      setCheckIfHyperSessionIsBuild(true);
       setLocalCartData(cartData);
       setCartId(data.cartId);
 

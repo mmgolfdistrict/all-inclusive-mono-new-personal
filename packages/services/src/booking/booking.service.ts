@@ -2332,7 +2332,7 @@ export class BookingService {
     const transfersToCreate: InsertTransfer[] = [];
     bookingsToCreate.push({
       id: bookingId,
-      purchasedAt: currentUtcTimestamp(),
+      // purchasedAt: currentUtcTimestamp(),
       providerBookingId: "",
       isListed: false,
       numberOfHoles: associatedBooking?.numberOfHoles,

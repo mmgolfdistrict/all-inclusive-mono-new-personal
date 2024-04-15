@@ -767,7 +767,7 @@ export class HyperSwitchWebhookService {
       if (newBooking.data.bookingType === "SECOND") {
         bookingsToCreate.push({
           id: bookingId,
-          purchasedAt: currentUtcTimestamp(),
+          // purchasedAt: currentUtcTimestamp(),
           providerBookingId: newBooking?.data.id || "",
           isListed: false,
           numberOfHoles: firstBooking.numberOfHoles,

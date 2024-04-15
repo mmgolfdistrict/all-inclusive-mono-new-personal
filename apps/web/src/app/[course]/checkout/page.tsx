@@ -39,6 +39,7 @@ export default function Checkout({
   params: { course: string };
   searchParams: Record<string, string | string[] | undefined>;
 }) {
+  const [checkIfHyperSessionIsBuild,setCheckIfHyperSessionIsBuild]=useState(false);
   const courseId = params.course;
   const teeTimeId = searchParams?.teeTimeId as string | undefined;
   const listingId = searchParams?.listingId as string | undefined;
@@ -83,7 +84,6 @@ export default function Checkout({
   );
 
   const data = teeTimeId ? teeTimeData : listingData;
-  console.log(data, "ygufuyffcytucctctctc");
   const isLoading = teeTimeId ? isLoadingTeeTime : isLoadingListing;
   const isError = teeTimeId ? isErrorTeeTime : isErrorListing;
   const error = teeTimeId ? errorTeeTime : errorListing;
@@ -337,6 +337,7 @@ export default function Checkout({
                   Number(data?.pricePerGolfer) * amountOfPlayers ?? 0,
               }}
               isSensibleInvalid={isSensibleInvalid}
+              checkIfHyperSessionIsBuild={checkIfHyperSessionIsBuild}
             />
           </div>
           <div className="md:w-2/5">
@@ -357,6 +358,7 @@ export default function Checkout({
                 isBuyNowAuction={false}
                 cartData={cartData}
                 teeTimeDate={teeTimeData?.date}
+                setCheckIfHyperSessionIsBuild={setCheckIfHyperSessionIsBuild}
               />
             )}
           </div>

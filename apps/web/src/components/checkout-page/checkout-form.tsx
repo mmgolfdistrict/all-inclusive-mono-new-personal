@@ -228,7 +228,7 @@ export const CheckoutForm = ({
       cartId,
       listingId,
     });
-    console.log(bookingResponse);
+    // console.log(bookingResponse);
     return bookingResponse;
   };
 
