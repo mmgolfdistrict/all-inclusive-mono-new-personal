@@ -124,7 +124,7 @@ export class BookingService {
     private readonly tokenizeService: TokenizeService,
     private readonly providerService: ProviderService,
     private readonly notificationService: NotificationService
-  ) {}
+  ) { }
 
   createCounterOffer = async (userId: string, bookingIds: string[], offerId: string, amount: number) => {
     //find owner of each booking
@@ -777,7 +777,7 @@ export class BookingService {
         throw new Error("Error creating listing");
       });
     this.logger.info(`Listings created successfully. for user ${userId} teeTimeId ${firstBooking.teeTimeId}`);
-    this.notificationService.createNotification(
+    await this.notificationService.createNotification(
       userId,
       "LISTING_CREATED",
       `Listing creation successful`,
@@ -1874,7 +1874,7 @@ export class BookingService {
         providerTeeSheetId: providerCourseLink.providerTeeSheetId,
         courseId: teeTimes.courseId,
         providerBookingId: bookings.providerBookingId,
-        providerId: teeTimes.soldByProvider,
+        providerId: teeTimes.courseProvider,
       })
       .from(bookings)
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -1882,7 +1882,7 @@ export class BookingService {
         providerCourseLink,
         and(
           eq(providerCourseLink.courseId, teeTimes.courseId),
-          eq(providerCourseLink.providerId, teeTimes.soldByProvider)
+          eq(providerCourseLink.providerId, teeTimes.courseProvider)
         )
       )
       .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))
@@ -2110,7 +2110,24 @@ export class BookingService {
       paymentId: customerCartData.paymentId,
     };
   };
-  reserveBooking = async (userId: string, cartId: string) => {
+  
+  checkIfPaymentIdIsValid= async (paymentId:string)=>{
+    const hyperswitchEndPoint = `https://sandbox.hyperswitch.io/payments/${paymentId}`;
+    const myHeaders = new Headers();
+    myHeaders.append("api-key", "snd_NYL9A7V0hbeKw16eJUAWxJ58IuX4dN4zWpHn8gcq5h5PQ2Ncw1ENGHmvYATH7dbl");
+    const requestOptions = {
+      method: "GET",
+      headers: myHeaders,
+    };
+    const response = await fetch(hyperswitchEndPoint, requestOptions);
+    const paymentData = await response.json();
+    if(paymentData.error && paymentData?.error?.type==="invalid_request"){
+      return false;
+    }
+    return true;
+  }
+
+  reserveBooking = async (userId: string, cartId: string,payment_id:string) => {
     const {
       cart,
       playerCount,
@@ -2129,7 +2146,10 @@ export class BookingService {
       cartId,
       userId,
     });
-
+    const isValid= await this.checkIfPaymentIdIsValid(payment_id)
+    if(!isValid){
+      throw new Error("Payment Id not is not valid")
+    }
     const pricePerGolfer = primaryGreenFeeCharge / playerCount;
 
     const [teeTime] = await this.database
@@ -2140,7 +2160,7 @@ export class BookingService {
         date: teeTimes.date,
         providerCourseId: providerCourseLink.providerCourseId,
         providerTeeSheetId: providerCourseLink.providerTeeSheetId,
-        providerId: teeTimes.soldByProvider,
+        providerId: teeTimes.courseProvider,
         internalId: providers.internalId,
         providerDate: teeTimes.providerDate,
         holes: teeTimes.numberOfHoles,
@@ -2150,7 +2170,7 @@ export class BookingService {
         providerCourseLink,
         and(
           eq(providerCourseLink.courseId, teeTimes.courseId),
-          eq(providerCourseLink.providerId, teeTimes.soldByProvider)
+          eq(providerCourseLink.providerId, teeTimes.courseProvider)
         )
       )
       .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))
@@ -2282,7 +2302,7 @@ export class BookingService {
         });
     }
   };
-  reserveSecondHandBooking = async (userId = "", cartId = "", listingId = "") => {
+  reserveSecondHandBooking = async (userId = "", cartId = "", listingId = "",payment_id="") => {
     const {
       cart,
       playerCount,
@@ -2301,6 +2321,11 @@ export class BookingService {
       cartId,
       userId,
     });
+
+    const isValid= await this.checkIfPaymentIdIsValid(payment_id)
+    if(!isValid){
+      throw new Error("Payment Id not is not valid")
+    }
 
     const [associatedBooking] = await this.database
       .select({

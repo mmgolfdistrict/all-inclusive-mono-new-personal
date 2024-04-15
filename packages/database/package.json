@@ -13,6 +13,7 @@
     "format": "prettier --check \"**/*.{mjs,ts,md,json}\"",
     "lint": "eslint .",
     "push": "drizzle-kit push:mysql",
+    "push:secondary-database": "drizzle-kit push:mysql --config=secondaryDatabaseDrizzle.config.ts",
     "studio": "drizzle-kit studio",
     "typecheck": "tsc --noEmit"
   },

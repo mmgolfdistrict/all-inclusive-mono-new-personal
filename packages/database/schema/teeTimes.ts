@@ -21,9 +21,9 @@ export const teeTimes = mySqlTable(
     availableSecondHandSpots: int("availableSecondHandSpots").notNull(),
     greenFee: int("greenFee").notNull(),
     cartFee: int("cartFee").notNull(),
-    greenFeeTax: int("greeFeeTax").notNull(),
+    greenFeeTax: int("greenFeeTax").notNull().default(0),
     cartFeeTax: int("cartFeeTax").notNull(),
-    soldByProvider: varchar("courseProvider", { length: 191 }).notNull(),
+    courseProvider: varchar("courseProvider", { length: 191 }).notNull(),
     courseId: varchar("courseId", { length: 36 }).notNull(),
     entityId: varchar("entityId", { length: 36 }).notNull(),
   },
@@ -52,7 +52,7 @@ export const teeTimesRelations = relations(teeTimes, ({ one, many }) => ({
     references: [courses.id],
   }),
   provider: one(providerCourseLink, {
-    fields: [teeTimes.soldByProvider],
+    fields: [teeTimes.courseProvider],
     references: [providerCourseLink.providerId],
   }),
   entity: one(entities, {
