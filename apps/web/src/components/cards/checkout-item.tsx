@@ -20,7 +20,7 @@ export const CheckoutItem = ({
   teeTime,
   isLoading,
   isSensibleInvalid,
-  sensibleDataToMountComp
+  sensibleDataToMountComp,
 }: {
   teeTime: SearchObject | null | undefined;
   isLoading: boolean;

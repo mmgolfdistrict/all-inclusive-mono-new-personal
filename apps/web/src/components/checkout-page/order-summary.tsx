@@ -8,7 +8,7 @@ export const OrderSummary = ({
   teeTime,
   isLoading,
   sensibleDataToMountComp,
-  isSensibleInvalid
+  isSensibleInvalid,
 }: {
   teeTime: SearchObject | null | undefined;
   isLoading: boolean;
