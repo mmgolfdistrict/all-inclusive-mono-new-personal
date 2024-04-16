@@ -377,6 +377,99 @@ export class ForeUpWebhookService {
     return { insert: teeTimesToInsert, upsert: teeTimesToUpsert, remove: teeTimesToRemove };
   };
 
+  indexTeeTime = async (formattedDate: string,
+    providerCourseId: string,
+    providerTeeSheetId: string,
+    provider: ProviderAPI,
+    token: string,
+    time: number) => {
+    try {
+      const teeTimeResponse = await provider.getTeeTimes(token, providerCourseId, providerTeeSheetId, time.toString().padStart(4, "0"), (time + 1).toString().padStart(4, "0"), formattedDate)
+      let teeTime;
+      if (teeTimeResponse && teeTimeResponse.length > 0) {
+        teeTime = teeTimeResponse[0];
+      }
+      if (!teeTime) {
+        throw new Error("Tee time not available for booking");
+      }
+
+      const [indexedTeeTime] = await this.database.select().from(teeTimes).where(eq(teeTimes.providerTeeTimeId, teeTime.id)).execute().catch((err) => {
+        this.logger.error(err);
+        throw new Error(`Error finding tee time id`);
+      });
+
+      if (indexedTeeTime) {
+        const attributes = teeTime.attributes;
+
+        if (!attributes) {
+          this.logger.error(`No TeeTimeSlotAttributes available for: ${JSON.stringify(teeTimeResponse)}`);
+          throw new Error("No TeeTimeSlotAttributes available");
+        }
+        const maxPlayers = Math.max(...attributes.allowedGroupSizes);
+
+        // format of attributes.time -> 2023-12-20T01:28:00-07:00
+        const hours = Number(attributes.time?.split("T")?.[1]?.split(":")?.[0]);
+        const minutes = Number(attributes.time?.split("T")?.[1]?.split(":")?.[1]?.split(":")?.[0]);
+        const militaryTime = hours * 100 + minutes;
+
+        const providerTeeTime = {
+          id: indexedTeeTime.id,
+          courseId: indexedTeeTime.courseId,
+          providerTeeTimeId: teeTime.id,
+          courseProvider: indexedTeeTime.courseProvider,
+          numberOfHoles: attributes.holes,
+          date: attributes.time,
+          time: militaryTime,
+          maxPlayersPerBooking: maxPlayers,
+          availableFirstHandSpots: attributes.availableSpots,
+          availableSecondHandSpots: indexedTeeTime.availableSecondHandSpots,
+          greenFee: attributes.greenFee * 100,
+          cartFee: attributes.cartFee * 100,
+          greenFeeTax: attributes.greenFeeTax ? attributes.greenFeeTax : 0,
+          cartFeeTax: attributes.cartFeeTax,
+          providerDate: attributes.time,
+          entityId: indexedTeeTime.entityId,
+        };
+        const providerTeeTimeMatchingKeys = {
+          id: indexedTeeTime.id,
+          providerTeeTimeId: teeTime.id,
+          numberOfHoles: attributes.holes,
+          date: dateToUtcTimestamp(new Date(attributes.time)),
+          time: militaryTime,
+          maxPlayersPerBooking: maxPlayers,
+          greenFee: attributes.greenFee * 100,
+          cartFee: attributes.cartFee * 100,
+          greenFeeTax: attributes.greenFeeTax ? attributes.greenFeeTax : 0,
+          cartFeeTax: attributes.cartFeeTax,
+          courseId: indexedTeeTime.courseId,
+          availableFirstHandSpots: attributes.availableSpots,
+          availableSecondHandSpots: indexedTeeTime.availableSecondHandSpots,
+          courseProvider: indexedTeeTime.courseProvider,
+          providerDate: attributes.time,
+          entityId: indexedTeeTime.entityId,
+        };
+        if (isEqual(indexedTeeTime, providerTeeTimeMatchingKeys)) {
+          // no changes to tee time do nothing
+          return;
+        } else {
+          await this.database
+            .update(teeTimes)
+            .set(providerTeeTime)
+            .where(eq(teeTimes.id, indexedTeeTime.id))
+            .execute()
+            .catch((err) => {
+              this.logger.error(err);
+              throw new Error(`Error updating tee time: ${err}`);
+            });
+        }
+      }
+    } catch (error) {
+      this.logger.error(error);
+      throw new Error(`Error indexing tee time: ${error}`);
+    }
+
+  }
+
   initializeData = async () => {
     // Get course to index
     const [data] = await this.database

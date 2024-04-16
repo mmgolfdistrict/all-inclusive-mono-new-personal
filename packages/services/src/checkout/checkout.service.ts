@@ -326,6 +326,7 @@ export class CheckoutService {
         providerTeeSheetId: providerCourseLink.providerTeeSheetId,
         providerId: teeTimes.courseProvider,
         internalId: providers.internalId,
+        time: teeTimes.time,
       })
       .from(teeTimes)
       .leftJoin(
@@ -357,27 +358,9 @@ export class CheckoutService {
 
     const [formattedDate] = teeTime.date.split(" ");
 
-    const { insert, upsert, remove } = await this.foreupIndexer
-      .indexDay(
-        formattedDate!,
-        teeTime.providerCourseId!,
-        teeTime.courseId,
-        teeTime.providerTeeSheetId!,
-        teeTime.providerId,
-        provider,
-        token,
-        teeTime.entityId
-      )
-      .catch(() => {
-        throw new Error(`Error indexing day ${formattedDate} please return to course page`);
-      });
-    if (insert.length > 0 && upsert.length > 0 && remove.length > 0) {
-      return errors;
+    if (teeTime.providerCourseId && teeTime.providerTeeSheetId && formattedDate) {
+      await this.foreupIndexer.indexTeeTime(formattedDate, teeTime.providerCourseId, teeTime.providerTeeSheetId, provider, token, teeTime.time)
     }
-    await this.foreupIndexer.saveTeeTimes(insert, upsert, remove).catch((err) => {
-      this.logger.error("error saving indexed teetimes");
-      throw new Error("there was an error indexing this day please return to course page");
-    });
     const stillAvailable = await this.database
       .select({ id: teeTimes.id })
       .from(teeTimes)
@@ -396,7 +379,7 @@ export class CheckoutService {
         errorType: CartValidationErrors.TEE_TIME_NOT_AVAILABLE,
         product_id: item.id,
       });
-      throw new Error("Tee time not found.");
+      throw new Error("Expected Tee time spots may not be available anymore");
     }
     return errors;
   };
