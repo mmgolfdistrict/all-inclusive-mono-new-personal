@@ -84,7 +84,6 @@ export default function Checkout({
   );
 
   const data = teeTimeId ? teeTimeData : listingData;
-  console.log(data, "ygufuyffcytucctctctc");
   const isLoading = teeTimeId ? isLoadingTeeTime : isLoadingListing;
   const isError = teeTimeId ? isErrorTeeTime : isErrorListing;
   const error = teeTimeId ? errorTeeTime : errorListing;

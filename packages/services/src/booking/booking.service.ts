@@ -124,7 +124,7 @@ export class BookingService {
     private readonly tokenizeService: TokenizeService,
     private readonly providerService: ProviderService,
     private readonly notificationService: NotificationService
-  ) { }
+  ) {}
 
   createCounterOffer = async (userId: string, bookingIds: string[], offerId: string, amount: number) => {
     //find owner of each booking
@@ -2332,7 +2332,7 @@ export class BookingService {
     const transfersToCreate: InsertTransfer[] = [];
     bookingsToCreate.push({
       id: bookingId,
-      purchasedAt: currentUtcTimestamp(),
+      // purchasedAt: currentUtcTimestamp(),
       providerBookingId: "",
       isListed: false,
       numberOfHoles: associatedBooking?.numberOfHoles,

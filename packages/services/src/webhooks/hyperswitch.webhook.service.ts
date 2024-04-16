@@ -276,7 +276,12 @@ export class HyperSwitchWebhookService {
         (item) => item.product_data.metadata.type === "sensible"
       );
       if (weatherGuaranteeData.length) {
-        await this.handleSensibleItem(weatherGuaranteeData[0] as SensibleProduct, amountReceived, customer_id, customerCart);
+        await this.handleSensibleItem(
+          weatherGuaranteeData[0] as SensibleProduct,
+          amountReceived,
+          customer_id,
+          customerCart
+        );
       }
       return;
     }
@@ -767,7 +772,7 @@ export class HyperSwitchWebhookService {
       if (newBooking.data.bookingType === "SECOND") {
         bookingsToCreate.push({
           id: bookingId,
-          purchasedAt: currentUtcTimestamp(),
+          // purchasedAt: currentUtcTimestamp(),
           providerBookingId: newBooking?.data.id || "",
           isListed: false,
           numberOfHoles: firstBooking.numberOfHoles,

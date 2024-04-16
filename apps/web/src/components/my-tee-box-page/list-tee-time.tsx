@@ -65,11 +65,12 @@ export const ListTeeTime = ({
     // );
     console.log(selectedTeeTime);
     if (!selectedTeeTime?.purchasedFor) return 0;
-    const max = selectedTeeTime?.purchasedFor *
-    (1 +
-      (course?.maxListPricePerGolferPercentage
-        ? course?.maxListPricePerGolferPercentage / 100
-        : 0));
+    const max =
+      selectedTeeTime?.purchasedFor *
+      (1 +
+        (course?.maxListPricePerGolferPercentage
+          ? course?.maxListPricePerGolferPercentage / 100
+          : 0));
 
     return Math.round(parseInt(max.toFixed(2)));
   }, [selectedTeeTime]);

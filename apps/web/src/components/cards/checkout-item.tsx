@@ -29,7 +29,6 @@ export const CheckoutItem = ({
 }) => {
   const searchParams = useSearchParams();
   const playerCount = searchParams.get("playerCount");
-
   const { setAmountOfPlayers, amountOfPlayers } = useCheckoutContext();
   const { course } = useCourseContext();
 

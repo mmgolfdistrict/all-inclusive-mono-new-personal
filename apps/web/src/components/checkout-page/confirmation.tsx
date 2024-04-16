@@ -103,11 +103,16 @@ export const Confirmation = ({
                   <span style={{ margin: "0 15px" }}>:</span>
                   <span>{bookingId}</span>
                 </div>
-                <div style={{ paddingBottom: "5px" }}>
-                  <span style={{ fontWeight: 500 }}>Course Reservation Id</span>
-                  <span style={{ margin: "0 15px" }}>:</span>
-                  <span>{bookingData?.providerId}</span>
-                </div>
+                {bookingData?.providerId?.length ? (
+                  <div style={{ paddingBottom: "5px" }}>
+                    <span style={{ fontWeight: 500 }}>
+                      Course Reservation Id
+                    </span>
+                    <span style={{ margin: "0 15px" }}>:</span>
+                    <span>{bookingData?.providerId}</span>
+                  </div>
+                ) : null}
+
                 <div style={{ paddingBottom: "65px" }}>
                   <span style={{ fontWeight: 500 }}>Play Time</span>
                   <span style={{ margin: "0 15px" }}>:</span>
@@ -149,7 +154,7 @@ export const Confirmation = ({
             <FilledButton className="w-full">Go To My Tee Box</FilledButton>
           </Link>
         </div>
-        <InviteFriends isConfirmationPage={true} teeTimeId={teeTimeId} />
+        {/* <InviteFriends isConfirmationPage={true} teeTimeId={teeTimeId} /> */}
         <div className="flex flex-col gap-2">
           <div className="text-secondary-black">Share your Tee-Time</div>
           <div className="flex flex-wrap items-center justify-center gap-2">
