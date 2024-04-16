@@ -166,7 +166,6 @@ export const CheckoutForm = ({
     {
       setIsLoading(true);
 
-      console.log(widgets);
       const response = await hyper.confirmPayment({
         widgets,
         confirmParams: {

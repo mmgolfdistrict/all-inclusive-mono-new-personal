@@ -14,6 +14,7 @@ import {
 } from "../../utils/credit-card-formatters";
 import { FilledButton } from "../buttons/filled-button";
 import { Input } from "../input/input";
+import { toast } from "react-toastify";
 
 const Options = ["debit", "credit"];
 type OptionsType = "debit" | "credit";
@@ -44,7 +45,7 @@ export const AddCard = ({ refetchCards }: { refetchCards: () => unknown }) => {
     const paymentMethod = type;
     try {
       setIsLoading(true);
-      await addCard.mutateAsync({
+     const response= await addCard.mutateAsync({
         params: {
           payment_method: "card",
           payment_method_type: paymentMethod,
@@ -58,7 +59,14 @@ export const AddCard = ({ refetchCards }: { refetchCards: () => unknown }) => {
           customer_id: user?.id,
         },
       });
+
+      if(response.status==="Cannot add card please enter valid details"){
+        toast.error("Cannot add card please enter valid card details")
+      }else{
+        toast.info("Card added successfully")
+      }
       await refetchCards();
+      setType("")
       reset();
       setIsLoading(false);
     } catch (error) {

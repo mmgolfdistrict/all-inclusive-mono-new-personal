@@ -166,13 +166,23 @@ export class HyperSwitchService {
    * @throws Will throw an error if the payment method creation fails.
    */
   createPaymentMethod = async (
-    params: HyperSwitch.PaymentMethodCreateParams
-  ): Promise<HyperSwitch.Response<HyperSwitch.PaymentMethod>> => {
-    console.log(params);
-    return await this.hyperSwitch.paymentMethods.create(params).catch((err) => {
-      this.logger.error(`Error creating payment method: ${err}`);
-      throw new Error(`Error creating payment method: ${err}`);
-    });
+    params:any
+  ) => {
+    const options = {
+      method: 'POST',
+      headers: {
+        'api-key': 'snd_NYL9A7V0hbeKw16eJUAWxJ58IuX4dN4zWpHn8gcq5h5PQ2Ncw1ENGHmvYATH7dbl',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params)
+    };
+    
+    const res=await fetch('https://sandbox.hyperswitch.io/payment_methods', options);
+    const jsonRes=await res.json();
+    if(jsonRes.error){
+      return {status:"Cannot add card please enter valid details"}
+    }
+    return {status:"success"};
   };
 
   /**

@@ -8,14 +8,12 @@ export const OrderSummary = ({
   teeTime,
   isLoading,
   sensibleDataToMountComp,
-  isSensibleInvalid,
-  checkIfHyperSessionIsBuild,
+  isSensibleInvalid
 }: {
   teeTime: SearchObject | null | undefined;
   isLoading: boolean;
   sensibleDataToMountComp: SensibleDataToMountCompType;
   isSensibleInvalid: boolean;
-  checkIfHyperSessionIsBuild: boolean;
 }) => {
   return (
     <section className="mx-auto flex w-full h-fit flex-col gap-4 bg-white px-3 py-2 md:rounded-xl md:p-6 md:py-4">
@@ -26,7 +24,6 @@ export const OrderSummary = ({
           teeTime={teeTime}
           isSensibleInvalid={isSensibleInvalid}
           sensibleDataToMountComp={sensibleDataToMountComp}
-          checkIfHyperSessionIsBuild={checkIfHyperSessionIsBuild}
         />
       </div>
       <h2 className="italic">This purchase in non-refundable</h2>

@@ -48,7 +48,7 @@ export const ManageOffer = ({
     }
   }, [selectedOffer]);
 
-  const { trigger, sidebar, toggleSidebar } = useSidebar({
+  const { toggleSidebar } = useSidebar({
     isOpen: isManageOfferOpen,
     setIsOpen: setIsManageOfferOpen,
   });
@@ -82,7 +82,7 @@ export const ManageOffer = ({
 
   const totalPayout = useMemo(() => {
     if (!listingPrice) return 0;
-    return listingPrice * parseInt(players) - 45;
+    return Math.abs(listingPrice * parseInt(players) - 45);
   }, [listingPrice, players]);
 
   const updateOffer = () => {
@@ -100,7 +100,7 @@ export const ManageOffer = ({
         </div>
       )}
       <aside
-        ref={sidebar}
+        // ref={sidebar}
         className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[500px] md:h-[100dvh] ${
           isManageOfferOpen ? "translate-x-0" : "translate-x-full"
         }`}
@@ -110,7 +110,7 @@ export const ManageOffer = ({
             <div className="text-lg">Manage Offer</div>
 
             <button
-              ref={trigger}
+              // ref={trigger}
               onClick={toggleSidebar}
               aria-controls="sidebar"
               aria-expanded={isManageOfferOpen}

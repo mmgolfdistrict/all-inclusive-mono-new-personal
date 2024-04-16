@@ -20,14 +20,12 @@ export const CheckoutItem = ({
   teeTime,
   isLoading,
   isSensibleInvalid,
-  sensibleDataToMountComp,
-  checkIfHyperSessionIsBuild,
+  sensibleDataToMountComp
 }: {
   teeTime: SearchObject | null | undefined;
   isLoading: boolean;
   isSensibleInvalid: boolean;
   sensibleDataToMountComp: SensibleDataToMountCompType;
-  checkIfHyperSessionIsBuild: boolean;
 }) => {
   const searchParams = useSearchParams();
   const playerCount = searchParams.get("playerCount");
@@ -108,7 +106,7 @@ export const CheckoutItem = ({
         isSecondHand={teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND"}
         teeTimeId={teeTime?.teeTimeId}
       />
-      {isSensibleInvalid || !checkIfHyperSessionIsBuild ? null : (
+      {isSensibleInvalid || isLoading ? null : (
         <SensibleWidget sensibleDataToMountComp={sensibleDataToMountComp} />
         // <section className="flex flex-col items-center justify-between gap-4 border-t border-stroke p-4 lg:flex-row">
         //   <div className="flex flex-col gap-2">

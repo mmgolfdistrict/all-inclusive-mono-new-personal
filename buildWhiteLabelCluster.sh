@@ -9,6 +9,7 @@ echo [$containerCount]
 
 echo "Removing all containers..."
 docker ps -aq | xargs docker stop | xargs docker rm
+docker container prune --force
 
 BASE_PORT_NUMBER=3000
 # for i in {1..$containerCount..1}
@@ -43,4 +44,5 @@ if [ -z "$ipAddress" ]; then
 fi
 
 echo "Local IP Address is $ipAddress"
+docker container run -it -d -p 80:80 -e HostIPAddress="$ipAddress" --name nginx1 wlblnginx systemctl start nginx
 

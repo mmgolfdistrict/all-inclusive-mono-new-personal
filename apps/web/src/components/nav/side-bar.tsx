@@ -49,7 +49,7 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
     }
   );
 
-  const { trigger, sidebar, toggleSidebar } = useSidebar({
+  const { toggleSidebar } = useSidebar({
     isOpen: isSideBarOpen,
     setIsOpen: setIsSideBarOpen,
   });
@@ -72,7 +72,7 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
   return (
     <>
       <aside
-        ref={sidebar}
+        // ref={sidebar}
         className={`!duration-400 fixed left-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[320px] md:-translate-x-[105%]  ${
           isSideBarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
@@ -92,7 +92,7 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
               )}
             </div>
             <button
-              ref={trigger}
+              // ref={trigger}
               onClick={toggleSidebar}
               aria-controls="sidebar"
               aria-expanded={isSideBarOpen}

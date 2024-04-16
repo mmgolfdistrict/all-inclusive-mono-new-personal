@@ -35,14 +35,14 @@ export const HyperSwitch = ({
   teeTimeId,
   teeTimeDate,
   listingId,
-  setCheckIfHyperSessionIsBuild,
+  setIsLoading,
 }: {
   cartData: CartProduct[];
   isBuyNowAuction: boolean;
   teeTimeId: string;
   teeTimeDate: string | undefined;
   listingId: string | undefined;
-  setCheckIfHyperSessionIsBuild: Dispatch<SetStateAction<boolean>>;
+  setIsLoading?: (isLoading: boolean) => void;
 }) => {
   const [options, setOptions] = useState<Options | undefined>(undefined);
   const { user } = useUserContext();
@@ -85,7 +85,6 @@ export const HyperSwitch = ({
           theme: "default",
         },
       });
-      setCheckIfHyperSessionIsBuild(true);
       setLocalCartData(cartData);
       setCartId(data.cartId);
 
@@ -118,6 +117,10 @@ export const HyperSwitch = ({
       }
     }
   }, [user, options, cartData]);
+
+  if (setIsLoading && options !== undefined && hyperPromise !== undefined) {
+    setIsLoading(false);
+  }
 
   if (error) {
     return (
