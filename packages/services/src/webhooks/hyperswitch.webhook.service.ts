@@ -19,7 +19,7 @@ import { transfers } from "@golf-district/database/schema/transfers";
 import type { InsertTransfer } from "@golf-district/database/schema/transfers";
 import { userPromoCodeLink } from "@golf-district/database/schema/userPromoCodeLink";
 import { users } from "@golf-district/database/schema/users";
-import { currentUtcTimestamp } from "@golf-district/shared";
+import { currentUtcTimestamp, formatMoney } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
 import { Client } from "@upstash/qstash/.";
 import dayjs from "dayjs";
@@ -912,7 +912,7 @@ export class HyperSwitchWebhookService {
           SensibleWeatherIncluded: sensibleCharge ? "Yes" : "No",
           PurchasedFrom: sellerCustomer.name,
           PlayerCount: listedSlotsCount ?? 0,
-          TotalAmount: `$${total ?? 0}`,
+          TotalAmount: formatMoney(total ?? 0),
         };
 
         await this.notificationService.createNotification(
@@ -944,7 +944,7 @@ export class HyperSwitchWebhookService {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}` || "-",
-            Payout: (listedPrice - totalTax) * (listedSlotsCount || 1),
+            Payout: formatMoney((listedPrice - totalTax) * (listedSlotsCount || 1)),
             PurchasedFrom: existingTeeTime?.courseName || "-",
           };
           await this.notificationService.createNotification(
@@ -974,7 +974,7 @@ export class HyperSwitchWebhookService {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}` || "-",
-          Payout: (listedPrice - totalTax) * (listedSlotsCount || 1),
+          Payout: formatMoney((listedPrice - totalTax) * (listedSlotsCount || 1)),
           SensibleWeatherIncluded: firstBooking.weatherGuaranteeId?.length ? "Yes" : "No",
           PurchasedFrom: existingTeeTime?.courseName || "-",
         };
