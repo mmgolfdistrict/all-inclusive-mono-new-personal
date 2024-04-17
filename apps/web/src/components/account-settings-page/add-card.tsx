@@ -8,6 +8,7 @@ import {
 import { api } from "~/utils/api";
 import { useState } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
+import { toast } from "react-toastify";
 import {
   formatCreditCardNumber,
   formatExpirationDate,
@@ -44,7 +45,7 @@ export const AddCard = ({ refetchCards }: { refetchCards: () => unknown }) => {
     const paymentMethod = type;
     try {
       setIsLoading(true);
-      await addCard.mutateAsync({
+      const response = await addCard.mutateAsync({
         params: {
           payment_method: "card",
           payment_method_type: paymentMethod,
@@ -58,7 +59,14 @@ export const AddCard = ({ refetchCards }: { refetchCards: () => unknown }) => {
           customer_id: user?.id,
         },
       });
+
+      if (response.status === "Cannot add card please enter valid details") {
+        toast.error("Cannot add card please enter valid card details");
+      } else {
+        toast.info("Card added successfully");
+      }
       await refetchCards();
+      setType("");
       reset();
       setIsLoading(false);
     } catch (error) {

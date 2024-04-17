@@ -166,7 +166,6 @@ export const CheckoutForm = ({
     {
       setIsLoading(true);
 
-      console.log(widgets);
       const response = await hyper.confirmPayment({
         widgets,
         confirmParams: {
@@ -241,7 +240,7 @@ export const CheckoutForm = ({
       listingId,
       payment_id,
     });
-    console.log(bookingResponse);
+    // console.log(bookingResponse);
     return bookingResponse;
   };
 

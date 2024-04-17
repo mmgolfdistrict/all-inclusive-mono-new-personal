@@ -6,6 +6,7 @@ import { Club } from "~/components/icons/club";
 import { GolfDistrict } from "~/components/icons/golf-district";
 import { Layout } from "~/components/layout";
 import { fontMapper } from "~/styles/fonts";
+import { getNICDetails } from "~/utils/ipUtility";
 import { type Metadata } from "next";
 import { headers } from "next/headers";
 import Providers from "./providers";
@@ -90,6 +91,10 @@ export default async function RootLayout({
   const domainDecoded = decodeURIComponent(domain!);
 
   const entityData = await ssrGetEntityByDomain(domainDecoded, "");
+
+  const nicInfos = getNICDetails();
+  console.log("NIC Details");
+  console.log(nicInfos);
 
   return (
     <html lang="en" suppressHydrationWarning>

@@ -402,7 +402,7 @@ export class HyperSwitchWebhookService {
     golferPrice: number
   ) => {
     // console.log(item, amountReceived, customer_id, paymentId, "iuguyffuyfuy");
-    debugger;
+
     const listingId = item.product_data.metadata.second_hand_id;
     const listedSlots = await this.database
       .select({
@@ -661,7 +661,7 @@ export class HyperSwitchWebhookService {
       if (newBooking.data.bookingType === "SECOND") {
         bookingsToCreate.push({
           id: bookingId,
-          purchasedAt: currentUtcTimestamp(),
+          // purchasedAt: currentUtcTimestamp(),
           providerBookingId: newBooking?.data.id || "",
           isListed: false,
           numberOfHoles: firstBooking.numberOfHoles,

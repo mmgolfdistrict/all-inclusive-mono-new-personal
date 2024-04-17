@@ -6,6 +6,7 @@ import type { FullCourseType } from "@golf-district/shared";
 import { CourseLayout } from "~/components/course-layout";
 import { CourseWrapper } from "~/contexts/CourseContext";
 import { FiltersWrapper } from "~/contexts/FiltersContext";
+import { getNICDetails } from "~/utils/ipUtility";
 import Link from "next/link";
 
 export default async function CoursePageLayout({
@@ -22,6 +23,10 @@ export default async function CoursePageLayout({
   const courseData = (await getCourseById(courseId)) as FullCourseType;
 
   const courseImages = await getCourseImages(courseId);
+
+  const nicInfos = getNICDetails();
+  console.log("NIC Details");
+  console.log(nicInfos);
 
   return (
     <>

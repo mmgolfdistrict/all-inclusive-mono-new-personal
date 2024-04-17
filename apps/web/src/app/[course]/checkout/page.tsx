@@ -46,6 +46,7 @@ export default function Checkout({
   const { course } = useCourseContext();
   const { user } = useUserContext();
   const { status } = useSession();
+  const [isSessionLoading, setIsSessionLoading] = useState(true);
 
   const {
     shouldAddSensible,
@@ -83,7 +84,6 @@ export default function Checkout({
   );
 
   const data = teeTimeId ? teeTimeData : listingData;
-  console.log(data, "ygufuyffcytucctctctc");
   const isLoading = teeTimeId ? isLoadingTeeTime : isLoadingListing;
   const isError = teeTimeId ? isErrorTeeTime : isErrorListing;
   const error = teeTimeId ? errorTeeTime : errorListing;
@@ -322,7 +322,7 @@ export default function Checkout({
           <div className="md:w-3/5">
             <OrderSummary
               teeTime={data}
-              isLoading={isLoading}
+              isLoading={isLoading || isSessionLoading}
               sensibleDataToMountComp={{
                 partner_id: process.env.NEXT_PUBLIC_SENSIBLE_PARTNER_ID ?? "",
                 product_id: process.env.NEXT_PUBLIC_SENSIBLE_PRODUCT_ID ?? "",
@@ -353,6 +353,7 @@ export default function Checkout({
                 teeTimeId={
                   teeTimeId !== undefined ? teeTimeId : listingId ?? ""
                 }
+                setIsLoading={setIsSessionLoading}
                 listingId={listingId}
                 isBuyNowAuction={false}
                 cartData={cartData}

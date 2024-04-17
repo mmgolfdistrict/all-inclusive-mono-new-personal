@@ -7,25 +7,25 @@ export const useSidebar = ({
   isOpen: boolean;
   setIsOpen: Dispatch<SetStateAction<boolean>>;
 }) => {
-  const trigger = useRef<HTMLButtonElement>(null);
-  const sidebar = useRef<HTMLElement>(null);
+  // const trigger = useRef<HTMLButtonElement>(null);
+  // const sidebar = useRef<HTMLElement>(null);
 
-  useEffect(() => {
-    const clickHandler = ({ target }: MouseEvent) => {
-      if (!sidebar.current || !trigger.current) return;
-      if (
-        !isOpen ||
-        sidebar.current.contains(target as Node) ||
-        trigger.current.contains(target as Node)
-      ) {
-        return;
-      }
-      setIsOpen(false);
-    };
+  // useEffect(() => {
+  //   const clickHandler = ({ target }: MouseEvent) => {
+  //     if (!sidebar.current || !trigger.current) return;
+  //     if (
+  //       !isOpen ||
+  //       sidebar.current.contains(target as Node) ||
+  //       trigger.current.contains(target as Node)
+  //     ) {
+  //       return;
+  //     }
+  //     setIsOpen(false);
+  //   };
 
-    document.addEventListener("click", clickHandler);
-    return () => document.removeEventListener("click", clickHandler);
-  });
+  //   document.addEventListener("click", clickHandler);
+  //   return () => document.removeEventListener("click", clickHandler);
+  // });
 
   useEffect(() => {
     const keyHandler = ({ code }: KeyboardEvent) => {
@@ -49,8 +49,8 @@ export const useSidebar = ({
   }, [isOpen]);
 
   return {
-    trigger,
-    sidebar,
+    // trigger,
+    // sidebar,
     toggleSidebar,
   };
 };

@@ -14,6 +14,10 @@ RUN echo Y | apt-get install inetutils-ping; exit 0 >> /tmp/output.txt
 RUN echo Y | apt-get install vim; exit 0 >> /tmp/output.txt
 RUN echo Y | apt-get install uuid-runtime; exit 0 >> /tmp/output.txt
 RUN echo Y | apt-get install uuid; exit 0 >> /tmp/output.txt
+RUN echo Y | apt-get install systemctl; exit 0 >> /tmp/output.txt
+RUN echo Y | apt-get install net-tools; exit 0 >> /tmp/output.txt
+RUN echo Y | apt-get install sed; exit 0 >> /tmp/output.txt
+RUN echo Y | apt-get install jq; exit 0 >> /tmp/output.txt
 
 # Create Application Directory
 RUN mkdir /opt/apps

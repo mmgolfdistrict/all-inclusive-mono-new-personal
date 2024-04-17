@@ -195,7 +195,7 @@ export class TokenizeService {
 
     bookingsToCreate.push({
       id: bookingId,
-      purchasedAt: currentUtcTimestamp(),
+      // purchasedAt: currentUtcTimestamp(),
       // time: existingTeeTime.date,
       providerBookingId: providerBookingId,
       // withCart: withCart,
