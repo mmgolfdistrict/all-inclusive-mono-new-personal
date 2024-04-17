@@ -899,11 +899,16 @@ export class HyperSwitchWebhookService {
         const template: any = {
           ...commonTemplateData,
           CustomerFirstName: buyerCustomer.name?.split(" ")[0],
-          GreenFees:
+          GreenFeesPerPlayer:
             `$${(newBooking.data.purchasedFor ?? 0).toLocaleString("en-US", {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })} / Golfer` || "-",
+          GreenFees:
+          `$${((newBooking.data.purchasedFor ?? 0) * (listedSlotsCount ?? 0)).toLocaleString("en-US", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}` || "-",
           TaxesAndOtherFees:
             `$${taxes.toLocaleString("en-US", {
               minimumFractionDigits: 2,
@@ -912,7 +917,7 @@ export class HyperSwitchWebhookService {
           SensibleWeatherIncluded: sensibleCharge ? "Yes" : "No",
           PurchasedFrom: sellerCustomer.name,
           PlayerCount: listedSlotsCount ?? 0,
-          TotalAmount: formatMoney(total ?? 0),
+          TotalAmount: formatMoney(total),
         };
 
         await this.notificationService.createNotification(

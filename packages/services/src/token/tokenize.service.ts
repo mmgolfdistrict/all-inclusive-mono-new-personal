@@ -321,11 +321,16 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       PlayDateTime:
         dayjs(existingTeeTime.providerDate).utcOffset("-06:00").format("YYYY-MM-DD hh:mm A") ?? "-",
       NumberOfHoles: existingTeeTime.numberOfHoles,
-      GreenFees:
+      GreenFeesPerPlayer:
         `$${(purchasePrice / 100).toLocaleString("en-US", {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         })}` ?? "-",
+      GreenFees:
+      `$${((purchasePrice * players) / 100).toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}` ?? "-",
       TaxesAndOtherFees:
         `$${normalizedCartData.taxes.toLocaleString("en-US", {
           minimumFractionDigits: 2,
