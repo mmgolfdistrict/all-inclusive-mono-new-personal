@@ -3,11 +3,11 @@
 import type { CustomerPaymentMethod } from "~/hooks/usePaymentMethods";
 import { usePaymentMethods } from "~/hooks/usePaymentMethods";
 import { api } from "~/utils/api";
+import { useState } from "react";
 import { toast } from "react-toastify";
 import { Trashcan } from "../icons/trashcan";
 import { Spinner } from "../loading/spinner";
 import { AddCard } from "./add-card";
-import { useState } from "react";
 
 export const PaymentInfoMangeProfile = () => {
   const { cards, refetch, isLoading } = usePaymentMethods();
@@ -62,12 +62,12 @@ const CardDisplay = ({
   card: CustomerPaymentMethod;
   removeMethod: (x: string) => Promise<void>;
 }) => {
-  const [confirmStatus,setConfirmStatus]=useState(false);
+  const [confirmStatus, setConfirmStatus] = useState(false);
   // payment_method_idw
-  const removeCard=()=>{
-    removeMethod(card.payment_method_id)
-    setConfirmStatus(false)
-  }
+  const removeCard = async () => {
+    await removeMethod(card.payment_method_id);
+    setConfirmStatus(false);
+  };
 
   return (
     <div className="border border-stroke rounded-md p-3 flex flex-col gap-2 relative">
@@ -90,19 +90,32 @@ const CardDisplay = ({
         </button>
       </div>
       {/* <div id="backdrop" className="fixed inset-0 bg-black opacity-50 z-10 backdrop"></div> */}
-      {
-        confirmStatus?   <div id="slideOut" className="absolute top-0 bg-white-500 w-1/2 h-full transition-transform duration-300 ease-in-out transform translate-x-full z-20">
-        <div className="bg-white p-2 text-sm rounded shadow-md h-full">
-        <h2 className="text-lg font-semibold mb-4">Confirm Deletion</h2>
-        <p className="mb-2">Are you sure you want to delete card?</p>
-        <div className="flex justify-end">
-          <button style={{background:"red"}} className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded mr-2" onClick={()=>removeCard()}>Yes</button>
-          <button className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded" onClick={()=>setConfirmStatus(false)}>Cancel</button>
+      {confirmStatus ? (
+        <div
+          id="slideOut"
+          className="absolute top-0 bg-white-500 w-1/2 h-full transition-transform duration-300 ease-in-out transform translate-x-full z-20"
+        >
+          <div className="bg-white p-2 text-sm rounded shadow-md h-full">
+            <h2 className="text-lg font-semibold mb-4">Confirm Deletion</h2>
+            <p className="mb-2">Are you sure you want to delete card?</p>
+            <div className="flex justify-end">
+              <button
+                style={{ background: "red" }}
+                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded mr-2"
+                onClick={() => removeCard()}
+              >
+                Yes
+              </button>
+              <button
+                className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded"
+                onClick={() => setConfirmStatus(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
-        </div>
-        </div>:null
-      }
-    
+      ) : null}
     </div>
   );
 };

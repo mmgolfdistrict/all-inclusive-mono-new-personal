@@ -377,14 +377,23 @@ export class ForeUpWebhookService {
     return { insert: teeTimesToInsert, upsert: teeTimesToUpsert, remove: teeTimesToRemove };
   };
 
-  indexTeeTime = async (formattedDate: string,
+  indexTeeTime = async (
+    formattedDate: string,
     providerCourseId: string,
     providerTeeSheetId: string,
     provider: ProviderAPI,
     token: string,
-    time: number) => {
+    time: number
+  ) => {
     try {
-      const teeTimeResponse = await provider.getTeeTimes(token, providerCourseId, providerTeeSheetId, time.toString().padStart(4, "0"), (time + 1).toString().padStart(4, "0"), formattedDate)
+      const teeTimeResponse = await provider.getTeeTimes(
+        token,
+        providerCourseId,
+        providerTeeSheetId,
+        time.toString().padStart(4, "0"),
+        (time + 1).toString().padStart(4, "0"),
+        formattedDate
+      );
       let teeTime;
       if (teeTimeResponse && teeTimeResponse.length > 0) {
         teeTime = teeTimeResponse[0];
@@ -393,10 +402,15 @@ export class ForeUpWebhookService {
         throw new Error("Tee time not available for booking");
       }
 
-      const [indexedTeeTime] = await this.database.select().from(teeTimes).where(eq(teeTimes.providerTeeTimeId, teeTime.id)).execute().catch((err) => {
-        this.logger.error(err);
-        throw new Error(`Error finding tee time id`);
-      });
+      const [indexedTeeTime] = await this.database
+        .select()
+        .from(teeTimes)
+        .where(eq(teeTimes.providerTeeTimeId, teeTime.id))
+        .execute()
+        .catch((err) => {
+          this.logger.error(err);
+          throw new Error(`Error finding tee time id`);
+        });
 
       if (indexedTeeTime) {
         const attributes = teeTime.attributes;
@@ -467,8 +481,7 @@ export class ForeUpWebhookService {
       this.logger.error(error);
       throw new Error(`Error indexing tee time: ${error}`);
     }
-
-  }
+  };
 
   initializeData = async () => {
     // Get course to index

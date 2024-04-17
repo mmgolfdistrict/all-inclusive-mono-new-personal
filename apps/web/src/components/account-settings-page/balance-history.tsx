@@ -112,57 +112,56 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
     //   </Tabs.Content>
     // </Tabs.Root>
 
-    <section className="h-inherit mx-auto flex w-full flex-col gap-6 bg-white px-3 py-2 mb-2  md:rounded-xl md:p-6 md:py-4">
-    <div>
-      <h3 className="text-[18px]  md:text-[24px]">Balance</h3>
-      {/* <p className=" text-[14px] text-primary-gray md:text-[16px]">
+    <section className="h-full mx-auto flex w-full flex-col gap-6 bg-white px-3 py-2 mb-2  md:rounded-xl md:p-6 md:py-4">
+      <div>
+        <h3 className="text-[18px]  md:text-[24px]">Balance</h3>
+        {/* <p className=" text-[14px] text-primary-gray md:text-[16px]">
         Set how you&apos;d like your profile information to appear.
       </p> */}
-    </div>
-    <div className="flex flex-col items-center gap-2 lg:flex-row">
-    <div className="flex flex-col h-full items-center justify-center gap-2 md:min-h-[220px]">
-    <div className="flex flex-col items-center gap-2 md:flex-row md:items-center">
-      <div className="text-[24px] text-secondary-black md:text-[32px]">
-        {formatMoney(user?.balance ?? 0 / 100)}
       </div>
-      {user?.stripeConnectAccountStatus === "CONNECTED" ? null : (
-        <div className="text-primary-gray">
-          You need to connect your account to transfer your balance.
+      <div className="flex flex-col items-center gap-2 lg:flex-row">
+        <div className="flex flex-col h-full items-center justify-center gap-2 md:min-h-[220px]">
+          <div className="flex flex-col items-center gap-2 md:flex-row md:items-center">
+            <div className="text-[24px] text-secondary-black md:text-[32px]">
+              {formatMoney(user?.balance ?? 0 / 100)}
+            </div>
+            {user?.stripeConnectAccountStatus === "CONNECTED" ? null : (
+              <div className="text-primary-gray">
+                You need to connect your account to transfer your balance.
+              </div>
+            )}
+          </div>
+          {user?.stripeConnectAccountStatus === "CONNECTED" ? (
+            <FilledButton
+              onClick={() => void handleRequestCashOut()}
+              disabled={requestCashOut.isLoading}
+              className={`min-w-[150px] ${
+                connectAccount.isLoading
+                  ? "animate-pulse cusor-not-allowed"
+                  : ""
+              }`}
+              data-testid="cash-out-button-id"
+            >
+              Cash Out
+            </FilledButton>
+          ) : (
+            <FilledButton
+              onClick={() => void handleConnectAccount()}
+              disabled={connectAccount.isLoading}
+              className={`${
+                connectAccount.isLoading
+                  ? "animate-pulse cusor-not-allowed"
+                  : ""
+              }`}
+              data-testid="connect-button-id"
+            >
+              {connectAccount.isLoading
+                ? "Connecting..."
+                : "Connect Stripe Account"}
+            </FilledButton>
+          )}
         </div>
-      )}
-    </div>
-    {user?.stripeConnectAccountStatus === "CONNECTED" ? (
-      <FilledButton
-        onClick={() => void handleRequestCashOut()}
-        disabled={requestCashOut.isLoading}
-        className={`min-w-[150px] ${
-          connectAccount.isLoading
-            ? "animate-pulse cusor-not-allowed"
-            : ""
-        }`}
-        data-testid="cash-out-button-id"
-      >
-        Cash Out
-      </FilledButton>
-    ) : (
-      <FilledButton
-        onClick={() => void handleConnectAccount()}
-        disabled={connectAccount.isLoading}
-        className={`${
-          connectAccount.isLoading
-            ? "animate-pulse cusor-not-allowed"
-            : ""
-        }`}
-        data-testid="connect-button-id"
-      >
-        {connectAccount.isLoading
-          ? "Connecting..."
-          : "Connect Stripe Account"}
-      </FilledButton>
-    )}
-  </div>
       </div>
-      </section>
-   
+    </section>
   );
 };

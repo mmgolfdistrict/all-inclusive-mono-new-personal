@@ -169,7 +169,7 @@ export class HyperSwitchService {
     const options = {
       method: "POST",
       headers: {
-        "api-key": process.env.HYPERSWITCH_API_KEY??"",
+        "api-key": process.env.HYPERSWITCH_API_KEY ?? "",
         "Content-Type": "application/json",
       },
       body: JSON.stringify(params),
@@ -219,8 +219,11 @@ export class HyperSwitchService {
       const deletePaymentMethodResponse = await fetch(url, options);
       const deletedMethod = await deletePaymentMethodResponse.json();
       this.logger.info("Payment method deleted: ", deletedMethod);
+      console.log("Payment method deleted",deletedMethod)
     } catch (error) {
       this.logger.error("Error removing payment method: ", error);
+
+      console.log("Payment method deleted")
     }
   };
 }

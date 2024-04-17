@@ -359,7 +359,14 @@ export class CheckoutService {
     const [formattedDate] = teeTime.date.split(" ");
 
     if (teeTime.providerCourseId && teeTime.providerTeeSheetId && formattedDate) {
-      await this.foreupIndexer.indexTeeTime(formattedDate, teeTime.providerCourseId, teeTime.providerTeeSheetId, provider, token, teeTime.time)
+      await this.foreupIndexer.indexTeeTime(
+        formattedDate,
+        teeTime.providerCourseId,
+        teeTime.providerTeeSheetId,
+        provider,
+        token,
+        teeTime.time
+      );
     }
     const stillAvailable = await this.database
       .select({ id: teeTimes.id })
