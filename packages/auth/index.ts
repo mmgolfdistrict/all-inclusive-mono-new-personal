@@ -127,6 +127,7 @@ export const authConfig: NextAuthConfig = {
   },
   session: {
     strategy: "jwt",
+    maxAge: 7 * 24 * 60 * 60,
   },
   // cookies: {
   //   sessionToken: {
