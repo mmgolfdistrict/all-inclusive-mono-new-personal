@@ -11,7 +11,7 @@ import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import type { InsertTransfer } from "@golf-district/database/schema/transfers";
 import { transfers } from "@golf-district/database/schema/transfers";
 import { users } from "@golf-district/database/schema/users";
-import { currentUtcTimestamp } from "@golf-district/shared";
+import { currentUtcTimestamp, formatMoney } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
 import dayjs from "dayjs";
 import { textChangeRangeIsUnchanged } from "typescript";
@@ -321,11 +321,16 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       PlayDateTime:
         dayjs(existingTeeTime.providerDate).utcOffset("-06:00").format("YYYY-MM-DD hh:mm A") ?? "-",
       NumberOfHoles: existingTeeTime.numberOfHoles,
-      GreenFees:
+      GreenFeesPerPlayer:
         `$${(purchasePrice / 100).toLocaleString("en-US", {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         })}` ?? "-",
+      GreenFees:
+      `$${((purchasePrice * players) / 100).toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}` ?? "-",
       TaxesAndOtherFees:
         `$${normalizedCartData.taxes.toLocaleString("en-US", {
           minimumFractionDigits: 2,
@@ -334,7 +339,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       SensibleWeatherIncluded: normalizedCartData.sensibleCharge ? "Yes" : "No",
       PurchasedFrom: existingTeeTime.courseName ?? "-",
       PlayerCount: players ?? 0,
-      TotalAmount: `$${normalizedCartData.total / 100 ?? 0}`,
+      TotalAmount: formatMoney(normalizedCartData.total / 100 ?? 0),
     };
 
     await this.notificationService.createNotification(

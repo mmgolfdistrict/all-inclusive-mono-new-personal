@@ -230,3 +230,16 @@ export const addDays = (date: Date, days: number) => {
 export const normalizeDateToUnixTimestamp = (inputDate: string): number => {
   return dayjs(inputDate).unix();
 };
+
+export const formatMoney = (amount: number) => {
+  if (!amount) return "$0.00";
+  if (amount < 0)
+    return `-$${Math.abs(amount).toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+  return `$${amount.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+};
