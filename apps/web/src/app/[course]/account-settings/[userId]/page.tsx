@@ -22,16 +22,20 @@ export default function ManangeProfile({
       <section className="mx-auto flex w-full flex-col gap-4 pt-4 md:max-w-[1360px] md:px-6">
         <ProfileDetails />
         <div className="flex h-full flex-col gap-4 md:flex-row w-full">
-          <div className="w-full md:w-[50%] h-inherit">
+          <div className="w-full md:w-[50%]  md:rounded-xl overflow-hidden">
             <BalanceHistory userId={userId} />
           </div>
+          <div className="w-full md:w-[50%] h-inherit">
+            <PrivacySettings />
+            <NotificationSettings />
+          </div>
 
-          <ConnectAccount userId={userId} />
+          {/* <ConnectAccount userId={userId} /> */}
         </div>
-        <div className="flex h-full flex-col gap-4 md:flex-row">
+        {/* <div className="flex h-full flex-col gap-4 md:flex-row">
           <PrivacySettings />
           <NotificationSettings />
-        </div>
+        </div> */}
         <div className="flex flex-col gap-4 md:flex-row">
           <EditProfileForm />
           <PaymentInfoMangeProfile />
