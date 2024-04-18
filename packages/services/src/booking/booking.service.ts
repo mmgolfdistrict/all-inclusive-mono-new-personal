@@ -778,7 +778,7 @@ export class BookingService {
         throw new Error("Error creating listing");
       });
     this.logger.info(`Listings created successfully. for user ${userId} teeTimeId ${firstBooking.teeTimeId}`);
-    this.notificationService.createNotification(
+    await this.notificationService.createNotification(
       userId,
       "LISTING_CREATED",
       `Listing creation successful`,
@@ -2111,7 +2111,24 @@ export class BookingService {
       paymentId: customerCartData.paymentId,
     };
   };
-  reserveBooking = async (userId: string, cartId: string) => {
+
+  checkIfPaymentIdIsValid = async (paymentId: string) => {
+    const hyperswitchEndPoint = `${process.env.HYPERSWITCH_BASE_URL}/payments/${paymentId}`;
+    const myHeaders = new Headers();
+    myHeaders.append("api-key", process.env.HYPERSWITCH_API_KEY??"");
+    const requestOptions = {
+      method: "GET",
+      headers: myHeaders,
+    };
+    const response = await fetch(hyperswitchEndPoint, requestOptions);
+    const paymentData = await response.json();
+    if (paymentData.error && paymentData?.error?.type === "invalid_request") {
+      return false;
+    }
+    return true;
+  };
+
+  reserveBooking = async (userId: string, cartId: string, payment_id: string) => {
     const {
       cart,
       playerCount,
@@ -2130,7 +2147,10 @@ export class BookingService {
       cartId,
       userId,
     });
-
+    const isValid = await this.checkIfPaymentIdIsValid(payment_id);
+    if (!isValid) {
+      throw new Error("Payment Id not is not valid");
+    }
     const pricePerGolfer = primaryGreenFeeCharge / playerCount;
 
     const [teeTime] = await this.database
@@ -2283,7 +2303,7 @@ export class BookingService {
         });
     }
   };
-  reserveSecondHandBooking = async (userId = "", cartId = "", listingId = "") => {
+  reserveSecondHandBooking = async (userId = "", cartId = "", listingId = "", payment_id = "") => {
     const {
       cart,
       playerCount,
@@ -2302,6 +2322,11 @@ export class BookingService {
       cartId,
       userId,
     });
+
+    const isValid = await this.checkIfPaymentIdIsValid(payment_id);
+    if (!isValid) {
+      throw new Error("Payment Id not is not valid");
+    }
 
     const [associatedBooking] = await this.database
       .select({

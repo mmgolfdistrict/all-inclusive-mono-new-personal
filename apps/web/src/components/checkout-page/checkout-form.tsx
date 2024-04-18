@@ -185,14 +185,21 @@ export const CheckoutForm = ({
             status: "",
           };
           if (isFirstHand.length) {
-            bookingResponse = await reserveBookingFirstHand(cartId);
+            bookingResponse = await reserveBookingFirstHand(
+              cartId,
+              response?.payment_id
+            );
             setReservationData({
               golfReservationId: bookingResponse.bookingId,
               providerReservationId: bookingResponse.providerBookingId,
               playTime: teeTimeDate || "",
             });
           } else {
-            bookingResponse = await reserveSecondHandBooking(cartId, listingId);
+            bookingResponse = await reserveSecondHandBooking(
+              cartId,
+              listingId,
+              response?.payment_id
+            );
           }
           setMessage("Payment Successful");
           isBuyNowAuction
@@ -212,20 +219,26 @@ export const CheckoutForm = ({
     }
   };
 
-  const reserveBookingFirstHand = async (cartId: string) => {
+  const reserveBookingFirstHand = async (
+    cartId: string,
+    payment_id: string
+  ) => {
     const bookingResponse = await reserveBookingApi.mutateAsync({
       cartId,
+      payment_id,
     });
     return bookingResponse;
   };
 
   const reserveSecondHandBooking = async (
     cartId: string,
-    listingId: string
+    listingId: string,
+    payment_id: string
   ) => {
     const bookingResponse = await reserveSecondHandBookingApi.mutateAsync({
       cartId,
       listingId,
+      payment_id,
     });
     // console.log(bookingResponse);
     return bookingResponse;

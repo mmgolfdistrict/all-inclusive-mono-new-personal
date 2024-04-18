@@ -5094,7 +5094,7 @@ const _f4b49z = eventHandler((event) => {
   return readAsset(id);
 });
 
-const _lazy_6ByX9K = () => import('../_...auth_.mjs');
+const _lazy_EBQjlW = () => import('../_...auth_.mjs');
 
 const handlers = [
   { route: '', handler: _f4b49z, lazy: false, middleware: true, method: undefined },

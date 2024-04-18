@@ -26,6 +26,7 @@ import {
   WeatherService,
 } from "./index";
 import { ProviderService } from "./tee-sheet-provider/providers.service";
+import { PaymentVerifierService } from "./webhooks/paymentverifier.service";
 
 export interface ServiceConfig {
   database: Db;
@@ -329,5 +330,9 @@ export class ServiceFactory {
 
   getAppSettingService = (): AppSettingsService => {
     return new AppSettingsService(this.config.database, this.getCacheService());
+  };
+
+  getPaymentVerifierService = (): PaymentVerifierService => {
+    return new PaymentVerifierService(this.config.database, this.getHyperSwitchWebhookService());
   };
 }

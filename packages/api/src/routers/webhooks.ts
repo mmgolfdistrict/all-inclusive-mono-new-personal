@@ -9,4 +9,7 @@ export const webhookRouter = createTRPCRouter({
     //@TODO validate type maybe?
     ctx.serviceFactory.getHyperSwitchWebhookService().processWebhook(input as any);
   }),
+  paymentVerifier: publicProcedure.mutation(async ({ ctx, input }) => {
+    ctx.serviceFactory.getPaymentVerifierService().verifyPayment();
+  }),
 });
