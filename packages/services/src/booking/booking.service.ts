@@ -307,7 +307,7 @@ export class BookingService {
             date: teeTime.date ? teeTime.date : "",
             firstHandPrice: teeTime.greenFee ? teeTime.greenFee : 0,
             miniumOfferPrice: teeTime.minimumOfferPrice ? teeTime.minimumOfferPrice : 0,
-            listPrice: teeTime.listPrice,
+            listPrice: teeTime.listPrice/100,
             status: "LISTED",
             listedSpots: [teeTime.bookingId],
             listedSlotsCount: teeTime.listedSlots,
