@@ -24,8 +24,8 @@ interface TeeTimeSearchObject {
   soldByImage: string;
   availableSlots: number;
   pricePerGolfer: number;
-  greenFeeTax: number;
-  cartFeeTax: number;
+  greenFeeTaxPerPlayer: number;
+  cartFeeTaxPerPlayer: number;
   teeTimeId: string;
   date: string; //day of tee time
   time: number; //military time
@@ -168,7 +168,7 @@ export class SearchService {
         withCart: bookings.includesCart,
         ownerHandle: users.handle,
         favorites: favorites.id,
-        firstHandPrice: teeTimes.greenFee,
+        firstHandPrice: teeTimes.greenFeePerPlayer,
         minimumOfferPrice: bookings.minimumOfferPrice,
         purchasedFor: bookings.totalAmount,
         golfers: bookings.nameOnBooking,
@@ -255,7 +255,7 @@ export class SearchService {
         bookingId: bookings.id,
         favorites: favorites.id,
         includesCart: bookings.includesCart,
-        firstHandPrice: teeTimes.greenFee,
+        firstHandPrice: teeTimes.greenFeePerPlayer,
         buyerFee: courses.buyerFee,
         sellerFee: courses.sellerFee,
         image: {
@@ -324,14 +324,14 @@ export class SearchService {
         date: teeTimes.date,
         numberOfHoles: teeTimes.numberOfHoles,
         firstPartySlots: teeTimes.availableFirstHandSpots,
-        greenFee: teeTimes.greenFee,
-        cartFee: teeTimes.cartFee,
+        greenFee: teeTimes.greenFeePerPlayer,
+        cartFee: teeTimes.cartFeePerPlayer,
         courseName: courses.name,
-        markup: courses.markup,
+        markupFeesFixedPerPlayer: courses.markupFeesFixedPerPlayer,
         favorites: favorites.id,
         providerDate: teeTimes.providerDate,
-        greenFeeTax: teeTimes.greenFeeTax,
-        cartFeeTax: teeTimes.cartFeeTax,
+        greenFeeTax: teeTimes.greenFeeTaxPerPlayer,
+        cartFeeTax: teeTimes.cartFeeTaxPerPlayer,
         numberOfWatchers: sql<number>`(
           SELECT COUNT(*)
           FROM ${favorites}
@@ -389,9 +389,9 @@ export class SearchService {
         ? `https://${tee.logo.cdnUrl}/${tee.logo.key}.${tee.logo.extension}`
         : "/defaults/default-profile.webp",
       availableSlots: tee.firstPartySlots,
-      pricePerGolfer: (tee.greenFee / 100) + (tee.cartFee / 100) + (tee.markup ? tee.markup / 100 : 0),
-      greenFeeTax: tee.greenFeeTax,
-      cartFeeTax: tee.cartFeeTax,
+      pricePerGolfer: (tee.greenFee / 100) + (tee.cartFee / 100) + (tee.markupFeesFixedPerPlayer ? tee.markupFeesFixedPerPlayer / 100 : 0),
+      greenFeeTaxPerPlayer: tee.greenFeeTax,
+      cartFeeTaxPerPlayer: tee.cartFeeTax,
       teeTimeId: tee.id,
       userWatchListed: tee.favorites ? true : false,
       date: tee.providerDate, //day of tee time
@@ -575,20 +575,20 @@ export class SearchService {
         numberOfHoles: teeTimes.numberOfHoles,
         firstPartySlots: teeTimes.availableFirstHandSpots,
         secondHandSlots: teeTimes.availableSecondHandSpots,
-        greenFee: teeTimes.greenFee,
+        greenFee: teeTimes.greenFeePerPlayer,
         courseName: courses.name,
-        cartFee: teeTimes.cartFee,
+        cartFee: teeTimes.cartFeePerPlayer,
       })
       .from(teeTimes)
       .innerJoin(courses, eq(courses.id, courseId))
       .where(
         and(
           and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
-          between(teeTimes.greenFee, lowerPrice, upperPrice),
+          between(teeTimes.greenFeePerPlayer, lowerPrice, upperPrice),
           gte(teeTimes.providerDate, currentTimePlus30Min),
           between(teeTimes.providerDate, minDateSubquery, maxDateSubquery),
           eq(teeTimes.courseId, courseId),
-          includesCart ? gte(teeTimes.cartFee, 1) : eq(teeTimes.cartFee, 0), //currently do not have a hasCart column in tee time table
+          includesCart ? gte(teeTimes.cartFeePerPlayer, 1) : eq(teeTimes.cartFeePerPlayer, 0), //currently do not have a hasCart column in tee time table
           eq(teeTimes.numberOfHoles, holes),
           eq(teeTimes.numberOfHoles, holes),
           gt(teeTimes.availableFirstHandSpots, 0),
@@ -615,12 +615,12 @@ export class SearchService {
         numberOfHoles: teeTimes.numberOfHoles,
         firstPartySlots: teeTimes.availableFirstHandSpots,
         secondHandSlots: teeTimes.availableSecondHandSpots,
-        greenFee: teeTimes.greenFee,
+        greenFee: teeTimes.greenFeePerPlayer,
         courseName: courses.name,
-        markup: courses.markup,
+        markupFeesFixedPerPlayer: courses.markupFeesFixedPerPlayer,
         buyerFee: courses.buyerFee,
         sellerFee: courses.sellerFee,
-        cartFee: teeTimes.cartFee,
+        cartFee: teeTimes.cartFeePerPlayer,
         logo: {
           key: assets.key,
           cdnUrl: assets.cdn,
@@ -636,11 +636,11 @@ export class SearchService {
       .where(
         and(
           and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
-          between(teeTimes.greenFee, lowerPrice, upperPrice),
+          between(teeTimes.greenFeePerPlayer, lowerPrice, upperPrice),
           gte(teeTimes.providerDate, currentTimePlus30Min),
           between(teeTimes.providerDate, startDate, endDate),
           eq(teeTimes.courseId, courseId),
-          includesCart ? gte(teeTimes.cartFee, 1) : eq(teeTimes.cartFee, 0), //currently do not have a hasCart column in tee time table
+          includesCart ? gte(teeTimes.cartFeePerPlayer, 1) : eq(teeTimes.cartFeePerPlayer, 0), //currently do not have a hasCart column in tee time table
           eq(teeTimes.numberOfHoles, holes),
           gt(teeTimes.availableFirstHandSpots, 0),
           or(gte(teeTimes.availableFirstHandSpots, golfers), gte(teeTimes.availableSecondHandSpots, golfers))
@@ -648,11 +648,11 @@ export class SearchService {
       )
       .orderBy(
         sortPrice === "desc"
-          ? desc(teeTimes.greenFee)
+          ? desc(teeTimes.greenFeePerPlayer)
           : sortTime === "desc"
           ? desc(teeTimes.time)
           : sortPrice === "asc"
-          ? asc(teeTimes.greenFee)
+          ? asc(teeTimes.greenFeePerPlayer)
           : asc(teeTimes.time)
       )
       .limit(limit);
@@ -691,7 +691,7 @@ export class SearchService {
         firstOrSecondHandTeeTime: TeeTimeType.FIRST_HAND,
         isListed: false,
         minimumOfferPrice: teeTime.greenFee / 100, //add more fees?
-        pricePerGolfer: (teeTime.greenFee / 100) + (teeTime.cartFee / 100) + (teeTime.markup ? teeTime.markup / 100 : 0), //add more fees?
+        pricePerGolfer: (teeTime.greenFee / 100) + (teeTime.cartFee / 100) + (teeTime.markupFeesFixedPerPlayer ? teeTime.markupFeesFixedPerPlayer / 100 : 0), //add more fees?
         isOwned: false,
         firstHandPurchasePrice: 0,
         bookingIds: [],
@@ -716,7 +716,7 @@ export class SearchService {
         date: teeTimes.providerDate,
         time: teeTimes.time,
 
-        greenFee: teeTimes.greenFee,
+        greenFee: teeTimes.greenFeePerPlayer,
         profilePicture: {
           key: assets.key,
           cdnUrl: assets.cdn,

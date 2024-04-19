@@ -272,7 +272,7 @@ export class BookingService {
         teeTimesId: teeTimes.id,
         listPrice: lists.listPrice,
         listedSlots: lists.slots,
-        greenFee: teeTimes.greenFee,
+        greenFeePerPlayer: teeTimes.greenFeePerPlayer,
         minimumOfferPrice: bookings.minimumOfferPrice,
       })
       .from(bookings)
@@ -305,7 +305,7 @@ export class BookingService {
               ? `https://${teeTime.teeTimeImage.cdnUrl}/${teeTime.teeTimeImage.key}.${teeTime.teeTimeImage.extension}`
               : "/defaults/default-course.webp",
             date: teeTime.date ? teeTime.date : "",
-            firstHandPrice: teeTime.greenFee ? teeTime.greenFee : 0,
+            firstHandPrice: teeTime.greenFeePerPlayer ? teeTime.greenFeePerPlayer : 0,
             miniumOfferPrice: teeTime.minimumOfferPrice ? teeTime.minimumOfferPrice : 0,
             listPrice: teeTime.listPrice/100,
             status: "LISTED",
@@ -422,9 +422,9 @@ export class BookingService {
         date: teeTimes.providerDate,
         courseId: teeTimes.courseId,
         courseName: courses.name,
-        courseMarkup: courses.markup,
-        greenFee: teeTimes.greenFee,
-        cartFee: teeTimes.cartFee,
+        courseMarkup: courses.markupFeesFixedPerPlayer,
+        greenFeePerPlayer: teeTimes.greenFeePerPlayer,
+        cartFeePerPlayer: teeTimes.cartFeePerPlayer,
         lastHighestSale: sql<number | null>`MAX(${transfers.amount})`,
         teeTimeImage: {
           key: assets.key,
@@ -471,7 +471,7 @@ export class BookingService {
         teeTimes.date,
         teeTimes.courseId,
         courses.name,
-        teeTimes.greenFee,
+        teeTimes.greenFeePerPlayer,
         assets.key,
         assets.cdn,
         assets.extension,
@@ -501,7 +501,7 @@ export class BookingService {
             ? `https://${teeTime.teeTimeImage.cdnUrl}/${teeTime.teeTimeImage.key}.${teeTime.teeTimeImage.extension}`
             : "/defaults/default-course.webp",
           date: teeTime.date,
-          firstHandPrice: teeTime.greenFee + teeTime.cartFee + (teeTime.courseMarkup ? teeTime.courseMarkup / 100 : 0),
+          firstHandPrice: teeTime.greenFeePerPlayer + teeTime.cartFeePerPlayer + (teeTime.courseMarkup ? teeTime.courseMarkup / 100 : 0),
           golfers: [],
           purchasedFor: Number(teeTime.purchasedFor) / 100,
           bookingIds: [teeTime.bookingId],
@@ -1473,7 +1473,7 @@ export class BookingService {
         courseName: courses.name,
         teeTimeDate: teeTimes.date,
         teeTimeId: teeTimes.id,
-        originalGreenFee: teeTimes.greenFee,
+        originalGreenFee: teeTimes.greenFeePerPlayer,
         lastHighestSale: sql<number | null>`MAX(${transfers.amount})`,
         courseImage: {
           key: courseImage.key,
@@ -1605,7 +1605,7 @@ export class BookingService {
         courseName: courses.name,
         teeTimeDate: teeTimes.providerDate,
         teeTimeId: teeTimes.id,
-        originalGreenFee: teeTimes.greenFee,
+        originalGreenFee: teeTimes.greenFeePerPlayer,
         lastHighestSale: sql<number | null>`MAX(${transfers.amount})`,
         courseImage: {
           key: courseImage.key,
@@ -1751,7 +1751,7 @@ export class BookingService {
         courseName: courses.name,
         teeTimeDate: teeTimes.providerDate,
         teeTimeId: teeTimes.id,
-        originalGreenFee: teeTimes.greenFee,
+        originalGreenFee: teeTimes.greenFeePerPlayer,
         lastHighestSale: sql<number | null>`MAX(${transfers.amount})`,
         courseImage: {
           key: courseImage.key,

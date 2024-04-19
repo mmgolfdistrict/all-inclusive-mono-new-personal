@@ -625,7 +625,7 @@ export class HyperSwitchWebhookService {
         numberOfHoles: teeTimes.numberOfHoles,
         availableFirstHandSpots: teeTimes.availableFirstHandSpots,
         availableSecondHandSpots: teeTimes.availableSecondHandSpots,
-        greenFee: teeTimes.greenFee,
+        greenFee: teeTimes.greenFeePerPlayer,
         courseName: courses.name,
         entityName: entities.name,
         cdn: assets.cdn,

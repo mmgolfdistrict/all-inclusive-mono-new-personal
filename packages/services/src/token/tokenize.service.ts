@@ -161,7 +161,7 @@ export class TokenizeService {
         numberOfHoles: teeTimes.numberOfHoles,
         availableFirstHandSpots: teeTimes.availableFirstHandSpots,
         availableSecondHandSpots: teeTimes.availableSecondHandSpots,
-        greenFee: teeTimes.greenFee,
+        greenFee: teeTimes.greenFeePerPlayer,
         courseName: courses.name,
         customerName: users.name,
         entityName: entities.name,

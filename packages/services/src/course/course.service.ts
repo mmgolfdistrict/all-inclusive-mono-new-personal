@@ -59,8 +59,8 @@ export class CourseService extends DomainService {
         longitude: courses.longitude,
         latitude: courses.latitude,
         forecastApi: courses.forecastApi,
-        convenienceFees: courses.convenanceFees,
-        markup: courses.markup,
+        convenienceFeesFixedPerPlayer: courses.convenienceFeesFixedPerPlayer,
+        markupFeesFixedPerPlayer: courses.markupFeesFixedPerPlayer,
         maxListPricePerGolferPercentage: courses.maxListPricePerGolferPercentage,
         openTime: courses.openTime,
         closeTime: courses.closeTime,
@@ -100,8 +100,8 @@ export class CourseService extends DomainService {
     //Cache if possible
     const primarySaleTeeTimePriceQuery = this.database
       .select({
-        highestPrimarySaleTeeTime: max(teeTimes.greenFee),
-        lowestPrimarySaleTeeTime: min(teeTimes.greenFee),
+        highestPrimarySaleTeeTime: max(teeTimes.greenFeePerPlayer),
+        lowestPrimarySaleTeeTime: min(teeTimes.greenFeePerPlayer),
       })
       .from(teeTimes)
       .where(eq(teeTimes.courseId, courseId))

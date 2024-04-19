@@ -71,8 +71,8 @@ export type FullCourseType = {
   longitude: number | null;
   latitude: number | null;
   forecastApi: string | null;
-  convenienceFees: number | null;
-  markup: number | null;
+  convenienceFeesFixedPerPlayer: number | null;
+  markupFeesFixedPerPlayer: number | null;
   maxListPricePerGolferPercentage: number | undefined;
   openTime: string | null;
   closeTime: string | null;
@@ -154,8 +154,8 @@ export type SearchObject = {
   soldByImage: string;
   availableSlots: number;
   pricePerGolfer: number;
-  greenFeeTax?: number;
-  cartFeeTax?: number;
+  greenFeeTaxPerPlayer?: number;
+  cartFeeTaxPerPlayer?: number;
   teeTimeId: string;
   date: string; //day of tee time
   time: number; //military time

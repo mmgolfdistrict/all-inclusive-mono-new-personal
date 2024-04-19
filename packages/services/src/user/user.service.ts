@@ -1168,7 +1168,7 @@ export class UserService {
         withCart: bookings.includesCart,
         ownerHandle: users.handle,
         favorites: favorites.id,
-        firstHandPrice: teeTimes.greenFee,
+        firstHandPrice: teeTimes.greenFeePerPlayer,
         minimumOfferPrice: bookings.minimumOfferPrice,
         purchasedFor: bookings.totalAmount,
         golfers: bookings.nameOnBooking,

@@ -137,7 +137,7 @@ export class WatchlistService {
         courseId: favorites.courseId,
         createdAt: favorites.createdAt,
         userId: favorites.userId,
-        price: teeTimes.greenFee,
+        price: teeTimes.greenFeePerPlayer,
         teeTimeExpiration: teeTimes.providerDate,
         availableFirstHandSpots: teeTimes.availableFirstHandSpots,
         availableSecondHandSpots: teeTimes.availableSecondHandSpots,
