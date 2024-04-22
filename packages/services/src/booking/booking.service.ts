@@ -2159,7 +2159,8 @@ export class BookingService {
       .select({
         id: teeTimes.id,
         courseId: teeTimes.courseId,
-        entityId: teeTimes.entityId,
+        // entityId: teeTimes.entityId,
+        entityId: courses.entityId,
         date: teeTimes.date,
         providerCourseId: providerCourseLink.providerCourseId,
         providerTeeSheetId: providerCourseLink.providerTeeSheetId,
@@ -2176,6 +2177,7 @@ export class BookingService {
           eq(providerCourseLink.providerId, teeTimes.courseProvider)
         )
       )
+      .leftJoin(courses, eq(courses.id, teeTimes.courseId))
       .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))
       .where(eq(teeTimes.id, teeTimeId as string))
       .execute()

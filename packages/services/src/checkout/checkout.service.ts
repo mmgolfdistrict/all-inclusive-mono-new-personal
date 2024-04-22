@@ -36,6 +36,7 @@ import type {
   TaxProduct,
 } from "./types";
 import { CartValidationErrors } from "./types";
+import { courses } from "@golf-district/database/schema/courses";
 
 /**
  * Configuration options for the CheckoutService.
@@ -187,15 +188,18 @@ export class CheckoutService {
         throw new Error(`Error creating payment intent: ${err}`);
       });
 
-    const teeTimeId = customerCart?.cart?.find(
-      ({ product_data }: ProductData) => product_data.metadata.type === "first_hand"
-    )?.product_data.metadata?.tee_time_id ?? null;
+    let teeTimeId;
+    let listingId;
 
-    const listingId = customerCart?.cart?.find(
-      ({ product_data }: ProductData) => product_data.metadata.type === "second_hand"
-    )?.product_data.metadata?.second_hand_id ?? null;
-
-    console.log("build checkout ====", teeTimeId, listingId);
+    customerCartData?.cart?.forEach(
+      ({ product_data }: ProductData) => {
+        if (product_data.metadata.type === "first_hand") {
+          teeTimeId = product_data.metadata.tee_time_id;
+        }
+        if (product_data.metadata.type === "second_hand") {
+          listingId = product_data.metadata.second_hand_id;
+        }
+      });
 
     //save customerCart to database
     const cartId: string = randomUUID();
@@ -205,8 +209,8 @@ export class CheckoutService {
       courseId: customerCart.courseId,
       paymentId: paymentIntent.payment_id,
       cart: customerCart,
-      listingId: listingId,
-      teeTimeId: teeTimeId
+      listingId,
+      teeTimeId
     });
 
     return {
@@ -242,16 +246,18 @@ export class CheckoutService {
         throw new Error(`Error updating payment intent: ${err}`);
       });
 
-    const teeTimeId = customerCart?.cart?.find(
-      ({ product_data }: ProductData) => product_data.metadata.type === "first_hand"
-    )?.product_data.metadata?.tee_time_id ?? null;
+    let teeTimeId;
+    let listingId;
 
-    const listingId = customerCart?.cart?.find(
-      ({ product_data }: ProductData) => product_data.metadata.type === "second_hand"
-    )?.product_data.metadata?.second_hand_id ?? null;
-
-    console.log("update checkout ====", teeTimeId, listingId);
-    
+    customerCartData?.cart?.forEach(
+      ({ product_data }: ProductData) => {
+        if (product_data.metadata.type === "first_hand") {
+          teeTimeId = product_data.metadata.tee_time_id;
+        }
+        if (product_data.metadata.type === "second_hand") {
+          listingId = product_data.metadata.second_hand_id;
+        }
+      });
 
     await this.database
       .update(customerCarts)
@@ -346,7 +352,8 @@ export class CheckoutService {
       .select({
         id: teeTimes.id,
         courseId: teeTimes.courseId,
-        entityId: teeTimes.entityId,
+        // entityId: teeTimes.entityId,
+        entityId: courses.entityId,
         date: teeTimes.date,
         providerCourseId: providerCourseLink.providerCourseId,
         providerTeeSheetId: providerCourseLink.providerTeeSheetId,
@@ -362,6 +369,7 @@ export class CheckoutService {
           eq(providerCourseLink.providerId, teeTimes.courseProvider)
         )
       )
+      .leftJoin(courses, eq(courses.id, teeTimes.courseId))
       .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))
       .where(eq(teeTimes.id, item.product_data.metadata.tee_time_id))
       .execute()

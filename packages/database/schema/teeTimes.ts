@@ -25,7 +25,7 @@ export const teeTimes = mySqlTable(
     cartFeeTaxPerPlayer: int("cartFeeTaxPerPlayer").notNull(),
     courseProvider: varchar("courseProvider", { length: 191 }).notNull(),
     courseId: varchar("courseId", { length: 36 }).notNull(),
-    entityId: varchar("entityId", { length: 36 }).notNull(),
+    // entityId: varchar("entityId", { length: 36 }).notNull(),
     createdDateTime: datetime("createdDateTime", { mode: "string", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
@@ -61,10 +61,10 @@ export const teeTimesRelations = relations(teeTimes, ({ one, many }) => ({
     fields: [teeTimes.courseProvider],
     references: [providerCourseLink.providerId],
   }),
-  entity: one(entities, {
-    fields: [teeTimes.entityId],
-    references: [entities.id],
-  }),
+  // entity: one(entities, {
+  //   fields: [teeTimes.entityId],
+  //   references: [entities.id],
+  // }),
 }));
 
 export type SelectTeeTimes = InferSelectModel<typeof teeTimes>;

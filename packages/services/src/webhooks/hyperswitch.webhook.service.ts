@@ -219,7 +219,8 @@ export class HyperSwitchWebhookService {
       .select({
         id: teeTimes.id,
         courseId: teeTimes.courseId,
-        entityId: teeTimes.entityId,
+        // entityId: teeTimes.entityId,
+        entityId: courses.entityId,
         date: teeTimes.date,
         providerCourseId: providerCourseLink.providerCourseId,
         providerTeeSheetId: providerCourseLink.providerTeeSheetId,
@@ -237,6 +238,7 @@ export class HyperSwitchWebhookService {
         )
       )
       .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))
+      .leftJoin(courses, eq(courses.id, teeTimes.courseId))
       .where(eq(teeTimes.id, item.product_data.metadata.tee_time_id))
       .execute()
       .catch((err) => {
@@ -477,7 +479,8 @@ export class HyperSwitchWebhookService {
         time: teeTimes.time,
         numberOfHoles: bookings.numberOfHoles,
         includesCart: bookings.includesCart,
-        entityId: teeTimes.entityId,
+        // entityId: teeTimes.entityId,
+        entityId: courses.entityId,
         weatherGuaranteeId: bookings.weatherGuaranteeId,
         weatherGuaranteeAmount: bookings.weatherGuaranteeAmount,
         listId: bookings.listId,
@@ -619,7 +622,8 @@ export class HyperSwitchWebhookService {
     const [existingTeeTime] = await this.database
       .select({
         id: teeTimes.id,
-        entityId: teeTimes.entityId,
+        // entityId: teeTimes.entityId,
+        entityId: courses.entityId,
         date: teeTimes.date,
         courseId: teeTimes.courseId,
         numberOfHoles: teeTimes.numberOfHoles,
@@ -637,7 +641,7 @@ export class HyperSwitchWebhookService {
       })
       .from(teeTimes)
       .where(eq(teeTimes.id, firstBooking.teeTimeId))
-      .leftJoin(entities, eq(teeTimes.entityId, entities.id))
+      // .leftJoin(entities, eq(teeTimes.entityId, entities.id))
       .leftJoin(courses, eq(courses.id, teeTimes.courseId))
       .leftJoin(assets, eq(assets.id, courses.logoId))
       .execute()
