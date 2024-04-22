@@ -244,10 +244,12 @@ export class ProviderService extends CacheService {
       if (!customerId) {
         throw new Error(`Error creating customer on provider: No Customer Id`);
       }
+      const userProviderCourseLinkId: string = randomUUID();
       //update user with providerCustomerId
       await this.database
         .insert(userProviderCourseLink)
         .values({
+          id: userProviderCourseLinkId,
           courseId: courseId,
           providerId: providerId,
           userId: userId,
