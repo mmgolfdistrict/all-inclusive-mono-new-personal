@@ -21,6 +21,7 @@ export const lists = mySqlTable(
       .notNull(),
     // status: mysqlEnum("status", ["PENDING", "ACCEPTED", "REJECTED"]).default("PENDING").notNull(),
     isDeleted: boolean("isCancelled").default(false).notNull(),
+    cancelledByUserId: varchar("cancelledByUserId", { length: 36 }),
     // minimumOfferPrice: int("minimumOfferPrice").default(0).notNull(),
     // splitTeeTime: boolean("splitTeeTime").default(false).notNull(),
     slots: smallint("slots").default(0).notNull(),

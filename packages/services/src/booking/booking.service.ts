@@ -836,11 +836,13 @@ export class BookingService {
       .from(bookings)
       .where(eq(bookings.listId, listingId))
       .execute();
+      console.log("cancel listing by user", userId)
     await this.database.transaction(async (trx) => {
       await trx
         .update(lists)
         .set({
           isDeleted: true,
+          cancelledByUserId: userId
         })
         .where(eq(lists.id, listingId))
         .execute()
