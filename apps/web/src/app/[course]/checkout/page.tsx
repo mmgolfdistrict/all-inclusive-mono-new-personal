@@ -175,12 +175,15 @@ export default function Checkout({
         name: "Golf District Tee Time",
         id: teeTimeId ?? data?.teeTimeId,
         price:
-          ((data?.greenFeeTax ?? 0) + (data?.cartFeeTax ?? 0)) *
+          ((data?.greenFeeTaxPerPlayer ?? 0) +
+            (data?.cartFeeTaxPerPlayer ?? 0)) *
           amountOfPlayers, //int
         image: "", //
         currency: "USD", //USD
         display_price: formatMoney(
-          ((data?.greenFeeTax ?? 0) + (data?.cartFeeTax ?? 0)) * amountOfPlayers
+          ((data?.greenFeeTaxPerPlayer ?? 0) +
+            (data?.cartFeeTaxPerPlayer ?? 0)) *
+            amountOfPlayers
         ),
         product_data: {
           metadata: {
@@ -190,16 +193,17 @@ export default function Checkout({
       });
     }
 
-    if (course?.convenienceFees) {
+    if (course?.convenienceFeesFixedPerPlayer) {
       localCart.push({
         name: "Golf District Tee Time",
         id: teeTimeId ?? data?.teeTimeId,
-        price: course?.convenienceFees * amountOfPlayers ?? 0, //int
+        price: course?.convenienceFeesFixedPerPlayer * amountOfPlayers ?? 0, //int
         image: "", //
         currency: "USD", //USD
         display_price: formatMoney(
-          (course?.convenienceFees ? course?.convenienceFees / 100 : 0) *
-            amountOfPlayers
+          (course?.convenienceFeesFixedPerPlayer
+            ? course?.convenienceFeesFixedPerPlayer / 100
+            : 0) * amountOfPlayers
         ),
         product_data: {
           metadata: {
@@ -209,14 +213,18 @@ export default function Checkout({
       });
     }
 
-    if (course?.markup) {
+    if (course?.markupFeesFixedPerPlayer) {
       localCart.push({
         name: "Golf District Tee Time",
         id: teeTimeId ?? data?.teeTimeId,
-        price: course?.markup ?? 0, //int
+        price: course?.markupFeesFixedPerPlayer ?? 0, //int
         image: "", //
         currency: "USD", //USD
-        display_price: formatMoney(course?.markup ? course?.markup / 100 : 0),
+        display_price: formatMoney(
+          course?.markupFeesFixedPerPlayer
+            ? course?.markupFeesFixedPerPlayer / 100
+            : 0
+        ),
         product_data: {
           metadata: {
             type: "markup",
@@ -272,8 +280,8 @@ export default function Checkout({
     promoCodePrice,
     selectedCharity,
     deboundCharityAmount,
-    course?.markup,
-    course?.convenienceFees,
+    course?.markupFeesFixedPerPlayer,
+    course?.convenienceFeesFixedPerPlayer,
   ]);
 
   if (isError && error) {

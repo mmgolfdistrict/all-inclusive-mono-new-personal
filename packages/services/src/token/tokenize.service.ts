@@ -138,7 +138,6 @@ export class TokenizeService {
     teeTime?: {
       id: string;
       courseId: string;
-      entityId: string;
       date: string;
       providerCourseId: string | null;
       providerTeeSheetId: string | null;
@@ -155,13 +154,13 @@ export class TokenizeService {
     const [existingTeeTime] = await this.database
       .select({
         id: teeTimes.id,
-        entityId: teeTimes.entityId,
+        // entityId: teeTimes.entityId,
         date: teeTimes.date,
         courseId: teeTimes.courseId,
         numberOfHoles: teeTimes.numberOfHoles,
         availableFirstHandSpots: teeTimes.availableFirstHandSpots,
         availableSecondHandSpots: teeTimes.availableSecondHandSpots,
-        greenFee: teeTimes.greenFee,
+        greenFee: teeTimes.greenFeePerPlayer,
         courseName: courses.name,
         customerName: users.name,
         entityName: entities.name,
@@ -169,7 +168,7 @@ export class TokenizeService {
       })
       .from(teeTimes)
       .where(eq(teeTimes.id, providerTeeTimeId))
-      .leftJoin(entities, eq(teeTimes.entityId, entities.id))
+      // .leftJoin(entities, eq(teeTimes.entityId, entities.id))
       .leftJoin(courses, eq(courses.id, teeTimes.courseId))
       .leftJoin(users, eq(users.id, userId))
       .execute()

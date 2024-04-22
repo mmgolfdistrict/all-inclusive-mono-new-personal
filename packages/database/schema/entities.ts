@@ -45,7 +45,7 @@ export const entities = mySqlTable(
 export const entitiesRelations = relations(entities, ({ many, one }) => ({
   admins: many(entityAdmins),
   course: many(courses),
-  teeTimes: many(teeTimes),
+  // teeTimes: many(teeTimes),
   auction: many(auctions),
   booking: many(bookings),
   logo: one(assets, {

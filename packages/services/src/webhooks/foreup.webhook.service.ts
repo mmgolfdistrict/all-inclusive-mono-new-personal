@@ -76,7 +76,7 @@ export class ForeUpWebhookService {
    * @param {Db} database - The database instance to interact with.
    * @param {ProviderService} providerService - The provider service for fetching tee times from ForeUp.
    */
-  constructor(private readonly database: Db, private readonly providerService: ProviderService) {}
+  constructor(private readonly database: Db, private readonly providerService: ProviderService) { }
 
   /**
    * Handles the ForeUp webhook.
@@ -184,10 +184,10 @@ export class ForeUpWebhookService {
             numberOfHoles: teeTime.numberOfHoles,
             maxPlayersPerBooking: teeTime.maxPlayersPerBooking,
             availableFirstHandSpots: teeTime.availableFirstHandSpots,
-            greenFee: teeTime.greenFee,
-            cartFee: teeTime.cartFee,
-            greenFeeTax: teeTime.greenFeeTax,
-            cartFeeTax: teeTime.cartFeeTax,
+            greenFeePerPlayer: teeTime.greenFeePerPlayer,
+            cartFeePerPlayer: teeTime.cartFeePerPlayer,
+            greenFeeTaxPerPlayer: teeTime.greenFeeTaxPerPlayer,
+            cartFeeTaxPerPlayer: teeTime.cartFeeTaxPerPlayer,
             date: teeTime.date,
             time: teeTime.time,
             providerDate: teeTime.providerDate,
@@ -227,18 +227,20 @@ export class ForeUpWebhookService {
         date: teeTimes.date,
         time: teeTimes.time,
         maxPlayersPerBooking: teeTimes.maxPlayersPerBooking,
-        greenFee: teeTimes.greenFee,
-        cartFee: teeTimes.cartFee,
-        greenFeeTax: teeTimes.greenFeeTax,
-        cartFeeTax: teeTimes.cartFeeTax,
+        greenFeePerPlayer: teeTimes.greenFeePerPlayer,
+        cartFeePerPlayer: teeTimes.cartFeePerPlayer,
+        greenFeeTaxPerPlayer: teeTimes.greenFeeTaxPerPlayer,
+        cartFeeTaxPerPlayer: teeTimes.cartFeeTaxPerPlayer,
         courseId: teeTimes.courseId,
         availableFirstHandSpots: teeTimes.availableFirstHandSpots,
         availableSecondHandSpots: teeTimes.availableSecondHandSpots,
         courseProvider: teeTimes.courseProvider,
-        entityId: teeTimes.entityId,
+        // entityId: teeTimes.entityId,
+        entityId: courses.entityId,
         providerDate: teeTimes.providerDate,
       })
       .from(teeTimes)
+      .leftJoin(courses, eq(courses.id, courseId))
       .where(
         and(
           eq(teeTimes.courseId, courseId),
@@ -318,12 +320,12 @@ export class ForeUpWebhookService {
           maxPlayersPerBooking: maxPlayers,
           availableFirstHandSpots: attributes.availableSpots,
           availableSecondHandSpots: indexedTeeTime.availableSecondHandSpots,
-          greenFee: attributes.greenFee,
-          cartFee: attributes.cartFee,
-          greenFeeTax: attributes.greenFeeTax ? attributes.greenFeeTax : 0,
-          cartFeeTax: attributes.cartFeeTax,
+          greenFeePerPlayer: attributes.greenFee,
+          cartFeePerPlayer: attributes.cartFee,
+          greenFeeTaxPerPlayer: attributes.greenFeeTax ? attributes.greenFeeTax : 0,
+          cartFeeTaxPerPlayer: attributes.cartFeeTax,
           providerDate: attributes.time,
-          entityId: entityId ? entityId : "",
+          // entityId: entityId ? entityId : "",
         };
         const providerTeeTimeMatchingKeys = {
           id: indexedTeeTime.id,
@@ -362,12 +364,12 @@ export class ForeUpWebhookService {
           maxPlayersPerBooking: maxPlayers,
           availableFirstHandSpots: attributes.availableSpots,
           availableSecondHandSpots: 0,
-          greenFee: attributes.greenFee,
-          cartFee: attributes.cartFee,
-          greenFeeTax: attributes.greenFeeTax ? attributes.greenFeeTax : 0,
-          cartFeeTax: attributes.cartFeeTax,
+          greenFeePerPlayer: attributes.greenFee,
+          cartFeePerPlayer: attributes.cartFee,
+          greenFeeTaxPerPlayer: attributes.greenFeeTax ? attributes.greenFeeTax : 0,
+          cartFeeTaxPerPlayer: attributes.cartFeeTax,
           providerDate: attributes.time,
-          entityId: entityId ? entityId : "",
+          // entityId: entityId ? entityId : "",
         };
         // console.log("providerTeeTime to insert", providerTeeTime);
         teeTimesToInsert.push(providerTeeTime);
@@ -401,10 +403,16 @@ export class ForeUpWebhookService {
       if (!teeTime) {
         throw new Error("Tee time not available for booking");
       }
-
       const [indexedTeeTime] = await this.database
-        .select()
+        .select({
+          id: teeTimes.id,
+          courseId: teeTimes.courseId,
+          courseProvider: teeTimes.courseProvider,
+          availableSecondHandSpots: teeTimes.availableSecondHandSpots,
+          entityId: courses.entityId,
+        })
         .from(teeTimes)
+        .leftJoin(courses, eq(courses.id, teeTimes.courseId))
         .where(eq(teeTimes.providerTeeTimeId, teeTime.id))
         .execute()
         .catch((err) => {
@@ -437,10 +445,10 @@ export class ForeUpWebhookService {
           maxPlayersPerBooking: maxPlayers,
           availableFirstHandSpots: attributes.availableSpots,
           availableSecondHandSpots: indexedTeeTime.availableSecondHandSpots,
-          greenFee: attributes.greenFee * 100,
-          cartFee: attributes.cartFee * 100,
-          greenFeeTax: attributes.greenFeeTax ? attributes.greenFeeTax : 0,
-          cartFeeTax: attributes.cartFeeTax,
+          greenFeePerPlayer: attributes.greenFee * 100,
+          cartFeePerPlayer: attributes.cartFee * 100,
+          greenFeeTaxPerPlayer: attributes.greenFeeTax ? attributes.greenFeeTax : 0,
+          cartFeeTaxPerPlayer: attributes.cartFeeTax,
           providerDate: attributes.time,
           entityId: indexedTeeTime.entityId,
         };
@@ -451,10 +459,10 @@ export class ForeUpWebhookService {
           date: dateToUtcTimestamp(new Date(attributes.time)),
           time: militaryTime,
           maxPlayersPerBooking: maxPlayers,
-          greenFee: attributes.greenFee * 100,
-          cartFee: attributes.cartFee * 100,
-          greenFeeTax: attributes.greenFeeTax ? attributes.greenFeeTax : 0,
-          cartFeeTax: attributes.cartFeeTax,
+          greenFeePerPlayer: attributes.greenFee * 100,
+          cartFeePerPlayer: attributes.cartFee * 100,
+          greenFeeTaxPerPlayer: (attributes.greenFeeTax ? attributes.greenFeeTax : 0) * 100,
+          cartFeeTaxPerPlayer: attributes.cartFeeTax * 100,
           courseId: indexedTeeTime.courseId,
           availableFirstHandSpots: attributes.availableSpots,
           availableSecondHandSpots: indexedTeeTime.availableSecondHandSpots,

@@ -78,9 +78,11 @@ export class WatchlistService {
       const [teeTime] = await this.database
         .select({
           course: teeTimes.courseId,
-          entityId: teeTimes.entityId,
+          // entityId: teeTimes.entityId,
+          entityId: courses.entityId
         })
         .from(teeTimes)
+        .leftJoin(courses, eq(courses.id, teeTimes.courseId))
         .where(eq(teeTimes.id, teeTimeId))
         .limit(1)
         .execute();
@@ -95,7 +97,7 @@ export class WatchlistService {
         userId,
         teeTimeId,
         courseId: teeTime.course,
-        entityId: teeTime.entityId,
+        entityId: teeTime.entityId ?? "",
       };
 
       await this.database
@@ -137,7 +139,7 @@ export class WatchlistService {
         courseId: favorites.courseId,
         createdAt: favorites.createdAt,
         userId: favorites.userId,
-        price: teeTimes.greenFee,
+        price: teeTimes.greenFeePerPlayer,
         teeTimeExpiration: teeTimes.providerDate,
         availableFirstHandSpots: teeTimes.availableFirstHandSpots,
         availableSecondHandSpots: teeTimes.availableSecondHandSpots,
