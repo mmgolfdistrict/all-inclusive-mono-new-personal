@@ -35,8 +35,8 @@ export const customerCartRelations = relations(customerCarts, ({ one }) => ({
     fields: [customerCarts.userId],
     references: [users.id],
   }),
-  // course: one(courses, {
-  //   fields: [customerCarts.courseId],
-  //   references: [courses.id],
-  // }),
+  course: one(courses, {
+    fields: [customerCarts.courseId],
+    references: [courses.id],
+  }),
 }));

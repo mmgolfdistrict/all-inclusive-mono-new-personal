@@ -186,17 +186,16 @@ export class CheckoutService {
         this.logger.error(` ${err}`);
         throw new Error(`Error creating payment intent: ${err}`);
       });
-      
-      let firstHandInfo = customerCart?.cart?.filter(
-        ({ product_data }: ProductData) => product_data.metadata.type === "first_hand"
-      );
-      let secondtHandInfo = customerCart?.cart?.filter(
-        ({ product_data }: ProductData) => product_data.metadata.type === "second_hand"
-      );
-      console.log("build checkout", firstHandInfo, secondtHandInfo);
-    
-    const teeTimeId = firstHandInfo.length > 0 ? firstHandInfo?.[0]?.product_data?.metadata.tee_time_id : null
-    const listingId = secondtHandInfo.length > 0 ? secondtHandInfo?.[0]?.product_data?.metadata?.second_hand_id : null
+
+    const teeTimeId = customerCart?.cart?.find(
+      ({ product_data }: ProductData) => product_data.metadata.type === "first_hand"
+    )?.product_data.metadata?.tee_time_id ?? null;
+
+    const listingId = customerCart?.cart?.find(
+      ({ product_data }: ProductData) => product_data.metadata.type === "second_hand"
+    )?.product_data.metadata?.second_hand_id ?? null;
+
+    console.log("build checkout ====", teeTimeId, listingId);
 
     //save customerCart to database
     const cartId: string = randomUUID();
@@ -206,8 +205,8 @@ export class CheckoutService {
       courseId: customerCart.courseId,
       paymentId: paymentIntent.payment_id,
       cart: customerCart,
-      listingId,
-      teeTimeId
+      listingId: listingId,
+      teeTimeId: teeTimeId
     });
 
     return {
@@ -242,16 +241,17 @@ export class CheckoutService {
         this.logger.error(` ${err}`);
         throw new Error(`Error updating payment intent: ${err}`);
       });
-      let firstHandInfo = customerCart?.cart?.filter(
-        ({ product_data }: ProductData) => product_data.metadata.type === "first_hand"
-      );
-      let secondtHandInfo = customerCart?.cart?.filter(
-        ({ product_data }: ProductData) => product_data.metadata.type === "second_hand"
-      );
-      console.log("update checkout", firstHandInfo, secondtHandInfo);
 
-    const teeTimeId = firstHandInfo.length > 0 ? firstHandInfo?.[0]?.product_data?.metadata?.tee_time_id : null
-    const listingId = secondtHandInfo.length > 0 ? secondtHandInfo?.[0]?.product_data?.metadata?.second_hand_id : null
+    const teeTimeId = customerCart?.cart?.find(
+      ({ product_data }: ProductData) => product_data.metadata.type === "first_hand"
+    )?.product_data.metadata?.tee_time_id ?? null;
+
+    const listingId = customerCart?.cart?.find(
+      ({ product_data }: ProductData) => product_data.metadata.type === "second_hand"
+    )?.product_data.metadata?.second_hand_id ?? null;
+
+    console.log("update checkout ====", teeTimeId, listingId);
+    
 
     await this.database
       .update(customerCarts)
