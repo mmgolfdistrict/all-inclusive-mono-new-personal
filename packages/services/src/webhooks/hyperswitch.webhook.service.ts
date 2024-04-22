@@ -276,6 +276,7 @@ export class HyperSwitchWebhookService {
 
     const booking = await provider
       .createBooking(token, teeTime.providerCourseId!, teeTime.providerTeeSheetId!, {
+        totalAmountPaid: amountReceived / 100,
         data: {
           type: "bookings",
           attributes: {
@@ -561,6 +562,7 @@ export class HyperSwitchWebhookService {
         firstBooking.providerTeeSheetId!,
         {
           data: {
+            totalAmountPaid: amountReceived / 100,
             type: "bookings",
             attributes: {
               start: firstBooking.providerDate,
@@ -588,6 +590,7 @@ export class HyperSwitchWebhookService {
           firstBooking.providerCourseId!,
           firstBooking.providerTeeSheetId!,
           {
+            totalAmountPaid: amountReceived / 100,
             data: {
               type: "bookings",
               attributes: {
@@ -794,10 +797,10 @@ export class HyperSwitchWebhookService {
               maximumFractionDigits: 2,
             })} / Golfer` || "-",
           GreenFees:
-          `$${((newBooking.data.purchasedFor ?? 0) * (listedSlotsCount ?? 0)).toLocaleString("en-US", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          })}` || "-",
+            `$${((newBooking.data.purchasedFor ?? 0) * (listedSlotsCount ?? 0)).toLocaleString("en-US", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}` || "-",
           TaxesAndOtherFees:
             `$${taxes.toLocaleString("en-US", {
               minimumFractionDigits: 2,

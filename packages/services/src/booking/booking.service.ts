@@ -124,7 +124,7 @@ export class BookingService {
     private readonly tokenizeService: TokenizeService,
     private readonly providerService: ProviderService,
     private readonly notificationService: NotificationService
-  ) {}
+  ) { }
 
   createCounterOffer = async (userId: string, bookingIds: string[], offerId: string, amount: number) => {
     //find owner of each booking
@@ -307,7 +307,7 @@ export class BookingService {
             date: teeTime.date ? teeTime.date : "",
             firstHandPrice: teeTime.greenFee ? teeTime.greenFee : 0,
             miniumOfferPrice: teeTime.minimumOfferPrice ? teeTime.minimumOfferPrice : 0,
-            listPrice: teeTime.listPrice/100,
+            listPrice: teeTime.listPrice / 100,
             status: "LISTED",
             listedSpots: [teeTime.bookingId],
             listedSlotsCount: teeTime.listedSlots,
@@ -2115,7 +2115,7 @@ export class BookingService {
   checkIfPaymentIdIsValid = async (paymentId: string) => {
     const hyperswitchEndPoint = `${process.env.HYPERSWITCH_BASE_URL}/payments/${paymentId}`;
     const myHeaders = new Headers();
-    myHeaders.append("api-key", process.env.HYPERSWITCH_API_KEY??"");
+    myHeaders.append("api-key", process.env.HYPERSWITCH_API_KEY ?? "");
     const requestOptions = {
       method: "GET",
       headers: myHeaders,
@@ -2209,6 +2209,7 @@ export class BookingService {
     ];
     const booking = await provider
       .createBooking(token, teeTime.providerCourseId!, teeTime.providerTeeSheetId!, {
+        totalAmountPaid: primaryGreenFeeCharge / 100,
         data: {
           type: "bookings",
           attributes: {
