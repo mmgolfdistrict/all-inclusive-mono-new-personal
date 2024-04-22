@@ -76,7 +76,7 @@ export class ForeUpWebhookService {
    * @param {Db} database - The database instance to interact with.
    * @param {ProviderService} providerService - The provider service for fetching tee times from ForeUp.
    */
-  constructor(private readonly database: Db, private readonly providerService: ProviderService) {}
+  constructor(private readonly database: Db, private readonly providerService: ProviderService) { }
 
   /**
    * Handles the ForeUp webhook.
@@ -318,10 +318,10 @@ export class ForeUpWebhookService {
           maxPlayersPerBooking: maxPlayers,
           availableFirstHandSpots: attributes.availableSpots,
           availableSecondHandSpots: indexedTeeTime.availableSecondHandSpots,
-          greenFeePerPlayer: attributes.greenFeePerPlayer,
-          cartFeePerPlayer: attributes.cartFeePerPlayer,
-          greenFeeTaxPerPlayer: attributes.greenFeeTaxPerPlayer ? attributes.greenFeeTaxPerPlayer : 0,
-          cartFeeTaxPerPlayer: attributes.cartFeeTaxPerPlayer,
+          greenFeePerPlayer: attributes.greenFee,
+          cartFeePerPlayer: attributes.cartFee,
+          greenFeeTaxPerPlayer: attributes.greenFeeTax ? attributes.greenFeeTax : 0,
+          cartFeeTaxPerPlayer: attributes.cartFeeTax,
           providerDate: attributes.time,
           entityId: entityId ? entityId : "",
         };
@@ -332,10 +332,10 @@ export class ForeUpWebhookService {
           date: dateToUtcTimestamp(new Date(attributes.time)),
           time: militaryTime,
           maxPlayersPerBooking: maxPlayers,
-          greenFee: attributes.greenFeePerPlayer,
-          cartFee: attributes.cartFeePerPlayer,
-          greenFeeTax: attributes.greenFeeTaxPerPlayer ? attributes.greenFeeTaxPerPlayer : 0,
-          cartFeeTax: attributes.cartFeeTaxPerPlayer,
+          greenFee: attributes.greenFee,
+          cartFee: attributes.cartFee,
+          greenFeeTax: attributes.greenFeeTax ? attributes.greenFeeTax : 0,
+          cartFeeTax: attributes.cartFeeTax,
           courseId: courseId,
           availableFirstHandSpots: attributes.availableSpots,
           availableSecondHandSpots: indexedTeeTime.availableSecondHandSpots,
@@ -362,10 +362,10 @@ export class ForeUpWebhookService {
           maxPlayersPerBooking: maxPlayers,
           availableFirstHandSpots: attributes.availableSpots,
           availableSecondHandSpots: 0,
-          greenFeePerPlayer: attributes.greenFeePerPlayer,
-          cartFeePerPlayer: attributes.cartFeePerPlayer,
-          greenFeeTaxPerPlayer: attributes.greenFeeTaxPerPlayer ? attributes.greenFeeTaxPerPlayer : 0,
-          cartFeeTaxPerPlayer: attributes.cartFeeTaxPerPlayer,
+          greenFeePerPlayer: attributes.greenFee,
+          cartFeePerPlayer: attributes.cartFee,
+          greenFeeTaxPerPlayer: attributes.greenFeeTax ? attributes.greenFeeTax : 0,
+          cartFeeTaxPerPlayer: attributes.cartFeeTax,
           providerDate: attributes.time,
           entityId: entityId ? entityId : "",
         };
@@ -401,7 +401,6 @@ export class ForeUpWebhookService {
       if (!teeTime) {
         throw new Error("Tee time not available for booking");
       }
-
       const [indexedTeeTime] = await this.database
         .select()
         .from(teeTimes)
@@ -437,10 +436,10 @@ export class ForeUpWebhookService {
           maxPlayersPerBooking: maxPlayers,
           availableFirstHandSpots: attributes.availableSpots,
           availableSecondHandSpots: indexedTeeTime.availableSecondHandSpots,
-          greenFee: attributes.greenFeePerPlayer * 100,
-          cartFee: attributes.cartFeePerPlayer * 100,
-          greenFeeTax: attributes.greenFeeTaxPerPlayer ? attributes.greenFeeTaxPerPlayer : 0,
-          cartFeeTax: attributes.cartFeeTaxPerPlayer,
+          greenFeePerPlayer: attributes.greenFee * 100,
+          cartFeePerPlayer: attributes.cartFee * 100,
+          greenFeeTaxPerPlayer: attributes.greenFeeTax ? attributes.greenFeeTax : 0,
+          cartFeeTaxPerPlayer: attributes.cartFeeTax,
           providerDate: attributes.time,
           entityId: indexedTeeTime.entityId,
         };
@@ -451,10 +450,10 @@ export class ForeUpWebhookService {
           date: dateToUtcTimestamp(new Date(attributes.time)),
           time: militaryTime,
           maxPlayersPerBooking: maxPlayers,
-          greenFee: attributes.greenFeePerPlayer * 100,
-          cartFee: attributes.cartFeePerPlayer * 100,
-          greenFeeTax: attributes.greenFeeTaxPerPlayer ? attributes.greenFeeTaxPerPlayer : 0,
-          cartFeeTax: attributes.cartFeeTaxPerPlayer,
+          greenFeePerPlayer: attributes.greenFee * 100,
+          cartFeePerPlayer: attributes.cartFee * 100,
+          greenFeeTaxPerPlayer: (attributes.greenFeeTax ? attributes.greenFeeTax : 0) * 100,
+          cartFeeTaxPerPlayer: attributes.cartFeeTax * 100,
           courseId: indexedTeeTime.courseId,
           availableFirstHandSpots: attributes.availableSpots,
           availableSecondHandSpots: indexedTeeTime.availableSecondHandSpots,

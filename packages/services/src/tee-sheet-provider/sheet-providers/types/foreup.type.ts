@@ -19,11 +19,11 @@ export interface TeeTimeSlotAttributes {
   scheduleId: string;
   bookingClassId: number;
   availableSpots: number;
-  greenFeePerPlayer: number;
-  cartFeePerPlayer: number;
+  greenFee: number;
+  cartFee: number;
   rateType: string;
-  greenFeeTaxPerPlayer: number | undefined;
-  cartFeeTaxPerPlayer: number;
+  greenFeeTax: number | undefined;
+  cartFeeTax: number;
   hasSpecial: boolean;
   specialDiscountPercentage: number;
   tradeDiscountAvailable: number;
