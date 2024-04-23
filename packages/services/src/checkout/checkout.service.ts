@@ -5,6 +5,7 @@ import { bookings } from "@golf-district/database/schema/bookings";
 import { charities } from "@golf-district/database/schema/charities";
 import { charityCourseLink } from "@golf-district/database/schema/charityCourseLink";
 import { coursePromoCodeLink } from "@golf-district/database/schema/coursePromoCodeLink";
+import { courses } from "@golf-district/database/schema/courses";
 import { customerCarts } from "@golf-district/database/schema/customerCart";
 import { lists } from "@golf-district/database/schema/lists";
 import { promoCodes } from "@golf-district/database/schema/promoCodes";
@@ -36,7 +37,6 @@ import type {
   TaxProduct,
 } from "./types";
 import { CartValidationErrors } from "./types";
-import { courses } from "@golf-district/database/schema/courses";
 
 /**
  * Configuration options for the CheckoutService.
@@ -191,15 +191,14 @@ export class CheckoutService {
     let teeTimeId;
     let listingId;
 
-    customerCartData?.cart?.forEach(
-      ({ product_data }: ProductData) => {
-        if (product_data.metadata.type === "first_hand") {
-          teeTimeId = product_data.metadata.tee_time_id;
-        }
-        if (product_data.metadata.type === "second_hand") {
-          listingId = product_data.metadata.second_hand_id;
-        }
-      });
+    customerCartData?.cart?.forEach(({ product_data }: ProductData) => {
+      if (product_data.metadata.type === "first_hand") {
+        teeTimeId = product_data.metadata.tee_time_id;
+      }
+      if (product_data.metadata.type === "second_hand") {
+        listingId = product_data.metadata.second_hand_id;
+      }
+    });
 
     //save customerCart to database
     const cartId: string = randomUUID();
@@ -210,7 +209,7 @@ export class CheckoutService {
       paymentId: paymentIntent.payment_id,
       cart: customerCart,
       listingId,
-      teeTimeId
+      teeTimeId,
     });
 
     return {
@@ -249,22 +248,21 @@ export class CheckoutService {
     let teeTimeId;
     let listingId;
 
-    customerCartData?.cart?.forEach(
-      ({ product_data }: ProductData) => {
-        if (product_data.metadata.type === "first_hand") {
-          teeTimeId = product_data.metadata.tee_time_id;
-        }
-        if (product_data.metadata.type === "second_hand") {
-          listingId = product_data.metadata.second_hand_id;
-        }
-      });
+    customerCartData?.cart?.forEach(({ product_data }: ProductData) => {
+      if (product_data.metadata.type === "first_hand") {
+        teeTimeId = product_data.metadata.tee_time_id;
+      }
+      if (product_data.metadata.type === "second_hand") {
+        listingId = product_data.metadata.second_hand_id;
+      }
+    });
 
     await this.database
       .update(customerCarts)
       .set({
         cart: customerCart,
         listingId,
-        teeTimeId
+        teeTimeId,
       })
       .where(and(eq(customerCarts.paymentId, paymentId || ""), eq(customerCarts.userId, userId)))
       .execute()
@@ -370,7 +368,7 @@ export class CheckoutService {
           eq(providerCourseLink.providerId, courses.providerId)
         )
       )
-      .leftJoin(courses, eq(courses.id, teeTimes.courseId))
+      //.leftJoin(courses, eq(courses.id, teeTimes.courseId))
       .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))
       .where(eq(teeTimes.id, item.product_data.metadata.tee_time_id))
       .execute()
