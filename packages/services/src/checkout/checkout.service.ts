@@ -206,7 +206,7 @@ export class CheckoutService {
     await this.database.insert(customerCarts).values({
       id: cartId,
       userId: userId,
-      courseId: customerCart.courseId,
+      // courseId: customerCart.courseId,
       paymentId: paymentIntent.payment_id,
       cart: customerCart,
       listingId,
@@ -357,16 +357,17 @@ export class CheckoutService {
         date: teeTimes.date,
         providerCourseId: providerCourseLink.providerCourseId,
         providerTeeSheetId: providerCourseLink.providerTeeSheetId,
-        providerId: teeTimes.courseProvider,
+        providerId: providerCourseLink.providerId,
         internalId: providers.internalId,
         time: teeTimes.time,
       })
       .from(teeTimes)
+      .leftJoin(courses, eq(courses.id, teeTimes.courseId))
       .leftJoin(
         providerCourseLink,
         and(
           eq(providerCourseLink.courseId, teeTimes.courseId),
-          eq(providerCourseLink.providerId, teeTimes.courseProvider)
+          eq(providerCourseLink.providerId, courses.providerId)
         )
       )
       .leftJoin(courses, eq(courses.id, teeTimes.courseId))

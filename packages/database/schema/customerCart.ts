@@ -9,7 +9,7 @@ export const customerCarts = mySqlTable(
   {
     id: varchar("id", { length: 36 }).notNull().primaryKey(),
     userId: varchar("userId", { length: 36 }).notNull(),
-    courseId: varchar("courseId", { length: 36 }).notNull(),
+    // courseId: varchar("courseId", { length: 36 }).notNull(),
     paymentId: varchar("paymentId", { length: 36 }).notNull(),
     teeTimeId: varchar("teeTimeId", { length: 36 }),
     listingId: varchar("listingId", { length: 36 }),
@@ -25,7 +25,7 @@ export const customerCarts = mySqlTable(
   (table) => {
     return {
       paymentIdIdx: index("CustomerCart_paymentId_idx").on(table.paymentId),
-      courseUserIdIdx: index("CustomerCart_courseId_userId_idx").on(table.courseId, table.userId),
+      // courseUserIdIdx: index("CustomerCart_courseId_userId_idx").on(table.courseId, table.userId),
     };
   }
 );
@@ -35,8 +35,8 @@ export const customerCartRelations = relations(customerCarts, ({ one }) => ({
     fields: [customerCarts.userId],
     references: [users.id],
   }),
-  course: one(courses, {
-    fields: [customerCarts.courseId],
-    references: [courses.id],
-  }),
+  // course: one(courses, {
+  //   fields: [customerCarts.courseId],
+  //   references: [courses.id],
+  // }),
 }));
