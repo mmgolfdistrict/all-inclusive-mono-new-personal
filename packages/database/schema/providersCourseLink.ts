@@ -44,7 +44,7 @@ export const providersRelations = relations(providerCourseLink, ({ one, many }) 
     fields: [providerCourseLink.providerId],
     references: [providers.id],
   }),
-  teeTimes: many(teeTimes),
+  // teeTimes: many(teeTimes),
 }));
 
 export type SelectProviders = InferSelectModel<typeof providers>;

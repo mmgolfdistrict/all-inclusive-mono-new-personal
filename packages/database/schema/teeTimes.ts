@@ -23,7 +23,7 @@ export const teeTimes = mySqlTable(
     cartFeePerPlayer: int("cartFeePerPlayer").notNull(),
     greenFeeTaxPerPlayer: int("greenFeeTaxPerPlayer").notNull().default(0),
     cartFeeTaxPerPlayer: int("cartFeeTaxPerPlayer").notNull(),
-    courseProvider: varchar("courseProvider", { length: 191 }).notNull(),
+    // courseProvider: varchar("courseProvider", { length: 191 }).notNull(),
     courseId: varchar("courseId", { length: 36 }).notNull(),
     // entityId: varchar("entityId", { length: 36 }).notNull(),
     createdDateTime: datetime("createdDateTime", { mode: "string", fsp: 3 })
@@ -57,10 +57,10 @@ export const teeTimesRelations = relations(teeTimes, ({ one, many }) => ({
     fields: [teeTimes.courseId],
     references: [courses.id],
   }),
-  provider: one(providerCourseLink, {
-    fields: [teeTimes.courseProvider],
-    references: [providerCourseLink.providerId],
-  }),
+  // provider: one(providerCourseLink, {
+  //   fields: [teeTimes.courseProvider],
+  //   references: [providerCourseLink.providerId],
+  // }),
   // entity: one(entities, {
   //   fields: [teeTimes.entityId],
   //   references: [entities.id],

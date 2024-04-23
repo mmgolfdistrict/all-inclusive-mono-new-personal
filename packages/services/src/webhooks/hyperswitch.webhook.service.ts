@@ -224,17 +224,18 @@ export class HyperSwitchWebhookService {
         date: teeTimes.date,
         providerCourseId: providerCourseLink.providerCourseId,
         providerTeeSheetId: providerCourseLink.providerTeeSheetId,
-        providerId: teeTimes.courseProvider,
+        providerId: providerCourseLink.providerId,
         internalId: providers.internalId,
         providerDate: teeTimes.providerDate,
         holes: teeTimes.numberOfHoles,
       })
       .from(teeTimes)
+      .leftJoin(courses, eq(courses.id, teeTimes.courseId))
       .leftJoin(
         providerCourseLink,
         and(
           eq(providerCourseLink.courseId, teeTimes.courseId),
-          eq(providerCourseLink.providerId, teeTimes.courseProvider)
+          eq(providerCourseLink.providerId, courses.providerId)
         )
       )
       .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))
@@ -255,7 +256,7 @@ export class HyperSwitchWebhookService {
     );
     const providerCustomer = await this.providerService.findOrCreateCustomer(
       teeTime.courseId,
-      teeTime.providerId,
+      teeTime.providerId ?? "",
       teeTime.providerCourseId!,
       customer_id,
       provider,
@@ -334,7 +335,7 @@ export class HyperSwitchWebhookService {
       .from(customerCarts)
       .where(
         and(
-          eq(customerCarts.courseId, courseId),
+          // eq(customerCarts.courseId, courseId),
           eq(customerCarts.userId, ownerId),
           eq(customerCarts.paymentId, paymentId)
         )
@@ -469,7 +470,7 @@ export class HyperSwitchWebhookService {
         ownerId: bookings.ownerId,
         courseId: teeTimes.courseId,
         providerBookingId: bookings.providerBookingId,
-        providerId: teeTimes.courseProvider,
+        providerId: providerCourseLink.providerId,
         providerCourseId: providerCourseLink.providerCourseId,
         providerDate: teeTimes.providerDate,
         internalId: providers.internalId,
@@ -494,7 +495,7 @@ export class HyperSwitchWebhookService {
         providerCourseLink,
         and(
           eq(providerCourseLink.courseId, teeTimes.courseId),
-          eq(providerCourseLink.providerId, teeTimes.courseProvider)
+          eq(providerCourseLink.providerId, courses.providerId)
         )
       )
       .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))

@@ -1877,15 +1877,16 @@ export class BookingService {
         providerTeeSheetId: providerCourseLink.providerTeeSheetId,
         courseId: teeTimes.courseId,
         providerBookingId: bookings.providerBookingId,
-        providerId: teeTimes.courseProvider,
+        providerId: providerCourseLink.providerId,
       })
       .from(bookings)
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
+      .leftJoin(courses, eq(teeTimes.courseId, courses.id))
       .leftJoin(
         providerCourseLink,
         and(
           eq(providerCourseLink.courseId, teeTimes.courseId),
-          eq(providerCourseLink.providerId, teeTimes.courseProvider)
+          eq(providerCourseLink.providerId, courses.providerId)
         )
       )
       .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))
@@ -2164,17 +2165,18 @@ export class BookingService {
         date: teeTimes.date,
         providerCourseId: providerCourseLink.providerCourseId,
         providerTeeSheetId: providerCourseLink.providerTeeSheetId,
-        providerId: teeTimes.courseProvider,
+        providerId: providerCourseLink.providerId,
         internalId: providers.internalId,
         providerDate: teeTimes.providerDate,
         holes: teeTimes.numberOfHoles,
       })
       .from(teeTimes)
+      .leftJoin(courses, eq(teeTimes.courseId, courses.id))
       .leftJoin(
         providerCourseLink,
         and(
           eq(providerCourseLink.courseId, teeTimes.courseId),
-          eq(providerCourseLink.providerId, teeTimes.courseProvider)
+          eq(providerCourseLink.providerId, courses.providerId)
         )
       )
       .leftJoin(courses, eq(courses.id, teeTimes.courseId))
@@ -2195,7 +2197,7 @@ export class BookingService {
     );
     const providerCustomer = await this.providerService.findOrCreateCustomer(
       teeTime.courseId,
-      teeTime.providerId,
+      teeTime.providerId ?? "",
       teeTime.providerCourseId!,
       userId,
       provider,
@@ -2280,11 +2282,13 @@ export class BookingService {
     const [booking] = await this.database
       .select({
         bookingId: bookings.id,
-        courseId: courses.id,
+        courseId: teeTimes.courseId,
       })
       .from(bookings)
       .innerJoin(customerCarts, eq(bookings.cartId, customerCarts.id))
-      .leftJoin(courses, eq(customerCarts.courseId, courses.id))
+      .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
+
+      // .leftJoin(courses, eq(customerCarts.courseId, courses.id))
       .where(and(eq(customerCarts.paymentId, paymentId), eq(bookings.ownerId, userId)))
       .execute()
       .catch((err) => {

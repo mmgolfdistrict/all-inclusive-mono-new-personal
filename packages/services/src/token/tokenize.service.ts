@@ -41,7 +41,7 @@ export class TokenizeService {
       .from(customerCarts)
       .where(
         and(
-          eq(customerCarts.courseId, courseId),
+          // eq(customerCarts.courseId, courseId),
           eq(customerCarts.userId, ownerId),
           eq(customerCarts.paymentId, paymentId)
         )
@@ -141,7 +141,7 @@ export class TokenizeService {
       date: string;
       providerCourseId: string | null;
       providerTeeSheetId: string | null;
-      providerId: string;
+      providerId: string | null;
       internalId: string | null;
       providerDate: string;
       holes: number;
