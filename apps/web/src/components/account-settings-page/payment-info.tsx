@@ -90,8 +90,7 @@ const CardDisplay = ({
           <Trashcan fill="#EE2020" className="w-[20px] h-[20px]" />
         </button>
       </div>
-{
-  confirmStatus?
+      {confirmStatus ? (
         <SidePanel isOpen={true}>
           <div className="bg-white p-8 text-sm rounded shadow-md h-full">
             <h2 className="text-lg font-semibold mb-4">Confirm Deletion</h2>
@@ -112,10 +111,8 @@ const CardDisplay = ({
               </button>
             </div>
           </div>
-        </SidePanel>:
-        null
-
-}
+        </SidePanel>
+      ) : null}
     </div>
   );
 };

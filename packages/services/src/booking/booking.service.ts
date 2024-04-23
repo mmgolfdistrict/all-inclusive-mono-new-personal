@@ -307,7 +307,7 @@ export class BookingService {
             date: teeTime.date ? teeTime.date : "",
             firstHandPrice: teeTime.greenFeePerPlayer ? teeTime.greenFeePerPlayer : 0,
             miniumOfferPrice: teeTime.minimumOfferPrice ? teeTime.minimumOfferPrice : 0,
-            listPrice: teeTime.listPrice/100,
+            listPrice: teeTime.listPrice / 100,
             status: "LISTED",
             listedSpots: [teeTime.bookingId],
             listedSlotsCount: teeTime.listedSlots,
@@ -501,7 +501,10 @@ export class BookingService {
             ? `https://${teeTime.teeTimeImage.cdnUrl}/${teeTime.teeTimeImage.key}.${teeTime.teeTimeImage.extension}`
             : "/defaults/default-course.webp",
           date: teeTime.date,
-          firstHandPrice: teeTime.greenFeePerPlayer + teeTime.cartFeePerPlayer + (teeTime.courseMarkup ? teeTime.courseMarkup / 100 : 0),
+          firstHandPrice:
+            teeTime.greenFeePerPlayer +
+            teeTime.cartFeePerPlayer +
+            (teeTime.courseMarkup ? teeTime.courseMarkup / 100 : 0),
           golfers: [],
           purchasedFor: Number(teeTime.purchasedFor) / 100,
           bookingIds: [teeTime.bookingId],
@@ -2115,7 +2118,7 @@ export class BookingService {
   checkIfPaymentIdIsValid = async (paymentId: string) => {
     const hyperswitchEndPoint = `${process.env.HYPERSWITCH_BASE_URL}/payments/${paymentId}`;
     const myHeaders = new Headers();
-    myHeaders.append("api-key", process.env.HYPERSWITCH_API_KEY??"");
+    myHeaders.append("api-key", process.env.HYPERSWITCH_API_KEY ?? "");
     const requestOptions = {
       method: "GET",
       headers: myHeaders,

@@ -12,6 +12,8 @@ import type { InsertTransfer } from "@golf-district/database/schema/transfers";
 import { transfers } from "@golf-district/database/schema/transfers";
 import { users } from "@golf-district/database/schema/users";
 import { currentUtcTimestamp, formatMoney } from "@golf-district/shared";
+import createICS from "@golf-district/shared/createICS";
+import type { Event } from "@golf-district/shared/createICS";
 import Logger from "@golf-district/shared/src/logger";
 import dayjs from "dayjs";
 import { textChangeRangeIsUnchanged } from "typescript";
@@ -20,8 +22,6 @@ import { CustomerCart } from "../checkout/types";
 import type { NotificationService } from "../notification/notification.service";
 import type { ProviderAPI } from "../tee-sheet-provider/sheet-providers";
 import { TeeTime } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
-import createICS from '@golf-district/shared/createICS';
-import type { Event } from "@golf-district/shared/createICS";
 
 /**
  * Service class for handling booking tokenization, transfers, and updates.
@@ -315,14 +315,13 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
     `;
 
     const event: Event = {
-      startDate: new Date('2024-05-01T10:00:00'),
-      endDate: new Date('2024-05-01T12:00:00'),
-      summary: 'Team Meeting',
-      location: 'Office',
+      startDate: new Date("2024-05-01T10:00:00"),
+      endDate: new Date("2024-05-01T12:00:00"),
+      summary: "Team Meeting",
+      location: "Office",
     };
-    
+
     const icsContent: string = createICS(event);
-    
 
     const template = {
       CustomerFirstName: existingTeeTime.customerName?.split(" ")[0],
@@ -339,10 +338,10 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
           maximumFractionDigits: 2,
         })}` ?? "-",
       GreenFees:
-      `$${((purchasePrice * players) / 100).toLocaleString("en-US", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })}` ?? "-",
+        `$${((purchasePrice * players) / 100).toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}` ?? "-",
       TaxesAndOtherFees:
         `$${normalizedCartData.taxes.toLocaleString("en-US", {
           minimumFractionDigits: 2,
@@ -353,7 +352,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       PlayerCount: players ?? 0,
       TotalAmount: formatMoney(normalizedCartData.total / 100 ?? 0),
     };
-    console.log(icsContent,"guygu")
+    console.log(icsContent, "guygu");
     await this.notificationService.createNotification(
       userId,
       "TeeTimes Purchased",
@@ -361,15 +360,15 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       existingTeeTime.courseId,
       process.env.SENDGRID_TEE_TIMES_PURCHASED_TEMPLATE_ID,
       template,
-     [
+      [
         {
           content: icsContent,
-          filename: 'event.ics',
+          filename: "event.ics",
           type: 'text/calendar; charset="utf-8"; method=REQUEST',
-          disposition: 'attachment',
-          contentId: 'event',
+          disposition: "attachment",
+          contentId: "event",
         },
-      ],
+      ]
     );
     return bookingId;
   }

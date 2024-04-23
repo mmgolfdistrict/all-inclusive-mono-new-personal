@@ -794,10 +794,10 @@ export class HyperSwitchWebhookService {
               maximumFractionDigits: 2,
             })} / Golfer` || "-",
           GreenFees:
-          `$${((newBooking.data.purchasedFor ?? 0) * (listedSlotsCount ?? 0)).toLocaleString("en-US", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          })}` || "-",
+            `$${((newBooking.data.purchasedFor ?? 0) * (listedSlotsCount ?? 0)).toLocaleString("en-US", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}` || "-",
           TaxesAndOtherFees:
             `$${taxes.toLocaleString("en-US", {
               minimumFractionDigits: 2,

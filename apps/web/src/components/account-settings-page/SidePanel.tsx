@@ -25,4 +25,3 @@ const SidePanel: FC<SidePanelProps> = ({ isOpen, children }) => {
 };
 
 export default SidePanel;
-
