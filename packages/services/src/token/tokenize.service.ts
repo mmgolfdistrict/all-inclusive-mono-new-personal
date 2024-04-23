@@ -34,7 +34,10 @@ export class TokenizeService {
    * @example
    * const tokenizeService = new TokenizeService(database);
    */
-  constructor(private readonly database: Db, private readonly notificationService: NotificationService) {}
+  constructor(
+    private readonly database: Db,
+    private readonly notificationService: NotificationService
+  ) {}
   getCartData = async ({ courseId = "", ownerId = "", paymentId = "" }) => {
     const [customerCartData]: any = await this.database
       .select({ cart: customerCarts.cart, cartId: customerCarts.id })
@@ -168,8 +171,8 @@ export class TokenizeService {
       })
       .from(teeTimes)
       .where(eq(teeTimes.id, providerTeeTimeId))
-      // .leftJoin(entities, eq(teeTimes.entityId, entities.id))
       .leftJoin(courses, eq(courses.id, teeTimes.courseId))
+      .leftJoin(entities, eq(courses.entityId, entities.id))
       .leftJoin(users, eq(users.id, userId))
       .execute()
       .catch((err) => {
@@ -326,10 +329,10 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
           maximumFractionDigits: 2,
         })}` ?? "-",
       GreenFees:
-      `$${((purchasePrice * players) / 100).toLocaleString("en-US", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })}` ?? "-",
+        `$${((purchasePrice * players) / 100).toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}` ?? "-",
       TaxesAndOtherFees:
         `$${normalizedCartData.taxes.toLocaleString("en-US", {
           minimumFractionDigits: 2,
