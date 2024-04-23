@@ -1,4 +1,4 @@
-import { relations, type InferInsertModel, type InferSelectModel, sql } from "drizzle-orm";
+import { relations, sql, type InferInsertModel, type InferSelectModel } from "drizzle-orm";
 import { datetime, index, int, primaryKey, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 import { bookings } from "./bookings";
@@ -19,10 +19,10 @@ export const teeTimes = mySqlTable(
     maxPlayersPerBooking: int("maxPlayersPerBooking").notNull(),
     availableFirstHandSpots: int("availableFirstHandSpots").notNull(),
     availableSecondHandSpots: int("availableSecondHandSpots").notNull(),
-    greenFeePerPlayer: int("greenFeePerPlayer").notNull(),
-    cartFeePerPlayer: int("cartFeePerPlayer").notNull(),
+    greenFeePerPlayer: int("greenFeePerPlayer").notNull().default(0),
+    cartFeePerPlayer: int("cartFeePerPlayer").notNull().default(0),
     greenFeeTaxPerPlayer: int("greenFeeTaxPerPlayer").notNull().default(0),
-    cartFeeTaxPerPlayer: int("cartFeeTaxPerPlayer").notNull(),
+    cartFeeTaxPerPlayer: int("cartFeeTaxPerPlayer").notNull().default(0),
     // courseProvider: varchar("courseProvider", { length: 191 }).notNull(),
     courseId: varchar("courseId", { length: 36 }).notNull(),
     // entityId: varchar("entityId", { length: 36 }).notNull(),
