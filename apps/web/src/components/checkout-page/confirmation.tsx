@@ -39,6 +39,7 @@ export const Confirmation = ({
   const { reservationData } = useCheckoutContext();
   return (
     <section className="mx-auto flex w-full flex-col gap-4 bg-white px-3 py-2 text-center md:max-w-[80vw] md:rounded-xl md:p-6 md:py-4">
+      {/* 
       <video
         className="max-h-[200px] w-full"
         autoPlay
@@ -49,7 +50,7 @@ export const Confirmation = ({
 
         src={"/videos/confirmation.mp4"}
       />
-      {/* <div style={{ display: "flex",flexWrap:'wrap' }}>
+      <div style={{ display: "flex",flexWrap:'wrap' }}>
         <div className="flex-1">
           <h1 className="text-[24px] md:text-[32px]">
             Your Reservation Details
@@ -85,7 +86,8 @@ export const Confirmation = ({
             phone.
           </p>
         </div>
-      </div> */}
+      </div> 
+      */}
       <div className="container mx-auto p-4">
         <div className="flex flex-wrap">
           <div className="w-full md:w-1/2 p-4">
@@ -98,7 +100,7 @@ export const Confirmation = ({
               <>
                 <div style={{ paddingBottom: "5px", fontSize: "16px" }}>
                   <span style={{ fontWeight: 500 }}>
-                    GOLFdistrict Reservation Id
+                    GOLFdistrict Reservation ID
                   </span>
                   <span style={{ margin: "0 15px" }}>:</span>
                   <span>{bookingId}</span>
@@ -106,7 +108,7 @@ export const Confirmation = ({
                 {bookingData?.providerId?.length ? (
                   <div style={{ paddingBottom: "5px" }}>
                     <span style={{ fontWeight: 500 }}>
-                      Course Reservation Id
+                      Course Reservation ID
                     </span>
                     <span style={{ margin: "0 15px" }}>:</span>
                     <span>{bookingData?.providerId}</span>
