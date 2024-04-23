@@ -8,6 +8,7 @@ import { toast } from "react-toastify";
 import { Trashcan } from "../icons/trashcan";
 import { Spinner } from "../loading/spinner";
 import { AddCard } from "./add-card";
+import SidePanel from "./SidePanel";
 
 export const PaymentInfoMangeProfile = () => {
   const { cards, refetch, isLoading } = usePaymentMethods();
@@ -89,13 +90,10 @@ const CardDisplay = ({
           <Trashcan fill="#EE2020" className="w-[20px] h-[20px]" />
         </button>
       </div>
-      {/* <div id="backdrop" className="fixed inset-0 bg-black opacity-50 z-10 backdrop"></div> */}
-      {confirmStatus ? (
-        <div
-          id="slideOut"
-          className="absolute top-0 bg-white-500 w-1/2 h-full transition-transform duration-300 ease-in-out transform translate-x-full z-20"
-        >
-          <div className="bg-white p-2 text-sm rounded shadow-md h-full">
+{
+  confirmStatus?
+        <SidePanel isOpen={true}>
+          <div className="bg-white p-8 text-sm rounded shadow-md h-full">
             <h2 className="text-lg font-semibold mb-4">Confirm Deletion</h2>
             <p className="mb-2">Are you sure you want to delete card?</p>
             <div className="flex justify-end">
@@ -114,8 +112,10 @@ const CardDisplay = ({
               </button>
             </div>
           </div>
-        </div>
-      ) : null}
+        </SidePanel>:
+        null
+
+}
     </div>
   );
 };

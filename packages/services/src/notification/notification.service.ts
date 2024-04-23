@@ -32,6 +32,16 @@ interface EmailParams {
   VerifyURL?: string;
 }
 
+interface Attachment {
+  content: string;
+  filename: string;
+  type: string;
+  disposition?: string;
+  contentId?: string;
+  encoding?: string;
+}
+
+
 /**
  * Service class for handling notifications, including emails, SMS, and user notifications.
  */
@@ -123,7 +133,7 @@ export class NotificationService {
     // }
   };
 
-  sendEmailByTemplate = async (email: string, subject: string, templateId: string, template: EmailParams) => {
+  sendEmailByTemplate = async (email: string, subject: string, templateId: string, template: EmailParams,attachments:Attachment[]) => {
     this.logger.info(`Sending email to ${email}`);
     await this.sendGridClient
       .send({
@@ -132,6 +142,7 @@ export class NotificationService {
         subject,
         templateId,
         dynamicTemplateData: { ...template },
+        attachments
       })
       .catch((err) => {
         this.logger.error(err);
@@ -293,13 +304,15 @@ export class NotificationService {
    * // Creating a notification for user with ID 'user123' with subject 'New Notification' and body 'You have a new notification.'.
    * await createNotification('user123', 'New Notification', 'You have a new notification.', 'entity123');
    */
+  
   createNotification = async (
     userId: string,
     subject: string,
     body: string,
     courseId?: string | null,
     templateId?: string,
-    template?: EmailParams
+    template?: EmailParams,
+    attachments?: Attachment[]
   ) => {
     const [user] = await this.database
       .select()
@@ -341,7 +354,7 @@ export class NotificationService {
     if (user.emailNotifications && user.email) {
       if (templateId && template) {
         this.logger.debug(`Sending email to ${user.email}`);
-        await this.sendEmailByTemplate(user.email, subject, templateId, template);
+        await this.sendEmailByTemplate(user.email, subject, templateId, template, attachments||[]);
       } else {
         this.logger.debug(`Sending email to ${user.email}`);
         await this.sendEmail(user.email, subject, body);

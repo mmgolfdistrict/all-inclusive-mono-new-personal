@@ -20,6 +20,8 @@ import { CustomerCart } from "../checkout/types";
 import type { NotificationService } from "../notification/notification.service";
 import type { ProviderAPI } from "../tee-sheet-provider/sheet-providers";
 import { TeeTime } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
+import createICS from '@golf-district/shared/createICS';
+import type { Event } from "@golf-district/shared/createICS";
 
 /**
  * Service class for handling booking tokenization, transfers, and updates.
@@ -312,6 +314,16 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
     This is a first party purchase from the course
     `;
 
+    const event: Event = {
+      startDate: new Date('2024-05-01T10:00:00'),
+      endDate: new Date('2024-05-01T12:00:00'),
+      summary: 'Team Meeting',
+      location: 'Office',
+    };
+    
+    const icsContent: string = createICS(event);
+    
+
     const template = {
       CustomerFirstName: existingTeeTime.customerName?.split(" ")[0],
       CourseName: existingTeeTime.courseName ?? "-",
@@ -341,14 +353,23 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       PlayerCount: players ?? 0,
       TotalAmount: formatMoney(normalizedCartData.total / 100 ?? 0),
     };
-
+    console.log(icsContent,"guygu")
     await this.notificationService.createNotification(
       userId,
       "TeeTimes Purchased",
       message,
       existingTeeTime.courseId,
       process.env.SENDGRID_TEE_TIMES_PURCHASED_TEMPLATE_ID,
-      template
+      template,
+     [
+        {
+          content: icsContent,
+          filename: 'event.ics',
+          type: 'text/calendar; charset="utf-8"; method=REQUEST',
+          disposition: 'attachment',
+          contentId: 'event',
+        },
+      ],
     );
     return bookingId;
   }
