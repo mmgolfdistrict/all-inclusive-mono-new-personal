@@ -124,7 +124,7 @@ export class BookingService {
     private readonly tokenizeService: TokenizeService,
     private readonly providerService: ProviderService,
     private readonly notificationService: NotificationService
-  ) { }
+  ) {}
 
   createCounterOffer = async (userId: string, bookingIds: string[], offerId: string, amount: number) => {
     //find owner of each booking
@@ -501,7 +501,10 @@ export class BookingService {
             ? `https://${teeTime.teeTimeImage.cdnUrl}/${teeTime.teeTimeImage.key}.${teeTime.teeTimeImage.extension}`
             : "/defaults/default-course.webp",
           date: teeTime.date,
-          firstHandPrice: teeTime.greenFeePerPlayer + teeTime.cartFeePerPlayer + (teeTime.courseMarkup ? teeTime.courseMarkup / 100 : 0),
+          firstHandPrice:
+            teeTime.greenFeePerPlayer +
+            teeTime.cartFeePerPlayer +
+            (teeTime.courseMarkup ? teeTime.courseMarkup / 100 : 0),
           golfers: [],
           purchasedFor: Number(teeTime.purchasedFor) / 100,
           bookingIds: [teeTime.bookingId],
@@ -836,13 +839,13 @@ export class BookingService {
       .from(bookings)
       .where(eq(bookings.listId, listingId))
       .execute();
-      console.log("cancel listing by user", userId)
+    console.log("cancel listing by user", userId);
     await this.database.transaction(async (trx) => {
       await trx
         .update(lists)
         .set({
           isDeleted: true,
-          cancelledByUserId: userId
+          cancelledByUserId: userId,
         })
         .where(eq(lists.id, listingId))
         .execute()
@@ -2179,7 +2182,7 @@ export class BookingService {
           eq(providerCourseLink.providerId, courses.providerId)
         )
       )
-      .leftJoin(courses, eq(courses.id, teeTimes.courseId))
+      //.leftJoin(courses, eq(courses.id, teeTimes.courseId))
       .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))
       .where(eq(teeTimes.id, teeTimeId as string))
       .execute()
