@@ -100,7 +100,14 @@ export class foreUp extends BaseProvider {
     const booking: BookingResponse = await response.json();
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.addSalesData(totalAmountPaid, bookingData.data.attributes.players, courseId, teesheetId, booking.data.id, token)
+    this.addSalesData(
+      totalAmountPaid,
+      bookingData.data.attributes.players,
+      courseId,
+      teesheetId,
+      booking.data.id,
+      token
+    );
     return booking;
   }
 
@@ -114,8 +121,9 @@ export class foreUp extends BaseProvider {
   ): Promise<BookingResponse> {
     const endpoint = this.getBasePoint();
     // https://api.foreupsoftware.com/api_rest/index.php/courses/courseId/teesheets/teesheetId/bookings/bookingId/bookedPlayers/bookedPlayerId
-    const url = `${endpoint}/courses/${courseId}/teesheets/${teesheetId}/bookings/${bookingId}/bookedPlayers/${slotId ? slotId : bookingId
-      }`;
+    const url = `${endpoint}/courses/${courseId}/teesheets/${teesheetId}/bookings/${bookingId}/bookedPlayers/${
+      slotId ? slotId : bookingId
+    }`;
     const headers = this.getHeaders(token);
 
     console.log(`updateTeeTime - ${url}`);
@@ -210,12 +218,19 @@ export class foreUp extends BaseProvider {
     return (await response.json()) as CustomerData;
   }
 
-  addSalesData = async (totalAmountPaid: number, players: number, courseId: string | number, teesheetId: string | number, bookingId: string, token: string): Promise<void> => {
+  addSalesData = async (
+    totalAmountPaid: number,
+    players: number,
+    courseId: string | number,
+    teesheetId: string | number,
+    bookingId: string,
+    token: string
+  ): Promise<void> => {
     try {
       const endpoint = this.getBasePoint();
       const headers = this.getHeaders(token);
 
-      const bookingCheckinUrl = `${endpoint}/courses/${courseId}/teesheets/${teesheetId}/bookings/${bookingId}/checkIn`
+      const bookingCheckinUrl = `${endpoint}/courses/${courseId}/teesheets/${teesheetId}/bookings/${bookingId}/checkIn`;
       this.logger.info(`Booking Check in Url - ${bookingCheckinUrl}`);
       this.logger.info(`Making Check in request for provider booking: ${bookingId}`);
 
@@ -226,71 +241,96 @@ export class foreUp extends BaseProvider {
         method: "POST",
         headers: headers,
         body: JSON.stringify({
-          "data": {
-            "type": "check_ins",
-            "attributes": {
-              "positions": generatedPositionsArray
-            }
-          }
-        })
+          data: {
+            type: "check_ins",
+            attributes: {
+              positions: generatedPositionsArray,
+            },
+          },
+        }),
       });
       if (!checkInResponse.ok) {
-        throw new Error(`Error doing booking checkin for booking: ${bookingId}, status code: ${checkInResponse.status}, status text: ${checkInResponse.statusText}, response: ${JSON.stringify(checkInResponse)}`);
+        throw new Error(
+          `Error doing booking checkin for booking: ${bookingId}, status code: ${
+            checkInResponse.status
+          }, status text: ${checkInResponse.statusText}, response: ${JSON.stringify(checkInResponse)}`
+        );
       }
       const cartData: CartData = await checkInResponse.json();
 
-      const addPaymentsUrl = `${endpoint}/courses/${courseId}/carts/${cartData.data.id}/payments`
+      const addPaymentsUrl = `${endpoint}/courses/${courseId}/carts/${cartData.data.id}/payments`;
       this.logger.info(`Add payments url - ${addPaymentsUrl}`);
       this.logger.info(`Adding payment for provider booking: ${bookingId}, cart id: ${cartData.data.id}`);
 
-      console.log("PAYMENT BODY:", JSON.stringify({
-        "data": {
-          "type": "payments",
-          "attributes": {
-            "amount": `${totalAmountPaid}`,
-            "type": "cash"
-          }
-        }
-      }))
+      console.log(
+        "PAYMENT BODY:",
+        JSON.stringify({
+          data: {
+            type: "payments",
+            attributes: {
+              amount: `${totalAmountPaid}`,
+              type: "cash",
+            },
+          },
+        })
+      );
       const addPaymentsResponse = await fetch(addPaymentsUrl, {
         method: "POST",
         headers: headers,
         body: JSON.stringify({
-          "data": {
-            "type": "payments",
-            "attributes": {
-              "amount": `${totalAmountPaid}`,
-              "type": "cash"
-            }
-          }
-        })
+          data: {
+            type: "payments",
+            attributes: {
+              amount: `${totalAmountPaid}`,
+              type: "cash",
+            },
+          },
+        }),
       });
       if (!addPaymentsResponse.ok) {
-        throw new Error(`Error adding payment to cart for booking: ${bookingId}, status code: ${addPaymentsResponse.status}, status text: ${addPaymentsResponse.statusText}, response: ${JSON.stringify(addPaymentsResponse)}`);
+        throw new Error(
+          `Error adding payment to cart for booking: ${bookingId}, status code: ${
+            addPaymentsResponse.status
+          }, status text: ${addPaymentsResponse.statusText}, response: ${JSON.stringify(addPaymentsResponse)}`
+        );
       }
       const paymentData: CartData = await addPaymentsResponse.json();
 
-      const completeCartUrl = `${endpoint}/courses/${courseId}/carts/${cartData.data.id}`
+      const completeCartUrl = `${endpoint}/courses/${courseId}/carts/${cartData.data.id}`;
       this.logger.info(`Complete cart url - ${completeCartUrl}`);
-      this.logger.info(`Completing cart for provider booking: ${bookingId}, cart id: ${cartData.data.id}, with paymentData: ${JSON.stringify(paymentData)}`);
+      this.logger.info(
+        `Completing cart for provider booking: ${bookingId}, cart id: ${
+          cartData.data.id
+        }, with paymentData: ${JSON.stringify(paymentData)}`
+      );
       const completeCartResponse = await fetch(completeCartUrl, {
         method: "PUT",
         headers: headers,
         body: JSON.stringify({
-          "data": {
-            "type": "carts",
-            "id": `${cartData.data.id}`,
-            "attributes": {
-              "status": "complete"
-            }
-          }
-        })
+          data: {
+            type: "carts",
+            id: `${cartData.data.id}`,
+            attributes: {
+              status: "complete",
+            },
+          },
+        }),
       });
       if (!completeCartResponse.ok) {
-        throw new Error(`Error completing cart for booking: ${bookingId}, status code: ${completeCartResponse.status}, status text: ${completeCartResponse.statusText}, response: ${JSON.stringify(completeCartResponse)}`);
+        throw new Error(
+          `Error completing cart for booking: ${bookingId}, status code: ${
+            completeCartResponse.status
+          }, status text: ${completeCartResponse.statusText}, response: ${JSON.stringify(
+            completeCartResponse
+          )}`
+        );
       }
       const completeCartData: CartData = await completeCartResponse.json();
-      this.logger.info(`Sales data added successfully for booking with id: ${bookingId}, cart data: ${JSON.stringify(completeCartData)}`);
+      this.logger.info(
+        `Sales data added successfully for booking with id: ${bookingId}, cart data: ${JSON.stringify(
+          completeCartData
+        )}`
+      );
     } catch (error) {
       this.logger.error(`Error adding sales data: ${error}`);
     }

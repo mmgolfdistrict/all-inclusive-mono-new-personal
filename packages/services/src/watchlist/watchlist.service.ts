@@ -79,7 +79,7 @@ export class WatchlistService {
         .select({
           course: teeTimes.courseId,
           // entityId: teeTimes.entityId,
-          entityId: courses.entityId
+          entityId: courses.entityId,
         })
         .from(teeTimes)
         .leftJoin(courses, eq(courses.id, teeTimes.courseId))

@@ -150,7 +150,7 @@ export class TokenizeService {
     },
     normalizedCartData?: any
   ): Promise<string> {
-    debugger
+    debugger;
     this.logger.info(`tokenizeBooking tokenizing booking id: ${providerTeeTimeId} for user: ${userId}`);
     //@TODO add this to the transaction
 

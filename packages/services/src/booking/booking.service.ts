@@ -124,7 +124,7 @@ export class BookingService {
     private readonly tokenizeService: TokenizeService,
     private readonly providerService: ProviderService,
     private readonly notificationService: NotificationService
-  ) { }
+  ) {}
 
   createCounterOffer = async (userId: string, bookingIds: string[], offerId: string, amount: number) => {
     //find owner of each booking
@@ -839,13 +839,13 @@ export class BookingService {
       .from(bookings)
       .where(eq(bookings.listId, listingId))
       .execute();
-      console.log("cancel listing by user", userId)
+    console.log("cancel listing by user", userId);
     await this.database.transaction(async (trx) => {
       await trx
         .update(lists)
         .set({
           isDeleted: true,
-          cancelledByUserId: userId
+          cancelledByUserId: userId,
         })
         .where(eq(lists.id, listingId))
         .execute()
@@ -2153,7 +2153,7 @@ export class BookingService {
       cartId,
       userId,
     });
-    debugger
+    debugger;
     const isValid = await this.checkIfPaymentIdIsValid(payment_id);
     if (!isValid) {
       throw new Error("Payment Id not is not valid");
