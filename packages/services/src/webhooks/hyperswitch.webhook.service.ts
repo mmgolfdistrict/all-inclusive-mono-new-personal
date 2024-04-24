@@ -17,11 +17,11 @@ import { providerCourseLink } from "@golf-district/database/schema/providersCour
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import { transfers } from "@golf-district/database/schema/transfers";
 import type { InsertTransfer } from "@golf-district/database/schema/transfers";
-import createICS from "@golf-district/shared/createICS";
-import type { Event } from "@golf-district/shared/createICS";
 import { userPromoCodeLink } from "@golf-district/database/schema/userPromoCodeLink";
 import { users } from "@golf-district/database/schema/users";
 import { currentUtcTimestamp, formatMoney } from "@golf-district/shared";
+import createICS from "@golf-district/shared/createICS";
+import type { Event } from "@golf-district/shared/createICS";
 import Logger from "@golf-district/shared/src/logger";
 import { Client } from "@upstash/qstash/.";
 import dayjs from "dayjs";
@@ -780,8 +780,8 @@ export class HyperSwitchWebhookService {
       }
 
       const event: Event = {
-        startDate: existingTeeTime?.providerDate??"",
-        endDate: existingTeeTime?.providerDate??"",
+        startDate: existingTeeTime?.providerDate ?? "",
+        endDate: existingTeeTime?.providerDate ?? "",
       };
       const icsContent: string = createICS(event);
       const commonTemplateData = {
@@ -833,12 +833,12 @@ export class HyperSwitchWebhookService {
           template,
           [
             {
-              content: Buffer.from(icsContent).toString('base64'),
-              filename: 'meeting.ics',
-              type: 'text/calendar',
-              disposition: 'attachment',
-              contentId: 'meeting'
-            }
+              content: Buffer.from(icsContent).toString("base64"),
+              filename: "meeting.ics",
+              type: "text/calendar",
+              disposition: "attachment",
+              contentId: "meeting",
+            },
           ]
         );
 

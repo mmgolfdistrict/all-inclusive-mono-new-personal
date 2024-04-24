@@ -36,10 +36,7 @@ export class TokenizeService {
    * @example
    * const tokenizeService = new TokenizeService(database);
    */
-  constructor(
-    private readonly database: Db,
-    private readonly notificationService: NotificationService
-  ) {}
+  constructor(private readonly database: Db, private readonly notificationService: NotificationService) {}
   getCartData = async ({ courseId = "", ownerId = "", paymentId = "" }) => {
     const [customerCartData]: any = await this.database
       .select({ cart: customerCarts.cart, cartId: customerCarts.id })
@@ -169,7 +166,7 @@ export class TokenizeService {
         greenFee: teeTimes.greenFeePerPlayer,
         courseName: courses.name,
         customerName: users.name,
-        email:users.email,
+        email: users.email,
         entityName: entities.name,
         providerDate: teeTimes.providerDate,
       })
@@ -321,7 +318,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
     const event: Event = {
       startDate: existingTeeTime.providerDate,
       endDate: existingTeeTime.providerDate,
-      email:existingTeeTime.email??"",
+      email: existingTeeTime.email ?? "",
     };
     const icsContent: string = createICS(event);
     const template = {
@@ -362,12 +359,12 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       template,
       [
         {
-          content: Buffer.from(icsContent).toString('base64'),
-          filename: 'meeting.ics',
-          type: 'text/calendar',
-          disposition: 'attachment',
-          contentId: 'meeting'
-        }
+          content: Buffer.from(icsContent).toString("base64"),
+          filename: "meeting.ics",
+          type: "text/calendar",
+          disposition: "attachment",
+          contentId: "meeting",
+        },
       ]
     );
     return bookingId;
