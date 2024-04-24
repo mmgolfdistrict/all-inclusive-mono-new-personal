@@ -2183,7 +2183,7 @@ export class BookingService {
           eq(providerCourseLink.providerId, courses.providerId)
         )
       )
-      // .leftJoin(courses, eq(courses.id, teeTimes.courseId))
+      //.leftJoin(courses, eq(courses.id, teeTimes.courseId))
       .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))
       .where(eq(teeTimes.id, teeTimeId as string))
       .execute()

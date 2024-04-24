@@ -1,42 +1,63 @@
-interface Event {
-  startDate: Date;
-  endDate: Date;
-  summary: string;
-  location: string;
+export interface Event {
+  startDate: String;
+  endDate: String;
+  email?:string;
+  // summary: string;
+  // location: string;
 }
 
 const createICS = (event: Event): string => {
-  const { summary, location } = event;
+  // const { summary, location } = event;
 
-  // Get tomorrow's date at 5:00 PM
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  tomorrow.setHours(17, 0, 0, 0);
+  const formatDate = (isoDateTime: string, addMinutes: number = 0): string => {
+    const date = new Date(isoDateTime);
+    
+    // Add minutes to the date
+    date.setMinutes(date.getMinutes() + addMinutes);
+  
+    const year = date.getUTCFullYear().toString().padStart(4, '0');
+    const month = (date.getUTCMonth() + 1).toString().padStart(2, '0');
+    const day = date.getUTCDate().toString().padStart(2, '0');
+    const hours = date.getUTCHours().toString().padStart(2, '0');
+    const minutes = date.getUTCMinutes().toString().padStart(2, '0');
+    const seconds = date.getUTCSeconds().toString().padStart(2, '0');
+  
+    return `${year}${month}${day}T${hours}${minutes}${seconds}Z`;
+};
 
-  const formatDate = (date: Date): string => {
-    return date
-      .toISOString()
-      .replace(/-|:|\.\d+/g, "")
-      .replace(/T/g, "");
+  
+  const convertToCustomFormat = (isoDateTime: string): string => {
+    const date = new Date(isoDateTime);
+  
+    const year = date.getUTCFullYear().toString().padStart(4, '0');
+    const month = (date.getUTCMonth() + 1).toString().padStart(2, '0');
+    const day = date.getUTCDate().toString().padStart(2, '0');
+    const hours = date.getUTCHours().toString().padStart(2, '0');
+    const minutes = date.getUTCMinutes().toString().padStart(2, '0');
+    const seconds = date.getUTCSeconds().toString().padStart(2, '0');
+  
+    return `${year}${month}${day}T${hours}${minutes}${seconds}Z`;
   };
+  
 
   const content = `
-      BEGIN:VCALENDAR
-      VERSION:2.0
-      BEGIN:VEVENT
-      UID:${new Date().getTime()}
-      DTSTAMP:${formatDate(new Date())}
-      DTSTART:${formatDate(tomorrow)}
-      DTEND:${formatDate(new Date(tomorrow.getTime() + 60 * 60 * 1000))}
-      SUMMARY:${summary}
-      LOCATION:${location}
-      END:VEVENT
-      END:VCALENDAR
-    `
-    .trim()
+    BEGIN:VCALENDAR
+    PRODID:${new Date().getTime()}
+    VERSION:2.0
+    METHOD:REQUEST
+    BEGIN:VEVENT
+    UID:unique-id@example.com
+    DTSTAMP:${convertToCustomFormat(new Date().toISOString())}
+    DTSTART:${formatDate(`${event.startDate}`)}
+    DTEND:${formatDate(`${event.startDate}`,10)}
+    SUMMARY:Google Meet Meeting
+    LOCATION:Google Meet
+    ORGANIZER;CN="Golf district":mailto:nara@golfdistrict.com
+    ATTENDEE;RSVP=TRUE;PARTSTAT=NEEDS-ACTION;CN="Attendee Name":mailto:${event.email}
+    END:VEVENT
+    END:VCALENDAR  
+    `.trim()
     .replace(/\n\s*/g, "\n");
-
-  console.log(content, "uyfytfytftyffpppppppppp");
   return content;
 };
 

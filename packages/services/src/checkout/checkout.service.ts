@@ -368,7 +368,7 @@ export class CheckoutService {
           eq(providerCourseLink.providerId, courses.providerId)
         )
       )
-      // .leftJoin(courses, eq(courses.id, teeTimes.courseId))
+      //.leftJoin(courses, eq(courses.id, teeTimes.courseId))
       .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))
       .where(eq(teeTimes.id, item.product_data.metadata.tee_time_id))
       .execute()

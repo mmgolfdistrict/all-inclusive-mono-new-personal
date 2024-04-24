@@ -99,8 +99,7 @@ export class foreUp extends BaseProvider {
 
     const booking: BookingResponse = await response.json();
 
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.addSalesData(
+    await this.addSalesData(
       totalAmountPaid,
       bookingData.data.attributes.players,
       courseId,

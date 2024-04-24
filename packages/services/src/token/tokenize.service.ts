@@ -36,7 +36,10 @@ export class TokenizeService {
    * @example
    * const tokenizeService = new TokenizeService(database);
    */
-  constructor(private readonly database: Db, private readonly notificationService: NotificationService) {}
+  constructor(
+    private readonly database: Db,
+    private readonly notificationService: NotificationService
+  ) {}
   getCartData = async ({ courseId = "", ownerId = "", paymentId = "" }) => {
     const [customerCartData]: any = await this.database
       .select({ cart: customerCarts.cart, cartId: customerCarts.id })
@@ -166,13 +169,14 @@ export class TokenizeService {
         greenFee: teeTimes.greenFeePerPlayer,
         courseName: courses.name,
         customerName: users.name,
+        email:users.email,
         entityName: entities.name,
         providerDate: teeTimes.providerDate,
       })
       .from(teeTimes)
       .where(eq(teeTimes.id, providerTeeTimeId))
-      .leftJoin(entities, eq(courses.entityId, entities.id))
       .leftJoin(courses, eq(courses.id, teeTimes.courseId))
+      .leftJoin(entities, eq(courses.entityId, entities.id))
       .leftJoin(users, eq(users.id, userId))
       .execute()
       .catch((err) => {
@@ -315,14 +319,11 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
     `;
 
     const event: Event = {
-      startDate: new Date("2024-05-01T10:00:00"),
-      endDate: new Date("2024-05-01T12:00:00"),
-      summary: "Team Meeting",
-      location: "Office",
+      startDate: existingTeeTime.providerDate,
+      endDate: existingTeeTime.providerDate,
+      email:existingTeeTime.email??"",
     };
-
     const icsContent: string = createICS(event);
-
     const template = {
       CustomerFirstName: existingTeeTime.customerName?.split(" ")[0],
       CourseName: existingTeeTime.courseName ?? "-",
@@ -352,7 +353,6 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       PlayerCount: players ?? 0,
       TotalAmount: formatMoney(normalizedCartData.total / 100 ?? 0),
     };
-    console.log(icsContent, "guygu");
     await this.notificationService.createNotification(
       userId,
       "TeeTimes Purchased",
@@ -361,13 +361,13 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       process.env.SENDGRID_TEE_TIMES_PURCHASED_TEMPLATE_ID,
       template,
       [
-        // {
-        //   content: icsContent,
-        //   filename: "event.ics",
-        //   type: 'text/calendar; charset="utf-8"; method=REQUEST',
-        //   disposition: "attachment",
-        //   contentId: "event",
-        // },
+        {
+          content: Buffer.from(icsContent).toString('base64'),
+          filename: 'meeting.ics',
+          type: 'text/calendar',
+          disposition: 'attachment',
+          contentId: 'meeting'
+        }
       ]
     );
     return bookingId;
