@@ -36,7 +36,7 @@ const createICS = (event: Event): string => {
     .trim()
     .replace(/\n\s*/g, "\n");
 
-  console.log(content);
+  console.log(content,"uyfytfytftyffpppppppppp");
   return content;
 };
 

@@ -234,11 +234,13 @@ export class ForeUpWebhookService {
         courseId: teeTimes.courseId,
         availableFirstHandSpots: teeTimes.availableFirstHandSpots,
         availableSecondHandSpots: teeTimes.availableSecondHandSpots,
-        courseProvider: teeTimes.courseProvider,
-        entityId: teeTimes.entityId,
+        courseProvider: courses.providerId,
+        // entityId: teeTimes.entityId,
+        entityId: courses.entityId,
         providerDate: teeTimes.providerDate,
       })
       .from(teeTimes)
+      .leftJoin(courses, eq(courses.id, courseId))
       .where(
         and(
           eq(teeTimes.courseId, courseId),
@@ -311,7 +313,7 @@ export class ForeUpWebhookService {
           id: indexedTeeTime.id,
           courseId: courseId,
           providerTeeTimeId: teeTimeResponse.id,
-          courseProvider: providerId,
+          // courseProvider: providerId,
           numberOfHoles: attributes.holes,
           date: attributes.time,
           time: militaryTime,
@@ -323,7 +325,7 @@ export class ForeUpWebhookService {
           greenFeeTaxPerPlayer: attributes.greenFeeTax ? attributes.greenFeeTax : 0,
           cartFeeTaxPerPlayer: attributes.cartFeeTax,
           providerDate: attributes.time,
-          entityId: entityId ? entityId : "",
+          // entityId: entityId ? entityId : "",
         };
         const providerTeeTimeMatchingKeys = {
           id: indexedTeeTime.id,
@@ -355,7 +357,7 @@ export class ForeUpWebhookService {
           id: randomUUID(),
           courseId: courseId,
           providerTeeTimeId: teeTimeResponse.id,
-          courseProvider: providerId,
+          // courseProvider: providerId,
           numberOfHoles: attributes.holes,
           date: attributes.time,
           time: militaryTime,
@@ -367,7 +369,7 @@ export class ForeUpWebhookService {
           greenFeeTaxPerPlayer: attributes.greenFeeTax ? attributes.greenFeeTax : 0,
           cartFeeTaxPerPlayer: attributes.cartFeeTax,
           providerDate: attributes.time,
-          entityId: entityId ? entityId : "",
+          // entityId: entityId ? entityId : "",
         };
         // console.log("providerTeeTime to insert", providerTeeTime);
         teeTimesToInsert.push(providerTeeTime);
@@ -402,8 +404,15 @@ export class ForeUpWebhookService {
         throw new Error("Tee time not available for booking");
       }
       const [indexedTeeTime] = await this.database
-        .select()
+        .select({
+          id: teeTimes.id,
+          courseId: teeTimes.courseId,
+          courseProvider: courses.providerId,
+          availableSecondHandSpots: teeTimes.availableSecondHandSpots,
+          entityId: courses.entityId,
+        })
         .from(teeTimes)
+        .leftJoin(courses, eq(courses.id, teeTimes.courseId))
         .where(eq(teeTimes.providerTeeTimeId, teeTime.id))
         .execute()
         .catch((err) => {

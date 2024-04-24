@@ -124,7 +124,7 @@ export class BookingService {
     private readonly tokenizeService: TokenizeService,
     private readonly providerService: ProviderService,
     private readonly notificationService: NotificationService
-  ) {}
+  ) { }
 
   createCounterOffer = async (userId: string, bookingIds: string[], offerId: string, amount: number) => {
     //find owner of each booking
@@ -839,11 +839,13 @@ export class BookingService {
       .from(bookings)
       .where(eq(bookings.listId, listingId))
       .execute();
+      console.log("cancel listing by user", userId)
     await this.database.transaction(async (trx) => {
       await trx
         .update(lists)
         .set({
           isDeleted: true,
+          cancelledByUserId: userId
         })
         .where(eq(lists.id, listingId))
         .execute()
@@ -1878,15 +1880,16 @@ export class BookingService {
         providerTeeSheetId: providerCourseLink.providerTeeSheetId,
         courseId: teeTimes.courseId,
         providerBookingId: bookings.providerBookingId,
-        providerId: teeTimes.courseProvider,
+        providerId: providerCourseLink.providerId,
       })
       .from(bookings)
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
+      .leftJoin(courses, eq(teeTimes.courseId, courses.id))
       .leftJoin(
         providerCourseLink,
         and(
           eq(providerCourseLink.courseId, teeTimes.courseId),
-          eq(providerCourseLink.providerId, teeTimes.courseProvider)
+          eq(providerCourseLink.providerId, courses.providerId)
         )
       )
       .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))
@@ -2150,6 +2153,7 @@ export class BookingService {
       cartId,
       userId,
     });
+    debugger
     const isValid = await this.checkIfPaymentIdIsValid(payment_id);
     if (!isValid) {
       throw new Error("Payment Id not is not valid");
@@ -2160,23 +2164,26 @@ export class BookingService {
       .select({
         id: teeTimes.id,
         courseId: teeTimes.courseId,
-        entityId: teeTimes.entityId,
+        // entityId: teeTimes.entityId,
+        entityId: courses.entityId,
         date: teeTimes.date,
         providerCourseId: providerCourseLink.providerCourseId,
         providerTeeSheetId: providerCourseLink.providerTeeSheetId,
-        providerId: teeTimes.courseProvider,
+        providerId: providerCourseLink.providerId,
         internalId: providers.internalId,
         providerDate: teeTimes.providerDate,
         holes: teeTimes.numberOfHoles,
       })
       .from(teeTimes)
+      .leftJoin(courses, eq(teeTimes.courseId, courses.id))
       .leftJoin(
         providerCourseLink,
         and(
           eq(providerCourseLink.courseId, teeTimes.courseId),
-          eq(providerCourseLink.providerId, teeTimes.courseProvider)
+          eq(providerCourseLink.providerId, courses.providerId)
         )
       )
+      // .leftJoin(courses, eq(courses.id, teeTimes.courseId))
       .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))
       .where(eq(teeTimes.id, teeTimeId as string))
       .execute()
@@ -2194,7 +2201,7 @@ export class BookingService {
     );
     const providerCustomer = await this.providerService.findOrCreateCustomer(
       teeTime.courseId,
-      teeTime.providerId,
+      teeTime.providerId ?? "",
       teeTime.providerCourseId!,
       userId,
       provider,
@@ -2212,6 +2219,7 @@ export class BookingService {
     ];
     const booking = await provider
       .createBooking(token, teeTime.providerCourseId!, teeTime.providerTeeSheetId!, {
+        totalAmountPaid: primaryGreenFeeCharge / 100,
         data: {
           type: "bookings",
           attributes: {
@@ -2279,11 +2287,13 @@ export class BookingService {
     const [booking] = await this.database
       .select({
         bookingId: bookings.id,
-        courseId: courses.id,
+        courseId: teeTimes.courseId,
       })
       .from(bookings)
       .innerJoin(customerCarts, eq(bookings.cartId, customerCarts.id))
-      .leftJoin(courses, eq(customerCarts.courseId, courses.id))
+      .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
+
+      // .leftJoin(courses, eq(customerCarts.courseId, courses.id))
       .where(and(eq(customerCarts.paymentId, paymentId), eq(bookings.ownerId, userId)))
       .execute()
       .catch((err) => {

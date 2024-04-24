@@ -83,6 +83,7 @@ export interface TeeTimeRequestOptions {
 // }
 
 export interface BookingCreationData {
+  totalAmountPaid: number;
   data: {
     type: string;
     attributes: {
@@ -322,4 +323,20 @@ export interface ContactInfo {
   handicap_score?: string;
   comments?: string;
   gender?: string;
+}
+
+
+export interface CartData {
+  data: {
+    type: string;
+    id: string;
+    attributes: {
+      total: number;
+      totalDue: number;
+      tax: number;
+      subTotal: number;
+      status: string;
+      lastActivity: string;
+    };
+  };
 }

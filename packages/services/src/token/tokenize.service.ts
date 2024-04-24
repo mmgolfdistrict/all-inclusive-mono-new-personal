@@ -43,7 +43,7 @@ export class TokenizeService {
       .from(customerCarts)
       .where(
         and(
-          eq(customerCarts.courseId, courseId),
+          // eq(customerCarts.courseId, courseId),
           eq(customerCarts.userId, ownerId),
           eq(customerCarts.paymentId, paymentId)
         )
@@ -140,24 +140,24 @@ export class TokenizeService {
     teeTime?: {
       id: string;
       courseId: string;
-      entityId: string;
       date: string;
       providerCourseId: string | null;
       providerTeeSheetId: string | null;
-      providerId: string;
+      providerId: string | null;
       internalId: string | null;
       providerDate: string;
       holes: number;
     },
     normalizedCartData?: any
   ): Promise<string> {
+    debugger
     this.logger.info(`tokenizeBooking tokenizing booking id: ${providerTeeTimeId} for user: ${userId}`);
     //@TODO add this to the transaction
 
     const [existingTeeTime] = await this.database
       .select({
         id: teeTimes.id,
-        entityId: teeTimes.entityId,
+        // entityId: teeTimes.entityId,
         date: teeTimes.date,
         courseId: teeTimes.courseId,
         numberOfHoles: teeTimes.numberOfHoles,
@@ -171,7 +171,7 @@ export class TokenizeService {
       })
       .from(teeTimes)
       .where(eq(teeTimes.id, providerTeeTimeId))
-      .leftJoin(entities, eq(teeTimes.entityId, entities.id))
+      .leftJoin(entities, eq(courses.entityId, entities.id))
       .leftJoin(courses, eq(courses.id, teeTimes.courseId))
       .leftJoin(users, eq(users.id, userId))
       .execute()
@@ -361,13 +361,13 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       process.env.SENDGRID_TEE_TIMES_PURCHASED_TEMPLATE_ID,
       template,
       [
-        {
-          content: icsContent,
-          filename: "event.ics",
-          type: 'text/calendar; charset="utf-8"; method=REQUEST',
-          disposition: "attachment",
-          contentId: "event",
-        },
+        // {
+        //   content: icsContent,
+        //   filename: "event.ics",
+        //   type: 'text/calendar; charset="utf-8"; method=REQUEST',
+        //   disposition: "attachment",
+        //   contentId: "event",
+        // },
       ]
     );
     return bookingId;
