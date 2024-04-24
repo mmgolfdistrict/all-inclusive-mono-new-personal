@@ -45,7 +45,7 @@ export const DailyTeeTimes = ({
     sortValue,
   } = useFiltersContext();
   const teeTimeStartTime = startTime[0];
-  const teeTimeEndTime = startTime[1] + 59;
+  const teeTimeEndTime = startTime[1];
 
   const { data: weather, isLoading: isLoadingWeather } =
     api.searchRouter.getWeatherForDay.useQuery(
