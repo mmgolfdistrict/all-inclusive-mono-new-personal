@@ -20,6 +20,8 @@ import type { InsertTransfer } from "@golf-district/database/schema/transfers";
 import { userPromoCodeLink } from "@golf-district/database/schema/userPromoCodeLink";
 import { users } from "@golf-district/database/schema/users";
 import { currentUtcTimestamp, formatMoney } from "@golf-district/shared";
+import createICS from "@golf-district/shared/createICS";
+import type { Event } from "@golf-district/shared/createICS";
 import Logger from "@golf-district/shared/src/logger";
 import { Client } from "@upstash/qstash/.";
 import dayjs from "dayjs";
@@ -777,6 +779,11 @@ export class HyperSwitchWebhookService {
         });
       }
 
+      const event: Event = {
+        startDate: existingTeeTime?.providerDate ?? "",
+        endDate: existingTeeTime?.providerDate ?? "",
+      };
+      const icsContent: string = createICS(event);
       const commonTemplateData = {
         CourseLogoURL: `https://${existingTeeTime?.cdn}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
         CourseName: existingTeeTime?.courseName || "-",
@@ -823,7 +830,16 @@ export class HyperSwitchWebhookService {
           "TeeTimes Purchased",
           existingTeeTime?.courseId,
           process.env.SENDGRID_TEE_TIMES_PURCHASED_TEMPLATE_ID ?? "d-82894b9885e54f98a810960373d80575",
-          template
+          template,
+          [
+            {
+              content: Buffer.from(icsContent).toString("base64"),
+              filename: "meeting.ics",
+              type: "text/calendar",
+              disposition: "attachment",
+              contentId: "meeting",
+            },
+          ]
         );
 
         if (newBookings.length === 1) {

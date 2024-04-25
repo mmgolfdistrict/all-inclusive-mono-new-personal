@@ -29,7 +29,7 @@ export class PaymentVerifierService {
     for (const record of records) {
       const hyperswitchEndPoint = `${this.hyperSwitchBaseUrl}/payments/${record.providerPaymentId}`;
       const myHeaders = new Headers();
-      myHeaders.append("api-key", process.env.HYPERSWITCH_API_KEY??"");
+      myHeaders.append("api-key", process.env.HYPERSWITCH_API_KEY ?? "");
       const requestOptions = {
         method: "GET",
         headers: myHeaders,

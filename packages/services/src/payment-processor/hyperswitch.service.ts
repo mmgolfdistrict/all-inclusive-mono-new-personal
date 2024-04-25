@@ -219,11 +219,11 @@ export class HyperSwitchService {
       const deletePaymentMethodResponse = await fetch(url, options);
       const deletedMethod = await deletePaymentMethodResponse.json();
       this.logger.info("Payment method deleted: ", deletedMethod);
-      console.log("Payment method deleted",deletedMethod)
+      console.log("Payment method deleted", deletedMethod);
     } catch (error) {
       this.logger.error("Error removing payment method: ", error);
 
-      console.log("Payment method deleted")
+      console.log("Payment method deleted");
     }
   };
 }

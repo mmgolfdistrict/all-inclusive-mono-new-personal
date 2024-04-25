@@ -183,7 +183,8 @@ export class UserService {
         VerifyURL: `${encodeURI(data?.redirectHref)}/verify?userId=${encodeURIComponent(
           user?.id
         )}&verificationToken=${encodeURIComponent(verificationToken)}`,
-      }
+      },
+      []
     );
   };
 
@@ -396,7 +397,8 @@ export class UserService {
           process.env.SENDGRID_TEE_TIMES_NEW_USER_TEMPLATE_ID!,
           {
             CustomerFirstName: user.handle ?? "",
-          }
+          },
+          []
         );
       } catch (error) {
         throw new Error("Error sending welcome email");
@@ -730,7 +732,8 @@ export class UserService {
             ForgotPasswordURL: `${encodeURI(redirectHref)}/reset-password?userId=${encodeURIComponent(
               user?.id
             )}&verificationToken=${encodeURIComponent(verificationToken)}`,
-          }
+          },
+          []
         )
         .catch((err) => {
           this.logger.error(`Error sending email: ${err}`);
@@ -742,7 +745,8 @@ export class UserService {
           user.email,
           "Reset your password",
           process.env.SENDGRID_FORGOT_PASSWORD_AUTH_USER_TEMPLATE_ID!,
-          emailParams
+          emailParams,
+          []
         )
         .catch((err) => {
           this.logger.error(`Error sending email: ${err}`);
@@ -824,7 +828,8 @@ export class UserService {
           process.env.SENDGRID_TEE_TIMES_PASSWORD_RESET_SUCCESSFUL_TEMPLATE_ID!,
           {
             CustomerFirstName: user?.handle ?? "",
-          }
+          },
+          []
         );
       } catch (error) {
         throw new Error("Error sending welcome email");
