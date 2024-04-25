@@ -1,5 +1,7 @@
 import { BalanceHistory } from "~/components/account-settings-page/balance-history";
 import { ConnectAccount } from "~/components/account-settings-page/connect-account";
+import { AddCreditCard } from "~/components/account-settings-page/addCreditCard";
+import {SavedBankDetails} from "~/components/account-settings-page/savedBankDetails";
 import { EditProfileForm } from "~/components/account-settings-page/edit-profile-form";
 import { NotificationSettings } from "~/components/account-settings-page/notification-settings";
 import { PaymentInfoMangeProfile } from "~/components/account-settings-page/payment-info";
@@ -37,8 +39,14 @@ export default function ManangeProfile({
           <NotificationSettings />
         </div> */}
         <div className="flex flex-col gap-4 md:flex-row">
-          <EditProfileForm />
+          <div className="md:w-[50%]"><EditProfileForm /></div>
+          <div  className="flex flex-col gap-4 md:flex-col md:w-[50%]">
+          <AddCreditCard/>
           <PaymentInfoMangeProfile />
+          <SavedBankDetails/>
+          </div>
+          
+         
         </div>
       </section>
     </main>

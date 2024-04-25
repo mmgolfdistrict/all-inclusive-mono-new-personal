@@ -9,7 +9,7 @@ import { Trashcan } from "../icons/trashcan";
 import { Spinner } from "../loading/spinner";
 import { AddCard } from "./add-card";
 
-export const PaymentInfoMangeProfile = () => {
+export const AddCreditCard = () => {
   const { cards, refetch, isLoading } = usePaymentMethods();
   const removeCard = api.checkout.removePaymentMethod.useMutation();
 
@@ -31,19 +31,10 @@ export const PaymentInfoMangeProfile = () => {
       id="payment-method"
       className="flex h-fit w-full flex-col bg-white px-3 py-2  md:rounded-xl md:p-6 md:py-4"
     >
-      <h1 className="pb-6 text-[18px] md:text-[24px]">Saved Credit Cards</h1>
-      <div className="flex flex-col gap-2">
-        {cards && cards.length > 0 ? (
-          cards.map((card, idx) => (
-            <CardDisplay removeMethod={removeMethod} card={card} key={idx} />
-          ))
-        ) : isLoading ? (
-          <div className="flex justify-center items-center h-full min-h-[200px]">
-            <Spinner className="w-[50px] h-[50px]" />
-          </div>
-        ) : (
-          <div className="text-center">No cards on file.</div>
-        )}
+      <h1 className="pb-6 text-[18px] md:text-[24px]">Add New Credit Card</h1>
+  
+      <div className="w-full md:min-w-[370px] px-2 md:px-0">
+        <AddCard refetchCards={refetch} />
       </div>
     </section>
   );

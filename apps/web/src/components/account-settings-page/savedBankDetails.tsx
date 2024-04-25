@@ -9,7 +9,7 @@ import { Trashcan } from "../icons/trashcan";
 import { Spinner } from "../loading/spinner";
 import { AddCard } from "./add-card";
 
-export const PaymentInfoMangeProfile = () => {
+export const SavedBankDetails = () => {
   const { cards, refetch, isLoading } = usePaymentMethods();
   const removeCard = api.checkout.removePaymentMethod.useMutation();
 
@@ -31,7 +31,7 @@ export const PaymentInfoMangeProfile = () => {
       id="payment-method"
       className="flex h-fit w-full flex-col bg-white px-3 py-2  md:rounded-xl md:p-6 md:py-4"
     >
-      <h1 className="pb-6 text-[18px] md:text-[24px]">Saved Credit Cards</h1>
+      <h1 className="pb-6 text-[18px] md:text-[24px]">Saved Bank Details</h1>
       <div className="flex flex-col gap-2">
         {cards && cards.length > 0 ? (
           cards.map((card, idx) => (
@@ -66,14 +66,18 @@ const CardDisplay = ({
   return (
     <div className="border border-stroke rounded-md p-3 flex flex-col gap-2 relative">
       <div className="flex items-start flex-col gap-1">
-        <div className="font-[500] text-md">Card Number</div>
-        <div className="text-sm">XXXX XXXX XXXX {card?.card?.last4_digits}</div>
+        <div className="font-[500] text-md">Bank Name</div>
+        <div className="text-sm">N/A</div>
+      </div>
+      <div className="flex items-start flex-col gap-1">
+        <div className="font-[500] text-md">Routing Number</div>
+        <div className="text-sm">N/A</div>
       </div>
       <div className="flex w-full justify-between items-end">
         <div className="flex flex-col gap-1">
-          <div className="font-[500] text-md">Card Expiry</div>
+          <div className="font-[500] text-md">Account Number</div>
           <div className="text-sm">
-            {card?.card?.expiry_month}/{card?.card?.expiry_year}
+           N/A
           </div>
         </div>
         <button
