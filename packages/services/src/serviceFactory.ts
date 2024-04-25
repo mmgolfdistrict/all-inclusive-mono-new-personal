@@ -27,6 +27,7 @@ import {
 } from "./index";
 import { ProviderService } from "./tee-sheet-provider/providers.service";
 import { PaymentVerifierService } from "./webhooks/paymentverifier.service";
+import { FinixService } from "./webhooks/finix.service";
 
 export interface ServiceConfig {
   database: Db;
@@ -334,5 +335,9 @@ export class ServiceFactory {
 
   getPaymentVerifierService = (): PaymentVerifierService => {
     return new PaymentVerifierService(this.config.database, this.getHyperSwitchWebhookService());
+  };
+
+  getFinixService = (): FinixService => {
+    return new FinixService(this.config.database);
   };
 }

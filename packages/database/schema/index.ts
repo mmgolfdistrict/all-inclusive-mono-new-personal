@@ -12,6 +12,7 @@ import * as coursePromoCodeLink from "./coursePromoCodeLink";
 import * as courses from "./courses";
 import * as courseScheduleDetails from "./courseScheduleDetails";
 import * as customerCart from "./customerCart";
+import * as customerPaymentDetail from "./customerPaymentDetails";
 import * as donations from "./donations";
 import * as entities from "./entities";
 import * as entityAdmins from "./entityAdmins";
@@ -74,4 +75,5 @@ export const schema = {
   ...courseScheduleDetails,
   ...jobs,
   ...teeTimeIndexLogs,
+  ...customerPaymentDetail,
 };
