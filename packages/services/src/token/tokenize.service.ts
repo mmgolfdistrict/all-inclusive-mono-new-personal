@@ -215,7 +215,7 @@ export class TokenizeService {
       cartId: normalizedCartData.cartId,
       playerCount: players ?? 0,
       greenFeePerPlayer: normalizedCartData.primaryGreenFeeCharge / players || 0,
-      totalTaxesAmount: normalizedCartData.taxes * 100 || 0,
+      totalTaxesAmount: normalizedCartData.taxCharge * 100 || 0,
       charityId: normalizedCartData.charityId || null,
       totalCharityAmount: normalizedCartData.charityCharge * 100 || 0,
       totalAmount: normalizedCartData.total || 0,
