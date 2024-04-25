@@ -1,29 +1,22 @@
 "use client";
 
-import type { CustomerPaymentMethod } from "~/hooks/usePaymentMethods";
-import { usePaymentMethods } from "~/hooks/usePaymentMethods";
+import { usePaymentMethods, type CustomerPaymentMethod } from "~/hooks/usePaymentMethods";
+import CardDetails from './CardDetails';
 import { api } from "~/utils/api";
 import { useState } from "react";
 import { toast } from "react-toastify";
 import { Trashcan } from "../icons/trashcan";
 import { Spinner } from "../loading/spinner";
 import { AddCard } from "./add-card";
+import SidePanel from "./SidePanel";
 
 export const SavedBankDetails = () => {
-  const { cards, refetch, isLoading } = usePaymentMethods();
+  // const { cards, refetch, isLoading } = usePaymentMethods();
+  const cards=[]
+  const isLoading=false;
   const removeCard = api.checkout.removePaymentMethod.useMutation();
 
   const removeMethod = async (paymentMethodId: string) => {
-    if (!paymentMethodId) return;
-    if (removeCard.isLoading) return;
-    try {
-      await removeCard.mutateAsync({ paymentMethodId });
-      await refetch();
-      toast.success("Card removed successfully");
-    } catch (error) {
-      console.log(error);
-      toast.error((error as Error)?.message ?? "Error removing card");
-    }
   };
 
   return (
@@ -42,7 +35,7 @@ export const SavedBankDetails = () => {
             <Spinner className="w-[50px] h-[50px]" />
           </div>
         ) : (
-          <div className="text-center">No cards on file.</div>
+          <div className="text-center">No bank details added.</div>
         )}
       </div>
     </section>
@@ -64,36 +57,17 @@ const CardDisplay = ({
   };
 
   return (
-    <div className="border border-stroke rounded-md p-3 flex flex-col gap-2 relative">
-      <div className="flex items-start flex-col gap-1">
-        <div className="font-[500] text-md">Bank Name</div>
-        <div className="text-sm">N/A</div>
-      </div>
-      <div className="flex items-start flex-col gap-1">
-        <div className="font-[500] text-md">Routing Number</div>
-        <div className="text-sm">N/A</div>
-      </div>
-      <div className="flex w-full justify-between items-end">
-        <div className="flex flex-col gap-1">
-          <div className="font-[500] text-md">Account Number</div>
-          <div className="text-sm">
-           N/A
-          </div>
-        </div>
-        <button
-          onClick={() => setConfirmStatus(true)}
-          className="border border-alert-red px-3 rounded-md"
-        >
-          <Trashcan fill="#EE2020" className="w-[20px] h-[20px]" />
-        </button>
-      </div>
-      {/* <div id="backdrop" className="fixed inset-0 bg-black opacity-50 z-10 backdrop"></div> */}
+    <div className="border border-stroke rounded-md p-3 flex flex-col relative">
+       <CardDetails label="Bank Name" value={'N/A'} />
+       <CardDetails label="Routing Number" value={'N/A'} />
+       <CardDetails
+      label="Account Details"
+      value={`XXXX XXXX XXXX ${card?.card?.last4_digits}`}
+      // onRemove={() => setConfirmStatus(true)}
+    />
       {confirmStatus ? (
-        <div
-          id="slideOut"
-          className="absolute top-0 bg-white-500 w-1/2 h-full transition-transform duration-300 ease-in-out transform translate-x-full z-20"
-        >
-          <div className="bg-white p-2 text-sm rounded shadow-md h-full">
+        <SidePanel isOpen={true}>
+          <div className="bg-white p-8 text-sm rounded shadow-md h-full">
             <h2 className="text-lg font-semibold mb-4">Confirm Deletion</h2>
             <p className="mb-2">Are you sure you want to delete card?</p>
             <div className="flex justify-end">
@@ -112,7 +86,7 @@ const CardDisplay = ({
               </button>
             </div>
           </div>
-        </div>
+        </SidePanel>
       ) : null}
     </div>
   );
