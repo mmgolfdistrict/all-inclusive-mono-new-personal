@@ -5,6 +5,7 @@ import * as auctionAssets from "./auctionAssets";
 import * as auctions from "./auctions";
 import * as bids from "./bids";
 import * as bookings from "./bookings";
+import * as cashouts from "./cashout";
 import * as charities from "./charities";
 import * as charityCourseLink from "./charityCourseLink";
 import * as courseAssets from "./courseAssets";
@@ -76,4 +77,5 @@ export const schema = {
   ...jobs,
   ...teeTimeIndexLogs,
   ...customerPaymentDetail,
+  ...cashouts,
 };

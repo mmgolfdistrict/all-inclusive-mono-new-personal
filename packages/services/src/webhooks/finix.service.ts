@@ -2,6 +2,7 @@ import { randomUUID } from "crypto";
 import { eq } from "@golf-district/database";
 import type { Db } from "@golf-district/database";
 import { customerPaymentDetail } from "@golf-district/database/schema/customerPaymentDetails";
+import { cashout } from "@golf-district/database/schema/cashout";
 
 interface TagDetails {
   customerId: string;
@@ -155,12 +156,14 @@ export class FinixService {
   constructor(
     private readonly database: Db // private readonly hyperSwitchService: HyperSwitchWebhookService
   ) {}
-
+  getHeaders = () => {
+    const requestHeaders = new Headers();
+    requestHeaders.append("Content-Type", "application/json");
+    requestHeaders.append("Finix-Version", process.env.FINIX_VERSION || "2022-02-01");
+    requestHeaders.append("Authorization", this.authorizationHeader);
+    return requestHeaders;
+  };
   createCustomerIdentity = async (tagDetails: TagDetails) => {
-    const myHeaders = new Headers();
-    myHeaders.append("Content-Type", "application/json");
-    myHeaders.append("Finix-Version", "2022-02-01");
-    myHeaders.append("Authorization", this.authorizationHeader);
     const raw = JSON.stringify({
       identity_roles: ["RECIPIENT"],
       entity: {
@@ -171,7 +174,7 @@ export class FinixService {
 
     const requestOptions: RequestOptions = {
       method: "POST",
-      headers: myHeaders,
+      headers: this.getHeaders(),
       body: raw,
       redirect: "follow",
     };
@@ -181,10 +184,6 @@ export class FinixService {
     return customerIdentityData;
   };
   createPaymentInstrument = async (id: string, token: string) => {
-    const myHeaders = new Headers();
-    myHeaders.append("Content-Type", "application/json");
-    myHeaders.append("Finix-Version", "2022-02-01");
-    myHeaders.append("Authorization", this.authorizationHeader);
     const raw = JSON.stringify({
       token: token,
       type: "TOKEN",
@@ -193,7 +192,7 @@ export class FinixService {
 
     const requestOptions: RequestOptions = {
       method: "POST",
-      headers: myHeaders,
+      headers: this.getHeaders(),
       body: raw,
       redirect: "follow",
     };
@@ -203,17 +202,13 @@ export class FinixService {
     return paymentInstrumentData;
   };
   createMerchantAccountOnProcessor = async (id: string) => {
-    const myHeaders = new Headers();
-    myHeaders.append("Content-Type", "application/json");
-    myHeaders.append("Finix-Version", "2022-02-01");
-    myHeaders.append("Authorization", this.authorizationHeader);
     const raw = JSON.stringify({
       processor: process.env.FINIX_PROCESSOR,
     });
 
     const requestOptions: RequestOptions = {
       method: "POST",
-      headers: myHeaders,
+      headers: this.getHeaders(),
       body: raw,
       redirect: "follow",
     };
@@ -224,10 +219,6 @@ export class FinixService {
   };
   createTransfer = async (amount: number, customerId: string) => {
     try {
-      const myHeaders = new Headers();
-      myHeaders.append("Content-Type", "application/json");
-      myHeaders.append("Finix-Version", "2022-02-01");
-      myHeaders.append("Authorization", this.authorizationHeader);
       const raw = JSON.stringify({
         merchant: process.env.FINIX_MERCHANT_ID,
         currency: "USD",
@@ -239,7 +230,7 @@ export class FinixService {
 
       const requestOptions: RequestOptions = {
         method: "POST",
-        headers: myHeaders,
+        headers: this.getHeaders(),
         body: raw,
         redirect: "follow",
       };
@@ -254,8 +245,12 @@ export class FinixService {
   };
 
   createCashoutTransfer = async (amount: number, customerId: string) => {
+    console.log("creating transfer");
     const [paymentInstrumentIdFromBackend] = await this.database
-      .select({ paymentInstrumentId: customerPaymentDetail.paymentInstrumentId })
+      .select({
+        paymentInstrumentId: customerPaymentDetail.paymentInstrumentId,
+        id: customerPaymentDetail.id,
+      })
       .from(customerPaymentDetail)
       .where(eq(customerPaymentDetail.customerId, customerId))
       .execute();
@@ -267,7 +262,22 @@ export class FinixService {
         amount,
         paymentInstrumentIdFromBackend?.paymentInstrumentId
       );
-      console.log("=====>cashoutData", cashoutData);
+      const transferId: string = cashoutData.id as string;
+
+      await this.database
+        .insert(cashout)
+        .values({
+          id: randomUUID(),
+          amount,
+          customerId,
+          transferId,
+          paymentDetailId: paymentInstrumentIdFromBackend.id,
+        })
+        .catch((e) => {
+          console.log("Error in transfer", e);
+          throw "Error in creating cashout";
+        });
+      return { success: true, error: false };
     }
   };
 
@@ -281,10 +291,6 @@ export class FinixService {
       paymentToken
     );
     const merchantData: any = await this.createMerchantAccountOnProcessor(customerIdentity.id);
-    console.log(customerIdentity.id);
-    console.log(paymentInstrumentData.id);
-    console.log(merchantData.id);
-
     if (customerIdentity.id && paymentInstrumentData.id && merchantData.id) {
       await this.database
         .insert(customerPaymentDetail)

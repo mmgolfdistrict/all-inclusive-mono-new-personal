@@ -26,8 +26,8 @@ import {
   WeatherService,
 } from "./index";
 import { ProviderService } from "./tee-sheet-provider/providers.service";
-import { PaymentVerifierService } from "./webhooks/paymentverifier.service";
 import { FinixService } from "./webhooks/finix.service";
+import { PaymentVerifierService } from "./webhooks/paymentverifier.service";
 
 export interface ServiceConfig {
   database: Db;

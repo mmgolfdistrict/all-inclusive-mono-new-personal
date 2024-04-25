@@ -325,7 +325,6 @@ export interface ContactInfo {
   gender?: string;
 }
 
-
 export interface CartData {
   data: {
     type: string;
