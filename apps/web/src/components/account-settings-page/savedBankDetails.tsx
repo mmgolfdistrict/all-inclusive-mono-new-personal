@@ -1,13 +1,10 @@
 "use client";
 
-import { usePaymentMethods, type CustomerPaymentMethod } from "~/hooks/usePaymentMethods";
+import { type CustomerPaymentMethod } from "~/hooks/usePaymentMethods";
 import CardDetails from './CardDetails';
 import { api } from "~/utils/api";
 import { useState } from "react";
-import { toast } from "react-toastify";
-import { Trashcan } from "../icons/trashcan";
 import { Spinner } from "../loading/spinner";
-import { AddCard } from "./add-card";
 import SidePanel from "./SidePanel";
 
 export const SavedBankDetails = () => {
@@ -17,6 +14,7 @@ export const SavedBankDetails = () => {
   const removeCard = api.checkout.removePaymentMethod.useMutation();
 
   const removeMethod = async (paymentMethodId: string) => {
+    // TODO: Implement the removeMethod functionality
   };
 
   return (
