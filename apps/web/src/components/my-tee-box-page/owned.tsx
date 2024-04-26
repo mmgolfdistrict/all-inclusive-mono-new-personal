@@ -173,7 +173,7 @@ export const Owned = () => {
         courseLogo={selectedTeeTime?.courseLogo}
         date={selectedTeeTime?.date}
         golferCount={selectedTeeTime?.listedSpots?.length ?? 0}
-        pricePerGolfer={selectedTeeTime?.listPrice ?? 0}
+        pricePerGolfer={selectedTeeTime?.listPrice ? (selectedTeeTime?.listPrice/100) : 0}
         listingId={selectedTeeTime?.listingId ?? undefined}
         refetch={refetch}
       />
