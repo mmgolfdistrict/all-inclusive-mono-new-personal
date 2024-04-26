@@ -1,6 +1,7 @@
 "use client";
 
 import { useSession } from "@golf-district/auth/nextjs-exports";
+import { useAppContext } from "~/contexts/AppContext";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
@@ -23,6 +24,7 @@ import { SideBar } from "./side-bar";
 export const CourseNav = () => {
   const { user } = useUserContext();
   const { course } = useCourseContext();
+  const { setPrevPath } = useAppContext();
   const courseId = course?.id;
   const [isSideBarOpen, setIsSideBarOpen] = useState<boolean>(false);
   const isMobile = useMediaQuery("(max-width: 768px)");
@@ -102,7 +104,12 @@ export const CourseNav = () => {
             </div>
           ) : status == "loading" ? null : (
             status != "authenticated" && (
-              <Link href={`/${course?.id}/login`}>
+              <Link
+                href={`/${course?.id}/login`}
+                onClick={() => {
+                  setPrevPath(pathname);
+                }}
+              >
                 <FilledButton
                   className="hidden md:block"
                   data-testid="signin-button-id"
