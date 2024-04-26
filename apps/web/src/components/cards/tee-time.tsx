@@ -114,16 +114,16 @@ export const TeeTime = ({
       console.log(error);
     }
   };
-  const buyTeeTime = async () => {
+  const buyTeeTime = () => {
     console.log(`buyTeeTime, status = ${status}`);
-    const isTeeTimeAvailable = await refetchCheckTeeTime();
-    console.log("isTeeTimeAvailable");
-    console.log(isTeeTimeAvailable);
+    // const isTeeTimeAvailable = await refetchCheckTeeTime();
+    // console.log("isTeeTimeAvailable");
+    // console.log(isTeeTimeAvailable);
 
-    if (!isTeeTimeAvailable.data && status === "SECOND_HAND") {
-      toast.error("Oops! Tee time is not available anymore");
-      return;
-    }
+    // if (!isTeeTimeAvailable.data && status === "SECOND_HAND") {
+    //   toast.error("Oops! Tee time is not available anymore");
+    //   return;
+    // }
 
     if (!user || !session) {
       if (status === "FIRST_HAND") {
