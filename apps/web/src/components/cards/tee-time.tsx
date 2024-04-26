@@ -115,8 +115,9 @@ export const TeeTime = ({
     }
   };
   const buyTeeTime = async () => {
-    const isTeeTimeAvailable = await refetchCheckTeeTime();
     console.log(`buyTeeTime, status = ${status}`);
+    const isTeeTimeAvailable = await refetchCheckTeeTime();
+    console.log("isTeeTimeAvailable");
     console.log(isTeeTimeAvailable);
 
     if (!isTeeTimeAvailable.data && status === "SECOND_HAND") {
