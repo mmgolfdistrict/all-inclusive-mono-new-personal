@@ -117,7 +117,7 @@ export const TeeTime = ({
   const buyTeeTime = async () => {
     const isTeeTimeAvailable = await refetchCheckTeeTime();
     console.log(`buyTeeTime, status = ${status}`);
-    console.log(isTeeTimeAvailable.data);
+    console.log(isTeeTimeAvailable);
 
     if (!isTeeTimeAvailable.data && status === "SECOND_HAND") {
       toast.error("Oops! Tee time is not available anymore");
