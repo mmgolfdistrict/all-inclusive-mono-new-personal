@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { eq } from "@golf-district/database";
+import { eq, and } from "@golf-district/database";
 import type { Db } from "@golf-district/database";
 import { customerPaymentDetail } from "@golf-district/database/schema/customerPaymentDetails";
 import { cashout } from "@golf-district/database/schema/cashout";
@@ -150,7 +150,6 @@ export class FinixService {
   protected baseurl = process.env.FINIX_BASE_URL;
   protected username = process.env.FINIX_USERNAME;
   protected password = process.env.FINIX_PASSWORD;
-  protected application_id = process.env.FINIX_APPLICATION_ID;
   protected encodedCredentials = btoa(`${this.username}:${this.password}`);
   protected authorizationHeader = `Basic ${this.encodedCredentials}`;
   constructor(
@@ -163,13 +162,13 @@ export class FinixService {
     requestHeaders.append("Authorization", this.authorizationHeader);
     return requestHeaders;
   };
-  createCustomerIdentity = async (tagDetails: TagDetails) => {
+  createCustomerIdentity = async (userId: string) => {
     const raw = JSON.stringify({
       identity_roles: ["RECIPIENT"],
-      entity: {
-        email: tagDetails.customerId,
+      entity: {},
+      tags: {
+        userId,
       },
-      tags: tagDetails,
     });
 
     const requestOptions: RequestOptions = {
@@ -244,22 +243,27 @@ export class FinixService {
     }
   };
 
-  createCashoutTransfer = async (amount: number, customerId: string) => {
+  createCashoutTransfer = async (amount: number, customerId: string, paymentDetailId: string) => {
     console.log("creating transfer");
+    const amountMultiplied = amount * 100;
     const [paymentInstrumentIdFromBackend] = await this.database
       .select({
         paymentInstrumentId: customerPaymentDetail.paymentInstrumentId,
         id: customerPaymentDetail.id,
       })
       .from(customerPaymentDetail)
-      .where(eq(customerPaymentDetail.customerId, customerId))
+      .where(
+        and(eq(customerPaymentDetail.customerId, customerId), eq(customerPaymentDetail.id, paymentDetailId))
+      )
       .execute();
 
     if (!paymentInstrumentIdFromBackend?.paymentInstrumentId) {
       return new Error("Could not find paymentInstrumentId");
     } else {
+      // Add function to validate the amount eligible for cashout
+
       const cashoutData = await this.createTransfer(
-        amount,
+        amountMultiplied,
         paymentInstrumentIdFromBackend?.paymentInstrumentId
       );
       const transferId: string = cashoutData.id as string;
@@ -268,10 +272,11 @@ export class FinixService {
         .insert(cashout)
         .values({
           id: randomUUID(),
-          amount,
+          amount: amountMultiplied,
           customerId,
           transferId,
           paymentDetailId: paymentInstrumentIdFromBackend.id,
+          externalStatus: cashoutData.state,
         })
         .catch((e) => {
           console.log("Error in transfer", e);
@@ -281,11 +286,8 @@ export class FinixService {
     }
   };
 
-  createCashoutCustomerIdentity = async (
-    tagDetails: TagDetails,
-    paymentToken: string
-  ): Promise<ResponseCashout> => {
-    const customerIdentity: Identity = await this.createCustomerIdentity(tagDetails);
+  createCashoutCustomerIdentity = async (userId: string, paymentToken: string): Promise<ResponseCashout> => {
+    const customerIdentity: Identity = await this.createCustomerIdentity(userId);
     const paymentInstrumentData: PaymentInstrument = await this.createPaymentInstrument(
       customerIdentity.id,
       paymentToken
@@ -296,14 +298,26 @@ export class FinixService {
         .insert(customerPaymentDetail)
         .values({
           id: randomUUID(),
-          customerId: tagDetails.customerId,
+          customerId: userId,
           paymentInstrumentId: paymentInstrumentData.id,
           customerIdentity: customerIdentity.id,
+          accountNumber: paymentInstrumentData.masked_account_number,
         })
         .execute();
       return { success: true, error: false };
     } else {
       return { success: false, error: true };
     }
+  };
+
+  getPaymentInstruments = async (userId: string): Promise<{ id: string; accountNumber: string | null }[]> => {
+    const paymentInstruments = await this.database
+      .select({
+        id: customerPaymentDetail.id,
+        accountNumber: customerPaymentDetail.accountNumber,
+      })
+      .from(customerPaymentDetail)
+      .where(and(eq(customerPaymentDetail.customerId, userId), eq(customerPaymentDetail.isActive, 1)));
+    return paymentInstruments;
   };
 }

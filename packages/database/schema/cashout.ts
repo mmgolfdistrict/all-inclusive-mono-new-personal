@@ -5,10 +5,11 @@ import { mySqlTable } from "./_table";
 
 export const cashout = mySqlTable("cashout", {
   id: varchar("id", { length: 191 }).notNull().primaryKey(),
-  customerId: varchar("customerId", { length: 191 }),
+  customerId: varchar("userId", { length: 191 }),
   amount: int("amount").notNull(),
   paymentDetailId: varchar("paymentDetailId", { length: 191 }),
-  transferId: varchar("transferId", { length: 191 }),
+  externalStatus: varchar("externalStatus", { length: 46 }),
+  transferId: varchar("externalTransferId", { length: 191 }),
   lastUpdatedDateTime: datetime("lastUpdatedDateTime", { mode: "string", fsp: 3 }).default(
     sql`CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)`
   ),

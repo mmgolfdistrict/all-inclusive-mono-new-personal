@@ -97,27 +97,29 @@ export class HyperSwitchWebhookService {
    * ```
    */
   processWebhook = async (req: HyperSwitchEvent) => {
-    this.logger.info(`Processing webhook: ${req.event_id}`);
-    const paymentId = req.content.object.payment_id;
-    const amountReceived = req.content.object.amount_received;
-    const customer_id = req.content.object.customer_id;
-    if (!customer_id) throw new Error("Customer id not found");
-    if (!paymentId) throw new Error("Payment id not found");
-    if (!amountReceived) throw new Error("Amount received not found");
-    const customerCart = await this.getCustomerCartData(paymentId);
-    if (customerCart.promoCode) await this.usePromoCode(customerCart.promoCode, customer_id);
-    // console.log(JSON.stringify(customerCart));
-    //@TODO validate payment amount
+    setTimeout(async () => {
+      this.logger.info(`Processing webhook: ${req.event_id}`);
+      const paymentId = req.content.object.payment_id;
+      const amountReceived = req.content.object.amount_received;
+      const customer_id = req.content.object.customer_id;
+      if (!customer_id) throw new Error("Customer id not found");
+      if (!paymentId) throw new Error("Payment id not found");
+      if (!amountReceived) throw new Error("Amount received not found");
+      const customerCart = await this.getCustomerCartData(paymentId);
+      if (customerCart.promoCode) await this.usePromoCode(customerCart.promoCode, customer_id);
+      // console.log(JSON.stringify(customerCart));
+      //@TODO validate payment amount
 
-    switch (req.event_type) {
-      case "payment_succeeded":
-        return this.paymentSuccessHandler(customerCart, amountReceived, paymentId, customer_id);
-      case "payment_failed":
-        return this.paymentFailureHandler(customer_id);
-      default:
-        this.logger.warn(`Unhandled event type: ${req.event_type}`);
-        throw new Error("Unhandled event type.");
-    }
+      switch (req.event_type) {
+        case "payment_succeeded":
+          return this.paymentSuccessHandler(customerCart, amountReceived, paymentId, customer_id);
+        case "payment_failed":
+          return this.paymentFailureHandler(customer_id);
+        default:
+          this.logger.warn(`Unhandled event type: ${req.event_type}`);
+          throw new Error("Unhandled event type.");
+      }
+    }, 60000);
   };
 
   usePromoCode = async (promoCode: string, customerId: string) => {
