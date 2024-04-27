@@ -18,7 +18,7 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
   const { data: user, refetch } = useUser(userId);
   const connectAccount = api.cashOut.createStripeAccountLink.useMutation();
   const createCashoutTransfer = api.cashOut.createCashoutTransfer.useMutation();
-  const { data: associatedBanks, isLoading: isLoadingAssociatedBanks } =
+  const { data: associatedBanks, refetch: refetchAssociatedBanks } =
     api.cashOut.getAssociatedAccounts.useQuery({});
   const requestCashOut = api.cashOut.requestCashOut.useMutation();
 
