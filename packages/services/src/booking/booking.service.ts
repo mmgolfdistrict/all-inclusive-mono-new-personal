@@ -2153,6 +2153,7 @@ export class BookingService {
       cartId,
       userId,
     });
+    debugger;
     const isValid = await this.checkIfPaymentIdIsValid(payment_id);
     if (!isValid) {
       throw new Error("Payment Id not is not valid");
@@ -2385,7 +2386,7 @@ export class BookingService {
       cartId: cartId,
       playerCount: associatedBooking?.listedSlotsCount ?? 0,
       greenFeePerPlayer: primaryGreenFeeCharge / (associatedBooking?.listedSlotsCount ?? 1) ?? 0,
-      totalTaxesAmount: taxes * 100 || 0,
+      totalTaxesAmount: taxCharge * 100 || 0,
       charityId: charityId || null,
       totalCharityAmount: charityCharge * 100 || 0,
       totalAmount: total || 0,

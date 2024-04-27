@@ -20,6 +20,8 @@ import type { InsertTransfer } from "@golf-district/database/schema/transfers";
 import { userPromoCodeLink } from "@golf-district/database/schema/userPromoCodeLink";
 import { users } from "@golf-district/database/schema/users";
 import { currentUtcTimestamp, formatMoney } from "@golf-district/shared";
+import createICS from "@golf-district/shared/createICS";
+import type { Event } from "@golf-district/shared/createICS";
 import Logger from "@golf-district/shared/src/logger";
 import { Client } from "@upstash/qstash/.";
 import dayjs from "dayjs";
@@ -656,7 +658,7 @@ export class HyperSwitchWebhookService {
         return [];
       });
 
-    const { taxes, sensibleCharge, charityCharge, total, cartId, charityId, weatherQuoteId } =
+    const { taxes, sensibleCharge, charityCharge, taxCharge, total, cartId, charityId, weatherQuoteId } =
       await this.getCartData({
         courseId: existingTeeTime?.courseId,
         ownerId: customer_id,
@@ -688,7 +690,7 @@ export class HyperSwitchWebhookService {
           cartId: cartId,
           playerCount: listedSlotsCount || 0,
           greenFeePerPlayer: listPrice ?? 1 * 100,
-          totalTaxesAmount: taxes * 100 || 0,
+          totalTaxesAmount: taxCharge * 100 || 0,
           charityId: charityId || null,
           totalCharityAmount: charityCharge * 100 || 0,
           totalAmount: total || 0,
@@ -779,6 +781,11 @@ export class HyperSwitchWebhookService {
         });
       }
 
+      const event: Event = {
+        startDate: existingTeeTime?.providerDate ?? "",
+        endDate: existingTeeTime?.providerDate ?? "",
+      };
+      const icsContent: string = createICS(event);
       const commonTemplateData = {
         CourseLogoURL: `https://${existingTeeTime?.cdn}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
         CourseName: existingTeeTime?.courseName || "-",
@@ -825,7 +832,16 @@ export class HyperSwitchWebhookService {
           "TeeTimes Purchased",
           existingTeeTime?.courseId,
           process.env.SENDGRID_TEE_TIMES_PURCHASED_TEMPLATE_ID ?? "d-82894b9885e54f98a810960373d80575",
-          template
+          template,
+          [
+            {
+              content: Buffer.from(icsContent).toString("base64"),
+              filename: "meeting.ics",
+              type: "text/calendar",
+              disposition: "attachment",
+              contentId: "meeting",
+            },
+          ]
         );
 
         if (newBookings.length === 1) {
@@ -1731,6 +1747,8 @@ export class HyperSwitchWebhookService {
     customer_id: string,
     customerCart: CustomerCart
   ) => {
+    console.log("handle sensible ===", item)
+
     // Logic for handling first-hand items
     try {
       const booking = await this.getBookingDetails(item.id);

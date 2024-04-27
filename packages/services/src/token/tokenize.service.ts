@@ -12,6 +12,8 @@ import type { InsertTransfer } from "@golf-district/database/schema/transfers";
 import { transfers } from "@golf-district/database/schema/transfers";
 import { users } from "@golf-district/database/schema/users";
 import { currentUtcTimestamp, formatMoney } from "@golf-district/shared";
+import createICS from "@golf-district/shared/createICS";
+import type { Event } from "@golf-district/shared/createICS";
 import Logger from "@golf-district/shared/src/logger";
 import dayjs from "dayjs";
 import { textChangeRangeIsUnchanged } from "typescript";
@@ -148,6 +150,7 @@ export class TokenizeService {
     },
     normalizedCartData?: any
   ): Promise<string> {
+    debugger;
     this.logger.info(`tokenizeBooking tokenizing booking id: ${providerTeeTimeId} for user: ${userId}`);
     //@TODO add this to the transaction
 
@@ -163,6 +166,7 @@ export class TokenizeService {
         greenFee: teeTimes.greenFeePerPlayer,
         courseName: courses.name,
         customerName: users.name,
+        email: users.email,
         entityName: entities.name,
         providerDate: teeTimes.providerDate,
       })
@@ -211,7 +215,7 @@ export class TokenizeService {
       cartId: normalizedCartData.cartId,
       playerCount: players ?? 0,
       greenFeePerPlayer: normalizedCartData.primaryGreenFeeCharge / players || 0,
-      totalTaxesAmount: normalizedCartData.taxes * 100 || 0,
+      totalTaxesAmount: normalizedCartData.taxCharge * 100 || 0,
       charityId: normalizedCartData.charityId || null,
       totalCharityAmount: normalizedCartData.charityCharge * 100 || 0,
       totalAmount: normalizedCartData.total || 0,
@@ -311,6 +315,12 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
     This is a first party purchase from the course
     `;
 
+    const event: Event = {
+      startDate: existingTeeTime.providerDate,
+      endDate: existingTeeTime.providerDate,
+      email: existingTeeTime.email ?? "",
+    };
+    const icsContent: string = createICS(event);
     const template = {
       CustomerFirstName: existingTeeTime.customerName?.split(" ")[0],
       CourseName: existingTeeTime.courseName ?? "-",
@@ -340,14 +350,22 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       PlayerCount: players ?? 0,
       TotalAmount: formatMoney(normalizedCartData.total / 100 ?? 0),
     };
-
     await this.notificationService.createNotification(
       userId,
       "TeeTimes Purchased",
       message,
       existingTeeTime.courseId,
       process.env.SENDGRID_TEE_TIMES_PURCHASED_TEMPLATE_ID,
-      template
+      template,
+      [
+        {
+          content: Buffer.from(icsContent).toString("base64"),
+          filename: "meeting.ics",
+          type: "text/calendar",
+          disposition: "attachment",
+          contentId: "meeting",
+        },
+      ]
     );
     return bookingId;
   }

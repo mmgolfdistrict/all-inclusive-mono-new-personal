@@ -107,7 +107,6 @@ export class foreUp extends BaseProvider {
       booking.data.id,
       token
     );
-
     return booking;
   }
 

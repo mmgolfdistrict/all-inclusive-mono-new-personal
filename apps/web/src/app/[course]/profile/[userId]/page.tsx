@@ -21,8 +21,8 @@ export default function Profile({
       <section className="mx-auto flex w-full flex-col gap-4 pt-4 md:max-w-[1360px] md:px-6">
         <ProfileDetails />
 
-        <UpcomingTeeTimes courseId={courseId} userId={userId} />
-        <TeeTimeHistory courseId={courseId} userId={userId} />
+        {/* <UpcomingTeeTimes courseId={courseId} userId={userId} />
+        <TeeTimeHistory courseId={courseId} userId={userId} /> */}
       </section>
     </main>
   );

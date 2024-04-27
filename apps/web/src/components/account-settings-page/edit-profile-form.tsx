@@ -237,7 +237,7 @@ export const EditProfileForm = () => {
   };
 
   return (
-    <section className="mx-auto flex h-fit w-full flex-col bg-white px-3 py-2 md:max-w-[50%] md:rounded-xl md:p-6 md:py-4">
+    <section className="mx-auto flex h-fit w-full flex-col bg-white px-3 py-2  md:rounded-xl md:p-6 md:py-4">
       <h1 className="pb-6  text-[18px]  md:text-[24px]">Account Information</h1>
       <form className="flex flex-col gap-2" onSubmit={handleSubmit(onSubmit)}>
         <Input

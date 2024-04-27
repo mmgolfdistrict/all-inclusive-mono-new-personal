@@ -8,9 +8,8 @@ import { toast } from "react-toastify";
 import { Trashcan } from "../icons/trashcan";
 import { Spinner } from "../loading/spinner";
 import { AddCard } from "./add-card";
-import SidePanel from "./SidePanel";
 
-export const PaymentInfoMangeProfile = () => {
+export const AddCreditCard = () => {
   const { cards, refetch, isLoading } = usePaymentMethods();
   const removeCard = api.checkout.removePaymentMethod.useMutation();
 
@@ -32,19 +31,10 @@ export const PaymentInfoMangeProfile = () => {
       id="payment-method"
       className="flex h-fit w-full flex-col bg-white px-3 py-2  md:rounded-xl md:p-6 md:py-4"
     >
-      <h1 className="pb-6 text-[18px] md:text-[24px]">Saved Credit Cards</h1>
-      <div className="flex flex-col gap-2">
-        {cards && cards.length > 0 ? (
-          cards.map((card, idx) => (
-            <CardDisplay removeMethod={removeMethod} card={card} key={idx} />
-          ))
-        ) : isLoading ? (
-          <div className="flex justify-center items-center h-full min-h-[200px]">
-            <Spinner className="w-[50px] h-[50px]" />
-          </div>
-        ) : (
-          <div className="text-center">No cards on file.</div>
-        )}
+      <h1 className="pb-6 text-[18px] md:text-[24px]">Add New Credit Card</h1>
+  
+      <div className="w-full md:min-w-[370px] px-2 md:px-0">
+        <AddCard refetchCards={refetch} />
       </div>
     </section>
   );
@@ -84,9 +74,13 @@ const CardDisplay = ({
           <Trashcan fill="#EE2020" className="w-[20px] h-[20px]" />
         </button>
       </div>
+      {/* <div id="backdrop" className="fixed inset-0 bg-black opacity-50 z-10 backdrop"></div> */}
       {confirmStatus ? (
-        <SidePanel isOpen={true}>
-          <div className="bg-white p-8 text-sm rounded shadow-md h-full">
+        <div
+          id="slideOut"
+          className="absolute top-0 bg-white-500 w-1/2 h-full transition-transform duration-300 ease-in-out transform translate-x-full z-20"
+        >
+          <div className="bg-white p-2 text-sm rounded shadow-md h-full">
             <h2 className="text-lg font-semibold mb-4">Confirm Deletion</h2>
             <p className="mb-2">Are you sure you want to delete card?</p>
             <div className="flex justify-end">
@@ -105,7 +99,7 @@ const CardDisplay = ({
               </button>
             </div>
           </div>
-        </SidePanel>
+        </div>
       ) : null}
     </div>
   );
