@@ -23,7 +23,7 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
   const requestCashOut = api.cashOut.requestCashOut.useMutation();
 
   const [modalOpen, setModalOpen] = useState(false);
-
+  const [loadingCashout, setLoadingCashout] = useState<boolean>(false);
   const openModal = () => {
     setModalOpen(true);
   };
@@ -32,36 +32,20 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
     setModalOpen(false);
   };
 
-  const handleConnectAccount = async () => {
-    try {
-      const res = await connectAccount.mutateAsync({
-        accountSettingsHref: window.location.href,
-      });
-      if (res.url) {
-        //open up new tab with stripe connect link
-        window.open(res.url, "_blank");
-      }
-    } catch (error) {
-      console.log(error);
-      toast.error((error as Error).message ?? "Could not connect account.");
-    }
-  };
-
   const handleTransferAmount = async (paymentInstrumentId, amount) => {
-    await createCashoutTransfer.mutateAsync({
-      paymentInstrumentId,
-      amount: Number(amount),
-    });
-  };
-
-  const handleRequestCashOut = async () => {
     try {
-      await requestCashOut.mutateAsync({ userId: userId });
+      setLoadingCashout(true);
+      await createCashoutTransfer.mutateAsync({
+        paymentInstrumentId,
+        amount: Number(amount),
+      });
       toast.success("Cash out requested.");
       await refetch();
     } catch (error) {
       console.log(error);
       toast.error((error as Error).message ?? "Could not request cash out.");
+    } finally {
+      setLoadingCashout(false);
     }
   };
 
@@ -117,6 +101,7 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
           </div>
         </div>
         <OptionDetails
+          loadingCashout={loadingCashout}
           associatedBanks={associatedBanks}
           handleTransferAmount={handleTransferAmount}
         />

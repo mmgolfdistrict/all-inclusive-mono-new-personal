@@ -11,7 +11,7 @@ const Modal = ({ isOpen, onClose }) => {
       {/* <div className="absolute inset-0 bg-black opacity-0"></div> */}
       <div className="bg-white p-6 rounded-md shadow-lg">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold">Modal Title</h2>
+          <h2 className="text-lg font-semibold">Add bank details</h2>
           <button
             className="text-gray-500 hover:text-gray-700"
             onClick={onClose}

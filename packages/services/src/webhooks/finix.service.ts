@@ -1,8 +1,8 @@
 import { randomUUID } from "crypto";
-import { eq, and } from "@golf-district/database";
+import { and, eq } from "@golf-district/database";
 import type { Db } from "@golf-district/database";
-import { customerPaymentDetail } from "@golf-district/database/schema/customerPaymentDetails";
 import { cashout } from "@golf-district/database/schema/cashout";
+import { customerPaymentDetail } from "@golf-district/database/schema/customerPaymentDetails";
 
 interface TagDetails {
   customerId: string;

@@ -1,12 +1,18 @@
 // components/OptionDetails.tsx
 
 import { useState } from "react";
+import { FilledButton } from "../buttons/filled-button";
 
 const OptionDetails = ({
   associatedBanks = [],
   handleTransferAmount,
+  loadingCashout = false,
 }: {
-  associatedBanks?: { id: string; accountNumber: string | null }[];
+  loadingCashout: boolean;
+  associatedBanks?: {
+    id: string;
+    accountNumber: string | null;
+  }[];
   handleTransferAmount: (
     paymentInstrumentId: any,
     amount: any
@@ -50,15 +56,30 @@ const OptionDetails = ({
                 id="amount"
                 name="amount"
                 placeholder="Enter amount"
-                onChange={(e) => setValue(e.target.value)}
+                value={value}
+                onChange={(e) => {
+                  const inputValue = e.target.value;
+                  // Regular expression to match numbers with up to two decimal places
+                  const regex = /^\d*\.?\d{0,2}$/;
+                  if (regex.test(inputValue)) {
+                    setValue(inputValue);
+                  }
+                }}
                 className="w-1/2 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:border-blue-400 mr-4"
               />
-              <button
-                onClick={() => handleTransferAmount(selectedOption, value)}
+              <FilledButton
+                {...(!loadingCashout
+                  ? {
+                      onClick: () => {
+                        setValue("");
+                        handleTransferAmount(selectedOption, value);
+                      },
+                    }
+                  : {})}
                 className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 focus:outline-none"
               >
-                Pay
-              </button>
+                {loadingCashout ? "Processing..." : "Cashout"}
+              </FilledButton>
             </div>
           </div>
         </div>
