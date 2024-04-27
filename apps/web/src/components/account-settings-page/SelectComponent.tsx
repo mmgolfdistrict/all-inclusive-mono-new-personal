@@ -70,9 +70,10 @@ const OptionDetails = ({
               <FilledButton
                 {...(!loadingCashout
                   ? {
-                      onClick: () => {
+                      // eslint-disable-next-line @typescript-eslint/no-misused-promises
+                      onClick: async () => {
                         setValue("");
-                        handleTransferAmount(selectedOption, value);
+                        await handleTransferAmount(selectedOption, value);
                       },
                     }
                   : {})}

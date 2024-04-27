@@ -1,6 +1,5 @@
 "use client";
 
-import * as Tabs from "@radix-ui/react-tabs";
 import { useUser } from "~/hooks/useUser";
 import { api } from "~/utils/api";
 import { formatMoney } from "~/utils/formatters";
@@ -8,19 +7,16 @@ import Script from "next/script";
 import { useState } from "react";
 import { toast } from "react-toastify";
 import { FilledButton } from "../buttons/filled-button";
-import { History } from "../icons/history";
-import { Wallet } from "../icons/wallet";
 import Modal from "./modal";
 import OptionDetails from "./SelectComponent";
-import { TransactionHistory } from "./transaction-history";
 
 export const BalanceHistory = ({ userId }: { userId: string }) => {
   const { data: user, refetch } = useUser(userId);
   const connectAccount = api.cashOut.createStripeAccountLink.useMutation();
   const createCashoutTransfer = api.cashOut.createCashoutTransfer.useMutation();
-  const { data: associatedBanks, refetch: refetchAssociatedBanks } =
-    api.cashOut.getAssociatedAccounts.useQuery({});
-  const requestCashOut = api.cashOut.requestCashOut.useMutation();
+  const { data: associatedBanks } = api.cashOut.getAssociatedAccounts.useQuery(
+    {}
+  );
 
   const [modalOpen, setModalOpen] = useState(false);
   const [loadingCashout, setLoadingCashout] = useState<boolean>(false);
@@ -71,33 +67,19 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
                 </div>
               )}
             </div>
-            {user?.stripeConnectAccountStatus === "CONNECTED" ? (
-              <FilledButton
-                onClick={() => void handleRequestCashOut()}
-                disabled={requestCashOut.isLoading}
-                className={`min-w-[150px] ${
-                  connectAccount.isLoading
-                    ? "animate-pulse cusor-not-allowed"
-                    : ""
-                }`}
-                data-testid="cash-out-button-id"
-              >
-                Cash Out
-              </FilledButton>
-            ) : (
-              <FilledButton
-                onClick={openModal}
-                disabled={connectAccount.isLoading}
-                className={`${
-                  connectAccount.isLoading
-                    ? "animate-pulse cusor-not-allowed"
-                    : ""
-                }`}
-                data-testid="connect-button-id"
-              >
-                Add Bank Account
-              </FilledButton>
-            )}
+
+            <FilledButton
+              onClick={openModal}
+              disabled={connectAccount.isLoading}
+              className={`${
+                connectAccount.isLoading
+                  ? "animate-pulse cusor-not-allowed"
+                  : ""
+              }`}
+              data-testid="connect-button-id"
+            >
+              Add Bank Account
+            </FilledButton>
           </div>
         </div>
         <OptionDetails
