@@ -40,6 +40,7 @@ export const Roles = () => {
 
 const TableRow = ({
   name,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   userId,
   status,
   openEditRole,

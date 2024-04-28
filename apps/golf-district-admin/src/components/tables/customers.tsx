@@ -72,6 +72,7 @@ const TableRow = ({
   name,
   userImage,
   username,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   userId,
   email,
   phoneNumber,
