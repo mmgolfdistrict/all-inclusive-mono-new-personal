@@ -18,6 +18,7 @@ import styles from "./checkout.module.css";
 
 export const CheckoutForm = ({
   isBuyNowAuction,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   amountToPay,
   teeTimeId,
   cartData,

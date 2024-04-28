@@ -5,14 +5,15 @@ import { useCourseContext } from "~/contexts/CourseContext";
 import { api } from "~/utils/api";
 import { formatTime } from "~/utils/formatters";
 import Link from "next/link";
-import { useRouter } from "next/router";
+// import { useRouter } from "next/router";
 import { FilledButton } from "../buttons/filled-button";
 import { OutlineButton } from "../buttons/outline-button";
 import { Facebook } from "../icons/share/facebook";
 import { Instagram } from "../icons/share/instagram";
 import { LinkedIn } from "../icons/share/linkedin";
 import { X } from "../icons/share/x";
-import { InviteFriends } from "../tee-time-page/invite-friends";
+
+// import { InviteFriends } from "../tee-time-page/invite-friends";
 
 export const Confirmation = ({
   teeTimeId,
@@ -24,6 +25,7 @@ export const Confirmation = ({
   const {
     data: bookingData,
     isLoading: isLoadingBookingData,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     refetch,
   } = api.teeBox.getOwnedBookingById.useQuery(
     { bookingId },

@@ -6,10 +6,11 @@ import { api } from "~/utils/api";
 import { useState } from "react";
 import { toast } from "react-toastify";
 import { Trashcan } from "../icons/trashcan";
-import { Spinner } from "../loading/spinner";
+// import { Spinner } from "../loading/spinner";
 import { AddCard } from "./add-card";
 
 export const AddCreditCard = () => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { cards, refetch, isLoading } = usePaymentMethods();
   const removeCard = api.checkout.removePaymentMethod.useMutation();
 
@@ -32,7 +33,7 @@ export const AddCreditCard = () => {
       className="flex h-fit w-full flex-col bg-white px-3 py-2  md:rounded-xl md:p-6 md:py-4"
     >
       <h1 className="pb-6 text-[18px] md:text-[24px]">Add New Credit Card</h1>
-  
+
       <div className="w-full md:min-w-[370px] px-2 md:px-0">
         <AddCard refetchCards={refetch} />
       </div>

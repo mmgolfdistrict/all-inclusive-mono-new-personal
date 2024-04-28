@@ -7,7 +7,7 @@ import { useState } from "react";
 import { toast } from "react-toastify";
 import { Trashcan } from "../icons/trashcan";
 import { Spinner } from "../loading/spinner";
-import { AddCard } from "./add-card";
+// import { AddCard } from "./add-card";
 import SidePanel from "./SidePanel";
 
 export const PaymentInfoMangeProfile = () => {

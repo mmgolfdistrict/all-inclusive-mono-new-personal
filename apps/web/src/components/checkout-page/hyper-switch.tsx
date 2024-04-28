@@ -5,7 +5,8 @@ import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
 import type { CartProduct } from "~/utils/types";
-import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
+// import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Spinner } from "../loading/spinner";
 import { CheckoutForm } from "./checkout-form";
 
@@ -48,6 +49,7 @@ export const HyperSwitch = ({
   const { user } = useUserContext();
   const { course } = useCourseContext();
   const checkout = api.checkout.buildCheckoutSession.useMutation();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isLoadingSession, setIsLoadingSession] = useState<boolean>(false);
   const [cartId, setCartId] = useState<string>("");
   const amountToPay =

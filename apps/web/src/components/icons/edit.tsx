@@ -1,6 +1,6 @@
 import { type SVGAttributes } from "react";
 
-export const Edit = ({ ...rest }: SVGAttributes<SVGElement>) => (
+export const Edit = ({ ..._rest }: SVGAttributes<SVGElement>) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 512 512"

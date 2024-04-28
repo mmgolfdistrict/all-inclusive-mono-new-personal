@@ -2,8 +2,9 @@
 
 import { GoBack } from "~/components/buttons/go-back";
 import { ProfileDetails } from "~/components/profile-page/profile-details";
-import { TeeTimeHistory } from "~/components/profile-page/tee-time-history";
-import { UpcomingTeeTimes } from "~/components/profile-page/upcoming-tee-times";
+
+// import { TeeTimeHistory } from "~/components/profile-page/tee-time-history";
+// import { UpcomingTeeTimes } from "~/components/profile-page/upcoming-tee-times";
 
 export default function Profile({
   params,
@@ -11,7 +12,7 @@ export default function Profile({
   params: { course: string; userId: string };
 }) {
   const courseId = params.course;
-  const userId = params.userId;
+  const _userId = params.userId;
 
   return (
     <main className="bg-secondary-white py-4 md:py-6 ">

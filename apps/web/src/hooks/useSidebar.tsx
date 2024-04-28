@@ -1,4 +1,5 @@
-import { useEffect, useRef, type Dispatch, type SetStateAction } from "react";
+// import { useEffect, useRef, type Dispatch, type SetStateAction } from "react";
+import { useEffect, type Dispatch, type SetStateAction } from "react";
 
 export const useSidebar = ({
   isOpen,
