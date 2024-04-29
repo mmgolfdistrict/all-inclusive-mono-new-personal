@@ -38,7 +38,7 @@ export interface Event {
     SUMMARY:Golf Reservation at ${event.name}
     LOCATION:${event.address}
     DESCRIPTION: GOLFdistrict Reservation : ${event.reservationId} , Course Reservation : ${event.courseReservation},  Number of Players :  ${event.numberOfPlayer}
-    ORGANIZER:mailto:nara@golfdistrict.com
+    ORGANIZER:mailto:${process.env.SENDGRID_EMAIL}
     BEGIN:VALARM
     ACTION:DISPLAY
     TRIGGER:PT18H
