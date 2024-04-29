@@ -169,6 +169,8 @@ export class TokenizeService {
         email: users.email,
         entityName: entities.name,
         providerDate: teeTimes.providerDate,
+        address:courses.address,
+        name:courses.name
       })
       .from(teeTimes)
       .where(eq(teeTimes.id, providerTeeTimeId))
@@ -316,9 +318,14 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
     `;
 
     const event: Event = {
-      startDate: existingTeeTime.providerDate,
-      endDate: existingTeeTime.providerDate,
+      startDate: existingTeeTime.date,
+      endDate: existingTeeTime.date,
       email: existingTeeTime.email ?? "",
+      address:existingTeeTime.address,
+      name:existingTeeTime.name,
+      reservationId:bookingId,
+      courseReservation:providerBookingId,
+      numberOfPlayer:players.toString()
     };
     const icsContent: string = createICS(event);
     const template = {
