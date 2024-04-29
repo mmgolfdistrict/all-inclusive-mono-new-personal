@@ -749,7 +749,6 @@ export class BookingService {
       // splitTeeTime: false,
       slots,
     };
-    debugger;
     await this.database
       .transaction(async (transaction) => {
         for (const id of bookingIds) {
@@ -2153,7 +2152,6 @@ export class BookingService {
       cartId,
       userId,
     });
-    debugger;
     const isValid = await this.checkIfPaymentIdIsValid(payment_id);
     if (!isValid) {
       throw new Error("Payment Id not is not valid");
