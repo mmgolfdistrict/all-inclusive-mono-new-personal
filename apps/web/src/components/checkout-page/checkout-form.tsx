@@ -208,14 +208,19 @@ export const CheckoutForm = ({
             : router.push(
                 `/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}&bookingId=${bookingResponse.bookingId}`
               );
+              setIsLoading(false);
         } else if (response.error) {
           setMessage(response.error.message);
+          setIsLoading(false);
         } else {
           setMessage("An unexpected error occurred.");
+          setIsLoading(false);
         }
 
-        setIsLoading(false);
+        
         // setIsPaymentCompleted(true);
+      }else{
+        setIsLoading(false)
       }
     }
   };

@@ -25,6 +25,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { ViewportList } from "react-viewport-list";
 import { useMediaQuery } from "usehooks-ts";
+import {LoadingContainer} from './loader';
 
 dayjs.extend(Weekday);
 dayjs.extend(RelativeTime);
@@ -174,6 +175,7 @@ export default function CourseHomePage() {
 
   const [showFilters, setShowFilters] = useState<boolean>(false);
   const [showSort, setShowSort] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const isMobile = useMediaQuery("(max-width: 768px)");
 
@@ -206,6 +208,10 @@ export default function CourseHomePage() {
     setTake((prev) => prev - TAKE);
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   };
+
+  const handleLoading=(val:boolean)=>{
+    setIsLoading(val);
+  }
 
   useEffect(() => {
     setPageNumber(1);
@@ -312,6 +318,7 @@ export default function CourseHomePage() {
             </div>
           ) : (
             <>
+              <LoadingContainer isLoading={isLoading}>
               <div className="flex w-full flex-col gap-1 md:gap-4" ref={ref}>
                 <ViewportList
                   viewportRef={ref}
@@ -330,10 +337,12 @@ export default function CourseHomePage() {
                       updateCount={updateCount}
                       minDate={utcStartDate.toString()}
                       maxDate={utcEndDate.toString()}
+                      handleLoading={handleLoading}
                     />
                   )}
                 </ViewportList>
               </div>
+              </LoadingContainer>
               {daysData.amountOfPages > 1 && count > 0 ? (
                 <div className="flex items-center justify-center gap-2">
                   <FilledButton

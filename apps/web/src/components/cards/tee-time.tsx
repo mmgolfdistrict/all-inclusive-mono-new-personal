@@ -8,7 +8,7 @@ import { api } from "~/utils/api";
 import { formatMoney, formatTime, getTime } from "~/utils/formatters";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode} from "react";
 import { toast } from "react-toastify";
 import { Avatar } from "../avatar";
 import { FilledButton } from "../buttons/filled-button";
@@ -43,6 +43,7 @@ export const TeeTime = ({
   showFullDate,
   children,
   listedSlots,
+  handleLoading
 }: {
   time: string;
   canChoosePlayer: boolean;
@@ -64,6 +65,7 @@ export const TeeTime = ({
   showFullDate?: boolean;
   children?: ReactNode;
   listedSlots?: number | null;
+  handleLoading?: (val:boolean)=>void;
 }) => {
   const [selectedPlayers, setSelectedPlayers] = useState<string>(
     status === "UNLISTED" ? "1" : status === "FIRST_HAND" ? "1" : players
@@ -115,7 +117,6 @@ export const TeeTime = ({
     }
   };
   const buyTeeTime = () => {
-    console.log(`buyTeeTime, status = ${status}`);
     // const isTeeTimeAvailable = await refetchCheckTeeTime();
     // console.log("isTeeTimeAvailable");
     // console.log(isTeeTimeAvailable);
@@ -124,6 +125,10 @@ export const TeeTime = ({
     //   toast.error("Oops! Tee time is not available anymore");
     //   return;
     // }
+    if(handleLoading){
+      handleLoading(true);
+    }
+   
 
     if (!user || !session) {
       if (status === "FIRST_HAND") {
@@ -149,6 +154,10 @@ export const TeeTime = ({
         `/${course?.id}/checkout?listingId=${listingId}&playerCount=${listedSlots}`
       );
     }
+    if(handleLoading){
+      handleLoading(false);
+    }
+   
   };
 
   const makeAnOffer = () => {
