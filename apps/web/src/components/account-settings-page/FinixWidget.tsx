@@ -46,7 +46,7 @@ const FinixForm = ({ onClose }) => {
 
   return (
     <>
-      <div id="form" />
+      <div id="form" className="h-[88%]" />
     </>
   );
 };

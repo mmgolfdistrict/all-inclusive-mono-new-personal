@@ -52,3 +52,15 @@ input[type="number"]::-webkit-inner-spin-button {
 button {
   cursor: pointer;
 }
+
+#finix-form-container {
+  height: 98%;
+  display: flex;
+  flex-direction: column;
+}
+
+#form #finix-form-container #finix-submit-button {
+  margin-top: auto !important;
+  background-color: var(--primary-color) !important;
+  border-radius: 999px !important;
+}
