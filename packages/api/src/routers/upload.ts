@@ -40,4 +40,13 @@ export const uploadRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       return await ctx.serviceFactory.getUploadService().abortUpload(input.s3Key, input.uploadId);
     }),
+  deleteFile: protectedProcedure
+    .input(
+      z.object({
+        fileType: z.enum(["profileImage", "bannerImage"]),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return await ctx.serviceFactory.getUploadService().deleteFile(ctx.session.user.id, input.fileType);
+    }),
 });
