@@ -165,7 +165,7 @@ export const ManageTeeTimeListing = ({
     return selectedTeeTime?.firstHandPrice * 50;
   }, [selectedTeeTime]);
 
-  const save = async () => {
+  const _save = async () => {
     if (!selectedTeeTime?.listingId) {
       toast.error("Listing not found");
       return;
@@ -383,7 +383,9 @@ export const ManageTeeTimeListing = ({
         courseLogo={selectedTeeTime?.courseLogo}
         date={selectedTeeTime?.date}
         golferCount={selectedTeeTime?.listedSlotsCount}
-        pricePerGolfer={selectedTeeTime?.listPrice ? (selectedTeeTime?.listPrice/100) : 0}
+        pricePerGolfer={
+          selectedTeeTime?.listPrice ? selectedTeeTime?.listPrice / 100 : 0
+        }
         listingId={selectedTeeTime?.listingId ?? undefined}
         refetch={refetch}
         needRedirect={needRedirect}

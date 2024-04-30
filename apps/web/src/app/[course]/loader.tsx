@@ -1,11 +1,14 @@
-import React, { FC, ReactNode, useState } from "react";
+import React, { type FC, type ReactNode } from "react";
 
 interface LoadingContainerProps {
   isLoading: boolean;
   children: ReactNode;
 }
 
-export const LoadingContainer: FC<LoadingContainerProps> = ({ isLoading, children }) => {
+export const LoadingContainer: FC<LoadingContainerProps> = ({
+  isLoading,
+  children,
+}) => {
   return (
     <div className="relative">
       {isLoading && (
@@ -17,7 +20,7 @@ export const LoadingContainer: FC<LoadingContainerProps> = ({ isLoading, childre
             fill="none"
             viewBox="0 0 24 24"
           >
-             <circle
+            <circle
               className="opacity-80"
               cx="12"
               cy="12"

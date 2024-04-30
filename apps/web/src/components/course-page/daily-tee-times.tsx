@@ -4,7 +4,7 @@ import { useCourseContext } from "~/contexts/CourseContext";
 import { useFiltersContext } from "~/contexts/FiltersContext";
 import { api } from "~/utils/api";
 import { dayMonthDate } from "~/utils/formatters";
-import { Dispatch, useEffect, useRef, SetStateAction } from "react";
+import { useEffect, useRef } from "react";
 import { useElementSize, useIntersectionObserver } from "usehooks-ts";
 import { useDraggableScroll } from "../../hooks/useDraggableScroll";
 import { TeeTime } from "../cards/tee-time";
@@ -17,14 +17,14 @@ export const DailyTeeTimes = ({
   maxDate,
   setError,
   updateCount,
-  handleLoading
+  handleLoading,
 }: {
   date: string;
   minDate: string;
   maxDate: string;
   setError: (t: string | null) => void;
   updateCount: (balance: number) => void;
-  handleLoading?: (val:boolean)=>void;
+  handleLoading?: (val: boolean) => void;
 }) => {
   const overflowRef = useRef<HTMLDivElement>(null);
   const nextPageRef = useRef<HTMLDivElement>(null);
