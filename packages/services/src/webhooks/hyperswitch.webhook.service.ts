@@ -159,15 +159,22 @@ export class HyperSwitchWebhookService {
     paymentId: string,
     customer_id: string
   ) => {
+    console.log("paymentSuccessHandler");
+    console.log(customerCart);
+    console.log(`amountReceived = ${amountReceived}, paymentId = ${paymentId}, customer_id = ${customer_id}`);
+
     // const customer_id: string = customerCart.customerId;
     const isFirstHandBooking = customerCart.cart.some(
       (item) => item.product_data.metadata.type === "first_hand"
     );
+    console.log(`isFirstHandBooking = ${isFirstHandBooking}`);
     if (isFirstHandBooking) {
       await this.bookingService.confirmBooking(paymentId, customer_id);
       const weatherGuaranteeData = customerCart.cart.filter(
         (item) => item.product_data.metadata.type === "sensible"
       );
+      console.log(`weatherGuaranteeData length = ${weatherGuaranteeData.length}`);
+      console.log(weatherGuaranteeData);
       if (weatherGuaranteeData.length) {
         await this.handleSensibleItem(
           weatherGuaranteeData[0] as SensibleProduct,
@@ -1747,7 +1754,7 @@ export class HyperSwitchWebhookService {
     customer_id: string,
     customerCart: CustomerCart
   ) => {
-    console.log("handle sensible ===", item)
+    console.log("handle sensible ===", item);
 
     // Logic for handling first-hand items
     try {
