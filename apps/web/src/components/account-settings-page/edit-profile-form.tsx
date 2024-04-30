@@ -37,6 +37,8 @@ export const EditProfileForm = () => {
     bannerId: "",
     profilePictureId: "",
   });
+
+  const { mutate: deleteFileAsset } = api.upload.deleteFile.useMutation();
   const params = useParams();
   const { userId } = params;
   const { refetchMe } = useUserContext();
@@ -195,9 +197,11 @@ export const EditProfileForm = () => {
       //check if profilePictureAssetId is defaultProfilePhoto and then set it to empty string if it is
       if (dataToUpdate?.profilePictureAssetId === defaultProfilePhoto) {
         dataToUpdate.profilePictureAssetId = "";
+        deleteFileAsset({ fileType: "profileImage" });
       }
       if (dataToUpdate?.bannerImageAssetId === defaultBannerPhoto) {
         dataToUpdate.bannerImageAssetId = "";
+        deleteFileAsset({ fileType: "bannerImage" });
       }
       await updateUser.mutateAsync({ ...dataToUpdate });
       if (profilePhoto && profilePhoto !== defaultProfilePhoto) {
@@ -300,7 +304,11 @@ export const EditProfileForm = () => {
             <option key={idx}>{city.place_name}</option>
           ))}
         </datalist>
-        <div className="flex items-end justify-between w-full gap-2">
+        <div
+          className={`flex items-end justify-between w-full gap-2 ${
+            isUploading ? "pointer-events-none cursor-not-allowed" : ""
+          }`}
+        >
           <DropMedia
             label="Upload your profile photo"
             id="profilePictureAssetId"
@@ -321,7 +329,11 @@ export const EditProfileForm = () => {
           ) : null}
         </div>
 
-        <div className="flex items-end justify-between w-full gap-2">
+        <div
+          className={`flex items-end justify-between w-full gap-2 ${
+            isUploading ? "pointer-events-none cursor-not-allowed" : ""
+          }`}
+        >
           <DropMedia
             label="Upload your background photo"
             id="bannerImageAssetId"

@@ -7,7 +7,6 @@ import { toast } from "react-toastify";
 export const useUploadMedia = () => {
   const getPresignedUrl = api.upload.getPresignedUrl.useMutation();
   const completeUpload = api.upload.completeUpload.useMutation();
-  const storeAsset = api.image.storeAsset.useMutation();
   const [isUploading, setIsUploading] = useState<boolean>(false);
 
   const uploadMedia = async (file: File) => {
@@ -29,16 +28,13 @@ export const useUploadMedia = () => {
         setIsUploading(true);
         return;
       }
-      const { key, cdn, extension } = await completeUpload.mutateAsync({
-        s3Key: s3Key,
-        uploadId: uploadId,
-        parts: completedUploads,
-      });
-      const assetId = await storeAsset.mutateAsync({
-        assetKey: key,
-        extension: extension,
-        cdn: cdn,
-      });
+      const { key, cdn, extension, assetId } = await completeUpload.mutateAsync(
+        {
+          s3Key: s3Key,
+          uploadId: uploadId,
+          parts: completedUploads,
+        }
+      );
       setIsUploading(false);
       return { assetUrl: assetToURL({ cdn, key, extension }), assetId };
     } catch (error) {
