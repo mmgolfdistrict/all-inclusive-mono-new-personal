@@ -21,6 +21,7 @@ export interface Customer {
   playerNumber: number | null;
   customerId: number | null;
   name: string | null;
+  username: string | null;
 }
 /**
  * Service class for handling Tee Sheet providers.
@@ -199,6 +200,7 @@ export class ProviderService extends CacheService {
       playerNumber: buyer.providerAccountNumber,
       customerId: buyer.providerCustomerId,
       name: buyer.name,
+      username: buyer.handel
     };
     if (buyer.providerAccountNumber && buyer.providerCustomerId) {
       return customerInfo;
@@ -235,6 +237,7 @@ export class ProviderService extends CacheService {
           playerNumber: accountNumber,
           customerId: customerData.data.id,
           name: buyer.name,
+          username: buyer.handel
         };
         customerId = customerData.data.id;
       } catch (error) {

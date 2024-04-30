@@ -121,7 +121,7 @@ export class HyperSwitchWebhookService {
           this.logger.warn(`Unhandled event type: ${req.event_type}`);
           throw new Error("Unhandled event type.");
       }
-    }, 60000);
+    }, 10000);
   };
 
   usePromoCode = async (promoCode: string, customerId: string) => {
@@ -657,6 +657,7 @@ export class HyperSwitchWebhookService {
       .from(teeTimes)
       .where(eq(teeTimes.id, firstBooking.teeTimeId))
       // .leftJoin(entities, eq(teeTimes.entityId, entities.id))
+      .leftJoin(entities, eq(courses.entityId, entities.id))
       .leftJoin(courses, eq(courses.id, teeTimes.courseId))
       .leftJoin(assets, eq(assets.id, courses.logoId))
       .execute()
@@ -828,10 +829,11 @@ export class HyperSwitchWebhookService {
               maximumFractionDigits: 2,
             })}` || "-",
           SensibleWeatherIncluded: sensibleCharge ? "Yes" : "No",
-          PurchasedFrom: sellerCustomer.name,
+          PurchasedFrom: sellerCustomer.username,
           PlayerCount: listedSlotsCount ?? 0,
-          TotalAmount: formatMoney(total),
+          TotalAmount: formatMoney(total/100),
         };
+console.log("$$$$ template", sellerCustomer, existingTeeTime);
 
         await this.notificationService.createNotification(
           booking?.data.ownerId || "",
@@ -1754,8 +1756,6 @@ export class HyperSwitchWebhookService {
     customer_id: string,
     customerCart: CustomerCart
   ) => {
-    console.log("handle sensible ===", item);
-
     // Logic for handling first-hand items
     try {
       const booking = await this.getBookingDetails(item.id);
