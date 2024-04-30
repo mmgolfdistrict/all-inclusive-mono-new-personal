@@ -633,7 +633,6 @@ export class HyperSwitchWebhookService {
     } catch (err) {
       this.logger.error(`Error creating booking: ${err}`);
     }
-
     const [existingTeeTime] = await this.database
       .select({
         id: teeTimes.id,
@@ -657,8 +656,8 @@ export class HyperSwitchWebhookService {
       .from(teeTimes)
       .where(eq(teeTimes.id, firstBooking.teeTimeId))
       // .leftJoin(entities, eq(teeTimes.entityId, entities.id))
-      .leftJoin(entities, eq(courses.entityId, entities.id))
       .leftJoin(courses, eq(courses.id, teeTimes.courseId))
+      .leftJoin(entities, eq(courses.entityId, entities.id))
       .leftJoin(assets, eq(assets.id, courses.logoId))
       .execute()
       .catch((err) => {
@@ -798,7 +797,7 @@ export class HyperSwitchWebhookService {
         CourseLogoURL: `https://${existingTeeTime?.cdn}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
         CourseName: existingTeeTime?.courseName || "-",
         FacilityName: existingTeeTime?.entityName || "-",
-        PlayDateTime: dayjs(existingTeeTime?.providerDate).format("MM/DD/YYYY h:mm A") || "-",
+        PlayDateTime: dayjs(existingTeeTime?.providerDate).utcOffset("-06:00").format("MM/DD/YYYY h:mm A") || "-",
         NumberOfHoles: existingTeeTime?.numberOfHoles,
         SellTeeTImeURL: `${process.env.APP_URL}/my-tee-box`,
         ManageTeeTimesURL: `${process.env.APP_URL}/my-tee-box`,
@@ -833,7 +832,6 @@ export class HyperSwitchWebhookService {
           PlayerCount: listedSlotsCount ?? 0,
           TotalAmount: formatMoney(total/100),
         };
-console.log("$$$$ template", sellerCustomer, existingTeeTime);
 
         await this.notificationService.createNotification(
           booking?.data.ownerId || "",
