@@ -83,10 +83,17 @@ export default function Checkout({
     { enabled: listingId !== undefined }
   );
 
+  let isError, error;
+
   const data = teeTimeId ? teeTimeData : listingData;
   const isLoading = teeTimeId ? isLoadingTeeTime : isLoadingListing;
-  const isError = teeTimeId ? isErrorTeeTime : isErrorListing;
-  const error = teeTimeId ? errorTeeTime : errorListing;
+  isError = teeTimeId ? isErrorTeeTime : isErrorListing;
+  error = teeTimeId ? errorTeeTime : errorListing;
+
+  if (listingData?.ownerId === user?.id) {
+    isError = true;
+    error = new Error("You cannot buy your own tee time");
+  }
 
   const saleType = teeTimeId ? "first_hand" : "second_hand";
 
