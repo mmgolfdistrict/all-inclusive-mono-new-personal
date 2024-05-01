@@ -54,7 +54,7 @@ button {
 }
 
 #finix-form-container {
-  height: 98%;
+  height: 100% !important;
   display: flex;
   flex-direction: column;
 }
@@ -63,4 +63,10 @@ button {
   margin-top: auto !important;
   background-color: var(--primary-color) !important;
   border-radius: 999px !important;
+  font-size: 0 !important;
+}
+#form #finix-form-container #finix-submit-button::after {
+  content: "Save";
+  display: inline-block;
+  font-size: 16px;
 }

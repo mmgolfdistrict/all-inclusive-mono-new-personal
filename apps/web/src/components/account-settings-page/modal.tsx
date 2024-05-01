@@ -1,11 +1,19 @@
 // Modal.js
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { OutlineButton } from "../buttons/outline-button";
+import { Close } from "../icons/close";
+import { Spinner } from "../loading/spinner";
 import FinixForm from "./FinixWidget";
 
 const Modal = ({ isOpen, onClose }) => {
-  if (!isOpen) return null;
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (isOpen) {
+      setIsLoading(true);
+    }
+  }, [isOpen]);
 
   return (
     <>
@@ -21,20 +29,35 @@ const Modal = ({ isOpen, onClose }) => {
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        <div className="bg-white p-6 rounded-md h-full">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold">Add bank details</h2>
-            <button
-              className="text-gray-500 hover:text-gray-700"
-              onClick={onClose}
-            >
-              Close
-            </button>
+        <div className="bg-white p-6 flex flex-col justify-between rounded-md h-full w-full">
+          <div className="flex flex-col h-full pb-2">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold">Add Bank Account</h2>
+              <button
+                className="text-gray-500 hover:text-gray-700"
+                onClick={onClose}
+              >
+                <Close className="h-[25px] w-[25px]" />
+              </button>
+            </div>
+            {isLoading && (
+              <div className="flex justify-center items-center m-auto h-full w-full">
+                <Spinner className="w-[50px] h-[50px]" />
+              </div>
+            )}
+            {isOpen && (
+              <FinixForm
+                onClose={onClose}
+                setLoading={setIsLoading}
+                loading={isLoading}
+              />
+            )}
           </div>
-          <FinixForm onClose={onClose} />
-          <OutlineButton onClick={onClose} className="w-full">
-            Cancel
-          </OutlineButton>
+          {!isLoading && (
+            <OutlineButton onClick={onClose} className="w-full">
+              Cancel
+            </OutlineButton>
+          )}
         </div>
       </aside>
     </>
