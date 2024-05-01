@@ -20,7 +20,7 @@ export const LoadingContainer: FC<LoadingContainerProps> = ({
   return (
     <div className="relative">
       {isLoading && (
-        <div className="absolute inset-0 flex  justify-center bg-black bg-opacity-40 z-10 rounded-md">
+        <div className="absolute inset-0 flex  justify-center bg-black bg-opacity-40 z-10">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 200 200"
