@@ -220,6 +220,8 @@ export class HyperSwitchWebhookService {
       }
     }
   };
+
+
   handleFirstHandItem = async (
     item: FirstHandProduct,
     amountReceived: number,
@@ -288,9 +290,10 @@ export class HyperSwitchWebhookService {
       },
     ];
 
+    //TODO: ADD taxes component on totalAmountPaid if this method comes in use and decrease markup fees
     const booking = await provider
       .createBooking(token, teeTime.providerCourseId!, teeTime.providerTeeSheetId!, {
-        totalAmountPaid: amountReceived / 100,
+        // totalAmountPaid: amountReceived / 100,
         data: {
           type: "bookings",
           attributes: {
@@ -577,7 +580,6 @@ export class HyperSwitchWebhookService {
         firstBooking.providerTeeSheetId!,
         {
           data: {
-            totalAmountPaid: amountReceived / 100,
             type: "bookings",
             attributes: {
               start: firstBooking.providerDate,
@@ -605,7 +607,6 @@ export class HyperSwitchWebhookService {
           firstBooking.providerCourseId!,
           firstBooking.providerTeeSheetId!,
           {
-            totalAmountPaid: amountReceived / 100,
             data: {
               type: "bookings",
               attributes: {
@@ -655,7 +656,6 @@ export class HyperSwitchWebhookService {
       })
       .from(teeTimes)
       .where(eq(teeTimes.id, firstBooking.teeTimeId))
-      // .leftJoin(entities, eq(teeTimes.entityId, entities.id))
       .leftJoin(courses, eq(courses.id, teeTimes.courseId))
       .leftJoin(entities, eq(courses.entityId, entities.id))
       .leftJoin(assets, eq(assets.id, courses.logoId))

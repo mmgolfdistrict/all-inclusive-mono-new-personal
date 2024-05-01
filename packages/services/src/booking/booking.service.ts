@@ -124,7 +124,7 @@ export class BookingService {
     private readonly tokenizeService: TokenizeService,
     private readonly providerService: ProviderService,
     private readonly notificationService: NotificationService
-  ) {}
+  ) { }
 
   createCounterOffer = async (userId: string, bookingIds: string[], offerId: string, amount: number) => {
     //find owner of each booking
@@ -2051,7 +2051,7 @@ export class BookingService {
       .execute();
 
     let slotInfo = customerCartData?.cart?.cart?.filter(
-      ({ product_data }: ProductData) => product_data.metadata.type === "first_hand"
+      ({ product_data }: ProductData) => product_data.metadata.type === 'first_hand'
     );
     if (!slotInfo.length) {
       slotInfo = customerCartData?.cart?.cart?.filter(
@@ -2078,11 +2078,15 @@ export class BookingService {
       customerCartData?.cart?.cart
         ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "sensible")
         ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
-    ``;
 
     const charityCharge =
       customerCartData?.cart?.cart
         ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "charity")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+
+    const markupCharge =
+      customerCartData?.cart?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "markup")
         ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
 
     const charityId = customerCartData?.cart?.cart?.find(
@@ -2109,6 +2113,7 @@ export class BookingService {
       convenienceCharge,
       charityCharge,
       taxes,
+      markupCharge,
       total,
       cartId: customerCartData?.cartId,
       charityId,
@@ -2143,6 +2148,7 @@ export class BookingService {
       sensibleCharge,
       convenienceCharge,
       charityCharge,
+      markupCharge,
       taxes,
       total,
       charityId,
@@ -2215,9 +2221,10 @@ export class BookingService {
         accountNumber: providerCustomer.playerNumber,
       },
     ];
+
     const booking = await provider
       .createBooking(token, teeTime.providerCourseId!, teeTime.providerTeeSheetId!, {
-        totalAmountPaid: primaryGreenFeeCharge / 100,
+        totalAmountPaid: (primaryGreenFeeCharge / 100) + taxCharge - markupCharge,
         data: {
           type: "bookings",
           attributes: {
