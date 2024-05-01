@@ -325,7 +325,8 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       name:existingTeeTime.name,
       reservationId:bookingId,
       courseReservation:providerBookingId,
-      numberOfPlayer:players.toString()
+      numberOfPlayer:players.toString(),
+      playTime: dayjs(existingTeeTime.providerDate).utcOffset("-06:00").format("YYYY-MM-DD hh:mm A") ?? "-",
     };
     const icsContent: string = createICS(event);
     const template = {
