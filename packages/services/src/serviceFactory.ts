@@ -295,7 +295,7 @@ export class ServiceFactory {
    * @returns An instance of TokenizeService.
    */
   getTokenizerService = (): TokenizeService => {
-    return new TokenizeService(this.config.database, this.getNotificationService());
+    return new TokenizeService(this.config.database, this.getNotificationService(), this.getSensibleService());
   };
 
   /**
