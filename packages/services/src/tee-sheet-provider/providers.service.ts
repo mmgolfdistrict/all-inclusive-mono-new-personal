@@ -200,7 +200,8 @@ export class ProviderService extends CacheService {
       playerNumber: buyer.providerAccountNumber,
       customerId: buyer.providerCustomerId,
       name: buyer.name,
-      username: buyer.handel
+      username: buyer.handel,
+      email:buyer.email
     };
     if (buyer.providerAccountNumber && buyer.providerCustomerId) {
       return customerInfo;
@@ -237,7 +238,8 @@ export class ProviderService extends CacheService {
           playerNumber: accountNumber,
           customerId: customerData.data.id,
           name: buyer.name,
-          username: buyer.handel
+          username: buyer.handel,
+          email:buyer.email
         };
         customerId = customerData.data.id;
       } catch (error) {
