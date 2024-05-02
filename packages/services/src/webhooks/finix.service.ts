@@ -3,6 +3,7 @@ import { and, eq } from "@golf-district/database";
 import type { Db } from "@golf-district/database";
 import { cashout } from "@golf-district/database/schema/cashout";
 import { customerPaymentDetail } from "@golf-district/database/schema/customerPaymentDetails";
+import type { CashOutService } from "../cashout/cashout.service";
 
 interface TagDetails {
   customerId: string;
@@ -153,7 +154,8 @@ export class FinixService {
   protected encodedCredentials = btoa(`${this.username}:${this.password}`);
   protected authorizationHeader = `Basic ${this.encodedCredentials}`;
   constructor(
-    private readonly database: Db // private readonly hyperSwitchService: HyperSwitchWebhookService
+    private readonly database: Db, // private readonly hyperSwitchService: HyperSwitchWebhookService
+    private readonly cashoutService: CashOutService
   ) {}
   getHeaders = () => {
     const requestHeaders = new Headers();
@@ -244,7 +246,15 @@ export class FinixService {
   };
 
   createCashoutTransfer = async (amount: number, customerId: string, paymentDetailId: string) => {
-    console.log("creating transfer");
+    const recievableData = await this.cashoutService.getRecievables(customerId);
+    if (!recievableData) {
+      return new Error("Error Fetching recievable data");
+    }
+    console.log(recievableData);
+    if (amount > recievableData.withdrawableAmount) {
+      return new Error("Amount cannot be more then withdrawable amount");
+    }
+    console.log("creating transfer", recievableData.withdrawableAmount);
     const amountMultiplied = amount * 100;
     const [paymentInstrumentIdFromBackend] = await this.database
       .select({

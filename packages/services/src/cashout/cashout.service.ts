@@ -1,11 +1,14 @@
 import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
-import { eq } from "@golf-district/database";
+import { eq, sum, and, gte, lt } from "@golf-district/database";
 import { users } from "@golf-district/database/schema/users";
 import { withdrawals } from "@golf-district/database/schema/withdrawals";
 import Logger from "@golf-district/shared/src/logger";
-import { NotificationService } from "../notification/notification.service";
+import type { NotificationService } from "../notification/notification.service";
 import type { StripeService } from "../payment-processor/stripe.service";
+import { customerRecievable } from "@golf-district/database/schema/customerRecievable";
+import { cashout } from "@golf-district/database/schema/cashout";
+import { currentUtcTimestamp, dateToUtcTimestamp } from "@golf-district/shared";
 
 export class CashOutService {
   private readonly logger = Logger(CashOutService.name);
@@ -128,5 +131,45 @@ export class CashOutService {
       "Cashout Initiated",
       "Your funds have been withdrawn to your bank account"
     );
+  };
+
+  getRecievables = async (userId: string) => {
+    const [totalAmount] = await this.database
+      .select({
+        amount: sum(customerRecievable.amount),
+      })
+      .from(customerRecievable)
+      .where(eq(customerRecievable.userId, userId))
+      .execute();
+
+    const [totalCashoutAmount] = await this.database
+      .select({
+        amount: sum(cashout.amount),
+      })
+      .from(cashout)
+      .where(eq(cashout.customerId, userId))
+      .execute();
+
+    const [radeemableAmount] = await this.database
+      .select({
+        amount: sum(customerRecievable.amount),
+      })
+      .from(customerRecievable)
+      .where(
+        and(eq(customerRecievable.userId, userId), lt(customerRecievable.redeemAfter, currentUtcTimestamp()))
+      )
+      .execute();
+
+    // .where(and(eq(cashout.customerId, userId), gte(teeTimes.date, currentUtcTimestamp())))
+    const tAmount = totalAmount ? totalAmount.amount : 0;
+    const tCashoutAmount = totalCashoutAmount ? totalCashoutAmount.amount : 0;
+    const tAvailableAmount = Number(tAmount) - Number(tCashoutAmount);
+    const tReedemableAmount = Number(radeemableAmount?.amount) - tAvailableAmount;
+    return {
+      totalAmount: Number(tAmount) / 100,
+      totalCashoutAmount: Number(tCashoutAmount) / 100,
+      availableAmount: tAvailableAmount / 100,
+      withdrawableAmount: tReedemableAmount / 100,
+    };
   };
 }

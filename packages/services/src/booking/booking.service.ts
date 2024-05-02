@@ -2215,6 +2215,7 @@ export class BookingService {
         accountNumber: providerCustomer.playerNumber,
       },
     ];
+
     const booking = await provider
       .createBooking(token, teeTime.providerCourseId!, teeTime.providerTeeSheetId!, {
         totalAmountPaid: primaryGreenFeeCharge / 100,

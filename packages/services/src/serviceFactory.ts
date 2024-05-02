@@ -338,6 +338,6 @@ export class ServiceFactory {
   };
 
   getFinixService = (): FinixService => {
-    return new FinixService(this.config.database);
+    return new FinixService(this.config.database, this.getCashOutService());
   };
 }
