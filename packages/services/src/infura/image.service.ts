@@ -19,7 +19,7 @@ export class ImageService {
    *
    * @param {Db} database - The database client instance.
    */
-  constructor(private readonly database: Db) { }
+  constructor(private readonly database: Db) {}
 
   /**
    * Asynchronously retrieves the URL of an image from the database using its asset ID.
@@ -83,7 +83,7 @@ export class ImageService {
       extension,
       cdn,
       createdById,
-    }
+    };
 
     await this.database
       .insert(assets)
@@ -108,6 +108,5 @@ export class ImageService {
       throw new Error("Error asset not found for key ${key}");
     }
     return insertedAsset.id;
-
   };
 }

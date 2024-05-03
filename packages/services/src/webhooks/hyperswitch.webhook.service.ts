@@ -8,6 +8,7 @@ import { bookingslots } from "@golf-district/database/schema/bookingslots";
 import { charityCourseLink } from "@golf-district/database/schema/charityCourseLink";
 import { courses } from "@golf-district/database/schema/courses";
 import { customerCarts } from "@golf-district/database/schema/customerCart";
+import { customerRecievable } from "@golf-district/database/schema/customerRecievable";
 import { donations } from "@golf-district/database/schema/donations";
 import { entities } from "@golf-district/database/schema/entities";
 import { lists } from "@golf-district/database/schema/lists";
@@ -397,6 +398,25 @@ export class HyperSwitchWebhookService {
     };
   };
 
+  addDays = (date: Date, days: number) => {
+    const result = new Date(date);
+    result.setDate(result.getDate() + days);
+    return result;
+  };
+
+  formatCurrentDateTime = (date: Date) => {
+    const currentDate = date;
+    const year = currentDate.getFullYear();
+    const month = String(currentDate.getMonth() + 1).padStart(2, "0"); // Adding 1 because months are zero-indexed
+    const day = String(currentDate.getDate()).padStart(2, "0");
+    const hours = String(currentDate.getHours()).padStart(2, "0");
+    const minutes = String(currentDate.getMinutes()).padStart(2, "0");
+    const seconds = String(currentDate.getSeconds()).padStart(2, "0");
+    const milliseconds = String(currentDate.getMilliseconds()).padStart(3, "0");
+
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.${milliseconds}`;
+  };
+
   handleSecondHandItem = async (
     item: SecondHandProduct,
     amountReceived: number,
@@ -404,8 +424,6 @@ export class HyperSwitchWebhookService {
     paymentId: string,
     golferPrice: number
   ) => {
-    // console.log(item, amountReceived, customer_id, paymentId, "iuguyffuyfuy");
-
     const listingId = item.product_data.metadata.second_hand_id;
     const listedSlots = await this.database
       .select({
@@ -423,6 +441,7 @@ export class HyperSwitchWebhookService {
       .select({
         id: bookings.id,
         oldBookingId: transfers.fromBookingId,
+        transferId: transfers.id,
       })
       .from(customerCarts)
       .innerJoin(bookings, eq(bookings.cartId, customerCarts.id))
@@ -557,7 +576,29 @@ export class HyperSwitchWebhookService {
       });
 
     const newBookings: BookingResponse[] = [];
-
+    console.log(
+      token,
+      firstBooking.providerCourseId!,
+      firstBooking.providerTeeSheetId!,
+      JSON.stringify({
+        data: {
+          totalAmountPaid: amountReceived / 100,
+          type: "bookings",
+          attributes: {
+            start: firstBooking.providerDate,
+            holes: firstBooking.numberOfHoles,
+            players: listedSlotsCount,
+            bookedPlayers: [
+              {
+                personId: buyerCustomer.customerId,
+              },
+            ],
+            event_type: "tee_time",
+            details: "GD Booking",
+          },
+        },
+      })
+    );
     try {
       const newBooking = await provider.createBooking(
         token,
@@ -640,7 +681,7 @@ export class HyperSwitchWebhookService {
         buyerFee: courses.buyerFee,
         sellerFee: courses.sellerFee,
         providerDate: teeTimes.providerDate,
-        address: courses.address
+        address: courses.address,
       })
       .from(teeTimes)
       .where(eq(teeTimes.id, firstBooking.teeTimeId))
@@ -653,6 +694,9 @@ export class HyperSwitchWebhookService {
         this.logger.error(err);
         return [];
       });
+
+    const buyerFee = (existingTeeTime?.buyerFee ?? 1) / 100;
+    const sellerFee = (existingTeeTime?.sellerFee ?? 1) / 100;
 
     const { taxes, sensibleCharge, charityCharge, taxCharge, total, cartId, charityId, weatherQuoteId } =
       await this.getCartData({
@@ -778,31 +822,30 @@ export class HyperSwitchWebhookService {
       }
 
       const event: Event = {
-        startDate: existingTeeTime?.date??"",
-        endDate: existingTeeTime?.date??"",
-        email: buyerCustomer?.email??"",
-        address:existingTeeTime?.address??"",
-        name:existingTeeTime?.courseName,
-        reservationId:bookingId,
-        courseReservation:newBooking?.data.id,
-        numberOfPlayer:(listedSlotsCount??1).toString(),
-        playTime: dayjs(existingTeeTime?.providerDate).utcOffset("-06:00").format("YYYY-MM-DD hh:mm A") ?? "-",
+        startDate: existingTeeTime?.date ?? "",
+        endDate: existingTeeTime?.date ?? "",
+        email: buyerCustomer?.email ?? "",
+        address: existingTeeTime?.address ?? "",
+        name: existingTeeTime?.courseName,
+        reservationId: bookingId,
+        courseReservation: newBooking?.data.id,
+        numberOfPlayer: (listedSlotsCount ?? 1).toString(),
+        playTime:
+          dayjs(existingTeeTime?.providerDate).utcOffset("-06:00").format("YYYY-MM-DD hh:mm A") ?? "-",
       };
       const icsContent: string = createICS(event);
       const commonTemplateData = {
         CourseLogoURL: `https://${existingTeeTime?.cdn}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
         CourseName: existingTeeTime?.courseName || "-",
         FacilityName: existingTeeTime?.entityName || "-",
-        PlayDateTime: dayjs(existingTeeTime?.providerDate).utcOffset("-06:00").format("MM/DD/YYYY h:mm A") || "-",
+        PlayDateTime:
+          dayjs(existingTeeTime?.providerDate).utcOffset("-06:00").format("MM/DD/YYYY h:mm A") || "-",
         NumberOfHoles: existingTeeTime?.numberOfHoles,
         SellTeeTImeURL: `${process.env.APP_URL}/my-tee-box`,
         ManageTeeTimesURL: `${process.env.APP_URL}/my-tee-box`,
         GolfDistrictReservationID: bookingId,
         CourseReservationID: newBooking?.data.id,
       };
-
-      const buyerFee = (existingTeeTime?.buyerFee ?? 1) / 100;
-      const sellerFee = (existingTeeTime?.sellerFee ?? 1) / 100;
 
       if (newBooking.data.bookingType == "FIRST") {
         const template: any = {
@@ -826,7 +869,7 @@ export class HyperSwitchWebhookService {
           SensibleWeatherIncluded: sensibleCharge ? "Yes" : "No",
           PurchasedFrom: sellerCustomer.username,
           PlayerCount: listedSlotsCount ?? 0,
-          TotalAmount: formatMoney(total/100),
+          TotalAmount: formatMoney(total / 100),
         };
 
         await this.notificationService.createNotification(
@@ -911,6 +954,29 @@ export class HyperSwitchWebhookService {
         );
       }
     }
+
+    const amount = listPrice ?? 1;
+    const serviceCharge = amount * sellerFee;
+    const payable = (amount - serviceCharge) * (listedSlotsCount || 1);
+    const currentDate = new Date();
+    const redeemAfterDate = this.addDays(currentDate, 7);
+    const customerRecievableData = [
+      {
+        id: randomUUID(),
+        userId: firstBooking.ownerId,
+        amount: payable,
+        type: "CASHOUT",
+        transferId: bookingsIds?.transferId,
+        createdDateTime: this.formatCurrentDateTime(currentDate), // Use UTC string format for datetime fields
+        redeemAfter: this.formatCurrentDateTime(redeemAfterDate), // Use UTC string format for datetime fields
+      },
+    ];
+    await this.database
+      .insert(customerRecievable)
+      .values(customerRecievableData)
+      .catch((err: any) => {
+        this.logger.error(err);
+      });
   };
 
   // handleSecondHandItem = async (`

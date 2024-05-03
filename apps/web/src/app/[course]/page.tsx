@@ -25,7 +25,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { ViewportList } from "react-viewport-list";
 import { useMediaQuery } from "usehooks-ts";
-import {LoadingContainer} from './loader';
+import { LoadingContainer } from "./loader";
 
 dayjs.extend(Weekday);
 dayjs.extend(RelativeTime);
@@ -209,9 +209,9 @@ export default function CourseHomePage() {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const handleLoading=(val:boolean)=>{
+  const handleLoading = (val: boolean) => {
     setIsLoading(val);
-  }
+  };
 
   useEffect(() => {
     setPageNumber(1);
@@ -262,9 +262,9 @@ export default function CourseHomePage() {
 
   return (
     <main className="bg-secondary-white py-4 md:py-6">
-       <LoadingContainer isLoading={isLoading}>
+      <LoadingContainer isLoading={isLoading}>
         <div></div>
-       </LoadingContainer>
+      </LoadingContainer>
       <div className="flex items-center justify-between px-4 md:px-6">
         <GoBack href="/" text={`Back to all ${entity?.name} Courses`} />
       </div>
@@ -375,7 +375,7 @@ export default function CourseHomePage() {
           )}
         </div>
       </section>
-     
+
       {showSort && (
         <MobileSort
           setShowSort={setShowSort}
@@ -390,7 +390,6 @@ export default function CourseHomePage() {
           toggleFilters={toggleFilters}
         />
       )}
-      
     </main>
   );
 }

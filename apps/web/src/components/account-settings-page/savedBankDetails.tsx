@@ -9,9 +9,11 @@ import SidePanel from "./SidePanel";
 
 export const SavedBankDetails = () => {
   // const { cards, refetch, isLoading } = usePaymentMethods();
-  const { data: associatedBanks, refetch, isLoading } = api.cashOut.getAssociatedAccounts.useQuery(
-    {}
-  );
+  const {
+    data: associatedBanks,
+    refetch,
+    isLoading,
+  } = api.cashOut.getAssociatedAccounts.useQuery({});
   const removeCard = api.checkout.removePaymentMethod.useMutation();
 
   const removeMethod = async (_paymentMethodId: string) => {

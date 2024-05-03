@@ -22,7 +22,7 @@ import { CustomerCart } from "../checkout/types";
 import type { NotificationService } from "../notification/notification.service";
 import type { ProviderAPI } from "../tee-sheet-provider/sheet-providers";
 import { TeeTime } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
-import { SensibleService } from "../sensible/sensible.service";
+import type { SensibleService } from "../sensible/sensible.service";
 
 /**
  * Service class for handling booking tokenization, transfers, and updates.
@@ -42,7 +42,11 @@ export class TokenizeService {
    * @example
    * const tokenizeService = new TokenizeService(database);
    */
-  constructor(private readonly database: Db, private readonly notificationService: NotificationService, private readonly sensibleService: SensibleService) { }
+  constructor(
+    private readonly database: Db,
+    private readonly notificationService: NotificationService,
+    private readonly sensibleService: SensibleService
+  ) {}
   getCartData = async ({ courseId = "", ownerId = "", paymentId = "" }) => {
     const [customerCartData]: any = await this.database
       .select({ cart: customerCarts.cart, cartId: customerCarts.id })
@@ -175,7 +179,7 @@ export class TokenizeService {
         entityName: entities.name,
         providerDate: teeTimes.providerDate,
         address: courses.address,
-        name: courses.name
+        name: courses.name,
       })
       .from(teeTimes)
       .where(eq(teeTimes.id, providerTeeTimeId))
@@ -224,7 +228,9 @@ export class TokenizeService {
           user: {
             email: normalizedCartData?.cart?.email,
             name: normalizedCartData.cart?.name,
-            phone: normalizedCartData.cart?.phone ? `+${normalizedCartData?.cart?.phone_country_code}${normalizedCartData?.cart?.phone}` : "",
+            phone: normalizedCartData.cart?.phone
+              ? `+${normalizedCartData?.cart?.phone_country_code}${normalizedCartData?.cart?.phone}`
+              : "",
           },
         });
       }
