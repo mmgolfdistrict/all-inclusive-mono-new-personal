@@ -34,6 +34,7 @@ export class foreUp extends BaseProvider {
     if (!response.ok) {
       if (response.status === 403) {
         this.logger.error(`Error fetching tee time: ${response.statusText}`);
+        this.logger.error("Error response from foreup", await response.json());
         await this.getToken();
       }
 
@@ -62,6 +63,7 @@ export class foreUp extends BaseProvider {
 
     if (!response.ok) {
       this.logger.error(`Error deleting booking: ${response.statusText}`);
+      this.logger.error("Error response from foreup", await response.json());
       if (response.status === 403) {
         await this.getToken();
       }
@@ -92,7 +94,7 @@ export class foreUp extends BaseProvider {
     if (!response.ok) {
       if (response.status === 403) {
         this.logger.error(`Error creating booking: ${response.statusText}`);
-        console.log("Error response from foreup", response);
+        this.logger.error("Error response from foreup", await response.json());
         await this.getToken();
       }
       throw new Error(`Error creating booking: ${JSON.stringify(response)}`);
@@ -136,6 +138,7 @@ export class foreUp extends BaseProvider {
     if (!response.ok) {
       if (response.status === 403) {
         this.logger.error(`Error updating tee time: ${response.statusText}`);
+        this.logger.error("Error response from foreup", await response.json());
         await this.getToken();
       }
       throw new Error(`Error updating tee time: ${response.statusText}`);
@@ -160,6 +163,7 @@ export class foreUp extends BaseProvider {
     });
 
     if (!requiredFieldsResponse.ok) {
+      this.logger.error("Error response from foreup", await requiredFieldsResponse.json());
       throw new Error(`Error fetching required fields: ${requiredFieldsResponse.statusText}`);
     }
 
@@ -189,6 +193,7 @@ export class foreUp extends BaseProvider {
     if (!response.ok) {
       if (response.status === 403) {
         this.logger.error(`Error creating customer: ${response.statusText}`);
+        this.logger.error("Error response from foreup", await response.json());
       }
       throw new Error(`Error creating customer: ${response.statusText}`);
     }
@@ -211,6 +216,7 @@ export class foreUp extends BaseProvider {
 
     if (!response.ok) {
       this.logger.error(`Error fetching customer: ${response.statusText}`);
+      this.logger.error("Error response from foreup", await response.json());
       throw new Error(`Error fetching customer: ${response.statusText}`);
     }
 
@@ -343,7 +349,8 @@ export class foreUp extends BaseProvider {
     });
 
     if (!response.ok) {
-      this.logger.fatal(`Error fetching token: ${response.statusText}`);
+      this.logger.error(`Error fetching token: ${response.statusText}`);
+      this.logger.error("Error response from foreup", await response.json());
       throw new Error(`Error fetching token: ${response.statusText}`);
     }
 
