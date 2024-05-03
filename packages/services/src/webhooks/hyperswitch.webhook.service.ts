@@ -210,7 +210,6 @@ export class HyperSwitchWebhookService {
     }
   };
 
-
   handleFirstHandItem = async (
     item: FirstHandProduct,
     amountReceived: number,
@@ -1822,7 +1821,7 @@ export class HyperSwitchWebhookService {
   ) => {
     // Logic for handling first-hand items
     try {
-      const booking = await this.getBookingDetails(item.id);
+      const booking = await this.getBookingDetails(item.product_data.metadata.sensible_quote_id);
 
       // const userDetails = await this.getUserDetails(customer_id);
 
@@ -1841,7 +1840,6 @@ export class HyperSwitchWebhookService {
           phone: customerCart.phone ? `+${customerCart.phone_country_code}${customerCart.phone}` : "",
         },
       });
-
       //Add guarantee details on bookings
       if (acceptedQuote) {
         await this.database
@@ -1859,8 +1857,11 @@ export class HyperSwitchWebhookService {
     }
   };
 
-  getBookingDetails = async (bookingId: string) => {
-    const [booking] = await this.database.select().from(bookings).where(eq(bookings.teeTimeId, bookingId));
+  getBookingDetails = async (guaranteeId: string) => {
+    const [booking] = await this.database
+      .select()
+      .from(bookings)
+      .where(eq(bookings.weatherQuoteId, guaranteeId));
 
     if (!booking) {
       throw new Error("Booking details not found");
