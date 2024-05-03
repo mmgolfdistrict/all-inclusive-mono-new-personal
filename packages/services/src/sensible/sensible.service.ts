@@ -455,7 +455,7 @@ export class SensibleService extends CacheService {
         user: {
           name: params.user.name,
           email: params.user.email,
-          phone: `+1${params.user.phone || "8778338723"}`,
+          phone: params.user.phone || "+18778338723",
         },
       }),
     });
@@ -466,7 +466,7 @@ export class SensibleService extends CacheService {
       const errorData = responseData; //await response.json();
 
       this.logger.fatal(
-        `Failed to accept quote from SensibleWeather API: ${errorData.error}: ${errorData.error_description}`
+        `Failed to accept quote from SensibleWeather API: ${errorData.message}: ${errorData.error_description}`
       );
       throw new Error(`${errorData.error}: ${errorData.error_description}`);
     }

@@ -7,13 +7,14 @@ export interface Event {
   reservationId?: string | null;
   courseReservation?: string | null;
   numberOfPlayer?: string | null;
+  playTime?: string | null;
   // summary: string;
   // location: string;
 }
 
 const createICS = (event: Event): string => {
   const convertToUTCString = (dtStr: string, nextDay?: boolean): string => {
-    let dt = new Date(dtStr);
+    const dt = new Date(dtStr);
     if (nextDay) {
       dt.setDate(dt.getDate() + 1);
     }
@@ -22,6 +23,11 @@ const createICS = (event: Event): string => {
     const day = dt.getUTCDate().toString().padStart(2, "0");
     const utcStr = `${year}${month}${day}`;
     return utcStr;
+  };
+
+  const getTimeFromString = (inputString: string) => {
+    const time = inputString.substring(11, 19);
+    return time;
   };
 
   const content = `
@@ -35,14 +41,14 @@ const createICS = (event: Event): string => {
     DTSTART:${convertToUTCString(`${event.startDate}`)}
     DTEND:${convertToUTCString(`${event.startDate}`, true)}
     SUMMARY:Golf Reservation at ${event.name}
-    LOCATION:${event.address}
+    LOCATION:${getTimeFromString(event.playTime ?? "")} At ${event.address}
     DESCRIPTION: GOLFdistrict Reservation : ${event.reservationId} , Course Reservation : ${
     event.courseReservation
   },  Number of Players :  ${event.numberOfPlayer}
     ORGANIZER:mailto:${process.env.SENDGRID_EMAIL}
     BEGIN:VALARM
     ACTION:DISPLAY
-    TRIGGER:PT18H
+    TRIGGER:-PT18H
     DESCRIPTION:Reminder
     END:VALARM
     ATTENDEE;RSVP=TRUE;PARTSTAT=NEEDS-ACTION;CN="Attendee Name":mailto:${event.email}

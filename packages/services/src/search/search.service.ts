@@ -76,7 +76,7 @@ export class SearchService {
     private readonly database: Db,
     private readonly weatherService: WeatherService,
     private readonly providerService: ProviderService
-  ) {}
+  ) { }
 
   findBlackoutDates = async (courseId: string): Promise<Day[]> => {
     // Generate a range of dates for the next 365 days
@@ -299,6 +299,7 @@ export class SearchService {
       isListed: true,
       weather,
       minimumOfferPrice: firstBooking?.minimumOfferPrice ?? 0,
+      ownerId: firstBooking.ownerId
     };
     return res;
   };
@@ -653,10 +654,10 @@ export class SearchService {
         sortPrice === "desc"
           ? desc(teeTimes.greenFeePerPlayer)
           : sortTime === "desc"
-          ? desc(teeTimes.time)
-          : sortPrice === "asc"
-          ? asc(teeTimes.greenFeePerPlayer)
-          : asc(teeTimes.time)
+            ? desc(teeTimes.time)
+            : sortPrice === "asc"
+              ? asc(teeTimes.greenFeePerPlayer)
+              : asc(teeTimes.time)
       )
       .limit(limit);
     const courseData = await this.database
@@ -667,7 +668,7 @@ export class SearchService {
       .from(courses)
       .where(eq(courses.id, courseId))
       .execute()
-      .catch(() => {});
+      .catch(() => { });
     let buyerFee = 0;
     if (courseData?.length) {
       buyerFee = (courseData[0]?.buyerFee ?? 1) / 100;
@@ -753,10 +754,10 @@ export class SearchService {
         sortPrice === "desc"
           ? desc(lists.listPrice)
           : sortTime === "desc"
-          ? desc(teeTimes.time)
-          : sortPrice === "asc"
-          ? asc(lists.listPrice)
-          : asc(teeTimes.time)
+            ? desc(teeTimes.time)
+            : sortPrice === "asc"
+              ? asc(lists.listPrice)
+              : asc(teeTimes.time)
       );
     // .limit(limit);
     const secoondHandData = await secondHandBookingsQuery.execute().catch((err) => {

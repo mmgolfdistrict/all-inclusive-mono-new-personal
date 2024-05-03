@@ -36,7 +36,10 @@ export class TokenizeService {
    * @example
    * const tokenizeService = new TokenizeService(database);
    */
-  constructor(private readonly database: Db, private readonly notificationService: NotificationService) {}
+  constructor(
+    private readonly database: Db,
+    private readonly notificationService: NotificationService
+  ) {}
   getCartData = async ({ courseId = "", ownerId = "", paymentId = "" }) => {
     const [customerCartData]: any = await this.database
       .select({ cart: customerCarts.cart, cartId: customerCarts.id })
@@ -326,6 +329,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       reservationId: bookingId,
       courseReservation: providerBookingId,
       numberOfPlayer: players.toString(),
+      playTime: dayjs(existingTeeTime.providerDate).utcOffset("-06:00").format("YYYY-MM-DD hh:mm A") ?? "-",
     };
     const icsContent: string = createICS(event);
     const template = {

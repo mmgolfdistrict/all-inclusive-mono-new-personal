@@ -693,6 +693,7 @@ export class HyperSwitchWebhookService {
         buyerFee: courses.buyerFee,
         sellerFee: courses.sellerFee,
         providerDate: teeTimes.providerDate,
+        address: courses.address
       })
       .from(teeTimes)
       .where(eq(teeTimes.id, firstBooking.teeTimeId))
@@ -833,8 +834,15 @@ export class HyperSwitchWebhookService {
       }
 
       const event: Event = {
-        startDate: existingTeeTime?.providerDate ?? "",
-        endDate: existingTeeTime?.providerDate ?? "",
+        startDate: existingTeeTime?.date??"",
+        endDate: existingTeeTime?.date??"",
+        email: buyerCustomer?.email??"",
+        address:existingTeeTime?.address??"",
+        name:existingTeeTime?.courseName,
+        reservationId:bookingId,
+        courseReservation:newBooking?.data.id,
+        numberOfPlayer:(listedSlotsCount??1).toString(),
+        playTime: dayjs(existingTeeTime?.providerDate).utcOffset("-06:00").format("YYYY-MM-DD hh:mm A") ?? "-",
       };
       const icsContent: string = createICS(event);
       const commonTemplateData = {

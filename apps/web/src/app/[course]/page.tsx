@@ -262,6 +262,9 @@ export default function CourseHomePage() {
 
   return (
     <main className="bg-secondary-white py-4 md:py-6">
+      <LoadingContainer isLoading={isLoading}>
+        <div></div>
+      </LoadingContainer>
       <div className="flex items-center justify-between px-4 md:px-6">
         <GoBack href="/" text={`Back to all ${entity?.name} Courses`} />
       </div>
@@ -271,7 +274,7 @@ export default function CourseHomePage() {
         className="px-4 md:px-6"
       />
       <CourseBanner className="pt-4" />
-      <section className="relative flex gap-8 pl-0 pt-6 md:pl-6 md:pt-8 mx-auto w-full">
+      <section className="relative flex gap-8 pl-0 pt-6 md:pl-6 md:pt-8 mx-auto w-full mb-[-1.5rem]">
         <div
           ref={scrollRef}
           className="absolute -top-[7.5rem] md:-top-[9.2rem]"
@@ -318,31 +321,29 @@ export default function CourseHomePage() {
             </div>
           ) : (
             <>
-              <LoadingContainer isLoading={isLoading}>
-                <div className="flex w-full flex-col gap-1 md:gap-4" ref={ref}>
-                  <ViewportList
-                    viewportRef={ref}
-                    items={datesArr.slice(
-                      (pageNumber - 1) * TAKE,
-                      pageNumber * TAKE
-                    )}
-                  >
-                    {(date, idx) => (
-                      <DailyTeeTimes
-                        setError={(e: string | null) => {
-                          setError(e);
-                        }}
-                        key={idx}
-                        date={date}
-                        updateCount={updateCount}
-                        minDate={utcStartDate.toString()}
-                        maxDate={utcEndDate.toString()}
-                        handleLoading={handleLoading}
-                      />
-                    )}
-                  </ViewportList>
-                </div>
-              </LoadingContainer>
+              <div className="flex w-full flex-col gap-1 md:gap-4" ref={ref}>
+                <ViewportList
+                  viewportRef={ref}
+                  items={datesArr.slice(
+                    (pageNumber - 1) * TAKE,
+                    pageNumber * TAKE
+                  )}
+                >
+                  {(date, idx) => (
+                    <DailyTeeTimes
+                      setError={(e: string | null) => {
+                        setError(e);
+                      }}
+                      key={idx}
+                      date={date}
+                      updateCount={updateCount}
+                      minDate={utcStartDate.toString()}
+                      maxDate={utcEndDate.toString()}
+                      handleLoading={handleLoading}
+                    />
+                  )}
+                </ViewportList>
+              </div>
               {daysData.amountOfPages > 1 && count > 0 ? (
                 <div className="flex items-center justify-center gap-2">
                   <FilledButton
