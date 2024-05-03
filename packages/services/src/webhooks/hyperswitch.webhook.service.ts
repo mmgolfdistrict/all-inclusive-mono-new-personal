@@ -173,7 +173,7 @@ export class HyperSwitchWebhookService {
       await this.bookingService.confirmBooking(paymentId, customer_id);
       return;
     }
-  
+
     for (const item of customerCart.cart) {
       switch (item.product_data.metadata.type) {
         case "second_hand":
@@ -831,7 +831,9 @@ export class HyperSwitchWebhookService {
         courseReservation: newBooking?.data.id,
         numberOfPlayer: (listedSlotsCount ?? 1).toString(),
         playTime:
-          dayjs(existingTeeTime?.providerDate).utcOffset("-06:00").format("YYYY-MM-DD hh:mm A") ?? "-",
+          dayjs(existingTeeTime?.providerDate)
+            .utcOffset("-06:00")
+            .format("YYYY-MM-DD hh:mm A") ?? "-",
       };
       const icsContent: string = createICS(event);
       const commonTemplateData = {
@@ -839,7 +841,9 @@ export class HyperSwitchWebhookService {
         CourseName: existingTeeTime?.courseName || "-",
         FacilityName: existingTeeTime?.entityName || "-",
         PlayDateTime:
-          dayjs(existingTeeTime?.providerDate).utcOffset("-06:00").format("MM/DD/YYYY h:mm A") || "-",
+          dayjs(existingTeeTime?.providerDate)
+            .utcOffset("-06:00")
+            .format("MM/DD/YYYY h:mm A") || "-",
         NumberOfHoles: existingTeeTime?.numberOfHoles,
         SellTeeTImeURL: `${process.env.APP_URL}/my-tee-box`,
         ManageTeeTimesURL: `${process.env.APP_URL}/my-tee-box`,
@@ -1844,7 +1848,7 @@ export class HyperSwitchWebhookService {
           .update(bookings)
           .set({
             weatherGuaranteeId: acceptedQuote.id,
-            weatherGuaranteeAmount: acceptedQuote.price_charged * 100,
+            weatherGuaranteeAmount: item.price,
           })
           .where(eq(bookings.id, acceptedQuote.reservation_id));
       }
