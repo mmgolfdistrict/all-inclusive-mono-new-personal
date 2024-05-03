@@ -100,7 +100,13 @@ export class HyperSwitchWebhookService {
    * ```
    */
   processWebhook = async (req: HyperSwitchEvent) => {
+    console.log("processWebhook inside setTimeout");
+    console.log(req);
+
     setTimeout(async () => {
+      console.log("processWebhook inside setTimeout");
+      console.log(req);
+
       this.logger.info(`Processing webhook: ${req.event_id}`);
       this.logger.info(JSON.stringify(req));
 
