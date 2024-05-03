@@ -101,6 +101,7 @@ export class HyperSwitchWebhookService {
    */
   processWebhook = async (req: HyperSwitchEvent) => {
     setTimeout(async () => {
+      this.logger.info(req);
       this.logger.info(`Processing webhook: ${req.event_id}`);
       const paymentId = req.content.object.payment_id;
       const amountReceived = req.content.object.amount_received;
