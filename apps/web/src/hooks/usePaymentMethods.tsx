@@ -3,24 +3,26 @@ import { api } from "~/utils/api";
 import { useMemo } from "react";
 
 export type CustomerPaymentMethod = {
-  payment_token: string;
-  payment_method_id: string;
-  customer_id: string;
-  payment_method: PaymentMethodType;
+  payment_token?: string;
+  payment_method_id?: string;
+  customer_id?: string;
+  payment_method?: PaymentMethodType;
   payment_method_type?: string;
   payment_method_issuer?: string;
   payment_method_issuer_code?: string;
-  recurring_enabled: boolean;
-  installment_payment_enabled: boolean;
+  recurring_enabled?: boolean;
+  installment_payment_enabled?: boolean;
   payment_experience?: PaymentExperience[];
   card?: CardDetails;
   bank?: { mask: string };
   metadata?: object; // Optional object with string keys and values
   created?: string;
   surcharge_details?: object;
-  requires_cvv: boolean;
+  requires_cvv?: boolean;
   last_used_at?: string;
-  default_payment_method_set: boolean;
+  default_payment_method_set?: boolean;
+  accountNumber?: string | null;
+  id?: string;
 };
 
 type PaymentMethodType =

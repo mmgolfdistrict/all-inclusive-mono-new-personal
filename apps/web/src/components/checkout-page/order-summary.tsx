@@ -26,7 +26,9 @@ export const OrderSummary = ({
           sensibleDataToMountComp={sensibleDataToMountComp}
         />
       </div>
-      <h2 className="italic">This purchase in non-refundable</h2>
+      <h2 className="italic">
+        This purchase in non-refundable. All fees are included.
+      </h2>
       <div className="rounded-md bg-primary p-2 text-white">
         <h2 className="text-lg">Resell Your Tee Time Anytime</h2>
         <p className="text-sm">

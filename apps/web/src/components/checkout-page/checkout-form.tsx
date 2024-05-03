@@ -208,7 +208,7 @@ export const CheckoutForm = ({
             : router.push(
                 `/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}&bookingId=${bookingResponse.bookingId}`
               );
-              setIsLoading(false);
+          setIsLoading(false);
         } else if (response.error) {
           setMessage(response.error.message);
           setIsLoading(false);
@@ -217,10 +217,9 @@ export const CheckoutForm = ({
           setIsLoading(false);
         }
 
-        
         // setIsPaymentCompleted(true);
-      }else{
-        setIsLoading(false)
+      } else {
+        setIsLoading(false);
       }
     }
   };

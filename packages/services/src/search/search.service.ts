@@ -299,6 +299,7 @@ export class SearchService {
       isListed: true,
       weather,
       minimumOfferPrice: firstBooking?.minimumOfferPrice ?? 0,
+      ownerId: firstBooking.ownerId,
     };
     return res;
   };

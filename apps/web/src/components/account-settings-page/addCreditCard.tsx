@@ -51,7 +51,7 @@ const CardDisplay = ({
   const [confirmStatus, setConfirmStatus] = useState(false);
   // payment_method_idw
   const removeCard = async () => {
-    await removeMethod(card.payment_method_id);
+    await removeMethod(card?.payment_method_id ?? "");
     setConfirmStatus(false);
   };
 

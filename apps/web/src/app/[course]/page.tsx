@@ -25,7 +25,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { ViewportList } from "react-viewport-list";
 import { useMediaQuery } from "usehooks-ts";
-import {LoadingContainer} from './loader';
+import { LoadingContainer } from "./loader";
 
 dayjs.extend(Weekday);
 dayjs.extend(RelativeTime);
@@ -209,9 +209,9 @@ export default function CourseHomePage() {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const handleLoading=(val:boolean)=>{
+  const handleLoading = (val: boolean) => {
     setIsLoading(val);
-  }
+  };
 
   useEffect(() => {
     setPageNumber(1);
@@ -262,6 +262,9 @@ export default function CourseHomePage() {
 
   return (
     <main className="bg-secondary-white py-4 md:py-6">
+      <LoadingContainer isLoading={isLoading}>
+        <div></div>
+      </LoadingContainer>
       <div className="flex items-center justify-between px-4 md:px-6">
         <GoBack href="/" text={`Back to all ${entity?.name} Courses`} />
       </div>
@@ -271,7 +274,7 @@ export default function CourseHomePage() {
         className="px-4 md:px-6"
       />
       <CourseBanner className="pt-4" />
-      <section className="relative flex gap-8 pl-0 pt-6 md:pl-6 md:pt-8 mx-auto w-full">
+      <section className="relative flex gap-8 pl-0 pt-6 md:pl-6 md:pt-8 mx-auto w-full mb-[-1.5rem]">
         <div
           ref={scrollRef}
           className="absolute -top-[7.5rem] md:-top-[9.2rem]"
@@ -318,7 +321,6 @@ export default function CourseHomePage() {
             </div>
           ) : (
             <>
-              <LoadingContainer isLoading={isLoading}>
               <div className="flex w-full flex-col gap-1 md:gap-4" ref={ref}>
                 <ViewportList
                   viewportRef={ref}
@@ -342,7 +344,6 @@ export default function CourseHomePage() {
                   )}
                 </ViewportList>
               </div>
-              </LoadingContainer>
               {daysData.amountOfPages > 1 && count > 0 ? (
                 <div className="flex items-center justify-center gap-2">
                   <FilledButton

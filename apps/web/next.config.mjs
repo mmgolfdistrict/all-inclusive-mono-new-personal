@@ -27,6 +27,12 @@ const config = {
       },
       {
         protocol: "https",
+        hostname: "d1vt16457i7yu.cloudfront.net",
+        port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
         hostname: "d13gaac8iye040.cloudfront.net",
         port: "",
         pathname: "/**",

@@ -174,6 +174,7 @@ export type SearchObject = {
   bookingIds?: string[];
   minimumOfferPrice?: number;
   firstHandPurchasePrice?: number;
+  ownerId: string;
 };
 
 export type CombinedObject = {

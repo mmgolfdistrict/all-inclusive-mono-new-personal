@@ -8,7 +8,7 @@ import { api } from "~/utils/api";
 import { formatMoney, formatTime, getTime } from "~/utils/formatters";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState, type ReactNode} from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { toast } from "react-toastify";
 import { Avatar } from "../avatar";
 import { FilledButton } from "../buttons/filled-button";
@@ -43,7 +43,7 @@ export const TeeTime = ({
   showFullDate,
   children,
   listedSlots,
-  handleLoading
+  handleLoading,
 }: {
   time: string;
   canChoosePlayer: boolean;
@@ -65,7 +65,7 @@ export const TeeTime = ({
   showFullDate?: boolean;
   children?: ReactNode;
   listedSlots?: number | null;
-  handleLoading?: (val:boolean)=>void;
+  handleLoading?: (val: boolean) => void;
 }) => {
   const [selectedPlayers, setSelectedPlayers] = useState<string>(
     status === "UNLISTED" ? "1" : status === "FIRST_HAND" ? "1" : players
@@ -125,10 +125,9 @@ export const TeeTime = ({
     //   toast.error("Oops! Tee time is not available anymore");
     //   return;
     // }
-    if(handleLoading){
+    if (handleLoading) {
       handleLoading(true);
     }
-   
 
     if (!user || !session) {
       if (status === "FIRST_HAND") {
@@ -154,10 +153,9 @@ export const TeeTime = ({
         `/${course?.id}/checkout?listingId=${listingId}&playerCount=${listedSlots}`
       );
     }
-    if(handleLoading){
+    if (handleLoading) {
       handleLoading(false);
     }
-   
   };
 
   const makeAnOffer = () => {
@@ -194,6 +192,10 @@ export const TeeTime = ({
     <>
       {children}
       <div
+        data-testid="tee-time-id"
+        data-test={
+          status === "SECOND_HAND" ? "secondary_listed" : "primary_listed"
+        }
         className={`md:rounded-xl rounded-lg bg-secondary-white w-fit min-w-[228px] md:min-w-[302px] ${
           className ?? ""
         }`}

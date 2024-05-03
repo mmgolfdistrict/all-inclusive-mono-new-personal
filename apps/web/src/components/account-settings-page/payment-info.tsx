@@ -61,7 +61,7 @@ const CardDisplay = ({
   const [confirmStatus, setConfirmStatus] = useState(false);
   // payment_method_idw
   const removeCard = async () => {
-    await removeMethod(card.payment_method_id);
+    await removeMethod(card?.payment_method_id ?? "");
     setConfirmStatus(false);
   };
 
@@ -118,8 +118,24 @@ const CardDisplay = ({
             <div className="flex h-full flex-col justify-between overflow-y-auto">
               <div className="flex flex-col gap-6 px-0 sm:px-4">
                 <div>
-                  <div className="mt-6 px-4 pb-4 text-center text-2xl font-[300] md:text-2xl">
-                    Are you sure you want to remove the card?
+                  <div className="mt-6  pb-4 text-center text-2xl font-[300] md:text-xl">
+                    Are you sure you want to delete this credit card?
+                  </div>
+                  <div>
+                    <div className="flex items-start flex-col gap-1 px-1">
+                      <div className="font-[500] text-md">Card Number</div>
+                      <div className="text-sm">
+                        XXXX XXXX XXXX {card?.card?.last4_digits}
+                      </div>
+                    </div>
+                    <div className="flex w-full justify-between items-end px-1">
+                      <div className="flex flex-col gap-1">
+                        <div className="font-[500] text-md">Card Expiry</div>
+                        <div className="text-sm">
+                          {card?.card?.expiry_month}/{card?.card?.expiry_year}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -129,6 +145,10 @@ const CardDisplay = ({
                     className="w-full"
                     onClick={() => removeCard()}
                     data-testid="cancel-listing-button-id"
+                    style={{
+                      background: "red",
+                      border: "red",
+                    }}
                   >
                     Remove card
                   </FilledButton>

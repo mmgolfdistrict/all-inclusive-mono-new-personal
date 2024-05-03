@@ -125,6 +125,19 @@ export const processUpdateWithdrawableBalance = async (req: { userId: string; am
 export const processHyperSwitchWebhook = async (req: any) => {
   const appSettingService = new AppSettingsService(db, process.env.REDIS_URL!, process.env.REDIS_TOKEN!);
 
+  const appSettings = await appSettingService.getMultiple(
+    "SENSIBLE_CLIENT_ID",
+    "SENSIBLE_CLIENT_SECRET",
+    "SENSIBLE_AUDIENCE"
+  );
+  const sensibleService = new SensibleService(
+    (appSettings?.SENSIBLE_CLIENT_ID as string) || "",
+    (appSettings?.SENSIBLE_CLIENT_SECRET as string) || "",
+    (appSettings?.SENSIBLE_AUDIENCE as string) || "",
+    process.env.REDIS_URL!,
+    process.env.REDIS_TOKEN!
+  );
+
   const notificationService = new NotificationService(
     db,
     process.env.TWILLIO_PHONE_NUMBER!,
@@ -133,7 +146,7 @@ export const processHyperSwitchWebhook = async (req: any) => {
     process.env.TWILLIO_AUTH_TOKEN!,
     process.env.SENDGRID_API_KEY!
   );
-  const tokenizeService = new TokenizeService(db, notificationService);
+  const tokenizeService = new TokenizeService(db, notificationService, sensibleService);
   const credentials = {
     username: process.env.FOREUP_USERNAME!,
     password: process.env.FOREUP_PASSWORD!,
@@ -146,19 +159,19 @@ export const processHyperSwitchWebhook = async (req: any) => {
   );
   const bookingService = new BookingService(db, tokenizeService, providerService, notificationService);
 
-  const appSettings = await appSettingService.getMultiple(
-    "SENSIBLE_CLIENT_ID",
-    "SENSIBLE_CLIENT_SECRET",
-    "SENSIBLE_AUDIENCE"
-  );
+  // const appSettings = await appSettingService.getMultiple(
+  //   "SENSIBLE_CLIENT_ID",
+  //   "SENSIBLE_CLIENT_SECRET",
+  //   "SENSIBLE_AUDIENCE"
+  // );
 
-  const sensibleService = new SensibleService(
-    (appSettings?.SENSIBLE_CLIENT_ID as string) || "",
-    (appSettings?.SENSIBLE_CLIENT_SECRET as string) || "",
-    (appSettings?.SENSIBLE_AUDIENCE as string) || "",
-    process.env.REDIS_URL!,
-    process.env.REDIS_TOKEN!
-  );
+  // const sensibleService = new SensibleService(
+  //   (appSettings?.SENSIBLE_CLIENT_ID as string) || "",
+  //   (appSettings?.SENSIBLE_CLIENT_SECRET as string) || "",
+  //   (appSettings?.SENSIBLE_AUDIENCE as string) || "",
+  //   process.env.REDIS_URL!,
+  //   process.env.REDIS_TOKEN!
+  // );
 
   const hyperSwitchWebhookService = new HyperSwitchWebhookService(
     db,

@@ -2257,6 +2257,7 @@ export class BookingService {
         token,
         teeTime,
         {
+          cart,
           primaryGreenFeeCharge,
           taxCharge,
           sensibleCharge,
@@ -2288,7 +2289,6 @@ export class BookingService {
     } as ReserveTeeTimeResponse;
   };
   confirmBooking = async (paymentId: string, userId: string) => {
-    console.log("start confirmation process", paymentId, userId);
     const [booking] = await this.database
       .select({
         bookingId: bookings.id,

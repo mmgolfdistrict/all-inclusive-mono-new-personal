@@ -17,7 +17,8 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
   const { data: associatedBanks } = api.cashOut.getAssociatedAccounts.useQuery(
     {}
   );
-
+  const { data: recievableData, refetch: refetchRecievableData } =
+    api.cashOut.getRecievables.useQuery({});
   const [modalOpen, setModalOpen] = useState(false);
   const [loadingCashout, setLoadingCashout] = useState<boolean>(false);
   const openModal = () => {
@@ -31,12 +32,20 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
   const handleTransferAmount = async (paymentInstrumentId, amount) => {
     try {
       setLoadingCashout(true);
+      if (amount > (recievableData?.withdrawableAmount ?? 0)) {
+        toast.error("Amount cannot be greater then withdrawable amount");
+        return;
+      }
+      if (amount <= 0) {
+        toast.error("Please enter valid amount");
+      }
       await createCashoutTransfer.mutateAsync({
         paymentInstrumentId,
         amount: Number(amount),
       });
-      toast.success("Cash out requested.");
+      toast.success(`Cash out requested for $${amount}`);
       await refetch();
+      await refetchRecievableData();
     } catch (error) {
       console.log(error);
       toast.error((error as Error).message ?? "Could not request cash out.");
@@ -56,12 +65,37 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
       </p> */}
         </div>
         <div className="flex flex-col items-center gap-2 lg:flex-row">
-          <div className="flex flex-col h-full items-center justify-center gap-2 md:min-h-[220px]">
-            <div className="flex flex-col items-center gap-2 md:flex-row md:items-center">
-              <div className="text-[24px] text-secondary-black md:text-[32px]">
-                {formatMoney(user?.balance ?? 0 / 100)}
+          <div className="flex flex-col w-full h-full items-center justify-center gap-2 ">
+            <div
+              className="p-4"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-evenly",
+                width: "100%",
+              }}
+            >
+              <div className="flex justify-center items-center flex-col">
+                <p className="text-gray-600 md:text-[24px]">Available Amount</p>
+                <p className="text-gray-800 md:text-[24px]">{`$${
+                  recievableData?.availableAmount || 0
+                }`}</p>
               </div>
-              {user?.stripeConnectAccountStatus === "CONNECTED" ? null : (
+              <div className="flex justify-center items-center flex-col">
+                <p className="text-gray-600 md:text-[24px]">
+                  Withdrawable Amount
+                </p>
+                <p className="text-gray-800 md:text-[24px]">{`$${
+                  recievableData?.withdrawableAmount || 0
+                }`}</p>
+              </div>
+            </div>
+            <div className="flex flex-col items-center gap-2 md:flex-row md:items-center">
+              {/* <div className="text-[24px] text-secondary-black md:text-[32px]">
+                {formatMoney(user?.balance ?? 0 / 100)}
+              </div> */}
+              {user?.stripeConnectAccountStatus === "CONNECTED" ||
+              associatedBanks?.length ? null : (
                 <div className="text-primary-gray">
                   You need to connect your account to transfer your balance.
                 </div>
@@ -78,7 +112,9 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
               }`}
               data-testid="connect-button-id"
             >
-              Add Bank Account
+              {associatedBanks?.length
+                ? "Add another bank account"
+                : "Add Bank Account"}
             </FilledButton>
           </div>
         </div>

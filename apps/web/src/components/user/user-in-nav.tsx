@@ -89,9 +89,9 @@ export const UserInNav = ({ alwaysShow }: { alwaysShow?: boolean }) => {
               </div>
               <p className="text-lg font-medium">Welcome, {user?.name}!</p>
             </div>
-            <Link href={`/${courseId}/profile/${user?.id}`}>
+            {/* <Link href={`/${courseId}/profile/${user?.id}`}>
               <MenuItem title="Profile" />
-            </Link>
+            </Link> */}
             <Link href={`/${courseId}/account-settings/${user?.id}`}>
               <MenuItem title="Account Settings" />
             </Link>

@@ -10,7 +10,7 @@ declare global {
   }
 }
 
-const FinixForm = ({ onClose }) => {
+const FinixForm = ({ onClose, setLoading, loading }) => {
   const { refetch: refetchAssociatedBanks } =
     api.cashOut.getAssociatedAccounts.useQuery({}, { enabled: false });
   const createCashoutCustomerIdentity =
@@ -40,13 +40,16 @@ const FinixForm = ({ onClose }) => {
       const form = window.Finix.BankTokenForm("form", {
         showAddress: true,
         onSubmit,
+        onLoad: () => {
+          setLoading(false);
+        },
       });
     }
   }, []);
 
   return (
     <>
-      <div id="form" className="h-[88%]" />
+      <div id="form" className={`h-full ${loading ? "hidden" : ""}`} />
     </>
   );
 };
