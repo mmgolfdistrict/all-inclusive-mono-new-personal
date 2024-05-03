@@ -123,6 +123,9 @@ export const processUpdateWithdrawableBalance = async (req: { userId: string; am
 };
 
 export const processHyperSwitchWebhook = async (req: any) => {
+  console.log("processHyperSwitchWebhook");
+  console.log(req);
+
   const appSettingService = new AppSettingsService(db, process.env.REDIS_URL!, process.env.REDIS_TOKEN!);
 
   const appSettings = await appSettingService.getMultiple(
