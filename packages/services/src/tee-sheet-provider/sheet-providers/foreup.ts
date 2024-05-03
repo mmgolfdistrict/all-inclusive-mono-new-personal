@@ -223,19 +223,15 @@ export class foreUp extends BaseProvider {
     return (await response.json()) as CustomerData;
   }
 
-  addSalesData = async (
-    totalAmountPaid: number,
-    players: number,
-    courseId: string | number,
-    teesheetId: string | number,
-    bookingId: string,
-    token: string
-  ): Promise<void> => {
+  addSalesData = async (totalAmountPaid: number, players: number, courseId: string | number, teesheetId: string | number, bookingId: string, token: string): Promise<void> => {
     try {
+      if (!totalAmountPaid) {
+        return;
+      }
       const endpoint = this.getBasePoint();
       const headers = this.getHeaders(token);
 
-      const bookingCheckinUrl = `${endpoint}/courses/${courseId}/teesheets/${teesheetId}/bookings/${bookingId}/checkIn`;
+      const bookingCheckinUrl = `${endpoint}/courses/${courseId}/teesheets/${teesheetId}/bookings/${bookingId}/checkIn`
       this.logger.info(`Booking Check in Url - ${bookingCheckinUrl}`);
       this.logger.info(`Making Check in request for provider booking: ${bookingId}`);
 
@@ -246,13 +242,13 @@ export class foreUp extends BaseProvider {
         method: "POST",
         headers: headers,
         body: JSON.stringify({
-          data: {
-            type: "check_ins",
-            attributes: {
-              positions: generatedPositionsArray,
-            },
-          },
-        }),
+          "data": {
+            "type": "check_ins",
+            "attributes": {
+              "positions": generatedPositionsArray
+            }
+          }
+        })
       });
       if (!checkInResponse.ok) {
         throw new Error(
@@ -262,34 +258,31 @@ export class foreUp extends BaseProvider {
       }
       const cartData: CartData = await checkInResponse.json();
 
-      const addPaymentsUrl = `${endpoint}/courses/${courseId}/carts/${cartData.data.id}/payments`;
+      const addPaymentsUrl = `${endpoint}/courses/${courseId}/carts/${cartData.data.id}/payments`
       this.logger.info(`Add payments url - ${addPaymentsUrl}`);
       this.logger.info(`Adding payment for provider booking: ${bookingId}, cart id: ${cartData.data.id}`);
 
-      console.log(
-        "PAYMENT BODY:",
-        JSON.stringify({
-          data: {
-            type: "payments",
-            attributes: {
-              amount: `${totalAmountPaid}`,
-              type: "cash",
-            },
-          },
-        })
-      );
+      console.log("PAYMENT BODY:", JSON.stringify({
+        "data": {
+          "type": "payments",
+          "attributes": {
+            "amount": `${totalAmountPaid}`,
+            "type": "cash"
+          }
+        }
+      }))
       const addPaymentsResponse = await fetch(addPaymentsUrl, {
         method: "POST",
         headers: headers,
         body: JSON.stringify({
-          data: {
-            type: "payments",
-            attributes: {
-              amount: `${totalAmountPaid}`,
-              type: "cash",
-            },
-          },
-        }),
+          "data": {
+            "type": "payments",
+            "attributes": {
+              "amount": `${totalAmountPaid}`,
+              "type": "cash"
+            }
+          }
+        })
       });
       if (!addPaymentsResponse.ok) {
         throw new Error(
@@ -299,7 +292,7 @@ export class foreUp extends BaseProvider {
       }
       const paymentData: CartData = await addPaymentsResponse.json();
 
-      const completeCartUrl = `${endpoint}/courses/${courseId}/carts/${cartData.data.id}`;
+      const completeCartUrl = `${endpoint}/courses/${courseId}/carts/${cartData.data.id}`
       this.logger.info(`Complete cart url - ${completeCartUrl}`);
       this.logger.info(
         `Completing cart for provider booking: ${bookingId}, cart id: ${cartData.data.id
@@ -309,14 +302,14 @@ export class foreUp extends BaseProvider {
         method: "PUT",
         headers: headers,
         body: JSON.stringify({
-          data: {
-            type: "carts",
-            id: `${cartData.data.id}`,
-            attributes: {
-              status: "complete",
-            },
-          },
-        }),
+          "data": {
+            "type": "carts",
+            "id": `${cartData.data.id}`,
+            "attributes": {
+              "status": "complete"
+            }
+          }
+        })
       });
       if (!completeCartResponse.ok) {
         throw new Error(
@@ -327,11 +320,7 @@ export class foreUp extends BaseProvider {
         );
       }
       const completeCartData: CartData = await completeCartResponse.json();
-      this.logger.info(
-        `Sales data added successfully for booking with id: ${bookingId}, cart data: ${JSON.stringify(
-          completeCartData
-        )}`
-      );
+      this.logger.info(`Sales data added successfully for booking with id: ${bookingId}, cart data: ${JSON.stringify(completeCartData)}`);
     } catch (error) {
       this.logger.error(`Error adding sales data: ${error}`);
     }
