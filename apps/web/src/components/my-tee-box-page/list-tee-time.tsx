@@ -156,11 +156,11 @@ export const ListTeeTime = ({
   const listTeeTime = async () => {
     //You should never enter this condition.
     if (totalPayout < 0) {
-      toast.info("Listing price must be greater than $45.");
+      toast.error("Listing price must be greater than $45.");
       return;
     }
     if (!selectedTeeTime) {
-      toast.info("Invalid date on tee time.");
+      toast.error("Invalid date on tee time.");
       return;
     }
     console.log(
@@ -168,13 +168,13 @@ export const ListTeeTime = ({
     );
 
     if (listingPrice > maxListingPrice) {
-      toast.info(
+      toast.error(
         `Listing price cannot be greater than ${formatMoney(maxListingPrice)}.`
       );
       return;
     }
     if (listingPrice <= 1) {
-      toast.info(`Listing price must be greater than $1.`);
+      toast.error(`Listing price must be greater than $1.`);
       return;
     }
     try {
