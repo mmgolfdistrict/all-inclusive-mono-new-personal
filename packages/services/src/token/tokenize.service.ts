@@ -22,10 +22,16 @@ import { CustomerCart } from "../checkout/types";
 import type { NotificationService } from "../notification/notification.service";
 import type { ProviderAPI } from "../tee-sheet-provider/sheet-providers";
 import { TeeTime } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
+import type { SensibleService } from "../sensible/sensible.service";
 
 /**
  * Service class for handling booking tokenization, transfers, and updates.
  */
+
+interface AcceptedQuoteParams {
+  id: string | null;
+  price_charged: number;
+}
 export class TokenizeService {
   private logger = Logger(TokenizeService.name);
 
@@ -36,7 +42,11 @@ export class TokenizeService {
    * @example
    * const tokenizeService = new TokenizeService(database);
    */
-  constructor(private readonly database: Db, private readonly notificationService: NotificationService) {}
+  constructor(
+    private readonly database: Db,
+    private readonly notificationService: NotificationService,
+    private readonly sensibleService: SensibleService
+  ) {}
   getCartData = async ({ courseId = "", ownerId = "", paymentId = "" }) => {
     const [customerCartData]: any = await this.database
       .select({ cart: customerCarts.cart, cartId: customerCarts.id })
@@ -150,7 +160,6 @@ export class TokenizeService {
     },
     normalizedCartData?: any
   ): Promise<string> {
-    debugger;
     this.logger.info(`tokenizeBooking tokenizing booking id: ${providerTeeTimeId} for user: ${userId}`);
     //@TODO add this to the transaction
 
@@ -198,6 +207,35 @@ export class TokenizeService {
     const transactionId = randomUUID();
     const bookingId = randomUUID();
 
+    let acceptedQuote: AcceptedQuoteParams = { id: null, price_charged: 0 };
+
+    const isFirstHandBooking = normalizedCartData?.cart?.cart?.some(
+      (item: ProductData) => item.product_data.metadata.type === "first_hand"
+    );
+
+    console.log(`isFirstHandBooking= ${isFirstHandBooking}`);
+    if (isFirstHandBooking) {
+      const weatherGuaranteeData = normalizedCartData.cart?.cart?.filter(
+        (item: ProductData) => item.product_data.metadata.type === "sensible"
+      );
+
+      if (weatherGuaranteeData?.length > 0) {
+        acceptedQuote = await this.sensibleService.acceptQuote({
+          quoteId: weatherGuaranteeData[0].product_data.metadata.sensible_quote_id,
+          price_charged: weatherGuaranteeData[0].price / 100,
+          reservation_id: bookingId,
+          lang_locale: "en_US",
+          user: {
+            email: normalizedCartData?.cart?.email,
+            name: normalizedCartData.cart?.name,
+            phone: normalizedCartData.cart?.phone
+              ? `+${normalizedCartData?.cart?.phone_country_code}${normalizedCartData?.cart?.phone}`
+              : "",
+          },
+        });
+      }
+    }
+
     bookingsToCreate.push({
       id: bookingId,
       // purchasedAt: currentUtcTimestamp(),
@@ -223,6 +261,8 @@ export class TokenizeService {
       totalAmount: normalizedCartData.total || 0,
       providerPaymentId: paymentId,
       weatherQuoteId: normalizedCartData.weatherQuoteId ?? null,
+      weatherGuaranteeId: acceptedQuote?.id ? acceptedQuote?.id : null,
+      weatherGuaranteeAmount: acceptedQuote?.price_charged ? acceptedQuote?.price_charged * 100 : 0,
     });
 
     transfersToCreate.push({

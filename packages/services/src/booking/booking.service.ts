@@ -2251,6 +2251,7 @@ export class BookingService {
         token,
         teeTime,
         {
+          cart,
           primaryGreenFeeCharge,
           taxCharge,
           sensibleCharge,

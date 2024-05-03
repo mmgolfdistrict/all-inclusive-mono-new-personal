@@ -171,21 +171,9 @@ export class HyperSwitchWebhookService {
     console.log(`isFirstHandBooking = ${isFirstHandBooking}`);
     if (isFirstHandBooking) {
       await this.bookingService.confirmBooking(paymentId, customer_id);
-      const weatherGuaranteeData = customerCart.cart.filter(
-        (item) => item.product_data.metadata.type === "sensible"
-      );
-      console.log(`weatherGuaranteeData length = ${weatherGuaranteeData.length}`);
-      console.log(weatherGuaranteeData);
-      if (weatherGuaranteeData.length) {
-        await this.handleSensibleItem(
-          weatherGuaranteeData[0] as SensibleProduct,
-          amountReceived,
-          customer_id,
-          customerCart
-        );
-      }
       return;
     }
+  
     for (const item of customerCart.cart) {
       switch (item.product_data.metadata.type) {
         case "second_hand":
