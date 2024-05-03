@@ -18,12 +18,15 @@ export const LoadingContainer: FC<LoadingContainerProps> = ({
   }, [isLoading]);
 
   return (
-    <div className=" inset-0 flex justify-center items-center bg-black bg-opacity-40" style={{ zIndex: isLoading ? 999 : -1, position:"fixed" }}>
+    <div
+      className=" inset-0 flex justify-center items-center bg-black bg-opacity-40"
+      style={{ zIndex: isLoading ? 999 : -1, position: "fixed" }}
+    >
       {isLoading && (
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 200 200"
-          style={{ width: '80px', height: '80px' }}
+          style={{ width: "80px", height: "80px" }}
         >
           <radialGradient
             id="a9"
@@ -49,7 +52,7 @@ export const LoadingContainer: FC<LoadingContainerProps> = ({
             cx="100"
             cy="100"
             r="70"
-            style={{ transformOrigin: 'center' }}
+            style={{ transformOrigin: "center" }}
           >
             <animateTransform
               type="rotate"
@@ -74,9 +77,7 @@ export const LoadingContainer: FC<LoadingContainerProps> = ({
           ></circle>
         </svg>
       )}
-      <div style={{ display: isLoading ? 'none' : 'block' }}>
-        {children}
-      </div>
+      <div style={{ display: isLoading ? "none" : "block" }}>{children}</div>
     </div>
   );
 };

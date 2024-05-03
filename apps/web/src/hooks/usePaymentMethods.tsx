@@ -21,8 +21,8 @@ export type CustomerPaymentMethod = {
   requires_cvv?: boolean;
   last_used_at?: string;
   default_payment_method_set?: boolean;
-  accountNumber?: string | null; 
-  id?:string;
+  accountNumber?: string | null;
+  id?: string;
 };
 
 type PaymentMethodType =

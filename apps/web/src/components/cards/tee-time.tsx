@@ -193,7 +193,9 @@ export const TeeTime = ({
       {children}
       <div
         data-testid="tee-time-id"
-        data-test={status === "SECOND_HAND" ? "secondary_listed" : "primary_listed"}
+        data-test={
+          status === "SECOND_HAND" ? "secondary_listed" : "primary_listed"
+        }
         className={`md:rounded-xl rounded-lg bg-secondary-white w-fit min-w-[228px] md:min-w-[302px] ${
           className ?? ""
         }`}

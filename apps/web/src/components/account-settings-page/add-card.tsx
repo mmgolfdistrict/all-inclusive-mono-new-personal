@@ -124,41 +124,40 @@ export const AddCard = ({ refetchCards }: { refetchCards: () => unknown }) => {
             data-testid="card-expiry-date-id"
           />
           <ToggleGroup.Root
-          type="single"
-          value={type}
-          onValueChange={(p: OptionsType) => {
-            if (p) {
-              setType(p);
-              setValue("type", p);
-            }
-          }}
-          orientation="horizontal"
-          className="mx-auto"
-          data-testid="card-type-id"
-          style={{
-            outline: 'none',
-            alignItems: 'flex-end',
-            display: 'flex',
-            justifyContent: 'center',
-            paddingBottom: '5px'
-          }}
-        >
-          {Options.map((value, index) => (
-            <Item
-              key={index}
-              value={value}
-              className={`${
-                index === 0
-                  ? "rounded-l-full border-b border-l border-t border-stroke"
-                  : index === Options.length - 1
-                  ? "rounded-r-full border-b border-r border-t border-stroke"
-                  : "border border-stroke"
-              } px-[2.65rem]`}
-            />
-          ))}
-        </ToggleGroup.Root>
+            type="single"
+            value={type}
+            onValueChange={(p: OptionsType) => {
+              if (p) {
+                setType(p);
+                setValue("type", p);
+              }
+            }}
+            orientation="horizontal"
+            className="mx-auto"
+            data-testid="card-type-id"
+            style={{
+              outline: "none",
+              alignItems: "flex-end",
+              display: "flex",
+              justifyContent: "center",
+              paddingBottom: "5px",
+            }}
+          >
+            {Options.map((value, index) => (
+              <Item
+                key={index}
+                value={value}
+                className={`${
+                  index === 0
+                    ? "rounded-l-full border-b border-l border-t border-stroke"
+                    : index === Options.length - 1
+                    ? "rounded-r-full border-b border-r border-t border-stroke"
+                    : "border border-stroke"
+                } px-[2.65rem]`}
+              />
+            ))}
+          </ToggleGroup.Root>
         </div>
-        
 
         <FilledButton
           type="submit"
