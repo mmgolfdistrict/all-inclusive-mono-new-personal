@@ -17,7 +17,8 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
   const { data: associatedBanks } = api.cashOut.getAssociatedAccounts.useQuery(
     {}
   );
-  const { data: recievableData } = api.cashOut.getRecievables.useQuery({});
+  const { data: recievableData, refetch: refetchRecievableData } =
+    api.cashOut.getRecievables.useQuery({});
   const [modalOpen, setModalOpen] = useState(false);
   const [loadingCashout, setLoadingCashout] = useState<boolean>(false);
   const openModal = () => {
@@ -42,8 +43,9 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
         paymentInstrumentId,
         amount: Number(amount),
       });
-      toast.success("Cash out requested.");
+      toast.success(`Cash out requested for $${amount}`);
       await refetch();
+      await refetchRecievableData();
     } catch (error) {
       console.log(error);
       toast.error((error as Error).message ?? "Could not request cash out.");
@@ -73,15 +75,17 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
                 width: "100%",
               }}
             >
-              <div className="flex justify-between">
-                <p className="text-gray-600">Available Amount:</p>
-                <p className="text-gray-800">{`${
+              <div className="flex justify-center items-center flex-col">
+                <p className="text-gray-600 md:text-[24px]">Available Amount</p>
+                <p className="text-gray-800 md:text-[24px]">{`$${
                   recievableData?.availableAmount || 0
                 }`}</p>
               </div>
-              <div className="flex justify-between">
-                <p className="text-gray-600">Withdrawable Amount:</p>
-                <p className="text-gray-800">{`${
+              <div className="flex justify-center items-center flex-col">
+                <p className="text-gray-600 md:text-[24px]">
+                  Withdrawable Amount
+                </p>
+                <p className="text-gray-800 md:text-[24px]">{`$${
                   recievableData?.withdrawableAmount || 0
                 }`}</p>
               </div>

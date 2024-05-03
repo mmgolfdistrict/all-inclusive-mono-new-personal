@@ -25,7 +25,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { ViewportList } from "react-viewport-list";
 import { useMediaQuery } from "usehooks-ts";
-import {LoadingContainer} from './loader';
+import { LoadingContainer } from "./loader";
 
 dayjs.extend(Weekday);
 dayjs.extend(RelativeTime);
@@ -209,9 +209,9 @@ export default function CourseHomePage() {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const handleLoading=(val:boolean)=>{
+  const handleLoading = (val: boolean) => {
     setIsLoading(val);
-  }
+  };
 
   useEffect(() => {
     setPageNumber(1);
@@ -319,29 +319,29 @@ export default function CourseHomePage() {
           ) : (
             <>
               <LoadingContainer isLoading={isLoading}>
-              <div className="flex w-full flex-col gap-1 md:gap-4" ref={ref}>
-                <ViewportList
-                  viewportRef={ref}
-                  items={datesArr.slice(
-                    (pageNumber - 1) * TAKE,
-                    pageNumber * TAKE
-                  )}
-                >
-                  {(date, idx) => (
-                    <DailyTeeTimes
-                      setError={(e: string | null) => {
-                        setError(e);
-                      }}
-                      key={idx}
-                      date={date}
-                      updateCount={updateCount}
-                      minDate={utcStartDate.toString()}
-                      maxDate={utcEndDate.toString()}
-                      handleLoading={handleLoading}
-                    />
-                  )}
-                </ViewportList>
-              </div>
+                <div className="flex w-full flex-col gap-1 md:gap-4" ref={ref}>
+                  <ViewportList
+                    viewportRef={ref}
+                    items={datesArr.slice(
+                      (pageNumber - 1) * TAKE,
+                      pageNumber * TAKE
+                    )}
+                  >
+                    {(date, idx) => (
+                      <DailyTeeTimes
+                        setError={(e: string | null) => {
+                          setError(e);
+                        }}
+                        key={idx}
+                        date={date}
+                        updateCount={updateCount}
+                        minDate={utcStartDate.toString()}
+                        maxDate={utcEndDate.toString()}
+                        handleLoading={handleLoading}
+                      />
+                    )}
+                  </ViewportList>
+                </div>
               </LoadingContainer>
               {daysData.amountOfPages > 1 && count > 0 ? (
                 <div className="flex items-center justify-center gap-2">

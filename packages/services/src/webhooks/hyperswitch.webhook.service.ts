@@ -8,6 +8,7 @@ import { bookingslots } from "@golf-district/database/schema/bookingslots";
 import { charityCourseLink } from "@golf-district/database/schema/charityCourseLink";
 import { courses } from "@golf-district/database/schema/courses";
 import { customerCarts } from "@golf-district/database/schema/customerCart";
+import { customerRecievable } from "@golf-district/database/schema/customerRecievable";
 import { donations } from "@golf-district/database/schema/donations";
 import { entities } from "@golf-district/database/schema/entities";
 import { lists } from "@golf-district/database/schema/lists";
@@ -47,7 +48,6 @@ import type { BookingResponse } from "../tee-sheet-provider/sheet-providers/type
 import { BookingCreationData } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
 import type { TokenizeService } from "../token/tokenize.service";
 import type { HyperSwitchEvent } from "./types/hyperswitch";
-import { customerRecievable } from "@golf-district/database/schema/customerRecievable";
 
 /**
  * `HyperSwitchWebhookService` - A service for processing webhooks from HyperSwitch.
@@ -436,8 +436,6 @@ export class HyperSwitchWebhookService {
     paymentId: string,
     golferPrice: number
   ) => {
-    // console.log(item, amountReceived, customer_id, paymentId, "iuguyffuyfuy");
-    debugger;
     const listingId = item.product_data.metadata.second_hand_id;
     const listedSlots = await this.database
       .select({
@@ -590,7 +588,29 @@ export class HyperSwitchWebhookService {
       });
 
     const newBookings: BookingResponse[] = [];
-
+    console.log(
+      token,
+      firstBooking.providerCourseId!,
+      firstBooking.providerTeeSheetId!,
+      JSON.stringify({
+        data: {
+          totalAmountPaid: amountReceived / 100,
+          type: "bookings",
+          attributes: {
+            start: firstBooking.providerDate,
+            holes: firstBooking.numberOfHoles,
+            players: listedSlotsCount,
+            bookedPlayers: [
+              {
+                personId: buyerCustomer.customerId,
+              },
+            ],
+            event_type: "tee_time",
+            details: "GD Booking",
+          },
+        },
+      })
+    );
     try {
       const newBooking = await provider.createBooking(
         token,
@@ -739,29 +759,6 @@ export class HyperSwitchWebhookService {
           .where(eq(bookings.id, bookingId))
           .execute()
           .catch((err) => {
-            this.logger.error(err);
-          });
-        const amount = listPrice ?? 1;
-        const serviceCharge = amount * sellerFee;
-        const payable = ((amount - serviceCharge) * (listedSlotsCount || 1)) / 100;
-        const currentDate = new Date();
-        const redeemAfterDate = this.addDays(currentDate, 7);
-
-        const customerRecievableData = [
-          {
-            id: randomUUID(),
-            userId: booking.data.ownerId || "",
-            amount: payable,
-            type: "CASHOUT",
-            transferId: bookingsIds?.transferId,
-            createdDateTime: this.formatCurrentDateTime(currentDate), // Use UTC string format for datetime fields
-            redeemAfter: this.formatCurrentDateTime(redeemAfterDate), // Use UTC string format for datetime fields
-          },
-        ];
-        await this.database
-          .insert(customerRecievable)
-          .values(customerRecievableData)
-          .catch((err: any) => {
             this.logger.error(err);
           });
       }
@@ -962,6 +959,29 @@ export class HyperSwitchWebhookService {
         );
       }
     }
+
+    const amount = listPrice ?? 1;
+    const serviceCharge = amount * sellerFee;
+    const payable = (amount - serviceCharge) * (listedSlotsCount || 1);
+    const currentDate = new Date();
+    const redeemAfterDate = this.addDays(currentDate, 7);
+    const customerRecievableData = [
+      {
+        id: randomUUID(),
+        userId: firstBooking.ownerId,
+        amount: payable,
+        type: "CASHOUT",
+        transferId: bookingsIds?.transferId,
+        createdDateTime: this.formatCurrentDateTime(currentDate), // Use UTC string format for datetime fields
+        redeemAfter: this.formatCurrentDateTime(redeemAfterDate), // Use UTC string format for datetime fields
+      },
+    ];
+    await this.database
+      .insert(customerRecievable)
+      .values(customerRecievableData)
+      .catch((err: any) => {
+        this.logger.error(err);
+      });
   };
 
   // handleSecondHandItem = async (`
