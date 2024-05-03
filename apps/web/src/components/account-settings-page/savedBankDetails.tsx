@@ -9,8 +9,9 @@ import SidePanel from "./SidePanel";
 
 export const SavedBankDetails = () => {
   // const { cards, refetch, isLoading } = usePaymentMethods();
-  const cards = [];
-  const isLoading = false;
+  const { data: associatedBanks, refetch, isLoading } = api.cashOut.getAssociatedAccounts.useQuery(
+    {}
+  );
   const removeCard = api.checkout.removePaymentMethod.useMutation();
 
   const removeMethod = async (_paymentMethodId: string) => {
@@ -24,9 +25,9 @@ export const SavedBankDetails = () => {
     >
       <h1 className="pb-6 text-[18px] md:text-[24px]">Saved Bank Details</h1>
       <div className="flex flex-col gap-2">
-        {cards && cards.length > 0 ? (
-          cards.map((card, idx) => (
-            <CardDisplay removeMethod={removeMethod} card={card} key={idx} />
+        {associatedBanks && associatedBanks.length > 0 ? (
+          associatedBanks.map((bank, idx) => (
+            <CardDisplay removeMethod={removeMethod} card={bank} key={idx} />
           ))
         ) : isLoading ? (
           <div className="flex justify-center items-center h-full min-h-[200px]">
@@ -49,10 +50,10 @@ const CardDisplay = ({
 }) => {
   const [confirmStatus, setConfirmStatus] = useState(false);
   // payment_method_idw
-  const removeCard = async () => {
-    await removeMethod(card.payment_method_id);
-    setConfirmStatus(false);
-  };
+  // const removeCard = () => {
+  //   // await removeMethod(card.payment_method_id);
+  //   setConfirmStatus(false);
+  // };
 
   return (
     <div className="border border-stroke rounded-md p-3 flex flex-col relative">
@@ -60,10 +61,10 @@ const CardDisplay = ({
       <CardDetails label="Routing Number" value={"N/A"} />
       <CardDetails
         label="Account Details"
-        value={`XXXX XXXX XXXX ${card?.card?.last4_digits}`}
+        value={`${card?.accountNumber}`}
         // onRemove={() => setConfirmStatus(true)}
       />
-      {confirmStatus ? (
+      {/* {confirmStatus ? (
         <SidePanel isOpen={true}>
           <div className="bg-white p-8 text-sm rounded shadow-md h-full">
             <h2 className="text-lg font-semibold mb-4">Confirm Deletion</h2>
@@ -85,7 +86,7 @@ const CardDisplay = ({
             </div>
           </div>
         </SidePanel>
-      ) : null}
+      ) : null} */}
     </div>
   );
 };

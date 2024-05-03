@@ -123,8 +123,7 @@ export const AddCard = ({ refetchCards }: { refetchCards: () => unknown }) => {
             }}
             data-testid="card-expiry-date-id"
           />
-        </div>
-        <ToggleGroup.Root
+          <ToggleGroup.Root
           type="single"
           value={type}
           onValueChange={(p: OptionsType) => {
@@ -136,6 +135,13 @@ export const AddCard = ({ refetchCards }: { refetchCards: () => unknown }) => {
           orientation="horizontal"
           className="mx-auto"
           data-testid="card-type-id"
+          style={{
+            outline: 'none',
+            alignItems: 'flex-end',
+            display: 'flex',
+            justifyContent: 'center',
+            paddingBottom: '5px'
+          }}
         >
           {Options.map((value, index) => (
             <Item
@@ -151,6 +157,8 @@ export const AddCard = ({ refetchCards }: { refetchCards: () => unknown }) => {
             />
           ))}
         </ToggleGroup.Root>
+        </div>
+        
 
         <FilledButton
           type="submit"
