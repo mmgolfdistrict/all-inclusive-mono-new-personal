@@ -99,7 +99,7 @@ export class HyperSwitchWebhookService {
    * hyperSwitchWebhookService.processWebhook(webhook);
    * ```
    */
-  processWebhook = async (req: HyperSwitchEvent) => {
+  processWebhook = async (req: /* HyperSwitchEvent */ any) => {
     console.log("processWebhook outside setTimeout");
     console.log(req);
 
@@ -110,9 +110,10 @@ export class HyperSwitchWebhookService {
     this.logger.info(`Processing webhook: ${req.event_id}`);
     this.logger.info(JSON.stringify(req));
 
-    const paymentId = req.content.object.payment_id;
-    const amountReceived = req.content.object.amount_received;
-    const customer_id = req.content.object.customer_id;
+    const eventType: string | undefined = req.status; // req.event_type;
+    const paymentId: string | undefined = req.payment_id; // req.content.object.payment_id;
+    const amountReceived: number | undefined = req.amount_received; // req.content.object.amount_received;
+    const customer_id: string | undefined = req.customer_id; // req.content.object.customer_id;
     if (!customer_id) throw new Error("Customer id not found");
     if (!paymentId) throw new Error("Payment id not found");
     if (!amountReceived) throw new Error("Amount received not found");
@@ -121,13 +122,15 @@ export class HyperSwitchWebhookService {
     // console.log(JSON.stringify(customerCart));
     //@TODO validate payment amount
 
-    switch (req.event_type) {
+    switch (eventType) {
       case "payment_succeeded":
+      case "succeeded":
         return this.paymentSuccessHandler(customerCart, amountReceived, paymentId, customer_id);
       case "payment_failed":
+      case "failed":
         return this.paymentFailureHandler(customer_id);
       default:
-        this.logger.warn(`Unhandled event type: ${req.event_type}`);
+        this.logger.warn(`Unhandled event type: ${eventType}`);
         throw new Error("Unhandled event type.");
     }
     // }, 10000);
