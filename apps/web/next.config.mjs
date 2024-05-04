@@ -10,6 +10,7 @@ const config = {
   experimental: {
     serverComponentsExternalPackages: ["bcrypt"],
     instrumentationHook: true,
+    serverSourceMaps: true,
   },
   images: {
     remotePatterns: [
