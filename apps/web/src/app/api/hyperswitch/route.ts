@@ -4,8 +4,9 @@ import { NextResponse, type NextRequest } from "next/server";
 export async function POST(req: NextRequest) {
   console.log("hyperswitch webhook called");
   console.log(req);
-  console.log(req.json());
+  const reqJSON = await req.json();
+  console.log(reqJSON);
 
-  await processHyperSwitchWebhook(await req.json());
+  await processHyperSwitchWebhook(reqJSON);
   return NextResponse.json({ ok: true });
 }
