@@ -100,11 +100,15 @@ export class HyperSwitchWebhookService {
    * ```
    */
   processWebhook = async (req: HyperSwitchEvent) => {
-    console.log("processWebhook outside setTimeout");
+    const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    console.log("processWebhook before waiting.");
     console.log(req);
 
+    await delay(30 * 1000);
+
     // setTimeout(async () => {
-    console.log("processWebhook inside setTimeout");
+    console.log("processWebhook after waiting");
     console.log(req);
 
     this.logger.info(`Processing webhook: ${req.event_id}`);
