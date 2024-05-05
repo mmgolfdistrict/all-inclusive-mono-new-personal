@@ -2158,12 +2158,14 @@ export class BookingService {
       cartId,
       userId,
     });
+    console.log(`Check if payment id is valid ${payment_id}`);
     const isValid = await this.checkIfPaymentIdIsValid(payment_id);
     if (!isValid) {
       throw new Error("Payment Id not is not valid");
     }
     const pricePerGolfer = primaryGreenFeeCharge / playerCount;
 
+    console.log(`Retrieving tee time from database ${teeTimeId}`);
     const [teeTime] = await this.database
       .select({
         id: teeTimes.id,
@@ -2199,9 +2201,15 @@ export class BookingService {
       this.logger.fatal(`tee time not found id: ${teeTimeId}`);
       throw new Error(`Error finding tee time id`);
     }
+
+    console.log(`Retrieving provider and token ${teeTime.internalId}, ${teeTime.courseId}`);
     const { provider, token } = await this.providerService.getProviderAndKey(
       teeTime.internalId!,
       teeTime.courseId
+    );
+
+    console.log(
+      `Finding or creating customer ${userId}, ${teeTime.courseId}, ${teeTime.providerId}, ${teeTime.providerCourseId}, ${token}`
     );
     const providerCustomer = await this.providerService.findOrCreateCustomer(
       teeTime.courseId,
@@ -2222,6 +2230,9 @@ export class BookingService {
       },
     ];
 
+    console.log(
+      `Creating booking ${teeTime.providerDate}, ${teeTime.holes}, ${playerCount}, ${teeTime.providerCourseId}, ${teeTime.providerTeeSheetId}, ${token}`
+    );
     const booking = await provider
       .createBooking(token, teeTime.providerCourseId!, teeTime.providerTeeSheetId!, {
         totalAmountPaid: primaryGreenFeeCharge / 100 + taxCharge - markupCharge,
@@ -2243,6 +2254,8 @@ export class BookingService {
 
         throw new Error(`Error creating booking`);
       });
+
+    console.log(`Creating tokenized booking`);
     //create tokenized bookings
     const bookingId = await this.tokenizeService
       .tokenizeBooking(
@@ -2288,6 +2301,7 @@ export class BookingService {
       status: "Reserved",
     } as ReserveTeeTimeResponse;
   };
+
   confirmBooking = async (paymentId: string, userId: string) => {
     const [booking] = await this.database
       .select({

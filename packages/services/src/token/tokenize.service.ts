@@ -163,6 +163,7 @@ export class TokenizeService {
     this.logger.info(`tokenizeBooking tokenizing booking id: ${providerTeeTimeId} for user: ${userId}`);
     //@TODO add this to the transaction
 
+    console.log(`Retrieving tee time ${providerTeeTimeId}`);
     const [existingTeeTime] = await this.database
       .select({
         id: teeTimes.id,
@@ -197,6 +198,8 @@ export class TokenizeService {
       this.logger.fatal(`TeeTime with ID: ${providerTeeTimeId} does not exist.`);
       throw new Error(`TeeTime with ID: ${providerTeeTimeId} does not exist.`);
     }
+
+    // TODO: Shouldn't this logic not be present before sending the booking to the provider?
     if (existingTeeTime.availableFirstHandSpots < players) {
       this.logger.fatal(`TeeTime with ID: ${providerTeeTimeId} does not have enough spots.`);
       throw new Error(`TeeTime with ID: ${providerTeeTimeId} does not have enough spots.`);
@@ -218,6 +221,8 @@ export class TokenizeService {
       const weatherGuaranteeData = normalizedCartData.cart?.cart?.filter(
         (item: ProductData) => item.product_data.metadata.type === "sensible"
       );
+
+      console.log(`weatherGuaranteeData length = ${weatherGuaranteeData?.length}`);
 
       if (weatherGuaranteeData?.length > 0) {
         acceptedQuote = await this.sensibleService.acceptQuote({
@@ -276,6 +281,7 @@ export class TokenizeService {
       courseId: existingTeeTime.courseId,
     });
 
+    console.log(`Getting slot IDs for booking.`);
     //create bookings according to slot in bookingslot tables
     const bookingSlots =
       (await provider?.getSlotIdsForBooking(
@@ -287,7 +293,9 @@ export class TokenizeService {
         existingTeeTime.courseId
       )) ?? [];
 
+    console.log(`Looping through and updating the booking slots.`);
     for (let i = 0; i < bookingSlots.length; i++) {
+      //TODO: Why can't we use if( i === 0 ) { continue; }? Would it be cleaner?
       if (i != 0) {
         await provider?.updateTeeTime(
           token ?? "",
@@ -311,6 +319,8 @@ export class TokenizeService {
         );
       }
     }
+
+    console.log(`Creating bookings and slots in database.`);
     //create all booking in a transaction to ensure atomicity
     await this.database.transaction(async (tx) => {
       //create each booking
