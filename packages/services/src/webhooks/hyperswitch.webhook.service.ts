@@ -1816,7 +1816,7 @@ export class HyperSwitchWebhookService {
     const [courseCharity] = await this.database
       .select({ courseCharityId: charityCourseLink.charityId })
       .from(charityCourseLink)
-      .where(eq(charityCourseLink.courseId, item.product_data.metadata.charity_id))
+      .where(eq(charityCourseLink.charityId, item.product_data.metadata.charity_id))
       .limit(1)
       .execute();
     if (!courseCharity?.courseCharityId) {
