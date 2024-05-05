@@ -124,7 +124,7 @@ export class BookingService {
     private readonly tokenizeService: TokenizeService,
     private readonly providerService: ProviderService,
     private readonly notificationService: NotificationService
-  ) { }
+  ) {}
 
   createCounterOffer = async (userId: string, bookingIds: string[], offerId: string, amount: number) => {
     //find owner of each booking
@@ -2051,7 +2051,7 @@ export class BookingService {
       .execute();
 
     let slotInfo = customerCartData?.cart?.cart?.filter(
-      ({ product_data }: ProductData) => product_data.metadata.type === 'first_hand'
+      ({ product_data }: ProductData) => product_data.metadata.type === "first_hand"
     );
     if (!slotInfo.length) {
       slotInfo = customerCartData?.cart?.cart?.filter(
@@ -2224,7 +2224,7 @@ export class BookingService {
 
     const booking = await provider
       .createBooking(token, teeTime.providerCourseId!, teeTime.providerTeeSheetId!, {
-        totalAmountPaid: (primaryGreenFeeCharge / 100) + taxCharge - markupCharge,
+        totalAmountPaid: primaryGreenFeeCharge / 100 + taxCharge - markupCharge,
         data: {
           type: "bookings",
           attributes: {
@@ -2306,6 +2306,9 @@ export class BookingService {
         throw "Error retrieving booking";
       });
     if (!booking) {
+      // TODO: need to refund the payment.
+      console.log(`Booking not found for payment id ${paymentId}`);
+
       throw "Booking not found for payment id";
     } else {
       console.log("Set confirm status on booking id ", booking.bookingId);
