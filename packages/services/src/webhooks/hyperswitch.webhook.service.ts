@@ -195,7 +195,10 @@ export class HyperSwitchWebhookService {
       return;
     }
 
+    console.log("Looping through cart");
     for (const item of customerCart.cart) {
+      console.log(item);
+
       switch (item.product_data.metadata.type) {
         case "second_hand":
           await this.handleSecondHandItem(
