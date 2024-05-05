@@ -105,7 +105,7 @@ export class HyperSwitchWebhookService {
     console.log("processWebhook before waiting.");
     console.log(req);
 
-    await delay(10 * 1000);
+    await delay(30 * 1000);
 
     // setTimeout(async () => {
     console.log("processWebhook after waiting");
