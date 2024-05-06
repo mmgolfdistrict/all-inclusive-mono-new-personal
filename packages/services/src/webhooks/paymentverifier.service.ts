@@ -39,16 +39,16 @@ export class PaymentVerifierService {
         weatherGuaranteeId: bookings.weatherGuaranteeId,
       })
       .from(bookings)
-      .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
-      .leftJoin(courses, eq(courses.id, teeTimes.courseId))
-      .leftJoin(
+      .innerJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
+      .innerJoin(courses, eq(courses.id, teeTimes.courseId))
+      .innerJoin(
         providerCourseLink,
         and(
           eq(providerCourseLink.courseId, teeTimes.courseId),
           eq(providerCourseLink.providerId, courses.providerId)
         )
       )
-      .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))
+      .innerJoin(providers, eq(providers.id, providerCourseLink.providerId))
       .where(or(eq(bookings.status, "RESERVED"), eq(bookings.status, "PROCESSING")))
       .execute();
 
