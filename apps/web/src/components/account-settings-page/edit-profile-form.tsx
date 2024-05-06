@@ -64,6 +64,7 @@ export const EditProfileForm = () => {
     setValue,
     watch,
     handleSubmit,
+    setError,
     formState: { isSubmitting, errors },
   } = useForm<EditProfileSchemaType>({
     // @ts-ignore
@@ -222,6 +223,11 @@ export const EditProfileForm = () => {
       toast.success("Profile updated successfully");
     } catch (error) {
       console.log(error);
+
+      if (error?.message === "Handle already exists") {
+        setError("handle", { type: "custom", message: "Handle already exists" });
+      }
+
       toast.error(
         (error as Error)?.message ?? "An error occurred updating profile"
       );
@@ -250,7 +256,6 @@ export const EditProfileForm = () => {
           placeholder="Enter your full name"
           id="name"
           name="name"
-          disabled={true}
           register={register}
           error={errors.name?.message}
           data-testid="profile-name-id"
@@ -305,9 +310,8 @@ export const EditProfileForm = () => {
           ))}
         </datalist>
         <div
-          className={`flex items-end justify-between w-full gap-2 ${
-            isUploading ? "pointer-events-none cursor-not-allowed" : ""
-          }`}
+          className={`flex items-end justify-between w-full gap-2 ${isUploading ? "pointer-events-none cursor-not-allowed" : ""
+            }`}
         >
           <DropMedia
             label="Upload your profile photo"
@@ -330,9 +334,8 @@ export const EditProfileForm = () => {
         </div>
 
         <div
-          className={`flex items-end justify-between w-full gap-2 ${
-            isUploading ? "pointer-events-none cursor-not-allowed" : ""
-          }`}
+          className={`flex items-end justify-between w-full gap-2 ${isUploading ? "pointer-events-none cursor-not-allowed" : ""
+            }`}
         >
           <DropMedia
             label="Upload your background photo"
@@ -346,7 +349,7 @@ export const EditProfileForm = () => {
             dataTestId="upload-background-photo-id"
           />
           {userData?.bannerImage &&
-          userData?.bannerImage !== defaultBannerPhoto ? (
+            userData?.bannerImage !== defaultBannerPhoto ? (
             <OutlineButton
               className="!px-2 !py-1 text-sm rounded-md"
               onClick={resetBanner}
@@ -357,9 +360,8 @@ export const EditProfileForm = () => {
         </div>
         <FilledButton
           disabled={isSubmitting || isUploading}
-          className={`w-full rounded-full ${
-            isSubmitting || isUploading ? "opacity-50" : ""
-          }`}
+          className={`w-full rounded-full ${isSubmitting || isUploading ? "opacity-50" : ""
+            }`}
           data-testid="update-button-id"
         >
           {isSubmitting ? "Updating..." : "Update"}

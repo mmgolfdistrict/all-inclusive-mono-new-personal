@@ -12,7 +12,7 @@ import { z } from "zod";
 // const MAX_PROFILE_IMAGE_SIZE = 500000;
 
 export const editProfileSchema = z.object({
-  name: z.string().min(1, { message: "Name is required" }).max(30),
+  name: z.string().min(6, { message: "Name is required" }).max(30),
   handle: z
     .string()
     .min(1, { message: "Handle is required" })
@@ -31,7 +31,7 @@ export const editProfileSchema = z.object({
       message:
         "Invalid phone number. Please enter a valid US phone number with area code. No country code required, dashes, or spaces.",
     }),
-  location: z.string().optional(),
+  location: z.string().min(1, { message: "Location is required" }),
   profilePictureAssetId: z.string().or(z.null()).or(z.object({})).optional(),
   // .refine(
   //   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
