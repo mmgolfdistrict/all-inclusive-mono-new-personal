@@ -225,7 +225,10 @@ export const EditProfileForm = () => {
       console.log(error);
 
       if (error?.message === "Handle already exists") {
-        setError("handle", { type: "custom", message: "Handle already exists" });
+        setError("handle", {
+          type: "custom",
+          message: "Handle already exists",
+        });
       }
 
       toast.error(
@@ -269,6 +272,7 @@ export const EditProfileForm = () => {
           name="email"
           error={errors.email?.message}
           data-testid="profile-email-id"
+          disabled={true}
         />
         <Input
           label="Phone Number"
@@ -310,8 +314,9 @@ export const EditProfileForm = () => {
           ))}
         </datalist>
         <div
-          className={`flex items-end justify-between w-full gap-2 ${isUploading ? "pointer-events-none cursor-not-allowed" : ""
-            }`}
+          className={`flex items-end justify-between w-full gap-2 ${
+            isUploading ? "pointer-events-none cursor-not-allowed" : ""
+          }`}
         >
           <DropMedia
             label="Upload your profile photo"
@@ -334,8 +339,9 @@ export const EditProfileForm = () => {
         </div>
 
         <div
-          className={`flex items-end justify-between w-full gap-2 ${isUploading ? "pointer-events-none cursor-not-allowed" : ""
-            }`}
+          className={`flex items-end justify-between w-full gap-2 ${
+            isUploading ? "pointer-events-none cursor-not-allowed" : ""
+          }`}
         >
           <DropMedia
             label="Upload your background photo"
@@ -349,7 +355,7 @@ export const EditProfileForm = () => {
             dataTestId="upload-background-photo-id"
           />
           {userData?.bannerImage &&
-            userData?.bannerImage !== defaultBannerPhoto ? (
+          userData?.bannerImage !== defaultBannerPhoto ? (
             <OutlineButton
               className="!px-2 !py-1 text-sm rounded-md"
               onClick={resetBanner}
@@ -360,8 +366,9 @@ export const EditProfileForm = () => {
         </div>
         <FilledButton
           disabled={isSubmitting || isUploading}
-          className={`w-full rounded-full ${isSubmitting || isUploading ? "opacity-50" : ""
-            }`}
+          className={`w-full rounded-full ${
+            isSubmitting || isUploading ? "opacity-50" : ""
+          }`}
           data-testid="update-button-id"
         >
           {isSubmitting ? "Updating..." : "Update"}
