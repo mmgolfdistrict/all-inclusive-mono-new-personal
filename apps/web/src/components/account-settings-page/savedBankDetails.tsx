@@ -6,10 +6,8 @@ import { Spinner } from "../loading/spinner";
 import CardDetails from "./CardDetails";
 
 export const SavedBankDetails = () => {
-  const {
-    data: associatedBanks,
-    isLoading,
-  } = api.cashOut.getAssociatedAccounts.useQuery({});
+  const { data: associatedBanks, isLoading } =
+    api.cashOut.getAssociatedAccounts.useQuery({});
 
   const removeMethod = async (_paymentMethodId: string) => {
     // TODO: Implement the removeMethod functionality
@@ -39,12 +37,11 @@ export const SavedBankDetails = () => {
 };
 
 const CardDisplay = ({
-  card
+  card,
 }: {
   card: CustomerPaymentMethod;
   removeMethod: (x: string) => Promise<void>;
 }) => {
-
   return (
     <div className="border border-stroke rounded-md p-3 flex flex-col relative">
       <CardDetails label="Bank Name" value={"N/A"} />
