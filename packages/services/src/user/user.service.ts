@@ -13,12 +13,7 @@ import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import type { InsertUser } from "@golf-district/database/schema/users";
 import { users } from "@golf-district/database/schema/users";
 import type { GroupedBookings } from "@golf-district/shared";
-import {
-  assetToURL,
-  currentUtcTimestamp,
-  isValidEmail,
-  isValidPassword,
-} from "@golf-district/shared";
+import { assetToURL, currentUtcTimestamp, isValidEmail, isValidPassword } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
 import bcrypt from "bcryptjs";
 import { alias } from "drizzle-orm/mysql-core";
