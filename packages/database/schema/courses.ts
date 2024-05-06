@@ -6,9 +6,7 @@ import {
   double,
   index,
   int,
-  primaryKey,
   text,
-  tinyint,
   varchar,
 } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";

@@ -3,7 +3,7 @@ import type { Db } from "@golf-district/database";
 import { and, eq, inArray } from "@golf-district/database";
 import type { InsertBooking } from "@golf-district/database/schema/bookings";
 import { bookings } from "@golf-district/database/schema/bookings";
-import { bookingslots, InsertBookingSlots } from "@golf-district/database/schema/bookingslots";
+import { bookingslots } from "@golf-district/database/schema/bookingslots";
 import { courses } from "@golf-district/database/schema/courses";
 import { customerCarts } from "@golf-district/database/schema/customerCart";
 import { entities } from "@golf-district/database/schema/entities";
@@ -11,17 +11,14 @@ import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import type { InsertTransfer } from "@golf-district/database/schema/transfers";
 import { transfers } from "@golf-district/database/schema/transfers";
 import { users } from "@golf-district/database/schema/users";
-import { currentUtcTimestamp, formatMoney } from "@golf-district/shared";
+import { formatMoney } from "@golf-district/shared";
 import createICS from "@golf-district/shared/createICS";
 import type { Event } from "@golf-district/shared/createICS";
 import Logger from "@golf-district/shared/src/logger";
 import dayjs from "dayjs";
-import { textChangeRangeIsUnchanged } from "typescript";
 import type { ProductData } from "../checkout/types";
-import { CustomerCart } from "../checkout/types";
 import type { NotificationService } from "../notification/notification.service";
 import type { ProviderAPI } from "../tee-sheet-provider/sheet-providers";
-import { TeeTime } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
 import type { SensibleService } from "../sensible/sensible.service";
 
 /**

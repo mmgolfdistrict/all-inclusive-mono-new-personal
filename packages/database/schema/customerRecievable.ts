@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import type { InferSelectModel } from "drizzle-orm";
 import { datetime, int, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 

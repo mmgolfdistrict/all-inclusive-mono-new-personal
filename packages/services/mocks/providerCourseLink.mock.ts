@@ -1,4 +1,4 @@
-import { providerCourseLink } from "@golf-district/database/schema/providersCourseLink";
+import type { providerCourseLink } from "@golf-district/database/schema/providersCourseLink";
 import { currentUtcTimestamp } from "@golf-district/shared";
 
 export const mockProviderCourseLink: (typeof providerCourseLink.$inferInsert)[] = [

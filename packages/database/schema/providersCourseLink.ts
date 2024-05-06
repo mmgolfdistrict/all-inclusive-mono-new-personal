@@ -4,7 +4,6 @@ import { datetime, primaryKey, text, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 import { courses } from "./courses";
 import { providers } from "./providers";
-import { teeTimes } from "./teeTimes";
 
 // import { courseProviders } from './courseProviders';
 

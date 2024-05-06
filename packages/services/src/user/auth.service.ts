@@ -2,12 +2,11 @@ import { eq, or } from "@golf-district/database";
 import type { Db } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import { users } from "@golf-district/database/schema/users";
-import type { SelectUser } from "@golf-district/database/schema/users";
 import { assetToURL, currentUtcTimestamp } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
 import bcrypt from "bcryptjs";
 import { CacheService } from "../infura/cache.service";
-import { NotificationService } from "../notification/notification.service";
+import type { NotificationService } from "../notification/notification.service";
 
 export class AuthService extends CacheService {
   /**

@@ -1,8 +1,9 @@
-import { Db, eq } from "@golf-district/database";
+import type { Db} from "@golf-district/database";
+import { eq } from "@golf-district/database";
 import { users } from "@golf-district/database/schema/users";
 import Logger from "@golf-district/shared/src/logger";
-import { NotificationService } from "../notification/notification.service";
-import { StripeService } from "../payment-processor/stripe.service";
+import type { NotificationService } from "../notification/notification.service";
+import type { StripeService } from "../payment-processor/stripe.service";
 
 export class StripeConnectWebhookService {
   private readonly logger = Logger(StripeConnectWebhookService.name);

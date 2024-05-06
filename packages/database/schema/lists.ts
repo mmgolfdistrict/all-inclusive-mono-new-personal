@@ -1,10 +1,8 @@
 import type { InferInsertModel } from "drizzle-orm";
 import { relations, sql } from "drizzle-orm";
-import { boolean, datetime, index, int, mysqlEnum, smallint, varchar } from "drizzle-orm/mysql-core";
+import { boolean, datetime, index, int, smallint, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 import { bookings } from "./bookings";
-import { courses } from "./courses";
-import { teeTimes } from "./teeTimes";
 import { users } from "./users";
 
 export const lists = mySqlTable(

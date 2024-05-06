@@ -8,7 +8,7 @@ import { bids } from "@golf-district/database/schema/bids";
 import { users } from "@golf-district/database/schema/users";
 import { assetToURL, currentUtcTimestamp, dateToUtcTimestamp } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
-import { HyperSwitchService } from "../payment-processor/hyperswitch.service";
+import type { HyperSwitchService } from "../payment-processor/hyperswitch.service";
 
 /**
  * Provides methods for creating, managing, and querying auctions.
@@ -24,7 +24,7 @@ export class AuctionService {
    *
    * @param database - The database client used to perform auction-related operations.
    */
-  constructor(private readonly database: Db, private readonly hyperSwitch: HyperSwitchService) {}
+  constructor(private readonly database: Db, private readonly hyperSwitch: HyperSwitchService) { }
 
   /**
    * Creates a new auction for a specified course ID.
@@ -134,7 +134,7 @@ export class AuctionService {
   ): Promise<{ auctions: SelectAuctions[]; nextCursor: string | null }> => {
     this.logger.info(`Getting auctions for course ${courseId}`);
 
-    let query = this.database
+    const query = this.database
       .select()
       .from(auctions)
       .orderBy(desc(auctions.startDate))
@@ -307,7 +307,7 @@ export class AuctionService {
       this.logger.warn(`Auction ${auctionId} not found`);
       throw new Error("Auction not found");
     }
-    if (!auction!.buyNowPrice) {
+    if (!auction.buyNowPrice) {
       this.logger.warn(`Auction ${auctionId} does not have a buy now price`);
       throw new Error("Auction does not have a buy now price");
     }
@@ -433,7 +433,7 @@ export class AuctionService {
       this.logger.fatal(`BuyNow callback auction not found: ${auctionId}`);
       throw new Error("Error getting auction");
     }
-    if (!auction!.buyNowPrice) {
+    if (!auction.buyNowPrice) {
       this.logger.fatal(`BuyNow callback Auction ${auctionId} does not have a buy now price`);
       throw new Error("Auction does not have a buy now price");
     }
@@ -510,7 +510,7 @@ export class AuctionService {
     }
     const { auction, asset } = data;
 
-    let imageUrl: string = "";
+    let imageUrl = "";
     if (!asset) {
       imageUrl = "/defaults/default-auction.webp";
     } else {

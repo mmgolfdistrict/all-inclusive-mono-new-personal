@@ -19,7 +19,6 @@ import Logger from "@golf-district/shared/src/logger";
 import { AuctionService } from "../auction/auction.service";
 import { HyperSwitchService } from "../payment-processor/hyperswitch.service";
 //import { StripeService } from "../payment-processor/stripe.service";
-import { SensibleService } from "../sensible/sensible.service";
 import type { ProviderService } from "../tee-sheet-provider/providers.service";
 import type { ForeUpWebhookService } from "../webhooks/foreup.webhook.service";
 import type {

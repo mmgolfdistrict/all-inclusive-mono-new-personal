@@ -1,5 +1,5 @@
 import { randomBytes, randomUUID } from "crypto";
-import { and, asc, desc, eq, gt, is, lt, or } from "@golf-district/database";
+import { and, asc, desc, eq, gt, lt, or } from "@golf-district/database";
 import type { Db } from "@golf-district/database";
 import { accounts } from "@golf-district/database/schema/accounts";
 import { assets } from "@golf-district/database/schema/assets";
@@ -12,10 +12,9 @@ import { lists } from "@golf-district/database/schema/lists";
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import type { InsertUser } from "@golf-district/database/schema/users";
 import { users } from "@golf-district/database/schema/users";
-import type { BookingGroup, GroupedBookings } from "@golf-district/shared";
+import type { GroupedBookings } from "@golf-district/shared";
 import {
   assetToURL,
-  containsBadWords,
   currentUtcTimestamp,
   isValidEmail,
   isValidPassword,

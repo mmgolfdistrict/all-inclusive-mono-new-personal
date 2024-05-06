@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
-import { and, eq, not } from "@golf-district/database";
+import { and, eq } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import { bookings } from "@golf-district/database/schema/bookings";
 import type { InsertBooking } from "@golf-district/database/schema/bookings";
@@ -17,16 +17,14 @@ import { providers } from "@golf-district/database/schema/providers";
 import { providerCourseLink } from "@golf-district/database/schema/providersCourseLink";
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import { transfers } from "@golf-district/database/schema/transfers";
-import type { InsertTransfer } from "@golf-district/database/schema/transfers";
 import { userPromoCodeLink } from "@golf-district/database/schema/userPromoCodeLink";
 import { users } from "@golf-district/database/schema/users";
-import { currentUtcTimestamp, formatMoney } from "@golf-district/shared";
+import { formatMoney } from "@golf-district/shared";
 import createICS from "@golf-district/shared/createICS";
 import type { Event } from "@golf-district/shared/createICS";
 import Logger from "@golf-district/shared/src/logger";
 import { Client } from "@upstash/qstash/.";
 import dayjs from "dayjs";
-import { B } from "vitest/dist/reporters-5f784f42";
 import type { BookingService } from "../booking/booking.service";
 import type {
   AuctionProduct,
@@ -45,7 +43,6 @@ import type { NotificationService } from "../notification/notification.service";
 import type { SensibleService } from "../sensible/sensible.service";
 import type { ProviderService } from "../tee-sheet-provider/providers.service";
 import type { BookingResponse } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
-import { BookingCreationData } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
 import type { TokenizeService } from "../token/tokenize.service";
 import type { HyperSwitchEvent } from "./types/hyperswitch";
 

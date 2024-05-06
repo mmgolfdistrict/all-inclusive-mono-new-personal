@@ -1,4 +1,5 @@
-import { InferInsertModel, relations, sql } from "drizzle-orm";
+import type { InferInsertModel} from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import { datetime, index, primaryKey, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 import { courses } from "./courses";
