@@ -5,7 +5,6 @@ import { api } from "~/utils/api";
 import { useState } from "react";
 import { Spinner } from "../loading/spinner";
 import CardDetails from "./CardDetails";
-import SidePanel from "./SidePanel";
 
 export const SavedBankDetails = () => {
   // const { cards, refetch, isLoading } = usePaymentMethods();

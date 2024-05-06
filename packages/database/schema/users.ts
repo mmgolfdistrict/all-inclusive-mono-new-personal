@@ -1,4 +1,5 @@
-import { InferInsertModel, InferSelectModel, relations, sql } from "drizzle-orm";
+import type { InferInsertModel, InferSelectModel} from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
   boolean,
   index,
@@ -7,7 +8,6 @@ import {
   primaryKey,
   text,
   timestamp,
-  tinyint,
   unique,
   varchar,
 } from "drizzle-orm/mysql-core";

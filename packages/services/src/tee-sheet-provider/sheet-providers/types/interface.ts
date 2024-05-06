@@ -1,5 +1,4 @@
 import type { InsertBookingSlots } from "@golf-district/database/schema/bookingslots";
-import Logger from "@golf-district/shared/src/logger";
 import type pino from "pino";
 import type { BookingResponse, CustomerCreationData, CustomerData, TeeTimeResponse } from "./foreup.type";
 

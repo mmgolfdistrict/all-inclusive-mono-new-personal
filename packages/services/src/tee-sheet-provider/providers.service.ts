@@ -1,10 +1,7 @@
 import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
-import { and, eq, inArray, sql } from "@golf-district/database";
+import { and, eq, sql } from "@golf-district/database";
 import type { InsertBookingSlots } from "@golf-district/database/schema/bookingslots";
-import { providers } from "@golf-district/database/schema/providers";
-import type { SelectProviders } from "@golf-district/database/schema/providers";
-import { providerCourseLink } from "@golf-district/database/schema/providersCourseLink";
 import { userProviderCourseLink } from "@golf-district/database/schema/userProviderCourseLink";
 import { users } from "@golf-district/database/schema/users";
 import Logger from "@golf-district/shared/src/logger";

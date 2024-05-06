@@ -1,5 +1,4 @@
-import { lists } from "@golf-district/database/schema/lists";
-import { currentUtcTimestamp } from "@golf-district/shared";
+import type { lists } from "@golf-district/database/schema/lists";
 
 export const mockLists: (typeof lists.$inferInsert)[] = [
   {

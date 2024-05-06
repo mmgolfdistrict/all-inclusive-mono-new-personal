@@ -21,11 +21,9 @@ import { currentUtcTimestamp, dateToUtcTimestamp } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
 import dayjs from "dayjs";
 import { alias } from "drizzle-orm/mysql-core";
-import type { CustomerCart, FirstHandProduct, ProductData } from "../checkout/types";
+import type { CustomerCart, ProductData } from "../checkout/types";
 import type { NotificationService } from "../notification/notification.service";
-import type { HyperSwitchService } from "../payment-processor/hyperswitch.service";
 import type { Customer, ProviderService } from "../tee-sheet-provider/providers.service";
-import type { BookingResponse } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
 import type { TokenizeService } from "../token/tokenize.service";
 
 interface TeeTimeData {
