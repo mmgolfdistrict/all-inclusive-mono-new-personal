@@ -368,7 +368,9 @@ export const CheckoutForm = ({
 
       <FilledButton
         className={`w-full rounded-full`}
-        disabled={!hyper || !widgets || message === "Payment Successful"}
+        disabled={
+          isLoading || !hyper || !widgets || message === "Payment Successful"
+        }
         data-testid="pay-now-id"
       >
         {isLoading ? "Loading..." : <>Pay Now</>}
