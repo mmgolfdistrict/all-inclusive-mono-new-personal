@@ -153,9 +153,9 @@ export const TeeTime = ({
         `/${course?.id}/checkout?listingId=${listingId}&playerCount=${listedSlots}`
       );
     }
-    if (handleLoading) {
-      handleLoading(false);
-    }
+    // if (handleLoading) {
+    //   handleLoading(false);
+    // }
   };
 
   const makeAnOffer = () => {
