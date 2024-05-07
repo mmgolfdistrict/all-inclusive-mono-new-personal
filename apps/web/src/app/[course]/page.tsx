@@ -50,8 +50,7 @@ export default function CourseHomePage() {
   const { data: farthestDateOut } =
     api.searchRouter.getFarthestTeeTimeDate.useQuery(
       {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-        courseId: course?.id!,
+        courseId: course?.id ?? "",
         order: "desc",
       },
       {

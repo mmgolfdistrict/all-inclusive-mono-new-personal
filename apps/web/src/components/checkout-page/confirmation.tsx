@@ -22,20 +22,16 @@ export const Confirmation = ({
   teeTimeId: string;
   bookingId: string;
 }) => {
-  const {
-    data: bookingData,
-    isLoading: isLoadingBookingData,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    refetch,
-  } = api.teeBox.getOwnedBookingById.useQuery(
-    { bookingId },
-    {
-      enabled: !!teeTimeId,
-      refetchOnMount: false,
-      refetchOnReconnect: false,
-      refetchOnWindowFocus: false,
-    }
-  );
+  const { data: bookingData, isLoading: isLoadingBookingData } =
+    api.teeBox.getOwnedBookingById.useQuery(
+      { bookingId },
+      {
+        enabled: !!teeTimeId,
+        refetchOnMount: false,
+        refetchOnReconnect: false,
+        refetchOnWindowFocus: false,
+      }
+    );
 
   const { course } = useCourseContext();
   // const { reservationData } = useCheckoutContext();
