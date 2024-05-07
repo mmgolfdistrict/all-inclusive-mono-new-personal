@@ -60,8 +60,7 @@ export const Filters = () => {
   } = useFiltersContext();
   const { course } = useCourseContext();
   const { data } = api.searchRouter.findBlackoutDates.useQuery(
-    // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-    { courseId: course?.id! },
+    { courseId: course?.id ?? "" },
     { enabled: course?.id !== undefined }
   );
 

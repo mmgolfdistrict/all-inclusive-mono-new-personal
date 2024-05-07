@@ -3,6 +3,7 @@
 import { useCourseContext } from "~/contexts/CourseContext";
 import { api } from "~/utils/api";
 import { formatMoney, formatTime } from "~/utils/formatters";
+import type { InviteFriend } from "~/utils/types";
 import { useEffect, useMemo, useState } from "react";
 import { Avatar } from "../avatar";
 import { OutlineButton } from "../buttons/outline-button";
@@ -10,15 +11,25 @@ import { SkeletonRow } from "./skeleton-row";
 import { TxnDetails } from "./txn-details";
 
 export type TxnHistoryType = {
+  // courseName: string;
+  // courseLogo: string;
+  // date: string;
+  // firstHandPrice: number;
+  // golfers: string[];
+  // pricePerGolfer: number[];
+  // bookingIds: string[];
+  // playerCount?: number;
+  // status: string; //"SOLD" | "PURCHASED" |
+  courseId: string;
   courseName: string;
   courseLogo: string;
   date: string;
   firstHandPrice: number;
-  golfers: string[];
   pricePerGolfer: number[];
+  golfers: InviteFriend[];
   bookingIds: string[];
+  status: string;
   playerCount?: number;
-  status: string; //"SOLD" | "PURCHASED" |
 };
 
 export const TransactionHistory = () => {
@@ -47,12 +58,8 @@ export const TransactionHistory = () => {
   }
 
   const txnHistory = useMemo(() => {
-    if (!data) return undefined;
-    // return Object.keys(data).map((key) => {
-    //   return data[key] as TxnHistoryType;
-    // });
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    return sortByDate(data as any);
+    if (!data || Array.isArray(data)) return undefined;
+    return sortByDate(data as Record<string, TxnHistoryType>);
   }, [data]);
 
   // const loadMore = () => {
@@ -169,7 +176,7 @@ const TableRow = ({
   course: string;
   date: string;
   iconSrc: string;
-  golfers: string[];
+  golfers: InviteFriend[];
   purchasePrice: number;
   status: string;
   timezoneCorrection: number | undefined;

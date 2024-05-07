@@ -18,15 +18,17 @@ export type { Session } from "next-auth";
 export const providers = ["google", "credentials"] as const;
 export type OAuthProviders = (typeof providers)[number];
 
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  image: string;
+  phone: string;
+}
 declare module "next-auth" {
+
   interface Session {
-    user: {
-      id: string;
-      name: string;
-      email: string;
-      image: string;
-      phone: string;
-    } & DefaultSession["user"];
+    user: User & DefaultSession["user"];
   }
 }
 export const authConfig: NextAuthConfig = {
@@ -167,10 +169,9 @@ export const authConfig: NextAuthConfig = {
       if (trigger === "update" && session?.image !== undefined && token) {
         token.picture = session.image;
         token.image = session.image;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (token.user as any).image = session.image;
+        (token.user as User).image = session.image;
       }
-      const userInfo: any = token.user;
+      const userInfo = token.user as User;
       token.phone = userInfo.phone;
       return token;
     },

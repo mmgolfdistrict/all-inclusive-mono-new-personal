@@ -49,14 +49,7 @@ export const HyperSwitch = ({
   const { user } = useUserContext();
   const { course } = useCourseContext();
   const checkout = api.checkout.buildCheckoutSession.useMutation();
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [isLoadingSession, setIsLoadingSession] = useState<boolean>(false);
   const [cartId, setCartId] = useState<string>("");
-  const amountToPay =
-    //@ts-ignore
-    cartData
-      ?.filter(({ product_data }) => product_data.metadata.type !== "markup")
-      ?.reduce((acc: number, i: CartProduct) => acc + i.price, 0) / 100;
   const [localCartData, setLocalCartData] = useState<unknown[]>(cartData);
   const [error, setError] = useState<undefined | string>(undefined);
   const callingRef = useRef<boolean>(false);
@@ -136,13 +129,10 @@ export const HyperSwitch = ({
 
   return (
     <div className="w-full md:min-w-[370px] px-2 md:px-0">
-      {options !== undefined &&
-      hyperPromise !== undefined &&
-      !isLoadingSession ? (
+      {options !== undefined && hyperPromise !== undefined ? (
         <HyperElements options={options} hyper={hyperPromise}>
           <CheckoutForm
             teeTimeId={teeTimeId}
-            amountToPay={amountToPay}
             isBuyNowAuction={isBuyNowAuction}
             cartData={cartData}
             cartId={cartId}
