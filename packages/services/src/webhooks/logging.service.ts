@@ -9,8 +9,8 @@ interface AuditLog {
   listingId: string;
   eventId: string;
   json: string;
-  createdAt: Date;
-  lastUpdatedDateTime: Date;
+  createdAt?: Date;
+  lastUpdatedDateTime?: Date;
 }
 
 
@@ -31,7 +31,6 @@ export class LoggerService {
           "Upstash-Delay": "5s",
         },
       });
-  
       if (res.ok) {
         return NextResponse.json({ message: "Message successfully sent." });
       } else {

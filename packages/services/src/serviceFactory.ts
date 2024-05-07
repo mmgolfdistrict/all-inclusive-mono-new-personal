@@ -111,7 +111,8 @@ export class ServiceFactory {
       this.config.database,
       this.getTokenizerService(),
       this.getProviderService(),
-      this.getNotificationService()
+      this.getNotificationService(),
+      this.getLoggerService()
     );
   };
 
@@ -296,7 +297,7 @@ export class ServiceFactory {
    * @returns An instance of TokenizeService.
    */
   getTokenizerService = (): TokenizeService => {
-    return new TokenizeService(this.config.database, this.getNotificationService());
+    return new TokenizeService(this.config.database, this.getNotificationService(),this.getLoggerService());
   };
 
   /**
@@ -319,6 +320,7 @@ export class ServiceFactory {
       this.getNotificationService(),
       this.getBookingService(),
       this.getSensibleService(),
+      this.getLoggerService(),
       this.config.upStashClientToken
     );
   };
