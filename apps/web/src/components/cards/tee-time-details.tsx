@@ -128,7 +128,11 @@ export const TeeTimeDetails = ({
         </div>
       ) : data === null ? (
         <div className="flex justify-center items-center h-[200px]">
-          <div className="text-center">We're sorry. This time is no longer available. Someone just booked this. It may take a minute for the sold time you selected to be removed. Please select another time.</div>
+          <div className="text-center">
+            We're sorry. This time is no longer available. Someone just booked
+            this. It may take a minute for the sold time you selected to be
+            removed. Please select another time.
+          </div>
         </div>
       ) : (
         <div className="flex flex-col gap-4  px-4 pb-2 text-[14px] md:px-6 md:pb-3">

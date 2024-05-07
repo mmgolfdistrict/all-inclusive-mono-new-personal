@@ -18,10 +18,10 @@ import Logger from "@golf-district/shared/src/logger";
 import dayjs from "dayjs";
 import type { ProductData } from "../checkout/types";
 import type { NotificationService } from "../notification/notification.service";
+import type { SensibleService } from "../sensible/sensible.service";
 import type { ProviderAPI } from "../tee-sheet-provider/sheet-providers";
 import { TeeTime } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
 import { LoggerService } from "../webhooks/logging.service";
-import type { SensibleService } from "../sensible/sensible.service";
 
 /**
  * Service class for handling booking tokenization, transfers, and updates.

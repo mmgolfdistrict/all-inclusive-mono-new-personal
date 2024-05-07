@@ -26,7 +26,6 @@ interface User {
   phone: string;
 }
 declare module "next-auth" {
-
   interface Session {
     user: User & DefaultSession["user"];
   }

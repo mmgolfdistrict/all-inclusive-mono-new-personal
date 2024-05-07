@@ -151,7 +151,7 @@ export const processHyperSwitchWebhook = async (req: any) => {
     process.env.SENDGRID_API_KEY!
   );
   const loggerService = new LoggerService();
-  const tokenizeService = new TokenizeService(db, notificationService, loggerService,sensibleService);
+  const tokenizeService = new TokenizeService(db, notificationService, loggerService, sensibleService);
   const credentials = {
     username: process.env.FOREUP_USERNAME!,
     password: process.env.FOREUP_PASSWORD!,
