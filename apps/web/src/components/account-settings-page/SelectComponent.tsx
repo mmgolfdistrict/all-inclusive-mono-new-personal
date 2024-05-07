@@ -35,7 +35,7 @@ const OptionDetails = ({
         onChange={handleChange}
         className="block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:border-blue-400"
       >
-        <option value="">Select an option</option>
+        <option value="">Select a Bank Account Below</option>
         {associatedBanks.map((bank) => (
           <option key={bank.id} value={bank.id}>
             {bank.accountNumber}

@@ -1,5 +1,5 @@
-import { string, z } from "zod";
-import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+import { z } from "zod";
+import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const cashOutRouter = createTRPCRouter({
   createStripeAccountLink: protectedProcedure

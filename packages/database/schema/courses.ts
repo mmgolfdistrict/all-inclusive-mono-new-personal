@@ -1,16 +1,6 @@
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 import { relations, sql } from "drizzle-orm";
-import {
-  boolean,
-  datetime,
-  double,
-  index,
-  int,
-  primaryKey,
-  text,
-  tinyint,
-  varchar,
-} from "drizzle-orm/mysql-core";
+import { boolean, datetime, double, index, int, text, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 import { assets } from "./assets";
 import { bookings } from "./bookings";

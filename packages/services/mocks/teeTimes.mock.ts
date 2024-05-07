@@ -1,5 +1,4 @@
-import { teeTimes } from "@golf-district/database/schema/teeTimes";
-import { currentUtcTimestamp } from "@golf-district/shared";
+import type { teeTimes } from "@golf-district/database/schema/teeTimes";
 
 export const mockTeeTimes: (typeof teeTimes.$inferInsert)[] = [
   {

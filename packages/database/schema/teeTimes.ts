@@ -1,11 +1,9 @@
 import { relations, sql, type InferInsertModel, type InferSelectModel } from "drizzle-orm";
-import { datetime, index, int, primaryKey, varchar } from "drizzle-orm/mysql-core";
+import { datetime, index, int, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 import { bookings } from "./bookings";
 import { courses } from "./courses";
-import { entities } from "./entities";
 import { favorites } from "./favorites";
-import { providerCourseLink } from "./providersCourseLink";
 
 export const teeTimes = mySqlTable(
   "teeTime",

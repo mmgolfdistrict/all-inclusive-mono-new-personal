@@ -2,7 +2,6 @@
 
 import { useUser } from "~/hooks/useUser";
 import { api } from "~/utils/api";
-import { formatMoney } from "~/utils/formatters";
 import Script from "next/script";
 import { useState } from "react";
 import { toast } from "react-toastify";

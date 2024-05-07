@@ -1,7 +1,6 @@
 import { relations, sql } from "drizzle-orm";
 import { datetime, index, json, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
-import { courses } from "./courses";
 import { users } from "./users";
 
 export const customerCarts = mySqlTable(

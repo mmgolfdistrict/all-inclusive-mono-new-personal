@@ -1,11 +1,11 @@
 import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
-import { and, eq, gte, lt, sum } from "@golf-district/database";
+import { and, eq, lt, sum } from "@golf-district/database";
 import { cashout } from "@golf-district/database/schema/cashout";
 import { customerRecievable } from "@golf-district/database/schema/customerRecievable";
 import { users } from "@golf-district/database/schema/users";
 import { withdrawals } from "@golf-district/database/schema/withdrawals";
-import { currentUtcTimestamp, dateToUtcTimestamp } from "@golf-district/shared";
+import { currentUtcTimestamp } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
 import type { NotificationService } from "../notification/notification.service";
 import type { StripeService } from "../payment-processor/stripe.service";

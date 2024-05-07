@@ -1,4 +1,4 @@
-import { notifications } from "@golf-district/database/schema/notifications";
+import type { notifications } from "@golf-district/database/schema/notifications";
 import { currentUtcTimestamp } from "@golf-district/shared";
 
 export const mockNotifications: (typeof notifications.$inferInsert)[] = [

@@ -1,9 +1,8 @@
 import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
-import { and, desc, eq, gt, gte, inArray, isNull, lt, or, sql } from "@golf-district/database";
+import { and, desc, eq, gte, inArray, lt, sql } from "@golf-district/database";
 import { bookings } from "@golf-district/database/schema/bookings";
 import { notifications } from "@golf-district/database/schema/notifications";
-import { offerRead } from "@golf-district/database/schema/offerRead";
 import { offers } from "@golf-district/database/schema/offers";
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import { userBookingOffers } from "@golf-district/database/schema/userBookingOffers";
