@@ -442,6 +442,7 @@ export class UserService {
    */
   updateUser = async (userId: string, data: UserUpdateData): Promise<void> => {
     this.logger.info(`updateUser called for user: ${userId}`);
+    
     if (data.handle) {
       if (!(await this.isValidHandle(data.handle))) {
         this.logger.warn(`Handle already exists: ${data.handle}`);
@@ -510,7 +511,10 @@ export class UserService {
       updateData.phoneNotifications = data.phoneNotifications ? true : false;
     if (Object.prototype.hasOwnProperty.call(data, "emailNotifications"))
       updateData.emailNotifications = data.emailNotifications ? true : false;
-    if (Object.prototype.hasOwnProperty.call(data, "phoneNumber")) updateData.phoneNumber = data.phoneNumber;
+    if (Object.prototype.hasOwnProperty.call(data, "phoneNumber")) {
+      updateData.phoneNumber = data.phoneNumber;
+      updateData.phoneNumberVerified = null;
+    }
 
     await this.database
       .update(users)
