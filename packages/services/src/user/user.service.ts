@@ -448,7 +448,6 @@ export class UserService {
    */
   updateUser = async (userId: string, data: UserUpdateData): Promise<void> => {
     this.logger.info(`updateUser called for user: ${userId}`);
-    console.log("update user data =========", data);
     
     if (data.handle) {
       if (!(await this.isValidHandle(data.handle))) {
@@ -519,7 +518,6 @@ export class UserService {
     if (Object.prototype.hasOwnProperty.call(data, "emailNotifications"))
       updateData.emailNotifications = data.emailNotifications ? true : false;
     if (Object.prototype.hasOwnProperty.call(data, "phoneNumber")) {
-      console.log("data phone number has changedv===========", data.phoneNumber)
       updateData.phoneNumber = data.phoneNumber;
       updateData.phoneNumberVerified = null;
     }
