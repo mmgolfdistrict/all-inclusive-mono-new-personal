@@ -25,6 +25,7 @@ import type { CustomerCart, ProductData } from "../checkout/types";
 import type { NotificationService } from "../notification/notification.service";
 import type { Customer, ProviderService } from "../tee-sheet-provider/providers.service";
 import type { TokenizeService } from "../token/tokenize.service";
+import type { LoggerService } from "../webhooks/logging.service";
 
 interface TeeTimeData {
   courseId: string;
@@ -126,7 +127,8 @@ export class BookingService {
     private readonly database: Db,
     private readonly tokenizeService: TokenizeService,
     private readonly providerService: ProviderService,
-    private readonly notificationService: NotificationService
+    private readonly notificationService: NotificationService,
+    private readonly loggerService: LoggerService
   ) {}
 
   createCounterOffer = async (userId: string, bookingIds: string[], offerId: string, amount: number) => {
@@ -2290,6 +2292,15 @@ export class BookingService {
       .catch((err) => {
         this.logger.error(err);
         //@TODO this email should be removed
+        this.loggerService.auditLog({
+          id: randomUUID(),
+          userId,
+          teeTimeId,
+          bookingId: "",
+          listingId: "",
+          eventId: "TEE_TIME_BOOKING_FAILED",
+          json: err,
+        });
 
         throw new Error(`Error creating booking`);
       });
@@ -2334,6 +2345,17 @@ export class BookingService {
         throw new Error(`Error creating booking`);
       });
     await this.sendMessageToVerifyPayment(paymentId as string, userId, bookingId);
+
+    this.loggerService.auditLog({
+      id: randomUUID(),
+      userId,
+      teeTimeId,
+      bookingId,
+      listingId: "",
+      eventId: "TEE_TIME_BOOKED",
+      json: "tee time booked",
+    });
+
     return {
       bookingId,
       providerBookingId: booking.data.id,
@@ -2346,6 +2368,7 @@ export class BookingService {
       .select({
         bookingId: bookings.id,
         courseId: teeTimes.courseId,
+        teeTimeId: bookings.teeTimeId,
       })
       .from(bookings)
       .innerJoin(customerCarts, eq(bookings.cartId, customerCarts.id))
@@ -2355,6 +2378,15 @@ export class BookingService {
       .where(and(eq(customerCarts.paymentId, paymentId), eq(bookings.ownerId, userId)))
       .execute()
       .catch((err) => {
+        this.loggerService.auditLog({
+          id: randomUUID(),
+          userId,
+          teeTimeId: booking?.teeTimeId ?? "",
+          bookingId: booking?.bookingId ?? "",
+          listingId: "",
+          eventId: "TEE_TIME_CONFIRMATION_FAILED",
+          json: err,
+        });
         this.logger.error(`Error retrieving bookings by payment id: ${err}`);
         throw "Error retrieving booking";
       });
@@ -2374,7 +2406,26 @@ export class BookingService {
         .execute()
         .catch((err) => {
           this.logger.error(`Error in updating booking status ${err}`);
+          this.loggerService.auditLog({
+            id: randomUUID(),
+            userId,
+            teeTimeId: booking?.teeTimeId ?? "",
+            bookingId: booking?.bookingId ?? "",
+            listingId: "",
+            eventId: "TEE_TIME_CONFIRMATION_FAILED",
+            json: err,
+          });
         });
+
+      this.loggerService.auditLog({
+        id: randomUUID(),
+        userId,
+        teeTimeId: booking?.teeTimeId ?? "",
+        bookingId: booking?.bookingId ?? "",
+        listingId: "",
+        eventId: "TEE_TIME_CONFIRMED_SUCCESS",
+        json: "Tee time status confirmed",
+      });
     }
   };
   reserveSecondHandBooking = async (userId = "", cartId = "", listingId = "", payment_id = "") => {
@@ -2399,6 +2450,15 @@ export class BookingService {
 
     const isValid = await this.checkIfPaymentIdIsValid(payment_id);
     if (!isValid) {
+      this.loggerService.auditLog({
+        id: randomUUID(),
+        userId,
+        teeTimeId: "",
+        bookingId: "",
+        listingId,
+        eventId: "PAYMENT_ID_NOT_VALID",
+        json: "Payment Id not is not valid",
+      });
       throw new Error("Payment Id not is not valid");
     }
 
@@ -2483,6 +2543,17 @@ export class BookingService {
         });
     });
     await this.sendMessageToVerifyPayment(payment_id, userId, bookingId);
+
+    this.loggerService.auditLog({
+      id: randomUUID(),
+      userId,
+      teeTimeId: associatedBooking?.teeTimeIdForBooking ?? "",
+      bookingId,
+      listingId,
+      eventId: "TEE_TIME_BOOKED",
+      json: "Tee time booked",
+    });
+
     return {
       bookingId,
       providerBookingId: "",

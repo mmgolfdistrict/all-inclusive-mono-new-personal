@@ -91,15 +91,15 @@ export const TeeTime = ({
 
   const toggleWatchlist = api.watchlist.toggleWatchlist.useMutation();
   const [optimisticLike, setOptimisticLike] = useState(isLiked);
-  const { refetch: refetchCheckTeeTime } =
-    api.teeBox.checkIfTeeTimeStillListed.useQuery(
-      {
-        bookingId: bookingIds[0] || "",
-      },
-      {
-        enabled: false,
-      }
-    );
+  // const { refetch: refetchCheckTeeTime } =
+  //   api.teeBox.checkIfTeeTimeStillListed.useQuery(
+  //     {
+  //       bookingId: bookingIds[0] || "",
+  //     },
+  //     {
+  //       enabled: false,
+  //     }
+  //   );
 
   const addToWatchlist = async () => {
     if (!user) {
@@ -153,9 +153,9 @@ export const TeeTime = ({
         `/${course?.id}/checkout?listingId=${listingId}&playerCount=${listedSlots}`
       );
     }
-    if (handleLoading) {
-      handleLoading(false);
-    }
+    // if (handleLoading) {
+    //   handleLoading(false);
+    // }
   };
 
   const makeAnOffer = () => {

@@ -174,7 +174,7 @@ export const ListTeeTime = ({
       return;
     }
     if (listingPrice <= 1) {
-      toast.error(`Listing price must be greater than $1.`);
+      toast.error(`Enter listing price.`);
       return;
     }
     try {
@@ -296,7 +296,7 @@ export const ListTeeTime = ({
                 <ToggleGroup.Root
                   id="spots"
                   type="single"
-                  value={players}
+                  value={availableSlots.toString()}
                   onValueChange={(player: PlayerType) => {
                     if (availableSlots < parseInt(player)) return;
 

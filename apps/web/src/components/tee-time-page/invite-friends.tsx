@@ -286,18 +286,18 @@ export const InviteFriends = ({
                           {friendList.length ? (
                             <ul className="w-full text-opacity-100 text-gray-700 shadow-md border border-solid border-gray-200 rounded-8 text-start">
                               {friendList?.map((frnd, idx) => (
-                                // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
-                                <li
-                                  className="cursor-pointer p-4 border-b border-solid border-gray-300"
-                                  onClick={() => {
-                                    addFriendUpdated({
-                                      ...frnd,
-                                      slotId: friend.slotId,
-                                    });
-                                  }}
-                                  key={idx}
-                                >
-                                  {frnd.email} ({frnd.handle})
+                                <li key={idx}>
+                                  <div
+                                    className="cursor-pointer p-4 border-b border-solid border-gray-300"
+                                    onClick={() => {
+                                      addFriendUpdated({
+                                        ...frnd,
+                                        slotId: friend.slotId,
+                                      });
+                                    }}
+                                  >
+                                    {frnd.email} ({frnd.handle})
+                                  </div>
                                 </li>
                               ))}
                             </ul>

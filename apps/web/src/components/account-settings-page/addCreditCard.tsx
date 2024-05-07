@@ -10,8 +10,7 @@ import { Trashcan } from "../icons/trashcan";
 import { AddCard } from "./add-card";
 
 export const AddCreditCard = () => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { cards, refetch, isLoading } = usePaymentMethods();
+  const { refetch } = usePaymentMethods();
   const removeCard = api.checkout.removePaymentMethod.useMutation();
 
   const removeMethod = async (paymentMethodId: string) => {

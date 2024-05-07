@@ -18,8 +18,10 @@ import Logger from "@golf-district/shared/src/logger";
 import dayjs from "dayjs";
 import type { ProductData } from "../checkout/types";
 import type { NotificationService } from "../notification/notification.service";
-import type { ProviderAPI } from "../tee-sheet-provider/sheet-providers";
 import type { SensibleService } from "../sensible/sensible.service";
+import type { ProviderAPI } from "../tee-sheet-provider/sheet-providers";
+import { TeeTime } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
+import { LoggerService } from "../webhooks/logging.service";
 
 /**
  * Service class for handling booking tokenization, transfers, and updates.
@@ -42,6 +44,7 @@ export class TokenizeService {
   constructor(
     private readonly database: Db,
     private readonly notificationService: NotificationService,
+    private readonly loggerService: LoggerService,
     private readonly sensibleService: SensibleService
   ) {}
   getCartData = async ({ courseId = "", ownerId = "", paymentId = "" }) => {
@@ -193,12 +196,30 @@ export class TokenizeService {
     if (!existingTeeTime) {
       //how has a booking been created for a tee time that does not exist? big problem
       this.logger.fatal(`TeeTime with ID: ${providerTeeTimeId} does not exist.`);
+      this.loggerService.auditLog({
+        id: randomUUID(),
+        userId,
+        teeTimeId: "",
+        bookingId: "",
+        listingId: "",
+        eventId: "TEE_TIME_NOT_FOUND",
+        json: `TeeTime with ID: ${providerTeeTimeId} does not exist.`,
+      });
       throw new Error(`TeeTime with ID: ${providerTeeTimeId} does not exist.`);
     }
 
     // TODO: Shouldn't this logic not be present before sending the booking to the provider?
     if (existingTeeTime.availableFirstHandSpots < players) {
       this.logger.fatal(`TeeTime with ID: ${providerTeeTimeId} does not have enough spots.`);
+      this.loggerService.auditLog({
+        id: randomUUID(),
+        userId,
+        teeTimeId: "",
+        bookingId: "",
+        listingId: "",
+        eventId: "TEE_TIME_DOES_NOT_HAVE_ENOUGH_SPOTS",
+        json: `TeeTime with ID: ${providerTeeTimeId} does not have enough spots.`,
+      });
       throw new Error(`TeeTime with ID: ${providerTeeTimeId} does not have enough spots.`);
     }
 
@@ -353,6 +374,16 @@ export class TokenizeService {
           this.logger.error(err);
           tx.rollback();
         });
+    });
+
+    this.loggerService.auditLog({
+      id: randomUUID(),
+      userId,
+      teeTimeId: existingTeeTime?.id,
+      bookingId,
+      listingId: "",
+      eventId: "TEE_TIME_BOOKED",
+      json: "tee time booked",
     });
 
     const message = `
