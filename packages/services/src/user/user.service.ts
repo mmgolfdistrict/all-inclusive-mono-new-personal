@@ -13,12 +13,7 @@ import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import type { InsertUser } from "@golf-district/database/schema/users";
 import { users } from "@golf-district/database/schema/users";
 import type { GroupedBookings } from "@golf-district/shared";
-import {
-  assetToURL,
-  currentUtcTimestamp,
-  isValidEmail,
-  isValidPassword,
-} from "@golf-district/shared";
+import { assetToURL, currentUtcTimestamp, isValidEmail, isValidPassword } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
 import bcrypt from "bcryptjs";
 import { alias } from "drizzle-orm/mysql-core";
@@ -122,8 +117,8 @@ export class UserService {
       throw new Error("Invalid email format");
     }
     if (!(await this.isValidHandle(data.handle))) {
-      this.logger.warn(`Invalid handle format: ${data.handle}`);
-      throw new Error("Invalid handle format");
+      this.logger.warn(`Handle already exists: ${data.handle}`);
+      throw new Error("Handle already exists");
     }
     if (isValidPassword(data.password).score < 8) {
       this.logger.warn("Invalid password");
@@ -426,7 +421,7 @@ export class UserService {
    * @returns {Promise<void>} Promise that resolves when the user's information is successfully updated.
    *
    * @throws
-   *   - `Error("Invalid handle format")`: If the provided `handle` does not pass the format validation.
+   *   - `Error("Handle already exists")`: If the provided `handle` does not pass the format validation.
    *   - `Error("Invalid name due to profanity filter")`: If the provided `name` does not pass the profanity filter check.
    *   - `Error("Error recovering asset: [assetId]")`: If there is an error retrieving the asset identified by `[assetId]` from the database.
    *   - `Error("Asset not found: [assetId]")`: If the asset identified by `[assetId]` is not found in the database.
@@ -449,8 +444,8 @@ export class UserService {
     this.logger.info(`updateUser called for user: ${userId}`);
     if (data.handle) {
       if (!(await this.isValidHandle(data.handle))) {
-        this.logger.warn(`Invalid handle format: ${data.handle}`);
-        throw new Error("Invalid handle format");
+        this.logger.warn(`Handle already exists: ${data.handle}`);
+        throw new Error("Handle already exists");
       }
     }
     // if (data.name) {

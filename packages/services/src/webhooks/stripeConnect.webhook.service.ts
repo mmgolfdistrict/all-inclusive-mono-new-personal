@@ -1,4 +1,4 @@
-import type { Db} from "@golf-district/database";
+import type { Db } from "@golf-district/database";
 import { eq } from "@golf-district/database";
 import { users } from "@golf-district/database/schema/users";
 import Logger from "@golf-district/shared/src/logger";

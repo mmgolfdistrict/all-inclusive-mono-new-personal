@@ -64,6 +64,7 @@ export const EditProfileForm = () => {
     setValue,
     watch,
     handleSubmit,
+    setError,
     formState: { isSubmitting, errors },
   } = useForm<EditProfileSchemaType>({
     // @ts-ignore
@@ -222,6 +223,14 @@ export const EditProfileForm = () => {
       toast.success("Profile updated successfully");
     } catch (error) {
       console.log(error);
+
+      if (error?.message === "Handle already exists") {
+        setError("handle", {
+          type: "custom",
+          message: "Handle already exists",
+        });
+      }
+
       toast.error(
         (error as Error)?.message ?? "An error occurred updating profile"
       );
@@ -250,7 +259,6 @@ export const EditProfileForm = () => {
           placeholder="Enter your full name"
           id="name"
           name="name"
-          disabled={true}
           register={register}
           error={errors.name?.message}
           data-testid="profile-name-id"
@@ -264,6 +272,7 @@ export const EditProfileForm = () => {
           name="email"
           error={errors.email?.message}
           data-testid="profile-email-id"
+          disabled={true}
         />
         <Input
           label="Phone Number"
