@@ -344,6 +344,6 @@ export class ServiceFactory {
     return new FinixService(this.config.database);
   };
   getLoggerService = (): LoggerService => {
-    return new LoggerService(this.config.database);
+    return new LoggerService();
   };
 }

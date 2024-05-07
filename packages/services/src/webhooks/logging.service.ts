@@ -14,7 +14,6 @@ interface AuditLog {
 }
 
 export class LoggerService {
-  constructor(private readonly database: Db) {}
 
   auditLog = async (data: AuditLog) => {
     try {
