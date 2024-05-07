@@ -59,6 +59,7 @@ export const userRouter = createTRPCRouter({
   updateUser: protectedProcedure
     .input(
       z.object({
+        name: z.string().optional(),
         handle: z.string().optional(),
         profileVisibility: z.enum(["PUBLIC", "PRIVATE"]).optional(),
         profilePictureAssetId: z.string().optional(),
