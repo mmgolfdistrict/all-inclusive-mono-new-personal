@@ -442,7 +442,7 @@ export class UserService {
    */
   updateUser = async (userId: string, data: UserUpdateData): Promise<void> => {
     this.logger.info(`updateUser called for user: ${userId}`);
-    
+
     if (data.handle) {
       if (!(await this.isValidHandle(data.handle))) {
         this.logger.warn(`Handle already exists: ${data.handle}`);

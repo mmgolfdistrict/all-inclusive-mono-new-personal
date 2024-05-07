@@ -3,6 +3,7 @@ import * as appSettings from "./appSetting";
 import * as assets from "./assets";
 import * as auctionAssets from "./auctionAssets";
 import * as auctions from "./auctions";
+import * as auditlog from "./auditlog";
 import * as bids from "./bids";
 import * as bookings from "./bookings";
 import * as cashouts from "./cashout";
@@ -38,7 +39,6 @@ import * as userProviderCourseLink from "./userProviderCourseLink";
 import * as users from "./users";
 import * as verificationTokens from "./verificationTokens";
 import * as withdrawals from "./withdrawals";
-import * as auditlog from "./auditlog";
 
 export const schema = {
   ...accounts,
