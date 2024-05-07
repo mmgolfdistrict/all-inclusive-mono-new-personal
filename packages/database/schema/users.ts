@@ -65,6 +65,7 @@ export const users = mySqlTable(
       .notNull(),
     phoneNotifications: boolean("phoneNotifications").default(true).notNull(),
     phoneNumber: varchar("phoneNumber", { length: 191 }),
+    phoneNumberVerified: timestamp("phoneNumberVerified", { mode: "string", fsp: 3 }),
     emailNotifications: boolean("emailNotifications").default(true).notNull(),
     verificationRequestToken: varchar("verificationRequestToken", {
       length: 191,
