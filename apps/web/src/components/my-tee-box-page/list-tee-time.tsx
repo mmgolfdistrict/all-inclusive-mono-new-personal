@@ -296,7 +296,7 @@ export const ListTeeTime = ({
                 <ToggleGroup.Root
                   id="spots"
                   type="single"
-                  value={availableSlots.toString()}
+                  value={players}
                   onValueChange={(player: PlayerType) => {
                     if (availableSlots < parseInt(player)) return;
 
