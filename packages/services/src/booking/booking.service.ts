@@ -103,7 +103,12 @@ interface TransferData {
   status: string;
   playerCount?: number;
 }
-
+type RequestOptions = {
+  method: string;
+  headers: Headers;
+  body: string;
+  redirect: RequestRedirect;
+};
 /**
  * Service for managing bookings and transaction history.
  */
@@ -2136,6 +2141,42 @@ export class BookingService {
     return true;
   };
 
+  sendMessageToVerifyPayment = async (paymentId: string, customer_id: string, bookingId: string) => {
+    const myHeaders = new Headers();
+    myHeaders.append("Authorization", `Bearer ${process.env.QSTASH_TOKEN}`);
+    myHeaders.append("Content-Type", "application/json");
+
+    const raw = JSON.stringify({
+      json: {
+        paymentId,
+        customer_id,
+        bookingId,
+      },
+    });
+    console.log("Sending message to payment queue", {
+      paymentId,
+      customer_id,
+      bookingId,
+      url: `https://qstash.upstash.io/v2/publish/${process.env.QSTASH_PAYMENT_TOPIC}`,
+    });
+    const requestOptions: RequestOptions = {
+      method: "POST",
+      headers: myHeaders,
+      body: raw,
+      redirect: "follow",
+    };
+    try {
+      const response = await fetch(
+        `https://qstash.upstash.io/v2/publish/${process.env.QSTASH_PAYMENT_TOPIC}`,
+        requestOptions
+      );
+      const data = await response.json();
+      return data;
+    } catch (e) {
+      console.log("Error in addding message", e);
+    }
+  };
+
   reserveBooking = async (userId: string, cartId: string, payment_id: string) => {
     const {
       cart,
@@ -2292,7 +2333,7 @@ export class BookingService {
         );
         throw new Error(`Error creating booking`);
       });
-
+    await this.sendMessageToVerifyPayment(paymentId as string, userId, bookingId);
     return {
       bookingId,
       providerBookingId: booking.data.id,
@@ -2441,7 +2482,7 @@ export class BookingService {
           this.logger.error(err);
         });
     });
-
+    await this.sendMessageToVerifyPayment(payment_id, userId, bookingId);
     return {
       bookingId,
       providerBookingId: "",
