@@ -38,6 +38,7 @@ import * as userProviderCourseLink from "./userProviderCourseLink";
 import * as users from "./users";
 import * as verificationTokens from "./verificationTokens";
 import * as withdrawals from "./withdrawals";
+import * as auditlog from "./auditlog";
 
 export const schema = {
   ...accounts,
@@ -80,4 +81,5 @@ export const schema = {
   ...customerPaymentDetail,
   ...cashouts,
   ...customerRecievable,
+  ...auditlog,
 };
