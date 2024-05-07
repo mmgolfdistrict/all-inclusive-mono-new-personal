@@ -37,7 +37,11 @@ export class TokenizeService {
    * @example
    * const tokenizeService = new TokenizeService(database);
    */
-  constructor(private readonly database: Db, private readonly notificationService: NotificationService, private readonly loggerService:LoggerService) {}
+  constructor(
+    private readonly database: Db,
+    private readonly notificationService: NotificationService,
+    private readonly loggerService: LoggerService
+  ) {}
   getCartData = async ({ courseId = "", ownerId = "", paymentId = "" }) => {
     const [customerCartData]: any = await this.database
       .select({ cart: customerCarts.cart, cartId: customerCarts.id })
@@ -170,8 +174,8 @@ export class TokenizeService {
         email: users.email,
         entityName: entities.name,
         providerDate: teeTimes.providerDate,
-        address:courses.address,
-        name:courses.name
+        address: courses.address,
+        name: courses.name,
       })
       .from(teeTimes)
       .where(eq(teeTimes.id, providerTeeTimeId))
@@ -188,27 +192,27 @@ export class TokenizeService {
       //how has a booking been created for a tee time that does not exist? big problem
       this.logger.fatal(`TeeTime with ID: ${providerTeeTimeId} does not exist.`);
       this.loggerService.auditLog({
-        id:randomUUID(),
+        id: randomUUID(),
         userId,
-        teeTimeId:"",
-        bookingId:"",
-        listingId:"",
+        teeTimeId: "",
+        bookingId: "",
+        listingId: "",
         eventId: "TEE_TIME_NOT_FOUND",
-        json: `TeeTime with ID: ${providerTeeTimeId} does not exist.`
-       })
+        json: `TeeTime with ID: ${providerTeeTimeId} does not exist.`,
+      });
       throw new Error(`TeeTime with ID: ${providerTeeTimeId} does not exist.`);
     }
     if (existingTeeTime.availableFirstHandSpots < players) {
       this.logger.fatal(`TeeTime with ID: ${providerTeeTimeId} does not have enough spots.`);
       this.loggerService.auditLog({
-        id:randomUUID(),
+        id: randomUUID(),
         userId,
-        teeTimeId:"",
-        bookingId:"",
-        listingId:"",
+        teeTimeId: "",
+        bookingId: "",
+        listingId: "",
         eventId: "TEE_TIME_DOES_NOT_HAVE_ENOUGH_SPOTS",
-        json: `TeeTime with ID: ${providerTeeTimeId} does not have enough spots.`
-       })
+        json: `TeeTime with ID: ${providerTeeTimeId} does not have enough spots.`,
+      });
       throw new Error(`TeeTime with ID: ${providerTeeTimeId} does not have enough spots.`);
     }
 
@@ -328,14 +332,14 @@ export class TokenizeService {
     });
 
     this.loggerService.auditLog({
-      id:randomUUID(),
+      id: randomUUID(),
       userId,
-      teeTimeId:existingTeeTime?.id,
+      teeTimeId: existingTeeTime?.id,
       bookingId,
-      listingId:"",
+      listingId: "",
       eventId: "TEE_TIME_BOOKED",
-      json: "tee time booked"
-     })
+      json: "tee time booked",
+    });
 
     const message = `
 ${players} tee times have been purchased for ${existingTeeTime.date} at ${existingTeeTime.courseId}
@@ -350,11 +354,11 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       startDate: existingTeeTime.date,
       endDate: existingTeeTime.date,
       email: existingTeeTime.email ?? "",
-      address:existingTeeTime.address,
-      name:existingTeeTime.name,
-      reservationId:bookingId,
-      courseReservation:providerBookingId,
-      numberOfPlayer:players.toString(),
+      address: existingTeeTime.address,
+      name: existingTeeTime.name,
+      reservationId: bookingId,
+      courseReservation: providerBookingId,
+      numberOfPlayer: players.toString(),
       playTime: dayjs(existingTeeTime.providerDate).utcOffset("-06:00").format("YYYY-MM-DD hh:mm A") ?? "-",
     };
     const icsContent: string = createICS(event);

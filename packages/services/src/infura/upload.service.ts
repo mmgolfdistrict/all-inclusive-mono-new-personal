@@ -8,10 +8,10 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { db, eq, type Db } from "@golf-district/database";
-import Logger from "@golf-district/shared/src/logger";
-import type { ImageService } from "./image.service";
 import { assets } from "@golf-district/database/schema/assets";
 import { users } from "@golf-district/database/schema/users";
+import Logger from "@golf-district/shared/src/logger";
+import type { ImageService } from "./image.service";
 
 export interface Part {
   ETag: string;
@@ -266,26 +266,34 @@ export class UploadService {
    */
   deleteFile = async (userId: string, imageType: "profileImage" | "bannerImage"): Promise<void> => {
     let assetId;
-    this.logger.info("userId", userId)
+    this.logger.info("userId", userId);
 
     if (imageType === "profileImage") {
-      const [asset] = await db.select({
-        assetId: users.image
-      }).from(users).where(eq(users.id, userId)).execute();
+      const [asset] = await db
+        .select({
+          assetId: users.image,
+        })
+        .from(users)
+        .where(eq(users.id, userId))
+        .execute();
       if (!asset) {
         throw new Error("User or asset not found");
       }
-      assetId = asset.assetId
+      assetId = asset.assetId;
     } else if (imageType === "bannerImage") {
-      const [asset] = await db.select({
-        assetId: users.bannerImage
-      }).from(users).where(eq(users.id, userId)).execute();
+      const [asset] = await db
+        .select({
+          assetId: users.bannerImage,
+        })
+        .from(users)
+        .where(eq(users.id, userId))
+        .execute();
       if (!asset) {
         throw new Error("User or asset not found");
       }
-      assetId = asset.assetId
+      assetId = asset.assetId;
     }
-    this.logger.info("assetId", assetId)
+    this.logger.info("assetId", assetId);
     if (!assetId) {
       throw new Error("asset not found");
     }
@@ -293,7 +301,7 @@ export class UploadService {
     const [assetData] = await db
       .select({
         assetKey: assets.key,
-        assetExtension: assets.extension
+        assetExtension: assets.extension,
       })
       .from(assets)
       .where(eq(assets.id, assetId))

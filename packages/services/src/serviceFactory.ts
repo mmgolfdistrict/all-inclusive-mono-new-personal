@@ -27,8 +27,8 @@ import {
 } from "./index";
 import { ProviderService } from "./tee-sheet-provider/providers.service";
 import { FinixService } from "./webhooks/finix.service";
-import { PaymentVerifierService } from "./webhooks/paymentverifier.service";
 import { LoggerService } from "./webhooks/logging.service";
+import { PaymentVerifierService } from "./webhooks/paymentverifier.service";
 
 export interface ServiceConfig {
   database: Db;
@@ -297,7 +297,7 @@ export class ServiceFactory {
    * @returns An instance of TokenizeService.
    */
   getTokenizerService = (): TokenizeService => {
-    return new TokenizeService(this.config.database, this.getNotificationService(),this.getLoggerService());
+    return new TokenizeService(this.config.database, this.getNotificationService(), this.getLoggerService());
   };
 
   /**
@@ -343,7 +343,7 @@ export class ServiceFactory {
   getFinixService = (): FinixService => {
     return new FinixService(this.config.database);
   };
-  getLoggerService =(): LoggerService => {
-    return new LoggerService(this.config.database)
-  }
+  getLoggerService = (): LoggerService => {
+    return new LoggerService(this.config.database);
+  };
 }

@@ -46,8 +46,8 @@ import type { ProviderService } from "../tee-sheet-provider/providers.service";
 import type { BookingResponse } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
 import { BookingCreationData } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
 import type { TokenizeService } from "../token/tokenize.service";
-import type { HyperSwitchEvent } from "./types/hyperswitch";
 import { LoggerService } from "./logging.service";
+import type { HyperSwitchEvent } from "./types/hyperswitch";
 
 /**
  * `HyperSwitchWebhookService` - A service for processing webhooks from HyperSwitch.
@@ -79,8 +79,8 @@ export class HyperSwitchWebhookService {
     private readonly notificationService: NotificationService,
     private readonly bookingService: BookingService,
     private readonly sensibleService: SensibleService,
-    private readonly loggerService:LoggerService,
-    upStashClientToken: string,
+    private readonly loggerService: LoggerService,
+    upStashClientToken: string
   ) {
     this.qStashClient = new Client({
       token: upStashClientToken,
@@ -258,27 +258,27 @@ export class HyperSwitchWebhookService {
       .catch((err) => {
         this.logger.error(err);
         this.loggerService.auditLog({
-          id:randomUUID(),
-          userId:customer_id,
-          teeTimeId:item.product_data.metadata.tee_time_id,
-          bookingId:"",
-          listingId:"",
+          id: randomUUID(),
+          userId: customer_id,
+          teeTimeId: item.product_data.metadata.tee_time_id,
+          bookingId: "",
+          listingId: "",
           eventId: "TEE_TIME_NOT_FOUND",
-          json: err
-         })
+          json: err,
+        });
         throw new Error(`Error finding tee time id`);
       });
     if (!teeTime) {
       this.logger.fatal(`tee time not found id: ${item.product_data.metadata.tee_time_id}`);
       this.loggerService.auditLog({
-        id:randomUUID(),
-        userId:customer_id,
-        teeTimeId:item.product_data.metadata.tee_time_id,
-        bookingId:"",
-        listingId:"",
+        id: randomUUID(),
+        userId: customer_id,
+        teeTimeId: item.product_data.metadata.tee_time_id,
+        bookingId: "",
+        listingId: "",
         eventId: "TEE_TIME_NOT_FOUND",
-        json: `tee time not found id: ${item.product_data.metadata.tee_time_id}`
-       })
+        json: `tee time not found id: ${item.product_data.metadata.tee_time_id}`,
+      });
       throw new Error(`Error finding tee time id`);
     }
     const { provider, token } = await this.providerService.getProviderAndKey(
@@ -296,14 +296,14 @@ export class HyperSwitchWebhookService {
     if (!providerCustomer?.playerNumber) {
       this.logger.error(`Error creating customer`);
       this.loggerService.auditLog({
-        id:randomUUID(),
-        userId:customer_id,
-        teeTimeId:item.product_data.metadata.tee_time_id,
-        bookingId:"",
-        listingId:"",
+        id: randomUUID(),
+        userId: customer_id,
+        teeTimeId: item.product_data.metadata.tee_time_id,
+        bookingId: "",
+        listingId: "",
         eventId: "ERROR_CREATING_CUSTOMER",
-        json: `Error creating customer`
-       })
+        json: `Error creating customer`,
+      });
       throw new Error(`Error creating customer`);
     }
 
@@ -336,14 +336,14 @@ export class HyperSwitchWebhookService {
         this.logger.error(err);
         //@TODO this email should be removed
         this.loggerService.auditLog({
-          id:randomUUID(),
-          userId:customer_id,
-          teeTimeId:teeTime.id,
-          bookingId:"",
-          listingId:"",
+          id: randomUUID(),
+          userId: customer_id,
+          teeTimeId: teeTime.id,
+          bookingId: "",
+          listingId: "",
           eventId: "TEE_TIME_BOOKING_FAILED",
-          json: err
-         })
+          json: err,
+        });
 
         this.notificationService.createNotification(
           customer_id,
@@ -351,7 +351,7 @@ export class HyperSwitchWebhookService {
           "An error occurred while creating booking with provider",
           teeTime.courseId
         );
-        
+
         throw new Error(`Error creating booking`);
       });
     //create tokenized bookings
@@ -378,14 +378,14 @@ export class HyperSwitchWebhookService {
           teeTime.courseId
         );
         this.loggerService.auditLog({
-          id:randomUUID(),
-          userId:customer_id,
-          teeTimeId:teeTime.id,
-          bookingId:"",
-          listingId:"",
+          id: randomUUID(),
+          userId: customer_id,
+          teeTimeId: teeTime.id,
+          bookingId: "",
+          listingId: "",
           eventId: "TEE_TIME_BOOKING_FAILED",
-          json: err
-         })
+          json: err,
+        });
         throw new Error(`Error creating booking`);
       });
   };
@@ -492,14 +492,14 @@ export class HyperSwitchWebhookService {
       .execute()
       .catch((error) => {
         this.loggerService.auditLog({
-          id:randomUUID(),
-          userId:customer_id,
-          teeTimeId:"",
-          bookingId:"",
+          id: randomUUID(),
+          userId: customer_id,
+          teeTimeId: "",
+          bookingId: "",
           listingId,
           eventId: "BOOKING_ID_NOT_FOUND",
-          json: error
-         })
+          json: error,
+        });
         throw new Error("error fetching old and new bookingId");
       });
 
@@ -512,17 +512,17 @@ export class HyperSwitchWebhookService {
       .execute()
       .catch((err) => {
         this.loggerService.auditLog({
-          id:randomUUID(),
-          userId:customer_id,
-          teeTimeId:"",
-          bookingId:bookingsIds?.id??"",
+          id: randomUUID(),
+          userId: customer_id,
+          teeTimeId: "",
+          bookingId: bookingsIds?.id ?? "",
           listingId,
           eventId: "BOOKING_CONFIRMATION_ERROR",
-          json: "Error confirming booking"
-         })  
+          json: "Error confirming booking",
+        });
         throw new Error(`Error confirming booking`);
       });
-    
+
     await this.database
       .update(bookings)
       .set({
@@ -533,26 +533,26 @@ export class HyperSwitchWebhookService {
       .execute()
       .catch((err) => {
         this.loggerService.auditLog({
-          id:randomUUID(),
-          userId:customer_id,
-          teeTimeId:"",
-          bookingId:bookingsIds?.id??"",
+          id: randomUUID(),
+          userId: customer_id,
+          teeTimeId: "",
+          bookingId: bookingsIds?.id ?? "",
           listingId,
           eventId: "BOOKING_CONFIRMATION_ERROR",
-          json: err
-         })  
+          json: err,
+        });
         throw new Error(`Error cancelling old booking`);
       });
-    
-      this.loggerService.auditLog({
-        id:randomUUID(),
-        userId:customer_id,
-        teeTimeId:"",
-        bookingId:bookingsIds?.id??"",
-        listingId,
-        eventId: "BOOKING_STATUS_UPDATED",
-        json: "Booking status updated"
-       })    
+
+    this.loggerService.auditLog({
+      id: randomUUID(),
+      userId: customer_id,
+      teeTimeId: "",
+      bookingId: bookingsIds?.id ?? "",
+      listingId,
+      eventId: "BOOKING_STATUS_UPDATED",
+      json: "Booking status updated",
+    });
 
     await this.database
       .update(lists)
@@ -603,14 +603,14 @@ export class HyperSwitchWebhookService {
     if (listedBooking.length === 0) {
       this.logger.fatal(`no bookings found for listing id: ${listingId}`);
       this.loggerService.auditLog({
-        id:randomUUID(),
-        userId:customer_id,
-        teeTimeId:"",
-        bookingId:bookingsIds?.id??"",
+        id: randomUUID(),
+        userId: customer_id,
+        teeTimeId: "",
+        bookingId: bookingsIds?.id ?? "",
         listingId,
         eventId: "BOOKING_NOT_FOUND_FOR_LISTING",
-        json: "Error finding bookings for listing id"
-       })  
+        json: "Error finding bookings for listing id",
+      });
       throw new Error(`Error finding bookings for listing id`);
     }
     const firstBooking = listedBooking[0];
@@ -635,14 +635,14 @@ export class HyperSwitchWebhookService {
     if (!buyerCustomer?.playerNumber) {
       this.logger.error(`Error creating or finding customer`);
       this.loggerService.auditLog({
-        id:randomUUID(),
-        userId:customer_id,
-        teeTimeId:firstBooking?.teeTimeId,
-        bookingId:bookingsIds?.id??"",
+        id: randomUUID(),
+        userId: customer_id,
+        teeTimeId: firstBooking?.teeTimeId,
+        bookingId: bookingsIds?.id ?? "",
         listingId,
         eventId: "ERROR_CREATING_CUSTOMER",
-        json: "Error creating or finding customer"
-       })  
+        json: "Error creating or finding customer",
+      });
       throw new Error(`Error creating or finding customer`);
     }
 
@@ -658,14 +658,14 @@ export class HyperSwitchWebhookService {
     if (!sellerCustomer?.playerNumber) {
       this.logger.error(`Error creating or finding customer`);
       this.loggerService.auditLog({
-        id:randomUUID(),
-        userId:firstBooking.ownerId,
-        teeTimeId:firstBooking?.teeTimeId,
-        bookingId:bookingsIds?.id??"",
+        id: randomUUID(),
+        userId: firstBooking.ownerId,
+        teeTimeId: firstBooking?.teeTimeId,
+        bookingId: bookingsIds?.id ?? "",
         listingId,
         eventId: "ERROR_CREATING_CUSTOMER",
-        json: "Error creating or finding customer"
-       })  
+        json: "Error creating or finding customer",
+      });
       throw new Error(`Error creating or finding customer`);
     }
 
@@ -679,14 +679,14 @@ export class HyperSwitchWebhookService {
       .catch((err) => {
         this.logger.error(`Error deleting booking: ${err}`);
         this.loggerService.auditLog({
-          id:randomUUID(),
-          userId:firstBooking.ownerId,
-          teeTimeId:firstBooking?.teeTimeId,
-          bookingId:bookingsIds?.id??"",
+          id: randomUUID(),
+          userId: firstBooking.ownerId,
+          teeTimeId: firstBooking?.teeTimeId,
+          bookingId: bookingsIds?.id ?? "",
           listingId,
           eventId: "ERROR_DELETING_TEETIME",
-          json: "Error deleting booking"
-         })  
+          json: "Error deleting booking",
+        });
         throw new Error(`Error deleting booking`);
       });
 
@@ -774,7 +774,7 @@ export class HyperSwitchWebhookService {
         buyerFee: courses.buyerFee,
         sellerFee: courses.sellerFee,
         providerDate: teeTimes.providerDate,
-        address: courses.address
+        address: courses.address,
       })
       .from(teeTimes)
       .where(eq(teeTimes.id, firstBooking.teeTimeId))
@@ -912,22 +912,24 @@ export class HyperSwitchWebhookService {
       }
 
       const event: Event = {
-        startDate: existingTeeTime?.date??"",
-        endDate: existingTeeTime?.date??"",
-        email: buyerCustomer?.email??"",
-        address:existingTeeTime?.address??"",
-        name:existingTeeTime?.courseName,
-        reservationId:bookingId,
-        courseReservation:newBooking?.data.id,
-        numberOfPlayer:(listedSlotsCount??1).toString(),
-        playTime: dayjs(existingTeeTime?.providerDate).utcOffset("-06:00").format("YYYY-MM-DD hh:mm A") ?? "-",
+        startDate: existingTeeTime?.date ?? "",
+        endDate: existingTeeTime?.date ?? "",
+        email: buyerCustomer?.email ?? "",
+        address: existingTeeTime?.address ?? "",
+        name: existingTeeTime?.courseName,
+        reservationId: bookingId,
+        courseReservation: newBooking?.data.id,
+        numberOfPlayer: (listedSlotsCount ?? 1).toString(),
+        playTime:
+          dayjs(existingTeeTime?.providerDate).utcOffset("-06:00").format("YYYY-MM-DD hh:mm A") ?? "-",
       };
       const icsContent: string = createICS(event);
       const commonTemplateData = {
         CourseLogoURL: `https://${existingTeeTime?.cdn}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
         CourseName: existingTeeTime?.courseName || "-",
         FacilityName: existingTeeTime?.entityName || "-",
-        PlayDateTime: dayjs(existingTeeTime?.providerDate).utcOffset("-06:00").format("MM/DD/YYYY h:mm A") || "-",
+        PlayDateTime:
+          dayjs(existingTeeTime?.providerDate).utcOffset("-06:00").format("MM/DD/YYYY h:mm A") || "-",
         NumberOfHoles: existingTeeTime?.numberOfHoles,
         SellTeeTImeURL: `${process.env.APP_URL}/my-tee-box`,
         ManageTeeTimesURL: `${process.env.APP_URL}/my-tee-box`,
@@ -960,7 +962,7 @@ export class HyperSwitchWebhookService {
           SensibleWeatherIncluded: sensibleCharge ? "Yes" : "No",
           PurchasedFrom: sellerCustomer.username,
           PlayerCount: listedSlotsCount ?? 0,
-          TotalAmount: formatMoney(total/100),
+          TotalAmount: formatMoney(total / 100),
         };
 
         await this.notificationService.createNotification(

@@ -282,7 +282,7 @@ export interface CustomerAttributes {
     priceClass: string; // ""213""
     groups: string[]; // ["Public", "Junior"]
     contactInfo: ContactInfo; // nested interface
-    email?:string;
+    email?: string;
   };
 }
 
@@ -305,7 +305,7 @@ export interface CustomerAttributes {
   price_class?: string;
   groups?: string[];
   contact_info: ContactInfo;
-  email?:string;
+  email?: string;
 }
 export interface ContactInfo {
   first_name: string;

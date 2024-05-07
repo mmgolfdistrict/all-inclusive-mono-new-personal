@@ -13,21 +13,17 @@ interface AuditLog {
   lastUpdatedDateTime?: Date;
 }
 
-
 export class LoggerService {
-  constructor(
-    private readonly database: Db 
-  ) {}
+  constructor(private readonly database: Db) {}
 
-  auditLog= async (data:AuditLog)=>{
+  auditLog = async (data: AuditLog) => {
     try {
       const res = await fetch(`${process.env.QSTASH_BASE_URL}/v2/publish/${process.env.QSTASH_AUDIT_TOPIC}`, {
         method: "POST",
         body: JSON.stringify(data),
         headers: {
           "content-type": "application/json",
-          Authorization:
-            `Bearer ${process.env.QSTASH_TOKEN}`,
+          Authorization: `Bearer ${process.env.QSTASH_TOKEN}`,
           "Upstash-Delay": "5s",
         },
       });
@@ -40,6 +36,5 @@ export class LoggerService {
       console.log(error);
       return NextResponse.json({ error: JSON.stringify(error) }, { status: 500 });
     }
-  }
-
+  };
 }

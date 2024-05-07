@@ -61,7 +61,7 @@ const CardDisplay = ({
   const [confirmStatus, setConfirmStatus] = useState(false);
   // payment_method_idw
   const removeCard = async () => {
-    await removeMethod(card?.payment_method_id??"");
+    await removeMethod(card?.payment_method_id ?? "");
     setConfirmStatus(false);
   };
 
@@ -122,19 +122,20 @@ const CardDisplay = ({
                     Are you sure you want to delete this credit card?
                   </div>
                   <div>
-
-                  <div className="flex items-start flex-col gap-1 px-1">
-                <div className="font-[500] text-md">Card Number</div>
-                <div className="text-sm">XXXX XXXX XXXX {card?.card?.last4_digits}</div>
-              </div>
-              <div className="flex w-full justify-between items-end px-1">
-                <div className="flex flex-col gap-1">
-                  <div className="font-[500] text-md">Card Expiry</div>
-                  <div className="text-sm">
-                    {card?.card?.expiry_month}/{card?.card?.expiry_year}
-                  </div>
-                </div>
-              </div>
+                    <div className="flex items-start flex-col gap-1 px-1">
+                      <div className="font-[500] text-md">Card Number</div>
+                      <div className="text-sm">
+                        XXXX XXXX XXXX {card?.card?.last4_digits}
+                      </div>
+                    </div>
+                    <div className="flex w-full justify-between items-end px-1">
+                      <div className="flex flex-col gap-1">
+                        <div className="font-[500] text-md">Card Expiry</div>
+                        <div className="text-sm">
+                          {card?.card?.expiry_month}/{card?.card?.expiry_year}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -145,8 +146,8 @@ const CardDisplay = ({
                     onClick={() => removeCard()}
                     data-testid="cancel-listing-button-id"
                     style={{
-                      background: 'red',
-                      border: 'red'
+                      background: "red",
+                      border: "red",
                     }}
                   >
                     Remove card
