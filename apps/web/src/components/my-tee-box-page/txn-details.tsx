@@ -1,6 +1,7 @@
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useSidebar } from "~/hooks/useSidebar";
 import { formatMoney, formatTime } from "~/utils/formatters";
+import type { InviteFriend } from "~/utils/types";
 import { useMemo, type Dispatch, type SetStateAction } from "react";
 import { Avatar } from "../avatar";
 import { FilledButton } from "../buttons/filled-button";
@@ -140,7 +141,7 @@ const TeeTimeItem = ({
 }: {
   courseName: string;
   courseImage: string;
-  golfers: string[];
+  golfers: InviteFriend[];
   date: string;
   timezoneCorrection: number | undefined;
   playerCount?: number;

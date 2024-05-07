@@ -1,5 +1,5 @@
-import { string, z } from "zod";
-import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+import { z } from "zod";
+import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const cashOutRouter = createTRPCRouter({
   createStripeAccountLink: protectedProcedure
@@ -22,6 +22,10 @@ export const cashOutRouter = createTRPCRouter({
     .mutation(async ({ ctx }) => {
       return await ctx.serviceFactory.getCashOutService().requestCashOut(ctx.session.user.id);
     }),
+
+  getRecievables: protectedProcedure.input(z.object({})).query(async ({ ctx }) => {
+    return ctx.serviceFactory.getCashOutService().getRecievables(ctx.session?.user?.id ?? "");
+  }),
 
   createCashoutCustomerIdentity: protectedProcedure
     .input(

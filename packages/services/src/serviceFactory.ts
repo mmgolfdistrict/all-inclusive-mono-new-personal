@@ -297,7 +297,12 @@ export class ServiceFactory {
    * @returns An instance of TokenizeService.
    */
   getTokenizerService = (): TokenizeService => {
-    return new TokenizeService(this.config.database, this.getNotificationService(), this.getLoggerService());
+    return new TokenizeService(
+      this.config.database,
+      this.getNotificationService(),
+      this.getLoggerService(),
+      this.getSensibleService()
+    );
   };
 
   /**
@@ -341,7 +346,7 @@ export class ServiceFactory {
   };
 
   getFinixService = (): FinixService => {
-    return new FinixService(this.config.database);
+    return new FinixService(this.config.database, this.getCashOutService());
   };
   getLoggerService = (): LoggerService => {
     return new LoggerService();

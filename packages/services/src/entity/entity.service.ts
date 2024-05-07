@@ -1,12 +1,10 @@
-import { and, eq, inArray, isNull, not } from "@golf-district/database";
+import { eq, inArray, isNull, not } from "@golf-district/database";
 import type { Db } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import { courseAssets } from "@golf-district/database/schema/courseAssets";
 import { courses } from "@golf-district/database/schema/courses";
-import type { SelectCourses } from "@golf-district/database/schema/courses";
 import { entities } from "@golf-district/database/schema/entities";
 import Logger from "@golf-district/shared/src/logger";
-import { assert } from "vitest";
 
 /**
  * Service class for handling entity-related operations.

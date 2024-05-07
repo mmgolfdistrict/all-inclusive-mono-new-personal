@@ -3,7 +3,6 @@ import { eq, or } from "@golf-district/database";
 import type { InsertBooking } from "@golf-district/database/schema/bookings";
 import { bookings } from "@golf-district/database/schema/bookings";
 import Logger from "@golf-district/shared/src/logger";
-import { getDate } from "date-fns";
 import type { HyperSwitchWebhookService } from "./hyperswitch.webhook.service";
 
 export class PaymentVerifierService {

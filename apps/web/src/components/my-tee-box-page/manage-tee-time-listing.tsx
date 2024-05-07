@@ -175,7 +175,7 @@ export const ManageTeeTimeListing = ({
       return;
     }
     if (listingPrice > maxListingPrice) {
-      toast.info(
+      toast.error(
         `Listing price cannot be greater than 50x the first hand price. (${formatMoney(
           maxListingPrice
         )}).`
@@ -183,7 +183,7 @@ export const ManageTeeTimeListing = ({
       return;
     }
     if (totalPayout <= 0) {
-      toast.info("Listing price must be greater than $45.");
+      toast.error("Listing price must be greater than $45.");
       return;
     }
     if (!bookingIds) {

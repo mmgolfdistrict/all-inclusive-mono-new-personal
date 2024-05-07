@@ -63,7 +63,7 @@ export const AddCard = ({ refetchCards }: { refetchCards: () => unknown }) => {
       if (response.status === "Cannot add card please enter valid details") {
         toast.error("Cannot add card please enter valid card details");
       } else {
-        toast.info("Card added successfully");
+        toast.success("Card added successfully");
       }
       await refetchCards();
       setType("");

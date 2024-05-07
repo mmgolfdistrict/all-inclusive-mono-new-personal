@@ -1,5 +1,4 @@
-import { courses } from "@golf-district/database/schema/courses";
-import { currentUtcTimestamp } from "@golf-district/shared";
+import type { courses } from "@golf-district/database/schema/courses";
 
 export const mockCourses: (typeof courses.$inferInsert)[] = [
   {

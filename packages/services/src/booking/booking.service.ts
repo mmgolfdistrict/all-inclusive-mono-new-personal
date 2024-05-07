@@ -21,11 +21,9 @@ import { currentUtcTimestamp, dateToUtcTimestamp } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
 import dayjs from "dayjs";
 import { alias } from "drizzle-orm/mysql-core";
-import type { CustomerCart, FirstHandProduct, ProductData } from "../checkout/types";
+import type { CustomerCart, ProductData } from "../checkout/types";
 import type { NotificationService } from "../notification/notification.service";
-import type { HyperSwitchService } from "../payment-processor/hyperswitch.service";
 import type { Customer, ProviderService } from "../tee-sheet-provider/providers.service";
-import type { BookingResponse } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
 import type { TokenizeService } from "../token/tokenize.service";
 import { LoggerService } from "../webhooks/logging.service";
 
@@ -2080,11 +2078,15 @@ export class BookingService {
       customerCartData?.cart?.cart
         ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "sensible")
         ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
-    ``;
 
     const charityCharge =
       customerCartData?.cart?.cart
         ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "charity")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+
+    const markupCharge =
+      customerCartData?.cart?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "markup")
         ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
 
     const charityId = customerCartData?.cart?.cart?.find(
@@ -2111,6 +2113,7 @@ export class BookingService {
       convenienceCharge,
       charityCharge,
       taxes,
+      markupCharge,
       total,
       cartId: customerCartData?.cartId,
       charityId,
@@ -2144,6 +2147,7 @@ export class BookingService {
       sensibleCharge,
       convenienceCharge,
       charityCharge,
+      markupCharge,
       taxes,
       total,
       charityId,
@@ -2153,12 +2157,14 @@ export class BookingService {
       cartId,
       userId,
     });
+    console.log(`Check if payment id is valid ${payment_id}`);
     const isValid = await this.checkIfPaymentIdIsValid(payment_id);
     if (!isValid) {
       throw new Error("Payment Id not is not valid");
     }
     const pricePerGolfer = primaryGreenFeeCharge / playerCount;
 
+    console.log(`Retrieving tee time from database ${teeTimeId}`);
     const [teeTime] = await this.database
       .select({
         id: teeTimes.id,
@@ -2194,9 +2200,15 @@ export class BookingService {
       this.logger.fatal(`tee time not found id: ${teeTimeId}`);
       throw new Error(`Error finding tee time id`);
     }
+
+    console.log(`Retrieving provider and token ${teeTime.internalId}, ${teeTime.courseId}`);
     const { provider, token } = await this.providerService.getProviderAndKey(
       teeTime.internalId!,
       teeTime.courseId
+    );
+
+    console.log(
+      `Finding or creating customer ${userId}, ${teeTime.courseId}, ${teeTime.providerId}, ${teeTime.providerCourseId}, ${token}`
     );
     const providerCustomer = await this.providerService.findOrCreateCustomer(
       teeTime.courseId,
@@ -2216,9 +2228,13 @@ export class BookingService {
         accountNumber: providerCustomer.playerNumber,
       },
     ];
+
+    console.log(
+      `Creating booking ${teeTime.providerDate}, ${teeTime.holes}, ${playerCount}, ${teeTime.providerCourseId}, ${teeTime.providerTeeSheetId}, ${token}`
+    );
     const booking = await provider
       .createBooking(token, teeTime.providerCourseId!, teeTime.providerTeeSheetId!, {
-        totalAmountPaid: primaryGreenFeeCharge / 100,
+        totalAmountPaid: primaryGreenFeeCharge / 100 + taxCharge - markupCharge,
         data: {
           type: "bookings",
           attributes: {
@@ -2246,6 +2262,8 @@ export class BookingService {
 
         throw new Error(`Error creating booking`);
       });
+
+    console.log(`Creating tokenized booking`);
     //create tokenized bookings
     const bookingId = await this.tokenizeService
       .tokenizeBooking(
@@ -2260,6 +2278,7 @@ export class BookingService {
         token,
         teeTime,
         {
+          cart,
           primaryGreenFeeCharge,
           taxCharge,
           sensibleCharge,
@@ -2300,6 +2319,7 @@ export class BookingService {
       status: "Reserved",
     } as ReserveTeeTimeResponse;
   };
+
   confirmBooking = async (paymentId: string, userId: string) => {
     const [booking] = await this.database
       .select({
@@ -2328,6 +2348,9 @@ export class BookingService {
         throw "Error retrieving booking";
       });
     if (!booking) {
+      // TODO: need to refund the payment.
+      console.log(`Booking not found for payment id ${paymentId}`);
+
       throw "Booking not found for payment id";
     } else {
       console.log("Set confirm status on booking id ", booking.bookingId);

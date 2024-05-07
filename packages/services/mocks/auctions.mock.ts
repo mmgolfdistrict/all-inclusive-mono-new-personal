@@ -1,4 +1,4 @@
-import { auctions } from "@golf-district/database/schema/auctions";
+import type { auctions } from "@golf-district/database/schema/auctions";
 import { currentUtcTimestamp } from "@golf-district/shared";
 import { mockUsers } from "./user.mock";
 

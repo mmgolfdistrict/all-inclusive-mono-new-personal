@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
-import { and, eq, not } from "@golf-district/database";
+import { and, eq } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import { bookings } from "@golf-district/database/schema/bookings";
 import type { InsertBooking } from "@golf-district/database/schema/bookings";
@@ -8,6 +8,7 @@ import { bookingslots } from "@golf-district/database/schema/bookingslots";
 import { charityCourseLink } from "@golf-district/database/schema/charityCourseLink";
 import { courses } from "@golf-district/database/schema/courses";
 import { customerCarts } from "@golf-district/database/schema/customerCart";
+import { customerRecievable } from "@golf-district/database/schema/customerRecievable";
 import { donations } from "@golf-district/database/schema/donations";
 import { entities } from "@golf-district/database/schema/entities";
 import { lists } from "@golf-district/database/schema/lists";
@@ -16,16 +17,14 @@ import { providers } from "@golf-district/database/schema/providers";
 import { providerCourseLink } from "@golf-district/database/schema/providersCourseLink";
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import { transfers } from "@golf-district/database/schema/transfers";
-import type { InsertTransfer } from "@golf-district/database/schema/transfers";
 import { userPromoCodeLink } from "@golf-district/database/schema/userPromoCodeLink";
 import { users } from "@golf-district/database/schema/users";
-import { currentUtcTimestamp, formatMoney } from "@golf-district/shared";
+import { formatMoney } from "@golf-district/shared";
 import createICS from "@golf-district/shared/createICS";
 import type { Event } from "@golf-district/shared/createICS";
 import Logger from "@golf-district/shared/src/logger";
 import { Client } from "@upstash/qstash/.";
 import dayjs from "dayjs";
-import { B } from "vitest/dist/reporters-5f784f42";
 import type { BookingService } from "../booking/booking.service";
 import type {
   AuctionProduct,
@@ -44,7 +43,6 @@ import type { NotificationService } from "../notification/notification.service";
 import type { SensibleService } from "../sensible/sensible.service";
 import type { ProviderService } from "../tee-sheet-provider/providers.service";
 import type { BookingResponse } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
-import { BookingCreationData } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
 import type { TokenizeService } from "../token/tokenize.service";
 import { LoggerService } from "./logging.service";
 import type { HyperSwitchEvent } from "./types/hyperswitch";
@@ -101,29 +99,50 @@ export class HyperSwitchWebhookService {
    * ```
    */
   processWebhook = async (req: HyperSwitchEvent) => {
-    setTimeout(async () => {
-      this.logger.info(`Processing webhook: ${req.event_id}`);
-      const paymentId = req.content.object.payment_id;
-      const amountReceived = req.content.object.amount_received;
-      const customer_id = req.content.object.customer_id;
-      if (!customer_id) throw new Error("Customer id not found");
-      if (!paymentId) throw new Error("Payment id not found");
-      if (!amountReceived) throw new Error("Amount received not found");
-      const customerCart = await this.getCustomerCartData(paymentId);
-      if (customerCart.promoCode) await this.usePromoCode(customerCart.promoCode, customer_id);
-      // console.log(JSON.stringify(customerCart));
-      //@TODO validate payment amount
+    const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-      switch (req.event_type) {
-        case "payment_succeeded":
-          return this.paymentSuccessHandler(customerCart, amountReceived, paymentId, customer_id);
-        case "payment_failed":
-          return this.paymentFailureHandler(customer_id);
-        default:
-          this.logger.warn(`Unhandled event type: ${req.event_type}`);
-          throw new Error("Unhandled event type.");
-      }
-    }, 10000);
+    console.log("processWebhook before waiting.");
+    console.log(req);
+
+    await delay(30 * 1000);
+
+    // setTimeout(async () => {
+    console.log("processWebhook after waiting");
+    console.log(req);
+
+    this.logger.info(`Processing webhook: ${req.event_id}`);
+    this.logger.info(JSON.stringify(req));
+
+    const eventType = req.event_type; //req.status; // req.event_type;
+    const paymentId = req.content.object.payment_id; // req.payment_id; // req.content.object.payment_id;
+    const amountReceived = req.content.object.amount_received; // req.amount_received; // req.content.object.amount_received;
+    const customer_id = req.content.object.customer_id; //req.customer_id; // req.content.object.customer_id;
+
+    console.log(`eventType: ${eventType}`);
+    console.log(`paymentId: ${paymentId}`);
+    console.log(`amountReceived: ${amountReceived}`);
+    console.log(`customer_id: ${customer_id}`);
+
+    if (!customer_id) throw new Error("Customer id not found");
+    if (!paymentId) throw new Error("Payment id not found");
+    if (!amountReceived) throw new Error("Amount received not found");
+    const customerCart = await this.getCustomerCartData(paymentId);
+    if (customerCart.promoCode) await this.usePromoCode(customerCart.promoCode, customer_id);
+    // console.log(JSON.stringify(customerCart));
+    //@TODO validate payment amount
+
+    switch (eventType) {
+      case "payment_succeeded":
+        // case "succeeded":
+        return this.paymentSuccessHandler(customerCart, amountReceived, paymentId, customer_id);
+      case "payment_failed":
+        // case "failed":
+        return this.paymentFailureHandler(customer_id);
+      default:
+        this.logger.warn(`Unhandled event type: ${eventType}`);
+        throw new Error("Unhandled event type.");
+    }
+    // }, 10000);
   };
 
   usePromoCode = async (promoCode: string, customerId: string) => {
@@ -172,22 +191,13 @@ export class HyperSwitchWebhookService {
     console.log(`isFirstHandBooking = ${isFirstHandBooking}`);
     if (isFirstHandBooking) {
       await this.bookingService.confirmBooking(paymentId, customer_id);
-      const weatherGuaranteeData = customerCart.cart.filter(
-        (item) => item.product_data.metadata.type === "sensible"
-      );
-      console.log(`weatherGuaranteeData length = ${weatherGuaranteeData.length}`);
-      console.log(weatherGuaranteeData);
-      if (weatherGuaranteeData.length) {
-        await this.handleSensibleItem(
-          weatherGuaranteeData[0] as SensibleProduct,
-          amountReceived,
-          customer_id,
-          customerCart
-        );
-      }
       return;
     }
+
+    console.log("Looping through cart");
     for (const item of customerCart.cart) {
+      console.log(item);
+
       switch (item.product_data.metadata.type) {
         case "second_hand":
           await this.handleSecondHandItem(
@@ -222,6 +232,7 @@ export class HyperSwitchWebhookService {
       }
     }
   };
+
   handleFirstHandItem = async (
     item: FirstHandProduct,
     amountReceived: number,
@@ -317,9 +328,10 @@ export class HyperSwitchWebhookService {
       },
     ];
 
+    //TODO: ADD taxes component on totalAmountPaid if this method comes in use and decrease markup fees
     const booking = await provider
       .createBooking(token, teeTime.providerCourseId!, teeTime.providerTeeSheetId!, {
-        totalAmountPaid: amountReceived / 100,
+        // totalAmountPaid: amountReceived / 100,
         data: {
           type: "bookings",
           attributes: {
@@ -458,6 +470,25 @@ export class HyperSwitchWebhookService {
     };
   };
 
+  addDays = (date: Date, days: number) => {
+    const result = new Date(date);
+    result.setDate(result.getDate() + days);
+    return result;
+  };
+
+  formatCurrentDateTime = (date: Date) => {
+    const currentDate = date;
+    const year = currentDate.getFullYear();
+    const month = String(currentDate.getMonth() + 1).padStart(2, "0"); // Adding 1 because months are zero-indexed
+    const day = String(currentDate.getDate()).padStart(2, "0");
+    const hours = String(currentDate.getHours()).padStart(2, "0");
+    const minutes = String(currentDate.getMinutes()).padStart(2, "0");
+    const seconds = String(currentDate.getSeconds()).padStart(2, "0");
+    const milliseconds = String(currentDate.getMilliseconds()).padStart(3, "0");
+
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.${milliseconds}`;
+  };
+
   handleSecondHandItem = async (
     item: SecondHandProduct,
     amountReceived: number,
@@ -465,8 +496,6 @@ export class HyperSwitchWebhookService {
     paymentId: string,
     golferPrice: number
   ) => {
-    // console.log(item, amountReceived, customer_id, paymentId, "iuguyffuyfuy");
-
     const listingId = item.product_data.metadata.second_hand_id;
     const listedSlots = await this.database
       .select({
@@ -484,6 +513,7 @@ export class HyperSwitchWebhookService {
       .select({
         id: bookings.id,
         oldBookingId: transfers.fromBookingId,
+        transferId: transfers.id,
       })
       .from(customerCarts)
       .innerJoin(bookings, eq(bookings.cartId, customerCarts.id))
@@ -691,7 +721,29 @@ export class HyperSwitchWebhookService {
       });
 
     const newBookings: BookingResponse[] = [];
-
+    console.log(
+      token,
+      firstBooking.providerCourseId!,
+      firstBooking.providerTeeSheetId!,
+      JSON.stringify({
+        data: {
+          totalAmountPaid: amountReceived / 100,
+          type: "bookings",
+          attributes: {
+            start: firstBooking.providerDate,
+            holes: firstBooking.numberOfHoles,
+            players: listedSlotsCount,
+            bookedPlayers: [
+              {
+                personId: buyerCustomer.customerId,
+              },
+            ],
+            event_type: "tee_time",
+            details: "GD Booking",
+          },
+        },
+      })
+    );
     try {
       const newBooking = await provider.createBooking(
         token,
@@ -699,7 +751,6 @@ export class HyperSwitchWebhookService {
         firstBooking.providerTeeSheetId!,
         {
           data: {
-            totalAmountPaid: amountReceived / 100,
             type: "bookings",
             attributes: {
               start: firstBooking.providerDate,
@@ -727,7 +778,6 @@ export class HyperSwitchWebhookService {
           firstBooking.providerCourseId!,
           firstBooking.providerTeeSheetId!,
           {
-            totalAmountPaid: amountReceived / 100,
             data: {
               type: "bookings",
               attributes: {
@@ -778,7 +828,6 @@ export class HyperSwitchWebhookService {
       })
       .from(teeTimes)
       .where(eq(teeTimes.id, firstBooking.teeTimeId))
-      // .leftJoin(entities, eq(teeTimes.entityId, entities.id))
       .leftJoin(courses, eq(courses.id, teeTimes.courseId))
       .leftJoin(entities, eq(courses.entityId, entities.id))
       .leftJoin(assets, eq(assets.id, courses.logoId))
@@ -787,6 +836,9 @@ export class HyperSwitchWebhookService {
         this.logger.error(err);
         return [];
       });
+
+    const buyerFee = (existingTeeTime?.buyerFee ?? 1) / 100;
+    const sellerFee = (existingTeeTime?.sellerFee ?? 1) / 100;
 
     const { taxes, sensibleCharge, charityCharge, taxCharge, total, cartId, charityId, weatherQuoteId } =
       await this.getCartData({
@@ -921,7 +973,9 @@ export class HyperSwitchWebhookService {
         courseReservation: newBooking?.data.id,
         numberOfPlayer: (listedSlotsCount ?? 1).toString(),
         playTime:
-          dayjs(existingTeeTime?.providerDate).utcOffset("-06:00").format("YYYY-MM-DD hh:mm A") ?? "-",
+          dayjs(existingTeeTime?.providerDate)
+            .utcOffset("-06:00")
+            .format("YYYY-MM-DD hh:mm A") ?? "-",
       };
       const icsContent: string = createICS(event);
       const commonTemplateData = {
@@ -929,16 +983,15 @@ export class HyperSwitchWebhookService {
         CourseName: existingTeeTime?.courseName || "-",
         FacilityName: existingTeeTime?.entityName || "-",
         PlayDateTime:
-          dayjs(existingTeeTime?.providerDate).utcOffset("-06:00").format("MM/DD/YYYY h:mm A") || "-",
+          dayjs(existingTeeTime?.providerDate)
+            .utcOffset("-06:00")
+            .format("MM/DD/YYYY h:mm A") || "-",
         NumberOfHoles: existingTeeTime?.numberOfHoles,
         SellTeeTImeURL: `${process.env.APP_URL}/my-tee-box`,
         ManageTeeTimesURL: `${process.env.APP_URL}/my-tee-box`,
         GolfDistrictReservationID: bookingId,
         CourseReservationID: newBooking?.data.id,
       };
-
-      const buyerFee = (existingTeeTime?.buyerFee ?? 1) / 100;
-      const sellerFee = (existingTeeTime?.sellerFee ?? 1) / 100;
 
       if (newBooking.data.bookingType == "FIRST") {
         const template: any = {
@@ -1047,6 +1100,29 @@ export class HyperSwitchWebhookService {
         );
       }
     }
+
+    const amount = listPrice ?? 1;
+    const serviceCharge = amount * sellerFee;
+    const payable = (amount - serviceCharge) * (listedSlotsCount || 1);
+    const currentDate = new Date();
+    const redeemAfterDate = this.addDays(currentDate, 7);
+    const customerRecievableData = [
+      {
+        id: randomUUID(),
+        userId: firstBooking.ownerId,
+        amount: payable,
+        type: "CASHOUT",
+        transferId: bookingsIds?.transferId,
+        createdDateTime: this.formatCurrentDateTime(currentDate), // Use UTC string format for datetime fields
+        redeemAfter: this.formatCurrentDateTime(redeemAfterDate), // Use UTC string format for datetime fields
+      },
+    ];
+    await this.database
+      .insert(customerRecievable)
+      .values(customerRecievableData)
+      .catch((err: any) => {
+        this.logger.error(err);
+      });
   };
 
   // handleSecondHandItem = async (`
@@ -1862,7 +1938,7 @@ export class HyperSwitchWebhookService {
     const [courseCharity] = await this.database
       .select({ courseCharityId: charityCourseLink.charityId })
       .from(charityCourseLink)
-      .where(eq(charityCourseLink.courseId, item.product_data.metadata.charity_id))
+      .where(eq(charityCourseLink.charityId, item.product_data.metadata.charity_id))
       .limit(1)
       .execute();
     if (!courseCharity?.courseCharityId) {
@@ -1888,7 +1964,7 @@ export class HyperSwitchWebhookService {
   ) => {
     // Logic for handling first-hand items
     try {
-      const booking = await this.getBookingDetails(item.id);
+      const booking = await this.getBookingDetails(item.product_data.metadata.sensible_quote_id);
 
       // const userDetails = await this.getUserDetails(customer_id);
 
@@ -1907,14 +1983,13 @@ export class HyperSwitchWebhookService {
           phone: customerCart.phone ? `+${customerCart.phone_country_code}${customerCart.phone}` : "",
         },
       });
-
       //Add guarantee details on bookings
       if (acceptedQuote) {
         await this.database
           .update(bookings)
           .set({
             weatherGuaranteeId: acceptedQuote.id,
-            weatherGuaranteeAmount: acceptedQuote.price_charged * 100,
+            weatherGuaranteeAmount: item.price,
           })
           .where(eq(bookings.id, acceptedQuote.reservation_id));
       }
@@ -1925,8 +2000,11 @@ export class HyperSwitchWebhookService {
     }
   };
 
-  getBookingDetails = async (bookingId: string) => {
-    const [booking] = await this.database.select().from(bookings).where(eq(bookings.teeTimeId, bookingId));
+  getBookingDetails = async (guaranteeId: string) => {
+    const [booking] = await this.database
+      .select()
+      .from(bookings)
+      .where(eq(bookings.weatherQuoteId, guaranteeId));
 
     if (!booking) {
       throw new Error("Booking details not found");

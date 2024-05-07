@@ -1,4 +1,4 @@
-import { favorites } from "@golf-district/database/schema/favorites";
+import type { favorites } from "@golf-district/database/schema/favorites";
 import { currentUtcTimestamp } from "@golf-district/shared";
 
 export const mockFavorites: (typeof favorites.$inferInsert)[] = [

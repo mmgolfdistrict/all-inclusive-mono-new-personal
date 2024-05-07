@@ -1,4 +1,5 @@
-import React, { FC, ReactNode, useEffect } from "react";
+import type { FC, ReactNode } from "react";
+import React, { useEffect } from "react";
 
 interface LoadingContainerProps {
   isLoading: boolean;

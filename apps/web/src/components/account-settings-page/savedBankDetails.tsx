@@ -2,19 +2,12 @@
 
 import { type CustomerPaymentMethod } from "~/hooks/usePaymentMethods";
 import { api } from "~/utils/api";
-import { useState } from "react";
 import { Spinner } from "../loading/spinner";
 import CardDetails from "./CardDetails";
-import SidePanel from "./SidePanel";
 
 export const SavedBankDetails = () => {
-  // const { cards, refetch, isLoading } = usePaymentMethods();
-  const {
-    data: associatedBanks,
-    refetch,
-    isLoading,
-  } = api.cashOut.getAssociatedAccounts.useQuery({});
-  const removeCard = api.checkout.removePaymentMethod.useMutation();
+  const { data: associatedBanks, isLoading } =
+    api.cashOut.getAssociatedAccounts.useQuery({});
 
   const removeMethod = async (_paymentMethodId: string) => {
     // TODO: Implement the removeMethod functionality
@@ -45,18 +38,10 @@ export const SavedBankDetails = () => {
 
 const CardDisplay = ({
   card,
-  removeMethod,
 }: {
   card: CustomerPaymentMethod;
   removeMethod: (x: string) => Promise<void>;
 }) => {
-  const [confirmStatus, setConfirmStatus] = useState(false);
-  // payment_method_idw
-  // const removeCard = () => {
-  //   // await removeMethod(card.payment_method_id);
-  //   setConfirmStatus(false);
-  // };
-
   return (
     <div className="border border-stroke rounded-md p-3 flex flex-col relative">
       <CardDetails label="Bank Name" value={"N/A"} />

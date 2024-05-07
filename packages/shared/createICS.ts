@@ -14,7 +14,7 @@ export interface Event {
 
 const createICS = (event: Event): string => {
   const convertToUTCString = (dtStr: string, nextDay?: boolean): string => {
-    let dt = new Date(dtStr);
+    const dt = new Date(dtStr);
     if (nextDay) {
       dt.setDate(dt.getDate() + 1);
     }
@@ -26,7 +26,7 @@ const createICS = (event: Event): string => {
   };
 
   const getTimeFromString = (inputString: string) => {
-    var time = inputString.substring(11, 19);
+    const time = inputString.substring(11, 19);
     return time;
   };
 

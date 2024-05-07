@@ -1,5 +1,4 @@
-import { transfers } from "@golf-district/database/schema/transfers";
-import { currentUtcTimestamp } from "@golf-district/shared";
+import type { transfers } from "@golf-district/database/schema/transfers";
 
 export const mockTransfers: (typeof transfers.$inferInsert)[] = [
   {

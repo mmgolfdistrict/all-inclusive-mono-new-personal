@@ -52,8 +52,7 @@ export const DailyTeeTimes = ({
   const { data: weather, isLoading: isLoadingWeather } =
     api.searchRouter.getWeatherForDay.useQuery(
       {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-        courseId: course?.id!,
+        courseId: course?.id ?? "",
         date,
       },
       {
@@ -72,8 +71,7 @@ export const DailyTeeTimes = ({
     error,
   } = api.searchRouter.getTeeTimesForDay.useInfiniteQuery(
     {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-      courseId: course?.id!,
+      courseId: course?.id ?? "",
       date,
       minDate,
       maxDate,

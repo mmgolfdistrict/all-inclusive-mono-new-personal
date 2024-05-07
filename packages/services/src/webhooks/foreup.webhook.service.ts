@@ -1,13 +1,13 @@
 import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
-import { and, asc, between, eq, inArray, sql } from "@golf-district/database";
+import { and, asc, between, eq, inArray } from "@golf-district/database";
 import { courses } from "@golf-district/database/schema/courses";
 import { entities } from "@golf-district/database/schema/entities";
 import { providers } from "@golf-district/database/schema/providers";
 import { providerCourseLink } from "@golf-district/database/schema/providersCourseLink";
 import type { InsertTeeTimes } from "@golf-district/database/schema/teeTimes";
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
-import { dateToUtcTimestamp, isEqual, normalizeDateToUnixTimestamp } from "@golf-district/shared";
+import { dateToUtcTimestamp, isEqual } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
 import dayjs from "dayjs";
 // import { isEqual } from "lodash";

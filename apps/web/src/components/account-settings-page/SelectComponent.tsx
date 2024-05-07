@@ -13,15 +13,16 @@ const OptionDetails = ({
     id: string;
     accountNumber: string | null;
   }[];
-  handleTransferAmount: (
-    paymentInstrumentId: any,
-    amount: any
-  ) => Promise<void>;
+  handleTransferAmount: (paymentInstrumentId, amount) => Promise<void>;
 }) => {
   const [value, setValue] = useState("");
   const [selectedOption, setSelectedOption] = useState<string>("");
   const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedOption(event.target.value);
+  };
+  const handleCashoutClick = async () => {
+    setValue("");
+    await handleTransferAmount(selectedOption, value);
   };
   //   const account = associatedBanks.find((bank) => bank.id === selectedOption);
   if (!associatedBanks.length) {
@@ -35,7 +36,7 @@ const OptionDetails = ({
         onChange={handleChange}
         className="block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:border-blue-400"
       >
-        <option value="">Select an option</option>
+        <option value="">Select a Bank Account Below</option>
         {associatedBanks.map((bank) => (
           <option key={bank.id} value={bank.id}>
             {bank.accountNumber}
@@ -68,15 +69,7 @@ const OptionDetails = ({
                 className="w-1/2 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:border-blue-400 mr-4"
               />
               <FilledButton
-                {...(!loadingCashout
-                  ? {
-                      // eslint-disable-next-line @typescript-eslint/no-misused-promises
-                      onClick: async () => {
-                        setValue("");
-                        await handleTransferAmount(selectedOption, value);
-                      },
-                    }
-                  : {})}
+                onClick={!loadingCashout ? handleCashoutClick : undefined}
                 className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 focus:outline-none"
               >
                 {loadingCashout ? "Processing..." : "Cashout"}

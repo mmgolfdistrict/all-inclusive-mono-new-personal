@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import type { ReserveTeeTimeResponse } from "@golf-district/shared";
 import {
   UnifiedCheckout,
@@ -18,8 +17,6 @@ import styles from "./checkout.module.css";
 
 export const CheckoutForm = ({
   isBuyNowAuction,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  amountToPay,
   teeTimeId,
   cartData,
   cartId,
@@ -27,7 +24,6 @@ export const CheckoutForm = ({
   listingId,
 }: {
   isBuyNowAuction: boolean;
-  amountToPay: number;
   teeTimeId: string;
   cartData: CartProduct[];
   cartId: string;
@@ -150,7 +146,7 @@ export const CheckoutForm = ({
     hyper.retrievePaymentIntent(clientSecret).then((resp) => {
       const status = resp?.paymentIntent?.status;
       if (status) {
-        handlePaymentStatus(resp?.paymentIntent?.status);
+        handlePaymentStatus(resp?.paymentIntent?.status as string);
       }
     });
   });
@@ -188,7 +184,7 @@ export const CheckoutForm = ({
           if (isFirstHand.length) {
             bookingResponse = await reserveBookingFirstHand(
               cartId,
-              response?.payment_id
+              response?.payment_id as string
             );
             setReservationData({
               golfReservationId: bookingResponse.bookingId,
@@ -199,7 +195,7 @@ export const CheckoutForm = ({
             bookingResponse = await reserveSecondHandBooking(
               cartId,
               listingId,
-              response?.payment_id
+              response?.payment_id as string
             );
           }
           setMessage("Payment Successful");
@@ -210,7 +206,7 @@ export const CheckoutForm = ({
               );
           setIsLoading(false);
         } else if (response.error) {
-          setMessage(response.error.message);
+          setMessage(response.error.message as string);
           setIsLoading(false);
         } else {
           setMessage("An unexpected error occurred.");
@@ -368,7 +364,9 @@ export const CheckoutForm = ({
 
       <FilledButton
         className={`w-full rounded-full`}
-        disabled={!hyper || !widgets || message === "Payment Successful"}
+        disabled={
+          isLoading || !hyper || !widgets || message === "Payment Successful"
+        }
         data-testid="pay-now-id"
       >
         {isLoading ? "Loading..." : <>Pay Now</>}
@@ -377,8 +375,8 @@ export const CheckoutForm = ({
       {message && (
         <div id="payment-message" className={styles.paymentMessage}>
           {message === "Payment Successful"
-            ? "Payment Successful"
-            : "An error occurred processing payment."}
+            ? <span>Payment Successful</span>
+            : <span className="!text-red">An error occurred processing payment.</span>}
         </div>
       )}
     </form>

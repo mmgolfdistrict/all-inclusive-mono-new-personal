@@ -102,7 +102,7 @@ const CardDisplay = ({
         >
           <div className="relative flex h-full flex-col">
             <div className="flex items-center justify-between p-4">
-              <div className="text-lg">Remove saved card</div>
+              <div className="text-lg">Delete Saved Credit Card</div>
 
               <button
                 // ref={trigger}
