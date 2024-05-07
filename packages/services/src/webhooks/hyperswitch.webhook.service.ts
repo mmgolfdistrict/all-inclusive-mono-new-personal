@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
 import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
 import { and, eq, not } from "@golf-district/database";
@@ -100,50 +101,128 @@ export class HyperSwitchWebhookService {
    * ```
    */
   processWebhook = async (req: HyperSwitchEvent) => {
-    const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-    console.log("processWebhook before waiting.");
-    console.log(req);
-
-    await delay(30 * 1000);
-
-    // setTimeout(async () => {
-    console.log("processWebhook after waiting");
-    console.log(req);
-
-    this.logger.info(`Processing webhook: ${req.event_id}`);
-    this.logger.info(JSON.stringify(req));
-
-    const eventType = req.event_type; //req.status; // req.event_type;
-    const paymentId = req.content.object.payment_id; // req.payment_id; // req.content.object.payment_id;
-    const amountReceived = req.content.object.amount_received; // req.amount_received; // req.content.object.amount_received;
-    const customer_id = req.content.object.customer_id; //req.customer_id; // req.content.object.customer_id;
-
-    console.log(`eventType: ${eventType}`);
-    console.log(`paymentId: ${paymentId}`);
-    console.log(`amountReceived: ${amountReceived}`);
-    console.log(`customer_id: ${customer_id}`);
-
-    if (!customer_id) throw new Error("Customer id not found");
-    if (!paymentId) throw new Error("Payment id not found");
-    if (!amountReceived) throw new Error("Amount received not found");
-    const customerCart = await this.getCustomerCartData(paymentId);
-    if (customerCart.promoCode) await this.usePromoCode(customerCart.promoCode, customer_id);
-    // console.log(JSON.stringify(customerCart));
-    //@TODO validate payment amount
-
-    switch (eventType) {
-      case "payment_succeeded":
-        // case "succeeded":
-        return this.paymentSuccessHandler(customerCart, amountReceived, paymentId, customer_id);
-      case "payment_failed":
-        // case "failed":
-        return this.paymentFailureHandler(customer_id);
-      default:
-        this.logger.warn(`Unhandled event type: ${eventType}`);
-        throw new Error("Unhandled event type.");
-    }
+    // const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+    // console.log("processWebhook before waiting.");
+    // console.log(req);
+    // await delay(30 * 1000);
+    // // setTimeout(async () => {
+    // console.log("processWebhook after waiting");
+    // console.log(req);
+    // this.logger.info(`Processing webhook: ${req.event_id}`);
+    // this.logger.info(JSON.stringify(req));
+    // const eventType = req.event_type; //req.status; // req.event_type;
+    // const paymentId = req.content.object.payment_id; // req.payment_id; // req.content.object.payment_id;
+    // const amountReceived = req.content.object.amount_received; // req.amount_received; // req.content.object.amount_received;
+    // const customer_id = req.content.object.customer_id; //req.customer_id; // req.content.object.customer_id;
+    // console.log(`eventType: ${eventType}`);
+    // console.log(`paymentId: ${paymentId}`);
+    // console.log(`amountReceived: ${amountReceived}`);
+    // console.log(`customer_id: ${customer_id}`);
+    // if (!customer_id) throw new Error("Customer id not found");
+    // if (!paymentId) throw new Error("Payment id not found");
+    // if (!amountReceived) throw new Error("Amount received not found");
+    // const customerCart = await this.getCustomerCartData(paymentId);
+    // if (customerCart.promoCode) await this.usePromoCode(customerCart.promoCode, customer_id);
+    // // console.log(JSON.stringify(customerCart));
+    // //@TODO validate payment amount
+    // switch (eventType) {
+    //   case "payment_succeeded":
+    //     // case "succeeded":
+    //     return this.paymentSuccessHandler(customerCart, amountReceived, paymentId, customer_id);
+    //   case "payment_failed":
+    //     // case "failed":
+    //     return this.paymentFailureHandler(customer_id);
+    //   default:
+    //     this.logger.warn(`Unhandled event type: ${eventType}`);
+    //     throw new Error("Unhandled event type.");
+    // }
     // }, 10000);
+  };
+
+  checkPaymentStatus = async (paymentId: string) => {
+    const hyperswitchEndPoint = `${process.env.HYPERSWITCH_BASE_URL}/payments/${paymentId}`;
+    const myHeaders = new Headers();
+    myHeaders.append("api-key", process.env.HYPERSWITCH_API_KEY ?? "");
+    const requestOptions = {
+      method: "GET",
+      headers: myHeaders,
+    };
+    const response = await fetch(hyperswitchEndPoint, requestOptions);
+    const paymentData = await response.json();
+    if (paymentData.error) {
+      return paymentData?.error?.type as string;
+    }
+    return { paymentStatus: paymentData.status, amountReceived: paymentData.amount_received };
+  };
+
+  processPayment = async (paymentId: string, customer_id: string, bookingId: string) => {
+    const { paymentStatus, amountReceived } = (await this.checkPaymentStatus(paymentId)) as {
+      paymentStatus: string;
+      amountReceived: number;
+    };
+    console.log("processing payment=======>", { paymentId, customer_id, bookingId });
+    if (!paymentStatus) {
+      throw new Error("Payment status not available");
+    }
+    if (paymentStatus === "invalid_request") {
+      throw new Error("Payment Id not is not valid");
+    }
+    if (!customer_id) throw new Error("Customer id not found");
+    const customerCart = await this.getCustomerCartData(paymentId);
+
+    if (paymentStatus === "succeeded") {
+      await this.paymentSuccessHandler(customerCart, amountReceived, paymentId, customer_id);
+      return {
+        status: "success",
+        erroe: false,
+      };
+    } else if (paymentStatus === "failed" || paymentStatus === "expired") {
+      await this.database
+        .update(bookings)
+        .set({
+          status: "FAILED",
+        })
+        .where(eq(bookings.id, bookingId))
+        .execute();
+      const [booking] = await this.database
+        .select({
+          bookingId: bookings.id,
+          providerBookingId: bookings.providerBookingId,
+          courseId: courses.id,
+          providerCourseId: providerCourseLink.providerCourseId,
+          providerTeeSheetId: providerCourseLink.providerTeeSheetId,
+          internalId: providers.internalId,
+          weatherGuaranteeId: bookings.weatherGuaranteeId,
+        })
+        .from(bookings)
+        .innerJoin(teeTimes, eq(bookings.teeTimeId, teeTimes.id))
+        .innerJoin(courses, eq(teeTimes.courseId, courses.id))
+        .leftJoin(
+          providerCourseLink,
+          and(
+            eq(providerCourseLink.courseId, teeTimes.courseId),
+            eq(providerCourseLink.providerId, courses.providerId)
+          )
+        )
+        .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))
+        .where(eq(bookings.id, bookingId))
+        .execute();
+      if (!booking) {
+        throw new Error("Booking not found");
+      }
+      return this.paymentFailureHandler(
+        customer_id,
+        bookingId,
+        booking?.internalId!,
+        booking?.providerCourseId!,
+        booking?.providerTeeSheetId!,
+        booking?.providerBookingId,
+        booking?.weatherGuaranteeId!
+      );
+    } else {
+      this.logger.warn(`Something went wrong`);
+      throw new Error("Something went wrong.");
+    }
   };
 
   usePromoCode = async (promoCode: string, customerId: string) => {
@@ -1961,7 +2040,28 @@ export class HyperSwitchWebhookService {
    * hyperSwitchWebhookService.paymentFailureHandler(webhook);
    * ```
    */
-  paymentFailureHandler = async (customer_id: string) => {
+  paymentFailureHandler = async (
+    customer_id: string,
+    bookingId?: string,
+    internalId?: string,
+    courseId?: string,
+    teesheetId?: string,
+    providerBookingId?: string,
+    weatherGuaranteeId?: string
+  ) => {
+    if (providerBookingId && courseId && teesheetId) {
+      console.log("cancel primary booking since payment is failed");
+      const { provider, token } = await this.providerService.getProviderAndKey(internalId!, courseId ?? "");
+      await provider.deleteBooking(token, courseId, teesheetId, providerBookingId);
+    }
+    if (weatherGuaranteeId) {
+      console.log("cancel weather guarantee since payment is failed", weatherGuaranteeId);
+      try {
+        await this.sensibleService.cancelGuarantee(weatherGuaranteeId);
+      } catch (e) {
+        console.log(e);
+      }
+    }
     await this.notificationService.createNotification(
       customer_id,
       "Payment Failed",
