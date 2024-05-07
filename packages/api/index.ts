@@ -14,9 +14,9 @@ import {
   TokenizeService,
   UpdateWithdrawableBalance,
 } from "@golf-district/service";
+import { LoggerService } from "@golf-district/service/src/webhooks/logging.service";
 import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "./src/root";
-import { LoggerService } from "@golf-district/service/src/webhooks/logging.service";
 
 export { appRouter, type AppRouter } from "./src/root";
 export { createTRPCContext } from "./src/trpc";
@@ -134,8 +134,8 @@ export const processHyperSwitchWebhook = async (req: any) => {
     process.env.TWILLIO_AUTH_TOKEN!,
     process.env.SENDGRID_API_KEY!
   );
-  const loggerService=new LoggerService()
-  const tokenizeService = new TokenizeService(db, notificationService,loggerService);
+  const loggerService = new LoggerService();
+  const tokenizeService = new TokenizeService(db, notificationService, loggerService);
   const credentials = {
     username: process.env.FOREUP_USERNAME!,
     password: process.env.FOREUP_PASSWORD!,
@@ -146,7 +146,13 @@ export const processHyperSwitchWebhook = async (req: any) => {
     process.env.REDIS_TOKEN!,
     credentials
   );
-  const bookingService = new BookingService(db, tokenizeService, providerService, notificationService, loggerService);
+  const bookingService = new BookingService(
+    db,
+    tokenizeService,
+    providerService,
+    notificationService,
+    loggerService
+  );
 
   const appSettings = await appSettingService.getMultiple(
     "SENSIBLE_CLIENT_ID",

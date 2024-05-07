@@ -14,7 +14,6 @@ interface AuditLog {
 }
 
 export class LoggerService {
-
   auditLog = async (data: AuditLog) => {
     try {
       const res = await fetch(`${process.env.QSTASH_BASE_URL}/v2/publish/${process.env.QSTASH_AUDIT_TOPIC}`, {
