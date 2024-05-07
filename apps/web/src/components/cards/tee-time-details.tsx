@@ -129,9 +129,9 @@ export const TeeTimeDetails = ({
       ) : data === null ? (
         <div className="flex justify-center items-center h-[200px]">
           <div className="text-center">
-            We're sorry. This time is no longer available. Someone just booked
-            this. It may take a minute for the sold time you selected to be
-            removed. Please select another time.
+            We&apos;re sorry. This time is no longer available. Someone just
+            booked this. It may take a minute for the sold time you selected to
+            be removed. Please select another time.
           </div>
         </div>
       ) : (
