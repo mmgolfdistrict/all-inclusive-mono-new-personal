@@ -78,7 +78,8 @@ export const ListTeeTime = ({
   }, [selectedTeeTime]);
 
   useEffect(() => {
-    setPlayers(selectedTeeTime?.selectedSlotsCount || (selectedTeeTime?.golfers.length || 0));
+    const slots = selectedTeeTime?.golfers.length || 0;
+    setPlayers(selectedTeeTime?.selectedSlotsCount || slots.toString());
   }, [selectedTeeTime?.selectedSlotsCount, selectedTeeTime?.golfers]);
 
   useEffect(() => {
