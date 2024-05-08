@@ -76,6 +76,7 @@ interface OwnedTeeTimeData {
   listPrice: number | null;
   minimumOfferPrice: number;
   weatherGuaranteeAmount: number | null;
+  teeTimeId: string;
 }
 
 interface ListingData {
@@ -129,7 +130,7 @@ export class BookingService {
     private readonly providerService: ProviderService,
     private readonly notificationService: NotificationService,
     private readonly loggerService: LoggerService
-  ) {}
+  ) { }
 
   createCounterOffer = async (userId: string, bookingIds: string[], offerId: string, amount: number) => {
     //find owner of each booking
@@ -176,8 +177,8 @@ export class BookingService {
   getTransactionHistory = async (
     userId: string,
     courseId: string,
-    limit = 10,
-    cursor: string | undefined
+    _limit = 10,
+    _cursor: string | undefined
   ) => {
     this.logger.info(`getTransactionHistory called with userId: ${userId}`);
     const data = await this.database
@@ -259,7 +260,7 @@ export class BookingService {
    * const limit = 10;
    * const listedTeeTimes = await bookingService.getMyListedTeeTimes(userId, courseId, limit);
    */
-  getMyListedTeeTimes = async (userId: string, courseId: string, limit = 10, cursor?: string) => {
+  getMyListedTeeTimes = async (userId: string, courseId: string, _limit = 10, _cursor?: string) => {
     this.logger.info(`getMyListedTeeTimes called with userId: ${userId}`);
     const localDateTimePlus1Hour = dayjs.utc().utcOffset(-7).add(1, "hour");
 
@@ -419,7 +420,7 @@ export class BookingService {
     }
     return data.map((booking) => booking.id);
   };
-  getOwnedTeeTimes = async (userId: string, courseId: string, limit = 10, cursor: string | undefined) => {
+  getOwnedTeeTimes = async (userId: string, courseId: string, _limit = 10, _cursor: string | undefined) => {
     this.logger.info(`getOwnedTeeTimes called with userId: ${userId}`);
     const data = await this.database
       .select({
@@ -451,6 +452,7 @@ export class BookingService {
         slotCustomerId: bookingslots.customerId,
         slotPosition: bookingslots.slotPosition,
         purchasedFor: bookings.greenFeePerPlayer,
+        providerBookingId: bookings.providerBookingId
       })
       .from(teeTimes)
       .innerJoin(bookings, eq(bookings.teeTimeId, teeTimes.id))
@@ -489,7 +491,7 @@ export class BookingService {
         bookingslots.name,
         bookingslots.slotPosition
       )
-      .orderBy(desc(teeTimes.date), asc(bookingslots.slotPosition))
+      .orderBy(asc(teeTimes.date), asc(bookingslots.slotPosition))
       .execute();
     if (!data.length) {
       this.logger.info(`No tee times found for user: ${userId}`);
@@ -498,8 +500,8 @@ export class BookingService {
     const combinedData: Record<string, OwnedTeeTimeData> = {};
 
     data.forEach((teeTime) => {
-      if (!combinedData[teeTime.id]) {
-        combinedData[teeTime.id] = {
+      if (!combinedData[teeTime.providerBookingId]) {
+        combinedData[teeTime.providerBookingId] = {
           courseId,
           courseName: teeTime.courseName,
           courseLogo: teeTime.teeTimeImage
@@ -527,9 +529,10 @@ export class BookingService {
           listPrice: teeTime.listPrice,
           minimumOfferPrice: teeTime.minimumOfferPrice,
           weatherGuaranteeAmount: teeTime.weatherGuaranteeAmount,
+          teeTimeId: teeTime.id
         };
       } else {
-        const currentEntry = combinedData[teeTime.id];
+        const currentEntry = combinedData[teeTime.providerBookingId];
         if (currentEntry) {
           currentEntry.bookingIds.push(teeTime.bookingId);
           currentEntry.slotsData.push({
@@ -560,6 +563,7 @@ export class BookingService {
         }
       }
     });
+
     for (const t of Object.values(combinedData)) {
       const finaldata: InviteFriend[] = [];
 
@@ -655,6 +659,7 @@ export class BookingService {
       t.slotsData = finaldata;
       t.golfers = finaldata;
     }
+
     return combinedData;
   };
 
@@ -1462,7 +1467,7 @@ export class BookingService {
    * @param bookingId - The ID of the booking.
    * @returns A promise that resolves to an array of offers.
    */
-  getOffersForBooking = async (bookingId: string, limit = 10, cursor?: string) => {
+  getOffersForBooking = async (bookingId: string, _limit = 10, _cursor?: string) => {
     this.logger.info(`getOffersForBooking called with bookingId: ${bookingId}`);
     const userImage = alias(assets, "userImage");
     const courseImage = alias(assets, "courseImage");
@@ -1591,7 +1596,7 @@ export class BookingService {
    * const result = await bookingService.getOfferSentForUser(userId, courseId, limit);
    * // result: [{ offer: OfferData }, { offer: OfferData }, ...]
    */
-  async getOfferSentForUser(userId: string, courseId: string, limit = 10, cursor?: string | null) {
+  async getOfferSentForUser(userId: string, courseId: string, _limit = 10, _cursor?: string | null) {
     this.logger.info(`getOfferSentForUser called with userId: ${userId}`);
     const userImage = alias(assets, "userImage");
     const ownerImage = alias(assets, "ownerImage");
@@ -1740,7 +1745,7 @@ export class BookingService {
    * @param userId - The ID of the user.
    * @returns A promise that resolves to an array of offers.
    */
-  async getOfferReceivedForUser(userId: string, courseId: string, limit = 10, cursor?: string | null) {
+  async getOfferReceivedForUser(userId: string, courseId: string, _limit = 10, _cursor?: string | null) {
     this.logger.info(`getOfferReceivedForUser called with userId: ${userId}`);
     const userImage = alias(assets, "userImage");
     const courseImage = alias(assets, "courseImage");

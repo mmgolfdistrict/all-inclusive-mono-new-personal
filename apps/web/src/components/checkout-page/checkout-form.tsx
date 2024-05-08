@@ -14,6 +14,7 @@ import { FilledButton } from "../buttons/filled-button";
 import { CharitySelect } from "../input/charity-select";
 import { Input } from "../input/input";
 import styles from "./checkout.module.css";
+import { LoadingContainer } from "~/app/[course]/loader";
 
 export const CheckoutForm = ({
   isBuyNowAuction,
@@ -361,6 +362,9 @@ export const CheckoutForm = ({
           </div>
         </div>
       </div>
+      <LoadingContainer isLoading={isLoading}>
+        <div></div>
+      </LoadingContainer>
 
       <FilledButton
         className={`w-full rounded-full`}
