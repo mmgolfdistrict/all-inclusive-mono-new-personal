@@ -39,7 +39,7 @@ import * as userProviderCourseLink from "./userProviderCourseLink";
 import * as users from "./users";
 import * as verificationTokens from "./verificationTokens";
 import * as withdrawals from "./withdrawals";
-import * as profanities from "./profanities";
+// import * as profanities from "./profanities";
 
 export const schema = {
   ...accounts,
