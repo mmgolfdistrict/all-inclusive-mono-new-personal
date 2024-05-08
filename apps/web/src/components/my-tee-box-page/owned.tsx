@@ -60,7 +60,7 @@ export const Owned = () => {
   const ownedTeeTimes = useMemo(() => {
     if (!data) return undefined;
     return Object.keys(data).map((key) => {
-      return { ...data[key], teeTimeId: key } as OwnedTeeTime;
+      return { ...data[key], teeTimeId: data[key].teeTimeId } as OwnedTeeTime;
     });
   }, [data]);
   // const loadMore = () => {
