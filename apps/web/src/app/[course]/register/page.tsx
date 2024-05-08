@@ -42,11 +42,15 @@ export default function RegisterPage() {
   const [showConfirmPassword, setShowConfirmPassword] =
     useState<boolean>(false);
   const router = useRouter();
+  const { mutateAsync: checkProfanity } =
+    api.profanity.checkProfanity.useMutation();
 
   const {
     register,
     handleSubmit,
     setValue,
+    watch,
+    setError,
     formState: { isSubmitting, errors },
   } = useForm<RegisterSchemaType>({
     resolver: zodResolver(registerSchema),
@@ -56,10 +60,51 @@ export default function RegisterPage() {
     const uName = generateUsername(undefined, undefined, 12);
     setValue("username", uName);
   };
+  const username = watch("username");
 
   useEffect(() => {
     genUsername();
   }, []);
+  const handleCheckProfanity = async () => {
+    if (!username || username?.length <= 1) {
+      setError("username", {
+        message: "",
+      });
+      return;
+    }
+    const data = await checkProfanity({ text: username });
+    if (data.isProfane) {
+      setError("username", {
+        message: "Handle contains profanity.",
+      });
+    } else {
+      setError("username", {
+        message: "",
+      });
+    }
+  };
+
+  // useEffect(() => {
+  //   if (!username || username?.length <= 2) {
+  //     setError("username", {
+  //       message: "",
+  //     });
+  //     false;
+  //   }
+  //   setError("username", {
+  //     message: "",
+  //   });
+  //   const handleCheckProfanity = async () => {
+  //     const data = await checkProfanity({ text: username });
+  //     if (data.isProfane) {
+  //       setError("username", {
+  //         message: "Handle contains profanity.",
+  //       });
+  //     }
+  //   };
+  //   // eslint-disable-next-line @typescript-eslint/no-floating-promises
+  //   handleCheckProfanity();
+  // }, [username]);
 
   useEffect(() => {
     const href = window.location.href;
@@ -145,6 +190,7 @@ export default function RegisterPage() {
           />
           <div className="flex items-end gap-2">
             <Input
+              onBlur={handleCheckProfanity}
               label="Username"
               className="w-full"
               type="text"
