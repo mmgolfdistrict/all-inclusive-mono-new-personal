@@ -48,7 +48,7 @@ export const ListTeeTime = ({
 
   const [listingPrice, setListingPrice] = useState<number>(0);
   const [sellerServiceFee, setSellerServiceFee] = useState<number>(0);
-  const [players, setPlayers] = useState<any>(
+  const [players, setPlayers] = useState<string>(
     selectedTeeTime?.selectedSlotsCount || availableSlots.toString()
   );
   const { toggleSidebar } = useSidebar({
