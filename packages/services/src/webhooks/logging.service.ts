@@ -9,20 +9,20 @@ interface AuditLog {
   listingId: string;
   eventId: string;
   json: string;
-  createdAt?: Date;
+  createdDateTime?: Date;
   lastUpdatedDateTime?: Date;
 }
 
 export class LoggerService {
   auditLog = async (data: AuditLog) => {
     try {
-      const res = await fetch(`${process.env.QSTASH_BASE_URL}/v2/publish/${process.env.QSTASH_AUDIT_TOPIC}`, {
+      const res = await fetch(`${process.env.QSTASH_BASE_URL}${process.env.QSTASH_AUDIT_TOPIC}`, {
         method: "POST",
         body: JSON.stringify(data),
         headers: {
           "content-type": "application/json",
           Authorization: `Bearer ${process.env.QSTASH_TOKEN}`,
-          "Upstash-Delay": "5s",
+          "Upstash-Delay": `${process.env.QSTASH_DELAY}`,
         },
       });
       if (res.ok) {
