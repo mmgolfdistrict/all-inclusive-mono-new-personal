@@ -45,7 +45,7 @@ import type { SensibleService } from "../sensible/sensible.service";
 import type { ProviderService } from "../tee-sheet-provider/providers.service";
 import type { BookingResponse } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
 import type { TokenizeService } from "../token/tokenize.service";
-import { LoggerService } from "./logging.service";
+import type { LoggerService } from "./logging.service";
 import type { HyperSwitchEvent } from "./types/hyperswitch";
 
 /**
@@ -955,7 +955,8 @@ export class HyperSwitchWebhookService {
           charityId: charityId || null,
           totalCharityAmount: charityCharge * 100 || 0,
           totalAmount: total || 0,
-          providerPaymentId: paymentId,
+          providerPaymentId: "",
+          status: "CONFIRMED",
           weatherQuoteId: weatherQuoteId || null,
         });
       }
@@ -1052,7 +1053,9 @@ export class HyperSwitchWebhookService {
         courseReservation: newBooking?.data.id,
         numberOfPlayer: (listedSlotsCount ?? 1).toString(),
         playTime:
-          dayjs(existingTeeTime?.providerDate).utcOffset("-06:00").format("YYYY-MM-DD hh:mm A") ?? "-",
+          dayjs(existingTeeTime?.providerDate)
+            .utcOffset("-06:00")
+            .format("YYYY-MM-DD hh:mm A") ?? "-",
       };
       const icsContent: string = createICS(event);
       const commonTemplateData = {
@@ -1060,7 +1063,9 @@ export class HyperSwitchWebhookService {
         CourseName: existingTeeTime?.courseName || "-",
         FacilityName: existingTeeTime?.entityName || "-",
         PlayDateTime:
-          dayjs(existingTeeTime?.providerDate).utcOffset("-06:00").format("MM/DD/YYYY h:mm A") || "-",
+          dayjs(existingTeeTime?.providerDate)
+            .utcOffset("-06:00")
+            .format("MM/DD/YYYY h:mm A") || "-",
         NumberOfHoles: existingTeeTime?.numberOfHoles,
         SellTeeTImeURL: `${process.env.APP_URL}/my-tee-box`,
         ManageTeeTimesURL: `${process.env.APP_URL}/my-tee-box`,
@@ -1115,7 +1120,7 @@ export class HyperSwitchWebhookService {
           if (firstBooking?.weatherGuaranteeId?.length) {
             await this.sensibleService.cancelGuarantee(firstBooking?.weatherGuaranteeId || "");
           }
-          const lsPrice = listPrice ?? 0;
+          const lsPrice = (listPrice ?? 0) / 100;
           const listedPrice = lsPrice + lsPrice * buyerFee;
           const totalTax = lsPrice * sellerFee;
           const templateSeller: any = {
@@ -1144,7 +1149,7 @@ export class HyperSwitchWebhookService {
           );
         }
       } else {
-        const lsPrice = listPrice ?? 0;
+        const lsPrice = (listPrice ?? 0) / 100;
         const listedPrice = lsPrice + lsPrice * buyerFee;
         const totalTax = lsPrice * (buyerFee + sellerFee);
         const templateSeller: any = {
