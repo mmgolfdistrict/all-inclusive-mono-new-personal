@@ -4,6 +4,7 @@ import {
   useHyper,
   useWidgets,
 } from "@juspay-tech/react-hyper-js";
+import { LoadingContainer } from "~/app/[course]/loader";
 import { useCheckoutContext } from "~/contexts/CheckoutContext";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { api } from "~/utils/api";
@@ -14,7 +15,6 @@ import { FilledButton } from "../buttons/filled-button";
 import { CharitySelect } from "../input/charity-select";
 import { Input } from "../input/input";
 import styles from "./checkout.module.css";
-import { LoadingContainer } from "~/app/[course]/loader";
 
 export const CheckoutForm = ({
   isBuyNowAuction,

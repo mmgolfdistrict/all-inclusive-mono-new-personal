@@ -130,7 +130,7 @@ export class BookingService {
     private readonly providerService: ProviderService,
     private readonly notificationService: NotificationService,
     private readonly loggerService: LoggerService
-  ) { }
+  ) {}
 
   createCounterOffer = async (userId: string, bookingIds: string[], offerId: string, amount: number) => {
     //find owner of each booking
@@ -452,7 +452,7 @@ export class BookingService {
         slotCustomerId: bookingslots.customerId,
         slotPosition: bookingslots.slotPosition,
         purchasedFor: bookings.greenFeePerPlayer,
-        providerBookingId: bookings.providerBookingId
+        providerBookingId: bookings.providerBookingId,
       })
       .from(teeTimes)
       .innerJoin(bookings, eq(bookings.teeTimeId, teeTimes.id))
@@ -529,7 +529,7 @@ export class BookingService {
           listPrice: teeTime.listPrice,
           minimumOfferPrice: teeTime.minimumOfferPrice,
           weatherGuaranteeAmount: teeTime.weatherGuaranteeAmount,
-          teeTimeId: teeTime.id
+          teeTimeId: teeTime.id,
         };
       } else {
         const currentEntry = combinedData[teeTime.providerBookingId];

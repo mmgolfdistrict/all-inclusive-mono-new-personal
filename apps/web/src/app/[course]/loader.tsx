@@ -16,9 +16,9 @@ export const LoadingContainer: FC<LoadingContainerProps> = ({
     } else {
       document.body.style.overflow = "";
     }
-    return ()=>{
+    return () => {
       document.body.style.overflow = "";
-    }
+    };
   }, [isLoading]);
 
   return (
