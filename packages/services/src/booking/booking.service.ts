@@ -497,7 +497,6 @@ export class BookingService {
       this.logger.info(`No tee times found for user: ${userId}`);
       return [];
     }
-    console.log("USER OWNED TEE TIME DATA:", data);
     const combinedData: Record<string, OwnedTeeTimeData> = {};
 
     data.forEach((teeTime) => {
@@ -565,8 +564,6 @@ export class BookingService {
       }
     });
 
-    console.log("USER OWNED DATA COMBINED:");
-    console.dir(combinedData, { depth: null });
     for (const t of Object.values(combinedData)) {
       const finaldata: InviteFriend[] = [];
 
@@ -663,8 +660,6 @@ export class BookingService {
       t.golfers = finaldata;
     }
 
-    console.log("FINAL DATA:");
-    console.dir(combinedData, { depth: null });
     return combinedData;
   };
 
