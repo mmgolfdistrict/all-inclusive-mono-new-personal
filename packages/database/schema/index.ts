@@ -25,6 +25,7 @@ import * as lists from "./lists";
 import * as notifications from "./notifications";
 import * as offerRead from "./offerRead";
 import * as offers from "./offers";
+import * as profanities from "./profanities";
 import * as promoCodes from "./promoCodes";
 import * as providers from "./providers";
 import * as providerScheduleDetails from "./providerScheduleDetails";
@@ -39,7 +40,6 @@ import * as userProviderCourseLink from "./userProviderCourseLink";
 import * as users from "./users";
 import * as verificationTokens from "./verificationTokens";
 import * as withdrawals from "./withdrawals";
-// import * as profanities from "./profanities";
 
 export const schema = {
   ...accounts,
@@ -83,5 +83,5 @@ export const schema = {
   ...cashouts,
   ...customerRecievable,
   ...auditlog,
-  ...profanities
+  ...profanities,
 };
