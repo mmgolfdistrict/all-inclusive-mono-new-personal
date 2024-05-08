@@ -44,10 +44,12 @@ export const ListTeeTime = ({
   refetch,
   needsRedirect,
 }: SideBarProps) => {
+  const availableSlots = selectedTeeTime?.golfers.length || 0;
+
   const [listingPrice, setListingPrice] = useState<number>(0);
   const [sellerServiceFee, setSellerServiceFee] = useState<number>(0);
-  const [players, setPlayers] = useState<PlayerType>(
-    selectedTeeTime?.selectedSlotsCount || "1"
+  const [players, setPlayers] = useState<any>(
+    selectedTeeTime?.selectedSlotsCount || availableSlots.toString()
   );
   const { toggleSidebar } = useSidebar({
     isOpen: isListTeeTimeOpen,
@@ -75,11 +77,9 @@ export const ListTeeTime = ({
     return Math.round(parseInt(max.toFixed(2)));
   }, [selectedTeeTime]);
 
-  const availableSlots = selectedTeeTime?.golfers.length || 0;
-
   useEffect(() => {
-    setPlayers(selectedTeeTime?.selectedSlotsCount || "1");
-  }, [selectedTeeTime?.selectedSlotsCount]);
+    setPlayers(selectedTeeTime?.selectedSlotsCount || (selectedTeeTime?.golfers.length || 0));
+  }, [selectedTeeTime?.selectedSlotsCount, selectedTeeTime?.golfers]);
 
   useEffect(() => {
     if (isListTeeTimeOpen) {
