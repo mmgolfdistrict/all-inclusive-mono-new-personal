@@ -30,7 +30,7 @@ const OptionDetails = ({
   }
   return (
     <div className="container mx-auto ">
-      <h3 className="text-xl font mb-4">Select an account to cashout:</h3>
+      <h3 className="text-xl font mb-4">Select an Account to Cashout:</h3>
       <select
         value={selectedOption}
         onChange={handleChange}
