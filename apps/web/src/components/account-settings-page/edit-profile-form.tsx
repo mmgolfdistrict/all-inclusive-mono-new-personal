@@ -13,6 +13,7 @@ import {
   type EditProfileSchemaType,
 } from "~/schema/edit-profile-schema";
 import { api } from "~/utils/api";
+import { debounceFunction } from "~/utils/debounce";
 import { useParams } from "next/navigation";
 import type { FormEvent } from "react";
 import { useCallback, useEffect, useState, type ChangeEvent } from "react";
@@ -38,8 +39,11 @@ export const EditProfileForm = () => {
     profilePictureId: "",
   });
 
-  const { mutateAsync: checkProfanity } =
-    api.profanity.checkProfanity.useMutation();
+  const {
+    mutateAsync: checkProfanity,
+    data: profanityCheckData,
+    reset: resetProfanityCheck,
+  } = api.profanity.checkProfanity.useMutation();
   const { mutate: deleteFileAsset } = api.upload.deleteFile.useMutation();
   const params = useParams();
   const { userId } = params;
@@ -145,47 +149,35 @@ export const EditProfileForm = () => {
   }, [bannerImage, userData, isLoading]);
 
   const handle = watch("handle");
-  const handleCheckProfanity = async () => {
-    if (!handle || handle?.length <= 1) {
-      setError("handle", {
-        message: "",
-      });
-      return;
-    }
-    const data = await checkProfanity({ text: handle });
-    console.log(data);
+
+  const handleCheckProfanity = async (text: string) => {
+    if (!text) return;
+    const data = await checkProfanity({ text });
     if (data.isProfane) {
       setError("handle", {
         message: "Handle contains profanity.",
       });
-    } else {
+    }
+  };
+
+  const debouncedHandleCheckProfanity = useCallback(
+    debounceFunction(handleCheckProfanity, 500),
+    []
+  );
+
+  useEffect(() => {
+    if (!handle || handle?.length <= 2) {
       setError("handle", {
         message: "",
       });
+      resetProfanityCheck();
+      return;
     }
-  };
-  // useEffect(() => {
-  //   if (!handle || handle?.length <= 2) {
-  //     setError("handle", {
-  //       message: "",
-  //     });
-  //     return;
-  //   }
-  //   setError("handle", {
-  //     message: "",
-  //   });
-  //   const handleCheckProfanity = async () => {
-  //     const data = await checkProfanity({ text: handle });
-  //     console.log(data);
-  //     if (data.isProfane) {
-  //       setError("handle", {
-  //         message: "Handle contains profanity.",
-  //       });
-  //     }
-  //   };
-  //   // eslint-disable-next-line @typescript-eslint/no-floating-promises
-  //   handleCheckProfanity();
-  // }, [handle]);
+    setError("handle", {
+      message: "",
+    });
+    debouncedHandleCheckProfanity(handle);
+  }, [handle]);
 
   const getKeyFromAssetUrl = (url: string) => {
     const split = url.split("/");
@@ -195,6 +187,12 @@ export const EditProfileForm = () => {
   };
 
   const onSubmit: SubmitHandler<EditProfileSchemaType> = async (data) => {
+    if (profanityCheckData?.isProfane) {
+      setError("handle", {
+        message: errors.handle?.message || "Handle contains profanity.",
+      });
+      return;
+    }
     if (isUploading) return;
 
     try {
@@ -338,7 +336,6 @@ export const EditProfileForm = () => {
           name={"handle"}
           error={errors.handle?.message}
           data-testid="profile-handle-id"
-          onBlur={handleCheckProfanity}
         />
         <Input
           label="Location"

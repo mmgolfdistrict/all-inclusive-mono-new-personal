@@ -14,10 +14,12 @@ import { Visible } from "~/components/icons/visible";
 import { Input } from "~/components/input/input";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { api } from "~/utils/api";
+import { debounceFunction } from "~/utils/debounce";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   createRef,
+  useCallback,
   useEffect,
   useMemo,
   useState,
@@ -42,8 +44,11 @@ export default function RegisterPage() {
   const [showConfirmPassword, setShowConfirmPassword] =
     useState<boolean>(false);
   const router = useRouter();
-  const { mutateAsync: checkProfanity } =
-    api.profanity.checkProfanity.useMutation();
+  const {
+    mutateAsync: checkProfanity,
+    data: profanityCheckData,
+    reset: resetProfanityCheck,
+  } = api.profanity.checkProfanity.useMutation();
 
   const {
     register,
@@ -65,46 +70,35 @@ export default function RegisterPage() {
   useEffect(() => {
     genUsername();
   }, []);
-  const handleCheckProfanity = async () => {
-    if (!username || username?.length <= 1) {
-      setError("username", {
-        message: "",
-      });
-      return;
-    }
-    const data = await checkProfanity({ text: username });
+
+  const handleCheckProfanity = async (text: string) => {
+    if (!text) return;
+    const data = await checkProfanity({ text });
     if (data.isProfane) {
       setError("username", {
-        message: "Handle contains profanity.",
-      });
-    } else {
-      setError("username", {
-        message: "",
+        message: "Username contains profanity.",
       });
     }
   };
 
-  // useEffect(() => {
-  //   if (!username || username?.length <= 2) {
-  //     setError("username", {
-  //       message: "",
-  //     });
-  //     false;
-  //   }
-  //   setError("username", {
-  //     message: "",
-  //   });
-  //   const handleCheckProfanity = async () => {
-  //     const data = await checkProfanity({ text: username });
-  //     if (data.isProfane) {
-  //       setError("username", {
-  //         message: "Handle contains profanity.",
-  //       });
-  //     }
-  //   };
-  //   // eslint-disable-next-line @typescript-eslint/no-floating-promises
-  //   handleCheckProfanity();
-  // }, [username]);
+  const debouncedHandleCheckProfanity = useCallback(
+    debounceFunction(handleCheckProfanity, 500),
+    []
+  );
+
+  useEffect(() => {
+    if (!username || username?.length <= 2) {
+      setError("username", {
+        message: "",
+      });
+      resetProfanityCheck();
+      return;
+    }
+    setError("username", {
+      message: "",
+    });
+    debouncedHandleCheckProfanity(username);
+  }, [username]);
 
   useEffect(() => {
     const href = window.location.href;
@@ -114,6 +108,12 @@ export default function RegisterPage() {
   }, []);
 
   const onSubmit: SubmitHandler<RegisterSchemaType> = async (data) => {
+    if (profanityCheckData?.isProfane) {
+      setError("username", {
+        message: errors.username?.message || "Username contains profanity.",
+      });
+      return;
+    }
     if (isSubmitting) return;
     if (registerUser.isLoading) return;
     if (registerUser.isSuccess) return;
@@ -190,7 +190,6 @@ export default function RegisterPage() {
           />
           <div className="flex items-end gap-2">
             <Input
-              onBlur={handleCheckProfanity}
               label="Username"
               className="w-full"
               type="text"
