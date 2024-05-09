@@ -76,6 +76,7 @@ interface OwnedTeeTimeData {
   listPrice: number | null;
   minimumOfferPrice: number;
   weatherGuaranteeAmount: number | null;
+  teeTimeId: string;
 }
 
 interface ListingData {
@@ -451,6 +452,7 @@ export class BookingService {
         slotCustomerId: bookingslots.customerId,
         slotPosition: bookingslots.slotPosition,
         purchasedFor: bookings.greenFeePerPlayer,
+        providerBookingId: bookings.providerBookingId,
       })
       .from(teeTimes)
       .innerJoin(bookings, eq(bookings.teeTimeId, teeTimes.id))
@@ -489,7 +491,7 @@ export class BookingService {
         bookingslots.name,
         bookingslots.slotPosition
       )
-      .orderBy(desc(teeTimes.date), asc(bookingslots.slotPosition))
+      .orderBy(asc(teeTimes.date), asc(bookingslots.slotPosition))
       .execute();
     if (!data.length) {
       this.logger.info(`No tee times found for user: ${userId}`);
@@ -498,8 +500,8 @@ export class BookingService {
     const combinedData: Record<string, OwnedTeeTimeData> = {};
 
     data.forEach((teeTime) => {
-      if (!combinedData[teeTime.id]) {
-        combinedData[teeTime.id] = {
+      if (!combinedData[teeTime.providerBookingId]) {
+        combinedData[teeTime.providerBookingId] = {
           courseId,
           courseName: teeTime.courseName,
           courseLogo: teeTime.teeTimeImage
@@ -527,9 +529,10 @@ export class BookingService {
           listPrice: teeTime.listPrice,
           minimumOfferPrice: teeTime.minimumOfferPrice,
           weatherGuaranteeAmount: teeTime.weatherGuaranteeAmount,
+          teeTimeId: teeTime.id,
         };
       } else {
-        const currentEntry = combinedData[teeTime.id];
+        const currentEntry = combinedData[teeTime.providerBookingId];
         if (currentEntry) {
           currentEntry.bookingIds.push(teeTime.bookingId);
           currentEntry.slotsData.push({
@@ -560,6 +563,7 @@ export class BookingService {
         }
       }
     });
+
     for (const t of Object.values(combinedData)) {
       const finaldata: InviteFriend[] = [];
 
@@ -655,6 +659,7 @@ export class BookingService {
       t.slotsData = finaldata;
       t.golfers = finaldata;
     }
+
     return combinedData;
   };
 

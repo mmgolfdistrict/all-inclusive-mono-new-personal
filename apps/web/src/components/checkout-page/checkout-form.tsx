@@ -4,6 +4,7 @@ import {
   useHyper,
   useWidgets,
 } from "@juspay-tech/react-hyper-js";
+import { LoadingContainer } from "~/app/[course]/loader";
 import { useCheckoutContext } from "~/contexts/CheckoutContext";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { api } from "~/utils/api";
@@ -175,7 +176,7 @@ export const CheckoutForm = ({
       });
 
       if (response) {
-        if (response.status === "succeeded") {
+        if (response.status === "succeeded"||response.status === "processing") {
           let bookingResponse: ReserveTeeTimeResponse = {
             bookingId: "",
             providerBookingId: "",
@@ -361,6 +362,9 @@ export const CheckoutForm = ({
           </div>
         </div>
       </div>
+      <LoadingContainer isLoading={isLoading}>
+        <div></div>
+      </LoadingContainer>
 
       <FilledButton
         className={`w-full rounded-full`}

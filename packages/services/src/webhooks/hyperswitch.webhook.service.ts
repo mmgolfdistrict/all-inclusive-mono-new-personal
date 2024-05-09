@@ -45,7 +45,7 @@ import type { SensibleService } from "../sensible/sensible.service";
 import type { ProviderService } from "../tee-sheet-provider/providers.service";
 import type { BookingResponse } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
 import type { TokenizeService } from "../token/tokenize.service";
-import { LoggerService } from "./logging.service";
+import type { LoggerService } from "./logging.service";
 import type { HyperSwitchEvent } from "./types/hyperswitch";
 
 /**
@@ -955,7 +955,8 @@ export class HyperSwitchWebhookService {
           charityId: charityId || null,
           totalCharityAmount: charityCharge * 100 || 0,
           totalAmount: total || 0,
-          providerPaymentId: paymentId,
+          providerPaymentId: "",
+          status: "CONFIRMED",
           weatherQuoteId: weatherQuoteId || null,
         });
       }
@@ -1115,7 +1116,7 @@ export class HyperSwitchWebhookService {
           if (firstBooking?.weatherGuaranteeId?.length) {
             await this.sensibleService.cancelGuarantee(firstBooking?.weatherGuaranteeId || "");
           }
-          const lsPrice = listPrice ?? 0;
+          const lsPrice = (listPrice ?? 0) / 100;
           const listedPrice = lsPrice + lsPrice * buyerFee;
           const totalTax = lsPrice * sellerFee;
           const templateSeller: any = {
@@ -1144,7 +1145,7 @@ export class HyperSwitchWebhookService {
           );
         }
       } else {
-        const lsPrice = listPrice ?? 0;
+        const lsPrice = (listPrice ?? 0) / 100;
         const listedPrice = lsPrice + lsPrice * buyerFee;
         const totalTax = lsPrice * (buyerFee + sellerFee);
         const templateSeller: any = {
