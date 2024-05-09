@@ -1191,7 +1191,7 @@ export class HyperSwitchWebhookService {
     const serviceCharge = amount * sellerFee;
     const payable = (amount - serviceCharge) * (listedSlotsCount || 1);
     const currentDate = new Date();
-    const radeemAfterMinutes = await appSettingService.get("REDEEM_AFTER_MINUTES");
+    const radeemAfterMinutes = await appSettingService.get("CASH_OUT_AFTER_MINUTES");
     const redeemAfterDate = this.addMinutes(currentDate, Number(radeemAfterMinutes));
     const customerRecievableData = [
       {
