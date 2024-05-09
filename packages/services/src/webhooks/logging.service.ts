@@ -2,7 +2,7 @@ import type { Db } from "@golf-district/database";
 import { NextResponse } from "next/server";
 
 interface AuditLog {
-  id: string;
+  id?: string;
   userId: string;
   teeTimeId: string;
   bookingId: string;

@@ -10,6 +10,7 @@ import { FilledButton } from "../buttons/filled-button";
 import { OutlineButton } from "../buttons/outline-button";
 import { Close } from "../icons/close";
 import { Players } from "../icons/players";
+import { useUserContext } from "~/contexts/UserContext";
 
 type SideBarProps = {
   isCancelListingOpen: boolean;
@@ -46,6 +47,18 @@ export const CancelListing = ({
   const router = useRouter();
 
   const { course } = useCourseContext();
+  const {user} = useUserContext()
+  const auditLog = api.webhooks.auditLog.useMutation();
+  const logAudit=async ()=>{
+    await auditLog.mutateAsync({
+      userId: user?.id??"",
+      teeTimeId: "",
+      bookingId: "",
+      listingId: listingId??"",
+      eventId: "TEE_TIME_CANCELLED",
+      json:  `TEE_TIME_CANCELLED`,
+    })
+  }
 
   const cancelListing = async () => {
     if (!listingId) {
@@ -59,6 +72,7 @@ export const CancelListing = ({
       await refetch?.();
       toast.success("Listing cancelled successfully");
       setIsCancelListingOpen(false);
+      void logAudit()
       if (needRedirect) {
         router.push(`/${course?.id}/my-tee-box`);
       }

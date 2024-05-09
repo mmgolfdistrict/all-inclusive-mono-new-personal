@@ -15,6 +15,7 @@ import { FilledButton } from "../buttons/filled-button";
 import { CharitySelect } from "../input/charity-select";
 import { Input } from "../input/input";
 import styles from "./checkout.module.css";
+import { useUserContext } from "~/contexts/UserContext";
 
 export const CheckoutForm = ({
   isBuyNowAuction,
@@ -32,6 +33,18 @@ export const CheckoutForm = ({
   listingId: string;
 }) => {
   const { course } = useCourseContext();
+  const {user} = useUserContext()
+  const auditLog = api.webhooks.auditLog.useMutation();
+  const logAudit=async ()=>{
+    await auditLog.mutateAsync({
+      userId: user?.id??"",
+      teeTimeId: teeTimeId,
+      bookingId: "",
+      listingId: listingId,
+      eventId: "TEE_TIME_PURCHASED",
+      json:  `TEE_TIME_PURCHASED`,
+    })
+  }
 
   let primaryGreenFeeCharge = 0;
 
@@ -153,6 +166,7 @@ export const CheckoutForm = ({
   });
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    void logAudit();
     if (message === "Payment Successful") return;
     e.preventDefault();
     if (

@@ -24,6 +24,7 @@ import { Info } from "../icons/info";
 import { Players } from "../icons/players";
 import { Tooltip } from "../tooltip";
 import { type OwnedTeeTime } from "./owned";
+import { useUserContext } from "~/contexts/UserContext";
 
 type PlayerType = "1" | "2" | "3" | "4";
 
@@ -58,6 +59,18 @@ export const ListTeeTime = ({
   const sell = api.teeBox.createListingForBookings.useMutation();
   const router = useRouter();
   const { course } = useCourseContext();
+  const {user} = useUserContext()
+  const auditLog = api.webhooks.auditLog.useMutation();
+  const logAudit=async ()=>{
+   await auditLog.mutateAsync({
+      userId: user?.id??"",
+      teeTimeId: selectedTeeTime?.teeTimeId??"",
+      bookingId: selectedTeeTime?.bookingIds?.[0]??"",
+      listingId: selectedTeeTime?.listingId??"",
+      eventId: "TEE_TIME_LISTED",
+      json:  `TEE_TIME_LISTED`,
+    })
+  }
   const listingSellerFeePercentage = (course?.sellerFee ?? 1) / 100;
   const listingBuyerFeePercentage = (course?.buyerFee ?? 1) / 100;
 
@@ -155,6 +168,7 @@ export const ListTeeTime = ({
   }, [listingPrice, players]);
 
   const listTeeTime = async () => {
+    void logAudit()
     //You should never enter this condition.
     if (totalPayout < 0) {
       toast.error("Listing price must be greater than $45.");
