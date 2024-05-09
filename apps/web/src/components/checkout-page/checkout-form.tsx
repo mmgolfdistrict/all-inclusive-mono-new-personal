@@ -286,10 +286,10 @@ export const CheckoutForm = ({
 
                     const decimals = value.split(".")[1];
                     if (decimals) {
-                      setCharityAmountError("Chairty amount are not allowed in decimal value.")
+                      setCharityAmountError("Charity amount are not allowed in decimal value.")
                       return;
                     }
-
+                    setCharityAmountError("");
                     const strippedLeadingZeros = value.replace(/^0+/, "");
                     handleSelectedCharityAmount(Number(strippedLeadingZeros));
                   }}
