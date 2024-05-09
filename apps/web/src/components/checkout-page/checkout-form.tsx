@@ -176,7 +176,7 @@ export const CheckoutForm = ({
       });
 
       if (response) {
-        if (response.status === "succeeded") {
+        if (response.status === "succeeded"||response.status === "processing") {
           let bookingResponse: ReserveTeeTimeResponse = {
             bookingId: "",
             providerBookingId: "",
