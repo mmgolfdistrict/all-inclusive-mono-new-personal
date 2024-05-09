@@ -174,8 +174,12 @@ export const ListTeeTime = ({
       );
       return;
     }
-    if (listingPrice <= 1) {
+    if (listingPrice === 0) {
       toast.error(`Enter listing price.`);
+      return;
+    }
+    if (listingPrice === 1) {
+      toast.error(`Listing price must be greater than $1.`);
       return;
     }
     try {
