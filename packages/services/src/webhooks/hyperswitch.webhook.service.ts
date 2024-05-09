@@ -47,6 +47,7 @@ import type { BookingResponse } from "../tee-sheet-provider/sheet-providers/type
 import type { TokenizeService } from "../token/tokenize.service";
 import type { LoggerService } from "./logging.service";
 import type { HyperSwitchEvent } from "./types/hyperswitch";
+import { appSettingService } from "../app-settings/initialized";
 
 /**
  * `HyperSwitchWebhookService` - A service for processing webhooks from HyperSwitch.
@@ -552,6 +553,11 @@ export class HyperSwitchWebhookService {
   addDays = (date: Date, days: number) => {
     const result = new Date(date);
     result.setDate(result.getDate() + days);
+    return result;
+  };
+  addMinutes = (date: Date, minutes: number) => {
+    const result = new Date(date);
+    result.setMinutes(result.getMinutes() + minutes);
     return result;
   };
 
@@ -1186,7 +1192,8 @@ export class HyperSwitchWebhookService {
     const serviceCharge = amount * sellerFee;
     const payable = (amount - serviceCharge) * (listedSlotsCount || 1);
     const currentDate = new Date();
-    const redeemAfterDate = this.addDays(currentDate, 7);
+    const radeemAfterMinutes = await appSettingService.get("CASH_OUT_AFTER_MINUTES");
+    const redeemAfterDate = this.addMinutes(currentDate, Number(radeemAfterMinutes));
     const customerRecievableData = [
       {
         id: randomUUID(),
