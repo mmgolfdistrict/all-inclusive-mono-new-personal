@@ -86,6 +86,7 @@ export const CheckoutForm = ({
       usePrefilledValues: "never", // or "auto",
     },
     branding: "never",
+    hideExpiredPaymentMethods: true,
   };
   const hyper = useHyper();
   const widgets = useWidgets();
