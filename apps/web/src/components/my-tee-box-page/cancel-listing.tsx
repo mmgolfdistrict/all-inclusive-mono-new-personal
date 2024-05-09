@@ -1,4 +1,5 @@
 import { useCourseContext } from "~/contexts/CourseContext";
+import { useUserContext } from "~/contexts/UserContext";
 import { useSidebar } from "~/hooks/useSidebar";
 import { api } from "~/utils/api";
 import { formatMoney, formatTime } from "~/utils/formatters";
@@ -46,6 +47,18 @@ export const CancelListing = ({
   const router = useRouter();
 
   const { course } = useCourseContext();
+  const { user } = useUserContext();
+  const auditLog = api.webhooks.auditLog.useMutation();
+  const logAudit = async () => {
+    await auditLog.mutateAsync({
+      userId: user?.id ?? "",
+      teeTimeId: "",
+      bookingId: "",
+      listingId: listingId ?? "",
+      eventId: "TEE_TIME_CANCELLED",
+      json: `TEE_TIME_CANCELLED`,
+    });
+  };
 
   const cancelListing = async () => {
     if (!listingId) {
@@ -59,6 +72,7 @@ export const CancelListing = ({
       await refetch?.();
       toast.success("Listing cancelled successfully");
       setIsCancelListingOpen(false);
+      void logAudit();
       if (needRedirect) {
         router.push(`/${course?.id}/my-tee-box`);
       }

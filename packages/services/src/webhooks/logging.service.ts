@@ -2,7 +2,7 @@ import type { Db } from "@golf-district/database";
 import { NextResponse } from "next/server";
 
 interface AuditLog {
-  id: string;
+  id?: string;
   userId: string;
   teeTimeId: string;
   bookingId: string;
@@ -22,7 +22,7 @@ export class LoggerService {
         headers: {
           "content-type": "application/json",
           Authorization: `Bearer ${process.env.QSTASH_TOKEN}`,
-          "Upstash-Delay": `${process.env.QSTASH_AUDIT_DELAY_IN_SECONDS}`,
+          "Upstash-Delay": `${process.env.QSTASH_AUDIT_DELAY_IN_SECONDS}s`,
         },
       });
       if (res.ok) {
