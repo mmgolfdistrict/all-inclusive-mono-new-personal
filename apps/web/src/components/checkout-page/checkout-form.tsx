@@ -175,8 +175,9 @@ export const CheckoutForm = ({
       (!selectedCharityAmount || selectedCharityAmount === 0)
     ) {
       setCharityAmountError("Charity amount cannot be empty or zero");
+      return;
     }
-    {
+      setCharityAmountError("");
       setIsLoading(true);
 
       const response = await hyper.confirmPayment({
@@ -236,7 +237,6 @@ export const CheckoutForm = ({
       } else {
         setIsLoading(false);
       }
-    }
   };
 
   const reserveBookingFirstHand = async (
@@ -302,8 +302,11 @@ export const CheckoutForm = ({
                       .replaceAll(",", "");
 
                     const decimals = value.split(".")[1];
-                    if (decimals && decimals?.length > 2) return;
-
+                    if (decimals) {
+                      setCharityAmountError("Charity amount are not allowed in decimal value.")
+                      return;
+                    }
+                    setCharityAmountError("");
                     const strippedLeadingZeros = value.replace(/^0+/, "");
                     handleSelectedCharityAmount(Number(strippedLeadingZeros));
                   }}
