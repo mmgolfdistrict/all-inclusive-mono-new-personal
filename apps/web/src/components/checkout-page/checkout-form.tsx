@@ -7,6 +7,7 @@ import {
 import { LoadingContainer } from "~/app/[course]/loader";
 import { useCheckoutContext } from "~/contexts/CheckoutContext";
 import { useCourseContext } from "~/contexts/CourseContext";
+import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
 import type { CartProduct } from "~/utils/types";
 import { useRouter } from "next/navigation";
@@ -15,7 +16,6 @@ import { FilledButton } from "../buttons/filled-button";
 import { CharitySelect } from "../input/charity-select";
 import { Input } from "../input/input";
 import styles from "./checkout.module.css";
-import { useUserContext } from "~/contexts/UserContext";
 
 export const CheckoutForm = ({
   isBuyNowAuction,
@@ -33,18 +33,18 @@ export const CheckoutForm = ({
   listingId: string;
 }) => {
   const { course } = useCourseContext();
-  const {user} = useUserContext()
+  const { user } = useUserContext();
   const auditLog = api.webhooks.auditLog.useMutation();
-  const logAudit=async ()=>{
+  const logAudit = async () => {
     await auditLog.mutateAsync({
-      userId: user?.id??"",
+      userId: user?.id ?? "",
       teeTimeId: teeTimeId,
       bookingId: "",
       listingId: listingId,
       eventId: "TEE_TIME_PURCHASED",
-      json:  `TEE_TIME_PURCHASED`,
-    })
-  }
+      json: `TEE_TIME_PURCHASED`,
+    });
+  };
 
   let primaryGreenFeeCharge = 0;
 

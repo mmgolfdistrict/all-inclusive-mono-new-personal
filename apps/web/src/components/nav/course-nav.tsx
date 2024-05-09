@@ -39,16 +39,16 @@ export const CourseNav = () => {
     }
   );
   const auditLog = api.webhooks.auditLog.useMutation();
-  const logAudit=async ()=>{
+  const logAudit = async () => {
     await auditLog.mutateAsync({
-      userId: user?.id??"",
+      userId: user?.id ?? "",
       teeTimeId: "",
       bookingId: "",
       listingId: "",
       eventId: "USER_LOGGED_IN",
-      json:  `user with id ${user?.id} logged in `,
-    })
-  }
+      json: `user with id ${user?.id} logged in `,
+    });
+  };
 
   useEffect(() => {
     if (isSideBarOpen && isMobile) {

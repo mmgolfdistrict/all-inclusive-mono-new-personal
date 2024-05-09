@@ -1,8 +1,8 @@
 "use client";
 
+import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
 import React, { useEffect } from "react";
-import { useUserContext } from "~/contexts/UserContext";
 
 declare global {
   interface Window {
@@ -16,18 +16,18 @@ const FinixForm = ({ onClose, setLoading, loading }) => {
     api.cashOut.getAssociatedAccounts.useQuery({}, { enabled: false });
   const createCashoutCustomerIdentity =
     api.cashOut.createCashoutCustomerIdentity.useMutation();
-    const {user}=useUserContext()
-    const auditLog = api.webhooks.auditLog.useMutation();
-    const logAudit=()=>{
-     void auditLog.mutateAsync({
-        userId: user?.id??"",
-        teeTimeId: "",
-        bookingId: "",
-        listingId: "",
-        eventId: "FINIX_WEB_HOOK",
-        json:  `finix webhook `,
-      })
-    }
+  const { user } = useUserContext();
+  const auditLog = api.webhooks.auditLog.useMutation();
+  const logAudit = () => {
+    void auditLog.mutateAsync({
+      userId: user?.id ?? "",
+      teeTimeId: "",
+      bookingId: "",
+      listingId: "",
+      eventId: "FINIX_WEB_HOOK",
+      json: `finix webhook `,
+    });
+  };
 
   const handleCashoutTransfer = async (token: string) => {
     await createCashoutCustomerIdentity.mutateAsync({ paymentToken: token });
@@ -45,7 +45,7 @@ const FinixForm = ({ onClose, setLoading, loading }) => {
             const token: string = tokenData.id;
             await handleCashoutTransfer(token);
             await refetchAssociatedBanks();
-            logAudit()
+            logAudit();
             onClose();
           }
         );
