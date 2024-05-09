@@ -343,7 +343,12 @@ export class ServiceFactory {
   };
 
   getPaymentVerifierService = (): PaymentVerifierService => {
-    return new PaymentVerifierService(this.config.database, this.getHyperSwitchWebhookService(), this.getSensibleService(), this.getProviderService());
+    return new PaymentVerifierService(
+      this.config.database,
+      this.getHyperSwitchWebhookService(),
+      this.getSensibleService(),
+      this.getProviderService()
+    );
   };
 
   getFinixService = (): FinixService => {

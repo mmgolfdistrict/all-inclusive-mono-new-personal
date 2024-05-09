@@ -191,7 +191,10 @@ export const CheckoutForm = ({
       });
 
       if (response) {
-        if (response.status === "succeeded"||response.status === "processing") {
+        if (
+          response.status === "succeeded" ||
+          response.status === "processing"
+        ) {
           let bookingResponse: ReserveTeeTimeResponse = {
             bookingId: "",
             providerBookingId: "",

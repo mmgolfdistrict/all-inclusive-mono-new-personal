@@ -26,6 +26,7 @@ import type { Event } from "@golf-district/shared/createICS";
 import Logger from "@golf-district/shared/src/logger";
 import { Client } from "@upstash/qstash/.";
 import dayjs from "dayjs";
+import { appSettingService } from "../app-settings/initialized";
 import type { BookingService } from "../booking/booking.service";
 import type {
   AuctionProduct,
@@ -47,7 +48,6 @@ import type { BookingResponse } from "../tee-sheet-provider/sheet-providers/type
 import type { TokenizeService } from "../token/tokenize.service";
 import type { LoggerService } from "./logging.service";
 import type { HyperSwitchEvent } from "./types/hyperswitch";
-import { appSettingService } from "../app-settings/initialized";
 
 /**
  * `HyperSwitchWebhookService` - A service for processing webhooks from HyperSwitch.
@@ -1060,9 +1060,7 @@ export class HyperSwitchWebhookService {
         courseReservation: newBooking?.data.id,
         numberOfPlayer: (listedSlotsCount ?? 1).toString(),
         playTime:
-          dayjs(existingTeeTime?.providerDate)
-            .utcOffset("-06:00")
-            .format("YYYY-MM-DD hh:mm A") ?? "-",
+          dayjs(existingTeeTime?.providerDate).utcOffset("-06:00").format("YYYY-MM-DD hh:mm A") ?? "-",
       };
       const icsContent: string = createICS(event);
       const commonTemplateData = {
@@ -1070,9 +1068,7 @@ export class HyperSwitchWebhookService {
         CourseName: existingTeeTime?.courseName || "-",
         FacilityName: existingTeeTime?.entityName || "-",
         PlayDateTime:
-          dayjs(existingTeeTime?.providerDate)
-            .utcOffset("-06:00")
-            .format("MM/DD/YYYY h:mm A") || "-",
+          dayjs(existingTeeTime?.providerDate).utcOffset("-06:00").format("MM/DD/YYYY h:mm A") || "-",
         NumberOfHoles: existingTeeTime?.numberOfHoles,
         SellTeeTImeURL: `${process.env.APP_URL}/my-tee-box`,
         ManageTeeTimesURL: `${process.env.APP_URL}/my-tee-box`,

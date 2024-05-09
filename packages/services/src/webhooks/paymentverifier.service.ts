@@ -2,14 +2,14 @@ import type { Db } from "@golf-district/database";
 import { and, eq, or } from "@golf-district/database";
 import type { InsertBooking } from "@golf-district/database/schema/bookings";
 import { bookings } from "@golf-district/database/schema/bookings";
+import { courses } from "@golf-district/database/schema/courses";
+import { providers } from "@golf-district/database/schema/providers";
+import { providerCourseLink } from "@golf-district/database/schema/providersCourseLink";
+import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import Logger from "@golf-district/shared/src/logger";
-import type { HyperSwitchWebhookService } from "./hyperswitch.webhook.service";
 import { SensibleService } from "../sensible/sensible.service";
 import { ProviderService } from "../tee-sheet-provider/providers.service";
-import { teeTimes } from "@golf-district/database/schema/teeTimes";
-import { providers } from "@golf-district/database/schema/providers";
-import { courses } from "@golf-district/database/schema/courses";
-import { providerCourseLink } from "@golf-district/database/schema/providersCourseLink";
+import type { HyperSwitchWebhookService } from "./hyperswitch.webhook.service";
 
 export class PaymentVerifierService {
   protected hyperSwitchBaseUrl = process.env.HYPERSWITCH_BASE_URL;
@@ -19,7 +19,7 @@ export class PaymentVerifierService {
     private readonly hyperSwitchService: HyperSwitchWebhookService,
     private readonly sensibleService: SensibleService,
     private readonly providerService: ProviderService
-  ) { }
+  ) {}
 
   verifyPayment = async () => {
     // const records: InsertBooking[] = await this.database
@@ -52,8 +52,7 @@ export class PaymentVerifierService {
       .where(or(eq(bookings.status, "RESERVED"), eq(bookings.status, "PROCESSING")))
       .execute();
 
-
-    console.log("verify Payment records called", records)
+    console.log("verify Payment records called", records);
 
     if (!records) {
       this.logger.error(`Error fetching bookings`);
