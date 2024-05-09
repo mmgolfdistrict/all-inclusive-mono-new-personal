@@ -336,7 +336,6 @@ export const EditProfileForm = () => {
           name={"handle"}
           error={errors.handle?.message}
           data-testid="profile-handle-id"
-          // onBlur={handleCheckProfanity}
         />
         <Input
           label="Location"
