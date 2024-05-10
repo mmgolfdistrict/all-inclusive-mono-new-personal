@@ -177,66 +177,63 @@ export const CheckoutForm = ({
       setCharityAmountError("Charity amount cannot be empty or zero");
       return;
     }
-      setCharityAmountError("");
-      setIsLoading(true);
+    setCharityAmountError("");
+    setIsLoading(true);
 
-      const response = await hyper.confirmPayment({
-        widgets,
-        confirmParams: {
-          // Make sure to change this to your payment completion page
-          return_url: isBuyNowAuction
-            ? `${window.location.origin}/${course?.id}/auctions/confirmation`
-            : `${window.location.origin}/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}`,
-        },
-        redirect: "if_required",
-      });
+    const response = await hyper.confirmPayment({
+      widgets,
+      confirmParams: {
+        // Make sure to change this to your payment completion page
+        return_url: isBuyNowAuction
+          ? `${window.location.origin}/${course?.id}/auctions/confirmation`
+          : `${window.location.origin}/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}`,
+      },
+      redirect: "if_required",
+    });
 
-      if (response) {
-        if (
-          response.status === "succeeded" ||
-          response.status === "processing"
-        ) {
-          let bookingResponse: ReserveTeeTimeResponse = {
-            bookingId: "",
-            providerBookingId: "",
-            status: "",
-          };
-          if (isFirstHand.length) {
-            bookingResponse = await reserveBookingFirstHand(
-              cartId,
-              response?.payment_id as string
-            );
-            setReservationData({
-              golfReservationId: bookingResponse.bookingId,
-              providerReservationId: bookingResponse.providerBookingId,
-              playTime: teeTimeDate || "",
-            });
-          } else {
-            bookingResponse = await reserveSecondHandBooking(
-              cartId,
-              listingId,
-              response?.payment_id as string
-            );
-          }
-          setMessage("Payment Successful");
-          isBuyNowAuction
-            ? router.push(`/${course?.id}/auctions/confirmation`)
-            : router.push(
-                `/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}&bookingId=${bookingResponse.bookingId}`
-              );
-          setIsLoading(false);
-        } else if (response.error) {
-          setMessage(response.error.message as string);
-          setIsLoading(false);
+    if (response) {
+      if (response.status === "succeeded" || response.status === "processing") {
+        let bookingResponse: ReserveTeeTimeResponse = {
+          bookingId: "",
+          providerBookingId: "",
+          status: "",
+        };
+        if (isFirstHand.length) {
+          bookingResponse = await reserveBookingFirstHand(
+            cartId,
+            response?.payment_id as string
+          );
+          setReservationData({
+            golfReservationId: bookingResponse.bookingId,
+            providerReservationId: bookingResponse.providerBookingId,
+            playTime: teeTimeDate || "",
+          });
         } else {
-          setMessage("An unexpected error occurred.");
-          setIsLoading(false);
+          bookingResponse = await reserveSecondHandBooking(
+            cartId,
+            listingId,
+            response?.payment_id as string
+          );
         }
-
-        // setIsPaymentCompleted(true);
+        setMessage("Payment Successful");
+        isBuyNowAuction
+          ? router.push(`/${course?.id}/auctions/confirmation`)
+          : router.push(
+              `/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}&bookingId=${bookingResponse.bookingId}`
+            );
+        setIsLoading(false);
+      } else if (response.error) {
+        setMessage(response.error.message as string);
+        setIsLoading(false);
       } else {
+        setMessage("An unexpected error occurred.");
         setIsLoading(false);
       }
+
+      // setIsPaymentCompleted(true);
+    } else {
+      setIsLoading(false);
+    }
   };
 
   const reserveBookingFirstHand = async (
@@ -303,7 +300,9 @@ export const CheckoutForm = ({
 
                     const decimals = value.split(".")[1];
                     if (decimals) {
-                      setCharityAmountError("Charity amount are not allowed in decimal value.")
+                      setCharityAmountError(
+                        "Charity amount are not allowed in decimal value."
+                      );
                       return;
                     }
                     setCharityAmountError("");
