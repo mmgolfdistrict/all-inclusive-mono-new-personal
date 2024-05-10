@@ -25,6 +25,7 @@ import { Info } from "../icons/info";
 import { Players } from "../icons/players";
 import { Tooltip } from "../tooltip";
 import { type OwnedTeeTime } from "./owned";
+import { LoadingContainer } from "~/app/[course]/loader";
 
 type PlayerType = "1" | "2" | "3" | "4";
 
@@ -48,6 +49,7 @@ export const ListTeeTime = ({
   const availableSlots = selectedTeeTime?.golfers.length || 0;
 
   const [listingPrice, setListingPrice] = useState<number>(0);
+  const [isLoading,setIsLoading]=useState<boolean>(false)
   const [sellerServiceFee, setSellerServiceFee] = useState<number>(0);
   const [players, setPlayers] = useState<string>(
     selectedTeeTime?.selectedSlotsCount || availableSlots.toString()
@@ -168,6 +170,7 @@ export const ListTeeTime = ({
   }, [listingPrice, players]);
 
   const listTeeTime = async () => {
+    setIsLoading(true)
     void logAudit();
     //You should never enter this condition.
     if (totalPayout < 0) {
@@ -220,12 +223,15 @@ export const ListTeeTime = ({
           `/${selectedTeeTime?.courseId}/my-tee-box?section=my-listed-tee-times`
         );
       }
+      setIsLoading(false)
       await refetch();
       setIsListTeeTimeOpen(false);
     } catch (error) {
       toast.error(
         (error as Error)?.message ?? "An error occurred selling tee time."
       );
+    } finally{
+      setIsLoading(false)
     }
   };
 
@@ -238,6 +244,9 @@ export const ListTeeTime = ({
           <div className="h-screen bg-[#00000099]" />
         </div>
       )}
+      <LoadingContainer isLoading={isLoading}>
+        <div></div>
+      </LoadingContainer>
       <aside
         // ref={sidebar}
         className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[500px] md:h-[100dvh] ${

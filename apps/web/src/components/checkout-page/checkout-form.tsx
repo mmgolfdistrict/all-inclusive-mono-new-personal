@@ -191,49 +191,63 @@ export const CheckoutForm = ({
       redirect: "if_required",
     });
 
-    if (response) {
-      if (response.status === "succeeded" || response.status === "processing") {
-        let bookingResponse: ReserveTeeTimeResponse = {
-          bookingId: "",
-          providerBookingId: "",
-          status: "",
-        };
-        if (isFirstHand.length) {
-          bookingResponse = await reserveBookingFirstHand(
-            cartId,
-            response?.payment_id as string
-          );
-          setReservationData({
-            golfReservationId: bookingResponse.bookingId,
-            providerReservationId: bookingResponse.providerBookingId,
-            playTime: teeTimeDate || "",
-          });
-        } else {
-          bookingResponse = await reserveSecondHandBooking(
-            cartId,
-            listingId,
-            response?.payment_id as string
-          );
-        }
-        setMessage("Payment Successful");
-        isBuyNowAuction
-          ? router.push(`/${course?.id}/auctions/confirmation`)
-          : router.push(
+    try {
+      if (response) {
+        if (response.status === "succeeded" || response.status === "processing") {
+          let bookingResponse = {
+            bookingId: "",
+            providerBookingId: "",
+            status: "",
+          };
+    
+          if (isFirstHand.length) {
+            try {
+              bookingResponse = await reserveBookingFirstHand(
+                cartId,
+                response?.payment_id as string
+              );
+              setReservationData({
+                golfReservationId: bookingResponse.bookingId,
+                providerReservationId: bookingResponse.providerBookingId,
+                playTime: teeTimeDate || "",
+              });
+            } catch (error) {
+              setMessage("Error reserving first hand booking: " + error.message);
+              return;
+            }
+          } else {
+            try {
+              bookingResponse = await reserveSecondHandBooking(
+                cartId,
+                listingId,
+                response?.payment_id as string
+              );
+            } catch (error) {
+              setMessage("Error reserving second hand booking: " + error.message);
+              return;
+            }
+          }
+    
+          setMessage("Payment Successful");
+          if (isBuyNowAuction) {
+            router.push(`/${course?.id}/auctions/confirmation`);
+          } else {
+            router.push(
               `/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}&bookingId=${bookingResponse.bookingId}`
             );
-        setIsLoading(false);
-      } else if (response.error) {
-        setMessage(response.error.message as string);
-        setIsLoading(false);
-      } else {
-        setMessage("An unexpected error occurred.");
-        setIsLoading(false);
+          }
+        } else if (response.error) {
+          setMessage(response.error.message as string);
+        } else {
+          setMessage("An unexpected error occurred.");
+        }
       }
-
-      // setIsPaymentCompleted(true);
-    } else {
+    } catch (error) {
+      setMessage("An unexpected error occurred: " + error.message);
+    } finally {
       setIsLoading(false);
     }
+    
   };
 
   const reserveBookingFirstHand = async (
