@@ -936,7 +936,7 @@ export class UserService {
    */
   isValidHandle = async (handle: string): Promise<boolean> => {
     this.logger.info(`isValidHandle called with handle: ${handle}`);
-    if (handle.length < 3 || handle.length > 20) {
+    if (handle.length < 10 || handle.length > 20) {
       this.logger.debug(`Handle length is invalid: ${handle}`);
       //throw new Error("Handle length is invalid");
       return false;
@@ -1071,17 +1071,17 @@ export class UserService {
     const { user, profileImage, bannerImage } = data;
     const profilePicture = profileImage
       ? assetToURL({
-          key: profileImage.assetKey,
-          cdn: profileImage.assetCdn,
-          extension: profileImage.assetExtension,
-        })
+        key: profileImage.assetKey,
+        cdn: profileImage.assetCdn,
+        extension: profileImage.assetExtension,
+      })
       : "/defaults/default-profile.webp";
     const bannerPicture = bannerImage
       ? assetToURL({
-          key: bannerImage.assetKey,
-          cdn: bannerImage.assetCdn,
-          extension: bannerImage.assetExtension,
-        })
+        key: bannerImage.assetKey,
+        cdn: bannerImage.assetCdn,
+        extension: bannerImage.assetExtension,
+      })
       : "/defaults/default-banner.webp";
     let res;
 
