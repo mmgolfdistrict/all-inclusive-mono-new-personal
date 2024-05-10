@@ -5,9 +5,12 @@ import { api } from "~/utils/api";
 import Script from "next/script";
 import { useState } from "react";
 import { toast } from "react-toastify";
+
 import { FilledButton } from "../buttons/filled-button";
 import Modal from "./modal";
 import OptionDetails from "./SelectComponent";
+import { Info } from "../icons/info";
+import { Tooltip } from "../tooltip";
 
 export const BalanceHistory = ({ userId }: { userId: string }) => {
   const { data: user, refetch } = useUser(userId);
@@ -66,27 +69,38 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
         <div className="flex flex-col items-center gap-2 lg:flex-row">
           <div className="flex flex-col w-full h-full items-center justify-center gap-2 ">
             <div
-              className="p-4"
+              className="py-4"
               style={{
                 display: "flex",
-                alignItems: "center",
+                flexDirection: "column",
                 justifyContent: "space-evenly",
                 width: "100%",
               }}
             >
-              <div className="flex justify-center items-center flex-col">
-                <p className="text-gray-600 md:text-[24px]">Available Amount</p>
-                <p className="text-gray-800 md:text-[24px]">{`$${
-                  recievableData?.availableAmount || 0
-                }`}</p>
+              <div className="flex justify-between items-center">
+                <div className="flex">
+                  <p className="text-gray-600 md:text-[24px]">Available Amount:&nbsp;</p>
+                  <p className="text-gray-800 md:text-[24px]">{`$${recievableData?.availableAmount || 0
+                    }`}</p>
+                </div>
+                <Tooltip
+                  trigger={<Info className="h-[20px] w-[20px]" />}
+                  content="This is the total amount available in your account and you can withdraw some of them once they are settled."
+                />
               </div>
-              <div className="flex justify-center items-center flex-col">
-                <p className="text-gray-600 md:text-[24px]">
-                  Withdrawable Amount
-                </p>
-                <p className="text-gray-800 md:text-[24px]">{`$${
-                  recievableData?.withdrawableAmount || 0
-                }`}</p>
+              <div className="flex justify-between items-center">
+                <div className="flex">
+
+                  <p className="text-gray-600 md:text-[24px]">
+                    Withdrawable Amount:&nbsp;
+                  </p>
+                  <p className="text-gray-800 md:text-[24px]">{`$${recievableData?.withdrawableAmount || 0
+                    }`}</p>
+                </div>
+                <Tooltip
+                  trigger={<Info className="h-[20px] w-[20px]" />}
+                  content="Funds that are attached to a recent transaction are not able to be withdrawn until payment is confirmed. This typically takes less than 5 days."
+                />
               </div>
             </div>
             <div className="flex flex-col items-center gap-2 md:flex-row md:items-center">
@@ -94,7 +108,7 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
                 {formatMoney(user?.balance ?? 0 / 100)}
               </div> */}
               {user?.stripeConnectAccountStatus === "CONNECTED" ||
-              associatedBanks?.length ? null : (
+                associatedBanks?.length ? null : (
                 <div className="text-primary-gray">
                   You need to connect your account to transfer your balance.
                 </div>
@@ -104,11 +118,10 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
             <FilledButton
               onClick={openModal}
               disabled={connectAccount.isLoading}
-              className={`${
-                connectAccount.isLoading
-                  ? "animate-pulse cusor-not-allowed"
-                  : ""
-              }`}
+              className={`${connectAccount.isLoading
+                ? "animate-pulse cusor-not-allowed"
+                : ""
+                }`}
               data-testid="connect-button-id"
             >
               {associatedBanks?.length
@@ -121,6 +134,7 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
           loadingCashout={loadingCashout}
           associatedBanks={associatedBanks}
           handleTransferAmount={handleTransferAmount}
+          disabledCashOut={recievableData?.withdrawableAmount ? false : true}
         />
       </section>
 
