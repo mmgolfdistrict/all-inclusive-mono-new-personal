@@ -4,6 +4,8 @@ import { useState } from "react";
 
 import { FilledButton } from "../buttons/filled-button";
 import styles from "./select.module.css";
+import { Tooltip } from "../tooltip";
+import { Info } from "../icons/info";
 
 const OptionDetails = ({
   associatedBanks = [],
@@ -32,10 +34,16 @@ const OptionDetails = ({
   if (!associatedBanks.length) {
     return null;
   }
-  
+
   return (
     <div className="container mx-auto ">
-      <h3 className="text-xl font mb-4">Select an Account to Cashout:</h3>
+      <div className="flex justify-between">
+        <h3 className="text-xl font mb-4">Select an Account to Cashout:</h3>
+        <Tooltip
+          trigger={<Info className="h-[20px] w-[20px]" />}
+          content="As your account is having 0 balance. So, you are not able to cashout."
+        />
+      </div>
       <select
         disabled={disabledCashOut}
         value={selectedOption}
