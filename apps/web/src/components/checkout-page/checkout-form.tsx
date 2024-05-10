@@ -199,7 +199,7 @@ export const CheckoutForm = ({
             providerBookingId: "",
             status: "",
           };
-    
+
           if (isFirstHand.length) {
             try {
               bookingResponse = await reserveBookingFirstHand(
@@ -227,7 +227,7 @@ export const CheckoutForm = ({
               return;
             }
           }
-    
+
           setMessage("Payment Successful");
           if (isBuyNowAuction) {
             router.push(`/${course?.id}/auctions/confirmation`);
@@ -247,7 +247,6 @@ export const CheckoutForm = ({
     } finally {
       setIsLoading(false);
     }
-    
   };
 
   const reserveBookingFirstHand = async (
@@ -312,14 +311,11 @@ export const CheckoutForm = ({
                       .replace("$", "")
                       .replaceAll(",", "");
 
+                    if (Number(value) < 0) return;
+
                     const decimals = value.split(".")[1];
-                    if (decimals) {
-                      setCharityAmountError(
-                        "Charity amount are not allowed in decimal value."
-                      );
-                      return;
-                    }
-                    setCharityAmountError("");
+                    if (decimals) return;
+
                     const strippedLeadingZeros = value.replace(/^0+/, "");
                     handleSelectedCharityAmount(Number(strippedLeadingZeros));
                   }}
