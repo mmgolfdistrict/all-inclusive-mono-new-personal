@@ -956,7 +956,7 @@ export class HyperSwitchWebhookService {
           weatherGuaranteeAmount: firstBooking.weatherGuaranteeAmount,
           weatherGuaranteeId: firstBooking.weatherGuaranteeId,
           cartId: cartId,
-          playerCount: listedSlotsCount || 0,
+          playerCount: firstBooking.playerCount-(listedSlotsCount??0),
           greenFeePerPlayer: listPrice ?? 1 * 100,
           totalTaxesAmount: taxCharge * 100 || 0,
           charityId: charityId || null,
@@ -1197,7 +1197,6 @@ export class HyperSwitchWebhookService {
         amount: payable,
         type: "CASHOUT",
         transferId: bookingsIds?.transferId,
-        createdDateTime: this.formatCurrentDateTime(currentDate), // Use UTC string format for datetime fields
         redeemAfter: this.formatCurrentDateTime(redeemAfterDate), // Use UTC string format for datetime fields
       },
     ];
