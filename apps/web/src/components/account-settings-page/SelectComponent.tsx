@@ -39,10 +39,10 @@ const OptionDetails = ({
     <div className="container mx-auto ">
       <div className="flex justify-between">
         <h3 className="text-xl font mb-4">Select an Account to Cashout:</h3>
-        <Tooltip
+        {disabledCashOut && <Tooltip
           trigger={<Info className="h-[20px] w-[20px]" />}
           content="As your account is having 0 balance. So, you are not able to cashout."
-        />
+        />}
       </div>
       <select
         disabled={disabledCashOut}
