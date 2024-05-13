@@ -68,7 +68,7 @@ export const Owned = () => {
   //   setAmount(amount + 4);
   // };
 
-  const openListTeeTime = (teeTime: OwnedTeeTime) => {debugger
+  const openListTeeTime = (teeTime: OwnedTeeTime) => {
     setSelectedTeeTime(teeTime);
     setIsListTeeTimeOpen(true);
   };
