@@ -1,17 +1,16 @@
 // components/OptionDetails.tsx
 
 import { useState } from "react";
-
 import { FilledButton } from "../buttons/filled-button";
-import styles from "./select.module.css";
-import { Tooltip } from "../tooltip";
 import { Info } from "../icons/info";
+import { Tooltip } from "../tooltip";
+import styles from "./select.module.css";
 
 const OptionDetails = ({
   associatedBanks = [],
   handleTransferAmount,
   loadingCashout = false,
-  disabledCashOut = true
+  disabledCashOut = true,
 }: {
   loadingCashout: boolean;
   associatedBanks?: {
@@ -39,10 +38,12 @@ const OptionDetails = ({
     <div className="container mx-auto ">
       <div className="flex justify-between">
         <h3 className="text-xl font mb-4">Select an Account to Cashout:</h3>
-        {disabledCashOut && <Tooltip
-          trigger={<Info className="h-[20px] w-[20px]" />}
-          content="As your account is having 0 balance. So, you are not able to cashout."
-        />}
+        {disabledCashOut && (
+          <Tooltip
+            trigger={<Info className="h-[20px] w-[20px]" />}
+            content="As your account is having 0 balance. So, you are not able to cashout."
+          />
+        )}
       </div>
       <select
         disabled={disabledCashOut}

@@ -5,12 +5,11 @@ import { api } from "~/utils/api";
 import Script from "next/script";
 import { useState } from "react";
 import { toast } from "react-toastify";
-
 import { FilledButton } from "../buttons/filled-button";
-import Modal from "./modal";
-import OptionDetails from "./SelectComponent";
 import { Info } from "../icons/info";
 import { Tooltip } from "../tooltip";
+import Modal from "./modal";
+import OptionDetails from "./SelectComponent";
 
 export const BalanceHistory = ({ userId }: { userId: string }) => {
   const { data: user, refetch } = useUser(userId);
@@ -79,9 +78,12 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
             >
               <div className="flex justify-between items-center">
                 <div className="flex">
-                  <p className="text-gray-600 md:text-[24px]">Available Amount:&nbsp;</p>
-                  <p className="text-gray-800 md:text-[24px]">{`$${recievableData?.availableAmount || 0
-                    }`}</p>
+                  <p className="text-gray-600 md:text-[24px]">
+                    Available Amount:&nbsp;
+                  </p>
+                  <p className="text-gray-800 md:text-[24px]">{`$${
+                    recievableData?.availableAmount || 0
+                  }`}</p>
                 </div>
                 <Tooltip
                   trigger={<Info className="h-[20px] w-[20px]" />}
@@ -90,12 +92,12 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
               </div>
               <div className="flex justify-between items-center">
                 <div className="flex">
-
                   <p className="text-gray-600 md:text-[24px]">
                     Withdrawable Amount:&nbsp;
                   </p>
-                  <p className="text-gray-800 md:text-[24px]">{`$${recievableData?.withdrawableAmount || 0
-                    }`}</p>
+                  <p className="text-gray-800 md:text-[24px]">{`$${
+                    recievableData?.withdrawableAmount || 0
+                  }`}</p>
                 </div>
                 <Tooltip
                   trigger={<Info className="h-[20px] w-[20px]" />}
@@ -108,7 +110,7 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
                 {formatMoney(user?.balance ?? 0 / 100)}
               </div> */}
               {user?.stripeConnectAccountStatus === "CONNECTED" ||
-                associatedBanks?.length ? null : (
+              associatedBanks?.length ? null : (
                 <div className="text-primary-gray">
                   You need to connect your account to transfer your balance.
                 </div>
@@ -118,10 +120,11 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
             <FilledButton
               onClick={openModal}
               disabled={connectAccount.isLoading}
-              className={`${connectAccount.isLoading
-                ? "animate-pulse cusor-not-allowed"
-                : ""
-                }`}
+              className={`${
+                connectAccount.isLoading
+                  ? "animate-pulse cusor-not-allowed"
+                  : ""
+              }`}
               data-testid="connect-button-id"
             >
               {associatedBanks?.length
