@@ -33,7 +33,7 @@ export type OwnedTeeTime = {
   minimumOfferPrice: number;
   weatherGuaranteeAmount?: number;
   selectedSlotsCount?: "1" | "2" | "3" | "4";
-  slots: number;
+  slots?: number;
 };
 
 export const Owned = () => {
