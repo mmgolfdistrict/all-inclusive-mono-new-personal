@@ -25,6 +25,7 @@ import {
   WatchlistService,
   WeatherService,
 } from "./index";
+import { ProfanityService } from "./profanity/profanity.service";
 import { ProviderService } from "./tee-sheet-provider/providers.service";
 import { FinixService } from "./webhooks/finix.service";
 import { LoggerService } from "./webhooks/logging.service";
@@ -342,7 +343,12 @@ export class ServiceFactory {
   };
 
   getPaymentVerifierService = (): PaymentVerifierService => {
-    return new PaymentVerifierService(this.config.database, this.getHyperSwitchWebhookService());
+    return new PaymentVerifierService(
+      this.config.database,
+      this.getHyperSwitchWebhookService(),
+      this.getSensibleService(),
+      this.getProviderService()
+    );
   };
 
   getFinixService = (): FinixService => {
@@ -350,5 +356,8 @@ export class ServiceFactory {
   };
   getLoggerService = (): LoggerService => {
     return new LoggerService();
+  };
+  getProfanityService = (): ProfanityService => {
+    return new ProfanityService(this.config.database);
   };
 }

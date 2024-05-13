@@ -13,6 +13,7 @@ import {
   type EditProfileSchemaType,
 } from "~/schema/edit-profile-schema";
 import { api } from "~/utils/api";
+import { debounceFunction } from "~/utils/debounce";
 import { useParams } from "next/navigation";
 import type { FormEvent } from "react";
 import { useCallback, useEffect, useState, type ChangeEvent } from "react";
@@ -38,6 +39,11 @@ export const EditProfileForm = () => {
     profilePictureId: "",
   });
 
+  const {
+    mutateAsync: checkProfanity,
+    data: profanityCheckData,
+    reset: resetProfanityCheck,
+  } = api.profanity.checkProfanity.useMutation();
   const { mutate: deleteFileAsset } = api.upload.deleteFile.useMutation();
   const params = useParams();
   const { userId } = params;
@@ -142,6 +148,37 @@ export const EditProfileForm = () => {
     }
   }, [bannerImage, userData, isLoading]);
 
+  const handle = watch("handle");
+
+  const handleCheckProfanity = async (text: string) => {
+    if (!text) return;
+    const data = await checkProfanity({ text });
+    if (data.isProfane) {
+      setError("handle", {
+        message: "Handle contains profanity.",
+      });
+    }
+  };
+
+  const debouncedHandleCheckProfanity = useCallback(
+    debounceFunction(handleCheckProfanity, 500),
+    []
+  );
+
+  useEffect(() => {
+    if (!handle || handle?.length <= 2) {
+      setError("handle", {
+        message: "",
+      });
+      resetProfanityCheck();
+      return;
+    }
+    setError("handle", {
+      message: "",
+    });
+    debouncedHandleCheckProfanity(handle);
+  }, [handle]);
+
   const getKeyFromAssetUrl = (url: string) => {
     const split = url.split("/");
     const key = split[split.length - 1];
@@ -150,6 +187,12 @@ export const EditProfileForm = () => {
   };
 
   const onSubmit: SubmitHandler<EditProfileSchemaType> = async (data) => {
+    if (profanityCheckData?.isProfane) {
+      setError("handle", {
+        message: errors.handle?.message || "Handle contains profanity.",
+      });
+      return;
+    }
     if (isUploading) return;
 
     try {

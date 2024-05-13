@@ -1,5 +1,6 @@
 import * as ToggleGroup from "@radix-ui/react-toggle-group";
 import { useCourseContext } from "~/contexts/CourseContext";
+import { useUserContext } from "~/contexts/UserContext";
 import { useSidebar } from "~/hooks/useSidebar";
 import { api } from "~/utils/api";
 import { formatMoney, formatTime } from "~/utils/formatters";
@@ -24,6 +25,7 @@ import { Info } from "../icons/info";
 import { Players } from "../icons/players";
 import { Tooltip } from "../tooltip";
 import { type OwnedTeeTime } from "./owned";
+import { LoadingContainer } from "~/app/[course]/loader";
 
 type PlayerType = "1" | "2" | "3" | "4";
 
@@ -44,10 +46,13 @@ export const ListTeeTime = ({
   refetch,
   needsRedirect,
 }: SideBarProps) => {
+  const availableSlots = selectedTeeTime?.golfers.length || 0;
+
   const [listingPrice, setListingPrice] = useState<number>(0);
+  const [isLoading,setIsLoading]=useState<boolean>(false)
   const [sellerServiceFee, setSellerServiceFee] = useState<number>(0);
-  const [players, setPlayers] = useState<PlayerType>(
-    selectedTeeTime?.selectedSlotsCount || "1"
+  const [players, setPlayers] = useState<string>(
+    selectedTeeTime?.selectedSlotsCount || availableSlots.toString()
   );
   const { toggleSidebar } = useSidebar({
     isOpen: isListTeeTimeOpen,
@@ -56,6 +61,18 @@ export const ListTeeTime = ({
   const sell = api.teeBox.createListingForBookings.useMutation();
   const router = useRouter();
   const { course } = useCourseContext();
+  const { user } = useUserContext();
+  const auditLog = api.webhooks.auditLog.useMutation();
+  const logAudit = async () => {
+    await auditLog.mutateAsync({
+      userId: user?.id ?? "",
+      teeTimeId: selectedTeeTime?.teeTimeId ?? "",
+      bookingId: selectedTeeTime?.bookingIds?.[0] ?? "",
+      listingId: selectedTeeTime?.listingId ?? "",
+      eventId: "TEE_TIME_LISTED",
+      json: `TEE_TIME_LISTED`,
+    });
+  };
   const listingSellerFeePercentage = (course?.sellerFee ?? 1) / 100;
   const listingBuyerFeePercentage = (course?.buyerFee ?? 1) / 100;
 
@@ -75,11 +92,10 @@ export const ListTeeTime = ({
     return Math.round(parseInt(max.toFixed(2)));
   }, [selectedTeeTime]);
 
-  const availableSlots = selectedTeeTime?.golfers.length || 0;
-
   useEffect(() => {
-    setPlayers(selectedTeeTime?.selectedSlotsCount || "1");
-  }, [selectedTeeTime?.selectedSlotsCount]);
+    const slots = selectedTeeTime?.golfers.length || 0;
+    setPlayers(selectedTeeTime?.selectedSlotsCount || slots.toString());
+  }, [selectedTeeTime?.selectedSlotsCount, selectedTeeTime?.golfers]);
 
   useEffect(() => {
     if (isListTeeTimeOpen) {
@@ -154,6 +170,8 @@ export const ListTeeTime = ({
   }, [listingPrice, players]);
 
   const listTeeTime = async () => {
+    setIsLoading(true)
+    void logAudit();
     //You should never enter this condition.
     if (totalPayout < 0) {
       toast.error("Listing price must be greater than $45.");
@@ -173,8 +191,12 @@ export const ListTeeTime = ({
       );
       return;
     }
-    if (listingPrice <= 1) {
+    if (listingPrice === 0) {
       toast.error(`Enter listing price.`);
+      return;
+    }
+    if (listingPrice === 1) {
+      toast.error(`Listing price must be greater than $1.`);
       return;
     }
     try {
@@ -201,12 +223,15 @@ export const ListTeeTime = ({
           `/${selectedTeeTime?.courseId}/my-tee-box?section=my-listed-tee-times`
         );
       }
+      setIsLoading(false)
       await refetch();
       setIsListTeeTimeOpen(false);
     } catch (error) {
       toast.error(
         (error as Error)?.message ?? "An error occurred selling tee time."
       );
+    } finally{
+      setIsLoading(false)
     }
   };
 
@@ -219,6 +244,9 @@ export const ListTeeTime = ({
           <div className="h-screen bg-[#00000099]" />
         </div>
       )}
+      <LoadingContainer isLoading={isLoading}>
+        <div></div>
+      </LoadingContainer>
       <aside
         // ref={sidebar}
         className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[500px] md:h-[100dvh] ${

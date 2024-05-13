@@ -116,7 +116,7 @@ export const authConfig: NextAuthConfig = {
           return null;
         }
 
-        // console.log("Authentication successful");
+        // console.log("Authentication successful ho gya hai");
         return {
           id: data?.id,
           email: data?.email,

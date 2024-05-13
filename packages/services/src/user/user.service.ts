@@ -442,6 +442,7 @@ export class UserService {
    */
   updateUser = async (userId: string, data: UserUpdateData): Promise<void> => {
     this.logger.info(`updateUser called for user: ${userId}`);
+
     if (data.handle) {
       if (!(await this.isValidHandle(data.handle))) {
         this.logger.warn(`Handle already exists: ${data.handle}`);
@@ -510,7 +511,10 @@ export class UserService {
       updateData.phoneNotifications = data.phoneNotifications ? true : false;
     if (Object.prototype.hasOwnProperty.call(data, "emailNotifications"))
       updateData.emailNotifications = data.emailNotifications ? true : false;
-    if (Object.prototype.hasOwnProperty.call(data, "phoneNumber")) updateData.phoneNumber = data.phoneNumber;
+    if (Object.prototype.hasOwnProperty.call(data, "phoneNumber")) {
+      updateData.phoneNumber = data.phoneNumber;
+      updateData.phoneNumberVerified = null;
+    }
 
     await this.database
       .update(users)
@@ -932,7 +936,7 @@ export class UserService {
    */
   isValidHandle = async (handle: string): Promise<boolean> => {
     this.logger.info(`isValidHandle called with handle: ${handle}`);
-    if (handle.length < 3 || handle.length > 20) {
+    if (handle.length < 10 || handle.length > 20) {
       this.logger.debug(`Handle length is invalid: ${handle}`);
       //throw new Error("Handle length is invalid");
       return false;
@@ -1067,17 +1071,17 @@ export class UserService {
     const { user, profileImage, bannerImage } = data;
     const profilePicture = profileImage
       ? assetToURL({
-          key: profileImage.assetKey,
-          cdn: profileImage.assetCdn,
-          extension: profileImage.assetExtension,
-        })
+        key: profileImage.assetKey,
+        cdn: profileImage.assetCdn,
+        extension: profileImage.assetExtension,
+      })
       : "/defaults/default-profile.webp";
     const bannerPicture = bannerImage
       ? assetToURL({
-          key: bannerImage.assetKey,
-          cdn: bannerImage.assetCdn,
-          extension: bannerImage.assetExtension,
-        })
+        key: bannerImage.assetKey,
+        cdn: bannerImage.assetCdn,
+        extension: bannerImage.assetExtension,
+      })
       : "/defaults/default-banner.webp";
     let res;
 

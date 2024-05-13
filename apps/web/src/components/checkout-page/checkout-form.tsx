@@ -4,8 +4,10 @@ import {
   useHyper,
   useWidgets,
 } from "@juspay-tech/react-hyper-js";
+import { LoadingContainer } from "~/app/[course]/loader";
 import { useCheckoutContext } from "~/contexts/CheckoutContext";
 import { useCourseContext } from "~/contexts/CourseContext";
+import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
 import type { CartProduct } from "~/utils/types";
 import { useRouter } from "next/navigation";
@@ -31,6 +33,18 @@ export const CheckoutForm = ({
   listingId: string;
 }) => {
   const { course } = useCourseContext();
+  const { user } = useUserContext();
+  const auditLog = api.webhooks.auditLog.useMutation();
+  const logAudit = async () => {
+    await auditLog.mutateAsync({
+      userId: user?.id ?? "",
+      teeTimeId: teeTimeId,
+      bookingId: "",
+      listingId: listingId,
+      eventId: "TEE_TIME_PURCHASED",
+      json: `TEE_TIME_PURCHASED`,
+    });
+  };
 
   let primaryGreenFeeCharge = 0;
 
@@ -85,6 +99,7 @@ export const CheckoutForm = ({
       usePrefilledValues: "never", // or "auto",
     },
     branding: "never",
+    hideExpiredPaymentMethods: true,
   };
   const hyper = useHyper();
   const widgets = useWidgets();
@@ -152,6 +167,7 @@ export const CheckoutForm = ({
   });
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    void logAudit();
     if (message === "Payment Successful") return;
     e.preventDefault();
     if (
@@ -159,64 +175,77 @@ export const CheckoutForm = ({
       (!selectedCharityAmount || selectedCharityAmount === 0)
     ) {
       setCharityAmountError("Charity amount cannot be empty or zero");
+      return;
     }
-    {
-      setIsLoading(true);
+    setCharityAmountError("");
+    setIsLoading(true);
 
-      const response = await hyper.confirmPayment({
-        widgets,
-        confirmParams: {
-          // Make sure to change this to your payment completion page
-          return_url: isBuyNowAuction
-            ? `${window.location.origin}/${course?.id}/auctions/confirmation`
-            : `${window.location.origin}/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}`,
-        },
-        redirect: "if_required",
-      });
+    const response = await hyper.confirmPayment({
+      widgets,
+      confirmParams: {
+        // Make sure to change this to your payment completion page
+        return_url: isBuyNowAuction
+          ? `${window.location.origin}/${course?.id}/auctions/confirmation`
+          : `${window.location.origin}/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}`,
+      },
+      redirect: "if_required",
+    });
 
+    try {
       if (response) {
-        if (response.status === "succeeded") {
-          let bookingResponse: ReserveTeeTimeResponse = {
+        if (response.status === "succeeded" || response.status === "processing") {
+          let bookingResponse = {
             bookingId: "",
             providerBookingId: "",
             status: "",
           };
+
           if (isFirstHand.length) {
-            bookingResponse = await reserveBookingFirstHand(
-              cartId,
-              response?.payment_id as string
-            );
-            setReservationData({
-              golfReservationId: bookingResponse.bookingId,
-              providerReservationId: bookingResponse.providerBookingId,
-              playTime: teeTimeDate || "",
-            });
+            try {
+              bookingResponse = await reserveBookingFirstHand(
+                cartId,
+                response?.payment_id as string
+              );
+              setReservationData({
+                golfReservationId: bookingResponse.bookingId,
+                providerReservationId: bookingResponse.providerBookingId,
+                playTime: teeTimeDate || "",
+              });
+            } catch (error) {
+              setMessage("Error reserving first hand booking: " + error.message);
+              return;
+            }
           } else {
-            bookingResponse = await reserveSecondHandBooking(
-              cartId,
-              listingId,
-              response?.payment_id as string
+            try {
+              bookingResponse = await reserveSecondHandBooking(
+                cartId,
+                listingId,
+                response?.payment_id as string
+              );
+            } catch (error) {
+              setMessage("Error reserving second hand booking: " + error.message);
+              return;
+            }
+          }
+
+          setMessage("Payment Successful");
+          if (isBuyNowAuction) {
+            router.push(`/${course?.id}/auctions/confirmation`);
+          } else {
+            router.push(
+              `/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}&bookingId=${bookingResponse.bookingId}`
             );
           }
-          setMessage("Payment Successful");
-          isBuyNowAuction
-            ? router.push(`/${course?.id}/auctions/confirmation`)
-            : router.push(
-                `/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}&bookingId=${bookingResponse.bookingId}`
-              );
-          setIsLoading(false);
         } else if (response.error) {
           setMessage(response.error.message as string);
-          setIsLoading(false);
         } else {
           setMessage("An unexpected error occurred.");
-          setIsLoading(false);
         }
-
-        // setIsPaymentCompleted(true);
-      } else {
-        setIsLoading(false);
       }
+    } catch (error) {
+      setMessage("An unexpected error occurred: " + error.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -282,8 +311,10 @@ export const CheckoutForm = ({
                       .replace("$", "")
                       .replaceAll(",", "");
 
+                    if (Number(value) < 0) return;
+
                     const decimals = value.split(".")[1];
-                    if (decimals && decimals?.length > 2) return;
+                    if (decimals) return;
 
                     const strippedLeadingZeros = value.replace(/^0+/, "");
                     handleSelectedCharityAmount(Number(strippedLeadingZeros));
@@ -361,6 +392,9 @@ export const CheckoutForm = ({
           </div>
         </div>
       </div>
+      <LoadingContainer isLoading={isLoading}>
+        <div></div>
+      </LoadingContainer>
 
       <FilledButton
         className={`w-full rounded-full`}

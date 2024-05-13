@@ -14,10 +14,12 @@ import { Visible } from "~/components/icons/visible";
 import { Input } from "~/components/input/input";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { api } from "~/utils/api";
+import { debounceFunction } from "~/utils/debounce";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   createRef,
+  useCallback,
   useEffect,
   useMemo,
   useState,
@@ -42,11 +44,18 @@ export default function RegisterPage() {
   const [showConfirmPassword, setShowConfirmPassword] =
     useState<boolean>(false);
   const router = useRouter();
+  const {
+    mutateAsync: checkProfanity,
+    data: profanityCheckData,
+    reset: resetProfanityCheck,
+  } = api.profanity.checkProfanity.useMutation();
 
   const {
     register,
     handleSubmit,
     setValue,
+    watch,
+    setError,
     formState: { isSubmitting, errors },
   } = useForm<RegisterSchemaType>({
     resolver: zodResolver(registerSchema),
@@ -56,10 +65,40 @@ export default function RegisterPage() {
     const uName = generateUsername(undefined, undefined, 12);
     setValue("username", uName);
   };
+  const username = watch("username");
 
   useEffect(() => {
     genUsername();
   }, []);
+
+  const handleCheckProfanity = async (text: string) => {
+    if (!text) return;
+    const data = await checkProfanity({ text });
+    if (data.isProfane) {
+      setError("username", {
+        message: "Username contains profanity.",
+      });
+    }
+  };
+
+  const debouncedHandleCheckProfanity = useCallback(
+    debounceFunction(handleCheckProfanity, 500),
+    []
+  );
+
+  useEffect(() => {
+    if (!username || username?.length <= 2) {
+      setError("username", {
+        message: "",
+      });
+      resetProfanityCheck();
+      return;
+    }
+    setError("username", {
+      message: "",
+    });
+    debouncedHandleCheckProfanity(username);
+  }, [username]);
 
   useEffect(() => {
     const href = window.location.href;
@@ -69,6 +108,12 @@ export default function RegisterPage() {
   }, []);
 
   const onSubmit: SubmitHandler<RegisterSchemaType> = async (data) => {
+    if (profanityCheckData?.isProfane) {
+      setError("username", {
+        message: errors.username?.message || "Username contains profanity.",
+      });
+      return;
+    }
     if (isSubmitting) return;
     if (registerUser.isLoading) return;
     if (registerUser.isSuccess) return;

@@ -35,7 +35,7 @@ export default async function TeeTimePage({
           {"true" === isTransactionHistoryVisible?.toLowerCase() && (
             <TransactionHistory teeTimeId={teeTimeId} />
           )}
-          <InviteFriends teeTimeId={teeTimeId} />
+          {/* <InviteFriends teeTimeId={teeTimeId} /> */}
         </div>
       </section>
     </main>

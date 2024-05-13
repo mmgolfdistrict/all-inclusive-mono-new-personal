@@ -1,15 +1,17 @@
 import { useCourseContext } from "~/contexts/CourseContext";
+import { useUserContext } from "~/contexts/UserContext";
 import { useSidebar } from "~/hooks/useSidebar";
 import { api } from "~/utils/api";
 import { formatMoney, formatTime } from "~/utils/formatters";
 import { useRouter } from "next/navigation";
-import { type Dispatch, type SetStateAction } from "react";
+import { useState, type Dispatch, type SetStateAction } from "react";
 import { toast } from "react-toastify";
 import { Avatar } from "../avatar";
 import { FilledButton } from "../buttons/filled-button";
 import { OutlineButton } from "../buttons/outline-button";
 import { Close } from "../icons/close";
 import { Players } from "../icons/players";
+import { LoadingContainer } from "~/app/[course]/loader";
 
 type SideBarProps = {
   isCancelListingOpen: boolean;
@@ -44,14 +46,27 @@ export const CancelListing = ({
   const cancel = api.teeBox.cancelListing.useMutation();
 
   const router = useRouter();
-
+  const [isLoading,setIsLoading]=useState<boolean>(false)
   const { course } = useCourseContext();
+  const { user } = useUserContext();
+  const auditLog = api.webhooks.auditLog.useMutation();
+  const logAudit = async () => {
+    await auditLog.mutateAsync({
+      userId: user?.id ?? "",
+      teeTimeId: "",
+      bookingId: "",
+      listingId: listingId ?? "",
+      eventId: "TEE_TIME_CANCELLED",
+      json: `TEE_TIME_CANCELLED`,
+    });
+  };
 
   const cancelListing = async () => {
     if (!listingId) {
       toast.error("Listed already cancelled");
       return;
     }
+    setIsLoading(true)
     try {
       await cancel.mutateAsync({
         listingId: listingId,
@@ -59,12 +74,16 @@ export const CancelListing = ({
       await refetch?.();
       toast.success("Listing cancelled successfully");
       setIsCancelListingOpen(false);
+      void logAudit();
       if (needRedirect) {
         router.push(`/${course?.id}/my-tee-box`);
       }
     } catch (error) {
       toast.error((error as Error)?.message ?? "Error cancelling listing");
+    } finally{
+      setIsLoading(false)
     }
+    
   };
 
   return (
@@ -76,6 +95,9 @@ export const CancelListing = ({
           <div className="h-screen bg-[#00000099]" />
         </div>
       )}
+       <LoadingContainer isLoading={isLoading}>
+        <div></div>
+      </LoadingContainer>
       <aside
         // ref={sidebar}
         className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[500px] md:h-[100dvh] ${

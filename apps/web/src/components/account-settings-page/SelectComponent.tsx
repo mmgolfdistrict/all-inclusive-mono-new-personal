@@ -1,12 +1,17 @@
 // components/OptionDetails.tsx
 
 import { useState } from "react";
+
 import { FilledButton } from "../buttons/filled-button";
+import styles from "./select.module.css";
+import { Tooltip } from "../tooltip";
+import { Info } from "../icons/info";
 
 const OptionDetails = ({
   associatedBanks = [],
   handleTransferAmount,
   loadingCashout = false,
+  disabledCashOut = true
 }: {
   loadingCashout: boolean;
   associatedBanks?: {
@@ -14,6 +19,7 @@ const OptionDetails = ({
     accountNumber: string | null;
   }[];
   handleTransferAmount: (paymentInstrumentId, amount) => Promise<void>;
+  disabledCashOut: boolean;
 }) => {
   const [value, setValue] = useState("");
   const [selectedOption, setSelectedOption] = useState<string>("");
@@ -28,13 +34,21 @@ const OptionDetails = ({
   if (!associatedBanks.length) {
     return null;
   }
+
   return (
     <div className="container mx-auto ">
-      <h3 className="text-xl font mb-4">Select an account to cashout:</h3>
+      <div className="flex justify-between">
+        <h3 className="text-xl font mb-4">Select an Account to Cashout:</h3>
+        <Tooltip
+          trigger={<Info className="h-[20px] w-[20px]" />}
+          content="As your account is having 0 balance. So, you are not able to cashout."
+        />
+      </div>
       <select
+        disabled={disabledCashOut}
         value={selectedOption}
         onChange={handleChange}
-        className="block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:border-blue-400"
+        className={`block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:border-blue-400 ${styles.select}`}
       >
         <option value="">Select a Bank Account Below</option>
         {associatedBanks.map((bank) => (

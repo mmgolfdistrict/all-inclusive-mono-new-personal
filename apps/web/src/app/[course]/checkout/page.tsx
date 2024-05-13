@@ -90,7 +90,7 @@ export default function Checkout({
   isError = teeTimeId ? isErrorTeeTime : isErrorListing;
   error = teeTimeId ? errorTeeTime : errorListing;
 
-  if (listingData?.ownerId === user?.id) {
+  if (data && listingData?.ownerId === user?.id) {
     isError = true;
     error = new Error("You cannot buy your own tee time");
   }
