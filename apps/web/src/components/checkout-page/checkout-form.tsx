@@ -222,7 +222,9 @@ export const CheckoutForm = ({
           void cancelHyperswitchPaymentById.mutateAsync({
             paymentId: response?.payment_id as string,
           });
-          setMessage(getErrorMessageById(response?.error_code ?? ""));
+          setMessage(
+            getErrorMessageById((response?.error_code ?? "") as string)
+          );
         } else if (response.status === "succeeded") {
           let bookingResponse = {
             bookingId: "",
@@ -273,7 +275,9 @@ export const CheckoutForm = ({
         } else if (response.error) {
           setMessage(response.error.message as string);
         } else {
-          setMessage(getErrorMessageById(response?.error_code ?? ""));
+          setMessage(
+            getErrorMessageById((response?.error_code ?? "") as string)
+          );
         }
       }
     } catch (error) {
