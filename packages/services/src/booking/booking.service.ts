@@ -692,7 +692,7 @@ export class BookingService {
       this.loggerService.auditLog({
         id: randomUUID(),
         userId,
-        teeTimeId:"",
+        teeTimeId: "",
         bookingId: "",
         listingId: "",
         eventId: "TEE_TIME_LISTED_FAILED",
@@ -727,7 +727,7 @@ export class BookingService {
         this.loggerService.auditLog({
           id: randomUUID(),
           userId,
-          teeTimeId:"",
+          teeTimeId: "",
           bookingId: "",
           listingId: "",
           eventId: "TEE_TIME_LISTED_FAILED",
@@ -741,7 +741,7 @@ export class BookingService {
       this.loggerService.auditLog({
         id: randomUUID(),
         userId,
-        teeTimeId:"",
+        teeTimeId: "",
         bookingId: "",
         listingId: "",
         eventId: "TEE_TIME_LISTED_FAILED",
@@ -754,7 +754,7 @@ export class BookingService {
       this.loggerService.auditLog({
         id: randomUUID(),
         userId,
-        teeTimeId:"",
+        teeTimeId: "",
         bookingId: "",
         listingId: "",
         eventId: "TEE_TIME_LISTED_FAILED",
@@ -841,7 +841,7 @@ export class BookingService {
     this.loggerService.auditLog({
       id: randomUUID(),
       userId,
-      teeTimeId:"",
+      teeTimeId: "",
       bookingId: "",
       listingId: "",
       eventId: "TEE_TIME_LISTED",

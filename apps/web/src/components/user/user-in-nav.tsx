@@ -36,7 +36,7 @@ export const UserInNav = ({ alwaysShow }: { alwaysShow?: boolean }) => {
   const auditLog = api.webhooks.auditLog.useMutation();
   const logAudit = async () => {
     await auditLog.mutateAsync({
-      userId: user?.id??"",
+      userId: user?.id ?? "",
       teeTimeId: "",
       bookingId: "",
       listingId: "",
@@ -46,7 +46,7 @@ export const UserInNav = ({ alwaysShow }: { alwaysShow?: boolean }) => {
   };
 
   const logOutUser = async () => {
-    void logAudit()
+    void logAudit();
     if (PathsThatNeedRedirectOnLogout.some((i) => pathname.includes(i))) {
       const data = await signOut({
         callbackUrl: `/${courseId}`,

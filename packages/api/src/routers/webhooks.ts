@@ -47,6 +47,6 @@ export const webhookRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      return await ctx.serviceFactory.getLoggerService().auditLog(input,ctx?.session?.ip??"");
+      return await ctx.serviceFactory.getLoggerService().auditLog(input, ctx?.session?.ip ?? "");
     }),
 });

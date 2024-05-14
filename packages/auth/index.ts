@@ -28,7 +28,7 @@ interface User {
 declare module "next-auth" {
   interface Session {
     user: User & DefaultSession["user"];
-    ip?:string
+    ip?: string;
   }
 }
 export const authConfig: NextAuthConfig = {
