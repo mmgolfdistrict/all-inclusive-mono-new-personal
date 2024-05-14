@@ -76,6 +76,18 @@ export const TeeTime = ({
   const [isMakeAnOfferOpen, setIsMakeAnOfferOpen] = useState<boolean>(false);
   const { data: session } = useSession();
   const [isManageOpen, setIsManageOpen] = useState<boolean>(false);
+  const { user } = useUserContext();
+  const auditLog = api.webhooks.auditLog.useMutation();
+  const logAudit = async () => {
+    await auditLog.mutateAsync({
+      userId: user?.id??"",
+      teeTimeId: teeTimeId??"",
+      bookingId: "",
+      listingId: listingId??"",
+      eventId: "TEE_TIME_IN_CART",
+      json: `TEE_TIME_IN_CART `,
+    });
+  };
 
   useEffect(() => {
     if (isMakeAnOfferOpen || isManageOpen) {
@@ -84,8 +96,6 @@ export const TeeTime = ({
       document.body.classList.remove("overflow-hidden");
     }
   }, [isMakeAnOfferOpen, isManageOpen]);
-
-  const { user } = useUserContext();
   const router = useRouter();
   const { setPrevPath } = useAppContext();
 
@@ -117,6 +127,7 @@ export const TeeTime = ({
     }
   };
   const buyTeeTime = () => {
+    
     // const isTeeTimeAvailable = await refetchCheckTeeTime();
     // console.log("isTeeTimeAvailable");
     // console.log(isTeeTimeAvailable);
@@ -125,6 +136,7 @@ export const TeeTime = ({
     //   toast.error("Oops! Tee time is not available anymore");
     //   return;
     // }
+    logAudit();
     if (handleLoading) {
       handleLoading(true);
     }

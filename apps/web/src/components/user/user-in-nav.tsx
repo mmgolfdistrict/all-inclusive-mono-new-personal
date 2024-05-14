@@ -32,7 +32,21 @@ export const UserInNav = ({ alwaysShow }: { alwaysShow?: boolean }) => {
       refetchOnReconnect: false,
     }
   );
+
+  const auditLog = api.webhooks.auditLog.useMutation();
+  const logAudit = async () => {
+    await auditLog.mutateAsync({
+      userId: user?.id??"",
+      teeTimeId: "",
+      bookingId: "",
+      listingId: "",
+      eventId: "USER_LOGGED_OUT",
+      json: `user logged out `,
+    });
+  };
+
   const logOutUser = async () => {
+    void logAudit()
     if (PathsThatNeedRedirectOnLogout.some((i) => pathname.includes(i))) {
       const data = await signOut({
         callbackUrl: `/${courseId}`,
