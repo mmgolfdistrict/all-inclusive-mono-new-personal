@@ -455,7 +455,7 @@ export class BookingService {
         slotPosition: bookingslots.slotPosition,
         purchasedFor: bookings.greenFeePerPlayer,
         providerBookingId: bookings.providerBookingId,
-        slots: lists.slots
+        slots: lists.slots,
       })
       .from(teeTimes)
       .innerJoin(bookings, eq(bookings.teeTimeId, teeTimes.id))
@@ -533,7 +533,7 @@ export class BookingService {
           minimumOfferPrice: teeTime.minimumOfferPrice,
           weatherGuaranteeAmount: teeTime.weatherGuaranteeAmount,
           teeTimeId: teeTime.id,
-          slots: teeTime.slots || 0
+          slots: teeTime.slots || 0,
         };
       } else {
         const currentEntry = combinedData[teeTime.providerBookingId];

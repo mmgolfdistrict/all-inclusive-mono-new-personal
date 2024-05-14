@@ -1054,9 +1054,7 @@ export class HyperSwitchWebhookService {
         courseReservation: newBooking?.data.id,
         numberOfPlayer: (listedSlotsCount ?? 1).toString(),
         playTime:
-          dayjs(existingTeeTime?.providerDate)
-            .utcOffset("-06:00")
-            .format("YYYY-MM-DD hh:mm A") ?? "-",
+          dayjs(existingTeeTime?.providerDate).utcOffset("-06:00").format("YYYY-MM-DD hh:mm A") ?? "-",
       };
       const icsContent: string = createICS(event);
       const commonTemplateData = {
@@ -1064,9 +1062,7 @@ export class HyperSwitchWebhookService {
         CourseName: existingTeeTime?.courseName || "-",
         FacilityName: existingTeeTime?.entityName || "-",
         PlayDateTime:
-          dayjs(existingTeeTime?.providerDate)
-            .utcOffset("-06:00")
-            .format("MM/DD/YYYY h:mm A") || "-",
+          dayjs(existingTeeTime?.providerDate).utcOffset("-06:00").format("MM/DD/YYYY h:mm A") || "-",
         NumberOfHoles: existingTeeTime?.numberOfHoles,
         SellTeeTImeURL: `${process.env.APP_URL}/my-tee-box`,
         ManageTeeTimesURL: `${process.env.APP_URL}/my-tee-box`,

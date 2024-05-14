@@ -73,7 +73,7 @@ export const getCourseSEOInfo = async (courseId: string) => {
   } catch (error) {
     console.log(error);
   }
-}
+};
 
 export const processForeUpWebhook = async () => {
   const credentials = {
