@@ -82,10 +82,10 @@ export const TeeTime = ({
   const auditLog = api.webhooks.auditLog.useMutation();
   const logAudit = async () => {
     await auditLog.mutateAsync({
-      userId: user?.id??"",
-      teeTimeId: teeTimeId??"",
+      userId: user?.id ?? "",
+      teeTimeId: teeTimeId ?? "",
       bookingId: "",
-      listingId: listingId??"",
+      listingId: listingId ?? "",
       eventId: "TEE_TIME_IN_CART",
       json: `TEE_TIME_IN_CART `,
     });
@@ -128,8 +128,7 @@ export const TeeTime = ({
       console.log(error);
     }
   };
-  const buyTeeTime = () => {
-    
+  const buyTeeTime = async () => {
     // const isTeeTimeAvailable = await refetchCheckTeeTime();
     // console.log("isTeeTimeAvailable");
     // console.log(isTeeTimeAvailable);
@@ -138,7 +137,8 @@ export const TeeTime = ({
     //   toast.error("Oops! Tee time is not available anymore");
     //   return;
     // }
-    logAudit();
+    await logAudit();
+
     if (handleLoading) {
       handleLoading(true);
     }
