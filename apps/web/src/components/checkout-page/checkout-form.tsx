@@ -441,7 +441,7 @@ export const CheckoutForm = ({
         }
         data-testid="pay-now-id"
       >
-        {isLoading ? "Loading..." : <>Pay Now</>}
+        {isLoading ? "Processing..." : <>Pay Now</>}
       </FilledButton>
       {/* Show any error or success messages */}
       {message && (
