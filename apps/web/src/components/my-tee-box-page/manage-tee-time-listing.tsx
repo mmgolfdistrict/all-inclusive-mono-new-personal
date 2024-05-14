@@ -296,12 +296,13 @@ export const ManageTeeTimeListing = ({
                   orientation="horizontal"
                   className="mx-auto flex"
                   data-testid="player-button-id"
+                  disabled
                 >
                   {PlayerOptions.map((value, index) => (
                     <Item
                       key={index}
                       value={value}
-                      className={`${
+                      className={`opacity-50 ${
                         index === 0
                           ? "rounded-l-full border border-stroke"
                           : index === PlayerOptions.length - 1

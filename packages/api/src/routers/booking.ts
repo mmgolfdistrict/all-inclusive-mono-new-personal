@@ -11,6 +11,16 @@ export const bookingRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       return ctx.serviceFactory.getBookingService().checkIfTeeTimeStillListed(input.bookingId);
     }),
+  checkIfTeeTimeStillListedByListingId: protectedProcedure
+    .input(
+      z.object({
+        listingId: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return ctx.serviceFactory.getBookingService().checkIfTeeTimeStillListedByListingId(input.listingId);
+    }),
+
   getOfferReceivedForUser: protectedProcedure
     .input(
       z.object({

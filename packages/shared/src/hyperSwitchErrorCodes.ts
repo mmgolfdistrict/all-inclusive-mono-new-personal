@@ -1,0 +1,34 @@
+const errorMessages: Record<string, string> = {
+  "11": "A duplicate transaction has been submitted",
+  "13": "Invalid Merchant Login ID or Password or Inactive Account",
+  "14": "Invalid Referrer or Relay Response URL",
+  "16": "Transaction Not Found",
+  "17": "Merchant Does Not Accept This Type of Card",
+  "28": "Merchant Does Not Accept This Type of Card",
+  "39": "Invalid or Unsupported Currency Code",
+  "52": "Unable to Send Notification to Customer",
+  "63": "Processing Error",
+  "66": "Transaction Not Accepted for Processing",
+  "87": "Transactions of This Market Type Cannot Be Processed on This System",
+  "92": "Unsupported Method of Integration",
+  "97": "Transaction Cannot Be Accepted",
+  "98": "This transaction cannot be accepted.",
+  "99": "This transaction cannot be accepted.",
+  "123": "This account has not been given the permissions required for this request.",
+  "127": "Could Not Void",
+  "180": "Voiding credits is not permitted by the processor.",
+  "312": "Invalid Security Code",
+  "313": "This error indicates that the customer has requested a new Security Code.",
+  "325": "Required fields are missing from the request.",
+  "326": "Invalid data in one or more request fields.",
+  "327": "Void request was unsuccessful.",
+};
+
+// Function to get error message by ID
+export const getErrorMessageById = (errorId: string): string => {
+  return errorMessages[errorId] || "Error Processing Payment"; // Return the error message or a default message if not found
+};
+
+// Example usage:
+console.log(getErrorMessageById("11")); // Output: "A duplicate transaction has been submitted"
+console.log(getErrorMessageById("999")); // Output: "Error not found"

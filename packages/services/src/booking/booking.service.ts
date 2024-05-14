@@ -1071,6 +1071,17 @@ export class BookingService {
     return booking?.isListed;
   };
 
+  checkIfTeeTimeStillListedByListingId = async (listingId: string) => {
+    const [booking] = await this.database
+      .select({ isListed: bookings.isListed })
+      .from(lists)
+      .innerJoin(bookings, eq(bookings.listId, lists.id))
+      .where(eq(lists.id, listingId))
+      .execute();
+
+    return booking?.isListed;
+  };
+
   teeTimeAvailableFirsthandSpots = async (listingId: string) => {
     const [teeTime] = await this.database
       .select({ availableFirstHandSpots: teeTimes.availableFirstHandSpots })
@@ -2478,11 +2489,16 @@ export class BookingService {
         listedSlotsCount: lists.slots,
         listPrice: lists.listPrice,
         teeTimeIdForBooking: bookings.teeTimeId,
+        isListed: bookings.isListed,
       })
       .from(bookings)
       .leftJoin(lists, eq(lists.id, listingId))
       .where(eq(bookings.listId, listingId))
       .execute();
+
+    if (!associatedBooking?.isListed) {
+      throw new Error("Sorry the tee time is not listed anymore");
+    }
 
     const [userData] = await this.database
       .select({

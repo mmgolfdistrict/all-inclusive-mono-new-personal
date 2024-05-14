@@ -374,7 +374,7 @@ export const TeeTime = ({
                 "golfer"
               ) as string[],
               teeTimeId: teeTimeId,
-              listedSlotsCount: availableSlots,
+              listedSlotsCount: listedSlots ?? 1,
             }}
           />
         )}

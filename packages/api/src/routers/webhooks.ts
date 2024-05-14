@@ -26,6 +26,15 @@ export const webhookRouter = createTRPCRouter({
         .getHyperSwitchWebhookService()
         .processPayment(input.paymentId, input.customer_id, input.bookingId);
     }),
+  cancelHyperswitchPaymentById: publicProcedure
+    .input(
+      z.object({
+        paymentId: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return await ctx.serviceFactory.getHyperSwitchService().cancelHyperswitchPaymentById(input.paymentId);
+    }),
   auditLog: publicProcedure
     .input(
       z.object({
