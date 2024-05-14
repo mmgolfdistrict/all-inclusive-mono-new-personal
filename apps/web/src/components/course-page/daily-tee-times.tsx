@@ -69,6 +69,7 @@ export const DailyTeeTimes = ({
     isFetchingNextPage,
     fetchNextPage,
     error,
+    refetch,
   } = api.searchRouter.getTeeTimesForDay.useInfiniteQuery(
     {
       courseId: course?.id ?? "",
@@ -232,6 +233,7 @@ export const DailyTeeTimes = ({
               listingId={i?.listingId}
               listedSlots={i?.listedSlots}
               handleLoading={handleLoading}
+              refetch={refetch}
             />
           ))}
           <div

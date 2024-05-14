@@ -455,7 +455,7 @@ export class BookingService {
         slotPosition: bookingslots.slotPosition,
         purchasedFor: bookings.greenFeePerPlayer,
         providerBookingId: bookings.providerBookingId,
-        slots: lists.slots
+        slots: lists.slots,
       })
       .from(teeTimes)
       .innerJoin(bookings, eq(bookings.teeTimeId, teeTimes.id))
@@ -533,7 +533,7 @@ export class BookingService {
           minimumOfferPrice: teeTime.minimumOfferPrice,
           weatherGuaranteeAmount: teeTime.weatherGuaranteeAmount,
           teeTimeId: teeTime.id,
-          slots: teeTime.slots || 0
+          slots: teeTime.slots || 0,
         };
       } else {
         const currentEntry = combinedData[teeTime.providerBookingId];
@@ -1117,6 +1117,17 @@ export class BookingService {
       .select({ isListed: bookings.isListed })
       .from(bookings)
       .where(eq(bookings.id, bookingId))
+      .execute();
+
+    return booking?.isListed;
+  };
+
+  checkIfTeeTimeStillListedByListingId = async (listingId: string) => {
+    const [booking] = await this.database
+      .select({ isListed: bookings.isListed })
+      .from(lists)
+      .innerJoin(bookings, eq(bookings.listId, lists.id))
+      .where(eq(lists.id, listingId))
       .execute();
 
     return booking?.isListed;
@@ -2529,11 +2540,16 @@ export class BookingService {
         listedSlotsCount: lists.slots,
         listPrice: lists.listPrice,
         teeTimeIdForBooking: bookings.teeTimeId,
+        isListed: bookings.isListed,
       })
       .from(bookings)
       .leftJoin(lists, eq(lists.id, listingId))
       .where(eq(bookings.listId, listingId))
       .execute();
+
+    if (!associatedBooking?.isListed) {
+      throw new Error("Sorry the tee time is not listed anymore");
+    }
 
     const [userData] = await this.database
       .select({

@@ -215,7 +215,7 @@ const TableRow = ({
   timezoneCorrection,
   openListTeeTime,
   openCancelListing,
-  openManageListTeeTime
+  openManageListTeeTime,
 }: {
   course: string;
   date: string;

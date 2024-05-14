@@ -26,7 +26,6 @@ import type { Event } from "@golf-district/shared/createICS";
 import Logger from "@golf-district/shared/src/logger";
 import { Client } from "@upstash/qstash/.";
 import dayjs from "dayjs";
-import { appSettingService } from "../app-settings/initialized";
 import type { BookingService } from "../booking/booking.service";
 import type {
   AuctionProduct,
@@ -553,11 +552,6 @@ export class HyperSwitchWebhookService {
   addDays = (date: Date, days: number) => {
     const result = new Date(date);
     result.setDate(result.getDate() + days);
-    return result;
-  };
-  addMinutes = (date: Date, minutes: number) => {
-    const result = new Date(date);
-    result.setMinutes(result.getMinutes() + minutes);
     return result;
   };
 
@@ -1174,8 +1168,7 @@ export class HyperSwitchWebhookService {
     const serviceCharge = amount * sellerFee;
     const payable = (amount - serviceCharge) * (listedSlotsCount || 1);
     const currentDate = new Date();
-    const radeemAfterMinutes = await appSettingService.get("CASH_OUT_AFTER_MINUTES");
-    const redeemAfterDate = this.addMinutes(currentDate, Number(radeemAfterMinutes));
+    const redeemAfterDate = this.addDays(currentDate, 7);
     const customerRecievableData = [
       {
         id: randomUUID(),
@@ -1183,6 +1176,7 @@ export class HyperSwitchWebhookService {
         amount: payable,
         type: "CASHOUT",
         transferId: bookingsIds?.transferId,
+        createdDateTime: this.formatCurrentDateTime(currentDate), // Use UTC string format for datetime fields
         redeemAfter: this.formatCurrentDateTime(redeemAfterDate), // Use UTC string format for datetime fields
       },
     ];
@@ -1193,7 +1187,7 @@ export class HyperSwitchWebhookService {
         this.logger.error(err);
       });
   };
-  
+
   handleOfferItem = async (item: Offer, amountReceived: number, customer_id: string) => {
     await this.bookingService.createOfferOnBookings(
       customer_id,

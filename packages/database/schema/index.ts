@@ -13,6 +13,7 @@ import * as courseAssets from "./courseAssets";
 import * as coursePromoCodeLink from "./coursePromoCodeLink";
 import * as courses from "./courses";
 import * as courseScheduleDetails from "./courseScheduleDetails";
+import * as courseSEOs from "./courseSEO";
 import * as customerCart from "./customerCart";
 import * as customerPaymentDetail from "./customerPaymentDetails";
 import * as customerRecievable from "./customerRecievable";
@@ -84,4 +85,5 @@ export const schema = {
   ...customerRecievable,
   ...auditlog,
   ...profanities,
+  ...courseSEOs,
 };

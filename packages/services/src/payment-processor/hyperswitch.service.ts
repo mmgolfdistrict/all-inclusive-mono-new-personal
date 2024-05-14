@@ -226,4 +226,19 @@ export class HyperSwitchService {
       console.log("Payment method deleted");
     }
   };
+
+  cancelHyperswitchPaymentById = async (paymentMethodId: string) => {
+    const options = {
+      method: "POST",
+      headers: { "api-key": "<api-key>", "Content-Type": "application/json" },
+      body: '{"cancellation_reason":"requested_by_customer"}',
+    };
+
+    const res = await fetch(`${this.hyperSwitchBaseUrl}/payments/${paymentMethodId}/cancel`, options);
+    const jsonRes = await res.json();
+    if (jsonRes.error) {
+      return { status: "Cannot delete payment" };
+    }
+    return { status: "success" };
+  };
 }

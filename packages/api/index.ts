@@ -2,6 +2,7 @@ import { db } from "@golf-district/database";
 import {
   AppSettingsService,
   BookingService,
+  CourseSEOService,
   CourseService,
   EntityService,
   ForeUpWebhookService,
@@ -60,6 +61,15 @@ export const getCourseImages = async (courseId: string) => {
   );
   try {
     return await courseService.getImagesForCourse(courseId);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const getCourseSEOInfo = async (courseId: string) => {
+  const courseSEOService = new CourseSEOService(db);
+  try {
+    return await courseSEOService.getCourseSEO(courseId);
   } catch (error) {
     console.log(error);
   }

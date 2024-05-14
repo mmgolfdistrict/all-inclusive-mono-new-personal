@@ -1,4 +1,5 @@
 import type { ReserveTeeTimeResponse } from "@golf-district/shared";
+import { getErrorMessageById } from "@golf-district/shared/src/hyperSwitchErrorCodes";
 import {
   UnifiedCheckout,
   useHyper,
@@ -12,6 +13,7 @@ import { api } from "~/utils/api";
 import type { CartProduct } from "~/utils/types";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
+import { toast } from "react-toastify";
 import { FilledButton } from "../buttons/filled-button";
 import { CharitySelect } from "../input/charity-select";
 import { Input } from "../input/input";
@@ -35,6 +37,19 @@ export const CheckoutForm = ({
   const { course } = useCourseContext();
   const { user } = useUserContext();
   const auditLog = api.webhooks.auditLog.useMutation();
+  const cancelHyperswitchPaymentById =
+    api.webhooks.cancelHyperswitchPaymentById.useMutation();
+
+  const { refetch: refetchCheckTeeTime, data: isTeeTimeStillListed } =
+    api.teeBox.checkIfTeeTimeStillListedByListingId.useQuery(
+      {
+        listingId: listingId,
+      },
+      {
+        enabled: false,
+      }
+    );
+
   const logAudit = async () => {
     await auditLog.mutateAsync({
       userId: user?.id ?? "",
@@ -167,7 +182,17 @@ export const CheckoutForm = ({
   });
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     void logAudit();
+    if (listingId.length) {
+      const isTeeTimeAvailable = await refetchCheckTeeTime();
+      if (!isTeeTimeAvailable.data) {
+        toast.error("Oops! Tee time is not available anymore");
+        return;
+      }
+      console.log(isTeeTimeAvailable.data);
+    }
+
     if (message === "Payment Successful") return;
     e.preventDefault();
     if (
@@ -193,10 +218,14 @@ export const CheckoutForm = ({
 
     try {
       if (response) {
-        if (
-          response.status === "succeeded" ||
-          response.status === "processing"
-        ) {
+        if (response.status === "processing") {
+          void cancelHyperswitchPaymentById.mutateAsync({
+            paymentId: response?.payment_id as string,
+          });
+          setMessage(
+            getErrorMessageById((response?.error_code ?? "") as string)
+          );
+        } else if (response.status === "succeeded") {
           let bookingResponse = {
             bookingId: "",
             providerBookingId: "",
@@ -246,7 +275,9 @@ export const CheckoutForm = ({
         } else if (response.error) {
           setMessage(response.error.message as string);
         } else {
-          setMessage("An unexpected error occurred.");
+          setMessage(
+            getErrorMessageById((response?.error_code ?? "") as string)
+          );
         }
       }
     } catch (error) {
@@ -410,7 +441,7 @@ export const CheckoutForm = ({
         }
         data-testid="pay-now-id"
       >
-        {isLoading ? "Loading..." : <>Pay Now</>}
+        {isLoading ? "Processing..." : <>Pay Now</>}
       </FilledButton>
       {/* Show any error or success messages */}
       {message && (

@@ -1,5 +1,5 @@
-import { relations } from "drizzle-orm";
-import { text, varchar } from "drizzle-orm/mysql-core";
+import { relations, sql } from "drizzle-orm";
+import { datetime, text, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 import { charityCourseLink } from "./charityCourseLink";
 
@@ -8,7 +8,12 @@ export const charities = mySqlTable("charities", {
   name: varchar("name", { length: 191 }).notNull(),
   description: text("description"),
   logoAssetId: varchar("logo", { length: 36 }),
-  //add extra data as needed here
+  createdDateTime: datetime("createdDateTime", { mode: "string", fsp: 3 })
+    .default(sql`CURRENT_TIMESTAMP(3)`)
+    .notNull(),
+  lastUpdatedDateTime: datetime("lastUpdatedDateTime", { mode: "string", fsp: 3 })
+    .default(sql`CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)`)
+    .notNull(),
 });
 
 export const charitiesRelations = relations(charities, ({ many }) => ({
