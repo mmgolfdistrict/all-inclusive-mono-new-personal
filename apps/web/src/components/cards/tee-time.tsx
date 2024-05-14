@@ -44,6 +44,7 @@ export const TeeTime = ({
   children,
   listedSlots,
   handleLoading,
+  refetch,
 }: {
   time: string;
   canChoosePlayer: boolean;
@@ -66,6 +67,7 @@ export const TeeTime = ({
   children?: ReactNode;
   listedSlots?: number | null;
   handleLoading?: (val: boolean) => void;
+  refetch?: () => Promise<unknown>;
 }) => {
   const [selectedPlayers, setSelectedPlayers] = useState<string>(
     status === "UNLISTED" ? "1" : status === "FIRST_HAND" ? "1" : players
@@ -374,8 +376,9 @@ export const TeeTime = ({
                 "golfer"
               ) as string[],
               teeTimeId: teeTimeId,
-              listedSlotsCount: availableSlots,
+              listedSlotsCount: listedSlots ?? 1,
             }}
+            refetch={refetch}
           />
         )}
       </div>

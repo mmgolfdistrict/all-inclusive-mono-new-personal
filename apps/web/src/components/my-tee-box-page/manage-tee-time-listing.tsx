@@ -1,5 +1,7 @@
 import * as ToggleGroup from "@radix-ui/react-toggle-group";
+import { LoadingContainer } from "~/app/[course]/loader";
 import { useCourseContext } from "~/contexts/CourseContext";
+import { useUserContext } from "~/contexts/UserContext";
 import { useSidebar } from "~/hooks/useSidebar";
 import { api } from "~/utils/api";
 import { formatMoney, formatTime } from "~/utils/formatters";
@@ -78,12 +80,40 @@ export const ManageTeeTimeListing = ({
   }, [selectedTeeTime, isManageTeeTimeListingOpen]);
 
   const manageListing = api.teeBox.updateListing.useMutation();
-
-  const openCancelListing = () => {
-    setIsManageTeeTimeListingOpen(false);
-    setIsCancelListingOpen(true);
+  const cancel = api.teeBox.cancelListing.useMutation();
+  const auditLog = api.webhooks.auditLog.useMutation();
+  const { user } = useUserContext();
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const logAudit = async () => {
+    await auditLog.mutateAsync({
+      userId: user?.id ?? "",
+      teeTimeId: "",
+      bookingId: "",
+      listingId: selectedTeeTime?.listingId ?? "",
+      eventId: "TEE_TIME_CANCELLED",
+      json: `TEE_TIME_CANCELLED`,
+    });
   };
-
+  const cancelListing = async () => {
+    if (!selectedTeeTime?.listingId) {
+      toast.error("Listed already cancelled");
+      return;
+    }
+    setIsLoading(true);
+    try {
+      await cancel.mutateAsync({
+        listingId: selectedTeeTime?.listingId,
+      });
+      await refetch?.();
+      toast.success("Listing cancelled successfully");
+      setIsManageTeeTimeListingOpen(false);
+      void logAudit();
+    } catch (error) {
+      toast.error((error as Error)?.message ?? "Error cancelling listing");
+    } finally {
+      setIsLoading(false);
+    }
+  };
   useEffect(() => {
     if (isManageTeeTimeListingOpen) {
       document.body.classList.add("overflow-hidden");
@@ -221,6 +251,9 @@ export const ManageTeeTimeListing = ({
           <div className="h-screen bg-[#00000099]" />
         </div>
       )}
+      <LoadingContainer isLoading={isLoading}>
+        <div></div>
+      </LoadingContainer>
       <aside
         // ref={sidebar}
         className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[500px] md:h-[100dvh] ${
@@ -265,7 +298,7 @@ export const ManageTeeTimeListing = ({
                   </span>
                   <input
                     id="listingPrice"
-                    value={listingPrice?.toString()?.replace(/^0+/, "")}
+                    value={listingPrice?.toFixed(2)}
                     type="number"
                     onFocus={handleFocus}
                     onChange={handleListingPrice}
@@ -296,12 +329,13 @@ export const ManageTeeTimeListing = ({
                   orientation="horizontal"
                   className="mx-auto flex"
                   data-testid="player-button-id"
+                  disabled
                 >
                   {PlayerOptions.map((value, index) => (
                     <Item
                       key={index}
                       value={value}
-                      className={`${
+                      className={`opacity-50 ${
                         index === 0
                           ? "rounded-l-full border border-stroke"
                           : index === PlayerOptions.length - 1
@@ -359,7 +393,7 @@ export const ManageTeeTimeListing = ({
                 </FilledButton> */}
                 <FilledButton
                   className="w-full"
-                  onClick={openCancelListing}
+                  onClick={cancelListing}
                   data-testid="cancel-listing-button-id"
                 >
                   Cancel Listing
