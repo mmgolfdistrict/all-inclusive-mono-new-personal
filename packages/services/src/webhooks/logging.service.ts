@@ -11,10 +11,12 @@ interface AuditLog {
   json: string;
   createdDateTime?: Date;
   lastUpdatedDateTime?: Date;
+  ip?:string;
 }
 
 export class LoggerService {
-  auditLog = async (data: AuditLog) => {
+  auditLog = async (data: AuditLog,ip:string) => {
+    data.ip=ip;
     try {
       const res = await fetch(`${process.env.QSTASH_BASE_URL}${process.env.QSTASH_AUDIT_TOPIC}`, {
         method: "POST",

@@ -801,29 +801,6 @@ export class HyperSwitchWebhookService {
       });
 
     const newBookings: BookingResponse[] = [];
-    console.log(
-      token,
-      firstBooking.providerCourseId!,
-      firstBooking.providerTeeSheetId!,
-      JSON.stringify({
-        data: {
-          totalAmountPaid: amountReceived / 100,
-          type: "bookings",
-          attributes: {
-            start: firstBooking.providerDate,
-            holes: firstBooking.numberOfHoles,
-            players: listedSlotsCount,
-            bookedPlayers: [
-              {
-                personId: buyerCustomer.customerId,
-              },
-            ],
-            event_type: "tee_time",
-            details: "GD Booking",
-          },
-        },
-      })
-    );
     try {
       const newBooking = await provider.createBooking(
         token,
@@ -884,6 +861,15 @@ export class HyperSwitchWebhookService {
       }
     } catch (err) {
       this.logger.error(`Error creating booking: ${err}`);
+      this.loggerService.auditLog({
+        id: randomUUID(),
+        userId: customer_id,
+        teeTimeId: firstBooking?.teeTimeId,
+        bookingId: bookingsIds?.id ?? "",
+        listingId,
+        eventId: "TEE_TIME_BOOKING_FAILED",
+        json: "Error booking tee time",
+      });
     }
     const [existingTeeTime] = await this.database
       .select({
@@ -1201,6 +1187,7 @@ export class HyperSwitchWebhookService {
         this.logger.error(err);
       });
   };
+
   handleOfferItem = async (item: Offer, amountReceived: number, customer_id: string) => {
     await this.bookingService.createOfferOnBookings(
       customer_id,

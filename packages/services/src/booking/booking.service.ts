@@ -689,6 +689,15 @@ export class BookingService {
     this.logger.info(`createListingForBookings called with userId: ${userId}`);
     if (new Date().getTime() >= endTime.getTime()) {
       this.logger.warn("End time cannot be before current time");
+      this.loggerService.auditLog({
+        id: randomUUID(),
+        userId,
+        teeTimeId:"",
+        bookingId: "",
+        listingId: "",
+        eventId: "TEE_TIME_LISTED_FAILED",
+        json: "End time cannot be before current time.",
+      });
       throw new Error("End time cannot be before current time");
     }
 
@@ -715,15 +724,42 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving bookings: ${err}`);
+        this.loggerService.auditLog({
+          id: randomUUID(),
+          userId,
+          teeTimeId:"",
+          bookingId: "",
+          listingId: "",
+          eventId: "TEE_TIME_LISTED_FAILED",
+          json: "Error retrieving bookings.",
+        });
         throw new Error("Error retrieving bookings");
       });
     if (!ownedBookings.length) {
       this.logger.debug(`Owned bookings: ${JSON.stringify(ownedBookings)}`);
       this.logger.warn(`User ${userId} does not own  specified bookings.`);
+      this.loggerService.auditLog({
+        id: randomUUID(),
+        userId,
+        teeTimeId:"",
+        bookingId: "",
+        listingId: "",
+        eventId: "TEE_TIME_LISTED_FAILED",
+        json: "User does not  own specified bookings.",
+      });
       throw new Error("User does not  own specified bookings.");
     }
     if (ownedBookings.length > 4) {
       this.logger.warn(`Cannot list more than 4 bookings.`);
+      this.loggerService.auditLog({
+        id: randomUUID(),
+        userId,
+        teeTimeId:"",
+        bookingId: "",
+        listingId: "",
+        eventId: "TEE_TIME_LISTED_FAILED",
+        json: "Cannot list more than 4 bookings.",
+      });
       throw new Error("Cannot list more than 4 bookings.");
     }
     for (const booking of ownedBookings) {
@@ -801,6 +837,16 @@ export class BookingService {
       `Listing creation successful`,
       courseId
     );
+
+    this.loggerService.auditLog({
+      id: randomUUID(),
+      userId,
+      teeTimeId:"",
+      bookingId: "",
+      listingId: "",
+      eventId: "TEE_TIME_LISTED",
+      json: "TEE_TIME_LISTED",
+    });
 
     return { success: true, body: { listingId: toCreate.id }, message: "Listings created successfully." };
   };

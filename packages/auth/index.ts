@@ -28,6 +28,7 @@ interface User {
 declare module "next-auth" {
   interface Session {
     user: User & DefaultSession["user"];
+    ip?:string
   }
 }
 export const authConfig: NextAuthConfig = {
@@ -116,7 +117,7 @@ export const authConfig: NextAuthConfig = {
           return null;
         }
 
-        // console.log("Authentication successful");
+        // console.log("Authentication successful ho gya hai");
         return {
           id: data?.id,
           email: data?.email,
