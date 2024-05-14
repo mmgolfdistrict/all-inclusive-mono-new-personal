@@ -319,13 +319,13 @@ export const CheckoutForm = ({
         {course?.supportCharity ? (
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
-              <div>Support a Charity</div>
+              <div>Charitable Donations</div>
               {selectedCharity ? (
                 <button
                   onClick={handleRemoveSelectedCharity}
                   className="text-[12px] self-end p-1 border rounded-md w-fit bg-error-stroke text-white"
                 >
-                  Remove Charity
+                  Remove Charitable Donation
                 </button>
               ) : null}
             </div>
@@ -357,7 +357,7 @@ export const CheckoutForm = ({
                     const strippedLeadingZeros = value.replace(/^0+/, "");
                     handleSelectedCharityAmount(Number(strippedLeadingZeros));
                   }}
-                  placeholder="Enter donation amount"
+                  placeholder="Enter charitable donation amount."
                   register={() => undefined}
                   error={charityAmountError}
                   data-testid="donation-amount-id"

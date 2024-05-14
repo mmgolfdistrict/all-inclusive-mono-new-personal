@@ -77,6 +77,7 @@ interface OwnedTeeTimeData {
   minimumOfferPrice: number;
   weatherGuaranteeAmount: number | null;
   teeTimeId: string;
+  slots: number;
 }
 
 interface ListingData {
@@ -321,6 +322,7 @@ export class BookingService {
         } else {
           const currentEntry = combinedData[teeTime.teeTimesId];
           if (currentEntry) {
+            currentEntry.listedSlotsCount = teeTime.listedSlots;
             if (currentEntry.listedSpots) {
               currentEntry.listedSpots.push(teeTime.bookingId);
             } else {
@@ -453,6 +455,7 @@ export class BookingService {
         slotPosition: bookingslots.slotPosition,
         purchasedFor: bookings.greenFeePerPlayer,
         providerBookingId: bookings.providerBookingId,
+        slots: lists.slots
       })
       .from(teeTimes)
       .innerJoin(bookings, eq(bookings.teeTimeId, teeTimes.id))
@@ -530,6 +533,7 @@ export class BookingService {
           minimumOfferPrice: teeTime.minimumOfferPrice,
           weatherGuaranteeAmount: teeTime.weatherGuaranteeAmount,
           teeTimeId: teeTime.id,
+          slots: teeTime.slots || 0
         };
       } else {
         const currentEntry = combinedData[teeTime.providerBookingId];
@@ -545,6 +549,7 @@ export class BookingService {
               ? parseInt(currentEntry.offers.toString()) + parseInt(teeTime.offers.toString())
               : 0;
           }
+          currentEntry.slots = teeTime.slots || 0;
           if (teeTime.listing && !teeTime.listingIsDeleted) {
             currentEntry.status = "LISTED";
             currentEntry.listingId = teeTime.listing;

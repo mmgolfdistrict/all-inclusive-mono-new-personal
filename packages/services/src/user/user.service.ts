@@ -1071,17 +1071,17 @@ export class UserService {
     const { user, profileImage, bannerImage } = data;
     const profilePicture = profileImage
       ? assetToURL({
-        key: profileImage.assetKey,
-        cdn: profileImage.assetCdn,
-        extension: profileImage.assetExtension,
-      })
+          key: profileImage.assetKey,
+          cdn: profileImage.assetCdn,
+          extension: profileImage.assetExtension,
+        })
       : "/defaults/default-profile.webp";
     const bannerPicture = bannerImage
       ? assetToURL({
-        key: bannerImage.assetKey,
-        cdn: bannerImage.assetCdn,
-        extension: bannerImage.assetExtension,
-      })
+          key: bannerImage.assetKey,
+          cdn: bannerImage.assetCdn,
+          extension: bannerImage.assetExtension,
+        })
       : "/defaults/default-banner.webp";
     let res;
 

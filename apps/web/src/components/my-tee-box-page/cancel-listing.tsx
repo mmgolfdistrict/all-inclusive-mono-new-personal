@@ -1,3 +1,4 @@
+import { LoadingContainer } from "~/app/[course]/loader";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { useSidebar } from "~/hooks/useSidebar";
@@ -11,7 +12,6 @@ import { FilledButton } from "../buttons/filled-button";
 import { OutlineButton } from "../buttons/outline-button";
 import { Close } from "../icons/close";
 import { Players } from "../icons/players";
-import { LoadingContainer } from "~/app/[course]/loader";
 
 type SideBarProps = {
   isCancelListingOpen: boolean;
@@ -46,7 +46,7 @@ export const CancelListing = ({
   const cancel = api.teeBox.cancelListing.useMutation();
 
   const router = useRouter();
-  const [isLoading,setIsLoading]=useState<boolean>(false)
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const { course } = useCourseContext();
   const { user } = useUserContext();
   const auditLog = api.webhooks.auditLog.useMutation();
@@ -66,7 +66,7 @@ export const CancelListing = ({
       toast.error("Listed already cancelled");
       return;
     }
-    setIsLoading(true)
+    setIsLoading(true);
     try {
       await cancel.mutateAsync({
         listingId: listingId,
@@ -80,10 +80,9 @@ export const CancelListing = ({
       }
     } catch (error) {
       toast.error((error as Error)?.message ?? "Error cancelling listing");
-    } finally{
-      setIsLoading(false)
+    } finally {
+      setIsLoading(false);
     }
-    
   };
 
   return (
@@ -95,7 +94,7 @@ export const CancelListing = ({
           <div className="h-screen bg-[#00000099]" />
         </div>
       )}
-       <LoadingContainer isLoading={isLoading}>
+      <LoadingContainer isLoading={isLoading}>
         <div></div>
       </LoadingContainer>
       <aside
