@@ -942,7 +942,7 @@ export class HyperSwitchWebhookService {
           weatherGuaranteeAmount: firstBooking.weatherGuaranteeAmount,
           weatherGuaranteeId: firstBooking.weatherGuaranteeId,
           cartId: cartId,
-          playerCount: firstBooking.playerCount-(listedSlotsCount??0),
+          playerCount: firstBooking.playerCount - (listedSlotsCount ?? 0),
           greenFeePerPlayer: listPrice ?? 1 * 100,
           totalTaxesAmount: taxCharge * 100 || 0,
           charityId: charityId || null,

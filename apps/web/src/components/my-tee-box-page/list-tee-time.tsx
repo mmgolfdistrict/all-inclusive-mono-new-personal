@@ -1,4 +1,5 @@
 import * as ToggleGroup from "@radix-ui/react-toggle-group";
+import { LoadingContainer } from "~/app/[course]/loader";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { useSidebar } from "~/hooks/useSidebar";
@@ -25,7 +26,6 @@ import { Info } from "../icons/info";
 import { Players } from "../icons/players";
 import { Tooltip } from "../tooltip";
 import { type OwnedTeeTime } from "./owned";
-import { LoadingContainer } from "~/app/[course]/loader";
 
 type PlayerType = "1" | "2" | "3" | "4";
 
@@ -49,7 +49,7 @@ export const ListTeeTime = ({
   const availableSlots = selectedTeeTime?.golfers.length || 0;
 
   const [listingPrice, setListingPrice] = useState<number>(0);
-  const [isLoading,setIsLoading]=useState<boolean>(false)
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [sellerServiceFee, setSellerServiceFee] = useState<number>(0);
   const [players, setPlayers] = useState<string>(
     selectedTeeTime?.selectedSlotsCount || availableSlots.toString()
@@ -170,15 +170,17 @@ export const ListTeeTime = ({
   }, [listingPrice, players]);
 
   const listTeeTime = async () => {
-    setIsLoading(true)
+    setIsLoading(true);
     void logAudit();
     //You should never enter this condition.
     if (totalPayout < 0) {
       toast.error("Listing price must be greater than $45.");
+      setIsLoading(false);
       return;
     }
     if (!selectedTeeTime) {
       toast.error("Invalid date on tee time.");
+      setIsLoading(false);
       return;
     }
     console.log(
@@ -189,14 +191,17 @@ export const ListTeeTime = ({
       toast.error(
         `Listing price cannot be greater than ${formatMoney(maxListingPrice)}.`
       );
+      setIsLoading(false);
       return;
     }
     if (listingPrice === 0) {
       toast.error(`Enter listing price.`);
+      setIsLoading(false);
       return;
     }
     if (listingPrice === 1) {
       toast.error(`Listing price must be greater than $1.`);
+      setIsLoading(false);
       return;
     }
     try {
@@ -223,15 +228,15 @@ export const ListTeeTime = ({
           `/${selectedTeeTime?.courseId}/my-tee-box?section=my-listed-tee-times`
         );
       }
-      setIsLoading(false)
+      setIsLoading(false);
       await refetch();
       setIsListTeeTimeOpen(false);
     } catch (error) {
       toast.error(
         (error as Error)?.message ?? "An error occurred selling tee time."
       );
-    } finally{
-      setIsLoading(false)
+    } finally {
+      setIsLoading(false);
     }
   };
 

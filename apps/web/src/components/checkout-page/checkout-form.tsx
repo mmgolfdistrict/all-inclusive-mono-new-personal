@@ -193,7 +193,10 @@ export const CheckoutForm = ({
 
     try {
       if (response) {
-        if (response.status === "succeeded" || response.status === "processing") {
+        if (
+          response.status === "succeeded" ||
+          response.status === "processing"
+        ) {
           let bookingResponse = {
             bookingId: "",
             providerBookingId: "",
@@ -212,7 +215,9 @@ export const CheckoutForm = ({
                 playTime: teeTimeDate || "",
               });
             } catch (error) {
-              setMessage("Error reserving first hand booking: " + error.message);
+              setMessage(
+                "Error reserving first hand booking: " + error.message
+              );
               return;
             }
           } else {
@@ -223,7 +228,9 @@ export const CheckoutForm = ({
                 response?.payment_id as string
               );
             } catch (error) {
-              setMessage("Error reserving second hand booking: " + error.message);
+              setMessage(
+                "Error reserving second hand booking: " + error.message
+              );
               return;
             }
           }
@@ -281,13 +288,13 @@ export const CheckoutForm = ({
         {course?.supportCharity ? (
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
-              <div>Support a Charity</div>
+              <div>Charitable Donations</div>
               {selectedCharity ? (
                 <button
                   onClick={handleRemoveSelectedCharity}
                   className="text-[12px] self-end p-1 border rounded-md w-fit bg-error-stroke text-white"
                 >
-                  Remove Charity
+                  Remove Charitable Donation
                 </button>
               ) : null}
             </div>
@@ -319,7 +326,7 @@ export const CheckoutForm = ({
                     const strippedLeadingZeros = value.replace(/^0+/, "");
                     handleSelectedCharityAmount(Number(strippedLeadingZeros));
                   }}
-                  placeholder="Enter donation amount"
+                  placeholder="Enter charitable donation amount."
                   register={() => undefined}
                   error={charityAmountError}
                   data-testid="donation-amount-id"
