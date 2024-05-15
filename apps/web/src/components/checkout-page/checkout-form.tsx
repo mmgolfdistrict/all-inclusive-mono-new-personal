@@ -1,4 +1,3 @@
-import type { ReserveTeeTimeResponse } from "@golf-district/shared";
 import { getErrorMessageById } from "@golf-district/shared/src/hyperSwitchErrorCodes";
 import {
   UnifiedCheckout,
@@ -34,6 +33,7 @@ export const CheckoutForm = ({
   teeTimeDate: string | undefined;
   listingId: string;
 }) => {
+  const MAX_CHARITY_AMOUNT = 1000;
   const { course } = useCourseContext();
   const { user } = useUserContext();
   const auditLog = api.webhooks.auditLog.useMutation();
@@ -202,6 +202,9 @@ export const CheckoutForm = ({
       setCharityAmountError("Charity amount cannot be empty or zero");
       return;
     }
+    if (selectedCharityAmount && selectedCharityAmount > MAX_CHARITY_AMOUNT) {
+      return;
+    }
     setCharityAmountError("");
     setIsLoading(true);
 
@@ -345,6 +348,7 @@ export const CheckoutForm = ({
                   value={String(selectedCharityAmount)}
                   name="donation-amount"
                   onChange={(e) => {
+                    setCharityAmountError("");
                     const value = e.target.value
                       .replace("$", "")
                       .replaceAll(",", "");
@@ -353,6 +357,14 @@ export const CheckoutForm = ({
 
                     const decimals = value.split(".")[1];
                     if (decimals) return;
+
+                    if (Number(value) > MAX_CHARITY_AMOUNT) {
+                      setCharityAmountError(
+                        "Donation amount exceeds limit of $1000"
+                      );
+                      if (value.length > MAX_CHARITY_AMOUNT.toString().length)
+                        return;
+                    }
 
                     const strippedLeadingZeros = value.replace(/^0+/, "");
                     handleSelectedCharityAmount(Number(strippedLeadingZeros));
