@@ -33,6 +33,7 @@ export type OwnedTeeTime = {
   minimumOfferPrice: number;
   weatherGuaranteeAmount?: number;
   selectedSlotsCount?: "1" | "2" | "3" | "4";
+  slots?: number;
 };
 
 export const Owned = () => {
@@ -103,6 +104,7 @@ export const Owned = () => {
       </div>
     );
   }
+
   return (
     <>
       <div className="relative flex max-w-full flex-col gap-4  overflow-auto pb-2  text-[14px] md:pb-3">
@@ -172,7 +174,7 @@ export const Owned = () => {
         courseName={selectedTeeTime?.courseName}
         courseLogo={selectedTeeTime?.courseLogo}
         date={selectedTeeTime?.date}
-        golferCount={selectedTeeTime?.listedSpots?.length ?? 0}
+        golferCount={selectedTeeTime?.slots || 0}
         pricePerGolfer={
           selectedTeeTime?.listPrice ? selectedTeeTime?.listPrice / 100 : 0
         }

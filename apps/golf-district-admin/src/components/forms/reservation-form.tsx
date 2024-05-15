@@ -155,8 +155,8 @@ export const ReservationForm = ({
               value={""}
               setValue={setCourse}
               // @dev using setCourse here during layout, will switch to setValue from useForm hook and not use useState
-              label="Selected Charity"
-              placeholder="Select a charity"
+              label="Selected Charitable Donation"
+              placeholder="Select a charitable donation"
             />
             <Input
               name="taxes"

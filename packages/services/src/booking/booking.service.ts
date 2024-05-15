@@ -77,6 +77,7 @@ interface OwnedTeeTimeData {
   minimumOfferPrice: number;
   weatherGuaranteeAmount: number | null;
   teeTimeId: string;
+  slots: number;
 }
 
 interface ListingData {
@@ -321,6 +322,7 @@ export class BookingService {
         } else {
           const currentEntry = combinedData[teeTime.teeTimesId];
           if (currentEntry) {
+            currentEntry.listedSlotsCount = teeTime.listedSlots;
             if (currentEntry.listedSpots) {
               currentEntry.listedSpots.push(teeTime.bookingId);
             } else {
@@ -453,6 +455,7 @@ export class BookingService {
         slotPosition: bookingslots.slotPosition,
         purchasedFor: bookings.greenFeePerPlayer,
         providerBookingId: bookings.providerBookingId,
+        slots: lists.slots,
       })
       .from(teeTimes)
       .innerJoin(bookings, eq(bookings.teeTimeId, teeTimes.id))
@@ -530,6 +533,7 @@ export class BookingService {
           minimumOfferPrice: teeTime.minimumOfferPrice,
           weatherGuaranteeAmount: teeTime.weatherGuaranteeAmount,
           teeTimeId: teeTime.id,
+          slots: teeTime.slots || 0,
         };
       } else {
         const currentEntry = combinedData[teeTime.providerBookingId];
@@ -545,6 +549,7 @@ export class BookingService {
               ? parseInt(currentEntry.offers.toString()) + parseInt(teeTime.offers.toString())
               : 0;
           }
+          currentEntry.slots = teeTime.slots || 0;
           if (teeTime.listing && !teeTime.listingIsDeleted) {
             currentEntry.status = "LISTED";
             currentEntry.listingId = teeTime.listing;
@@ -684,6 +689,15 @@ export class BookingService {
     this.logger.info(`createListingForBookings called with userId: ${userId}`);
     if (new Date().getTime() >= endTime.getTime()) {
       this.logger.warn("End time cannot be before current time");
+      this.loggerService.auditLog({
+        id: randomUUID(),
+        userId,
+        teeTimeId: "",
+        bookingId: "",
+        listingId: "",
+        eventId: "TEE_TIME_LISTED_FAILED",
+        json: "End time cannot be before current time.",
+      });
       throw new Error("End time cannot be before current time");
     }
 
@@ -710,15 +724,42 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving bookings: ${err}`);
+        this.loggerService.auditLog({
+          id: randomUUID(),
+          userId,
+          teeTimeId: "",
+          bookingId: "",
+          listingId: "",
+          eventId: "TEE_TIME_LISTED_FAILED",
+          json: "Error retrieving bookings.",
+        });
         throw new Error("Error retrieving bookings");
       });
     if (!ownedBookings.length) {
       this.logger.debug(`Owned bookings: ${JSON.stringify(ownedBookings)}`);
       this.logger.warn(`User ${userId} does not own  specified bookings.`);
+      this.loggerService.auditLog({
+        id: randomUUID(),
+        userId,
+        teeTimeId: "",
+        bookingId: "",
+        listingId: "",
+        eventId: "TEE_TIME_LISTED_FAILED",
+        json: "User does not  own specified bookings.",
+      });
       throw new Error("User does not  own specified bookings.");
     }
     if (ownedBookings.length > 4) {
       this.logger.warn(`Cannot list more than 4 bookings.`);
+      this.loggerService.auditLog({
+        id: randomUUID(),
+        userId,
+        teeTimeId: "",
+        bookingId: "",
+        listingId: "",
+        eventId: "TEE_TIME_LISTED_FAILED",
+        json: "Cannot list more than 4 bookings.",
+      });
       throw new Error("Cannot list more than 4 bookings.");
     }
     for (const booking of ownedBookings) {
@@ -796,6 +837,16 @@ export class BookingService {
       `Listing creation successful`,
       courseId
     );
+
+    this.loggerService.auditLog({
+      id: randomUUID(),
+      userId,
+      teeTimeId: "",
+      bookingId: "",
+      listingId: "",
+      eventId: "TEE_TIME_LISTED",
+      json: "TEE_TIME_LISTED",
+    });
 
     return { success: true, body: { listingId: toCreate.id }, message: "Listings created successfully." };
   };
@@ -1066,6 +1117,17 @@ export class BookingService {
       .select({ isListed: bookings.isListed })
       .from(bookings)
       .where(eq(bookings.id, bookingId))
+      .execute();
+
+    return booking?.isListed;
+  };
+
+  checkIfTeeTimeStillListedByListingId = async (listingId: string) => {
+    const [booking] = await this.database
+      .select({ isListed: bookings.isListed })
+      .from(lists)
+      .innerJoin(bookings, eq(bookings.listId, lists.id))
+      .where(eq(lists.id, listingId))
       .execute();
 
     return booking?.isListed;
@@ -2478,11 +2540,16 @@ export class BookingService {
         listedSlotsCount: lists.slots,
         listPrice: lists.listPrice,
         teeTimeIdForBooking: bookings.teeTimeId,
+        isListed: bookings.isListed,
       })
       .from(bookings)
       .leftJoin(lists, eq(lists.id, listingId))
       .where(eq(bookings.listId, listingId))
       .execute();
+
+    if (!associatedBooking?.isListed) {
+      throw new Error("Sorry the tee time is not listed anymore");
+    }
 
     const [userData] = await this.database
       .select({

@@ -29,4 +29,5 @@ export * from "./token/tokenize.service";
 export * from "./cashout/cashout.service";
 export * from "./webhooks/updateWithdrawlableAmount";
 export * from "./webhooks/stripeConnect.webhook.service";
+export * from "./course-seo/courseSEO.service";
 export { verifySignatureAppRouter } from "@upstash/qstash/dist/nextjs";
