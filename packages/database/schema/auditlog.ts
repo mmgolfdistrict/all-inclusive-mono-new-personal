@@ -5,7 +5,7 @@ import { mySqlTable } from "./_table";
 
 export const auditLog = mySqlTable("auditLog", {
   id: varchar("id", { length: 36 }).notNull().primaryKey(),
-  ip: varchar("ip", { length: 50 }).notNull(),
+  ip: varchar("ip", { length: 50 }),
   userId: varchar("userId", { length: 36 }).notNull(),
   teeTimeId: varchar("teeTimeId", { length: 36 }).notNull(),
   bookingId: varchar("bookingId", { length: 36 }).notNull(),

@@ -32,8 +32,9 @@ export const OrderSummary = ({
       <div className="rounded-md bg-primary p-2 text-white">
         <h2 className="text-lg">Resell Your Tee Time Anytime</h2>
         <p className="text-sm">
-          Plans change. No worries! Resell your tee times on GOLFdistrict up to
-          30 minutes before play.
+          Plans change. No worries! Resell your tee time on this platform.
+          Selling outside of the platform is not allowed, and both the buyer and
+          seller may forfeit their money and time.
         </p>
       </div>
     </section>
