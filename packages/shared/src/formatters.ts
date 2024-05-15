@@ -42,11 +42,11 @@ export const formatQueryDate = (date: Date): string => {
 };
 
 export const removeTimeZoneOffset = (date?: string): string | null => {
-  if (!date) return null
+  if (!date) return null;
   const parts = date.split("T");
   const dateAndTime = parts ? parts[0] + "T" + parts[1]?.slice(0, -6) : "";
-  return dateAndTime
-}
+  return dateAndTime;
+};
 
 /**
  * Converts a Date object to a UTC timestamp in a string format.
