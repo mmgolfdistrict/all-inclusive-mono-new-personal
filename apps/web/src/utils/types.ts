@@ -101,6 +101,8 @@ export type SensibleDataToMountCompType = {
   product_id: string;
   coverageStartDate: string;
   coverageEndDate: string;
+  coverageStartHourNumber: number;
+  coverageEndHourNumber: number;
   currency: string;
   langLocale: string;
   exposureName: string;
@@ -117,15 +119,15 @@ export type CartProduct = {
   display_price: string; //$4.00
   product_data: {
     metadata:
-      | FirstHandProduct
-      | SecondHandProduct
-      | SensibleProduct
-      | AuctionProduct
-      | CharityProduct
-      | Offer
-      | MarkupProduct
-      | ConvenienceFeeProduct
-      | TaxProduct;
+    | FirstHandProduct
+    | SecondHandProduct
+    | SensibleProduct
+    | AuctionProduct
+    | CharityProduct
+    | Offer
+    | MarkupProduct
+    | ConvenienceFeeProduct
+    | TaxProduct;
   };
 };
 

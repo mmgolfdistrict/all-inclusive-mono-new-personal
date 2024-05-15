@@ -87,6 +87,9 @@ export const SensibleWidget = memo(
         );
         // @ts-ignore
         Sensible.mountComponent({
+          coverageStartHourNumber:
+            sensibleDataToMountComp.coverageStartHourNumber,
+          coverageEndHourNumber: sensibleDataToMountComp.coverageEndHourNumber,
           coverageStartDate: sensibleDataToMountComp.coverageStartDate,
           coverageEndDate: sensibleDataToMountComp.coverageEndDate,
           currency: sensibleDataToMountComp.currency,

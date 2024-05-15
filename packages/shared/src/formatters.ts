@@ -41,6 +41,13 @@ export const formatQueryDate = (date: Date): string => {
   return `${year}-${month}-${day}`;
 };
 
+export const removeTimeZoneOffset = (date?: string): string | null => {
+  if (!date) return null
+  const parts = date.split("T");
+  const dateAndTime = parts ? parts[0] + "T" + parts[1]?.slice(0, -6) : "";
+  return dateAndTime
+}
+
 /**
  * Converts a Date object to a UTC timestamp in a string format.
  * Format: 'YYYY-MM-DD HH:MM:SS.sss'
