@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "@golf-district/auth/nextjs-exports";
-import { formatQueryDate } from "@golf-district/shared";
+import { formatQueryDate, removeTimeZoneOffset } from "@golf-district/shared";
 import { FilledButton } from "~/components/buttons/filled-button";
 import { HyperSwitch } from "~/components/checkout-page/hyper-switch";
 import { OrderSummary } from "~/components/checkout-page/order-summary";
@@ -26,6 +26,7 @@ import type {
   SensibleProduct,
   TaxProduct,
 } from "~/utils/types";
+import dayjs from "dayjs";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useDebounce } from "usehooks-ts";
@@ -132,6 +133,11 @@ export default function Checkout({
       void checkPromoCode();
     }
   }, [debouncedPromoCode]);
+
+  const startHourNumber = dayjs(removeTimeZoneOffset(data?.date)).hour();
+  const endHourNumber = dayjs(removeTimeZoneOffset(data?.date))
+    .add(6, "hours")
+    .hour();
 
   const cartData: CartProduct[] = useMemo(() => {
     if (!data || data === null) return [];
@@ -301,7 +307,6 @@ export default function Checkout({
       </div>
     );
   }
-
   return (
     <>
       <div className="relative flex flex-col items-center gap-4 px-0 pb-8 md:px-8">
@@ -343,6 +348,8 @@ export default function Checkout({
                 product_id: process.env.NEXT_PUBLIC_SENSIBLE_PRODUCT_ID ?? "",
                 coverageStartDate: formatQueryDate(new Date(data?.date ?? "")),
                 coverageEndDate: formatQueryDate(new Date(data?.date ?? "")),
+                coverageStartHourNumber: startHourNumber,
+                coverageEndHourNumber: endHourNumber === 0 ? 23 : endHourNumber, // SAFE VALUE SHOULDN'T BE 0 OR 24
                 currency: "USD",
                 langLocale: "en-US",
                 exposureName: course?.name ?? "",

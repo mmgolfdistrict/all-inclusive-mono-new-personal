@@ -101,6 +101,8 @@ export type SensibleDataToMountCompType = {
   product_id: string;
   coverageStartDate: string;
   coverageEndDate: string;
+  coverageStartHourNumber: number;
+  coverageEndHourNumber: number;
   currency: string;
   langLocale: string;
   exposureName: string;
