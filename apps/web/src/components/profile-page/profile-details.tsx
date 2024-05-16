@@ -56,6 +56,7 @@ export const ProfileDetails = () => {
         </div>
       </div>
       <div className="h-[180px] w-full bg-white md:h-[150px] md:rounded-b-xl" />
+      <h1 className="flex justify-center mt-12 text-primary-gray text-lg">Profile Page Coming Soon…</h1>
     </div>
   );
 };
