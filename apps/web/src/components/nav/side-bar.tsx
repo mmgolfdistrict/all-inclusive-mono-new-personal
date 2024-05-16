@@ -135,30 +135,32 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
                 data-test={courseId}
               />
 
-              <NavItem
-                href={
-                  user && status === "authenticated"
-                    ? `/${courseId}/my-tee-box?section=offers-received`
-                    : `/${courseId}/login`
-                }
-                text="My Offers"
-                onClick={() => {
-                  toggleSidebar();
-                }}
-                icon={
-                  <div className="relative">
-                    <MyOffers className="w-[20px]" />
-                    {unreadOffers && unreadOffers > 0 ? (
-                      <div className="absolute -right-3.5 -top-2 flex h-5 w-5 min-w-fit select-none items-center justify-center rounded-full border-2 border-white bg-alert-red p-1 text-[10px] font-semibold text-white">
-                        {unreadOffers}
-                      </div>
-                    ) : null}
-                  </div>
-                }
-                className="border-b border-t border-stroke-secondary p-2 md:p-4"
-                data-testid="my-offer-id"
-                data-test={courseId}
-              />
+              {course?.supportsOffers ? (
+                <NavItem
+                  href={
+                    user && status === "authenticated"
+                      ? `/${courseId}/my-tee-box?section=offers-received`
+                      : `/${courseId}/login`
+                  }
+                  text="My Offers"
+                  onClick={() => {
+                    toggleSidebar();
+                  }}
+                  icon={
+                    <div className="relative">
+                      <MyOffers className="w-[20px]" />
+                      {unreadOffers && unreadOffers > 0 ? (
+                        <div className="absolute -right-3.5 -top-2 flex h-5 w-5 min-w-fit select-none items-center justify-center rounded-full border-2 border-white bg-alert-red p-1 text-[10px] font-semibold text-white">
+                          {unreadOffers}
+                        </div>
+                      ) : null}
+                    </div>
+                  }
+                  className="border-b border-t border-stroke-secondary p-2 md:p-4"
+                  data-testid="my-offer-id"
+                  data-test={courseId}
+                />
+              ) : null}
             </div>
             {user && status === "authenticated" ? (
               <div className="flex flex-col">
