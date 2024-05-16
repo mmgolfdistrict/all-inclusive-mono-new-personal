@@ -131,7 +131,7 @@ export class BookingService {
     private readonly providerService: ProviderService,
     private readonly notificationService: NotificationService,
     private readonly loggerService: LoggerService
-  ) {}
+  ) { }
 
   createCounterOffer = async (userId: string, bookingIds: string[], offerId: string, amount: number) => {
     //find owner of each booking
@@ -871,6 +871,7 @@ export class BookingService {
         userId: lists.userId,
         // status: lists.status,
         isDeleted: lists.isDeleted,
+
       })
       .from(lists)
       .where(and(eq(lists.id, listingId), eq(lists.userId, userId)))
@@ -895,11 +896,17 @@ export class BookingService {
     const bookingIds = await this.database
       .select({
         id: bookings.id,
+        courseId: teeTimes.courseId
       })
       .from(bookings)
+      .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
       .where(eq(bookings.listId, listingId))
       .execute();
     console.log("cancel listing by user", userId);
+    if (bookingIds && !bookingIds.length) {
+      throw new Error("No booking found for this listing");
+    }
+    const courseId = bookingIds[0]?.courseId ?? "";
     await this.database.transaction(async (trx) => {
       await trx
         .update(lists)
@@ -928,6 +935,13 @@ export class BookingService {
           });
       }
     });
+    this.logger.info(`Listings cancelled successfully. for user ${userId} listingId ${listingId}`);
+    await this.notificationService.createNotification(
+      userId,
+      "LISTING_CANCELLED",
+      `Listing cancellation successful`,
+      courseId
+    );
   };
 
   /**
