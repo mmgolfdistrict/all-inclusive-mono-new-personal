@@ -667,16 +667,23 @@ export class UserService {
       this.logger.error(`Invalid captcha`);
       throw new Error("Invalid captcha");
     }
+    let CourseURL: string | undefined;
     let CourseLogoURL: string | undefined;
     if (courseProviderId) {
       const [course] = await this.database
-        .select()
+        .select({
+          cdn: assets.cdn,
+          key: assets.key,
+          extension: assets.extension,
+          websiteURL: courses.websiteURL
+        })
         .from(courses)
         .leftJoin(assets, eq(assets.courseId, courseProviderId))
         .where(eq(courses.logoId, assets.id));
 
-      if (course?.asset) {
-        CourseLogoURL = `https://${course.asset.cdn}/${course.asset.key}.${course.asset.extension}`;
+      if (course?.cdn) {
+        CourseLogoURL = `https://${course?.cdn}/${course?.key}.${course?.extension}`;
+        CourseURL = course?.websiteURL || "";
       }
     }
 
@@ -717,6 +724,7 @@ export class UserService {
       CustomerFirstName: user.name?.split(" ")[0],
       EMail: user.email,
       CourseLogoURL,
+      CourseURL
     };
 
     if (user.gdPassword) {
@@ -825,7 +833,7 @@ export class UserService {
           "Golf District - Password Reset Successful",
           process.env.SENDGRID_TEE_TIMES_PASSWORD_RESET_SUCCESSFUL_TEMPLATE_ID!,
           {
-            CustomerFirstName: user?.handle ?? "",
+            CustomerFirstName: user?.handle ?? ""
           },
           []
         );

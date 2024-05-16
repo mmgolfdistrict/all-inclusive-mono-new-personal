@@ -28,6 +28,7 @@ interface EmailParams {
   EMail?: string;
   ForgotPasswordURL?: string;
   CourseLogoURL?: string;
+  CourseURL?: string;
   VerifyURL?: string;
 }
 
