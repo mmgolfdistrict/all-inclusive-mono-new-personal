@@ -263,7 +263,7 @@ export const bookingRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       return ctx.serviceFactory
         .getBookingService()
-        .reserveBooking(ctx.session.user.id, input.cartId, input.payment_id);
+        .reserveBooking(ctx.session.user.id, input.cartId, input.payment_id,ctx?.session?.ip ?? "");
     }),
   reserveSecondHandBooking: protectedProcedure
     .input(

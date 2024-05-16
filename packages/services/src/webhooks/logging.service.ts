@@ -15,7 +15,6 @@ interface AuditLog {
 }
 
 interface ErrorLog {
-  id: string;
   applicationName: string;
   clientIP: string;
   userId: string;
@@ -24,12 +23,13 @@ interface ErrorLog {
   message: string;
   stackTrace: string;
   additionalDetailsJSON: string;
-  createdDateTime: string;
-  lastUpdatedDateTime: string;
+  createdDateTime?: string;
+  lastUpdatedDateTime?: string;
+  ip?: string;
 }
 
 export class LoggerService {
-  auditLog = async (data: AuditLog, ip = "") => {
+  auditLog = async (data: AuditLog, ip:string = "") => {
     data.ip = ip;
     try {
       const res = await fetch(`${process.env.QSTASH_BASE_URL}${process.env.QSTASH_AUDIT_TOPIC}`, {
@@ -51,9 +51,10 @@ export class LoggerService {
       return NextResponse.json({ error: JSON.stringify(error) }, { status: 500 });
     }
   };
-  errorLog = async (data: ErrorLog) =>{
+  errorLog = async (data: ErrorLog, ip:string = "") =>{
+    data.ip = ip;
     try {
-      const res = await fetch(`${process.env.QSTASH_BASE_URL}${process.env.QSTASH_AUDIT_TOPIC}`, {
+      const res = await fetch(`${process.env.QSTASH_BASE_URL}${process.env.QSTASH_AUDIT_ERROR_LOG_TOPIC}`, {
         method: "POST",
         body: JSON.stringify(data),
         headers: {
