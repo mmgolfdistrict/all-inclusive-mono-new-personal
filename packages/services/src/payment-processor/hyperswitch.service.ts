@@ -230,14 +230,34 @@ export class HyperSwitchService {
   cancelHyperswitchPaymentById = async (paymentMethodId: string) => {
     const options = {
       method: "POST",
-      headers: { "api-key": "<api-key>", "Content-Type": "application/json" },
-      body: '{"cancellation_reason":"requested_by_customer"}',
+      headers: { "api-key": this.hyperSwitchApiKey, "Content-Type": "application/json" },
+      body: '{"cancellation_reason":"cancelled_by_GD"}',
     };
 
     const res = await fetch(`${this.hyperSwitchBaseUrl}/payments/${paymentMethodId}/cancel`, options);
     const jsonRes = await res.json();
     if (jsonRes.error) {
       return { status: "Cannot delete payment" };
+    }
+    return { status: "success" };
+  };
+  refundPayment = async (paymentId: string) => {
+    const myHeaders = new Headers();
+    myHeaders.append("Content-Type", "application/json");
+    myHeaders.append("api-key", this.hyperSwitchApiKey);
+    const options = {
+      method: "POST",
+      headers: { "api-key": this.hyperSwitchApiKey, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        payment_id: paymentId,
+        refund_type: "instant",
+      }),
+    };
+
+    const res = await fetch(`${this.hyperSwitchBaseUrl}/refunds`, options);
+    const jsonRes = await res.json();
+    if (jsonRes.error) {
+      return { status: "Cannot refund payment" };
     }
     return { status: "success" };
   };
