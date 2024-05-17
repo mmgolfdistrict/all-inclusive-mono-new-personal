@@ -145,14 +145,16 @@ export const TeeTime = ({
 
     if (!user || !session) {
       if (status === "FIRST_HAND") {
-        setPrevPath(
-          `/${course?.id}/checkout?teeTimeId=${teeTimeId}&playerCount=${selectedPlayers}`
-        );
+        setPrevPath({
+          path: `/${course?.id}/checkout?teeTimeId=${teeTimeId}&playerCount=${selectedPlayers}`,
+          createdAt: new Date().toISOString(),
+        });
       }
       if (status === "SECOND_HAND") {
-        setPrevPath(
-          `/${course?.id}/checkout?listingId=${listingId}&playerCount=${listedSlots}`
-        );
+        setPrevPath({
+          path: `/${course?.id}/checkout?listingId=${listingId}&playerCount=${listedSlots}`,
+          createdAt: new Date().toISOString(),
+        });
       }
       void router.push(`/${course?.id}/login`);
       return;
