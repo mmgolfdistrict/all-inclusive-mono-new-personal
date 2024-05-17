@@ -114,7 +114,8 @@ export class ServiceFactory {
       this.getProviderService(),
       this.getNotificationService(),
       this.getLoggerService(),
-      this.getHyperSwitchService()
+      this.getHyperSwitchService(),
+      this.getSensibleService()
     );
   };
 

@@ -496,23 +496,13 @@ export class SensibleService extends CacheService {
       }
     }
 
-    const response = await fetch(`${this.getEndpoint()}/quote/guarantee/${quoteId}/decline`, {
+   fetch(`${this.getEndpoint()}/quote/guarantee/${quoteId}/decline`, {
       method: "PATCH",
       headers: {
         Accept: "application/json",
         Authorization: `Bearer ${bearerToken}`,
       },
     });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      this.logger.fatal(
-        `Failed to cancel quote from SensibleWeather API: ${errorData.error}: ${errorData.error_description}`
-      );
-      throw new Error(`${errorData.error}: ${errorData.error_description}`);
-    }
-
-    return await response.json();
   };
 
   /**

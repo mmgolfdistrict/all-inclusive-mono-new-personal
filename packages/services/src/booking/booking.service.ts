@@ -29,7 +29,7 @@ import type { TokenizeService } from "../token/tokenize.service";
 import type { LoggerService } from "../webhooks/logging.service";
 import type { ProviderAPI } from "../tee-sheet-provider/sheet-providers";
 import type { BookingResponse } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
-
+import type { SensibleService } from "../sensible/sensible.service"
 interface TeeTimeData {
   courseId: string;
   courseName: string;
@@ -134,7 +134,8 @@ export class BookingService {
     private readonly providerService: ProviderService,
     private readonly notificationService: NotificationService,
     private readonly loggerService: LoggerService,
-    private readonly hyperSwitchService: HyperSwitchService
+    private readonly hyperSwitchService: HyperSwitchService,
+    private readonly sensibleService: SensibleService,
   ) {}
 
   createCounterOffer = async (userId: string, bookingIds: string[], offerId: string, amount: number) => {
@@ -2250,7 +2251,7 @@ export class BookingService {
     }
   };
 
-  reserveBooking = async (userId: string, cartId: string, payment_id: string) => {
+  reserveBooking = async (userId: string, cartId: string, payment_id: string, sensibleQuoteId:string) => {
     const {
       cart,
       playerCount,
@@ -2275,6 +2276,10 @@ export class BookingService {
     if (!isValid) {
       throw new Error("Payment Id not is not valid");
     }
+    if(!weatherQuoteId){
+      console.log("Cancel Sensible Quote ID : ",sensibleQuoteId);
+      this.sensibleService.cancelQuote(sensibleQuoteId)
+     }
     const pricePerGolfer = primaryGreenFeeCharge / playerCount;
 
     console.log(`Retrieving tee time from database ${teeTimeId}`);
