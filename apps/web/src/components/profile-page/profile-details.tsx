@@ -8,7 +8,7 @@ import userPlaceholder from "../../../public/placeholders/profile-user.png";
 import { Location } from "../icons/location";
 import { BlurImage } from "../images/blur-image";
 
-export const ProfileDetails = () => {
+export const ProfileDetails = ({ isThirdPartyProfile }: { isThirdPartyProfile: boolean; }) => {
   const params = useParams();
   const { userId } = params;
   const { data: userData } = useUser(userId as string | undefined);
@@ -56,7 +56,7 @@ export const ProfileDetails = () => {
         </div>
       </div>
       <div className="h-[180px] w-full bg-white md:h-[150px] md:rounded-b-xl" />
-      <h1 className="flex justify-center mt-12 text-primary-gray text-lg">Profile Page Coming Soon…</h1>
+      {isThirdPartyProfile && <h1 className="flex justify-center mt-12 text-primary-gray text-lg">Profile Page Coming Soon…</h1>}
     </div>
   );
 };
