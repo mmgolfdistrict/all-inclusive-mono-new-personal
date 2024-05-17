@@ -118,7 +118,10 @@ export const CourseNav = () => {
               <Link
                 href={`/${course?.id}/login`}
                 onClick={() => {
-                  setPrevPath(pathname);
+                  setPrevPath({
+                    path: pathname,
+                    createdAt: new Date().toISOString(),
+                  });
                   void logAudit();
                 }}
               >
