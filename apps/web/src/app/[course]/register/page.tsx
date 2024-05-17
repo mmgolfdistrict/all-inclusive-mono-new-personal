@@ -118,7 +118,10 @@ export default function RegisterPage() {
     if (registerUser.isLoading) return;
     if (registerUser.isSuccess) return;
     try {
-      await registerUser.mutateAsync(data);
+      await registerUser.mutateAsync({
+        ...data,
+        courseId: course?.id
+      });
 
       router.push(`/${course?.id}/verify-email`);
     } catch (error) {
@@ -315,9 +318,8 @@ export default function RegisterPage() {
             )}
 
           <FilledButton
-            className={`w-full rounded-full ${
-              isSubmitting ? "animate-pulse cursor-not-allopwed" : ""
-            }`}
+            className={`w-full rounded-full ${isSubmitting ? "animate-pulse cursor-not-allopwed" : ""
+              }`}
             type="submit"
             disabled={isSubmitting}
             data-testid="register-button-id"

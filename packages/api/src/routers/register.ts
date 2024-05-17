@@ -14,9 +14,9 @@ export const registerRouter = createTRPCRouter({
       phoneNumber: input.phoneNumber,
       location: input.location,
       redirectHref: input.redirectHref,
-      ReCAPTCHA: input.ReCAPTCHA,
+      ReCAPTCHA: input.ReCAPTCHA
     };
-    return await ctx.serviceFactory.getUserService().createUser(createUserData);
+    return await ctx.serviceFactory.getUserService().createUser(input?.courseId, createUserData);
   }),
   isValidHandle: publicProcedureWithCaptcha.input(z.string()).query(async ({ input, ctx }) => {
     return await ctx.serviceFactory.getUserService().isValidHandle(input);
@@ -26,9 +26,10 @@ export const registerRouter = createTRPCRouter({
       z.object({
         userId: z.string(),
         token: z.string(),
+        courseId: z.string().optional()
       })
     )
     .mutation(async ({ input, ctx }) => {
-      return await ctx.serviceFactory.getUserService().verifyUserEmail(input.userId, input.token);
+      return await ctx.serviceFactory.getUserService().verifyUserEmail(input?.courseId, input.userId, input.token);
     }),
 });

@@ -25,7 +25,7 @@ export default function Verify() {
     if (!userId || !verificationToken) return;
     try {
       callingRef.current = true;
-      await verifyEmail.mutateAsync({ userId, token: verificationToken });
+      await verifyEmail.mutateAsync({ courseId: course?.id, userId, token: verificationToken });
       setIsSuccess(true);
       callingRef.current = false;
     } catch (error) {

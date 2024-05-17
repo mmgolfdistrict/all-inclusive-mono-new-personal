@@ -20,7 +20,7 @@ export default function Profile({
         <GoBack href={`/${courseId}`} text={`Back to tee times`} />
       </div>
       <section className="mx-auto flex w-full flex-col gap-4 pt-4 md:max-w-[1360px] md:px-6">
-        <ProfileDetails />
+        <ProfileDetails isThirdPartyProfile={true} />
 
         {/* <UpcomingTeeTimes courseId={courseId} userId={userId} />
         <TeeTimeHistory courseId={courseId} userId={userId} /> */}
