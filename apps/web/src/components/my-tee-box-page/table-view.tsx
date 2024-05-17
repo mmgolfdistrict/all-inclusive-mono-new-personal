@@ -88,7 +88,10 @@ export const TableView = () => {
               <Link
                 href={`/${courseId}/login`}
                 onClick={() => {
-                  setPrevPath(pathname);
+                  setPrevPath({
+                    path: pathname,
+                    createdAt: new Date().toISOString(),
+                  });
                 }}
                 data-testid="login-to-view-id"
               >

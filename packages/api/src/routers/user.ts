@@ -92,7 +92,7 @@ export const userRouter = createTRPCRouter({
   executeForgotPassword: publicProcedure.input(resetPasswordSchema).mutation(async ({ ctx, input }) => {
     return await ctx.serviceFactory
       .getUserService()
-      .executeForgotPassword(input.userId, input.verificationToken, input.password);
+      .executeForgotPassword(input?.courseId, input.userId, input.verificationToken, input.password);
   }),
   getUpcomingTeeTimesForUser: publicProcedure
     .input(z.object({ userId: z.string(), courseId: z.string() }))

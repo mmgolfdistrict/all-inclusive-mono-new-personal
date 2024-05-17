@@ -22,7 +22,7 @@ export default function ManangeProfile({
         <GoBack href={`/${courseId}`} text={`Back to tee times`} />
       </div>
       <section className="mx-auto flex w-full flex-col gap-4 pt-4 md:max-w-[1360px] md:px-6">
-        <ProfileDetails />
+        <ProfileDetails isThirdPartyProfile={false} />
         <div className="flex h-full flex-col gap-4 md:flex-row w-full">
           <div className="w-full md:w-[50%]  md:rounded-xl overflow-hidden">
             <BalanceHistory userId={userId} />
