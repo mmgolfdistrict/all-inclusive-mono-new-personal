@@ -23,10 +23,12 @@ import dayjs from "dayjs";
 import { alias } from "drizzle-orm/mysql-core";
 import type { CustomerCart, ProductData } from "../checkout/types";
 import type { NotificationService } from "../notification/notification.service";
+import type { HyperSwitchService } from "../payment-processor/hyperswitch.service";
 import type { Customer, ProviderService } from "../tee-sheet-provider/providers.service";
 import type { TokenizeService } from "../token/tokenize.service";
 import type { LoggerService } from "../webhooks/logging.service";
-import type { HyperSwitchService } from "../payment-processor/hyperswitch.service";
+import type { ProviderAPI } from "../tee-sheet-provider/sheet-providers";
+import type { BookingResponse } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
 
 interface TeeTimeData {
   courseId: string;
@@ -2313,17 +2315,16 @@ export class BookingService {
     }
 
     console.log(`Retrieving provider and token ${teeTime.internalId}, ${teeTime.courseId}`);
-    let booking = null
-    let teeProvider = null
-    let teeToken = null
+    let booking: BookingResponse |null = null;
+    let teeProvider: ProviderAPI | null = null;
+    let teeToken:string | null = null;
     try {
       const { provider, token } = await this.providerService.getProviderAndKey(
         teeTime.internalId!,
         teeTime.courseId
       );
-      teeProvider = provider
-      teeToken = token
-
+      teeProvider = provider;
+      teeToken = token;
 
       console.log(
         `Finding or creating customer ${userId}, ${teeTime.courseId}, ${teeTime.providerId}, ${teeTime.providerCourseId}, ${token}`
@@ -2350,8 +2351,8 @@ export class BookingService {
       console.log(
         `Creating booking ${teeTime.providerDate}, ${teeTime.holes}, ${playerCount}, ${teeTime.providerCourseId}, ${teeTime.providerTeeSheetId}, ${token}`
       );
-       booking = await provider
-        .createBooking(token, teeTime.providerCoursed!, teeTime.providerTeeSheetId!, {
+      booking = await provider
+        .createBooking(token, teeTime.providerCourseId!, teeTime.providerTeeSheetId!, {
           totalAmountPaid: primaryGreenFeeCharge / 100 + taxCharge - markupCharge,
           data: {
             type: "bookings",
@@ -2381,18 +2382,18 @@ export class BookingService {
           throw new Error(`Error creating booking`);
         });
     } catch (e) {
-     console.log("BOOKING FAILED ON PROVIDER, INITIATING REFUND FOR PAYMENT_ID", payment_id);
-     this.loggerService.auditLog({
-      id: randomUUID(),
-      userId,
-      teeTimeId,
-      bookingId:"",
-      listingId: "",
-      eventId: "REFUND_INITIATED",
-      json: `{paymentId:${payment_id}}`,
-    });
-     await this.hyperSwitchService.refundPayment(payment_id) 
-     throw('Booking failed on provider')
+      console.log("BOOKING FAILED ON PROVIDER, INITIATING REFUND FOR PAYMENT_ID", payment_id);
+      this.loggerService.auditLog({
+        id: randomUUID(),
+        userId,
+        teeTimeId,
+        bookingId: "",
+        listingId: "",
+        eventId: "REFUND_INITIATED",
+        json: `{paymentId:${payment_id}}`,
+      });
+      await this.hyperSwitchService.refundPayment(payment_id);
+      throw "Booking failed on provider";
     }
     console.log(`Creating tokenized booking`);
     //create tokenized bookings
