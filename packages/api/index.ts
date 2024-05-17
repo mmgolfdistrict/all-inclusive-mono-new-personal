@@ -180,7 +180,8 @@ export const processHyperSwitchWebhook = async (req: any) => {
     providerService,
     notificationService,
     loggerService,
-    hyperswitchService
+    hyperswitchService,
+    sensibleService
   );
 
   // const appSettings = await appSettingService.getMultiple(
