@@ -22,6 +22,7 @@ import type { SensibleService } from "../sensible/sensible.service";
 import type { ProviderAPI } from "../tee-sheet-provider/sheet-providers";
 import { TeeTime } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
 import { LoggerService } from "../webhooks/logging.service";
+import { assets } from "@golf-district/database/schema/assets";
 
 /**
  * Service class for handling booking tokenization, transfers, and updates.
@@ -181,10 +182,15 @@ export class TokenizeService {
         providerDate: teeTimes.providerDate,
         address: courses.address,
         name: courses.name,
+        websiteURL: courses.websiteURL,
+        cdn: assets.cdn,
+        cdnKey: assets.key,
+        extension: assets.extension,
       })
       .from(teeTimes)
       .where(eq(teeTimes.id, providerTeeTimeId))
       .leftJoin(courses, eq(courses.id, teeTimes.courseId))
+      .leftJoin(assets, eq(assets.id, courses.logoId))
       .leftJoin(entities, eq(courses.entityId, entities.id))
       .leftJoin(users, eq(users.id, userId))
       .execute()
@@ -435,6 +441,8 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       PurchasedFrom: existingTeeTime.courseName ?? "-",
       PlayerCount: players ?? 0,
       TotalAmount: formatMoney(normalizedCartData.total / 100 ?? 0),
+      CourseLogoURL: `https://${existingTeeTime?.cdn}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
+      CourseURL: existingTeeTime?.websiteURL || ""
     };
     await this.notificationService.createNotification(
       userId,

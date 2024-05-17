@@ -50,6 +50,7 @@ export const courses = mySqlTable(
     createdDateTime: datetime("createdDateTime", { mode: "string", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
+    websiteURL: varchar("websiteURL", { length: 255 }).default("https://arrowoodgolf.com/").notNull(),
   },
   (table) => {
     return {
