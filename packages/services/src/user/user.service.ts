@@ -110,7 +110,7 @@ export class UserService {
    *     handel: 'johnDoe123'
    *   });
    */
-  createUser = async (data: UserCreationData): Promise<void> => {
+  createUser = async (courseId: string | undefined, data: UserCreationData): Promise<void> => {
     this.logger.info(`createUser called`);
     if (!isValidEmail(data.email)) {
       this.logger.warn(`Invalid email format: ${data.email}`);
@@ -168,6 +168,33 @@ export class UserService {
     // "Reset your password",
     // process.env.SENDGRID_FORGOT_PASSWORD_AUTH_USER_TEMPLATE_ID!,
     // emailParams
+
+    let CourseLogoURL: string | undefined;
+    let CourseURL: string | undefined;
+
+    if (courseId) {
+      const [course] = await this.database
+        .select({
+          cdn: assets.cdn,
+          key: assets.key,
+          extension: assets.extension,
+          websiteURL: courses.websiteURL
+        })
+        .from(courses)
+        .where(eq(courses.id, courseId))
+        .leftJoin(assets, eq(assets.id, courses.logoId))
+        .execute()
+        .catch((err) => {
+          this.logger.error(err);
+          return [];
+        });
+
+      if (course?.cdn) {
+        CourseLogoURL = `https://${course?.cdn}/${course?.key}.${course?.extension}`;
+        CourseURL = course?.websiteURL || "";
+      }
+    }
+
     await this.notificationsService.sendEmailByTemplate(
       data.email,
       "Verify your email",
@@ -177,6 +204,8 @@ export class UserService {
         VerifyURL: `${encodeURI(data?.redirectHref)}/verify?userId=${encodeURIComponent(
           user?.id
         )}&verificationToken=${encodeURIComponent(verificationToken)}`,
+        CourseLogoURL,
+        CourseURL
       },
       []
     );
@@ -350,7 +379,7 @@ export class UserService {
    * @example
    *   verifyUserEmail('user123id', 'secureverificationtoken');
    */
-  verifyUserEmail = async (userId: string, token: string): Promise<void> => {
+  verifyUserEmail = async (courseId: string | undefined, userId: string, token: string): Promise<void> => {
     this.logger.info(`verifyUserEmail called with userId: ${userId} and token: ${token}`);
     const [user] = await this.database.select().from(users).where(eq(users.id, userId));
     if (!user) {
@@ -382,6 +411,28 @@ export class UserService {
       })
       .where(eq(users.id, userId))
       .execute();
+
+    let CourseLogoURL: string | undefined;
+    let CourseURL: string | undefined;
+
+    if (courseId) {
+      const [course] = await this.database
+        .select({
+          cdn: assets.cdn,
+          key: assets.key,
+          extension: assets.extension,
+          websiteURL: courses.websiteURL
+        })
+        .from(courses)
+        .where(eq(courses.id, courseId))
+        .leftJoin(assets, eq(assets.id, courses.logoId));
+
+      if (course?.cdn) {
+        CourseLogoURL = `https://${course?.cdn}/${course?.key}.${course?.extension}`;
+        CourseURL = course?.websiteURL || "";
+      }
+    }
+
     if (user?.email) {
       //send welcome email
       try {
@@ -391,6 +442,8 @@ export class UserService {
           process.env.SENDGRID_TEE_TIMES_NEW_USER_TEMPLATE_ID!,
           {
             CustomerFirstName: user.handle ?? "",
+            CourseLogoURL,
+            CourseURL
           },
           []
         );
@@ -784,7 +837,7 @@ export class UserService {
    * @example
    *   executeForgotPassword('user123id', 'secureverificationtoken', 'newSecurePassword123');
    */
-  executeForgotPassword = async (userId: string, token: string, newPassword: string): Promise<void> => {
+  executeForgotPassword = async (courseId: string | undefined, userId: string, token: string, newPassword: string): Promise<void> => {
     this.logger.info(`executeForgotPassword called with userId: ${userId}`);
     if (isValidPassword(newPassword).score < 8) {
       this.logger.warn(`Invalid password format: ${newPassword}`);
@@ -826,6 +879,33 @@ export class UserService {
         this.logger.error(`Error updating password for user: ${userId} - ${err}`);
         throw new Error("Error updating password");
       });
+
+    let CourseLogoURL: string | undefined;
+    let CourseURL: string | undefined;
+
+    if (courseId) {
+      const [course] = await this.database
+        .select({
+          cdn: assets.cdn,
+          key: assets.key,
+          extension: assets.extension,
+          websiteURL: courses.websiteURL
+        })
+        .from(courses)
+        .where(eq(courses.id, courseId))
+        .leftJoin(assets, eq(assets.id, courses.logoId))
+        .execute()
+        .catch((err) => {
+          this.logger.error(err);
+          return [];
+        });
+
+      if (course?.cdn) {
+        CourseLogoURL = `https://${course?.cdn}/${course?.key}.${course?.extension}`;
+        CourseURL = course?.websiteURL || "";
+      }
+    }
+
     if (user?.email) {
       try {
         await this.notificationsService.sendEmailByTemplate(
@@ -833,7 +913,9 @@ export class UserService {
           "Golf District - Password Reset Successful",
           process.env.SENDGRID_TEE_TIMES_PASSWORD_RESET_SUCCESSFUL_TEMPLATE_ID!,
           {
-            CustomerFirstName: user?.handle ?? ""
+            CustomerFirstName: user?.handle ?? "",
+            CourseLogoURL,
+            CourseURL
           },
           []
         );
@@ -1079,17 +1161,17 @@ export class UserService {
     const { user, profileImage, bannerImage } = data;
     const profilePicture = profileImage
       ? assetToURL({
-          key: profileImage.assetKey,
-          cdn: profileImage.assetCdn,
-          extension: profileImage.assetExtension,
-        })
+        key: profileImage.assetKey,
+        cdn: profileImage.assetCdn,
+        extension: profileImage.assetExtension,
+      })
       : "/defaults/default-profile.webp";
     const bannerPicture = bannerImage
       ? assetToURL({
-          key: bannerImage.assetKey,
-          cdn: bannerImage.assetCdn,
-          extension: bannerImage.assetExtension,
-        })
+        key: bannerImage.assetKey,
+        cdn: bannerImage.assetCdn,
+        extension: bannerImage.assetExtension,
+      })
       : "/defaults/default-banner.webp";
     let res;
 
