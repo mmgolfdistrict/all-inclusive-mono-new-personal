@@ -26,6 +26,7 @@ import type { NotificationService } from "../notification/notification.service";
 import type { Customer, ProviderService } from "../tee-sheet-provider/providers.service";
 import type { TokenizeService } from "../token/tokenize.service";
 import type { LoggerService } from "../webhooks/logging.service";
+import type { HyperSwitchService } from "../payment-processor/hyperswitch.service";
 
 interface TeeTimeData {
   courseId: string;
@@ -130,7 +131,8 @@ export class BookingService {
     private readonly tokenizeService: TokenizeService,
     private readonly providerService: ProviderService,
     private readonly notificationService: NotificationService,
-    private readonly loggerService: LoggerService
+    private readonly loggerService: LoggerService,
+    private readonly hyperSwitchService: HyperSwitchService
   ) {}
 
   createCounterOffer = async (userId: string, bookingIds: string[], offerId: string, amount: number) => {
@@ -2311,67 +2313,87 @@ export class BookingService {
     }
 
     console.log(`Retrieving provider and token ${teeTime.internalId}, ${teeTime.courseId}`);
-    const { provider, token } = await this.providerService.getProviderAndKey(
-      teeTime.internalId!,
-      teeTime.courseId
-    );
+    let booking = null
+    let teeProvider = null
+    let teeToken = null
+    try {
+      const { provider, token } = await this.providerService.getProviderAndKey(
+        teeTime.internalId!,
+        teeTime.courseId
+      );
+      teeProvider = provider
+      teeToken = token
 
-    console.log(
-      `Finding or creating customer ${userId}, ${teeTime.courseId}, ${teeTime.providerId}, ${teeTime.providerCourseId}, ${token}`
-    );
-    const providerCustomer = await this.providerService.findOrCreateCustomer(
-      teeTime.courseId,
-      teeTime.providerId ?? "",
-      teeTime.providerCourseId!,
-      userId,
-      provider,
-      token
-    );
-    if (!providerCustomer?.playerNumber) {
-      this.logger.error(`Error creating customer`);
-      throw new Error(`Error creating customer`);
-    }
 
-    const bookedPLayers: { accountNumber: number }[] = [
-      {
-        accountNumber: providerCustomer.playerNumber,
-      },
-    ];
+      console.log(
+        `Finding or creating customer ${userId}, ${teeTime.courseId}, ${teeTime.providerId}, ${teeTime.providerCourseId}, ${token}`
+      );
+      const providerCustomer = await this.providerService.findOrCreateCustomer(
+        teeTime.courseId,
+        teeTime.providerId ?? "",
+        teeTime.providerCourseId!,
+        userId,
+        provider,
+        token
+      );
+      if (!providerCustomer?.playerNumber) {
+        this.logger.error(`Error creating customer`);
+        throw new Error(`Error creating customer`);
+      }
 
-    console.log(
-      `Creating booking ${teeTime.providerDate}, ${teeTime.holes}, ${playerCount}, ${teeTime.providerCourseId}, ${teeTime.providerTeeSheetId}, ${token}`
-    );
-    const booking = await provider
-      .createBooking(token, teeTime.providerCourseId!, teeTime.providerTeeSheetId!, {
-        totalAmountPaid: primaryGreenFeeCharge / 100 + taxCharge - markupCharge,
-        data: {
-          type: "bookings",
-          attributes: {
-            start: teeTime.providerDate,
-            holes: teeTime.holes,
-            players: playerCount,
-            bookedPlayers: bookedPLayers,
-            event_type: "tee_time",
-            details: "GD Booking",
-          },
+      const bookedPLayers: { accountNumber: number }[] = [
+        {
+          accountNumber: providerCustomer.playerNumber,
         },
-      })
-      .catch((err) => {
-        this.logger.error(err);
-        //@TODO this email should be removed
-        this.loggerService.auditLog({
-          id: randomUUID(),
-          userId,
-          teeTimeId,
-          bookingId: "",
-          listingId: "",
-          eventId: "TEE_TIME_BOOKING_FAILED",
-          json: err,
+      ];
+
+      console.log(
+        `Creating booking ${teeTime.providerDate}, ${teeTime.holes}, ${playerCount}, ${teeTime.providerCourseId}, ${teeTime.providerTeeSheetId}, ${token}`
+      );
+       booking = await provider
+        .createBooking(token, teeTime.providerCoursed!, teeTime.providerTeeSheetId!, {
+          totalAmountPaid: primaryGreenFeeCharge / 100 + taxCharge - markupCharge,
+          data: {
+            type: "bookings",
+            attributes: {
+              start: teeTime.providerDate,
+              holes: teeTime.holes,
+              players: playerCount,
+              bookedPlayers: bookedPLayers,
+              event_type: "tee_time",
+              details: "GD Booking",
+            },
+          },
+        })
+        .catch((err) => {
+          this.logger.error(err);
+          //@TODO this email should be removed
+          this.loggerService.auditLog({
+            id: randomUUID(),
+            userId,
+            teeTimeId,
+            bookingId: "",
+            listingId: "",
+            eventId: "TEE_TIME_BOOKING_FAILED",
+            json: err,
+          });
+
+          throw new Error(`Error creating booking`);
         });
-
-        throw new Error(`Error creating booking`);
-      });
-
+    } catch (e) {
+     console.log("BOOKING FAILED ON PROVIDER, INITIATING REFUND FOR PAYMENT_ID", payment_id);
+     this.loggerService.auditLog({
+      id: randomUUID(),
+      userId,
+      teeTimeId,
+      bookingId:"",
+      listingId: "",
+      eventId: "REFUND_INITIATED",
+      json: `{paymentId:${payment_id}}`,
+    });
+     await this.hyperSwitchService.refundPayment(payment_id) 
+     throw('Booking failed on provider')
+    }
     console.log(`Creating tokenized booking`);
     //create tokenized bookings
     const bookingId = await this.tokenizeService
@@ -2383,8 +2405,8 @@ export class BookingService {
         teeTimeId as string,
         paymentId as string,
         true,
-        provider,
-        token,
+        teeProvider,
+        teeToken,
         teeTime,
         {
           cart,

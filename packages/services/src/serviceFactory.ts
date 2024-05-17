@@ -113,7 +113,8 @@ export class ServiceFactory {
       this.getTokenizerService(),
       this.getProviderService(),
       this.getNotificationService(),
-      this.getLoggerService()
+      this.getLoggerService(),
+      this.getHyperSwitchService()
     );
   };
 
