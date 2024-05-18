@@ -624,7 +624,7 @@ const TeeTimeItem = ({
         <div className="flex text-[14px] font-[300]">
           <div className="w-[55px]" />
           <div className="text-prmiary-gray">
-            Sensible guarantee purchased for{" "}
+            Rain protection purchased for{" "}
             <span className="font-semibold text-secondary-black">
               {formatMoney(sensiblePurchasedFor / 100)}
             </span>
