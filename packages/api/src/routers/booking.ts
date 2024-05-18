@@ -258,13 +258,13 @@ export const bookingRouter = createTRPCRouter({
       z.object({
         cartId: z.string(),
         payment_id: z.string(),
-        sensibleQuoteId:z.string(),
+        sensibleQuoteId: z.string(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       return ctx.serviceFactory
         .getBookingService()
-        .reserveBooking(ctx.session.user.id, input.cartId, input.payment_id,input.sensibleQuoteId);
+        .reserveBooking(ctx.session.user.id, input.cartId, input.payment_id, input.sensibleQuoteId);
     }),
   reserveSecondHandBooking: protectedProcedure
     .input(

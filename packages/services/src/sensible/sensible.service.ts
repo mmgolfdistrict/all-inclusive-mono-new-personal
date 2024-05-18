@@ -496,7 +496,7 @@ export class SensibleService extends CacheService {
       }
     }
 
-   fetch(`${this.getEndpoint()}/quote/guarantee/${quoteId}/decline`, {
+    fetch(`${this.getEndpoint()}/quote/guarantee/${quoteId}/decline`, {
       method: "PATCH",
       headers: {
         Accept: "application/json",

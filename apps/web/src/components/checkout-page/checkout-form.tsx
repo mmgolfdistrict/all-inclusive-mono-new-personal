@@ -135,7 +135,7 @@ export const CheckoutForm = ({
     handleSelectedCharityAmount,
     handleRemoveSelectedCharity,
     setReservationData,
-    sensibleData
+    sensibleData,
   } = useCheckoutContext();
 
   const reserveBookingApi = api.teeBox.reserveBooking.useMutation();
@@ -241,7 +241,7 @@ export const CheckoutForm = ({
               bookingResponse = await reserveBookingFirstHand(
                 cartId,
                 response?.payment_id as string,
-                sensibleData?.id ??""
+                sensibleData?.id ?? ""
               );
               setReservationData({
                 golfReservationId: bookingResponse.bookingId,
@@ -295,12 +295,12 @@ export const CheckoutForm = ({
   const reserveBookingFirstHand = async (
     cartId: string,
     payment_id: string,
-    sensibleQuoteId:string
+    sensibleQuoteId: string
   ) => {
     const bookingResponse = await reserveBookingApi.mutateAsync({
       cartId,
       payment_id,
-      sensibleQuoteId
+      sensibleQuoteId,
     });
     return bookingResponse;
   };

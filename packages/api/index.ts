@@ -163,7 +163,7 @@ export const processHyperSwitchWebhook = async (req: any) => {
   );
   const loggerService = new LoggerService();
   const tokenizeService = new TokenizeService(db, notificationService, loggerService, sensibleService);
-  const hyperswitchService = new HyperSwitchService(process.env.HYPERSWITCH_API_KEY ?? "")
+  const hyperswitchService = new HyperSwitchService(process.env.HYPERSWITCH_API_KEY ?? "");
   const credentials = {
     username: process.env.FOREUP_USERNAME!,
     password: process.env.FOREUP_PASSWORD!,

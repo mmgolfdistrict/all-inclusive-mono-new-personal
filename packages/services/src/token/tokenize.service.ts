@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
 import { and, eq, inArray } from "@golf-district/database";
+import { assets } from "@golf-district/database/schema/assets";
 import type { InsertBooking } from "@golf-district/database/schema/bookings";
 import { bookings } from "@golf-district/database/schema/bookings";
 import { bookingslots } from "@golf-district/database/schema/bookingslots";
@@ -22,7 +23,6 @@ import type { SensibleService } from "../sensible/sensible.service";
 import type { ProviderAPI } from "../tee-sheet-provider/sheet-providers";
 import { TeeTime } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
 import { LoggerService } from "../webhooks/logging.service";
-import { assets } from "@golf-district/database/schema/assets";
 
 /**
  * Service class for handling booking tokenization, transfers, and updates.
@@ -442,7 +442,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       PlayerCount: players ?? 0,
       TotalAmount: formatMoney(normalizedCartData.total / 100 ?? 0),
       CourseLogoURL: `https://${existingTeeTime?.cdn}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
-      CourseURL: existingTeeTime?.websiteURL || ""
+      CourseURL: existingTeeTime?.websiteURL || "",
     };
     await this.notificationService.createNotification(
       userId,

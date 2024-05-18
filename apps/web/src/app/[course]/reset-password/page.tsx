@@ -58,7 +58,7 @@ export default function ResetPassword() {
       console.log(error);
       toast.error(
         (error as Error)?.message ??
-        "An error occurred submitting your request."
+          "An error occurred submitting your request."
       );
     }
   };
@@ -153,8 +153,9 @@ export default function ResetPassword() {
               </IconButton>
             </div>
             <FilledButton
-              className={`w-full rounded-full ${resetFn.isLoading ? "animate-pulse cursor-not-allopwed" : ""
-                }`}
+              className={`w-full rounded-full ${
+                resetFn.isLoading ? "animate-pulse cursor-not-allopwed" : ""
+              }`}
               data-testid="submit-button-id"
             >
               {resetFn.isLoading ? "Submitting..." : "Submit"}

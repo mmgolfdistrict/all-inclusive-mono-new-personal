@@ -27,7 +27,7 @@ export const registerSchema = z
     confirmPassword: z.string().min(1, { message: "Password confirmation is required" }),
     redirectHref: z.string().url(),
     ReCAPTCHA: z.string().optional(),
-    courseId: z.string().optional()
+    courseId: z.string().optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     path: ["confirmPassword"],

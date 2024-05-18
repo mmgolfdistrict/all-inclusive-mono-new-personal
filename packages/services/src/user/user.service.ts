@@ -178,7 +178,7 @@ export class UserService {
           cdn: assets.cdn,
           key: assets.key,
           extension: assets.extension,
-          websiteURL: courses.websiteURL
+          websiteURL: courses.websiteURL,
         })
         .from(courses)
         .where(eq(courses.id, courseId))
@@ -205,7 +205,7 @@ export class UserService {
           user?.id
         )}&verificationToken=${encodeURIComponent(verificationToken)}`,
         CourseLogoURL,
-        CourseURL
+        CourseURL,
       },
       []
     );
@@ -421,7 +421,7 @@ export class UserService {
           cdn: assets.cdn,
           key: assets.key,
           extension: assets.extension,
-          websiteURL: courses.websiteURL
+          websiteURL: courses.websiteURL,
         })
         .from(courses)
         .where(eq(courses.id, courseId))
@@ -443,7 +443,7 @@ export class UserService {
           {
             CustomerFirstName: user.handle ?? "",
             CourseLogoURL,
-            CourseURL
+            CourseURL,
           },
           []
         );
@@ -728,7 +728,7 @@ export class UserService {
           cdn: assets.cdn,
           key: assets.key,
           extension: assets.extension,
-          websiteURL: courses.websiteURL
+          websiteURL: courses.websiteURL,
         })
         .from(courses)
         .leftJoin(assets, eq(assets.courseId, courseProviderId))
@@ -777,7 +777,7 @@ export class UserService {
       CustomerFirstName: user.name?.split(" ")[0],
       EMail: user.email,
       CourseLogoURL,
-      CourseURL
+      CourseURL,
     };
 
     if (user.gdPassword) {
@@ -837,7 +837,12 @@ export class UserService {
    * @example
    *   executeForgotPassword('user123id', 'secureverificationtoken', 'newSecurePassword123');
    */
-  executeForgotPassword = async (courseId: string | undefined, userId: string, token: string, newPassword: string): Promise<void> => {
+  executeForgotPassword = async (
+    courseId: string | undefined,
+    userId: string,
+    token: string,
+    newPassword: string
+  ): Promise<void> => {
     this.logger.info(`executeForgotPassword called with userId: ${userId}`);
     if (isValidPassword(newPassword).score < 8) {
       this.logger.warn(`Invalid password format: ${newPassword}`);
@@ -889,7 +894,7 @@ export class UserService {
           cdn: assets.cdn,
           key: assets.key,
           extension: assets.extension,
-          websiteURL: courses.websiteURL
+          websiteURL: courses.websiteURL,
         })
         .from(courses)
         .where(eq(courses.id, courseId))
@@ -915,7 +920,7 @@ export class UserService {
           {
             CustomerFirstName: user?.handle ?? "",
             CourseLogoURL,
-            CourseURL
+            CourseURL,
           },
           []
         );
@@ -1161,17 +1166,17 @@ export class UserService {
     const { user, profileImage, bannerImage } = data;
     const profilePicture = profileImage
       ? assetToURL({
-        key: profileImage.assetKey,
-        cdn: profileImage.assetCdn,
-        extension: profileImage.assetExtension,
-      })
+          key: profileImage.assetKey,
+          cdn: profileImage.assetCdn,
+          extension: profileImage.assetExtension,
+        })
       : "/defaults/default-profile.webp";
     const bannerPicture = bannerImage
       ? assetToURL({
-        key: bannerImage.assetKey,
-        cdn: bannerImage.assetCdn,
-        extension: bannerImage.assetExtension,
-      })
+          key: bannerImage.assetKey,
+          cdn: bannerImage.assetCdn,
+          extension: bannerImage.assetExtension,
+        })
       : "/defaults/default-banner.webp";
     let res;
 

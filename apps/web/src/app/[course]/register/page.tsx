@@ -120,7 +120,7 @@ export default function RegisterPage() {
     try {
       await registerUser.mutateAsync({
         ...data,
-        courseId: course?.id
+        courseId: course?.id,
       });
 
       router.push(`/${course?.id}/verify-email`);
@@ -318,8 +318,9 @@ export default function RegisterPage() {
             )}
 
           <FilledButton
-            className={`w-full rounded-full ${isSubmitting ? "animate-pulse cursor-not-allopwed" : ""
-              }`}
+            className={`w-full rounded-full ${
+              isSubmitting ? "animate-pulse cursor-not-allopwed" : ""
+            }`}
             type="submit"
             disabled={isSubmitting}
             data-testid="register-button-id"

@@ -24,12 +24,13 @@ import { alias } from "drizzle-orm/mysql-core";
 import type { CustomerCart, ProductData } from "../checkout/types";
 import type { NotificationService } from "../notification/notification.service";
 import type { HyperSwitchService } from "../payment-processor/hyperswitch.service";
+import type { SensibleService } from "../sensible/sensible.service";
 import type { Customer, ProviderService } from "../tee-sheet-provider/providers.service";
-import type { TokenizeService } from "../token/tokenize.service";
-import type { LoggerService } from "../webhooks/logging.service";
 import type { ProviderAPI } from "../tee-sheet-provider/sheet-providers";
 import type { BookingResponse } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
-import type { SensibleService } from "../sensible/sensible.service"
+import type { TokenizeService } from "../token/tokenize.service";
+import type { LoggerService } from "../webhooks/logging.service";
+
 interface TeeTimeData {
   courseId: string;
   courseName: string;
@@ -135,7 +136,7 @@ export class BookingService {
     private readonly notificationService: NotificationService,
     private readonly loggerService: LoggerService,
     private readonly hyperSwitchService: HyperSwitchService,
-    private readonly sensibleService: SensibleService,
+    private readonly sensibleService: SensibleService
   ) {}
 
   createCounterOffer = async (userId: string, bookingIds: string[], offerId: string, amount: number) => {
@@ -876,7 +877,6 @@ export class BookingService {
         userId: lists.userId,
         // status: lists.status,
         isDeleted: lists.isDeleted,
-
       })
       .from(lists)
       .where(and(eq(lists.id, listingId), eq(lists.userId, userId)))
@@ -901,7 +901,7 @@ export class BookingService {
     const bookingIds = await this.database
       .select({
         id: bookings.id,
-        courseId: teeTimes.courseId
+        courseId: teeTimes.courseId,
       })
       .from(bookings)
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -2265,7 +2265,7 @@ export class BookingService {
     }
   };
 
-  reserveBooking = async (userId: string, cartId: string, payment_id: string, sensibleQuoteId:string) => {
+  reserveBooking = async (userId: string, cartId: string, payment_id: string, sensibleQuoteId: string) => {
     const {
       cart,
       playerCount,
@@ -2290,10 +2290,10 @@ export class BookingService {
     if (!isValid) {
       throw new Error("Payment Id not is not valid");
     }
-    if(!weatherQuoteId){
-      console.log("Cancel Sensible Quote ID : ",sensibleQuoteId);
-      this.sensibleService.cancelQuote(sensibleQuoteId)
-     }
+    if (!weatherQuoteId) {
+      console.log("Cancel Sensible Quote ID : ", sensibleQuoteId);
+      this.sensibleService.cancelQuote(sensibleQuoteId);
+    }
     const pricePerGolfer = primaryGreenFeeCharge / playerCount;
 
     console.log(`Retrieving tee time from database ${teeTimeId}`);

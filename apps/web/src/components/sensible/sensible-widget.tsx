@@ -86,10 +86,12 @@ export const SensibleWidget = memo(
           "sandbox"
         );
         //@ts-ignore
-        Sensible.createGuaranteeCallback=(quote)=>{
-        
-          setSensibleData({ id: quote.quoteData.id, price:quote.quoteData.pricePerDay });
-        }
+        Sensible.createGuaranteeCallback = (quote) => {
+          setSensibleData({
+            id: quote.quoteData.id,
+            price: quote.quoteData.pricePerDay,
+          });
+        };
         // @ts-ignore
         Sensible.mountComponent({
           coverageStartHourNumber:

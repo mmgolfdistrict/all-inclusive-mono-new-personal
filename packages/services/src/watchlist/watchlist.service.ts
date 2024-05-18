@@ -41,7 +41,7 @@ export class WatchlistService {
    *
    * @param {Db} database - The database instance.
    */
-  constructor(protected readonly database: Db) { }
+  constructor(protected readonly database: Db) {}
 
   /**
    * Toggles a tee time in the user's watchlist.
