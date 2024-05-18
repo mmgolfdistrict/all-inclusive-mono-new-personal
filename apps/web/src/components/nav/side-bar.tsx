@@ -127,7 +127,7 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
               )}
               <NavItem
                 href={`/${courseId}/my-tee-box`}
-                text="Sell Your Tee Time"
+                text="Sell"
                 icon={<Marketplace className="w-[16px]" />}
                 className="border-t border-stroke-secondary p-2 md:p-4"
                 onClick={toggleSidebar}

@@ -158,7 +158,7 @@ export const CourseNav = () => {
             )}
             <NavItem
               href={`/${courseId}/my-tee-box`}
-              text="Sell Your Tee Time"
+              text="Sell"
               icon={<Marketplace className="w-[16px]" />}
               data-testid="sell-your-tee-time-id"
               data-test={courseId}
