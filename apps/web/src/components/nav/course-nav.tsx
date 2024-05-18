@@ -163,6 +163,14 @@ export const CourseNav = () => {
               data-testid="sell-your-tee-time-id"
               data-test={courseId}
             />
+            <NavItem
+              href={`/${courseId}/my-tee-box?section=my-listed-tee-times`}
+              text="My Tee Times"
+              icon={<Marketplace className="w-[16px]" />}
+              data-testid="sell-your-tee-time-id"
+              data-test={courseId}
+            />
+
             {course?.supportsOffers ? (
               <NavItem
                 href={

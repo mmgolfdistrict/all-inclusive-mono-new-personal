@@ -134,6 +134,15 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
                 data-testid="my-tee-box-id"
                 data-test={courseId}
               />
+              <NavItem
+                href={`/${courseId}/my-tee-box?section=my-listed-tee-times`}
+                text="My Tee Times"
+                icon={<Marketplace className="w-[16px]" />}
+                className="border-t border-stroke-secondary p-2 md:p-4"
+                onClick={toggleSidebar}
+                data-testid="my-tee-box-id"
+                data-test={courseId}
+              />
 
               {course?.supportsOffers ? (
                 <NavItem
