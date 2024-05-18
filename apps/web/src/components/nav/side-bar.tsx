@@ -10,9 +10,9 @@ import { Avatar } from "../avatar";
 import { FilledButton } from "../buttons/filled-button";
 import { Auction } from "../icons/auction";
 import { Close } from "../icons/close";
-import { Club } from "../icons/club";
 import { Marketplace } from "../icons/marketplace";
 import { MyOffers } from "../icons/my-offers";
+import { Search } from "../icons/search";
 import { PoweredBy } from "../powered-by";
 import { PathsThatNeedRedirectOnLogout } from "../user/user-in-nav";
 import { NavItem } from "./nav-item";
@@ -107,8 +107,8 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
             <div className="flex flex-col">
               <NavItem
                 href={`/${courseId}`}
-                text="Tee Times"
-                icon={<Club className="w-[16px]" />}
+                text="Find"
+                icon={<Search className="w-[16px]" />}
                 className="border-t border-stroke-secondary p-2 md:p-4"
                 onClick={toggleSidebar}
                 data-testid="tee-time-course-id"

@@ -11,10 +11,10 @@ import { useEffect, useState } from "react";
 import { useMediaQuery } from "usehooks-ts";
 import { FilledButton } from "../buttons/filled-button";
 import { Auction } from "../icons/auction";
-import { Club } from "../icons/club";
 import { Hamburger } from "../icons/hamburger";
 import { Marketplace } from "../icons/marketplace";
 import { MyOffers } from "../icons/my-offers";
+import { Search } from "../icons/search";
 import { BlurImage } from "../images/blur-image";
 import { PoweredBy } from "../powered-by";
 import { UserInNav } from "../user/user-in-nav";
@@ -142,8 +142,8 @@ export const CourseNav = () => {
           <div className="flex justify-between gap-4 md:gap-8">
             <NavItem
               href={`/${courseId}`}
-              text="Tee Times"
-              icon={<Club className="w-[16px]" />}
+              text="Find"
+              icon={<Search className="w-[16px]" />}
               data-testid="tee-time-id"
               data-test={courseId}
             />
