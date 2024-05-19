@@ -415,7 +415,7 @@ export const CheckoutForm = ({
           </div>
         </div>
         <div className="flex justify-between">
-          <div>Taxes & Others</div>
+          <div>Taxes & Fees</div>
           <div>
             $
             {(
