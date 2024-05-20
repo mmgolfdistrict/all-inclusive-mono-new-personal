@@ -6,6 +6,7 @@ import { api } from "~/utils/api";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { type Dispatch, type SetStateAction } from "react";
+
 import { Avatar } from "../avatar";
 import { FilledButton } from "../buttons/filled-button";
 import { Auction } from "../icons/auction";
@@ -16,6 +17,7 @@ import { Search } from "../icons/search";
 import { PoweredBy } from "../powered-by";
 import { PathsThatNeedRedirectOnLogout } from "../user/user-in-nav";
 import { NavItem } from "./nav-item";
+import { Calendar } from "../icons/calendar";
 
 type SideBarProps = {
   isSideBarOpen: boolean;
@@ -137,7 +139,7 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
               <NavItem
                 href={`/${courseId}/my-tee-box?section=my-listed-tee-times`}
                 text="My Tee Times"
-                icon={<Marketplace className="w-[16px]" />}
+                icon={<Calendar className="w-[16px]" />}
                 className="border-t border-stroke-secondary p-2 md:p-4"
                 onClick={toggleSidebar}
                 data-testid="my-tee-box-id"
