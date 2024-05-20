@@ -744,15 +744,16 @@ export class HyperSwitchWebhookService {
 
     if (!buyerCustomer?.playerNumber) {
       this.logger.error(`Error creating or finding customer`);
-      this.loggerService.auditLog({
-        id: randomUUID(),
-        userId: customer_id,
-        teeTimeId: firstBooking?.teeTimeId,
-        bookingId: bookingsIds?.id ?? "",
-        listingId,
-        eventId: "ERROR_CREATING_CUSTOMER",
-        json: "Error creating or finding customer",
-      });
+      this.loggerService.errorLog({
+        applicationName:"golfdistrict-foreup",
+        clientIP: "",
+        userId:customer_id,
+        url: "/handleSecondHandItem",
+        userAgent: "",
+        message: "Error creating customer",
+        stackTrace: "",
+        additionalDetailsJSON:"Error creating customer"
+      })
       throw new Error(`Error creating or finding customer`);
     }
 
@@ -788,15 +789,16 @@ export class HyperSwitchWebhookService {
       )
       .catch((err) => {
         this.logger.error(`Error deleting booking: ${err}`);
-        this.loggerService.auditLog({
-          id: randomUUID(),
-          userId: firstBooking.ownerId,
-          teeTimeId: firstBooking?.teeTimeId,
-          bookingId: bookingsIds?.id ?? "",
-          listingId,
-          eventId: "ERROR_DELETING_TEETIME",
-          json: "Error deleting booking",
-        });
+        this.loggerService.errorLog({
+          applicationName:"golfdistrict-foreup",
+          clientIP: "",
+          userId:firstBooking.ownerId,
+          url: "/handleSecondHandItem",
+          userAgent: "",
+          message: "Error deleting booking ",
+          stackTrace: "",
+          additionalDetailsJSON:"ERROR DELETING BOOKING GOLFDISTRICT"
+        })
         throw new Error(`Error deleting booking`);
       });
 
@@ -861,15 +863,16 @@ export class HyperSwitchWebhookService {
       }
     } catch (err) {
       this.logger.error(`Error creating booking: ${err}`);
-      this.loggerService.auditLog({
-        id: randomUUID(),
-        userId: customer_id,
-        teeTimeId: firstBooking?.teeTimeId,
-        bookingId: bookingsIds?.id ?? "",
-        listingId,
-        eventId: "TEE_TIME_BOOKING_FAILED",
-        json: "Error booking tee time",
-      });
+      this.loggerService.errorLog({
+        applicationName:"golfdistrict-foreup",
+        clientIP: "",
+        userId:customer_id,
+        url: "/handleSecondHandItem",
+        userAgent: "",
+        message: "Error booking tee time",
+        stackTrace: "",
+        additionalDetailsJSON:"TEE_TIME_BOOKING_FAILED"
+      })
     }
     const [existingTeeTime] = await this.database
       .select({
