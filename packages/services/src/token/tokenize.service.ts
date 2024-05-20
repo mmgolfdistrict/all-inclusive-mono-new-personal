@@ -139,6 +139,7 @@ export class TokenizeService {
    *   - There are issues interacting with the underlying data store (Prisma).
    */
   async tokenizeBooking(
+    redirectHref: string,
     userId: string,
     purchasePrice: number,
     players: number, //how many bookings to make
@@ -443,6 +444,8 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       TotalAmount: formatMoney(normalizedCartData.total / 100 ?? 0),
       CourseLogoURL: `https://${existingTeeTime?.cdn}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
       CourseURL: existingTeeTime?.websiteURL || "",
+      SellTeeTImeURL: `${redirectHref}/my-tee-box`,
+      ManageTeeTimesURL: `${redirectHref}/my-tee-box`,
     };
     await this.notificationService.createNotification(
       userId,

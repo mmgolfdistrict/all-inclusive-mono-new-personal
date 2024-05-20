@@ -2252,7 +2252,7 @@ export class BookingService {
     return true;
   };
 
-  sendMessageToVerifyPayment = async (paymentId: string, customer_id: string, bookingId: string) => {
+  sendMessageToVerifyPayment = async (paymentId: string, customer_id: string, bookingId: string, redirectHref: string) => {
     const myHeaders = new Headers();
     myHeaders.append("Authorization", `Bearer ${process.env.QSTASH_TOKEN}`);
     myHeaders.append("Content-Type", "application/json");
@@ -2262,12 +2262,14 @@ export class BookingService {
         paymentId,
         customer_id,
         bookingId,
+        redirectHref
       },
     });
     console.log("Sending message to payment queue", {
       paymentId,
       customer_id,
       bookingId,
+      redirectHref,
       url: `https://qstash.upstash.io/v2/publish/${process.env.QSTASH_PAYMENT_TOPIC}`,
     });
     const requestOptions: RequestOptions = {
@@ -2288,7 +2290,7 @@ export class BookingService {
     }
   };
 
-  reserveBooking = async (userId: string, cartId: string, payment_id: string, sensibleQuoteId: string) => {
+  reserveBooking = async (userId: string, cartId: string, payment_id: string, sensibleQuoteId: string, redirectHref: string) => {
     const {
       cart,
       playerCount,
@@ -2441,6 +2443,7 @@ export class BookingService {
     //create tokenized bookings
     const bookingId = await this.tokenizeService
       .tokenizeBooking(
+        redirectHref,
         userId,
         pricePerGolfer,
         playerCount as number,
@@ -2487,7 +2490,19 @@ export class BookingService {
         });
         throw new Error(`Error creating booking`);
       });
-    await this.sendMessageToVerifyPayment(paymentId as string, userId, bookingId);
+
+    await this.sendMessageToVerifyPayment(paymentId as string, userId, bookingId, redirectHref);
+
+    this.loggerService.auditLog({
+      id: randomUUID(),
+      userId,
+      teeTimeId,
+      bookingId,
+      listingId: "",
+      eventId: "TEE_TIME_BOOKED",
+      json: "tee time booked",
+    });
+
     return {
       bookingId,
       providerBookingId: booking.data.id,
@@ -2560,7 +2575,7 @@ export class BookingService {
       });
     }
   };
-  reserveSecondHandBooking = async (userId = "", cartId = "", listingId = "", payment_id = "") => {
+  reserveSecondHandBooking = async (userId = "", cartId = "", listingId = "", payment_id = "", redirectHref = "") => {
     const {
       cart,
       playerCount,
@@ -2679,7 +2694,7 @@ export class BookingService {
           this.logger.error(err);
         });
     });
-    await this.sendMessageToVerifyPayment(payment_id, userId, bookingId);
+    await this.sendMessageToVerifyPayment(payment_id, userId, bookingId, redirectHref);
 
     this.loggerService.auditLog({
       id: randomUUID(),
