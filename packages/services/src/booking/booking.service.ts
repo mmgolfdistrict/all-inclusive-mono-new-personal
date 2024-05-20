@@ -30,6 +30,7 @@ import type { ProviderAPI } from "../tee-sheet-provider/sheet-providers";
 import type { BookingResponse } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
 import type { TokenizeService } from "../token/tokenize.service";
 import type { LoggerService } from "../webhooks/logging.service";
+import { appSettingService } from "../app-settings/initialized";
 
 interface TeeTimeData {
   courseId: string;
@@ -2393,6 +2394,18 @@ export class BookingService {
       console.log(
         `Creating booking ${teeTime.providerDate}, ${teeTime.holes}, ${playerCount}, ${teeTime.providerCourseId}, ${teeTime.providerTeeSheetId}, ${token}`
       );
+      let details = "GD Booking"
+      try{
+        const isSensibleNoteAvailable = await appSettingService.get(
+          "SENSIBLE_NOTE_TO_TEE_SHEET"
+        );
+        if(weatherQuoteId && isSensibleNoteAvailable){
+          details =`${details}: ${isSensibleNoteAvailable}`
+        }
+      }
+      catch(e){
+        console.log("ERROR in getting appsetting SENSIBLE_NOTE_TO_TEE_SHEET");
+      }
       booking = await provider
         .createBooking(token, teeTime.providerCourseId!, teeTime.providerTeeSheetId!, {
           totalAmountPaid: primaryGreenFeeCharge / 100 + taxCharge - markupCharge,
@@ -2404,7 +2417,7 @@ export class BookingService {
               players: playerCount,
               bookedPlayers: bookedPLayers,
               event_type: "tee_time",
-              details: "GD Booking",
+              details,
             },
           },
         })

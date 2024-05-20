@@ -47,6 +47,8 @@ import type { BookingResponse } from "../tee-sheet-provider/sheet-providers/type
 import type { TokenizeService } from "../token/tokenize.service";
 import type { LoggerService } from "./logging.service";
 import type { HyperSwitchEvent } from "./types/hyperswitch";
+import { appSettingService } from "../app-settings/initialized";
+import type { HyperSwitchService } from "../payment-processor/hyperswitch.service";
 
 /**
  * `HyperSwitchWebhookService` - A service for processing webhooks from HyperSwitch.
@@ -79,7 +81,8 @@ export class HyperSwitchWebhookService {
     private readonly bookingService: BookingService,
     private readonly sensibleService: SensibleService,
     private readonly loggerService: LoggerService,
-    upStashClientToken: string
+    upStashClientToken: string,
+    private readonly hyperSwitchService: HyperSwitchService,
   ) {
     this.qStashClient = new Client({
       token: upStashClientToken,
@@ -803,8 +806,61 @@ export class HyperSwitchWebhookService {
       });
 
     const newBookings: BookingResponse[] = [];
+    const [existingTeeTime] = await this.database
+      .select({
+        id: teeTimes.id,
+        // entityId: teeTimes.entityId,
+        entityId: courses.entityId,
+        date: teeTimes.date,
+        courseId: teeTimes.courseId,
+        numberOfHoles: teeTimes.numberOfHoles,
+        availableFirstHandSpots: teeTimes.availableFirstHandSpots,
+        availableSecondHandSpots: teeTimes.availableSecondHandSpots,
+        greenFee: teeTimes.greenFeePerPlayer,
+        courseName: courses.name,
+        entityName: entities.name,
+        cdn: assets.cdn,
+        cdnKey: assets.key,
+        extension: assets.extension,
+        buyerFee: courses.buyerFee,
+        sellerFee: courses.sellerFee,
+        providerDate: teeTimes.providerDate,
+        address: courses.address,
+        websiteURL: courses.websiteURL,
+      })
+      .from(teeTimes)
+      .where(eq(teeTimes.id, firstBooking.teeTimeId))
+      .leftJoin(courses, eq(courses.id, teeTimes.courseId))
+      .leftJoin(entities, eq(courses.entityId, entities.id))
+      .leftJoin(assets, eq(assets.id, courses.logoId))
+      .execute()
+      .catch((err) => {
+        this.logger.error(err);
+        return [];
+      });
+
+    const { taxes, sensibleCharge, charityCharge, taxCharge, total, cartId, charityId, weatherQuoteId } =
+      await this.getCartData({
+        courseId: existingTeeTime?.courseId,
+        ownerId: customer_id,
+        paymentId,
+      });
     try {
-      const newBooking = await provider.createBooking(
+      let details = "GD Booking"
+      try{
+        const isSensibleNoteAvailable = await appSettingService.get(
+          "SENSIBLE_NOTE_TO_TEE_SHEET"
+        );
+        if(weatherQuoteId && isSensibleNoteAvailable){
+          details =`${details}: ${isSensibleNoteAvailable}`
+        }
+      }
+      catch(e){
+        console.log("ERROR in getting appsetting SENSIBLE_NOTE_TO_TEE_SHEET");
+      }
+      let newBooking: BookingResponse | null = null;
+    try{
+       newBooking = await provider.createBooking(
         token,
         firstBooking.providerCourseId!,
         firstBooking.providerTeeSheetId!,
@@ -821,11 +877,27 @@ export class HyperSwitchWebhookService {
                 },
               ],
               event_type: "tee_time",
-              details: "GD Booking",
+              details
             },
           },
         }
       );
+    }
+    catch(e){
+       console.log("BOOKING FAILED ON PROVIDER, INITIATING REFUND FOR PAYMENT_ID", paymentId);
+       this.loggerService.auditLog({
+        id: randomUUID(),
+        userId,
+        teeTimeId,
+        bookingId: "",
+        listingId: "",
+        eventId: "REFUND_INITIATED",
+        json: `{paymentId:${paymentId}}`,
+      });
+      await this.hyperSwitchService.refundPayment(paymentId);
+      throw "Booking failed on provider";
+    }
+    
       newBooking.data.purchasedFor = golferPrice / (listedSlotsCount || 1) / 100;
       newBooking.data.ownerId = customer_id;
       newBooking.data.name = buyerCustomer.name || "";
@@ -874,48 +946,11 @@ export class HyperSwitchWebhookService {
         additionalDetailsJSON:"TEE_TIME_BOOKING_FAILED"
       })
     }
-    const [existingTeeTime] = await this.database
-      .select({
-        id: teeTimes.id,
-        // entityId: teeTimes.entityId,
-        entityId: courses.entityId,
-        date: teeTimes.date,
-        courseId: teeTimes.courseId,
-        numberOfHoles: teeTimes.numberOfHoles,
-        availableFirstHandSpots: teeTimes.availableFirstHandSpots,
-        availableSecondHandSpots: teeTimes.availableSecondHandSpots,
-        greenFee: teeTimes.greenFeePerPlayer,
-        courseName: courses.name,
-        entityName: entities.name,
-        cdn: assets.cdn,
-        cdnKey: assets.key,
-        extension: assets.extension,
-        buyerFee: courses.buyerFee,
-        sellerFee: courses.sellerFee,
-        providerDate: teeTimes.providerDate,
-        address: courses.address,
-        websiteURL: courses.websiteURL,
-      })
-      .from(teeTimes)
-      .where(eq(teeTimes.id, firstBooking.teeTimeId))
-      .leftJoin(courses, eq(courses.id, teeTimes.courseId))
-      .leftJoin(entities, eq(courses.entityId, entities.id))
-      .leftJoin(assets, eq(assets.id, courses.logoId))
-      .execute()
-      .catch((err) => {
-        this.logger.error(err);
-        return [];
-      });
-
+    
     const buyerFee = (existingTeeTime?.buyerFee ?? 1) / 100;
     const sellerFee = (existingTeeTime?.sellerFee ?? 1) / 100;
 
-    const { taxes, sensibleCharge, charityCharge, taxCharge, total, cartId, charityId, weatherQuoteId } =
-      await this.getCartData({
-        courseId: existingTeeTime?.courseId,
-        ownerId: customer_id,
-        paymentId,
-      });
+    
 
     for (const booking of newBookings) {
       const newBooking = booking;
