@@ -376,6 +376,16 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving tee time history: ${err}`);
+        this.loggerService.errorLog({
+          applicationName: "golfdistrict-foreup",
+          clientIP: "",
+          userId: "",
+          url: "/getTeeTimeHistory",
+          userAgent: "",
+          message: "ERROR_RETRIEVING_TEE_TIME_HISTORY",
+          stackTrace: "",
+          additionalDetailsJSON: "Error retrieving tee time history",
+        });
         throw new Error("Error retrieving tee time history");
       });
     if (!data.length) {
@@ -421,6 +431,16 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving bookings: ${err}`);
+        this.loggerService.errorLog({
+          applicationName: "golfdistrict-foreup",
+          clientIP: "",
+          userId,
+          url: "/getOwnedBookingsForTeeTime",
+          userAgent: "",
+          message: "ERROR_GETTING_OWNED_BOOKING",
+          stackTrace: "",
+          additionalDetailsJSON: "error getting owned booking",
+        });
         throw new Error("Error retrieving bookings");
       });
     if (!data.length) {
@@ -504,6 +524,16 @@ export class BookingService {
       .execute();
     if (!data.length) {
       this.logger.info(`No tee times found for user: ${userId}`);
+      this.loggerService.errorLog({
+        applicationName: "golfdistrict-foreup",
+        clientIP: "",
+        userId,
+        url: "/getOwnedTeeTimes",
+        userAgent: "",
+        message: "Error_FINDING_TEE_TIME ",
+        stackTrace: "",
+        additionalDetailsJSON: `No tee times found for user: ${userId}`,
+      });
       return [];
     }
     const combinedData: Record<string, OwnedTeeTimeData> = {};
@@ -695,14 +725,15 @@ export class BookingService {
     this.logger.info(`createListingForBookings called with userId: ${userId}`);
     if (new Date().getTime() >= endTime.getTime()) {
       this.logger.warn("End time cannot be before current time");
-      this.loggerService.auditLog({
-        id: randomUUID(),
+      this.loggerService.errorLog({
+        applicationName: "golfdistrict-foreup",
+        clientIP: "",
         userId,
-        teeTimeId: "",
-        bookingId: "",
-        listingId: "",
-        eventId: "TEE_TIME_LISTED_FAILED",
-        json: "End time cannot be before current time.",
+        url: "/createListingForBookings",
+        userAgent: "",
+        message: "TEE_TIME_LISTED_FAILED",
+        stackTrace: "",
+        additionalDetailsJSON: "End time cannot be before current time.",
       });
       throw new Error("End time cannot be before current time");
     }
@@ -730,47 +761,40 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving bookings: ${err}`);
-        this.loggerService.auditLog({
-          id: randomUUID(),
-          userId,
-          teeTimeId: "",
-          bookingId: "",
-          listingId: "",
-          eventId: "TEE_TIME_LISTED_FAILED",
-          json: "Error retrieving bookings.",
-        });
         throw new Error("Error retrieving bookings");
       });
     if (!ownedBookings.length) {
       this.logger.debug(`Owned bookings: ${JSON.stringify(ownedBookings)}`);
       this.logger.warn(`User ${userId} does not own  specified bookings.`);
-      this.loggerService.auditLog({
-        id: randomUUID(),
-        userId,
-        teeTimeId: "",
-        bookingId: "",
-        listingId: "",
-        eventId: "TEE_TIME_LISTED_FAILED",
-        json: "User does not  own specified bookings.",
-      });
       throw new Error("User does not  own specified bookings.");
     }
     if (ownedBookings.length > 4) {
       this.logger.warn(`Cannot list more than 4 bookings.`);
-      this.loggerService.auditLog({
-        id: randomUUID(),
+      this.loggerService.errorLog({
+        applicationName: "golfdistrict-foreup",
+        clientIP: "",
         userId,
-        teeTimeId: "",
-        bookingId: "",
-        listingId: "",
-        eventId: "TEE_TIME_LISTED_FAILED",
-        json: "Cannot list more than 4 bookings.",
+        url: "/createListingForBookings",
+        userAgent: "",
+        message: "TEE_TIME_LISTED_FAILED",
+        stackTrace: "",
+        additionalDetailsJSON: "Cannot list more than 4 bookings.",
       });
       throw new Error("Cannot list more than 4 bookings.");
     }
     for (const booking of ownedBookings) {
       if (booking.isListed) {
         this.logger.warn(`Booking ${booking.id} is already listed.`);
+        this.loggerService.errorLog({
+          applicationName: "golfdistrict-foreup",
+          clientIP: "",
+          userId,
+          url: "/createListingForBookings",
+          userAgent: "",
+          message: "TEE_TIME_LISTED_FAILED",
+          stackTrace: "",
+          additionalDetailsJSON: "One or more bookings from this tee time is already listed",
+        });
         throw new Error(`One or more bookings from this tee time is already listed.`);
       }
     }
@@ -843,17 +867,6 @@ export class BookingService {
       `Listing creation successful`,
       courseId
     );
-
-    this.loggerService.auditLog({
-      id: randomUUID(),
-      userId,
-      teeTimeId: "",
-      bookingId: "",
-      listingId: "",
-      eventId: "TEE_TIME_LISTED",
-      json: "TEE_TIME_LISTED",
-    });
-
     return { success: true, body: { listingId: toCreate.id }, message: "Listings created successfully." };
   };
 
@@ -884,6 +897,16 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving listing: ${err}`);
+        this.loggerService.errorLog({
+          applicationName: "golfdistrict-foreup",
+          clientIP: "",
+          userId,
+          url: "/cancelListing",
+          userAgent: "",
+          message: "TEE_TIME_CANCELLED",
+          stackTrace: "",
+          additionalDetailsJSON: "Error retrieving listing.",
+        });
         throw new Error("Error retrieving listing");
       });
     if (!listing) {
@@ -2454,8 +2477,20 @@ export class BookingService {
           "An error occurred while creating booking with provider",
           teeTime.courseId
         );
+        this.loggerService.errorLog({
+          applicationName: "golfdistrict-foreup",
+          //Commenting out the below code and setting empty string as this line was giving an error and Manish is out today.
+          clientIP: "", // ip,
+          userId: userId,
+          url: "/handleSecondHandItem",
+          userAgent: "",
+          message: "Error booking tee time golf district",
+          stackTrace: "",
+          additionalDetailsJSON: "ERROR CREATING BOOKING GOLFDISTRICT",
+        });
         throw new Error(`Error creating booking`);
       });
+
     await this.sendMessageToVerifyPayment(paymentId as string, userId, bookingId, redirectHref);
 
     this.loggerService.auditLog({
