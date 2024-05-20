@@ -154,7 +154,7 @@ export class HyperSwitchWebhookService {
     return { paymentStatus: paymentData.status, amountReceived: paymentData.amount_received };
   };
 
-  processPayment = async (paymentId: string, customer_id: string, bookingId: string) => {
+  processPayment = async (paymentId: string, customer_id: string, bookingId: string, redirectHref: string) => {
     const { paymentStatus, amountReceived } = (await this.checkPaymentStatus(paymentId)) as {
       paymentStatus: string;
       amountReceived: number;
@@ -170,7 +170,7 @@ export class HyperSwitchWebhookService {
     const customerCart = await this.getCustomerCartData(paymentId);
 
     if (paymentStatus === "succeeded") {
-      await this.paymentSuccessHandler(customerCart, amountReceived, paymentId, customer_id);
+      await this.paymentSuccessHandler(customerCart, amountReceived, paymentId, customer_id, redirectHref);
       return {
         status: "success",
         erroe: false,
@@ -257,7 +257,8 @@ export class HyperSwitchWebhookService {
     customerCart: CustomerCart,
     amountReceived: number,
     paymentId: string,
-    customer_id: string
+    customer_id: string,
+    redirectHref: string
   ) => {
     console.log("paymentSuccessHandler");
     console.log(customerCart);
@@ -284,7 +285,8 @@ export class HyperSwitchWebhookService {
             amountReceived,
             customer_id,
             paymentId,
-            item.price
+            item.price,
+            redirectHref
           );
           break;
         case "offer":
@@ -316,7 +318,8 @@ export class HyperSwitchWebhookService {
     item: FirstHandProduct,
     amountReceived: number,
     customer_id: string,
-    paymentId: string
+    paymentId: string,
+    redirectHref: string
   ) => {
     const [teeTime] = await this.database
       .select({
@@ -448,6 +451,7 @@ export class HyperSwitchWebhookService {
     //create tokenized bookings
     await this.tokenizeService
       .tokenizeBooking(
+        redirectHref,
         customer_id,
         pricePerBooking,
         item.product_data.metadata.number_of_bookings,
@@ -573,7 +577,8 @@ export class HyperSwitchWebhookService {
     amountReceived: number,
     customer_id: string,
     paymentId: string,
-    golferPrice: number
+    golferPrice: number,
+    redirectHref: string
   ) => {
     const listingId = item.product_data.metadata.second_hand_id;
     const listedSlots = await this.database
@@ -1053,10 +1058,10 @@ export class HyperSwitchWebhookService {
         PlayDateTime:
           dayjs(existingTeeTime?.providerDate).utcOffset("-06:00").format("MM/DD/YYYY h:mm A") || "-",
         NumberOfHoles: existingTeeTime?.numberOfHoles,
-        SellTeeTImeURL: `${process.env.APP_URL}/my-tee-box`,
-        ManageTeeTimesURL: `${process.env.APP_URL}/my-tee-box`,
+        SellTeeTImeURL: `${redirectHref}/my-tee-box`,
+        ManageTeeTimesURL: `${redirectHref}/my-tee-box`,
         GolfDistrictReservationID: bookingId,
-        CourseReservationID: newBooking?.data.id,
+        CourseReservationID: newBooking?.data.id
       };
 
       if (newBooking.data.bookingType == "FIRST") {
@@ -1081,7 +1086,7 @@ export class HyperSwitchWebhookService {
           SensibleWeatherIncluded: sensibleCharge ? "Yes" : "No",
           PurchasedFrom: sellerCustomer.username,
           PlayerCount: listedSlotsCount ?? 0,
-          TotalAmount: formatMoney(total / 100),
+          TotalAmount: formatMoney(total / 100)
         };
 
         await this.notificationService.createNotification(
