@@ -157,7 +157,12 @@ export class HyperSwitchWebhookService {
     return { paymentStatus: paymentData.status, amountReceived: paymentData.amount_received };
   };
 
-  processPayment = async (paymentId: string, customer_id: string, bookingId: string, redirectHref: string) => {
+  processPayment = async (
+    paymentId: string,
+    customer_id: string,
+    bookingId: string,
+    redirectHref: string
+  ) => {
     const { paymentStatus, amountReceived } = (await this.checkPaymentStatus(paymentId)) as {
       paymentStatus: string;
       amountReceived: number;
@@ -561,6 +566,11 @@ export class HyperSwitchWebhookService {
     result.setDate(result.getDate() + days);
     return result;
   };
+  addMinutes = (date: Date, minutes: number) => {
+    const result = new Date(date);
+    result.setMinutes(result.getMinutes() + minutes);
+    return result;
+  };
 
   formatCurrentDateTime = (date: Date) => {
     const currentDate = date;
@@ -885,7 +895,6 @@ export class HyperSwitchWebhookService {
           }
         );
       } catch (e) {
-      
         await this.hyperSwitchService.refundPayment(paymentId);
         throw "Booking failed on provider";
       }
@@ -1084,7 +1093,7 @@ export class HyperSwitchWebhookService {
         SellTeeTImeURL: `${redirectHref}/my-tee-box`,
         ManageTeeTimesURL: `${redirectHref}/my-tee-box`,
         GolfDistrictReservationID: bookingId,
-        CourseReservationID: newBooking?.data.id
+        CourseReservationID: newBooking?.data.id,
       };
 
       if (newBooking.data.bookingType == "FIRST") {
@@ -1109,7 +1118,7 @@ export class HyperSwitchWebhookService {
           SensibleWeatherIncluded: sensibleCharge ? "Yes" : "No",
           PurchasedFrom: sellerCustomer.username,
           PlayerCount: listedSlotsCount ?? 0,
-          TotalAmount: formatMoney(total / 100)
+          TotalAmount: formatMoney(total / 100),
         };
 
         await this.notificationService.createNotification(
@@ -1199,7 +1208,8 @@ export class HyperSwitchWebhookService {
     const serviceCharge = amount * sellerFee;
     const payable = (amount - serviceCharge) * (listedSlotsCount || 1);
     const currentDate = new Date();
-    const redeemAfterDate = this.addDays(currentDate, 7);
+    const radeemAfterMinutes = await appSettingService.get("CASH_OUT_AFTER_MINUTES");
+    const redeemAfterDate = this.addMinutes(currentDate, Number(radeemAfterMinutes));
     const customerRecievableData = [
       {
         id: randomUUID(),
