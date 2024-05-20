@@ -9,6 +9,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useMediaQuery } from "usehooks-ts";
+
 import { FilledButton } from "../buttons/filled-button";
 import { Auction } from "../icons/auction";
 import { Hamburger } from "../icons/hamburger";
@@ -20,6 +21,7 @@ import { PoweredBy } from "../powered-by";
 import { UserInNav } from "../user/user-in-nav";
 import { NavItem } from "./nav-item";
 import { SideBar } from "./side-bar";
+import { Calendar } from "../icons/calendar";
 
 export const CourseNav = () => {
   const { user } = useUserContext();
@@ -166,7 +168,7 @@ export const CourseNav = () => {
             <NavItem
               href={`/${courseId}/my-tee-box?section=my-listed-tee-times`}
               text="My Tee Times"
-              icon={<Marketplace className="w-[16px]" />}
+              icon={<Calendar className="w-[16px]" />}
               data-testid="sell-your-tee-time-id"
               data-test={courseId}
             />
