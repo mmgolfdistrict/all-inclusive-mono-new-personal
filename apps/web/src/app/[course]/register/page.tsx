@@ -118,7 +118,10 @@ export default function RegisterPage() {
     if (registerUser.isLoading) return;
     if (registerUser.isSuccess) return;
     try {
-      await registerUser.mutateAsync(data);
+      await registerUser.mutateAsync({
+        ...data,
+        courseId: course?.id,
+      });
 
       router.push(`/${course?.id}/verify-email`);
     } catch (error) {

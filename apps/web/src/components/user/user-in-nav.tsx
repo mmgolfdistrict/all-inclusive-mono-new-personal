@@ -1,4 +1,4 @@
-import { signOut } from "@golf-district/auth/nextjs-exports";
+import { signOut, useSession } from "@golf-district/auth/nextjs-exports";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
@@ -22,6 +22,7 @@ export const UserInNav = ({ alwaysShow }: { alwaysShow?: boolean }) => {
   const courseId = course?.id;
   const pathname = usePathname();
   const router = useRouter();
+  const session = useSession();
 
   const { data: imageUrl } = api.image.getAssetUrl.useQuery(
     { assetId: user?.image ?? "" },
@@ -47,6 +48,11 @@ export const UserInNav = ({ alwaysShow }: { alwaysShow?: boolean }) => {
 
   const logOutUser = async () => {
     void logAudit();
+    localStorage.clear();
+    sessionStorage.clear();
+    session.data = null;
+    session.status = "unauthenticated";
+    await session.update(null);
     if (PathsThatNeedRedirectOnLogout.some((i) => pathname.includes(i))) {
       const data = await signOut({
         callbackUrl: `/${courseId}`,

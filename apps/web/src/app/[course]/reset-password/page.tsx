@@ -53,7 +53,7 @@ export default function ResetPassword() {
     if (resetFn.isSuccess) return;
     if (resetFn.isLoading) return;
     try {
-      await resetFn.mutateAsync(data);
+      await resetFn.mutateAsync({ ...data, courseId: course?.id });
     } catch (error) {
       console.log(error);
       toast.error(

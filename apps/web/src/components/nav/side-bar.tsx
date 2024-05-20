@@ -10,9 +10,9 @@ import { Avatar } from "../avatar";
 import { FilledButton } from "../buttons/filled-button";
 import { Auction } from "../icons/auction";
 import { Close } from "../icons/close";
-import { Club } from "../icons/club";
 import { Marketplace } from "../icons/marketplace";
 import { MyOffers } from "../icons/my-offers";
+import { Search } from "../icons/search";
 import { PoweredBy } from "../powered-by";
 import { PathsThatNeedRedirectOnLogout } from "../user/user-in-nav";
 import { NavItem } from "./nav-item";
@@ -107,8 +107,8 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
             <div className="flex flex-col">
               <NavItem
                 href={`/${courseId}`}
-                text="Tee Times"
-                icon={<Club className="w-[16px]" />}
+                text="Find"
+                icon={<Search className="w-[16px]" />}
                 className="border-t border-stroke-secondary p-2 md:p-4"
                 onClick={toggleSidebar}
                 data-testid="tee-time-course-id"
@@ -127,7 +127,16 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
               )}
               <NavItem
                 href={`/${courseId}/my-tee-box`}
-                text="Sell Your Tee Time"
+                text="Sell"
+                icon={<Marketplace className="w-[16px]" />}
+                className="border-t border-stroke-secondary p-2 md:p-4"
+                onClick={toggleSidebar}
+                data-testid="my-tee-box-id"
+                data-test={courseId}
+              />
+              <NavItem
+                href={`/${courseId}/my-tee-box?section=my-listed-tee-times`}
+                text="My Tee Times"
                 icon={<Marketplace className="w-[16px]" />}
                 className="border-t border-stroke-secondary p-2 md:p-4"
                 onClick={toggleSidebar}
@@ -135,30 +144,32 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
                 data-test={courseId}
               />
 
-              <NavItem
-                href={
-                  user && status === "authenticated"
-                    ? `/${courseId}/my-tee-box?section=offers-received`
-                    : `/${courseId}/login`
-                }
-                text="My Offers"
-                onClick={() => {
-                  toggleSidebar();
-                }}
-                icon={
-                  <div className="relative">
-                    <MyOffers className="w-[20px]" />
-                    {unreadOffers && unreadOffers > 0 ? (
-                      <div className="absolute -right-3.5 -top-2 flex h-5 w-5 min-w-fit select-none items-center justify-center rounded-full border-2 border-white bg-alert-red p-1 text-[10px] font-semibold text-white">
-                        {unreadOffers}
-                      </div>
-                    ) : null}
-                  </div>
-                }
-                className="border-b border-t border-stroke-secondary p-2 md:p-4"
-                data-testid="my-offer-id"
-                data-test={courseId}
-              />
+              {course?.supportsOffers ? (
+                <NavItem
+                  href={
+                    user && status === "authenticated"
+                      ? `/${courseId}/my-tee-box?section=offers-received`
+                      : `/${courseId}/login`
+                  }
+                  text="My Offers"
+                  onClick={() => {
+                    toggleSidebar();
+                  }}
+                  icon={
+                    <div className="relative">
+                      <MyOffers className="w-[20px]" />
+                      {unreadOffers && unreadOffers > 0 ? (
+                        <div className="absolute -right-3.5 -top-2 flex h-5 w-5 min-w-fit select-none items-center justify-center rounded-full border-2 border-white bg-alert-red p-1 text-[10px] font-semibold text-white">
+                          {unreadOffers}
+                        </div>
+                      ) : null}
+                    </div>
+                  }
+                  className="border-b border-t border-stroke-secondary p-2 md:p-4"
+                  data-testid="my-offer-id"
+                  data-test={courseId}
+                />
+              ) : null}
             </div>
             {user && status === "authenticated" ? (
               <div className="flex flex-col">

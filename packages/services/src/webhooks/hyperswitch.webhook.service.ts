@@ -894,6 +894,7 @@ export class HyperSwitchWebhookService {
         sellerFee: courses.sellerFee,
         providerDate: teeTimes.providerDate,
         address: courses.address,
+        websiteURL: courses.websiteURL,
       })
       .from(teeTimes)
       .where(eq(teeTimes.id, firstBooking.teeTimeId))
@@ -1046,8 +1047,10 @@ export class HyperSwitchWebhookService {
           dayjs(existingTeeTime?.providerDate).utcOffset("-06:00").format("YYYY-MM-DD hh:mm A") ?? "-",
       };
       const icsContent: string = createICS(event);
+
       const commonTemplateData = {
         CourseLogoURL: `https://${existingTeeTime?.cdn}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
+        CourseURL: existingTeeTime?.websiteURL || "",
         CourseName: existingTeeTime?.courseName || "-",
         FacilityName: existingTeeTime?.entityName || "-",
         PlayDateTime:

@@ -13,6 +13,7 @@ import { Visible } from "~/components/icons/visible";
 import { Input } from "~/components/input/input";
 import { useAppContext } from "~/contexts/AppContext";
 import { useCourseContext } from "~/contexts/CourseContext";
+import { usePreviousPath } from "~/hooks/usePreviousPath";
 import { loginSchema, type LoginSchemaType } from "~/schema/login-schema";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -24,6 +25,7 @@ import { toast } from "react-toastify";
 export default function Login() {
   const recaptchaRef = createRef<ReCAPTCHA>();
   const { prevPath } = useAppContext();
+  const { isPathExpired } = usePreviousPath();
   const searchParams = useSearchParams();
   const loginError = searchParams.get("error");
   const { course } = useCourseContext();
@@ -46,19 +48,22 @@ export default function Login() {
     resolver: zodResolver(loginSchema),
   });
   const GO_TO_PREV_PATH =
-    !prevPath?.includes("/login") &&
-    !prevPath?.includes("verify") &&
-    !prevPath?.includes("reset-password") &&
-    !prevPath?.includes("forgot-password") &&
-    !prevPath?.includes("verify-email");
+    !prevPath?.path?.includes("/login") &&
+    !prevPath?.path?.includes("verify") &&
+    !prevPath?.path?.includes("reset-password") &&
+    !prevPath?.path?.includes("forgot-password") &&
+    !prevPath?.path?.includes("verify-email");
 
   const onSubmit: SubmitHandler<LoginSchemaType> = async (data) => {
     try {
+      const callbackURL = `${window.location.origin}${
+        GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+          ? prevPath?.path
+          : "/"
+      }`;
       const res = await signIn("credentials", {
-        callbackUrl: `${window.location.origin}${
-          GO_TO_PREV_PATH ? prevPath : "/"
-        }`,
-        redirect: false,
+        callbackUrl: callbackURL,
+        redirect: true,
         email: data.email,
         password: data.password,
         ReCAPTCHA: process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY
@@ -71,7 +76,9 @@ export default function Login() {
       } else if (!res?.error && res?.ok) {
         window.location.reload();
         window.location.href = `${window.location.origin}${
-          GO_TO_PREV_PATH ? prevPath : "/"
+          GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+            ? prevPath?.path
+            : "/"
         }`;
       }
     } catch (error) {
@@ -106,7 +113,9 @@ export default function Login() {
   const facebookSignIn = async () => {
     await signIn("facebook", {
       callbackUrl: `${window.location.origin}${
-        GO_TO_PREV_PATH ? prevPath : "/"
+        GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+          ? prevPath?.path
+          : "/"
       }`,
       redirect: true,
     });
@@ -115,7 +124,9 @@ export default function Login() {
   const appleSignIn = async () => {
     await signIn("apple", {
       callbackUrl: `${window.location.origin}${
-        GO_TO_PREV_PATH ? prevPath : "/"
+        GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+          ? prevPath?.path
+          : "/"
       }`,
       redirect: true,
     });
@@ -125,7 +136,9 @@ export default function Login() {
     try {
       await signIn("google", {
         callbackUrl: `${window.location.origin}${
-          GO_TO_PREV_PATH ? prevPath : "/"
+          GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+            ? prevPath?.path
+            : "/"
         }`,
         redirect: true,
       });
