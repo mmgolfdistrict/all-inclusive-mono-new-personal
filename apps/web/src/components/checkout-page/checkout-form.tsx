@@ -297,10 +297,14 @@ export const CheckoutForm = ({
     payment_id: string,
     sensibleQuoteId: string
   ) => {
+    const href = window.location.href;
+    const redirectHref = href.split("/checkout")[0] || "";
+
     const bookingResponse = await reserveBookingApi.mutateAsync({
       cartId,
       payment_id,
       sensibleQuoteId,
+      redirectHref
     });
     return bookingResponse;
   };
@@ -310,10 +314,14 @@ export const CheckoutForm = ({
     listingId: string,
     payment_id: string
   ) => {
+    const href = window.location.href;
+    const redirectHref = href.split("/checkout")[0] || "";
+
     const bookingResponse = await reserveSecondHandBookingApi.mutateAsync({
       cartId,
       listingId,
       payment_id,
+      redirectHref
     });
     // console.log(bookingResponse);
     return bookingResponse;
