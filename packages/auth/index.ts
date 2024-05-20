@@ -18,14 +18,17 @@ export type { Session } from "next-auth";
 export const providers = ["google", "credentials"] as const;
 export type OAuthProviders = (typeof providers)[number];
 
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  image: string;
+  phone: string;
+}
 declare module "next-auth" {
   interface Session {
-    user: {
-      id: string;
-      name: string;
-      email: string;
-      image: string;
-    } & DefaultSession["user"];
+    user: User & DefaultSession["user"];
+    ip?: string;
   }
 }
 export const authConfig: NextAuthConfig = {
@@ -35,6 +38,13 @@ export const authConfig: NextAuthConfig = {
     GoogleProvider({
       clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      authorization: {
+        params: {
+          prompt: "consent",
+          access_type: "offline",
+          response_type: "code",
+        },
+      },
     }),
     AppleProvider({
       clientId: process.env.NEXT_PUBLIC_APPLE_ID,
@@ -107,12 +117,13 @@ export const authConfig: NextAuthConfig = {
           return null;
         }
 
-        // console.log("Authentication successful");
+        // console.log("Authentication successful ho gya hai");
         return {
           id: data?.id,
           email: data?.email,
           image: data?.profilePicture,
           name: data?.name,
+          phone: data?.phoneNumber,
         };
       },
     }),
@@ -125,6 +136,7 @@ export const authConfig: NextAuthConfig = {
   },
   session: {
     strategy: "jwt",
+    maxAge: 7 * 24 * 60 * 60,
   },
   // cookies: {
   //   sessionToken: {
@@ -141,6 +153,11 @@ export const authConfig: NextAuthConfig = {
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
     jwt: ({ trigger, session, token, user }) => {
+      console.log("JWT Callback");
+      console.log(trigger);
+      console.log(session);
+      console.log(token);
+      console.log(user);
       if (user) {
         token.id = user?.id;
         token.email = user.email;
@@ -152,13 +169,17 @@ export const authConfig: NextAuthConfig = {
       if (trigger === "update" && session?.image !== undefined && token) {
         token.picture = session.image;
         token.image = session.image;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (token.user as any).image = session.image;
+        (token.user as User).image = session.image;
       }
-
+      const userInfo = token.user as User;
+      token.phone = userInfo.phone;
       return token;
     },
     session: ({ session, token }) => {
+      console.log("Session Callback");
+      console.log(session);
+      console.log(token);
+
       return {
         ...session,
         user: {

@@ -1,4 +1,5 @@
-import { InferInsertModel, InferSelectModel, relations, sql } from "drizzle-orm";
+import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
   boolean,
   index,
@@ -7,7 +8,6 @@ import {
   primaryKey,
   text,
   timestamp,
-  tinyint,
   unique,
   varchar,
 } from "drizzle-orm/mysql-core";
@@ -65,6 +65,7 @@ export const users = mySqlTable(
       .notNull(),
     phoneNotifications: boolean("phoneNotifications").default(true).notNull(),
     phoneNumber: varchar("phoneNumber", { length: 191 }),
+    phoneNumberVerified: timestamp("phoneNumberVerified", { mode: "string", fsp: 3 }),
     emailNotifications: boolean("emailNotifications").default(true).notNull(),
     verificationRequestToken: varchar("verificationRequestToken", {
       length: 191,

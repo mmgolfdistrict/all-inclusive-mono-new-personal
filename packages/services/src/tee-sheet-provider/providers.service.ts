@@ -1,9 +1,7 @@
 import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
-import { and, eq, inArray, sql } from "@golf-district/database";
-import { providers } from "@golf-district/database/schema/providers";
-import type { SelectProviders } from "@golf-district/database/schema/providers";
-import { providerCourseLink } from "@golf-district/database/schema/providersCourseLink";
+import { and, eq, sql } from "@golf-district/database";
+import type { InsertBookingSlots } from "@golf-district/database/schema/bookingslots";
 import { userProviderCourseLink } from "@golf-district/database/schema/userProviderCourseLink";
 import { users } from "@golf-district/database/schema/users";
 import Logger from "@golf-district/shared/src/logger";
@@ -21,6 +19,7 @@ export interface Customer {
   playerNumber: number | null;
   customerId: number | null;
   name: string | null;
+  username: string | null;
 }
 /**
  * Service class for handling Tee Sheet providers.
@@ -139,11 +138,32 @@ export class ProviderService extends CacheService {
     teeTimeId: string,
     providerId: string,
     bookingId: string,
-    options: any
+    options: any,
+    slotId: string
   ): Promise<BookingResponse> {
     this.logger.info(`updateTeeTime called with courseId: ${courseId}`);
     const { provider, token } = await this.getProviderAndKey(providerId, courseId);
-    return provider.updateTeeTime(token, courseId, teeTimeId, bookingId, options);
+    return provider.updateTeeTime(token, courseId, teeTimeId, bookingId, options, slotId);
+  }
+
+  async getSlotIdsForBooking(
+    bookingId: string,
+    slots: number,
+    customerId: string,
+    providerBookingId: string,
+    providerId: string,
+    courseId: string
+  ): Promise<InsertBookingSlots[]> {
+    // this.logger.info(`updateTeeTime called with courseId: ${courseId}`);
+    const { provider } = await this.getProviderAndKey(providerId, courseId);
+    return provider.getSlotIdsForBooking(
+      bookingId,
+      slots,
+      customerId,
+      providerBookingId,
+      providerId,
+      courseId
+    );
   }
 
   findOrCreateCustomer = async (
@@ -186,6 +206,8 @@ export class ProviderService extends CacheService {
       playerNumber: buyer.providerAccountNumber,
       customerId: buyer.providerCustomerId,
       name: buyer.name,
+      username: buyer.handel,
+      email: buyer.email,
     };
     if (buyer.providerAccountNumber && buyer.providerCustomerId) {
       return customerInfo;
@@ -222,6 +244,8 @@ export class ProviderService extends CacheService {
           playerNumber: accountNumber,
           customerId: customerData.data.id,
           name: buyer.name,
+          username: buyer.handel,
+          email: buyer.email,
         };
         customerId = customerData.data.id;
       } catch (error) {
@@ -231,10 +255,12 @@ export class ProviderService extends CacheService {
       if (!customerId) {
         throw new Error(`Error creating customer on provider: No Customer Id`);
       }
+      const userProviderCourseLinkId: string = randomUUID();
       //update user with providerCustomerId
       await this.database
         .insert(userProviderCourseLink)
         .values({
+          id: userProviderCourseLinkId,
           courseId: courseId,
           providerId: providerId,
           userId: userId,

@@ -10,6 +10,7 @@ import { geoCodeRouter } from "./routers/geo";
 import { historyRouter } from "./routers/history";
 import { imageRouter } from "./routers/image";
 import { placesRouter } from "./routers/places";
+import { profanityRouter } from "./routers/profanity";
 import { registerRouter } from "./routers/register";
 import { searchRouter } from "./routers/search";
 import { sensibleRouter } from "./routers/sensible";
@@ -43,6 +44,7 @@ export const appRouter = createTRPCRouter({
   teeBox: bookingRouter,
   cashOut: cashOutRouter,
   clubprophet: clubProphetRouter,
+  profanity: profanityRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -22,6 +22,7 @@ export type MyListedTeeTimeType = {
   status: string;
   listedSpots: string[] | null;
   teeTimeId: string;
+  listedSlotsCount?: number;
 };
 
 export const MyListedTeeTimes = () => {
@@ -101,7 +102,7 @@ export const MyListedTeeTimes = () => {
                     iconSrc={i.courseLogo}
                     key={idx}
                     listedPrice={i?.listPrice ?? 0}
-                    golfers={i?.listedSpots?.length ?? 0}
+                    golfers={i?.listedSlotsCount || 0}
                     status={i.status}
                     courseId={i.courseId}
                     teeTimeId={i.teeTimeId}

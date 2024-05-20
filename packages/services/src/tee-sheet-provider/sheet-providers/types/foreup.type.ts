@@ -83,6 +83,7 @@ export interface TeeTimeRequestOptions {
 // }
 
 export interface BookingCreationData {
+  totalAmountPaid: number;
   data: {
     type: string;
     attributes: {
@@ -105,6 +106,12 @@ export interface BookingResponse {
   data: {
     type: string;
     id: string;
+    ownerId?: string;
+    name?: string;
+    purchasedFor?: number;
+    bookingType?: string;
+    weatherGuaranteeAmount?: number;
+    weatherGuaranteeId?: string;
     attributes: {
       isReround: boolean;
       type: string;
@@ -275,6 +282,7 @@ export interface CustomerAttributes {
     priceClass: string; // ""213""
     groups: string[]; // ["Public", "Junior"]
     contactInfo: ContactInfo; // nested interface
+    email?: string;
   };
 }
 
@@ -297,6 +305,7 @@ export interface CustomerAttributes {
   price_class?: string;
   groups?: string[];
   contact_info: ContactInfo;
+  email?: string;
 }
 export interface ContactInfo {
   first_name: string;
@@ -316,4 +325,19 @@ export interface ContactInfo {
   handicap_score?: string;
   comments?: string;
   gender?: string;
+}
+
+export interface CartData {
+  data: {
+    type: string;
+    id: string;
+    attributes: {
+      total: number;
+      totalDue: number;
+      tax: number;
+      subTotal: number;
+      status: string;
+      lastActivity: string;
+    };
+  };
 }

@@ -78,9 +78,11 @@ export class WatchlistService {
       const [teeTime] = await this.database
         .select({
           course: teeTimes.courseId,
-          entityId: teeTimes.entityId,
+          // entityId: teeTimes.entityId,
+          entityId: courses.entityId,
         })
         .from(teeTimes)
+        .leftJoin(courses, eq(courses.id, teeTimes.courseId))
         .where(eq(teeTimes.id, teeTimeId))
         .limit(1)
         .execute();
@@ -95,7 +97,7 @@ export class WatchlistService {
         userId,
         teeTimeId,
         courseId: teeTime.course,
-        entityId: teeTime.entityId,
+        entityId: teeTime.entityId ?? "",
       };
 
       await this.database
@@ -137,7 +139,7 @@ export class WatchlistService {
         courseId: favorites.courseId,
         createdAt: favorites.createdAt,
         userId: favorites.userId,
-        price: teeTimes.greenFee,
+        price: teeTimes.greenFeePerPlayer,
         teeTimeExpiration: teeTimes.providerDate,
         availableFirstHandSpots: teeTimes.availableFirstHandSpots,
         availableSecondHandSpots: teeTimes.availableSecondHandSpots,
@@ -181,7 +183,7 @@ export class WatchlistService {
           teeTimeId: item.teeTimeId,
           courseId: item.courseId,
           teeTimeExpiration: item.teeTimeExpiration,
-          price: item.price,
+          price: item.price / 100,
           availableSpots: item.availableFirstHandSpots,
           ownedBy: item.courseName,
           type: "FIRST_PARTY",
@@ -213,7 +215,7 @@ export class WatchlistService {
           bookingId: bookings.id,
           soldByHandle: users.handle,
           soldById: users.id,
-          price: bookings.purchasedPrice,
+          price: bookings.totalAmount,
           minimumOfferPrice: bookings.minimumOfferPrice,
           image: {
             key: assets.key,
@@ -255,7 +257,7 @@ export class WatchlistService {
             teeTimeId: item.teeTimeId ?? "",
             courseId: courseId,
             teeTimeExpiration: item.teeTimeDate ?? " ",
-            price: item.listingId ? item.listingPrice ?? 0 : item.price,
+            price: (item.listingId ? item.listingPrice ?? 0 : item.price) / 100,
             availableSpots: 1,
             ownedBy: item.soldByHandle ? item.soldByHandle : "Anonymous",
             type: "SECOND_HAND",

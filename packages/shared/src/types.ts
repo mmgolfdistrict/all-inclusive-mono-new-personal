@@ -71,8 +71,9 @@ export type FullCourseType = {
   longitude: number | null;
   latitude: number | null;
   forecastApi: string | null;
-  convenienceFees: number | null;
-  markup: number | null;
+  convenienceFeesFixedPerPlayer: number | null;
+  markupFeesFixedPerPlayer: number | null;
+  maxListPricePerGolferPercentage: number | undefined;
   openTime: string | null;
   closeTime: string | null;
   supportCharity: boolean;
@@ -83,6 +84,12 @@ export type FullCourseType = {
   highestPrimarySaleTeeTime: number;
   lowestPrimarySaleTeeTime: number;
   supportedCharities?: SupportedCharity[];
+  allowAuctions: number | null;
+  supportsOffers?: boolean;
+  supportsWatchlist?: boolean;
+  supportsPromocode?: boolean;
+  sellerFee?: number;
+  buyerFee?: number;
 };
 
 export type SupportedCharity = {
@@ -147,6 +154,8 @@ export type SearchObject = {
   soldByImage: string;
   availableSlots: number;
   pricePerGolfer: number;
+  greenFeeTaxPerPlayer?: number;
+  cartFeeTaxPerPlayer?: number;
   teeTimeId: string;
   date: string; //day of tee time
   time: number; //military time
@@ -161,9 +170,11 @@ export type SearchObject = {
     iconCode: IconCodeType;
   };
   listingId?: string;
+  listedSlots?: number;
   bookingIds?: string[];
   minimumOfferPrice?: number;
   firstHandPurchasePrice?: number;
+  ownerId: string;
 };
 
 export type CombinedObject = {
@@ -184,4 +195,11 @@ export type CombinedObject = {
   bookingIds: string[];
   minimumOfferPrice?: number;
   firstHandPurchasePrice?: number;
+  listedSlots: number | null;
+};
+
+export type ReserveTeeTimeResponse = {
+  bookingId: string;
+  providerBookingId: string;
+  status: string;
 };

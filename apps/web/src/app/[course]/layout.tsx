@@ -1,11 +1,35 @@
 import { CourseNav } from "~/components/nav/course-nav";
-import { type ReactNode } from "react";
+import React, { type ReactNode } from "react";
 import "react-responsive-carousel/lib/styles/carousel.min.css";
-import { getCourseById, getCourseImages } from "@golf-district/api";
+import {
+  getCourseById,
+  getCourseImages,
+  getCourseSEOInfo,
+} from "@golf-district/api";
+import type { FullCourseType } from "@golf-district/shared";
 import { CourseLayout } from "~/components/course-layout";
 import { CourseWrapper } from "~/contexts/CourseContext";
 import { FiltersWrapper } from "~/contexts/FiltersContext";
+import { getNICDetails } from "~/utils/ipUtility";
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: {
+    course: string;
+  };
+}) {
+  const courseId = params.course;
+
+  const courseSEOInfo = await getCourseSEOInfo(courseId);
+  const seoData = JSON.parse(courseSEOInfo?.seoJSON || "{}");
+
+  return {
+    ...seoData,
+  } as Metadata;
+}
 
 export default async function CoursePageLayout({
   children,
@@ -18,9 +42,13 @@ export default async function CoursePageLayout({
 }) {
   const courseId = params.course;
 
-  const courseData = await getCourseById(courseId);
+  const courseData = (await getCourseById(courseId)) as FullCourseType;
 
   const courseImages = await getCourseImages(courseId);
+
+  const nicInfos = getNICDetails();
+  console.log("NIC Details");
+  console.log(nicInfos);
 
   return (
     <>

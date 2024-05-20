@@ -1,6 +1,7 @@
 "use client";
 
 import { useSession } from "@golf-district/auth/nextjs-exports";
+import { useAppContext } from "~/contexts/AppContext";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
@@ -10,10 +11,10 @@ import { useEffect, useState } from "react";
 import { useMediaQuery } from "usehooks-ts";
 import { FilledButton } from "../buttons/filled-button";
 import { Auction } from "../icons/auction";
-import { Club } from "../icons/club";
 import { Hamburger } from "../icons/hamburger";
 import { Marketplace } from "../icons/marketplace";
 import { MyOffers } from "../icons/my-offers";
+import { Search } from "../icons/search";
 import { BlurImage } from "../images/blur-image";
 import { PoweredBy } from "../powered-by";
 import { UserInNav } from "../user/user-in-nav";
@@ -23,6 +24,7 @@ import { SideBar } from "./side-bar";
 export const CourseNav = () => {
   const { user } = useUserContext();
   const { course } = useCourseContext();
+  const { setPrevPath } = useAppContext();
   const courseId = course?.id;
   const [isSideBarOpen, setIsSideBarOpen] = useState<boolean>(false);
   const isMobile = useMediaQuery("(max-width: 768px)");
@@ -36,6 +38,17 @@ export const CourseNav = () => {
       enabled: courseId !== undefined && user?.id !== undefined,
     }
   );
+  const auditLog = api.webhooks.auditLog.useMutation();
+  const logAudit = async () => {
+    await auditLog.mutateAsync({
+      userId: "",
+      teeTimeId: "",
+      bookingId: "",
+      listingId: "",
+      eventId: "USER_LOGGED_IN",
+      json: `user logged in `,
+    });
+  };
 
   useEffect(() => {
     if (isSideBarOpen && isMobile) {
@@ -100,10 +113,26 @@ export const CourseNav = () => {
             <div className="flex items-center gap-4">
               <UserInNav />
             </div>
-          ) : (
-            <Link href={`/${course?.id}/login`}>
-              <FilledButton className="hidden md:block" data-testid="signin-button-id">Log In</FilledButton>
-            </Link>
+          ) : status == "loading" ? null : (
+            status != "authenticated" && (
+              <Link
+                href={`/${course?.id}/login`}
+                onClick={() => {
+                  setPrevPath({
+                    path: pathname,
+                    createdAt: new Date().toISOString(),
+                  });
+                  void logAudit();
+                }}
+              >
+                <FilledButton
+                  className="hidden md:block"
+                  data-testid="signin-button-id"
+                >
+                  Log In
+                </FilledButton>
+              </Link>
+            )
           )}
         </div>
       </div>
@@ -113,46 +142,57 @@ export const CourseNav = () => {
           <div className="flex justify-between gap-4 md:gap-8">
             <NavItem
               href={`/${courseId}`}
-              text="Tee Times"
-              icon={<Club className="w-[16px]" />}
+              text="Find"
+              icon={<Search className="w-[16px]" />}
               data-testid="tee-time-id"
               data-test={courseId}
             />
+            {course?.allowAuctions === 1 && (
+              <NavItem
+                href={`/${courseId}/auctions`}
+                text="Auctions"
+                icon={<Auction className="w-[16px]" />}
+                data-testid="auction-id"
+                data-test={courseId}
+              />
+            )}
             <NavItem
-              href={`/${courseId}/auctions`}
-              text="Auctions"
-              icon={<Auction className="w-[16px]" />}
-              data-testid="auction-id"
+              href={`/${courseId}/my-tee-box`}
+              text="Sell"
+              icon={<Marketplace className="w-[16px]" />}
+              data-testid="sell-your-tee-time-id"
               data-test={courseId}
             />
             <NavItem
-              href={`/${courseId}/my-tee-box`}
-              text="Sell Your Tee Time"
+              href={`/${courseId}/my-tee-box?section=my-listed-tee-times`}
+              text="My Tee Times"
               icon={<Marketplace className="w-[16px]" />}
               data-testid="sell-your-tee-time-id"
               data-test={courseId}
             />
 
-            <NavItem
-              href={
-                user
-                  ? `/${courseId}/my-tee-box?section=offers-received`
-                  : `/${course?.id}/login`
-              }
-              text="My Offers"
-              icon={
-                <div className="relative">
-                  <MyOffers className="w-[20px]" />
-                  {unreadOffers && unreadOffers > 0 ? (
-                    <div className="absolute -right-3.5 -top-2 md:-right-2.5 md:-top-4 flex h-5 w-5 min-w-fit select-none items-center justify-center rounded-full border-2 border-white bg-alert-red p-1 text-[10px] font-semibold text-white">
-                      {unreadOffers}
-                    </div>
-                  ) : null}
-                </div>
-              }
-              data-testid="my-offer-id"
-              data-test={courseId}
-            />
+            {course?.supportsOffers ? (
+              <NavItem
+                href={
+                  user
+                    ? `/${courseId}/my-tee-box?section=offers-received`
+                    : `/${course?.id}/login`
+                }
+                text="My Offers"
+                icon={
+                  <div className="relative">
+                    <MyOffers className="w-[20px]" />
+                    {unreadOffers && unreadOffers > 0 ? (
+                      <div className="absolute -right-3.5 -top-2 md:-right-2.5 md:-top-4 flex h-5 w-5 min-w-fit select-none items-center justify-center rounded-full border-2 border-white bg-alert-red p-1 text-[10px] font-semibold text-white">
+                        {unreadOffers}
+                      </div>
+                    ) : null}
+                  </div>
+                }
+                data-testid="my-offer-id"
+                data-test={courseId}
+              />
+            ) : null}
           </div>
         </div>
       </div>

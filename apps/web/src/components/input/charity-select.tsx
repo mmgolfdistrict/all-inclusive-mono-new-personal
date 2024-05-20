@@ -29,10 +29,10 @@ export const CharitySelect = ({
         data-testid="charity-button-id"
       >
         <RadixSelect.Value
-          placeholder="Select a charity"
+          placeholder="Select a charitable donation"
           aria-label={value?.charityId as string}
         >
-          {(value?.charityName as string) ?? "Select a charity"}
+          {(value?.charityName as string) ?? "Select a charitable donation"}
         </RadixSelect.Value>
         <RadixSelect.Icon className="text-primary-gray">
           <DownChevron className="h-[14px] w-[14px]" />

@@ -1,9 +1,8 @@
 import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
-import { and, desc, eq, gt, gte, inArray, isNull, lt, or, sql } from "@golf-district/database";
+import { and, desc, eq, gte, inArray, lt, sql } from "@golf-district/database";
 import { bookings } from "@golf-district/database/schema/bookings";
 import { notifications } from "@golf-district/database/schema/notifications";
-import { offerRead } from "@golf-district/database/schema/offerRead";
 import { offers } from "@golf-district/database/schema/offers";
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import { userBookingOffers } from "@golf-district/database/schema/userBookingOffers";
@@ -11,7 +10,7 @@ import { users } from "@golf-district/database/schema/users";
 import { currentUtcTimestamp } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
 import { MailService } from "@sendgrid/mail";
-import pino from "pino";
+import type pino from "pino";
 import twilio from "twilio";
 
 interface EmailParams {
@@ -26,6 +25,20 @@ interface EmailParams {
   TaxesAndOtherFees?: string;
   SensibleWeatherIncluded?: string;
   PurchasedFrom?: string;
+  EMail?: string;
+  ForgotPasswordURL?: string;
+  CourseLogoURL?: string;
+  CourseURL?: string;
+  VerifyURL?: string;
+}
+
+interface Attachment {
+  content: string;
+  filename: string;
+  type: string;
+  disposition?: string;
+  contentId?: string;
+  encoding?: string;
 }
 
 /**
@@ -119,16 +132,22 @@ export class NotificationService {
     // }
   };
 
-  sendEmailByTemplate = async (email: string, subject: string, templateId: string, template: EmailParams) => {
+  sendEmailByTemplate = async (
+    email: string,
+    subject: string,
+    templateId: string,
+    template: EmailParams,
+    attachments: Attachment[]
+  ) => {
     this.logger.info(`Sending email to ${email}`);
-    //if (process.env.NODE_ENV === "production") {
     await this.sendGridClient
       .send({
         to: email,
         from: this.sendGrid_email,
         subject,
         templateId,
-        dynamicTemplateData: { ...template }
+        dynamicTemplateData: { ...template },
+        attachments,
       })
       .catch((err) => {
         this.logger.error(err);
@@ -290,7 +309,16 @@ export class NotificationService {
    * // Creating a notification for user with ID 'user123' with subject 'New Notification' and body 'You have a new notification.'.
    * await createNotification('user123', 'New Notification', 'You have a new notification.', 'entity123');
    */
-  createNotification = async (userId: string, subject: string, body: string, courseId?: string, templateId?: string, template?: EmailParams) => {
+
+  createNotification = async (
+    userId: string,
+    subject: string,
+    body: string,
+    courseId?: string | null,
+    templateId?: string,
+    template?: EmailParams,
+    attachments?: Attachment[]
+  ) => {
     const [user] = await this.database
       .select()
       .from(users)
@@ -331,7 +359,7 @@ export class NotificationService {
     if (user.emailNotifications && user.email) {
       if (templateId && template) {
         this.logger.debug(`Sending email to ${user.email}`);
-        await this.sendEmailByTemplate(user.email, subject, templateId, template);
+        await this.sendEmailByTemplate(user.email, subject, templateId, template, attachments || []);
       } else {
         this.logger.debug(`Sending email to ${user.email}`);
         await this.sendEmail(user.email, subject, body);

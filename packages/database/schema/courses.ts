@@ -1,15 +1,6 @@
-import { InferInsertModel, InferSelectModel, relations } from "drizzle-orm";
-import {
-  boolean,
-  datetime,
-  double,
-  index,
-  int,
-  primaryKey,
-  text,
-  tinyint,
-  varchar,
-} from "drizzle-orm/mysql-core";
+import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
+import { boolean, datetime, double, index, int, text, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 import { assets } from "./assets";
 import { bookings } from "./bookings";
@@ -34,8 +25,9 @@ export const courses = mySqlTable(
     forecastApi: text("forecastApi"),
     privacyPolicy: text("privacyPolicy"),
     termsAndConditions: text("termsAndConditions"),
-    convenanceFees: int("convenanceFees"),
-    markup: int("markup").default(0),
+    convenienceFeesFixedPerPlayer: int("convenienceFeesFixedPerPlayer"),
+    markupFeesFixedPerPlayer: int("markupFeesFixedPerPlayer").default(0),
+    maxListPricePerGolferPercentage: int("maxListPricePerGolferPercentage").default(0),
     openTime: datetime("openTime", { mode: "string", fsp: 3 }),
     closeTime: datetime("closeTime", { mode: "string", fsp: 3 }),
     logoId: varchar("logoId", { length: 36 }),
@@ -43,9 +35,22 @@ export const courses = mySqlTable(
     providerId: varchar("providerId", { length: 36 }),
     furthestDayToBook: int("furthestDayToBook").default(0).notNull(),
     timezoneCorrection: int("timezoneCorrection").default(0).notNull(),
-    supportCharity: boolean("supportCharity").default(false).notNull(),
-    supportSensibleWeather: boolean("supportSensitiveWeather").default(false).notNull(),
+    supportCharity: boolean("supportsCharity").default(false).notNull(),
+    supportSensibleWeather: boolean("supportsWeatherGuarantee").default(false).notNull(),
+    allowAuctions: int("supportsAuctions").default(0),
     isDeleted: boolean("isDeleted").default(false).notNull(),
+    supportsOffers: boolean("supportsOffers").default(false),
+    supportsWatchlist: boolean("supportsWatchlist").default(false),
+    supportsPromocode: boolean("supportsPromocode").default(false),
+    buyerFee: int("buyerFee").default(1).notNull(),
+    sellerFee: int("sellerFee").default(1).notNull(),
+    lastUpdatedDateTime: datetime("lastUpdatedDateTime", { mode: "string", fsp: 3 })
+      .default(sql`CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)`)
+      .notNull(),
+    createdDateTime: datetime("createdDateTime", { mode: "string", fsp: 3 })
+      .default(sql`CURRENT_TIMESTAMP(3)`)
+      .notNull(),
+    websiteURL: varchar("websiteURL", { length: 255 }).default("https://www.golfdistrict.com/").notNull(),
   },
   (table) => {
     return {

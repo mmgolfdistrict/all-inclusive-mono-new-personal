@@ -4,6 +4,7 @@ import { Avatar } from "../avatar";
 import { OutlineButton } from "../buttons/outline-button";
 import { TableHeader } from "./table-header";
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const TransactionHistory = ({ teeTimeId }: { teeTimeId: string }) => {
   return (
     <div className="flex w-full flex-col text-[14px] gap-4 bg-white text-primary-gray">
@@ -81,7 +82,9 @@ const TableRow = ({
   date,
   salePrice,
   userImage,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   userId,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   courseId,
 }: {
   purchasedByUsername: string;

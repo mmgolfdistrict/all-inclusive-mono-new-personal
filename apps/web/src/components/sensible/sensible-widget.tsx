@@ -85,8 +85,18 @@ export const SensibleWidget = memo(
           sensibleDataToMountComp.product_id,
           "sandbox"
         );
+        //@ts-ignore
+        Sensible.createGuaranteeCallback = (quote) => {
+          setSensibleData({
+            id: quote.quoteData.id,
+            price: quote.quoteData.pricePerDay,
+          });
+        };
         // @ts-ignore
         Sensible.mountComponent({
+          coverageStartHourNumber:
+            sensibleDataToMountComp.coverageStartHourNumber,
+          coverageEndHourNumber: sensibleDataToMountComp.coverageEndHourNumber,
           coverageStartDate: sensibleDataToMountComp.coverageStartDate,
           coverageEndDate: sensibleDataToMountComp.coverageEndDate,
           currency: sensibleDataToMountComp.currency,

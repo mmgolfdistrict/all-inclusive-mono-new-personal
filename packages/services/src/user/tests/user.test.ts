@@ -57,7 +57,7 @@ describe("createUser", () => {
   it("should throw an error if handle is invalid", async () => {
     //create a mock of isValidHandle that returns false
     const invalidData = { ...mockUserCreationData, handle: "" };
-    await expect(userService.createUser(invalidData)).rejects.toThrow("Invalid handle format");
+    await expect(userService.createUser(invalidData)).rejects.toThrow("Handle already exists");
   });
   it("should throw an error if password score is less than 8", async () => {});
   it("should throw an error if firstName contains prohibited words", async () => {

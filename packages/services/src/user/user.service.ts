@@ -1,9 +1,10 @@
 import { randomBytes, randomUUID } from "crypto";
-import { and, asc, desc, eq, gt, is, lt, or } from "@golf-district/database";
+import { and, asc, desc, eq, gt, lt, or } from "@golf-district/database";
 import type { Db } from "@golf-district/database";
 import { accounts } from "@golf-district/database/schema/accounts";
 import { assets } from "@golf-district/database/schema/assets";
 import { bookings } from "@golf-district/database/schema/bookings";
+import { bookingslots } from "@golf-district/database/schema/bookingslots";
 import { courses } from "@golf-district/database/schema/courses";
 import { entities } from "@golf-district/database/schema/entities";
 import { favorites } from "@golf-district/database/schema/favorites";
@@ -11,14 +12,8 @@ import { lists } from "@golf-district/database/schema/lists";
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import type { InsertUser } from "@golf-district/database/schema/users";
 import { users } from "@golf-district/database/schema/users";
-import type { BookingGroup, GroupedBookings } from "@golf-district/shared";
-import {
-  assetToURL,
-  containsBadWords,
-  currentUtcTimestamp,
-  isValidEmail,
-  isValidPassword,
-} from "@golf-district/shared";
+import type { GroupedBookings } from "@golf-district/shared";
+import { assetToURL, currentUtcTimestamp, isValidEmail, isValidPassword } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
 import bcrypt from "bcryptjs";
 import { alias } from "drizzle-orm/mysql-core";
@@ -74,10 +69,7 @@ export class UserService {
    * @example
    * const userService = new UserService(database, notificationService);
    */
-  constructor(
-    protected readonly database: Db,
-    private readonly notificationsService: NotificationService
-  ) {
+  constructor(protected readonly database: Db, private readonly notificationsService: NotificationService) {
     //this.filter = new Filter();
   }
 
@@ -118,15 +110,15 @@ export class UserService {
    *     handel: 'johnDoe123'
    *   });
    */
-  createUser = async (data: UserCreationData): Promise<void> => {
+  createUser = async (courseId: string | undefined, data: UserCreationData): Promise<void> => {
     this.logger.info(`createUser called`);
     if (!isValidEmail(data.email)) {
       this.logger.warn(`Invalid email format: ${data.email}`);
       throw new Error("Invalid email format");
     }
     if (!(await this.isValidHandle(data.handle))) {
-      this.logger.warn(`Invalid handle format: ${data.handle}`);
-      throw new Error("Invalid handle format");
+      this.logger.warn(`Handle already exists: ${data.handle}`);
+      throw new Error("Handle already exists");
     }
     if (isValidPassword(data.password).score < 8) {
       this.logger.warn("Invalid password");
@@ -172,12 +164,50 @@ export class UserService {
       this.logger.warn(`No redirectHref provided`);
       throw new Error("No redirect url provided");
     }
-    await this.notificationsService.sendEmail(
+    // user.email,
+    // "Reset your password",
+    // process.env.SENDGRID_FORGOT_PASSWORD_AUTH_USER_TEMPLATE_ID!,
+    // emailParams
+
+    let CourseLogoURL: string | undefined;
+    let CourseURL: string | undefined;
+
+    if (courseId) {
+      const [course] = await this.database
+        .select({
+          cdn: assets.cdn,
+          key: assets.key,
+          extension: assets.extension,
+          websiteURL: courses.websiteURL,
+        })
+        .from(courses)
+        .where(eq(courses.id, courseId))
+        .leftJoin(assets, eq(assets.id, courses.logoId))
+        .execute()
+        .catch((err) => {
+          this.logger.error(err);
+          return [];
+        });
+
+      if (course?.cdn) {
+        CourseLogoURL = `https://${course?.cdn}/${course?.key}.${course?.extension}`;
+        CourseURL = course?.websiteURL || "";
+      }
+    }
+
+    await this.notificationsService.sendEmailByTemplate(
       data.email,
       "Verify your email",
-      `${encodeURI(data?.redirectHref)}/verify?userId=${encodeURIComponent(
-        user?.id
-      )}&verificationToken=${encodeURIComponent(verificationToken)}`
+      process.env.SENDGRID_TEE_TIMES_VERIFY_EMAIL_TEMPLATE_ID!,
+      {
+        CustomerFirstName: data.handle,
+        VerifyURL: `${encodeURI(data?.redirectHref)}/verify?userId=${encodeURIComponent(
+          user?.id
+        )}&verificationToken=${encodeURIComponent(verificationToken)}`,
+        CourseLogoURL,
+        CourseURL,
+      },
+      []
     );
   };
 
@@ -229,7 +259,7 @@ export class UserService {
    *
    * @param {string} teeTimeId - The unique identifier of the tee time.
    * @param {string} [userId] - The unique identifier of the user. If not provided, the result will indicate that the connected user is not the owner and return an empty array of bookings.
-   * @returns {Promise<{ connectedUserIsOwner: boolean; bookings: string[] }>} A promise that resolves to an object containing information about the ownership and bookings.
+   * @returns {Promise<{ connectedUserIsOwner: boolean; bookings:any }>} A promise that resolves to an object containing information about the ownership and bookings.
    * @throws {Error} Throws an error if there is an issue retrieving bookings from the database.
    * @example
    * const teeTimeId = "exampleTeeTimeId";
@@ -247,10 +277,15 @@ export class UserService {
     const data = await this.database
       .select({
         bookingId: bookings.id,
-        nameOnBooking: bookings.nameOnBooking,
+        nameOnBooking: bookingslots.name,
+        slotId: bookingslots.slotnumber,
+        customerId: bookingslots.customerId,
+        slotPosition: bookingslots.slotPosition,
       })
       .from(bookings)
+      .leftJoin(bookingslots, eq(bookingslots.bookingId, bookings.id))
       .where(and(eq(bookings.teeTimeId, teeTimeId), eq(bookings.ownerId, userId)))
+      .orderBy(asc(bookingslots.slotPosition))
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving bookings: ${err}`);
@@ -263,15 +298,18 @@ export class UserService {
       };
     }
 
-    const namesOnBooking = data.filter((i) => i.nameOnBooking !== "Guest");
-    const foundUsersForBooking: {
+    const finalData: {
       id: string;
-      handle: string | null;
-      name: string | null;
-      email: string | null;
+      handle: string;
+      name: string;
+      email: string;
+      slotId: string;
+      bookingId: string;
+      currentlyEditing: boolean;
     }[] = [];
-    if (namesOnBooking.length > 0) {
-      for (const _name of namesOnBooking) {
+
+    for (const unit of data) {
+      if (unit.customerId !== "") {
         const userData = await this.database
           .select({
             id: users.id,
@@ -280,45 +318,41 @@ export class UserService {
             email: users.email,
           })
           .from(users)
-          .where(eq(users.name, _name.nameOnBooking))
+          .where(eq(users.id, unit.customerId || ""))
           .execute()
           .catch((err) => {
             this.logger.error(`Error retrieving user: ${err}`);
             throw new Error("Error retrieving user");
           });
         if (userData[0]) {
-          foundUsersForBooking.push(userData[0]);
+          finalData.push({
+            ...userData[0],
+            name: unit.nameOnBooking?.length ? unit.nameOnBooking : "Guest",
+            email: userData[0]?.email?.length ? userData[0]?.email : "",
+            handle: userData[0]?.handle?.length ? userData[0]?.handle : "",
+            slotId: unit.slotId!,
+            currentlyEditing: false,
+            bookingId: unit.bookingId,
+          });
         }
+      } else {
+        finalData.push({
+          id: "",
+          name: unit.nameOnBooking?.length ? unit.nameOnBooking : "Guest",
+          email: "",
+          handle: "",
+          currentlyEditing: false,
+          slotId: unit.slotId!,
+          bookingId: unit.bookingId,
+        });
       }
     }
-
-    const cleanedData = data.map((i) => {
-      if (foundUsersForBooking.length > 0) {
-        const user = foundUsersForBooking.find(
-          (user) => i.nameOnBooking.toLowerCase() === user.name?.toLowerCase()
-        );
-        if (user) {
-          return {
-            id: user.id,
-            handle: user.handle,
-            name: user.name,
-            email: user.email,
-          };
-        }
-      }
-      return {
-        id: "",
-        handle: "",
-        name: i.nameOnBooking,
-        email: "",
-      };
-    });
 
     const bookingIds = data.map((i) => i.bookingId);
 
     return {
       connectedUserIsOwner: true,
-      bookings: cleanedData,
+      bookings: finalData,
       bookingIds,
     };
   };
@@ -345,7 +379,7 @@ export class UserService {
    * @example
    *   verifyUserEmail('user123id', 'secureverificationtoken');
    */
-  verifyUserEmail = async (userId: string, token: string): Promise<void> => {
+  verifyUserEmail = async (courseId: string | undefined, userId: string, token: string): Promise<void> => {
     this.logger.info(`verifyUserEmail called with userId: ${userId} and token: ${token}`);
     const [user] = await this.database.select().from(users).where(eq(users.id, userId));
     if (!user) {
@@ -377,13 +411,41 @@ export class UserService {
       })
       .where(eq(users.id, userId))
       .execute();
+
+    let CourseLogoURL: string | undefined;
+    let CourseURL: string | undefined;
+
+    if (courseId) {
+      const [course] = await this.database
+        .select({
+          cdn: assets.cdn,
+          key: assets.key,
+          extension: assets.extension,
+          websiteURL: courses.websiteURL,
+        })
+        .from(courses)
+        .where(eq(courses.id, courseId))
+        .leftJoin(assets, eq(assets.id, courses.logoId));
+
+      if (course?.cdn) {
+        CourseLogoURL = `https://${course?.cdn}/${course?.key}.${course?.extension}`;
+        CourseURL = course?.websiteURL || "";
+      }
+    }
+
     if (user?.email) {
       //send welcome email
       try {
-        await this.notificationsService.sendEmail(
+        await this.notificationsService.sendEmailByTemplate(
           user?.email,
           "Welcome to Golf District",
-          `Welcome! This is the official welcome email from Golf District.`
+          process.env.SENDGRID_TEE_TIMES_NEW_USER_TEMPLATE_ID!,
+          {
+            CustomerFirstName: user.handle ?? "",
+            CourseLogoURL,
+            CourseURL,
+          },
+          []
         );
       } catch (error) {
         throw new Error("Error sending welcome email");
@@ -412,7 +474,7 @@ export class UserService {
    * @returns {Promise<void>} Promise that resolves when the user's information is successfully updated.
    *
    * @throws
-   *   - `Error("Invalid handle format")`: If the provided `handle` does not pass the format validation.
+   *   - `Error("Handle already exists")`: If the provided `handle` does not pass the format validation.
    *   - `Error("Invalid name due to profanity filter")`: If the provided `name` does not pass the profanity filter check.
    *   - `Error("Error recovering asset: [assetId]")`: If there is an error retrieving the asset identified by `[assetId]` from the database.
    *   - `Error("Asset not found: [assetId]")`: If the asset identified by `[assetId]` is not found in the database.
@@ -433,10 +495,11 @@ export class UserService {
    */
   updateUser = async (userId: string, data: UserUpdateData): Promise<void> => {
     this.logger.info(`updateUser called for user: ${userId}`);
+
     if (data.handle) {
       if (!(await this.isValidHandle(data.handle))) {
-        this.logger.warn(`Invalid handle format: ${data.handle}`);
-        throw new Error("Invalid handle format");
+        this.logger.warn(`Handle already exists: ${data.handle}`);
+        throw new Error("Handle already exists");
       }
     }
     // if (data.name) {
@@ -501,7 +564,10 @@ export class UserService {
       updateData.phoneNotifications = data.phoneNotifications ? true : false;
     if (Object.prototype.hasOwnProperty.call(data, "emailNotifications"))
       updateData.emailNotifications = data.emailNotifications ? true : false;
-    if (Object.prototype.hasOwnProperty.call(data, "phoneNumber")) updateData.phoneNumber = data.phoneNumber;
+    if (Object.prototype.hasOwnProperty.call(data, "phoneNumber")) {
+      updateData.phoneNumber = data.phoneNumber;
+      updateData.phoneNumberVerified = null;
+    }
 
     await this.database
       .update(users)
@@ -643,7 +709,8 @@ export class UserService {
   forgotPasswordRequest = async (
     redirectHref: string,
     handleOrEmail: string,
-    ReCAPTCHA: string | undefined
+    ReCAPTCHA: string | undefined,
+    courseProviderId: string | undefined
   ): Promise<void> => {
     let isNotRobot;
     if (ReCAPTCHA) {
@@ -652,6 +719,25 @@ export class UserService {
     if (process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && !isNotRobot) {
       this.logger.error(`Invalid captcha`);
       throw new Error("Invalid captcha");
+    }
+    let CourseURL: string | undefined;
+    let CourseLogoURL: string | undefined;
+    if (courseProviderId) {
+      const [course] = await this.database
+        .select({
+          cdn: assets.cdn,
+          key: assets.key,
+          extension: assets.extension,
+          websiteURL: courses.websiteURL,
+        })
+        .from(courses)
+        .leftJoin(assets, eq(assets.courseId, courseProviderId))
+        .where(eq(courses.logoId, assets.id));
+
+      if (course?.cdn) {
+        CourseLogoURL = `https://${course?.cdn}/${course?.key}.${course?.extension}`;
+        CourseURL = course?.websiteURL || "";
+      }
     }
 
     const [user] = await this.database
@@ -687,18 +773,45 @@ export class UserService {
         this.logger.error(`Error updating forgotPasswordToken for user: ${user.id} - ${err}`);
       });
 
-    await this.notificationsService
-      .sendEmail(
-        user.email,
-        "Reset your password",
-        `${encodeURI(redirectHref)}/reset-password?userId=${encodeURIComponent(
-          user?.id
-        )}&verificationToken=${encodeURIComponent(verificationToken)}`
-      )
-      .catch((err) => {
-        this.logger.error(`Error sending email: ${err}`);
-        throw new Error("Error sending email");
-      });
+    const emailParams = {
+      CustomerFirstName: user.name?.split(" ")[0],
+      EMail: user.email,
+      CourseLogoURL,
+      CourseURL,
+    };
+
+    if (user.gdPassword) {
+      await this.notificationsService
+        .sendEmailByTemplate(
+          user.email,
+          "Reset your password",
+          process.env.SENDGRID_FORGOT_PASSWORD_NORMAL_USER_TEMPLATE_ID!,
+          {
+            ...emailParams,
+            ForgotPasswordURL: `${encodeURI(redirectHref)}/reset-password?userId=${encodeURIComponent(
+              user?.id
+            )}&verificationToken=${encodeURIComponent(verificationToken)}`,
+          },
+          []
+        )
+        .catch((err) => {
+          this.logger.error(`Error sending email: ${err}`);
+          throw new Error("Error sending email");
+        });
+    } else {
+      await this.notificationsService
+        .sendEmailByTemplate(
+          user.email,
+          "Reset your password",
+          process.env.SENDGRID_FORGOT_PASSWORD_AUTH_USER_TEMPLATE_ID!,
+          emailParams,
+          []
+        )
+        .catch((err) => {
+          this.logger.error(`Error sending email: ${err}`);
+          throw new Error("Error sending email");
+        });
+    }
   };
 
   /**
@@ -724,7 +837,12 @@ export class UserService {
    * @example
    *   executeForgotPassword('user123id', 'secureverificationtoken', 'newSecurePassword123');
    */
-  executeForgotPassword = async (userId: string, token: string, newPassword: string): Promise<void> => {
+  executeForgotPassword = async (
+    courseId: string | undefined,
+    userId: string,
+    token: string,
+    newPassword: string
+  ): Promise<void> => {
     this.logger.info(`executeForgotPassword called with userId: ${userId}`);
     if (isValidPassword(newPassword).score < 8) {
       this.logger.warn(`Invalid password format: ${newPassword}`);
@@ -766,12 +884,45 @@ export class UserService {
         this.logger.error(`Error updating password for user: ${userId} - ${err}`);
         throw new Error("Error updating password");
       });
+
+    let CourseLogoURL: string | undefined;
+    let CourseURL: string | undefined;
+
+    if (courseId) {
+      const [course] = await this.database
+        .select({
+          cdn: assets.cdn,
+          key: assets.key,
+          extension: assets.extension,
+          websiteURL: courses.websiteURL,
+        })
+        .from(courses)
+        .where(eq(courses.id, courseId))
+        .leftJoin(assets, eq(assets.id, courses.logoId))
+        .execute()
+        .catch((err) => {
+          this.logger.error(err);
+          return [];
+        });
+
+      if (course?.cdn) {
+        CourseLogoURL = `https://${course?.cdn}/${course?.key}.${course?.extension}`;
+        CourseURL = course?.websiteURL || "";
+      }
+    }
+
     if (user?.email) {
       try {
-        await this.notificationsService.sendEmail(
+        await this.notificationsService.sendEmailByTemplate(
           user?.email,
           "Golf District - Password Reset Successful",
-          `Successfully reset your password.`
+          process.env.SENDGRID_TEE_TIMES_PASSWORD_RESET_SUCCESSFUL_TEMPLATE_ID!,
+          {
+            CustomerFirstName: user?.handle ?? "",
+            CourseLogoURL,
+            CourseURL,
+          },
+          []
         );
       } catch (error) {
         throw new Error("Error sending welcome email");
@@ -880,7 +1031,7 @@ export class UserService {
    */
   isValidHandle = async (handle: string): Promise<boolean> => {
     this.logger.info(`isValidHandle called with handle: ${handle}`);
-    if (handle.length < 3 || handle.length > 20) {
+    if (handle.length < 10 || handle.length > 20) {
       this.logger.debug(`Handle length is invalid: ${handle}`);
       //throw new Error("Handle length is invalid");
       return false;
@@ -1082,7 +1233,7 @@ export class UserService {
       userProfileVisibility = userProfile?.userProfileVisibility || "PUBLIC"; // Default to PUBLIC if visibility is undefined
     }
     // Building the where clause
-    let whereClause = and(eq(bookings.courseId, courseId), gt(teeTimes.date, currentUtcTimestamp()));
+    let whereClause = and(eq(teeTimes.courseId, courseId), gt(teeTimes.date, currentUtcTimestamp()));
 
     if (userProfileVisibility === "PUBLIC" && callerId !== userId) {
       this.logger.debug("Profile is PUBLIC");
@@ -1111,13 +1262,13 @@ export class UserService {
         date: teeTimes.providerDate,
         numberOfHoles: bookings.numberOfHoles,
         courseName: courses.name,
-        courseId: bookings.courseId,
-        withCart: bookings.withCart,
+        courseId: teeTimes.courseId,
+        withCart: bookings.includesCart,
         ownerHandle: users.handle,
         favorites: favorites.id,
-        firstHandPrice: teeTimes.greenFee,
+        firstHandPrice: teeTimes.greenFeePerPlayer,
         minimumOfferPrice: bookings.minimumOfferPrice,
-        purchasedFor: bookings.purchasedPrice,
+        purchasedFor: bookings.totalAmount,
         golfers: bookings.nameOnBooking,
         listed: bookings.isListed,
         listPrice: lists.listPrice,
@@ -1131,12 +1282,12 @@ export class UserService {
       .from(bookings)
       .leftJoin(users, eq(users.id, bookings.ownerId))
       .leftJoin(assets, eq(assets.id, users.image))
-      .leftJoin(lists, eq(lists.teeTimeId, bookings.teeTimeId))
+      .leftJoin(lists, eq(lists.id, bookings.listId))
       .leftJoin(favorites, and(eq(favorites.teeTimeId, bookings.teeTimeId), eq(favorites.userId, userId)))
-      .leftJoin(courses, eq(courses.id, bookings.courseId))
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
+      .leftJoin(courses, eq(courses.id, teeTimes.courseId))
       .where(whereClause)
-      .orderBy(asc(bookings.time))
+      .orderBy(asc(bookings.purchasedAt))
       .execute();
 
     if (!upcomingTeeTimeData || upcomingTeeTimeData.length === 0) {
@@ -1218,7 +1369,7 @@ export class UserService {
         teeTimeId: bookings.teeTimeId,
         date: teeTimes.providerDate,
         courseName: courses.name,
-        courseId: bookings.courseId,
+        courseId: teeTimes.courseId,
         courseImage: {
           key: assets.key,
           cdnUrl: assets.cdn,
@@ -1226,17 +1377,17 @@ export class UserService {
         },
       })
       .from(bookings)
-      .leftJoin(courses, eq(courses.id, bookings.courseId))
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
+      .leftJoin(courses, eq(courses.id, teeTimes.courseId))
       .leftJoin(assets, eq(assets.id, courses.logoId))
       .where(
         and(
           eq(courses.entityId, entity.entityId),
           or(eq(bookings.ownerId, userId), eq(bookings.nameOnBooking, userId)),
-          lt(bookings.time, currentUtcTimestamp())
+          lt(bookings.purchasedAt, currentUtcTimestamp())
         )
       )
-      .orderBy(desc(bookings.time))
+      .orderBy(desc(bookings.purchasedAt))
       .execute();
 
     if (!teeTimeHistoryData || teeTimeHistoryData.length === 0) {
@@ -1250,7 +1401,7 @@ export class UserService {
           teeTimeId: booking.teeTimeId,
           date: booking.date,
           courseName: booking.courseName,
-          courseId: booking.courseId,
+          courseId: booking.courseId ?? "",
           courseImage: booking.courseImage
             ? `https://${booking.courseImage.cdnUrl}/${booking.courseImage.key}.${booking.courseImage.extension}`
             : "/defaults/default-course.webp",

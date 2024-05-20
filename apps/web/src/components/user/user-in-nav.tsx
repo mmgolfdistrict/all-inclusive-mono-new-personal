@@ -1,4 +1,4 @@
-import { signOut } from "@golf-district/auth/nextjs-exports";
+import { signOut, useSession } from "@golf-district/auth/nextjs-exports";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
@@ -22,6 +22,7 @@ export const UserInNav = ({ alwaysShow }: { alwaysShow?: boolean }) => {
   const courseId = course?.id;
   const pathname = usePathname();
   const router = useRouter();
+  const session = useSession();
 
   const { data: imageUrl } = api.image.getAssetUrl.useQuery(
     { assetId: user?.image ?? "" },
@@ -32,7 +33,26 @@ export const UserInNav = ({ alwaysShow }: { alwaysShow?: boolean }) => {
       refetchOnReconnect: false,
     }
   );
+
+  const auditLog = api.webhooks.auditLog.useMutation();
+  const logAudit = async () => {
+    await auditLog.mutateAsync({
+      userId: user?.id ?? "",
+      teeTimeId: "",
+      bookingId: "",
+      listingId: "",
+      eventId: "USER_LOGGED_OUT",
+      json: `user logged out `,
+    });
+  };
+
   const logOutUser = async () => {
+    void logAudit();
+    localStorage.clear();
+    sessionStorage.clear();
+    session.data = null;
+    session.status = "unauthenticated";
+    await session.update(null);
     if (PathsThatNeedRedirectOnLogout.some((i) => pathname.includes(i))) {
       const data = await signOut({
         callbackUrl: `/${courseId}`,
@@ -89,18 +109,21 @@ export const UserInNav = ({ alwaysShow }: { alwaysShow?: boolean }) => {
               </div>
               <p className="text-lg font-medium">Welcome, {user?.name}!</p>
             </div>
-            <Link href={`/${courseId}/profile/${user?.id}`}>
+            {/* <Link href={`/${courseId}/profile/${user?.id}`}>
               <MenuItem title="Profile" />
-            </Link>
+            </Link> */}
             <Link href={`/${courseId}/account-settings/${user?.id}`}>
               <MenuItem title="Account Settings" />
             </Link>
             <Link href={`/${courseId}/my-tee-box`}>
               <MenuItem title="My Tee Box" />
             </Link>
-            <Link href={`/${courseId}/watchlist`}>
-              <MenuItem title="Watchlist" />
-            </Link>
+            {course?.supportsWatchlist ? (
+              <Link href={`/${courseId}/watchlist`}>
+                <MenuItem title="Watchlist" />
+              </Link>
+            ) : null}
+
             <MenuItem title="Log Out" handleClick={() => void logOutUser()} />
           </DropdownMenu.Content>
         </DropdownMenu.Portal>

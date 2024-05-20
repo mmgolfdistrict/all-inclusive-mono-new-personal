@@ -10,6 +10,7 @@ export enum CartValidationErrors {
   AUCTION_BUY_NOW_PRICE_MISMATCH = "AUCTION_BUY_NOW_PRICE_MISMATCH",
   UNKNOWN_PRODUCT_TYPE = "UNKNOWN_PRODUCT_TYPE",
   CHARITY_NOT_ACTIVE = "CHARITY_NOT_ACTIVE",
+  TEE_TIME_PROVIDER_COURSE_ID_NOT_FOUND = "TEE_TIME_PROVIDER_COURSE_ID_NOT_FOUND",
 }
 
 export interface CustomerCart {
@@ -21,15 +22,25 @@ export interface CustomerCart {
   promoCode?: string | null | undefined;
   phone: string | null;
   phone_country_code: string | null;
+  paymentId: string | null;
   cart: ProductData[];
 }
+
+export interface UpdatePayment {
+  currency: string;
+  amount: number;
+}
+
 export type ProductData =
   | FirstHandProduct
   | SecondHandProduct
   | SensibleProduct
   | AuctionProduct
   | CharityProduct
-  | Offer;
+  | Offer
+  | MarkupProduct
+  | ConvenienceFeeProduct
+  | TaxProduct;
 
 export interface BaseProduct {
   name: string; // teeTime-course-time
@@ -41,6 +52,7 @@ export interface BaseProduct {
 }
 
 export interface FirstHandProduct extends BaseProduct {
+  price: number;
   product_data: {
     metadata: {
       type: "first_hand";
@@ -93,6 +105,27 @@ export interface Offer extends BaseProduct {
       booking_ids: string[];
       price: number;
       expires_at: Date;
+    };
+  };
+}
+export interface MarkupProduct extends BaseProduct {
+  product_data: {
+    metadata: {
+      type: "markup";
+    };
+  };
+}
+export interface ConvenienceFeeProduct extends BaseProduct {
+  product_data: {
+    metadata: {
+      type: "convenience_fee";
+    };
+  };
+}
+export interface TaxProduct extends BaseProduct {
+  product_data: {
+    metadata: {
+      type: "taxes";
     };
   };
 }

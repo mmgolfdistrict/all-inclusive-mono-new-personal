@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "@golf-district/auth/nextjs-exports";
-import { formatQueryDate } from "@golf-district/shared";
+import { formatQueryDate, removeTimeZoneOffset } from "@golf-district/shared";
 import { FilledButton } from "~/components/buttons/filled-button";
 import { HyperSwitch } from "~/components/checkout-page/hyper-switch";
 import { OrderSummary } from "~/components/checkout-page/order-summary";
@@ -14,6 +14,19 @@ import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
 import { formatMoney, getPromoCodePrice } from "~/utils/formatters";
+import type {
+  AuctionProduct,
+  CartProduct,
+  CharityProduct,
+  ConvenienceFeeProduct,
+  FirstHandProduct,
+  MarkupProduct,
+  Offer,
+  SecondHandProduct,
+  SensibleProduct,
+  TaxProduct,
+} from "~/utils/types";
+import dayjs from "dayjs";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useDebounce } from "usehooks-ts";
@@ -34,6 +47,7 @@ export default function Checkout({
   const { course } = useCourseContext();
   const { user } = useUserContext();
   const { status } = useSession();
+  const [isSessionLoading, setIsSessionLoading] = useState(true);
 
   const {
     shouldAddSensible,
@@ -70,10 +84,17 @@ export default function Checkout({
     { enabled: listingId !== undefined }
   );
 
+  let isError, error;
+
   const data = teeTimeId ? teeTimeData : listingData;
   const isLoading = teeTimeId ? isLoadingTeeTime : isLoadingListing;
-  const isError = teeTimeId ? isErrorTeeTime : isErrorListing;
-  const error = teeTimeId ? errorTeeTime : errorListing;
+  isError = teeTimeId ? isErrorTeeTime : isErrorListing;
+  error = teeTimeId ? errorTeeTime : errorListing;
+
+  if (data && listingData?.ownerId === user?.id) {
+    isError = true;
+    error = new Error("You cannot buy your own tee time");
+  }
 
   const saleType = teeTimeId ? "first_hand" : "second_hand";
 
@@ -113,10 +134,24 @@ export default function Checkout({
     }
   }, [debouncedPromoCode]);
 
-  const cartData = useMemo(() => {
+  const startHourNumber = dayjs(removeTimeZoneOffset(data?.date)).hour();
+  const endHourNumber = dayjs(removeTimeZoneOffset(data?.date))
+    .add(6, "hours")
+    .hour();
+
+  const cartData: CartProduct[] = useMemo(() => {
     if (!data || data === null) return [];
 
-    const metadata: Record<string, number | string | undefined | null> =
+    const metadata:
+      | FirstHandProduct
+      | SecondHandProduct
+      | SensibleProduct
+      | AuctionProduct
+      | CharityProduct
+      | Offer
+      | MarkupProduct
+      | ConvenienceFeeProduct
+      | TaxProduct =
       saleType === "first_hand"
         ? {
             type: "first_hand",
@@ -127,7 +162,8 @@ export default function Checkout({
             type: "second_hand",
             second_hand_id: listingId,
           };
-    const localCart = [
+
+    const localCart: CartProduct[] = [
       {
         name: "Golf District Tee Time",
         id: teeTimeId ?? data?.teeTimeId,
@@ -146,6 +182,69 @@ export default function Checkout({
         },
       },
     ];
+
+    if (data) {
+      localCart.push({
+        name: "Golf District Tee Time",
+        id: teeTimeId ?? data?.teeTimeId,
+        price:
+          ((data?.greenFeeTaxPerPlayer ?? 0) +
+            (data?.cartFeeTaxPerPlayer ?? 0)) *
+          amountOfPlayers, //int
+        image: "", //
+        currency: "USD", //USD
+        display_price: formatMoney(
+          ((data?.greenFeeTaxPerPlayer ?? 0) +
+            (data?.cartFeeTaxPerPlayer ?? 0)) *
+            amountOfPlayers
+        ),
+        product_data: {
+          metadata: {
+            type: "taxes",
+          },
+        },
+      });
+    }
+
+    if (course?.convenienceFeesFixedPerPlayer) {
+      localCart.push({
+        name: "Golf District Tee Time",
+        id: teeTimeId ?? data?.teeTimeId,
+        price: course?.convenienceFeesFixedPerPlayer * amountOfPlayers ?? 0, //int
+        image: "", //
+        currency: "USD", //USD
+        display_price: formatMoney(
+          (course?.convenienceFeesFixedPerPlayer
+            ? course?.convenienceFeesFixedPerPlayer / 100
+            : 0) * amountOfPlayers
+        ),
+        product_data: {
+          metadata: {
+            type: "convenience_fee",
+          },
+        },
+      });
+    }
+
+    if (course?.markupFeesFixedPerPlayer) {
+      localCart.push({
+        name: "Golf District Tee Time",
+        id: teeTimeId ?? data?.teeTimeId,
+        price: course?.markupFeesFixedPerPlayer ?? 0, //int
+        image: "", //
+        currency: "USD", //USD
+        display_price: formatMoney(
+          course?.markupFeesFixedPerPlayer
+            ? course?.markupFeesFixedPerPlayer / 100
+            : 0
+        ),
+        product_data: {
+          metadata: {
+            type: "markup",
+          },
+        },
+      });
+    }
 
     if (shouldAddSensible && !isSensibleInvalid) {
       localCart.push({
@@ -194,6 +293,8 @@ export default function Checkout({
     promoCodePrice,
     selectedCharity,
     deboundCharityAmount,
+    course?.markupFeesFixedPerPlayer,
+    course?.convenienceFeesFixedPerPlayer,
   ]);
 
   if (isError && error) {
@@ -206,7 +307,6 @@ export default function Checkout({
       </div>
     );
   }
-
   return (
     <>
       <div className="relative flex flex-col items-center gap-4 px-0 pb-8 md:px-8">
@@ -226,7 +326,7 @@ export default function Checkout({
               className="w-[50px] object-fit"
             />
           </Link>
-          {user && status === "authenticated" ? (
+          {status == "loading" ? null : user && status === "authenticated" ? (
             <div className="flex items-center gap-4">
               <UserInNav alwaysShow={true} />
             </div>
@@ -239,25 +339,29 @@ export default function Checkout({
         <CheckoutBreadcumbs status={"checkout"} />
 
         <div className="flex w-full flex-col gap-4 md:flex-row">
-          <OrderSummary
-            teeTime={data}
-            isLoading={isLoading}
-            sensibleDataToMountComp={{
-              partner_id: process.env.NEXT_PUBLIC_SENSIBLE_PARTNER_ID ?? "",
-              product_id: process.env.NEXT_PUBLIC_SENSIBLE_PRODUCT_ID ?? "",
-              coverageStartDate: formatQueryDate(new Date(data?.date ?? "")),
-              coverageEndDate: formatQueryDate(new Date(data?.date ?? "")),
-              currency: "USD",
-              langLocale: "en-US",
-              exposureName: course?.name ?? "",
-              exposureLatitude: course?.latitude ?? 0,
-              exposureLongitude: course?.longitude ?? 0,
-              exposureTotalCoverageAmount:
-                Number(data?.pricePerGolfer) * amountOfPlayers ?? 0,
-            }}
-            isSensibleInvalid={isSensibleInvalid}
-          />
-          <div>
+          <div className="md:w-3/5">
+            <OrderSummary
+              teeTime={data}
+              isLoading={isLoading || isSessionLoading}
+              sensibleDataToMountComp={{
+                partner_id: process.env.NEXT_PUBLIC_SENSIBLE_PARTNER_ID ?? "",
+                product_id: process.env.NEXT_PUBLIC_SENSIBLE_PRODUCT_ID ?? "",
+                coverageStartDate: formatQueryDate(new Date(data?.date ?? "")),
+                coverageEndDate: formatQueryDate(new Date(data?.date ?? "")),
+                coverageStartHourNumber: startHourNumber,
+                coverageEndHourNumber: endHourNumber === 0 ? 23 : endHourNumber, // SAFE VALUE SHOULDN'T BE 0 OR 24
+                currency: "USD",
+                langLocale: "en-US",
+                exposureName: course?.name ?? "",
+                exposureLatitude: course?.latitude ?? 0,
+                exposureLongitude: course?.longitude ?? 0,
+                exposureTotalCoverageAmount:
+                  Number(data?.pricePerGolfer) * amountOfPlayers ?? 0,
+              }}
+              isSensibleInvalid={isSensibleInvalid}
+            />
+          </div>
+          <div className="md:w-2/5">
             {isLoading || !data || data === null ? (
               <div className="flex justify-center items-center h-[200px] w-full md:min-w-[370px]">
                 <Spinner className="w-[50px] h-[50px]" />
@@ -271,8 +375,11 @@ export default function Checkout({
                 teeTimeId={
                   teeTimeId !== undefined ? teeTimeId : listingId ?? ""
                 }
+                setIsLoading={setIsSessionLoading}
+                listingId={listingId}
                 isBuyNowAuction={false}
                 cartData={cartData}
+                teeTimeDate={teeTimeData?.date}
               />
             )}
           </div>

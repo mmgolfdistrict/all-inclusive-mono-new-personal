@@ -1,7 +1,7 @@
 import { auth } from "@golf-district/auth";
 import type { Session } from "@golf-district/auth";
 import { db } from "@golf-district/database";
-import { RateLimitService } from "@golf-district/service";
+import { AppSettingsService, RateLimitService } from "@golf-district/service";
 import type { ServiceConfig } from "@golf-district/service/src/serviceFactory";
 import { ServiceFactory } from "@golf-district/service/src/serviceFactory";
 import Logger from "@golf-district/shared/src/logger";
@@ -14,6 +14,20 @@ interface CreateContextOptions {
   //logger: pino.Logger;
 }
 
+let appSettings: any = {};
+await (async () => {
+  if (!process.env.REDIS_URL || !process.env.REDIS_TOKEN) {
+    return;
+  }
+
+  const appSettingService = new AppSettingsService(db, process.env.REDIS_URL, process.env.REDIS_TOKEN);
+  const res = await appSettingService.getMultiple(
+    "SENSIBLE_CLIENT_ID",
+    "SENSIBLE_CLIENT_SECRET",
+    "SENSIBLE_AUDIENCE"
+  );
+  appSettings = res ?? {};
+})();
 const logger = Logger("trpc");
 const serviceFactoryConfig: ServiceConfig = {
   database: db,
@@ -34,9 +48,9 @@ const serviceFactoryConfig: ServiceConfig = {
   vercel_authBearerToken: process.env.VERCEL_AUTH_BEARER_TOKEN ?? "",
   sensible_partner_id: process.env.NEXT_PUBLIC_SENSIBLE_PARTNER_ID ?? "",
   sensible_product_id: process.env.NEXT_PUBLIC_SENSIBLE_PRODUCT_ID ?? "",
-  sensible_audience: process.env.SENSIBLE_AUDIENCE ?? "",
-  sensible_client_Id: process.env.SENSIBLE_CLIENT_ID ?? "",
-  sensible_client_secret: process.env.SENSIBLE_CLIENT_SECRET ?? "",
+  sensible_audience: appSettings.SENSIBLE_AUDIENCE ?? "",
+  sensible_client_Id: appSettings.SENSIBLE_CLIENT_ID ?? "",
+  sensible_client_secret: appSettings.SENSIBLE_CLIENT_SECRET ?? "",
   hyperSwitchApiKey: process.env.HYPERSWITCH_API_KEY ?? "",
   hyperSwitchProfileId: process.env.HYPERSWITCH_PROFILE_ID ?? "",
   foreUpApiKey: process.env.FOREUP_API_KEY ?? "",
@@ -45,7 +59,6 @@ const serviceFactoryConfig: ServiceConfig = {
   foreupPassword: process.env.FOREUP_PASSWORD ?? "",
   upStashClientToken: process.env.UPSTASH_CLIENT_TOKEN ?? "",
 };
-
 const createInnerTRPCContext = (opts: CreateContextOptions) => {
   return {
     session: opts.session,
@@ -57,7 +70,8 @@ const createInnerTRPCContext = (opts: CreateContextOptions) => {
 export const createTRPCContext = async (opts: { req?: Request; auth?: Session }) => {
   const session = opts.auth ?? (await auth());
   const source = opts.req?.headers.get("x-trpc-source") ?? "unknown";
-
+  const ip = opts.req?.headers.get("x-forwarded-for");
+  session.ip = ip ?? "";
   logger.info(">>> tRPC Request from", source, "by", session?.user?.id ?? "anonymous");
 
   return createInnerTRPCContext({

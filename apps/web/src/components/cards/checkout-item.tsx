@@ -29,7 +29,6 @@ export const CheckoutItem = ({
 }) => {
   const searchParams = useSearchParams();
   const playerCount = searchParams.get("playerCount");
-
   const { setAmountOfPlayers, amountOfPlayers } = useCheckoutContext();
   const { course } = useCourseContext();
 
@@ -107,7 +106,7 @@ export const CheckoutItem = ({
         isSecondHand={teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND"}
         teeTimeId={teeTime?.teeTimeId}
       />
-      {isSensibleInvalid ? null : (
+      {isSensibleInvalid || isLoading ? null : (
         <SensibleWidget sensibleDataToMountComp={sensibleDataToMountComp} />
         // <section className="flex flex-col items-center justify-between gap-4 border-t border-stroke p-4 lg:flex-row">
         //   <div className="flex flex-col gap-2">
@@ -240,7 +239,7 @@ const Data = ({
         </div>
         <div className="flex">
           <div className="text-[20px] font-semibold text-secondary-black">
-            {formatMoney(pricePerGolfer ?? 0)}
+            {formatMoney(pricePerGolfer ?? 1 ?? 0)}
           </div>
           <div className="text-[16px] text-primary-gray">/golfer</div>
         </div>

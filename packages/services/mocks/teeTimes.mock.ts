@@ -1,5 +1,4 @@
-import { teeTimes } from "@golf-district/database/schema/teeTimes";
-import { currentUtcTimestamp } from "@golf-district/shared";
+import type { teeTimes } from "@golf-district/database/schema/teeTimes";
 
 export const mockTeeTimes: (typeof teeTimes.$inferInsert)[] = [
   {
@@ -11,11 +10,11 @@ export const mockTeeTimes: (typeof teeTimes.$inferInsert)[] = [
     maxPlayersPerBooking: 10,
     availableFirstHandSpots: 5,
     availableSecondHandSpots: 5,
-    greenFee: 100,
-    cartFee: 100,
-    greenFeeTax: 10,
-    cartFeeTax: 10,
-    soldByProvider: "provider1",
+    greenFeePerPlayer: 100,
+    cartFeePerPlayer: 100,
+    greenFeeTaxPerPlayer: 10,
+    cartFeeTaxPerPlayer: 10,
+    courseProvider: "provider1",
     courseId: "course1",
     entityId: "entity1",
   },

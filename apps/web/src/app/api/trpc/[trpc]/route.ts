@@ -28,6 +28,7 @@ const handler = auth(async (req) => {
     endpoint: "/api/trpc",
     req,
     router: appRouter,
+    /* @ts-ignore */
     createContext: async () => await createTRPCContext({ auth: req.auth, req }),
 
     onError({ error, path }) {

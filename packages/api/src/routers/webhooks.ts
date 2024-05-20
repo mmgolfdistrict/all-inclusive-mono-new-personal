@@ -1,3 +1,4 @@
+import { any, z } from "zod";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 
 export const webhookRouter = createTRPCRouter({
@@ -9,4 +10,43 @@ export const webhookRouter = createTRPCRouter({
     //@TODO validate type maybe?
     ctx.serviceFactory.getHyperSwitchWebhookService().processWebhook(input as any);
   }),
+  paymentVerifier: publicProcedure.mutation(async ({ ctx, input }) => {
+    ctx.serviceFactory.getPaymentVerifierService().verifyPayment();
+  }),
+  processPayment: publicProcedure
+    .input(
+      z.object({
+        customer_id: z.string(),
+        paymentId: z.string(),
+        bookingId: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return await ctx.serviceFactory
+        .getHyperSwitchWebhookService()
+        .processPayment(input.paymentId, input.customer_id, input.bookingId);
+    }),
+  cancelHyperswitchPaymentById: publicProcedure
+    .input(
+      z.object({
+        paymentId: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return await ctx.serviceFactory.getHyperSwitchService().cancelHyperswitchPaymentById(input.paymentId);
+    }),
+  auditLog: publicProcedure
+    .input(
+      z.object({
+        userId: z.string(),
+        teeTimeId: z.string(),
+        bookingId: z.string(),
+        listingId: z.string(),
+        eventId: z.string(),
+        json: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return await ctx.serviceFactory.getLoggerService().auditLog(input, ctx?.session?.ip ?? "");
+    }),
 });

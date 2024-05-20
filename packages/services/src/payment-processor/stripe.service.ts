@@ -1,5 +1,3 @@
-// /* eslint no-use-before-define: 0 */
-import { validDomainRegex } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
 import type pino from "pino";
 import Stripe from "stripe";

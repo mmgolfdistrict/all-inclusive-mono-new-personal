@@ -1,5 +1,6 @@
 import type { Db } from "@golf-district/database";
 import {
+  AppSettingsService,
   AuctionService,
   AuthService,
   BookingService,
@@ -24,8 +25,12 @@ import {
   WatchlistService,
   WeatherService,
 } from "./index";
+import { ProfanityService } from "./profanity/profanity.service";
 import { ProviderService } from "./tee-sheet-provider/providers.service";
 import { clubprophetWebhookService } from "./webhooks/clubprophet.webhook.service";
+import { FinixService } from "./webhooks/finix.service";
+import { LoggerService } from "./webhooks/logging.service";
+import { PaymentVerifierService } from "./webhooks/paymentverifier.service";
 
 export interface ServiceConfig {
   database: Db;
@@ -73,7 +78,7 @@ export interface ServiceConfig {
  * ```
  */
 export class ServiceFactory {
-  constructor(protected readonly config: ServiceConfig) {}
+  constructor(protected readonly config: ServiceConfig) { }
 
   /**
    * Returns an instance of HyperSwitchService with the provided API key.
@@ -117,7 +122,10 @@ export class ServiceFactory {
       this.config.database,
       this.getTokenizerService(),
       this.getProviderService(),
-      this.getNotificationService()
+      this.getNotificationService(),
+      this.getLoggerService(),
+      this.getHyperSwitchService(),
+      this.getSensibleService()
     );
   };
 
@@ -144,7 +152,6 @@ export class ServiceFactory {
   getSensibleService = (): SensibleService => {
     return new SensibleService(
       this.config.sensible_client_Id,
-      this.config.sensible_product_id,
       this.config.sensible_client_secret,
       this.config.sensible_audience,
       this.config.redisUrl,
@@ -303,7 +310,12 @@ export class ServiceFactory {
    * @returns An instance of TokenizeService.
    */
   getTokenizerService = (): TokenizeService => {
-    return new TokenizeService(this.config.database, this.getNotificationService());
+    return new TokenizeService(
+      this.config.database,
+      this.getNotificationService(),
+      this.getLoggerService(),
+      this.getSensibleService()
+    );
   };
 
   /**
@@ -325,6 +337,8 @@ export class ServiceFactory {
       this.getProviderService(),
       this.getNotificationService(),
       this.getBookingService(),
+      this.getSensibleService(),
+      this.getLoggerService(),
       this.config.upStashClientToken
     );
   };
@@ -334,5 +348,28 @@ export class ServiceFactory {
 
   getCashOutService = (): CashOutService => {
     return new CashOutService(this.config.database, this.getStripeService(), this.getNotificationService());
+  };
+
+  getAppSettingService = (): AppSettingsService => {
+    return new AppSettingsService(this.config.database, this.getCacheService());
+  };
+
+  getPaymentVerifierService = (): PaymentVerifierService => {
+    return new PaymentVerifierService(
+      this.config.database,
+      this.getHyperSwitchWebhookService(),
+      this.getSensibleService(),
+      this.getProviderService()
+    );
+  };
+
+  getFinixService = (): FinixService => {
+    return new FinixService(this.config.database, this.getCashOutService());
+  };
+  getLoggerService = (): LoggerService => {
+    return new LoggerService();
+  };
+  getProfanityService = (): ProfanityService => {
+    return new ProfanityService(this.config.database);
   };
 }

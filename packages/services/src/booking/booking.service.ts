@@ -1,23 +1,35 @@
 import { randomUUID } from "crypto";
-import { and, desc, eq, gte, inArray, or, sql, type Db } from "@golf-district/database";
+import { and, asc, desc, eq, gte, inArray, or, sql, type Db } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
+import type { InsertBooking } from "@golf-district/database/schema/bookings";
 import { bookings } from "@golf-district/database/schema/bookings";
+import { bookingslots } from "@golf-district/database/schema/bookingslots";
 import { courses } from "@golf-district/database/schema/courses";
+import { customerCarts } from "@golf-district/database/schema/customerCart";
 import type { InsertList } from "@golf-district/database/schema/lists";
 import { lists } from "@golf-district/database/schema/lists";
 import { offers } from "@golf-district/database/schema/offers";
+import { providers } from "@golf-district/database/schema/providers";
 import { providerCourseLink } from "@golf-district/database/schema/providersCourseLink";
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
+import type { InsertTransfer } from "@golf-district/database/schema/transfers";
 import { transfers } from "@golf-district/database/schema/transfers";
 import { userBookingOffers } from "@golf-district/database/schema/userBookingOffers";
 import { users } from "@golf-district/database/schema/users";
+import type { ReserveTeeTimeResponse } from "@golf-district/shared";
 import { currentUtcTimestamp, dateToUtcTimestamp } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
+import dayjs from "dayjs";
 import { alias } from "drizzle-orm/mysql-core";
+import type { CustomerCart, ProductData } from "../checkout/types";
 import type { NotificationService } from "../notification/notification.service";
 import type { HyperSwitchService } from "../payment-processor/hyperswitch.service";
+import type { SensibleService } from "../sensible/sensible.service";
 import type { Customer, ProviderService } from "../tee-sheet-provider/providers.service";
+import type { ProviderAPI } from "../tee-sheet-provider/sheet-providers";
+import type { BookingResponse } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
 import type { TokenizeService } from "../token/tokenize.service";
+import type { LoggerService } from "../webhooks/logging.service";
 
 interface TeeTimeData {
   courseId: string;
@@ -41,15 +53,25 @@ type InviteFriend = {
   handle: string | null;
   name: string | null;
   email: string | null;
+  bookingId?: string | null;
+  slotId: string;
 };
+
+type SlotsData = {
+  slotId: string;
+  customerId: string;
+  name: string | null;
+};
+
 interface OwnedTeeTimeData {
   courseId: string;
   courseName: string;
   courseLogo: string;
   date: string;
   firstHandPrice: number;
-  golfers: InviteFriend[] | string[];
+  golfers: InviteFriend[];
   bookingIds: string[];
+  slotsData: SlotsData[];
   purchasedFor: number | null;
   status: string;
   listingId: string | null;
@@ -57,6 +79,9 @@ interface OwnedTeeTimeData {
   offers: number;
   listPrice: number | null;
   minimumOfferPrice: number;
+  weatherGuaranteeAmount: number | null;
+  teeTimeId: string;
+  slots: number;
 }
 
 interface ListingData {
@@ -70,6 +95,7 @@ interface ListingData {
   listPrice: number | null;
   status: string;
   listedSpots: string[] | null;
+  listedSlotsCount: number;
 }
 
 interface TransferData {
@@ -79,11 +105,17 @@ interface TransferData {
   date: string;
   firstHandPrice: number;
   pricePerGolfer: number[];
-  golfers: string[];
+  golfers: InviteFriend[];
   bookingIds: string[];
   status: string;
+  playerCount?: number;
 }
-
+type RequestOptions = {
+  method: string;
+  headers: Headers;
+  body: string;
+  redirect: RequestRedirect;
+};
 /**
  * Service for managing bookings and transaction history.
  */
@@ -101,7 +133,10 @@ export class BookingService {
     private readonly database: Db,
     private readonly tokenizeService: TokenizeService,
     private readonly providerService: ProviderService,
-    private readonly notificationService: NotificationService
+    private readonly notificationService: NotificationService,
+    private readonly loggerService: LoggerService,
+    private readonly hyperSwitchService: HyperSwitchService,
+    private readonly sensibleService: SensibleService
   ) {}
 
   createCounterOffer = async (userId: string, bookingIds: string[], offerId: string, amount: number) => {
@@ -149,8 +184,8 @@ export class BookingService {
   getTransactionHistory = async (
     userId: string,
     courseId: string,
-    limit = 10,
-    cursor: string | undefined
+    _limit = 10,
+    _cursor: string | undefined
   ) => {
     this.logger.info(`getTransactionHistory called with userId: ${userId}`);
     const data = await this.database
@@ -160,16 +195,17 @@ export class BookingService {
         date: teeTimes.providerDate,
         courseId: teeTimes.courseId,
         courseName: courses.name,
-        greenFee: teeTimes.greenFee,
+        greenFee: bookings.greenFeePerPlayer,
         teeTimeImage: {
           key: assets.key,
           cdnUrl: assets.cdn,
           extension: assets.extension,
         },
         listing: lists.id,
-        players: bookings.nameOnBooking,
+        players: bookings.playerCount,
         bookingId: bookings.id,
         amount: transfers.amount,
+        purchasedPrice: bookings.totalAmount,
         from: transfers.fromUserId,
         transfersDate: transfers.createdAt,
       })
@@ -177,17 +213,17 @@ export class BookingService {
       .innerJoin(bookings, eq(bookings.id, transfers.bookingId))
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
       .innerJoin(courses, eq(courses.id, teeTimes.courseId))
-      .leftJoin(lists, eq(lists.teeTimeId, teeTimes.id))
+      .leftJoin(lists, eq(bookings.listId, lists.id))
       .leftJoin(assets, eq(assets.id, courses.logoId))
-      .leftJoin(userBookingOffers, eq(userBookingOffers.bookingId, bookings.id))
+      // .leftJoin(userBookingOffers, eq(userBookingOffers.bookingId, bookings.id))
       .where(or(eq(transfers.toUserId, userId), eq(transfers.fromUserId, userId)))
       .orderBy(desc(transfers.createdAt))
       .execute();
+    console.log("========>", data.length);
     if (!data.length) {
       this.logger.info(`No tee times found for user: ${userId}`);
       return [];
     }
-
     const combinedData: Record<string, TransferData> = {};
     data.forEach((teeTime) => {
       if (!combinedData[teeTime.transferId]) {
@@ -199,16 +235,17 @@ export class BookingService {
             : "/defaults/default-course.webp",
           date: teeTime.date ? teeTime.date : "",
           firstHandPrice: teeTime.greenFee ? teeTime.greenFee : 0,
-          golfers: [teeTime.players],
-          pricePerGolfer: [teeTime.amount],
+          golfers: [{ id: "", email: "", handle: "", name: "", slotId: "" }],
+          pricePerGolfer: teeTime.from === userId ? [teeTime.amount / 100] : [teeTime.purchasedPrice / 100],
           bookingIds: [teeTime.bookingId],
           status: teeTime.from === userId ? "SOLD" : "PURCHASED",
+          playerCount: teeTime.players,
         };
       } else {
         const currentEntry = combinedData[teeTime.transferId];
         if (currentEntry) {
-          currentEntry.golfers.push(teeTime.players);
-          currentEntry.pricePerGolfer.push(teeTime.amount);
+          currentEntry.golfers.push({ id: "", email: "", handle: "", name: "", slotId: "" });
+          currentEntry.pricePerGolfer.push(teeTime.from === userId ? teeTime.amount : teeTime.purchasedPrice);
           currentEntry.bookingIds.push(teeTime.bookingId);
         }
       }
@@ -230,8 +267,10 @@ export class BookingService {
    * const limit = 10;
    * const listedTeeTimes = await bookingService.getMyListedTeeTimes(userId, courseId, limit);
    */
-  getMyListedTeeTimes = async (userId: string, courseId: string, limit = 10, cursor?: string) => {
+  getMyListedTeeTimes = async (userId: string, courseId: string, _limit = 10, _cursor?: string) => {
     this.logger.info(`getMyListedTeeTimes called with userId: ${userId}`);
+    const localDateTimePlus1Hour = dayjs.utc().utcOffset(-7).add(1, "hour");
+
     const data = await this.database
       .select({
         bookingId: bookings.id,
@@ -245,15 +284,23 @@ export class BookingService {
         listingId: bookings.listId,
         teeTimesId: teeTimes.id,
         listPrice: lists.listPrice,
-        greenFee: teeTimes.greenFee,
+        listedSlots: lists.slots,
+        greenFeePerPlayer: teeTimes.greenFeePerPlayer,
         minimumOfferPrice: bookings.minimumOfferPrice,
       })
       .from(bookings)
       .innerJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
       .innerJoin(courses, eq(courses.id, teeTimes.courseId))
       .innerJoin(assets, eq(assets.id, courses.logoId))
-      .innerJoin(lists, and(eq(lists.teeTimeId, teeTimes.id), eq(lists.isDeleted, false)))
-      .where(and(eq(bookings.isListed, true), eq(teeTimes.courseId, courseId), eq(bookings.ownerId, userId)))
+      .innerJoin(lists, and(eq(lists.id, bookings.listId), eq(lists.isDeleted, false)))
+      .where(
+        and(
+          eq(bookings.isListed, true),
+          eq(teeTimes.courseId, courseId),
+          eq(bookings.ownerId, userId),
+          gte(teeTimes.providerDate, localDateTimePlus1Hour.format("YYYY-MM-DDTHH:mm:ss")) //Exclude past tee times
+        )
+      )
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving tee times: ${err}`);
@@ -271,15 +318,17 @@ export class BookingService {
               ? `https://${teeTime.teeTimeImage.cdnUrl}/${teeTime.teeTimeImage.key}.${teeTime.teeTimeImage.extension}`
               : "/defaults/default-course.webp",
             date: teeTime.date ? teeTime.date : "",
-            firstHandPrice: teeTime.greenFee ? teeTime.greenFee : 0,
+            firstHandPrice: teeTime.greenFeePerPlayer ? teeTime.greenFeePerPlayer : 0,
             miniumOfferPrice: teeTime.minimumOfferPrice ? teeTime.minimumOfferPrice : 0,
-            listPrice: teeTime.listPrice,
+            listPrice: teeTime.listPrice / 100,
             status: "LISTED",
             listedSpots: [teeTime.bookingId],
+            listedSlotsCount: teeTime.listedSlots,
           };
         } else {
           const currentEntry = combinedData[teeTime.teeTimesId];
           if (currentEntry) {
+            currentEntry.listedSlotsCount = teeTime.listedSlots;
             if (currentEntry.listedSpots) {
               currentEntry.listedSpots.push(teeTime.bookingId);
             } else {
@@ -306,7 +355,7 @@ export class BookingService {
     const data = await this.database
       .select({
         bookingId: bookings.id,
-        courseId: bookings.courseId,
+        courseId: teeTimes.courseId,
         purchasedById: transfers.fromUserId,
         purchasedByName: users.name,
         purchaseAmount: transfers.amount,
@@ -318,6 +367,7 @@ export class BookingService {
         },
       })
       .from(bookings)
+      .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
       .where(eq(bookings.teeTimeId, teeTimeId))
       .innerJoin(transfers, eq(transfers.bookingId, bookings.id))
       .innerJoin(users, eq(users.id, transfers.toUserId))
@@ -378,7 +428,7 @@ export class BookingService {
     }
     return data.map((booking) => booking.id);
   };
-  getOwnedTeeTimes = async (userId: string, courseId: string, limit = 10, cursor: string | undefined) => {
+  getOwnedTeeTimes = async (userId: string, courseId: string, _limit = 10, _cursor: string | undefined) => {
     this.logger.info(`getOwnedTeeTimes called with userId: ${userId}`);
     const data = await this.database
       .select({
@@ -386,7 +436,9 @@ export class BookingService {
         date: teeTimes.providerDate,
         courseId: teeTimes.courseId,
         courseName: courses.name,
-        greenFee: teeTimes.greenFee,
+        courseMarkup: courses.markupFeesFixedPerPlayer,
+        greenFeePerPlayer: teeTimes.greenFeePerPlayer,
+        cartFeePerPlayer: teeTimes.cartFeePerPlayer,
         lastHighestSale: sql<number | null>`MAX(${transfers.amount})`,
         teeTimeImage: {
           key: assets.key,
@@ -398,21 +450,34 @@ export class BookingService {
         players: bookings.nameOnBooking,
         bookingId: bookings.id,
         offers: sql<number>`COUNT(DISTINCT${userBookingOffers.offerId})`,
-        golferCount: sql<number | null>`COUNT(DISTINCT ${bookings.ownerId})`,
+        golferCount: sql<number | null>`COUNT(${bookings.ownerId})`,
         listPrice: lists.listPrice,
         bookingListed: bookings.isListed,
         minimumOfferPrice: bookings.minimumOfferPrice,
+        weatherGuaranteeAmount: bookings.weatherGuaranteeAmount,
+        slotId: bookingslots.slotnumber,
+        slotCustomerName: bookingslots.name,
+        slotCustomerId: bookingslots.customerId,
+        slotPosition: bookingslots.slotPosition,
+        purchasedFor: bookings.greenFeePerPlayer,
+        providerBookingId: bookings.providerBookingId,
+        slots: lists.slots,
       })
       .from(teeTimes)
       .innerJoin(bookings, eq(bookings.teeTimeId, teeTimes.id))
       .innerJoin(courses, eq(courses.id, teeTimes.courseId))
-      .leftJoin(lists, and(eq(lists.teeTimeId, teeTimes.id), eq(lists.isDeleted, false)))
+      .leftJoin(
+        lists,
+        and(eq(lists.id, bookings.listId), eq(lists.isDeleted, false), eq(bookings.ownerId, lists.userId))
+      )
       .leftJoin(assets, eq(assets.id, courses.logoId))
       .leftJoin(userBookingOffers, eq(userBookingOffers.bookingId, bookings.id))
       .leftJoin(transfers, eq(transfers.bookingId, bookings.id))
+      .leftJoin(bookingslots, eq(bookingslots.bookingId, bookings.id))
       .where(
         and(
           eq(bookings.ownerId, userId),
+          eq(bookings.isActive, true),
           eq(teeTimes.courseId, courseId),
           gte(teeTimes.date, currentUtcTimestamp())
         )
@@ -422,54 +487,75 @@ export class BookingService {
         teeTimes.date,
         teeTimes.courseId,
         courses.name,
-        teeTimes.greenFee,
+        teeTimes.greenFeePerPlayer,
         assets.key,
         assets.cdn,
         assets.extension,
         bookings.nameOnBooking,
         lists.id,
         bookings.id,
-        lists.listPrice
+        lists.listPrice,
+        bookingslots.slotnumber,
+        bookingslots.customerId,
+        bookingslots.name,
+        bookingslots.slotPosition
       )
-      .orderBy(desc(teeTimes.date))
+      .orderBy(asc(teeTimes.date), asc(bookingslots.slotPosition))
       .execute();
     if (!data.length) {
       this.logger.info(`No tee times found for user: ${userId}`);
       return [];
     }
     const combinedData: Record<string, OwnedTeeTimeData> = {};
+
     data.forEach((teeTime) => {
-      if (!combinedData[teeTime.id]) {
-        combinedData[teeTime.id] = {
+      if (!combinedData[teeTime.providerBookingId]) {
+        combinedData[teeTime.providerBookingId] = {
           courseId,
           courseName: teeTime.courseName,
           courseLogo: teeTime.teeTimeImage
             ? `https://${teeTime.teeTimeImage.cdnUrl}/${teeTime.teeTimeImage.key}.${teeTime.teeTimeImage.extension}`
             : "/defaults/default-course.webp",
           date: teeTime.date,
-          firstHandPrice: teeTime.greenFee,
-          golfers: [teeTime.players],
-          purchasedFor: teeTime.lastHighestSale,
+          firstHandPrice:
+            teeTime.greenFeePerPlayer +
+            teeTime.cartFeePerPlayer +
+            (teeTime.courseMarkup ? teeTime.courseMarkup / 100 : 0),
+          golfers: [],
+          purchasedFor: Number(teeTime.purchasedFor) / 100,
           bookingIds: [teeTime.bookingId],
+          slotsData: [
+            {
+              name: teeTime.slotCustomerName || "",
+              slotId: teeTime.slotId || "",
+              customerId: teeTime.slotCustomerId || "",
+            },
+          ],
           status: teeTime.listing && !teeTime.listingIsDeleted ? "LISTED" : "UNLISTED",
           offers: teeTime.offers ? parseInt(teeTime.offers.toString()) : 0,
           listingId: teeTime.listing && !teeTime.listingIsDeleted ? teeTime.listing : null,
           listedSpots: teeTime.listing && !teeTime.listingIsDeleted ? [teeTime.bookingId] : null,
           listPrice: teeTime.listPrice,
           minimumOfferPrice: teeTime.minimumOfferPrice,
+          weatherGuaranteeAmount: teeTime.weatherGuaranteeAmount,
+          teeTimeId: teeTime.id,
+          slots: teeTime.slots || 0,
         };
       } else {
-        const currentEntry = combinedData[teeTime.id];
+        const currentEntry = combinedData[teeTime.providerBookingId];
         if (currentEntry) {
-          // Update the existing entry
-          // @ts-ignore
-          currentEntry.golfers.push(teeTime.players);
           currentEntry.bookingIds.push(teeTime.bookingId);
+          currentEntry.slotsData.push({
+            name: teeTime.slotCustomerName,
+            customerId: teeTime.slotCustomerId!,
+            slotId: teeTime.slotId!,
+          });
           if (teeTime.offers) {
             currentEntry.offers = currentEntry.offers
               ? parseInt(currentEntry.offers.toString()) + parseInt(teeTime.offers.toString())
               : 0;
           }
+          currentEntry.slots = teeTime.slots || 0;
           if (teeTime.listing && !teeTime.listingIsDeleted) {
             currentEntry.status = "LISTED";
             currentEntry.listingId = teeTime.listing;
@@ -479,27 +565,21 @@ export class BookingService {
                 : [teeTime.bookingId];
             }
           }
-          if (
-            teeTime.lastHighestSale &&
-            (!currentEntry.purchasedFor || teeTime.lastHighestSale > currentEntry.purchasedFor)
-          ) {
-            currentEntry.purchasedFor = teeTime.lastHighestSale;
-          }
+          // if (
+          //   teeTime.lastHighestSale &&
+          //   (!currentEntry.purchasedFor || teeTime.lastHighestSale > currentEntry.purchasedFor)
+          // ) {
+          //   currentEntry.purchasedFor = teeTime.lastHighestSale;
+          // }
         }
       }
     });
-    // console.log(combinedData);
-    for (const t of Object.values(combinedData)) {
-      const namesOnBooking = t.golfers.filter((golfer) => golfer !== "Guest");
 
-      const foundUsersForBooking: {
-        id: string;
-        handle: string | null;
-        name: string | null;
-        email: string | null;
-      }[] = [];
-      if (namesOnBooking.length > 0) {
-        for (const _name of namesOnBooking) {
+    for (const t of Object.values(combinedData)) {
+      const finaldata: InviteFriend[] = [];
+
+      for (const slot of t.slotsData) {
+        if (slot.customerId !== "") {
           const userData = await this.database
             .select({
               id: users.id,
@@ -508,39 +588,89 @@ export class BookingService {
               email: users.email,
             })
             .from(users)
-            .where(eq(users.name, _name as string))
+            .where(eq(users.id, slot.customerId))
             .execute()
             .catch((err) => {
               this.logger.error(`Error retrieving user: ${err}`);
               throw new Error("Error retrieving user");
             });
           if (userData[0]) {
-            foundUsersForBooking.push(userData[0]);
-          }
-        }
-      }
-      //x will be a string of Guest or a name until its turned into an object here
-      // @ts-ignore
-      t.golfers = t.golfers.map((x: string) => {
-        if (foundUsersForBooking.length > 0) {
-          const user = foundUsersForBooking.find((user) => x.toLowerCase() === user.name?.toLowerCase());
-          if (user) {
-            return {
+            const user = userData[0];
+            finaldata.push({
               id: user.id,
               handle: user.handle,
-              name: user.name,
+              name: user.name || "",
               email: user.email,
-            };
+              slotId: slot.slotId,
+            });
           }
+        } else {
+          finaldata.push({
+            id: "",
+            handle: "",
+            name: slot.name,
+            email: "",
+            slotId: slot.slotId,
+          });
         }
-        return {
-          id: "",
-          handle: "",
-          name: x,
-          email: "",
-        };
-      });
+      }
+      // t.slotsData=finaldata;
+
+      // const namesOnBooking = t.golfers.filter((golfer) => golfer !== "Guest");
+
+      // const foundUsersForBooking: {
+      //   id: string;
+      //   handle: string | null;
+      //   name: string | null;
+      //   email: string | null;
+      // }[] = [];
+      // if (namesOnBooking.length > 0) {
+      //   for (const _name of namesOnBooking) {
+      //     const userData = await this.database
+      //       .select({
+      //         id: users.id,
+      //         handle: users.handle,
+      //         name: users.name,
+      //         email: users.email,
+      //       })
+      //       .from(users)
+      //       .where(eq(users.name, _name as string))
+      //       .execute()
+      //       .catch((err) => {
+      //         this.logger.error(`Error retrieving user: ${err}`);
+      //         throw new Error("Error retrieving user");
+      //       });
+      //     if (userData[0]) {
+      //       foundUsersForBooking.push(userData[0]);
+      //     }
+      //   }
+      // }
+      //x will be a string of Guest or a name until its turned into an object here
+      // @ts-ignore
+      // t.golfers = t.golfers.map((x: string) => {
+      //   if (foundUsersForBooking.length > 0) {
+      //     const user = foundUsersForBooking.find((user) => x.toLowerCase() === user.name?.toLowerCase());
+      //     if (user) {
+      //       return {
+      //         id: user.id,
+      //         handle: user.handle,
+      //         name: user.name,
+      //         email: user.email,
+      //       };
+      //     }
+      //   }
+      //   return {
+      //     id: "",
+      //     handle: "",
+      //     name: x,
+      //     email: "",
+      //   };
+      // });
+
+      t.slotsData = finaldata;
+      t.golfers = finaldata;
     }
+
     return combinedData;
   };
 
@@ -559,38 +689,83 @@ export class BookingService {
     userId: string,
     listPrice: number,
     bookingIds: string[],
-    endTime: Date
+    endTime: Date,
+    slots: number
   ) => {
     this.logger.info(`createListingForBookings called with userId: ${userId}`);
     if (new Date().getTime() >= endTime.getTime()) {
       this.logger.warn("End time cannot be before current time");
+      this.loggerService.auditLog({
+        id: randomUUID(),
+        userId,
+        teeTimeId: "",
+        bookingId: "",
+        listingId: "",
+        eventId: "TEE_TIME_LISTED_FAILED",
+        json: "End time cannot be before current time.",
+      });
       throw new Error("End time cannot be before current time");
     }
-    if (!bookingIds.length) {
+
+    if (!slots) {
+      this.logger.warn(`Slots less than one`);
+      throw new Error("Slots less than one");
+    }
+    if (!bookingIds[0]) {
       this.logger.warn(`No bookings specified.`);
       throw new Error("No bookings specified.");
     }
+
+    const bookingId: string = bookingIds[0];
     const ownedBookings = await this.database
       .select({
         id: bookings.id,
-        courseId: bookings.courseId,
+        courseId: teeTimes.courseId,
         teeTimeId: bookings.teeTimeId,
         isListed: bookings.isListed,
       })
       .from(bookings)
+      .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
       .where(and(eq(bookings.ownerId, userId), inArray(bookings.id, bookingIds)))
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving bookings: ${err}`);
+        this.loggerService.auditLog({
+          id: randomUUID(),
+          userId,
+          teeTimeId: "",
+          bookingId: "",
+          listingId: "",
+          eventId: "TEE_TIME_LISTED_FAILED",
+          json: "Error retrieving bookings.",
+        });
         throw new Error("Error retrieving bookings");
       });
-    if (ownedBookings.length !== bookingIds.length || !ownedBookings[0]) {
+    if (!ownedBookings.length) {
       this.logger.debug(`Owned bookings: ${JSON.stringify(ownedBookings)}`);
-      this.logger.warn(`User ${userId} does not own all specified bookings.`);
-      throw new Error("User does not own all specified bookings.");
+      this.logger.warn(`User ${userId} does not own  specified bookings.`);
+      this.loggerService.auditLog({
+        id: randomUUID(),
+        userId,
+        teeTimeId: "",
+        bookingId: "",
+        listingId: "",
+        eventId: "TEE_TIME_LISTED_FAILED",
+        json: "User does not  own specified bookings.",
+      });
+      throw new Error("User does not  own specified bookings.");
     }
     if (ownedBookings.length > 4) {
       this.logger.warn(`Cannot list more than 4 bookings.`);
+      this.loggerService.auditLog({
+        id: randomUUID(),
+        userId,
+        teeTimeId: "",
+        bookingId: "",
+        listingId: "",
+        eventId: "TEE_TIME_LISTED_FAILED",
+        json: "Cannot list more than 4 bookings.",
+      });
       throw new Error("Cannot list more than 4 bookings.");
     }
     for (const booking of ownedBookings) {
@@ -600,31 +775,36 @@ export class BookingService {
       }
     }
     //validate that all bookings are for the same course
-    const courseIds = new Set(ownedBookings.map((booking) => booking.courseId));
-    if (courseIds.size > 1) {
-      this.logger.warn(`Bookings are not for the same course.`);
-      throw new Error("Bookings are not for the same course.");
-    }
+    // const courseIds = new Set(ownedBookings.map((booking) => booking.courseId));
+    // if (courseIds.size > 1) {
+    //   this.logger.warn(`Bookings are not for the same course.`);
+    //   throw new Error("Bookings are not for the same course.");
+    // }
     //validate that each booking is for the same tee time
-    const teeTimeIds = new Set(ownedBookings.map((booking) => booking.teeTimeId));
-    if (teeTimeIds.size > 1) {
-      this.logger.warn(`Bookings are not for the same tee time.`);
-      throw new Error("Bookings are not for the same tee time.");
-    }
+    // const teeTimeIds = new Set(ownedBookings.map((booking) => booking.teeTimeId));
+    // if (teeTimeIds.size > 1) {
+    //   this.logger.warn(`Bookings are not for the same tee time.`);
+    //   throw new Error("Bookings are not for the same tee time.");
+    // }
 
     const [firstBooking] = ownedBookings;
-    const courseId = firstBooking.courseId;
+    if (!firstBooking) {
+      this.logger.warn(`Booking ${bookingId} not found.`);
+      throw new Error(`Booking ${bookingId} not found.`);
+    }
+    const courseId = firstBooking.courseId ?? "";
 
     const toCreate: InsertList = {
       id: randomUUID(),
       userId: userId,
-      listPrice: listPrice,
-      teeTimeId: firstBooking.teeTimeId,
-      endTime: dateToUtcTimestamp(endTime),
-      courseId: courseId,
-      status: "PENDING",
+      listPrice: listPrice * 100,
+      // teeTimeId: firstBooking?.teeTimeId,
+      // endTime: dateToUtcTimestamp(endTime),
+      // courseId: courseId,
+      // status: "PENDING",
       isDeleted: false,
-      splitTeeTime: false,
+      // splitTeeTime: false,
+      slots,
     };
     await this.database
       .transaction(async (transaction) => {
@@ -657,12 +837,22 @@ export class BookingService {
         throw new Error("Error creating listing");
       });
     this.logger.info(`Listings created successfully. for user ${userId} teeTimeId ${firstBooking.teeTimeId}`);
-    this.notificationService.createNotification(
+    await this.notificationService.createNotification(
       userId,
       "LISTING_CREATED",
       `Listing creation successful`,
       courseId
     );
+
+    this.loggerService.auditLog({
+      id: randomUUID(),
+      userId,
+      teeTimeId: "",
+      bookingId: "",
+      listingId: "",
+      eventId: "TEE_TIME_LISTED",
+      json: "TEE_TIME_LISTED",
+    });
 
     return { success: true, body: { listingId: toCreate.id }, message: "Listings created successfully." };
   };
@@ -685,7 +875,7 @@ export class BookingService {
       .select({
         id: lists.id,
         userId: lists.userId,
-        status: lists.status,
+        // status: lists.status,
         isDeleted: lists.isDeleted,
       })
       .from(lists)
@@ -700,10 +890,10 @@ export class BookingService {
       this.logger.warn(`Listing not found. Either listing does not exist or user does not own listing.`);
       throw new Error("Owned listing not found");
     }
-    if (listing.status !== "PENDING") {
-      this.logger.warn(`Listing is not pending.`);
-      throw new Error("Listing is not pending");
-    }
+    // if (listing.status !== "PENDING") {
+    //   this.logger.warn(`Listing is not pending.`);
+    //   throw new Error("Listing is not pending");
+    // }
     if (listing.isDeleted) {
       this.logger.warn(`Listing is already deleted.`);
       throw new Error("Listing is already deleted");
@@ -711,15 +901,23 @@ export class BookingService {
     const bookingIds = await this.database
       .select({
         id: bookings.id,
+        courseId: teeTimes.courseId,
       })
       .from(bookings)
+      .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
       .where(eq(bookings.listId, listingId))
       .execute();
+    console.log("cancel listing by user", userId);
+    if (bookingIds && !bookingIds.length) {
+      throw new Error("No booking found for this listing");
+    }
+    const courseId = bookingIds[0]?.courseId ?? "";
     await this.database.transaction(async (trx) => {
       await trx
         .update(lists)
         .set({
           isDeleted: true,
+          cancelledByUserId: userId,
         })
         .where(eq(lists.id, listingId))
         .execute()
@@ -742,6 +940,13 @@ export class BookingService {
           });
       }
     });
+    this.logger.info(`Listings cancelled successfully. for user ${userId} listingId ${listingId}`);
+    await this.notificationService.createNotification(
+      userId,
+      "LISTING_CANCELLED",
+      `Listing cancellation successful`,
+      courseId
+    );
   };
 
   /**
@@ -785,7 +990,7 @@ export class BookingService {
       .select({
         id: lists.id,
         userId: lists.userId,
-        status: lists.status,
+        // status: lists.status,
         isDeleted: lists.isDeleted,
       })
       .from(lists)
@@ -800,10 +1005,10 @@ export class BookingService {
       this.logger.warn(`Listing not found. Either listing does not exist or user does not own listing.`);
       throw new Error("Owned listing not found");
     }
-    if (listing.status !== "PENDING") {
-      this.logger.warn(`Listing is not pending.`);
-      throw new Error("Listing is not pending");
-    }
+    // if (listing.status !== "PENDING") {
+    //   this.logger.warn(`Listing is not pending.`);
+    //   throw new Error("Listing is not pending");
+    // }
     if (listing.isDeleted) {
       this.logger.warn(`Listing is already deleted.`);
       throw new Error("Listing is already deleted");
@@ -811,10 +1016,11 @@ export class BookingService {
     const ownedBookings = await this.database
       .select({
         id: bookings.id,
-        courseId: bookings.courseId,
+        courseId: teeTimes.courseId,
         teeTimeId: bookings.teeTimeId,
       })
       .from(bookings)
+      .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
       .where(and(eq(bookings.ownerId, userId), inArray(bookings.id, bookingIds)))
       .execute()
       .catch((err) => {
@@ -856,12 +1062,12 @@ export class BookingService {
       id: randomUUID(),
       userId: userId,
       listPrice: listPrice,
-      teeTimeId: ownedBookings[0].teeTimeId,
-      endTime: dateToUtcTimestamp(endTime),
-      courseId: ownedBookings[0].courseId,
-      status: "PENDING",
+      // teeTimeId: ownedBookings[0].teeTimeId,
+      // endTime: dateToUtcTimestamp(endTime),
+      // courseId: ownedBookings[0].courseId??"",
+      // status: "PENDING",
       isDeleted: false,
-      splitTeeTime: false,
+      // splitTeeTime: false,
     };
     await this.database
       .transaction(async (trx) => {
@@ -923,6 +1129,29 @@ export class BookingService {
       });
   };
 
+  checkIfTeeTimeStillListed = async (bookingId: string) => {
+    console.log(`checkIfTeeTimeStillListed: ${bookingId}`);
+
+    const [booking] = await this.database
+      .select({ isListed: bookings.isListed })
+      .from(bookings)
+      .where(eq(bookings.id, bookingId))
+      .execute();
+
+    return booking?.isListed;
+  };
+
+  checkIfTeeTimeStillListedByListingId = async (listingId: string) => {
+    const [booking] = await this.database
+      .select({ isListed: bookings.isListed })
+      .from(lists)
+      .innerJoin(bookings, eq(bookings.listId, lists.id))
+      .where(eq(lists.id, listingId))
+      .execute();
+
+    return booking?.isListed;
+  };
+
   teeTimeAvailableFirsthandSpots = async (listingId: string) => {
     const [teeTime] = await this.database
       .select({ availableFirstHandSpots: teeTimes.availableFirstHandSpots })
@@ -953,12 +1182,13 @@ export class BookingService {
     const data = await this.database
       .select({
         id: bookings.id,
-        courseId: bookings.courseId,
+        courseId: teeTimes.courseId,
         teeTimeId: bookings.teeTimeId,
         minimumOfferPrice: bookings.minimumOfferPrice,
         ownerId: bookings.ownerId,
       })
       .from(bookings)
+      .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
       .where(inArray(bookings.id, bookingIds))
       .leftJoin(lists, eq(lists.id, bookings.listId))
       .execute()
@@ -971,11 +1201,10 @@ export class BookingService {
       throw new Error("No bookings found");
     }
     const firstTeeTime = data[0].teeTimeId;
-    const courseId = data[0].courseId;
+    const courseId = data[0].courseId ?? "";
     if (!data.every((booking) => booking.teeTimeId === firstTeeTime)) {
       throw new Error("All bookings must be under the same tee time.");
     }
-    //price must to higher than the largest minimum offer price
 
     const minimumOfferPrice = Math.max(...data.map((booking) => booking.minimumOfferPrice));
     if (price === 0) {
@@ -984,26 +1213,6 @@ export class BookingService {
     if (price < minimumOfferPrice) {
       throw new Error("Offer price must be higher than the minimum offer price.");
     }
-    // const paymentMethod = await this.hyperSwitchService.retrievePaymentMethods(userId, {type: "card"});
-    // console.log(paymentMethod?.data[0])
-    //  const paymentIntent= await this.hyperSwitchService.createPaymentIntent({
-    //   customer: {
-    //     id: userId,
-    //   },
-    //   amount: price,
-    //   capture_method: "manual",
-    //   currency: "USD",
-    //   payment_method_type: 'card',
-    //   pa
-
-    //   payment_token:paymentMethod?.data[0].id
-    // });
-
-    // // console.log(paymentIntent);
-    // const  accept = await this.hyperSwitchService.capturePaymentIntent("pay_mZIlZE09HO2bnRHQU0yP");
-    // console.log(accept)
-    // return
-    // //make sure al the bookings are active , owned by one user, and are under one course and tee time
     await this.database.transaction(async (trx) => {
       const offerId = randomUUID();
       await trx
@@ -1339,7 +1548,7 @@ export class BookingService {
    * @param bookingId - The ID of the booking.
    * @returns A promise that resolves to an array of offers.
    */
-  getOffersForBooking = async (bookingId: string, limit = 10, cursor?: string) => {
+  getOffersForBooking = async (bookingId: string, _limit = 10, _cursor?: string) => {
     this.logger.info(`getOffersForBooking called with bookingId: ${bookingId}`);
     const userImage = alias(assets, "userImage");
     const courseImage = alias(assets, "courseImage");
@@ -1359,7 +1568,7 @@ export class BookingService {
         courseName: courses.name,
         teeTimeDate: teeTimes.date,
         teeTimeId: teeTimes.id,
-        originalGreenFee: teeTimes.greenFee,
+        originalGreenFee: teeTimes.greenFeePerPlayer,
         lastHighestSale: sql<number | null>`MAX(${transfers.amount})`,
         courseImage: {
           key: courseImage.key,
@@ -1381,7 +1590,7 @@ export class BookingService {
       .innerJoin(bookings, eq(bookings.id, userBookingOffers.bookingId))
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
       .leftJoin(users, eq(users.id, offers.buyerId))
-      .innerJoin(courses, eq(courses.id, bookings.courseId))
+      .innerJoin(courses, eq(courses.id, teeTimes.courseId))
       .leftJoin(courseImage, eq(courseImage.courseId, courses.logoId))
       .leftJoin(userImage, eq(userImage.id, users.image))
       .leftJoin(transfers, eq(transfers.bookingId, bookings.id))
@@ -1468,7 +1677,7 @@ export class BookingService {
    * const result = await bookingService.getOfferSentForUser(userId, courseId, limit);
    * // result: [{ offer: OfferData }, { offer: OfferData }, ...]
    */
-  async getOfferSentForUser(userId: string, courseId: string, limit = 10, cursor?: string | null) {
+  async getOfferSentForUser(userId: string, courseId: string, _limit = 10, _cursor?: string | null) {
     this.logger.info(`getOfferSentForUser called with userId: ${userId}`);
     const userImage = alias(assets, "userImage");
     const ownerImage = alias(assets, "ownerImage");
@@ -1491,7 +1700,7 @@ export class BookingService {
         courseName: courses.name,
         teeTimeDate: teeTimes.providerDate,
         teeTimeId: teeTimes.id,
-        originalGreenFee: teeTimes.greenFee,
+        originalGreenFee: teeTimes.greenFeePerPlayer,
         lastHighestSale: sql<number | null>`MAX(${transfers.amount})`,
         courseImage: {
           key: courseImage.key,
@@ -1522,7 +1731,7 @@ export class BookingService {
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
       .innerJoin(userBooking, eq(userBooking.teeTimeId, bookings.teeTimeId))
       .leftJoin(users, eq(users.id, offers.buyerId))
-      .innerJoin(courses, eq(courses.id, bookings.courseId))
+      .innerJoin(courses, eq(courses.id, teeTimes.courseId))
       .leftJoin(courseImage, eq(courseImage.id, courses.logoId))
       .leftJoin(userImage, eq(userImage.id, users.image))
       .leftJoin(transfers, eq(transfers.bookingId, bookings.id))
@@ -1617,7 +1826,7 @@ export class BookingService {
    * @param userId - The ID of the user.
    * @returns A promise that resolves to an array of offers.
    */
-  async getOfferReceivedForUser(userId: string, courseId: string, limit = 10, cursor?: string | null) {
+  async getOfferReceivedForUser(userId: string, courseId: string, _limit = 10, _cursor?: string | null) {
     this.logger.info(`getOfferReceivedForUser called with userId: ${userId}`);
     const userImage = alias(assets, "userImage");
     const courseImage = alias(assets, "courseImage");
@@ -1637,7 +1846,7 @@ export class BookingService {
         courseName: courses.name,
         teeTimeDate: teeTimes.providerDate,
         teeTimeId: teeTimes.id,
-        originalGreenFee: teeTimes.greenFee,
+        originalGreenFee: teeTimes.greenFeePerPlayer,
         lastHighestSale: sql<number | null>`MAX(${transfers.amount})`,
         courseImage: {
           key: courseImage.key,
@@ -1660,7 +1869,7 @@ export class BookingService {
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
       .leftJoin(userBooking, eq(userBooking.ownerId, userId))
       .leftJoin(users, eq(users.id, offers.buyerId))
-      .leftJoin(courses, eq(courses.id, bookings.courseId))
+      .leftJoin(courses, eq(courses.id, teeTimes.courseId))
       .leftJoin(courseImage, eq(courseImage.id, courses.logoId))
       .leftJoin(userImage, eq(userImage.id, users.image))
       .leftJoin(transfers, eq(transfers.bookingId, bookings.id))
@@ -1750,35 +1959,38 @@ export class BookingService {
    * const names = ["New Name 1", "New Name 2"];
    * await bookingService.updateNamesOnBookings(userId, bookingIds, names);
    */
-  updateNamesOnBookings = async (userId: string, bookingIds: string[], userIds: string[]) => {
+  updateNamesOnBookings = async (userId: string, usersToUpdate: InviteFriend[], bookingId: string) => {
     this.logger.info(`updateNamesOnBookings called with userId: ${userId}`);
     const data = await this.database
       .select({
         id: bookings.id,
         nameOnBooking: bookings.nameOnBooking,
-        internalId: providerCourseLink.internalId,
+        internalId: providers.internalId,
         providerCourseId: providerCourseLink.providerCourseId,
         providerTeeSheetId: providerCourseLink.providerTeeSheetId,
         courseId: teeTimes.courseId,
         providerBookingId: bookings.providerBookingId,
-        providerId: teeTimes.soldByProvider,
+        providerId: providerCourseLink.providerId,
       })
       .from(bookings)
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
+      .leftJoin(courses, eq(teeTimes.courseId, courses.id))
       .leftJoin(
         providerCourseLink,
         and(
-          eq(providerCourseLink.courseId, bookings.courseId),
-          eq(providerCourseLink.providerId, teeTimes.soldByProvider)
+          eq(providerCourseLink.courseId, teeTimes.courseId),
+          eq(providerCourseLink.providerId, courses.providerId)
         )
       )
-      .where(and(eq(bookings.ownerId, userId), inArray(bookings.id, bookingIds)))
+      .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))
+      .where(and(eq(bookings.ownerId, userId), eq(bookings.id, bookingId)))
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving bookings: ${err}`);
         throw new Error("Error retrieving bookings");
       });
-    if (!data.length || data.length !== bookingIds.length || !data[0]) {
+
+    if (!data.length || !data[0]) {
       this.logger.warn(`No bookings found. or user does not own all bookings`);
       throw new Error("No bookings found");
     }
@@ -1790,89 +2002,79 @@ export class BookingService {
       firstBooking.internalId!,
       firstBooking.courseId!
     );
-    //get user profiles for each user to be added
-    //@TODO update typing here
-    if (userIds.length > 0) {
-      const customers: Customer[] = [];
+    if (!firstBooking.providerId || !firstBooking.providerCourseId || !firstBooking.courseId) {
+      throw new Error("provider id, course id, or provider course id not found");
+    }
 
-      for (const id of userIds) {
-        if (!firstBooking.providerId || !firstBooking.providerCourseId || !firstBooking.courseId) {
-          throw new Error("provider id, course id, or provider course id not found");
-        }
-        try {
+    //updating bookingslots data
+    await Promise.all(
+      usersToUpdate.map((user, index) => {
+        this.database
+          .update(bookingslots)
+          .set({
+            name: user.name || "",
+            customerId: user.id || "",
+          })
+          .where(eq(bookingslots.slotnumber, user.slotId))
+          .execute()
+          .catch((err) => {
+            console.log("Error setting names on booking: ", err);
+          });
+      })
+    );
+
+    //check if user created in fore-up or not
+    // call find or create for user and update according to slot
+    const customers: Customer[] = [];
+    const providerDataToUpdate: {
+      playerNumber: number | null;
+      customerId: number | null;
+      name: string | null;
+      slotId: string | null;
+    }[] = [];
+    for (const user of usersToUpdate) {
+      try {
+        if (user.id !== "") {
           const customerData = await this.providerService.findOrCreateCustomer(
             firstBooking.courseId,
             firstBooking.providerId,
             firstBooking.providerCourseId,
-            id,
+            user.id,
             provider,
             token
           );
-          customers.push(customerData);
-        } catch (error) {
-          console.log("Error creating customer", error);
-          throw new Error("Error creating customer");
+          providerDataToUpdate.push({ ...customerData, slotId: user.slotId });
+          //update on foreup with the slotId with the personId recieved in customer
+        } else if (user.name !== "") {
+          providerDataToUpdate.push({ name: user.name, playerNumber: 0, customerId: 0, slotId: user.slotId });
         }
+      } catch (error) {
+        console.log("Error creating customer", error);
+        throw new Error("Error creating customer");
       }
+    }
 
-      for (let i = 0; i < customers.length; i++) {
-        try {
-          if (data[i]?.providerBookingId === undefined) {
-            throw new Error("Provider booking id not found");
-          }
-          await provider.updateTeeTime(
-            token,
-            firstBooking.providerCourseId!,
-            firstBooking.providerTeeSheetId!,
-            data[i]?.providerBookingId!,
-            {
-              data: {
-                type: "bookedPlayer",
-                id: data[i]?.providerBookingId,
-                attributes: {
-                  name: customers[i]?.name,
-                  personId: customers[i]?.customerId,
-                },
-              },
-            }
-          );
-        } catch (error) {
-          console.log("Error updating tee time", error);
-          throw new Error("Error updating tee time");
-        }
-      }
-
-      //update the name on each booking
-      // for (const booking of data) {
-      //   await this.database
-      //     .update(bookings)
-      //     .set({
-      //       nameOnBooking: names[bookingIds.indexOf(booking.id)],
-      //     })
-      //     .where(eq(bookings.id, booking.id))
-      //     .execute()
-      //     .catch((err) => {
-      //       this.logger.error(`Error updating bookingId: ${booking.id}: ${err}`);
-      //       throw new Error("Error updating bookingId");
-      //     });
-      // }
-
-      await Promise.all(
-        data.map((booking, index) => {
-          if (!customers[index]?.name) {
-            return;
-          }
-          this.database
-            .update(bookings)
-            .set({
-              nameOnBooking: customers[index]?.name!,
-            })
-            .where(eq(bookings.id, booking.id))
-            .execute()
-            .catch((err) => {
-              console.log("Error setting names on booking: ", err);
-            });
-        })
+    for (const user of providerDataToUpdate) {
+      await provider?.updateTeeTime(
+        token || "",
+        firstBooking?.providerCourseId || "",
+        firstBooking?.providerTeeSheetId || "",
+        firstBooking.providerBookingId,
+        {
+          data: {
+            type: "Guest",
+            id: firstBooking.providerBookingId,
+            attributes: {
+              type: "Guest",
+              name: user.name,
+              paid: false,
+              cartPaid: false,
+              noShow: false,
+              personId: user.customerId != 0 ? user.customerId : "",
+            },
+          },
+        },
+        user.slotId || ""
       );
     }
   };
@@ -1931,5 +2133,563 @@ export class BookingService {
     if (message) {
       throw new Error(message);
     }
+  };
+  normalizeCartData = async ({ cartId = "", userId = "" }) => {
+    const [customerCartData]: any = await this.database
+      .select({ cart: customerCarts.cart, cartId: customerCarts.id, paymentId: customerCarts.paymentId })
+      .from(customerCarts)
+      .where(and(eq(customerCarts.id, cartId), eq(customerCarts.userId, userId)))
+      .execute();
+
+    let slotInfo = customerCartData?.cart?.cart?.filter(
+      ({ product_data }: ProductData) => product_data.metadata.type === "first_hand"
+    );
+    if (!slotInfo.length) {
+      slotInfo = customerCartData?.cart?.cart?.filter(
+        ({ product_data }: ProductData) => product_data.metadata.type === "second_hand"
+      );
+    }
+    const primaryData = {
+      primaryGreenFeeCharge: slotInfo[0].price,
+      teeTimeId: slotInfo[0].product_data.metadata.tee_time_id,
+      playerCount: slotInfo[0].product_data.metadata.number_of_bookings,
+    };
+    console.log("primaryData=======>", primaryData);
+    const convenienceCharge =
+      customerCartData?.cart?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "convenience_fee")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+
+    const taxCharge =
+      customerCartData?.cart?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "taxes")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+
+    const sensibleCharge =
+      customerCartData?.cart?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "sensible")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+
+    const charityCharge =
+      customerCartData?.cart?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "charity")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+
+    const markupCharge =
+      customerCartData?.cart?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "markup")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+
+    const charityId = customerCartData?.cart?.cart?.find(
+      ({ product_data }: ProductData) => product_data.metadata.type === "charity"
+    )?.product_data.metadata.charity_id;
+
+    const weatherQuoteId = customerCartData?.cart?.cart?.find(
+      ({ product_data }: ProductData) => product_data.metadata.type === "sensible"
+    )?.product_data.metadata.sensible_quote_id;
+
+    const taxes = taxCharge + sensibleCharge + charityCharge + convenienceCharge;
+
+    const total = customerCartData?.cart?.cart
+      .filter(({ product_data }: ProductData) => product_data.metadata.type !== "markup")
+      .reduce((acc: number, i: any) => {
+        return acc + i.price;
+      }, 0);
+
+    return {
+      ...primaryData,
+      cart: customerCartData.cart as CustomerCart,
+      taxCharge,
+      sensibleCharge,
+      convenienceCharge,
+      charityCharge,
+      taxes,
+      markupCharge,
+      total,
+      cartId: customerCartData?.cartId,
+      charityId,
+      weatherQuoteId,
+      paymentId: customerCartData.paymentId,
+    };
+  };
+
+  checkIfPaymentIdIsValid = async (paymentId: string) => {
+    const hyperswitchEndPoint = `${process.env.HYPERSWITCH_BASE_URL}/payments/${paymentId}`;
+    const myHeaders = new Headers();
+    myHeaders.append("api-key", process.env.HYPERSWITCH_API_KEY ?? "");
+    const requestOptions = {
+      method: "GET",
+      headers: myHeaders,
+    };
+    const response = await fetch(hyperswitchEndPoint, requestOptions);
+    const paymentData = await response.json();
+    if (paymentData.error && paymentData?.error?.type === "invalid_request") {
+      return false;
+    }
+    return true;
+  };
+
+  sendMessageToVerifyPayment = async (paymentId: string, customer_id: string, bookingId: string) => {
+    const myHeaders = new Headers();
+    myHeaders.append("Authorization", `Bearer ${process.env.QSTASH_TOKEN}`);
+    myHeaders.append("Content-Type", "application/json");
+
+    const raw = JSON.stringify({
+      json: {
+        paymentId,
+        customer_id,
+        bookingId,
+      },
+    });
+    console.log("Sending message to payment queue", {
+      paymentId,
+      customer_id,
+      bookingId,
+      url: `https://qstash.upstash.io/v2/publish/${process.env.QSTASH_PAYMENT_TOPIC}`,
+    });
+    const requestOptions: RequestOptions = {
+      method: "POST",
+      headers: myHeaders,
+      body: raw,
+      redirect: "follow",
+    };
+    try {
+      const response = await fetch(
+        `https://qstash.upstash.io/v2/publish/${process.env.QSTASH_PAYMENT_TOPIC}`,
+        requestOptions
+      );
+      const data = await response.json();
+      return data;
+    } catch (e) {
+      console.log("Error in addding message", e);
+    }
+  };
+
+  reserveBooking = async (userId: string, cartId: string, payment_id: string, sensibleQuoteId: string) => {
+    const {
+      cart,
+      playerCount,
+      primaryGreenFeeCharge,
+      teeTimeId,
+      taxCharge,
+      sensibleCharge,
+      convenienceCharge,
+      charityCharge,
+      markupCharge,
+      taxes,
+      total,
+      charityId,
+      weatherQuoteId,
+      paymentId,
+    } = await this.normalizeCartData({
+      cartId,
+      userId,
+    });
+    console.log(`Check if payment id is valid ${payment_id}`);
+    const isValid = await this.checkIfPaymentIdIsValid(payment_id);
+    if (!isValid) {
+      throw new Error("Payment Id not is not valid");
+    }
+    if (!weatherQuoteId) {
+      console.log("Cancel Sensible Quote ID : ", sensibleQuoteId);
+      this.sensibleService.cancelQuote(sensibleQuoteId);
+    }
+    const pricePerGolfer = primaryGreenFeeCharge / playerCount;
+
+    console.log(`Retrieving tee time from database ${teeTimeId}`);
+    const [teeTime] = await this.database
+      .select({
+        id: teeTimes.id,
+        courseId: teeTimes.courseId,
+        // entityId: teeTimes.entityId,
+        entityId: courses.entityId,
+        date: teeTimes.date,
+        providerCourseId: providerCourseLink.providerCourseId,
+        providerTeeSheetId: providerCourseLink.providerTeeSheetId,
+        providerId: providerCourseLink.providerId,
+        internalId: providers.internalId,
+        providerDate: teeTimes.providerDate,
+        holes: teeTimes.numberOfHoles,
+      })
+      .from(teeTimes)
+      .leftJoin(courses, eq(teeTimes.courseId, courses.id))
+      .leftJoin(
+        providerCourseLink,
+        and(
+          eq(providerCourseLink.courseId, teeTimes.courseId),
+          eq(providerCourseLink.providerId, courses.providerId)
+        )
+      )
+      //.leftJoin(courses, eq(courses.id, teeTimes.courseId))
+      .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))
+      .where(eq(teeTimes.id, teeTimeId as string))
+      .execute()
+      .catch((err) => {
+        this.logger.error(err);
+        throw new Error(`Error finding tee time id`);
+      });
+    if (!teeTime) {
+      this.logger.fatal(`tee time not found id: ${teeTimeId}`);
+      throw new Error(`Error finding tee time id`);
+    }
+
+    console.log(`Retrieving provider and token ${teeTime.internalId}, ${teeTime.courseId}`);
+    let booking: BookingResponse | null = null;
+    let teeProvider: ProviderAPI | null = null;
+    let teeToken: string | null = null;
+    try {
+      const { provider, token } = await this.providerService.getProviderAndKey(
+        teeTime.internalId!,
+        teeTime.courseId
+      );
+      teeProvider = provider;
+      teeToken = token;
+
+      console.log(
+        `Finding or creating customer ${userId}, ${teeTime.courseId}, ${teeTime.providerId}, ${teeTime.providerCourseId}, ${token}`
+      );
+      const providerCustomer = await this.providerService.findOrCreateCustomer(
+        teeTime.courseId,
+        teeTime.providerId ?? "",
+        teeTime.providerCourseId!,
+        userId,
+        provider,
+        token
+      );
+      if (!providerCustomer?.playerNumber) {
+        this.logger.error(`Error creating customer`);
+        throw new Error(`Error creating customer`);
+      }
+
+      const bookedPLayers: { accountNumber: number }[] = [
+        {
+          accountNumber: providerCustomer.playerNumber,
+        },
+      ];
+
+      console.log(
+        `Creating booking ${teeTime.providerDate}, ${teeTime.holes}, ${playerCount}, ${teeTime.providerCourseId}, ${teeTime.providerTeeSheetId}, ${token}`
+      );
+      booking = await provider
+        .createBooking(token, teeTime.providerCourseId!, teeTime.providerTeeSheetId!, {
+          totalAmountPaid: primaryGreenFeeCharge / 100 + taxCharge - markupCharge,
+          data: {
+            type: "bookings",
+            attributes: {
+              start: teeTime.providerDate,
+              holes: teeTime.holes,
+              players: playerCount,
+              bookedPlayers: bookedPLayers,
+              event_type: "tee_time",
+              details: "GD Booking",
+            },
+          },
+        })
+        .catch((err) => {
+          this.logger.error(err);
+          //@TODO this email should be removed
+          this.loggerService.auditLog({
+            id: randomUUID(),
+            userId,
+            teeTimeId,
+            bookingId: "",
+            listingId: "",
+            eventId: "TEE_TIME_BOOKING_FAILED",
+            json: err,
+          });
+
+          throw new Error(`Error creating booking`);
+        });
+    } catch (e) {
+      console.log("BOOKING FAILED ON PROVIDER, INITIATING REFUND FOR PAYMENT_ID", payment_id);
+      this.loggerService.auditLog({
+        id: randomUUID(),
+        userId,
+        teeTimeId,
+        bookingId: "",
+        listingId: "",
+        eventId: "REFUND_INITIATED",
+        json: `{paymentId:${payment_id}}`,
+      });
+      await this.hyperSwitchService.refundPayment(payment_id);
+      throw "Booking failed on provider";
+    }
+    console.log(`Creating tokenized booking`);
+    //create tokenized bookings
+    const bookingId = await this.tokenizeService
+      .tokenizeBooking(
+        userId,
+        pricePerGolfer,
+        playerCount as number,
+        booking.data.id,
+        teeTimeId as string,
+        paymentId as string,
+        true,
+        teeProvider,
+        teeToken,
+        teeTime,
+        {
+          cart,
+          primaryGreenFeeCharge,
+          taxCharge,
+          sensibleCharge,
+          convenienceCharge,
+          charityCharge,
+          taxes,
+          total,
+          charityId,
+          weatherQuoteId,
+          cartId,
+        }
+      )
+      .catch(async (err) => {
+        this.logger.error(err);
+        //@TODO this email should be removed
+        await this.notificationService.createNotification(
+          userId,
+          "Error creating booking",
+          "An error occurred while creating booking with provider",
+          teeTime.courseId
+        );
+        throw new Error(`Error creating booking`);
+      });
+    await this.sendMessageToVerifyPayment(paymentId as string, userId, bookingId);
+
+    this.loggerService.auditLog({
+      id: randomUUID(),
+      userId,
+      teeTimeId,
+      bookingId,
+      listingId: "",
+      eventId: "TEE_TIME_BOOKED",
+      json: "tee time booked",
+    });
+
+    return {
+      bookingId,
+      providerBookingId: booking.data.id,
+      status: "Reserved",
+    } as ReserveTeeTimeResponse;
+  };
+
+  confirmBooking = async (paymentId: string, userId: string) => {
+    const [booking] = await this.database
+      .select({
+        bookingId: bookings.id,
+        courseId: teeTimes.courseId,
+        teeTimeId: bookings.teeTimeId,
+      })
+      .from(bookings)
+      .innerJoin(customerCarts, eq(bookings.cartId, customerCarts.id))
+      .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
+
+      // .leftJoin(courses, eq(customerCarts.courseId, courses.id))
+      .where(and(eq(customerCarts.paymentId, paymentId), eq(bookings.ownerId, userId)))
+      .execute()
+      .catch((err) => {
+        this.loggerService.auditLog({
+          id: randomUUID(),
+          userId,
+          teeTimeId: booking?.teeTimeId ?? "",
+          bookingId: booking?.bookingId ?? "",
+          listingId: "",
+          eventId: "TEE_TIME_CONFIRMATION_FAILED",
+          json: err,
+        });
+        this.logger.error(`Error retrieving bookings by payment id: ${err}`);
+        throw "Error retrieving booking";
+      });
+    if (!booking) {
+      // TODO: need to refund the payment.
+      console.log(`Booking not found for payment id ${paymentId}`);
+
+      throw "Booking not found for payment id";
+    } else {
+      console.log("Set confirm status on booking id ", booking.bookingId);
+      await this.database
+        .update(bookings)
+        .set({
+          status: "CONFIRMED",
+        })
+        .where(eq(bookings.id, booking.bookingId))
+        .execute()
+        .catch((err) => {
+          this.logger.error(`Error in updating booking status ${err}`);
+          this.loggerService.auditLog({
+            id: randomUUID(),
+            userId,
+            teeTimeId: booking?.teeTimeId ?? "",
+            bookingId: booking?.bookingId ?? "",
+            listingId: "",
+            eventId: "TEE_TIME_CONFIRMATION_FAILED",
+            json: err,
+          });
+        });
+
+      this.loggerService.auditLog({
+        id: randomUUID(),
+        userId,
+        teeTimeId: booking?.teeTimeId ?? "",
+        bookingId: booking?.bookingId ?? "",
+        listingId: "",
+        eventId: "TEE_TIME_CONFIRMED_SUCCESS",
+        json: "Tee time status confirmed",
+      });
+    }
+  };
+  reserveSecondHandBooking = async (userId = "", cartId = "", listingId = "", payment_id = "") => {
+    const {
+      cart,
+      playerCount,
+      primaryGreenFeeCharge,
+      teeTimeId,
+      taxCharge,
+      sensibleCharge,
+      convenienceCharge,
+      charityCharge,
+      taxes,
+      total,
+      charityId,
+      weatherQuoteId,
+      paymentId,
+    } = await this.normalizeCartData({
+      cartId,
+      userId,
+    });
+
+    const isValid = await this.checkIfPaymentIdIsValid(payment_id);
+    if (!isValid) {
+      this.loggerService.auditLog({
+        id: randomUUID(),
+        userId,
+        teeTimeId: "",
+        bookingId: "",
+        listingId,
+        eventId: "PAYMENT_ID_NOT_VALID",
+        json: "Payment Id not is not valid",
+      });
+      throw new Error("Payment Id not is not valid");
+    }
+
+    const [associatedBooking] = await this.database
+      .select({
+        id: bookings.id,
+        includesCart: bookings.includesCart,
+        numberOfHoles: bookings.numberOfHoles,
+        weatherGuaranteeAmount: bookings.weatherGuaranteeAmount,
+        weatherGuaranteeId: bookings.weatherGuaranteeId,
+        ownerId: bookings.ownerId,
+        listedSlotsCount: lists.slots,
+        listPrice: lists.listPrice,
+        teeTimeIdForBooking: bookings.teeTimeId,
+        isListed: bookings.isListed,
+      })
+      .from(bookings)
+      .leftJoin(lists, eq(lists.id, listingId))
+      .where(eq(bookings.listId, listingId))
+      .execute();
+
+    if (!associatedBooking?.isListed) {
+      throw new Error("Sorry the tee time is not listed anymore");
+    }
+
+    const [userData] = await this.database
+      .select({
+        handle: users.handle,
+      })
+      .from(users)
+      .where(eq(users.id, userId))
+      .execute();
+
+    const bookingId = randomUUID();
+    const bookingsToCreate: InsertBooking[] = [];
+    const transfersToCreate: InsertTransfer[] = [];
+    bookingsToCreate.push({
+      id: bookingId,
+      // purchasedAt: currentUtcTimestamp(),
+      providerBookingId: "",
+      isListed: false,
+      numberOfHoles: associatedBooking?.numberOfHoles,
+      minimumOfferPrice: 0,
+      ownerId: userId,
+      teeTimeId: associatedBooking?.teeTimeIdForBooking ?? "",
+      nameOnBooking: userData?.handle ?? "",
+      includesCart: associatedBooking?.includesCart,
+      listId: null,
+      weatherGuaranteeAmount: sensibleCharge,
+      weatherGuaranteeId: "",
+      cartId: cartId,
+      playerCount: associatedBooking?.listedSlotsCount ?? 0,
+      greenFeePerPlayer: primaryGreenFeeCharge / (associatedBooking?.listedSlotsCount ?? 1) ?? 0,
+      totalTaxesAmount: taxCharge * 100 || 0,
+      charityId: charityId || null,
+      totalCharityAmount: charityCharge * 100 || 0,
+      totalAmount: total || 0,
+      providerPaymentId: paymentId,
+      weatherQuoteId: weatherQuoteId || null,
+    });
+    transfersToCreate.push({
+      id: randomUUID(),
+      amount: associatedBooking?.listPrice ?? 0,
+      bookingId: bookingId,
+      transactionId: randomUUID(),
+      fromUserId: associatedBooking?.ownerId ?? "",
+      toUserId: userId,
+      courseId: cart?.courseId,
+      fromBookingId: associatedBooking?.id,
+    });
+    await this.database.transaction(async (tx) => {
+      await tx
+        .insert(bookings)
+        .values(bookingsToCreate)
+        .execute()
+        .catch((err) => {
+          this.logger.error(err);
+          tx.rollback();
+        });
+
+      await this.database
+        .insert(transfers)
+        .values(transfersToCreate)
+        .execute()
+        .catch((err) => {
+          this.logger.error(err);
+        });
+    });
+    await this.sendMessageToVerifyPayment(payment_id, userId, bookingId);
+
+    this.loggerService.auditLog({
+      id: randomUUID(),
+      userId,
+      teeTimeId: associatedBooking?.teeTimeIdForBooking ?? "",
+      bookingId,
+      listingId,
+      eventId: "TEE_TIME_BOOKED",
+      json: "Tee time booked",
+    });
+
+    return {
+      bookingId,
+      providerBookingId: "",
+      status: "Reserved",
+    } as ReserveTeeTimeResponse;
+  };
+
+  getOwnedBookingById = async (userId: string, bookingId: string) => {
+    const [booking] = await this.database
+      .select({
+        providerId: bookings.providerBookingId,
+        playTime: teeTimes.providerDate,
+      })
+      .from(bookings)
+      .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
+      .where(and(eq(bookings.ownerId, userId), eq(bookings.id, bookingId)))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error retrieving bookings by payment id: ${err}`);
+        throw "Error retrieving booking";
+      });
+
+    return booking;
   };
 }

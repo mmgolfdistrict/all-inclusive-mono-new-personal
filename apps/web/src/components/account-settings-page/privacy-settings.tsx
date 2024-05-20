@@ -49,7 +49,10 @@ export const PrivacySettings = () => {
   };
 
   return (
-    <section className="h-inherit mx-auto flex w-full flex-col gap-6 bg-white px-3 py-2 md:max-w-[50%] md:rounded-xl md:p-6 md:py-4">
+    <section
+      className="h-inherit mx-auto flex w-full flex-col gap-6 bg-white px-3 py-2 mb-2  md:rounded-xl md:p-6 md:py-4"
+      style={{ height: "49%" }}
+    >
       <div>
         <h3 className="text-[18px]  md:text-[24px]">Privacy Settings</h3>
         <p className=" text-[14px] text-primary-gray md:text-[16px]">

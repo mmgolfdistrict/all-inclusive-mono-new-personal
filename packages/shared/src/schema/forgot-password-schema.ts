@@ -5,6 +5,7 @@ export const forgotPasswordSchema = z
     email: z.string().email({ message: "Invalid email" }).min(1, "Email is required"),
     redirectHref: z.string().url(),
     ReCAPTCHA: z.string().optional(),
+    courseProviderId: z.string().optional(),
   })
   .refine(
     (data) => {

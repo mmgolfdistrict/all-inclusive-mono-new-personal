@@ -1,7 +1,8 @@
 import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
-import { and, desc, eq, isNull, max, min, sql } from "@golf-district/database";
+import { and, asc, desc, eq, max, min, sql } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
+import { bookings } from "@golf-district/database/schema/bookings";
 import { charities } from "@golf-district/database/schema/charities";
 import { charityCourseLink } from "@golf-district/database/schema/charityCourseLink";
 import { courseAssets } from "@golf-district/database/schema/courseAssets";
@@ -58,14 +59,21 @@ export class CourseService extends DomainService {
         longitude: courses.longitude,
         latitude: courses.latitude,
         forecastApi: courses.forecastApi,
-        convenienceFees: courses.convenanceFees,
-        markup: courses.markup,
+        convenienceFeesFixedPerPlayer: courses.convenienceFeesFixedPerPlayer,
+        markupFeesFixedPerPlayer: courses.markupFeesFixedPerPlayer,
+        maxListPricePerGolferPercentage: courses.maxListPricePerGolferPercentage,
         openTime: courses.openTime,
         closeTime: courses.closeTime,
         supportCharity: courses.supportCharity,
         supportSensibleWeather: courses.supportSensibleWeather,
         timezoneCorrection: courses.timezoneCorrection,
         furthestDayToBook: courses.furthestDayToBook,
+        allowAuctions: courses.allowAuctions,
+        supportsOffers: courses.supportsOffers,
+        supportsWatchlist: courses.supportsWatchlist,
+        supportsPromocode: courses.supportsPromocode,
+        buyerFee: courses.buyerFee,
+        sellerFee: courses.sellerFee,
       })
       .from(courses)
       .where(and(eq(courses.id, courseId), eq(courses.isDeleted, false)))
@@ -83,15 +91,17 @@ export class CourseService extends DomainService {
         lowestListedTeeTime: min(lists.listPrice),
       })
       .from(lists)
-      .where(and(eq(lists.courseId, courseId), eq(lists.isDeleted, false)))
+      .innerJoin(bookings, eq(bookings.listId, lists.id))
+      .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
+      .where(and(eq(teeTimes.courseId, courseId), eq(lists.isDeleted, false)))
       .limit(1)
       .execute();
     //Get the highest and lowest primary sale tee time prices
     //Cache if possible
     const primarySaleTeeTimePriceQuery = this.database
       .select({
-        highestPrimarySaleTeeTime: max(teeTimes.greenFee),
-        lowestPrimarySaleTeeTime: min(teeTimes.greenFee),
+        highestPrimarySaleTeeTime: max(teeTimes.greenFeePerPlayer),
+        lowestPrimarySaleTeeTime: min(teeTimes.greenFeePerPlayer),
       })
       .from(teeTimes)
       .where(eq(teeTimes.courseId, courseId))
@@ -200,7 +210,8 @@ export class CourseService extends DomainService {
         extension: assets.extension,
       })
       .from(assets)
-      .where(and(eq(assets.courseId, courseId), isNull(assets.courseAssetId)))
+      .innerJoin(courses, eq(courses.logoId, assets.id))
+      .where(eq(courses.id, courseId))
       .limit(1)
       .execute();
 
@@ -215,9 +226,12 @@ export class CourseService extends DomainService {
         courseLogoId: courses.logoId,
       })
       .from(assets)
-      .leftJoin(courseAssets, eq(assets.id, courseAssets.assetId))
-      .leftJoin(courses, eq(assets.courseId, courses.id))
-      .where(and(eq(assets.courseId, courseId), eq(assets.courseAssetId, courseAssets.id)))
+      .innerJoin(courseAssets, eq(assets.id, courseAssets.assetId))
+      // .innerJoin(courses, eq(assets.courseId, courses.id))
+      // .where(and(eq(assets.courseId, courseId), eq(assets.courseAssetId, courseAssets.id)))
+      .innerJoin(courses, eq(courseAssets.courseId, courses.id))
+      .where(eq(courses.id, courseId))
+      .orderBy(asc(courseAssets.order))
       .execute()
       .catch((err) => {
         this.logger.error(`Error getting images for course: ${err}`);
@@ -228,7 +242,7 @@ export class CourseService extends DomainService {
         ? `https://${logo[0].cdn}/${logo[0].key}.${logo[0].extension}`
         : "/defaults/default-profile.webp",
       images: images
-        .filter((i) => i.coursesId === courseId && i.id !== i.courseLogoId)
+        // .filter((i) => i.coursesId === courseId && i.id !== i.courseLogoId)
         .sort((a, b) => {
           const orderA = a.order !== null ? a.order : Number.MAX_SAFE_INTEGER;
           const orderB = b.order !== null ? b.order : Number.MAX_SAFE_INTEGER;

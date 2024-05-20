@@ -37,7 +37,7 @@ const reservation = [
   "Allow Reservation Export",
 ];
 
-const customer = ["Allow Edit Customer", "Allow List Customer", ""];
+const _customer = ["Allow Edit Customer", "Allow List Customer", ""];
 
 export const RoleForm = ({
   isEdit,

@@ -9,6 +9,8 @@ const config = {
 
   experimental: {
     serverComponentsExternalPackages: ["bcrypt"],
+    instrumentationHook: true,
+    serverSourceMaps: true,
   },
   images: {
     remotePatterns: [
@@ -21,6 +23,18 @@ const config = {
       {
         protocol: "https",
         hostname: "lh3.google.com",
+        port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "d1vt16457i7yu.cloudfront.net",
+        port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "d13gaac8iye040.cloudfront.net",
         port: "",
         pathname: "/**",
       },
@@ -58,6 +72,7 @@ const config = {
       tls: false,
       "aws-crt": false,
     };
+    config.experiments = { ...config.experiments, topLevelAwait: true };
     config.externals.push({
       "@aws-sdk/signature-v4-multi-region":
         "commonjs @aws-sdk/signature-v4-multi-region",

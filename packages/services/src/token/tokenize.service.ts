@@ -1,22 +1,37 @@
 import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
 import { and, eq, inArray } from "@golf-district/database";
-import { bookings, InsertBooking } from "@golf-district/database/schema/bookings";
+import { assets } from "@golf-district/database/schema/assets";
+import type { InsertBooking } from "@golf-district/database/schema/bookings";
+import { bookings } from "@golf-district/database/schema/bookings";
+import { bookingslots } from "@golf-district/database/schema/bookingslots";
+import { courses } from "@golf-district/database/schema/courses";
+import { customerCarts } from "@golf-district/database/schema/customerCart";
 import { entities } from "@golf-district/database/schema/entities";
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
-import { InsertTransfer, transfers } from "@golf-district/database/schema/transfers";
-import { currentUtcTimestamp } from "@golf-district/shared";
-import Logger from "@golf-district/shared/src/logger";
-import { textChangeRangeIsUnchanged } from "typescript";
-import dayjs from "dayjs";
-import { courses } from "@golf-district/database/schema/courses";
+import type { InsertTransfer } from "@golf-district/database/schema/transfers";
+import { transfers } from "@golf-district/database/schema/transfers";
 import { users } from "@golf-district/database/schema/users";
-import { customerCarts } from "@golf-district/database/schema/customerCart";
-import { NotificationService } from "../notification/notification.service";
+import { formatMoney } from "@golf-district/shared";
+import createICS from "@golf-district/shared/createICS";
+import type { Event } from "@golf-district/shared/createICS";
+import Logger from "@golf-district/shared/src/logger";
+import dayjs from "dayjs";
+import type { ProductData } from "../checkout/types";
+import type { NotificationService } from "../notification/notification.service";
+import type { SensibleService } from "../sensible/sensible.service";
+import type { ProviderAPI } from "../tee-sheet-provider/sheet-providers";
+import { TeeTime } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
+import { LoggerService } from "../webhooks/logging.service";
 
 /**
  * Service class for handling booking tokenization, transfers, and updates.
  */
+
+interface AcceptedQuoteParams {
+  id: string | null;
+  price_charged: number;
+}
 export class TokenizeService {
   private logger = Logger(TokenizeService.name);
 
@@ -27,7 +42,79 @@ export class TokenizeService {
    * @example
    * const tokenizeService = new TokenizeService(database);
    */
-  constructor(private readonly database: Db, private readonly notificationService: NotificationService) { }
+  constructor(
+    private readonly database: Db,
+    private readonly notificationService: NotificationService,
+    private readonly loggerService: LoggerService,
+    private readonly sensibleService: SensibleService
+  ) {}
+  getCartData = async ({ courseId = "", ownerId = "", paymentId = "" }) => {
+    const [customerCartData]: any = await this.database
+      .select({ cart: customerCarts.cart, cartId: customerCarts.id })
+      .from(customerCarts)
+      .where(
+        and(
+          // eq(customerCarts.courseId, courseId),
+          eq(customerCarts.userId, ownerId),
+          eq(customerCarts.paymentId, paymentId)
+        )
+      )
+      .execute();
+
+    const primaryGreenFeeCharge =
+      customerCartData?.cart?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "first_hand")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+
+    const convenienceCharge =
+      customerCartData?.cart?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "convenience_fee")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+
+    const taxCharge =
+      customerCartData?.cart?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "taxes")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+
+    const sensibleCharge =
+      customerCartData?.cart?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "sensible")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+
+    const charityCharge =
+      customerCartData?.cart?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "charity")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+
+    const charityId = customerCartData?.cart?.cart?.find(
+      ({ product_data }: ProductData) => product_data.metadata.type === "charity"
+    )?.product_data.metadata.charity_id;
+
+    const weatherQuoteId = customerCartData?.cart?.cart?.find(
+      ({ product_data }: ProductData) => product_data.metadata.type === "sensible"
+    )?.product_data.metadata.sensible_quote_id;
+
+    const taxes = taxCharge + sensibleCharge + charityCharge + convenienceCharge;
+
+    const total = customerCartData?.cart?.cart
+      .filter(({ product_data }: ProductData) => product_data.metadata.type !== "markup")
+      .reduce((acc: number, i: any) => {
+        return acc + i.price;
+      }, 0);
+
+    return {
+      primaryGreenFeeCharge,
+      taxCharge,
+      sensibleCharge,
+      convenienceCharge,
+      charityCharge,
+      taxes,
+      total,
+      cartId: customerCartData?.cartId,
+      charityId,
+      weatherQuoteId,
+    };
+  };
   /**
    * Tokenize a booking for a user. This function either books an existing tee time or creates a new one based on the provided details.
    *
@@ -57,82 +144,221 @@ export class TokenizeService {
     players: number, //how many bookings to make
     providerBookingId: string, //the tee time ids to book
     providerTeeTimeId: string, //all tee times to be tokenized are purchased from a provider
-    withCart?: boolean
-  ): Promise<void> {
+    paymentId: string,
+    withCart?: boolean,
+    provider?: ProviderAPI,
+    token?: string,
+    teeTime?: {
+      id: string;
+      courseId: string;
+      date: string;
+      providerCourseId: string | null;
+      providerTeeSheetId: string | null;
+      providerId: string | null;
+      internalId: string | null;
+      providerDate: string;
+      holes: number;
+    },
+    normalizedCartData?: any
+  ): Promise<string> {
     this.logger.info(`tokenizeBooking tokenizing booking id: ${providerTeeTimeId} for user: ${userId}`);
     //@TODO add this to the transaction
+
+    console.log(`Retrieving tee time ${providerTeeTimeId}`);
     const [existingTeeTime] = await this.database
       .select({
         id: teeTimes.id,
-        entityId: teeTimes.entityId,
+        // entityId: teeTimes.entityId,
         date: teeTimes.date,
         courseId: teeTimes.courseId,
         numberOfHoles: teeTimes.numberOfHoles,
         availableFirstHandSpots: teeTimes.availableFirstHandSpots,
         availableSecondHandSpots: teeTimes.availableSecondHandSpots,
-        greenFee: teeTimes.greenFee,
+        greenFee: teeTimes.greenFeePerPlayer,
         courseName: courses.name,
         customerName: users.name,
+        email: users.email,
         entityName: entities.name,
+        providerDate: teeTimes.providerDate,
+        address: courses.address,
+        name: courses.name,
+        websiteURL: courses.websiteURL,
+        cdn: assets.cdn,
+        cdnKey: assets.key,
+        extension: assets.extension,
       })
       .from(teeTimes)
       .where(eq(teeTimes.id, providerTeeTimeId))
-      .leftJoin(entities, eq(teeTimes.entityId, entities.id))
       .leftJoin(courses, eq(courses.id, teeTimes.courseId))
+      .leftJoin(assets, eq(assets.id, courses.logoId))
+      .leftJoin(entities, eq(courses.entityId, entities.id))
       .leftJoin(users, eq(users.id, userId))
       .execute()
       .catch((err) => {
         this.logger.error(err);
         return [];
       });
+
     if (!existingTeeTime) {
       //how has a booking been created for a tee time that does not exist? big problem
       this.logger.fatal(`TeeTime with ID: ${providerTeeTimeId} does not exist.`);
+      this.loggerService.auditLog({
+        id: randomUUID(),
+        userId,
+        teeTimeId: "",
+        bookingId: "",
+        listingId: "",
+        eventId: "TEE_TIME_NOT_FOUND",
+        json: `TeeTime with ID: ${providerTeeTimeId} does not exist.`,
+      });
       throw new Error(`TeeTime with ID: ${providerTeeTimeId} does not exist.`);
     }
+
+    // TODO: Shouldn't this logic not be present before sending the booking to the provider?
     if (existingTeeTime.availableFirstHandSpots < players) {
       this.logger.fatal(`TeeTime with ID: ${providerTeeTimeId} does not have enough spots.`);
+      this.loggerService.auditLog({
+        id: randomUUID(),
+        userId,
+        teeTimeId: "",
+        bookingId: "",
+        listingId: "",
+        eventId: "TEE_TIME_DOES_NOT_HAVE_ENOUGH_SPOTS",
+        json: `TeeTime with ID: ${providerTeeTimeId} does not have enough spots.`,
+      });
       throw new Error(`TeeTime with ID: ${providerTeeTimeId} does not have enough spots.`);
     }
+
     const bookingsToCreate: InsertBooking[] = [];
     const transfersToCreate: InsertTransfer[] = [];
     const transactionId = randomUUID();
-    for (let i = 0; i < players; i++) {
-      let bookingId = randomUUID();
-      bookingsToCreate.push({
-        id: bookingId,
-        purchasedAt: currentUtcTimestamp(),
-        purchasedPrice: purchasePrice,
-        time: existingTeeTime.date,
-        providerBookingId: providerBookingId,
-        withCart: withCart,
-        isListed: false,
-        numberOfHoles: existingTeeTime.numberOfHoles,
-        minimumOfferPrice: 0,
-        ownerId: userId,
-        courseId: existingTeeTime.courseId,
-        teeTimeId: existingTeeTime.id,
-        nameOnBooking: "Guest",
-        includesCart: withCart,
-        listId: null,
-        entityId: existingTeeTime.entityId
-      });
-      transfersToCreate.push({
-        id: randomUUID(),
-        amount: purchasePrice,
-        bookingId: bookingId,
-        transactionId: transactionId,
-        fromUserId: "0x000", //first hand sales are from the platform
-        toUserId: userId,
-        courseId: existingTeeTime.courseId,
-      });
+    const bookingId = randomUUID();
+
+    let acceptedQuote: AcceptedQuoteParams = { id: null, price_charged: 0 };
+
+    const isFirstHandBooking = normalizedCartData?.cart?.cart?.some(
+      (item: ProductData) => item.product_data.metadata.type === "first_hand"
+    );
+
+    console.log(`isFirstHandBooking= ${isFirstHandBooking}`);
+    if (isFirstHandBooking) {
+      const weatherGuaranteeData = normalizedCartData.cart?.cart?.filter(
+        (item: ProductData) => item.product_data.metadata.type === "sensible"
+      );
+
+      console.log(`weatherGuaranteeData length = ${weatherGuaranteeData?.length}`);
+
+      if (weatherGuaranteeData?.length > 0) {
+        acceptedQuote = await this.sensibleService.acceptQuote({
+          quoteId: weatherGuaranteeData[0].product_data.metadata.sensible_quote_id,
+          price_charged: weatherGuaranteeData[0].price / 100,
+          reservation_id: bookingId,
+          lang_locale: "en_US",
+          user: {
+            email: normalizedCartData?.cart?.email,
+            name: normalizedCartData.cart?.name,
+            phone: normalizedCartData.cart?.phone
+              ? `+${normalizedCartData?.cart?.phone_country_code}${normalizedCartData?.cart?.phone}`
+              : "",
+          },
+        });
+      }
     }
+
+    bookingsToCreate.push({
+      id: bookingId,
+      // purchasedAt: currentUtcTimestamp(),
+      // time: existingTeeTime.date,
+      providerBookingId: providerBookingId,
+      // withCart: withCart,
+      isListed: false,
+      numberOfHoles: existingTeeTime.numberOfHoles,
+      minimumOfferPrice: 0,
+      ownerId: userId,
+      // courseId: existingTeeTime.courseId,
+      teeTimeId: existingTeeTime.id,
+      nameOnBooking: "Guest",
+      includesCart: withCart,
+      listId: null,
+      // entityId: existingTeeTime.entityId,
+      cartId: normalizedCartData.cartId,
+      playerCount: players ?? 0,
+      greenFeePerPlayer: normalizedCartData.primaryGreenFeeCharge / players || 0,
+      totalTaxesAmount: normalizedCartData.taxCharge * 100 || 0,
+      charityId: normalizedCartData.charityId || null,
+      totalCharityAmount: normalizedCartData.charityCharge * 100 || 0,
+      totalAmount: normalizedCartData.total || 0,
+      providerPaymentId: paymentId,
+      weatherQuoteId: normalizedCartData.weatherQuoteId ?? null,
+      weatherGuaranteeId: acceptedQuote?.id ? acceptedQuote?.id : null,
+      weatherGuaranteeAmount: acceptedQuote?.price_charged ? acceptedQuote?.price_charged * 100 : 0,
+    });
+
+    transfersToCreate.push({
+      id: randomUUID(),
+      amount: purchasePrice,
+      purchasedPrice: purchasePrice,
+      bookingId: bookingId,
+      transactionId: transactionId,
+      fromUserId: "0x000", //first hand sales are from the platform
+      toUserId: userId,
+      courseId: existingTeeTime.courseId,
+    });
+
+    console.log(`Getting slot IDs for booking.`);
+    //create bookings according to slot in bookingslot tables
+    const bookingSlots =
+      (await provider?.getSlotIdsForBooking(
+        bookingId,
+        players,
+        userId,
+        providerBookingId,
+        provider.providerId,
+        existingTeeTime.courseId
+      )) ?? [];
+
+    console.log(`Looping through and updating the booking slots.`);
+    for (let i = 0; i < bookingSlots.length; i++) {
+      //TODO: Why can't we use if( i === 0 ) { continue; }? Would it be cleaner?
+      if (i != 0) {
+        await provider?.updateTeeTime(
+          token ?? "",
+          teeTime?.providerCourseId ?? "",
+          teeTime?.providerTeeSheetId ?? "",
+          providerBookingId,
+          {
+            data: {
+              type: "Guest",
+              id: providerBookingId,
+              attributes: {
+                type: "Guest",
+                name: "Guest",
+                paid: false,
+                cartPaid: false,
+                noShow: false,
+              },
+            },
+          },
+          bookingSlots[i]?.slotnumber
+        );
+      }
+    }
+
+    console.log(`Creating bookings and slots in database.`);
     //create all booking in a transaction to ensure atomicity
     await this.database.transaction(async (tx) => {
       //create each booking
       await tx
         .insert(bookings)
         .values(bookingsToCreate)
+        .execute()
+        .catch((err) => {
+          this.logger.error(err);
+          tx.rollback();
+        });
+      await tx
+        .insert(bookingslots)
+        .values(bookingSlots)
         .execute()
         .catch((err) => {
           this.logger.error(err);
@@ -155,8 +381,19 @@ export class TokenizeService {
           tx.rollback();
         });
     });
+
+    this.loggerService.auditLog({
+      id: randomUUID(),
+      userId,
+      teeTimeId: existingTeeTime?.id,
+      bookingId,
+      listingId: "",
+      eventId: "TEE_TIME_BOOKED",
+      json: "tee time booked",
+    });
+
     const message = `
-    ${players} tee times have been purchased for ${existingTeeTime.date} at ${existingTeeTime.courseId}
+${players} tee times have been purchased for ${existingTeeTime.date} at ${existingTeeTime.courseId}
     price per booking: ${purchasePrice} 
 
     ${providerBookingId}
@@ -164,28 +401,67 @@ export class TokenizeService {
     This is a first party purchase from the course
     `;
 
+    const event: Event = {
+      startDate: existingTeeTime.date,
+      endDate: existingTeeTime.date,
+      email: existingTeeTime.email ?? "",
+      address: existingTeeTime.address,
+      name: existingTeeTime.name,
+      reservationId: bookingId,
+      courseReservation: providerBookingId,
+      numberOfPlayer: players.toString(),
+      playTime: dayjs(existingTeeTime.providerDate).utcOffset("-06:00").format("YYYY-MM-DD hh:mm A") ?? "-",
+    };
+    const icsContent: string = createICS(event);
     const template = {
       CustomerFirstName: existingTeeTime.customerName?.split(" ")[0],
-      CourseName: existingTeeTime.courseName || "-",
-      GolfDistrictReservationID: bookingsToCreate?.[0]?.id || "-",
-      CourseReservationID: providerBookingId || "-",
-      FacilityName: existingTeeTime.entityName || "-",
-      PlayDateTime: dayjs(existingTeeTime.date).format("MM/DD/YYYY h:mm A") || "-",
+      CourseName: existingTeeTime.courseName ?? "-",
+      GolfDistrictReservationID: bookingsToCreate?.[0]?.id ?? "-",
+      CourseReservationID: providerBookingId ?? "-",
+      FacilityName: existingTeeTime.entityName ?? "-",
+      PlayDateTime:
+        dayjs(existingTeeTime.providerDate).utcOffset("-06:00").format("YYYY-MM-DD hh:mm A") ?? "-",
       NumberOfHoles: existingTeeTime.numberOfHoles,
-      GreenFees: `$${existingTeeTime.greenFee}.00` || "-",
-      TaxesAndOtherFees: `$${purchasePrice - existingTeeTime.greenFee}.00` || "-",
-      // SensibleWeatherIncluded: ,
-      PurchasedFrom: existingTeeTime.courseName || "-",
-    }
-
+      GreenFeesPerPlayer:
+        `$${(purchasePrice / 100).toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}` ?? "-",
+      GreenFees:
+        `$${((purchasePrice * players) / 100).toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}` ?? "-",
+      TaxesAndOtherFees:
+        `$${normalizedCartData.taxes.toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}` ?? "-",
+      SensibleWeatherIncluded: normalizedCartData.sensibleCharge ? "Yes" : "No",
+      PurchasedFrom: existingTeeTime.courseName ?? "-",
+      PlayerCount: players ?? 0,
+      TotalAmount: formatMoney(normalizedCartData.total / 100 ?? 0),
+      CourseLogoURL: `https://${existingTeeTime?.cdn}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
+      CourseURL: existingTeeTime?.websiteURL || "",
+    };
     await this.notificationService.createNotification(
       userId,
       "TeeTimes Purchased",
       message,
       existingTeeTime.courseId,
       process.env.SENDGRID_TEE_TIMES_PURCHASED_TEMPLATE_ID,
-      template
+      template,
+      [
+        {
+          content: Buffer.from(icsContent).toString("base64"),
+          filename: "meeting.ics",
+          type: "text/calendar",
+          disposition: "attachment",
+          contentId: "meeting",
+        },
+      ]
     );
+    return bookingId;
   }
 
   /**
@@ -201,9 +477,10 @@ export class TokenizeService {
       .select({
         id: bookings.id,
         ownerId: bookings.ownerId,
-        courseId: bookings.courseId,
+        courseId: teeTimes.courseId,
       })
       .from(bookings)
+      .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
       .where(and(inArray(bookings.id, bookingIds), eq(bookings.ownerId, userId)))
       .execute()
       .catch((err) => {
@@ -221,60 +498,61 @@ export class TokenizeService {
     }
     const transactionId = randomUUID();
     //transfer the bookings
-    await this.database.transaction(async (tx) => {
-      for (const booking of bookingsToTransfer) {
-        await tx
-          .update(bookings)
-          .set({
-            ownerId: newOwnerId,
-            nameOnBooking: "guest",
-          })
-          .where(eq(bookings.id, booking.id))
-          .execute()
-          .catch((err) => {
-            this.logger.error(err);
-            tx.rollback();
-          });
-        await tx
-          .insert(transfers)
-          .values({
-            id: randomUUID(),
-            transactionId: transactionId,
-            amount: price,
-            bookingId: booking.id,
-            fromUserId: userId,
-            toUserId: newOwnerId,
-            courseId: booking.courseId,
-          })
-          .execute()
-          .catch((err) => {
-            this.logger.error(err);
-            tx.rollback();
-          });
-      }
-    });
+    // await this.database.transaction(async (tx) => {
+    //   for (const booking of bookingsToTransfer) {
+    //     await tx
+    //       .update(bookings)
+    //       .set({
+    //         ownerId: newOwnerId,
+    //         nameOnBooking: "Guest",
+    //       })
+    //       .where(eq(bookings.id, booking.id))
+    //       .execute()
+    //       .catch((err) => {
+    //         this.logger.error(err);
+    //         tx.rollback();
+    //       });
+    //     await tx
+    //       .insert(transfers)
+    //       .values({
+    //         id: randomUUID(),
+    //         transactionId: transactionId,
+    //         amount: price,
+    //         bookingId: booking.id,
+    //         fromUserId: userId,
+    //         toUserId: newOwnerId,
+    //         courseId: booking.courseId??"",
+    //         purchasedPrice: price,
+    //       })
+    //       .execute()
+    //       .catch((err) => {
+    //         this.logger.error(err);
+    //         tx.rollback();
+    //       });
+    //   }
+    // });
 
     const message1 = `
     ${bookingIds.length} tee times have been transferred to you This is to the new owner of the bookings the provider ids: ${bookingIds}
     `;
 
-    await this.notificationService.createNotification(
-      newOwnerId,
-      "TeeTimes Purchased",
-      message1,
-      bookingsToTransfer[0]?.courseId as string
-    );
+    // await this.notificationService.createNotification(
+    //   newOwnerId,
+    //   "TeeTimes Purchased",
+    //   message1,
+    //   bookingsToTransfer[0]?.courseId
+    // );
 
     const message2 = `
     ${bookingIds.length} bookings have been purchased this is to the old owner of the bookings
     Transfers bookings: 
     `;
-    await this.notificationService.createNotification(
-      userId,
-      "TeeTimes Sold",
-      message2,
-      bookingsToTransfer[0]?.courseId as string
-    );
+    // await this.notificationService.createNotification(
+    //   userId,
+    //   "TeeTimes Sold",
+    //   message2,
+    //   bookingsToTransfer[0]?.courseId
+    // );
   };
 
   /**

@@ -1,5 +1,7 @@
 import * as ToggleGroup from "@radix-ui/react-toggle-group";
+import { LoadingContainer } from "~/app/[course]/loader";
 import { useCourseContext } from "~/contexts/CourseContext";
+import { useUserContext } from "~/contexts/UserContext";
 import { useSidebar } from "~/hooks/useSidebar";
 import { api } from "~/utils/api";
 import { formatMoney, formatTime } from "~/utils/formatters";
@@ -44,10 +46,11 @@ export const ManageTeeTimeListing = ({
   needRedirect,
 }: SideBarProps) => {
   const [listingPrice, setListingPrice] = useState<number>(300);
+  const [sellerServiceFee, setSellerServiceFee] = useState<number>(0);
   const [minimumListingPrice, setMinimumListingPrice] = useState<number>(200);
   const [players, setPlayers] = useState<PlayerType>("1");
 
-  const { trigger, sidebar, toggleSidebar } = useSidebar({
+  const { toggleSidebar } = useSidebar({
     isOpen: isManageTeeTimeListingOpen,
     setIsOpen: setIsManageTeeTimeListingOpen,
   });
@@ -55,6 +58,8 @@ export const ManageTeeTimeListing = ({
     useState<boolean>(false);
   const router = useRouter();
   const { course } = useCourseContext();
+  const listingSellerFeePercentage = (course?.sellerFee ?? 1) / 100;
+  const listingBuyerFeePercentage = (course?.buyerFee ?? 1) / 100;
 
   const { data: bookingIds } = api.teeBox.getOwnedBookingsForTeeTime.useQuery(
     {
@@ -63,24 +68,52 @@ export const ManageTeeTimeListing = ({
     { enabled: !!selectedTeeTime?.teeTimeId }
   );
 
-  const availableSlots = bookingIds?.length ?? 0;
+  const availableSlots = 4 - (selectedTeeTime?.listedSlotsCount || 0);
 
   useEffect(() => {
     if (selectedTeeTime) {
       if (selectedTeeTime?.listPrice !== null) {
         setListingPrice(selectedTeeTime?.listPrice);
       }
-      setPlayers(selectedTeeTime.listedSpots?.length.toString() as PlayerType);
+      setPlayers(selectedTeeTime?.listedSlotsCount?.toString() as PlayerType);
     }
   }, [selectedTeeTime, isManageTeeTimeListingOpen]);
 
   const manageListing = api.teeBox.updateListing.useMutation();
-
-  const openCancelListing = () => {
-    setIsManageTeeTimeListingOpen(false);
-    setIsCancelListingOpen(true);
+  const cancel = api.teeBox.cancelListing.useMutation();
+  const auditLog = api.webhooks.auditLog.useMutation();
+  const { user } = useUserContext();
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const logAudit = async () => {
+    await auditLog.mutateAsync({
+      userId: user?.id ?? "",
+      teeTimeId: "",
+      bookingId: "",
+      listingId: selectedTeeTime?.listingId ?? "",
+      eventId: "TEE_TIME_CANCELLED",
+      json: `TEE_TIME_CANCELLED`,
+    });
   };
-
+  const cancelListing = async () => {
+    if (!selectedTeeTime?.listingId) {
+      toast.error("Listed already cancelled");
+      return;
+    }
+    setIsLoading(true);
+    try {
+      await cancel.mutateAsync({
+        listingId: selectedTeeTime?.listingId,
+      });
+      await refetch?.();
+      toast.success("Listing cancelled successfully");
+      setIsManageTeeTimeListingOpen(false);
+      void logAudit();
+    } catch (error) {
+      toast.error((error as Error)?.message ?? "Error cancelling listing");
+    } finally {
+      setIsLoading(false);
+    }
+  };
   useEffect(() => {
     if (isManageTeeTimeListingOpen) {
       document.body.classList.add("overflow-hidden");
@@ -110,9 +143,51 @@ export const ManageTeeTimeListing = ({
     setListingPrice(Number(strippedLeadingZeros));
   };
 
+  // const totalPayout = useMemo(() => {
+  //   if (!listingPrice) return 0;
+  //   return listingPrice * parseInt(players) - 45;
+  // }, [listingPrice, players]);
+
   const totalPayout = useMemo(() => {
-    if (!listingPrice) return 0;
-    return listingPrice * parseInt(players) - 45;
+    if (!listingPrice) {
+      setSellerServiceFee(0);
+      return 0;
+    }
+    if (listingPrice <= 0) {
+      setSellerServiceFee(0);
+      return 0;
+    }
+
+    console.log(
+      `selectedTeeTime?.firstHandPrice = ${selectedTeeTime?.firstHandPrice}`
+    );
+
+    const sellerListingPricePerGolfer = parseFloat(listingPrice.toString());
+
+    const buyerListingPricePerGolfer =
+      sellerListingPricePerGolfer * (1 + listingBuyerFeePercentage);
+    const sellerFeePerGolfer =
+      sellerListingPricePerGolfer * listingSellerFeePercentage;
+    const buyerFeePerGolfer =
+      sellerListingPricePerGolfer * listingBuyerFeePercentage;
+    let totalPayoutForAllGolfers =
+      (buyerListingPricePerGolfer - buyerFeePerGolfer - sellerFeePerGolfer) *
+      parseInt(players);
+
+    // console.log(`
+    //   listingSellerFeePercentage = ${listingSellerFeePercentage},
+    //   listingBuyerFeePercentage  = ${listingBuyerFeePercentage},
+    //   buyerListingPricePerGolfer = ${buyerListingPricePerGolfer},
+    //   sellerFeePerGolfer         = ${sellerFeePerGolfer},
+    //   buyerFeePerGolfer          = ${buyerFeePerGolfer},
+    //   totalPayoutForAllGolfers   = ${totalPayoutForAllGolfers}`);
+
+    totalPayoutForAllGolfers =
+      totalPayoutForAllGolfers <= 0 ? 0 : totalPayoutForAllGolfers;
+
+    setSellerServiceFee(sellerFeePerGolfer * parseInt(players));
+
+    return Math.abs(totalPayoutForAllGolfers);
   }, [listingPrice, players]);
 
   const maxListingPrice = useMemo(() => {
@@ -120,7 +195,7 @@ export const ManageTeeTimeListing = ({
     return selectedTeeTime?.firstHandPrice * 50;
   }, [selectedTeeTime]);
 
-  const save = async () => {
+  const _save = async () => {
     if (!selectedTeeTime?.listingId) {
       toast.error("Listing not found");
       return;
@@ -130,7 +205,7 @@ export const ManageTeeTimeListing = ({
       return;
     }
     if (listingPrice > maxListingPrice) {
-      toast.info(
+      toast.error(
         `Listing price cannot be greater than 50x the first hand price. (${formatMoney(
           maxListingPrice
         )}).`
@@ -138,7 +213,7 @@ export const ManageTeeTimeListing = ({
       return;
     }
     if (totalPayout <= 0) {
-      toast.info("Listing price must be greater than $45.");
+      toast.error("Listing price must be greater than $45.");
       return;
     }
     if (!bookingIds) {
@@ -176,8 +251,11 @@ export const ManageTeeTimeListing = ({
           <div className="h-screen bg-[#00000099]" />
         </div>
       )}
+      <LoadingContainer isLoading={isLoading}>
+        <div></div>
+      </LoadingContainer>
       <aside
-        ref={sidebar}
+        // ref={sidebar}
         className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[500px] md:h-[100dvh] ${
           isManageTeeTimeListingOpen ? "translate-x-0" : "translate-x-full"
         }`}
@@ -187,7 +265,7 @@ export const ManageTeeTimeListing = ({
             <div className="text-lg">Manage Tee Time Listing</div>
 
             <button
-              ref={trigger}
+              // ref={trigger}
               onClick={toggleSidebar}
               aria-controls="sidebar"
               aria-expanded={isManageTeeTimeListingOpen}
@@ -204,7 +282,7 @@ export const ManageTeeTimeListing = ({
                 courseImage={selectedTeeTime?.courseLogo ?? ""}
                 courseName={selectedTeeTime?.courseName ?? ""}
                 courseDate={selectedTeeTime?.date ?? ""}
-                golferCount={selectedTeeTime?.listedSpots?.length ?? 0}
+                golferCount={selectedTeeTime?.listedSlotsCount ?? 1}
                 timezoneCorrection={course?.timezoneCorrection}
               />
               <div className={`flex flex-col gap-1 text-center w-fit mx-auto`}>
@@ -220,13 +298,14 @@ export const ManageTeeTimeListing = ({
                   </span>
                   <input
                     id="listingPrice"
-                    value={listingPrice?.toString()?.replace(/^0+/, "")}
+                    value={listingPrice?.toFixed(2)}
                     type="number"
                     onFocus={handleFocus}
                     onChange={handleListingPrice}
                     onBlur={handleBlur}
                     className="mx-auto max-w-[300px] rounded-lg bg-secondary-white px-4 py-1 text-center text-[24px] font-semibold outline-none md:text-[32px] pl-6"
                     data-testid="lsiting-price-id"
+                    disabled
                   />
                 </div>
               </div>
@@ -250,12 +329,13 @@ export const ManageTeeTimeListing = ({
                   orientation="horizontal"
                   className="mx-auto flex"
                   data-testid="player-button-id"
+                  disabled
                 >
                   {PlayerOptions.map((value, index) => (
                     <Item
                       key={index}
                       value={value}
-                      className={`${
+                      className={`opacity-50 ${
                         index === 0
                           ? "rounded-l-full border border-stroke"
                           : index === PlayerOptions.length - 1
@@ -279,7 +359,7 @@ export const ManageTeeTimeListing = ({
                   Tee Time Price
                 </div>
                 <div className="text-secondary-black">
-                  {formatMoney(listingPrice)}
+                  {formatMoney(listingPrice * Number(players))}
                 </div>
               </div>
               <div className="flex justify-between">
@@ -290,7 +370,9 @@ export const ManageTeeTimeListing = ({
                     content="Service fee description."
                   />
                 </div>
-                <div className="text-secondary-black">{formatMoney(45)}</div>
+                <div className="text-secondary-black">
+                  {formatMoney(sellerServiceFee)}
+                </div>
               </div>
               <div className="flex justify-between">
                 <div className="font-[300] text-primary-gray">Total Payout</div>
@@ -302,16 +384,16 @@ export const ManageTeeTimeListing = ({
                 All sales are final.
               </div>
               <div className="flex flex-col gap-2">
-                <FilledButton
+                {/* <FilledButton
                   className="w-full"
                   onClick={save}
                   data-testid="save-button-id"
                 >
                   Save
-                </FilledButton>
+                </FilledButton> */}
                 <FilledButton
                   className="w-full"
-                  onClick={openCancelListing}
+                  onClick={cancelListing}
                   data-testid="cancel-listing-button-id"
                 >
                   Cancel Listing
@@ -334,8 +416,10 @@ export const ManageTeeTimeListing = ({
         courseName={selectedTeeTime?.courseName}
         courseLogo={selectedTeeTime?.courseLogo}
         date={selectedTeeTime?.date}
-        golferCount={selectedTeeTime?.listedSpots?.length ?? 0}
-        pricePerGolfer={selectedTeeTime?.listPrice ?? 0}
+        golferCount={selectedTeeTime?.listedSlotsCount}
+        pricePerGolfer={
+          selectedTeeTime?.listPrice ? selectedTeeTime?.listPrice / 100 : 0
+        }
         listingId={selectedTeeTime?.listingId ?? undefined}
         refetch={refetch}
         needRedirect={needRedirect}

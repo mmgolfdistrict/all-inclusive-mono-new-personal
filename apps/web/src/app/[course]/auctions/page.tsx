@@ -8,6 +8,7 @@ import { BlurImage } from "~/components/images/blur-image";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useAuction } from "~/hooks/useAuction";
 import { fullDate, placeholderBlurhash } from "~/utils/formatters";
+import { redirect } from "next/navigation";
 import { Skeleton } from "./skeleton";
 
 const auctionId = "72673ea0-7e91-444c-a76a-824d518362e8";
@@ -17,10 +18,12 @@ export default function AuctionsPage({
 }: {
   params: { auction: string; course: string };
 }) {
-  const { auctionData, isLoading, refetch } = useAuction(auctionId);
-
   const courseId = params.course;
   const { course } = useCourseContext();
+  if (course?.allowAuctions !== 1 || !course) {
+    redirect(`/${courseId}`);
+  }
+  const { auctionData, isLoading, refetch } = useAuction(auctionId);
 
   const refetchData = async () => {
     await refetch();

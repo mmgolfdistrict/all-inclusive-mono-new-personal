@@ -1,0 +1,27 @@
+FROM nginx
+
+# Setup Aliases
+RUN echo "alias ll='_TMPCMD=\"ls -alh --group-directories-first\";echo \$_TMPCMD;eval \$_TMPCMD'" >> ~/.bashrc
+RUN echo "alias c='clear'" >> ~/.bashrc
+RUN echo "alias cls='clear'" >> ~/.bashrc
+
+# Install Necessary Software
+RUN echo "Output of all commands." > /tmp/output.txt
+RUN apt-get update >> /tmp/output.txt
+RUN apt-get upgrade >> /tmp/output.txt
+RUN echo Y | apt-get install telnet; exit 0 >> /tmp/output.txt
+RUN echo Y | apt-get install inetutils-ping; exit 0 >> /tmp/output.txt
+RUN echo Y | apt-get install vim; exit 0 >> /tmp/output.txt
+RUN echo Y | apt-get install uuid-runtime; exit 0 >> /tmp/output.txt
+RUN echo Y | apt-get install uuid; exit 0 >> /tmp/output.txt
+RUN echo Y | apt-get install systemctl; exit 0 >> /tmp/output.txt
+RUN echo Y | apt-get install net-tools; exit 0 >> /tmp/output.txt
+RUN echo Y | apt-get install sed; exit 0 >> /tmp/output.txt
+RUN echo Y | apt-get install jq; exit 0 >> /tmp/output.txt
+
+RUN echo "systemctl start nginx" >> /opt/startup.sh
+RUN echo "mv /etc/nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf.orig" >> /opt/startup.sh
+RUN chmod 777 /opt/startup.sh
+
+RUN systemctl start nginx
+

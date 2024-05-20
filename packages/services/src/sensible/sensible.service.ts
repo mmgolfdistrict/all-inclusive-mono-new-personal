@@ -22,15 +22,14 @@ export class SensibleService extends CacheService {
   /**
    * Creates an instance of SensibleService.
    *
-   * @param {string} NEXT_PUBLIC_SENSIBLE_PARTNER_ID - Sensible partner ID.
-   * @param {string} NEXT_PUBLIC_SENSIBLE_PRODUCT_ID - Sensible product ID.
-   * @param {string} SENSIBLE_API_KEY - Sensible API key.
+   * @param {string} SENSIBLE_CLIENT_ID - Sensible client ID.
+   * @param {string} SENSIBLE_CLIENT_SECRET - Sensible client secret.
+   * @param {string} SENSIBLE_AUDIENCE - Sensible audience.
    * @param {string} redisUrl - Redis URL.
    * @param {string} redisToken - Redis token.
    */
   constructor(
-    private readonly NEXT_PUBLIC_SENSIBLE_PARTNER_ID: string,
-    private readonly NEXT_PUBLIC_SENSIBLE_PRODUCT_ID: string,
+    private readonly SENSIBLE_CLIENT_ID: string,
     private readonly SENSIBLE_CLIENT_SECRET: string,
     private readonly SENSIBLE_AUDIENCE: string,
     redisUrl: string,
@@ -49,15 +48,17 @@ export class SensibleService extends CacheService {
    *
    */
   getToken = async (): Promise<void> => {
+    const SENSIBLE_AUTH_URL: string = process.env.SENSIBLE_AUTH_URL!;
+
     this.logger.info("getAccessToken called");
     const payload: AccessTokenRequest = {
       grant_type: "client_credentials",
-      client_id: this.NEXT_PUBLIC_SENSIBLE_PARTNER_ID,
+      client_id: this.SENSIBLE_CLIENT_ID,
       client_secret: this.SENSIBLE_CLIENT_SECRET,
       audience: this.SENSIBLE_AUDIENCE,
     };
     console.log(payload);
-    const response = await fetch("https://auth.sensibleweather.io/oauth/token", {
+    const response = await fetch(SENSIBLE_AUTH_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -76,8 +77,8 @@ export class SensibleService extends CacheService {
 
     const data: AccessTokenSuccessResponse = await response.json();
 
-    this.invalidateCache("sensible_access_token");
-    this.setCache("sensible_access_token", data.access_token, data.expires_in);
+    await this.invalidateCache("sensible_access_token");
+    await this.setCache("sensible_access_token", data.access_token, data.expires_in);
   };
 
   /**
@@ -137,14 +138,14 @@ export class SensibleService extends CacheService {
 
     let bearerToken = await this.getCache("sensible_access_token");
     if (!bearerToken) {
-      bearerToken = await this.getToken()
-        .then(() => {
-          this.logger.info(`getQuote retrieved access token from SensibleWeather API.`);
-        })
-        .catch((err) => {
-          this.logger.error(`Error getting access token: ${err}`);
-          throw new Error(`Error getting access token: ${err}`);
-        });
+      try {
+        await this.getToken();
+        this.logger.info(`getQuote retrieved access token from SensibleWeather API.`);
+        bearerToken = await this.getCache("sensible_access_token");
+      } catch (err) {
+        this.logger.error(`Error getting access token: ${err}`);
+        throw new Error(`Error getting access token: ${err}`);
+      }
     }
 
     const response = await fetch(`${this.getEndpoint()}/quote/guarantee`, {
@@ -189,16 +190,16 @@ export class SensibleService extends CacheService {
    * const quoteDetails = await getQuoteById("xyz123");
    */
   getQuoteById = async (quoteId: string): Promise<GetQuoteResponse> => {
-    let bearerToken = await this.getCache("sensible_access_token");
+    let bearerToken: string | null = await this.getCache("sensible_access_token");
     if (!bearerToken) {
-      bearerToken = await this.getToken()
-        .then(() => {
-          this.logger.info(`getQuote retrieved access token from SensibleWeather API.`);
-        })
-        .catch((err) => {
-          this.logger.error(`Error getting access token: ${err}`);
-          throw new Error(`Error getting access token: ${err}`);
-        });
+      try {
+        await this.getToken();
+        this.logger.info(`getQuote retrieved access token from SensibleWeather API.`);
+        bearerToken = await this.getCache("sensible_access_token");
+      } catch (err) {
+        this.logger.error(`Error getting access token: ${err}`);
+        throw new Error(`Error getting access token: ${err}`);
+      }
     }
     const url = `${this.getEndpoint()}/quote/guarantee/${quoteId}`;
     const response = await fetch(url, {
@@ -229,14 +230,14 @@ export class SensibleService extends CacheService {
     this.logger.info(`getGuarantee called with params: ${JSON.stringify(params)}`);
     let bearerToken = await this.getCache("sensible_access_token");
     if (!bearerToken) {
-      bearerToken = await this.getToken()
-        .then(() => {
-          this.logger.info(`getQuote retrieved access token from SensibleWeather API.`);
-        })
-        .catch((err) => {
-          this.logger.error(`Error getting access token: ${err}`);
-          throw new Error(`Error getting access token: ${err}`);
-        });
+      try {
+        await this.getToken();
+        this.logger.info(`getQuote retrieved access token from SensibleWeather API.`);
+        bearerToken = await this.getCache("sensible_access_token");
+      } catch (err) {
+        this.logger.error(`Error getting access token: ${err}`);
+        throw new Error(`Error getting access token: ${err}`);
+      }
     }
 
     const url = `${this.getEndpoint()}/guarantee`;
@@ -271,14 +272,14 @@ export class SensibleService extends CacheService {
     this.logger.info(`cancelGuarantee called with guaranteeId: ${guaranteeId}`);
     let bearerToken = await this.getCache("sensible_access_token");
     if (!bearerToken) {
-      bearerToken = await this.getToken()
-        .then(() => {
-          this.logger.info(`getQuote retrieved access token from SensibleWeather API.`);
-        })
-        .catch((err) => {
-          this.logger.error(`Error getting access token: ${err}`);
-          throw new Error(`Error getting access token: ${err}`);
-        });
+      try {
+        await this.getToken();
+        this.logger.info(`getQuote retrieved access token from SensibleWeather API.`);
+        bearerToken = await this.getCache("sensible_access_token");
+      } catch (err) {
+        this.logger.error(`Error getting access token: ${err}`);
+        throw new Error(`Error getting access token: ${err}`);
+      }
     }
 
     const url = `${this.getEndpoint()}/guarantee/${guaranteeId}/cancel`;
@@ -310,14 +311,14 @@ export class SensibleService extends CacheService {
     this.logger.info(`createQuote called with params: ${JSON.stringify(params)}`);
     let bearerToken = await this.getCache("sensible_access_token");
     if (!bearerToken) {
-      bearerToken = await this.getToken()
-        .then(() => {
-          this.logger.info(`getQuote retrieved access token from SensibleWeather API.`);
-        })
-        .catch((err) => {
-          this.logger.error(`Error getting access token: ${err}`);
-          throw new Error(`Error getting access token: ${err}`);
-        });
+      try {
+        await this.getToken();
+        this.logger.info(`getQuote retrieved access token from SensibleWeather API.`);
+        bearerToken = await this.getCache("sensible_access_token");
+      } catch (err) {
+        this.logger.error(`Error getting access token: ${err}`);
+        throw new Error(`Error getting access token: ${err}`);
+      }
     }
 
     const response = await fetch(`${this.getEndpoint()}/quote/guarantee`, {
@@ -352,14 +353,14 @@ export class SensibleService extends CacheService {
     this.logger.info(`getGuaranteeById called with guaranteeId: ${guaranteeId}`);
     let bearerToken = await this.getCache("sensible_access_token");
     if (!bearerToken) {
-      bearerToken = await this.getToken()
-        .then(() => {
-          this.logger.info(`getQuote retrieved access token from SensibleWeather API.`);
-        })
-        .catch((err) => {
-          this.logger.error(`Error getting access token: ${err}`);
-          throw new Error(`Error getting access token: ${err}`);
-        });
+      try {
+        await this.getToken();
+        this.logger.info(`getQuote retrieved access token from SensibleWeather API.`);
+        bearerToken = await this.getCache("sensible_access_token");
+      } catch (err) {
+        this.logger.error(`Error getting access token: ${err}`);
+        throw new Error(`Error getting access token: ${err}`);
+      }
     }
 
     const url = `${this.getEndpoint()}/guarantee/${guaranteeId}`;
@@ -390,18 +391,55 @@ export class SensibleService extends CacheService {
    */
   acceptQuote = async (params: AcceptQuoteParams): Promise<AcceptQuoteSuccessResponse> => {
     this.logger.info(`acceptQuote called with params: ${JSON.stringify(params)}`);
-    let bearerToken = await this.getCache("sensible_access_token");
+    let bearerToken: string | null = await this.getCache("sensible_access_token");
     if (!bearerToken) {
-      bearerToken = await this.getToken()
-        .then(() => {
-          this.logger.info(`getQuote retrieved access token from SensibleWeather API.`);
-        })
-        .catch((err) => {
-          this.logger.error(`Error getting access token: ${err}`);
-          throw new Error(`Error getting access token: ${err}`);
-        });
+      try {
+        await this.getToken();
+        this.logger.info(`getQuote retrieved access token from SensibleWeather API.`);
+        bearerToken = await this.getCache("sensible_access_token");
+      } catch (err) {
+        this.logger.error(`Error getting access token: ${err}`);
+        throw new Error(`Error getting access token: ${err}`);
+      }
     }
-    const response = await fetch(`${this.getEndpoint()}/quote/guarantee/${params.quoteId}/accept`, {
+
+    // console.log("Before calling API https://jsonplaceholder.typicode.com/todos");
+
+    // try {
+    //   const response = await fetch("https://jsonplaceholder.typicode.com/todos");
+    //   if (!response.ok) {
+    //     this.logger.error(
+    //       `Error calling API https://jsonplaceholder.typicode.com/todos: ${response.statusText}`
+    //     );
+    //     throw new Error(
+    //       `Error calling API https://jsonplaceholder.typicode.com/todos: ${response.statusText}`
+    //     );
+    //   }
+    //   const data = await response.json();
+    //   this.logger.info(
+    //     `Successfully called API https://jsonplaceholder.typicode.com/todos: ${JSON.stringify(data)}`
+    //   );
+    // } catch (err) {
+    //   this.logger.error(`Error calling API https://jsonplaceholder.typicode.com/todos: ${err}`);
+    // } finally {
+    //   console.log("After calling API https://jsonplaceholder.typicode.com/todos - 1");
+    // }
+    // console.log("After calling API https://jsonplaceholder.typicode.com/todos - 2");
+
+    // console.log(JSON.stringify(params));
+    // console.log(
+    //   JSON.stringify({
+    //     price_charged: params.price_charged,
+    //     reservation_id: params.reservation_id,
+    //     lang_locale: params.lang_locale,
+    //     user: { name: params.user.name, email: params.user.email, phone: params.user.phone },
+    //   })
+    // );
+
+    const url = `${this.getEndpoint()}/quote/guarantee/${params.quoteId}/accept`;
+    // console.log(`Sensible Bearer Token = ${bearerToken}`);
+
+    const response = await fetch(url, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -409,18 +447,32 @@ export class SensibleService extends CacheService {
         Authorization: `Bearer ${bearerToken}`,
       },
       body: JSON.stringify({
+        guarantee_quote_id: params.quoteId,
         price_charged: params.price_charged,
+        reservation_id: params.reservation_id,
+        lang_locale: params.lang_locale,
+        //@TODO add phone number from reservation screen if not provided in the profile. GOLFdistrict owns the phone number 877-Tee-Trade & 833-Tee-Trade
+        user: {
+          name: params.user.name,
+          email: params.user.email,
+          phone: params.user.phone || "+18778338723",
+        },
       }),
     });
+
+    const responseData = await response.json();
+
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorData = responseData; //await response.json();
+
       this.logger.fatal(
-        `Failed to accept quote from SensibleWeather API: ${errorData.error}: ${errorData.error_description}`
+        `Failed to accept quote from SensibleWeather API: ${errorData.message}: ${errorData.error_description}`
       );
       throw new Error(`${errorData.error}: ${errorData.error_description}`);
     }
 
-    return (await response.json()) as AcceptQuoteSuccessResponse;
+    // return (await response.json()) as AcceptQuoteSuccessResponse;
+    return responseData as AcceptQuoteSuccessResponse;
   };
 
   /**
@@ -434,33 +486,23 @@ export class SensibleService extends CacheService {
     this.logger.info(`cancelQuote called with quoteId: ${quoteId}`);
     let bearerToken = await this.getCache("sensible_access_token");
     if (!bearerToken) {
-      bearerToken = await this.getToken()
-        .then(() => {
-          this.logger.info(`getQuote retrieved access token from SensibleWeather API.`);
-        })
-        .catch((err) => {
-          this.logger.error(`Error getting access token: ${err}`);
-          throw new Error(`Error getting access token: ${err}`);
-        });
+      try {
+        await this.getToken();
+        this.logger.info(`getQuote retrieved access token from SensibleWeather API.`);
+        bearerToken = await this.getCache("sensible_access_token");
+      } catch (err) {
+        this.logger.error(`Error getting access token: ${err}`);
+        throw new Error(`Error getting access token: ${err}`);
+      }
     }
 
-    const response = await fetch(`${this.getEndpoint()}/quote/guarantee/${quoteId}/decline`, {
+    fetch(`${this.getEndpoint()}/quote/guarantee/${quoteId}/decline`, {
       method: "PATCH",
       headers: {
         Accept: "application/json",
         Authorization: `Bearer ${bearerToken}`,
       },
     });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      this.logger.fatal(
-        `Failed to cancel quote from SensibleWeather API: ${errorData.error}: ${errorData.error_description}`
-      );
-      throw new Error(`${errorData.error}: ${errorData.error_description}`);
-    }
-
-    return await response.json();
   };
 
   /**
@@ -471,12 +513,16 @@ export class SensibleService extends CacheService {
    * const apiEndpoint = getEndpoint();
    */
   getEndpoint = (): string => {
-    switch (process.env.NODE_ENV) {
-      case "production":
-        return "https://protect.sensibleweather.io/api/v0_1";
-      case "development":
-      default:
-        return "https://protect.sandbox.sensibleweather.io/api/v0_1";
-    }
+    const SENSIBLE_BASE_URL = process.env.SENSIBLE_BASE_URL!;
+
+    return SENSIBLE_BASE_URL;
+
+    // switch (process.env.NODE_ENV) {
+    //   case "production":
+    //     return "https://protect.sensibleweather.io/api/v0_1";
+    //   case "development":
+    //   default:
+    //     return "https://protect.sandbox.sensibleweather.io/api/v0_1";
+    // }
   };
 }

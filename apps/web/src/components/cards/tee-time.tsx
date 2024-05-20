@@ -34,7 +34,7 @@ export const TeeTime = ({
   availableSlots,
   teeTimeId,
   isLiked,
-  status,
+  status = "FIRST_HAND",
   minimumOfferPrice,
   bookingIds,
   listingId,
@@ -42,6 +42,9 @@ export const TeeTime = ({
   className,
   showFullDate,
   children,
+  listedSlots,
+  handleLoading,
+  refetch,
 }: {
   time: string;
   canChoosePlayer: boolean;
@@ -62,14 +65,31 @@ export const TeeTime = ({
   className?: string;
   showFullDate?: boolean;
   children?: ReactNode;
+  listedSlots?: number | null;
+  handleLoading?: (val: boolean) => void;
+  refetch?: () => Promise<unknown>;
 }) => {
-  const [selectedPlayers, setSelectedPlayers] = useState<string>("1");
+  const [selectedPlayers, setSelectedPlayers] = useState<string>(
+    status === "UNLISTED" ? "1" : status === "FIRST_HAND" ? "1" : players
+  );
   const { course } = useCourseContext();
   const courseId = course?.id;
   const timezoneCorrection = course?.timezoneCorrection;
   const [isMakeAnOfferOpen, setIsMakeAnOfferOpen] = useState<boolean>(false);
   const { data: session } = useSession();
   const [isManageOpen, setIsManageOpen] = useState<boolean>(false);
+  const { user } = useUserContext();
+  const auditLog = api.webhooks.auditLog.useMutation();
+  const logAudit = async () => {
+    await auditLog.mutateAsync({
+      userId: user?.id ?? "",
+      teeTimeId: teeTimeId ?? "",
+      bookingId: "",
+      listingId: listingId ?? "",
+      eventId: "TEE_TIME_IN_CART",
+      json: `TEE_TIME_IN_CART `,
+    });
+  };
 
   useEffect(() => {
     if (isMakeAnOfferOpen || isManageOpen) {
@@ -78,13 +98,20 @@ export const TeeTime = ({
       document.body.classList.remove("overflow-hidden");
     }
   }, [isMakeAnOfferOpen, isManageOpen]);
-
-  const { user } = useUserContext();
   const router = useRouter();
   const { setPrevPath } = useAppContext();
 
   const toggleWatchlist = api.watchlist.toggleWatchlist.useMutation();
   const [optimisticLike, setOptimisticLike] = useState(isLiked);
+  // const { refetch: refetchCheckTeeTime } =
+  //   api.teeBox.checkIfTeeTimeStillListed.useQuery(
+  //     {
+  //       bookingId: bookingIds[0] || "",
+  //     },
+  //     {
+  //       enabled: false,
+  //     }
+  //   );
 
   const addToWatchlist = async () => {
     if (!user) {
@@ -101,17 +128,33 @@ export const TeeTime = ({
       console.log(error);
     }
   };
-  const buyTeeTime = () => {
+  const buyTeeTime = async () => {
+    // const isTeeTimeAvailable = await refetchCheckTeeTime();
+    // console.log("isTeeTimeAvailable");
+    // console.log(isTeeTimeAvailable);
+
+    // if (!isTeeTimeAvailable.data && status === "SECOND_HAND") {
+    //   toast.error("Oops! Tee time is not available anymore");
+    //   return;
+    // }
+    await logAudit();
+
+    if (handleLoading) {
+      handleLoading(true);
+    }
+
     if (!user || !session) {
       if (status === "FIRST_HAND") {
-        setPrevPath(
-          `/${course?.id}/checkout?teeTimeId=${teeTimeId}&playerCount=${selectedPlayers}`
-        );
+        setPrevPath({
+          path: `/${course?.id}/checkout?teeTimeId=${teeTimeId}&playerCount=${selectedPlayers}`,
+          createdAt: new Date().toISOString(),
+        });
       }
       if (status === "SECOND_HAND") {
-        setPrevPath(
-          `/${course?.id}/checkout?listingId=${listingId}&playerCount=${selectedPlayers}`
-        );
+        setPrevPath({
+          path: `/${course?.id}/checkout?listingId=${listingId}&playerCount=${listedSlots}`,
+          createdAt: new Date().toISOString(),
+        });
       }
       void router.push(`/${course?.id}/login`);
       return;
@@ -123,7 +166,7 @@ export const TeeTime = ({
     }
     if (status === "SECOND_HAND") {
       void router.push(
-        `/${course?.id}/checkout?listingId=${listingId}&playerCount=${selectedPlayers}`
+        `/${course?.id}/checkout?listingId=${listingId}&playerCount=${listedSlots}`
       );
     }
   };
@@ -145,9 +188,9 @@ export const TeeTime = ({
   const isSuggested = status === "UNLISTED";
 
   useEffect(() => {
-    if (status !== "FIRST_HAND") {
-      setSelectedPlayers(availableSlots.toString());
-    }
+    // if (status === "SECOND_HAND") {
+    //   setSelectedPlayers(isOwned ? players : availableSlots.toString());
+    // }
   }, [status, availableSlots]);
 
   const openManage = () => {
@@ -162,8 +205,13 @@ export const TeeTime = ({
     <>
       {children}
       <div
-        className={`md:rounded-xl rounded-lg bg-secondary-white w-fit min-w-[228px] md:min-w-[302px] ${className ?? ""
-          }`}
+        data-testid="tee-time-id"
+        data-test={
+          status === "SECOND_HAND" ? "secondary_listed" : "primary_listed"
+        }
+        className={`md:rounded-xl rounded-lg bg-secondary-white w-fit min-w-[228px] md:min-w-[302px] ${
+          className ?? ""
+        }`}
       >
         <div className="border-b border-stroke">
           <div className="flex justify-between py-1 px-3 md:p-3">
@@ -203,12 +251,17 @@ export const TeeTime = ({
             <div className="scale-75 md:scale-100">
               <OutlineClub />
             </div>
+
             {canChoosePlayer ? (
               <ChoosePlayers
-                players={selectedPlayers}
+                players={
+                  status === "SECOND_HAND" ? `${listedSlots}` : selectedPlayers
+                }
                 setPlayers={setSelectedPlayers}
                 playersOptions={PlayersOptions}
-                availableSlots={availableSlots}
+                availableSlots={
+                  status === "SECOND_HAND" ? listedSlots || 0 : availableSlots
+                }
                 isDisabled={status === "SECOND_HAND"}
                 className="md:px-[1rem] md:py-[.25rem] md:!text-[14px] !text-[10px] px-[.75rem] py-[.1rem]"
                 teeTimeId={teeTimeId}
@@ -239,18 +292,21 @@ export const TeeTime = ({
           </div>
 
           <div className="flex items-center gap-1">
-            <OutlineButton
-              className="md:px-[.5rem] px-[0.375rem] py-[0.375rem] md:py-2"
-              onClick={addToWatchlist}
-              data-testid="watch-list-id"
-              data-test={teeTimeId}
-              data-qa={optimisticLike}
-            >
-              <Heart
-                className={`w-[13px] md:w-[18px]`}
-                fill={optimisticLike ? "#40942A" : undefined}
-              />
-            </OutlineButton>
+            {course?.supportsWatchlist ? (
+              <OutlineButton
+                className="md:px-[.5rem] px-[0.375rem] py-[0.375rem] md:py-2"
+                onClick={addToWatchlist}
+                data-testid="watch-list-id"
+                data-test={teeTimeId}
+                data-qa={optimisticLike}
+              >
+                <Heart
+                  className={`w-[13px] md:w-[18px]`}
+                  fill={optimisticLike ? "#40942A" : undefined}
+                />
+              </OutlineButton>
+            ) : null}
+
             <Link
               href={href}
               data-testid="details-button-id"
@@ -263,7 +319,9 @@ export const TeeTime = ({
               </OutlineButton>
             </Link>
             {soldById === user?.id && session ? (
-              <FilledButton onClick={openManage} className="whitespace-nowrap"
+              <FilledButton
+                onClick={openManage}
+                className="whitespace-nowrap"
                 data-testid="sell-button-id"
                 data-test={teeTimeId}
                 data-qa="Buy"
@@ -332,7 +390,9 @@ export const TeeTime = ({
                 "golfer"
               ) as string[],
               teeTimeId: teeTimeId,
+              listedSlotsCount: listedSlots ?? 1,
             }}
+            refetch={refetch}
           />
         )}
       </div>

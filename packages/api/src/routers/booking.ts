@@ -2,6 +2,25 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const bookingRouter = createTRPCRouter({
+  checkIfTeeTimeStillListed: protectedProcedure
+    .input(
+      z.object({
+        bookingId: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return ctx.serviceFactory.getBookingService().checkIfTeeTimeStillListed(input.bookingId);
+    }),
+  checkIfTeeTimeStillListedByListingId: protectedProcedure
+    .input(
+      z.object({
+        listingId: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return ctx.serviceFactory.getBookingService().checkIfTeeTimeStillListedByListingId(input.listingId);
+    }),
+
   getOfferReceivedForUser: protectedProcedure
     .input(
       z.object({
@@ -86,12 +105,19 @@ export const bookingRouter = createTRPCRouter({
         bookingIds: z.array(z.string()),
         listPrice: z.number(),
         endTime: z.date(),
+        slots: z.number(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       return ctx.serviceFactory
         .getBookingService()
-        .createListingForBookings(ctx.session.user.id, input.listPrice, input.bookingIds, input.endTime);
+        .createListingForBookings(
+          ctx.session.user.id,
+          input.listPrice,
+          input.bookingIds,
+          input.endTime,
+          input.slots
+        );
     }),
   getOwnedBookingsForTeeTime: protectedProcedure
     .input(
@@ -105,17 +131,36 @@ export const bookingRouter = createTRPCRouter({
         .getBookingService()
         .getOwnedBookingsForTeeTime(input.ownerId ?? ctx.session.user.id, input.teeTimeId);
     }),
+
+  getOwnedBookingById: protectedProcedure
+    .input(
+      z.object({
+        bookingId: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return ctx.serviceFactory.getBookingService().getOwnedBookingById(ctx.session.user.id, input.bookingId);
+    }),
   updateNamesOnBookings: protectedProcedure
     .input(
       z.object({
-        bookingIds: z.array(z.string()),
-        userIds: z.array(z.string()),
+        bookingId: z.string(),
+        usersToUpdate: z.array(
+          z.object({
+            id: z.string(),
+            handle: z.string(),
+            name: z.string(),
+            email: z.string(),
+            slotId: z.string(),
+            bookingId: z.string(),
+          })
+        ),
       })
     )
     .mutation(async ({ ctx, input }) => {
       return ctx.serviceFactory
         .getBookingService()
-        .updateNamesOnBookings(ctx.session.user.id, input.bookingIds, input.userIds);
+        .updateNamesOnBookings(ctx.session.user.id, input.usersToUpdate, input.bookingId);
     }),
   updateListing: protectedProcedure
     .input(
@@ -207,5 +252,31 @@ export const bookingRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       return ctx.serviceFactory.getBookingService().teeTimeAvailableFirsthandSpots(input.teeTimeId);
+    }),
+  reserveBooking: protectedProcedure
+    .input(
+      z.object({
+        cartId: z.string(),
+        payment_id: z.string(),
+        sensibleQuoteId: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return ctx.serviceFactory
+        .getBookingService()
+        .reserveBooking(ctx.session.user.id, input.cartId, input.payment_id, input.sensibleQuoteId);
+    }),
+  reserveSecondHandBooking: protectedProcedure
+    .input(
+      z.object({
+        cartId: z.string(),
+        listingId: z.string(),
+        payment_id: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return ctx.serviceFactory
+        .getBookingService()
+        .reserveSecondHandBooking(ctx.session.user.id, input.cartId, input.listingId, input.payment_id);
     }),
 });

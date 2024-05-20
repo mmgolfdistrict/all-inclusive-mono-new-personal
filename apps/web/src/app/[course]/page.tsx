@@ -25,6 +25,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { ViewportList } from "react-viewport-list";
 import { useMediaQuery } from "usehooks-ts";
+import { LoadingContainer } from "./loader";
 
 dayjs.extend(Weekday);
 dayjs.extend(RelativeTime);
@@ -49,8 +50,7 @@ export default function CourseHomePage() {
   const { data: farthestDateOut } =
     api.searchRouter.getFarthestTeeTimeDate.useQuery(
       {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-        courseId: course?.id!,
+        courseId: course?.id ?? "",
         order: "desc",
       },
       {
@@ -174,6 +174,7 @@ export default function CourseHomePage() {
 
   const [showFilters, setShowFilters] = useState<boolean>(false);
   const [showSort, setShowSort] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const isMobile = useMediaQuery("(max-width: 768px)");
 
@@ -205,6 +206,10 @@ export default function CourseHomePage() {
     setPageNumber((prev) => prev - 1);
     setTake((prev) => prev - TAKE);
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const handleLoading = (val: boolean) => {
+    setIsLoading(val);
   };
 
   useEffect(() => {
@@ -256,6 +261,9 @@ export default function CourseHomePage() {
 
   return (
     <main className="bg-secondary-white py-4 md:py-6">
+      <LoadingContainer isLoading={isLoading}>
+        <div></div>
+      </LoadingContainer>
       <div className="flex items-center justify-between px-4 md:px-6">
         <GoBack href="/" text={`Back to all ${entity?.name} Courses`} />
       </div>
@@ -265,7 +273,7 @@ export default function CourseHomePage() {
         className="px-4 md:px-6"
       />
       <CourseBanner className="pt-4" />
-      <section className="relative flex gap-8 pl-0 pt-6 md:pl-6 md:pt-8 mx-auto w-full">
+      <section className="relative flex gap-8 pl-0 pt-6 md:pl-6 md:pt-8 mx-auto w-full mb-[-1.5rem]">
         <div
           ref={scrollRef}
           className="absolute -top-[7.5rem] md:-top-[9.2rem]"
@@ -294,7 +302,7 @@ export default function CourseHomePage() {
         <div className="flex w-full flex-col gap-1 md:gap-4 overflow-x-hidden pr-0 md:pr-6">
           <div className="flex justify-between gap-4  px-4 md:px-0">
             <div className="text-secondary-black">
-              Showing {count?.toLocaleString() ?? "0"} tee times{" "}
+              {/* Showing {count?.toLocaleString() ?? "0"} tee times{" "} */}
               <span className="text-sm text-primary-gray">
                 All times shown in course time zone
               </span>
@@ -330,6 +338,7 @@ export default function CourseHomePage() {
                       updateCount={updateCount}
                       minDate={utcStartDate.toString()}
                       maxDate={utcEndDate.toString()}
+                      handleLoading={handleLoading}
                     />
                   )}
                 </ViewportList>

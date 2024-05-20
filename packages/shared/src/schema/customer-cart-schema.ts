@@ -31,6 +31,33 @@ export const SecondHandProductSchema = BaseProductSchema.extend({
   }),
 });
 
+// ConvenienceFee schema
+export const ConvenienceFeeSchema = BaseProductSchema.extend({
+  product_data: z.object({
+    metadata: z.object({
+      type: z.literal("convenience_fee"),
+    }),
+  }),
+});
+
+// Markup schema
+export const MarkupSchema = BaseProductSchema.extend({
+  product_data: z.object({
+    metadata: z.object({
+      type: z.literal("markup"),
+    }),
+  }),
+});
+
+// Tax schema
+export const TaxSchema = BaseProductSchema.extend({
+  product_data: z.object({
+    metadata: z.object({
+      type: z.literal("taxes"),
+    }),
+  }),
+});
+
 // SensibleProduct schema
 const SensibleProductSchema = BaseProductSchema.extend({
   product_data: z.object({
@@ -66,9 +93,12 @@ export const CharityProductSchema = BaseProductSchema.extend({
 export const ProductDataSchema = z.union([
   FirstHandProductSchema,
   SecondHandProductSchema,
+  ConvenienceFeeSchema,
+  MarkupSchema,
   SensibleProductSchema,
   AuctionProductSchema,
   CharityProductSchema,
+  TaxSchema,
 ]);
 
 // CustomerCart schema
@@ -81,5 +111,7 @@ export const CustomerCartSchema = z.object({
   phone: z.string().nullable(),
   promoCode: z.string().nullable().optional(),
   phone_country_code: z.string().nullable(),
+  paymentId: z.string().nullable(),
   cart: z.array(ProductDataSchema),
+  cartId: z.string().optional(),
 });

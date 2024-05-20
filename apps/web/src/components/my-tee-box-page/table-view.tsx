@@ -2,12 +2,13 @@
 
 import { useSession } from "@golf-district/auth/nextjs-exports";
 import * as Tabs from "@radix-ui/react-tabs";
+import { useAppContext } from "~/contexts/AppContext";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
 import { OpenSection } from "~/utils/tee-box-helper";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { type ReactNode } from "react";
 import { Badge } from "../badge";
 import { FilledButton } from "../buttons/filled-button";
@@ -19,13 +20,15 @@ import { TransactionHistory } from "./transaction-history";
 
 export const TableView = () => {
   const { course } = useCourseContext();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const courseId = course?.id;
   const params = useSearchParams();
   const section = OpenSection.includes(params?.get("section") ?? "")
     ? params?.get("section")
     : "owned";
   const { user } = useUserContext();
+  const pathname = usePathname();
+  const { setPrevPath } = useAppContext();
 
   const { data: unreadOffers, refetch } =
     api.user.getUnreadOffersForCourse.useQuery(
@@ -61,25 +64,42 @@ export const TableView = () => {
         >
           My Listed Tee Times
         </TabTrigger>
-        <TabTrigger value={"offers-sent"}>Offers Sent</TabTrigger>
-        <TabTrigger value={"offers-received"} handleClick={markAsRead}>
-          Offers Received{" "}
-          {unreadOffers && unreadOffers > 0 ? (
-            <Badge className="py-[.15rem] text-[12px]">{unreadOffers}</Badge>
-          ) : null}
-        </TabTrigger>
+        {course?.supportsOffers ? (
+          <>
+            <TabTrigger value={"offers-sent"}>Offers Sent</TabTrigger>
+            <TabTrigger value={"offers-received"} handleClick={markAsRead}>
+              Offers Received{" "}
+              {unreadOffers && unreadOffers > 0 ? (
+                <Badge className="py-[.15rem] text-[12px]">
+                  {unreadOffers}
+                </Badge>
+              ) : null}
+            </TabTrigger>
+          </>
+        ) : null}
         <TabTrigger value={"transaction-history"}>
           Transaction History
         </TabTrigger>
       </Tabs.List>
       {!session ? (
-        <Tabs.Content value={section ?? "owned"} className="bg-white p-2">
-          <div className="min-h-[250px] flex items-center justify-center">
-            <Link href={`/${courseId}/login`} data-testid="login-to-view-id">
-              <FilledButton>Login to view</FilledButton>
-            </Link>
-          </div>
-        </Tabs.Content>
+        status == "loading" ? null : (
+          <Tabs.Content value={section ?? "owned"} className="bg-white p-2">
+            <div className="min-h-[250px] flex items-center justify-center">
+              <Link
+                href={`/${courseId}/login`}
+                onClick={() => {
+                  setPrevPath({
+                    path: pathname,
+                    createdAt: new Date().toISOString(),
+                  });
+                }}
+                data-testid="login-to-view-id"
+              >
+                <FilledButton>Login to view</FilledButton>
+              </Link>
+            </div>
+          </Tabs.Content>
+        )
       ) : (
         <>
           <Tabs.Content value="owned" className="bg-white p-2">

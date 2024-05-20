@@ -13,6 +13,7 @@ import {
   type EditProfileSchemaType,
 } from "~/schema/edit-profile-schema";
 import { api } from "~/utils/api";
+import { debounceFunction } from "~/utils/debounce";
 import { useParams } from "next/navigation";
 import type { FormEvent } from "react";
 import { useCallback, useEffect, useState, type ChangeEvent } from "react";
@@ -37,6 +38,13 @@ export const EditProfileForm = () => {
     bannerId: "",
     profilePictureId: "",
   });
+
+  const {
+    mutateAsync: checkProfanity,
+    data: profanityCheckData,
+    reset: resetProfanityCheck,
+  } = api.profanity.checkProfanity.useMutation();
+  const { mutate: deleteFileAsset } = api.upload.deleteFile.useMutation();
   const params = useParams();
   const { userId } = params;
   const { refetchMe } = useUserContext();
@@ -62,6 +70,7 @@ export const EditProfileForm = () => {
     setValue,
     watch,
     handleSubmit,
+    setError,
     formState: { isSubmitting, errors },
   } = useForm<EditProfileSchemaType>({
     // @ts-ignore
@@ -139,6 +148,37 @@ export const EditProfileForm = () => {
     }
   }, [bannerImage, userData, isLoading]);
 
+  const handle = watch("handle");
+
+  const handleCheckProfanity = async (text: string) => {
+    if (!text) return;
+    const data = await checkProfanity({ text });
+    if (data.isProfane) {
+      setError("handle", {
+        message: "Handle contains profanity.",
+      });
+    }
+  };
+
+  const debouncedHandleCheckProfanity = useCallback(
+    debounceFunction(handleCheckProfanity, 500),
+    []
+  );
+
+  useEffect(() => {
+    if (!handle || handle?.length <= 2) {
+      setError("handle", {
+        message: "",
+      });
+      resetProfanityCheck();
+      return;
+    }
+    setError("handle", {
+      message: "",
+    });
+    debouncedHandleCheckProfanity(handle);
+  }, [handle]);
+
   const getKeyFromAssetUrl = (url: string) => {
     const split = url.split("/");
     const key = split[split.length - 1];
@@ -147,6 +187,12 @@ export const EditProfileForm = () => {
   };
 
   const onSubmit: SubmitHandler<EditProfileSchemaType> = async (data) => {
+    if (profanityCheckData?.isProfane) {
+      setError("handle", {
+        message: errors.handle?.message || "Handle contains profanity.",
+      });
+      return;
+    }
     if (isUploading) return;
 
     try {
@@ -195,9 +241,11 @@ export const EditProfileForm = () => {
       //check if profilePictureAssetId is defaultProfilePhoto and then set it to empty string if it is
       if (dataToUpdate?.profilePictureAssetId === defaultProfilePhoto) {
         dataToUpdate.profilePictureAssetId = "";
+        deleteFileAsset({ fileType: "profileImage" });
       }
       if (dataToUpdate?.bannerImageAssetId === defaultBannerPhoto) {
         dataToUpdate.bannerImageAssetId = "";
+        deleteFileAsset({ fileType: "bannerImage" });
       }
       await updateUser.mutateAsync({ ...dataToUpdate });
       if (profilePhoto && profilePhoto !== defaultProfilePhoto) {
@@ -218,6 +266,14 @@ export const EditProfileForm = () => {
       toast.success("Profile updated successfully");
     } catch (error) {
       console.log(error);
+
+      if (error?.message === "Handle already exists") {
+        setError("handle", {
+          type: "custom",
+          message: "Handle already exists",
+        });
+      }
+
       toast.error(
         (error as Error)?.message ?? "An error occurred updating profile"
       );
@@ -237,7 +293,7 @@ export const EditProfileForm = () => {
   };
 
   return (
-    <section className="mx-auto flex h-fit w-full flex-col bg-white px-3 py-2 md:max-w-[50%] md:rounded-xl md:p-6 md:py-4">
+    <section className="mx-auto flex h-fit w-full flex-col bg-white px-3 py-2  md:rounded-xl md:p-6 md:py-4">
       <h1 className="pb-6  text-[18px]  md:text-[24px]">Account Information</h1>
       <form className="flex flex-col gap-2" onSubmit={handleSubmit(onSubmit)}>
         <Input
@@ -246,7 +302,6 @@ export const EditProfileForm = () => {
           placeholder="Enter your full name"
           id="name"
           name="name"
-          disabled={true}
           register={register}
           error={errors.name?.message}
           data-testid="profile-name-id"
@@ -260,6 +315,7 @@ export const EditProfileForm = () => {
           name="email"
           error={errors.email?.message}
           data-testid="profile-email-id"
+          disabled={true}
         />
         <Input
           label="Phone Number"
@@ -300,7 +356,11 @@ export const EditProfileForm = () => {
             <option key={idx}>{city.place_name}</option>
           ))}
         </datalist>
-        <div className="flex items-end justify-between w-full gap-2">
+        <div
+          className={`flex items-end justify-between w-full gap-2 ${
+            isUploading ? "pointer-events-none cursor-not-allowed" : ""
+          }`}
+        >
           <DropMedia
             label="Upload your profile photo"
             id="profilePictureAssetId"
@@ -321,7 +381,11 @@ export const EditProfileForm = () => {
           ) : null}
         </div>
 
-        <div className="flex items-end justify-between w-full gap-2">
+        <div
+          className={`flex items-end justify-between w-full gap-2 ${
+            isUploading ? "pointer-events-none cursor-not-allowed" : ""
+          }`}
+        >
           <DropMedia
             label="Upload your background photo"
             id="bannerImageAssetId"

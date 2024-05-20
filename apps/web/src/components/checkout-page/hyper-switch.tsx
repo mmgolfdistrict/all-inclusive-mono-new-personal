@@ -4,16 +4,21 @@ import { HyperElements } from "@juspay-tech/react-hyper-js";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
+import type { CartProduct } from "~/utils/types";
+// import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 import { useEffect, useRef, useState } from "react";
 import { Spinner } from "../loading/spinner";
 import { CheckoutForm } from "./checkout-form";
 
 type CreatePaymentResponse = {
   clientSecret: string;
+  paymentId: string | undefined;
+  cartId: string;
 };
 
 type Options = {
   clientSecret: string;
+  paymentId: string | undefined;
   appearance: {
     theme: string;
   };
@@ -29,19 +34,22 @@ export const HyperSwitch = ({
   cartData,
   isBuyNowAuction,
   teeTimeId,
+  teeTimeDate,
+  listingId,
+  setIsLoading,
 }: {
-  cartData: unknown[];
+  cartData: CartProduct[];
   isBuyNowAuction: boolean;
   teeTimeId: string;
+  teeTimeDate: string | undefined;
+  listingId: string | undefined;
+  setIsLoading?: (isLoading: boolean) => void;
 }) => {
   const [options, setOptions] = useState<Options | undefined>(undefined);
   const { user } = useUserContext();
   const { course } = useCourseContext();
   const checkout = api.checkout.buildCheckoutSession.useMutation();
-  const [isLoadingSession, setIsLoadingSession] = useState<boolean>(false);
-  const amountToPay =
-    //@ts-ignore
-    cartData?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+  const [cartId, setCartId] = useState<string>("");
   const [localCartData, setLocalCartData] = useState<unknown[]>(cartData);
   const [error, setError] = useState<undefined | string>(undefined);
   const callingRef = useRef<boolean>(false);
@@ -51,29 +59,34 @@ export const HyperSwitch = ({
     try {
       callingRef.current = true;
       setError(undefined);
-      setIsLoadingSession(true);
+      // setIsLoadingSession(true);
       const data = (await checkout.mutateAsync({
         userId: user.id,
         customerId: user.id,
         courseId: course?.id ?? "",
         name: user?.name ?? "",
         email: user.email ?? "",
-        phone: "",
+        phone: user.phone ?? "",
         phone_country_code: "1",
+        paymentId: options?.paymentId ? options.paymentId : null,
         //@ts-ignore
         cart: cartData,
+        cartId,
       })) as CreatePaymentResponse;
       setOptions({
         clientSecret: data.clientSecret,
+        paymentId: data.paymentId,
         appearance: {
           theme: "default",
         },
       });
       setLocalCartData(cartData);
-      setIsLoadingSession(false);
+      setCartId(data.cartId);
+
+      // setIsLoadingSession(false);
       callingRef.current = false;
     } catch (error) {
-      setIsLoadingSession(false);
+      // setIsLoadingSession(false);
       callingRef.current = false;
       console.log(error.message);
       setError(
@@ -100,6 +113,10 @@ export const HyperSwitch = ({
     }
   }, [user, options, cartData]);
 
+  if (setIsLoading && options !== undefined && hyperPromise !== undefined) {
+    setIsLoading(false);
+  }
+
   if (error) {
     return (
       <div className="w-full md:min-w-[370px] px-2 md:px-0">
@@ -112,14 +129,15 @@ export const HyperSwitch = ({
 
   return (
     <div className="w-full md:min-w-[370px] px-2 md:px-0">
-      {options !== undefined &&
-      hyperPromise !== undefined &&
-      !isLoadingSession ? (
+      {options !== undefined && hyperPromise !== undefined ? (
         <HyperElements options={options} hyper={hyperPromise}>
           <CheckoutForm
             teeTimeId={teeTimeId}
-            amountToPay={amountToPay}
             isBuyNowAuction={isBuyNowAuction}
+            cartData={cartData}
+            cartId={cartId}
+            teeTimeDate={teeTimeDate}
+            listingId={listingId ?? ""}
           />
         </HyperElements>
       ) : (

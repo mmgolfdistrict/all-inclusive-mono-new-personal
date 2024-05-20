@@ -76,24 +76,28 @@ export class ImageService {
       this.logger.error(`User not found: ${createdById}`);
       throw new Error("User not found");
     }
+
+    const assetData = {
+      id: randomUUID(),
+      key,
+      extension,
+      cdn,
+      createdById,
+    };
+
     await this.database
       .insert(assets)
-      .values({
-        id: randomUUID(),
-        key,
-        extension,
-        cdn,
-        createdById,
-      })
+      .values(assetData)
       .execute()
       .catch((err) => {
         this.logger.error(err);
         throw new Error("Error storing asset");
       });
+
     const [insertedAsset] = await this.database
       .select()
       .from(assets)
-      .where(eq(assets.key, key))
+      .where(eq(assets.id, assetData.id))
       .execute()
       .catch((err) => {
         this.logger.error("Error retrieving inserted asset", err);

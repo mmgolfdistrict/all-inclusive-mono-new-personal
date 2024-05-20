@@ -72,7 +72,6 @@ export interface User {
   name: string;
   phone: string;
   email: string;
-  lang_locale: Locale;
 }
 
 export interface ErrorResponse {
@@ -171,16 +170,6 @@ export interface AcceptQuoteParams {
   reservation_id: string;
   lang_locale?: Locale;
   user: User;
-  product_id: string;
-  coverage_start_date: string;
-  coverage_end_date: string;
-  coverage_start_hour_number?: number;
-  coverage_end_hour_number?: number;
-  currency: Currency;
-  exposure_name: string;
-  exposure_latitude: number;
-  exposure_longitude: number;
-  exposure_total_coverage_amount: number;
 }
 
 export interface GetGuaranteeParams {

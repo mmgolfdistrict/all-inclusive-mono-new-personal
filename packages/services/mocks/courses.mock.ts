@@ -1,5 +1,4 @@
-import { courses } from "@golf-district/database/schema/courses";
-import { currentUtcTimestamp } from "@golf-district/shared";
+import type { courses } from "@golf-district/database/schema/courses";
 
 export const mockCourses: (typeof courses.$inferInsert)[] = [
   {
@@ -14,8 +13,8 @@ export const mockCourses: (typeof courses.$inferInsert)[] = [
     charityDescription: "Course One Charity Description",
     privacyPolicy: "Course One Privacy Policy",
     termsAndConditions: "Course One Terms and Conditions",
-    convenanceFees: 10,
-    markup: 15,
+    convenienceFeesFixedPerPlayer: 10,
+    markupFeesFixedPerPlayer: 15,
     openTime: new Date(new Date().getTime() - 1000).toISOString().replace("T", " ").replace("Z", ""),
     closeTime: new Date(new Date().getTime() + 10000).toISOString().replace("T", " ").replace("Z", ""),
     logoId: "Course One",

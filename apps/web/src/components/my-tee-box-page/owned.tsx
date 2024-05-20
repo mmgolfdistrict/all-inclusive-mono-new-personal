@@ -21,7 +21,7 @@ export type OwnedTeeTime = {
   courseId: string;
   date: string;
   firstHandPrice: number;
-  golfers: InviteFriend[] | string[];
+  golfers: InviteFriend[];
   purchasedFor: number;
   bookingIds: string[];
   status: "UNLISTED" | "LISTED";
@@ -31,6 +31,9 @@ export type OwnedTeeTime = {
   teeTimeId: string;
   listPrice: number | null;
   minimumOfferPrice: number;
+  weatherGuaranteeAmount?: number;
+  selectedSlotsCount?: "1" | "2" | "3" | "4";
+  slots?: number;
 };
 
 export const Owned = () => {
@@ -58,7 +61,7 @@ export const Owned = () => {
   const ownedTeeTimes = useMemo(() => {
     if (!data) return undefined;
     return Object.keys(data).map((key) => {
-      return { ...data[key], teeTimeId: key } as OwnedTeeTime;
+      return { ...data[key], teeTimeId: data[key].teeTimeId } as OwnedTeeTime;
     });
   }, [data]);
   // const loadMore = () => {
@@ -101,6 +104,7 @@ export const Owned = () => {
       </div>
     );
   }
+
   return (
     <>
       <div className="relative flex max-w-full flex-col gap-4  overflow-auto pb-2  text-[14px] md:pb-3">
@@ -117,29 +121,31 @@ export const Owned = () => {
           <tbody className={`max-h-[300px] w-full flex-col overflow-scroll`}>
             {isLoading
               ? Array(3)
-                .fill(null)
-                .map((_, idx) => <SkeletonRow key={idx} />)
+                  .fill(null)
+                  .map((_, idx) => <SkeletonRow key={idx} />)
               : ownedTeeTimes?.map((i, idx) => (
-                <TableRow
-                  course={i.courseName}
-                  date={i.date}
-                  iconSrc={i.courseLogo}
-                  key={idx}
-                  purchasePrice={i.purchasedFor ?? i.firstHandPrice}
-                  golfers={i.golfers as InviteFriend[]}
-                  status={i.status}
-                  offers={i.offers ? parseInt(i.offers) : undefined}
-                  isListed={i.status === "LISTED"}
-                  openListTeeTime={() => openListTeeTime(i)}
-                  openCancelListing={() => openCancelListing(i)}
-                  openManageListTeeTime={() => openManageListTeeTime(i)}
-                  courseId={i.courseId}
-                  teeTimeId={i.teeTimeId}
-                  listingId={i.listingId}
-                  ownerId={user?.id ?? ""}
-                  timezoneCorrection={course?.timezoneCorrection}
-                />
-              ))}
+                  <TableRow
+                    course={i.courseName}
+                    date={i.date}
+                    iconSrc={i.courseLogo}
+                    key={idx}
+                    purchasePrice={
+                      (i.purchasedFor ?? i.firstHandPrice) * i.golfers.length
+                    }
+                    golfers={i.golfers}
+                    status={i.status}
+                    offers={i.offers ? parseInt(i.offers) : undefined}
+                    isListed={i.status === "LISTED"}
+                    openListTeeTime={() => openListTeeTime(i)}
+                    openCancelListing={() => openCancelListing(i)}
+                    openManageListTeeTime={() => openManageListTeeTime(i)}
+                    courseId={i.courseId}
+                    teeTimeId={i.teeTimeId}
+                    listingId={i.listingId}
+                    ownerId={user?.id ?? ""}
+                    timezoneCorrection={course?.timezoneCorrection}
+                  />
+                ))}
           </tbody>
         </table>
         {/* <OutlineButton
@@ -168,8 +174,10 @@ export const Owned = () => {
         courseName={selectedTeeTime?.courseName}
         courseLogo={selectedTeeTime?.courseLogo}
         date={selectedTeeTime?.date}
-        golferCount={selectedTeeTime?.listedSpots?.length ?? 0}
-        pricePerGolfer={selectedTeeTime?.listPrice ?? 0}
+        golferCount={selectedTeeTime?.slots || 0}
+        pricePerGolfer={
+          selectedTeeTime?.listPrice ? selectedTeeTime?.listPrice / 100 : 0
+        }
         listingId={selectedTeeTime?.listingId ?? undefined}
         refetch={refetch}
       />
@@ -259,15 +267,16 @@ const TableRow = ({
       </td>
       <td className="whitespace-nowrap px-4 py-3">
         {golfers.length > 2
-          ? `You, ${golfers[1]?.name} & ${golfers.length - 2} ${golfers.length - 2 === 1 ? "golfers" : "golfers"
-          }`
+          ? `You, ${golfers[1]?.name} & ${golfers.length - 2} ${
+              golfers.length - 2 === 1 ? "golfers" : "golfers"
+            }`
           : golfers.map((i, idx) => {
-            if (idx === 0) return "You ";
-            if (golfers.length === 1) return "You";
-            if (idx === golfers.length - 1) return `& ${i.name}`;
-            if (idx === golfers.length - 2) return `${i.name} `;
-            return `${i.name}, `;
-          })}
+              if (idx === 0) return "You ";
+              if (golfers.length === 1) return "You";
+              if (idx === golfers.length - 1) return `& ${i.name}`;
+              if (idx === golfers.length - 2) return `${i.name} `;
+              return `${i.name}, `;
+            })}
       </td>
       <td className="flex items-center gap-1 whitespace-nowrap px-4 pb-3 pt-6">
         {offers ? (

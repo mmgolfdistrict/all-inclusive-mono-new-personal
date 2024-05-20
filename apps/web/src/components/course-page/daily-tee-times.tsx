@@ -1,3 +1,4 @@
+import type { CombinedObject } from "@golf-district/shared";
 import { WeatherIcons } from "~/constants/weather-icons";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useFiltersContext } from "~/contexts/FiltersContext";
@@ -16,12 +17,14 @@ export const DailyTeeTimes = ({
   maxDate,
   setError,
   updateCount,
+  handleLoading,
 }: {
   date: string;
   minDate: string;
   maxDate: string;
   setError: (t: string | null) => void;
   updateCount: (balance: number) => void;
+  handleLoading?: (val: boolean) => void;
 }) => {
   const overflowRef = useRef<HTMLDivElement>(null);
   const nextPageRef = useRef<HTMLDivElement>(null);
@@ -44,13 +47,12 @@ export const DailyTeeTimes = ({
     sortValue,
   } = useFiltersContext();
   const teeTimeStartTime = startTime[0];
-  const teeTimeEndTime = startTime[1] + 59;
+  const teeTimeEndTime = startTime[1];
 
   const { data: weather, isLoading: isLoadingWeather } =
     api.searchRouter.getWeatherForDay.useQuery(
       {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-        courseId: course?.id!,
+        courseId: course?.id ?? "",
         date,
       },
       {
@@ -67,10 +69,10 @@ export const DailyTeeTimes = ({
     isFetchingNextPage,
     fetchNextPage,
     error,
+    refetch,
   } = api.searchRouter.getTeeTimesForDay.useInfiniteQuery(
     {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-      courseId: course?.id!,
+      courseId: course?.id ?? "",
       date,
       minDate,
       maxDate,
@@ -210,7 +212,7 @@ export const DailyTeeTimes = ({
           ref={overflowRef}
           onMouseDown={onMouseDown}
         >
-          {allTeeTimes?.map((i, idx) => (
+          {allTeeTimes?.map((i: CombinedObject, idx) => (
             <TeeTime
               time={i.date}
               key={idx}
@@ -229,6 +231,9 @@ export const DailyTeeTimes = ({
               minimumOfferPrice={i?.minimumOfferPrice}
               bookingIds={i?.bookingIds ?? []}
               listingId={i?.listingId}
+              listedSlots={i?.listedSlots}
+              handleLoading={handleLoading}
+              refetch={refetch}
             />
           ))}
           <div

@@ -1,17 +1,22 @@
 import { db } from "@golf-district/database";
 import {
+  AppSettingsService,
   BookingService,
+  CourseSEOService,
   CourseService,
   EntityService,
   ForeUpWebhookService,
+  HyperSwitchService,
   HyperSwitchWebhookService,
   NotificationService,
   ProviderService,
+  SensibleService,
   StripeConnectWebhookService,
   StripeService,
   TokenizeService,
   UpdateWithdrawableBalance,
 } from "@golf-district/service";
+import { LoggerService } from "@golf-district/service/src/webhooks/logging.service";
 import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "./src/root";
 
@@ -57,6 +62,15 @@ export const getCourseImages = async (courseId: string) => {
   );
   try {
     return await courseService.getImagesForCourse(courseId);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const getCourseSEOInfo = async (courseId: string) => {
+  const courseSEOService = new CourseSEOService(db);
+  try {
+    return await courseSEOService.getCourseSEO(courseId);
   } catch (error) {
     console.log(error);
   }
@@ -121,6 +135,24 @@ export const processUpdateWithdrawableBalance = async (req: { userId: string; am
 };
 
 export const processHyperSwitchWebhook = async (req: any) => {
+  console.log("processHyperSwitchWebhook");
+  console.log(req);
+
+  const appSettingService = new AppSettingsService(db, process.env.REDIS_URL!, process.env.REDIS_TOKEN!);
+
+  const appSettings = await appSettingService.getMultiple(
+    "SENSIBLE_CLIENT_ID",
+    "SENSIBLE_CLIENT_SECRET",
+    "SENSIBLE_AUDIENCE"
+  );
+  const sensibleService = new SensibleService(
+    (appSettings?.SENSIBLE_CLIENT_ID as string) || "",
+    (appSettings?.SENSIBLE_CLIENT_SECRET as string) || "",
+    (appSettings?.SENSIBLE_AUDIENCE as string) || "",
+    process.env.REDIS_URL!,
+    process.env.REDIS_TOKEN!
+  );
+
   const notificationService = new NotificationService(
     db,
     process.env.TWILLIO_PHONE_NUMBER!,
@@ -129,7 +161,9 @@ export const processHyperSwitchWebhook = async (req: any) => {
     process.env.TWILLIO_AUTH_TOKEN!,
     process.env.SENDGRID_API_KEY!
   );
-  const tokenizeService = new TokenizeService(db, notificationService);
+  const loggerService = new LoggerService();
+  const tokenizeService = new TokenizeService(db, notificationService, loggerService, sensibleService);
+  const hyperswitchService = new HyperSwitchService(process.env.HYPERSWITCH_API_KEY ?? "");
   const credentials = {
     username: process.env.FOREUP_USERNAME!,
     password: process.env.FOREUP_PASSWORD!,
@@ -140,13 +174,38 @@ export const processHyperSwitchWebhook = async (req: any) => {
     process.env.REDIS_TOKEN!,
     credentials
   );
-  const bookingService = new BookingService(db, tokenizeService, providerService, notificationService);
+  const bookingService = new BookingService(
+    db,
+    tokenizeService,
+    providerService,
+    notificationService,
+    loggerService,
+    hyperswitchService,
+    sensibleService
+  );
+
+  // const appSettings = await appSettingService.getMultiple(
+  //   "SENSIBLE_CLIENT_ID",
+  //   "SENSIBLE_CLIENT_SECRET",
+  //   "SENSIBLE_AUDIENCE"
+  // );
+
+  // const sensibleService = new SensibleService(
+  //   (appSettings?.SENSIBLE_CLIENT_ID as string) || "",
+  //   (appSettings?.SENSIBLE_CLIENT_SECRET as string) || "",
+  //   (appSettings?.SENSIBLE_AUDIENCE as string) || "",
+  //   process.env.REDIS_URL!,
+  //   process.env.REDIS_TOKEN!
+  // );
+
   const hyperSwitchWebhookService = new HyperSwitchWebhookService(
     db,
     tokenizeService,
     providerService,
     notificationService,
     bookingService,
+    sensibleService,
+    loggerService,
     process.env.QSTASH_TOKEN!
   );
   await hyperSwitchWebhookService.processWebhook(req).catch((error) => {

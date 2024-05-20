@@ -59,6 +59,7 @@ export const userRouter = createTRPCRouter({
   updateUser: protectedProcedure
     .input(
       z.object({
+        name: z.string().optional(),
         handle: z.string().optional(),
         profileVisibility: z.enum(["PUBLIC", "PRIVATE"]).optional(),
         profilePictureAssetId: z.string().optional(),
@@ -86,12 +87,12 @@ export const userRouter = createTRPCRouter({
   forgotPasswordRequest: publicProcedure.input(forgotPasswordSchema).mutation(async ({ ctx, input }) => {
     return await ctx.serviceFactory
       .getUserService()
-      .forgotPasswordRequest(input.redirectHref, input.email, input.ReCAPTCHA);
+      .forgotPasswordRequest(input.redirectHref, input.email, input.ReCAPTCHA, input.courseProviderId);
   }),
   executeForgotPassword: publicProcedure.input(resetPasswordSchema).mutation(async ({ ctx, input }) => {
     return await ctx.serviceFactory
       .getUserService()
-      .executeForgotPassword(input.userId, input.verificationToken, input.password);
+      .executeForgotPassword(input?.courseId, input.userId, input.verificationToken, input.password);
   }),
   getUpcomingTeeTimesForUser: publicProcedure
     .input(z.object({ userId: z.string(), courseId: z.string() }))

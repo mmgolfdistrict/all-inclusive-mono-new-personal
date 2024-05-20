@@ -3,6 +3,7 @@
 import { useCourseContext } from "~/contexts/CourseContext";
 import { api } from "~/utils/api";
 import { formatMoney, formatTime } from "~/utils/formatters";
+import type { InviteFriend } from "~/utils/types";
 import { useEffect, useMemo, useState } from "react";
 import { Avatar } from "../avatar";
 import { OutlineButton } from "../buttons/outline-button";
@@ -10,14 +11,25 @@ import { SkeletonRow } from "./skeleton-row";
 import { TxnDetails } from "./txn-details";
 
 export type TxnHistoryType = {
+  // courseName: string;
+  // courseLogo: string;
+  // date: string;
+  // firstHandPrice: number;
+  // golfers: string[];
+  // pricePerGolfer: number[];
+  // bookingIds: string[];
+  // playerCount?: number;
+  // status: string; //"SOLD" | "PURCHASED" |
+  courseId: string;
   courseName: string;
   courseLogo: string;
   date: string;
   firstHandPrice: number;
-  golfers: string[];
   pricePerGolfer: number[];
+  golfers: InviteFriend[];
   bookingIds: string[];
-  status: string; //"SOLD" | "PURCHASED" |
+  status: string;
+  playerCount?: number;
 };
 
 export const TransactionHistory = () => {
@@ -34,11 +46,20 @@ export const TransactionHistory = () => {
     );
   const [selectedTxn, setSelectedTxn] = useState<TxnHistoryType | null>(null);
 
-  const txnHistory = useMemo(() => {
-    if (!data) return undefined;
-    return Object.keys(data).map((key) => {
-      return data[key] as TxnHistoryType;
+  function sortByDate(objectOfObjects: Record<string, TxnHistoryType>) {
+    const arrayOfObjects: TxnHistoryType[] = Object.values(objectOfObjects);
+    arrayOfObjects.sort((a, b) => {
+      const dateA = Number(new Date(a.date));
+      const dateB = Number(new Date(b.date));
+      return dateB - dateA;
     });
+
+    return arrayOfObjects;
+  }
+
+  const txnHistory = useMemo(() => {
+    if (!data || Array.isArray(data)) return undefined;
+    return sortByDate(data as Record<string, TxnHistoryType>);
   }, [data]);
 
   // const loadMore = () => {
@@ -103,6 +124,7 @@ export const TransactionHistory = () => {
                     key={idx}
                     purchasePrice={i.pricePerGolfer[0] ?? i.firstHandPrice}
                     golfers={i.golfers}
+                    playerCount={i.playerCount}
                     status={i.status}
                     openTxnDetails={() => openTxnDetails(i)}
                     timezoneCorrection={course?.timezoneCorrection}
@@ -149,14 +171,16 @@ const TableRow = ({
   status,
   timezoneCorrection,
   openTxnDetails,
+  playerCount = 1,
 }: {
   course: string;
   date: string;
   iconSrc: string;
-  golfers: string[];
+  golfers: InviteFriend[];
   purchasePrice: number;
   status: string;
   timezoneCorrection: number | undefined;
+  playerCount?: number;
   openTxnDetails: () => void;
 }) => {
   return (
@@ -179,15 +203,15 @@ const TableRow = ({
         <span className="font-[300]"> Transaction Total</span>
       </td>
       <td className="whitespace-nowrap px-4 py-3">
-        {golfers.length > 2
-          ? `${golfers[0]}, ${golfers[1]} & ${golfers.length - 2} ${
-              golfers.length - 2 === 1 ? "golfers" : "golfers"
+        {playerCount > 2
+          ? `You, Guest & ${playerCount - 2} ${
+              playerCount - 2 === 1 ? "golfers" : "golfers"
             }`
           : golfers.map((i, idx) => {
-              if (golfers.length === 1) return i;
-              if (idx === golfers.length - 1) return `& ${i}`;
-              if (idx === golfers.length - 2) return `${i} `;
-              return `${i}, `;
+              if (playerCount === 1) return "Guest";
+              if (idx === playerCount - 1) return `& You`;
+              if (idx === playerCount - 2) return `Guest `;
+              return `Guest, `;
             })}
       </td>
       <td className="flex items-center gap-1 whitespace-nowrap px-4 pb-3 pt-6 capitalize">

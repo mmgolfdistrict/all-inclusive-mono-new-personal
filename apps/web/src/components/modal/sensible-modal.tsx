@@ -63,7 +63,7 @@ export const SensibleModal = ({
             ref={modalRef}
             transition={{ duration: 0.2 }}
           >
-            <div className="overflow-y-auto max-h-[100dvh]">
+            <div>
               <div className="flex flex-col gap-4 p-6 md:rounded-t-lg bg-tertiary-gray">
                 <h1 className="font-semibold text-[22px] md:text-[28px]">
                   Protect Your Trip from Weather

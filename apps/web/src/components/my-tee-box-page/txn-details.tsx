@@ -1,6 +1,7 @@
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useSidebar } from "~/hooks/useSidebar";
 import { formatMoney, formatTime } from "~/utils/formatters";
+import type { InviteFriend } from "~/utils/types";
 import { useMemo, type Dispatch, type SetStateAction } from "react";
 import { Avatar } from "../avatar";
 import { FilledButton } from "../buttons/filled-button";
@@ -21,7 +22,7 @@ export const TxnDetails = ({
   setIsTxnDetailsOpen,
   selectedTxn,
 }: SideBarProps) => {
-  const { trigger, sidebar, toggleSidebar } = useSidebar({
+  const { toggleSidebar } = useSidebar({
     isOpen: isTxnDetailsOpen,
     setIsOpen: setIsTxnDetailsOpen,
   });
@@ -46,7 +47,7 @@ export const TxnDetails = ({
         </div>
       )}
       <aside
-        ref={sidebar}
+        // ref={sidebar}
         className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[500px] md:h-[100dvh] ${
           isTxnDetailsOpen ? "translate-x-0" : "translate-x-full"
         }`}
@@ -56,7 +57,7 @@ export const TxnDetails = ({
             <div className="text-lg">Details</div>
 
             <button
-              ref={trigger}
+              // ref={trigger}
               onClick={toggleSidebar}
               aria-controls="sidebar"
               aria-expanded={isTxnDetailsOpen}
@@ -75,6 +76,7 @@ export const TxnDetails = ({
                 courseImage={selectedTxn?.courseLogo ?? ""}
                 date={selectedTxn?.date ?? ""}
                 timezoneCorrection={course?.timezoneCorrection}
+                playerCount={selectedTxn?.playerCount}
               />
 
               <div className="flex flex-col gap-2 rounded-xl bg-secondary-white px-4 py-5 text-center">
@@ -106,7 +108,7 @@ export const TxnDetails = ({
               <div className="flex justify-between">
                 <div className="font-[300] text-primary-gray">Total Payout</div>
                 <div className="text-secondary-black">
-                  {formatMoney(teeTimePrice - 45)}
+                  {formatMoney(Math.abs(teeTimePrice - 45))}
                 </div>
               </div>
               <div className="text-center text-[14px] font-[300] text-primary-gray">
@@ -135,12 +137,14 @@ const TeeTimeItem = ({
   golfers,
   date,
   timezoneCorrection,
+  playerCount = 1,
 }: {
   courseName: string;
   courseImage: string;
-  golfers: string[];
+  golfers: InviteFriend[];
   date: string;
   timezoneCorrection: number | undefined;
+  playerCount?: number;
 }) => {
   return (
     <div className="flex flex-col gap-2 rounded-xl bg-secondary-white px-4 py-5">
@@ -160,20 +164,19 @@ const TeeTimeItem = ({
           <Players className="ml-auto w-[30px]" />
         </div>
         <div className="flex flex-col">
-          <div>{`${golfers.length} ${
-            golfers.length === 1 ? "golfer" : "golfers"
+          <div>{`${playerCount} ${
+            playerCount === 1 ? "golfer" : "golfers"
           }`}</div>
           <div className="text-primary-gray">
-            {" "}
-            {golfers.length > 2
-              ? `${golfers[0]}, ${golfers[1]} & ${golfers.length - 2} ${
-                  golfers.length - 2 === 1 ? "golfers" : "golfers"
+            {playerCount > 2
+              ? `You, Guest & ${playerCount - 2} ${
+                  playerCount - 2 === 1 ? "golfers" : "golfers"
                 }`
               : golfers.map((i, idx) => {
-                  if (golfers.length === 1) return i;
-                  if (idx === golfers.length - 1) return `& ${i}`;
-                  if (idx === golfers.length - 2) return `${i} `;
-                  return `${i}, `;
+                  if (playerCount === 1) return "Guest";
+                  if (idx === playerCount - 1) return `& You`;
+                  if (idx === playerCount - 2) return `Guest `;
+                  return `Guest, `;
                 })}
           </div>
         </div>

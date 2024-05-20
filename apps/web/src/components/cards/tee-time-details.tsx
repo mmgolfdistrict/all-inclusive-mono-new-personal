@@ -128,7 +128,11 @@ export const TeeTimeDetails = ({
         </div>
       ) : data === null ? (
         <div className="flex justify-center items-center h-[200px]">
-          <div className="text-center">Tee time not found</div>
+          <div className="text-center">
+            We&apos;re sorry. This time is no longer available. Someone just
+            booked this. It may take a minute for the sold time you selected to
+            be removed. Please select another time.
+          </div>
         </div>
       ) : (
         <div className="flex flex-col gap-4  px-4 pb-2 text-[14px] md:px-6 md:pb-3">
@@ -182,19 +186,22 @@ export const TeeTimeDetails = ({
                   )}
                 </div>
               </OutlineButton>
-              <OutlineButton
-                className="w-full whitespace-nowrap"
-                onClick={addToWatchlist}
-                data-testid="watch-list-button-id"
-              >
-                <div className="flex items-center justify-center gap-2">
-                  <Heart
-                    className="w-[20px] min-w-[20px]"
-                    fill={data?.userWatchListed ? "#40942A" : undefined}
-                  />{" "}
-                  Watchlist
-                </div>
-              </OutlineButton>
+              {course?.supportsWatchlist ? (
+                <OutlineButton
+                  className="w-full whitespace-nowrap"
+                  onClick={addToWatchlist}
+                  data-testid="watch-list-button-id"
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <Heart
+                      className="w-[20px] min-w-[20px]"
+                      fill={data?.userWatchListed ? "#40942A" : undefined}
+                    />{" "}
+                    Watchlist
+                  </div>
+                </OutlineButton>
+              ) : null}
+
               <FilledButton
                 className="w-full whitespace-nowrap md:px-14"
                 onClick={buyTeeTime}
