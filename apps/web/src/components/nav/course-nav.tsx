@@ -9,9 +9,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useMediaQuery } from "usehooks-ts";
-
 import { FilledButton } from "../buttons/filled-button";
 import { Auction } from "../icons/auction";
+import { Calendar } from "../icons/calendar";
 import { Hamburger } from "../icons/hamburger";
 import { Marketplace } from "../icons/marketplace";
 import { MyOffers } from "../icons/my-offers";
@@ -21,7 +21,6 @@ import { PoweredBy } from "../powered-by";
 import { UserInNav } from "../user/user-in-nav";
 import { NavItem } from "./nav-item";
 import { SideBar } from "./side-bar";
-import { Calendar } from "../icons/calendar";
 
 export const CourseNav = () => {
   const { user } = useUserContext();

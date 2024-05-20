@@ -6,10 +6,10 @@ import { api } from "~/utils/api";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { type Dispatch, type SetStateAction } from "react";
-
 import { Avatar } from "../avatar";
 import { FilledButton } from "../buttons/filled-button";
 import { Auction } from "../icons/auction";
+import { Calendar } from "../icons/calendar";
 import { Close } from "../icons/close";
 import { Marketplace } from "../icons/marketplace";
 import { MyOffers } from "../icons/my-offers";
@@ -17,7 +17,6 @@ import { Search } from "../icons/search";
 import { PoweredBy } from "../powered-by";
 import { PathsThatNeedRedirectOnLogout } from "../user/user-in-nav";
 import { NavItem } from "./nav-item";
-import { Calendar } from "../icons/calendar";
 
 type SideBarProps = {
   isSideBarOpen: boolean;

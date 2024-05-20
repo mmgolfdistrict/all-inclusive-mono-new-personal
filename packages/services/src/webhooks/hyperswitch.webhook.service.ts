@@ -154,7 +154,12 @@ export class HyperSwitchWebhookService {
     return { paymentStatus: paymentData.status, amountReceived: paymentData.amount_received };
   };
 
-  processPayment = async (paymentId: string, customer_id: string, bookingId: string, redirectHref: string) => {
+  processPayment = async (
+    paymentId: string,
+    customer_id: string,
+    bookingId: string,
+    redirectHref: string
+  ) => {
     const { paymentStatus, amountReceived } = (await this.checkPaymentStatus(paymentId)) as {
       paymentStatus: string;
       amountReceived: number;
@@ -750,15 +755,15 @@ export class HyperSwitchWebhookService {
     if (!buyerCustomer?.playerNumber) {
       this.logger.error(`Error creating or finding customer`);
       this.loggerService.errorLog({
-        applicationName:"golfdistrict-foreup",
+        applicationName: "golfdistrict-foreup",
         clientIP: "",
-        userId:customer_id,
+        userId: customer_id,
         url: "/handleSecondHandItem",
         userAgent: "",
         message: "Error creating customer",
         stackTrace: "",
-        additionalDetailsJSON:"Error creating customer"
-      })
+        additionalDetailsJSON: "Error creating customer",
+      });
       throw new Error(`Error creating or finding customer`);
     }
 
@@ -795,15 +800,15 @@ export class HyperSwitchWebhookService {
       .catch((err) => {
         this.logger.error(`Error deleting booking: ${err}`);
         this.loggerService.errorLog({
-          applicationName:"golfdistrict-foreup",
+          applicationName: "golfdistrict-foreup",
           clientIP: "",
-          userId:firstBooking.ownerId,
+          userId: firstBooking.ownerId,
           url: "/handleSecondHandItem",
           userAgent: "",
           message: "Error deleting booking ",
           stackTrace: "",
-          additionalDetailsJSON:"ERROR DELETING BOOKING GOLFDISTRICT"
-        })
+          additionalDetailsJSON: "ERROR DELETING BOOKING GOLFDISTRICT",
+        });
         throw new Error(`Error deleting booking`);
       });
 
@@ -869,15 +874,15 @@ export class HyperSwitchWebhookService {
     } catch (err) {
       this.logger.error(`Error creating booking: ${err}`);
       this.loggerService.errorLog({
-        applicationName:"golfdistrict-foreup",
+        applicationName: "golfdistrict-foreup",
         clientIP: "",
-        userId:customer_id,
+        userId: customer_id,
         url: "/handleSecondHandItem",
         userAgent: "",
         message: "Error booking tee time",
         stackTrace: "",
-        additionalDetailsJSON:"TEE_TIME_BOOKING_FAILED"
-      })
+        additionalDetailsJSON: "TEE_TIME_BOOKING_FAILED",
+      });
     }
     const [existingTeeTime] = await this.database
       .select({
@@ -1064,7 +1069,7 @@ export class HyperSwitchWebhookService {
         SellTeeTImeURL: `${redirectHref}/my-tee-box`,
         ManageTeeTimesURL: `${redirectHref}/my-tee-box`,
         GolfDistrictReservationID: bookingId,
-        CourseReservationID: newBooking?.data.id
+        CourseReservationID: newBooking?.data.id,
       };
 
       if (newBooking.data.bookingType == "FIRST") {
@@ -1089,7 +1094,7 @@ export class HyperSwitchWebhookService {
           SensibleWeatherIncluded: sensibleCharge ? "Yes" : "No",
           PurchasedFrom: sellerCustomer.username,
           PlayerCount: listedSlotsCount ?? 0,
-          TotalAmount: formatMoney(total / 100)
+          TotalAmount: formatMoney(total / 100),
         };
 
         await this.notificationService.createNotification(

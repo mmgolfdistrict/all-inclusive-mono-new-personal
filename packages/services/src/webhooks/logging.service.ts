@@ -29,7 +29,7 @@ interface ErrorLog {
 }
 
 export class LoggerService {
-  auditLog = async (data: AuditLog, ip:string = "") => {
+  auditLog = async (data: AuditLog, ip: string = "") => {
     data.ip = ip;
     try {
       const res = await fetch(`${process.env.QSTASH_BASE_URL}${process.env.QSTASH_AUDIT_TOPIC}`, {
@@ -51,7 +51,7 @@ export class LoggerService {
       return NextResponse.json({ error: JSON.stringify(error) }, { status: 500 });
     }
   };
-  errorLog = async (data: ErrorLog, ip:string = "") =>{
+  errorLog = async (data: ErrorLog, ip: string = "") => {
     data.ip = ip;
     try {
       const res = await fetch(`${process.env.QSTASH_BASE_URL}${process.env.QSTASH_AUDIT_ERROR_LOG_TOPIC}`, {
@@ -72,5 +72,5 @@ export class LoggerService {
       console.log(error);
       return NextResponse.json({ error: JSON.stringify(error) }, { status: 500 });
     }
-  }
+  };
 }
