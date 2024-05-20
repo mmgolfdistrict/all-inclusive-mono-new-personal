@@ -26,6 +26,7 @@ import type { Event } from "@golf-district/shared/createICS";
 import Logger from "@golf-district/shared/src/logger";
 import { Client } from "@upstash/qstash/.";
 import dayjs from "dayjs";
+import { appSettingService } from "../app-settings/initialized";
 import type { BookingService } from "../booking/booking.service";
 import type {
   AuctionProduct,
@@ -41,14 +42,13 @@ import type {
   TaxProduct,
 } from "../checkout/types";
 import type { NotificationService } from "../notification/notification.service";
+import type { HyperSwitchService } from "../payment-processor/hyperswitch.service";
 import type { SensibleService } from "../sensible/sensible.service";
 import type { ProviderService } from "../tee-sheet-provider/providers.service";
 import type { BookingResponse } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
 import type { TokenizeService } from "../token/tokenize.service";
 import type { LoggerService } from "./logging.service";
 import type { HyperSwitchEvent } from "./types/hyperswitch";
-import { appSettingService } from "../app-settings/initialized";
-import type { HyperSwitchService } from "../payment-processor/hyperswitch.service";
 
 /**
  * `HyperSwitchWebhookService` - A service for processing webhooks from HyperSwitch.
@@ -82,7 +82,7 @@ export class HyperSwitchWebhookService {
     private readonly sensibleService: SensibleService,
     private readonly loggerService: LoggerService,
     upStashClientToken: string,
-    private readonly hyperSwitchService: HyperSwitchService,
+    private readonly hyperSwitchService: HyperSwitchService
   ) {
     this.qStashClient = new Client({
       token: upStashClientToken,
@@ -748,15 +748,15 @@ export class HyperSwitchWebhookService {
     if (!buyerCustomer?.playerNumber) {
       this.logger.error(`Error creating or finding customer`);
       this.loggerService.errorLog({
-        applicationName:"golfdistrict-foreup",
+        applicationName: "golfdistrict-foreup",
         clientIP: "",
-        userId:customer_id,
+        userId: customer_id,
         url: "/handleSecondHandItem",
         userAgent: "",
         message: "Error creating customer",
         stackTrace: "",
-        additionalDetailsJSON:"Error creating customer"
-      })
+        additionalDetailsJSON: "Error creating customer",
+      });
       throw new Error(`Error creating or finding customer`);
     }
 
@@ -793,15 +793,15 @@ export class HyperSwitchWebhookService {
       .catch((err) => {
         this.logger.error(`Error deleting booking: ${err}`);
         this.loggerService.errorLog({
-          applicationName:"golfdistrict-foreup",
+          applicationName: "golfdistrict-foreup",
           clientIP: "",
-          userId:firstBooking.ownerId,
+          userId: firstBooking.ownerId,
           url: "/handleSecondHandItem",
           userAgent: "",
           message: "Error deleting booking ",
           stackTrace: "",
-          additionalDetailsJSON:"ERROR DELETING BOOKING GOLFDISTRICT"
-        })
+          additionalDetailsJSON: "ERROR DELETING BOOKING GOLFDISTRICT",
+        });
         throw new Error(`Error deleting booking`);
       });
 
@@ -846,58 +846,45 @@ export class HyperSwitchWebhookService {
         paymentId,
       });
     try {
-      let details = "GD Booking"
-      try{
-        const isSensibleNoteAvailable = await appSettingService.get(
-          "SENSIBLE_NOTE_TO_TEE_SHEET"
-        );
-        if(weatherQuoteId && isSensibleNoteAvailable){
-          details =`${details}: ${isSensibleNoteAvailable}`
+      let details = "GD Booking";
+      try {
+        const isSensibleNoteAvailable = await appSettingService.get("SENSIBLE_NOTE_TO_TEE_SHEET");
+        if (weatherQuoteId && isSensibleNoteAvailable) {
+          details = `${details}: ${isSensibleNoteAvailable}`;
         }
-      }
-      catch(e){
+      } catch (e) {
         console.log("ERROR in getting appsetting SENSIBLE_NOTE_TO_TEE_SHEET");
       }
       let newBooking: BookingResponse | null = null;
-    try{
-       newBooking = await provider.createBooking(
-        token,
-        firstBooking.providerCourseId!,
-        firstBooking.providerTeeSheetId!,
-        {
-          data: {
-            type: "bookings",
-            attributes: {
-              start: firstBooking.providerDate,
-              holes: firstBooking.numberOfHoles,
-              players: listedSlotsCount,
-              bookedPlayers: [
-                {
-                  personId: buyerCustomer.customerId,
-                },
-              ],
-              event_type: "tee_time",
-              details
+      try {
+        newBooking = await provider.createBooking(
+          token,
+          firstBooking.providerCourseId!,
+          firstBooking.providerTeeSheetId!,
+          {
+            data: {
+              type: "bookings",
+              attributes: {
+                start: firstBooking.providerDate,
+                holes: firstBooking.numberOfHoles,
+                players: listedSlotsCount,
+                bookedPlayers: [
+                  {
+                    personId: buyerCustomer.customerId,
+                  },
+                ],
+                event_type: "tee_time",
+                details,
+              },
             },
-          },
-        }
-      );
-    }
-    catch(e){
-       console.log("BOOKING FAILED ON PROVIDER, INITIATING REFUND FOR PAYMENT_ID", paymentId);
-       this.loggerService.auditLog({
-        id: randomUUID(),
-        userId,
-        teeTimeId,
-        bookingId: "",
-        listingId: "",
-        eventId: "REFUND_INITIATED",
-        json: `{paymentId:${paymentId}}`,
-      });
-      await this.hyperSwitchService.refundPayment(paymentId);
-      throw "Booking failed on provider";
-    }
-    
+          }
+        );
+      } catch (e) {
+      
+        await this.hyperSwitchService.refundPayment(paymentId);
+        throw "Booking failed on provider";
+      }
+
       newBooking.data.purchasedFor = golferPrice / (listedSlotsCount || 1) / 100;
       newBooking.data.ownerId = customer_id;
       newBooking.data.name = buyerCustomer.name || "";
@@ -936,21 +923,19 @@ export class HyperSwitchWebhookService {
     } catch (err) {
       this.logger.error(`Error creating booking: ${err}`);
       this.loggerService.errorLog({
-        applicationName:"golfdistrict-foreup",
+        applicationName: "golfdistrict-foreup",
         clientIP: "",
-        userId:customer_id,
+        userId: customer_id,
         url: "/handleSecondHandItem",
         userAgent: "",
         message: "Error booking tee time",
         stackTrace: "",
-        additionalDetailsJSON:"TEE_TIME_BOOKING_FAILED"
-      })
+        additionalDetailsJSON: "TEE_TIME_BOOKING_FAILED",
+      });
     }
-    
+
     const buyerFee = (existingTeeTime?.buyerFee ?? 1) / 100;
     const sellerFee = (existingTeeTime?.sellerFee ?? 1) / 100;
-
-    
 
     for (const booking of newBookings) {
       const newBooking = booking;

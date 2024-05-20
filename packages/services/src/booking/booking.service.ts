@@ -21,6 +21,7 @@ import { currentUtcTimestamp, dateToUtcTimestamp } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
 import dayjs from "dayjs";
 import { alias } from "drizzle-orm/mysql-core";
+import { appSettingService } from "../app-settings/initialized";
 import type { CustomerCart, ProductData } from "../checkout/types";
 import type { NotificationService } from "../notification/notification.service";
 import type { HyperSwitchService } from "../payment-processor/hyperswitch.service";
@@ -30,7 +31,6 @@ import type { ProviderAPI } from "../tee-sheet-provider/sheet-providers";
 import type { BookingResponse } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
 import type { TokenizeService } from "../token/tokenize.service";
 import type { LoggerService } from "../webhooks/logging.service";
-import { appSettingService } from "../app-settings/initialized";
 
 interface TeeTimeData {
   courseId: string;
@@ -378,15 +378,15 @@ export class BookingService {
       .catch((err) => {
         this.logger.error(`Error retrieving tee time history: ${err}`);
         this.loggerService.errorLog({
-          applicationName:"golfdistrict-foreup",
+          applicationName: "golfdistrict-foreup",
           clientIP: "",
-          userId:"",
+          userId: "",
           url: "/getTeeTimeHistory",
           userAgent: "",
           message: "ERROR_RETRIEVING_TEE_TIME_HISTORY",
           stackTrace: "",
-          additionalDetailsJSON:"Error retrieving tee time history"
-        })
+          additionalDetailsJSON: "Error retrieving tee time history",
+        });
         throw new Error("Error retrieving tee time history");
       });
     if (!data.length) {
@@ -433,15 +433,15 @@ export class BookingService {
       .catch((err) => {
         this.logger.error(`Error retrieving bookings: ${err}`);
         this.loggerService.errorLog({
-          applicationName:"golfdistrict-foreup",
+          applicationName: "golfdistrict-foreup",
           clientIP: "",
           userId,
           url: "/getOwnedBookingsForTeeTime",
           userAgent: "",
           message: "ERROR_GETTING_OWNED_BOOKING",
           stackTrace: "",
-          additionalDetailsJSON:"error getting owned booking"
-        })
+          additionalDetailsJSON: "error getting owned booking",
+        });
         throw new Error("Error retrieving bookings");
       });
     if (!data.length) {
@@ -526,15 +526,15 @@ export class BookingService {
     if (!data.length) {
       this.logger.info(`No tee times found for user: ${userId}`);
       this.loggerService.errorLog({
-        applicationName:"golfdistrict-foreup",
+        applicationName: "golfdistrict-foreup",
         clientIP: "",
         userId,
         url: "/getOwnedTeeTimes",
         userAgent: "",
         message: "Error_FINDING_TEE_TIME ",
         stackTrace: "",
-        additionalDetailsJSON:`No tee times found for user: ${userId}`
-      })
+        additionalDetailsJSON: `No tee times found for user: ${userId}`,
+      });
       return [];
     }
     const combinedData: Record<string, OwnedTeeTimeData> = {};
@@ -727,15 +727,15 @@ export class BookingService {
     if (new Date().getTime() >= endTime.getTime()) {
       this.logger.warn("End time cannot be before current time");
       this.loggerService.errorLog({
-        applicationName:"golfdistrict-foreup",
+        applicationName: "golfdistrict-foreup",
         clientIP: "",
         userId,
         url: "/createListingForBookings",
         userAgent: "",
         message: "TEE_TIME_LISTED_FAILED",
         stackTrace: "",
-        additionalDetailsJSON:"End time cannot be before current time."
-      })
+        additionalDetailsJSON: "End time cannot be before current time.",
+      });
       throw new Error("End time cannot be before current time");
     }
 
@@ -761,7 +761,7 @@ export class BookingService {
       .where(and(eq(bookings.ownerId, userId), inArray(bookings.id, bookingIds)))
       .execute()
       .catch((err) => {
-        this.logger.error(`Error retrieving bookings: ${err}`); 
+        this.logger.error(`Error retrieving bookings: ${err}`);
         throw new Error("Error retrieving bookings");
       });
     if (!ownedBookings.length) {
@@ -772,30 +772,30 @@ export class BookingService {
     if (ownedBookings.length > 4) {
       this.logger.warn(`Cannot list more than 4 bookings.`);
       this.loggerService.errorLog({
-        applicationName:"golfdistrict-foreup",
+        applicationName: "golfdistrict-foreup",
         clientIP: "",
         userId,
         url: "/createListingForBookings",
         userAgent: "",
         message: "TEE_TIME_LISTED_FAILED",
         stackTrace: "",
-        additionalDetailsJSON:"Cannot list more than 4 bookings."
-      })
+        additionalDetailsJSON: "Cannot list more than 4 bookings.",
+      });
       throw new Error("Cannot list more than 4 bookings.");
     }
     for (const booking of ownedBookings) {
       if (booking.isListed) {
         this.logger.warn(`Booking ${booking.id} is already listed.`);
         this.loggerService.errorLog({
-          applicationName:"golfdistrict-foreup",
+          applicationName: "golfdistrict-foreup",
           clientIP: "",
           userId,
           url: "/createListingForBookings",
           userAgent: "",
           message: "TEE_TIME_LISTED_FAILED",
           stackTrace: "",
-          additionalDetailsJSON:"One or more bookings from this tee time is already listed"
-        })
+          additionalDetailsJSON: "One or more bookings from this tee time is already listed",
+        });
         throw new Error(`One or more bookings from this tee time is already listed.`);
       }
     }
@@ -899,15 +899,15 @@ export class BookingService {
       .catch((err) => {
         this.logger.error(`Error retrieving listing: ${err}`);
         this.loggerService.errorLog({
-          applicationName:"golfdistrict-foreup",
+          applicationName: "golfdistrict-foreup",
           clientIP: "",
           userId,
           url: "/cancelListing",
           userAgent: "",
           message: "TEE_TIME_CANCELLED",
           stackTrace: "",
-          additionalDetailsJSON:"Error retrieving listing."
-        })
+          additionalDetailsJSON: "Error retrieving listing.",
+        });
         throw new Error("Error retrieving listing");
       });
     if (!listing) {
@@ -2394,16 +2394,13 @@ export class BookingService {
       console.log(
         `Creating booking ${teeTime.providerDate}, ${teeTime.holes}, ${playerCount}, ${teeTime.providerCourseId}, ${teeTime.providerTeeSheetId}, ${token}`
       );
-      let details = "GD Booking"
-      try{
-        const isSensibleNoteAvailable = await appSettingService.get(
-          "SENSIBLE_NOTE_TO_TEE_SHEET"
-        );
-        if(weatherQuoteId && isSensibleNoteAvailable){
-          details =`${details}: ${isSensibleNoteAvailable}`
+      let details = "GD Booking";
+      try {
+        const isSensibleNoteAvailable = await appSettingService.get("SENSIBLE_NOTE_TO_TEE_SHEET");
+        if (weatherQuoteId && isSensibleNoteAvailable) {
+          details = `${details}: ${isSensibleNoteAvailable}`;
         }
-      }
-      catch(e){
+      } catch (e) {
         console.log("ERROR in getting appsetting SENSIBLE_NOTE_TO_TEE_SHEET");
       }
       booking = await provider
@@ -2488,15 +2485,15 @@ export class BookingService {
           teeTime.courseId
         );
         this.loggerService.errorLog({
-          applicationName:"golfdistrict-foreup",
-          clientIP: ip,
-          userId:userId,
+          applicationName: "golfdistrict-foreup",
+          clientIP: 'ip-need to fix',
+          userId: userId,
           url: "/handleSecondHandItem",
           userAgent: "",
           message: "Error booking tee time golf district",
           stackTrace: "",
-          additionalDetailsJSON:"ERROR CREATING BOOKING GOLFDISTRICT"
-        })
+          additionalDetailsJSON: "ERROR CREATING BOOKING GOLFDISTRICT",
+        });
         throw new Error(`Error creating booking`);
       });
     await this.sendMessageToVerifyPayment(paymentId as string, userId, bookingId);
