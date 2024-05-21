@@ -4,7 +4,7 @@ import type { BookingResponse, CustomerCreationData, CustomerData, TeeTimeRespon
 
 import { clubprophet } from "../clubprophet";
 import type {
-  BookingResponse as BookingResponseClubProphet,
+  ClubProphetBookingResponse,
   ClubProphetTeeTimeResponse,
   TeeTimeResponseClubProphet,
 } from "./clubprophet.types";
@@ -29,13 +29,13 @@ export interface ProviderAPI {
     endTime: string,
     date: string,
     rateCode?: string
-  ) => Promise<TeeTimeResponse[]>;
+  ) => Promise<TeeTimeResponse[] | ClubProphetTeeTimeResponse[]>;
   createBooking: (
     token: string,
     courseId: string,
     teeTimeId: string,
     options: any
-  ) => Promise<BookingResponse>;
+  ) => Promise<BookingResponse | ClubProphetBookingResponse>;
   updateTeeTime: (
     token: string,
     courseId: string,
@@ -43,7 +43,7 @@ export interface ProviderAPI {
     bookingId: string,
     options: any,
     slotId: string | undefined
-  ) => Promise<BookingResponse>;
+  ) => Promise<BookingResponse | ClubProphetBookingResponse>;
   deleteBooking: (token: string, courseId: string, teesheetId: string, bookingId: string) => Promise<void>; // Added deleteBooking to the interface
   getToken: () => Promise<string>;
   createCustomer: (

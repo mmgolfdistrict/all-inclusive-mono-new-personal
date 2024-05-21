@@ -1,15 +1,21 @@
+import { randomUUID } from "crypto";
 import axios from "axios";
-import {
+import type {
   BookingCreationData,
-  BookingResponse,
-  ClubProphetTeeTimeResponse,
+  ClubProphetBookingResponse,
+  ClubProphetTeeTimeResponse
+} from "./types/clubprophet.types";
+import {
   TeeTimeResponseClubProphet,
 } from "./types/clubprophet.types";
-import { TeeTimeUpdateRequest } from "./types/foreup.type";
+import type { CustomerData, TeeTimeUpdateRequest } from "./types/foreup.type";
+import { BaseProvider } from "./types/interface";
+import Logger from "@golf-district/shared/src/logger";
 
 export class clubprophet {
-  providerId?: string = "club-prophet";
+  providerId = "club-prophet";
   public providerConfiguration: any;
+  logger = Logger(clubprophet.name);
 
   async getTeeTimes(
     token: string,
@@ -44,7 +50,7 @@ export class clubprophet {
 
     // console.log("data--", data);
 
-    let config = {
+    const config = {
       method: "GET",
       maxBodyLength: Infinity,
       url,
@@ -76,7 +82,7 @@ export class clubprophet {
     courseId: string,
     teesheetId: string,
     data: BookingCreationData
-  ): Promise<BookingResponse> {
+  ): Promise<ClubProphetBookingResponse> {
     const endpoint = this.getBasePoint();
     const url = `${endpoint}/thirdpartyapi/api/v1/TeeSheet/BookReservation`;
 
@@ -96,7 +102,7 @@ export class clubprophet {
       throw new Error(`Error creating booking: ${JSON.stringify(response)}`);
     }
 
-    return (await response.json()) as BookingResponse;
+    return (await response.json()) as ClubProphetBookingResponse;
   }
 
   async updateTeeTime(
@@ -105,7 +111,7 @@ export class clubprophet {
     teesheetId: string,
     bookingId: string,
     options?: TeeTimeUpdateRequest
-  ): Promise<BookingResponse> {
+  ): Promise<ClubProphetBookingResponse> {
     const endpoint = this.getBasePoint();
     console.log("update teetime called");
     // https://api.foreupsoftware.com/api_rest/index.php/courses/courseId/teesheets/teesheetId/bookings/bookingId/bookedPlayers/bookedPlayerId
@@ -129,7 +135,7 @@ export class clubprophet {
       throw new Error(`Error updating tee time: ${response.statusText}`);
     }
 
-    return (await response.json()) as BookingResponse;
+    return (await response.json()) as ClubProphetBookingResponse;
   }
 
   getToken = async (): Promise<string> => {
@@ -178,5 +184,46 @@ export class clubprophet {
       default:
         return TOKEN_ENDPOINT;
     }
+  }
+
+  deleteBooking =
+    async (): Promise<void> => {
+
+    }
+  createCustomer = async (): Promise<CustomerData> => { return {} as CustomerData; }
+  getCustomer = async (): Promise<CustomerData> => { return {} as CustomerData; }
+  async getSlotIdsForBooking(
+    bookingId: string,
+    slots: number,
+    customerId: string,
+    providerBookingId: string,
+    providerId: string,
+    courseId: string
+  ) {
+    const bookingSlots: {
+      id: string;
+      bookingId: string;
+      slotnumber: string;
+      name: string;
+      customerId: string;
+      isActive: boolean;
+      slotPosition: number;
+      lastUpdatedDateTime: string | null;
+      createdDateTime: string | null;
+    }[] = [];
+    for (let i = 0; i < slots; i++) {
+      bookingSlots.push({
+        id: randomUUID(),
+        bookingId: bookingId,
+        slotnumber: providerBookingId + "-" + (i + 1),
+        name: i === 0 ? "" : "Guest",
+        customerId: i === 0 ? customerId : "",
+        isActive: true,
+        slotPosition: i + 1,
+        lastUpdatedDateTime: null,
+        createdDateTime: null,
+      });
+    }
+    return bookingSlots;
   }
 }

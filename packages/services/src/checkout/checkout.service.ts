@@ -357,6 +357,7 @@ export class CheckoutService {
         date: teeTimes.date,
         providerCourseId: providerCourseLink.providerCourseId,
         providerTeeSheetId: providerCourseLink.providerTeeSheetId,
+        providerCourseConfiguration: providerCourseLink.providerCourseConfiguration,
         providerId: providerCourseLink.providerId,
         internalId: providers.internalId,
         time: teeTimes.time,
@@ -402,10 +403,8 @@ export class CheckoutService {
           teeTime.providerCourseId!,
           teeTime.courseId,
           teeTime.providerTeeSheetId!,
-          teeTime.providerId,
           provider,
           token,
-          teeTime.entityId
         )
         .catch((err) => {
           console.log("err in indexer ======>", err.error);

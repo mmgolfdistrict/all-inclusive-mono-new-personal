@@ -14,6 +14,7 @@ import type {
   CustomerCreationData,
   TeeTimeResponse,
 } from "./sheet-providers/types/foreup.type";
+import type { ClubProphetBookingResponse, ClubProphetTeeTimeResponse } from "./sheet-providers/types/clubprophet.types";
 
 export interface Customer {
   playerNumber: number | null;
@@ -46,7 +47,7 @@ export class ProviderService extends CacheService {
   ) {
     super(redisUrl, redisToken, Logger(ProviderService.name));
     //this will need to be refactored to allow for providers with different credentials per course
-    this.teeSheetProviders = [new foreUp(foreUpCredentials), new clubprophet()]
+    this.teeSheetProviders = [new foreUp(foreUpCredentials), new clubprophet()];
   }
 
   /**
@@ -102,7 +103,7 @@ export class ProviderService extends CacheService {
     startTime: string,
     endTime: string,
     date: string
-  ): Promise<TeeTimeResponse[]> {
+  ): Promise<TeeTimeResponse[] | ClubProphetTeeTimeResponse[]> {
     this.logger.info(`getTeeTimes called with courseId: ${courseId}`);
     const { provider, token } = await this.getProviderAndKey(providerId, courseId);
     return provider.getTeeTimes(token, courseId, teeSheetId, startTime, endTime, date);
@@ -120,7 +121,7 @@ export class ProviderService extends CacheService {
     teeTimeId: string,
     providerId: string,
     options: { data: any }
-  ): Promise<BookingResponse> {
+  ): Promise<BookingResponse | ClubProphetBookingResponse> {
     this.logger.info(`createBooking called with courseId: ${courseId}`);
     const { provider, token } = await this.getProviderAndKey(providerId, courseId);
     return provider.createBooking(token, courseId, teeTimeId, options);
@@ -140,7 +141,7 @@ export class ProviderService extends CacheService {
     bookingId: string,
     options: any,
     slotId: string
-  ): Promise<BookingResponse> {
+  ): Promise<BookingResponse | ClubProphetBookingResponse> {
     this.logger.info(`updateTeeTime called with courseId: ${courseId}`);
     const { provider, token } = await this.getProviderAndKey(providerId, courseId);
     return provider.updateTeeTime(token, courseId, teeTimeId, bookingId, options, slotId);

@@ -13,6 +13,7 @@ import dayjs from "dayjs";
 // import { isEqual } from "lodash";
 import type { ProviderService } from "../tee-sheet-provider/providers.service";
 import type { ProviderAPI } from "../tee-sheet-provider/sheet-providers";
+import type { TeeTimeResponse } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
 
 interface IndexingSchedule {
   day: number;
@@ -76,7 +77,7 @@ export class ForeUpWebhookService {
    * @param {Db} database - The database instance to interact with.
    * @param {ProviderService} providerService - The provider service for fetching tee times from ForeUp.
    */
-  constructor(private readonly database: Db, private readonly providerService: ProviderService) {}
+  constructor(private readonly database: Db, private readonly providerService: ProviderService) { }
 
   /**
    * Handles the ForeUp webhook.
@@ -263,7 +264,8 @@ export class ForeUpWebhookService {
       "0000",
       "2359",
       formattedDate
-    );
+    ) as unknown as TeeTimeResponse[];
+
     const teeTimesToUpsert: InsertTeeTimes[] = [];
     const teeTimesToInsert: InsertTeeTimes[] = [];
     const teeTimesToRemove: InsertTeeTimes[] = [];
@@ -356,7 +358,7 @@ export class ForeUpWebhookService {
         providerTeeTime = {
           id: randomUUID(),
           courseId: courseId,
-          providerTeeTimeId: teeTimeResponse.id,
+          providerTeeTimeId: teeTimeResponse?.id,
           // courseProvider: providerId,
           numberOfHoles: attributes.holes,
           date: attributes.time,
@@ -395,7 +397,7 @@ export class ForeUpWebhookService {
         time.toString().padStart(4, "0"),
         (time + 1).toString().padStart(4, "0"),
         formattedDate
-      );
+      ) as unknown as TeeTimeResponse[];
       let teeTime;
       if (teeTimeResponse && teeTimeResponse.length > 0) {
         teeTime = teeTimeResponse[0];

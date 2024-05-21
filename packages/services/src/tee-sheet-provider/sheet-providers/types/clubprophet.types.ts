@@ -95,7 +95,7 @@ export interface BookingCreationData {
   price: number[];
 }
 
-export interface BookingResponse {
+export interface ClubProphetBookingResponse {
   success: boolean;
   responseText: string;
   participantIds: number[];
