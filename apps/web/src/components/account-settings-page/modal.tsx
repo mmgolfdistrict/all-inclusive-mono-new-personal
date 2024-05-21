@@ -40,6 +40,9 @@ const Modal = ({ isOpen, onClose }) => {
                 <Close className="h-[25px] w-[25px]" />
               </button>
             </div>
+            <h5 className="text-sm font-semibold">
+              GOLFdistrict does not store any bank details. They are directly handled by our payment processing 3rd-party partners.
+            </h5>
             {isLoading && (
               <div className="flex justify-center items-center m-auto h-full w-full">
                 <Spinner className="w-[50px] h-[50px]" />
