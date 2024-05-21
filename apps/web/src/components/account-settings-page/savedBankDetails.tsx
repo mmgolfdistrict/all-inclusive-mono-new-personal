@@ -2,8 +2,10 @@
 
 import { type CustomerPaymentMethod } from "~/hooks/usePaymentMethods";
 import { api } from "~/utils/api";
+
 import { Spinner } from "../loading/spinner";
 import CardDetails from "./CardDetails";
+import { Trashcan } from "../icons/trashcan";
 
 export const SavedBankDetails = () => {
   const { data: associatedBanks, isLoading } =
@@ -44,13 +46,23 @@ const CardDisplay = ({
 }) => {
   return (
     <div className="border border-stroke rounded-md p-3 flex flex-col relative">
-      <CardDetails label="Bank Name" value={"N/A"} />
-      <CardDetails label="Routing Number" value={"N/A"} />
-      <CardDetails
-        label="Account Details"
-        value={`${card?.accountNumber}`}
+      <div className="flex items-start flex-col gap-1">
+        <CardDetails label="Bank Name" value={"N/A"} />
+        <CardDetails label="Routing Number" value={"N/A"} />
+      </div>
+      <div className="flex w-full justify-between items-end">
+        <CardDetails
+          label="Account Details"
+          value={`${card?.accountNumber}`}
         // onRemove={() => setConfirmStatus(true)}
-      />
+        />
+        <button
+          // onClick={() => setConfirmStatus(true)}
+          className="border border-alert-red px-3 rounded-md"
+        >
+          <Trashcan fill="#EE2020" className="w-[20px] h-[20px]" />
+        </button>
+      </div>
       {/* {confirmStatus ? (
         <SidePanel isOpen={true}>
           <div className="bg-white p-8 text-sm rounded shadow-md h-full">
