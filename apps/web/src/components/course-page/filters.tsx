@@ -305,10 +305,7 @@ export const Filters = () => {
           </div>
           <div>
             $
-            {localPriceRange[0] +
-              (course?.markupFeesFixedPerPlayer
-                ? course?.markupFeesFixedPerPlayer / 100
-                : 0)}
+            {localPriceRange[0]}
             -${localPriceRange[1]}
           </div>
         </div>
