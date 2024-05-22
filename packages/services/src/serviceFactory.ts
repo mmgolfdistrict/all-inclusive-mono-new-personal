@@ -329,7 +329,8 @@ export class ServiceFactory {
       this.getBookingService(),
       this.getSensibleService(),
       this.getLoggerService(),
-      this.config.upStashClientToken
+      this.config.upStashClientToken,
+      this.getHyperSwitchService()
     );
   };
   getStripeService = (): StripeService => {

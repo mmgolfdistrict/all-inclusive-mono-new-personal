@@ -21,6 +21,7 @@ import { currentUtcTimestamp, dateToUtcTimestamp } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
 import dayjs from "dayjs";
 import { alias } from "drizzle-orm/mysql-core";
+import { appSettingService } from "../app-settings/initialized";
 import type { CustomerCart, ProductData } from "../checkout/types";
 import type { NotificationService } from "../notification/notification.service";
 import type { HyperSwitchService } from "../payment-processor/hyperswitch.service";
@@ -30,6 +31,7 @@ import type { ProviderAPI } from "../tee-sheet-provider/sheet-providers";
 import type { BookingResponse } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
 import type { TokenizeService } from "../token/tokenize.service";
 import type { LoggerService } from "../webhooks/logging.service";
+import { entities } from "@golf-district/database/schema/entities";
 
 interface TeeTimeData {
   courseId: string;
@@ -2346,9 +2348,17 @@ export class BookingService {
         internalId: providers.internalId,
         providerDate: teeTimes.providerDate,
         holes: teeTimes.numberOfHoles,
+        cdn: assets.cdn,
+        cdnKey: assets.key,
+        extension: assets.extension,
+        websiteURL: courses.websiteURL,
+        courseName: courses.name,
+        entityName: entities.name,
       })
       .from(teeTimes)
       .leftJoin(courses, eq(teeTimes.courseId, courses.id))
+      .leftJoin(assets, eq(assets.id, courses.logoId))
+      .leftJoin(entities, eq(courses.entityId, entities.id))
       .leftJoin(
         providerCourseLink,
         and(
@@ -2380,7 +2390,6 @@ export class BookingService {
       );
       teeProvider = provider;
       teeToken = token;
-
       console.log(
         `Finding or creating customer ${userId}, ${teeTime.courseId}, ${teeTime.providerId}, ${teeTime.providerCourseId}, ${token}`
       );
@@ -2406,6 +2415,15 @@ export class BookingService {
       console.log(
         `Creating booking ${teeTime.providerDate}, ${teeTime.holes}, ${playerCount}, ${teeTime.providerCourseId}, ${teeTime.providerTeeSheetId}, ${token}`
       );
+      let details = "GD Booking";
+      try {
+        const isSensibleNoteAvailable = await appSettingService.get("SENSIBLE_NOTE_TO_TEE_SHEET");
+        if (weatherQuoteId && isSensibleNoteAvailable) {
+          details = `${details}: ${isSensibleNoteAvailable}`;
+        }
+      } catch (e) {
+        console.log("ERROR in getting appsetting SENSIBLE_NOTE_TO_TEE_SHEET");
+      }
       booking = await provider
         .createBooking(token, teeTime.providerCourseId!, teeTime.providerTeeSheetId!, {
           totalAmountPaid: primaryGreenFeeCharge / 100 + taxCharge - markupCharge,
@@ -2417,7 +2435,7 @@ export class BookingService {
               players: playerCount,
               bookedPlayers: bookedPLayers,
               event_type: "tee_time",
-              details: "GD Booking",
+              details,
             },
           },
         })
@@ -2438,6 +2456,33 @@ export class BookingService {
         });
     } catch (e) {
       console.log("BOOKING FAILED ON PROVIDER, INITIATING REFUND FOR PAYMENT_ID", payment_id);
+      
+      await this.hyperSwitchService.refundPayment(payment_id);
+
+      const [user] = await this.database.select().from(users).where(eq(users.id, userId));
+      if (!user) {
+        this.logger.warn(`User not found: ${userId}`);
+        throw new Error("User not found");
+      }
+
+      const template={
+        CustomerFirstName:user?.handle??user.name??"",
+        CourseLogoURL: `https://${teeTime?.cdn}/${teeTime?.cdnKey}.${teeTime?.extension}`,
+        CourseURL: teeTime?.websiteURL || "",
+        CourseName: teeTime?.courseName || "-",
+        FacilityName: teeTime?.entityName || "-",
+        PlayDateTime:
+          dayjs(teeTime?.providerDate).utcOffset("-06:00").format("MM/DD/YYYY h:mm A") || "-"
+      }
+      await this.notificationService.createNotification(
+        userId || "",
+        "Refund Initiated",
+        "Refund Initiated",
+        teeTime?.courseId,
+        process.env.SENDGRID_REFUND_EMAIL_TEMPLATE_ID ?? "d-79ca4be6569940cdb19dd2b607c17221",
+        template
+      );
+
       this.loggerService.auditLog({
         id: randomUUID(),
         userId,
@@ -2447,7 +2492,7 @@ export class BookingService {
         eventId: "REFUND_INITIATED",
         json: `{paymentId:${payment_id}}`,
       });
-      await this.hyperSwitchService.refundPayment(payment_id);
+
       throw "Booking failed on provider";
     }
     console.log(`Creating tokenized booking`);
@@ -2490,8 +2535,7 @@ export class BookingService {
         );
         this.loggerService.errorLog({
           applicationName: "golfdistrict-foreup",
-          //Commenting out the below code and setting empty string as this line was giving an error and Manish is out today.
-          clientIP: "", // ip,
+          clientIP: 'ip-need to fix',
           userId: userId,
           url: "/handleSecondHandItem",
           userAgent: "",
