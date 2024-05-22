@@ -22,13 +22,12 @@ export const SavedBankDetails = () => {
   const [loader, setLoader] = useState<boolean>(false);
 
   const removeMethod = async (paymentMethodId: string) => {
-    // TODO: Implement the removeMethod functionality
     setLoader(true);
     try {
       await deletePaymentInstrument.mutateAsync({ paymentInstrumentId: paymentMethodId });
       await refetchAssociatedBanks();
       setLoader(false);
-      toast.success("Bank card removed successfully.")
+      toast.success("Bank detail removed successfully.")
     } catch (error) {
       setLoader(false);
       console.log(error);
