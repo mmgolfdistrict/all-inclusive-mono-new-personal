@@ -330,4 +330,17 @@ export class FinixService {
       .where(and(eq(customerPaymentDetail.customerId, userId), eq(customerPaymentDetail.isActive, 1)));
     return paymentInstruments;
   };
+
+  deletePaymentInstrument = async (paymentInstrumentId: string) => {
+    try {
+      await this.database
+        .delete(customerPaymentDetail)
+        .where(eq(customerPaymentDetail.id, paymentInstrumentId))
+        .execute();
+      console.log("Saved bank card deleted successfully.");
+    } catch(error) {
+      console.log("Error on deleting saved bank card", error);
+      throw error;
+    }
+  }
 }
