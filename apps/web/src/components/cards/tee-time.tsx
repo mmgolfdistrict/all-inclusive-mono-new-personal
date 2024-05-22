@@ -209,9 +209,8 @@ export const TeeTime = ({
         data-test={
           status === "SECOND_HAND" ? "secondary_listed" : "primary_listed"
         }
-        className={`md:rounded-xl rounded-lg bg-secondary-white w-fit min-w-[228px] md:min-w-[302px] ${
-          className ?? ""
-        }`}
+        className={`md:rounded-xl rounded-lg bg-secondary-white w-fit min-w-[228px] md:min-w-[240px] ${className ?? ""
+          }`}
       >
         <div className="border-b border-stroke">
           <div className="flex justify-between py-1 px-3 md:p-3">
@@ -234,18 +233,19 @@ export const TeeTime = ({
 
             <div className="whitespace-nowrap md:pr-1">
               {status === "UNLISTED" ? "Owned" : "Sold"} by
+
+              {isOwned || status === "SECOND_HAND" ? (
+                <Link
+                  href={`/${courseId}/profile/${soldById}`}
+                  className="text-primary text-ellipsis"
+                  data-testid="sold-by-name-id"
+                >
+                  {soldByName}
+                </Link>
+              ) : (
+                <div className="whitespace-nowrap">{soldByName}</div>
+              )}
             </div>
-            {isOwned || status === "SECOND_HAND" ? (
-              <Link
-                href={`/${courseId}/profile/${soldById}`}
-                className="text-primary text-ellipsis"
-                data-testid="sold-by-name-id"
-              >
-                {soldByName}
-              </Link>
-            ) : (
-              <div className="whitespace-nowrap">{soldByName}</div>
-            )}
           </div>
           <div className="flex md:min-h-[31px] items-center gap-2">
             <div className="scale-75 md:scale-100">
