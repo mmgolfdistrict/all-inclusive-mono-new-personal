@@ -79,7 +79,7 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
               <div className="flex justify-between items-center">
                 <div className="flex">
                   <p className="text-gray-600 md:text-[24px]">
-                    Available Amount:&nbsp;
+                    Processing Funds:&nbsp;
                   </p>
                   <p className="text-gray-800 md:text-[24px]">{`$${
                     recievableData?.availableAmount || 0
@@ -87,13 +87,13 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
                 </div>
                 <Tooltip
                   trigger={<Info className="h-[20px] w-[20px]" />}
-                  content="This is the total amount available in your account and you can withdraw some of them once they are settled."
+                  content="These funds are currently being processed and wiwll be available for withdrawal soon. Processing typically takes 3-5 business days."
                 />
               </div>
               <div className="flex justify-between items-center">
                 <div className="flex">
                   <p className="text-gray-600 md:text-[24px]">
-                    Withdrawable Amount:&nbsp;
+                    Available Funds:&nbsp;
                   </p>
                   <p className="text-gray-800 md:text-[24px]">{`$${
                     recievableData?.withdrawableAmount || 0
@@ -101,7 +101,7 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
                 </div>
                 <Tooltip
                   trigger={<Info className="h-[20px] w-[20px]" />}
-                  content="Funds that are attached to a recent transaction are not able to be withdrawn until payment is confirmed. This typically takes less than 5 days."
+                  content="These funds have completed processing and are now available for withdrawal. You can transfer these funds to your bank account."
                 />
               </div>
             </div>
