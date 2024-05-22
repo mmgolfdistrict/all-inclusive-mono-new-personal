@@ -53,4 +53,9 @@ export const cashOutRouter = createTRPCRouter({
   getAssociatedAccounts: protectedProcedure.input(z.object({})).query(async ({ ctx }) => {
     return ctx.serviceFactory.getFinixService().getPaymentInstruments(ctx.session?.user?.id ?? "");
   }),
+  deletePaymentInstrument: protectedProcedure.input(z.object({
+    paymentInstrumentId: z.string()
+  })).mutation(async ({ ctx, input }) => {
+    return ctx.serviceFactory.getFinixService().deletePaymentInstrument(input.paymentInstrumentId);
+  }),
 });
