@@ -22,7 +22,7 @@ import type { NotificationService } from "../notification/notification.service";
 import type { SensibleService } from "../sensible/sensible.service";
 import type { ProviderAPI } from "../tee-sheet-provider/sheet-providers";
 import { TeeTime } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
-import { LoggerService } from "../webhooks/logging.service";
+import type { LoggerService } from "../webhooks/logging.service";
 
 /**
  * Service class for handling booking tokenization, transfers, and updates.
@@ -217,7 +217,8 @@ export class TokenizeService {
 
     // TODO: Shouldn't this logic not be present before sending the booking to the provider?
     if (existingTeeTime.availableFirstHandSpots < players) {
-      this.logger.fatal(`TeeTime with ID: ${providerTeeTimeId} does not have enough spots.`);
+      this.logger.fatal(`TeeTime with ID: ${providerTeeTimeId} does not have enough spots. spot available - ${existingTeeTime.availableFirstHandSpots}, spot demanded- ${players}`);
+      
       this.loggerService.auditLog({
         id: randomUUID(),
         userId,
