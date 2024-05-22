@@ -19,7 +19,7 @@ export const webhookRouter = createTRPCRouter({
         customer_id: z.string(),
         paymentId: z.string(),
         bookingId: z.string(),
-        redirectHref: z.string().url()
+        redirectHref: z.string().url(),
       })
     )
     .mutation(async ({ ctx, input }) => {

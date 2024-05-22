@@ -304,7 +304,7 @@ export const CheckoutForm = ({
       cartId,
       payment_id,
       sensibleQuoteId,
-      redirectHref
+      redirectHref,
     });
     return bookingResponse;
   };
@@ -321,7 +321,7 @@ export const CheckoutForm = ({
       cartId,
       listingId,
       payment_id,
-      redirectHref
+      redirectHref,
     });
     // console.log(bookingResponse);
     return bookingResponse;

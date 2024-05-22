@@ -548,7 +548,8 @@ export class SearchService {
     _userId?: string
   ) {
     const userId = _userId ?? "00000000-0000-0000-0000-000000000000";
-
+    lowerPrice = lowerPrice * 100;
+    upperPrice = upperPrice * 100;
     const limit = (cursor ?? 1) * take;
 
     const minDateSubquery = dayjs(minDate).utc().hour(0).minute(0).second(0).millisecond(0).toISOString();

@@ -37,6 +37,10 @@ export const OrderSummary = ({
           seller may forfeit their money and time.
         </p>
       </div>
+      <h2 className="italic">
+        GOLFdistrict does not store or process any credit card or payments. They
+        are directly handled by our payment processing 3rd-party partners.
+      </h2>
     </section>
   );
 };

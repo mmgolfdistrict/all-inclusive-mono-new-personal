@@ -2253,7 +2253,12 @@ export class BookingService {
     return true;
   };
 
-  sendMessageToVerifyPayment = async (paymentId: string, customer_id: string, bookingId: string, redirectHref: string) => {
+  sendMessageToVerifyPayment = async (
+    paymentId: string,
+    customer_id: string,
+    bookingId: string,
+    redirectHref: string
+  ) => {
     const myHeaders = new Headers();
     myHeaders.append("Authorization", `Bearer ${process.env.QSTASH_TOKEN}`);
     myHeaders.append("Content-Type", "application/json");
@@ -2263,7 +2268,7 @@ export class BookingService {
         paymentId,
         customer_id,
         bookingId,
-        redirectHref
+        redirectHref,
       },
     });
     console.log("Sending message to payment queue", {
@@ -2291,7 +2296,13 @@ export class BookingService {
     }
   };
 
-  reserveBooking = async (userId: string, cartId: string, payment_id: string, sensibleQuoteId: string, redirectHref: string) => {
+  reserveBooking = async (
+    userId: string,
+    cartId: string,
+    payment_id: string,
+    sensibleQuoteId: string,
+    redirectHref: string
+  ) => {
     const {
       cart,
       playerCount,
@@ -2584,7 +2595,13 @@ export class BookingService {
       });
     }
   };
-  reserveSecondHandBooking = async (userId = "", cartId = "", listingId = "", payment_id = "", redirectHref = "") => {
+  reserveSecondHandBooking = async (
+    userId = "",
+    cartId = "",
+    listingId = "",
+    payment_id = "",
+    redirectHref = ""
+  ) => {
     const {
       cart,
       playerCount,

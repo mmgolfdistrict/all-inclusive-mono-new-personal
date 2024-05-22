@@ -11,6 +11,7 @@ import { useEffect, useState } from "react";
 import { useMediaQuery } from "usehooks-ts";
 import { FilledButton } from "../buttons/filled-button";
 import { Auction } from "../icons/auction";
+import { Calendar } from "../icons/calendar";
 import { Hamburger } from "../icons/hamburger";
 import { Marketplace } from "../icons/marketplace";
 import { MyOffers } from "../icons/my-offers";
@@ -166,7 +167,7 @@ export const CourseNav = () => {
             <NavItem
               href={`/${courseId}/my-tee-box?section=my-listed-tee-times`}
               text="My Tee Times"
-              icon={<Marketplace className="w-[16px]" />}
+              icon={<Calendar className="w-[16px]" />}
               data-testid="sell-your-tee-time-id"
               data-test={courseId}
             />

@@ -267,11 +267,11 @@ export default function CourseHomePage() {
       <div className="flex items-center justify-between px-4 md:px-6">
         <GoBack href="/" text={`Back to all ${entity?.name} Courses`} />
       </div>
-      <CourseTitle
+      {/* <CourseTitle
         courseName={course?.name ?? ""}
         description={course?.description ?? ""}
         className="px-4 md:px-6"
-      />
+      /> */}
       <CourseBanner className="pt-4" />
       <section className="relative flex gap-8 pl-0 pt-6 md:pl-6 md:pt-8 mx-auto w-full mb-[-1.5rem]">
         <div
