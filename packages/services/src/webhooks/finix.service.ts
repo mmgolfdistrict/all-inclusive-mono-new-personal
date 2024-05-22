@@ -338,9 +338,9 @@ export class FinixService {
         .where(eq(customerPaymentDetail.id, paymentInstrumentId))
         .execute();
       console.log("Saved bank card deleted successfully.");
-    } catch(error) {
+    } catch (error) {
       console.log("Error on deleting saved bank card", error);
       throw error;
     }
-  }
+  };
 }

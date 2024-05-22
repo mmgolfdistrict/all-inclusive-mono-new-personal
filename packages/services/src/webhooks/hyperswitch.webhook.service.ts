@@ -898,33 +898,32 @@ export class HyperSwitchWebhookService {
         await this.hyperSwitchService.refundPayment(paymentId);
         this.loggerService.auditLog({
           id: randomUUID(),
-          userId:customer_id,
-          teeTimeId:existingTeeTime?.id??"",
-          bookingId: bookingsIds?.id??"",
+          userId: customer_id,
+          teeTimeId: existingTeeTime?.id ?? "",
+          bookingId: bookingsIds?.id ?? "",
           listingId: listingId,
           eventId: "REFUND_INITIATED",
           json: `{paymentId:${paymentId}}`,
         });
 
-        const template={
-          CustomerFirstName:buyerCustomer?.username??"",
+        const template = {
+          CustomerFirstName: buyerCustomer?.username ?? "",
           CourseLogoURL: `https://${existingTeeTime?.cdn}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
           CourseURL: existingTeeTime?.websiteURL || "",
           CourseName: existingTeeTime?.courseName || "-",
           FacilityName: existingTeeTime?.entityName || "-",
           PlayDateTime:
-            dayjs(existingTeeTime?.providerDate).utcOffset("-06:00").format("MM/DD/YYYY h:mm A") || "-"
-        }
+            dayjs(existingTeeTime?.providerDate).utcOffset("-06:00").format("MM/DD/YYYY h:mm A") || "-",
+        };
         await this.notificationService.createNotification(
-          customer_id??"",
+          customer_id ?? "",
           "Refund Initiated",
           "Refund Initiated",
           existingTeeTime?.courseId,
           process.env.SENDGRID_REFUND_EMAIL_TEMPLATE_ID ?? "d-79ca4be6569940cdb19dd2b607c17221",
           template
         );
-  
-  
+
         throw "Booking failed on provider";
       }
 

@@ -6,6 +6,7 @@ import { bookings } from "@golf-district/database/schema/bookings";
 import { bookingslots } from "@golf-district/database/schema/bookingslots";
 import { courses } from "@golf-district/database/schema/courses";
 import { customerCarts } from "@golf-district/database/schema/customerCart";
+import { entities } from "@golf-district/database/schema/entities";
 import type { InsertList } from "@golf-district/database/schema/lists";
 import { lists } from "@golf-district/database/schema/lists";
 import { offers } from "@golf-district/database/schema/offers";
@@ -31,7 +32,6 @@ import type { ProviderAPI } from "../tee-sheet-provider/sheet-providers";
 import type { BookingResponse } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
 import type { TokenizeService } from "../token/tokenize.service";
 import type { LoggerService } from "../webhooks/logging.service";
-import { entities } from "@golf-district/database/schema/entities";
 
 interface TeeTimeData {
   courseId: string;
@@ -2456,7 +2456,7 @@ export class BookingService {
         });
     } catch (e) {
       console.log("BOOKING FAILED ON PROVIDER, INITIATING REFUND FOR PAYMENT_ID", payment_id);
-      
+
       await this.hyperSwitchService.refundPayment(payment_id);
 
       const [user] = await this.database.select().from(users).where(eq(users.id, userId));
@@ -2465,15 +2465,14 @@ export class BookingService {
         throw new Error("User not found");
       }
 
-      const template={
-        CustomerFirstName:user?.handle??user.name??"",
+      const template = {
+        CustomerFirstName: user?.handle ?? user.name ?? "",
         CourseLogoURL: `https://${teeTime?.cdn}/${teeTime?.cdnKey}.${teeTime?.extension}`,
         CourseURL: teeTime?.websiteURL || "",
         CourseName: teeTime?.courseName || "-",
         FacilityName: teeTime?.entityName || "-",
-        PlayDateTime:
-          dayjs(teeTime?.providerDate).utcOffset("-06:00").format("MM/DD/YYYY h:mm A") || "-"
-      }
+        PlayDateTime: dayjs(teeTime?.providerDate).utcOffset("-06:00").format("MM/DD/YYYY h:mm A") || "-",
+      };
       await this.notificationService.createNotification(
         userId || "",
         "Refund Initiated",
@@ -2535,7 +2534,7 @@ export class BookingService {
         );
         this.loggerService.errorLog({
           applicationName: "golfdistrict-foreup",
-          clientIP: 'ip-need to fix',
+          clientIP: "ip-need to fix",
           userId: userId,
           url: "/handleSecondHandItem",
           userAgent: "",

@@ -216,20 +216,22 @@ export class TokenizeService {
     }
 
     // TODO: Shouldn't this logic not be present before sending the booking to the provider?
-    if (existingTeeTime.availableFirstHandSpots < players) {
-      this.logger.fatal(`TeeTime with ID: ${providerTeeTimeId} does not have enough spots. spot available - ${existingTeeTime.availableFirstHandSpots}, spot demanded- ${players}`);
-      
-      this.loggerService.auditLog({
-        id: randomUUID(),
-        userId,
-        teeTimeId: "",
-        bookingId: "",
-        listingId: "",
-        eventId: "TEE_TIME_DOES_NOT_HAVE_ENOUGH_SPOTS",
-        json: `TeeTime with ID: ${providerTeeTimeId} does not have enough spots.`,
-      });
-      throw new Error(`TeeTime with ID: ${providerTeeTimeId} does not have enough spots.`);
-    }
+    // if (existingTeeTime.availableFirstHandSpots < players) {
+    //   this.logger.fatal(
+    //     `TeeTime with ID: ${providerTeeTimeId} does not have enough spots. spot available - ${existingTeeTime.availableFirstHandSpots}, spot demanded- ${players}`
+    //   );
+
+    //   this.loggerService.auditLog({
+    //     id: randomUUID(),
+    //     userId,
+    //     teeTimeId: "",
+    //     bookingId: "",
+    //     listingId: "",
+    //     eventId: "TEE_TIME_DOES_NOT_HAVE_ENOUGH_SPOTS",
+    //     json: `TeeTime with ID: ${providerTeeTimeId} does not have enough spots.`,
+    //   });
+    //   throw new Error(`TeeTime with ID: ${providerTeeTimeId} does not have enough spots.`);
+    // }
 
     const bookingsToCreate: InsertBooking[] = [];
     const transfersToCreate: InsertTransfer[] = [];
@@ -366,14 +368,15 @@ export class TokenizeService {
           this.logger.error(err);
           tx.rollback();
         });
-      await tx
-        .update(teeTimes)
-        .set({
-          availableSecondHandSpots: existingTeeTime.availableSecondHandSpots + players,
-          availableFirstHandSpots: existingTeeTime.availableFirstHandSpots - players,
-        })
-        .where(eq(teeTimes.id, existingTeeTime.id))
-        .execute();
+      // commenting this out as the webhook is already updating the available firsthandslots: Revisit this
+      // await tx
+      //   .update(teeTimes)
+      //   .set({
+      //     availableSecondHandSpots: existingTeeTime.availableSecondHandSpots + players,
+      //     availableFirstHandSpots: existingTeeTime.availableFirstHandSpots - players,
+      //   })
+      //   .where(eq(teeTimes.id, existingTeeTime.id))
+      //   .execute();
       await tx
         .insert(transfers)
         .values(transfersToCreate)

@@ -2,38 +2,40 @@
 
 import { type CustomerPaymentMethod } from "~/hooks/usePaymentMethods";
 import { api } from "~/utils/api";
-import { toast } from "react-toastify";
 import { useState } from "react";
-
+import { toast } from "react-toastify";
+import { FilledButton } from "../buttons/filled-button";
+import { OutlineButton } from "../buttons/outline-button";
+import { Close } from "../icons/close";
+import { Trashcan } from "../icons/trashcan";
 import { Spinner } from "../loading/spinner";
 import CardDetails from "./CardDetails";
-import { Trashcan } from "../icons/trashcan";
-import { OutlineButton } from "../buttons/outline-button";
-import { FilledButton } from "../buttons/filled-button";
-import { Close } from "../icons/close";
 
 export const SavedBankDetails = () => {
   const { data: associatedBanks, isLoading } =
     api.cashOut.getAssociatedAccounts.useQuery({});
   const { refetch: refetchAssociatedBanks } =
     api.cashOut.getAssociatedAccounts.useQuery({}, { enabled: false });
-  const deletePaymentInstrument = api.cashOut.deletePaymentInstrument.useMutation();
+  const deletePaymentInstrument =
+    api.cashOut.deletePaymentInstrument.useMutation();
 
   const [loader, setLoader] = useState<boolean>(false);
 
   const removeMethod = async (paymentMethodId: string) => {
     setLoader(true);
     try {
-      await deletePaymentInstrument.mutateAsync({ paymentInstrumentId: paymentMethodId });
+      await deletePaymentInstrument.mutateAsync({
+        paymentInstrumentId: paymentMethodId,
+      });
       await refetchAssociatedBanks();
       setLoader(false);
-      toast.success("Bank detail removed successfully.")
+      toast.success("Bank detail removed successfully.");
     } catch (error) {
       setLoader(false);
       console.log(error);
       toast.error(
         (error as Error)?.message ??
-        "An error occurred submitting your request."
+          "An error occurred submitting your request."
       );
     }
   };
@@ -49,7 +51,7 @@ export const SavedBankDetails = () => {
           associatedBanks.map((bank, idx) => (
             <CardDisplay removeMethod={removeMethod} card={bank} key={idx} />
           ))
-        ) : (isLoading || loader) ? (
+        ) : isLoading || loader ? (
           <div className="flex justify-center items-center h-full min-h-[200px]">
             <Spinner className="w-[50px] h-[50px]" />
           </div>
@@ -63,7 +65,7 @@ export const SavedBankDetails = () => {
 
 const CardDisplay = ({
   card,
-  removeMethod
+  removeMethod,
 }: {
   card: CustomerPaymentMethod;
   removeMethod: (x: string) => Promise<void>;
@@ -82,10 +84,7 @@ const CardDisplay = ({
         <CardDetails label="Routing Number" value={"N/A"} />
       </div>
       <div className="flex w-full justify-between items-end">
-        <CardDetails
-          label="Account Details"
-          value={`${card?.accountNumber}`}
-        />
+        <CardDetails label="Account Details" value={`${card?.accountNumber}`} />
         <button
           onClick={() => setConfirmStatus(true)}
           className="border border-alert-red px-3 rounded-md"
@@ -126,8 +125,9 @@ const CardDisplay = ({
         )}
         <aside
           // ref={sidebar}
-          className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[500px] md:h-[100dvh] ${confirmStatus ? "translate-x-0" : "translate-x-full"
-            }`}
+          className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[500px] md:h-[100dvh] ${
+            confirmStatus ? "translate-x-0" : "translate-x-full"
+          }`}
         >
           <div className="relative flex h-full flex-col">
             <div className="flex items-center justify-between p-4">
@@ -151,9 +151,7 @@ const CardDisplay = ({
                 </div>
                 <div className="flex items-start flex-col gap-1 px-1">
                   <div className="font-[500] text-md">Account Number</div>
-                  <div className="text-sm">
-                    {card?.accountNumber}
-                  </div>
+                  <div className="text-sm">{card?.accountNumber}</div>
                 </div>
               </div>
               <div className="flex flex-col gap-4 px-4 pb-6">
