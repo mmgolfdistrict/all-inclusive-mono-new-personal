@@ -8,9 +8,9 @@ export const errorLog = mySqlTable("errorLog", {
   applicationName: varchar("applicationName", { length: 50 }),
   clientIP: varchar("clientIP", { length: 25 }),
   userId: varchar("userId", { length: 36 }),
-  url: varchar("userId", { length: 1024 }),
+  url: varchar("url", { length: 1024 }),
   userAgent: varchar("userAgent", { length: 1024 }),
-  message: varchar("userAgent", { length: 255 }),
+  message: varchar("message", { length: 255 }),
   stackTrace: varchar("stackTrace", { length: 2048 }),
   additionalDetailsJSON: varchar("additionalDetailsJSON", { length: 2048 }),
   createdDateTime: datetime("createdDateTime", { mode: "string", fsp: 3 })
