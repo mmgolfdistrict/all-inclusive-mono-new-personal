@@ -548,7 +548,7 @@ export class SearchService {
     _userId?: string
   ) {
     const userId = _userId ?? "00000000-0000-0000-0000-000000000000";
-     const limit = (cursor ?? 1) * take;
+    const limit = (cursor ?? 1) * take;
 
     const minDateSubquery = dayjs(minDate).utc().hour(0).minute(0).second(0).millisecond(0).toISOString();
     const maxDateSubquery = dayjs(maxDate)
@@ -812,11 +812,10 @@ export class SearchService {
     //combine first and second hand results according to sort params
     const combinedResults = [...firstHandResults, ...secondHandResults];
 
-    const combinedResultsInRange = combinedResults.filter(teeTime => {
+    const combinedResultsInRange = combinedResults.filter((teeTime) => {
       const totalFee = teeTime.pricePerGolfer;
       return totalFee >= lowerPrice && totalFee <= upperPrice;
     });
-    
 
     //sort combined results
     const sortedResults = combinedResultsInRange.sort((a, b) => {
