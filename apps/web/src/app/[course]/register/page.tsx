@@ -76,7 +76,7 @@ export default function RegisterPage() {
     const data = await checkProfanity({ text });
     if (data.isProfane) {
       setError("username", {
-        message: "Username contains profanity.",
+        message: "Handle not allowed",
       });
     }
   };
@@ -110,7 +110,7 @@ export default function RegisterPage() {
   const onSubmit: SubmitHandler<RegisterSchemaType> = async (data) => {
     if (profanityCheckData?.isProfane) {
       setError("username", {
-        message: errors.username?.message || "Username contains profanity.",
+        message: "Handle not allowed",
       });
       return;
     }
