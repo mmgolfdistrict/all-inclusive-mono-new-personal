@@ -169,8 +169,8 @@ export class clubprophetWebhookService {
             maxPlayersPerBooking: teeTimeResponse.freeSlots,
             availableFirstHandSpots: teeTimeResponse.freeSlots > 4 ? 4 : teeTimeResponse.freeSlots,
             availableSecondHandSpots: indexedTeeTime.availableSecondHandSpots,
-            greenFeePerPlayer: teeTimeResponse.greenFee18 ? 18 : teeTimeResponse.greenFee9 ? 9 : 18,
-            cartFeePerPlayer: teeTimeResponse.cartFee18 ? 18 : teeTimeResponse.cartFee9 ? 9 : 18,
+            greenFeePerPlayer: (teeTimeResponse.greenFee18 ? teeTimeResponse.greenFee18 : teeTimeResponse.greenFee9 ? teeTimeResponse.greenFee9 : 0) * 100,
+            cartFeePerPlayer: (teeTimeResponse.cartFee18 ? teeTimeResponse.cartFee18 : teeTimeResponse.cartFee9 ? teeTimeResponse.cartFee9 : 0) * 100,
             greenFeeTaxPerPlayer: indexedTeeTime.greenFeeTax ? indexedTeeTime.greenFeeTax : 0,
             cartFeeTaxPerPlayer: indexedTeeTime.cartFeeTax,
             providerDate: teeTimeResponse.startTime,
@@ -191,10 +191,10 @@ export class clubprophetWebhookService {
             maxPlayersPerBooking: teeTimeResponse.freeSlots,
             availableFirstHandSpots: teeTimeResponse.freeSlots > 4 ? 4 : teeTimeResponse.freeSlots,
             availableSecondHandSpots: 0,
-            greenFeePerPlayer: teeTimeResponse.greenFee18 ? 18 : teeTimeResponse.greenFee9 ? 9 : 18,
-            cartFeePerPlayer: teeTimeResponse.cartFee18 ? 18 : teeTimeResponse.cartFee9 ? 9 : 18,
-            greenFeeTaxPerPlayer: 1223, // hardcode
-            cartFeeTaxPerPlayer: 1223,
+            greenFeePerPlayer: (teeTimeResponse.greenFee18 ? teeTimeResponse.greenFee18 : teeTimeResponse.greenFee9 ? teeTimeResponse.greenFee9 : 0) * 100,
+            cartFeePerPlayer: (teeTimeResponse.cartFee18 ? teeTimeResponse.cartFee18 : teeTimeResponse.cartFee9 ? teeTimeResponse.cartFee9 : 0) * 100,
+            greenFeeTaxPerPlayer: 0, // hardcode
+            cartFeeTaxPerPlayer: 0,
             providerDate: teeTimeResponse.startTime,
             // entityId: entityId ? entityId : "",
           };
@@ -204,6 +204,113 @@ export class clubprophetWebhookService {
       return { insert: teeTimesToInsert, upsert: teeTimesToUpsert, remove: teeTimesToRemove };
     } else {
       console.log("No time times for this day");
+    }
+  };
+
+  indexTeeTime = async (
+    formattedDate: string,
+    providerCourseId: string,
+    provider: ProviderAPI,
+    providerTeeTimeId: string,
+    token: string,
+  ) => {
+    try {
+      const teeTimeResponse = await provider.getTeeTimes(
+        token,
+        providerCourseId,
+        "",
+        "",
+        "",
+        formattedDate
+      ) as unknown as ClubProphetTeeTimeResponse[];
+
+      let teeTime;
+      if (teeTimeResponse && teeTimeResponse.length > 0) {
+        teeTime = teeTimeResponse.find((teeTime) => teeTime.teeSheetId.toString() === providerTeeTimeId);
+      }
+      if (!teeTime) {
+        throw new Error("Tee time not available for booking");
+      }
+
+      const [indexedTeeTime] = await this.database
+        .select({
+          id: teeTimes.id,
+          courseId: teeTimes.courseId,
+          courseProvider: courses.providerId,
+          availableSecondHandSpots: teeTimes.availableSecondHandSpots,
+          entityId: courses.entityId,
+          greenFeeTaxPerPlayer: teeTimes.greenFeeTaxPerPlayer,
+          cartFeeTaxPerPlayer: teeTimes.cartFeeTaxPerPlayer
+        })
+        .from(teeTimes)
+        .leftJoin(courses, eq(courses.id, teeTimes.courseId))
+        .where(eq(teeTimes.providerTeeTimeId, teeTime.teeSheetId.toString()))
+        .execute()
+        .catch((err) => {
+          this.logger.error(err);
+          throw new Error(`Error finding tee time id`);
+        });
+
+      if (indexedTeeTime) {
+        const hours = Number(teeTime.startTime?.split("T")?.[1]?.split(":")?.[0]);
+        const minutes = Number(teeTime.startTime?.split("T")?.[1]?.split(":")?.[1]?.split(":")?.[0]);
+        const militaryTime = hours * 100 + minutes;
+
+        const providerTeeTime = {
+          id: indexedTeeTime.id,
+          courseId: indexedTeeTime.courseId,
+          providerTeeTimeId: String(teeTime.teeSheetId),
+          numberOfHoles: teeTime.is18HoleOnly ? 18 : teeTime.is9HoleOnly ? 9 : 18,
+          date: teeTime.startTime,
+          time: militaryTime,
+          maxPlayersPerBooking: teeTime.freeSlots,
+          availableFirstHandSpots: teeTime.freeSlots > 4 ? 4 : teeTime.freeSlots,
+          availableSecondHandSpots: indexedTeeTime.availableSecondHandSpots,
+          greenFeePerPlayer: (teeTime.greenFee18 ? teeTime.greenFee18 : teeTime.greenFee9 ? teeTime.greenFee9 : 0) * 100,
+          cartFeePerPlayer: (teeTime.cartFee18 ? teeTime.cartFee18 : teeTime.cartFee9 ? teeTime.cartFee9 : 0) * 100,
+          greenFeeTaxPerPlayer: indexedTeeTime.greenFeeTaxPerPlayer ? indexedTeeTime.greenFeeTaxPerPlayer : 0,
+          cartFeeTaxPerPlayer: indexedTeeTime.cartFeeTaxPerPlayer,
+          providerDate: teeTime.startTime,
+        };
+        const providerTeeTimeMatchingKeys = {
+          id: indexedTeeTime.id,
+          providerTeeTimeId: String(teeTime.teeSheetId),
+          numberOfHoles: teeTime.is18HoleOnly ? 18 : teeTime.is9HoleOnly ? 9 : 18,
+          date: teeTime.startTime,
+          time: militaryTime,
+          maxPlayersPerBooking: teeTime.freeSlots,
+          greenFeePerPlayer: (teeTime.greenFee18 ? teeTime.greenFee18 : teeTime.greenFee9 ? teeTime.greenFee9 : 0) * 100,
+          cartFeePerPlayer: (teeTime.cartFee18 ? teeTime.cartFee18 : teeTime.cartFee9 ? teeTime.cartFee9 : 0) * 100,
+          greenFeeTaxPerPlayer: indexedTeeTime.greenFeeTaxPerPlayer ? indexedTeeTime.greenFeeTaxPerPlayer : 0,
+          cartFeeTaxPerPlayer: indexedTeeTime.cartFeeTaxPerPlayer,
+          courseId: indexedTeeTime.courseId,
+          availableFirstHandSpots: teeTime.freeSlots > 4 ? 4 : teeTime.freeSlots,
+          availableSecondHandSpots: indexedTeeTime.availableSecondHandSpots,
+          courseProvider: indexedTeeTime.courseProvider,
+          providerDate: teeTime.startTime,
+          entityId: indexedTeeTime.entityId,
+        };
+        if (isEqual(indexedTeeTime, providerTeeTimeMatchingKeys)) {
+          // no changes to tee time do nothing
+          return;
+        } else {
+          await this.database
+            .update(teeTimes)
+            .set(providerTeeTime)
+            .where(eq(teeTimes.id, indexedTeeTime.id))
+            .execute()
+            .catch((err) => {
+              this.logger.error(err);
+              throw new Error(`Error updating tee time: ${err}`);
+            });
+        }
+      }
+    } catch (error) {
+      this.logger.error(error);
+      // throw new Error(`Error indexing tee time: ${error}`);
+      throw new Error(
+        `We're sorry. This time is no longer available. Someone just booked this. It may take a minute for the sold time you selected to be removed. Please select another time.`
+      );
     }
   };
 

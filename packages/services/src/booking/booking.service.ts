@@ -30,6 +30,7 @@ import type { ProviderAPI } from "../tee-sheet-provider/sheet-providers";
 import type { BookingResponse } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
 import type { TokenizeService } from "../token/tokenize.service";
 import type { LoggerService } from "../webhooks/logging.service";
+import type { ClubProphetBookingResponse } from "../tee-sheet-provider/sheet-providers/types/clubprophet.types";
 
 interface TeeTimeData {
   courseId: string;
@@ -137,7 +138,7 @@ export class BookingService {
     private readonly loggerService: LoggerService,
     private readonly hyperSwitchService: HyperSwitchService,
     private readonly sensibleService: SensibleService
-  ) {}
+  ) { }
 
   createCounterOffer = async (userId: string, bookingIds: string[], offerId: string, amount: number) => {
     //find owner of each booking
@@ -2306,10 +2307,12 @@ export class BookingService {
         date: teeTimes.date,
         providerCourseId: providerCourseLink.providerCourseId,
         providerTeeSheetId: providerCourseLink.providerTeeSheetId,
+        providerConfiguration: providerCourseLink.providerCourseConfiguration,
         providerId: providerCourseLink.providerId,
         internalId: providers.internalId,
         providerDate: teeTimes.providerDate,
         holes: teeTimes.numberOfHoles,
+        providerTeeTimeId: teeTimes.providerTeeTimeId
       })
       .from(teeTimes)
       .leftJoin(courses, eq(teeTimes.courseId, courses.id))
@@ -2334,13 +2337,17 @@ export class BookingService {
     }
 
     console.log(`Retrieving provider and token ${teeTime.internalId}, ${teeTime.courseId}`);
-    let booking: BookingResponse | null = null;
+    let booking: BookingResponse | ClubProphetBookingResponse | null = null;
     let teeProvider: ProviderAPI | null = null;
     let teeToken: string | null = null;
+    let bookedPLayers: { accountNumber: number }[] = [];
+    let bookingData;
+    let providerBookingId = "";
     try {
       const { provider, token } = await this.providerService.getProviderAndKey(
         teeTime.internalId!,
-        teeTime.courseId
+        teeTime.courseId,
+        teeTime.providerConfiguration
       );
       teeProvider = provider;
       teeToken = token;
@@ -2348,30 +2355,28 @@ export class BookingService {
       console.log(
         `Finding or creating customer ${userId}, ${teeTime.courseId}, ${teeTime.providerId}, ${teeTime.providerCourseId}, ${token}`
       );
-      const providerCustomer = await this.providerService.findOrCreateCustomer(
-        teeTime.courseId,
-        teeTime.providerId ?? "",
-        teeTime.providerCourseId!,
-        userId,
-        provider,
-        token
-      );
-      if (!providerCustomer?.playerNumber) {
-        this.logger.error(`Error creating customer`);
-        throw new Error(`Error creating customer`);
-      }
 
-      const bookedPLayers: { accountNumber: number }[] = [
-        {
-          accountNumber: providerCustomer.playerNumber,
-        },
-      ];
+      if (teeTime.internalId === "fore-up") {
+        const providerCustomer = await this.providerService.findOrCreateCustomer(
+          teeTime.courseId,
+          teeTime.providerId ?? "",
+          teeTime.providerCourseId!,
+          userId,
+          provider,
+          token
+        );
+        if (!providerCustomer?.playerNumber) {
+          this.logger.error(`Error creating customer`);
+          throw new Error(`Error creating customer`);
+        }
 
-      console.log(
-        `Creating booking ${teeTime.providerDate}, ${teeTime.holes}, ${playerCount}, ${teeTime.providerCourseId}, ${teeTime.providerTeeSheetId}, ${token}`
-      );
-      booking = await provider
-        .createBooking(token, teeTime.providerCourseId!, teeTime.providerTeeSheetId!, {
+        bookedPLayers = [
+          {
+            accountNumber: providerCustomer.playerNumber,
+          },
+        ];
+
+        bookingData = {
           totalAmountPaid: primaryGreenFeeCharge / 100 + taxCharge - markupCharge,
           data: {
             type: "bookings",
@@ -2384,7 +2389,45 @@ export class BookingService {
               details: "GD Booking",
             },
           },
+        }
+      }
+
+      if (teeTime.internalId === "club-prophet") {
+        const [user] = await this.database.select({
+          name: users.name,
+          email: users.email,
+          phone: users.phoneNumber,
+        }).from(users).where(eq(users.id, userId)).execute().catch((err) => {
+          this.logger.error(err);
+          throw new Error(`Error finding user: ${err}`);
         })
+        if (!user) {
+          throw new Error("User not found");
+        }
+        const [firstName, lastName] = user.name!.split(" ");
+
+        bookingData = {
+          teeSheetId: teeTime.providerTeeTimeId,
+          holes: teeTime.holes,
+          firstName: firstName,
+          lastName: lastName,
+          email: user.email,
+          phone: user.phone,
+          players: playerCount,
+          notes: "GD Booking",
+          pskUserId: 0,
+          terminalId: 0,
+          bookingTypeId: 311,
+          rateCode: "sticks",
+          price: [primaryGreenFeeCharge / 100 + taxCharge - markupCharge],
+        }
+      }
+
+      console.log(
+        `Creating booking ${teeTime.providerDate}, ${teeTime.holes}, ${playerCount}, ${teeTime.providerCourseId}, ${teeTime.providerTeeSheetId}, ${token}`
+      );
+      booking = await provider
+        .createBooking(token, teeTime.providerCourseId!, teeTime.providerTeeSheetId!, bookingData)
         .catch((err) => {
           this.logger.error(err);
           //@TODO this email should be removed
@@ -2414,6 +2457,15 @@ export class BookingService {
       await this.hyperSwitchService.refundPayment(payment_id);
       throw "Booking failed on provider";
     }
+
+    if (teeTime.internalId === "fore-up" && "data" in booking) {
+      providerBookingId = booking.data.id
+    }
+
+    if (teeTime.internalId === "club-prophet" && "reservationId" in booking) {
+      providerBookingId = booking.reservationId.toString()
+    }
+
     console.log(`Creating tokenized booking`);
     //create tokenized bookings
     const bookingId = await this.tokenizeService
@@ -2421,7 +2473,7 @@ export class BookingService {
         userId,
         pricePerGolfer,
         playerCount as number,
-        booking.data.id,
+        providerBookingId,
         teeTimeId as string,
         paymentId as string,
         true,
@@ -2467,7 +2519,7 @@ export class BookingService {
 
     return {
       bookingId,
-      providerBookingId: booking.data.id,
+      providerBookingId,
       status: "Reserved",
     } as ReserveTeeTimeResponse;
   };

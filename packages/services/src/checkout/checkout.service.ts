@@ -172,8 +172,42 @@ export class CheckoutService {
     // debugger;
     console.log("===>", total);
     console.log("===>", parseInt(total.toString()));
-    const paymentIntent = await this.hyperSwitch
-      .createPaymentIntent({
+    const [record] = await this.database
+      .select({
+        internalId: providers.internalId,
+      })
+      .from(providerCourseLink)
+      .innerJoin(providers, eq(providers.id, providerCourseLink.providerId))
+      .where(eq(providerCourseLink.courseId, customerCart.courseId))
+      .execute();
+
+    let paymentData;
+    if (String(record?.internalId) === "club-prophet") {
+      paymentData = {
+        customer_id: customerCart.customerId,
+        confirm: true,
+        amount_to_capture: parseInt(total.toString()),
+        return_url: `${'http://localhost:3000'}/${customerCart.courseId}/checkout/confirmation?teeTimeId=${(customerCart.cart[0] as FirstHandProduct)?.product_data?.metadata?.tee_time_id
+          }`,
+        payment_method: "card_redirect",
+        business_country: "US",
+        payment_method_type: "card_redirect",
+        payment_method_data: {
+          card_redirect: {
+            card_redirect: {},
+          },
+        },
+        routing: {
+          type: "single",
+          data: "prophetpay",
+        },
+        amount: parseInt(total.toString()),
+        currency: "USD",
+        metadata: customerCart,
+        profile_id: process.env.HYPERSWITCH_PROFILE_ID,
+      };
+    } else {
+      paymentData = {
         // @ts-ignore
         customer_id: customerCart.customerId,
         name: user.name,
@@ -184,7 +218,10 @@ export class CheckoutService {
         profile_id: this.profileId,
         // @ts-ignore
         metadata: customerCart.courseId,
-      })
+      };
+    }
+    const paymentIntent = await this.hyperSwitch
+      .createPaymentIntent(paymentData)
       .catch((err) => {
         this.logger.error(` ${err}`);
         throw new Error(`Error creating payment intent: ${err}`);
@@ -359,6 +396,7 @@ export class CheckoutService {
         providerTeeSheetId: providerCourseLink.providerTeeSheetId,
         providerCourseConfiguration: providerCourseLink.providerCourseConfiguration,
         providerId: providerCourseLink.providerId,
+        providerTeeTimeId: teeTimes.providerTeeTimeId,
         internalId: providers.internalId,
         time: teeTimes.time,
       })
@@ -395,28 +433,21 @@ export class CheckoutService {
 
     const [formattedDate] = teeTime.date.split(" ");
 
-    let responseFromIndexer: any = null;
     if (provider.providerId === "club-prophet") {
-      responseFromIndexer = await this.clubProphetWebhook
-        .indexDay(
+      await this.clubProphetWebhook
+        .indexTeeTime(
           formattedDate!,
           teeTime.providerCourseId!,
-          teeTime.courseId,
-          teeTime.providerTeeSheetId!,
           provider,
+          teeTime.providerTeeTimeId,
           token,
         )
         .catch((err) => {
-          console.log("err in indexer ======>", err.error);
+          console.log("err in index ======>", err.error);
           throw new Error(`Error indexing day ${formattedDate} please return to course page`);
         });
     }
 
-    const { insert, upsert, remove } = responseFromIndexer;
-
-    if (insert.length > 0 && upsert.length > 0 && remove.length > 0) {
-      return errors;
-    }
     if (teeTime.providerCourseId && teeTime.providerTeeSheetId && formattedDate) {
       await this.foreupIndexer.indexTeeTime(
         formattedDate,

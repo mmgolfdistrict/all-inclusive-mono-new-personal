@@ -47,7 +47,7 @@ export class ProviderService extends CacheService {
   ) {
     super(redisUrl, redisToken, Logger(ProviderService.name));
     //this will need to be refactored to allow for providers with different credentials per course
-    this.teeSheetProviders = [new foreUp(foreUpCredentials), new clubprophet()];
+    this.teeSheetProviders = [new foreUp(foreUpCredentials), new clubprophet(providerConfiguration)];
   }
 
   /**
@@ -81,7 +81,7 @@ export class ProviderService extends CacheService {
       await this.setCache(
         `provider-${internalProviderIdentifier}-${courseId}-${process.env.NODE_ENV}`,
         token,
-        24 * 60 * 60
+        60 * 60
       );
     }
     return {

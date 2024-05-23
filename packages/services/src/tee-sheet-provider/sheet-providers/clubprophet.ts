@@ -5,17 +5,18 @@ import type {
   ClubProphetBookingResponse,
   ClubProphetTeeTimeResponse
 } from "./types/clubprophet.types";
-import {
-  TeeTimeResponseClubProphet,
-} from "./types/clubprophet.types";
 import type { CustomerData, TeeTimeUpdateRequest } from "./types/foreup.type";
 import { BaseProvider } from "./types/interface";
 import Logger from "@golf-district/shared/src/logger";
 
 export class clubprophet {
   providerId = "club-prophet";
-  public providerConfiguration: any;
+  public providerConfiguration: string;
   logger = Logger(clubprophet.name);
+
+  constructor(providerConfiguration: string) {
+    this.providerConfiguration = providerConfiguration;
+  }
 
   async getTeeTimes(
     token: string,
@@ -35,7 +36,7 @@ export class clubprophet {
     //   date: string
     // ): Promise<ClubProphetTeeTimeResponse[]> {
     const { CONTENT_TYPE, CLIENT_ID, CLIENT_SECRET, API_KEY, TOKEN_ENDPOINT, TEESHEET_ENDPOINT } = JSON.parse(
-      this.providerConfiguration
+      this.providerConfiguration ?? "{}"
     );
 
     const url = TEESHEET_ENDPOINT;
@@ -88,6 +89,9 @@ export class clubprophet {
 
     const headers = this.getHeaders(token);
 
+    console.log("createBooking - ", url);
+    console.log(data)
+
     const response = await fetch(url, {
       method: "POST",
       headers: headers,
@@ -99,6 +103,7 @@ export class clubprophet {
         // this.logger.error(`Error creating booking: ${response.statusText}`);
         await this.getToken();
       }
+      console.dir(response, { depth: null });
       throw new Error(`Error creating booking: ${JSON.stringify(response)}`);
     }
 
@@ -114,7 +119,7 @@ export class clubprophet {
   ): Promise<ClubProphetBookingResponse> {
     const endpoint = this.getBasePoint();
     console.log("update teetime called");
-    // https://api.foreupsoftware.com/api_rest/index.php/courses/courseId/teesheets/teesheetId/bookings/bookingId/bookedPlayers/bookedPlayerId
+
     const url = `${endpoint}/courses/${courseId}/teesheets/${teesheetId}/bookings/${bookingId}/bookedPlayers/${bookingId}-1`;
     // console.log(url);
 
@@ -140,7 +145,7 @@ export class clubprophet {
 
   getToken = async (): Promise<string> => {
     const { CONTENT_TYPE, CLIENT_ID, CLIENT_SECRET, API_KEY, TOKEN_ENDPOINT } = JSON.parse(
-      this.providerConfiguration
+      this.providerConfiguration ?? "{}"
     );
 
     const response = await fetch(`${TOKEN_ENDPOINT}`, {
@@ -163,7 +168,7 @@ export class clubprophet {
   };
 
   private getHeaders(token: string) {
-    const { CONTENT_TYPE, CLIENT_ID, CLIENT_SECRET, X_Component_Id } = JSON.parse(this.providerConfiguration);
+    const { CONTENT_TYPE, CLIENT_ID, CLIENT_SECRET, X_Component_Id } = JSON.parse(this.providerConfiguration ?? "{}");
     return {
       "Content-Type": CONTENT_TYPE,
       Authorization: `bearer ${token}`,
@@ -174,15 +179,15 @@ export class clubprophet {
   }
 
   private getBasePoint(): string {
-    const { TOKEN_ENDPOINT } = JSON.parse(this.providerConfiguration);
+    const { BASE_ENDPOINT } = JSON.parse(this.providerConfiguration ?? "{}");
 
     switch (process.env.NODE_ENV) {
       case "development":
-        return TOKEN_ENDPOINT;
+        return BASE_ENDPOINT;
       case "production":
-        return TOKEN_ENDPOINT;
+        return BASE_ENDPOINT;
       default:
-        return TOKEN_ENDPOINT;
+        return BASE_ENDPOINT;
     }
   }
 
