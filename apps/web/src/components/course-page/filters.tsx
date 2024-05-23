@@ -304,11 +304,7 @@ export const Filters = () => {
             Price Range <span className="font-[300]">(per golfer)</span>
           </div>
           <div>
-            $
-            {localPriceRange[0] +
-              (course?.markupFeesFixedPerPlayer
-                ? course?.markupFeesFixedPerPlayer / 100
-                : 0)}
+            ${localPriceRange[0]}
             -${localPriceRange[1]}
           </div>
         </div>

@@ -132,10 +132,10 @@ export class CourseService extends DomainService {
 
     const res = {
       ...result,
-      highestListedTeeTime: result.highestListedTeeTime ?? 0,
-      lowestListedTeeTime: result.lowestListedTeeTime ?? 0,
-      highestPrimarySaleTeeTime: result.highestPrimarySaleTeeTime ?? 0,
-      lowestPrimarySaleTeeTime: result.lowestPrimarySaleTeeTime ?? 0,
+      highestListedTeeTime: (result.highestListedTeeTime ?? 0) / 100,
+      lowestListedTeeTime: (result.lowestListedTeeTime ?? 0) / 100,
+      highestPrimarySaleTeeTime: (result.highestPrimarySaleTeeTime ?? 0) / 100,
+      lowestPrimarySaleTeeTime: (result.lowestPrimarySaleTeeTime ?? 0) / 100,
     };
 
     if (result.supportCharity) {

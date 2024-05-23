@@ -6,6 +6,7 @@ import { bookings } from "@golf-district/database/schema/bookings";
 import { bookingslots } from "@golf-district/database/schema/bookingslots";
 import { courses } from "@golf-district/database/schema/courses";
 import { customerCarts } from "@golf-district/database/schema/customerCart";
+import { entities } from "@golf-district/database/schema/entities";
 import type { InsertList } from "@golf-district/database/schema/lists";
 import { lists } from "@golf-district/database/schema/lists";
 import { offers } from "@golf-district/database/schema/offers";
@@ -21,6 +22,7 @@ import { currentUtcTimestamp, dateToUtcTimestamp } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
 import dayjs from "dayjs";
 import { alias } from "drizzle-orm/mysql-core";
+import { appSettingService } from "../app-settings/initialized";
 import type { CustomerCart, ProductData } from "../checkout/types";
 import type { NotificationService } from "../notification/notification.service";
 import type { HyperSwitchService } from "../payment-processor/hyperswitch.service";
@@ -377,6 +379,16 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving tee time history: ${err}`);
+        this.loggerService.errorLog({
+          applicationName: "golfdistrict-foreup",
+          clientIP: "",
+          userId: "",
+          url: "/getTeeTimeHistory",
+          userAgent: "",
+          message: "ERROR_RETRIEVING_TEE_TIME_HISTORY",
+          stackTrace: "",
+          additionalDetailsJSON: "Error retrieving tee time history",
+        });
         throw new Error("Error retrieving tee time history");
       });
     if (!data.length) {
@@ -422,6 +434,16 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving bookings: ${err}`);
+        this.loggerService.errorLog({
+          applicationName: "golfdistrict-foreup",
+          clientIP: "",
+          userId,
+          url: "/getOwnedBookingsForTeeTime",
+          userAgent: "",
+          message: "ERROR_GETTING_OWNED_BOOKING",
+          stackTrace: "",
+          additionalDetailsJSON: "error getting owned booking",
+        });
         throw new Error("Error retrieving bookings");
       });
     if (!data.length) {
@@ -505,6 +527,16 @@ export class BookingService {
       .execute();
     if (!data.length) {
       this.logger.info(`No tee times found for user: ${userId}`);
+      this.loggerService.errorLog({
+        applicationName: "golfdistrict-foreup",
+        clientIP: "",
+        userId,
+        url: "/getOwnedTeeTimes",
+        userAgent: "",
+        message: "Error_FINDING_TEE_TIME ",
+        stackTrace: "",
+        additionalDetailsJSON: `No tee times found for user: ${userId}`,
+      });
       return [];
     }
     const combinedData: Record<string, OwnedTeeTimeData> = {};
@@ -696,14 +728,15 @@ export class BookingService {
     this.logger.info(`createListingForBookings called with userId: ${userId}`);
     if (new Date().getTime() >= endTime.getTime()) {
       this.logger.warn("End time cannot be before current time");
-      this.loggerService.auditLog({
-        id: randomUUID(),
+      this.loggerService.errorLog({
+        applicationName: "golfdistrict-foreup",
+        clientIP: "",
         userId,
-        teeTimeId: "",
-        bookingId: "",
-        listingId: "",
-        eventId: "TEE_TIME_LISTED_FAILED",
-        json: "End time cannot be before current time.",
+        url: "/createListingForBookings",
+        userAgent: "",
+        message: "TEE_TIME_LISTED_FAILED",
+        stackTrace: "",
+        additionalDetailsJSON: "End time cannot be before current time.",
       });
       throw new Error("End time cannot be before current time");
     }
@@ -731,47 +764,40 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving bookings: ${err}`);
-        this.loggerService.auditLog({
-          id: randomUUID(),
-          userId,
-          teeTimeId: "",
-          bookingId: "",
-          listingId: "",
-          eventId: "TEE_TIME_LISTED_FAILED",
-          json: "Error retrieving bookings.",
-        });
         throw new Error("Error retrieving bookings");
       });
     if (!ownedBookings.length) {
       this.logger.debug(`Owned bookings: ${JSON.stringify(ownedBookings)}`);
       this.logger.warn(`User ${userId} does not own  specified bookings.`);
-      this.loggerService.auditLog({
-        id: randomUUID(),
-        userId,
-        teeTimeId: "",
-        bookingId: "",
-        listingId: "",
-        eventId: "TEE_TIME_LISTED_FAILED",
-        json: "User does not  own specified bookings.",
-      });
       throw new Error("User does not  own specified bookings.");
     }
     if (ownedBookings.length > 4) {
       this.logger.warn(`Cannot list more than 4 bookings.`);
-      this.loggerService.auditLog({
-        id: randomUUID(),
+      this.loggerService.errorLog({
+        applicationName: "golfdistrict-foreup",
+        clientIP: "",
         userId,
-        teeTimeId: "",
-        bookingId: "",
-        listingId: "",
-        eventId: "TEE_TIME_LISTED_FAILED",
-        json: "Cannot list more than 4 bookings.",
+        url: "/createListingForBookings",
+        userAgent: "",
+        message: "TEE_TIME_LISTED_FAILED",
+        stackTrace: "",
+        additionalDetailsJSON: "Cannot list more than 4 bookings.",
       });
       throw new Error("Cannot list more than 4 bookings.");
     }
     for (const booking of ownedBookings) {
       if (booking.isListed) {
         this.logger.warn(`Booking ${booking.id} is already listed.`);
+        this.loggerService.errorLog({
+          applicationName: "golfdistrict-foreup",
+          clientIP: "",
+          userId,
+          url: "/createListingForBookings",
+          userAgent: "",
+          message: "TEE_TIME_LISTED_FAILED",
+          stackTrace: "",
+          additionalDetailsJSON: "One or more bookings from this tee time is already listed",
+        });
         throw new Error(`One or more bookings from this tee time is already listed.`);
       }
     }
@@ -844,17 +870,6 @@ export class BookingService {
       `Listing creation successful`,
       courseId
     );
-
-    this.loggerService.auditLog({
-      id: randomUUID(),
-      userId,
-      teeTimeId: "",
-      bookingId: "",
-      listingId: "",
-      eventId: "TEE_TIME_LISTED",
-      json: "TEE_TIME_LISTED",
-    });
-
     return { success: true, body: { listingId: toCreate.id }, message: "Listings created successfully." };
   };
 
@@ -885,6 +900,16 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving listing: ${err}`);
+        this.loggerService.errorLog({
+          applicationName: "golfdistrict-foreup",
+          clientIP: "",
+          userId,
+          url: "/cancelListing",
+          userAgent: "",
+          message: "TEE_TIME_CANCELLED",
+          stackTrace: "",
+          additionalDetailsJSON: "Error retrieving listing.",
+        });
         throw new Error("Error retrieving listing");
       });
     if (!listing) {
@@ -2230,7 +2255,12 @@ export class BookingService {
     return true;
   };
 
-  sendMessageToVerifyPayment = async (paymentId: string, customer_id: string, bookingId: string) => {
+  sendMessageToVerifyPayment = async (
+    paymentId: string,
+    customer_id: string,
+    bookingId: string,
+    redirectHref: string
+  ) => {
     const myHeaders = new Headers();
     myHeaders.append("Authorization", `Bearer ${process.env.QSTASH_TOKEN}`);
     myHeaders.append("Content-Type", "application/json");
@@ -2240,12 +2270,14 @@ export class BookingService {
         paymentId,
         customer_id,
         bookingId,
+        redirectHref,
       },
     });
     console.log("Sending message to payment queue", {
       paymentId,
       customer_id,
       bookingId,
+      redirectHref,
       url: `https://qstash.upstash.io/v2/publish/${process.env.QSTASH_PAYMENT_TOPIC}`,
     });
     const requestOptions: RequestOptions = {
@@ -2266,7 +2298,13 @@ export class BookingService {
     }
   };
 
-  reserveBooking = async (userId: string, cartId: string, payment_id: string, sensibleQuoteId: string) => {
+  reserveBooking = async (
+    userId: string,
+    cartId: string,
+    payment_id: string,
+    sensibleQuoteId: string,
+    redirectHref: string
+  ) => {
     const {
       cart,
       playerCount,
@@ -2312,10 +2350,18 @@ export class BookingService {
         internalId: providers.internalId,
         providerDate: teeTimes.providerDate,
         holes: teeTimes.numberOfHoles,
+        cdn: assets.cdn,
+        cdnKey: assets.key,
+        extension: assets.extension,
+        websiteURL: courses.websiteURL,
+        courseName: courses.name,
+        entityName: entities.name,
         providerTeeTimeId: teeTimes.providerTeeTimeId
       })
       .from(teeTimes)
       .leftJoin(courses, eq(teeTimes.courseId, courses.id))
+      .leftJoin(assets, eq(assets.id, courses.logoId))
+      .leftJoin(entities, eq(courses.entityId, entities.id))
       .leftJoin(
         providerCourseLink,
         and(
@@ -2351,7 +2397,6 @@ export class BookingService {
       );
       teeProvider = provider;
       teeToken = token;
-
       console.log(
         `Finding or creating customer ${userId}, ${teeTime.courseId}, ${teeTime.providerId}, ${teeTime.providerCourseId}, ${token}`
       );
@@ -2376,6 +2421,19 @@ export class BookingService {
           },
         ];
 
+        console.log(
+          `Creating booking ${teeTime.providerDate}, ${teeTime.holes}, ${playerCount}, ${teeTime.providerCourseId}, ${teeTime.providerTeeSheetId}, ${token}`
+        );
+        let details = "GD Booking";
+        //TODO: need to check if course supports sensible or not
+        try {
+          const isSensibleNoteAvailable = await appSettingService.get("SENSIBLE_NOTE_TO_TEE_SHEET");
+          if (weatherQuoteId && isSensibleNoteAvailable) {
+            details = `${details}: ${isSensibleNoteAvailable}`;
+          }
+        } catch (e) {
+          console.log("ERROR in getting appsetting SENSIBLE_NOTE_TO_TEE_SHEET");
+        }
         bookingData = {
           totalAmountPaid: primaryGreenFeeCharge / 100 + taxCharge - markupCharge,
           data: {
@@ -2386,7 +2444,7 @@ export class BookingService {
               players: playerCount,
               bookedPlayers: bookedPLayers,
               event_type: "tee_time",
-              details: "GD Booking",
+              details,
             },
           },
         }
@@ -2445,6 +2503,32 @@ export class BookingService {
         });
     } catch (e) {
       console.log("BOOKING FAILED ON PROVIDER, INITIATING REFUND FOR PAYMENT_ID", payment_id);
+
+      await this.hyperSwitchService.refundPayment(payment_id);
+
+      const [user] = await this.database.select().from(users).where(eq(users.id, userId));
+      if (!user) {
+        this.logger.warn(`User not found: ${userId}`);
+        throw new Error("User not found");
+      }
+
+      const template = {
+        CustomerFirstName: user?.handle ?? user.name ?? "",
+        CourseLogoURL: `https://${teeTime?.cdn}/${teeTime?.cdnKey}.${teeTime?.extension}`,
+        CourseURL: teeTime?.websiteURL || "",
+        CourseName: teeTime?.courseName || "-",
+        FacilityName: teeTime?.entityName || "-",
+        PlayDateTime: dayjs(teeTime?.providerDate).utcOffset("-06:00").format("MM/DD/YYYY h:mm A") || "-",
+      };
+      await this.notificationService.createNotification(
+        userId || "",
+        "Refund Initiated",
+        "Refund Initiated",
+        teeTime?.courseId,
+        process.env.SENDGRID_REFUND_EMAIL_TEMPLATE_ID ?? "d-79ca4be6569940cdb19dd2b607c17221",
+        template
+      );
+
       this.loggerService.auditLog({
         id: randomUUID(),
         userId,
@@ -2454,7 +2538,7 @@ export class BookingService {
         eventId: "REFUND_INITIATED",
         json: `{paymentId:${payment_id}}`,
       });
-      await this.hyperSwitchService.refundPayment(payment_id);
+
       throw "Booking failed on provider";
     }
 
@@ -2470,6 +2554,7 @@ export class BookingService {
     //create tokenized bookings
     const bookingId = await this.tokenizeService
       .tokenizeBooking(
+        redirectHref,
         userId,
         pricePerGolfer,
         playerCount as number,
@@ -2503,9 +2588,20 @@ export class BookingService {
           "An error occurred while creating booking with provider",
           teeTime.courseId
         );
+        this.loggerService.errorLog({
+          applicationName: "golfdistrict-foreup",
+          clientIP: "ip-need to fix",
+          userId: userId,
+          url: "/handleSecondHandItem",
+          userAgent: "",
+          message: "Error booking tee time golf district",
+          stackTrace: "",
+          additionalDetailsJSON: "ERROR CREATING BOOKING GOLFDISTRICT",
+        });
         throw new Error(`Error creating booking`);
       });
-    await this.sendMessageToVerifyPayment(paymentId as string, userId, bookingId);
+
+    await this.sendMessageToVerifyPayment(paymentId as string, userId, bookingId, redirectHref);
 
     this.loggerService.auditLog({
       id: randomUUID(),
@@ -2589,7 +2685,13 @@ export class BookingService {
       });
     }
   };
-  reserveSecondHandBooking = async (userId = "", cartId = "", listingId = "", payment_id = "") => {
+  reserveSecondHandBooking = async (
+    userId = "",
+    cartId = "",
+    listingId = "",
+    payment_id = "",
+    redirectHref = ""
+  ) => {
     const {
       cart,
       playerCount,
@@ -2708,7 +2810,7 @@ export class BookingService {
           this.logger.error(err);
         });
     });
-    await this.sendMessageToVerifyPayment(payment_id, userId, bookingId);
+    await this.sendMessageToVerifyPayment(payment_id, userId, bookingId, redirectHref);
 
     this.loggerService.auditLog({
       id: randomUUID(),

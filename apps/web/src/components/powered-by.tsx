@@ -7,7 +7,7 @@ export const PoweredBy = (props: ComponentProps<"div">) => {
       className="flex flex-col items-center justify-center md:flex-row md:gap-1"
       {...props}
     >
-      <div className="text-[10px] text-primary-gray md:text-[12px]">
+      <div className="text-[10px] text-primary-black md:text-[12px]">
         Powered by
       </div>
       <GolfDistrict

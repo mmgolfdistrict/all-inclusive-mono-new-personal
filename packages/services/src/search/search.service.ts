@@ -548,7 +548,6 @@ export class SearchService {
     _userId?: string
   ) {
     const userId = _userId ?? "00000000-0000-0000-0000-000000000000";
-
     const limit = (cursor ?? 1) * take;
 
     const minDateSubquery = dayjs(minDate).utc().hour(0).minute(0).second(0).millisecond(0).toISOString();
@@ -640,7 +639,7 @@ export class SearchService {
       .where(
         and(
           and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
-          between(teeTimes.greenFeePerPlayer, lowerPrice, upperPrice),
+          // between(teeTimes.greenFeePerPlayer, lowerPrice, upperPrice),
           gte(teeTimes.providerDate, currentTimePlus30Min),
           between(teeTimes.providerDate, startDate, endDate),
           eq(teeTimes.courseId, courseId),
@@ -739,7 +738,7 @@ export class SearchService {
       .where(
         and(
           and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
-          between(lists.listPrice, lowerPrice, upperPrice),
+          // between(lists.listPrice, lowerPrice, upperPrice),
           gte(teeTimes.providerDate, currentTimePlus30Min),
           between(teeTimes.providerDate, startDate, endDate),
           eq(teeTimes.courseId, courseId),
@@ -813,8 +812,13 @@ export class SearchService {
     //combine first and second hand results according to sort params
     const combinedResults = [...firstHandResults, ...secondHandResults];
 
+    const combinedResultsInRange = combinedResults.filter((teeTime) => {
+      const totalFee = teeTime.pricePerGolfer;
+      return totalFee >= lowerPrice && totalFee <= upperPrice;
+    });
+
     //sort combined results
-    const sortedResults = combinedResults.sort((a, b) => {
+    const sortedResults = combinedResultsInRange.sort((a, b) => {
       if (sortPrice === "desc") {
         return b.pricePerGolfer - a.pricePerGolfer;
       } else if (sortTime === "desc") {
@@ -827,7 +831,6 @@ export class SearchService {
     });
 
     const totalCount = firstHandCount + secondHandCount;
-
     return { results: sortedResults, cursor, count: totalCount };
   }
 

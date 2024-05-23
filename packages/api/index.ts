@@ -206,7 +206,8 @@ export const processHyperSwitchWebhook = async (req: any) => {
     bookingService,
     sensibleService,
     loggerService,
-    process.env.QSTASH_TOKEN!
+    process.env.QSTASH_TOKEN!,
+    hyperswitchService
   );
   await hyperSwitchWebhookService.processWebhook(req).catch((error) => {
     console.log(error);
