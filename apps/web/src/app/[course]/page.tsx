@@ -273,7 +273,7 @@ export default function CourseHomePage() {
         className="px-4 md:px-6"
       /> */}
       <CourseBanner className="pt-4" />
-      <section className="relative flex gap-8 pl-0 pt-6 md:pl-6 md:pt-8 mx-auto w-full mb-[-1.5rem]">
+      <section className="relative flex gap-8 pl-0 pt-6 md:pl-6 md:pt-8 mx-auto w-full">
         <div
           ref={scrollRef}
           className="absolute -top-[7.5rem] md:-top-[9.2rem]"
@@ -344,7 +344,7 @@ export default function CourseHomePage() {
                 </ViewportList>
               </div>
               {daysData.amountOfPages > 1 && count > 0 ? (
-                <div className="flex items-center justify-center gap-2">
+                <div className="flex items-center justify-center gap-2 pt-1 md:pt-0 md:pb-4">
                   <FilledButton
                     className={`!px-3 !py-2 !min-w-fit !rounded-md ${
                       pageNumber === 1 ? "opacity-50 cursor-not-allowed" : ""
