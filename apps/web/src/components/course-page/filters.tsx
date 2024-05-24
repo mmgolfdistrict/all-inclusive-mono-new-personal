@@ -69,18 +69,18 @@ export const Filters = () => {
   const highestPrice = useMemo(() => {
     if (!course) return 0;
     if (course.highestListedTeeTime > course.highestPrimarySaleTeeTime) {
-      return course.highestListedTeeTime * 2;
+      return Math.ceil(course.highestListedTeeTime/10)*10;
     } else {
-      return course.highestPrimarySaleTeeTime * 2;
+      return Math.ceil(course.highestPrimarySaleTeeTime/10)*10;
     }
   }, [course]);
 
   const lowestPrice = useMemo(() => {
     if (!course) return 0;
     if (course.lowestListedTeeTime < course.lowestPrimarySaleTeeTime) {
-      return course.lowestListedTeeTime;
+      return Math.floor(course.lowestListedTeeTime/10)*10;
     } else {
-      return course.lowestPrimarySaleTeeTime;
+      return Math.floor(course.lowestPrimarySaleTeeTime/10)*10;
     }
   }, [course]);
 
