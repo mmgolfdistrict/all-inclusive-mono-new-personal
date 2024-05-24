@@ -34,5 +34,5 @@ RUN npm install
 RUN npm run build
 
 # Run the Application
-CMD [ "npm", "run dev" ]
+CMD [ "npm", "start" ]
 
