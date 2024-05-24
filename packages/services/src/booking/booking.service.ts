@@ -2352,6 +2352,7 @@ export class BookingService {
         websiteURL: courses.websiteURL,
         courseName: courses.name,
         entityName: entities.name,
+        isWebhookAvailable: providerCourseLink.isWebhookAvailable,
       })
       .from(teeTimes)
       .leftJoin(courses, eq(teeTimes.courseId, courses.id))
@@ -2524,7 +2525,8 @@ export class BookingService {
           charityId,
           weatherQuoteId,
           cartId,
-        }
+        },
+        teeTime?.isWebhookAvailable ?? false
       )
       .catch(async (err) => {
         this.logger.error(err);

@@ -837,6 +837,9 @@ export class HyperSwitchWebhookService {
         providerDate: teeTimes.providerDate,
         address: courses.address,
         websiteURL: courses.websiteURL,
+        cartFeePerPlayer: teeTimes.cartFeePerPlayer,
+        greenFeeTaxPerPlayer: teeTimes.greenFeeTaxPerPlayer,
+        cartFeeTaxPerPlayer: teeTimes.cartFeeTaxPerPlayer,
       })
       .from(teeTimes)
       .where(eq(teeTimes.id, firstBooking.teeTimeId))
@@ -866,12 +869,19 @@ export class HyperSwitchWebhookService {
         console.log("ERROR in getting appsetting SENSIBLE_NOTE_TO_TEE_SHEET");
       }
       let newBooking: BookingResponse | null = null;
+      const greenFee = existingTeeTime?.greenFee ?? 0;
+      const greenFeeTaxPerPlayer = existingTeeTime?.greenFeeTaxPerPlayer ?? 0;
+      const cartFeePerPlayer = existingTeeTime?.cartFeePerPlayer ?? 0;
+      const cartFeeTaxPerPlayer = existingTeeTime?.cartFeeTaxPerPlayer ?? 0;
+
+      const totalAmount = (greenFee + greenFeeTaxPerPlayer + cartFeePerPlayer + cartFeeTaxPerPlayer) / 100;
       try {
         newBooking = await provider.createBooking(
           token,
           firstBooking.providerCourseId!,
           firstBooking.providerTeeSheetId!,
           {
+            totalAmountPaid: totalAmount * (listedSlotsCount ?? 1),
             data: {
               type: "bookings",
               attributes: {
@@ -942,6 +952,7 @@ export class HyperSwitchWebhookService {
           firstBooking.providerCourseId!,
           firstBooking.providerTeeSheetId!,
           {
+            totalAmountPaid: totalAmount * (listedBooking.length - listedSlotsCount),
             data: {
               type: "bookings",
               attributes: {
