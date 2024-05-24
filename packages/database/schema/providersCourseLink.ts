@@ -1,6 +1,6 @@
 import type { InferSelectModel } from "drizzle-orm";
 import { relations, sql } from "drizzle-orm";
-import { datetime, primaryKey, text, varchar } from "drizzle-orm/mysql-core";
+import { boolean, datetime, primaryKey, text, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 import { courses } from "./courses";
 import { providers } from "./providers";
@@ -26,6 +26,7 @@ export const providerCourseLink = mySqlTable(
     createdDateTime: datetime("createdDateTime", { mode: "string", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
+    isWebhookAvailable: boolean("isWebhookAvailable").default(false),
   },
   (table) => {
     return {

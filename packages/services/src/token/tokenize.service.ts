@@ -160,7 +160,8 @@ export class TokenizeService {
       providerDate: string;
       holes: number;
     },
-    normalizedCartData?: any
+    normalizedCartData?: any,
+    isWebhookAvailable?: boolean
   ): Promise<string> {
     this.logger.info(`tokenizeBooking tokenizing booking id: ${providerTeeTimeId} for user: ${userId}`);
     //@TODO add this to the transaction
@@ -368,15 +369,17 @@ export class TokenizeService {
           this.logger.error(err);
           tx.rollback();
         });
-      // commenting this out as the webhook is already updating the available firsthandslots: Revisit this
-      // await tx
-      //   .update(teeTimes)
-      //   .set({
-      //     availableSecondHandSpots: existingTeeTime.availableSecondHandSpots + players,
-      //     availableFirstHandSpots: existingTeeTime.availableFirstHandSpots - players,
-      //   })
-      //   .where(eq(teeTimes.id, existingTeeTime.id))
-      //   .execute();
+      if (!isWebhookAvailable) {
+        await tx
+          .update(teeTimes)
+          .set({
+            availableSecondHandSpots: existingTeeTime.availableSecondHandSpots + players,
+            availableFirstHandSpots: existingTeeTime.availableFirstHandSpots - players,
+          })
+          .where(eq(teeTimes.id, existingTeeTime.id))
+          .execute();
+      }
+
       await tx
         .insert(transfers)
         .values(transfersToCreate)
