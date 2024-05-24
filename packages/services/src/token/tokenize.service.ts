@@ -203,14 +203,13 @@ export class TokenizeService {
     if (!existingTeeTime) {
       //how has a booking been created for a tee time that does not exist? big problem
       this.logger.fatal(`TeeTime with ID: ${providerTeeTimeId} does not exist.`);
-      this.loggerService.auditLog({
-        id: randomUUID(),
-        userId,
-        teeTimeId: "",
-        bookingId: "",
-        listingId: "",
-        eventId: "TEE_TIME_NOT_FOUND",
-        json: `TeeTime with ID: ${providerTeeTimeId} does not exist.`,
+      this.loggerService.errorLog({
+        userId: userId,
+        url: "/reserveBooking",
+        userAgent: "",
+        message: "TEE TIME NOT FOUND",
+        stackTrace: `TeeTime with ID: ${providerTeeTimeId} does not exist.`,
+        additionalDetailsJSON: "",
       });
       throw new Error(`TeeTime with ID: ${providerTeeTimeId} does not exist.`);
     }
@@ -393,8 +392,8 @@ export class TokenizeService {
       teeTimeId: existingTeeTime?.id,
       bookingId,
       listingId: "",
-      eventId: "TEE_TIME_BOOKED",
-      json: "tee time booked",
+      eventId: "TEE_TIME_PURCHASED",
+      json: "Tee time purchased",
     });
 
     const message = `

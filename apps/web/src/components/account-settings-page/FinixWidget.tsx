@@ -24,8 +24,8 @@ const FinixForm = ({ onClose, setLoading, loading }) => {
       teeTimeId: "",
       bookingId: "",
       listingId: "",
-      eventId: "FINIX_WEB_HOOK",
-      json: `finix webhook `,
+      eventId: "FINIX_WEB_HOOK_CASHOUT_TRANSFERED",
+      json: `Cashout transfered to user id ${user?.id} `,
     });
   };
 

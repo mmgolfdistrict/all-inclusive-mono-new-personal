@@ -56,8 +56,8 @@ export const CheckoutForm = ({
       teeTimeId: teeTimeId,
       bookingId: "",
       listingId: listingId,
-      eventId: "TEE_TIME_PURCHASED",
-      json: `TEE_TIME_PURCHASED`,
+      eventId: "TEE_TIME_PAY_NOW_CLICKED",
+      json: `TEE_TIME_PAY_NOW_CLICKED`,
     });
   };
 
