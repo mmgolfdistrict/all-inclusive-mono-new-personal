@@ -15,8 +15,8 @@ interface AuditLog {
 }
 
 interface ErrorLog {
-  applicationName: string;
-  clientIP: string;
+  applicationName?: string;
+  clientIP?: string;
   userId: string;
   url: string;
   userAgent: string;
@@ -52,7 +52,8 @@ export class LoggerService {
     }
   };
   errorLog = async (data: ErrorLog, ip: string = "") => {
-    data.ip = ip;
+    data.clientIP = ip;
+    data.applicationName = process.env.APPLICATION_NAME ?? "";
     try {
       const res = await fetch(`${process.env.QSTASH_BASE_URL}${process.env.QSTASH_AUDIT_ERROR_LOG_TOPIC}`, {
         method: "POST",
