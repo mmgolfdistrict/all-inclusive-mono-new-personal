@@ -26,7 +26,7 @@ export const providerCourseLink = mySqlTable(
     createdDateTime: datetime("createdDateTime", { mode: "string", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
-    isWebhookAvailable: boolean("isWebhookAvailable").default(false),
+    isWebhookAvailable: boolean("isWebhookAvailable").default(true),
   },
   (table) => {
     return {
