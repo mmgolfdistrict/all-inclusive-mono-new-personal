@@ -900,7 +900,7 @@ export class HyperSwitchWebhookService {
           eventId: "REFUND_INITIATED",
           json: `{paymentId:${paymentId}}`,
         });
-        
+
         this.loggerService.errorLog({
           userId: customer_id,
           url: "/handleSecondHandItem",
@@ -1099,8 +1099,8 @@ export class HyperSwitchWebhookService {
       }
 
       this.loggerService.auditLog({
-        userId:customer_id,
-        teeTimeId: existingTeeTime?.id??"",
+        userId: customer_id,
+        teeTimeId: existingTeeTime?.id ?? "",
         bookingId,
         listingId: "",
         eventId: "TEE_TIME_PURCHASED",

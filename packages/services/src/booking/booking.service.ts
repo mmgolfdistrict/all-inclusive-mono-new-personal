@@ -2602,7 +2602,9 @@ export class BookingService {
             url: "/confirmBooking",
             userAgent: "",
             message: "ERROR CONFIRMING BOOKING",
-            stackTrace: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${booking?.teeTimeId ?? ""}`,
+            stackTrace: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${
+              booking?.teeTimeId ?? ""
+            }`,
             additionalDetailsJSON: err,
           });
         });

@@ -53,7 +53,7 @@ export class LoggerService {
   };
   errorLog = async (data: ErrorLog, ip: string = "") => {
     data.clientIP = ip;
-    data.applicationName=process.env.APPLICATION_NAME??"";
+    data.applicationName = process.env.APPLICATION_NAME ?? "";
     try {
       const res = await fetch(`${process.env.QSTASH_BASE_URL}${process.env.QSTASH_AUDIT_ERROR_LOG_TOPIC}`, {
         method: "POST",
