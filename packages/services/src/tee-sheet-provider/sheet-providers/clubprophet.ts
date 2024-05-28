@@ -80,8 +80,8 @@ export class clubprophet {
 
   async createBooking(
     token: string,
-    courseId: string,
-    teesheetId: string,
+    _coureId: string,
+    _teesheetId: string,
     data: BookingCreationData
   ): Promise<ClubProphetBookingResponse> {
     const endpoint = this.getBasePoint();
@@ -90,7 +90,7 @@ export class clubprophet {
     const headers = this.getHeaders(token);
 
     console.log("createBooking - ", url);
-    console.log(data)
+    console.log(data, JSON.stringify(data))
 
     const response = await fetch(url, {
       method: "POST",
@@ -104,6 +104,7 @@ export class clubprophet {
         await this.getToken();
       }
       console.dir(response, { depth: null });
+      console.log("ERROR", await response.json());
       throw new Error(`Error creating booking: ${JSON.stringify(response)}`);
     }
 
@@ -117,30 +118,30 @@ export class clubprophet {
     bookingId: string,
     options?: TeeTimeUpdateRequest
   ): Promise<ClubProphetBookingResponse> {
-    const endpoint = this.getBasePoint();
-    console.log("update teetime called");
+    // const endpoint = this.getBasePoint();
+    // console.log("update teetime called");
 
-    const url = `${endpoint}/courses/${courseId}/teesheets/${teesheetId}/bookings/${bookingId}/bookedPlayers/${bookingId}-1`;
-    // console.log(url);
+    // const url = `${endpoint}/courses/${courseId}/teesheets/${teesheetId}/bookings/${bookingId}/bookedPlayers/${bookingId}-1`;
+    // // console.log(url);
 
-    // console.log(JSON.stringify(options));
-    const headers = this.getHeaders(token);
+    // // console.log(JSON.stringify(options));
+    // const headers = this.getHeaders(token);
 
-    const response = await fetch(url, {
-      method: "PUT",
-      headers: headers,
-      body: JSON.stringify(options),
-    });
-    // console.log(response);
-    if (!response.ok) {
-      if (response.status === 403) {
-        // this.logger.error(`Error updating tee time: ${response.statusText}`);
-        await this.getToken();
-      }
-      throw new Error(`Error updating tee time: ${response.statusText}`);
-    }
+    // const response = await fetch(url, {
+    //   method: "PUT",
+    //   headers: headers,
+    //   body: JSON.stringify(options),
+    // });
+    // // console.log(response);
+    // if (!response.ok) {
+    //   if (response.status === 403) {
+    //     // this.logger.error(`Error updating tee time: ${response.statusText}`);
+    //     await this.getToken();
+    //   }
+    //   throw new Error(`Error updating tee time: ${response.statusText}`);
+    // }
 
-    return (await response.json()) as ClubProphetBookingResponse;
+    return ({}) as ClubProphetBookingResponse;
   }
 
   getToken = async (): Promise<string> => {
@@ -192,12 +193,39 @@ export class clubprophet {
   }
 
   deleteBooking =
-    async (): Promise<void> => {
+    async (
+      token: string,
+      teesheetId: string,
+      bookingId: string
+    ): Promise<void> => {
+      const endpoint = this.getBasePoint();
+      const url = `${endpoint}/api/v1/TeeSheet/CancelReservation`;
+      const headers = this.getHeaders(token);
 
+      console.log(`deleteBooking - ${url}`);
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: headers,
+        body: JSON.stringify({
+          reservationId: bookingId,
+        })
+      });
+
+      if (!response.ok) {
+        this.logger.error(`Error deleting booking: ${response.statusText}`);
+        this.logger.error(`Error response from club-prophet: ${JSON.stringify(await response.json())}`);
+        if (response.status === 403) {
+          await this.getToken();
+        }
+        throw new Error(`Error deleting booking: ${response.statusText}`);
+      }
+      this.logger.info(`Booking deleted successfully: ${bookingId}`);
     }
+
   createCustomer = async (): Promise<CustomerData> => { return {} as CustomerData; }
   getCustomer = async (): Promise<CustomerData> => { return {} as CustomerData; }
-  async getSlotIdsForBooking(
+  getSlotIdsForBooking(
     bookingId: string,
     slots: number,
     customerId: string,

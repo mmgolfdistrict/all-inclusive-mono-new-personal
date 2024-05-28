@@ -703,7 +703,7 @@ export class BookingService {
       t.slotsData = finaldata;
       t.golfers = finaldata;
     }
-
+    console.log("COMBINED DATA", combinedData);
     return combinedData;
   };
 
@@ -2333,6 +2333,18 @@ export class BookingService {
       console.log("Cancel Sensible Quote ID : ", sensibleQuoteId);
       this.sensibleService.cancelQuote(sensibleQuoteId);
     }
+
+    const [bookedAlready] = await this.database
+      .select({
+        id: bookings.id
+      })
+      .from(bookings)
+      .where(eq(bookings.providerPaymentId, payment_id));
+
+    if (bookedAlready) {
+      throw new Error("Booking already done");
+    }
+
     const pricePerGolfer = primaryGreenFeeCharge / playerCount;
 
     console.log(`Retrieving tee time from database ${teeTimeId}`);
@@ -2484,6 +2496,7 @@ export class BookingService {
       console.log(
         `Creating booking ${teeTime.providerDate}, ${teeTime.holes}, ${playerCount}, ${teeTime.providerCourseId}, ${teeTime.providerTeeSheetId}, ${token}`
       );
+      console.log(bookingData)
       booking = await provider
         .createBooking(token, teeTime.providerCourseId!, teeTime.providerTeeSheetId!, bookingData)
         .catch((err) => {

@@ -29,6 +29,21 @@ export interface CustomerCart {
 export interface UpdatePayment {
   currency: string;
   amount: number;
+  amount_to_capture?: number;
+  return_url?: string;
+  confirm?: boolean;
+  payment_method?: string;
+  business_country?: string;
+  payment_method_type?: string;
+  payment_method_data?: {
+    card_redirect?: {
+      card_redirect?: {},
+    },
+  },
+  routing?: {
+    type: string,
+    data: string,
+  },
 }
 
 export type ProductData =

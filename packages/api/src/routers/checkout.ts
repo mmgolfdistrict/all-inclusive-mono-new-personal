@@ -47,4 +47,13 @@ export const checkoutRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       return await ctx.serviceFactory.getHyperSwitchService().removePaymentMethod(input.paymentMethodId);
     }),
+  retrivePaymentIntent: protectedProcedure
+    .input(
+      z.object({
+        clientSecret: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return await ctx.serviceFactory.getHyperSwitchService().retrievePaymentIntent(input.clientSecret);
+    }),
 });

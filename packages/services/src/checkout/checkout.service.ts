@@ -186,9 +186,9 @@ export class CheckoutService {
       paymentData = {
         customer_id: customerCart.customerId,
         confirm: true,
-        amount_to_capture: parseInt(total.toString()),
-        return_url: `${'http://localhost:3000'}/${customerCart.courseId}/checkout/confirmation?teeTimeId=${(customerCart.cart[0] as FirstHandProduct)?.product_data?.metadata?.tee_time_id
-          }`,
+        amount_to_capture: total,
+        //TODO: add ENV for host
+        return_url: `http://localhost:3000/${customerCart.courseId}/checkout/processing?teeTimeId=${(customerCart.cart[0] as FirstHandProduct)?.product_data?.metadata?.tee_time_id}`,
         payment_method: "card_redirect",
         business_country: "US",
         payment_method_type: "card_redirect",
@@ -201,9 +201,9 @@ export class CheckoutService {
           type: "single",
           data: "prophetpay",
         },
-        amount: parseInt(total.toString()),
+        amount: total,
         currency: "USD",
-        metadata: customerCart,
+        metadata: customerCart.courseId,
         profile_id: process.env.HYPERSWITCH_PROFILE_ID,
       };
     } else {
@@ -220,7 +220,7 @@ export class CheckoutService {
         metadata: customerCart.courseId,
       };
     }
-    const paymentIntent = await this.hyperSwitch
+    let paymentIntent = await this.hyperSwitch
       .createPaymentIntent(paymentData)
       .catch((err) => {
         this.logger.error(` ${err}`);
@@ -250,11 +250,41 @@ export class CheckoutService {
       listingId,
       teeTimeId,
     });
+    // const nextAction = paymentIntent.next_action;
+    if (String(record?.internalId) === "club-prophet") {
+      const sensibleItem = customerCart.cart.find(({ product_data }) => product_data.metadata.type === "sensible") as SensibleProduct
+      paymentIntent = await this.hyperSwitch.updatePaymentIntent(paymentIntent.payment_id, {
+        amount: parseInt(total.toString()),
+        currency: "USD",
+        return_url: `http://localhost:3000/${customerCart.courseId}/checkout/processing?teeTimeId=${(customerCart.cart[0] as FirstHandProduct)?.product_data?.metadata?.tee_time_id}&cart_id=${cartId}&sensible_quote_id=${sensibleItem?.product_data?.metadata?.sensible_quote_id}&payment_id=${paymentIntent.payment_id}`,
+        confirm: true,
+        amount_to_capture: total,
+        payment_method: "card_redirect",
+        business_country: "US",
+        payment_method_type: "card_redirect",
+        payment_method_data: {
+          card_redirect: {
+            card_redirect: {},
+          },
+        },
+        routing: {
+          type: "single",
+          data: "prophetpay",
+        },
+      })
+    }
 
+    console.log({
+      clientSecret: paymentIntent.client_secret,
+      paymentId: paymentIntent.payment_id,
+      cartId: cartId,
+      next_action: paymentIntent.next_action
+    })
     return {
       clientSecret: paymentIntent.client_secret,
       paymentId: paymentIntent.payment_id,
       cartId: cartId,
+      next_action: paymentIntent.next_action
     };
   };
 
@@ -277,6 +307,7 @@ export class CheckoutService {
       .updatePaymentIntent(paymentId || "", {
         currency: "USD",
         amount: parseInt(total.toString()),
+        amount_to_capture: parseInt(total.toString())
         // @ts-ignore
       })
       .catch((err) => {
