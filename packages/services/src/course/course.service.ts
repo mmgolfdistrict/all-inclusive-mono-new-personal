@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
-import { and, asc, desc, eq, max, min, sql } from "@golf-district/database";
+import { and, asc, desc, eq, gte, max, min, sql } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import { bookings } from "@golf-district/database/schema/bookings";
 import { charities } from "@golf-district/database/schema/charities";
@@ -11,7 +11,7 @@ import type { InsertCourses } from "@golf-district/database/schema/courses";
 import { entities } from "@golf-district/database/schema/entities";
 import { lists } from "@golf-district/database/schema/lists";
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
-import { getApexDomain, validDomainRegex } from "@golf-district/shared";
+import { currentUtcTimestamp, getApexDomain, validDomainRegex } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
 import { DomainService } from "../domain/domain.service";
 
@@ -92,19 +92,21 @@ export class CourseService extends DomainService {
       })
       .from(lists)
       .innerJoin(bookings, eq(bookings.listId, lists.id))
-      .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
-      .where(and(eq(teeTimes.courseId, courseId), eq(lists.isDeleted, false)))
+      .innerJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
+      .innerJoin(courses,eq(courses.id,teeTimes.courseId))
+      .where(and(eq(teeTimes.courseId, courseId), eq(lists.isDeleted, false), gte(teeTimes.providerDate,currentUtcTimestamp())))
       .limit(1)
       .execute();
     //Get the highest and lowest primary sale tee time prices
     //Cache if possible
     const primarySaleTeeTimePriceQuery = this.database
       .select({
-        highestPrimarySaleTeeTime: max(teeTimes.greenFeePerPlayer),
-        lowestPrimarySaleTeeTime: min(teeTimes.greenFeePerPlayer),
+        highestPrimarySaleTeeTime: sql`max(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})`,
+        lowestPrimarySaleTeeTime:  sql`min(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})`,
       })
       .from(teeTimes)
-      .where(eq(teeTimes.courseId, courseId))
+      .innerJoin(courses,eq(courses.id,teeTimes.courseId))
+      .where(and(eq(teeTimes.courseId, courseId),gte(teeTimes.providerDate,currentUtcTimestamp())))
       .limit(1)
       .execute();
 
@@ -134,8 +136,8 @@ export class CourseService extends DomainService {
       ...result,
       highestListedTeeTime: (result.highestListedTeeTime ?? 0) / 100,
       lowestListedTeeTime: (result.lowestListedTeeTime ?? 0) / 100,
-      highestPrimarySaleTeeTime: (result.highestPrimarySaleTeeTime ?? 0) / 100,
-      lowestPrimarySaleTeeTime: (result.lowestPrimarySaleTeeTime ?? 0) / 100,
+      highestPrimarySaleTeeTime: (result.highestPrimarySaleTeeTime as number ?? 0) / 100,
+      lowestPrimarySaleTeeTime: (result.lowestPrimarySaleTeeTime as number ?? 0) / 100,
     };
 
     if (result.supportCharity) {
