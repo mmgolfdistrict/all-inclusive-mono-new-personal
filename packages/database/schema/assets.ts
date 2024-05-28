@@ -25,6 +25,12 @@ export const assets = mySqlTable(
     auctionId: varchar("auctionId", { length: 36 }),
     courseAssetId: varchar("courseAssetId", { length: 36 }),
     auctionAssetId: varchar("auctionAssetId", { length: 36 }),
+    createdDateTime: datetime("createdDateTime", { mode: "string", fsp: 3 })
+    .default(sql`CURRENT_TIMESTAMP(3)`)
+    .notNull(),
+    lastUpdatedDateTime: datetime("lastUpdatedDateTime", { mode: "string", fsp: 3 })
+      .default(sql`CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)`)
+      .notNull(),
   },
   (table) => {
     return {
