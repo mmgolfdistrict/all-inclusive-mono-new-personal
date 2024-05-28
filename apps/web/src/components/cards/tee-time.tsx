@@ -209,9 +209,8 @@ export const TeeTime = ({
         data-test={
           status === "SECOND_HAND" ? "secondary_listed" : "primary_listed"
         }
-        className={`md:rounded-xl rounded-lg bg-secondary-white w-fit min-w-[228px] md:min-w-[240px] ${
-          className ?? ""
-        }`}
+        className={`md:rounded-xl rounded-lg bg-secondary-white w-fit min-w-[230px] md:min-w-[265px] ${className ?? ""
+          }`}
       >
         <div className="border-b border-stroke">
           <div className="flex justify-between py-1 px-3 md:p-3">
@@ -231,19 +230,20 @@ export const TeeTime = ({
               src={soldByImage}
               className="!min-h-[30px] !min-w-[30px] !max-h-[30px] !max-w-[30px] !h-[30px] !w-[30px] md:min-h-[40px] md:min-w-[40px] md:max-h-[40px] md:max-w-[40px] md:h-[40px] md:w-[40px]"
             />
-
-            <div className="whitespace-nowrap md:pr-1">
-              {status === "UNLISTED" ? "Owned" : "Sold"} by
+            <div className="flex flex-col">
+              <div className="whitespace-nowrap md:pr-1">
+                {status === "UNLISTED" ? "Owned" : "Sold"} by
+              </div>
               {isOwned || status === "SECOND_HAND" ? (
                 <Link
                   href={`/${courseId}/profile/${soldById}`}
-                  className="text-primary text-ellipsis"
+                  className="text-primary whitespace-nowrap overflow-hidden w-[230px] md:w-[200px] text-ellipsis"
                   data-testid="sold-by-name-id"
                 >
                   {soldByName}
                 </Link>
               ) : (
-                <div className="whitespace-nowrap">{soldByName}</div>
+                <div className="whitespace-nowrap overflow-hidden w-[230px] md:w-[200px] text-ellipsis">{soldByName}</div>
               )}
             </div>
           </div>

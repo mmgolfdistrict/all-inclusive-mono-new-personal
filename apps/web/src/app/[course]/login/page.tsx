@@ -52,13 +52,16 @@ export default function Login() {
     !prevPath?.path?.includes("verify") &&
     !prevPath?.path?.includes("reset-password") &&
     !prevPath?.path?.includes("forgot-password") &&
-    !prevPath?.path?.includes("verify-email");
+    !prevPath?.path?.includes("verify-email") &&
+    !prevPath?.path?.includes("register");
 
   const onSubmit: SubmitHandler<LoginSchemaType> = async (data) => {
     try {
       const callbackURL = `${window.location.origin}${
         GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
           ? prevPath?.path
+            ? prevPath.path
+            : "/"
           : "/"
       }`;
       const res = await signIn("credentials", {
@@ -78,6 +81,8 @@ export default function Login() {
         window.location.href = `${window.location.origin}${
           GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
             ? prevPath?.path
+              ? prevPath.path
+              : "/"
             : "/"
         }`;
       }
@@ -115,6 +120,8 @@ export default function Login() {
       callbackUrl: `${window.location.origin}${
         GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
           ? prevPath?.path
+            ? prevPath.path
+            : "/"
           : "/"
       }`,
       redirect: true,
@@ -126,6 +133,8 @@ export default function Login() {
       callbackUrl: `${window.location.origin}${
         GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
           ? prevPath?.path
+            ? prevPath.path
+            : "/"
           : "/"
       }`,
       redirect: true,
@@ -138,6 +147,8 @@ export default function Login() {
         callbackUrl: `${window.location.origin}${
           GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
             ? prevPath?.path
+              ? prevPath.path
+              : "/"
             : "/"
         }`,
         redirect: true,

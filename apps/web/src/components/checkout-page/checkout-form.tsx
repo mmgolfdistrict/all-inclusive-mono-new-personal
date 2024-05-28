@@ -61,8 +61,8 @@ export const CheckoutForm = ({
       teeTimeId: teeTimeId,
       bookingId: "",
       listingId: listingId,
-      eventId: "TEE_TIME_PURCHASED",
-      json: `TEE_TIME_PURCHASED`,
+      eventId: "TEE_TIME_PAY_NOW_CLICKED",
+      json: `TEE_TIME_PAY_NOW_CLICKED`,
     });
   };
 
@@ -475,7 +475,7 @@ export const CheckoutForm = ({
       </FilledButton> */}
       {nextAction?.type === "redirect_to_url" ? (
         <FilledButton
-          className={`w-full rounded-full ${callingRef ? "opacity-60" : ""}`}
+          className={`w-full rounded-full disabled:opacity-60`}
           disabled={!hyper || !widgets || callingRef}
           onClick={() => {
             if (nextAction?.redirect_to_url) {
@@ -488,7 +488,7 @@ export const CheckoutForm = ({
         </FilledButton>
       ) : (
         <FilledButton
-          className={`w-full rounded-full`}
+          className={`w-full rounded-full disabled:opacity-60`}
           disabled={
             isLoading || !hyper || !widgets || message === "Payment Successful"
           }

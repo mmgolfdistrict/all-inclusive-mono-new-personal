@@ -27,7 +27,7 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
   const { user } = useUserContext();
   const { course } = useCourseContext();
   const courseId = course?.id;
-  const { status } = useSession();
+  const session = useSession();
   const pathname = usePathname();
   const router = useRouter();
 
@@ -55,7 +55,25 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
     setIsOpen: setIsSideBarOpen,
   });
 
+  const auditLog = api.webhooks.auditLog.useMutation();
+  const logAudit = async () => {
+    await auditLog.mutateAsync({
+      userId: user?.id ?? "",
+      teeTimeId: "",
+      bookingId: "",
+      listingId: "",
+      eventId: "USER_LOGGED_OUT",
+      json: `user logged out `,
+    });
+  };
+
   const logOutUser = async () => {
+    void logAudit();
+    localStorage.clear();
+    sessionStorage.clear();
+    session.data = null;
+    session.status = "unauthenticated";
+    await session.update(null);
     if (PathsThatNeedRedirectOnLogout.some((i) => pathname.includes(i))) {
       const data = await signOut({
         callbackUrl: `/${courseId}`,
@@ -81,8 +99,8 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
         <div className="relative flex h-full flex-col">
           <div className="flex  items-center justify-between px-2 py-2">
             <div className="flex items-center gap-2">
-              {status === "loading" ? null : user &&
-                status === "authenticated" ? null : (
+              {session.status === "loading" ? null : user &&
+                session.status === "authenticated" ? null : (
                 <Link
                   href={`/${courseId}/login`}
                   onClick={toggleSidebar}
@@ -148,7 +166,7 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
               {course?.supportsOffers ? (
                 <NavItem
                   href={
-                    user && status === "authenticated"
+                    user && session.status === "authenticated"
                       ? `/${courseId}/my-tee-box?section=offers-received`
                       : `/${courseId}/login`
                   }
@@ -172,7 +190,7 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
                 />
               ) : null}
             </div>
-            {user && status === "authenticated" ? (
+            {user && session.status === "authenticated" ? (
               <div className="flex flex-col">
                 <NavItem
                   href={`/${courseId}/profile/${user?.id}`}

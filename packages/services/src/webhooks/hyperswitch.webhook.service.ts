@@ -772,13 +772,11 @@ export class HyperSwitchWebhookService {
     if (!buyerCustomer?.playerNumber) {
       this.logger.error(`Error creating or finding customer`);
       this.loggerService.errorLog({
-        applicationName: "golfdistrict-foreup",
-        clientIP: "",
         userId: customer_id,
         url: "/handleSecondHandItem",
         userAgent: "",
-        message: "Error creating customer",
-        stackTrace: "",
+        message: "ERROR CREATING CUSTOMER",
+        stackTrace: `Error creating customer on provider for userId ${customer_id}`,
         additionalDetailsJSON: "Error creating customer",
       });
       throw new Error(`Error creating or finding customer`);
@@ -795,14 +793,13 @@ export class HyperSwitchWebhookService {
 
     if (!sellerCustomer?.playerNumber) {
       this.logger.error(`Error creating or finding customer`);
-      this.loggerService.auditLog({
-        id: randomUUID(),
+      this.loggerService.errorLog({
         userId: firstBooking.ownerId,
-        teeTimeId: firstBooking?.teeTimeId,
-        bookingId: bookingsIds?.id ?? "",
-        listingId,
-        eventId: "ERROR_CREATING_CUSTOMER",
-        json: "Error creating or finding customer",
+        url: "/handleSecondHandItem",
+        userAgent: "",
+        message: "ERROR CREATING CUSTOMER",
+        stackTrace: `Error creating customer on provider for userId ${firstBooking.ownerId}`,
+        additionalDetailsJSON: "Error creating customer",
       });
       throw new Error(`Error creating or finding customer`);
     }
@@ -817,14 +814,12 @@ export class HyperSwitchWebhookService {
       .catch((err) => {
         this.logger.error(`Error deleting booking: ${err}`);
         this.loggerService.errorLog({
-          applicationName: "golfdistrict-foreup",
-          clientIP: "",
           userId: firstBooking.ownerId,
           url: "/handleSecondHandItem",
           userAgent: "",
-          message: "Error deleting booking ",
-          stackTrace: "",
-          additionalDetailsJSON: "ERROR DELETING BOOKING GOLFDISTRICT",
+          message: "ERROR DELETING BOOKING ON PROVIDER",
+          stackTrace: `Error deleting booking on provider for provider booking Id ${firstBooking.providerBookingId}`,
+          additionalDetailsJSON: "Error creating customer",
         });
         throw new Error(`Error deleting booking`);
       });
@@ -851,6 +846,9 @@ export class HyperSwitchWebhookService {
         providerDate: teeTimes.providerDate,
         address: courses.address,
         websiteURL: courses.websiteURL,
+        cartFeePerPlayer: teeTimes.cartFeePerPlayer,
+        greenFeeTaxPerPlayer: teeTimes.greenFeeTaxPerPlayer,
+        cartFeeTaxPerPlayer: teeTimes.cartFeeTaxPerPlayer,
       })
       .from(teeTimes)
       .where(eq(teeTimes.id, firstBooking.teeTimeId))
@@ -880,12 +878,19 @@ export class HyperSwitchWebhookService {
         console.log("ERROR in getting appsetting SENSIBLE_NOTE_TO_TEE_SHEET");
       }
       let newBooking: BookingResponse | null = null;
+      const greenFee = existingTeeTime?.greenFee ?? 0;
+      const greenFeeTaxPerPlayer = existingTeeTime?.greenFeeTaxPerPlayer ?? 0;
+      const cartFeePerPlayer = existingTeeTime?.cartFeePerPlayer ?? 0;
+      const cartFeeTaxPerPlayer = existingTeeTime?.cartFeeTaxPerPlayer ?? 0;
+
+      const totalAmount = (greenFee + greenFeeTaxPerPlayer + cartFeePerPlayer + cartFeeTaxPerPlayer) / 100;
       try {
         newBooking = await provider.createBooking(
           token,
           firstBooking.providerCourseId!,
           firstBooking.providerTeeSheetId!,
           {
+            totalAmountPaid: totalAmount * (listedSlotsCount ?? 1),
             data: {
               type: "bookings",
               attributes: {
@@ -913,6 +918,15 @@ export class HyperSwitchWebhookService {
           listingId: listingId,
           eventId: "REFUND_INITIATED",
           json: `{paymentId:${paymentId}}`,
+        });
+
+        this.loggerService.errorLog({
+          userId: customer_id,
+          url: "/handleSecondHandItem",
+          userAgent: "",
+          message: "TEE TIME BOOKING FAILED ON PROVIDER",
+          stackTrace: `second hand booking at provider failed for teetime ${existingTeeTime?.id}`,
+          additionalDetailsJSON: JSON.stringify(e),
         });
 
         const template = {
@@ -947,6 +961,7 @@ export class HyperSwitchWebhookService {
           firstBooking.providerCourseId!,
           firstBooking.providerTeeSheetId!,
           {
+            totalAmountPaid: totalAmount * (listedBooking.length - listedSlotsCount),
             data: {
               type: "bookings",
               attributes: {
@@ -974,14 +989,12 @@ export class HyperSwitchWebhookService {
     } catch (err) {
       this.logger.error(`Error creating booking: ${err}`);
       this.loggerService.errorLog({
-        applicationName: "golfdistrict-foreup",
-        clientIP: "",
         userId: customer_id,
         url: "/handleSecondHandItem",
         userAgent: "",
-        message: "Error booking tee time",
-        stackTrace: "",
-        additionalDetailsJSON: "TEE_TIME_BOOKING_FAILED",
+        message: "ERROR BOOKING TEE TIME",
+        stackTrace: `Error booking tee time for tee time id ${existingTeeTime?.id}`,
+        additionalDetailsJSON: JSON.stringify(err),
       });
     }
 
@@ -1104,6 +1117,15 @@ export class HyperSwitchWebhookService {
             });
         });
       }
+
+      this.loggerService.auditLog({
+        userId: customer_id,
+        teeTimeId: existingTeeTime?.id ?? "",
+        bookingId,
+        listingId: "",
+        eventId: "TEE_TIME_PURCHASED",
+        json: "Tee time purchased",
+      });
 
       const event: Event = {
         startDate: existingTeeTime?.date ?? "",

@@ -380,8 +380,6 @@ export class BookingService {
       .catch((err) => {
         this.logger.error(`Error retrieving tee time history: ${err}`);
         this.loggerService.errorLog({
-          applicationName: "golfdistrict-foreup",
-          clientIP: "",
           userId: "",
           url: "/getTeeTimeHistory",
           userAgent: "",
@@ -2368,7 +2366,8 @@ export class BookingService {
         websiteURL: courses.websiteURL,
         courseName: courses.name,
         entityName: entities.name,
-        providerTeeTimeId: teeTimes.providerTeeTimeId
+        providerTeeTimeId: teeTimes.providerTeeTimeId,
+        isWebhookAvailable: providerCourseLink.isWebhookAvailable,
       })
       .from(teeTimes)
       .leftJoin(courses, eq(teeTimes.courseId, courses.id))
@@ -2424,6 +2423,14 @@ export class BookingService {
         );
         if (!providerCustomer?.playerNumber) {
           this.logger.error(`Error creating customer`);
+          this.loggerService.errorLog({
+            userId: userId,
+            url: "/reserveBooking",
+            userAgent: "",
+            message: "ERROR CREATING CUSTOMER",
+            stackTrace: `Error creating customer on provider for userId ${userId}`,
+            additionalDetailsJSON: "Error creating customer",
+          });
           throw new Error(`Error creating customer`);
         }
 
@@ -2501,17 +2508,14 @@ export class BookingService {
         .createBooking(token, teeTime.providerCourseId!, teeTime.providerTeeSheetId!, bookingData)
         .catch((err) => {
           this.logger.error(err);
-          //@TODO this email should be removed
-          this.loggerService.auditLog({
-            id: randomUUID(),
-            userId,
-            teeTimeId,
-            bookingId: "",
-            listingId: "",
-            eventId: "TEE_TIME_BOOKING_FAILED",
-            json: err,
+          this.loggerService.errorLog({
+            userId: userId,
+            url: "/reserveBooking",
+            userAgent: "",
+            message: "TEE TIME BOOKING FAILED ON PROVIDER",
+            stackTrace: `first hand booking at provider failed for teetime ${teeTime.id}`,
+            additionalDetailsJSON: err,
           });
-
           throw new Error(`Error creating booking`);
         });
     } catch (e) {
@@ -2590,7 +2594,8 @@ export class BookingService {
           charityId,
           weatherQuoteId,
           cartId,
-        }
+        },
+        teeTime?.isWebhookAvailable ?? false
       )
       .catch(async (err) => {
         this.logger.error(err);
@@ -2602,30 +2607,17 @@ export class BookingService {
           teeTime.courseId
         );
         this.loggerService.errorLog({
-          applicationName: "golfdistrict-foreup",
-          clientIP: "ip-need to fix",
           userId: userId,
-          url: "/handleSecondHandItem",
+          url: "/reserveBooking",
           userAgent: "",
-          message: "Error booking tee time golf district",
-          stackTrace: "",
-          additionalDetailsJSON: "ERROR CREATING BOOKING GOLFDISTRICT",
+          message: "TEE TIME BOOKING FAILED ON PROVIDER",
+          stackTrace: `first hand booking at provider failed for teetime ${teeTime.id}`,
+          additionalDetailsJSON: JSON.stringify(err),
         });
         throw new Error(`Error creating booking`);
       });
 
     await this.sendMessageToVerifyPayment(paymentId as string, userId, bookingId, redirectHref);
-
-    this.loggerService.auditLog({
-      id: randomUUID(),
-      userId,
-      teeTimeId,
-      bookingId,
-      listingId: "",
-      eventId: "TEE_TIME_BOOKED",
-      json: "tee time booked",
-    });
-
     return {
       bookingId,
       providerBookingId,
@@ -2676,14 +2668,14 @@ export class BookingService {
         .execute()
         .catch((err) => {
           this.logger.error(`Error in updating booking status ${err}`);
-          this.loggerService.auditLog({
-            id: randomUUID(),
-            userId,
-            teeTimeId: booking?.teeTimeId ?? "",
-            bookingId: booking?.bookingId ?? "",
-            listingId: "",
-            eventId: "TEE_TIME_CONFIRMATION_FAILED",
-            json: err,
+          this.loggerService.errorLog({
+            userId: userId,
+            url: "/confirmBooking",
+            userAgent: "",
+            message: "ERROR CONFIRMING BOOKING",
+            stackTrace: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${booking?.teeTimeId ?? ""
+              }`,
+            additionalDetailsJSON: err,
           });
         });
 
@@ -2693,8 +2685,8 @@ export class BookingService {
         teeTimeId: booking?.teeTimeId ?? "",
         bookingId: booking?.bookingId ?? "",
         listingId: "",
-        eventId: "TEE_TIME_CONFIRMED_SUCCESS",
-        json: "Tee time status confirmed",
+        eventId: "BOOKING_CONFIRMED",
+        json: "Bookimg status confirmed",
       });
     }
   };
