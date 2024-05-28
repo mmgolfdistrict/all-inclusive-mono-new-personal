@@ -343,7 +343,7 @@ export default function CourseHomePage() {
                   )}
                 </ViewportList>
               </div>
-              {daysData.amountOfPages > 1 && count > 0 ? (
+              {daysData.amountOfPages > 1 ? (
                 <div className="flex items-center justify-center gap-2 pt-1 md:pt-0 md:pb-4">
                   <FilledButton
                     className={`!px-3 !py-2 !min-w-fit !rounded-md ${
