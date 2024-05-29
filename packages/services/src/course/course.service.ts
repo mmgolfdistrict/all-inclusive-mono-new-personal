@@ -87,14 +87,20 @@ export class CourseService extends DomainService {
     //Cache if possible
     const listTeeTimePriceQuery = this.database
       .select({
-        highestListedTeeTime: max(lists.listPrice),
-        lowestListedTeeTime: min(lists.listPrice),
+        highestListedTeeTime: sql`max(${lists.listPrice} * (${courses.buyerFee}/100) + ${lists.listPrice})`,
+        lowestListedTeeTime: sql`min(${lists.listPrice} * (${courses.buyerFee}/100) + ${lists.listPrice})`,
       })
       .from(lists)
       .innerJoin(bookings, eq(bookings.listId, lists.id))
       .innerJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
-      .innerJoin(courses,eq(courses.id,teeTimes.courseId))
-      .where(and(eq(teeTimes.courseId, courseId), eq(lists.isDeleted, false), gte(teeTimes.providerDate,currentUtcTimestamp())))
+      .innerJoin(courses, eq(courses.id, teeTimes.courseId))
+      .where(
+        and(
+          eq(teeTimes.courseId, courseId),
+          eq(lists.isDeleted, false),
+          gte(teeTimes.providerDate, currentUtcTimestamp())
+        )
+      )
       .limit(1)
       .execute();
     //Get the highest and lowest primary sale tee time prices
@@ -102,11 +108,11 @@ export class CourseService extends DomainService {
     const primarySaleTeeTimePriceQuery = this.database
       .select({
         highestPrimarySaleTeeTime: sql`max(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})`,
-        lowestPrimarySaleTeeTime:  sql`min(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})`,
+        lowestPrimarySaleTeeTime: sql`min(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})`,
       })
       .from(teeTimes)
-      .innerJoin(courses,eq(courses.id,teeTimes.courseId))
-      .where(and(eq(teeTimes.courseId, courseId),gte(teeTimes.providerDate,currentUtcTimestamp())))
+      .innerJoin(courses, eq(courses.id, teeTimes.courseId))
+      .where(and(eq(teeTimes.courseId, courseId), gte(teeTimes.providerDate, currentUtcTimestamp())))
       .limit(1)
       .execute();
 
@@ -134,10 +140,10 @@ export class CourseService extends DomainService {
 
     const res = {
       ...result,
-      highestListedTeeTime: (result.highestListedTeeTime ?? 0) / 100,
-      lowestListedTeeTime: (result.lowestListedTeeTime ?? 0) / 100,
-      highestPrimarySaleTeeTime: (result.highestPrimarySaleTeeTime as number ?? 0) / 100,
-      lowestPrimarySaleTeeTime: (result.lowestPrimarySaleTeeTime as number ?? 0) / 100,
+      highestListedTeeTime: ((result.highestListedTeeTime as number) ?? 0) / 100,
+      lowestListedTeeTime: ((result.lowestListedTeeTime as number) ?? 0) / 100,
+      highestPrimarySaleTeeTime: ((result.highestPrimarySaleTeeTime as number) ?? 0) / 100,
+      lowestPrimarySaleTeeTime: ((result.lowestPrimarySaleTeeTime as number) ?? 0) / 100,
     };
 
     if (result.supportCharity) {
