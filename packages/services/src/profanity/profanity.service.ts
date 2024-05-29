@@ -11,13 +11,21 @@ export class ProfanityService {
     this.db = db;
   }
 
-  isProfane = async (text: string) => {
+  isProfane = async (profanityText: string) => {
     try {
+      const text = profanityText.replace(/(.)(?=.*\1)/g, "");
+
       if (text.length < 1) {
         return {
           isProfane: false,
         };
       }
+      if (text.includes('69')) {
+        return {
+          isProfane: true,
+        };
+      }
+      
       const matchingWords = await this.db
         .select()
         .from(profanities)

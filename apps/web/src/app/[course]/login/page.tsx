@@ -30,9 +30,9 @@ export default function Login() {
   const loginError = searchParams.get("error");
   const { course } = useCourseContext();
   const [showPassword, setShowPassword] = useState<boolean>(false);
-
+console.log("loginERror", loginError)
   useEffect(() => {
-    if (loginError === "CallbackRouteError") {
+    if (loginError === "CallbackRouteError") {debugger
       toast.error("An error occurred logging in, try another option.");
     }
   }, []);
