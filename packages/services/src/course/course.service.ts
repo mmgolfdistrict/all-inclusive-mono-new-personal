@@ -87,7 +87,7 @@ export class CourseService extends DomainService {
     //Cache if possible
     const listTeeTimePriceQuery = this.database
       .select({
-        highestListedTeeTime: max(lists.listPrice),
+        highestListedTeeTime: sql`max(${lists.listPrice} * (${courses.buyerFee}/100) + ${lists.listPrice})`,
         lowestListedTeeTime: min(lists.listPrice),
       })
       .from(lists)
