@@ -138,7 +138,7 @@ export class TokenizeService {
    *   - The maximum bookings for a tee time have been reached.
    *   - There are issues interacting with the underlying data store (Prisma).
    */
-  async tokenizeBooking(
+  async tokenizeBooking({ redirectHref, userId, purchasePrice, players, providerBookingId, providerTeeTimeId, paymentId, withCart, provider, token, teeTime, normalizedCartData, isWebhookAvailable, providerBookingIds }: {
     redirectHref: string,
     userId: string,
     purchasePrice: number,
@@ -161,7 +161,9 @@ export class TokenizeService {
       holes: number;
     },
     normalizedCartData?: any,
-    isWebhookAvailable?: boolean
+    isWebhookAvailable?: boolean,
+    providerBookingIds?: string[]
+  }
   ): Promise<string> {
     this.logger.info(`tokenizeBooking tokenizing booking id: ${providerTeeTimeId} for user: ${userId}`);
     //@TODO add this to the transaction
@@ -310,13 +312,14 @@ export class TokenizeService {
     });
 
     console.log(`Getting slot IDs for booking.`);
+
     //create bookings according to slot in bookingslot tables
     const bookingSlots =
       (await provider?.getSlotIdsForBooking(
         bookingId,
         players,
         userId,
-        providerBookingId,
+        providerBookingIds?.length ? providerBookingIds : providerBookingId,
         provider.providerId,
         existingTeeTime.courseId
       )) ?? [];

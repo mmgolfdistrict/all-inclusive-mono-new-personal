@@ -3,9 +3,11 @@ import axios from "axios";
 import type {
   BookingCreationData,
   ClubProphetBookingResponse,
-  ClubProphetTeeTimeResponse
+  ClubProphetCustomerCreationResponse,
+  ClubProphetCustomerCreationData,
 } from "./types/clubprophet.types";
-import type { CustomerData, TeeTimeUpdateRequest } from "./types/foreup.type";
+import type { TeeTimeUpdateRequest } from "./types/foreup.type";
+import type { TeeTimeResponse, CustomerData, CustomerCreationData } from "./types/interface";
 import { BaseProvider } from "./types/interface";
 import Logger from "@golf-district/shared/src/logger";
 
@@ -26,7 +28,7 @@ export class clubprophet {
     endTime: string,
     date: string,
     rateCode?: string
-  ): Promise<ClubProphetTeeTimeResponse[]> {
+  ): Promise<TeeTimeResponse[]> {
     // async getTeeTimes(
     //   token: string,
     //   courseId: string,
@@ -35,7 +37,7 @@ export class clubprophet {
     //   rateCode: string,
     //   date: string
     // ): Promise<ClubProphetTeeTimeResponse[]> {
-    const { CONTENT_TYPE, CLIENT_ID, CLIENT_SECRET, API_KEY, TOKEN_ENDPOINT, TEESHEET_ENDPOINT } = JSON.parse(
+    const { TEESHEET_ENDPOINT } = JSON.parse(
       this.providerConfiguration ?? "{}"
     );
 
@@ -59,7 +61,7 @@ export class clubprophet {
       data,
     };
     const resp = await axios.request(config as any);
-    return resp.data;
+    return resp.data as TeeTimeResponse[];
     // const response = await fetch(url, { headers, method: "GET", data:JSON.stringify(data) });
 
     // if (!response.ok) {
@@ -112,11 +114,11 @@ export class clubprophet {
   }
 
   async updateTeeTime(
-    token: string,
-    courseId: string,
-    teesheetId: string,
-    bookingId: string,
-    options?: TeeTimeUpdateRequest
+    _token: string,
+    _courseId: string,
+    _teesheetId: string,
+    _bookingId: string,
+    _options?: TeeTimeUpdateRequest
   ): Promise<ClubProphetBookingResponse> {
     // const endpoint = this.getBasePoint();
     // console.log("update teetime called");
@@ -195,11 +197,11 @@ export class clubprophet {
   deleteBooking =
     async (
       token: string,
-      teesheetId: string,
+      _teesheetId: string,
       bookingId: string
     ): Promise<void> => {
       const endpoint = this.getBasePoint();
-      const url = `${endpoint}/api/v1/TeeSheet/CancelReservation`;
+      const url = `${endpoint}/thirdpartyapi/api/v1/TeeSheet/CancelReservation`;
       const headers = this.getHeaders(token);
 
       console.log(`deleteBooking - ${url}`);
@@ -223,15 +225,43 @@ export class clubprophet {
       this.logger.info(`Booking deleted successfully: ${bookingId}`);
     }
 
-  createCustomer = async (): Promise<CustomerData> => { return {} as CustomerData; }
-  getCustomer = async (): Promise<CustomerData> => { return {} as CustomerData; }
-  getSlotIdsForBooking(
+  async createCustomer(
+    token: string,
+    _courseId: string,
+    customerData: CustomerCreationData
+  ): Promise<CustomerData> {
+    customerData = customerData as ClubProphetCustomerCreationData;
+    //Create Customer
+    const endpoint = this.getBasePoint();
+    const url = `${endpoint}/thirdpartyapi/api/v1/Customer/Customer`;
+
+    console.log(`createCustomer - ${url}`);
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: this.getHeaders(token),
+      body: JSON.stringify(customerData),
+    });
+
+    if (!response.ok) {
+      if (response.status === 403) {
+        this.logger.error(`Error creating customer: ${response.statusText}`);
+        this.logger.error(`Error response from foreup: ${JSON.stringify(await response.json())}`);
+      }
+      throw new Error(`Error creating customer: ${response.statusText}`);
+    }
+
+    return (await response.json()) as ClubProphetCustomerCreationResponse;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/require-await
+  async getSlotIdsForBooking(
     bookingId: string,
     slots: number,
     customerId: string,
-    providerBookingId: string,
-    providerId: string,
-    courseId: string
+    providerBookingIds: string | string[],
+    _providerId: string,
+    _courseId: string
   ) {
     const bookingSlots: {
       id: string;
@@ -244,11 +274,12 @@ export class clubprophet {
       lastUpdatedDateTime: string | null;
       createdDateTime: string | null;
     }[] = [];
+
     for (let i = 0; i < slots; i++) {
       bookingSlots.push({
         id: randomUUID(),
         bookingId: bookingId,
-        slotnumber: providerBookingId + "-" + (i + 1),
+        slotnumber: providerBookingIds[i]!,
         name: i === 0 ? "" : "Guest",
         customerId: i === 0 ? customerId : "",
         isActive: true,
@@ -259,4 +290,6 @@ export class clubprophet {
     }
     return bookingSlots;
   }
+
+  getCustomer = async (): Promise<CustomerData> => { return {} as CustomerData; }
 }

@@ -95,10 +95,23 @@ export interface BookingCreationData {
   price: number[];
 }
 
+export interface ClubProphetCustomerCreationData {
+  firstName: string,
+  lastName: string,
+  email: string,
+  phone: string
+}
+
+export interface ClubProphetCustomerCreationResponse {
+  success: boolean;
+  acct: string
+}
+
 export interface ClubProphetBookingResponse {
   success: boolean;
   responseText: string;
   participantIds: number[];
   reservationConfirmKey: null | string; // This can be either null or a string
   reservationId: number;
+  data?: Record<string, any>
 }

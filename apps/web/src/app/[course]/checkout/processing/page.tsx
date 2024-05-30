@@ -1,9 +1,7 @@
 "use client";
 
-import { Confirmation } from "~/components/checkout-page/confirmation";
 import { BlurImage } from "~/components/images/blur-image";
 import { Spinner } from "~/components/loading/spinner";
-import { CheckoutBreadcumbs } from "~/components/nav/checkout-breadcrumbs";
 import { useCheckoutContext } from "~/contexts/CheckoutContext";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { api } from "~/utils/api";
@@ -21,7 +19,7 @@ export default function CheckoutConfirmation() {
   const cartId = params.get("cart_id");
   const sensibleQuoteId = params.get("sensible_quote_id");
   const [message, setMessage] = useState("");
-  const { push } = useRouter();
+  const router = useRouter();
 
   const reserveBookingApi = api.teeBox.reserveBooking.useMutation();
   const cancelHyperswitchPaymentById =
@@ -123,7 +121,7 @@ export default function CheckoutConfirmation() {
         // }
 
         setMessage("Booking Successful");
-        push(
+        router.push(
           `${window.location.origin}/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}&bookingId=${bookingResponse.bookingId}`
         );
         // if (isBuyNowAuction) {
@@ -150,8 +148,7 @@ export default function CheckoutConfirmation() {
 
   useEffect(() => {
     if (!isLoadingPaymentIntent && paymentIntent) {
-      handlePayment();
-      console.log("USE EFFECT BEING CALLED");
+      void handlePayment();
     }
   }, [isLoadingPaymentIntent]);
 

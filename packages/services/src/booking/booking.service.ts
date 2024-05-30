@@ -2400,6 +2400,7 @@ export class BookingService {
     let bookedPLayers: { accountNumber: number }[] = [];
     let bookingData;
     let providerBookingId = "";
+    let providerBookingIds: string[] = [];
     try {
       const { provider, token } = await this.providerService.getProviderAndKey(
         teeTime.internalId!,
@@ -2412,15 +2413,16 @@ export class BookingService {
         `Finding or creating customer ${userId}, ${teeTime.courseId}, ${teeTime.providerId}, ${teeTime.providerCourseId}, ${token}`
       );
 
+      const providerCustomer = await this.providerService.findOrCreateCustomer(
+        teeTime.courseId,
+        teeTime.providerId ?? "",
+        teeTime.providerCourseId!,
+        userId,
+        provider,
+        token
+      );
+
       if (teeTime.internalId === "fore-up") {
-        const providerCustomer = await this.providerService.findOrCreateCustomer(
-          teeTime.courseId,
-          teeTime.providerId ?? "",
-          teeTime.providerCourseId!,
-          userId,
-          provider,
-          token
-        );
         if (!providerCustomer?.playerNumber) {
           this.logger.error(`Error creating customer`);
           this.loggerService.errorLog({
@@ -2433,7 +2435,6 @@ export class BookingService {
           });
           throw new Error(`Error creating customer`);
         }
-
         bookedPLayers = [
           {
             accountNumber: providerCustomer.playerNumber,
@@ -2470,6 +2471,18 @@ export class BookingService {
       }
 
       if (teeTime.internalId === "club-prophet") {
+        if (!providerCustomer?.customerId) {
+          this.logger.error(`Error creating customer`);
+          this.loggerService.errorLog({
+            userId: userId,
+            url: "/reserveBooking",
+            userAgent: "",
+            message: "ERROR CREATING CUSTOMER",
+            stackTrace: `Error creating customer on provider for userId ${userId}`,
+            additionalDetailsJSON: "Error creating customer",
+          });
+          throw new Error(`Error creating customer`);
+        }
         const [user] = await this.database.select({
           name: users.name,
           email: users.email,
@@ -2559,30 +2572,31 @@ export class BookingService {
       throw "Booking failed on provider";
     }
 
-    if (teeTime.internalId === "fore-up" && "data" in booking) {
+    if (teeTime.internalId === "fore-up" && "data" in booking && booking.data) {
       providerBookingId = booking.data.id
     }
 
     if (teeTime.internalId === "club-prophet" && "reservationId" in booking) {
       providerBookingId = booking.reservationId.toString()
+      providerBookingIds = booking.participantIds.map((id) => id.toString())
     }
 
     console.log(`Creating tokenized booking`);
     //create tokenized bookings
     const bookingId = await this.tokenizeService
-      .tokenizeBooking(
+      .tokenizeBooking({
         redirectHref,
         userId,
-        pricePerGolfer,
-        playerCount as number,
+        purchasePrice: pricePerGolfer,
+        players: playerCount as number,
         providerBookingId,
-        teeTimeId as string,
-        paymentId as string,
-        true,
-        teeProvider,
-        teeToken,
+        providerTeeTimeId: teeTimeId as string,
+        paymentId: paymentId as string,
+        withCart: true,
+        provider: teeProvider,
+        token: teeToken,
         teeTime,
-        {
+        normalizedCartData: {
           cart,
           primaryGreenFeeCharge,
           taxCharge,
@@ -2595,8 +2609,9 @@ export class BookingService {
           weatherQuoteId,
           cartId,
         },
-        teeTime?.isWebhookAvailable ?? false
-      )
+        isWebhookAvailable: teeTime?.isWebhookAvailable ?? false,
+        providerBookingIds
+      })
       .catch(async (err) => {
         this.logger.error(err);
         //@TODO this email should be removed

@@ -1,12 +1,12 @@
 import type { InsertBookingSlots } from "@golf-district/database/schema/bookingslots";
 import type pino from "pino";
-import type { BookingResponse, CustomerCreationData, CustomerData, TeeTimeResponse } from "./foreup.type";
+import type { BookingResponse as ForeUpBookingResponse, CustomerCreationData as ForeUpCustomerCreationData, CustomerData as ForeUpCustomerCreationResponse, TeeTimeResponse as ForeUpTeeTimeResponse } from "./foreup.type";
 
-import { clubprophet } from "../clubprophet";
 import type {
   ClubProphetBookingResponse,
+  ClubProphetCustomerCreationData,
+  ClubProphetCustomerCreationResponse,
   ClubProphetTeeTimeResponse,
-  TeeTimeResponseClubProphet,
 } from "./clubprophet.types";
 
 
@@ -16,6 +16,14 @@ export type ForeUpCredentials = {
 };
 
 type ProviderCredentials = ForeUpCredentials;
+
+export type TeeTimeResponse = ForeUpTeeTimeResponse | ClubProphetTeeTimeResponse;
+
+export type BookingResponse = ForeUpBookingResponse | ClubProphetBookingResponse
+
+export type CustomerCreationData = ForeUpCustomerCreationData | ClubProphetCustomerCreationData;
+
+export type CustomerData = ForeUpCustomerCreationResponse | ClubProphetCustomerCreationResponse;
 
 export interface ProviderAPI {
   providerId: string;
@@ -29,13 +37,13 @@ export interface ProviderAPI {
     endTime: string,
     date: string,
     rateCode?: string
-  ) => Promise<TeeTimeResponse[] | ClubProphetTeeTimeResponse[]>;
+  ) => Promise<TeeTimeResponse[]>;
   createBooking: (
     token: string,
     courseId: string,
     teeTimeId: string,
     options: any
-  ) => Promise<BookingResponse | ClubProphetBookingResponse>;
+  ) => Promise<BookingResponse>;
   updateTeeTime: (
     token: string,
     courseId: string,
@@ -43,7 +51,7 @@ export interface ProviderAPI {
     bookingId: string,
     options: any,
     slotId: string | undefined
-  ) => Promise<BookingResponse | ClubProphetBookingResponse>;
+  ) => Promise<BookingResponse>;
   deleteBooking: (token: string, courseId: string, teesheetId: string, bookingId: string) => Promise<void>; // Added deleteBooking to the interface
   getToken: () => Promise<string>;
   createCustomer: (
@@ -56,7 +64,7 @@ export interface ProviderAPI {
     bookingId: string,
     slots: number,
     clientId: string,
-    providerBookingId: string,
+    providerBookingId: string | string[],
     providerId: string,
     courseId: string
   ) => Promise<InsertBookingSlots[]>;
@@ -110,7 +118,7 @@ export abstract class BaseProvider implements ProviderAPI {
     bookingId: string,
     slots: number,
     clientId: string,
-    providerBookingId: string,
+    providerBookingId: string | string[],
     providerId: string,
     courseId: string
   ): Promise<InsertBookingSlots[]>;

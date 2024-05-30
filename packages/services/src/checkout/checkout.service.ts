@@ -163,6 +163,8 @@ export class CheckoutService {
       .reduce((acc, item) => {
         return acc + item.price;
       }, 0);
+    const isFirstHand = customerCart.cart
+      .filter(({ product_data }) => product_data.metadata.type === "first_hand")
     // const tax = await this.stripeService.getTaxRate(customerCart.cart).catch((err) => {
     //   this.logger.error(`Error calculating tax: ${err}`);
     //   throw new Error(`Error calculating tax: ${err}`);
@@ -182,7 +184,7 @@ export class CheckoutService {
       .execute();
 
     let paymentData;
-    if (String(record?.internalId) === "club-prophet") {
+    if (String(record?.internalId) === "club-prophet" && isFirstHand.length > 0) {
       paymentData = {
         customer_id: customerCart.customerId,
         confirm: true,
@@ -220,6 +222,7 @@ export class CheckoutService {
         metadata: customerCart.courseId,
       };
     }
+
     let paymentIntent = await this.hyperSwitch
       .createPaymentIntent(paymentData)
       .catch((err) => {
@@ -250,8 +253,8 @@ export class CheckoutService {
       listingId,
       teeTimeId,
     });
-    // const nextAction = paymentIntent.next_action;
-    if (String(record?.internalId) === "club-prophet") {
+
+    if (String(record?.internalId) === "club-prophet" && isFirstHand.length > 0) {
       const sensibleItem = customerCart.cart.find(({ product_data }) => product_data.metadata.type === "sensible") as SensibleProduct
       paymentIntent = await this.hyperSwitch.updatePaymentIntent(paymentIntent.payment_id, {
         amount: parseInt(total.toString()),
@@ -274,12 +277,6 @@ export class CheckoutService {
       })
     }
 
-    console.log({
-      clientSecret: paymentIntent.client_secret,
-      paymentId: paymentIntent.payment_id,
-      cartId: cartId,
-      next_action: paymentIntent.next_action
-    })
     return {
       clientSecret: paymentIntent.client_secret,
       paymentId: paymentIntent.payment_id,
