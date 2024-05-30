@@ -209,8 +209,9 @@ export const TeeTime = ({
         data-test={
           status === "SECOND_HAND" ? "secondary_listed" : "primary_listed"
         }
-        className={`md:rounded-xl rounded-lg bg-secondary-white w-fit min-w-[230px] md:min-w-[265px] ${className ?? ""
-          }`}
+        className={`md:rounded-xl rounded-lg bg-secondary-white w-fit min-w-[230px] md:min-w-[265px] ${
+          className ?? ""
+        }`}
       >
         <div className="border-b border-stroke">
           <div className="flex justify-between py-1 px-3 md:p-3">
@@ -243,7 +244,9 @@ export const TeeTime = ({
                   {soldByName}
                 </Link>
               ) : (
-                <div className="whitespace-nowrap overflow-hidden w-[230px] md:w-[200px] text-ellipsis">{soldByName}</div>
+                <div className="whitespace-nowrap overflow-hidden w-[230px] md:w-[200px] text-ellipsis">
+                  {soldByName}
+                </div>
               )}
             </div>
           </div>

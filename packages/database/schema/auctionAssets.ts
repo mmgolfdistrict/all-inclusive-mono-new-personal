@@ -1,6 +1,6 @@
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
-import { relations } from "drizzle-orm";
-import { index, int, primaryKey, varchar } from "drizzle-orm/mysql-core";
+import { relations, sql } from "drizzle-orm";
+import { boolean, datetime, index, int, primaryKey, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 import { assets } from "./assets";
 import { auctions } from "./auctions";
@@ -12,6 +12,13 @@ export const auctionAssets = mySqlTable(
     order: int("order").notNull().default(0),
     auctionId: varchar("auctionId", { length: 36 }).notNull(),
     assetId: varchar("assetId", { length: 36 }).notNull(),
+    isDeleted: boolean("isDeleted").default(false).notNull(),
+    createdDateTime: datetime("createdDateTime", { mode: "string", fsp: 3 })
+      .default(sql`CURRENT_TIMESTAMP(3)`)
+      .notNull(),
+    lastUpdatedDateTime: datetime("lastUpdatedDateTime", { mode: "string", fsp: 3 })
+      .default(sql`CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)`)
+      .notNull(),
   },
   (table) => {
     return {
