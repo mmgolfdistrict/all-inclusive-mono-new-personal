@@ -2,6 +2,7 @@ import { useCourseContext } from "~/contexts/CourseContext";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { GolfDistrict } from "../icons/golf-district";
+import { BlurImage } from "../images/blur-image";
 
 export const Footer = () => {
   const { course } = useCourseContext();
@@ -11,7 +12,13 @@ export const Footer = () => {
       <div>Copyright {new Date().getFullYear()}</div>
       <div className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 transform items-end gap-1 md:flex">
         <span>Powered by</span>
-        <GolfDistrict id="1" className="w-[110px]" />
+        <BlurImage
+          src={`https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/footerlogo.png`}
+          alt="golf district logo"
+          width={150}
+          height={100}
+          className="w-[50px] object-fit"
+        />
       </div>
       {pathname === "/" ? (
         <div />
