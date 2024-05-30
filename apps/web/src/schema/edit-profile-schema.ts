@@ -20,11 +20,11 @@ export const editProfileSchema = z.object({
     .max(30, { message: "Name should be in at most 30 characters" }),
   handle: z
     .string()
-    .min(10, { message: "Handle should be at least 10 characters long" })
-    .max(20, { message: "Handle shouldn't be more than 20 characters long" })
-    .refine((handle) => !handle.includes("@"), {
-      message: "Handle cannot contain '@'",
-    }),
+    .min(6, { message: "Username should be at least 6 characters long" })
+    .max(64, { message: "Username shouldn't be more than 64 characters long" }),
+    // .refine((handle) => !handle.includes("@"), {
+    //   message: "Handle cannot contain '@'",
+    // }),
   email: z
     .string()
     .email({ message: "Invalid email" })

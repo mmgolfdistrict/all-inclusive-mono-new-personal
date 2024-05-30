@@ -19,6 +19,7 @@ import { OutlineClub } from "../icons/outline-club";
 import { ChoosePlayers } from "../input/choose-players";
 import { ManageTeeTimeListing } from "../my-tee-box-page/manage-tee-time-listing";
 import { MakeAnOffer } from "../watchlist-page/make-an-offer";
+import { Tooltip } from "../tooltip";
 
 const PlayersOptions = ["1", "2", "3", "4"];
 
@@ -236,17 +237,24 @@ export const TeeTime = ({
                 {status === "UNLISTED" ? "Owned" : "Sold"} by
               </div>
               {isOwned || status === "SECOND_HAND" ? (
-                <Link
-                  href={`/${courseId}/profile/${soldById}`}
-                  className="text-primary whitespace-nowrap overflow-hidden w-[230px] md:w-[200px] text-ellipsis"
-                  data-testid="sold-by-name-id"
-                >
-                  {soldByName}
-                </Link>
+                <Tooltip
+                  trigger={
+                    <div className="text-left text-primary whitespace-nowrap overflow-hidden w-[230px] md:w-[200px] text-ellipsis">
+                      <Link
+                        href={`/${courseId}/profile/${soldById}`}
+                        data-testid="sold-by-name-id"
+                      >
+                        {soldByName}
+                      </Link>
+                    </div>
+                  }
+                  content={soldByName}
+                />
               ) : (
-                <div className="whitespace-nowrap overflow-hidden w-[230px] md:w-[200px] text-ellipsis">
-                  {soldByName}
-                </div>
+                <Tooltip
+                  trigger={<div className="text-left whitespace-nowrap overflow-hidden w-[230px] md:w-[200px] text-ellipsis">{soldByName}</div>}
+                  content={soldByName}
+                />
               )}
             </div>
           </div>

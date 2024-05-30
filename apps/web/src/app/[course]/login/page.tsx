@@ -21,6 +21,8 @@ import { createRef, useEffect, useState } from "react";
 import ReCAPTCHA from "react-google-recaptcha";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
+import { generateUsername } from "unique-username-generator";
+import { api } from "~/utils/api";
 
 export default function Login() {
   const recaptchaRef = createRef<ReCAPTCHA>();
@@ -30,6 +32,7 @@ export default function Login() {
   const loginError = searchParams.get("error");
   const { course } = useCourseContext();
   const [showPassword, setShowPassword] = useState<boolean>(false);
+  const updateUser = api.user.updateUser.useMutation();
 
   useEffect(() => {
     if (loginError === "CallbackRouteError") {
@@ -95,6 +98,13 @@ export default function Login() {
     }
   };
 
+  const updateHandle = async () => {
+    const uName = generateUsername(undefined, undefined, 6);
+    await updateUser.mutateAsync({
+      handle: uName,
+    });
+  };
+
   useEffect(() => {
     if (
       process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY &&
@@ -126,6 +136,7 @@ export default function Login() {
       }`,
       redirect: true,
     });
+    await updateHandle();
   };
 
   const appleSignIn = async () => {
@@ -139,6 +150,7 @@ export default function Login() {
       }`,
       redirect: true,
     });
+    await updateHandle();
   };
 
   const googleSignIn = async () => {
@@ -153,6 +165,7 @@ export default function Login() {
         }`,
         redirect: true,
       });
+     await updateHandle();
     } catch (error) {
       console.log(error);
     }
