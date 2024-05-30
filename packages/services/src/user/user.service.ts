@@ -1031,7 +1031,7 @@ export class UserService {
    */
   isValidHandle = async (handle: string): Promise<boolean> => {
     this.logger.info(`isValidHandle called with handle: ${handle}`);
-    if (handle.length < 10 || handle.length > 20) {
+    if (handle.length < 6 || handle.length > 64) {
       this.logger.debug(`Handle length is invalid: ${handle}`);
       //throw new Error("Handle length is invalid");
       return false;

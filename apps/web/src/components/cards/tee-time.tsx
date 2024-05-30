@@ -238,18 +238,21 @@ export const TeeTime = ({
               </div>
               {isOwned || status === "SECOND_HAND" ? (
                 <Tooltip
-                  trigger={<Link
-                    href={`/${courseId}/profile/${soldById}`}
-                    className="text-primary whitespace-nowrap overflow-hidden w-[230px] md:w-[200px] text-ellipsis"
-                    data-testid="sold-by-name-id"
-                  >
-                    {soldByName}
-                  </Link>}
+                  trigger={
+                    <div className="text-left text-primary whitespace-nowrap overflow-hidden w-[230px] md:w-[200px] text-ellipsis">
+                      <Link
+                        href={`/${courseId}/profile/${soldById}`}
+                        data-testid="sold-by-name-id"
+                      >
+                        {soldByName}
+                      </Link>
+                    </div>
+                  }
                   content={soldByName}
                 />
               ) : (
                 <Tooltip
-                  trigger={<div className="whitespace-nowrap overflow-hidden w-[230px] md:w-[200px] text-ellipsis">{soldByName}</div>}
+                  trigger={<div className="text-left whitespace-nowrap overflow-hidden w-[230px] md:w-[200px] text-ellipsis">{soldByName}</div>}
                   content={soldByName}
                 />
               )}
