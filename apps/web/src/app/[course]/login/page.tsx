@@ -35,7 +35,7 @@ export default function Login() {
   const updateUser = api.user.updateUser.useMutation();
 
   useEffect(() => {
-    if (loginError === "CallbackRouteError") {debugger
+    if (loginError === "CallbackRouteError") {
       toast.error("An error occurred logging in, try another option.");
     }
   }, []);

@@ -5,7 +5,6 @@ import { FilledButton } from "~/components/buttons/filled-button";
 import { FilterSort } from "~/components/buttons/filters-sort";
 import { GoBack } from "~/components/buttons/go-back";
 import { CourseBanner } from "~/components/course-page/course-banner";
-import { CourseTitle } from "~/components/course-page/course-title";
 import { DailyTeeTimes } from "~/components/course-page/daily-tee-times";
 import { Filters } from "~/components/course-page/filters";
 import { MobileFilters } from "~/components/course-page/mobile-filters";
