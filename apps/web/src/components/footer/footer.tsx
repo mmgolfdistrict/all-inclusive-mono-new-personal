@@ -16,6 +16,8 @@ export const Footer = () => {
           src={`https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/footerlogo.png`}
           alt="golf district logo"
           className="w-[50px] object-fit"
+          width={150}
+          height={50}
         />
       </div>
       {pathname === "/" ? (
