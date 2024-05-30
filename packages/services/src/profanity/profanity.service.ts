@@ -11,21 +11,28 @@ export class ProfanityService {
     this.db = db;
   }
 
+  isValidString = (input: string) => {
+    var regex = /^[a-z0-9_.]+$/;
+    return regex.test(input);
+  }
+
   isProfane = async (profanityText: string) => {
     try {
-      const text = profanityText.replace(/(.)(?=.*\1)/g, "");
+      const removeRepeatedText = profanityText.replace(/(.)(?=.*\1)/g, "");
+      const text = removeRepeatedText.replaceAll("1", 'i').replaceAll("1", 'l').replaceAll("0", 'o').replaceAll("3", "e").replaceAll("5", "s").replaceAll("7", "l");
 
       if (text.length < 1) {
         return {
           isProfane: false,
         };
       }
-      if (text.includes('69')) {
+
+      if (!this.isValidString(text) || text.includes('69')) {
         return {
           isProfane: true,
         };
       }
-      
+
       const matchingWords = await this.db
         .select()
         .from(profanities)

@@ -21,6 +21,8 @@ import { createRef, useEffect, useState } from "react";
 import ReCAPTCHA from "react-google-recaptcha";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
+import { generateUsername } from "unique-username-generator";
+import { api } from "~/utils/api";
 
 export default function Login() {
   const recaptchaRef = createRef<ReCAPTCHA>();
@@ -30,7 +32,8 @@ export default function Login() {
   const loginError = searchParams.get("error");
   const { course } = useCourseContext();
   const [showPassword, setShowPassword] = useState<boolean>(false);
-console.log("loginERror", loginError)
+  const updateUser = api.user.updateUser.useMutation();
+
   useEffect(() => {
     if (loginError === "CallbackRouteError") {debugger
       toast.error("An error occurred logging in, try another option.");
@@ -95,6 +98,13 @@ console.log("loginERror", loginError)
     }
   };
 
+  const updateHandle = async () => {
+    const uName = generateUsername(undefined, undefined, 6);
+    await updateUser.mutateAsync({
+      handle: uName,
+    });
+  };
+
   useEffect(() => {
     if (
       process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY &&
@@ -126,6 +136,7 @@ console.log("loginERror", loginError)
       }`,
       redirect: true,
     });
+    await updateHandle();
   };
 
   const appleSignIn = async () => {
@@ -139,6 +150,7 @@ console.log("loginERror", loginError)
       }`,
       redirect: true,
     });
+    await updateHandle();
   };
 
   const googleSignIn = async () => {
@@ -153,6 +165,7 @@ console.log("loginERror", loginError)
         }`,
         redirect: true,
       });
+     await updateHandle();
     } catch (error) {
       console.log(error);
     }

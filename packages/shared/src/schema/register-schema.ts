@@ -7,10 +7,10 @@ export const registerSchema = z
     username: z
       .string()
       .min(6, { message: "Username should be at least 6 characters long" })
-      .max(64, { message: "Username shouldn't be more than 64 characters long" })
-      .refine((username) => !username.includes("@"), {
-        message: "Username cannot contain '@'",
-      }),
+      .max(64, { message: "Username shouldn't be more than 64 characters long" }),
+      // .refine((username) => !username.includes("@"), {
+      //   message: "Username cannot contain '@'",
+      // }),
     email: z.string().email({ message: "Invalid email" }).min(1, "Email is required"),
     phoneNumber: z
       .string()

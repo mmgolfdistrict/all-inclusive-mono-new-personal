@@ -62,7 +62,7 @@ export default function RegisterPage() {
   });
 
   const genUsername = () => {
-    const uName = generateUsername(undefined, undefined, 12);
+    const uName = generateUsername(undefined, undefined, 6);
     setValue("username", uName);
   };
   const username = watch("username");
