@@ -13,7 +13,7 @@ export default function PrivacyPolicy() {
       </LoadingContainer>
       {privacyPolicies && (
         <main className="p-4 md:p-6 ">
-          <div dangerouslySetInnerHTML={{ __html: JSON.stringify(privacyPolicies) }}></div>
+          <div dangerouslySetInnerHTML={{ __html: privacyPolicies }}></div>
         </main>
       )}
     </>

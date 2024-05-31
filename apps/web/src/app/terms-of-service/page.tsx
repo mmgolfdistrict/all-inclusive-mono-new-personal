@@ -13,7 +13,7 @@ export default function TermsOfService() {
       </LoadingContainer>
       {termsOfServices && (
         <main className="p-4 md:p-6 ">
-          <div dangerouslySetInnerHTML={{ __html: JSON.stringify(termsOfServices) }}></div>
+          <div dangerouslySetInnerHTML={{ __html: termsOfServices }}></div>
         </main>
       )}
     </>
