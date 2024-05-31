@@ -20,6 +20,9 @@ import { alias } from "drizzle-orm/mysql-core";
 import { verifyCaptcha } from "../../../api/src/googleCaptcha";
 import { generateUtcTimestamp } from "../../helpers";
 import type { NotificationService } from "../notification/notification.service";
+import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
+
+const s3Client = new S3Client({ region: process.env.AWS_REGION });
 
 export interface UserCreationData {
   email: string;
@@ -1166,17 +1169,17 @@ export class UserService {
     const { user, profileImage, bannerImage } = data;
     const profilePicture = profileImage
       ? assetToURL({
-          key: profileImage.assetKey,
-          cdn: profileImage.assetCdn,
-          extension: profileImage.assetExtension,
-        })
+        key: profileImage.assetKey,
+        cdn: profileImage.assetCdn,
+        extension: profileImage.assetExtension,
+      })
       : "/defaults/default-profile.webp";
     const bannerPicture = bannerImage
       ? assetToURL({
-          key: bannerImage.assetKey,
-          cdn: bannerImage.assetCdn,
-          extension: bannerImage.assetExtension,
-        })
+        key: bannerImage.assetKey,
+        cdn: bannerImage.assetCdn,
+        extension: bannerImage.assetExtension,
+      })
       : "/defaults/default-banner.webp";
     let res;
 
@@ -1430,4 +1433,29 @@ export class UserService {
 
     return cleanedProviders;
   };
+
+  getS3HtmlContent = async (keyName: string) => {
+    const getObjectParams = {
+      Bucket: process.env.AWS_BUCKET,
+      Key: keyName,
+    };
+
+    try {
+      const { Body } = await s3Client.send(new GetObjectCommand(getObjectParams));
+      const htmlContent = await this.streamToString(Body);
+      return htmlContent;
+    } catch (err) {
+      console.error("Error fetching HTML file:", err);
+      throw err;
+    }
+  };
+
+  streamToString = async (stream: any) => {
+    const chunks: any[] = [];
+    return new Promise((resolve, reject) => {
+      stream.on("data", (chunk: any) => chunks.push(chunk));
+      stream.on("error", reject);
+      stream.on("end", () => resolve(Buffer.concat(chunks).toString("utf-8")));
+    });
+  }
 }
