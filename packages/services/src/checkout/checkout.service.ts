@@ -300,13 +300,52 @@ export class CheckoutService {
     console.log(`cartId = ${cartId}`);
     console.log(customerCartData);
 
-    const paymentIntent = await this.hyperSwitch
-      .updatePaymentIntent(paymentId || "", {
+    let intentData;
+
+    const isFirstHand = customerCart.cart
+      .filter(({ product_data }) => product_data.metadata.type === "first_hand")
+
+    const [record] = await this.database
+      .select({
+        internalId: providers.internalId,
+      })
+      .from(providerCourseLink)
+      .innerJoin(providers, eq(providers.id, providerCourseLink.providerId))
+      .where(eq(providerCourseLink.courseId, customerCart.courseId))
+      .execute();
+
+    if (String(record?.internalId) === "club-prophet" && isFirstHand.length > 0) {
+      const sensibleItem = customerCart.cart.find(({ product_data }) => product_data.metadata.type === "sensible") as SensibleProduct
+      intentData = {
+        amount: parseInt(total.toString()),
+        currency: "USD",
+        return_url: `http://localhost:3000/${customerCart.courseId}/checkout/processing?teeTimeId=${(customerCart.cart[0] as FirstHandProduct)?.product_data?.metadata?.tee_time_id}&cart_id=${cartId}&sensible_quote_id=${sensibleItem?.product_data?.metadata?.sensible_quote_id}&payment_id=${paymentId}`,
+        confirm: true,
+        amount_to_capture: parseInt(total.toString()),
+        payment_method: "card_redirect",
+        business_country: "US",
+        payment_method_type: "card_redirect",
+        payment_method_data: {
+          card_redirect: {
+            card_redirect: {},
+          },
+        },
+        routing: {
+          type: "single",
+          data: "prophetpay",
+        },
+      }
+    } else {
+      intentData = {
         currency: "USD",
         amount: parseInt(total.toString()),
         amount_to_capture: parseInt(total.toString())
-        // @ts-ignore
-      })
+      }
+    }
+
+    // @ts-ignore
+    const paymentIntent = await this.hyperSwitch
+      .updatePaymentIntent(paymentId || "", intentData)
       .catch((err) => {
         this.logger.error(` ${err}`);
         throw new Error(`Error updating payment intent: ${err}`);
@@ -342,6 +381,7 @@ export class CheckoutService {
       clientSecret: paymentIntent.client_secret,
       paymentId: paymentIntent.payment_id,
       cartId,
+      next_action: paymentIntent.next_action
     };
   };
 

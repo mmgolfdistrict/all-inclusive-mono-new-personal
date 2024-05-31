@@ -62,6 +62,7 @@ export const HyperSwitch = ({
   const [nextaction, setNextaction] = useState<NextAction | undefined>(
     undefined
   );
+  const [paymentId, setPaymentId] = useState<string | undefined>(undefined);
 
   const isFirstHand = localCartData?.filter(
     ({ product_data }) => product_data.metadata.type === "first_hand"
@@ -81,13 +82,18 @@ export const HyperSwitch = ({
         email: user.email ?? "",
         phone: user.phone ?? "",
         phone_country_code: "1",
-        paymentId: options?.paymentId ? options.paymentId : null,
+        paymentId: options?.paymentId
+          ? options.paymentId
+          : paymentId
+          ? paymentId
+          : null,
         //@ts-ignore
         cart: cartData,
         cartId,
       })) as CreatePaymentResponse;
       if (data?.next_action) {
         setNextaction(data?.next_action);
+        setPaymentId(data?.paymentId);
       } else {
         setOptions({
           clientSecret: data.clientSecret,

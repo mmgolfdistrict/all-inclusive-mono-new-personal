@@ -74,6 +74,12 @@ export default function CheckoutConfirmation() {
     // setIsLoading(true);
 
     try {
+      if (status === "failed") {
+        //TODO: If the payment is failed on prophetpay's end
+        throw new Error(
+          "Something went wrong while making payment, Please try again."
+        );
+      }
       // if (response) {
       if (paymentIntent!.status === "processing") {
         void cancelHyperswitchPaymentById.mutateAsync({

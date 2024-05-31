@@ -764,54 +764,6 @@ export class HyperSwitchWebhookService {
       firstBooking.providerCourseConfiguration
     );
 
-    // let buyerCustomer;
-    // let sellerCustomer;
-    // if (firstBooking.internalId === "club-prophet") {
-    //   const buyerCustomerResponse = await this.database.select({
-    //     email: users.email,
-    //     name: users.name,
-    //     phone: users.phoneNumber
-    //   }).from(users).where(eq(users.id, customer_id)).execute().catch(err => {
-    //     this.logger.error(`Error finding customer: ${err}`)
-    //   })
-
-    //   if (!buyerCustomerResponse) {
-    //     this.logger.error(`Error finding customer`);
-    //     this.loggerService.errorLog({
-    //       userId: customer_id,
-    //       url: "/handleSecondHandItem",
-    //       userAgent: "",
-    //       message: "ERROR FINDING CUSTOMER",
-    //       stackTrace: `Error finding for userId ${customer_id}`,
-    //       additionalDetailsJSON: "Error finding customer",
-    //     });
-    //     throw new Error(`Error finding customer`);
-    //   }
-    //   buyerCustomer = buyerCustomerResponse[0]
-
-    //   const sellerCustomerResponse = await this.database.select({
-    //     email: users.email,
-    //     name: users.name,
-    //     phone: users.phoneNumber
-    //   }).from(users).where(eq(users.id, firstBooking.ownerId)).execute().catch(err => {
-    //     this.logger.error(`Error finding customer: ${err}`)
-    //   })
-
-    //   if (!sellerCustomerResponse) {
-    //     this.logger.error(`Error finding customer`);
-    //     this.loggerService.errorLog({
-    //       userId: firstBooking.ownerId,
-    //       url: "/handleSecondHandItem",
-    //       userAgent: "",
-    //       message: "ERROR FINDING CUSTOMER",
-    //       stackTrace: `Error finding for userId ${firstBooking.ownerId}`,
-    //       additionalDetailsJSON: "Error finding customer",
-    //     });
-    //     throw new Error(`Error finding customer`);
-    //   }
-
-    //   sellerCustomer = sellerCustomerResponse[0]
-    // } else {
     const buyerCustomer = await this.providerService.findOrCreateCustomer(
       firstBooking.courseId ?? "",
       firstBooking.providerId!,
@@ -855,8 +807,6 @@ export class HyperSwitchWebhookService {
       });
       throw new Error(`Error creating or finding customer`);
     }
-    // }
-
 
     await provider
       .deleteBooking(
@@ -877,7 +827,7 @@ export class HyperSwitchWebhookService {
         });
         throw new Error(`Error deleting booking`);
       });
-
+    console.log("Deleted old bookings")
     const newBookings: (BookingResponse | ClubProphetBookingResponse)[] = [];
     const [existingTeeTime] = await this.database
       .select({

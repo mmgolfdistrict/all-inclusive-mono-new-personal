@@ -701,7 +701,6 @@ export class BookingService {
       t.slotsData = finaldata;
       t.golfers = finaldata;
     }
-    console.log("COMBINED DATA", combinedData);
     return combinedData;
   };
 

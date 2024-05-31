@@ -23,20 +23,12 @@ export class clubprophet {
   async getTeeTimes(
     token: string,
     courseId: string,
-    teesheetId: string | null,
-    startTime: string,
-    endTime: string,
+    _teesheetId: string | null,
+    _startTime: string,
+    _endTime: string,
     date: string,
     rateCode?: string
   ): Promise<TeeTimeResponse[]> {
-    // async getTeeTimes(
-    //   token: string,
-    //   courseId: string,
-    //   startTime: string,
-    //   endTime: string,
-    //   rateCode: string,
-    //   date: string
-    // ): Promise<ClubProphetTeeTimeResponse[]> {
     const { TEESHEET_ENDPOINT } = JSON.parse(
       this.providerConfiguration ?? "{}"
     );
@@ -48,7 +40,7 @@ export class clubprophet {
       fromDate: `${date}T00:00:04.192Z`,
       toDate: `${date}T23:59:04.192Z`,
       courseId: courseId,
-      rateCode: rateCode || "string",
+      rateCode: rateCode || "sticks",
     });
 
     // console.log("data--", data);
@@ -62,24 +54,9 @@ export class clubprophet {
     };
     const resp = await axios.request(config as any);
     return resp.data as TeeTimeResponse[];
-    // const response = await fetch(url, { headers, method: "GET", data:JSON.stringify(data) });
-
-    // if (!response.ok) {
-    //   if (response.status === 403) {
-    //     this.logger.error(`Error updating tee time: ${response.statusText}`);
-    //     await this.getToken();
-    //   }
-
-    //   console.log(JSON.stringify(response));
-    //   throw new Error(`Error fetching tee times: ${response.statusText}`);
-    // }
-
-    // return (await response.json()).data as TeeTimeResponse[];
-    // const res:TeeTimeResponse = resp
   }
 
   // ----* starting here we are creating new booking for tee time *-----
-
   async createBooking(
     token: string,
     _coureId: string,
@@ -105,48 +82,18 @@ export class clubprophet {
         // this.logger.error(`Error creating booking: ${response.statusText}`);
         await this.getToken();
       }
-      console.dir(response, { depth: null });
       console.log("ERROR", await response.json());
       throw new Error(`Error creating booking: ${JSON.stringify(response)}`);
     }
 
-    return (await response.json()) as ClubProphetBookingResponse;
+    const bookingResponse = (await response.json()) as ClubProphetBookingResponse;
+
+    // await this.addSalesData(bookingResponse.participantIds, token);
+
+    return (bookingResponse);
   }
 
-  async updateTeeTime(
-    _token: string,
-    _courseId: string,
-    _teesheetId: string,
-    _bookingId: string,
-    _options?: TeeTimeUpdateRequest
-  ): Promise<ClubProphetBookingResponse> {
-    // const endpoint = this.getBasePoint();
-    // console.log("update teetime called");
-
-    // const url = `${endpoint}/courses/${courseId}/teesheets/${teesheetId}/bookings/${bookingId}/bookedPlayers/${bookingId}-1`;
-    // // console.log(url);
-
-    // // console.log(JSON.stringify(options));
-    // const headers = this.getHeaders(token);
-
-    // const response = await fetch(url, {
-    //   method: "PUT",
-    //   headers: headers,
-    //   body: JSON.stringify(options),
-    // });
-    // // console.log(response);
-    // if (!response.ok) {
-    //   if (response.status === 403) {
-    //     // this.logger.error(`Error updating tee time: ${response.statusText}`);
-    //     await this.getToken();
-    //   }
-    //   throw new Error(`Error updating tee time: ${response.statusText}`);
-    // }
-
-    return ({}) as ClubProphetBookingResponse;
-  }
-
-  getToken = async (): Promise<string> => {
+  async getToken(): Promise<string> {
     const { CONTENT_TYPE, CLIENT_ID, CLIENT_SECRET, API_KEY, TOKEN_ENDPOINT } = JSON.parse(
       this.providerConfiguration ?? "{}"
     );
@@ -194,36 +141,36 @@ export class clubprophet {
     }
   }
 
-  deleteBooking =
-    async (
-      token: string,
-      _teesheetId: string,
-      bookingId: string
-    ): Promise<void> => {
-      const endpoint = this.getBasePoint();
-      const url = `${endpoint}/thirdpartyapi/api/v1/TeeSheet/CancelReservation`;
-      const headers = this.getHeaders(token);
+  async deleteBooking(
+    token: string,
+    _courseId: string,
+    _teesheetId: string,
+    bookingId: string
+  ): Promise<void> {
+    const endpoint = this.getBasePoint();
+    const url = `${endpoint}/thirdpartyapi/api/v1/TeeSheet/CancelReservation`;
+    const headers = this.getHeaders(token);
 
-      console.log(`deleteBooking - ${url}`);
+    console.log(`deleteBooking - ${url}`);
 
-      const response = await fetch(url, {
-        method: "POST",
-        headers: headers,
-        body: JSON.stringify({
-          reservationId: bookingId,
-        })
-      });
+    const response = await fetch(url, {
+      method: "POST",
+      headers: headers,
+      body: JSON.stringify({
+        reservationId: bookingId,
+      })
+    });
 
-      if (!response.ok) {
-        this.logger.error(`Error deleting booking: ${response.statusText}`);
-        this.logger.error(`Error response from club-prophet: ${JSON.stringify(await response.json())}`);
-        if (response.status === 403) {
-          await this.getToken();
-        }
-        throw new Error(`Error deleting booking: ${response.statusText}`);
+    if (!response.ok) {
+      this.logger.error(`Error deleting booking: ${response.statusText}`);
+      this.logger.error(`Error response from club-prophet: ${JSON.stringify(await response.json())}`);
+      if (response.status === 403) {
+        await this.getToken();
       }
-      this.logger.info(`Booking deleted successfully: ${bookingId}`);
+      throw new Error(`Error deleting booking: ${response.statusText}`);
     }
+    this.logger.info(`Booking deleted successfully: ${bookingId}`);
+  }
 
   async createCustomer(
     token: string,
@@ -291,5 +238,61 @@ export class clubprophet {
     return bookingSlots;
   }
 
-  getCustomer = async (): Promise<CustomerData> => { return {} as CustomerData; }
+  addSalesData = async (
+    bookingIds: number[],
+    token: string
+  ): Promise<void> => {
+    try {
+      if (bookingIds.length <= 0) {
+        return;
+      }
+      const endpoint = this.getBasePoint();
+      const headers = this.getHeaders(token);
+
+      const addSalesUrl = `${endpoint}/thirdpartyapi/api/v1/Sale/SaleOnlineByBookingId`;
+      this.logger.info(`Add sales url - ${addSalesUrl}`);
+      this.logger.info(`Adding sales for booking Ids: ${bookingIds}`);
+
+      const addSalesData = {
+        bookingIds,
+        approvalCode: "123123", // Fake value
+        refNum: "1212", // Fake value
+        cardIssuedBy: ""
+      }
+
+      const addSalesResponse = await fetch(addSalesUrl, {
+        method: "POST",
+        headers: headers,
+        body: JSON.stringify(addSalesData),
+      });
+      if (!addSalesResponse.ok) {
+        throw new Error(
+          `Error adding sales data for booking Ids: ${JSON.stringify(bookingIds)}, status code: ${addSalesResponse.status
+          }, status text: ${addSalesResponse.statusText}, response: ${JSON.stringify(await addSalesResponse.json())}`
+        );
+      }
+      const salesResponse = await addSalesResponse.json();
+
+      this.logger.info(
+        `Sales data added successfully for booking with ids: ${bookingIds}, cart data: ${JSON.stringify(
+          salesResponse
+        )}`
+      );
+    } catch (error) {
+      this.logger.error(`Error adding sales data: ${error}`);
+    }
+  };
+
+  async updateTeeTime(
+    _token: string,
+    _courseId: string,
+    _teesheetId: string,
+    _bookingId: string,
+    _options?: TeeTimeUpdateRequest
+  ): Promise<ClubProphetBookingResponse> {
+    return ({}) as ClubProphetBookingResponse;
+  }
+
+
+  async getCustomer(): Promise<CustomerData> { return {} as CustomerData; }
 }

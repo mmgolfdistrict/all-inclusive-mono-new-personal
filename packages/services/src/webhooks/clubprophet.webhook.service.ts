@@ -267,7 +267,8 @@ export class clubprophetWebhookService {
           availableFirstHandSpots: teeTime.freeSlots > 4 ? 4 : teeTime.freeSlots,
           availableSecondHandSpots: indexedTeeTime.availableSecondHandSpots,
           greenFeePerPlayer: (teeTime.greenFee18 ? teeTime.greenFee18 : teeTime.greenFee9 ? teeTime.greenFee9 : 18) * 100,
-          cartFeePerPlayer: (teeTime.cartFee18 ? teeTime.cartFee18 : teeTime.cartFee9 ? teeTime.cartFee9 : 18) * 100,
+          //TODO: remove static cart fee
+          cartFeePerPlayer: (teeTime.cartFee18 ? teeTime.cartFee18 : teeTime.cartFee9 ? teeTime.cartFee9 : 1) * 100,
           greenFeeTaxPerPlayer: indexedTeeTime.greenFeeTaxPerPlayer ? indexedTeeTime.greenFeeTaxPerPlayer : 0,
           cartFeeTaxPerPlayer: indexedTeeTime.cartFeeTaxPerPlayer,
           providerDate: teeTime.startTime,
@@ -280,7 +281,8 @@ export class clubprophetWebhookService {
           time: militaryTime,
           maxPlayersPerBooking: teeTime.freeSlots,
           greenFeePerPlayer: (teeTime.greenFee18 ? teeTime.greenFee18 : teeTime.greenFee9 ? teeTime.greenFee9 : 18) * 100,
-          cartFeePerPlayer: (teeTime.cartFee18 ? teeTime.cartFee18 : teeTime.cartFee9 ? teeTime.cartFee9 : 18) * 100,
+          //TODO: remove static cart fee
+          cartFeePerPlayer: (teeTime.cartFee18 ? teeTime.cartFee18 : teeTime.cartFee9 ? teeTime.cartFee9 : 1) * 100,
           greenFeeTaxPerPlayer: indexedTeeTime.greenFeeTaxPerPlayer ? indexedTeeTime.greenFeeTaxPerPlayer : 0,
           cartFeeTaxPerPlayer: indexedTeeTime.cartFeeTaxPerPlayer,
           courseId: indexedTeeTime.courseId,
