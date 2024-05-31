@@ -37,13 +37,13 @@ export interface UpdatePayment {
   payment_method_type?: string;
   payment_method_data?: {
     card_redirect?: {
-      card_redirect?: {},
-    },
-  },
+      card_redirect?: {};
+    };
+  };
   routing?: {
-    type: string,
-    data: string,
-  },
+    type: string;
+    data: string;
+  };
 }
 
 export type ProductData =

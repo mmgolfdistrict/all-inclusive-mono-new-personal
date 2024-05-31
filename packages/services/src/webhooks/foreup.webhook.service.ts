@@ -77,7 +77,7 @@ export class ForeUpWebhookService {
    * @param {Db} database - The database instance to interact with.
    * @param {ProviderService} providerService - The provider service for fetching tee times from ForeUp.
    */
-  constructor(private readonly database: Db, private readonly providerService: ProviderService) { }
+  constructor(private readonly database: Db, private readonly providerService: ProviderService) {}
 
   /**
    * Handles the ForeUp webhook.
@@ -257,14 +257,14 @@ export class ForeUpWebhookService {
     // console.log("teeTimes found for this day", existingTeeTimesForThisDay.length);
 
     // Retrieve provider tee times
-    const providerTeeTimes = await provider.getTeeTimes(
+    const providerTeeTimes = (await provider.getTeeTimes(
       token,
       providerCourseId,
       providerTeeSheetId,
       "0000",
       "2359",
       formattedDate
-    ) as unknown as TeeTimeResponse[];
+    )) as unknown as TeeTimeResponse[];
 
     const teeTimesToUpsert: InsertTeeTimes[] = [];
     const teeTimesToInsert: InsertTeeTimes[] = [];
@@ -390,14 +390,14 @@ export class ForeUpWebhookService {
     time: number
   ) => {
     try {
-      const teeTimeResponse = await provider.getTeeTimes(
+      const teeTimeResponse = (await provider.getTeeTimes(
         token,
         providerCourseId,
         providerTeeSheetId,
         time.toString().padStart(4, "0"),
         (time + 1).toString().padStart(4, "0"),
         formattedDate
-      ) as unknown as TeeTimeResponse[];
+      )) as unknown as TeeTimeResponse[];
       let teeTime;
       if (teeTimeResponse && teeTimeResponse.length > 0) {
         teeTime = teeTimeResponse[0];

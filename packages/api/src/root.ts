@@ -3,6 +3,7 @@ import { authRouter } from "./routers/auth";
 import { bookingRouter } from "./routers/booking";
 import { cashOutRouter } from "./routers/cashout";
 import { checkoutRouter } from "./routers/checkout";
+import { clubProphetRouter } from "./routers/clubprophet";
 import { courseRouter } from "./routers/course";
 import { domainRouter } from "./routers/domain";
 import { entityRouter } from "./routers/entity";
@@ -20,7 +21,6 @@ import { watchlistRouter } from "./routers/watchlist";
 import { weatherRouter } from "./routers/weather";
 import { webhookRouter } from "./routers/webhooks";
 import { createTRPCRouter } from "./trpc";
-import { clubProphetRouter } from "./routers/clubprophet";
 
 export const appRouter = createTRPCRouter({
   auction: auctionRouter,

@@ -21,7 +21,6 @@ import type { ProductData } from "../checkout/types";
 import type { NotificationService } from "../notification/notification.service";
 import type { SensibleService } from "../sensible/sensible.service";
 import type { ProviderAPI } from "../tee-sheet-provider/sheet-providers";
-import { TeeTime } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
 import type { LoggerService } from "../webhooks/logging.service";
 
 /**
@@ -138,17 +137,32 @@ export class TokenizeService {
    *   - The maximum bookings for a tee time have been reached.
    *   - There are issues interacting with the underlying data store (Prisma).
    */
-  async tokenizeBooking({ redirectHref, userId, purchasePrice, players, providerBookingId, providerTeeTimeId, paymentId, withCart, provider, token, teeTime, normalizedCartData, isWebhookAvailable, providerBookingIds }: {
-    redirectHref: string,
-    userId: string,
-    purchasePrice: number,
-    players: number, //how many bookings to make
-    providerBookingId: string, //the tee time ids to book
-    providerTeeTimeId: string, //all tee times to be tokenized are purchased from a provider
-    paymentId: string,
-    withCart?: boolean,
-    provider?: ProviderAPI,
-    token?: string,
+  async tokenizeBooking({
+    redirectHref,
+    userId,
+    purchasePrice,
+    players,
+    providerBookingId,
+    providerTeeTimeId,
+    paymentId,
+    withCart,
+    provider,
+    token,
+    teeTime,
+    normalizedCartData,
+    isWebhookAvailable,
+    providerBookingIds,
+  }: {
+    redirectHref: string;
+    userId: string;
+    purchasePrice: number;
+    players: number; //how many bookings to make
+    providerBookingId: string; //the tee time ids to book
+    providerTeeTimeId: string; //all tee times to be tokenized are purchased from a provider
+    paymentId: string;
+    withCart?: boolean;
+    provider?: ProviderAPI;
+    token?: string;
     teeTime?: {
       id: string;
       courseId: string;
@@ -159,12 +173,11 @@ export class TokenizeService {
       internalId: string | null;
       providerDate: string;
       holes: number;
-    },
-    normalizedCartData?: any,
-    isWebhookAvailable?: boolean,
-    providerBookingIds?: string[]
-  }
-  ): Promise<string> {
+    };
+    normalizedCartData?: any;
+    isWebhookAvailable?: boolean;
+    providerBookingIds?: string[];
+  }): Promise<string> {
     this.logger.info(`tokenizeBooking tokenizing booking id: ${providerTeeTimeId} for user: ${userId}`);
     //@TODO add this to the transaction
 

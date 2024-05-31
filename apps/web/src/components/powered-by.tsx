@@ -1,5 +1,4 @@
 import { type ComponentProps } from "react";
-
 import { BlurImage } from "./images/blur-image";
 
 export const PoweredBy = (props: ComponentProps<"div">) => {

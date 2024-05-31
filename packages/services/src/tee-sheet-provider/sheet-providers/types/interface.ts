@@ -1,14 +1,17 @@
 import type { InsertBookingSlots } from "@golf-district/database/schema/bookingslots";
 import type pino from "pino";
-import type { BookingResponse as ForeUpBookingResponse, CustomerCreationData as ForeUpCustomerCreationData, CustomerData as ForeUpCustomerCreationResponse, TeeTimeResponse as ForeUpTeeTimeResponse } from "./foreup.type";
-
 import type {
   ClubProphetBookingResponse,
   ClubProphetCustomerCreationData,
   ClubProphetCustomerCreationResponse,
   ClubProphetTeeTimeResponse,
 } from "./clubprophet.types";
-
+import type {
+  BookingResponse as ForeUpBookingResponse,
+  CustomerCreationData as ForeUpCustomerCreationData,
+  CustomerData as ForeUpCustomerCreationResponse,
+  TeeTimeResponse as ForeUpTeeTimeResponse,
+} from "./foreup.type";
 
 export type ForeUpCredentials = {
   username: string;
@@ -19,7 +22,7 @@ type ProviderCredentials = ForeUpCredentials;
 
 export type TeeTimeResponse = ForeUpTeeTimeResponse | ClubProphetTeeTimeResponse;
 
-export type BookingResponse = ForeUpBookingResponse | ClubProphetBookingResponse
+export type BookingResponse = ForeUpBookingResponse | ClubProphetBookingResponse;
 
 export type CustomerCreationData = ForeUpCustomerCreationData | ClubProphetCustomerCreationData;
 

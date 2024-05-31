@@ -3,26 +3,22 @@ import type { Db } from "@golf-district/database";
 import { and, asc, eq, inArray, sql } from "@golf-district/database";
 import { courses } from "@golf-district/database/schema/courses";
 import { entities } from "@golf-district/database/schema/entities";
+import { providers } from "@golf-district/database/schema/providers";
 import { providerCourseLink } from "@golf-district/database/schema/providersCourseLink";
 import type { InsertTeeTimes } from "@golf-district/database/schema/teeTimes";
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
-import { dateToUtcTimestamp } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
 import dayjs from "dayjs";
 import isEqual from "lodash.isequal";
 import type { ProviderService } from "../tee-sheet-provider/providers.service";
 import type { ProviderAPI } from "../tee-sheet-provider/sheet-providers";
 import type { ClubProphetTeeTimeResponse } from "../tee-sheet-provider/sheet-providers/types/clubprophet.types";
-import { providers } from "@golf-district/database/schema/providers";
 
 export class clubprophetWebhookService {
   private readonly clubProphetId = "club-prophet";
   private readonly providerName = "club-prophet";
 
-  constructor(
-    private readonly database: Db,
-    private readonly providerService: ProviderService
-  ) { }
+  constructor(private readonly database: Db, private readonly providerService: ProviderService) { }
   private readonly logger = Logger(clubprophetWebhookService.name);
 
   initializeData = async () => {
@@ -70,7 +66,6 @@ export class clubprophetWebhookService {
       this.logger.info("no provider Configuration found");
       return null;
     }
-    console.log("INTERNAL ID", internalId)
     const { provider, token } = await this.providerService.getProviderAndKey(
       internalId ?? "",
       courseToIndex.providerCourseId,
@@ -89,7 +84,7 @@ export class clubprophetWebhookService {
     courseId: string,
     providerTeeSheetId: string,
     provider: ProviderAPI,
-    token: string,
+    token: string
   ) => {
     const existingTeeTimesForThisDay = await this.database
       .select({
@@ -120,15 +115,15 @@ export class clubprophetWebhookService {
       });
 
     // Retrieve provider te`e times
-    const providerTeeTimes: ClubProphetTeeTimeResponse[] = await provider.getTeeTimes(
+    const providerTeeTimes: ClubProphetTeeTimeResponse[] = (await provider.getTeeTimes(
       token,
       providerCourseId,
       providerTeeSheetId,
       "0000",
       "2359",
       formattedDate
-    ) as unknown as ClubProphetTeeTimeResponse[];
-    console.log(providerTeeTimes)
+    )) as unknown as ClubProphetTeeTimeResponse[];
+    console.log(providerTeeTimes);
 
     const teeTimesToUpsert: InsertTeeTimes[] = [];
     const teeTimesToInsert: InsertTeeTimes[] = [];
@@ -169,8 +164,18 @@ export class clubprophetWebhookService {
             maxPlayersPerBooking: teeTimeResponse.freeSlots,
             availableFirstHandSpots: teeTimeResponse.freeSlots > 4 ? 4 : teeTimeResponse.freeSlots,
             availableSecondHandSpots: indexedTeeTime.availableSecondHandSpots,
-            greenFeePerPlayer: (teeTimeResponse.greenFee18 ? teeTimeResponse.greenFee18 : teeTimeResponse.greenFee9 ? teeTimeResponse.greenFee9 : 18) * 100,
-            cartFeePerPlayer: (teeTimeResponse.cartFee18 ? teeTimeResponse.cartFee18 : teeTimeResponse.cartFee9 ? teeTimeResponse.cartFee9 : 18) * 100,
+            greenFeePerPlayer:
+              (teeTimeResponse.greenFee18
+                ? teeTimeResponse.greenFee18
+                : teeTimeResponse.greenFee9
+                  ? teeTimeResponse.greenFee9
+                  : 18) * 100,
+            cartFeePerPlayer:
+              (teeTimeResponse.cartFee18
+                ? teeTimeResponse.cartFee18
+                : teeTimeResponse.cartFee9
+                  ? teeTimeResponse.cartFee9
+                  : 18) * 100,
             greenFeeTaxPerPlayer: indexedTeeTime.greenFeeTax ? indexedTeeTime.greenFeeTax : 0,
             cartFeeTaxPerPlayer: indexedTeeTime.cartFeeTax,
             providerDate: teeTimeResponse.startTime,
@@ -191,8 +196,18 @@ export class clubprophetWebhookService {
             maxPlayersPerBooking: teeTimeResponse.freeSlots,
             availableFirstHandSpots: teeTimeResponse.freeSlots > 4 ? 4 : teeTimeResponse.freeSlots,
             availableSecondHandSpots: 0,
-            greenFeePerPlayer: (teeTimeResponse.greenFee18 ? teeTimeResponse.greenFee18 : teeTimeResponse.greenFee9 ? teeTimeResponse.greenFee9 : 18) * 100,
-            cartFeePerPlayer: (teeTimeResponse.cartFee18 ? teeTimeResponse.cartFee18 : teeTimeResponse.cartFee9 ? teeTimeResponse.cartFee9 : 18) * 100,
+            greenFeePerPlayer:
+              (teeTimeResponse.greenFee18
+                ? teeTimeResponse.greenFee18
+                : teeTimeResponse.greenFee9
+                  ? teeTimeResponse.greenFee9
+                  : 18) * 100,
+            cartFeePerPlayer:
+              (teeTimeResponse.cartFee18
+                ? teeTimeResponse.cartFee18
+                : teeTimeResponse.cartFee9
+                  ? teeTimeResponse.cartFee9
+                  : 18) * 100,
             greenFeeTaxPerPlayer: 0, // hardcode
             cartFeeTaxPerPlayer: 0,
             providerDate: teeTimeResponse.startTime,
@@ -212,17 +227,17 @@ export class clubprophetWebhookService {
     providerCourseId: string,
     provider: ProviderAPI,
     providerTeeTimeId: string,
-    token: string,
+    token: string
   ) => {
     try {
-      const teeTimeResponse = await provider.getTeeTimes(
+      const teeTimeResponse = (await provider.getTeeTimes(
         token,
         providerCourseId,
         "",
         "",
         "",
         formattedDate
-      ) as unknown as ClubProphetTeeTimeResponse[];
+      )) as unknown as ClubProphetTeeTimeResponse[];
 
       let teeTime;
       if (teeTimeResponse && teeTimeResponse.length > 0) {
@@ -240,7 +255,7 @@ export class clubprophetWebhookService {
           availableSecondHandSpots: teeTimes.availableSecondHandSpots,
           entityId: courses.entityId,
           greenFeeTaxPerPlayer: teeTimes.greenFeeTaxPerPlayer,
-          cartFeeTaxPerPlayer: teeTimes.cartFeeTaxPerPlayer
+          cartFeeTaxPerPlayer: teeTimes.cartFeeTaxPerPlayer,
         })
         .from(teeTimes)
         .leftJoin(courses, eq(courses.id, teeTimes.courseId))
@@ -266,9 +281,11 @@ export class clubprophetWebhookService {
           maxPlayersPerBooking: teeTime.freeSlots,
           availableFirstHandSpots: teeTime.freeSlots > 4 ? 4 : teeTime.freeSlots,
           availableSecondHandSpots: indexedTeeTime.availableSecondHandSpots,
-          greenFeePerPlayer: (teeTime.greenFee18 ? teeTime.greenFee18 : teeTime.greenFee9 ? teeTime.greenFee9 : 18) * 100,
+          greenFeePerPlayer:
+            (teeTime.greenFee18 ? teeTime.greenFee18 : teeTime.greenFee9 ? teeTime.greenFee9 : 18) * 100,
           //TODO: remove static cart fee
-          cartFeePerPlayer: (teeTime.cartFee18 ? teeTime.cartFee18 : teeTime.cartFee9 ? teeTime.cartFee9 : 1) * 100,
+          cartFeePerPlayer:
+            (teeTime.cartFee18 ? teeTime.cartFee18 : teeTime.cartFee9 ? teeTime.cartFee9 : 1) * 100,
           greenFeeTaxPerPlayer: indexedTeeTime.greenFeeTaxPerPlayer ? indexedTeeTime.greenFeeTaxPerPlayer : 0,
           cartFeeTaxPerPlayer: indexedTeeTime.cartFeeTaxPerPlayer,
           providerDate: teeTime.startTime,
@@ -280,9 +297,11 @@ export class clubprophetWebhookService {
           date: teeTime.startTime,
           time: militaryTime,
           maxPlayersPerBooking: teeTime.freeSlots,
-          greenFeePerPlayer: (teeTime.greenFee18 ? teeTime.greenFee18 : teeTime.greenFee9 ? teeTime.greenFee9 : 18) * 100,
+          greenFeePerPlayer:
+            (teeTime.greenFee18 ? teeTime.greenFee18 : teeTime.greenFee9 ? teeTime.greenFee9 : 18) * 100,
           //TODO: remove static cart fee
-          cartFeePerPlayer: (teeTime.cartFee18 ? teeTime.cartFee18 : teeTime.cartFee9 ? teeTime.cartFee9 : 1) * 100,
+          cartFeePerPlayer:
+            (teeTime.cartFee18 ? teeTime.cartFee18 : teeTime.cartFee9 ? teeTime.cartFee9 : 1) * 100,
           greenFeeTaxPerPlayer: indexedTeeTime.greenFeeTaxPerPlayer ? indexedTeeTime.greenFeeTaxPerPlayer : 0,
           cartFeeTaxPerPlayer: indexedTeeTime.cartFeeTaxPerPlayer,
           courseId: indexedTeeTime.courseId,
@@ -320,7 +339,7 @@ export class clubprophetWebhookService {
     const initData = await this.initializeData();
     if (!initData) return; // Exit if initialization fails
     const { courseToIndex, entityId, provider, token, providerUid } = initData;
-    console.log(provider)
+    console.log(provider);
 
     const courseId = courseToIndex.providerCourseId;
     const today = dayjs();
@@ -335,7 +354,7 @@ export class clubprophetWebhookService {
         courseToIndex.providerTeeSheetId,
         // courseToIndex.providerId,
         provider,
-        token,
+        token
         // entityId
       );
       if (indexResult) {

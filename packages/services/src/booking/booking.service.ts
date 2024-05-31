@@ -29,10 +29,10 @@ import type { HyperSwitchService } from "../payment-processor/hyperswitch.servic
 import type { SensibleService } from "../sensible/sensible.service";
 import type { Customer, ProviderService } from "../tee-sheet-provider/providers.service";
 import type { ProviderAPI } from "../tee-sheet-provider/sheet-providers";
+import type { ClubProphetBookingResponse } from "../tee-sheet-provider/sheet-providers/types/clubprophet.types";
 import type { BookingResponse } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
 import type { TokenizeService } from "../token/tokenize.service";
 import type { LoggerService } from "../webhooks/logging.service";
-import type { ClubProphetBookingResponse } from "../tee-sheet-provider/sheet-providers/types/clubprophet.types";
 
 interface TeeTimeData {
   courseId: string;
@@ -140,7 +140,7 @@ export class BookingService {
     private readonly loggerService: LoggerService,
     private readonly hyperSwitchService: HyperSwitchService,
     private readonly sensibleService: SensibleService
-  ) { }
+  ) {}
 
   createCounterOffer = async (userId: string, bookingIds: string[], offerId: string, amount: number) => {
     //find owner of each booking
@@ -2333,7 +2333,7 @@ export class BookingService {
 
     const [bookedAlready] = await this.database
       .select({
-        id: bookings.id
+        id: bookings.id,
       })
       .from(bookings)
       .where(eq(bookings.providerPaymentId, payment_id));
@@ -2466,7 +2466,7 @@ export class BookingService {
               details,
             },
           },
-        }
+        };
       }
 
       if (teeTime.internalId === "club-prophet") {
@@ -2482,14 +2482,19 @@ export class BookingService {
           });
           throw new Error(`Error creating customer`);
         }
-        const [user] = await this.database.select({
-          name: users.name,
-          email: users.email,
-          phone: users.phoneNumber,
-        }).from(users).where(eq(users.id, userId)).execute().catch((err) => {
-          this.logger.error(err);
-          throw new Error(`Error finding user: ${err}`);
-        })
+        const [user] = await this.database
+          .select({
+            name: users.name,
+            email: users.email,
+            phone: users.phoneNumber,
+          })
+          .from(users)
+          .where(eq(users.id, userId))
+          .execute()
+          .catch((err) => {
+            this.logger.error(err);
+            throw new Error(`Error finding user: ${err}`);
+          });
         if (!user) {
           throw new Error("User not found");
         }
@@ -2509,13 +2514,13 @@ export class BookingService {
           bookingTypeId: 311,
           rateCode: "sticks",
           price: [primaryGreenFeeCharge / 100 + taxCharge - markupCharge],
-        }
+        };
       }
 
       console.log(
         `Creating booking ${teeTime.providerDate}, ${teeTime.holes}, ${playerCount}, ${teeTime.providerCourseId}, ${teeTime.providerTeeSheetId}, ${token}`
       );
-      console.log(bookingData)
+      console.log(bookingData);
       booking = await provider
         .createBooking(token, teeTime.providerCourseId!, teeTime.providerTeeSheetId!, bookingData)
         .catch((err) => {
@@ -2572,12 +2577,12 @@ export class BookingService {
     }
 
     if (teeTime.internalId === "fore-up" && "data" in booking && booking.data) {
-      providerBookingId = booking.data.id
+      providerBookingId = booking.data.id;
     }
 
     if (teeTime.internalId === "club-prophet" && "reservationId" in booking) {
-      providerBookingId = booking.reservationId.toString()
-      providerBookingIds = booking.participantIds.map((id) => id.toString())
+      providerBookingId = booking.reservationId.toString();
+      providerBookingIds = booking.participantIds.map((id) => id.toString());
     }
 
     console.log(`Creating tokenized booking`);
@@ -2609,7 +2614,7 @@ export class BookingService {
           cartId,
         },
         isWebhookAvailable: teeTime?.isWebhookAvailable ?? false,
-        providerBookingIds
+        providerBookingIds,
       })
       .catch(async (err) => {
         this.logger.error(err);
@@ -2687,8 +2692,9 @@ export class BookingService {
             url: "/confirmBooking",
             userAgent: "",
             message: "ERROR CONFIRMING BOOKING",
-            stackTrace: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${booking?.teeTimeId ?? ""
-              }`,
+            stackTrace: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${
+              booking?.teeTimeId ?? ""
+            }`,
             additionalDetailsJSON: err,
           });
         });

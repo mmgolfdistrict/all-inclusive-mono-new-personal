@@ -2,18 +2,26 @@ import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
 import { and, eq, sql } from "@golf-district/database";
 import type { InsertBookingSlots } from "@golf-district/database/schema/bookingslots";
+import { providers } from "@golf-district/database/schema/providers";
 import { userProviderCourseLink } from "@golf-district/database/schema/userProviderCourseLink";
 import { users } from "@golf-district/database/schema/users";
 import Logger from "@golf-district/shared/src/logger";
 import { CacheService } from "../infura/cache.service";
-import type { BookingResponse, CustomerCreationData, ForeUpCredentials, TeeTimeResponse } from "./sheet-providers";
+import type {
+  BookingResponse,
+  ForeUpCredentials,
+  TeeTimeResponse,
+} from "./sheet-providers";
 import { foreUp, type ProviderAPI } from "./sheet-providers";
 import { clubprophet } from "./sheet-providers/clubprophet";
 import type {
-  CustomerCreationData as ForeUpCustomerCreationData, CustomerData as ForeUpCustomerCreationResponse,
+  ClubProphetCustomerCreationData,
+  ClubProphetCustomerCreationResponse,
+} from "./sheet-providers/types/clubprophet.types";
+import type {
+  CustomerCreationData as ForeUpCustomerCreationData,
+  CustomerData as ForeUpCustomerCreationResponse,
 } from "./sheet-providers/types/foreup.type";
-import { providers } from "@golf-district/database/schema/providers";
-import type { ClubProphetCustomerCreationData, ClubProphetCustomerCreationResponse } from "./sheet-providers/types/clubprophet.types";
 
 export interface Customer {
   playerNumber: number | null;
@@ -186,17 +194,14 @@ export class ProviderService extends CacheService {
         phoneNotification: users.phoneNotifications,
         emailNotification: users.emailNotifications,
         handel: users.handle,
-        internalId: providers.internalId
+        internalId: providers.internalId,
       })
       .from(users)
       .leftJoin(
         userProviderCourseLink,
         and(eq(userProviderCourseLink.userId, users.id), eq(userProviderCourseLink.courseId, courseId))
       )
-      .leftJoin(
-        providers,
-        eq(providers.id, providerId),
-      )
+      .leftJoin(providers, eq(providers.id, providerId))
       .where(eq(users.id, userId))
       .execute()
       .catch((err) => {
@@ -213,7 +218,7 @@ export class ProviderService extends CacheService {
       name: buyer.name,
       username: buyer.handel,
       email: buyer.email,
-      phone: buyer.phone
+      phone: buyer.phone,
     };
     if (buyer.providerAccountNumber && buyer.providerCustomerId) {
       return customerInfo;
@@ -248,13 +253,13 @@ export class ProviderService extends CacheService {
       if (buyer.internalId === "club-prophet") {
         const nameOfCustomer = buyer.name.split(" ");
         const firstName = nameOfCustomer?.[0] ? nameOfCustomer[0] : "guest";
-        const lastName = nameOfCustomer?.[1] ? nameOfCustomer[1] : "N/A"
+        const lastName = nameOfCustomer?.[1] ? nameOfCustomer[1] : "N/A";
         customer = {
           email: buyer.email,
           phone: buyer.phone,
           firstName,
-          lastName
-        } as ClubProphetCustomerCreationData
+          lastName,
+        } as ClubProphetCustomerCreationData;
       }
 
       if (!customer) {
@@ -280,7 +285,7 @@ export class ProviderService extends CacheService {
           name: buyer.name,
           username: buyer.handel,
           email: buyer.email,
-          phone: buyer.phone
+          phone: buyer.phone,
         };
       } catch (error) {
         console.log("provider.createCustomer error: ", error);

@@ -96,15 +96,15 @@ export interface BookingCreationData {
 }
 
 export interface ClubProphetCustomerCreationData {
-  firstName: string,
-  lastName: string,
-  email: string,
-  phone: string
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
 }
 
 export interface ClubProphetCustomerCreationResponse {
   success: boolean;
-  acct: string
+  acct: string;
 }
 
 export interface ClubProphetBookingResponse {
@@ -113,5 +113,5 @@ export interface ClubProphetBookingResponse {
   participantIds: number[];
   reservationConfirmKey: null | string; // This can be either null or a string
   reservationId: number;
-  data?: Record<string, any>
+  data?: Record<string, any>;
 }

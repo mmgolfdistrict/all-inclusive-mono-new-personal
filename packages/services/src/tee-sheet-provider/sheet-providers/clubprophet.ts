@@ -1,15 +1,15 @@
 import { randomUUID } from "crypto";
+import Logger from "@golf-district/shared/src/logger";
 import axios from "axios";
 import type {
   BookingCreationData,
   ClubProphetBookingResponse,
-  ClubProphetCustomerCreationResponse,
   ClubProphetCustomerCreationData,
+  ClubProphetCustomerCreationResponse,
 } from "./types/clubprophet.types";
 import type { TeeTimeUpdateRequest } from "./types/foreup.type";
-import type { TeeTimeResponse, CustomerData, CustomerCreationData } from "./types/interface";
+import type { CustomerCreationData, CustomerData, TeeTimeResponse } from "./types/interface";
 import { BaseProvider } from "./types/interface";
-import Logger from "@golf-district/shared/src/logger";
 
 export class clubprophet {
   providerId = "club-prophet";
@@ -29,9 +29,7 @@ export class clubprophet {
     date: string,
     rateCode?: string
   ): Promise<TeeTimeResponse[]> {
-    const { TEESHEET_ENDPOINT } = JSON.parse(
-      this.providerConfiguration ?? "{}"
-    );
+    const { TEESHEET_ENDPOINT } = JSON.parse(this.providerConfiguration ?? "{}");
 
     const url = TEESHEET_ENDPOINT;
 
@@ -69,7 +67,7 @@ export class clubprophet {
     const headers = this.getHeaders(token);
 
     console.log("createBooking - ", url);
-    console.log(data, JSON.stringify(data))
+    console.log(data, JSON.stringify(data));
 
     const response = await fetch(url, {
       method: "POST",
@@ -90,7 +88,7 @@ export class clubprophet {
 
     // await this.addSalesData(bookingResponse.participantIds, token);
 
-    return (bookingResponse);
+    return bookingResponse;
   }
 
   async getToken(): Promise<string> {
@@ -115,10 +113,12 @@ export class clubprophet {
 
     const responseData = await response.json();
     return responseData.access_token as string;
-  };
+  }
 
   private getHeaders(token: string) {
-    const { CONTENT_TYPE, CLIENT_ID, CLIENT_SECRET, X_Component_Id } = JSON.parse(this.providerConfiguration ?? "{}");
+    const { CONTENT_TYPE, CLIENT_ID, CLIENT_SECRET, X_Component_Id } = JSON.parse(
+      this.providerConfiguration ?? "{}"
+    );
     return {
       "Content-Type": CONTENT_TYPE,
       Authorization: `bearer ${token}`,
@@ -158,7 +158,7 @@ export class clubprophet {
       headers: headers,
       body: JSON.stringify({
         reservationId: bookingId,
-      })
+      }),
     });
 
     if (!response.ok) {
@@ -238,10 +238,7 @@ export class clubprophet {
     return bookingSlots;
   }
 
-  addSalesData = async (
-    bookingIds: number[],
-    token: string
-  ): Promise<void> => {
+  addSalesData = async (bookingIds: number[], token: string): Promise<void> => {
     try {
       if (bookingIds.length <= 0) {
         return;
@@ -257,8 +254,8 @@ export class clubprophet {
         bookingIds,
         approvalCode: "123123", // Fake value
         refNum: "1212", // Fake value
-        cardIssuedBy: ""
-      }
+        cardIssuedBy: "",
+      };
 
       const addSalesResponse = await fetch(addSalesUrl, {
         method: "POST",
@@ -267,8 +264,11 @@ export class clubprophet {
       });
       if (!addSalesResponse.ok) {
         throw new Error(
-          `Error adding sales data for booking Ids: ${JSON.stringify(bookingIds)}, status code: ${addSalesResponse.status
-          }, status text: ${addSalesResponse.statusText}, response: ${JSON.stringify(await addSalesResponse.json())}`
+          `Error adding sales data for booking Ids: ${JSON.stringify(bookingIds)}, status code: ${
+            addSalesResponse.status
+          }, status text: ${addSalesResponse.statusText}, response: ${JSON.stringify(
+            await addSalesResponse.json()
+          )}`
         );
       }
       const salesResponse = await addSalesResponse.json();
@@ -290,9 +290,10 @@ export class clubprophet {
     _bookingId: string,
     _options?: TeeTimeUpdateRequest
   ): Promise<ClubProphetBookingResponse> {
-    return ({}) as ClubProphetBookingResponse;
+    return {} as ClubProphetBookingResponse;
   }
 
-
-  async getCustomer(): Promise<CustomerData> { return {} as CustomerData; }
+  async getCustomer(): Promise<CustomerData> {
+    return {} as CustomerData;
+  }
 }
