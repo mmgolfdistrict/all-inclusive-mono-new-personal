@@ -7,11 +7,7 @@ import { userProviderCourseLink } from "@golf-district/database/schema/userProvi
 import { users } from "@golf-district/database/schema/users";
 import Logger from "@golf-district/shared/src/logger";
 import { CacheService } from "../infura/cache.service";
-import type {
-  BookingResponse,
-  ForeUpCredentials,
-  TeeTimeResponse,
-} from "./sheet-providers";
+import type { BookingResponse, ForeUpCredentials, TeeTimeResponse } from "./sheet-providers";
 import { foreUp, type ProviderAPI } from "./sheet-providers";
 import { clubprophet } from "./sheet-providers/clubprophet";
 import type {
