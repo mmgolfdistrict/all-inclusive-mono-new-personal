@@ -20,33 +20,29 @@ export const Footer = () => {
           height={50}
         />
       </div>
-      {pathname === "/" ? (
-        <div />
-      ) : (
-        <div className="flex flex-col items-start gap-2 md:items-end lg:flex-row lg:items-center">
-          <Link href={`/${course?.id}}/faq`} data-testid="footer-help-id">
-            Help
-          </Link>
-          <Link
-            href={`/${course?.id}/about-us`}
-            data-testid="footer-about-us-id"
-          >
-            About Us
-          </Link>
-          <Link
-            href={`/${course?.id}/privacy-policy`}
-            data-testid="footer-privacy-policy-id"
-          >
-            Privacy Policy
-          </Link>
-          <Link
-            href={`/${course?.id}/terms-of-service`}
-            data-testid="footer-terms-of-service-id"
-          >
-            Terms of Service
-          </Link>
-        </div>
-      )}
+      <div className="flex flex-col items-start gap-2 md:items-end lg:flex-row lg:items-center">
+        <Link href={`/faq`} data-testid="footer-help-id">
+          Help
+        </Link>
+        <Link
+          href={`/about-us`}
+          data-testid="footer-about-us-id"
+        >
+          About Us
+        </Link>
+        <Link
+          href={`/privacy-policy`}
+          data-testid="footer-privacy-policy-id"
+        >
+          Privacy Policy
+        </Link>
+        <Link
+          href={`/terms-of-service`}
+          data-testid="footer-terms-of-service-id"
+        >
+          Terms of Service
+        </Link>
+      </div>
       <div className="flex items-end gap-1 md:hidden">
         <span>Powered by</span>
         <GolfDistrict id="2" className="w-[110px]" />
