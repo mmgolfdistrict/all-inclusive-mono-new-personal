@@ -1451,11 +1451,16 @@ export class UserService {
   };
 
   streamToString = async (stream: any) => {
+    // const chunks: Uint8Array[] = [];
+    // return new Promise((resolve, reject) => {
+    //   stream.on("data", (chunk: Uint8Array) => chunks.push(chunk));
+    //   stream.on("error", reject);
+    //   stream.on("end", () => resolve(Buffer.concat(chunks).toString("utf-8")));
+    // });
     const chunks: any[] = [];
-    return new Promise((resolve, reject) => {
-      stream.on("data", (chunk: any) => chunks.push(chunk));
-      stream.on("error", reject);
-      stream.on("end", () => resolve(Buffer.concat(chunks).toString("utf-8")));
-    });
-  }
+      for await (const chunk of stream) {
+        chunks.push(chunk);
+      }
+    return Buffer.concat(chunks).toString('utf8');
+  };
 }
