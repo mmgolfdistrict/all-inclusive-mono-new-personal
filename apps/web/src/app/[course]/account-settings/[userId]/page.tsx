@@ -1,4 +1,5 @@
 "use client";
+
 // import { ConnectAccount } from "~/components/account-settings-page/connect-account";
 import { useSession } from "@golf-district/auth/nextjs-exports";
 import { AddCreditCard } from "~/components/account-settings-page/addCreditCard";
@@ -21,8 +22,8 @@ export default function ManangeProfile({
   const userId = params.userId;
   const router = useRouter();
   const { status } = useSession();
-  if(status==="unauthenticated"){
-      router.push(`/${courseId}`)
+  if (status === "unauthenticated") {
+    router.push(`/${courseId}`);
   }
 
   return (

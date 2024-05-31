@@ -54,8 +54,8 @@ export const UserInNav = ({ alwaysShow }: { alwaysShow?: boolean }) => {
       });
       router.push(data.url);
       return;
-    }else{
-     await signOut()
+    } else {
+      await signOut();
     }
   };
 

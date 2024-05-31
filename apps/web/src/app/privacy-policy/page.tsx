@@ -1,10 +1,11 @@
-'use client';
+"use client";
 
-import { LoadingContainer } from "../[course]/loader";
 import { api } from "~/utils/api";
+import { LoadingContainer } from "../[course]/loader";
 
 export default function PrivacyPolicy() {
-  const { data: privacyPolicies, isLoading } = api.user.getS3HtmlContent.useQuery({ keyName: 'privacypolicy.html' });
+  const { data: privacyPolicies, isLoading } =
+    api.user.getS3HtmlContent.useQuery({ keyName: "privacypolicy.html" });
 
   return (
     <>

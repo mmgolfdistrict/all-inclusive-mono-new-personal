@@ -24,16 +24,10 @@ export const Footer = () => {
         <Link href={`/faq`} data-testid="footer-help-id">
           Help
         </Link>
-        <Link
-          href={`/about-us`}
-          data-testid="footer-about-us-id"
-        >
+        <Link href={`/about-us`} data-testid="footer-about-us-id">
           About Us
         </Link>
-        <Link
-          href={`/privacy-policy`}
-          data-testid="footer-privacy-policy-id"
-        >
+        <Link href={`/privacy-policy`} data-testid="footer-privacy-policy-id">
           Privacy Policy
         </Link>
         <Link

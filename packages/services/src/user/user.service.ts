@@ -1,4 +1,5 @@
 import { randomBytes, randomUUID } from "crypto";
+import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { and, asc, desc, eq, gt, lt, or } from "@golf-district/database";
 import type { Db } from "@golf-district/database";
 import { accounts } from "@golf-district/database/schema/accounts";
@@ -20,7 +21,6 @@ import { alias } from "drizzle-orm/mysql-core";
 import { verifyCaptcha } from "../../../api/src/googleCaptcha";
 import { generateUtcTimestamp } from "../../helpers";
 import type { NotificationService } from "../notification/notification.service";
-import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 
 const s3Client = new S3Client({ region: process.env.AWS_REGION });
 
@@ -1169,17 +1169,17 @@ export class UserService {
     const { user, profileImage, bannerImage } = data;
     const profilePicture = profileImage
       ? assetToURL({
-        key: profileImage.assetKey,
-        cdn: profileImage.assetCdn,
-        extension: profileImage.assetExtension,
-      })
+          key: profileImage.assetKey,
+          cdn: profileImage.assetCdn,
+          extension: profileImage.assetExtension,
+        })
       : "/defaults/default-profile.webp";
     const bannerPicture = bannerImage
       ? assetToURL({
-        key: bannerImage.assetKey,
-        cdn: bannerImage.assetCdn,
-        extension: bannerImage.assetExtension,
-      })
+          key: bannerImage.assetKey,
+          cdn: bannerImage.assetCdn,
+          extension: bannerImage.assetExtension,
+        })
       : "/defaults/default-banner.webp";
     let res;
 
@@ -1458,9 +1458,9 @@ export class UserService {
     //   stream.on("end", () => resolve(Buffer.concat(chunks).toString("utf-8")));
     // });
     const chunks: any[] = [];
-      for await (const chunk of stream) {
-        chunks.push(chunk);
-      }
-    return Buffer.concat(chunks).toString('utf8');
+    for await (const chunk of stream) {
+      chunks.push(chunk);
+    }
+    return Buffer.concat(chunks).toString("utf8");
   };
 }

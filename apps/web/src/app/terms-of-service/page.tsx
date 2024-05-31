@@ -1,10 +1,11 @@
-'use client';
+"use client";
 
 import { api } from "~/utils/api";
 import { LoadingContainer } from "../[course]/loader";
 
 export default function TermsOfService() {
-  const { data: termsOfServices, isLoading } = api.user.getS3HtmlContent.useQuery({ keyName: 'termsofservice.html' });
+  const { data: termsOfServices, isLoading } =
+    api.user.getS3HtmlContent.useQuery({ keyName: "termsofservice.html" });
 
   return (
     <>
