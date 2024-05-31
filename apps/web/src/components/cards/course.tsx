@@ -35,7 +35,7 @@ export const Course = ({
       <div className="flex flex-col gap-1">
         <div className="font-bold">{courseName}</div>
         <div>{location}</div>
-        <div className=" text-sm font-[300]">{description}</div>
+        <div className=" text-sm text-justify font-[300]">{description}</div>
       </div>
     </Link>
   );
