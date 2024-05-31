@@ -47,12 +47,6 @@ export const UserInNav = ({ alwaysShow }: { alwaysShow?: boolean }) => {
   };
 
   const logOutUser = async () => {
-    void logAudit();
-    localStorage.clear();
-    sessionStorage.clear();
-    session.data = null;
-    session.status = "unauthenticated";
-    await session.update(null);
     if (PathsThatNeedRedirectOnLogout.some((i) => pathname.includes(i))) {
       const data = await signOut({
         callbackUrl: `/${courseId}`,
@@ -60,12 +54,9 @@ export const UserInNav = ({ alwaysShow }: { alwaysShow?: boolean }) => {
       });
       router.push(data.url);
       return;
+    }else{
+     await signOut()
     }
-    const data = await signOut({
-      callbackUrl: pathname,
-      redirect: false,
-    });
-    router.push(data.url);
   };
 
   return (
