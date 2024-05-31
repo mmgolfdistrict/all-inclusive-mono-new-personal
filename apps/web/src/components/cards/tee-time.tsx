@@ -18,8 +18,8 @@ import { Hidden } from "../icons/hidden";
 import { OutlineClub } from "../icons/outline-club";
 import { ChoosePlayers } from "../input/choose-players";
 import { ManageTeeTimeListing } from "../my-tee-box-page/manage-tee-time-listing";
-import { MakeAnOffer } from "../watchlist-page/make-an-offer";
 import { Tooltip } from "../tooltip";
+import { MakeAnOffer } from "../watchlist-page/make-an-offer";
 
 const PlayersOptions = ["1", "2", "3", "4"];
 
@@ -252,7 +252,11 @@ export const TeeTime = ({
                 />
               ) : (
                 <Tooltip
-                  trigger={<div className="text-left whitespace-nowrap overflow-hidden w-[230px] md:w-[200px] text-ellipsis">{soldByName}</div>}
+                  trigger={
+                    <div className="text-left whitespace-nowrap overflow-hidden w-[230px] md:w-[200px] text-ellipsis">
+                      {soldByName}
+                    </div>
+                  }
                   content={soldByName}
                 />
               )}

@@ -22,9 +22,9 @@ export const editProfileSchema = z.object({
     .string()
     .min(6, { message: "Username should be at least 6 characters long" })
     .max(64, { message: "Username shouldn't be more than 64 characters long" }),
-    // .refine((handle) => !handle.includes("@"), {
-    //   message: "Handle cannot contain '@'",
-    // }),
+  // .refine((handle) => !handle.includes("@"), {
+  //   message: "Handle cannot contain '@'",
+  // }),
   email: z
     .string()
     .email({ message: "Invalid email" })
