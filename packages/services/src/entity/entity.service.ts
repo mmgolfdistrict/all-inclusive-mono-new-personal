@@ -165,12 +165,13 @@ export class EntityService {
       .from(assets)
       .innerJoin(courses, eq(assets.id, courses.logoId))
       .leftJoin(courseAssets, and(eq(courses.id, courseAssets.courseId), eq(assets.id, courseAssets.assetId)))
-      .where(
-        inArray(
-          courses.id,
-          data.map(({ id }) => id)
-        )
-      );
+      .where(eq(courses.entityId, entityId));
+    // .where(
+    //   inArray(
+    //     courses.id,
+    //     data.map(({ id }) => id)
+    //   )
+    // );
 
     const res = data.map((course) => ({
       ...course,
