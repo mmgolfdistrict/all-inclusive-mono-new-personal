@@ -146,13 +146,35 @@ export class EntityService {
         logo: courses.logoId,
       })
       .from(courses)
+      .innerJoin(assets, eq(courses.logoId, assets.id))
       .where(eq(courses.entityId, entityId))
       .execute()
       .catch((err) => {
         this.logger.error(err);
         throw new Error(`Error getting courses for entity: ${entityId}`);
       });
-    //find all images for each course
+
+    //TODO - This logos query is not needed and should be combiled with the data query.
+    //find all logos for each course
+    const logos = await this.database
+      .select({
+        id: assets.id,
+        coursesId: assets.courseId,
+        key: assets.key,
+        cdn: assets.cdn,
+        extension: assets.extension,
+        order: courseAssets.order,
+      })
+      .from(assets)
+      .innerJoin(courses, eq(courses.logoId, assets.id))
+      .where(
+        inArray(
+          assets.courseId,
+          data.map(({ id }) => id)
+        )
+      );
+
+    //find all images for each course. This query will not fetch the logo.
     const images = await this.database
       .select({
         id: assets.id,
@@ -173,7 +195,7 @@ export class EntityService {
 
     const res = data.map((course) => ({
       ...course,
-      logo: images
+      logo: logos
         .filter((i) => i.id === course.logo)
         .map(({ key, cdn, extension }) => `https://${cdn}/${key}.${extension}`)[0],
       images: images
