@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull, not } from "@golf-district/database";
+import { eq, inArray, isNull, not } from "@golf-district/database";
 import type { Db } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import { courseAssets } from "@golf-district/database/schema/courseAssets";
@@ -163,15 +163,13 @@ export class EntityService {
         order: courseAssets.order,
       })
       .from(assets)
-      .innerJoin(courses, eq(assets.id, courses.logoId))
-      .leftJoin(courseAssets, and(eq(courses.id, courseAssets.courseId), eq(assets.id, courseAssets.assetId)))
-      .where(eq(courses.entityId, entityId));
-    // .where(
-    //   inArray(
-    //     courses.id,
-    //     data.map(({ id }) => id)
-    //   )
-    // );
+      .leftJoin(courseAssets, eq(assets.id, courseAssets.assetId))
+      .where(
+        inArray(
+          assets.courseId,
+          data.map(({ id }) => id)
+        )
+      );
 
     const res = data.map((course) => ({
       ...course,
