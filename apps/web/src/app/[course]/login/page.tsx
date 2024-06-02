@@ -21,6 +21,7 @@ import { createRef, useEffect, useState } from "react";
 import ReCAPTCHA from "react-google-recaptcha";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
+import { LoadingContainer } from "../loader";
 
 export default function Login() {
   const recaptchaRef = createRef<ReCAPTCHA>();
@@ -30,6 +31,7 @@ export default function Login() {
   const loginError = searchParams.get("error");
   const { course } = useCourseContext();
   const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (loginError === "CallbackRouteError") {
@@ -56,6 +58,7 @@ export default function Login() {
     !prevPath?.path?.includes("register");
 
   const onSubmit: SubmitHandler<LoginSchemaType> = async (data) => {
+    setIsLoading(true);
     try {
       const callbackURL = `${window.location.origin}${
         GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
@@ -65,8 +68,8 @@ export default function Login() {
           : "/"
       }`;
       const res = await signIn("credentials", {
-        callbackUrl: callbackURL,
-        redirect: true,
+        // callbackUrl: callbackURL,
+        redirect: false,
         email: data.email,
         password: data.password,
         ReCAPTCHA: process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY
@@ -92,6 +95,9 @@ export default function Login() {
         (error as Error)?.message ??
           "An error occurred logging in, try another option."
       );
+    }
+    finally{
+      setIsLoading(false);
     }
   };
 
@@ -165,6 +171,9 @@ export default function Login() {
 
   return (
     <main className="bg-secondary-white py-4 md:py-6">
+      <LoadingContainer isLoading={isLoading}>
+        <div></div>
+      </LoadingContainer>
       <h1 className="pb-4 text-center text-[24px] md:pb-6 md:pt-8 md:text-[32px]">
         Login
       </h1>

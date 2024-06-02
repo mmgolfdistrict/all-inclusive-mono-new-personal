@@ -132,7 +132,7 @@ export const authConfig: NextAuthConfig = {
   pages: {
     // signIn: `/login`,
     // verifyRequest: `/login`,
-    error: `/auth-error`,
+    // error: `/auth-error`,
     // newUser: `/profile?new`, //this will call the create customer endpoint
   },
   session: {
