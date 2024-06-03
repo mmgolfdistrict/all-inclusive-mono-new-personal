@@ -72,7 +72,10 @@ export class UserService {
    * @example
    * const userService = new UserService(database, notificationService);
    */
-  constructor(protected readonly database: Db, private readonly notificationsService: NotificationService) {
+  constructor(
+    protected readonly database: Db,
+    private readonly notificationsService: NotificationService
+  ) {
     //this.filter = new Filter();
   }
 
@@ -1435,6 +1438,8 @@ export class UserService {
   };
 
   getS3HtmlContent = async (keyName: string) => {
+    console.log(`Bucket Name: ${process.env.AWS_BUCKET}, File Name: ${keyName}`);
+
     const getObjectParams = {
       Bucket: process.env.AWS_BUCKET,
       Key: keyName,
