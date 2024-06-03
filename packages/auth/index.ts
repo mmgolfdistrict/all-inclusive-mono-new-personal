@@ -153,7 +153,6 @@ export const authConfig: NextAuthConfig = {
   // },
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
-    
     jwt: ({ trigger, session, token, user }) => {
       console.log("JWT Callback");
       console.log(trigger);
@@ -192,10 +191,10 @@ export const authConfig: NextAuthConfig = {
     },
   },
   events: {
-  signOut(e) {
+    signOut(e) {
       cookies().delete("cookie");
-  }
-},
+    },
+  },
 };
 
 export const {

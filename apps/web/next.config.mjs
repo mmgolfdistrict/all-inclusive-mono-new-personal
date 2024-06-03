@@ -28,6 +28,12 @@ const config = {
       },
       {
         protocol: "https",
+        hostname: "assets.golfdistrict.com",
+        port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
         hostname: "d1vt16457i7yu.cloudfront.net",
         port: "",
         pathname: "/**",

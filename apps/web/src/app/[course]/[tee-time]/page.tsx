@@ -3,7 +3,6 @@ import { GoBack } from "~/components/buttons/go-back";
 import { TeeTimeDetails } from "~/components/cards/tee-time-details";
 import { TransactionHistory } from "~/components/cards/transaction-history";
 import { CourseDescription } from "~/components/tee-time-page/course-description";
-import { InviteFriends } from "~/components/tee-time-page/invite-friends";
 
 export default async function TeeTimePage({
   params,

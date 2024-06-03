@@ -1,4 +1,5 @@
 import { randomBytes, randomUUID } from "crypto";
+import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { and, asc, desc, eq, gt, lt, or } from "@golf-district/database";
 import type { Db } from "@golf-district/database";
 import { accounts } from "@golf-district/database/schema/accounts";
@@ -20,6 +21,14 @@ import { alias } from "drizzle-orm/mysql-core";
 import { verifyCaptcha } from "../../../api/src/googleCaptcha";
 import { generateUtcTimestamp } from "../../helpers";
 import type { NotificationService } from "../notification/notification.service";
+
+const s3Client = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+  },
+});
 
 export interface UserCreationData {
   email: string;
@@ -69,7 +78,10 @@ export class UserService {
    * @example
    * const userService = new UserService(database, notificationService);
    */
-  constructor(protected readonly database: Db, private readonly notificationsService: NotificationService) {
+  constructor(
+    protected readonly database: Db,
+    private readonly notificationsService: NotificationService
+  ) {
     //this.filter = new Filter();
   }
 
@@ -1031,7 +1043,7 @@ export class UserService {
    */
   isValidHandle = async (handle: string): Promise<boolean> => {
     this.logger.info(`isValidHandle called with handle: ${handle}`);
-    if (handle.length < 10 || handle.length > 20) {
+    if (handle.length < 6 || handle.length > 64) {
       this.logger.debug(`Handle length is invalid: ${handle}`);
       //throw new Error("Handle length is invalid");
       return false;
@@ -1429,5 +1441,37 @@ export class UserService {
     });
 
     return cleanedProviders;
+  };
+
+  getS3HtmlContent = async (keyName: string) => {
+    console.log(`Bucket Name: ${process.env.AWS_BUCKET}, File Name: ${keyName}`);
+
+    const getObjectParams = {
+      Bucket: process.env.AWS_BUCKET,
+      Key: keyName,
+    };
+
+    try {
+      const { Body } = await s3Client.send(new GetObjectCommand(getObjectParams));
+      const htmlContent = await this.streamToString(Body);
+      return htmlContent;
+    } catch (err) {
+      console.error("Error fetching HTML file:", err);
+      throw err;
+    }
+  };
+
+  streamToString = async (stream: any) => {
+    // const chunks: Uint8Array[] = [];
+    // return new Promise((resolve, reject) => {
+    //   stream.on("data", (chunk: Uint8Array) => chunks.push(chunk));
+    //   stream.on("error", reject);
+    //   stream.on("end", () => resolve(Buffer.concat(chunks).toString("utf-8")));
+    // });
+    const chunks: any[] = [];
+    for await (const chunk of stream) {
+      chunks.push(chunk);
+    }
+    return Buffer.concat(chunks).toString("utf8");
   };
 }

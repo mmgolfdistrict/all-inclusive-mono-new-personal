@@ -290,14 +290,14 @@ export const ListTeeTime = ({
                 >
                   Enter listing price per golfer
                 </label>
-                <div className="flex text-[14px] md:text-[16px]">
+                {/* <div className="flex text-[14px] md:text-[16px]">
                   <span className="text-primary-gray">
                     Maximum listing price per golfer: &nbsp;
                   </span>
                   <span className="text-secondary-black">
                     ${maxListingPrice}
                   </span>
-                </div>
+                </div> */}
                 <div className="relative">
                   <span className="absolute left-1 top-1 text-[24px] md:text-[32px]">
                     $
