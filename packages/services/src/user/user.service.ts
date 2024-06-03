@@ -22,7 +22,7 @@ import { verifyCaptcha } from "../../../api/src/googleCaptcha";
 import { generateUtcTimestamp } from "../../helpers";
 import type { NotificationService } from "../notification/notification.service";
 
-const s3Client = new S3Client({ region: process.env.AWS_REGION });
+const s3Client = new S3Client({ region: process.env.AWS_REGION, apiVersion: "2006-03-01" });
 
 export interface UserCreationData {
   email: string;
