@@ -32,13 +32,13 @@ export const OrderSummary = ({
       <div className="rounded-md bg-primary p-2 text-white">
         <h2 className="text-lg">Resell Your Tee Time Anytime</h2>
         <p className="text-sm">
-          Plans change. No worries! Resell your tee time on this platform.
-          Selling outside of the platform is not allowed, and both the buyer and
+          Plans change. No worries! Resell your tee time from our website.
+          Selling outside from our website is not allowed, and both the buyer and
           seller may forfeit their money and time.
         </p>
       </div>
       <h2 className="italic">
-        GOLFdistrict does not store or process any credit card or payments. They
+        Golf District does not store or process any credit card or payments. They
         are directly handled by our payment processing 3rd-party partners.
       </h2>
     </section>

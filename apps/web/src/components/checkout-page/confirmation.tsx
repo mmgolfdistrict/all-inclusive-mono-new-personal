@@ -98,7 +98,7 @@ export const Confirmation = ({
               <>
                 <div style={{ paddingBottom: "5px", fontSize: "16px" }}>
                   <span style={{ fontWeight: 500 }}>
-                    GOLFdistrict Reservation ID
+                    Golf District Reservation ID
                   </span>
                   <span style={{ margin: "0 15px" }}>:</span>
                   <span>{bookingId}</span>
@@ -133,12 +133,11 @@ export const Confirmation = ({
             </h1>
             <p className="text-[14px] text-primary-gray md:text-[16px]">
               Your tee time will be viewable in your My Tee Box in the Profile.
-              All purchases are final. You can sell or adjust your tee time up
-              to 30 minutes before the scheduled time.
+              All purchases are final. You can sell or manage the players in your party at any time prior to the round.
             </p>
             <p className="text-[14px] text-primary-gray md:text-[16px]">
               Add your golfers to your tee time. You can add their name or
-              select them using their GOLFdistrict handle or invite them via
+              select them using their Golf District handle or invite them via
               email or phone.
             </p>
           </div>

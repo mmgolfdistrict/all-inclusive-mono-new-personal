@@ -41,7 +41,7 @@ const OptionDetails = ({
         {disabledCashOut && (
           <Tooltip
             trigger={<Info className="h-[20px] w-[20px]" />}
-            content="As your account is having 0 balance. So, you are not able to cashout."
+            content="You have a 0 balance. There are no funds to cash out."
           />
         )}
       </div>
