@@ -15,11 +15,10 @@ export default function HowToGuide() {
             src="https://scribehow.com/page/Golf_District__How_to_Guide__Kg_zsvNST2C3xhJXdbeyog"
             title="Golf District How to Guide"
             style={{
-              display: block,
+              display: "block",
               height: "100vh",
               width: "100vw",
-              border: none,
-              background: lightyellow,
+              border: "none",
             }}
           ></iframe>
         </section>
