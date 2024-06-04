@@ -41,7 +41,7 @@ const Modal = ({ isOpen, onClose }) => {
               </button>
             </div>
             <h5 className="text-sm font-semibold">
-              GOLFdistrict does not store any bank details. They are directly
+              Golf District does not store any bank details. They are directly
               handled by our payment processing 3rd-party partners.
             </h5>
             {isLoading && (

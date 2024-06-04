@@ -232,7 +232,7 @@ export const Filters = () => {
             <div className="text-[15px]">Includes Cart</div>
             <Tooltip
               trigger={<Info className="h-[14px] w-[14px]" />}
-              content="Includes Cart"
+              content="The cart fee is included in the greens fee when toggled on. Purchasing without a cart may not be available."
             />
           </div>
         </div>
