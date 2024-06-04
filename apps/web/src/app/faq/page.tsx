@@ -17,11 +17,9 @@ export default function FAQ() {
         </h2>
         <section className="mx-auto flex w-full flex-col gap-4 md:max-w-[1174px]">
           <AccordionRoot defaultValue="item-1">
-            <AccordionItem
-              title="TODOTitle"
-              content="TODOContent"
-              value="item-1"
-            />
+            <AccordionItem title="TODOTitle" value="item-1">
+              Hello World
+            </AccordionItem>
           </AccordionRoot>
         </section>
       </section>

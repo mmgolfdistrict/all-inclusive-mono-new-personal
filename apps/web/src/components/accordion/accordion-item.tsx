@@ -1,16 +1,17 @@
 "use client";
 
 import * as Accordion from "@radix-ui/react-accordion";
+import type { ReactNode } from "react";
 import { DownChevron } from "../icons/down-chevron";
 
 export const AccordionItem = ({
   title,
   value,
-  content,
+  children,
 }: {
   title: string;
   value: string;
-  content: string;
+  children: ReactNode;
 }) => {
   return (
     <Accordion.Item value={value}>
@@ -33,7 +34,7 @@ export const AccordionItem = ({
         className={`overflow-hidden bg-white text-[15px] data-[state=closed]:animate-slideUp data-[state=open]:animate-slideDown md:rounded-b-xl`}
       >
         <div className="px-5 py-[15px] text-[14px] font-light text-primary-gray md:text-[16px]">
-          {content}
+          {children}
         </div>
       </Accordion.Content>
     </Accordion.Item>
