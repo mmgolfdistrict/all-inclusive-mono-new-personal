@@ -13,9 +13,14 @@ export default function HowToGuide() {
         <section className="mx-auto flex w-full flex-col gap-4 md:max-w-[1174px]">
           <iframe
             src="https://scribehow.com/page/Golf_District__How_to_Guide__Kg_zsvNST2C3xhJXdbeyog"
-            width="100%"
-            height="100%"
             title="Golf District How to Guide"
+            style={{
+              display: block,
+              height: "100vh",
+              width: "100vw",
+              border: none,
+              background: lightyellow,
+            }}
           ></iframe>
         </section>
       </section>
