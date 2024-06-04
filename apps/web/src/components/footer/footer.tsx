@@ -22,7 +22,7 @@ export const Footer = () => {
       </div>
       <div className="flex flex-col items-start gap-2 md:items-end lg:flex-row lg:items-center">
         <Link href={`/faq`} data-testid="footer-help-id">
-          Help
+          FAQ
         </Link>
         <Link href={`/about-us`} data-testid="footer-about-us-id">
           About Us
