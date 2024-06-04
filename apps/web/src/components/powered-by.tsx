@@ -11,10 +11,8 @@ export const PoweredBy = (props: ComponentProps<"div">) => {
         Powered by
       </sup>
       <BlurImage
-        src={`https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/logo.png`}
+        src={`https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/headerlogo.png`}
         alt="golf district logo"
-        width={150}
-        height={100}
         className="w-[50px] object-fit"
       />
     </div>

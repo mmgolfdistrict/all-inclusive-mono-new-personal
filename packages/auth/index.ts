@@ -8,6 +8,7 @@ import { AuthService, NotificationService } from "@golf-district/service";
 import NextAuth from "next-auth";
 import type { DefaultSession, NextAuthConfig } from "next-auth";
 import FacebookProvider from "next-auth/providers/facebook";
+import { cookies } from "next/headers";
 // @TODO - update to use env validation
 //import { env } from "./env.mjs";
 import { verifyCaptcha } from "../api/src/googleCaptcha";
@@ -187,6 +188,11 @@ export const authConfig: NextAuthConfig = {
           id: token?.id,
         },
       };
+    },
+  },
+  events: {
+    signOut(e) {
+      cookies().delete("cookie");
     },
   },
 };

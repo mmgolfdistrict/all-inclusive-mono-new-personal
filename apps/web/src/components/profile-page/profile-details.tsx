@@ -37,13 +37,13 @@ export const ProfileDetails = ({
             className="mx-auto h-[120px] w-[120px] rounded-full border-2 md:border-4 border-stroke object-cover md:h-[200px] md:w-[200px]"
           />
           <div className="flex flex-col gap-1 md:pb-3">
-            <div className="flex flex-col items-center justify-center gap-1 text-[22px] md:flex-row md:gap-4 md:text-[32px]">
+            <div className="flex flex-col items-center gap-1 text-[22px] md:flex-row md:gap-4 md:text-[32px]">
               <div className="text-secondary-black">
                 {userData?.profileVisibility === "PRIVATE"
                   ? ""
                   : userData?.name}
               </div>
-              <div className="-mt-2 text-primary-gray md:mt-0">
+              <div className="-mt-2 text-primary-gray md:mt-0 whitespace-nowrap overflow-hidden text-ellipsis w-2/4">
                 {userData?.handle ?? ""}
               </div>
             </div>

@@ -111,4 +111,7 @@ export const userRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       return await ctx.serviceFactory.getUserService().getProvidersByUserId(input.userId);
     }),
+  getS3HtmlContent: publicProcedure.input(z.object({ keyName: z.string() })).query(async ({ ctx, input }) => {
+    return ctx.serviceFactory.getUserService().getS3HtmlContent(input.keyName);
+  }),
 });

@@ -45,7 +45,7 @@ export const CheckoutForm = ({
   const cancelHyperswitchPaymentById =
     api.webhooks.cancelHyperswitchPaymentById.useMutation();
 
-  const { refetch: refetchCheckTeeTime, data: isTeeTimeStillListed } =
+  const { refetch: refetchCheckTeeTime } =
     api.teeBox.checkIfTeeTimeStillListedByListingId.useQuery(
       {
         listingId: listingId,

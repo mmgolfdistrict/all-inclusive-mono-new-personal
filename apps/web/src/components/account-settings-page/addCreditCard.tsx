@@ -2,29 +2,27 @@
 
 import type { CustomerPaymentMethod } from "~/hooks/usePaymentMethods";
 import { usePaymentMethods } from "~/hooks/usePaymentMethods";
-import { api } from "~/utils/api";
 import { useState } from "react";
-import { toast } from "react-toastify";
 import { Trashcan } from "../icons/trashcan";
 // import { Spinner } from "../loading/spinner";
 import { AddCard } from "./add-card";
 
 export const AddCreditCard = () => {
   const { refetch } = usePaymentMethods();
-  const removeCard = api.checkout.removePaymentMethod.useMutation();
+  // const removeCard = api.checkout.removePaymentMethod.useMutation();
 
-  const removeMethod = async (paymentMethodId: string) => {
-    if (!paymentMethodId) return;
-    if (removeCard.isLoading) return;
-    try {
-      await removeCard.mutateAsync({ paymentMethodId });
-      await refetch();
-      toast.success("Card removed successfully");
-    } catch (error) {
-      console.log(error);
-      toast.error((error as Error)?.message ?? "Error removing card");
-    }
-  };
+  // const removeMethod = async (paymentMethodId: string) => {
+  //   if (!paymentMethodId) return;
+  //   if (removeCard.isLoading) return;
+  //   try {
+  //     await removeCard.mutateAsync({ paymentMethodId });
+  //     await refetch();
+  //     toast.success("Card removed successfully");
+  //   } catch (error) {
+  //     console.log(error);
+  //     toast.error((error as Error)?.message ?? "Error removing card");
+  //   }
+  // };
 
   return (
     <section

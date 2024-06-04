@@ -1,4 +1,7 @@
+"use client";
+
 // import { ConnectAccount } from "~/components/account-settings-page/connect-account";
+import { useSession } from "@golf-district/auth/nextjs-exports";
 import { AddCreditCard } from "~/components/account-settings-page/addCreditCard";
 import { BalanceHistory } from "~/components/account-settings-page/balance-history";
 import { EditProfileForm } from "~/components/account-settings-page/edit-profile-form";
@@ -8,6 +11,7 @@ import { PrivacySettings } from "~/components/account-settings-page/privacy-sett
 import { SavedBankDetails } from "~/components/account-settings-page/savedBankDetails";
 import { GoBack } from "~/components/buttons/go-back";
 import { ProfileDetails } from "~/components/profile-page/profile-details";
+import { usePathname, useRouter } from "next/navigation";
 
 export default function ManangeProfile({
   params,
@@ -16,6 +20,12 @@ export default function ManangeProfile({
 }) {
   const courseId = params.course;
   const userId = params.userId;
+  const router = useRouter();
+  const { status } = useSession();
+  if (status === "unauthenticated") {
+    router.push(`/${courseId}`);
+  }
+
   return (
     <main className="bg-secondary-white py-4 md:py-6 ">
       <div className="mx-auto flex items-center justify-between px-4 md:max-w-[1360px] md:px-6">
