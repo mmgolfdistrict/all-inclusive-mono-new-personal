@@ -244,9 +244,9 @@ export const TeeTime = ({
                     //     href={`/${courseId}/profile/${soldById}`}
                     //     data-testid="sold-by-name-id"
                     //   >
-                      <div className="text-left whitespace-nowrap overflow-hidden w-[230px] md:w-[200px] text-ellipsis">
-                        {soldByName}
-                      </div>
+                    <div className="text-left whitespace-nowrap overflow-hidden w-[230px] md:w-[200px] text-ellipsis">
+                      {soldByName}
+                    </div>
                     //   </Link>
                     // </div>
                   }

@@ -133,7 +133,8 @@ export const Confirmation = ({
             </h1>
             <p className="text-[14px] text-primary-gray md:text-[16px]">
               Your tee time will be viewable in your My Tee Box in the Profile.
-              All purchases are final. You can sell or manage the players in your party at any time prior to the round.
+              All purchases are final. You can sell or manage the players in
+              your party at any time prior to the round.
             </p>
             <p className="text-[14px] text-primary-gray md:text-[16px]">
               Add your golfers to your tee time. You can add their name or

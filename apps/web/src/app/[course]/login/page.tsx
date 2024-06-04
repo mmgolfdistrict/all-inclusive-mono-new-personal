@@ -22,8 +22,8 @@ import { createRef, useEffect, useState } from "react";
 import ReCAPTCHA from "react-google-recaptcha";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
-import { LoadingContainer } from "../loader";
 import { generateUsername } from "unique-username-generator";
+import { LoadingContainer } from "../loader";
 
 export default function Login() {
   const recaptchaRef = createRef<ReCAPTCHA>();
@@ -98,8 +98,7 @@ export default function Login() {
         (error as Error)?.message ??
           "An error occurred logging in, try another option."
       );
-    }
-    finally{
+    } finally {
       setIsLoading(false);
     }
   };
