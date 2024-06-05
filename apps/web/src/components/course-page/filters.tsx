@@ -221,7 +221,7 @@ export const Filters = () => {
             </div>
           </div>
         ) : null}
-        <div className="flex items-center gap-2">
+        {/* <div className="flex items-center gap-2">
           <Switch
             value={includesCart}
             setValue={setIncludesCart}
@@ -235,7 +235,7 @@ export const Filters = () => {
               content="The cart fee is included in the greens fee when toggled on. Purchasing without a cart may not be available."
             />
           </div>
-        </div>
+        </div> */}
       </section>
 
       <section className="flex flex-col gap-2">
