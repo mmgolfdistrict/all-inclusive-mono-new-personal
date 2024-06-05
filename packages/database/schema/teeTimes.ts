@@ -1,5 +1,5 @@
 import { relations, sql, type InferInsertModel, type InferSelectModel } from "drizzle-orm";
-import { boolean, datetime, index, int, varchar } from "drizzle-orm/mysql-core";
+import { datetime, index, int, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 import { bookings } from "./bookings";
 import { courses } from "./courses";
@@ -24,7 +24,6 @@ export const teeTimes = mySqlTable(
     // courseProvider: varchar("courseProvider", { length: 191 }).notNull(),
     courseId: varchar("courseId", { length: 36 }).notNull(),
     // entityId: varchar("entityId", { length: 36 }).notNull(),
-    isCartIncluded: boolean("isCartIncluded").notNull().default(false),
     createdDateTime: datetime("createdDateTime", { mode: "string", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
