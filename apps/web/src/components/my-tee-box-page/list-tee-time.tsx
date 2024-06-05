@@ -383,7 +383,9 @@ export const ListTeeTime = ({
                 </div>
               </div>
               <div className="flex justify-between">
-                <div className="font-[300] text-primary-gray">You Receive after Sale</div>
+                <div className="font-[300] text-primary-gray">
+                  You Receive after Sale
+                </div>
                 <div className="text-secondary-black">
                   {formatMoney(totalPayout)}
                 </div>

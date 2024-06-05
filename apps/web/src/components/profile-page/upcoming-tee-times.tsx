@@ -1,5 +1,6 @@
 "use client";
 
+import type { BookingGroup } from "@golf-district/shared";
 import { useOverflowCheck } from "~/hooks/useOverflowCheck";
 import { api } from "~/utils/api";
 import { useRef } from "react";
@@ -7,7 +8,6 @@ import { useElementSize } from "usehooks-ts";
 import { TeeTime } from "../cards/tee-time";
 import { Skeleton } from "../course-page/skeleton";
 import { LeftChevron } from "../icons/left-chevron";
-import { BookingGroup, CombinedObject } from "@golf-district/shared";
 
 export const UpcomingTeeTimes = ({
   courseId,
