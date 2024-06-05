@@ -7,6 +7,7 @@ import { useElementSize } from "usehooks-ts";
 import { TeeTime } from "../cards/tee-time";
 import { Skeleton } from "../course-page/skeleton";
 import { LeftChevron } from "../icons/left-chevron";
+import { BookingGroup, CombinedObject } from "@golf-district/shared";
 
 export const UpcomingTeeTimes = ({
   courseId,
@@ -73,10 +74,12 @@ export const UpcomingTeeTimes = ({
               <div className="text-center">No tee times found.</div>
             </div>
           ) : (
-            data?.map((i, idx) => (
+            data?.map((i: BookingGroup, idx: number) => (
               <TeeTime
                 time={i.date ?? ""}
                 key={idx}
+                items={i}
+                index={idx}
                 canChoosePlayer={
                   i.availableSlots > 0 && i.teeTimeStatus === "LISTED"
                 }

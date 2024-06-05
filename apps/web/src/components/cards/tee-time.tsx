@@ -8,7 +8,7 @@ import { api } from "~/utils/api";
 import { formatMoney, formatTime, getTime } from "~/utils/formatters";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { toast } from "react-toastify";
 import { Avatar } from "../avatar";
 import { FilledButton } from "../buttons/filled-button";
@@ -20,11 +20,14 @@ import { ChoosePlayers } from "../input/choose-players";
 import { ManageTeeTimeListing } from "../my-tee-box-page/manage-tee-time-listing";
 import { Tooltip } from "../tooltip";
 import { MakeAnOffer } from "../watchlist-page/make-an-offer";
+import { BookingGroup, CombinedObject } from "@golf-district/shared";
 
 const PlayersOptions = ["1", "2", "3", "4"];
 
 export const TeeTime = ({
   time,
+  items,
+  index,
   canChoosePlayer,
   players,
   price,
@@ -48,6 +51,8 @@ export const TeeTime = ({
   refetch,
 }: {
   time: string;
+  items: CombinedObject | BookingGroup;
+  index: number;
   canChoosePlayer: boolean;
   players: string;
   price: number;
@@ -91,6 +96,22 @@ export const TeeTime = ({
       json: `TEE_TIME_IN_CART `,
     });
   };
+
+  const tooltipRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  const [showTooltip, setShowTooltip] = useState<boolean[]>([]);
+
+  useEffect(() => {
+    const isTextTruncated = (ref: HTMLSpanElement | null) => {
+      if (ref) {
+        return ref.scrollWidth > ref.clientWidth;
+      }
+      return false;
+    };
+
+    setShowTooltip(
+      tooltipRefs.current.map(isTextTruncated)
+    );
+  }, [items]);
 
   useEffect(() => {
     if (isMakeAnOfferOpen || isManageOpen) {
@@ -210,9 +231,8 @@ export const TeeTime = ({
         data-test={
           status === "SECOND_HAND" ? "secondary_listed" : "primary_listed"
         }
-        className={`md:rounded-xl rounded-lg bg-secondary-white w-fit min-w-[230px] md:min-w-[265px] ${
-          className ?? ""
-        }`}
+        className={`md:rounded-xl rounded-lg bg-secondary-white w-fit min-w-[230px] md:min-w-[265px] ${className ?? ""
+          }`}
       >
         <div className="border-b border-stroke">
           <div className="flex justify-between py-1 px-3 md:p-3">
@@ -238,13 +258,14 @@ export const TeeTime = ({
               </div>
               {isOwned || status === "SECOND_HAND" ? (
                 <Tooltip
+                  isDisabled={showTooltip[index] ? false : true}
                   trigger={
                     // <div className="text-left text-primary whitespace-nowrap overflow-hidden w-[230px] md:w-[200px] text-ellipsis">
                     //   <Link
                     //     href={`/${courseId}/profile/${soldById}`}
                     //     data-testid="sold-by-name-id"
                     //   >
-                    <div className="text-left whitespace-nowrap overflow-hidden w-[230px] md:w-[200px] text-ellipsis">
+                    <div ref={el => tooltipRefs.current[index] = el} className="text-left whitespace-nowrap overflow-hidden w-[230px] md:w-[200px] text-ellipsis">
                       {soldByName}
                     </div>
                     //   </Link>
@@ -254,8 +275,9 @@ export const TeeTime = ({
                 />
               ) : (
                 <Tooltip
+                  isDisabled={showTooltip[index] ? false : true}
                   trigger={
-                    <div className="text-left whitespace-nowrap overflow-hidden w-[230px] md:w-[200px] text-ellipsis">
+                    <div ref={el => tooltipRefs.current[index] = el} className="text-left whitespace-nowrap overflow-hidden w-[230px] md:w-[200px] text-ellipsis">
                       {soldByName}
                     </div>
                   }
