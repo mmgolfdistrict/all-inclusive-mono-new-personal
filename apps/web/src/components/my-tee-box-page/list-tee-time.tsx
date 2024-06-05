@@ -364,7 +364,7 @@ export const ListTeeTime = ({
             <div className="flex flex-col gap-4 px-4 pb-6">
               <div className="flex justify-between">
                 <div className="font-[300] text-primary-gray">
-                  Tee Time Price
+                  Your Listing Price
                 </div>
                 <div className="text-secondary-black">
                   {formatMoney(listingPrice * Number(players))}
@@ -375,7 +375,7 @@ export const ListTeeTime = ({
                   Service Fee{" "}
                   <Tooltip
                     trigger={<Info className="h-[14px] w-[14px]" />}
-                    content="Service fee description."
+                    content="The service fee is divided between Golf District and the course. This ensures ongoing enhancements to our service, ultimate offering golfers the best access to booking times."
                   />
                 </div>
                 <div className="text-secondary-black">
@@ -383,7 +383,7 @@ export const ListTeeTime = ({
                 </div>
               </div>
               <div className="flex justify-between">
-                <div className="font-[300] text-primary-gray">Total Payout</div>
+                <div className="font-[300] text-primary-gray">You Receive after Sale</div>
                 <div className="text-secondary-black">
                   {formatMoney(totalPayout)}
                 </div>

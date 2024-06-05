@@ -200,7 +200,7 @@ export const ManageOffer = ({
             <div className="flex flex-col gap-4 px-4 pb-6">
               <div className="flex justify-between">
                 <div className="font-[300] text-primary-gray">
-                  Tee Time Price
+                  Your Listing Price
                 </div>
                 <div className="text-secondary-black">
                   {formatMoney(listingPrice)}

@@ -92,7 +92,7 @@ export const BuyNow = ({
                   Service Fee{" "}
                   <Tooltip
                     trigger={<Info className="h-[14px] w-[14px]" />}
-                    content="Service fee description."
+                    content="The service fee is divided between Golf District and the course. This ensures ongoing enhancements to our service, ultimate offering golfers the best access to booking times."
                   />
                 </div>
                 <div className="text-secondary-black">${"45.00"}</div>

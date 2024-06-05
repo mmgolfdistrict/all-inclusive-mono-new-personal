@@ -520,7 +520,7 @@ export const ManageOwnedTeeTime = ({
                 <>
                   <div className="flex justify-between">
                     <div className="font-[300] text-primary-gray">
-                      Tee Time Price
+                      Your Listing Price
                     </div>
                     <div className="text-secondary-black">
                       {formatMoney(minimumOfferPrice * friends.length)}
@@ -531,7 +531,7 @@ export const ManageOwnedTeeTime = ({
                       Service Fee{" "}
                       <Tooltip
                         trigger={<Info className="h-[14px] w-[14px]" />}
-                        content="Service fee description."
+                        content="The service fee is divided between Golf District and the course. This ensures ongoing enhancements to our service, ultimate offering golfers the best access to booking times."
                       />
                     </div>
                     <div className="text-secondary-black">
@@ -540,7 +540,7 @@ export const ManageOwnedTeeTime = ({
                   </div>
                   <div className="flex justify-between">
                     <div className="font-[300] text-primary-gray">
-                      Total Payout
+                      You Receive after Sale
                     </div>
                     <div className="text-secondary-black">
                       {formatMoney(totalPayout)}
