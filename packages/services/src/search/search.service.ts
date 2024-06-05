@@ -76,7 +76,7 @@ export class SearchService {
     private readonly database: Db,
     private readonly weatherService: WeatherService,
     private readonly providerService: ProviderService
-  ) {}
+  ) { }
 
   findBlackoutDates = async (courseId: string): Promise<Day[]> => {
     // Generate a range of dates for the next 365 days
@@ -591,7 +591,8 @@ export class SearchService {
           gte(teeTimes.providerDate, currentTimePlus30Min),
           between(teeTimes.providerDate, minDateSubquery, maxDateSubquery),
           eq(teeTimes.courseId, courseId),
-          includesCart ? gte(teeTimes.cartFeePerPlayer, 1) : eq(teeTimes.cartFeePerPlayer, 0), //currently do not have a hasCart column in tee time table
+          //TODO: use isCartIncluded instead
+          // includesCart ? gte(teeTimes.cartFeePerPlayer, 1) : eq(teeTimes.cartFeePerPlayer, 0),
           eq(teeTimes.numberOfHoles, holes),
           eq(teeTimes.numberOfHoles, holes),
           gt(teeTimes.availableFirstHandSpots, 0),
@@ -643,7 +644,8 @@ export class SearchService {
           gte(teeTimes.providerDate, currentTimePlus30Min),
           between(teeTimes.providerDate, startDate, endDate),
           eq(teeTimes.courseId, courseId),
-          includesCart ? gte(teeTimes.cartFeePerPlayer, 1) : eq(teeTimes.cartFeePerPlayer, 0), //currently do not have a hasCart column in tee time table
+          //TODO: use isCartIncluded instead
+          // includesCart ? gte(teeTimes.cartFeePerPlayer, 1) : eq(teeTimes.cartFeePerPlayer, 0),
           eq(teeTimes.numberOfHoles, holes),
           gt(teeTimes.availableFirstHandSpots, 0),
           or(gte(teeTimes.availableFirstHandSpots, golfers), gte(teeTimes.availableSecondHandSpots, golfers))
@@ -653,10 +655,10 @@ export class SearchService {
         sortPrice === "desc"
           ? desc(teeTimes.greenFeePerPlayer)
           : sortTime === "desc"
-          ? desc(teeTimes.time)
-          : sortPrice === "asc"
-          ? asc(teeTimes.greenFeePerPlayer)
-          : asc(teeTimes.time)
+            ? desc(teeTimes.time)
+            : sortPrice === "asc"
+              ? asc(teeTimes.greenFeePerPlayer)
+              : asc(teeTimes.time)
       )
       .limit(limit);
     const courseData = await this.database
@@ -667,7 +669,7 @@ export class SearchService {
       .from(courses)
       .where(eq(courses.id, courseId))
       .execute()
-      .catch(() => {});
+      .catch(() => { });
     let buyerFee = 0;
     if (courseData?.length) {
       buyerFee = (courseData[0]?.buyerFee ?? 1) / 100;
@@ -688,7 +690,8 @@ export class SearchService {
         date: teeTime.providerDate,
         teeTimeId: teeTime.id,
         time: teeTime.time,
-        includesCart: teeTime.cartFee >= 1,
+        //TODO: use isCartIncluded instead
+        // includesCart: teeTime.cartFee >= 1,
         userWatchListed: teeTime.favoritesId ? true : false,
         availableSlots: teeTime.firstPartySlots,
         firstOrSecondHandTeeTime: TeeTimeType.FIRST_HAND,
@@ -753,10 +756,10 @@ export class SearchService {
         sortPrice === "desc"
           ? desc(lists.listPrice)
           : sortTime === "desc"
-          ? desc(teeTimes.time)
-          : sortPrice === "asc"
-          ? asc(lists.listPrice)
-          : asc(teeTimes.time)
+            ? desc(teeTimes.time)
+            : sortPrice === "asc"
+              ? asc(lists.listPrice)
+              : asc(teeTimes.time)
       );
     // .limit(limit);
     const secoondHandData = await secondHandBookingsQuery.execute().catch((err) => {
