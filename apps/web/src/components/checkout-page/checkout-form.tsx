@@ -188,7 +188,6 @@ export const CheckoutForm = ({
   });
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    console.log("HANDLING SUBMIT");
     e.preventDefault();
     void logAudit();
     if (listingId.length) {
