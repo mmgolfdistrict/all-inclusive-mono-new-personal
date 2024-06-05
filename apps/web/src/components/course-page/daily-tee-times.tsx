@@ -212,10 +212,12 @@ export const DailyTeeTimes = ({
           ref={overflowRef}
           onMouseDown={onMouseDown}
         >
-          {allTeeTimes?.map((i: CombinedObject, idx) => (
+          {allTeeTimes?.map((i: CombinedObject, idx: number) => (
             <TeeTime
               time={i.date}
               key={idx}
+              items={i}
+              index={idx}
               canChoosePlayer={i.availableSlots > 0}
               availableSlots={i.availableSlots}
               players={String(4 - i.availableSlots)}
