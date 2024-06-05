@@ -27,9 +27,9 @@ export const Footer = () => {
         <Link href={`/how-to-guide`} data-testid="footer-how-to-guide-id">
           How to Guide
         </Link>
-        <Link href={`/about-us`} data-testid="footer-about-us-id">
+        {/* <Link href={`/about-us`} data-testid="footer-about-us-id">
           About Us
-        </Link>
+        </Link> */}
         <Link href={`/privacy-policy`} data-testid="footer-privacy-policy-id">
           Privacy Policy
         </Link>
