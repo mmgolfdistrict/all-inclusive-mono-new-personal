@@ -21,7 +21,7 @@ export const Tooltip = ({
         </RadixTooltip.Trigger>
         <RadixTooltip.Portal>
           <RadixTooltip.Content
-            className="rounded-md border relative z-50 border-stroke bg-white px-4 py-2 text-sm shadow-lg"
+            className="rounded-md max-w-[15rem] md:max-w-[30rem] border relative z-50 border-stroke bg-white px-4 py-2 text-sm shadow-lg"
             sideOffset={5}
           >
             {content}
