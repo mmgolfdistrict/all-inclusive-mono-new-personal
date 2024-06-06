@@ -24,6 +24,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { ViewportList } from "react-viewport-list";
 import { useMediaQuery } from "usehooks-ts";
+import { generateUsername } from "unique-username-generator";
+
 import { LoadingContainer } from "./loader";
 
 dayjs.extend(Weekday);
@@ -41,6 +43,18 @@ export default function CourseHomePage() {
   const [error, setError] = useState<string | null>(null);
   const [count, setCount] = useState<number>(0);
   const [isFirstRender, setIsFirstRender] = useState<boolean>(true);
+  const updateUser = api.user.updateUser.useMutation();
+
+  const updateHandle = async () => {
+    const uName = generateUsername(undefined, undefined, 6);
+    try {
+      await updateUser.mutateAsync({
+        handle: uName,
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const updateCount = (balance: number) => {
     setCount(balance);
@@ -271,7 +285,7 @@ export default function CourseHomePage() {
         description={course?.description ?? ""}
         className="px-4 md:px-6"
       /> */}
-      <CourseBanner className="pt-4" />
+      <CourseBanner className="pt-4" userId={user?.id ?? ""} updateHandle={updateHandle} />
       <section className="relative flex gap-8 pl-0 pt-6 md:pl-6 md:pt-8 mx-auto w-full">
         <div
           ref={scrollRef}
