@@ -1,12 +1,20 @@
 "use client";
 
 import { useCourseContext } from "~/contexts/CourseContext";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { Carousel } from "react-responsive-carousel";
 import { BlurImage } from "../images/blur-image";
+import { useUser } from "~/hooks/useUser";
 
-export const CourseBanner = ({ className }: { className?: string }) => {
+export const CourseBanner = ({ userId, updateHandle, className }: { userId: string; updateHandle: () => void; className?: string }) => {
   const { course } = useCourseContext();
+  const { data: userData } = useUser(userId as string | undefined);
+
+  useEffect(() => {
+    if (userData && !userData?.handle) {
+      updateHandle();
+    }
+  }, [userData]);
 
   const courseImages = useMemo(() => {
     if (!course) return [];
