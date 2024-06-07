@@ -12,6 +12,7 @@ import { lists } from "./lists";
 import { providers } from "./providers";
 import { teeTimes } from "./teeTimes";
 import { transfers } from "./transfers";
+import { waitlistNotifications } from "./waitlistNotifications";
 
 export const courses = mySqlTable(
   "course",
@@ -81,6 +82,7 @@ export const coursesRelations = relations(courses, ({ one, many }) => ({
     fields: [courses.logoId],
     references: [assets.id],
   }),
+  waitlistNotifications: many(waitlistNotifications),
 }));
 
 export type SelectCourses = InferSelectModel<typeof courses>;
