@@ -27,10 +27,10 @@ import {
 } from "./index";
 import { ProfanityService } from "./profanity/profanity.service";
 import { ProviderService } from "./tee-sheet-provider/providers.service";
+import { WaitlistNotificationService } from "./waitlist-notifications/waitlistNotification.service";
 import { FinixService } from "./webhooks/finix.service";
 import { LoggerService } from "./webhooks/logging.service";
 import { PaymentVerifierService } from "./webhooks/paymentverifier.service";
-import { WaitlistNotificationService } from "./waitlist-notifications/waitlistNotification.service";
 
 export interface ServiceConfig {
   database: Db;
@@ -78,7 +78,7 @@ export interface ServiceConfig {
  * ```
  */
 export class ServiceFactory {
-  constructor(protected readonly config: ServiceConfig) { }
+  constructor(protected readonly config: ServiceConfig) {}
 
   /**
    * Returns an instance of HyperSwitchService with the provided API key.
