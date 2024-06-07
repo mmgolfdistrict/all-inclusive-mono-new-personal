@@ -829,7 +829,6 @@ export class HyperSwitchWebhookService {
         greenFee: teeTimes.greenFeePerPlayer,
         courseName: courses.name,
         entityName: entities.name,
-        cdn: assets.cdn,
         cdnKey: assets.key,
         extension: assets.extension,
         buyerFee: courses.buyerFee,
@@ -922,12 +921,13 @@ export class HyperSwitchWebhookService {
 
         const template = {
           CustomerFirstName: buyerCustomer?.username ?? "",
-          CourseLogoURL: `https://${existingTeeTime?.cdn}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
+          CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
           CourseURL: existingTeeTime?.websiteURL || "",
           CourseName: existingTeeTime?.courseName || "-",
           FacilityName: existingTeeTime?.entityName || "-",
           PlayDateTime:
             dayjs(existingTeeTime?.providerDate).utcOffset("-06:00").format("MM/DD/YYYY h:mm A") || "-",
+          HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/headerlogo.png`
         };
         await this.notificationService.createNotification(
           customer_id ?? "",
@@ -1133,8 +1133,9 @@ export class HyperSwitchWebhookService {
       const icsContent: string = createICS(event);
 
       const commonTemplateData = {
-        CourseLogoURL: `https://${existingTeeTime?.cdn}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
+        CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
         CourseURL: existingTeeTime?.websiteURL || "",
+        HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/headerlogo.png`,
         CourseName: existingTeeTime?.courseName || "-",
         FacilityName: existingTeeTime?.entityName || "-",
         PlayDateTime:

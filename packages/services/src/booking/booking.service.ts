@@ -2346,7 +2346,6 @@ export class BookingService {
         internalId: providers.internalId,
         providerDate: teeTimes.providerDate,
         holes: teeTimes.numberOfHoles,
-        cdn: assets.cdn,
         cdnKey: assets.key,
         extension: assets.extension,
         websiteURL: courses.websiteURL,
@@ -2471,11 +2470,12 @@ export class BookingService {
 
       const template = {
         CustomerFirstName: user?.handle ?? user.name ?? "",
-        CourseLogoURL: `https://${teeTime?.cdn}/${teeTime?.cdnKey}.${teeTime?.extension}`,
+        CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${teeTime?.cdnKey}.${teeTime?.extension}`,
         CourseURL: teeTime?.websiteURL || "",
         CourseName: teeTime?.courseName || "-",
         FacilityName: teeTime?.entityName || "-",
         PlayDateTime: dayjs(teeTime?.providerDate).utcOffset("-06:00").format("MM/DD/YYYY h:mm A") || "-",
+        HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/headerlogo.png`
       };
       await this.notificationService.createNotification(
         userId || "",
