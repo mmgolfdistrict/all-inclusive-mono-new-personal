@@ -20,6 +20,7 @@ export class ProfanityService {
     try {
       const removeRepeatedText = profanityText.replace(/(.)(?=.*\1)/g, "");
       const text = removeRepeatedText
+        .replaceAll("'", "")
         .replaceAll("1", "l")
         .replaceAll("0", "o")
         .replaceAll("3", "e")
@@ -43,7 +44,11 @@ export class ProfanityService {
         .from(profanities)
         .where(
           // or(sql`${text} like CONCAT('%', profanityText, '%')`, like(profanities.profanityText, `%${text}%`))
-          like(profanities.profanityText, `%${text}%`)
+          // like(profanities.profanityText, `%${text}%`)
+          sql`
+          Concat( '%', profanityText, '%' ) Like Concat( '%{text}%' )
+		      Or Concat( '%{text}%' ) Like Concat( '%', profanityText, '%' )
+          `
         )
         .catch((err) => {
           this.logger.error(err);
