@@ -62,6 +62,8 @@ export class ProfanityService {
       //     this.logger.error(err);
       //     throw new Error(err);
       //   });
+      console.log(`matchingWords.length: ${matchingWords.length}`);
+      console.log(matchingWords);
 
       if (matchingWords.length > 0) {
         return {

@@ -192,7 +192,7 @@ export class HyperSwitchService {
    */
   retrievePaymentMethods = async (customerId: string): Promise<CustomerPaymentMethod[] | undefined> => {
     console.log(`hyperSwitchBaseUrl: ${this.hyperSwitchBaseUrl}`);
-    console.log(`hyperSwitchApiKey: ${this.hyperSwitchApiKey}`);
+    // console.log(`hyperSwitchApiKey: ${this.hyperSwitchApiKey}`);
     console.log(`customerId: ${customerId}`);
 
     try {
