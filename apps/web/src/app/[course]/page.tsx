@@ -24,7 +24,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { ViewportList } from "react-viewport-list";
 import { useMediaQuery } from "usehooks-ts";
-
 import { LoadingContainer } from "./loader";
 
 dayjs.extend(Weekday);

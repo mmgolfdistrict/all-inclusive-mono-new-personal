@@ -1477,7 +1477,7 @@ export class UserService {
     const buffer = randomBytes(3);
 
     // Convert buffer to hex string
-    const hex = buffer.toString('hex');
+    const hex = buffer.toString("hex");
 
     // Convert hex string to integer
     const randomNumber = parseInt(hex, 16);
@@ -1486,7 +1486,7 @@ export class UserService {
     const sixDigitNumber = randomNumber % 1000000;
 
     // Pad the number with zeros if necessary
-    const handle = sixDigitNumber.toString().padStart(digit, '0');
+    const handle = sixDigitNumber.toString().padStart(digit, "0");
 
     const isValid = await this.isValidHandle(handle);
 
@@ -1494,5 +1494,5 @@ export class UserService {
       this.generateUsername(digit);
     }
     return handle ?? "";
-  }
+  };
 }
