@@ -2475,7 +2475,7 @@ export class BookingService {
         CourseName: teeTime?.courseName || "-",
         FacilityName: teeTime?.entityName || "-",
         PlayDateTime: dayjs(teeTime?.providerDate).utcOffset("-06:00").format("MM/DD/YYYY h:mm A") || "-",
-        HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/headerlogo.png`
+        HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/headerlogo.png`,
       };
       await this.notificationService.createNotification(
         userId || "",

@@ -191,6 +191,10 @@ export class HyperSwitchService {
    * @throws Will throw an error if retrieving the payment methods fails.
    */
   retrievePaymentMethods = async (customerId: string): Promise<CustomerPaymentMethod[] | undefined> => {
+    console.log(`hyperSwitchBaseUrl: ${this.hyperSwitchBaseUrl}`);
+    console.log(`hyperSwitchApiKey: ${this.hyperSwitchApiKey}`);
+    console.log(`customerId: ${customerId}`);
+
     try {
       const url = `${this.hyperSwitchBaseUrl}/customers/${customerId}/payment_methods`;
       const options = {
@@ -201,6 +205,8 @@ export class HyperSwitchService {
       };
       const paymentMethodResponse = await fetch(url, options);
       const paymentMethods: CustomerPaymentMethodsResponse = await paymentMethodResponse.json();
+      console.log("paymentMethods");
+      console.log(paymentMethods);
       return paymentMethods.customer_payment_methods;
     } catch (error) {
       this.logger.error("Error retrieving payment methods: ", error);
