@@ -42,23 +42,23 @@ export class ProfanityService {
         .select()
         .from(profanities)
         .where(
-          or(sql`${text} like CONCAT('%', profanityText, '%')`, like(profanities.profanityText, `%${text}%`))
+          // or(sql`${text} like CONCAT('%', profanityText, '%')`, like(profanities.profanityText, `%${text}%`))
+          like(profanities.profanityText, `%${text}%`)
         )
         .catch((err) => {
           this.logger.error(err);
           throw new Error(err);
         });
-      const matchingPhonetically = await this.db
-        .select()
-        .from(profanities)
-        .where(sql`SOUNDEX(profanityText)=SOUNDEX(${text})`)
-        .catch((err) => {
-          this.logger.error(err);
-          throw new Error(err);
-        });
-      // console.log("MATHCNING WORDs:", matchingWords)
-      // console.log("MATHCNING WORDs PHONETICALLY:", matchingPhonetically)
-      if (matchingWords.length > 0 || matchingPhonetically.length > 0) {
+      // const matchingPhonetically = await this.db
+      //   .select()
+      //   .from(profanities)
+      //   .where(sql`SOUNDEX(profanityText)=SOUNDEX(${text})`)
+      //   .catch((err) => {
+      //     this.logger.error(err);
+      //     throw new Error(err);
+      //   });
+
+      if (matchingWords.length > 0) {
         return {
           isProfane: true,
         };
@@ -67,6 +67,15 @@ export class ProfanityService {
           isProfane: false,
         };
       }
+      // if (matchingWords.length > 0 || matchingPhonetically.length > 0) {
+      //   return {
+      //     isProfane: true,
+      //   };
+      // } else {
+      //   return {
+      //     isProfane: false,
+      //   };
+      // }
     } catch (error) {
       this.logger.error(error);
       return {

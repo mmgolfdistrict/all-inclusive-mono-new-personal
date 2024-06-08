@@ -23,8 +23,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { ViewportList } from "react-viewport-list";
-import { generateUsername } from "unique-username-generator";
 import { useMediaQuery } from "usehooks-ts";
+
 import { LoadingContainer } from "./loader";
 
 dayjs.extend(Weekday);
@@ -44,8 +44,7 @@ export default function CourseHomePage() {
   const [isFirstRender, setIsFirstRender] = useState<boolean>(true);
   const updateUser = api.user.updateUser.useMutation();
 
-  const updateHandle = async () => {
-    const uName = generateUsername(undefined, undefined, 6);
+  const updateHandle = async (uName) => {
     try {
       await updateUser.mutateAsync({
         handle: uName,

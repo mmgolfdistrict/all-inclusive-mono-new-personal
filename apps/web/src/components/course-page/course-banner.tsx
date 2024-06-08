@@ -5,24 +5,18 @@ import { useUser } from "~/hooks/useUser";
 import { useEffect, useMemo } from "react";
 import { Carousel } from "react-responsive-carousel";
 import { BlurImage } from "../images/blur-image";
+import { api } from "~/utils/api";
 
-export const CourseBanner = ({
-  userId,
-  updateHandle,
-  className,
-}: {
-  userId: string;
-  updateHandle: () => void;
-  className?: string;
-}) => {
+export const CourseBanner = ({ userId, updateHandle, className }: { userId: string; updateHandle: (uName: string) => void; className?: string }) => {
   const { course } = useCourseContext();
   const { data: userData } = useUser(userId as string | undefined);
+  const { data: uName } = api.register.generateUsername.useQuery(6);
 
   useEffect(() => {
     if (userData && !userData?.handle) {
-      updateHandle();
+      updateHandle(uName ?? "");
     }
-  }, [userData]);
+  }, [userData, uName]);
 
   const courseImages = useMemo(() => {
     if (!course) return [];

@@ -1471,4 +1471,28 @@ export class UserService {
     }
     return Buffer.concat(chunks).toString("utf8");
   };
+
+  generateUsername = async (digit: number) => {
+    // Generate a random buffer
+    const buffer = randomBytes(3);
+
+    // Convert buffer to hex string
+    const hex = buffer.toString('hex');
+
+    // Convert hex string to integer
+    const randomNumber = parseInt(hex, 16);
+
+    // Get the six least significant digits
+    const sixDigitNumber = randomNumber % 1000000;
+
+    // Pad the number with zeros if necessary
+    const handle = sixDigitNumber.toString().padStart(digit, '0');
+
+    const isValid = await this.isValidHandle(handle);
+
+    if (!isValid) {
+      this.generateUsername(digit);
+    }
+    return handle ?? "";
+  }
 }
