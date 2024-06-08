@@ -28,7 +28,6 @@ import {
 import ReCAPTCHA from "react-google-recaptcha";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
-import { generateUsername } from "unique-username-generator";
 import { useDebounce } from "usehooks-ts";
 
 export default function RegisterPage() {
@@ -38,6 +37,7 @@ export default function RegisterPage() {
   const cities = api.places.getCity.useQuery({ city: debouncedLocation });
   const recaptchaRef = createRef<ReCAPTCHA>();
   const registerUser = api.register.register.useMutation();
+  const { data: uName } = api.register.generateUsername.useQuery(6);
   const [rotate, setRotate] = useState<boolean>(false);
   const [password, setPassword] = useState<string>("");
   const [showPassword, setShowPassword] = useState<boolean>(false);
@@ -62,14 +62,14 @@ export default function RegisterPage() {
   });
 
   const genUsername = () => {
-    const uName = generateUsername(undefined, undefined, 6);
-    setValue("username", uName);
+    setValue("username", uName ?? "");
   };
+
   const username = watch("username");
 
   useEffect(() => {
     genUsername();
-  }, []);
+  }, [uName]);
 
   const handleCheckProfanity = async (text: string) => {
     if (!text) return;
