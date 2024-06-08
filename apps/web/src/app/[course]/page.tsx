@@ -23,9 +23,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { ViewportList } from "react-viewport-list";
-import { useMediaQuery } from "usehooks-ts";
 import { generateUsername } from "unique-username-generator";
-
+import { useMediaQuery } from "usehooks-ts";
 import { LoadingContainer } from "./loader";
 
 dayjs.extend(Weekday);
@@ -285,7 +284,11 @@ export default function CourseHomePage() {
         description={course?.description ?? ""}
         className="px-4 md:px-6"
       /> */}
-      <CourseBanner className="pt-4" userId={user?.id ?? ""} updateHandle={updateHandle} />
+      <CourseBanner
+        className="pt-4"
+        userId={user?.id ?? ""}
+        updateHandle={updateHandle}
+      />
       <section className="relative flex gap-8 pl-0 pt-6 md:pl-6 md:pt-8 mx-auto w-full">
         <div
           ref={scrollRef}
