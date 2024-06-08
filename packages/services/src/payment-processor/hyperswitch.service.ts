@@ -16,7 +16,7 @@ export class HyperSwitchService {
   protected hyperSwitch: HyperSwitch;
   protected logger: pino.Logger;
   protected hyper: any;
-  protected hyperSwitchBaseUrl = "https://sandbox.hyperswitch.io";
+  protected hyperSwitchBaseUrl = process.env.HYPERSWITCH_BASE_URL!; // "https://sandbox.hyperswitch.io";
   protected hyperSwitchApiKey: string;
 
   /**
