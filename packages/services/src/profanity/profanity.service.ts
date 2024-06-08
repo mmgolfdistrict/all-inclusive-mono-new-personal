@@ -39,6 +39,11 @@ export class ProfanityService {
         };
       }
 
+      console.log(`
+          Concat( '%', profanityText, '%' ) Like '%{text}%'
+		      Or '%{text}%' Like Concat( '%', profanityText, '%' )
+          `);
+
       const matchingWords = await this.db
         .select()
         .from(profanities)
@@ -46,8 +51,8 @@ export class ProfanityService {
           // or(sql`${text} like CONCAT('%', profanityText, '%')`, like(profanities.profanityText, `%${text}%`))
           // like(profanities.profanityText, `%${text}%`)
           sql`
-          Concat( '%', profanityText, '%' ) Like Concat( '%{text}%' )
-		      Or Concat( '%{text}%' ) Like Concat( '%', profanityText, '%' )
+          Concat( '%', profanityText, '%' ) Like '%{text}%'
+		      Or '%{text}%' Like Concat( '%', profanityText, '%' )
           `
         )
         .catch((err) => {
