@@ -1,6 +1,6 @@
 import type { Db } from "@golf-district/database";
 import { like, or, sql } from "@golf-district/database";
-import { profanities } from "@golf-district/database/schema/profanities";
+import { profanities, profanitiesTableName } from "@golf-district/database/schema/profanities";
 import Logger from "@golf-district/shared/src/logger";
 
 export class ProfanityService {
@@ -41,7 +41,7 @@ export class ProfanityService {
 
       const sqlText = `
           Select profanityText
-          From {profanities} PRO
+          From ${profanitiesTableName} PRO
           Where 1 = 1
             And 
             (
