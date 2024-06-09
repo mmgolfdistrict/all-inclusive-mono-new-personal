@@ -44,16 +44,34 @@ export class ProfanityService {
 		      Or %${text}% Like Concat( '%', profanityText, '%' )
           `);
 
+      const sqlobj = sql.raw(`
+          Select profanityText
+  From {profanities} PRO
+  Where 1 = 1
+    And 
+      (
+      Concat( '%', profanityText, '%' ) Like '%${text}%'
+      Or '%${text}%' Like Concat( '%', profanityText, '%' )
+    )
+          `);
+
+      console.log("sqlobj");
+      console.log(sqlobj);
+      console.log("actual sql");
+      console.log(sqlobj.getSQL());
+
+      // const test = await this.db.execute(sqlobj);
+
       const matchingWords = await this.db
         .select()
         .from(profanities)
         .where(
           // or(sql`${text} like CONCAT('%', profanityText, '%')`, like(profanities.profanityText, `%${text}%`))
-          // like(profanities.profanityText, `%${text}%`)
-          sql`
-          Concat( '%', profanityText, '%' ) Like %${text}%
-		      Or %${text}% Like Concat( '%', profanityText, '%' )
-          `
+          like(profanities.profanityText, `%${text}%`)
+          // sql`
+          // Concat( '%', profanityText, '%' ) Like %${text}%
+          // Or %${text}% Like Concat( '%', profanityText, '%' )
+          // `
         )
         .catch((err) => {
           this.logger.error(err);
