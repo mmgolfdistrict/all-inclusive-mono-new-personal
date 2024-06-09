@@ -16,15 +16,14 @@ export const DailyTeeTimes = ({
   minDate,
   maxDate,
   setError,
-  updateCount,
-  handleLoading,
+  handleLoading
 }: {
   date: string;
   minDate: string;
   maxDate: string;
   setError: (t: string | null) => void;
-  updateCount: (balance: number) => void;
   handleLoading?: (val: boolean) => void;
+
 }) => {
   const overflowRef = useRef<HTMLDivElement>(null);
   const nextPageRef = useRef<HTMLDivElement>(null);
@@ -115,17 +114,6 @@ export const DailyTeeTimes = ({
   useEffect(() => {
     setError(error?.message ?? null);
   }, [error]);
-
-  useEffect(() => {
-    const num = teeTimeData?.pages[teeTimeData?.pages?.length - 1]?.count;
-    if (!isLoading && isFetchedAfterMount) {
-      if (num !== undefined) {
-        updateCount(num);
-      } else {
-        updateCount(0);
-      }
-    }
-  }, [teeTimeData, isLoading, isFetchedAfterMount]);
 
   const allTeeTimes =
     teeTimeData?.pages[teeTimeData?.pages?.length - 1]?.results ?? [];
