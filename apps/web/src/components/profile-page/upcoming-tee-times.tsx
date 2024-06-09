@@ -1,6 +1,6 @@
 "use client";
 
-import { BookingGroup, CombinedObject } from "@golf-district/shared";
+import type { BookingGroup } from "@golf-district/shared";
 import { useOverflowCheck } from "~/hooks/useOverflowCheck";
 import { api } from "~/utils/api";
 import { useRef } from "react";

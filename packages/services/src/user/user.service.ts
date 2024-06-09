@@ -184,7 +184,6 @@ export class UserService {
     if (courseId) {
       const [course] = await this.database
         .select({
-          cdn: assets.cdn,
           key: assets.key,
           extension: assets.extension,
           websiteURL: courses.websiteURL,
@@ -198,8 +197,8 @@ export class UserService {
           return [];
         });
 
-      if (course?.cdn) {
-        CourseLogoURL = `https://${course?.cdn}/${course?.key}.${course?.extension}`;
+      if (course?.key) {
+        CourseLogoURL = `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`;
         CourseURL = course?.websiteURL || "";
       }
     }
@@ -215,6 +214,7 @@ export class UserService {
         )}&verificationToken=${encodeURIComponent(verificationToken)}`,
         CourseLogoURL,
         CourseURL,
+        HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/headerlogo.png`,
       },
       []
     );
@@ -427,7 +427,6 @@ export class UserService {
     if (courseId) {
       const [course] = await this.database
         .select({
-          cdn: assets.cdn,
           key: assets.key,
           extension: assets.extension,
           websiteURL: courses.websiteURL,
@@ -436,8 +435,8 @@ export class UserService {
         .where(eq(courses.id, courseId))
         .leftJoin(assets, eq(assets.id, courses.logoId));
 
-      if (course?.cdn) {
-        CourseLogoURL = `https://${course?.cdn}/${course?.key}.${course?.extension}`;
+      if (course?.key) {
+        CourseLogoURL = `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`;
         CourseURL = course?.websiteURL || "";
       }
     }
@@ -453,6 +452,7 @@ export class UserService {
             CustomerFirstName: user.handle ?? "",
             CourseLogoURL,
             CourseURL,
+            HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/headerlogo.png`,
           },
           []
         );
@@ -734,7 +734,6 @@ export class UserService {
     if (courseProviderId) {
       const [course] = await this.database
         .select({
-          cdn: assets.cdn,
           key: assets.key,
           extension: assets.extension,
           websiteURL: courses.websiteURL,
@@ -743,8 +742,8 @@ export class UserService {
         .leftJoin(assets, eq(assets.courseId, courseProviderId))
         .where(eq(courses.logoId, assets.id));
 
-      if (course?.cdn) {
-        CourseLogoURL = `https://${course?.cdn}/${course?.key}.${course?.extension}`;
+      if (course?.key) {
+        CourseLogoURL = `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`;
         CourseURL = course?.websiteURL || "";
       }
     }
@@ -787,6 +786,7 @@ export class UserService {
       EMail: user.email,
       CourseLogoURL,
       CourseURL,
+      HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/headerlogo.png`,
     };
 
     if (user.gdPassword) {
@@ -900,7 +900,6 @@ export class UserService {
     if (courseId) {
       const [course] = await this.database
         .select({
-          cdn: assets.cdn,
           key: assets.key,
           extension: assets.extension,
           websiteURL: courses.websiteURL,
@@ -914,8 +913,8 @@ export class UserService {
           return [];
         });
 
-      if (course?.cdn) {
-        CourseLogoURL = `https://${course?.cdn}/${course?.key}.${course?.extension}`;
+      if (course?.key) {
+        CourseLogoURL = `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`;
         CourseURL = course?.websiteURL || "";
       }
     }
@@ -930,6 +929,7 @@ export class UserService {
             CustomerFirstName: user?.handle ?? "",
             CourseLogoURL,
             CourseURL,
+            HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/headerlogo.png`,
           },
           []
         );
@@ -1470,5 +1470,29 @@ export class UserService {
       chunks.push(chunk);
     }
     return Buffer.concat(chunks).toString("utf8");
+  };
+
+  generateUsername = async (digit: number) => {
+    // Generate a random buffer
+    const buffer = randomBytes(3);
+
+    // Convert buffer to hex string
+    const hex = buffer.toString("hex");
+
+    // Convert hex string to integer
+    const randomNumber = parseInt(hex, 16);
+
+    // Get the six least significant digits
+    const sixDigitNumber = randomNumber % 1000000;
+
+    // Pad the number with zeros if necessary
+    const handle = sixDigitNumber.toString().padStart(digit, "0");
+
+    const isValid = await this.isValidHandle(handle);
+
+    if (!isValid) {
+      this.generateUsername(digit);
+    }
+    return handle ?? "";
   };
 }

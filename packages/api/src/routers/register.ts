@@ -34,4 +34,7 @@ export const registerRouter = createTRPCRouter({
         .getUserService()
         .verifyUserEmail(input?.courseId, input.userId, input.token);
     }),
+  generateUsername: publicProcedureWithCaptcha.input(z.number()).query(async ({ input, ctx }) => {
+    return await ctx.serviceFactory.getUserService().generateUsername(input);
+  }),
 });

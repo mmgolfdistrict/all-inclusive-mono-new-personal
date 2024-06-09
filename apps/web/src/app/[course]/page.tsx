@@ -60,6 +60,22 @@ export default function CourseHomePage() {
   const router = useRouter();
   const isMobile = useMediaQuery("(max-width: 768px)");
   const courseId = course?.id;
+  const [count, setCount] = useState<number>(0);
+  const updateUser = api.user.updateUser.useMutation();
+
+  const updateHandle = async (uName) => {
+    try {
+      await updateUser.mutateAsync({
+        handle: uName,
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const updateCount = (balance: number) => {
+    setCount(balance);
+  };
 
   const { data: farthestDateOut } =
     api.searchRouter.getFarthestTeeTimeDate.useQuery(
@@ -306,11 +322,15 @@ export default function CourseHomePage() {
         <GoBack href="/" text={`Back to all ${entity?.name} Courses`} />
       </div>
       {/* <CourseTitle
-    courseName={course?.name ?? ""}
-    description={course?.description ?? ""}
-    className="px-4 md:px-6"
-  /> */}
-      <CourseBanner className="pt-4" />
+        courseName={course?.name ?? ""}
+        description={course?.description ?? ""}
+        className="px-4 md:px-6"
+      /> */}
+      <CourseBanner
+        className="pt-4"
+        userId={user?.id ?? ""}
+        updateHandle={updateHandle}
+      />
       <section className="relative flex gap-8 pl-0 pt-6 md:pl-6 md:pt-8 mx-auto w-full">
         <div
           ref={scrollRef}

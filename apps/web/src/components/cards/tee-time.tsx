@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "@golf-district/auth/nextjs-exports";
-import { BookingGroup, CombinedObject } from "@golf-district/shared";
+import type { BookingGroup, CombinedObject } from "@golf-district/shared";
 import { useAppContext } from "~/contexts/AppContext";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";

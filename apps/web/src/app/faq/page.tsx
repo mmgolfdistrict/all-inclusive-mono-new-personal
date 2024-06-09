@@ -32,7 +32,7 @@ export default function FAQ() {
             >
               Please refer to our <a href="/how-to-guide">How to Guide</a> for
               detailed instructions. For further questions or feedback, email us
-              at
+              at{" "}
               <a href="mailto:support@golfdistrict.com">
                 support@golfdistrict.com
               </a>

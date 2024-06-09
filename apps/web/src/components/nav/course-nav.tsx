@@ -42,7 +42,7 @@ export const CourseNav = () => {
   const auditLog = api.webhooks.auditLog.useMutation();
   const logAudit = async () => {
     await auditLog.mutateAsync({
-      userId: "",
+      userId: user?.id ?? "",
       teeTimeId: "",
       bookingId: "",
       listingId: "",

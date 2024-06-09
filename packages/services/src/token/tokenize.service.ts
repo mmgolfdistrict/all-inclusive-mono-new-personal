@@ -185,7 +185,6 @@ export class TokenizeService {
         address: courses.address,
         name: courses.name,
         websiteURL: courses.websiteURL,
-        cdn: assets.cdn,
         cdnKey: assets.key,
         extension: assets.extension,
       })
@@ -448,8 +447,9 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       PurchasedFrom: existingTeeTime.courseName ?? "-",
       PlayerCount: players ?? 0,
       TotalAmount: formatMoney(normalizedCartData.total / 100 ?? 0),
-      CourseLogoURL: `https://${existingTeeTime?.cdn}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
+      CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
       CourseURL: existingTeeTime?.websiteURL || "",
+      HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/headerlogo.png`,
       SellTeeTImeURL: `${redirectHref}/my-tee-box`,
       ManageTeeTimesURL: `${redirectHref}/my-tee-box`,
     };
