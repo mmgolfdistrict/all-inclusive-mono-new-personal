@@ -39,28 +39,28 @@ export class ProfanityService {
         };
       }
 
-      console.log(`
-          Concat( '%', profanityText, '%' ) Like %${text}%
-		      Or %${text}% Like Concat( '%', profanityText, '%' )
-          `);
-
-      const sqlobj = sql.raw(`
+      const sqlText = `
           Select profanityText
-  From {profanities} PRO
-  Where 1 = 1
-    And 
-      (
-      Concat( '%', profanityText, '%' ) Like '%${text}%'
-      Or '%${text}%' Like Concat( '%', profanityText, '%' )
-    )
-          `);
+          From {profanities} PRO
+          Where 1 = 1
+            And 
+            (
+              Concat( '%', profanityText, '%' ) Like '%${text}%'
+              Or '%${text}%' Like Concat( '%', profanityText, '%' )
+            )
+          `;
+      console.log(sqlText);
+      const sqlobj = sql.raw(sqlText);
 
       console.log("sqlobj");
       console.log(sqlobj);
       console.log("actual sql");
       console.log(sqlobj.getSQL());
 
-      // const test = await this.db.execute(sqlobj);
+      const test = await this.db.execute(sqlobj);
+      console.log(`test.length: ${test.rows.length}`);
+      console.log(test);
+      console.log(test.rows);
 
       const matchingWords = await this.db
         .select()
