@@ -221,7 +221,9 @@ export const ViewOffer = ({
                 <div className="text-secondary-black">{formatMoney(45)}</div>
               </div>
               <div className="flex justify-between">
-                <div className="font-[300] text-primary-gray">You Receive after Sale</div>
+                <div className="font-[300] text-primary-gray">
+                  You Receive after Sale
+                </div>
                 <div className="text-secondary-black">
                   {formatMoney(Math.abs(teeTimePrice - 45))}
                 </div>

@@ -16,14 +16,13 @@ export const DailyTeeTimes = ({
   minDate,
   maxDate,
   setError,
-  handleLoading
+  handleLoading,
 }: {
   date: string;
   minDate: string;
   maxDate: string;
   setError: (t: string | null) => void;
   handleLoading?: (val: boolean) => void;
-
 }) => {
   const overflowRef = useRef<HTMLDivElement>(null);
   const nextPageRef = useRef<HTMLDivElement>(null);

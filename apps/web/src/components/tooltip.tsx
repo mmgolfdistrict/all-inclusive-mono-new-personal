@@ -5,7 +5,7 @@ export const Tooltip = ({
   trigger,
   content,
   className,
-  isDisabled = false
+  isDisabled = false,
 }: {
   trigger: ReactNode;
   content: ReactNode;
@@ -15,7 +15,7 @@ export const Tooltip = ({
   return (
     <>
       {isDisabled ? (
-      <>{trigger}</>
+        <>{trigger}</>
       ) : (
         <RadixTooltip.Provider>
           <RadixTooltip.Root delayDuration={0}>

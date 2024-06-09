@@ -58,17 +58,17 @@ interface CheckTeeTimesAvailabilityParams {
   endTime: number;
   minDate: string;
   maxDate: string;
-  holes: 9 | 18,
-  golfers: 1 | 2 | 3 | 4,
+  holes: 9 | 18;
+  golfers: 1 | 2 | 3 | 4;
   showUnlisted: boolean;
   includesCart: boolean;
   lowerPrice: number;
   upperPrice: number;
   take: number;
-  sortTime: "asc" | "desc" | "",
-  sortPrice: "asc" | "desc" | "",
-  timezoneCorrection: number,
-  cursor?: number | null,
+  sortTime: "asc" | "desc" | "";
+  sortPrice: "asc" | "desc" | "";
+  timezoneCorrection: number;
+  cursor?: number | null;
   _userId: string | undefined;
 }
 
@@ -97,7 +97,7 @@ export class SearchService {
     private readonly database: Db,
     private readonly weatherService: WeatherService,
     private readonly providerService: ProviderService
-  ) { }
+  ) {}
 
   findBlackoutDates = async (courseId: string): Promise<Day[]> => {
     // Generate a range of dates for the next 365 days
@@ -566,81 +566,86 @@ export class SearchService {
     sortPrice,
     timezoneCorrection,
     cursor,
-    _userId
-  }:CheckTeeTimesAvailabilityParams)  {
-  const res=[]
-  console.log("iuvhjlgfhjvbknlfycgjvhkbln",lowerPrice,upperPrice)
-   for(let i=0;i<dates.length;i++){
-    const date=dates[i]
-    const userId = _userId ?? "00000000-0000-0000-0000-000000000000";
-    const minDateSubquery = dayjs(minDate).utc().hour(0).minute(0).second(0).millisecond(0).toISOString();
-    const maxDateSubquery = dayjs(maxDate)
-      .utc()
-      .hour(23)
-      .minute(59)
-      .second(59)
-      .millisecond(999)
-      .toISOString();
-    const startDate = dayjs(date).utc().hour(0).minute(0).second(0).millisecond(0).toISOString();
-    const endDate = dayjs(date).utc().hour(23).minute(59).second(59).millisecond(999).toISOString();
-    const nowInCourseTimezone = dayjs().utc().utcOffset(timezoneCorrection).format("YYYY-MM-DD HH:mm:ss");
-    const currentTimePlus30Min = dayjs
-      .utc(nowInCourseTimezone)
-      .utcOffset(timezoneCorrection)
-      .add(30, "minutes")
-      .toISOString();
-    const firstHandRecords= await this.database.
-    select({
-      maxdata: sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})`
-    })
-    .from(teeTimes)
-    .innerJoin(courses, eq(courses.id, courseId))
-    .where(
-      and(
-        gte(teeTimes.providerDate, currentTimePlus30Min),
-        between(teeTimes.providerDate, minDateSubquery, maxDateSubquery),
-        gte(teeTimes.time, startTime), lte(teeTimes.time, endTime),
-        sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 >= ${lowerPrice}`,
-        sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 <= ${upperPrice}`,
-        eq(teeTimes.numberOfHoles, holes),
-        gt(teeTimes.availableFirstHandSpots, 0),
-        or(gte(teeTimes.availableFirstHandSpots, golfers), gte(teeTimes.availableSecondHandSpots, golfers))
-      )
-    )
-    .execute()
+    _userId,
+  }: CheckTeeTimesAvailabilityParams) {
+    const res = [];
+    console.log("iuvhjlgfhjvbknlfycgjvhkbln", lowerPrice, upperPrice);
+    for (let i = 0; i < dates.length; i++) {
+      const date = dates[i];
+      const userId = _userId ?? "00000000-0000-0000-0000-000000000000";
+      const minDateSubquery = dayjs(minDate).utc().hour(0).minute(0).second(0).millisecond(0).toISOString();
+      const maxDateSubquery = dayjs(maxDate)
+        .utc()
+        .hour(23)
+        .minute(59)
+        .second(59)
+        .millisecond(999)
+        .toISOString();
+      const startDate = dayjs(date).utc().hour(0).minute(0).second(0).millisecond(0).toISOString();
+      const endDate = dayjs(date).utc().hour(23).minute(59).second(59).millisecond(999).toISOString();
+      const nowInCourseTimezone = dayjs().utc().utcOffset(timezoneCorrection).format("YYYY-MM-DD HH:mm:ss");
+      const currentTimePlus30Min = dayjs
+        .utc(nowInCourseTimezone)
+        .utcOffset(timezoneCorrection)
+        .add(30, "minutes")
+        .toISOString();
+      const firstHandRecords = await this.database
+        .select({
+          maxdata: sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})`,
+        })
+        .from(teeTimes)
+        .innerJoin(courses, eq(courses.id, courseId))
+        .where(
+          and(
+            gte(teeTimes.providerDate, currentTimePlus30Min),
+            between(teeTimes.providerDate, minDateSubquery, maxDateSubquery),
+            gte(teeTimes.time, startTime),
+            lte(teeTimes.time, endTime),
+            sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 >= ${lowerPrice}`,
+            sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 <= ${upperPrice}`,
+            eq(teeTimes.numberOfHoles, holes),
+            gt(teeTimes.availableFirstHandSpots, 0),
+            or(
+              gte(teeTimes.availableFirstHandSpots, golfers),
+              gte(teeTimes.availableSecondHandSpots, golfers)
+            )
+          )
+        )
+        .execute();
 
-    const secondHandRecords = await this.database
-    .select({
-      maxDate: lists.listPrice,
-    })
-    .from(lists)
-    .innerJoin(bookings, eq(bookings.listId, lists.id))
-    .innerJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
-    .innerJoin(courses, eq(courses.id, teeTimes.courseId))
-    .where(
-      and(
-        eq(teeTimes.courseId, courseId),
-        eq(lists.isDeleted, false),
-        and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
-        gte(teeTimes.providerDate, currentTimePlus30Min),
-        between(teeTimes.providerDate, startDate, endDate),
-        eq(teeTimes.numberOfHoles, holes),
-        or(gte(teeTimes.availableFirstHandSpots, golfers), gte(teeTimes.availableSecondHandSpots, golfers)),
-        sql`(${lists.listPrice}*(${courses.buyerFee}/100)+${lists.listPrice})/100 >= ${lowerPrice}`,
-        sql`(${lists.listPrice}*(${courses.buyerFee}/100)+${lists.listPrice})/100 <= ${upperPrice}`,
-      )
-    )
-    .execute();
-    
-    const isDateToBeAdded = (firstHandRecords.length>0||secondHandRecords.length>0)
-    if(isDateToBeAdded){
-      res.push(date)
+      const secondHandRecords = await this.database
+        .select({
+          maxDate: lists.listPrice,
+        })
+        .from(lists)
+        .innerJoin(bookings, eq(bookings.listId, lists.id))
+        .innerJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
+        .innerJoin(courses, eq(courses.id, teeTimes.courseId))
+        .where(
+          and(
+            eq(teeTimes.courseId, courseId),
+            eq(lists.isDeleted, false),
+            and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
+            gte(teeTimes.providerDate, currentTimePlus30Min),
+            between(teeTimes.providerDate, startDate, endDate),
+            eq(teeTimes.numberOfHoles, holes),
+            or(
+              gte(teeTimes.availableFirstHandSpots, golfers),
+              gte(teeTimes.availableSecondHandSpots, golfers)
+            ),
+            sql`(${lists.listPrice}*(${courses.buyerFee}/100)+${lists.listPrice})/100 >= ${lowerPrice}`,
+            sql`(${lists.listPrice}*(${courses.buyerFee}/100)+${lists.listPrice})/100 <= ${upperPrice}`
+          )
+        )
+        .execute();
+
+      const isDateToBeAdded = firstHandRecords.length > 0 || secondHandRecords.length > 0;
+      if (isDateToBeAdded) {
+        res.push(date);
+      }
     }
-   }
-   return res;
-     
+    return res;
   }
-  
 
   async getTeeTimesForDay(
     courseId: string,
@@ -770,10 +775,10 @@ export class SearchService {
         sortPrice === "desc"
           ? desc(teeTimes.greenFeePerPlayer)
           : sortTime === "desc"
-            ? desc(teeTimes.time)
-            : sortPrice === "asc"
-              ? asc(teeTimes.greenFeePerPlayer)
-              : asc(teeTimes.time)
+          ? desc(teeTimes.time)
+          : sortPrice === "asc"
+          ? asc(teeTimes.greenFeePerPlayer)
+          : asc(teeTimes.time)
       )
       .limit(limit);
     const courseData = await this.database
@@ -784,7 +789,7 @@ export class SearchService {
       .from(courses)
       .where(eq(courses.id, courseId))
       .execute()
-      .catch(() => { });
+      .catch(() => {});
     let buyerFee = 0;
     if (courseData?.length) {
       buyerFee = (courseData[0]?.buyerFee ?? 1) / 100;
@@ -871,10 +876,10 @@ export class SearchService {
         sortPrice === "desc"
           ? desc(lists.listPrice)
           : sortTime === "desc"
-            ? desc(teeTimes.time)
-            : sortPrice === "asc"
-              ? asc(lists.listPrice)
-              : asc(teeTimes.time)
+          ? desc(teeTimes.time)
+          : sortPrice === "asc"
+          ? asc(lists.listPrice)
+          : asc(teeTimes.time)
       );
     // .limit(limit);
     const secoondHandData = await secondHandBookingsQuery.execute().catch((err) => {

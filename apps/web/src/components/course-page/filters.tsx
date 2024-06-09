@@ -317,7 +317,9 @@ export const Filters = () => {
           onPointerUp={() => {
             handleSetPriceRange();
           }}
-           onValueChange={(value: [number, number]) => {debounceFunction(setLocalPriceRange(value),1000)}}
+          onValueChange={(value: [number, number]) => {
+            debounceFunction(setLocalPriceRange(value), 1000);
+          }}
           data-testid="slider-price-range-id"
           data-qa={`${localPriceRange?.[0]}-${localPriceRange?.[1]}`}
         />

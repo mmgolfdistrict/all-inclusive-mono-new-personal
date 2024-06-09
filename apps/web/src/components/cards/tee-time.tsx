@@ -1,6 +1,7 @@
 "use client";
 
 import { useSession } from "@golf-district/auth/nextjs-exports";
+import { BookingGroup, CombinedObject } from "@golf-district/shared";
 import { useAppContext } from "~/contexts/AppContext";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
@@ -20,7 +21,6 @@ import { ChoosePlayers } from "../input/choose-players";
 import { ManageTeeTimeListing } from "../my-tee-box-page/manage-tee-time-listing";
 import { Tooltip } from "../tooltip";
 import { MakeAnOffer } from "../watchlist-page/make-an-offer";
-import { BookingGroup, CombinedObject } from "@golf-district/shared";
 
 const PlayersOptions = ["1", "2", "3", "4"];
 
@@ -108,9 +108,7 @@ export const TeeTime = ({
       return false;
     };
 
-    setShowTooltip(
-      tooltipRefs.current.map(isTextTruncated)
-    );
+    setShowTooltip(tooltipRefs.current.map(isTextTruncated));
   }, [items]);
 
   useEffect(() => {
@@ -231,8 +229,9 @@ export const TeeTime = ({
         data-test={
           status === "SECOND_HAND" ? "secondary_listed" : "primary_listed"
         }
-        className={`md:rounded-xl rounded-lg bg-secondary-white w-fit min-w-[230px] md:min-w-[265px] ${className ?? ""
-          }`}
+        className={`md:rounded-xl rounded-lg bg-secondary-white w-fit min-w-[230px] md:min-w-[265px] ${
+          className ?? ""
+        }`}
       >
         <div className="border-b border-stroke">
           <div className="flex justify-between py-1 px-3 md:p-3">
@@ -265,7 +264,10 @@ export const TeeTime = ({
                     //     href={`/${courseId}/profile/${soldById}`}
                     //     data-testid="sold-by-name-id"
                     //   >
-                    <div ref={el => tooltipRefs.current[index] = el} className="text-left whitespace-nowrap overflow-hidden w-[230px] md:w-[200px] text-ellipsis">
+                    <div
+                      ref={(el) => (tooltipRefs.current[index] = el)}
+                      className="text-left whitespace-nowrap overflow-hidden w-[230px] md:w-[200px] text-ellipsis"
+                    >
                       {soldByName}
                     </div>
                     //   </Link>
@@ -277,7 +279,10 @@ export const TeeTime = ({
                 <Tooltip
                   isDisabled={showTooltip[index] ? false : true}
                   trigger={
-                    <div ref={el => tooltipRefs.current[index] = el} className="text-left whitespace-nowrap overflow-hidden w-[230px] md:w-[200px] text-ellipsis">
+                    <div
+                      ref={(el) => (tooltipRefs.current[index] = el)}
+                      className="text-left whitespace-nowrap overflow-hidden w-[230px] md:w-[200px] text-ellipsis"
+                    >
                       {soldByName}
                     </div>
                   }
