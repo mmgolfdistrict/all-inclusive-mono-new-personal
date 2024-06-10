@@ -1493,6 +1493,6 @@ export class UserService {
     if (!isValid) {
       this.generateUsername(digit);
     }
-    return handle ?? "";
-  };
+    return handle ? `golfdistrict${handle}` : "golfdistrict";
+  }
 }
