@@ -12,7 +12,7 @@ import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import type { InsertTransfer } from "@golf-district/database/schema/transfers";
 import { transfers } from "@golf-district/database/schema/transfers";
 import { users } from "@golf-district/database/schema/users";
-import { formatMoney } from "@golf-district/shared";
+import { formatMoney, formatTime } from "@golf-district/shared";
 import createICS from "@golf-district/shared/createICS";
 import type { Event } from "@golf-district/shared/createICS";
 import Logger from "@golf-district/shared/src/logger";
@@ -187,6 +187,7 @@ export class TokenizeService {
         websiteURL: courses.websiteURL,
         cdnKey: assets.key,
         extension: assets.extension,
+        timezoneCorrection:courses.timezoneCorrection
       })
       .from(teeTimes)
       .where(eq(teeTimes.id, providerTeeTimeId))
@@ -416,7 +417,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       reservationId: bookingId,
       courseReservation: providerBookingId,
       numberOfPlayer: players.toString(),
-      playTime: dayjs(existingTeeTime.providerDate).utcOffset("-06:00").format("YYYY-MM-DD hh:mm A") ?? "-",
+      playTime: dayjs(existingTeeTime.providerDate).format("YYYY-MM-DD hh:mm A") ?? "-",
     };
     const icsContent: string = createICS(event);
     const template = {
@@ -425,8 +426,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       GolfDistrictReservationID: bookingsToCreate?.[0]?.id ?? "-",
       CourseReservationID: providerBookingId ?? "-",
       FacilityName: existingTeeTime.entityName ?? "-",
-      PlayDateTime:
-        dayjs(existingTeeTime.providerDate).utcOffset("-06:00").format("YYYY-MM-DD hh:mm A") ?? "-",
+      PlayDateTime:formatTime(existingTeeTime.providerDate,true,existingTeeTime.timezoneCorrection??0),
       NumberOfHoles: existingTeeTime.numberOfHoles,
       GreenFeesPerPlayer:
         `$${(purchasePrice / 100).toLocaleString("en-US", {
