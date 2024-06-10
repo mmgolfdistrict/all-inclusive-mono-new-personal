@@ -20,7 +20,7 @@ export default function AuctionsPage({
 }) {
   const courseId = params.course;
   const { course } = useCourseContext();
-  if (course?.allowAuctions !== 1 || !course) {
+  if (!course?.allowAuctions || !course) {
     redirect(`/${courseId}`);
   }
   const { auctionData, isLoading, refetch } = useAuction(auctionId);
