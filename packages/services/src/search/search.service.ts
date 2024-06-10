@@ -174,7 +174,6 @@ export class SearchService {
         golfers: bookings.nameOnBooking,
         profilePicture: {
           key: assets.key,
-          cdnUrl: assets.cdn,
           extension: assets.extension,
         },
       })
@@ -205,7 +204,7 @@ export class SearchService {
       soldById: ownerId,
       soldByName: firstBooking.ownerHandle ? firstBooking.ownerHandle : "Anonymous",
       soldByImage: firstBooking.profilePicture
-        ? `https://${firstBooking.profilePicture.cdnUrl}/${firstBooking.profilePicture.key}.${firstBooking.profilePicture.extension}`
+        ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${firstBooking.profilePicture.key}.${firstBooking.profilePicture.extension}`
         : "/defaults/default-profile.webp",
       availableSlots: unlistedBookingData.length,
       pricePerGolfer: 0,
@@ -260,7 +259,6 @@ export class SearchService {
         sellerFee: courses.sellerFee,
         image: {
           key: assets.key,
-          cdnUrl: assets.cdn,
           extension: assets.extension,
         },
         minimumOfferPrice: bookings.minimumOfferPrice,
@@ -285,7 +283,7 @@ export class SearchService {
       soldById: firstBooking.ownerId,
       soldByName: firstBooking.ownerHandle ? firstBooking.ownerHandle : "Anonymous",
       soldByImage: firstBooking.image
-        ? `https://${firstBooking.image.cdnUrl}/${firstBooking.image.key}.${firstBooking.image.extension}`
+        ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${firstBooking.image.key}.${firstBooking.image.extension}`
         : "/defaults/default-profile.webp",
       availableSlots: firstBooking.listedSlots,
       pricePerGolfer: Number((firstBooking.listPrice * (1 + firstBooking.buyerFee / 100)) / 100),
@@ -340,7 +338,6 @@ export class SearchService {
         )`,
         logo: {
           key: assets.key,
-          cdnUrl: assets.cdn,
           extension: assets.extension,
         },
       })
@@ -365,7 +362,6 @@ export class SearchService {
         handle: users.handle,
         image: {
           key: assets.key,
-          cdnUrl: assets.cdn,
           extension: assets.extension,
         },
       })
@@ -387,7 +383,7 @@ export class SearchService {
       soldById: tee.courseId,
       soldByName: tee.courseName ? tee.courseName : "Golf District",
       soldByImage: tee.logo
-        ? `https://${tee.logo.cdnUrl}/${tee.logo.key}.${tee.logo.extension}`
+        ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${tee.logo.key}.${tee.logo.extension}`
         : "/defaults/default-profile.webp",
       availableSlots: tee.firstPartySlots,
       pricePerGolfer:
@@ -409,7 +405,7 @@ export class SearchService {
           userId: watcher.userId,
           handle: watcher.handle ? watcher.handle : "Anonymous",
           image: watcher.image
-            ? `https://${watcher.image.cdnUrl}/${watcher.image.key}.${watcher.image.extension}`
+            ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${watcher.image.key}.${watcher.image.extension}`
             : "/defaults/default-profile.webp",
         };
       }),
@@ -627,7 +623,6 @@ export class SearchService {
         cartFee: teeTimes.cartFeePerPlayer,
         logo: {
           key: assets.key,
-          cdnUrl: assets.cdn,
           extension: assets.extension,
         },
         favoritesId: favorites.id,
@@ -685,7 +680,7 @@ export class SearchService {
         soldById: teeTime.courseId,
         soldByName: teeTime.courseName ? teeTime.courseName : "Golf District",
         soldByImage: teeTime.logo
-          ? `https://${teeTime.logo.cdnUrl}/${teeTime.logo.key}.${teeTime.logo.extension}`
+          ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${teeTime.logo.key}.${teeTime.logo.extension}`
           : "/defaults/default-profile.webp",
         date: teeTime.providerDate,
         teeTimeId: teeTime.id,
@@ -724,11 +719,9 @@ export class SearchService {
         minimumOfferPrice: bookings.minimumOfferPrice,
         date: teeTimes.providerDate,
         time: teeTimes.time,
-
         greenFee: teeTimes.greenFeePerPlayer,
         profilePicture: {
           key: assets.key,
-          cdnUrl: assets.cdn,
           extension: assets.extension,
         },
       })
@@ -778,7 +771,7 @@ export class SearchService {
               soldById: booking?.ownerId,
               soldByName: booking?.ownerName ?? "Anonymous",
               soldByImage: booking?.profilePicture
-                ? `https://${booking?.profilePicture.cdnUrl}/${booking?.profilePicture.key}.${booking?.profilePicture.extension}`
+                ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${booking?.profilePicture.key}.${booking?.profilePicture.extension}`
                 : "/defaults/default-profile.webp",
               pricePerGolfer:
                 booking.listingId && booking.listPrice

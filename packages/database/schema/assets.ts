@@ -14,7 +14,6 @@ export const assets = mySqlTable(
     id: varchar("id", { length: 36 }).notNull(),
     createdById: varchar("createdById", { length: 191 }),
     key: text("key").notNull(),
-    cdn: varchar("cdn", { length: 191 }).notNull(),
     extension: varchar("extension", { length: 5 }).notNull(),
     createdAt: datetime("createdAt", { mode: "string", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
