@@ -1,6 +1,6 @@
 import type { Db } from "@golf-district/database";
-import { like, or, sql } from "@golf-district/database";
-import { profanities, profanitiesTableName } from "@golf-district/database/schema/profanities";
+import { or, sql } from "@golf-district/database";
+import { profanities } from "@golf-district/database/schema/profanities";
 import Logger from "@golf-district/shared/src/logger";
 
 export class ProfanityService {
@@ -39,25 +39,25 @@ export class ProfanityService {
         };
       }
 
-      const sqlText = `
-          Select profanityText
-          From ${profanitiesTableName} PRO
-          Where 1 = 1
-            And 
-            (
-              Concat( '%', profanityText, '%' ) Like '%${text}%'
-              Or '%${text}%' Like Concat( '%', profanityText, '%' )
-            )
-          `;
-      console.log(sqlText);
-      const sqlobj = sql.raw(sqlText);
+      // const sqlText = `
+      //     Select profanityText
+      //     From ${profanitiesTableName} PRO
+      //     Where 1 = 1
+      //       And 
+      //       (
+      //         Concat( '%', profanityText, '%' ) Like '%${text}%'
+      //         Or '%${text}%' Like Concat( '%', profanityText, '%' )
+      //       )
+      //     `;
+      // console.log(sqlText);
+      // const sqlobj = sql.raw(sqlText);
 
       // console.log("sqlobj");
       // console.log(sqlobj);
       // console.log("actual sql");
       // console.log(sqlobj.getSQL());
 
-      const test = await this.db.execute(sqlobj);
+      // const test = await this.db.execute(sqlobj);
       // console.log(`test.length: ${test.rows.length}`);
       // console.log(test);
       // console.log(test.rows);
@@ -66,13 +66,16 @@ export class ProfanityService {
         .select()
         .from(profanities)
         .where(
-          // or(sql`${text} like CONCAT('%', profanityText, '%')`, like(profanities.profanityText, `%${text}%`))
-          like(profanities.profanityText, `%${text}%`)
+          or(
+            sql`CONCAT('%', profanityText, '%') LIKE ${`%${text}%`}`,
+            sql`CONCAT('%', ${text}, '%') LIKE CONCAT('%', profanityText, '%')`
+          )
         )
         .catch((err) => {
           this.logger.error(err);
           throw new Error(err);
         });
+
       // const matchingPhonetically = await this.db
       //   .select()
       //   .from(profanities)
