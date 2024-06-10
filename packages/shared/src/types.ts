@@ -84,7 +84,7 @@ export type FullCourseType = {
   highestPrimarySaleTeeTime: number;
   lowestPrimarySaleTeeTime: number;
   supportedCharities?: SupportedCharity[];
-  allowAuctions: number | null;
+  allowAuctions: boolean;
   supportsOffers?: boolean;
   supportsWatchlist?: boolean;
   supportsPromocode?: boolean;
