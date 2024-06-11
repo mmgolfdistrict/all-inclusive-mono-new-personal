@@ -64,10 +64,8 @@ export const courses = mySqlTable(
 export const coursesRelations = relations(courses, ({ one, many }) => ({
   coursesAsset: many(courseAssets),
   teeTime: many(teeTimes),
-  list: many(lists),
   transfer: many(transfers),
   favorite: many(favorites),
-  booking: many(bookings),
   coursePromoCodeLink: many(coursePromoCodeLink),
   entity: one(entities, {
     fields: [courses.entityId],
