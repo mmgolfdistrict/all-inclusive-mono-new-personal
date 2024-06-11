@@ -14,8 +14,6 @@ export const PoweredBy = (props: ComponentProps<"div">) => {
         src={`https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/headerlogo.png`}
         alt="golf district logo"
         className="w-[50px] object-fit"
-        height={30}
-        width={30}
       />
     </div>
   );
