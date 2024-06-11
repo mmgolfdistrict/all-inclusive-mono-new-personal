@@ -568,7 +568,7 @@ export class SearchService {
     cursor,
     _userId,
   }: CheckTeeTimesAvailabilityParams) {
-    const res:string[] = [];
+    const res: string[] = [];
     console.log("iuvhjlgfhjvbknlfycgjvhkbln", lowerPrice, upperPrice);
     for (let i = 0; i < dates.length; i++) {
       const date = dates[i];

@@ -101,7 +101,7 @@ export default function CourseHomePage() {
     const formatDate = (date: Date) => formatQueryDate(date);
     const getUtcDate = (date: Date) =>
       dayjs.utc(formatDate(date)).utcOffset(course?.timezoneCorrection ?? 0);
-  
+
     switch (dateType) {
       case "All":
       case "This Week":
@@ -133,8 +133,6 @@ export default function CourseHomePage() {
       }
     }
   }, [dateType, selectedDay]);
-  
-  
 
   const endDate = useMemo(() => {
     switch (dateType) {
@@ -184,7 +182,6 @@ export default function CourseHomePage() {
       }
     }
   }, [dateType, selectedDay, farthestDateOut]);
-  
 
   const utcStartDate = dayjs
     .utc(startDate)
