@@ -417,7 +417,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       reservationId: bookingId,
       courseReservation: providerBookingId,
       numberOfPlayer: players.toString(),
-      playTime: dayjs(existingTeeTime.providerDate).format("YYYY-MM-DD hh:mm A") ?? "-",
+      playTime: this.extractTime(formatTime(existingTeeTime.providerDate,true,existingTeeTime.timezoneCorrection??0)),
     };
     const icsContent: string = createICS(event);
     const template = {
@@ -471,6 +471,12 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       ]
     );
     return bookingId;
+  }
+
+  extractTime=(dateStr:string)=> {
+    const timeRegex = /\b\d{1,2}:\d{2} (AM|PM)\b/;
+    const timeMatch = dateStr.match(timeRegex);
+    return timeMatch ? timeMatch[0] : null;
   }
 
   /**
