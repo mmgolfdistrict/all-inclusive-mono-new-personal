@@ -32,7 +32,7 @@ dayjs.extend(RelativeTime);
 dayjs.extend(isoWeek);
 
 export default function CourseHomePage() {
-  const TAKE = 2;
+  const TAKE = 4;
   const ref = useRef<HTMLDivElement | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -98,47 +98,63 @@ export default function CourseHomePage() {
   );
 
   const startDate = useMemo(() => {
-    const formatDate = (date) => formatQueryDate(date);
-    const getUtcDate = (date) =>
+    const formatDate = (date: Date) => formatQueryDate(date);
+    const getUtcDate = (date: Date) =>
       dayjs.utc(formatDate(date)).utcOffset(course?.timezoneCorrection ?? 0);
 
     switch (dateType) {
       case "All":
       case "This Week":
       case "This Month":
-      case "Furthest Day Out To Book":
+      case "Furthest Day Out To Book": {
+        // Enclose in block to avoid lexical declaration issues
         return formatDate(new Date());
-      case "Today":
+      }
+      case "Today": {
+        // Enclose in block to avoid lexical declaration issues
         return getUtcDate(new Date());
-      case "This Weekend":
-        return formatDate(dayjs().day(5).toDate());
-      case "Custom":
+      }
+      case "This Weekend": {
+        // Enclose in block to avoid lexical declaration issues
+        const weekendDate = dayjs().day(5).toDate();
+        return formatDate(weekendDate);
+      }
+      case "Custom": {
+        // Enclose in block to avoid lexical declaration issues
         if (!selectedDay.from) return formatDate(new Date());
         const { year, month, day } = selectedDay.from;
         const dateString = `${year}-${month}-${day}`;
-        return formatDate(dayjs(dateString).toDate());
-      default:
+        const customDate = dayjs(dateString).toDate();
+        return formatDate(customDate);
+      }
+      default: {
+        // Enclose in block to avoid lexical declaration issues
         return formatDate(new Date());
+      }
     }
   }, [dateType, selectedDay]);
 
   const endDate = useMemo(() => {
     switch (dateType) {
-      case "All":
+      case "All": {
         return formatQueryDate(dayjs(farthestDateOut).toDate());
-      case "Today":
+      }
+      case "Today": {
         return formatQueryDate(dayjs().toDate());
-      case "This Week":
+      }
+      case "This Week": {
         return dayjs().endOf("isoWeek");
-      case "This Weekend":
+      }
+      case "This Weekend": {
         return formatQueryDate(dayjs().day(7).toDate());
+      }
       case "This Month": {
         const endOfMonth = dayjs().endOf("month").toDate();
         return endOfMonth > dayjs(farthestDateOut).toDate()
           ? farthestDateOut
           : endOfMonth;
       }
-      case "Furthest Day Out To Book":
+      case "Furthest Day Out To Book": {
         return dayjs(farthestDateOut)
           .utc()
           .hour(23)
@@ -146,7 +162,8 @@ export default function CourseHomePage() {
           .second(59)
           .millisecond(999)
           .toDate();
-      case "Custom":
+      }
+      case "Custom": {
         if (!selectedDay.to) {
           if (selectedDay.from) {
             const { year, month, day } = selectedDay.from;
@@ -159,8 +176,10 @@ export default function CourseHomePage() {
         const { year, month, day } = selectedDay.to;
         const dateString = `${year}-${month}-${day}`;
         return formatQueryDate(dayjs(dateString).toDate());
-      default:
+      }
+      default: {
         return formatQueryDate(dayjs().date(360).toDate()); // 360 days out
+      }
     }
   }, [dateType, selectedDay, farthestDateOut]);
 
