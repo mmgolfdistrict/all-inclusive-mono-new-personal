@@ -568,7 +568,7 @@ export class SearchService {
     cursor,
     _userId,
   }: CheckTeeTimesAvailabilityParams) {
-    const res = [];
+    const res:string[] = [];
     console.log("iuvhjlgfhjvbknlfycgjvhkbln", lowerPrice, upperPrice);
     for (let i = 0; i < dates.length; i++) {
       const date = dates[i];
@@ -640,7 +640,7 @@ export class SearchService {
         .execute();
 
       const isDateToBeAdded = firstHandRecords.length > 0 || secondHandRecords.length > 0;
-      if (isDateToBeAdded) {
+      if (isDateToBeAdded && date) {
         res.push(date);
       }
     }
