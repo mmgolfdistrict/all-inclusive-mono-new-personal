@@ -93,8 +93,6 @@ export default async function RootLayout({
   const entityData = await ssrGetEntityByDomain(domainDecoded, "");
 
   const nicInfos = getNICDetails();
-  console.log("NIC Details");
-  console.log(nicInfos);
 
   return (
     <html lang="en" suppressHydrationWarning>

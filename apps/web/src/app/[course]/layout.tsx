@@ -47,8 +47,6 @@ export default async function CoursePageLayout({
   const courseImages = await getCourseImages(courseId);
 
   const nicInfos = getNICDetails();
-  console.log("NIC Details");
-  console.log(nicInfos);
 
   return (
     <>

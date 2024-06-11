@@ -15,6 +15,7 @@ import type { DateType, GolferType, HoleType } from "~/contexts/FiltersContext";
 import { useFiltersContext } from "~/contexts/FiltersContext";
 import { api } from "~/utils/api";
 import { getDisabledDays } from "~/utils/calendar";
+import { debounceFunction } from "~/utils/debounce";
 
 const DateOptions = [
   "All",
@@ -311,13 +312,13 @@ export const Filters = () => {
         <Slider
           min={lowestPrice}
           max={highestPrice}
-          step={10}
+          step={5}
           value={localPriceRange}
           onPointerUp={() => {
             handleSetPriceRange();
           }}
           onValueChange={(value: [number, number]) => {
-            if (value) setLocalPriceRange(value);
+            debounceFunction(setLocalPriceRange(value), 1000);
           }}
           data-testid="slider-price-range-id"
           data-qa={`${localPriceRange?.[0]}-${localPriceRange?.[1]}`}
