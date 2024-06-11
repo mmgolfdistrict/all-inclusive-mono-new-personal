@@ -839,7 +839,7 @@ export class HyperSwitchWebhookService {
         cartFeePerPlayer: teeTimes.cartFeePerPlayer,
         greenFeeTaxPerPlayer: teeTimes.greenFeeTaxPerPlayer,
         cartFeeTaxPerPlayer: teeTimes.cartFeeTaxPerPlayer,
-        timezoneCorrection:courses.timezoneCorrection
+        timezoneCorrection: courses.timezoneCorrection,
       })
       .from(teeTimes)
       .where(eq(teeTimes.id, firstBooking.teeTimeId))
@@ -926,7 +926,11 @@ export class HyperSwitchWebhookService {
           CourseURL: existingTeeTime?.websiteURL || "",
           CourseName: existingTeeTime?.courseName || "-",
           FacilityName: existingTeeTime?.entityName || "-",
-          PlayDateTime:formatTime(existingTeeTime?.providerDate??"",true,existingTeeTime?.timezoneCorrection??0),
+          PlayDateTime: formatTime(
+            existingTeeTime?.providerDate ?? "",
+            true,
+            existingTeeTime?.timezoneCorrection ?? 0
+          ),
           HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/headerlogo.png`,
         };
         await this.notificationService.createNotification(
@@ -1127,7 +1131,9 @@ export class HyperSwitchWebhookService {
         reservationId: bookingId,
         courseReservation: newBooking?.data.id,
         numberOfPlayer: (listedSlotsCount ?? 1).toString(),
-        playTime: this.extractTime(formatTime(existingTeeTime?.providerDate??"",true,existingTeeTime?.timezoneCorrection??0))
+        playTime: this.extractTime(
+          formatTime(existingTeeTime?.providerDate ?? "", true, existingTeeTime?.timezoneCorrection ?? 0)
+        ),
       };
       const icsContent: string = createICS(event);
 
@@ -1137,7 +1143,11 @@ export class HyperSwitchWebhookService {
         HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/headerlogo.png`,
         CourseName: existingTeeTime?.courseName || "-",
         FacilityName: existingTeeTime?.entityName || "-",
-        PlayDateTime:formatTime(existingTeeTime?.providerDate??"",true,existingTeeTime?.timezoneCorrection??0),
+        PlayDateTime: formatTime(
+          existingTeeTime?.providerDate ?? "",
+          true,
+          existingTeeTime?.timezoneCorrection ?? 0
+        ),
         NumberOfHoles: existingTeeTime?.numberOfHoles,
         SellTeeTImeURL: `${redirectHref}/my-tee-box`,
         ManageTeeTimesURL: `${redirectHref}/my-tee-box`,
@@ -1278,11 +1288,11 @@ export class HyperSwitchWebhookService {
       });
   };
 
-  extractTime=(dateStr:string)=> {
+  extractTime = (dateStr: string) => {
     const timeRegex = /\b\d{1,2}:\d{2} (AM|PM)\b/;
     const timeMatch = dateStr.match(timeRegex);
     return timeMatch ? timeMatch[0] : null;
-  }
+  };
 
   handleOfferItem = async (item: Offer, amountReceived: number, customer_id: string) => {
     await this.bookingService.createOfferOnBookings(

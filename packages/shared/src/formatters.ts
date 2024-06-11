@@ -251,23 +251,11 @@ export const formatMoney = (amount: number) => {
   })}`;
 };
 
-export const formatTime = (
-  timestamp: string,
-  showFullDayOfTheWeek?: boolean,
-  utcOffset = 0
-): string => {
-  const cleanTimeString = !timestamp.includes("T")
-    ? timestamp.replace(" ", "T") + "Z"
-    : timestamp;
+export const formatTime = (timestamp: string, showFullDayOfTheWeek?: boolean, utcOffset = 0): string => {
+  const cleanTimeString = !timestamp.includes("T") ? timestamp.replace(" ", "T") + "Z" : timestamp;
   const timezone = cleanTimeString.slice(-6) ?? utcOffset;
   if (showFullDayOfTheWeek) {
-    return dayjs
-      .utc(cleanTimeString)
-      .utcOffset(timezone)
-      .format("dddd, MMM D h:mm A");
+    return dayjs.utc(cleanTimeString).utcOffset(timezone).format("dddd, MMM D h:mm A");
   }
-  return dayjs
-    .utc(cleanTimeString)
-    .utcOffset(timezone)
-    .format("dddd, MMM D h:mm A");
+  return dayjs.utc(cleanTimeString).utcOffset(timezone).format("dddd, MMM D h:mm A");
 };

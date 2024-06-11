@@ -187,7 +187,7 @@ export class TokenizeService {
         websiteURL: courses.websiteURL,
         cdnKey: assets.key,
         extension: assets.extension,
-        timezoneCorrection:courses.timezoneCorrection
+        timezoneCorrection: courses.timezoneCorrection,
       })
       .from(teeTimes)
       .where(eq(teeTimes.id, providerTeeTimeId))
@@ -417,7 +417,9 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       reservationId: bookingId,
       courseReservation: providerBookingId,
       numberOfPlayer: players.toString(),
-      playTime: this.extractTime(formatTime(existingTeeTime.providerDate,true,existingTeeTime.timezoneCorrection??0)),
+      playTime: this.extractTime(
+        formatTime(existingTeeTime.providerDate, true, existingTeeTime.timezoneCorrection ?? 0)
+      ),
     };
     const icsContent: string = createICS(event);
     const template = {
@@ -426,7 +428,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       GolfDistrictReservationID: bookingsToCreate?.[0]?.id ?? "-",
       CourseReservationID: providerBookingId ?? "-",
       FacilityName: existingTeeTime.entityName ?? "-",
-      PlayDateTime:formatTime(existingTeeTime.providerDate,true,existingTeeTime.timezoneCorrection??0),
+      PlayDateTime: formatTime(existingTeeTime.providerDate, true, existingTeeTime.timezoneCorrection ?? 0),
       NumberOfHoles: existingTeeTime.numberOfHoles,
       GreenFeesPerPlayer:
         `$${(purchasePrice / 100).toLocaleString("en-US", {
@@ -473,11 +475,11 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
     return bookingId;
   }
 
-  extractTime=(dateStr:string)=> {
+  extractTime = (dateStr: string) => {
     const timeRegex = /\b\d{1,2}:\d{2} (AM|PM)\b/;
     const timeMatch = dateStr.match(timeRegex);
     return timeMatch ? timeMatch[0] : null;
-  }
+  };
 
   /**
    * Transfers a bookings from one user to another.
