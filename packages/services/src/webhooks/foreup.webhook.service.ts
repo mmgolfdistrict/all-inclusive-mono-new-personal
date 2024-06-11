@@ -76,7 +76,7 @@ export class ForeUpWebhookService {
    * @param {Db} database - The database instance to interact with.
    * @param {ProviderService} providerService - The provider service for fetching tee times from ForeUp.
    */
-  constructor(private readonly database: Db, private readonly providerService: ProviderService) {}
+  constructor(private readonly database: Db, private readonly providerService: ProviderService) { }
 
   /**
    * Handles the ForeUp webhook.
@@ -404,15 +404,8 @@ export class ForeUpWebhookService {
         throw new Error("Tee time not available for booking");
       }
       const [indexedTeeTime] = await this.database
-        .select({
-          id: teeTimes.id,
-          courseId: teeTimes.courseId,
-          courseProvider: courses.providerId,
-          availableSecondHandSpots: teeTimes.availableSecondHandSpots,
-          entityId: courses.entityId,
-        })
+        .select()
         .from(teeTimes)
-        .leftJoin(courses, eq(courses.id, teeTimes.courseId))
         .where(eq(teeTimes.providerTeeTimeId, teeTime.id))
         .execute()
         .catch((err) => {
@@ -438,7 +431,6 @@ export class ForeUpWebhookService {
           id: indexedTeeTime.id,
           courseId: indexedTeeTime.courseId,
           providerTeeTimeId: teeTime.id,
-          courseProvider: indexedTeeTime.courseProvider,
           numberOfHoles: attributes.holes,
           date: attributes.time,
           time: militaryTime,
@@ -450,7 +442,6 @@ export class ForeUpWebhookService {
           greenFeeTaxPerPlayer: attributes.greenFeeTax ? attributes.greenFeeTax : 0,
           cartFeeTaxPerPlayer: attributes.cartFeeTax,
           providerDate: attributes.time,
-          entityId: indexedTeeTime.entityId,
         };
         const providerTeeTimeMatchingKeys = {
           id: indexedTeeTime.id,
@@ -466,9 +457,7 @@ export class ForeUpWebhookService {
           courseId: indexedTeeTime.courseId,
           availableFirstHandSpots: attributes.availableSpots,
           availableSecondHandSpots: indexedTeeTime.availableSecondHandSpots,
-          courseProvider: indexedTeeTime.courseProvider,
           providerDate: attributes.time,
-          entityId: indexedTeeTime.entityId,
         };
         if (isEqual(indexedTeeTime, providerTeeTimeMatchingKeys)) {
           // no changes to tee time do nothing
