@@ -4,16 +4,22 @@ import { useAppContext } from "~/contexts/AppContext";
 import { api } from "~/utils/api";
 import { useMemo } from "react";
 import { Course } from "../cards/course";
+import { useRouter } from "next/navigation";
 
 export const Courses = () => {
   const { entity } = useAppContext();
   const entityId = entity?.id;
+  const router = useRouter();
 
   const { data, isLoading, isError, error } =
     api.entity.getCoursesByEntityId.useQuery(
       { entityId: entityId! },
       { enabled: entityId !== undefined }
     );
+
+    if(entity?.redirectToCourseFlag && data?.length){
+      router.push(`/${data[0]?.id}`);
+    }  
 
   const gridClass = useMemo(() => {
     if (data?.length === 1) return "grid-cols-1";
