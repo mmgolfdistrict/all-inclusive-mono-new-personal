@@ -43,7 +43,7 @@ export class ProfanityService {
       //     Select profanityText
       //     From ${profanitiesTableName} PRO
       //     Where 1 = 1
-      //       And 
+      //       And
       //       (
       //         Concat( '%', profanityText, '%' ) Like '%${text}%'
       //         Or '%${text}%' Like Concat( '%', profanityText, '%' )

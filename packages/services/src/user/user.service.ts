@@ -1494,5 +1494,5 @@ export class UserService {
       this.generateUsername(digit);
     }
     return handle ? `golfdistrict${handle}` : "golfdistrict";
-  }
+  };
 }
