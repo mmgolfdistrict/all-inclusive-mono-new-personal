@@ -50,7 +50,7 @@ export type EntityType = {
   updatedAt?: Date;
   updatedById?: string | null;
   logo: string;
-  redirectToCourseFlag?:boolean | undefined;
+  redirectToCourseFlag?: boolean | undefined;
 };
 
 export type CourseType = {

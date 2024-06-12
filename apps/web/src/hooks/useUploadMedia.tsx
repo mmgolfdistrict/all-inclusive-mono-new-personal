@@ -28,13 +28,11 @@ export const useUploadMedia = () => {
         setIsUploading(true);
         return;
       }
-      const { key, extension, assetId } = await completeUpload.mutateAsync(
-        {
-          s3Key: s3Key,
-          uploadId: uploadId,
-          parts: completedUploads,
-        }
-      );
+      const { key, extension, assetId } = await completeUpload.mutateAsync({
+        s3Key: s3Key,
+        uploadId: uploadId,
+        parts: completedUploads,
+      });
       setIsUploading(false);
       return { assetUrl: assetToURL({ key, extension }), assetId };
     } catch (error) {

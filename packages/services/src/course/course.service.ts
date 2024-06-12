@@ -254,7 +254,9 @@ export class CourseService extends DomainService {
           const orderB = b.order !== null ? b.order : Number.MAX_SAFE_INTEGER;
           return orderA - orderB;
         })
-        .map(({ key, extension }) => `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${key}.${extension}`),
+        .map(
+          ({ key, extension }) => `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${key}.${extension}`
+        ),
     };
   };
 

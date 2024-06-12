@@ -78,7 +78,10 @@ export class UserService {
    * @example
    * const userService = new UserService(database, notificationService);
    */
-  constructor(protected readonly database: Db, private readonly notificationsService: NotificationService) {
+  constructor(
+    protected readonly database: Db,
+    private readonly notificationsService: NotificationService
+  ) {
     //this.filter = new Filter();
   }
 
@@ -1445,7 +1448,12 @@ export class UserService {
     try {
       const { Body } = await s3Client.send(new GetObjectCommand(getObjectParams));
       const htmlContent = await this.streamToString(Body);
-      return htmlContent;
+      // return htmlContent;
+      let replacedHTML = htmlContent;
+      replacedHTML = replacedHTML.replace(/background:\s?\b[a-zA-Z0-9]+;/gi, "");
+      replacedHTML = replacedHTML.replace(/background-color:\s?\b[a-zA-Z0-9]+;/gi, "");
+
+      return replacedHTML;
     } catch (err) {
       console.error("Error fetching HTML file:", err);
       throw err;

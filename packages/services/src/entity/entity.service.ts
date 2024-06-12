@@ -109,7 +109,7 @@ export class EntityService {
           key: assets.key,
           extension: assets.extension,
         },
-        redirectToCourseFlag: entities.redirectToCourseFlag
+        redirectToCourseFlag: entities.redirectToCourseFlag,
       })
       .from(entities)
       .leftJoin(assets, eq(entities.logo, assets.id));
@@ -174,7 +174,9 @@ export class EntityService {
       ...course,
       logo: images
         .filter((i) => i.id === course.logo)
-        .map(({ key, extension }) => `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${key}.${extension}`)[0],
+        .map(
+          ({ key, extension }) => `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${key}.${extension}`
+        )[0],
       images: images
         .filter((i) => i.coursesId === course.id && i.id !== course.logo)
         .sort((a, b) => {
@@ -182,7 +184,9 @@ export class EntityService {
           const orderB = b.order !== null ? b.order : Number.MAX_SAFE_INTEGER;
           return orderA - orderB;
         })
-        .map(({ key, extension }) => `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${key}.${extension}`),
+        .map(
+          ({ key, extension }) => `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${key}.${extension}`
+        ),
     }));
 
     return res;

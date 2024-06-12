@@ -15,7 +15,7 @@ export const imageRouter = createTRPCRouter({
     .input(
       z.object({
         assetKey: z.string(),
-        extension: z.string()
+        extension: z.string(),
       })
     )
     .mutation(async ({ input, ctx }) => {

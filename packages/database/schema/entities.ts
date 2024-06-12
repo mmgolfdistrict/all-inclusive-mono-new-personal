@@ -31,7 +31,6 @@ export const entities = mySqlTable(
       .notNull(),
     updatedById: varchar("updatedById", { length: 36 }),
     redirectToCourseFlag: boolean("redirectToCourseFlag").default(false).notNull(),
-    
   },
   (table) => {
     return {
