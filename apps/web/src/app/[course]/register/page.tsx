@@ -110,7 +110,7 @@ export default function RegisterPage() {
   const onSubmit: SubmitHandler<RegisterSchemaType> = async (data) => {
     if (profanityCheckData?.isProfane) {
       setError("username", {
-        message: "Handle not allowed",
+        message: "Handle not allowed.",
       });
       return;
     }
@@ -193,10 +193,10 @@ export default function RegisterPage() {
           />
           <div className="flex items-end gap-2">
             <Input
-              label="Username"
+              label="Handle"
               className="w-full"
               type="text"
-              placeholder="Enter your username"
+              placeholder="Enter your handle"
               id="username"
               register={register}
               name={"username"}

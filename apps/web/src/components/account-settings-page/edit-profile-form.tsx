@@ -330,7 +330,7 @@ export const EditProfileForm = () => {
           label="Handle"
           className="w-full"
           type="text"
-          placeholder="Enter your username"
+          placeholder="Enter your handle"
           id="handle"
           register={register}
           name={"handle"}
