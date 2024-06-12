@@ -7,7 +7,6 @@ dayjs.extend(UTC);
 dayjs.extend(isSameOrBefore);
 
 type Asset = {
-  cdn: string;
   key: string;
   extension: string;
 };
@@ -156,14 +155,13 @@ export const containsBadWords = (text: string, filter: Filter): boolean => {
  * Format: [cdn]/[key].[extension]
  *
  * @param {Asset} asset - An object containing properties of the asset.
- *   @property {string} cdn - The Content Delivery Network (CDN) base URL.
  *   @property {string} key - The unique identifier/key of the asset.
  *   @property {string} extension - The file extension of the asset.
  *
  * @returns {string} The full URL of the asset.
  */
 export const assetToURL = (asset: Asset): string => {
-  return `https://${asset.cdn}/${asset.key}.${asset.extension}`;
+  return `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${asset.key}.${asset.extension}`;
 };
 
 /**

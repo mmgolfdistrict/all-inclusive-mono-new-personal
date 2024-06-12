@@ -146,7 +146,7 @@ export class UploadService {
     s3Key: string,
     uploadId: string,
     parts: Part[]
-  ): Promise<{ key: string; cdn: string; extension: string; assetId: string }> => {
+  ): Promise<{ key: string; extension: string; assetId: string }> => {
     const params = {
       Bucket: this.bucketName,
       Key: s3Key,
@@ -163,7 +163,7 @@ export class UploadService {
     const fileNameWithoutExtension = s3Key.replace(/\.[^/.]+$/, "");
     const extension = s3Key.split(".").pop()!;
     const assetId = await this.imageService
-      .storeAsset(userId, fileNameWithoutExtension, extension, this.CLOUDFRONT_DOMAIN)
+      .storeAsset(userId, fileNameWithoutExtension, extension)
       .catch((err) => {
         this.logger.error(`completeUpload error storing asset: ${err}`);
         console.log("upload:", err);
@@ -171,7 +171,6 @@ export class UploadService {
       });
     return {
       key: fileNameWithoutExtension,
-      cdn: this.CLOUDFRONT_DOMAIN,
       extension: extension,
       assetId: assetId,
     };

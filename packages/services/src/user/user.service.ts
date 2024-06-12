@@ -1150,13 +1150,11 @@ export class UserService {
         profileImage: {
           assetId: profileAsset.id,
           assetKey: profileAsset.key,
-          assetCdn: profileAsset.cdn,
           assetExtension: profileAsset.extension,
         },
         bannerImage: {
           assetId: bannerAsset.id,
           assetKey: bannerAsset.key,
-          assetCdn: bannerAsset.cdn,
           assetExtension: bannerAsset.extension,
         },
       })
@@ -1176,14 +1174,12 @@ export class UserService {
     const profilePicture = profileImage
       ? assetToURL({
           key: profileImage.assetKey,
-          cdn: profileImage.assetCdn,
           extension: profileImage.assetExtension,
         })
       : "/defaults/default-profile.webp";
     const bannerPicture = bannerImage
       ? assetToURL({
           key: bannerImage.assetKey,
-          cdn: bannerImage.assetCdn,
           extension: bannerImage.assetExtension,
         })
       : "/defaults/default-banner.webp";
@@ -1284,7 +1280,6 @@ export class UserService {
         listingId: lists.id,
         profilePicture: {
           key: assets.key,
-          cdnUrl: assets.cdn,
           extension: assets.extension,
         },
       })
@@ -1311,7 +1306,7 @@ export class UserService {
           soldById: booking.ownerId,
           soldByName: booking.ownerHandle ? booking.ownerHandle : "Anonymous",
           soldByImage: booking.profilePicture
-            ? `https://${booking.profilePicture.cdnUrl}/${booking.profilePicture.key}.${booking.profilePicture.extension}`
+            ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${booking.profilePicture.key}.${booking.profilePicture.extension}`
             : "/defaults/default-profile.webp",
           availableSlots: booking.listed ? 0 : 1,
           pricePerGolfer: booking.listPrice ? booking.listPrice : 0,
@@ -1381,7 +1376,6 @@ export class UserService {
         courseId: teeTimes.courseId,
         courseImage: {
           key: assets.key,
-          cdnUrl: assets.cdn,
           extension: assets.extension,
         },
       })
@@ -1412,7 +1406,7 @@ export class UserService {
           courseName: booking.courseName,
           courseId: booking.courseId ?? "",
           courseImage: booking.courseImage
-            ? `https://${booking.courseImage.cdnUrl}/${booking.courseImage.key}.${booking.courseImage.extension}`
+            ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${booking.courseImage.key}.${booking.courseImage.extension}`
             : "/defaults/default-course.webp",
         });
       }

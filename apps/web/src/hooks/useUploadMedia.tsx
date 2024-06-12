@@ -28,7 +28,7 @@ export const useUploadMedia = () => {
         setIsUploading(true);
         return;
       }
-      const { key, cdn, extension, assetId } = await completeUpload.mutateAsync(
+      const { key, extension, assetId } = await completeUpload.mutateAsync(
         {
           s3Key: s3Key,
           uploadId: uploadId,
@@ -36,7 +36,7 @@ export const useUploadMedia = () => {
         }
       );
       setIsUploading(false);
-      return { assetUrl: assetToURL({ cdn, key, extension }), assetId };
+      return { assetUrl: assetToURL({ key, extension }), assetId };
     } catch (error) {
       console.log(error);
       setIsUploading(true);

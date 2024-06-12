@@ -57,7 +57,6 @@ export class ImageService {
    * @param {string} createdById - The ID of the user creating the asset.
    * @param {string} key - The key/name of the asset.
    * @param {string} extension - The file extension of the asset.
-   * @param {string} cdn - The CDN URL or identifier where the asset is stored.
    *
    * @returns {Promise<void>} A promise that resolves when the asset is successfully inserted into the database.
    *
@@ -69,7 +68,7 @@ export class ImageService {
    * await imageService.storeAsset('user123id', 'imageKey', 'jpg', 'http://golf.cloudfront.com');
    * ```
    */
-  storeAsset = async (createdById: string, key: string, extension: string, cdn: string): Promise<string> => {
+  storeAsset = async (createdById: string, key: string, extension: string): Promise<string> => {
     //this check may be able to be removed
     const user = await this.database.select().from(users).where(eq(users.id, createdById));
     if (!user[0]) {
@@ -81,7 +80,6 @@ export class ImageService {
       id: randomUUID(),
       key,
       extension,
-      cdn,
       createdById,
     };
 

@@ -15,13 +15,12 @@ export const imageRouter = createTRPCRouter({
     .input(
       z.object({
         assetKey: z.string(),
-        extension: z.string(),
-        cdn: z.string(),
+        extension: z.string()
       })
     )
     .mutation(async ({ input, ctx }) => {
       return await ctx.serviceFactory
         .getImageService()
-        .storeAsset(ctx.session.user.id, input.assetKey, input.extension, input.cdn);
+        .storeAsset(ctx.session.user.id, input.assetKey, input.extension);
     }),
 });

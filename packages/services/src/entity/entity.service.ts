@@ -107,7 +107,6 @@ export class EntityService {
         updatedById: entities.updatedById,
         logo: {
           key: assets.key,
-          cdn: assets.cdn,
           extension: assets.extension,
         },
         redirectToCourseFlag: entities.redirectToCourseFlag
@@ -126,7 +125,7 @@ export class EntityService {
     return {
       ...entity,
       logo: entity?.logo
-        ? `https://${entity.logo.cdn}/${entity.logo.key}.${entity.logo.extension}`
+        ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${entity.logo.key}.${entity.logo.extension}`
         : "/defaults/default-entity-logo.png",
     };
   };
@@ -159,7 +158,6 @@ export class EntityService {
         id: assets.id,
         coursesId: assets.courseId,
         key: assets.key,
-        cdn: assets.cdn,
         extension: assets.extension,
         order: courseAssets.order,
       })
@@ -176,7 +174,7 @@ export class EntityService {
       ...course,
       logo: images
         .filter((i) => i.id === course.logo)
-        .map(({ key, cdn, extension }) => `https://${cdn}/${key}.${extension}`)[0],
+        .map(({ key, extension }) => `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${key}.${extension}`)[0],
       images: images
         .filter((i) => i.coursesId === course.id && i.id !== course.logo)
         .sort((a, b) => {
@@ -184,7 +182,7 @@ export class EntityService {
           const orderB = b.order !== null ? b.order : Number.MAX_SAFE_INTEGER;
           return orderA - orderB;
         })
-        .map(({ key, cdn, extension }) => `https://${cdn}/${key}.${extension}`),
+        .map(({ key, extension }) => `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${key}.${extension}`),
     }));
 
     return res;
