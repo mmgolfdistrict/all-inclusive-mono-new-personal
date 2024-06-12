@@ -1450,8 +1450,8 @@ export class UserService {
       const htmlContent = await this.streamToString(Body);
       // return htmlContent;
       let replacedHTML = htmlContent;
-      replacedHTML = replacedHTML.replace(/background:\s?\b[a-zA-Z0-9]+;?/gi, "");
-      replacedHTML = replacedHTML.replace(/background-color:\s?\b[a-zA-Z0-9]+;?/gi, "");
+      replacedHTML = replacedHTML.replace(/background:\s?#?\b[a-zA-Z0-9]+;?/gi, "");
+      replacedHTML = replacedHTML.replace(/background-color:\s?#?\b[a-zA-Z0-9]+;?/gi, "");
 
       return replacedHTML;
     } catch (err) {
