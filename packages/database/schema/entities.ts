@@ -1,6 +1,6 @@
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 import { relations, sql } from "drizzle-orm";
-import { datetime, index, int, primaryKey, text, unique, varchar } from "drizzle-orm/mysql-core";
+import { boolean, datetime, index, int, primaryKey, text, unique, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 import { assets } from "./assets";
 import { auctions } from "./auctions";
@@ -30,6 +30,8 @@ export const entities = mySqlTable(
       .default(sql`CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)`)
       .notNull(),
     updatedById: varchar("updatedById", { length: 36 }),
+    redirectToCourseFlag: boolean("redirectToCourseFlag").default(false).notNull(),
+    
   },
   (table) => {
     return {

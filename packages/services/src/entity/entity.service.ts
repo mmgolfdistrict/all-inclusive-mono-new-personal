@@ -110,6 +110,7 @@ export class EntityService {
           cdn: assets.cdn,
           extension: assets.extension,
         },
+        redirectToCourseFlag: entities.redirectToCourseFlag
       })
       .from(entities)
       .leftJoin(assets, eq(entities.logo, assets.id));

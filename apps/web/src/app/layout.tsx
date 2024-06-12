@@ -91,7 +91,6 @@ export default async function RootLayout({
   const domainDecoded = decodeURIComponent(domain!);
 
   const entityData = await ssrGetEntityByDomain(domainDecoded, "");
-
   const nicInfos = getNICDetails();
 
   return (
