@@ -92,7 +92,7 @@ export const PrivacySettings = () => {
         <div className="text-[12px] text-primary-gray md:text-[14px]">
           {privacy === "PUBLIC"
             ? "Everything is visible, including tee time history."
-            : "Only listed tee times are visible and tee time history is hidden will be hidden to others."}
+            : "Your handle is public when you list a time for sale. All other information is not public."}
         </div>
       </div>
     </section>
