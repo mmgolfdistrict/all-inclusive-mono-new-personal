@@ -155,7 +155,7 @@ export const EditProfileForm = () => {
     const data = await checkProfanity({ text });
     if (data.isProfane) {
       setError("handle", {
-        message: "Handle not allowed",
+        message: "Handle not available",
       });
     }
   };
@@ -189,7 +189,7 @@ export const EditProfileForm = () => {
   const onSubmit: SubmitHandler<EditProfileSchemaType> = async (data) => {
     if (profanityCheckData?.isProfane) {
       setError("handle", {
-        message: errors.handle?.message || "Handle not allowed",
+        message: errors.handle?.message || "Handle not available",
       });
       return;
     }

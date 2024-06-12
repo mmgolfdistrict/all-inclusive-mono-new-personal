@@ -76,7 +76,7 @@ export default function RegisterPage() {
     const data = await checkProfanity({ text });
     if (data.isProfane) {
       setError("username", {
-        message: "Handle not allowed",
+        message: "Handle not available.",
       });
     }
   };
