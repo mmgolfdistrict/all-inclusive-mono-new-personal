@@ -214,7 +214,7 @@ export class UserService {
         )}&verificationToken=${encodeURIComponent(verificationToken)}`,
         CourseLogoURL,
         CourseURL,
-        HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/headerlogo.png`,
+        HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
       },
       []
     );
@@ -452,7 +452,7 @@ export class UserService {
             CustomerFirstName: user.handle ?? "",
             CourseLogoURL,
             CourseURL,
-            HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/headerlogo.png`,
+            HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
           },
           []
         );
@@ -786,7 +786,7 @@ export class UserService {
       EMail: user.email,
       CourseLogoURL,
       CourseURL,
-      HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/headerlogo.png`,
+      HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
     };
 
     if (user.gdPassword) {
@@ -929,7 +929,7 @@ export class UserService {
             CustomerFirstName: user?.handle ?? "",
             CourseLogoURL,
             CourseURL,
-            HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/headerlogo.png`,
+            HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
           },
           []
         );

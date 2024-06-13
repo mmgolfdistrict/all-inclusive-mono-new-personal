@@ -931,7 +931,7 @@ export class HyperSwitchWebhookService {
             true,
             existingTeeTime?.timezoneCorrection ?? 0
           ),
-          HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/headerlogo.png`,
+          HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
         };
         await this.notificationService.createNotification(
           customer_id ?? "",
@@ -1140,7 +1140,7 @@ export class HyperSwitchWebhookService {
       const commonTemplateData = {
         CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
         CourseURL: existingTeeTime?.websiteURL || "",
-        HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/headerlogo.png`,
+        HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
         CourseName: existingTeeTime?.courseName || "-",
         FacilityName: existingTeeTime?.entityName || "-",
         PlayDateTime: formatTime(
