@@ -1,5 +1,4 @@
 import { type ComponentProps } from "react";
-import { BlurImage } from "./images/blur-image";
 
 export const PoweredBy = (props: ComponentProps<"div">) => {
   return (
@@ -10,11 +9,7 @@ export const PoweredBy = (props: ComponentProps<"div">) => {
       <sup className="text-[10px] text-primary-black md:text-[12px]">
         Powered by
       </sup>
-      <BlurImage
-        src={`https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/headerlogo.png`}
-        alt="golf district logo"
-        className="w-[50px] object-fit"
-      />
+      <img alt="golf district logo" src={`https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/headerlogo.png`}></img>
     </div>
   );
 };
