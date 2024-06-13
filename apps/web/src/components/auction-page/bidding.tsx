@@ -60,7 +60,7 @@ export const Bidding = ({
   };
 
   const handleBid = (e: ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace("$", "").replaceAll(",", "");
+    const value = e.target.value.replaceAll("$", "").replaceAll(",", "");
 
     const decimals = value.split(".")[1];
     if (decimals && decimals?.length > 2) return;
