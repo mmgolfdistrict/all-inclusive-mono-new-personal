@@ -80,21 +80,21 @@ export const SensibleWidget = memo(
       }
       if (!isMounted || !isEqual(localData, sensibleDataToMountComp)) {
         // @ts-ignore
-         if(process.env.NEXT_PUBLIC_SENSIBLE_IS_SENSIBLE_SANDBOX==="true"){
-        // @ts-ignore
-        Sensible.configure(
-          sensibleDataToMountComp.partner_id,
-          sensibleDataToMountComp.product_id,
-          "sandbox"
-        );
-        }else{
-            // @ts-ignore
-        Sensible.configure(
-          sensibleDataToMountComp.partner_id,
-          sensibleDataToMountComp.product_id
-        );
+        if (process.env.NEXT_PUBLIC_SENSIBLE_IS_SENSIBLE_SANDBOX === "true") {
+          // @ts-ignore
+          Sensible.configure(
+            sensibleDataToMountComp.partner_id,
+            sensibleDataToMountComp.product_id,
+            "sandbox"
+          );
+        } else {
+          // @ts-ignore
+          Sensible.configure(
+            sensibleDataToMountComp.partner_id,
+            sensibleDataToMountComp.product_id
+          );
         }
-       
+
         //@ts-ignore
         Sensible.createGuaranteeCallback = (quote) => {
           setSensibleData({

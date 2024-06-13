@@ -95,7 +95,7 @@ export const CourseNav = () => {
         <div
           className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transform`}
         >
-         {entity?.redirectToCourseFlag ? (
+          {entity?.redirectToCourseFlag ? (
             <BlurImage
               src={course?.logo ?? ""}
               alt="course logo"
@@ -114,7 +114,7 @@ export const CourseNav = () => {
                 className="w-[50px] object-fit"
               />
             </Link>
-        )}
+          )}
         </div>
         <div className="flex items-center gap-6 md:gap-4">
           <div className="hidden md:block">

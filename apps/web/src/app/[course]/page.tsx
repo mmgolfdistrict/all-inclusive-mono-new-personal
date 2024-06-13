@@ -322,9 +322,9 @@ export default function CourseHomePage() {
   const handleLoading = (val: boolean) => {
     setIsLoading(val);
   };
-  useEffect(()=>{
+  useEffect(() => {
     setPageNumber(1);
-  },[priceRange])
+  }, [priceRange]);
 
   const datesArr = datesWithData ?? daysData.arrayOfDates;
   const amountOfPage = Math.ceil(
@@ -341,10 +341,9 @@ export default function CourseHomePage() {
         <div></div>
       </LoadingContainer>
       <div className="flex items-center justify-between px-4 md:px-6">
-        {
-          entity?.redirectToCourseFlag?null: <GoBack href="/" text={`Back to all ${entity?.name} Courses`} />
-        }
-       
+        {entity?.redirectToCourseFlag ? null : (
+          <GoBack href="/" text={`Back to all ${entity?.name} Courses`} />
+        )}
       </div>
       {/* <CourseTitle
         courseName={course?.name ?? ""}
