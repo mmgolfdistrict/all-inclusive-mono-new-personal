@@ -22,7 +22,7 @@ export const Input = ({
         {label}
       </label>
       <input
-        className="rounded-lg bg-secondary-white px-4 py-3 text-[14px] text-gray-500 outline-none"
+        className={`rounded-lg bg-secondary-white px-4 py-3 text-[14px] text-gray-500 outline-none text-ellipsis`}
         // @ts-ignore
         {...register(name)}
         {...props}

@@ -148,7 +148,13 @@ export const CourseNav = () => {
               data-testid="tee-time-id"
               data-test={courseId}
             />
-            {course?.allowAuctions === 1 && (
+            <NavItem
+              href={`/${courseId}/notify-me`}
+              text="Notify Me"
+              data-testid="notify-me-id"
+              data-test={courseId}
+            />
+            {course?.allowAuctions && (
               <NavItem
                 href={`/${courseId}/auctions`}
                 text="Auctions"

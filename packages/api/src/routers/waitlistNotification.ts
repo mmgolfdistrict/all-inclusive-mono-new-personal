@@ -2,23 +2,21 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 export const waitlistNotificationRouter = createTRPCRouter({
-  getWaitlist: publicProcedure
+  getWaitlist: protectedProcedure
     .input(
       z.object({
-        userId: z.string(),
         courseId: z.string(),
       })
     )
     .query(async ({ ctx, input }) => {
       return await ctx.serviceFactory
         .getWaitlistNotificationService()
-        .getWaitlist(input.userId, input.courseId);
+        .getWaitlist(ctx.session.user.id, input.courseId);
     }),
-  createWaitlistNotification: publicProcedure
+  createWaitlistNotification: protectedProcedure
     .input(
       z.object({
         dates: z.string().array(),
-        userId: z.string(),
         courseId: z.string(),
         startTime: z.number(),
         endTime: z.number(),
@@ -26,15 +24,15 @@ export const waitlistNotificationRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      return await ctx.serviceFactory.getWaitlistNotificationService().createWaitlistNotifications(input);
+      return await ctx.serviceFactory.getWaitlistNotificationService().createWaitlistNotifications({ ...input, userId: ctx.session.user.id });
     }),
-  deleteWaitlistNotification: publicProcedure
+  deleteWaitlistNotification: protectedProcedure
     .input(
       z.object({
-        id: z.string(),
+        ids: z.string().array(),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      return await ctx.serviceFactory.getWaitlistNotificationService().deleteWaitlistNotification(input.id);
+      return await ctx.serviceFactory.getWaitlistNotificationService().deleteWaitlistNotifications(input.ids);
     }),
 });

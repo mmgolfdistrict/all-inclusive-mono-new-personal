@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { and, asc, eq, type Db } from "@golf-district/database";
+import { and, asc, eq, type Db, inArray } from "@golf-district/database";
 import type { InsertWaitlistNotifications } from "@golf-district/database/schema/waitlistNotifications";
 import { waitlistNotifications } from "@golf-district/database/schema/waitlistNotifications";
 import Logger from "@golf-district/shared/src/logger";
@@ -8,6 +8,8 @@ import type {
   CreateWaitlistNotifications,
   UpdateWaitlistNotification,
 } from "./types";
+import dayjs from "dayjs";
+import { courses } from "@golf-district/database/schema/courses";
 
 /**
  * Service class for handling waitlist notification operations.
@@ -15,13 +17,22 @@ import type {
 export class WaitlistNotificationService {
   private readonly logger = Logger(WaitlistNotificationService.name);
 
-  constructor(private readonly database: Db) {}
+  constructor(private readonly database: Db) { }
 
   getWaitlist = async (userId: string, courseId: string) => {
     try {
       const waitlist = await this.database
-        .select()
+        .select({
+          id: waitlistNotifications.id,
+          courseId: waitlistNotifications.courseId,
+          startTime: waitlistNotifications.startTime,
+          endTime: waitlistNotifications.endTime,
+          playerCount: waitlistNotifications.playerCount,
+          date: waitlistNotifications.date,
+          courseName: courses.name,
+        })
         .from(waitlistNotifications)
+        .innerJoin(courses, eq(courses.id, waitlistNotifications.courseId))
         .where(
           and(
             eq(waitlistNotifications.userId, userId),
@@ -81,14 +92,14 @@ export class WaitlistNotificationService {
     }
   };
 
-  deleteWaitlistNotification = async (notificationId: string) => {
+  deleteWaitlistNotifications = async (notificationIds: string[]) => {
     try {
       await this.database
         .update(waitlistNotifications)
         .set({
           isDeleted: true,
         })
-        .where(eq(waitlistNotifications.id, notificationId))
+        .where(inArray(waitlistNotifications.id, notificationIds))
         .execute()
         .catch((err) => {
           this.logger.error(`error deleting waitlist notification from database: ${err}`);
@@ -114,14 +125,16 @@ export class WaitlistNotificationService {
         }
 
         if (deleteNotifications.length > 0) {
-          const deletedNotificationsPromises = deleteNotifications.map(async (notificationId) => {
-            return await this.deleteWaitlistNotification(notificationId);
-          });
-          await Promise.all(deletedNotificationsPromises);
+          // const deletedNotificationsPromises = deleteNotifications.map(async (notificationId) => {
+          //   return await this.deleteWaitlistNotification(notificationId);
+          // });
+          // await Promise.all(deletedNotificationsPromises);
+
+          await this.deleteWaitlistNotifications(deleteNotifications);
         }
       }
 
-      return "Notification created successfully";
+      return "Notifications created successfully";
     } catch (error) {
       this.logger.error(error);
       throw error;
@@ -137,6 +150,8 @@ export class WaitlistNotificationService {
 
       const newNotification = waitlistNotification;
 
+      const date = new Date(dayjs(waitlistNotification.date).format("YYYY-MM-DD") + "T00:00:00Z");
+
       const waitlist = await this.database
         .select()
         .from(waitlistNotifications)
@@ -145,7 +160,7 @@ export class WaitlistNotificationService {
             eq(waitlistNotifications.userId, waitlistNotification.userId),
             eq(waitlistNotifications.courseId, waitlistNotification.courseId),
             eq(waitlistNotifications.playerCount, waitlistNotification.playerCount),
-            eq(waitlistNotifications.date, new Date(waitlistNotification.date)),
+            eq(waitlistNotifications.date, date),
             eq(waitlistNotifications.isDeleted, false)
           )
         )
@@ -166,7 +181,6 @@ export class WaitlistNotificationService {
           }
 
           if (prevNotification.startTime > newNotification.endTime) {
-            console.log("2nd");
             break;
           }
 
@@ -188,7 +202,7 @@ export class WaitlistNotificationService {
       insertNotifications.push({
         ...newNotification,
         id: randomUUID(),
-        date: new Date(newNotification.date),
+        date: new Date(dayjs(newNotification.date).format("YYYY-MM-DD") + "T00:00:00Z"),
       });
       return [insertNotifications, deleteNotifications];
     } catch (error) {
