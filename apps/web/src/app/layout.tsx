@@ -32,7 +32,7 @@ export const metadata: Metadata = {
   },
   metadataBase: new URL("https://vercel.pub"),
   icons: {
-    icon: "/favicon.png",
+    icon: "/favicon.ico",
   },
 };
 
