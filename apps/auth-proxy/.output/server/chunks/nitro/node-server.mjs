@@ -4418,7 +4418,7 @@ const storage = createStorage({});
 
 storage.mount('/assets', assets$1);
 
-storage.mount('data', unstorage_47drivers_47fs_45lite({"driver":"fsLite","base":"/Users/manishpandey/Documents/updatedFolder/all-inclusive-mono/apps/auth-proxy/.data/kv"}));
+storage.mount('data', unstorage_47drivers_47fs_45lite({"driver":"fsLite","base":"/Users/manishpandey/Documents/project/all-inclusive-mono/apps/auth-proxy/.data/kv"}));
 
 function useStorage(base = "") {
   return base ? prefixStorage(storage, base) : storage;
@@ -5094,11 +5094,11 @@ const _f4b49z = eventHandler((event) => {
   return readAsset(id);
 });
 
-const _lazy_O6IG4d = () => import('../_...auth_.mjs');
+const _lazy_6ByX9K = () => import('../_...auth_.mjs');
 
 const handlers = [
   { route: '', handler: _f4b49z, lazy: false, middleware: true, method: undefined },
-  { route: '/**:auth', handler: _lazy_O6IG4d, lazy: true, middleware: false, method: undefined }
+  { route: '/**:auth', handler: _lazy_6ByX9K, lazy: true, middleware: false, method: undefined }
 ];
 
 function createNitroApp() {
