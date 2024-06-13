@@ -31,7 +31,7 @@ export const Footer = () => {
       </div>
       <div className="flex items-end gap-1 md:hidden">
         <span>Powered by</span>
-        <GolfDistrict id="2" className="w-[110px]" />
+        <img alt="golf district logo" src={`https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/footerlogo.png`} />
       </div>
     </div>
   );
