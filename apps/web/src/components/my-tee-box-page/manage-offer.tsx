@@ -60,30 +60,39 @@ export const ManageOffer = ({
       setListingPrice(300); //reset price
       setPlayers("1");
     }
-  }, [isManageOfferOpen]);
+}, [isManageOfferOpen]);
 
-  const handleFocus = () => {
-    if (!listingPrice) setListingPrice(0);
-  };
+const handleFocus = () => {
+  if (!listingPrice) {
+    setListingPrice(0);
+  }
+};
 
-  const handleBlur = () => {
-    if (!listingPrice) setListingPrice(0);
-  };
+const handleBlur = () => {
+  if (!listingPrice) {
+    setListingPrice(0);
+  }
+};
 
-  const handleListingPrice = (e: ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace("$", "").replaceAll(",", "");
+const handleBid = (e: ChangeEvent<HTMLInputElement>) => {
+  const value = e.target.value.replace(/[$,]/g, "");
 
-    const decimals = value.split(".")[1];
-    if (decimals && decimals?.length > 2) return;
+  const decimals = value.split(".")[1];
+  if (decimals && decimals.length > 2) {
+    return;
+  }
 
-    const strippedLeadingZeros = value.replace(/^0+/, "");
-    setListingPrice(Number(strippedLeadingZeros));
-  };
+  const strippedLeadingZeros = value.replace(/^0+/, "");
+  setListingPrice(Number(strippedLeadingZeros));
+};
 
-  const totalPayout = useMemo(() => {
-    if (!listingPrice) return 0;
-    return Math.abs(listingPrice * parseInt(players) - 45);
-  }, [listingPrice, players]);
+const totalPayout = useMemo(() => {
+  if (!listingPrice) {
+    return 0;
+  }
+  return Math.abs(listingPrice * parseInt(players) - 45);
+}, [listingPrice, players]);
+
 
   const updateOffer = () => {
     toast.success("Offer updated successfully");
