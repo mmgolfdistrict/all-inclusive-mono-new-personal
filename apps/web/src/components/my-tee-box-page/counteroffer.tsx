@@ -58,8 +58,9 @@ export const Counteroffer = ({
     if (!listingPrice) setListingPrice(0);
   };
 
-  const handleListingPrice = (e: ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace("$", "").replaceAll(",", "");
+ const handleBid = (e: ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/[$,]/g, "");
+};
 
     const decimals = value.split(".")[1];
     if (decimals && decimals?.length > 2) return;
