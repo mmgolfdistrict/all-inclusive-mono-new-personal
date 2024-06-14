@@ -5,6 +5,7 @@ import { api } from "~/utils/api";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { Course } from "../cards/course";
+import { LoadingContainer } from "~/app/[course]/loader";
 
 export const Courses = () => {
   const { entity } = useAppContext();
@@ -26,10 +27,15 @@ export const Courses = () => {
     if (data?.length === 2) return "grid-cols-2";
     return "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5";
   }, [data]);
-
+  console.log(isLoading,entity)
   return (
     <>
-      {isLoading ? (
+    {
+      entity?.redirectToCourseFlag?
+      <LoadingContainer isLoading={true} loadingText="Please wait while we redirect to your course">
+        <div></div>
+      </LoadingContainer>:
+      isLoading ? (
         <div className="mx-auto grid grid-cols-1 justify-center gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
           {Array(3)
             .fill(null)

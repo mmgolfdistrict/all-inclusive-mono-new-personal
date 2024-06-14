@@ -3,11 +3,13 @@ import React, { useEffect } from "react";
 
 interface LoadingContainerProps {
   isLoading: boolean;
+  loadingText?:string;
   children: ReactNode;
 }
 
 export const LoadingContainer: FC<LoadingContainerProps> = ({
   isLoading,
+  loadingText,
   children,
 }) => {
   useEffect(() => {
@@ -27,6 +29,7 @@ export const LoadingContainer: FC<LoadingContainerProps> = ({
       style={{ zIndex: isLoading ? 999 : -1, position: "fixed" }}
     >
       {isLoading && (
+        <div style={{display:'flex',flexDirection:'column',alignItems:'center', justifyContent:'center'}}>
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 200 200"
@@ -80,6 +83,8 @@ export const LoadingContainer: FC<LoadingContainerProps> = ({
             r="70"
           ></circle>
         </svg>
+        <div>{loadingText}</div>
+        </div>
       )}
       <div style={{ display: isLoading ? "none" : "block" }}>{children}</div>
     </div>
