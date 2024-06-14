@@ -48,14 +48,17 @@ export const CancelListing = ({
   const router = useRouter();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const { course } = useCourseContext();
+  const courseId = course?.id;
   const { user } = useUserContext();
   const auditLog = api.webhooks.auditLog.useMutation();
+  
   const logAudit = async () => {
     await auditLog.mutateAsync({
       userId: user?.id ?? "",
       teeTimeId: "",
       bookingId: "",
       listingId: listingId ?? "",
+      courseId,
       eventId: "TEE_TIME_CANCELLED",
       json: `TEE_TIME_CANCELLED`,
     });

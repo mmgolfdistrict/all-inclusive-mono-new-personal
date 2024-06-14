@@ -61,6 +61,7 @@ export const ListTeeTime = ({
   const sell = api.teeBox.createListingForBookings.useMutation();
   const router = useRouter();
   const { course } = useCourseContext();
+  const courseId = course?.id;
   const { user } = useUserContext();
   const auditLog = api.webhooks.auditLog.useMutation();
   const logAudit = async () => {
@@ -69,6 +70,7 @@ export const ListTeeTime = ({
       teeTimeId: selectedTeeTime?.teeTimeId ?? "",
       bookingId: selectedTeeTime?.bookingIds?.[0] ?? "",
       listingId: selectedTeeTime?.listingId ?? "",
+      courseId,
       eventId: "TEE_TIME_LISTED",
       json: `TEE_TIME_LISTED`,
     });

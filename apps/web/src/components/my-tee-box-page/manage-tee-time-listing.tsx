@@ -58,6 +58,7 @@ export const ManageTeeTimeListing = ({
     useState<boolean>(false);
   const router = useRouter();
   const { course } = useCourseContext();
+  const courseId = course?.id;
   const listingSellerFeePercentage = (course?.sellerFee ?? 1) / 100;
   const listingBuyerFeePercentage = (course?.buyerFee ?? 1) / 100;
 
@@ -90,6 +91,7 @@ export const ManageTeeTimeListing = ({
       teeTimeId: "",
       bookingId: "",
       listingId: selectedTeeTime?.listingId ?? "",
+      courseId,
       eventId: "TEE_TIME_CANCELLED",
       json: `TEE_TIME_CANCELLED`,
     });

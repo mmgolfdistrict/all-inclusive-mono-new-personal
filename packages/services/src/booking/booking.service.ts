@@ -2492,6 +2492,7 @@ export class BookingService {
         teeTimeId,
         bookingId: "",
         listingId: "",
+        courseId: teeTime?.courseId,
         eventId: "REFUND_INITIATED",
         json: `{paymentId:${payment_id}}`,
       });
@@ -2577,6 +2578,7 @@ export class BookingService {
           teeTimeId: booking?.teeTimeId ?? "",
           bookingId: booking?.bookingId ?? "",
           listingId: "",
+          courseId: booking?.courseId ?? "",
           eventId: "TEE_TIME_CONFIRMATION_FAILED",
           json: err,
         });
@@ -2617,6 +2619,7 @@ export class BookingService {
         teeTimeId: booking?.teeTimeId ?? "",
         bookingId: booking?.bookingId ?? "",
         listingId: "",
+        courseId: booking?.courseId ?? "",
         eventId: "BOOKING_CONFIRMED",
         json: "Bookimg status confirmed",
       });
@@ -2656,6 +2659,7 @@ export class BookingService {
         teeTimeId: "",
         bookingId: "",
         listingId,
+        courseId: cart?.courseId ?? "",
         eventId: "PAYMENT_ID_NOT_VALID",
         json: "Payment Id not is not valid",
       });
@@ -2755,6 +2759,7 @@ export class BookingService {
       teeTimeId: associatedBooking?.teeTimeIdForBooking ?? "",
       bookingId,
       listingId,
+      courseId: cart?.courseId ?? "",
       eventId: "TEE_TIME_BOOKED",
       json: "Tee time booked",
     });

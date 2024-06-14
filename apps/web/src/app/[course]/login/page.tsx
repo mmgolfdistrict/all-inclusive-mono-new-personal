@@ -1,6 +1,6 @@
 "use client";
 
-import { signIn } from "@golf-district/auth/nextjs-exports";
+import { signIn, useSession } from "@golf-district/auth/nextjs-exports";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FilledButton } from "~/components/buttons/filled-button";
 import { IconButton } from "~/components/buttons/icon-button";
@@ -22,6 +22,7 @@ import ReCAPTCHA from "react-google-recaptcha";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
 import { LoadingContainer } from "../loader";
+import { api } from "~/utils/api";
 
 export default function Login() {
   const recaptchaRef = createRef<ReCAPTCHA>();
@@ -32,6 +33,42 @@ export default function Login() {
   const { course } = useCourseContext();
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  const auditLog = api.webhooks.auditLog.useMutation();
+  const { data: sessionData, status } = useSession();
+
+  useEffect(() => {
+    if (sessionData?.user?.id && course?.id && status === "authenticated") {
+      logAudit(sessionData.user.id, course.id, () => {
+        window.location.reload();
+        window.location.href =  `${window.location.origin}${
+          GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+            ? prevPath?.path
+              ? prevPath.path
+              : "/"
+            : "/"
+        }`;
+      });
+    }
+  }, [sessionData, course, status]);
+
+  const logAudit = (userId: string, courseId: string, func: () => void) => {
+    auditLog.mutateAsync({
+      userId: userId,
+      teeTimeId: "",
+      bookingId: "",
+      listingId: "",
+      courseId: courseId,
+      eventId: "USER_LOGGED_IN",
+      json: `user logged in `,
+    }).then((res) => {
+      if (res) {
+        func();
+      }
+    }).catch(err => {
+      console.log(err);
+    });
+  };
 
   useEffect(() => {
     if (loginError === "CallbackRouteError") {
@@ -79,15 +116,6 @@ export default function Login() {
       if (res?.error) {
         toast.error("The email or password you entered is incorrect.");
         setValue("password", "");
-      } else if (!res?.error && res?.ok) {
-        window.location.reload();
-        window.location.href = `${window.location.origin}${
-          GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
-            ? prevPath?.path
-              ? prevPath.path
-              : "/"
-            : "/"
-        }`;
       }
     } catch (error) {
       console.log(error);
@@ -148,15 +176,15 @@ export default function Login() {
 
   const googleSignIn = async () => {
     try {
-      const result = await signIn("google", {
-        callbackUrl: `${window.location.origin}${
-          GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
-            ? prevPath?.path
-              ? prevPath.path
-              : "/"
-            : "/"
-        }`,
-        redirect: true,
+      await signIn("google", {
+        // callbackUrl: `${window.location.origin}${
+        //   GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+        //     ? prevPath?.path
+        //       ? prevPath.path
+        //       : "/"
+        //     : "/"
+        // }`,
+        redirect: false
       });
     } catch (error) {
       console.log(error);
