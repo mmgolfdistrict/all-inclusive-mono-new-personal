@@ -55,15 +55,18 @@ export const Counteroffer = ({
   };
 
   const handleBlur = () => {
-    if (!listingPrice) setListingPrice(0);
-  };
-
- const handleBid = (e: ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/[$,]/g, "");
+  if (!listingPrice) {
+    setListingPrice(0);
+  }
 };
 
-    const decimals = value.split(".")[1];
-    if (decimals && decimals?.length > 2) return;
+const handleListingPrice = (e: ChangeEvent<HTMLInputElement>) => {
+  const value = e.target.value.replace(/[$,]/g, "");
+
+  const decimals = value.split(".")[1];
+  if (decimals && decimals.length > 2) {
+    return;
+  }
 
     const strippedLeadingZeros = value.replace(/^0+/, "");
     setListingPrice(Number(strippedLeadingZeros));
