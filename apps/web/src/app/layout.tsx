@@ -32,7 +32,7 @@ export const metadata: Metadata = {
   },
   metadataBase: new URL("https://vercel.pub"),
   icons: {
-    icon: "/favicon.png",
+    icon: "/favicon.ico",
   },
 };
 
@@ -91,10 +91,7 @@ export default async function RootLayout({
   const domainDecoded = decodeURIComponent(domain!);
 
   const entityData = await ssrGetEntityByDomain(domainDecoded, "");
-
   const nicInfos = getNICDetails();
-  console.log("NIC Details");
-  console.log(nicInfos);
 
   return (
     <html lang="en" suppressHydrationWarning>

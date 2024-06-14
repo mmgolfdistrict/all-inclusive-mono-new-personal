@@ -20,7 +20,7 @@ import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import { transfers } from "@golf-district/database/schema/transfers";
 import { userPromoCodeLink } from "@golf-district/database/schema/userPromoCodeLink";
 import { users } from "@golf-district/database/schema/users";
-import { formatMoney } from "@golf-district/shared";
+import { formatMoney, formatTime } from "@golf-district/shared";
 import createICS from "@golf-district/shared/createICS";
 import type { Event } from "@golf-district/shared/createICS";
 import Logger from "@golf-district/shared/src/logger";
@@ -829,7 +829,6 @@ export class HyperSwitchWebhookService {
         greenFee: teeTimes.greenFeePerPlayer,
         courseName: courses.name,
         entityName: entities.name,
-        cdn: assets.cdn,
         cdnKey: assets.key,
         extension: assets.extension,
         buyerFee: courses.buyerFee,
@@ -840,6 +839,7 @@ export class HyperSwitchWebhookService {
         cartFeePerPlayer: teeTimes.cartFeePerPlayer,
         greenFeeTaxPerPlayer: teeTimes.greenFeeTaxPerPlayer,
         cartFeeTaxPerPlayer: teeTimes.cartFeeTaxPerPlayer,
+        timezoneCorrection: courses.timezoneCorrection,
       })
       .from(teeTimes)
       .where(eq(teeTimes.id, firstBooking.teeTimeId))
@@ -922,12 +922,16 @@ export class HyperSwitchWebhookService {
 
         const template = {
           CustomerFirstName: buyerCustomer?.username ?? "",
-          CourseLogoURL: `https://${existingTeeTime?.cdn}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
+          CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
           CourseURL: existingTeeTime?.websiteURL || "",
           CourseName: existingTeeTime?.courseName || "-",
           FacilityName: existingTeeTime?.entityName || "-",
-          PlayDateTime:
-            dayjs(existingTeeTime?.providerDate).utcOffset("-06:00").format("MM/DD/YYYY h:mm A") || "-",
+          PlayDateTime: formatTime(
+            existingTeeTime?.providerDate ?? "",
+            true,
+            existingTeeTime?.timezoneCorrection ?? 0
+          ),
+          HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
         };
         await this.notificationService.createNotification(
           customer_id ?? "",
@@ -1127,18 +1131,23 @@ export class HyperSwitchWebhookService {
         reservationId: bookingId,
         courseReservation: newBooking?.data.id,
         numberOfPlayer: (listedSlotsCount ?? 1).toString(),
-        playTime:
-          dayjs(existingTeeTime?.providerDate).utcOffset("-06:00").format("YYYY-MM-DD hh:mm A") ?? "-",
+        playTime: this.extractTime(
+          formatTime(existingTeeTime?.providerDate ?? "", true, existingTeeTime?.timezoneCorrection ?? 0)
+        ),
       };
       const icsContent: string = createICS(event);
 
       const commonTemplateData = {
-        CourseLogoURL: `https://${existingTeeTime?.cdn}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
+        CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
         CourseURL: existingTeeTime?.websiteURL || "",
+        HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
         CourseName: existingTeeTime?.courseName || "-",
         FacilityName: existingTeeTime?.entityName || "-",
-        PlayDateTime:
-          dayjs(existingTeeTime?.providerDate).utcOffset("-06:00").format("MM/DD/YYYY h:mm A") || "-",
+        PlayDateTime: formatTime(
+          existingTeeTime?.providerDate ?? "",
+          true,
+          existingTeeTime?.timezoneCorrection ?? 0
+        ),
         NumberOfHoles: existingTeeTime?.numberOfHoles,
         SellTeeTImeURL: `${redirectHref}/my-tee-box`,
         ManageTeeTimesURL: `${redirectHref}/my-tee-box`,
@@ -1277,6 +1286,12 @@ export class HyperSwitchWebhookService {
       .catch((err: any) => {
         this.logger.error(err);
       });
+  };
+
+  extractTime = (dateStr: string) => {
+    const timeRegex = /\b\d{1,2}:\d{2} (AM|PM)\b/;
+    const timeMatch = dateStr.match(timeRegex);
+    return timeMatch ? timeMatch[0] : null;
   };
 
   handleOfferItem = async (item: Offer, amountReceived: number, customer_id: string) => {

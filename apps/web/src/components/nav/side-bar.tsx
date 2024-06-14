@@ -133,7 +133,7 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
                 data-testid="tee-time-course-id"
                 data-test={courseId}
               />
-              {course?.allowAuctions === 1 && (
+              {course?.allowAuctions && (
                 <NavItem
                   href={`/${courseId}/auctions`}
                   text="Auctions"

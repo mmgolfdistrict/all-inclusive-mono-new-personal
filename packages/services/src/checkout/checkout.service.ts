@@ -352,6 +352,7 @@ export class CheckoutService {
         // entityId: teeTimes.entityId,
         entityId: courses.entityId,
         date: teeTimes.date,
+        providerDate: teeTimes.providerDate,
         providerCourseId: providerCourseLink.providerCourseId,
         providerTeeSheetId: providerCourseLink.providerTeeSheetId,
         providerId: providerCourseLink.providerId,
@@ -388,7 +389,11 @@ export class CheckoutService {
       teeTime.courseId
     );
 
-    const [formattedDate] = teeTime.date.split(" ");
+    // const [formattedDate] = teeTime.date.split(" ");
+    const [formattedDateUTC] = teeTime.date.split(" ");
+    const [formattedDate] = teeTime.providerDate.split("T");
+    console.log(`formattedDateUTC: ${formattedDateUTC}`);
+    console.log(`formattedDate: ${formattedDate}`);
 
     if (teeTime.providerCourseId && teeTime.providerTeeSheetId && formattedDate) {
       await this.foreupIndexer.indexTeeTime(

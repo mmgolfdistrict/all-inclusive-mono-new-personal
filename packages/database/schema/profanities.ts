@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { getTableName, sql } from "drizzle-orm";
 import { datetime, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 
@@ -12,3 +12,5 @@ export const profanities = mySqlTable("profanity", {
     .default(sql`CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)`)
     .notNull(),
 });
+
+export const profanitiesTableName = getTableName(profanities);

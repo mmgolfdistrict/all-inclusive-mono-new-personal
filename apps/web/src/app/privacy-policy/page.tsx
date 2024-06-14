@@ -13,8 +13,10 @@ export default function PrivacyPolicy() {
         <div></div>
       </LoadingContainer>
       {privacyPolicies && (
-        <main className="p-4 md:p-6 ">
-          <div dangerouslySetInnerHTML={{ __html: privacyPolicies }}></div>
+        <main className="bg-secondary-white py-4 md:py-6 ">
+          <section className="mx-auto flex w-full flex-col pt-4 md:max-w-[1360px] md:gap-4 md:px-6">
+            <div dangerouslySetInnerHTML={{ __html: privacyPolicies }}></div>
+          </section>
         </main>
       )}
     </>

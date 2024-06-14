@@ -30,6 +30,7 @@ interface EmailParams {
   CourseLogoURL?: string;
   CourseURL?: string;
   VerifyURL?: string;
+  HeaderLogoURL?: string;
 }
 
 interface Attachment {

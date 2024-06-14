@@ -184,7 +184,6 @@ export class UserService {
     if (courseId) {
       const [course] = await this.database
         .select({
-          cdn: assets.cdn,
           key: assets.key,
           extension: assets.extension,
           websiteURL: courses.websiteURL,
@@ -198,8 +197,8 @@ export class UserService {
           return [];
         });
 
-      if (course?.cdn) {
-        CourseLogoURL = `https://${course?.cdn}/${course?.key}.${course?.extension}`;
+      if (course?.key) {
+        CourseLogoURL = `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`;
         CourseURL = course?.websiteURL || "";
       }
     }
@@ -215,6 +214,7 @@ export class UserService {
         )}&verificationToken=${encodeURIComponent(verificationToken)}`,
         CourseLogoURL,
         CourseURL,
+        HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
       },
       []
     );
@@ -427,7 +427,6 @@ export class UserService {
     if (courseId) {
       const [course] = await this.database
         .select({
-          cdn: assets.cdn,
           key: assets.key,
           extension: assets.extension,
           websiteURL: courses.websiteURL,
@@ -436,8 +435,8 @@ export class UserService {
         .where(eq(courses.id, courseId))
         .leftJoin(assets, eq(assets.id, courses.logoId));
 
-      if (course?.cdn) {
-        CourseLogoURL = `https://${course?.cdn}/${course?.key}.${course?.extension}`;
+      if (course?.key) {
+        CourseLogoURL = `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`;
         CourseURL = course?.websiteURL || "";
       }
     }
@@ -453,6 +452,7 @@ export class UserService {
             CustomerFirstName: user.handle ?? "",
             CourseLogoURL,
             CourseURL,
+            HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
           },
           []
         );
@@ -734,7 +734,6 @@ export class UserService {
     if (courseProviderId) {
       const [course] = await this.database
         .select({
-          cdn: assets.cdn,
           key: assets.key,
           extension: assets.extension,
           websiteURL: courses.websiteURL,
@@ -743,8 +742,8 @@ export class UserService {
         .leftJoin(assets, eq(assets.courseId, courseProviderId))
         .where(eq(courses.logoId, assets.id));
 
-      if (course?.cdn) {
-        CourseLogoURL = `https://${course?.cdn}/${course?.key}.${course?.extension}`;
+      if (course?.key) {
+        CourseLogoURL = `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`;
         CourseURL = course?.websiteURL || "";
       }
     }
@@ -787,6 +786,7 @@ export class UserService {
       EMail: user.email,
       CourseLogoURL,
       CourseURL,
+      HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
     };
 
     if (user.gdPassword) {
@@ -900,7 +900,6 @@ export class UserService {
     if (courseId) {
       const [course] = await this.database
         .select({
-          cdn: assets.cdn,
           key: assets.key,
           extension: assets.extension,
           websiteURL: courses.websiteURL,
@@ -914,8 +913,8 @@ export class UserService {
           return [];
         });
 
-      if (course?.cdn) {
-        CourseLogoURL = `https://${course?.cdn}/${course?.key}.${course?.extension}`;
+      if (course?.key) {
+        CourseLogoURL = `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`;
         CourseURL = course?.websiteURL || "";
       }
     }
@@ -930,6 +929,7 @@ export class UserService {
             CustomerFirstName: user?.handle ?? "",
             CourseLogoURL,
             CourseURL,
+            HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
           },
           []
         );
@@ -1150,13 +1150,11 @@ export class UserService {
         profileImage: {
           assetId: profileAsset.id,
           assetKey: profileAsset.key,
-          assetCdn: profileAsset.cdn,
           assetExtension: profileAsset.extension,
         },
         bannerImage: {
           assetId: bannerAsset.id,
           assetKey: bannerAsset.key,
-          assetCdn: bannerAsset.cdn,
           assetExtension: bannerAsset.extension,
         },
       })
@@ -1176,14 +1174,12 @@ export class UserService {
     const profilePicture = profileImage
       ? assetToURL({
           key: profileImage.assetKey,
-          cdn: profileImage.assetCdn,
           extension: profileImage.assetExtension,
         })
       : "/defaults/default-profile.webp";
     const bannerPicture = bannerImage
       ? assetToURL({
           key: bannerImage.assetKey,
-          cdn: bannerImage.assetCdn,
           extension: bannerImage.assetExtension,
         })
       : "/defaults/default-banner.webp";
@@ -1284,7 +1280,6 @@ export class UserService {
         listingId: lists.id,
         profilePicture: {
           key: assets.key,
-          cdnUrl: assets.cdn,
           extension: assets.extension,
         },
       })
@@ -1311,7 +1306,7 @@ export class UserService {
           soldById: booking.ownerId,
           soldByName: booking.ownerHandle ? booking.ownerHandle : "Anonymous",
           soldByImage: booking.profilePicture
-            ? `https://${booking.profilePicture.cdnUrl}/${booking.profilePicture.key}.${booking.profilePicture.extension}`
+            ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${booking.profilePicture.key}.${booking.profilePicture.extension}`
             : "/defaults/default-profile.webp",
           availableSlots: booking.listed ? 0 : 1,
           pricePerGolfer: booking.listPrice ? booking.listPrice : 0,
@@ -1381,7 +1376,6 @@ export class UserService {
         courseId: teeTimes.courseId,
         courseImage: {
           key: assets.key,
-          cdnUrl: assets.cdn,
           extension: assets.extension,
         },
       })
@@ -1412,7 +1406,7 @@ export class UserService {
           courseName: booking.courseName,
           courseId: booking.courseId ?? "",
           courseImage: booking.courseImage
-            ? `https://${booking.courseImage.cdnUrl}/${booking.courseImage.key}.${booking.courseImage.extension}`
+            ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${booking.courseImage.key}.${booking.courseImage.extension}`
             : "/defaults/default-course.webp",
         });
       }
@@ -1451,7 +1445,12 @@ export class UserService {
     try {
       const { Body } = await s3Client.send(new GetObjectCommand(getObjectParams));
       const htmlContent = await this.streamToString(Body);
-      return htmlContent;
+      // return htmlContent;
+      let replacedHTML = htmlContent;
+      replacedHTML = replacedHTML.replace(/background:\s?#?\b[a-zA-Z0-9]+;?/gi, "");
+      replacedHTML = replacedHTML.replace(/background-color:\s?#?\b[a-zA-Z0-9]+;?/gi, "");
+
+      return replacedHTML;
     } catch (err) {
       console.error("Error fetching HTML file:", err);
       throw err;
@@ -1470,5 +1469,29 @@ export class UserService {
       chunks.push(chunk);
     }
     return Buffer.concat(chunks).toString("utf8");
+  };
+
+  generateUsername = async (digit: number) => {
+    // Generate a random buffer
+    const buffer = randomBytes(3);
+
+    // Convert buffer to hex string
+    const hex = buffer.toString("hex");
+
+    // Convert hex string to integer
+    const randomNumber = parseInt(hex, 16);
+
+    // Get the six least significant digits
+    const sixDigitNumber = randomNumber % 1000000;
+
+    // Pad the number with zeros if necessary
+    const handle = sixDigitNumber.toString().padStart(digit, "0");
+
+    const isValid = await this.isValidHandle(handle);
+
+    if (!isValid) {
+      this.generateUsername(digit);
+    }
+    return handle ? `golfdistrict${handle}` : "golfdistrict";
   };
 }

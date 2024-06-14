@@ -491,7 +491,6 @@ export class AuctionService {
         asset: {
           assetId: assets.id,
           assetKey: assets.key,
-          assetCdn: assets.cdn,
           assetExtension: assets.extension,
         },
       })
@@ -516,7 +515,6 @@ export class AuctionService {
     } else {
       imageUrl = assetToURL({
         key: asset.assetKey,
-        cdn: asset.assetCdn,
         extension: asset.assetExtension,
       });
     }

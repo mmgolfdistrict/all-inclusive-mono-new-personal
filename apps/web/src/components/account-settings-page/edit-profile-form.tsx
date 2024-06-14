@@ -155,7 +155,7 @@ export const EditProfileForm = () => {
     const data = await checkProfanity({ text });
     if (data.isProfane) {
       setError("handle", {
-        message: "Handle contains profanity.",
+        message: "Handle not available",
       });
     }
   };
@@ -189,7 +189,7 @@ export const EditProfileForm = () => {
   const onSubmit: SubmitHandler<EditProfileSchemaType> = async (data) => {
     if (profanityCheckData?.isProfane) {
       setError("handle", {
-        message: errors.handle?.message || "Handle contains profanity.",
+        message: errors.handle?.message || "Handle not available",
       });
       return;
     }
@@ -330,7 +330,7 @@ export const EditProfileForm = () => {
           label="Handle"
           className="w-full"
           type="text"
-          placeholder="Enter your username"
+          placeholder="Enter your handle"
           id="handle"
           register={register}
           name={"handle"}

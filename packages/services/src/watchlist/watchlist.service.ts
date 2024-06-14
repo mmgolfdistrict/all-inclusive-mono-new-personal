@@ -146,7 +146,6 @@ export class WatchlistService {
         courseName: courses.name,
         image: {
           key: assets.key,
-          cdn: assets.cdn,
           extension: assets.extension,
         },
       })
@@ -191,7 +190,7 @@ export class WatchlistService {
           ownedById: courseId,
           minimumOfferPrice: item.price,
           image: item.image
-            ? `https://${item.image.cdn}/${item.image.key}.${item.image.extension}`
+            ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${item.image.key}.${item.image.extension}`
             : "/defaults/default-course.webp",
           bookingIds: [],
         });
@@ -219,7 +218,6 @@ export class WatchlistService {
           minimumOfferPrice: bookings.minimumOfferPrice,
           image: {
             key: assets.key,
-            cdn: assets.cdn,
             extension: assets.extension,
           },
           listingId: lists.id,
@@ -267,7 +265,7 @@ export class WatchlistService {
             ownedById: item.soldById,
             minimumOfferPrice: item.minimumOfferPrice,
             image: item.image
-              ? `https://${item.image.cdn}/${item.image.key}.${item.image.extension}`
+              ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${item.image.key}.${item.image.extension}`
               : "/defaults/default-profile.webp",
           };
         }

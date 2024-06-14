@@ -200,7 +200,6 @@ export class BookingService {
         greenFee: bookings.greenFeePerPlayer,
         teeTimeImage: {
           key: assets.key,
-          cdnUrl: assets.cdn,
           extension: assets.extension,
         },
         listing: lists.id,
@@ -233,7 +232,7 @@ export class BookingService {
           courseId,
           courseName: teeTime.courseName,
           courseLogo: teeTime.teeTimeImage
-            ? `https://${teeTime.teeTimeImage.cdnUrl}/${teeTime.teeTimeImage.key}.${teeTime.teeTimeImage.extension}`
+            ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${teeTime.teeTimeImage.key}.${teeTime.teeTimeImage.extension}`
             : "/defaults/default-course.webp",
           date: teeTime.date ? teeTime.date : "",
           firstHandPrice: teeTime.greenFee ? teeTime.greenFee : 0,
@@ -280,7 +279,6 @@ export class BookingService {
         date: teeTimes.providerDate,
         teeTimeImage: {
           key: assets.key,
-          cdnUrl: assets.cdn,
           extension: assets.extension,
         },
         listingId: bookings.listId,
@@ -317,7 +315,7 @@ export class BookingService {
             listingId: teeTime.listingId,
             courseName: teeTime.courseName ? teeTime.courseName : "",
             courseLogo: teeTime.teeTimeImage
-              ? `https://${teeTime.teeTimeImage.cdnUrl}/${teeTime.teeTimeImage.key}.${teeTime.teeTimeImage.extension}`
+              ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${teeTime.teeTimeImage.key}.${teeTime.teeTimeImage.extension}`
               : "/defaults/default-course.webp",
             date: teeTime.date ? teeTime.date : "",
             firstHandPrice: teeTime.greenFeePerPlayer ? teeTime.greenFeePerPlayer : 0,
@@ -364,7 +362,6 @@ export class BookingService {
         purchasedAt: transfers.createdAt,
         purchasedByImage: {
           key: assets.key,
-          cdnUrl: assets.cdn,
           extension: assets.extension,
         },
       })
@@ -402,7 +399,7 @@ export class BookingService {
         purchaseAmount: booking.purchaseAmount,
         purchasedAt: booking.purchasedAt,
         purchasedByImage: booking.purchasedByImage
-          ? `https://${booking.purchasedByImage.cdnUrl}/${booking.purchasedByImage.key}.${booking.purchasedByImage.extension}`
+          ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${booking.purchasedByImage.key}.${booking.purchasedByImage.extension}`
           : "/defaults/default-profile.webp",
       };
     });
@@ -462,7 +459,6 @@ export class BookingService {
         lastHighestSale: sql<number | null>`MAX(${transfers.amount})`,
         teeTimeImage: {
           key: assets.key,
-          cdnUrl: assets.cdn,
           extension: assets.extension,
         },
         listing: lists.id,
@@ -509,7 +505,6 @@ export class BookingService {
         courses.name,
         teeTimes.greenFeePerPlayer,
         assets.key,
-        assets.cdn,
         assets.extension,
         bookings.nameOnBooking,
         lists.id,
@@ -544,7 +539,7 @@ export class BookingService {
           courseId,
           courseName: teeTime.courseName,
           courseLogo: teeTime.teeTimeImage
-            ? `https://${teeTime.teeTimeImage.cdnUrl}/${teeTime.teeTimeImage.key}.${teeTime.teeTimeImage.extension}`
+            ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${teeTime.teeTimeImage.key}.${teeTime.teeTimeImage.extension}`
             : "/defaults/default-course.webp",
           date: teeTime.date,
           firstHandPrice:
@@ -1595,7 +1590,6 @@ export class BookingService {
         lastHighestSale: sql<number | null>`MAX(${transfers.amount})`,
         courseImage: {
           key: courseImage.key,
-          cdnUrl: courseImage.cdn,
           extension: courseImage.extension,
         },
         offeredBy: {
@@ -1603,7 +1597,6 @@ export class BookingService {
           name: users.name,
           handle: users.handle,
           key: userImage.key,
-          cdnUrl: userImage.cdn,
           extension: userImage.extension,
         },
         golferCount: sql<number | null>`COUNT(DISTINCT ${userBookingOffers.bookingId})`,
@@ -1639,12 +1632,10 @@ export class BookingService {
         teeTimes.date,
         teeTimes.id,
         courseImage.key,
-        courseImage.cdn,
         courseImage.extension,
         users.id,
         users.name,
         userImage.key,
-        userImage.cdn,
         userImage.extension
       )
       .orderBy(desc(offers.createdAt))
@@ -1661,7 +1652,7 @@ export class BookingService {
           teeTimeDate: offer.teeTimeDate,
           teeTimeId: offer.teeTimeId,
           courseImage: offer.courseImage
-            ? `https://${offer.courseImage.cdnUrl}/${offer.courseImage.key}.${offer.courseImage.extension}`
+            ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${offer.courseImage.key}.${offer.courseImage.extension}`
             : "/defaults/default-course.webp",
         },
         offeredBy: {
@@ -1669,7 +1660,7 @@ export class BookingService {
           name: offer.offeredBy.name,
           handle: offer.offeredBy.handle,
           image: offer.offeredBy.key
-            ? `https://${offer.offeredBy.cdnUrl}/${offer.offeredBy.key}.${offer.offeredBy.extension}`
+            ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${offer.offeredBy.key}.${offer.offeredBy.extension}`
             : "/defaults/default-profile.webp",
         },
         amountOffered: offer.price,
@@ -1727,7 +1718,6 @@ export class BookingService {
         lastHighestSale: sql<number | null>`MAX(${transfers.amount})`,
         courseImage: {
           key: courseImage.key,
-          cdnUrl: courseImage.cdn,
           extension: courseImage.extension,
         },
         ownedBy: {
@@ -1735,7 +1725,6 @@ export class BookingService {
           name: bookingOwner.name,
           handle: bookingOwner.handle,
           key: ownerImage.key,
-          cdnUrl: ownerImage.cdn,
           extension: ownerImage.extension,
         },
         offeredBy: {
@@ -1743,7 +1732,6 @@ export class BookingService {
           name: users.name,
           handle: users.handle,
           key: userImage.key,
-          cdnUrl: userImage.cdn,
           extension: userImage.extension,
         },
         golferCount: sql<number | null>`COUNT(DISTINCT ${userBookingOffers.bookingId})`,
@@ -1783,15 +1771,12 @@ export class BookingService {
         teeTimes.date,
         teeTimes.id,
         courseImage.key,
-        courseImage.cdn,
         courseImage.extension,
         users.id,
         users.name,
         userImage.key,
-        userImage.cdn,
         userImage.extension,
         ownerImage.key,
-        ownerImage.cdn,
         ownerImage.extension,
         bookingOwner.id,
         bookingOwner.name,
@@ -1812,7 +1797,7 @@ export class BookingService {
           teeTimeDate: offer.teeTimeDate,
           teeTimeId: offer.teeTimeId,
           courseImage: offer.courseImage
-            ? `https://${offer.courseImage.cdnUrl}/${offer.courseImage.key}.${offer.courseImage.extension}`
+            ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${offer.courseImage.key}.${offer.courseImage.extension}`
             : "/defaults/default-course.webp",
         },
         offeredBy: {
@@ -1820,7 +1805,7 @@ export class BookingService {
           name: offer.offeredBy.name,
           handle: offer.offeredBy.handle,
           image: offer.offeredBy.key
-            ? `https://${offer.offeredBy.cdnUrl}/${offer.offeredBy.key}.${offer.offeredBy.extension}`
+            ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${offer.offeredBy.key}.${offer.offeredBy.extension}`
             : "/defaults/default-profile.webp",
         },
         ownedBy: {
@@ -1828,7 +1813,7 @@ export class BookingService {
           name: offer.ownedBy.name,
           handle: offer.ownedBy.handle,
           image: offer.ownedBy.key
-            ? `https://${offer.ownedBy.cdnUrl}/${offer.ownedBy.key}.${offer.ownedBy.extension}`
+            ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${offer.ownedBy.key}.${offer.ownedBy.extension}`
             : "/defaults/default-profile.webp",
         },
         offerAmount: offer.price,
@@ -1873,7 +1858,6 @@ export class BookingService {
         lastHighestSale: sql<number | null>`MAX(${transfers.amount})`,
         courseImage: {
           key: courseImage.key,
-          cdnUrl: courseImage.cdn,
           extension: courseImage.extension,
         },
         offeredBy: {
@@ -1881,7 +1865,6 @@ export class BookingService {
           name: users.name,
           handle: users.handle,
           key: userImage.key,
-          cdnUrl: userImage.cdn,
           extension: userImage.extension,
         },
         golferCount: sql<number | null>`COUNT(DISTINCT ${userBookingOffers.bookingId})`,
@@ -1920,12 +1903,10 @@ export class BookingService {
         teeTimes.date,
         teeTimes.id,
         courseImage.key,
-        courseImage.cdn,
         courseImage.extension,
         users.id,
         users.name,
         userImage.key,
-        userImage.cdn,
         userImage.extension
       )
       .orderBy(desc(offers.expiresAt))
@@ -1944,7 +1925,7 @@ export class BookingService {
           teeTimeDate: offer.teeTimeDate,
           teeTimeId: offer.teeTimeId,
           courseImage: offer.courseImage
-            ? `https://${offer.courseImage.cdnUrl}/${offer.courseImage.key}.${offer.courseImage.extension}`
+            ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${offer.courseImage.key}.${offer.courseImage.extension}`
             : "/defaults/default-course.webp",
         },
         offeredBy: {
@@ -1952,7 +1933,7 @@ export class BookingService {
           name: offer.offeredBy.name,
           handle: offer.offeredBy.handle,
           image: offer.offeredBy.key
-            ? `https://${offer.offeredBy.cdnUrl}/${offer.offeredBy.key}.${offer.offeredBy.extension}`
+            ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${offer.offeredBy.key}.${offer.offeredBy.extension}`
             : "/defaults/default-profile.webp",
         },
         amountOffered: offer.price,
@@ -2346,7 +2327,6 @@ export class BookingService {
         internalId: providers.internalId,
         providerDate: teeTimes.providerDate,
         holes: teeTimes.numberOfHoles,
-        cdn: assets.cdn,
         cdnKey: assets.key,
         extension: assets.extension,
         websiteURL: courses.websiteURL,
@@ -2471,11 +2451,12 @@ export class BookingService {
 
       const template = {
         CustomerFirstName: user?.handle ?? user.name ?? "",
-        CourseLogoURL: `https://${teeTime?.cdn}/${teeTime?.cdnKey}.${teeTime?.extension}`,
+        CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${teeTime?.cdnKey}.${teeTime?.extension}`,
         CourseURL: teeTime?.websiteURL || "",
         CourseName: teeTime?.courseName || "-",
         FacilityName: teeTime?.entityName || "-",
         PlayDateTime: dayjs(teeTime?.providerDate).utcOffset("-06:00").format("MM/DD/YYYY h:mm A") || "-",
+        HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
       };
       await this.notificationService.createNotification(
         userId || "",

@@ -51,6 +51,27 @@ interface TeeTimeSearchObject {
   firstHandPurchasePrice?: number;
 }
 
+interface CheckTeeTimesAvailabilityParams {
+  dates: string[];
+  courseId: string;
+  startTime: number;
+  endTime: number;
+  minDate: string;
+  maxDate: string;
+  holes: 9 | 18;
+  golfers: 1 | 2 | 3 | 4;
+  showUnlisted: boolean;
+  includesCart: boolean;
+  lowerPrice: number;
+  upperPrice: number;
+  take: number;
+  sortTime: "asc" | "desc" | "";
+  sortPrice: "asc" | "desc" | "";
+  timezoneCorrection: number;
+  cursor?: number | null;
+  _userId: string | undefined;
+}
+
 type Day = {
   year: number;
   month: number;
@@ -174,7 +195,6 @@ export class SearchService {
         golfers: bookings.nameOnBooking,
         profilePicture: {
           key: assets.key,
-          cdnUrl: assets.cdn,
           extension: assets.extension,
         },
       })
@@ -205,7 +225,7 @@ export class SearchService {
       soldById: ownerId,
       soldByName: firstBooking.ownerHandle ? firstBooking.ownerHandle : "Anonymous",
       soldByImage: firstBooking.profilePicture
-        ? `https://${firstBooking.profilePicture.cdnUrl}/${firstBooking.profilePicture.key}.${firstBooking.profilePicture.extension}`
+        ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${firstBooking.profilePicture.key}.${firstBooking.profilePicture.extension}`
         : "/defaults/default-profile.webp",
       availableSlots: unlistedBookingData.length,
       pricePerGolfer: 0,
@@ -260,7 +280,6 @@ export class SearchService {
         sellerFee: courses.sellerFee,
         image: {
           key: assets.key,
-          cdnUrl: assets.cdn,
           extension: assets.extension,
         },
         minimumOfferPrice: bookings.minimumOfferPrice,
@@ -285,7 +304,7 @@ export class SearchService {
       soldById: firstBooking.ownerId,
       soldByName: firstBooking.ownerHandle ? firstBooking.ownerHandle : "Anonymous",
       soldByImage: firstBooking.image
-        ? `https://${firstBooking.image.cdnUrl}/${firstBooking.image.key}.${firstBooking.image.extension}`
+        ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${firstBooking.image.key}.${firstBooking.image.extension}`
         : "/defaults/default-profile.webp",
       availableSlots: firstBooking.listedSlots,
       pricePerGolfer: Number((firstBooking.listPrice * (1 + firstBooking.buyerFee / 100)) / 100),
@@ -340,7 +359,6 @@ export class SearchService {
         )`,
         logo: {
           key: assets.key,
-          cdnUrl: assets.cdn,
           extension: assets.extension,
         },
       })
@@ -365,7 +383,6 @@ export class SearchService {
         handle: users.handle,
         image: {
           key: assets.key,
-          cdnUrl: assets.cdn,
           extension: assets.extension,
         },
       })
@@ -387,7 +404,7 @@ export class SearchService {
       soldById: tee.courseId,
       soldByName: tee.courseName ? tee.courseName : "Golf District",
       soldByImage: tee.logo
-        ? `https://${tee.logo.cdnUrl}/${tee.logo.key}.${tee.logo.extension}`
+        ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${tee.logo.key}.${tee.logo.extension}`
         : "/defaults/default-profile.webp",
       availableSlots: tee.firstPartySlots,
       pricePerGolfer:
@@ -409,7 +426,7 @@ export class SearchService {
           userId: watcher.userId,
           handle: watcher.handle ? watcher.handle : "Anonymous",
           image: watcher.image
-            ? `https://${watcher.image.cdnUrl}/${watcher.image.key}.${watcher.image.extension}`
+            ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${watcher.image.key}.${watcher.image.extension}`
             : "/defaults/default-profile.webp",
         };
       }),
@@ -527,6 +544,105 @@ export class SearchService {
     return teeTimeDate?.[0]?.date ?? "";
   }
 
+  async checkTeeTimesAvailabilityForDateRange({
+    dates,
+    courseId,
+    startTime,
+    endTime,
+    minDate,
+    maxDate,
+    holes,
+    golfers,
+    showUnlisted,
+    includesCart,
+    lowerPrice,
+    upperPrice,
+    take,
+    sortTime,
+    sortPrice,
+    timezoneCorrection,
+    cursor,
+    _userId,
+  }: CheckTeeTimesAvailabilityParams) {
+    const res: string[] = [];
+    console.log("iuvhjlgfhjvbknlfycgjvhkbln", lowerPrice, upperPrice);
+    for (let i = 0; i < dates.length; i++) {
+      const date = dates[i];
+      const userId = _userId ?? "00000000-0000-0000-0000-000000000000";
+      const minDateSubquery = dayjs(minDate).utc().hour(0).minute(0).second(0).millisecond(0).toISOString();
+      const maxDateSubquery = dayjs(maxDate)
+        .utc()
+        .hour(23)
+        .minute(59)
+        .second(59)
+        .millisecond(999)
+        .toISOString();
+      const startDate = dayjs(date).utc().hour(0).minute(0).second(0).millisecond(0).toISOString();
+      const endDate = dayjs(date).utc().hour(23).minute(59).second(59).millisecond(999).toISOString();
+      const nowInCourseTimezone = dayjs().utc().utcOffset(timezoneCorrection).format("YYYY-MM-DD HH:mm:ss");
+      const currentTimePlus30Min = dayjs
+        .utc(nowInCourseTimezone)
+        .utcOffset(timezoneCorrection)
+        .add(30, "minutes")
+        .toISOString();
+      const firstHandRecords = await this.database
+        .select({
+          maxdata: sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})`,
+        })
+        .from(teeTimes)
+        .innerJoin(courses, eq(courses.id, courseId))
+        .where(
+          and(
+            gte(teeTimes.providerDate, currentTimePlus30Min),
+            between(teeTimes.providerDate, minDateSubquery, maxDateSubquery),
+            gte(teeTimes.time, startTime),
+            lte(teeTimes.time, endTime),
+            sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 >= ${lowerPrice}`,
+            sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 <= ${upperPrice}`,
+            eq(teeTimes.numberOfHoles, holes),
+            gt(teeTimes.availableFirstHandSpots, 0),
+            or(
+              gte(teeTimes.availableFirstHandSpots, golfers),
+              gte(teeTimes.availableSecondHandSpots, golfers)
+            )
+          )
+        )
+        .execute();
+
+      const secondHandRecords = await this.database
+        .select({
+          maxDate: lists.listPrice,
+        })
+        .from(lists)
+        .innerJoin(bookings, eq(bookings.listId, lists.id))
+        .innerJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
+        .innerJoin(courses, eq(courses.id, teeTimes.courseId))
+        .where(
+          and(
+            eq(teeTimes.courseId, courseId),
+            eq(lists.isDeleted, false),
+            and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
+            gte(teeTimes.providerDate, currentTimePlus30Min),
+            between(teeTimes.providerDate, startDate, endDate),
+            eq(teeTimes.numberOfHoles, holes),
+            or(
+              gte(teeTimes.availableFirstHandSpots, golfers),
+              gte(teeTimes.availableSecondHandSpots, golfers)
+            ),
+            sql`(${lists.listPrice}*(${courses.buyerFee}/100)+${lists.listPrice})/100 >= ${lowerPrice}`,
+            sql`(${lists.listPrice}*(${courses.buyerFee}/100)+${lists.listPrice})/100 <= ${upperPrice}`
+          )
+        )
+        .execute();
+
+      const isDateToBeAdded = firstHandRecords.length > 0 || secondHandRecords.length > 0;
+      if (isDateToBeAdded && date) {
+        res.push(date);
+      }
+    }
+    return res;
+  }
+
   async getTeeTimesForDay(
     courseId: string,
     date: string,
@@ -627,7 +743,6 @@ export class SearchService {
         cartFee: teeTimes.cartFeePerPlayer,
         logo: {
           key: assets.key,
-          cdnUrl: assets.cdn,
           extension: assets.extension,
         },
         favoritesId: favorites.id,
@@ -685,7 +800,7 @@ export class SearchService {
         soldById: teeTime.courseId,
         soldByName: teeTime.courseName ? teeTime.courseName : "Golf District",
         soldByImage: teeTime.logo
-          ? `https://${teeTime.logo.cdnUrl}/${teeTime.logo.key}.${teeTime.logo.extension}`
+          ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${teeTime.logo.key}.${teeTime.logo.extension}`
           : "/defaults/default-profile.webp",
         date: teeTime.providerDate,
         teeTimeId: teeTime.id,
@@ -724,11 +839,9 @@ export class SearchService {
         minimumOfferPrice: bookings.minimumOfferPrice,
         date: teeTimes.providerDate,
         time: teeTimes.time,
-
         greenFee: teeTimes.greenFeePerPlayer,
         profilePicture: {
           key: assets.key,
-          cdnUrl: assets.cdn,
           extension: assets.extension,
         },
       })
@@ -778,7 +891,7 @@ export class SearchService {
               soldById: booking?.ownerId,
               soldByName: booking?.ownerName ?? "Anonymous",
               soldByImage: booking?.profilePicture
-                ? `https://${booking?.profilePicture.cdnUrl}/${booking?.profilePicture.key}.${booking?.profilePicture.extension}`
+                ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${booking?.profilePicture.key}.${booking?.profilePicture.extension}`
                 : "/defaults/default-profile.webp",
               pricePerGolfer:
                 booking.listingId && booking.listPrice

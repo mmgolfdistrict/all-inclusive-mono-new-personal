@@ -25,7 +25,7 @@ import { SideBar } from "./side-bar";
 export const CourseNav = () => {
   const { user } = useUserContext();
   const { course } = useCourseContext();
-  const { setPrevPath } = useAppContext();
+  const { entity, setPrevPath } = useAppContext();
   const courseId = course?.id;
   const [isSideBarOpen, setIsSideBarOpen] = useState<boolean>(false);
   const isMobile = useMediaQuery("(max-width: 768px)");
@@ -42,7 +42,7 @@ export const CourseNav = () => {
   const auditLog = api.webhooks.auditLog.useMutation();
   const logAudit = async () => {
     await auditLog.mutateAsync({
-      userId: "",
+      userId: user?.id ?? "",
       teeTimeId: "",
       bookingId: "",
       listingId: "",
@@ -95,15 +95,26 @@ export const CourseNav = () => {
         <div
           className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transform`}
         >
-          <Link href="/" data-testid="course-logo-id">
+          {entity?.redirectToCourseFlag ? (
             <BlurImage
               src={course?.logo ?? ""}
               alt="course logo"
               width={60}
               height={100}
               className="w-[50px] object-fit"
+              data-testid="course-logo-id"
             />
-          </Link>
+          ) : (
+            <Link href="/" data-testid="course-logo-id">
+              <BlurImage
+                src={course?.logo ?? ""}
+                alt="course logo"
+                width={60}
+                height={100}
+                className="w-[50px] object-fit"
+              />
+            </Link>
+          )}
         </div>
         <div className="flex items-center gap-6 md:gap-4">
           <div className="hidden md:block">
