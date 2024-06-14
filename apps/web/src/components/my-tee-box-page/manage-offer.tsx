@@ -74,7 +74,7 @@ const handleBlur = () => {
   }
 };
 
-const handleBid = (e: ChangeEvent<HTMLInputElement>) => {
+const handleListingPrice = (e: ChangeEvent<HTMLInputElement>) => {
   const value = e.target.value.replace(/[$,]/g, "");
 
   const decimals = value.split(".")[1];
