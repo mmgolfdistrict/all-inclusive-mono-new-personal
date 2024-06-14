@@ -268,11 +268,12 @@ export class TokenizeService {
             },
           });
         } catch (error) {
-          await this.notificationService.sendEmail(
-            process.env.ADMIN_EMAIL || "nara@golfdistrict.com",
-            "sensible Failed",
-            "error in sensible"
-          );
+          const adminEmail: string = process.env.ADMIN_EMAIL_LIST || "nara@golfdistrict.com";
+          const emailAterSplit = adminEmail.split(",");
+          emailAterSplit.map(async (email) => {
+            await this.notificationService.sendEmail(email, "sensible Failed", "error in sensible");
+          });
+
           this.loggerService.errorLog({
             userId: userId,
             url: "/checkout",
