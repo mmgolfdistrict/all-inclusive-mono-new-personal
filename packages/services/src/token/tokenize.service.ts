@@ -253,19 +253,35 @@ export class TokenizeService {
       console.log(`weatherGuaranteeData length = ${weatherGuaranteeData?.length}`);
 
       if (weatherGuaranteeData?.length > 0) {
-        acceptedQuote = await this.sensibleService.acceptQuote({
-          quoteId: weatherGuaranteeData[0].product_data.metadata.sensible_quote_id,
-          price_charged: weatherGuaranteeData[0].price / 100,
-          reservation_id: bookingId,
-          lang_locale: "en_US",
-          user: {
-            email: normalizedCartData?.cart?.email,
-            name: normalizedCartData.cart?.name,
-            phone: normalizedCartData.cart?.phone
-              ? `+${normalizedCartData?.cart?.phone_country_code}${normalizedCartData?.cart?.phone}`
-              : "",
-          },
-        });
+        try {
+          acceptedQuote = await this.sensibleService.acceptQuote({
+            quoteId: weatherGuaranteeData[0].product_data.metadata.sensible_quote_id,
+            price_charged: weatherGuaranteeData[0].price / 100,
+            reservation_id: bookingId,
+            lang_locale: "en_US",
+            user: {
+              email: normalizedCartData?.cart?.email,
+              name: normalizedCartData.cart?.name,
+              phone: normalizedCartData.cart?.phone
+                ? `+${normalizedCartData?.cart?.phone_country_code}${normalizedCartData?.cart?.phone}`
+                : "",
+            },
+          });
+        } catch (error) {
+          await this.notificationService.sendEmail(
+            process.env.ADMIN_EMAIL || "nara@golfdistrict.com",
+            "sensible Failed",
+            "error in sensible"
+          );
+          this.loggerService.errorLog({
+            userId: userId,
+            url: "/checkout",
+            userAgent: "",
+            message: "SENSIBLE_ERROR",
+            stackTrace: "",
+            additionalDetailsJSON: "Error in accepting quote ",
+          });
+        }
       }
     }
 
