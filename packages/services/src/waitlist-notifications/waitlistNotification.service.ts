@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { and, asc, eq, type Db, inArray } from "@golf-district/database";
+import { and, asc, eq, type Db, inArray, gte } from "@golf-district/database";
 import type { InsertWaitlistNotifications } from "@golf-district/database/schema/waitlistNotifications";
 import { waitlistNotifications } from "@golf-district/database/schema/waitlistNotifications";
 import Logger from "@golf-district/shared/src/logger";
@@ -10,7 +10,9 @@ import type {
 } from "./types";
 import dayjs from "dayjs";
 import { courses } from "@golf-district/database/schema/courses";
+import UTC from "dayjs/plugin/utc";
 
+dayjs.extend(UTC);
 /**
  * Service class for handling waitlist notification operations.
  */
@@ -21,6 +23,7 @@ export class WaitlistNotificationService {
 
   getWaitlist = async (userId: string, courseId: string) => {
     try {
+      const today = new Date(dayjs().startOf('day').utc().format("YYYY-MM-DD HH:mm:ss"));
       const waitlist = await this.database
         .select({
           id: waitlistNotifications.id,
@@ -37,10 +40,11 @@ export class WaitlistNotificationService {
           and(
             eq(waitlistNotifications.userId, userId),
             eq(waitlistNotifications.courseId, courseId),
-            eq(waitlistNotifications.isDeleted, false)
+            eq(waitlistNotifications.isDeleted, false),
+            gte(waitlistNotifications.date, today)
           )
         )
-        .orderBy(asc(waitlistNotifications.date), asc(waitlistNotifications.startTime))
+        .orderBy(asc(waitlistNotifications.date), asc(waitlistNotifications.playerCount), asc(waitlistNotifications.startTime))
         .execute()
         .catch((err) => {
           this.logger.error(`error getting waitlist from database: ${err}`);
@@ -150,6 +154,7 @@ export class WaitlistNotificationService {
 
       const newNotification = waitlistNotification;
 
+      // converting date to utc format
       const date = new Date(dayjs(waitlistNotification.date).format("YYYY-MM-DD") + "T00:00:00Z");
 
       const waitlist = await this.database
@@ -202,7 +207,7 @@ export class WaitlistNotificationService {
       insertNotifications.push({
         ...newNotification,
         id: randomUUID(),
-        date: new Date(dayjs(newNotification.date).format("YYYY-MM-DD") + "T00:00:00Z"),
+        date: date,
       });
       return [insertNotifications, deleteNotifications];
     } catch (error) {

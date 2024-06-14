@@ -13,6 +13,7 @@ import { Close } from "~/components/icons/close";
 import { ChoosePlayers } from "~/components/input/choose-players";
 import { Input } from "~/components/input/input";
 import Waitlists from "~/components/waitlist-page/waitlists";
+import { useCourseContext } from "~/contexts/CourseContext";
 import { useMe } from "~/hooks/useMe";
 import { api } from "~/utils/api";
 import type { Dayjs } from "dayjs";
@@ -23,6 +24,7 @@ import { toast } from "react-toastify";
 function NotifyMe({ params }: { params: { course: string } }) {
   const router = useRouter();
   const { user, isLoading } = useMe();
+  const { course } = useCourseContext();
   const courseId = params.course;
   const [selectedDates, setSelectedDates] = useState<Day[]>([]);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
@@ -33,6 +35,10 @@ function NotifyMe({ params }: { params: { course: string } }) {
   const [timeRange, setTimeRange] = useState<string>("");
   const [players, setPlayers] = useState("1");
   const [errorMessage, setErrorMessage] = useState<string>("");
+
+  if (!course?.supportsNotification || !course) {
+    router.push(`/${courseId}`);
+  }
 
   const { refetch: refetchWaitlist } =
     api.waitlistNotification.getWaitlist.useQuery(
