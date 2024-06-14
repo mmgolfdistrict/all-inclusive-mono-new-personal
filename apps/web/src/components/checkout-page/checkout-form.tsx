@@ -362,8 +362,8 @@ export const CheckoutForm = ({
                   onChange={(e) => {
                     setCharityAmountError("");
                     const value = e.target.value
-                      .replace("$", "")
-                      .replaceAll(",", "");
+                      .replace(/\$/g, "")
+                      .replace(/,/g, "");
 
                     if (Number(value) < 0) return;
 
