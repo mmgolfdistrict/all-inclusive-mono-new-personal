@@ -16,6 +16,7 @@ import { searchRouter } from "./routers/search";
 import { sensibleRouter } from "./routers/sensible";
 import { uploadRouter } from "./routers/upload";
 import { userRouter } from "./routers/user";
+import { waitlistNotificationRouter } from "./routers/waitlistNotification";
 import { watchlistRouter } from "./routers/watchlist";
 import { weatherRouter } from "./routers/weather";
 import { webhookRouter } from "./routers/webhooks";
@@ -43,6 +44,7 @@ export const appRouter = createTRPCRouter({
   teeBox: bookingRouter,
   cashOut: cashOutRouter,
   profanity: profanityRouter,
+  waitlistNotification: waitlistNotificationRouter,
 });
 
 export type AppRouter = typeof appRouter;

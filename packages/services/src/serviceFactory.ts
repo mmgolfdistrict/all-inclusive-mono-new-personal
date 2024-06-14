@@ -27,6 +27,7 @@ import {
 } from "./index";
 import { ProfanityService } from "./profanity/profanity.service";
 import { ProviderService } from "./tee-sheet-provider/providers.service";
+import { WaitlistNotificationService } from "./waitlist-notifications/waitlistNotification.service";
 import { FinixService } from "./webhooks/finix.service";
 import { LoggerService } from "./webhooks/logging.service";
 import { PaymentVerifierService } from "./webhooks/paymentverifier.service";
@@ -362,5 +363,9 @@ export class ServiceFactory {
   };
   getProfanityService = (): ProfanityService => {
     return new ProfanityService(this.config.database);
+  };
+
+  getWaitlistNotificationService = (): WaitlistNotificationService => {
+    return new WaitlistNotificationService(this.config.database);
   };
 }
