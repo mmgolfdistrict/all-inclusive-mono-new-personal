@@ -10,8 +10,8 @@ export const Footer = () => {
         <img
           alt="golf district logo"
           src={`https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/desktopfooterlogo.png`}
-          width={`${isMobile ? null : "157"}`}
-          height={`${isMobile ? null : "39"}`}
+          width={157}
+          height={39}
         />
       </div>
       <div className="flex flex-col items-start gap-2 md:items-end lg:flex-row lg:items-center">
