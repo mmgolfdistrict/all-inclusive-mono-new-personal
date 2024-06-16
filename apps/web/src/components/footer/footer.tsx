@@ -39,6 +39,8 @@ export const Footer = () => {
         <img
           alt="golf district logo"
           src={`https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/mobilefooterlogo.png`}
+          width={157}
+          height={39}
         />
       </div>
     </div>
