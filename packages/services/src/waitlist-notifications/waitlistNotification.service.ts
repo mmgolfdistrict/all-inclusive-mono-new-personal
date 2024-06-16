@@ -1,16 +1,16 @@
 import { randomUUID } from "crypto";
-import { and, asc, eq, type Db, inArray, gte } from "@golf-district/database";
+import { and, asc, eq, gte, inArray, type Db } from "@golf-district/database";
+import { courses } from "@golf-district/database/schema/courses";
 import type { InsertWaitlistNotifications } from "@golf-district/database/schema/waitlistNotifications";
 import { waitlistNotifications } from "@golf-district/database/schema/waitlistNotifications";
 import Logger from "@golf-district/shared/src/logger";
+import dayjs from "dayjs";
+import UTC from "dayjs/plugin/utc";
 import type {
   CreateWaitlistNotification,
   CreateWaitlistNotifications,
   UpdateWaitlistNotification,
 } from "./types";
-import dayjs from "dayjs";
-import { courses } from "@golf-district/database/schema/courses";
-import UTC from "dayjs/plugin/utc";
 
 dayjs.extend(UTC);
 /**
@@ -19,11 +19,11 @@ dayjs.extend(UTC);
 export class WaitlistNotificationService {
   private readonly logger = Logger(WaitlistNotificationService.name);
 
-  constructor(private readonly database: Db) { }
+  constructor(private readonly database: Db) {}
 
   getWaitlist = async (userId: string, courseId: string) => {
     try {
-      const today = new Date(dayjs().startOf('day').utc().format("YYYY-MM-DD HH:mm:ss"));
+      const today = new Date(dayjs().startOf("day").utc().format("YYYY-MM-DD HH:mm:ss"));
       const waitlist = await this.database
         .select({
           id: waitlistNotifications.id,
@@ -44,7 +44,11 @@ export class WaitlistNotificationService {
             gte(waitlistNotifications.date, today)
           )
         )
-        .orderBy(asc(waitlistNotifications.date), asc(waitlistNotifications.playerCount), asc(waitlistNotifications.startTime))
+        .orderBy(
+          asc(waitlistNotifications.date),
+          asc(waitlistNotifications.playerCount),
+          asc(waitlistNotifications.startTime)
+        )
         .execute()
         .catch((err) => {
           this.logger.error(`error getting waitlist from database: ${err}`);

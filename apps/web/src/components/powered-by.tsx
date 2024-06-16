@@ -18,8 +18,8 @@ export const PoweredBy = (props: ComponentProps<"div">) => {
         src={`https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${
           isMobile ? "mobileheaderlogo.png" : "desktopheaderlogo.png"
         }`}
-        width={`{isMobile ? null : "157"}`}
-        height={`{isMobile ? null : "39"}`}
+        width={`${isMobile ? null : "157"}`}
+        height={`${isMobile ? null : "39"}`}
       />
     </div>
   );
