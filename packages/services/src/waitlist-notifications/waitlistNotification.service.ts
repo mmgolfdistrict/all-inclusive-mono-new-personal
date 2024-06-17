@@ -1,16 +1,20 @@
 import { randomUUID } from "crypto";
-import { and, asc, eq, type Db, inArray, gte } from "@golf-district/database";
+import { and, asc, eq, gte, inArray, lt, lte, type Db } from "@golf-district/database";
+import { courses } from "@golf-district/database/schema/courses";
+import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import type { InsertWaitlistNotifications } from "@golf-district/database/schema/waitlistNotifications";
 import { waitlistNotifications } from "@golf-district/database/schema/waitlistNotifications";
 import Logger from "@golf-district/shared/src/logger";
+import dayjs from "dayjs";
+import UTC from "dayjs/plugin/utc";
 import type {
   CreateWaitlistNotification,
   CreateWaitlistNotifications,
   UpdateWaitlistNotification,
+  WaitlistNotification,
 } from "./types";
-import dayjs from "dayjs";
-import { courses } from "@golf-district/database/schema/courses";
-import UTC from "dayjs/plugin/utc";
+import type { NotificationService } from "../notification/notification.service";
+import { entities } from "@golf-district/database/schema/entities";
 
 dayjs.extend(UTC);
 /**
@@ -19,11 +23,11 @@ dayjs.extend(UTC);
 export class WaitlistNotificationService {
   private readonly logger = Logger(WaitlistNotificationService.name);
 
-  constructor(private readonly database: Db) { }
+  constructor(private readonly database: Db, private readonly notificationService: NotificationService) { }
 
   getWaitlist = async (userId: string, courseId: string) => {
     try {
-      const today = new Date(dayjs().startOf('day').utc().format("YYYY-MM-DD HH:mm:ss"));
+      const today = new Date(dayjs().startOf("day").utc().format("YYYY-MM-DD HH:mm:ss"));
       const waitlist = await this.database
         .select({
           id: waitlistNotifications.id,
@@ -44,7 +48,11 @@ export class WaitlistNotificationService {
             gte(waitlistNotifications.date, today)
           )
         )
-        .orderBy(asc(waitlistNotifications.date), asc(waitlistNotifications.playerCount), asc(waitlistNotifications.startTime))
+        .orderBy(
+          asc(waitlistNotifications.date),
+          asc(waitlistNotifications.playerCount),
+          asc(waitlistNotifications.startTime)
+        )
         .execute()
         .catch((err) => {
           this.logger.error(`error getting waitlist from database: ${err}`);
@@ -210,6 +218,161 @@ export class WaitlistNotificationService {
         date: date,
       });
       return [insertNotifications, deleteNotifications];
+    } catch (error) {
+      this.logger.error(error);
+      throw error;
+    }
+  };
+
+  sendWaitlistNotifications = async () => {
+    try {
+      const today = new Date(dayjs().startOf("day").add(1, "day").utc().format("YYYY-MM-DD HH:mm:ss")); // want to send notification for tomorrow
+
+      // get all notifications
+      const notifications = await this.database
+        .select({
+          id: waitlistNotifications.id,
+          userId: waitlistNotifications.userId,
+          courseId: waitlistNotifications.courseId,
+          startTime: waitlistNotifications.startTime,
+          endTime: waitlistNotifications.endTime,
+          playerCount: waitlistNotifications.playerCount,
+          date: waitlistNotifications.date,
+        })
+        .from(waitlistNotifications)
+        .where(and(eq(waitlistNotifications.isDeleted, false), gte(waitlistNotifications.date, today)))
+        .orderBy(
+          asc(waitlistNotifications.date),
+          asc(waitlistNotifications.playerCount),
+          asc(waitlistNotifications.startTime)
+        )
+        .execute()
+        .catch((err) => {
+          this.logger.error(`error getting waitlist from database: ${err}`);
+          throw new Error("Error getting waitlist");
+        });
+      // console.log("notificationsGroupedByCourse", notifications);
+
+      // group notifications by courseIDs (order them by date)
+      const notificationsGroupedByCourse = notifications.reduce((acc, notification: WaitlistNotification) => {
+        if (!acc[notification.courseId]) {
+          acc[notification.courseId] = [];
+        }
+        acc[notification.courseId]!.push(notification);
+        return acc;
+      }, {} as Record<string, WaitlistNotification[]>);
+      // console.dir(notificationsGroupedByCourse, { depth: null });
+
+      // for each course's notifications group them again by userIDs
+      const notificationsGroupedByUserAndCourse = Object.keys(notificationsGroupedByCourse).reduce(
+        (acc, courseId) => {
+          const notifications = notificationsGroupedByCourse[courseId];
+          notifications?.forEach((notification) => {
+            if (
+              !acc?.[notification.courseId] ||
+              (acc?.[notification.courseId] && !acc[notification.courseId]![notification.userId])
+            ) {
+              if (!acc[notification.courseId]) {
+                acc[notification.courseId] = {};
+              }
+              acc[notification.courseId]![notification.userId] = [];
+            }
+            acc?.[notification.courseId]?.[notification.userId]?.push(notification);
+          });
+          return acc;
+        },
+        {} as Record<string, Record<string, WaitlistNotification[]>>
+      );
+
+      // console.dir(notificationsGroupedByUser, { depth: null });
+
+      // for each user's notifications check availablity for each date(for now)
+      for (const courseId in notificationsGroupedByUserAndCourse) {
+        const [entity] = await this.database
+          .select({ subdomain: entities.subdomain })
+          .from(courses)
+          .innerJoin(entities, eq(courses.entityId, entities.id))
+          .where(eq(courses.id, courseId))
+          .execute()
+          .catch((err) => {
+            this.logger.error(err);
+            throw new Error(err);
+          });
+
+        if (!entity) {
+          throw new Error("No subdomain found for course: " + courseId);
+        }
+
+        for (const userId in notificationsGroupedByUserAndCourse[courseId]) {
+          const notifications = notificationsGroupedByUserAndCourse?.[courseId]?.[userId];
+
+          if (!notifications || notifications.length === 0) {
+            continue;
+          }
+
+          const availibilites = await this.getAvailableTeeTimesBasedOnNotification(notifications);
+          console.log("notifications", notifications);
+          console.log("availibilites", availibilites);
+
+          const urls = availibilites.map((teeTime) => {
+            // return `https://${entity.subdomain}/${courseId}/checkout?teeTimeId=${teeTime.id}&playerCount=${teeTime.playerCount}`;
+            return `http://localhost:3000/${courseId}/checkout?teeTimeId=${teeTime.id}&playerCount=${teeTime.playerCount}`;
+          });
+
+          if (availibilites.length > 0) {
+            // send email to user
+            this.notificationService.createNotification(userId, "Waitlist Notification",
+              `
+              Your tee time(s) are available!
+              ${urls.join("\n")}
+              `
+              , courseId);
+          }
+        }
+      }
+    } catch (error) {
+      this.logger.error(error);
+      throw error;
+    }
+  };
+
+  getAvailableTeeTimesBasedOnNotification = async (notifications: WaitlistNotification[]) => {
+    try {
+      const MAX_AVAILABLE_TEE_TIMES_TO_RETURN = 3;
+      const availableTeeTimesToReturn = [];
+
+      for (const notification of notifications) {
+        if (availableTeeTimesToReturn.length > MAX_AVAILABLE_TEE_TIMES_TO_RETURN) {
+          return availableTeeTimesToReturn.slice(0, MAX_AVAILABLE_TEE_TIMES_TO_RETURN);
+        }
+        // console.log(dayjs(notification.date).utc().format("YYYY-MM-DD HH:mm:ss.SSS"));
+        // console.log(dayjs(notification.date).add(1, 'day').utc().format("YYYY-MM-DD HH:mm:ss.SSS"));
+        const availableTeeTimes = await this.database
+          .select()
+          .from(teeTimes)
+          .where(
+            and(
+              eq(teeTimes.courseId, notification.courseId),
+              gte(teeTimes.providerDate, dayjs(notification.date).utc().format("YYYY-MM-DD HH:mm:ss.SSS")),
+              lt(
+                teeTimes.providerDate,
+                dayjs(notification.date).add(1, "day").utc().format("YYYY-MM-DD HH:mm:ss.SSS")
+              ),
+              gte(teeTimes.time, notification.startTime),
+              lte(teeTimes.time, notification.endTime),
+              gte(teeTimes.availableFirstHandSpots, notification.playerCount)
+            )
+          )
+          .orderBy(asc(teeTimes.time))
+          .limit(3)
+          .execute()
+          .catch((err) => {
+            this.logger.error(`error getting teeTimes from database: ${err}`);
+            throw new Error("Error getting teeTimes");
+          });
+        availableTeeTimesToReturn.push(...availableTeeTimes.map((teeTime) => ({ ...teeTime, playerCount: notification.playerCount })));
+      }
+      return availableTeeTimesToReturn;
     } catch (error) {
       this.logger.error(error);
       throw error;

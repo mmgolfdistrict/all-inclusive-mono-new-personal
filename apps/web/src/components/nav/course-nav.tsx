@@ -14,6 +14,7 @@ import { Auction } from "../icons/auction";
 import { Calendar } from "../icons/calendar";
 import { Hamburger } from "../icons/hamburger";
 import { Marketplace } from "../icons/marketplace";
+import { Megaphone } from "../icons/megaphone";
 import { MyOffers } from "../icons/my-offers";
 import { Search } from "../icons/search";
 import { BlurImage } from "../images/blur-image";
@@ -163,6 +164,7 @@ export const CourseNav = () => {
               <NavItem
                 href={`/${courseId}/notify-me`}
                 text="Notify Me"
+                icon={<Megaphone className="w-[16px]" />}
                 data-testid="notify-me-id"
                 data-test={courseId}
               />
