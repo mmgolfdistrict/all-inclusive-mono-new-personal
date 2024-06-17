@@ -358,6 +358,7 @@ export class CheckoutService {
         providerId: providerCourseLink.providerId,
         internalId: providers.internalId,
         time: teeTimes.time,
+        providerCourseConfiguration: providerCourseLink.providerCourseConfiguration,
       })
       .from(teeTimes)
       .leftJoin(courses, eq(courses.id, teeTimes.courseId))
@@ -386,7 +387,8 @@ export class CheckoutService {
 
     const { provider, token } = await this.providerService.getProviderAndKey(
       teeTime.internalId!,
-      teeTime.courseId
+      teeTime.courseId,
+      teeTime.providerCourseConfiguration!
     );
 
     // const [formattedDate] = teeTime.date.split(" ");

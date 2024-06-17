@@ -40,11 +40,11 @@ export class ProviderService extends CacheService {
     private readonly database: Db,
     redisUrl: string,
     redisToken: string,
-    foreUpCredentials: ForeUpCredentials
+    foreUpCredentials: ForeUpCredentials,
   ) {
     super(redisUrl, redisToken, Logger(ProviderService.name));
     //this will need to be refactored to allow for providers with different credentials per course
-    this.teeSheetProviders = [new foreUp(foreUpCredentials)];
+    this.teeSheetProviders = [new foreUp(foreUpCredentials)]
   }
 
   /**
@@ -55,14 +55,18 @@ export class ProviderService extends CacheService {
    */
   getProviderAndKey = async (
     internalProviderIdentifier: string,
-    courseId: string
+    courseId: string,
+    providerCourseConfiguration?: string
   ): Promise<{ provider: ProviderAPI; token: string }> => {
     this.logger.info(`getProvider called with providerId: ${internalProviderIdentifier}`);
     const provider = this.teeSheetProviders.find((p) => p.providerId === internalProviderIdentifier);
+
     if (!provider) {
       this.logger.fatal(`Provider with ID ${internalProviderIdentifier} not found`);
       throw new Error(`Provider with ID ${internalProviderIdentifier} not found`);
     }
+
+    provider.providerConfiguration = providerCourseConfiguration;
     let token = await this.getCache(
       `provider-${internalProviderIdentifier}-${courseId}-${process.env.NODE_ENV}`
     )!;
