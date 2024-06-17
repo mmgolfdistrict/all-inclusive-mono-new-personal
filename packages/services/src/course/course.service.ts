@@ -72,7 +72,7 @@ export class CourseService extends DomainService {
         supportsOffers: courses.supportsOffers,
         supportsWatchlist: courses.supportsWatchlist,
         supportsPromocode: courses.supportsPromocode,
-        supportsNotification: courses.supportsNotification,
+        supportsWaitlist: courses.supportsWaitlist,
         buyerFee: courses.buyerFee,
         sellerFee: courses.sellerFee,
       })

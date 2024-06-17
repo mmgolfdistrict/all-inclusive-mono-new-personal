@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
-export const waitlistNotificationRouter = createTRPCRouter({
+export const userWaitlistRouter = createTRPCRouter({
   getWaitlist: protectedProcedure
     .input(
       z.object({
@@ -10,7 +10,7 @@ export const waitlistNotificationRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       return await ctx.serviceFactory
-        .getWaitlistNotificationService()
+        .getUserWaitlistService()
         .getWaitlist(ctx.session.user.id, input.courseId);
     }),
   createWaitlistNotification: protectedProcedure
@@ -25,7 +25,7 @@ export const waitlistNotificationRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       return await ctx.serviceFactory
-        .getWaitlistNotificationService()
+        .getUserWaitlistService()
         .createWaitlistNotifications({ ...input, userId: ctx.session.user.id });
     }),
   deleteWaitlistNotification: protectedProcedure
@@ -35,6 +35,6 @@ export const waitlistNotificationRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      return await ctx.serviceFactory.getWaitlistNotificationService().deleteWaitlistNotifications(input.ids);
+      return await ctx.serviceFactory.getUserWaitlistService().deleteWaitlistNotifications(input.ids);
     }),
 });

@@ -10,7 +10,7 @@ import { favorites } from "./favorites";
 import { providers } from "./providers";
 import { teeTimes } from "./teeTimes";
 import { transfers } from "./transfers";
-import { waitlistNotifications } from "./waitlistNotifications";
+import { userWaitlists } from "./userWaitlists";
 
 export const courses = mySqlTable(
   "course",
@@ -41,7 +41,7 @@ export const courses = mySqlTable(
     supportsOffers: boolean("supportsOffers").default(false).notNull(),
     supportsWatchlist: boolean("supportsWatchlist").default(false).notNull(),
     supportsPromocode: boolean("supportsPromocode").default(false).notNull(),
-    supportsNotification: boolean("supportsNotification").default(false).notNull(),
+    supportsWaitlist: boolean("supportsWaitlist").default(false).notNull(),
     buyerFee: int("buyerFee").default(1).notNull(),
     sellerFee: int("sellerFee").default(1).notNull(),
     lastUpdatedDateTime: datetime("lastUpdatedDateTime", { mode: "string", fsp: 3 })
@@ -79,7 +79,7 @@ export const coursesRelations = relations(courses, ({ one, many }) => ({
     fields: [courses.logoId],
     references: [assets.id],
   }),
-  waitlistNotifications: many(waitlistNotifications),
+  userWaitlists: many(userWaitlists),
 }));
 
 export type SelectCourses = InferSelectModel<typeof courses>;

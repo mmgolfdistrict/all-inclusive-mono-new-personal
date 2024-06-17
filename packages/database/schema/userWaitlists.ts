@@ -4,8 +4,8 @@ import { mySqlTable } from "./_table";
 import { courses } from "./courses";
 import { users } from "./users";
 
-export const waitlistNotifications = mySqlTable(
-  "waitlistNotification",
+export const userWaitlists = mySqlTable(
+  "userWaitlist",
   {
     id: varchar("id", { length: 36 }).notNull().primaryKey(),
     userId: varchar("userId", { length: 36 }).notNull(),
@@ -21,26 +21,26 @@ export const waitlistNotifications = mySqlTable(
   },
   (table) => {
     return {
-      date: index("WaitlistNotification_date_idx").on(table.date),
-      userId: index("WaitlistNotification_userId_idx").on(table.userId),
-      courseId: index("WaitlistNotification_courseId_idx").on(table.courseId),
-      startTime: index("WaitlistNotification_startTime_idx").on(table.startTime),
-      endTime: index("WaitlistNotification_endTime_idx").on(table.endTime),
-      playerCount: index("WaitlistNotification_playerCount_idx").on(table.playerCount),
+      date: index("userWaitlist_date_idx").on(table.date),
+      userId: index("userWaitlist_userId_idx").on(table.userId),
+      courseId: index("userWaitlist_courseId_idx").on(table.courseId),
+      startTime: index("userWaitlist_startTime_idx").on(table.startTime),
+      endTime: index("userWaitlist_endTime_idx").on(table.endTime),
+      playerCount: index("userWaitlist_playerCount_idx").on(table.playerCount),
     };
   }
 );
 
-export const waitlistNotificationsRelations = relations(waitlistNotifications, ({ one }) => ({
+export const userWaitlistsRelations = relations(userWaitlists, ({ one }) => ({
   user: one(users, {
-    fields: [waitlistNotifications.userId],
+    fields: [userWaitlists.userId],
     references: [users.id],
   }),
   course: one(courses, {
-    fields: [waitlistNotifications.courseId],
+    fields: [userWaitlists.courseId],
     references: [courses.id],
   }),
 }));
 
-export type SelectWaitlistNotifications = InferSelectModel<typeof waitlistNotifications>;
-export type InsertWaitlistNotifications = InferInsertModel<typeof waitlistNotifications>;
+export type SelectUserWaitlists = InferSelectModel<typeof userWaitlists>;
+export type InsertUserWaitlists = InferInsertModel<typeof userWaitlists>;

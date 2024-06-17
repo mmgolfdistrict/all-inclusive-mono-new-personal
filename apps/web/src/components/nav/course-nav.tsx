@@ -159,7 +159,7 @@ export const CourseNav = () => {
               data-testid="tee-time-id"
               data-test={courseId}
             />
-            {course?.supportsNotification ? (
+            {course?.supportsWaitlist ? (
               <NavItem
                 href={`/${courseId}/notify-me`}
                 text="Notify Me"
