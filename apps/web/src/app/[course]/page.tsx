@@ -107,20 +107,16 @@ export default function CourseHomePage() {
       case "This Week":
       case "This Month":
       case "Furthest Day Out To Book": {
-        // Enclose in block to avoid lexical declaration issues
         return formatDate(new Date());
       }
       case "Today": {
-        // Enclose in block to avoid lexical declaration issues
         return getUtcDate(new Date());
       }
       case "This Weekend": {
-        // Enclose in block to avoid lexical declaration issues
         const weekendDate = dayjs().day(5).toDate();
         return formatDate(weekendDate);
       }
       case "Custom": {
-        // Enclose in block to avoid lexical declaration issues
         if (!selectedDay.from) return formatDate(new Date());
         const { year, month, day } = selectedDay.from;
         const dateString = `${year}-${month}-${day}`;
@@ -128,7 +124,6 @@ export default function CourseHomePage() {
         return formatDate(customDate);
       }
       default: {
-        // Enclose in block to avoid lexical declaration issues
         return formatDate(new Date());
       }
     }
@@ -328,13 +323,12 @@ export default function CourseHomePage() {
 
   const datesArr = datesWithData ?? daysData.arrayOfDates;
   const amountOfPage = Math.ceil(
-    (datesWithData ? datesWithData.length : daysData.amountOfPages) / TAKE
+    (datesWithData ? ((datesWithData.length-1)===0?1:(datesWithData.length-1)) : daysData.amountOfPages) / TAKE
   );
   const finalRes = [...datesArr].slice(
     (pageNumber - 1) * TAKE,
     pageNumber * TAKE
   );
-
   return (
     <main className="bg-secondary-white py-4 md:py-6">
       <LoadingContainer isLoading={isLoadingTeeTimeDate || isLoading}>
