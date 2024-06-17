@@ -404,7 +404,12 @@ export class ForeUpWebhookService {
         throw new Error("Tee time not available for booking");
       }
       const [indexedTeeTime] = await this.database
-        .select()
+        .select({
+          id: teeTimes.id,
+          courseId: teeTimes.courseId,
+          availableFirstHandSpots: teeTimes.availableFirstHandSpots,
+          availableSecondHandSpots: teeTimes.availableSecondHandSpots,
+        })
         .from(teeTimes)
         .where(eq(teeTimes.providerTeeTimeId, teeTime.id))
         .execute()
