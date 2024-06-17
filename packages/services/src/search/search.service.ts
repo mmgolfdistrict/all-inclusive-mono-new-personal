@@ -544,7 +544,7 @@ export class SearchService {
     return teeTimeDate?.[0]?.date ?? "";
   }
 
-  formatDateToRFC2822 = (dateString: string) => {
+  formatDateToAppropriateFormat = (dateString: string) => {
     const date = new Date(dateString);
     const rfc2822Date = date.toUTCString();
     return rfc2822Date;
@@ -637,7 +637,7 @@ export class SearchService {
 
     const firstHandAndSecondHandResult = [...firstHandResults, ...secondHandResults];
     const firstHandAndSecondHandResultDates = firstHandAndSecondHandResult.map((el) =>
-      this.formatDateToRFC2822(el.providerDate as string)
+      this.formatDateToAppropriateFormat(el.providerDate as string)
     );
     const uniqueSetfirstHandAndSecondHandResultDates = new Set(firstHandAndSecondHandResultDates);
     const uniqueArrayfirstHandAndSecondHandResultDates = Array.from(
