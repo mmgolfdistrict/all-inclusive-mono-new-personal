@@ -13,7 +13,12 @@ export const PoweredBy = (props: ComponentProps<"div">) => {
       <sup className="text-[10px] text-primary-black md:text-[12px]">
         Powered by
       </sup>
-      <img alt="golf district logo" src={`https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${isMobile ? "mobileheaderlogo.png" : "desktopheaderlogo.png"}`} />
+      <img
+        alt="golf district logo"
+        src={`https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${
+          isMobile ? "mobileheaderlogo.png" : "desktopheaderlogo.png"
+        }`}
+      />
     </div>
   );
 };

@@ -544,11 +544,11 @@ export class SearchService {
     return teeTimeDate?.[0]?.date ?? "";
   }
 
- formatDateToRFC2822=(dateString: string)=> {
+  formatDateToRFC2822 = (dateString: string) => {
     const date = new Date(dateString);
     const rfc2822Date = date.toUTCString();
     return rfc2822Date;
-  }
+  };
 
   async checkTeeTimesAvailabilityForDateRange({
     dates,
@@ -571,75 +571,77 @@ export class SearchService {
     _userId,
   }: CheckTeeTimesAvailabilityParams) {
     const res: string[] = [];
-      const userId = _userId ?? "00000000-0000-0000-0000-000000000000";
-      const minDateSubquery = dayjs(minDate).utc().hour(0).minute(0).second(0).millisecond(0).toISOString();
-      const maxDateSubquery = dayjs(maxDate)
-        .utc()
-        .hour(23)
-        .minute(59)
-        .second(59)
-        .millisecond(999)
-        .toISOString();
-      const startDate = dayjs(minDateSubquery).utc().hour(0).minute(0).second(0).millisecond(0).toISOString();
-      const endDate = dayjs(maxDateSubquery).utc().hour(23).minute(59).second(59).millisecond(999).toISOString();
-      const nowInCourseTimezone = dayjs().utc().utcOffset(timezoneCorrection).format("YYYY-MM-DD HH:mm:ss");
-      const currentTimePlus30Min = dayjs
-        .utc(nowInCourseTimezone)
-        .utcOffset(timezoneCorrection)
-        .add(30, "minutes")
-        .toISOString();
+    const userId = _userId ?? "00000000-0000-0000-0000-000000000000";
+    const minDateSubquery = dayjs(minDate).utc().hour(0).minute(0).second(0).millisecond(0).toISOString();
+    const maxDateSubquery = dayjs(maxDate)
+      .utc()
+      .hour(23)
+      .minute(59)
+      .second(59)
+      .millisecond(999)
+      .toISOString();
+    const startDate = dayjs(minDateSubquery).utc().hour(0).minute(0).second(0).millisecond(0).toISOString();
+    const endDate = dayjs(maxDateSubquery)
+      .utc()
+      .hour(23)
+      .minute(59)
+      .second(59)
+      .millisecond(999)
+      .toISOString();
+    const nowInCourseTimezone = dayjs().utc().utcOffset(timezoneCorrection).format("YYYY-MM-DD HH:mm:ss");
+    const currentTimePlus30Min = dayjs
+      .utc(nowInCourseTimezone)
+      .utcOffset(timezoneCorrection)
+      .add(30, "minutes")
+      .toISOString();
 
-     
-    const firstHandResults=await this.database
-        .selectDistinct({providerDate:sql`Date(${teeTimes.providerDate})`})
-        .from(teeTimes)
-        .innerJoin(courses, eq(courses.id, courseId))
-        .where(
-                and(
-                  gte(teeTimes.providerDate, currentTimePlus30Min),
-                  between(teeTimes.providerDate, minDateSubquery, maxDateSubquery),
-                  and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
-                  sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 >= ${lowerPrice}`,
-                  sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 <= ${upperPrice}`,
-                  eq(teeTimes.numberOfHoles, holes),
-                  gt(teeTimes.availableFirstHandSpots, 0),
-                  or(
-                    gte(teeTimes.availableFirstHandSpots, golfers),
-                    gte(teeTimes.availableSecondHandSpots, golfers)
-                  )
-                )
-              )
-          .orderBy(asc(sql`Date(${teeTimes.providerDate})`))    
-        .execute();
+    const firstHandResults = await this.database
+      .selectDistinct({ providerDate: sql`Date(${teeTimes.providerDate})` })
+      .from(teeTimes)
+      .innerJoin(courses, eq(courses.id, courseId))
+      .where(
+        and(
+          gte(teeTimes.providerDate, currentTimePlus30Min),
+          between(teeTimes.providerDate, minDateSubquery, maxDateSubquery),
+          and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
+          sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 >= ${lowerPrice}`,
+          sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 <= ${upperPrice}`,
+          eq(teeTimes.numberOfHoles, holes),
+          gt(teeTimes.availableFirstHandSpots, 0),
+          or(gte(teeTimes.availableFirstHandSpots, golfers), gte(teeTimes.availableSecondHandSpots, golfers))
+        )
+      )
+      .orderBy(asc(sql`Date(${teeTimes.providerDate})`))
+      .execute();
 
-      const secondHandResults= await this.database
-      .selectDistinct({providerDate:sql`Date(${teeTimes.providerDate})`})
+    const secondHandResults = await this.database
+      .selectDistinct({ providerDate: sql`Date(${teeTimes.providerDate})` })
       .from(lists)
       .innerJoin(bookings, eq(bookings.listId, lists.id))
       .innerJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
       .innerJoin(courses, eq(courses.id, teeTimes.courseId))
       .where(
-              and(
-                gte(teeTimes.providerDate, currentTimePlus30Min),
-                between(teeTimes.providerDate, startDate, endDate),
-                eq(lists.isDeleted, false),
-                and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
-                sql`(${lists.listPrice}*(${courses.buyerFee}/100)+${lists.listPrice})/100 >= ${lowerPrice}`,
-                sql`(${lists.listPrice}*(${courses.buyerFee}/100)+${lists.listPrice})/100 <= ${upperPrice}`,
-                eq(teeTimes.numberOfHoles, holes),
-                or(
-                  gte(teeTimes.availableFirstHandSpots, golfers),
-                  gte(teeTimes.availableSecondHandSpots, golfers)
-                )
-              )
-            )
-        .orderBy(asc(sql`Date(${teeTimes.providerDate})`))    
+        and(
+          gte(teeTimes.providerDate, currentTimePlus30Min),
+          between(teeTimes.providerDate, startDate, endDate),
+          eq(lists.isDeleted, false),
+          and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
+          sql`(${lists.listPrice}*(${courses.buyerFee}/100)+${lists.listPrice})/100 >= ${lowerPrice}`,
+          sql`(${lists.listPrice}*(${courses.buyerFee}/100)+${lists.listPrice})/100 <= ${upperPrice}`,
+          eq(teeTimes.numberOfHoles, holes),
+          or(gte(teeTimes.availableFirstHandSpots, golfers), gte(teeTimes.availableSecondHandSpots, golfers))
+        )
+      )
+      .orderBy(asc(sql`Date(${teeTimes.providerDate})`))
       .execute();
-    
-      const firstHandAndSecondHandResult=[...firstHandResults,...secondHandResults]
-      const firstHandAndSecondHandResultDates= firstHandAndSecondHandResult.map(el=>this.formatDateToRFC2822(el.providerDate as string))
-      const uniqueSetfirstHandAndSecondHandResultDates = new Set(firstHandAndSecondHandResultDates);
-    return [...uniqueSetfirstHandAndSecondHandResultDates];
+
+    const firstHandAndSecondHandResult = [...firstHandResults, ...secondHandResults];
+    const firstHandAndSecondHandResultDates = firstHandAndSecondHandResult.map((el) =>
+      this.formatDateToRFC2822(el.providerDate as string)
+    );
+    const uniqueSetfirstHandAndSecondHandResultDates = new Set(firstHandAndSecondHandResultDates);
+    const uniqueArrayfirstHandAndSecondHandResultDates = Array.from(uniqueSetfirstHandAndSecondHandResultDates);
+    return uniqueArrayfirstHandAndSecondHandResultDates;
   }
 
   async getTeeTimesForDay(

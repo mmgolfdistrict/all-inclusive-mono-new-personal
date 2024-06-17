@@ -323,7 +323,11 @@ export default function CourseHomePage() {
 
   const datesArr = datesWithData ?? daysData.arrayOfDates;
   const amountOfPage = Math.ceil(
-    (datesWithData ? ((datesWithData.length-1)===0?1:(datesWithData.length-1)) : daysData.amountOfPages) / TAKE
+    (datesWithData
+      ? datesWithData.length - 1 === 0
+        ? 1
+        : datesWithData.length - 1
+      : daysData.amountOfPages) / TAKE
   );
   const finalRes = [...datesArr].slice(
     (pageNumber - 1) * TAKE,

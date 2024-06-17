@@ -126,7 +126,7 @@ export const ManageOwnedTeeTime = ({
   };
 
   const handleMinimumOfferPrice = (e: ChangeEvent<HTMLInputElement>) => {
-  const value = e.target.value.replace(/[$,]/g, "");
+    const value = e.target.value.replace(/[$,]/g, "");
 
     const decimals = value.split(".")[1];
     if (decimals && decimals?.length > 2) return;
