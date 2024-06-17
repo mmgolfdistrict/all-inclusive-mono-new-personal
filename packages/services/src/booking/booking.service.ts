@@ -2455,7 +2455,10 @@ export class BookingService {
         CourseURL: teeTime?.websiteURL || "",
         CourseName: teeTime?.courseName || "-",
         FacilityName: teeTime?.entityName || "-",
-        PlayDateTime: dayjs(teeTime?.providerDate).utcOffset("-06:00").format("MM/DD/YYYY h:mm A") || "-",
+        PlayDateTime:
+          dayjs(teeTime?.providerDate)
+            .utcOffset("-06:00")
+            .format("MM/DD/YYYY h:mm A") || "-",
         HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
       };
       await this.notificationService.createNotification(
@@ -2752,8 +2755,10 @@ export class BookingService {
       .select({
         providerId: bookings.providerBookingId,
         playTime: teeTimes.providerDate,
+        transferedFromBookingId: transfers.fromUserId,
       })
       .from(bookings)
+      .innerJoin(transfers, eq(transfers.bookingId, bookings.id))
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
       .where(and(eq(bookings.ownerId, userId), eq(bookings.id, bookingId)))
       .execute()
@@ -2761,7 +2766,9 @@ export class BookingService {
         this.logger.error(`Error retrieving bookings by payment id: ${err}`);
         throw "Error retrieving booking";
       });
-
+    if (booking && booking?.transferedFromBookingId !== "0x000") {
+      booking.providerId = "";
+    }
     return booking;
   };
 }
