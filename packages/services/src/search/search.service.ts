@@ -640,7 +640,9 @@ export class SearchService {
       this.formatDateToRFC2822(el.providerDate as string)
     );
     const uniqueSetfirstHandAndSecondHandResultDates = new Set(firstHandAndSecondHandResultDates);
-    const uniqueArrayfirstHandAndSecondHandResultDates = Array.from(uniqueSetfirstHandAndSecondHandResultDates);
+    const uniqueArrayfirstHandAndSecondHandResultDates = Array.from(
+      uniqueSetfirstHandAndSecondHandResultDates
+    );
     return uniqueArrayfirstHandAndSecondHandResultDates;
   }
 

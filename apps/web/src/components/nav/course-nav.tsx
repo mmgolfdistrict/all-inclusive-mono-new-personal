@@ -159,7 +159,15 @@ export const CourseNav = () => {
               data-testid="tee-time-id"
               data-test={courseId}
             />
-            {course?.allowAuctions && (
+            {course?.supportsNotification ? (
+              <NavItem
+                href={`/${courseId}/notify-me`}
+                text="Notify Me"
+                data-testid="notify-me-id"
+                data-test={courseId}
+              />
+            ) : null}
+            {course?.allowAuctions ? (
               <NavItem
                 href={`/${courseId}/auctions`}
                 text="Auctions"
@@ -167,7 +175,7 @@ export const CourseNav = () => {
                 data-testid="auction-id"
                 data-test={courseId}
               />
-            )}
+            ) : null}
             <NavItem
               href={`/${courseId}/my-tee-box`}
               text="Sell"
