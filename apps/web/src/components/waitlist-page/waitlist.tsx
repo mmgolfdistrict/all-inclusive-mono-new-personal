@@ -19,7 +19,7 @@ function Waitlist({
   );
 
   const { mutateAsync: deleteNotifications } =
-    api.waitlistNotification.deleteWaitlistNotification.useMutation();
+    api.userWaitlist.deleteWaitlistNotification.useMutation();
 
   const handleNotificationClick = (notificationId: string) => {
     if (selectedNotifications.includes(notificationId)) {

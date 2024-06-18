@@ -103,14 +103,14 @@ export class foreUp extends BaseProvider {
 
     const booking: BookingResponse = await response.json();
 
-    await this.addSalesData(
-      totalAmountPaid,
-      bookingData.data.attributes.players,
-      courseId,
-      teesheetId,
-      booking.data.id,
-      token
-    );
+    // await this.addSalesData(
+    //   totalAmountPaid,
+    //   bookingData.data.attributes.players,
+    //   courseId,
+    //   teesheetId,
+    //   booking.data.id,
+    //   token
+    // );
     return booking;
   }
 

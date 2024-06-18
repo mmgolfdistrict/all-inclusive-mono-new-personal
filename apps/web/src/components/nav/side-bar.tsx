@@ -133,7 +133,7 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
                 data-testid="tee-time-course-id"
                 data-test={courseId}
               />
-              {course?.supportsNotification ? (
+              {course?.supportsWaitlist ? (
                 <NavItem
                   href={`/${courseId}/notify-me`}
                   text="Notify Me"

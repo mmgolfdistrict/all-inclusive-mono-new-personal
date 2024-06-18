@@ -89,7 +89,7 @@ export type FullCourseType = {
   supportsOffers?: boolean;
   supportsWatchlist?: boolean;
   supportsPromocode?: boolean;
-  supportsNotification?: boolean;
+  supportsWaitlist?: boolean;
   sellerFee?: number;
   buyerFee?: number;
 };
