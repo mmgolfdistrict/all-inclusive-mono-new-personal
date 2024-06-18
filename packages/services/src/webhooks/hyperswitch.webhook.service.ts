@@ -342,6 +342,7 @@ export class HyperSwitchWebhookService {
         internalId: providers.internalId,
         providerDate: teeTimes.providerDate,
         holes: teeTimes.numberOfHoles,
+        providerCourseConfiguration: providerCourseLink.providerCourseConfiguration,
       })
       .from(teeTimes)
       .leftJoin(courses, eq(courses.id, teeTimes.courseId))
@@ -384,7 +385,8 @@ export class HyperSwitchWebhookService {
     }
     const { provider, token } = await this.providerService.getProviderAndKey(
       teeTime.internalId!,
-      teeTime.courseId
+      teeTime.courseId,
+      teeTime.providerCourseConfiguration!
     );
     const providerCustomer = await this.providerService.findOrCreateCustomer(
       teeTime.courseId,
@@ -712,6 +714,7 @@ export class HyperSwitchWebhookService {
         weatherGuaranteeAmount: bookings.weatherGuaranteeAmount,
         listId: bookings.listId,
         playerCount: bookings.playerCount,
+        providerCourseConfiguration: providerCourseLink.providerCourseConfiguration,
       })
       .from(bookings)
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -748,7 +751,8 @@ export class HyperSwitchWebhookService {
 
     const { provider, token } = await this.providerService.getProviderAndKey(
       firstBooking.internalId!,
-      firstBooking.courseId ?? ""
+      firstBooking.courseId ?? "",
+      firstBooking.providerCourseConfiguration!
     );
 
     const buyerCustomer = await this.providerService.findOrCreateCustomer(

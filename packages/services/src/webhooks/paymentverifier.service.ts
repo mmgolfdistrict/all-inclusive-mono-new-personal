@@ -19,7 +19,7 @@ export class PaymentVerifierService {
     private readonly hyperSwitchService: HyperSwitchWebhookService,
     private readonly sensibleService: SensibleService,
     private readonly providerService: ProviderService
-  ) {}
+  ) { }
 
   verifyPayment = async () => {
     // const records: InsertBooking[] = await this.database
@@ -37,6 +37,7 @@ export class PaymentVerifierService {
         internalId: providers.internalId,
         providerTeeSheetId: providerCourseLink.providerTeeSheetId,
         weatherGuaranteeId: bookings.weatherGuaranteeId,
+        providerCourseConfiguration: providerCourseLink.providerCourseConfiguration,
       })
       .from(bookings)
       .innerJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -85,7 +86,8 @@ export class PaymentVerifierService {
 
         const { provider, token } = await this.providerService.getProviderAndKey(
           record.internalId!,
-          record.courseId ?? ""
+          record.courseId ?? "",
+          record.providerCourseConfiguration!
         );
 
         await provider

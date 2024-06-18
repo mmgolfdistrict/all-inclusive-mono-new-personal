@@ -139,7 +139,7 @@ export class BookingService {
     private readonly loggerService: LoggerService,
     private readonly hyperSwitchService: HyperSwitchService,
     private readonly sensibleService: SensibleService
-  ) {}
+  ) { }
 
   createCounterOffer = async (userId: string, bookingIds: string[], offerId: string, amount: number) => {
     //find owner of each booking
@@ -1975,6 +1975,7 @@ export class BookingService {
         courseId: teeTimes.courseId,
         providerBookingId: bookings.providerBookingId,
         providerId: providerCourseLink.providerId,
+        providerCourseConfiguration: providerCourseLink.providerCourseConfiguration,
       })
       .from(bookings)
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -2004,7 +2005,8 @@ export class BookingService {
     }
     const { token, provider } = await this.providerService.getProviderAndKey(
       firstBooking.internalId!,
-      firstBooking.courseId!
+      firstBooking.courseId!,
+      firstBooking.providerCourseConfiguration!
     );
     if (!firstBooking.providerId || !firstBooking.providerCourseId || !firstBooking.courseId) {
       throw new Error("provider id, course id, or provider course id not found");
@@ -2334,6 +2336,7 @@ export class BookingService {
         entityName: entities.name,
         isWebhookAvailable: providerCourseLink.isWebhookAvailable,
         timeZoneCorrection: courses.timezoneCorrection,
+        providerCourseConfiguration: providerCourseLink.providerCourseConfiguration,
       })
       .from(teeTimes)
       .leftJoin(courses, eq(teeTimes.courseId, courses.id))
@@ -2366,7 +2369,8 @@ export class BookingService {
     try {
       const { provider, token } = await this.providerService.getProviderAndKey(
         teeTime.internalId!,
-        teeTime.courseId
+        teeTime.courseId,
+        teeTime.providerCourseConfiguration!
       );
       teeProvider = provider;
       teeToken = token;
@@ -2589,9 +2593,8 @@ export class BookingService {
             url: "/confirmBooking",
             userAgent: "",
             message: "ERROR CONFIRMING BOOKING",
-            stackTrace: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${
-              booking?.teeTimeId ?? ""
-            }`,
+            stackTrace: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${booking?.teeTimeId ?? ""
+              }`,
             additionalDetailsJSON: err,
           });
         });
