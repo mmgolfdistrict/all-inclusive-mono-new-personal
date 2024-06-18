@@ -36,22 +36,21 @@ function NotifyMe({ params }: { params: { course: string } }) {
   const [players, setPlayers] = useState("1");
   const [errorMessage, setErrorMessage] = useState<string>("");
 
-  if (!course?.supportsNotification || !course) {
+  if (!course?.supportsWaitlist || !course) {
     router.push(`/${courseId}`);
   }
 
-  const { refetch: refetchWaitlist } =
-    api.waitlistNotification.getWaitlist.useQuery(
-      { courseId },
-      {
-        enabled: user?.id ? true : false,
-      }
-    );
+  const { refetch: refetchWaitlist } = api.userWaitlist.getWaitlist.useQuery(
+    { courseId },
+    {
+      enabled: user?.id ? true : false,
+    }
+  );
 
   const {
     mutateAsync: createNotifications,
     isLoading: isCreatingNotifications,
-  } = api.waitlistNotification.createWaitlistNotification.useMutation();
+  } = api.userWaitlist.createWaitlistNotification.useMutation();
 
   const minimumDate = {
     year: new Date().getFullYear(),

@@ -32,7 +32,7 @@ function Waitlists() {
     isLoading,
     isError,
     error,
-  } = api.waitlistNotification.getWaitlist.useQuery(
+  } = api.userWaitlist.getWaitlist.useQuery(
     { courseId: course as string },
     {
       enabled: user?.id ? true : false,
