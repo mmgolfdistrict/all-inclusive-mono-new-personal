@@ -337,7 +337,7 @@ export const EditProfileForm = () => {
           error={errors.handle?.message}
           data-testid="profile-handle-id"
           showInfoTooltip={true}
-          content="Handle must all be in lower case and must contain a minimum of 6 characters and maximum of 64 characters. Handle cannot contain special characters and any form of profanity or racism related content. Golf District reserves the right to change your handle to a random handle at any time if it violates our terms of service."
+          content="Handle must all be in lower case or numeric and must contain a minimum of 6 characters and maximum of 64 characters. Handle cannot contain special characters other than dot(.) and underscore(_) and any form of profanity or racism related content. Golf District reserves the right to change your handle to a random handle at any time if it violates our terms of service."
         />
         <Input
           label="Location"
