@@ -7,7 +7,12 @@ export const Footer = () => {
       <div>Copyright {new Date().getFullYear()}</div>
       <div className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 transform gap-1 md:flex items-center justify-center">
         <span className="text-[10px] md:text-[12px]">Powered by</span>
-        <img alt="golf district logo" src={`https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/desktopfooterlogo.png`} />
+        <img
+          alt="golf district logo"
+          src={`https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/desktopfooterlogo.png`}
+          width={157}
+          height={39}
+        />
       </div>
       <div className="flex flex-col items-start gap-2 md:items-end lg:flex-row lg:items-center">
         <Link href={`/faq`} data-testid="footer-help-id">
@@ -31,7 +36,12 @@ export const Footer = () => {
       </div>
       <div className="flex items-center justify-center gap-1 md:hidden">
         <span className="text-[10px] md:text-[12px]">Powered by</span>
-        <img alt="golf district logo" src={`https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/mobilefooterlogo.png`} />
+        <img
+          alt="golf district logo"
+          src={`https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/mobilefooterlogo.png`}
+          width={157}
+          height={39}
+        />
       </div>
     </div>
   );

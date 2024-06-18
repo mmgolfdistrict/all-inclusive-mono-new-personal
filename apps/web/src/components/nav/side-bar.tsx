@@ -133,7 +133,17 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
                 data-testid="tee-time-course-id"
                 data-test={courseId}
               />
-              {course?.allowAuctions && (
+              {course?.supportsWaitlist ? (
+                <NavItem
+                  href={`/${courseId}/notify-me`}
+                  text="Notify Me"
+                  className="border-t border-stroke-secondary p-2 md:p-4"
+                  onClick={toggleSidebar}
+                  data-testid="notify-me-id"
+                  data-test={courseId}
+                />
+              ) : null}
+              {course?.allowAuctions ? (
                 <NavItem
                   href={`/${courseId}/auctions`}
                   text="Auctions"
@@ -143,7 +153,7 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
                   data-testid="auction-id"
                   data-test={courseId}
                 />
-              )}
+              ) : null}
               <NavItem
                 href={`/${courseId}/my-tee-box`}
                 text="Sell"

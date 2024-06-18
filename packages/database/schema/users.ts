@@ -23,6 +23,7 @@ import { notifications } from "./notifications";
 import { offerRead } from "./offerRead";
 import { offers } from "./offers";
 import { transfers } from "./transfers";
+import { userWaitlists } from "./userWaitlists";
 
 export const users = mySqlTable(
   "user",
@@ -110,6 +111,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
     fields: [users.gdImage],
     references: [assets.id],
   }),
+  userWaitlists: many(userWaitlists),
 }));
 export type SelectUser = InferSelectModel<typeof users>;
 export type InsertUser = InferInsertModel<typeof users>;
