@@ -2333,6 +2333,7 @@ export class BookingService {
         courseName: courses.name,
         entityName: entities.name,
         isWebhookAvailable: providerCourseLink.isWebhookAvailable,
+        timeZoneCorrection: courses.timezoneCorrection,
       })
       .from(teeTimes)
       .leftJoin(courses, eq(teeTimes.courseId, courses.id))
@@ -2455,7 +2456,10 @@ export class BookingService {
         CourseURL: teeTime?.websiteURL || "",
         CourseName: teeTime?.courseName || "-",
         FacilityName: teeTime?.entityName || "-",
-        PlayDateTime: dayjs(teeTime?.providerDate).utcOffset("-06:00").format("MM/DD/YYYY h:mm A") || "-",
+        PlayDateTime:
+          dayjs(teeTime?.providerDate)
+            .utcOffset(teeTime.timeZoneCorrection || "-06:00")
+            .format("MM/DD/YYYY h:mm A") || "-",
         HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
       };
       await this.notificationService.createNotification(

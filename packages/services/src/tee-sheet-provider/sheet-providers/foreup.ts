@@ -102,14 +102,14 @@ export class foreUp extends BaseProvider {
 
     const booking: BookingResponse = await response.json();
 
-    await this.addSalesData(
-      totalAmountPaid,
-      bookingData.data.attributes.players,
-      courseId,
-      teesheetId,
-      booking.data.id,
-      token
-    );
+    // await this.addSalesData(
+    //   totalAmountPaid,
+    //   bookingData.data.attributes.players,
+    //   courseId,
+    //   teesheetId,
+    //   booking.data.id,
+    //   token
+    // );
     return booking;
   }
 
@@ -123,9 +123,8 @@ export class foreUp extends BaseProvider {
   ): Promise<BookingResponse> {
     const endpoint = this.getBasePoint();
     // https://api.foreupsoftware.com/api_rest/index.php/courses/courseId/teesheets/teesheetId/bookings/bookingId/bookedPlayers/bookedPlayerId
-    const url = `${endpoint}/courses/${courseId}/teesheets/${teesheetId}/bookings/${bookingId}/bookedPlayers/${
-      slotId ? slotId : bookingId
-    }`;
+    const url = `${endpoint}/courses/${courseId}/teesheets/${teesheetId}/bookings/${bookingId}/bookedPlayers/${slotId ? slotId : bookingId
+      }`;
     const headers = this.getHeaders(token);
 
     console.log(`updateTeeTime - ${url}`);
@@ -260,8 +259,7 @@ export class foreUp extends BaseProvider {
       });
       if (!checkInResponse.ok) {
         throw new Error(
-          `Error doing booking checkin for booking: ${bookingId}, status code: ${
-            checkInResponse.status
+          `Error doing booking checkin for booking: ${bookingId}, status code: ${checkInResponse.status
           }, status text: ${checkInResponse.statusText}, response: ${JSON.stringify(checkInResponse)}`
         );
       }
@@ -298,8 +296,7 @@ export class foreUp extends BaseProvider {
       });
       if (!addPaymentsResponse.ok) {
         throw new Error(
-          `Error adding payment to cart for booking: ${bookingId}, status code: ${
-            addPaymentsResponse.status
+          `Error adding payment to cart for booking: ${bookingId}, status code: ${addPaymentsResponse.status
           }, status text: ${addPaymentsResponse.statusText}, response: ${JSON.stringify(addPaymentsResponse)}`
         );
       }
@@ -308,8 +305,7 @@ export class foreUp extends BaseProvider {
       const completeCartUrl = `${endpoint}/courses/${courseId}/carts/${cartData.data.id}`;
       this.logger.info(`Complete cart url - ${completeCartUrl}`);
       this.logger.info(
-        `Completing cart for provider booking: ${bookingId}, cart id: ${
-          cartData.data.id
+        `Completing cart for provider booking: ${bookingId}, cart id: ${cartData.data.id
         }, with paymentData: ${JSON.stringify(paymentData)}`
       );
       const completeCartResponse = await fetch(completeCartUrl, {
@@ -327,8 +323,7 @@ export class foreUp extends BaseProvider {
       });
       if (!completeCartResponse.ok) {
         throw new Error(
-          `Error completing cart for booking: ${bookingId}, status code: ${
-            completeCartResponse.status
+          `Error completing cart for booking: ${bookingId}, status code: ${completeCartResponse.status
           }, status text: ${completeCartResponse.statusText}, response: ${JSON.stringify(
             completeCartResponse
           )}`

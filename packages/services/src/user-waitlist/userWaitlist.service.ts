@@ -1,9 +1,8 @@
 import { randomUUID } from "crypto";
-import { and, asc, eq, gte, inArray, lt, lte, type Db } from "@golf-district/database";
+import { and, asc, eq, gte, inArray, type Db, lt, lte } from "@golf-district/database";
 import { courses } from "@golf-district/database/schema/courses";
-import { teeTimes } from "@golf-district/database/schema/teeTimes";
-import type { InsertWaitlistNotifications } from "@golf-district/database/schema/waitlistNotifications";
-import { waitlistNotifications } from "@golf-district/database/schema/waitlistNotifications";
+import type { InsertUserWaitlists } from "@golf-district/database/schema/userWaitlists";
+import { userWaitlists } from "@golf-district/database/schema/userWaitlists";
 import Logger from "@golf-district/shared/src/logger";
 import dayjs from "dayjs";
 import UTC from "dayjs/plugin/utc";
@@ -13,15 +12,16 @@ import type {
   UpdateWaitlistNotification,
   WaitlistNotification,
 } from "./types";
-import type { NotificationService } from "../notification/notification.service";
 import { entities } from "@golf-district/database/schema/entities";
+import type { NotificationService } from "../notification/notification.service";
+import { teeTimes } from "@golf-district/database/schema/teeTimes";
 
 dayjs.extend(UTC);
 /**
  * Service class for handling waitlist notification operations.
  */
-export class WaitlistNotificationService {
-  private readonly logger = Logger(WaitlistNotificationService.name);
+export class UserWaitlistService {
+  private readonly logger = Logger(UserWaitlistService.name);
 
   constructor(private readonly database: Db, private readonly notificationService: NotificationService) { }
 
@@ -30,28 +30,28 @@ export class WaitlistNotificationService {
       const today = new Date(dayjs().startOf("day").utc().format("YYYY-MM-DD HH:mm:ss"));
       const waitlist = await this.database
         .select({
-          id: waitlistNotifications.id,
-          courseId: waitlistNotifications.courseId,
-          startTime: waitlistNotifications.startTime,
-          endTime: waitlistNotifications.endTime,
-          playerCount: waitlistNotifications.playerCount,
-          date: waitlistNotifications.date,
+          id: userWaitlists.id,
+          courseId: userWaitlists.courseId,
+          startTime: userWaitlists.startTime,
+          endTime: userWaitlists.endTime,
+          playerCount: userWaitlists.playerCount,
+          date: userWaitlists.date,
           courseName: courses.name,
         })
-        .from(waitlistNotifications)
-        .innerJoin(courses, eq(courses.id, waitlistNotifications.courseId))
+        .from(userWaitlists)
+        .innerJoin(courses, eq(courses.id, userWaitlists.courseId))
         .where(
           and(
-            eq(waitlistNotifications.userId, userId),
-            eq(waitlistNotifications.courseId, courseId),
-            eq(waitlistNotifications.isDeleted, false),
-            gte(waitlistNotifications.date, today)
+            eq(userWaitlists.userId, userId),
+            eq(userWaitlists.courseId, courseId),
+            eq(userWaitlists.isDeleted, false),
+            gte(userWaitlists.date, today)
           )
         )
         .orderBy(
-          asc(waitlistNotifications.date),
-          asc(waitlistNotifications.playerCount),
-          asc(waitlistNotifications.startTime)
+          asc(userWaitlists.date),
+          asc(userWaitlists.playerCount),
+          asc(userWaitlists.startTime)
         )
         .execute()
         .catch((err) => {
@@ -65,10 +65,10 @@ export class WaitlistNotificationService {
     }
   };
 
-  insertWaitlistNotifications = async (waitlistNotificationsList: InsertWaitlistNotifications[]) => {
+  insertWaitlistNotifications = async (waitlistNotificationsList: InsertUserWaitlists[]) => {
     try {
       await this.database
-        .insert(waitlistNotifications)
+        .insert(userWaitlists)
         .values(waitlistNotificationsList)
         .execute()
         .catch((err) => {
@@ -89,9 +89,9 @@ export class WaitlistNotificationService {
   ) => {
     try {
       await this.database
-        .update(waitlistNotifications)
+        .update(userWaitlists)
         .set(notificationData)
-        .where(eq(waitlistNotifications.id, notificationId))
+        .where(eq(userWaitlists.id, notificationId))
         .execute()
         .catch((err) => {
           this.logger.error(`error updating waitlist notification in database: ${err}`);
@@ -107,11 +107,11 @@ export class WaitlistNotificationService {
   deleteWaitlistNotifications = async (notificationIds: string[]) => {
     try {
       await this.database
-        .update(waitlistNotifications)
+        .update(userWaitlists)
         .set({
           isDeleted: true,
         })
-        .where(inArray(waitlistNotifications.id, notificationIds))
+        .where(inArray(userWaitlists.id, notificationIds))
         .execute()
         .catch((err) => {
           this.logger.error(`error deleting waitlist notification from database: ${err}`);
@@ -155,9 +155,9 @@ export class WaitlistNotificationService {
 
   calculateOverlappingNotifications = async (
     waitlistNotification: CreateWaitlistNotification
-  ): Promise<[InsertWaitlistNotifications[], string[]]> => {
+  ): Promise<[InsertUserWaitlists[], string[]]> => {
     try {
-      const insertNotifications: InsertWaitlistNotifications[] = [];
+      const insertNotifications: InsertUserWaitlists[] = [];
       const deleteNotifications: string[] = [];
 
       const newNotification = waitlistNotification;
@@ -167,17 +167,17 @@ export class WaitlistNotificationService {
 
       const waitlist = await this.database
         .select()
-        .from(waitlistNotifications)
+        .from(userWaitlists)
         .where(
           and(
-            eq(waitlistNotifications.userId, waitlistNotification.userId),
-            eq(waitlistNotifications.courseId, waitlistNotification.courseId),
-            eq(waitlistNotifications.playerCount, waitlistNotification.playerCount),
-            eq(waitlistNotifications.date, date),
-            eq(waitlistNotifications.isDeleted, false)
+            eq(userWaitlists.userId, waitlistNotification.userId),
+            eq(userWaitlists.courseId, waitlistNotification.courseId),
+            eq(userWaitlists.playerCount, waitlistNotification.playerCount),
+            eq(userWaitlists.date, date),
+            eq(userWaitlists.isDeleted, false)
           )
         )
-        .orderBy(asc(waitlistNotifications.startTime))
+        .orderBy(asc(userWaitlists.startTime))
         .execute()
         .catch((err) => {
           this.logger.error(`error getting waitlist from database: ${err}`);
@@ -231,20 +231,20 @@ export class WaitlistNotificationService {
       // get all notifications
       const notifications = await this.database
         .select({
-          id: waitlistNotifications.id,
-          userId: waitlistNotifications.userId,
-          courseId: waitlistNotifications.courseId,
-          startTime: waitlistNotifications.startTime,
-          endTime: waitlistNotifications.endTime,
-          playerCount: waitlistNotifications.playerCount,
-          date: waitlistNotifications.date,
+          id: userWaitlists.id,
+          userId: userWaitlists.userId,
+          courseId: userWaitlists.courseId,
+          startTime: userWaitlists.startTime,
+          endTime: userWaitlists.endTime,
+          playerCount: userWaitlists.playerCount,
+          date: userWaitlists.date,
         })
-        .from(waitlistNotifications)
-        .where(and(eq(waitlistNotifications.isDeleted, false), gte(waitlistNotifications.date, today)))
+        .from(userWaitlists)
+        .where(and(eq(userWaitlists.isDeleted, false), gte(userWaitlists.date, today)))
         .orderBy(
-          asc(waitlistNotifications.date),
-          asc(waitlistNotifications.playerCount),
-          asc(waitlistNotifications.startTime)
+          asc(userWaitlists.date),
+          asc(userWaitlists.playerCount),
+          asc(userWaitlists.startTime)
         )
         .execute()
         .catch((err) => {
@@ -321,7 +321,7 @@ export class WaitlistNotificationService {
 
           if (availibilites.length > 0) {
             // send email to user
-            this.notificationService.createNotification(userId, "Waitlist Notification",
+            await this.notificationService.createNotification(userId, "Waitlist Notification",
               `
               Your tee time(s) are available!
               ${urls.join("\n")}
@@ -364,7 +364,7 @@ export class WaitlistNotificationService {
             )
           )
           .orderBy(asc(teeTimes.time))
-          .limit(3)
+          .limit(MAX_AVAILABLE_TEE_TIMES_TO_RETURN)
           .execute()
           .catch((err) => {
             this.logger.error(`error getting teeTimes from database: ${err}`);

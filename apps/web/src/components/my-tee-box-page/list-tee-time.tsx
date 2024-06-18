@@ -116,7 +116,7 @@ export const ListTeeTime = ({
   };
 
   const handleListingPrice = (e: ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace("$", "").replaceAll(",", "");
+    const value = e.target.value.replace(/[$,]/g, "");
 
     // if( value.indexOf("-1") > -1) return;
 

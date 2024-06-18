@@ -82,7 +82,7 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
                     Processing Funds:&nbsp;
                   </p>
                   <p className="text-gray-800 md:text-[24px]">{`$${
-                    recievableData?.availableAmount || 0
+                    recievableData?.availableAmount.toFixed(2) || 0
                   }`}</p>
                 </div>
                 <Tooltip
@@ -96,7 +96,7 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
                     Available Funds:&nbsp;
                   </p>
                   <p className="text-gray-800 md:text-[24px]">{`$${
-                    recievableData?.withdrawableAmount || 0
+                    recievableData?.withdrawableAmount.toFixed(2) || 0
                   }`}</p>
                 </div>
                 <Tooltip
