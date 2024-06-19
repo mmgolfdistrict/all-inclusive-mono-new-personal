@@ -266,6 +266,7 @@ export default function CourseHomePage() {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [dateType]);
 
+
   useEffect(() => {
     if (!alertOffersShown && unreadOffers && Number(unreadOffers) > 0) {
       toast.info(
@@ -321,7 +322,7 @@ export default function CourseHomePage() {
     setPageNumber(1);
   }, [priceRange]);
 
-  const datesArr = datesWithData ?? daysData.arrayOfDates;
+  let datesArr = datesWithData ?? daysData.arrayOfDates;
   const amountOfPage = Math.ceil(
     (datesWithData
       ? datesWithData.length - 1 === 0
@@ -329,6 +330,9 @@ export default function CourseHomePage() {
         : datesWithData.length - 1
       : daysData.amountOfPages) / TAKE
   );
+  if(dateType==="Furthest Day Out To Book"){
+    datesArr=datesArr.reverse();
+  }
   const finalRes = [...datesArr].slice(
     (pageNumber - 1) * TAKE,
     pageNumber * TAKE
