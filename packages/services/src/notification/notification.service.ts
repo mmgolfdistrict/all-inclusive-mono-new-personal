@@ -12,6 +12,7 @@ import Logger from "@golf-district/shared/src/logger";
 import { MailService } from "@sendgrid/mail";
 import type pino from "pino";
 import twilio from "twilio";
+import { AppSettingsService } from "../app-settings/app-settings.service";
 
 interface EmailParams {
   CustomerFirstName?: string;
@@ -141,7 +142,26 @@ export class NotificationService {
     attachments: Attachment[]
   ) => {
     this.logger.info(`Sending email to ${email}`);
-    await this.sendGridClient
+    const appSettingService = new AppSettingsService(this.database, process.env.REDIS_URL!, process.env.REDIS_TOKEN!);
+
+    const appSettings = await appSettingService.getMultiple(
+     "ENABLE_ICS_ATTACHMENT"
+    );
+    if(appSettings?.ENABLE_ICS_ATTACHMENT==='true'){
+      await this.sendGridClient
+      .send({
+        to: email,
+        from: this.sendGrid_email,
+        subject,
+        templateId,
+        dynamicTemplateData: { ...template }
+      })
+      .catch((err) => {
+        this.logger.error(err);
+        throw new Error(`Failed to send email to: ${email}`);
+      });
+    }else{
+      await this.sendGridClient
       .send({
         to: email,
         from: this.sendGrid_email,
@@ -154,6 +174,8 @@ export class NotificationService {
         this.logger.error(err);
         throw new Error(`Failed to send email to: ${email}`);
       });
+    }
+   
   };
 
   /**
