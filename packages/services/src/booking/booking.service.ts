@@ -139,7 +139,7 @@ export class BookingService {
     private readonly loggerService: LoggerService,
     private readonly hyperSwitchService: HyperSwitchService,
     private readonly sensibleService: SensibleService
-  ) { }
+  ) {}
 
   createCounterOffer = async (userId: string, bookingIds: string[], offerId: string, amount: number) => {
     //find owner of each booking
@@ -2593,8 +2593,9 @@ export class BookingService {
             url: "/confirmBooking",
             userAgent: "",
             message: "ERROR CONFIRMING BOOKING",
-            stackTrace: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${booking?.teeTimeId ?? ""
-              }`,
+            stackTrace: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${
+              booking?.teeTimeId ?? ""
+            }`,
             additionalDetailsJSON: err,
           });
         });
@@ -2759,8 +2760,10 @@ export class BookingService {
       .select({
         providerId: bookings.providerBookingId,
         playTime: teeTimes.providerDate,
+        transferedFromBookingId: transfers.fromUserId,
       })
       .from(bookings)
+      .innerJoin(transfers, eq(transfers.bookingId, bookings.id))
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
       .where(and(eq(bookings.ownerId, userId), eq(bookings.id, bookingId)))
       .execute()
@@ -2768,7 +2771,9 @@ export class BookingService {
         this.logger.error(`Error retrieving bookings by payment id: ${err}`);
         throw "Error retrieving booking";
       });
-
+    if (booking && booking?.transferedFromBookingId !== "0x000") {
+      booking.providerId = "";
+    }
     return booking;
   };
 }
