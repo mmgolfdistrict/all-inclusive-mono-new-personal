@@ -623,7 +623,6 @@ export class HyperSwitchWebhookService {
       .from(customerCarts)
       .innerJoin(bookings, eq(bookings.cartId, customerCarts.id))
       .innerJoin(transfers, eq(transfers.bookingId, bookings.id))
-      .innerJoin(customerCarts, eq(customerCarts.id, bookings.cartId))
       .where(eq(customerCarts.paymentId, paymentId))
       .execute()
       .catch((error) => {
