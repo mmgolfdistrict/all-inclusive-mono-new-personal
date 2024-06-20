@@ -3,6 +3,7 @@
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
 import React, { useEffect } from "react";
+import { useCourseContext } from "~/contexts/CourseContext";
 
 declare global {
   interface Window {
@@ -17,6 +18,9 @@ const FinixForm = ({ onClose, setLoading, loading }) => {
   const createCashoutCustomerIdentity =
     api.cashOut.createCashoutCustomerIdentity.useMutation();
   const { user } = useUserContext();
+  const { course } = useCourseContext();
+  const courseId = course?.id;
+
   const auditLog = api.webhooks.auditLog.useMutation();
   const logAudit = () => {
     void auditLog.mutateAsync({
@@ -24,6 +28,7 @@ const FinixForm = ({ onClose, setLoading, loading }) => {
       teeTimeId: "",
       bookingId: "",
       listingId: "",
+      courseId,
       eventId: "FINIX_WEB_HOOK_CASHOUT_TRANSFERED",
       json: `Cashout transfered to user id ${user?.id} `,
     });

@@ -39,17 +39,6 @@ export const CourseNav = () => {
       enabled: courseId !== undefined && user?.id !== undefined,
     }
   );
-  const auditLog = api.webhooks.auditLog.useMutation();
-  const logAudit = async () => {
-    await auditLog.mutateAsync({
-      userId: user?.id ?? "",
-      teeTimeId: "",
-      bookingId: "",
-      listingId: "",
-      eventId: "USER_LOGGED_IN",
-      json: `user logged in `,
-    });
-  };
 
   useEffect(() => {
     if (isSideBarOpen && isMobile) {
@@ -134,7 +123,6 @@ export const CourseNav = () => {
                     path: pathname,
                     createdAt: new Date().toISOString(),
                   });
-                  void logAudit();
                 }}
               >
                 <FilledButton
