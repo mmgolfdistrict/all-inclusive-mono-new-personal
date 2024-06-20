@@ -618,7 +618,7 @@ export class HyperSwitchWebhookService {
         id: bookings.id,
         oldBookingId: transfers.fromBookingId,
         transferId: transfers.id,
-        cart: customerCarts.cart
+        cart: customerCarts.cart,
       })
       .from(customerCarts)
       .innerJoin(bookings, eq(bookings.cartId, customerCarts.id))
@@ -633,7 +633,7 @@ export class HyperSwitchWebhookService {
           teeTimeId: "",
           bookingId: "",
           listingId,
-          courseId: bookingsIds?.cart?.courseId ?? "",
+          courseId: "",
           eventId: "BOOKING_ID_NOT_FOUND",
           json: error,
         });
