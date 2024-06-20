@@ -23,4 +23,12 @@ export const db = drizzle(
   { schema, logger: false }
 );
 
+export const secondaryDb = drizzle(
+  new Client({
+    url: process.env.SECONDARY_DATABASE_URL,
+  }).connection(),
+  { schema, logger: false }
+);
+
 export type Db = typeof db;
+export type SecondaryDb = typeof secondaryDb;
