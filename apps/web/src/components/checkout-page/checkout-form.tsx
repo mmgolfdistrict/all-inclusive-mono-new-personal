@@ -35,6 +35,7 @@ export const CheckoutForm = ({
 }) => {
   const MAX_CHARITY_AMOUNT = 1000;
   const { course } = useCourseContext();
+  const courseId = course?.id;
   const { user } = useUserContext();
   const auditLog = api.webhooks.auditLog.useMutation();
   const cancelHyperswitchPaymentById =
@@ -56,6 +57,7 @@ export const CheckoutForm = ({
       teeTimeId: teeTimeId,
       bookingId: "",
       listingId: listingId,
+      courseId,
       eventId: "TEE_TIME_PAY_NOW_CLICKED",
       json: `TEE_TIME_PAY_NOW_CLICKED`,
     });

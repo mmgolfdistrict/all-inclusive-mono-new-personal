@@ -11,6 +11,7 @@ export const auditLog = mySqlTable("auditLog", {
   bookingId: varchar("bookingId", { length: 36 }).notNull(),
   listingId: varchar("listingId", { length: 36 }).notNull(),
   eventId: varchar("eventId", { length: 50 }).notNull(),
+  courseId: varchar("courseId", { length: 36 }).notNull().default(""),
   json: varchar("json", { length: 2048 }).notNull(),
   createdDateTime: datetime("createdDateTime", { mode: "string", fsp: 3 })
     .default(sql`CURRENT_TIMESTAMP(3)`)

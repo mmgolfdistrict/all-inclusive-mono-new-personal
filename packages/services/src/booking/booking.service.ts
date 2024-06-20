@@ -1975,6 +1975,7 @@ export class BookingService {
         courseId: teeTimes.courseId,
         providerBookingId: bookings.providerBookingId,
         providerId: providerCourseLink.providerId,
+        providerCourseConfiguration: providerCourseLink.providerCourseConfiguration,
       })
       .from(bookings)
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -2004,7 +2005,8 @@ export class BookingService {
     }
     const { token, provider } = await this.providerService.getProviderAndKey(
       firstBooking.internalId!,
-      firstBooking.courseId!
+      firstBooking.courseId!,
+      firstBooking.providerCourseConfiguration!
     );
     if (!firstBooking.providerId || !firstBooking.providerCourseId || !firstBooking.courseId) {
       throw new Error("provider id, course id, or provider course id not found");
@@ -2334,6 +2336,7 @@ export class BookingService {
         entityName: entities.name,
         isWebhookAvailable: providerCourseLink.isWebhookAvailable,
         timeZoneCorrection: courses.timezoneCorrection,
+        providerCourseConfiguration: providerCourseLink.providerCourseConfiguration,
       })
       .from(teeTimes)
       .leftJoin(courses, eq(teeTimes.courseId, courses.id))
@@ -2366,7 +2369,8 @@ export class BookingService {
     try {
       const { provider, token } = await this.providerService.getProviderAndKey(
         teeTime.internalId!,
-        teeTime.courseId
+        teeTime.courseId,
+        teeTime.providerCourseConfiguration!
       );
       teeProvider = provider;
       teeToken = token;
@@ -2477,6 +2481,7 @@ export class BookingService {
         teeTimeId,
         bookingId: "",
         listingId: "",
+        courseId: teeTime?.courseId,
         eventId: "REFUND_INITIATED",
         json: `{paymentId:${payment_id}}`,
       });
@@ -2562,6 +2567,7 @@ export class BookingService {
           teeTimeId: booking?.teeTimeId ?? "",
           bookingId: booking?.bookingId ?? "",
           listingId: "",
+          courseId: booking?.courseId ?? "",
           eventId: "TEE_TIME_CONFIRMATION_FAILED",
           json: err,
         });
@@ -2602,6 +2608,7 @@ export class BookingService {
         teeTimeId: booking?.teeTimeId ?? "",
         bookingId: booking?.bookingId ?? "",
         listingId: "",
+        courseId: booking?.courseId ?? "",
         eventId: "BOOKING_CONFIRMED",
         json: "Bookimg status confirmed",
       });
@@ -2641,6 +2648,7 @@ export class BookingService {
         teeTimeId: "",
         bookingId: "",
         listingId,
+        courseId: cart?.courseId ?? "",
         eventId: "PAYMENT_ID_NOT_VALID",
         json: "Payment Id not is not valid",
       });
@@ -2740,6 +2748,7 @@ export class BookingService {
       teeTimeId: associatedBooking?.teeTimeIdForBooking ?? "",
       bookingId,
       listingId,
+      courseId: cart?.courseId ?? "",
       eventId: "TEE_TIME_BOOKED",
       json: "Tee time booked",
     });
@@ -2756,8 +2765,10 @@ export class BookingService {
       .select({
         providerId: bookings.providerBookingId,
         playTime: teeTimes.providerDate,
+        transferedFromBookingId: transfers.fromUserId,
       })
       .from(bookings)
+      .innerJoin(transfers, eq(transfers.bookingId, bookings.id))
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
       .where(and(eq(bookings.ownerId, userId), eq(bookings.id, bookingId)))
       .execute()
@@ -2765,7 +2776,9 @@ export class BookingService {
         this.logger.error(`Error retrieving bookings by payment id: ${err}`);
         throw "Error retrieving booking";
       });
-
+    if (booking && booking?.transferedFromBookingId !== "0x000") {
+      booking.providerId = "";
+    }
     return booking;
   };
 }

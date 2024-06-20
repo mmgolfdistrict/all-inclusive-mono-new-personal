@@ -11,7 +11,7 @@ import { PrivacySettings } from "~/components/account-settings-page/privacy-sett
 import { SavedBankDetails } from "~/components/account-settings-page/savedBankDetails";
 import { GoBack } from "~/components/buttons/go-back";
 import { ProfileDetails } from "~/components/profile-page/profile-details";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 export default function ManangeProfile({
   params,

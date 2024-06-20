@@ -7,6 +7,7 @@ interface AuditLog {
   teeTimeId: string;
   bookingId: string;
   listingId: string;
+  courseId?: string;
   eventId: string;
   json: string;
   createdDateTime?: Date;

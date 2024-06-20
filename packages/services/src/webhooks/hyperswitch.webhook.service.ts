@@ -44,7 +44,7 @@ import type {
 import type { NotificationService } from "../notification/notification.service";
 import type { HyperSwitchService } from "../payment-processor/hyperswitch.service";
 import type { SensibleService } from "../sensible/sensible.service";
-import type { ProviderService } from "../tee-sheet-provider/providers.service";
+import type { Customer, ProviderService } from "../tee-sheet-provider/providers.service";
 import type { BookingResponse } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
 import type { TokenizeService } from "../token/tokenize.service";
 import type { LoggerService } from "./logging.service";
@@ -342,6 +342,7 @@ export class HyperSwitchWebhookService {
         internalId: providers.internalId,
         providerDate: teeTimes.providerDate,
         holes: teeTimes.numberOfHoles,
+        providerCourseConfiguration: providerCourseLink.providerCourseConfiguration,
       })
       .from(teeTimes)
       .leftJoin(courses, eq(courses.id, teeTimes.courseId))
@@ -364,6 +365,7 @@ export class HyperSwitchWebhookService {
           teeTimeId: item.product_data.metadata.tee_time_id,
           bookingId: "",
           listingId: "",
+          courseId: teeTime?.courseId ?? "",
           eventId: "TEE_TIME_NOT_FOUND",
           json: err,
         });
@@ -377,6 +379,7 @@ export class HyperSwitchWebhookService {
         teeTimeId: item.product_data.metadata.tee_time_id,
         bookingId: "",
         listingId: "",
+        courseId: "",
         eventId: "TEE_TIME_NOT_FOUND",
         json: `tee time not found id: ${item.product_data.metadata.tee_time_id}`,
       });
@@ -384,7 +387,8 @@ export class HyperSwitchWebhookService {
     }
     const { provider, token } = await this.providerService.getProviderAndKey(
       teeTime.internalId!,
-      teeTime.courseId
+      teeTime.courseId,
+      teeTime.providerCourseConfiguration!
     );
     const providerCustomer = await this.providerService.findOrCreateCustomer(
       teeTime.courseId,
@@ -402,6 +406,7 @@ export class HyperSwitchWebhookService {
         teeTimeId: item.product_data.metadata.tee_time_id,
         bookingId: "",
         listingId: "",
+        courseId: teeTime?.courseId ?? "",
         eventId: "ERROR_CREATING_CUSTOMER",
         json: `Error creating customer`,
       });
@@ -443,6 +448,7 @@ export class HyperSwitchWebhookService {
           teeTimeId: teeTime.id,
           bookingId: "",
           listingId: "",
+          courseId: teeTime?.courseId ?? "",
           eventId: "TEE_TIME_BOOKING_FAILED",
           json: err,
         });
@@ -486,6 +492,7 @@ export class HyperSwitchWebhookService {
           teeTimeId: teeTime.id,
           bookingId: "",
           listingId: "",
+          courseId: teeTime?.courseId ?? "",
           eventId: "TEE_TIME_BOOKING_FAILED",
           json: err,
         });
@@ -606,15 +613,17 @@ export class HyperSwitchWebhookService {
     const listedSlotsCount: number | undefined = listedSlots?.length ? listedSlots[0]?.listedSlotsCount : 0;
     const listPrice: number | undefined = listedSlots?.length ? listedSlots[0]?.listedPrice : 0;
 
-    const [bookingsIds] = await this.database
+    const [bookingsIds]: any = await this.database
       .select({
         id: bookings.id,
         oldBookingId: transfers.fromBookingId,
         transferId: transfers.id,
+        cart: customerCarts.cart
       })
       .from(customerCarts)
       .innerJoin(bookings, eq(bookings.cartId, customerCarts.id))
       .innerJoin(transfers, eq(transfers.bookingId, bookings.id))
+      .innerJoin(customerCarts, eq(customerCarts.id, bookings.cartId))
       .where(eq(customerCarts.paymentId, paymentId))
       .execute()
       .catch((error) => {
@@ -624,6 +633,7 @@ export class HyperSwitchWebhookService {
           teeTimeId: "",
           bookingId: "",
           listingId,
+          courseId: bookingsIds?.cart?.courseId ?? "",
           eventId: "BOOKING_ID_NOT_FOUND",
           json: error,
         });
@@ -644,6 +654,7 @@ export class HyperSwitchWebhookService {
           teeTimeId: "",
           bookingId: bookingsIds?.id ?? "",
           listingId,
+          courseId: bookingsIds?.cart?.courseId ?? "",
           eventId: "BOOKING_CONFIRMATION_ERROR",
           json: "Error confirming booking",
         });
@@ -666,6 +677,7 @@ export class HyperSwitchWebhookService {
           teeTimeId: "",
           bookingId: bookingsIds?.id ?? "",
           listingId,
+          courseId: bookingsIds?.cart?.courseId ?? "",
           eventId: "BOOKING_CONFIRMATION_ERROR",
           json: err,
         });
@@ -678,6 +690,7 @@ export class HyperSwitchWebhookService {
       teeTimeId: "",
       bookingId: bookingsIds?.id ?? "",
       listingId,
+      courseId: bookingsIds?.cart?.courseId ?? "",
       eventId: "BOOKING_STATUS_UPDATED",
       json: "Booking status updated",
     });
@@ -712,6 +725,7 @@ export class HyperSwitchWebhookService {
         weatherGuaranteeAmount: bookings.weatherGuaranteeAmount,
         listId: bookings.listId,
         playerCount: bookings.playerCount,
+        providerCourseConfiguration: providerCourseLink.providerCourseConfiguration,
       })
       .from(bookings)
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -736,6 +750,7 @@ export class HyperSwitchWebhookService {
         teeTimeId: "",
         bookingId: bookingsIds?.id ?? "",
         listingId,
+        courseId: bookingsIds?.cart?.courseId ?? "",
         eventId: "BOOKING_NOT_FOUND_FOR_LISTING",
         json: "Error finding bookings for listing id",
       });
@@ -748,7 +763,8 @@ export class HyperSwitchWebhookService {
 
     const { provider, token } = await this.providerService.getProviderAndKey(
       firstBooking.internalId!,
-      firstBooking.courseId ?? ""
+      firstBooking.courseId ?? "",
+      firstBooking.providerCourseConfiguration!
     );
 
     const buyerCustomer = await this.providerService.findOrCreateCustomer(
@@ -907,6 +923,7 @@ export class HyperSwitchWebhookService {
           teeTimeId: existingTeeTime?.id ?? "",
           bookingId: bookingsIds?.id ?? "",
           listingId: listingId,
+          courseId: existingTeeTime?.courseId,
           eventId: "REFUND_INITIATED",
           json: `{paymentId:${paymentId}}`,
         });
@@ -1118,6 +1135,7 @@ export class HyperSwitchWebhookService {
         teeTimeId: existingTeeTime?.id ?? "",
         bookingId,
         listingId: "",
+        courseId: existingTeeTime?.courseId ?? "",
         eventId: "TEE_TIME_PURCHASED",
         json: "Tee time purchased",
       });

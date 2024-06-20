@@ -57,20 +57,28 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
   });
 
   const auditLog = api.webhooks.auditLog.useMutation();
-  const logAudit = async () => {
-    await auditLog.mutateAsync({
+
+  const logAudit = (func: () => any) => {
+    auditLog.mutateAsync({
       userId: user?.id ?? "",
       teeTimeId: "",
       bookingId: "",
       listingId: "",
+      courseId,
       eventId: "USER_LOGGED_OUT",
       json: `user logged out `,
+    }).then(res => {
+      if (res) {
+        func();
+      }
+    }).catch(err => {
+      console.log(err);
     });
   };
 
-  const logOutUser = async () => {
-    void logAudit();
-    localStorage.clear();
+  const logOutUser = () => {
+    logAudit(async () => {
+      localStorage.clear();
     sessionStorage.clear();
     session.data = null;
     session.status = "unauthenticated";
@@ -88,6 +96,7 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
       redirect: false,
     });
     router.push(data.url);
+    });
   };
   return (
     <>
@@ -252,7 +261,7 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
                   href="/"
                   text="Log Out"
                   className="border-b border-t border-stroke-secondary p-4"
-                  onClick={() => void logOutUser()}
+                  onClick={logOutUser}
                   data-testid="logout-id"
                 />
               </div>

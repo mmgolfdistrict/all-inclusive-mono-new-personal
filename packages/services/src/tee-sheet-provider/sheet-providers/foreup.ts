@@ -23,8 +23,9 @@ export class foreUp extends BaseProvider {
     endTime: string,
     date: string
   ): Promise<TeeTimeResponse[]> {
+    const { defaultPriceClassID } = JSON.parse(this.providerConfiguration ?? "{}");
     const endpoint = this.getBasePoint();
-    const url = `${endpoint}/courses/${courseId}/teesheets/${teesheetId}/teetimes?startTime=${startTime}&endTime=${endTime}&date=${date}`;
+    const url = `${endpoint}/courses/${courseId}/teesheets/${teesheetId}/teetimes?startTime=${startTime}&endTime=${endTime}&date=${date}&priceClassId=${defaultPriceClassID}`;
     const headers = this.getHeaders(token);
 
     console.log(`getTeeTimes - ${url}`);
@@ -122,11 +123,16 @@ export class foreUp extends BaseProvider {
     slotId?: string
   ): Promise<BookingResponse> {
     const endpoint = this.getBasePoint();
+    const { defaultPriceClassID } = JSON.parse(this.providerConfiguration ?? "{}");
     // https://api.foreupsoftware.com/api_rest/index.php/courses/courseId/teesheets/teesheetId/bookings/bookingId/bookedPlayers/bookedPlayerId
     const url = `${endpoint}/courses/${courseId}/teesheets/${teesheetId}/bookings/${bookingId}/bookedPlayers/${
       slotId ? slotId : bookingId
     }`;
     const headers = this.getHeaders(token);
+
+    if (options) {
+      options.data.attributes.priceClassId = defaultPriceClassID;
+    }
 
     console.log(`updateTeeTime - ${url}`);
 
@@ -153,6 +159,7 @@ export class foreUp extends BaseProvider {
     courseId: string,
     customerData: CustomerCreationData
   ): Promise<CustomerData> {
+    const { defaultPriceClassID } = JSON.parse(this.providerConfiguration ?? "{}");
     // Fetch required fields for the course
     const requiredFieldsUrl = `${this.getBasePoint()}/courses/${courseId}/settings/customerFieldSettings`;
 
@@ -183,6 +190,7 @@ export class foreUp extends BaseProvider {
 
     console.log(`createCustomer - ${url}`);
 
+    customerData.attributes.price_class = defaultPriceClassID;
     const response = await fetch(url, {
       method: "POST",
       headers: this.getHeaders(token),

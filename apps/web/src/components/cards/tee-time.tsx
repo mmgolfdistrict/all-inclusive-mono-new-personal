@@ -92,6 +92,7 @@ export const TeeTime = ({
       teeTimeId: teeTimeId ?? "",
       bookingId: "",
       listingId: listingId ?? "",
+      courseId,
       eventId: "TEE_TIME_IN_CART",
       json: `TEE_TIME_IN_CART `,
     });
