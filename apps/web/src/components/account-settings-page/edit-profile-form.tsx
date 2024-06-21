@@ -21,6 +21,7 @@ import { useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
 import { useDebounce } from "usehooks-ts";
 import { OutlineButton } from "../buttons/outline-button";
+import { useCourseContext } from "~/contexts/CourseContext";
 
 const defaultProfilePhoto = "/defaults/default-profile.webp";
 const defaultBannerPhoto = "/defaults/default-banner.webp";
@@ -48,6 +49,9 @@ export const EditProfileForm = () => {
   const params = useParams();
   const { userId } = params;
   const { refetchMe } = useUserContext();
+  const { course } = useCourseContext();
+  const courseId = course?.id ?? "";
+
   const {
     data: userData,
     isLoading,
@@ -247,7 +251,7 @@ export const EditProfileForm = () => {
         dataToUpdate.bannerImageAssetId = "";
         deleteFileAsset({ fileType: "bannerImage" });
       }
-      await updateUser.mutateAsync({ ...dataToUpdate });
+      await updateUser.mutateAsync({ ...dataToUpdate, courseId });
       if (profilePhoto && profilePhoto !== defaultProfilePhoto) {
         setProfilePhoto(null);
         await update({ image: assetIds.profilePictureId });
