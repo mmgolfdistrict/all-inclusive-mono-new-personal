@@ -1,7 +1,7 @@
 import { type SVGProps } from "react";
 
 export const Megaphone = (props: SVGProps<SVGSVGElement>) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="100" viewBox="0 0 48 60" version="1.1" fill-rule="evenodd" clip-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="2" {...props}>
+    <svg xmlns="http://www.w3.org/2000/svg" width="100" viewBox="0 0 48 60" version="1.1" fillRule="evenodd" clipRule="evenodd" strokeLinejoin="round" strokeMiterlimit="2" {...props}>
         <g transform="matrix(1,0,0,1,-237,-137)">
             <g>
                 <path d="M282,169L286,169C286.552,169 287,168.552 287,168C287,167.448 286.552,167 286,167L282,167C281.448,167 281,167.448 281,168C281,168.552 281.448,169 282,169Z" />
