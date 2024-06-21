@@ -221,7 +221,7 @@ export default function CourseHomePage() {
         minDate: utcStartDate.toString(),
         maxDate: utcEndDate.toString(),
         holes: holes === "Any" || holes === "18" ? 18 : 9,
-        golfers: golfers === "Any" ? 1 : golfers,
+        golfers: golfers === "Any" ? -1 : golfers,
         showUnlisted: showUnlisted,
         includesCart: includesCart,
         lowerPrice: priceRange[0] ?? 0,
@@ -265,7 +265,6 @@ export default function CourseHomePage() {
 
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [dateType]);
-
 
   useEffect(() => {
     if (!alertOffersShown && unreadOffers && Number(unreadOffers) > 0) {
@@ -330,8 +329,8 @@ export default function CourseHomePage() {
         : datesWithData.length - 1
       : daysData.amountOfPages) / TAKE
   );
-  if(dateType==="Furthest Day Out To Book"){
-    datesArr=datesArr.reverse();
+  if (dateType === "Furthest Day Out To Book") {
+    datesArr = datesArr.reverse();
   }
   const finalRes = [...datesArr].slice(
     (pageNumber - 1) * TAKE,
