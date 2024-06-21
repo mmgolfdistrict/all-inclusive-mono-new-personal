@@ -79,11 +79,13 @@ export class foreUp extends BaseProvider {
     teesheetId: string,
     data: BookingCreationData
   ): Promise<BookingResponse> {
+    const { defaultBookingClassID } = JSON.parse(this.providerConfiguration ?? "{}");
     const { totalAmountPaid, ...bookingData } = data;
     const endpoint = this.getBasePoint();
     const url = `${endpoint}/courses/${courseId}/teesheets/${teesheetId}/bookings`;
     console.log(`createBooking - ${url}`);
 
+    bookingData.data.attributes.booking_class_id = defaultBookingClassID;
     const headers = this.getHeaders(token);
 
     const response = await fetch(url, {
