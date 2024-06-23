@@ -121,7 +121,7 @@ export const PlaceBid = ({
                   Service Fee{" "}
                   <Tooltip
                     trigger={<Info className="h-[14px] w-[14px]" />}
-                    content="The service fee is divided between Golf District and the course. This ensures ongoing enhancements to our service, ultimately offering golfers the best access to booking times."
+                    content="This fee ensures ongoing enhancements to our service, ultimately offering golfers the best access to booking times."
                   />
                 </div>
                 <div className="text-secondary-black">{formatMoney(45)}</div>
