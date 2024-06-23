@@ -59,7 +59,7 @@ interface CheckTeeTimesAvailabilityParams {
   minDate: string;
   maxDate: string;
   holes: 9 | 18;
-  golfers: 1 | 2 | 3 | 4;
+  golfers: 1 | 2 | 3 | 4 | -1;
   showUnlisted: boolean;
   includesCart: boolean;
   lowerPrice: number;
@@ -655,7 +655,7 @@ export class SearchService {
     startTime: number,
     endTime: number,
     holes: 9 | 18,
-    golfers: 1 | 2 | 3 | 4,
+    golfers: number,
     showUnlisted: boolean,
     includesCart: boolean,
     lowerPrice: number,
@@ -766,8 +766,7 @@ export class SearchService {
           //TODO: use isCartIncluded instead
           // includesCart ? gte(teeTimes.cartFeePerPlayer, 1) : eq(teeTimes.cartFeePerPlayer, 0),
           eq(teeTimes.numberOfHoles, holes),
-          gt(teeTimes.availableFirstHandSpots, 0),
-          or(gte(teeTimes.availableFirstHandSpots, golfers), gte(teeTimes.availableSecondHandSpots, golfers))
+          gte(teeTimes.availableFirstHandSpots, golfers)
         )
       )
       .orderBy(
@@ -925,8 +924,9 @@ export class SearchService {
 
       {} as Record<string, CombinedObject>
     );
-
-    const secondHandResults = Object.values(groupedSecondHandData).filter((i) => i.availableSlots >= golfers);
+    const secondHandResults = Object.values(groupedSecondHandData).filter((i) =>
+      golfers === -1 && i.listedSlots !== null ? i.listedSlots >= golfers : i.listedSlots == golfers
+    );
     const secondHandCount = secondHandResults.length;
 
     //combine first and second hand results according to sort params

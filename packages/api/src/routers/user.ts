@@ -64,6 +64,7 @@ export const userRouter = createTRPCRouter({
         profileVisibility: z.enum(["PUBLIC", "PRIVATE"]).optional(),
         profilePictureAssetId: z.string().optional(),
         bannerImageAssetId: z.string().optional(),
+        courseId: z.string().optional(),
         location: z.string().optional(),
         phoneNumber: z.string().optional(),
         phoneNotifications: z.boolean().optional(),
