@@ -7,13 +7,16 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { Switch } from "../buttons/switch";
+import { useCourseContext } from "~/contexts/CourseContext";
 
 export const NotificationSettings = () => {
   const [isByPhone, setIsByPhone] = useState<boolean>(true);
   const [isByEmail, setIsByEmail] = useState<boolean>(true);
   const updateUser = api.user.updateUser.useMutation();
   const [isMutating, setIsMutating] = useState<boolean>(false);
-
+  const { course } = useCourseContext();
+  const courseId = course?.id ?? "";
+  
   const params = useParams();
   const { userId } = params;
   const {
@@ -40,6 +43,7 @@ export const NotificationSettings = () => {
       setIsMutating(true);
       await updateUser.mutateAsync({
         phoneNotifications: newValue,
+        courseId
       });
       await refetch();
       toast.success("Phone notifications updated successfully");
@@ -61,6 +65,7 @@ export const NotificationSettings = () => {
       setIsMutating(true);
       await updateUser.mutateAsync({
         emailNotification: newValue,
+        courseId
       });
       await refetch();
       toast.success("Email notifications updated successfully");

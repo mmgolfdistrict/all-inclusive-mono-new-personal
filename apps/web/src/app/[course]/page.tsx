@@ -67,6 +67,7 @@ export default function CourseHomePage() {
     try {
       await updateUser.mutateAsync({
         handle: uName,
+        courseId
       });
     } catch (error) {
       console.log(error);

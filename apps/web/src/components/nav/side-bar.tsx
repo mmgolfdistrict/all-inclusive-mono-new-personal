@@ -17,6 +17,7 @@ import { Search } from "../icons/search";
 import { PoweredBy } from "../powered-by";
 import { PathsThatNeedRedirectOnLogout } from "../user/user-in-nav";
 import { NavItem } from "./nav-item";
+import { Megaphone } from "../icons/megaphone";
 
 type SideBarProps = {
   isSideBarOpen: boolean;
@@ -145,6 +146,7 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
               {course?.supportsWaitlist ? (
                 <NavItem
                   href={`/${courseId}/notify-me`}
+                  icon={<Megaphone className="w-[16px]" />}
                   text="Notify Me"
                   className="border-t border-stroke-secondary p-2 md:p-4"
                   onClick={toggleSidebar}

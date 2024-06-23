@@ -21,6 +21,7 @@ import { PoweredBy } from "../powered-by";
 import { UserInNav } from "../user/user-in-nav";
 import { NavItem } from "./nav-item";
 import { SideBar } from "./side-bar";
+import { Megaphone } from "../icons/megaphone";
 
 export const CourseNav = () => {
   const { user } = useUserContext();
@@ -151,6 +152,7 @@ export const CourseNav = () => {
               <NavItem
                 href={`/${courseId}/notify-me`}
                 text="Notify Me"
+                icon={<Megaphone className="w-[16px]" />}
                 data-testid="notify-me-id"
                 data-test={courseId}
               />
