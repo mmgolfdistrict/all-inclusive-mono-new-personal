@@ -18,7 +18,6 @@ import { Search } from "../icons/search";
 import { PoweredBy } from "../powered-by";
 import { PathsThatNeedRedirectOnLogout } from "../user/user-in-nav";
 import { NavItem } from "./nav-item";
-import { Megaphone } from "../icons/megaphone";
 
 type SideBarProps = {
   isSideBarOpen: boolean;
@@ -60,43 +59,46 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
   const auditLog = api.webhooks.auditLog.useMutation();
 
   const logAudit = (func: () => any) => {
-    auditLog.mutateAsync({
-      userId: user?.id ?? "",
-      teeTimeId: "",
-      bookingId: "",
-      listingId: "",
-      courseId,
-      eventId: "USER_LOGGED_OUT",
-      json: `user logged out `,
-    }).then(res => {
-      if (res) {
-        func();
-      }
-    }).catch(err => {
-      console.log(err);
-    });
+    auditLog
+      .mutateAsync({
+        userId: user?.id ?? "",
+        teeTimeId: "",
+        bookingId: "",
+        listingId: "",
+        courseId,
+        eventId: "USER_LOGGED_OUT",
+        json: `user logged out `,
+      })
+      .then((res) => {
+        if (res) {
+          func();
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   };
 
   const logOutUser = () => {
     logAudit(async () => {
       localStorage.clear();
-    sessionStorage.clear();
-    session.data = null;
-    session.status = "unauthenticated";
-    await session.update(null);
-    if (PathsThatNeedRedirectOnLogout.some((i) => pathname.includes(i))) {
+      sessionStorage.clear();
+      session.data = null;
+      session.status = "unauthenticated";
+      await session.update(null);
+      if (PathsThatNeedRedirectOnLogout.some((i) => pathname.includes(i))) {
+        const data = await signOut({
+          callbackUrl: `/${courseId}`,
+          redirect: false,
+        });
+        router.push(data.url);
+        return;
+      }
       const data = await signOut({
-        callbackUrl: `/${courseId}`,
+        callbackUrl: pathname,
         redirect: false,
       });
       router.push(data.url);
-      return;
-    }
-    const data = await signOut({
-      callbackUrl: pathname,
-      redirect: false,
-    });
-    router.push(data.url);
     });
   };
   return (
@@ -147,7 +149,6 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
               {course?.supportsWaitlist ? (
                 <NavItem
                   href={`/${courseId}/notify-me`}
-                  icon={<Megaphone className="w-[16px]" />}
                   text="Notify Me"
                   icon={<Megaphone className="w-[16px]" />}
                   className="border-t border-stroke-secondary p-2 md:p-4"
