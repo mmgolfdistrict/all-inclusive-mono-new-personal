@@ -39,9 +39,9 @@ import * as userBookingOffers from "./userBookingOffers";
 import * as userPromoCodeLink from "./userPromoCodeLink";
 import * as userProviderCourseLink from "./userProviderCourseLink";
 import * as users from "./users";
+import * as userWaitlists from "./userWaitlists";
 import * as verificationTokens from "./verificationTokens";
 import * as withdrawals from "./withdrawals";
-import * as userWaitlists from "./userWaitlists";
 
 export const schema = {
   ...accounts,
@@ -87,5 +87,5 @@ export const schema = {
   ...auditlog,
   ...profanities,
   ...courseSEOs,
-  ...userWaitlists
+  ...userWaitlists,
 };

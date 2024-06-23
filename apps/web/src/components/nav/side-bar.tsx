@@ -12,6 +12,7 @@ import { Auction } from "../icons/auction";
 import { Calendar } from "../icons/calendar";
 import { Close } from "../icons/close";
 import { Marketplace } from "../icons/marketplace";
+import { Megaphone } from "../icons/megaphone";
 import { MyOffers } from "../icons/my-offers";
 import { Search } from "../icons/search";
 import { PoweredBy } from "../powered-by";
@@ -148,6 +149,7 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
                   href={`/${courseId}/notify-me`}
                   icon={<Megaphone className="w-[16px]" />}
                   text="Notify Me"
+                  icon={<Megaphone className="w-[16px]" />}
                   className="border-t border-stroke-secondary p-2 md:p-4"
                   onClick={toggleSidebar}
                   data-testid="notify-me-id"

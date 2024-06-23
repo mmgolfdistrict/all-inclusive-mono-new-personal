@@ -14,6 +14,7 @@ import { Auction } from "../icons/auction";
 import { Calendar } from "../icons/calendar";
 import { Hamburger } from "../icons/hamburger";
 import { Marketplace } from "../icons/marketplace";
+import { Megaphone } from "../icons/megaphone";
 import { MyOffers } from "../icons/my-offers";
 import { Search } from "../icons/search";
 import { BlurImage } from "../images/blur-image";

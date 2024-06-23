@@ -78,7 +78,7 @@ export interface ServiceConfig {
  * ```
  */
 export class ServiceFactory {
-  constructor(protected readonly config: ServiceConfig) { }
+  constructor(protected readonly config: ServiceConfig) {}
 
   /**
    * Returns an instance of HyperSwitchService with the provided API key.
@@ -366,6 +366,6 @@ export class ServiceFactory {
   };
 
   getUserWaitlistService = (): UserWaitlistService => {
-    return new UserWaitlistService(this.config.database);
+    return new UserWaitlistService(this.config.database, this.getNotificationService());
   };
 }
