@@ -51,7 +51,7 @@ export const CancelListing = ({
   const courseId = course?.id;
   const { user } = useUserContext();
   const auditLog = api.webhooks.auditLog.useMutation();
-  
+
   const logAudit = async () => {
     await auditLog.mutateAsync({
       userId: user?.id ?? "",

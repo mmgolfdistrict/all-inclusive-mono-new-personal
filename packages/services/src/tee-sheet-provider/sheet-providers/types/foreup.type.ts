@@ -157,7 +157,7 @@ export interface BookingAttributes {
   lastUpdated: string;
   dateBooked: string;
   isTrade: boolean;
-  priceClassId?: string
+  priceClassId?: string;
 }
 
 export interface Relationships {

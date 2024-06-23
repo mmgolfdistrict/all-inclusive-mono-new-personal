@@ -15,6 +15,7 @@ import { useAppContext } from "~/contexts/AppContext";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { usePreviousPath } from "~/hooks/usePreviousPath";
 import { loginSchema, type LoginSchemaType } from "~/schema/login-schema";
+import { api } from "~/utils/api";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { createRef, useEffect, useState } from "react";
@@ -22,7 +23,6 @@ import ReCAPTCHA from "react-google-recaptcha";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
 import { LoadingContainer } from "../loader";
-import { api } from "~/utils/api";
 
 export default function Login() {
   const recaptchaRef = createRef<ReCAPTCHA>();
@@ -41,7 +41,7 @@ export default function Login() {
     if (sessionData?.user?.id && course?.id && status === "authenticated") {
       logAudit(sessionData.user.id, course.id, () => {
         window.location.reload();
-        window.location.href =  `${window.location.origin}${
+        window.location.href = `${window.location.origin}${
           GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
             ? prevPath?.path
               ? prevPath.path
@@ -53,21 +53,24 @@ export default function Login() {
   }, [sessionData, course, status]);
 
   const logAudit = (userId: string, courseId: string, func: () => void) => {
-    auditLog.mutateAsync({
-      userId: userId,
-      teeTimeId: "",
-      bookingId: "",
-      listingId: "",
-      courseId: courseId,
-      eventId: "USER_LOGGED_IN",
-      json: `user logged in `,
-    }).then((res) => {
-      if (res) {
-        func();
-      }
-    }).catch(err => {
-      console.log(err);
-    });
+    auditLog
+      .mutateAsync({
+        userId: userId,
+        teeTimeId: "",
+        bookingId: "",
+        listingId: "",
+        courseId: courseId,
+        eventId: "USER_LOGGED_IN",
+        json: `user logged in `,
+      })
+      .then((res) => {
+        if (res) {
+          func();
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   };
 
   useEffect(() => {
@@ -184,7 +187,7 @@ export default function Login() {
         //       : "/"
         //     : "/"
         // }`,
-        redirect: false
+        redirect: false,
       });
     } catch (error) {
       console.log(error);

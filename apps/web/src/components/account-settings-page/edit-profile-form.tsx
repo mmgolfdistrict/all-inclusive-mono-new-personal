@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { FilledButton } from "~/components/buttons/filled-button";
 import { DropMedia } from "~/components/input/drop-media";
 import { Input } from "~/components/input/input";
+import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { useUploadMedia } from "~/hooks/useUploadMedia";
 import { useUser } from "~/hooks/useUser";
@@ -21,7 +22,6 @@ import { useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
 import { useDebounce } from "usehooks-ts";
 import { OutlineButton } from "../buttons/outline-button";
-import { useCourseContext } from "~/contexts/CourseContext";
 
 const defaultProfilePhoto = "/defaults/default-profile.webp";
 const defaultBannerPhoto = "/defaults/default-banner.webp";

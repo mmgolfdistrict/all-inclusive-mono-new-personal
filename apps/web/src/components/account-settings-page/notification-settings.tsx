@@ -1,13 +1,13 @@
 "use client";
 
 import * as ToggleGroup from "@radix-ui/react-toggle-group";
+import { useCourseContext } from "~/contexts/CourseContext";
 import { useUser } from "~/hooks/useUser";
 import { api } from "~/utils/api";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { Switch } from "../buttons/switch";
-import { useCourseContext } from "~/contexts/CourseContext";
 
 export const NotificationSettings = () => {
   const [isByPhone, setIsByPhone] = useState<boolean>(true);
@@ -16,7 +16,7 @@ export const NotificationSettings = () => {
   const [isMutating, setIsMutating] = useState<boolean>(false);
   const { course } = useCourseContext();
   const courseId = course?.id ?? "";
-  
+
   const params = useParams();
   const { userId } = params;
   const {
@@ -43,7 +43,7 @@ export const NotificationSettings = () => {
       setIsMutating(true);
       await updateUser.mutateAsync({
         phoneNotifications: newValue,
-        courseId
+        courseId,
       });
       await refetch();
       toast.success("Phone notifications updated successfully");
@@ -65,7 +65,7 @@ export const NotificationSettings = () => {
       setIsMutating(true);
       await updateUser.mutateAsync({
         emailNotification: newValue,
-        courseId
+        courseId,
       });
       await refetch();
       toast.success("Email notifications updated successfully");

@@ -52,7 +52,7 @@ interface UserUpdateData {
   phoneNumber?: string | null;
   phoneNotifications?: boolean | null;
   emailNotifications?: boolean | null;
-  courseId?: string
+  courseId?: string;
 }
 type TeeTimeEntry = {
   teeTimeId: string;
@@ -577,19 +577,19 @@ export class UserService {
       }
 
       const [course] = await this.database
-      .select({
-        key: assets.key,
-        extension: assets.extension,
-        websiteURL: courses.websiteURL
-      })
-      .from(courses)
-      .where(eq(courses.id, data.courseId ?? ""))
-      .leftJoin(assets, eq(assets.id, courses.logoId))
-      .execute()
-      .catch((err) => {
-        this.logger.error(err);
-        return [];
-      });
+        .select({
+          key: assets.key,
+          extension: assets.extension,
+          websiteURL: courses.websiteURL,
+        })
+        .from(courses)
+        .where(eq(courses.id, data.courseId ?? ""))
+        .leftJoin(assets, eq(assets.id, courses.logoId))
+        .execute()
+        .catch((err) => {
+          this.logger.error(err);
+          return [];
+        });
 
       if (user && user.name && user.email) {
         await this.notificationsService
@@ -601,7 +601,7 @@ export class UserService {
               CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`,
               CourseURL: course?.websiteURL || "",
               HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
-              CustomerFirstName: user.name
+              CustomerFirstName: user.name,
             },
             []
           )
@@ -1223,15 +1223,15 @@ export class UserService {
     const { user, profileImage, bannerImage } = data;
     const profilePicture = profileImage
       ? assetToURL({
-        key: profileImage.assetKey,
-        extension: profileImage.assetExtension,
-      })
+          key: profileImage.assetKey,
+          extension: profileImage.assetExtension,
+        })
       : "/defaults/default-profile.webp";
     const bannerPicture = bannerImage
       ? assetToURL({
-        key: bannerImage.assetKey,
-        extension: bannerImage.assetExtension,
-      })
+          key: bannerImage.assetKey,
+          extension: bannerImage.assetExtension,
+        })
       : "/defaults/default-banner.webp";
     let res;
 

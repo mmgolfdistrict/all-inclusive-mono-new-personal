@@ -19,7 +19,7 @@ export class PaymentVerifierService {
     private readonly hyperSwitchService: HyperSwitchWebhookService,
     private readonly sensibleService: SensibleService,
     private readonly providerService: ProviderService
-  ) { }
+  ) {}
 
   verifyPayment = async () => {
     // const records: InsertBooking[] = await this.database

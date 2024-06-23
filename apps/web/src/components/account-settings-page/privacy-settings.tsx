@@ -1,12 +1,12 @@
 "use client";
 
 import * as ToggleGroup from "@radix-ui/react-toggle-group";
+import { useCourseContext } from "~/contexts/CourseContext";
 import { useUser } from "~/hooks/useUser";
 import { api } from "~/utils/api";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import { useCourseContext } from "~/contexts/CourseContext";
 
 const Options = ["PUBLIC", "PRIVATE"];
 type OptionsType = "PUBLIC" | "PRIVATE";
@@ -37,7 +37,7 @@ export const PrivacySettings = () => {
       setIsMutating(true);
       await updateUser.mutateAsync({
         profileVisibility: value,
-        courseId
+        courseId,
       });
       await refetch();
       toast.success("Privacy settings updated successfully");

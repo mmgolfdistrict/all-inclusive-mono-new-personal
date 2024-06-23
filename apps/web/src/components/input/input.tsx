@@ -28,10 +28,12 @@ export const Input = ({
         <label className="text-[14px] text-primary-gray" htmlFor={props.id}>
           {label}
         </label>
-        {showInfoTooltip && <Tooltip
-          trigger={<Info className="h-[20px] w-[20px]" />}
-          content={content}
-        />}
+        {showInfoTooltip && (
+          <Tooltip
+            trigger={<Info className="h-[20px] w-[20px]" />}
+            content={content}
+          />
+        )}
       </div>
       <input
         className={`rounded-lg bg-secondary-white px-4 py-3 text-[14px] text-gray-500 outline-none text-ellipsis`}

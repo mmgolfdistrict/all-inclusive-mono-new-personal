@@ -1,9 +1,9 @@
 "use client";
 
+import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
 import React, { useEffect } from "react";
-import { useCourseContext } from "~/contexts/CourseContext";
 
 declare global {
   interface Window {

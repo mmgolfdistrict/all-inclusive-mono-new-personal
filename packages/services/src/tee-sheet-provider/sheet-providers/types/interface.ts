@@ -57,11 +57,11 @@ export abstract class BaseProvider implements ProviderAPI {
   abstract providerId: string;
   protected credentials: ProviderCredentials;
   abstract logger: pino.Logger;
-  providerConfiguration: string | undefined
+  providerConfiguration: string | undefined;
 
   constructor(credentials: ProviderCredentials, providerConfiguration?: string) {
     this.credentials = credentials;
-    this.providerConfiguration = providerConfiguration
+    this.providerConfiguration = providerConfiguration;
   }
 
   // Abstract methods declaration

@@ -40,11 +40,11 @@ export class ProviderService extends CacheService {
     private readonly database: Db,
     redisUrl: string,
     redisToken: string,
-    foreUpCredentials: ForeUpCredentials,
+    foreUpCredentials: ForeUpCredentials
   ) {
     super(redisUrl, redisToken, Logger(ProviderService.name));
     //this will need to be refactored to allow for providers with different credentials per course
-    this.teeSheetProviders = [new foreUp(foreUpCredentials)]
+    this.teeSheetProviders = [new foreUp(foreUpCredentials)];
   }
 
   /**
