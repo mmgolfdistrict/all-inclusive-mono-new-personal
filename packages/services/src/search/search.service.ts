@@ -766,7 +766,7 @@ export class SearchService {
           //TODO: use isCartIncluded instead
           // includesCart ? gte(teeTimes.cartFeePerPlayer, 1) : eq(teeTimes.cartFeePerPlayer, 0),
           eq(teeTimes.numberOfHoles, holes),
-          gte(teeTimes.availableFirstHandSpots, golfers)
+          gte(teeTimes.availableFirstHandSpots, golfers === -1 ? 1 : golfers)
         )
       )
       .orderBy(
@@ -863,9 +863,7 @@ export class SearchService {
           eq(teeTimes.courseId, courseId),
           eq(bookings.includesCart, includesCart),
           eq(teeTimes.numberOfHoles, holes),
-          showUnlisted
-            ? or(eq(bookings.isListed, false), eq(bookings.isListed, true))
-            : eq(bookings.isListed, true)
+          eq(bookings.isListed, true)
         )
       )
       .orderBy(
@@ -925,7 +923,7 @@ export class SearchService {
       {} as Record<string, CombinedObject>
     );
     const secondHandResults = Object.values(groupedSecondHandData).filter((i) =>
-      golfers === -1 && i.listedSlots !== null ? i.listedSlots >= golfers : i.listedSlots == golfers
+      golfers === -1 && i.listedSlots !== null ? i.listedSlots >= 1 : i.listedSlots == golfers
     );
     const secondHandCount = secondHandResults.length;
 
