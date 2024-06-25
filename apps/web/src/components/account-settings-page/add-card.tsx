@@ -15,12 +15,15 @@ import {
 } from "../../utils/credit-card-formatters";
 import { FilledButton } from "../buttons/filled-button";
 import { Input } from "../input/input";
+import { usePaymentMethods } from "~/hooks/usePaymentMethods";
 
 const Options = ["debit", "credit"];
 type OptionsType = "debit" | "credit";
 
 export const AddCard = ({ refetchCards }: { refetchCards: () => unknown }) => {
   const { user } = useUserContext();
+  const { cards } = usePaymentMethods();
+
   const {
     register,
     handleSubmit,
@@ -37,42 +40,56 @@ export const AddCard = ({ refetchCards }: { refetchCards: () => unknown }) => {
   const addCard = api.checkout.createPaymentMethod.useMutation();
 
   const onSubmit: SubmitHandler<CreditCardSchemaType> = async (data) => {
-    const { cardNumber, expirationDate, type } = data;
-    const cleanedCardNumber = cardNumber.replace(/\s/g, "");
-    const expirationMonth = expirationDate.split("/")[0];
-    const expirationYear = expirationDate.split("/")[1];
-    const cardHolderName = data.cardHolderName;
-    const paymentMethod = type;
-    try {
-      setIsLoading(true);
-      const response = await addCard.mutateAsync({
-        params: {
-          payment_method: "card",
-          payment_method_type: paymentMethod,
-          card: {
-            card_number: cleanedCardNumber,
-            card_exp_month: expirationMonth,
-            card_exp_year: expirationYear,
-            card_holder_name: cardHolderName,
-            nick_name: user?.id ?? cardHolderName,
-          },
-          customer_id: user?.id,
-        },
-      });
+    let error = false;
 
-      if (response.status === "Cannot add card please enter valid details") {
-        toast.error("Cannot add card please enter valid card details");
-      } else {
-        toast.success("Card added successfully");
+    cards.forEach(card => {
+      if (!error && card?.card?.last4_digits && data.cardNumber.endsWith(card?.card?.last4_digits)) {
+        error = true;
       }
-      await refetchCards();
-      setType("");
-      reset();
-      setIsLoading(false);
-    } catch (error) {
-      console.log(error);
-      setIsLoading(false);
+    });
+
+    if (error) {
+      toast.error("Card already exists");
+      return;
+    } else {
+      const { cardNumber, expirationDate, type } = data;
+      const cleanedCardNumber = cardNumber.replace(/\s/g, "");
+      const expirationMonth = expirationDate.split("/")[0];
+      const expirationYear = expirationDate.split("/")[1];
+      const cardHolderName = data.cardHolderName;
+      const paymentMethod = type;
+      try {
+        setIsLoading(true);
+        const response = await addCard.mutateAsync({
+          params: {
+            payment_method: "card",
+            payment_method_type: paymentMethod,
+            card: {
+              card_number: cleanedCardNumber,
+              card_exp_month: expirationMonth,
+              card_exp_year: expirationYear,
+              card_holder_name: cardHolderName,
+              nick_name: user?.id ?? cardHolderName,
+            },
+            customer_id: user?.id,
+          },
+        });
+  
+        if (response.status === "Cannot add card please enter valid details") {
+          toast.error("Cannot add card please enter valid card details");
+        } else {
+          toast.success("Card added successfully");
+        }
+        await refetchCards();
+        setType("");
+        reset();
+        setIsLoading(false);
+      } catch (error) {
+        console.log(error);
+        setIsLoading(false);
+      }
     }
+    
   };
 
   return (

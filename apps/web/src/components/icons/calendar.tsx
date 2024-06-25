@@ -3,8 +3,9 @@ import type { ComponentProps } from "react";
 export const Calendar = (props: ComponentProps<"svg">) => {
   return (
     <svg
-      width="21"
-      height="21"
+      // width="21"
+      // height="21"
+      width="100%"
       viewBox="0 0 21 21"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
