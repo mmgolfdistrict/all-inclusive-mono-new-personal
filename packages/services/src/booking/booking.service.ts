@@ -21,6 +21,7 @@ import type { ReserveTeeTimeResponse } from "@golf-district/shared";
 import { currentUtcTimestamp, dateToUtcTimestamp } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
 import dayjs from "dayjs";
+import UTC from "dayjs/plugin/utc";
 import { alias } from "drizzle-orm/mysql-core";
 import { appSettingService } from "../app-settings/initialized";
 import type { CustomerCart, ProductData } from "../checkout/types";
@@ -31,7 +32,10 @@ import type { Customer, ProviderService } from "../tee-sheet-provider/providers.
 import type { ProviderAPI } from "../tee-sheet-provider/sheet-providers";
 import type { BookingResponse } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
 import type { TokenizeService } from "../token/tokenize.service";
+import type { UserWaitlistService } from "../user-waitlist/userWaitlist.service";
 import type { LoggerService } from "../webhooks/logging.service";
+
+dayjs.extend(UTC);
 
 interface TeeTimeData {
   courseId: string;
@@ -138,8 +142,9 @@ export class BookingService {
     private readonly notificationService: NotificationService,
     private readonly loggerService: LoggerService,
     private readonly hyperSwitchService: HyperSwitchService,
-    private readonly sensibleService: SensibleService
-  ) {}
+    private readonly sensibleService: SensibleService,
+    private readonly userWaitlistService: UserWaitlistService
+  ) { }
 
   createCounterOffer = async (userId: string, bookingIds: string[], offerId: string, amount: number) => {
     //find owner of each booking
@@ -718,6 +723,7 @@ export class BookingService {
     slots: number
   ) => {
     this.logger.info(`createListingForBookings called with userId: ${userId}`);
+    // console.log("CREATINGLISTING FOR DATE:", dayjs(endTime).utc().format('YYYY-MM-DD'), dayjs(endTime).utc().format('HHmm'));
     if (new Date().getTime() >= endTime.getTime()) {
       this.logger.warn("End time cannot be before current time");
       this.loggerService.errorLog({
@@ -749,6 +755,7 @@ export class BookingService {
         courseId: teeTimes.courseId,
         teeTimeId: bookings.teeTimeId,
         isListed: bookings.isListed,
+        providerDate: teeTimes.providerDate,
       })
       .from(bookings)
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -871,46 +878,31 @@ export class BookingService {
         throw new Error("Error creating listing");
       });
     this.logger.info(`Listings created successfully. for user ${userId} teeTimeId ${firstBooking.teeTimeId}`);
-    // await this.notificationService.createNotification(
-    //   userId,
-    //   "LISTING_CREATED",
-    //   `Listing creation successful`,
-    //   courseId
-    // );
+    await this.notificationService.createNotification(
+      userId,
+      "LISTING_CREATED",
+      `Listing creation successful`,
+      courseId
+    );
 
-    const [user] = await this.database
-      .select()
-      .from(users)
-      .where(eq(users.id, userId))
-      .execute()
-      .catch((err) => {
-        this.logger.error(`Failed to retrieve user: ${err}`);
-        throw new Error("Failed to retrieve user");
-      });
+    if (!firstBooking.providerDate) {
+      this.logger.error("providerDate not found in booking, Can't send notifications to users");
+      throw new Error("providerDate not found in booking, Can't send notifications to users");
+    }
 
-    if (!user) {
-      this.logger.error(`createNotification: User with ID ${userId} not found.`);
-      return;
-    }
-    if (user.email && user.name) {
-      await this.notificationService
-        .sendEmailByTemplate(
-          user.email,
-          "Listing Created",
-          process.env.SENDGRID_LISTING_CREATED_TEMPLATE_ID!,
-          {
-            CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`,
-            CourseURL: course?.websiteURL || "",
-            HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
-            CustomerFirstName: user.name,
-          },
-          []
-        )
-        .catch((err) => {
-          this.logger.error(`Error sending email: ${err}`);
-          throw new Error("Error sending email");
-        });
-    }
+    const [date, time] = firstBooking.providerDate.split("T");
+
+    const splittedTime = time!.split("-")[0]!.split(":");
+    const formattedTime = Number(splittedTime[0]! + splittedTime[1]!);
+
+    // send notifications to users
+    await this.userWaitlistService.sendNotificationsForAvailableTeeTime(
+      date,
+      formattedTime,
+      courseId,
+      userId
+    );
+    // console.log("CREATING LISTING FOR DATE:", date, formattedTime);
     return { success: true, body: { listingId: toCreate.id }, message: "Listings created successfully." };
   };
 
@@ -2644,9 +2636,8 @@ export class BookingService {
             url: "/confirmBooking",
             userAgent: "",
             message: "ERROR CONFIRMING BOOKING",
-            stackTrace: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${
-              booking?.teeTimeId ?? ""
-            }`,
+            stackTrace: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${booking?.teeTimeId ?? ""
+              }`,
             additionalDetailsJSON: err,
           });
         });

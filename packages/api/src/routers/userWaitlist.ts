@@ -19,6 +19,7 @@ export const userWaitlistRouter = createTRPCRouter({
         courseLogoURL: z.string(),
         subDomainURL: z.string(),
         courseName: z.string(),
+        notificationId: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -29,8 +30,16 @@ export const userWaitlistRouter = createTRPCRouter({
           input.userId,
           input.courseLogoURL,
           input.subDomainURL,
-          input.courseName
+          input.courseName,
+          input.notificationId
         );
+    }),
+  sendNotificationsForAvailableTeeTime: publicProcedure
+    .input(z.object({ date: z.string(), time: z.number(), courseId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      return await ctx.serviceFactory
+        .getUserWaitlistService()
+        .sendNotificationsForAvailableTeeTime(input.date, input.time, input.courseId);
     }),
   getWaitlist: protectedProcedure
     .input(
