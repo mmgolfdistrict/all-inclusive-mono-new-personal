@@ -1,6 +1,7 @@
 "use client";
 
 import * as ToggleGroup from "@radix-ui/react-toggle-group";
+import { useCourseContext } from "~/contexts/CourseContext";
 import { useUser } from "~/hooks/useUser";
 import { api } from "~/utils/api";
 import { useParams } from "next/navigation";
@@ -13,6 +14,8 @@ export const NotificationSettings = () => {
   const [isByEmail, setIsByEmail] = useState<boolean>(true);
   const updateUser = api.user.updateUser.useMutation();
   const [isMutating, setIsMutating] = useState<boolean>(false);
+  const { course } = useCourseContext();
+  const courseId = course?.id ?? "";
 
   const params = useParams();
   const { userId } = params;
@@ -40,6 +43,7 @@ export const NotificationSettings = () => {
       setIsMutating(true);
       await updateUser.mutateAsync({
         phoneNotifications: newValue,
+        courseId,
       });
       await refetch();
       toast.success("Phone notifications updated successfully");
@@ -61,6 +65,7 @@ export const NotificationSettings = () => {
       setIsMutating(true);
       await updateUser.mutateAsync({
         emailNotification: newValue,
+        courseId,
       });
       await refetch();
       toast.success("Email notifications updated successfully");

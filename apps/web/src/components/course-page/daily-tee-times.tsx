@@ -79,7 +79,7 @@ export const DailyTeeTimes = ({
       holes: holes === "Any" || holes === "18" ? 18 : 9,
       showUnlisted,
       includesCart,
-      golfers: golfers === "Any" ? 1 : golfers,
+      golfers: golfers === "Any" ? -1 : golfers,
       lowerPrice: priceRange[0]!,
       upperPrice: priceRange[1]!,
       sortTime:

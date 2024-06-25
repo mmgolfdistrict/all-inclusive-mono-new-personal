@@ -21,7 +21,7 @@ export type DateType =
   | "Furthest Day Out To Book"
   | "Custom";
 
-export type GolferType = "Any" | 1 | 2 | 3 | 4;
+export type GolferType = "Any" | 1 | 2 | 3 | 4 | -1;
 
 export type HoleType = "Any" | "18" | "9";
 

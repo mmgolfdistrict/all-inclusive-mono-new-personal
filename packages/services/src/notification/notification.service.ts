@@ -142,40 +142,41 @@ export class NotificationService {
     attachments: Attachment[]
   ) => {
     this.logger.info(`Sending email to ${email}`);
-    const appSettingService = new AppSettingsService(this.database, process.env.REDIS_URL!, process.env.REDIS_TOKEN!);
-
-    const appSettings = await appSettingService.getMultiple(
-     "ENABLE_ICS_ATTACHMENT"
+    const appSettingService = new AppSettingsService(
+      this.database,
+      process.env.REDIS_URL!,
+      process.env.REDIS_TOKEN!
     );
-    if(appSettings?.ENABLE_ICS_ATTACHMENT==='true'){
+
+    const appSettings = await appSettingService.getMultiple("ENABLE_ICS_ATTACHMENT");
+    if (appSettings?.ENABLE_ICS_ATTACHMENT === "true") {
       await this.sendGridClient
-      .send({
-        to: email,
-        from: this.sendGrid_email,
-        subject,
-        templateId,
-        dynamicTemplateData: { ...template }
-      })
-      .catch((err) => {
-        this.logger.error(err);
-        throw new Error(`Failed to send email to: ${email}`);
-      });
-    }else{
+        .send({
+          to: email,
+          from: this.sendGrid_email,
+          subject,
+          templateId,
+          dynamicTemplateData: { ...template },
+        })
+        .catch((err) => {
+          this.logger.error(err);
+          throw new Error(`Failed to send email to: ${email}`);
+        });
+    } else {
       await this.sendGridClient
-      .send({
-        to: email,
-        from: this.sendGrid_email,
-        subject,
-        templateId,
-        dynamicTemplateData: { ...template },
-        attachments,
-      })
-      .catch((err) => {
-        this.logger.error(err);
-        throw new Error(`Failed to send email to: ${email}`);
-      });
+        .send({
+          to: email,
+          from: this.sendGrid_email,
+          subject,
+          templateId,
+          dynamicTemplateData: { ...template },
+          attachments,
+        })
+        .catch((err) => {
+          this.logger.error(err);
+          throw new Error(`Failed to send email to: ${email}`);
+        });
     }
-   
   };
 
   /**

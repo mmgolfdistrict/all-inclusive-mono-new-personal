@@ -52,6 +52,7 @@ interface UserUpdateData {
   phoneNumber?: string | null;
   phoneNotifications?: boolean | null;
   emailNotifications?: boolean | null;
+  courseId?: string;
 }
 type TeeTimeEntry = {
   teeTimeId: string;
@@ -555,11 +556,60 @@ export class UserService {
     };
     if (Object.prototype.hasOwnProperty.call(data, "handle")) {
       updateData.handle = data.handle;
-      await this.notificationsService.createNotification(
-        userId,
-        "Handle updated",
-        `Your handle has been updated to ${data.handle}`
-      );
+      // await this.notificationsService.createNotification(
+      //   userId,
+      //   "Handle updated",
+      //   `Your handle has been updated to ${data.handle}`
+      // );
+      const [user] = await this.database
+        .select()
+        .from(users)
+        .where(eq(users.id, userId))
+        .execute()
+        .catch((err) => {
+          this.logger.error(`Failed to retrieve user: ${err}`);
+          throw new Error("Failed to retrieve user");
+        });
+
+      if (!user) {
+        this.logger.error(`createNotification: User with ID ${userId} not found.`);
+        return;
+      }
+
+      const [course] = await this.database
+        .select({
+          key: assets.key,
+          extension: assets.extension,
+          websiteURL: courses.websiteURL,
+        })
+        .from(courses)
+        .where(eq(courses.id, data.courseId ?? ""))
+        .leftJoin(assets, eq(assets.id, courses.logoId))
+        .execute()
+        .catch((err) => {
+          this.logger.error(err);
+          return [];
+        });
+
+      if (user && user.name && user.email) {
+        await this.notificationsService
+          .sendEmailByTemplate(
+            user.email,
+            "Handle Updated",
+            process.env.SENDGRID_HANDLE_CHANGED_TEMPLATE_ID!,
+            {
+              CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`,
+              CourseURL: course?.websiteURL || "",
+              HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+              CustomerFirstName: user.name,
+            },
+            []
+          )
+          .catch((err) => {
+            this.logger.error(`Error sending email: ${err}`);
+            throw new Error("Error sending email");
+          });
+      }
     }
     if (Object.prototype.hasOwnProperty.call(data, "name")) updateData.name = data.name;
     if (Object.prototype.hasOwnProperty.call(data, "profileVisibility"))

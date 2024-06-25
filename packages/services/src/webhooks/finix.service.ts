@@ -227,6 +227,7 @@ export class FinixService {
         destination: customerId,
         operation_key: "PUSH_TO_ACH",
         processor: process.env.FINIX_PROCESSOR,
+        idempotency_id: randomUUID(),
       });
 
       const requestOptions: RequestOptions = {

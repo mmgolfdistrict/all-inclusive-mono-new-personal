@@ -397,7 +397,7 @@ export class TokenizeService {
       listingId: "",
       courseId: existingTeeTime.courseId,
       eventId: "TEE_TIME_PURCHASED",
-      json: "Tee time purchased"
+      json: "Tee time purchased",
     });
 
     const message = `

@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { FilledButton } from "~/components/buttons/filled-button";
 import { DropMedia } from "~/components/input/drop-media";
 import { Input } from "~/components/input/input";
+import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { useUploadMedia } from "~/hooks/useUploadMedia";
 import { useUser } from "~/hooks/useUser";
@@ -48,6 +49,9 @@ export const EditProfileForm = () => {
   const params = useParams();
   const { userId } = params;
   const { refetchMe } = useUserContext();
+  const { course } = useCourseContext();
+  const courseId = course?.id ?? "";
+
   const {
     data: userData,
     isLoading,
@@ -247,7 +251,7 @@ export const EditProfileForm = () => {
         dataToUpdate.bannerImageAssetId = "";
         deleteFileAsset({ fileType: "bannerImage" });
       }
-      await updateUser.mutateAsync({ ...dataToUpdate });
+      await updateUser.mutateAsync({ ...dataToUpdate, courseId });
       if (profilePhoto && profilePhoto !== defaultProfilePhoto) {
         setProfilePhoto(null);
         await update({ image: assetIds.profilePictureId });
