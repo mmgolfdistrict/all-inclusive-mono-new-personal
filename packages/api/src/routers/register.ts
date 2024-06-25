@@ -27,12 +27,13 @@ export const registerRouter = createTRPCRouter({
         userId: z.string(),
         token: z.string(),
         courseId: z.string().optional(),
+        redirectHref: z.string()
       })
     )
     .mutation(async ({ input, ctx }) => {
       return await ctx.serviceFactory
         .getUserService()
-        .verifyUserEmail(input?.courseId, input.userId, input.token);
+        .verifyUserEmail(input?.courseId, input.userId, input.token, input.redirectHref);
     }),
   generateUsername: publicProcedureWithCaptcha.input(z.number()).query(async ({ input, ctx }) => {
     return await ctx.serviceFactory.getUserService().generateUsername(input);

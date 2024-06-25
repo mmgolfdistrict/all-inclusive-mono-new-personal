@@ -18,7 +18,7 @@ import { transfers } from "@golf-district/database/schema/transfers";
 import { userBookingOffers } from "@golf-district/database/schema/userBookingOffers";
 import { users } from "@golf-district/database/schema/users";
 import type { ReserveTeeTimeResponse } from "@golf-district/shared";
-import { currentUtcTimestamp, dateToUtcTimestamp } from "@golf-district/shared";
+import { currentUtcTimestamp, dateToUtcTimestamp, formatMoney, formatTime } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
 import dayjs from "dayjs";
 import { alias } from "drizzle-orm/mysql-core";
@@ -139,7 +139,7 @@ export class BookingService {
     private readonly loggerService: LoggerService,
     private readonly hyperSwitchService: HyperSwitchService,
     private readonly sensibleService: SensibleService
-  ) {}
+  ) { }
 
   createCounterOffer = async (userId: string, bookingIds: string[], offerId: string, amount: number) => {
     //find owner of each booking
@@ -749,9 +749,14 @@ export class BookingService {
         courseId: teeTimes.courseId,
         teeTimeId: bookings.teeTimeId,
         isListed: bookings.isListed,
+        providerDate: teeTimes.providerDate,
+        playerCount: bookings.playerCount,
+        totalAmount: bookings.totalAmount,
+        timezoneCorrection: courses.timezoneCorrection,
       })
       .from(bookings)
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
+      .leftJoin(courses, eq(courses.id, teeTimes.courseId))
       .where(and(eq(bookings.ownerId, userId), inArray(bookings.id, bookingIds)))
       .execute()
       .catch((err) => {
@@ -818,6 +823,8 @@ export class BookingService {
         key: assets.key,
         extension: assets.extension,
         websiteURL: courses.websiteURL,
+        name: courses.name,
+        id: courses.id
       })
       .from(courses)
       .where(eq(courses.id, courseId))
@@ -892,6 +899,7 @@ export class BookingService {
       this.logger.error(`createNotification: User with ID ${userId} not found.`);
       return;
     }
+console.log("######", ownedBookings)
     if (user.email && user.name) {
       await this.notificationService
         .sendEmailByTemplate(
@@ -901,8 +909,14 @@ export class BookingService {
           {
             CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`,
             CourseURL: course?.websiteURL || "",
+            CourseName: course?.name,
             HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
             CustomerFirstName: user.name,
+            CourseReservationID: course?.id ?? "-",
+            PlayDateTime: formatTime(firstBooking.providerDate ?? "", true, firstBooking.timezoneCorrection ?? 0),
+            PlayerCount: firstBooking.playerCount ?? 0,
+            ListedPricePerPlayer: listPrice ? `${listPrice}` : "-",
+            TotalAmount: formatMoney(firstBooking.totalAmount / 100 ?? 0),
           },
           []
         )
@@ -974,7 +988,7 @@ export class BookingService {
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
       .where(eq(bookings.listId, listingId))
       .execute();
-    console.log("cancel listing by user", userId);
+
     if (bookingIds && !bookingIds.length) {
       throw new Error("No booking found for this listing");
     }
@@ -1008,12 +1022,57 @@ export class BookingService {
       }
     });
     this.logger.info(`Listings cancelled successfully. for user ${userId} listingId ${listingId}`);
-    await this.notificationService.createNotification(
-      userId,
-      "LISTING_CANCELLED",
-      `Listing cancellation successful`,
-      courseId
-    );
+    const [user] = await this.database
+      .select({
+        email: users.email,
+        name: users.name,
+      })
+      .from(users)
+      .where(eq(users.id, userId))
+      .execute();
+
+    const [course] = await this.database
+      .select({
+        websiteURL: courses.websiteURL,
+        key: assets.key,
+        extension: assets.extension,
+        name: courses.name
+      })
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .leftJoin(assets, eq(assets.id, courses.logoId))
+      .execute()
+      .catch((err) => {
+        this.logger.error(err);
+        return [];
+      });
+
+    if (!user) {
+      this.logger.error(`Error fetching user data: ${userId} does not exist`);
+      throw new Error(`Error fetching user data: ${userId} does not exist`);
+    }
+
+    if (!course) {
+      this.logger.error(`Error fetching course data: ${courseId} does not exist`);
+      throw new Error(`Error fetching course data: ${courseId} does not exist`);
+    }
+
+    if (user.email && user.name && course) {
+      await this.notificationService
+        .sendEmailByTemplate(
+          user.email,
+          "Listing Cancelled",
+          process.env.SENDGRID_LISTING_CANCELLED_TEMPLATE_ID!,
+          {
+            CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`,
+            CourseURL: course?.websiteURL || "",
+            CourseName: course?.name,
+            HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+            CustomerFirstName: user.name,
+          },
+          []
+        )
+    }
   };
 
   /**
@@ -2644,9 +2703,8 @@ export class BookingService {
             url: "/confirmBooking",
             userAgent: "",
             message: "ERROR CONFIRMING BOOKING",
-            stackTrace: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${
-              booking?.teeTimeId ?? ""
-            }`,
+            stackTrace: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${booking?.teeTimeId ?? ""
+              }`,
             additionalDetailsJSON: err,
           });
         });
