@@ -181,6 +181,7 @@ export class UserService {
 
     let CourseLogoURL: string | undefined;
     let CourseURL: string | undefined;
+    let CourseName: string | undefined;
 
     if (courseId) {
       const [course] = await this.database
@@ -188,6 +189,7 @@ export class UserService {
           key: assets.key,
           extension: assets.extension,
           websiteURL: courses.websiteURL,
+          name: courses.name
         })
         .from(courses)
         .where(eq(courses.id, courseId))
@@ -201,6 +203,7 @@ export class UserService {
       if (course?.key) {
         CourseLogoURL = `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`;
         CourseURL = course?.websiteURL || "";
+        CourseName = course.name;
       }
     }
 
@@ -215,6 +218,7 @@ export class UserService {
         )}&verificationToken=${encodeURIComponent(verificationToken)}`,
         CourseLogoURL,
         CourseURL,
+        CourseName,
         HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
       },
       []
@@ -389,7 +393,7 @@ export class UserService {
    * @example
    *   verifyUserEmail('user123id', 'secureverificationtoken');
    */
-  verifyUserEmail = async (courseId: string | undefined, userId: string, token: string): Promise<void> => {
+  verifyUserEmail = async (courseId: string | undefined, userId: string, token: string, redirectHref: string): Promise<void> => {
     this.logger.info(`verifyUserEmail called with userId: ${userId} and token: ${token}`);
     const [user] = await this.database.select().from(users).where(eq(users.id, userId));
     if (!user) {
@@ -424,6 +428,7 @@ export class UserService {
 
     let CourseLogoURL: string | undefined;
     let CourseURL: string | undefined;
+    let CourseName: string | undefined;
 
     if (courseId) {
       const [course] = await this.database
@@ -431,6 +436,7 @@ export class UserService {
           key: assets.key,
           extension: assets.extension,
           websiteURL: courses.websiteURL,
+          name: courses.name
         })
         .from(courses)
         .where(eq(courses.id, courseId))
@@ -439,6 +445,7 @@ export class UserService {
       if (course?.key) {
         CourseLogoURL = `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`;
         CourseURL = course?.websiteURL || "";
+        CourseName = course.name
       }
     }
 
@@ -453,7 +460,9 @@ export class UserService {
             CustomerFirstName: user.handle ?? "",
             CourseLogoURL,
             CourseURL,
+            CourseName,
             HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+            BuyTeeTimeURL: encodeURI(redirectHref)
           },
           []
         );
@@ -581,6 +590,7 @@ export class UserService {
           key: assets.key,
           extension: assets.extension,
           websiteURL: courses.websiteURL,
+          name: courses.name,
         })
         .from(courses)
         .where(eq(courses.id, data.courseId ?? ""))
@@ -600,6 +610,7 @@ export class UserService {
             {
               CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`,
               CourseURL: course?.websiteURL || "",
+              CourseName: course?.name || "",
               HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
               CustomerFirstName: user.name,
             },
@@ -781,12 +792,15 @@ export class UserService {
     }
     let CourseURL: string | undefined;
     let CourseLogoURL: string | undefined;
+    let CourseName: string | undefined;
+
     if (courseProviderId) {
       const [course] = await this.database
         .select({
           key: assets.key,
           extension: assets.extension,
           websiteURL: courses.websiteURL,
+          name: courses.name
         })
         .from(courses)
         .leftJoin(assets, eq(assets.courseId, courseProviderId))
@@ -795,6 +809,7 @@ export class UserService {
       if (course?.key) {
         CourseLogoURL = `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`;
         CourseURL = course?.websiteURL || "";
+        CourseName = course?.name || ""
       }
     }
 
@@ -836,6 +851,7 @@ export class UserService {
       EMail: user.email,
       CourseLogoURL,
       CourseURL,
+      CourseName,
       HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
     };
 
@@ -946,6 +962,7 @@ export class UserService {
 
     let CourseLogoURL: string | undefined;
     let CourseURL: string | undefined;
+    let CourseName: string | undefined;
 
     if (courseId) {
       const [course] = await this.database
@@ -953,6 +970,7 @@ export class UserService {
           key: assets.key,
           extension: assets.extension,
           websiteURL: courses.websiteURL,
+          name: courses.name
         })
         .from(courses)
         .where(eq(courses.id, courseId))
@@ -966,6 +984,7 @@ export class UserService {
       if (course?.key) {
         CourseLogoURL = `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`;
         CourseURL = course?.websiteURL || "";
+        CourseName = course?.name || ""
       }
     }
 
@@ -979,6 +998,7 @@ export class UserService {
             CustomerFirstName: user?.handle ?? "",
             CourseLogoURL,
             CourseURL,
+            CourseName,
             HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
           },
           []

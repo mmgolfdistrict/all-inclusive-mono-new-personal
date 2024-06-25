@@ -19,6 +19,7 @@ interface EmailParams {
   CourseName?: string;
   GolfDistrictReservationID?: string;
   CourseReservationID?: string;
+  ListedPricePerPlayer?: string;
   FacilityName?: string;
   PlayDateTime?: string;
   NumberOfHoles?: number;
@@ -31,7 +32,10 @@ interface EmailParams {
   CourseLogoURL?: string;
   CourseURL?: string;
   VerifyURL?: string;
+  BuyTeeTimeURL?: string;
   HeaderLogoURL?: string;
+  PlayerCount?: number;
+  TotalAmount?: string;
 }
 
 interface Attachment {

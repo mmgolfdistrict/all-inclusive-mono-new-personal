@@ -1166,8 +1166,8 @@ export class HyperSwitchWebhookService {
           existingTeeTime?.timezoneCorrection ?? 0
         ),
         NumberOfHoles: existingTeeTime?.numberOfHoles,
-        SellTeeTImeURL: `${redirectHref}/my-tee-box`,
-        ManageTeeTimesURL: `${redirectHref}/my-tee-box`,
+        BuyTeeTImeURL: `${redirectHref}`,
+        CashOutURL: `${redirectHref}/account-settings/${customer_id}`,
         GolfDistrictReservationID: bookingId,
         CourseReservationID: newBooking?.data.id,
       };

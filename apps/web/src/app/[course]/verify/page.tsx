@@ -29,6 +29,7 @@ export default function Verify() {
         courseId: course?.id,
         userId,
         token: verificationToken,
+        redirectHref: window.location.origin
       });
       setIsSuccess(true);
       callingRef.current = false;
