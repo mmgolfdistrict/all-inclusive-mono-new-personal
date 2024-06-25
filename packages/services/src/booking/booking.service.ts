@@ -824,7 +824,7 @@ export class BookingService {
       .select({
         key: assets.key,
         extension: assets.extension,
-        websiteURL: courses.websiteURL,
+        websiteURL: courses.websiteURL
       })
       .from(courses)
       .where(eq(courses.id, courseId))
@@ -878,12 +878,45 @@ export class BookingService {
         throw new Error("Error creating listing");
       });
     this.logger.info(`Listings created successfully. for user ${userId} teeTimeId ${firstBooking.teeTimeId}`);
-    await this.notificationService.createNotification(
-      userId,
-      "LISTING_CREATED",
-      `Listing creation successful`,
-      courseId
-    );
+    // await this.notificationService.createNotification(
+    //   userId,
+    //   "LISTING_CREATED",
+    //   `Listing creation successful`,
+    //   courseId
+    // );
+    const [user] = await this.database
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Failed to retrieve user: ${err}`);
+        throw new Error("Failed to retrieve user");
+      });
+
+    if (!user) {
+      this.logger.error(`createNotification: User with ID ${userId} not found.`);
+      return;
+    }
+    if (user.email && user.name) {
+      await this.notificationService
+        .sendEmailByTemplate(
+          user.email,
+          "Listing Created",
+          process.env.SENDGRID_LISTING_CREATED_TEMPLATE_ID!,
+          {
+            CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`,
+            CourseURL: course?.websiteURL || "",
+            HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+            CustomerFirstName: user.name,
+          },
+          []
+        )
+        .catch((err) => {
+          this.logger.error(`Error sending email: ${err}`);
+          throw new Error("Error sending email");
+        });
+    }
 
     if (!firstBooking.providerDate) {
       this.logger.error("providerDate not found in booking, Can't send notifications to users");

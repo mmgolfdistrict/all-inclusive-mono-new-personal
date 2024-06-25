@@ -3,7 +3,7 @@ import { type SVGProps } from "react";
 export const Megaphone = (props: SVGProps<SVGSVGElement>) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    width="100"
+    width="100%"
     viewBox="0 0 48 60"
     version="1.1"
     fillRule="evenodd"

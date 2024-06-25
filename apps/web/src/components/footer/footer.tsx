@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { GolfDistrict } from "../icons/golf-district";
+import { BlurImage } from "../images/blur-image";
 
 export const Footer = () => {
   return (
@@ -7,7 +8,7 @@ export const Footer = () => {
       <div>Copyright {new Date().getFullYear()}</div>
       <div className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 transform gap-1 md:flex items-center justify-center">
         <span className="text-[10px] md:text-[12px]">Powered by</span>
-        <img
+        <BlurImage
           alt="golf district logo"
           src={`https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/desktopfooterlogo.png`}
           width={157}
@@ -36,7 +37,7 @@ export const Footer = () => {
       </div>
       <div className="flex items-center justify-center gap-1 md:hidden">
         <span className="text-[10px] md:text-[12px]">Powered by</span>
-        <img
+        <BlurImage
           alt="golf district logo"
           src={`https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/mobilefooterlogo.png`}
           width={157}
