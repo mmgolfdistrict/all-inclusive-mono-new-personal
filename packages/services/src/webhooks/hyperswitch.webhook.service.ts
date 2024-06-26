@@ -874,7 +874,7 @@ export class HyperSwitchWebhookService {
         paymentId,
       });
     try {
-      let details = "GD Booking";
+      let details = await appSettingService.get("TEE_SHEET_BOOKING_MESSAGE");
       try {
         const isSensibleNoteAvailable = await appSettingService.get("SENSIBLE_NOTE_TO_TEE_SHEET");
         if (weatherQuoteId && isSensibleNoteAvailable) {
@@ -985,7 +985,7 @@ export class HyperSwitchWebhookService {
                   },
                 ],
                 event_type: "tee_time",
-                details: "GD Booking",
+                details
               },
             },
           }

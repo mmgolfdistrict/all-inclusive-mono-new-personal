@@ -2515,7 +2515,7 @@ console.log("######", ownedBookings)
       console.log(
         `Creating booking ${teeTime.providerDate}, ${teeTime.holes}, ${playerCount}, ${teeTime.providerCourseId}, ${teeTime.providerTeeSheetId}, ${token}`
       );
-      let details = "GD Booking";
+      let details = await appSettingService.get("TEE_SHEET_BOOKING_MESSAGE");
       try {
         const isSensibleNoteAvailable = await appSettingService.get("SENSIBLE_NOTE_TO_TEE_SHEET");
         if (weatherQuoteId && isSensibleNoteAvailable) {
