@@ -371,7 +371,7 @@ export const TeeTime = ({
               )
             )}
           </div>
-          {/* <div> */}
+
           {soldById === user?.id && session ? (
             <FilledButton
               onClick={openManage}
@@ -410,7 +410,6 @@ export const TeeTime = ({
               )}
             </>
           )}
-          {/* </div> */}
           <div className="flex items-center gap-1">
             {course?.supportsWatchlist ? (
               <OutlineButton
@@ -444,17 +443,7 @@ export const TeeTime = ({
               data-testid="share-button-id"
             >
               <div className="flex items-center justify-center gap-2">
-                {isCopied ? (
-                  <>
-                    {/* <Check className="w-[18px] min-w-[18px]" />  */}
-                    Copied
-                  </>
-                ) : (
-                  <>
-                    {/* <Share /> */}
-                    Share
-                  </>
-                )}
+                {isCopied ? <>Copied</> : <>Share</>}
               </div>
             </OutlineButton>
           </div>
