@@ -18,6 +18,6 @@ export const customerRecievable = mySqlTable("customerRecievable", {
   redeemAfter: datetime("redeemAfter", { mode: "string", fsp: 3 })
     .default(sql`CURRENT_TIMESTAMP(3)`)
     .notNull(),
+  sensibleAmount: int("sensibleAmount").notNull(),
 });
-
 export type CustomerRecievable = InferSelectModel<typeof customerRecievable>;
