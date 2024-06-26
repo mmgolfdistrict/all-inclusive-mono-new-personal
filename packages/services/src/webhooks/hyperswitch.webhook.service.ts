@@ -1282,7 +1282,11 @@ export class HyperSwitchWebhookService {
 
     const amount = listPrice ?? 1;
     const serviceCharge = amount * sellerFee;
-    const payable = (amount - serviceCharge) * (listedSlotsCount || 1);
+    let weatherGuaranteeAmount = 0;
+    if (firstBooking?.weatherGuaranteeId) {
+      weatherGuaranteeAmount = firstBooking?.weatherGuaranteeAmount ?? 0;
+    }
+    const payable = (amount - serviceCharge) * (listedSlotsCount || 1) + weatherGuaranteeAmount;
     const currentDate = new Date();
     const radeemAfterMinutes = await appSettingService.get("CASH_OUT_AFTER_MINUTES");
     const redeemAfterDate = this.addMinutes(currentDate, Number(radeemAfterMinutes));
@@ -1293,6 +1297,7 @@ export class HyperSwitchWebhookService {
         amount: payable,
         type: "CASHOUT",
         transferId: bookingsIds?.transferId,
+        sensibleAmount: weatherGuaranteeAmount,
         createdDateTime: this.formatCurrentDateTime(currentDate), // Use UTC string format for datetime fields
         redeemAfter: this.formatCurrentDateTime(redeemAfterDate), // Use UTC string format for datetime fields
       },

@@ -395,6 +395,11 @@ export const ListTeeTime = ({
               <div className="text-center text-[14px] font-[300] text-primary-gray">
                 All sales are final.
               </div>
+              <div style={{ background: "#D3D3D3" }}>
+                Receive a full refund for previous purchased weather protection.
+                Any remaining owned rounds for this time will be subject to
+                raincheck policy.
+              </div>
               <div className="flex flex-col gap-2">
                 <FilledButton
                   className="w-full"
