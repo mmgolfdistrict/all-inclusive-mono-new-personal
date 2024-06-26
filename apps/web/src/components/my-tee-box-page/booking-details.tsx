@@ -1,19 +1,15 @@
 import { Dispatch, SetStateAction } from "react";
-import { useCourseContext } from "~/contexts/CourseContext";
 import { useSidebar } from "~/hooks/useSidebar";
-import { FilledButton } from "../buttons/filled-button";
 import { Close } from "../icons/close";
-import { BlurImage } from "../images/blur-image";
-import Link from "next/link";
-import { useMediaQuery } from "usehooks-ts";
-import { Table, TableCell, TableRow } from "@mui/material";
+import { TableCell, TableRow } from "@mui/material";
 import { formatMoney, formatTime } from "@golf-district/shared";
 import { OutlineButton } from "../buttons/outline-button";
+import { TxnHistoryType } from "./transaction-history";
 
 type BookingDetailsProps = {
 	isReceiptOpen: boolean;
 	setIsReceiptOpen: Dispatch<SetStateAction<boolean>>;
-	selectedReceipt: any;
+	selectedReceipt: TxnHistoryType | null;
 };
 
 export const BookingDetails = ({
@@ -21,15 +17,11 @@ export const BookingDetails = ({
 	setIsReceiptOpen,
 	selectedReceipt
 }: BookingDetailsProps) => {
-	const isMobile = useMediaQuery("(max-width: 768px)");
 
 	const { toggleSidebar } = useSidebar({
 		isOpen: isReceiptOpen,
 		setIsOpen: setIsReceiptOpen,
 	});
-
-	const { course } = useCourseContext();
-	console.log(selectedReceipt);
 
 	return (
 		<>

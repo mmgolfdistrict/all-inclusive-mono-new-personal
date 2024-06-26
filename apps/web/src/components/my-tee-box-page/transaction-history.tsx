@@ -31,6 +31,8 @@ export type TxnHistoryType = {
   bookingIds: string[];
   status: string;
   playerCount?: number;
+  sellerServiceFee: number;
+  receiveAfterSale: number;
 };
 
 export const TransactionHistory = () => {
