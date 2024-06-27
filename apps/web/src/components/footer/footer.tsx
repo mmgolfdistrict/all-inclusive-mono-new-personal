@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { GolfDistrict } from "../icons/golf-district";
 import { BlurImage } from "../images/blur-image";
 
 export const Footer = () => {

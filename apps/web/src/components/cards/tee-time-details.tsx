@@ -14,7 +14,6 @@ import { Avatar } from "../avatar";
 import { FilledButton } from "../buttons/filled-button";
 import { OutlineButton } from "../buttons/outline-button";
 import { Check } from "../icons/check";
-import { GolfCart } from "../icons/golf-cart";
 import { Heart } from "../icons/heart";
 import { Players } from "../icons/players";
 import { Share } from "../icons/share";

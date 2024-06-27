@@ -6,7 +6,6 @@ import { formatMoney, formatTime } from "~/utils/formatters";
 import type { InviteFriend } from "~/utils/types";
 import { useEffect, useMemo, useState } from "react";
 import { Avatar } from "../avatar";
-import { OutlineButton } from "../buttons/outline-button";
 import { SkeletonRow } from "./skeleton-row";
 import { TxnDetails } from "./txn-details";
 
