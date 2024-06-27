@@ -155,7 +155,7 @@ export const Confirmation = ({
           </Link>
         </div>
         {/* <InviteFriends isConfirmationPage={true} teeTimeId={teeTimeId} /> */}
-        <div className="flex flex-col gap-2">
+        {/* <div className="flex flex-col gap-2">
           <div className="text-secondary-black">Share your Tee-Time</div>
           <div className="flex flex-wrap items-center justify-center gap-2">
             <OutlineButton
@@ -179,7 +179,7 @@ export const Confirmation = ({
               <Instagram className="min-h-[24px] min-w-[24px]" />
             </OutlineButton>
           </div>
-        </div>
+        </div> */}
       </div>
     </section>
   );

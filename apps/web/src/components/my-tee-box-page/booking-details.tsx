@@ -74,47 +74,48 @@ export const BookingDetails = ({
 							</div> */}
 						<table border={0} cellPadding={0} cellSpacing={0} width="100%">
 							<TableRow>
-								<TableCell sx={{ borderBottom: "none" }} className="bold" width="50%">Play Date Time: </TableCell>
-								<TableCell sx={{ borderBottom: "none" }} width="50%">{selectedReceipt?.date ? formatTime(selectedReceipt?.date) : "-"}</TableCell>
+								<TableCell sx={{ borderBottom: "none" }} className="font-[300] text-primary-gray" width="50%">Play Date Time: </TableCell>
+								<TableCell sx={{ borderBottom: "none" }} className="text-secondary-black" width="50%">{selectedReceipt?.date ? formatTime(selectedReceipt?.date) : "-"}</TableCell>
 							</TableRow>
 							<TableRow>
-								<TableCell sx={{ borderBottom: "none" }} className="bold" width="50%">Players: </TableCell>
-								<TableCell sx={{ borderBottom: "none" }} width="50%">{selectedReceipt?.playerCount ?? "-"}</TableCell>
+								<TableCell sx={{ borderBottom: "none" }} className="font-[300] text-primary-gray" width="50%">Players: </TableCell>
+								<TableCell sx={{ borderBottom: "none" }} className="text-secondary-black" width="50%">{selectedReceipt?.playerCount ?? "-"}</TableCell>
 							</TableRow>
 							<TableRow>
-								<TableCell sx={{ borderBottom: "none" }} className="bold" width="50%">Status: </TableCell>
-								<TableCell sx={{ borderBottom: "none" }} width="50%">{selectedReceipt?.status ?? "-"}</TableCell>
+								<TableCell sx={{ borderBottom: "none" }} className="font-[300] text-primary-gray" width="50%">Status: </TableCell>
+								<TableCell sx={{ borderBottom: "none" }} className="text-secondary-black" width="50%">{selectedReceipt?.status ?? "-"}</TableCell>
 							</TableRow>
-							{selectedReceipt?.status === "SOLD" ? (
+							{selectedReceipt?.status === "PURCHASED" && (
 								<>
 									<TableRow>
-										<TableCell sx={{ borderBottom: "none" }} className="bold" width="50%">Your Listing Price: </TableCell>
-										<TableCell sx={{ borderBottom: "none" }} width="50%">{selectedReceipt?.firstHandPrice ? formatMoney(selectedReceipt?.firstHandPrice) : "-"}</TableCell>
+										<TableCell sx={{ borderBottom: "none" }} className="font-[300] text-primary-gray" width="50%">Green Fees Per Player: </TableCell>
+										<TableCell sx={{ borderBottom: "none" }} className="text-secondary-black" width="50%">{selectedReceipt?.firstHandPrice ? formatMoney(selectedReceipt?.firstHandPrice / 100) : "-"}</TableCell>
 									</TableRow>
 									<TableRow>
-										<TableCell sx={{ borderBottom: "none" }} className="bold" width="50%">Service Fee: </TableCell>
-										<TableCell sx={{ borderBottom: "none" }} width="50%">{selectedReceipt?.sellerServiceFee ? formatMoney(selectedReceipt?.sellerServiceFee) : "-"}</TableCell>
-									</TableRow>
-									<TableRow>
-										<TableCell sx={{ borderBottom: "none" }} className="bold" width="50%">You Receive after Sale: </TableCell>
-										<TableCell sx={{ borderBottom: "none" }} width="50%">{selectedReceipt?.receiveAfterSale ? formatMoney(selectedReceipt?.receiveAfterSale) : "-"}</TableCell>
-									</TableRow>
-								</>
-							) : (
-								<>
-									<TableRow>
-										<TableCell sx={{ borderBottom: "none" }} className="bold" width="50%">Green Fees Per Player: </TableCell>
-										<TableCell sx={{ borderBottom: "none" }} width="50%">{selectedReceipt?.firstHandPrice ? formatMoney(selectedReceipt?.firstHandPrice / 100) : "-"}</TableCell>
-									</TableRow>
-									<TableRow>
-										<TableCell sx={{ borderBottom: "none" }} className="bold" width="50%">Total Amount: </TableCell>
-										<TableCell sx={{ borderBottom: "none" }} width="50%">{selectedReceipt?.pricePerGolfer[0] ? formatMoney(selectedReceipt?.pricePerGolfer[0]) : "-"}</TableCell>
+										<TableCell sx={{ borderBottom: "none" }} className="font-[300] text-primary-gray" width="50%">Total Amount: </TableCell>
+										<TableCell sx={{ borderBottom: "none" }} className="text-secondary-black" width="50%">{selectedReceipt?.pricePerGolfer[0] ? formatMoney(selectedReceipt?.pricePerGolfer[0]) : "-"}</TableCell>
 									</TableRow>
 								</>
 							)}
 						</table>
 						{/* </div> */}
 						<div className="flex flex-col gap-4 px-4 pb-8">
+							{selectedReceipt?.status === "SOLD" && (
+								<table border={0} cellPadding={0} cellSpacing={0} width="100%">
+									<TableRow>
+										<TableCell sx={{ borderBottom: "none" }} className="font-[300] text-primary-gray" width="50%">Your Listing Price: </TableCell>
+										<TableCell sx={{ borderBottom: "none" }} className="text-secondary-black" width="50%">{selectedReceipt?.firstHandPrice ? formatMoney(selectedReceipt?.firstHandPrice) : "-"}</TableCell>
+									</TableRow>
+									<TableRow>
+										<TableCell sx={{ borderBottom: "none" }} className="font-[300] text-primary-gray" width="50%">Service Fee: </TableCell>
+										<TableCell sx={{ borderBottom: "none" }} className="text-secondary-black" width="50%">{selectedReceipt?.sellerServiceFee ? formatMoney(selectedReceipt?.sellerServiceFee) : "-"}</TableCell>
+									</TableRow>
+									<TableRow>
+										<TableCell sx={{ borderBottom: "none" }} className="font-[300] text-primary-gray" width="50%">You Receive after Sale: </TableCell>
+										<TableCell sx={{ borderBottom: "none" }} className="text-secondary-black" width="50%">{selectedReceipt?.receiveAfterSale ? formatMoney(selectedReceipt?.receiveAfterSale) : "-"}</TableCell>
+									</TableRow>
+								</table>
+							)}
 							<div className="flex flex-col gap-2">
 								<OutlineButton
 									onClick={() => setIsReceiptOpen(false)}
