@@ -166,7 +166,10 @@ export const ListTeeTime = ({
     totalPayoutForAllGolfers =
       totalPayoutForAllGolfers <= 0 ? 0 : totalPayoutForAllGolfers;
 
-    setSellerServiceFee(sellerFeePerGolfer * parseInt(players));
+    setSellerServiceFee(
+      sellerFeePerGolfer * parseInt(players) +
+        (selectedTeeTime?.weatherGuaranteeAmount ?? 0) / 100
+    );
 
     return Math.abs(totalPayoutForAllGolfers);
   }, [listingPrice, players]);
@@ -382,6 +385,20 @@ export const ListTeeTime = ({
                 </div>
                 <div className="text-secondary-black">
                   {formatMoney(sellerServiceFee)}
+                </div>
+              </div>
+              <div className="flex justify-between">
+                <div className="font-[300] text-primary-gray">
+                  Sensible Amount
+                  <Tooltip
+                    trigger={<Info className="h-[14px] w-[14px]" />}
+                    content="Sensible amount to be refunded"
+                  />
+                </div>
+                <div className="text-secondary-black">
+                  {formatMoney(
+                    (selectedTeeTime?.weatherGuaranteeAmount ?? 0) / 100
+                  )}
                 </div>
               </div>
               <div className="flex justify-between">
