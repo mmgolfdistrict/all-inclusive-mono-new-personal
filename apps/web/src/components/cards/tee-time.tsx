@@ -212,12 +212,12 @@ export const TeeTime = ({
 
   const isSuggested = status === "UNLISTED";
 
-  const share = async (teeTimeId: string) => {
-    const currentUrl = window.location.href;
+  const share = async () => {
+    const currentUrl = window.location.host;
     if (navigator?.share) {
-      await navigator.share({ url: `${currentUrl}/${teeTimeId}` });
+      await navigator.share({ url: `${currentUrl}${href}` });
     } else {
-      await copyToClipboard(`${currentUrl}/${teeTimeId}`);
+      await copyToClipboard(`${currentUrl}${href}`);
     }
   };
 
@@ -438,7 +438,7 @@ export const TeeTime = ({
               </OutlineButton>
             </Link>
             <OutlineButton
-              onClick={() => void share(teeTimeId)}
+              onClick={() => void share()}
               className="w-full whitespace-nowrap"
               data-testid="share-button-id"
             >
