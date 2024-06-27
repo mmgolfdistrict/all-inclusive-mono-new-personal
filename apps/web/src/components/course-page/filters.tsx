@@ -3,7 +3,6 @@
 import * as ToggleGroup from "@radix-ui/react-toggle-group";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { Switch } from "../buttons/switch";
-import { GolfCart } from "../icons/golf-cart";
 import { Hidden } from "../icons/hidden";
 import { Info } from "../icons/info";
 import { Slider } from "../input/slider";

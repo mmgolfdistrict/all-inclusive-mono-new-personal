@@ -947,7 +947,7 @@ export class BookingService {
             CourseName: course?.name,
             HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
             CustomerFirstName: user.name,
-            CourseReservationID: course?.id ?? "-",
+            CourseReservationID: firstBooking?.id ?? "-",
             PlayDateTime: formatTime(firstBooking.providerDate ?? "", true, firstBooking.timezoneCorrection ?? 0),
             PlayerCount: firstBooking.playerCount ?? 0,
             ListedPricePerPlayer: listPrice ? `${listPrice}` : "-",
