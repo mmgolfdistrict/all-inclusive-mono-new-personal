@@ -111,6 +111,8 @@ interface TransferData {
   bookingIds: string[];
   status: string;
   playerCount?: number;
+  sellerServiceFee: number;
+  receiveAfterSale: number;
 }
 type RequestOptions = {
   method: string;
@@ -197,6 +199,8 @@ export class BookingService {
         date: teeTimes.providerDate,
         courseId: teeTimes.courseId,
         courseName: courses.name,
+        sellerFee: courses.sellerFee,
+        buyerFee: courses.buyerFee,
         greenFee: bookings.greenFeePerPlayer,
         teeTimeImage: {
           key: assets.key,
@@ -228,6 +232,35 @@ export class BookingService {
     const combinedData: Record<string, TransferData> = {};
     data.forEach((teeTime) => {
       if (!combinedData[teeTime.transferId]) {
+        let sellerServiceFee = 0;
+        let receiveAfterSaleAmount = 0;
+
+        if (teeTime.from === userId) {
+          // calculating service fee for sold tee time
+          const listingSellerFeePercentage = (teeTime.sellerFee ?? 1) / 100;
+          const listingBuyerFeePercentage = (teeTime.buyerFee ?? 1) / 100;
+          const listingPrice = teeTime.amount / 100;
+
+          const sellerListingPricePerGolfer = parseFloat(listingPrice.toString());
+
+          const buyerListingPricePerGolfer =
+            sellerListingPricePerGolfer * (1 + listingBuyerFeePercentage);
+          const sellerFeePerGolfer =
+            sellerListingPricePerGolfer * listingSellerFeePercentage;
+          const buyerFeePerGolfer =
+            sellerListingPricePerGolfer * listingBuyerFeePercentage;
+          let totalPayoutForAllGolfers =
+            (buyerListingPricePerGolfer - buyerFeePerGolfer - sellerFeePerGolfer) *
+            teeTime.players;
+
+          totalPayoutForAllGolfers =
+            totalPayoutForAllGolfers <= 0 ? 0 : totalPayoutForAllGolfers;
+
+          sellerServiceFee = (sellerFeePerGolfer * teeTime.players);
+
+          receiveAfterSaleAmount = Math.abs(totalPayoutForAllGolfers);
+        }
+
         combinedData[teeTime.transferId] = {
           courseId,
           courseName: teeTime.courseName,
@@ -235,12 +268,14 @@ export class BookingService {
             ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${teeTime.teeTimeImage.key}.${teeTime.teeTimeImage.extension}`
             : "/defaults/default-course.webp",
           date: teeTime.date ? teeTime.date : "",
-          firstHandPrice: teeTime.greenFee ? teeTime.greenFee : 0,
+          firstHandPrice: teeTime.from === userId ? teeTime.amount / 100 : teeTime.greenFee,
           golfers: [{ id: "", email: "", handle: "", name: "", slotId: "" }],
-          pricePerGolfer: teeTime.from === userId ? [teeTime.amount / 100] : [teeTime.purchasedPrice / 100],
+          pricePerGolfer: teeTime.from === userId ? [(teeTime.greenFee * teeTime.players) / 100] : [teeTime.purchasedPrice / 100],
           bookingIds: [teeTime.bookingId],
           status: teeTime.from === userId ? "SOLD" : "PURCHASED",
           playerCount: teeTime.players,
+          sellerServiceFee: teeTime.from === userId ? sellerServiceFee : 0,
+          receiveAfterSale: teeTime.from === userId ? receiveAfterSaleAmount : 0
         };
       } else {
         const currentEntry = combinedData[teeTime.transferId];
@@ -899,7 +934,7 @@ export class BookingService {
       this.logger.error(`createNotification: User with ID ${userId} not found.`);
       return;
     }
-console.log("######", ownedBookings)
+    console.log("######", ownedBookings)
     if (user.email && user.name) {
       await this.notificationService
         .sendEmailByTemplate(
