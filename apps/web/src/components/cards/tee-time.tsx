@@ -277,7 +277,12 @@ export const TeeTime = ({
                     className="!min-h-[24px] !min-w-[24px] max-h-[24px] max-w-[24px] h-[24px] w-[24px] md:min-h-[30px] md:min-w-[30px] md:max-h-[30px] md:max-w-[30px] md:h-[30px] md:w-[30px]"
                   />
                 }
-                content={status === "SECOND_HAND" ? "TODO" : soldByName}
+                content={
+                  "Sold by " +
+                  (status === "SECOND_HAND"
+                    ? "another Golf District golfer."
+                    : soldByName)
+                }
               />
             </div>
           </div>
