@@ -2,6 +2,7 @@ import { type ReactNode } from "react";
 import "~/styles/globals.css";
 import { ssrGetEntityByDomain } from "@golf-district/api";
 import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Club } from "~/components/icons/club";
 import { GolfDistrict } from "~/components/icons/golf-district";
 import { Layout } from "~/components/layout";
@@ -138,8 +139,9 @@ export default async function RootLayout({
         ) : (
           <Providers entityData={entityData}>
             <Layout>
-              <Analytics />
               {children}
+              <Analytics />
+              <SpeedInsights />
             </Layout>
           </Providers>
         )}
