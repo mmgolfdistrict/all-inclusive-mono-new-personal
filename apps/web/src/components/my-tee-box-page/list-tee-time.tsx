@@ -365,6 +365,11 @@ export const ListTeeTime = ({
                   ))}
                 </ToggleGroup.Root>
               </div>
+              <div className="bg-secondary-white">
+                If you purchased sensible weather protection, you will receive a
+                full refund. Any remaining owned rounds for this time will be
+                subject to raincheck policy.
+              </div>
             </div>
             <div className="flex flex-col gap-4 px-4 pb-6">
               <div className="flex justify-between">
@@ -411,11 +416,6 @@ export const ListTeeTime = ({
               </div>
               <div className="text-center text-[14px] font-[300] text-primary-gray">
                 All sales are final.
-              </div>
-              <div style={{ background: "#D3D3D3" }}>
-                If you purchased sensible weather protection, you will receive a
-                full refund. Any remaining owned rounds for this time will be
-                subject to raincheck policy.
               </div>
               <div className="flex flex-col gap-2">
                 <FilledButton

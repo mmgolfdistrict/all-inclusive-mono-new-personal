@@ -6,9 +6,10 @@ import { formatMoney, formatTime } from "~/utils/formatters";
 import type { InviteFriend } from "~/utils/types";
 import { Dispatch, SetStateAction, useEffect, useMemo, useState } from "react";
 import { Avatar } from "../avatar";
+import { OutlineButton } from "../buttons/outline-button";
+import { BookingDetails } from "./booking-details";
 import { SkeletonRow } from "./skeleton-row";
 import { TxnDetails } from "./txn-details";
-import { BookingDetails } from "./booking-details";
 
 export type TxnHistoryType = {
   // courseName: string;
@@ -194,7 +195,7 @@ const TableRow = ({
   timezoneCorrection,
   openTxnDetails,
   openReceipt,
-  playerCount = 1
+  playerCount = 1,
 }: {
   course: string;
   date: string;
@@ -249,13 +250,9 @@ const TableRow = ({
           >
             Details
           </OutlineButton> */}
-          <OutlineButton
-            onClick={openReceipt}
-            data-testid="receipt-button-id"
-          >
+          <OutlineButton onClick={openReceipt} data-testid="receipt-button-id">
             Receipt
           </OutlineButton>
-          
         </div>
       </td>
     </tr>
