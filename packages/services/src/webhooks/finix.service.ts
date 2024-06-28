@@ -236,9 +236,10 @@ export class FinixService {
         body: raw,
         redirect: "follow",
       };
-
+      console.log("Transfer request data:", raw);
       const response = await fetch(`${this.baseurl}/transfers`, requestOptions);
       const transferData = await response.json();
+      console.log("Transfer response data", transferData);
       return transferData;
     } catch (e) {
       console.log("Error in transfer", e);
@@ -278,22 +279,26 @@ export class FinixService {
         paymentInstrumentIdFromBackend?.paymentInstrumentId
       );
       const transferId: string = cashoutData.id as string;
-
-      await this.database
-        .insert(cashout)
-        .values({
-          id: randomUUID(),
-          amount: amountMultiplied,
-          customerId,
-          transferId,
-          paymentDetailId: paymentInstrumentIdFromBackend.id,
-          externalStatus: cashoutData.state,
-        })
-        .catch((e) => {
-          console.log("Error in transfer", e);
-          throw "Error in creating cashout";
-        });
-      return { success: true, error: false };
+      if (transferId) {
+        await this.database
+          .insert(cashout)
+          .values({
+            id: randomUUID(),
+            amount: amountMultiplied,
+            customerId,
+            transferId,
+            paymentDetailId: paymentInstrumentIdFromBackend.id,
+            externalStatus: cashoutData.state,
+          })
+          .catch((e) => {
+            console.log("Error in transfer", e);
+            throw "Error in creating cashout";
+          });
+        return { success: true, error: false };
+      } else {
+        console.log("Transfer not initiated");
+        return { success: false, error: true };
+      }
     }
   };
 
