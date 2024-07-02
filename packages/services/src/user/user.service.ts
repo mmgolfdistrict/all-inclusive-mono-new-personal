@@ -37,7 +37,13 @@ export interface UserCreationData {
   lastName: string;
   handle: string;
   phoneNumber: string;
-  location?: string;
+  // location?: string;
+  address1?: string;
+  address2?: string;
+  state?: string;
+  city?: string;
+  zipcode?: string;
+  country?: string;
   redirectHref?: string;
   ReCAPTCHA: string | undefined;
 }
@@ -48,7 +54,12 @@ interface UserUpdateData {
   profileVisibility?: "PUBLIC" | "PRIVATE";
   profilePictureAssetId?: string | null;
   bannerImageAssetId?: string | null;
-  location?: string | null;
+  address1?: string | null;
+  address2?: string | null;
+  state?: string | null;
+  zipcode?: string | null;
+  city?: string | null;
+  country?: string | null;
   phoneNumber?: string | null;
   phoneNotifications?: boolean | null;
   emailNotifications?: boolean | null;
@@ -556,9 +567,9 @@ export class UserService {
         throw new Error(`Asset not found: ${data.profilePictureAssetId}`);
       }
     }
-    if (data.location) {
-      //TODO: validate location with geocode service
-    }
+    // if (data.location) {
+    //   //TODO: validate location with geocode service
+    // }
 
     const updateData: Partial<InsertUser> = {
       updatedAt: currentUtcTimestamp(),
@@ -629,7 +640,13 @@ export class UserService {
       updateData.image = data.profilePictureAssetId;
     if (Object.prototype.hasOwnProperty.call(data, "bannerImageAssetId"))
       updateData.bannerImage = data.bannerImageAssetId;
-    if (Object.prototype.hasOwnProperty.call(data, "location")) updateData.location = data.location;
+    // if (Object.prototype.hasOwnProperty.call(data, "location")) updateData.location = data.location;
+    if (Object.prototype.hasOwnProperty.call(data, "address1")) updateData.address1 = data.address1;
+    if (Object.prototype.hasOwnProperty.call(data, "address2")) updateData.address2 = data.address2;
+    if (Object.prototype.hasOwnProperty.call(data, "state")) updateData.state = data.state;
+    if (Object.prototype.hasOwnProperty.call(data, "city")) updateData.city = data.city;
+    if (Object.prototype.hasOwnProperty.call(data, "zipcode")) updateData.zipcode = data.zipcode;
+    if (Object.prototype.hasOwnProperty.call(data, "country")) updateData.country = data.country;
     if (Object.prototype.hasOwnProperty.call(data, "phoneNotifications"))
       updateData.phoneNotifications = data.phoneNotifications ? true : false;
     if (Object.prototype.hasOwnProperty.call(data, "emailNotifications"))
@@ -1179,7 +1196,13 @@ export class UserService {
         handle: data.handle,
         email: data.email,
         gdPassword: await bcrypt.hash(data.password, 10),
-        address: data.location,
+        // address: data.location,
+        address1: data.address1,
+        address2: data.address2,
+        state: data.state,
+        city: data.city,
+        zipcode: data.zipcode,
+        country: data.country,
         phoneNumber: data.phoneNumber,
         verificationRequestToken: verificationToken,
         verificationRequestExpiry: generateUtcTimestamp(90), //90 minutes
@@ -1270,8 +1293,13 @@ export class UserService {
         bannerPicture,
         handle: user.handle,
         name: user.name,
-        location: user.location,
-        profileVisibility: user.profileVisibility,
+        // location: user.location,
+        address1: user.address1,
+        address2: user.address2,
+        state: user.state,
+        city: user.city,
+        zipcode: user.zipcode,
+        country: user.country
       };
     }
     return res;
