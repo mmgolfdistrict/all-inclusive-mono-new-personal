@@ -366,9 +366,9 @@ export const ListTeeTime = ({
                 </ToggleGroup.Root>
               </div>
               <div className="bg-secondary-white">
-                If you purchased sensible weather protection, you will receive a
-                full refund. Any remaining owned rounds for this time will be
-                subject to raincheck policy.
+                If you purchased weather protection, you will receive a full
+                refund. Any remaining owned rounds for this time will be subject
+                to raincheck policy.
               </div>
             </div>
             <div className="flex flex-col gap-4 px-4 pb-6">
@@ -394,10 +394,10 @@ export const ListTeeTime = ({
               </div>
               <div className="flex justify-between">
                 <div className="font-[300] text-primary-gray">
-                  Sensible Amount
+                  Weather Guarantee Amount
                   <Tooltip
                     trigger={<Info className="h-[14px] w-[14px]" />}
-                    content="Sensible amount to be refunded"
+                    content="Weather guarantee amount to be refunded"
                   />
                 </div>
                 <div className="text-secondary-black">
