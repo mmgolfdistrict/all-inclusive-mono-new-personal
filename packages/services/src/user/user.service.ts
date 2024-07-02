@@ -189,7 +189,7 @@ export class UserService {
           key: assets.key,
           extension: assets.extension,
           websiteURL: courses.websiteURL,
-          name: courses.name
+          name: courses.name,
         })
         .from(courses)
         .where(eq(courses.id, courseId))
@@ -393,7 +393,12 @@ export class UserService {
    * @example
    *   verifyUserEmail('user123id', 'secureverificationtoken');
    */
-  verifyUserEmail = async (courseId: string | undefined, userId: string, token: string, redirectHref: string): Promise<void> => {
+  verifyUserEmail = async (
+    courseId: string | undefined,
+    userId: string,
+    token: string,
+    redirectHref: string
+  ): Promise<void> => {
     this.logger.info(`verifyUserEmail called with userId: ${userId} and token: ${token}`);
     const [user] = await this.database.select().from(users).where(eq(users.id, userId));
     if (!user) {
@@ -436,7 +441,7 @@ export class UserService {
           key: assets.key,
           extension: assets.extension,
           websiteURL: courses.websiteURL,
-          name: courses.name
+          name: courses.name,
         })
         .from(courses)
         .where(eq(courses.id, courseId))
@@ -445,7 +450,7 @@ export class UserService {
       if (course?.key) {
         CourseLogoURL = `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`;
         CourseURL = course?.websiteURL || "";
-        CourseName = course.name
+        CourseName = course.name;
       }
     }
 
@@ -462,7 +467,7 @@ export class UserService {
             CourseURL,
             CourseName,
             HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
-            BuyTeeTimeURL: encodeURI(redirectHref)
+            BuyTeeTimeURL: encodeURI(redirectHref),
           },
           []
         );
@@ -800,7 +805,7 @@ export class UserService {
           key: assets.key,
           extension: assets.extension,
           websiteURL: courses.websiteURL,
-          name: courses.name
+          name: courses.name,
         })
         .from(courses)
         .leftJoin(assets, eq(assets.courseId, courseProviderId))
@@ -809,7 +814,7 @@ export class UserService {
       if (course?.key) {
         CourseLogoURL = `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`;
         CourseURL = course?.websiteURL || "";
-        CourseName = course?.name || ""
+        CourseName = course?.name || "";
       }
     }
 
@@ -970,7 +975,7 @@ export class UserService {
           key: assets.key,
           extension: assets.extension,
           websiteURL: courses.websiteURL,
-          name: courses.name
+          name: courses.name,
         })
         .from(courses)
         .where(eq(courses.id, courseId))
@@ -984,7 +989,7 @@ export class UserService {
       if (course?.key) {
         CourseLogoURL = `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`;
         CourseURL = course?.websiteURL || "";
-        CourseName = course?.name || ""
+        CourseName = course?.name || "";
       }
     }
 

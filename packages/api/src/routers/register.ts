@@ -27,7 +27,7 @@ export const registerRouter = createTRPCRouter({
         userId: z.string(),
         token: z.string(),
         courseId: z.string().optional(),
-        redirectHref: z.string()
+        redirectHref: z.string(),
       })
     )
     .mutation(async ({ input, ctx }) => {

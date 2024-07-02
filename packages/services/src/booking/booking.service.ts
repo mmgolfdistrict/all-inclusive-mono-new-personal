@@ -141,7 +141,7 @@ export class BookingService {
     private readonly loggerService: LoggerService,
     private readonly hyperSwitchService: HyperSwitchService,
     private readonly sensibleService: SensibleService
-  ) { }
+  ) {}
 
   createCounterOffer = async (userId: string, bookingIds: string[], offerId: string, amount: number) => {
     //find owner of each booking
@@ -243,20 +243,15 @@ export class BookingService {
 
           const sellerListingPricePerGolfer = parseFloat(listingPrice.toString());
 
-          const buyerListingPricePerGolfer =
-            sellerListingPricePerGolfer * (1 + listingBuyerFeePercentage);
-          const sellerFeePerGolfer =
-            sellerListingPricePerGolfer * listingSellerFeePercentage;
-          const buyerFeePerGolfer =
-            sellerListingPricePerGolfer * listingBuyerFeePercentage;
+          const buyerListingPricePerGolfer = sellerListingPricePerGolfer * (1 + listingBuyerFeePercentage);
+          const sellerFeePerGolfer = sellerListingPricePerGolfer * listingSellerFeePercentage;
+          const buyerFeePerGolfer = sellerListingPricePerGolfer * listingBuyerFeePercentage;
           let totalPayoutForAllGolfers =
-            (buyerListingPricePerGolfer - buyerFeePerGolfer - sellerFeePerGolfer) *
-            teeTime.players;
+            (buyerListingPricePerGolfer - buyerFeePerGolfer - sellerFeePerGolfer) * teeTime.players;
 
-          totalPayoutForAllGolfers =
-            totalPayoutForAllGolfers <= 0 ? 0 : totalPayoutForAllGolfers;
+          totalPayoutForAllGolfers = totalPayoutForAllGolfers <= 0 ? 0 : totalPayoutForAllGolfers;
 
-          sellerServiceFee = (sellerFeePerGolfer * teeTime.players);
+          sellerServiceFee = sellerFeePerGolfer * teeTime.players;
 
           receiveAfterSaleAmount = Math.abs(totalPayoutForAllGolfers);
         }
@@ -270,12 +265,15 @@ export class BookingService {
           date: teeTime.date ? teeTime.date : "",
           firstHandPrice: teeTime.from === userId ? teeTime.amount / 100 : teeTime.greenFee,
           golfers: [{ id: "", email: "", handle: "", name: "", slotId: "" }],
-          pricePerGolfer: teeTime.from === userId ? [(teeTime.greenFee * teeTime.players) / 100] : [teeTime.purchasedPrice / 100],
+          pricePerGolfer:
+            teeTime.from === userId
+              ? [(teeTime.greenFee * teeTime.players) / 100]
+              : [teeTime.purchasedPrice / 100],
           bookingIds: [teeTime.bookingId],
           status: teeTime.from === userId ? "SOLD" : "PURCHASED",
           playerCount: teeTime.players,
           sellerServiceFee: teeTime.from === userId ? sellerServiceFee : 0,
-          receiveAfterSale: teeTime.from === userId ? receiveAfterSaleAmount : 0
+          receiveAfterSale: teeTime.from === userId ? receiveAfterSaleAmount : 0,
         };
       } else {
         const currentEntry = combinedData[teeTime.transferId];
@@ -859,7 +857,7 @@ export class BookingService {
         extension: assets.extension,
         websiteURL: courses.websiteURL,
         name: courses.name,
-        id: courses.id
+        id: courses.id,
       })
       .from(courses)
       .where(eq(courses.id, courseId))
@@ -934,7 +932,7 @@ export class BookingService {
       this.logger.error(`createNotification: User with ID ${userId} not found.`);
       return;
     }
-    console.log("######", ownedBookings)
+    console.log("######", ownedBookings);
     if (user.email && user.name) {
       await this.notificationService
         .sendEmailByTemplate(
@@ -948,7 +946,11 @@ export class BookingService {
             HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
             CustomerFirstName: user.name,
             CourseReservationID: firstBooking?.id ?? "-",
-            PlayDateTime: formatTime(firstBooking.providerDate ?? "", true, firstBooking.timezoneCorrection ?? 0),
+            PlayDateTime: formatTime(
+              firstBooking.providerDate ?? "",
+              true,
+              firstBooking.timezoneCorrection ?? 0
+            ),
             PlayerCount: firstBooking.playerCount ?? 0,
             ListedPricePerPlayer: listPrice ? `${listPrice}` : "-",
             TotalAmount: formatMoney(firstBooking.totalAmount / 100 ?? 0),
@@ -1071,7 +1073,7 @@ export class BookingService {
         websiteURL: courses.websiteURL,
         key: assets.key,
         extension: assets.extension,
-        name: courses.name
+        name: courses.name,
       })
       .from(courses)
       .where(eq(courses.id, courseId))
@@ -1093,20 +1095,19 @@ export class BookingService {
     }
 
     if (user.email && user.name && course) {
-      await this.notificationService
-        .sendEmailByTemplate(
-          user.email,
-          "Listing Cancelled",
-          process.env.SENDGRID_LISTING_CANCELLED_TEMPLATE_ID!,
-          {
-            CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`,
-            CourseURL: course?.websiteURL || "",
-            CourseName: course?.name,
-            HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
-            CustomerFirstName: user.name,
-          },
-          []
-        )
+      await this.notificationService.sendEmailByTemplate(
+        user.email,
+        "Listing Cancelled",
+        process.env.SENDGRID_LISTING_CANCELLED_TEMPLATE_ID!,
+        {
+          CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`,
+          CourseURL: course?.websiteURL || "",
+          CourseName: course?.name,
+          HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+          CustomerFirstName: user.name,
+        },
+        []
+      );
     }
   };
 
@@ -2738,8 +2739,9 @@ export class BookingService {
             url: "/confirmBooking",
             userAgent: "",
             message: "ERROR CONFIRMING BOOKING",
-            stackTrace: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${booking?.teeTimeId ?? ""
-              }`,
+            stackTrace: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${
+              booking?.teeTimeId ?? ""
+            }`,
             additionalDetailsJSON: err,
           });
         });

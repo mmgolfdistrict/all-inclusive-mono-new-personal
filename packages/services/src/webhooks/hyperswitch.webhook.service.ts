@@ -985,7 +985,7 @@ export class HyperSwitchWebhookService {
                   },
                 ],
                 event_type: "tee_time",
-                details
+                details,
               },
             },
           }
