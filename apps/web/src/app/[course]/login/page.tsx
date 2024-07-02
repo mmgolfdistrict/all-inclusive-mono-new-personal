@@ -293,11 +293,7 @@ export default function Login() {
           </Link>
           {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (
             <ReCAPTCHA
-              size={
-                process.env.NEXT_PUBLIC_RECAPTCHA_IS_INVISIBLE
-                  ? "invisible"
-                  : "normal"
-              }
+              size="normal"
               sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ?? ""}
               onChange={onReCAPTCHAChange}
               ref={recaptchaRef}
