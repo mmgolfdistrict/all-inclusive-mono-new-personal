@@ -297,11 +297,7 @@ export default function Login() {
           </Link>
           {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (
             <ReCAPTCHA
-              size={
-                process.env.NEXT_PUBLIC_RECAPTCHA_IS_INVISIBLE
-                  ? "invisible"
-                  : "normal"
-              }
+              size="normal"
               sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ?? ""}
               // size="normal"
               // sitekey="6LeBWkcpAAAAAPEMeLN5-i1VZXjM6LSSmHK1JmmD"
