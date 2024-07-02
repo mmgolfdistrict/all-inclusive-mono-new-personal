@@ -8,10 +8,6 @@ export const systemNotificationRouter = createTRPCRouter({
       })
     )
     .query(async ({ ctx, input }) => {
-      return [{
-        id:"1234",
-        shortMessage:"Test short message",
-
-      }]
+      return await ctx.serviceFactory.getSystemNotificationService().getSystemNotification()
     }),
 });

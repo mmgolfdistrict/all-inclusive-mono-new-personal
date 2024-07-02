@@ -5,8 +5,8 @@ import { mySqlTable } from "./_table";
 
 export const systemNotification = mySqlTable("systemNotification", {
   id: varchar("id", { length: 36 }).notNull().primaryKey(),
-  startDate: datetime("startDate").notNull(),
-  endDate: datetime("endDate").notNull(),
+  startDate: datetime("startDate", { mode: "string", fsp: 3 }).notNull(),
+  endDate: datetime("endDate", { mode: "string", fsp: 3 }).notNull(),
   shortMessage: varchar("shortMessage", { length: 255 }).notNull(),
   longMessage: varchar("longMessage", { length: 2048 }),
   displayType: varchar("displayType", { length: 36 }).notNull(),
