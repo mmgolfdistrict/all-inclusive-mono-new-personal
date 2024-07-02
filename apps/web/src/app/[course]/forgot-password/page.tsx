@@ -36,6 +36,10 @@ export default function ForgotPassword() {
     setValue("redirectHref", cleanedHref);
   }, []);
 
+  useEffect(() => {
+    recaptchaRef.current?.execute();
+  }, []);
+
   const onSubmit: SubmitHandler<ForgotPasswordSchemaType> = async (data) => {
     if (process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && !data.ReCAPTCHA) {
       toast.info("Please verify you are not a robot.");
@@ -97,8 +101,9 @@ export default function ForgotPassword() {
               />
               {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (
                 <ReCAPTCHA
-                  size="normal"
+                  size="invisible"
                   sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ?? ""}
+                  // sitekey="6LeBWkcpAAAAAPEMeLN5-i1VZXjM6LSSmHK1JmmD"
                   onChange={onReCAPTCHAChange}
                   ref={recaptchaRef}
                   data-testid="forgot-password-recaptcha-id"
