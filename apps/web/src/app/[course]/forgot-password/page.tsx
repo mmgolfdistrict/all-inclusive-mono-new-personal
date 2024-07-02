@@ -101,9 +101,12 @@ export default function ForgotPassword() {
               />
               {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (
                 <ReCAPTCHA
-                  size="invisible"
+                  size={
+                    process.env.NEXT_PUBLIC_RECAPTCHA_IS_INVISIBLE
+                      ? "invisible"
+                      : "normal"
+                  }
                   sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ?? ""}
-                  // sitekey="6LeBWkcpAAAAAPEMeLN5-i1VZXjM6LSSmHK1JmmD"
                   onChange={onReCAPTCHAChange}
                   ref={recaptchaRef}
                   data-testid="forgot-password-recaptcha-id"
