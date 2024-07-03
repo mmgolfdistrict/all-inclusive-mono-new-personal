@@ -32,8 +32,15 @@ import { useDebounce } from "usehooks-ts";
 
 export default function RegisterPage() {
   const { course } = useCourseContext();
-  const [location, setLocation] = useState<string>("");
-  const debouncedLocation = useDebounce<string>(location, 500);
+  // const [location, setLocation] = useState<string>("");
+  const [address1, setAddress1] = useState<string>("");
+  const [address2, setAddress2] = useState<string>("");
+  const [state, setState] = useState<string>("");
+  const [zipcode, setZipcode] = useState<string>("");
+  const [city, setCity] = useState<string>("");
+  const [country, setCountry] = useState<string>("");
+
+  const debouncedLocation = useDebounce<string>(city, 500);
   const cities = api.places.getCity.useQuery({ city: debouncedLocation });
   const recaptchaRef = createRef<ReCAPTCHA>();
   const registerUser = api.register.register.useMutation();
@@ -220,7 +227,7 @@ export default function RegisterPage() {
               <Refresh className="h-[14px] w-[14px]" />
             </IconButton>
           </div>
-          <Input
+          {/* <Input
             label="Location"
             type="text"
             list="places"
@@ -233,6 +240,90 @@ export default function RegisterPage() {
               setLocation(e.target.value);
             }}
             data-testid="register-location-id"
+          /> */}
+          <Input
+            label="Address1"
+            type="text"
+            list="places"
+            placeholder="Enter your address1"
+            id="address1"
+            register={register}
+            name="address1"
+            error={errors.address1?.message}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => {
+              setAddress1(e.target.value);
+            }}
+            data-testid="register-address1-id"
+          />
+          <Input
+            label="Address2"
+            type="text"
+            list="places"
+            placeholder="Enter your address2"
+            id="address2"
+            register={register}
+            name="address2"
+            error={errors.address2?.message}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => {
+              setAddress2(e.target.value);
+            }}
+            data-testid="register-address2-id"
+          />
+          <Input
+            label="City"
+            type="text"
+            list="places"
+            placeholder="Enter your city"
+            id="city"
+            register={register}
+            name="city"
+            error={errors.city?.message}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => {
+              setCity(e.target.value);
+            }}
+            data-testid="register-city-id"
+          />
+          <Input
+            label="State"
+            type="text"
+            list="places"
+            placeholder="Enter your state"
+            id="state"
+            register={register}
+            name="state"
+            error={errors.state?.message}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => {
+              setState(e.target.value);
+            }}
+            data-testid="register-state-id"
+          />
+          <Input
+            label="Zip"
+            type="text"
+            list="places"
+            placeholder="Enter your zip"
+            id="zipcode"
+            register={register}
+            name="zipcode"
+            error={errors.zipcode?.message}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => {
+              setZipcode(e.target.value);
+            }}
+            data-testid="register-zipcode-id"
+          />
+          <Input
+            label="Country"
+            type="text"
+            list="places"
+            placeholder="Enter your country"
+            id="country"
+            register={register}
+            name="country"
+            error={errors.country?.message}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => {
+              setCountry(e.target.value);
+            }}
+            data-testid="register-country-id"
           />
           <datalist id="places">
             {cities.data?.autocompleteCities.features.map((city, idx) => (

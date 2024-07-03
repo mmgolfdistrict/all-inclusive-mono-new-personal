@@ -1166,8 +1166,6 @@ export class HyperSwitchWebhookService {
           existingTeeTime?.timezoneCorrection ?? 0
         ),
         NumberOfHoles: existingTeeTime?.numberOfHoles,
-        BuyTeeTImeURL: `${redirectHref}`,
-        CashOutURL: `${redirectHref}/account-settings/${customer_id}`,
         // GolfDistrictReservationID: bookingId,
         CourseReservationID: newBooking?.data.id,
       };
@@ -1195,6 +1193,8 @@ export class HyperSwitchWebhookService {
           PurchasedFrom: sellerCustomer.username,
           PlayerCount: listedSlotsCount ?? 0,
           TotalAmount: formatMoney(total / 100),
+          SellTeeTImeURL: `${redirectHref}/my-tee-box`,
+          ManageTeeTimesURL: `${redirectHref}/my-tee-box`,
         };
 
         await this.notificationService.createNotification(
@@ -1237,6 +1237,8 @@ export class HyperSwitchWebhookService {
               })}` || "-",
             Payout: formatMoney((listedPrice - totalTax) * (listedSlotsCount || 1)),
             PurchasedFrom: existingTeeTime?.courseName || "-",
+            BuyTeeTImeURL: `${redirectHref}`,
+            CashOutURL: `${redirectHref}/account-settings/${customer_id}`,
           };
           await this.notificationService.createNotification(
             firstBooking.ownerId || "",
@@ -1268,6 +1270,8 @@ export class HyperSwitchWebhookService {
           Payout: formatMoney((listedPrice - totalTax) * (listedSlotsCount || 1)),
           SensibleWeatherIncluded: firstBooking.weatherGuaranteeId?.length ? "Yes" : "No",
           PurchasedFrom: existingTeeTime?.courseName || "-",
+          BuyTeeTImeURL: `${redirectHref}`,
+          CashOutURL: `${redirectHref}/account-settings/${customer_id}`
         };
         await this.notificationService.createNotification(
           firstBooking.ownerId || "",

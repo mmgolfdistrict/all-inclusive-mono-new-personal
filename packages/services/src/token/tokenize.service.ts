@@ -453,8 +453,10 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
       CourseURL: existingTeeTime?.websiteURL || "",
       HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
-      BuyTeeTImeURL: `${redirectHref}`,
-      CashOutURL: `${redirectHref}/account-settings/${userId}`,
+      // BuyTeeTImeURL: `${redirectHref}`,
+      // CashOutURL: `${redirectHref}/account-settings/${userId}`,
+      SellTeeTImeURL: `${redirectHref}/my-tee-box`,
+      ManageTeeTimesURL: `${redirectHref}/my-tee-box`,
     };
     await this.notificationService.createNotification(
       userId,

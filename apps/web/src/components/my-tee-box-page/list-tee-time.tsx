@@ -163,13 +163,19 @@ export const ListTeeTime = ({
     //   buyerFeePerGolfer          = ${buyerFeePerGolfer},
     //   totalPayoutForAllGolfers   = ${totalPayoutForAllGolfers}`);
 
-    totalPayoutForAllGolfers =
-      totalPayoutForAllGolfers <= 0 ? 0 : totalPayoutForAllGolfers;
+    // totalPayoutForAllGolfers =
+    //   ( totalPayoutForAllGolfers <= 0 ? 0 : totalPayoutForAllGolfers );
 
-    setSellerServiceFee(
-      sellerFeePerGolfer * parseInt(players) +
-        (selectedTeeTime?.weatherGuaranteeAmount ?? 0) / 100
-    );
+    totalPayoutForAllGolfers =
+      (totalPayoutForAllGolfers <= 0 ? 0 : totalPayoutForAllGolfers) +
+      (selectedTeeTime?.weatherGuaranteeAmount ?? 0) / 100;
+
+    // setSellerServiceFee(
+    //   sellerFeePerGolfer * parseInt(players) +
+    //     (selectedTeeTime?.weatherGuaranteeAmount ?? 0) / 100
+    // );
+
+    setSellerServiceFee(sellerFeePerGolfer * parseInt(players));
 
     return Math.abs(totalPayoutForAllGolfers);
   }, [listingPrice, players]);
@@ -389,12 +395,12 @@ export const ListTeeTime = ({
                   />
                 </div>
                 <div className="text-secondary-black">
-                  {formatMoney(sellerServiceFee)}
+                  ({formatMoney(sellerServiceFee)})
                 </div>
               </div>
               <div className="flex justify-between">
                 <div className="font-[300] text-primary-gray">
-                  Weather Guarantee Amount
+                  Weather Guarantee Refund{" "}
                   <Tooltip
                     trigger={<Info className="h-[14px] w-[14px]" />}
                     content="Weather guarantee amount to be refunded"
