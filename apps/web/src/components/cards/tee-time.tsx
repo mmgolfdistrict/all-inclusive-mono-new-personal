@@ -240,7 +240,8 @@ export const TeeTime = ({
       router.push(`/${courseId}/my-tee-box`);
       return;
     }
-    setIsManageOpen(true);
+    router.push(`/${courseId}/my-tee-box`);
+    // setIsManageOpen(true);
   };
 
   return (
