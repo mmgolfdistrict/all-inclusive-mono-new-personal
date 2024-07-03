@@ -413,7 +413,7 @@ export const CheckoutForm = ({
         <div className="flex justify-between">
           <div>
             Subtotal
-            {isBuyNowAuction ? null : ` (1 item)`}
+            {/* {isBuyNowAuction ? null : ` (1 item)`} */}
           </div>
 
           <div>

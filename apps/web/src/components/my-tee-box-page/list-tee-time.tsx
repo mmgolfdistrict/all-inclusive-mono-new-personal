@@ -394,7 +394,7 @@ export const ListTeeTime = ({
               </div>
               <div className="flex justify-between">
                 <div className="font-[300] text-primary-gray">
-                  Weather Guarantee Amount
+                  Weather Guarantee Refund{" "}
                   <Tooltip
                     trigger={<Info className="h-[14px] w-[14px]" />}
                     content="Weather guarantee amount to be refunded"

@@ -3,6 +3,8 @@ import {
   type SensibleDataToMountCompType,
 } from "~/utils/types";
 import { CheckoutItem } from "../cards/checkout-item";
+import { Info } from "../icons/info";
+import { Tooltip } from "../tooltip";
 
 export const OrderSummary = ({
   teeTime,
@@ -20,11 +22,15 @@ export const OrderSummary = ({
       <h1 className="text-center md:text-start">Order Summary</h1>
       <div className="rounded-md bg-primary p-2 text-white">
         <h2 className="text-lg">Plans change. No worries!</h2>
-        <p className="text-sm">
+        <Tooltip
+          trigger={<Info className="h-[14px] w-[14px]" />}
+          content="Resell your tee time from our website. Selling outside from our website is not allowed, and both the buyer and seller may forfeit their money and time."
+        />
+        {/* <p className="text-sm">
           Resell your tee time from our website. Selling outside from our
           website is not allowed, and both the buyer and seller may forfeit
           their money and time.
-        </p>
+        </p> */}
       </div>
       <div className="flex flex-col gap-4">
         <CheckoutItem
