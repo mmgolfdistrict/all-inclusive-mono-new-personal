@@ -38,7 +38,7 @@ export default function ManangeProfile({
             <BalanceHistory userId={userId} />
           </div>
           <div className="w-full md:w-[50%] h-inherit">
-            <PrivacySettings />
+            {/* <PrivacySettings /> */}
             <NotificationSettings />
           </div>
 
