@@ -389,7 +389,7 @@ export const ListTeeTime = ({
                   />
                 </div>
                 <div className="text-secondary-black">
-                  {formatMoney(sellerServiceFee)}
+                  ({formatMoney(sellerServiceFee)})
                 </div>
               </div>
               <div className="flex justify-between">

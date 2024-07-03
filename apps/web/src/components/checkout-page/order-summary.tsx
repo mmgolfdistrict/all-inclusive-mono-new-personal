@@ -22,7 +22,7 @@ export const OrderSummary = ({
       <h1 className="text-center md:text-start">Order Summary</h1>
       <div className="rounded-md bg-primary p-2 text-white">
         <h2 className="text-lg">
-          Plans change. No worries!
+          Plans change. No worries!{" "}
           <Tooltip
             trigger={<Info className="h-[14px] w-[14px]" />}
             content="Resell your tee time from our website. Selling outside from our website is not allowed, and both the buyer and seller may forfeit their money and time."
