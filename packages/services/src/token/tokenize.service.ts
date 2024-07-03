@@ -47,7 +47,7 @@ export class TokenizeService {
     private readonly notificationService: NotificationService,
     private readonly loggerService: LoggerService,
     private readonly sensibleService: SensibleService
-  ) {}
+  ) { }
   getCartData = async ({ courseId = "", ownerId = "", paymentId = "" }) => {
     const [customerCartData]: any = await this.database
       .select({ cart: customerCarts.cart, cartId: customerCarts.id })
@@ -426,7 +426,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
     const template = {
       CustomerFirstName: existingTeeTime.customerName?.split(" ")[0],
       CourseName: existingTeeTime.courseName ?? "-",
-      GolfDistrictReservationID: bookingsToCreate?.[0]?.id ?? "-",
+      // GolfDistrictReservationID: bookingsToCreate?.[0]?.id ?? "-",
       CourseReservationID: providerBookingId ?? "-",
       FacilityName: existingTeeTime.entityName ?? "-",
       PlayDateTime: formatTime(existingTeeTime.providerDate, true, existingTeeTime.timezoneCorrection ?? 0),

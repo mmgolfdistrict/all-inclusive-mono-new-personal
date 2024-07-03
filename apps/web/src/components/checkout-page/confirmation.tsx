@@ -96,13 +96,13 @@ export const Confirmation = ({
               <span>Loading ...</span>
             ) : (
               <>
-                <div style={{ paddingBottom: "5px", fontSize: "16px" }}>
+                {/* <div style={{ paddingBottom: "5px", fontSize: "16px" }}>
                   <span style={{ fontWeight: 500 }}>
                     Golf District Reservation ID
                   </span>
                   <span style={{ margin: "0 15px" }}>:</span>
                   <span>{bookingId}</span>
-                </div>
+                </div> */}
                 {bookingData?.providerId?.length ? (
                   <div style={{ paddingBottom: "5px" }}>
                     <span style={{ fontWeight: 500 }}>

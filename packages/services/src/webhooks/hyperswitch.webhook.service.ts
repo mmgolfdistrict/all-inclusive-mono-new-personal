@@ -1166,7 +1166,7 @@ export class HyperSwitchWebhookService {
           existingTeeTime?.timezoneCorrection ?? 0
         ),
         NumberOfHoles: existingTeeTime?.numberOfHoles,
-        GolfDistrictReservationID: bookingId,
+        // GolfDistrictReservationID: bookingId,
         CourseReservationID: newBooking?.data.id,
       };
 
