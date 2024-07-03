@@ -967,6 +967,7 @@ export class HyperSwitchWebhookService {
       newBooking.data.bookingType = "FIRST";
       newBookings.push(newBooking);
       if (listedSlotsCount && listedSlotsCount < firstBooking?.playerCount) {
+        details = await appSettingService.get("TEE_SHEET_BOOKING_MESSAGE");
         const newBookingSecond = await provider.createBooking(
           token,
           firstBooking.providerCourseId!,
@@ -1032,8 +1033,6 @@ export class HyperSwitchWebhookService {
           includesCart: firstBooking.includesCart,
           listId: null,
           // entityId: firstBooking.entityId,
-          weatherGuaranteeAmount: firstBooking.weatherGuaranteeAmount,
-          weatherGuaranteeId: firstBooking.weatherGuaranteeId,
           cartId: cartId,
           playerCount: firstBooking.playerCount - (listedSlotsCount ?? 0),
           greenFeePerPlayer: listPrice ?? 1 * 100,
@@ -1215,10 +1214,10 @@ export class HyperSwitchWebhookService {
           ]
         );
 
+        if (firstBooking?.weatherGuaranteeId?.length) {
+          await this.sensibleService.cancelGuarantee(firstBooking?.weatherGuaranteeId || "");
+        }
         if (newBookings.length === 1) {
-          if (firstBooking?.weatherGuaranteeId?.length) {
-            await this.sensibleService.cancelGuarantee(firstBooking?.weatherGuaranteeId || "");
-          }
           const lsPrice = (listPrice ?? 0) / 100;
           const listedPrice = lsPrice + lsPrice * buyerFee;
           const totalTax = lsPrice * sellerFee;
