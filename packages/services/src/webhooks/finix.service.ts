@@ -3,9 +3,9 @@ import { and, eq } from "@golf-district/database";
 import type { Db } from "@golf-district/database";
 import { cashout } from "@golf-district/database/schema/cashout";
 import { customerPaymentDetail } from "@golf-district/database/schema/customerPaymentDetails";
+import { users } from "@golf-district/database/schema/users";
 import type { CashOutService } from "../cashout/cashout.service";
 import type { LoggerService } from "../webhooks/logging.service";
-import { users } from "@golf-district/database/schema/users";
 
 interface TagDetails {
   customerId: string;

@@ -14,7 +14,7 @@ export const customerPaymentDetail = mySqlTable("customerPaymentDetail", {
   createdDateTime: datetime("createdDateTime", { mode: "string", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
   isActive: smallint("isActive").default(1),
   accountNumber: varchar("accountNumber", { length: 36 }),
-  merchantId:varchar("merchantId",{ length: 191 })
+  merchantId: varchar("merchantId", { length: 191 }),
 });
 
 export type InsertCustomerPaymentDetails = InferSelectModel<typeof customerPaymentDetail>;

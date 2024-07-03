@@ -22,8 +22,20 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
     api.cashOut.getRecievables.useQuery({});
   const [modalOpen, setModalOpen] = useState(false);
   const [loadingCashout, setLoadingCashout] = useState<boolean>(false);
+  const hasAddress =
+    user?.address1 &&
+    user.address2 &&
+    user.city &&
+    user.state &&
+    user.zipcode &&
+    user.country;
   const openModal = () => {
-    setModalOpen(true);
+    if (hasAddress) {
+      setModalOpen(true);
+    } else {
+      toast.error("Please add address before adding bank account");
+      return;
+    }
   };
 
   const closeModal = () => {
@@ -105,6 +117,7 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
                 />
               </div>
             </div>
+
             <div className="flex flex-col items-center gap-2 md:flex-row md:items-center">
               {/* <div className="text-[24px] text-secondary-black md:text-[32px]">
                 {formatMoney(user?.balance ?? 0 / 100)}
