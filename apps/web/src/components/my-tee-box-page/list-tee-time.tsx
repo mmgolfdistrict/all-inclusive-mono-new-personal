@@ -163,13 +163,19 @@ export const ListTeeTime = ({
     //   buyerFeePerGolfer          = ${buyerFeePerGolfer},
     //   totalPayoutForAllGolfers   = ${totalPayoutForAllGolfers}`);
 
-    totalPayoutForAllGolfers =
-      totalPayoutForAllGolfers <= 0 ? 0 : totalPayoutForAllGolfers;
+    // totalPayoutForAllGolfers =
+    //   ( totalPayoutForAllGolfers <= 0 ? 0 : totalPayoutForAllGolfers );
 
-    setSellerServiceFee(
-      sellerFeePerGolfer * parseInt(players) +
-        (selectedTeeTime?.weatherGuaranteeAmount ?? 0) / 100
-    );
+    totalPayoutForAllGolfers =
+      (totalPayoutForAllGolfers <= 0 ? 0 : totalPayoutForAllGolfers) +
+      (selectedTeeTime?.weatherGuaranteeAmount ?? 0) / 100;
+
+    // setSellerServiceFee(
+    //   sellerFeePerGolfer * parseInt(players) +
+    //     (selectedTeeTime?.weatherGuaranteeAmount ?? 0) / 100
+    // );
+
+    setSellerServiceFee(sellerFeePerGolfer * parseInt(players));
 
     return Math.abs(totalPayoutForAllGolfers);
   }, [listingPrice, players]);
