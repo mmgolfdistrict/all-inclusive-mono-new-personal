@@ -141,7 +141,7 @@ export class BookingService {
     private readonly loggerService: LoggerService,
     private readonly hyperSwitchService: HyperSwitchService,
     private readonly sensibleService: SensibleService
-  ) {}
+  ) { }
 
   createCounterOffer = async (userId: string, bookingIds: string[], offerId: string, amount: number) => {
     //find owner of each booking
@@ -786,6 +786,7 @@ export class BookingService {
         playerCount: bookings.playerCount,
         totalAmount: bookings.totalAmount,
         timezoneCorrection: courses.timezoneCorrection,
+        providerBookingId: bookings.providerBookingId
       })
       .from(bookings)
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -945,7 +946,7 @@ export class BookingService {
             CourseName: course?.name,
             HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
             CustomerFirstName: user.name,
-            CourseReservationID: firstBooking?.id ?? "-",
+            CourseReservationID: firstBooking?.providerBookingId ?? "-",
             PlayDateTime: formatTime(
               firstBooking.providerDate ?? "",
               true,
@@ -2739,9 +2740,8 @@ export class BookingService {
             url: "/confirmBooking",
             userAgent: "",
             message: "ERROR CONFIRMING BOOKING",
-            stackTrace: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${
-              booking?.teeTimeId ?? ""
-            }`,
+            stackTrace: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${booking?.teeTimeId ?? ""
+              }`,
             additionalDetailsJSON: err,
           });
         });
