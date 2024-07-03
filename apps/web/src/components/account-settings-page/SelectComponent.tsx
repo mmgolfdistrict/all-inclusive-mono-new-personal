@@ -5,6 +5,7 @@ import { FilledButton } from "../buttons/filled-button";
 import { Info } from "../icons/info";
 import { Tooltip } from "../tooltip";
 import styles from "./select.module.css";
+import { LoadingContainer } from "~/app/[course]/loader";
 
 const OptionDetails = ({
   associatedBanks = [],
@@ -16,6 +17,7 @@ const OptionDetails = ({
   associatedBanks?: {
     id: string;
     accountNumber: string | null;
+    onboardingStatus:string | null;
   }[];
   handleTransferAmount: (paymentInstrumentId, amount) => Promise<void>;
   disabledCashOut: boolean;
@@ -53,9 +55,13 @@ const OptionDetails = ({
       >
         <option value="">Select a Bank Account Below</option>
         {associatedBanks.map((bank) => (
-          <option key={bank.id} value={bank.id}>
+          <option key={bank.id} value={bank.id} disabled={bank.onboardingStatus !== "APPROVED"}>
+          <span style={bank.onboardingStatus === "REJECTED" ? { textDecoration: "line-through" } : {}}>
             {bank.accountNumber}
-          </option>
+          </span>
+          {bank.onboardingStatus === "PROVISIONING" && <span> - Pending Review</span>}
+          {bank.onboardingStatus === "REJECTED" && <span> - Not Approved</span>}
+        </option>
         ))}
       </select>
 
@@ -89,6 +95,9 @@ const OptionDetails = ({
               >
                 {loadingCashout ? "Processing..." : "Cashout"}
               </FilledButton>
+              <LoadingContainer isLoading={loadingCashout}>
+                <div></div>
+              </LoadingContainer>
             </div>
           </div>
         </div>
