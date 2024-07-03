@@ -1,10 +1,10 @@
 "use client";
 
+import { LoadingContainer } from "~/app/[course]/loader";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
 import React, { useEffect, useState } from "react";
-import { LoadingContainer } from "~/app/[course]/loader";
 import { toast } from "react-toastify";
 
 declare global {
@@ -21,8 +21,8 @@ const FinixForm = ({ onClose, setLoading, loading }) => {
     api.cashOut.createCashoutCustomerIdentity.useMutation();
   const { user } = useUserContext();
   const { course } = useCourseContext();
-  const [showError,setShowError]=useState(false);
-  const [showLoadingSubmit,setShowLoadingSubmit]=useState(false)
+  const [showError, setShowError] = useState(false);
+  const [showLoadingSubmit, setShowLoadingSubmit] = useState(false);
   const courseId = course?.id;
 
   const auditLog = api.webhooks.auditLog.useMutation();
@@ -45,23 +45,25 @@ const FinixForm = ({ onClose, setLoading, loading }) => {
   useEffect(() => {
     if (typeof window.Finix !== "undefined") {
       const onSubmit = () => {
-        setShowLoadingSubmit(true)
-        if(form.state.account_type.selected=="BUSINESS_CHECKING"||form.state.account_type.selected=="BUSINESS_SAVINGS"){
+        if (
+          form.state.account_type.selected == "BUSINESS_CHECKING" ||
+          form.state.account_type.selected == "BUSINESS_SAVINGS"
+        ) {
           setShowError(true);
           return;
         }
-        setShowError(false)
-        try{
+        setShowLoadingSubmit(true);
+        setShowError(false);
+        try {
           form.submit(
             process.env.NEXT_PUBLIC_FINIX_ENVIRONMENT,
             process.env.NEXT_PUBLIC_FINIX_APPLICATION_ID,
             async function (err, res) {
-  
-              if(err){
+              if (err) {
                 setShowLoadingSubmit(false);
-                return
+                return;
               }
-  
+
               // get token ID from response
               const tokenData = res.data || {};
               const token: string = tokenData.id;
@@ -73,15 +75,15 @@ const FinixForm = ({ onClose, setLoading, loading }) => {
               setShowLoadingSubmit(false);
             }
           );
-        } catch(err){
+        } catch (err) {
           setShowLoadingSubmit(false);
         }
       };
 
       const form = window.Finix.BankTokenForm("form", {
         showAddress: true,
-        labels:{
-          bank_code:"Routing Number"
+        labels: {
+          bank_code: "Routing Number",
         },
         onSubmit,
         onLoad: () => {
@@ -93,10 +95,14 @@ const FinixForm = ({ onClose, setLoading, loading }) => {
 
   return (
     <>
-    {
-       showError?<div style={{color:'red', margin:'10px 0px'}}>We do not support Business Checking and Business Savings”.</div>:null
-    }
-     <LoadingContainer isLoading={showLoadingSubmit}><div></div></LoadingContainer>
+      {showError ? (
+        <div style={{ color: "red", margin: "10px 0px" }}>
+          We do not support Business Checking and Business Savings”.
+        </div>
+      ) : null}
+      <LoadingContainer isLoading={showLoadingSubmit}>
+        <div></div>
+      </LoadingContainer>
       <div id="form" className={`h-full ${loading ? "hidden" : ""}`} />
     </>
   );
