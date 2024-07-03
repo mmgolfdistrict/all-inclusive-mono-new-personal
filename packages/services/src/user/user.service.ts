@@ -1304,7 +1304,7 @@ export class UserService {
         state: user.state,
         city: user.city,
         zipcode: user.zipcode,
-        country: user.country
+        country: user.country,
       };
     }
     return res;
