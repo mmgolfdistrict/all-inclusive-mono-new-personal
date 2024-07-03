@@ -225,6 +225,17 @@ export class BookingService {
       .orderBy(desc(transfers.createdAt))
       .execute();
     console.log("========>", data.length);
+
+
+    // const [cartData] = await this.database.select({
+    //   cart: customerCarts.cart
+    // })
+    //   .from(customerCarts)
+    //   .innerJoin(bookings, eq(bookings.id, transfers.bookingId))
+    //   .where(and(eq(customerCarts.teeTimeId, bookings.teeTimeId), eq(customerCarts.userId, userId)))
+    //   .execute();
+    // console.log("🚀 ~ BookingService ~ cartData:", cartData)
+
     if (!data.length) {
       this.logger.info(`No tee times found for user: ${userId}`);
       return [];
@@ -952,7 +963,7 @@ export class BookingService {
               true,
               firstBooking.timezoneCorrection ?? 0
             ),
-            PlayerCount: firstBooking.playerCount ?? 0,
+            PlayerCount: slots ?? 0,
             ListedPricePerPlayer: listPrice ? `${listPrice}` : "-",
             TotalAmount: formatMoney(firstBooking.totalAmount / 100 ?? 0),
           },
@@ -2740,9 +2751,8 @@ export class BookingService {
             url: "/confirmBooking",
             userAgent: "",
             message: "ERROR CONFIRMING BOOKING",
-            stackTrace: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${
-              booking?.teeTimeId ?? ""
-            }`,
+            stackTrace: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${booking?.teeTimeId ?? ""
+              }`,
             additionalDetailsJSON: err,
           });
         });

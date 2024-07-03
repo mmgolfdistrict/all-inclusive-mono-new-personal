@@ -20,7 +20,7 @@ type State = {
   username: string;
   // location: string;
   address1: string;
-  address2: string;
+  address2?: string;
   city: string;
   country: string;
   zipcode: string;

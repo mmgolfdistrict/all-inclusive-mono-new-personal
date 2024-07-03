@@ -11,7 +11,7 @@ type UserType = {
   gdImage: string | null;
   // location: string | null;
   address1: string | null;
-  address2: string | null;
+  address2?: string | null;
   state: string | null;
   zipcode: string | null;
   city: string | null;
