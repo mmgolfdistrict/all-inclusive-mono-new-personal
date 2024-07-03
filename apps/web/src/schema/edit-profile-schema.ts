@@ -36,7 +36,13 @@ export const editProfileSchema = z.object({
       message:
         "Invalid phone number. Please enter a valid US phone number with area code. No country code required, dashes, or spaces.",
     }),
-  location: z.string().min(1, { message: "Location is required" }),
+  // location: z.string().min(1, { message: "Location is required" }),
+  address1: z.string().min(1, { message: "Address1 is required" }),
+  address2: z.string().min(1, { message: "Address2 is required" }),
+  city: z.string().min(1, { message: "City is required" }),
+  state: z.string().min(1, { message: "State is required" }),
+  zipcode: z.string().min(1, { message: "Zipcode is required" }),
+  country: z.string().min(1, { message: "Country is required" }),
   profilePictureAssetId: z.string().or(z.null()).or(z.object({})).optional(),
   // .refine(
   //   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
