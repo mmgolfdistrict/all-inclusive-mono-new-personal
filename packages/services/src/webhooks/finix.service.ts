@@ -158,7 +158,7 @@ export class FinixService {
   constructor(
     private readonly database: Db, // private readonly hyperSwitchService: HyperSwitchWebhookService
     private readonly cashoutService: CashOutService,
-    private readonly loggerService: LoggerService,
+    private readonly loggerService: LoggerService
   ) {}
   getHeaders = () => {
     const requestHeaders = new Headers();
@@ -168,35 +168,38 @@ export class FinixService {
     return requestHeaders;
   };
   createCustomerIdentity = async (userId: string) => {
-
-    const resp= await this.database.select().from(users).where(and(eq(users.id,userId))).execute();
-    if(!resp[0]){
-      return new Error("User not found")
+    const resp = await this.database
+      .select()
+      .from(users)
+      .where(and(eq(users.id, userId)))
+      .execute();
+    if (!resp[0]) {
+      return new Error("User not found");
     }
-    const userData=resp[0]
+    const userData = resp[0];
 
-    const firstname=userData?.name?.split(' ')?.[0]
-    const lastname=userData?.name?.split(' ')?.[1]
-  
+    const firstname = userData?.name?.split(" ")?.[0];
+    const lastname = userData?.name?.split(" ")?.[1];
+
     const raw = JSON.stringify({
       identity_roles: ["RECIPIENT"],
       entity: {
-        "phone": userData?.phoneNumber,
-        "first_name": firstname,
-        "last_name": lastname,
-        "email": userData?.email,
-        "personal_address": {
-          "city": userData.city,
-          "country": userData?.country,
-          "region": userData?.state,
-          "line2": userData?.address1,
-          "line1": userData?.address2,
-          "postal_code": userData?.zipcode
-        }
+        phone: userData?.phoneNumber,
+        first_name: firstname,
+        last_name: lastname,
+        email: userData?.email,
+        personal_address: {
+          city: userData.city,
+          country: userData?.country,
+          region: userData?.state,
+          line2: userData?.address1,
+          line1: userData?.address2,
+          postal_code: userData?.zipcode,
+        },
       },
       tags: {
         userId,
-      }
+      },
     });
     const requestOptions: RequestOptions = {
       method: "POST",
@@ -270,7 +273,7 @@ export class FinixService {
       this.loggerService.errorLog({
         applicationName: "golfdistrict-foreup",
         clientIP: "",
-        userId:customerId,
+        userId: customerId,
         url: "/createTransfer",
         userAgent: "",
         message: "Transfer Failed",
@@ -353,7 +356,7 @@ export class FinixService {
           paymentInstrumentId: paymentInstrumentData.id,
           customerIdentity: customerIdentity.id,
           accountNumber: paymentInstrumentData.masked_account_number,
-          merchantId:merchantData.id
+          merchantId: merchantData.id,
         })
         .execute();
       return { success: true, error: false };
@@ -362,7 +365,7 @@ export class FinixService {
     }
   };
 
-  getMerchantById= async (id:string | null)=>{
+  getMerchantById = async (id: string | null) => {
     const requestOptions: RequestOptions = {
       method: "GET",
       headers: this.getHeaders(),
@@ -372,25 +375,27 @@ export class FinixService {
     const response = await fetch(`${this.baseurl}/merchants/${id}`, requestOptions);
     const merchantData = await response.json();
     return merchantData;
-  }
+  };
 
-  getPaymentInstruments = async (userId: string): Promise<{ id: string; accountNumber: string | null; onboardingStatus: string | null }[]> => {
+  getPaymentInstruments = async (
+    userId: string
+  ): Promise<{ id: string; accountNumber: string | null; onboardingStatus: string | null }[]> => {
     const paymentInstruments = await this.database
       .select({
         id: customerPaymentDetail.id,
         accountNumber: customerPaymentDetail.accountNumber,
-        merchantId:customerPaymentDetail.merchantId
+        merchantId: customerPaymentDetail.merchantId,
       })
       .from(customerPaymentDetail)
       .where(and(eq(customerPaymentDetail.customerId, userId), eq(customerPaymentDetail.isActive, 1)));
 
-      const finalRes=[]
+    const finalRes: any = [];
 
-      for (const instrument of paymentInstruments) {
-        const merchantData= await this.getMerchantById(instrument.merchantId)
-        const ddata={...instrument,onboardingStatus:merchantData.onboarding_state}
-        finalRes.push(ddata);
-      }
+    for (const instrument of paymentInstruments) {
+      const merchantData = await this.getMerchantById(instrument.merchantId);
+      const ddata = { ...instrument, onboardingStatus: merchantData.onboarding_state };
+      finalRes.push(ddata as any);
+    }
 
     return finalRes;
   };
