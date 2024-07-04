@@ -16,7 +16,7 @@ type State = {
   username: string;
   // location: string;
   address1: string;
-  address2: string;
+  address2?: string;
   state: string;
   city: string;
   zipcode: string;

@@ -38,7 +38,7 @@ export const editProfileSchema = z.object({
     }),
   // location: z.string().min(1, { message: "Location is required" }),
   address1: z.string().min(1, { message: "Address1 is required" }),
-  // address2: z.string().min(1, { message: "Address2 is required" }),
+  address2: z.string().optional(),
   city: z.string().min(1, { message: "City is required" }),
   state: z.string().min(1, { message: "State is required" }),
   zipcode: z.string().min(1, { message: "Zipcode is required" }),

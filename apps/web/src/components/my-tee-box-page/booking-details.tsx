@@ -17,6 +17,7 @@ export const BookingDetails = ({
   setIsReceiptOpen,
   selectedReceipt,
 }: BookingDetailsProps) => {
+
   const { toggleSidebar } = useSidebar({
     isOpen: isReceiptOpen,
     setIsOpen: setIsReceiptOpen,
@@ -123,6 +124,22 @@ export const BookingDetails = ({
                   {selectedReceipt?.status ?? "-"}
                 </TableCell>
               </TableRow>
+              <TableRow>
+                <TableCell
+                  sx={{ borderBottom: "none" }}
+                  className="font-[300] text-primary-gray"
+                  width="50%"
+                >
+                  Weather Guarantee Amount:{" "}
+                </TableCell>
+                <TableCell
+                  sx={{ borderBottom: "none" }}
+                  className="text-secondary-black"
+                  width="50%"
+                >
+                  {selectedReceipt?.weatherGuaranteeAmount ?? "-"}
+                </TableCell>
+                </TableRow>
               {selectedReceipt?.status === "PURCHASED" && (
                 <>
                   <TableRow>
