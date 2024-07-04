@@ -25,14 +25,9 @@ export const OrderSummary = ({
           Plans change. No worries!{" "}
           <Tooltip
             trigger={<Info className="h-[14px] w-[14px]" />}
-            content="Resell your tee time from our website. Selling outside from our website is not allowed, and both the buyer and seller may forfeit their money and time."
+            content="Easily resell your tee time through our website. Please note that selling outside our platform is prohibited and may result in both the buyer and seller forfeiting their money and time."
           />
         </h2>
-        {/* <p className="text-sm">
-          Resell your tee time from our website. Selling outside from our
-          website is not allowed, and both the buyer and seller may forfeit
-          their money and time.
-        </p> */}
       </div>
       <div className="flex flex-col gap-4">
         <CheckoutItem
