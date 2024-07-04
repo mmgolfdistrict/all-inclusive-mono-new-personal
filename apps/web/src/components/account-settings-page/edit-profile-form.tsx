@@ -113,7 +113,7 @@ export const EditProfileForm = () => {
       setValue("handle", userData?.handle ?? "");
       // setValue("location", userData?.location ?? "");
       setValue("address1", userData?.address1 ?? "");
-      setValue("address2", userData?.address2 ?? "");
+      // setValue("address2", userData?.address2 ?? "");
       setValue("state", userData?.state ?? "");
       setValue("city", userData?.city ?? "");
       setValue("zipcode", userData?.zipcode ?? "");
@@ -233,7 +233,7 @@ export const EditProfileForm = () => {
         handle: data.handle,
         // location: data.location,
         address1: data?.address1,
-        address2: data?.address2,
+        // address2: data?.address2,
         state: data?.state,
         city: data?.city,
         zipcode: data?.zipcode,
@@ -403,7 +403,7 @@ export const EditProfileForm = () => {
           id="address2"
           register={register}
           name="address2"
-          error={errors.address2?.message}
+          // error={errors.address2?.message}
           onChange={(e: ChangeEvent<HTMLInputElement>) => {
             setAddress2(e.target.value);
           }}
