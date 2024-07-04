@@ -33,6 +33,8 @@ export type TxnHistoryType = {
   playerCount?: number;
   sellerServiceFee: number;
   receiveAfterSale: number;
+  weatherGuaranteeAmount: number;
+  weatherGuaranteeId: string;
 };
 
 export const TransactionHistory = () => {

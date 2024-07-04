@@ -307,6 +307,8 @@ export class TokenizeService {
       fromUserId: "0x000", //first hand sales are from the platform
       toUserId: userId,
       courseId: existingTeeTime.courseId,
+      weatherGuaranteeId: acceptedQuote?.id ? acceptedQuote?.id : "",
+      weatherGuaranteeAmount: acceptedQuote?.price_charged ? acceptedQuote?.price_charged * 100 : 0,
     });
 
     console.log(`Getting slot IDs for booking.`);

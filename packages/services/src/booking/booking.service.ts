@@ -113,6 +113,8 @@ interface TransferData {
   playerCount?: number;
   sellerServiceFee: number;
   receiveAfterSale: number;
+  weatherGuaranteeId: string;
+  weatherGuaranteeAmount: number;
 }
 type RequestOptions = {
   method: string;
@@ -213,6 +215,8 @@ export class BookingService {
         purchasedPrice: bookings.totalAmount,
         from: transfers.fromUserId,
         transfersDate: transfers.createdAt,
+        weatherGuaranteeId: transfers.weatherGuaranteeId,
+        weatherGuaranteeAmount: transfers.weatherGuaranteeAmount,
       })
       .from(transfers)
       .innerJoin(bookings, eq(bookings.id, transfers.bookingId))
@@ -285,6 +289,8 @@ export class BookingService {
           playerCount: teeTime.players,
           sellerServiceFee: teeTime.from === userId ? sellerServiceFee : 0,
           receiveAfterSale: teeTime.from === userId ? receiveAfterSaleAmount : 0,
+          weatherGuaranteeAmount: teeTime.weatherGuaranteeAmount ?? 0,
+          weatherGuaranteeId: teeTime.weatherGuaranteeId ?? ""
         };
       } else {
         const currentEntry = combinedData[teeTime.transferId];
@@ -2876,6 +2882,8 @@ export class BookingService {
       toUserId: userId,
       courseId: cart?.courseId,
       fromBookingId: associatedBooking?.id,
+      weatherGuaranteeId: associatedBooking.weatherGuaranteeId ?? "",
+      weatherGuaranteeAmount: associatedBooking.weatherGuaranteeAmount ?? 0
     });
     await this.database.transaction(async (tx) => {
       await tx
