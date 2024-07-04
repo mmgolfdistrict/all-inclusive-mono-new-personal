@@ -263,7 +263,7 @@ export default function RegisterPage() {
             id="address2"
             register={register}
             name="address2"
-            error={errors.address2?.message}
+            // error={errors.address2?.message}
             onChange={(e: ChangeEvent<HTMLInputElement>) => {
               setAddress2(e.target.value);
             }}

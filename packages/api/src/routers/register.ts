@@ -14,7 +14,7 @@ export const registerRouter = createTRPCRouter({
       phoneNumber: input.phoneNumber,
       // location: input.location,
       address1: input.address1,
-      address2: input.address2,
+      // address2: input.address2,
       state: input.state,
       city: input.city,
       zipcode: input.zipcode,
