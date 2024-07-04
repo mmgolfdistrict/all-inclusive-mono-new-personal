@@ -1270,7 +1270,7 @@ export class HyperSwitchWebhookService {
           SensibleWeatherIncluded: firstBooking.weatherGuaranteeId?.length ? "Yes" : "No",
           PurchasedFrom: existingTeeTime?.courseName || "-",
           BuyTeeTImeURL: `${redirectHref}`,
-          CashOutURL: `${redirectHref}/account-settings/${customer_id}`
+          CashOutURL: `${redirectHref}/account-settings/${customer_id}`,
         };
         await this.notificationService.createNotification(
           firstBooking.ownerId || "",

@@ -141,7 +141,7 @@ export class BookingService {
     private readonly loggerService: LoggerService,
     private readonly hyperSwitchService: HyperSwitchService,
     private readonly sensibleService: SensibleService
-  ) { }
+  ) {}
 
   createCounterOffer = async (userId: string, bookingIds: string[], offerId: string, amount: number) => {
     //find owner of each booking
@@ -786,7 +786,7 @@ export class BookingService {
         playerCount: bookings.playerCount,
         totalAmount: bookings.totalAmount,
         timezoneCorrection: courses.timezoneCorrection,
-        providerBookingId: bookings.providerBookingId
+        providerBookingId: bookings.providerBookingId,
       })
       .from(bookings)
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -2740,8 +2740,9 @@ export class BookingService {
             url: "/confirmBooking",
             userAgent: "",
             message: "ERROR CONFIRMING BOOKING",
-            stackTrace: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${booking?.teeTimeId ?? ""
-              }`,
+            stackTrace: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${
+              booking?.teeTimeId ?? ""
+            }`,
             additionalDetailsJSON: err,
           });
         });

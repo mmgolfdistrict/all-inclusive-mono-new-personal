@@ -47,7 +47,7 @@ export class TokenizeService {
     private readonly notificationService: NotificationService,
     private readonly loggerService: LoggerService,
     private readonly sensibleService: SensibleService
-  ) { }
+  ) {}
   getCartData = async ({ courseId = "", ownerId = "", paymentId = "" }) => {
     const [customerCartData]: any = await this.database
       .select({ cart: customerCarts.cart, cartId: customerCarts.id })
