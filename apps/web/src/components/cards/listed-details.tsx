@@ -115,7 +115,7 @@ export const ListedDetails = ({
         <div className="text-lg font-semibold flex gap-2 items-center">
           <Tooltip
             trigger={<Avatar src={DEFAULT_SILHOUETTE_IMAGE} />}
-            content={"Sold by another Golf District golfer."}
+            content={"Sold by another Golf District golfer"}
           />
           {isError || data === null ? (
             <div className="h-4" />
@@ -154,7 +154,7 @@ export const ListedDetails = ({
           {/* <div className="flex items-center gap-1">
             <Tooltip
               trigger={<Avatar src={data?.soldByImage} />}
-              content={"Sold by another Golf District golfer."}
+              content={"Sold by another Golf District golfer"}
             />
           </div> */}
           {/* <div className="flex items-center gap-4">
