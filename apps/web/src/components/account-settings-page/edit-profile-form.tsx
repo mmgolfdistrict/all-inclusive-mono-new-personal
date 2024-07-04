@@ -459,6 +459,8 @@ export const EditProfileForm = () => {
           id="country"
           register={register}
           name="country"
+          disabled={true}
+          value={"USA"}
           error={errors.country?.message}
           onChange={(e: ChangeEvent<HTMLInputElement>) => {
             setCountry(e.target.value);
