@@ -1237,7 +1237,7 @@ export class HyperSwitchWebhookService {
             Payout: formatMoney((listedPrice - totalTax) * (listedSlotsCount || 1)),
             PurchasedFrom: existingTeeTime?.courseName || "-",
             BuyTeeTImeURL: `${redirectHref}`,
-            CashOutURL: `${redirectHref}/account-settings/${customer_id}`,
+            CashOutURL: `${redirectHref}/account-settings/${firstBooking.ownerId}`,
           };
           await this.notificationService.createNotification(
             firstBooking.ownerId || "",
@@ -1270,7 +1270,7 @@ export class HyperSwitchWebhookService {
           SensibleWeatherIncluded: firstBooking.weatherGuaranteeId?.length ? "Yes" : "No",
           PurchasedFrom: existingTeeTime?.courseName || "-",
           BuyTeeTImeURL: `${redirectHref}`,
-          CashOutURL: `${redirectHref}/account-settings/${customer_id}`,
+          CashOutURL: `${redirectHref}/account-settings/${firstBooking.ownerId}`,
         };
         await this.notificationService.createNotification(
           firstBooking.ownerId || "",
