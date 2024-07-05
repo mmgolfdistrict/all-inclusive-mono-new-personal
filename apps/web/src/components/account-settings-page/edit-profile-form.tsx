@@ -117,7 +117,7 @@ export const EditProfileForm = () => {
       setValue("state", userData?.state ?? "");
       setValue("city", userData?.city ?? "");
       setValue("zipcode", userData?.zipcode ?? "");
-      setValue("country", userData?.country ?? "");
+      // setValue("country", userData?.country ?? "");
       setValue("profilePictureAssetId", userData?.image ?? "");
       setValue("bannerImageAssetId", userData?.bannerImage ?? "");
       setBanner(
@@ -237,7 +237,7 @@ export const EditProfileForm = () => {
         state: data?.state,
         city: data?.city,
         zipcode: data?.zipcode,
-        country: data?.country,
+        country: "USA", // data?.country,
         phoneNumber: data.phoneNumber,
         profilePictureAssetId:
           data.profilePictureAssetId === defaultProfilePhoto
@@ -461,7 +461,7 @@ export const EditProfileForm = () => {
           name="country"
           disabled={true}
           value={"USA"}
-          error={errors.country?.message}
+          // error={errors.country?.message}
           showInfoTooltip={true}
           content="We only support cashouts for US banks at this time"
           onChange={(e: ChangeEvent<HTMLInputElement>) => {
