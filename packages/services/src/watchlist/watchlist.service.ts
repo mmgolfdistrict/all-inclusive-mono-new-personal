@@ -88,7 +88,7 @@ export class WatchlistService {
         .execute();
 
       if (!teeTime) {
-        this.logger.warn(`Tee time with id ${teeTimeId} not found`);
+        this.logger.warn(`Tee time with  id ${teeTimeId} not found`);
         throw new Error(`Tee time with id ${teeTimeId} not found`);
       }
 
