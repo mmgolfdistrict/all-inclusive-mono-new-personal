@@ -52,13 +52,20 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
       if (amount <= 0) {
         toast.error("Please enter valid amount");
       }
-      await createCashoutTransfer.mutateAsync({
+      const response = await createCashoutTransfer.mutateAsync({
         paymentInstrumentId,
         amount: Number(amount),
       });
-      toast.success(`Cash out requested for $${amount}`);
-      await refetch();
-      await refetchRecievableData();
+      if ((response as { success: boolean; error: boolean }).success) {
+        toast.success(`Cash out requested for $${amount}`);
+        await refetch();
+        await refetchRecievableData();
+      } else {
+        toast.error(
+          (response as Error).message ??
+            "Could not request cashout at this moment. Please try later."
+        );
+      }
     } catch (error) {
       console.log(error);
       toast.error((error as Error).message ?? "Could not request cash out.");

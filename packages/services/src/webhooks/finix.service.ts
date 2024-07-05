@@ -1,11 +1,12 @@
 import { randomUUID } from "crypto";
-import { and, eq } from "@golf-district/database";
+import { and, eq, sql } from "@golf-district/database";
 import type { Db } from "@golf-district/database";
 import { cashout } from "@golf-district/database/schema/cashout";
 import { customerPaymentDetail } from "@golf-district/database/schema/customerPaymentDetails";
 import { users } from "@golf-district/database/schema/users";
 import type { CashOutService } from "../cashout/cashout.service";
 import type { LoggerService } from "../webhooks/logging.service";
+import { appSettingService } from "../app-settings/initialized";
 
 interface TagDetails {
   customerId: string;
@@ -210,6 +211,19 @@ export class FinixService {
 
     const response = await fetch(`${this.baseurl}/identities`, requestOptions);
     const customerIdentityData = await response.json();
+    if (!customerIdentityData.id) {
+      console.log("Error in creating identity", JSON.stringify(customerIdentityData));
+      this.loggerService.errorLog({
+        applicationName: "golfdistrict-foreup",
+        clientIP: "",
+        userId,
+        url: "/createCustomerIdentity",
+        userAgent: "",
+        message: "ERROR_ADDING_BANK_ACCOUNT",
+        stackTrace: JSON.stringify(customerIdentityData),
+        additionalDetailsJSON: "error adding bank account",
+      });
+    }
     return customerIdentityData;
   };
   createPaymentInstrument = async (id: string, token: string) => {
@@ -290,12 +304,47 @@ export class FinixService {
     if (!recievableData) {
       return new Error("Error Fetching recievable data");
     }
-    console.log(recievableData);
     if (amount > recievableData.withdrawableAmount) {
       return new Error("Amount cannot be more then withdrawable amount");
     }
+    const today = new Date().toISOString().split("T")[0];
+    const [records] = await this.database
+      .select({ count: sql`COUNT(*)` })
+      .from(cashout)
+      .where(
+        and(
+          eq(sql`DATE(${cashout.createdDateTime})`, sql`DATE(${today})`),
+          eq(cashout.customerId, customerId)
+        )
+      )
+      .execute();
+    const limitInNumber: number =
+      Number(await appSettingService.get("CASH_OUT_LIMIT_IN_NUMBERS_PER_DAY")) || (1 as number);
+    if ((records?.count as number) >= limitInNumber) {
+      return new Error(`You cannot make more the ${limitInNumber} transactions per day.`);
+    }
+    const [allRecords] = await this.database
+      .select({ sum: sql`SUM(${cashout.amount})` })
+      .from(cashout)
+      .where(
+        and(
+          eq(sql`DATE(${cashout.createdDateTime})`, sql`DATE(${today})`),
+          eq(cashout.customerId, customerId)
+        )
+      )
+      .execute();
+    console.log(allRecords);
+    const limitInAmount: number =
+      Number(await appSettingService.get("CASH_OUT_LIMIT_IN_DOLLARS_PER_DAY")) || (1000 as number);
     console.log("creating transfer", recievableData.withdrawableAmount);
     const amountMultiplied = amount * 100;
+    if (amountMultiplied + Number((allRecords?.sum as number) || 0) > Number(limitInAmount) * 100) {
+      return new Error(
+        `You cannot withdraw more than $${limitInAmount} in a day. You have already withdrawn $${
+          ((allRecords?.sum as number) || 1) / 100 || 0
+        } today.`
+      );
+    }
     const [paymentInstrumentIdFromBackend] = await this.database
       .select({
         paymentInstrumentId: customerPaymentDetail.paymentInstrumentId,
@@ -342,6 +391,12 @@ export class FinixService {
 
   createCashoutCustomerIdentity = async (userId: string, paymentToken: string): Promise<ResponseCashout> => {
     const customerIdentity: Identity = await this.createCustomerIdentity(userId);
+    if (!customerIdentity.id) {
+      return {
+        error: true,
+        success: false,
+      };
+    }
     const paymentInstrumentData: PaymentInstrument = await this.createPaymentInstrument(
       customerIdentity.id,
       paymentToken
