@@ -22,7 +22,7 @@ export default {
         "success-alert" : "#4BB543",
         "success-stroke": "#74E040",
         warning: "#FF9A3D33",
-        "warning-alert" : "",
+        "warning-alert" : "#808080",
         "warning-stroke": "#FF9A3D",
         error: "#E0407033",
         "alert-red": "#EE2020",

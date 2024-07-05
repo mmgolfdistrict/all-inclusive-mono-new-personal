@@ -61,7 +61,7 @@ export const CourseNav = () => {
   const getBgColor = (type) => {
     if (type === "FAILURE") return "alert-red";
     if (type === "SUCCESS") return "success-alert";
-    if (type === "WARNING") return "primary-gray";
+    if (type === "WARNING") return "warning-alert";
   };
 
   return (
@@ -73,6 +73,7 @@ export const CourseNav = () => {
             className={`bg-${getBgColor(
               elm.displayType
             )} text-white w-full p-1`}
+            // className={`bg-success-alert text-white w-full p-1`}
           >
             {elm.longMessage}
           </div>
