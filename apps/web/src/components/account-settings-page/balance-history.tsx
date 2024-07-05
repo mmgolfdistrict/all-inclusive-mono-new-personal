@@ -81,7 +81,7 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
         <div>
           <h3 className="text-[18px]  md:text-[24px]">Balance</h3>
           <p className=" text-[14px] text-primary-gray md:text-[16px]">
-            You can cashout once a day up to $999.
+            You can cashout once a day up to $3000.
           </p>
         </div>
         <div className="flex flex-col items-center gap-2 lg:flex-row">
