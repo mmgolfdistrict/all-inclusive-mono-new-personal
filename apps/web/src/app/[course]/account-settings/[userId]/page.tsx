@@ -7,11 +7,11 @@ import { BalanceHistory } from "~/components/account-settings-page/balance-histo
 import { EditProfileForm } from "~/components/account-settings-page/edit-profile-form";
 import { NotificationSettings } from "~/components/account-settings-page/notification-settings";
 import { PaymentInfoMangeProfile } from "~/components/account-settings-page/payment-info";
-import { PrivacySettings } from "~/components/account-settings-page/privacy-settings";
 import { SavedBankDetails } from "~/components/account-settings-page/savedBankDetails";
 import { GoBack } from "~/components/buttons/go-back";
 import { ProfileDetails } from "~/components/profile-page/profile-details";
 import { useRouter } from "next/navigation";
+import { useUserContext } from "~/contexts/UserContext";
 
 export default function ManangeProfile({
   params,
@@ -22,7 +22,8 @@ export default function ManangeProfile({
   const userId = params.userId;
   const router = useRouter();
   const { status } = useSession();
-  if (status === "unauthenticated") {
+  const { user } = useUserContext()
+  if (status === "unauthenticated" || userId !== user?.id) {
     router.push(`/${courseId}`);
   }
 
