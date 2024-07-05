@@ -80,9 +80,9 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
       <section className="h-full mx-auto flex w-full flex-col gap-6 bg-white px-3 py-2 mb-2  md:rounded-xl md:p-6 md:py-4">
         <div>
           <h3 className="text-[18px]  md:text-[24px]">Balance</h3>
-          {/* <p className=" text-[14px] text-primary-gray md:text-[16px]">
-        Set how you&apos;d like your profile information to appear.
-      </p> */}
+          <p className=" text-[14px] text-primary-gray md:text-[16px]">
+            You can cashout once a day up to $999.
+          </p>
         </div>
         <div className="flex flex-col items-center gap-2 lg:flex-row">
           <div className="flex flex-col w-full h-full items-center justify-center gap-2 ">
