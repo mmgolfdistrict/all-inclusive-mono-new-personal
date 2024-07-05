@@ -33,13 +33,15 @@ const FinixForm = ({ onClose, setLoading, loading }) => {
       bookingId: "",
       listingId: "",
       courseId,
-      eventId: "FINIX_WEB_HOOK_CASHOUT_TRANSFERED",
-      json: `Cashout transfered to user id ${user?.id} `,
+      eventId: "FINIX_WEB_HOOK_ACCOUNT_ADDED",
+      json: `Bank account added for user ${user?.id} `,
     });
   };
 
   const handleCashoutTransfer = async (token: string) => {
-    await createCashoutCustomerIdentity.mutateAsync({ paymentToken: token });
+    return await createCashoutCustomerIdentity.mutateAsync({
+      paymentToken: token,
+    });
   };
 
   useEffect(() => {
@@ -67,7 +69,13 @@ const FinixForm = ({ onClose, setLoading, loading }) => {
               // get token ID from response
               const tokenData = res.data || {};
               const token: string = tokenData.id;
-              await handleCashoutTransfer(token);
+              const response = await handleCashoutTransfer(token);
+              if (response.error) {
+                toast.error("Some error occured in adding bank account");
+                onClose();
+                setShowLoadingSubmit(false);
+                return;
+              }
               await refetchAssociatedBanks();
               logAudit();
               toast.success("Bank account added successfully .");
