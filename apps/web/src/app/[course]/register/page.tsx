@@ -114,6 +114,10 @@ export default function RegisterPage() {
     setValue("redirectHref", cleanedHref);
   }, []);
 
+  useEffect(() => {
+    recaptchaRef.current?.execute();
+  }, []);
+
   const onSubmit: SubmitHandler<RegisterSchemaType> = async (data) => {
     if (profanityCheckData?.isProfane) {
       setError("username", {
@@ -398,7 +402,11 @@ export default function RegisterPage() {
           </div>
           {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (
             <ReCAPTCHA
-              size="normal"
+              size={
+                process.env.NEXT_PUBLIC_RECAPTCHA_IS_INVISIBLE
+                  ? "invisible"
+                  : "normal"
+              }
               sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ?? ""}
               onChange={onReCAPTCHAChange}
               ref={recaptchaRef}

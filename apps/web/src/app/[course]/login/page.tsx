@@ -97,6 +97,10 @@ export default function Login() {
     !prevPath?.path?.includes("verify-email") &&
     !prevPath?.path?.includes("register");
 
+  useEffect(() => {
+    recaptchaRef.current?.execute();
+  }, []);
+
   const onSubmit: SubmitHandler<LoginSchemaType> = async (data) => {
     setIsLoading(true);
     try {
@@ -293,7 +297,11 @@ export default function Login() {
           </Link>
           {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (
             <ReCAPTCHA
-              size="normal"
+              size={
+                process.env.NEXT_PUBLIC_RECAPTCHA_IS_INVISIBLE
+                  ? "invisible"
+                  : "normal"
+              }
               sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ?? ""}
               onChange={onReCAPTCHAChange}
               ref={recaptchaRef}
