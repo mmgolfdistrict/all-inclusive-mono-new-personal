@@ -41,6 +41,9 @@ export const CourseNav = () => {
     }
   );
 
+  const { data: systemNotifications } =
+    api.systemNotification.getSystemNotification.useQuery({});
+
   useEffect(() => {
     if (isSideBarOpen && isMobile) {
       document.body.classList.add("overflow-hidden");
@@ -55,9 +58,26 @@ export const CourseNav = () => {
 
   // if (pathname.includes("/checkout")) return null;
 
+  const getBgColor = (type) => {
+    if (type === "FAILURE") return "alert-red";
+    if (type === "SUCCESS") return "success-alert";
+    if (type === "WARNING") return "warning-alert";
+  };
+
   return (
     <div className="fixed top-0 w-full z-20">
       <div className="relative">
+        {systemNotifications?.map((elm) => (
+          <div
+            key={elm.id}
+            className={`bg-${getBgColor(
+              elm.displayType
+            )} text-white w-full p-1`}
+            // className={`bg-success-alert text-white w-full p-1`}
+          >
+            {elm.longMessage}
+          </div>
+        ))}
         {isSideBarOpen && (
           <div
             className={`fixed z-20 h-[100dvh] w-screen backdrop-blur ${
