@@ -5,6 +5,8 @@ import { OutlineButton } from "../buttons/outline-button";
 import { Close } from "../icons/close";
 import { Spinner } from "../loading/spinner";
 import FinixForm from "./FinixWidget";
+import { Tooltip } from "../tooltip";
+import { Info } from "../icons/info";
 
 const Modal = ({ isOpen, onClose }) => {
   const [isLoading, setIsLoading] = useState(true);
@@ -25,9 +27,8 @@ const Modal = ({ isOpen, onClose }) => {
         </div>
       )}
       <aside
-        className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[500px] md:h-[100dvh] ${
-          isOpen ? "translate-x-0" : "translate-x-full"
-        }`}
+        className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[500px] md:h-[100dvh] ${isOpen ? "translate-x-0" : "translate-x-full"
+          }`}
       >
         <div className="bg-white p-6 flex flex-col justify-between rounded-md h-full w-full">
           <div className="flex flex-col h-full pb-2">
@@ -62,6 +63,15 @@ const Modal = ({ isOpen, onClose }) => {
               Cancel
             </OutlineButton>
           )}
+          <div className="mt-2 flex gap-1">
+            <h5 className="text-sm font-semibold text-primary-gray">
+              Are you having issues adding your bank?
+            </h5>
+            <Tooltip
+              trigger={<Info className="h-[20px] w-[20px]" />}
+              content="Please ensure the address in your account settings matches the associated bank address above. Otherwise, your verification will be delayed, and you will be unable to cash out. If there are issues, please recheck and try again."
+            />
+          </div>
         </div>
       </aside>
     </>
