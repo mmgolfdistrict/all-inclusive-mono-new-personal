@@ -10,7 +10,6 @@ import { PaymentInfoMangeProfile } from "~/components/account-settings-page/paym
 import { SavedBankDetails } from "~/components/account-settings-page/savedBankDetails";
 import { GoBack } from "~/components/buttons/go-back";
 import { ProfileDetails } from "~/components/profile-page/profile-details";
-import { useUserContext } from "~/contexts/UserContext";
 import { useRouter } from "next/navigation";
 
 export default function ManangeProfile({
@@ -21,9 +20,9 @@ export default function ManangeProfile({
   const courseId = params.course;
   const userId = params.userId;
   const router = useRouter();
-  const { status } = useSession();
-  const { user } = useUserContext();
-  if (status === "unauthenticated" || userId !== user?.id) {
+  const { status, data } = useSession();
+
+  if (status === "unauthenticated" || (status !== "loading" && userId !== data?.user.id)) {
     router.push(`/${courseId}`);
   }
 
