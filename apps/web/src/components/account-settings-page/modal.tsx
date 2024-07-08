@@ -59,19 +59,22 @@ const Modal = ({ isOpen, onClose }) => {
             )}
           </div>
           {!isLoading && (
-            <OutlineButton onClick={onClose} className="w-full">
-              Cancel
-            </OutlineButton>
+            <>
+              <OutlineButton onClick={onClose} className="w-full">
+                Cancel
+              </OutlineButton>
+
+              <div className="mt-2 flex gap-1">
+                <h5 className="text-sm font-semibold text-primary-gray">
+                  Are you having issues adding your bank?
+                </h5>
+                <Tooltip
+                  trigger={<Info className="h-[20px] w-[20px]" />}
+                  content="Please ensure the address in your account settings matches the associated bank address above. Otherwise, your verification will be delayed, and you will be unable to cash out. If there are issues, please recheck and try again."
+                />
+              </div>
+            </>
           )}
-          <div className="mt-2 flex gap-1">
-            <h5 className="text-sm font-semibold text-primary-gray">
-              Are you having issues adding your bank?
-            </h5>
-            <Tooltip
-              trigger={<Info className="h-[20px] w-[20px]" />}
-              content="Please ensure the address in your account settings matches the associated bank address above. Otherwise, your verification will be delayed, and you will be unable to cash out. If there are issues, please recheck and try again."
-            />
-          </div>
         </div>
       </aside>
     </>
