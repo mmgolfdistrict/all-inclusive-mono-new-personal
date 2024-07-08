@@ -1218,14 +1218,14 @@ export class HyperSwitchWebhookService {
           await this.sensibleService.cancelGuarantee(firstBooking?.weatherGuaranteeId || "");
         }
         if (newBookings.length === 1) {
-          const lsPrice = (listPrice ?? 0) / 100;
-          const listedPrice = lsPrice + lsPrice * buyerFee;
-          const totalTax = lsPrice * sellerFee;
+          const listedPrice = (listPrice ?? 0) / 100;
+          const totalTax = listedPrice * sellerFee;
+
           const templateSeller: any = {
             ...commonTemplateData,
             CustomerFirstName: sellerCustomer.name?.split(" ")[0],
             ListedPrice:
-              `$${lsPrice.toLocaleString("en-US", {
+              `$${listedPrice.toLocaleString("en-US", {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })} / Golfer` || "-",
@@ -1249,15 +1249,15 @@ export class HyperSwitchWebhookService {
           );
         }
       } else {
-        const lsPrice = (listPrice ?? 0) / 100;
-        const listedPrice = lsPrice + lsPrice * buyerFee;
-        const totalTax = lsPrice * (buyerFee + sellerFee);
+        const listedPrice = (listPrice ?? 0) / 100;
+        const totalTax = listedPrice * sellerFee;
+
         const templateSeller: any = {
           ...commonTemplateData,
           SoldPlayers: listedSlotsCount,
           CustomerFirstName: sellerCustomer.name?.split(" ")[0],
           ListedPrice:
-            `$${lsPrice.toLocaleString("en-US", {
+            `$${listedPrice.toLocaleString("en-US", {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })} / Golfer` || "-",
