@@ -357,7 +357,12 @@ export class ServiceFactory {
   };
 
   getFinixService = (): FinixService => {
-    return new FinixService(this.config.database, this.getCashOutService(), this.getLoggerService());
+    return new FinixService(
+      this.config.database,
+      this.getCashOutService(),
+      this.getLoggerService(),
+      this.getNotificationService()
+    );
   };
   getLoggerService = (): LoggerService => {
     return new LoggerService();
