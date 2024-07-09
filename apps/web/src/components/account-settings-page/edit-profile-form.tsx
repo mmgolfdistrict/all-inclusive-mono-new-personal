@@ -37,19 +37,7 @@ export const EditProfileForm = () => {
     formState: { isSubmitting, errors },
   } = useForm<EditProfileSchemaType>({
     // @ts-ignore
-    resolver: zodResolver(editProfileSchema),
-    values: {
-      name: "",
-      email: "",
-      phoneNumber: "",
-      handle: "",
-      state: "",
-      address1: "",
-      address2: "",
-      city: "",
-      zipcode: "",
-      country: "USA"
-    },
+    resolver: zodResolver(editProfileSchema)
   });
   const [city, setCity] = useState(getValues("city"));
 
@@ -324,7 +312,6 @@ export const EditProfileForm = () => {
     setBanner(defaultBannerPhoto);
     setValue("bannerImageAssetId", defaultBannerPhoto);
   };
-console.log(getValues("country"));
 
   return (
     <section className="mx-auto flex h-fit w-full flex-col bg-white px-3 py-2  md:rounded-xl md:p-6 md:py-4">
@@ -457,6 +444,7 @@ console.log(getValues("country"));
           disabled={true}
           error={errors.country?.message}
           showInfoTooltip={true}
+          value={"USA"}
           content="We only support cashouts for US banks at this time"
           data-testid="profile-country-id"
         />
