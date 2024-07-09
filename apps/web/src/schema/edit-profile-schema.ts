@@ -42,7 +42,7 @@ export const editProfileSchema = z.object({
   city: z.string().min(1, { message: "City is required" }),
   state: z.string().min(1, { message: "State is required" }),
   zipcode: z.string().min(1, { message: "Zipcode is required" }),
-  // country: z.string().min(1, { message: "Country is required" }),
+  country: z.string().min(1, { message: "Country is required" }),
   profilePictureAssetId: z.string().or(z.null()).or(z.object({})).optional(),
   // .refine(
   //   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
