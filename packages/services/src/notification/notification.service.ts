@@ -36,6 +36,10 @@ interface EmailParams {
   HeaderLogoURL?: string;
   PlayerCount?: number;
   TotalAmount?: string;
+  AmountCashedOut?: number;
+  PreviousBalance?: number;
+  AvailableBalance?: number;
+  BalanceProcessing?: number | string;
 }
 
 interface Attachment {

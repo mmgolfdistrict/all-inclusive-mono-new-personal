@@ -43,12 +43,18 @@ export const cashOutRouter = createTRPCRouter({
       z.object({
         amount: z.number(),
         paymentInstrumentId: z.string(),
+        courseId: z.string(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       return await ctx.serviceFactory
         .getFinixService()
-        .createCashoutTransfer(input.amount, ctx.session?.user?.id ?? "", input.paymentInstrumentId);
+        .createCashoutTransfer(
+          input.amount,
+          ctx.session?.user?.id ?? "",
+          input.paymentInstrumentId,
+          input.courseId
+        );
     }),
   getAssociatedAccounts: protectedProcedure.input(z.object({})).query(async ({ ctx }) => {
     return ctx.serviceFactory.getFinixService().getPaymentInstruments(ctx.session?.user?.id ?? "");
@@ -62,4 +68,7 @@ export const cashOutRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       return ctx.serviceFactory.getFinixService().deletePaymentInstrument(input.paymentInstrumentId);
     }),
+  getCashoutTransactions: protectedProcedure.input(z.object({})).query(async ({ ctx }) => {
+    return ctx.serviceFactory.getCashOutService().getCashoutTransactions(ctx.session?.user?.id ?? "");
+  }),
 });

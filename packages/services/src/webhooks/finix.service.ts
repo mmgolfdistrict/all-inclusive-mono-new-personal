@@ -7,6 +7,9 @@ import { users } from "@golf-district/database/schema/users";
 import { appSettingService } from "../app-settings/initialized";
 import type { CashOutService } from "../cashout/cashout.service";
 import type { LoggerService } from "../webhooks/logging.service";
+import type { NotificationService } from "../notification/notification.service";
+import { assets } from "@golf-district/database/schema/assets";
+import { courses } from "@golf-district/database/schema/courses";
 
 interface TagDetails {
   customerId: string;
@@ -159,7 +162,8 @@ export class FinixService {
   constructor(
     private readonly database: Db, // private readonly hyperSwitchService: HyperSwitchWebhookService
     private readonly cashoutService: CashOutService,
-    private readonly loggerService: LoggerService
+    private readonly loggerService: LoggerService,
+    private readonly notificationService: NotificationService
   ) {}
   getHeaders = () => {
     const requestHeaders = new Headers();
@@ -299,7 +303,12 @@ export class FinixService {
     }
   };
 
-  createCashoutTransfer = async (amount: number, customerId: string, paymentDetailId: string) => {
+  createCashoutTransfer = async (
+    amount: number,
+    customerId: string,
+    paymentDetailId: string,
+    courseId: string
+  ) => {
     const recievableData = await this.cashoutService.getRecievables(customerId);
     if (!recievableData) {
       return new Error("Error Fetching recievable data");
@@ -356,6 +365,28 @@ export class FinixService {
       )
       .execute();
 
+    const [user] = await this.database
+      .select({ email: users.email, name: users.name })
+      .from(users)
+      .where(and(eq(users.id, customerId)))
+      .execute();
+
+    const [course] = await this.database
+      .select({
+        key: assets.key,
+        extension: assets.extension,
+        websiteURL: courses.websiteURL,
+        name: courses.name,
+        id: courses.id,
+      })
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .leftJoin(assets, eq(assets.id, courses.logoId))
+      .execute()
+      .catch((err) => {
+        return [];
+      });
+
     if (!paymentInstrumentIdFromBackend?.paymentInstrumentId) {
       return new Error("Could not find paymentInstrumentId");
     } else {
@@ -381,6 +412,35 @@ export class FinixService {
             console.log("Error in transfer", e);
             throw "Error in creating cashout";
           });
+
+        // await this.notificationService.createNotification(
+        //   customerId,
+        //   "Transfer amount",
+        //   `Amount Cashed Out ${amount}
+        //    Previous Balance ${recievableData.withdrawableAmount / 100}
+        //   Current Balance ${recievableData.withdrawableAmount / 100 - amount}
+        //   Amount in processing ${recievableData?.availableAmount - recievableData?.withdrawableAmount}
+        //   `
+        // );
+        await this.notificationService.sendEmailByTemplate(
+          user?.email ?? "",
+          "Cashout successful",
+          process.env.SENDGRID_CASHOUT_TRANSFER_TEMPLATE_ID ?? "",
+          {
+            AmountCashedOut: amount,
+            PreviousBalance: recievableData.withdrawableAmount,
+            AvailableBalance: recievableData.withdrawableAmount - amount,
+            BalanceProcessing: (recievableData?.availableAmount - recievableData?.withdrawableAmount).toFixed(
+              2
+            ),
+            CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`,
+            CourseURL: course?.websiteURL || "",
+            CourseName: course?.name,
+            HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+            CustomerFirstName: user?.name ?? "",
+          },
+          []
+        );
         return { success: true, error: false };
       } else {
         console.log("Transfer not initiated");

@@ -357,7 +357,12 @@ export class ServiceFactory {
   };
 
   getFinixService = (): FinixService => {
-    return new FinixService(this.config.database, this.getCashOutService(), this.getLoggerService());
+    return new FinixService(
+      this.config.database,
+      this.getCashOutService(),
+      this.getLoggerService(),
+      this.getNotificationService()
+    );
   };
   getLoggerService = (): LoggerService => {
     return new LoggerService();
@@ -369,8 +374,8 @@ export class ServiceFactory {
   getUserWaitlistService = (): UserWaitlistService => {
     return new UserWaitlistService(this.config.database, this.getNotificationService());
   };
-  
-  getSystemNotificationService =() : SystemNotificationService =>{
-    return new SystemNotificationService(this.config.database)
-  }
+
+  getSystemNotificationService = (): SystemNotificationService => {
+    return new SystemNotificationService(this.config.database);
+  };
 }

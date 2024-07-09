@@ -1,5 +1,6 @@
 "use client";
 
+import { useCourseContext } from "~/contexts/CourseContext";
 import { useUser } from "~/hooks/useUser";
 import { api } from "~/utils/api";
 import Script from "next/script";
@@ -22,6 +23,8 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
     api.cashOut.getRecievables.useQuery({});
   const [modalOpen, setModalOpen] = useState(false);
   const [loadingCashout, setLoadingCashout] = useState<boolean>(false);
+  const { course } = useCourseContext();
+  const courseId = course?.id ?? "";
   const hasAddress =
     user?.address1 &&
     user.address2 &&
@@ -55,6 +58,7 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
       const response = await createCashoutTransfer.mutateAsync({
         paymentInstrumentId,
         amount: Number(amount),
+        courseId,
       });
       if ((response as { success: boolean; error: boolean }).success) {
         toast.success(`Cash out requested for $${amount}`);
@@ -101,7 +105,10 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
                     Processing Funds:&nbsp;
                   </p>
                   <p className="text-gray-800 md:text-[24px]">{`$${
-                    recievableData?.availableAmount.toFixed(2) || 0
+                    (
+                      (recievableData?.availableAmount ?? 0) -
+                      (recievableData?.withdrawableAmount ?? 0)
+                    ).toFixed(2) || 0
                   }`}</p>
                 </div>
                 <Tooltip
