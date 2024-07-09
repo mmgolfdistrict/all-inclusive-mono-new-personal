@@ -26,12 +26,12 @@ import {
   WeatherService,
 } from "./index";
 import { ProfanityService } from "./profanity/profanity.service";
+import { SystemNotificationService } from "./system-notification/systemNotification.service";
 import { ProviderService } from "./tee-sheet-provider/providers.service";
 import { UserWaitlistService } from "./user-waitlist/userWaitlist.service";
 import { FinixService } from "./webhooks/finix.service";
 import { LoggerService } from "./webhooks/logging.service";
 import { PaymentVerifierService } from "./webhooks/paymentverifier.service";
-import { SystemNotificationService } from "./system-notification/systemNotification.service";
 
 export interface ServiceConfig {
   database: Db;
@@ -369,8 +369,8 @@ export class ServiceFactory {
   getUserWaitlistService = (): UserWaitlistService => {
     return new UserWaitlistService(this.config.database, this.getNotificationService());
   };
-  
-  getSystemNotificationService =() : SystemNotificationService =>{
-    return new SystemNotificationService(this.config.database)
-  }
+
+  getSystemNotificationService = (): SystemNotificationService => {
+    return new SystemNotificationService(this.config.database);
+  };
 }

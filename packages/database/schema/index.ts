@@ -32,7 +32,7 @@ import * as providers from "./providers";
 import * as providerScheduleDetails from "./providerScheduleDetails";
 import * as providerCourseLink from "./providersCourseLink";
 import * as sessions from "./sessions";
-import * as systemNotification  from "./systemNotification";
+import * as systemNotification from "./systemNotification";
 import * as teeTimeIndexLogs from "./teeTimeIndexLogs";
 import * as teeTimes from "./teeTimes";
 import * as transfers from "./transfers";
@@ -89,5 +89,5 @@ export const schema = {
   ...profanities,
   ...courseSEOs,
   ...userWaitlists,
-  ...systemNotification
+  ...systemNotification,
 };

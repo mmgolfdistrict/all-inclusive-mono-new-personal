@@ -22,7 +22,10 @@ export default function ManangeProfile({
   const router = useRouter();
   const { status, data } = useSession();
 
-  if (status === "unauthenticated" || (status !== "loading" && userId !== data?.user.id)) {
+  if (
+    status === "unauthenticated" ||
+    (status !== "loading" && userId !== data?.user.id)
+  ) {
     router.push(`/${courseId}`);
   }
 
