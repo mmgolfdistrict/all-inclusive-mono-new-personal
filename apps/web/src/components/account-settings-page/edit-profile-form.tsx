@@ -27,13 +27,31 @@ const defaultProfilePhoto = "/defaults/default-profile.webp";
 const defaultBannerPhoto = "/defaults/default-banner.webp";
 
 export const EditProfileForm = () => {
-  // const [location, setLocation] = useState<string>("");
-  const [address1, setAddress1] = useState<string>("");
-  const [address2, setAddress2] = useState<string>("");
-  const [city, setCity] = useState<string>("");
-  const [country, setCountry] = useState<string>("");
-  const [state, setState] = useState<string>("");
-  const [zipcode, setZipcode] = useState<string>("");
+  const {
+    register,
+    setValue,
+    watch,
+    handleSubmit,
+    setError,
+    getValues,
+    formState: { isSubmitting, errors },
+  } = useForm<EditProfileSchemaType>({
+    // @ts-ignore
+    resolver: zodResolver(editProfileSchema),
+    values: {
+      name: "",
+      email: "",
+      phoneNumber: "",
+      handle: "",
+      state: "",
+      address1: "",
+      address2: "",
+      city: "",
+      zipcode: "",
+      country: "USA"
+    },
+  });
+  const [city, setCity] = useState(getValues("city"));
 
   const { update } = useSession();
   const debouncedLocation = useDebounce<string>(city, 500);
@@ -76,18 +94,6 @@ export const EditProfileForm = () => {
     }
   );
 
-  const {
-    register,
-    setValue,
-    watch,
-    handleSubmit,
-    setError,
-    formState: { isSubmitting, errors },
-  } = useForm<EditProfileSchemaType>({
-    // @ts-ignore
-    resolver: zodResolver(editProfileSchema),
-  });
-
   const upload = useCallback(
     async (file: File, type: "image" | "bannerImage") => {
       const data = await uploadMedia(file);
@@ -104,7 +110,6 @@ export const EditProfileForm = () => {
     },
     []
   );
-
   useEffect(() => {
     if (!isLoading && userData) {
       setValue("name", userData?.name ?? "");
@@ -117,7 +122,7 @@ export const EditProfileForm = () => {
       setValue("state", userData?.state ?? "");
       setValue("city", userData?.city ?? "");
       setValue("zipcode", userData?.zipcode ?? "");
-      // setValue("country", userData?.country ?? "");
+      setValue("country", "USA");
       setValue("profilePictureAssetId", userData?.image ?? "");
       setValue("bannerImageAssetId", userData?.bannerImage ?? "");
       setBanner(
@@ -319,6 +324,7 @@ export const EditProfileForm = () => {
     setBanner(defaultBannerPhoto);
     setValue("bannerImageAssetId", defaultBannerPhoto);
   };
+console.log(getValues("country"));
 
   return (
     <section className="mx-auto flex h-fit w-full flex-col bg-white px-3 py-2  md:rounded-xl md:p-6 md:py-4">
@@ -390,9 +396,6 @@ export const EditProfileForm = () => {
           register={register}
           name="address1"
           error={errors.address1?.message}
-          onChange={(e: ChangeEvent<HTMLInputElement>) => {
-            setAddress1(e.target.value);
-          }}
           data-testid="profile-address1-id"
         />
         <Input
@@ -403,10 +406,7 @@ export const EditProfileForm = () => {
           id="address2"
           register={register}
           name="address2"
-          // error={errors.address2?.message}
-          onChange={(e: ChangeEvent<HTMLInputElement>) => {
-            setAddress2(e.target.value);
-          }}
+          error={errors.address2?.message}
           data-testid="profile-address2-id"
         />
         <Input
@@ -418,10 +418,11 @@ export const EditProfileForm = () => {
           register={register}
           name="city"
           error={errors.city?.message}
+          data-testid="profile-city-id"
           onChange={(e: ChangeEvent<HTMLInputElement>) => {
+            setValue("city", e.target.value);
             setCity(e.target.value);
           }}
-          data-testid="profile-city-id"
         />
         <Input
           label="State"
@@ -432,9 +433,6 @@ export const EditProfileForm = () => {
           register={register}
           name="state"
           error={errors.state?.message}
-          onChange={(e: ChangeEvent<HTMLInputElement>) => {
-            setState(e.target.value);
-          }}
           data-testid="profile-state-id"
         />
         <Input
@@ -446,9 +444,6 @@ export const EditProfileForm = () => {
           register={register}
           name="zipcode"
           error={errors.zipcode?.message}
-          onChange={(e: ChangeEvent<HTMLInputElement>) => {
-            setZipcode(e.target.value);
-          }}
           data-testid="profile-zipcode-id"
         />
         <Input
@@ -460,13 +455,9 @@ export const EditProfileForm = () => {
           register={register}
           name="country"
           disabled={true}
-          value={"USA"}
-          // error={errors.country?.message}
+          error={errors.country?.message}
           showInfoTooltip={true}
           content="We only support cashouts for US banks at this time"
-          onChange={(e: ChangeEvent<HTMLInputElement>) => {
-            setCountry(e.target.value);
-          }}
           data-testid="profile-country-id"
         />
         <datalist id="places">
