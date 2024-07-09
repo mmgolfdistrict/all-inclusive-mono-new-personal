@@ -31,16 +31,14 @@ export type TxnHistoryType = {
 
 export const Cashouts = () => {
   const { course } = useCourseContext();
-  const courseId = course?.id;
   const [selectedReceipt, setSelectedReceipt] = useState<any>(null);
   const [isReceiptOpen, setIsReceiptOpen] = useState<boolean>(false);
 
   const { data, isLoading, isError, error } =
     api.cashOut.getCashoutTransactions.useQuery({});
 
-  console.log(data, "dataaaaaa");
-
   function sortByDate(objectOfObjects) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const arrayOfObjects: TxnHistoryType[] = Object.values(objectOfObjects);
     arrayOfObjects.sort((a, b) => {
       const dateA = Number(new Date(a.date));
