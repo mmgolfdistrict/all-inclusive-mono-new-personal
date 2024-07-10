@@ -26,12 +26,7 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
   const { course } = useCourseContext();
   const courseId = course?.id ?? "";
   const hasAddress =
-    user?.address1 &&
-    user.address2 &&
-    user.city &&
-    user.state &&
-    user.zipcode &&
-    user.country;
+    user?.address1 && user.city && user.state && user.zipcode && user.country;
   const openModal = () => {
     if (hasAddress) {
       setModalOpen(true);
