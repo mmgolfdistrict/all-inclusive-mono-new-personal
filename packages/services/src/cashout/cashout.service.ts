@@ -170,4 +170,18 @@ export class CashOutService {
       withdrawableAmount: tReedemableAmount / 100,
     };
   };
+
+  getCashoutTransactions = async (userId: string) => {
+    const transactionDetails = await this.database
+      .select({
+        amount: cashout.amount,
+        externalStatus: cashout.externalStatus,
+        createdDateTime: cashout.createdDateTime,
+      })
+      .from(cashout)
+      .where(eq(cashout.customerId, userId))
+      .execute();
+
+    return transactionDetails;
+  };
 }

@@ -59,11 +59,11 @@ export default function Checkout({
     setAmountOfPlayers,
   } = useCheckoutContext();
 
-  useEffect(() => {
-    if (playerCount) {
-      setAmountOfPlayers(Number(playerCount));
-    }
-  }, []);
+  // useEffect(() => {
+  //   if (playerCount) {
+  //     setAmountOfPlayers(Number(playerCount));
+  //   }
+  // }, []);
 
   const {
     data: teeTimeData,
@@ -154,14 +154,14 @@ export default function Checkout({
       | TaxProduct =
       saleType === "first_hand"
         ? {
-            type: "first_hand",
-            tee_time_id: teeTimeId,
-            number_of_bookings: amountOfPlayers,
-          }
+          type: "first_hand",
+          tee_time_id: teeTimeId,
+          number_of_bookings: amountOfPlayers,
+        }
         : {
-            type: "second_hand",
-            second_hand_id: listingId,
-          };
+          type: "second_hand",
+          second_hand_id: listingId,
+        };
 
     const localCart: CartProduct[] = [
       {
@@ -196,7 +196,7 @@ export default function Checkout({
         display_price: formatMoney(
           ((data?.greenFeeTaxPerPlayer ?? 0) +
             (data?.cartFeeTaxPerPlayer ?? 0)) *
-            amountOfPlayers
+          amountOfPlayers
         ),
         product_data: {
           metadata: {
@@ -296,6 +296,11 @@ export default function Checkout({
     course?.markupFeesFixedPerPlayer,
     course?.convenienceFeesFixedPerPlayer,
   ]);
+
+  useEffect(() => {
+    if (playerCount && data?.availableSlots)
+      setAmountOfPlayers(_prev => Math.min(Number(playerCount), Number(data?.availableSlots)));
+  }, [data])
 
   if (isError && error) {
     return (

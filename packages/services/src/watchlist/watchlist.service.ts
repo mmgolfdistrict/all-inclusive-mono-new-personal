@@ -41,7 +41,7 @@ export class WatchlistService {
    *
    * @param {Db} database - The database instance.
    */
-  constructor(protected readonly database: Db) {}
+  constructor(protected readonly database: Db) { }
 
   /**
    * Toggles a tee time in the user's watchlist.
@@ -88,7 +88,7 @@ export class WatchlistService {
         .execute();
 
       if (!teeTime) {
-        this.logger.warn(`Tee time with id ${teeTimeId} not found`);
+        this.logger.warn(`Tee time with  id ${teeTimeId} not found`);
         throw new Error(`Tee time with id ${teeTimeId} not found`);
       }
 
@@ -140,9 +140,11 @@ export class WatchlistService {
         createdAt: favorites.createdAt,
         userId: favorites.userId,
         price: teeTimes.greenFeePerPlayer,
+        cartFee: teeTimes.cartFeePerPlayer,
         teeTimeExpiration: teeTimes.providerDate,
         availableFirstHandSpots: teeTimes.availableFirstHandSpots,
         availableSecondHandSpots: teeTimes.availableSecondHandSpots,
+        markupFeesFixedPerPlayer: courses.markupFeesFixedPerPlayer,
         courseName: courses.name,
         image: {
           key: assets.key,
@@ -182,7 +184,7 @@ export class WatchlistService {
           teeTimeId: item.teeTimeId,
           courseId: item.courseId,
           teeTimeExpiration: item.teeTimeExpiration,
-          price: item.price / 100,
+          price: (item.price / 100) + (item.cartFee / 100) + (item.markupFeesFixedPerPlayer ? item.markupFeesFixedPerPlayer / 100 : 0),
           availableSpots: item.availableFirstHandSpots,
           ownedBy: item.courseName,
           type: "FIRST_PARTY",

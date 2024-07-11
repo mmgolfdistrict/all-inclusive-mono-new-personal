@@ -1,10 +1,10 @@
 import { formatMoney, formatTime } from "@golf-district/shared";
 import { TableCell, TableRow } from "@mui/material";
 import { useSidebar } from "~/hooks/useSidebar";
-import { Dispatch, SetStateAction } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import { OutlineButton } from "../buttons/outline-button";
 import { Close } from "../icons/close";
-import { TxnHistoryType } from "./transaction-history";
+import type { TxnHistoryType } from "./transaction-history";
 
 type BookingDetailsProps = {
   isReceiptOpen: boolean;
@@ -136,7 +136,10 @@ export const BookingDetails = ({
                   className="text-secondary-black"
                   width="50%"
                 >
-                  {selectedReceipt?.weatherGuaranteeAmount ?? "-"}
+                  {/* {selectedReceipt?.weatherGuaranteeAmount ?? "-"} */}
+                  {selectedReceipt?.weatherGuaranteeAmount
+                    ? formatMoney(selectedReceipt?.weatherGuaranteeAmount / 100)
+                    : "-"}
                 </TableCell>
               </TableRow>
               {selectedReceipt?.status === "PURCHASED" && (

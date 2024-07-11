@@ -230,7 +230,6 @@ export class BookingService {
       .execute();
     console.log("========>", data.length);
 
-
     // const [cartData] = await this.database.select({
     //   cart: customerCarts.cart
     // })
@@ -290,7 +289,7 @@ export class BookingService {
           sellerServiceFee: teeTime.from === userId ? sellerServiceFee : 0,
           receiveAfterSale: teeTime.from === userId ? receiveAfterSaleAmount : 0,
           weatherGuaranteeAmount: teeTime.weatherGuaranteeAmount ?? 0,
-          weatherGuaranteeId: teeTime.weatherGuaranteeId ?? ""
+          weatherGuaranteeId: teeTime.weatherGuaranteeId ?? "",
         };
       } else {
         const currentEntry = combinedData[teeTime.transferId];
@@ -2757,8 +2756,9 @@ export class BookingService {
             url: "/confirmBooking",
             userAgent: "",
             message: "ERROR CONFIRMING BOOKING",
-            stackTrace: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${booking?.teeTimeId ?? ""
-              }`,
+            stackTrace: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${
+              booking?.teeTimeId ?? ""
+            }`,
             additionalDetailsJSON: err,
           });
         });
@@ -2883,7 +2883,7 @@ export class BookingService {
       courseId: cart?.courseId,
       fromBookingId: associatedBooking?.id,
       weatherGuaranteeId: associatedBooking.weatherGuaranteeId ?? "",
-      weatherGuaranteeAmount: associatedBooking.weatherGuaranteeAmount ?? 0
+      weatherGuaranteeAmount: associatedBooking.weatherGuaranteeAmount ?? 0,
     });
     await this.database.transaction(async (tx) => {
       await tx

@@ -32,13 +32,18 @@ import { useDebounce } from "usehooks-ts";
 
 export default function RegisterPage() {
   const { course } = useCourseContext();
-  // const [location, setLocation] = useState<string>("");
-  const [address1, setAddress1] = useState<string>("");
-  const [address2, setAddress2] = useState<string>("");
-  const [state, setState] = useState<string>("");
-  const [zipcode, setZipcode] = useState<string>("");
-  const [city, setCity] = useState<string>("");
-  const [country, setCountry] = useState<string>("");
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    setError,
+    getValues,
+    formState: { isSubmitting, errors },
+  } = useForm<RegisterSchemaType>({
+    resolver: zodResolver(registerSchema),
+  });
+  const [city, setCity] = useState(getValues("city"));
 
   const debouncedLocation = useDebounce<string>(city, 500);
   const cities = api.places.getCity.useQuery({ city: debouncedLocation });
@@ -56,17 +61,6 @@ export default function RegisterPage() {
     data: profanityCheckData,
     reset: resetProfanityCheck,
   } = api.profanity.checkProfanity.useMutation();
-
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    watch,
-    setError,
-    formState: { isSubmitting, errors },
-  } = useForm<RegisterSchemaType>({
-    resolver: zodResolver(registerSchema),
-  });
 
   const genUsername = () => {
     setValue("username", uName ?? "");
@@ -112,6 +106,10 @@ export default function RegisterPage() {
     const cleanedHref = href.split("/register")[0];
     if (!cleanedHref) return;
     setValue("redirectHref", cleanedHref);
+  }, []);
+
+  useEffect(() => {
+    recaptchaRef.current?.execute();
   }, []);
 
   const onSubmit: SubmitHandler<RegisterSchemaType> = async (data) => {
@@ -250,9 +248,6 @@ export default function RegisterPage() {
             register={register}
             name="address1"
             error={errors.address1?.message}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => {
-              setAddress1(e.target.value);
-            }}
             data-testid="register-address1-id"
           />
           <Input
@@ -263,10 +258,7 @@ export default function RegisterPage() {
             id="address2"
             register={register}
             name="address2"
-            // error={errors.address2?.message}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => {
-              setAddress2(e.target.value);
-            }}
+            error={errors.address2?.message}
             data-testid="register-address2-id"
           />
           <Input
@@ -278,10 +270,11 @@ export default function RegisterPage() {
             register={register}
             name="city"
             error={errors.city?.message}
+            data-testid="register-city-id"
             onChange={(e: ChangeEvent<HTMLInputElement>) => {
+              setValue("city", e.target.value);
               setCity(e.target.value);
             }}
-            data-testid="register-city-id"
           />
           <Input
             label="State"
@@ -292,9 +285,6 @@ export default function RegisterPage() {
             register={register}
             name="state"
             error={errors.state?.message}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => {
-              setState(e.target.value);
-            }}
             data-testid="register-state-id"
           />
           <Input
@@ -306,9 +296,6 @@ export default function RegisterPage() {
             register={register}
             name="zipcode"
             error={errors.zipcode?.message}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => {
-              setZipcode(e.target.value);
-            }}
             data-testid="register-zipcode-id"
           />
           <Input
@@ -320,9 +307,8 @@ export default function RegisterPage() {
             register={register}
             name="country"
             error={errors.country?.message}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => {
-              setCountry(e.target.value);
-            }}
+            showInfoTooltip={true}
+            content="We only support cashouts for US banks at this time"
             data-testid="register-country-id"
           />
           <datalist id="places">
@@ -339,9 +325,7 @@ export default function RegisterPage() {
               register={register}
               name="password"
               error={errors.password?.message}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                setPassword(e.target.value);
-              }}
+
               data-testid="register-password-id"
             />
             <IconButton
@@ -396,7 +380,11 @@ export default function RegisterPage() {
           </div>
           {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (
             <ReCAPTCHA
-              size="normal"
+              size={
+                process.env.NEXT_PUBLIC_RECAPTCHA_IS_INVISIBLE
+                  ? "invisible"
+                  : "normal"
+              }
               sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ?? ""}
               onChange={onReCAPTCHAChange}
               ref={recaptchaRef}

@@ -1,11 +1,15 @@
 import { randomUUID } from "crypto";
-import { and, eq } from "@golf-district/database";
+import { and, eq, sql } from "@golf-district/database";
 import type { Db } from "@golf-district/database";
 import { cashout } from "@golf-district/database/schema/cashout";
 import { customerPaymentDetail } from "@golf-district/database/schema/customerPaymentDetails";
 import { users } from "@golf-district/database/schema/users";
+import { appSettingService } from "../app-settings/initialized";
 import type { CashOutService } from "../cashout/cashout.service";
 import type { LoggerService } from "../webhooks/logging.service";
+import type { NotificationService } from "../notification/notification.service";
+import { assets } from "@golf-district/database/schema/assets";
+import { courses } from "@golf-district/database/schema/courses";
 
 interface TagDetails {
   customerId: string;
@@ -158,7 +162,8 @@ export class FinixService {
   constructor(
     private readonly database: Db, // private readonly hyperSwitchService: HyperSwitchWebhookService
     private readonly cashoutService: CashOutService,
-    private readonly loggerService: LoggerService
+    private readonly loggerService: LoggerService,
+    private readonly notificationService: NotificationService
   ) {}
   getHeaders = () => {
     const requestHeaders = new Headers();
@@ -210,6 +215,19 @@ export class FinixService {
 
     const response = await fetch(`${this.baseurl}/identities`, requestOptions);
     const customerIdentityData = await response.json();
+    if (!customerIdentityData.id) {
+      console.log("Error in creating identity", JSON.stringify(customerIdentityData));
+      this.loggerService.errorLog({
+        applicationName: "golfdistrict-foreup",
+        clientIP: "",
+        userId,
+        url: "/createCustomerIdentity",
+        userAgent: "",
+        message: "ERROR_ADDING_BANK_ACCOUNT",
+        stackTrace: JSON.stringify(customerIdentityData),
+        additionalDetailsJSON: "error adding bank account",
+      });
+    }
     return customerIdentityData;
   };
   createPaymentInstrument = async (id: string, token: string) => {
@@ -285,17 +303,57 @@ export class FinixService {
     }
   };
 
-  createCashoutTransfer = async (amount: number, customerId: string, paymentDetailId: string) => {
+  createCashoutTransfer = async (
+    amount: number,
+    customerId: string,
+    paymentDetailId: string,
+    courseId: string
+  ) => {
     const recievableData = await this.cashoutService.getRecievables(customerId);
     if (!recievableData) {
       return new Error("Error Fetching recievable data");
     }
-    console.log(recievableData);
     if (amount > recievableData.withdrawableAmount) {
       return new Error("Amount cannot be more then withdrawable amount");
     }
+    const today = new Date().toISOString().split("T")[0];
+    const [records] = await this.database
+      .select({ count: sql`COUNT(*)` })
+      .from(cashout)
+      .where(
+        and(
+          eq(sql`DATE(${cashout.createdDateTime})`, sql`DATE(${today})`),
+          eq(cashout.customerId, customerId)
+        )
+      )
+      .execute();
+    const limitInNumber: number =
+      Number(await appSettingService.get("CASH_OUT_LIMIT_IN_NUMBERS_PER_DAY")) || (1 as number);
+    if ((records?.count as number) >= limitInNumber) {
+      return new Error(`You cannot make more the ${limitInNumber} transactions per day.`);
+    }
+    const [allRecords] = await this.database
+      .select({ sum: sql`SUM(${cashout.amount})` })
+      .from(cashout)
+      .where(
+        and(
+          eq(sql`DATE(${cashout.createdDateTime})`, sql`DATE(${today})`),
+          eq(cashout.customerId, customerId)
+        )
+      )
+      .execute();
+    console.log(allRecords);
+    const limitInAmount: number =
+      Number(await appSettingService.get("CASH_OUT_LIMIT_IN_DOLLARS_PER_DAY")) || (1000 as number);
     console.log("creating transfer", recievableData.withdrawableAmount);
     const amountMultiplied = amount * 100;
+    if (amountMultiplied + Number((allRecords?.sum as number) || 0) > Number(limitInAmount) * 100) {
+      return new Error(
+        `You cannot withdraw more than $${limitInAmount} in a day. You have already withdrawn $${
+          ((allRecords?.sum as number) || 1) / 100 || 0
+        } today.`
+      );
+    }
     const [paymentInstrumentIdFromBackend] = await this.database
       .select({
         paymentInstrumentId: customerPaymentDetail.paymentInstrumentId,
@@ -306,6 +364,28 @@ export class FinixService {
         and(eq(customerPaymentDetail.customerId, customerId), eq(customerPaymentDetail.id, paymentDetailId))
       )
       .execute();
+
+    const [user] = await this.database
+      .select({ email: users.email, name: users.name })
+      .from(users)
+      .where(and(eq(users.id, customerId)))
+      .execute();
+
+    const [course] = await this.database
+      .select({
+        key: assets.key,
+        extension: assets.extension,
+        websiteURL: courses.websiteURL,
+        name: courses.name,
+        id: courses.id,
+      })
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .leftJoin(assets, eq(assets.id, courses.logoId))
+      .execute()
+      .catch((err) => {
+        return [];
+      });
 
     if (!paymentInstrumentIdFromBackend?.paymentInstrumentId) {
       return new Error("Could not find paymentInstrumentId");
@@ -332,6 +412,35 @@ export class FinixService {
             console.log("Error in transfer", e);
             throw "Error in creating cashout";
           });
+
+        // await this.notificationService.createNotification(
+        //   customerId,
+        //   "Transfer amount",
+        //   `Amount Cashed Out ${amount}
+        //    Previous Balance ${recievableData.withdrawableAmount / 100}
+        //   Current Balance ${recievableData.withdrawableAmount / 100 - amount}
+        //   Amount in processing ${recievableData?.availableAmount - recievableData?.withdrawableAmount}
+        //   `
+        // );
+        await this.notificationService.sendEmailByTemplate(
+          user?.email ?? "",
+          "Cashout successful",
+          process.env.SENDGRID_CASHOUT_TRANSFER_TEMPLATE_ID ?? "",
+          {
+            AmountCashedOut: amount,
+            PreviousBalance: recievableData.withdrawableAmount,
+            AvailableBalance: recievableData.withdrawableAmount - amount,
+            BalanceProcessing: (recievableData?.availableAmount - recievableData?.withdrawableAmount).toFixed(
+              2
+            ),
+            CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`,
+            CourseURL: course?.websiteURL || "",
+            CourseName: course?.name,
+            HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+            CustomerFirstName: user?.name ?? "",
+          },
+          []
+        );
         return { success: true, error: false };
       } else {
         console.log("Transfer not initiated");
@@ -342,6 +451,12 @@ export class FinixService {
 
   createCashoutCustomerIdentity = async (userId: string, paymentToken: string): Promise<ResponseCashout> => {
     const customerIdentity: Identity = await this.createCustomerIdentity(userId);
+    if (!customerIdentity.id) {
+      return {
+        error: true,
+        success: false,
+      };
+    }
     const paymentInstrumentData: PaymentInstrument = await this.createPaymentInstrument(
       customerIdentity.id,
       paymentToken
