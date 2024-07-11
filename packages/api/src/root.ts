@@ -4,6 +4,7 @@ import { bookingRouter } from "./routers/booking";
 import { cashOutRouter } from "./routers/cashout";
 import { checkoutRouter } from "./routers/checkout";
 import { courseRouter } from "./routers/course";
+import { courseExceptionRouter } from "./routers/courseException";
 import { domainRouter } from "./routers/domain";
 import { entityRouter } from "./routers/entity";
 import { geoCodeRouter } from "./routers/geo";
@@ -45,6 +46,8 @@ export const appRouter = createTRPCRouter({
   cashOut: cashOutRouter,
   profanity: profanityRouter,
   userWaitlist: userWaitlistRouter,
+  courseException:courseExceptionRouter
+
 });
 
 export type AppRouter = typeof appRouter;

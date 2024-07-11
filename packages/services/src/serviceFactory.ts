@@ -31,6 +31,7 @@ import { UserWaitlistService } from "./user-waitlist/userWaitlist.service";
 import { FinixService } from "./webhooks/finix.service";
 import { LoggerService } from "./webhooks/logging.service";
 import { PaymentVerifierService } from "./webhooks/paymentverifier.service";
+import { CourseExceptionService } from "./course-exception/courseException.service";
 
 export interface ServiceConfig {
   database: Db;
@@ -368,4 +369,8 @@ export class ServiceFactory {
   getUserWaitlistService = (): UserWaitlistService => {
     return new UserWaitlistService(this.config.database, this.getNotificationService());
   };
+  
+  getCourseExceptionService =() : CourseExceptionService =>{
+    return new CourseExceptionService(this.config.database)
+  }
 }

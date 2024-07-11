@@ -1,5 +1,6 @@
 "use client";
 
+import type { NotificationObject } from "@golf-district/shared";
 import { formatQueryDate } from "@golf-district/shared";
 import { FilledButton } from "~/components/buttons/filled-button";
 import { FilterSort } from "~/components/buttons/filters-sort";
@@ -73,6 +74,7 @@ export default function CourseHomePage() {
       console.log(error);
     }
   };
+  console.log("courseId", courseId);
 
   const updateCount = (balance: number) => {
     setCount(balance);
@@ -337,6 +339,34 @@ export default function CourseHomePage() {
     (pageNumber - 1) * TAKE,
     pageNumber * TAKE
   );
+
+  const { data: courseException } =
+    api.courseException.getCourseException.useQuery({
+      courseId: courseId ?? "",
+    });
+
+  // console.log("utcStartDate", utcStartDate);
+  // console.log("utcEndDate", utcEndDate);
+  // console.log("finalRes", finalRes);
+  console.log("courseException", courseException);
+
+  const getCourseException = (playDate: string): null | NotificationObject => {
+    let flag = false;
+    let msg: NotificationObject | null = null;
+    courseException?.forEach((ce) => {
+      const startDate = new Date(ce.startDate);
+      const endDate = new Date(ce.endDate);
+      const dateToCheck = new Date(playDate);
+      if (dateToCheck > startDate && dateToCheck < endDate) {
+        flag = true;
+        msg = ce;
+      }
+    });
+    if (flag) {
+      return msg;
+    }
+    return null;
+  };
   return (
     <main className="bg-secondary-white py-4 md:py-6">
       <LoadingContainer isLoading={isLoadingTeeTimeDate || isLoading}>
@@ -410,6 +440,7 @@ export default function CourseHomePage() {
                       setError={(e: string | null) => {
                         setError(e);
                       }}
+                      courseException={getCourseException(date)}
                       key={idx}
                       date={date}
                       minDate={utcStartDate.toString()}

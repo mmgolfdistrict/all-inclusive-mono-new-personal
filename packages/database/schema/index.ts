@@ -12,6 +12,7 @@ import * as charityCourseLink from "./charityCourseLink";
 import * as courseAssets from "./courseAssets";
 import * as coursePromoCodeLink from "./coursePromoCodeLink";
 import * as courses from "./courses";
+import * as courseException  from "./courseException";
 import * as courseScheduleDetails from "./courseScheduleDetails";
 import * as courseSEOs from "./courseSEO";
 import * as customerCart from "./customerCart";
@@ -88,4 +89,5 @@ export const schema = {
   ...profanities,
   ...courseSEOs,
   ...userWaitlists,
+  ...courseException
 };
