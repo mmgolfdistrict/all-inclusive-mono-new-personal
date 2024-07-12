@@ -551,11 +551,11 @@ export class SearchService {
     return rfc2822Date;
   };
 
- convertDateFormat(dateString:string) {
-    let parsedDate = dayjs.utc(dateString, 'ddd, DD MMM YYYY HH:mm:ss [GMT]');
-  let formattedDate = parsedDate.format('YYYY-MM-DDTHH:mm:ss');
-  return formattedDate;
-}
+  convertDateFormat(dateString: string) {
+    let parsedDate = dayjs.utc(dateString, "ddd, DD MMM YYYY HH:mm:ss [GMT]");
+    let formattedDate = parsedDate.format("YYYY-MM-DDTHH:mm:ss");
+    return formattedDate;
+  }
 
   async checkTeeTimesAvailabilityForDateRange({
     dates,
@@ -590,12 +590,12 @@ export class SearchService {
     //   console.log(minDateSubquery,maxDateSubquery,"maxDateSubquerymaxDateSubquerymaxDateSubquery")
     const minDateSubquery = this.convertDateFormat(minDate);
     const maxDateSubquery = this.convertDateFormat(maxDate);
-      // .utc()
-      // .hour(23)
-      // .minute(59)
-      // .second(59)
-      // .millisecond(999)
-      // .toISOString();
+    // .utc()
+    // .hour(23)
+    // .minute(59)
+    // .second(59)
+    // .millisecond(999)
+    // .toISOString();
     // const startDate = dayjs(minDateSubquery).utc().hour(0).minute(0).second(0).millisecond(0).toISOString();
     // const endDate = dayjs(maxDateSubquery)
     //   .utc()
