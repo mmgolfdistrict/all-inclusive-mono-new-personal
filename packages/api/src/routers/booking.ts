@@ -293,4 +293,16 @@ export const bookingRouter = createTRPCRouter({
           input.redirectHref
         );
     }),
+  checkIfTeeTimeAvailableOnProvider: protectedProcedure
+    .input(
+      z.object({
+        teeTimeId: z.string(),
+        golfersCount: z.number(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return ctx.serviceFactory
+        .getBookingService()
+        .checkIfTeeTimeAvailableOnProvider(input.teeTimeId, input.golfersCount, ctx.session.user.id);
+    }),
 });
