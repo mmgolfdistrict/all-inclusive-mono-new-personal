@@ -325,7 +325,6 @@ export default function RegisterPage() {
               register={register}
               name="password"
               error={errors.password?.message}
-
               data-testid="register-password-id"
             />
             <IconButton

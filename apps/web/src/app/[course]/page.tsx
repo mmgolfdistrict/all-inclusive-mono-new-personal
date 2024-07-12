@@ -100,8 +100,13 @@ export default function CourseHomePage() {
 
   const startDate = useMemo(() => {
     const formatDate = (date: Date) => formatQueryDate(date);
-    const getUtcDate = (date: Date) =>
-      dayjs.utc(formatDate(date)).utcOffset(course?.timezoneCorrection ?? 0);
+    const getUtcDate = (date: Date) => {
+      const currentDate = dayjs.utc(formatDate(date));
+      const currentDateWithTimeZoneOffset = currentDate
+        .add(course?.timezoneCorrection ?? 0, "hour")
+        .toString();
+      return currentDateWithTimeZoneOffset;
+    };
 
     switch (dateType) {
       case "All":
@@ -129,17 +134,25 @@ export default function CourseHomePage() {
       }
     }
   }, [dateType, selectedDay]);
-  // console.log(startDate.toString(),"startdate",course?.timezoneCorrection,dayjs.utc(startDate).utcOffset(course?.timezoneCorrection ?? 0).toString())
+
   const endDate = useMemo(() => {
     switch (dateType) {
       case "All": {
         return formatQueryDate(dayjs(farthestDateOut).toDate());
       }
       case "Today": {
-        return formatQueryDateEnd(new Date());
+        const endOfDayUTC = dayjs.utc().endOf("day");
+        const result2 = endOfDayUTC
+          .add(course?.timezoneCorrection ?? 0, "hour")
+          .toString();
+        return result2;
       }
       case "This Week": {
-        return dayjs().endOf("isoWeek");
+        const endOfDayUTC = dayjs.utc().endOf("isoWeek");
+        const result2 = endOfDayUTC
+          .add(course?.timezoneCorrection ?? 0, "hour")
+          .toString();
+        return result2;
       }
       case "This Weekend": {
         return formatQueryDate(dayjs().day(7).toDate());
@@ -183,9 +196,9 @@ export default function CourseHomePage() {
     .utc(startDate)
     .utcOffset(course?.timezoneCorrection ?? 0);
 
-    const utcEndDate = dayjs
-    .utc(endDate) // Convert endDate to UTC
-    .add(course?.timezoneCorrection ?? 0, 'hour');
+  const utcEndDate = dayjs
+    .utc(endDate)
+    .utcOffset(course?.timezoneCorrection ?? 0);
 
   const daysData = useMemo(() => {
     const amountOfDays = dayjs(utcEndDate).diff(utcStartDate, "day");
@@ -322,7 +335,9 @@ export default function CourseHomePage() {
     setPageNumber(1);
   }, [priceRange]);
 
-  let datesArr = JSON.parse(JSON.stringify(datesWithData ?? daysData.arrayOfDates));
+  let datesArr = JSON.parse(
+    JSON.stringify(datesWithData ?? daysData.arrayOfDates)
+  );
   const amountOfPage = Math.ceil(
     (datesWithData
       ? datesWithData.length - 1 === 0
@@ -398,10 +413,9 @@ export default function CourseHomePage() {
           ) : datesArr?.length === 0 ? (
             <div className="flex justify-center items-center h-[200px]">
               <div className="text-center">
-                {
-                  isLoadingTeeTimeDate? "Loading...": "No tee times available for selected filters."
-                }
-               
+                {isLoadingTeeTimeDate
+                  ? "Loading..."
+                  : "No tee times available for selected filters."}
               </div>
             </div>
           ) : (
