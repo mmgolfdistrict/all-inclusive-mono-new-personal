@@ -108,7 +108,7 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
                 </div>
                 <Tooltip
                   trigger={<Info className="h-[20px] w-[20px]" />}
-                  content="These funds are currently being processed and will be available for withdrawal soon. Processing typically takes 5-7 business days."
+                  content="These funds are currently being processed and will be available for withdrawal soon. Processing typically takes 5-8 business days."
                 />
               </div>
               <div className="flex justify-between items-center">
