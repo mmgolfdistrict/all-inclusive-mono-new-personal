@@ -2998,7 +2998,7 @@ export class BookingService {
       const providerDetailsGetTeeTime = await this.providerService.getTeeTimes(
         teeTime.providerCourseId ?? "",
         teeTime.internalId ?? "",
-        teeTime.provideeSheetId!,
+        teeTime.providerTeeSheetId!,
         `${teeTime.time - 1}`.length === 3
           ? teeTime.time % 100 == 0
             ? `0${teeTime.time - 41}`
