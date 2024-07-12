@@ -102,7 +102,9 @@ export default function CourseHomePage() {
     const formatDate = (date: Date) => formatQueryDate(date);
     const getUtcDate = (date: Date) => {
       const currentDate = dayjs.utc(formatDate(date));
-      const currentDateWithTimeZoneOffset = currentDate.add(course?.timezoneCorrection ?? 0, "hour").toString();
+      const currentDateWithTimeZoneOffset = currentDate
+        .add(course?.timezoneCorrection ?? 0, "hour")
+        .toString();
       return currentDateWithTimeZoneOffset;
     };
 
@@ -139,15 +141,15 @@ export default function CourseHomePage() {
         return formatQueryDate(dayjs(farthestDateOut).toDate());
       }
       case "Today": {
-        let endOfDayUTC = dayjs.utc().endOf("day");
-        let result2 = endOfDayUTC
+        const endOfDayUTC = dayjs.utc().endOf("day");
+        const result2 = endOfDayUTC
           .add(course?.timezoneCorrection ?? 0, "hour")
           .toString();
         return result2;
       }
       case "This Week": {
-        let endOfDayUTC = dayjs.utc().endOf("isoWeek");
-        let result2 = endOfDayUTC
+        const endOfDayUTC = dayjs.utc().endOf("isoWeek");
+        const result2 = endOfDayUTC
           .add(course?.timezoneCorrection ?? 0, "hour")
           .toString();
         return result2;
