@@ -415,7 +415,7 @@ export default function CourseHomePage() {
               <div className="text-center">
                 {isLoadingTeeTimeDate
                   ? "Loading..."
-                  : "No tee times available for selected filters."}
+                  : "Please select two days or more using this filter."}
               </div>
             </div>
           ) : (
