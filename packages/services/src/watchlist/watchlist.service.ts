@@ -41,7 +41,7 @@ export class WatchlistService {
    *
    * @param {Db} database - The database instance.
    */
-  constructor(protected readonly database: Db) { }
+  constructor(protected readonly database: Db) {}
 
   /**
    * Toggles a tee time in the user's watchlist.
@@ -184,7 +184,10 @@ export class WatchlistService {
           teeTimeId: item.teeTimeId,
           courseId: item.courseId,
           teeTimeExpiration: item.teeTimeExpiration,
-          price: (item.price / 100) + (item.cartFee / 100) + (item.markupFeesFixedPerPlayer ? item.markupFeesFixedPerPlayer / 100 : 0),
+          price:
+            item.price / 100 +
+            item.cartFee / 100 +
+            (item.markupFeesFixedPerPlayer ? item.markupFeesFixedPerPlayer / 100 : 0),
           availableSpots: item.availableFirstHandSpots,
           ownedBy: item.courseName,
           type: "FIRST_PARTY",

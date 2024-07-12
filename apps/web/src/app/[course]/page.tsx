@@ -1,7 +1,7 @@
 "use client";
 
 import type { NotificationObject } from "@golf-district/shared";
-import { formatQueryDate } from "@golf-district/shared";
+import { formatQueryDate, formatQueryDateEnd } from "@golf-district/shared";
 import { FilledButton } from "~/components/buttons/filled-button";
 import { FilterSort } from "~/components/buttons/filters-sort";
 import { GoBack } from "~/components/buttons/go-back";
@@ -102,8 +102,13 @@ export default function CourseHomePage() {
 
   const startDate = useMemo(() => {
     const formatDate = (date: Date) => formatQueryDate(date);
-    const getUtcDate = (date: Date) =>
-      dayjs.utc(formatDate(date)).utcOffset(course?.timezoneCorrection ?? 0);
+    const getUtcDate = (date: Date) => {
+      const currentDate = dayjs.utc(formatDate(date));
+      const currentDateWithTimeZoneOffset = currentDate
+        .add(course?.timezoneCorrection ?? 0, "hour")
+        .toString();
+      return currentDateWithTimeZoneOffset;
+    };
 
     switch (dateType) {
       case "All":
@@ -138,10 +143,18 @@ export default function CourseHomePage() {
         return formatQueryDate(dayjs(farthestDateOut).toDate());
       }
       case "Today": {
-        return formatQueryDate(dayjs().toDate());
+        const endOfDayUTC = dayjs.utc().endOf("day");
+        const result2 = endOfDayUTC
+          .add(course?.timezoneCorrection ?? 0, "hour")
+          .toString();
+        return result2;
       }
       case "This Week": {
-        return dayjs().endOf("isoWeek");
+        const endOfDayUTC = dayjs.utc().endOf("isoWeek");
+        const result2 = endOfDayUTC
+          .add(course?.timezoneCorrection ?? 0, "hour")
+          .toString();
+        return result2;
       }
       case "This Weekend": {
         return formatQueryDate(dayjs().day(7).toDate());
@@ -217,7 +230,7 @@ export default function CourseHomePage() {
   const { data: datesWithData, isLoading: isLoadingTeeTimeDate } =
     api.searchRouter.checkTeeTimesAvailabilityForDateRange.useQuery(
       {
-        dates: daysData.arrayOfDates,
+        dates: [],
         courseId: course?.id ?? "",
         startTime: startTime[0],
         endTime: startTime[1],
@@ -324,7 +337,9 @@ export default function CourseHomePage() {
     setPageNumber(1);
   }, [priceRange]);
 
-  let datesArr = datesWithData ?? daysData.arrayOfDates;
+  let datesArr = JSON.parse(
+    JSON.stringify(datesWithData ?? daysData.arrayOfDates)
+  );
   const amountOfPage = Math.ceil(
     (datesWithData
       ? datesWithData.length - 1 === 0
@@ -428,7 +443,9 @@ export default function CourseHomePage() {
           ) : datesArr?.length === 0 ? (
             <div className="flex justify-center items-center h-[200px]">
               <div className="text-center">
-                No tee times available for selected filters.
+                {isLoadingTeeTimeDate
+                  ? "Loading..."
+                  : "No tee times available for selected filters."}
               </div>
             </div>
           ) : (

@@ -18,6 +18,8 @@ export const BuyNowCheckout = ({
       <HyperSwitch
         teeTimeId=""
         isBuyNowAuction={true}
+        // fix later
+        playerCount="4"
         //@ts-ignore
         cartData={[
           {

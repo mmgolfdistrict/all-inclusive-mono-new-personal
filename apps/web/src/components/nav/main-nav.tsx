@@ -1,6 +1,8 @@
 "use client";
 
 import { useAppContext } from "~/contexts/AppContext";
+import { api } from "~/utils/api";
+import { getBgColor } from "~/utils/formatters";
 import Link from "next/link";
 import { BlurImage } from "../images/blur-image";
 import { PoweredBy } from "../powered-by";
@@ -8,9 +10,22 @@ import { PoweredBy } from "../powered-by";
 export const MainNav = () => {
   const { entity } = useAppContext();
 
+  const { data: systemNotifications } =
+    api.systemNotification.getSystemNotification.useQuery({});
+
   return (
     <div>
       <div className={`fixed z-10 w-full bg-white transition-all top-0`}>
+        {systemNotifications?.map((elm) => (
+          <div
+            key={elm.id}
+            className={`bg-${getBgColor(
+              elm.displayType
+            )} text-white w-full p-1 text-center`}
+          >
+            {elm.shortMessage} : {elm.longMessage}
+          </div>
+        ))}
         <div className="relative z-10 min-h-[75px] md:min-h-[95px] flex w-full items-center justify-end border-b border-stroke-secondary bg-white p-4 md:p-6">
           <div
             className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transform`}

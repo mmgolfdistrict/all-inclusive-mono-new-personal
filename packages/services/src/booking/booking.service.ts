@@ -2944,4 +2944,82 @@ export class BookingService {
     }
     return booking;
   };
+
+  checkIfTeeTimeAvailableOnProvider = async (teeTimeId: string, golfersCount: number, userId: string) => {
+    const [teeTime] = await this.database
+      .select({
+        id: teeTimes.id,
+        courseId: teeTimes.courseId,
+        time: teeTimes.time,
+        // entityId: teeTimes.entityId,
+        entityId: courses.entityId,
+        date: teeTimes.date,
+        availableFirstHandSpots: teeTimes.availableFirstHandSpots,
+        providerCourseId: providerCourseLink.providerCourseId,
+        providerTeeSheetId: providerCourseLink.providerTeeSheetId,
+        providerId: providerCourseLink.providerId,
+        internalId: providers.internalId,
+        providerDate: teeTimes.providerDate,
+        holes: teeTimes.numberOfHoles,
+        cdnKey: assets.key,
+        extension: assets.extension,
+        websiteURL: courses.websiteURL,
+        courseName: courses.name,
+        entityName: entities.name,
+        isWebhookAvailable: providerCourseLink.isWebhookAvailable,
+        timeZoneCorrection: courses.timezoneCorrection,
+        providerCourseConfiguration: providerCourseLink.providerCourseConfiguration,
+      })
+      .from(teeTimes)
+      .leftJoin(courses, eq(teeTimes.courseId, courses.id))
+      .leftJoin(assets, eq(assets.id, courses.logoId))
+      .leftJoin(entities, eq(courses.entityId, entities.id))
+      .leftJoin(
+        providerCourseLink,
+        and(
+          eq(providerCourseLink.courseId, teeTimes.courseId),
+          eq(providerCourseLink.providerId, courses.providerId)
+        )
+      )
+      //.leftJoin(courses, eq(courses.id, teeTimes.courseId))
+      .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))
+      .where(eq(teeTimes.id, teeTimeId))
+      .execute()
+      .catch((err) => {
+        this.logger.error(err);
+        throw new Error(`Error finding tee time id`);
+      });
+    if (!teeTime) {
+      this.logger.fatal(`tee time not found id: ${teeTimeId}`);
+      throw new Error(`Error finding tee time id`);
+    }
+
+    if (teeTime.availableFirstHandSpots >= golfersCount) {
+      const providerDetailsGetTeeTime = await this.providerService.getTeeTimes(
+        teeTime.providerCourseId ?? "",
+        teeTime.internalId ?? "",
+        teeTime.providerTeeSheetId!,
+        `${teeTime.time - 1}`.length === 3 ? `0${teeTime.time - 1}` : `${teeTime.time - 1}`,
+        `${teeTime.time + 1}`.length === 3 ? `0${teeTime.time + 1}` : `${teeTime.time + 1}`,
+        teeTime.providerDate.split("T")[0] ?? ""
+      );
+
+      if (providerDetailsGetTeeTime && providerDetailsGetTeeTime.length) {
+        const teeTimeData = providerDetailsGetTeeTime[0];
+        if ((teeTimeData?.attributes?.availableSpots ?? 0) >= golfersCount) {
+          return true;
+        }
+      }
+    }
+
+    this.loggerService.errorLog({
+      userId: userId,
+      url: "/checkIfTeeTimeAvailableOnProvider",
+      userAgent: "",
+      message: "Tee time already booked",
+      stackTrace: `Tee time already booked  teetimeId${teeTimeId} userId:${userId}`,
+      additionalDetailsJSON: "",
+    });
+    return false;
+  };
 }

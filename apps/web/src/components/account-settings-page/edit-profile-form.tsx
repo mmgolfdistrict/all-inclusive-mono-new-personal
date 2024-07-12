@@ -37,7 +37,7 @@ export const EditProfileForm = () => {
     formState: { isSubmitting, errors },
   } = useForm<EditProfileSchemaType>({
     // @ts-ignore
-    resolver: zodResolver(editProfileSchema)
+    resolver: zodResolver(editProfileSchema),
   });
   const [city, setCity] = useState(getValues("city"));
 
