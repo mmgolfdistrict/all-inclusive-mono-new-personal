@@ -184,7 +184,9 @@ export default function CourseHomePage() {
         }
         const { year, month, day } = selectedDay.to;
         const dateString = `${year}-${month}-${day}`;
-        return formatQueryDate(dayjs(dateString).toDate());
+        const currentDate= dayjs(dateString).utc().endOf('day')
+        const currentDateWithTimezone= currentDate.add(course?.timezoneCorrection??0).toDate().toString()
+        return currentDateWithTimezone;
       }
       default: {
         return formatQueryDate(dayjs().date(360).toDate()); // 360 days out
