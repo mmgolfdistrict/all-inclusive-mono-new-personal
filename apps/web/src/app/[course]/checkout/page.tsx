@@ -387,6 +387,7 @@ export default function Checkout({
                 isBuyNowAuction={false}
                 cartData={cartData}
                 teeTimeDate={teeTimeData?.date}
+                playerCount={playerCount}
               />
             )}
           </div>

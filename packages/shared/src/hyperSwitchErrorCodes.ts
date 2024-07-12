@@ -4,6 +4,7 @@ const errorMessages: Record<string, string> = {
   "14": "Invalid Referrer or Relay Response URL",
   "16": "Transaction Not Found",
   "17": "Merchant Does Not Accept This Type of Card",
+  "27": "Invalid address",
   "28": "Merchant Does Not Accept This Type of Card",
   "39": "Invalid or Unsupported Currency Code",
   "52": "Unable to Send Notification to Customer",
@@ -24,11 +25,6 @@ const errorMessages: Record<string, string> = {
   "327": "Void request was unsuccessful.",
 };
 
-// Function to get error message by ID
 export const getErrorMessageById = (errorId: string): string => {
-  return errorMessages[errorId] || "Error Processing Payment"; // Return the error message or a default message if not found
+  return errorMessages[errorId] || "Error Processing Payment with unknown error"; // Return the error message or a default message if not found
 };
-
-// Example usage:
-console.log(getErrorMessageById("11")); // Output: "A duplicate transaction has been submitted"
-console.log(getErrorMessageById("999")); // Output: "Error not found"
