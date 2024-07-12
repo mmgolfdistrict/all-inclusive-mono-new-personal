@@ -47,7 +47,7 @@ export const appRouter = createTRPCRouter({
   cashOut: cashOutRouter,
   profanity: profanityRouter,
   userWaitlist: userWaitlistRouter,
-  courseException:courseExceptionRouter
+  courseException:courseExceptionRouter,
   systemNotification: systemNotificationRouter,
 });
 
