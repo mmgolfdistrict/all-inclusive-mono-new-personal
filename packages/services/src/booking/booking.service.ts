@@ -2998,12 +2998,15 @@ export class BookingService {
       const providerDetailsGetTeeTime = await this.providerService.getTeeTimes(
         teeTime.providerCourseId ?? "",
         teeTime.internalId ?? "",
-        teeTime.providerTeeSheetId!,
-        `${teeTime.time - 1}`.length === 3 ? `0${teeTime.time - 1}` : `${teeTime.time - 1}`,
+        teeTime.provideeSheetId!,
+        `${teeTime.time - 1}`.length === 3
+          ? teeTime.time % 100 == 0
+            ? `0${teeTime.time - 41}`
+            : `0${teeTime.time - 1}`
+          : `${teeTime.time - 1}`,
         `${teeTime.time + 1}`.length === 3 ? `0${teeTime.time + 1}` : `${teeTime.time + 1}`,
         teeTime.providerDate.split("T")[0] ?? ""
       );
-
       if (providerDetailsGetTeeTime && providerDetailsGetTeeTime.length) {
         const teeTimeData = providerDetailsGetTeeTime[0];
         if ((teeTimeData?.attributes?.availableSpots ?? 0) >= golfersCount) {
