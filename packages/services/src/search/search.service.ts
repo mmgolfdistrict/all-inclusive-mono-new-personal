@@ -551,6 +551,12 @@ export class SearchService {
     return rfc2822Date;
   };
 
+ convertDateFormat(dateString:string) {
+    let parsedDate = dayjs.utc(dateString, 'ddd, DD MMM YYYY HH:mm:ss [GMT]');
+  let formattedDate = parsedDate.format('YYYY-MM-DDTHH:mm:ss');
+  return formattedDate;
+}
+
   async checkTeeTimesAvailabilityForDateRange({
     dates,
     courseId,
@@ -573,22 +579,31 @@ export class SearchService {
   }: CheckTeeTimesAvailabilityParams) {
     const res: string[] = [];
     const userId = _userId ?? "00000000-0000-0000-0000-000000000000";
-    const minDateSubquery = dayjs(minDate).utc().hour(0).minute(0).second(0).millisecond(0).toISOString();
-    const maxDateSubquery = dayjs(maxDate)
-      .utc()
-      .hour(23)
-      .minute(59)
-      .second(59)
-      .millisecond(999)
-      .toISOString();
-    const startDate = dayjs(minDateSubquery).utc().hour(0).minute(0).second(0).millisecond(0).toISOString();
-    const endDate = dayjs(maxDateSubquery)
-      .utc()
-      .hour(23)
-      .minute(59)
-      .second(59)
-      .millisecond(999)
-      .toISOString();
+    // const minDateSubquery = dayjs(minDate).utc().hour(0).minute(0).second(0).millisecond(0).toISOString();
+    // const maxDateSubquery = dayjs(maxDate)
+    //   .utc()
+    //   .hour(23)
+    //   .minute(59)
+    //   .second(59)
+    //   .millisecond(999)
+    //   .toISOString();
+    //   console.log(minDateSubquery,maxDateSubquery,"maxDateSubquerymaxDateSubquerymaxDateSubquery")
+    const minDateSubquery = this.convertDateFormat(minDate);
+    const maxDateSubquery = this.convertDateFormat(maxDate);
+      // .utc()
+      // .hour(23)
+      // .minute(59)
+      // .second(59)
+      // .millisecond(999)
+      // .toISOString();
+    // const startDate = dayjs(minDateSubquery).utc().hour(0).minute(0).second(0).millisecond(0).toISOString();
+    // const endDate = dayjs(maxDateSubquery)
+    //   .utc()
+    //   .hour(23)
+    //   .minute(59)
+    //   .second(59)
+    //   .millisecond(999)
+    //   .toISOString();
     const nowInCourseTimezone = dayjs().utc().utcOffset(timezoneCorrection).format("YYYY-MM-DD HH:mm:ss");
     const currentTimePlus30Min = dayjs
       .utc(nowInCourseTimezone)
@@ -624,7 +639,7 @@ export class SearchService {
       .where(
         and(
           gte(teeTimes.providerDate, currentTimePlus30Min),
-          between(teeTimes.providerDate, startDate, endDate),
+          between(teeTimes.providerDate, minDateSubquery, maxDateSubquery),
           eq(lists.isDeleted, false),
           and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
           sql`(${lists.listPrice}*(${courses.buyerFee}/100)+${lists.listPrice})/100 >= ${lowerPrice}`,
