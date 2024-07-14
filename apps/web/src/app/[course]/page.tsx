@@ -184,8 +184,11 @@ export default function CourseHomePage() {
         }
         const { year, month, day } = selectedDay.to;
         const dateString = `${year}-${month}-${day}`;
-        const currentDate= dayjs(dateString).utc().endOf('day')
-        const currentDateWithTimezone= currentDate.add(course?.timezoneCorrection??0).toDate().toString()
+        const currentDate = dayjs(dateString).utc().endOf("day");
+        const currentDateWithTimezone = currentDate
+          .add(course?.timezoneCorrection ?? 0)
+          .toDate()
+          .toString();
         return currentDateWithTimezone;
       }
       default: {

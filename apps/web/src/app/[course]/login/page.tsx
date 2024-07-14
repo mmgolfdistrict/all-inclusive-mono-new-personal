@@ -37,6 +37,16 @@ export default function Login() {
   const auditLog = api.webhooks.auditLog.useMutation();
   const { data: sessionData, status } = useSession();
 
+  console.log(
+    `process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY = [${process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}]`
+  );
+  console.log(
+    `process.env.RECAPTCHA_SECRET_KEY = [${process.env.RECAPTCHA_SECRET_KEY}]`
+  );
+  console.log(
+    `process.env.NEXT_PUBLIC_RECAPTCHA_IS_INVISIBLE = [${process.env.NEXT_PUBLIC_RECAPTCHA_IS_INVISIBLE}]`
+  );
+
   useEffect(() => {
     if (sessionData?.user?.id && course?.id && status === "authenticated") {
       logAudit(sessionData.user.id, course.id, () => {
