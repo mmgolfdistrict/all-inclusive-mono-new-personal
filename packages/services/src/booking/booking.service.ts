@@ -2999,11 +2999,7 @@ export class BookingService {
         teeTime.providerCourseId ?? "",
         teeTime.internalId ?? "",
         teeTime.providerTeeSheetId!,
-        `${teeTime.time - 1}`.length === 3
-          ? teeTime.time % 100 == 0
-            ? `0${teeTime.time - 41}`
-            : `0${teeTime.time - 1}`
-          : `${teeTime.time - 1}`,
+        `${teeTime.time}`.length === 3 ? `0${teeTime.time}` : `${teeTime.time}`,
         `${teeTime.time + 1}`.length === 3 ? `0${teeTime.time + 1}` : `${teeTime.time + 1}`,
         teeTime.providerDate.split("T")[0] ?? ""
       );
