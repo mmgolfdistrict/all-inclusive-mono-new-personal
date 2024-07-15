@@ -156,6 +156,10 @@ export default function RegisterPage() {
         Create an Account
       </h1>
       <section className="mx-auto flex w-full flex-col gap-2 bg-white p-5 sm:max-w-[500px] sm:rounded-xl sm:p-6">
+        <p>
+          Using gmail? Go to the login page and select the Google icon to login
+          with Google. The below form is not required for gmail users.
+        </p>
         <form className="flex flex-col gap-2" onSubmit={handleSubmit(onSubmit)}>
           <Input
             label="First Name"
