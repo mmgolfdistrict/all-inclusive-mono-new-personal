@@ -9,10 +9,15 @@ export default function FAQ() {
         <GoBack href="" usePrevRoute={true} text={`Back`} />
       </div>
       <section className="mx-auto flex w-full flex-col pt-4 md:max-w-[1360px] md:gap-4 md:px-6">
-        <h1 className="pb-4 text-center text-2xl text-secondary-black md:pb-0 md:text-3xl">
+        <h1 className="pb-4 text-left text-2xl text-secondary-black md:pb-0 md:text-3xl">
           Help
         </h1>
-        <h2 className="pb-4 text-center text-xl text-primary-gray md:pb-0 md:text-2xl">
+        <section className="mx-auto flex w-full flex-col gap-4 md:max-w-[1174px]">
+          Give us your feedback at{" "}
+          <a href="mailto:support@golfdistrict.com">support@golfdistrict.com</a>
+          .
+        </section>
+        <h2 className="pb-4 text-center text-2xl text-secondary-black md:pb-0 md:text-3xl">
           FAQs
         </h2>
         <h3 className="pb-4 text-left text-xl text-primary-gray md:pb-0 md:text-2xl">
