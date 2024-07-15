@@ -9,8 +9,8 @@ import { Layout } from "~/components/layout";
 import { fontMapper } from "~/styles/fonts";
 import { type Metadata } from "next";
 import { headers } from "next/headers";
-import Providers from "./providers";
 import GoogleAnalytics from "./GoogleAnalytics";
+import Providers from "./providers";
 
 const title = "Golf District Platforms";
 const description = "Golf District Platforms";
