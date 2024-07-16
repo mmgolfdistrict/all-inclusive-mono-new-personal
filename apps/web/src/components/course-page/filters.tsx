@@ -15,6 +15,7 @@ import { useFiltersContext } from "~/contexts/FiltersContext";
 import { api } from "~/utils/api";
 import { getDisabledDays } from "~/utils/calendar";
 import { debounceFunction } from "~/utils/debounce";
+import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils"
 
 const DateOptions = [
   "All",
@@ -113,7 +114,15 @@ export const Filters = () => {
           type="single"
           value={dateType}
           onValueChange={(dateType: DateType) => {
-            if (dateType) setDateType(dateType);
+            if (dateType) {
+              setDateType(dateType)
+              googleAnalyticsEvent({
+                action: `FILTER BY ${dateType}`,
+                category: "FILTER_DATA",
+                label: "filtered data by date",
+                value: "",
+              })
+            };
           }}
           orientation="vertical"
           className="flex flex-col"
@@ -179,6 +188,12 @@ export const Filters = () => {
             handleSetStartTime();
           }}
           onValueChange={(time: number[]) => {
+            googleAnalyticsEvent({
+              action: `FILTER BY START TIME AND END TIME`,
+              category: "FILTER_DATA",
+              label: "filtered data by date",
+              value: "",
+            })
             if (
               time &&
               time.length >= 2 &&
@@ -244,6 +259,12 @@ export const Filters = () => {
           type="single"
           value={holes}
           onValueChange={(hole: HoleType) => {
+            googleAnalyticsEvent({
+              action: `FILTER BY Holes`,
+              category: "FILTER_DATA",
+              label: "filtered data by date",
+              value: "",
+            })
             if (hole) setHoles(hole);
           }}
           orientation="horizontal"
@@ -272,6 +293,12 @@ export const Filters = () => {
           type="single"
           value={golfers.toString()}
           onValueChange={(golfer: string) => {
+            googleAnalyticsEvent({
+              action: `FILTER BY GOLFERS`,
+              category: "FILTER_DATA",
+              label: "filtered data by date",
+              value: "",
+            })
             if (golfer === "Any") {
               setGolfers("Any");
               return;
@@ -317,6 +344,12 @@ export const Filters = () => {
             handleSetPriceRange();
           }}
           onValueChange={(value: [number, number]) => {
+            googleAnalyticsEvent({
+              action: `FILTER BY PRICE RANGE`,
+              category: "FILTER_DATA",
+              label: "filtered data by date",
+              value: "",
+            })
             debounceFunction(setLocalPriceRange(value), 1000);
           }}
           data-testid="slider-price-range-id"
