@@ -157,7 +157,7 @@ export const CourseNav = () => {
           <div className="flex justify-between gap-4 md:gap-8">
             <NavItem
               href={`/${courseId}`}
-              text="Find"
+              text="Find Times"
               icon={<Search className="w-[16px]" />}
               data-testid="tee-time-id"
               data-test={courseId}
@@ -188,8 +188,8 @@ export const CourseNav = () => {
               data-test={courseId}
             />
             <NavItem
-              href={`/${courseId}/my-tee-box?section=my-listed-tee-times`}
-              text="My Tee Times"
+              href={`/${courseId}/my-tee-box?section=owned`}
+              text="My Tee Box"
               icon={<Calendar className="w-[16px]" />}
               data-testid="sell-your-tee-time-id"
               data-test={courseId}

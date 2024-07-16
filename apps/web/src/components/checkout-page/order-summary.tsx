@@ -40,6 +40,10 @@ export const OrderSummary = ({
       <h2 className="italic">
         This purchase in non-refundable. All fees are included.
       </h2>
+      <h2 className="italic">
+        Please send your feedback to{" "}
+        <a href="mailto:support@golfdistrict.com">support@golfdistrict.com</a>.
+      </h2>
     </section>
   );
 };
