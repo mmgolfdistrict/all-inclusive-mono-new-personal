@@ -234,7 +234,7 @@ export default function Checkout({
       localCart.push({
         name: "Golf District Tee Time",
         id: teeTimeId ?? data?.teeTimeId,
-        price: course?.markupFeesFixedPerPlayer ?? 0, //int
+        price: teeTimeData?.markupFees ?? 0, //int
         image: "", //
         currency: "USD", //USD
         display_price: formatMoney(
