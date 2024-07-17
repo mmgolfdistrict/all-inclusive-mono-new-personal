@@ -93,7 +93,6 @@ export default function Login() {
     register,
     handleSubmit,
     setValue,
-
     formState: { errors },
   } = useForm<LoginSchemaType>({
     // @ts-ignore
@@ -108,7 +107,9 @@ export default function Login() {
     !prevPath?.path?.includes("register");
 
   useEffect(() => {
-    recaptchaRef.current?.execute();
+    if (process.env.NEXT_PUBLIC_RECAPTCHA_IS_INVISIBLE === "true") {
+      recaptchaRef.current?.execute();
+    }
   }, []);
 
   const onSubmit: SubmitHandler<LoginSchemaType> = async (data) => {
@@ -313,7 +314,7 @@ export default function Login() {
           {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (
             <ReCAPTCHA
               size={
-                process.env.NEXT_PUBLIC_RECAPTCHA_IS_INVISIBLE
+                process.env.NEXT_PUBLIC_RECAPTCHA_IS_INVISIBLE === "true"
                   ? "invisible"
                   : "normal"
               }
