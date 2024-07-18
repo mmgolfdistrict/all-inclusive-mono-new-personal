@@ -136,6 +136,14 @@ export default function CourseHomePage() {
   }, [dateType, selectedDay]);
 
   const endDate = useMemo(() => {
+    const formatDate = (date: Date) => formatQueryDate(date);
+    const getUtcDate = (date: Date) => {
+      const currentDate = dayjs.utc(formatDate(date));
+      const currentDateWithTimeZoneOffset = currentDate
+        .add(course?.timezoneCorrection ?? 0, "hour")
+        .toString();
+      return currentDateWithTimeZoneOffset;
+    };
     switch (dateType) {
       case "All": {
         return formatQueryDate(dayjs(farthestDateOut).toDate());
@@ -164,6 +172,8 @@ export default function CourseHomePage() {
           : endOfMonth;
       }
       case "Furthest Day Out To Book": {
+        console.log("farthestDateOut", farthestDateOut);
+
         return dayjs(farthestDateOut)
           .utc()
           .hour(23)
@@ -173,24 +183,34 @@ export default function CourseHomePage() {
           .toDate();
       }
       case "Custom": {
+        console.log(selectedDay.from, selectedDay.to);
         if (!selectedDay.to) {
           if (selectedDay.from) {
+            console.log("1");
+
             const { year, month, day } = selectedDay.from;
             const dateString = `${year}-${month}-${day}`;
-            return formatQueryDate(dayjs(dateString).toDate());
+            const endOfDay = dayjs(dateString).endOf("day");
+            const result2 = endOfDay
+              .add(course?.timezoneCorrection ?? 0, "hour")
+              .toString();
+            return result2;
+            // return formatDate(endOfDay);
           } else {
-            return formatQueryDate(dayjs().toDate());
+            console.log("2");
+
+            return formatQueryDate(dayjs().endOf("day").toDate());
           }
         }
+
+        console.log("3");
+
         const { year, month, day } = selectedDay.to;
         const dateString = `${year}-${month}-${day}`;
-        const currentDate = dayjs(dateString).utc().endOf("day");
-        const currentDateWithTimezone = currentDate
-          .add(course?.timezoneCorrection ?? 0)
-          .toDate()
-          .toString();
-        return currentDateWithTimezone;
+        const endOfDay = dayjs(dateString).utc().endOf("day").toDate();
+        return formatDate(endOfDay);
       }
+
       default: {
         return formatQueryDate(dayjs().date(360).toDate()); // 360 days out
       }
@@ -421,6 +441,7 @@ export default function CourseHomePage() {
                 {isLoadingTeeTimeDate
                   ? "Loading..."
                   : "Please select two days or more using this filter."}
+                =
               </div>
             </div>
           ) : (

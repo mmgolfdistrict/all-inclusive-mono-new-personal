@@ -552,8 +552,8 @@ export class SearchService {
   };
 
   convertDateFormat(dateString: string) {
-    let parsedDate = dayjs.utc(dateString, "ddd, DD MMM YYYY HH:mm:ss [GMT]");
-    let formattedDate = parsedDate.format("YYYY-MM-DDTHH:mm:ss");
+    const parsedDate = dayjs.utc(dateString, "ddd, DD MMM YYYY HH:mm:ss [GMT]");
+    const formattedDate = parsedDate.format("YYYY-MM-DDTHH:mm:ss");
     return formattedDate;
   }
 
@@ -590,6 +590,7 @@ export class SearchService {
     //   console.log(minDateSubquery,maxDateSubquery,"maxDateSubquerymaxDateSubquerymaxDateSubquery")
     const minDateSubquery = this.convertDateFormat(minDate);
     const maxDateSubquery = this.convertDateFormat(maxDate);
+
     // .utc()
     // .hour(23)
     // .minute(59)
@@ -610,6 +611,7 @@ export class SearchService {
       .utcOffset(timezoneCorrection)
       .add(30, "minutes")
       .toISOString();
+    console.log("------->>>---->>", startTime, endTime);
 
     const firstHandResults = await this.database
       .selectDistinct({ providerDate: sql`Date(${teeTimes.providerDate})` })
@@ -619,7 +621,7 @@ export class SearchService {
         and(
           gte(teeTimes.providerDate, currentTimePlus30Min),
           between(teeTimes.providerDate, minDateSubquery, maxDateSubquery),
-          and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
+          and(gte(teeTimes.time, 0), lte(teeTimes.time, 0)),
           sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 >= ${lowerPrice}`,
           sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 <= ${upperPrice}`,
           eq(teeTimes.numberOfHoles, holes),
