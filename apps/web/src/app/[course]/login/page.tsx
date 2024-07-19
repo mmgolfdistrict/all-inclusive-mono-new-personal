@@ -37,6 +37,14 @@ export default function Login() {
   const auditLog = api.webhooks.auditLog.useMutation();
   const { data: sessionData, status } = useSession();
 
+  const event = ({ action, category, label, value }: any) => {
+    (window as any).gtag("event", action, {
+      event_category: category,
+      event_label: label,
+      value: value,
+    });
+  };
+
   console.log(
     `process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY = [${process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}]`
   );
@@ -113,6 +121,12 @@ export default function Login() {
 
   const onSubmit: SubmitHandler<LoginSchemaType> = async (data) => {
     setIsLoading(true);
+    event({
+      action: "SIGNIN_USING_CREDENTIALS",
+      category: "SIGNIN",
+      label: "Sign in using credentials",
+      value: "",
+    });
     try {
       const callbackURL = `${window.location.origin}${
         GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
@@ -192,6 +206,12 @@ export default function Login() {
   };
 
   const googleSignIn = async () => {
+    event({
+      action: "SIGNIN_USING_GOOGLE",
+      category: "SIGNIN",
+      label: "Sign in using google",
+      value: "",
+    });
     try {
       await signIn("google", {
         // callbackUrl: `${window.location.origin}${
