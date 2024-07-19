@@ -46,6 +46,7 @@ export const authConfig: NextAuthConfig = {
           response_type: "code",
         },
       },
+      allowDangerousEmailAccountLinking:true,
     }),
     AppleProvider({
       clientId: process.env.NEXT_PUBLIC_APPLE_ID,
