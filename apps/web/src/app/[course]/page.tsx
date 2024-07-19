@@ -207,8 +207,11 @@ export default function CourseHomePage() {
 
         const { year, month, day } = selectedDay.to;
         const dateString = `${year}-${month}-${day}`;
-        const endOfDay = dayjs(dateString).utc().endOf("day").toDate();
-        return formatDate(endOfDay);
+        const endOfDay = dayjs(dateString).endOf("day");
+        const result2 = endOfDay
+          .add(course?.timezoneCorrection ?? 0, "hour")
+          .toString();
+        return result2;
       }
 
       default: {
@@ -440,7 +443,7 @@ export default function CourseHomePage() {
               <div className="text-center">
                 {isLoadingTeeTimeDate
                   ? "Loading..."
-                  : "Please select two days or more using this filter."}
+                  : "No Tee Times Available."}
                 =
               </div>
             </div>

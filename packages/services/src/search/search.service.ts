@@ -621,7 +621,7 @@ export class SearchService {
         and(
           gte(teeTimes.providerDate, currentTimePlus30Min),
           between(teeTimes.providerDate, minDateSubquery, maxDateSubquery),
-          and(gte(teeTimes.time, 0), lte(teeTimes.time, 0)),
+          and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
           sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 >= ${lowerPrice}`,
           sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 <= ${upperPrice}`,
           eq(teeTimes.numberOfHoles, holes),
