@@ -190,13 +190,6 @@ export const CheckoutForm = ({
     });
   });
 
-  useEffect(()=>{
-    return ()=>{
-      setIsLoading(false);
-    }
-  })
-
-
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     googleAnalyticsEvent({
       action: `PAY NOW CLICKED`,
@@ -290,7 +283,6 @@ export const CheckoutForm = ({
               setMessage(
                 "Error reserving first hand booking: " + error.message
               );
-              setIsLoading(false);
               return;
             }
           } else {
@@ -304,7 +296,6 @@ export const CheckoutForm = ({
               setMessage(
                 "Error reserving second hand booking: " + error.message
               );
-              setIsLoading(false);
               return;
             }
           }
@@ -321,18 +312,16 @@ export const CheckoutForm = ({
           setMessage(
             getErrorMessageById((response?.error_code ?? "") as string)
           );
-          setIsLoading(false);
         } else {
           setMessage(
             getErrorMessageById((response?.error_code ?? "") as string)
           );
-          setIsLoading(false);
         }
       }
     } catch (error) {
       setMessage("An unexpected error occurred: " + error.message);
     } finally {
-      // setIsLoading(false);
+      setIsLoading(false);
     }
   };
 
