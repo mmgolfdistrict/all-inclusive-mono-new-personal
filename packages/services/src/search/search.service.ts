@@ -609,6 +609,7 @@ export class SearchService {
     //   console.log(minDateSubquery,maxDateSubquery,"maxDateSubquerymaxDateSubquerymaxDateSubquery")
     const minDateSubquery = this.convertDateFormat(minDate);
     const maxDateSubquery = this.convertDateFormat(maxDate);
+
     // .utc()
     // .hour(23)
     // .minute(59)
@@ -629,6 +630,7 @@ export class SearchService {
       .utcOffset(timezoneCorrection)
       .add(30, "minutes")
       .toISOString();
+    console.log("------->>>---->>", startTime, endTime);
 
     const firstHandResults = await this.database
       .selectDistinct({ providerDate: sql`Date(${teeTimes.providerDate})` })
