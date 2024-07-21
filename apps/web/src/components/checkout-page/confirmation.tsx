@@ -91,7 +91,8 @@ export const Confirmation = ({
         <div className="flex w-full flex-col items-center justify-center gap-2 md:flex-row">
           Please send your feedback to{" "}
           <a href="mailto:support@golfdistrict.com">support@golfdistrict.com</a>
-          .
+          <br />
+          <br />
         </div>
         <div className="flex w-full flex-col items-center justify-center gap-2 md:flex-row">
           <Link

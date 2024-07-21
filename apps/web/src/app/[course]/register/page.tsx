@@ -312,7 +312,7 @@ export default function RegisterPage() {
             name="country"
             error={errors.country?.message}
             showInfoTooltip={true}
-            content="We only support cashouts for US banks at this time"
+            content="We only support cash outs for US banks at this time"
             data-testid="register-country-id"
           />
           <datalist id="places">

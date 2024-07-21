@@ -444,7 +444,6 @@ export default function CourseHomePage() {
                 {isLoadingTeeTimeDate
                   ? "Loading..."
                   : "No Tee Times Available."}
-                =
               </div>
             </div>
           ) : (
