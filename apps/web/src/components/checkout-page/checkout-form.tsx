@@ -189,12 +189,11 @@ export const CheckoutForm = ({
     });
   });
 
-  useEffect(()=>{
-    return ()=>{
+  useEffect(() => {
+    return () => {
       setIsLoading(false);
-    }
-  },[])
-
+    };
+  }, []);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
