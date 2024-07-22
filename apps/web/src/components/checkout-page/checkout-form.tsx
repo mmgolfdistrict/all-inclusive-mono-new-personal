@@ -193,7 +193,7 @@ export const CheckoutForm = ({
     return ()=>{
       setIsLoading(false);
     }
-  })
+  },[])
 
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
