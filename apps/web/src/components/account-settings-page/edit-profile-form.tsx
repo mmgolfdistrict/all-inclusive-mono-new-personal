@@ -445,7 +445,7 @@ export const EditProfileForm = () => {
           error={errors.country?.message}
           showInfoTooltip={true}
           value={"USA"}
-          content="We only support cashouts for US banks at this time"
+          content="We only support cash outs for US banks at this time"
           data-testid="profile-country-id"
         />
         <datalist id="places">

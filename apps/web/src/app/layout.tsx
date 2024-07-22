@@ -9,6 +9,7 @@ import { Layout } from "~/components/layout";
 import { fontMapper } from "~/styles/fonts";
 import { type Metadata } from "next";
 import { headers } from "next/headers";
+import GoogleAnalytics from "./GoogleAnalytics";
 import Providers from "./providers";
 
 const title = "Golf District Platforms";
@@ -95,6 +96,7 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
+      <GoogleAnalytics />
       <body
         className={`${
           fontMapper[entityData?.font ?? "font-inter"]

@@ -12,11 +12,10 @@ export default function FAQ() {
         <h1 className="pb-4 text-left text-2xl text-secondary-black md:pb-0 md:text-3xl">
           Help
         </h1>
-        <section className="mx-auto flex w-full flex-col gap-4 md:max-w-[1174px]">
+        <h3>
           Give us your feedback at{" "}
           <a href="mailto:support@golfdistrict.com">support@golfdistrict.com</a>
-          .
-        </section>
+        </h3>
         <h2 className="pb-4 text-center text-2xl text-secondary-black md:pb-0 md:text-3xl">
           FAQs
         </h2>

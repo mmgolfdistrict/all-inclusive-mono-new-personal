@@ -410,7 +410,7 @@ export class FinixService {
           })
           .catch((e) => {
             console.log("Error in transfer", e);
-            throw "Error in creating cashout";
+            throw "Error in creating cash out";
           });
 
         // await this.notificationService.createNotification(
@@ -424,7 +424,7 @@ export class FinixService {
         // );
         await this.notificationService.sendEmailByTemplate(
           user?.email ?? "",
-          "Cashout successful",
+          "Cash out successful",
           process.env.SENDGRID_CASHOUT_TRANSFER_TEMPLATE_ID ?? "",
           {
             AmountCashedOut: amount,

@@ -22,6 +22,7 @@ import { ChoosePlayers } from "../input/choose-players";
 import { ManageTeeTimeListing } from "../my-tee-box-page/manage-tee-time-listing";
 import { Tooltip } from "../tooltip";
 import { MakeAnOffer } from "../watchlist-page/make-an-offer";
+import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
 
 const PlayersOptions = ["1", "2", "3", "4"];
 const DEFAULT_SILHOUETTE_IMAGE = "/defaults/default-profile.webp";
@@ -163,6 +164,12 @@ export const TeeTime = ({
     //   return;
     // }
     await logAudit();
+    googleAnalyticsEvent({
+      action: `CLICKED ON BUY`,
+      category: "TEE TIME ",
+      label: "user clicked on buy to purchase tee time",
+      value: "",
+    })
 
     if (handleLoading) {
       handleLoading(true);
