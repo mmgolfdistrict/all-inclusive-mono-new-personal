@@ -1030,8 +1030,8 @@ export class BookingService {
     //   throw new Error("Listing is not pending");
     // }
     if (listing.isDeleted) {
-      this.logger.warn(`Listing is already deleted.`);
-      throw new Error("Listing is already deleted");
+      this.logger.warn(`Tee time not available anymore.`);
+      throw new Error("Tee time not available anymore.");
     }
     const bookingIds = await this.database
       .select({
@@ -1189,8 +1189,8 @@ export class BookingService {
     //   throw new Error("Listing is not pending");
     // }
     if (listing.isDeleted) {
-      this.logger.warn(`Listing is already deleted.`);
-      throw new Error("Listing is already deleted");
+      this.logger.warn(`Tee time not available anymore.`);
+      throw new Error("Tee time not available anymore.");
     }
     const ownedBookings = await this.database
       .select({
