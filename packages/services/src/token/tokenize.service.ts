@@ -12,7 +12,7 @@ import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import type { InsertTransfer } from "@golf-district/database/schema/transfers";
 import { transfers } from "@golf-district/database/schema/transfers";
 import { users } from "@golf-district/database/schema/users";
-import { formatMoney } from "@golf-district/shared";
+import { formatMoney, formatTime } from "@golf-district/shared";
 import createICS from "@golf-district/shared/createICS";
 import type { Event } from "@golf-district/shared/createICS";
 import Logger from "@golf-district/shared/src/logger";
@@ -200,9 +200,9 @@ export class TokenizeService {
         address: courses.address,
         name: courses.name,
         websiteURL: courses.websiteURL,
-        cdn: assets.cdn,
         cdnKey: assets.key,
         extension: assets.extension,
+        timezoneCorrection: courses.timezoneCorrection,
       })
       .from(teeTimes)
       .where(eq(teeTimes.id, providerTeeTimeId))
@@ -311,6 +311,7 @@ export class TokenizeService {
       weatherQuoteId: normalizedCartData.weatherQuoteId ?? null,
       weatherGuaranteeId: acceptedQuote?.id ? acceptedQuote?.id : null,
       weatherGuaranteeAmount: acceptedQuote?.price_charged ? acceptedQuote?.price_charged * 100 : 0,
+      markupFees: (normalizedCartData?.markupCharge ?? 0) * 100,
     });
 
     transfersToCreate.push({
@@ -322,6 +323,8 @@ export class TokenizeService {
       fromUserId: "0x000", //first hand sales are from the platform
       toUserId: userId,
       courseId: existingTeeTime.courseId,
+      weatherGuaranteeId: acceptedQuote?.id ? acceptedQuote?.id : "",
+      weatherGuaranteeAmount: acceptedQuote?.price_charged ? acceptedQuote?.price_charged * 100 : 0,
     });
 
     console.log(`Getting slot IDs for booking.`);
@@ -411,6 +414,7 @@ export class TokenizeService {
       teeTimeId: existingTeeTime?.id,
       bookingId,
       listingId: "",
+      courseId: existingTeeTime.courseId,
       eventId: "TEE_TIME_PURCHASED",
       json: "Tee time purchased",
     });
@@ -433,17 +437,18 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       reservationId: bookingId,
       courseReservation: providerBookingId,
       numberOfPlayer: players.toString(),
-      playTime: dayjs(existingTeeTime.providerDate).utcOffset("-06:00").format("YYYY-MM-DD hh:mm A") ?? "-",
+      playTime: this.extractTime(
+        formatTime(existingTeeTime.providerDate, true, existingTeeTime.timezoneCorrection ?? 0)
+      ),
     };
     const icsContent: string = createICS(event);
     const template = {
       CustomerFirstName: existingTeeTime.customerName?.split(" ")[0],
       CourseName: existingTeeTime.courseName ?? "-",
-      GolfDistrictReservationID: bookingsToCreate?.[0]?.id ?? "-",
+      // GolfDistrictReservationID: bookingsToCreate?.[0]?.id ?? "-",
       CourseReservationID: providerBookingId ?? "-",
       FacilityName: existingTeeTime.entityName ?? "-",
-      PlayDateTime:
-        dayjs(existingTeeTime.providerDate).utcOffset("-06:00").format("YYYY-MM-DD hh:mm A") ?? "-",
+      PlayDateTime: formatTime(existingTeeTime.providerDate, true, existingTeeTime.timezoneCorrection ?? 0),
       NumberOfHoles: existingTeeTime.numberOfHoles,
       GreenFeesPerPlayer:
         `$${(purchasePrice / 100).toLocaleString("en-US", {
@@ -464,8 +469,11 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       PurchasedFrom: existingTeeTime.courseName ?? "-",
       PlayerCount: players ?? 0,
       TotalAmount: formatMoney(normalizedCartData.total / 100 ?? 0),
-      CourseLogoURL: `https://${existingTeeTime?.cdn}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
+      CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
       CourseURL: existingTeeTime?.websiteURL || "",
+      HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+      // BuyTeeTImeURL: `${redirectHref}`,
+      // CashOutURL: `${redirectHref}/account-settings/${userId}`,
       SellTeeTImeURL: `${redirectHref}/my-tee-box`,
       ManageTeeTimesURL: `${redirectHref}/my-tee-box`,
     };
@@ -488,6 +496,12 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
     );
     return bookingId;
   }
+
+  extractTime = (dateStr: string) => {
+    const timeRegex = /\b\d{1,2}:\d{2} (AM|PM)\b/;
+    const timeMatch = dateStr.match(timeRegex);
+    return timeMatch ? timeMatch[0] : null;
+  };
 
   /**
    * Transfers a bookings from one user to another.

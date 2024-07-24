@@ -28,16 +28,28 @@ import {
 import ReCAPTCHA from "react-google-recaptcha";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
-import { generateUsername } from "unique-username-generator";
 import { useDebounce } from "usehooks-ts";
 
 export default function RegisterPage() {
   const { course } = useCourseContext();
-  const [location, setLocation] = useState<string>("");
-  const debouncedLocation = useDebounce<string>(location, 500);
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    setError,
+    getValues,
+    formState: { isSubmitting, errors },
+  } = useForm<RegisterSchemaType>({
+    resolver: zodResolver(registerSchema),
+  });
+  const [city, setCity] = useState(getValues("city"));
+
+  const debouncedLocation = useDebounce<string>(city, 500);
   const cities = api.places.getCity.useQuery({ city: debouncedLocation });
   const recaptchaRef = createRef<ReCAPTCHA>();
   const registerUser = api.register.register.useMutation();
+  const { data: uName } = api.register.generateUsername.useQuery(6);
   const [rotate, setRotate] = useState<boolean>(false);
   const [password, setPassword] = useState<string>("");
   const [showPassword, setShowPassword] = useState<boolean>(false);
@@ -50,33 +62,22 @@ export default function RegisterPage() {
     reset: resetProfanityCheck,
   } = api.profanity.checkProfanity.useMutation();
 
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    watch,
-    setError,
-    formState: { isSubmitting, errors },
-  } = useForm<RegisterSchemaType>({
-    resolver: zodResolver(registerSchema),
-  });
-
   const genUsername = () => {
-    const uName = generateUsername(undefined, undefined, 6);
-    setValue("username", uName);
+    setValue("username", uName ?? "");
   };
+
   const username = watch("username");
 
   useEffect(() => {
     genUsername();
-  }, []);
+  }, [uName]);
 
   const handleCheckProfanity = async (text: string) => {
     if (!text) return;
     const data = await checkProfanity({ text });
     if (data.isProfane) {
       setError("username", {
-        message: "Handle not allowed",
+        message: "Handle not available.",
       });
     }
   };
@@ -107,10 +108,14 @@ export default function RegisterPage() {
     setValue("redirectHref", cleanedHref);
   }, []);
 
+  useEffect(() => {
+    recaptchaRef.current?.execute();
+  }, []);
+
   const onSubmit: SubmitHandler<RegisterSchemaType> = async (data) => {
     if (profanityCheckData?.isProfane) {
       setError("username", {
-        message: "Handle not allowed",
+        message: "Handle not allowed.",
       });
       return;
     }
@@ -151,6 +156,10 @@ export default function RegisterPage() {
         Create an Account
       </h1>
       <section className="mx-auto flex w-full flex-col gap-2 bg-white p-5 sm:max-w-[500px] sm:rounded-xl sm:p-6">
+        <p>
+          Using gmail? Go to the login page and select the Google icon to login
+          with Google. The below form is not required for gmail users.
+        </p>
         <form className="flex flex-col gap-2" onSubmit={handleSubmit(onSubmit)}>
           <Input
             label="First Name"
@@ -193,15 +202,17 @@ export default function RegisterPage() {
           />
           <div className="flex items-end gap-2">
             <Input
-              label="Username"
+              label="Handle"
               className="w-full"
               type="text"
-              placeholder="Enter your username"
+              placeholder="Enter your handle"
               id="username"
               register={register}
               name={"username"}
               error={errors.username?.message}
               data-testid="register-user-name-id"
+              showInfoTooltip={true}
+              content="Handle must all be in lower case or numeric and must contain a minimum of 6 characters and maximum of 64 characters. Handle cannot contain special characters other than dot(.) and underscore(_) and any form of profanity or racism related content. Golf District reserves the right to change your handle to a random handle at any time if it violates our terms of service."
             />
             <IconButton
               onClick={(e) => {
@@ -218,7 +229,7 @@ export default function RegisterPage() {
               <Refresh className="h-[14px] w-[14px]" />
             </IconButton>
           </div>
-          <Input
+          {/* <Input
             label="Location"
             type="text"
             list="places"
@@ -231,6 +242,78 @@ export default function RegisterPage() {
               setLocation(e.target.value);
             }}
             data-testid="register-location-id"
+          /> */}
+          <Input
+            label="Address1"
+            type="text"
+            list="places"
+            placeholder="Enter your address1"
+            id="address1"
+            register={register}
+            name="address1"
+            error={errors.address1?.message}
+            data-testid="register-address1-id"
+          />
+          <Input
+            label="Address2"
+            type="text"
+            list="places"
+            placeholder="Enter your address2"
+            id="address2"
+            register={register}
+            name="address2"
+            error={errors.address2?.message}
+            data-testid="register-address2-id"
+          />
+          <Input
+            label="City"
+            type="text"
+            list="places"
+            placeholder="Enter your city"
+            id="city"
+            register={register}
+            name="city"
+            error={errors.city?.message}
+            data-testid="register-city-id"
+            onChange={(e: ChangeEvent<HTMLInputElement>) => {
+              setValue("city", e.target.value);
+              setCity(e.target.value);
+            }}
+          />
+          <Input
+            label="State"
+            type="text"
+            list="places"
+            placeholder="Enter your state"
+            id="state"
+            register={register}
+            name="state"
+            error={errors.state?.message}
+            data-testid="register-state-id"
+          />
+          <Input
+            label="Zip"
+            type="text"
+            list="places"
+            placeholder="Enter your zip"
+            id="zipcode"
+            register={register}
+            name="zipcode"
+            error={errors.zipcode?.message}
+            data-testid="register-zipcode-id"
+          />
+          <Input
+            label="Country"
+            type="text"
+            list="places"
+            placeholder="Enter your country"
+            id="country"
+            register={register}
+            name="country"
+            error={errors.country?.message}
+            showInfoTooltip={true}
+            content="We only support cash outs for US banks at this time"
+            data-testid="register-country-id"
           />
           <datalist id="places">
             {cities.data?.autocompleteCities.features.map((city, idx) => (
@@ -246,9 +329,6 @@ export default function RegisterPage() {
               register={register}
               name="password"
               error={errors.password?.message}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                setPassword(e.target.value);
-              }}
               data-testid="register-password-id"
             />
             <IconButton
@@ -303,7 +383,11 @@ export default function RegisterPage() {
           </div>
           {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (
             <ReCAPTCHA
-              size="normal"
+              size={
+                process.env.NEXT_PUBLIC_RECAPTCHA_IS_INVISIBLE
+                  ? "invisible"
+                  : "normal"
+              }
               sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ?? ""}
               onChange={onReCAPTCHAChange}
               ref={recaptchaRef}

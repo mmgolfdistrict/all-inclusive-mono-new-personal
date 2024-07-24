@@ -3,7 +3,6 @@
 import * as ToggleGroup from "@radix-ui/react-toggle-group";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { Switch } from "../buttons/switch";
-import { GolfCart } from "../icons/golf-cart";
 import { Hidden } from "../icons/hidden";
 import { Info } from "../icons/info";
 import { Slider } from "../input/slider";
@@ -15,6 +14,8 @@ import type { DateType, GolferType, HoleType } from "~/contexts/FiltersContext";
 import { useFiltersContext } from "~/contexts/FiltersContext";
 import { api } from "~/utils/api";
 import { getDisabledDays } from "~/utils/calendar";
+import { debounceFunction } from "~/utils/debounce";
+import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils"
 
 const DateOptions = [
   "All",
@@ -113,7 +114,15 @@ export const Filters = () => {
           type="single"
           value={dateType}
           onValueChange={(dateType: DateType) => {
-            if (dateType) setDateType(dateType);
+            if (dateType) {
+              setDateType(dateType)
+              googleAnalyticsEvent({
+                action: `FILTER BY ${dateType}`,
+                category: "FILTER_DATA",
+                label: "filtered data by date",
+                value: "",
+              })
+            };
           }}
           orientation="vertical"
           className="flex flex-col"
@@ -179,6 +188,12 @@ export const Filters = () => {
             handleSetStartTime();
           }}
           onValueChange={(time: number[]) => {
+            googleAnalyticsEvent({
+              action: `FILTER BY START TIME AND END TIME`,
+              category: "FILTER_DATA",
+              label: "filtered data by date",
+              value: "",
+            })
             if (
               time &&
               time.length >= 2 &&
@@ -221,7 +236,7 @@ export const Filters = () => {
             </div>
           </div>
         ) : null}
-        <div className="flex items-center gap-2">
+        {/* <div className="flex items-center gap-2">
           <Switch
             value={includesCart}
             setValue={setIncludesCart}
@@ -232,10 +247,10 @@ export const Filters = () => {
             <div className="text-[15px]">Includes Cart</div>
             <Tooltip
               trigger={<Info className="h-[14px] w-[14px]" />}
-              content="Includes Cart"
+              content="The cart fee is included in the greens fee when toggled on. Purchasing without a cart may not be available."
             />
           </div>
-        </div>
+        </div> */}
       </section>
 
       <section className="flex flex-col gap-2">
@@ -244,6 +259,12 @@ export const Filters = () => {
           type="single"
           value={holes}
           onValueChange={(hole: HoleType) => {
+            googleAnalyticsEvent({
+              action: `FILTER BY Holes`,
+              category: "FILTER_DATA",
+              label: "filtered data by date",
+              value: "",
+            })
             if (hole) setHoles(hole);
           }}
           orientation="horizontal"
@@ -272,6 +293,12 @@ export const Filters = () => {
           type="single"
           value={golfers.toString()}
           onValueChange={(golfer: string) => {
+            googleAnalyticsEvent({
+              action: `FILTER BY GOLFERS`,
+              category: "FILTER_DATA",
+              label: "filtered data by date",
+              value: "",
+            })
             if (golfer === "Any") {
               setGolfers("Any");
               return;
@@ -311,13 +338,19 @@ export const Filters = () => {
         <Slider
           min={lowestPrice}
           max={highestPrice}
-          step={10}
+          step={5}
           value={localPriceRange}
           onPointerUp={() => {
             handleSetPriceRange();
           }}
           onValueChange={(value: [number, number]) => {
-            if (value) setLocalPriceRange(value);
+            googleAnalyticsEvent({
+              action: `FILTER BY PRICE RANGE`,
+              category: "FILTER_DATA",
+              label: "filtered data by date",
+              value: "",
+            })
+            debounceFunction(setLocalPriceRange(value), 1000);
           }}
           data-testid="slider-price-range-id"
           data-qa={`${localPriceRange?.[0]}-${localPriceRange?.[1]}`}

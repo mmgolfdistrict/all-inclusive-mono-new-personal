@@ -20,7 +20,7 @@ import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import { transfers } from "@golf-district/database/schema/transfers";
 import { userPromoCodeLink } from "@golf-district/database/schema/userPromoCodeLink";
 import { users } from "@golf-district/database/schema/users";
-import { formatMoney } from "@golf-district/shared";
+import { formatMoney, formatTime } from "@golf-district/shared";
 import createICS from "@golf-district/shared/createICS";
 import type { Event } from "@golf-district/shared/createICS";
 import Logger from "@golf-district/shared/src/logger";
@@ -44,7 +44,7 @@ import type {
 import type { NotificationService } from "../notification/notification.service";
 import type { HyperSwitchService } from "../payment-processor/hyperswitch.service";
 import type { SensibleService } from "../sensible/sensible.service";
-import type { ProviderService } from "../tee-sheet-provider/providers.service";
+import type { Customer, ProviderService } from "../tee-sheet-provider/providers.service";
 import type { ClubProphetBookingResponse } from "../tee-sheet-provider/sheet-providers/types/clubprophet.types";
 import type { BookingResponse } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
 import type { TokenizeService } from "../token/tokenize.service";
@@ -343,6 +343,7 @@ export class HyperSwitchWebhookService {
         internalId: providers.internalId,
         providerDate: teeTimes.providerDate,
         holes: teeTimes.numberOfHoles,
+        providerCourseConfiguration: providerCourseLink.providerCourseConfiguration,
       })
       .from(teeTimes)
       .leftJoin(courses, eq(courses.id, teeTimes.courseId))
@@ -365,6 +366,7 @@ export class HyperSwitchWebhookService {
           teeTimeId: item.product_data.metadata.tee_time_id,
           bookingId: "",
           listingId: "",
+          courseId: teeTime?.courseId ?? "",
           eventId: "TEE_TIME_NOT_FOUND",
           json: err,
         });
@@ -378,6 +380,7 @@ export class HyperSwitchWebhookService {
         teeTimeId: item.product_data.metadata.tee_time_id,
         bookingId: "",
         listingId: "",
+        courseId: "",
         eventId: "TEE_TIME_NOT_FOUND",
         json: `tee time not found id: ${item.product_data.metadata.tee_time_id}`,
       });
@@ -385,7 +388,8 @@ export class HyperSwitchWebhookService {
     }
     const { provider, token } = await this.providerService.getProviderAndKey(
       teeTime.internalId!,
-      teeTime.courseId
+      teeTime.courseId,
+      teeTime.providerCourseConfiguration!
     );
     const providerCustomer = await this.providerService.findOrCreateCustomer(
       teeTime.courseId,
@@ -403,6 +407,7 @@ export class HyperSwitchWebhookService {
         teeTimeId: item.product_data.metadata.tee_time_id,
         bookingId: "",
         listingId: "",
+        courseId: teeTime?.courseId ?? "",
         eventId: "ERROR_CREATING_CUSTOMER",
         json: `Error creating customer`,
       });
@@ -444,6 +449,7 @@ export class HyperSwitchWebhookService {
           teeTimeId: teeTime.id,
           bookingId: "",
           listingId: "",
+          courseId: teeTime?.courseId ?? "",
           eventId: "TEE_TIME_BOOKING_FAILED",
           json: err,
         });
@@ -496,6 +502,7 @@ export class HyperSwitchWebhookService {
           teeTimeId: teeTime.id,
           bookingId: "",
           listingId: "",
+          courseId: teeTime?.courseId ?? "",
           eventId: "TEE_TIME_BOOKING_FAILED",
           json: err,
         });
@@ -616,11 +623,12 @@ export class HyperSwitchWebhookService {
     const listedSlotsCount: number | undefined = listedSlots?.length ? listedSlots[0]?.listedSlotsCount : 0;
     const listPrice: number | undefined = listedSlots?.length ? listedSlots[0]?.listedPrice : 0;
 
-    const [bookingsIds] = await this.database
+    const [bookingsIds]: any = await this.database
       .select({
         id: bookings.id,
         oldBookingId: transfers.fromBookingId,
         transferId: transfers.id,
+        cart: customerCarts.cart,
       })
       .from(customerCarts)
       .innerJoin(bookings, eq(bookings.cartId, customerCarts.id))
@@ -634,6 +642,7 @@ export class HyperSwitchWebhookService {
           teeTimeId: "",
           bookingId: "",
           listingId,
+          courseId: "",
           eventId: "BOOKING_ID_NOT_FOUND",
           json: error,
         });
@@ -654,6 +663,7 @@ export class HyperSwitchWebhookService {
           teeTimeId: "",
           bookingId: bookingsIds?.id ?? "",
           listingId,
+          courseId: bookingsIds?.cart?.courseId ?? "",
           eventId: "BOOKING_CONFIRMATION_ERROR",
           json: "Error confirming booking",
         });
@@ -676,6 +686,7 @@ export class HyperSwitchWebhookService {
           teeTimeId: "",
           bookingId: bookingsIds?.id ?? "",
           listingId,
+          courseId: bookingsIds?.cart?.courseId ?? "",
           eventId: "BOOKING_CONFIRMATION_ERROR",
           json: err,
         });
@@ -688,6 +699,7 @@ export class HyperSwitchWebhookService {
       teeTimeId: "",
       bookingId: bookingsIds?.id ?? "",
       listingId,
+      courseId: bookingsIds?.cart?.courseId ?? "",
       eventId: "BOOKING_STATUS_UPDATED",
       json: "Booking status updated",
     });
@@ -748,6 +760,7 @@ export class HyperSwitchWebhookService {
         teeTimeId: "",
         bookingId: bookingsIds?.id ?? "",
         listingId,
+        courseId: bookingsIds?.cart?.courseId ?? "",
         eventId: "BOOKING_NOT_FOUND_FOR_LISTING",
         json: "Error finding bookings for listing id",
       });
@@ -761,7 +774,7 @@ export class HyperSwitchWebhookService {
     const { provider, token } = await this.providerService.getProviderAndKey(
       firstBooking.internalId!,
       firstBooking.courseId ?? "",
-      firstBooking.providerCourseConfiguration
+      firstBooking.providerCourseConfiguration!
     );
 
     const buyerCustomer = await this.providerService.findOrCreateCustomer(
@@ -841,7 +854,6 @@ export class HyperSwitchWebhookService {
         greenFee: teeTimes.greenFeePerPlayer,
         courseName: courses.name,
         entityName: entities.name,
-        cdn: assets.cdn,
         cdnKey: assets.key,
         extension: assets.extension,
         buyerFee: courses.buyerFee,
@@ -852,6 +864,7 @@ export class HyperSwitchWebhookService {
         cartFeePerPlayer: teeTimes.cartFeePerPlayer,
         greenFeeTaxPerPlayer: teeTimes.greenFeeTaxPerPlayer,
         cartFeeTaxPerPlayer: teeTimes.cartFeeTaxPerPlayer,
+        timezoneCorrection: courses.timezoneCorrection,
       })
       .from(teeTimes)
       .where(eq(teeTimes.id, firstBooking.teeTimeId))
@@ -871,7 +884,7 @@ export class HyperSwitchWebhookService {
         paymentId,
       });
     try {
-      let details = "GD Booking";
+      let details = await appSettingService.get("TEE_SHEET_BOOKING_MESSAGE");
       try {
         const isSensibleNoteAvailable = await appSettingService.get("SENSIBLE_NOTE_TO_TEE_SHEET");
         if (weatherQuoteId && isSensibleNoteAvailable) {
@@ -945,6 +958,7 @@ export class HyperSwitchWebhookService {
           teeTimeId: existingTeeTime?.id ?? "",
           bookingId: bookingsIds?.id ?? "",
           listingId: listingId,
+          courseId: existingTeeTime?.courseId,
           eventId: "REFUND_INITIATED",
           json: `{paymentId:${paymentId}}`,
         });
@@ -960,12 +974,16 @@ export class HyperSwitchWebhookService {
 
         const template = {
           CustomerFirstName: buyerCustomer?.username ?? "",
-          CourseLogoURL: `https://${existingTeeTime?.cdn}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
+          CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
           CourseURL: existingTeeTime?.websiteURL || "",
           CourseName: existingTeeTime?.courseName || "-",
           FacilityName: existingTeeTime?.entityName || "-",
-          PlayDateTime:
-            dayjs(existingTeeTime?.providerDate).utcOffset("-06:00").format("MM/DD/YYYY h:mm A") || "-",
+          PlayDateTime: formatTime(
+            existingTeeTime?.providerDate ?? "",
+            true,
+            existingTeeTime?.timezoneCorrection ?? 0
+          ),
+          HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
         };
         await this.notificationService.createNotification(
           customer_id ?? "",
@@ -987,8 +1005,8 @@ export class HyperSwitchWebhookService {
       newBooking.data.bookingType = "FIRST";
       newBookings.push(newBooking);
       if (listedSlotsCount && listedSlotsCount < firstBooking?.playerCount) {
+        details = await appSettingService.get("TEE_SHEET_BOOKING_MESSAGE");
         let newBookingData;
-
         if (firstBooking.internalId === "fore-up") {
           newBookingData = {
             totalAmountPaid: totalAmount * (listedBooking.length - listedSlotsCount),
@@ -1004,7 +1022,7 @@ export class HyperSwitchWebhookService {
                   },
                 ],
                 event_type: "tee_time",
-                details: "GD Booking",
+                details,
               },
             },
           };
@@ -1093,8 +1111,6 @@ export class HyperSwitchWebhookService {
           includesCart: firstBooking.includesCart,
           listId: null,
           // entityId: firstBooking.entityId,
-          weatherGuaranteeAmount: firstBooking.weatherGuaranteeAmount,
-          weatherGuaranteeId: firstBooking.weatherGuaranteeId,
           cartId: cartId,
           playerCount: firstBooking.playerCount - (listedSlotsCount ?? 0),
           greenFeePerPlayer: listPrice ?? 1 * 100,
@@ -1200,6 +1216,7 @@ export class HyperSwitchWebhookService {
         teeTimeId: existingTeeTime?.id ?? "",
         bookingId,
         listingId: "",
+        courseId: existingTeeTime?.courseId ?? "",
         eventId: "TEE_TIME_PURCHASED",
         json: "Tee time purchased",
       });
@@ -1213,23 +1230,26 @@ export class HyperSwitchWebhookService {
         reservationId: bookingId,
         courseReservation: providerBookingId || "",
         numberOfPlayer: (listedSlotsCount ?? 1).toString(),
-        playTime:
-          dayjs(existingTeeTime?.providerDate).utcOffset("-06:00").format("YYYY-MM-DD hh:mm A") ?? "-",
+        playTime: this.extractTime(
+          formatTime(existingTeeTime?.providerDate ?? "", true, existingTeeTime?.timezoneCorrection ?? 0)
+        ),
       };
       const icsContent: string = createICS(event);
 
       const commonTemplateData = {
-        CourseLogoURL: `https://${existingTeeTime?.cdn}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
+        CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
         CourseURL: existingTeeTime?.websiteURL || "",
+        HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
         CourseName: existingTeeTime?.courseName || "-",
         FacilityName: existingTeeTime?.entityName || "-",
-        PlayDateTime:
-          dayjs(existingTeeTime?.providerDate).utcOffset("-06:00").format("MM/DD/YYYY h:mm A") || "-",
+        PlayDateTime: formatTime(
+          existingTeeTime?.providerDate ?? "",
+          true,
+          existingTeeTime?.timezoneCorrection ?? 0
+        ),
         NumberOfHoles: existingTeeTime?.numberOfHoles,
-        SellTeeTImeURL: `${redirectHref}/my-tee-box`,
-        ManageTeeTimesURL: `${redirectHref}/my-tee-box`,
-        GolfDistrictReservationID: bookingId,
-        CourseReservationID: providerBookingId || "",
+        // GolfDistrictReservationID: bookingId,
+        CourseReservationID: newBooking?.data?.id || "",
       };
 
       if (newBooking.data?.bookingType == "FIRST") {
@@ -1255,6 +1275,8 @@ export class HyperSwitchWebhookService {
           PurchasedFrom: sellerCustomer?.username,
           PlayerCount: listedSlotsCount ?? 0,
           TotalAmount: formatMoney(total / 100),
+          SellTeeTImeURL: `${redirectHref}/my-tee-box`,
+          ManageTeeTimesURL: `${redirectHref}/my-tee-box`,
         };
 
         await this.notificationService.createNotification(
@@ -1275,18 +1297,18 @@ export class HyperSwitchWebhookService {
           ]
         );
 
+        if (firstBooking?.weatherGuaranteeId?.length) {
+          await this.sensibleService.cancelGuarantee(firstBooking?.weatherGuaranteeId || "");
+        }
         if (newBookings.length === 1) {
-          if (firstBooking?.weatherGuaranteeId?.length) {
-            await this.sensibleService.cancelGuarantee(firstBooking?.weatherGuaranteeId || "");
-          }
-          const lsPrice = (listPrice ?? 0) / 100;
-          const listedPrice = lsPrice + lsPrice * buyerFee;
-          const totalTax = lsPrice * sellerFee;
+          const listedPrice = (listPrice ?? 0) / 100;
+          const totalTax = listedPrice * sellerFee;
+
           const templateSeller: any = {
             ...commonTemplateData,
             CustomerFirstName: sellerCustomer?.name?.split(" ")[0],
             ListedPrice:
-              `$${lsPrice.toLocaleString("en-US", {
+              `$${listedPrice.toLocaleString("en-US", {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })} / Golfer` || "-",
@@ -1297,6 +1319,8 @@ export class HyperSwitchWebhookService {
               })}` || "-",
             Payout: formatMoney((listedPrice - totalTax) * (listedSlotsCount || 1)),
             PurchasedFrom: existingTeeTime?.courseName || "-",
+            BuyTeeTImeURL: `${redirectHref}`,
+            CashOutURL: `${redirectHref}/account-settings/${firstBooking.ownerId}`,
           };
           await this.notificationService.createNotification(
             firstBooking.ownerId || "",
@@ -1308,15 +1332,15 @@ export class HyperSwitchWebhookService {
           );
         }
       } else {
-        const lsPrice = (listPrice ?? 0) / 100;
-        const listedPrice = lsPrice + lsPrice * buyerFee;
-        const totalTax = lsPrice * (buyerFee + sellerFee);
+        const listedPrice = (listPrice ?? 0) / 100;
+        const totalTax = listedPrice * sellerFee;
+
         const templateSeller: any = {
           ...commonTemplateData,
           SoldPlayers: listedSlotsCount,
           CustomerFirstName: sellerCustomer?.name?.split(" ")[0],
           ListedPrice:
-            `$${lsPrice.toLocaleString("en-US", {
+            `$${listedPrice.toLocaleString("en-US", {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })} / Golfer` || "-",
@@ -1328,6 +1352,8 @@ export class HyperSwitchWebhookService {
           Payout: formatMoney((listedPrice - totalTax) * (listedSlotsCount || 1)),
           SensibleWeatherIncluded: firstBooking.weatherGuaranteeId?.length ? "Yes" : "No",
           PurchasedFrom: existingTeeTime?.courseName || "-",
+          BuyTeeTImeURL: `${redirectHref}`,
+          CashOutURL: `${redirectHref}/account-settings/${firstBooking.ownerId}`,
         };
         await this.notificationService.createNotification(
           firstBooking.ownerId || "",
@@ -1342,7 +1368,11 @@ export class HyperSwitchWebhookService {
 
     const amount = listPrice ?? 1;
     const serviceCharge = amount * sellerFee;
-    const payable = (amount - serviceCharge) * (listedSlotsCount || 1);
+    let weatherGuaranteeAmount = 0;
+    if (firstBooking?.weatherGuaranteeId) {
+      weatherGuaranteeAmount = firstBooking?.weatherGuaranteeAmount ?? 0;
+    }
+    const payable = (amount - serviceCharge) * (listedSlotsCount || 1) + weatherGuaranteeAmount;
     const currentDate = new Date();
     const radeemAfterMinutes = await appSettingService.get("CASH_OUT_AFTER_MINUTES");
     const redeemAfterDate = this.addMinutes(currentDate, Number(radeemAfterMinutes));
@@ -1353,6 +1383,7 @@ export class HyperSwitchWebhookService {
         amount: payable,
         type: "CASHOUT",
         transferId: bookingsIds?.transferId,
+        sensibleAmount: weatherGuaranteeAmount,
         createdDateTime: this.formatCurrentDateTime(currentDate), // Use UTC string format for datetime fields
         redeemAfter: this.formatCurrentDateTime(redeemAfterDate), // Use UTC string format for datetime fields
       },
@@ -1363,6 +1394,12 @@ export class HyperSwitchWebhookService {
       .catch((err: any) => {
         this.logger.error(err);
       });
+  };
+
+  extractTime = (dateStr: string) => {
+    const timeRegex = /\b\d{1,2}:\d{2} (AM|PM)\b/;
+    const timeMatch = dateStr.match(timeRegex);
+    return timeMatch ? timeMatch[0] : null;
   };
 
   handleOfferItem = async (item: Offer, amountReceived: number, customer_id: string) => {

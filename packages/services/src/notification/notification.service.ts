@@ -12,12 +12,14 @@ import Logger from "@golf-district/shared/src/logger";
 import { MailService } from "@sendgrid/mail";
 import type pino from "pino";
 import twilio from "twilio";
+import { AppSettingsService } from "../app-settings/app-settings.service";
 
 interface EmailParams {
   CustomerFirstName?: string;
   CourseName?: string;
   GolfDistrictReservationID?: string;
   CourseReservationID?: string;
+  ListedPricePerPlayer?: string;
   FacilityName?: string;
   PlayDateTime?: string;
   NumberOfHoles?: number;
@@ -30,6 +32,14 @@ interface EmailParams {
   CourseLogoURL?: string;
   CourseURL?: string;
   VerifyURL?: string;
+  BuyTeeTimeURL?: string;
+  HeaderLogoURL?: string;
+  PlayerCount?: number;
+  TotalAmount?: string;
+  AmountCashedOut?: number;
+  PreviousBalance?: number;
+  AvailableBalance?: number;
+  BalanceProcessing?: number | string;
 }
 
 interface Attachment {
@@ -140,19 +150,41 @@ export class NotificationService {
     attachments: Attachment[]
   ) => {
     this.logger.info(`Sending email to ${email}`);
-    await this.sendGridClient
-      .send({
-        to: email,
-        from: this.sendGrid_email,
-        subject,
-        templateId,
-        dynamicTemplateData: { ...template },
-        attachments,
-      })
-      .catch((err) => {
-        this.logger.error(err);
-        throw new Error(`Failed to send email to: ${email}`);
-      });
+    const appSettingService = new AppSettingsService(
+      this.database,
+      process.env.REDIS_URL!,
+      process.env.REDIS_TOKEN!
+    );
+
+    const appSettings = await appSettingService.getMultiple("ENABLE_ICS_ATTACHMENT");
+    if (appSettings?.ENABLE_ICS_ATTACHMENT === "false") {
+      await this.sendGridClient
+        .send({
+          to: email,
+          from: this.sendGrid_email,
+          subject,
+          templateId,
+          dynamicTemplateData: { ...template },
+        })
+        .catch((err) => {
+          this.logger.error(err);
+          throw new Error(`Failed to send email to: ${email}`);
+        });
+    } else {
+      await this.sendGridClient
+        .send({
+          to: email,
+          from: this.sendGrid_email,
+          subject,
+          templateId,
+          dynamicTemplateData: { ...template },
+          attachments,
+        })
+        .catch((err) => {
+          this.logger.error(err);
+          throw new Error(`Failed to send email to: ${email}`);
+        });
+    }
   };
 
   /**

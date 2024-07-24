@@ -3,7 +3,9 @@
 import React, { useEffect, useState } from "react";
 import { OutlineButton } from "../buttons/outline-button";
 import { Close } from "../icons/close";
+import { Info } from "../icons/info";
 import { Spinner } from "../loading/spinner";
+import { Tooltip } from "../tooltip";
 import FinixForm from "./FinixWidget";
 
 const Modal = ({ isOpen, onClose }) => {
@@ -41,7 +43,7 @@ const Modal = ({ isOpen, onClose }) => {
               </button>
             </div>
             <h5 className="text-sm font-semibold">
-              GOLFdistrict does not store any bank details. They are directly
+              Golf District does not store any bank details. They are directly
               handled by our payment processing 3rd-party partners.
             </h5>
             {isLoading && (
@@ -58,9 +60,21 @@ const Modal = ({ isOpen, onClose }) => {
             )}
           </div>
           {!isLoading && (
-            <OutlineButton onClick={onClose} className="w-full">
-              Cancel
-            </OutlineButton>
+            <>
+              <OutlineButton onClick={onClose} className="w-full">
+                Cancel
+              </OutlineButton>
+
+              <div className="mt-2 flex gap-1">
+                <h5 className="text-sm font-semibold text-primary-gray">
+                  Are you having issues adding your bank?
+                </h5>
+                <Tooltip
+                  trigger={<Info className="h-[20px] w-[20px]" />}
+                  content="Please ensure the address in your account settings matches the associated bank address above. Otherwise, your verification will be delayed, and you will be unable to cash out. If there are issues, please recheck and try again."
+                />
+              </div>
+            </>
           )}
         </div>
       </aside>

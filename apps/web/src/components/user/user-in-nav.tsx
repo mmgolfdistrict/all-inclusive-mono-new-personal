@@ -1,4 +1,4 @@
-import { signOut, useSession } from "@golf-district/auth/nextjs-exports";
+import { signOut } from "@golf-district/auth/nextjs-exports";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
@@ -22,7 +22,6 @@ export const UserInNav = ({ alwaysShow }: { alwaysShow?: boolean }) => {
   const courseId = course?.id;
   const pathname = usePathname();
   const router = useRouter();
-  const session = useSession();
 
   const { data: imageUrl } = api.image.getAssetUrl.useQuery(
     { assetId: user?.image ?? "" },
@@ -35,28 +34,40 @@ export const UserInNav = ({ alwaysShow }: { alwaysShow?: boolean }) => {
   );
 
   const auditLog = api.webhooks.auditLog.useMutation();
-  const logAudit = async () => {
-    await auditLog.mutateAsync({
-      userId: user?.id ?? "",
-      teeTimeId: "",
-      bookingId: "",
-      listingId: "",
-      eventId: "USER_LOGGED_OUT",
-      json: `user logged out `,
-    });
+  const logAudit = (func: () => any) => {
+    auditLog
+      .mutateAsync({
+        userId: user?.id ?? "",
+        teeTimeId: "",
+        bookingId: "",
+        listingId: "",
+        courseId,
+        eventId: "USER_LOGGED_OUT",
+        json: `user logged out `,
+      })
+      .then((res) => {
+        if (res) {
+          func();
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   };
 
-  const logOutUser = async () => {
-    if (PathsThatNeedRedirectOnLogout.some((i) => pathname.includes(i))) {
-      const data = await signOut({
-        callbackUrl: `/${courseId}`,
-        redirect: false,
-      });
-      router.push(data.url);
-      return;
-    } else {
-      await signOut();
-    }
+  const logOutUser = () => {
+    logAudit(async () => {
+      if (PathsThatNeedRedirectOnLogout.some((i) => pathname.includes(i))) {
+        const data = await signOut({
+          callbackUrl: `/${courseId}`,
+          redirect: false,
+        });
+        router.push(data.url);
+        return;
+      } else {
+        await signOut();
+      }
+    });
   };
 
   return (

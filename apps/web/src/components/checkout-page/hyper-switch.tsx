@@ -43,6 +43,7 @@ export const HyperSwitch = ({
   teeTimeDate,
   listingId,
   setIsLoading,
+  playerCount,
 }: {
   cartData: CartProduct[];
   isBuyNowAuction: boolean;
@@ -50,6 +51,7 @@ export const HyperSwitch = ({
   teeTimeDate: string | undefined;
   listingId: string | undefined;
   setIsLoading?: (isLoading: boolean) => void;
+  playerCount: string | undefined;
 }) => {
   const [options, setOptions] = useState<Options | undefined>(undefined);
   const { user } = useUserContext();
@@ -164,6 +166,7 @@ export const HyperSwitch = ({
             cartId={cartId}
             teeTimeDate={teeTimeDate}
             listingId={listingId ?? ""}
+            playerCount={playerCount}
           />
         </HyperElements>
       ) : nextaction ? (

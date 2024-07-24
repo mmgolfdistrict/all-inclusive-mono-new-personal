@@ -1,6 +1,7 @@
 "use client";
 
 import * as ToggleGroup from "@radix-ui/react-toggle-group";
+import { useCourseContext } from "~/contexts/CourseContext";
 import { useUser } from "~/hooks/useUser";
 import { api } from "~/utils/api";
 import { useParams } from "next/navigation";
@@ -11,11 +12,12 @@ const Options = ["PUBLIC", "PRIVATE"];
 type OptionsType = "PUBLIC" | "PRIVATE";
 
 export const PrivacySettings = () => {
-  const [privacy, setPrivacy] = useState<OptionsType>("PUBLIC");
-  const params = useParams();
-  const { userId } = params;
+  const [privacy, setPrivacy] = useState<OptionsType>("PRIVATE");
+  const { userId } = useParams();
   const updateUser = api.user.updateUser.useMutation();
   const [isMutating, setIsMutating] = useState<boolean>(false);
+  const { course } = useCourseContext();
+  const courseId = course?.id ?? "";
 
   const {
     data: userData,
@@ -35,6 +37,7 @@ export const PrivacySettings = () => {
       setIsMutating(true);
       await updateUser.mutateAsync({
         profileVisibility: value,
+        courseId,
       });
       await refetch();
       toast.success("Privacy settings updated successfully");
@@ -92,7 +95,7 @@ export const PrivacySettings = () => {
         <div className="text-[12px] text-primary-gray md:text-[14px]">
           {privacy === "PUBLIC"
             ? "Everything is visible, including tee time history."
-            : "Only listed tee times are visible and tee time history is hidden will be hidden to others."}
+            : "Your handle is public when you list a time for sale. All other information is not public."}
         </div>
       </div>
     </section>

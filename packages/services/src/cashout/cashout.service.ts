@@ -90,17 +90,17 @@ export class CashOutService {
       .execute();
     //check if user has a non pending balance
     if (!user) {
-      this.logger.error(`Error requesting cashout: user ${userId} does not exist`);
-      throw new Error(`Error requesting cashout: user does not exist`);
+      this.logger.error(`Error requesting cash out: user ${userId} does not exist`);
+      throw new Error(`Error requesting cash out: user does not exist`);
     }
     if (user.stripeConnectAccountStatus !== "CONNECTED" || !user.stripeAccountId) {
-      this.logger.error(`Error requesting cashout: user ${userId} does not have a connected stripe account`);
-      throw new Error(`Error requesting cashout: user does not have a connected stripe account`);
+      this.logger.error(`Error requesting cash out: user ${userId} does not have a connected stripe account`);
+      throw new Error(`Error requesting cash out: user does not have a connected stripe account`);
     }
     //@TODO: create a minimum balance constant
     if (user.balance < 10) {
-      this.logger.error(`Error requesting cashout: user ${userId} does not have enough balance`);
-      throw new Error(`Error requesting cashout: user ${userId} does not have enough balance`);
+      this.logger.error(`Error requesting cash out: user ${userId} does not have enough balance`);
+      throw new Error(`Error requesting cash out: user ${userId} does not have enough balance`);
     }
     //create stripe payout
     await this.stripeService.createPayout(user.stripeAccountId, user.balance, "usd").catch((err) => {
@@ -128,7 +128,7 @@ export class CashOutService {
       .execute();
     await this.notificationService.createNotification(
       userId,
-      "Cashout Initiated",
+      "Cash out Initiated",
       "Your funds have been withdrawn to your bank account"
     );
   };
@@ -169,5 +169,19 @@ export class CashOutService {
       availableAmount: tAvailableAmount / 100,
       withdrawableAmount: tReedemableAmount / 100,
     };
+  };
+
+  getCashoutTransactions = async (userId: string) => {
+    const transactionDetails = await this.database
+      .select({
+        amount: cashout.amount,
+        externalStatus: cashout.externalStatus,
+        createdDateTime: cashout.createdDateTime,
+      })
+      .from(cashout)
+      .where(eq(cashout.customerId, userId))
+      .execute();
+
+    return transactionDetails;
   };
 }

@@ -16,14 +16,12 @@ export const DailyTeeTimes = ({
   minDate,
   maxDate,
   setError,
-  updateCount,
   handleLoading,
 }: {
   date: string;
   minDate: string;
   maxDate: string;
   setError: (t: string | null) => void;
-  updateCount: (balance: number) => void;
   handleLoading?: (val: boolean) => void;
 }) => {
   const overflowRef = useRef<HTMLDivElement>(null);
@@ -81,7 +79,7 @@ export const DailyTeeTimes = ({
       holes: holes === "Any" || holes === "18" ? 18 : 9,
       showUnlisted,
       includesCart,
-      golfers: golfers === "Any" ? 1 : golfers,
+      golfers: golfers === "Any" ? -1 : golfers,
       lowerPrice: priceRange[0]!,
       upperPrice: priceRange[1]!,
       sortTime:
@@ -115,17 +113,6 @@ export const DailyTeeTimes = ({
   useEffect(() => {
     setError(error?.message ?? null);
   }, [error]);
-
-  useEffect(() => {
-    const num = teeTimeData?.pages[teeTimeData?.pages?.length - 1]?.count;
-    if (!isLoading && isFetchedAfterMount) {
-      if (num !== undefined) {
-        updateCount(num);
-      } else {
-        updateCount(0);
-      }
-    }
-  }, [teeTimeData, isLoading, isFetchedAfterMount]);
 
   const allTeeTimes =
     teeTimeData?.pages[teeTimeData?.pages?.length - 1]?.results ?? [];
@@ -212,10 +199,12 @@ export const DailyTeeTimes = ({
           ref={overflowRef}
           onMouseDown={onMouseDown}
         >
-          {allTeeTimes?.map((i: CombinedObject, idx) => (
+          {allTeeTimes?.map((i: CombinedObject, idx: number) => (
             <TeeTime
               time={i.date}
               key={idx}
+              items={i}
+              index={idx}
               canChoosePlayer={i.availableSlots > 0}
               availableSlots={i.availableSlots}
               players={String(4 - i.availableSlots)}

@@ -18,6 +18,7 @@ import { CharitySelect } from "../input/charity-select";
 import { Input } from "../input/input";
 import styles from "./checkout.module.css";
 import type { NextAction } from "./hyper-switch";
+import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
 
 export const CheckoutForm = ({
   isBuyNowAuction,
@@ -28,6 +29,7 @@ export const CheckoutForm = ({
   listingId,
   nextAction,
   callingRef,
+  playerCount,
 }: {
   isBuyNowAuction: boolean;
   teeTimeId: string;
@@ -37,9 +39,11 @@ export const CheckoutForm = ({
   listingId: string;
   nextAction?: NextAction;
   callingRef?: boolean;
+  playerCount?: string | undefined;
 }) => {
   const MAX_CHARITY_AMOUNT = 1000;
   const { course } = useCourseContext();
+  const courseId = course?.id;
   const { user } = useUserContext();
   const auditLog = api.webhooks.auditLog.useMutation();
   const cancelHyperswitchPaymentById =
@@ -55,12 +59,16 @@ export const CheckoutForm = ({
       }
     );
 
+  const checkIfTeeTimeAvailableOnProvider =
+    api.teeBox.checkIfTeeTimeAvailableOnProvider.useMutation();
+
   const logAudit = async () => {
     await auditLog.mutateAsync({
       userId: user?.id ?? "",
       teeTimeId: teeTimeId,
       bookingId: "",
       listingId: listingId,
+      courseId,
       eventId: "TEE_TIME_PAY_NOW_CLICKED",
       json: `TEE_TIME_PAY_NOW_CLICKED`,
     });
@@ -188,31 +196,54 @@ export const CheckoutForm = ({
   });
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    googleAnalyticsEvent({
+      action: `PAY NOW CLICKED`,
+      category: "TEE TIME PURCHASE",
+      label: "User clicked on pay now to do payment",
+      value: "",
+    })
     e.preventDefault();
     void logAudit();
+    setIsLoading(true);
     if (listingId.length) {
       const isTeeTimeAvailable = await refetchCheckTeeTime();
       if (!isTeeTimeAvailable.data) {
         toast.error("Oops! Tee time is not available anymore");
+        setIsLoading(false);
         return;
       }
       console.log(isTeeTimeAvailable.data);
+    } else {
+      const resp = await checkIfTeeTimeAvailableOnProvider.mutateAsync({
+        teeTimeId,
+        golfersCount: Number(playerCount ?? 0),
+      });
+
+      if (!resp) {
+        toast.error("Oops! Tee time is not available anymore");
+        setIsLoading(false);
+        return;
+      }
     }
 
-    if (message === "Payment Successful") return;
+    if (message === "Payment Successful") {
+      setIsLoading(false);
+      return;
+    }
     e.preventDefault();
     if (
       selectedCharity &&
       (!selectedCharityAmount || selectedCharityAmount === 0)
     ) {
       setCharityAmountError("Charity amount cannot be empty or zero");
+      setIsLoading(false);
       return;
     }
     if (selectedCharityAmount && selectedCharityAmount > MAX_CHARITY_AMOUNT) {
+      setIsLoading(false);
       return;
     }
     setCharityAmountError("");
-    setIsLoading(true);
 
     const response = await hyper.confirmPayment({
       widgets,
@@ -282,8 +313,10 @@ export const CheckoutForm = ({
               `/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}&bookingId=${bookingResponse.bookingId}`
             );
           }
-        } else if (response.error) {
-          setMessage(response.error.message as string);
+        } else if (response.status === "failed") {
+          setMessage(
+            getErrorMessageById((response?.error_code ?? "") as string)
+          );
         } else {
           setMessage(
             getErrorMessageById((response?.error_code ?? "") as string)
@@ -367,8 +400,8 @@ export const CheckoutForm = ({
                   onChange={(e) => {
                     setCharityAmountError("");
                     const value = e.target.value
-                      .replace("$", "")
-                      .replaceAll(",", "");
+                      .replace(/\$/g, "")
+                      .replace(/,/g, "");
 
                     if (Number(value) < 0) return;
 
@@ -416,7 +449,7 @@ export const CheckoutForm = ({
         <div className="flex justify-between">
           <div>
             Subtotal
-            {isBuyNowAuction ? null : ` (1 item)`}
+            {/* {isBuyNowAuction ? null : ` (1 item)`} */}
           </div>
 
           <div>
@@ -428,7 +461,7 @@ export const CheckoutForm = ({
           </div>
         </div>
         <div className="flex justify-between">
-          <div>Taxes & Fees</div>
+          <div>Taxes & Others</div>
           <div>
             $
             {(
@@ -502,9 +535,7 @@ export const CheckoutForm = ({
           {message === "Payment Successful" ? (
             <span>Payment Successful</span>
           ) : (
-            <span className="!text-red">
-              An error occurred processing payment.
-            </span>
+            <span className="!text-red">{message}</span>
           )}
         </div>
       )}

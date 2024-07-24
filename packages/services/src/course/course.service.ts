@@ -72,6 +72,7 @@ export class CourseService extends DomainService {
         supportsOffers: courses.supportsOffers,
         supportsWatchlist: courses.supportsWatchlist,
         supportsPromocode: courses.supportsPromocode,
+        supportsWaitlist: courses.supportsWaitlist,
         buyerFee: courses.buyerFee,
         sellerFee: courses.sellerFee,
       })
@@ -214,7 +215,6 @@ export class CourseService extends DomainService {
       .select({
         id: assets.id,
         key: assets.key,
-        cdn: assets.cdn,
         extension: assets.extension,
       })
       .from(assets)
@@ -228,7 +228,6 @@ export class CourseService extends DomainService {
         id: assets.id,
         coursesId: assets.courseId,
         key: assets.key,
-        cdn: assets.cdn,
         extension: assets.extension,
         order: courseAssets.order,
         courseLogoId: courses.logoId,
@@ -247,7 +246,7 @@ export class CourseService extends DomainService {
       });
     return {
       logo: logo[0]
-        ? `https://${logo[0].cdn}/${logo[0].key}.${logo[0].extension}`
+        ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${logo[0].key}.${logo[0].extension}`
         : "/defaults/default-profile.webp",
       images: images
         // .filter((i) => i.coursesId === courseId && i.id !== i.courseLogoId)
@@ -256,7 +255,9 @@ export class CourseService extends DomainService {
           const orderB = b.order !== null ? b.order : Number.MAX_SAFE_INTEGER;
           return orderA - orderB;
         })
-        .map(({ key, cdn, extension }) => `https://${cdn}/${key}.${extension}`),
+        .map(
+          ({ key, extension }) => `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${key}.${extension}`
+        ),
     };
   };
 

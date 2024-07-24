@@ -2,13 +2,14 @@ import { type ReactNode } from "react";
 import "~/styles/globals.css";
 import { ssrGetEntityByDomain } from "@golf-district/api";
 import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Club } from "~/components/icons/club";
 import { GolfDistrict } from "~/components/icons/golf-district";
 import { Layout } from "~/components/layout";
 import { fontMapper } from "~/styles/fonts";
-import { getNICDetails } from "~/utils/ipUtility";
 import { type Metadata } from "next";
 import { headers } from "next/headers";
+import GoogleAnalytics from "./GoogleAnalytics";
 import Providers from "./providers";
 
 const title = "Golf District Platforms";
@@ -32,7 +33,7 @@ export const metadata: Metadata = {
   },
   metadataBase: new URL("https://vercel.pub"),
   icons: {
-    icon: "/favicon.png",
+    icon: "/favicon.ico",
   },
 };
 
@@ -91,13 +92,11 @@ export default async function RootLayout({
   const domainDecoded = decodeURIComponent(domain!);
 
   const entityData = await ssrGetEntityByDomain(domainDecoded, "");
-
-  const nicInfos = getNICDetails();
-  console.log("NIC Details");
-  console.log(nicInfos);
+  // const nicInfos = getNICDetails();
 
   return (
     <html lang="en" suppressHydrationWarning>
+      <GoogleAnalytics />
       <body
         className={`${
           fontMapper[entityData?.font ?? "font-inter"]
@@ -142,8 +141,9 @@ export default async function RootLayout({
         ) : (
           <Providers entityData={entityData}>
             <Layout>
-              <Analytics />
               {children}
+              <Analytics />
+              <SpeedInsights />
             </Layout>
           </Providers>
         )}

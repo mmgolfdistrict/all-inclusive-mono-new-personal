@@ -23,8 +23,14 @@ export class foreUp extends BaseProvider {
     endTime: string,
     date: string
   ): Promise<TeeTimeResponse[]> {
+    const { defaultPriceClassID } = JSON.parse(this.providerConfiguration ?? "{}");
     const endpoint = this.getBasePoint();
-    const url = `${endpoint}/courses/${courseId}/teesheets/${teesheetId}/teetimes?startTime=${startTime}&endTime=${endTime}&date=${date}`;
+    let url = "";
+    if (defaultPriceClassID) {
+      url = `${endpoint}/courses/${courseId}/teesheets/${teesheetId}/teetimes?startTime=${startTime}&endTime=${endTime}&date=${date}&priceClassId=${defaultPriceClassID}`;
+    } else {
+      url = `${endpoint}/courses/${courseId}/teesheets/${teesheetId}/teetimes?startTime=${startTime}&endTime=${endTime}&date=${date}`;
+    }
     const headers = this.getHeaders(token);
 
     console.log(`getTeeTimes - ${url}`);
@@ -78,11 +84,13 @@ export class foreUp extends BaseProvider {
     teesheetId: string,
     data: BookingCreationData
   ): Promise<BookingResponse> {
+    const { defaultBookingClassID } = JSON.parse(this.providerConfiguration ?? "{}");
     const { totalAmountPaid, ...bookingData } = data;
     const endpoint = this.getBasePoint();
     const url = `${endpoint}/courses/${courseId}/teesheets/${teesheetId}/bookings`;
     console.log(`createBooking - ${url}`);
 
+    bookingData.data.attributes.booking_class_id = defaultBookingClassID;
     const headers = this.getHeaders(token);
 
     const response = await fetch(url, {
@@ -102,14 +110,14 @@ export class foreUp extends BaseProvider {
 
     const booking: BookingResponse = await response.json();
 
-    await this.addSalesData(
-      totalAmountPaid,
-      bookingData.data.attributes.players,
-      courseId,
-      teesheetId,
-      booking.data.id,
-      token
-    );
+    // await this.addSalesData(
+    //   totalAmountPaid,
+    //   bookingData.data.attributes.players,
+    //   courseId,
+    //   teesheetId,
+    //   booking.data.id,
+    //   token
+    // );
     return booking;
   }
 
@@ -122,11 +130,15 @@ export class foreUp extends BaseProvider {
     slotId?: string
   ): Promise<BookingResponse> {
     const endpoint = this.getBasePoint();
+    const { defaultPriceClassID } = JSON.parse(this.providerConfiguration ?? "{}");
     // https://api.foreupsoftware.com/api_rest/index.php/courses/courseId/teesheets/teesheetId/bookings/bookingId/bookedPlayers/bookedPlayerId
-    const url = `${endpoint}/courses/${courseId}/teesheets/${teesheetId}/bookings/${bookingId}/bookedPlayers/${
-      slotId ? slotId : bookingId
-    }`;
+    const url = `${endpoint}/courses/${courseId}/teesheets/${teesheetId}/bookings/${bookingId}/bookedPlayers/${slotId ? slotId : bookingId
+      }`;
     const headers = this.getHeaders(token);
+
+    if (options) {
+      options.data.attributes.priceClassId = defaultPriceClassID;
+    }
 
     console.log(`updateTeeTime - ${url}`);
 
@@ -153,6 +165,7 @@ export class foreUp extends BaseProvider {
     courseId: string,
     customerData: CustomerCreationData
   ): Promise<CustomerData> {
+    const { defaultPriceClassID } = JSON.parse(this.providerConfiguration ?? "{}");
     customerData = customerData as ForeUpCustomerCreationData;
     // Fetch required fields for the course
     const requiredFieldsUrl = `${this.getBasePoint()}/courses/${courseId}/settings/customerFieldSettings`;
@@ -184,6 +197,7 @@ export class foreUp extends BaseProvider {
 
     console.log(`createCustomer - ${url}`);
 
+    customerData.attributes.price_class = defaultPriceClassID;
     const response = await fetch(url, {
       method: "POST",
       headers: this.getHeaders(token),
@@ -261,8 +275,7 @@ export class foreUp extends BaseProvider {
       });
       if (!checkInResponse.ok) {
         throw new Error(
-          `Error doing booking checkin for booking: ${bookingId}, status code: ${
-            checkInResponse.status
+          `Error doing booking checkin for booking: ${bookingId}, status code: ${checkInResponse.status
           }, status text: ${checkInResponse.statusText}, response: ${JSON.stringify(checkInResponse)}`
         );
       }
@@ -299,8 +312,7 @@ export class foreUp extends BaseProvider {
       });
       if (!addPaymentsResponse.ok) {
         throw new Error(
-          `Error adding payment to cart for booking: ${bookingId}, status code: ${
-            addPaymentsResponse.status
+          `Error adding payment to cart for booking: ${bookingId}, status code: ${addPaymentsResponse.status
           }, status text: ${addPaymentsResponse.statusText}, response: ${JSON.stringify(addPaymentsResponse)}`
         );
       }
@@ -309,8 +321,7 @@ export class foreUp extends BaseProvider {
       const completeCartUrl = `${endpoint}/courses/${courseId}/carts/${cartData.data.id}`;
       this.logger.info(`Complete cart url - ${completeCartUrl}`);
       this.logger.info(
-        `Completing cart for provider booking: ${bookingId}, cart id: ${
-          cartData.data.id
+        `Completing cart for provider booking: ${bookingId}, cart id: ${cartData.data.id
         }, with paymentData: ${JSON.stringify(paymentData)}`
       );
       const completeCartResponse = await fetch(completeCartUrl, {
@@ -328,8 +339,7 @@ export class foreUp extends BaseProvider {
       });
       if (!completeCartResponse.ok) {
         throw new Error(
-          `Error completing cart for booking: ${bookingId}, status code: ${
-            completeCartResponse.status
+          `Error completing cart for booking: ${bookingId}, status code: ${completeCartResponse.status
           }, status text: ${completeCartResponse.statusText}, response: ${JSON.stringify(
             completeCartResponse
           )}`

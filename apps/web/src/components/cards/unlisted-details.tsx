@@ -15,7 +15,6 @@ import { Avatar } from "../avatar";
 import { FilledButton } from "../buttons/filled-button";
 import { OutlineButton } from "../buttons/outline-button";
 import { Check } from "../icons/check";
-import { GolfCart } from "../icons/golf-cart";
 import { Heart } from "../icons/heart";
 import { Players } from "../icons/players";
 import { Share } from "../icons/share";
@@ -173,12 +172,12 @@ export const UnlistedDetails = ({
               {data?.soldByName}
             </Link>
           </div>
-          <div className="flex items-center gap-4">
+          {/* <div className="flex items-center gap-4">
             {data?.includesCart ? <GolfCart className="w-[25px]" /> : null}
             <div>
               {data?.includesCart ? "Includes" : "Doesn't include"} cart
             </div>
-          </div>
+          </div> */}
           <div className="flex items-center gap-4">
             <Players className="w-[25px]" />
             <ChoosePlayers

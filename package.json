@@ -14,7 +14,7 @@
   ],
   "scripts": {
     "build": "turbo run build",
-    "start":"npm run dev",
+    "start": "npm run dev",
     "clean:workspaces": "turbo clean",
     "compile": "turbo run compile",
     "dev": "dotenv -- turbo dev --parallel --filter=golf-district-platforms",
@@ -36,6 +36,7 @@
     ]
   },
   "dependencies": {
+    "@juspay-tech/react-hyper-js": "^1.0.2",
     "dotenv-cli": "^7.3.0",
     "prettier": "^2.8.8",
     "turbo": "^1.12.4",

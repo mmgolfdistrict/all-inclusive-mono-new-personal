@@ -1,13 +1,16 @@
 "use client";
 
+import { LoadingContainer } from "~/app/[course]/loader";
 import { useAppContext } from "~/contexts/AppContext";
 import { api } from "~/utils/api";
+import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { Course } from "../cards/course";
 
 export const Courses = () => {
   const { entity } = useAppContext();
   const entityId = entity?.id;
+  const router = useRouter();
 
   const { data, isLoading, isError, error } =
     api.entity.getCoursesByEntityId.useQuery(
@@ -15,15 +18,26 @@ export const Courses = () => {
       { enabled: entityId !== undefined }
     );
 
+  if (entity?.redirectToCourseFlag && data?.length) {
+    router.push(`/${data[0]?.id}`);
+  }
+
   const gridClass = useMemo(() => {
     if (data?.length === 1) return "grid-cols-1";
     if (data?.length === 2) return "grid-cols-2";
     return "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5";
   }, [data]);
-
+  console.log(isLoading, entity);
   return (
     <>
-      {isLoading ? (
+      {entity?.redirectToCourseFlag ? (
+        <LoadingContainer
+          isLoading={true}
+          loadingText="Please wait while we redirect to your course"
+        >
+          <div></div>
+        </LoadingContainer>
+      ) : isLoading ? (
         <div className="mx-auto grid grid-cols-1 justify-center gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
           {Array(3)
             .fill(null)

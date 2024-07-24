@@ -50,6 +50,7 @@ export type EntityType = {
   updatedAt?: Date;
   updatedById?: string | null;
   logo: string;
+  redirectToCourseFlag?: boolean | undefined;
 };
 
 export type CourseType = {
@@ -84,10 +85,11 @@ export type FullCourseType = {
   highestPrimarySaleTeeTime: number;
   lowestPrimarySaleTeeTime: number;
   supportedCharities?: SupportedCharity[];
-  allowAuctions: number | null;
+  allowAuctions: boolean;
   supportsOffers?: boolean;
   supportsWatchlist?: boolean;
   supportsPromocode?: boolean;
+  supportsWaitlist?: boolean;
   sellerFee?: number;
   buyerFee?: number;
 };

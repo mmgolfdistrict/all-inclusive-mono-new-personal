@@ -19,12 +19,14 @@ export const NavItem = ({
     <Link
       href={href}
       {...rest}
-      className={`flex flex-col md:flex-row justify-center items-center gap-1 ${
+      className={`flex flex-col md:flex-row justify-between md:justify-center items-center gap-1 ${
         className ?? ""
       }`}
     >
       {icon ? <div>{icon}</div> : null}
-      <div className="text-[12px] md:text-sm">{text}</div>
+      <div>
+        <div className="text-[12px] md:text-sm">{text}</div>
+      </div>
     </Link>
   );
 };

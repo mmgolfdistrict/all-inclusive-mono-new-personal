@@ -12,6 +12,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { type ReactNode } from "react";
 import { Badge } from "../badge";
 import { FilledButton } from "../buttons/filled-button";
+import { Cashouts } from "./cashouts";
 import { MyListedTeeTimes } from "./my-listed-tee-times";
 import { OffersReceived } from "./offers-received";
 import { OffersSent } from "./offers-sent";
@@ -80,6 +81,7 @@ export const TableView = () => {
         <TabTrigger value={"transaction-history"}>
           Transaction History
         </TabTrigger>
+        <TabTrigger value={"cashouts"}>Cash out History</TabTrigger>
       </Tabs.List>
       {!session ? (
         status == "loading" ? null : (
@@ -116,6 +118,9 @@ export const TableView = () => {
           </Tabs.Content>
           <Tabs.Content value="transaction-history" className="bg-white p-2">
             <TransactionHistory />
+          </Tabs.Content>
+          <Tabs.Content value="cashouts" className="bg-white p-2">
+            <Cashouts />
           </Tabs.Content>
         </>
       )}

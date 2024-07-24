@@ -106,7 +106,7 @@ export const CounterofferSuccess = ({
             <div className="flex flex-col gap-4 px-4 pb-6">
               <div className="flex justify-between">
                 <div className="font-[300] text-primary-gray">
-                  Tee Time Price
+                  Your Listing Price
                 </div>
                 <div className="text-secondary-black">{"$215.99"}</div>
               </div>
@@ -115,13 +115,15 @@ export const CounterofferSuccess = ({
                   Service Fee{" "}
                   <Tooltip
                     trigger={<Info className="h-[14px] w-[14px]" />}
-                    content="Service fee description."
+                    content="This fee ensures ongoing enhancements to our service, ultimately offering golfers the best access to booking tee times"
                   />
                 </div>
                 <div className="text-secondary-black">${"45.00"}</div>
               </div>
               <div className="flex justify-between">
-                <div className="font-[300] text-primary-gray">Total Payout</div>
+                <div className="font-[300] text-primary-gray">
+                  You Receive after Sale
+                </div>
                 <div className="text-secondary-black">{"$692.97"}</div>
               </div>
               <div className="text-center text-[14px] font-[300] text-primary-gray">

@@ -36,6 +36,10 @@ export default function ForgotPassword() {
     setValue("redirectHref", cleanedHref);
   }, []);
 
+  useEffect(() => {
+    recaptchaRef.current?.execute();
+  }, []);
+
   const onSubmit: SubmitHandler<ForgotPasswordSchemaType> = async (data) => {
     if (process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && !data.ReCAPTCHA) {
       toast.info("Please verify you are not a robot.");
@@ -72,7 +76,7 @@ export default function ForgotPassword() {
       <section className="mx-auto flex w-full flex-col gap-2 bg-white p-5 sm:max-w-[500px] sm:rounded-xl sm:p-6">
         {forgotFn.isSuccess ? (
           <div className="text-[16px] text-center fade-in text-primary-gray">
-            If your email exists in a GOLFdistrict account with the email
+            If your email exists in a Golf District account with the email
             provided then you should receive a password reset link. Please open
             the email and click the reset button.
           </div>
@@ -97,7 +101,11 @@ export default function ForgotPassword() {
               />
               {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (
                 <ReCAPTCHA
-                  size="normal"
+                  size={
+                    process.env.NEXT_PUBLIC_RECAPTCHA_IS_INVISIBLE
+                      ? "invisible"
+                      : "normal"
+                  }
                   sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ?? ""}
                   onChange={onReCAPTCHAChange}
                   ref={recaptchaRef}

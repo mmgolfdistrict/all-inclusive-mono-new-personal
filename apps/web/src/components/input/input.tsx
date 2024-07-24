@@ -1,4 +1,6 @@
 import { type InputHTMLAttributes } from "react";
+import { Info } from "../icons/info";
+import { Tooltip } from "../tooltip";
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
@@ -6,6 +8,8 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   name: string;
   className?: string;
   error?: string;
+  showInfoTooltip?: boolean;
+  content?: string;
 }
 
 export const Input = ({
@@ -14,15 +18,25 @@ export const Input = ({
   name,
   register,
   error,
+  showInfoTooltip = false,
+  content,
   ...props
 }: InputProps) => {
   return (
     <div className={`flex flex-col gap-1 ${className ?? ""}`}>
-      <label className="text-[14px] text-primary-gray" htmlFor={props.id}>
-        {label}
-      </label>
+      <div className="flex gap-1">
+        <label className="text-[14px] text-primary-gray" htmlFor={props.id}>
+          {label}
+        </label>
+        {showInfoTooltip && (
+          <Tooltip
+            trigger={<Info className="h-[20px] w-[20px]" />}
+            content={content}
+          />
+        )}
+      </div>
       <input
-        className="rounded-lg bg-secondary-white px-4 py-3 text-[14px] text-gray-500 outline-none"
+        className={`rounded-lg bg-secondary-white px-4 py-3 text-[14px] text-gray-500 outline-none text-ellipsis`}
         // @ts-ignore
         {...register(name)}
         {...props}

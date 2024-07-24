@@ -12,6 +12,7 @@ import { Auction } from "../icons/auction";
 import { Calendar } from "../icons/calendar";
 import { Close } from "../icons/close";
 import { Marketplace } from "../icons/marketplace";
+import { Megaphone } from "../icons/megaphone";
 import { MyOffers } from "../icons/my-offers";
 import { Search } from "../icons/search";
 import { PoweredBy } from "../powered-by";
@@ -56,37 +57,49 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
   });
 
   const auditLog = api.webhooks.auditLog.useMutation();
-  const logAudit = async () => {
-    await auditLog.mutateAsync({
-      userId: user?.id ?? "",
-      teeTimeId: "",
-      bookingId: "",
-      listingId: "",
-      eventId: "USER_LOGGED_OUT",
-      json: `user logged out `,
-    });
+
+  const logAudit = (func: () => any) => {
+    auditLog
+      .mutateAsync({
+        userId: user?.id ?? "",
+        teeTimeId: "",
+        bookingId: "",
+        listingId: "",
+        courseId,
+        eventId: "USER_LOGGED_OUT",
+        json: `user logged out `,
+      })
+      .then((res) => {
+        if (res) {
+          func();
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   };
 
-  const logOutUser = async () => {
-    void logAudit();
-    localStorage.clear();
-    sessionStorage.clear();
-    session.data = null;
-    session.status = "unauthenticated";
-    await session.update(null);
-    if (PathsThatNeedRedirectOnLogout.some((i) => pathname.includes(i))) {
+  const logOutUser = () => {
+    logAudit(async () => {
+      localStorage.clear();
+      sessionStorage.clear();
+      session.data = null;
+      session.status = "unauthenticated";
+      await session.update(null);
+      if (PathsThatNeedRedirectOnLogout.some((i) => pathname.includes(i))) {
+        const data = await signOut({
+          callbackUrl: `/${courseId}`,
+          redirect: false,
+        });
+        router.push(data.url);
+        return;
+      }
       const data = await signOut({
-        callbackUrl: `/${courseId}`,
+        callbackUrl: pathname,
         redirect: false,
       });
       router.push(data.url);
-      return;
-    }
-    const data = await signOut({
-      callbackUrl: pathname,
-      redirect: false,
     });
-    router.push(data.url);
   };
   return (
     <>
@@ -133,7 +146,18 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
                 data-testid="tee-time-course-id"
                 data-test={courseId}
               />
-              {course?.allowAuctions === 1 && (
+              {course?.supportsWaitlist ? (
+                <NavItem
+                  href={`/${courseId}/notify-me`}
+                  text="Notify Me"
+                  icon={<Megaphone className="w-[16px]" />}
+                  className="border-t border-stroke-secondary p-2 md:p-4"
+                  onClick={toggleSidebar}
+                  data-testid="notify-me-id"
+                  data-test={courseId}
+                />
+              ) : null}
+              {course?.allowAuctions ? (
                 <NavItem
                   href={`/${courseId}/auctions`}
                   text="Auctions"
@@ -143,7 +167,7 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
                   data-testid="auction-id"
                   data-test={courseId}
                 />
-              )}
+              ) : null}
               <NavItem
                 href={`/${courseId}/my-tee-box`}
                 text="Sell"
@@ -240,7 +264,7 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
                   href="/"
                   text="Log Out"
                   className="border-b border-t border-stroke-secondary p-4"
-                  onClick={() => void logOutUser()}
+                  onClick={logOutUser}
                   data-testid="logout-id"
                 />
               </div>

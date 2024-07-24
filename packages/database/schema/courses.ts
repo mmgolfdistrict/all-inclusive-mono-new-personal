@@ -3,15 +3,14 @@ import { relations, sql } from "drizzle-orm";
 import { boolean, datetime, double, index, int, text, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 import { assets } from "./assets";
-import { bookings } from "./bookings";
 import { courseAssets } from "./courseAssets";
 import { coursePromoCodeLink } from "./coursePromoCodeLink";
 import { entities } from "./entities";
 import { favorites } from "./favorites";
-import { lists } from "./lists";
 import { providers } from "./providers";
 import { teeTimes } from "./teeTimes";
 import { transfers } from "./transfers";
+import { userWaitlists } from "./userWaitlists";
 
 export const courses = mySqlTable(
   "course",
@@ -37,11 +36,12 @@ export const courses = mySqlTable(
     timezoneCorrection: int("timezoneCorrection").default(0).notNull(),
     supportCharity: boolean("supportsCharity").default(false).notNull(),
     supportSensibleWeather: boolean("supportsWeatherGuarantee").default(false).notNull(),
-    allowAuctions: int("supportsAuctions").default(0),
+    allowAuctions: boolean("supportsAuctions").default(false).notNull(),
     isDeleted: boolean("isDeleted").default(false).notNull(),
-    supportsOffers: boolean("supportsOffers").default(false),
-    supportsWatchlist: boolean("supportsWatchlist").default(false),
-    supportsPromocode: boolean("supportsPromocode").default(false),
+    supportsOffers: boolean("supportsOffers").default(false).notNull(),
+    supportsWatchlist: boolean("supportsWatchlist").default(false).notNull(),
+    supportsPromocode: boolean("supportsPromocode").default(false).notNull(),
+    supportsWaitlist: boolean("supportsWaitlist").default(true).notNull(),
     buyerFee: int("buyerFee").default(1).notNull(),
     sellerFee: int("sellerFee").default(1).notNull(),
     lastUpdatedDateTime: datetime("lastUpdatedDateTime", { mode: "string", fsp: 3 })
@@ -64,10 +64,8 @@ export const courses = mySqlTable(
 export const coursesRelations = relations(courses, ({ one, many }) => ({
   coursesAsset: many(courseAssets),
   teeTime: many(teeTimes),
-  list: many(lists),
   transfer: many(transfers),
   favorite: many(favorites),
-  booking: many(bookings),
   coursePromoCodeLink: many(coursePromoCodeLink),
   entity: one(entities, {
     fields: [courses.entityId],
@@ -81,6 +79,7 @@ export const coursesRelations = relations(courses, ({ one, many }) => ({
     fields: [courses.logoId],
     references: [assets.id],
   }),
+  userWaitlists: many(userWaitlists),
 }));
 
 export type SelectCourses = InferSelectModel<typeof courses>;

@@ -1,6 +1,6 @@
 "use client";
 
-import { signIn } from "@golf-district/auth/nextjs-exports";
+import { signIn, useSession } from "@golf-district/auth/nextjs-exports";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FilledButton } from "~/components/buttons/filled-button";
 import { IconButton } from "~/components/buttons/icon-button";
@@ -22,7 +22,7 @@ import { createRef, useEffect, useState } from "react";
 import ReCAPTCHA from "react-google-recaptcha";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
-import { generateUsername } from "unique-username-generator";
+import { LoadingContainer } from "../loader";
 
 export default function Login() {
   const recaptchaRef = createRef<ReCAPTCHA>();
@@ -32,7 +32,64 @@ export default function Login() {
   const loginError = searchParams.get("error");
   const { course } = useCourseContext();
   const [showPassword, setShowPassword] = useState<boolean>(false);
-  const updateUser = api.user.updateUser.useMutation();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const auditLog = api.webhooks.auditLog.useMutation();
+  const { data: sessionData, status } = useSession();
+
+  const event = ({ action, category, label, value }: any) => {
+    (window as any).gtag("event", action, {
+      event_category: category,
+      event_label: label,
+      value: value,
+    });
+  };
+
+  console.log(
+    `process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY = [${process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}]`
+  );
+  console.log(
+    `process.env.RECAPTCHA_SECRET_KEY = [${process.env.RECAPTCHA_SECRET_KEY}]`
+  );
+  console.log(
+    `process.env.NEXT_PUBLIC_RECAPTCHA_IS_INVISIBLE = [${process.env.NEXT_PUBLIC_RECAPTCHA_IS_INVISIBLE}]`
+  );
+
+  useEffect(() => {
+    if (sessionData?.user?.id && course?.id && status === "authenticated") {
+      logAudit(sessionData.user.id, course.id, () => {
+        window.location.reload();
+        window.location.href = `${window.location.origin}${
+          GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+            ? prevPath?.path
+              ? prevPath.path
+              : "/"
+            : "/"
+        }`;
+      });
+    }
+  }, [sessionData, course, status]);
+
+  const logAudit = (userId: string, courseId: string, func: () => void) => {
+    auditLog
+      .mutateAsync({
+        userId: userId,
+        teeTimeId: "",
+        bookingId: "",
+        listingId: "",
+        courseId: courseId,
+        eventId: "USER_LOGGED_IN",
+        json: `user logged in `,
+      })
+      .then((res) => {
+        if (res) {
+          func();
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
 
   useEffect(() => {
     if (loginError === "CallbackRouteError") {
@@ -58,7 +115,18 @@ export default function Login() {
     !prevPath?.path?.includes("verify-email") &&
     !prevPath?.path?.includes("register");
 
+  useEffect(() => {
+    recaptchaRef.current?.execute();
+  }, []);
+
   const onSubmit: SubmitHandler<LoginSchemaType> = async (data) => {
+    setIsLoading(true);
+    event({
+      action: "SIGNIN_USING_CREDENTIALS",
+      category: "SIGNIN",
+      label: "Sign in using credentials",
+      value: "",
+    });
     try {
       const callbackURL = `${window.location.origin}${
         GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
@@ -68,8 +136,8 @@ export default function Login() {
           : "/"
       }`;
       const res = await signIn("credentials", {
-        callbackUrl: callbackURL,
-        redirect: true,
+        // callbackUrl: callbackURL,
+        redirect: false,
         email: data.email,
         password: data.password,
         ReCAPTCHA: process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY
@@ -79,15 +147,6 @@ export default function Login() {
       if (res?.error) {
         toast.error("The email or password you entered is incorrect.");
         setValue("password", "");
-      } else if (!res?.error && res?.ok) {
-        window.location.reload();
-        window.location.href = `${window.location.origin}${
-          GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
-            ? prevPath?.path
-              ? prevPath.path
-              : "/"
-            : "/"
-        }`;
       }
     } catch (error) {
       console.log(error);
@@ -95,14 +154,9 @@ export default function Login() {
         (error as Error)?.message ??
           "An error occurred logging in, try another option."
       );
+    } finally {
+      setIsLoading(false);
     }
-  };
-
-  const updateHandle = async () => {
-    const uName = generateUsername(undefined, undefined, 6);
-    await updateUser.mutateAsync({
-      handle: uName,
-    });
   };
 
   useEffect(() => {
@@ -136,7 +190,6 @@ export default function Login() {
       }`,
       redirect: true,
     });
-    await updateHandle();
   };
 
   const appleSignIn = async () => {
@@ -150,22 +203,26 @@ export default function Login() {
       }`,
       redirect: true,
     });
-    await updateHandle();
   };
 
   const googleSignIn = async () => {
+    event({
+      action: "SIGNIN_USING_GOOGLE",
+      category: "SIGNIN",
+      label: "Sign in using google",
+      value: "",
+    });
     try {
       await signIn("google", {
-        callbackUrl: `${window.location.origin}${
-          GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
-            ? prevPath?.path
-              ? prevPath.path
-              : "/"
-            : "/"
-        }`,
-        redirect: true,
+        // callbackUrl: `${window.location.origin}${
+        //   GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+        //     ? prevPath?.path
+        //       ? prevPath.path
+        //       : "/"
+        //     : "/"
+        // }`,
+        redirect: false,
       });
-      await updateHandle();
     } catch (error) {
       console.log(error);
     }
@@ -178,10 +235,18 @@ export default function Login() {
 
   return (
     <main className="bg-secondary-white py-4 md:py-6">
+      <LoadingContainer isLoading={isLoading}>
+        <div></div>
+      </LoadingContainer>
       <h1 className="pb-4 text-center text-[24px] md:pb-6 md:pt-8 md:text-[32px]">
         Login
       </h1>
       <section className="mx-auto flex w-full flex-col gap-2 bg-white p-5 sm:max-w-[500px] sm:rounded-xl sm:p-6">
+        <p>
+          First time users of Golf District need to create a new account. Simply
+          use Google to login quickly, or select sign up if you prefer to use
+          another email.
+        </p>
         {process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ? (
           <div className="w-full rounded-lg shadow-outline">
             <SquareButton
@@ -267,7 +332,11 @@ export default function Login() {
           </Link>
           {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (
             <ReCAPTCHA
-              size="normal"
+              size={
+                process.env.NEXT_PUBLIC_RECAPTCHA_IS_INVISIBLE
+                  ? "invisible"
+                  : "normal"
+              }
               sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ?? ""}
               onChange={onReCAPTCHAChange}
               ref={recaptchaRef}

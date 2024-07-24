@@ -41,7 +41,7 @@ const createICS = (event: Event): string => {
     DTSTART:${convertToUTCString(`${event.startDate}`)}
     DTEND:${convertToUTCString(`${event.startDate}`, true)}
     SUMMARY:Golf Reservation at ${event.name}
-    LOCATION:${getTimeFromString(event.playTime ?? "")} At ${event.address}
+    LOCATION:${event.playTime} At ${event.address}
     DESCRIPTION: GOLFdistrict Reservation : ${event.reservationId} , Course Reservation : ${
     event.courseReservation
   },  Number of Players :  ${event.numberOfPlayer}

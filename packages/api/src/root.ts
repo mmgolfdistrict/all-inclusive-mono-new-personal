@@ -15,8 +15,10 @@ import { profanityRouter } from "./routers/profanity";
 import { registerRouter } from "./routers/register";
 import { searchRouter } from "./routers/search";
 import { sensibleRouter } from "./routers/sensible";
+import { systemNotificationRouter } from "./routers/systemNotification";
 import { uploadRouter } from "./routers/upload";
 import { userRouter } from "./routers/user";
+import { userWaitlistRouter } from "./routers/userWaitlist";
 import { watchlistRouter } from "./routers/watchlist";
 import { weatherRouter } from "./routers/weather";
 import { webhookRouter } from "./routers/webhooks";
@@ -45,6 +47,8 @@ export const appRouter = createTRPCRouter({
   cashOut: cashOutRouter,
   clubprophet: clubProphetRouter,
   profanity: profanityRouter,
+  userWaitlist: userWaitlistRouter,
+  systemNotification: systemNotificationRouter,
 });
 
 export type AppRouter = typeof appRouter;

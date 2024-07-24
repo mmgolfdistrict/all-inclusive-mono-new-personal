@@ -126,7 +126,7 @@ export const ManageOwnedTeeTime = ({
   };
 
   const handleMinimumOfferPrice = (e: ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace("$", "").replaceAll(",", "");
+    const value = e.target.value.replace(/[$,]/g, "");
 
     const decimals = value.split(".")[1];
     if (decimals && decimals?.length > 2) return;
@@ -520,7 +520,7 @@ export const ManageOwnedTeeTime = ({
                 <>
                   <div className="flex justify-between">
                     <div className="font-[300] text-primary-gray">
-                      Tee Time Price
+                      Your Listing Price
                     </div>
                     <div className="text-secondary-black">
                       {formatMoney(minimumOfferPrice * friends.length)}
@@ -531,7 +531,7 @@ export const ManageOwnedTeeTime = ({
                       Service Fee{" "}
                       <Tooltip
                         trigger={<Info className="h-[14px] w-[14px]" />}
-                        content="Service fee description."
+                        content="This fee ensures ongoing enhancements to our service, ultimately offering golfers the best access to booking tee times"
                       />
                     </div>
                     <div className="text-secondary-black">
@@ -540,7 +540,7 @@ export const ManageOwnedTeeTime = ({
                   </div>
                   <div className="flex justify-between">
                     <div className="font-[300] text-primary-gray">
-                      Total Payout
+                      You Receive after Sale
                     </div>
                     <div className="text-secondary-black">
                       {formatMoney(totalPayout)}
@@ -624,7 +624,7 @@ const TeeTimeItem = ({
         <div className="flex text-[14px] font-[300]">
           <div className="w-[55px]" />
           <div className="text-prmiary-gray">
-            Rain protection purchased for{" "}
+            Weather guarantee purchased for{" "}
             <span className="font-semibold text-secondary-black">
               {formatMoney(sensiblePurchasedFor / 100)}
             </span>

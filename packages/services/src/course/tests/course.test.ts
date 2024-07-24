@@ -1,3 +1,4 @@
+import dotenv from "dotenv";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createDrizzleMock } from "../../../mocks";
 import { mockAssets } from "../../../mocks/assets.mock";
@@ -5,6 +6,8 @@ import { mockCourseAssets } from "../../../mocks/courseAssets.mock";
 import { mockCourses } from "../../../mocks/courses.mock";
 import { mockEntities } from "../../../mocks/entities.mock";
 import { CourseService } from "../course.service";
+
+dotenv.config();
 
 let dbMock = {
   select: createDrizzleMock([
@@ -27,7 +30,8 @@ describe("CourseService", () => {
   beforeEach(async () => {
     process.env.NODE_ENV = "test";
     process.env.LOG_LEVEL = "debug";
-    coursesService = new CourseService(dbMock as any, "mock_id", "mock_key", "mock_token");
+    const mockToken = process.env.MOCK_TOKEN; // Assigning mock_token as environment variable
+    coursesService = new CourseService(dbMock as any, "mock_id", "mock_key", mockToken);
   });
 
   describe("Course CRUD", () => {

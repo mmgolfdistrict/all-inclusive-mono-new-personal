@@ -14,11 +14,11 @@ import { Avatar } from "../avatar";
 import { FilledButton } from "../buttons/filled-button";
 import { OutlineButton } from "../buttons/outline-button";
 import { Check } from "../icons/check";
-import { GolfCart } from "../icons/golf-cart";
 import { Heart } from "../icons/heart";
 import { Players } from "../icons/players";
 import { Share } from "../icons/share";
 import { ChoosePlayers } from "../input/choose-players";
+import { Tooltip } from "../tooltip";
 
 const PlayersOptions = ["1", "2", "3", "4"];
 
@@ -137,16 +137,19 @@ export const TeeTimeDetails = ({
       ) : (
         <div className="flex flex-col gap-4  px-4 pb-2 text-[14px] md:px-6 md:pb-3">
           <div className="flex items-center gap-1">
-            <Avatar src={data?.soldByImage} />
-            <div>Sold by</div>
-            <div>{data?.soldByName}</div>
+            <Tooltip
+              trigger={<Avatar src={data?.soldByImage} />}
+              content={"Sold by " + data?.soldByName}
+            />
+            {/* <div>Sold by</div>
+            <div>{data?.soldByName}</div> */}
           </div>
-          <div className="flex items-center gap-4">
+          {/* <div className="flex items-center gap-4">
             {data?.includesCart ? <GolfCart className="w-[25px]" /> : null}
             <div>
               {data?.includesCart ? "Includes" : "Doesn't include"} cart
             </div>
-          </div>
+          </div> */}
           <div className="flex items-center gap-4">
             <Players className="w-[25px]" />
             <ChoosePlayers

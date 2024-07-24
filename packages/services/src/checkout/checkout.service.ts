@@ -293,6 +293,9 @@ export class CheckoutService {
   updateCheckoutSession = async (userId: string, customerCartData: CustomerCart, cartId: string) => {
     const { paymentId, ...customerCart } = customerCartData;
 
+    const errors = await this.validateCartItems(customerCartData);
+    console.log("errors ", JSON.stringify(errors));
+
     const total = customerCart.cart
       .filter(({ product_data }) => product_data.metadata.type !== "markup")
       .reduce((acc, item) => {
@@ -470,6 +473,7 @@ export class CheckoutService {
         // entityId: teeTimes.entityId,
         entityId: courses.entityId,
         date: teeTimes.date,
+        providerDate: teeTimes.providerDate,
         providerCourseId: providerCourseLink.providerCourseId,
         providerTeeSheetId: providerCourseLink.providerTeeSheetId,
         providerCourseConfiguration: providerCourseLink.providerCourseConfiguration,
@@ -506,10 +510,14 @@ export class CheckoutService {
     const { provider, token } = await this.providerService.getProviderAndKey(
       teeTime.internalId!,
       teeTime.courseId,
-      teeTime.providerCourseConfiguration
+      teeTime.providerCourseConfiguration!
     );
 
-    const [formattedDate] = teeTime.date.split(" ");
+    // const [formattedDate] = teeTime.date.split(" ");
+    const [formattedDateUTC] = teeTime.date.split(" ");
+    const [formattedDate] = teeTime.providerDate.split("T");
+    console.log(`formattedDateUTC: ${formattedDateUTC}`);
+    console.log(`formattedDate: ${formattedDate}`);
 
     if (provider.providerId === "club-prophet") {
       await this.clubProphetWebhook
@@ -527,9 +535,11 @@ export class CheckoutService {
         teeTime.providerTeeSheetId,
         provider,
         token,
-        teeTime.time
+        teeTime.time,
+        teeTime.id
       );
     }
+    console.log("teeTime", item.product_data);
     const stillAvailable = await this.database
       .select({ id: teeTimes.id })
       .from(teeTimes)
@@ -548,7 +558,7 @@ export class CheckoutService {
         errorType: CartValidationErrors.TEE_TIME_NOT_AVAILABLE,
         product_id: item.id,
       });
-      throw new Error("Expected Tee time spots may not be available anymore");
+      throw new Error("Expected Tee time spots may not be available anymore. Please select another time.");
     }
     return errors;
   };

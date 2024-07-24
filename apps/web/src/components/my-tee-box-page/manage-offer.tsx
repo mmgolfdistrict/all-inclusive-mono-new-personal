@@ -63,25 +63,33 @@ export const ManageOffer = ({
   }, [isManageOfferOpen]);
 
   const handleFocus = () => {
-    if (!listingPrice) setListingPrice(0);
+    if (!listingPrice) {
+      setListingPrice(0);
+    }
   };
 
   const handleBlur = () => {
-    if (!listingPrice) setListingPrice(0);
+    if (!listingPrice) {
+      setListingPrice(0);
+    }
   };
 
   const handleListingPrice = (e: ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace("$", "").replaceAll(",", "");
+    const value = e.target.value.replace(/[$,]/g, "");
 
     const decimals = value.split(".")[1];
-    if (decimals && decimals?.length > 2) return;
+    if (decimals && decimals.length > 2) {
+      return;
+    }
 
     const strippedLeadingZeros = value.replace(/^0+/, "");
     setListingPrice(Number(strippedLeadingZeros));
   };
 
   const totalPayout = useMemo(() => {
-    if (!listingPrice) return 0;
+    if (!listingPrice) {
+      return 0;
+    }
     return Math.abs(listingPrice * parseInt(players) - 45);
   }, [listingPrice, players]);
 
@@ -200,7 +208,7 @@ export const ManageOffer = ({
             <div className="flex flex-col gap-4 px-4 pb-6">
               <div className="flex justify-between">
                 <div className="font-[300] text-primary-gray">
-                  Tee Time Price
+                  Your Listing Price
                 </div>
                 <div className="text-secondary-black">
                   {formatMoney(listingPrice)}

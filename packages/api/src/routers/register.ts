@@ -12,7 +12,13 @@ export const registerRouter = createTRPCRouter({
       lastName: input.lastName,
       handle: input.username,
       phoneNumber: input.phoneNumber,
-      location: input.location,
+      // location: input.location,
+      address1: input.address1,
+      // address2: input.address2,
+      state: input.state,
+      city: input.city,
+      zipcode: input.zipcode,
+      country: input.country,
       redirectHref: input.redirectHref,
       ReCAPTCHA: input.ReCAPTCHA,
     };
@@ -27,11 +33,15 @@ export const registerRouter = createTRPCRouter({
         userId: z.string(),
         token: z.string(),
         courseId: z.string().optional(),
+        redirectHref: z.string(),
       })
     )
     .mutation(async ({ input, ctx }) => {
       return await ctx.serviceFactory
         .getUserService()
-        .verifyUserEmail(input?.courseId, input.userId, input.token);
+        .verifyUserEmail(input?.courseId, input.userId, input.token, input.redirectHref);
     }),
+  generateUsername: publicProcedureWithCaptcha.input(z.number()).query(async ({ input, ctx }) => {
+    return await ctx.serviceFactory.getUserService().generateUsername(input);
+  }),
 });

@@ -65,7 +65,6 @@ export class AuthService extends CacheService {
         asset: {
           assetId: assets.id,
           assetKey: assets.key,
-          assetCdn: assets.cdn,
           assetExtension: assets.extension,
         },
       })
@@ -138,7 +137,6 @@ export class AuthService extends CacheService {
     } else {
       profilePicture = assetToURL({
         key: data.asset.assetKey,
-        cdn: data.asset.assetCdn,
         extension: data.asset.assetExtension,
       });
     }
