@@ -575,7 +575,18 @@ export class SearchService {
     const formattedDate = parsedDate.format("YYYY-MM-DDTHH:mm:ss");
     return formattedDate;
   }
+  sortDates = (dateArray: string[]) => {
+    // Convert date strings to Date objects
+    const dateObjects: Date[] = dateArray.map((dateStr) => new Date(dateStr));
 
+    // Sort Date objects
+    dateObjects.sort((a, b) => a.getTime() - b.getTime());
+
+    // Convert Date objects back to strings in the same format
+    const sortedDateStrings: string[] = dateObjects.map((dateObj) => dateObj.toUTCString());
+
+    return sortedDateStrings;
+  };
   async checkTeeTimesAvailabilityForDateRange({
     dates,
     courseId,
@@ -680,7 +691,7 @@ export class SearchService {
     const uniqueArrayfirstHandAndSecondHandResultDates = Array.from(
       uniqueSetfirstHandAndSecondHandResultDates
     );
-    return uniqueArrayfirstHandAndSecondHandResultDates;
+    return this.sortDates(uniqueArrayfirstHandAndSecondHandResultDates);
   }
   getTeeTimesPriceWithRange = async (courseId: string) => {
     const markupData = await this.database
