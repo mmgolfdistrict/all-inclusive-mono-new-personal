@@ -577,13 +577,13 @@ export class SearchService {
   }
   sortDates = (dateArray: string[]) => {
     // Convert date strings to Date objects
-    const dateObjects = dateArray.map((dateStr) => new Date(dateStr));
+    const dateObjects: Date[] = dateArray.map((dateStr) => new Date(dateStr));
 
     // Sort Date objects
-    dateObjects.sort((a, b) => a - b);
+    dateObjects.sort((a, b) => a.getTime() - b.getTime());
 
     // Convert Date objects back to strings in the same format
-    const sortedDateStrings = dateObjects.map((dateObj) => dateObj.toUTCString());
+    const sortedDateStrings: string[] = dateObjects.map((dateObj) => dateObj.toUTCString());
 
     return sortedDateStrings;
   };
