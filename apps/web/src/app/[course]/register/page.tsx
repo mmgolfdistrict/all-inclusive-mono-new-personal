@@ -121,12 +121,16 @@ export default function RegisterPage() {
     }
     if (isSubmitting) return;
     if (registerUser.isLoading) return;
-    if (registerUser.isSuccess) return;
+    // if (registerUser.isSuccess) return;
     try {
-      await registerUser.mutateAsync({
+      const response= await registerUser.mutateAsync({
         ...data,
         courseId: course?.id,
       });
+      if(response?.error){
+        toast.error(response.message);
+        return
+      }
 
       router.push(`/${course?.id}/verify-email`);
     } catch (error) {
