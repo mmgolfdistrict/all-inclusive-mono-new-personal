@@ -46,7 +46,7 @@ export default function RegisterPage() {
   const [city, setCity] = useState(getValues("city"));
 
   const debouncedLocation = useDebounce<string>(city, 500);
-  const cities = api.places.getCity.useQuery({ city: debouncedLocation });
+  const cities = api.places.getCity.useQuery({ city: debouncedLocation??"" });
   const recaptchaRef = createRef<ReCAPTCHA>();
   const registerUser = api.register.register.useMutation();
   const { data: uName } = api.register.generateUsername.useQuery(6);
