@@ -2693,7 +2693,7 @@ export class BookingService {
           userId: userId,
           url: "/reserveBooking",
           userAgent: "",
-          message: "TEE TIME BOOKING FAILED ON PROVIDER",
+          message: "TEE TIME BOOKING FAILED ON GOLF DISTRIC",
           stackTrace: `first hand booking at provider failed for teetime ${teeTime.id}`,
           additionalDetailsJSON: JSON.stringify(err),
         });
