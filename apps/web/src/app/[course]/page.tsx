@@ -108,8 +108,17 @@ export default function CourseHomePage() {
       return currentDateWithTimeZoneOffset;
     };
 
+    const todayDate = (date) => {
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1;
+      const day = date.getDate();
+      return `${year}-${month}-${day}`;
+    };
+
     switch (dateType) {
-      case "All":
+      case "All": {
+        return getUtcDate(new Date());
+      }
       case "This Week":
       case "This Month":
       case "Furthest Day Out To Book": {
@@ -126,7 +135,13 @@ export default function CourseHomePage() {
         if (!selectedDay.from) return formatDate(new Date());
         const { year, month, day } = selectedDay.from;
         const dateString = `${year}-${month}-${day}`;
+        if (dateString === todayDate(new Date())) {
+          const coo = dayjs(formatDate(new Date()));
+          const dd = coo.add(-7, "hour").toDate();
+          return formatDate(dd);
+        }
         const customDate = dayjs(dateString).toDate();
+
         return formatDate(customDate);
       }
       default: {
@@ -172,8 +187,6 @@ export default function CourseHomePage() {
           : endOfMonth;
       }
       case "Furthest Day Out To Book": {
-        console.log("farthestDateOut", farthestDateOut);
-
         return dayjs(farthestDateOut)
           .utc()
           .hour(23)
@@ -183,11 +196,8 @@ export default function CourseHomePage() {
           .toDate();
       }
       case "Custom": {
-        console.log(selectedDay.from, selectedDay.to);
         if (!selectedDay.to) {
           if (selectedDay.from) {
-            console.log("1");
-
             const { year, month, day } = selectedDay.from;
             const dateString = `${year}-${month}-${day}`;
             const endOfDay = dayjs(dateString).endOf("day");
@@ -197,13 +207,9 @@ export default function CourseHomePage() {
             return result2;
             // return formatDate(endOfDay);
           } else {
-            console.log("2");
-
             return formatQueryDate(dayjs().endOf("day").toDate());
           }
         }
-
-        console.log("3");
 
         const { year, month, day } = selectedDay.to;
         const dateString = `${year}-${month}-${day}`;
