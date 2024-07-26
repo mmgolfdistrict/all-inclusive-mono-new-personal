@@ -704,7 +704,11 @@ export class SearchService {
 
     markupData.forEach((el) => {
       const toDay = currentDate.add(el?.toDay, "day");
-      const fromDay = currentDate.add(el?.fromDay, "day");
+      const fromDay = currentDate
+        .add(el?.fromDay, "day")
+        .set("hours", 0)
+        .set("minutes", 0)
+        .set("seconds", 0);
       priceAccordingToDate.push({
         toDayFormatted: toDay.toString(),
         fromDayFormatted: fromDay.toString(),
@@ -868,6 +872,7 @@ export class SearchService {
     });
     const priceAccordingToDate: any[] = await this.getTeeTimesPriceWithRange(courseId);
     const filteredDate: any[] = [];
+    console.log("date is", date);
 
     priceAccordingToDate.forEach((el) => {
       if (
@@ -877,9 +882,10 @@ export class SearchService {
       ) {
         filteredDate.push(el);
         return;
+      } else {
+        console.log("date===>", date, dayjs(el.toDayFormatted), dayjs(el.fromDayFormatted));
       }
     });
-
     const markupFeesFinal = filteredDate.length
       ? filteredDate[0].markUpFees
       : courseDataIfAvailable.markupFees;
