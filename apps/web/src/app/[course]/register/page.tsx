@@ -46,7 +46,7 @@ export default function RegisterPage() {
   const [city, setCity] = useState(getValues("city"));
 
   const debouncedLocation = useDebounce<string>(city, 500);
-  const cities = api.places.getCity.useQuery({ city: debouncedLocation });
+  const cities = api.places.getCity.useQuery({ city: debouncedLocation??"" });
   const recaptchaRef = createRef<ReCAPTCHA>();
   const registerUser = api.register.register.useMutation();
   const { data: uName } = api.register.generateUsername.useQuery(6);
@@ -121,12 +121,16 @@ export default function RegisterPage() {
     }
     if (isSubmitting) return;
     if (registerUser.isLoading) return;
-    if (registerUser.isSuccess) return;
+    // if (registerUser.isSuccess) return;
     try {
-      await registerUser.mutateAsync({
+      const response= await registerUser.mutateAsync({
         ...data,
         courseId: course?.id,
       });
+      if(response?.error){
+        toast.error(response.message);
+        return
+      }
 
       router.push(`/${course?.id}/verify-email`);
     } catch (error) {
@@ -156,6 +160,10 @@ export default function RegisterPage() {
         Create an Account
       </h1>
       <section className="mx-auto flex w-full flex-col gap-2 bg-white p-5 sm:max-w-[500px] sm:rounded-xl sm:p-6">
+        <p>
+          Using gmail? Go to the login page and select the Google icon to login
+          with Google. The below form is not required for gmail users.
+        </p>
         <form className="flex flex-col gap-2" onSubmit={handleSubmit(onSubmit)}>
           <Input
             label="First Name"
@@ -308,7 +316,7 @@ export default function RegisterPage() {
             name="country"
             error={errors.country?.message}
             showInfoTooltip={true}
-            content="We only support cashouts for US banks at this time"
+            content="We only support cash outs for US banks at this time"
             data-testid="register-country-id"
           />
           <datalist id="places">
@@ -325,7 +333,6 @@ export default function RegisterPage() {
               register={register}
               name="password"
               error={errors.password?.message}
-
               data-testid="register-password-id"
             />
             <IconButton

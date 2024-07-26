@@ -5,6 +5,7 @@ import { useAppContext } from "~/contexts/AppContext";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
+import { getBgColor } from "~/utils/formatters";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -58,12 +59,6 @@ export const CourseNav = () => {
 
   // if (pathname.includes("/checkout")) return null;
 
-  const getBgColor = (type) => {
-    if (type === "FAILURE") return "alert-red";
-    if (type === "SUCCESS") return "success-alert";
-    if (type === "WARNING") return "warning-alert";
-  };
-
   return (
     <div className="fixed top-0 w-full z-20">
       <div className="relative">
@@ -72,10 +67,9 @@ export const CourseNav = () => {
             key={elm.id}
             className={`bg-${getBgColor(
               elm.displayType
-            )} text-white w-full p-1`}
-            // className={`bg-success-alert text-white w-full p-1`}
+            )} text-white w-full p-1 text-center`}
           >
-            {elm.longMessage}
+            {elm.shortMessage} : {elm.longMessage}
           </div>
         ))}
         {isSideBarOpen && (
@@ -163,7 +157,7 @@ export const CourseNav = () => {
           <div className="flex justify-between gap-4 md:gap-8">
             <NavItem
               href={`/${courseId}`}
-              text="Find"
+              text="Find Times"
               icon={<Search className="w-[16px]" />}
               data-testid="tee-time-id"
               data-test={courseId}
@@ -194,8 +188,8 @@ export const CourseNav = () => {
               data-test={courseId}
             />
             <NavItem
-              href={`/${courseId}/my-tee-box?section=my-listed-tee-times`}
-              text="My Tee Times"
+              href={`/${courseId}/my-tee-box?section=owned`}
+              text="My Tee Box"
               icon={<Calendar className="w-[16px]" />}
               data-testid="sell-your-tee-time-id"
               data-test={courseId}

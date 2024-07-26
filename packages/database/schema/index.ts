@@ -10,6 +10,7 @@ import * as cashouts from "./cashout";
 import * as charities from "./charities";
 import * as charityCourseLink from "./charityCourseLink";
 import * as courseAssets from "./courseAssets";
+import * as courseMarkup from "./courseMarkup";
 import * as coursePromoCodeLink from "./coursePromoCodeLink";
 import * as courses from "./courses";
 import * as courseScheduleDetails from "./courseScheduleDetails";
@@ -90,4 +91,5 @@ export const schema = {
   ...courseSEOs,
   ...userWaitlists,
   ...systemNotification,
+  ...courseMarkup,
 };

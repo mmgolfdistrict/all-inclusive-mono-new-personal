@@ -1,7 +1,11 @@
 "use client";
 
 import { useSession } from "@golf-district/auth/nextjs-exports";
-import { formatQueryDate, removeTimeZoneOffset } from "@golf-district/shared";
+import {
+  formatDate,
+  formatQueryDate,
+  removeTimeZoneOffset,
+} from "@golf-district/shared";
 import { FilledButton } from "~/components/buttons/filled-button";
 import { HyperSwitch } from "~/components/checkout-page/hyper-switch";
 import { OrderSummary } from "~/components/checkout-page/order-summary";
@@ -154,14 +158,14 @@ export default function Checkout({
       | TaxProduct =
       saleType === "first_hand"
         ? {
-          type: "first_hand",
-          tee_time_id: teeTimeId,
-          number_of_bookings: amountOfPlayers,
-        }
+            type: "first_hand",
+            tee_time_id: teeTimeId,
+            number_of_bookings: amountOfPlayers,
+          }
         : {
-          type: "second_hand",
-          second_hand_id: listingId,
-        };
+            type: "second_hand",
+            second_hand_id: listingId,
+          };
 
     const localCart: CartProduct[] = [
       {
@@ -196,7 +200,7 @@ export default function Checkout({
         display_price: formatMoney(
           ((data?.greenFeeTaxPerPlayer ?? 0) +
             (data?.cartFeeTaxPerPlayer ?? 0)) *
-          amountOfPlayers
+            amountOfPlayers
         ),
         product_data: {
           metadata: {
@@ -230,7 +234,7 @@ export default function Checkout({
       localCart.push({
         name: "Golf District Tee Time",
         id: teeTimeId ?? data?.teeTimeId,
-        price: course?.markupFeesFixedPerPlayer ?? 0, //int
+        price: teeTimeData?.markupFees ?? 0, //int
         image: "", //
         currency: "USD", //USD
         display_price: formatMoney(
@@ -299,8 +303,10 @@ export default function Checkout({
 
   useEffect(() => {
     if (playerCount && data?.availableSlots)
-      setAmountOfPlayers(_prev => Math.min(Number(playerCount), Number(data?.availableSlots)));
-  }, [data])
+      setAmountOfPlayers((_prev) =>
+        Math.min(Number(playerCount), Number(data?.availableSlots))
+      );
+  }, [data]);
 
   if (isError && error) {
     return (
@@ -351,8 +357,8 @@ export default function Checkout({
               sensibleDataToMountComp={{
                 partner_id: process.env.NEXT_PUBLIC_SENSIBLE_PARTNER_ID ?? "",
                 product_id: process.env.NEXT_PUBLIC_SENSIBLE_PRODUCT_ID ?? "",
-                coverageStartDate: formatQueryDate(new Date(data?.date ?? "")),
-                coverageEndDate: formatQueryDate(new Date(data?.date ?? "")),
+                coverageStartDate: formatDate(new Date(data?.date ?? "")),
+                coverageEndDate: formatDate(new Date(data?.date ?? "")),
                 coverageStartHourNumber: startHourNumber,
                 coverageEndHourNumber: endHourNumber === 0 ? 23 : endHourNumber, // SAFE VALUE SHOULDN'T BE 0 OR 24
                 currency: "USD",
@@ -385,6 +391,7 @@ export default function Checkout({
                 isBuyNowAuction={false}
                 cartData={cartData}
                 teeTimeDate={teeTimeData?.date}
+                playerCount={playerCount}
               />
             )}
           </div>

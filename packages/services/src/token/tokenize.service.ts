@@ -296,6 +296,7 @@ export class TokenizeService {
       weatherQuoteId: normalizedCartData.weatherQuoteId ?? null,
       weatherGuaranteeId: acceptedQuote?.id ? acceptedQuote?.id : null,
       weatherGuaranteeAmount: acceptedQuote?.price_charged ? acceptedQuote?.price_charged * 100 : 0,
+      markupFees: (normalizedCartData?.markupCharge ?? 0) * 100,
     });
 
     transfersToCreate.push({

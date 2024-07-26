@@ -145,6 +145,12 @@ export const ManageOwnedTeeTime = ({
       toast.error("Tee time not selected");
       return;
     }
+
+    if (!updateNames.data?.success) {
+      toast.error(updateNames.data?.message);
+      return;
+    }
+
     if (updateNames.isLoading || updateMinimumOfferPrice.isLoading) return;
 
     selectedTeeTime.golfers.map((el) => {

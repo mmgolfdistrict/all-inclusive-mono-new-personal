@@ -16,7 +16,7 @@ export const Footer = () => {
       </div>
       <div className="flex flex-col items-start gap-2 md:items-end lg:flex-row lg:items-center">
         <Link href={`/faq`} data-testid="footer-help-id">
-          FAQ
+          Help
         </Link>
         <Link href={`/how-to-guide`} data-testid="footer-how-to-guide-id">
           How to Guide

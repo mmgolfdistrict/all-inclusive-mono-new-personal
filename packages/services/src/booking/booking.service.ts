@@ -1030,8 +1030,8 @@ export class BookingService {
     //   throw new Error("Listing is not pending");
     // }
     if (listing.isDeleted) {
-      this.logger.warn(`Listing is already deleted.`);
-      throw new Error("Listing is already deleted");
+      this.logger.warn(`Tee time not available anymore.`);
+      throw new Error("Tee time not available anymore.");
     }
     const bookingIds = await this.database
       .select({
@@ -1189,8 +1189,8 @@ export class BookingService {
     //   throw new Error("Listing is not pending");
     // }
     if (listing.isDeleted) {
-      this.logger.warn(`Listing is already deleted.`);
-      throw new Error("Listing is already deleted");
+      this.logger.warn(`Tee time not available anymore.`);
+      throw new Error("Tee time not available anymore.");
     }
     const ownedBookings = await this.database
       .select({
@@ -2137,6 +2137,7 @@ export class BookingService {
         providerBookingId: bookings.providerBookingId,
         providerId: providerCourseLink.providerId,
         providerCourseConfiguration: providerCourseLink.providerCourseConfiguration,
+        status: bookings.status,
       })
       .from(bookings)
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -2160,6 +2161,11 @@ export class BookingService {
       this.logger.warn(`No bookings found. or user does not own all bookings`);
       throw new Error("No bookings found");
     }
+
+    if (data[0].status === "CANCELLED") {
+      return { success: false, message: "This Reservation is already Cancelled" };
+    }
+
     const firstBooking = data[0];
     if (!firstBooking) {
       throw new Error("bookings not found");
@@ -2676,6 +2682,7 @@ export class BookingService {
           charityId,
           weatherQuoteId,
           cartId,
+          markupCharge,
         },
         teeTime?.isWebhookAvailable ?? false
       )
@@ -2692,7 +2699,7 @@ export class BookingService {
           userId: userId,
           url: "/reserveBooking",
           userAgent: "",
-          message: "TEE TIME BOOKING FAILED ON PROVIDER",
+          message: "TEE TIME BOOKING FAILED ON GOLF DISTRIC",
           stackTrace: `first hand booking at provider failed for teetime ${teeTime.id}`,
           additionalDetailsJSON: JSON.stringify(err),
         });
@@ -2943,5 +2950,82 @@ export class BookingService {
       booking.providerId = "";
     }
     return booking;
+  };
+
+  checkIfTeeTimeAvailableOnProvider = async (teeTimeId: string, golfersCount: number, userId: string) => {
+    const [teeTime] = await this.database
+      .select({
+        id: teeTimes.id,
+        courseId: teeTimes.courseId,
+        time: teeTimes.time,
+        // entityId: teeTimes.entityId,
+        entityId: courses.entityId,
+        date: teeTimes.date,
+        availableFirstHandSpots: teeTimes.availableFirstHandSpots,
+        providerCourseId: providerCourseLink.providerCourseId,
+        providerTeeSheetId: providerCourseLink.providerTeeSheetId,
+        providerId: providerCourseLink.providerId,
+        internalId: providers.internalId,
+        providerDate: teeTimes.providerDate,
+        holes: teeTimes.numberOfHoles,
+        cdnKey: assets.key,
+        extension: assets.extension,
+        websiteURL: courses.websiteURL,
+        courseName: courses.name,
+        entityName: entities.name,
+        isWebhookAvailable: providerCourseLink.isWebhookAvailable,
+        timeZoneCorrection: courses.timezoneCorrection,
+        providerCourseConfiguration: providerCourseLink.providerCourseConfiguration,
+      })
+      .from(teeTimes)
+      .leftJoin(courses, eq(teeTimes.courseId, courses.id))
+      .leftJoin(assets, eq(assets.id, courses.logoId))
+      .leftJoin(entities, eq(courses.entityId, entities.id))
+      .leftJoin(
+        providerCourseLink,
+        and(
+          eq(providerCourseLink.courseId, teeTimes.courseId),
+          eq(providerCourseLink.providerId, courses.providerId)
+        )
+      )
+      //.leftJoin(courses, eq(courses.id, teeTimes.courseId))
+      .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))
+      .where(eq(teeTimes.id, teeTimeId))
+      .execute()
+      .catch((err) => {
+        this.logger.error(err);
+        throw new Error(`Error finding tee time id`);
+      });
+    if (!teeTime) {
+      this.logger.fatal(`tee time not found id: ${teeTimeId}`);
+      throw new Error(`Error finding tee time id`);
+    }
+
+    if (teeTime.availableFirstHandSpots >= golfersCount) {
+      const providerDetailsGetTeeTime = await this.providerService.getTeeTimes(
+        teeTime.providerCourseId ?? "",
+        teeTime.internalId ?? "",
+        teeTime.providerTeeSheetId!,
+        `${teeTime.time}`.length === 3 ? `0${teeTime.time}` : `${teeTime.time}`,
+        `${teeTime.time + 1}`.length === 3 ? `0${teeTime.time + 1}` : `${teeTime.time + 1}`,
+        teeTime.providerDate.split("T")[0] ?? ""
+      );
+      if (providerDetailsGetTeeTime && providerDetailsGetTeeTime.length) {
+        const teeTimeData = providerDetailsGetTeeTime[0];
+        if ((teeTimeData?.attributes?.availableSpots ?? 0) >= golfersCount) {
+          return true;
+        }
+      }
+    }
+
+    this.loggerService.errorLog({
+      userId: userId,
+      url: "/checkIfTeeTimeAvailableOnProvider",
+      userAgent: "",
+      message: "Tee time already booked",
+      stackTrace: `Tee time already booked  teetimeId${teeTimeId} userId:${userId}`,
+      additionalDetailsJSON: "",
+    });
+    return false;
   };
 }

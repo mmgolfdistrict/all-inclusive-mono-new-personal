@@ -1,15 +1,15 @@
 import { randomUUID } from "crypto";
 import { and, eq, sql } from "@golf-district/database";
 import type { Db } from "@golf-district/database";
+import { assets } from "@golf-district/database/schema/assets";
 import { cashout } from "@golf-district/database/schema/cashout";
+import { courses } from "@golf-district/database/schema/courses";
 import { customerPaymentDetail } from "@golf-district/database/schema/customerPaymentDetails";
 import { users } from "@golf-district/database/schema/users";
 import { appSettingService } from "../app-settings/initialized";
 import type { CashOutService } from "../cashout/cashout.service";
-import type { LoggerService } from "../webhooks/logging.service";
 import type { NotificationService } from "../notification/notification.service";
-import { assets } from "@golf-district/database/schema/assets";
-import { courses } from "@golf-district/database/schema/courses";
+import type { LoggerService } from "../webhooks/logging.service";
 
 interface TagDetails {
   customerId: string;
@@ -410,7 +410,7 @@ export class FinixService {
           })
           .catch((e) => {
             console.log("Error in transfer", e);
-            throw "Error in creating cashout";
+            throw "Error in creating cash out";
           });
 
         // await this.notificationService.createNotification(
@@ -424,7 +424,7 @@ export class FinixService {
         // );
         await this.notificationService.sendEmailByTemplate(
           user?.email ?? "",
-          "Cashout successful",
+          "Cash out successful",
           process.env.SENDGRID_CASHOUT_TRANSFER_TEMPLATE_ID ?? "",
           {
             AmountCashedOut: amount,

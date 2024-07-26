@@ -37,7 +37,7 @@ export const EditProfileForm = () => {
     formState: { isSubmitting, errors },
   } = useForm<EditProfileSchemaType>({
     // @ts-ignore
-    resolver: zodResolver(editProfileSchema)
+    resolver: zodResolver(editProfileSchema),
   });
   const [city, setCity] = useState(getValues("city"));
 
@@ -445,7 +445,7 @@ export const EditProfileForm = () => {
           error={errors.country?.message}
           showInfoTooltip={true}
           value={"USA"}
-          content="We only support cashouts for US banks at this time"
+          content="We only support cash outs for US banks at this time"
           data-testid="profile-country-id"
         />
         <datalist id="places">
