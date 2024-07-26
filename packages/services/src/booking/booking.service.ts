@@ -2137,6 +2137,7 @@ export class BookingService {
         providerBookingId: bookings.providerBookingId,
         providerId: providerCourseLink.providerId,
         providerCourseConfiguration: providerCourseLink.providerCourseConfiguration,
+        status: bookings.status,
       })
       .from(bookings)
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -2160,6 +2161,11 @@ export class BookingService {
       this.logger.warn(`No bookings found. or user does not own all bookings`);
       throw new Error("No bookings found");
     }
+
+    if (data[0].status === "CANCELLED") {
+      return { success: false, message: "This Reservation is already Cancelled" };
+    }
+
     const firstBooking = data[0];
     if (!firstBooking) {
       throw new Error("bookings not found");
