@@ -190,6 +190,14 @@ export const CheckoutForm = ({
     });
   });
 
+  useEffect(() => {
+    const timer = setTimeout(function () {
+      router.push(`/${courseId}`);
+    }, 10 * 60 * 1000);
+
+    return () => clearTimeout(timer);
+  });
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     googleAnalyticsEvent({
       action: `PAY NOW CLICKED`,
