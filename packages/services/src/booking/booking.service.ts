@@ -2267,6 +2267,7 @@ export class BookingService {
    * await bookingService.setMinimumOfferPrice(userId, teeTimeId, minimumOfferPrice);
    */
   setMinimumOfferPrice = async (userId: string, teeTimeId: string, minimumOfferPrice: number) => {
+    //Dummy changesto trigger build.
     let message: string | undefined;
     await this.database.transaction(async (trx) => {
       //find all booking for this tee time owned by this user
