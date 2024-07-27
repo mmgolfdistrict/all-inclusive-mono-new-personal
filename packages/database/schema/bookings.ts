@@ -43,7 +43,6 @@ export const bookings = mySqlTable(
     weatherQuoteId: varchar("weatherQuoteId", { length: 36 }),
     status: varchar("status", { length: 10 }).notNull().default("RESERVED"),
     markupFees: int("markupFees"),
-    isTest: boolean("isTest").default(false),
   },
   (table) => {
     return {
