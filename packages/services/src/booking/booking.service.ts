@@ -2872,6 +2872,7 @@ export class BookingService {
       totalCharityAmount: charityCharge * 100 || 0,
       totalAmount: total || 0,
       providerPaymentId: paymentId,
+      markupFees: 0,
       weatherQuoteId: weatherQuoteId || null,
     });
     transfersToCreate.push({
