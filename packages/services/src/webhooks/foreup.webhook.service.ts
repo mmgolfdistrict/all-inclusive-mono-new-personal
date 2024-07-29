@@ -490,9 +490,13 @@ export class ForeUpWebhookService {
     } catch (error) {
       this.logger.error(error);
       // throw new Error(`Error indexing tee time: ${error}`);
-      throw new Error(
-        `We're sorry. This time is no longer available. Someone just booked this. It may take a minute for the sold time you selected to be removed. Please select another time.`
-      );
+      // throw new Error(
+      //   `We're sorry. This time is no longer available. Someone just booked this. It may take a minute for the sold time you selected to be removed. Please select another time.`
+      // );
+      return {
+        error:true,
+        message:`We're sorry. This time is no longer available. Someone just booked this. It may take a minute for the sold time you selected to be removed. Please select another time.`
+      }
     }
   };
 
