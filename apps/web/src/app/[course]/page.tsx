@@ -136,9 +136,11 @@ export default function CourseHomePage() {
         const { year, month, day } = selectedDay.from;
         const dateString = `${year}-${month}-${day}`;
         if (dateString === todayDate(new Date())) {
-          const coo = dayjs(formatDate(new Date()));
-          const dd = coo.add(-7, "hour").toDate();
-          return formatDate(dd);
+          const customDate2 = dayjs(formatDate(new Date()));
+          const result2 = customDate2
+            .add(course?.timezoneCorrection ?? 0, "hour")
+            .toDate();
+          return formatDate(result2);
         }
         const customDate = dayjs(dateString).toDate();
 
