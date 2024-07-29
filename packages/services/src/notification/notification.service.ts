@@ -157,7 +157,7 @@ export class NotificationService {
     );
 
     const appSettings = await appSettingService.getMultiple("ENABLE_ICS_ATTACHMENT");
-    if (appSettings?.ENABLE_ICS_ATTACHMENT === "true") {
+    if (appSettings?.ENABLE_ICS_ATTACHMENT === "false") {
       await this.sendGridClient
         .send({
           to: email,

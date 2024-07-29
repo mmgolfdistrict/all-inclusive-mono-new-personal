@@ -17,6 +17,7 @@ import { FilledButton } from "../buttons/filled-button";
 import { CharitySelect } from "../input/charity-select";
 import { Input } from "../input/input";
 import styles from "./checkout.module.css";
+import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
 
 export const CheckoutForm = ({
   isBuyNowAuction,
@@ -189,7 +190,21 @@ export const CheckoutForm = ({
     });
   });
 
+  useEffect(() => {
+    const timer = setTimeout(function () {
+      router.push(`/${courseId}`);
+    }, 10 * 60 * 1000);
+
+    return () => clearTimeout(timer);
+  });
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    googleAnalyticsEvent({
+      action: `PAY NOW CLICKED`,
+      category: "TEE TIME PURCHASE",
+      label: "User clicked on pay now to do payment",
+      value: "",
+    })
     e.preventDefault();
     void logAudit();
     setIsLoading(true);

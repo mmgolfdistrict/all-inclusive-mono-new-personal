@@ -575,7 +575,18 @@ export class SearchService {
     const formattedDate = parsedDate.format("YYYY-MM-DDTHH:mm:ss");
     return formattedDate;
   }
+  sortDates = (dateArray: string[]) => {
+    // Convert date strings to Date objects
+    const dateObjects: Date[] = dateArray.map((dateStr) => new Date(dateStr));
 
+    // Sort Date objects
+    dateObjects.sort((a, b) => a.getTime() - b.getTime());
+
+    // Convert Date objects back to strings in the same format
+    const sortedDateStrings: string[] = dateObjects.map((dateObj) => dateObj.toUTCString());
+
+    return sortedDateStrings;
+  };
   async checkTeeTimesAvailabilityForDateRange({
     dates,
     courseId,
@@ -609,6 +620,7 @@ export class SearchService {
     //   console.log(minDateSubquery,maxDateSubquery,"maxDateSubquerymaxDateSubquerymaxDateSubquery")
     const minDateSubquery = this.convertDateFormat(minDate);
     const maxDateSubquery = this.convertDateFormat(maxDate);
+
     // .utc()
     // .hour(23)
     // .minute(59)
@@ -629,6 +641,7 @@ export class SearchService {
       .utcOffset(timezoneCorrection)
       .add(30, "minutes")
       .toISOString();
+    console.log("------->>>---->>", startTime, endTime);
 
     const firstHandResults = await this.database
       .selectDistinct({ providerDate: sql`Date(${teeTimes.providerDate})` })
@@ -678,7 +691,7 @@ export class SearchService {
     const uniqueArrayfirstHandAndSecondHandResultDates = Array.from(
       uniqueSetfirstHandAndSecondHandResultDates
     );
-    return uniqueArrayfirstHandAndSecondHandResultDates;
+    return this.sortDates(uniqueArrayfirstHandAndSecondHandResultDates);
   }
   getTeeTimesPriceWithRange = async (courseId: string) => {
     const markupData = await this.database
@@ -691,7 +704,11 @@ export class SearchService {
 
     markupData.forEach((el) => {
       const toDay = currentDate.add(el?.toDay, "day");
-      const fromDay = currentDate.add(el?.fromDay, "day");
+      const fromDay = currentDate
+        .add(el?.fromDay, "day")
+        .set("hours", 0)
+        .set("minutes", 0)
+        .set("seconds", 0);
       priceAccordingToDate.push({
         toDayFormatted: toDay.toString(),
         fromDayFormatted: fromDay.toString(),
@@ -855,6 +872,7 @@ export class SearchService {
     });
     const priceAccordingToDate: any[] = await this.getTeeTimesPriceWithRange(courseId);
     const filteredDate: any[] = [];
+    console.log("date is", date);
 
     priceAccordingToDate.forEach((el) => {
       if (
@@ -864,9 +882,10 @@ export class SearchService {
       ) {
         filteredDate.push(el);
         return;
+      } else {
+        console.log("date===>", date, dayjs(el.toDayFormatted), dayjs(el.fromDayFormatted));
       }
     });
-
     const markupFeesFinal = filteredDate.length
       ? filteredDate[0].markUpFees
       : courseDataIfAvailable.markupFees;
