@@ -222,7 +222,7 @@ export class SearchService {
     if (forecast) {
       const teeTimeDate = new Date(firstBooking.date);
       weather = this.matchForecastToTeeTime(teeTimeDate, forecast);
-    }
+    }  
     const res = {
       soldById: ownerId,
       soldByName: firstBooking.ownerHandle ? firstBooking.ownerHandle : "Anonymous",
