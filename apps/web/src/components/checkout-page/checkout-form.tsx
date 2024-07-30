@@ -191,10 +191,15 @@ export const CheckoutForm = ({
   });
 
   useEffect(() => {
+    const timer = setTimeout(function () {
+      router.push(`/${courseId}`);
+    }, 10 * 60 * 1000);
+
     return () => {
+      clearTimeout(timer);
       setIsLoading(false);
-    };
-  }, []);
+    }
+  },[]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     googleAnalyticsEvent({
