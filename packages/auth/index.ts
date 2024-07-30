@@ -32,6 +32,22 @@ declare module "next-auth" {
     ip?: string;
   }
 }
+
+const notificationService = new NotificationService(
+  db,
+  process.env.TWILLIO_PHONE_NUMBER!,
+  process.env.SENDGRID_EMAIL!,
+  process.env.TWILLIO_ACCOUNT_SID!,
+  process.env.TWILLIO_AUTH_TOKEN!,
+  process.env.SENDGRID_API_KEY!
+);
+const authService = new AuthService(
+  db,
+  notificationService,
+  process.env.REDIS_URL!,
+  process.env.REDIS_TOKEN!
+);
+
 export const authConfig: NextAuthConfig = {
   adapter: DrizzleAdapter(db, tableCreator),
   redirectProxyUrl: process.env.AUTH_REDIRECT_PROXY_URL,
@@ -92,20 +108,7 @@ export const authConfig: NextAuthConfig = {
         if (!isNotRobot) {
           return null;
         }
-        const notificationService = new NotificationService(
-          db,
-          process.env.TWILLIO_PHONE_NUMBER!,
-          process.env.SENDGRID_EMAIL!,
-          process.env.TWILLIO_ACCOUNT_SID!,
-          process.env.TWILLIO_AUTH_TOKEN!,
-          process.env.SENDGRID_API_KEY!
-        );
-        const authService = new AuthService(
-          db,
-          notificationService,
-          process.env.REDIS_URL!,
-          process.env.REDIS_TOKEN!
-        );
+
         const data = await authService.authenticateUser(
           credentials.email as string,
           credentials.password as string
@@ -153,7 +156,7 @@ export const authConfig: NextAuthConfig = {
   // },
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
-    jwt: ({ trigger, session, token, user }) => {
+    jwt: async ({ trigger, session, token, user }) => {
       console.log("JWT Callback");
       console.log(trigger);
       console.log(session);
@@ -166,6 +169,8 @@ export const authConfig: NextAuthConfig = {
         token.picture = user.image;
         token.image = (token?.user as { image?: string })?.image ?? undefined;
       }
+
+      await authService.updateLastSuccessfulLogin(user?.id, user?.email ?? "");
 
       if (trigger === "update" && session?.image !== undefined && token) {
         token.picture = session.image;
