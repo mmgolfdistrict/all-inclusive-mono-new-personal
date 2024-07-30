@@ -29,9 +29,9 @@ export class clubprophet {
     date: string,
     rateCode?: string
   ): Promise<TeeTimeResponse[]> {
-    const { TEESHEET_ENDPOINT } = JSON.parse(this.providerConfiguration ?? "{}");
+    const baseEndpoint = this.getBasePoint();
 
-    const url = TEESHEET_ENDPOINT;
+    const url = `${baseEndpoint}/thirdpartyapi/api/v1/TeeSheet/TeeSheets`;
 
     const headers = this.getHeaders(token);
     const data = JSON.stringify({
@@ -40,8 +40,6 @@ export class clubprophet {
       courseId: courseId,
       rateCode: rateCode || "sticks",
     });
-
-    // console.log("data--", data);
 
     const config = {
       method: "GET",
@@ -92,11 +90,14 @@ export class clubprophet {
   }
 
   async getToken(): Promise<string> {
-    const { CONTENT_TYPE, CLIENT_ID, CLIENT_SECRET, API_KEY, TOKEN_ENDPOINT } = JSON.parse(
+    const baseEndpoint = this.getBasePoint();
+    const { CONTENT_TYPE, CLIENT_ID, CLIENT_SECRET, API_KEY } = JSON.parse(
       this.providerConfiguration ?? "{}"
     );
 
-    const response = await fetch(`${TOKEN_ENDPOINT}`, {
+    const url = `${baseEndpoint}/identityapi/myconnect/token`;
+
+    const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": CONTENT_TYPE },
       body: JSON.stringify({
@@ -264,8 +265,7 @@ export class clubprophet {
       });
       if (!addSalesResponse.ok) {
         throw new Error(
-          `Error adding sales data for booking Ids: ${JSON.stringify(bookingIds)}, status code: ${
-            addSalesResponse.status
+          `Error adding sales data for booking Ids: ${JSON.stringify(bookingIds)}, status code: ${addSalesResponse.status
           }, status text: ${addSalesResponse.statusText}, response: ${JSON.stringify(
             await addSalesResponse.json()
           )}`
