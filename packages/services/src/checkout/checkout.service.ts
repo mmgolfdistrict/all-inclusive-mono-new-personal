@@ -221,6 +221,9 @@ export class CheckoutService {
   updateCheckoutSession = async (userId: string, customerCartData: CustomerCart, cartId: string) => {
     const { paymentId, ...customerCart } = customerCartData;
 
+    const errors = await this.validateCartItems(customerCartData);
+    console.log("errors ", JSON.stringify(errors));
+
     const total = customerCart.cart
       .filter(({ product_data }) => product_data.metadata.type !== "markup")
       .reduce((acc, item) => {
@@ -398,15 +401,23 @@ export class CheckoutService {
     console.log(`formattedDate: ${formattedDate}`);
 
     if (teeTime.providerCourseId && teeTime.providerTeeSheetId && formattedDate) {
-      await this.foreupIndexer.indexTeeTime(
+     const response =  await this.foreupIndexer.indexTeeTime(
         formattedDate,
         teeTime.providerCourseId,
         teeTime.providerTeeSheetId,
         provider,
         token,
-        teeTime.time
+        teeTime.time,
+        teeTime.id
       );
+      if(response?.error){
+        errors.push({
+          errorType: CartValidationErrors.TEE_TIME_NOT_AVAILABLE,
+          product_id: item.id,
+        })
+      }
     }
+    console.log("teeTime", item.product_data);
     const stillAvailable = await this.database
       .select({ id: teeTimes.id })
       .from(teeTimes)
@@ -425,7 +436,7 @@ export class CheckoutService {
         errorType: CartValidationErrors.TEE_TIME_NOT_AVAILABLE,
         product_id: item.id,
       });
-      throw new Error("Expected Tee time spots may not be available anymore");
+      throw new Error("Expected Tee time spots may not be available anymore. Please select another time.");
     }
     return errors;
   };

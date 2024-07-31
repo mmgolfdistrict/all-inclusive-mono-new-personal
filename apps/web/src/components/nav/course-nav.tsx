@@ -5,6 +5,7 @@ import { useAppContext } from "~/contexts/AppContext";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
+import { getBgColor } from "~/utils/formatters";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -41,6 +42,9 @@ export const CourseNav = () => {
     }
   );
 
+  const { data: systemNotifications } =
+    api.systemNotification.getSystemNotification.useQuery({});
+
   useEffect(() => {
     if (isSideBarOpen && isMobile) {
       document.body.classList.add("overflow-hidden");
@@ -58,6 +62,16 @@ export const CourseNav = () => {
   return (
     <div className="fixed top-0 w-full z-20">
       <div className="relative">
+        {systemNotifications?.map((elm) => (
+          <div
+            key={elm.id}
+            className={`bg-${getBgColor(
+              elm.displayType
+            )} text-white w-full p-1 text-center`}
+          >
+            {elm.shortMessage} : {elm.longMessage}
+          </div>
+        ))}
         {isSideBarOpen && (
           <div
             className={`fixed z-20 h-[100dvh] w-screen backdrop-blur ${
@@ -143,7 +157,7 @@ export const CourseNav = () => {
           <div className="flex justify-between gap-4 md:gap-8">
             <NavItem
               href={`/${courseId}`}
-              text="Find"
+              text="Find Times"
               icon={<Search className="w-[16px]" />}
               data-testid="tee-time-id"
               data-test={courseId}
@@ -174,8 +188,8 @@ export const CourseNav = () => {
               data-test={courseId}
             />
             <NavItem
-              href={`/${courseId}/my-tee-box?section=my-listed-tee-times`}
-              text="My Tee Times"
+              href={`/${courseId}/my-tee-box?section=owned`}
+              text="My Tee Box"
               icon={<Calendar className="w-[16px]" />}
               data-testid="sell-your-tee-time-id"
               data-test={courseId}

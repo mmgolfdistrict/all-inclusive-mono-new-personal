@@ -52,10 +52,12 @@ function NotifyMe({ params }: { params: { course: string } }) {
     isLoading: isCreatingNotifications,
   } = api.userWaitlist.createWaitlistNotification.useMutation();
 
+  const currentDate = dayjs().add(1, "day");
+
   const minimumDate = {
-    year: new Date().getFullYear(),
-    month: new Date().getMonth() + 1,
-    day: new Date().getDate(),
+    year: currentDate.year(),
+    month: currentDate.month() + 1,
+    day: currentDate.date(),
   };
 
   const handleDoneSetTimeRange = () => {
@@ -252,9 +254,8 @@ function NotifyMe({ params }: { params: { course: string } }) {
                     </div>
                     <div>
                       <span
-                        className={`text-[12px] text-red ${
-                          errorMessage ? "" : "hidden"
-                        }`}
+                        className={`text-[12px] text-red ${errorMessage ? "" : "hidden"
+                          }`}
                       >
                         {errorMessage}
                       </span>

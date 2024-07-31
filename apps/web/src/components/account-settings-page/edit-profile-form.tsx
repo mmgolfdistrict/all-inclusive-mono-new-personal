@@ -27,9 +27,22 @@ const defaultProfilePhoto = "/defaults/default-profile.webp";
 const defaultBannerPhoto = "/defaults/default-banner.webp";
 
 export const EditProfileForm = () => {
-  const [location, setLocation] = useState<string>("");
+  const {
+    register,
+    setValue,
+    watch,
+    handleSubmit,
+    setError,
+    getValues,
+    formState: { isSubmitting, errors },
+  } = useForm<EditProfileSchemaType>({
+    // @ts-ignore
+    resolver: zodResolver(editProfileSchema),
+  });
+  const [city, setCity] = useState(getValues("city"));
+
   const { update } = useSession();
-  const debouncedLocation = useDebounce<string>(location, 500);
+  const debouncedLocation = useDebounce<string>(city, 500);
   const { uploadMedia, isUploading } = useUploadMedia();
   const [banner, setBanner] = useState<string | null | undefined>(null);
   const [profilePhoto, setProfilePhoto] = useState<string | null | undefined>(
@@ -69,18 +82,6 @@ export const EditProfileForm = () => {
     }
   );
 
-  const {
-    register,
-    setValue,
-    watch,
-    handleSubmit,
-    setError,
-    formState: { isSubmitting, errors },
-  } = useForm<EditProfileSchemaType>({
-    // @ts-ignore
-    resolver: zodResolver(editProfileSchema),
-  });
-
   const upload = useCallback(
     async (file: File, type: "image" | "bannerImage") => {
       const data = await uploadMedia(file);
@@ -97,14 +98,19 @@ export const EditProfileForm = () => {
     },
     []
   );
-
   useEffect(() => {
     if (!isLoading && userData) {
       setValue("name", userData?.name ?? "");
       setValue("email", userData?.email ?? "");
       setValue("phoneNumber", userData?.phoneNumber ?? "");
       setValue("handle", userData?.handle ?? "");
-      setValue("location", userData?.location ?? "");
+      // setValue("location", userData?.location ?? "");
+      setValue("address1", userData?.address1 ?? "");
+      // setValue("address2", userData?.address2 ?? "");
+      setValue("state", userData?.state ?? "");
+      setValue("city", userData?.city ?? "");
+      setValue("zipcode", userData?.zipcode ?? "");
+      setValue("country", "USA");
       setValue("profilePictureAssetId", userData?.image ?? "");
       setValue("bannerImageAssetId", userData?.bannerImage ?? "");
       setBanner(
@@ -204,8 +210,13 @@ export const EditProfileForm = () => {
         name: userData?.name ?? "",
         email: userData?.email,
         handle: userData?.handle,
-        location: userData?.location,
-        phoneNumber: userData?.phoneNumber,
+        // location: userData?.location,
+        address1: userData?.address1,
+        address2: userData?.address2,
+        state: userData?.state,
+        city: userData?.city,
+        zipcode: userData?.zipcode,
+        country: userData?.country,
         profilePictureAssetId: getKeyFromAssetUrl(userData?.image ?? ""),
         bannerImageAssetId: getKeyFromAssetUrl(userData?.bannerImage ?? ""),
       };
@@ -213,7 +224,13 @@ export const EditProfileForm = () => {
         name: data.name,
         email: data.email,
         handle: data.handle,
-        location: data.location,
+        // location: data.location,
+        address1: data?.address1,
+        // address2: data?.address2,
+        state: data?.state,
+        city: data?.city,
+        zipcode: data?.zipcode,
+        country: "USA", // data?.country,
         phoneNumber: data.phoneNumber,
         profilePictureAssetId:
           data.profilePictureAssetId === defaultProfilePhoto
@@ -343,7 +360,7 @@ export const EditProfileForm = () => {
           showInfoTooltip={true}
           content="Handle must all be in lower case or numeric and must contain a minimum of 6 characters and maximum of 64 characters. Handle cannot contain special characters other than dot(.) and underscore(_) and any form of profanity or racism related content. Golf District reserves the right to change your handle to a random handle at any time if it violates our terms of service."
         />
-        <Input
+        {/* <Input
           label="Location"
           type="text"
           list="places"
@@ -356,6 +373,80 @@ export const EditProfileForm = () => {
             setLocation(e.target.value);
           }}
           data-testid="profile-location-id"
+        /> */}
+        <Input
+          label="Address1"
+          type="text"
+          list="places"
+          placeholder="Enter your address1"
+          id="address1"
+          register={register}
+          name="address1"
+          error={errors.address1?.message}
+          data-testid="profile-address1-id"
+        />
+        <Input
+          label="Address2"
+          type="text"
+          list="places"
+          placeholder="Enter your address2"
+          id="address2"
+          register={register}
+          name="address2"
+          error={errors.address2?.message}
+          data-testid="profile-address2-id"
+        />
+        <Input
+          label="City"
+          type="text"
+          list="places"
+          placeholder="Enter your city"
+          id="city"
+          register={register}
+          name="city"
+          error={errors.city?.message}
+          data-testid="profile-city-id"
+          onChange={(e: ChangeEvent<HTMLInputElement>) => {
+            setValue("city", e.target.value);
+            setCity(e.target.value);
+          }}
+        />
+        <Input
+          label="State"
+          type="text"
+          list="places"
+          placeholder="Enter your state"
+          id="state"
+          register={register}
+          name="state"
+          error={errors.state?.message}
+          data-testid="profile-state-id"
+        />
+        <Input
+          label="Zip"
+          type="text"
+          list="places"
+          placeholder="Enter your zip"
+          id="zipcode"
+          register={register}
+          name="zipcode"
+          error={errors.zipcode?.message}
+          data-testid="profile-zipcode-id"
+        />
+        <Input
+          label="Country"
+          type="text"
+          list="places"
+          placeholder="Enter your country"
+          id="country"
+          register={register}
+          name="country"
+          disabled={true}
+          error={errors.country?.message}
+          showInfoTooltip={true}
+          value={"USA"}
+          content="We only support cash outs for US banks at this time"
+          data-testid="profile-country-id"
         />
         <datalist id="places">
           {cities.data?.autocompleteCities.features.map((city, idx) => (

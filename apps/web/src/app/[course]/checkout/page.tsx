@@ -1,7 +1,11 @@
 "use client";
 
 import { useSession } from "@golf-district/auth/nextjs-exports";
-import { formatQueryDate, removeTimeZoneOffset } from "@golf-district/shared";
+import {
+  formatDate,
+  formatQueryDate,
+  removeTimeZoneOffset,
+} from "@golf-district/shared";
 import { FilledButton } from "~/components/buttons/filled-button";
 import { HyperSwitch } from "~/components/checkout-page/hyper-switch";
 import { OrderSummary } from "~/components/checkout-page/order-summary";
@@ -59,11 +63,11 @@ export default function Checkout({
     setAmountOfPlayers,
   } = useCheckoutContext();
 
-  useEffect(() => {
-    if (playerCount) {
-      setAmountOfPlayers(Number(playerCount));
-    }
-  }, []);
+  // useEffect(() => {
+  //   if (playerCount) {
+  //     setAmountOfPlayers(Number(playerCount));
+  //   }
+  // }, []);
 
   const {
     data: teeTimeData,
@@ -230,7 +234,7 @@ export default function Checkout({
       localCart.push({
         name: "Golf District Tee Time",
         id: teeTimeId ?? data?.teeTimeId,
-        price: course?.markupFeesFixedPerPlayer ?? 0, //int
+        price: teeTimeData?.markupFees ?? 0, //int
         image: "", //
         currency: "USD", //USD
         display_price: formatMoney(
@@ -297,6 +301,13 @@ export default function Checkout({
     course?.convenienceFeesFixedPerPlayer,
   ]);
 
+  useEffect(() => {
+    if (playerCount && data?.availableSlots)
+      setAmountOfPlayers((_prev) =>
+        Math.min(Number(playerCount), Number(data?.availableSlots))
+      );
+  }, [data]);
+
   if (isError && error) {
     return (
       <div className="flex justify-center flex-col items-center h-[200px]">
@@ -346,8 +357,8 @@ export default function Checkout({
               sensibleDataToMountComp={{
                 partner_id: process.env.NEXT_PUBLIC_SENSIBLE_PARTNER_ID ?? "",
                 product_id: process.env.NEXT_PUBLIC_SENSIBLE_PRODUCT_ID ?? "",
-                coverageStartDate: formatQueryDate(new Date(data?.date ?? "")),
-                coverageEndDate: formatQueryDate(new Date(data?.date ?? "")),
+                coverageStartDate: formatDate(new Date(data?.date ?? "")),
+                coverageEndDate: formatDate(new Date(data?.date ?? "")),
                 coverageStartHourNumber: startHourNumber,
                 coverageEndHourNumber: endHourNumber === 0 ? 23 : endHourNumber, // SAFE VALUE SHOULDN'T BE 0 OR 24
                 currency: "USD",
@@ -380,6 +391,7 @@ export default function Checkout({
                 isBuyNowAuction={false}
                 cartData={cartData}
                 teeTimeDate={teeTimeData?.date}
+                playerCount={playerCount}
               />
             )}
           </div>

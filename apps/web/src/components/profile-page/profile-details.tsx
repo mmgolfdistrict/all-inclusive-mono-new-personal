@@ -54,11 +54,11 @@ export const ProfileDetails = ({
             <div className="flex items-center md:justify-start justify-center gap-1 text-primary-gray">
               {!isThirdPartyProfile ||
               (isThirdPartyProfile &&
-                userData?.location &&
+                userData?.city &&
                 userData?.profileVisibility === "PUBLIC") ? (
                 <>
                   <Location className="w-[16px] md:w-[22px]" />
-                  <div>{userData?.location}</div>
+                  <div>{userData?.city}</div>
                 </>
               ) : null}
             </div>

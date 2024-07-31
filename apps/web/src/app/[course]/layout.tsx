@@ -10,7 +10,6 @@ import type { FullCourseType } from "@golf-district/shared";
 import { CourseLayout } from "~/components/course-layout";
 import { CourseWrapper } from "~/contexts/CourseContext";
 import { FiltersWrapper } from "~/contexts/FiltersContext";
-import { getNICDetails } from "~/utils/ipUtility";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -46,7 +45,7 @@ export default async function CoursePageLayout({
 
   const courseImages = await getCourseImages(courseId);
 
-  const nicInfos = getNICDetails();
+  // const nicInfos = getNICDetails();
 
   return (
     <>

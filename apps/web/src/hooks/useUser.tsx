@@ -9,7 +9,13 @@ type UserType = {
   emailVerified: string | null;
   image: string;
   gdImage: string | null;
-  location: string | null;
+  // location: string | null;
+  address1: string | null;
+  address2?: string | null;
+  state: string | null;
+  zipcode: string | null;
+  city: string | null;
+  country: string | null;
   createdAt: string | null;
   updatedAt: string | null;
   lastSuccessfulLogin: string | null;

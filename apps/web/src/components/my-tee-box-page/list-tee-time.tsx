@@ -163,8 +163,17 @@ export const ListTeeTime = ({
     //   buyerFeePerGolfer          = ${buyerFeePerGolfer},
     //   totalPayoutForAllGolfers   = ${totalPayoutForAllGolfers}`);
 
+    // totalPayoutForAllGolfers =
+    //   ( totalPayoutForAllGolfers <= 0 ? 0 : totalPayoutForAllGolfers );
+
     totalPayoutForAllGolfers =
-      totalPayoutForAllGolfers <= 0 ? 0 : totalPayoutForAllGolfers;
+      (totalPayoutForAllGolfers <= 0 ? 0 : totalPayoutForAllGolfers) +
+      (selectedTeeTime?.weatherGuaranteeAmount ?? 0) / 100;
+
+    // setSellerServiceFee(
+    //   sellerFeePerGolfer * parseInt(players) +
+    //     (selectedTeeTime?.weatherGuaranteeAmount ?? 0) / 100
+    // );
 
     setSellerServiceFee(sellerFeePerGolfer * parseInt(players));
 
@@ -362,11 +371,20 @@ export const ListTeeTime = ({
                   ))}
                 </ToggleGroup.Root>
               </div>
+              <div className="bg-secondary-white">
+                If you purchased weather protection, you will receive a full
+                refund. Any remaining owned rounds for this time will be subject
+                to raincheck policy.
+              </div>
             </div>
             <div className="flex flex-col gap-4 px-4 pb-6">
               <div className="flex justify-between">
                 <div className="font-[300] text-primary-gray">
-                  Your Listing Price
+                  Your Listing Price{" "}
+                  <Tooltip
+                    trigger={<Info className="h-[14px] w-[14px]" />}
+                    content="Buyer sees a slightly higher amount. These buyer/seller fees help keep the lights on at Golf District and to continuously provide better service."
+                  />
                 </div>
                 <div className="text-secondary-black">
                   {formatMoney(listingPrice * Number(players))}
@@ -377,11 +395,25 @@ export const ListTeeTime = ({
                   Service Fee{" "}
                   <Tooltip
                     trigger={<Info className="h-[14px] w-[14px]" />}
-                    content="This fee ensures ongoing enhancements to our service, ultimately offering golfers the best access to booking times."
+                    content="This fee ensures ongoing enhancements to our service, ultimately offering golfers the best access to booking tee times"
                   />
                 </div>
                 <div className="text-secondary-black">
-                  {formatMoney(sellerServiceFee)}
+                  ({formatMoney(sellerServiceFee)})
+                </div>
+              </div>
+              <div className="flex justify-between">
+                <div className="font-[300] text-primary-gray">
+                  Weather Guarantee Refund{" "}
+                  <Tooltip
+                    trigger={<Info className="h-[14px] w-[14px]" />}
+                    content="Weather guarantee amount to be refunded"
+                  />
+                </div>
+                <div className="text-secondary-black">
+                  {formatMoney(
+                    (selectedTeeTime?.weatherGuaranteeAmount ?? 0) / 100
+                  )}
                 </div>
               </div>
               <div className="flex justify-between">

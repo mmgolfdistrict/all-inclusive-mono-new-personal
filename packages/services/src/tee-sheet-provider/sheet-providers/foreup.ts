@@ -25,7 +25,12 @@ export class foreUp extends BaseProvider {
   ): Promise<TeeTimeResponse[]> {
     const { defaultPriceClassID } = JSON.parse(this.providerConfiguration ?? "{}");
     const endpoint = this.getBasePoint();
-    const url = `${endpoint}/courses/${courseId}/teesheets/${teesheetId}/teetimes?startTime=${startTime}&endTime=${endTime}&date=${date}&priceClassId=${defaultPriceClassID}`;
+    let url = "";
+    if (defaultPriceClassID) {
+      url = `${endpoint}/courses/${courseId}/teesheets/${teesheetId}/teetimes?startTime=${startTime}&endTime=${endTime}&date=${date}&priceClassId=${defaultPriceClassID}`;
+    } else {
+      url = `${endpoint}/courses/${courseId}/teesheets/${teesheetId}/teetimes?startTime=${startTime}&endTime=${endTime}&date=${date}`;
+    }
     const headers = this.getHeaders(token);
 
     console.log(`getTeeTimes - ${url}`);

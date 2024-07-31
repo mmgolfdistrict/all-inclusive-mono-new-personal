@@ -10,6 +10,7 @@ import * as cashouts from "./cashout";
 import * as charities from "./charities";
 import * as charityCourseLink from "./charityCourseLink";
 import * as courseAssets from "./courseAssets";
+import * as courseMarkup from "./courseMarkup";
 import * as coursePromoCodeLink from "./coursePromoCodeLink";
 import * as courses from "./courses";
 import * as courseScheduleDetails from "./courseScheduleDetails";
@@ -32,6 +33,7 @@ import * as providers from "./providers";
 import * as providerScheduleDetails from "./providerScheduleDetails";
 import * as providerCourseLink from "./providersCourseLink";
 import * as sessions from "./sessions";
+import * as systemNotification from "./systemNotification";
 import * as teeTimeIndexLogs from "./teeTimeIndexLogs";
 import * as teeTimes from "./teeTimes";
 import * as transfers from "./transfers";
@@ -88,4 +90,6 @@ export const schema = {
   ...profanities,
   ...courseSEOs,
   ...userWaitlists,
+  ...systemNotification,
+  ...courseMarkup,
 };

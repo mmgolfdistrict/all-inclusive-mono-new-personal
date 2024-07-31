@@ -19,6 +19,7 @@ interface EmailParams {
   CourseName?: string;
   GolfDistrictReservationID?: string;
   CourseReservationID?: string;
+  ListedPricePerPlayer?: string;
   FacilityName?: string;
   PlayDateTime?: string;
   NumberOfHoles?: number;
@@ -31,7 +32,14 @@ interface EmailParams {
   CourseLogoURL?: string;
   CourseURL?: string;
   VerifyURL?: string;
+  BuyTeeTimeURL?: string;
   HeaderLogoURL?: string;
+  PlayerCount?: number;
+  TotalAmount?: string;
+  AmountCashedOut?: number;
+  PreviousBalance?: number;
+  AvailableBalance?: number;
+  BalanceProcessing?: number | string;
 }
 
 interface Attachment {
@@ -149,7 +157,7 @@ export class NotificationService {
     );
 
     const appSettings = await appSettingService.getMultiple("ENABLE_ICS_ATTACHMENT");
-    if (appSettings?.ENABLE_ICS_ATTACHMENT === "true") {
+    if (appSettings?.ENABLE_ICS_ATTACHMENT === "false") {
       await this.sendGridClient
         .send({
           to: email,

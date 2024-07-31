@@ -14,7 +14,7 @@
   ],
   "scripts": {
     "build": "turbo run build",
-    "start":"npm run dev",
+    "start": "npm run dev",
     "clean:workspaces": "turbo clean",
     "compile": "turbo run compile",
     "dev": "dotenv -- turbo dev --parallel --filter=golf-district-platforms",
@@ -27,7 +27,8 @@
     "prepare": "husky install",
     "prettier-check": "prettier --check \"**/*.{js,jsx,ts,tsx,md,css}\" --ignore-path .prettierignore",
     "test": "turbo run test",
-    "typecheck": "turbo typecheck"
+    "typecheck": "turbo typecheck",
+    "revision": "node ./revision/generateRevision.js && node ./revision/route.js"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,md,css}": [
@@ -36,7 +37,9 @@
     ]
   },
   "dependencies": {
+    "@juspay-tech/react-hyper-js": "^1.0.2",
     "dotenv-cli": "^7.3.0",
+    "express": "^4.19.2",
     "prettier": "^2.8.8",
     "turbo": "^1.12.4",
     "typescript": "^5.2.2"

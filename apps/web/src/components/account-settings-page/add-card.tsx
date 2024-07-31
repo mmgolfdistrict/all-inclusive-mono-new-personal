@@ -1,6 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as ToggleGroup from "@radix-ui/react-toggle-group";
 import { useUserContext } from "~/contexts/UserContext";
+import { usePaymentMethods } from "~/hooks/usePaymentMethods";
 import {
   creditCardSchema,
   type CreditCardSchemaType,
@@ -15,7 +16,6 @@ import {
 } from "../../utils/credit-card-formatters";
 import { FilledButton } from "../buttons/filled-button";
 import { Input } from "../input/input";
-import { usePaymentMethods } from "~/hooks/usePaymentMethods";
 
 const Options = ["debit", "credit"];
 type OptionsType = "debit" | "credit";
@@ -42,8 +42,12 @@ export const AddCard = ({ refetchCards }: { refetchCards: () => unknown }) => {
   const onSubmit: SubmitHandler<CreditCardSchemaType> = async (data) => {
     let error = false;
 
-    cards.forEach(card => {
-      if (!error && card?.card?.last4_digits && data.cardNumber.endsWith(card?.card?.last4_digits)) {
+    cards.forEach((card) => {
+      if (
+        !error &&
+        card?.card?.last4_digits &&
+        data.cardNumber.endsWith(card?.card?.last4_digits)
+      ) {
         error = true;
       }
     });
@@ -74,7 +78,7 @@ export const AddCard = ({ refetchCards }: { refetchCards: () => unknown }) => {
             customer_id: user?.id,
           },
         });
-  
+
         if (response.status === "Cannot add card please enter valid details") {
           toast.error("Cannot add card please enter valid card details");
         } else {
@@ -89,7 +93,6 @@ export const AddCard = ({ refetchCards }: { refetchCards: () => unknown }) => {
         setIsLoading(false);
       }
     }
-    
   };
 
   return (

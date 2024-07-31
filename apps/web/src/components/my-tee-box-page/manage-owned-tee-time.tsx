@@ -145,6 +145,12 @@ export const ManageOwnedTeeTime = ({
       toast.error("Tee time not selected");
       return;
     }
+
+    if (!updateNames.data?.success) {
+      toast.error(updateNames.data?.message);
+      return;
+    }
+
     if (updateNames.isLoading || updateMinimumOfferPrice.isLoading) return;
 
     selectedTeeTime.golfers.map((el) => {
@@ -531,7 +537,7 @@ export const ManageOwnedTeeTime = ({
                       Service Fee{" "}
                       <Tooltip
                         trigger={<Info className="h-[14px] w-[14px]" />}
-                        content="This fee ensures ongoing enhancements to our service, ultimately offering golfers the best access to booking times."
+                        content="This fee ensures ongoing enhancements to our service, ultimately offering golfers the best access to booking tee times"
                       />
                     </div>
                     <div className="text-secondary-black">
@@ -624,7 +630,7 @@ const TeeTimeItem = ({
         <div className="flex text-[14px] font-[300]">
           <div className="w-[55px]" />
           <div className="text-prmiary-gray">
-            Rain protection purchased for{" "}
+            Weather guarantee purchased for{" "}
             <span className="font-semibold text-secondary-black">
               {formatMoney(sensiblePurchasedFor / 100)}
             </span>

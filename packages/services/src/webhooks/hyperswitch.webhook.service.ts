@@ -725,6 +725,7 @@ export class HyperSwitchWebhookService {
         listId: bookings.listId,
         playerCount: bookings.playerCount,
         providerCourseConfiguration: providerCourseLink.providerCourseConfiguration,
+        markupFees: bookings.markupFees,
       })
       .from(bookings)
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -874,7 +875,7 @@ export class HyperSwitchWebhookService {
         paymentId,
       });
     try {
-      let details = "GD Booking";
+      let details = await appSettingService.get("TEE_SHEET_BOOKING_MESSAGE");
       try {
         const isSensibleNoteAvailable = await appSettingService.get("SENSIBLE_NOTE_TO_TEE_SHEET");
         if (weatherQuoteId && isSensibleNoteAvailable) {
@@ -967,6 +968,7 @@ export class HyperSwitchWebhookService {
       newBooking.data.bookingType = "FIRST";
       newBookings.push(newBooking);
       if (listedSlotsCount && listedSlotsCount < firstBooking?.playerCount) {
+        details = await appSettingService.get("TEE_SHEET_BOOKING_MESSAGE");
         const newBookingSecond = await provider.createBooking(
           token,
           firstBooking.providerCourseId!,
@@ -985,7 +987,7 @@ export class HyperSwitchWebhookService {
                   },
                 ],
                 event_type: "tee_time",
-                details: "GD Booking",
+                details,
               },
             },
           }
@@ -1032,8 +1034,6 @@ export class HyperSwitchWebhookService {
           includesCart: firstBooking.includesCart,
           listId: null,
           // entityId: firstBooking.entityId,
-          weatherGuaranteeAmount: firstBooking.weatherGuaranteeAmount,
-          weatherGuaranteeId: firstBooking.weatherGuaranteeId,
           cartId: cartId,
           playerCount: firstBooking.playerCount - (listedSlotsCount ?? 0),
           greenFeePerPlayer: listPrice ?? 1 * 100,
@@ -1043,6 +1043,7 @@ export class HyperSwitchWebhookService {
           totalAmount: total || 0,
           providerPaymentId: "",
           status: "CONFIRMED",
+          markupFees: 0,
           weatherQuoteId: weatherQuoteId || null,
         });
       }
@@ -1166,9 +1167,7 @@ export class HyperSwitchWebhookService {
           existingTeeTime?.timezoneCorrection ?? 0
         ),
         NumberOfHoles: existingTeeTime?.numberOfHoles,
-        SellTeeTImeURL: `${redirectHref}/my-tee-box`,
-        ManageTeeTimesURL: `${redirectHref}/my-tee-box`,
-        GolfDistrictReservationID: bookingId,
+        // GolfDistrictReservationID: bookingId,
         CourseReservationID: newBooking?.data.id,
       };
 
@@ -1195,6 +1194,8 @@ export class HyperSwitchWebhookService {
           PurchasedFrom: sellerCustomer.username,
           PlayerCount: listedSlotsCount ?? 0,
           TotalAmount: formatMoney(total / 100),
+          SellTeeTImeURL: `${redirectHref}/my-tee-box`,
+          ManageTeeTimesURL: `${redirectHref}/my-tee-box`,
         };
 
         await this.notificationService.createNotification(
@@ -1215,18 +1216,18 @@ export class HyperSwitchWebhookService {
           ]
         );
 
+        if (firstBooking?.weatherGuaranteeId?.length) {
+          await this.sensibleService.cancelGuarantee(firstBooking?.weatherGuaranteeId || "");
+        }
         if (newBookings.length === 1) {
-          if (firstBooking?.weatherGuaranteeId?.length) {
-            await this.sensibleService.cancelGuarantee(firstBooking?.weatherGuaranteeId || "");
-          }
-          const lsPrice = (listPrice ?? 0) / 100;
-          const listedPrice = lsPrice + lsPrice * buyerFee;
-          const totalTax = lsPrice * sellerFee;
+          const listedPrice = (listPrice ?? 0) / 100;
+          const totalTax = listedPrice * sellerFee;
+
           const templateSeller: any = {
             ...commonTemplateData,
             CustomerFirstName: sellerCustomer.name?.split(" ")[0],
             ListedPrice:
-              `$${lsPrice.toLocaleString("en-US", {
+              `$${listedPrice.toLocaleString("en-US", {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })} / Golfer` || "-",
@@ -1237,6 +1238,8 @@ export class HyperSwitchWebhookService {
               })}` || "-",
             Payout: formatMoney((listedPrice - totalTax) * (listedSlotsCount || 1)),
             PurchasedFrom: existingTeeTime?.courseName || "-",
+            BuyTeeTImeURL: `${redirectHref}`,
+            CashOutURL: `${redirectHref}/account-settings/${firstBooking.ownerId}`,
           };
           await this.notificationService.createNotification(
             firstBooking.ownerId || "",
@@ -1248,15 +1251,15 @@ export class HyperSwitchWebhookService {
           );
         }
       } else {
-        const lsPrice = (listPrice ?? 0) / 100;
-        const listedPrice = lsPrice + lsPrice * buyerFee;
-        const totalTax = lsPrice * (buyerFee + sellerFee);
+        const listedPrice = (listPrice ?? 0) / 100;
+        const totalTax = listedPrice * sellerFee;
+
         const templateSeller: any = {
           ...commonTemplateData,
           SoldPlayers: listedSlotsCount,
           CustomerFirstName: sellerCustomer.name?.split(" ")[0],
           ListedPrice:
-            `$${lsPrice.toLocaleString("en-US", {
+            `$${listedPrice.toLocaleString("en-US", {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })} / Golfer` || "-",
@@ -1268,6 +1271,8 @@ export class HyperSwitchWebhookService {
           Payout: formatMoney((listedPrice - totalTax) * (listedSlotsCount || 1)),
           SensibleWeatherIncluded: firstBooking.weatherGuaranteeId?.length ? "Yes" : "No",
           PurchasedFrom: existingTeeTime?.courseName || "-",
+          BuyTeeTImeURL: `${redirectHref}`,
+          CashOutURL: `${redirectHref}/account-settings/${firstBooking.ownerId}`,
         };
         await this.notificationService.createNotification(
           firstBooking.ownerId || "",
@@ -1282,7 +1287,11 @@ export class HyperSwitchWebhookService {
 
     const amount = listPrice ?? 1;
     const serviceCharge = amount * sellerFee;
-    const payable = (amount - serviceCharge) * (listedSlotsCount || 1);
+    let weatherGuaranteeAmount = 0;
+    if (firstBooking?.weatherGuaranteeId) {
+      weatherGuaranteeAmount = firstBooking?.weatherGuaranteeAmount ?? 0;
+    }
+    const payable = (amount - serviceCharge) * (listedSlotsCount || 1) + weatherGuaranteeAmount;
     const currentDate = new Date();
     const radeemAfterMinutes = await appSettingService.get("CASH_OUT_AFTER_MINUTES");
     const redeemAfterDate = this.addMinutes(currentDate, Number(radeemAfterMinutes));
@@ -1293,6 +1302,7 @@ export class HyperSwitchWebhookService {
         amount: payable,
         type: "CASHOUT",
         transferId: bookingsIds?.transferId,
+        sensibleAmount: weatherGuaranteeAmount,
         createdDateTime: this.formatCurrentDateTime(currentDate), // Use UTC string format for datetime fields
         redeemAfter: this.formatCurrentDateTime(redeemAfterDate), // Use UTC string format for datetime fields
       },

@@ -1,5 +1,6 @@
 "use client";
 
+import { useCourseContext } from "~/contexts/CourseContext";
 import { useUser } from "~/hooks/useUser";
 import { api } from "~/utils/api";
 import Script from "next/script";
@@ -22,8 +23,17 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
     api.cashOut.getRecievables.useQuery({});
   const [modalOpen, setModalOpen] = useState(false);
   const [loadingCashout, setLoadingCashout] = useState<boolean>(false);
+  const { course } = useCourseContext();
+  const courseId = course?.id ?? "";
+  const hasAddress =
+    user?.address1 && user.city && user.state && user.zipcode && user.country;
   const openModal = () => {
-    setModalOpen(true);
+    if (hasAddress) {
+      setModalOpen(true);
+    } else {
+      toast.error("Please add address before adding bank account");
+      return;
+    }
   };
 
   const closeModal = () => {
@@ -40,13 +50,21 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
       if (amount <= 0) {
         toast.error("Please enter valid amount");
       }
-      await createCashoutTransfer.mutateAsync({
+      const response = await createCashoutTransfer.mutateAsync({
         paymentInstrumentId,
         amount: Number(amount),
+        courseId,
       });
-      toast.success(`Cash out requested for $${amount}`);
-      await refetch();
-      await refetchRecievableData();
+      if ((response as { success: boolean; error: boolean }).success) {
+        toast.success(`Cash out requested for $${amount}`);
+        await refetch();
+        await refetchRecievableData();
+      } else {
+        toast.error(
+          (response as Error).message ??
+            "Could not request cashout at this moment. Please try later."
+        );
+      }
     } catch (error) {
       console.log(error);
       toast.error((error as Error).message ?? "Could not request cash out.");
@@ -61,9 +79,9 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
       <section className="h-full mx-auto flex w-full flex-col gap-6 bg-white px-3 py-2 mb-2  md:rounded-xl md:p-6 md:py-4">
         <div>
           <h3 className="text-[18px]  md:text-[24px]">Balance</h3>
-          {/* <p className=" text-[14px] text-primary-gray md:text-[16px]">
-        Set how you&apos;d like your profile information to appear.
-      </p> */}
+          <p className=" text-[14px] text-primary-gray md:text-[16px]">
+            You can cashout once a day up to $3000.
+          </p>
         </div>
         <div className="flex flex-col items-center gap-2 lg:flex-row">
           <div className="flex flex-col w-full h-full items-center justify-center gap-2 ">
@@ -82,12 +100,15 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
                     Processing Funds:&nbsp;
                   </p>
                   <p className="text-gray-800 md:text-[24px]">{`$${
-                    recievableData?.availableAmount.toFixed(2) || 0
+                    (
+                      (recievableData?.availableAmount ?? 0) -
+                      (recievableData?.withdrawableAmount ?? 0)
+                    ).toFixed(2) || 0
                   }`}</p>
                 </div>
                 <Tooltip
                   trigger={<Info className="h-[20px] w-[20px]" />}
-                  content="These funds are currently being processed and will be available for withdrawal soon. Processing typically takes 5-7 business days."
+                  content="These funds are currently being processed and will be available for withdrawal soon. Processing typically takes 5-8 business days."
                 />
               </div>
               <div className="flex justify-between items-center">
@@ -105,6 +126,7 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
                 />
               </div>
             </div>
+
             <div className="flex flex-col items-center gap-2 md:flex-row md:items-center">
               {/* <div className="text-[24px] text-secondary-black md:text-[32px]">
                 {formatMoney(user?.balance ?? 0 / 100)}

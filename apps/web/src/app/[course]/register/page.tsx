@@ -32,9 +32,21 @@ import { useDebounce } from "usehooks-ts";
 
 export default function RegisterPage() {
   const { course } = useCourseContext();
-  const [location, setLocation] = useState<string>("");
-  const debouncedLocation = useDebounce<string>(location, 500);
-  const cities = api.places.getCity.useQuery({ city: debouncedLocation });
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    setError,
+    getValues,
+    formState: { isSubmitting, errors },
+  } = useForm<RegisterSchemaType>({
+    resolver: zodResolver(registerSchema),
+  });
+  const [city, setCity] = useState(getValues("city"));
+
+  const debouncedLocation = useDebounce<string>(city, 500);
+  const cities = api.places.getCity.useQuery({ city: debouncedLocation??"" });
   const recaptchaRef = createRef<ReCAPTCHA>();
   const registerUser = api.register.register.useMutation();
   const { data: uName } = api.register.generateUsername.useQuery(6);
@@ -49,17 +61,6 @@ export default function RegisterPage() {
     data: profanityCheckData,
     reset: resetProfanityCheck,
   } = api.profanity.checkProfanity.useMutation();
-
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    watch,
-    setError,
-    formState: { isSubmitting, errors },
-  } = useForm<RegisterSchemaType>({
-    resolver: zodResolver(registerSchema),
-  });
 
   const genUsername = () => {
     setValue("username", uName ?? "");
@@ -107,6 +108,10 @@ export default function RegisterPage() {
     setValue("redirectHref", cleanedHref);
   }, []);
 
+  useEffect(() => {
+    recaptchaRef.current?.execute();
+  }, []);
+
   const onSubmit: SubmitHandler<RegisterSchemaType> = async (data) => {
     if (profanityCheckData?.isProfane) {
       setError("username", {
@@ -116,12 +121,16 @@ export default function RegisterPage() {
     }
     if (isSubmitting) return;
     if (registerUser.isLoading) return;
-    if (registerUser.isSuccess) return;
+    // if (registerUser.isSuccess) return;
     try {
-      await registerUser.mutateAsync({
+      const response= await registerUser.mutateAsync({
         ...data,
         courseId: course?.id,
       });
+      if(response?.error){
+        toast.error(response.message);
+        return
+      }
 
       router.push(`/${course?.id}/verify-email`);
     } catch (error) {
@@ -151,6 +160,10 @@ export default function RegisterPage() {
         Create an Account
       </h1>
       <section className="mx-auto flex w-full flex-col gap-2 bg-white p-5 sm:max-w-[500px] sm:rounded-xl sm:p-6">
+        <p>
+          Using gmail? Go to the login page and select the Google icon to login
+          with Google. The below form is not required for gmail users.
+        </p>
         <form className="flex flex-col gap-2" onSubmit={handleSubmit(onSubmit)}>
           <Input
             label="First Name"
@@ -220,7 +233,7 @@ export default function RegisterPage() {
               <Refresh className="h-[14px] w-[14px]" />
             </IconButton>
           </div>
-          <Input
+          {/* <Input
             label="Location"
             type="text"
             list="places"
@@ -233,6 +246,78 @@ export default function RegisterPage() {
               setLocation(e.target.value);
             }}
             data-testid="register-location-id"
+          /> */}
+          <Input
+            label="Address1"
+            type="text"
+            list="places"
+            placeholder="Enter your address1"
+            id="address1"
+            register={register}
+            name="address1"
+            error={errors.address1?.message}
+            data-testid="register-address1-id"
+          />
+          <Input
+            label="Address2"
+            type="text"
+            list="places"
+            placeholder="Enter your address2"
+            id="address2"
+            register={register}
+            name="address2"
+            error={errors.address2?.message}
+            data-testid="register-address2-id"
+          />
+          <Input
+            label="City"
+            type="text"
+            list="places"
+            placeholder="Enter your city"
+            id="city"
+            register={register}
+            name="city"
+            error={errors.city?.message}
+            data-testid="register-city-id"
+            onChange={(e: ChangeEvent<HTMLInputElement>) => {
+              setValue("city", e.target.value);
+              setCity(e.target.value);
+            }}
+          />
+          <Input
+            label="State"
+            type="text"
+            list="places"
+            placeholder="Enter your state"
+            id="state"
+            register={register}
+            name="state"
+            error={errors.state?.message}
+            data-testid="register-state-id"
+          />
+          <Input
+            label="Zip"
+            type="text"
+            list="places"
+            placeholder="Enter your zip"
+            id="zipcode"
+            register={register}
+            name="zipcode"
+            error={errors.zipcode?.message}
+            data-testid="register-zipcode-id"
+          />
+          <Input
+            label="Country"
+            type="text"
+            list="places"
+            placeholder="Enter your country"
+            id="country"
+            register={register}
+            name="country"
+            error={errors.country?.message}
+            showInfoTooltip={true}
+            content="We only support cash outs for US banks at this time"
+            data-testid="register-country-id"
           />
           <datalist id="places">
             {cities.data?.autocompleteCities.features.map((city, idx) => (
@@ -248,9 +333,6 @@ export default function RegisterPage() {
               register={register}
               name="password"
               error={errors.password?.message}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                setPassword(e.target.value);
-              }}
               data-testid="register-password-id"
             />
             <IconButton
@@ -305,7 +387,11 @@ export default function RegisterPage() {
           </div>
           {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (
             <ReCAPTCHA
-              size="normal"
+              size={
+                process.env.NEXT_PUBLIC_RECAPTCHA_IS_INVISIBLE
+                  ? "invisible"
+                  : "normal"
+              }
               sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ?? ""}
               onChange={onReCAPTCHAChange}
               ref={recaptchaRef}

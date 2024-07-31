@@ -37,6 +37,24 @@ export default function Login() {
   const auditLog = api.webhooks.auditLog.useMutation();
   const { data: sessionData, status } = useSession();
 
+  const event = ({ action, category, label, value }: any) => {
+    (window as any).gtag("event", action, {
+      event_category: category,
+      event_label: label,
+      value: value,
+    });
+  };
+
+  console.log(
+    `process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY = [${process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}]`
+  );
+  console.log(
+    `process.env.RECAPTCHA_SECRET_KEY = [${process.env.RECAPTCHA_SECRET_KEY}]`
+  );
+  console.log(
+    `process.env.NEXT_PUBLIC_RECAPTCHA_IS_INVISIBLE = [${process.env.NEXT_PUBLIC_RECAPTCHA_IS_INVISIBLE}]`
+  );
+
   useEffect(() => {
     if (sessionData?.user?.id && course?.id && status === "authenticated") {
       logAudit(sessionData.user.id, course.id, () => {
@@ -97,8 +115,18 @@ export default function Login() {
     !prevPath?.path?.includes("verify-email") &&
     !prevPath?.path?.includes("register");
 
+  useEffect(() => {
+    recaptchaRef.current?.execute();
+  }, []);
+
   const onSubmit: SubmitHandler<LoginSchemaType> = async (data) => {
     setIsLoading(true);
+    event({
+      action: "SIGNIN_USING_CREDENTIALS",
+      category: "SIGNIN",
+      label: "Sign in using credentials",
+      value: "",
+    });
     try {
       const callbackURL = `${window.location.origin}${
         GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
@@ -178,6 +206,12 @@ export default function Login() {
   };
 
   const googleSignIn = async () => {
+    event({
+      action: "SIGNIN_USING_GOOGLE",
+      category: "SIGNIN",
+      label: "Sign in using google",
+      value: "",
+    });
     try {
       await signIn("google", {
         // callbackUrl: `${window.location.origin}${
@@ -208,6 +242,11 @@ export default function Login() {
         Login
       </h1>
       <section className="mx-auto flex w-full flex-col gap-2 bg-white p-5 sm:max-w-[500px] sm:rounded-xl sm:p-6">
+        <p>
+          First time users of Golf District need to create a new account. Simply
+          use Google to login quickly, or select sign up if you prefer to use
+          another email.
+        </p>
         {process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ? (
           <div className="w-full rounded-lg shadow-outline">
             <SquareButton
@@ -293,7 +332,11 @@ export default function Login() {
           </Link>
           {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (
             <ReCAPTCHA
-              size="normal"
+              size={
+                process.env.NEXT_PUBLIC_RECAPTCHA_IS_INVISIBLE
+                  ? "invisible"
+                  : "normal"
+              }
               sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ?? ""}
               onChange={onReCAPTCHAChange}
               ref={recaptchaRef}

@@ -364,6 +364,7 @@ export class UserWaitlistService {
 
         const template = {
           CourseLogoURL,
+          CourseName: courseName,
           HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
           availableTimes: availableTimes,
           dates,

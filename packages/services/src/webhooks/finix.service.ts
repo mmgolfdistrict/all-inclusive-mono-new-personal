@@ -1,9 +1,15 @@
 import { randomUUID } from "crypto";
-import { and, eq } from "@golf-district/database";
+import { and, eq, sql } from "@golf-district/database";
 import type { Db } from "@golf-district/database";
+import { assets } from "@golf-district/database/schema/assets";
 import { cashout } from "@golf-district/database/schema/cashout";
+import { courses } from "@golf-district/database/schema/courses";
 import { customerPaymentDetail } from "@golf-district/database/schema/customerPaymentDetails";
+import { users } from "@golf-district/database/schema/users";
+import { appSettingService } from "../app-settings/initialized";
 import type { CashOutService } from "../cashout/cashout.service";
+import type { NotificationService } from "../notification/notification.service";
+import type { LoggerService } from "../webhooks/logging.service";
 
 interface TagDetails {
   customerId: string;
@@ -143,7 +149,7 @@ type ResponseCashout = {
 type RequestOptions = {
   method: string;
   headers: Headers;
-  body: string;
+  body?: string;
   redirect: RequestRedirect;
 };
 
@@ -155,7 +161,9 @@ export class FinixService {
   protected authorizationHeader = `Basic ${this.encodedCredentials}`;
   constructor(
     private readonly database: Db, // private readonly hyperSwitchService: HyperSwitchWebhookService
-    private readonly cashoutService: CashOutService
+    private readonly cashoutService: CashOutService,
+    private readonly loggerService: LoggerService,
+    private readonly notificationService: NotificationService
   ) {}
   getHeaders = () => {
     const requestHeaders = new Headers();
@@ -165,14 +173,39 @@ export class FinixService {
     return requestHeaders;
   };
   createCustomerIdentity = async (userId: string) => {
+    const resp = await this.database
+      .select()
+      .from(users)
+      .where(and(eq(users.id, userId)))
+      .execute();
+    if (!resp[0]) {
+      return new Error("User not found");
+    }
+    const userData = resp[0];
+
+    const firstname = userData?.name?.split(" ")?.[0];
+    const lastname = userData?.name?.split(" ")?.[1];
+
     const raw = JSON.stringify({
       identity_roles: ["RECIPIENT"],
-      entity: {},
+      entity: {
+        phone: userData?.phoneNumber,
+        first_name: firstname,
+        last_name: lastname,
+        email: userData?.email,
+        personal_address: {
+          city: userData.city,
+          country: userData?.country,
+          region: userData?.state,
+          line2: userData?.address1,
+          line1: userData?.address2,
+          postal_code: userData?.zipcode,
+        },
+      },
       tags: {
         userId,
       },
     });
-
     const requestOptions: RequestOptions = {
       method: "POST",
       headers: this.getHeaders(),
@@ -182,6 +215,19 @@ export class FinixService {
 
     const response = await fetch(`${this.baseurl}/identities`, requestOptions);
     const customerIdentityData = await response.json();
+    if (!customerIdentityData.id) {
+      console.log("Error in creating identity", JSON.stringify(customerIdentityData));
+      this.loggerService.errorLog({
+        applicationName: "golfdistrict-foreup",
+        clientIP: "",
+        userId,
+        url: "/createCustomerIdentity",
+        userAgent: "",
+        message: "ERROR_ADDING_BANK_ACCOUNT",
+        stackTrace: JSON.stringify(customerIdentityData),
+        additionalDetailsJSON: "error adding bank account",
+      });
+    }
     return customerIdentityData;
   };
   createPaymentInstrument = async (id: string, token: string) => {
@@ -236,27 +282,78 @@ export class FinixService {
         body: raw,
         redirect: "follow",
       };
-
+      console.log("Transfer request data:", raw);
       const response = await fetch(`${this.baseurl}/transfers`, requestOptions);
       const transferData = await response.json();
+      console.log("Transfer response data", transferData);
       return transferData;
     } catch (e) {
+      this.loggerService.errorLog({
+        applicationName: "golfdistrict-foreup",
+        clientIP: "",
+        userId: customerId,
+        url: "/createTransfer",
+        userAgent: "",
+        message: "Transfer Failed",
+        stackTrace: "",
+        additionalDetailsJSON: "Amount was not transfered",
+      });
       console.log("Error in transfer", e);
       throw e;
     }
   };
 
-  createCashoutTransfer = async (amount: number, customerId: string, paymentDetailId: string) => {
+  createCashoutTransfer = async (
+    amount: number,
+    customerId: string,
+    paymentDetailId: string,
+    courseId: string
+  ) => {
     const recievableData = await this.cashoutService.getRecievables(customerId);
     if (!recievableData) {
       return new Error("Error Fetching recievable data");
     }
-    console.log(recievableData);
     if (amount > recievableData.withdrawableAmount) {
       return new Error("Amount cannot be more then withdrawable amount");
     }
+    const today = new Date().toISOString().split("T")[0];
+    const [records] = await this.database
+      .select({ count: sql`COUNT(*)` })
+      .from(cashout)
+      .where(
+        and(
+          eq(sql`DATE(${cashout.createdDateTime})`, sql`DATE(${today})`),
+          eq(cashout.customerId, customerId)
+        )
+      )
+      .execute();
+    const limitInNumber: number =
+      Number(await appSettingService.get("CASH_OUT_LIMIT_IN_NUMBERS_PER_DAY")) || (1 as number);
+    if ((records?.count as number) >= limitInNumber) {
+      return new Error(`You cannot make more the ${limitInNumber} transactions per day.`);
+    }
+    const [allRecords] = await this.database
+      .select({ sum: sql`SUM(${cashout.amount})` })
+      .from(cashout)
+      .where(
+        and(
+          eq(sql`DATE(${cashout.createdDateTime})`, sql`DATE(${today})`),
+          eq(cashout.customerId, customerId)
+        )
+      )
+      .execute();
+    console.log(allRecords);
+    const limitInAmount: number =
+      Number(await appSettingService.get("CASH_OUT_LIMIT_IN_DOLLARS_PER_DAY")) || (1000 as number);
     console.log("creating transfer", recievableData.withdrawableAmount);
     const amountMultiplied = amount * 100;
+    if (amountMultiplied + Number((allRecords?.sum as number) || 0) > Number(limitInAmount) * 100) {
+      return new Error(
+        `You cannot withdraw more than $${limitInAmount} in a day. You have already withdrawn $${
+          ((allRecords?.sum as number) || 1) / 100 || 0
+        } today.`
+      );
+    }
     const [paymentInstrumentIdFromBackend] = await this.database
       .select({
         paymentInstrumentId: customerPaymentDetail.paymentInstrumentId,
@@ -268,6 +365,28 @@ export class FinixService {
       )
       .execute();
 
+    const [user] = await this.database
+      .select({ email: users.email, name: users.name })
+      .from(users)
+      .where(and(eq(users.id, customerId)))
+      .execute();
+
+    const [course] = await this.database
+      .select({
+        key: assets.key,
+        extension: assets.extension,
+        websiteURL: courses.websiteURL,
+        name: courses.name,
+        id: courses.id,
+      })
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .leftJoin(assets, eq(assets.id, courses.logoId))
+      .execute()
+      .catch((err) => {
+        return [];
+      });
+
     if (!paymentInstrumentIdFromBackend?.paymentInstrumentId) {
       return new Error("Could not find paymentInstrumentId");
     } else {
@@ -278,27 +397,66 @@ export class FinixService {
         paymentInstrumentIdFromBackend?.paymentInstrumentId
       );
       const transferId: string = cashoutData.id as string;
+      if (transferId) {
+        await this.database
+          .insert(cashout)
+          .values({
+            id: randomUUID(),
+            amount: amountMultiplied,
+            customerId,
+            transferId,
+            paymentDetailId: paymentInstrumentIdFromBackend.id,
+            externalStatus: cashoutData.state,
+          })
+          .catch((e) => {
+            console.log("Error in transfer", e);
+            throw "Error in creating cash out";
+          });
 
-      await this.database
-        .insert(cashout)
-        .values({
-          id: randomUUID(),
-          amount: amountMultiplied,
-          customerId,
-          transferId,
-          paymentDetailId: paymentInstrumentIdFromBackend.id,
-          externalStatus: cashoutData.state,
-        })
-        .catch((e) => {
-          console.log("Error in transfer", e);
-          throw "Error in creating cashout";
-        });
-      return { success: true, error: false };
+        // await this.notificationService.createNotification(
+        //   customerId,
+        //   "Transfer amount",
+        //   `Amount Cashed Out ${amount}
+        //    Previous Balance ${recievableData.withdrawableAmount / 100}
+        //   Current Balance ${recievableData.withdrawableAmount / 100 - amount}
+        //   Amount in processing ${recievableData?.availableAmount - recievableData?.withdrawableAmount}
+        //   `
+        // );
+        await this.notificationService.sendEmailByTemplate(
+          user?.email ?? "",
+          "Cash out successful",
+          process.env.SENDGRID_CASHOUT_TRANSFER_TEMPLATE_ID ?? "",
+          {
+            AmountCashedOut: amount,
+            PreviousBalance: recievableData.withdrawableAmount,
+            AvailableBalance: recievableData.withdrawableAmount - amount,
+            BalanceProcessing: (recievableData?.availableAmount - recievableData?.withdrawableAmount).toFixed(
+              2
+            ),
+            CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`,
+            CourseURL: course?.websiteURL || "",
+            CourseName: course?.name,
+            HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+            CustomerFirstName: user?.name ?? "",
+          },
+          []
+        );
+        return { success: true, error: false };
+      } else {
+        console.log("Transfer not initiated");
+        return { success: false, error: true };
+      }
     }
   };
 
   createCashoutCustomerIdentity = async (userId: string, paymentToken: string): Promise<ResponseCashout> => {
     const customerIdentity: Identity = await this.createCustomerIdentity(userId);
+    if (!customerIdentity.id) {
+      return {
+        error: true,
+        success: false,
+      };
+    }
     const paymentInstrumentData: PaymentInstrument = await this.createPaymentInstrument(
       customerIdentity.id,
       paymentToken
@@ -313,6 +471,7 @@ export class FinixService {
           paymentInstrumentId: paymentInstrumentData.id,
           customerIdentity: customerIdentity.id,
           accountNumber: paymentInstrumentData.masked_account_number,
+          merchantId: merchantData.id,
         })
         .execute();
       return { success: true, error: false };
@@ -321,15 +480,39 @@ export class FinixService {
     }
   };
 
-  getPaymentInstruments = async (userId: string): Promise<{ id: string; accountNumber: string | null }[]> => {
+  getMerchantById = async (id: string | null) => {
+    const requestOptions: RequestOptions = {
+      method: "GET",
+      headers: this.getHeaders(),
+      redirect: "follow",
+    };
+
+    const response = await fetch(`${this.baseurl}/merchants/${id}`, requestOptions);
+    const merchantData = await response.json();
+    return merchantData;
+  };
+
+  getPaymentInstruments = async (
+    userId: string
+  ): Promise<{ id: string; accountNumber: string | null; onboardingStatus: string | null }[]> => {
     const paymentInstruments = await this.database
       .select({
         id: customerPaymentDetail.id,
         accountNumber: customerPaymentDetail.accountNumber,
+        merchantId: customerPaymentDetail.merchantId,
       })
       .from(customerPaymentDetail)
       .where(and(eq(customerPaymentDetail.customerId, userId), eq(customerPaymentDetail.isActive, 1)));
-    return paymentInstruments;
+
+    const finalRes: any = [];
+
+    for (const instrument of paymentInstruments) {
+      const merchantData = await this.getMerchantById(instrument.merchantId);
+      const ddata = { ...instrument, onboardingStatus: merchantData.onboarding_state };
+      finalRes.push(ddata as any);
+    }
+
+    return finalRes;
   };
 
   deletePaymentInstrument = async (paymentInstrumentId: string) => {
