@@ -2,38 +2,6 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 export const userWaitlistRouter = createTRPCRouter({
-  sendWaitlistNotifications: publicProcedure
-    .input(
-      z.object({
-        courseId: z.string(),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      return await ctx.serviceFactory.getUserWaitlistService().sendWaitlistNotifications(input.courseId);
-    }),
-  sendWaitlistNotificationToUser: publicProcedure
-    .input(
-      z.object({
-        courseId: z.string(),
-        userId: z.string(),
-        courseLogoURL: z.string(),
-        subDomainURL: z.string(),
-        courseName: z.string(),
-        notificationId: z.string().optional(),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      return await ctx.serviceFactory
-        .getUserWaitlistService()
-        .sendWaitlistNotificationToUser(
-          input.courseId,
-          input.userId,
-          input.courseLogoURL,
-          input.subDomainURL,
-          input.courseName,
-          input.notificationId
-        );
-    }),
   sendNotificationsForAvailableTeeTime: publicProcedure
     .input(z.object({ date: z.string(), time: z.number(), courseId: z.string() }))
     .query(async ({ ctx, input }) => {

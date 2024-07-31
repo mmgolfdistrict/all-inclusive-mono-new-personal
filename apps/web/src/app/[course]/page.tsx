@@ -426,7 +426,7 @@ export default function CourseHomePage() {
       : daysData.amountOfPages) / TAKE
   );
 
-  datesArr = datesArr.filter((date) =>
+  datesArr = datesArr.filter((date: string) =>
     dayjs(date).isBetween(dayjs(startDate), dayjs(endDate), "day", "[]")
   );
 
