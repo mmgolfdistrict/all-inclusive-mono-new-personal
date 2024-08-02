@@ -71,13 +71,11 @@ export class AuthService extends CacheService {
   authenticateUser = async (handleOrEmail: string, password: string) => {
     // console.log("Node Env");
     // console.log(process.env.NODE_ENV);
-    // console.log(handleOrEmail);
-
     const [data] = await this.database
       .select({
         user: users,
         asset: {
-          assetId: assets.id,
+        assetId: assets.id,
           assetKey: assets.key,
           assetExtension: assets.extension,
         },
@@ -95,7 +93,7 @@ export class AuthService extends CacheService {
       }
       return null;
     }
-    // console.log("User found");
+
     if (!data.user.emailVerified) {
       this.logger.warn(`User email not verified: ${handleOrEmail}`);
       if (process.env.NODE_ENV !== "production") {
@@ -116,6 +114,7 @@ export class AuthService extends CacheService {
     const valid = await bcrypt.compare(password, data.user.gdPassword);
     // console.log("Bcrypt compare");
     // console.log(valid);
+
     if (!valid) {
       this.logger.warn(`Invalid password: ${handleOrEmail}`);
       if (process.env.NODE_ENV !== "production") {
@@ -124,6 +123,7 @@ export class AuthService extends CacheService {
 
       const signInAttempts = await this.incrementOrSetKey(`signinAttempts:${data.user.id}`);
       if (signInAttempts >= 3) {
+        this.logger.warn(`Suspicious activity detected`);
         await this.notificationService.sendEmail(
           data.user.id,
           "Suspicious activity detected",
@@ -133,6 +133,8 @@ export class AuthService extends CacheService {
 
       return null;
     }
+    this.logger.warn(`Password Verified`);
+
     await this.invalidateCache(`signinAttempts:${data.user.id}`);
     let profilePicture = "";
     if (!data.asset) {

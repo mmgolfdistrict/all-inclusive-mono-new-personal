@@ -1,6 +1,7 @@
 import { and, asc, between, desc, eq, gt, gte, like, lte, or, sql, type Db } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import { bookings } from "@golf-district/database/schema/bookings";
+import { courseMarkup } from "@golf-district/database/schema/courseMarkup";
 import { courses } from "@golf-district/database/schema/courses";
 import { favorites } from "@golf-district/database/schema/favorites";
 import { lists } from "@golf-district/database/schema/lists";
@@ -15,7 +16,6 @@ import UTC from "dayjs/plugin/utc";
 import { type ProviderService } from "../tee-sheet-provider/providers.service";
 import type { Forecast } from "../weather/types";
 import type { WeatherService } from "../weather/weather.service";
-import { courseMarkup } from "@golf-district/database/schema/courseMarkup";
 
 dayjs.extend(UTC);
 

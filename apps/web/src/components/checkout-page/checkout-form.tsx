@@ -195,8 +195,11 @@ export const CheckoutForm = ({
       router.push(`/${courseId}`);
     }, 10 * 60 * 1000);
 
-    return () => clearTimeout(timer);
-  });
+    return () => {
+      clearTimeout(timer);
+      setIsLoading(false);
+    }
+  },[]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     googleAnalyticsEvent({
@@ -268,6 +271,7 @@ export const CheckoutForm = ({
           setMessage(
             getErrorMessageById((response?.error_code ?? "") as string)
           );
+          setIsLoading(false);
         } else if (response.status === "succeeded") {
           let bookingResponse = {
             bookingId: "",
@@ -291,6 +295,7 @@ export const CheckoutForm = ({
               setMessage(
                 "Error reserving first hand booking: " + error.message
               );
+              setIsLoading(false);
               return;
             }
           } else {
@@ -304,6 +309,7 @@ export const CheckoutForm = ({
               setMessage(
                 "Error reserving second hand booking: " + error.message
               );
+              setIsLoading(false);
               return;
             }
           }
@@ -320,6 +326,7 @@ export const CheckoutForm = ({
           setMessage(
             getErrorMessageById((response?.error_code ?? "") as string)
           );
+          setIsLoading(false);
         } else {
           setMessage(
             getErrorMessageById((response?.error_code ?? "") as string)
@@ -328,8 +335,9 @@ export const CheckoutForm = ({
       }
     } catch (error) {
       setMessage("An unexpected error occurred: " + error.message);
-    } finally {
       setIsLoading(false);
+    } finally {
+      // setIsLoading(false);
     }
   };
 
