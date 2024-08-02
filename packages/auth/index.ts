@@ -33,7 +33,21 @@ declare module "next-auth" {
     ip?: string;
   }
 }
-const logger = Logger("Auth-File")
+const logger = Logger("Auth-File");
+const notificationService = new NotificationService(
+  db,
+  process.env.TWILLIO_PHONE_NUMBER!,
+  process.env.SENDGRID_EMAIL!,
+  process.env.TWILLIO_ACCOUNT_SID!,
+  process.env.TWILLIO_AUTH_TOKEN!,
+  process.env.SENDGRID_API_KEY!
+);
+const authService = new AuthService(
+  db,
+  notificationService,
+  process.env.REDIS_URL!,
+  process.env.REDIS_TOKEN!
+);
 export const authConfig: NextAuthConfig = {
   adapter: DrizzleAdapter(db, tableCreator),
   redirectProxyUrl: process.env.AUTH_REDIRECT_PROXY_URL,
@@ -70,7 +84,6 @@ export const authConfig: NextAuthConfig = {
         ReCAPTCHA: { label: "ReCAPTCHA", type: "text" },
       },
       async authorize(credentials) {
-        // console.log("Credentials");
         // console.log(credentials);
 
         if (process.env.RECAPTCHA_SECRET_KEY) {
@@ -88,7 +101,6 @@ export const authConfig: NextAuthConfig = {
 
         // console.log("RECAPTCHA_SECRET_KEY");
         // console.log(process.env.RECAPTCHA_SECRET_KEY);
-        // console.log(isNotRobot);
 
         //if the captcha is not valid, return null
 
@@ -96,22 +108,7 @@ export const authConfig: NextAuthConfig = {
           logger.error(`Captcha not verified`);
           return null;
         }
-
-        const notificationService = new NotificationService(
-          db,
-          process.env.TWILLIO_PHONE_NUMBER!,
-          process.env.SENDGRID_EMAIL!,
-          process.env.TWILLIO_ACCOUNT_SID!,
-          process.env.TWILLIO_AUTH_TOKEN!,
-          process.env.SENDGRID_API_KEY!
-        );
-
-        const authService = new AuthService(
-          db,
-          notificationService,
-          process.env.REDIS_URL!,
-          process.env.REDIS_TOKEN!
-        );
+        console.log("------here------>CredentialsCredentials");
 
         const data = await authService.authenticateUser(
           credentials.email as string,
@@ -158,6 +155,16 @@ export const authConfig: NextAuthConfig = {
   // },
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
+    async signIn({ user }) {
+      if (user) {
+        const isUserBlocked = await authService.isUserBlocked(user.email ?? "");
+
+        if (isUserBlocked) {
+          return false;
+        }
+      }
+      return true;
+    },
     jwt: ({ trigger, session, token, user }) => {
       console.log("JWT Callback");
       console.log(trigger);
