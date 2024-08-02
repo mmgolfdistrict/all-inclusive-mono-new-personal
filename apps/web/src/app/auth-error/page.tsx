@@ -1,7 +1,11 @@
 "use client";
 
+import { Spinner } from "~/components/loading/spinner";
+import { useAppContext } from "~/contexts/AppContext";
+import { api } from "~/utils/api";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 
 const Errors = {
   OAuthSignin: "Error in constructing an authorization URL",
@@ -23,9 +27,29 @@ const Errors = {
 
 export default function AuthError() {
   const query = useSearchParams();
-
   const errorKey = query.get("error");
+  const { entity } = useAppContext();
+  const entityId = entity?.id;
+  const router = useRouter();
 
+  const { data, isLoading, isError, error } =
+    api.entity.getCoursesByEntityId.useQuery(
+      { entityId: entityId! },
+      { enabled: entityId !== undefined }
+    );
+
+  useEffect(() => {
+    if (errorKey === "AccessDenied" && data?.length) {
+      router.push(`${data[0]?.id}/login?error=AccessDenied`);
+    }
+  }, [errorKey, router, data]);
+  if (isLoading && errorKey === "AccessDenied") {
+    return (
+      <div className="flex justify-center items-center min-h-screen w-full bg-white">
+        <Spinner className="w-[50px] h-[50px]" />
+      </div>
+    );
+  }
   return (
     <div className="flex items-center text-center flex-col justify-center mt-20">
       <h2 className="text-xl font-bold">An Error Occurred</h2>
