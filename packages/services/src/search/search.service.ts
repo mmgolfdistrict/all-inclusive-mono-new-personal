@@ -381,7 +381,10 @@ export class SearchService {
     if (!tee) {
       return null;
     }
-    const priceAccordingToDate: any[] = await this.getTeeTimesPriceWithRange(tee?.courseId);
+    const priceAccordingToDate: any[] = await this.getTeeTimesPriceWithRange(
+      tee?.courseId,
+      tee?.timezoneCorrection
+    );
     const filteredDate: any[] = [];
 
     const date = dayjs(tee?.providerDate).utc();
@@ -693,18 +696,26 @@ export class SearchService {
     );
     return this.sortDates(uniqueArrayfirstHandAndSecondHandResultDates);
   }
-  getTeeTimesPriceWithRange = async (courseId: string) => {
+  getTeeTimesPriceWithRange = async (courseId: string, timeZoneCorrection: number) => {
     const markupData = await this.database
       .select()
       .from(courseMarkup)
       .where(eq(courseMarkup.courseId, courseId))
       .execute();
+
     const currentDate = dayjs();
+    const currentdateWithTimeZone = currentDate.add(timeZoneCorrection ?? 0, "hour");
+    console.log(
+      currentDate.toString(),
+      currentdateWithTimeZone.toString(),
+      "ewfwfewfewfewwfe",
+      timeZoneCorrection
+    );
     const priceAccordingToDate: any[] = [];
 
     markupData.forEach((el) => {
-      const toDay = currentDate.add(el?.toDay, "day");
-      const fromDay = currentDate
+      const toDay = currentdateWithTimeZone.add(el?.toDay, "day");
+      const fromDay = currentdateWithTimeZone
         .add(el?.fromDay, "day")
         .set("hours", 0)
         .set("minutes", 0)
@@ -854,6 +865,7 @@ export class SearchService {
         buyerFee: courses.buyerFee,
         sellerFee: courses.sellerFee,
         markupFees: courses.markupFeesFixedPerPlayer,
+        timeZoneCorrection: courses.timezoneCorrection,
       })
       .from(courses)
       .where(eq(courses.id, courseId))
@@ -870,7 +882,10 @@ export class SearchService {
       this.logger.error(err);
       throw new Error(`Error getting tee times for ${date}: ${err}`);
     });
-    const priceAccordingToDate: any[] = await this.getTeeTimesPriceWithRange(courseId);
+    const priceAccordingToDate: any[] = await this.getTeeTimesPriceWithRange(
+      courseId,
+      courseDataIfAvailable?.timeZoneCorrection ?? 0
+    );
     const filteredDate: any[] = [];
     console.log("date is", date);
 
