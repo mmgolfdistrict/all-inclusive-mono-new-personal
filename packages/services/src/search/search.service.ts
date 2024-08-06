@@ -222,7 +222,7 @@ export class SearchService {
     if (forecast) {
       const teeTimeDate = new Date(firstBooking.date);
       weather = this.matchForecastToTeeTime(teeTimeDate, forecast);
-    }  
+    }
     const res = {
       soldById: ownerId,
       soldByName: firstBooking.ownerHandle ? firstBooking.ownerHandle : "Anonymous",
@@ -876,8 +876,8 @@ export class SearchService {
 
     priceAccordingToDate.forEach((el) => {
       if (
-        dayjs(el.toDayFormatted).isAfter(date) &&
-        dayjs(el.fromDayFormatted).isBefore(date) &&
+        ((dayjs(el.toDayFormatted).isAfter(date) && dayjs(el.fromDayFormatted).isBefore(date)) ||
+          dayjs(date).isSame(dayjs(el.fromDayFormatted))) &&
         !filteredDate.length
       ) {
         filteredDate.push(el);
