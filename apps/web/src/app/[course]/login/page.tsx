@@ -234,7 +234,7 @@ export default function Login() {
       value: "",
     });
     try {
-      const res = await signIn("google", {
+      await signIn("google", {
         // callbackUrl: `${window.location.origin}${
         //   GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
         //     ? prevPath?.path
@@ -244,17 +244,6 @@ export default function Login() {
         // }`,
         redirect: false,
       });
-      console.log(res);
-
-      if (res?.error) {
-        console.error("Google sign-in error:", res.error);
-
-        // Redirect back to login page or handle as needed
-        window.location.href = "/login"; // Redirect to the login page
-      } else if (res?.url) {
-        // If successful, you might want to handle the redirection manually
-        window.location.href = res.url;
-      }
     } catch (error) {
       console.log(error);
     }
