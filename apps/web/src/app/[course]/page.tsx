@@ -30,7 +30,7 @@ import { LoadingContainer } from "./loader";
 dayjs.extend(Weekday);
 dayjs.extend(RelativeTime);
 dayjs.extend(isoWeek);
-
+export const maxDuration = 299;
 export default function CourseHomePage() {
   const TAKE = 4;
   const ref = useRef<HTMLDivElement | null>(null);
