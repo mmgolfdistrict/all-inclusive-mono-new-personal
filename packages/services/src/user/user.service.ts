@@ -90,7 +90,10 @@ export class UserService {
    * @example
    * const userService = new UserService(database, notificationService);
    */
-  constructor(protected readonly database: Db, private readonly notificationsService: NotificationService) {
+  constructor(
+    protected readonly database: Db,
+    private readonly notificationsService: NotificationService
+  ) {
     //this.filter = new Filter();
   }
 
@@ -144,9 +147,10 @@ export class UserService {
     if (isValidPassword(data.password).score < 8) {
       this.logger.warn("Invalid password");
       return {
-        error:true,
-        message:"Password must include uppercase, lowercase letters, numbers, and special characters (!@#$%^&*)."
-      }
+        error: true,
+        message:
+          "Password must include uppercase, lowercase letters, numbers, and special characters (!@#$%^&*).",
+      };
     }
 
     let isNotRobot;
@@ -422,9 +426,9 @@ export class UserService {
     if (!user.verificationRequestToken) {
       this.logger.warn(`User email already verified: ${userId}`);
       return {
-        error:true,
-        message:"User email already verified"
-      }
+        error: true,
+        message: "User email already verified",
+      };
     }
     if (user.verificationRequestExpiry && user.verificationRequestExpiry < currentUtcTimestamp()) {
       await this.deleteUserById(userId);
@@ -1602,5 +1606,21 @@ export class UserService {
       this.generateUsername(digit);
     }
     return handle ? `golfdistrict${handle}` : "golfdistrict";
+  };
+
+  isUserBlocked = async (email: string) => {
+    const [data] = await this.database
+      .select({
+        bannedUntilDateTime: users.bannedUntilDateTime,
+      })
+      .from(users)
+      .where(eq(users.email, email))
+      .execute();
+    const now = new Date();
+    const date = new Date(data?.bannedUntilDateTime ?? "");
+    if (now < date) {
+      return true;
+    }
+    return false;
   };
 }

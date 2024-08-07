@@ -23,6 +23,8 @@ const Errors = {
   SessionRequired:
     "The content of this page requires you to be signed in at all times.",
   Default: "An error occurred in authorization.",
+  AccessDenied:
+    "Unable to login. Please call customer support at 877-TeeTrade or email at support@golfdistrict.com",
 };
 
 export default function AuthError() {
@@ -43,23 +45,30 @@ export default function AuthError() {
       router.push(`${data[0]?.id}/login?error=AccessDenied`);
     }
   }, [errorKey, router, data]);
-  if (isLoading && errorKey === "AccessDenied") {
-    return (
-      <div className="flex justify-center items-center min-h-screen w-full bg-white">
-        <Spinner className="w-[50px] h-[50px]" />
-      </div>
-    );
-  }
   return (
-    <div className="flex items-center text-center flex-col justify-center mt-20">
-      <h2 className="text-xl font-bold">An Error Occurred</h2>
-      <p className="pb-4 max-w-[400px]">
-        {Errors[errorKey as keyof typeof Errors] ??
-          "An error occurred in authorization."}
-      </p>
-      <Link href="/" className="underline" data-testid="return-home-id">
-        Return Home
-      </Link>
-    </div>
+    <>
+      {errorKey === "AccessDenied" ? (
+        <div style={{ height: "100vh" }}>
+          <div className="flex justify-center items-center min-h-screen w-full">
+            <Spinner className="w-[50px] h-[50px]" />
+          </div>
+        </div>
+      ) : (
+        <div className="flex items-center text-center flex-col justify-center mt-20">
+          <h2 className="text-xl font-bold">
+            {errorKey === "AccessDenied"
+              ? "Access Denied"
+              : "An Error Occurred"}
+          </h2>
+          <p className="pb-4 max-w-[400px]">
+            {Errors[errorKey as keyof typeof Errors] ??
+              "An error occurred in authorization."}
+          </p>
+          <Link href="/" className="underline" data-testid="return-home-id">
+            Return Home
+          </Link>
+        </div>
+      )}
+    </>
   );
 }

@@ -121,4 +121,14 @@ export const userRouter = createTRPCRouter({
   getS3HtmlContent: publicProcedure.input(z.object({ keyName: z.string() })).query(async ({ ctx, input }) => {
     return ctx.serviceFactory.getUserService().getS3HtmlContent(input.keyName);
   }),
+
+  isUserBlocked: publicProcedure
+    .input(
+      z.object({
+        userEmail: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return await ctx.serviceFactory.getUserService().isUserBlocked(input.userEmail);
+    }),
 });

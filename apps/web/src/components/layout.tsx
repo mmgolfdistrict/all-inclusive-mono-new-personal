@@ -1,7 +1,7 @@
 "use client";
 
 import { getNICDetails } from "~/utils/ipUtility";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useMemo } from "react";
 import { Footer } from "./footer/footer";
 import { MainNav } from "./nav/main-nav";
@@ -17,12 +17,13 @@ const AllowedPathsForMainNav = [
   "/faq",
   "/how-to-guide",
   "/about-us",
-  "/auth-error",
 ];
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
+  const query = useSearchParams();
 
+  const errorKey = query.get("error");
   const nicInfos = getNICDetails();
 
   useEffect(() => {
