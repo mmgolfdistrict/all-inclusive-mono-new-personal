@@ -13,7 +13,7 @@
     "infura/*"
   ],
   "scripts": {
-    "build": "turbo run build",
+    "build": "turbo run build && node ./apps/web/script/generateRevision.js",
     "start": "npm run dev",
     "clean:workspaces": "turbo clean",
     "compile": "turbo run compile",
@@ -27,8 +27,7 @@
     "prepare": "husky install",
     "prettier-check": "prettier --check \"**/*.{js,jsx,ts,tsx,md,css}\" --ignore-path .prettierignore",
     "test": "turbo run test",
-    "typecheck": "turbo typecheck",
-    "revision": "node ./revision/generateRevision.js && node ./revision/route.js"
+    "typecheck": "turbo typecheck"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,md,css}": [
