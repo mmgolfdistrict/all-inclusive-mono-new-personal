@@ -134,7 +134,7 @@ export const authConfig: NextAuthConfig = {
   pages: {
     signIn: `/`,
     // verifyRequest: `/login`,
-    // error: `/auth-error`,
+    error: `/auth-error`,
     // newUser: `/profile?new`, //this will call the create customer endpoint
   },
   session: {
@@ -158,7 +158,6 @@ export const authConfig: NextAuthConfig = {
     async signIn({ user }) {
       if (user) {
         const isUserBlocked = await authService.isUserBlocked(user.email ?? "");
-
         if (isUserBlocked) {
           return false;
         }

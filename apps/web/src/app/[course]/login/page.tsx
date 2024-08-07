@@ -54,15 +54,16 @@ export default function Login() {
 
   useEffect(() => {
     if (errorKey === "AccessDenied" && !toast.isActive("accessDeniedToast")) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("error");
+      router.push(url.pathname + url.search);
       toast.error(
         "Unable to login. Please call customer support at 877-TeeTrade or email at support@golfdistrict.com",
         { toastId: "accessDeniedToast" }
       );
-      const url = new URL(window.location.href);
-      url.searchParams.delete("error");
-      router.push(url.pathname + url.search);
     }
   }, [errorKey]);
+
   useEffect(() => {
     if (sessionData?.user?.id && course?.id && status === "authenticated") {
       console.log("sessionData", sessionData);
@@ -129,7 +130,6 @@ export default function Login() {
       recaptchaRef.current?.execute();
     }
   }, [recaptchaRef]);
-  console.log(recaptchaRef.current);
 
   const onSubmit: SubmitHandler<LoginSchemaType> = async (data) => {
     setIsLoading(true);

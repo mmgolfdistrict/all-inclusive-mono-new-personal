@@ -1,4 +1,4 @@
-import type { Db } from "@golf-district/database";
+import { eq, type Db } from "@golf-district/database";
 import {
   AppSettingsService,
   AuctionService,
@@ -32,6 +32,7 @@ import { UserWaitlistService } from "./user-waitlist/userWaitlist.service";
 import { FinixService } from "./webhooks/finix.service";
 import { LoggerService } from "./webhooks/logging.service";
 import { PaymentVerifierService } from "./webhooks/paymentverifier.service";
+import { users } from "@golf-district/database/schema/users";
 
 export interface ServiceConfig {
   database: Db;
