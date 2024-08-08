@@ -380,7 +380,11 @@ export const ListTeeTime = ({
             <div className="flex flex-col gap-4 px-4 pb-6">
               <div className="flex justify-between">
                 <div className="font-[300] text-primary-gray">
-                  Your Listing Price
+                  Your Listing Price{" "}
+                  <Tooltip
+                    trigger={<Info className="h-[14px] w-[14px]" />}
+                    content="Buyer sees a slightly higher amount. These buyer/seller fees help keep the lights on at Golf District and to continuously provide better service."
+                  />
                 </div>
                 <div className="text-secondary-black">
                   {formatMoney(listingPrice * Number(players))}
