@@ -98,20 +98,30 @@ export const EditProfileForm = () => {
 
   const onPlaceChanged = () => {
     const place = autocompleteRef.current?.getPlace();
-    if (place && place.address_components) {
+    if (place?.address_components) {
       const addressComponents = place.address_components;
-
-      const getAddressComponent = (type) => {
+  
+      const getAddressComponent = (type: string): string => {
         return addressComponents.find(component => component.types.includes(type))?.long_name || '';
       };
-      setValue("address1", getAddressComponent('street_address') || getAddressComponent('route'));
-      setValue("address2", getAddressComponent('sublocality'));
-      setValue("state", getAddressComponent('administrative_area_level_1'));
-      setValue("city", getAddressComponent('locality'));
-      setValue("zipcode", getAddressComponent('postal_code'));
-      setValue("country", getAddressComponent('country'));
+  
+      const address1 = getAddressComponent('street_address') || getAddressComponent('route');
+      const address2 = getAddressComponent('sublocality');
+      const state = getAddressComponent('administrative_area_level_1');
+      const city = getAddressComponent('locality');
+      const zipcode = getAddressComponent('postal_code');
+      const country = getAddressComponent('country');
+  
+      // Type guard before passing to setValue
+      if (typeof address1 === 'string') setValue("address1", address1);
+      if (typeof address2 === 'string') setValue("address2", address2);
+      if (typeof state === 'string') setValue("state", state);
+      if (typeof city === 'string') setValue("city", city);
+      if (typeof zipcode === 'string') setValue("zipcode", zipcode);
+      if (typeof country === 'string') setValue("country", country);
     }
   };
+  
 
   const cities = api.places.getCity.useQuery(
     { city: debouncedLocation },
