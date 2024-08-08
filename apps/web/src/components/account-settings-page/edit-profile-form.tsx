@@ -17,14 +17,16 @@ import { api } from "~/utils/api";
 import { debounceFunction } from "~/utils/debounce";
 import { useParams } from "next/navigation";
 import type { FormEvent } from "react";
-import { useCallback, useEffect, useState, type ChangeEvent } from "react";
-import { useForm, type SubmitHandler } from "react-hook-form";
+import { useCallback, useEffect, useState, type ChangeEvent, useRef } from "react";
+import { useForm, type SubmitHandler, Controller } from "react-hook-form";
 import { toast } from "react-toastify";
 import { useDebounce } from "usehooks-ts";
 import { OutlineButton } from "../buttons/outline-button";
+import { useLoadScript } from '@react-google-maps/api';
 
 const defaultProfilePhoto = "/defaults/default-profile.webp";
 const defaultBannerPhoto = "/defaults/default-banner.webp";
+const libraries:any = ['places'];
 
 export const EditProfileForm = () => {
   const {
@@ -34,11 +36,20 @@ export const EditProfileForm = () => {
     handleSubmit,
     setError,
     getValues,
+    control,
     formState: { isSubmitting, errors },
   } = useForm<EditProfileSchemaType>({
     // @ts-ignore
     resolver: zodResolver(editProfileSchema),
+    mode: "onChange",
   });
+  const { isLoaded, loadError } = useLoadScript({
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY??"",
+    libraries,
+  });
+  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
   const [city, setCity] = useState(getValues("city"));
 
   const { update } = useSession();
@@ -72,6 +83,36 @@ export const EditProfileForm = () => {
   } = useUser(userId as string | undefined);
   const updateUser = api.user.updateUser.useMutation();
 
+  useEffect(() => {
+    if (isLoaded && !loadError && inputRef?.current) {
+      const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
+        types: ['address'],
+        componentRestrictions: { country: 'us' },
+      });
+      if (autocomplete) {
+        autocompleteRef.current = autocomplete;
+        autocomplete.addListener('place_changed', onPlaceChanged);
+      }
+    }
+  }, [isLoaded, loadError]);
+
+  const onPlaceChanged = () => {
+    const place = autocompleteRef.current?.getPlace();
+    if (place && place.address_components) {
+      const addressComponents = place.address_components;
+
+      const getAddressComponent = (type) => {
+        return addressComponents.find(component => component.types.includes(type))?.long_name || '';
+      };
+      setValue("address1", getAddressComponent('street_address') || getAddressComponent('route'));
+      setValue("address2", getAddressComponent('sublocality'));
+      setValue("state", getAddressComponent('administrative_area_level_1'));
+      setValue("city", getAddressComponent('locality'));
+      setValue("zipcode", getAddressComponent('postal_code'));
+      setValue("country", getAddressComponent('country'));
+    }
+  };
+
   const cities = api.places.getCity.useQuery(
     { city: debouncedLocation },
     {
@@ -81,6 +122,7 @@ export const EditProfileForm = () => {
       refetchOnReconnect: false,
     }
   );
+
 
   const upload = useCallback(
     async (file: File, type: "image" | "bannerImage") => {
@@ -106,7 +148,7 @@ export const EditProfileForm = () => {
       setValue("handle", userData?.handle ?? "");
       // setValue("location", userData?.location ?? "");
       setValue("address1", userData?.address1 ?? "");
-      // setValue("address2", userData?.address2 ?? "");
+      setValue("address2", userData?.address2 ?? "");
       setValue("state", userData?.state ?? "");
       setValue("city", userData?.city ?? "");
       setValue("zipcode", userData?.zipcode ?? "");
@@ -226,7 +268,7 @@ export const EditProfileForm = () => {
         handle: data.handle,
         // location: data.location,
         address1: data?.address1,
-        // address2: data?.address2,
+        address2: data?.address2,
         state: data?.state,
         city: data?.city,
         zipcode: data?.zipcode,
@@ -317,38 +359,73 @@ export const EditProfileForm = () => {
     <section className="mx-auto flex h-fit w-full flex-col bg-white px-3 py-2  md:rounded-xl md:p-6 md:py-4">
       <h1 className="pb-6  text-[18px]  md:text-[24px]">Account Information</h1>
       <form className="flex flex-col gap-2" onSubmit={handleSubmit(onSubmit)}>
-        <Input
-          label="Name"
-          type="text"
-          placeholder="Enter your full name"
-          id="name"
+        <Controller
           name="name"
-          register={register}
-          error={errors.name?.message}
-          data-testid="profile-name-id"
+          control={control}
+          render={({ field }) => (
+            <Input
+            {...field} 
+            label="Name"
+            type="text"
+            placeholder="Enter your full name"
+            id="name"
+            name="name"
+            register={register}
+            error={errors.name?.message}
+            data-testid="profile-name-id"
+            inputRef={(e)=>{
+              field.ref(e);
+            }}
+          />
+          )}
         />
-        <Input
-          label="Email"
-          type="email"
-          placeholder="Enter your email address"
-          id="email"
-          register={register}
+         <Controller
           name="email"
-          error={errors.email?.message}
-          data-testid="profile-email-id"
-          disabled={true}
+          control={control}
+          render={({ field }) => (
+            <Input
+            {...field} 
+            label="Email"
+            type="email"
+            placeholder="Enter your email address"
+            id="email"
+            register={register}
+            name="email"
+            error={errors.email?.message}
+            data-testid="profile-email-id"
+            disabled={true}
+            inputRef={(e)=>{
+              field.ref(e);
+            }}
+          />
+          )}
         />
-        <Input
-          label="Phone Number"
+           <Controller
+          name="phoneNumber"
+          control={control}
+          render={({ field }) => (
+            <Input
+            {...field} 
+            label="Phone Number"
           type="tel"
           placeholder="Enter your phone number"
           id="phoneNumber"
           register={register}
           name="phoneNumber"
           error={errors.phoneNumber?.message}
+            inputRef={(e)=>{
+              field.ref(e);
+            }}
+          />
+          )}
         />
-        <Input
-          label="Handle"
+        <Controller
+          name="handle"
+          control={control}
+          render={({ field }) => (
+            <Input
+            {...field} 
+            label="Handle"
           className="w-full"
           type="text"
           placeholder="Enter your handle"
@@ -359,71 +436,108 @@ export const EditProfileForm = () => {
           data-testid="profile-handle-id"
           showInfoTooltip={true}
           content="Handle must all be in lower case or numeric and must contain a minimum of 6 characters and maximum of 64 characters. Handle cannot contain special characters other than dot(.) and underscore(_) and any form of profanity or racism related content. Golf District reserves the right to change your handle to a random handle at any time if it violates our terms of service."
-        />
-        {/* <Input
-          label="Location"
-          type="text"
-          list="places"
-          placeholder="Start typing your city"
-          id="location"
-          register={register}
-          name="location"
-          error={errors.location?.message}
-          onChange={(e: ChangeEvent<HTMLInputElement>) => {
-            setLocation(e.target.value);
+          inputRef={(e)=>{
+            field.ref(e);
           }}
-          data-testid="profile-location-id"
-        /> */}
-        <Input
-          label="Address1"
-          type="text"
-          list="places"
-          placeholder="Enter your address1"
-          id="address1"
-          register={register}
+          />
+          )}
+        />
+
+       <Controller
           name="address1"
-          error={errors.address1?.message}
-          data-testid="profile-address1-id"
+          control={control}
+          render={({ field }) => (
+            <Input
+            {...field} 
+            label="Address1"
+            type="text"
+            list="places"
+            placeholder="Enter your address1"
+            id="address1"
+            register={register}
+            name="address1"
+            error={errors.address1?.message}
+            data-testid="profile-address1-id"
+            content="Handle must all be in lower case or numeric and must contain a minimum of 6 characters and maximum of 64 characters. Handle cannot contain special characters other than dot(.) and underscore(_) and any form of profanity or racism related content. Golf District reserves the right to change your handle to a random handle at any time if it violates our terms of service."
+            inputRef={inputRef}
+          />
+          )}
         />
-        <Input
-          label="Address2"
-          type="text"
-          list="places"
-          placeholder="Enter your address2"
-          id="address2"
-          register={register}
+         <Controller
           name="address2"
-          error={errors.address2?.message}
-          data-testid="profile-address2-id"
+          control={control}
+          render={({ field }) => (
+            <Input
+            {...field} 
+            label="Address2"
+            type="text"
+            list="places"
+            placeholder="Enter your address2"
+            id="address2"
+            register={register}
+            name="address2"
+            error={errors.address2?.message}
+            data-testid="profile-address2-id"
+            inputRef={(e)=>{
+              field.ref(e);
+            }}
+             />
+          )}
         />
-        <Input
-          label="City"
-          type="text"
-          list="places"
-          placeholder="Enter your city"
-          id="city"
-          register={register}
+         <Controller
           name="city"
-          error={errors.city?.message}
-          data-testid="profile-city-id"
-          onChange={(e: ChangeEvent<HTMLInputElement>) => {
-            setValue("city", e.target.value);
-            setCity(e.target.value);
-          }}
+          control={control}
+          render={({ field }) => (
+            <Input
+            {...field} 
+            label="City"
+            type="text"
+            list="places"
+            placeholder="Enter your city"
+            id="city"
+            register={register}
+            name="city"
+            error={errors.city?.message}
+            data-testid="profile-city-id"
+            onChange={(e: ChangeEvent<HTMLInputElement>) => {
+              setValue("city", e.target.value);
+              setCity(e.target.value);
+            }}
+            inputRef={(e)=>{
+              field.ref(e);
+            }}
+             />
+          )}
         />
-        <Input
-          label="State"
-          type="text"
-          list="places"
-          placeholder="Enter your state"
-          id="state"
-          register={register}
+
+       <Controller
           name="state"
-          error={errors.state?.message}
-          data-testid="profile-state-id"
+          control={control}
+          render={({ field }) => (
+            <Input
+            {...field} 
+            label="State"
+            type="text"
+            list="places"
+            placeholder="Enter your state"
+            id="state"
+            register={register}
+            name="state"
+            error={errors.state?.message}
+            data-testid="profile-state-id"
+            inputRef={(e)=>{
+              field.ref(e);
+            }}
+             />
+          )}
         />
-        <Input
-          label="Zip"
+         <Controller
+          name="zipcode"
+          control={control}
+          render={({ field }) => (
+            <Input
+            {...field} 
+            label="Zip"
           type="text"
           list="places"
           placeholder="Enter your zip"
@@ -432,9 +546,19 @@ export const EditProfileForm = () => {
           name="zipcode"
           error={errors.zipcode?.message}
           data-testid="profile-zipcode-id"
+          inputRef={(e)=>{
+            field.ref(e);
+          }}
+             />
+          )}
         />
-        <Input
-          label="Country"
+         <Controller
+          name="country"
+          control={control}
+          render={({ field }) => (
+            <Input
+            {...field} 
+            label="Country"
           type="text"
           list="places"
           placeholder="Enter your country"
@@ -447,7 +571,13 @@ export const EditProfileForm = () => {
           value={"USA"}
           content="We only support cash outs for US banks at this time"
           data-testid="profile-country-id"
+          inputRef={(e)=>{
+            field.ref(e);
+          }}
+             />
+          )}
         />
+    
         <datalist id="places">
           {cities.data?.autocompleteCities.features.map((city, idx) => (
             <option key={idx}>{city.place_name}</option>
