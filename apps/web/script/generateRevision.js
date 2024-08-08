@@ -2,7 +2,7 @@ const fs = require('fs');
 const { execSync } = require('child_process');
 const path = require('path');
 
-const revisionFilePath = path.join(__dirname, 'revision.json');
+const revisionFilePath = path.join(__dirname, '../revision.json');
 const buildUTCDate = new Date().toISOString().replace('T', ' ').replace(/\..+/, '');
 let commitHash = '';
 
