@@ -98,6 +98,18 @@ export default function CourseHomePage() {
     }
   );
 
+  const { data: specialEvents } = api.searchRouter.getSpecialEvents.useQuery({
+    courseId: courseId ?? "",
+  });
+  console.log("specialEvents", specialEvents);
+
+  const getSpecialDayDate = (label) => {
+    const specialDay = specialEvents?.find((day) => day.eventName === label);
+    return specialDay
+      ? { start: dayjs(specialDay.startDate), end: dayjs(specialDay.endDate) }
+      : null;
+  };
+
   const startDate = useMemo(() => {
     const formatDate = (date: Date) => formatQueryDate(date);
     const getUtcDate = (date: Date) => {
@@ -107,6 +119,15 @@ export default function CourseHomePage() {
         .toString();
       return currentDateWithTimeZoneOffset;
     };
+    const specialDate = getSpecialDayDate(dateType);
+    console.log("specialDate", specialDate);
+
+    if (specialDate) {
+      const startOfDayUTC = dayjs.utc(formatDate(specialDate.start.toDate()));
+      console.log("startOfDayUTC", startOfDayUTC.toDate());
+
+      return startOfDayUTC.toDate();
+    }
 
     switch (dateType) {
       case "All":
@@ -144,6 +165,16 @@ export default function CourseHomePage() {
         .toString();
       return currentDateWithTimeZoneOffset;
     };
+
+    const specialDate = getSpecialDayDate(dateType);
+    console.log("specialDate", specialDate);
+
+    if (specialDate) {
+      const endOfDayUTC = dayjs.utc(formatDate(specialDate.end.toDate()));
+      const result2 = endOfDayUTC.toDate();
+      return result2;
+    }
+
     switch (dateType) {
       case "All": {
         return formatQueryDate(dayjs(farthestDateOut).toDate());

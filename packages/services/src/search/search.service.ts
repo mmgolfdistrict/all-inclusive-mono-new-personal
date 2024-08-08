@@ -1,4 +1,18 @@
-import { and, asc, between, desc, eq, gt, gte, like, lte, or, sql, type Db } from "@golf-district/database";
+import {
+  and,
+  asc,
+  between,
+  desc,
+  eq,
+  gt,
+  gte,
+  like,
+  lte,
+  or,
+  sql,
+  type Db,
+  lt,
+} from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import { bookings } from "@golf-district/database/schema/bookings";
 import { courses } from "@golf-district/database/schema/courses";
@@ -16,6 +30,7 @@ import { type ProviderService } from "../tee-sheet-provider/providers.service";
 import type { Forecast } from "../weather/types";
 import type { WeatherService } from "../weather/weather.service";
 import { courseMarkup } from "@golf-district/database/schema/courseMarkup";
+import { majorEvents } from "@golf-district/database/schema/majorEvents";
 
 dayjs.extend(UTC);
 
@@ -1103,5 +1118,35 @@ export class SearchService {
     return primaryDomain.length > 1
       ? primaryDomain.substring(0, 1) + "*".repeat(primaryDomain.length - 1)
       : primaryDomain;
+  };
+
+  getSpecialEvents = async (courseId: string) => {
+    const today = dayjs().startOf("day").format("YYYY-MM-DD HH:mm:ss");
+    const threeMonthsFromNow = dayjs().add(3, "month").endOf("day").format("YYYY-MM-DD HH:mm:ss");
+
+    const events = await this.database
+      .select({
+        id: majorEvents.id,
+        eventName: majorEvents.eventName,
+        startDate: majorEvents.startDate,
+        endDate: majorEvents.endDate,
+      })
+      .from(majorEvents)
+      .where(
+        and(
+          eq(majorEvents.courseId, courseId),
+          gt(majorEvents.startDate, today),
+          lt(majorEvents.startDate, threeMonthsFromNow),
+          gt(majorEvents.endDate, today),
+          lt(majorEvents.endDate, threeMonthsFromNow)
+        )
+      )
+      .orderBy(asc(majorEvents.startDate))
+      .limit(6)
+      .execute()
+      .catch((e) => {
+        console.log("Error in getting special Events");
+      });
+    return events;
   };
 }

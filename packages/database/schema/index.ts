@@ -24,6 +24,7 @@ import * as entityAdmins from "./entityAdmins";
 import * as favorites from "./favorites";
 import * as jobs from "./jobs";
 import * as lists from "./lists";
+import * as majorEvents from "./majorEvents";
 import * as notifications from "./notifications";
 import * as offerRead from "./offerRead";
 import * as offers from "./offers";
@@ -92,4 +93,5 @@ export const schema = {
   ...userWaitlists,
   ...systemNotification,
   ...courseMarkup,
+  ...majorEvents,
 };
