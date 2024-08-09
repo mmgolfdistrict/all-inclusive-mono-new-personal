@@ -1,3 +1,4 @@
+import dotenv from "dotenv";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createDrizzleMock } from "../../../mocks";
 import { mockAssets } from "../../../mocks/assets.mock";
@@ -5,7 +6,6 @@ import { mockCourseAssets } from "../../../mocks/courseAssets.mock";
 import { mockCourses } from "../../../mocks/courses.mock";
 import { mockEntities } from "../../../mocks/entities.mock";
 import { CourseService } from "../course.service";
-import dotenv from 'dotenv';
 
 dotenv.config();
 

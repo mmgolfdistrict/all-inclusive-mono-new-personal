@@ -26,7 +26,9 @@ import {
   WeatherService,
 } from "./index";
 import { ProfanityService } from "./profanity/profanity.service";
+import { SystemNotificationService } from "./system-notification/systemNotification.service";
 import { ProviderService } from "./tee-sheet-provider/providers.service";
+import { UserWaitlistService } from "./user-waitlist/userWaitlist.service";
 import { FinixService } from "./webhooks/finix.service";
 import { LoggerService } from "./webhooks/logging.service";
 import { PaymentVerifierService } from "./webhooks/paymentverifier.service";
@@ -355,12 +357,25 @@ export class ServiceFactory {
   };
 
   getFinixService = (): FinixService => {
-    return new FinixService(this.config.database, this.getCashOutService());
+    return new FinixService(
+      this.config.database,
+      this.getCashOutService(),
+      this.getLoggerService(),
+      this.getNotificationService()
+    );
   };
   getLoggerService = (): LoggerService => {
     return new LoggerService();
   };
   getProfanityService = (): ProfanityService => {
     return new ProfanityService(this.config.database);
+  };
+
+  getUserWaitlistService = (): UserWaitlistService => {
+    return new UserWaitlistService(this.config.database, this.getNotificationService());
+  };
+
+  getSystemNotificationService = (): SystemNotificationService => {
+    return new SystemNotificationService(this.config.database);
   };
 }

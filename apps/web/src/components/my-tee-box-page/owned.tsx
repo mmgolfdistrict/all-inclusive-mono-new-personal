@@ -112,7 +112,7 @@ export const Owned = () => {
           <thead className="top-0 table-header-group">
             <tr className="text-left">
               <TableHeader text="Details" />
-              <TableHeader text="Purchase Price" />
+              {/* <TableHeader text="Purchase Price" /> */}
               <TableHeader text="Golfers" />
               <TableHeader text="Status" />
               <TableHeader text="" className="text-right" />
@@ -262,9 +262,9 @@ const TableRow = ({
           </div>
         </Link>
       </td>
-      <td className="whitespace-nowrap px-4 py-3">
+      {/* <td className="whitespace-nowrap px-4 py-3">
         {formatMoney(purchasePrice)}
-      </td>
+      </td> */}
       <td className="whitespace-nowrap px-4 py-3">
         {golfers.length > 2
           ? `You, ${golfers[1]?.name} & ${golfers.length - 2} ${

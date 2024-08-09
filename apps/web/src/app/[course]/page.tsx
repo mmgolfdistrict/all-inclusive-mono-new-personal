@@ -1,6 +1,6 @@
 "use client";
 
-import { formatQueryDate } from "@golf-district/shared";
+import { formatQueryDate, formatQueryDateEnd } from "@golf-district/shared";
 import { FilledButton } from "~/components/buttons/filled-button";
 import { FilterSort } from "~/components/buttons/filters-sort";
 import { GoBack } from "~/components/buttons/go-back";
@@ -30,7 +30,7 @@ import { LoadingContainer } from "./loader";
 dayjs.extend(Weekday);
 dayjs.extend(RelativeTime);
 dayjs.extend(isoWeek);
-
+export const maxDuration = 299;
 export default function CourseHomePage() {
   const TAKE = 4;
   const ref = useRef<HTMLDivElement | null>(null);
@@ -67,6 +67,7 @@ export default function CourseHomePage() {
     try {
       await updateUser.mutateAsync({
         handle: uName,
+        courseId,
       });
     } catch (error) {
       console.log(error);
@@ -99,51 +100,84 @@ export default function CourseHomePage() {
 
   const startDate = useMemo(() => {
     const formatDate = (date: Date) => formatQueryDate(date);
-    const getUtcDate = (date: Date) =>
-      dayjs.utc(formatDate(date)).utcOffset(course?.timezoneCorrection ?? 0);
+    const getUtcDate = (date: Date) => {
+      const currentDate = dayjs.utc(formatDate(date));
+      const currentDateWithTimeZoneOffset = currentDate
+        .add(course?.timezoneCorrection ?? 0, "hour")
+        .toString();
+      return currentDateWithTimeZoneOffset;
+    };
+
+    const todayDate = (date) => {
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1;
+      const day = date.getDate();
+      return `${year}-${month}-${day}`;
+    };
 
     switch (dateType) {
-      case "All":
+      case "All": {
+        return getUtcDate(new Date());
+      }
       case "This Week":
       case "This Month":
       case "Furthest Day Out To Book": {
-        // Enclose in block to avoid lexical declaration issues
         return formatDate(new Date());
       }
       case "Today": {
-        // Enclose in block to avoid lexical declaration issues
         return getUtcDate(new Date());
       }
       case "This Weekend": {
-        // Enclose in block to avoid lexical declaration issues
         const weekendDate = dayjs().day(5).toDate();
         return formatDate(weekendDate);
       }
       case "Custom": {
-        // Enclose in block to avoid lexical declaration issues
         if (!selectedDay.from) return formatDate(new Date());
         const { year, month, day } = selectedDay.from;
         const dateString = `${year}-${month}-${day}`;
+        if (dateString === todayDate(new Date())) {
+          const customDate2 = dayjs(formatDate(new Date()));
+          const result2 = customDate2
+            .add(course?.timezoneCorrection ?? 0, "hour")
+            .toDate();
+          return formatDate(result2);
+        }
         const customDate = dayjs(dateString).toDate();
+
         return formatDate(customDate);
       }
       default: {
-        // Enclose in block to avoid lexical declaration issues
         return formatDate(new Date());
       }
     }
   }, [dateType, selectedDay]);
 
   const endDate = useMemo(() => {
+    const formatDate = (date: Date) => formatQueryDate(date);
+    const getUtcDate = (date: Date) => {
+      const currentDate = dayjs.utc(formatDate(date));
+      const currentDateWithTimeZoneOffset = currentDate
+        .add(course?.timezoneCorrection ?? 0, "hour")
+        .toString();
+      return currentDateWithTimeZoneOffset;
+    };
     switch (dateType) {
       case "All": {
         return formatQueryDate(dayjs(farthestDateOut).toDate());
       }
       case "Today": {
-        return formatQueryDate(dayjs().toDate());
+        const endOfDayUTC = dayjs.utc().endOf("day");
+        const result2 = endOfDayUTC
+          .add(course?.timezoneCorrection ?? 0, "hour")
+          .toString();
+        return result2;
       }
       case "This Week": {
-        return dayjs().endOf("isoWeek");
+        const endOfDayUTC = dayjs.utc().endOf("isoWeek");
+        const result2 = endOfDayUTC
+          .add(course?.timezoneCorrection ?? 0, "hour")
+          .toString();
+        return result2;
       }
       case "This Weekend": {
         return formatQueryDate(dayjs().day(7).toDate());
@@ -168,15 +202,26 @@ export default function CourseHomePage() {
           if (selectedDay.from) {
             const { year, month, day } = selectedDay.from;
             const dateString = `${year}-${month}-${day}`;
-            return formatQueryDate(dayjs(dateString).toDate());
+            const endOfDay = dayjs(dateString).endOf("day");
+            const result2 = endOfDay
+              .add(course?.timezoneCorrection ?? 0, "hour")
+              .toString();
+            return result2;
+            // return formatDate(endOfDay);
           } else {
-            return formatQueryDate(dayjs().toDate());
+            return formatQueryDate(dayjs().endOf("day").toDate());
           }
         }
+
         const { year, month, day } = selectedDay.to;
         const dateString = `${year}-${month}-${day}`;
-        return formatQueryDate(dayjs(dateString).toDate());
+        const endOfDay = dayjs(dateString).endOf("day");
+        const result2 = endOfDay
+          .add(course?.timezoneCorrection ?? 0, "hour")
+          .toString();
+        return result2;
       }
+
       default: {
         return formatQueryDate(dayjs().date(360).toDate()); // 360 days out
       }
@@ -219,14 +264,14 @@ export default function CourseHomePage() {
   const { data: datesWithData, isLoading: isLoadingTeeTimeDate } =
     api.searchRouter.checkTeeTimesAvailabilityForDateRange.useQuery(
       {
-        dates: daysData.arrayOfDates,
+        dates: [],
         courseId: course?.id ?? "",
         startTime: startTime[0],
         endTime: startTime[1],
         minDate: utcStartDate.toString(),
         maxDate: utcEndDate.toString(),
         holes: holes === "Any" || holes === "18" ? 18 : 9,
-        golfers: golfers === "Any" ? 1 : golfers,
+        golfers: golfers === "Any" ? -1 : golfers,
         showUnlisted: showUnlisted,
         includesCart: includesCart,
         lowerPrice: priceRange[0] ?? 0,
@@ -326,15 +371,23 @@ export default function CourseHomePage() {
     setPageNumber(1);
   }, [priceRange]);
 
-  const datesArr = datesWithData ?? daysData.arrayOfDates;
-  const amountOfPage = Math.ceil(
-    (datesWithData ? datesWithData.length : daysData.amountOfPages) / TAKE
+  let datesArr = JSON.parse(
+    JSON.stringify(datesWithData ?? daysData.arrayOfDates)
   );
+  const amountOfPage = Math.ceil(
+    (datesWithData
+      ? datesWithData.length - 1 === 0
+        ? 1
+        : datesWithData.length - 1
+      : daysData.amountOfPages) / TAKE
+  );
+  if (dateType === "Furthest Day Out To Book") {
+    datesArr = datesArr.reverse();
+  }
   const finalRes = [...datesArr].slice(
     (pageNumber - 1) * TAKE,
     pageNumber * TAKE
   );
-
   return (
     <main className="bg-secondary-white py-4 md:py-6">
       <LoadingContainer isLoading={isLoadingTeeTimeDate || isLoading}>
@@ -396,7 +449,9 @@ export default function CourseHomePage() {
           ) : datesArr?.length === 0 ? (
             <div className="flex justify-center items-center h-[200px]">
               <div className="text-center">
-                No tee times available for selected filters.
+                {isLoadingTeeTimeDate
+                  ? "Loading..."
+                  : "No Tee Times Available."}
               </div>
             </div>
           ) : (

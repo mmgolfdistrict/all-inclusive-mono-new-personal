@@ -58,6 +58,7 @@ export const ManageTeeTimeListing = ({
     useState<boolean>(false);
   const router = useRouter();
   const { course } = useCourseContext();
+  const courseId = course?.id;
   const listingSellerFeePercentage = (course?.sellerFee ?? 1) / 100;
   const listingBuyerFeePercentage = (course?.buyerFee ?? 1) / 100;
 
@@ -90,6 +91,7 @@ export const ManageTeeTimeListing = ({
       teeTimeId: "",
       bookingId: "",
       listingId: selectedTeeTime?.listingId ?? "",
+      courseId,
       eventId: "TEE_TIME_CANCELLED",
       json: `TEE_TIME_CANCELLED`,
     });
@@ -134,7 +136,7 @@ export const ManageTeeTimeListing = ({
   };
 
   const handleListingPrice = (e: ChangeEvent<HTMLInputElement>) => {
-  const value = e.target.value.replace(/[$,]/g, "");
+    const value = e.target.value.replace(/[$,]/g, "");
 
     const decimals = value.split(".")[1];
     if (decimals && decimals?.length > 2) return;
@@ -367,7 +369,7 @@ export const ManageTeeTimeListing = ({
                   Service Fee{" "}
                   <Tooltip
                     trigger={<Info className="h-[14px] w-[14px]" />}
-                    content="The service fee is divided between Golf District and the course. This ensures ongoing enhancements to our service, ultimately offering golfers the best access to booking times."
+                    content="This fee ensures ongoing enhancements to our service, ultimately offering golfers the best access to booking tee times"
                   />
                 </div>
                 <div className="text-secondary-black">

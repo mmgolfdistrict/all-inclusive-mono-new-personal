@@ -19,7 +19,13 @@ export const registerSchema = z
         message:
           "Invalid phone number. Please enter a valid US phone number with area code. No country code required, dashes, or spaces.",
       }),
-    location: z.string().min(1, { message: "Location is required" }),
+    // location: z.string().min(1, { message: "Location is required" }),
+    address1: z.string().min(1, { message: "Address1 is required" }),
+    address2: z.string().optional(),
+    state: z.string().min(1, { message: "State is required" }),
+    zipcode: z.string().min(1, { message: "Zip is required" }),
+    city: z.string().min(1, { message: "City is required" }),
+    country: z.string().min(1, { message: "Country is required" }),
     password: z
       .string()
       .min(1, { message: "Password is required" })

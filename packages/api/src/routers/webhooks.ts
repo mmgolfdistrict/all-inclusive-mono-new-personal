@@ -43,6 +43,7 @@ export const webhookRouter = createTRPCRouter({
         teeTimeId: z.string(),
         bookingId: z.string(),
         listingId: z.string(),
+        courseId: z.string().optional(),
         eventId: z.string(),
         json: z.string(),
       })

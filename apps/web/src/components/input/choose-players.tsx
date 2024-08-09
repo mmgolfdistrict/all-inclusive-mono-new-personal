@@ -28,7 +28,7 @@ export const ChoosePlayers = ({
         if (value) setPlayers(value);
       }}
       orientation="horizontal"
-      className="flex"
+      className={`flex ${className}`}
       data-testid="player-button-id"
       data-test={teeTimeId}
       data-qa={availableSlots}

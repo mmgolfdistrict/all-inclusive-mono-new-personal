@@ -385,7 +385,8 @@ export class ForeUpWebhookService {
     providerTeeSheetId: string,
     provider: ProviderAPI,
     token: string,
-    time: number
+    time: number,
+    teeTimeId: string
   ) => {
     try {
       const teeTimeResponse = await provider.getTeeTimes(
@@ -401,13 +402,18 @@ export class ForeUpWebhookService {
         teeTime = teeTimeResponse[0];
       }
       if (!teeTime) {
+        await this.database
+          .update(teeTimes)
+          .set({ availableFirstHandSpots: 0 })
+          .where(eq(teeTimes.id, teeTimeId))
+          .execute();
         throw new Error("Tee time not available for booking");
       }
       const [indexedTeeTime] = await this.database
         .select({
           id: teeTimes.id,
           courseId: teeTimes.courseId,
-          courseProvider: courses.providerId,
+          availableFirstHandSpots: teeTimes.availableFirstHandSpots,
           availableSecondHandSpots: teeTimes.availableSecondHandSpots,
           entityId: courses.entityId,
         })
@@ -438,7 +444,6 @@ export class ForeUpWebhookService {
           id: indexedTeeTime.id,
           courseId: indexedTeeTime.courseId,
           providerTeeTimeId: teeTime.id,
-          courseProvider: indexedTeeTime.courseProvider,
           numberOfHoles: attributes.holes,
           date: attributes.time,
           time: militaryTime,
@@ -450,7 +455,6 @@ export class ForeUpWebhookService {
           greenFeeTaxPerPlayer: attributes.greenFeeTax ? attributes.greenFeeTax : 0,
           cartFeeTaxPerPlayer: attributes.cartFeeTax,
           providerDate: attributes.time,
-          entityId: indexedTeeTime.entityId,
         };
         const providerTeeTimeMatchingKeys = {
           id: indexedTeeTime.id,
@@ -466,9 +470,7 @@ export class ForeUpWebhookService {
           courseId: indexedTeeTime.courseId,
           availableFirstHandSpots: attributes.availableSpots,
           availableSecondHandSpots: indexedTeeTime.availableSecondHandSpots,
-          courseProvider: indexedTeeTime.courseProvider,
           providerDate: attributes.time,
-          entityId: indexedTeeTime.entityId,
         };
         if (isEqual(indexedTeeTime, providerTeeTimeMatchingKeys)) {
           // no changes to tee time do nothing
@@ -488,9 +490,13 @@ export class ForeUpWebhookService {
     } catch (error) {
       this.logger.error(error);
       // throw new Error(`Error indexing tee time: ${error}`);
-      throw new Error(
-        `We're sorry. This time is no longer available. Someone just booked this. It may take a minute for the sold time you selected to be removed. Please select another time.`
-      );
+      // throw new Error(
+      //   `We're sorry. This time is no longer available. Someone just booked this. It may take a minute for the sold time you selected to be removed. Please select another time.`
+      // );
+      return {
+        error:true,
+        message:`We're sorry. This time is no longer available. Someone just booked this. It may take a minute for the sold time you selected to be removed. Please select another time.`
+      }
     }
   };
 

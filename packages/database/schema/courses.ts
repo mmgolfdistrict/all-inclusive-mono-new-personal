@@ -3,15 +3,14 @@ import { relations, sql } from "drizzle-orm";
 import { boolean, datetime, double, index, int, text, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 import { assets } from "./assets";
-import { bookings } from "./bookings";
 import { courseAssets } from "./courseAssets";
 import { coursePromoCodeLink } from "./coursePromoCodeLink";
 import { entities } from "./entities";
 import { favorites } from "./favorites";
-import { lists } from "./lists";
 import { providers } from "./providers";
 import { teeTimes } from "./teeTimes";
 import { transfers } from "./transfers";
+import { userWaitlists } from "./userWaitlists";
 
 export const courses = mySqlTable(
   "course",
@@ -42,6 +41,7 @@ export const courses = mySqlTable(
     supportsOffers: boolean("supportsOffers").default(false).notNull(),
     supportsWatchlist: boolean("supportsWatchlist").default(false).notNull(),
     supportsPromocode: boolean("supportsPromocode").default(false).notNull(),
+    supportsWaitlist: boolean("supportsWaitlist").default(true).notNull(),
     buyerFee: int("buyerFee").default(1).notNull(),
     sellerFee: int("sellerFee").default(1).notNull(),
     lastUpdatedDateTime: datetime("lastUpdatedDateTime", { mode: "string", fsp: 3 })
@@ -79,6 +79,7 @@ export const coursesRelations = relations(courses, ({ one, many }) => ({
     fields: [courses.logoId],
     references: [assets.id],
   }),
+  userWaitlists: many(userWaitlists),
 }));
 
 export type SelectCourses = InferSelectModel<typeof courses>;

@@ -313,6 +313,7 @@ export class TokenizeService {
       weatherQuoteId: normalizedCartData.weatherQuoteId ?? null,
       weatherGuaranteeId: acceptedQuote?.id ? acceptedQuote?.id : null,
       weatherGuaranteeAmount: acceptedQuote?.price_charged ? acceptedQuote?.price_charged * 100 : 0,
+      markupFees: (normalizedCartData?.markupCharge ?? 0) * 100,
     });
 
     transfersToCreate.push({
@@ -324,6 +325,8 @@ export class TokenizeService {
       fromUserId: "0x000", //first hand sales are from the platform
       toUserId: userId,
       courseId: existingTeeTime.courseId,
+      weatherGuaranteeId: acceptedQuote?.id ? acceptedQuote?.id : "",
+      weatherGuaranteeAmount: acceptedQuote?.price_charged ? acceptedQuote?.price_charged * 100 : 0,
     });
 
     console.log(`Getting slot IDs for booking.`);
@@ -412,6 +415,7 @@ export class TokenizeService {
       teeTimeId: existingTeeTime?.id,
       bookingId,
       listingId: "",
+      courseId: existingTeeTime.courseId,
       eventId: "TEE_TIME_PURCHASED",
       json: "Tee time purchased",
     });
@@ -442,7 +446,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
     const template = {
       CustomerFirstName: existingTeeTime.customerName?.split(" ")[0],
       CourseName: existingTeeTime.courseName ?? "-",
-      GolfDistrictReservationID: bookingsToCreate?.[0]?.id ?? "-",
+      // GolfDistrictReservationID: bookingsToCreate?.[0]?.id ?? "-",
       CourseReservationID: providerBookingId ?? "-",
       FacilityName: existingTeeTime.entityName ?? "-",
       PlayDateTime: formatTime(existingTeeTime.providerDate, true, existingTeeTime.timezoneCorrection ?? 0),
@@ -469,6 +473,8 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
       CourseURL: existingTeeTime?.websiteURL || "",
       HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+      // BuyTeeTImeURL: `${redirectHref}`,
+      // CashOutURL: `${redirectHref}/account-settings/${userId}`,
       SellTeeTImeURL: `${redirectHref}/my-tee-box`,
       ManageTeeTimesURL: `${redirectHref}/my-tee-box`,
     };

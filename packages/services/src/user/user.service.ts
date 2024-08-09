@@ -37,7 +37,13 @@ export interface UserCreationData {
   lastName: string;
   handle: string;
   phoneNumber: string;
-  location?: string;
+  // location?: string;
+  address1?: string;
+  address2?: string;
+  state?: string;
+  city?: string;
+  zipcode?: string;
+  country?: string;
   redirectHref?: string;
   ReCAPTCHA: string | undefined;
 }
@@ -48,10 +54,16 @@ interface UserUpdateData {
   profileVisibility?: "PUBLIC" | "PRIVATE";
   profilePictureAssetId?: string | null;
   bannerImageAssetId?: string | null;
-  location?: string | null;
+  address1?: string | null;
+  address2?: string | null;
+  state?: string | null;
+  zipcode?: string | null;
+  city?: string | null;
+  country?: string | null;
   phoneNumber?: string | null;
   phoneNotifications?: boolean | null;
   emailNotifications?: boolean | null;
+  courseId?: string;
 }
 type TeeTimeEntry = {
   teeTimeId: string;
@@ -119,7 +131,7 @@ export class UserService {
    *     handel: 'johnDoe123'
    *   });
    */
-  createUser = async (courseId: string | undefined, data: UserCreationData): Promise<void> => {
+  createUser = async (courseId: string | undefined, data: UserCreationData) => {
     this.logger.info(`createUser called`);
     if (!isValidEmail(data.email)) {
       this.logger.warn(`Invalid email format: ${data.email}`);
@@ -127,11 +139,17 @@ export class UserService {
     }
     if (!(await this.isValidHandle(data.handle))) {
       this.logger.warn(`Handle already exists: ${data.handle}`);
-      throw new Error("Handle already exists");
+      return {
+        error:true,
+        message:"Handle already exists."
+      }
     }
     if (isValidPassword(data.password).score < 8) {
       this.logger.warn("Invalid password");
-      throw new Error("Invalid password");
+      return {
+        error:true,
+        message:"Password must include uppercase, lowercase letters, numbers, and special characters (!@#$%^&*)."
+      }
     }
 
     let isNotRobot;
@@ -180,6 +198,7 @@ export class UserService {
 
     let CourseLogoURL: string | undefined;
     let CourseURL: string | undefined;
+    let CourseName: string | undefined;
 
     if (courseId) {
       const [course] = await this.database
@@ -187,6 +206,7 @@ export class UserService {
           key: assets.key,
           extension: assets.extension,
           websiteURL: courses.websiteURL,
+          name: courses.name,
         })
         .from(courses)
         .where(eq(courses.id, courseId))
@@ -200,6 +220,7 @@ export class UserService {
       if (course?.key) {
         CourseLogoURL = `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`;
         CourseURL = course?.websiteURL || "";
+        CourseName = course.name;
       }
     }
 
@@ -214,6 +235,7 @@ export class UserService {
         )}&verificationToken=${encodeURIComponent(verificationToken)}`,
         CourseLogoURL,
         CourseURL,
+        CourseName,
         HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
       },
       []
@@ -333,7 +355,7 @@ export class UserService {
             this.logger.error(`Error retrieving user: ${err}`);
             throw new Error("Error retrieving user");
           });
-        if (userData[0]) {
+        if (userData &&  userData[0]) {
           finalData.push({
             ...userData[0],
             name: unit.nameOnBooking?.length ? unit.nameOnBooking : "Guest",
@@ -388,7 +410,12 @@ export class UserService {
    * @example
    *   verifyUserEmail('user123id', 'secureverificationtoken');
    */
-  verifyUserEmail = async (courseId: string | undefined, userId: string, token: string): Promise<void> => {
+  verifyUserEmail = async (
+    courseId: string | undefined,
+    userId: string,
+    token: string,
+    redirectHref: string
+  ) => {
     this.logger.info(`verifyUserEmail called with userId: ${userId} and token: ${token}`);
     const [user] = await this.database.select().from(users).where(eq(users.id, userId));
     if (!user) {
@@ -397,7 +424,10 @@ export class UserService {
     }
     if (!user.verificationRequestToken) {
       this.logger.warn(`User email already verified: ${userId}`);
-      throw new Error("User email already verified");
+      return {
+        error:true,
+        message:"User email already verified"
+      }
     }
     if (user.verificationRequestExpiry && user.verificationRequestExpiry < currentUtcTimestamp()) {
       await this.deleteUserById(userId);
@@ -423,6 +453,7 @@ export class UserService {
 
     let CourseLogoURL: string | undefined;
     let CourseURL: string | undefined;
+    let CourseName: string | undefined;
 
     if (courseId) {
       const [course] = await this.database
@@ -430,6 +461,7 @@ export class UserService {
           key: assets.key,
           extension: assets.extension,
           websiteURL: courses.websiteURL,
+          name: courses.name,
         })
         .from(courses)
         .where(eq(courses.id, courseId))
@@ -438,6 +470,7 @@ export class UserService {
       if (course?.key) {
         CourseLogoURL = `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`;
         CourseURL = course?.websiteURL || "";
+        CourseName = course.name;
       }
     }
 
@@ -452,7 +485,9 @@ export class UserService {
             CustomerFirstName: user.handle ?? "",
             CourseLogoURL,
             CourseURL,
+            CourseName,
             HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+            BuyTeeTimeURL: encodeURI(redirectHref),
           },
           []
         );
@@ -546,20 +581,71 @@ export class UserService {
         throw new Error(`Asset not found: ${data.profilePictureAssetId}`);
       }
     }
-    if (data.location) {
-      //TODO: validate location with geocode service
-    }
+    // if (data.location) {
+    //   //TODO: validate location with geocode service
+    // }
 
     const updateData: Partial<InsertUser> = {
       updatedAt: currentUtcTimestamp(),
     };
     if (Object.prototype.hasOwnProperty.call(data, "handle")) {
       updateData.handle = data.handle;
-      await this.notificationsService.createNotification(
-        userId,
-        "Handle updated",
-        `Your handle has been updated to ${data.handle}`
-      );
+      // await this.notificationsService.createNotification(
+      //   userId,
+      //   "Handle updated",
+      //   `Your handle has been updated to ${data.handle}`
+      // );
+      const [user] = await this.database
+        .select()
+        .from(users)
+        .where(eq(users.id, userId))
+        .execute()
+        .catch((err) => {
+          this.logger.error(`Failed to retrieve user: ${err}`);
+          throw new Error("Failed to retrieve user");
+        });
+
+      if (!user) {
+        this.logger.error(`createNotification: User with ID ${userId} not found.`);
+        return;
+      }
+
+      const [course] = await this.database
+        .select({
+          key: assets.key,
+          extension: assets.extension,
+          websiteURL: courses.websiteURL,
+          name: courses.name,
+        })
+        .from(courses)
+        .where(eq(courses.id, data.courseId ?? ""))
+        .leftJoin(assets, eq(assets.id, courses.logoId))
+        .execute()
+        .catch((err) => {
+          this.logger.error(err);
+          return [];
+        });
+
+      if (user && user.name && user.email) {
+        await this.notificationsService
+          .sendEmailByTemplate(
+            user.email,
+            "Handle Updated",
+            process.env.SENDGRID_HANDLE_CHANGED_TEMPLATE_ID!,
+            {
+              CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`,
+              CourseURL: course?.websiteURL || "",
+              CourseName: course?.name || "",
+              HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+              CustomerFirstName: user.name,
+            },
+            []
+          )
+          .catch((err) => {
+            this.logger.error(`Error sending email: ${err}`);
+            throw new Error("Error sending email");
+          });
+      }
     }
     if (Object.prototype.hasOwnProperty.call(data, "name")) updateData.name = data.name;
     if (Object.prototype.hasOwnProperty.call(data, "profileVisibility"))
@@ -568,7 +654,13 @@ export class UserService {
       updateData.image = data.profilePictureAssetId;
     if (Object.prototype.hasOwnProperty.call(data, "bannerImageAssetId"))
       updateData.bannerImage = data.bannerImageAssetId;
-    if (Object.prototype.hasOwnProperty.call(data, "location")) updateData.location = data.location;
+    // if (Object.prototype.hasOwnProperty.call(data, "location")) updateData.location = data.location;
+    if (Object.prototype.hasOwnProperty.call(data, "address1")) updateData.address1 = data.address1;
+    if (Object.prototype.hasOwnProperty.call(data, "address2")) updateData.address2 = data.address2;
+    if (Object.prototype.hasOwnProperty.call(data, "state")) updateData.state = data.state;
+    if (Object.prototype.hasOwnProperty.call(data, "city")) updateData.city = data.city;
+    if (Object.prototype.hasOwnProperty.call(data, "zipcode")) updateData.zipcode = data.zipcode;
+    if (Object.prototype.hasOwnProperty.call(data, "country")) updateData.country = data.country;
     if (Object.prototype.hasOwnProperty.call(data, "phoneNotifications"))
       updateData.phoneNotifications = data.phoneNotifications ? true : false;
     if (Object.prototype.hasOwnProperty.call(data, "emailNotifications"))
@@ -731,12 +823,15 @@ export class UserService {
     }
     let CourseURL: string | undefined;
     let CourseLogoURL: string | undefined;
+    let CourseName: string | undefined;
+
     if (courseProviderId) {
       const [course] = await this.database
         .select({
           key: assets.key,
           extension: assets.extension,
           websiteURL: courses.websiteURL,
+          name: courses.name,
         })
         .from(courses)
         .leftJoin(assets, eq(assets.courseId, courseProviderId))
@@ -745,6 +840,7 @@ export class UserService {
       if (course?.key) {
         CourseLogoURL = `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`;
         CourseURL = course?.websiteURL || "";
+        CourseName = course?.name || "";
       }
     }
 
@@ -786,6 +882,7 @@ export class UserService {
       EMail: user.email,
       CourseLogoURL,
       CourseURL,
+      CourseName,
       HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
     };
 
@@ -896,6 +993,7 @@ export class UserService {
 
     let CourseLogoURL: string | undefined;
     let CourseURL: string | undefined;
+    let CourseName: string | undefined;
 
     if (courseId) {
       const [course] = await this.database
@@ -903,6 +1001,7 @@ export class UserService {
           key: assets.key,
           extension: assets.extension,
           websiteURL: courses.websiteURL,
+          name: courses.name,
         })
         .from(courses)
         .where(eq(courses.id, courseId))
@@ -916,6 +1015,7 @@ export class UserService {
       if (course?.key) {
         CourseLogoURL = `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`;
         CourseURL = course?.websiteURL || "";
+        CourseName = course?.name || "";
       }
     }
 
@@ -929,6 +1029,7 @@ export class UserService {
             CustomerFirstName: user?.handle ?? "",
             CourseLogoURL,
             CourseURL,
+            CourseName,
             HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
           },
           []
@@ -1109,7 +1210,13 @@ export class UserService {
         handle: data.handle,
         email: data.email,
         gdPassword: await bcrypt.hash(data.password, 10),
-        address: data.location,
+        // address: data.location,
+        address1: data.address1,
+        address2: data.address2,
+        state: data.state,
+        city: data.city,
+        zipcode: data.zipcode,
+        country: data.country,
         phoneNumber: data.phoneNumber,
         verificationRequestToken: verificationToken,
         verificationRequestExpiry: generateUtcTimestamp(90), //90 minutes
@@ -1200,8 +1307,13 @@ export class UserService {
         bannerPicture,
         handle: user.handle,
         name: user.name,
-        location: user.location,
-        profileVisibility: user.profileVisibility,
+        // location: user.location,
+        address1: user.address1,
+        address2: user.address2,
+        state: user.state,
+        city: user.city,
+        zipcode: user.zipcode,
+        country: user.country,
       };
     }
     return res;

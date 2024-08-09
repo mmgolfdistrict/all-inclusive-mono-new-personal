@@ -13,8 +13,10 @@ import { OutlineClub } from "../icons/outline-club";
 import { BlurImage } from "../images/blur-image";
 import { ChoosePlayers } from "../input/choose-players";
 import { SensibleWidget } from "../sensible/sensible-widget";
+import { Tooltip } from "../tooltip";
 
 const PlayersOptions = ["1", "2", "3", "4"];
+const DEFAULT_SILHOUETTE_IMAGE = "/defaults/default-profile.webp";
 
 export const CheckoutItem = ({
   teeTime,
@@ -211,11 +213,25 @@ const Data = ({
       className={`flex w-full flex-col justify-between gap-2 text-sm lg:flex-row ${className}`}
     >
       <div className="flex gap-1 lg:items-start">
-        <Avatar src={soldByImage} />
-        <div className="flex flex-wrap gap-1">
+        <Tooltip
+          trigger={
+            <Avatar
+              src={
+                isSecondHand === true ? DEFAULT_SILHOUETTE_IMAGE : soldByImage
+              }
+            />
+          }
+          content={
+            "Sold by " +
+            (isSecondHand === true
+              ? "another Golf District golfer."
+              : soldByName)
+          }
+        />
+        {/* <div className="flex flex-wrap gap-1">
           <div>Sold by</div>
           {soldByName}
-        </div>
+        </div> */}
       </div>
       <div className="flex flex-col gap-2 lg:items-end">
         <div className="flex min-h-[31px] items-center gap-2">

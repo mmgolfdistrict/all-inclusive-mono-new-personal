@@ -55,18 +55,18 @@ export const Counteroffer = ({
   };
 
   const handleBlur = () => {
-  if (!listingPrice) {
-    setListingPrice(0);
-  }
-};
+    if (!listingPrice) {
+      setListingPrice(0);
+    }
+  };
 
-const handleListingPrice = (e: ChangeEvent<HTMLInputElement>) => {
-  const value = e.target.value.replace(/[$,]/g, "");
+  const handleListingPrice = (e: ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/[$,]/g, "");
 
-  const decimals = value.split(".")[1];
-  if (decimals && decimals.length > 2) {
-    return;
-  }
+    const decimals = value.split(".")[1];
+    if (decimals && decimals.length > 2) {
+      return;
+    }
 
     const strippedLeadingZeros = value.replace(/^0+/, "");
     setListingPrice(Number(strippedLeadingZeros));
@@ -197,7 +197,7 @@ const handleListingPrice = (e: ChangeEvent<HTMLInputElement>) => {
                   Service Fee{" "}
                   <Tooltip
                     trigger={<Info className="h-[14px] w-[14px]" />}
-                    content="The service fee is divided between Golf District and the course. This ensures ongoing enhancements to our service, ultimately offering golfers the best access to booking times."
+                    content="This fee ensures ongoing enhancements to our service, ultimately offering golfers the best access to booking tee times"
                   />
                 </div>
                 <div className="text-secondary-black">${"45.00"}</div>

@@ -5,6 +5,7 @@ import { useAppContext } from "~/contexts/AppContext";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
+import { getBgColor } from "~/utils/formatters";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -14,6 +15,7 @@ import { Auction } from "../icons/auction";
 import { Calendar } from "../icons/calendar";
 import { Hamburger } from "../icons/hamburger";
 import { Marketplace } from "../icons/marketplace";
+import { Megaphone } from "../icons/megaphone";
 import { MyOffers } from "../icons/my-offers";
 import { Search } from "../icons/search";
 import { BlurImage } from "../images/blur-image";
@@ -39,17 +41,9 @@ export const CourseNav = () => {
       enabled: courseId !== undefined && user?.id !== undefined,
     }
   );
-  const auditLog = api.webhooks.auditLog.useMutation();
-  const logAudit = async () => {
-    await auditLog.mutateAsync({
-      userId: user?.id ?? "",
-      teeTimeId: "",
-      bookingId: "",
-      listingId: "",
-      eventId: "USER_LOGGED_IN",
-      json: `user logged in `,
-    });
-  };
+
+  const { data: systemNotifications } =
+    api.systemNotification.getSystemNotification.useQuery({});
 
   useEffect(() => {
     if (isSideBarOpen && isMobile) {
@@ -68,6 +62,16 @@ export const CourseNav = () => {
   return (
     <div className="fixed top-0 w-full z-20">
       <div className="relative">
+        {systemNotifications?.map((elm) => (
+          <div
+            key={elm.id}
+            className={`bg-${getBgColor(
+              elm.displayType
+            )} text-white w-full p-1 text-center`}
+          >
+            {elm.shortMessage} : {elm.longMessage}
+          </div>
+        ))}
         {isSideBarOpen && (
           <div
             className={`fixed z-20 h-[100dvh] w-screen backdrop-blur ${
@@ -134,7 +138,6 @@ export const CourseNav = () => {
                     path: pathname,
                     createdAt: new Date().toISOString(),
                   });
-                  void logAudit();
                 }}
               >
                 <FilledButton
@@ -154,12 +157,21 @@ export const CourseNav = () => {
           <div className="flex justify-between gap-4 md:gap-8">
             <NavItem
               href={`/${courseId}`}
-              text="Find"
+              text="Find Times"
               icon={<Search className="w-[16px]" />}
               data-testid="tee-time-id"
               data-test={courseId}
             />
-            {course?.allowAuctions && (
+            {course?.supportsWaitlist ? (
+              <NavItem
+                href={`/${courseId}/notify-me`}
+                text="Notify Me"
+                icon={<Megaphone className="w-[16px]" />}
+                data-testid="notify-me-id"
+                data-test={courseId}
+              />
+            ) : null}
+            {course?.allowAuctions ? (
               <NavItem
                 href={`/${courseId}/auctions`}
                 text="Auctions"
@@ -167,7 +179,7 @@ export const CourseNav = () => {
                 data-testid="auction-id"
                 data-test={courseId}
               />
-            )}
+            ) : null}
             <NavItem
               href={`/${courseId}/my-tee-box`}
               text="Sell"
@@ -176,8 +188,8 @@ export const CourseNav = () => {
               data-test={courseId}
             />
             <NavItem
-              href={`/${courseId}/my-tee-box?section=my-listed-tee-times`}
-              text="My Tee Times"
+              href={`/${courseId}/my-tee-box?section=owned`}
+              text="My Tee Box"
               icon={<Calendar className="w-[16px]" />}
               data-testid="sell-your-tee-time-id"
               data-test={courseId}

@@ -55,14 +55,18 @@ export class ProviderService extends CacheService {
    */
   getProviderAndKey = async (
     internalProviderIdentifier: string,
-    courseId: string
+    courseId: string,
+    providerCourseConfiguration?: string
   ): Promise<{ provider: ProviderAPI; token: string }> => {
     this.logger.info(`getProvider called with providerId: ${internalProviderIdentifier}`);
     const provider = this.teeSheetProviders.find((p) => p.providerId === internalProviderIdentifier);
+    console.log(this.teeSheetProviders, "this.teeSheetProviders");
     if (!provider) {
       this.logger.fatal(`Provider with ID ${internalProviderIdentifier} not found`);
       throw new Error(`Provider with ID ${internalProviderIdentifier} not found`);
     }
+
+    provider.providerConfiguration = providerCourseConfiguration;
     let token = await this.getCache(
       `provider-${internalProviderIdentifier}-${courseId}-${process.env.NODE_ENV}`
     )!;
@@ -172,7 +176,13 @@ export class ProviderService extends CacheService {
         providerCustomerId: userProviderCourseLink.customerId,
         name: users.name,
         email: users.email,
-        address: users.address,
+        // address: users.address,
+        address1: users.address1,
+        address2: users.address2,
+        state: users.state,
+        zipcode: users.zipcode,
+        city: users.city,
+        country: users.country,
         phone: users.phoneNumber,
         phoneNotification: users.phoneNotifications,
         emailNotification: users.emailNotifications,
@@ -220,7 +230,7 @@ export class ProviderService extends CacheService {
           contact_info: {
             account_number: accountNumber,
             phone_number: buyer.phone ?? "",
-            address_1: buyer.address ?? "",
+            address_1: buyer.address1 ?? "",
             first_name: nameOfCustomer?.[0] ? nameOfCustomer[0] ?? "guest" : "guest",
             last_name: nameOfCustomer?.[1] ? nameOfCustomer[1] : "N/A",
             email: buyer.email,

@@ -1,6 +1,7 @@
 import { and, asc, between, desc, eq, gt, gte, like, lte, or, sql, type Db } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import { bookings } from "@golf-district/database/schema/bookings";
+import { courseMarkup } from "@golf-district/database/schema/courseMarkup";
 import { courses } from "@golf-district/database/schema/courses";
 import { favorites } from "@golf-district/database/schema/favorites";
 import { lists } from "@golf-district/database/schema/lists";
@@ -34,6 +35,7 @@ interface TeeTimeSearchObject {
   isListed: boolean; //false if the booking is unlisted
   userWatchListed: boolean;
   numberOfWatchers: number;
+  markupFees: number;
   watchers: {
     userId: string;
     handle: string;
@@ -59,7 +61,7 @@ interface CheckTeeTimesAvailabilityParams {
   minDate: string;
   maxDate: string;
   holes: 9 | 18;
-  golfers: 1 | 2 | 3 | 4;
+  golfers: 1 | 2 | 3 | 4 | -1;
   showUnlisted: boolean;
   includesCart: boolean;
   lowerPrice: number;
@@ -331,6 +333,7 @@ export class SearchService {
    * @example
    * const teeTimeInfo = await searchService.getTeeTimeById("yourTeeTimeId", "optionalUserId");
    */
+
   getTeeTimeById = async (teeTimeId: string, _userId?: string) => {
     let userId = "00000000-0000-0000-0000-000000000000";
     if (_userId) {
@@ -361,11 +364,13 @@ export class SearchService {
           key: assets.key,
           extension: assets.extension,
         },
+        timezoneCorrection: courses.timezoneCorrection,
       })
       .from(teeTimes)
       .where(eq(teeTimes.id, teeTimeId))
       .innerJoin(courses, eq(courses.id, teeTimes.courseId))
-      .leftJoin(assets, and(eq(assets.courseId, teeTimes.courseId), eq(assets.id, courses.logoId)))
+      // .leftJoin(assets, and(eq(assets.courseId, teeTimes.courseId), eq(assets.id, courses.logoId)))
+      .leftJoin(assets, eq(assets.id, courses.logoId))
       .leftJoin(favorites, and(eq(favorites.teeTimeId, teeTimes.id), eq(favorites.userId, userId)))
       .limit(1)
       .execute()
@@ -376,7 +381,27 @@ export class SearchService {
     if (!tee) {
       return null;
     }
+    const priceAccordingToDate: any[] = await this.getTeeTimesPriceWithRange(
+      tee?.courseId,
+      tee?.timezoneCorrection
+    );
+    const filteredDate: any[] = [];
 
+    const date = dayjs(tee?.providerDate).utc();
+    const dateWithTimezone = date.add(tee?.timezoneCorrection).toString();
+    priceAccordingToDate.forEach((el) => {
+      if (
+        dayjs(el.toDayFormatted).isAfter(dateWithTimezone) &&
+        dayjs(el.fromDayFormatted).isBefore(dateWithTimezone) &&
+        !filteredDate.length
+      ) {
+        filteredDate.push(el);
+        return;
+      }
+    });
+
+    const markupFeesFinal = filteredDate.length ? filteredDate[0].markUpFees : tee.markupFeesFixedPerPlayer;
+    const markupFeesToBeUsed = markupFeesFinal / 100;
     const watchers = await this.database
       .select({
         userId: favorites.userId,
@@ -407,10 +432,8 @@ export class SearchService {
         ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${tee.logo.key}.${tee.logo.extension}`
         : "/defaults/default-profile.webp",
       availableSlots: tee.firstPartySlots,
-      pricePerGolfer:
-        tee.greenFee / 100 +
-        tee.cartFee / 100 +
-        (tee.markupFeesFixedPerPlayer ? tee.markupFeesFixedPerPlayer / 100 : 0),
+      pricePerGolfer: tee.greenFee / 100 + tee.cartFee / 100 + markupFeesToBeUsed,
+      markupFees: markupFeesToBeUsed * 100,
       greenFeeTaxPerPlayer: tee.greenFeeTax,
       cartFeeTaxPerPlayer: tee.cartFeeTax,
       teeTimeId: tee.id,
@@ -544,6 +567,29 @@ export class SearchService {
     return teeTimeDate?.[0]?.date ?? "";
   }
 
+  formatDateToAppropriateFormat = (dateString: string) => {
+    const date = new Date(dateString);
+    const rfc2822Date = date.toUTCString();
+    return rfc2822Date;
+  };
+
+  convertDateFormat(dateString: string) {
+    const parsedDate = dayjs.utc(dateString, "ddd, DD MMM YYYY HH:mm:ss [GMT]");
+    const formattedDate = parsedDate.format("YYYY-MM-DDTHH:mm:ss");
+    return formattedDate;
+  }
+  sortDates = (dateArray: string[]) => {
+    // Convert date strings to Date objects
+    const dateObjects: Date[] = dateArray.map((dateStr) => new Date(dateStr));
+
+    // Sort Date objects
+    dateObjects.sort((a, b) => a.getTime() - b.getTime());
+
+    // Convert Date objects back to strings in the same format
+    const sortedDateStrings: string[] = dateObjects.map((dateObj) => dateObj.toUTCString());
+
+    return sortedDateStrings;
+  };
   async checkTeeTimesAvailabilityForDateRange({
     dates,
     courseId,
@@ -565,84 +611,123 @@ export class SearchService {
     _userId,
   }: CheckTeeTimesAvailabilityParams) {
     const res: string[] = [];
-    console.log("iuvhjlgfhjvbknlfycgjvhkbln", lowerPrice, upperPrice);
-    for (let i = 0; i < dates.length; i++) {
-      const date = dates[i];
-      const userId = _userId ?? "00000000-0000-0000-0000-000000000000";
-      const minDateSubquery = dayjs(minDate).utc().hour(0).minute(0).second(0).millisecond(0).toISOString();
-      const maxDateSubquery = dayjs(maxDate)
-        .utc()
-        .hour(23)
-        .minute(59)
-        .second(59)
-        .millisecond(999)
-        .toISOString();
-      const startDate = dayjs(date).utc().hour(0).minute(0).second(0).millisecond(0).toISOString();
-      const endDate = dayjs(date).utc().hour(23).minute(59).second(59).millisecond(999).toISOString();
-      const nowInCourseTimezone = dayjs().utc().utcOffset(timezoneCorrection).format("YYYY-MM-DD HH:mm:ss");
-      const currentTimePlus30Min = dayjs
-        .utc(nowInCourseTimezone)
-        .utcOffset(timezoneCorrection)
-        .add(30, "minutes")
-        .toISOString();
-      const firstHandRecords = await this.database
-        .select({
-          maxdata: sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})`,
-        })
-        .from(teeTimes)
-        .innerJoin(courses, eq(courses.id, courseId))
-        .where(
-          and(
-            gte(teeTimes.providerDate, currentTimePlus30Min),
-            between(teeTimes.providerDate, minDateSubquery, maxDateSubquery),
-            gte(teeTimes.time, startTime),
-            lte(teeTimes.time, endTime),
-            sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 >= ${lowerPrice}`,
-            sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 <= ${upperPrice}`,
-            eq(teeTimes.numberOfHoles, holes),
-            gt(teeTimes.availableFirstHandSpots, 0),
-            or(
-              gte(teeTimes.availableFirstHandSpots, golfers),
-              gte(teeTimes.availableSecondHandSpots, golfers)
-            )
-          )
-        )
-        .execute();
+    const userId = _userId ?? "00000000-0000-0000-0000-000000000000";
+    // const minDateSubquery = dayjs(minDate).utc().hour(0).minute(0).second(0).millisecond(0).toISOString();
+    // const maxDateSubquery = dayjs(maxDate)
+    //   .utc()
+    //   .hour(23)
+    //   .minute(59)
+    //   .second(59)
+    //   .millisecond(999)
+    //   .toISOString();
+    //   console.log(minDateSubquery,maxDateSubquery,"maxDateSubquerymaxDateSubquerymaxDateSubquery")
+    const minDateSubquery = this.convertDateFormat(minDate);
+    const maxDateSubquery = this.convertDateFormat(maxDate);
 
-      const secondHandRecords = await this.database
-        .select({
-          maxDate: lists.listPrice,
-        })
-        .from(lists)
-        .innerJoin(bookings, eq(bookings.listId, lists.id))
-        .innerJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
-        .innerJoin(courses, eq(courses.id, teeTimes.courseId))
-        .where(
-          and(
-            eq(teeTimes.courseId, courseId),
-            eq(lists.isDeleted, false),
-            and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
-            gte(teeTimes.providerDate, currentTimePlus30Min),
-            between(teeTimes.providerDate, startDate, endDate),
-            eq(teeTimes.numberOfHoles, holes),
-            or(
-              gte(teeTimes.availableFirstHandSpots, golfers),
-              gte(teeTimes.availableSecondHandSpots, golfers)
-            ),
-            sql`(${lists.listPrice}*(${courses.buyerFee}/100)+${lists.listPrice})/100 >= ${lowerPrice}`,
-            sql`(${lists.listPrice}*(${courses.buyerFee}/100)+${lists.listPrice})/100 <= ${upperPrice}`
-          )
-        )
-        .execute();
+    // .utc()
+    // .hour(23)
+    // .minute(59)
+    // .second(59)
+    // .millisecond(999)
+    // .toISOString();
+    // const startDate = dayjs(minDateSubquery).utc().hour(0).minute(0).second(0).millisecond(0).toISOString();
+    // const endDate = dayjs(maxDateSubquery)
+    //   .utc()
+    //   .hour(23)
+    //   .minute(59)
+    //   .second(59)
+    //   .millisecond(999)
+    //   .toISOString();
+    const nowInCourseTimezone = dayjs().utc().utcOffset(timezoneCorrection).format("YYYY-MM-DD HH:mm:ss");
+    const currentTimePlus30Min = dayjs
+      .utc(nowInCourseTimezone)
+      .utcOffset(timezoneCorrection)
+      .add(30, "minutes")
+      .toISOString();
+    console.log("------->>>---->>", startTime, endTime);
 
-      const isDateToBeAdded = firstHandRecords.length > 0 || secondHandRecords.length > 0;
-      if (isDateToBeAdded && date) {
-        res.push(date);
-      }
-    }
-    return res;
+    const firstHandResults = await this.database
+      .selectDistinct({ providerDate: sql`Date(${teeTimes.providerDate})` })
+      .from(teeTimes)
+      .innerJoin(courses, eq(courses.id, courseId))
+      .where(
+        and(
+          gte(teeTimes.providerDate, currentTimePlus30Min),
+          between(teeTimes.providerDate, minDateSubquery, maxDateSubquery),
+          and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
+          sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 >= ${lowerPrice}`,
+          sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 <= ${upperPrice}`,
+          eq(teeTimes.numberOfHoles, holes),
+          gt(teeTimes.availableFirstHandSpots, 0),
+          or(gte(teeTimes.availableFirstHandSpots, golfers), gte(teeTimes.availableSecondHandSpots, golfers))
+        )
+      )
+      .orderBy(asc(sql`Date(${teeTimes.providerDate})`))
+      .execute();
+
+    const secondHandResults = await this.database
+      .selectDistinct({ providerDate: sql`Date(${teeTimes.providerDate})` })
+      .from(lists)
+      .innerJoin(bookings, eq(bookings.listId, lists.id))
+      .innerJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
+      .innerJoin(courses, eq(courses.id, teeTimes.courseId))
+      .where(
+        and(
+          gte(teeTimes.providerDate, currentTimePlus30Min),
+          between(teeTimes.providerDate, minDateSubquery, maxDateSubquery),
+          eq(lists.isDeleted, false),
+          and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
+          sql`(${lists.listPrice}*(${courses.buyerFee}/100)+${lists.listPrice})/100 >= ${lowerPrice}`,
+          sql`(${lists.listPrice}*(${courses.buyerFee}/100)+${lists.listPrice})/100 <= ${upperPrice}`,
+          eq(teeTimes.numberOfHoles, holes),
+          or(gte(teeTimes.availableFirstHandSpots, golfers), gte(teeTimes.availableSecondHandSpots, golfers))
+        )
+      )
+      .orderBy(asc(sql`Date(${teeTimes.providerDate})`))
+      .execute();
+
+    const firstHandAndSecondHandResult = [...firstHandResults, ...secondHandResults];
+    const firstHandAndSecondHandResultDates = firstHandAndSecondHandResult.map((el) =>
+      this.formatDateToAppropriateFormat(el.providerDate as string)
+    );
+    const uniqueSetfirstHandAndSecondHandResultDates = new Set(firstHandAndSecondHandResultDates);
+    const uniqueArrayfirstHandAndSecondHandResultDates = Array.from(
+      uniqueSetfirstHandAndSecondHandResultDates
+    );
+    return this.sortDates(uniqueArrayfirstHandAndSecondHandResultDates);
   }
+  getTeeTimesPriceWithRange = async (courseId: string, timeZoneCorrection: number) => {
+    const markupData = await this.database
+      .select()
+      .from(courseMarkup)
+      .where(eq(courseMarkup.courseId, courseId))
+      .execute();
 
+    const currentDate = dayjs();
+    const currentdateWithTimeZone = currentDate.add(timeZoneCorrection ?? 0, "hour");
+    console.log(
+      currentDate.toString(),
+      currentdateWithTimeZone.toString(),
+      "ewfwfewfewfewwfe",
+      timeZoneCorrection
+    );
+    const priceAccordingToDate: any[] = [];
+
+    markupData.forEach((el) => {
+      const toDay = currentdateWithTimeZone.add(el?.toDay, "day");
+      const fromDay = currentdateWithTimeZone
+        .add(el?.fromDay, "day")
+        .set("hours", 0)
+        .set("minutes", 0)
+        .set("seconds", 0);
+      priceAccordingToDate.push({
+        toDayFormatted: toDay.toString(),
+        fromDayFormatted: fromDay.toString(),
+        markUpFees: el.markUp,
+      });
+    });
+    return priceAccordingToDate;
+  };
   async getTeeTimesForDay(
     courseId: string,
     date: string,
@@ -651,7 +736,7 @@ export class SearchService {
     startTime: number,
     endTime: number,
     holes: 9 | 18,
-    golfers: 1 | 2 | 3 | 4,
+    golfers: number,
     showUnlisted: boolean,
     includesCart: boolean,
     lowerPrice: number,
@@ -762,8 +847,7 @@ export class SearchService {
           //TODO: use isCartIncluded instead
           // includesCart ? gte(teeTimes.cartFeePerPlayer, 1) : eq(teeTimes.cartFeePerPlayer, 0),
           eq(teeTimes.numberOfHoles, holes),
-          gt(teeTimes.availableFirstHandSpots, 0),
-          or(gte(teeTimes.availableFirstHandSpots, golfers), gte(teeTimes.availableSecondHandSpots, golfers))
+          gte(teeTimes.availableFirstHandSpots, golfers === -1 ? 1 : golfers)
         )
       )
       .orderBy(
@@ -780,20 +864,47 @@ export class SearchService {
       .select({
         buyerFee: courses.buyerFee,
         sellerFee: courses.sellerFee,
+        markupFees: courses.markupFeesFixedPerPlayer,
+        timeZoneCorrection: courses.timezoneCorrection,
       })
       .from(courses)
       .where(eq(courses.id, courseId))
       .execute()
       .catch(() => {});
     let buyerFee = 0;
+    let courseDataIfAvailable: any = {};
     if (courseData?.length) {
       buyerFee = (courseData[0]?.buyerFee ?? 1) / 100;
+      courseDataIfAvailable = courseData[0];
     }
 
     const teeTimesData = await teeQuery.execute().catch((err) => {
       this.logger.error(err);
       throw new Error(`Error getting tee times for ${date}: ${err}`);
     });
+    const priceAccordingToDate: any[] = await this.getTeeTimesPriceWithRange(
+      courseId,
+      courseDataIfAvailable?.timeZoneCorrection ?? 0
+    );
+    const filteredDate: any[] = [];
+    console.log("date is", date);
+
+    priceAccordingToDate.forEach((el) => {
+      if (
+        ((dayjs(el.toDayFormatted).isAfter(date) && dayjs(el.fromDayFormatted).isBefore(date)) ||
+          dayjs(date).isSame(dayjs(el.fromDayFormatted))) &&
+        !filteredDate.length
+      ) {
+        filteredDate.push(el);
+        return;
+      } else {
+        console.log("date===>", date, dayjs(el.toDayFormatted), dayjs(el.fromDayFormatted));
+      }
+    });
+    const markupFeesFinal = filteredDate.length
+      ? filteredDate[0].markUpFees
+      : courseDataIfAvailable.markupFees;
+    const markupFeesToBeUsed = markupFeesFinal / 100;
     const firstHandResults = teeTimesData.map((teeTime) => {
       return {
         ...teeTime,
@@ -812,10 +923,7 @@ export class SearchService {
         firstOrSecondHandTeeTime: TeeTimeType.FIRST_HAND,
         isListed: false,
         minimumOfferPrice: teeTime.greenFee / 100, //add more fees?
-        pricePerGolfer:
-          teeTime.greenFee / 100 +
-          teeTime.cartFee / 100 +
-          (teeTime.markupFeesFixedPerPlayer ? teeTime.markupFeesFixedPerPlayer / 100 : 0), //add more fees?
+        pricePerGolfer: teeTime.greenFee / 100 + teeTime.cartFee / 100 + markupFeesToBeUsed, //add more fees?
         isOwned: false,
         firstHandPurchasePrice: 0,
         bookingIds: [],
@@ -860,9 +968,7 @@ export class SearchService {
           eq(teeTimes.courseId, courseId),
           eq(bookings.includesCart, includesCart),
           eq(teeTimes.numberOfHoles, holes),
-          showUnlisted
-            ? or(eq(bookings.isListed, false), eq(bookings.isListed, true))
-            : eq(bookings.isListed, true)
+          eq(bookings.isListed, true)
         )
       )
       .orderBy(
@@ -921,8 +1027,9 @@ export class SearchService {
 
       {} as Record<string, CombinedObject>
     );
-
-    const secondHandResults = Object.values(groupedSecondHandData).filter((i) => i.availableSlots >= golfers);
+    const secondHandResults = Object.values(groupedSecondHandData).filter((i) =>
+      golfers === -1 && i.listedSlots !== null ? i.listedSlots >= 1 : i.listedSlots == golfers
+    );
     const secondHandCount = secondHandResults.length;
 
     //combine first and second hand results according to sort params
