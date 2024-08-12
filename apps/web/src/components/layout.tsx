@@ -17,12 +17,10 @@ const AllowedPathsForMainNav = [
   "/faq",
   "/how-to-guide",
   "/about-us",
-  "/auth-error",
 ];
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
-
   const nicInfos = getNICDetails();
 
   useEffect(() => {

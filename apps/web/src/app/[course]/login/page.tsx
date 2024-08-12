@@ -1,6 +1,12 @@
 "use client";
 
-import { signIn, useSession } from "@golf-district/auth/nextjs-exports";
+import {
+  signIn,
+  signOut,
+  useSession,
+} from "@golf-district/auth/nextjs-exports";
+import { db } from "@golf-district/database";
+import { NotificationService, UserService } from "@golf-district/service";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FilledButton } from "~/components/buttons/filled-button";
 import { IconButton } from "~/components/buttons/icon-button";
@@ -17,7 +23,7 @@ import { usePreviousPath } from "~/hooks/usePreviousPath";
 import { loginSchema, type LoginSchemaType } from "~/schema/login-schema";
 import { api } from "~/utils/api";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createRef, useEffect, useState } from "react";
 import ReCAPTCHA from "react-google-recaptcha";
 import { useForm, type SubmitHandler } from "react-hook-form";
@@ -33,9 +39,10 @@ export default function Login() {
   const { course } = useCourseContext();
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(false);
-
   const auditLog = api.webhooks.auditLog.useMutation();
   const { data: sessionData, status } = useSession();
+  const errorKey = searchParams.get("error");
+  const router = useRouter();
 
   const event = ({ action, category, label, value }: any) => {
     (window as any).gtag("event", action, {
@@ -45,18 +52,21 @@ export default function Login() {
     });
   };
 
-  console.log(
-    `process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY = [${process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}]`
-  );
-  console.log(
-    `process.env.RECAPTCHA_SECRET_KEY = [${process.env.RECAPTCHA_SECRET_KEY}]`
-  );
-  console.log(
-    `process.env.NEXT_PUBLIC_RECAPTCHA_IS_INVISIBLE = [${process.env.NEXT_PUBLIC_RECAPTCHA_IS_INVISIBLE}]`
-  );
+  useEffect(() => {
+    if (errorKey === "AccessDenied" && !toast.isActive("accessDeniedToast")) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("error");
+      router.push(url.pathname + url.search);
+      toast.error(
+        "Unable to login. Please call customer support at 877-TeeTrade or email at support@golfdistrict.com",
+        { toastId: "accessDeniedToast" }
+      );
+    }
+  }, [errorKey]);
 
   useEffect(() => {
     if (sessionData?.user?.id && course?.id && status === "authenticated") {
+      console.log("sessionData", sessionData);
       logAudit(sessionData.user.id, course.id, () => {
         window.location.reload();
         window.location.href = `${window.location.origin}${
@@ -101,7 +111,6 @@ export default function Login() {
     register,
     handleSubmit,
     setValue,
-
     formState: { errors },
   } = useForm<LoginSchemaType>({
     // @ts-ignore
@@ -116,8 +125,11 @@ export default function Login() {
     !prevPath?.path?.includes("register");
 
   useEffect(() => {
-    recaptchaRef.current?.execute();
-  }, []);
+    if (process.env.NEXT_PUBLIC_RECAPTCHA_IS_INVISIBLE === "true") {
+      console.log(recaptchaRef.current);
+      recaptchaRef.current?.execute();
+    }
+  }, [recaptchaRef]);
 
   const onSubmit: SubmitHandler<LoginSchemaType> = async (data) => {
     setIsLoading(true);
@@ -128,6 +140,7 @@ export default function Login() {
       value: "",
     });
     try {
+      recaptchaRef.current?.reset();
       const callbackURL = `${window.location.origin}${
         GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
           ? prevPath?.path
@@ -145,7 +158,15 @@ export default function Login() {
           : undefined,
       });
       if (res?.error) {
-        toast.error("The email or password you entered is incorrect.");
+        await recaptchaRef.current?.executeAsync();
+        console.log("res?.error", res?.error);
+        if (res.error === "AccessDenied") {
+          toast.error(
+            "Unable to login. Please call customer support at 877-TeeTrade or email at support@golfdistrict.com"
+          );
+        } else {
+          toast.error("The email or password you entered is incorrect.");
+        }
         setValue("password", "");
       }
     } catch (error) {

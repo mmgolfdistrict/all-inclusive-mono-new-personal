@@ -54,6 +54,23 @@ export class AuthService extends CacheService {
    * @example
    *   authenticateUser('johnDoe123', 'SecureP@ssw0rd!');
    */
+
+  isUserBlocked = async (email: string) => {
+    const [data] = await this.database
+      .select({
+        bannedUntilDateTime: users.bannedUntilDateTime,
+      })
+      .from(users)
+      .where(eq(users.email, email))
+      .execute();
+    const now = new Date();
+    const date = new Date(data?.bannedUntilDateTime ?? "");
+    if (now < date) {
+      return true;
+    }
+    return false;
+  };
+
   authenticateUser = async (handleOrEmail: string, password: string) => {
     // console.log("Node Env");
     // console.log(process.env.NODE_ENV);
@@ -61,7 +78,7 @@ export class AuthService extends CacheService {
       .select({
         user: users,
         asset: {
-        assetId: assets.id,
+          assetId: assets.id,
           assetKey: assets.key,
           assetExtension: assets.extension,
         },
@@ -99,8 +116,6 @@ export class AuthService extends CacheService {
 
     const valid = await bcrypt.compare(password, data.user.gdPassword);
     // console.log("Bcrypt compare");
-    // console.log(valid);
-
     if (!valid) {
       this.logger.warn(`Invalid password: ${handleOrEmail}`);
       if (process.env.NODE_ENV !== "production") {
