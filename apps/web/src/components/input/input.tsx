@@ -10,6 +10,7 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   error?: string;
   showInfoTooltip?: boolean;
   content?: string;
+  inputRef?:unknown;
 }
 
 export const Input = ({
@@ -20,6 +21,7 @@ export const Input = ({
   error,
   showInfoTooltip = false,
   content,
+  inputRef,
   ...props
 }: InputProps) => {
   return (
@@ -40,6 +42,7 @@ export const Input = ({
         // @ts-ignore
         {...register(name)}
         {...props}
+        ref={inputRef}
       />
       {error && <p className="text-[12px] text-red">{error}</p>}
     </div>
