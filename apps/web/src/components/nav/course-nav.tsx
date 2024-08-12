@@ -77,7 +77,7 @@ export const CourseNav = () => {
   };
 
   useEffect(() => {
-    (async () => {
+    (() => {
       if (isUserBlocked) {
         logAudit(async () => {
           localStorage.clear();
