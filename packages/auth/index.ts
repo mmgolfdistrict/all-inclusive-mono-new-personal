@@ -9,6 +9,7 @@ import NextAuth from "next-auth";
 import type { DefaultSession, NextAuthConfig } from "next-auth";
 import FacebookProvider from "next-auth/providers/facebook";
 import { cookies } from "next/headers";
+import Logger from "@golf-district/shared/src/logger";
 // @TODO - update to use env validation
 //import { env } from "./env.mjs";
 import { verifyCaptcha } from "../api/src/googleCaptcha";
@@ -32,6 +33,7 @@ declare module "next-auth" {
     ip?: string;
   }
 }
+const logger = Logger("Auth-File")
 export const authConfig: NextAuthConfig = {
   adapter: DrizzleAdapter(db, tableCreator),
   redirectProxyUrl: process.env.AUTH_REDIRECT_PROXY_URL,
@@ -89,9 +91,12 @@ export const authConfig: NextAuthConfig = {
         // console.log(isNotRobot);
 
         //if the captcha is not valid, return null
+
         if (!isNotRobot) {
+          logger.error(`Captcha not verified`);
           return null;
         }
+
         const notificationService = new NotificationService(
           db,
           process.env.TWILLIO_PHONE_NUMBER!,
@@ -100,25 +105,25 @@ export const authConfig: NextAuthConfig = {
           process.env.TWILLIO_AUTH_TOKEN!,
           process.env.SENDGRID_API_KEY!
         );
+
         const authService = new AuthService(
           db,
           notificationService,
           process.env.REDIS_URL!,
           process.env.REDIS_TOKEN!
         );
+
         const data = await authService.authenticateUser(
           credentials.email as string,
           credentials.password as string
         );
 
-        // console.log("data");
-        // console.log(data);
-
         if (!data) {
+          logger.warn(`User not authenticated`);
           return null;
         }
 
-        // console.log("Authentication successful ho gya hai");
+        logger.warn(`User authentication successful`);
         return {
           id: data?.id,
           email: data?.email,

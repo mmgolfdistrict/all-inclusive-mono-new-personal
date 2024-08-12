@@ -139,7 +139,10 @@ export class UserService {
     }
     if (!(await this.isValidHandle(data.handle))) {
       this.logger.warn(`Handle already exists: ${data.handle}`);
-      throw new Error("Handle already exists");
+      return {
+        error:true,
+        message:"Handle already exists."
+      }
     }
     if (isValidPassword(data.password).score < 8) {
       this.logger.warn("Invalid password");
@@ -352,7 +355,7 @@ export class UserService {
             this.logger.error(`Error retrieving user: ${err}`);
             throw new Error("Error retrieving user");
           });
-        if (userData[0]) {
+        if (userData &&  userData[0]) {
           finalData.push({
             ...userData[0],
             name: unit.nameOnBooking?.length ? unit.nameOnBooking : "Guest",

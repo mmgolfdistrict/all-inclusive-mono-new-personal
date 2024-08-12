@@ -725,6 +725,7 @@ export class HyperSwitchWebhookService {
         listId: bookings.listId,
         playerCount: bookings.playerCount,
         providerCourseConfiguration: providerCourseLink.providerCourseConfiguration,
+        markupFees: bookings.markupFees,
       })
       .from(bookings)
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -1042,6 +1043,7 @@ export class HyperSwitchWebhookService {
           totalAmount: total || 0,
           providerPaymentId: "",
           status: "CONFIRMED",
+          markupFees: 0,
           weatherQuoteId: weatherQuoteId || null,
         });
       }

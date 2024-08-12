@@ -26,6 +26,7 @@ import * as jobs from "./jobs";
 import * as lists from "./lists";
 import * as majorEvents from "./majorEvents";
 import * as notifications from "./notifications";
+import * as nums from "./nums";
 import * as offerRead from "./offerRead";
 import * as offers from "./offers";
 import * as profanities from "./profanities";
@@ -93,5 +94,6 @@ export const schema = {
   ...userWaitlists,
   ...systemNotification,
   ...courseMarkup,
+  ...nums,
   ...majorEvents,
 };
