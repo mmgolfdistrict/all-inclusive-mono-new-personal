@@ -98,15 +98,34 @@ export default function CourseHomePage() {
     }
   );
 
+  const { data: specialEvents } = api.searchRouter.getSpecialEvents.useQuery({
+    courseId: courseId ?? "",
+  });
+  console.log("specialEvents", specialEvents);
+
+  const getSpecialDayDate = (label) => {
+    const specialDay = specialEvents?.find((day) => day.eventName === label);
+    return specialDay
+      ? { start: dayjs(specialDay.startDate), end: dayjs(specialDay.endDate) }
+      : null;
+  };
+
   const startDate = useMemo(() => {
     const formatDate = (date: Date) => formatQueryDate(date);
     const getUtcDate = (date: Date) => {
       const currentDate = dayjs.utc(formatDate(date));
-      const currentDateWithTimeZoneOffset = currentDate
-        .add(course?.timezoneCorrection ?? 0, "hour")
-        .toString();
+      const currentDateWithTimeZoneOffset = currentDate.toString();
       return currentDateWithTimeZoneOffset;
     };
+    const specialDate = getSpecialDayDate(dateType);
+    console.log("specialDate", specialDate);
+
+    if (specialDate) {
+      const startOfDay = dayjs(specialDate.start);
+      const result2 = formatQueryDate(startOfDay.toDate());
+
+      return result2;
+    }
 
     const todayDate = (date) => {
       const year = date.getFullYear();
@@ -161,6 +180,16 @@ export default function CourseHomePage() {
         .toString();
       return currentDateWithTimeZoneOffset;
     };
+
+    const specialDate = getSpecialDayDate(dateType);
+    console.log("specialDate", specialDate);
+
+    if (specialDate) {
+      const endOfDay = dayjs(specialDate.end);
+      const result2 = formatQueryDate(endOfDay.toDate());
+      return result2;
+    }
+
     switch (dateType) {
       case "All": {
         return formatQueryDate(dayjs(farthestDateOut).toDate());
