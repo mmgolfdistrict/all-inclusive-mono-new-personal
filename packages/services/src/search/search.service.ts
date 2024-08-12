@@ -763,7 +763,7 @@ export class SearchService {
       .second(59)
       .millisecond(999)
       .toISOString();
-
+    console.log("=====>", minDateSubquery, maxDateSubquery);
     const startDate = dayjs(date).utc().hour(0).minute(0).second(0).millisecond(0).toISOString();
     const endDate = dayjs(date).utc().hour(23).minute(59).second(59).millisecond(999).toISOString();
 

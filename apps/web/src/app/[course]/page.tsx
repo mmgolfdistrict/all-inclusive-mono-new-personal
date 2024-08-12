@@ -114,19 +114,17 @@ export default function CourseHomePage() {
     const formatDate = (date: Date) => formatQueryDate(date);
     const getUtcDate = (date: Date) => {
       const currentDate = dayjs.utc(formatDate(date));
-      const currentDateWithTimeZoneOffset = currentDate
-        .add(course?.timezoneCorrection ?? 0, "hour")
-        .toString();
+      const currentDateWithTimeZoneOffset = currentDate.toString();
       return currentDateWithTimeZoneOffset;
     };
     const specialDate = getSpecialDayDate(dateType);
     console.log("specialDate", specialDate);
 
     if (specialDate) {
-      const startOfDayUTC = dayjs.utc(formatDate(specialDate.start.toDate()));
-      console.log("startOfDayUTC", startOfDayUTC.toDate());
+      const startOfDay = dayjs(specialDate.start);
+      const result2 = formatQueryDate(startOfDay.toDate());
 
-      return startOfDayUTC.toDate();
+      return result2;
     }
 
     switch (dateType) {
@@ -170,8 +168,8 @@ export default function CourseHomePage() {
     console.log("specialDate", specialDate);
 
     if (specialDate) {
-      const endOfDayUTC = dayjs.utc(formatDate(specialDate.end.toDate()));
-      const result2 = endOfDayUTC.toDate();
+      const endOfDay = dayjs(specialDate.end);
+      const result2 = formatQueryDate(endOfDay.toDate());
       return result2;
     }
 

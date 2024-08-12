@@ -10,6 +10,17 @@ input[type="checkbox"] {
   background-color: green;
 }
 
+.custom_calendar {
+  border-radius: 0 0 1rem 1rem !important;
+  border: 1px solid #d7dcde !important;
+  background: #fff;
+}
+.custom_calendar .Calendar {
+  border-radius: none !important;
+  border: none !important;
+  box-shadow: none;
+}
+
 .Calendar {
   max-width: 300px !important;
   border-radius: 0 0 1rem 1rem !important;

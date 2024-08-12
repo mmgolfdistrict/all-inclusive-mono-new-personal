@@ -18,11 +18,14 @@ import { debounceFunction } from "~/utils/debounce";
 import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
 import { useMediaQuery } from "usehooks-ts";
 
-type DayValue = {
+interface DayValue {
   year: number;
   month: number;
   day: number;
-};
+  hour: number;
+  minute: number;
+  second: number;
+}
 
 const HoleOptions = ["Any", "18", "9"];
 
@@ -130,6 +133,9 @@ export const Filters = () => {
     year: date.getFullYear(),
     month: date.getMonth() + 1,
     day: date.getDate(),
+    hour: date.getHours(),
+    minute: date.getMinutes(),
+    second: date.getSeconds(),
   });
   return (
     <div className="flex flex-col gap-4 pr-1">
@@ -171,40 +177,40 @@ export const Filters = () => {
               />
               {dateType === "Custom" && value === "Custom" ? (
                 <>
-                  <Calendar
-                    value={selectedDay}
-                    calendarClassName="responsive-calendar"
-                    onChange={setSelectedDay}
-                    colorPrimary="#40942A"
-                    minimumDate={minimumDate}
-                    disabledDays={blackOutDays}
-                  />
-                  <div
-                    className={`z-50 ${
-                      specialEvents && specialEvents.length > 3
-                        ? "-mt-14"
-                        : "-mt-12"
-                    } mb-10 text-sm w-full flex flex-wrap justify-center `}
-                  >
-                    {specialEvents?.map((event, i) => (
-                      <>
-                        <button
-                          key={i}
-                          className={`inline-block mt-1 ${
-                            isMobile ? "mx-4" : "mx-2"
-                          }`}
-                          onClick={() =>
-                            setSelectedDay({
-                              from: dateToDayValue(new Date(event.startDate)),
-                              to: dateToDayValue(new Date(event.endDate)),
-                            })
-                          }
-                        >
-                          {event.eventName}
-                        </button>
-                        {(i + 1) % 3 === 0 && <br />}
-                      </>
-                    ))}
+                  <div className="custom_calendar">
+                    <Calendar
+                      value={selectedDay}
+                      calendarClassName="responsive-calendar"
+                      onChange={setSelectedDay}
+                      colorPrimary="#40942A"
+                      minimumDate={minimumDate}
+                      disabledDays={blackOutDays}
+                    />
+                    <div
+                      className={`z-50 text-sm w-full flex justify-center flex-wrap p-0 px-4 pb-4 `}
+                    >
+                      {specialEvents?.map((event, i) => (
+                        <>
+                          <button
+                            key={i}
+                            className={`inline-block mt-1 ${
+                              isMobile ? "mx-4" : "mx-2"
+                            }`}
+                            onClick={() => {
+                              const startDate = new Date(event.startDate);
+                              const endDate = new Date(event.endDate);
+                              setSelectedDay({
+                                from: dateToDayValue(startDate),
+                                to: dateToDayValue(endDate),
+                              });
+                              console.log("startDate", startDate, endDate);
+                            }}
+                          >
+                            {event.eventName}
+                          </button>
+                        </>
+                      ))}
+                    </div>
                   </div>
                 </>
               ) : null}
