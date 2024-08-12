@@ -17,14 +17,18 @@ import { api } from "~/utils/api";
 import { debounceFunction } from "~/utils/debounce";
 import { useParams } from "next/navigation";
 import type { FormEvent } from "react";
-import { useCallback, useEffect, useState, type ChangeEvent } from "react";
-import { useForm, type SubmitHandler } from "react-hook-form";
+import { useCallback, useEffect, useState, type ChangeEvent, useRef } from "react";
+import { useForm, type SubmitHandler, Controller } from "react-hook-form";
 import { toast } from "react-toastify";
 import { useDebounce } from "usehooks-ts";
 import { OutlineButton } from "../buttons/outline-button";
+import { useLoadScript } from '@react-google-maps/api';
+import { MenuItem, Select } from "@mui/material";
 
 const defaultProfilePhoto = "/defaults/default-profile.webp";
 const defaultBannerPhoto = "/defaults/default-banner.webp";
+const libraries: any = ['places'];
+
 
 export const EditProfileForm = () => {
   const {
@@ -34,11 +38,20 @@ export const EditProfileForm = () => {
     handleSubmit,
     setError,
     getValues,
+    control,
     formState: { isSubmitting, errors },
   } = useForm<EditProfileSchemaType>({
     // @ts-ignore
     resolver: zodResolver(editProfileSchema),
+    mode: "onChange",
   });
+  const { isLoaded, loadError } = useLoadScript({
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "",
+    libraries,
+  });
+  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
   const [city, setCity] = useState(getValues("city"));
 
   const { update } = useSession();
@@ -72,6 +85,46 @@ export const EditProfileForm = () => {
   } = useUser(userId as string | undefined);
   const updateUser = api.user.updateUser.useMutation();
 
+  useEffect(() => {
+    if (isLoaded && !loadError && inputRef?.current) {
+      const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
+        types: ['address'],
+        componentRestrictions: { country: 'us' },
+      });
+      if (autocomplete) {
+        autocompleteRef.current = autocomplete;
+        autocomplete.addListener('place_changed', onPlaceChanged);
+      }
+    }
+  }, [isLoaded, loadError]);
+
+  const onPlaceChanged = () => {
+    const place = autocompleteRef.current?.getPlace();
+    if (place?.address_components) {
+      const addressComponents = place.address_components;
+
+      const getAddressComponent = (type: string): string => {
+        return addressComponents.find(component => component.types.includes(type))?.long_name || '';
+      };
+
+      const address1 = getAddressComponent('street_address') || getAddressComponent('route');
+      const address2 = getAddressComponent('sublocality');
+      const state = getAddressComponent('administrative_area_level_1');
+      const city = getAddressComponent('locality');
+      const zipcode = getAddressComponent('postal_code');
+      const country = getAddressComponent('country');
+
+      // Type guard before passing to setValue
+      if (typeof address1 === 'string') setValue("address1", address1);
+      if (typeof address2 === 'string') setValue("address2", address2);
+      if (typeof state === 'string') setValue("state", state);
+      if (typeof city === 'string') setValue("city", city);
+      if (typeof zipcode === 'string') setValue("zipcode", zipcode);
+      if (typeof country === 'string') setValue("country", country);
+    }
+  };
+
+
   const cities = api.places.getCity.useQuery(
     { city: debouncedLocation },
     {
@@ -81,6 +134,7 @@ export const EditProfileForm = () => {
       refetchOnReconnect: false,
     }
   );
+
 
   const upload = useCallback(
     async (file: File, type: "image" | "bannerImage") => {
@@ -106,7 +160,7 @@ export const EditProfileForm = () => {
       setValue("handle", userData?.handle ?? "");
       // setValue("location", userData?.location ?? "");
       setValue("address1", userData?.address1 ?? "");
-      // setValue("address2", userData?.address2 ?? "");
+      setValue("address2", userData?.address2 ?? "");
       setValue("state", userData?.state ?? "");
       setValue("city", userData?.city ?? "");
       setValue("zipcode", userData?.zipcode ?? "");
@@ -226,7 +280,7 @@ export const EditProfileForm = () => {
         handle: data.handle,
         // location: data.location,
         address1: data?.address1,
-        // address2: data?.address2,
+        address2: data?.address2,
         state: data?.state,
         city: data?.city,
         zipcode: data?.zipcode,
@@ -317,146 +371,250 @@ export const EditProfileForm = () => {
     <section className="mx-auto flex h-fit w-full flex-col bg-white px-3 py-2  md:rounded-xl md:p-6 md:py-4">
       <h1 className="pb-6  text-[18px]  md:text-[24px]">Account Information</h1>
       <form className="flex flex-col gap-2" onSubmit={handleSubmit(onSubmit)}>
-        <Input
-          label="Name"
-          type="text"
-          placeholder="Enter your full name"
-          id="name"
+        <Controller
           name="name"
-          register={register}
-          error={errors.name?.message}
-          data-testid="profile-name-id"
+          control={control}
+          render={({ field }) => (
+            <Input
+              {...field}
+              label="Name"
+              type="text"
+              placeholder="Enter your full name"
+              id="name"
+              name="name"
+              register={register}
+              error={errors.name?.message}
+              data-testid="profile-name-id"
+              inputRef={(e) => {
+                field.ref(e);
+              }}
+            />
+          )}
         />
-        <Input
-          label="Email"
-          type="email"
-          placeholder="Enter your email address"
-          id="email"
-          register={register}
+        <Controller
           name="email"
-          error={errors.email?.message}
-          data-testid="profile-email-id"
-          disabled={true}
+          control={control}
+          render={({ field }) => (
+            <Input
+              {...field}
+              label="Email"
+              type="email"
+              placeholder="Enter your email address"
+              id="email"
+              register={register}
+              name="email"
+              error={errors.email?.message}
+              data-testid="profile-email-id"
+              disabled={true}
+              inputRef={(e) => {
+                field.ref(e);
+              }}
+            />
+          )}
         />
-        <Input
-          label="Phone Number"
-          type="tel"
-          placeholder="Enter your phone number"
-          id="phoneNumber"
-          register={register}
+        <Controller
           name="phoneNumber"
-          error={errors.phoneNumber?.message}
+          control={control}
+          render={({ field }) => (
+            <Input
+              {...field}
+              label="Phone Number"
+              type="tel"
+              placeholder="Enter your phone number"
+              id="phoneNumber"
+              register={register}
+              name="phoneNumber"
+              error={errors.phoneNumber?.message}
+              inputRef={(e) => {
+                field.ref(e);
+              }}
+            />
+          )}
         />
-        <Input
-          label="Handle"
-          className="w-full"
-          type="text"
-          placeholder="Enter your handle"
-          id="handle"
-          register={register}
-          name={"handle"}
-          error={errors.handle?.message}
-          data-testid="profile-handle-id"
-          showInfoTooltip={true}
-          content="Handle must all be in lower case or numeric and must contain a minimum of 6 characters and maximum of 64 characters. Handle cannot contain special characters other than dot(.) and underscore(_) and any form of profanity or racism related content. Golf District reserves the right to change your handle to a random handle at any time if it violates our terms of service."
+        <Controller
+          name="handle"
+          control={control}
+          render={({ field }) => (
+            <Input
+              {...field}
+              label="Handle"
+              className="w-full"
+              type="text"
+              placeholder="Enter your handle"
+              id="handle"
+              register={register}
+              name={"handle"}
+              error={errors.handle?.message}
+              data-testid="profile-handle-id"
+              showInfoTooltip={true}
+              content="Handle must all be in lower case or numeric and must contain a minimum of 6 characters and maximum of 64 characters. Handle cannot contain special characters other than dot(.) and underscore(_) and any form of profanity or racism related content. Golf District reserves the right to change your handle to a random handle at any time if it violates our terms of service."
+              inputRef={(e) => {
+                field.ref(e);
+              }}
+            />
+          )}
         />
-        {/* <Input
-          label="Location"
-          type="text"
-          list="places"
-          placeholder="Start typing your city"
-          id="location"
-          register={register}
-          name="location"
-          error={errors.location?.message}
-          onChange={(e: ChangeEvent<HTMLInputElement>) => {
-            setLocation(e.target.value);
-          }}
-          data-testid="profile-location-id"
-        /> */}
-        <Input
-          label="Address1"
-          type="text"
-          list="places"
-          placeholder="Enter your address1"
-          id="address1"
-          register={register}
+
+        <Controller
           name="address1"
-          error={errors.address1?.message}
-          data-testid="profile-address1-id"
+          control={control}
+          render={({ field }) => (
+            <Input
+              {...field}
+              label="Address1"
+              type="text"
+              list="places"
+              placeholder="Enter your address1"
+              id="address1"
+              register={register}
+              name="address1"
+              error={errors.address1?.message}
+              data-testid="profile-address1-id"
+              content="Handle must all be in lower case or numeric and must contain a minimum of 6 characters and maximum of 64 characters. Handle cannot contain special characters other than dot(.) and underscore(_) and any form of profanity or racism related content. Golf District reserves the right to change your handle to a random handle at any time if it violates our terms of service."
+              inputRef={inputRef}
+            />
+          )}
         />
-        <Input
-          label="Address2"
-          type="text"
-          list="places"
-          placeholder="Enter your address2"
-          id="address2"
-          register={register}
+        <Controller
           name="address2"
-          error={errors.address2?.message}
-          data-testid="profile-address2-id"
+          control={control}
+          render={({ field }) => (
+            <Input
+              {...field}
+              label="Address2"
+              type="text"
+              list="places"
+              placeholder="Enter your address2"
+              id="address2"
+              register={register}
+              name="address2"
+              error={errors.address2?.message}
+              data-testid="profile-address2-id"
+              inputRef={(e) => {
+                field.ref(e);
+              }}
+            />
+          )}
         />
-        <Input
-          label="City"
-          type="text"
-          list="places"
-          placeholder="Enter your city"
-          id="city"
-          register={register}
+        <Controller
           name="city"
-          error={errors.city?.message}
-          data-testid="profile-city-id"
-          onChange={(e: ChangeEvent<HTMLInputElement>) => {
-            setValue("city", e.target.value);
-            setCity(e.target.value);
-          }}
+          control={control}
+          render={({ field }) => (
+            <Input
+              {...field}
+              label="City"
+              type="text"
+              list="places"
+              placeholder="Enter your city"
+              id="city"
+              register={register}
+              name="city"
+              error={errors.city?.message}
+              data-testid="profile-city-id"
+              onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                setValue("city", e.target.value);
+                setCity(e.target.value);
+              }}
+              inputRef={(e) => {
+                field.ref(e);
+              }}
+            />
+          )}
         />
-        <Input
-          label="State"
-          type="text"
-          list="places"
-          placeholder="Enter your state"
-          id="state"
-          register={register}
+
+        <Controller
           name="state"
-          error={errors.state?.message}
-          data-testid="profile-state-id"
+          control={control}
+          render={({ field }) => (
+            <div>
+              <label htmlFor="state" style={{ fontSize: "14px", color: "rgb(109 119 124" }} >State</label>
+              <Select
+                size="small"
+                {...field}
+                id="state"
+                placeholder="Enter Your State"
+                fullWidth
+                name="state"
+                data-testid="register-state-id"
+                inputRef={(e) => {
+                  field.ref(e);
+                }}
+                value={field.value || ''}
+                sx={{
+                  fontSize: "14px",
+                  color: "rgb(109 119 124)",
+                  backgroundColor: 'rgb(247, 249, 250)',
+                  border: 'none',
+                  '& fieldset': { border: 'none' },
+                }}
+                // defaultValue=""
+                displayEmpty
+              >
+                {/* <MenuItem value="" disabled >Select your state</MenuItem> */}
+                {usStates.map((state) => (
+                  <MenuItem key={state.code} value={state.name}  >
+                    {state.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </div>
+          )}
         />
-        <Input
-          label="Zip"
-          type="text"
-          list="places"
-          placeholder="Enter your zip"
-          id="zipcode"
-          register={register}
+        <Controller
           name="zipcode"
-          error={errors.zipcode?.message}
-          data-testid="profile-zipcode-id"
+          control={control}
+          render={({ field }) => (
+            <Input
+              {...field}
+              label="Zip"
+              type="text"
+              list="places"
+              placeholder="Enter your zip"
+              id="zipcode"
+              register={register}
+              name="zipcode"
+              error={errors.zipcode?.message}
+              data-testid="profile-zipcode-id"
+              inputRef={(e) => {
+                field.ref(e);
+              }}
+            />
+          )}
         />
-        <Input
-          label="Country"
-          type="text"
-          list="places"
-          placeholder="Enter your country"
-          id="country"
-          register={register}
+        <Controller
           name="country"
-          disabled={true}
-          error={errors.country?.message}
-          showInfoTooltip={true}
-          value={"USA"}
-          content="We only support cash outs for US banks at this time"
-          data-testid="profile-country-id"
+          control={control}
+          render={({ field }) => (
+            <Input
+              {...field}
+              label="Country"
+              type="text"
+              list="places"
+              placeholder="Enter your country"
+              id="country"
+              register={register}
+              name="country"
+              disabled={true}
+              error={errors.country?.message}
+              showInfoTooltip={true}
+              value={"USA"}
+              content="We only support cash outs for US banks at this time"
+              data-testid="profile-country-id"
+              inputRef={(e) => {
+                field.ref(e);
+              }}
+            />
+          )}
         />
+
         <datalist id="places">
           {cities.data?.autocompleteCities.features.map((city, idx) => (
             <option key={idx}>{city.place_name}</option>
           ))}
         </datalist>
         <div
-          className={`flex items-end justify-between w-full gap-2 ${
-            isUploading ? "pointer-events-none cursor-not-allowed" : ""
-          }`}
+          className={`flex items-end justify-between w-full gap-2 ${isUploading ? "pointer-events-none cursor-not-allowed" : ""
+            }`}
         >
           <DropMedia
             label="Upload your profile photo"
@@ -479,9 +637,8 @@ export const EditProfileForm = () => {
         </div>
 
         <div
-          className={`flex items-end justify-between w-full gap-2 ${
-            isUploading ? "pointer-events-none cursor-not-allowed" : ""
-          }`}
+          className={`flex items-end justify-between w-full gap-2 ${isUploading ? "pointer-events-none cursor-not-allowed" : ""
+            }`}
         >
           <DropMedia
             label="Upload your background photo"
@@ -495,7 +652,7 @@ export const EditProfileForm = () => {
             dataTestId="upload-background-photo-id"
           />
           {userData?.bannerImage &&
-          userData?.bannerImage !== defaultBannerPhoto ? (
+            userData?.bannerImage !== defaultBannerPhoto ? (
             <OutlineButton
               className="!px-2 !py-1 text-sm rounded-md"
               onClick={resetBanner}
@@ -506,9 +663,8 @@ export const EditProfileForm = () => {
         </div>
         <FilledButton
           disabled={isSubmitting || isUploading}
-          className={`w-full rounded-full ${
-            isSubmitting || isUploading ? "opacity-50" : ""
-          }`}
+          className={`w-full rounded-full ${isSubmitting || isUploading ? "opacity-50" : ""
+            }`}
           data-testid="update-button-id"
         >
           {isSubmitting ? "Updating..." : "Update"}
@@ -517,3 +673,56 @@ export const EditProfileForm = () => {
     </section>
   );
 };
+
+const usStates = [
+  { code: 'AL', name: 'Alabama' },
+  { code: 'AK', name: 'Alaska' },
+  { code: 'AZ', name: 'Arizona' },
+  { code: 'AR', name: 'Arkansas' },
+  { code: 'CA', name: 'California' },
+  { code: 'CO', name: 'Colorado' },
+  { code: 'CT', name: 'Connecticut' },
+  { code: 'DE', name: 'Delaware' },
+  { code: 'FL', name: 'Florida' },
+  { code: 'GA', name: 'Georgia' },
+  { code: 'HI', name: 'Hawaii' },
+  { code: 'ID', name: 'Idaho' },
+  { code: 'IL', name: 'Illinois' },
+  { code: 'IN', name: 'Indiana' },
+  { code: 'IA', name: 'Iowa' },
+  { code: 'KS', name: 'Kansas' },
+  { code: 'KY', name: 'Kentucky' },
+  { code: 'LA', name: 'Louisiana' },
+  { code: 'ME', name: 'Maine' },
+  { code: 'MD', name: 'Maryland' },
+  { code: 'MA', name: 'Massachusetts' },
+  { code: 'MI', name: 'Michigan' },
+  { code: 'MN', name: 'Minnesota' },
+  { code: 'MS', name: 'Mississippi' },
+  { code: 'MO', name: 'Missouri' },
+  { code: 'MT', name: 'Montana' },
+  { code: 'NE', name: 'Nebraska' },
+  { code: 'NV', name: 'Nevada' },
+  { code: 'NH', name: 'New Hampshire' },
+  { code: 'NJ', name: 'New Jersey' },
+  { code: 'NM', name: 'New Mexico' },
+  { code: 'NY', name: 'New York' },
+  { code: 'NC', name: 'North Carolina' },
+  { code: 'ND', name: 'North Dakota' },
+  { code: 'OH', name: 'Ohio' },
+  { code: 'OK', name: 'Oklahoma' },
+  { code: 'OR', name: 'Oregon' },
+  { code: 'PA', name: 'Pennsylvania' },
+  { code: 'RI', name: 'Rhode Island' },
+  { code: 'SC', name: 'South Carolina' },
+  { code: 'SD', name: 'South Dakota' },
+  { code: 'TN', name: 'Tennessee' },
+  { code: 'TX', name: 'Texas' },
+  { code: 'UT', name: 'Utah' },
+  { code: 'VT', name: 'Vermont' },
+  { code: 'VA', name: 'Virginia' },
+  { code: 'WA', name: 'Washington' },
+  { code: 'WV', name: 'West Virginia' },
+  { code: 'WI', name: 'Wisconsin' },
+  { code: 'WY', name: 'Wyoming' }
+];

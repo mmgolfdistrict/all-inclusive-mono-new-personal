@@ -1,6 +1,8 @@
 /* eslint no-use-before-define: 0 */
 import Logger from "@golf-district/shared/src/logger";
 import HyperSwitch from "@juspay-tech/hyper-node";
+import { db } from "@golf-district/database";
+import type { Db } from "@golf-district/database";
 import type pino from "pino";
 import type { UpdatePayment } from "../checkout/types";
 import type {
@@ -8,6 +10,7 @@ import type {
   CustomerPaymentMethod,
   CustomerPaymentMethodsResponse,
 } from "./types/hyperSwitch.types";
+import { NotificationService } from "../notification/notification.service";
 
 /**
  * Service for interacting with the HyperSwitch API.
@@ -18,6 +21,8 @@ export class HyperSwitchService {
   protected hyper: any;
   protected hyperSwitchBaseUrl = process.env.HYPERSWITCH_BASE_URL!; // "https://sandbox.hyperswitch.io";
   protected hyperSwitchApiKey: string;
+  protected notificationService: NotificationService;
+  protected database: Db;
 
   /**
    * Constructs a new HyperSwitchService.
@@ -27,7 +32,15 @@ export class HyperSwitchService {
   constructor(hyperSwitchApiKey: string, logger?: pino.Logger) {
     this.logger = logger ? logger : Logger(HyperSwitchService.name);
     this.hyper = require("@juspay-tech/hyperswitch-node")(hyperSwitchApiKey);
-
+    (this.database = db),
+      (this.notificationService = new NotificationService(
+        db,
+        process.env.TWILLIO_PHONE_NUMBER!,
+        process.env.SENDGRID_EMAIL!,
+        process.env.TWILLIO_ACCOUNT_SID!,
+        process.env.TWILLIO_AUTH_TOKEN!,
+        process.env.SENDGRID_API_KEY!
+      ));
     this.hyperSwitch = new HyperSwitch(hyperSwitchApiKey, {
       apiVersion: "2020-08-27",
       typescript: true,
@@ -242,9 +255,19 @@ export class HyperSwitchService {
 
     const res = await fetch(`${this.hyperSwitchBaseUrl}/payments/${paymentMethodId}/cancel`, options);
     const jsonRes = await res.json();
+    const adminEmail: string = process.env.ADMIN_EMAIL_LIST || "nara@golfdistrict.com";
+    const emailAterSplit = adminEmail.split(",");
+    emailAterSplit.map(async (email) => {
+      await this.notificationService.sendEmail(
+        email,
+        "A payment has failed ",
+        `payment with paymentid ${paymentMethodId} failed`
+      );
+    });
     if (jsonRes.error) {
       return { status: "Cannot delete payment" };
     }
+
     return { status: "success" };
   };
   refundPayment = async (paymentId: string) => {

@@ -13,7 +13,8 @@
     "infura/*"
   ],
   "scripts": {
-    "build": "turbo run build",
+    "build": "turbo run build && node ./apps/web/script/generateRevision.js",
+    "start": "npm run dev",
     "clean:workspaces": "turbo clean",
     "compile": "turbo run compile",
     "dev": "dotenv -- turbo dev --parallel --filter=golf-district-platforms",
