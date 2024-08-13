@@ -85,12 +85,15 @@ export default function RegisterPage() {
         return addressComponents.find(component => component.types.includes(type))?.long_name || '';
       };
 
-      const address1 = getAddressComponent('street_address') || getAddressComponent('route');
+      const streetNumber = getAddressComponent('street_number');
+      const route = getAddressComponent('route');
+      const address1 = `${streetNumber} ${route}`.trim();
       const address2 = getAddressComponent('sublocality');
       const state = getAddressComponent('administrative_area_level_1');
       const city = getAddressComponent('locality');
       const zipcode = getAddressComponent('postal_code');
       const country = getAddressComponent('country');
+
       // Type guard before passing to setValue
       if (typeof address1 === 'string') setValue("address1", address1);
       if (typeof address2 === 'string') setValue("address2", address2);
@@ -100,6 +103,9 @@ export default function RegisterPage() {
       if (typeof country === 'string') setValue("country", country);
     }
   };
+
+
+
 
   useEffect(() => {
     if (isLoaded && !loadError && inputRef?.current) {

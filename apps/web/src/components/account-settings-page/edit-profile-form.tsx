@@ -107,7 +107,9 @@ export const EditProfileForm = () => {
         return addressComponents.find(component => component.types.includes(type))?.long_name || '';
       };
 
-      const address1 = getAddressComponent('street_address') || getAddressComponent('route');
+      const streetNumber = getAddressComponent('street_number');
+      const route = getAddressComponent('route');
+      const address1 = `${streetNumber} ${route}`.trim();
       const address2 = getAddressComponent('sublocality');
       const state = getAddressComponent('administrative_area_level_1');
       const city = getAddressComponent('locality');
