@@ -2618,75 +2618,74 @@ export class BookingService {
             },
           },
         }
+      }
 
-
-        if (String(teeTime.internalId) === "club-prophet") {
-          if (!providerCustomer?.customerId) {
-            this.logger.error(`Error creating customer`);
-            this.loggerService.errorLog({
-              userId: userId,
-              url: "/reserveBooking",
-              userAgent: "",
-              message: "ERROR CREATING CUSTOMER",
-              stackTrace: `Error creating customer on provider for userId ${userId}`,
-              additionalDetailsJSON: "Error creating customer",
-            });
-            throw new Error(`Error creating customer`);
-          }
-          const [user] = await this.database
-            .select({
-              name: users.name,
-              email: users.email,
-              phone: users.phoneNumber,
-            })
-            .from(users)
-            .where(eq(users.id, userId))
-            .execute()
-            .catch((err) => {
-              this.logger.error(err);
-              throw new Error(`Error finding user: ${err}`);
-            });
-          if (!user) {
-            throw new Error("User not found");
-          }
-          const [firstName, lastName] = user.name!.split(" ");
-
-          bookingData = {
-            teeSheetId: teeTime.providerTeeTimeId,
-            holes: teeTime.holes,
-            firstName: firstName,
-            lastName: lastName,
-            email: user.email,
-            phone: user.phone,
-            players: playerCount,
-            notes: "GD Booking",
-            pskUserId: 0,
-            terminalId: 0,
-            bookingTypeId: 311,
-            rateCode: "sticks",
-            price: [primaryGreenFeeCharge / 100 + taxCharge - markupCharge],
-          };
+      if (teeTime.internalId === "club-prophet") {
+        if (!providerCustomer?.customerId) {
+          this.logger.error(`Error creating customer`);
+          this.loggerService.errorLog({
+            userId: userId,
+            url: "/reserveBooking",
+            userAgent: "",
+            message: "ERROR CREATING CUSTOMER",
+            stackTrace: `Error creating customer on provider for userId ${userId}`,
+            additionalDetailsJSON: "Error creating customer",
+          });
+          throw new Error(`Error creating customer`);
         }
-
-        console.log(
-          `Creating booking ${teeTime.providerDate}, ${teeTime.holes}, ${playerCount}, ${teeTime.providerCourseId}, ${teeTime.providerTeeSheetId}, ${token}`
-        );
-        console.log(bookingData);
-        booking = await provider
-          .createBooking(token, teeTime.providerCourseId!, teeTime.providerTeeSheetId!, bookingData)
+        const [user] = await this.database
+          .select({
+            name: users.name,
+            email: users.email,
+            phone: users.phoneNumber,
+          })
+          .from(users)
+          .where(eq(users.id, userId))
+          .execute()
           .catch((err) => {
             this.logger.error(err);
-            this.loggerService.errorLog({
-              userId: userId,
-              url: "/reserveBooking",
-              userAgent: "",
-              message: "TEE TIME BOOKING FAILED ON PROVIDER",
-              stackTrace: `first hand booking at provider failed for teetime ${teeTime.id}`,
-              additionalDetailsJSON: err,
-            });
-            throw new Error(`Error creating booking`);
+            throw new Error(`Error finding user: ${err}`);
           });
+        if (!user) {
+          throw new Error("User not found");
+        }
+        const [firstName, lastName] = user.name!.split(" ");
+
+        bookingData = {
+          teeSheetId: teeTime.providerTeeTimeId,
+          holes: teeTime.holes,
+          firstName: firstName,
+          lastName: lastName,
+          email: user.email,
+          phone: user.phone,
+          players: playerCount,
+          notes: "GD Booking",
+          pskUserId: 0,
+          terminalId: 0,
+          bookingTypeId: 311,
+          rateCode: "sticks",
+          price: [primaryGreenFeeCharge / 100 + taxCharge - markupCharge],
+        };
       }
+
+      console.log(
+        `Creating booking ${teeTime.providerDate}, ${teeTime.holes}, ${playerCount}, ${teeTime.providerCourseId}, ${teeTime.providerTeeSheetId}, ${token}`
+      );
+      console.log(bookingData);
+      booking = await provider
+        .createBooking(token, teeTime.providerCourseId!, teeTime.providerTeeSheetId!, bookingData)
+        .catch((err) => {
+          this.logger.error(err);
+          this.loggerService.errorLog({
+            userId: userId,
+            url: "/reserveBooking",
+            userAgent: "",
+            message: "TEE TIME BOOKING FAILED ON PROVIDER",
+            stackTrace: `first hand booking at provider failed for teetime ${teeTime.id}`,
+            additionalDetailsJSON: err,
+          });
+          throw new Error(`Error creating booking`);
+        });
     } catch (e) {
       console.log("BOOKING FAILED ON PROVIDER, INITIATING REFUND FOR PAYMENT_ID", payment_id);
 
@@ -2737,9 +2736,11 @@ export class BookingService {
       providerBookingId = booking.data.id;
     }
 
+    console.log("BOOKING>>>", booking)
     if (booking && teeTime.internalId === "club-prophet" && "reservationId" in booking) {
       providerBookingId = booking.reservationId.toString();
       providerBookingIds = booking.participantIds.map((id) => id.toString());
+      console.log("PROVIDER_BOOKING_ID:", providerBookingId)
     }
 
     console.log(`Creating tokenized booking`);

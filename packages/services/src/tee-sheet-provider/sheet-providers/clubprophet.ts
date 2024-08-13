@@ -83,7 +83,6 @@ export class clubprophet {
     }
 
     const bookingResponse = (await response.json()) as ClubProphetBookingResponse;
-
     // await this.addSalesData(bookingResponse.participantIds, token);
 
     return bookingResponse;
@@ -117,7 +116,7 @@ export class clubprophet {
   }
 
   private getHeaders(token: string) {
-    const { CONTENT_TYPE, CLIENT_ID, CLIENT_SECRET, X_Component_Id } = JSON.parse(
+    const { CONTENT_TYPE, CLIENT_ID, CLIENT_SECRET, X_Component_Id, X_Module_Id } = JSON.parse(
       this.providerConfiguration ?? "{}"
     );
     return {
@@ -126,6 +125,7 @@ export class clubprophet {
       "client-secret": CLIENT_SECRET,
       "client-id": CLIENT_ID,
       "X-componentid": X_Component_Id,
+      "x-moduleId": X_Module_Id
     };
   }
 

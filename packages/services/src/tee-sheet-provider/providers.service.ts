@@ -66,7 +66,6 @@ export class ProviderService extends CacheService {
   ): Promise<{ provider: ProviderAPI; token: string }> => {
     this.logger.info(`getProvider called with providerId: ${internalProviderIdentifier}`);
     const provider = this.teeSheetProviders.find((p) => p.providerId === internalProviderIdentifier);
-    console.log(this.teeSheetProviders, "this.teeSheetProviders");
 
     if (provider && internalProviderIdentifier == "club-prophet") {
       // remove after adding
