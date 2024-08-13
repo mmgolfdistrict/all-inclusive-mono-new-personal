@@ -223,7 +223,7 @@ export const CourseNav = () => {
             {course?.supportsWaitlist ? (
               <NavItem
                 href={`/${courseId}/notify-me`}
-                text="Notify Me"
+                text="Waitlist"
                 icon={<Megaphone className="w-[16px]" />}
                 data-testid="notify-me-id"
                 data-test={courseId}
