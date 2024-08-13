@@ -222,7 +222,7 @@ export const TeeTime = ({
   const share = async () => {
     const currentUrl = window.location.host;
     if (navigator?.share) {
-      await navigator.share({ url: `${currentUrl}${href}` });
+      await navigator.share({ url: `${href}` });
     } else {
       await copyToClipboard(`${currentUrl}${href}`);
     }
@@ -259,9 +259,8 @@ export const TeeTime = ({
         data-test={
           status === "SECOND_HAND" ? "secondary_listed" : "primary_listed"
         }
-        className={`md:rounded-xl rounded-lg bg-secondary-white w-fit min-w-[230px] md:min-w-[265px] ${
-          className ?? ""
-        }`}
+        className={`md:rounded-xl rounded-lg bg-secondary-white w-fit min-w-[230px] md:min-w-[265px] ${className ?? ""
+          }`}
       >
         <div className="border-b border-stroke">
           <div className="flex justify-between py-1 px-2 md:px-3 md:p-3 items-center">

@@ -30,7 +30,7 @@ import { LoadingContainer } from "./loader";
 dayjs.extend(Weekday);
 dayjs.extend(RelativeTime);
 dayjs.extend(isoWeek);
-
+export const maxDuration = 299;
 export default function CourseHomePage() {
   const TAKE = 4;
   const ref = useRef<HTMLDivElement | null>(null);
@@ -98,18 +98,46 @@ export default function CourseHomePage() {
     }
   );
 
+  const { data: specialEvents } = api.searchRouter.getSpecialEvents.useQuery({
+    courseId: courseId ?? "",
+  });
+  console.log("specialEvents", specialEvents);
+
+  const getSpecialDayDate = (label) => {
+    const specialDay = specialEvents?.find((day) => day.eventName === label);
+    return specialDay
+      ? { start: dayjs(specialDay.startDate), end: dayjs(specialDay.endDate) }
+      : null;
+  };
+
   const startDate = useMemo(() => {
     const formatDate = (date: Date) => formatQueryDate(date);
     const getUtcDate = (date: Date) => {
       const currentDate = dayjs.utc(formatDate(date));
-      const currentDateWithTimeZoneOffset = currentDate
-        .add(course?.timezoneCorrection ?? 0, "hour")
-        .toString();
+      const currentDateWithTimeZoneOffset = currentDate.toString();
       return currentDateWithTimeZoneOffset;
+    };
+    const specialDate = getSpecialDayDate(dateType);
+    console.log("specialDate", specialDate);
+
+    if (specialDate) {
+      const startOfDay = dayjs(specialDate.start);
+      const result2 = formatQueryDate(startOfDay.toDate());
+
+      return result2;
+    }
+
+    const todayDate = (date) => {
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1;
+      const day = date.getDate();
+      return `${year}-${month}-${day}`;
     };
 
     switch (dateType) {
-      case "All":
+      case "All": {
+        return getUtcDate(new Date());
+      }
       case "This Week":
       case "This Month":
       case "Furthest Day Out To Book": {
@@ -126,7 +154,15 @@ export default function CourseHomePage() {
         if (!selectedDay.from) return formatDate(new Date());
         const { year, month, day } = selectedDay.from;
         const dateString = `${year}-${month}-${day}`;
+        if (dateString === todayDate(new Date())) {
+          const customDate2 = dayjs(formatDate(new Date()));
+          const result2 = customDate2
+            .add(course?.timezoneCorrection ?? 0, "hour")
+            .toDate();
+          return formatDate(result2);
+        }
         const customDate = dayjs(dateString).toDate();
+
         return formatDate(customDate);
       }
       default: {
@@ -144,6 +180,16 @@ export default function CourseHomePage() {
         .toString();
       return currentDateWithTimeZoneOffset;
     };
+
+    const specialDate = getSpecialDayDate(dateType);
+    console.log("specialDate", specialDate);
+
+    if (specialDate) {
+      const endOfDay = dayjs(specialDate.end);
+      const result2 = formatQueryDate(endOfDay.toDate());
+      return result2;
+    }
+
     switch (dateType) {
       case "All": {
         return formatQueryDate(dayjs(farthestDateOut).toDate());
@@ -172,8 +218,6 @@ export default function CourseHomePage() {
           : endOfMonth;
       }
       case "Furthest Day Out To Book": {
-        console.log("farthestDateOut", farthestDateOut);
-
         return dayjs(farthestDateOut)
           .utc()
           .hour(23)
@@ -183,11 +227,8 @@ export default function CourseHomePage() {
           .toDate();
       }
       case "Custom": {
-        console.log(selectedDay.from, selectedDay.to);
         if (!selectedDay.to) {
           if (selectedDay.from) {
-            console.log("1");
-
             const { year, month, day } = selectedDay.from;
             const dateString = `${year}-${month}-${day}`;
             const endOfDay = dayjs(dateString).endOf("day");
@@ -197,13 +238,9 @@ export default function CourseHomePage() {
             return result2;
             // return formatDate(endOfDay);
           } else {
-            console.log("2");
-
             return formatQueryDate(dayjs().endOf("day").toDate());
           }
         }
-
-        console.log("3");
 
         const { year, month, day } = selectedDay.to;
         const dateString = `${year}-${month}-${day}`;
@@ -273,14 +310,14 @@ export default function CourseHomePage() {
           sortValue === "Sort by time - Early to Late"
             ? "asc"
             : sortValue === "Sort by time - Late to Early"
-            ? "desc"
-            : "",
+              ? "desc"
+              : "",
         sortPrice:
           sortValue === "Sort by price - Low to High"
             ? "asc"
             : sortValue === "Sort by price - High to Low"
-            ? "desc"
-            : "",
+              ? "desc"
+              : "",
         timezoneCorrection: course?.timezoneCorrection,
       },
       {
@@ -467,9 +504,8 @@ export default function CourseHomePage() {
               {daysData.amountOfPages > 1 ? (
                 <div className="flex items-center justify-center gap-2 pt-1 md:pt-0 md:pb-4">
                   <FilledButton
-                    className={`!px-3 !py-2 !min-w-fit !rounded-md ${
-                      pageNumber === 1 ? "opacity-50 cursor-not-allowed" : ""
-                    }`}
+                    className={`!px-3 !py-2 !min-w-fit !rounded-md ${pageNumber === 1 ? "opacity-50 cursor-not-allowed" : ""
+                      }`}
                     onClick={pageDown}
                     data-testid="chevron-down-id"
                   >
@@ -479,11 +515,10 @@ export default function CourseHomePage() {
                     {pageNumber} / {amountOfPage}
                   </div>
                   <FilledButton
-                    className={`!px-3 !py-2 !min-w-fit !rounded-md ${
-                      pageNumber === daysData.amountOfPages
+                    className={`!px-3 !py-2 !min-w-fit !rounded-md ${pageNumber === daysData.amountOfPages
                         ? "opacity-50 cursor-not-allowed"
                         : ""
-                    }`}
+                      }`}
                     onClick={pageUp}
                     data-testid="chevron-up-id"
                   >

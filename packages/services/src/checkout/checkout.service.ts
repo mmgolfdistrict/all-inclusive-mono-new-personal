@@ -529,7 +529,7 @@ export class CheckoutService {
     }
 
     if (teeTime.providerCourseId && teeTime.providerTeeSheetId && formattedDate) {
-      await this.foreupIndexer.indexTeeTime(
+      const response = await this.foreupIndexer.indexTeeTime(
         formattedDate,
         teeTime.providerCourseId,
         teeTime.providerTeeSheetId,
@@ -538,6 +538,12 @@ export class CheckoutService {
         teeTime.time,
         teeTime.id
       );
+      if (response?.error) {
+        errors.push({
+          errorType: CartValidationErrors.TEE_TIME_NOT_AVAILABLE,
+          product_id: item.id,
+        })
+      }
     }
     console.log("teeTime", item.product_data);
     const stillAvailable = await this.database

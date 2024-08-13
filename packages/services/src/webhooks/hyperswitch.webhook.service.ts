@@ -735,6 +735,7 @@ export class HyperSwitchWebhookService {
         listId: bookings.listId,
         playerCount: bookings.playerCount,
         providerCourseConfiguration: providerCourseLink.providerCourseConfiguration,
+        markupFees: bookings.markupFees,
         providerTeeTimeId: teeTimes.providerTeeTimeId,
       })
       .from(bookings)
@@ -1062,7 +1063,7 @@ export class HyperSwitchWebhookService {
         newBooking.data.weatherGuaranteeId = firstBooking.weatherGuaranteeId || "";
         newBooking.data.weatherGuaranteeAmount = firstBooking.weatherGuaranteeAmount || 0;
         newBookingSecond.data.bookingType = "SECOND";
-        newBookingSecond.data.name = sellerCustomer?.name || "";
+        newBookingSecond.data.name = sellerCustomer.name || "";
         newBookings.push(newBookingSecond);
       }
     } catch (err) {
@@ -1120,6 +1121,7 @@ export class HyperSwitchWebhookService {
           totalAmount: total || 0,
           providerPaymentId: "",
           status: "CONFIRMED",
+          markupFees: 0,
           weatherQuoteId: weatherQuoteId || null,
         });
       }
@@ -1248,8 +1250,10 @@ export class HyperSwitchWebhookService {
           existingTeeTime?.timezoneCorrection ?? 0
         ),
         NumberOfHoles: existingTeeTime?.numberOfHoles,
-        // GolfDistrictReservationID: bookingId,
-        CourseReservationID: newBooking?.data?.id || "",
+        SellTeeTImeURL: `${redirectHref}/my-tee-box`,
+        ManageTeeTimesURL: `${redirectHref}/my-tee-box`,
+        GolfDistrictReservationID: bookingId,
+        CourseReservationID: newBooking?.data?.id,
       };
 
       if (newBooking.data?.bookingType == "FIRST") {
