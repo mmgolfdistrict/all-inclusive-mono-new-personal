@@ -177,7 +177,7 @@ export const Filters = () => {
               <Item
                 key={index}
                 value={value}
-                label={value==="Custom"?<div className="flex justify-between"><span>{value}</span>{`${selectedDay.from?formatDate(selectedDay.from):''} ${selectedDay.to?formatDate(selectedDay.to):''}`}</div>:value}
+                label={value==="Custom"?<div className="flex justify-between"><span>{value}</span>{`${selectedDay.from?formatDate(selectedDay.from):''} ${selectedDay.to?'-':''} ${selectedDay.to?formatDate(selectedDay.to):''}`}</div>:value}
                 dataTestId="date-filter-id"
                 dataQa={value}
                 className={`${
