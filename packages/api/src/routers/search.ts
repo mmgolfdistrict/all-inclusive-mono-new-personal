@@ -160,4 +160,13 @@ export const searchRouter = createTRPCRouter({
         _userId: ctx.session?.user?.id,
       });
     }),
+  getSpecialEvents: publicProcedure
+    .input(
+      z.object({
+        courseId: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return await ctx.serviceFactory.getSearchService().getSpecialEvents(input?.courseId);
+    }),
 });

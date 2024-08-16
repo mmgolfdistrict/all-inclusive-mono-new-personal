@@ -15,16 +15,17 @@ import { useFiltersContext } from "~/contexts/FiltersContext";
 import { api } from "~/utils/api";
 import { getDisabledDays } from "~/utils/calendar";
 import { debounceFunction } from "~/utils/debounce";
+import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
+import { useMediaQuery } from "usehooks-ts";
 
-const DateOptions = [
-  "All",
-  "Today",
-  "This Week",
-  "This Weekend",
-  "This Month",
-  "Furthest Day Out To Book",
-  "Custom",
-];
+interface DayValue {
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+  second: number;
+}
 
 const HoleOptions = ["Any", "18", "9"];
 
@@ -59,6 +60,8 @@ export const Filters = () => {
     startTimeOptions,
   } = useFiltersContext();
   const { course } = useCourseContext();
+  const isMobile = useMediaQuery("(max-width: 768px)");
+
   const { data } = api.searchRouter.findBlackoutDates.useQuery(
     { courseId: course?.id ?? "" },
     { enabled: course?.id !== undefined }
@@ -105,6 +108,49 @@ export const Filters = () => {
     setPriceRange(localPriceRange);
   };
 
+  const { data: specialEvents } = api.searchRouter.getSpecialEvents.useQuery({
+    courseId: course?.id ?? "",
+  });
+
+  const DateOptions = useMemo(() => {
+    const defaultDateOptions = [
+      "All",
+      "Today",
+      "This Week",
+      "This Weekend",
+      "This Month",
+      "Furthest Day Out To Book",
+      "Custom",
+    ];
+
+    // Extract the names of the first two special events
+    const specialEventOptions =
+      specialEvents?.slice(0, 2).map((event) => event.eventName) || [];
+
+    return [...specialEventOptions, ...defaultDateOptions];
+  }, [specialEvents]);
+  const dateToDayValue = (date: Date): DayValue => ({
+    year: date.getFullYear(),
+    month: date.getMonth() + 1,
+    day: date.getDate(),
+    hour: date.getHours(),
+    minute: date.getMinutes(),
+    second: date.getSeconds(),
+  });
+
+  const formatDate=(dateObj)=> {
+    const months = [
+      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    ];
+  
+    const day = dateObj?.day;
+    const month = months[dateObj?.month - 1]; 
+  
+    return `${month}-${day}`;
+  }
+
+  console.log(selectedDay)
   return (
     <div className="flex flex-col gap-4 pr-1">
       <section className="flex flex-col gap-2">
@@ -113,7 +159,15 @@ export const Filters = () => {
           type="single"
           value={dateType}
           onValueChange={(dateType: DateType) => {
-            if (dateType) setDateType(dateType);
+            if (dateType) {
+              setDateType(dateType);
+              googleAnalyticsEvent({
+                action: `FILTER BY ${dateType}`,
+                category: "FILTER_DATA",
+                label: "filtered data by date",
+                value: "",
+              });
+            }
           }}
           orientation="vertical"
           className="flex flex-col"
@@ -123,6 +177,7 @@ export const Filters = () => {
               <Item
                 key={index}
                 value={value}
+                label={value==="Custom"?<div className="flex justify-between"><span>{value}</span>{`${selectedDay.from?formatDate(selectedDay.from):''} ${selectedDay.to?'-':''} ${selectedDay.to?formatDate(selectedDay.to):''}`}</div>:value}
                 dataTestId="date-filter-id"
                 dataQa={value}
                 className={`${
@@ -136,14 +191,43 @@ export const Filters = () => {
                 }`}
               />
               {dateType === "Custom" && value === "Custom" ? (
-                <Calendar
-                  value={selectedDay}
-                  calendarClassName="responsive-calendar"
-                  onChange={setSelectedDay}
-                  colorPrimary="#40942A"
-                  minimumDate={minimumDate}
-                  disabledDays={blackOutDays}
-                />
+                <>
+                  <div className="custom_calendar">
+                    <Calendar
+                      value={selectedDay}
+                      calendarClassName="responsive-calendar"
+                      onChange={setSelectedDay}
+                      colorPrimary="#40942A"
+                      minimumDate={minimumDate}
+                      disabledDays={blackOutDays}
+                    />
+                    <div
+                      className={`z-50 text-sm w-full flex justify-center flex-wrap p-0 px-4 pb-4 `}
+                    >
+                      {specialEvents?.map((event, i) => (
+                        <>
+                          <button
+                            key={i}
+                            className={`inline-block mt-1 ${
+                              isMobile ? "mx-4" : "mx-2"
+                            }`}
+                            onClick={() => {
+                              const startDate = new Date(event.startDate);
+                              const endDate = new Date(event.endDate);
+                              setSelectedDay({
+                                from: dateToDayValue(startDate),
+                                to: dateToDayValue(endDate),
+                              });
+                              console.log("startDate", startDate, endDate);
+                            }}
+                          >
+                            {event.eventName}
+                          </button>
+                        </>
+                      ))}
+                    </div>
+                  </div>
+                </>
               ) : null}
             </Fragment>
           ))}
@@ -179,6 +263,12 @@ export const Filters = () => {
             handleSetStartTime();
           }}
           onValueChange={(time: number[]) => {
+            googleAnalyticsEvent({
+              action: `FILTER BY START TIME AND END TIME`,
+              category: "FILTER_DATA",
+              label: "filtered data by date",
+              value: "",
+            });
             if (
               time &&
               time.length >= 2 &&
@@ -244,6 +334,12 @@ export const Filters = () => {
           type="single"
           value={holes}
           onValueChange={(hole: HoleType) => {
+            googleAnalyticsEvent({
+              action: `FILTER BY Holes`,
+              category: "FILTER_DATA",
+              label: "filtered data by date",
+              value: "",
+            });
             if (hole) setHoles(hole);
           }}
           orientation="horizontal"
@@ -272,6 +368,12 @@ export const Filters = () => {
           type="single"
           value={golfers.toString()}
           onValueChange={(golfer: string) => {
+            googleAnalyticsEvent({
+              action: `FILTER BY GOLFERS`,
+              category: "FILTER_DATA",
+              label: "filtered data by date",
+              value: "",
+            });
             if (golfer === "Any") {
               setGolfers("Any");
               return;
@@ -317,6 +419,12 @@ export const Filters = () => {
             handleSetPriceRange();
           }}
           onValueChange={(value: [number, number]) => {
+            googleAnalyticsEvent({
+              action: `FILTER BY PRICE RANGE`,
+              category: "FILTER_DATA",
+              label: "filtered data by date",
+              value: "",
+            });
             debounceFunction(setLocalPriceRange(value), 1000);
           }}
           data-testid="slider-price-range-id"
@@ -334,6 +442,7 @@ export const Item = ({
   dataQa,
   dataTest,
   dataCy,
+  label
 }: {
   value: string;
   className?: string;
@@ -341,6 +450,7 @@ export const Item = ({
   dataQa?: string;
   dataTest?: string;
   dataCy?: string;
+  label?: any;
 }) => {
   return (
     <ToggleGroup.Item
@@ -353,7 +463,8 @@ export const Item = ({
       data-test={dataTest}
       data-cy={dataCy}
     >
-      {value}
+      {label}
     </ToggleGroup.Item>
   );
 };
+

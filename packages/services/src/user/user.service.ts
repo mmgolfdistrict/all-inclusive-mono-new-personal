@@ -90,7 +90,10 @@ export class UserService {
    * @example
    * const userService = new UserService(database, notificationService);
    */
-  constructor(protected readonly database: Db, private readonly notificationsService: NotificationService) {
+  constructor(
+    protected readonly database: Db,
+    private readonly notificationsService: NotificationService
+  ) {
     //this.filter = new Filter();
   }
 
@@ -131,7 +134,7 @@ export class UserService {
    *     handel: 'johnDoe123'
    *   });
    */
-  createUser = async (courseId: string | undefined, data: UserCreationData): Promise<void> => {
+  createUser = async (courseId: string | undefined, data: UserCreationData) => {
     this.logger.info(`createUser called`);
     if (!isValidEmail(data.email)) {
       this.logger.warn(`Invalid email format: ${data.email}`);
@@ -139,11 +142,18 @@ export class UserService {
     }
     if (!(await this.isValidHandle(data.handle))) {
       this.logger.warn(`Handle already exists: ${data.handle}`);
-      throw new Error("Handle already exists");
+      return {
+        error:true,
+        message:"Handle already exists."
+      }
     }
     if (isValidPassword(data.password).score < 8) {
       this.logger.warn("Invalid password");
-      throw new Error("Invalid password");
+      return {
+        error: true,
+        message:
+          "Password must include uppercase, lowercase letters, numbers, and special characters (!@#$%^&*).",
+      };
     }
 
     let isNotRobot;
@@ -349,7 +359,7 @@ export class UserService {
             this.logger.error(`Error retrieving user: ${err}`);
             throw new Error("Error retrieving user");
           });
-        if (userData[0]) {
+        if (userData &&  userData[0]) {
           finalData.push({
             ...userData[0],
             name: unit.nameOnBooking?.length ? unit.nameOnBooking : "Guest",
@@ -409,7 +419,7 @@ export class UserService {
     userId: string,
     token: string,
     redirectHref: string
-  ): Promise<void> => {
+  ) => {
     this.logger.info(`verifyUserEmail called with userId: ${userId} and token: ${token}`);
     const [user] = await this.database.select().from(users).where(eq(users.id, userId));
     if (!user) {
@@ -418,7 +428,10 @@ export class UserService {
     }
     if (!user.verificationRequestToken) {
       this.logger.warn(`User email already verified: ${userId}`);
-      throw new Error("User email already verified");
+      return {
+        error: true,
+        message: "User email already verified",
+      };
     }
     if (user.verificationRequestExpiry && user.verificationRequestExpiry < currentUtcTimestamp()) {
       await this.deleteUserById(userId);
@@ -1596,5 +1609,21 @@ export class UserService {
       this.generateUsername(digit);
     }
     return handle ? `golfdistrict${handle}` : "golfdistrict";
+  };
+
+  isUserBlocked = async (email: string) => {
+    const [data] = await this.database
+      .select({
+        bannedUntilDateTime: users.bannedUntilDateTime,
+      })
+      .from(users)
+      .where(eq(users.email, email))
+      .execute();
+    const now = new Date();
+    const date = new Date(data?.bannedUntilDateTime ?? "");
+    if (now < date) {
+      return true;
+    }
+    return false;
   };
 }

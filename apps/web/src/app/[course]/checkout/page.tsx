@@ -1,7 +1,11 @@
 "use client";
 
 import { useSession } from "@golf-district/auth/nextjs-exports";
-import { formatQueryDate, removeTimeZoneOffset } from "@golf-district/shared";
+import {
+  formatDate,
+  formatQueryDate,
+  removeTimeZoneOffset,
+} from "@golf-district/shared";
 import { FilledButton } from "~/components/buttons/filled-button";
 import { HyperSwitch } from "~/components/checkout-page/hyper-switch";
 import { OrderSummary } from "~/components/checkout-page/order-summary";
@@ -230,7 +234,7 @@ export default function Checkout({
       localCart.push({
         name: "Golf District Tee Time",
         id: teeTimeId ?? data?.teeTimeId,
-        price: course?.markupFeesFixedPerPlayer ?? 0, //int
+        price: teeTimeData?.markupFees ?? 0, //int
         image: "", //
         currency: "USD", //USD
         display_price: formatMoney(
@@ -353,8 +357,8 @@ export default function Checkout({
               sensibleDataToMountComp={{
                 partner_id: process.env.NEXT_PUBLIC_SENSIBLE_PARTNER_ID ?? "",
                 product_id: process.env.NEXT_PUBLIC_SENSIBLE_PRODUCT_ID ?? "",
-                coverageStartDate: formatQueryDate(new Date(data?.date ?? "")),
-                coverageEndDate: formatQueryDate(new Date(data?.date ?? "")),
+                coverageStartDate: formatDate(new Date(data?.date ?? "")),
+                coverageEndDate: formatDate(new Date(data?.date ?? "")),
                 coverageStartHourNumber: startHourNumber,
                 coverageEndHourNumber: endHourNumber === 0 ? 23 : endHourNumber, // SAFE VALUE SHOULDN'T BE 0 OR 24
                 currency: "USD",

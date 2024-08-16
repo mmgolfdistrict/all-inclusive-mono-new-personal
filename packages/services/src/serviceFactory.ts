@@ -1,4 +1,4 @@
-import type { Db } from "@golf-district/database";
+import { type Db } from "@golf-district/database";
 import {
   AppSettingsService,
   AuctionService,
@@ -379,8 +379,8 @@ export class ServiceFactory {
   getSystemNotificationService = (): SystemNotificationService => {
     return new SystemNotificationService(this.config.database);
   };
-  
-  getCourseExceptionService =() : CourseExceptionService =>{
-    return new CourseExceptionService(this.config.database)
-  }
+
+  getCourseExceptionService = (): CourseExceptionService => {
+    return new CourseExceptionService(this.config.database);
+  };
 }

@@ -38,7 +38,7 @@ export const TransactionDetails = ({
       >
         <div className="relative flex h-full flex-col">
           <div className="flex items-center justify-between p-4">
-            <div className="text-lg">Cashout Reciept</div>
+            <div className="text-lg">Cash out Reciept</div>
             <button
               onClick={toggleSidebar}
               aria-controls="sidebar"

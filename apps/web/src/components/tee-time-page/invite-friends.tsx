@@ -194,6 +194,11 @@ export const InviteFriends = ({
       toast.error("Tee time not selected");
       return;
     }
+
+    if (!updateNames.data?.success) {
+      toast.error(updateNames.data?.message);
+      return;
+    }
     let resultantData: InviteFriend[] = [];
     selectedTeeTime.map((el) => {
       friends.forEach((fd) => {

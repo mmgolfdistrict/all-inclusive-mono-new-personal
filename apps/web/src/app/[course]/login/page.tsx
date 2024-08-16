@@ -1,6 +1,12 @@
 "use client";
 
-import { signIn, useSession } from "@golf-district/auth/nextjs-exports";
+import {
+  signIn,
+  signOut,
+  useSession,
+} from "@golf-district/auth/nextjs-exports";
+import { db } from "@golf-district/database";
+import { NotificationService, UserService } from "@golf-district/service";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FilledButton } from "~/components/buttons/filled-button";
 import { IconButton } from "~/components/buttons/icon-button";
@@ -17,7 +23,7 @@ import { usePreviousPath } from "~/hooks/usePreviousPath";
 import { loginSchema, type LoginSchemaType } from "~/schema/login-schema";
 import { api } from "~/utils/api";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createRef, useEffect, useState } from "react";
 import ReCAPTCHA from "react-google-recaptcha";
 import { useForm, type SubmitHandler } from "react-hook-form";
@@ -33,12 +39,34 @@ export default function Login() {
   const { course } = useCourseContext();
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(false);
-
   const auditLog = api.webhooks.auditLog.useMutation();
   const { data: sessionData, status } = useSession();
+  const errorKey = searchParams.get("error");
+  const router = useRouter();
+
+  const event = ({ action, category, label, value }: any) => {
+    (window as any).gtag("event", action, {
+      event_category: category,
+      event_label: label,
+      value: value,
+    });
+  };
+
+  useEffect(() => {
+    if (errorKey === "AccessDenied" && !toast.isActive("accessDeniedToast")) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("error");
+      router.push(url.pathname + url.search);
+      toast.error(
+        "Unable to login. Please call customer support at 877-TeeTrade or email at support@golfdistrict.com",
+        { toastId: "accessDeniedToast" }
+      );
+    }
+  }, [errorKey]);
 
   useEffect(() => {
     if (sessionData?.user?.id && course?.id && status === "authenticated") {
+      console.log("sessionData", sessionData);
       logAudit(sessionData.user.id, course.id, () => {
         window.location.reload();
         window.location.href = `${window.location.origin}${
@@ -83,7 +111,6 @@ export default function Login() {
     register,
     handleSubmit,
     setValue,
-
     formState: { errors },
   } = useForm<LoginSchemaType>({
     // @ts-ignore
@@ -98,12 +125,22 @@ export default function Login() {
     !prevPath?.path?.includes("register");
 
   useEffect(() => {
-    recaptchaRef.current?.execute();
-  }, []);
+    if (process.env.NEXT_PUBLIC_RECAPTCHA_IS_INVISIBLE === "true") {
+      console.log(recaptchaRef.current);
+      recaptchaRef.current?.execute();
+    }
+  }, [recaptchaRef]);
 
   const onSubmit: SubmitHandler<LoginSchemaType> = async (data) => {
     setIsLoading(true);
+    event({
+      action: "SIGNIN_USING_CREDENTIALS",
+      category: "SIGNIN",
+      label: "Sign in using credentials",
+      value: "",
+    });
     try {
+      recaptchaRef.current?.reset();
       const callbackURL = `${window.location.origin}${
         GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
           ? prevPath?.path
@@ -121,7 +158,15 @@ export default function Login() {
           : undefined,
       });
       if (res?.error) {
-        toast.error("The email or password you entered is incorrect.");
+        await recaptchaRef.current?.executeAsync();
+        console.log("res?.error", res?.error);
+        if (res.error === "AccessDenied") {
+          toast.error(
+            "Unable to login. Please call customer support at 877-TeeTrade or email at support@golfdistrict.com"
+          );
+        } else {
+          toast.error("The email or password you entered is incorrect.");
+        }
         setValue("password", "");
       }
     } catch (error) {
@@ -182,6 +227,12 @@ export default function Login() {
   };
 
   const googleSignIn = async () => {
+    event({
+      action: "SIGNIN_USING_GOOGLE",
+      category: "SIGNIN",
+      label: "Sign in using google",
+      value: "",
+    });
     try {
       await signIn("google", {
         // callbackUrl: `${window.location.origin}${
@@ -212,6 +263,11 @@ export default function Login() {
         Login
       </h1>
       <section className="mx-auto flex w-full flex-col gap-2 bg-white p-5 sm:max-w-[500px] sm:rounded-xl sm:p-6">
+        <p>
+          First time users of Golf District need to create a new account. Simply
+          use Google to login quickly, or select sign up if you prefer to use
+          another email.
+        </p>
         {process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ? (
           <div className="w-full rounded-lg shadow-outline">
             <SquareButton

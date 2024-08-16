@@ -89,6 +89,12 @@ export const Confirmation = ({
       </div>
       <div>
         <div className="flex w-full flex-col items-center justify-center gap-2 md:flex-row">
+          Please send your feedback to{" "}
+          <a href="mailto:support@golfdistrict.com">support@golfdistrict.com</a>
+          <br />
+          <br />
+        </div>
+        <div className="flex w-full flex-col items-center justify-center gap-2 md:flex-row">
           <Link
             href={`/${course?.id}/my-tee-box`}
             className="w-full md:w-fit md:min-w-[250px]"
@@ -98,6 +104,9 @@ export const Confirmation = ({
           </Link>
         </div>
       </div>
+      <p className="mt-4 text-[14px] text-primary-gray md:text-[16px] font-semibold text-center">
+      Tip: If you know you can’t make your time, the earlier you can list, the greater the chance it sells.
+    </p>     
     </section>
   );
 };

@@ -82,6 +82,10 @@ export const users = mySqlTable(
       fsp: 3,
     }),
     entityId: varchar("entityId", { length: 191 }),
+    bannedUntilDateTime: timestamp("bannedUntilDateTime", {
+      mode: "string",
+      fsp: 3,
+    }),
   },
   (table) => {
     return {

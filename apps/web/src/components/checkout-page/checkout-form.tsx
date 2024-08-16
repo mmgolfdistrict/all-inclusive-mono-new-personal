@@ -17,6 +17,7 @@ import { FilledButton } from "../buttons/filled-button";
 import { CharitySelect } from "../input/charity-select";
 import { Input } from "../input/input";
 import styles from "./checkout.module.css";
+import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
 
 export const CheckoutForm = ({
   isBuyNowAuction,
@@ -189,7 +190,24 @@ export const CheckoutForm = ({
     });
   });
 
+  useEffect(() => {
+    const timer = setTimeout(function () {
+      router.push(`/${courseId}`);
+    }, 10 * 60 * 1000);
+
+    return () => {
+      clearTimeout(timer);
+      setIsLoading(false);
+    }
+  },[]);
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    googleAnalyticsEvent({
+      action: `PAY NOW CLICKED`,
+      category: "TEE TIME PURCHASE",
+      label: "User clicked on pay now to do payment",
+      value: "",
+    })
     e.preventDefault();
     void logAudit();
     setIsLoading(true);
@@ -253,6 +271,7 @@ export const CheckoutForm = ({
           setMessage(
             getErrorMessageById((response?.error_code ?? "") as string)
           );
+          setIsLoading(false);
         } else if (response.status === "succeeded") {
           let bookingResponse = {
             bookingId: "",
@@ -276,6 +295,7 @@ export const CheckoutForm = ({
               setMessage(
                 "Error reserving first hand booking: " + error.message
               );
+              setIsLoading(false);
               return;
             }
           } else {
@@ -289,6 +309,7 @@ export const CheckoutForm = ({
               setMessage(
                 "Error reserving second hand booking: " + error.message
               );
+              setIsLoading(false);
               return;
             }
           }
@@ -305,6 +326,7 @@ export const CheckoutForm = ({
           setMessage(
             getErrorMessageById((response?.error_code ?? "") as string)
           );
+          setIsLoading(false);
         } else {
           setMessage(
             getErrorMessageById((response?.error_code ?? "") as string)
@@ -313,8 +335,9 @@ export const CheckoutForm = ({
       }
     } catch (error) {
       setMessage("An unexpected error occurred: " + error.message);
-    } finally {
       setIsLoading(false);
+    } finally {
+      // setIsLoading(false);
     }
   };
 

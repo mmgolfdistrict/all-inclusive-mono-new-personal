@@ -11,6 +11,7 @@ const config = {
     serverComponentsExternalPackages: ["bcrypt"],
     instrumentationHook: true,
     serverSourceMaps: true,
+    esmExternals: false,
   },
   images: {
     remotePatterns: [

@@ -1030,8 +1030,8 @@ export class BookingService {
     //   throw new Error("Listing is not pending");
     // }
     if (listing.isDeleted) {
-      this.logger.warn(`Listing is already deleted.`);
-      throw new Error("Listing is already deleted");
+      this.logger.warn(`Tee time not available anymore.`);
+      throw new Error("Tee time not available anymore.");
     }
     const bookingIds = await this.database
       .select({
@@ -1189,8 +1189,8 @@ export class BookingService {
     //   throw new Error("Listing is not pending");
     // }
     if (listing.isDeleted) {
-      this.logger.warn(`Listing is already deleted.`);
-      throw new Error("Listing is already deleted");
+      this.logger.warn(`Tee time not available anymore.`);
+      throw new Error("Tee time not available anymore.");
     }
     const ownedBookings = await this.database
       .select({
@@ -2137,6 +2137,7 @@ export class BookingService {
         providerBookingId: bookings.providerBookingId,
         providerId: providerCourseLink.providerId,
         providerCourseConfiguration: providerCourseLink.providerCourseConfiguration,
+        status: bookings.status,
       })
       .from(bookings)
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -2160,6 +2161,11 @@ export class BookingService {
       this.logger.warn(`No bookings found. or user does not own all bookings`);
       throw new Error("No bookings found");
     }
+
+    if (data[0].status === "CANCELLED") {
+      return { success: false, message: "This Reservation is already Cancelled" };
+    }
+
     const firstBooking = data[0];
     if (!firstBooking) {
       throw new Error("bookings not found");
@@ -2261,6 +2267,7 @@ export class BookingService {
    * await bookingService.setMinimumOfferPrice(userId, teeTimeId, minimumOfferPrice);
    */
   setMinimumOfferPrice = async (userId: string, teeTimeId: string, minimumOfferPrice: number) => {
+    //Dummy changesto trigger build.
     let message: string | undefined;
     await this.database.transaction(async (trx) => {
       //find all booking for this tee time owned by this user
@@ -2676,6 +2683,7 @@ export class BookingService {
           charityId,
           weatherQuoteId,
           cartId,
+          markupCharge,
         },
         teeTime?.isWebhookAvailable ?? false
       )
@@ -2692,7 +2700,7 @@ export class BookingService {
           userId: userId,
           url: "/reserveBooking",
           userAgent: "",
-          message: "TEE TIME BOOKING FAILED ON PROVIDER",
+          message: "TEE TIME BOOKING FAILED ON GOLF DISTRIC",
           stackTrace: `first hand booking at provider failed for teetime ${teeTime.id}`,
           additionalDetailsJSON: JSON.stringify(err),
         });
@@ -2871,6 +2879,7 @@ export class BookingService {
       totalCharityAmount: charityCharge * 100 || 0,
       totalAmount: total || 0,
       providerPaymentId: paymentId,
+      markupFees: 0,
       weatherQuoteId: weatherQuoteId || null,
     });
     transfersToCreate.push({
@@ -2999,11 +3008,10 @@ export class BookingService {
         teeTime.providerCourseId ?? "",
         teeTime.internalId ?? "",
         teeTime.providerTeeSheetId!,
-        `${teeTime.time - 1}`.length === 3 ? `0${teeTime.time - 1}` : `${teeTime.time - 1}`,
+        `${teeTime.time}`.length === 3 ? `0${teeTime.time}` : `${teeTime.time}`,
         `${teeTime.time + 1}`.length === 3 ? `0${teeTime.time + 1}` : `${teeTime.time + 1}`,
         teeTime.providerDate.split("T")[0] ?? ""
       );
-
       if (providerDetailsGetTeeTime && providerDetailsGetTeeTime.length) {
         const teeTimeData = providerDetailsGetTeeTime[0];
         if ((teeTimeData?.attributes?.availableSpots ?? 0) >= golfersCount) {
