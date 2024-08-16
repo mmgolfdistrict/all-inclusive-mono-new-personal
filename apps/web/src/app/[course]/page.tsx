@@ -10,6 +10,8 @@ import { Filters } from "~/components/course-page/filters";
 import { MobileFilters } from "~/components/course-page/mobile-filters";
 import { MobileSort, SortOptions } from "~/components/course-page/mobile-sort";
 import { ChevronUp } from "~/components/icons/chevron-up";
+import { FiltersIcon } from "~/components/icons/filters";
+import { SortIcon } from "~/components/icons/sort";
 import { Select } from "~/components/input/select";
 import { useAppContext } from "~/contexts/AppContext";
 import { useCourseContext } from "~/contexts/CourseContext";
@@ -30,7 +32,6 @@ import { LoadingContainer } from "./loader";
 dayjs.extend(Weekday);
 dayjs.extend(RelativeTime);
 dayjs.extend(isoWeek);
-export const maxDuration = 299;
 export default function CourseHomePage() {
   const TAKE = 4;
   const ref = useRef<HTMLDivElement | null>(null);
@@ -463,6 +464,20 @@ export default function CourseHomePage() {
           <FilterSort toggleFilters={toggleFilters} toggleSort={toggleSort} />
         </div>
         <div className="flex w-full flex-col gap-1 md:gap-4 overflow-x-hidden pr-0 md:pr-6">
+          <div className="flex space-x-2 md:hidden px-4 md:px-0">
+            <button
+              onClick={toggleFilters}
+              className="p-2 text-xs flex items-center space-x-2 flex items-center gap-1 rounded-full border-b border-r border-t border-l border-stroke"
+            >
+              <FiltersIcon className="h-[14px] w-[14px]" /> Filters
+            </button>
+            <button
+              onClick={toggleSort}
+              className="p-2 text-xs flex items-center space-x-2 flex items-center gap-1 rounded-full border-b border-r border-t border-l border-stroke"
+            >
+              <SortIcon className="h-[14px] w-[14px]" /> Sort
+            </button>
+          </div>
           <div className="flex justify-between gap-4  px-4 md:px-0">
             <div className="text-secondary-black">
               {/* Showing {count?.toLocaleString() ?? "0"} tee times{" "} */}
