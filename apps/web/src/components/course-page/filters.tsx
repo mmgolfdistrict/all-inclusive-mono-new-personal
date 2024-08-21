@@ -137,6 +137,30 @@ export const Filters = () => {
     minute: date.getMinutes(),
     second: date.getSeconds(),
   });
+
+  const formatDate = (dateObj) => {
+    const months = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+
+    const day = dateObj?.day;
+    const month = months[dateObj?.month - 1];
+
+    return `${month}-${day}`;
+  };
+
+  console.log(selectedDay);
   return (
     <div className="flex flex-col gap-4 pr-1">
       <section className="flex flex-col gap-2">
@@ -163,6 +187,20 @@ export const Filters = () => {
               <Item
                 key={index}
                 value={value}
+                label={
+                  value === "Custom" ? (
+                    <div className="flex justify-between">
+                      <span>{value}</span>
+                      {`${
+                        selectedDay.from ? formatDate(selectedDay.from) : ""
+                      } ${selectedDay.to ? "-" : ""} ${
+                        selectedDay.to ? formatDate(selectedDay.to) : ""
+                      }`}
+                    </div>
+                  ) : (
+                    value
+                  )
+                }
                 dataTestId="date-filter-id"
                 dataQa={value}
                 className={`${
@@ -334,6 +372,7 @@ export const Filters = () => {
             <Item
               key={index}
               value={value}
+              label={value}
               dataTestId="hole-filter-id"
               dataQa={value}
               className={`${
@@ -372,6 +411,7 @@ export const Filters = () => {
             <Item
               key={index}
               value={value}
+              label={value}
               dataTestId="golfer-filter-id"
               dataQa={value}
               className={`${
@@ -427,6 +467,7 @@ export const Item = ({
   dataQa,
   dataTest,
   dataCy,
+  label,
 }: {
   value: string;
   className?: string;
@@ -434,6 +475,7 @@ export const Item = ({
   dataQa?: string;
   dataTest?: string;
   dataCy?: string;
+  label?: any;
 }) => {
   return (
     <ToggleGroup.Item
@@ -446,7 +488,7 @@ export const Item = ({
       data-test={dataTest}
       data-cy={dataCy}
     >
-      {value}
+      {label}
     </ToggleGroup.Item>
   );
 };
