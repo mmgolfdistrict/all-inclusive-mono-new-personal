@@ -191,47 +191,53 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
         if (isMobile) {
           setDateTypeMobile(value);
         } else {
-          setDateType(value);
+          setDateType(value as DateType);
         }
         break;
       }
       case 'time': {
         if (isMobile) {
-          setTimeMobile(value);
+          setTimeMobile(value as [number, number]);
         } else {
-          setLocalStartTime(value);
+          setLocalStartTime(value as [number, number]);
         }
         break;
       }
       case 'hole': {
         if (isMobile) {
-          setHoleMobile(value);
+          setHoleMobile(value as HoleType);
         } else {
-          setHoles(value);
+          setHoles(value as HoleType);
         }
         break;
       }
       case 'golfer': {
         if (isMobile) {
-          setGolferMobile(value);
+          setGolferMobile(value as GolferType);
         } else {
-          setGolfers(value);
+          setGolfers(value as GolferType);
         }
         break;
       }
       case 'price': {
         if (isMobile) {
-          setPriceMobile(value);
+          setPriceMobile(value as [number, number]);
         } else {
-          setLocalPriceRange(value);
+          setLocalPriceRange(value as [number, number]);
         }
         break;
       }
       case 'selectedDay': {
         if (isMobile) {
-          setSelectedDayMobile(value);
+          setSelectedDayMobile(value as {
+            from: DayValue;
+            to: DayValue;
+          });
         } else {
-          setSelectedDay(value);
+          setSelectedDay(value as {
+            from: DayValue;
+            to: DayValue;
+          });
         }
         break;
       }
@@ -249,7 +255,7 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
           value={isMobile ? dateTypeMobile : dateType}
           onValueChange={(dateType: DateType) => {
             if (dateType) {
-              setFilter("dateType", dateType as any)
+              setFilter("dateType", dateType)
               googleAnalyticsEvent({
                 action: `FILTER BY ${dateType}`,
                 category: "FILTER_DATA",
@@ -576,3 +582,5 @@ export const Item = ({
     </ToggleGroup.Item>
   );
 };
+
+Filters.displayName = "Filters";

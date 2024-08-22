@@ -3,7 +3,16 @@ import { FilledButton } from "../buttons/filled-button";
 import { OutlineButton } from "../buttons/outline-button";
 import { Leaflet } from "../modal/leaflet";
 import { Filters } from "./filters";
-import { useFiltersContext } from "~/contexts/FiltersContext";
+import { DateType, GolferType, HoleType, useFiltersContext } from "~/contexts/FiltersContext";
+
+interface DayValue {
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+  second: number;
+}
 
 export const MobileFilters = ({
   setShowFilters,
@@ -27,12 +36,15 @@ export const MobileFilters = ({
   const getDataFromChild = () => {
     if (childRef.current) {
       const childData = childRef.current.getChildValue();
-      setDateType(childData?.dateType)
-      setHoles(childData?.holes)
-      setGolfers(childData?.golfers)
-      setPriceRange(childData?.priceRange)
-      setStartTime(childData?.startTime)
-      setSelectedDay(childData?.selectedDay)
+      setDateType(childData?.dateType as DateType)
+      setHoles(childData?.holes as HoleType)
+      setGolfers(childData?.golfers as GolferType)
+      setPriceRange(childData?.priceRange as [number, number])
+      setStartTime(childData?.startTime as [number, number])
+      setSelectedDay(childData?.selectedDay as {
+        from: DayValue;
+        to: DayValue;
+      })
     }
   }
   return (
