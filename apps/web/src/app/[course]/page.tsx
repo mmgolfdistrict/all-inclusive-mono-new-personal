@@ -82,16 +82,9 @@ export default function CourseHomePage() {
     setCount(balance);
   };
 
-  const { data: farthestDateOut } =
-    api.searchRouter.getFarthestTeeTimeDate.useQuery(
-      {
-        courseId: course?.id ?? "",
-        order: "desc",
-      },
-      {
-        enabled: course?.id !== undefined,
-      }
-    );
+  const farthestDateOut = useMemo(() => {
+    return dayjs().utc().add(course?.furthestDayToBook ?? 0, "day").format("YYYY-MM-DD");
+  }, [course?.furthestDayToBook]);
 
   const { data: unreadOffers } = api.user.getUnreadOffersForCourse.useQuery(
     {

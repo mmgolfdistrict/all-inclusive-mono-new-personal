@@ -92,6 +92,7 @@ export type FullCourseType = {
   supportsWaitlist?: boolean;
   sellerFee?: number;
   buyerFee?: number;
+  furthestDayToBook?: number;
 };
 
 export type SupportedCharity = {
