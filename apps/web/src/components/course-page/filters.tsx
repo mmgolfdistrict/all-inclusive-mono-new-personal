@@ -1,7 +1,7 @@
 "use client";
 
 import * as ToggleGroup from "@radix-ui/react-toggle-group";
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, forwardRef, useEffect, useImperativeHandle, useMemo, useState } from "react";
 import { Switch } from "../buttons/switch";
 import { Hidden } from "../icons/hidden";
 import { Info } from "../icons/info";
@@ -27,6 +27,11 @@ interface DayValue {
   second: number;
 }
 
+interface ChildComponentRef {
+  getChildValue: () => any;
+}
+
+
 const HoleOptions = ["Any", "18", "9"];
 
 const GolferOptions = ["Any", "1", "2", "3", "4"];
@@ -39,7 +44,7 @@ const minimumDate = {
 
 const disabledDays = getDisabledDays(minimumDate);
 
-export const Filters = () => {
+export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
   const {
     dateType,
     setDateType,
@@ -51,7 +56,7 @@ export const Filters = () => {
     setShowUnlisted,
     includesCart,
     setIncludesCart,
-    // priceRange,
+    priceRange,
     setPriceRange,
     startTime,
     setStartTime,
@@ -60,6 +65,13 @@ export const Filters = () => {
     startTimeOptions,
   } = useFiltersContext();
   const { course } = useCourseContext();
+  const [dateTypeMobile, setDateTypeMobile] = useState(dateType);
+  const [timeMobile, setTimeMobile] = useState(startTime);
+  const [switchMobile, setSwitchMobile] = useState(showUnlisted)
+  const [holeMobile, setHoleMobile] = useState(holes)
+  const [golferMobile, setGolferMobile] = useState(golfers)
+  const [selectedDayMobile, setSelectedDayMobile] = useState(selectedDay)
+
   const isMobile = useMediaQuery("(max-width: 768px)");
 
   const { data } = api.searchRouter.findBlackoutDates.useQuery(
@@ -99,7 +111,7 @@ export const Filters = () => {
     lowestPrice,
     highestPrice,
   ]);
-
+  const [priceMobile, setPriceMobile] = useState(priceRange);
   const handleSetStartTime = () => {
     setStartTime(localStartTime);
   };
@@ -160,17 +172,84 @@ export const Filters = () => {
     return `${month}-${day}`;
   };
 
-  console.log(selectedDay);
+  useImperativeHandle(ref, () => ({
+    getChildValue() {
+      return {
+        dateType: dateTypeMobile,
+        startTime: timeMobile,
+        holes: holeMobile,
+        selectedDay: selectedDayMobile,
+        golfers: golferMobile,
+        priceRange: priceMobile
+      };
+    }
+  }));
+
+  const setFilter = (type, value) => {
+    switch (type) {
+      case 'dateType': {
+        if (isMobile) {
+          setDateTypeMobile(value);
+        } else {
+          setDateType(value);
+        }
+        break;
+      }
+      case 'time': {
+        if (isMobile) {
+          setTimeMobile(value);
+        } else {
+          setLocalStartTime(value);
+        }
+        break;
+      }
+      case 'hole': {
+        if (isMobile) {
+          setHoleMobile(value);
+        } else {
+          setHoles(value);
+        }
+        break;
+      }
+      case 'golfer': {
+        if (isMobile) {
+          setGolferMobile(value);
+        } else {
+          setGolfers(value);
+        }
+        break;
+      }
+      case 'price': {
+        if (isMobile) {
+          setPriceMobile(value);
+        } else {
+          setLocalPriceRange(value);
+        }
+        break;
+      }
+      case 'selectedDay': {
+        if (isMobile) {
+          setSelectedDayMobile(value);
+        } else {
+          setSelectedDay(value);
+        }
+        break;
+      }
+      default:
+        break;
+    }
+  };
+
   return (
     <div className="flex flex-col gap-4 pr-1">
       <section className="flex flex-col gap-2">
         <div>Date</div>
         <ToggleGroup.Root
           type="single"
-          value={dateType}
+          value={isMobile ? dateTypeMobile : dateType}
           onValueChange={(dateType: DateType) => {
             if (dateType) {
-              setDateType(dateType);
+              setFilter("dateType", dateType as any)
               googleAnalyticsEvent({
                 action: `FILTER BY ${dateType}`,
                 category: "FILTER_DATA",
@@ -191,11 +270,12 @@ export const Filters = () => {
                   value === "Custom" ? (
                     <div className="flex justify-between">
                       <span>{value}</span>
-                      {`${
-                        selectedDay.from ? formatDate(selectedDay.from) : ""
-                      } ${selectedDay.to ? "-" : ""} ${
-                        selectedDay.to ? formatDate(selectedDay.to) : ""
-                      }`}
+                      {isMobile
+                        ? `${selectedDayMobile.from ? formatDate(selectedDayMobile.from) : ""
+                        } ${selectedDayMobile.to ? "-" : ""} ${selectedDayMobile.to ? formatDate(selectedDayMobile.to) : ""}`
+                        : `${selectedDay.from ? formatDate(selectedDay.from) : ""
+                        } ${selectedDay.to ? "-" : ""} ${selectedDay.to ? formatDate(selectedDay.to) : ""}`}
+
                     </div>
                   ) : (
                     value
@@ -203,23 +283,22 @@ export const Filters = () => {
                 }
                 dataTestId="date-filter-id"
                 dataQa={value}
-                className={`${
-                  index === 0
-                    ? "rounded-t-2xl border border-stroke"
-                    : index === DateOptions.length - 1 && dateType === "Custom"
+                className={`${index === 0
+                  ? "rounded-t-2xl border border-stroke"
+                  : index === DateOptions.length - 1 && dateType === "Custom"
                     ? "border-l border-r border-stroke"
                     : index === DateOptions.length - 1
-                    ? "rounded-b-2xl border-b border-l border-r border-stroke"
-                    : "border-b border-l border-r border-stroke"
-                }`}
+                      ? "rounded-b-2xl border-b border-l border-r border-stroke"
+                      : "border-b border-l border-r border-stroke"
+                  }`}
               />
               {dateType === "Custom" && value === "Custom" ? (
                 <>
                   <div className="custom_calendar">
                     <Calendar
-                      value={selectedDay}
+                      value={isMobile ? selectedDayMobile : selectedDay}
                       calendarClassName="responsive-calendar"
-                      onChange={setSelectedDay}
+                      onChange={isMobile ? setSelectedDayMobile : setSelectedDay}
                       colorPrimary="#40942A"
                       minimumDate={minimumDate}
                       disabledDays={blackOutDays}
@@ -231,17 +310,15 @@ export const Filters = () => {
                         <>
                           <button
                             key={i}
-                            className={`inline-block mt-1 ${
-                              isMobile ? "mx-4" : "mx-2"
-                            }`}
+                            className={`inline-block mt-1 ${isMobile ? "mx-4" : "mx-2"
+                              }`}
                             onClick={() => {
                               const startDate = new Date(event.startDate);
                               const endDate = new Date(event.endDate);
-                              setSelectedDay({
+                              setFilter("selectedDay", {
                                 from: dateToDayValue(startDate),
                                 to: dateToDayValue(endDate),
-                              });
-                              console.log("startDate", startDate, endDate);
+                              })
                             }}
                           >
                             {event.eventName}
@@ -262,15 +339,25 @@ export const Filters = () => {
           <div>Start Time</div>
           <div>
             {
-              startTimeOptions[
-                startTimeOptions.findIndex((i) => i.value === localStartTime[0])
-              ]?.displayTime
+              isMobile ?
+                startTimeOptions[
+                  startTimeOptions.findIndex((i) => i.value === timeMobile[0])
+                ]?.displayTime
+                :
+                startTimeOptions[
+                  startTimeOptions.findIndex((i) => i.value === localStartTime[0])
+                ]?.displayTime
             }
             -
             {
-              startTimeOptions[
-                startTimeOptions.findIndex((i) => i.value === localStartTime[1])
-              ]?.displayTime
+              isMobile ?
+                startTimeOptions[
+                  startTimeOptions.findIndex((i) => i.value === timeMobile[1])
+                ]?.displayTime
+                :
+                startTimeOptions[
+                  startTimeOptions.findIndex((i) => i.value === localStartTime[1])
+                ]?.displayTime
             }
           </div>
         </div>
@@ -278,7 +365,10 @@ export const Filters = () => {
           min={0}
           max={startTimeOptions.length - 1}
           step={1}
-          value={[
+          value={isMobile ? [
+            startTimeOptions.findIndex((i) => i.value === timeMobile[0]),
+            startTimeOptions.findIndex((i) => i.value === timeMobile[1]),
+          ] : [
             startTimeOptions.findIndex((i) => i.value === localStartTime[0]),
             startTimeOptions.findIndex((i) => i.value === localStartTime[1]),
           ]}
@@ -301,18 +391,14 @@ export const Filters = () => {
               const option1 = startTimeOptions[time[0]];
               const option2 = startTimeOptions[time[1]];
               if (option1 && option2) {
-                setLocalStartTime([option1.value, option2.value]);
+                setFilter("time", [option1.value, option2.value])
               }
             }
           }}
           data-testid="slider-start-time-id"
-          data-qa={`${
-            startTimeOptions.find((i) => i.value === localStartTime[0])
-              ?.displayTime
-          } - ${
-            startTimeOptions.find((i) => i.value === localStartTime[1])
-              ?.displayTime
-          }`}
+          data-qa={isMobile
+            ? `${startTimeOptions.find((i) => i.value === timeMobile[0])?.displayTime} - ${startTimeOptions.find((i) => i.value === timeMobile[1])?.displayTime}`
+            : `${startTimeOptions.find((i) => i.value === localStartTime[0])?.displayTime} - ${startTimeOptions.find((i) => i.value === localStartTime[1])?.displayTime}`}
         />
       </section>
 
@@ -320,8 +406,8 @@ export const Filters = () => {
         {course?.supportsOffers ? (
           <div className="flex items-center gap-2">
             <Switch
-              value={showUnlisted}
-              setValue={setShowUnlisted}
+              value={isMobile ? switchMobile : showUnlisted}
+              setValue={isMobile ? setSwitchMobile : setShowUnlisted}
               dataTestId="filter-switch-not-for-sale-make-an-offer-id"
             />
             <div className="flex items-center gap-1 text-primary-gray">
@@ -355,7 +441,7 @@ export const Filters = () => {
         <div>Holes</div>
         <ToggleGroup.Root
           type="single"
-          value={holes}
+          value={isMobile ? holeMobile : holes}
           onValueChange={(hole: HoleType) => {
             googleAnalyticsEvent({
               action: `FILTER BY Holes`,
@@ -363,7 +449,7 @@ export const Filters = () => {
               label: "filtered data by date",
               value: "",
             });
-            if (hole) setHoles(hole);
+            if (hole) setFilter("hole", hole);
           }}
           orientation="horizontal"
           className="flex"
@@ -375,13 +461,12 @@ export const Filters = () => {
               label={value}
               dataTestId="hole-filter-id"
               dataQa={value}
-              className={`${
-                index === 0
-                  ? "rounded-l-full border-b border-l border-t border-stroke"
-                  : index === HoleOptions.length - 1
+              className={`${index === 0
+                ? "rounded-l-full border-b border-l border-t border-stroke"
+                : index === HoleOptions.length - 1
                   ? "rounded-r-full border-b border-r border-t border-stroke"
                   : "border border-stroke"
-              } px-[2.5rem]`}
+                } px-[2.5rem]`}
             />
           ))}
         </ToggleGroup.Root>
@@ -390,7 +475,7 @@ export const Filters = () => {
         <div>Golfers</div>
         <ToggleGroup.Root
           type="single"
-          value={golfers.toString()}
+          value={isMobile ? golferMobile.toString() : golfers.toString()}
           onValueChange={(golfer: string) => {
             googleAnalyticsEvent({
               action: `FILTER BY GOLFERS`,
@@ -402,7 +487,7 @@ export const Filters = () => {
               setGolfers("Any");
               return;
             }
-            if (golfer) setGolfers(Number(golfer) as GolferType);
+            if (golfer) setFilter("golfer", Number(golfer) as GolferType)
           }}
           orientation="horizontal"
           className="flex"
@@ -414,13 +499,12 @@ export const Filters = () => {
               label={value}
               dataTestId="golfer-filter-id"
               dataQa={value}
-              className={`${
-                index === 0
-                  ? "rounded-l-full border-b border-l border-t border-stroke"
-                  : index === GolferOptions.length - 1
+              className={`${index === 0
+                ? "rounded-l-full border-b border-l border-t border-stroke"
+                : index === GolferOptions.length - 1
                   ? "rounded-r-full border border-stroke"
                   : "border-b border-l border-t border-stroke"
-              } px-[1.44rem]`}
+                } px-[1.44rem]`}
             />
           ))}
         </ToggleGroup.Root>
@@ -431,15 +515,16 @@ export const Filters = () => {
             Price Range <span className="font-[300]">(per golfer)</span>
           </div>
           <div>
-            ${localPriceRange[0]}
-            -${localPriceRange[1]}
+            {isMobile
+              ? `$${priceMobile[0]} - $${priceMobile[1]}`
+              : `$${localPriceRange[0]} - $${localPriceRange[1]}`}
           </div>
         </div>
         <Slider
           min={lowestPrice}
           max={highestPrice}
           step={5}
-          value={localPriceRange}
+          value={isMobile ? priceMobile : localPriceRange}
           onPointerUp={() => {
             handleSetPriceRange();
           }}
@@ -450,15 +535,15 @@ export const Filters = () => {
               label: "filtered data by date",
               value: "",
             });
-            debounceFunction(setLocalPriceRange(value), 1000);
+            debounceFunction(setFilter("price", value), 1000);
           }}
           data-testid="slider-price-range-id"
-          data-qa={`${localPriceRange?.[0]}-${localPriceRange?.[1]}`}
+          data-qa={isMobile ? `${priceMobile?.[0]}-${priceMobile?.[1]}` : `${localPriceRange?.[0]}-${localPriceRange?.[1]}`}
         />
       </section>
     </div>
   );
-};
+});
 
 export const Item = ({
   value,
@@ -480,9 +565,8 @@ export const Item = ({
   return (
     <ToggleGroup.Item
       value={value}
-      className={`bg-white px-4 py-2 text-left text-[14px] text-primary-gray transition-colors data-[state=on]:bg-primary data-[state=on]:text-white ${
-        className ?? ""
-      }`}
+      className={`bg-white px-4 py-2 text-left text-[14px] text-primary-gray transition-colors data-[state=on]:bg-primary data-[state=on]:text-white ${className ?? ""
+        }`}
       data-testid={dataTestId}
       data-qa={dataQa}
       data-test={dataTest}
