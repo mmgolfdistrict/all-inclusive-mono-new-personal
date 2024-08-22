@@ -426,6 +426,17 @@ export default function CourseHomePage() {
     pageNumber * TAKE
   );
 
+  const [scrollY, setScrollY] = useState(0);
+
+  const handleScroll = () => {
+    setScrollY(window.scrollY);
+  };
+
+  useEffect(() => {
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   return (
     <main className="bg-secondary-white py-4 md:py-6">
       <LoadingContainer isLoading={isLoadingTeeTimeDate || isLoading}>
@@ -472,7 +483,13 @@ export default function CourseHomePage() {
           <FilterSort toggleFilters={toggleFilters} toggleSort={toggleSort} />
         </div>
         <div className="flex w-full flex-col gap-1 md:gap-4 overflow-x-hidden pr-0 md:pr-6">
-          <div className="flex space-x-2 md:hidden px-4 md:px-0">
+          <div
+            className={`flex space-x-2 md:hidden px-4 ${
+              scrollY > 333
+                ? "fixed top-[7.8rem] left-0 w-full z-10 bg-secondary-white pt-2 pb-3 shadow-md"
+                : "relative"
+            }`}
+          >
             <button
               onClick={toggleFilters}
               className="p-2 text-xs flex items-center space-x-2 flex items-center gap-1 rounded-full border-b border-r border-t border-l border-stroke"
