@@ -143,8 +143,8 @@ export class UserService {
     if (!(await this.isValidHandle(data.handle))) {
       this.logger.warn(`Handle already exists: ${data.handle}`);
       return {
-        error:true,
-        message:"Handle already exists."
+        error: true,
+        message: "Handle already exists."
       }
     }
     if (isValidPassword(data.password).score < 8) {
@@ -359,7 +359,7 @@ export class UserService {
             this.logger.error(`Error retrieving user: ${err}`);
             throw new Error("Error retrieving user");
           });
-        if (userData &&  userData[0]) {
+        if (userData && userData[0]) {
           finalData.push({
             ...userData[0],
             name: unit.nameOnBooking?.length ? unit.nameOnBooking : "Guest",
@@ -541,13 +541,17 @@ export class UserService {
    *     emailNotifications: false
    *   });
    */
-  updateUser = async (userId: string, data: UserUpdateData): Promise<void> => {
+  updateUser = async (userId: string, data: UserUpdateData) => {
     this.logger.info(`updateUser called for user: ${userId}`);
 
     if (data.handle) {
-      if (!(await this.isValidHandle(data.handle))) {
+      const isValid = await this.isValidHandle(data.handle);
+      if (!isValid) {
         this.logger.warn(`Handle already exists: ${data.handle}`);
-        throw new Error("Handle already exists");
+        return {
+          error: true,
+          message: "Handle already exists.",
+        };
       }
     }
     // if (data.name) {
@@ -1284,15 +1288,15 @@ export class UserService {
     const { user, profileImage, bannerImage } = data;
     const profilePicture = profileImage
       ? assetToURL({
-          key: profileImage.assetKey,
-          extension: profileImage.assetExtension,
-        })
+        key: profileImage.assetKey,
+        extension: profileImage.assetExtension,
+      })
       : "/defaults/default-profile.webp";
     const bannerPicture = bannerImage
       ? assetToURL({
-          key: bannerImage.assetKey,
-          extension: bannerImage.assetExtension,
-        })
+        key: bannerImage.assetKey,
+        extension: bannerImage.assetExtension,
+      })
       : "/defaults/default-banner.webp";
     let res;
 
