@@ -1,13 +1,13 @@
 "use client";
 
-import { useSession } from "@golf-district/auth/nextjs-exports";
+import { signOut, useSession } from "@golf-district/auth/nextjs-exports";
 import { useAppContext } from "~/contexts/AppContext";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
 import { getBgColor } from "~/utils/formatters";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useMediaQuery } from "usehooks-ts";
 import { FilledButton } from "../buttons/filled-button";
@@ -20,7 +20,7 @@ import { MyOffers } from "../icons/my-offers";
 import { Search } from "../icons/search";
 import { BlurImage } from "../images/blur-image";
 import { PoweredBy } from "../powered-by";
-import { UserInNav } from "../user/user-in-nav";
+import { PathsThatNeedRedirectOnLogout, UserInNav } from "../user/user-in-nav";
 import { NavItem } from "./nav-item";
 import { SideBar } from "./side-bar";
 
@@ -32,7 +32,9 @@ export const CourseNav = () => {
   const [isSideBarOpen, setIsSideBarOpen] = useState<boolean>(false);
   const isMobile = useMediaQuery("(max-width: 768px)");
   const pathname = usePathname();
-  const { status } = useSession();
+  const session = useSession();
+  const router = useRouter();
+
   const { data: unreadOffers } = api.user.getUnreadOffersForCourse.useQuery(
     {
       courseId: courseId ?? "",
@@ -44,6 +46,62 @@ export const CourseNav = () => {
 
   const { data: systemNotifications } =
     api.systemNotification.getSystemNotification.useQuery({});
+
+  const { data: isUserBlocked } = api.user.isUserBlocked.useQuery({
+    userEmail: session?.data?.user.email ?? "",
+  });
+
+  console.log("isUserBlocked", isUserBlocked);
+
+  const auditLog = api.webhooks.auditLog.useMutation();
+
+  const logAudit = (func: () => any) => {
+    auditLog
+      .mutateAsync({
+        userId: user?.id ?? "",
+        teeTimeId: "",
+        bookingId: "",
+        listingId: "",
+        courseId,
+        eventId: "USER_LOGGED_OUT",
+        json: `user logged out `,
+      })
+      .then((res) => {
+        if (res) {
+          func();
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
+
+  useEffect(() => {
+    (() => {
+      if (isUserBlocked) {
+        logAudit(async () => {
+          localStorage.clear();
+          sessionStorage.clear();
+          session.data = null;
+          session.status = "unauthenticated";
+          await session.update(null);
+          if (PathsThatNeedRedirectOnLogout.some((i) => pathname.includes(i))) {
+            const data = await signOut({
+              callbackUrl: `/${courseId}`,
+              redirect: false,
+            });
+            router.push(data.url);
+            return;
+          }
+          const data = await signOut({
+            callbackUrl: pathname,
+            redirect: false,
+          });
+          router.push(data.url);
+        });
+      }
+    })();
+  }, [isUserBlocked]);
 
   useEffect(() => {
     if (isSideBarOpen && isMobile) {
@@ -125,12 +183,12 @@ export const CourseNav = () => {
             <PoweredBy id="powered-by-sidebar" />
           </div>
 
-          {user && status === "authenticated" ? (
+          {user && session.status === "authenticated" ? (
             <div className="flex items-center gap-4">
               <UserInNav />
             </div>
-          ) : status == "loading" ? null : (
-            status != "authenticated" && (
+          ) : session.status == "loading" ? null : (
+            session.status != "authenticated" && (
               <Link
                 href={`/${course?.id}/login`}
                 onClick={() => {
@@ -165,7 +223,7 @@ export const CourseNav = () => {
             {course?.supportsWaitlist ? (
               <NavItem
                 href={`/${courseId}/notify-me`}
-                text="Notify Me"
+                text="Waitlist"
                 icon={<Megaphone className="w-[16px]" />}
                 data-testid="notify-me-id"
                 data-test={courseId}

@@ -90,7 +90,10 @@ export class UserService {
    * @example
    * const userService = new UserService(database, notificationService);
    */
-  constructor(protected readonly database: Db, private readonly notificationsService: NotificationService) {
+  constructor(
+    protected readonly database: Db,
+    private readonly notificationsService: NotificationService
+  ) {
     //this.filter = new Filter();
   }
 
@@ -140,16 +143,17 @@ export class UserService {
     if (!(await this.isValidHandle(data.handle))) {
       this.logger.warn(`Handle already exists: ${data.handle}`);
       return {
-        error:true,
-        message:"Handle already exists."
-      }
+        error: true,
+        message: "Handle already exists.",
+      };
     }
     if (isValidPassword(data.password).score < 8) {
       this.logger.warn("Invalid password");
       return {
-        error:true,
-        message:"Password must include uppercase, lowercase letters, numbers, and special characters (!@#$%^&*)."
-      }
+        error: true,
+        message:
+          "Password must include uppercase, lowercase letters, numbers, and special characters (!@#$%^&*).",
+      };
     }
 
     let isNotRobot;
@@ -176,7 +180,10 @@ export class UserService {
     if (existingUserWithEmail) {
       if (existingUserWithEmail.email == data.email) {
         this.logger.warn(`Email already exists: ${data.email}`);
-        throw new Error("Email already exists");
+        return {
+          error: true,
+          message: "Email already exists",
+        };
       }
     }
     const verificationToken = randomBytes(32).toString("hex");
@@ -355,7 +362,7 @@ export class UserService {
             this.logger.error(`Error retrieving user: ${err}`);
             throw new Error("Error retrieving user");
           });
-        if (userData &&  userData[0]) {
+        if (userData?.[0]) {
           finalData.push({
             ...userData[0],
             name: unit.nameOnBooking?.length ? unit.nameOnBooking : "Guest",
@@ -425,9 +432,9 @@ export class UserService {
     if (!user.verificationRequestToken) {
       this.logger.warn(`User email already verified: ${userId}`);
       return {
-        error:true,
-        message:"User email already verified"
-      }
+        error: true,
+        message: "User email already verified",
+      };
     }
     if (user.verificationRequestExpiry && user.verificationRequestExpiry < currentUtcTimestamp()) {
       await this.deleteUserById(userId);
@@ -1605,5 +1612,21 @@ export class UserService {
       this.generateUsername(digit);
     }
     return handle ? `golfdistrict${handle}` : "golfdistrict";
+  };
+
+  isUserBlocked = async (email: string) => {
+    const [data] = await this.database
+      .select({
+        bannedUntilDateTime: users.bannedUntilDateTime,
+      })
+      .from(users)
+      .where(eq(users.email, email))
+      .execute();
+    const now = new Date();
+    const date = new Date(data?.bannedUntilDateTime ?? "");
+    if (now < date) {
+      return true;
+    }
+    return false;
   };
 }

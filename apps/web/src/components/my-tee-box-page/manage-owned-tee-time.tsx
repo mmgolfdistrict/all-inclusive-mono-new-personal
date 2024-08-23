@@ -554,6 +554,9 @@ export const ManageOwnedTeeTime = ({
                   </div>
                 </>
               ) : null}
+               <p className="mt-4 mb-2 text-[14px] text-primary-gray md:text-[16px] font-semibold text-left">
+              Tip: If you know you can’t make your time, the earlier you can list, the greater the chance it sells.
+            </p>
               <div className="text-center text-[14px] font-[300] text-primary-gray">
                 All sales are final.
               </div>

@@ -38,6 +38,7 @@ export const ChoosePlayers = ({
         <Item
           key={index}
           value={value}
+          label={value}
           dataTestId="tee-time-player-id"
           dataTest={teeTimeId}
           dataQa={value}

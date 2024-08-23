@@ -1,6 +1,21 @@
-import { and, asc, between, desc, eq, gt, gte, like, lte, or, sql, type Db } from "@golf-district/database";
+import {
+  and,
+  asc,
+  between,
+  desc,
+  eq,
+  gt,
+  gte,
+  like,
+  lte,
+  or,
+  sql,
+  type Db,
+  lt,
+} from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import { bookings } from "@golf-district/database/schema/bookings";
+import { courseMarkup } from "@golf-district/database/schema/courseMarkup";
 import { courses } from "@golf-district/database/schema/courses";
 import { favorites } from "@golf-district/database/schema/favorites";
 import { lists } from "@golf-district/database/schema/lists";
@@ -15,7 +30,7 @@ import UTC from "dayjs/plugin/utc";
 import { type ProviderService } from "../tee-sheet-provider/providers.service";
 import type { Forecast } from "../weather/types";
 import type { WeatherService } from "../weather/weather.service";
-import { courseMarkup } from "@golf-district/database/schema/courseMarkup";
+import { majorEvents } from "@golf-district/database/schema/majorEvents";
 
 dayjs.extend(UTC);
 
@@ -222,7 +237,7 @@ export class SearchService {
     if (forecast) {
       const teeTimeDate = new Date(firstBooking.date);
       weather = this.matchForecastToTeeTime(teeTimeDate, forecast);
-    }  
+    }
     const res = {
       soldById: ownerId,
       soldByName: firstBooking.ownerHandle ? firstBooking.ownerHandle : "Anonymous",
@@ -381,7 +396,10 @@ export class SearchService {
     if (!tee) {
       return null;
     }
-    const priceAccordingToDate: any[] = await this.getTeeTimesPriceWithRange(tee?.courseId);
+    const priceAccordingToDate: any[] = await this.getTeeTimesPriceWithRange(
+      tee?.courseId,
+      tee?.timezoneCorrection
+    );
     const filteredDate: any[] = [];
 
     const date = dayjs(tee?.providerDate).utc();
@@ -693,18 +711,26 @@ export class SearchService {
     );
     return this.sortDates(uniqueArrayfirstHandAndSecondHandResultDates);
   }
-  getTeeTimesPriceWithRange = async (courseId: string) => {
+  getTeeTimesPriceWithRange = async (courseId: string, timeZoneCorrection: number) => {
     const markupData = await this.database
       .select()
       .from(courseMarkup)
       .where(eq(courseMarkup.courseId, courseId))
       .execute();
+
     const currentDate = dayjs();
+    const currentdateWithTimeZone = currentDate.add(timeZoneCorrection ?? 0, "hour");
+    console.log(
+      currentDate.toString(),
+      currentdateWithTimeZone.toString(),
+      "ewfwfewfewfewwfe",
+      timeZoneCorrection
+    );
     const priceAccordingToDate: any[] = [];
 
     markupData.forEach((el) => {
-      const toDay = currentDate.add(el?.toDay, "day");
-      const fromDay = currentDate
+      const toDay = currentdateWithTimeZone.add(el?.toDay, "day");
+      const fromDay = currentdateWithTimeZone
         .add(el?.fromDay, "day")
         .set("hours", 0)
         .set("minutes", 0)
@@ -748,7 +774,7 @@ export class SearchService {
       .second(59)
       .millisecond(999)
       .toISOString();
-
+    console.log("=====>", minDateSubquery, maxDateSubquery);
     const startDate = dayjs(date).utc().hour(0).minute(0).second(0).millisecond(0).toISOString();
     const endDate = dayjs(date).utc().hour(23).minute(59).second(59).millisecond(999).toISOString();
 
@@ -854,6 +880,7 @@ export class SearchService {
         buyerFee: courses.buyerFee,
         sellerFee: courses.sellerFee,
         markupFees: courses.markupFeesFixedPerPlayer,
+        timeZoneCorrection: courses.timezoneCorrection,
       })
       .from(courses)
       .where(eq(courses.id, courseId))
@@ -870,14 +897,17 @@ export class SearchService {
       this.logger.error(err);
       throw new Error(`Error getting tee times for ${date}: ${err}`);
     });
-    const priceAccordingToDate: any[] = await this.getTeeTimesPriceWithRange(courseId);
+    const priceAccordingToDate: any[] = await this.getTeeTimesPriceWithRange(
+      courseId,
+      courseDataIfAvailable?.timeZoneCorrection ?? 0
+    );
     const filteredDate: any[] = [];
     console.log("date is", date);
 
     priceAccordingToDate.forEach((el) => {
       if (
-        dayjs(el.toDayFormatted).isAfter(date) &&
-        dayjs(el.fromDayFormatted).isBefore(date) &&
+        ((dayjs(el.toDayFormatted).isAfter(date) && dayjs(el.fromDayFormatted).isBefore(date)) ||
+          dayjs(date).isSame(dayjs(el.fromDayFormatted))) &&
         !filteredDate.length
       ) {
         filteredDate.push(el);
@@ -1103,5 +1133,35 @@ export class SearchService {
     return primaryDomain.length > 1
       ? primaryDomain.substring(0, 1) + "*".repeat(primaryDomain.length - 1)
       : primaryDomain;
+  };
+
+  getSpecialEvents = async (courseId: string) => {
+    const today = dayjs().startOf("day").format("YYYY-MM-DD HH:mm:ss");
+    const threeMonthsFromNow = dayjs().add(3, "month").endOf("day").format("YYYY-MM-DD HH:mm:ss");
+
+    const events = await this.database
+      .select({
+        id: majorEvents.id,
+        eventName: majorEvents.eventName,
+        startDate: majorEvents.startDate,
+        endDate: majorEvents.endDate,
+      })
+      .from(majorEvents)
+      .where(
+        and(
+          eq(majorEvents.courseId, courseId),
+          gt(majorEvents.startDate, today),
+          lt(majorEvents.startDate, threeMonthsFromNow),
+          gt(majorEvents.endDate, today),
+          lt(majorEvents.endDate, threeMonthsFromNow)
+        )
+      )
+      .orderBy(asc(majorEvents.startDate))
+      .limit(6)
+      .execute()
+      .catch((e) => {
+        console.log("Error in getting special Events");
+      });
+    return events;
   };
 }

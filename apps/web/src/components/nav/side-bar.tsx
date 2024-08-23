@@ -148,7 +148,7 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
               {course?.supportsWaitlist ? (
                 <NavItem
                   href={`/${courseId}/notify-me`}
-                  text="Notify Me"
+                  text="Waitlist"
                   icon={<Megaphone className="w-[16px]" />}
                   className="border-t border-stroke-secondary p-2 md:p-4"
                   onClick={toggleSidebar}
