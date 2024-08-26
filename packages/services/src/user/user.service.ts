@@ -860,11 +860,49 @@ export class UserService {
       // throw new Error("User not found");
       return;
     }
+
     if (!user.email) {
       this.logger.warn(`User email does not exists: ${handleOrEmail}`);
       // throw new Error("User does not have an email");
       return;
     }
+
+    const [accountData] = await this.database
+      .select()
+      .from(accounts)
+      .where(and(eq(accounts.userId, user.id), eq(accounts.provider, 'google')))
+      .execute()
+
+    const emailParam = {
+      CustomerFirstName: user.name?.split(" ")[0],
+      EMail: user.email,
+      CourseLogoURL,
+      CourseURL,
+      CourseName,
+      HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+    };
+
+    const templateId = process.env.SENDGRID_FORGOT_PASSWORD_AUTH_USER_TEMPLATE_ID;
+
+    if (!templateId) {
+      this.logger.error("Missing SendGrid template ID for forgot password email.");
+      throw new Error("Missing email template ID");
+    }
+
+    if (accountData) {
+      await this.notificationsService
+        .sendEmail(
+          user.email,
+          "Reset Password",
+          "Since you signed in using google , we cannot reset your password from our end. Please use google to sign in."
+        )
+        .catch((err) => {
+          this.logger.error(`Error sending email: ${err}`);
+          throw new Error("Error sending email");
+        });
+    }
+
+
     if (!user.emailVerified) {
       this.logger.warn(`User email not verified: ${handleOrEmail}`);
       // throw new Error("User email not verified");
@@ -1287,15 +1325,15 @@ export class UserService {
     const { user, profileImage, bannerImage } = data;
     const profilePicture = profileImage
       ? assetToURL({
-          key: profileImage.assetKey,
-          extension: profileImage.assetExtension,
-        })
+        key: profileImage.assetKey,
+        extension: profileImage.assetExtension,
+      })
       : "/defaults/default-profile.webp";
     const bannerPicture = bannerImage
       ? assetToURL({
-          key: bannerImage.assetKey,
-          extension: bannerImage.assetExtension,
-        })
+        key: bannerImage.assetKey,
+        extension: bannerImage.assetExtension,
+      })
       : "/defaults/default-banner.webp";
     let res;
 
