@@ -1,6 +1,6 @@
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 import { relations, sql } from "drizzle-orm";
-import { boolean, datetime, double, index, int, text, varchar } from "drizzle-orm/mysql-core";
+import { boolean, datetime, double, index, int, text, tinyint, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 import { assets } from "./assets";
 import { courseAssets } from "./courseAssets";
@@ -51,6 +51,8 @@ export const courses = mySqlTable(
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
     websiteURL: varchar("websiteURL", { length: 255 }).default("https://www.golfdistrict.com/").notNull(),
+    maxRoundsPerPeriod: tinyint("maxRoundsPerPeriod"),
+    maxBookingsPerPeriod: tinyint("maxBookingsPerPeriod"),
   },
   (table) => {
     return {

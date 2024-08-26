@@ -9,7 +9,8 @@ import { useCheckoutContext } from "~/contexts/CheckoutContext";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
-import type { CartProduct } from "~/utils/types";
+import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
+import type { CartProduct, MaxReservationResponse } from "~/utils/types";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { toast } from "react-toastify";
@@ -17,7 +18,6 @@ import { FilledButton } from "../buttons/filled-button";
 import { CharitySelect } from "../input/charity-select";
 import { Input } from "../input/input";
 import styles from "./checkout.module.css";
-import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
 
 export const CheckoutForm = ({
   isBuyNowAuction,
@@ -27,6 +27,7 @@ export const CheckoutForm = ({
   teeTimeDate,
   listingId,
   playerCount,
+  maxReservation,
 }: {
   isBuyNowAuction: boolean;
   teeTimeId: string;
@@ -35,6 +36,7 @@ export const CheckoutForm = ({
   teeTimeDate: string | undefined;
   listingId: string;
   playerCount: string | undefined;
+  maxReservation: MaxReservationResponse;
 }) => {
   const MAX_CHARITY_AMOUNT = 1000;
   const { course } = useCourseContext();
@@ -198,8 +200,8 @@ export const CheckoutForm = ({
     return () => {
       clearTimeout(timer);
       setIsLoading(false);
-    }
-  },[]);
+    };
+  }, []);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     googleAnalyticsEvent({
@@ -207,10 +209,17 @@ export const CheckoutForm = ({
       category: "TEE TIME PURCHASE",
       label: "User clicked on pay now to do payment",
       value: "",
-    })
+    });
     e.preventDefault();
     void logAudit();
     setIsLoading(true);
+    if (!maxReservation?.success) {
+      // toast.error(maxReservation?.message);
+      setIsLoading(false);
+      setMessage(maxReservation?.message ?? "");
+      return;
+    }
+
     if (listingId.length) {
       const isTeeTimeAvailable = await refetchCheckTeeTime();
       if (!isTeeTimeAvailable.data) {
@@ -506,6 +515,12 @@ export const CheckoutForm = ({
       <LoadingContainer isLoading={isLoading}>
         <div></div>
       </LoadingContainer>
+
+      {!maxReservation?.success && (
+        <div className="md:hidden bg-alert-red text-white p-1 pl-2 my-2  w-full rounded">
+          {maxReservation?.message}
+        </div>
+      )}
 
       <FilledButton
         className={`w-full rounded-full`}

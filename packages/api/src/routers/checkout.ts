@@ -47,4 +47,17 @@ export const checkoutRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       return await ctx.serviceFactory.getHyperSwitchService().removePaymentMethod(input.paymentMethodId);
     }),
+
+  checkMaxReservationsAndMaxRounds: protectedProcedure
+    .input(
+      z.object({
+        roundsToBook: z.number(),
+        courseId: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return await ctx.serviceFactory
+        .getCheckoutService()
+        .checkMaxReservationsAndMaxRounds(ctx.session.user.id, input.roundsToBook, input.courseId);
+    }),
 });
