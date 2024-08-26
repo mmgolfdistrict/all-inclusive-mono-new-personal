@@ -144,8 +144,8 @@ export class UserService {
       this.logger.warn(`Handle already exists: ${data.handle}`);
       return {
         error: true,
-        message: "Handle already exists."
-      }
+        message: "Handle already exists.",
+      };
     }
     if (isValidPassword(data.password).score < 8) {
       this.logger.warn("Invalid password");
@@ -180,7 +180,10 @@ export class UserService {
     if (existingUserWithEmail) {
       if (existingUserWithEmail.email == data.email) {
         this.logger.warn(`Email already exists: ${data.email}`);
-        throw new Error("Email already exists");
+        return {
+          error: true,
+          message: "Email already exists",
+        };
       }
     }
     const verificationToken = randomBytes(32).toString("hex");

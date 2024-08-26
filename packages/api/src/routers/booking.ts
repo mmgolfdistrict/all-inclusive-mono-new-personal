@@ -129,7 +129,7 @@ export const bookingRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       return ctx.serviceFactory
         .getBookingService()
-        .getOwnedBookingsForTeeTime(input.ownerId ?? ctx.session.user.id, input.teeTimeId);
+        .getOwnedBookingsForTeeTime(input?.ownerId ?? ctx?.session?.user?.id, input.teeTimeId);
     }),
 
   getOwnedBookingById: protectedProcedure
