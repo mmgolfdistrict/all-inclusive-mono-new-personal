@@ -7,6 +7,7 @@ import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
 import { formatMoney, formatTime, getTime } from "~/utils/formatters";
+import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
@@ -22,7 +23,6 @@ import { ChoosePlayers } from "../input/choose-players";
 import { ManageTeeTimeListing } from "../my-tee-box-page/manage-tee-time-listing";
 import { Tooltip } from "../tooltip";
 import { MakeAnOffer } from "../watchlist-page/make-an-offer";
-import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
 
 const PlayersOptions = ["1", "2", "3", "4"];
 const DEFAULT_SILHOUETTE_IMAGE = "/defaults/default-profile.webp";
@@ -151,14 +151,10 @@ export const TeeTime = ({
       setOptimisticLike(!optimisticLike);
     } catch (error) {
       toast.error((error as Error)?.message ?? "Error adding to watchlist");
-      console.log(error);
     }
   };
   const buyTeeTime = async () => {
     // const isTeeTimeAvailable = await refetchCheckTeeTime();
-    // console.log("isTeeTimeAvailable");
-    // console.log(isTeeTimeAvailable);
-
     // if (!isTeeTimeAvailable.data && status === "SECOND_HAND") {
     //   toast.error("Oops! Tee time is not available anymore");
     //   return;
@@ -169,7 +165,7 @@ export const TeeTime = ({
       category: "TEE TIME ",
       label: "user clicked on buy to purchase tee time",
       value: "",
-    })
+    });
 
     if (handleLoading) {
       handleLoading(true);
@@ -259,8 +255,9 @@ export const TeeTime = ({
         data-test={
           status === "SECOND_HAND" ? "secondary_listed" : "primary_listed"
         }
-        className={`md:rounded-xl rounded-lg bg-secondary-white w-fit min-w-[230px] md:min-w-[265px] ${className ?? ""
-          }`}
+        className={`md:rounded-xl rounded-lg bg-secondary-white w-fit min-w-[230px] md:min-w-[265px] ${
+          className ?? ""
+        }`}
       >
         <div className="border-b border-stroke">
           <div className="flex justify-between py-1 px-2 md:px-3 md:p-3 items-center">

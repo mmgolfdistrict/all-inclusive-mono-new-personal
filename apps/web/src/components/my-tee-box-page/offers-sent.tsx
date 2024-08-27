@@ -59,7 +59,6 @@ export const OffersSent = () => {
   const [selectedOffer, setSelectedOffer] = useState<OfferSentType | undefined>(
     undefined
   );
-  console.log(data);
   useEffect(() => {
     if (!isCancelOfferOpen && !isManageOfferOpen) {
       setSelectedOffer(undefined);

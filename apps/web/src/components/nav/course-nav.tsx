@@ -51,8 +51,6 @@ export const CourseNav = () => {
     userEmail: session?.data?.user.email ?? "",
   });
 
-  console.log("isUserBlocked", isUserBlocked);
-
   const auditLog = api.webhooks.auditLog.useMutation();
 
   const logAudit = (func: () => any) => {
@@ -71,9 +69,7 @@ export const CourseNav = () => {
           func();
         }
       })
-      .catch((err) => {
-        console.log(err);
-      });
+      .catch((err) => {});
   };
 
   useEffect(() => {

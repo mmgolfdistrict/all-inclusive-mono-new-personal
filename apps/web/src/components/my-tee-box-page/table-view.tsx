@@ -50,9 +50,7 @@ export const TableView = () => {
         courseId: courseId,
       });
       await refetch();
-    } catch (error) {
-      console.log(error);
-    }
+    } catch (error) {}
   };
 
   return (
