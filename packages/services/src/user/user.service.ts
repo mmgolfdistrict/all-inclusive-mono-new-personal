@@ -870,7 +870,7 @@ export class UserService {
     const [accountData] = await this.database
       .select()
       .from(accounts)
-      .where(and(eq(accounts.userId, user.id), eq(accounts.provider, 'google')))
+      .where(and(eq(accounts.userId, user.id)))
       .execute()
 
     const emailParam = {
@@ -894,7 +894,7 @@ export class UserService {
         .sendEmail(
           user.email,
           "Reset Password",
-          "Since you signed in using google , we cannot reset your password from our end. Please use google to sign in."
+          `Since you signed in using ${accountData?.provider} , we cannot reset your password from our end. Please use ${accountData?.provider} to sign in.`
         )
         .catch((err) => {
           this.logger.error(`Error sending email: ${err}`);
