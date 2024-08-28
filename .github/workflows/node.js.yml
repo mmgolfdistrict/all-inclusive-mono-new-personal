@@ -76,3 +76,26 @@ jobs:
       - name: Deploy Project Artifacts to Vercel
         run: vercel deploy --prebuilt --prod --token=${{ secrets.PROD_VERCEL_TOKEN }}
         id: deploy
+
+  stage-odd:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/stage-odd'
+    environment:
+      name: stage-odd
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.STAGE_ODD_VERCEL_PROJECT_ID }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+      - name: Test build
+        run: npm i && npm run build
+      - name: Pull Vercel Environment Information
+        run: vercel pull --yes --environment=production --token=${{ secrets.NON_PROD_VERCEL_TOKEN }}
+      - name: Build Project Artifacts
+        run: vercel build --prod --token=${{ secrets.NON_PROD_VERCEL_TOKEN }}
+      - name: Deploy Project Artifacts to Vercel
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.NON_PROD_VERCEL_TOKEN }}
+        id: deploy
