@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - pre-production
+      - club-prophet-mergeing-main
 
 jobs:
   Deploy-pre-prod:
