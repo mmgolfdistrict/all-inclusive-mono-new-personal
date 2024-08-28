@@ -18,7 +18,6 @@
     "clean:workspaces": "turbo clean",
     "compile": "turbo run compile",
     "dev": "dotenv -- turbo dev --parallel --filter=golf-district-platforms",
-    "dev:admin": "dotenv -- turbo dev --parallel --filter=golf-district-admin",
     "dev:tunnel": "dotenv -- turbo dev --parallel",
     "devbuild": "( export QSTASH_CURRENT_SIGNING_KEY='sig_XYZ' && export QSTASH_NEXT_SIGNING_KEY='sig_XYZ' && turbo run build )",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,md,css}\"",
