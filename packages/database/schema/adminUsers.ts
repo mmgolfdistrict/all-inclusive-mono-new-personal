@@ -1,19 +1,13 @@
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 import { relations, sql } from "drizzle-orm";
-import {
-  boolean,
-  index,
-  timestamp,
-  varchar,
-} from "drizzle-orm/mysql-core";
+import { boolean, index, timestamp, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 import { courses } from "./courses";
-
 
 export const adminUsers = mySqlTable(
   "adminUser",
   {
-    id: varchar("id", { length: 36 }).notNull(),
+    id: varchar("id", { length: 36 }).notNull().primaryKey(),
     cognitoId: varchar("cognitoId", { length: 36 }).notNull(),
     name: varchar("name", { length: 191 }),
     firstname: varchar("firstname", { length: 191 }),
