@@ -80,7 +80,7 @@ jobs:
 
   stage-odd:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/stage-odd'
+    if: github.ref == 'refs/heads/club-prophet-mergeing-main'
     environment:
       name: stage-odd
     env:
