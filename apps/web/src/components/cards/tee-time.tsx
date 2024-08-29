@@ -23,6 +23,7 @@ import { ManageTeeTimeListing } from "../my-tee-box-page/manage-tee-time-listing
 import { Tooltip } from "../tooltip";
 import { MakeAnOffer } from "../watchlist-page/make-an-offer";
 import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
+import { microsoftClarityEvent } from "~/utils/microsoftClarityUtils";
 
 const PlayersOptions = ["1", "2", "3", "4"];
 const DEFAULT_SILHOUETTE_IMAGE = "/defaults/default-profile.webp";
@@ -90,6 +91,7 @@ export const TeeTime = ({
   const { data: session } = useSession();
   const [isManageOpen, setIsManageOpen] = useState<boolean>(false);
   const { user } = useUserContext();
+  const router = useRouter();
   const auditLog = api.webhooks.auditLog.useMutation();
   const logAudit = async () => {
     await auditLog.mutateAsync({
@@ -124,7 +126,6 @@ export const TeeTime = ({
       document.body.classList.remove("overflow-hidden");
     }
   }, [isMakeAnOfferOpen, isManageOpen]);
-  const router = useRouter();
   const { setPrevPath } = useAppContext();
 
   const toggleWatchlist = api.watchlist.toggleWatchlist.useMutation();
@@ -154,6 +155,10 @@ export const TeeTime = ({
       console.log(error);
     }
   };
+  const fullUrl = window.location.href;
+  const url = new URL(fullUrl);
+  const pathname = url.pathname;
+  
   const buyTeeTime = async () => {
     // const isTeeTimeAvailable = await refetchCheckTeeTime();
     // console.log("isTeeTimeAvailable");
@@ -164,6 +169,12 @@ export const TeeTime = ({
     //   return;
     // }
     await logAudit();
+    microsoftClarityEvent({
+      action: `CLICKED ON BUY`,
+      category: "BUY TEE TIME",
+      label: "user clicked on buy to purchase tee time",
+      value: pathname,
+    })
     googleAnalyticsEvent({
       action: `CLICKED ON BUY`,
       category: "TEE TIME ",
