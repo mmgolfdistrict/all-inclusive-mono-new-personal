@@ -2664,7 +2664,7 @@ export class BookingService {
           terminalId: 0,
           bookingTypeId: 311,
           rateCode: "sticks",
-          price: [primaryGreenFeeCharge / 100 + taxCharge - markupCharge],
+          // price: [primaryGreenFeeCharge / 100 + taxCharge - markupCharge],
         };
       }
 

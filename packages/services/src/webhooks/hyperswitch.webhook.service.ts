@@ -941,7 +941,7 @@ export class HyperSwitchWebhookService {
             terminalId: 0,
             bookingTypeId: 311,
             rateCode: "sticks",
-            price: [totalAmount * (listedSlotsCount ?? 1)],
+            // price: [totalAmount * (listedSlotsCount ?? 1)],
           };
         }
 
@@ -1045,7 +1045,7 @@ export class HyperSwitchWebhookService {
             terminalId: 0,
             bookingTypeId: 311,
             rateCode: "sticks",
-            price: [totalAmount * (listedBooking.length - listedSlotsCount)],
+            // price: [totalAmount * (listedBooking.length - listedSlotsCount)],
           };
         }
 
