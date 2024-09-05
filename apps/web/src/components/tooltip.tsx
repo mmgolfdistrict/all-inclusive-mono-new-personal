@@ -1,4 +1,5 @@
 import * as RadixTooltip from "@radix-ui/react-tooltip";
+import { useState } from "react";
 import { type ReactNode } from "react";
 
 export const Tooltip = ({
@@ -12,16 +13,32 @@ export const Tooltip = ({
   className?: string;
   isDisabled?: boolean;
 }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleTouchStart = () => {
+    if (!isDisabled) {
+      setIsOpen(!isOpen);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (isOpen) {
+      setIsOpen(false);
+    }
+  };
+
   return (
     <>
       {isDisabled ? (
         <>{trigger}</>
       ) : (
         <RadixTooltip.Provider>
-          <RadixTooltip.Root delayDuration={0}>
+          <RadixTooltip.Root open={isOpen} onOpenChange={setIsOpen} delayDuration={0}>
             <RadixTooltip.Trigger
               className={`${className ?? ""}`}
               data-testid="trigger-button-id"
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
             >
               {trigger}
             </RadixTooltip.Trigger>
@@ -29,6 +46,7 @@ export const Tooltip = ({
               <RadixTooltip.Content
                 className="rounded-md max-w-[15rem] md:max-w-[30rem] border relative z-50 border-stroke bg-white px-4 py-2 text-sm shadow-lg"
                 sideOffset={5}
+                onClick={() => setIsOpen(false)} // Close tooltip on click
               >
                 {content}
                 <RadixTooltip.Arrow className=" fill-white" />
