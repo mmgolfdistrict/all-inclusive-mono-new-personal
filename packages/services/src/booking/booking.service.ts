@@ -2572,7 +2572,15 @@ export class BookingService {
         provider,
         token
       );
-
+      let details = await appSettingService.get("TEE_SHEET_BOOKING_MESSAGE");
+      try {
+        const isSensibleNoteAvailable = await appSettingService.get("SENSIBLE_NOTE_TO_TEE_SHEET");
+        if (weatherQuoteId && isSensibleNoteAvailable) {
+          details = `${details}: ${isSensibleNoteAvailable}`;
+        }
+      } catch (e) {
+        console.log("ERROR in getting appsetting SENSIBLE_NOTE_TO_TEE_SHEET");
+      }
       if (teeTime.internalId === "fore-up") {
         if (!providerCustomer?.playerNumber) {
           this.logger.error(`Error creating customer`);
@@ -2595,15 +2603,7 @@ export class BookingService {
         console.log(
           `Creating booking ${teeTime.providerDate}, ${teeTime.holes}, ${playerCount}, ${teeTime.providerCourseId}, ${teeTime.providerTeeSheetId}, ${token}`
         );
-        let details = await appSettingService.get("TEE_SHEET_BOOKING_MESSAGE");
-        try {
-          const isSensibleNoteAvailable = await appSettingService.get("SENSIBLE_NOTE_TO_TEE_SHEET");
-          if (weatherQuoteId && isSensibleNoteAvailable) {
-            details = `${details}: ${isSensibleNoteAvailable}`;
-          }
-        } catch (e) {
-          console.log("ERROR in getting appsetting SENSIBLE_NOTE_TO_TEE_SHEET");
-        }
+
         bookingData = {
           totalAmountPaid: primaryGreenFeeCharge / 100 + taxCharge - markupCharge,
           data: {
@@ -2659,7 +2659,7 @@ export class BookingService {
           email: user.email,
           phone: user.phone,
           players: playerCount,
-          notes: "GD Booking",
+          notes: details,
           pskUserId: 0,
           terminalId: 0,
           bookingTypeId: 311,
