@@ -41,8 +41,8 @@ export const CheckoutForm = ({
   const courseId = course?.id;
   const { user } = useUserContext();
   const auditLog = api.webhooks.auditLog.useMutation();
-  const cancelHyperswitchPaymentById =
-    api.webhooks.cancelHyperswitchPaymentById.useMutation();
+  const sendEmailForFailedPayment =
+    api.webhooks.sendEmailForFailedPayment.useMutation();
 
   const { refetch: refetchCheckTeeTime } =
     api.teeBox.checkIfTeeTimeStillListedByListingId.useQuery(
@@ -265,7 +265,7 @@ export const CheckoutForm = ({
     try {
       if (response) {
         if (response.status === "processing") {
-          void cancelHyperswitchPaymentById.mutateAsync({
+          void sendEmailForFailedPayment.mutateAsync({
             paymentId: response?.payment_id as string,
           });
           setMessage(
