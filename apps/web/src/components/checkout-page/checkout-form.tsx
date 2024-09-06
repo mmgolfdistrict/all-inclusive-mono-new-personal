@@ -18,6 +18,7 @@ import { CharitySelect } from "../input/charity-select";
 import { Input } from "../input/input";
 import styles from "./checkout.module.css";
 import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
+import { OutlineButton } from "../buttons/outline-button";
 
 export const CheckoutForm = ({
   isBuyNowAuction,
@@ -39,6 +40,8 @@ export const CheckoutForm = ({
   const MAX_CHARITY_AMOUNT = 1000;
   const { course } = useCourseContext();
   const courseId = course?.id;
+  const roundUpCharityId = course?.roundUpCharityId
+
   const { user } = useUserContext();
   const auditLog = api.webhooks.auditLog.useMutation();
   const cancelHyperswitchPaymentById =
@@ -128,8 +131,10 @@ export const CheckoutForm = ({
   const widgets = useWidgets();
 
   const router = useRouter();
-
+  const [donateValue, setDonateValue] = useState(5)
+  const [roundOffClick, setRoundOffClick] = useState(false)
   const [isLoading, setIsLoading] = useState(false);
+  const [showTextField, setShowTextField] = useState(false);
   // const [isPaymentCompleted, setIsPaymentCompleted] = useState(false);
   const [message, setMessage] = useState("");
   const [charityAmountError, setCharityAmountError] = useState("");
@@ -199,9 +204,11 @@ export const CheckoutForm = ({
       clearTimeout(timer);
       setIsLoading(false);
     }
-  },[]);
+  }, []);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    console.log("clicked");
+
     googleAnalyticsEvent({
       action: `PAY NOW CLICKED`,
       category: "TEE TIME PURCHASE",
@@ -376,6 +383,36 @@ export const CheckoutForm = ({
     return bookingResponse;
   };
 
+  let Total =
+    primaryGreenFeeCharge +
+    taxCharge +
+    sensibleCharge +
+    charityCharge +
+    convenienceCharge
+
+  const handleDonateChange = (event) => {
+    console.log("ksfkj", event.target.value);
+    if (!event.target.value.length) {
+      setDonateValue(1)
+    } else {
+      if (event.target.value >= 1) {
+        setDonateValue(event.target.value)
+      }
+    }
+
+  };
+
+  const TotalAmt = Total.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
+  const roundOff = Math.ceil(Total)
+  const handleRoundOff = () => {
+    setRoundOffClick(true)
+    const donation = roundOff - Total
+    setDonateValue(donation)
+  }
+
   return (
     <form onSubmit={handleSubmit} className="">
       <UnifiedCheckout id="unified-checkout" options={unifiedCheckoutOptions} />
@@ -487,27 +524,72 @@ export const CheckoutForm = ({
           </div>
         </div>
         <div className="flex justify-between">
+          <div>Charitable Donation</div>
+          <div>
+            $
+            {donateValue}
+          </div>
+        </div>
+        <div className="flex justify-between">
           <div>Total</div>
           <div>
             $
-            {(
-              primaryGreenFeeCharge +
-              taxCharge +
-              sensibleCharge +
-              charityCharge +
-              convenienceCharge
-            ).toLocaleString("en-US", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
+            {
+              roundOffClick ?
+                TotalAmt :
+                roundOff
+            }
+
           </div>
         </div>
       </div>
-      <LoadingContainer isLoading={isLoading}>
-        <div></div>
-      </LoadingContainer>
+      <div className="flex w-full flex-col gap-2 bg-white p-4 rounded-lg my-2">
+        <div>Golf District supports PGA 401k.</div>
+        <div>Please help us the golf professionals retire peacefully.</div>
+        <div className="flex gap-2 mt-5 ml-3 mb-4">
+          {roundUpCharityId && (
+            <FilledButton
+              type="button"
+              className={`w-32 rounded-md`}
+              onClick={handleRoundOff}
+            >
+              Round Up
+            </FilledButton>
+          )}
+          <OutlineButton
+            type="button"
+            className="w-24 rounded-md flex items-center justify-center gap-2"
+            onClick={() => {
+              setShowTextField(true);
+            }}
+          >
+            Other
+          </OutlineButton>
+
+          <button
+            type="button"
+            className={`flex w-32 items-center justify-center rounded-full bg-white p-2 text-primary border-none`}
+            onClick={() => {
+              setShowTextField(false);
+            }}
+          >
+            No Thanks
+          </button>
+        </div>
+        {showTextField && (
+          <input
+            type="text"
+            placeholder="Enter Donation Amount"
+            value={donateValue}
+            onChange={handleDonateChange}
+            className="p-2 border border-primary rounded-md"
+          />
+        )}
+      </div>
+
 
       <FilledButton
+        type="submit"
         className={`w-full rounded-full`}
         disabled={
           isLoading || !hyper || !widgets || message === "Payment Successful"
@@ -516,6 +598,9 @@ export const CheckoutForm = ({
       >
         {isLoading ? "Processing..." : <>Pay Now</>}
       </FilledButton>
+      <LoadingContainer isLoading={isLoading}>
+        <div></div>
+      </LoadingContainer>
       {/* Show any error or success messages */}
       {message && (
         <div id="payment-message" className={styles.paymentMessage}>

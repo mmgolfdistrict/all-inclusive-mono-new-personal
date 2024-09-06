@@ -51,6 +51,7 @@ export const courses = mySqlTable(
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
     websiteURL: varchar("websiteURL", { length: 255 }).default("https://www.golfdistrict.com/").notNull(),
+    roundUpCharityId: varchar("roundUpCharityId", { length: 191 })
   },
   (table) => {
     return {

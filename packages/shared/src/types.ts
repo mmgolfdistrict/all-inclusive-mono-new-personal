@@ -93,6 +93,7 @@ export type FullCourseType = {
   sellerFee?: number;
   buyerFee?: number;
   furthestDayToBook?: number;
+  roundUpCharityId?: string
 };
 
 export type SupportedCharity = {
