@@ -933,7 +933,6 @@ export class SearchService {
         filteredDate.push(el);
         return;
       } else {
-        console.log("date===>", date, dayjs(el.toDayFormatted), dayjs(el.fromDayFormatted));
       }
     });
     const markupFeesFinal = filteredDate.length
