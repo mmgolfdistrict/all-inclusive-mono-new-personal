@@ -27,6 +27,7 @@ export default function ManangeProfile({
     (status !== "loading" && userId !== data?.user.id)
   ) {
     router.push(`/${courseId}`);
+    return;
   }
 
   return (
