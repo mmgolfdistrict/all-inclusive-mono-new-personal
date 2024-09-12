@@ -246,6 +246,19 @@ export class HyperSwitchService {
     }
   };
 
+  sendEmailForFailedPayment = async (paymentMethodId: string) => {
+    const adminEmail: string = process.env.ADMIN_EMAIL_LIST || "nara@golfdistrict.com";
+    const emailAterSplit = adminEmail.split(",");
+    emailAterSplit.map(async (email) => {
+      await this.notificationService.sendEmail(
+        email,
+        "A payment has failed ",
+        `payment with paymentid ${paymentMethodId} failed`
+      );
+    });
+    return { status: "success" };
+  };
+
   cancelHyperswitchPaymentById = async (paymentMethodId: string) => {
     const options = {
       method: "POST",

@@ -31,6 +31,7 @@ import { type ProviderService } from "../tee-sheet-provider/providers.service";
 import type { Forecast } from "../weather/types";
 import type { WeatherService } from "../weather/weather.service";
 import { majorEvents } from "@golf-district/database/schema/majorEvents";
+import type { LoggerService } from "../webhooks/logging.service";
 
 dayjs.extend(UTC);
 
@@ -113,7 +114,8 @@ export class SearchService {
   constructor(
     private readonly database: Db,
     private readonly weatherService: WeatherService,
-    private readonly providerService: ProviderService
+    private readonly providerService: ProviderService,
+    private readonly loggerService: LoggerService
   ) {}
 
   findBlackoutDates = async (courseId: string): Promise<Day[]> => {
@@ -875,6 +877,7 @@ export class SearchService {
           : asc(teeTimes.time)
       )
       .limit(limit);
+
     const courseData = await this.database
       .select({
         buyerFee: courses.buyerFee,
@@ -885,7 +888,16 @@ export class SearchService {
       .from(courses)
       .where(eq(courses.id, courseId))
       .execute()
-      .catch(() => {});
+      .catch(async () => {
+        await this.loggerService.errorLog({
+          userId: _userId ?? "",
+          url: `/${courseId}`,
+          userAgent: "",
+          message: "ERROR_RETRIEVING_COURSE_DATA",
+          stackTrace: `Error retrieving course data where courseId: ${courseId}, date: ${date}, minDate:${minDate}, maxDate:${maxDate}, startTime:${startTime}, endTime:${endTime}, holes:${holes}, golfers:${golfers}`,
+          additionalDetailsJSON: "Error retrieving course data",
+        });
+      });
     let buyerFee = 0;
     let courseDataIfAvailable: any = {};
     if (courseData?.length) {
@@ -893,7 +905,15 @@ export class SearchService {
       courseDataIfAvailable = courseData[0];
     }
 
-    const teeTimesData = await teeQuery.execute().catch((err) => {
+    const teeTimesData = await teeQuery.execute().catch(async (err) => {
+      await this.loggerService.errorLog({
+        userId: _userId ?? "",
+        url: `/${courseId}`,
+        userAgent: "",
+        message: "ERROR_GETTING_TEE_TIMES",
+        stackTrace: `Error retrieving tee times where courseId: ${courseId}, date: ${date}, minDate:${minDate}, maxDate:${maxDate}, startTime:${startTime}, endTime:${endTime}, holes:${holes}, golfers:${golfers}`,
+        additionalDetailsJSON: `Error getting tee times for ${date}: ${err}`,
+      });
       this.logger.error(err);
       throw new Error(`Error getting tee times for ${date}: ${err}`);
     });
@@ -913,7 +933,6 @@ export class SearchService {
         filteredDate.push(el);
         return;
       } else {
-        console.log("date===>", date, dayjs(el.toDayFormatted), dayjs(el.fromDayFormatted));
       }
     });
     const markupFeesFinal = filteredDate.length
@@ -996,7 +1015,15 @@ export class SearchService {
           : asc(teeTimes.time)
       );
     // .limit(limit);
-    const secoondHandData = await secondHandBookingsQuery.execute().catch((err) => {
+    const secoondHandData = await secondHandBookingsQuery.execute().catch(async (err) => {
+      await this.loggerService.errorLog({
+        userId: _userId ?? "",
+        url: `/${courseId}`,
+        userAgent: "",
+        message: "ERROR_GETTING_SECOND_HAND_TEE_TIMES",
+        stackTrace: `Error retrieving second hand tee times where courseId: ${courseId}, date: ${date}, minDate:${minDate}, maxDate:${maxDate}, startTime:${startTime}, endTime:${endTime}, holes:${holes}, golfers:${golfers}`,
+        additionalDetailsJSON: `Error getting second hand tee times for ${date}: ${err}`,
+      });
       this.logger.error(err);
       throw new Error(`Error getting second hand tee times for ${date}: ${err}`);
     });
