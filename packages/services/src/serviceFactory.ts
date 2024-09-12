@@ -103,7 +103,12 @@ export class ServiceFactory {
    * @returns An instance of SearchService.
    */
   getSearchService = (): SearchService => {
-    return new SearchService(this.config.database, this.getWeatherService(), this.getProviderService());
+    return new SearchService(
+      this.config.database,
+      this.getWeatherService(),
+      this.getProviderService(),
+      this.getLoggerService()
+    );
   };
 
   /**

@@ -356,6 +356,7 @@ export const ListTeeTime = ({
                       dataTestId="player-item-id"
                       dataQa={value}
                       value={value}
+                      label={value}
                       className={`${
                         index === 0
                           ? "rounded-l-full border border-stroke"
