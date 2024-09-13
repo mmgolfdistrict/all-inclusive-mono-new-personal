@@ -139,7 +139,7 @@ export class AuthService extends CacheService {
       if (signInAttempts >= 3) {
         this.logger.warn(`Suspicious activity detected`);
         await this.notificationService.sendEmail(
-          data.user.id,
+          data.user.email ?? "",
           "Suspicious activity detected",
           `We have detected suspicious activity on your account. If you are not the one attempting to login, please contact support immediately.`
         );
