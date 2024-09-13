@@ -29,7 +29,10 @@ export const ConnectAccount = ({ userId }: { userId: string }) => {
       await signIn("google", {
         callbackUrl: `${window.location.origin}${pathname}`,
       });
-    } catch (error) {}
+    } catch (error) {
+      console.log("error", error);
+
+    }
   };
 
   const hasProvidersSetUp =
@@ -51,7 +54,7 @@ export const ConnectAccount = ({ userId }: { userId: string }) => {
       ) : (
         <>
           {data?.some((provider) => provider !== "google") ? null : process.env
-              .NEXT_PUBLIC_GOOGLE_CLIENT_ID ? (
+            .NEXT_PUBLIC_GOOGLE_CLIENT_ID ? (
             <div className="w-full rounded-lg shadow-outline">
               <SquareButton
                 onClick={googleConnect}
@@ -64,7 +67,7 @@ export const ConnectAccount = ({ userId }: { userId: string }) => {
             </div>
           ) : null}
           {data?.some((provider) => provider === "apple") ? null : process.env
-              .NEXT_PUBLIC_APPLE_ID ? (
+            .NEXT_PUBLIC_APPLE_ID ? (
             <SquareButton
               onClick={appleConnect}
               className="flex items-center justify-center gap-3 bg-black text-white"
@@ -75,7 +78,7 @@ export const ConnectAccount = ({ userId }: { userId: string }) => {
             </SquareButton>
           ) : null}
           {data?.some((provider) => provider === "facebook") ? null : process
-              .env.NEXT_PUBLIC_FACEBOOK_CLIENT_ID ? (
+            .env.NEXT_PUBLIC_FACEBOOK_CLIENT_ID ? (
             <SquareButton
               onClick={facebookConnect}
               className="flex items-center justify-center gap-3 bg-facebook text-white"

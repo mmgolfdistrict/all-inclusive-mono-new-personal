@@ -74,7 +74,9 @@ export default function CourseHomePage() {
         handle: uName,
         courseId,
       });
-    } catch (error) {}
+    } catch (error) {
+      console.log("error", error);
+    }
   };
   console.log("courseId", courseId);
 

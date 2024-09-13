@@ -69,13 +69,12 @@ export default function Login() {
     if (sessionData?.user?.id && course?.id && status === "authenticated") {
       logAudit(sessionData.user.id, course.id, () => {
         window.location.reload();
-        window.location.href = `${window.location.origin}${
-          GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
-            ? prevPath?.path
-              ? prevPath.path
-              : "/"
+        window.location.href = `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+          ? prevPath?.path
+            ? prevPath.path
             : "/"
-        }`;
+          : "/"
+          }`;
       });
     }
   }, [sessionData, course, status]);
@@ -96,7 +95,9 @@ export default function Login() {
           func();
         }
       })
-      .catch((err) => {});
+      .catch((err) => {
+        console.log("error", err);
+      });
   };
 
   useEffect(() => {
@@ -144,13 +145,12 @@ export default function Login() {
     });
     try {
       recaptchaRef.current?.reset();
-      const callbackURL = `${window.location.origin}${
-        GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
-          ? prevPath?.path
-            ? prevPath.path
-            : "/"
+      const callbackURL = `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+        ? prevPath?.path
+          ? prevPath.path
           : "/"
-      }`;
+        : "/"
+        }`;
       const res = await signIn("credentials", {
         // callbackUrl: callbackURL,
         redirect: false,
@@ -174,7 +174,7 @@ export default function Login() {
     } catch (error) {
       toast.error(
         (error as Error)?.message ??
-          "An error occurred logging in, try another option."
+        "An error occurred logging in, try another option."
       );
     } finally {
       setIsLoading(false);
@@ -203,26 +203,24 @@ export default function Login() {
 
   const facebookSignIn = async () => {
     await signIn("facebook", {
-      callbackUrl: `${window.location.origin}${
-        GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
-          ? prevPath?.path
-            ? prevPath.path
-            : "/"
+      callbackUrl: `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+        ? prevPath?.path
+          ? prevPath.path
           : "/"
-      }`,
+        : "/"
+        }`,
       redirect: true,
     });
   };
 
   const appleSignIn = async () => {
     await signIn("apple", {
-      callbackUrl: `${window.location.origin}${
-        GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
-          ? prevPath?.path
-            ? prevPath.path
-            : "/"
+      callbackUrl: `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+        ? prevPath?.path
+          ? prevPath.path
           : "/"
-      }`,
+        : "/"
+        }`,
       redirect: true,
     });
   };
@@ -245,7 +243,9 @@ export default function Login() {
         // }`,
         redirect: false,
       });
-    } catch (error) {}
+    } catch (error) {
+      console.log("error", error);
+    }
   };
 
   const hasProvidersSetUp =
