@@ -550,7 +550,7 @@ export default function CourseHomePage() {
                       setError={(e: string | null) => {
                         setError(e);
                       }}
-                      courseException={getCourseException(date)}
+                      courseException={getCourseException(date as string)}
                       key={idx}
                       date={date}
                       minDate={utcStartDate.toString()}
