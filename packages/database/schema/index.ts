@@ -47,6 +47,8 @@ import * as users from "./users";
 import * as userWaitlists from "./userWaitlists";
 import * as verificationTokens from "./verificationTokens";
 import * as withdrawals from "./withdrawals";
+import * as adminUsers from "./adminUsers";
+import * as adminUserCourse from "./adminUserCourse";
 
 export const schema = {
   ...accounts,
@@ -98,4 +100,6 @@ export const schema = {
   ...courseMarkup,
   ...nums,
   ...majorEvents,
+  ...adminUsers,
+  ...adminUserCourse
 };
