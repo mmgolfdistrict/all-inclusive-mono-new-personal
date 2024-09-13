@@ -127,7 +127,9 @@ export default function Checkout({
         promoData.type
       );
       setPromoCodePrice(ratedPrice);
-    } catch (error) {}
+    } catch (error) {
+      console.log("error", error);
+    }
   };
 
   useEffect(() => {
@@ -156,14 +158,14 @@ export default function Checkout({
       | TaxProduct =
       saleType === "first_hand"
         ? {
-            type: "first_hand",
-            tee_time_id: teeTimeId,
-            number_of_bookings: amountOfPlayers,
-          }
+          type: "first_hand",
+          tee_time_id: teeTimeId,
+          number_of_bookings: amountOfPlayers,
+        }
         : {
-            type: "second_hand",
-            second_hand_id: listingId,
-          };
+          type: "second_hand",
+          second_hand_id: listingId,
+        };
 
     const localCart: CartProduct[] = [
       {
@@ -198,7 +200,7 @@ export default function Checkout({
         display_price: formatMoney(
           ((data?.greenFeeTaxPerPlayer ?? 0) +
             (data?.cartFeeTaxPerPlayer ?? 0)) *
-            amountOfPlayers
+          amountOfPlayers
         ),
         product_data: {
           metadata: {
