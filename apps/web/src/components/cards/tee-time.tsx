@@ -23,6 +23,7 @@ import { ChoosePlayers } from "../input/choose-players";
 import { ManageTeeTimeListing } from "../my-tee-box-page/manage-tee-time-listing";
 import { Tooltip } from "../tooltip";
 import { MakeAnOffer } from "../watchlist-page/make-an-offer";
+import { microsoftClarityEvent } from "~/utils/microsoftClarityUtils";
 
 const PlayersOptions = ["1", "2", "3", "4"];
 const DEFAULT_SILHOUETTE_IMAGE = "/defaults/default-profile.webp";
@@ -90,6 +91,7 @@ export const TeeTime = ({
   const { data: session } = useSession();
   const [isManageOpen, setIsManageOpen] = useState<boolean>(false);
   const { user } = useUserContext();
+  const router = useRouter();
   const auditLog = api.webhooks.auditLog.useMutation();
   const logAudit = async () => {
     await auditLog.mutateAsync({
@@ -124,7 +126,6 @@ export const TeeTime = ({
       document.body.classList.remove("overflow-hidden");
     }
   }, [isMakeAnOfferOpen, isManageOpen]);
-  const router = useRouter();
   const { setPrevPath } = useAppContext();
 
   const toggleWatchlist = api.watchlist.toggleWatchlist.useMutation();
@@ -153,6 +154,10 @@ export const TeeTime = ({
       toast.error((error as Error)?.message ?? "Error adding to watchlist");
     }
   };
+  const fullUrl = window.location.href;
+  const url = new URL(fullUrl);
+  const pathname = url.pathname;
+
   const buyTeeTime = async () => {
     // const isTeeTimeAvailable = await refetchCheckTeeTime();
     // if (!isTeeTimeAvailable.data && status === "SECOND_HAND") {
@@ -160,6 +165,12 @@ export const TeeTime = ({
     //   return;
     // }
     await logAudit();
+    microsoftClarityEvent({
+      action: `CLICKED ON BUY`,
+      category: "BUY TEE TIME",
+      label: "user clicked on buy to purchase tee time",
+      value: pathname,
+    })
     googleAnalyticsEvent({
       action: `CLICKED ON BUY`,
       category: "TEE TIME ",
@@ -255,9 +266,8 @@ export const TeeTime = ({
         data-test={
           status === "SECOND_HAND" ? "secondary_listed" : "primary_listed"
         }
-        className={`md:rounded-xl rounded-lg bg-secondary-white w-fit min-w-[230px] md:min-w-[265px] ${
-          className ?? ""
-        }`}
+        className={`md:rounded-xl rounded-lg bg-secondary-white w-fit min-w-[230px] md:min-w-[265px] ${className ?? ""
+          }`}
       >
         <div className="border-b border-stroke">
           <div className="flex justify-between py-1 px-2 md:px-3 md:p-3 items-center">

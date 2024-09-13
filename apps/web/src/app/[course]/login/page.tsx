@@ -29,6 +29,7 @@ import ReCAPTCHA from "react-google-recaptcha";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
 import { LoadingContainer } from "../loader";
+import { microsoftClarityEvent } from "~/utils/microsoftClarityUtils";
 
 export default function Login() {
   const recaptchaRef = createRef<ReCAPTCHA>();
@@ -128,6 +129,12 @@ export default function Login() {
   }, [recaptchaRef]);
 
   const onSubmit: SubmitHandler<LoginSchemaType> = async (data) => {
+    microsoftClarityEvent({
+      action: `REGISTER CLICKED`,
+      category: "REGISTER",
+      label: "User clicked on register",
+      value: data?.email,
+    })
     setIsLoading(true);
     event({
       action: "SIGNIN_USING_CREDENTIALS",
