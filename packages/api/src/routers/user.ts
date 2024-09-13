@@ -89,7 +89,7 @@ export const userRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       return await ctx.serviceFactory
         .getUserService()
-        .getBookingsOwnedForTeeTime(input.teeTimeId, ctx?.session?.user.id);
+        .getBookingsOwnedForTeeTime(input.teeTimeId, ctx?.session?.user?.id);
     }),
   forgotPasswordRequest: publicProcedure.input(forgotPasswordSchema).mutation(async ({ ctx, input }) => {
     return await ctx.serviceFactory
@@ -121,4 +121,14 @@ export const userRouter = createTRPCRouter({
   getS3HtmlContent: publicProcedure.input(z.object({ keyName: z.string() })).query(async ({ ctx, input }) => {
     return ctx.serviceFactory.getUserService().getS3HtmlContent(input.keyName);
   }),
+
+  isUserBlocked: publicProcedure
+    .input(
+      z.object({
+        userEmail: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return await ctx.serviceFactory.getUserService().isUserBlocked(input.userEmail);
+    }),
 });

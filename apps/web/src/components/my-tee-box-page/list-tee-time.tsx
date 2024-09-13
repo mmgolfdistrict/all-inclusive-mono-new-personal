@@ -79,10 +79,6 @@ export const ListTeeTime = ({
   const listingBuyerFeePercentage = (course?.buyerFee ?? 1) / 100;
 
   const maxListingPrice = useMemo(() => {
-    // console.log(
-    //   `selectedTeeTime?.firstHandPrice = ${selectedTeeTime?.firstHandPrice}`
-    // );
-    console.log(selectedTeeTime);
     if (!selectedTeeTime?.purchasedFor) return 0;
     const max =
       selectedTeeTime?.purchasedFor *
@@ -139,10 +135,6 @@ export const ListTeeTime = ({
       return 0;
     }
 
-    console.log(
-      `selectedTeeTime?.firstHandPrice = ${selectedTeeTime?.firstHandPrice}`
-    );
-
     const sellerListingPricePerGolfer = parseFloat(listingPrice.toString());
 
     const buyerListingPricePerGolfer =
@@ -154,14 +146,6 @@ export const ListTeeTime = ({
     let totalPayoutForAllGolfers =
       (buyerListingPricePerGolfer - buyerFeePerGolfer - sellerFeePerGolfer) *
       parseInt(players);
-
-    // console.log(`
-    //   listingSellerFeePercentage = ${listingSellerFeePercentage},
-    //   listingBuyerFeePercentage  = ${listingBuyerFeePercentage},
-    //   buyerListingPricePerGolfer = ${buyerListingPricePerGolfer},
-    //   sellerFeePerGolfer         = ${sellerFeePerGolfer},
-    //   buyerFeePerGolfer          = ${buyerFeePerGolfer},
-    //   totalPayoutForAllGolfers   = ${totalPayoutForAllGolfers}`);
 
     // totalPayoutForAllGolfers =
     //   ( totalPayoutForAllGolfers <= 0 ? 0 : totalPayoutForAllGolfers );
@@ -194,9 +178,6 @@ export const ListTeeTime = ({
       setIsLoading(false);
       return;
     }
-    console.log(
-      `listingPrice = ${listingPrice}, maxListingPrice = ${maxListingPrice}`
-    );
 
     if (listingPrice > maxListingPrice) {
       toast.error(
@@ -356,6 +337,7 @@ export const ListTeeTime = ({
                       dataTestId="player-item-id"
                       dataQa={value}
                       value={value}
+                      label={value}
                       className={`${
                         index === 0
                           ? "rounded-l-full border border-stroke"

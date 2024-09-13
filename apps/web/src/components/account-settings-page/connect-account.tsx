@@ -29,9 +29,7 @@ export const ConnectAccount = ({ userId }: { userId: string }) => {
       await signIn("google", {
         callbackUrl: `${window.location.origin}${pathname}`,
       });
-    } catch (error) {
-      console.log(error);
-    }
+    } catch (error) {}
   };
 
   const hasProvidersSetUp =

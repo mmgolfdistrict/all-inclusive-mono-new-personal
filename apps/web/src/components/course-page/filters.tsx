@@ -1,7 +1,7 @@
 "use client";
 
 import * as ToggleGroup from "@radix-ui/react-toggle-group";
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, forwardRef, useEffect, useImperativeHandle, useMemo, useState } from "react";
 import { Switch } from "../buttons/switch";
 import { Hidden } from "../icons/hidden";
 import { Info } from "../icons/info";
@@ -15,17 +15,22 @@ import { useFiltersContext } from "~/contexts/FiltersContext";
 import { api } from "~/utils/api";
 import { getDisabledDays } from "~/utils/calendar";
 import { debounceFunction } from "~/utils/debounce";
-import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils"
+import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
+import { useMediaQuery } from "usehooks-ts";
 
-const DateOptions = [
-  "All",
-  "Today",
-  "This Week",
-  "This Weekend",
-  "This Month",
-  "Furthest Day Out To Book",
-  "Custom",
-];
+interface DayValue {
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+  second: number;
+}
+
+interface ChildComponentRef {
+  getChildValue: () => any;
+}
+
 
 const HoleOptions = ["Any", "18", "9"];
 
@@ -39,7 +44,7 @@ const minimumDate = {
 
 const disabledDays = getDisabledDays(minimumDate);
 
-export const Filters = () => {
+export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
   const {
     dateType,
     setDateType,
@@ -51,7 +56,7 @@ export const Filters = () => {
     setShowUnlisted,
     includesCart,
     setIncludesCart,
-    // priceRange,
+    priceRange,
     setPriceRange,
     startTime,
     setStartTime,
@@ -60,6 +65,15 @@ export const Filters = () => {
     startTimeOptions,
   } = useFiltersContext();
   const { course } = useCourseContext();
+  const [dateTypeMobile, setDateTypeMobile] = useState(dateType);
+  const [timeMobile, setTimeMobile] = useState(startTime);
+  const [switchMobile, setSwitchMobile] = useState(showUnlisted)
+  const [holeMobile, setHoleMobile] = useState(holes)
+  const [golferMobile, setGolferMobile] = useState(golfers)
+  const [selectedDayMobile, setSelectedDayMobile] = useState(selectedDay)
+
+  const isMobile = useMediaQuery("(max-width: 768px)");
+
   const { data } = api.searchRouter.findBlackoutDates.useQuery(
     { courseId: course?.id ?? "" },
     { enabled: course?.id !== undefined }
@@ -97,7 +111,7 @@ export const Filters = () => {
     lowestPrice,
     highestPrice,
   ]);
-
+  const [priceMobile, setPriceMobile] = useState(priceRange);
   const handleSetStartTime = () => {
     setStartTime(localStartTime);
   };
@@ -106,23 +120,149 @@ export const Filters = () => {
     setPriceRange(localPriceRange);
   };
 
+  const { data: specialEvents } = api.searchRouter.getSpecialEvents.useQuery({
+    courseId: course?.id ?? "",
+  });
+
+  const DateOptions = useMemo(() => {
+    const defaultDateOptions = [
+      "All",
+      "Today",
+      "This Week",
+      "This Weekend",
+      "This Month",
+      "Furthest Day Out To Book",
+      "Custom",
+    ];
+
+    // Extract the names of the first two special events
+    const specialEventOptions =
+      specialEvents?.slice(0, 2).map((event) => event.eventName) || [];
+
+    return [...specialEventOptions, ...defaultDateOptions];
+  }, [specialEvents]);
+  const dateToDayValue = (date: Date): DayValue => ({
+    year: date.getFullYear(),
+    month: date.getMonth() + 1,
+    day: date.getDate(),
+    hour: date.getHours(),
+    minute: date.getMinutes(),
+    second: date.getSeconds(),
+  });
+
+  const formatDate = (dateObj) => {
+    const months = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+
+    const day = dateObj?.day;
+    const month = months[dateObj?.month - 1];
+
+    return `${month}-${day}`;
+  };
+
+  useImperativeHandle(ref, () => ({
+    getChildValue() {
+      return {
+        dateType: dateTypeMobile,
+        startTime: timeMobile,
+        holes: holeMobile,
+        selectedDay: selectedDayMobile,
+        golfers: golferMobile,
+        priceRange: priceMobile
+      };
+    }
+  }));
+
+  const setFilter = (type, value) => {
+    switch (type) {
+      case 'dateType': {
+        if (isMobile) {
+          setDateTypeMobile(value);
+        } else {
+          setDateType(value as DateType);
+        }
+        break;
+      }
+      case 'time': {
+        if (isMobile) {
+          setTimeMobile(value as [number, number]);
+        } else {
+          setLocalStartTime(value as [number, number]);
+        }
+        break;
+      }
+      case 'hole': {
+        if (isMobile) {
+          setHoleMobile(value as HoleType);
+        } else {
+          setHoles(value as HoleType);
+        }
+        break;
+      }
+      case 'golfer': {
+        if (isMobile) {
+          setGolferMobile(value as GolferType);
+        } else {
+          setGolfers(value as GolferType);
+        }
+        break;
+      }
+      case 'price': {
+        if (isMobile) {
+          setPriceMobile(value as [number, number]);
+        } else {
+          setLocalPriceRange(value as [number, number]);
+        }
+        break;
+      }
+      case 'selectedDay': {
+        if (isMobile) {
+          setSelectedDayMobile(value as {
+            from: DayValue;
+            to: DayValue;
+          });
+        } else {
+          setSelectedDay(value as {
+            from: DayValue;
+            to: DayValue;
+          });
+        }
+        break;
+      }
+      default:
+        break;
+    }
+  };
+
   return (
     <div className="flex flex-col gap-4 pr-1">
       <section className="flex flex-col gap-2">
         <div>Date</div>
         <ToggleGroup.Root
           type="single"
-          value={dateType}
+          value={isMobile ? dateTypeMobile : dateType}
           onValueChange={(dateType: DateType) => {
             if (dateType) {
-              setDateType(dateType)
+              setFilter("dateType", dateType)
               googleAnalyticsEvent({
                 action: `FILTER BY ${dateType}`,
                 category: "FILTER_DATA",
                 label: "filtered data by date",
                 value: "",
-              })
-            };
+              });
+            }
           }}
           orientation="vertical"
           className="flex flex-col"
@@ -132,27 +272,68 @@ export const Filters = () => {
               <Item
                 key={index}
                 value={value}
+                label={
+                  value === "Custom" ? (
+                    <div className="flex justify-between">
+                      <span>{value}</span>
+                      {isMobile
+                        ? `${selectedDayMobile.from ? formatDate(selectedDayMobile.from) : ""
+                        } ${selectedDayMobile.to ? "-" : ""} ${selectedDayMobile.to ? formatDate(selectedDayMobile.to) : ""}`
+                        : `${selectedDay.from ? formatDate(selectedDay.from) : ""
+                        } ${selectedDay.to ? "-" : ""} ${selectedDay.to ? formatDate(selectedDay.to) : ""}`}
+
+                    </div>
+                  ) : (
+                    value
+                  )
+                }
                 dataTestId="date-filter-id"
                 dataQa={value}
-                className={`${
-                  index === 0
-                    ? "rounded-t-2xl border border-stroke"
-                    : index === DateOptions.length - 1 && dateType === "Custom"
+                className={`${index === 0
+                  ? "rounded-t-2xl border border-stroke"
+                  : index === DateOptions.length - 1 && dateType === "Custom"
                     ? "border-l border-r border-stroke"
                     : index === DateOptions.length - 1
-                    ? "rounded-b-2xl border-b border-l border-r border-stroke"
-                    : "border-b border-l border-r border-stroke"
-                }`}
+                      ? "rounded-b-2xl border-b border-l border-r border-stroke"
+                      : "border-b border-l border-r border-stroke"
+                  }`}
               />
               {dateType === "Custom" && value === "Custom" ? (
-                <Calendar
-                  value={selectedDay}
-                  calendarClassName="responsive-calendar"
-                  onChange={setSelectedDay}
-                  colorPrimary="#40942A"
-                  minimumDate={minimumDate}
-                  disabledDays={blackOutDays}
-                />
+                <>
+                  <div className="custom_calendar">
+                    <Calendar
+                      value={isMobile ? selectedDayMobile : selectedDay}
+                      calendarClassName="responsive-calendar"
+                      onChange={isMobile ? setSelectedDayMobile : setSelectedDay}
+                      colorPrimary="#40942A"
+                      minimumDate={minimumDate}
+                      disabledDays={blackOutDays}
+                    />
+                    <div
+                      className={`z-50 text-sm w-full flex justify-center flex-wrap p-0 px-4 pb-4 `}
+                    >
+                      {specialEvents?.map((event, i) => (
+                        <>
+                          <button
+                            key={i}
+                            className={`inline-block mt-1 ${isMobile ? "mx-4" : "mx-2"
+                              }`}
+                            onClick={() => {
+                              const startDate = new Date(event.startDate);
+                              const endDate = new Date(event.endDate);
+                              setFilter("selectedDay", {
+                                from: dateToDayValue(startDate),
+                                to: dateToDayValue(endDate),
+                              })
+                            }}
+                          >
+                            {event.eventName}
+                          </button>
+                        </>
+                      ))}
+                    </div>
+                  </div>
+                </>
               ) : null}
             </Fragment>
           ))}
@@ -164,15 +345,25 @@ export const Filters = () => {
           <div>Start Time</div>
           <div>
             {
-              startTimeOptions[
-                startTimeOptions.findIndex((i) => i.value === localStartTime[0])
-              ]?.displayTime
+              isMobile ?
+                startTimeOptions[
+                  startTimeOptions.findIndex((i) => i.value === timeMobile[0])
+                ]?.displayTime
+                :
+                startTimeOptions[
+                  startTimeOptions.findIndex((i) => i.value === localStartTime[0])
+                ]?.displayTime
             }
             -
             {
-              startTimeOptions[
-                startTimeOptions.findIndex((i) => i.value === localStartTime[1])
-              ]?.displayTime
+              isMobile ?
+                startTimeOptions[
+                  startTimeOptions.findIndex((i) => i.value === timeMobile[1])
+                ]?.displayTime
+                :
+                startTimeOptions[
+                  startTimeOptions.findIndex((i) => i.value === localStartTime[1])
+                ]?.displayTime
             }
           </div>
         </div>
@@ -180,7 +371,10 @@ export const Filters = () => {
           min={0}
           max={startTimeOptions.length - 1}
           step={1}
-          value={[
+          value={isMobile ? [
+            startTimeOptions.findIndex((i) => i.value === timeMobile[0]),
+            startTimeOptions.findIndex((i) => i.value === timeMobile[1]),
+          ] : [
             startTimeOptions.findIndex((i) => i.value === localStartTime[0]),
             startTimeOptions.findIndex((i) => i.value === localStartTime[1]),
           ]}
@@ -193,7 +387,7 @@ export const Filters = () => {
               category: "FILTER_DATA",
               label: "filtered data by date",
               value: "",
-            })
+            });
             if (
               time &&
               time.length >= 2 &&
@@ -203,18 +397,14 @@ export const Filters = () => {
               const option1 = startTimeOptions[time[0]];
               const option2 = startTimeOptions[time[1]];
               if (option1 && option2) {
-                setLocalStartTime([option1.value, option2.value]);
+                setFilter("time", [option1.value, option2.value])
               }
             }
           }}
           data-testid="slider-start-time-id"
-          data-qa={`${
-            startTimeOptions.find((i) => i.value === localStartTime[0])
-              ?.displayTime
-          } - ${
-            startTimeOptions.find((i) => i.value === localStartTime[1])
-              ?.displayTime
-          }`}
+          data-qa={isMobile
+            ? `${startTimeOptions.find((i) => i.value === timeMobile[0])?.displayTime} - ${startTimeOptions.find((i) => i.value === timeMobile[1])?.displayTime}`
+            : `${startTimeOptions.find((i) => i.value === localStartTime[0])?.displayTime} - ${startTimeOptions.find((i) => i.value === localStartTime[1])?.displayTime}`}
         />
       </section>
 
@@ -222,8 +412,8 @@ export const Filters = () => {
         {course?.supportsOffers ? (
           <div className="flex items-center gap-2">
             <Switch
-              value={showUnlisted}
-              setValue={setShowUnlisted}
+              value={isMobile ? switchMobile : showUnlisted}
+              setValue={isMobile ? setSwitchMobile : setShowUnlisted}
               dataTestId="filter-switch-not-for-sale-make-an-offer-id"
             />
             <div className="flex items-center gap-1 text-primary-gray">
@@ -257,15 +447,15 @@ export const Filters = () => {
         <div>Holes</div>
         <ToggleGroup.Root
           type="single"
-          value={holes}
+          value={isMobile ? holeMobile : holes}
           onValueChange={(hole: HoleType) => {
             googleAnalyticsEvent({
               action: `FILTER BY Holes`,
               category: "FILTER_DATA",
               label: "filtered data by date",
               value: "",
-            })
-            if (hole) setHoles(hole);
+            });
+            if (hole) setFilter("hole", hole);
           }}
           orientation="horizontal"
           className="flex"
@@ -274,15 +464,15 @@ export const Filters = () => {
             <Item
               key={index}
               value={value}
+              label={value}
               dataTestId="hole-filter-id"
               dataQa={value}
-              className={`${
-                index === 0
-                  ? "rounded-l-full border-b border-l border-t border-stroke"
-                  : index === HoleOptions.length - 1
+              className={`${index === 0
+                ? "rounded-l-full border-b border-l border-t border-stroke"
+                : index === HoleOptions.length - 1
                   ? "rounded-r-full border-b border-r border-t border-stroke"
                   : "border border-stroke"
-              } px-[2.5rem]`}
+                } px-[2.5rem]`}
             />
           ))}
         </ToggleGroup.Root>
@@ -291,19 +481,19 @@ export const Filters = () => {
         <div>Golfers</div>
         <ToggleGroup.Root
           type="single"
-          value={golfers.toString()}
+          value={isMobile ? golferMobile.toString() : golfers.toString()}
           onValueChange={(golfer: string) => {
             googleAnalyticsEvent({
               action: `FILTER BY GOLFERS`,
               category: "FILTER_DATA",
               label: "filtered data by date",
               value: "",
-            })
+            });
             if (golfer === "Any") {
               setGolfers("Any");
               return;
             }
-            if (golfer) setGolfers(Number(golfer) as GolferType);
+            if (golfer) setFilter("golfer", Number(golfer) as GolferType)
           }}
           orientation="horizontal"
           className="flex"
@@ -312,15 +502,15 @@ export const Filters = () => {
             <Item
               key={index}
               value={value}
+              label={value}
               dataTestId="golfer-filter-id"
               dataQa={value}
-              className={`${
-                index === 0
-                  ? "rounded-l-full border-b border-l border-t border-stroke"
-                  : index === GolferOptions.length - 1
+              className={`${index === 0
+                ? "rounded-l-full border-b border-l border-t border-stroke"
+                : index === GolferOptions.length - 1
                   ? "rounded-r-full border border-stroke"
                   : "border-b border-l border-t border-stroke"
-              } px-[1.44rem]`}
+                } px-[1.44rem]`}
             />
           ))}
         </ToggleGroup.Root>
@@ -331,15 +521,16 @@ export const Filters = () => {
             Price Range <span className="font-[300]">(per golfer)</span>
           </div>
           <div>
-            ${localPriceRange[0]}
-            -${localPriceRange[1]}
+            {isMobile
+              ? `$${priceMobile[0]} - $${priceMobile[1]}`
+              : `$${localPriceRange[0]} - $${localPriceRange[1]}`}
           </div>
         </div>
         <Slider
           min={lowestPrice}
           max={highestPrice}
           step={5}
-          value={localPriceRange}
+          value={isMobile ? priceMobile : localPriceRange}
           onPointerUp={() => {
             handleSetPriceRange();
           }}
@@ -349,16 +540,16 @@ export const Filters = () => {
               category: "FILTER_DATA",
               label: "filtered data by date",
               value: "",
-            })
-            debounceFunction(setLocalPriceRange(value), 1000);
+            });
+            debounceFunction(setFilter("price", value), 1000);
           }}
           data-testid="slider-price-range-id"
-          data-qa={`${localPriceRange?.[0]}-${localPriceRange?.[1]}`}
+          data-qa={isMobile ? `${priceMobile?.[0]}-${priceMobile?.[1]}` : `${localPriceRange?.[0]}-${localPriceRange?.[1]}`}
         />
       </section>
     </div>
   );
-};
+});
 
 export const Item = ({
   value,
@@ -367,6 +558,7 @@ export const Item = ({
   dataQa,
   dataTest,
   dataCy,
+  label,
 }: {
   value: string;
   className?: string;
@@ -374,19 +566,21 @@ export const Item = ({
   dataQa?: string;
   dataTest?: string;
   dataCy?: string;
+  label?: any;
 }) => {
   return (
     <ToggleGroup.Item
       value={value}
-      className={`bg-white px-4 py-2 text-left text-[14px] text-primary-gray transition-colors data-[state=on]:bg-primary data-[state=on]:text-white ${
-        className ?? ""
-      }`}
+      className={`bg-white px-4 py-2 text-left text-[14px] text-primary-gray transition-colors data-[state=on]:bg-primary data-[state=on]:text-white ${className ?? ""
+        }`}
       data-testid={dataTestId}
       data-qa={dataQa}
       data-test={dataTest}
       data-cy={dataCy}
     >
-      {value}
+      {label}
     </ToggleGroup.Item>
   );
 };
+
+Filters.displayName = "Filters";

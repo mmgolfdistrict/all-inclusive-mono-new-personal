@@ -9,6 +9,7 @@ import { useCheckoutContext } from "~/contexts/CheckoutContext";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
+import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
 import type { CartProduct } from "~/utils/types";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
@@ -17,7 +18,6 @@ import { FilledButton } from "../buttons/filled-button";
 import { CharitySelect } from "../input/charity-select";
 import { Input } from "../input/input";
 import styles from "./checkout.module.css";
-import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
 
 export const CheckoutForm = ({
   isBuyNowAuction,
@@ -41,8 +41,8 @@ export const CheckoutForm = ({
   const courseId = course?.id;
   const { user } = useUserContext();
   const auditLog = api.webhooks.auditLog.useMutation();
-  const cancelHyperswitchPaymentById =
-    api.webhooks.cancelHyperswitchPaymentById.useMutation();
+  const sendEmailForFailedPayment =
+    api.webhooks.sendEmailForFailedPayment.useMutation();
 
   const { refetch: refetchCheckTeeTime } =
     api.teeBox.checkIfTeeTimeStillListedByListingId.useQuery(
@@ -198,8 +198,8 @@ export const CheckoutForm = ({
     return () => {
       clearTimeout(timer);
       setIsLoading(false);
-    }
-  },[]);
+    };
+  }, []);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     googleAnalyticsEvent({
@@ -207,7 +207,7 @@ export const CheckoutForm = ({
       category: "TEE TIME PURCHASE",
       label: "User clicked on pay now to do payment",
       value: "",
-    })
+    });
     e.preventDefault();
     void logAudit();
     setIsLoading(true);
@@ -218,7 +218,6 @@ export const CheckoutForm = ({
         setIsLoading(false);
         return;
       }
-      console.log(isTeeTimeAvailable.data);
     } else {
       const resp = await checkIfTeeTimeAvailableOnProvider.mutateAsync({
         teeTimeId,
@@ -265,7 +264,7 @@ export const CheckoutForm = ({
     try {
       if (response) {
         if (response.status === "processing") {
-          void cancelHyperswitchPaymentById.mutateAsync({
+          void sendEmailForFailedPayment.mutateAsync({
             paymentId: response?.payment_id as string,
           });
           setMessage(
@@ -372,7 +371,6 @@ export const CheckoutForm = ({
       payment_id,
       redirectHref,
     });
-    // console.log(bookingResponse);
     return bookingResponse;
   };
 

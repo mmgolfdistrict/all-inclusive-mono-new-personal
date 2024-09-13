@@ -11,8 +11,6 @@ export const CourseLayout = ({ children }: { children: React.ReactNode }) => {
   const { data: systemNotifications } =
     api.systemNotification.getSystemNotification.useQuery({});
 
-  console.log(isMobile);
-
   const styling = useMemo(() => {
     if (pathname.includes("/checkout")) {
       return "";

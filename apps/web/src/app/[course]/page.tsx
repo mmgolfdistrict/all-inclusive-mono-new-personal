@@ -1,5 +1,6 @@
 "use client";
 
+import type { NotificationObject } from "@golf-district/shared";
 import { formatQueryDate, formatQueryDateEnd } from "@golf-district/shared";
 import { FilledButton } from "~/components/buttons/filled-button";
 import { FilterSort } from "~/components/buttons/filters-sort";
@@ -7,9 +8,13 @@ import { GoBack } from "~/components/buttons/go-back";
 import { CourseBanner } from "~/components/course-page/course-banner";
 import { DailyTeeTimes } from "~/components/course-page/daily-tee-times";
 import { Filters } from "~/components/course-page/filters";
+import { MobileDates } from "~/components/course-page/mobile-date";
 import { MobileFilters } from "~/components/course-page/mobile-filters";
 import { MobileSort, SortOptions } from "~/components/course-page/mobile-sort";
+import { Calendar } from "~/components/icons/calendar";
 import { ChevronUp } from "~/components/icons/chevron-up";
+import { FiltersIcon } from "~/components/icons/filters";
+import { SortIcon } from "~/components/icons/sort";
 import { Select } from "~/components/input/select";
 import { useAppContext } from "~/contexts/AppContext";
 import { useCourseContext } from "~/contexts/CourseContext";
@@ -30,7 +35,6 @@ import { LoadingContainer } from "./loader";
 dayjs.extend(Weekday);
 dayjs.extend(RelativeTime);
 dayjs.extend(isoWeek);
-
 export default function CourseHomePage() {
   const TAKE = 4;
   const ref = useRef<HTMLDivElement | null>(null);
@@ -38,6 +42,7 @@ export default function CourseHomePage() {
   const [error, setError] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState<boolean>(false);
   const [showSort, setShowSort] = useState<boolean>(false);
+  const [showDates, setShowDates] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isFirstRender, setIsFirstRender] = useState<boolean>(true);
   const [take, setTake] = useState<number>(TAKE);
@@ -69,25 +74,20 @@ export default function CourseHomePage() {
         handle: uName,
         courseId,
       });
-    } catch (error) {
-      console.log(error);
-    }
+    } catch (error) {}
   };
+  console.log("courseId", courseId);
 
   const updateCount = (balance: number) => {
     setCount(balance);
   };
 
-  const { data: farthestDateOut } =
-    api.searchRouter.getFarthestTeeTimeDate.useQuery(
-      {
-        courseId: course?.id ?? "",
-        order: "desc",
-      },
-      {
-        enabled: course?.id !== undefined,
-      }
-    );
+  const farthestDateOut = useMemo(() => {
+    return dayjs()
+      .utc()
+      .add(course?.furthestDayToBook ?? 0, "day")
+      .format("YYYY-MM-DD");
+  }, [course?.furthestDayToBook]);
 
   const { data: unreadOffers } = api.user.getUnreadOffersForCourse.useQuery(
     {
@@ -98,15 +98,32 @@ export default function CourseHomePage() {
     }
   );
 
+  const { data: specialEvents } = api.searchRouter.getSpecialEvents.useQuery({
+    courseId: courseId ?? "",
+  });
+
+  const getSpecialDayDate = (label) => {
+    const specialDay = specialEvents?.find((day) => day.eventName === label);
+    return specialDay
+      ? { start: dayjs(specialDay.startDate), end: dayjs(specialDay.endDate) }
+      : null;
+  };
+
   const startDate = useMemo(() => {
     const formatDate = (date: Date) => formatQueryDate(date);
     const getUtcDate = (date: Date) => {
       const currentDate = dayjs.utc(formatDate(date));
-      const currentDateWithTimeZoneOffset = currentDate
-        .add(course?.timezoneCorrection ?? 0, "hour")
-        .toString();
+      const currentDateWithTimeZoneOffset = currentDate.toString();
       return currentDateWithTimeZoneOffset;
     };
+    const specialDate = getSpecialDayDate(dateType);
+
+    if (specialDate) {
+      const startOfDay = dayjs(specialDate.start);
+      const result2 = formatQueryDate(startOfDay.toDate());
+
+      return result2;
+    }
 
     const todayDate = (date) => {
       const year = date.getFullYear();
@@ -161,6 +178,15 @@ export default function CourseHomePage() {
         .toString();
       return currentDateWithTimeZoneOffset;
     };
+
+    const specialDate = getSpecialDayDate(dateType);
+
+    if (specialDate) {
+      const endOfDay = dayjs(specialDate.end);
+      const result2 = formatQueryDate(endOfDay.toDate());
+      return result2;
+    }
+
     switch (dateType) {
       case "All": {
         return formatQueryDate(dayjs(farthestDateOut).toDate());
@@ -281,14 +307,14 @@ export default function CourseHomePage() {
           sortValue === "Sort by time - Early to Late"
             ? "asc"
             : sortValue === "Sort by time - Late to Early"
-            ? "desc"
-            : "",
+              ? "desc"
+              : "",
         sortPrice:
           sortValue === "Sort by price - Low to High"
             ? "asc"
             : sortValue === "Sort by price - High to Low"
-            ? "desc"
-            : "",
+              ? "desc"
+              : "",
         timezoneCorrection: course?.timezoneCorrection,
       },
       {
@@ -350,6 +376,10 @@ export default function CourseHomePage() {
     setShowSort(!showSort);
   };
 
+  const toggleDates = () => {
+    setShowDates(!showDates);
+  };
+
   const pageUp = () => {
     if (pageNumber === daysData.amountOfPages) return;
     setPageNumber((prev) => prev + 1);
@@ -388,6 +418,41 @@ export default function CourseHomePage() {
     (pageNumber - 1) * TAKE,
     pageNumber * TAKE
   );
+
+  const [scrollY, setScrollY] = useState(0);
+
+  const handleScroll = () => {
+    setScrollY(window.scrollY);
+  };
+
+  useEffect(() => {
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+
+  const { data: courseException } =
+    api.courseException.getCourseException.useQuery({
+      courseId: courseId ?? "",
+    });
+
+  const getCourseException = (playDate: string): null | NotificationObject => {
+    let flag = false;
+    let msg: NotificationObject | null = null;
+    courseException?.forEach((ce) => {
+      const startDate = new Date(ce.startDate);
+      const endDate = new Date(ce.endDate);
+      const dateToCheck = new Date(playDate);
+      if (dateToCheck > startDate && dateToCheck < endDate) {
+        flag = true;
+        msg = ce;
+      }
+    });
+    if (flag) {
+      return msg;
+    }
+    return null;
+  };
   return (
     <main className="bg-secondary-white py-4 md:py-6">
       <LoadingContainer isLoading={isLoadingTeeTimeDate || isLoading}>
@@ -434,6 +499,26 @@ export default function CourseHomePage() {
           <FilterSort toggleFilters={toggleFilters} toggleSort={toggleSort} />
         </div>
         <div className="flex w-full flex-col gap-1 md:gap-4 overflow-x-hidden pr-0 md:pr-6">
+          <div
+            className={`flex space-x-2 md:hidden px-4 ${scrollY > 333
+              ? "fixed top-[7.8rem] left-0 w-full z-10 bg-secondary-white pt-2 pb-3 shadow-md"
+              : "relative"
+              }`}
+          >
+            <button
+              onClick={toggleFilters}
+              className="p-2 text-xs flex items-center space-x-2 flex items-center gap-1 rounded-full border-b border-r border-t border-l border-stroke"
+            >
+              <FiltersIcon className="h-[14px] w-[14px]" />
+              All Filters
+            </button>
+            <button
+              onClick={toggleDates}
+              className="p-2 text-xs flex items-center space-x-2 flex items-center gap-1 rounded-full border-b border-r border-t border-l border-stroke"
+            >
+              <Calendar className="h-[14px] w-[14px]" /> Date
+            </button>
+          </div>
           <div className="flex justify-between gap-4  px-4 md:px-0">
             <div className="text-secondary-black">
               {/* Showing {count?.toLocaleString() ?? "0"} tee times{" "} */}
@@ -463,6 +548,7 @@ export default function CourseHomePage() {
                       setError={(e: string | null) => {
                         setError(e);
                       }}
+                      courseException={getCourseException(date as string)}
                       key={idx}
                       date={date}
                       minDate={utcStartDate.toString()}
@@ -475,9 +561,8 @@ export default function CourseHomePage() {
               {daysData.amountOfPages > 1 ? (
                 <div className="flex items-center justify-center gap-2 pt-1 md:pt-0 md:pb-4">
                   <FilledButton
-                    className={`!px-3 !py-2 !min-w-fit !rounded-md ${
-                      pageNumber === 1 ? "opacity-50 cursor-not-allowed" : ""
-                    }`}
+                    className={`!px-3 !py-2 !min-w-fit !rounded-md ${pageNumber === 1 ? "opacity-50 cursor-not-allowed" : ""
+                      }`}
                     onClick={pageDown}
                     data-testid="chevron-down-id"
                   >
@@ -487,11 +572,10 @@ export default function CourseHomePage() {
                     {pageNumber} / {amountOfPage}
                   </div>
                   <FilledButton
-                    className={`!px-3 !py-2 !min-w-fit !rounded-md ${
-                      pageNumber === daysData.amountOfPages
-                        ? "opacity-50 cursor-not-allowed"
-                        : ""
-                    }`}
+                    className={`!px-3 !py-2 !min-w-fit !rounded-md ${pageNumber === daysData.amountOfPages
+                      ? "opacity-50 cursor-not-allowed"
+                      : ""
+                      }`}
                     onClick={pageUp}
                     data-testid="chevron-up-id"
                   >
@@ -516,6 +600,12 @@ export default function CourseHomePage() {
         <MobileFilters
           setShowFilters={setShowFilters}
           toggleFilters={toggleFilters}
+        />
+      )}
+      {showDates && (
+        <MobileDates
+          setShowFilters={setShowDates}
+          toggleFilters={toggleDates}
         />
       )}
     </main>

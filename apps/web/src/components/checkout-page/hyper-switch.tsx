@@ -90,7 +90,6 @@ export const HyperSwitch = ({
     } catch (error) {
       // setIsLoadingSession(false);
       callingRef.current = false;
-      console.log(error.message);
       setError(
         (error?.message as string) ??
           "An error occurred building checkout seesion."

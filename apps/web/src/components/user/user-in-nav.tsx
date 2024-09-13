@@ -50,9 +50,7 @@ export const UserInNav = ({ alwaysShow }: { alwaysShow?: boolean }) => {
           func();
         }
       })
-      .catch((err) => {
-        console.log(err);
-      });
+      .catch((err) => {});
   };
 
   const logOutUser = () => {

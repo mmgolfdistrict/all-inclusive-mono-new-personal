@@ -67,7 +67,6 @@ export const ViewOffer = ({
       }
     } catch (error) {
       toast.error((error as Error)?.message ?? "Error accepting offer");
-      console.log(error);
     }
   };
 
@@ -94,7 +93,6 @@ export const ViewOffer = ({
       }
     } catch (error) {
       toast.error((error as Error)?.message ?? "Error declining offer");
-      console.log(error);
     }
   };
 
