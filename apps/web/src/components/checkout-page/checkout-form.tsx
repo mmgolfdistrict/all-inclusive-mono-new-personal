@@ -27,7 +27,6 @@ export const CheckoutForm = ({
   teeTimeDate,
   listingId,
   playerCount,
-  maxReservation,
 }: {
   isBuyNowAuction: boolean;
   teeTimeId: string;
@@ -36,15 +35,14 @@ export const CheckoutForm = ({
   teeTimeDate: string | undefined;
   listingId: string;
   playerCount: string | undefined;
-  maxReservation: MaxReservationResponse;
 }) => {
   const MAX_CHARITY_AMOUNT = 1000;
   const { course } = useCourseContext();
   const courseId = course?.id;
   const { user } = useUserContext();
   const auditLog = api.webhooks.auditLog.useMutation();
-  const cancelHyperswitchPaymentById =
-    api.webhooks.cancelHyperswitchPaymentById.useMutation();
+  const sendEmailForFailedPayment =
+    api.webhooks.sendEmailForFailedPayment.useMutation();
 
   const { refetch: refetchCheckTeeTime } =
     api.teeBox.checkIfTeeTimeStillListedByListingId.useQuery(
@@ -146,6 +144,7 @@ export const CheckoutForm = ({
     handleRemoveSelectedCharity,
     setReservationData,
     sensibleData,
+    amountOfPlayers
   } = useCheckoutContext();
 
   const reserveBookingApi = api.teeBox.reserveBooking.useMutation();
@@ -203,6 +202,13 @@ export const CheckoutForm = ({
     };
   }, []);
 
+  const { data: maxReservation } =
+    api.checkout.checkMaxReservationsAndMaxRounds.useQuery({
+      roundsToBook: amountOfPlayers,
+      courseId: courseId ? courseId : "",
+    });
+
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     googleAnalyticsEvent({
       action: `PAY NOW CLICKED`,
@@ -227,7 +233,6 @@ export const CheckoutForm = ({
         setIsLoading(false);
         return;
       }
-      console.log(isTeeTimeAvailable.data);
     } else {
       const resp = await checkIfTeeTimeAvailableOnProvider.mutateAsync({
         teeTimeId,
@@ -274,7 +279,7 @@ export const CheckoutForm = ({
     try {
       if (response) {
         if (response.status === "processing") {
-          void cancelHyperswitchPaymentById.mutateAsync({
+          void sendEmailForFailedPayment.mutateAsync({
             paymentId: response?.payment_id as string,
           });
           setMessage(
@@ -381,7 +386,6 @@ export const CheckoutForm = ({
       payment_id,
       redirectHref,
     });
-    // console.log(bookingResponse);
     return bookingResponse;
   };
 

@@ -106,7 +106,6 @@ export const UnlistedDetails = ({
       await refetch();
     } catch (error) {
       toast.error((error as Error)?.message ?? "Error adding to watchlist");
-      console.log(error);
     }
   };
 

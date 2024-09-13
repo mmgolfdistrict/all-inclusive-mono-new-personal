@@ -29,6 +29,7 @@ import ReCAPTCHA from "react-google-recaptcha";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
 import { LoadingContainer } from "../loader";
+import { microsoftClarityEvent } from "~/utils/microsoftClarityUtils";
 
 export default function Login() {
   const recaptchaRef = createRef<ReCAPTCHA>();
@@ -66,16 +67,14 @@ export default function Login() {
 
   useEffect(() => {
     if (sessionData?.user?.id && course?.id && status === "authenticated") {
-      console.log("sessionData", sessionData);
       logAudit(sessionData.user.id, course.id, () => {
         window.location.reload();
-        window.location.href = `${window.location.origin}${
-          GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
-            ? prevPath?.path
-              ? prevPath.path
-              : "/"
+        window.location.href = `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+          ? prevPath?.path
+            ? prevPath.path
             : "/"
-        }`;
+          : "/"
+          }`;
       });
     }
   }, [sessionData, course, status]);
@@ -97,7 +96,7 @@ export default function Login() {
         }
       })
       .catch((err) => {
-        console.log(err);
+        console.log("error", err);
       });
   };
 
@@ -126,12 +125,17 @@ export default function Login() {
 
   useEffect(() => {
     if (process.env.NEXT_PUBLIC_RECAPTCHA_IS_INVISIBLE === "true") {
-      console.log(recaptchaRef.current);
       recaptchaRef.current?.execute();
     }
   }, [recaptchaRef]);
 
   const onSubmit: SubmitHandler<LoginSchemaType> = async (data) => {
+    microsoftClarityEvent({
+      action: `REGISTER CLICKED`,
+      category: "REGISTER",
+      label: "User clicked on register",
+      value: data?.email,
+    })
     setIsLoading(true);
     event({
       action: "SIGNIN_USING_CREDENTIALS",
@@ -141,13 +145,12 @@ export default function Login() {
     });
     try {
       recaptchaRef.current?.reset();
-      const callbackURL = `${window.location.origin}${
-        GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
-          ? prevPath?.path
-            ? prevPath.path
-            : "/"
+      const callbackURL = `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+        ? prevPath?.path
+          ? prevPath.path
           : "/"
-      }`;
+        : "/"
+        }`;
       const res = await signIn("credentials", {
         // callbackUrl: callbackURL,
         redirect: false,
@@ -159,7 +162,6 @@ export default function Login() {
       });
       if (res?.error) {
         await recaptchaRef.current?.executeAsync();
-        console.log("res?.error", res?.error);
         if (res.error === "AccessDenied") {
           toast.error(
             "Unable to login. Please call customer support at 877-TeeTrade or email at support@golfdistrict.com"
@@ -170,10 +172,9 @@ export default function Login() {
         setValue("password", "");
       }
     } catch (error) {
-      console.log(error);
       toast.error(
         (error as Error)?.message ??
-          "An error occurred logging in, try another option."
+        "An error occurred logging in, try another option."
       );
     } finally {
       setIsLoading(false);
@@ -202,26 +203,24 @@ export default function Login() {
 
   const facebookSignIn = async () => {
     await signIn("facebook", {
-      callbackUrl: `${window.location.origin}${
-        GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
-          ? prevPath?.path
-            ? prevPath.path
-            : "/"
+      callbackUrl: `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+        ? prevPath?.path
+          ? prevPath.path
           : "/"
-      }`,
+        : "/"
+        }`,
       redirect: true,
     });
   };
 
   const appleSignIn = async () => {
     await signIn("apple", {
-      callbackUrl: `${window.location.origin}${
-        GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
-          ? prevPath?.path
-            ? prevPath.path
-            : "/"
+      callbackUrl: `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+        ? prevPath?.path
+          ? prevPath.path
           : "/"
-      }`,
+        : "/"
+        }`,
       redirect: true,
     });
   };
@@ -245,7 +244,7 @@ export default function Login() {
         redirect: false,
       });
     } catch (error) {
-      console.log(error);
+      console.log("error", error);
     }
   };
 

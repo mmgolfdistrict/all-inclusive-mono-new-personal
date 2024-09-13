@@ -74,7 +74,6 @@ export default function Checkout({
       roundsToBook: amountOfPlayers,
       courseId: courseId,
     });
-  console.log("maxReservation", maxReservation);
 
   const {
     data: teeTimeData,
@@ -135,7 +134,7 @@ export default function Checkout({
       );
       setPromoCodePrice(ratedPrice);
     } catch (error) {
-      console.log(error);
+      console.log("error", error);
     }
   };
 
@@ -165,14 +164,14 @@ export default function Checkout({
       | TaxProduct =
       saleType === "first_hand"
         ? {
-            type: "first_hand",
-            tee_time_id: teeTimeId,
-            number_of_bookings: amountOfPlayers,
-          }
+          type: "first_hand",
+          tee_time_id: teeTimeId,
+          number_of_bookings: amountOfPlayers,
+        }
         : {
-            type: "second_hand",
-            second_hand_id: listingId,
-          };
+          type: "second_hand",
+          second_hand_id: listingId,
+        };
 
     const localCart: CartProduct[] = [
       {
@@ -207,7 +206,7 @@ export default function Checkout({
         display_price: formatMoney(
           ((data?.greenFeeTaxPerPlayer ?? 0) +
             (data?.cartFeeTaxPerPlayer ?? 0)) *
-            amountOfPlayers
+          amountOfPlayers
         ),
         product_data: {
           metadata: {
@@ -403,7 +402,7 @@ export default function Checkout({
                 cartData={cartData}
                 teeTimeDate={teeTimeData?.date}
                 playerCount={playerCount}
-                maxReservation={maxReservation}
+              // maxReservation={maxReservation}
               />
             )}
           </div>

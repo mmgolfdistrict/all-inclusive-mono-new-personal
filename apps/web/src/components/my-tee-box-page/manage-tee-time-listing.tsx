@@ -160,10 +160,6 @@ export const ManageTeeTimeListing = ({
       return 0;
     }
 
-    console.log(
-      `selectedTeeTime?.firstHandPrice = ${selectedTeeTime?.firstHandPrice}`
-    );
-
     const sellerListingPricePerGolfer = parseFloat(listingPrice.toString());
 
     const buyerListingPricePerGolfer =
@@ -175,14 +171,6 @@ export const ManageTeeTimeListing = ({
     let totalPayoutForAllGolfers =
       (buyerListingPricePerGolfer - buyerFeePerGolfer - sellerFeePerGolfer) *
       parseInt(players);
-
-    // console.log(`
-    //   listingSellerFeePercentage = ${listingSellerFeePercentage},
-    //   listingBuyerFeePercentage  = ${listingBuyerFeePercentage},
-    //   buyerListingPricePerGolfer = ${buyerListingPricePerGolfer},
-    //   sellerFeePerGolfer         = ${sellerFeePerGolfer},
-    //   buyerFeePerGolfer          = ${buyerFeePerGolfer},
-    //   totalPayoutForAllGolfers   = ${totalPayoutForAllGolfers}`);
 
     totalPayoutForAllGolfers =
       totalPayoutForAllGolfers <= 0 ? 0 : totalPayoutForAllGolfers;

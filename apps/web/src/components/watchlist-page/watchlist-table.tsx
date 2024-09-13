@@ -78,7 +78,6 @@ export const WatchlistTable = () => {
       toast.success("Removed from watchlist");
     } catch (error) {
       toast.error((error as Error)?.message ?? "Error removing from watchlist");
-      console.log(error);
     }
   };
 
