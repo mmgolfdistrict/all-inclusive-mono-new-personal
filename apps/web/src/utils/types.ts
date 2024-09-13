@@ -172,3 +172,10 @@ export interface ConvenienceFeeProduct {
 export interface TaxProduct {
   type: "taxes";
 }
+
+export type MaxReservationResponse =
+  | {
+      success: boolean;
+      message?: string;
+    }
+  | undefined;

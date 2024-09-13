@@ -69,6 +69,12 @@ export default function Checkout({
   //   }
   // }, []);
 
+  const { data: maxReservation } =
+    api.checkout.checkMaxReservationsAndMaxRounds.useQuery({
+      roundsToBook: amountOfPlayers,
+      courseId: courseId,
+    });
+
   const {
     data: teeTimeData,
     isLoading: isLoadingTeeTime,
@@ -348,7 +354,11 @@ export default function Checkout({
           )}
         </div>
         <CheckoutBreadcumbs status={"checkout"} />
-
+        {!maxReservation?.success && (
+          <div className="bg-alert-red text-white p-1 pl-2  w-full rounded">
+            {maxReservation?.message}
+          </div>
+        )}
         <div className="flex w-full flex-col gap-4 md:flex-row">
           <div className="md:w-3/5">
             <OrderSummary
@@ -392,6 +402,7 @@ export default function Checkout({
                 cartData={cartData}
                 teeTimeDate={teeTimeData?.date}
                 playerCount={playerCount}
+              // maxReservation={maxReservation}
               />
             )}
           </div>
