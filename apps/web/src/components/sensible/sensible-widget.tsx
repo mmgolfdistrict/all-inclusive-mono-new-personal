@@ -120,7 +120,6 @@ export const SensibleWidget = memo(
         setLocalData(sensibleDataToMountComp);
         // @ts-ignore
         // Sensible.setCreateGuaranteeCallback((quote) => {
-        // console.log(quote);
         // });
         // @ts-ignore
         Sensible.setSelectGuaranteeCallback((quote) => {

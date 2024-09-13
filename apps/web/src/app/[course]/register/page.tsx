@@ -6,6 +6,8 @@ import {
   type RegisterSchemaType,
 } from "@golf-district/shared/src/schema/register-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { MenuItem, Select } from "@mui/material";
+import { useLoadScript } from "@react-google-maps/api";
 import { FilledButton } from "~/components/buttons/filled-button";
 import { IconButton } from "~/components/buttons/icon-button";
 import { Hidden } from "~/components/icons/hidden";
@@ -22,16 +24,14 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ChangeEvent,
-  useRef,
 } from "react";
 import ReCAPTCHA from "react-google-recaptcha";
-import { useForm, type SubmitHandler, Controller } from "react-hook-form";
+import { Controller, useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
 import { useDebounce } from "usehooks-ts";
-import { useLoadScript } from "@react-google-maps/api";
-import { MenuItem, Select } from "@mui/material";
 
 export default function RegisterPage() {
   const { course } = useCourseContext();
@@ -47,7 +47,7 @@ export default function RegisterPage() {
   } = useForm<RegisterSchemaType>({
     resolver: zodResolver(registerSchema),
   });
-  const libraries: any = ['places'];
+  const libraries: any = ["places"];
   const [city, setCity] = useState(getValues("city"));
 
   const debouncedLocation = useDebounce<string>(city, 500);
@@ -69,12 +69,10 @@ export default function RegisterPage() {
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "",
     libraries,
-  }
-  );
+  });
 
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
-
 
   const onPlaceChanged = () => {
     const place = autocompleteRef.current?.getPlace();
@@ -82,40 +80,43 @@ export default function RegisterPage() {
       const addressComponents = place.address_components;
 
       const getAddressComponent = (type: string): string => {
-        return addressComponents.find(component => component.types.includes(type))?.long_name || '';
+        return (
+          addressComponents.find((component) => component.types.includes(type))
+            ?.long_name || ""
+        );
       };
 
-      const streetNumber = getAddressComponent('street_number');
-      const route = getAddressComponent('route');
+      const streetNumber = getAddressComponent("street_number");
+      const route = getAddressComponent("route");
       const address1 = `${streetNumber} ${route}`.trim();
-      const address2 = getAddressComponent('sublocality');
-      const state = getAddressComponent('administrative_area_level_1');
-      const city = getAddressComponent('locality');
-      const zipcode = getAddressComponent('postal_code');
-      const country = getAddressComponent('country');
+      const address2 = getAddressComponent("sublocality");
+      const state = getAddressComponent("administrative_area_level_1");
+      const city = getAddressComponent("locality");
+      const zipcode = getAddressComponent("postal_code");
+      const country = getAddressComponent("country");
 
       // Type guard before passing to setValue
-      if (typeof address1 === 'string') setValue("address1", address1);
-      if (typeof address2 === 'string') setValue("address2", address2);
-      if (typeof state === 'string') setValue("state", state);
-      if (typeof city === 'string') setValue("city", city);
-      if (typeof zipcode === 'string') setValue("zipcode", zipcode);
-      if (typeof country === 'string') setValue("country", country);
+      if (typeof address1 === "string") setValue("address1", address1);
+      if (typeof address2 === "string") setValue("address2", address2);
+      if (typeof state === "string") setValue("state", state);
+      if (typeof city === "string") setValue("city", city);
+      if (typeof zipcode === "string") setValue("zipcode", zipcode);
+      if (typeof country === "string") setValue("country", country);
     }
   };
 
-
-
-
   useEffect(() => {
     if (isLoaded && !loadError && inputRef?.current) {
-      const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
-        types: ['address'],
-        componentRestrictions: { country: 'us' },
-      });
+      const autocomplete = new window.google.maps.places.Autocomplete(
+        inputRef.current,
+        {
+          types: ["address"],
+          componentRestrictions: { country: "us" },
+        }
+      );
       if (autocomplete) {
         autocompleteRef.current = autocomplete;
-        autocomplete.addListener('place_changed', onPlaceChanged);
+        autocomplete.addListener("place_changed", onPlaceChanged);
       }
     }
   }, [isLoaded, loadError]);
@@ -129,7 +130,6 @@ export default function RegisterPage() {
       refetchOnReconnect: false,
     }
   );
-
 
   const genUsername = () => {
     setValue("username", uName ?? "");
@@ -198,13 +198,12 @@ export default function RegisterPage() {
       });
       if (response?.error) {
         toast.error(response.message);
-        return
+        return;
       }
 
       router.push(`/${course?.id}/verify-email`);
     } catch (error) {
       toast.error((error as Error)?.message ?? "Error registering user.");
-      console.log(error);
     }
   };
 
@@ -234,7 +233,6 @@ export default function RegisterPage() {
           with Google. The below form is not required for gmail users.
         </p>
         <form className="flex flex-col gap-2" onSubmit={handleSubmit(onSubmit)}>
-
           <Controller
             name="firstName"
             control={control}
@@ -314,7 +312,6 @@ export default function RegisterPage() {
               />
             )}
           />
-
 
           <div className="flex items-end gap-2">
             <Controller
@@ -439,7 +436,12 @@ export default function RegisterPage() {
             control={control}
             render={({ field }) => (
               <div>
-                <label htmlFor="state" style={{ fontSize: "14px", color: "rgb(109 119 124" }} >State</label>
+                <label
+                  htmlFor="state"
+                  style={{ fontSize: "14px", color: "rgb(109 119 124" }}
+                >
+                  State
+                </label>
                 <Select
                   size="small"
                   {...field}
@@ -454,31 +456,31 @@ export default function RegisterPage() {
                   sx={{
                     fontSize: "14px",
                     color: "rgb(109 119 124)",
-                    backgroundColor: 'rgb(247, 249, 250)',
-                    border: 'none',
-                    '& fieldset': { border: 'none' },
+                    backgroundColor: "rgb(247, 249, 250)",
+                    border: "none",
+                    "& fieldset": { border: "none" },
                   }}
-                  value={field.value || ''}
+                  value={field.value || ""}
                   MenuProps={{
                     PaperProps: {
                       sx: {
-                        '& .MuiMenuItem-root.Mui-selected': {
-                          backgroundColor: 'rgb(0, 0, 0)',
-                          color: 'white',
-                          '&:hover': {
-                            backgroundColor: 'rgb(0, 0, 0)',
-                            color: 'white',
-                          }
-                        }
-                      }
-                    }
+                        "& .MuiMenuItem-root.Mui-selected": {
+                          backgroundColor: "rgb(0, 0, 0)",
+                          color: "white",
+                          "&:hover": {
+                            backgroundColor: "rgb(0, 0, 0)",
+                            color: "white",
+                          },
+                        },
+                      },
+                    },
                   }}
                   // defaultValue=""
                   displayEmpty
                 >
                   {/* <MenuItem value="" disabled >Select your state</MenuItem> */}
                   {usStates.map((state) => (
-                    <MenuItem key={state.code} value={state.name} >
+                    <MenuItem key={state.code} value={state.name}>
                       {state.name}
                     </MenuItem>
                   ))}
@@ -641,8 +643,9 @@ export default function RegisterPage() {
             )}
 
           <FilledButton
-            className={`w-full rounded-full ${isSubmitting ? "animate-pulse cursor-not-allopwed" : ""
-              }`}
+            className={`w-full rounded-full ${
+              isSubmitting ? "animate-pulse cursor-not-allopwed" : ""
+            }`}
             type="submit"
             disabled={isSubmitting}
             data-testid="register-button-id"
@@ -667,54 +670,54 @@ export default function RegisterPage() {
 }
 
 const usStates = [
-  { code: 'AL', name: 'Alabama' },
-  { code: 'AK', name: 'Alaska' },
-  { code: 'AZ', name: 'Arizona' },
-  { code: 'AR', name: 'Arkansas' },
-  { code: 'CA', name: 'California' },
-  { code: 'CO', name: 'Colorado' },
-  { code: 'CT', name: 'Connecticut' },
-  { code: 'DE', name: 'Delaware' },
-  { code: 'FL', name: 'Florida' },
-  { code: 'GA', name: 'Georgia' },
-  { code: 'HI', name: 'Hawaii' },
-  { code: 'ID', name: 'Idaho' },
-  { code: 'IL', name: 'Illinois' },
-  { code: 'IN', name: 'Indiana' },
-  { code: 'IA', name: 'Iowa' },
-  { code: 'KS', name: 'Kansas' },
-  { code: 'KY', name: 'Kentucky' },
-  { code: 'LA', name: 'Louisiana' },
-  { code: 'ME', name: 'Maine' },
-  { code: 'MD', name: 'Maryland' },
-  { code: 'MA', name: 'Massachusetts' },
-  { code: 'MI', name: 'Michigan' },
-  { code: 'MN', name: 'Minnesota' },
-  { code: 'MS', name: 'Mississippi' },
-  { code: 'MO', name: 'Missouri' },
-  { code: 'MT', name: 'Montana' },
-  { code: 'NE', name: 'Nebraska' },
-  { code: 'NV', name: 'Nevada' },
-  { code: 'NH', name: 'New Hampshire' },
-  { code: 'NJ', name: 'New Jersey' },
-  { code: 'NM', name: 'New Mexico' },
-  { code: 'NY', name: 'New York' },
-  { code: 'NC', name: 'North Carolina' },
-  { code: 'ND', name: 'North Dakota' },
-  { code: 'OH', name: 'Ohio' },
-  { code: 'OK', name: 'Oklahoma' },
-  { code: 'OR', name: 'Oregon' },
-  { code: 'PA', name: 'Pennsylvania' },
-  { code: 'RI', name: 'Rhode Island' },
-  { code: 'SC', name: 'South Carolina' },
-  { code: 'SD', name: 'South Dakota' },
-  { code: 'TN', name: 'Tennessee' },
-  { code: 'TX', name: 'Texas' },
-  { code: 'UT', name: 'Utah' },
-  { code: 'VT', name: 'Vermont' },
-  { code: 'VA', name: 'Virginia' },
-  { code: 'WA', name: 'Washington' },
-  { code: 'WV', name: 'West Virginia' },
-  { code: 'WI', name: 'Wisconsin' },
-  { code: 'WY', name: 'Wyoming' }
+  { code: "AL", name: "Alabama" },
+  { code: "AK", name: "Alaska" },
+  { code: "AZ", name: "Arizona" },
+  { code: "AR", name: "Arkansas" },
+  { code: "CA", name: "California" },
+  { code: "CO", name: "Colorado" },
+  { code: "CT", name: "Connecticut" },
+  { code: "DE", name: "Delaware" },
+  { code: "FL", name: "Florida" },
+  { code: "GA", name: "Georgia" },
+  { code: "HI", name: "Hawaii" },
+  { code: "ID", name: "Idaho" },
+  { code: "IL", name: "Illinois" },
+  { code: "IN", name: "Indiana" },
+  { code: "IA", name: "Iowa" },
+  { code: "KS", name: "Kansas" },
+  { code: "KY", name: "Kentucky" },
+  { code: "LA", name: "Louisiana" },
+  { code: "ME", name: "Maine" },
+  { code: "MD", name: "Maryland" },
+  { code: "MA", name: "Massachusetts" },
+  { code: "MI", name: "Michigan" },
+  { code: "MN", name: "Minnesota" },
+  { code: "MS", name: "Mississippi" },
+  { code: "MO", name: "Missouri" },
+  { code: "MT", name: "Montana" },
+  { code: "NE", name: "Nebraska" },
+  { code: "NV", name: "Nevada" },
+  { code: "NH", name: "New Hampshire" },
+  { code: "NJ", name: "New Jersey" },
+  { code: "NM", name: "New Mexico" },
+  { code: "NY", name: "New York" },
+  { code: "NC", name: "North Carolina" },
+  { code: "ND", name: "North Dakota" },
+  { code: "OH", name: "Ohio" },
+  { code: "OK", name: "Oklahoma" },
+  { code: "OR", name: "Oregon" },
+  { code: "PA", name: "Pennsylvania" },
+  { code: "RI", name: "Rhode Island" },
+  { code: "SC", name: "South Carolina" },
+  { code: "SD", name: "South Dakota" },
+  { code: "TN", name: "Tennessee" },
+  { code: "TX", name: "Texas" },
+  { code: "UT", name: "Utah" },
+  { code: "VT", name: "Vermont" },
+  { code: "VA", name: "Virginia" },
+  { code: "WA", name: "Washington" },
+  { code: "WV", name: "West Virginia" },
+  { code: "WI", name: "Wisconsin" },
+  { code: "WY", name: "Wyoming" },
 ];

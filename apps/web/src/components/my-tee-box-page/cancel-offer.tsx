@@ -52,7 +52,6 @@ export const CancelOffer = ({
       setIsCancelOfferOpen(false);
     } catch (error) {
       toast.error((error as Error)?.message ?? "Error cancelling offer");
-      console.log(error);
     }
   };
 

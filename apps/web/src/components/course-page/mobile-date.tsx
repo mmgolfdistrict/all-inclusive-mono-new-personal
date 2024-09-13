@@ -140,7 +140,6 @@ export const MobileDates = ({
                                   from: dateToDayValue(startDate),
                                   to: dateToDayValue(endDate),
                                 });
-                                console.log("startDate", startDate, endDate);
                               }}
                             >
                               {event.eventName}

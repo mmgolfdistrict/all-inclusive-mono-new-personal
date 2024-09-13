@@ -67,7 +67,6 @@ export default function Login() {
 
   useEffect(() => {
     if (sessionData?.user?.id && course?.id && status === "authenticated") {
-      console.log("sessionData", sessionData);
       logAudit(sessionData.user.id, course.id, () => {
         window.location.reload();
         window.location.href = `${window.location.origin}${
@@ -97,9 +96,7 @@ export default function Login() {
           func();
         }
       })
-      .catch((err) => {
-        console.log(err);
-      });
+      .catch((err) => {});
   };
 
   useEffect(() => {
@@ -127,7 +124,6 @@ export default function Login() {
 
   useEffect(() => {
     if (process.env.NEXT_PUBLIC_RECAPTCHA_IS_INVISIBLE === "true") {
-      console.log(recaptchaRef.current);
       recaptchaRef.current?.execute();
     }
   }, [recaptchaRef]);
@@ -166,7 +162,6 @@ export default function Login() {
       });
       if (res?.error) {
         await recaptchaRef.current?.executeAsync();
-        console.log("res?.error", res?.error);
         if (res.error === "AccessDenied") {
           toast.error(
             "Unable to login. Please call customer support at 877-TeeTrade or email at support@golfdistrict.com"
@@ -177,7 +172,6 @@ export default function Login() {
         setValue("password", "");
       }
     } catch (error) {
-      console.log(error);
       toast.error(
         (error as Error)?.message ??
           "An error occurred logging in, try another option."
@@ -251,9 +245,7 @@ export default function Login() {
         // }`,
         redirect: false,
       });
-    } catch (error) {
-      console.log(error);
-    }
+    } catch (error) {}
   };
 
   const hasProvidersSetUp =

@@ -74,9 +74,7 @@ export default function CourseHomePage() {
         handle: uName,
         courseId,
       });
-    } catch (error) {
-      console.log(error);
-    }
+    } catch (error) {}
   };
   console.log("courseId", courseId);
 
@@ -85,7 +83,10 @@ export default function CourseHomePage() {
   };
 
   const farthestDateOut = useMemo(() => {
-    return dayjs().utc().add(course?.furthestDayToBook ?? 0, "day").format("YYYY-MM-DD");
+    return dayjs()
+      .utc()
+      .add(course?.furthestDayToBook ?? 0, "day")
+      .format("YYYY-MM-DD");
   }, [course?.furthestDayToBook]);
 
   const { data: unreadOffers } = api.user.getUnreadOffersForCourse.useQuery(
@@ -100,7 +101,6 @@ export default function CourseHomePage() {
   const { data: specialEvents } = api.searchRouter.getSpecialEvents.useQuery({
     courseId: courseId ?? "",
   });
-  console.log("specialEvents", specialEvents);
 
   const getSpecialDayDate = (label) => {
     const specialDay = specialEvents?.find((day) => day.eventName === label);
@@ -117,7 +117,6 @@ export default function CourseHomePage() {
       return currentDateWithTimeZoneOffset;
     };
     const specialDate = getSpecialDayDate(dateType);
-    console.log("specialDate", specialDate);
 
     if (specialDate) {
       const startOfDay = dayjs(specialDate.start);
@@ -181,7 +180,6 @@ export default function CourseHomePage() {
     };
 
     const specialDate = getSpecialDayDate(dateType);
-    console.log("specialDate", specialDate);
 
     if (specialDate) {
       const endOfDay = dayjs(specialDate.end);

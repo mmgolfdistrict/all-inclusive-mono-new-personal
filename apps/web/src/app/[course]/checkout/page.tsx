@@ -127,9 +127,7 @@ export default function Checkout({
         promoData.type
       );
       setPromoCodePrice(ratedPrice);
-    } catch (error) {
-      console.log(error);
-    }
+    } catch (error) {}
   };
 
   useEffect(() => {
