@@ -730,7 +730,8 @@ export class HyperSwitchWebhookService {
         charityCharge:bookings?.totalCharityAmount,
         charityId:bookings?.charityId,
         weatherQuoteId:bookings?.weatherQuoteId,
-        cartId:bookings?.cartId
+        cartId:bookings?.cartId,
+         totalTaxesAmount:bookings.totalTaxesAmount
       })
       .from(bookings)
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -1043,7 +1044,7 @@ export class HyperSwitchWebhookService {
           cartId: firstBooking.cartId,
           playerCount: firstBooking.playerCount - (listedSlotsCount ?? 0),
           greenFeePerPlayer: firstBooking.greenFeesPerPlayer ?? 1 * 100,
-          totalTaxesAmount: taxCharge * 100 || 0,
+          totalTaxesAmount: firstBooking.totalTaxesAmount,
           charityId: firstBooking.charityId || null,
           totalCharityAmount: firstBooking?.charityCharge,
           totalAmount: totalAmount || 0,
