@@ -71,6 +71,19 @@ export class AuthService extends CacheService {
     return false;
   };
 
+  updateLastSuccessfulLogin = async (userId: string, handleOrEmail: string) => {
+    await this.database
+      .update(users)
+      .set({
+        lastSuccessfulLogin: currentUtcTimestamp(),
+      })
+      .where(eq(users.id, userId))
+      .execute()
+      .then(() => {
+        this.logger.info(`Updated lastSuccessfulLogin for user: ${handleOrEmail}`);
+      });
+  };
+
   authenticateUser = async (handleOrEmail: string, password: string) => {
     // console.log("Node Env");
     // console.log(process.env.NODE_ENV);
@@ -137,17 +150,6 @@ export class AuthService extends CacheService {
     this.logger.warn(`Password Verified`);
 
     await this.invalidateCache(`signinAttempts:${data.user.id}`);
-    await this.database
-      .update(users)
-      .set({
-        lastSuccessfulLogin: currentUtcTimestamp(),
-      })
-      .where(eq(users.id, data.user.id))
-      .execute()
-      .then(() => {
-        this.logger.info(`Updated lastSuccessfulLogin for user: ${handleOrEmail}`);
-        return data.user;
-      });
     let profilePicture = "";
     if (!data.asset) {
       profilePicture = "/defaults/default-banner.webp";
