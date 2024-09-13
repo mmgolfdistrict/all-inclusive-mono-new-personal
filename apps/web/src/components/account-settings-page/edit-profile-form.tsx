@@ -333,7 +333,12 @@ export const EditProfileForm = () => {
         dataToUpdate.bannerImageAssetId = "";
         deleteFileAsset({ fileType: "bannerImage" });
       }
-      await updateUser.mutateAsync({ ...dataToUpdate, courseId });
+      const response = await updateUser.mutateAsync({ ...dataToUpdate, courseId });
+
+      if (response?.error) {
+        toast.error(response.message);
+        return;
+      }
       if (profilePhoto && profilePhoto !== defaultProfilePhoto) {
         setProfilePhoto(null);
         await update({ image: assetIds.profilePictureId });
@@ -350,6 +355,7 @@ export const EditProfileForm = () => {
       await refetchMe();
       await refetch();
       toast.success("Profile updated successfully");
+
     } catch (error) {
       if (error?.message === "Handle already exists") {
         setError("handle", {

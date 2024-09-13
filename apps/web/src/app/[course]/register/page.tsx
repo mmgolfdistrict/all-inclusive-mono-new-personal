@@ -194,6 +194,7 @@ export default function RegisterPage() {
     try {
       const response = await registerUser.mutateAsync({
         ...data,
+        country:"USA",
         courseId: course?.id,
       });
       if (response?.error) {
