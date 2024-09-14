@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
-import { and, asc, desc, eq, isNull, max, min, sql } from "@golf-district/database";
+import { and, asc, desc, eq, gte, max, min, sql } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import { bookings } from "@golf-district/database/schema/bookings";
 import { charities } from "@golf-district/database/schema/charities";
@@ -11,7 +11,7 @@ import type { InsertCourses } from "@golf-district/database/schema/courses";
 import { entities } from "@golf-district/database/schema/entities";
 import { lists } from "@golf-district/database/schema/lists";
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
-import { getApexDomain, validDomainRegex } from "@golf-district/shared";
+import { currentUtcTimestamp, getApexDomain, validDomainRegex } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
 import { DomainService } from "../domain/domain.service";
 
@@ -72,6 +72,7 @@ export class CourseService extends DomainService {
         supportsOffers: courses.supportsOffers,
         supportsWatchlist: courses.supportsWatchlist,
         supportsPromocode: courses.supportsPromocode,
+        supportsWaitlist: courses.supportsWaitlist,
         buyerFee: courses.buyerFee,
         sellerFee: courses.sellerFee,
       })
@@ -87,24 +88,32 @@ export class CourseService extends DomainService {
     //Cache if possible
     const listTeeTimePriceQuery = this.database
       .select({
-        highestListedTeeTime: max(lists.listPrice),
-        lowestListedTeeTime: min(lists.listPrice),
+        highestListedTeeTime: sql`max(${lists.listPrice} * (${courses.buyerFee}/100) + ${lists.listPrice})`,
+        lowestListedTeeTime: sql`min(${lists.listPrice} * (${courses.buyerFee}/100) + ${lists.listPrice})`,
       })
       .from(lists)
       .innerJoin(bookings, eq(bookings.listId, lists.id))
-      .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
-      .where(and(eq(teeTimes.courseId, courseId), eq(lists.isDeleted, false)))
+      .innerJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
+      .innerJoin(courses, eq(courses.id, teeTimes.courseId))
+      .where(
+        and(
+          eq(teeTimes.courseId, courseId),
+          eq(lists.isDeleted, false),
+          gte(teeTimes.providerDate, currentUtcTimestamp())
+        )
+      )
       .limit(1)
       .execute();
     //Get the highest and lowest primary sale tee time prices
     //Cache if possible
     const primarySaleTeeTimePriceQuery = this.database
       .select({
-        highestPrimarySaleTeeTime: max(teeTimes.greenFeePerPlayer),
-        lowestPrimarySaleTeeTime: min(teeTimes.greenFeePerPlayer),
+        highestPrimarySaleTeeTime: sql`max(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})`,
+        lowestPrimarySaleTeeTime: sql`min(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})`,
       })
       .from(teeTimes)
-      .where(eq(teeTimes.courseId, courseId))
+      .innerJoin(courses, eq(courses.id, teeTimes.courseId))
+      .where(and(eq(teeTimes.courseId, courseId), gte(teeTimes.providerDate, currentUtcTimestamp())))
       .limit(1)
       .execute();
 
@@ -132,10 +141,10 @@ export class CourseService extends DomainService {
 
     const res = {
       ...result,
-      highestListedTeeTime: result.highestListedTeeTime ?? 0,
-      lowestListedTeeTime: result.lowestListedTeeTime ?? 0,
-      highestPrimarySaleTeeTime: result.highestPrimarySaleTeeTime ?? 0,
-      lowestPrimarySaleTeeTime: result.lowestPrimarySaleTeeTime ?? 0,
+      highestListedTeeTime: ((result.highestListedTeeTime as number) ?? 0) / 100,
+      lowestListedTeeTime: ((result.lowestListedTeeTime as number) ?? 0) / 100,
+      highestPrimarySaleTeeTime: ((result.highestPrimarySaleTeeTime as number) ?? 0) / 100,
+      lowestPrimarySaleTeeTime: ((result.lowestPrimarySaleTeeTime as number) ?? 0) / 100,
     };
 
     if (result.supportCharity) {
@@ -206,7 +215,6 @@ export class CourseService extends DomainService {
       .select({
         id: assets.id,
         key: assets.key,
-        cdn: assets.cdn,
         extension: assets.extension,
       })
       .from(assets)
@@ -220,7 +228,6 @@ export class CourseService extends DomainService {
         id: assets.id,
         coursesId: assets.courseId,
         key: assets.key,
-        cdn: assets.cdn,
         extension: assets.extension,
         order: courseAssets.order,
         courseLogoId: courses.logoId,
@@ -239,7 +246,7 @@ export class CourseService extends DomainService {
       });
     return {
       logo: logo[0]
-        ? `https://${logo[0].cdn}/${logo[0].key}.${logo[0].extension}`
+        ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${logo[0].key}.${logo[0].extension}`
         : "/defaults/default-profile.webp",
       images: images
         // .filter((i) => i.coursesId === courseId && i.id !== i.courseLogoId)
@@ -248,7 +255,9 @@ export class CourseService extends DomainService {
           const orderB = b.order !== null ? b.order : Number.MAX_SAFE_INTEGER;
           return orderA - orderB;
         })
-        .map(({ key, cdn, extension }) => `https://${cdn}/${key}.${extension}`),
+        .map(
+          ({ key, extension }) => `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${key}.${extension}`
+        ),
     };
   };
 

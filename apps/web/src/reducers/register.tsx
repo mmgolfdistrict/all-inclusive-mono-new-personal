@@ -14,7 +14,13 @@ type State = {
   name: string;
   email: string;
   username: string;
-  location: string;
+  // location: string;
+  address1: string;
+  address2?: string;
+  state: string;
+  city: string;
+  zipcode: string;
+  country: string;
   password: string;
   passwordConfirmation: string;
   profilePicture: string;
@@ -27,7 +33,13 @@ export const initRegisterState: State = {
   name: "",
   email: "",
   username: "",
-  location: "",
+  // location: "",
+  address1: "",
+  address2: "",
+  state: "",
+  city: "",
+  zipcode: "",
+  country: "",
   password: "",
   passwordConfirmation: "",
   profilePicture: "",

@@ -149,3 +149,9 @@ export const getPromoCodePrice = (
   }
   return Number((currentPrice - discount).toFixed(2));
 };
+
+export const getBgColor = (type) => {
+  if (type === "FAILURE") return "alert-red";
+  if (type === "SUCCESS") return "success-alert";
+  if (type === "WARNING") return "slate-400";
+};

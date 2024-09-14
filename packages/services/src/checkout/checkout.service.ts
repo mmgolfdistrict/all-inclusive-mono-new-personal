@@ -19,7 +19,6 @@ import Logger from "@golf-district/shared/src/logger";
 import { AuctionService } from "../auction/auction.service";
 import { HyperSwitchService } from "../payment-processor/hyperswitch.service";
 //import { StripeService } from "../payment-processor/stripe.service";
-import { SensibleService } from "../sensible/sensible.service";
 import type { ProviderService } from "../tee-sheet-provider/providers.service";
 import type { ForeUpWebhookService } from "../webhooks/foreup.webhook.service";
 import type {
@@ -37,10 +36,21 @@ import type {
   TaxProduct,
 } from "./types";
 import { CartValidationErrors } from "./types";
+import dayjs from "dayjs";
+import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
+import UTC from "dayjs/plugin/utc";
 
 /**
  * Configuration options for the CheckoutService.
  */
+
+type MaxReservationsAndMaxRoundsResult = {
+  success: boolean;
+  message: string;
+};
+
+dayjs.extend(UTC);
+dayjs.extend(isSameOrBefore);
 export interface CheckoutServiceConfig {
   sensible_partner_id: string;
   sensible_product_id: string;
@@ -108,6 +118,82 @@ export class CheckoutService {
    * };
    * const checkoutSession = await checkoutService.buildCheckoutSession(userId, customerCart);
    */
+
+  checkMaxReservationsAndMaxRounds = async (
+    userId: string,
+    roundsToBook: number,
+    courseId: string
+  ): Promise<MaxReservationsAndMaxRoundsResult | undefined> => {
+    const twentyFourHoursAgo = dayjs().subtract(24, "hour").format("YYYY-MM-DD HH:mm:ss");
+
+    try {
+      const courseData = await this.database
+        .select({
+          maxRoundsPerPeriod: courses.maxRoundsPerPeriod,
+          maxBookingsPerPeriod: courses.maxBookingsPerPeriod,
+        })
+        .from(courses)
+        .where(eq(courses.id, courseId))
+        .execute();
+
+      if (!courseData) {
+        throw new Error("Course data not found.");
+      }
+
+      const booking = await this.database
+        .select({
+          ownerId: bookings.ownerId,
+          playerCount: bookings.playerCount,
+        })
+        .from(bookings)
+        .where(and(eq(bookings.ownerId, userId), gte(bookings.purchasedAt, twentyFourHoursAgo)))
+        .execute();
+
+      if (!bookings) {
+        throw new Error("Bookings data not found.");
+      }
+
+      const numberOfBookings = booking.length;
+      const numberOfRounds = booking.reduce((total, booking) => total + booking.playerCount, 0);
+
+      console.log("=======courseData====", courseData, numberOfRounds, numberOfBookings);
+
+      const maxRoundsPerPeriod = courseData[0]?.maxRoundsPerPeriod;
+      const maxBookingsPerPeriod = courseData[0]?.maxBookingsPerPeriod;
+
+      const exceedsRounds =
+        maxRoundsPerPeriod !== null &&
+        maxRoundsPerPeriod !== undefined &&
+        numberOfRounds + roundsToBook > maxRoundsPerPeriod;
+      const exceedsBookings =
+        maxBookingsPerPeriod !== null &&
+        maxBookingsPerPeriod !== undefined &&
+        numberOfBookings + 1 > maxBookingsPerPeriod;
+
+      if (exceedsBookings) {
+        console.error("User exceeds max bookings per period.");
+        return {
+          success: false,
+          message: "You have already reached the maximum number of bookings allowed for a day.",
+        };
+      }
+
+      if (exceedsRounds) {
+        console.error("User exceeds max rounds per period.");
+        return {
+          success: false,
+          message: "You have already exceeded the maximum number of rounds allowed per day.",
+        };
+      }
+
+      console.log("User can proceed with booking.");
+      return { success: true, message: "" };
+    } catch (error) {
+      console.error("Error in validation:", error);
+      return { success: false, message: "An error occurred during validation." };
+    }
+  };
+
   buildCheckoutSession = async (userId: string, customerCartData: CustomerCart, cartId = "") => {
     const { paymentId } = customerCartData;
     let data = {};
@@ -221,6 +307,9 @@ export class CheckoutService {
 
   updateCheckoutSession = async (userId: string, customerCartData: CustomerCart, cartId: string) => {
     const { paymentId, ...customerCart } = customerCartData;
+
+    const errors = await this.validateCartItems(customerCartData);
+    console.log("errors ", JSON.stringify(errors));
 
     const total = customerCart.cart
       .filter(({ product_data }) => product_data.metadata.type !== "markup")
@@ -353,11 +442,13 @@ export class CheckoutService {
         // entityId: teeTimes.entityId,
         entityId: courses.entityId,
         date: teeTimes.date,
+        providerDate: teeTimes.providerDate,
         providerCourseId: providerCourseLink.providerCourseId,
         providerTeeSheetId: providerCourseLink.providerTeeSheetId,
         providerId: providerCourseLink.providerId,
         internalId: providers.internalId,
         time: teeTimes.time,
+        providerCourseConfiguration: providerCourseLink.providerCourseConfiguration,
       })
       .from(teeTimes)
       .leftJoin(courses, eq(courses.id, teeTimes.courseId))
@@ -386,21 +477,34 @@ export class CheckoutService {
 
     const { provider, token } = await this.providerService.getProviderAndKey(
       teeTime.internalId!,
-      teeTime.courseId
+      teeTime.courseId,
+      teeTime.providerCourseConfiguration!
     );
 
-    const [formattedDate] = teeTime.date.split(" ");
+    // const [formattedDate] = teeTime.date.split(" ");
+    const [formattedDateUTC] = teeTime.date.split(" ");
+    const [formattedDate] = teeTime.providerDate.split("T");
+    console.log(`formattedDateUTC: ${formattedDateUTC}`);
+    console.log(`formattedDate: ${formattedDate}`);
 
     if (teeTime.providerCourseId && teeTime.providerTeeSheetId && formattedDate) {
-      await this.foreupIndexer.indexTeeTime(
+      const response = await this.foreupIndexer.indexTeeTime(
         formattedDate,
         teeTime.providerCourseId,
         teeTime.providerTeeSheetId,
         provider,
         token,
-        teeTime.time
+        teeTime.time,
+        teeTime.id
       );
+      if (response?.error) {
+        errors.push({
+          errorType: CartValidationErrors.TEE_TIME_NOT_AVAILABLE,
+          product_id: item.id,
+        });
+      }
     }
+    console.log("teeTime", item.product_data);
     const stillAvailable = await this.database
       .select({ id: teeTimes.id })
       .from(teeTimes)
@@ -419,7 +523,7 @@ export class CheckoutService {
         errorType: CartValidationErrors.TEE_TIME_NOT_AVAILABLE,
         product_id: item.id,
       });
-      throw new Error("Expected Tee time spots may not be available anymore");
+      throw new Error("Expected Tee time spots may not be available anymore. Please select another time.");
     }
     return errors;
   };

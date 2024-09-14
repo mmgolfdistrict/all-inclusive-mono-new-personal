@@ -1,6 +1,7 @@
 "use client";
 
 import * as ToggleGroup from "@radix-ui/react-toggle-group";
+import { useCourseContext } from "~/contexts/CourseContext";
 import { useUser } from "~/hooks/useUser";
 import { api } from "~/utils/api";
 import { useParams } from "next/navigation";
@@ -13,6 +14,8 @@ export const NotificationSettings = () => {
   const [isByEmail, setIsByEmail] = useState<boolean>(true);
   const updateUser = api.user.updateUser.useMutation();
   const [isMutating, setIsMutating] = useState<boolean>(false);
+  const { course } = useCourseContext();
+  const courseId = course?.id ?? "";
 
   const params = useParams();
   const { userId } = params;
@@ -40,6 +43,7 @@ export const NotificationSettings = () => {
       setIsMutating(true);
       await updateUser.mutateAsync({
         phoneNotifications: newValue,
+        courseId,
       });
       await refetch();
       toast.success("Phone notifications updated successfully");
@@ -61,6 +65,7 @@ export const NotificationSettings = () => {
       setIsMutating(true);
       await updateUser.mutateAsync({
         emailNotification: newValue,
+        courseId,
       });
       await refetch();
       toast.success("Email notifications updated successfully");
@@ -75,7 +80,10 @@ export const NotificationSettings = () => {
   };
 
   return (
-    <section className="mx-auto flex h-fit w-full flex-col gap-6 bg-white px-3 py-2  md:rounded-xl md:p-6 md:py-4">
+    <section
+      className="mx-auto flex h-fit w-full flex-col gap-6 bg-white px-3 py-2  md:rounded-xl md:p-6 md:py-4"
+      // style={{ height: "49%" }}
+    >
       <div>
         <h3 className="text-[18px] md:text-[24px]">Notifications</h3>
         <p className=" text-[14px] text-primary-gray md:text-[16px]">

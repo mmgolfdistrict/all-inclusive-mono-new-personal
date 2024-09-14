@@ -7,7 +7,6 @@ dayjs.extend(UTC);
 dayjs.extend(isSameOrBefore);
 
 type Asset = {
-  cdn: string;
   key: string;
   extension: string;
 };
@@ -33,12 +32,41 @@ export const currentUtcTimestamp = (): string => {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.000`;
 };
 
-export const formatQueryDate = (date: Date): string => {
+export const formatDate = (date: Date): string => {
   const year = date.getFullYear();
   const month = (date.getMonth() + 1).toString().padStart(2, "0");
   const day = date.getDate().toString().padStart(2, "0");
 
   return `${year}-${month}-${day}`;
+};
+
+export const formatQueryDate = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, "0");
+  const day = date.getDate().toString().padStart(2, "0");
+  const hours = date.getHours().toString().padStart(2, "0");
+  const minutes = date.getMinutes().toString().padStart(2, "0");
+  const seconds = date.getSeconds().toString().padStart(2, "0");
+
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+};
+
+export const formatQueryDateEnd = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, "0");
+  const day = date.getDate().toString().padStart(2, "0");
+  const hours = date.getHours().toString().padStart(2, "0");
+  const minutes = date.getMinutes().toString().padStart(2, "0");
+  const seconds = date.getSeconds().toString().padStart(2, "0");
+
+  return `${year}-${month}-${day} ${23}:${59}:${59}`;
+};
+
+export const removeTimeZoneOffset = (date?: string): string | null => {
+  if (!date) return null;
+  const parts = date.split("T");
+  const dateAndTime = parts ? parts[0] + "T" + parts[1]?.slice(0, -6) : "";
+  return dateAndTime;
 };
 
 /**
@@ -149,14 +177,13 @@ export const containsBadWords = (text: string, filter: Filter): boolean => {
  * Format: [cdn]/[key].[extension]
  *
  * @param {Asset} asset - An object containing properties of the asset.
- *   @property {string} cdn - The Content Delivery Network (CDN) base URL.
  *   @property {string} key - The unique identifier/key of the asset.
  *   @property {string} extension - The file extension of the asset.
  *
  * @returns {string} The full URL of the asset.
  */
 export const assetToURL = (asset: Asset): string => {
-  return `https://${asset.cdn}/${asset.key}.${asset.extension}`;
+  return `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${asset.key}.${asset.extension}`;
 };
 
 /**
@@ -242,4 +269,13 @@ export const formatMoney = (amount: number) => {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
+};
+
+export const formatTime = (timestamp: string, showFullDayOfTheWeek?: boolean, utcOffset = 0): string => {
+  const cleanTimeString = !timestamp.includes("T") ? timestamp.replace(" ", "T") + "Z" : timestamp;
+  const timezone = cleanTimeString.slice(-6) ?? utcOffset;
+  if (showFullDayOfTheWeek) {
+    return dayjs.utc(cleanTimeString).utcOffset(timezone).format("dddd, MMM D h:mm A");
+  }
+  return dayjs.utc(cleanTimeString).utcOffset(timezone).format("dddd, MMM D h:mm A");
 };

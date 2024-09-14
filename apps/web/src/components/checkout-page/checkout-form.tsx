@@ -1,16 +1,19 @@
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-import type { ReserveTeeTimeResponse } from "@golf-district/shared";
+import { getErrorMessageById } from "@golf-district/shared/src/hyperSwitchErrorCodes";
 import {
   UnifiedCheckout,
   useHyper,
   useWidgets,
 } from "@juspay-tech/react-hyper-js";
+import { LoadingContainer } from "~/app/[course]/loader";
 import { useCheckoutContext } from "~/contexts/CheckoutContext";
 import { useCourseContext } from "~/contexts/CourseContext";
+import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
-import type { CartProduct } from "~/utils/types";
+import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
+import type { CartProduct, MaxReservationResponse } from "~/utils/types";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
+import { toast } from "react-toastify";
 import { FilledButton } from "../buttons/filled-button";
 import { CharitySelect } from "../input/charity-select";
 import { Input } from "../input/input";
@@ -18,22 +21,53 @@ import styles from "./checkout.module.css";
 
 export const CheckoutForm = ({
   isBuyNowAuction,
-  amountToPay,
   teeTimeId,
   cartData,
   cartId,
   teeTimeDate,
   listingId,
+  playerCount,
 }: {
   isBuyNowAuction: boolean;
-  amountToPay: number;
   teeTimeId: string;
   cartData: CartProduct[];
   cartId: string;
   teeTimeDate: string | undefined;
   listingId: string;
+  playerCount: string | undefined;
 }) => {
+  const MAX_CHARITY_AMOUNT = 1000;
   const { course } = useCourseContext();
+  const courseId = course?.id;
+  const { user } = useUserContext();
+  const auditLog = api.webhooks.auditLog.useMutation();
+  const sendEmailForFailedPayment =
+    api.webhooks.sendEmailForFailedPayment.useMutation();
+
+  const { refetch: refetchCheckTeeTime } =
+    api.teeBox.checkIfTeeTimeStillListedByListingId.useQuery(
+      {
+        listingId: listingId,
+      },
+      {
+        enabled: false,
+      }
+    );
+
+  const checkIfTeeTimeAvailableOnProvider =
+    api.teeBox.checkIfTeeTimeAvailableOnProvider.useMutation();
+
+  const logAudit = async () => {
+    await auditLog.mutateAsync({
+      userId: user?.id ?? "",
+      teeTimeId: teeTimeId,
+      bookingId: "",
+      listingId: listingId,
+      courseId,
+      eventId: "TEE_TIME_PAY_NOW_CLICKED",
+      json: `TEE_TIME_PAY_NOW_CLICKED`,
+    });
+  };
 
   let primaryGreenFeeCharge = 0;
 
@@ -88,6 +122,7 @@ export const CheckoutForm = ({
       usePrefilledValues: "never", // or "auto",
     },
     branding: "never",
+    hideExpiredPaymentMethods: true,
   };
   const hyper = useHyper();
   const widgets = useWidgets();
@@ -108,6 +143,8 @@ export const CheckoutForm = ({
     handleSelectedCharityAmount,
     handleRemoveSelectedCharity,
     setReservationData,
+    sensibleData,
+    amountOfPlayers
   } = useCheckoutContext();
 
   const reserveBookingApi = api.teeBox.reserveBooking.useMutation();
@@ -149,83 +186,188 @@ export const CheckoutForm = ({
     hyper.retrievePaymentIntent(clientSecret).then((resp) => {
       const status = resp?.paymentIntent?.status;
       if (status) {
-        handlePaymentStatus(resp?.paymentIntent?.status);
+        handlePaymentStatus(resp?.paymentIntent?.status as string);
       }
     });
   });
 
+  useEffect(() => {
+    const timer = setTimeout(function () {
+      router.push(`/${courseId}`);
+    }, 10 * 60 * 1000);
+
+    return () => {
+      clearTimeout(timer);
+      setIsLoading(false);
+    };
+  }, []);
+
+  const { data: maxReservation } =
+    api.checkout.checkMaxReservationsAndMaxRounds.useQuery({
+      roundsToBook: amountOfPlayers,
+      courseId: courseId ? courseId : "",
+    });
+
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    if (message === "Payment Successful") return;
+    googleAnalyticsEvent({
+      action: `PAY NOW CLICKED`,
+      category: "TEE TIME PURCHASE",
+      label: "User clicked on pay now to do payment",
+      value: "",
+    });
+    e.preventDefault();
+    void logAudit();
+    setIsLoading(true);
+    if (!maxReservation?.success) {
+      // toast.error(maxReservation?.message);
+      setIsLoading(false);
+      setMessage(maxReservation?.message ?? "");
+      return;
+    }
+
+    if (listingId.length) {
+      const isTeeTimeAvailable = await refetchCheckTeeTime();
+      if (!isTeeTimeAvailable.data) {
+        toast.error("Oops! Tee time is not available anymore");
+        setIsLoading(false);
+        return;
+      }
+    } else {
+      const resp = await checkIfTeeTimeAvailableOnProvider.mutateAsync({
+        teeTimeId,
+        golfersCount: Number(playerCount ?? 0),
+      });
+
+      if (!resp) {
+        toast.error("Oops! Tee time is not available anymore");
+        setIsLoading(false);
+        return;
+      }
+    }
+
+    if (message === "Payment Successful") {
+      setIsLoading(false);
+      return;
+    }
     e.preventDefault();
     if (
       selectedCharity &&
       (!selectedCharityAmount || selectedCharityAmount === 0)
     ) {
       setCharityAmountError("Charity amount cannot be empty or zero");
+      setIsLoading(false);
+      return;
     }
-    {
-      setIsLoading(true);
+    if (selectedCharityAmount && selectedCharityAmount > MAX_CHARITY_AMOUNT) {
+      setIsLoading(false);
+      return;
+    }
+    setCharityAmountError("");
 
-      const response = await hyper.confirmPayment({
-        widgets,
-        confirmParams: {
-          // Make sure to change this to your payment completion page
-          return_url: isBuyNowAuction
-            ? `${window.location.origin}/${course?.id}/auctions/confirmation`
-            : `${window.location.origin}/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}`,
-        },
-        redirect: "if_required",
-      });
+    const response = await hyper.confirmPayment({
+      widgets,
+      confirmParams: {
+        // Make sure to change this to your payment completion page
+        return_url: isBuyNowAuction
+          ? `${window.location.origin}/${course?.id}/auctions/confirmation`
+          : `${window.location.origin}/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}`,
+      },
+      redirect: "if_required",
+    });
 
+    try {
       if (response) {
-        if (response.status === "succeeded") {
-          let bookingResponse: ReserveTeeTimeResponse = {
+        if (response.status === "processing") {
+          void sendEmailForFailedPayment.mutateAsync({
+            paymentId: response?.payment_id as string,
+          });
+          setMessage(
+            getErrorMessageById((response?.error_code ?? "") as string)
+          );
+          setIsLoading(false);
+        } else if (response.status === "succeeded") {
+          let bookingResponse = {
             bookingId: "",
             providerBookingId: "",
             status: "",
           };
+
           if (isFirstHand.length) {
-            bookingResponse = await reserveBookingFirstHand(
-              cartId,
-              response?.payment_id
-            );
-            setReservationData({
-              golfReservationId: bookingResponse.bookingId,
-              providerReservationId: bookingResponse.providerBookingId,
-              playTime: teeTimeDate || "",
-            });
+            try {
+              bookingResponse = await reserveBookingFirstHand(
+                cartId,
+                response?.payment_id as string,
+                sensibleData?.id ?? ""
+              );
+              setReservationData({
+                golfReservationId: bookingResponse.bookingId,
+                providerReservationId: bookingResponse.providerBookingId,
+                playTime: teeTimeDate || "",
+              });
+            } catch (error) {
+              setMessage(
+                "Error reserving first hand booking: " + error.message
+              );
+              setIsLoading(false);
+              return;
+            }
           } else {
-            bookingResponse = await reserveSecondHandBooking(
-              cartId,
-              listingId,
-              response?.payment_id
+            try {
+              bookingResponse = await reserveSecondHandBooking(
+                cartId,
+                listingId,
+                response?.payment_id as string
+              );
+            } catch (error) {
+              setMessage(
+                "Error reserving second hand booking: " + error.message
+              );
+              setIsLoading(false);
+              return;
+            }
+          }
+
+          setMessage("Payment Successful");
+          if (isBuyNowAuction) {
+            router.push(`/${course?.id}/auctions/confirmation`);
+          } else {
+            router.push(
+              `/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}&bookingId=${bookingResponse.bookingId}`
             );
           }
-          setMessage("Payment Successful");
-          isBuyNowAuction
-            ? router.push(`/${course?.id}/auctions/confirmation`)
-            : router.push(
-                `/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}&bookingId=${bookingResponse.bookingId}`
-              );
-        } else if (response.error) {
-          setMessage(response.error.message);
+        } else if (response.status === "failed") {
+          setMessage(
+            getErrorMessageById((response?.error_code ?? "") as string)
+          );
+          setIsLoading(false);
         } else {
-          setMessage("An unexpected error occurred.");
+          setMessage(
+            getErrorMessageById((response?.error_code ?? "") as string)
+          );
         }
-
-        setIsLoading(false);
-        // setIsPaymentCompleted(true);
       }
+    } catch (error) {
+      setMessage("An unexpected error occurred: " + error.message);
+      setIsLoading(false);
+    } finally {
+      // setIsLoading(false);
     }
   };
 
   const reserveBookingFirstHand = async (
     cartId: string,
-    payment_id: string
+    payment_id: string,
+    sensibleQuoteId: string
   ) => {
+    const href = window.location.href;
+    const redirectHref = href.split("/checkout")[0] || "";
+
     const bookingResponse = await reserveBookingApi.mutateAsync({
       cartId,
       payment_id,
+      sensibleQuoteId,
+      redirectHref,
     });
     return bookingResponse;
   };
@@ -235,12 +377,15 @@ export const CheckoutForm = ({
     listingId: string,
     payment_id: string
   ) => {
+    const href = window.location.href;
+    const redirectHref = href.split("/checkout")[0] || "";
+
     const bookingResponse = await reserveSecondHandBookingApi.mutateAsync({
       cartId,
       listingId,
       payment_id,
+      redirectHref,
     });
-    // console.log(bookingResponse);
     return bookingResponse;
   };
 
@@ -251,13 +396,13 @@ export const CheckoutForm = ({
         {course?.supportCharity ? (
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
-              <div>Support a Charity</div>
+              <div>Charitable Donations</div>
               {selectedCharity ? (
                 <button
                   onClick={handleRemoveSelectedCharity}
                   className="text-[12px] self-end p-1 border rounded-md w-fit bg-error-stroke text-white"
                 >
-                  Remove Charity
+                  Remove Charitable Donation
                 </button>
               ) : null}
             </div>
@@ -277,17 +422,28 @@ export const CheckoutForm = ({
                   value={String(selectedCharityAmount)}
                   name="donation-amount"
                   onChange={(e) => {
+                    setCharityAmountError("");
                     const value = e.target.value
-                      .replace("$", "")
-                      .replaceAll(",", "");
+                      .replace(/\$/g, "")
+                      .replace(/,/g, "");
+
+                    if (Number(value) < 0) return;
 
                     const decimals = value.split(".")[1];
-                    if (decimals && decimals?.length > 2) return;
+                    if (decimals) return;
+
+                    if (Number(value) > MAX_CHARITY_AMOUNT) {
+                      setCharityAmountError(
+                        "Donation amount exceeds limit of $1000"
+                      );
+                      if (value.length > MAX_CHARITY_AMOUNT.toString().length)
+                        return;
+                    }
 
                     const strippedLeadingZeros = value.replace(/^0+/, "");
                     handleSelectedCharityAmount(Number(strippedLeadingZeros));
                   }}
-                  placeholder="Enter donation amount"
+                  placeholder="Enter charitable donation amount."
                   register={() => undefined}
                   error={charityAmountError}
                   data-testid="donation-amount-id"
@@ -317,7 +473,7 @@ export const CheckoutForm = ({
         <div className="flex justify-between">
           <div>
             Subtotal
-            {isBuyNowAuction ? null : ` (1 item)`}
+            {/* {isBuyNowAuction ? null : ` (1 item)`} */}
           </div>
 
           <div>
@@ -360,20 +516,33 @@ export const CheckoutForm = ({
           </div>
         </div>
       </div>
+      <LoadingContainer isLoading={isLoading}>
+        <div></div>
+      </LoadingContainer>
+
+      {!maxReservation?.success && (
+        <div className="md:hidden bg-alert-red text-white p-1 pl-2 my-2  w-full rounded">
+          {maxReservation?.message}
+        </div>
+      )}
 
       <FilledButton
         className={`w-full rounded-full`}
-        disabled={!hyper || !widgets || message === "Payment Successful"}
+        disabled={
+          isLoading || !hyper || !widgets || message === "Payment Successful"
+        }
         data-testid="pay-now-id"
       >
-        {isLoading ? "Loading..." : <>Pay Now</>}
+        {isLoading ? "Processing..." : <>Pay Now</>}
       </FilledButton>
       {/* Show any error or success messages */}
       {message && (
         <div id="payment-message" className={styles.paymentMessage}>
-          {message === "Payment Successful"
-            ? "Payment Successful"
-            : "An error occurred processing payment."}
+          {message === "Payment Successful" ? (
+            <span>Payment Successful</span>
+          ) : (
+            <span className="!text-red">{message}</span>
+          )}
         </div>
       )}
     </form>

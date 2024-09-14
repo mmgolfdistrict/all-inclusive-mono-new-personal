@@ -1,7 +1,11 @@
 "use client";
 
 import { useSession } from "@golf-district/auth/nextjs-exports";
-import { formatQueryDate } from "@golf-district/shared";
+import {
+  formatDate,
+  formatQueryDate,
+  removeTimeZoneOffset,
+} from "@golf-district/shared";
 import { FilledButton } from "~/components/buttons/filled-button";
 import { HyperSwitch } from "~/components/checkout-page/hyper-switch";
 import { OrderSummary } from "~/components/checkout-page/order-summary";
@@ -26,6 +30,7 @@ import type {
   SensibleProduct,
   TaxProduct,
 } from "~/utils/types";
+import dayjs from "dayjs";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useDebounce } from "usehooks-ts";
@@ -58,11 +63,17 @@ export default function Checkout({
     setAmountOfPlayers,
   } = useCheckoutContext();
 
-  useEffect(() => {
-    if (playerCount) {
-      setAmountOfPlayers(Number(playerCount));
-    }
-  }, []);
+  // useEffect(() => {
+  //   if (playerCount) {
+  //     setAmountOfPlayers(Number(playerCount));
+  //   }
+  // }, []);
+
+  const { data: maxReservation } =
+    api.checkout.checkMaxReservationsAndMaxRounds.useQuery({
+      roundsToBook: amountOfPlayers,
+      courseId: courseId,
+    });
 
   const {
     data: teeTimeData,
@@ -83,10 +94,17 @@ export default function Checkout({
     { enabled: listingId !== undefined }
   );
 
+  let isError, error;
+
   const data = teeTimeId ? teeTimeData : listingData;
   const isLoading = teeTimeId ? isLoadingTeeTime : isLoadingListing;
-  const isError = teeTimeId ? isErrorTeeTime : isErrorListing;
-  const error = teeTimeId ? errorTeeTime : errorListing;
+  isError = teeTimeId ? isErrorTeeTime : isErrorListing;
+  error = teeTimeId ? errorTeeTime : errorListing;
+
+  if (data && listingData?.ownerId === user?.id) {
+    isError = true;
+    error = new Error("You cannot buy your own tee time");
+  }
 
   const saleType = teeTimeId ? "first_hand" : "second_hand";
 
@@ -116,7 +134,7 @@ export default function Checkout({
       );
       setPromoCodePrice(ratedPrice);
     } catch (error) {
-      console.log(error);
+      console.log("error", error);
     }
   };
 
@@ -125,6 +143,11 @@ export default function Checkout({
       void checkPromoCode();
     }
   }, [debouncedPromoCode]);
+
+  const startHourNumber = dayjs(removeTimeZoneOffset(data?.date)).hour();
+  const endHourNumber = dayjs(removeTimeZoneOffset(data?.date))
+    .add(6, "hours")
+    .hour();
 
   const cartData: CartProduct[] = useMemo(() => {
     if (!data || data === null) return [];
@@ -141,14 +164,14 @@ export default function Checkout({
       | TaxProduct =
       saleType === "first_hand"
         ? {
-            type: "first_hand",
-            tee_time_id: teeTimeId,
-            number_of_bookings: amountOfPlayers,
-          }
+          type: "first_hand",
+          tee_time_id: teeTimeId,
+          number_of_bookings: amountOfPlayers,
+        }
         : {
-            type: "second_hand",
-            second_hand_id: listingId,
-          };
+          type: "second_hand",
+          second_hand_id: listingId,
+        };
 
     const localCart: CartProduct[] = [
       {
@@ -183,7 +206,7 @@ export default function Checkout({
         display_price: formatMoney(
           ((data?.greenFeeTaxPerPlayer ?? 0) +
             (data?.cartFeeTaxPerPlayer ?? 0)) *
-            amountOfPlayers
+          amountOfPlayers
         ),
         product_data: {
           metadata: {
@@ -217,7 +240,7 @@ export default function Checkout({
       localCart.push({
         name: "Golf District Tee Time",
         id: teeTimeId ?? data?.teeTimeId,
-        price: course?.markupFeesFixedPerPlayer ?? 0, //int
+        price: teeTimeData?.markupFees ?? 0, //int
         image: "", //
         currency: "USD", //USD
         display_price: formatMoney(
@@ -284,6 +307,13 @@ export default function Checkout({
     course?.convenienceFeesFixedPerPlayer,
   ]);
 
+  useEffect(() => {
+    if (playerCount && data?.availableSlots)
+      setAmountOfPlayers((_prev) =>
+        Math.min(Number(playerCount), Number(data?.availableSlots))
+      );
+  }, [data]);
+
   if (isError && error) {
     return (
       <div className="flex justify-center flex-col items-center h-[200px]">
@@ -294,7 +324,6 @@ export default function Checkout({
       </div>
     );
   }
-
   return (
     <>
       <div className="relative flex flex-col items-center gap-4 px-0 pb-8 md:px-8">
@@ -325,7 +354,11 @@ export default function Checkout({
           )}
         </div>
         <CheckoutBreadcumbs status={"checkout"} />
-
+        {!maxReservation?.success && (
+          <div className="bg-alert-red text-white p-1 pl-2  w-full rounded">
+            {maxReservation?.message}
+          </div>
+        )}
         <div className="flex w-full flex-col gap-4 md:flex-row">
           <div className="md:w-3/5">
             <OrderSummary
@@ -334,8 +367,10 @@ export default function Checkout({
               sensibleDataToMountComp={{
                 partner_id: process.env.NEXT_PUBLIC_SENSIBLE_PARTNER_ID ?? "",
                 product_id: process.env.NEXT_PUBLIC_SENSIBLE_PRODUCT_ID ?? "",
-                coverageStartDate: formatQueryDate(new Date(data?.date ?? "")),
-                coverageEndDate: formatQueryDate(new Date(data?.date ?? "")),
+                coverageStartDate: formatDate(new Date(data?.date ?? "")),
+                coverageEndDate: formatDate(new Date(data?.date ?? "")),
+                coverageStartHourNumber: startHourNumber,
+                coverageEndHourNumber: endHourNumber === 0 ? 23 : endHourNumber, // SAFE VALUE SHOULDN'T BE 0 OR 24
                 currency: "USD",
                 langLocale: "en-US",
                 exposureName: course?.name ?? "",
@@ -366,6 +401,8 @@ export default function Checkout({
                 isBuyNowAuction={false}
                 cartData={cartData}
                 teeTimeDate={teeTimeData?.date}
+                playerCount={playerCount}
+              // maxReservation={maxReservation}
               />
             )}
           </div>

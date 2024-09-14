@@ -3,29 +3,40 @@ import * as appSettings from "./appSetting";
 import * as assets from "./assets";
 import * as auctionAssets from "./auctionAssets";
 import * as auctions from "./auctions";
+import * as auditlog from "./auditlog";
 import * as bids from "./bids";
 import * as bookings from "./bookings";
+import * as cashouts from "./cashout";
 import * as charities from "./charities";
 import * as charityCourseLink from "./charityCourseLink";
 import * as courseAssets from "./courseAssets";
+import * as courseException from "./courseException";
+import * as courseMarkup from "./courseMarkup";
 import * as coursePromoCodeLink from "./coursePromoCodeLink";
 import * as courses from "./courses";
 import * as courseScheduleDetails from "./courseScheduleDetails";
+import * as courseSEOs from "./courseSEO";
 import * as customerCart from "./customerCart";
+import * as customerPaymentDetail from "./customerPaymentDetails";
+import * as customerRecievable from "./customerRecievable";
 import * as donations from "./donations";
 import * as entities from "./entities";
 import * as entityAdmins from "./entityAdmins";
 import * as favorites from "./favorites";
 import * as jobs from "./jobs";
 import * as lists from "./lists";
+import * as majorEvents from "./majorEvents";
 import * as notifications from "./notifications";
+import * as nums from "./nums";
 import * as offerRead from "./offerRead";
 import * as offers from "./offers";
+import * as profanities from "./profanities";
 import * as promoCodes from "./promoCodes";
 import * as providers from "./providers";
 import * as providerScheduleDetails from "./providerScheduleDetails";
 import * as providerCourseLink from "./providersCourseLink";
 import * as sessions from "./sessions";
+import * as systemNotification from "./systemNotification";
 import * as teeTimeIndexLogs from "./teeTimeIndexLogs";
 import * as teeTimes from "./teeTimes";
 import * as transfers from "./transfers";
@@ -33,8 +44,11 @@ import * as userBookingOffers from "./userBookingOffers";
 import * as userPromoCodeLink from "./userPromoCodeLink";
 import * as userProviderCourseLink from "./userProviderCourseLink";
 import * as users from "./users";
+import * as userWaitlists from "./userWaitlists";
 import * as verificationTokens from "./verificationTokens";
 import * as withdrawals from "./withdrawals";
+import * as adminUsers from "./adminUsers";
+import * as adminUserCourse from "./adminUserCourse";
 
 export const schema = {
   ...accounts,
@@ -74,4 +88,18 @@ export const schema = {
   ...courseScheduleDetails,
   ...jobs,
   ...teeTimeIndexLogs,
+  ...customerPaymentDetail,
+  ...cashouts,
+  ...customerRecievable,
+  ...auditlog,
+  ...profanities,
+  ...courseSEOs,
+  ...userWaitlists,
+  ...systemNotification,
+  ...courseException,
+  ...courseMarkup,
+  ...nums,
+  ...majorEvents,
+  ...adminUsers,
+  ...adminUserCourse
 };

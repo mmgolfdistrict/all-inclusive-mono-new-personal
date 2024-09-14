@@ -15,16 +15,13 @@ const AllowedPathsForMainNav = [
   "/register",
   "/forgot-password",
   "/faq",
+  "/how-to-guide",
   "/about-us",
-  "/auth-error",
 ];
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
-
   const nicInfos = getNICDetails();
-  console.log("NIC Details");
-  console.log(nicInfos);
 
   useEffect(() => {
     const html = document.querySelector("html");

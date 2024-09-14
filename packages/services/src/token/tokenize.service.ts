@@ -1,9 +1,10 @@
 import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
 import { and, eq, inArray } from "@golf-district/database";
+import { assets } from "@golf-district/database/schema/assets";
 import type { InsertBooking } from "@golf-district/database/schema/bookings";
 import { bookings } from "@golf-district/database/schema/bookings";
-import { bookingslots, InsertBookingSlots } from "@golf-district/database/schema/bookingslots";
+import { bookingslots } from "@golf-district/database/schema/bookingslots";
 import { courses } from "@golf-district/database/schema/courses";
 import { customerCarts } from "@golf-district/database/schema/customerCart";
 import { entities } from "@golf-district/database/schema/entities";
@@ -11,19 +12,26 @@ import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import type { InsertTransfer } from "@golf-district/database/schema/transfers";
 import { transfers } from "@golf-district/database/schema/transfers";
 import { users } from "@golf-district/database/schema/users";
-import { currentUtcTimestamp, formatMoney } from "@golf-district/shared";
+import { formatMoney, formatTime } from "@golf-district/shared";
+import createICS from "@golf-district/shared/createICS";
+import type { Event } from "@golf-district/shared/createICS";
 import Logger from "@golf-district/shared/src/logger";
 import dayjs from "dayjs";
-import { textChangeRangeIsUnchanged } from "typescript";
 import type { ProductData } from "../checkout/types";
-import { CustomerCart } from "../checkout/types";
 import type { NotificationService } from "../notification/notification.service";
+import type { SensibleService } from "../sensible/sensible.service";
 import type { ProviderAPI } from "../tee-sheet-provider/sheet-providers";
 import { TeeTime } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
+import type { LoggerService } from "../webhooks/logging.service";
 
 /**
  * Service class for handling booking tokenization, transfers, and updates.
  */
+
+interface AcceptedQuoteParams {
+  id: string | null;
+  price_charged: number;
+}
 export class TokenizeService {
   private logger = Logger(TokenizeService.name);
 
@@ -36,7 +44,9 @@ export class TokenizeService {
    */
   constructor(
     private readonly database: Db,
-    private readonly notificationService: NotificationService
+    private readonly notificationService: NotificationService,
+    private readonly loggerService: LoggerService,
+    private readonly sensibleService: SensibleService
   ) {}
   getCartData = async ({ courseId = "", ownerId = "", paymentId = "" }) => {
     const [customerCartData]: any = await this.database
@@ -129,6 +139,7 @@ export class TokenizeService {
    *   - There are issues interacting with the underlying data store (Prisma).
    */
   async tokenizeBooking(
+    redirectHref: string,
     userId: string,
     purchasePrice: number,
     players: number, //how many bookings to make
@@ -149,11 +160,13 @@ export class TokenizeService {
       providerDate: string;
       holes: number;
     },
-    normalizedCartData?: any
+    normalizedCartData?: any,
+    isWebhookAvailable?: boolean
   ): Promise<string> {
     this.logger.info(`tokenizeBooking tokenizing booking id: ${providerTeeTimeId} for user: ${userId}`);
     //@TODO add this to the transaction
 
+    console.log(`Retrieving tee time ${providerTeeTimeId}`);
     const [existingTeeTime] = await this.database
       .select({
         id: teeTimes.id,
@@ -166,12 +179,20 @@ export class TokenizeService {
         greenFee: teeTimes.greenFeePerPlayer,
         courseName: courses.name,
         customerName: users.name,
+        email: users.email,
         entityName: entities.name,
         providerDate: teeTimes.providerDate,
+        address: courses.address,
+        name: courses.name,
+        websiteURL: courses.websiteURL,
+        cdnKey: assets.key,
+        extension: assets.extension,
+        timezoneCorrection: courses.timezoneCorrection,
       })
       .from(teeTimes)
       .where(eq(teeTimes.id, providerTeeTimeId))
       .leftJoin(courses, eq(courses.id, teeTimes.courseId))
+      .leftJoin(assets, eq(assets.id, courses.logoId))
       .leftJoin(entities, eq(courses.entityId, entities.id))
       .leftJoin(users, eq(users.id, userId))
       .execute()
@@ -183,17 +204,87 @@ export class TokenizeService {
     if (!existingTeeTime) {
       //how has a booking been created for a tee time that does not exist? big problem
       this.logger.fatal(`TeeTime with ID: ${providerTeeTimeId} does not exist.`);
+      this.loggerService.errorLog({
+        userId: userId,
+        url: "/reserveBooking",
+        userAgent: "",
+        message: "TEE TIME NOT FOUND",
+        stackTrace: `TeeTime with ID: ${providerTeeTimeId} does not exist.`,
+        additionalDetailsJSON: "",
+      });
       throw new Error(`TeeTime with ID: ${providerTeeTimeId} does not exist.`);
     }
-    if (existingTeeTime.availableFirstHandSpots < players) {
-      this.logger.fatal(`TeeTime with ID: ${providerTeeTimeId} does not have enough spots.`);
-      throw new Error(`TeeTime with ID: ${providerTeeTimeId} does not have enough spots.`);
-    }
+
+    // TODO: Shouldn't this logic not be present before sending the booking to the provider?
+    // if (existingTeeTime.availableFirstHandSpots < players) {
+    //   this.logger.fatal(
+    //     `TeeTime with ID: ${providerTeeTimeId} does not have enough spots. spot available - ${existingTeeTime.availableFirstHandSpots}, spot demanded- ${players}`
+    //   );
+
+    //   this.loggerService.auditLog({
+    //     id: randomUUID(),
+    //     userId,
+    //     teeTimeId: "",
+    //     bookingId: "",
+    //     listingId: "",
+    //     eventId: "TEE_TIME_DOES_NOT_HAVE_ENOUGH_SPOTS",
+    //     json: `TeeTime with ID: ${providerTeeTimeId} does not have enough spots.`,
+    //   });
+    //   throw new Error(`TeeTime with ID: ${providerTeeTimeId} does not have enough spots.`);
+    // }
 
     const bookingsToCreate: InsertBooking[] = [];
     const transfersToCreate: InsertTransfer[] = [];
     const transactionId = randomUUID();
     const bookingId = randomUUID();
+
+    let acceptedQuote: AcceptedQuoteParams = { id: null, price_charged: 0 };
+
+    const isFirstHandBooking = normalizedCartData?.cart?.cart?.some(
+      (item: ProductData) => item.product_data.metadata.type === "first_hand"
+    );
+
+    console.log(`isFirstHandBooking= ${isFirstHandBooking}`);
+    if (isFirstHandBooking) {
+      const weatherGuaranteeData = normalizedCartData.cart?.cart?.filter(
+        (item: ProductData) => item.product_data.metadata.type === "sensible"
+      );
+
+      console.log(`weatherGuaranteeData length = ${weatherGuaranteeData?.length}`);
+
+      if (weatherGuaranteeData?.length > 0) {
+        try {
+          acceptedQuote = await this.sensibleService.acceptQuote({
+            quoteId: weatherGuaranteeData[0].product_data.metadata.sensible_quote_id,
+            price_charged: weatherGuaranteeData[0].price / 100,
+            reservation_id: bookingId,
+            lang_locale: "en_US",
+            user: {
+              email: normalizedCartData?.cart?.email,
+              name: normalizedCartData.cart?.name,
+              phone: normalizedCartData.cart?.phone
+                ? `+${normalizedCartData?.cart?.phone_country_code}${normalizedCartData?.cart?.phone}`
+                : "",
+            },
+          });
+        } catch (error) {
+          const adminEmail: string = process.env.ADMIN_EMAIL_LIST || "nara@golfdistrict.com";
+          const emailAterSplit = adminEmail.split(",");
+          emailAterSplit.map(async (email) => {
+            await this.notificationService.sendEmail(email, "sensible Failed", "error in sensible");
+          });
+
+          this.loggerService.errorLog({
+            userId: userId,
+            url: "/checkout",
+            userAgent: "",
+            message: "SENSIBLE_ERROR",
+            stackTrace: "",
+            additionalDetailsJSON: "Error in accepting quote ",
+          });
+        }
+      }
+    }
 
     bookingsToCreate.push({
       id: bookingId,
@@ -214,12 +305,15 @@ export class TokenizeService {
       cartId: normalizedCartData.cartId,
       playerCount: players ?? 0,
       greenFeePerPlayer: normalizedCartData.primaryGreenFeeCharge / players || 0,
-      totalTaxesAmount: normalizedCartData.taxes * 100 || 0,
+      totalTaxesAmount: normalizedCartData.taxCharge * 100 || 0,
       charityId: normalizedCartData.charityId || null,
       totalCharityAmount: normalizedCartData.charityCharge * 100 || 0,
       totalAmount: normalizedCartData.total || 0,
       providerPaymentId: paymentId,
       weatherQuoteId: normalizedCartData.weatherQuoteId ?? null,
+      weatherGuaranteeId: acceptedQuote?.id ? acceptedQuote?.id : null,
+      weatherGuaranteeAmount: acceptedQuote?.price_charged ? acceptedQuote?.price_charged * 100 : 0,
+      markupFees: (normalizedCartData?.markupCharge ?? 0) * 100,
     });
 
     transfersToCreate.push({
@@ -231,8 +325,11 @@ export class TokenizeService {
       fromUserId: "0x000", //first hand sales are from the platform
       toUserId: userId,
       courseId: existingTeeTime.courseId,
+      weatherGuaranteeId: acceptedQuote?.id ? acceptedQuote?.id : "",
+      weatherGuaranteeAmount: acceptedQuote?.price_charged ? acceptedQuote?.price_charged * 100 : 0,
     });
 
+    console.log(`Getting slot IDs for booking.`);
     //create bookings according to slot in bookingslot tables
     const bookingSlots =
       (await provider?.getSlotIdsForBooking(
@@ -244,7 +341,9 @@ export class TokenizeService {
         existingTeeTime.courseId
       )) ?? [];
 
+    console.log(`Looping through and updating the booking slots.`);
     for (let i = 0; i < bookingSlots.length; i++) {
+      //TODO: Why can't we use if( i === 0 ) { continue; }? Would it be cleaner?
       if (i != 0) {
         await provider?.updateTeeTime(
           token ?? "",
@@ -268,6 +367,8 @@ export class TokenizeService {
         );
       }
     }
+
+    console.log(`Creating bookings and slots in database.`);
     //create all booking in a transaction to ensure atomicity
     await this.database.transaction(async (tx) => {
       //create each booking
@@ -287,14 +388,17 @@ export class TokenizeService {
           this.logger.error(err);
           tx.rollback();
         });
-      await tx
-        .update(teeTimes)
-        .set({
-          availableSecondHandSpots: existingTeeTime.availableSecondHandSpots + players,
-          availableFirstHandSpots: existingTeeTime.availableFirstHandSpots - players,
-        })
-        .where(eq(teeTimes.id, existingTeeTime.id))
-        .execute();
+      if (!isWebhookAvailable) {
+        await tx
+          .update(teeTimes)
+          .set({
+            availableSecondHandSpots: existingTeeTime.availableSecondHandSpots + players,
+            availableFirstHandSpots: existingTeeTime.availableFirstHandSpots - players,
+          })
+          .where(eq(teeTimes.id, existingTeeTime.id))
+          .execute();
+      }
+
       await tx
         .insert(transfers)
         .values(transfersToCreate)
@@ -303,6 +407,17 @@ export class TokenizeService {
           this.logger.error(err);
           tx.rollback();
         });
+    });
+
+    this.loggerService.auditLog({
+      id: randomUUID(),
+      userId,
+      teeTimeId: existingTeeTime?.id,
+      bookingId,
+      listingId: "",
+      courseId: existingTeeTime.courseId,
+      eventId: "TEE_TIME_PURCHASED",
+      json: "Tee time purchased",
     });
 
     const message = `
@@ -314,14 +429,27 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
     This is a first party purchase from the course
     `;
 
+    const event: Event = {
+      startDate: existingTeeTime.date,
+      endDate: existingTeeTime.date,
+      email: existingTeeTime.email ?? "",
+      address: existingTeeTime.address,
+      name: existingTeeTime.name,
+      reservationId: bookingId,
+      courseReservation: providerBookingId,
+      numberOfPlayer: players.toString(),
+      playTime: this.extractTime(
+        formatTime(existingTeeTime.providerDate, true, existingTeeTime.timezoneCorrection ?? 0)
+      ),
+    };
+    const icsContent: string = createICS(event);
     const template = {
       CustomerFirstName: existingTeeTime.customerName?.split(" ")[0],
       CourseName: existingTeeTime.courseName ?? "-",
-      GolfDistrictReservationID: bookingsToCreate?.[0]?.id ?? "-",
+      // GolfDistrictReservationID: bookingsToCreate?.[0]?.id ?? "-",
       CourseReservationID: providerBookingId ?? "-",
       FacilityName: existingTeeTime.entityName ?? "-",
-      PlayDateTime:
-        dayjs(existingTeeTime.providerDate).utcOffset("-06:00").format("YYYY-MM-DD hh:mm A") ?? "-",
+      PlayDateTime: formatTime(existingTeeTime.providerDate, true, existingTeeTime.timezoneCorrection ?? 0),
       NumberOfHoles: existingTeeTime.numberOfHoles,
       GreenFeesPerPlayer:
         `$${(purchasePrice / 100).toLocaleString("en-US", {
@@ -342,18 +470,39 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       PurchasedFrom: existingTeeTime.courseName ?? "-",
       PlayerCount: players ?? 0,
       TotalAmount: formatMoney(normalizedCartData.total / 100 ?? 0),
+      CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
+      CourseURL: existingTeeTime?.websiteURL || "",
+      HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+      // BuyTeeTImeURL: `${redirectHref}`,
+      // CashOutURL: `${redirectHref}/account-settings/${userId}`,
+      SellTeeTImeURL: `${redirectHref}/my-tee-box`,
+      ManageTeeTimesURL: `${redirectHref}/my-tee-box`,
     };
-
     await this.notificationService.createNotification(
       userId,
       "TeeTimes Purchased",
       message,
       existingTeeTime.courseId,
       process.env.SENDGRID_TEE_TIMES_PURCHASED_TEMPLATE_ID,
-      template
+      template,
+      [
+        {
+          content: Buffer.from(icsContent).toString("base64"),
+          filename: "meeting.ics",
+          type: "text/calendar",
+          disposition: "attachment",
+          contentId: "meeting",
+        },
+      ]
     );
     return bookingId;
   }
+
+  extractTime = (dateStr: string) => {
+    const timeRegex = /\b\d{1,2}:\d{2} (AM|PM)\b/;
+    const timeMatch = dateStr.match(timeRegex);
+    return timeMatch ? timeMatch[0] : null;
+  };
 
   /**
    * Transfers a bookings from one user to another.

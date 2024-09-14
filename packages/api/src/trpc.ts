@@ -35,7 +35,7 @@ const serviceFactoryConfig: ServiceConfig = {
   aws_secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? "",
   aws_region: process.env.AWS_REGION ?? "",
   aws_bucket: process.env.AWS_BUCKET ?? "",
-  aws_cloudFrontUrl: process.env.AWS_CLOUDFRONT_URL ?? "",
+  aws_cloudFrontUrl: process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL ?? "",
   redisUrl: process.env.REDIS_URL ?? "",
   redisToken: process.env.REDIS_TOKEN ?? "",
   twillio_accountSid: process.env.TWILLIO_ACCOUNT_SID ?? "",
@@ -70,7 +70,8 @@ const createInnerTRPCContext = (opts: CreateContextOptions) => {
 export const createTRPCContext = async (opts: { req?: Request; auth?: Session }) => {
   const session = opts.auth ?? (await auth());
   const source = opts.req?.headers.get("x-trpc-source") ?? "unknown";
-
+  const ip = opts.req?.headers.get("x-forwarded-for");
+  session.ip = ip ?? "";
   logger.info(">>> tRPC Request from", source, "by", session?.user?.id ?? "anonymous");
 
   return createInnerTRPCContext({

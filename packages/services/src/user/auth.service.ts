@@ -2,12 +2,11 @@ import { eq, or } from "@golf-district/database";
 import type { Db } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import { users } from "@golf-district/database/schema/users";
-import type { SelectUser } from "@golf-district/database/schema/users";
 import { assetToURL, currentUtcTimestamp } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
 import bcrypt from "bcryptjs";
 import { CacheService } from "../infura/cache.service";
-import { NotificationService } from "../notification/notification.service";
+import type { NotificationService } from "../notification/notification.service";
 
 export class AuthService extends CacheService {
   /**
@@ -55,18 +54,45 @@ export class AuthService extends CacheService {
    * @example
    *   authenticateUser('johnDoe123', 'SecureP@ssw0rd!');
    */
+
+  isUserBlocked = async (email: string) => {
+    const [data] = await this.database
+      .select({
+        bannedUntilDateTime: users.bannedUntilDateTime,
+      })
+      .from(users)
+      .where(eq(users.email, email))
+      .execute();
+    const now = new Date();
+    const date = new Date(data?.bannedUntilDateTime ?? "");
+    if (now < date) {
+      return true;
+    }
+    return false;
+  };
+
+  updateLastSuccessfulLogin = async (userId: string, handleOrEmail: string) => {
+    await this.database
+      .update(users)
+      .set({
+        lastSuccessfulLogin: currentUtcTimestamp(),
+      })
+      .where(eq(users.id, userId))
+      .execute()
+      .then(() => {
+        this.logger.info(`Updated lastSuccessfulLogin for user: ${handleOrEmail}`);
+      });
+  };
+
   authenticateUser = async (handleOrEmail: string, password: string) => {
     // console.log("Node Env");
     // console.log(process.env.NODE_ENV);
-    // console.log(handleOrEmail);
-
     const [data] = await this.database
       .select({
         user: users,
         asset: {
           assetId: assets.id,
           assetKey: assets.key,
-          assetCdn: assets.cdn,
           assetExtension: assets.extension,
         },
       })
@@ -83,7 +109,7 @@ export class AuthService extends CacheService {
       }
       return null;
     }
-    // console.log("User found");
+
     if (!data.user.emailVerified) {
       this.logger.warn(`User email not verified: ${handleOrEmail}`);
       if (process.env.NODE_ENV !== "production") {
@@ -103,7 +129,6 @@ export class AuthService extends CacheService {
 
     const valid = await bcrypt.compare(password, data.user.gdPassword);
     // console.log("Bcrypt compare");
-    // console.log(valid);
     if (!valid) {
       this.logger.warn(`Invalid password: ${handleOrEmail}`);
       if (process.env.NODE_ENV !== "production") {
@@ -112,8 +137,9 @@ export class AuthService extends CacheService {
 
       const signInAttempts = await this.incrementOrSetKey(`signinAttempts:${data.user.id}`);
       if (signInAttempts >= 3) {
+        this.logger.warn(`Suspicious activity detected`);
         await this.notificationService.sendEmail(
-          data.user.id,
+          data.user.email ?? "",
           "Suspicious activity detected",
           `We have detected suspicious activity on your account. If you are not the one attempting to login, please contact support immediately.`
         );
@@ -121,25 +147,15 @@ export class AuthService extends CacheService {
 
       return null;
     }
+    this.logger.warn(`Password Verified`);
+
     await this.invalidateCache(`signinAttempts:${data.user.id}`);
-    await this.database
-      .update(users)
-      .set({
-        lastSuccessfulLogin: currentUtcTimestamp(),
-      })
-      .where(eq(users.id, data.user.id))
-      .execute()
-      .then(() => {
-        this.logger.info(`Updated lastSuccessfulLogin for user: ${handleOrEmail}`);
-        return data.user;
-      });
     let profilePicture = "";
     if (!data.asset) {
       profilePicture = "/defaults/default-banner.webp";
     } else {
       profilePicture = assetToURL({
         key: data.asset.assetKey,
-        cdn: data.asset.assetCdn,
         extension: data.asset.assetExtension,
       });
     }

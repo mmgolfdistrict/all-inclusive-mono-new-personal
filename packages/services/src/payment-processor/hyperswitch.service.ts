@@ -1,6 +1,8 @@
 /* eslint no-use-before-define: 0 */
 import Logger from "@golf-district/shared/src/logger";
 import HyperSwitch from "@juspay-tech/hyper-node";
+import { db } from "@golf-district/database";
+import type { Db } from "@golf-district/database";
 import type pino from "pino";
 import type { UpdatePayment } from "../checkout/types";
 import type {
@@ -8,6 +10,7 @@ import type {
   CustomerPaymentMethod,
   CustomerPaymentMethodsResponse,
 } from "./types/hyperSwitch.types";
+import { NotificationService } from "../notification/notification.service";
 
 /**
  * Service for interacting with the HyperSwitch API.
@@ -16,8 +19,10 @@ export class HyperSwitchService {
   protected hyperSwitch: HyperSwitch;
   protected logger: pino.Logger;
   protected hyper: any;
-  protected hyperSwitchBaseUrl = "https://sandbox.hyperswitch.io";
+  protected hyperSwitchBaseUrl = process.env.HYPERSWITCH_BASE_URL!; // "https://sandbox.hyperswitch.io";
   protected hyperSwitchApiKey: string;
+  protected notificationService: NotificationService;
+  protected database: Db;
 
   /**
    * Constructs a new HyperSwitchService.
@@ -27,7 +32,15 @@ export class HyperSwitchService {
   constructor(hyperSwitchApiKey: string, logger?: pino.Logger) {
     this.logger = logger ? logger : Logger(HyperSwitchService.name);
     this.hyper = require("@juspay-tech/hyperswitch-node")(hyperSwitchApiKey);
-
+    (this.database = db),
+      (this.notificationService = new NotificationService(
+        db,
+        process.env.TWILLIO_PHONE_NUMBER!,
+        process.env.SENDGRID_EMAIL!,
+        process.env.TWILLIO_ACCOUNT_SID!,
+        process.env.TWILLIO_AUTH_TOKEN!,
+        process.env.SENDGRID_API_KEY!
+      ));
     this.hyperSwitch = new HyperSwitch(hyperSwitchApiKey, {
       apiVersion: "2020-08-27",
       typescript: true,
@@ -191,6 +204,10 @@ export class HyperSwitchService {
    * @throws Will throw an error if retrieving the payment methods fails.
    */
   retrievePaymentMethods = async (customerId: string): Promise<CustomerPaymentMethod[] | undefined> => {
+    console.log(`hyperSwitchBaseUrl: ${this.hyperSwitchBaseUrl}`);
+    // console.log(`hyperSwitchApiKey: ${this.hyperSwitchApiKey}`);
+    console.log(`customerId: ${customerId}`);
+
     try {
       const url = `${this.hyperSwitchBaseUrl}/customers/${customerId}/payment_methods`;
       const options = {
@@ -201,6 +218,8 @@ export class HyperSwitchService {
       };
       const paymentMethodResponse = await fetch(url, options);
       const paymentMethods: CustomerPaymentMethodsResponse = await paymentMethodResponse.json();
+      console.log("paymentMethods");
+      console.log(paymentMethods);
       return paymentMethods.customer_payment_methods;
     } catch (error) {
       this.logger.error("Error retrieving payment methods: ", error);
@@ -219,11 +238,69 @@ export class HyperSwitchService {
       const deletePaymentMethodResponse = await fetch(url, options);
       const deletedMethod = await deletePaymentMethodResponse.json();
       this.logger.info("Payment method deleted: ", deletedMethod);
-      console.log("Payment method deleted",deletedMethod)
+      console.log("Payment method deleted", deletedMethod);
     } catch (error) {
       this.logger.error("Error removing payment method: ", error);
 
-      console.log("Payment method deleted")
+      console.log("Payment method deleted");
     }
+  };
+
+  sendEmailForFailedPayment = async (paymentMethodId: string) => {
+    const adminEmail: string = process.env.ADMIN_EMAIL_LIST || "nara@golfdistrict.com";
+    const emailAterSplit = adminEmail.split(",");
+    emailAterSplit.map(async (email) => {
+      await this.notificationService.sendEmail(
+        email,
+        "A payment has failed ",
+        `payment with paymentid ${paymentMethodId} failed`
+      );
+    });
+    return { status: "success" };
+  };
+
+  cancelHyperswitchPaymentById = async (paymentMethodId: string) => {
+    const options = {
+      method: "POST",
+      headers: { "api-key": this.hyperSwitchApiKey, "Content-Type": "application/json" },
+      body: '{"cancellation_reason":"cancelled_by_GD"}',
+    };
+
+    const res = await fetch(`${this.hyperSwitchBaseUrl}/payments/${paymentMethodId}/cancel`, options);
+    const jsonRes = await res.json();
+    const adminEmail: string = process.env.ADMIN_EMAIL_LIST || "nara@golfdistrict.com";
+    const emailAterSplit = adminEmail.split(",");
+    emailAterSplit.map(async (email) => {
+      await this.notificationService.sendEmail(
+        email,
+        "A payment has failed ",
+        `payment with paymentid ${paymentMethodId} failed`
+      );
+    });
+    if (jsonRes.error) {
+      return { status: "Cannot delete payment" };
+    }
+
+    return { status: "success" };
+  };
+  refundPayment = async (paymentId: string) => {
+    const myHeaders = new Headers();
+    myHeaders.append("Content-Type", "application/json");
+    myHeaders.append("api-key", this.hyperSwitchApiKey);
+    const options = {
+      method: "POST",
+      headers: { "api-key": this.hyperSwitchApiKey, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        payment_id: paymentId,
+        refund_type: "instant",
+      }),
+    };
+
+    const res = await fetch(`${this.hyperSwitchBaseUrl}/refunds`, options);
+    const jsonRes = await res.json();
+    if (jsonRes.error) {
+      return { status: "Cannot refund payment" };
+    }
+    return { status: "success" };
   };
 }

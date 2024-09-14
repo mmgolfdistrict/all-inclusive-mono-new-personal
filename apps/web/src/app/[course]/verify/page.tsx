@@ -25,7 +25,16 @@ export default function Verify() {
     if (!userId || !verificationToken) return;
     try {
       callingRef.current = true;
-      await verifyEmail.mutateAsync({ userId, token: verificationToken });
+      const response= await verifyEmail.mutateAsync({
+        courseId: course?.id,
+        userId,
+        token: verificationToken,
+        redirectHref: window.location.origin,
+      });
+      if(response?.error){
+        toast.error(response?.message);
+        return
+      }
       setIsSuccess(true);
       callingRef.current = false;
     } catch (error) {

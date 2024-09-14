@@ -1,5 +1,7 @@
 import * as ToggleGroup from "@radix-ui/react-toggle-group";
+import { LoadingContainer } from "~/app/[course]/loader";
 import { useCourseContext } from "~/contexts/CourseContext";
+import { useUserContext } from "~/contexts/UserContext";
 import { useSidebar } from "~/hooks/useSidebar";
 import { api } from "~/utils/api";
 import { formatMoney, formatTime } from "~/utils/formatters";
@@ -44,10 +46,13 @@ export const ListTeeTime = ({
   refetch,
   needsRedirect,
 }: SideBarProps) => {
+  const availableSlots = selectedTeeTime?.golfers.length || 0;
+
   const [listingPrice, setListingPrice] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [sellerServiceFee, setSellerServiceFee] = useState<number>(0);
-  const [players, setPlayers] = useState<PlayerType>(
-    selectedTeeTime?.selectedSlotsCount || "1"
+  const [players, setPlayers] = useState<string>(
+    selectedTeeTime?.selectedSlotsCount || availableSlots.toString()
   );
   const { toggleSidebar } = useSidebar({
     isOpen: isListTeeTimeOpen,
@@ -56,14 +61,24 @@ export const ListTeeTime = ({
   const sell = api.teeBox.createListingForBookings.useMutation();
   const router = useRouter();
   const { course } = useCourseContext();
+  const courseId = course?.id;
+  const { user } = useUserContext();
+  const auditLog = api.webhooks.auditLog.useMutation();
+  const logAudit = async () => {
+    await auditLog.mutateAsync({
+      userId: user?.id ?? "",
+      teeTimeId: selectedTeeTime?.teeTimeId ?? "",
+      bookingId: selectedTeeTime?.bookingIds?.[0] ?? "",
+      listingId: selectedTeeTime?.listingId ?? "",
+      courseId,
+      eventId: "TEE_TIME_LISTED",
+      json: `TEE_TIME_LISTED`,
+    });
+  };
   const listingSellerFeePercentage = (course?.sellerFee ?? 1) / 100;
   const listingBuyerFeePercentage = (course?.buyerFee ?? 1) / 100;
 
   const maxListingPrice = useMemo(() => {
-    // console.log(
-    //   `selectedTeeTime?.firstHandPrice = ${selectedTeeTime?.firstHandPrice}`
-    // );
-    console.log(selectedTeeTime);
     if (!selectedTeeTime?.purchasedFor) return 0;
     const max =
       selectedTeeTime?.purchasedFor *
@@ -75,11 +90,10 @@ export const ListTeeTime = ({
     return Math.round(parseInt(max.toFixed(2)));
   }, [selectedTeeTime]);
 
-  const availableSlots = selectedTeeTime?.golfers.length || 0;
-
   useEffect(() => {
-    setPlayers(selectedTeeTime?.selectedSlotsCount || "1");
-  }, [selectedTeeTime?.selectedSlotsCount]);
+    const slots = selectedTeeTime?.golfers.length || 0;
+    setPlayers(selectedTeeTime?.selectedSlotsCount || slots.toString());
+  }, [selectedTeeTime?.selectedSlotsCount, selectedTeeTime?.golfers]);
 
   useEffect(() => {
     if (isListTeeTimeOpen) {
@@ -100,7 +114,7 @@ export const ListTeeTime = ({
   };
 
   const handleListingPrice = (e: ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace("$", "").replaceAll(",", "");
+    const value = e.target.value.replace(/[$,]/g, "");
 
     // if( value.indexOf("-1") > -1) return;
 
@@ -121,10 +135,6 @@ export const ListTeeTime = ({
       return 0;
     }
 
-    console.log(
-      `selectedTeeTime?.firstHandPrice = ${selectedTeeTime?.firstHandPrice}`
-    );
-
     const sellerListingPricePerGolfer = parseFloat(listingPrice.toString());
 
     const buyerListingPricePerGolfer =
@@ -137,16 +147,17 @@ export const ListTeeTime = ({
       (buyerListingPricePerGolfer - buyerFeePerGolfer - sellerFeePerGolfer) *
       parseInt(players);
 
-    // console.log(`
-    //   listingSellerFeePercentage = ${listingSellerFeePercentage},
-    //   listingBuyerFeePercentage  = ${listingBuyerFeePercentage},
-    //   buyerListingPricePerGolfer = ${buyerListingPricePerGolfer},
-    //   sellerFeePerGolfer         = ${sellerFeePerGolfer},
-    //   buyerFeePerGolfer          = ${buyerFeePerGolfer},
-    //   totalPayoutForAllGolfers   = ${totalPayoutForAllGolfers}`);
+    // totalPayoutForAllGolfers =
+    //   ( totalPayoutForAllGolfers <= 0 ? 0 : totalPayoutForAllGolfers );
 
     totalPayoutForAllGolfers =
-      totalPayoutForAllGolfers <= 0 ? 0 : totalPayoutForAllGolfers;
+      (totalPayoutForAllGolfers <= 0 ? 0 : totalPayoutForAllGolfers) +
+      (selectedTeeTime?.weatherGuaranteeAmount ?? 0) / 100;
+
+    // setSellerServiceFee(
+    //   sellerFeePerGolfer * parseInt(players) +
+    //     (selectedTeeTime?.weatherGuaranteeAmount ?? 0) / 100
+    // );
 
     setSellerServiceFee(sellerFeePerGolfer * parseInt(players));
 
@@ -154,27 +165,35 @@ export const ListTeeTime = ({
   }, [listingPrice, players]);
 
   const listTeeTime = async () => {
+    setIsLoading(true);
+    void logAudit();
     //You should never enter this condition.
     if (totalPayout < 0) {
-      toast.info("Listing price must be greater than $45.");
+      toast.error("Listing price must be greater than $45.");
+      setIsLoading(false);
       return;
     }
     if (!selectedTeeTime) {
-      toast.info("Invalid date on tee time.");
+      toast.error("Invalid date on tee time.");
+      setIsLoading(false);
       return;
     }
-    console.log(
-      `listingPrice = ${listingPrice}, maxListingPrice = ${maxListingPrice}`
-    );
 
     if (listingPrice > maxListingPrice) {
-      toast.info(
+      toast.error(
         `Listing price cannot be greater than ${formatMoney(maxListingPrice)}.`
       );
+      setIsLoading(false);
       return;
     }
-    if (listingPrice <= 1) {
-      toast.info(`Listing price must be greater than $1.`);
+    if (listingPrice === 0) {
+      toast.error(`Enter listing price.`);
+      setIsLoading(false);
+      return;
+    }
+    if (listingPrice === 1) {
+      toast.error(`Listing price must be greater than $1.`);
+      setIsLoading(false);
       return;
     }
     try {
@@ -201,12 +220,15 @@ export const ListTeeTime = ({
           `/${selectedTeeTime?.courseId}/my-tee-box?section=my-listed-tee-times`
         );
       }
+      setIsLoading(false);
       await refetch();
       setIsListTeeTimeOpen(false);
     } catch (error) {
       toast.error(
         (error as Error)?.message ?? "An error occurred selling tee time."
       );
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -219,6 +241,9 @@ export const ListTeeTime = ({
           <div className="h-screen bg-[#00000099]" />
         </div>
       )}
+      <LoadingContainer isLoading={isLoading}>
+        <div></div>
+      </LoadingContainer>
       <aside
         // ref={sidebar}
         className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[500px] md:h-[100dvh] ${
@@ -257,14 +282,14 @@ export const ListTeeTime = ({
                 >
                   Enter listing price per golfer
                 </label>
-                <div className="flex text-[14px] md:text-[16px]">
+                {/* <div className="flex text-[14px] md:text-[16px]">
                   <span className="text-primary-gray">
                     Maximum listing price per golfer: &nbsp;
                   </span>
                   <span className="text-secondary-black">
                     ${maxListingPrice}
                   </span>
-                </div>
+                </div> */}
                 <div className="relative">
                   <span className="absolute left-1 top-1 text-[24px] md:text-[32px]">
                     $
@@ -312,6 +337,7 @@ export const ListTeeTime = ({
                       dataTestId="player-item-id"
                       dataQa={value}
                       value={value}
+                      label={value}
                       className={`${
                         index === 0
                           ? "rounded-l-full border border-stroke"
@@ -327,11 +353,20 @@ export const ListTeeTime = ({
                   ))}
                 </ToggleGroup.Root>
               </div>
+              <div className="bg-secondary-white">
+                If you purchased weather protection, you will receive a full
+                refund. Any remaining owned rounds for this time will be subject
+                to raincheck policy.
+              </div>
             </div>
             <div className="flex flex-col gap-4 px-4 pb-6">
               <div className="flex justify-between">
                 <div className="font-[300] text-primary-gray">
-                  Tee Time Price
+                  Your Listing Price{" "}
+                  <Tooltip
+                    trigger={<Info className="h-[14px] w-[14px]" />}
+                    content="Buyer sees a slightly higher amount. These buyer/seller fees help keep the lights on at Golf District and to continuously provide better service."
+                  />
                 </div>
                 <div className="text-secondary-black">
                   {formatMoney(listingPrice * Number(players))}
@@ -342,15 +377,31 @@ export const ListTeeTime = ({
                   Service Fee{" "}
                   <Tooltip
                     trigger={<Info className="h-[14px] w-[14px]" />}
-                    content="Service fee description."
+                    content="This fee ensures ongoing enhancements to our service, ultimately offering golfers the best access to booking tee times"
                   />
                 </div>
                 <div className="text-secondary-black">
-                  {formatMoney(sellerServiceFee)}
+                  ({formatMoney(sellerServiceFee)})
                 </div>
               </div>
               <div className="flex justify-between">
-                <div className="font-[300] text-primary-gray">Total Payout</div>
+                <div className="font-[300] text-primary-gray">
+                  Weather Guarantee Refund{" "}
+                  <Tooltip
+                    trigger={<Info className="h-[14px] w-[14px]" />}
+                    content="Weather guarantee amount to be refunded"
+                  />
+                </div>
+                <div className="text-secondary-black">
+                  {formatMoney(
+                    (selectedTeeTime?.weatherGuaranteeAmount ?? 0) / 100
+                  )}
+                </div>
+              </div>
+              <div className="flex justify-between">
+                <div className="font-[300] text-primary-gray">
+                  You Receive after Sale
+                </div>
                 <div className="text-secondary-black">
                   {formatMoney(totalPayout)}
                 </div>

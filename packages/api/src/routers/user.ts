@@ -59,11 +59,19 @@ export const userRouter = createTRPCRouter({
   updateUser: protectedProcedure
     .input(
       z.object({
+        name: z.string().optional(),
         handle: z.string().optional(),
         profileVisibility: z.enum(["PUBLIC", "PRIVATE"]).optional(),
         profilePictureAssetId: z.string().optional(),
         bannerImageAssetId: z.string().optional(),
-        location: z.string().optional(),
+        courseId: z.string().optional(),
+        // location: z.string().optional(),
+        address1: z.string().optional(),
+        address2: z.string().optional(),
+        state: z.string().optional(),
+        city: z.string().optional(),
+        zipcode: z.string().optional(),
+        country: z.string().optional(),
         phoneNumber: z.string().optional(),
         phoneNotifications: z.boolean().optional(),
         emailNotification: z.boolean().optional(),
@@ -81,7 +89,7 @@ export const userRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       return await ctx.serviceFactory
         .getUserService()
-        .getBookingsOwnedForTeeTime(input.teeTimeId, ctx?.session?.user.id);
+        .getBookingsOwnedForTeeTime(input.teeTimeId, ctx?.session?.user?.id);
     }),
   forgotPasswordRequest: publicProcedure.input(forgotPasswordSchema).mutation(async ({ ctx, input }) => {
     return await ctx.serviceFactory
@@ -91,7 +99,7 @@ export const userRouter = createTRPCRouter({
   executeForgotPassword: publicProcedure.input(resetPasswordSchema).mutation(async ({ ctx, input }) => {
     return await ctx.serviceFactory
       .getUserService()
-      .executeForgotPassword(input.userId, input.verificationToken, input.password);
+      .executeForgotPassword(input?.courseId, input.userId, input.verificationToken, input.password);
   }),
   getUpcomingTeeTimesForUser: publicProcedure
     .input(z.object({ userId: z.string(), courseId: z.string() }))
@@ -109,5 +117,18 @@ export const userRouter = createTRPCRouter({
     .input(z.object({ userId: z.string() }))
     .query(async ({ ctx, input }) => {
       return await ctx.serviceFactory.getUserService().getProvidersByUserId(input.userId);
+    }),
+  getS3HtmlContent: publicProcedure.input(z.object({ keyName: z.string() })).query(async ({ ctx, input }) => {
+    return ctx.serviceFactory.getUserService().getS3HtmlContent(input.keyName);
+  }),
+
+  isUserBlocked: publicProcedure
+    .input(
+      z.object({
+        userEmail: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return await ctx.serviceFactory.getUserService().isUserBlocked(input.userEmail);
     }),
 });

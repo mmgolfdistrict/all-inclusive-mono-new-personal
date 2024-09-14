@@ -21,7 +21,7 @@ export type DateType =
   | "Furthest Day Out To Book"
   | "Custom";
 
-export type GolferType = "Any" | 1 | 2 | 3 | 4;
+export type GolferType = "Any" | 1 | 2 | 3 | 4 | -1;
 
 export type HoleType = "Any" | "18" | "9";
 
@@ -63,7 +63,7 @@ type OperationTimeType = {
 };
 
 interface FiltersContextType {
-  dateType: DateType;
+  dateType: any;
   setDateType: React.Dispatch<React.SetStateAction<DateType>>;
   holes: HoleType;
   setHoles: React.Dispatch<React.SetStateAction<HoleType>>;

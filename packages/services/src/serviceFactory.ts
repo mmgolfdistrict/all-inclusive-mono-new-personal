@@ -1,4 +1,4 @@
-import type { Db } from "@golf-district/database";
+import { type Db } from "@golf-district/database";
 import {
   AppSettingsService,
   AuctionService,
@@ -25,8 +25,14 @@ import {
   WatchlistService,
   WeatherService,
 } from "./index";
+import { ProfanityService } from "./profanity/profanity.service";
+import { SystemNotificationService } from "./system-notification/systemNotification.service";
 import { ProviderService } from "./tee-sheet-provider/providers.service";
+import { UserWaitlistService } from "./user-waitlist/userWaitlist.service";
+import { FinixService } from "./webhooks/finix.service";
+import { LoggerService } from "./webhooks/logging.service";
 import { PaymentVerifierService } from "./webhooks/paymentverifier.service";
+import { CourseExceptionService } from "./course-exception/courseException.service";
 
 export interface ServiceConfig {
   database: Db;
@@ -97,7 +103,12 @@ export class ServiceFactory {
    * @returns An instance of SearchService.
    */
   getSearchService = (): SearchService => {
-    return new SearchService(this.config.database, this.getWeatherService(), this.getProviderService());
+    return new SearchService(
+      this.config.database,
+      this.getWeatherService(),
+      this.getProviderService(),
+      this.getLoggerService()
+    );
   };
 
   /**
@@ -109,7 +120,10 @@ export class ServiceFactory {
       this.config.database,
       this.getTokenizerService(),
       this.getProviderService(),
-      this.getNotificationService()
+      this.getNotificationService(),
+      this.getLoggerService(),
+      this.getHyperSwitchService(),
+      this.getSensibleService()
     );
   };
 
@@ -294,7 +308,12 @@ export class ServiceFactory {
    * @returns An instance of TokenizeService.
    */
   getTokenizerService = (): TokenizeService => {
-    return new TokenizeService(this.config.database, this.getNotificationService());
+    return new TokenizeService(
+      this.config.database,
+      this.getNotificationService(),
+      this.getLoggerService(),
+      this.getSensibleService()
+    );
   };
 
   /**
@@ -317,7 +336,9 @@ export class ServiceFactory {
       this.getNotificationService(),
       this.getBookingService(),
       this.getSensibleService(),
-      this.config.upStashClientToken
+      this.getLoggerService(),
+      this.config.upStashClientToken,
+      this.getHyperSwitchService()
     );
   };
   getStripeService = (): StripeService => {
@@ -333,6 +354,38 @@ export class ServiceFactory {
   };
 
   getPaymentVerifierService = (): PaymentVerifierService => {
-    return new PaymentVerifierService(this.config.database, this.getHyperSwitchWebhookService());
+    return new PaymentVerifierService(
+      this.config.database,
+      this.getHyperSwitchWebhookService(),
+      this.getSensibleService(),
+      this.getProviderService()
+    );
+  };
+
+  getFinixService = (): FinixService => {
+    return new FinixService(
+      this.config.database,
+      this.getCashOutService(),
+      this.getLoggerService(),
+      this.getNotificationService()
+    );
+  };
+  getLoggerService = (): LoggerService => {
+    return new LoggerService();
+  };
+  getProfanityService = (): ProfanityService => {
+    return new ProfanityService(this.config.database);
+  };
+
+  getUserWaitlistService = (): UserWaitlistService => {
+    return new UserWaitlistService(this.config.database, this.getNotificationService());
+  };
+
+  getSystemNotificationService = (): SystemNotificationService => {
+    return new SystemNotificationService(this.config.database);
+  };
+
+  getCourseExceptionService = (): CourseExceptionService => {
+    return new CourseExceptionService(this.config.database);
   };
 }

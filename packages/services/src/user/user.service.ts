@@ -1,5 +1,6 @@
 import { randomBytes, randomUUID } from "crypto";
-import { and, asc, desc, eq, gt, is, lt, or } from "@golf-district/database";
+import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { and, asc, desc, eq, gt, lt, or } from "@golf-district/database";
 import type { Db } from "@golf-district/database";
 import { accounts } from "@golf-district/database/schema/accounts";
 import { assets } from "@golf-district/database/schema/assets";
@@ -12,20 +13,22 @@ import { lists } from "@golf-district/database/schema/lists";
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import type { InsertUser } from "@golf-district/database/schema/users";
 import { users } from "@golf-district/database/schema/users";
-import type { BookingGroup, GroupedBookings } from "@golf-district/shared";
-import {
-  assetToURL,
-  containsBadWords,
-  currentUtcTimestamp,
-  isValidEmail,
-  isValidPassword,
-} from "@golf-district/shared";
+import type { GroupedBookings } from "@golf-district/shared";
+import { assetToURL, currentUtcTimestamp, isValidEmail, isValidPassword } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
 import bcrypt from "bcryptjs";
 import { alias } from "drizzle-orm/mysql-core";
 import { verifyCaptcha } from "../../../api/src/googleCaptcha";
 import { generateUtcTimestamp } from "../../helpers";
 import type { NotificationService } from "../notification/notification.service";
+
+const s3Client = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+  },
+});
 
 export interface UserCreationData {
   email: string;
@@ -34,7 +37,13 @@ export interface UserCreationData {
   lastName: string;
   handle: string;
   phoneNumber: string;
-  location?: string;
+  // location?: string;
+  address1?: string;
+  address2?: string;
+  state?: string;
+  city?: string;
+  zipcode?: string;
+  country?: string;
   redirectHref?: string;
   ReCAPTCHA: string | undefined;
 }
@@ -45,10 +54,16 @@ interface UserUpdateData {
   profileVisibility?: "PUBLIC" | "PRIVATE";
   profilePictureAssetId?: string | null;
   bannerImageAssetId?: string | null;
-  location?: string | null;
+  address1?: string | null;
+  address2?: string | null;
+  state?: string | null;
+  zipcode?: string | null;
+  city?: string | null;
+  country?: string | null;
   phoneNumber?: string | null;
   phoneNotifications?: boolean | null;
   emailNotifications?: boolean | null;
+  courseId?: string;
 }
 type TeeTimeEntry = {
   teeTimeId: string;
@@ -75,7 +90,10 @@ export class UserService {
    * @example
    * const userService = new UserService(database, notificationService);
    */
-  constructor(protected readonly database: Db, private readonly notificationsService: NotificationService) {
+  constructor(
+    protected readonly database: Db,
+    private readonly notificationsService: NotificationService
+  ) {
     //this.filter = new Filter();
   }
 
@@ -116,19 +134,26 @@ export class UserService {
    *     handel: 'johnDoe123'
    *   });
    */
-  createUser = async (data: UserCreationData): Promise<void> => {
+  createUser = async (courseId: string | undefined, data: UserCreationData) => {
     this.logger.info(`createUser called`);
     if (!isValidEmail(data.email)) {
       this.logger.warn(`Invalid email format: ${data.email}`);
       throw new Error("Invalid email format");
     }
     if (!(await this.isValidHandle(data.handle))) {
-      this.logger.warn(`Invalid handle format: ${data.handle}`);
-      throw new Error("Invalid handle format");
+      this.logger.warn(`Handle already exists: ${data.handle}`);
+      return {
+        error: true,
+        message: "Handle already exists.",
+      };
     }
     if (isValidPassword(data.password).score < 8) {
       this.logger.warn("Invalid password");
-      throw new Error("Invalid password");
+      return {
+        error: true,
+        message:
+          "Password must include uppercase, lowercase letters, numbers, and special characters (!@#$%^&*).",
+      };
     }
 
     let isNotRobot;
@@ -155,7 +180,10 @@ export class UserService {
     if (existingUserWithEmail) {
       if (existingUserWithEmail.email == data.email) {
         this.logger.warn(`Email already exists: ${data.email}`);
-        throw new Error("Email already exists");
+        return {
+          error: true,
+          message: "Email already exists",
+        };
       }
     }
     const verificationToken = randomBytes(32).toString("hex");
@@ -174,6 +202,35 @@ export class UserService {
     // "Reset your password",
     // process.env.SENDGRID_FORGOT_PASSWORD_AUTH_USER_TEMPLATE_ID!,
     // emailParams
+
+    let CourseLogoURL: string | undefined;
+    let CourseURL: string | undefined;
+    let CourseName: string | undefined;
+
+    if (courseId) {
+      const [course] = await this.database
+        .select({
+          key: assets.key,
+          extension: assets.extension,
+          websiteURL: courses.websiteURL,
+          name: courses.name,
+        })
+        .from(courses)
+        .where(eq(courses.id, courseId))
+        .leftJoin(assets, eq(assets.id, courses.logoId))
+        .execute()
+        .catch((err) => {
+          this.logger.error(err);
+          return [];
+        });
+
+      if (course?.key) {
+        CourseLogoURL = `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`;
+        CourseURL = course?.websiteURL || "";
+        CourseName = course.name;
+      }
+    }
+
     await this.notificationsService.sendEmailByTemplate(
       data.email,
       "Verify your email",
@@ -183,7 +240,12 @@ export class UserService {
         VerifyURL: `${encodeURI(data?.redirectHref)}/verify?userId=${encodeURIComponent(
           user?.id
         )}&verificationToken=${encodeURIComponent(verificationToken)}`,
-      }
+        CourseLogoURL,
+        CourseURL,
+        CourseName,
+        HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+      },
+      []
     );
   };
 
@@ -300,7 +362,7 @@ export class UserService {
             this.logger.error(`Error retrieving user: ${err}`);
             throw new Error("Error retrieving user");
           });
-        if (userData[0]) {
+        if (userData && userData[0]) {
           finalData.push({
             ...userData[0],
             name: unit.nameOnBooking?.length ? unit.nameOnBooking : "Guest",
@@ -355,7 +417,12 @@ export class UserService {
    * @example
    *   verifyUserEmail('user123id', 'secureverificationtoken');
    */
-  verifyUserEmail = async (userId: string, token: string): Promise<void> => {
+  verifyUserEmail = async (
+    courseId: string | undefined,
+    userId: string,
+    token: string,
+    redirectHref: string
+  ) => {
     this.logger.info(`verifyUserEmail called with userId: ${userId} and token: ${token}`);
     const [user] = await this.database.select().from(users).where(eq(users.id, userId));
     if (!user) {
@@ -364,7 +431,10 @@ export class UserService {
     }
     if (!user.verificationRequestToken) {
       this.logger.warn(`User email already verified: ${userId}`);
-      throw new Error("User email already verified");
+      return {
+        error: true,
+        message: "User email already verified",
+      };
     }
     if (user.verificationRequestExpiry && user.verificationRequestExpiry < currentUtcTimestamp()) {
       await this.deleteUserById(userId);
@@ -387,6 +457,30 @@ export class UserService {
       })
       .where(eq(users.id, userId))
       .execute();
+
+    let CourseLogoURL: string | undefined;
+    let CourseURL: string | undefined;
+    let CourseName: string | undefined;
+
+    if (courseId) {
+      const [course] = await this.database
+        .select({
+          key: assets.key,
+          extension: assets.extension,
+          websiteURL: courses.websiteURL,
+          name: courses.name,
+        })
+        .from(courses)
+        .where(eq(courses.id, courseId))
+        .leftJoin(assets, eq(assets.id, courses.logoId));
+
+      if (course?.key) {
+        CourseLogoURL = `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`;
+        CourseURL = course?.websiteURL || "";
+        CourseName = course.name;
+      }
+    }
+
     if (user?.email) {
       //send welcome email
       try {
@@ -396,7 +490,13 @@ export class UserService {
           process.env.SENDGRID_TEE_TIMES_NEW_USER_TEMPLATE_ID!,
           {
             CustomerFirstName: user.handle ?? "",
-          }
+            CourseLogoURL,
+            CourseURL,
+            CourseName,
+            HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+            BuyTeeTimeURL: encodeURI(redirectHref),
+          },
+          []
         );
       } catch (error) {
         throw new Error("Error sending welcome email");
@@ -425,7 +525,7 @@ export class UserService {
    * @returns {Promise<void>} Promise that resolves when the user's information is successfully updated.
    *
    * @throws
-   *   - `Error("Invalid handle format")`: If the provided `handle` does not pass the format validation.
+   *   - `Error("Handle already exists")`: If the provided `handle` does not pass the format validation.
    *   - `Error("Invalid name due to profanity filter")`: If the provided `name` does not pass the profanity filter check.
    *   - `Error("Error recovering asset: [assetId]")`: If there is an error retrieving the asset identified by `[assetId]` from the database.
    *   - `Error("Asset not found: [assetId]")`: If the asset identified by `[assetId]` is not found in the database.
@@ -444,12 +544,17 @@ export class UserService {
    *     emailNotifications: false
    *   });
    */
-  updateUser = async (userId: string, data: UserUpdateData): Promise<void> => {
+  updateUser = async (userId: string, data: UserUpdateData) => {
     this.logger.info(`updateUser called for user: ${userId}`);
+
     if (data.handle) {
-      if (!(await this.isValidHandle(data.handle))) {
-        this.logger.warn(`Invalid handle format: ${data.handle}`);
-        throw new Error("Invalid handle format");
+      const isValid = await this.isValidHandle(data.handle);
+      if (!isValid) {
+        this.logger.warn(`Handle already exists: ${data.handle}`);
+        return {
+          error: true,
+          message: "Handle already exists.",
+        };
       }
     }
     // if (data.name) {
@@ -487,20 +592,71 @@ export class UserService {
         throw new Error(`Asset not found: ${data.profilePictureAssetId}`);
       }
     }
-    if (data.location) {
-      //TODO: validate location with geocode service
-    }
+    // if (data.location) {
+    //   //TODO: validate location with geocode service
+    // }
 
     const updateData: Partial<InsertUser> = {
       updatedAt: currentUtcTimestamp(),
     };
     if (Object.prototype.hasOwnProperty.call(data, "handle")) {
       updateData.handle = data.handle;
-      await this.notificationsService.createNotification(
-        userId,
-        "Handle updated",
-        `Your handle has been updated to ${data.handle}`
-      );
+      // await this.notificationsService.createNotification(
+      //   userId,
+      //   "Handle updated",
+      //   `Your handle has been updated to ${data.handle}`
+      // );
+      const [user] = await this.database
+        .select()
+        .from(users)
+        .where(eq(users.id, userId))
+        .execute()
+        .catch((err) => {
+          this.logger.error(`Failed to retrieve user: ${err}`);
+          throw new Error("Failed to retrieve user");
+        });
+
+      if (!user) {
+        this.logger.error(`createNotification: User with ID ${userId} not found.`);
+        return;
+      }
+
+      const [course] = await this.database
+        .select({
+          key: assets.key,
+          extension: assets.extension,
+          websiteURL: courses.websiteURL,
+          name: courses.name,
+        })
+        .from(courses)
+        .where(eq(courses.id, data.courseId ?? ""))
+        .leftJoin(assets, eq(assets.id, courses.logoId))
+        .execute()
+        .catch((err) => {
+          this.logger.error(err);
+          return [];
+        });
+
+      if (user && user.name && user.email) {
+        await this.notificationsService
+          .sendEmailByTemplate(
+            user.email,
+            "Handle Updated",
+            process.env.SENDGRID_HANDLE_CHANGED_TEMPLATE_ID!,
+            {
+              CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`,
+              CourseURL: course?.websiteURL || "",
+              CourseName: course?.name || "",
+              HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+              CustomerFirstName: user.name,
+            },
+            []
+          )
+          .catch((err) => {
+            this.logger.error(`Error sending email: ${err}`);
+            throw new Error("Error sending email");
+          });
+      }
     }
     if (Object.prototype.hasOwnProperty.call(data, "name")) updateData.name = data.name;
     if (Object.prototype.hasOwnProperty.call(data, "profileVisibility"))
@@ -509,12 +665,21 @@ export class UserService {
       updateData.image = data.profilePictureAssetId;
     if (Object.prototype.hasOwnProperty.call(data, "bannerImageAssetId"))
       updateData.bannerImage = data.bannerImageAssetId;
-    if (Object.prototype.hasOwnProperty.call(data, "location")) updateData.location = data.location;
+    // if (Object.prototype.hasOwnProperty.call(data, "location")) updateData.location = data.location;
+    if (Object.prototype.hasOwnProperty.call(data, "address1")) updateData.address1 = data.address1;
+    if (Object.prototype.hasOwnProperty.call(data, "address2")) updateData.address2 = data.address2;
+    if (Object.prototype.hasOwnProperty.call(data, "state")) updateData.state = data.state;
+    if (Object.prototype.hasOwnProperty.call(data, "city")) updateData.city = data.city;
+    if (Object.prototype.hasOwnProperty.call(data, "zipcode")) updateData.zipcode = data.zipcode;
+    if (Object.prototype.hasOwnProperty.call(data, "country")) updateData.country = data.country;
     if (Object.prototype.hasOwnProperty.call(data, "phoneNotifications"))
       updateData.phoneNotifications = data.phoneNotifications ? true : false;
     if (Object.prototype.hasOwnProperty.call(data, "emailNotifications"))
       updateData.emailNotifications = data.emailNotifications ? true : false;
-    if (Object.prototype.hasOwnProperty.call(data, "phoneNumber")) updateData.phoneNumber = data.phoneNumber;
+    if (Object.prototype.hasOwnProperty.call(data, "phoneNumber")) {
+      updateData.phoneNumber = data.phoneNumber;
+      updateData.phoneNumberVerified = null;
+    }
 
     await this.database
       .update(users)
@@ -667,16 +832,26 @@ export class UserService {
       this.logger.error(`Invalid captcha`);
       throw new Error("Invalid captcha");
     }
+    let CourseURL: string | undefined;
     let CourseLogoURL: string | undefined;
+    let CourseName: string | undefined;
+
     if (courseProviderId) {
       const [course] = await this.database
-        .select()
+        .select({
+          key: assets.key,
+          extension: assets.extension,
+          websiteURL: courses.websiteURL,
+          name: courses.name,
+        })
         .from(courses)
         .leftJoin(assets, eq(assets.courseId, courseProviderId))
         .where(eq(courses.logoId, assets.id));
 
-      if (course?.asset) {
-        CourseLogoURL = `https://${course.asset.cdn}/${course.asset.key}.${course.asset.extension}`;
+      if (course?.key) {
+        CourseLogoURL = `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`;
+        CourseURL = course?.websiteURL || "";
+        CourseName = course?.name || "";
       }
     }
 
@@ -689,11 +864,49 @@ export class UserService {
       // throw new Error("User not found");
       return;
     }
+
     if (!user.email) {
       this.logger.warn(`User email does not exists: ${handleOrEmail}`);
       // throw new Error("User does not have an email");
       return;
     }
+
+    const [accountData] = await this.database
+      .select()
+      .from(accounts)
+      .where(and(eq(accounts.userId, user.id)))
+      .execute()
+
+    const emailParam = {
+      CustomerFirstName: user.name?.split(" ")[0],
+      EMail: user.email,
+      CourseLogoURL,
+      CourseURL,
+      CourseName,
+      HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+    };
+
+    const templateId = process.env.SENDGRID_FORGOT_PASSWORD_AUTH_USER_TEMPLATE_ID;
+
+    if (!templateId) {
+      this.logger.error("Missing SendGrid template ID for forgot password email.");
+      throw new Error("Missing email template ID");
+    }
+
+    if (accountData) {
+      await this.notificationsService
+        .sendEmail(
+          user.email,
+          "Reset Password",
+          `Since you signed in using ${accountData?.provider} , we cannot reset your password from our end. Please use ${accountData?.provider} to sign in.`
+        )
+        .catch((err) => {
+          this.logger.error(`Error sending email: ${err}`);
+          throw new Error("Error sending email");
+        });
+    }
+
+
     if (!user.emailVerified) {
       this.logger.warn(`User email not verified: ${handleOrEmail}`);
       // throw new Error("User email not verified");
@@ -717,6 +930,9 @@ export class UserService {
       CustomerFirstName: user.name?.split(" ")[0],
       EMail: user.email,
       CourseLogoURL,
+      CourseURL,
+      CourseName,
+      HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
     };
 
     if (user.gdPassword) {
@@ -730,7 +946,8 @@ export class UserService {
             ForgotPasswordURL: `${encodeURI(redirectHref)}/reset-password?userId=${encodeURIComponent(
               user?.id
             )}&verificationToken=${encodeURIComponent(verificationToken)}`,
-          }
+          },
+          []
         )
         .catch((err) => {
           this.logger.error(`Error sending email: ${err}`);
@@ -742,7 +959,8 @@ export class UserService {
           user.email,
           "Reset your password",
           process.env.SENDGRID_FORGOT_PASSWORD_AUTH_USER_TEMPLATE_ID!,
-          emailParams
+          emailParams,
+          []
         )
         .catch((err) => {
           this.logger.error(`Error sending email: ${err}`);
@@ -774,7 +992,12 @@ export class UserService {
    * @example
    *   executeForgotPassword('user123id', 'secureverificationtoken', 'newSecurePassword123');
    */
-  executeForgotPassword = async (userId: string, token: string, newPassword: string): Promise<void> => {
+  executeForgotPassword = async (
+    courseId: string | undefined,
+    userId: string,
+    token: string,
+    newPassword: string
+  ): Promise<void> => {
     this.logger.info(`executeForgotPassword called with userId: ${userId}`);
     if (isValidPassword(newPassword).score < 8) {
       this.logger.warn(`Invalid password format: ${newPassword}`);
@@ -816,6 +1039,35 @@ export class UserService {
         this.logger.error(`Error updating password for user: ${userId} - ${err}`);
         throw new Error("Error updating password");
       });
+
+    let CourseLogoURL: string | undefined;
+    let CourseURL: string | undefined;
+    let CourseName: string | undefined;
+
+    if (courseId) {
+      const [course] = await this.database
+        .select({
+          key: assets.key,
+          extension: assets.extension,
+          websiteURL: courses.websiteURL,
+          name: courses.name,
+        })
+        .from(courses)
+        .where(eq(courses.id, courseId))
+        .leftJoin(assets, eq(assets.id, courses.logoId))
+        .execute()
+        .catch((err) => {
+          this.logger.error(err);
+          return [];
+        });
+
+      if (course?.key) {
+        CourseLogoURL = `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`;
+        CourseURL = course?.websiteURL || "";
+        CourseName = course?.name || "";
+      }
+    }
+
     if (user?.email) {
       try {
         await this.notificationsService.sendEmailByTemplate(
@@ -824,7 +1076,12 @@ export class UserService {
           process.env.SENDGRID_TEE_TIMES_PASSWORD_RESET_SUCCESSFUL_TEMPLATE_ID!,
           {
             CustomerFirstName: user?.handle ?? "",
-          }
+            CourseLogoURL,
+            CourseURL,
+            CourseName,
+            HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+          },
+          []
         );
       } catch (error) {
         throw new Error("Error sending welcome email");
@@ -933,7 +1190,7 @@ export class UserService {
    */
   isValidHandle = async (handle: string): Promise<boolean> => {
     this.logger.info(`isValidHandle called with handle: ${handle}`);
-    if (handle.length < 3 || handle.length > 20) {
+    if (handle.length < 6 || handle.length > 64) {
       this.logger.debug(`Handle length is invalid: ${handle}`);
       //throw new Error("Handle length is invalid");
       return false;
@@ -1002,7 +1259,13 @@ export class UserService {
         handle: data.handle,
         email: data.email,
         gdPassword: await bcrypt.hash(data.password, 10),
-        address: data.location,
+        // address: data.location,
+        address1: data.address1,
+        address2: data.address2,
+        state: data.state,
+        city: data.city,
+        zipcode: data.zipcode,
+        country: data.country,
         phoneNumber: data.phoneNumber,
         verificationRequestToken: verificationToken,
         verificationRequestExpiry: generateUtcTimestamp(90), //90 minutes
@@ -1043,13 +1306,11 @@ export class UserService {
         profileImage: {
           assetId: profileAsset.id,
           assetKey: profileAsset.key,
-          assetCdn: profileAsset.cdn,
           assetExtension: profileAsset.extension,
         },
         bannerImage: {
           assetId: bannerAsset.id,
           assetKey: bannerAsset.key,
-          assetCdn: bannerAsset.cdn,
           assetExtension: bannerAsset.extension,
         },
       })
@@ -1068,17 +1329,15 @@ export class UserService {
     const { user, profileImage, bannerImage } = data;
     const profilePicture = profileImage
       ? assetToURL({
-          key: profileImage.assetKey,
-          cdn: profileImage.assetCdn,
-          extension: profileImage.assetExtension,
-        })
+        key: profileImage.assetKey,
+        extension: profileImage.assetExtension,
+      })
       : "/defaults/default-profile.webp";
     const bannerPicture = bannerImage
       ? assetToURL({
-          key: bannerImage.assetKey,
-          cdn: bannerImage.assetCdn,
-          extension: bannerImage.assetExtension,
-        })
+        key: bannerImage.assetKey,
+        extension: bannerImage.assetExtension,
+      })
       : "/defaults/default-banner.webp";
     let res;
 
@@ -1097,8 +1356,13 @@ export class UserService {
         bannerPicture,
         handle: user.handle,
         name: user.name,
-        location: user.location,
-        profileVisibility: user.profileVisibility,
+        // location: user.location,
+        address1: user.address1,
+        address2: user.address2,
+        state: user.state,
+        city: user.city,
+        zipcode: user.zipcode,
+        country: user.country,
       };
     }
     return res;
@@ -1177,7 +1441,6 @@ export class UserService {
         listingId: lists.id,
         profilePicture: {
           key: assets.key,
-          cdnUrl: assets.cdn,
           extension: assets.extension,
         },
       })
@@ -1204,7 +1467,7 @@ export class UserService {
           soldById: booking.ownerId,
           soldByName: booking.ownerHandle ? booking.ownerHandle : "Anonymous",
           soldByImage: booking.profilePicture
-            ? `https://${booking.profilePicture.cdnUrl}/${booking.profilePicture.key}.${booking.profilePicture.extension}`
+            ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${booking.profilePicture.key}.${booking.profilePicture.extension}`
             : "/defaults/default-profile.webp",
           availableSlots: booking.listed ? 0 : 1,
           pricePerGolfer: booking.listPrice ? booking.listPrice : 0,
@@ -1274,7 +1537,6 @@ export class UserService {
         courseId: teeTimes.courseId,
         courseImage: {
           key: assets.key,
-          cdnUrl: assets.cdn,
           extension: assets.extension,
         },
       })
@@ -1305,7 +1567,7 @@ export class UserService {
           courseName: booking.courseName,
           courseId: booking.courseId ?? "",
           courseImage: booking.courseImage
-            ? `https://${booking.courseImage.cdnUrl}/${booking.courseImage.key}.${booking.courseImage.extension}`
+            ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${booking.courseImage.key}.${booking.courseImage.extension}`
             : "/defaults/default-course.webp",
         });
       }
@@ -1331,5 +1593,82 @@ export class UserService {
     });
 
     return cleanedProviders;
+  };
+
+  getS3HtmlContent = async (keyName: string) => {
+    console.log(`Bucket Name: ${process.env.AWS_BUCKET}, File Name: ${keyName}`);
+
+    const getObjectParams = {
+      Bucket: process.env.AWS_BUCKET,
+      Key: keyName,
+    };
+
+    try {
+      const { Body } = await s3Client.send(new GetObjectCommand(getObjectParams));
+      const htmlContent = await this.streamToString(Body);
+      // return htmlContent;
+      let replacedHTML = htmlContent;
+      replacedHTML = replacedHTML.replace(/background:\s?#?\b[a-zA-Z0-9]+;?/gi, "");
+      replacedHTML = replacedHTML.replace(/background-color:\s?#?\b[a-zA-Z0-9]+;?/gi, "");
+
+      return replacedHTML;
+    } catch (err) {
+      console.error("Error fetching HTML file:", err);
+      throw err;
+    }
+  };
+
+  streamToString = async (stream: any) => {
+    // const chunks: Uint8Array[] = [];
+    // return new Promise((resolve, reject) => {
+    //   stream.on("data", (chunk: Uint8Array) => chunks.push(chunk));
+    //   stream.on("error", reject);
+    //   stream.on("end", () => resolve(Buffer.concat(chunks).toString("utf-8")));
+    // });
+    const chunks: any[] = [];
+    for await (const chunk of stream) {
+      chunks.push(chunk);
+    }
+    return Buffer.concat(chunks).toString("utf8");
+  };
+
+  generateUsername = async (digit: number) => {
+    // Generate a random buffer
+    const buffer = randomBytes(3);
+
+    // Convert buffer to hex string
+    const hex = buffer.toString("hex");
+
+    // Convert hex string to integer
+    const randomNumber = parseInt(hex, 16);
+
+    // Get the six least significant digits
+    const sixDigitNumber = randomNumber % 1000000;
+
+    // Pad the number with zeros if necessary
+    const handle = sixDigitNumber.toString().padStart(digit, "0");
+
+    const isValid = await this.isValidHandle(handle);
+
+    if (!isValid) {
+      this.generateUsername(digit);
+    }
+    return handle ? `golfdistrict${handle}` : "golfdistrict";
+  };
+
+  isUserBlocked = async (email: string) => {
+    const [data] = await this.database
+      .select({
+        bannedUntilDateTime: users.bannedUntilDateTime,
+      })
+      .from(users)
+      .where(eq(users.email, email))
+      .execute();
+    const now = new Date();
+    const date = new Date(data?.bannedUntilDateTime ?? "");
+    if (now < date) {
+      return true;
+    }
+    return false;
   };
 }

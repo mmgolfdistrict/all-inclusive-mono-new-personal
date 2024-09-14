@@ -50,6 +50,7 @@ export type EntityType = {
   updatedAt?: Date;
   updatedById?: string | null;
   logo: string;
+  redirectToCourseFlag?: boolean | undefined;
 };
 
 export type CourseType = {
@@ -84,12 +85,14 @@ export type FullCourseType = {
   highestPrimarySaleTeeTime: number;
   lowestPrimarySaleTeeTime: number;
   supportedCharities?: SupportedCharity[];
-  allowAuctions: number | null;
+  allowAuctions: boolean;
   supportsOffers?: boolean;
   supportsWatchlist?: boolean;
   supportsPromocode?: boolean;
+  supportsWaitlist?: boolean;
   sellerFee?: number;
   buyerFee?: number;
+  furthestDayToBook?: number;
 };
 
 export type SupportedCharity = {
@@ -174,6 +177,7 @@ export type SearchObject = {
   bookingIds?: string[];
   minimumOfferPrice?: number;
   firstHandPurchasePrice?: number;
+  ownerId: string;
 };
 
 export type CombinedObject = {
@@ -202,3 +206,13 @@ export type ReserveTeeTimeResponse = {
   providerBookingId: string;
   status: string;
 };
+
+export type  NotificationObject ={
+  id: string;
+  courseId: string;
+  shortMessage: string;
+  longMessage: string | null;
+  displayType: string;
+  startDate: string;
+  endDate: string;
+}

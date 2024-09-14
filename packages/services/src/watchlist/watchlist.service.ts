@@ -79,7 +79,7 @@ export class WatchlistService {
         .select({
           course: teeTimes.courseId,
           // entityId: teeTimes.entityId,
-          entityId: courses.entityId
+          entityId: courses.entityId,
         })
         .from(teeTimes)
         .leftJoin(courses, eq(courses.id, teeTimes.courseId))
@@ -88,7 +88,7 @@ export class WatchlistService {
         .execute();
 
       if (!teeTime) {
-        this.logger.warn(`Tee time with id ${teeTimeId} not found`);
+        this.logger.warn(`Tee time with  id ${teeTimeId} not found`);
         throw new Error(`Tee time with id ${teeTimeId} not found`);
       }
 
@@ -140,13 +140,14 @@ export class WatchlistService {
         createdAt: favorites.createdAt,
         userId: favorites.userId,
         price: teeTimes.greenFeePerPlayer,
+        cartFee: teeTimes.cartFeePerPlayer,
         teeTimeExpiration: teeTimes.providerDate,
         availableFirstHandSpots: teeTimes.availableFirstHandSpots,
         availableSecondHandSpots: teeTimes.availableSecondHandSpots,
+        markupFeesFixedPerPlayer: courses.markupFeesFixedPerPlayer,
         courseName: courses.name,
         image: {
           key: assets.key,
-          cdn: assets.cdn,
           extension: assets.extension,
         },
       })
@@ -183,7 +184,10 @@ export class WatchlistService {
           teeTimeId: item.teeTimeId,
           courseId: item.courseId,
           teeTimeExpiration: item.teeTimeExpiration,
-          price: item.price,
+          price:
+            item.price / 100 +
+            item.cartFee / 100 +
+            (item.markupFeesFixedPerPlayer ? item.markupFeesFixedPerPlayer / 100 : 0),
           availableSpots: item.availableFirstHandSpots,
           ownedBy: item.courseName,
           type: "FIRST_PARTY",
@@ -191,7 +195,7 @@ export class WatchlistService {
           ownedById: courseId,
           minimumOfferPrice: item.price,
           image: item.image
-            ? `https://${item.image.cdn}/${item.image.key}.${item.image.extension}`
+            ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${item.image.key}.${item.image.extension}`
             : "/defaults/default-course.webp",
           bookingIds: [],
         });
@@ -219,7 +223,6 @@ export class WatchlistService {
           minimumOfferPrice: bookings.minimumOfferPrice,
           image: {
             key: assets.key,
-            cdn: assets.cdn,
             extension: assets.extension,
           },
           listingId: lists.id,
@@ -257,7 +260,7 @@ export class WatchlistService {
             teeTimeId: item.teeTimeId ?? "",
             courseId: courseId,
             teeTimeExpiration: item.teeTimeDate ?? " ",
-            price: item.listingId ? item.listingPrice ?? 0 : item.price,
+            price: (item.listingId ? item.listingPrice ?? 0 : item.price) / 100,
             availableSpots: 1,
             ownedBy: item.soldByHandle ? item.soldByHandle : "Anonymous",
             type: "SECOND_HAND",
@@ -267,7 +270,7 @@ export class WatchlistService {
             ownedById: item.soldById,
             minimumOfferPrice: item.minimumOfferPrice,
             image: item.image
-              ? `https://${item.image.cdn}/${item.image.key}.${item.image.extension}`
+              ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${item.image.key}.${item.image.extension}`
               : "/defaults/default-profile.webp",
           };
         }

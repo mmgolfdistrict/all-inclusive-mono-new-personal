@@ -4,8 +4,9 @@ import { HyperElements } from "@juspay-tech/react-hyper-js";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
-import type { CartProduct } from "~/utils/types";
-import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
+import type { CartProduct, MaxReservationResponse } from "~/utils/types";
+// import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Spinner } from "../loading/spinner";
 import { CheckoutForm } from "./checkout-form";
 
@@ -36,6 +37,8 @@ export const HyperSwitch = ({
   teeTimeDate,
   listingId,
   setIsLoading,
+  playerCount,
+  // maxReservation,
 }: {
   cartData: CartProduct[];
   isBuyNowAuction: boolean;
@@ -43,18 +46,14 @@ export const HyperSwitch = ({
   teeTimeDate: string | undefined;
   listingId: string | undefined;
   setIsLoading?: (isLoading: boolean) => void;
+  playerCount: string | undefined;
+  // maxReservation: MaxReservationResponse;
 }) => {
   const [options, setOptions] = useState<Options | undefined>(undefined);
   const { user } = useUserContext();
   const { course } = useCourseContext();
   const checkout = api.checkout.buildCheckoutSession.useMutation();
-  const [isLoadingSession, setIsLoadingSession] = useState<boolean>(false);
   const [cartId, setCartId] = useState<string>("");
-  const amountToPay =
-    //@ts-ignore
-    cartData
-      ?.filter(({ product_data }) => product_data.metadata.type !== "markup")
-      ?.reduce((acc: number, i: CartProduct) => acc + i.price, 0) / 100;
   const [localCartData, setLocalCartData] = useState<unknown[]>(cartData);
   const [error, setError] = useState<undefined | string>(undefined);
   const callingRef = useRef<boolean>(false);
@@ -93,10 +92,9 @@ export const HyperSwitch = ({
     } catch (error) {
       // setIsLoadingSession(false);
       callingRef.current = false;
-      console.log(error.message);
       setError(
         (error?.message as string) ??
-          "An error occurred building checkout seesion."
+        "An error occurred building checkout seesion."
       );
     }
   };
@@ -134,18 +132,17 @@ export const HyperSwitch = ({
 
   return (
     <div className="w-full md:min-w-[370px] px-2 md:px-0">
-      {options !== undefined &&
-      hyperPromise !== undefined &&
-      !isLoadingSession ? (
+      {options !== undefined && hyperPromise !== undefined ? (
         <HyperElements options={options} hyper={hyperPromise}>
           <CheckoutForm
             teeTimeId={teeTimeId}
-            amountToPay={amountToPay}
             isBuyNowAuction={isBuyNowAuction}
             cartData={cartData}
             cartId={cartId}
             teeTimeDate={teeTimeDate}
             listingId={listingId ?? ""}
+            playerCount={playerCount}
+          // maxReservation={maxReservation}
           />
         </HyperElements>
       ) : (

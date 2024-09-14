@@ -1,4 +1,5 @@
-import { InferInsertModel, InferSelectModel, relations, sql } from "drizzle-orm";
+import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
   boolean,
   index,
@@ -7,7 +8,6 @@ import {
   primaryKey,
   text,
   timestamp,
-  tinyint,
   unique,
   varchar,
 } from "drizzle-orm/mysql-core";
@@ -23,6 +23,7 @@ import { notifications } from "./notifications";
 import { offerRead } from "./offerRead";
 import { offers } from "./offers";
 import { transfers } from "./transfers";
+import { userWaitlists } from "./userWaitlists";
 
 export const users = mySqlTable(
   "user",
@@ -34,7 +35,7 @@ export const users = mySqlTable(
     emailVerified: timestamp("emailVerified", { mode: "string", fsp: 3 }),
     image: text("image"),
     gdImage: varchar("golfDistrictImage", { length: 191 }),
-    location: text("location"),
+    // location: text("location"),
     createdAt: timestamp("createdAt", { mode: "string", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
@@ -46,7 +47,13 @@ export const users = mySqlTable(
       fsp: 3,
     }),
     balance: int("balance").default(0).notNull(),
-    address: text("address"),
+    // address: text("address"),
+    address1: text("address1"),
+    address2: text("address2"),
+    state: text("state"),
+    city: text("city"),
+    zipcode: text("zipcode"),
+    country: text("country"),
     bannerImage: varchar("bannerImage", { length: 191 }),
     profileVisibility: mysqlEnum("profileVisibility", ["PUBLIC", "PRIVATE"]).default("PUBLIC").notNull(),
     gdPassword: varchar("gdPassword", { length: 191 }),
@@ -65,6 +72,7 @@ export const users = mySqlTable(
       .notNull(),
     phoneNotifications: boolean("phoneNotifications").default(true).notNull(),
     phoneNumber: varchar("phoneNumber", { length: 191 }),
+    phoneNumberVerified: timestamp("phoneNumberVerified", { mode: "string", fsp: 3 }),
     emailNotifications: boolean("emailNotifications").default(true).notNull(),
     verificationRequestToken: varchar("verificationRequestToken", {
       length: 191,
@@ -74,6 +82,10 @@ export const users = mySqlTable(
       fsp: 3,
     }),
     entityId: varchar("entityId", { length: 191 }),
+    bannedUntilDateTime: timestamp("bannedUntilDateTime", {
+      mode: "string",
+      fsp: 3,
+    }),
   },
   (table) => {
     return {
@@ -109,6 +121,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
     fields: [users.gdImage],
     references: [assets.id],
   }),
+  userWaitlists: many(userWaitlists),
 }));
 export type SelectUser = InferSelectModel<typeof users>;
 export type InsertUser = InferInsertModel<typeof users>;

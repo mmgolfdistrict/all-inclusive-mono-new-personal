@@ -74,7 +74,7 @@ export const MakeAnOffer = ({
   };
 
   const handleOfferPrice = (e: ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace("$", "").replaceAll(",", "");
+    const value = e.target.value.replace(/[$,]/g, "");
 
     const decimals = value.split(".")[1];
     if (decimals && decimals?.length > 2) return;
@@ -284,7 +284,6 @@ const TeeTimeItem = ({
   const cleanTimeString = !date.includes("T")
     ? date.replace(" ", "T") + "Z"
     : date;
-  console.log(cleanTimeString);
   return (
     <div className="flex flex-col gap-2 rounded-xl bg-secondary-white px-4 py-5">
       <div className="flex items-center gap-4">

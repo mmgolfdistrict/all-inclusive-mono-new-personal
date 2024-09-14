@@ -2,11 +2,14 @@ import {
   AbortMultipartUploadCommand,
   CompleteMultipartUploadCommand,
   CreateMultipartUploadCommand,
+  DeleteObjectCommand,
   S3Client,
   UploadPartCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import type { Db } from "@golf-district/database";
+import { db, eq, type Db } from "@golf-district/database";
+import { assets } from "@golf-district/database/schema/assets";
+import { users } from "@golf-district/database/schema/users";
 import Logger from "@golf-district/shared/src/logger";
 import type { ImageService } from "./image.service";
 
@@ -143,7 +146,7 @@ export class UploadService {
     s3Key: string,
     uploadId: string,
     parts: Part[]
-  ): Promise<{ key: string; cdn: string; extension: string; assetId: string }> => {
+  ): Promise<{ key: string; extension: string; assetId: string }> => {
     const params = {
       Bucket: this.bucketName,
       Key: s3Key,
@@ -160,7 +163,7 @@ export class UploadService {
     const fileNameWithoutExtension = s3Key.replace(/\.[^/.]+$/, "");
     const extension = s3Key.split(".").pop()!;
     const assetId = await this.imageService
-      .storeAsset(userId, fileNameWithoutExtension, extension, this.CLOUDFRONT_DOMAIN)
+      .storeAsset(userId, fileNameWithoutExtension, extension)
       .catch((err) => {
         this.logger.error(`completeUpload error storing asset: ${err}`);
         console.log("upload:", err);
@@ -168,7 +171,6 @@ export class UploadService {
       });
     return {
       key: fileNameWithoutExtension,
-      cdn: this.CLOUDFRONT_DOMAIN,
       extension: extension,
       assetId: assetId,
     };
@@ -251,5 +253,74 @@ export class UploadService {
       map[index] = part;
       return map;
     }, {} as Record<number, string>);
+  };
+
+  /**
+   * Deletes a file from an S3 bucket.
+   *
+   * @param {string} userId - The ID of the user that owns the asset being deleted.
+   * @param {string} imageType - The type of image being deleted.
+   * @returns {Promise<void>} A promise that resolves when the file is deleted.
+   * @throws Will throw an error if the file deletion fails.
+   */
+  deleteFile = async (userId: string, imageType: "profileImage" | "bannerImage"): Promise<void> => {
+    let assetId;
+    this.logger.info("userId", userId);
+
+    if (imageType === "profileImage") {
+      const [asset] = await db
+        .select({
+          assetId: users.image,
+        })
+        .from(users)
+        .where(eq(users.id, userId))
+        .execute();
+      if (!asset) {
+        throw new Error("User or asset not found");
+      }
+      assetId = asset.assetId;
+    } else if (imageType === "bannerImage") {
+      const [asset] = await db
+        .select({
+          assetId: users.bannerImage,
+        })
+        .from(users)
+        .where(eq(users.id, userId))
+        .execute();
+      if (!asset) {
+        throw new Error("User or asset not found");
+      }
+      assetId = asset.assetId;
+    }
+    this.logger.info("assetId", assetId);
+    if (!assetId) {
+      throw new Error("asset not found");
+    }
+
+    const [assetData] = await db
+      .select({
+        assetKey: assets.key,
+        assetExtension: assets.extension,
+      })
+      .from(assets)
+      .where(eq(assets.id, assetId))
+      .execute();
+    if (!assetData) {
+      throw new Error("asset data not found");
+    }
+
+    const s3Key = assetData.assetKey + "." + assetData.assetExtension;
+    const params = {
+      Bucket: this.bucketName,
+      Key: s3Key,
+    };
+
+    try {
+      await this.s3.send(new DeleteObjectCommand(params));
+      await db.update(assets).set({ isDeleted: true }).where(eq(assets.id, assetId)).execute();
+    } catch (error) {
+      this.logger.error(`deleteFileFromS3Bucket error deleting file: ${error}`);
+      throw error;
+    }
   };
 }

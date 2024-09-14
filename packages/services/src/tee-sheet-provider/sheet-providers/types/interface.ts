@@ -1,5 +1,4 @@
 import type { InsertBookingSlots } from "@golf-district/database/schema/bookingslots";
-import Logger from "@golf-district/shared/src/logger";
 import type pino from "pino";
 import type { BookingResponse, CustomerCreationData, CustomerData, TeeTimeResponse } from "./foreup.type";
 
@@ -13,6 +12,7 @@ type ProviderCredentials = ForeUpCredentials;
 export interface ProviderAPI {
   providerId: string;
   logger: pino.Logger;
+  providerConfiguration?: string | undefined;
   getTeeTimes: (
     token: string,
     courseId: string,
@@ -57,9 +57,11 @@ export abstract class BaseProvider implements ProviderAPI {
   abstract providerId: string;
   protected credentials: ProviderCredentials;
   abstract logger: pino.Logger;
+  providerConfiguration: string | undefined;
 
-  constructor(credentials: ProviderCredentials) {
+  constructor(credentials: ProviderCredentials, providerConfiguration?: string) {
     this.credentials = credentials;
+    this.providerConfiguration = providerConfiguration;
   }
 
   // Abstract methods declaration

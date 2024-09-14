@@ -6,7 +6,6 @@ export const mockAssets: (typeof assets.$inferInsert)[] = [
     id: "asset1",
     createdById: "user1",
     key: "key1",
-    cdn: "cdn.com",
     extension: "png",
     createdAt: currentUtcTimestamp(),
     isDeleted: false,

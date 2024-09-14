@@ -32,20 +32,42 @@ export const UserInNav = ({ alwaysShow }: { alwaysShow?: boolean }) => {
       refetchOnReconnect: false,
     }
   );
-  const logOutUser = async () => {
-    if (PathsThatNeedRedirectOnLogout.some((i) => pathname.includes(i))) {
-      const data = await signOut({
-        callbackUrl: `/${courseId}`,
-        redirect: false,
+
+  const auditLog = api.webhooks.auditLog.useMutation();
+  const logAudit = (func: () => any) => {
+    auditLog
+      .mutateAsync({
+        userId: user?.id ?? "",
+        teeTimeId: "",
+        bookingId: "",
+        listingId: "",
+        courseId,
+        eventId: "USER_LOGGED_OUT",
+        json: `user logged out `,
+      })
+      .then((res) => {
+        if (res) {
+          func();
+        }
+      })
+      .catch((err) => {
+        console.log("error", err);
       });
-      router.push(data.url);
-      return;
-    }
-    const data = await signOut({
-      callbackUrl: pathname,
-      redirect: false,
+  };
+
+  const logOutUser = () => {
+    logAudit(async () => {
+      if (PathsThatNeedRedirectOnLogout.some((i) => pathname.includes(i))) {
+        const data = await signOut({
+          callbackUrl: `/${courseId}`,
+          redirect: false,
+        });
+        router.push(data.url);
+        return;
+      } else {
+        await signOut();
+      }
     });
-    router.push(data.url);
   };
 
   return (
@@ -71,9 +93,8 @@ export const UserInNav = ({ alwaysShow }: { alwaysShow?: boolean }) => {
         <DropdownMenu.Portal>
           <DropdownMenu.Content
             sideOffset={5}
-            className={`z-20 mr-5 min-w-[300px] overflow-y-auto rounded-xl border border-stroke bg-white shadow-md ${
-              alwaysShow ? "block" : "hidden md:block"
-            }`}
+            className={`z-20 mr-5 min-w-[300px] overflow-y-auto rounded-xl border border-stroke bg-white shadow-md ${alwaysShow ? "block" : "hidden md:block"
+              }`}
           >
             <div className="flex items-center flex-col px-4 py-3 border-b border-stroke">
               <p className="text-sm">{user?.email}</p>
@@ -89,9 +110,9 @@ export const UserInNav = ({ alwaysShow }: { alwaysShow?: boolean }) => {
               </div>
               <p className="text-lg font-medium">Welcome, {user?.name}!</p>
             </div>
-            <Link href={`/${courseId}/profile/${user?.id}`}>
+            {/* <Link href={`/${courseId}/profile/${user?.id}`}>
               <MenuItem title="Profile" />
-            </Link>
+            </Link> */}
             <Link href={`/${courseId}/account-settings/${user?.id}`}>
               <MenuItem title="Account Settings" />
             </Link>

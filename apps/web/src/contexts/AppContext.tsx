@@ -1,6 +1,7 @@
 "use client";
 
 import { type CourseType, type EntityType } from "@golf-district/shared";
+import type { Path } from "~/hooks/usePreviousPath";
 import { usePreviousPath } from "~/hooks/usePreviousPath";
 import { api } from "~/utils/api";
 import {
@@ -14,10 +15,10 @@ import {
 } from "react";
 
 interface AppContextType {
-  prevPath: string | null;
+  prevPath: Path | null;
   entity: EntityType | undefined;
   courses: CourseType[] | undefined;
-  setPrevPath: Dispatch<SetStateAction<string | null>>;
+  setPrevPath: Dispatch<SetStateAction<Path | null>>;
   alertOffersShown: boolean;
   setAlertOffersShown: Dispatch<SetStateAction<boolean>>;
 }

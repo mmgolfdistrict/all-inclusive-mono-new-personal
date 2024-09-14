@@ -2,15 +2,17 @@
 
 import { useSession } from "@golf-district/auth/nextjs-exports";
 import * as Tabs from "@radix-ui/react-tabs";
+import { useAppContext } from "~/contexts/AppContext";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
 import { OpenSection } from "~/utils/tee-box-helper";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { type ReactNode } from "react";
 import { Badge } from "../badge";
 import { FilledButton } from "../buttons/filled-button";
+import { Cashouts } from "./cashouts";
 import { MyListedTeeTimes } from "./my-listed-tee-times";
 import { OffersReceived } from "./offers-received";
 import { OffersSent } from "./offers-sent";
@@ -26,6 +28,8 @@ export const TableView = () => {
     ? params?.get("section")
     : "owned";
   const { user } = useUserContext();
+  const pathname = usePathname();
+  const { setPrevPath } = useAppContext();
 
   const { data: unreadOffers, refetch } =
     api.user.getUnreadOffersForCourse.useQuery(
@@ -47,7 +51,7 @@ export const TableView = () => {
       });
       await refetch();
     } catch (error) {
-      console.log(error);
+      console.log("error", error);
     }
   };
 
@@ -77,12 +81,22 @@ export const TableView = () => {
         <TabTrigger value={"transaction-history"}>
           Transaction History
         </TabTrigger>
+        <TabTrigger value={"cashouts"}>Cash out History</TabTrigger>
       </Tabs.List>
       {!session ? (
         status == "loading" ? null : (
           <Tabs.Content value={section ?? "owned"} className="bg-white p-2">
             <div className="min-h-[250px] flex items-center justify-center">
-              <Link href={`/${courseId}/login`} data-testid="login-to-view-id">
+              <Link
+                href={`/${courseId}/login`}
+                onClick={() => {
+                  setPrevPath({
+                    path: pathname,
+                    createdAt: new Date().toISOString(),
+                  });
+                }}
+                data-testid="login-to-view-id"
+              >
                 <FilledButton>Login to view</FilledButton>
               </Link>
             </div>
@@ -104,6 +118,9 @@ export const TableView = () => {
           </Tabs.Content>
           <Tabs.Content value="transaction-history" className="bg-white p-2">
             <TransactionHistory />
+          </Tabs.Content>
+          <Tabs.Content value="cashouts" className="bg-white p-2">
+            <Cashouts />
           </Tabs.Content>
         </>
       )}

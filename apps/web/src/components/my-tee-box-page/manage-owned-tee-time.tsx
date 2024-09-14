@@ -126,7 +126,7 @@ export const ManageOwnedTeeTime = ({
   };
 
   const handleMinimumOfferPrice = (e: ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace("$", "").replaceAll(",", "");
+    const value = e.target.value.replace(/[$,]/g, "");
 
     const decimals = value.split(".")[1];
     if (decimals && decimals?.length > 2) return;
@@ -145,6 +145,12 @@ export const ManageOwnedTeeTime = ({
       toast.error("Tee time not selected");
       return;
     }
+
+    if (!updateNames.data?.success) {
+      toast.error(updateNames.data?.message);
+      return;
+    }
+
     if (updateNames.isLoading || updateMinimumOfferPrice.isLoading) return;
 
     selectedTeeTime.golfers.map((el) => {
@@ -203,7 +209,6 @@ export const ManageOwnedTeeTime = ({
   };
 
   const addFriend = (e: ChangeEvent<HTMLInputElement>) => {
-    console.log(e.target.value);
     if (friends?.length + 1 > maxFriends) return;
     const selectedFriend = friendList?.find(
       (friend) => `${friend.email} (${friend.handle})` === e.target.value
@@ -444,19 +449,19 @@ export const ManageOwnedTeeTime = ({
                                 <div className="mx-auto w-full max-w-[400px] rounded-lg py-2 flex justify-between text-[14px] font-semibold outline-none rounded-8 ">
                                   {friendList.length ? (
                                     <ul className="w-full text-opacity-100 text-gray-700 shadow-md border border-solid border-gray-200 rounded-8 text-start">
-                                      {friendList?.map((frnd, idx) => (
-                                        // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
-                                        <li
-                                          className="cursor-pointer p-4 border-b border-solid border-gray-300"
-                                          onClick={() => {
-                                            addFriendUpdated({
-                                              ...frnd,
-                                              slotId: friend.slotId,
-                                            });
-                                          }}
-                                          key={idx}
-                                        >
-                                          {frnd.email} ({frnd.handle})
+                                      {friendList.map((frnd, idx) => (
+                                        <li key={idx}>
+                                          <div
+                                            className="cursor-pointer p-4 border-b border-solid border-gray-300"
+                                            onClick={() => {
+                                              addFriendUpdated({
+                                                ...frnd,
+                                                slotId: friend.slotId,
+                                              });
+                                            }}
+                                          >
+                                            {frnd.email} ({frnd.handle})
+                                          </div>
                                         </li>
                                       ))}
                                     </ul>
@@ -520,7 +525,7 @@ export const ManageOwnedTeeTime = ({
                 <>
                   <div className="flex justify-between">
                     <div className="font-[300] text-primary-gray">
-                      Tee Time Price
+                      Your Listing Price
                     </div>
                     <div className="text-secondary-black">
                       {formatMoney(minimumOfferPrice * friends.length)}
@@ -531,7 +536,7 @@ export const ManageOwnedTeeTime = ({
                       Service Fee{" "}
                       <Tooltip
                         trigger={<Info className="h-[14px] w-[14px]" />}
-                        content="Service fee description."
+                        content="This fee ensures ongoing enhancements to our service, ultimately offering golfers the best access to booking tee times"
                       />
                     </div>
                     <div className="text-secondary-black">
@@ -540,7 +545,7 @@ export const ManageOwnedTeeTime = ({
                   </div>
                   <div className="flex justify-between">
                     <div className="font-[300] text-primary-gray">
-                      Total Payout
+                      You Receive after Sale
                     </div>
                     <div className="text-secondary-black">
                       {formatMoney(totalPayout)}
@@ -548,6 +553,10 @@ export const ManageOwnedTeeTime = ({
                   </div>
                 </>
               ) : null}
+              <p className="mt-4 mb-2 text-[14px] text-primary-gray md:text-[16px] font-semibold text-left">
+                Tip: If you know you can’t make your time, the earlier you can
+                list, the greater the chance it sells.
+              </p>
               <div className="text-center text-[14px] font-[300] text-primary-gray">
                 All sales are final.
               </div>
@@ -624,7 +633,7 @@ const TeeTimeItem = ({
         <div className="flex text-[14px] font-[300]">
           <div className="w-[55px]" />
           <div className="text-prmiary-gray">
-            Sensible guarantee purchased for{" "}
+            Weather guarantee purchased for{" "}
             <span className="font-semibold text-secondary-black">
               {formatMoney(sensiblePurchasedFor / 100)}
             </span>

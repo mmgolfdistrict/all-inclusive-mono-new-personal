@@ -1,10 +1,13 @@
 import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
-import { eq } from "@golf-district/database";
+import { and, eq, lt, sum } from "@golf-district/database";
+import { cashout } from "@golf-district/database/schema/cashout";
+import { customerRecievable } from "@golf-district/database/schema/customerRecievable";
 import { users } from "@golf-district/database/schema/users";
 import { withdrawals } from "@golf-district/database/schema/withdrawals";
+import { currentUtcTimestamp } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
-import { NotificationService } from "../notification/notification.service";
+import type { NotificationService } from "../notification/notification.service";
 import type { StripeService } from "../payment-processor/stripe.service";
 
 export class CashOutService {
@@ -87,17 +90,17 @@ export class CashOutService {
       .execute();
     //check if user has a non pending balance
     if (!user) {
-      this.logger.error(`Error requesting cashout: user ${userId} does not exist`);
-      throw new Error(`Error requesting cashout: user does not exist`);
+      this.logger.error(`Error requesting cash out: user ${userId} does not exist`);
+      throw new Error(`Error requesting cash out: user does not exist`);
     }
     if (user.stripeConnectAccountStatus !== "CONNECTED" || !user.stripeAccountId) {
-      this.logger.error(`Error requesting cashout: user ${userId} does not have a connected stripe account`);
-      throw new Error(`Error requesting cashout: user does not have a connected stripe account`);
+      this.logger.error(`Error requesting cash out: user ${userId} does not have a connected stripe account`);
+      throw new Error(`Error requesting cash out: user does not have a connected stripe account`);
     }
     //@TODO: create a minimum balance constant
     if (user.balance < 10) {
-      this.logger.error(`Error requesting cashout: user ${userId} does not have enough balance`);
-      throw new Error(`Error requesting cashout: user ${userId} does not have enough balance`);
+      this.logger.error(`Error requesting cash out: user ${userId} does not have enough balance`);
+      throw new Error(`Error requesting cash out: user ${userId} does not have enough balance`);
     }
     //create stripe payout
     await this.stripeService.createPayout(user.stripeAccountId, user.balance, "usd").catch((err) => {
@@ -125,8 +128,60 @@ export class CashOutService {
       .execute();
     await this.notificationService.createNotification(
       userId,
-      "Cashout Initiated",
+      "Cash out Initiated",
       "Your funds have been withdrawn to your bank account"
     );
+  };
+
+  getRecievables = async (userId: string) => {
+    const [totalAmount] = await this.database
+      .select({
+        amount: sum(customerRecievable.amount),
+      })
+      .from(customerRecievable)
+      .where(eq(customerRecievable.userId, userId))
+      .execute();
+
+    const [totalCashoutAmount] = await this.database
+      .select({
+        amount: sum(cashout.amount),
+      })
+      .from(cashout)
+      .where(eq(cashout.customerId, userId))
+      .execute();
+    const [redeemableAmount] = await this.database
+      .select({
+        amount: sum(customerRecievable.amount),
+      })
+      .from(customerRecievable)
+      .where(
+        and(eq(customerRecievable.userId, userId), lt(customerRecievable.redeemAfter, currentUtcTimestamp()))
+      )
+      .execute();
+    // .where(and(eq(cashout.customerId, userId), gte(teeTimes.date, currentUtcTimestamp())))
+    const tAmount = totalAmount ? totalAmount.amount : 0;
+    const tCashoutAmount = totalCashoutAmount ? totalCashoutAmount.amount : 0;
+    const tAvailableAmount = Number(tAmount) - Number(tCashoutAmount);
+    const tReedemableAmount = Number(redeemableAmount?.amount) - Number(tCashoutAmount ?? 0);
+    return {
+      totalAmount: Number(tAmount) / 100,
+      totalCashoutAmount: Number(tCashoutAmount) / 100,
+      availableAmount: tAvailableAmount / 100,
+      withdrawableAmount: tReedemableAmount / 100,
+    };
+  };
+
+  getCashoutTransactions = async (userId: string) => {
+    const transactionDetails = await this.database
+      .select({
+        amount: cashout.amount,
+        externalStatus: cashout.externalStatus,
+        createdDateTime: cashout.createdDateTime,
+      })
+      .from(cashout)
+      .where(eq(cashout.customerId, userId))
+      .execute();
+
+    return transactionDetails;
   };
 }

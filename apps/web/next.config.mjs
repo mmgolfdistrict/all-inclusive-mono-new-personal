@@ -10,6 +10,8 @@ const config = {
   experimental: {
     serverComponentsExternalPackages: ["bcrypt"],
     instrumentationHook: true,
+    serverSourceMaps: true,
+    esmExternals: false,
   },
   images: {
     remotePatterns: [
@@ -22,6 +24,24 @@ const config = {
       {
         protocol: "https",
         hostname: "lh3.google.com",
+        port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "assets.golfdistrict.com",
+        port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "d1vt16457i7yu.cloudfront.net",
+        port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "d13gaac8iye040.cloudfront.net",
         port: "",
         pathname: "/**",
       },

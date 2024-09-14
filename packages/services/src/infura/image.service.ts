@@ -57,7 +57,6 @@ export class ImageService {
    * @param {string} createdById - The ID of the user creating the asset.
    * @param {string} key - The key/name of the asset.
    * @param {string} extension - The file extension of the asset.
-   * @param {string} cdn - The CDN URL or identifier where the asset is stored.
    *
    * @returns {Promise<void>} A promise that resolves when the asset is successfully inserted into the database.
    *
@@ -69,7 +68,7 @@ export class ImageService {
    * await imageService.storeAsset('user123id', 'imageKey', 'jpg', 'http://golf.cloudfront.com');
    * ```
    */
-  storeAsset = async (createdById: string, key: string, extension: string, cdn: string): Promise<string> => {
+  storeAsset = async (createdById: string, key: string, extension: string): Promise<string> => {
     //this check may be able to be removed
     const user = await this.database.select().from(users).where(eq(users.id, createdById));
     if (!user[0]) {
@@ -77,47 +76,35 @@ export class ImageService {
       throw new Error("User not found");
     }
 
-    const [asset] = await this.database
-      .select()
-      .from(assets)
-      .where(eq(assets.createdById, createdById))
+    const assetData = {
+      id: randomUUID(),
+      key,
+      extension,
+      createdById,
+    };
+
+    await this.database
+      .insert(assets)
+      .values(assetData)
       .execute()
       .catch((err) => {
-        this.logger.error("Error retrieving fetching asset", err);
-        throw new Error("Error retrieving fetching asset");
+        this.logger.error(err);
+        throw new Error("Error storing asset");
       });
 
-    if (asset) {
-      return asset.id;
-    } else {
-      await this.database
-        .insert(assets)
-        .values({
-          id: randomUUID(),
-          key,
-          extension,
-          cdn,
-          createdById,
-        })
-        .execute()
-        .catch((err) => {
-          this.logger.error(err);
-          throw new Error("Error storing asset");
-        });
-      const [insertedAsset] = await this.database
-        .select()
-        .from(assets)
-        .where(eq(assets.key, key))
-        .execute()
-        .catch((err) => {
-          this.logger.error("Error retrieving inserted asset", err);
-          throw new Error("Error retrieving inserted asset");
-        });
-      if (!insertedAsset) {
-        this.logger.error(`Error asset not found for key ${key}`);
-        throw new Error("Error asset not found for key ${key}");
-      }
-      return insertedAsset.id;
+    const [insertedAsset] = await this.database
+      .select()
+      .from(assets)
+      .where(eq(assets.id, assetData.id))
+      .execute()
+      .catch((err) => {
+        this.logger.error("Error retrieving inserted asset", err);
+        throw new Error("Error retrieving inserted asset");
+      });
+    if (!insertedAsset) {
+      this.logger.error(`Error asset not found for key ${key}`);
+      throw new Error("Error asset not found for key ${key}");
     }
+    return insertedAsset.id;
   };
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import type { BookingGroup } from "@golf-district/shared";
 import { useOverflowCheck } from "~/hooks/useOverflowCheck";
 import { api } from "~/utils/api";
 import { useRef } from "react";
@@ -73,10 +74,12 @@ export const UpcomingTeeTimes = ({
               <div className="text-center">No tee times found.</div>
             </div>
           ) : (
-            data?.map((i, idx) => (
+            data?.map((i: BookingGroup, idx: number) => (
               <TeeTime
                 time={i.date ?? ""}
                 key={idx}
+                items={i}
+                index={idx}
                 canChoosePlayer={
                   i.availableSlots > 0 && i.teeTimeStatus === "LISTED"
                 }

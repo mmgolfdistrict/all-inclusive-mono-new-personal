@@ -12,11 +12,17 @@ export const registerRouter = createTRPCRouter({
       lastName: input.lastName,
       handle: input.username,
       phoneNumber: input.phoneNumber,
-      location: input.location,
+      // location: input.location,
+      address1: input.address1,
+      // address2: input.address2,
+      state: input.state,
+      city: input.city,
+      zipcode: input.zipcode,
+      country: input.country,
       redirectHref: input.redirectHref,
       ReCAPTCHA: input.ReCAPTCHA,
     };
-    return await ctx.serviceFactory.getUserService().createUser(createUserData);
+    return await ctx.serviceFactory.getUserService().createUser(input?.courseId, createUserData);
   }),
   isValidHandle: publicProcedureWithCaptcha.input(z.string()).query(async ({ input, ctx }) => {
     return await ctx.serviceFactory.getUserService().isValidHandle(input);
@@ -26,9 +32,16 @@ export const registerRouter = createTRPCRouter({
       z.object({
         userId: z.string(),
         token: z.string(),
+        courseId: z.string().optional(),
+        redirectHref: z.string(),
       })
     )
     .mutation(async ({ input, ctx }) => {
-      return await ctx.serviceFactory.getUserService().verifyUserEmail(input.userId, input.token);
+      return await ctx.serviceFactory
+        .getUserService()
+        .verifyUserEmail(input?.courseId, input.userId, input.token, input.redirectHref);
     }),
+  generateUsername: publicProcedureWithCaptcha.input(z.number()).query(async ({ input, ctx }) => {
+    return await ctx.serviceFactory.getUserService().generateUsername(input);
+  }),
 });

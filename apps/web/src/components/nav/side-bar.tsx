@@ -9,10 +9,12 @@ import { type Dispatch, type SetStateAction } from "react";
 import { Avatar } from "../avatar";
 import { FilledButton } from "../buttons/filled-button";
 import { Auction } from "../icons/auction";
+import { Calendar } from "../icons/calendar";
 import { Close } from "../icons/close";
-import { Club } from "../icons/club";
 import { Marketplace } from "../icons/marketplace";
+import { Megaphone } from "../icons/megaphone";
 import { MyOffers } from "../icons/my-offers";
+import { Search } from "../icons/search";
 import { PoweredBy } from "../powered-by";
 import { PathsThatNeedRedirectOnLogout } from "../user/user-in-nav";
 import { NavItem } from "./nav-item";
@@ -26,7 +28,7 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
   const { user } = useUserContext();
   const { course } = useCourseContext();
   const courseId = course?.id;
-  const { status } = useSession();
+  const session = useSession();
   const pathname = usePathname();
   const router = useRouter();
 
@@ -54,34 +56,64 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
     setIsOpen: setIsSideBarOpen,
   });
 
-  const logOutUser = async () => {
-    if (PathsThatNeedRedirectOnLogout.some((i) => pathname.includes(i))) {
+  const auditLog = api.webhooks.auditLog.useMutation();
+
+  const logAudit = (func: () => any) => {
+    auditLog
+      .mutateAsync({
+        userId: user?.id ?? "",
+        teeTimeId: "",
+        bookingId: "",
+        listingId: "",
+        courseId,
+        eventId: "USER_LOGGED_OUT",
+        json: `user logged out `,
+      })
+      .then((res) => {
+        if (res) {
+          func();
+        }
+      })
+      .catch((err) => {
+        console.log("error", err);
+
+      });
+  };
+
+  const logOutUser = () => {
+    logAudit(async () => {
+      localStorage.clear();
+      sessionStorage.clear();
+      session.data = null;
+      session.status = "unauthenticated";
+      await session.update(null);
+      if (PathsThatNeedRedirectOnLogout.some((i) => pathname.includes(i))) {
+        const data = await signOut({
+          callbackUrl: `/${courseId}`,
+          redirect: false,
+        });
+        router.push(data.url);
+        return;
+      }
       const data = await signOut({
-        callbackUrl: `/${courseId}`,
+        callbackUrl: pathname,
         redirect: false,
       });
       router.push(data.url);
-      return;
-    }
-    const data = await signOut({
-      callbackUrl: pathname,
-      redirect: false,
     });
-    router.push(data.url);
   };
   return (
     <>
       <aside
         // ref={sidebar}
-        className={`!duration-400 fixed left-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[320px] md:-translate-x-[105%]  ${
-          isSideBarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`!duration-400 fixed left-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[320px] md:-translate-x-[105%]  ${isSideBarOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         <div className="relative flex h-full flex-col">
           <div className="flex  items-center justify-between px-2 py-2">
             <div className="flex items-center gap-2">
-              {status === "loading" ? null : user &&
-                status === "authenticated" ? null : (
+              {session.status === "loading" ? null : user &&
+                session.status === "authenticated" ? null : (
                 <Link
                   href={`/${courseId}/login`}
                   onClick={toggleSidebar}
@@ -107,14 +139,25 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
             <div className="flex flex-col">
               <NavItem
                 href={`/${courseId}`}
-                text="Tee Times"
-                icon={<Club className="w-[16px]" />}
+                text="Find"
+                icon={<Search className="w-[16px]" />}
                 className="border-t border-stroke-secondary p-2 md:p-4"
                 onClick={toggleSidebar}
                 data-testid="tee-time-course-id"
                 data-test={courseId}
               />
-              {course?.allowAuctions === 1 && (
+              {course?.supportsWaitlist ? (
+                <NavItem
+                  href={`/${courseId}/notify-me`}
+                  text="Waitlist"
+                  icon={<Megaphone className="w-[16px]" />}
+                  className="border-t border-stroke-secondary p-2 md:p-4"
+                  onClick={toggleSidebar}
+                  data-testid="notify-me-id"
+                  data-test={courseId}
+                />
+              ) : null}
+              {course?.allowAuctions ? (
                 <NavItem
                   href={`/${courseId}/auctions`}
                   text="Auctions"
@@ -124,43 +167,54 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
                   data-testid="auction-id"
                   data-test={courseId}
                 />
-              )}
+              ) : null}
               <NavItem
                 href={`/${courseId}/my-tee-box`}
-                text="Sell Your Tee Time"
+                text="Sell"
                 icon={<Marketplace className="w-[16px]" />}
                 className="border-t border-stroke-secondary p-2 md:p-4"
                 onClick={toggleSidebar}
                 data-testid="my-tee-box-id"
                 data-test={courseId}
               />
-
               <NavItem
-                href={
-                  user && status === "authenticated"
-                    ? `/${courseId}/my-tee-box?section=offers-received`
-                    : `/${courseId}/login`
-                }
-                text="My Offers"
-                onClick={() => {
-                  toggleSidebar();
-                }}
-                icon={
-                  <div className="relative">
-                    <MyOffers className="w-[20px]" />
-                    {unreadOffers && unreadOffers > 0 ? (
-                      <div className="absolute -right-3.5 -top-2 flex h-5 w-5 min-w-fit select-none items-center justify-center rounded-full border-2 border-white bg-alert-red p-1 text-[10px] font-semibold text-white">
-                        {unreadOffers}
-                      </div>
-                    ) : null}
-                  </div>
-                }
-                className="border-b border-t border-stroke-secondary p-2 md:p-4"
-                data-testid="my-offer-id"
+                href={`/${courseId}/my-tee-box?section=my-listed-tee-times`}
+                text="My Tee Times"
+                icon={<Calendar className="w-[16px]" />}
+                className="border-t border-stroke-secondary p-2 md:p-4"
+                onClick={toggleSidebar}
+                data-testid="my-tee-box-id"
                 data-test={courseId}
               />
+
+              {course?.supportsOffers ? (
+                <NavItem
+                  href={
+                    user && session.status === "authenticated"
+                      ? `/${courseId}/my-tee-box?section=offers-received`
+                      : `/${courseId}/login`
+                  }
+                  text="My Offers"
+                  onClick={() => {
+                    toggleSidebar();
+                  }}
+                  icon={
+                    <div className="relative">
+                      <MyOffers className="w-[20px]" />
+                      {unreadOffers && unreadOffers > 0 ? (
+                        <div className="absolute -right-3.5 -top-2 flex h-5 w-5 min-w-fit select-none items-center justify-center rounded-full border-2 border-white bg-alert-red p-1 text-[10px] font-semibold text-white">
+                          {unreadOffers}
+                        </div>
+                      ) : null}
+                    </div>
+                  }
+                  className="border-b border-t border-stroke-secondary p-2 md:p-4"
+                  data-testid="my-offer-id"
+                  data-test={courseId}
+                />
+              ) : null}
             </div>
-            {user && status === "authenticated" ? (
+            {user && session.status === "authenticated" ? (
               <div className="flex flex-col">
                 <NavItem
                   href={`/${courseId}/profile/${user?.id}`}
@@ -210,7 +264,7 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
                   href="/"
                   text="Log Out"
                   className="border-b border-t border-stroke-secondary p-4"
-                  onClick={() => void logOutUser()}
+                  onClick={logOutUser}
                   data-testid="logout-id"
                 />
               </div>

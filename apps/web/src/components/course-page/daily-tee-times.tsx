@@ -1,14 +1,23 @@
-import type { CombinedObject } from "@golf-district/shared";
+import type { CombinedObject, NotificationObject } from "@golf-district/shared";
 import { WeatherIcons } from "~/constants/weather-icons";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useFiltersContext } from "~/contexts/FiltersContext";
 import { api } from "~/utils/api";
 import { dayMonthDate } from "~/utils/formatters";
-import { useEffect, useRef } from "react";
-import { useElementSize, useIntersectionObserver } from "usehooks-ts";
+import { useEffect, useRef, useState } from "react";
+import {
+  useElementSize,
+  useIntersectionObserver,
+  useMediaQuery,
+} from "usehooks-ts";
 import { useDraggableScroll } from "../../hooks/useDraggableScroll";
 import { TeeTime } from "../cards/tee-time";
+import { Error } from "../icons/alert/error";
+import { Success } from "../icons/alert/success";
+import { Warning } from "../icons/alert/warning";
 import { LeftChevron } from "../icons/left-chevron";
+import { Tooltip } from "../tooltip";
+import { TooltipMobile } from "../tooltip-mobile";
 import { TeeTimeSkeleton } from "./tee-time-skeleton";
 
 export const DailyTeeTimes = ({
@@ -16,13 +25,15 @@ export const DailyTeeTimes = ({
   minDate,
   maxDate,
   setError,
-  updateCount,
+  handleLoading,
+  courseException,
 }: {
   date: string;
   minDate: string;
   maxDate: string;
   setError: (t: string | null) => void;
-  updateCount: (balance: number) => void;
+  handleLoading?: (val: boolean) => void;
+  courseException: NotificationObject | null;
 }) => {
   const overflowRef = useRef<HTMLDivElement>(null);
   const nextPageRef = useRef<HTMLDivElement>(null);
@@ -33,7 +44,12 @@ export const DailyTeeTimes = ({
   const entry = useIntersectionObserver(nextPageRef, {});
   const isVisible = !!entry?.isIntersecting;
   const [sizeRef, { width = 0 }] = useElementSize();
+  const [isExpanded, setIsExpanded] = useState(false);
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
+  const toggleExpand = () => {
+    setIsExpanded(!isExpanded);
+  };
   const { course } = useCourseContext();
   const {
     showUnlisted,
@@ -50,8 +66,7 @@ export const DailyTeeTimes = ({
   const { data: weather, isLoading: isLoadingWeather } =
     api.searchRouter.getWeatherForDay.useQuery(
       {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-        courseId: course?.id!,
+        courseId: course?.id ?? "",
         date,
       },
       {
@@ -60,7 +75,6 @@ export const DailyTeeTimes = ({
     );
 
   const TAKE = 8;
-
   const {
     data: teeTimeData,
     isLoading,
@@ -68,10 +82,10 @@ export const DailyTeeTimes = ({
     isFetchingNextPage,
     fetchNextPage,
     error,
+    refetch,
   } = api.searchRouter.getTeeTimesForDay.useInfiniteQuery(
     {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-      courseId: course?.id!,
+      courseId: course?.id ?? "",
       date,
       minDate,
       maxDate,
@@ -80,7 +94,7 @@ export const DailyTeeTimes = ({
       holes: holes === "Any" || holes === "18" ? 18 : 9,
       showUnlisted,
       includesCart,
-      golfers: golfers === "Any" ? 1 : golfers,
+      golfers: golfers === "Any" ? -1 : golfers,
       lowerPrice: priceRange[0]!,
       upperPrice: priceRange[1]!,
       sortTime:
@@ -115,17 +129,6 @@ export const DailyTeeTimes = ({
     setError(error?.message ?? null);
   }, [error]);
 
-  useEffect(() => {
-    const num = teeTimeData?.pages[teeTimeData?.pages?.length - 1]?.count;
-    if (!isLoading && isFetchedAfterMount) {
-      if (num !== undefined) {
-        updateCount(num);
-      } else {
-        updateCount(0);
-      }
-    }
-  }, [teeTimeData, isLoading, isFetchedAfterMount]);
-
   const allTeeTimes =
     teeTimeData?.pages[teeTimeData?.pages?.length - 1]?.results ?? [];
 
@@ -156,6 +159,18 @@ export const DailyTeeTimes = ({
     overflowRef.current?.classList.remove("scroll-smooth");
   };
 
+  const getTextColor = (type) => {
+    if (type === "FAILURE") return "red";
+    if (type === "SUCCESS") return "primary";
+    if (type === "WARNING") return "primary-gray";
+  };
+
+  const getIconForException = (type) => {
+    if (type === "FAILURE") return <Error className="h-[20px] w-[20px] " />;
+    if (type === "SUCCESS") return <Success className="h-[20px] w-[20px] " />;
+    if (type === "WARNING") return <Warning className="h-[20px] w-[20px] " />;
+  };
+
   if (!isLoading && isFetchedAfterMount && allTeeTimes.length === 0) {
     return null;
   }
@@ -170,6 +185,45 @@ export const DailyTeeTimes = ({
         >
           {dayMonthDate(date)}
         </div>
+        {courseException &&
+          (isMobile ? (
+            <div className={` flex-1`}>
+              <TooltipMobile
+                className="text-left"
+                trigger={getIconForException(courseException.displayType)}
+                content={courseException.shortMessage}
+              />
+            </div>
+          ) : (
+            <div className={` flex-1`}>
+              <Tooltip
+                className="text-left"
+                trigger={
+                  <p
+                    className={`text-${getTextColor(
+                      courseException.displayType
+                    )} inline text-left`}
+                  >
+                    {isExpanded
+                      ? courseException.longMessage
+                      : courseException.longMessage?.substring(0, 70) +
+                        (courseException.longMessage?.length && 0 > 70
+                          ? "..."
+                          : "")}
+                  </p>
+                }
+                content={courseException.shortMessage}
+              />
+              {courseException.longMessage?.length && 0 > 70 && (
+                <button
+                  className="ml-1 text-blue-500 underline"
+                  onClick={toggleExpand}
+                >
+                  {isExpanded ? "Collapse" : "More"}
+                </button>
+              )}
+            </div>
+          ))}
         {isLoadingWeather && !weather ? (
           <div className="h-8 w-[30%] bg-gray-200 rounded-md  animate-pulse" />
         ) : weather && !isLoadingWeather ? (
@@ -211,10 +265,12 @@ export const DailyTeeTimes = ({
           ref={overflowRef}
           onMouseDown={onMouseDown}
         >
-          {allTeeTimes?.map((i: CombinedObject, idx) => (
+          {allTeeTimes?.map((i: CombinedObject, idx: number) => (
             <TeeTime
               time={i.date}
               key={idx}
+              items={i}
+              index={idx}
               canChoosePlayer={i.availableSlots > 0}
               availableSlots={i.availableSlots}
               players={String(4 - i.availableSlots)}
@@ -231,6 +287,8 @@ export const DailyTeeTimes = ({
               bookingIds={i?.bookingIds ?? []}
               listingId={i?.listingId}
               listedSlots={i?.listedSlots}
+              handleLoading={handleLoading}
+              refetch={refetch}
             />
           ))}
           <div

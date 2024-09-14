@@ -1,5 +1,6 @@
-import { InferInsertModel, InferSelectModel, relations, sql } from "drizzle-orm";
-import { boolean, datetime, index, primaryKey, text, tinyint, varchar } from "drizzle-orm/mysql-core";
+import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
+import { boolean, datetime, index, primaryKey, text, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 import { auctions } from "./auctions";
 import { courseAssets } from "./courseAssets";
@@ -13,7 +14,7 @@ export const assets = mySqlTable(
     id: varchar("id", { length: 36 }).notNull(),
     createdById: varchar("createdById", { length: 191 }),
     key: text("key").notNull(),
-    cdn: varchar("cdn", { length: 191 }).notNull(),
+    cdn: varchar("cdn", { length: 191 }).notNull().default("abcdef"),
     extension: varchar("extension", { length: 5 }).notNull(),
     createdAt: datetime("createdAt", { mode: "string", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
@@ -24,6 +25,12 @@ export const assets = mySqlTable(
     auctionId: varchar("auctionId", { length: 36 }),
     courseAssetId: varchar("courseAssetId", { length: 36 }),
     auctionAssetId: varchar("auctionAssetId", { length: 36 }),
+    createdDateTime: datetime("createdDateTime", { mode: "string", fsp: 3 })
+      .default(sql`CURRENT_TIMESTAMP(3)`)
+      .notNull(),
+    lastUpdatedDateTime: datetime("lastUpdatedDateTime", { mode: "string", fsp: 3 })
+      .default(sql`CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)`)
+      .notNull(),
   },
   (table) => {
     return {

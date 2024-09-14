@@ -1,9 +1,6 @@
 import { appSettingService } from "@golf-district/service/src/app-settings/initialized";
 import { GoBack } from "~/components/buttons/go-back";
-import { TransactionHistory } from "~/components/cards/transaction-history";
-import { UnlistedDetails } from "~/components/cards/unlisted-details";
-import { CourseDescription } from "~/components/tee-time-page/course-description";
-import { InviteFriends } from "~/components/tee-time-page/invite-friends";
+import OwnerTeeTimeDetails from "~/components/my-tee-box-page/OwnerTeeTimeDetails";
 
 export default async function UnlistedPage({
   params,
@@ -22,22 +19,13 @@ export default async function UnlistedPage({
       <div className="flex items-center justify-between px-4 md:px-6">
         <GoBack href={`/${courseId}`} text={`Back to tee times`} />
       </div>
-      <section className="flex flex-col gap-4 pl-0 pt-6 md:flex-row md:pl-6 md:pt-8">
-        <div className="hidden md:block">
-          <CourseDescription />
-        </div>
-        <div className="flex w-full flex-col gap-4 pr-0 md:pr-6">
-          <UnlistedDetails ownerId={ownerId} teeTimeId={teeTimeId} />
 
-          <div className="md:hidden">
-            <CourseDescription />
-          </div>
-          {"true" === isTransactionHistoryVisible?.toLowerCase() && (
-            <TransactionHistory teeTimeId={teeTimeId} />
-          )}
-          <InviteFriends teeTimeId={teeTimeId} />
-        </div>
-      </section>
+      <OwnerTeeTimeDetails
+        teeTimeId={teeTimeId}
+        courseId={courseId}
+        ownerId={ownerId}
+        isTransactionHistoryVisible={isTransactionHistoryVisible}
+      />
     </main>
   );
 }

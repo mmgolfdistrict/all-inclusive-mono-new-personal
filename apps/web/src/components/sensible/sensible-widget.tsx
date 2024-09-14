@@ -80,13 +80,33 @@ export const SensibleWidget = memo(
       }
       if (!isMounted || !isEqual(localData, sensibleDataToMountComp)) {
         // @ts-ignore
-        Sensible.configure(
-          sensibleDataToMountComp.partner_id,
-          sensibleDataToMountComp.product_id,
-          "sandbox"
-        );
+        if (process.env.NEXT_PUBLIC_SENSIBLE_IS_SENSIBLE_SANDBOX === "true") {
+          // @ts-ignore
+          Sensible.configure(
+            sensibleDataToMountComp.partner_id,
+            sensibleDataToMountComp.product_id,
+            "sandbox"
+          );
+        } else {
+          // @ts-ignore
+          Sensible.configure(
+            sensibleDataToMountComp.partner_id,
+            sensibleDataToMountComp.product_id
+          );
+        }
+
+        //@ts-ignore
+        Sensible.createGuaranteeCallback = (quote) => {
+          setSensibleData({
+            id: quote.quoteData.id,
+            price: quote.quoteData.pricePerDay,
+          });
+        };
         // @ts-ignore
         Sensible.mountComponent({
+          coverageStartHourNumber:
+            sensibleDataToMountComp.coverageStartHourNumber,
+          coverageEndHourNumber: sensibleDataToMountComp.coverageEndHourNumber,
           coverageStartDate: sensibleDataToMountComp.coverageStartDate,
           coverageEndDate: sensibleDataToMountComp.coverageEndDate,
           currency: sensibleDataToMountComp.currency,
@@ -100,7 +120,6 @@ export const SensibleWidget = memo(
         setLocalData(sensibleDataToMountComp);
         // @ts-ignore
         // Sensible.setCreateGuaranteeCallback((quote) => {
-        // console.log(quote);
         // });
         // @ts-ignore
         Sensible.setSelectGuaranteeCallback((quote) => {

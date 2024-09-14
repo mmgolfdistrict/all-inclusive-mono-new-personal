@@ -1,12 +1,12 @@
-import { InferInsertModel, InferSelectModel, relations, sql } from "drizzle-orm";
-import { datetime, index, int, primaryKey, text, unique, varchar } from "drizzle-orm/mysql-core";
+import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
+import { boolean, datetime, index, int, primaryKey, text, unique, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 import { assets } from "./assets";
 import { auctions } from "./auctions";
 import { bookings } from "./bookings";
 import { courses } from "./courses";
 import { entityAdmins } from "./entityAdmins";
-import { teeTimes } from "./teeTimes";
 
 export const entities = mySqlTable(
   "entity",
@@ -30,6 +30,7 @@ export const entities = mySqlTable(
       .default(sql`CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)`)
       .notNull(),
     updatedById: varchar("updatedById", { length: 36 }),
+    redirectToCourseFlag: boolean("redirectToCourseFlag").default(false).notNull(),
   },
   (table) => {
     return {
@@ -45,9 +46,7 @@ export const entities = mySqlTable(
 export const entitiesRelations = relations(entities, ({ many, one }) => ({
   admins: many(entityAdmins),
   course: many(courses),
-  // teeTimes: many(teeTimes),
   auction: many(auctions),
-  booking: many(bookings),
   logo: one(assets, {
     fields: [entities.logo],
     references: [assets.id],

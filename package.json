@@ -13,18 +13,19 @@
     "infura/*"
   ],
   "scripts": {
-    "build": "turbo run build",
+    "build": "turbo run build && node ./apps/web/script/generateRevision.js",
+    "start": "npm run dev",
     "clean:workspaces": "turbo clean",
     "compile": "turbo run compile",
     "dev": "dotenv -- turbo dev --parallel --filter=golf-district-platforms",
-    "dev:admin": "dotenv -- turbo dev --parallel --filter=golf-district-admin",
     "dev:tunnel": "dotenv -- turbo dev --parallel",
     "devbuild": "( export QSTASH_CURRENT_SIGNING_KEY='sig_XYZ' && export QSTASH_NEXT_SIGNING_KEY='sig_XYZ' && turbo run build )",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,md,css}\"",
     "lint": "turbo run lint",
     "pre-commit": "lint-staged",
-    "prepare": "husky install",
     "prettier-check": "prettier --check \"**/*.{js,jsx,ts,tsx,md,css}\" --ignore-path .prettierignore",
+    "revision": "node ./revision/generateRevision.js && node ./revision/route.js",
+    "start": "npm run dev",
     "test": "turbo run test",
     "typecheck": "turbo typecheck"
   },
@@ -35,7 +36,9 @@
     ]
   },
   "dependencies": {
+    "@juspay-tech/react-hyper-js": "^1.0.2",
     "dotenv-cli": "^7.3.0",
+    "express": "^4.19.2",
     "prettier": "^2.8.8",
     "turbo": "^1.12.4",
     "typescript": "^5.2.2"

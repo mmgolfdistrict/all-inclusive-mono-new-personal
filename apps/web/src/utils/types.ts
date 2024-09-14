@@ -101,6 +101,8 @@ export type SensibleDataToMountCompType = {
   product_id: string;
   coverageStartDate: string;
   coverageEndDate: string;
+  coverageStartHourNumber: number;
+  coverageEndHourNumber: number;
   currency: string;
   langLocale: string;
   exposureName: string;
@@ -170,3 +172,10 @@ export interface ConvenienceFeeProduct {
 export interface TaxProduct {
   type: "taxes";
 }
+
+export type MaxReservationResponse =
+  | {
+      success: boolean;
+      message?: string;
+    }
+  | undefined;

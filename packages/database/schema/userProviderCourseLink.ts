@@ -1,6 +1,6 @@
 import type { InferInsertModel } from "drizzle-orm";
 import { relations, sql } from "drizzle-orm";
-import { datetime, int, primaryKey, unique, varchar } from "drizzle-orm/mysql-core";
+import { datetime, int, unique, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 import { courses } from "./courses";
 import { providers } from "./providers";

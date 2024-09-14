@@ -1,9 +1,8 @@
 import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
-import { and, desc, eq, gt, gte, inArray, isNull, lt, or, sql } from "@golf-district/database";
+import { and, desc, eq, gte, inArray, lt, sql } from "@golf-district/database";
 import { bookings } from "@golf-district/database/schema/bookings";
 import { notifications } from "@golf-district/database/schema/notifications";
-import { offerRead } from "@golf-district/database/schema/offerRead";
 import { offers } from "@golf-district/database/schema/offers";
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import { userBookingOffers } from "@golf-district/database/schema/userBookingOffers";
@@ -13,12 +12,14 @@ import Logger from "@golf-district/shared/src/logger";
 import { MailService } from "@sendgrid/mail";
 import type pino from "pino";
 import twilio from "twilio";
+import { AppSettingsService } from "../app-settings/app-settings.service";
 
 interface EmailParams {
   CustomerFirstName?: string;
   CourseName?: string;
   GolfDistrictReservationID?: string;
   CourseReservationID?: string;
+  ListedPricePerPlayer?: string;
   FacilityName?: string;
   PlayDateTime?: string;
   NumberOfHoles?: number;
@@ -29,7 +30,25 @@ interface EmailParams {
   EMail?: string;
   ForgotPasswordURL?: string;
   CourseLogoURL?: string;
+  CourseURL?: string;
   VerifyURL?: string;
+  BuyTeeTimeURL?: string;
+  HeaderLogoURL?: string;
+  PlayerCount?: number;
+  TotalAmount?: string;
+  AmountCashedOut?: number;
+  PreviousBalance?: number;
+  AvailableBalance?: number;
+  BalanceProcessing?: number | string;
+}
+
+interface Attachment {
+  content: string;
+  filename: string;
+  type: string;
+  disposition?: string;
+  contentId?: string;
+  encoding?: string;
 }
 
 /**
@@ -123,20 +142,49 @@ export class NotificationService {
     // }
   };
 
-  sendEmailByTemplate = async (email: string, subject: string, templateId: string, template: EmailParams) => {
+  sendEmailByTemplate = async (
+    email: string,
+    subject: string,
+    templateId: string,
+    template: EmailParams,
+    attachments: Attachment[]
+  ) => {
     this.logger.info(`Sending email to ${email}`);
-    await this.sendGridClient
-      .send({
-        to: email,
-        from: this.sendGrid_email,
-        subject,
-        templateId,
-        dynamicTemplateData: { ...template },
-      })
-      .catch((err) => {
-        this.logger.error(err);
-        throw new Error(`Failed to send email to: ${email}`);
-      });
+    const appSettingService = new AppSettingsService(
+      this.database,
+      process.env.REDIS_URL!,
+      process.env.REDIS_TOKEN!
+    );
+
+    const appSettings = await appSettingService.getMultiple("ENABLE_ICS_ATTACHMENT");
+    if (appSettings?.ENABLE_ICS_ATTACHMENT === "false") {
+      await this.sendGridClient
+        .send({
+          to: email,
+          from: this.sendGrid_email,
+          subject,
+          templateId,
+          dynamicTemplateData: { ...template },
+        })
+        .catch((err) => {
+          this.logger.error(err);
+          throw new Error(`Failed to send email to: ${email}`);
+        });
+    } else {
+      await this.sendGridClient
+        .send({
+          to: email,
+          from: this.sendGrid_email,
+          subject,
+          templateId,
+          dynamicTemplateData: { ...template },
+          attachments,
+        })
+        .catch((err) => {
+          this.logger.error(err);
+          throw new Error(`Failed to send email to: ${email}`);
+        });
+    }
   };
 
   /**
@@ -293,13 +341,15 @@ export class NotificationService {
    * // Creating a notification for user with ID 'user123' with subject 'New Notification' and body 'You have a new notification.'.
    * await createNotification('user123', 'New Notification', 'You have a new notification.', 'entity123');
    */
+
   createNotification = async (
     userId: string,
     subject: string,
     body: string,
     courseId?: string | null,
     templateId?: string,
-    template?: EmailParams
+    template?: EmailParams,
+    attachments?: Attachment[]
   ) => {
     const [user] = await this.database
       .select()
@@ -341,7 +391,7 @@ export class NotificationService {
     if (user.emailNotifications && user.email) {
       if (templateId && template) {
         this.logger.debug(`Sending email to ${user.email}`);
-        await this.sendEmailByTemplate(user.email, subject, templateId, template);
+        await this.sendEmailByTemplate(user.email, subject, templateId, template, attachments || []);
       } else {
         this.logger.debug(`Sending email to ${user.email}`);
         await this.sendEmail(user.email, subject, body);

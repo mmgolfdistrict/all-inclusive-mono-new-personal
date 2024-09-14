@@ -4,17 +4,21 @@ import { bookingRouter } from "./routers/booking";
 import { cashOutRouter } from "./routers/cashout";
 import { checkoutRouter } from "./routers/checkout";
 import { courseRouter } from "./routers/course";
+import { courseExceptionRouter } from "./routers/courseException";
 import { domainRouter } from "./routers/domain";
 import { entityRouter } from "./routers/entity";
 import { geoCodeRouter } from "./routers/geo";
 import { historyRouter } from "./routers/history";
 import { imageRouter } from "./routers/image";
 import { placesRouter } from "./routers/places";
+import { profanityRouter } from "./routers/profanity";
 import { registerRouter } from "./routers/register";
 import { searchRouter } from "./routers/search";
 import { sensibleRouter } from "./routers/sensible";
+import { systemNotificationRouter } from "./routers/systemNotification";
 import { uploadRouter } from "./routers/upload";
 import { userRouter } from "./routers/user";
+import { userWaitlistRouter } from "./routers/userWaitlist";
 import { watchlistRouter } from "./routers/watchlist";
 import { weatherRouter } from "./routers/weather";
 import { webhookRouter } from "./routers/webhooks";
@@ -41,6 +45,10 @@ export const appRouter = createTRPCRouter({
   watchlist: watchlistRouter,
   teeBox: bookingRouter,
   cashOut: cashOutRouter,
+  profanity: profanityRouter,
+  userWaitlist: userWaitlistRouter,
+  courseException:courseExceptionRouter,
+  systemNotification: systemNotificationRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -23,8 +23,14 @@ export class foreUp extends BaseProvider {
     endTime: string,
     date: string
   ): Promise<TeeTimeResponse[]> {
+    const { defaultPriceClassID } = JSON.parse(this.providerConfiguration ?? "{}");
     const endpoint = this.getBasePoint();
-    const url = `${endpoint}/courses/${courseId}/teesheets/${teesheetId}/teetimes?startTime=${startTime}&endTime=${endTime}&date=${date}`;
+    let url = "";
+    if (defaultPriceClassID) {
+      url = `${endpoint}/courses/${courseId}/teesheets/${teesheetId}/teetimes?startTime=${startTime}&endTime=${endTime}&date=${date}&priceClassId=${defaultPriceClassID}`;
+    } else {
+      url = `${endpoint}/courses/${courseId}/teesheets/${teesheetId}/teetimes?startTime=${startTime}&endTime=${endTime}&date=${date}`;
+    }
     const headers = this.getHeaders(token);
 
     console.log(`getTeeTimes - ${url}`);
@@ -34,6 +40,7 @@ export class foreUp extends BaseProvider {
     if (!response.ok) {
       if (response.status === 403) {
         this.logger.error(`Error fetching tee time: ${response.statusText}`);
+        this.logger.error(`Error response from foreup: ${JSON.stringify(await response.json())}`);
         await this.getToken();
       }
 
@@ -62,6 +69,7 @@ export class foreUp extends BaseProvider {
 
     if (!response.ok) {
       this.logger.error(`Error deleting booking: ${response.statusText}`);
+      this.logger.error(`Error response from foreup: ${JSON.stringify(await response.json())}`);
       if (response.status === 403) {
         await this.getToken();
       }
@@ -76,11 +84,13 @@ export class foreUp extends BaseProvider {
     teesheetId: string,
     data: BookingCreationData
   ): Promise<BookingResponse> {
+    const { defaultBookingClassID } = JSON.parse(this.providerConfiguration ?? "{}");
     const { totalAmountPaid, ...bookingData } = data;
     const endpoint = this.getBasePoint();
     const url = `${endpoint}/courses/${courseId}/teesheets/${teesheetId}/bookings`;
     console.log(`createBooking - ${url}`);
 
+    bookingData.data.attributes.booking_class_id = defaultBookingClassID;
     const headers = this.getHeaders(token);
 
     const response = await fetch(url, {
@@ -90,8 +100,11 @@ export class foreUp extends BaseProvider {
     });
 
     if (!response.ok) {
+      this.logger.error(JSON.stringify(response));
+
       if (response.status === 403) {
         this.logger.error(`Error creating booking: ${response.statusText}`);
+        this.logger.error(`Error response from foreup: ${JSON.stringify(await response.json())}`);
         await this.getToken();
       }
       throw new Error(`Error creating booking: ${JSON.stringify(response)}`);
@@ -99,15 +112,14 @@ export class foreUp extends BaseProvider {
 
     const booking: BookingResponse = await response.json();
 
-    await this.addSalesData(
-      totalAmountPaid,
-      bookingData.data.attributes.players,
-      courseId,
-      teesheetId,
-      booking.data.id,
-      token
-    );
-
+    // await this.addSalesData(
+    //   totalAmountPaid,
+    //   bookingData.data.attributes.players,
+    //   courseId,
+    //   teesheetId,
+    //   booking.data.id,
+    //   token
+    // );
     return booking;
   }
 
@@ -120,11 +132,16 @@ export class foreUp extends BaseProvider {
     slotId?: string
   ): Promise<BookingResponse> {
     const endpoint = this.getBasePoint();
+    const { defaultPriceClassID } = JSON.parse(this.providerConfiguration ?? "{}");
     // https://api.foreupsoftware.com/api_rest/index.php/courses/courseId/teesheets/teesheetId/bookings/bookingId/bookedPlayers/bookedPlayerId
     const url = `${endpoint}/courses/${courseId}/teesheets/${teesheetId}/bookings/${bookingId}/bookedPlayers/${
       slotId ? slotId : bookingId
     }`;
     const headers = this.getHeaders(token);
+
+    if (options) {
+      options.data.attributes.priceClassId = defaultPriceClassID;
+    }
 
     console.log(`updateTeeTime - ${url}`);
 
@@ -137,6 +154,7 @@ export class foreUp extends BaseProvider {
     if (!response.ok) {
       if (response.status === 403) {
         this.logger.error(`Error updating tee time: ${response.statusText}`);
+        this.logger.error(`Error response from foreup: ${JSON.stringify(await response.json())}`);
         await this.getToken();
       }
       throw new Error(`Error updating tee time: ${response.statusText}`);
@@ -150,6 +168,7 @@ export class foreUp extends BaseProvider {
     courseId: string,
     customerData: CustomerCreationData
   ): Promise<CustomerData> {
+    const { defaultPriceClassID } = JSON.parse(this.providerConfiguration ?? "{}");
     // Fetch required fields for the course
     const requiredFieldsUrl = `${this.getBasePoint()}/courses/${courseId}/settings/customerFieldSettings`;
 
@@ -161,6 +180,7 @@ export class foreUp extends BaseProvider {
     });
 
     if (!requiredFieldsResponse.ok) {
+      this.logger.error(`Error response from foreup: ${JSON.stringify(await requiredFieldsResponse.json())}`);
       throw new Error(`Error fetching required fields: ${requiredFieldsResponse.statusText}`);
     }
 
@@ -179,6 +199,7 @@ export class foreUp extends BaseProvider {
 
     console.log(`createCustomer - ${url}`);
 
+    customerData.attributes.price_class = defaultPriceClassID;
     const response = await fetch(url, {
       method: "POST",
       headers: this.getHeaders(token),
@@ -190,6 +211,7 @@ export class foreUp extends BaseProvider {
     if (!response.ok) {
       if (response.status === 403) {
         this.logger.error(`Error creating customer: ${response.statusText}`);
+        this.logger.error(`Error response from foreup: ${JSON.stringify(await response.json())}`);
       }
       throw new Error(`Error creating customer: ${response.statusText}`);
     }
@@ -212,6 +234,7 @@ export class foreUp extends BaseProvider {
 
     if (!response.ok) {
       this.logger.error(`Error fetching customer: ${response.statusText}`);
+      this.logger.error(`Error response from foreup: ${JSON.stringify(await response.json())}`);
       throw new Error(`Error fetching customer: ${response.statusText}`);
     }
 
@@ -227,6 +250,9 @@ export class foreUp extends BaseProvider {
     token: string
   ): Promise<void> => {
     try {
+      if (!totalAmountPaid) {
+        return;
+      }
       const endpoint = this.getBasePoint();
       const headers = this.getHeaders(token);
 
@@ -348,7 +374,8 @@ export class foreUp extends BaseProvider {
     });
 
     if (!response.ok) {
-      this.logger.fatal(`Error fetching token: ${response.statusText}`);
+      this.logger.error(`Error fetching token: ${response.statusText}`);
+      this.logger.error(`Error response from foreup: ${JSON.stringify(await response.json())}`);
       throw new Error(`Error fetching token: ${response.statusText}`);
     }
 

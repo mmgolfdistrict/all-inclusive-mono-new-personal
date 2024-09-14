@@ -1,7 +1,5 @@
-import { bookings } from "@golf-district/database/schema/bookings";
+import type { bookings } from "@golf-district/database/schema/bookings";
 import { currentUtcTimestamp } from "@golf-district/shared";
-import { mockAuctions } from "./auctions.mock";
-import { mockUsers } from "./user.mock";
 
 export const mockBookings: (typeof bookings.$inferInsert)[] = [
   {

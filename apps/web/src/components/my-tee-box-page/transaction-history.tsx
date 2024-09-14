@@ -3,22 +3,38 @@
 import { useCourseContext } from "~/contexts/CourseContext";
 import { api } from "~/utils/api";
 import { formatMoney, formatTime } from "~/utils/formatters";
-import { useEffect, useMemo, useState } from "react";
+import type { InviteFriend } from "~/utils/types";
+import { Dispatch, SetStateAction, useEffect, useMemo, useState } from "react";
 import { Avatar } from "../avatar";
 import { OutlineButton } from "../buttons/outline-button";
+import { BookingDetails } from "./booking-details";
 import { SkeletonRow } from "./skeleton-row";
 import { TxnDetails } from "./txn-details";
 
 export type TxnHistoryType = {
+  // courseName: string;
+  // courseLogo: string;
+  // date: string;
+  // firstHandPrice: number;
+  // golfers: string[];
+  // pricePerGolfer: number[];
+  // bookingIds: string[];
+  // playerCount?: number;
+  // status: string; //"SOLD" | "PURCHASED" |
+  courseId: string;
   courseName: string;
   courseLogo: string;
   date: string;
   firstHandPrice: number;
-  golfers: string[];
   pricePerGolfer: number[];
+  golfers: InviteFriend[];
   bookingIds: string[];
+  status: string;
   playerCount?: number;
-  status: string; //"SOLD" | "PURCHASED" |
+  sellerServiceFee: number;
+  receiveAfterSale: number;
+  weatherGuaranteeAmount: number;
+  weatherGuaranteeId: string;
 };
 
 export const TransactionHistory = () => {
@@ -26,6 +42,8 @@ export const TransactionHistory = () => {
   const { course } = useCourseContext();
   const courseId = course?.id;
   const [isTxnDetailsOpen, setIsTxnDetailsOpen] = useState<boolean>(false);
+  const [isReceiptOpen, setIsReceiptOpen] = useState<boolean>(false);
+
   const { data, isLoading, isError, error } =
     api.teeBox.getTransactionHistory.useQuery(
       {
@@ -34,6 +52,7 @@ export const TransactionHistory = () => {
       { enabled: !!courseId }
     );
   const [selectedTxn, setSelectedTxn] = useState<TxnHistoryType | null>(null);
+  const [selectedReceipt, setSelectedReceipt] = useState<any>(null);
 
   function sortByDate(objectOfObjects: Record<string, TxnHistoryType>) {
     const arrayOfObjects: TxnHistoryType[] = Object.values(objectOfObjects);
@@ -47,12 +66,8 @@ export const TransactionHistory = () => {
   }
 
   const txnHistory = useMemo(() => {
-    if (!data) return undefined;
-    // return Object.keys(data).map((key) => {
-    //   return data[key] as TxnHistoryType;
-    // });
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    return sortByDate(data as any);
+    if (!data || Array.isArray(data)) return undefined;
+    return sortByDate(data as Record<string, TxnHistoryType>);
   }, [data]);
 
   // const loadMore = () => {
@@ -64,11 +79,22 @@ export const TransactionHistory = () => {
     setIsTxnDetailsOpen(true);
   };
 
+  const openReceipt = (i: any) => {
+    setSelectedReceipt(i);
+    setIsReceiptOpen(true);
+  };
+
   useEffect(() => {
     if (!isTxnDetailsOpen) {
       setSelectedTxn(null);
     }
   }, [isTxnDetailsOpen]);
+
+  useEffect(() => {
+    if (!selectedReceipt) {
+      setSelectedReceipt(null);
+    }
+  }, [selectedReceipt]);
 
   if (isError && error) {
     return (
@@ -120,6 +146,7 @@ export const TransactionHistory = () => {
                     playerCount={i.playerCount}
                     status={i.status}
                     openTxnDetails={() => openTxnDetails(i)}
+                    openReceipt={() => openReceipt(i)}
                     timezoneCorrection={course?.timezoneCorrection}
                   />
                 ))}
@@ -136,6 +163,11 @@ export const TransactionHistory = () => {
         isTxnDetailsOpen={isTxnDetailsOpen}
         setIsTxnDetailsOpen={setIsTxnDetailsOpen}
         selectedTxn={selectedTxn}
+      />
+      <BookingDetails
+        isReceiptOpen={isReceiptOpen}
+        setIsReceiptOpen={setIsReceiptOpen}
+        selectedReceipt={selectedReceipt}
       />
     </>
   );
@@ -164,17 +196,19 @@ const TableRow = ({
   status,
   timezoneCorrection,
   openTxnDetails,
+  openReceipt,
   playerCount = 1,
 }: {
   course: string;
   date: string;
   iconSrc: string;
-  golfers: string[];
+  golfers: InviteFriend[];
   purchasePrice: number;
   status: string;
   timezoneCorrection: number | undefined;
   playerCount?: number;
   openTxnDetails: () => void;
+  openReceipt: () => void;
 }) => {
   return (
     <tr className="w-full border-b border-stroke text-primary-gray">
@@ -211,12 +245,15 @@ const TableRow = ({
         {status.toLowerCase()}
       </td>
       <td className="whitespace-nowrap px-4 py-3">
-        <div className="flex w-full justify-end gap-2">
-          <OutlineButton
+        <div className="col-span-3 flex w-full justify-end gap-2">
+          {/* <OutlineButton
             onClick={openTxnDetails}
             data-testid="details-button-id"
           >
             Details
+          </OutlineButton> */}
+          <OutlineButton onClick={openReceipt} data-testid="receipt-button-id">
+            Receipt
           </OutlineButton>
         </div>
       </td>

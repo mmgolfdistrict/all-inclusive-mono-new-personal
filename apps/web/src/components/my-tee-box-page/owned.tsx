@@ -33,6 +33,7 @@ export type OwnedTeeTime = {
   minimumOfferPrice: number;
   weatherGuaranteeAmount?: number;
   selectedSlotsCount?: "1" | "2" | "3" | "4";
+  slots?: number;
 };
 
 export const Owned = () => {
@@ -60,7 +61,7 @@ export const Owned = () => {
   const ownedTeeTimes = useMemo(() => {
     if (!data) return undefined;
     return Object.keys(data).map((key) => {
-      return { ...data[key], teeTimeId: key } as OwnedTeeTime;
+      return { ...data[key], teeTimeId: data[key].teeTimeId } as OwnedTeeTime;
     });
   }, [data]);
   // const loadMore = () => {
@@ -103,6 +104,7 @@ export const Owned = () => {
       </div>
     );
   }
+
   return (
     <>
       <div className="relative flex max-w-full flex-col gap-4  overflow-auto pb-2  text-[14px] md:pb-3">
@@ -110,7 +112,7 @@ export const Owned = () => {
           <thead className="top-0 table-header-group">
             <tr className="text-left">
               <TableHeader text="Details" />
-              <TableHeader text="Purchase Price" />
+              {/* <TableHeader text="Purchase Price" /> */}
               <TableHeader text="Golfers" />
               <TableHeader text="Status" />
               <TableHeader text="" className="text-right" />
@@ -172,8 +174,10 @@ export const Owned = () => {
         courseName={selectedTeeTime?.courseName}
         courseLogo={selectedTeeTime?.courseLogo}
         date={selectedTeeTime?.date}
-        golferCount={selectedTeeTime?.listedSpots?.length ?? 0}
-        pricePerGolfer={selectedTeeTime?.listPrice ?? 0}
+        golferCount={selectedTeeTime?.slots || 0}
+        pricePerGolfer={
+          selectedTeeTime?.listPrice ? selectedTeeTime?.listPrice / 100 : 0
+        }
         listingId={selectedTeeTime?.listingId ?? undefined}
         refetch={refetch}
       />
@@ -258,9 +262,9 @@ const TableRow = ({
           </div>
         </Link>
       </td>
-      <td className="whitespace-nowrap px-4 py-3">
+      {/* <td className="whitespace-nowrap px-4 py-3">
         {formatMoney(purchasePrice)}
-      </td>
+      </td> */}
       <td className="whitespace-nowrap px-4 py-3">
         {golfers.length > 2
           ? `You, ${golfers[1]?.name} & ${golfers.length - 2} ${

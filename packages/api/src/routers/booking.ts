@@ -11,6 +11,16 @@ export const bookingRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       return ctx.serviceFactory.getBookingService().checkIfTeeTimeStillListed(input.bookingId);
     }),
+  checkIfTeeTimeStillListedByListingId: protectedProcedure
+    .input(
+      z.object({
+        listingId: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return ctx.serviceFactory.getBookingService().checkIfTeeTimeStillListedByListingId(input.listingId);
+    }),
+
   getOfferReceivedForUser: protectedProcedure
     .input(
       z.object({
@@ -119,7 +129,7 @@ export const bookingRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       return ctx.serviceFactory
         .getBookingService()
-        .getOwnedBookingsForTeeTime(input.ownerId ?? ctx.session.user.id, input.teeTimeId);
+        .getOwnedBookingsForTeeTime(input?.ownerId ?? ctx?.session?.user?.id, input.teeTimeId);
     }),
 
   getOwnedBookingById: protectedProcedure
@@ -248,12 +258,20 @@ export const bookingRouter = createTRPCRouter({
       z.object({
         cartId: z.string(),
         payment_id: z.string(),
+        sensibleQuoteId: z.string(),
+        redirectHref: z.string().url(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       return ctx.serviceFactory
         .getBookingService()
-        .reserveBooking(ctx.session.user.id, input.cartId, input.payment_id);
+        .reserveBooking(
+          ctx.session.user.id,
+          input.cartId,
+          input.payment_id,
+          input.sensibleQuoteId,
+          input.redirectHref
+        );
     }),
   reserveSecondHandBooking: protectedProcedure
     .input(
@@ -261,11 +279,30 @@ export const bookingRouter = createTRPCRouter({
         cartId: z.string(),
         listingId: z.string(),
         payment_id: z.string(),
+        redirectHref: z.string().url(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       return ctx.serviceFactory
         .getBookingService()
-        .reserveSecondHandBooking(ctx.session.user.id, input.cartId, input.listingId, input.payment_id);
+        .reserveSecondHandBooking(
+          ctx.session.user.id,
+          input.cartId,
+          input.listingId,
+          input.payment_id,
+          input.redirectHref
+        );
+    }),
+  checkIfTeeTimeAvailableOnProvider: protectedProcedure
+    .input(
+      z.object({
+        teeTimeId: z.string(),
+        golfersCount: z.number(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return ctx.serviceFactory
+        .getBookingService()
+        .checkIfTeeTimeAvailableOnProvider(input.teeTimeId, input.golfersCount, ctx.session.user.id);
     }),
 });

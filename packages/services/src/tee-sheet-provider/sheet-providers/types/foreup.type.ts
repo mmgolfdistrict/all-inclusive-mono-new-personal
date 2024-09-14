@@ -157,6 +157,7 @@ export interface BookingAttributes {
   lastUpdated: string;
   dateBooked: string;
   isTrade: boolean;
+  priceClassId?: string;
 }
 
 export interface Relationships {
@@ -282,6 +283,7 @@ export interface CustomerAttributes {
     priceClass: string; // ""213""
     groups: string[]; // ["Public", "Junior"]
     contactInfo: ContactInfo; // nested interface
+    email?: string;
   };
 }
 
@@ -304,6 +306,7 @@ export interface CustomerAttributes {
   price_class?: string;
   groups?: string[];
   contact_info: ContactInfo;
+  email?: string;
 }
 export interface ContactInfo {
   first_name: string;
@@ -324,7 +327,6 @@ export interface ContactInfo {
   comments?: string;
   gender?: string;
 }
-
 
 export interface CartData {
   data: {

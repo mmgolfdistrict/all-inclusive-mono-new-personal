@@ -6,11 +6,11 @@ export const registerSchema = z
     lastName: z.string().min(1, { message: "Last name is required" }),
     username: z
       .string()
-      .min(1, { message: "Username is required" })
-      .max(20)
-      .refine((username) => !username.includes("@"), {
-        message: "Username cannot contain '@'",
-      }),
+      .min(6, { message: "Username should be at least 6 characters long" })
+      .max(64, { message: "Username shouldn't be more than 64 characters long" }),
+    // .refine((username) => !username.includes("@"), {
+    //   message: "Username cannot contain '@'",
+    // }),
     email: z.string().email({ message: "Invalid email" }).min(1, "Email is required"),
     phoneNumber: z
       .string()
@@ -19,7 +19,13 @@ export const registerSchema = z
         message:
           "Invalid phone number. Please enter a valid US phone number with area code. No country code required, dashes, or spaces.",
       }),
-    location: z.string().min(1, { message: "Location is required" }),
+    // location: z.string().min(1, { message: "Location is required" }),
+    address1: z.string().min(1, { message: "Address1 is required" }),
+    address2: z.string().optional(),
+    state: z.string().min(1, { message: "State is required" }),
+    zipcode: z.string().min(1, { message: "Zip is required" }),
+    city: z.string().min(1, { message: "City is required" }),
+    country: z.string().min(1, { message: "Country is required" }),
     password: z
       .string()
       .min(1, { message: "Password is required" })
@@ -27,6 +33,7 @@ export const registerSchema = z
     confirmPassword: z.string().min(1, { message: "Password confirmation is required" }),
     redirectHref: z.string().url(),
     ReCAPTCHA: z.string().optional(),
+    courseId: z.string().optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     path: ["confirmPassword"],

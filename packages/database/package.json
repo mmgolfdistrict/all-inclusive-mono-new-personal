@@ -12,8 +12,8 @@
     "clean": "rm -rf .turbo node_modules",
     "format": "prettier --check \"**/*.{mjs,ts,md,json}\"",
     "lint": "eslint .",
-    "push": "drizzle-kit push:mysql",
-    "push:secondary-database": "drizzle-kit push:mysql --config=secondaryDatabaseDrizzle.config.ts",
+    "push:primary": "drizzle-kit push:mysql",
+    "push:secondary": "drizzle-kit push:mysql --config=secondaryDatabaseDrizzle.config.ts",
     "studio": "drizzle-kit studio",
     "typecheck": "tsc --noEmit"
   },
@@ -33,7 +33,7 @@
   "devDependencies": {
     "@faker-js/faker": "^8.3.1",
     "dotenv-cli": "^7.3.0",
-    "drizzle-kit": "^0.20.13",
+    "drizzle-kit": "^0.20.18",
     "mysql2": "^3.6.5"
   }
 }

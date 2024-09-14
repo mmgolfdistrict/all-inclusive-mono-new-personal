@@ -1,13 +1,13 @@
 import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
-import { and, asc, between, eq, inArray, sql } from "@golf-district/database";
+import { and, asc, between, eq, inArray } from "@golf-district/database";
 import { courses } from "@golf-district/database/schema/courses";
 import { entities } from "@golf-district/database/schema/entities";
 import { providers } from "@golf-district/database/schema/providers";
 import { providerCourseLink } from "@golf-district/database/schema/providersCourseLink";
 import type { InsertTeeTimes } from "@golf-district/database/schema/teeTimes";
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
-import { dateToUtcTimestamp, isEqual, normalizeDateToUnixTimestamp } from "@golf-district/shared";
+import { dateToUtcTimestamp, isEqual } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
 import dayjs from "dayjs";
 // import { isEqual } from "lodash";
@@ -76,7 +76,7 @@ export class ForeUpWebhookService {
    * @param {Db} database - The database instance to interact with.
    * @param {ProviderService} providerService - The provider service for fetching tee times from ForeUp.
    */
-  constructor(private readonly database: Db, private readonly providerService: ProviderService) { }
+  constructor(private readonly database: Db, private readonly providerService: ProviderService) {}
 
   /**
    * Handles the ForeUp webhook.
@@ -385,7 +385,8 @@ export class ForeUpWebhookService {
     providerTeeSheetId: string,
     provider: ProviderAPI,
     token: string,
-    time: number
+    time: number,
+    teeTimeId: string
   ) => {
     try {
       const teeTimeResponse = await provider.getTeeTimes(
@@ -401,13 +402,18 @@ export class ForeUpWebhookService {
         teeTime = teeTimeResponse[0];
       }
       if (!teeTime) {
+        await this.database
+          .update(teeTimes)
+          .set({ availableFirstHandSpots: 0 })
+          .where(eq(teeTimes.id, teeTimeId))
+          .execute();
         throw new Error("Tee time not available for booking");
       }
       const [indexedTeeTime] = await this.database
         .select({
           id: teeTimes.id,
           courseId: teeTimes.courseId,
-          courseProvider: courses.providerId,
+          availableFirstHandSpots: teeTimes.availableFirstHandSpots,
           availableSecondHandSpots: teeTimes.availableSecondHandSpots,
           entityId: courses.entityId,
         })
@@ -438,7 +444,6 @@ export class ForeUpWebhookService {
           id: indexedTeeTime.id,
           courseId: indexedTeeTime.courseId,
           providerTeeTimeId: teeTime.id,
-          courseProvider: indexedTeeTime.courseProvider,
           numberOfHoles: attributes.holes,
           date: attributes.time,
           time: militaryTime,
@@ -450,7 +455,6 @@ export class ForeUpWebhookService {
           greenFeeTaxPerPlayer: attributes.greenFeeTax ? attributes.greenFeeTax : 0,
           cartFeeTaxPerPlayer: attributes.cartFeeTax,
           providerDate: attributes.time,
-          entityId: indexedTeeTime.entityId,
         };
         const providerTeeTimeMatchingKeys = {
           id: indexedTeeTime.id,
@@ -466,9 +470,7 @@ export class ForeUpWebhookService {
           courseId: indexedTeeTime.courseId,
           availableFirstHandSpots: attributes.availableSpots,
           availableSecondHandSpots: indexedTeeTime.availableSecondHandSpots,
-          courseProvider: indexedTeeTime.courseProvider,
           providerDate: attributes.time,
-          entityId: indexedTeeTime.entityId,
         };
         if (isEqual(indexedTeeTime, providerTeeTimeMatchingKeys)) {
           // no changes to tee time do nothing
@@ -487,7 +489,14 @@ export class ForeUpWebhookService {
       }
     } catch (error) {
       this.logger.error(error);
-      throw new Error(`Error indexing tee time: ${error}`);
+      // throw new Error(`Error indexing tee time: ${error}`);
+      // throw new Error(
+      //   `We're sorry. This time is no longer available. Someone just booked this. It may take a minute for the sold time you selected to be removed. Please select another time.`
+      // );
+      return {
+        error:true,
+        message:`We're sorry. This time is no longer available. Someone just booked this. It may take a minute for the sold time you selected to be removed. Please select another time.`
+      }
     }
   };
 

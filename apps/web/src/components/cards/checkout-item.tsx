@@ -1,5 +1,7 @@
+import type { NotificationObject } from "@golf-district/shared";
 import { useCheckoutContext } from "~/contexts/CheckoutContext";
 import { useCourseContext } from "~/contexts/CourseContext";
+import { api } from "~/utils/api";
 import { formatMoney, formatTime } from "~/utils/formatters";
 import {
   type SearchObject,
@@ -13,8 +15,10 @@ import { OutlineClub } from "../icons/outline-club";
 import { BlurImage } from "../images/blur-image";
 import { ChoosePlayers } from "../input/choose-players";
 import { SensibleWidget } from "../sensible/sensible-widget";
+import { Tooltip } from "../tooltip";
 
 const PlayersOptions = ["1", "2", "3", "4"];
+const DEFAULT_SILHOUETTE_IMAGE = "/defaults/default-profile.webp";
 
 export const CheckoutItem = ({
   teeTime,
@@ -57,6 +61,32 @@ export const CheckoutItem = ({
     }
   }, [playerCount, teeTime]);
 
+  const { data: courseException } =
+    api.courseException.getCourseException.useQuery({
+      courseId: course?.id ?? "",
+    });
+
+  const getCourseException = (playDate: string): NotificationObject | null => {
+    let flag = false;
+    let msg: NotificationObject | null = null;
+    courseException?.forEach((ce) => {
+      const startDate = new Date(ce.startDate);
+      const endDate = new Date(ce.endDate);
+      const dateToCheck = new Date(playDate);
+      if (dateToCheck > startDate && dateToCheck < endDate) {
+        flag = true;
+        msg = ce;
+      }
+      console.log("startDate", startDate);
+      console.log("endDate", endDate);
+      console.log("dateToCheck", dateToCheck);
+    });
+    if (flag) {
+      return msg;
+    }
+    return null;
+  };
+
   return (
     <div className="relative flex w-full flex-col gap-2 bg-secondary-white  pt-4 lg:rounded-lg">
       <div className="flex items-center gap-2 px-4 pb-4 lg:items-start">
@@ -75,7 +105,6 @@ export const CheckoutItem = ({
               formatTime(teeTime?.date ?? "", true, course?.timezoneCorrection)
             )}
           </div>
-
           <Data
             className="hidden lg:flex"
             canChoosePlayer={(teeTime?.availableSlots ?? 4) > 0}
@@ -89,6 +118,7 @@ export const CheckoutItem = ({
             availableSlots={teeTime?.availableSlots}
             isSecondHand={teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND"}
             teeTimeId={teeTime?.teeTimeId}
+            courseException={getCourseException(teeTime?.date ?? "")}
           />
         </div>
       </div>
@@ -105,6 +135,7 @@ export const CheckoutItem = ({
         availableSlots={teeTime?.availableSlots}
         isSecondHand={teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND"}
         teeTimeId={teeTime?.teeTimeId}
+        courseException={getCourseException(teeTime?.date ?? "")}
       />
       {isSensibleInvalid || isLoading ? null : (
         <SensibleWidget sensibleDataToMountComp={sensibleDataToMountComp} />
@@ -172,6 +203,7 @@ const Data = ({
   availableSlots,
   isSecondHand,
   teeTimeId,
+  courseException,
 }: {
   className: string;
   canChoosePlayer: boolean;
@@ -185,6 +217,7 @@ const Data = ({
   availableSlots?: number;
   isSecondHand: boolean;
   teeTimeId?: string | undefined;
+  courseException: NotificationObject | null;
 }) => {
   if (isLoading) {
     return (
@@ -206,16 +239,47 @@ const Data = ({
       </div>
     );
   }
+
+  console.log("courseException courseException", courseException);
+  const getTextColor = (type) => {
+    if (type === "FAILURE") return "red";
+    if (type === "SUCCESS") return "primary";
+    if (type === "WARNING") return "primary-gray";
+  };
   return (
     <div
       className={`flex w-full flex-col justify-between gap-2 text-sm lg:flex-row ${className}`}
     >
       <div className="flex gap-1 lg:items-start">
-        <Avatar src={soldByImage} />
-        <div className="flex flex-wrap gap-1">
+        <div className="flex gap-1 flex-col items-start">
+          <Tooltip
+            trigger={
+              <Avatar
+                src={
+                  isSecondHand === true ? DEFAULT_SILHOUETTE_IMAGE : soldByImage
+                }
+              />
+            }
+            content={
+              "Sold by " +
+              (isSecondHand === true
+                ? "another Golf District golfer."
+                : soldByName)
+            }
+          />
+          <p
+            className={`text-${getTextColor(
+              courseException?.displayType
+            )} font-semibold`}
+          >
+            {courseException?.longMessage || courseException?.longMessage}
+          </p>
+        </div>
+
+        {/* <div className="flex flex-wrap gap-1">
           <div>Sold by</div>
           {soldByName}
-        </div>
+        </div> */}
       </div>
       <div className="flex flex-col gap-2 lg:items-end">
         <div className="flex min-h-[31px] items-center gap-2">

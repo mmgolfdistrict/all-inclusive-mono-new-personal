@@ -8,7 +8,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import { useDebounce } from "usehooks-ts";
 import { FilledButton } from "../buttons/filled-button";
-import { OutlineButton } from "../buttons/outline-button";
+// import { OutlineButton } from "../buttons/outline-button";
 import { Close } from "../icons/close";
 import { Edit } from "../icons/edit";
 
@@ -194,6 +194,11 @@ export const InviteFriends = ({
       toast.error("Tee time not selected");
       return;
     }
+
+    if (!updateNames.data?.success) {
+      toast.error(updateNames.data?.message);
+      return;
+    }
     let resultantData: InviteFriend[] = [];
     selectedTeeTime.map((el) => {
       friends.forEach((fd) => {
@@ -286,18 +291,18 @@ export const InviteFriends = ({
                           {friendList.length ? (
                             <ul className="w-full text-opacity-100 text-gray-700 shadow-md border border-solid border-gray-200 rounded-8 text-start">
                               {friendList?.map((frnd, idx) => (
-                                // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
-                                <li
-                                  className="cursor-pointer p-4 border-b border-solid border-gray-300"
-                                  onClick={() => {
-                                    addFriendUpdated({
-                                      ...frnd,
-                                      slotId: friend.slotId,
-                                    });
-                                  }}
-                                  key={idx}
-                                >
-                                  {frnd.email} ({frnd.handle})
+                                <li key={idx}>
+                                  <div
+                                    className="cursor-pointer p-4 border-b border-solid border-gray-300"
+                                    onClick={() => {
+                                      addFriendUpdated({
+                                        ...frnd,
+                                        slotId: friend.slotId,
+                                      });
+                                    }}
+                                  >
+                                    {frnd.email} ({frnd.handle})
+                                  </div>
                                 </li>
                               ))}
                             </ul>

@@ -1,6 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as ToggleGroup from "@radix-ui/react-toggle-group";
 import { useUserContext } from "~/contexts/UserContext";
+import { usePaymentMethods } from "~/hooks/usePaymentMethods";
 import {
   creditCardSchema,
   type CreditCardSchemaType,
@@ -21,6 +22,8 @@ type OptionsType = "debit" | "credit";
 
 export const AddCard = ({ refetchCards }: { refetchCards: () => unknown }) => {
   const { user } = useUserContext();
+  const { cards } = usePaymentMethods();
+
   const {
     register,
     handleSubmit,
@@ -37,41 +40,57 @@ export const AddCard = ({ refetchCards }: { refetchCards: () => unknown }) => {
   const addCard = api.checkout.createPaymentMethod.useMutation();
 
   const onSubmit: SubmitHandler<CreditCardSchemaType> = async (data) => {
-    const { cardNumber, expirationDate, type } = data;
-    const cleanedCardNumber = cardNumber.replace(/\s/g, "");
-    const expirationMonth = expirationDate.split("/")[0];
-    const expirationYear = expirationDate.split("/")[1];
-    const cardHolderName = data.cardHolderName;
-    const paymentMethod = type;
-    try {
-      setIsLoading(true);
-      const response = await addCard.mutateAsync({
-        params: {
-          payment_method: "card",
-          payment_method_type: paymentMethod,
-          card: {
-            card_number: cleanedCardNumber,
-            card_exp_month: expirationMonth,
-            card_exp_year: expirationYear,
-            card_holder_name: cardHolderName,
-            nick_name: user?.id ?? cardHolderName,
-          },
-          customer_id: user?.id,
-        },
-      });
+    let error = false;
 
-      if (response.status === "Cannot add card please enter valid details") {
-        toast.error("Cannot add card please enter valid card details");
-      } else {
-        toast.info("Card added successfully");
+    cards.forEach((card) => {
+      if (
+        !error &&
+        card?.card?.last4_digits &&
+        data.cardNumber.endsWith(card?.card?.last4_digits)
+      ) {
+        error = true;
       }
-      await refetchCards();
-      setType("");
-      reset();
-      setIsLoading(false);
-    } catch (error) {
-      console.log(error);
-      setIsLoading(false);
+    });
+
+    if (error) {
+      toast.error("Card already exists");
+      return;
+    } else {
+      const { cardNumber, expirationDate, type } = data;
+      const cleanedCardNumber = cardNumber.replace(/\s/g, "");
+      const expirationMonth = expirationDate.split("/")[0];
+      const expirationYear = expirationDate.split("/")[1];
+      const cardHolderName = data.cardHolderName;
+      const paymentMethod = type;
+      try {
+        setIsLoading(true);
+        const response = await addCard.mutateAsync({
+          params: {
+            payment_method: "card",
+            payment_method_type: paymentMethod,
+            card: {
+              card_number: cleanedCardNumber,
+              card_exp_month: expirationMonth,
+              card_exp_year: expirationYear,
+              card_holder_name: cardHolderName,
+              nick_name: user?.id ?? cardHolderName,
+            },
+            customer_id: user?.id,
+          },
+        });
+
+        if (response.status === "Cannot add card please enter valid details") {
+          toast.error("Cannot add card please enter valid card details");
+        } else {
+          toast.success("Card added successfully");
+        }
+        await refetchCards();
+        setType("");
+        reset();
+        setIsLoading(false);
+      } catch (error) {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -123,34 +142,41 @@ export const AddCard = ({ refetchCards }: { refetchCards: () => unknown }) => {
             }}
             data-testid="card-expiry-date-id"
           />
+          <ToggleGroup.Root
+            type="single"
+            value={type}
+            onValueChange={(p: OptionsType) => {
+              if (p) {
+                setType(p);
+                setValue("type", p);
+              }
+            }}
+            orientation="horizontal"
+            className="mx-auto"
+            data-testid="card-type-id"
+            style={{
+              outline: "none",
+              alignItems: "flex-end",
+              display: "flex",
+              justifyContent: "center",
+              paddingBottom: "5px",
+            }}
+          >
+            {Options.map((value, index) => (
+              <Item
+                key={index}
+                value={value}
+                className={`${
+                  index === 0
+                    ? "rounded-l-full border-b border-l border-t border-stroke"
+                    : index === Options.length - 1
+                    ? "rounded-r-full border-b border-r border-t border-stroke"
+                    : "border border-stroke"
+                } px-[2.65rem]`}
+              />
+            ))}
+          </ToggleGroup.Root>
         </div>
-        <ToggleGroup.Root
-          type="single"
-          value={type}
-          onValueChange={(p: OptionsType) => {
-            if (p) {
-              setType(p);
-              setValue("type", p);
-            }
-          }}
-          orientation="horizontal"
-          className="mx-auto"
-          data-testid="card-type-id"
-        >
-          {Options.map((value, index) => (
-            <Item
-              key={index}
-              value={value}
-              className={`${
-                index === 0
-                  ? "rounded-l-full border-b border-l border-t border-stroke"
-                  : index === Options.length - 1
-                  ? "rounded-r-full border-b border-r border-t border-stroke"
-                  : "border border-stroke"
-              } px-[2.65rem]`}
-            />
-          ))}
-        </ToggleGroup.Root>
 
         <FilledButton
           type="submit"

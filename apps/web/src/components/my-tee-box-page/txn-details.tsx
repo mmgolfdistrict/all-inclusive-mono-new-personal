@@ -1,6 +1,7 @@
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useSidebar } from "~/hooks/useSidebar";
 import { formatMoney, formatTime } from "~/utils/formatters";
+import type { InviteFriend } from "~/utils/types";
 import { useMemo, type Dispatch, type SetStateAction } from "react";
 import { Avatar } from "../avatar";
 import { FilledButton } from "../buttons/filled-button";
@@ -88,7 +89,7 @@ export const TxnDetails = ({
             <div className="flex flex-col gap-4 px-4 pb-6">
               <div className="flex justify-between">
                 <div className="font-[300] text-primary-gray">
-                  Tee Time Price
+                  Your Listing Price
                 </div>
                 <div className="text-secondary-black">
                   {formatMoney(teeTimePrice)}
@@ -99,13 +100,15 @@ export const TxnDetails = ({
                   Service Fee{" "}
                   <Tooltip
                     trigger={<Info className="h-[14px] w-[14px]" />}
-                    content="Service fee description."
+                    content="This fee ensures ongoing enhancements to our service, ultimately offering golfers the best access to booking tee times"
                   />
                 </div>
                 <div className="text-secondary-black">{formatMoney(45)}</div>
               </div>
               <div className="flex justify-between">
-                <div className="font-[300] text-primary-gray">Total Payout</div>
+                <div className="font-[300] text-primary-gray">
+                  You Receive after Sale
+                </div>
                 <div className="text-secondary-black">
                   {formatMoney(Math.abs(teeTimePrice - 45))}
                 </div>
@@ -140,7 +143,7 @@ const TeeTimeItem = ({
 }: {
   courseName: string;
   courseImage: string;
-  golfers: string[];
+  golfers: InviteFriend[];
   date: string;
   timezoneCorrection: number | undefined;
   playerCount?: number;

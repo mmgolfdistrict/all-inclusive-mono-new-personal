@@ -1,5 +1,4 @@
-import { entities } from "@golf-district/database/schema/entities";
-import { currentUtcTimestamp } from "@golf-district/shared";
+import type { entities } from "@golf-district/database/schema/entities";
 
 export const mockEntities: (typeof entities.$inferInsert)[] = [
   {
