@@ -9,7 +9,9 @@ import { Layout } from "~/components/layout";
 import { fontMapper } from "~/styles/fonts";
 import { type Metadata } from "next";
 import { headers } from "next/headers";
+import GoogleAnalytics from "./GoogleAnalytics";
 import Providers from "./providers";
+import MicrosoftClarity from "./MicrosoftClarity";
 
 const title = "Golf District Platforms";
 const description = "Golf District Platforms";
@@ -95,6 +97,8 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
+      <GoogleAnalytics />
+      <MicrosoftClarity/>
       <body
         className={`${
           fontMapper[entityData?.font ?? "font-inter"]

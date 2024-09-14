@@ -144,6 +144,7 @@ interface PaymentInstrument {
 type ResponseCashout = {
   success: boolean;
   error: boolean;
+  message: string;
 };
 
 type RequestOptions = {
@@ -410,7 +411,7 @@ export class FinixService {
           })
           .catch((e) => {
             console.log("Error in transfer", e);
-            throw "Error in creating cashout";
+            throw "Error in creating cash out";
           });
 
         // await this.notificationService.createNotification(
@@ -424,7 +425,7 @@ export class FinixService {
         // );
         await this.notificationService.sendEmailByTemplate(
           user?.email ?? "",
-          "Cashout successful",
+          "Cash out successful",
           process.env.SENDGRID_CASHOUT_TRANSFER_TEMPLATE_ID ?? "",
           {
             AmountCashedOut: amount,
@@ -455,12 +456,35 @@ export class FinixService {
       return {
         error: true,
         success: false,
+        message: "Some error occured in adding bank account",
       };
     }
     const paymentInstrumentData: PaymentInstrument = await this.createPaymentInstrument(
       customerIdentity.id,
       paymentToken
     );
+
+    const existingRecord = await this.database
+      .select({
+        id: customerPaymentDetail.id,
+      })
+      .from(customerPaymentDetail)
+      .where(
+        and(
+          eq(customerPaymentDetail.accountNumber, paymentInstrumentData.masked_account_number),
+          eq(customerPaymentDetail.bankCode, paymentInstrumentData.bank_code),
+          eq(customerPaymentDetail.isActive, 1)
+        )
+      );
+
+    if (existingRecord.length > 0) {
+      return {
+        success: false,
+        error: true,
+        message: "It seems that the account details already exist in our system.",
+      };
+    }
+
     const merchantData: any = await this.createMerchantAccountOnProcessor(customerIdentity.id);
     if (customerIdentity.id && paymentInstrumentData.id && merchantData.id) {
       await this.database
@@ -471,12 +495,13 @@ export class FinixService {
           paymentInstrumentId: paymentInstrumentData.id,
           customerIdentity: customerIdentity.id,
           accountNumber: paymentInstrumentData.masked_account_number,
+          bankCode: paymentInstrumentData.bank_code,
           merchantId: merchantData.id,
         })
         .execute();
-      return { success: true, error: false };
+      return { success: true, error: false, message: "Some error occured in adding bank account" };
     } else {
-      return { success: false, error: true };
+      return { success: false, error: true, message: "Some error occured in adding bank account" };
     }
   };
 
@@ -500,6 +525,7 @@ export class FinixService {
         id: customerPaymentDetail.id,
         accountNumber: customerPaymentDetail.accountNumber,
         merchantId: customerPaymentDetail.merchantId,
+        backCode: customerPaymentDetail.bankCode,
       })
       .from(customerPaymentDetail)
       .where(and(eq(customerPaymentDetail.customerId, userId), eq(customerPaymentDetail.isActive, 1)));

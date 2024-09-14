@@ -1,4 +1,4 @@
-import type { Db } from "@golf-district/database";
+import { type Db } from "@golf-district/database";
 import {
   AppSettingsService,
   AuctionService,
@@ -32,6 +32,7 @@ import { UserWaitlistService } from "./user-waitlist/userWaitlist.service";
 import { FinixService } from "./webhooks/finix.service";
 import { LoggerService } from "./webhooks/logging.service";
 import { PaymentVerifierService } from "./webhooks/paymentverifier.service";
+import { CourseExceptionService } from "./course-exception/courseException.service";
 
 export interface ServiceConfig {
   database: Db;
@@ -102,7 +103,12 @@ export class ServiceFactory {
    * @returns An instance of SearchService.
    */
   getSearchService = (): SearchService => {
-    return new SearchService(this.config.database, this.getWeatherService(), this.getProviderService());
+    return new SearchService(
+      this.config.database,
+      this.getWeatherService(),
+      this.getProviderService(),
+      this.getLoggerService()
+    );
   };
 
   /**
@@ -377,5 +383,9 @@ export class ServiceFactory {
 
   getSystemNotificationService = (): SystemNotificationService => {
     return new SystemNotificationService(this.config.database);
+  };
+
+  getCourseExceptionService = (): CourseExceptionService => {
+    return new CourseExceptionService(this.config.database);
   };
 }

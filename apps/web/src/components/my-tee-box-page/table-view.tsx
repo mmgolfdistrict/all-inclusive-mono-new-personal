@@ -51,7 +51,7 @@ export const TableView = () => {
       });
       await refetch();
     } catch (error) {
-      console.log(error);
+      console.log("error", error);
     }
   };
 
@@ -81,7 +81,7 @@ export const TableView = () => {
         <TabTrigger value={"transaction-history"}>
           Transaction History
         </TabTrigger>
-        <TabTrigger value={"cashouts"}>Cashout History</TabTrigger>
+        <TabTrigger value={"cashouts"}>Cash out History</TabTrigger>
       </Tabs.List>
       {!session ? (
         status == "loading" ? null : (

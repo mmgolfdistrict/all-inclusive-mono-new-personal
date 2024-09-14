@@ -106,7 +106,6 @@ export const UnlistedDetails = ({
       await refetch();
     } catch (error) {
       toast.error((error as Error)?.message ?? "Error adding to watchlist");
-      console.log(error);
     }
   };
 
@@ -161,7 +160,7 @@ export const UnlistedDetails = ({
         <div className="flex flex-col gap-4  px-4 pb-2 text-[14px] md:px-6 md:pb-3">
           <div className="flex items-center gap-1">
             <Avatar src={data?.soldByImage} />
-            <div>Sold by</div>
+            <div>Owned By</div>
             <Link
               href={`/${course?.id}/profile/${data?.soldById}`}
               className="text-primary"

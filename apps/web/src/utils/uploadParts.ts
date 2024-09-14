@@ -36,7 +36,6 @@ export const uploadParts = async (
       invalidUploads,
     };
   } catch (error) {
-    console.log("Error uploading parts:", error);
     return { completedUploads: [], invalidUploads: [error as Error] };
   }
 };

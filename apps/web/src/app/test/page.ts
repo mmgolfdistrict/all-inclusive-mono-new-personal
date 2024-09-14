@@ -14,7 +14,6 @@ export default function test() {
   const { data } = api.searchRouter.findBlackoutDates.useQuery({
     courseId: "5df5581f-6e5c-49af-a360-a7c9fd733f22",
   });
-  console.log(data);
   // if (isLoading) {
   //   return <div style={{ textAlign: "center" }}>Loading...</div>;
   // }

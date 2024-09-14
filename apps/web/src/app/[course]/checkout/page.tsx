@@ -69,6 +69,12 @@ export default function Checkout({
   //   }
   // }, []);
 
+  const { data: maxReservation } =
+    api.checkout.checkMaxReservationsAndMaxRounds.useQuery({
+      roundsToBook: amountOfPlayers,
+      courseId: courseId,
+    });
+
   const {
     data: teeTimeData,
     isLoading: isLoadingTeeTime,
@@ -100,6 +106,11 @@ export default function Checkout({
     error = new Error("You cannot buy your own tee time");
   }
 
+  if (!isLoading && listingId && !data && !error) {
+    isError = true;
+    error = new Error("Expected Tee time spots may not be available anymore");
+  }
+
   const saleType = teeTimeId ? "first_hand" : "second_hand";
 
   const teeTimeDate = formatQueryDate(new Date(data?.date ?? ""));
@@ -128,7 +139,7 @@ export default function Checkout({
       );
       setPromoCodePrice(ratedPrice);
     } catch (error) {
-      console.log(error);
+      console.log("error", error);
     }
   };
 
@@ -158,14 +169,14 @@ export default function Checkout({
       | TaxProduct =
       saleType === "first_hand"
         ? {
-            type: "first_hand",
-            tee_time_id: teeTimeId,
-            number_of_bookings: amountOfPlayers,
-          }
+          type: "first_hand",
+          tee_time_id: teeTimeId,
+          number_of_bookings: amountOfPlayers,
+        }
         : {
-            type: "second_hand",
-            second_hand_id: listingId,
-          };
+          type: "second_hand",
+          second_hand_id: listingId,
+        };
 
     const localCart: CartProduct[] = [
       {
@@ -200,7 +211,7 @@ export default function Checkout({
         display_price: formatMoney(
           ((data?.greenFeeTaxPerPlayer ?? 0) +
             (data?.cartFeeTaxPerPlayer ?? 0)) *
-            amountOfPlayers
+          amountOfPlayers
         ),
         product_data: {
           metadata: {
@@ -234,7 +245,7 @@ export default function Checkout({
       localCart.push({
         name: "Golf District Tee Time",
         id: teeTimeId ?? data?.teeTimeId,
-        price: course?.markupFeesFixedPerPlayer ?? 0, //int
+        price: teeTimeData?.markupFees ?? 0, //int
         image: "", //
         currency: "USD", //USD
         display_price: formatMoney(
@@ -348,7 +359,11 @@ export default function Checkout({
           )}
         </div>
         <CheckoutBreadcumbs status={"checkout"} />
-
+        {!maxReservation?.success && (
+          <div className="bg-alert-red text-white p-1 pl-2  w-full rounded">
+            {maxReservation?.message}
+          </div>
+        )}
         <div className="flex w-full flex-col gap-4 md:flex-row">
           <div className="md:w-3/5">
             <OrderSummary
@@ -392,6 +407,7 @@ export default function Checkout({
                 cartData={cartData}
                 teeTimeDate={teeTimeData?.date}
                 playerCount={playerCount}
+              // maxReservation={maxReservation}
               />
             )}
           </div>

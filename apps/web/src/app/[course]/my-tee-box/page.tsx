@@ -43,6 +43,9 @@ export default function MyTeeBox({
             <p className=" text-[14px] text-primary-gray md:text-[20px]">
               {OpenSectionDescription[section]}
             </p>
+            <p className="mt-4 mb-2 text-[14px] text-primary-gray md:text-[16px] font-semibold text-left">
+      Tip: If you know you can’t make your time, the earlier you can list, the greater the chance it sells.
+    </p>    
           </div>
         </div>
 

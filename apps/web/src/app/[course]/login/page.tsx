@@ -1,6 +1,12 @@
 "use client";
 
-import { signIn, useSession } from "@golf-district/auth/nextjs-exports";
+import {
+  signIn,
+  signOut,
+  useSession,
+} from "@golf-district/auth/nextjs-exports";
+import { db } from "@golf-district/database";
+import { NotificationService, UserService } from "@golf-district/service";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FilledButton } from "~/components/buttons/filled-button";
 import { IconButton } from "~/components/buttons/icon-button";
@@ -17,12 +23,13 @@ import { usePreviousPath } from "~/hooks/usePreviousPath";
 import { loginSchema, type LoginSchemaType } from "~/schema/login-schema";
 import { api } from "~/utils/api";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createRef, useEffect, useState } from "react";
 import ReCAPTCHA from "react-google-recaptcha";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
 import { LoadingContainer } from "../loader";
+import { microsoftClarityEvent } from "~/utils/microsoftClarityUtils";
 
 export default function Login() {
   const recaptchaRef = createRef<ReCAPTCHA>();
@@ -33,31 +40,41 @@ export default function Login() {
   const { course } = useCourseContext();
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(false);
-
   const auditLog = api.webhooks.auditLog.useMutation();
   const { data: sessionData, status } = useSession();
+  const errorKey = searchParams.get("error");
+  const router = useRouter();
 
-  console.log(
-    `process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY = [${process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}]`
-  );
-  console.log(
-    `process.env.RECAPTCHA_SECRET_KEY = [${process.env.RECAPTCHA_SECRET_KEY}]`
-  );
-  console.log(
-    `process.env.NEXT_PUBLIC_RECAPTCHA_IS_INVISIBLE = [${process.env.NEXT_PUBLIC_RECAPTCHA_IS_INVISIBLE}]`
-  );
+  const event = ({ action, category, label, value }: any) => {
+    (window as any).gtag("event", action, {
+      event_category: category,
+      event_label: label,
+      value: value,
+    });
+  };
+
+  useEffect(() => {
+    if (errorKey === "AccessDenied" && !toast.isActive("accessDeniedToast")) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("error");
+      router.push(url.pathname + url.search);
+      toast.error(
+        "Unable to login. Please call customer support at 877-TeeTrade or email at support@golfdistrict.com",
+        { toastId: "accessDeniedToast" }
+      );
+    }
+  }, [errorKey]);
 
   useEffect(() => {
     if (sessionData?.user?.id && course?.id && status === "authenticated") {
       logAudit(sessionData.user.id, course.id, () => {
         window.location.reload();
-        window.location.href = `${window.location.origin}${
-          GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
-            ? prevPath?.path
-              ? prevPath.path
-              : "/"
+        window.location.href = `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+          ? prevPath?.path
+            ? prevPath.path
             : "/"
-        }`;
+          : "/"
+          }`;
       });
     }
   }, [sessionData, course, status]);
@@ -79,7 +96,7 @@ export default function Login() {
         }
       })
       .catch((err) => {
-        console.log(err);
+        console.log("error", err);
       });
   };
 
@@ -110,18 +127,30 @@ export default function Login() {
     if (process.env.NEXT_PUBLIC_RECAPTCHA_IS_INVISIBLE === "true") {
       recaptchaRef.current?.execute();
     }
-  }, []);
+  }, [recaptchaRef]);
 
   const onSubmit: SubmitHandler<LoginSchemaType> = async (data) => {
+    microsoftClarityEvent({
+      action: `REGISTER CLICKED`,
+      category: "REGISTER",
+      label: "User clicked on register",
+      value: data?.email,
+    })
     setIsLoading(true);
+    event({
+      action: "SIGNIN_USING_CREDENTIALS",
+      category: "SIGNIN",
+      label: "Sign in using credentials",
+      value: "",
+    });
     try {
-      const callbackURL = `${window.location.origin}${
-        GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
-          ? prevPath?.path
-            ? prevPath.path
-            : "/"
+      recaptchaRef.current?.reset();
+      const callbackURL = `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+        ? prevPath?.path
+          ? prevPath.path
           : "/"
-      }`;
+        : "/"
+        }`;
       const res = await signIn("credentials", {
         // callbackUrl: callbackURL,
         redirect: false,
@@ -132,14 +161,20 @@ export default function Login() {
           : undefined,
       });
       if (res?.error) {
-        toast.error("The email or password you entered is incorrect.");
+        await recaptchaRef.current?.executeAsync();
+        if (res.error === "AccessDenied") {
+          toast.error(
+            "Unable to login. Please call customer support at 877-TeeTrade or email at support@golfdistrict.com"
+          );
+        } else {
+          toast.error("The email or password you entered is incorrect.");
+        }
         setValue("password", "");
       }
     } catch (error) {
-      console.log(error);
       toast.error(
         (error as Error)?.message ??
-          "An error occurred logging in, try another option."
+        "An error occurred logging in, try another option."
       );
     } finally {
       setIsLoading(false);
@@ -168,31 +203,35 @@ export default function Login() {
 
   const facebookSignIn = async () => {
     await signIn("facebook", {
-      callbackUrl: `${window.location.origin}${
-        GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
-          ? prevPath?.path
-            ? prevPath.path
-            : "/"
+      callbackUrl: `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+        ? prevPath?.path
+          ? prevPath.path
           : "/"
-      }`,
+        : "/"
+        }`,
       redirect: true,
     });
   };
 
   const appleSignIn = async () => {
     await signIn("apple", {
-      callbackUrl: `${window.location.origin}${
-        GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
-          ? prevPath?.path
-            ? prevPath.path
-            : "/"
+      callbackUrl: `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+        ? prevPath?.path
+          ? prevPath.path
           : "/"
-      }`,
+        : "/"
+        }`,
       redirect: true,
     });
   };
 
   const googleSignIn = async () => {
+    event({
+      action: "SIGNIN_USING_GOOGLE",
+      category: "SIGNIN",
+      label: "Sign in using google",
+      value: "",
+    });
     try {
       await signIn("google", {
         // callbackUrl: `${window.location.origin}${
@@ -205,7 +244,7 @@ export default function Login() {
         redirect: false,
       });
     } catch (error) {
-      console.log(error);
+      console.log("error", error);
     }
   };
 

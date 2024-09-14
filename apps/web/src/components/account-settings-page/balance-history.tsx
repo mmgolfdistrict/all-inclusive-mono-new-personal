@@ -66,7 +66,6 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
         );
       }
     } catch (error) {
-      console.log(error);
       toast.error((error as Error).message ?? "Could not request cash out.");
     } finally {
       setLoadingCashout(false);

@@ -76,7 +76,7 @@ export class ForeUpWebhookService {
    * @param {Db} database - The database instance to interact with.
    * @param {ProviderService} providerService - The provider service for fetching tee times from ForeUp.
    */
-  constructor(private readonly database: Db, private readonly providerService: ProviderService) {}
+  constructor(private readonly database: Db, private readonly providerService: ProviderService) { }
 
   /**
    * Handles the ForeUp webhook.
@@ -415,10 +415,8 @@ export class ForeUpWebhookService {
           courseId: teeTimes.courseId,
           availableFirstHandSpots: teeTimes.availableFirstHandSpots,
           availableSecondHandSpots: teeTimes.availableSecondHandSpots,
-          entityId: courses.entityId,
         })
         .from(teeTimes)
-        .leftJoin(courses, eq(courses.id, teeTimes.courseId))
         .where(eq(teeTimes.providerTeeTimeId, teeTime.id))
         .execute()
         .catch((err) => {
@@ -490,9 +488,13 @@ export class ForeUpWebhookService {
     } catch (error) {
       this.logger.error(error);
       // throw new Error(`Error indexing tee time: ${error}`);
-      throw new Error(
-        `We're sorry. This time is no longer available. Someone just booked this. It may take a minute for the sold time you selected to be removed. Please select another time.`
-      );
+      // throw new Error(
+      //   `We're sorry. This time is no longer available. Someone just booked this. It may take a minute for the sold time you selected to be removed. Please select another time.`
+      // );
+      return {
+        error:true,
+        message:`We're sorry. This time is no longer available. Someone just booked this. It may take a minute for the sold time you selected to be removed. Please select another time.`
+      }
     }
   };
 

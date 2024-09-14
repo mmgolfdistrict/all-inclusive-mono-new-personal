@@ -100,6 +100,8 @@ export class foreUp extends BaseProvider {
     });
 
     if (!response.ok) {
+      this.logger.error(JSON.stringify(response));
+
       if (response.status === 403) {
         this.logger.error(`Error creating booking: ${response.statusText}`);
         this.logger.error(`Error response from foreup: ${JSON.stringify(await response.json())}`);

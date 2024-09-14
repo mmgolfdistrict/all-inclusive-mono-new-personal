@@ -13,6 +13,7 @@ export const customerPaymentDetail = mySqlTable("customerPaymentDetail", {
   ),
   createdDateTime: datetime("createdDateTime", { mode: "string", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
   isActive: smallint("isActive").default(1),
+  bankCode: varchar("bankCode", { length: 36 }),
   accountNumber: varchar("accountNumber", { length: 36 }),
   merchantId: varchar("merchantId", { length: 191 }),
 });
