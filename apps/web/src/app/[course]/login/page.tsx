@@ -353,7 +353,7 @@ export default function Login() {
           {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (
             <ReCAPTCHA
               size={
-                process.env.NEXT_PUBLIC_RECAPTCHA_IS_INVISIBLE
+                process.env.NEXT_PUBLIC_RECAPTCHA_IS_INVISIBLE === "true"
                   ? "invisible"
                   : "normal"
               }
