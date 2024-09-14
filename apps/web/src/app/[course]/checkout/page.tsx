@@ -106,6 +106,11 @@ export default function Checkout({
     error = new Error("You cannot buy your own tee time");
   }
 
+  if (!isLoading && listingId && !data && !error) {
+    isError = true;
+    error = new Error("Expected Tee time spots may not be available anymore");
+  }
+
   const saleType = teeTimeId ? "first_hand" : "second_hand";
 
   const teeTimeDate = formatQueryDate(new Date(data?.date ?? ""));
