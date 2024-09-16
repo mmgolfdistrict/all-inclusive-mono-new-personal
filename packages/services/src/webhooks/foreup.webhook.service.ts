@@ -76,7 +76,7 @@ export class ForeUpWebhookService {
    * @param {Db} database - The database instance to interact with.
    * @param {ProviderService} providerService - The provider service for fetching tee times from ForeUp.
    */
-  constructor(private readonly database: Db, private readonly providerService: ProviderService) {}
+  constructor(private readonly database: Db, private readonly providerService: ProviderService) { }
 
   /**
    * Handles the ForeUp webhook.
@@ -415,10 +415,8 @@ export class ForeUpWebhookService {
           courseId: teeTimes.courseId,
           availableFirstHandSpots: teeTimes.availableFirstHandSpots,
           availableSecondHandSpots: teeTimes.availableSecondHandSpots,
-          entityId: courses.entityId,
         })
         .from(teeTimes)
-        .leftJoin(courses, eq(courses.id, teeTimes.courseId))
         .where(eq(teeTimes.providerTeeTimeId, teeTime.id))
         .execute()
         .catch((err) => {

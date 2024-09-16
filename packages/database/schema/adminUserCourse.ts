@@ -1,14 +1,14 @@
 import type { InferSelectModel } from "drizzle-orm";
 import { relations, sql } from "drizzle-orm";
-import { datetime, primaryKey, varchar } from "drizzle-orm/mysql-core";
+import { datetime, unique, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 import { courses } from "./courses";
 import { adminUsers } from "./adminUsers";
 
-export const adminUserCourseLink = mySqlTable(
-  "adminUserCourseLink",
+export const adminUserCourse = mySqlTable(
+  "adminUserCourse",
   {
-    id: varchar("id", { length: 36 }).notNull(),
+    id: varchar("id", { length: 36 }).notNull().primaryKey(),
     courseId: varchar("courseId", { length: 36 }).notNull(),
     adminUserId: varchar("adminUserId", { length: 36 }).notNull(),
     lastUpdatedDateTime: datetime("lastUpdatedDateTime", { mode: "string", fsp: 3 })
@@ -19,20 +19,20 @@ export const adminUserCourseLink = mySqlTable(
       .notNull(),
   },
   (table) => ({
-    primaryKey: primaryKey({ columns: [table.courseId, table.adminUserId] }),
+    primaryKey: unique("UK_admin_user_id_course_id").on(table.courseId, table.adminUserId),
   }),
 );
 
-export const adminUserCourseRelations = relations(adminUserCourseLink, ({ one }) => ({
+export const adminUserCourseRelations = relations(adminUserCourse, ({ one }) => ({
   courseProvider: one(courses, {
-    fields: [adminUserCourseLink.courseId],
+    fields: [adminUserCourse.courseId],
     references: [courses.id],
   }),
   adminUserId: one(adminUsers, {
-    fields: [adminUserCourseLink.adminUserId],
+    fields: [adminUserCourse.adminUserId],
     references: [adminUsers.id],
   }),
 }));
 
-export type SelectAdminUserCourseLink = InferSelectModel<typeof adminUserCourseLink>;
-export type InsertAdminUserCourseLink = InferSelectModel<typeof adminUserCourseLink>;
+export type SelectAdminUserCourse = InferSelectModel<typeof adminUserCourse>;
+export type InsertAdminUserCourse = InferSelectModel<typeof adminUserCourse>;

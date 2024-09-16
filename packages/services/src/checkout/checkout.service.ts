@@ -36,10 +36,21 @@ import type {
   TaxProduct,
 } from "./types";
 import { CartValidationErrors } from "./types";
+import dayjs from "dayjs";
+import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
+import UTC from "dayjs/plugin/utc";
 
 /**
  * Configuration options for the CheckoutService.
  */
+
+type MaxReservationsAndMaxRoundsResult = {
+  success: boolean;
+  message: string;
+};
+
+dayjs.extend(UTC);
+dayjs.extend(isSameOrBefore);
 export interface CheckoutServiceConfig {
   sensible_partner_id: string;
   sensible_product_id: string;
@@ -107,6 +118,82 @@ export class CheckoutService {
    * };
    * const checkoutSession = await checkoutService.buildCheckoutSession(userId, customerCart);
    */
+
+  checkMaxReservationsAndMaxRounds = async (
+    userId: string,
+    roundsToBook: number,
+    courseId: string
+  ): Promise<MaxReservationsAndMaxRoundsResult | undefined> => {
+    const twentyFourHoursAgo = dayjs().subtract(24, "hour").format("YYYY-MM-DD HH:mm:ss");
+
+    try {
+      const courseData = await this.database
+        .select({
+          maxRoundsPerPeriod: courses.maxRoundsPerPeriod,
+          maxBookingsPerPeriod: courses.maxBookingsPerPeriod,
+        })
+        .from(courses)
+        .where(eq(courses.id, courseId))
+        .execute();
+
+      if (!courseData) {
+        throw new Error("Course data not found.");
+      }
+
+      const booking = await this.database
+        .select({
+          ownerId: bookings.ownerId,
+          playerCount: bookings.playerCount,
+        })
+        .from(bookings)
+        .where(and(eq(bookings.ownerId, userId), gte(bookings.purchasedAt, twentyFourHoursAgo)))
+        .execute();
+
+      if (!bookings) {
+        throw new Error("Bookings data not found.");
+      }
+
+      const numberOfBookings = booking.length;
+      const numberOfRounds = booking.reduce((total, booking) => total + booking.playerCount, 0);
+
+      console.log("=======courseData====", courseData, numberOfRounds, numberOfBookings);
+
+      const maxRoundsPerPeriod = courseData[0]?.maxRoundsPerPeriod;
+      const maxBookingsPerPeriod = courseData[0]?.maxBookingsPerPeriod;
+
+      const exceedsRounds =
+        maxRoundsPerPeriod !== null &&
+        maxRoundsPerPeriod !== undefined &&
+        numberOfRounds + roundsToBook > maxRoundsPerPeriod;
+      const exceedsBookings =
+        maxBookingsPerPeriod !== null &&
+        maxBookingsPerPeriod !== undefined &&
+        numberOfBookings + 1 > maxBookingsPerPeriod;
+
+      if (exceedsBookings) {
+        console.error("User exceeds max bookings per period.");
+        return {
+          success: false,
+          message: "You have already reached the maximum number of bookings allowed for a day.",
+        };
+      }
+
+      if (exceedsRounds) {
+        console.error("User exceeds max rounds per period.");
+        return {
+          success: false,
+          message: "You have already exceeded the maximum number of rounds allowed per day.",
+        };
+      }
+
+      console.log("User can proceed with booking.");
+      return { success: true, message: "" };
+    } catch (error) {
+      console.error("Error in validation:", error);
+      return { success: false, message: "An error occurred during validation." };
+    }
+  };
+
   buildCheckoutSession = async (userId: string, customerCartData: CustomerCart, cartId = "") => {
     const { paymentId } = customerCartData;
     let data = {};
@@ -401,7 +488,7 @@ export class CheckoutService {
     console.log(`formattedDate: ${formattedDate}`);
 
     if (teeTime.providerCourseId && teeTime.providerTeeSheetId && formattedDate) {
-     const response =  await this.foreupIndexer.indexTeeTime(
+      const response = await this.foreupIndexer.indexTeeTime(
         formattedDate,
         teeTime.providerCourseId,
         teeTime.providerTeeSheetId,
@@ -410,11 +497,11 @@ export class CheckoutService {
         teeTime.time,
         teeTime.id
       );
-      if(response?.error){
+      if (response?.error) {
         errors.push({
           errorType: CartValidationErrors.TEE_TIME_NOT_AVAILABLE,
           product_id: item.id,
-        })
+        });
       }
     }
     console.log("teeTime", item.product_data);

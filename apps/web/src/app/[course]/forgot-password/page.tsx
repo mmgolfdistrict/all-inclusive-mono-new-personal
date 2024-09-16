@@ -51,7 +51,6 @@ export default function ForgotPassword() {
       const forgotPasswordData = { ...data, courseProviderId: course?.id };
       await forgotFn.mutateAsync(forgotPasswordData);
     } catch (error) {
-      console.log(error);
       toast.error(
         (error as Error)?.message ??
           "An error occurred submitting your request."

@@ -207,3 +207,13 @@ export type ReserveTeeTimeResponse = {
   providerBookingId: string;
   status: string;
 };
+
+export type  NotificationObject ={
+  id: string;
+  courseId: string;
+  shortMessage: string;
+  longMessage: string | null;
+  displayType: string;
+  startDate: string;
+  endDate: string;
+}
