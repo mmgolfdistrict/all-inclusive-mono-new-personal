@@ -362,7 +362,7 @@ export class UserService {
             this.logger.error(`Error retrieving user: ${err}`);
             throw new Error("Error retrieving user");
           });
-        if (userData?.[0]) {
+        if (userData && userData[0]) {
           finalData.push({
             ...userData[0],
             name: unit.nameOnBooking?.length ? unit.nameOnBooking : "Guest",
@@ -544,13 +544,17 @@ export class UserService {
    *     emailNotifications: false
    *   });
    */
-  updateUser = async (userId: string, data: UserUpdateData): Promise<void> => {
+  updateUser = async (userId: string, data: UserUpdateData) => {
     this.logger.info(`updateUser called for user: ${userId}`);
 
     if (data.handle) {
-      if (!(await this.isValidHandle(data.handle))) {
+      const isValid = await this.isValidHandle(data.handle);
+      if (!isValid) {
         this.logger.warn(`Handle already exists: ${data.handle}`);
-        throw new Error("Handle already exists");
+        return {
+          error: true,
+          message: "Handle already exists.",
+        };
       }
     }
     // if (data.name) {

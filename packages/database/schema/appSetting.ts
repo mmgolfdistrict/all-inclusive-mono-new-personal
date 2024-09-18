@@ -1,6 +1,6 @@
 import type { InferInsertModel } from "drizzle-orm";
 import { sql, type InferSelectModel } from "drizzle-orm";
-import { datetime, varchar } from "drizzle-orm/mysql-core";
+import { datetime, unique, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 
 export const appSettings = mySqlTable(
@@ -21,7 +21,7 @@ export const appSettings = mySqlTable(
   },
   (table) => {
     return {
-      unique_group_internal: `UNIQUE KEY unique_group_internal (groupName, internalName)`,
+      unique_group_internal: unique("unique_group_internal").on(table.groupName, table.internalName),
     };
   }
 );

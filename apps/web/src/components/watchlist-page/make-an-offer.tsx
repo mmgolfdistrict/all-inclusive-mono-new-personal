@@ -284,7 +284,6 @@ const TeeTimeItem = ({
   const cleanTimeString = !date.includes("T")
     ? date.replace(" ", "T") + "Z"
     : date;
-  console.log(cleanTimeString);
   return (
     <div className="flex flex-col gap-2 rounded-xl bg-secondary-white px-4 py-5">
       <div className="flex items-center gap-4">

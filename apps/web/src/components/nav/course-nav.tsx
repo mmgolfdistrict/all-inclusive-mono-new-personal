@@ -51,8 +51,6 @@ export const CourseNav = () => {
     userEmail: session?.data?.user.email ?? "",
   });
 
-  console.log("isUserBlocked", isUserBlocked);
-
   const auditLog = api.webhooks.auditLog.useMutation();
 
   const logAudit = (func: () => any) => {
@@ -72,7 +70,8 @@ export const CourseNav = () => {
         }
       })
       .catch((err) => {
-        console.log(err);
+        console.log("error", err);
+
       });
   };
 
@@ -132,9 +131,8 @@ export const CourseNav = () => {
         ))}
         {isSideBarOpen && (
           <div
-            className={`fixed z-20 h-[100dvh] w-screen backdrop-blur ${
-              isSideBarOpen ? "md:hidden" : ""
-            }`}
+            className={`fixed z-20 h-[100dvh] w-screen backdrop-blur ${isSideBarOpen ? "md:hidden" : ""
+              }`}
           >
             <div className="h-screen bg-[#00000099]" />
           </div>

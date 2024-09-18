@@ -32,7 +32,6 @@ export const SavedBankDetails = () => {
       toast.success("Bank detail removed successfully.");
     } catch (error) {
       setLoader(false);
-      console.log(error);
       toast.error(
         (error as Error)?.message ??
           "An error occurred submitting your request."

@@ -75,7 +75,8 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
         }
       })
       .catch((err) => {
-        console.log(err);
+        console.log("error", err);
+
       });
   };
 
@@ -105,9 +106,8 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
     <>
       <aside
         // ref={sidebar}
-        className={`!duration-400 fixed left-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[320px] md:-translate-x-[105%]  ${
-          isSideBarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`!duration-400 fixed left-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[320px] md:-translate-x-[105%]  ${isSideBarOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         <div className="relative flex h-full flex-col">
           <div className="flex  items-center justify-between px-2 py-2">

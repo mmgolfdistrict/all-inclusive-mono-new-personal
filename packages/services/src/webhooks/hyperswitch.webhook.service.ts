@@ -726,8 +726,14 @@ export class HyperSwitchWebhookService {
         playerCount: bookings.playerCount,
         providerCourseConfiguration: providerCourseLink.providerCourseConfiguration,
         markupFees: bookings.markupFees,
+        greenFeesPerPlayer: bookings.greenFeePerPlayer,
+        charityCharge: bookings?.totalCharityAmount,
+        charityId: bookings?.charityId,
+        weatherQuoteId: bookings?.weatherQuoteId,
+        cartId: bookings?.cartId,
+        totalTaxesAmount: bookings.totalTaxesAmount,
         providerTeeTimeId: teeTimes.providerTeeTimeId,
-        greenFeePerPlayer: bookings.greenFeePerPlayer,
+        nameOnBooking: bookings.nameOnBooking,
       })
       .from(bookings)
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -1073,6 +1079,7 @@ export class HyperSwitchWebhookService {
       const bookingsToCreate: InsertBooking[] = [];
       // const transfersToCreate: InsertTransfer[] = [];
       const bookingId = newBooking.data.bookingType === "FIRST" ? bookingsIds?.id ?? "" : randomUUID();
+      const totalAmount = (firstBooking?.greenFeesPerPlayer * (firstBooking.playerCount - (listedSlotsCount ?? 0))) + (firstBooking?.weatherGuaranteeAmount ?? 0) + firstBooking?.charityCharge
       if (newBooking.data.bookingType === "SECOND") {
         bookingsToCreate.push({
           id: bookingId,
@@ -1084,21 +1091,21 @@ export class HyperSwitchWebhookService {
           ownerId: booking.data.ownerId || "",
           // courseId: firstBooking.courseId??"",
           teeTimeId: firstBooking.teeTimeId,
-          nameOnBooking: newBooking.data.name || "",
+          nameOnBooking: newBooking.data.name || firstBooking.nameOnBooking || "",
           includesCart: firstBooking.includesCart,
           listId: null,
           // entityId: firstBooking.entityId,
-          cartId: cartId,
+          cartId: firstBooking.cartId,
           playerCount: firstBooking.playerCount - (listedSlotsCount ?? 0),
-          greenFeePerPlayer: firstBooking.greenFeePerPlayer ?? 1 * 100,
-          totalTaxesAmount: taxCharge * 100 || 0,
-          charityId: charityId || null,
-          totalCharityAmount: charityCharge * 100 || 0,
-          totalAmount: total || 0,
+          greenFeePerPlayer: firstBooking.greenFeesPerPlayer ?? 1 * 100,
+          totalTaxesAmount: firstBooking.totalTaxesAmount,
+          charityId: firstBooking.charityId || null,
+          totalCharityAmount: firstBooking?.charityCharge,
+          totalAmount: totalAmount || 0,
           providerPaymentId: "",
           status: "CONFIRMED",
-          markupFees: 0,
-          // weatherQuoteId: weatherQuoteId || null,
+          markupFees: firstBooking.markupFees,
+          weatherQuoteId: firstBooking.weatherQuoteId || null
         });
       }
 

@@ -19,7 +19,6 @@ export const AddCreditCard = () => {
   //     await refetch();
   //     toast.success("Card removed successfully");
   //   } catch (error) {
-  //     console.log(error);
   //     toast.error((error as Error)?.message ?? "Error removing card");
   //   }
   // };

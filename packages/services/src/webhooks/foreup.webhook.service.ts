@@ -416,10 +416,8 @@ export class ForeUpWebhookService {
           courseId: teeTimes.courseId,
           availableFirstHandSpots: teeTimes.availableFirstHandSpots,
           availableSecondHandSpots: teeTimes.availableSecondHandSpots,
-          entityId: courses.entityId,
         })
         .from(teeTimes)
-        .leftJoin(courses, eq(courses.id, teeTimes.courseId))
         .where(eq(teeTimes.providerTeeTimeId, teeTime.id))
         .execute()
         .catch((err) => {
