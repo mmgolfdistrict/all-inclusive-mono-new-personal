@@ -47,7 +47,7 @@ export class TokenizeService {
     private readonly notificationService: NotificationService,
     private readonly loggerService: LoggerService,
     private readonly sensibleService: SensibleService
-  ) {}
+  ) { }
   getCartData = async ({ courseId = "", ownerId = "", paymentId = "" }) => {
     const [customerCartData]: any = await this.database
       .select({ cart: customerCarts.cart, cartId: customerCarts.id })
@@ -161,7 +161,8 @@ export class TokenizeService {
       holes: number;
     },
     normalizedCartData?: any,
-    isWebhookAvailable?: boolean
+    isWebhookAvailable?: boolean,
+    providerSlotIds?: string[],
   ): Promise<string> {
     this.logger.info(`tokenizeBooking tokenizing booking id: ${providerTeeTimeId} for user: ${userId}`);
     //@TODO add this to the transaction
@@ -298,7 +299,7 @@ export class TokenizeService {
       ownerId: userId,
       // courseId: existingTeeTime.courseId,
       teeTimeId: existingTeeTime.id,
-      nameOnBooking: "Guest",
+      nameOnBooking: existingTeeTime.customerName ?? "Guest",
       includesCart: withCart,
       listId: null,
       // entityId: existingTeeTime.entityId,
@@ -338,7 +339,8 @@ export class TokenizeService {
         userId,
         providerBookingId,
         provider.providerId,
-        existingTeeTime.courseId
+        existingTeeTime.courseId,
+        providerSlotIds
       )) ?? [];
 
     console.log(`Looping through and updating the booking slots.`);

@@ -45,7 +45,7 @@ import type { NotificationService } from "../notification/notification.service";
 import type { HyperSwitchService } from "../payment-processor/hyperswitch.service";
 import type { SensibleService } from "../sensible/sensible.service";
 import type { Customer, ProviderService } from "../tee-sheet-provider/providers.service";
-import type { BookingResponse } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
+import type { BookingResponse } from "../tee-sheet-provider/sheet-providers/types/interface";
 import type { TokenizeService } from "../token/tokenize.service";
 import type { LoggerService } from "./logging.service";
 import type { HyperSwitchEvent } from "./types/hyperswitch";
@@ -726,6 +726,8 @@ export class HyperSwitchWebhookService {
         playerCount: bookings.playerCount,
         providerCourseConfiguration: providerCourseLink.providerCourseConfiguration,
         markupFees: bookings.markupFees,
+        providerTeeTimeId: teeTimes.providerTeeTimeId,
+        greenFeePerPlayer: bookings.greenFeePerPlayer,
       })
       .from(bookings)
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -856,6 +858,7 @@ export class HyperSwitchWebhookService {
         greenFeeTaxPerPlayer: teeTimes.greenFeeTaxPerPlayer,
         cartFeeTaxPerPlayer: teeTimes.cartFeeTaxPerPlayer,
         timezoneCorrection: courses.timezoneCorrection,
+        cartFee: teeTimes.cartFeePerPlayer,
       })
       .from(teeTimes)
       .where(eq(teeTimes.id, firstBooking.teeTimeId))
@@ -892,29 +895,54 @@ export class HyperSwitchWebhookService {
 
       const totalAmount = (greenFee + greenFeeTaxPerPlayer + cartFeePerPlayer + cartFeeTaxPerPlayer) / 100;
       try {
-        newBooking = await provider.createBooking(
-          token,
-          firstBooking.providerCourseId!,
-          firstBooking.providerTeeSheetId!,
-          {
-            totalAmountPaid: totalAmount * (listedSlotsCount ?? 1),
-            data: {
-              type: "bookings",
-              attributes: {
-                start: firstBooking.providerDate,
-                holes: firstBooking.numberOfHoles,
-                players: listedSlotsCount,
-                bookedPlayers: [
-                  {
-                    personId: buyerCustomer.customerId,
-                  },
-                ],
-                event_type: "tee_time",
-                details,
+        //TODO: Provider update
+        if (firstBooking.internalId === "fore-up") {
+          newBooking = await provider.createBooking(
+            token,
+            firstBooking.providerCourseId!,
+            firstBooking.providerTeeSheetId!,
+            {
+              totalAmountPaid: totalAmount * (listedSlotsCount ?? 1),
+              data: {
+                type: "bookings",
+                attributes: {
+                  start: firstBooking.providerDate,
+                  holes: firstBooking.numberOfHoles,
+                  players: listedSlotsCount,
+                  bookedPlayers: [
+                    {
+                      personId: buyerCustomer.customerId,
+                    },
+                  ],
+                  event_type: "tee_time",
+                  details,
+                },
               },
-            },
-          }
-        );
+            }
+          );
+        } else {
+          const bookingData = provider.getBookingCreationData({
+            firstHandCharge: greenFee,
+            markupCharge: 0,
+            taxCharge,
+            playerCount: listedSlotsCount ?? 1,
+            holes: firstBooking.numberOfHoles,
+            notes: details,
+            teeTimeId: firstBooking.id,
+            providerTeeTimeId: firstBooking.providerTeeTimeId ?? "",
+            startTime: firstBooking.providerDate ?? "",
+            greenFees: (existingTeeTime?.greenFee ?? 0) / 100,
+            cartFees: (existingTeeTime?.cartFee ?? 0) / 100,
+            providerCustomerId: buyerCustomer.customerId,
+          })
+
+          newBooking = await provider.createBooking(
+            token,
+            firstBooking.providerCourseId!,
+            firstBooking.providerTeeSheetId!,
+            bookingData
+          );
+        }
       } catch (e) {
         await this.hyperSwitchService.refundPayment(paymentId);
         this.loggerService.auditLog({
@@ -966,37 +994,64 @@ export class HyperSwitchWebhookService {
       newBooking.data.ownerId = customer_id;
       newBooking.data.name = buyerCustomer.name || "";
       newBooking.data.bookingType = "FIRST";
+      newBooking.data.playerCount = listedSlotsCount;
       newBookings.push(newBooking);
       if (listedSlotsCount && listedSlotsCount < firstBooking?.playerCount) {
         details = await appSettingService.get("TEE_SHEET_BOOKING_MESSAGE");
-        const newBookingSecond = await provider.createBooking(
-          token,
-          firstBooking.providerCourseId!,
-          firstBooking.providerTeeSheetId!,
-          {
-            totalAmountPaid: totalAmount * (listedBooking.length - listedSlotsCount),
-            data: {
-              type: "bookings",
-              attributes: {
-                start: firstBooking.providerDate,
-                holes: firstBooking.numberOfHoles,
-                players: listedBooking.length - listedSlotsCount,
-                bookedPlayers: [
-                  {
-                    personId: sellerCustomer.customerId,
-                  },
-                ],
-                event_type: "tee_time",
-                details,
+        let newBookingSecond;
+        if (firstBooking.internalId === "fore-up") {
+          newBookingSecond = await provider.createBooking(
+            token,
+            firstBooking.providerCourseId!,
+            firstBooking.providerTeeSheetId!,
+            {
+              totalAmountPaid: totalAmount * (listedBooking.length - listedSlotsCount),
+              data: {
+                type: "bookings",
+                attributes: {
+                  start: firstBooking.providerDate,
+                  holes: firstBooking.numberOfHoles,
+                  players: listedBooking.length - listedSlotsCount,
+                  bookedPlayers: [
+                    {
+                      personId: sellerCustomer.customerId,
+                    },
+                  ],
+                  event_type: "tee_time",
+                  details,
+                },
               },
-            },
-          }
-        );
+            }
+          );
+        } else {
+          const bookingData = provider.getBookingCreationData({
+            firstHandCharge: greenFee,
+            markupCharge: 0,
+            taxCharge,
+            playerCount: listedBooking.length - listedSlotsCount,
+            holes: firstBooking.numberOfHoles,
+            notes: details,
+            teeTimeId: firstBooking.id,
+            providerTeeTimeId: firstBooking.providerTeeTimeId ?? "",
+            startTime: firstBooking.providerDate ?? "",
+            greenFees: (existingTeeTime?.greenFee ?? 0) / 100,
+            cartFees: (existingTeeTime?.cartFee ?? 0) / 100,
+            providerCustomerId: sellerCustomer.customerId,
+          })
+          newBookingSecond = await provider.createBooking(
+            token,
+            firstBooking.providerCourseId!,
+            firstBooking.providerTeeSheetId!,
+            bookingData
+          );
+        }
+
         newBookingSecond.data.ownerId = firstBooking.ownerId;
         newBooking.data.weatherGuaranteeId = firstBooking.weatherGuaranteeId || "";
         newBooking.data.weatherGuaranteeAmount = firstBooking.weatherGuaranteeAmount || 0;
         newBookingSecond.data.bookingType = "SECOND";
         newBookingSecond.data.name = sellerCustomer.name || "";
+        newBookingSecond.data.playerCount = listedBooking.length - listedSlotsCount;
         newBookings.push(newBookingSecond);
       }
     } catch (err) {
@@ -1013,7 +1068,6 @@ export class HyperSwitchWebhookService {
 
     const buyerFee = (existingTeeTime?.buyerFee ?? 1) / 100;
     const sellerFee = (existingTeeTime?.sellerFee ?? 1) / 100;
-
     for (const booking of newBookings) {
       const newBooking = booking;
       const bookingsToCreate: InsertBooking[] = [];
@@ -1036,7 +1090,7 @@ export class HyperSwitchWebhookService {
           // entityId: firstBooking.entityId,
           cartId: cartId,
           playerCount: firstBooking.playerCount - (listedSlotsCount ?? 0),
-          greenFeePerPlayer: listPrice ?? 1 * 100,
+          greenFeePerPlayer: firstBooking.greenFeePerPlayer ?? 1 * 100,
           totalTaxesAmount: taxCharge * 100 || 0,
           charityId: charityId || null,
           totalCharityAmount: charityCharge * 100 || 0,
@@ -1044,7 +1098,7 @@ export class HyperSwitchWebhookService {
           providerPaymentId: "",
           status: "CONFIRMED",
           markupFees: 0,
-          weatherQuoteId: weatherQuoteId || null,
+          // weatherQuoteId: weatherQuoteId || null,
         });
       }
 
@@ -1060,15 +1114,16 @@ export class HyperSwitchWebhookService {
             this.logger.error(err);
           });
       }
-
+      const providerSlotIds = provider?.getSlotIdsFromBooking(newBooking)
       const bookingSlots =
         (await provider?.getSlotIdsForBooking(
           bookingId,
-          booking.data.attributes.playerCount,
+          booking.data.playerCount ?? 1,
           booking.data.ownerId || "",
           newBooking?.data?.id || "",
           provider.providerId,
-          firstBooking.courseId ?? ""
+          firstBooking.courseId ?? "",
+          providerSlotIds
         )) || [];
 
       for (let i = 0; i < bookingSlots.length; i++) {
@@ -1096,6 +1151,7 @@ export class HyperSwitchWebhookService {
         }
       }
 
+      console.log("bookingSlots", bookingSlots.length, bookingsToCreate.length);
       if (bookingsToCreate.length) {
         await this.database.transaction(async (tx) => {
           //create each booking
@@ -1363,6 +1419,8 @@ export class HyperSwitchWebhookService {
     customer_id: string,
     customerCart: CustomerCart
   ) => {
+    console.log("Sensible Item");
+    console.dir(item, { depth: null });
     // Logic for handling first-hand items
     try {
       const booking = await this.getBookingDetails(item.product_data.metadata.sensible_quote_id);

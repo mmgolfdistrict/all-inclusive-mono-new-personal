@@ -100,8 +100,8 @@ export const ManageOwnedTeeTime = ({
       document.body.classList.remove("overflow-hidden");
       setMinimumOfferPrice(
         selectedTeeTime?.minimumOfferPrice ||
-          selectedTeeTime?.firstHandPrice ||
-          0
+        selectedTeeTime?.firstHandPrice ||
+        0
       ); //reset price
       setNewFriend({
         id: "",
@@ -140,16 +140,17 @@ export const ManageOwnedTeeTime = ({
     return Math.abs(minimumOfferPrice * friends.length - 45);
   }, [minimumOfferPrice, friends]);
 
+  console.log("friends,", friends)
   const save = async () => {
     if (!selectedTeeTime) {
       toast.error("Tee time not selected");
       return;
     }
 
-    if (!updateNames.data?.success) {
-      toast.error(updateNames.data?.message);
-      return;
-    }
+    // if (!updateNames.data?.success) {
+    //   toast.error(updateNames.data?.message);
+    //   return;
+    // }
 
     if (updateNames.isLoading || updateMinimumOfferPrice.isLoading) return;
 
@@ -337,9 +338,8 @@ export const ManageOwnedTeeTime = ({
       )}
       <aside
         // ref={sidebar}
-        className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[500px] md:h-[100dvh] ${
-          isManageOwnedTeeTimeOpen ? "translate-x-0" : "translate-x-full"
-        }`}
+        className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[500px] md:h-[100dvh] ${isManageOwnedTeeTimeOpen ? "translate-x-0" : "translate-x-full"
+          }`}
       >
         <div className="relative flex h-full flex-col">
           <div className="flex items-center justify-between p-4">
@@ -409,115 +409,114 @@ export const ManageOwnedTeeTime = ({
 
                 {friends.length
                   ? friends.map((friend, index) => {
-                      return (
-                        <>
-                          {!friend.currentlyEditing ? (
-                            <div
-                              key={friend.slotId}
-                              className="mx-auto w-full max-w-[400px] rounded-lg bg-secondary-white px-4 py-1 flex justify-between text-[16px] font-semibold outline-none"
-                            >
-                              <div>{index === 0 ? "You" : friend.name}</div>
-                              {index !== 0 ? (
-                                <button
-                                  onClick={() => {
-                                    removeFriend(friend.slotId);
-                                  }}
-                                  data-testid="remove-friend-button-id"
-                                >
-                                  {!friend.currentlyEditing ? (
-                                    <Edit className="w-[20px]" />
-                                  ) : (
-                                    <Close className="w-[20px]" />
-                                  )}
-                                </button>
-                              ) : null}
-                            </div>
-                          ) : (
-                            <>
-                              <input
-                                value={friend.name}
-                                type="search"
-                                list="searchedFriends"
-                                onChange={(e) => {
-                                  handleNewFriend(e, friend);
+                    return (
+                      <>
+                        {!friend.currentlyEditing ? (
+                          <div
+                            key={friend.slotId}
+                            className="mx-auto w-full max-w-[400px] rounded-lg bg-secondary-white px-4 py-1 flex justify-between text-[16px] font-semibold outline-none"
+                          >
+                            <div>{index === 0 ? "You" : friend.name}</div>
+                            {index !== 0 ? (
+                              <button
+                                onClick={() => {
+                                  removeFriend(friend.slotId);
                                 }}
-                                onSelect={addFriend}
-                                placeholder="Username or email"
-                                className="mx-auto w-full max-w-[400px] rounded-lg bg-secondary-white px-4 py-2 flex justify-between text-[14px] font-semibold outline-none"
-                                data-testid="search-friend-id"
-                              />
-                              {friend.slotId == newFriend.slotId ? (
-                                <div className="mx-auto w-full max-w-[400px] rounded-lg py-2 flex justify-between text-[14px] font-semibold outline-none rounded-8 ">
-                                  {friendList.length ? (
-                                    <ul className="w-full text-opacity-100 text-gray-700 shadow-md border border-solid border-gray-200 rounded-8 text-start">
-                                      {friendList.map((frnd, idx) => (
-                                        <li key={idx}>
-                                          <div
-                                            className="cursor-pointer p-4 border-b border-solid border-gray-300"
-                                            onClick={() => {
-                                              addFriendUpdated({
-                                                ...frnd,
-                                                slotId: friend.slotId,
-                                              });
-                                            }}
-                                          >
-                                            {frnd.email} ({frnd.handle})
-                                          </div>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  ) : null}
-                                </div>
-                              ) : null}
+                                data-testid="remove-friend-button-id"
+                              >
+                                {!friend.currentlyEditing ? (
+                                  <Edit className="w-[20px]" />
+                                ) : (
+                                  <Close className="w-[20px]" />
+                                )}
+                              </button>
+                            ) : null}
+                          </div>
+                        ) : (
+                          <>
+                            <input
+                              value={friend.name}
+                              type="search"
+                              list="searchedFriends"
+                              onChange={(e) => {
+                                handleNewFriend(e, friend);
+                              }}
+                              onSelect={addFriend}
+                              placeholder="Username or email"
+                              className="mx-auto w-full max-w-[400px] rounded-lg bg-secondary-white px-4 py-2 flex justify-between text-[14px] font-semibold outline-none"
+                              data-testid="search-friend-id"
+                            />
+                            {friend.slotId == newFriend.slotId ? (
+                              <div className="mx-auto w-full max-w-[400px] rounded-lg py-2 flex justify-between text-[14px] font-semibold outline-none rounded-8 ">
+                                {friendList.length ? (
+                                  <ul className="w-full text-opacity-100 text-gray-700 shadow-md border border-solid border-gray-200 rounded-8 text-start">
+                                    {friendList.map((frnd, idx) => (
+                                      <li key={idx}>
+                                        <div
+                                          className="cursor-pointer p-4 border-b border-solid border-gray-300"
+                                          onClick={() => {
+                                            addFriendUpdated({
+                                              ...frnd,
+                                              slotId: friend.slotId,
+                                            });
+                                          }}
+                                        >
+                                          {frnd.email} ({frnd.handle})
+                                        </div>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                ) : null}
+                              </div>
+                            ) : null}
 
-                              {!isLoading &&
+                            {!isLoading &&
                               friendList?.length === 0 &&
                               debouncedValue.name.length > 0 ? (
-                                <div className="flex justify-center items-center flex-col gap-1 rounded-md w-full mx-auto max-w-[400px]">
-                                  {inviteSucess ? (
+                              <div className="flex justify-center items-center flex-col gap-1 rounded-md w-full mx-auto max-w-[400px]">
+                                {inviteSucess ? (
+                                  <div className="text-center fade-in">
+                                    Friend invited successfully.
+                                  </div>
+                                ) : (
+                                  <>
                                     <div className="text-center fade-in">
-                                      Friend invited successfully.
+                                      Friend not found. Invite them!
                                     </div>
-                                  ) : (
-                                    <>
-                                      <div className="text-center fade-in">
-                                        Friend not found. Invite them!
-                                      </div>
-                                      <div className="flex items-center gap-1 w-full fade-in">
-                                        <input
-                                          value={inviteFriend}
-                                          type="text"
-                                          onChange={(e) => {
-                                            if (invite.isLoading) return;
-                                            setInviteFriend(e.target.value);
-                                          }}
-                                          placeholder="Email or phone number"
-                                          className="mx-auto w-full max-w-[400px] rounded-lg bg-secondary-white px-4 py-2 flex justify-between text-[14px] font-semibold outline-none"
-                                          data-testid="invite-friend-id"
-                                        />
-                                        <FilledButton
-                                          className={`w-full !max-w-fit ${
-                                            invite.isLoading
-                                              ? "animate-pulse"
-                                              : ""
+                                    <div className="flex items-center gap-1 w-full fade-in">
+                                      <input
+                                        value={inviteFriend}
+                                        type="text"
+                                        onChange={(e) => {
+                                          if (invite.isLoading) return;
+                                          setInviteFriend(e.target.value);
+                                        }}
+                                        placeholder="Email or phone number"
+                                        className="mx-auto w-full max-w-[400px] rounded-lg bg-secondary-white px-4 py-2 flex justify-between text-[14px] font-semibold outline-none"
+                                        data-testid="invite-friend-id"
+                                      />
+                                      <FilledButton
+                                        className={`w-full !max-w-fit ${invite.isLoading
+                                          ? "animate-pulse"
+                                          : ""
                                           }`}
-                                          onClick={inviteFriendCall}
-                                          data-testid="invite-button-id"
-                                        >
-                                          {invite.isLoading
-                                            ? "Inviting..."
-                                            : "Invite"}
-                                        </FilledButton>
-                                      </div>
-                                    </>
-                                  )}
-                                </div>
-                              ) : null}
-                            </>
-                          )}
-                        </>
-                      );
-                    })
+                                        onClick={inviteFriendCall}
+                                        data-testid="invite-button-id"
+                                      >
+                                        {invite.isLoading
+                                          ? "Inviting..."
+                                          : "Invite"}
+                                      </FilledButton>
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            ) : null}
+                          </>
+                        )}
+                      </>
+                    );
+                  })
                   : null}
               </div>
             </div>
@@ -554,9 +553,9 @@ export const ManageOwnedTeeTime = ({
                   </div>
                 </>
               ) : null}
-               <p className="mt-4 mb-2 text-[14px] text-primary-gray md:text-[16px] font-semibold text-left">
-              Tip: If you know you can’t make your time, the earlier you can list, the greater the chance it sells.
-            </p>
+              <p className="mt-4 mb-2 text-[14px] text-primary-gray md:text-[16px] font-semibold text-left">
+                Tip: If you know you can’t make your time, the earlier you can list, the greater the chance it sells.
+              </p>
               <div className="text-center text-[14px] font-[300] text-primary-gray">
                 All sales are final.
               </div>

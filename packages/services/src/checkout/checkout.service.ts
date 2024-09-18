@@ -401,16 +401,30 @@ export class CheckoutService {
     console.log(`formattedDate: ${formattedDate}`);
 
     if (teeTime.providerCourseId && teeTime.providerTeeSheetId && formattedDate) {
-     const response =  await this.foreupIndexer.indexTeeTime(
-        formattedDate,
-        teeTime.providerCourseId,
-        teeTime.providerTeeSheetId,
-        provider,
-        token,
-        teeTime.time,
-        teeTime.id
-      );
-      if(response?.error){
+      //TODO: Provider update
+      let response;
+      if (teeTime.internalId === "fore-up") {
+        response = await this.foreupIndexer.indexTeeTime(
+          formattedDate,
+          teeTime.providerCourseId,
+          teeTime.providerTeeSheetId,
+          provider,
+          token,
+          teeTime.time,
+          teeTime.id
+        );
+      } else {
+        response = await provider.indexTeeTime(
+          formattedDate,
+          teeTime.providerCourseId,
+          teeTime.providerTeeSheetId,
+          provider,
+          token,
+          teeTime.time,
+          teeTime.id
+        )
+      }
+      if (response?.error) {
         errors.push({
           errorType: CartValidationErrors.TEE_TIME_NOT_AVAILABLE,
           product_id: item.id,
@@ -418,6 +432,7 @@ export class CheckoutService {
       }
     }
     console.log("teeTime", item.product_data);
+    console.log("NUmber of bookings", item.product_data.metadata.number_of_bookings);
     const stillAvailable = await this.database
       .select({ id: teeTimes.id })
       .from(teeTimes)

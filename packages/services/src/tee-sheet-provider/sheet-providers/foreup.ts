@@ -9,6 +9,7 @@ import type {
   TeeTimeResponse,
   TeeTimeUpdateRequest,
 } from "./types/foreup.type";
+import type { BuyerData, ProviderAPI, TeeTimeData } from "./types/interface";
 import { BaseProvider } from "./types/interface";
 
 export class foreUp extends BaseProvider {
@@ -134,9 +135,8 @@ export class foreUp extends BaseProvider {
     const endpoint = this.getBasePoint();
     const { defaultPriceClassID } = JSON.parse(this.providerConfiguration ?? "{}");
     // https://api.foreupsoftware.com/api_rest/index.php/courses/courseId/teesheets/teesheetId/bookings/bookingId/bookedPlayers/bookedPlayerId
-    const url = `${endpoint}/courses/${courseId}/teesheets/${teesheetId}/bookings/${bookingId}/bookedPlayers/${
-      slotId ? slotId : bookingId
-    }`;
+    const url = `${endpoint}/courses/${courseId}/teesheets/${teesheetId}/bookings/${bookingId}/bookedPlayers/${slotId ? slotId : bookingId
+      }`;
     const headers = this.getHeaders(token);
 
     if (options) {
@@ -277,8 +277,7 @@ export class foreUp extends BaseProvider {
       });
       if (!checkInResponse.ok) {
         throw new Error(
-          `Error doing booking checkin for booking: ${bookingId}, status code: ${
-            checkInResponse.status
+          `Error doing booking checkin for booking: ${bookingId}, status code: ${checkInResponse.status
           }, status text: ${checkInResponse.statusText}, response: ${JSON.stringify(checkInResponse)}`
         );
       }
@@ -315,8 +314,7 @@ export class foreUp extends BaseProvider {
       });
       if (!addPaymentsResponse.ok) {
         throw new Error(
-          `Error adding payment to cart for booking: ${bookingId}, status code: ${
-            addPaymentsResponse.status
+          `Error adding payment to cart for booking: ${bookingId}, status code: ${addPaymentsResponse.status
           }, status text: ${addPaymentsResponse.statusText}, response: ${JSON.stringify(addPaymentsResponse)}`
         );
       }
@@ -325,8 +323,7 @@ export class foreUp extends BaseProvider {
       const completeCartUrl = `${endpoint}/courses/${courseId}/carts/${cartData.data.id}`;
       this.logger.info(`Complete cart url - ${completeCartUrl}`);
       this.logger.info(
-        `Completing cart for provider booking: ${bookingId}, cart id: ${
-          cartData.data.id
+        `Completing cart for provider booking: ${bookingId}, cart id: ${cartData.data.id
         }, with paymentData: ${JSON.stringify(paymentData)}`
       );
       const completeCartResponse = await fetch(completeCartUrl, {
@@ -344,8 +341,7 @@ export class foreUp extends BaseProvider {
       });
       if (!completeCartResponse.ok) {
         throw new Error(
-          `Error completing cart for booking: ${bookingId}, status code: ${
-            completeCartResponse.status
+          `Error completing cart for booking: ${bookingId}, status code: ${completeCartResponse.status
           }, status text: ${completeCartResponse.statusText}, response: ${JSON.stringify(
             completeCartResponse
           )}`
@@ -370,7 +366,7 @@ export class foreUp extends BaseProvider {
     const response = await fetch(`${endpoint}/tokens`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: this.credentials.username, password: this.credentials.password }),
+      body: JSON.stringify({ email: this.credentials?.username, password: this.credentials?.password }),
     });
 
     if (!response.ok) {
@@ -408,7 +404,7 @@ export class foreUp extends BaseProvider {
     customerId: string,
     providerBookingId: string,
     providerId: string,
-    courseId: string
+    courseId: string,
   ) {
     const bookingSlots: {
       id: string;
@@ -435,6 +431,43 @@ export class foreUp extends BaseProvider {
       });
     }
     return bookingSlots;
+  }
+
+
+  getCustomerCreationData(buyerData: BuyerData): any {
+    return buyerData;
+  }
+
+  getCustomerId(customerData: any): string {
+    return "";
+  }
+
+  getBookingCreationData(teeTimeData: TeeTimeData): any {
+
+    return {};
+  }
+
+  getBookingId(bookingData: any): string {
+    return "";
+  }
+
+  getAvailableSpotsOnTeeTime(teeTimeData: any): number {
+    return 1;
+  }
+
+  indexTeeTime = async (
+    formattedDate: string,
+    providerCourseId: string,
+    providerTeeSheetId: string,
+    provider: ProviderAPI,
+    token: string,
+    time: number,
+    teeTimeId: string
+  ) => {
+
+  }
+  getSlotIdsFromBooking = (bookingData: any): string[] => {
+    return undefined as any;
   }
 }
 

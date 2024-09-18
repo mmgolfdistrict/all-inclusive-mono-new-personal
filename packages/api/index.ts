@@ -88,9 +88,9 @@ export const processForeUpWebhook = async () => {
     credentials
   );
   const foreUpWebhookService = new ForeUpWebhookService(db, providerService);
-  await foreUpWebhookService.handleWebhook().catch((error) => {
-    console.log(error);
-  });
+  // await foreUpWebhookService.handleWebhook().catch((error) => {
+  //   console.log(error);
+  // });
 };
 
 export const processStripeWebhook = async (req: any, sig: string) => {
