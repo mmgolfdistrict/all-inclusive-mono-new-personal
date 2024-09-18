@@ -123,7 +123,8 @@ export class ServiceFactory {
       this.getNotificationService(),
       this.getLoggerService(),
       this.getHyperSwitchService(),
-      this.getSensibleService()
+      this.getSensibleService(),
+      this.getUserWaitlistService()
     );
   };
 

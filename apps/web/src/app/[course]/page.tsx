@@ -18,15 +18,17 @@ import { SortIcon } from "~/components/icons/sort";
 import { Select } from "~/components/input/select";
 import { useAppContext } from "~/contexts/AppContext";
 import { useCourseContext } from "~/contexts/CourseContext";
+import type { GolferType } from "~/contexts/FiltersContext";
 import { useFiltersContext } from "~/contexts/FiltersContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
 import dayjs from "dayjs";
+import isBetween from "dayjs/plugin/isBetween";
 import isoWeek from "dayjs/plugin/isoWeek";
 import RelativeTime from "dayjs/plugin/relativeTime";
 import Weekday from "dayjs/plugin/weekday";
-import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { ViewportList } from "react-viewport-list";
 import { useMediaQuery } from "usehooks-ts";
@@ -35,7 +37,15 @@ import { LoadingContainer } from "./loader";
 dayjs.extend(Weekday);
 dayjs.extend(RelativeTime);
 dayjs.extend(isoWeek);
+dayjs.extend(isBetween);
 export default function CourseHomePage() {
+  const searchParams = useSearchParams();
+  const queryDateType = searchParams.get("dateType");
+  const queryDate = searchParams.get("date");
+  const queryStartTime = searchParams.get("startTime");
+  const queryEndTime = searchParams.get("endTime");
+  const queryPlayerCount = searchParams.get("playerCount");
+
   const TAKE = 4;
   const ref = useRef<HTMLDivElement | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -60,6 +70,10 @@ export default function CourseHomePage() {
     dateType,
     selectedDay,
     handleSetSortValue,
+    setDateType,
+    setSelectedDay,
+    setStartTime,
+    setGolfers,
   } = useFiltersContext();
   const { entity, alertOffersShown, setAlertOffersShown } = useAppContext();
   const router = useRouter();
@@ -403,6 +417,36 @@ export default function CourseHomePage() {
     setPageNumber(1);
   }, [priceRange]);
 
+  useEffect(() => {
+    if (queryDateType === "custom" && queryDate) {
+      setDateType("Custom");
+
+      const courseOpenTime = Number(dayjs(course?.openTime).format("HHmm"));
+      const courseCloseTime = Number(dayjs(course?.closeTime).format("HHmm"));
+      const startTime = Math.max(courseOpenTime, Number(queryStartTime));
+      const endTime = Math.min(courseCloseTime, Number(queryEndTime));
+      setStartTime([startTime, endTime]);
+
+      const playerCount =
+        Number(queryPlayerCount) <= 0 || Number(queryPlayerCount) > 4
+          ? "Any"
+          : Number(queryPlayerCount);
+      setGolfers((playerCount as GolferType) || "Any");
+    }
+  }, [queryDateType]);
+
+  useEffect(() => {
+    if (queryDateType === "custom" && queryDate) {
+      const [year, month, day] = queryDate.split("-");
+      if (year && month && day) {
+        setSelectedDay({
+          from: { year: Number(year), month: Number(month), day: Number(day) },
+          to: { year: Number(year), month: Number(month), day: Number(day) },
+        });
+      }
+    }
+  }, [dateType]);
+
   let datesArr = JSON.parse(
     JSON.stringify(datesWithData ?? daysData.arrayOfDates)
   );
@@ -413,6 +457,11 @@ export default function CourseHomePage() {
         : datesWithData.length - 1
       : daysData.amountOfPages) / TAKE
   );
+
+  datesArr = datesArr.filter((date: string) =>
+    dayjs(date).isBetween(dayjs(startDate), dayjs(endDate), "day", "[]")
+  );
+
   if (dateType === "Furthest Day Out To Book") {
     datesArr = datesArr.reverse();
   }

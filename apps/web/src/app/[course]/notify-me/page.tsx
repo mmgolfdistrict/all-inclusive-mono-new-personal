@@ -254,9 +254,8 @@ function NotifyMe({ params }: { params: { course: string } }) {
                     </div>
                     <div>
                       <span
-                        className={`text-[12px] text-red ${
-                          errorMessage ? "" : "hidden"
-                        }`}
+                        className={`text-[12px] text-red ${errorMessage ? "" : "hidden"
+                          }`}
                       >
                         {errorMessage}
                       </span>
