@@ -4,7 +4,7 @@ import { HyperElements } from "@juspay-tech/react-hyper-js";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
-import type { CartProduct } from "~/utils/types";
+import type { CartProduct, MaxReservationResponse } from "~/utils/types";
 // import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 import { useEffect, useRef, useState } from "react";
 import { Spinner } from "../loading/spinner";
@@ -38,6 +38,7 @@ export const HyperSwitch = ({
   listingId,
   setIsLoading,
   playerCount,
+  // maxReservation,
 }: {
   cartData: CartProduct[];
   isBuyNowAuction: boolean;
@@ -46,6 +47,7 @@ export const HyperSwitch = ({
   listingId: string | undefined;
   setIsLoading?: (isLoading: boolean) => void;
   playerCount: string | undefined;
+  // maxReservation: MaxReservationResponse;
 }) => {
   const [options, setOptions] = useState<Options | undefined>(undefined);
   const { user } = useUserContext();
@@ -90,10 +92,9 @@ export const HyperSwitch = ({
     } catch (error) {
       // setIsLoadingSession(false);
       callingRef.current = false;
-      console.log(error.message);
       setError(
         (error?.message as string) ??
-          "An error occurred building checkout seesion."
+        "An error occurred building checkout seesion."
       );
     }
   };
@@ -141,6 +142,7 @@ export const HyperSwitch = ({
             teeTimeDate={teeTimeDate}
             listingId={listingId ?? ""}
             playerCount={playerCount}
+          // maxReservation={maxReservation}
           />
         </HyperElements>
       ) : (

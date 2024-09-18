@@ -89,7 +89,6 @@ export const AddCard = ({ refetchCards }: { refetchCards: () => unknown }) => {
         reset();
         setIsLoading(false);
       } catch (error) {
-        console.log(error);
         setIsLoading(false);
       }
     }

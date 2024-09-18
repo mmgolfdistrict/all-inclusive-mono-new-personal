@@ -1,5 +1,6 @@
 "use client";
 
+import type { NotificationObject } from "@golf-district/shared";
 import { formatQueryDate, formatQueryDateEnd } from "@golf-district/shared";
 import { FilledButton } from "~/components/buttons/filled-button";
 import { FilterSort } from "~/components/buttons/filters-sort";
@@ -88,16 +89,20 @@ export default function CourseHomePage() {
         courseId,
       });
     } catch (error) {
-      console.log(error);
+      console.log("error", error);
     }
   };
+  console.log("courseId", courseId);
 
   const updateCount = (balance: number) => {
     setCount(balance);
   };
 
   const farthestDateOut = useMemo(() => {
-    return dayjs().utc().add(course?.furthestDayToBook ?? 0, "day").format("YYYY-MM-DD");
+    return dayjs()
+      .utc()
+      .add(course?.furthestDayToBook ?? 0, "day")
+      .format("YYYY-MM-DD");
   }, [course?.furthestDayToBook]);
 
   const { data: unreadOffers } = api.user.getUnreadOffersForCourse.useQuery(
@@ -112,7 +117,6 @@ export default function CourseHomePage() {
   const { data: specialEvents } = api.searchRouter.getSpecialEvents.useQuery({
     courseId: courseId ?? "",
   });
-  console.log("specialEvents", specialEvents);
 
   const getSpecialDayDate = (label) => {
     const specialDay = specialEvents?.find((day) => day.eventName === label);
@@ -129,7 +133,6 @@ export default function CourseHomePage() {
       return currentDateWithTimeZoneOffset;
     };
     const specialDate = getSpecialDayDate(dateType);
-    console.log("specialDate", specialDate);
 
     if (specialDate) {
       const startOfDay = dayjs(specialDate.start);
@@ -193,7 +196,6 @@ export default function CourseHomePage() {
     };
 
     const specialDate = getSpecialDayDate(dateType);
-    console.log("specialDate", specialDate);
 
     if (specialDate) {
       const endOfDay = dayjs(specialDate.end);
@@ -479,6 +481,29 @@ export default function CourseHomePage() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+
+  const { data: courseException } =
+    api.courseException.getCourseException.useQuery({
+      courseId: courseId ?? "",
+    });
+
+  const getCourseException = (playDate: string): null | NotificationObject => {
+    let flag = false;
+    let msg: NotificationObject | null = null;
+    courseException?.forEach((ce) => {
+      const startDate = new Date(ce.startDate);
+      const endDate = new Date(ce.endDate);
+      const dateToCheck = new Date(playDate);
+      if (dateToCheck > startDate && dateToCheck < endDate) {
+        flag = true;
+        msg = ce;
+      }
+    });
+    if (flag) {
+      return msg;
+    }
+    return null;
+  };
   return (
     <main className="bg-secondary-white py-4 md:py-6">
       <LoadingContainer isLoading={isLoadingTeeTimeDate || isLoading}>
@@ -527,8 +552,8 @@ export default function CourseHomePage() {
         <div className="flex w-full flex-col gap-1 md:gap-4 overflow-x-hidden pr-0 md:pr-6">
           <div
             className={`flex space-x-2 md:hidden px-4 ${scrollY > 333
-                ? "fixed top-[7.8rem] left-0 w-full z-10 bg-secondary-white pt-2 pb-3 shadow-md"
-                : "relative"
+              ? "fixed top-[7.8rem] left-0 w-full z-10 bg-secondary-white pt-2 pb-3 shadow-md"
+              : "relative"
               }`}
           >
             <button
@@ -574,6 +599,7 @@ export default function CourseHomePage() {
                       setError={(e: string | null) => {
                         setError(e);
                       }}
+                      courseException={getCourseException(date as string)}
                       key={idx}
                       date={date}
                       minDate={utcStartDate.toString()}

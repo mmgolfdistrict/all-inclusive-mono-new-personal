@@ -75,7 +75,8 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
         }
       })
       .catch((err) => {
-        console.log(err);
+        console.log("error", err);
+
       });
   };
 

@@ -4,7 +4,7 @@ import GitHubProvider from "@auth/core/providers/github";
 import GoogleProvider from "@auth/core/providers/google";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { db, tableCreator } from "@golf-district/database";
-import { AuthService, NotificationService } from "@golf-district/service";
+import { AuthService, NotificationService, UserService } from "@golf-district/service";
 import NextAuth from "next-auth";
 import type { DefaultSession, NextAuthConfig } from "next-auth";
 import FacebookProvider from "next-auth/providers/facebook";
@@ -156,7 +156,7 @@ export const authConfig: NextAuthConfig = {
   // },
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
-    async signIn({ user }) {
+    async signIn({ user, account }) {
       if (user) {
         const notificationService = new NotificationService(
           db,
@@ -166,6 +166,7 @@ export const authConfig: NextAuthConfig = {
           process.env.TWILLIO_AUTH_TOKEN!,
           process.env.SENDGRID_API_KEY!
         );
+
         const authService = new AuthService(
           db,
           notificationService,
@@ -176,15 +177,46 @@ export const authConfig: NextAuthConfig = {
         if (isUserBlocked) {
           return false;
         }
+        const userService = new UserService(db, notificationService);
+        const username = await userService.generateUsername(6);
+        const getUserByIdServide = await userService.getUserById(user.id);
+        console.log("getUserByIdServide", getUserByIdServide);
+
+        if (!getUserByIdServide?.handle) {
+          if (account && account.provider) {
+            const updateData = {
+              ...user,
+              handle: username,
+            };
+            await userService.updateUser(user.id, updateData);
+          }
+        }
       }
       return true;
     },
-    jwt: ({ trigger, session, token, user }) => {
+    jwt: async ({ trigger, session, token, user }) => {
       console.log("JWT Callback");
       console.log(trigger);
       console.log(session);
       console.log(token);
       console.log(user);
+
+      const notificationService = new NotificationService(
+        db,
+        process.env.TWILLIO_PHONE_NUMBER!,
+        process.env.SENDGRID_EMAIL!,
+        process.env.TWILLIO_ACCOUNT_SID!,
+        process.env.TWILLIO_AUTH_TOKEN!,
+        process.env.SENDGRID_API_KEY!
+      );
+
+      const authService = new AuthService(
+        db,
+        notificationService,
+        process.env.REDIS_URL!,
+        process.env.REDIS_TOKEN!
+      );
+
       if (user) {
         token.id = user?.id;
         token.email = user.email;
@@ -192,6 +224,8 @@ export const authConfig: NextAuthConfig = {
         token.picture = user.image;
         token.image = (token?.user as { image?: string })?.image ?? undefined;
       }
+
+      await authService.updateLastSuccessfulLogin(user?.id, user?.email ?? "");
 
       if (trigger === "update" && session?.image !== undefined && token) {
         token.picture = session.image;

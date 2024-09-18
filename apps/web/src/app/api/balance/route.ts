@@ -9,7 +9,6 @@ async function handler(req: NextRequest) {
     const body = (await req.json()) as { userId: string; amount: number };
     await processUpdateWithdrawableBalance(body);
   } catch (error) {
-    console.log(error);
     return NextResponse.json({ ok: false });
   }
 
