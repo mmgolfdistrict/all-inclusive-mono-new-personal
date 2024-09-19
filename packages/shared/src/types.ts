@@ -93,6 +93,8 @@ export type FullCourseType = {
   sellerFee?: number;
   buyerFee?: number;
   furthestDayToBook?: number;
+  internalId?: string | null;
+  supportsPlayerNameChange: boolean;
 };
 
 export type SupportedCharity = {
@@ -207,7 +209,7 @@ export type ReserveTeeTimeResponse = {
   status: string;
 };
 
-export type  NotificationObject ={
+export type NotificationObject = {
   id: string;
   courseId: string;
   shortMessage: string;

@@ -51,6 +51,7 @@ export interface ProviderAPI {
     providerId: string,
     courseId: string
   ) => Promise<InsertBookingSlots[]>;
+  supportsPlayerNameChange(): boolean;
 }
 
 export abstract class BaseProvider implements ProviderAPI {
@@ -107,4 +108,5 @@ export abstract class BaseProvider implements ProviderAPI {
     providerId: string,
     courseId: string
   ): Promise<InsertBookingSlots[]>;
+  abstract supportsPlayerNameChange(): boolean;
 }
