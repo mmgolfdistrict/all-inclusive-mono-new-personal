@@ -141,8 +141,8 @@ export class UserService {
       this.logger.warn(`Handle already exists: ${data.handle}`);
       return {
         error: true,
-        message: "Handle already exists."
-      }
+        message: "Handle already exists.",
+      };
     }
     if (isValidPassword(data.password).score < 8) {
       this.logger.warn("Invalid password");
@@ -177,7 +177,10 @@ export class UserService {
     if (existingUserWithEmail) {
       if (existingUserWithEmail.email == data.email) {
         this.logger.warn(`Email already exists: ${data.email}`);
-        throw new Error("Email already exists");
+        return {
+          error: true,
+          message: "Email already exists",
+        };
       }
     }
     const verificationToken = randomBytes(32).toString("hex");
@@ -538,13 +541,17 @@ export class UserService {
    *     emailNotifications: false
    *   });
    */
-  updateUser = async (userId: string, data: UserUpdateData): Promise<void> => {
+  updateUser = async (userId: string, data: UserUpdateData) => {
     this.logger.info(`updateUser called for user: ${userId}`);
 
     if (data.handle) {
-      if (!(await this.isValidHandle(data.handle))) {
+      const isValid = await this.isValidHandle(data.handle);
+      if (!isValid) {
         this.logger.warn(`Handle already exists: ${data.handle}`);
-        throw new Error("Handle already exists");
+        return {
+          error: true,
+          message: "Handle already exists.",
+        };
       }
     }
     // if (data.name) {
@@ -854,11 +861,49 @@ export class UserService {
       // throw new Error("User not found");
       return;
     }
+
     if (!user.email) {
       this.logger.warn(`User email does not exists: ${handleOrEmail}`);
       // throw new Error("User does not have an email");
       return;
     }
+
+    const [accountData] = await this.database
+      .select()
+      .from(accounts)
+      .where(and(eq(accounts.userId, user.id)))
+      .execute()
+
+    const emailParam = {
+      CustomerFirstName: user.name?.split(" ")[0],
+      EMail: user.email,
+      CourseLogoURL,
+      CourseURL,
+      CourseName,
+      HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+    };
+
+    const templateId = process.env.SENDGRID_FORGOT_PASSWORD_AUTH_USER_TEMPLATE_ID;
+
+    if (!templateId) {
+      this.logger.error("Missing SendGrid template ID for forgot password email.");
+      throw new Error("Missing email template ID");
+    }
+
+    if (accountData) {
+      await this.notificationsService
+        .sendEmail(
+          user.email,
+          "Reset Password",
+          `Since you signed in using ${accountData?.provider} , we cannot reset your password from our end. Please use ${accountData?.provider} to sign in.`
+        )
+        .catch((err) => {
+          this.logger.error(`Error sending email: ${err}`);
+          throw new Error("Error sending email");
+        });
+    }
+
+
     if (!user.emailVerified) {
       this.logger.warn(`User email not verified: ${handleOrEmail}`);
       // throw new Error("User email not verified");

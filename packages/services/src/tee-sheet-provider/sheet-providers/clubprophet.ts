@@ -107,6 +107,7 @@ export class clubprophet {
     });
 
     if (!response.ok) {
+      console.log("ERROR", await response.json());
       // this.logger.fatal(`Error fetching token: ${response.statusText}`);
       throw new Error(`Error fetching token: ${response.statusText}`);
     }

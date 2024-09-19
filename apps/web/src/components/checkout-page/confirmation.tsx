@@ -104,6 +104,9 @@ export const Confirmation = ({
           </Link>
         </div>
       </div>
+      <p className="mt-4 text-[14px] text-primary-gray md:text-[16px] font-semibold text-center">
+      Tip: If you know you can’t make your time, the earlier you can list, the greater the chance it sells.
+    </p>     
     </section>
   );
 };

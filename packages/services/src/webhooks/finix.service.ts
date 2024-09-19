@@ -144,6 +144,7 @@ interface PaymentInstrument {
 type ResponseCashout = {
   success: boolean;
   error: boolean;
+  message: string;
 };
 
 type RequestOptions = {
@@ -164,7 +165,7 @@ export class FinixService {
     private readonly cashoutService: CashOutService,
     private readonly loggerService: LoggerService,
     private readonly notificationService: NotificationService
-  ) {}
+  ) { }
   getHeaders = () => {
     const requestHeaders = new Headers();
     requestHeaders.append("Content-Type", "application/json");
@@ -349,8 +350,7 @@ export class FinixService {
     const amountMultiplied = amount * 100;
     if (amountMultiplied + Number((allRecords?.sum as number) || 0) > Number(limitInAmount) * 100) {
       return new Error(
-        `You cannot withdraw more than $${limitInAmount} in a day. You have already withdrawn $${
-          ((allRecords?.sum as number) || 1) / 100 || 0
+        `You cannot withdraw more than $${limitInAmount} in a day. You have already withdrawn $${((allRecords?.sum as number) || 1) / 100 || 0
         } today.`
       );
     }
@@ -455,12 +455,35 @@ export class FinixService {
       return {
         error: true,
         success: false,
+        message: "Some error occured in adding bank account",
       };
     }
     const paymentInstrumentData: PaymentInstrument = await this.createPaymentInstrument(
       customerIdentity.id,
       paymentToken
     );
+
+    const existingRecord = await this.database
+      .select({
+        id: customerPaymentDetail.id,
+      })
+      .from(customerPaymentDetail)
+      .where(
+        and(
+          eq(customerPaymentDetail.accountNumber, paymentInstrumentData.masked_account_number),
+          eq(customerPaymentDetail.bankCode, paymentInstrumentData.bank_code),
+          eq(customerPaymentDetail.isActive, 1)
+        )
+      );
+
+    if (existingRecord.length > 0) {
+      return {
+        success: false,
+        error: true,
+        message: "It seems that the account details already exist in our system.",
+      };
+    }
+
     const merchantData: any = await this.createMerchantAccountOnProcessor(customerIdentity.id);
     if (customerIdentity.id && paymentInstrumentData.id && merchantData.id) {
       await this.database
@@ -471,12 +494,13 @@ export class FinixService {
           paymentInstrumentId: paymentInstrumentData.id,
           customerIdentity: customerIdentity.id,
           accountNumber: paymentInstrumentData.masked_account_number,
+          bankCode: paymentInstrumentData.bank_code,
           merchantId: merchantData.id,
         })
         .execute();
-      return { success: true, error: false };
+      return { success: true, error: false, message: "Some error occured in adding bank account" };
     } else {
-      return { success: false, error: true };
+      return { success: false, error: true, message: "Some error occured in adding bank account" };
     }
   };
 
@@ -492,6 +516,7 @@ export class FinixService {
     return merchantData;
   };
 
+
   getPaymentInstruments = async (
     userId: string
   ): Promise<{ id: string; accountNumber: string | null; onboardingStatus: string | null }[]> => {
@@ -500,6 +525,7 @@ export class FinixService {
         id: customerPaymentDetail.id,
         accountNumber: customerPaymentDetail.accountNumber,
         merchantId: customerPaymentDetail.merchantId,
+        backCode: customerPaymentDetail.bankCode,
       })
       .from(customerPaymentDetail)
       .where(and(eq(customerPaymentDetail.customerId, userId), eq(customerPaymentDetail.isActive, 1)));

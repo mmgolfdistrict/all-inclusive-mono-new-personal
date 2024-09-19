@@ -71,7 +71,7 @@ const FinixForm = ({ onClose, setLoading, loading }) => {
               const token: string = tokenData.id;
               const response = await handleCashoutTransfer(token);
               if (response.error) {
-                toast.error("Some error occured in adding bank account");
+                toast.error(response.message);
                 onClose();
                 setShowLoadingSubmit(false);
                 return;

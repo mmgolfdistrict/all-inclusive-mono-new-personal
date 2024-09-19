@@ -2,6 +2,8 @@
 
 import { useSession } from "@golf-district/auth/nextjs-exports";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { MenuItem, Select } from "@mui/material";
+import { useLoadScript } from "@react-google-maps/api";
 import { FilledButton } from "~/components/buttons/filled-button";
 import { DropMedia } from "~/components/input/drop-media";
 import { Input } from "~/components/input/input";
@@ -17,18 +19,21 @@ import { api } from "~/utils/api";
 import { debounceFunction } from "~/utils/debounce";
 import { useParams } from "next/navigation";
 import type { FormEvent } from "react";
-import { useCallback, useEffect, useState, type ChangeEvent, useRef } from "react";
-import { useForm, type SubmitHandler, Controller } from "react-hook-form";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+} from "react";
+import { Controller, useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
 import { useDebounce } from "usehooks-ts";
 import { OutlineButton } from "../buttons/outline-button";
-import { useLoadScript } from '@react-google-maps/api';
-import { MenuItem, Select } from "@mui/material";
 
 const defaultProfilePhoto = "/defaults/default-profile.webp";
 const defaultBannerPhoto = "/defaults/default-banner.webp";
-const libraries: any = ['places'];
-
+const libraries: any = ["places"];
 
 export const EditProfileForm = () => {
   const {
@@ -87,13 +92,16 @@ export const EditProfileForm = () => {
 
   useEffect(() => {
     if (isLoaded && !loadError && inputRef?.current) {
-      const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
-        types: ['address'],
-        componentRestrictions: { country: 'us' },
-      });
+      const autocomplete = new window.google.maps.places.Autocomplete(
+        inputRef.current,
+        {
+          types: ["address"],
+          componentRestrictions: { country: "us" },
+        }
+      );
       if (autocomplete) {
         autocompleteRef.current = autocomplete;
-        autocomplete.addListener('place_changed', onPlaceChanged);
+        autocomplete.addListener("place_changed", onPlaceChanged);
       }
     }
   }, [isLoaded, loadError]);
@@ -104,26 +112,30 @@ export const EditProfileForm = () => {
       const addressComponents = place.address_components;
 
       const getAddressComponent = (type: string): string => {
-        return addressComponents.find(component => component.types.includes(type))?.long_name || '';
+        return (
+          addressComponents.find((component) => component.types.includes(type))
+            ?.long_name || ""
+        );
       };
 
-      const address1 = getAddressComponent('street_address') || getAddressComponent('route');
-      const address2 = getAddressComponent('sublocality');
-      const state = getAddressComponent('administrative_area_level_1');
-      const city = getAddressComponent('locality');
-      const zipcode = getAddressComponent('postal_code');
-      const country = getAddressComponent('country');
+      const streetNumber = getAddressComponent("street_number");
+      const route = getAddressComponent("route");
+      const address1 = `${streetNumber} ${route}`.trim();
+      const address2 = getAddressComponent("sublocality");
+      const state = getAddressComponent("administrative_area_level_1");
+      const city = getAddressComponent("locality");
+      const zipcode = getAddressComponent("postal_code");
+      const country = getAddressComponent("country");
 
       // Type guard before passing to setValue
-      if (typeof address1 === 'string') setValue("address1", address1);
-      if (typeof address2 === 'string') setValue("address2", address2);
-      if (typeof state === 'string') setValue("state", state);
-      if (typeof city === 'string') setValue("city", city);
-      if (typeof zipcode === 'string') setValue("zipcode", zipcode);
-      if (typeof country === 'string') setValue("country", country);
+      if (typeof address1 === "string") setValue("address1", address1);
+      if (typeof address2 === "string") setValue("address2", address2);
+      if (typeof state === "string") setValue("state", state);
+      if (typeof city === "string") setValue("city", city);
+      if (typeof zipcode === "string") setValue("zipcode", zipcode);
+      if (typeof country === "string") setValue("country", country);
     }
   };
-
 
   const cities = api.places.getCity.useQuery(
     { city: debouncedLocation },
@@ -134,7 +146,6 @@ export const EditProfileForm = () => {
       refetchOnReconnect: false,
     }
   );
-
 
   const upload = useCallback(
     async (file: File, type: "image" | "bannerImage") => {
@@ -322,7 +333,12 @@ export const EditProfileForm = () => {
         dataToUpdate.bannerImageAssetId = "";
         deleteFileAsset({ fileType: "bannerImage" });
       }
-      await updateUser.mutateAsync({ ...dataToUpdate, courseId });
+      const response = await updateUser.mutateAsync({ ...dataToUpdate, courseId });
+
+      if (response?.error) {
+        toast.error(response.message);
+        return;
+      }
       if (profilePhoto && profilePhoto !== defaultProfilePhoto) {
         setProfilePhoto(null);
         await update({ image: assetIds.profilePictureId });
@@ -339,9 +355,8 @@ export const EditProfileForm = () => {
       await refetchMe();
       await refetch();
       toast.success("Profile updated successfully");
-    } catch (error) {
-      console.log(error);
 
+    } catch (error) {
       if (error?.message === "Handle already exists") {
         setError("handle", {
           type: "custom",
@@ -527,7 +542,12 @@ export const EditProfileForm = () => {
           control={control}
           render={({ field }) => (
             <div>
-              <label htmlFor="state" style={{ fontSize: "14px", color: "rgb(109 119 124" }} >State</label>
+              <label
+                htmlFor="state"
+                style={{ fontSize: "14px", color: "rgb(109 119 124" }}
+              >
+                State
+              </label>
               <Select
                 size="small"
                 {...field}
@@ -539,20 +559,20 @@ export const EditProfileForm = () => {
                 inputRef={(e) => {
                   field.ref(e);
                 }}
-                value={field.value || ''}
+                value={field.value || ""}
                 sx={{
                   fontSize: "14px",
                   color: "rgb(109 119 124)",
-                  backgroundColor: 'rgb(247, 249, 250)',
-                  border: 'none',
-                  '& fieldset': { border: 'none' },
+                  backgroundColor: "rgb(247, 249, 250)",
+                  border: "none",
+                  "& fieldset": { border: "none" },
                 }}
                 // defaultValue=""
                 displayEmpty
               >
                 {/* <MenuItem value="" disabled >Select your state</MenuItem> */}
                 {usStates.map((state) => (
-                  <MenuItem key={state.code} value={state.name}  >
+                  <MenuItem key={state.code} value={state.name}>
                     {state.name}
                   </MenuItem>
                 ))}
@@ -675,54 +695,54 @@ export const EditProfileForm = () => {
 };
 
 const usStates = [
-  { code: 'AL', name: 'Alabama' },
-  { code: 'AK', name: 'Alaska' },
-  { code: 'AZ', name: 'Arizona' },
-  { code: 'AR', name: 'Arkansas' },
-  { code: 'CA', name: 'California' },
-  { code: 'CO', name: 'Colorado' },
-  { code: 'CT', name: 'Connecticut' },
-  { code: 'DE', name: 'Delaware' },
-  { code: 'FL', name: 'Florida' },
-  { code: 'GA', name: 'Georgia' },
-  { code: 'HI', name: 'Hawaii' },
-  { code: 'ID', name: 'Idaho' },
-  { code: 'IL', name: 'Illinois' },
-  { code: 'IN', name: 'Indiana' },
-  { code: 'IA', name: 'Iowa' },
-  { code: 'KS', name: 'Kansas' },
-  { code: 'KY', name: 'Kentucky' },
-  { code: 'LA', name: 'Louisiana' },
-  { code: 'ME', name: 'Maine' },
-  { code: 'MD', name: 'Maryland' },
-  { code: 'MA', name: 'Massachusetts' },
-  { code: 'MI', name: 'Michigan' },
-  { code: 'MN', name: 'Minnesota' },
-  { code: 'MS', name: 'Mississippi' },
-  { code: 'MO', name: 'Missouri' },
-  { code: 'MT', name: 'Montana' },
-  { code: 'NE', name: 'Nebraska' },
-  { code: 'NV', name: 'Nevada' },
-  { code: 'NH', name: 'New Hampshire' },
-  { code: 'NJ', name: 'New Jersey' },
-  { code: 'NM', name: 'New Mexico' },
-  { code: 'NY', name: 'New York' },
-  { code: 'NC', name: 'North Carolina' },
-  { code: 'ND', name: 'North Dakota' },
-  { code: 'OH', name: 'Ohio' },
-  { code: 'OK', name: 'Oklahoma' },
-  { code: 'OR', name: 'Oregon' },
-  { code: 'PA', name: 'Pennsylvania' },
-  { code: 'RI', name: 'Rhode Island' },
-  { code: 'SC', name: 'South Carolina' },
-  { code: 'SD', name: 'South Dakota' },
-  { code: 'TN', name: 'Tennessee' },
-  { code: 'TX', name: 'Texas' },
-  { code: 'UT', name: 'Utah' },
-  { code: 'VT', name: 'Vermont' },
-  { code: 'VA', name: 'Virginia' },
-  { code: 'WA', name: 'Washington' },
-  { code: 'WV', name: 'West Virginia' },
-  { code: 'WI', name: 'Wisconsin' },
-  { code: 'WY', name: 'Wyoming' }
+  { code: "AL", name: "Alabama" },
+  { code: "AK", name: "Alaska" },
+  { code: "AZ", name: "Arizona" },
+  { code: "AR", name: "Arkansas" },
+  { code: "CA", name: "California" },
+  { code: "CO", name: "Colorado" },
+  { code: "CT", name: "Connecticut" },
+  { code: "DE", name: "Delaware" },
+  { code: "FL", name: "Florida" },
+  { code: "GA", name: "Georgia" },
+  { code: "HI", name: "Hawaii" },
+  { code: "ID", name: "Idaho" },
+  { code: "IL", name: "Illinois" },
+  { code: "IN", name: "Indiana" },
+  { code: "IA", name: "Iowa" },
+  { code: "KS", name: "Kansas" },
+  { code: "KY", name: "Kentucky" },
+  { code: "LA", name: "Louisiana" },
+  { code: "ME", name: "Maine" },
+  { code: "MD", name: "Maryland" },
+  { code: "MA", name: "Massachusetts" },
+  { code: "MI", name: "Michigan" },
+  { code: "MN", name: "Minnesota" },
+  { code: "MS", name: "Mississippi" },
+  { code: "MO", name: "Missouri" },
+  { code: "MT", name: "Montana" },
+  { code: "NE", name: "Nebraska" },
+  { code: "NV", name: "Nevada" },
+  { code: "NH", name: "New Hampshire" },
+  { code: "NJ", name: "New Jersey" },
+  { code: "NM", name: "New Mexico" },
+  { code: "NY", name: "New York" },
+  { code: "NC", name: "North Carolina" },
+  { code: "ND", name: "North Dakota" },
+  { code: "OH", name: "Ohio" },
+  { code: "OK", name: "Oklahoma" },
+  { code: "OR", name: "Oregon" },
+  { code: "PA", name: "Pennsylvania" },
+  { code: "RI", name: "Rhode Island" },
+  { code: "SC", name: "South Carolina" },
+  { code: "SD", name: "South Dakota" },
+  { code: "TN", name: "Tennessee" },
+  { code: "TX", name: "Texas" },
+  { code: "UT", name: "Utah" },
+  { code: "VT", name: "Vermont" },
+  { code: "VA", name: "Virginia" },
+  { code: "WA", name: "Washington" },
+  { code: "WV", name: "West Virginia" },
+  { code: "WI", name: "Wisconsin" },
+  { code: "WY", name: "Wyoming" },
 ];

@@ -897,6 +897,7 @@ export class BookingService {
       isDeleted: false,
       // splitTeeTime: false,
       slots,
+      splitType: "FULL"
     };
     await this.database
       .transaction(async (transaction) => {
@@ -1248,6 +1249,7 @@ export class BookingService {
       // status: "PENDING",
       isDeleted: false,
       // splitTeeTime: false,
+      splitType: "FULL"
     };
     await this.database
       .transaction(async (trx) => {

@@ -66,6 +66,7 @@ export class ProviderService extends CacheService {
   ): Promise<{ provider: ProviderAPI; token: string }> => {
     this.logger.info(`getProvider called with providerId: ${internalProviderIdentifier}`);
     const provider = this.teeSheetProviders.find((p) => p.providerId === internalProviderIdentifier);
+    console.log(this.teeSheetProviders, "this.teeSheetProviders");
 
     if (provider && internalProviderIdentifier == "club-prophet") {
       // remove after adding
@@ -269,9 +270,7 @@ export class ProviderService extends CacheService {
       if (!customer) {
         this.logger.fatal(`Course internal Id doesn't match for user: ${userId}`);
         throw new Error(`Error matching provider Internal Id`);
-      }
-
-      //create customer on provider
+      }      //create customer on provider
       let customerId: number | null = null;
       try {
         const customerData = await provider.createCustomer(token, providerCourseId, customer);

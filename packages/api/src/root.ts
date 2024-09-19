@@ -5,6 +5,7 @@ import { cashOutRouter } from "./routers/cashout";
 import { checkoutRouter } from "./routers/checkout";
 import { clubProphetRouter } from "./routers/clubprophet";
 import { courseRouter } from "./routers/course";
+import { courseExceptionRouter } from "./routers/courseException";
 import { domainRouter } from "./routers/domain";
 import { entityRouter } from "./routers/entity";
 import { geoCodeRouter } from "./routers/geo";
@@ -48,6 +49,7 @@ export const appRouter = createTRPCRouter({
   clubprophet: clubProphetRouter,
   profanity: profanityRouter,
   userWaitlist: userWaitlistRouter,
+  courseException: courseExceptionRouter,
   systemNotification: systemNotificationRouter,
 });
 

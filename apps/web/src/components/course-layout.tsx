@@ -11,8 +11,6 @@ export const CourseLayout = ({ children }: { children: React.ReactNode }) => {
   const { data: systemNotifications } =
     api.systemNotification.getSystemNotification.useQuery({});
 
-  console.log(isMobile);
-
   const styling = useMemo(() => {
     if (pathname.includes("/checkout")) {
       return "";
@@ -20,8 +18,8 @@ export const CourseLayout = ({ children }: { children: React.ReactNode }) => {
       return systemNotifications?.length === 0
         ? "pt-14"
         : isMobile === true
-        ? "pt-28"
-        : "pt-20";
+          ? "pt-28"
+          : "pt-20";
     }
   }, [pathname]);
 

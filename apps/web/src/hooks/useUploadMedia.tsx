@@ -36,7 +36,6 @@ export const useUploadMedia = () => {
       setIsUploading(false);
       return { assetUrl: assetToURL({ key, extension }), assetId };
     } catch (error) {
-      console.log(error);
       setIsUploading(true);
       toast.error(
         (error as Error).message ?? "An error occurred uploading the media"

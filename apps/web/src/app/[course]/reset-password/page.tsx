@@ -55,7 +55,6 @@ export default function ResetPassword() {
     try {
       await resetFn.mutateAsync({ ...data, courseId: course?.id });
     } catch (error) {
-      console.log(error);
       toast.error(
         (error as Error)?.message ??
           "An error occurred submitting your request."

@@ -4,7 +4,7 @@ import { HyperElements } from "@juspay-tech/react-hyper-js";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
-import type { CartProduct } from "~/utils/types";
+import type { CartProduct, MaxReservationResponse } from "~/utils/types";
 // import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 import { useEffect, useRef, useState } from "react";
 import { Spinner } from "../loading/spinner";
@@ -44,6 +44,7 @@ export const HyperSwitch = ({
   listingId,
   setIsLoading,
   playerCount,
+  // maxReservation,
 }: {
   cartData: CartProduct[];
   isBuyNowAuction: boolean;
@@ -87,8 +88,8 @@ export const HyperSwitch = ({
         paymentId: options?.paymentId
           ? options.paymentId
           : paymentId
-          ? paymentId
-          : null,
+            ? paymentId
+            : null,
         //@ts-ignore
         cart: cartData,
         cartId,
@@ -112,10 +113,9 @@ export const HyperSwitch = ({
     } catch (error) {
       // setIsLoadingSession(false);
       callingRef.current = false;
-      console.log(error.message);
       setError(
         (error?.message as string) ??
-          "An error occurred building checkout seesion."
+        "An error occurred building checkout seesion."
       );
     }
   };
@@ -170,16 +170,17 @@ export const HyperSwitch = ({
           />
         </HyperElements>
       ) : nextaction ? (
-        <CheckoutForm
-          teeTimeId={teeTimeId}
-          isBuyNowAuction={isBuyNowAuction}
-          cartData={cartData}
-          cartId={cartId}
-          teeTimeDate={teeTimeDate}
-          listingId={listingId ?? ""}
-          nextAction={nextaction}
-          callingRef={callingRef.current}
-        />
+        <></>
+        // <CheckoutForm
+        //   teeTimeId={teeTimeId}
+        //   isBuyNowAuction={isBuyNowAuction}
+        //   cartData={cartData}
+        //   cartId={cartId}
+        //   teeTimeDate={teeTimeDate}
+        //   listingId={listingId ?? ""}
+        //   nextAction={nextaction}
+        //   callingRef={callingRef.current}
+        // />
       ) : (
         <div className="flex justify-center items-center h-full min-h-[200px]">
           <Spinner className="w-[50px] h-[50px]" />

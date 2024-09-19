@@ -51,8 +51,6 @@ export const CourseNav = () => {
     userEmail: session?.data?.user.email ?? "",
   });
 
-  console.log("isUserBlocked", isUserBlocked);
-
   const auditLog = api.webhooks.auditLog.useMutation();
 
   const logAudit = (func: () => any) => {
@@ -72,7 +70,8 @@ export const CourseNav = () => {
         }
       })
       .catch((err) => {
-        console.log(err);
+        console.log("error", err);
+
       });
   };
 
@@ -222,7 +221,7 @@ export const CourseNav = () => {
             {course?.supportsWaitlist ? (
               <NavItem
                 href={`/${courseId}/notify-me`}
-                text="Notify Me"
+                text="Waitlist"
                 icon={<Megaphone className="w-[16px]" />}
                 data-testid="notify-me-id"
                 data-test={courseId}
