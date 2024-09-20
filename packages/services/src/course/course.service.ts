@@ -75,6 +75,7 @@ export class CourseService extends DomainService {
         supportsWaitlist: courses.supportsWaitlist,
         buyerFee: courses.buyerFee,
         sellerFee: courses.sellerFee,
+        roundUpCharityId: courses?.roundUpCharityId
       })
       .from(courses)
       .where(and(eq(courses.id, courseId), eq(courses.isDeleted, false)))

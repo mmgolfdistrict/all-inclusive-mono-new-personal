@@ -277,8 +277,8 @@ export default function Checkout({
         },
       });
     }
- 
-    if (selectedCharity && deboundCharityAmount && deboundCharityAmount > 0) {
+
+    if ((selectedCharity|| course?.roundUpCharityId) && deboundCharityAmount && deboundCharityAmount > 0) {
       localCart.push({
         name: "Golf District Tee Time",
         id: teeTimeId ?? data?.teeTimeId,
@@ -289,7 +289,7 @@ export default function Checkout({
         product_data: {
           metadata: {
             type: "charity",
-            charity_id: selectedCharity?.charityId,
+            charity_id: selectedCharity?.charityId??"",
             donation_amount: deboundCharityAmount * 100,
           },
         },
