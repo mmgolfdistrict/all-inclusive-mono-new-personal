@@ -81,8 +81,13 @@ export const TeeTime = ({
 }) => {
   const [, copy] = useCopyToClipboard();
   const [isCopied, setIsCopied] = useState<boolean>(false);
+  // const { data: NumberOfPlayers } = api.course.getNumberOfPlayersByCourse.useQuery({
+  //   courseId: courseId ?? "",
+  // });
+  const NumberOfPlayers = ["2", "4"]
+
   const [selectedPlayers, setSelectedPlayers] = useState<string>(
-    status === "UNLISTED" ? "1" : status === "FIRST_HAND" ? "1" : players
+    NumberOfPlayers.length !== 0 ? NumberOfPlayers[0]! : status === "UNLISTED" ? "1" : status === "FIRST_HAND" ? "1" : players
   );
   const { course } = useCourseContext();
   const courseId = course?.id;
@@ -104,6 +109,7 @@ export const TeeTime = ({
       json: `TEE_TIME_IN_CART `,
     });
   };
+
 
   const tooltipRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const [showTooltip, setShowTooltip] = useState<boolean[]>([]);
@@ -164,6 +170,12 @@ export const TeeTime = ({
     //   toast.error("Oops! Tee time is not available anymore");
     //   return;
     // }
+    if (selectedPlayers !== "2" && selectedPlayers !== "4" && status !== "SECOND_HAND") {
+      toast.error(
+        "You can only select 2 or 4 players at a time."
+      );
+      return
+    }
     await logAudit();
     microsoftClarityEvent({
       action: `CLICKED ON BUY`,
@@ -381,6 +393,8 @@ export const TeeTime = ({
                 isDisabled={status === "SECOND_HAND"}
                 className="md:px-[1rem] md:py-[.25rem] md:!text-[14px] !text-[10px] px-[.75rem] py-[.1rem]"
                 teeTimeId={teeTimeId}
+                numberOfPlayers={NumberOfPlayers}
+                status={status}
               />
             ) : (
               players && (

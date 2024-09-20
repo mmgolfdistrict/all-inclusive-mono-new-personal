@@ -86,6 +86,11 @@ export const TeeTimeDetails = ({
     }
   };
 
+  // const { data: NumberOfPlayers } = api.course.getNumberOfPlayersByCourse.useQuery({
+  //   courseId: courseId ?? "",
+  // });
+  const NumberOfPlayers = ["2", "4"]
+
   if (isLoading) {
     return <Skeleton />;
   }
@@ -152,11 +157,13 @@ export const TeeTimeDetails = ({
           <div className="flex items-center gap-4">
             <Players className="w-[25px]" />
             <ChoosePlayers
-              players={players}
+              players={NumberOfPlayers.length !== 0 ? NumberOfPlayers[0]! : players}
               setPlayers={setPlayers}
               playersOptions={PlayersOptions}
               availableSlots={data?.availableSlots ?? 0}
               teeTimeId={teeTimeId}
+              numberOfPlayers={NumberOfPlayers}
+              status={"FIRST_HAND"}
             />
           </div>
           <div className="flex flex-col flex-wrap justify-between gap-2 md:flex-row">
