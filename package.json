@@ -25,7 +25,6 @@
     "pre-commit": "lint-staged",
     "prettier-check": "prettier --check \"**/*.{js,jsx,ts,tsx,md,css}\" --ignore-path .prettierignore",
     "revision": "node ./revision/generateRevision.js && node ./revision/route.js",
-    "start": "npm run dev",
     "test": "turbo run test",
     "typecheck": "turbo typecheck"
   },
@@ -44,6 +43,8 @@
     "typescript": "^5.2.2"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^14.2.11",
+    "cross-env": "^7.0.3",
     "eslint": "^8.45.0",
     "eslint-config-custom": "*",
     "husky": "^8.0.3",

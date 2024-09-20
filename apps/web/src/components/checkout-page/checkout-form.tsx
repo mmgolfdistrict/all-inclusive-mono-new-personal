@@ -151,7 +151,7 @@ export const CheckoutForm = ({
     handleRemoveSelectedCharity,
     setReservationData,
     sensibleData,
-    amountOfPlayers
+    amountOfPlayers,
   } = useCheckoutContext();
 
   const reserveBookingApi = api.teeBox.reserveBooking.useMutation();
@@ -214,7 +214,6 @@ export const CheckoutForm = ({
       roundsToBook: amountOfPlayers,
       courseId: courseId ? courseId : "",
     });
-
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     googleAnalyticsEvent({
@@ -396,7 +395,7 @@ export const CheckoutForm = ({
     return bookingResponse;
   };
 
-  let Total =
+  const Total =
     primaryGreenFeeCharge +
     taxCharge +
     sensibleCharge +
@@ -409,13 +408,12 @@ export const CheckoutForm = ({
     maximumFractionDigits: 2,
   });
 
-
   const handleDonateChange = (event) => {
-    const value = event.target.value.trim();
+    const value = event.target.value.trim() as string;
     const numericValue = value.length > 0 ? parseFloat(value) : 0;
 
     if (!numericValue || numericValue === 0) {
-      setDonateValue(event.target.value);
+      setDonateValue(parseFloat(event.target.value as string));
       setDonateError(true);
     } else if (numericValue < 1) {
       setDonateError(true);
@@ -437,7 +435,6 @@ export const CheckoutForm = ({
   };
 
   console.log("selectedCharity", selectedCharityAmount);
-
 
   useEffect(() => {
     handleRoundOff();
@@ -481,7 +478,7 @@ export const CheckoutForm = ({
                       .replace(/\$/g, "")
                       .replace(/,/g, "");
 
-                    console.log("value", value)
+                    console.log("value", value);
 
                     if (Number(value) < 0) return;
 
@@ -554,18 +551,25 @@ export const CheckoutForm = ({
         {roundUpCharityId && (
           <div className="flex justify-between">
             <div>Charitable Donation</div>
-            <div>${donateValue.toLocaleString("en-US", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}</div>
+            <div>
+              $
+              {donateValue.toLocaleString("en-US", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </div>
           </div>
         )}
         <div className="flex justify-between">
           <div>Total</div>
-          <div>${roundUpCharityId
-            ? (roundOffClick ? roundOff : TotalAmt)
-            : TotalAmt
-          }</div>
+          <div>
+            $
+            {roundUpCharityId
+              ? roundOffClick
+                ? roundOff
+                : TotalAmt
+              : TotalAmt}
+          </div>
         </div>
       </div>
       {roundUpCharityId && (
@@ -573,13 +577,13 @@ export const CheckoutForm = ({
           <div>Golf District supports PGA 401k.</div>
           <div>Please help us the golf professionals retire peacefully.</div>
           <div className="flex gap-2 mt-5 ml-3 mb-4">
-
             <button
               type="button"
-              className={`flex w-32 items-center justify-center rounded-md p-2  ${roundOffClick
-                ? "bg-primary text-white"
-                : "bg-white text-primary border-primary border-2"
-                }`}
+              className={`flex w-32 items-center justify-center rounded-md p-2  ${
+                roundOffClick
+                  ? "bg-primary text-white"
+                  : "bg-white text-primary border-primary border-2"
+              }`}
               onClick={handleRoundOff}
             >
               Round Up
@@ -587,10 +591,11 @@ export const CheckoutForm = ({
 
             <button
               type="button"
-              className={`flex w-32 items-center justify-center rounded-md p-2  ${showTextField
-                ? "bg-primary text-white"
-                : "bg-white text-primary border-primary border-2"
-                }`}
+              className={`flex w-32 items-center justify-center rounded-md p-2  ${
+                showTextField
+                  ? "bg-primary text-white"
+                  : "bg-white text-primary border-primary border-2"
+              }`}
               onClick={() => {
                 setRoundOffClick(false);
                 setShowTextField(true);
@@ -621,8 +626,9 @@ export const CheckoutForm = ({
                 placeholder="Enter Donation Amount"
                 value={donateValue}
                 onChange={handleDonateChange}
-                className={`p-2 border rounded-md ${donateError ? "border-red-500" : "border-primary"
-                  }`}
+                className={`p-2 border rounded-md ${
+                  donateError ? "border-red-500" : "border-primary"
+                }`}
                 min="1"
                 step="1"
               />
