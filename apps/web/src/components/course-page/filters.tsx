@@ -246,6 +246,13 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
     }
   };
 
+  useEffect(() => {
+    const startTimeRounded = Math.round(startTime[0] / 100) * 100;
+    const endTimeRounded = Math.round(startTime[1] / 100) * 100;
+
+    setLocalStartTime([startTimeRounded, endTimeRounded]);
+  }, [startTime]);
+
   return (
     <div className="flex flex-col gap-4 pr-1">
       <section className="flex flex-col gap-2">

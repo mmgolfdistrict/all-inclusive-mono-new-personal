@@ -1,5 +1,5 @@
 "use client";
-
+ 
 import { useSession } from "@golf-district/auth/nextjs-exports";
 import {
   formatDate,
@@ -34,9 +34,9 @@ import dayjs from "dayjs";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useDebounce } from "usehooks-ts";
-
+ 
 const currentDate = formatQueryDate(new Date());
-
+ 
 export default function Checkout({
   params,
   searchParams,
@@ -52,7 +52,7 @@ export default function Checkout({
   const { user } = useUserContext();
   const { status } = useSession();
   const [isSessionLoading, setIsSessionLoading] = useState(true);
-
+ 
   const {
     shouldAddSensible,
     sensibleData,
@@ -62,19 +62,19 @@ export default function Checkout({
     selectedCharityAmount,
     setAmountOfPlayers,
   } = useCheckoutContext();
-
+ 
   // useEffect(() => {
   //   if (playerCount) {
   //     setAmountOfPlayers(Number(playerCount));
   //   }
   // }, []);
-
+ 
   const { data: maxReservation } =
     api.checkout.checkMaxReservationsAndMaxRounds.useQuery({
       roundsToBook: amountOfPlayers,
       courseId: courseId,
     });
-
+ 
   const {
     data: teeTimeData,
     isLoading: isLoadingTeeTime,
@@ -93,38 +93,38 @@ export default function Checkout({
     { listingId: listingId! },
     { enabled: listingId !== undefined }
   );
-
+ 
   let isError, error;
-
+ 
   const data = teeTimeId ? teeTimeData : listingData;
   const isLoading = teeTimeId ? isLoadingTeeTime : isLoadingListing;
   isError = teeTimeId ? isErrorTeeTime : isErrorListing;
   error = teeTimeId ? errorTeeTime : errorListing;
-
+ 
   if (data && listingData?.ownerId === user?.id) {
     isError = true;
     error = new Error("You cannot buy your own tee time");
   }
-
+ 
   if (!isLoading && listingId && !data && !error) {
     isError = true;
     error = new Error("Expected Tee time spots may not be available anymore");
   }
-
+ 
   const saleType = teeTimeId ? "first_hand" : "second_hand";
-
+ 
   const teeTimeDate = formatQueryDate(new Date(data?.date ?? ""));
-
+ 
   const isSensibleInvalid = teeTimeDate === currentDate;
-
+ 
   const validatePromoCode = api.checkout.validatePromoCode.useMutation();
   const debouncedPromoCode = useDebounce(promoCode, 500);
   const deboundCharityAmount = useDebounce(selectedCharityAmount, 500);
-
+ 
   const [promoCodePrice, setPromoCodePrice] = useState<number | undefined>(
     undefined
   );
-
+ 
   const checkPromoCode = async () => {
     const currentPrice = Number(data?.pricePerGolfer) * amountOfPlayers;
     try {
@@ -142,21 +142,21 @@ export default function Checkout({
       console.log("error", error);
     }
   };
-
+ 
   useEffect(() => {
     if (debouncedPromoCode) {
       void checkPromoCode();
     }
   }, [debouncedPromoCode]);
-
+ 
   const startHourNumber = dayjs(removeTimeZoneOffset(data?.date)).hour();
   const endHourNumber = dayjs(removeTimeZoneOffset(data?.date))
     .add(6, "hours")
     .hour();
-
+ 
   const cartData: CartProduct[] = useMemo(() => {
     if (!data || data === null) return [];
-
+ 
     const metadata:
       | FirstHandProduct
       | SecondHandProduct
@@ -177,7 +177,7 @@ export default function Checkout({
           type: "second_hand",
           second_hand_id: listingId,
         };
-
+ 
     const localCart: CartProduct[] = [
       {
         name: "Golf District Tee Time",
@@ -197,7 +197,7 @@ export default function Checkout({
         },
       },
     ];
-
+ 
     if (data) {
       localCart.push({
         name: "Golf District Tee Time",
@@ -220,7 +220,7 @@ export default function Checkout({
         },
       });
     }
-
+ 
     if (course?.convenienceFeesFixedPerPlayer) {
       localCart.push({
         name: "Golf District Tee Time",
@@ -240,7 +240,7 @@ export default function Checkout({
         },
       });
     }
-
+ 
     if (course?.markupFeesFixedPerPlayer) {
       localCart.push({
         name: "Golf District Tee Time",
@@ -260,7 +260,7 @@ export default function Checkout({
         },
       });
     }
-
+ 
     if (shouldAddSensible && !isSensibleInvalid) {
       localCart.push({
         name: "Golf District Tee Time",
@@ -295,7 +295,7 @@ export default function Checkout({
         },
       });
     }
-
+ 
     return localCart;
   }, [
     sensibleData,
@@ -311,17 +311,24 @@ export default function Checkout({
     course?.markupFeesFixedPerPlayer,
     course?.convenienceFeesFixedPerPlayer,
   ]);
-
+ 
   useEffect(() => {
     if (playerCount && data?.availableSlots)
       setAmountOfPlayers((_prev) =>
         Math.min(Number(playerCount), Number(data?.availableSlots))
       );
   }, [data]);
-
+ 
+  const { data: systemNotifications } =
+    api.systemNotification.getSystemNotification.useQuery({});
+ 
+  const notificationsCount = systemNotifications ? systemNotifications.length : 0;
+  const height = notificationsCount > 0 ? `${200 + notificationsCount * 80}px` : '200px';
+  const marginTop = notificationsCount > 0 ? `mt-${notificationsCount * 8}` : '';
+ 
   if (isError && error) {
     return (
-      <div className="flex justify-center flex-col items-center h-[200px]">
+      <div className={`flex justify-center flex-col items-center`} style={{ height }}>
         <div className="text-center">Error: {error?.message}</div>
         <Link href="/" className="underline">
           Return to home
@@ -329,12 +336,13 @@ export default function Checkout({
       </div>
     );
   }
+ 
   return (
     <>
-      <div className="relative flex flex-col items-center gap-4 px-0 pb-8 md:px-8">
+      <div className={`relative flex flex-col items-center gap-4 px-0 pb-8 md:px-8 ${marginTop}`}>
         <div className="flex p-2 justify-between w-full relative">
           <div />
-
+ 
           <Link
             href={`/${course?.id}`}
             className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"

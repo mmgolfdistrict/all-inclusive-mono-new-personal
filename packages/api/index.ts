@@ -16,6 +16,7 @@ import {
   TokenizeService,
   UpdateWithdrawableBalance,
 } from "@golf-district/service";
+import { UserWaitlistService } from "@golf-district/service/src/user-waitlist/userWaitlist.service";
 import { LoggerService } from "@golf-district/service/src/webhooks/logging.service";
 import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "./src/root";
@@ -174,6 +175,7 @@ export const processHyperSwitchWebhook = async (req: any) => {
     process.env.REDIS_TOKEN!,
     credentials
   );
+  const userWaitlistService = new UserWaitlistService(db, notificationService);
   const bookingService = new BookingService(
     db,
     tokenizeService,
@@ -181,7 +183,8 @@ export const processHyperSwitchWebhook = async (req: any) => {
     notificationService,
     loggerService,
     hyperswitchService,
-    sensibleService
+    sensibleService,
+    userWaitlistService
   );
 
   // const appSettings = await appSettingService.getMultiple(
