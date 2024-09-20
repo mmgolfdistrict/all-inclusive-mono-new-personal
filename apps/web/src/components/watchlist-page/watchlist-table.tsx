@@ -128,7 +128,7 @@ export const WatchlistTable = () => {
               <TableHeader text="Details" />
               <TableHeader text="Price" />
               <TableHeader text="Golfers" />
-              <TableHeader text="Status" />
+              {/* <TableHeader text="Status" /> */}
               <TableHeader text="" className="text-right" />
             </tr>
           </thead>
@@ -284,9 +284,9 @@ const TableRow = ({
       <td className="whitespace-nowrap px-4 py-3">
         {golfers} {golfers === 1 ? "golfers" : "golfers"}
       </td>
-      <td className="whitespace-nowrap px-4 py-3 capitalize">
+      {/* <td className="whitespace-nowrap px-4 py-3 capitalize">
         {status.toLowerCase()}
-      </td>
+      </td> */}
       <td className="whitespace-nowrap px-4 py-3">
         <div className="flex  justify-end gap-2">
           <Link href={href} data-testid="details-button-id">
