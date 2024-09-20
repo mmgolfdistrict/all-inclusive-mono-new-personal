@@ -14,7 +14,6 @@
   ],
   "scripts": {
     "build": "turbo run build && node ./apps/web/script/generateRevision.js",
-    "start": "npm run dev",
     "clean:workspaces": "turbo clean",
     "compile": "turbo run compile",
     "dev": "dotenv -- turbo dev --parallel --filter=golf-district-platforms",
@@ -25,6 +24,7 @@
     "pre-commit": "lint-staged",
     "prettier-check": "prettier --check \"**/*.{js,jsx,ts,tsx,md,css}\" --ignore-path .prettierignore",
     "revision": "node ./revision/generateRevision.js && node ./revision/route.js",
+    "start": "npm run dev",
     "test": "turbo run test",
     "typecheck": "turbo typecheck"
   },
