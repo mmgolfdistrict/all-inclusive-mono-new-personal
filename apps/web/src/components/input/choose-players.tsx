@@ -21,7 +21,7 @@ export const ChoosePlayers = ({
   className?: string;
   teeTimeId: string | undefined;
   status?: string
-  numberOfPlayers: string[]
+  numberOfPlayers?: string[]
 }) => {
 
 
@@ -32,7 +32,7 @@ export const ChoosePlayers = ({
       onValueChange={(value: string) => {
         if (isDisabled) return;
         if (availableSlots < parseInt(value)) return;
-        if (!numberOfPlayers.includes(value) || status === "SECOND_HAND") {
+        if (!numberOfPlayers?.includes(value) || status === "SECOND_HAND") {
           return;
         }
         if (value) setPlayers(value);
@@ -58,7 +58,7 @@ export const ChoosePlayers = ({
               ? "rounded-r-full border-b border-t border-r border-stroke"
               : "border-b border-r border-t border-stroke"
             } px-[1rem] py-[.25rem] ${availableSlots < index + 1 ? "opacity-50 cursor-not-allowed" : ""
-            } ${isDisabled || !numberOfPlayers.includes(value) ? "opacity-50 cursor-not-allowed" : ""} ${className ?? ""
+            } ${isDisabled || !numberOfPlayers?.includes(value) ? "opacity-50 cursor-not-allowed" : ""} ${className ?? ""
             }`}
 
         />

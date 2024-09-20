@@ -81,16 +81,21 @@ export const TeeTime = ({
 }) => {
   const [, copy] = useCopyToClipboard();
   const [isCopied, setIsCopied] = useState<boolean>(false);
-  // const { data: NumberOfPlayers } = api.course.getNumberOfPlayersByCourse.useQuery({
-  //   courseId: courseId ?? "",
-  // });
-  const NumberOfPlayers = ["2", "4"]
-
-  const [selectedPlayers, setSelectedPlayers] = useState<string>(
-    NumberOfPlayers.length !== 0 ? NumberOfPlayers[0]! : status === "UNLISTED" ? "1" : status === "FIRST_HAND" ? "1" : players
-  );
   const { course } = useCourseContext();
   const courseId = course?.id;
+  const { data: NumberOfPlayers } = api.course.getNumberOfPlayersByCourse.useQuery({
+    courseId: courseId ?? "",
+  });
+  // const NumberOfPlayers = ["2", "4"]
+  console.log("NumberOfPlayers", NumberOfPlayers);
+
+  const [selectedPlayers, setSelectedPlayers] = useState<string>(() => {
+    if (NumberOfPlayers?.length) {
+      return String(NumberOfPlayers[0]);
+    }
+    return (status === "UNLISTED" || status === "FIRST_HAND") ? "1" : players;
+  });
+
   const timezoneCorrection = course?.timezoneCorrection;
   const [isMakeAnOfferOpen, setIsMakeAnOfferOpen] = useState<boolean>(false);
   const { data: session } = useSession();

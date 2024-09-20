@@ -292,6 +292,8 @@ const Data = ({
               availableSlots={availableSlots ?? 0}
               isDisabled={isSecondHand}
               teeTimeId={teeTimeId}
+              status={"ssd"}
+              numberOfPlayers={["1", "2", "3", "4"]}
             />
           ) : (
             players && (
