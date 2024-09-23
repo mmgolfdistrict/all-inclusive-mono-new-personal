@@ -35,11 +35,7 @@ export const CheckoutItem = ({
   const playerCount = searchParams.get("playerCount");
   const { setAmountOfPlayers, amountOfPlayers } = useCheckoutContext();
   const { course } = useCourseContext();
-  const courseId = course?.id;
 
-  const { data: NumberOfPlayers } = api.course.getNumberOfPlayersByCourse.useQuery({
-    courseId: courseId ?? "",
-  });
   const choosePlayers = (amount: string) => {
     setAmountOfPlayers(Number(amount));
   };
@@ -123,7 +119,6 @@ export const CheckoutItem = ({
             isSecondHand={teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND"}
             teeTimeId={teeTime?.teeTimeId}
             courseException={getCourseException(teeTime?.date ?? "")}
-            NumberOfPlayers={NumberOfPlayers}
           />
         </div>
       </div>
@@ -141,7 +136,6 @@ export const CheckoutItem = ({
         isSecondHand={teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND"}
         teeTimeId={teeTime?.teeTimeId}
         courseException={getCourseException(teeTime?.date ?? "")}
-        NumberOfPlayers={NumberOfPlayers}
       />
       {isSensibleInvalid || isLoading ? null : (
         <SensibleWidget sensibleDataToMountComp={sensibleDataToMountComp} />
@@ -210,7 +204,6 @@ const Data = ({
   isSecondHand,
   teeTimeId,
   courseException,
-  NumberOfPlayers
 }: {
   className: string;
   canChoosePlayer: boolean;
@@ -225,7 +218,6 @@ const Data = ({
   isSecondHand: boolean;
   teeTimeId?: string | undefined;
   courseException: NotificationObject | null;
-  NumberOfPlayers?: string[]
 }) => {
   if (isLoading) {
     return (
@@ -300,8 +292,6 @@ const Data = ({
               availableSlots={availableSlots ?? 0}
               isDisabled={isSecondHand}
               teeTimeId={teeTimeId}
-              status={"ssd"}
-              numberOfPlayers={NumberOfPlayers ? NumberOfPlayers : []}
             />
           ) : (
             players && (

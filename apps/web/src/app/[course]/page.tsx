@@ -92,6 +92,7 @@ export default function CourseHomePage() {
       console.log("error", error);
     }
   };
+  console.log("courseId", courseId);
 
   const updateCount = (balance: number) => {
     setCount(balance);
