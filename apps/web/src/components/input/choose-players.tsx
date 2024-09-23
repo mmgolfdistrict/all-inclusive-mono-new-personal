@@ -20,10 +20,10 @@ export const ChoosePlayers = ({
   isDisabled?: boolean;
   className?: string;
   teeTimeId: string | undefined;
-  status?: string
-  numberOfPlayers?: string[]
+  status?: string;
+  numberOfPlayers: string[];
 }) => {
-
+  console.log("numberOfPlayers", numberOfPlayers);
 
   return (
     <ToggleGroup.Root
@@ -60,10 +60,8 @@ export const ChoosePlayers = ({
             } px-[1rem] py-[.25rem] ${availableSlots < index + 1 ? "opacity-50 cursor-not-allowed" : ""
             } ${isDisabled || !numberOfPlayers?.includes(value) ? "opacity-50 cursor-not-allowed" : ""} ${className ?? ""
             }`}
-
         />
       ))}
     </ToggleGroup.Root>
   );
 };
-// || value == "1" || value === "3"

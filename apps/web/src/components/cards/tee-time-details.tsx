@@ -36,10 +36,9 @@ export const TeeTimeDetails = ({
   const { data: NumberOfPlayers } = api.course.getNumberOfPlayersByCourse.useQuery({
     courseId: courseId ?? "",
   });
-  // const NumberOfPlayers = ["2", "4"]
 
   const [players, setPlayers] = useState<string>(
-    NumberOfPlayers?.length ? String(NumberOfPlayers[0]) : "1"
+    NumberOfPlayers?.length !== 0 && NumberOfPlayers !== undefined ? String(NumberOfPlayers[0]) : "1"
   );
 
   const [, copy] = useCopyToClipboard();
@@ -169,7 +168,7 @@ export const TeeTimeDetails = ({
               playersOptions={PlayersOptions}
               availableSlots={data?.availableSlots ?? 0}
               teeTimeId={teeTimeId}
-              numberOfPlayers={NumberOfPlayers}
+              numberOfPlayers={NumberOfPlayers ? NumberOfPlayers : []}
               status={"FIRST_HAND"}
             />
           </div>

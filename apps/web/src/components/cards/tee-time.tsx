@@ -83,15 +83,13 @@ export const TeeTime = ({
   const [isCopied, setIsCopied] = useState<boolean>(false);
   const { course } = useCourseContext();
   const courseId = course?.id;
-  const { data: NumberOfPlayers } = api.course.getNumberOfPlayersByCourse.useQuery({
+  const { data: numberOfPlayers } = api.course.getNumberOfPlayersByCourse.useQuery({
     courseId: courseId ?? "",
   });
-  // const NumberOfPlayers = ["2", "4"]
-  console.log("NumberOfPlayers", NumberOfPlayers);
 
   const [selectedPlayers, setSelectedPlayers] = useState<string>(() => {
-    if (NumberOfPlayers?.length) {
-      return String(NumberOfPlayers[0]);
+    if (numberOfPlayers?.length !== 0 && numberOfPlayers !== undefined) {
+      return String(numberOfPlayers[0]);
     }
     return (status === "UNLISTED" || status === "FIRST_HAND") ? "1" : players;
   });
@@ -398,7 +396,7 @@ export const TeeTime = ({
                 isDisabled={status === "SECOND_HAND"}
                 className="md:px-[1rem] md:py-[.25rem] md:!text-[14px] !text-[10px] px-[.75rem] py-[.1rem]"
                 teeTimeId={teeTimeId}
-                numberOfPlayers={NumberOfPlayers}
+                numberOfPlayers={numberOfPlayers ? numberOfPlayers : []}
                 status={status}
               />
             ) : (

@@ -34,6 +34,13 @@ export const ListedDetails = ({
   teeTimeId: string;
   props?: ComponentProps<"div">;
 }) => {
+  const { course } = useCourseContext();
+  const courseId = course?.id;
+
+  const { data: NumberOfPlayers } = api.course.getNumberOfPlayersByCourse.useQuery({
+    courseId: courseId ?? "",
+  });
+
   const [players, setPlayers] = useState<string>("1");
   const [, copy] = useCopyToClipboard();
   const [isCopied, setIsCopied] = useState<boolean>(false);
@@ -44,7 +51,6 @@ export const ListedDetails = ({
     api.searchRouter.getListingById.useQuery({ listingId: listingId });
 
   const { user } = useUserContext();
-  const { course } = useCourseContext();
   const router = useRouter();
   const { data: session } = useSession();
 
@@ -171,6 +177,8 @@ export const ListedDetails = ({
               availableSlots={data?.availableSlots ?? 0}
               isDisabled={true}
               teeTimeId={teeTimeId}
+              numberOfPlayers={NumberOfPlayers ? NumberOfPlayers : []}
+              status={"SECOND_HAND"}
             />
           </div>
           <div className="flex flex-col flex-wrap justify-between gap-2 md:flex-row">

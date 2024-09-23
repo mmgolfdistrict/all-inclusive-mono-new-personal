@@ -608,60 +608,16 @@ export class CourseService extends DomainService {
       })
       .from(courses)
       .where(eq(courses.id, courseId));
-    const allowedPlayers = NumberOfPlayers[0]?.primaryMarketAllowedPlayers;
 
-    let playerMessage = [];
+    const PlayersOptions = ["1", "2", "3", "4"];
 
-    switch (allowedPlayers) {
-      case 1:
-        playerMessage = ["1"];
-        break;
-      case 2:
-        playerMessage = ["2"];
-        break;
-      case 3:
-        playerMessage = ["1", "2"];
-        break;
-      case 4:
-        playerMessage = ["3"];
-        break;
-      case 5:
-        playerMessage = ["1", "3"];
-        break;
-      case 6:
-        playerMessage = ["2", "3"];
-        break;
-      case 7:
-        playerMessage = ["1", "2", "3"];
-        break;
-      case 8:
-        playerMessage = ["4"];
-        break;
-      case 9:
-        playerMessage = ["1", "4"];
-        break;
-      case 10:
-        playerMessage = ["2", "4"];
-        break;
-      case 11:
-        playerMessage = ["1", "2", "4"];
-        break;
-      case 12:
-        playerMessage = ["3", "4"];
-        break;
-      case 13:
-        playerMessage = ["1", "3", "4"];
-        break;
-      case 14:
-        playerMessage = ["2", "3", "4"];
-        break;
-      case 15:
-        playerMessage = ["1", "2", "3", "4"];
-        break;
-      default:
-        playerMessage = ["1", "2", "3", "4"];
-    }
+    const binaryMask = NumberOfPlayers[0]?.primaryMarketAllowedPlayers;
 
-    return playerMessage;
+    const numberOfPlayers =
+      binaryMask !== null && binaryMask !== undefined
+        ? PlayersOptions.filter((_, index) => (binaryMask & (1 << index)) !== 0)
+        : PlayersOptions;
+
+    return numberOfPlayers;
   };
 }
