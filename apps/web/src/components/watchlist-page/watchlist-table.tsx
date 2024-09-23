@@ -16,6 +16,7 @@ import { OutlineButton } from "../buttons/outline-button";
 import { Trashcan } from "../icons/trashcan";
 import { SkeletonRow } from "../my-tee-box-page/skeleton-row";
 import { MakeAnOffer } from "./make-an-offer";
+import { Spinner } from "../loading/spinner";
 
 export const WatchlistTable = () => {
   const { course } = useCourseContext();
@@ -25,7 +26,7 @@ export const WatchlistTable = () => {
     WatchlistItem | undefined
   >(undefined);
 
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const router = useRouter();
   const { user } = useUserContext();
 
@@ -81,7 +82,15 @@ export const WatchlistTable = () => {
     }
   };
 
-  if (!user || !session) {
+  if (status === "loading") {
+    return (
+      <div className="flex flex-col items-center justify-center h-[200px] rounded-xl gap-4 bg-white p-6 text-center">
+        <Spinner className="w-[50px] h-[150px] mx-auto" />
+      </div>
+    )
+  }
+
+  if ((!user || !session) && status === "unauthenticated") {
     return (
       <div className="flex flex-col items-center justify-center h-[200px] rounded-xl gap-4 bg-white p-6 text-center">
         <div className="text-2xl font-semibold">
