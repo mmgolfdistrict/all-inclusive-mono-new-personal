@@ -180,6 +180,7 @@ export const Counteroffer = ({
                       } px-[1.75rem]`}
                       dataTestId="player-item-id"
                       dataQa={value}
+                      label={value}
                     />
                   ))}
                 </ToggleGroup.Root>

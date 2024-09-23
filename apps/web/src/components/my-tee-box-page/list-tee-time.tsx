@@ -345,6 +345,7 @@ export const ListTeeTime = ({
                           ? "opacity-50 cursor-not-allowed"
                           : ""
                         }`}
+                      label={value}
                     />
                   ))}
                 </ToggleGroup.Root>
