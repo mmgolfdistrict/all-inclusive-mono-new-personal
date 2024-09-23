@@ -246,9 +246,8 @@ export const ManageTeeTimeListing = ({
       </LoadingContainer>
       <aside
         // ref={sidebar}
-        className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[500px] md:h-[100dvh] ${
-          isManageTeeTimeListingOpen ? "translate-x-0" : "translate-x-full"
-        }`}
+        className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[500px] md:h-[100dvh] ${isManageTeeTimeListingOpen ? "translate-x-0" : "translate-x-full"
+          }`}
       >
         <div className="relative flex h-full flex-col">
           <div className="flex items-center justify-between p-4">
@@ -325,19 +324,18 @@ export const ManageTeeTimeListing = ({
                     <Item
                       key={index}
                       value={value}
-                      className={`opacity-50 ${
-                        index === 0
-                          ? "rounded-l-full border border-stroke"
-                          : index === PlayerOptions.length - 1
+                      className={`opacity-50 ${index === 0
+                        ? "rounded-l-full border border-stroke"
+                        : index === PlayerOptions.length - 1
                           ? "rounded-r-full border-b border-t border-r border-stroke"
                           : "border-b border-r border-t border-stroke"
-                      } px-[1.75rem] ${
-                        availableSlots < index + 1
+                        } px-[1.75rem] ${availableSlots < index + 1
                           ? "opacity-50 cursor-not-allowed"
                           : ""
-                      }`}
+                        }`}
                       dataTestId="player-item-id"
                       dataQa={value}
+                      label={value}
                     />
                   ))}
                 </ToggleGroup.Root>
