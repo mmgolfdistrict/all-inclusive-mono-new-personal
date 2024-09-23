@@ -138,6 +138,7 @@ export const CheckoutForm = ({
   const [isLoading, setIsLoading] = useState(false);
   const [showTextField, setShowTextField] = useState(false);
   const [donateError, setDonateError] = useState(false);
+  const [noThanks, setNoThanks] = useState(false);
   // const [isPaymentCompleted, setIsPaymentCompleted] = useState(false);
   const [message, setMessage] = useState("");
   const [charityAmountError, setCharityAmountError] = useState("");
@@ -412,9 +413,10 @@ export const CheckoutForm = ({
   const handleDonateChange = (event) => {
     const value = event.target.value.trim() as string;
     const numericValue = value.length > 0 ? parseFloat(value) : 0;
+    setNoThanks(false)
 
     if (!numericValue || numericValue === 0) {
-      setDonateValue(parseFloat(event.target.value as string));
+      setDonateValue(event.target.value);
       setDonateError(true);
     } else if (numericValue < 1) {
       setDonateError(true);
@@ -434,6 +436,7 @@ export const CheckoutForm = ({
 
   const handleRoundOff = () => {
     setShowTextField(false);
+    setNoThanks(false)
     setRoundOffClick(true);
     const donation = parseFloat((roundOff - (primaryGreenFeeCharge + TaxCharge)).toFixed(2));
     setDonateValue(donation);
@@ -445,7 +448,6 @@ export const CheckoutForm = ({
       handleRoundOff();
     }
   }, [TaxCharge]);
-
 
   return (
     <form onSubmit={handleSubmit} className="">
@@ -549,7 +551,10 @@ export const CheckoutForm = ({
           <div>Taxes & Others</div>
           <div>
             $
-            {TaxCharge}
+            {TaxCharge.toLocaleString("en-US", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
           </div>
         </div>
         {roundUpCharityId && (
@@ -557,7 +562,7 @@ export const CheckoutForm = ({
             <div>Charitable Donation</div>
             <div>
               $
-              {donateValue.toLocaleString("en-US", {
+              {(donateValue || 0).toLocaleString("en-US", {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}
@@ -568,11 +573,12 @@ export const CheckoutForm = ({
           <div>Total</div>
           <div>
             $
-            {roundUpCharityId
-              ? roundOffClick
-                ? roundOff
-                : TotalAmt
-              : TotalAmt}
+            {((roundUpCharityId
+              ? (roundOffClick ? roundOff : TotalAmt)
+              : TotalAmt) || 0).toLocaleString("en-US", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
           </div>
         </div>
       </div>
@@ -610,12 +616,17 @@ export const CheckoutForm = ({
 
             <button
               type="button"
-              className={`flex w-32 items-center justify-center rounded-full bg-white p-2 text-primary border-none`}
+              className={`flex w-32 items-center justify-center rounded-md p-2  ${noThanks
+                ? "bg-primary text-white"
+                : "bg-white text-primary border-primary border-2"
+                }`}
+              // className={`flex w-32 items-center justify-center rounded-full bg-white p-2 text-primary border-none`}
               onClick={() => {
                 setRoundOffClick(false);
                 setShowTextField(false);
                 setDonateValue(0);
                 handleSelectedCharityAmount(0);
+                setNoThanks(true)
               }}
             >
               No Thanks
@@ -634,8 +645,8 @@ export const CheckoutForm = ({
                 step="1"
               />
               {donateError && (
-                <div className="text-red-500 mt-1">
-                  Donation Amount must be greater than 1.
+                <div className="mt-1 text-sm text-red">
+                  Donation amount must be more than 0.
                 </div>
               )}
             </div>
