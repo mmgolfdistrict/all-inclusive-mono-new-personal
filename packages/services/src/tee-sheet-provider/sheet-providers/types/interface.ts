@@ -1,6 +1,6 @@
 import type { InsertBookingSlots } from "@golf-district/database/schema/bookingslots";
 import type pino from "pino";
-import type { BookingResponse, CustomerCreationData, CustomerData, TeeTimeResponse } from "./foreup.type";
+import type { BookingResponse as ForeUpBookingResponse, CustomerCreationData, CustomerData, ForeupSaleDataOptions, TeeTimeResponse } from "./foreup.type";
 
 export type ForeUpCredentials = {
   username: string;
@@ -8,6 +8,18 @@ export type ForeUpCredentials = {
 };
 
 type ProviderCredentials = ForeUpCredentials;
+
+export type BookingResponse = ForeUpBookingResponse;
+
+export type BookingDetails = {
+  providerCourseId: string;
+  providerTeeSheetId: string;
+  playerCount: number;
+  totalAmountPaid: number;
+  token: string;
+}
+
+type SalesDataOptions = ForeupSaleDataOptions;
 
 export interface ProviderAPI {
   providerId: string;
@@ -51,6 +63,9 @@ export interface ProviderAPI {
     providerId: string,
     courseId: string
   ) => Promise<InsertBookingSlots[]>;
+  shouldAddSaleData: () => boolean;
+  getSalesDataOptions: (reservationData: BookingResponse, bookingDetails: BookingDetails) => SalesDataOptions;
+  addSalesData: (options: SalesDataOptions) => Promise<void>;
 }
 
 export abstract class BaseProvider implements ProviderAPI {
@@ -106,5 +121,8 @@ export abstract class BaseProvider implements ProviderAPI {
     providerBookingId: string,
     providerId: string,
     courseId: string
-  ): Promise<InsertBookingSlots[]>;
+  ): Promise<InsertBookingSlots[]>
+  abstract shouldAddSaleData(): boolean;
+  abstract getSalesDataOptions(reservationData: BookingResponse, bookingDetails: BookingDetails): SalesDataOptions;
+  abstract addSalesData(options: SalesDataOptions): Promise<void>;
 }

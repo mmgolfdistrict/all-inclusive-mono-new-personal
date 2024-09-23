@@ -396,7 +396,7 @@ export default function CourseHomePage() {
   };
 
   const pageUp = () => {
-    if (pageNumber === daysData.amountOfPages) return;
+    if (pageNumber === amountOfPage) return;
     setPageNumber((prev) => prev + 1);
     setTake((prev) => prev + TAKE);
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -503,14 +503,23 @@ export default function CourseHomePage() {
     }
     return null;
   };
+
+
+  const { data: systemNotifications } =
+    api.systemNotification.getSystemNotification.useQuery({});
+
+  const notificationsCount = systemNotifications ? systemNotifications.length : 0;
+  const marginTop = notificationsCount > 0 ? `mt-${notificationsCount * 6}` : '';
+
+
   return (
-    <main className="bg-secondary-white py-4 md:py-6">
+    <main className={`bg-secondary-white py-4 md:py-6 ${marginTop}`} >
       <LoadingContainer isLoading={isLoadingTeeTimeDate || isLoading}>
         <div></div>
       </LoadingContainer>
       <div className="flex items-center justify-between px-4 md:px-6">
         {entity?.redirectToCourseFlag ? null : (
-          <GoBack href="/" text={`Back to all ${entity?.name} Courses`} />
+        <GoBack href="/" text={`Back to all ${entity?.name} Courses`} />
         )}
       </div>
       {/* <CourseTitle
@@ -622,7 +631,7 @@ export default function CourseHomePage() {
                     {pageNumber} / {amountOfPage}
                   </div>
                   <FilledButton
-                    className={`!px-3 !py-2 !min-w-fit !rounded-md ${pageNumber === daysData.amountOfPages
+                    className={`!px-3 !py-2 !min-w-fit !rounded-md ${pageNumber === amountOfPage
                       ? "opacity-50 cursor-not-allowed"
                       : ""
                       }`}

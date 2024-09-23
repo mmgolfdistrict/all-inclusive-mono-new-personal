@@ -14,7 +14,9 @@ import type { CartProduct, MaxReservationResponse } from "~/utils/types";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { toast } from "react-toastify";
+import { number } from "zod";
 import { FilledButton } from "../buttons/filled-button";
+import { OutlineButton } from "../buttons/outline-button";
 import { CharitySelect } from "../input/charity-select";
 import { Input } from "../input/input";
 import styles from "./checkout.module.css";
@@ -39,6 +41,8 @@ export const CheckoutForm = ({
   const MAX_CHARITY_AMOUNT = 1000;
   const { course } = useCourseContext();
   const courseId = course?.id;
+  const roundUpCharityId = course?.roundUpCharityId;
+
   const { user } = useUserContext();
   const auditLog = api.webhooks.auditLog.useMutation();
   const sendEmailForFailedPayment =
@@ -103,6 +107,7 @@ export const CheckoutForm = ({
       ?.filter(({ product_data }) => product_data.metadata.type === "sensible")
       ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
 
+
   const charityCharge =
     cartData
       ?.filter(({ product_data }) => product_data.metadata.type === "charity")
@@ -128,8 +133,11 @@ export const CheckoutForm = ({
   const widgets = useWidgets();
 
   const router = useRouter();
-
+  const [donateValue, setDonateValue] = useState(5);
+  const [roundOffClick, setRoundOffClick] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [showTextField, setShowTextField] = useState(false);
+  const [donateError, setDonateError] = useState(false);
   // const [isPaymentCompleted, setIsPaymentCompleted] = useState(false);
   const [message, setMessage] = useState("");
   const [charityAmountError, setCharityAmountError] = useState("");
@@ -144,7 +152,7 @@ export const CheckoutForm = ({
     handleRemoveSelectedCharity,
     setReservationData,
     sensibleData,
-    amountOfPlayers
+    amountOfPlayers,
   } = useCheckoutContext();
 
   const reserveBookingApi = api.teeBox.reserveBooking.useMutation();
@@ -207,7 +215,6 @@ export const CheckoutForm = ({
       roundsToBook: amountOfPlayers,
       courseId: courseId ? courseId : "",
     });
-
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     googleAnalyticsEvent({
@@ -351,7 +358,7 @@ export const CheckoutForm = ({
       setMessage("An unexpected error occurred: " + error.message);
       setIsLoading(false);
     } finally {
-      // setIsLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -389,11 +396,62 @@ export const CheckoutForm = ({
     return bookingResponse;
   };
 
+  const Total =
+    primaryGreenFeeCharge +
+    taxCharge +
+    sensibleCharge +
+    (!roundUpCharityId ? charityCharge : 0) +
+    convenienceCharge +
+    (!roundUpCharityId ? 0 : Number(donateValue));
+
+  const TotalAmt = Total.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
+  const handleDonateChange = (event) => {
+    const value = event.target.value.trim() as string;
+    const numericValue = value.length > 0 ? parseFloat(value) : 0;
+
+    if (!numericValue || numericValue === 0) {
+      setDonateValue(parseFloat(event.target.value as string));
+      setDonateError(true);
+    } else if (numericValue < 1) {
+      setDonateError(true);
+    } else {
+      setDonateError(false);
+      setDonateValue(numericValue);
+      handleSelectedCharityAmount(Number(numericValue));
+    }
+  };
+
+  const TaxCharge = taxCharge +
+    sensibleCharge +
+    (!roundUpCharityId ? charityCharge : 0) +
+    convenienceCharge
+
+  const roundOff = Math.ceil(primaryGreenFeeCharge + TaxCharge);
+
+  const handleRoundOff = () => {
+    setShowTextField(false);
+    setRoundOffClick(true);
+    const donation = parseFloat((roundOff - (primaryGreenFeeCharge + TaxCharge)).toFixed(2));
+    setDonateValue(donation);
+    handleSelectedCharityAmount(Number(donation));
+  };
+
+  useEffect(() => {
+    if (roundUpCharityId) {
+      handleRoundOff();
+    }
+  }, [TaxCharge]);
+
+
   return (
     <form onSubmit={handleSubmit} className="">
       <UnifiedCheckout id="unified-checkout" options={unifiedCheckoutOptions} />
       <div className="flex w-full flex-col gap-2 bg-white p-4 rounded-lg my-2">
-        {course?.supportCharity ? (
+        {course?.supportCharity && !roundUpCharityId ? (
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
               <div>Charitable Donations</div>
@@ -427,10 +485,12 @@ export const CheckoutForm = ({
                       .replace(/\$/g, "")
                       .replace(/,/g, "");
 
+                    console.log("value", value);
+
                     if (Number(value) < 0) return;
 
-                    const decimals = value.split(".")[1];
-                    if (decimals) return;
+                    // const decimals = value.split(".")[1];
+                    // if (decimals) return;
 
                     if (Number(value) > MAX_CHARITY_AMOUNT) {
                       setCharityAmountError(
@@ -441,6 +501,7 @@ export const CheckoutForm = ({
                     }
 
                     const strippedLeadingZeros = value.replace(/^0+/, "");
+
                     handleSelectedCharityAmount(Number(strippedLeadingZeros));
                   }}
                   placeholder="Enter charitable donation amount."
@@ -488,38 +549,99 @@ export const CheckoutForm = ({
           <div>Taxes & Others</div>
           <div>
             $
-            {(
-              taxCharge +
-              sensibleCharge +
-              charityCharge +
-              convenienceCharge
-            ).toLocaleString("en-US", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
+            {TaxCharge}
           </div>
         </div>
+        {roundUpCharityId && (
+          <div className="flex justify-between">
+            <div>Charitable Donation</div>
+            <div>
+              $
+              {donateValue.toLocaleString("en-US", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </div>
+          </div>
+        )}
         <div className="flex justify-between">
           <div>Total</div>
           <div>
             $
-            {(
-              primaryGreenFeeCharge +
-              taxCharge +
-              sensibleCharge +
-              charityCharge +
-              convenienceCharge
-            ).toLocaleString("en-US", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
+            {roundUpCharityId
+              ? roundOffClick
+                ? roundOff
+                : TotalAmt
+              : TotalAmt}
           </div>
         </div>
       </div>
-      <LoadingContainer isLoading={isLoading}>
-        <div></div>
-      </LoadingContainer>
+      {roundUpCharityId && (
+        <div className="flex w-full flex-col gap-2 bg-white p-4 rounded-lg my-2 border border-primary">
+          <div>Golf District supports PGA 401k.</div>
+          <div>Please help us the golf professionals retire peacefully.</div>
+          <div className="flex gap-2 mt-5 ml-3 mb-4">
+            <button
+              type="button"
+              className={`flex w-32 items-center justify-center rounded-md p-2  ${roundOffClick
+                ? "bg-primary text-white"
+                : "bg-white text-primary border-primary border-2"
+                }`}
+              onClick={handleRoundOff}
+            >
+              Round Up
+            </button>
 
+            <button
+              type="button"
+              className={`flex w-32 items-center justify-center rounded-md p-2  ${showTextField
+                ? "bg-primary text-white"
+                : "bg-white text-primary border-primary border-2"
+                }`}
+              onClick={() => {
+                setRoundOffClick(false);
+                setShowTextField(true);
+                setDonateValue(5);
+                handleSelectedCharityAmount(5);
+              }}
+            >
+              Other
+            </button>
+
+            <button
+              type="button"
+              className={`flex w-32 items-center justify-center rounded-full bg-white p-2 text-primary border-none`}
+              onClick={() => {
+                setRoundOffClick(false);
+                setShowTextField(false);
+                setDonateValue(0);
+                handleSelectedCharityAmount(0);
+              }}
+            >
+              No Thanks
+            </button>
+          </div>
+          {showTextField && (
+            <div className="flex flex-col">
+              <input
+                type="number"
+                placeholder="Enter Donation Amount"
+                value={donateValue}
+                onChange={handleDonateChange}
+                className={`p-2 border rounded-md ${donateError ? "border-red-500" : "border-primary"
+                  }`}
+                min="1"
+                step="1"
+              />
+              {donateError && (
+                <div className="text-red-500 mt-1">
+                  Donation Amount must be greater than 1.
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
       {!maxReservation?.success && (
         <div className="md:hidden bg-alert-red text-white p-1 pl-2 my-2  w-full rounded">
           {maxReservation?.message}
@@ -527,6 +649,7 @@ export const CheckoutForm = ({
       )}
 
       <FilledButton
+        type="submit"
         className={`w-full rounded-full`}
         disabled={
           isLoading || !hyper || !widgets || message === "Payment Successful"
@@ -535,6 +658,9 @@ export const CheckoutForm = ({
       >
         {isLoading ? "Processing..." : <>Pay Now</>}
       </FilledButton>
+      <LoadingContainer isLoading={isLoading}>
+        <div></div>
+      </LoadingContainer>
       {/* Show any error or success messages */}
       {message && (
         <div id="payment-message" className={styles.paymentMessage}>
