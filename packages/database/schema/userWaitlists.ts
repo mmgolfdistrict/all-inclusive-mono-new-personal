@@ -18,6 +18,7 @@ export const userWaitlists = mySqlTable(
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
     isDeleted: boolean("isDeleted").notNull().default(false),
+    isSent: boolean("isSent").notNull().default(false),
   },
   (table) => {
     return {

@@ -14,7 +14,6 @@
   ],
   "scripts": {
     "build": "turbo run build && node ./apps/web/script/generateRevision.js",
-    "start": "npm run dev",
     "clean:workspaces": "turbo clean",
     "compile": "turbo run compile",
     "dev": "dotenv -- turbo dev --parallel --filter=golf-district-platforms",
@@ -44,6 +43,8 @@
     "typescript": "^5.2.2"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^14.2.11",
+    "cross-env": "^7.0.3",
     "eslint": "^8.45.0",
     "eslint-config-custom": "*",
     "husky": "^8.0.3",

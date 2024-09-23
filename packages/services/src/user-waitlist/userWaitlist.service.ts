@@ -1,14 +1,10 @@
 import { randomUUID } from "crypto";
-import { and, asc, count, eq, gte, inArray, lt, lte, secondaryDb, type Db } from "@golf-district/database";
+import { and, asc, eq, gte, inArray, lte, type Db } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import { courses } from "@golf-district/database/schema/courses";
 import { entities } from "@golf-district/database/schema/entities";
-import { teeTimes } from "@golf-district/database/schema/teeTimes";
-import { users } from "@golf-district/database/schema/users";
 import type { InsertUserWaitlists } from "@golf-district/database/schema/userWaitlists";
 import { userWaitlists } from "@golf-district/database/schema/userWaitlists";
-import { userWaitlistAuditLogs } from "@golf-district/database/secondaryDbSchema/userWaitlistAuditLogs";
-import { userWaitlistRecords } from "@golf-district/database/secondaryDbSchema/userWaitlistRecords";
 import Logger from "@golf-district/shared/src/logger";
 import dayjs from "dayjs";
 import UTC from "dayjs/plugin/utc";
@@ -16,8 +12,8 @@ import type { NotificationService } from "../notification/notification.service";
 import type {
   CreateWaitlistNotification,
   CreateWaitlistNotifications,
+  NotificationQstashData,
   UpdateWaitlistNotification,
-  WaitlistNotification,
 } from "./types";
 
 dayjs.extend(UTC);
@@ -27,7 +23,7 @@ dayjs.extend(UTC);
 export class UserWaitlistService {
   private readonly logger = Logger(UserWaitlistService.name);
 
-  constructor(private readonly database: Db, private readonly notificationService: NotificationService) {}
+  constructor(private readonly database: Db, private readonly notificationService: NotificationService) { }
 
   getWaitlist = async (userId: string, courseId: string) => {
     try {
@@ -224,329 +220,98 @@ export class UserWaitlistService {
     }
   };
 
-  sendWaitlistNotificationToUser = async (
+  sendNotificationsForAvailableTeeTime = async (
+    date: string | undefined,
+    time: number,
     courseId: string,
-    userId: string,
-    CourseLogoURL: string,
-    subDomainURL: string,
-    courseName: string
+    userId?: string
   ) => {
     try {
-      const tomorrowsDate = new Date(
-        dayjs().utc().startOf("day").add(1, "day").format("YYYY-MM-DD") + "T00:00:00Z"
-      ); // want to send notification for tomorrow
+      if (!date || !time) {
+        throw new Error("date or time is undefined, can't send notifications to users");
+      }
 
-      // get all notifications
+      if (dayjs(date).utc().isBefore(dayjs().utc(), "day")) {
+        throw new Error("date is in the past, can't send notifications to users");
+      }
+
       const notifications = await this.database
         .select({
           id: userWaitlists.id,
           userId: userWaitlists.userId,
           courseId: userWaitlists.courseId,
-          startTime: userWaitlists.startTime,
-          endTime: userWaitlists.endTime,
-          playerCount: userWaitlists.playerCount,
           date: userWaitlists.date,
+          subDomainURL: entities.subdomain,
+          courseName: courses.name,
+          cdnKey: assets.key,
+          extension: assets.extension,
         })
         .from(userWaitlists)
+        .innerJoin(courses, eq(courses.id, courseId))
+        .innerJoin(assets, eq(assets.id, courses.logoId))
+        .innerJoin(entities, eq(entities.id, courses.entityId))
         .where(
           and(
             eq(userWaitlists.courseId, courseId),
-            eq(userWaitlists.userId, userId),
             eq(userWaitlists.isDeleted, false),
-            gte(userWaitlists.date, tomorrowsDate)
+            eq(userWaitlists.date, new Date(dayjs(date).format("YYYY-MM-DD") + "T00:00:00Z")),
+            lte(userWaitlists.startTime, time),
+            gte(userWaitlists.endTime, time)
           )
         )
-        .orderBy(asc(userWaitlists.date), asc(userWaitlists.playerCount), asc(userWaitlists.startTime))
         .execute()
         .catch((err) => {
-          this.logger.error(`error getting waitlist from database: ${err}`);
-          throw new Error("Error getting waitlist");
+          this.logger.error(`error getting notifications from database: ${err}`);
+          throw new Error("Error getting notifications");
         });
 
-      const sortedNotifications = notifications.reduce((acc, notification: WaitlistNotification) => {
-        const date = dayjs(notification.date).utc().format("YYYY-MM-DD");
-        if (!acc[date]) {
-          acc[date] = [];
+      const sentNotificationsToUsers = new Set();
+
+      for (const notification of notifications) {
+        // don't send notificaton same user or to lister
+        if (sentNotificationsToUsers.has(notification.userId) || userId === notification.userId) {
+          continue;
         }
-        acc[date]!.push(notification);
-        return acc;
-      }, {} as Record<string, WaitlistNotification[]>);
-
-      const sortedNotificationsByDate = Object.keys(sortedNotifications).sort((a, b) => {
-        const dateA = dayjs(a).utc();
-        const dateB = dayjs(b).utc();
-        return dateA.isBefore(dateB) ? -1 : 1;
-      });
-
-      const MAX_AVAILABLE_TEE_TIMES_TO_RETURN = 5;
-      const availableTeeTimes = [] as WaitlistNotification[];
-
-      for (const date of sortedNotificationsByDate) {
-        if (availableTeeTimes.length >= MAX_AVAILABLE_TEE_TIMES_TO_RETURN) {
-          break;
-        }
-
-        const availableTeeTime = await this.getAvailableTeeTimesBasedForDay(sortedNotifications[date]);
-        if (availableTeeTime) {
-          availableTeeTimes.push(availableTeeTime);
-        }
-      }
-
-      if (availableTeeTimes.length > 0) {
-        // send email to user
-        const availableTimes = availableTeeTimes.map((notificationTime) => {
-          const date = dayjs(notificationTime.date);
-          const formattedDate = date.format("dddd MMM DD, YYYY");
-
-          const startTimeDate = dayjs(notificationTime.date)
-            .utc()
-            .add(Math.floor(notificationTime.startTime / 100), "hour")
-            .add(notificationTime.startTime % 100, "minute");
-          const endTimeDate = dayjs(notificationTime.date)
-            .utc()
-            .add(Math.floor(notificationTime.endTime / 100), "hour")
-            .add(notificationTime.endTime % 100, "minute");
-
-          const startTimeFormated = startTimeDate.format("hh:mm A");
-          const endTimeFormated = endTimeDate.format("hh:mm A");
-
-          return {
-            date: formattedDate,
-            time: `${startTimeFormated} - ${endTimeFormated}`,
-            bookNowURL: `https://${subDomainURL}/${courseId}`,
-            stopNotificationURL: `https://${subDomainURL}/${courseId}/notify-me/stop-notification/${notificationTime.id}`,
-            courseName,
-          };
-        });
-
-        const template = {
-          CourseLogoURL,
-          CourseName: courseName,
-          HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
-          availableTimes,
-        };
-
-        await this.notificationService.createNotification(
-          userId || "",
-          "Waitlist Notification",
-          "",
-          courseId,
-          process.env.SENDGRID_USER_WAITLIST_NOTIFICATION_TEMPLATE_ID,
-          template
-        );
-
-        const logData = {
-          id: randomUUID(),
-          userId: userId,
-          courseId: courseId,
-          json: JSON.stringify({
-            notificationsSentFor: availableTeeTimes,
-            status: "success",
-          }),
-        };
-
-        await secondaryDb
-          .insert(userWaitlistAuditLogs)
-          .values(logData)
-          .execute()
-          .catch((err) => {
-            this.logger.error(`error inserting waitlist audit log into database: ${err}`);
-          });
-      }
-    } catch (error) {
-      this.logger.error(error);
-      const logData = {
-        id: randomUUID(),
-        userId: userId,
-        courseId: courseId,
-        json: JSON.stringify({ notificationsSentFor: [], status: "error", error: JSON.stringify(error) }),
-      };
-
-      await secondaryDb
-        .insert(userWaitlistAuditLogs)
-        .values(logData)
-        .execute()
-        .catch((err) => {
-          this.logger.error(`error inserting waitlist audit log into database: ${err}`);
-        });
-    }
-  };
-
-  sendWaitlistNotifications = async (courseId: string) => {
-    try {
-      let offset = 0;
-      const USER_LIMIT = 50;
-      const todaysDate = new Date(dayjs().utc().startOf("day").format("YYYY-MM-DD") + "T00:00:00Z");
-      let newRecordData;
-
-      const [course] = await this.database
-        .select({
-          cdnKey: assets.key,
-          extension: assets.extension,
-          subDomainURL: entities.subdomain,
-          coursesName: courses.name,
-        })
-        .from(courses)
-        .leftJoin(assets, eq(assets.id, courses.logoId))
-        .leftJoin(entities, eq(entities.id, courses.entityId))
-        .where(eq(courses.id, courseId))
-        .execute()
-        .catch((err) => {
-          this.logger.error(`error getting course logo from database: ${err}`);
-          throw new Error("Error getting course logo");
-        });
-
-      const [record] = await secondaryDb
-        .select({
-          id: userWaitlistRecords.id,
-          totalUsers: userWaitlistRecords.totalUsers,
-          usersDone: userWaitlistRecords.usersDone,
-        })
-        .from(userWaitlistRecords)
-        .where(and(eq(userWaitlistRecords.courseId, courseId), eq(userWaitlistRecords.date, todaysDate)))
-        .execute()
-        .catch((err) => {
-          this.logger.error(`error getting waitlist record from database: ${err}`);
-          throw new Error("Error getting waitlist record");
-        });
-
-      if (!record) {
-        const [allUsers] = await this.database
-          .select({ totalUsers: count() })
-          .from(users)
-          .execute()
-          .catch((err) => {
-            this.logger.error(`error fetching total users from database: ${err}`);
-            throw new Error("Error fetching total users");
-          });
-
-        newRecordData = {
-          id: randomUUID(),
-          courseId,
-          totalUsers: allUsers?.totalUsers ?? 0,
-          usersDone: 0,
-          date: todaysDate,
-        };
-
-        await secondaryDb
-          .insert(userWaitlistRecords)
-          .values(newRecordData)
-          .execute()
-          .catch((err) => {
-            this.logger.error(`error inserting waitlist record into database: ${err}`);
-            throw new Error("Error inserting waitlist record");
-          });
-      }
-
-      if (record) {
-        offset = record.usersDone;
-      }
-
-      if (record && record.usersDone >= record.totalUsers) {
-        return;
-      }
-
-      const userIds = await this.database
-        .select({ id: users.id })
-        .from(users)
-        .orderBy(users.email)
-        .limit(USER_LIMIT)
-        .offset(offset)
-        .execute()
-        .catch((err) => {
-          this.logger.error(`error fetching users from database: ${err}`);
-          throw new Error("Error fetching users");
-        });
-
-      // send to qstash for further process
-      for (const user of userIds) {
+        sentNotificationsToUsers.add(notification.userId);
         const data = {
           json: {
-            courseId,
-            userId: user.id,
-            courseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.cdnKey}.${course?.extension}`,
-            subDomainURL: course?.subDomainURL,
-            courseName: course?.coursesName,
+            notificationId: notification.id,
+            courseId: notification.courseId,
+            userId: notification.userId,
+            courseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${notification.cdnKey}.${notification.extension}`,
+            subDomainURL: notification.subDomainURL,
+            courseName: notification.courseName,
           },
         };
 
-        const res = await fetch(
-          `${process.env.QSTASH_BASE_URL}${process.env.QSTASH_WAITLIST_NOTIFICATION_TOPIC}`,
-          {
-            method: "POST",
-            body: JSON.stringify(data),
-            headers: {
-              "content-type": "application/json",
-              Authorization: `Bearer ${process.env.QSTASH_TOKEN}`,
-            },
-          }
-        );
-
-        if (res.ok) {
-          this.logger.info(`message sent successfully for user: ${user.id} and course: ${courseId}`);
-        } else {
-          this.logger.error(`error sending message for user: ${user.id} and course: ${courseId}`);
-        }
-      }
-
-      if (record || newRecordData) {
-        const recordId = record ? record.id : newRecordData ? newRecordData.id : "";
-        await secondaryDb
-          .update(userWaitlistRecords)
-          .set({
-            usersDone: (offset > 0 ? record?.usersDone ?? 0 : 0) + userIds.length,
-          })
-          .where(eq(userWaitlistRecords.id, recordId))
-          .execute()
-          .catch((err) => {
-            this.logger.error(`error updating waitlist record in database: ${err}`);
-            throw new Error("Error updating waitlist record");
-          });
+        await this.sendQstashMessage(data);
       }
     } catch (error) {
       this.logger.error(error);
-      throw error;
     }
   };
 
-  getAvailableTeeTimesBasedForDay = async (notifications: WaitlistNotification[] | undefined) => {
-    try {
-      if (notifications === undefined) {
-        return;
+  sendQstashMessage = async (data: NotificationQstashData) => {
+    const res = await fetch(
+      `${process.env.QSTASH_BASE_URL}${process.env.QSTASH_WAITLIST_NOTIFICATION_TOPIC}`,
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+        headers: {
+          "content-type": "application/json",
+          Authorization: `Bearer ${process.env.QSTASH_TOKEN}`,
+        },
       }
+    );
 
-      for (const notification of notifications) {
-        const [availableTeeTime] = await this.database
-          .select({ id: teeTimes.id })
-          .from(teeTimes)
-          .where(
-            and(
-              eq(teeTimes.courseId, notification.courseId),
-              gte(teeTimes.providerDate, dayjs(notification.date).utc().format("YYYY-MM-DD HH:mm:ss.SSS")),
-              lt(
-                teeTimes.providerDate,
-                dayjs(notification.date).add(1, "day").utc().format("YYYY-MM-DD HH:mm:ss.SSS")
-              ),
-              gte(teeTimes.time, notification.startTime),
-              lte(teeTimes.time, notification.endTime),
-              gte(teeTimes.availableFirstHandSpots, notification.playerCount)
-            )
-          )
-          .orderBy(asc(teeTimes.time))
-          .limit(1)
-          .execute()
-          .catch((err) => {
-            this.logger.error(`error getting teeTimes from database: ${err}`);
-            throw new Error("Error getting teeTimes");
-          });
-        if (availableTeeTime) {
-          return notification;
-        }
-      }
-      return;
-    } catch (error) {
-      this.logger.error(error);
-      throw error;
+    if (res.ok) {
+      this.logger.info(
+        `message sent successfully for user: ${data.json.userId} and course: ${data.json.courseId}`
+      );
+    } else {
+      this.logger.error(
+        `error sending message for user: ${data.json.userId} and course: ${data.json.courseId}`
+      );
     }
   };
 }

@@ -216,6 +216,13 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
     }
   };
 
+  useEffect(() => {
+    const startTimeRounded = Math.round(startTime[0] / 100) * 100;
+    const endTimeRounded = Math.round(startTime[1] / 100) * 100;
+
+    setLocalStartTime([startTimeRounded, endTimeRounded]);
+  }, [startTime]);
+
   const { data: specialEvents } = api.searchRouter.getSpecialEvents.useQuery({
     courseId: course?.id ?? "",
   });
