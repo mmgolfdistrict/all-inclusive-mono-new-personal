@@ -397,7 +397,7 @@ export default function CourseHomePage() {
   };
 
   const pageUp = () => {
-    if (pageNumber === daysData.amountOfPages) return;
+    if (pageNumber === amountOfPage) return;
     setPageNumber((prev) => prev + 1);
     setTake((prev) => prev + TAKE);
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -632,7 +632,7 @@ export default function CourseHomePage() {
                     {pageNumber} / {amountOfPage}
                   </div>
                   <FilledButton
-                    className={`!px-3 !py-2 !min-w-fit !rounded-md ${pageNumber === daysData.amountOfPages
+                    className={`!px-3 !py-2 !min-w-fit !rounded-md ${pageNumber === amountOfPage
                       ? "opacity-50 cursor-not-allowed"
                       : ""
                       }`}
