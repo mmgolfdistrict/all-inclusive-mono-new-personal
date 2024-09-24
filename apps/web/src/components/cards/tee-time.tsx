@@ -173,12 +173,7 @@ export const TeeTime = ({
     //   toast.error("Oops! Tee time is not available anymore");
     //   return;
     // }
-    if (selectedPlayers !== "2" && selectedPlayers !== "4" && status !== "SECOND_HAND") {
-      toast.error(
-        "You can only select 2 or 4 players at a time."
-      );
-      return
-    }
+
     await logAudit();
     microsoftClarityEvent({
       action: `CLICKED ON BUY`,
