@@ -1,5 +1,9 @@
 {
+<<<<<<< HEAD
   "date": "2024-09-24T15:15:35.839Z",
+=======
+  "date": "2024-09-24T12:17:32.567Z",
+>>>>>>> 6ec9304e717479ce77de255cc9ebbf1fd1a5d420
   "preset": "node-server",
   "commands": {
     "preview": "node ./server/index.mjs"

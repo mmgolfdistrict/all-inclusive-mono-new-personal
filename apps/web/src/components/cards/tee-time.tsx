@@ -81,19 +81,11 @@ export const TeeTime = ({
 }) => {
   const [, copy] = useCopyToClipboard();
   const [isCopied, setIsCopied] = useState<boolean>(false);
+  const [selectedPlayers, setSelectedPlayers] = useState<string>(
+    status === "UNLISTED" ? "1" : status === "FIRST_HAND" ? "1" : players
+  );
   const { course } = useCourseContext();
   const courseId = course?.id;
-  const { data: numberOfPlayers } = api.course.getNumberOfPlayersByCourse.useQuery({
-    courseId: courseId ?? "",
-  });
-
-  const [selectedPlayers, setSelectedPlayers] = useState<string>(() => {
-    if (numberOfPlayers?.length !== 0 && numberOfPlayers !== undefined) {
-      return String(numberOfPlayers[0]);
-    }
-    return (status === "UNLISTED" || status === "FIRST_HAND") ? "1" : players;
-  });
-
   const timezoneCorrection = course?.timezoneCorrection;
   const [isMakeAnOfferOpen, setIsMakeAnOfferOpen] = useState<boolean>(false);
   const { data: session } = useSession();
@@ -112,7 +104,6 @@ export const TeeTime = ({
       json: `TEE_TIME_IN_CART `,
     });
   };
-
 
   const tooltipRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const [showTooltip, setShowTooltip] = useState<boolean[]>([]);
@@ -173,7 +164,6 @@ export const TeeTime = ({
     //   toast.error("Oops! Tee time is not available anymore");
     //   return;
     // }
-
     await logAudit();
     microsoftClarityEvent({
       action: `CLICKED ON BUY`,
@@ -391,8 +381,6 @@ export const TeeTime = ({
                 isDisabled={status === "SECOND_HAND"}
                 className="md:px-[1rem] md:py-[.25rem] md:!text-[14px] !text-[10px] px-[.75rem] py-[.1rem]"
                 teeTimeId={teeTimeId}
-                numberOfPlayers={numberOfPlayers ? numberOfPlayers : []}
-                status={status}
               />
             ) : (
               players && (
