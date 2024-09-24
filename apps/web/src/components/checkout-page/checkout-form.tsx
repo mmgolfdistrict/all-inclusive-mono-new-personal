@@ -60,7 +60,7 @@ export const CheckoutForm = ({
 
   const { refetch: refetchGetSupportedCharities } =
     api.course.getSupportedCharitiesForCourseId.useQuery({
-      courseId: course?.id!,
+      courseId: course?.id??"",
     },
       {
         enabled: false,
@@ -211,7 +211,7 @@ export const CheckoutForm = ({
   });
 
   const CharityData = async () => {
-    let result = await refetchGetSupportedCharities()
+    const result = await refetchGetSupportedCharities()
     const charities = result.data;
     if (Array.isArray(charities)) {
       const Charity = charities?.find(
@@ -222,7 +222,7 @@ export const CheckoutForm = ({
   }
 
   useEffect(() => {
-    CharityData()
+    void CharityData()
     const timer = setTimeout(function () {
       router.push(`/${courseId}`);
     }, 10 * 60 * 1000);
@@ -439,7 +439,7 @@ export const CheckoutForm = ({
     setNoThanks(false)
 
     if (!numericValue || numericValue === 0) {
-      setDonateValue(event.target.value);
+      setDonateValue(Number(event?.target?.value));
       setDonateError(true);
     } else if (numericValue < 1) {
       setDonateError(true);
