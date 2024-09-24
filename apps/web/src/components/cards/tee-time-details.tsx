@@ -29,7 +29,20 @@ export const TeeTimeDetails = ({
   teeTimeId: string;
   props?: ComponentProps<"div">;
 }) => {
-  const [players, setPlayers] = useState<string>("1");
+  const { course } = useCourseContext();
+  const courseId = course?.id;
+
+  const { data: NumberOfPlayers } =
+    api.course.getNumberOfPlayersByCourse.useQuery({
+      courseId: courseId ?? "",
+    });
+
+  const [players, setPlayers] = useState<string>(
+    NumberOfPlayers?.length !== 0 && NumberOfPlayers !== undefined
+      ? String(NumberOfPlayers[0])
+      : "1"
+  );
+
   const [, copy] = useCopyToClipboard();
   const [isCopied, setIsCopied] = useState<boolean>(false);
 
@@ -38,7 +51,6 @@ export const TeeTimeDetails = ({
 
   const { user } = useUserContext();
   const router = useRouter();
-  const { course } = useCourseContext();
   const { data: session } = useSession();
 
   const toggleWatchlist = api.watchlist.toggleWatchlist.useMutation();
@@ -157,6 +169,8 @@ export const TeeTimeDetails = ({
               playersOptions={PlayersOptions}
               availableSlots={data?.availableSlots ?? 0}
               teeTimeId={teeTimeId}
+              numberOfPlayers={NumberOfPlayers ? NumberOfPlayers : []}
+              status={"FIRST_HAND"}
             />
           </div>
           <div className="flex flex-col flex-wrap justify-between gap-2 md:flex-row">

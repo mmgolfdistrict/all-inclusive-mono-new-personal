@@ -81,7 +81,7 @@ export class CourseService extends DomainService {
         buyerFee: courses.buyerFee,
         sellerFee: courses.sellerFee,
         internalId: providers.internalId,
-        roundUpCharityId: courses?.roundUpCharityId
+        roundUpCharityId: courses?.roundUpCharityId,
       })
       .from(courses)
       .innerJoin(providerCourseLink, eq(providerCourseLink.courseId, courses.id))
@@ -612,5 +612,25 @@ export class CourseService extends DomainService {
         }
       }
     }
+  };
+
+  getNumberOfPlayersByCourse = async (courseId: string) => {
+    const NumberOfPlayers = await this.database
+      .select({
+        primaryMarketAllowedPlayers: courses.primaryMarketAllowedPlayers,
+      })
+      .from(courses)
+      .where(eq(courses.id, courseId));
+
+    const PlayersOptions = ["1", "2", "3", "4"];
+
+    const binaryMask = NumberOfPlayers[0]?.primaryMarketAllowedPlayers;
+
+    const numberOfPlayers =
+      binaryMask !== null && binaryMask !== undefined
+        ? PlayersOptions.filter((_, index) => (binaryMask & (1 << index)) !== 0)
+        : PlayersOptions;
+
+    return numberOfPlayers;
   };
 }

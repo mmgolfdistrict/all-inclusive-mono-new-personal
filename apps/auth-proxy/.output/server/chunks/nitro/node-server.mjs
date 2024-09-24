@@ -4418,11 +4418,7 @@ const storage = createStorage({});
 
 storage.mount('/assets', assets$1);
 
-<<<<<<< HEAD
 storage.mount('data', unstorage_47drivers_47fs_45lite({"driver":"fsLite","base":"/Users/Harsh/Desktop/all-inclusive-mono/apps/auth-proxy/.data/kv"}));
-=======
-storage.mount('data', unstorage_47drivers_47fs_45lite({"driver":"fsLite","base":"/Users/soumyajoshi/Documents/golfdistrict/all-inclusive-mono/apps/auth-proxy/.data/kv"}));
->>>>>>> 6ec9304e717479ce77de255cc9ebbf1fd1a5d420
 
 function useStorage(base = "") {
   return base ? prefixStorage(storage, base) : storage;
@@ -5098,19 +5094,11 @@ const _f4b49z = eventHandler((event) => {
   return readAsset(id);
 });
 
-<<<<<<< HEAD
 const _lazy_ttHgau = () => import('../_...auth_.mjs');
 
 const handlers = [
   { route: '', handler: _f4b49z, lazy: false, middleware: true, method: undefined },
   { route: '/**:auth', handler: _lazy_ttHgau, lazy: true, middleware: false, method: undefined }
-=======
-const _lazy_i52oai = () => import('../_...auth_.mjs');
-
-const handlers = [
-  { route: '', handler: _f4b49z, lazy: false, middleware: true, method: undefined },
-  { route: '/**:auth', handler: _lazy_i52oai, lazy: true, middleware: false, method: undefined }
->>>>>>> 6ec9304e717479ce77de255cc9ebbf1fd1a5d420
 ];
 
 function createNitroApp() {
