@@ -58,6 +58,15 @@ export const CheckoutForm = ({
       }
     );
 
+  const { refetch: refetchGetSupportedCharities } =
+    api.course.getSupportedCharitiesForCourseId.useQuery({
+      courseId: course?.id!,
+    },
+      {
+        enabled: false,
+      })
+
+
   const checkIfTeeTimeAvailableOnProvider =
     api.teeBox.checkIfTeeTimeAvailableOnProvider.useMutation();
 
@@ -139,6 +148,7 @@ export const CheckoutForm = ({
   const [showTextField, setShowTextField] = useState(false);
   const [donateError, setDonateError] = useState(false);
   const [noThanks, setNoThanks] = useState(false);
+  const [charityName, setCharityName] = useState<string>("");
   // const [isPaymentCompleted, setIsPaymentCompleted] = useState(false);
   const [message, setMessage] = useState("");
   const [charityAmountError, setCharityAmountError] = useState("");
@@ -200,7 +210,19 @@ export const CheckoutForm = ({
     });
   });
 
+  const CharityData = async () => {
+    let result = await refetchGetSupportedCharities()
+    const charities = result.data;
+    if (Array.isArray(charities)) {
+      const Charity = charities?.find(
+        (charity) => charity?.charityId === roundUpCharityId
+      );
+      setCharityName(Charity?.charityName || "")
+    }
+  }
+
   useEffect(() => {
+    CharityData()
     const timer = setTimeout(function () {
       router.push(`/${courseId}`);
     }, 10 * 60 * 1000);
@@ -397,6 +419,7 @@ export const CheckoutForm = ({
     return bookingResponse;
   };
 
+
   const Total =
     primaryGreenFeeCharge +
     taxCharge +
@@ -584,7 +607,7 @@ export const CheckoutForm = ({
       </div>
       {roundUpCharityId && (
         <div className="flex w-full flex-col gap-2 bg-white p-4 rounded-lg my-2 border border-primary">
-          <div>Golf District supports PGA 401k.</div>
+          <div>Golf District supports {charityName}.</div>
           <div>Please help us the golf professionals retire peacefully.</div>
           <div className="flex gap-2 mt-5 ml-3 mb-4">
             <button

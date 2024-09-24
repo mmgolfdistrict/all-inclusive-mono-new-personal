@@ -54,6 +54,24 @@ export const getCourseById = async (courseId: string) => {
     console.log(error);
   }
 };
+
+export const getSupportedCharitiesForCourseId = async (courseId: string) => {
+  const courseService = new CourseService(
+    db,
+    process.env.VERCEL_PROJECT_ID!,
+    process.env.VERCEL_TEAM_ID!,
+    process.env.VERCEL_AUTH_BEARER_TOKEN!
+  );
+  
+  try {
+    return await courseService.getSupportedCharitiesForCourseId(courseId);
+  } catch (error) {
+    console.error("Error fetching supported charities:", error);
+    return []; // Return an empty array on error to avoid breaking the UI
+  }
+};
+
+
 export const getCourseImages = async (courseId: string) => {
   const courseService = new CourseService(
     db,
