@@ -2202,7 +2202,9 @@ export class BookingService {
     if (!firstBooking.providerId || !firstBooking.providerCourseId || !firstBooking.courseId) {
       throw new Error("provider id, course id, or provider course id not found");
     }
-
+    if (!provider.supportsPlayerNameChange) {
+      return { success: false, message: "Course doesn't support name changes" };
+    }
     //updating bookingslots data
     await Promise.all(
       usersToUpdate.map((user, index) => {

@@ -14,6 +14,9 @@ import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import { currentUtcTimestamp, getApexDomain, validDomainRegex } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
 import { DomainService } from "../domain/domain.service";
+import type { ProviderService } from "../tee-sheet-provider/providers.service";
+import { providerCourseLink } from "@golf-district/database/schema/providersCourseLink";
+import { providers } from "@golf-district/database/schema/providers";
 
 /**
  * Service handling course-related operations.
@@ -27,14 +30,16 @@ export class CourseService extends DomainService {
    * @param {string} PROJECT_ID_VERCEL - Vercel project ID.
    * @param {string} TEAM_ID_VERCEL - Vercel team ID.
    * @param {string} AUTH_BEARER_TOKEN - Bearer token for authentication.
+   * @param {ProviderService} providerService - The provider service.
    * @example
-   * const courseService = new CourseService(database, "project_id", "team_id", "bearer_token");
+   * const courseService = new CourseService(database, "project_id", "team_id", "bearer_token", providerService);
    */
   constructor(
     private readonly database: Db,
     PROJECT_ID_VERCEL: string,
     TEAM_ID_VERCEL: string,
-    AUTH_BEARER_TOKEN: string
+    AUTH_BEARER_TOKEN: string,
+    private providerService: ProviderService
   ) {
     super(PROJECT_ID_VERCEL, TEAM_ID_VERCEL, AUTH_BEARER_TOKEN, Logger(CourseService.name));
   }
@@ -75,9 +80,12 @@ export class CourseService extends DomainService {
         supportsWaitlist: courses.supportsWaitlist,
         buyerFee: courses.buyerFee,
         sellerFee: courses.sellerFee,
+        internalId: providers.internalId,
         roundUpCharityId: courses?.roundUpCharityId
       })
       .from(courses)
+      .innerJoin(providerCourseLink, eq(providerCourseLink.courseId, courses.id))
+      .innerJoin(providers, eq(providers.id, providerCourseLink.providerId))
       .where(and(eq(courses.id, courseId), eq(courses.isDeleted, false)))
       .limit(1)
       .execute()
@@ -170,9 +178,13 @@ export class CourseService extends DomainService {
         charityId: d.charityId,
       }));
 
+      const { provider } = await this.providerService.getProviderAndKey(courseDetails.internalId, courseId);
+      const supportsPlayerNameChange = provider.supportsPlayerNameChange() ?? false;
+
       return {
         ...res,
         supportedCharities,
+        supportsPlayerNameChange,
       };
     }
     return res;

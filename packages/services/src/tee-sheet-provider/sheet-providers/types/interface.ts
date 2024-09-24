@@ -66,6 +66,7 @@ export interface ProviderAPI {
   shouldAddSaleData: () => boolean;
   getSalesDataOptions: (reservationData: BookingResponse, bookingDetails: BookingDetails) => SalesDataOptions;
   addSalesData: (options: SalesDataOptions) => Promise<void>;
+  supportsPlayerNameChange(): boolean;
 }
 
 export abstract class BaseProvider implements ProviderAPI {
@@ -125,4 +126,5 @@ export abstract class BaseProvider implements ProviderAPI {
   abstract shouldAddSaleData(): boolean;
   abstract getSalesDataOptions(reservationData: BookingResponse, bookingDetails: BookingDetails): SalesDataOptions;
   abstract addSalesData(options: SalesDataOptions): Promise<void>;
+  abstract supportsPlayerNameChange(): boolean;
 }
