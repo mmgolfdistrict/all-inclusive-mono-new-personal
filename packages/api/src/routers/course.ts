@@ -20,4 +20,13 @@ export const courseRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       return await ctx.serviceFactory.getCourseService().getSupportedCharitiesForCourseId(input.courseId);
     }),
+  getNumberOfPlayersByCourse: publicProcedure
+    .input(
+      z.object({
+        courseId: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return await ctx.serviceFactory.getCourseService().getNumberOfPlayersByCourse(input.courseId);
+    }),
 });
