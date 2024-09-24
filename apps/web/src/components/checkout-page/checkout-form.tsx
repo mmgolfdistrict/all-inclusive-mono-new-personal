@@ -439,7 +439,7 @@ export const CheckoutForm = ({
     setNoThanks(false)
 
     if (!numericValue || numericValue === 0) {
-      setDonateValue(Number(event?.target?.value));
+      setDonateValue(event?.target?.value as number);
       setDonateError(true);
     } else if (numericValue < 1) {
       setDonateError(true);
