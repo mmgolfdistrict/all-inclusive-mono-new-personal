@@ -342,3 +342,12 @@ export interface CartData {
     };
   };
 }
+
+export interface ForeupSaleDataOptions {
+  totalAmountPaid: number;
+  players: number;
+  courseId: string | number;
+  teesheetId: string | number;
+  bookingId: string;
+  token: string;
+}

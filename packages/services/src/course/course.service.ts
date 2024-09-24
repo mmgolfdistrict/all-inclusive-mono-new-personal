@@ -80,7 +80,8 @@ export class CourseService extends DomainService {
         supportsWaitlist: courses.supportsWaitlist,
         buyerFee: courses.buyerFee,
         sellerFee: courses.sellerFee,
-        internalId: providers.internalId
+        internalId: providers.internalId,
+        roundUpCharityId: courses?.roundUpCharityId
       })
       .from(courses)
       .innerJoin(providerCourseLink, eq(providerCourseLink.courseId, courses.id))

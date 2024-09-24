@@ -6,10 +6,11 @@ import type {
   CartData,
   CustomerCreationData,
   CustomerData,
+  ForeupSaleDataOptions,
   TeeTimeResponse,
   TeeTimeUpdateRequest,
 } from "./types/foreup.type";
-import { BaseProvider } from "./types/interface";
+import { BaseProvider, type BookingDetails } from "./types/interface";
 
 export class foreUp extends BaseProvider {
   providerId = "fore-up";
@@ -100,7 +101,7 @@ export class foreUp extends BaseProvider {
     });
 
     if (!response.ok) {
-      this.logger.error(JSON.stringify(response));
+      this.logger.error(JSON.stringify(await response.json()));
 
       if (response.status === 403) {
         this.logger.error(`Error creating booking: ${response.statusText}`);
@@ -112,14 +113,6 @@ export class foreUp extends BaseProvider {
 
     const booking: BookingResponse = await response.json();
 
-    // await this.addSalesData(
-    //   totalAmountPaid,
-    //   bookingData.data.attributes.players,
-    //   courseId,
-    //   teesheetId,
-    //   booking.data.id,
-    //   token
-    // );
     return booking;
   }
 
@@ -241,15 +234,9 @@ export class foreUp extends BaseProvider {
     return (await response.json()) as CustomerData;
   }
 
-  addSalesData = async (
-    totalAmountPaid: number,
-    players: number,
-    courseId: string | number,
-    teesheetId: string | number,
-    bookingId: string,
-    token: string
-  ): Promise<void> => {
+  async addSalesData(options: ForeupSaleDataOptions): Promise<void> {
     try {
+      const { totalAmountPaid, players, courseId, teesheetId, bookingId, token } = options;
       if (!totalAmountPaid) {
         return;
       }
@@ -407,8 +394,8 @@ export class foreUp extends BaseProvider {
     slots: number,
     customerId: string,
     providerBookingId: string,
-    providerId: string,
-    courseId: string
+    _providerId: string,
+    _courseId: string
   ) {
     const bookingSlots: {
       id: string;
@@ -435,6 +422,23 @@ export class foreUp extends BaseProvider {
       });
     }
     return bookingSlots;
+  }
+
+  shouldAddSaleData() {
+    return false;
+  }
+
+  getSalesDataOptions(reservationData: BookingResponse, bookingDetails: BookingDetails): ForeupSaleDataOptions {
+    const salesDataOptions: ForeupSaleDataOptions = {
+      bookingId: reservationData.data.id,
+      courseId: bookingDetails.providerCourseId,
+      teesheetId: bookingDetails.providerTeeSheetId,
+      players: bookingDetails.playerCount,
+      totalAmountPaid: bookingDetails.totalAmountPaid,
+      token: bookingDetails.token
+    }
+
+    return salesDataOptions;
   }
 
   supportsPlayerNameChange() {

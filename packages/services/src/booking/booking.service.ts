@@ -29,7 +29,7 @@ import type { NotificationService } from "../notification/notification.service";
 import type { HyperSwitchService } from "../payment-processor/hyperswitch.service";
 import type { SensibleService } from "../sensible/sensible.service";
 import type { Customer, ProviderService } from "../tee-sheet-provider/providers.service";
-import type { ProviderAPI } from "../tee-sheet-provider/sheet-providers";
+import type { BookingDetails, ProviderAPI } from "../tee-sheet-provider/sheet-providers";
 import type { BookingResponse } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
 import type { TokenizeService } from "../token/tokenize.service";
 import type { UserWaitlistService } from "../user-waitlist/userWaitlist.service";
@@ -2637,6 +2637,21 @@ export class BookingService {
           });
           throw new Error(`Error creating booking`);
         });
+      if (provider.shouldAddSaleData()) {
+        try {
+          const bookingsDetails: BookingDetails = {
+            playerCount: playerCount,
+            providerCourseId: teeTime.providerCourseId!,
+            providerTeeSheetId: teeTime.providerTeeSheetId!,
+            totalAmountPaid: primaryGreenFeeCharge / 100 + taxCharge - markupCharge,
+            token: token
+          }
+          const addSalesOptions = provider.getSalesDataOptions(booking, bookingsDetails);
+          await provider.addSalesData(addSalesOptions);
+        } catch (error) {
+          this.logger.error(`Error adding sales data, ${error}`);
+        }
+      }
     } catch (e) {
       console.log("BOOKING FAILED ON PROVIDER, INITIATING REFUND FOR PAYMENT_ID", payment_id);
 

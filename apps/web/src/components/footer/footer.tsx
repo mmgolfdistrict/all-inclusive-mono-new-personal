@@ -9,7 +9,7 @@ export const Footer = () => {
         <span className="text-[10px] md:text-[12px]">Powered by</span>
         <BlurImage
           alt="golf district logo"
-          src={`https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/desktopfooterlogo.png`}
+          src={`https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/desktopfooterlogo.svg`}
           width={157}
           height={39}
         />
@@ -38,7 +38,7 @@ export const Footer = () => {
         <span className="text-[10px] md:text-[12px]">Powered by</span>
         <BlurImage
           alt="golf district logo"
-          src={`https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/mobilefooterlogo.png`}
+          src={`https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/mobilefooterlogo.svg`}
           width={157}
           height={39}
         />
