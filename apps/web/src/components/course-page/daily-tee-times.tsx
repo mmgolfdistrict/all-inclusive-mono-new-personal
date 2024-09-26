@@ -175,6 +175,13 @@ export const DailyTeeTimes = ({
     return null;
   }
 
+  const { data: numberOfPlayers } =
+    api.course.getNumberOfPlayersByCourse.useQuery({
+      courseId: course?.id ?? "",
+    });
+
+  const playersCount = numberOfPlayers?.[0] ? Number(numberOfPlayers[0]) : 0;
+
   return (
     <div className="flex flex-col gap-1 md:gap-4 bg-white px-4 py-2 md:rounded-xl md:px-8 md:py-6">
       <div className="flex flex-wrap justify-between gap-2">
@@ -265,32 +272,45 @@ export const DailyTeeTimes = ({
           ref={overflowRef}
           onMouseDown={onMouseDown}
         >
-          {allTeeTimes?.map((i: CombinedObject, idx: number) => (
-            <TeeTime
-              time={i.date}
-              key={idx}
-              items={i}
-              index={idx}
-              canChoosePlayer={i.availableSlots > 0}
-              availableSlots={i.availableSlots}
-              players={String(4 - i.availableSlots)}
-              firstHandPurchasePrice={i?.firstHandPurchasePrice}
-              price={i.pricePerGolfer}
-              isOwned={i?.isOwned}
-              soldById={i?.soldById}
-              soldByImage={i?.soldByImage}
-              soldByName={i?.soldByName}
-              teeTimeId={i?.teeTimeId}
-              isLiked={i?.userWatchListed}
-              status={i?.firstOrSecondHandTeeTime}
-              minimumOfferPrice={i?.minimumOfferPrice}
-              bookingIds={i?.bookingIds ?? []}
-              listingId={i?.listingId}
-              listedSlots={i?.listedSlots}
-              handleLoading={handleLoading}
-              refetch={refetch}
-            />
-          ))}
+          {allTeeTimes?.map((i: CombinedObject, idx: number) => {
+            console.log(
+              "numberOfPlayers",
+              numberOfPlayers,
+              playersCount,
+              i.availableSlots
+            );
+
+            if (i.availableSlots >= playersCount) {
+              return (
+                <TeeTime
+                  time={i.date}
+                  key={idx}
+                  items={i}
+                  index={idx}
+                  canChoosePlayer={i.availableSlots > 0}
+                  availableSlots={i.availableSlots}
+                  players={String(4 - i.availableSlots)}
+                  firstHandPurchasePrice={i?.firstHandPurchasePrice}
+                  price={i.pricePerGolfer}
+                  isOwned={i?.isOwned}
+                  soldById={i?.soldById}
+                  soldByImage={i?.soldByImage}
+                  soldByName={i?.soldByName}
+                  teeTimeId={i?.teeTimeId}
+                  isLiked={i?.userWatchListed}
+                  status={i?.firstOrSecondHandTeeTime}
+                  minimumOfferPrice={i?.minimumOfferPrice}
+                  bookingIds={i?.bookingIds ?? []}
+                  listingId={i?.listingId}
+                  listedSlots={i?.listedSlots}
+                  handleLoading={handleLoading}
+                  refetch={refetch}
+                />
+              );
+            }
+            return null; // Return null instead of an empty string for better readability
+          })}
+
           <div
             ref={nextPageRef}
             className="h-[50px] w-[1px] text-[1px] text-white"
