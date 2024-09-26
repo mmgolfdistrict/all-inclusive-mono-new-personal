@@ -10,6 +10,8 @@ import { Spinner } from "../loading/spinner";
 import Waitlist from "./waitlist";
 import { FilledButton } from "../buttons/filled-button";
 import { toast } from "react-toastify";
+import { Close } from "../icons/close";
+import { OutlineButton } from "../buttons/outline-button";
 
 dayjs.extend(UTC);
 
@@ -28,20 +30,34 @@ export type WaitlistItem = {
 function Waitlists() {
   const { user } = useMe();
   const { course } = useParams();
-  const [selectedNotifications, setSelectedNotifications] = useState<string[]>(
+  const [selectedNotifications, setSelectedNotifications] = useState<WaitlistItem[]>(
     []
   );
-
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const { mutateAsync: deleteNotifications } =
     api.userWaitlist.deleteWaitlistNotification.useMutation();
 
-  const handleNotificationClick = (notificationId: string) => {
-    if (selectedNotifications.includes(notificationId)) {
+  const handleNotificationClick = (notification: WaitlistItem) => {
+    if (selectedNotifications.includes(notification)) {
       setSelectedNotifications(
-        selectedNotifications.filter((item) => item !== notificationId)
+        selectedNotifications.filter((item) => item.id !== notification.id)
       );
     } else {
-      setSelectedNotifications([...selectedNotifications, notificationId]);
+      setSelectedNotifications([...selectedNotifications, notification]);
+    }
+  };
+
+  const handleSelectNotifications = (notifications: WaitlistItem[], selected: boolean) => {
+    for (const notification of notifications) {
+      if (selected) {
+        if (!selectedNotifications.includes(notification)) {
+          setSelectedNotifications(previosNotifications => [...previosNotifications, notification]);
+        }
+      } else {
+        setSelectedNotifications(previosNotifications =>
+          previosNotifications.filter((item) => item.id !== notification.id)
+        );
+      }
     }
   };
 
@@ -49,7 +65,7 @@ function Waitlists() {
     let notificationsToDelete;
 
     if (selectedNotifications.length > 0) {
-      notificationsToDelete = selectedNotifications;
+      notificationsToDelete = selectedNotifications.map((item) => item.id);
     } else {
       notificationsToDelete = waitlist?.map((item) => item.id);
     }
@@ -58,6 +74,7 @@ function Waitlists() {
       {
         onSuccess: (msg) => {
           toast.success(msg);
+          setIsDeleteModalOpen(false);
           setSelectedNotifications([]);
         },
       }
@@ -112,7 +129,7 @@ function Waitlists() {
           Your notifications
         </h1>
         <FilledButton
-          onClick={handleDeleteNotifications}
+          onClick={() => setIsDeleteModalOpen(true)}
           className="py-[.28rem] md:py-1.5 text-[10px] md:text-[14px] float-right absolute right-[20px] top-[50%] -translate-y-[50%] disabled:opacity-50"
           disabled={selectedNotifications.length === 0}
         >
@@ -143,11 +160,66 @@ function Waitlists() {
                 formattedDate={formattedDate}
                 // refetchWaitlist={refetchWaitlist}
                 handleSelectNotification={handleNotificationClick}
+                handleSelectNotifications={handleSelectNotifications}
                 selectedNotifications={selectedNotifications}
               />
             ))
             : null}
         </div>
+      )}
+      {isDeleteModalOpen && (
+        <>
+          <div
+            className={`fixed left-0 top-0 z-20 h-[100dvh] w-screen backdrop-blur `}
+            onClick={() => setIsDeleteModalOpen(false)}
+          >
+            <div className="h-screen bg-[#00000099]" />
+          </div>
+          <div className="date-selector w-[95%] flex flex-col max-w-[500px] p-6 gap-1 mt-14 rounded-xl bg-white fixed top-[50%] left-[50%] -translate-x-[50%] -translate-y-[60%] z-50">
+            <Close
+              className="absolute right-4 top-4 cursor-pointer"
+              height={24}
+              width={24}
+              onClick={() => setIsDeleteModalOpen(false)}
+            />
+            <h1 className="text-[20px] md:text-2xl">
+              Delete selected notifications
+            </h1>
+            <p className="text-[14px] mb-4 md:text-md">
+              You have selected the following dates and times to delete below. Are you sure you want to delete?
+            </p>
+
+            <div className="flex flex-col gap-2 self-center max-h-[250px] overflow-y-auto">
+              {selectedNotifications.map((item) => (
+                <div
+                  className="flex items-center gap-2 justify-between bg-secondary-white p-2 rounded-md"
+                  key={item.id}
+                >
+                  <div className="text-[14px] md:text-md">
+                    {dayjs(item.date).format("ddd MMM DD, YYYY")}
+                  </div>
+                  <div className="text-[14px] md:text-md">
+                    {item.startTimeFormated} - {item.endTimeFormated}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <OutlineButton
+                className="w-full mt-2 py-[.28rem] md:py-1.5 text-[10px] md:text-[14px]"
+                onClick={() => setIsDeleteModalOpen(false)}
+              >
+                No
+              </OutlineButton>
+              <FilledButton
+                className="w-full mt-2 py-[.28rem] md:py-1.5 text-[10px] md:text-[14px]"
+                onClick={handleDeleteNotifications}
+              >
+                Yes
+              </FilledButton>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
