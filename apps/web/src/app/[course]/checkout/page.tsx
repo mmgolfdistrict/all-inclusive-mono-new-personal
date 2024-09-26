@@ -367,7 +367,7 @@ export default function Checkout({
           )}
         </div>
         <CheckoutBreadcumbs status={"checkout"} />
-        {!maxReservation?.success && (
+        {maxReservation && maxReservation?.success === false && (
           <div className="bg-alert-red text-white p-1 pl-2  w-full rounded">
             {maxReservation?.message}
           </div>
