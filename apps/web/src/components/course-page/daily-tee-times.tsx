@@ -51,6 +51,8 @@ export const DailyTeeTimes = ({
     setIsExpanded(!isExpanded);
   };
   const { course } = useCourseContext();
+  const courseId = course?.id;
+
   const {
     showUnlisted,
     includesCart,
@@ -62,6 +64,13 @@ export const DailyTeeTimes = ({
   } = useFiltersContext();
   const teeTimeStartTime = startTime[0];
   const teeTimeEndTime = startTime[1];
+
+  const { data: numberOfPlayers } =
+    api.course.getNumberOfPlayersByCourse.useQuery({
+      courseId: courseId ?? "",
+    });
+
+  const playersCount = numberOfPlayers?.[0] ? Number(numberOfPlayers[0]) : 0;
 
   const { data: weather, isLoading: isLoadingWeather } =
     api.searchRouter.getWeatherForDay.useQuery(
@@ -175,13 +184,6 @@ export const DailyTeeTimes = ({
     return null;
   }
 
-  const { data: numberOfPlayers } =
-    api.course.getNumberOfPlayersByCourse.useQuery({
-      courseId: course?.id ?? "",
-    });
-
-  const playersCount = numberOfPlayers?.[0] ? Number(numberOfPlayers[0]) : 0;
-
   return (
     <div className="flex flex-col gap-1 md:gap-4 bg-white px-4 py-2 md:rounded-xl md:px-8 md:py-6">
       <div className="flex flex-wrap justify-between gap-2">
@@ -273,13 +275,6 @@ export const DailyTeeTimes = ({
           onMouseDown={onMouseDown}
         >
           {allTeeTimes?.map((i: CombinedObject, idx: number) => {
-            console.log(
-              "numberOfPlayers",
-              numberOfPlayers,
-              playersCount,
-              i.availableSlots
-            );
-
             if (i.availableSlots >= playersCount) {
               return (
                 <TeeTime
