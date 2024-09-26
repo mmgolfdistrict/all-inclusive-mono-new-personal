@@ -196,6 +196,7 @@ export class CourseService extends DomainService {
         charityDescription: charities.description,
         charityName: charities.name,
         charityId: charities.id,
+        logo: charities.logoAssetId
       })
       .from(charityCourseLink)
       .leftJoin(charities, eq(charityCourseLink.charityId, charities.id))
@@ -210,6 +211,7 @@ export class CourseService extends DomainService {
       charityDescription: d.charityDescription,
       charityName: d.charityName,
       charityId: d.charityId,
+      charityLogo: d.logo
     }));
     return supportedCharities;
   };

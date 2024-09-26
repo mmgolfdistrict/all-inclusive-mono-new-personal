@@ -5,7 +5,7 @@ import { charityCourseLink } from "./charityCourseLink";
 
 export const charities = mySqlTable("charities", {
   id: varchar("id", { length: 36 }).notNull().primaryKey(),
-  name: varchar("name", { length: 191 }).notNull(),
+  name: varchar("name", { length: 127 }).notNull(),
   description: text("description"),
   logoAssetId: varchar("logo", { length: 36 }),
   createdDateTime: datetime("createdDateTime", { mode: "string", fsp: 3 })

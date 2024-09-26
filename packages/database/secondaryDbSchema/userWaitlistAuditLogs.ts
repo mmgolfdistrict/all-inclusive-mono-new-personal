@@ -4,7 +4,7 @@ import { datetime, index, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 
 export const userWaitlistAuditLogs = mySqlTable(
-  "userWaitlistAuditLog",
+  "userWaitlistAuditLogs",
   {
     id: varchar("id", { length: 36 }).notNull().primaryKey(),
     courseId: varchar("courseId", { length: 36 }).notNull(),

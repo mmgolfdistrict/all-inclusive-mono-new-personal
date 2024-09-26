@@ -303,7 +303,7 @@ export const DailyTeeTimes = ({
                 />
               );
             }
-            return null; // Return null instead of an empty string for better readability
+            return null;
           })}
 
           <div

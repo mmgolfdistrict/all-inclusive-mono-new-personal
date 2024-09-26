@@ -21,6 +21,13 @@ import { CharitySelect } from "../input/charity-select";
 import { Input } from "../input/input";
 import styles from "./checkout.module.css";
 
+type charityData = {
+  charityDescription: string | undefined;
+  charityName: string | undefined;
+  charityId: string | undefined;
+  charityLogo: string | undefined;
+};
+
 export const CheckoutForm = ({
   isBuyNowAuction,
   teeTimeId,
@@ -148,7 +155,12 @@ export const CheckoutForm = ({
   const [showTextField, setShowTextField] = useState(false);
   const [donateError, setDonateError] = useState(false);
   const [noThanks, setNoThanks] = useState(false);
-  const [charityName, setCharityName] = useState<string>("");
+  const [charityData, setCharityData] = useState<charityData | undefined>({
+    charityDescription: "",
+    charityId: "",
+    charityLogo: "",
+    charityName: "",
+  });
   // const [isPaymentCompleted, setIsPaymentCompleted] = useState(false);
   const [message, setMessage] = useState("");
   const [charityAmountError, setCharityAmountError] = useState("");
@@ -217,7 +229,8 @@ export const CheckoutForm = ({
       const Charity = charities?.find(
         (charity) => charity?.charityId === roundUpCharityId
       );
-      setCharityName(Charity?.charityName || "");
+      setCharityData(Charity as charityData);
+      handleSelectedCharity(Charity?.charityId ?? "");
     }
   };
 
@@ -611,12 +624,28 @@ export const CheckoutForm = ({
       </div>
       {roundUpCharityId && (
         <div className="flex w-full flex-col gap-2 bg-white p-4 rounded-lg my-2 border border-primary">
-          <div>Golf District supports {charityName}.</div>
-          <div>Please help us the golf professionals retire peacefully.</div>
+          <div className="flex items-center">
+            {charityData?.charityLogo && (
+              <img
+                src={`https://${charityData?.charityLogo}/charitylogo.svg`}
+                alt={`${charityData.charityName} logo`}
+                className="w-16 h-16 mr-4 rounded-md"
+              />
+            )}
+            <div>
+              <h2 className="text-lg font-semibold">
+                {charityData?.charityName}
+              </h2>
+              <p className="text-sm text-gray-600">
+                {charityData?.charityDescription}
+              </p>
+            </div>
+          </div>
+
           <div className="flex gap-2 mt-5 ml-3 mb-4">
             <button
               type="button"
-              className={`flex w-32 items-center justify-center rounded-md p-2  ${
+              className={`flex w-32 items-center justify-center rounded-md p-2 ${
                 roundOffClick
                   ? "bg-primary text-white"
                   : "bg-white text-primary border-primary border-2"
@@ -628,7 +657,7 @@ export const CheckoutForm = ({
 
             <button
               type="button"
-              className={`flex w-32 items-center justify-center rounded-md p-2  ${
+              className={`flex w-32 items-center justify-center rounded-md p-2 ${
                 showTextField
                   ? "bg-primary text-white"
                   : "bg-white text-primary border-primary border-2"
@@ -645,12 +674,11 @@ export const CheckoutForm = ({
 
             <button
               type="button"
-              className={`flex w-32 items-center justify-center rounded-md p-2  ${
+              className={`flex w-32 items-center justify-center rounded-md p-2 ${
                 noThanks
                   ? "bg-primary text-white"
                   : "bg-white text-primary border-primary border-2"
               }`}
-              // className={`flex w-32 items-center justify-center rounded-full bg-white p-2 text-primary border-none`}
               onClick={() => {
                 setRoundOffClick(false);
                 setShowTextField(false);
@@ -662,6 +690,7 @@ export const CheckoutForm = ({
               No Thanks
             </button>
           </div>
+
           {showTextField && (
             <div className="flex flex-col">
               <input
@@ -676,7 +705,7 @@ export const CheckoutForm = ({
                 step="1"
               />
               {donateError && (
-                <div className="mt-1 text-sm text-red">
+                <div className="mt-1 text-sm text-red-500">
                   Donation amount must be more than 0.
                 </div>
               )}
