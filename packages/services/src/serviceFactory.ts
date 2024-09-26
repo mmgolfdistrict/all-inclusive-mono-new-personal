@@ -177,7 +177,8 @@ export class ServiceFactory {
       this.config.database,
       this.config.vercel_projectId,
       this.config.vercel_teamId,
-      this.config.vercel_authBearerToken
+      this.config.vercel_authBearerToken,
+      this.getProviderService()
     );
   };
 

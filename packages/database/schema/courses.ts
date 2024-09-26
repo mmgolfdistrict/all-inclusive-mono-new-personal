@@ -55,6 +55,7 @@ export const courses = mySqlTable(
     roundUpCharityId: varchar("roundUpCharityId", { length: 191 }),
     maxRoundsPerPeriod: tinyint("maxRoundsPerPeriod"),
     maxBookingsPerPeriod: tinyint("maxBookingsPerPeriod"),
+    primaryMarketAllowedPlayers: tinyint("primaryMarketAllowedPlayers"),
   },
   (table) => {
     return {

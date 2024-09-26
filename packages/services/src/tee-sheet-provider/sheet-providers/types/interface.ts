@@ -11,6 +11,7 @@ import type {
   CustomerCreationData as ForeUpCustomerCreationData,
   CustomerData as ForeUpCustomerCreationResponse,
   TeeTimeResponse as ForeUpTeeTimeResponse,
+  ForeupSaleDataOptions, 
 } from "./foreup.type";
 
 export type ForeUpCredentials = {
@@ -27,6 +28,16 @@ export type BookingResponse = ForeUpBookingResponse | ClubProphetBookingResponse
 export type CustomerCreationData = ForeUpCustomerCreationData | ClubProphetCustomerCreationData;
 
 export type CustomerData = ForeUpCustomerCreationResponse | ClubProphetCustomerCreationResponse;
+
+export type BookingDetails = {
+  providerCourseId: string;
+  providerTeeSheetId: string;
+  playerCount: number;
+  totalAmountPaid: number;
+  token: string;
+}
+
+export type SalesDataOptions = ForeupSaleDataOptions;
 
 export interface ProviderAPI {
   providerId: string;
@@ -71,6 +82,10 @@ export interface ProviderAPI {
     providerId: string,
     courseId: string
   ) => Promise<InsertBookingSlots[]>;
+  shouldAddSaleData: () => boolean;
+  getSalesDataOptions: (reservationData: BookingResponse, bookingDetails: BookingDetails) => SalesDataOptions;
+  addSalesData: (options: SalesDataOptions) => Promise<void>;
+  supportsPlayerNameChange(): boolean;
 }
 
 export abstract class BaseProvider implements ProviderAPI {
@@ -126,5 +141,9 @@ export abstract class BaseProvider implements ProviderAPI {
     providerBookingId: string | string[],
     providerId: string,
     courseId: string
-  ): Promise<InsertBookingSlots[]>;
+  ): Promise<InsertBookingSlots[]>
+  abstract shouldAddSaleData(): boolean;
+  abstract getSalesDataOptions(reservationData: BookingResponse, bookingDetails: BookingDetails): SalesDataOptions;
+  abstract addSalesData(options: SalesDataOptions): Promise<void>;
+  abstract supportsPlayerNameChange(): boolean;
 }

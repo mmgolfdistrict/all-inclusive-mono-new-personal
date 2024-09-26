@@ -8,7 +8,7 @@ import type {
   ClubProphetCustomerCreationResponse,
 } from "./types/clubprophet.types";
 import type { TeeTimeUpdateRequest } from "./types/foreup.type";
-import type { CustomerCreationData, CustomerData, TeeTimeResponse } from "./types/interface";
+import type { CustomerCreationData, CustomerData, SalesDataOptions, TeeTimeResponse } from "./types/interface";
 import { BaseProvider } from "./types/interface";
 
 export class clubprophet {
@@ -240,48 +240,48 @@ export class clubprophet {
     return bookingSlots;
   }
 
-  addSalesData = async (bookingIds: number[], token: string): Promise<void> => {
-    try {
-      if (bookingIds.length <= 0) {
-        return;
-      }
-      const endpoint = this.getBasePoint();
-      const headers = this.getHeaders(token);
+  addSalesData = async (Options: SalesDataOptions): Promise<void> => {
+  // try {
+  //   if (bookingIds.length <= 0) {
+  //     return;
+  //   }
+  //   const endpoint = this.getBasePoint();
+  //   const headers = this.getHeaders(token);
 
-      const addSalesUrl = `${endpoint}/thirdpartyapi/api/v1/Sale/SaleOnlineByBookingId`;
-      this.logger.info(`Add sales url - ${addSalesUrl}`);
-      this.logger.info(`Adding sales for booking Ids: ${bookingIds}`);
+    //   const addSalesUrl = `${endpoint}/thirdpartyapi/api/v1/Sale/SaleOnlineByBookingId`;
+    //   this.logger.info(`Add sales url - ${addSalesUrl}`);
+    //   this.logger.info(`Adding sales for booking Ids: ${bookingIds}`);
 
-      const addSalesData = {
-        bookingIds,
-        approvalCode: "123123", // Fake value
-        refNum: "1212", // Fake value
-        cardIssuedBy: "",
-      };
+    //   const addSalesData = {
+    //     bookingIds,
+    //     approvalCode: "123123", // Fake value
+    //     refNum: "1212", // Fake value
+    //     cardIssuedBy: "",
+    //   };
 
-      const addSalesResponse = await fetch(addSalesUrl, {
-        method: "POST",
-        headers: headers,
-        body: JSON.stringify(addSalesData),
-      });
-      if (!addSalesResponse.ok) {
-        throw new Error(
-          `Error adding sales data for booking Ids: ${JSON.stringify(bookingIds)}, status code: ${addSalesResponse.status
-          }, status text: ${addSalesResponse.statusText}, response: ${JSON.stringify(
-            await addSalesResponse.json()
-          )}`
-        );
-      }
-      const salesResponse = await addSalesResponse.json();
+    //   const addSalesResponse = await fetch(addSalesUrl, {
+    //     method: "POST",
+    //     headers: headers,
+    //     body: JSON.stringify(addSalesData),
+    //   });
+    //   if (!addSalesResponse.ok) {
+    //     throw new Error(
+    //       `Error adding sales data for booking Ids: ${JSON.stringify(bookingIds)}, status code: ${addSalesResponse.status
+    //       }, status text: ${addSalesResponse.statusText}, response: ${JSON.stringify(
+    //         await addSalesResponse.json()
+    //       )}`
+    //     );
+    //   }
+    //   const salesResponse = await addSalesResponse.json();
 
-      this.logger.info(
-        `Sales data added successfully for booking with ids: ${bookingIds}, cart data: ${JSON.stringify(
-          salesResponse
-        )}`
-      );
-    } catch (error) {
-      this.logger.error(`Error adding sales data: ${error}`);
-    }
+    //   this.logger.info(
+    //     `Sales data added successfully for booking with ids: ${bookingIds}, cart data: ${JSON.stringify(
+    //       salesResponse
+    //     )}`
+    //   );
+    // } catch (error) {
+    //   this.logger.error(`Error adding sales data: ${error}`);
+    // }
   };
 
   async updateTeeTime(
@@ -296,5 +296,16 @@ export class clubprophet {
 
   async getCustomer(): Promise<CustomerData> {
     return {} as CustomerData;
+  }
+
+  shouldAddSaleData(): boolean {
+    return false;
+  }
+  getSalesDataOptions(): SalesDataOptions {
+    return {} as SalesDataOptions;
+  }
+
+  supportsPlayerNameChange(): boolean {
+    return false;
   }
 }

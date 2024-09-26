@@ -6,10 +6,11 @@ import type {
   CartData,
   CustomerData,
   CustomerCreationData as ForeUpCustomerCreationData,
+  ForeupSaleDataOptions,
   TeeTimeUpdateRequest,
 } from "./types/foreup.type";
 import type { CustomerCreationData, TeeTimeResponse } from "./types/interface";
-import { BaseProvider } from "./types/interface";
+import { BaseProvider, type BookingDetails } from "./types/interface";
 
 export class foreUp extends BaseProvider {
   providerId = "fore-up";
@@ -100,7 +101,7 @@ export class foreUp extends BaseProvider {
     });
 
     if (!response.ok) {
-      this.logger.error(JSON.stringify(response));
+      this.logger.error(JSON.stringify(await response.json()));
 
       if (response.status === 403) {
         this.logger.error(`Error creating booking: ${response.statusText}`);
@@ -112,14 +113,6 @@ export class foreUp extends BaseProvider {
 
     const booking: BookingResponse = await response.json();
 
-    // await this.addSalesData(
-    //   totalAmountPaid,
-    //   bookingData.data.attributes.players,
-    //   courseId,
-    //   teesheetId,
-    //   booking.data.id,
-    //   token
-    // );
     return booking;
   }
 
@@ -241,15 +234,9 @@ export class foreUp extends BaseProvider {
     return (await response.json()) as CustomerData;
   }
 
-  addSalesData = async (
-    totalAmountPaid: number,
-    players: number,
-    courseId: string | number,
-    teesheetId: string | number,
-    bookingId: string,
-    token: string
-  ): Promise<void> => {
+  async addSalesData(options: ForeupSaleDataOptions): Promise<void> {
     try {
+      const { totalAmountPaid, players, courseId, teesheetId, bookingId, token } = options;
       if (!totalAmountPaid) {
         return;
       }
@@ -403,8 +390,8 @@ export class foreUp extends BaseProvider {
     slots: number,
     customerId: string,
     providerBookingId: string | string[],
-    providerId: string,
-    courseId: string
+    _providerId: string,
+    _courseId: string
   ) {
     const bookingSlots: {
       id: string;
@@ -432,6 +419,27 @@ export class foreUp extends BaseProvider {
     }
     return bookingSlots;
   }
+
+  shouldAddSaleData() {
+    return false;
+  }
+
+  getSalesDataOptions(reservationData: BookingResponse, bookingDetails: BookingDetails): ForeupSaleDataOptions {
+    const salesDataOptions: ForeupSaleDataOptions = {
+      bookingId: reservationData.data.id,
+      courseId: bookingDetails.providerCourseId,
+      teesheetId: bookingDetails.providerTeeSheetId,
+      players: bookingDetails.playerCount,
+      totalAmountPaid: bookingDetails.totalAmountPaid,
+      token: bookingDetails.token
+    }
+
+    return salesDataOptions;
+  }
+
+  supportsPlayerNameChange() {
+    return true;
+  };
 }
 
 // // "id": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJmb3JldXBzb2Z0d2FyZS5jb20iLCJhdWQiOiJmb3JldXBzb2Z0d2FyZS5jb20iLCJpYXQiOjE3MDI0ODQ5NzksImV4cCI6MTcwNTA3Njk3OSwibGV2ZWwiOjMsImNpZCI6OTAzOSwiZW1wbG95ZWUiOmZhbHNlLCJ1aWQiOjcxNzk5MDUsImFwaVZlcnNpb24iOm51bGwsImFwcElkIjo2NDgyNzI4LCJwcmljZUNsYXNzSWQiOm51bGwsImFwaXYySWQiOjEyMCwibGltaXRhdGlvbnMiOnsiY3VzdG9tZXJzIjp0cnVlLCJlbXBsb3llZXMiOnRydWUsImludmVudG9yeSI6dHJ1ZSwiaWRlbnRpdHlfcHJvdmlkZXIiOnRydWUsImVtYWlscyI6dHJ1ZSwic2FsZXMiOnRydWUsInRlZXNoZWV0Ijp0cnVlLCJ0cmFkaW5nX2VuYWJsZWQiOmZhbHNlLCJ0cmFkZXNfYnlfcGxheWVyX2NvdW50IjpmYWxzZSwibWFnaWNfYXV0aF92aWFfZW1haWwiOmZhbHNlfX0.KBfzS0EHqPu09VL7W9A2U7GkAnh8OGP3QkRzePHmQ9mfcLLZD1z2Q0Zuv9aJVCEgtb1KXvX-XzZahK_edA08-Q",
