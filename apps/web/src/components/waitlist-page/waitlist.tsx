@@ -7,13 +7,18 @@ function Waitlist({
   formattedDate,
   // refetchWaitlist,
   handleSelectNotification,
+  handleSelectNotifications,
   selectedNotifications,
 }: {
   waitlist: WaitlistItem[] | undefined;
   formattedDate: string;
   // refetchWaitlist: () => void;
-  handleSelectNotification: (notificationId: string) => void;
-  selectedNotifications: string[];
+    handleSelectNotification: (notification: WaitlistItem) => void;
+    handleSelectNotifications: (
+      notifications: WaitlistItem[],
+      selected: boolean
+    ) => void;
+    selectedNotifications: WaitlistItem[];
 }) {
   // const [selectedNotifications, setSelectedNotifications] = useState<string[]>(
   //   []
@@ -52,9 +57,18 @@ function Waitlist({
   //   refetchWaitlist();
   // };
 
+  const handleIsChecked = () => {
+    return waitlist?.map((item) => item).every((item) => selectedNotifications.includes(item)) ?? false;
+  };
+
+  const handleSelectAllCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    handleSelectNotifications(waitlist ?? [], e.target.checked);
+  }
+
   return (
     <div>
-      <div className="flex flex-row justify-between items-center md:px-4">
+      <div className="flex flex-row items-center gap-2 md:px-4">
+        {waitlist && <Checkbox isChecked={handleIsChecked()} onChange={handleSelectAllCheckboxChange} />}
         <h2 className="text-[13px] md:text-lg capitalize text-secondary-black">
           {formattedDate}
         </h2>
@@ -70,11 +84,11 @@ function Waitlist({
           <div
             key={item.id}
             className="bg-secondary-white p-3 rounded-xl max-w-[200px] md:max-w-none md:w-[260px] flex flex-col gap-1 text-[12px] md:text-[16px] text-secondary-black cursor-pointer"
-            onClick={() => handleSelectNotification(item.id)}
+            onClick={() => handleSelectNotification(item)}
           >
             <div className="flex flex-row justify-between items-end ">
               <span className="max-w-[80%] truncate">{item.courseName}</span>
-              <Checkbox isChecked={selectedNotifications.includes(item.id)} />
+              <Checkbox isChecked={selectedNotifications.includes(item)} />
             </div>
             <div className="flex flex-row justify-between">
               <span className="text-primary-gray">Date:</span>
