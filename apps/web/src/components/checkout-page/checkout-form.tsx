@@ -20,6 +20,7 @@ import { OutlineButton } from "../buttons/outline-button";
 import { CharitySelect } from "../input/charity-select";
 import { Input } from "../input/input";
 import styles from "./checkout.module.css";
+import type { NextAction } from "./hyper-switch";
 
 type charityData = {
   charityDescription: string | undefined;
@@ -35,6 +36,8 @@ export const CheckoutForm = ({
   cartId,
   teeTimeDate,
   listingId,
+  nextAction,
+  callingRef,
   playerCount,
 }: {
   isBuyNowAuction: boolean;
@@ -43,6 +46,8 @@ export const CheckoutForm = ({
   cartId: string;
   teeTimeDate: string | undefined;
   listingId: string;
+  nextAction?: NextAction;
+  callingRef?: boolean;
   playerCount: string | undefined;
 }) => {
   const MAX_CHARITY_AMOUNT = 1000;
@@ -718,17 +723,31 @@ export const CheckoutForm = ({
           {maxReservation?.message}
         </div>
       )}
-
-      <FilledButton
-        type="submit"
-        className={`w-full rounded-full`}
-        disabled={
-          isLoading || !hyper || !widgets || message === "Payment Successful"
-        }
-        data-testid="pay-now-id"
-      >
-        {isLoading ? "Processing..." : <>Pay Now</>}
-      </FilledButton>
+      {nextAction?.type === "redirect_to_url" ? (
+        <FilledButton
+          className={`w-full rounded-full disabled:opacity-60`}
+          disabled={!hyper || !widgets || callingRef}
+          onClick={() => {
+            if (nextAction?.redirect_to_url) {
+              window.location.href = nextAction?.redirect_to_url;
+            }
+          }}
+          type="button"
+        >
+          {isLoading ? "Loading..." : <>Pay Now</>}
+        </FilledButton>
+      ) : (
+        <FilledButton
+          type="submit"
+          className={`w-full rounded-full disabled:opacity-60`}
+          disabled={
+            isLoading || !hyper || !widgets || message === "Payment Successful"
+          }
+          data-testid="pay-now-id"
+        >
+          {isLoading ? "Processing..." : <>Pay Now</>}
+        </FilledButton>
+      )}
       <LoadingContainer isLoading={isLoading}>
         <div></div>
       </LoadingContainer>

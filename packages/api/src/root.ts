@@ -3,6 +3,7 @@ import { authRouter } from "./routers/auth";
 import { bookingRouter } from "./routers/booking";
 import { cashOutRouter } from "./routers/cashout";
 import { checkoutRouter } from "./routers/checkout";
+import { clubProphetRouter } from "./routers/clubprophet";
 import { courseRouter } from "./routers/course";
 import { courseExceptionRouter } from "./routers/courseException";
 import { domainRouter } from "./routers/domain";
@@ -45,9 +46,10 @@ export const appRouter = createTRPCRouter({
   watchlist: watchlistRouter,
   teeBox: bookingRouter,
   cashOut: cashOutRouter,
+  clubprophet: clubProphetRouter,
   profanity: profanityRouter,
   userWaitlist: userWaitlistRouter,
-  courseException:courseExceptionRouter,
+  courseException: courseExceptionRouter,
   systemNotification: systemNotificationRouter,
 });
 

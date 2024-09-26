@@ -10,7 +10,7 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   error?: string;
   showInfoTooltip?: boolean;
   content?: string;
-  inputRef?:unknown;
+  inputRef?: unknown;
 }
 
 export const Input = ({
@@ -38,21 +38,21 @@ export const Input = ({
         )}
       </div>
       {
-        inputRef?
-        <input
-        className={`rounded-lg bg-secondary-white px-4 py-3 text-[14px] text-gray-500 outline-none text-ellipsis`}
-        // @ts-ignore
-        {...register(name)}
-        {...props}
-        ref={inputRef}
-      />: <input
-      className={`rounded-lg bg-secondary-white px-4 py-3 text-[14px] text-gray-500 outline-none text-ellipsis`}
-      // @ts-ignore
-      {...register(name)}
-      {...props}
-      />
+        inputRef ?
+          <input
+            className={`rounded-lg bg-secondary-white px-4 py-3 text-[14px] text-gray-500 outline-none text-ellipsis`}
+            // @ts-ignore
+            {...register(name)}
+            {...props}
+            ref={inputRef}
+          /> : <input
+            className={`rounded-lg bg-secondary-white px-4 py-3 text-[14px] text-gray-500 outline-none text-ellipsis`}
+            // @ts-ignore
+            {...register(name)}
+            {...props}
+          />
       }
-    
+
       {error && <p className="text-[12px] text-red">{error}</p>}
     </div>
   );

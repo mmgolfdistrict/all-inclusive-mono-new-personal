@@ -130,21 +130,7 @@ export default function Login() {
   }, [recaptchaRef]);
 
   const onSubmit: SubmitHandler<LoginSchemaType> = async (data) => {
-    microsoftClarityEvent({
-      action: `REGISTER CLICKED`,
-      category: "REGISTER",
-      label: "User clicked on register",
-      value: data?.email,
-    })
-    setIsLoading(true);
-    event({
-      action: "SIGNIN_USING_CREDENTIALS",
-      category: "SIGNIN",
-      label: "Sign in using credentials",
-      value: "",
-    });
     try {
-      recaptchaRef.current?.reset();
       const callbackURL = `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
         ? prevPath?.path
           ? prevPath.path
