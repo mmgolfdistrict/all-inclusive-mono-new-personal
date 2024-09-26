@@ -196,10 +196,14 @@ export class CourseService extends DomainService {
         charityDescription: charities.description,
         charityName: charities.name,
         charityId: charities.id,
-        logo: charities.logoAssetId
+        logo: charities.logoAssetId,
+        logoCdn:assets.cdn,
+        logoExtension:assets.extension,
+        logoKey:assets.key
       })
       .from(charityCourseLink)
       .leftJoin(charities, eq(charityCourseLink.charityId, charities.id))
+      .leftJoin(assets,eq(assets.id,charities.logoAssetId))
       .where(eq(charityCourseLink.courseId, courseId))
       .execute()
       .catch((err) => {
@@ -211,7 +215,7 @@ export class CourseService extends DomainService {
       charityDescription: d.charityDescription,
       charityName: d.charityName,
       charityId: d.charityId,
-      charityLogo: d.logo
+      charityLogo: d.logo?`https://${d.logoCdn}/${d.logoKey}.${d.logoExtension}`:''
     }));
     return supportedCharities;
   };

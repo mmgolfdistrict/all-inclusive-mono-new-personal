@@ -485,6 +485,8 @@ export const CheckoutForm = ({
     }
   }, [TaxCharge]);
 
+  console.log(charityData)
+
   return (
     <form onSubmit={handleSubmit} className="">
       <UnifiedCheckout id="unified-checkout" options={unifiedCheckoutOptions} />
@@ -623,7 +625,7 @@ export const CheckoutForm = ({
         <div className="flex items-center">
           {charityData?.charityLogo && (
             <img 
-              src={`https://${charityData?.charityLogo}/charitylogo.svg`} 
+              src={`${charityData?.charityLogo}`} 
               alt={`${charityData.charityName} logo`} 
               className="w-16 h-16 mr-4 rounded-md" 
             />
@@ -687,12 +689,12 @@ export const CheckoutForm = ({
               placeholder="Enter Donation Amount"
               value={donateValue}
               onChange={handleDonateChange}
-              className={`p-2 border rounded-md ${donateError ? "border-red-500" : "border-primary"}`}
+              className={`p-2 border rounded-md ${donateError ? "border-red" : "border-primary"}`}
               min="1"
               step="1"
             />
             {donateError && (
-              <div className="mt-1 text-sm text-red-500">
+              <div className="mt-1 text-sm text-red">
                 Donation amount must be more than 0.
               </div>
             )}
