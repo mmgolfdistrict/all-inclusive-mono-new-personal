@@ -23,8 +23,6 @@ export const ChoosePlayers = ({
   status?: string;
   numberOfPlayers: string[];
 }) => {
-  console.log("numberOfPlayers", numberOfPlayers);
-
   return (
     <ToggleGroup.Root
       type="single"
