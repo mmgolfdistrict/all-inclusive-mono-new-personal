@@ -4,12 +4,12 @@ import type {
   BookingCreationData,
   BookingResponse,
   CartData,
-  CustomerCreationData,
   CustomerData,
+  CustomerCreationData as ForeUpCustomerCreationData,
   ForeupSaleDataOptions,
-  TeeTimeResponse,
   TeeTimeUpdateRequest,
 } from "./types/foreup.type";
+import type { CustomerCreationData, TeeTimeResponse } from "./types/interface";
 import { BaseProvider, type BookingDetails } from "./types/interface";
 
 export class foreUp extends BaseProvider {
@@ -127,9 +127,8 @@ export class foreUp extends BaseProvider {
     const endpoint = this.getBasePoint();
     const { defaultPriceClassID } = JSON.parse(this.providerConfiguration ?? "{}");
     // https://api.foreupsoftware.com/api_rest/index.php/courses/courseId/teesheets/teesheetId/bookings/bookingId/bookedPlayers/bookedPlayerId
-    const url = `${endpoint}/courses/${courseId}/teesheets/${teesheetId}/bookings/${bookingId}/bookedPlayers/${
-      slotId ? slotId : bookingId
-    }`;
+    const url = `${endpoint}/courses/${courseId}/teesheets/${teesheetId}/bookings/${bookingId}/bookedPlayers/${slotId ? slotId : bookingId
+      }`;
     const headers = this.getHeaders(token);
 
     if (options) {
@@ -162,6 +161,7 @@ export class foreUp extends BaseProvider {
     customerData: CustomerCreationData
   ): Promise<CustomerData> {
     const { defaultPriceClassID } = JSON.parse(this.providerConfiguration ?? "{}");
+    customerData = customerData as ForeUpCustomerCreationData;
     // Fetch required fields for the course
     const requiredFieldsUrl = `${this.getBasePoint()}/courses/${courseId}/settings/customerFieldSettings`;
 
@@ -264,8 +264,7 @@ export class foreUp extends BaseProvider {
       });
       if (!checkInResponse.ok) {
         throw new Error(
-          `Error doing booking checkin for booking: ${bookingId}, status code: ${
-            checkInResponse.status
+          `Error doing booking checkin for booking: ${bookingId}, status code: ${checkInResponse.status
           }, status text: ${checkInResponse.statusText}, response: ${JSON.stringify(checkInResponse)}`
         );
       }
@@ -302,8 +301,7 @@ export class foreUp extends BaseProvider {
       });
       if (!addPaymentsResponse.ok) {
         throw new Error(
-          `Error adding payment to cart for booking: ${bookingId}, status code: ${
-            addPaymentsResponse.status
+          `Error adding payment to cart for booking: ${bookingId}, status code: ${addPaymentsResponse.status
           }, status text: ${addPaymentsResponse.statusText}, response: ${JSON.stringify(addPaymentsResponse)}`
         );
       }
@@ -312,8 +310,7 @@ export class foreUp extends BaseProvider {
       const completeCartUrl = `${endpoint}/courses/${courseId}/carts/${cartData.data.id}`;
       this.logger.info(`Complete cart url - ${completeCartUrl}`);
       this.logger.info(
-        `Completing cart for provider booking: ${bookingId}, cart id: ${
-          cartData.data.id
+        `Completing cart for provider booking: ${bookingId}, cart id: ${cartData.data.id
         }, with paymentData: ${JSON.stringify(paymentData)}`
       );
       const completeCartResponse = await fetch(completeCartUrl, {
@@ -331,8 +328,7 @@ export class foreUp extends BaseProvider {
       });
       if (!completeCartResponse.ok) {
         throw new Error(
-          `Error completing cart for booking: ${bookingId}, status code: ${
-            completeCartResponse.status
+          `Error completing cart for booking: ${bookingId}, status code: ${completeCartResponse.status
           }, status text: ${completeCartResponse.statusText}, response: ${JSON.stringify(
             completeCartResponse
           )}`
@@ -393,7 +389,7 @@ export class foreUp extends BaseProvider {
     bookingId: string,
     slots: number,
     customerId: string,
-    providerBookingId: string,
+    providerBookingId: string | string[],
     _providerId: string,
     _courseId: string
   ) {

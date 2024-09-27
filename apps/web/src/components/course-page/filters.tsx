@@ -120,36 +120,6 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
     setPriceRange(localPriceRange);
   };
 
-  const { data: specialEvents } = api.searchRouter.getSpecialEvents.useQuery({
-    courseId: course?.id ?? "",
-  });
-
-  const DateOptions = useMemo(() => {
-    const defaultDateOptions = [
-      "All",
-      "Today",
-      "This Week",
-      "This Weekend",
-      "This Month",
-      "Furthest Day Out To Book",
-      "Custom",
-    ];
-
-    // Extract the names of the first two special events
-    const specialEventOptions =
-      specialEvents?.slice(0, 2).map((event) => event.eventName) || [];
-
-    return [...specialEventOptions, ...defaultDateOptions];
-  }, [specialEvents]);
-  const dateToDayValue = (date: Date): DayValue => ({
-    year: date.getFullYear(),
-    month: date.getMonth() + 1,
-    day: date.getDate(),
-    hour: date.getHours(),
-    minute: date.getMinutes(),
-    second: date.getSeconds(),
-  });
-
   const formatDate = (dateObj) => {
     const months = [
       "Jan",
@@ -253,6 +223,35 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
     setLocalStartTime([startTimeRounded, endTimeRounded]);
   }, [startTime]);
 
+  const { data: specialEvents } = api.searchRouter.getSpecialEvents.useQuery({
+    courseId: course?.id ?? "",
+  });
+
+  const DateOptions = useMemo(() => {
+    const defaultDateOptions = [
+      "All",
+      "Today",
+      "This Week",
+      "This Weekend",
+      "This Month",
+      "Furthest Day Out To Book",
+      "Custom",
+    ];
+
+    // Extract the names of the first two special events
+    const specialEventOptions =
+      specialEvents?.slice(0, 2).map((event) => event.eventName) || [];
+
+    return [...specialEventOptions, ...defaultDateOptions];
+  }, [specialEvents]);
+  const dateToDayValue = (date: Date): DayValue => ({
+    year: date.getFullYear(),
+    month: date.getMonth() + 1,
+    day: date.getDate(),
+    hour: date.getHours(),
+    minute: date.getMinutes(),
+    second: date.getSeconds(),
+  });
   return (
     <div className="flex flex-col gap-4 pr-1">
       <section className="flex flex-col gap-2">
@@ -409,9 +408,11 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
             }
           }}
           data-testid="slider-start-time-id"
-          data-qa={isMobile
-            ? `${startTimeOptions.find((i) => i.value === timeMobile[0])?.displayTime} - ${startTimeOptions.find((i) => i.value === timeMobile[1])?.displayTime}`
-            : `${startTimeOptions.find((i) => i.value === localStartTime[0])?.displayTime} - ${startTimeOptions.find((i) => i.value === localStartTime[1])?.displayTime}`}
+          data-qa={`${startTimeOptions.find((i) => i.value === localStartTime[0])
+            ?.displayTime
+            } - ${startTimeOptions.find((i) => i.value === localStartTime[1])
+              ?.displayTime
+            }`}
         />
       </section>
 

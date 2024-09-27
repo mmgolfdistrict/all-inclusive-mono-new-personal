@@ -165,7 +165,7 @@ export class FinixService {
     private readonly cashoutService: CashOutService,
     private readonly loggerService: LoggerService,
     private readonly notificationService: NotificationService
-  ) {}
+  ) { }
   getHeaders = () => {
     const requestHeaders = new Headers();
     requestHeaders.append("Content-Type", "application/json");
@@ -350,8 +350,7 @@ export class FinixService {
     const amountMultiplied = amount * 100;
     if (amountMultiplied + Number((allRecords?.sum as number) || 0) > Number(limitInAmount) * 100) {
       return new Error(
-        `You cannot withdraw more than $${limitInAmount} in a day. You have already withdrawn $${
-          ((allRecords?.sum as number) || 1) / 100 || 0
+        `You cannot withdraw more than $${limitInAmount} in a day. You have already withdrawn $${((allRecords?.sum as number) || 1) / 100 || 0
         } today.`
       );
     }
@@ -516,6 +515,7 @@ export class FinixService {
     const merchantData = await response.json();
     return merchantData;
   };
+
 
   getPaymentInstruments = async (
     userId: string

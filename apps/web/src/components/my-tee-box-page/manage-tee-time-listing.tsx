@@ -338,6 +338,7 @@ export const ManageTeeTimeListing = ({
                       }`}
                       dataTestId="player-item-id"
                       dataQa={value}
+                      label={value}
                     />
                   ))}
                 </ToggleGroup.Root>

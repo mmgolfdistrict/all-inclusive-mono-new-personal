@@ -51,6 +51,8 @@ export const DailyTeeTimes = ({
     setIsExpanded(!isExpanded);
   };
   const { course } = useCourseContext();
+  const courseId = course?.id;
+
   const {
     showUnlisted,
     includesCart,
@@ -62,6 +64,13 @@ export const DailyTeeTimes = ({
   } = useFiltersContext();
   const teeTimeStartTime = startTime[0];
   const teeTimeEndTime = startTime[1];
+
+  const { data: numberOfPlayers } =
+    api.course.getNumberOfPlayersByCourse.useQuery({
+      courseId: courseId ?? "",
+    });
+
+  const playersCount = numberOfPlayers?.[0] ? Number(numberOfPlayers[0]) : 0;
 
   const { data: weather, isLoading: isLoadingWeather } =
     api.searchRouter.getWeatherForDay.useQuery(
@@ -265,32 +274,38 @@ export const DailyTeeTimes = ({
           ref={overflowRef}
           onMouseDown={onMouseDown}
         >
-          {allTeeTimes?.map((i: CombinedObject, idx: number) => (
-            <TeeTime
-              time={i.date}
-              key={idx}
-              items={i}
-              index={idx}
-              canChoosePlayer={i.availableSlots > 0}
-              availableSlots={i.availableSlots}
-              players={String(4 - i.availableSlots)}
-              firstHandPurchasePrice={i?.firstHandPurchasePrice}
-              price={i.pricePerGolfer}
-              isOwned={i?.isOwned}
-              soldById={i?.soldById}
-              soldByImage={i?.soldByImage}
-              soldByName={i?.soldByName}
-              teeTimeId={i?.teeTimeId}
-              isLiked={i?.userWatchListed}
-              status={i?.firstOrSecondHandTeeTime}
-              minimumOfferPrice={i?.minimumOfferPrice}
-              bookingIds={i?.bookingIds ?? []}
-              listingId={i?.listingId}
-              listedSlots={i?.listedSlots}
-              handleLoading={handleLoading}
-              refetch={refetch}
-            />
-          ))}
+          {allTeeTimes?.map((i: CombinedObject, idx: number) => {
+            if (i.availableSlots >= playersCount) {
+              return (
+                <TeeTime
+                  time={i.date}
+                  key={idx}
+                  items={i}
+                  index={idx}
+                  canChoosePlayer={i.availableSlots > 0}
+                  availableSlots={i.availableSlots}
+                  players={String(4 - i.availableSlots)}
+                  firstHandPurchasePrice={i?.firstHandPurchasePrice}
+                  price={i.pricePerGolfer}
+                  isOwned={i?.isOwned}
+                  soldById={i?.soldById}
+                  soldByImage={i?.soldByImage}
+                  soldByName={i?.soldByName}
+                  teeTimeId={i?.teeTimeId}
+                  isLiked={i?.userWatchListed}
+                  status={i?.firstOrSecondHandTeeTime}
+                  minimumOfferPrice={i?.minimumOfferPrice}
+                  bookingIds={i?.bookingIds ?? []}
+                  listingId={i?.listingId}
+                  listedSlots={i?.listedSlots}
+                  handleLoading={handleLoading}
+                  refetch={refetch}
+                />
+              );
+            }
+            return null;
+          })}
+
           <div
             ref={nextPageRef}
             className="h-[50px] w-[1px] text-[1px] text-white"

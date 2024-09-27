@@ -82,9 +82,6 @@ export const CheckoutItem = ({
         flag = true;
         msg = ce;
       }
-      console.log("startDate", startDate);
-      console.log("endDate", endDate);
-      console.log("dateToCheck", dateToCheck);
     });
     if (flag) {
       return msg;
@@ -249,7 +246,6 @@ const Data = ({
     );
   }
 
-  console.log("courseException courseException", courseException);
   const getTextColor = (type) => {
     if (type === "FAILURE") return "red";
     if (type === "SUCCESS") return "primary";

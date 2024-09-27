@@ -292,7 +292,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
               setPlayers={setPlayers}
               teeTimeId={"-"}
               playersOptions={["1", "2", "3", "4"]}
-              numberOfPlayers={numberOfPlayers ? numberOfPlayers : []}
+              numberOfPlayers={["1", "2", "3", "4"]}
             />
           </div>
         </div>

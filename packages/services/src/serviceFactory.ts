@@ -28,6 +28,7 @@ import {
 import { ProfanityService } from "./profanity/profanity.service";
 import { SystemNotificationService } from "./system-notification/systemNotification.service";
 import { ProviderService } from "./tee-sheet-provider/providers.service";
+import { clubprophetWebhookService } from "./webhooks/clubprophet.webhook.service";
 import { UserWaitlistService } from "./user-waitlist/userWaitlist.service";
 import { FinixService } from "./webhooks/finix.service";
 import { LoggerService } from "./webhooks/logging.service";
@@ -96,6 +97,15 @@ export class ServiceFactory {
    */
   getForeupWebhookService = (): ForeUpWebhookService => {
     return new ForeUpWebhookService(this.config.database, this.getProviderService());
+  };
+
+  /**
+   * Returns an instance of clubprophetWebhookService with the provided database and provider service.
+   * @returns An instance of clubprophetWebhookService.
+   */
+
+  getClubprophetWebhookService = (): clubprophetWebhookService => {
+    return new clubprophetWebhookService(this.config.database, this.getProviderService());
   };
 
   /**

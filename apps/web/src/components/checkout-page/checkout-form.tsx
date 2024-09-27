@@ -20,13 +20,14 @@ import { OutlineButton } from "../buttons/outline-button";
 import { CharitySelect } from "../input/charity-select";
 import { Input } from "../input/input";
 import styles from "./checkout.module.css";
+import type { NextAction } from "./hyper-switch";
 
-type charityData={
-  charityDescription: string | undefined,
-  charityName:string | undefined,
-  charityId: string | undefined,
-  charityLogo: string | undefined
-}
+type charityData = {
+  charityDescription: string | undefined;
+  charityName: string | undefined;
+  charityId: string | undefined;
+  charityLogo: string | undefined;
+};
 
 export const CheckoutForm = ({
   isBuyNowAuction,
@@ -35,6 +36,8 @@ export const CheckoutForm = ({
   cartId,
   teeTimeDate,
   listingId,
+  nextAction,
+  callingRef,
   playerCount,
 }: {
   isBuyNowAuction: boolean;
@@ -43,6 +46,8 @@ export const CheckoutForm = ({
   cartId: string;
   teeTimeDate: string | undefined;
   listingId: string;
+  nextAction?: NextAction;
+  callingRef?: boolean;
   playerCount: string | undefined;
 }) => {
   const MAX_CHARITY_AMOUNT = 1000;
@@ -66,13 +71,14 @@ export const CheckoutForm = ({
     );
 
   const { refetch: refetchGetSupportedCharities } =
-    api.course.getSupportedCharitiesForCourseId.useQuery({
-      courseId: course?.id??"",
-    },
+    api.course.getSupportedCharitiesForCourseId.useQuery(
+      {
+        courseId: course?.id ?? "",
+      },
       {
         enabled: false,
-      })
-
+      }
+    );
 
   const checkIfTeeTimeAvailableOnProvider =
     api.teeBox.checkIfTeeTimeAvailableOnProvider.useMutation();
@@ -123,7 +129,6 @@ export const CheckoutForm = ({
       ?.filter(({ product_data }) => product_data.metadata.type === "sensible")
       ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
 
-
   const charityCharge =
     cartData
       ?.filter(({ product_data }) => product_data.metadata.type === "charity")
@@ -155,11 +160,11 @@ export const CheckoutForm = ({
   const [showTextField, setShowTextField] = useState(false);
   const [donateError, setDonateError] = useState(false);
   const [noThanks, setNoThanks] = useState(false);
-  const [charityData, setCharityData] = useState<charityData| undefined>({
-    charityDescription:'',
-    charityId:'',
-    charityLogo:'',
-    charityName:''
+  const [charityData, setCharityData] = useState<charityData | undefined>({
+    charityDescription: "",
+    charityId: "",
+    charityLogo: "",
+    charityName: "",
   });
   // const [isPaymentCompleted, setIsPaymentCompleted] = useState(false);
   const [message, setMessage] = useState("");
@@ -223,19 +228,19 @@ export const CheckoutForm = ({
   });
 
   const CharityData = async () => {
-    const result = await refetchGetSupportedCharities()
+    const result = await refetchGetSupportedCharities();
     const charities = result.data;
     if (Array.isArray(charities)) {
       const Charity = charities?.find(
         (charity) => charity?.charityId === roundUpCharityId
       );
-      setCharityData(Charity as charityData)
-      handleSelectedCharity(Charity?.charityId??"")
+      setCharityData(Charity as charityData);
+      handleSelectedCharity(Charity?.charityId ?? "");
     }
-  }
+  };
 
   useEffect(() => {
-    void CharityData()
+    void CharityData();
     const timer = setTimeout(function () {
       router.push(`/${courseId}`);
     }, 10 * 60 * 1000);
@@ -432,7 +437,6 @@ export const CheckoutForm = ({
     return bookingResponse;
   };
 
-
   const Total =
     primaryGreenFeeCharge +
     taxCharge +
@@ -449,7 +453,7 @@ export const CheckoutForm = ({
   const handleDonateChange = (event) => {
     const value = event.target.value.trim() as string;
     const numericValue = value.length > 0 ? parseFloat(value) : 0;
-    setNoThanks(false)
+    setNoThanks(false);
 
     if (!numericValue || numericValue === 0) {
       setDonateValue(event?.target?.value as number);
@@ -463,18 +467,21 @@ export const CheckoutForm = ({
     }
   };
 
-  const TaxCharge = taxCharge +
+  const TaxCharge =
+    taxCharge +
     sensibleCharge +
     (!roundUpCharityId ? charityCharge : 0) +
-    convenienceCharge
+    convenienceCharge;
 
   const roundOff = Math.ceil(primaryGreenFeeCharge + TaxCharge);
 
   const handleRoundOff = () => {
     setShowTextField(false);
-    setNoThanks(false)
+    setNoThanks(false);
     setRoundOffClick(true);
-    const donation = parseFloat((roundOff - (primaryGreenFeeCharge + TaxCharge)).toFixed(2));
+    const donation = parseFloat(
+      (roundOff - (primaryGreenFeeCharge + TaxCharge)).toFixed(2)
+    );
     setDonateValue(donation);
     handleSelectedCharityAmount(Number(donation));
   };
@@ -524,8 +531,6 @@ export const CheckoutForm = ({
                     const value = e.target.value
                       .replace(/\$/g, "")
                       .replace(/,/g, "");
-
-                    console.log("value", value);
 
                     if (Number(value) < 0) return;
 
@@ -611,114 +616,140 @@ export const CheckoutForm = ({
           <div>Total</div>
           <div>
             $
-            {((roundUpCharityId
-              ? (roundOffClick ? roundOff : TotalAmt)
-              : TotalAmt) || 0).toLocaleString("en-US", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
+            {(
+              (roundUpCharityId
+                ? roundOffClick
+                  ? roundOff
+                  : TotalAmt
+                : TotalAmt) || 0
+            ).toLocaleString("en-US", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
           </div>
         </div>
       </div>
       {roundUpCharityId && (
         <div className="flex w-full flex-col gap-2 bg-white p-4 rounded-lg my-2 border border-primary">
-        <div className="flex items-center">
-          {charityData?.charityLogo && (
-            <img 
-              src={`${charityData?.charityLogo}`} 
-              alt={`${charityData.charityName} logo`} 
-              className="w-16 h-16 mr-4 rounded-md" 
-            />
-          )}
-          <div>
-            <h2 className="text-lg font-semibold">{charityData?.charityName}</h2>
-            <p className="text-sm text-gray-600">{charityData?.charityDescription}</p>
-          </div>
-        </div>
-        
-        <div className="flex gap-2 mt-5 ml-3 mb-4">
-          <button
-            type="button"
-            className={`flex w-32 items-center justify-center rounded-md p-2 ${roundOffClick
-              ? "bg-primary text-white"
-              : "bg-white text-primary border-primary border-2"
-              }`}
-            onClick={handleRoundOff}
-          >
-            Round Up
-          </button>
-      
-          <button
-            type="button"
-            className={`flex w-32 items-center justify-center rounded-md p-2 ${showTextField
-              ? "bg-primary text-white"
-              : "bg-white text-primary border-primary border-2"
-              }`}
-            onClick={() => {
-              setRoundOffClick(false);
-              setShowTextField(true);
-              setDonateValue(5);
-              handleSelectedCharityAmount(5);
-            }}
-          >
-            Other
-          </button>
-      
-          <button
-            type="button"
-            className={`flex w-32 items-center justify-center rounded-md p-2 ${noThanks
-              ? "bg-primary text-white"
-              : "bg-white text-primary border-primary border-2"
-              }`}
-            onClick={() => {
-              setRoundOffClick(false);
-              setShowTextField(false);
-              setDonateValue(0);
-              handleSelectedCharityAmount(0);
-              setNoThanks(true);
-            }}
-          >
-            No Thanks
-          </button>
-        </div>
-        
-        {showTextField && (
-          <div className="flex flex-col">
-            <input
-              type="number"
-              placeholder="Enter Donation Amount"
-              value={donateValue}
-              onChange={handleDonateChange}
-              className={`p-2 border rounded-md ${donateError ? "border-red" : "border-primary"}`}
-              min="1"
-              step="1"
-            />
-            {donateError && (
-              <div className="mt-1 text-sm text-red">
-                Donation amount must be more than 0.
-              </div>
+          <div className="flex items-center">
+            {charityData?.charityLogo && (
+              <img
+                src={`${charityData?.charityLogo}`} 
+                alt={`${charityData.charityName} logo`}
+                className="w-16 h-16 mr-4 rounded-md"
+              />
             )}
+            <div>
+              <h2 className="text-lg font-semibold">
+                {charityData?.charityName}
+              </h2>
+              <p className="text-sm text-gray-600">
+                {charityData?.charityDescription}
+              </p>
+            </div>
           </div>
-        )}
-      </div>
-      
+
+          <div className="flex gap-2 mt-5 ml-3 mb-4">
+            <button
+              type="button"
+              className={`flex w-32 items-center justify-center rounded-md p-2 ${
+                roundOffClick
+                  ? "bg-primary text-white"
+                  : "bg-white text-primary border-primary border-2"
+              }`}
+              onClick={handleRoundOff}
+            >
+              Round Up
+            </button>
+
+            <button
+              type="button"
+              className={`flex w-32 items-center justify-center rounded-md p-2 ${
+                showTextField
+                  ? "bg-primary text-white"
+                  : "bg-white text-primary border-primary border-2"
+              }`}
+              onClick={() => {
+                setRoundOffClick(false);
+                setShowTextField(true);
+                setDonateValue(5);
+                handleSelectedCharityAmount(5);
+              }}
+            >
+              Other
+            </button>
+
+            <button
+              type="button"
+              className={`flex w-32 items-center justify-center rounded-md p-2 ${
+                noThanks
+                  ? "bg-primary text-white"
+                  : "bg-white text-primary border-primary border-2"
+              }`}
+              onClick={() => {
+                setRoundOffClick(false);
+                setShowTextField(false);
+                setDonateValue(0);
+                handleSelectedCharityAmount(0);
+                setNoThanks(true);
+              }}
+            >
+              No Thanks
+            </button>
+          </div>
+
+          {showTextField && (
+            <div className="flex flex-col">
+              <input
+                type="number"
+                placeholder="Enter Donation Amount"
+                value={donateValue}
+                onChange={handleDonateChange}
+                className={`p-2 border rounded-md ${
+                  donateError ? "border-red" : "border-primary"
+                }`}
+                min="1"
+                step="1"
+              />
+              {donateError && (
+                <div className="mt-1 text-sm text-red">
+                  Donation amount must be more than 0.
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       )}
       {!maxReservation?.success && (
         <div className="md:hidden bg-alert-red text-white p-1 pl-2 my-2  w-full rounded">
           {maxReservation?.message}
         </div>
       )}
-
-      <FilledButton
-        type="submit"
-        className={`w-full rounded-full`}
-        disabled={
-          isLoading || !hyper || !widgets || message === "Payment Successful"
-        }
-        data-testid="pay-now-id"
-      >
-        {isLoading ? "Processing..." : <>Pay Now</>}
-      </FilledButton>
+      {nextAction?.type === "redirect_to_url" ? (
+        <FilledButton
+          className={`w-full rounded-full disabled:opacity-60`}
+          disabled={!hyper || !widgets || callingRef}
+          onClick={() => {
+            if (nextAction?.redirect_to_url) {
+              window.location.href = nextAction?.redirect_to_url;
+            }
+          }}
+          type="button"
+        >
+          {isLoading ? "Loading..." : <>Pay Now</>}
+        </FilledButton>
+      ) : (
+        <FilledButton
+          type="submit"
+          className={`w-full rounded-full disabled:opacity-60`}
+          disabled={
+            isLoading || !hyper || !widgets || message === "Payment Successful"
+          }
+          data-testid="pay-now-id"
+        >
+          {isLoading ? "Processing..." : <>Pay Now</>}
+        </FilledButton>
+      )}
       <LoadingContainer isLoading={isLoading}>
         <div></div>
       </LoadingContainer>

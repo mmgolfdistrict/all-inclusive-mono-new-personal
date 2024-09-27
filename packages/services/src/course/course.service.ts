@@ -82,6 +82,7 @@ export class CourseService extends DomainService {
         sellerFee: courses.sellerFee,
         internalId: providers.internalId,
         roundUpCharityId: courses?.roundUpCharityId,
+        providerConfiguration: providerCourseLink.providerCourseConfiguration
       })
       .from(courses)
       .innerJoin(providerCourseLink, eq(providerCourseLink.courseId, courses.id))
@@ -133,11 +134,12 @@ export class CourseService extends DomainService {
     ]);
 
     // Destructure the first element from each resulting array
-    const courseDetails = courseDetailsArray[0];
+    const course = courseDetailsArray[0];
     const listTeeTimePrices = listTeeTimePricesArray[0];
     const primarySaleTeeTimePrices = primarySaleTeeTimePricesArray[0];
 
-    if (!courseDetails) return null;
+    if (!course) return null;
+    const { providerConfiguration, ...courseDetails } = course;
 
     // Assemble the final result object
     const result = {
@@ -178,7 +180,7 @@ export class CourseService extends DomainService {
         charityId: d.charityId,
       }));
 
-      const { provider } = await this.providerService.getProviderAndKey(courseDetails.internalId, courseId);
+      const { provider } = await this.providerService.getProviderAndKey(courseDetails.internalId, courseId, providerConfiguration ?? "");
       const supportsPlayerNameChange = provider.supportsPlayerNameChange() ?? false;
 
       return {

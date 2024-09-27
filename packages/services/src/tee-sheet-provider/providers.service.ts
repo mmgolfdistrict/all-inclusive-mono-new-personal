@@ -2,16 +2,21 @@ import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
 import { and, eq, sql } from "@golf-district/database";
 import type { InsertBookingSlots } from "@golf-district/database/schema/bookingslots";
+import { providers } from "@golf-district/database/schema/providers";
 import { userProviderCourseLink } from "@golf-district/database/schema/userProviderCourseLink";
 import { users } from "@golf-district/database/schema/users";
 import Logger from "@golf-district/shared/src/logger";
 import { CacheService } from "../infura/cache.service";
-import type { ForeUpCredentials } from "./sheet-providers";
+import type { BookingResponse, ForeUpCredentials, TeeTimeResponse } from "./sheet-providers";
 import { foreUp, type ProviderAPI } from "./sheet-providers";
+import { clubprophet } from "./sheet-providers/clubprophet";
 import type {
-  BookingResponse,
-  CustomerCreationData,
-  TeeTimeResponse,
+  ClubProphetCustomerCreationData,
+  ClubProphetCustomerCreationResponse,
+} from "./sheet-providers/types/clubprophet.types";
+import type {
+  CustomerCreationData as ForeUpCustomerCreationData,
+  CustomerData as ForeUpCustomerCreationResponse,
 } from "./sheet-providers/types/foreup.type";
 
 export interface Customer {
@@ -40,11 +45,12 @@ export class ProviderService extends CacheService {
     private readonly database: Db,
     redisUrl: string,
     redisToken: string,
-    foreUpCredentials: ForeUpCredentials
+    foreUpCredentials: ForeUpCredentials,
+    providerConfiguration?: any
   ) {
     super(redisUrl, redisToken, Logger(ProviderService.name));
     //this will need to be refactored to allow for providers with different credentials per course
-    this.teeSheetProviders = [new foreUp(foreUpCredentials)];
+    this.teeSheetProviders = [new foreUp(foreUpCredentials), new clubprophet(providerConfiguration)];
   }
 
   /**
@@ -60,6 +66,12 @@ export class ProviderService extends CacheService {
   ): Promise<{ provider: ProviderAPI; token: string }> => {
     this.logger.info(`getProvider called with providerId: ${internalProviderIdentifier}`);
     const provider = this.teeSheetProviders.find((p) => p.providerId === internalProviderIdentifier);
+
+    if (provider && internalProviderIdentifier == "club-prophet") {
+      // remove after adding
+      provider.providerConfiguration = providerCourseConfiguration;
+    }
+
     if (!provider) {
       this.logger.fatal(`Provider with ID ${internalProviderIdentifier} not found`);
       throw new Error(`Provider with ID ${internalProviderIdentifier} not found`);
@@ -74,7 +86,7 @@ export class ProviderService extends CacheService {
       await this.setCache(
         `provider-${internalProviderIdentifier}-${courseId}-${process.env.NODE_ENV}`,
         token,
-        24 * 60 * 60
+        60 * 60
       );
     }
     return {
@@ -186,12 +198,14 @@ export class ProviderService extends CacheService {
         phoneNotification: users.phoneNotifications,
         emailNotification: users.emailNotifications,
         handel: users.handle,
+        internalId: providers.internalId,
       })
       .from(users)
       .leftJoin(
         userProviderCourseLink,
         and(eq(userProviderCourseLink.userId, users.id), eq(userProviderCourseLink.courseId, courseId))
       )
+      .leftJoin(providers, eq(providers.id, providerId))
       .where(eq(users.id, userId))
       .execute()
       .catch((err) => {
@@ -208,6 +222,7 @@ export class ProviderService extends CacheService {
       name: buyer.name,
       username: buyer.handel,
       email: buyer.email,
+      phone: buyer.phone,
     };
     if (buyer.providerAccountNumber && buyer.providerCustomerId) {
       return customerInfo;
@@ -217,37 +232,63 @@ export class ProviderService extends CacheService {
         this.logger.fatal(`user missing name or email id: ${userId}`);
         throw new Error(`Error finding user id`);
       }
+      let customer;
       const accountNumber = Math.floor(Math.random() * 90000) + 10000;
-      const nameOfCustomer = buyer.name.split(" ");
-      const customer: CustomerCreationData = {
-        type: "customer",
-        //@ts-ignore
-        attributes: {
-          username: buyer.handel ?? "",
-          email_subscribed: buyer.emailNotification ?? "",
-          taxable: true,
-          contact_info: {
-            account_number: accountNumber,
-            phone_number: buyer.phone ?? "",
-            address_1: buyer.address1 ?? "",
-            first_name: nameOfCustomer?.[0] ? nameOfCustomer[0] ?? "guest" : "guest",
-            last_name: nameOfCustomer?.[1] ? nameOfCustomer[1] : "N/A",
-            email: buyer.email,
+      if (buyer.internalId === "fore-up") {
+        const nameOfCustomer = buyer.name.split(" ");
+        customer = {
+          type: "customer",
+          //@ts-ignore
+          attributes: {
+            username: buyer.handel ?? "",
+            email_subscribed: buyer.emailNotification ?? "",
+            taxable: true,
+            contact_info: {
+              account_number: accountNumber,
+              phone_number: buyer.phone ?? "",
+              address_1: buyer.address1 ?? "",
+              first_name: nameOfCustomer?.[0] ? nameOfCustomer[0] ?? "guest" : "guest",
+              last_name: nameOfCustomer?.[1] ? nameOfCustomer[1] : "N/A",
+              email: buyer.email,
+            },
           },
-        },
-      };
-      //create customer on provider
+        } as ForeUpCustomerCreationData;
+      }
+      if (buyer.internalId === "club-prophet") {
+        const nameOfCustomer = buyer.name.split(" ");
+        const firstName = nameOfCustomer?.[0] ? nameOfCustomer[0] : "guest";
+        const lastName = nameOfCustomer?.[1] ? nameOfCustomer[1] : "N/A";
+        customer = {
+          email: buyer.email,
+          phone: buyer.phone,
+          firstName,
+          lastName,
+        } as ClubProphetCustomerCreationData;
+      }
+
+      if (!customer) {
+        this.logger.fatal(`Course internal Id doesn't match for user: ${userId}`);
+        throw new Error(`Error matching provider Internal Id`);
+      }      //create customer on provider
       let customerId: number | null = null;
       try {
         const customerData = await provider.createCustomer(token, providerCourseId, customer);
+
+        if (buyer.internalId === "fore-up") {
+          customerId = Number((customerData as ForeUpCustomerCreationResponse).data.id);
+        }
+        if (buyer.internalId === "club-prophet") {
+          customerId = Number((customerData as ClubProphetCustomerCreationResponse).acct);
+        }
+
         customerInfo = {
           playerNumber: accountNumber,
-          customerId: customerData.data.id,
+          customerId,
           name: buyer.name,
           username: buyer.handel,
           email: buyer.email,
+          phone: buyer.phone,
         };
-        customerId = customerData.data.id;
       } catch (error) {
         console.log("provider.createCustomer error: ", error);
         throw new Error(`Error creating customer on provider`);
