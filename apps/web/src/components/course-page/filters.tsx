@@ -283,11 +283,18 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
                     <div className="flex justify-between">
                       <span>{value}</span>
                       {isMobile
-                        ? `${selectedDayMobile.from ? formatDate(selectedDayMobile.from) : ""
-                        } ${selectedDayMobile.to ? "-" : ""} ${selectedDayMobile.to ? formatDate(selectedDayMobile.to) : ""}`
-                        : `${selectedDay.from ? formatDate(selectedDay.from) : ""
-                        } ${selectedDay.to ? "-" : ""} ${selectedDay.to ? formatDate(selectedDay.to) : ""}`}
-
+                        ? dateTypeMobile === "Custom" && (
+                          <>
+                            {selectedDayMobile.from ? formatDate(selectedDayMobile.from) : ""}
+                            {selectedDayMobile.to ? ` - ${formatDate(selectedDayMobile.to)}` : ""}
+                          </>
+                        )
+                        : dateType === "Custom" && (
+                          <>
+                            {selectedDay.from ? formatDate(selectedDay.from) : ""}
+                            {selectedDay.to ? ` - ${formatDate(selectedDay.to)}` : ""}
+                          </>
+                        )}
                     </div>
                   ) : (
                     value
