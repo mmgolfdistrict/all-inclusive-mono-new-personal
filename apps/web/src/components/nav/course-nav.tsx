@@ -26,8 +26,8 @@ import { SideBar } from "./side-bar";
 
 export const CourseNav = () => {
   const { user } = useUserContext();
-  const { course } = useCourseContext();
   const { entity, setPrevPath } = useAppContext();
+  const { course } = useCourseContext();
   const courseId = course?.id;
   const [isSideBarOpen, setIsSideBarOpen] = useState<boolean>(false);
   const isMobile = useMediaQuery("(max-width: 768px)");
@@ -46,6 +46,11 @@ export const CourseNav = () => {
 
   const { data: systemNotifications } =
     api.systemNotification.getSystemNotification.useQuery({});
+
+  const { data: courseGlobalNotification } =
+    api.systemNotification.getCourseGlobalNotification.useQuery({
+      courseId: courseId ?? "",
+    });
 
   const { data: isUserBlocked } = api.user.isUserBlocked.useQuery({
     userEmail: session?.data?.user.email ?? "",
@@ -71,7 +76,6 @@ export const CourseNav = () => {
       })
       .catch((err) => {
         console.log("error", err);
-
       });
   };
 
@@ -122,7 +126,17 @@ export const CourseNav = () => {
         {systemNotifications?.map((elm) => (
           <div
             key={elm.id}
-            className={`bg-${getBgColor(
+            className={`${getBgColor(
+              elm.displayType
+            )} text-white w-full p-1 text-center`}
+          >
+            {elm.shortMessage} : {elm.longMessage}
+          </div>
+        ))}
+        {courseGlobalNotification?.map((elm) => (
+          <div
+            key={elm.id}
+            className={`${getBgColor(
               elm.displayType
             )} text-white w-full p-1 text-center`}
           >
@@ -131,8 +145,9 @@ export const CourseNav = () => {
         ))}
         {isSideBarOpen && (
           <div
-            className={`fixed z-20 h-[100dvh] w-screen backdrop-blur ${isSideBarOpen ? "md:hidden" : ""
-              }`}
+            className={`fixed z-20 h-[100dvh] w-screen backdrop-blur ${
+              isSideBarOpen ? "md:hidden" : ""
+            }`}
           >
             <div className="h-screen bg-[#00000099]" />
           </div>

@@ -1,6 +1,18 @@
 import type { InsertBookingSlots } from "@golf-district/database/schema/bookingslots";
 import type pino from "pino";
-import type { BookingResponse as ForeUpBookingResponse, CustomerCreationData, CustomerData, ForeupSaleDataOptions, TeeTimeResponse } from "./foreup.type";
+import type {
+  ClubProphetBookingResponse,
+  ClubProphetCustomerCreationData,
+  ClubProphetCustomerCreationResponse,
+  ClubProphetTeeTimeResponse,
+} from "./clubprophet.types";
+import type {
+  BookingResponse as ForeUpBookingResponse,
+  CustomerCreationData as ForeUpCustomerCreationData,
+  CustomerData as ForeUpCustomerCreationResponse,
+  TeeTimeResponse as ForeUpTeeTimeResponse,
+  ForeupSaleDataOptions, 
+} from "./foreup.type";
 
 export type ForeUpCredentials = {
   username: string;
@@ -9,7 +21,13 @@ export type ForeUpCredentials = {
 
 type ProviderCredentials = ForeUpCredentials;
 
-export type BookingResponse = ForeUpBookingResponse;
+export type TeeTimeResponse = ForeUpTeeTimeResponse | ClubProphetTeeTimeResponse;
+
+export type BookingResponse = ForeUpBookingResponse | ClubProphetBookingResponse;
+
+export type CustomerCreationData = ForeUpCustomerCreationData | ClubProphetCustomerCreationData;
+
+export type CustomerData = ForeUpCustomerCreationResponse | ClubProphetCustomerCreationResponse;
 
 export type BookingDetails = {
   providerCourseId: string;
@@ -19,7 +37,7 @@ export type BookingDetails = {
   token: string;
 }
 
-type SalesDataOptions = ForeupSaleDataOptions;
+export type SalesDataOptions = ForeupSaleDataOptions;
 
 export interface ProviderAPI {
   providerId: string;
@@ -31,7 +49,8 @@ export interface ProviderAPI {
     teesheetId: string,
     startTime: string,
     endTime: string,
-    date: string
+    date: string,
+    rateCode?: string
   ) => Promise<TeeTimeResponse[]>;
   createBooking: (
     token: string,
@@ -59,13 +78,14 @@ export interface ProviderAPI {
     bookingId: string,
     slots: number,
     clientId: string,
-    providerBookingId: string,
+    providerBookingId: string | string[],
     providerId: string,
     courseId: string
   ) => Promise<InsertBookingSlots[]>;
   shouldAddSaleData: () => boolean;
   getSalesDataOptions: (reservationData: BookingResponse, bookingDetails: BookingDetails) => SalesDataOptions;
   addSalesData: (options: SalesDataOptions) => Promise<void>;
+  supportsPlayerNameChange(): boolean;
 }
 
 export abstract class BaseProvider implements ProviderAPI {
@@ -118,11 +138,12 @@ export abstract class BaseProvider implements ProviderAPI {
     bookingId: string,
     slots: number,
     clientId: string,
-    providerBookingId: string,
+    providerBookingId: string | string[],
     providerId: string,
     courseId: string
   ): Promise<InsertBookingSlots[]>
   abstract shouldAddSaleData(): boolean;
   abstract getSalesDataOptions(reservationData: BookingResponse, bookingDetails: BookingDetails): SalesDataOptions;
   abstract addSalesData(options: SalesDataOptions): Promise<void>;
+  abstract supportsPlayerNameChange(): boolean;
 }

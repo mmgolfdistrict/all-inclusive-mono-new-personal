@@ -28,6 +28,7 @@ import {
 import { ProfanityService } from "./profanity/profanity.service";
 import { SystemNotificationService } from "./system-notification/systemNotification.service";
 import { ProviderService } from "./tee-sheet-provider/providers.service";
+import { clubprophetWebhookService } from "./webhooks/clubprophet.webhook.service";
 import { UserWaitlistService } from "./user-waitlist/userWaitlist.service";
 import { FinixService } from "./webhooks/finix.service";
 import { LoggerService } from "./webhooks/logging.service";
@@ -80,7 +81,7 @@ export interface ServiceConfig {
  * ```
  */
 export class ServiceFactory {
-  constructor(protected readonly config: ServiceConfig) {}
+  constructor(protected readonly config: ServiceConfig) { }
 
   /**
    * Returns an instance of HyperSwitchService with the provided API key.
@@ -96,6 +97,15 @@ export class ServiceFactory {
    */
   getForeupWebhookService = (): ForeUpWebhookService => {
     return new ForeUpWebhookService(this.config.database, this.getProviderService());
+  };
+
+  /**
+   * Returns an instance of clubprophetWebhookService with the provided database and provider service.
+   * @returns An instance of clubprophetWebhookService.
+   */
+
+  getClubprophetWebhookService = (): clubprophetWebhookService => {
+    return new clubprophetWebhookService(this.config.database, this.getProviderService());
   };
 
   /**
@@ -167,7 +177,8 @@ export class ServiceFactory {
       this.config.database,
       this.config.vercel_projectId,
       this.config.vercel_teamId,
-      this.config.vercel_authBearerToken
+      this.config.vercel_authBearerToken,
+      this.getProviderService()
     );
   };
 

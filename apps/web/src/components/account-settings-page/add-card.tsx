@@ -89,10 +89,11 @@ export const AddCard = ({ refetchCards }: { refetchCards: () => unknown }) => {
         reset();
         setIsLoading(false);
       } catch (error) {
+        console.log(error);
         setIsLoading(false);
       }
-    }
-  };
+    };
+  }
 
   return (
     <>
@@ -166,13 +167,12 @@ export const AddCard = ({ refetchCards }: { refetchCards: () => unknown }) => {
               <Item
                 key={index}
                 value={value}
-                className={`${
-                  index === 0
-                    ? "rounded-l-full border-b border-l border-t border-stroke"
-                    : index === Options.length - 1
+                className={`${index === 0
+                  ? "rounded-l-full border-b border-l border-t border-stroke"
+                  : index === Options.length - 1
                     ? "rounded-r-full border-b border-r border-t border-stroke"
                     : "border border-stroke"
-                } px-[2.65rem]`}
+                  } px-[2.65rem]`}
               />
             ))}
           </ToggleGroup.Root>
@@ -181,9 +181,8 @@ export const AddCard = ({ refetchCards }: { refetchCards: () => unknown }) => {
         <FilledButton
           type="submit"
           disabled={isSubmitting || isLoading}
-          className={`w-full rounded-full ${
-            isLoading || isSubmitting ? "opacity-20" : "opacity-100"
-          }`}
+          className={`w-full rounded-full ${isLoading || isSubmitting ? "opacity-20" : "opacity-100"
+            }`}
           data-testid="add-button-id"
         >
           Add
@@ -197,9 +196,8 @@ const Item = ({ value, className }: { value: string; className?: string }) => {
   return (
     <ToggleGroup.Item
       value={value}
-      className={`bg-white capitalize px-4 py-2 text-left text-[14px] text-primary-gray transition-colors data-[state=on]:bg-primary data-[state=on]:text-white ${
-        className ?? ""
-      }`}
+      className={`bg-white capitalize px-4 py-2 text-left text-[14px] text-primary-gray transition-colors data-[state=on]:bg-primary data-[state=on]:text-white ${className ?? ""
+        }`}
       data-testid="toggle-item-id"
       data-qa={value}
     >

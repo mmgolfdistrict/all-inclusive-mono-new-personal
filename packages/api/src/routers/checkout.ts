@@ -60,4 +60,13 @@ export const checkoutRouter = createTRPCRouter({
         .getCheckoutService()
         .checkMaxReservationsAndMaxRounds(ctx.session.user.id, input.roundsToBook, input.courseId);
     }),
+  retrivePaymentIntent: protectedProcedure
+    .input(
+      z.object({
+        clientSecret: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return await ctx.serviceFactory.getHyperSwitchService().retrievePaymentIntent(input.clientSecret);
+    }),
 });

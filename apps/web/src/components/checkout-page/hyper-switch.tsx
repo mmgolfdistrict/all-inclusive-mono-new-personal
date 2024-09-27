@@ -10,10 +10,16 @@ import { useEffect, useRef, useState } from "react";
 import { Spinner } from "../loading/spinner";
 import { CheckoutForm } from "./checkout-form";
 
+export type NextAction = {
+  type?: string;
+  redirect_to_url?: string;
+};
+
 type CreatePaymentResponse = {
   clientSecret: string;
   paymentId: string | undefined;
   cartId: string;
+  next_action?: NextAction;
 };
 
 type Options = {
@@ -47,7 +53,6 @@ export const HyperSwitch = ({
   listingId: string | undefined;
   setIsLoading?: (isLoading: boolean) => void;
   playerCount: string | undefined;
-  // maxReservation: MaxReservationResponse;
 }) => {
   const [options, setOptions] = useState<Options | undefined>(undefined);
   const { user } = useUserContext();
@@ -57,6 +62,14 @@ export const HyperSwitch = ({
   const [localCartData, setLocalCartData] = useState<unknown[]>(cartData);
   const [error, setError] = useState<undefined | string>(undefined);
   const callingRef = useRef<boolean>(false);
+  const [nextaction, setNextaction] = useState<NextAction | undefined>(
+    undefined
+  );
+  const [paymentId, setPaymentId] = useState<string | undefined>(undefined);
+
+  const isFirstHand = localCartData?.filter(
+    ({ product_data }) => product_data.metadata.type === "first_hand"
+  );
 
   const buildSession = async () => {
     if (!user) return;
@@ -72,21 +85,29 @@ export const HyperSwitch = ({
         email: user.email ?? "",
         phone: user.phone ?? "",
         phone_country_code: "1",
-        paymentId: options?.paymentId ? options.paymentId : null,
+        paymentId: options?.paymentId
+          ? options.paymentId
+          : paymentId
+            ? paymentId
+            : null,
         //@ts-ignore
         cart: cartData,
         cartId,
       })) as CreatePaymentResponse;
-      setOptions({
-        clientSecret: data.clientSecret,
-        paymentId: data.paymentId,
-        appearance: {
-          theme: "default",
-        },
-      });
+      if (data?.next_action) {
+        setNextaction(data?.next_action);
+        setPaymentId(data?.paymentId);
+      } else {
+        setOptions({
+          clientSecret: data.clientSecret,
+          paymentId: data.paymentId,
+          appearance: {
+            theme: "default",
+          },
+        });
+      }
       setLocalCartData(cartData);
       setCartId(data.cartId);
-
       // setIsLoadingSession(false);
       callingRef.current = false;
     } catch (error) {
@@ -116,7 +137,11 @@ export const HyperSwitch = ({
     }
   }, [user, options, cartData]);
 
-  if (setIsLoading && options !== undefined && hyperPromise !== undefined) {
+  if (
+    setIsLoading &&
+    (options !== undefined || nextaction !== undefined) &&
+    hyperPromise !== undefined
+  ) {
     setIsLoading(false);
   }
 
@@ -142,9 +167,20 @@ export const HyperSwitch = ({
             teeTimeDate={teeTimeDate}
             listingId={listingId ?? ""}
             playerCount={playerCount}
-          // maxReservation={maxReservation}
           />
         </HyperElements>
+      ) : nextaction ? (
+        <></>
+        // <CheckoutForm
+        //   teeTimeId={teeTimeId}
+        //   isBuyNowAuction={isBuyNowAuction}
+        //   cartData={cartData}
+        //   cartId={cartId}
+        //   teeTimeDate={teeTimeDate}
+        //   listingId={listingId ?? ""}
+        //   nextAction={nextaction}
+        //   callingRef={callingRef.current}
+        // />
       ) : (
         <div className="flex justify-center items-center h-full min-h-[200px]">
           <Spinner className="w-[50px] h-[50px]" />

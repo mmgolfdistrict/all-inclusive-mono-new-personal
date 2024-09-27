@@ -42,11 +42,22 @@ export const ssrGetStaticPaths = async () => {
 };
 
 export const getCourseById = async (courseId: string) => {
+  const credentials = {
+    username: process.env.FOREUP_USERNAME!,
+    password: process.env.FOREUP_PASSWORD!,
+  };
+  const providerService = new ProviderService(
+    db,
+    process.env.REDIS_URL!,
+    process.env.REDIS_TOKEN!,
+    credentials
+  );
   const courseService = new CourseService(
     db,
     process.env.VERCEL_PROJECT_ID!,
     process.env.VERCEL_TEAM_ID!,
-    process.env.VERCEL_AUTH_BEARER_TOKEN!
+    process.env.VERCEL_AUTH_BEARER_TOKEN!,
+    providerService
   );
   try {
     return await courseService.getCourseById(courseId);
@@ -54,12 +65,52 @@ export const getCourseById = async (courseId: string) => {
     console.log(error);
   }
 };
-export const getCourseImages = async (courseId: string) => {
+
+export const getSupportedCharitiesForCourseId = async (courseId: string) => {
+  const credentials = {
+    username: process.env.FOREUP_USERNAME!,
+    password: process.env.FOREUP_PASSWORD!,
+  };
+  const providerService = new ProviderService(
+    db,
+    process.env.REDIS_URL!,
+    process.env.REDIS_TOKEN!,
+    credentials
+  );
   const courseService = new CourseService(
     db,
     process.env.VERCEL_PROJECT_ID!,
     process.env.VERCEL_TEAM_ID!,
-    process.env.VERCEL_AUTH_BEARER_TOKEN!
+    process.env.VERCEL_AUTH_BEARER_TOKEN!,
+    providerService
+  );
+  
+  try {
+    return await courseService.getSupportedCharitiesForCourseId(courseId);
+  } catch (error) {
+    console.error("Error fetching supported charities:", error);
+    return []; // Return an empty array on error to avoid breaking the UI
+  }
+};
+
+
+export const getCourseImages = async (courseId: string) => {
+  const credentials = {
+    username: process.env.FOREUP_USERNAME!,
+    password: process.env.FOREUP_PASSWORD!,
+  };
+  const providerService = new ProviderService(
+    db,
+    process.env.REDIS_URL!,
+    process.env.REDIS_TOKEN!,
+    credentials
+  );
+  const courseService = new CourseService(
+    db,
+    process.env.VERCEL_PROJECT_ID!,
+    process.env.VERCEL_TEAM_ID!,
+    process.env.VERCEL_AUTH_BEARER_TOKEN!,
+    providerService
   );
   try {
     return await courseService.getImagesForCourse(courseId);

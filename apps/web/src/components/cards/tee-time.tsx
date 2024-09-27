@@ -8,6 +8,7 @@ import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
 import { formatMoney, formatTime, getTime } from "~/utils/formatters";
 import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
+import { microsoftClarityEvent } from "~/utils/microsoftClarityUtils";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
@@ -23,7 +24,6 @@ import { ChoosePlayers } from "../input/choose-players";
 import { ManageTeeTimeListing } from "../my-tee-box-page/manage-tee-time-listing";
 import { Tooltip } from "../tooltip";
 import { MakeAnOffer } from "../watchlist-page/make-an-offer";
-import { microsoftClarityEvent } from "~/utils/microsoftClarityUtils";
 
 const PlayersOptions = ["1", "2", "3", "4"];
 const DEFAULT_SILHOUETTE_IMAGE = "/defaults/default-profile.webp";
@@ -81,11 +81,20 @@ export const TeeTime = ({
 }) => {
   const [, copy] = useCopyToClipboard();
   const [isCopied, setIsCopied] = useState<boolean>(false);
-  const [selectedPlayers, setSelectedPlayers] = useState<string>(
-    status === "UNLISTED" ? "1" : status === "FIRST_HAND" ? "1" : players
-  );
   const { course } = useCourseContext();
   const courseId = course?.id;
+  const { data: numberOfPlayers } =
+    api.course.getNumberOfPlayersByCourse.useQuery({
+      courseId: courseId ?? "",
+    });
+
+  const [selectedPlayers, setSelectedPlayers] = useState<string>(() => {
+    if (numberOfPlayers?.length !== 0 && numberOfPlayers !== undefined) {
+      return String(numberOfPlayers[0]);
+    }
+    return status === "UNLISTED" || status === "FIRST_HAND" ? "1" : players;
+  });
+
   const timezoneCorrection = course?.timezoneCorrection;
   const [isMakeAnOfferOpen, setIsMakeAnOfferOpen] = useState<boolean>(false);
   const { data: session } = useSession();
@@ -170,7 +179,7 @@ export const TeeTime = ({
       category: "BUY TEE TIME",
       label: "user clicked on buy to purchase tee time",
       value: pathname,
-    })
+    });
     googleAnalyticsEvent({
       action: `CLICKED ON BUY`,
       category: "TEE TIME ",
@@ -266,8 +275,9 @@ export const TeeTime = ({
         data-test={
           status === "SECOND_HAND" ? "secondary_listed" : "primary_listed"
         }
-        className={`md:rounded-xl rounded-lg bg-secondary-white w-fit min-w-[230px] md:min-w-[265px] ${className ?? ""
-          }`}
+        className={`md:rounded-xl rounded-lg bg-secondary-white w-fit min-w-[230px] md:min-w-[265px] ${
+          className ?? ""
+        }`}
       >
         <div className="border-b border-stroke">
           <div className="flex justify-between py-1 px-2 md:px-3 md:p-3 items-center">
@@ -381,6 +391,8 @@ export const TeeTime = ({
                 isDisabled={status === "SECOND_HAND"}
                 className="md:px-[1rem] md:py-[.25rem] md:!text-[14px] !text-[10px] px-[.75rem] py-[.1rem]"
                 teeTimeId={teeTimeId}
+                numberOfPlayers={numberOfPlayers ? numberOfPlayers : []}
+                status={status}
               />
             ) : (
               players && (
