@@ -10,6 +10,7 @@ import { PaymentInfoMangeProfile } from "~/components/account-settings-page/paym
 import { SavedBankDetails } from "~/components/account-settings-page/savedBankDetails";
 import { GoBack } from "~/components/buttons/go-back";
 import { ProfileDetails } from "~/components/profile-page/profile-details";
+import { api } from "~/utils/api";
 import { useRouter } from "next/navigation";
 
 export default function ManangeProfile({
@@ -22,6 +23,21 @@ export default function ManangeProfile({
   const router = useRouter();
   const { status, data } = useSession();
 
+  const { data: systemNotifications } =
+    api.systemNotification.getSystemNotification.useQuery({});
+
+  const { data: courseGlobalNotification } =
+    api.systemNotification.getCourseGlobalNotification.useQuery({
+      courseId: courseId ?? "",
+    });
+
+  const notificationsCount =
+    (systemNotifications ? systemNotifications.length : 0) +
+    (courseGlobalNotification ? courseGlobalNotification.length : 0);
+
+  const marginTop =
+    notificationsCount > 0 ? `mt-${notificationsCount * 6}` : "";
+
   if (
     status === "unauthenticated" ||
     (status !== "loading" && userId !== data?.user.id)
@@ -31,7 +47,7 @@ export default function ManangeProfile({
   }
 
   return (
-    <main className="bg-secondary-white py-4 md:py-6 ">
+    <main className={`bg-secondary-white py-4 md:py-6 ${marginTop}`}>
       <div className="mx-auto flex items-center justify-between px-4 md:max-w-[1360px] md:px-6">
         <GoBack href={`/${courseId}`} text={`Back to tee times`} />
       </div>

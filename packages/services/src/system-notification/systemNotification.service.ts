@@ -1,4 +1,5 @@
-import { and, gt, gte, lt, lte, type Db } from "@golf-district/database";
+import { and, eq, gt, gte, lt, lte, type Db } from "@golf-district/database";
+import { courseGlobalNotification } from "@golf-district/database/schema/courseGlobalNotification";
 import { systemNotification } from "@golf-district/database/schema/systemNotification";
 import { currentUtcTimestamp } from "@golf-district/shared";
 
@@ -6,7 +7,6 @@ export class SystemNotificationService {
   constructor(private readonly database: Db) {}
 
   async getSystemNotification() {
-    console.log("===========>", currentUtcTimestamp());
     const notifications = await this.database
       .select({
         id: systemNotification.id,
@@ -26,5 +26,30 @@ export class SystemNotificationService {
         console.log("Error in getting system notification");
       });
     return notifications;
+  }
+
+  async getCourseGlobalNotification(courseId: string) {
+    const courseNotifications = await this.database
+      .select({
+        id: courseGlobalNotification.id,
+        shortMessage: courseGlobalNotification.shortMessage,
+        longMessage: courseGlobalNotification.longMessage,
+        displayType: courseGlobalNotification.displayType,
+      })
+      .from(courseGlobalNotification)
+      .where(
+        and(
+          eq(courseGlobalNotification.courseId, courseId),
+          and(
+            lte(courseGlobalNotification.startDateTime, currentUtcTimestamp()),
+            gte(courseGlobalNotification.endDateTime, currentUtcTimestamp())
+          )
+        )
+      )
+      .execute()
+      .catch((e) => {
+        console.log("Error in getting system notification");
+      });
+    return courseNotifications;
   }
 }

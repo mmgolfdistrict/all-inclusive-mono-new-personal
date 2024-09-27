@@ -151,7 +151,9 @@ export const getPromoCodePrice = (
 };
 
 export const getBgColor = (type) => {
-  if (type === "FAILURE") return "alert-red";
-  if (type === "SUCCESS") return "success-alert";
-  if (type === "WARNING") return "slate-400";
+  console.log("type", type);
+
+  if (type === "FAILURE") return "bg-alert-red";
+  if (type === "SUCCESS") return "bg-green-500";
+  if (type === "WARNING") return "bg-slate-400";
 };

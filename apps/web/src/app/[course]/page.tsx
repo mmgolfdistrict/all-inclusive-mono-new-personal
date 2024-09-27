@@ -506,9 +506,15 @@ export default function CourseHomePage() {
   const { data: systemNotifications } =
     api.systemNotification.getSystemNotification.useQuery({});
 
-  const notificationsCount = systemNotifications
-    ? systemNotifications.length
-    : 0;
+  const { data: courseGlobalNotification } =
+    api.systemNotification.getCourseGlobalNotification.useQuery({
+      courseId: courseId ?? "",
+    });
+
+  const notificationsCount =
+    (systemNotifications ? systemNotifications.length : 0) +
+    (courseGlobalNotification ? courseGlobalNotification.length : 0);
+
   const marginTop =
     notificationsCount > 0 ? `mt-${notificationsCount * 6}` : "";
 
