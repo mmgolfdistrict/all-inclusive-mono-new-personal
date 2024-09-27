@@ -268,6 +268,7 @@ export class CheckoutService {
         profile_id: this.profileId,
         // @ts-ignore
         metadata: customerCart.courseId,
+        setup_future_usage: "off_session",
       })
       .catch((err) => {
         this.logger.error(` ${err}`);

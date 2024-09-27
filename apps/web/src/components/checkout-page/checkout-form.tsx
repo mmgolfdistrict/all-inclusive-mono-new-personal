@@ -107,7 +107,6 @@ export const CheckoutForm = ({
       ?.filter(({ product_data }) => product_data.metadata.type === "sensible")
       ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
 
-
   const charityCharge =
     cartData
       ?.filter(({ product_data }) => product_data.metadata.type === "charity")
@@ -128,6 +127,7 @@ export const CheckoutForm = ({
     },
     branding: "never",
     hideExpiredPaymentMethods: true,
+    displaySavedPaymentMethodsCheckbox: false,
   };
   const hyper = useHyper();
   const widgets = useWidgets();
@@ -425,17 +425,20 @@ export const CheckoutForm = ({
     }
   };
 
-  const TaxCharge = taxCharge +
+  const TaxCharge =
+    taxCharge +
     sensibleCharge +
     (!roundUpCharityId ? charityCharge : 0) +
-    convenienceCharge
+    convenienceCharge;
 
   const roundOff = Math.ceil(primaryGreenFeeCharge + TaxCharge);
 
   const handleRoundOff = () => {
     setShowTextField(false);
     setRoundOffClick(true);
-    const donation = parseFloat((roundOff - (primaryGreenFeeCharge + TaxCharge)).toFixed(2));
+    const donation = parseFloat(
+      (roundOff - (primaryGreenFeeCharge + TaxCharge)).toFixed(2)
+    );
     setDonateValue(donation);
     handleSelectedCharityAmount(Number(donation));
   };
@@ -445,7 +448,6 @@ export const CheckoutForm = ({
       handleRoundOff();
     }
   }, [TaxCharge]);
-
 
   return (
     <form onSubmit={handleSubmit} className="">
@@ -547,10 +549,7 @@ export const CheckoutForm = ({
         </div>
         <div className="flex justify-between">
           <div>Taxes & Others</div>
-          <div>
-            $
-            {TaxCharge}
-          </div>
+          <div>${TaxCharge}</div>
         </div>
         {roundUpCharityId && (
           <div className="flex justify-between">
@@ -583,10 +582,11 @@ export const CheckoutForm = ({
           <div className="flex gap-2 mt-5 ml-3 mb-4">
             <button
               type="button"
-              className={`flex w-32 items-center justify-center rounded-md p-2  ${roundOffClick
-                ? "bg-primary text-white"
-                : "bg-white text-primary border-primary border-2"
-                }`}
+              className={`flex w-32 items-center justify-center rounded-md p-2  ${
+                roundOffClick
+                  ? "bg-primary text-white"
+                  : "bg-white text-primary border-primary border-2"
+              }`}
               onClick={handleRoundOff}
             >
               Round Up
@@ -594,10 +594,11 @@ export const CheckoutForm = ({
 
             <button
               type="button"
-              className={`flex w-32 items-center justify-center rounded-md p-2  ${showTextField
-                ? "bg-primary text-white"
-                : "bg-white text-primary border-primary border-2"
-                }`}
+              className={`flex w-32 items-center justify-center rounded-md p-2  ${
+                showTextField
+                  ? "bg-primary text-white"
+                  : "bg-white text-primary border-primary border-2"
+              }`}
               onClick={() => {
                 setRoundOffClick(false);
                 setShowTextField(true);
@@ -628,8 +629,9 @@ export const CheckoutForm = ({
                 placeholder="Enter Donation Amount"
                 value={donateValue}
                 onChange={handleDonateChange}
-                className={`p-2 border rounded-md ${donateError ? "border-red-500" : "border-primary"
-                  }`}
+                className={`p-2 border rounded-md ${
+                  donateError ? "border-red-500" : "border-primary"
+                }`}
                 min="1"
                 step="1"
               />

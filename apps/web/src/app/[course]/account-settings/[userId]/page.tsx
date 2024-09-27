@@ -58,7 +58,7 @@ export default function ManangeProfile({
           </div>
           <div className="flex flex-col gap-4 md:flex-col md:w-[50%]">
             <AddCreditCard />
-            <PaymentInfoMangeProfile />
+            {/* <PaymentInfoMangeProfile /> */}
             <SavedBankDetails />
           </div>
         </div>
