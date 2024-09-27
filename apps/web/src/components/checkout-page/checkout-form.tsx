@@ -149,6 +149,7 @@ export const CheckoutForm = ({
     },
     branding: "never",
     hideExpiredPaymentMethods: true,
+    displaySavedPaymentMethodsCheckbox: false,
   };
   const hyper = useHyper();
   const widgets = useWidgets();
@@ -492,8 +493,6 @@ export const CheckoutForm = ({
     }
   }, [TaxCharge]);
 
-  console.log(charityData)
-
   return (
     <form onSubmit={handleSubmit} className="">
       <UnifiedCheckout id="unified-checkout" options={unifiedCheckoutOptions} />
@@ -634,7 +633,7 @@ export const CheckoutForm = ({
           <div className="flex items-center">
             {charityData?.charityLogo && (
               <img
-                src={`${charityData?.charityLogo}`} 
+                src={`${charityData?.charityLogo}`}
                 alt={`${charityData.charityName} logo`}
                 className="w-16 h-16 mr-4 rounded-md"
               />

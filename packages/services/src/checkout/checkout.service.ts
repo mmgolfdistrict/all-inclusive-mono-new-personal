@@ -310,6 +310,7 @@ export class CheckoutService {
       profile_id: this.profileId,
       // @ts-ignore
       metadata: customerCart.courseId,
+      setup_future_usage: "off_session",
     };
     // }
 
@@ -629,7 +630,7 @@ export class CheckoutService {
         errors.push({
           errorType: CartValidationErrors.TEE_TIME_NOT_AVAILABLE,
           product_id: item.id,
-        })
+        });
       }
     }
     console.log("teeTime", item.product_data);
