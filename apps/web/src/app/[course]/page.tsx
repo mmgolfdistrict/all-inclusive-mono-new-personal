@@ -22,7 +22,7 @@ import type { GolferType } from "~/contexts/FiltersContext";
 import { useFiltersContext } from "~/contexts/FiltersContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
-import dayjs from "dayjs";
+import dayjs, { Dayjs } from 'dayjs';
 import isBetween from "dayjs/plugin/isBetween";
 import isoWeek from "dayjs/plugin/isoWeek";
 import RelativeTime from "dayjs/plugin/relativeTime";
@@ -124,11 +124,15 @@ export default function CourseHomePage() {
       : null;
   };
 
-  const formatDateString = (date) => {
+  const formatDateString = (date: string | number | Date | Dayjs | null | undefined): string => {
+    if (!date) {
+      return ''; // Handle the case where date is null or undefined
+    }
     return dayjs(date).utc().format('ddd, DD MMM YYYY HH:mm:ss [GMT]');
   };
+  
 
-  const getUtcDate = (date, timezoneCorrection = 0) => {
+  const getUtcDate = (date: string | number | Dayjs | Date | null | undefined, timezoneCorrection = 0):string => {
     const currentDate = dayjs.utc(formatDateString(date));
     return currentDate.add(timezoneCorrection, "hour").toString();
   };
@@ -149,10 +153,11 @@ export default function CourseHomePage() {
         return getUtcDate(new Date(), course?.timezoneCorrection);
       case "This Weekend":
         return formatDateString(dayjs().day(5).toDate());
-      case "Custom":
+      case "Custom":{
         if (!selectedDay.from) return formatDateString(new Date());
         const customDate = dayjs(`${selectedDay.from.year}-${selectedDay.from.month}-${selectedDay.from.day}`).toDate();
         return formatDateString(customDate);
+      }
       default:
         return formatDateString(new Date());
     }
@@ -173,12 +178,13 @@ export default function CourseHomePage() {
         return getUtcDate(dayjs().endOf("isoWeek").toDate(), course?.timezoneCorrection);
       case "This Weekend":
         return formatDateString(dayjs().day(7).toDate());
-      case "This Month":
+      case "This Month":{
         const endOfMonth = dayjs().endOf("month").toDate();
         return endOfMonth > dayjs(farthestDateOut).toDate() ? formatDateString(farthestDateOut) : formatDateString(endOfMonth);
+      }
       case "Furthest Day Out To Book":
         return formatDateString(dayjs(farthestDateOut).utc().hour(23).minute(59).second(59).millisecond(999).toDate());
-      case "Custom":
+      case "Custom":{
         if (!selectedDay.to) {
           if (selectedDay.from) {
             const endOfDay = dayjs(`${selectedDay.from.year}-${selectedDay.from.month}-${selectedDay.from.day}`).endOf("day");
@@ -188,6 +194,7 @@ export default function CourseHomePage() {
         }
         const endDateCustom = dayjs(`${selectedDay.to.year}-${selectedDay.to.month}-${selectedDay.to.day}`).endOf("day");
         return getUtcDate(endDateCustom.toDate(), course?.timezoneCorrection);
+      }
       default:
         return formatDateString(dayjs().add(360, 'days').toDate());
     }
