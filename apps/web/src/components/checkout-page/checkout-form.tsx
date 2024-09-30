@@ -630,12 +630,12 @@ export const CheckoutForm = ({
       </div>
       {roundUpCharityId && (
         <div className="flex w-full flex-col gap-2 bg-white p-4 rounded-lg my-2 border border-primary">
-          <div className="flex items-center">
+          <div className="flex items-top">
             {charityData?.charityLogo && (
               <img
                 src={`${charityData?.charityLogo}`}
                 alt={`${charityData.charityName} logo`}
-                className="w-16 h-16 mr-4 rounded-md"
+                className="w-16 h-16 mr-4 rounded-md mt-2"
               />
             )}
             <div>
