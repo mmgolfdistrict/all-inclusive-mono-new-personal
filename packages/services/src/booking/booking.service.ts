@@ -2542,7 +2542,7 @@ export class BookingService {
         courseName: courses.name,
         entityName: entities.name,
         providerTeeTimeId: teeTimes.providerTeeTimeId,
-        isWebhookAvailable: providerCourseLink.isWebhookAvailable,
+        isWebhookAvailable: providers.isWebhookAvailable,
         timeZoneCorrection: courses.timezoneCorrection,
         providerCourseConfiguration: providerCourseLink.providerCourseConfiguration,
       })
@@ -3104,7 +3104,7 @@ export class BookingService {
         websiteURL: courses.websiteURL,
         courseName: courses.name,
         entityName: entities.name,
-        isWebhookAvailable: providerCourseLink.isWebhookAvailable,
+        isWebhookAvailable: providers.isWebhookAvailable,
         timeZoneCorrection: courses.timezoneCorrection,
         providerCourseConfiguration: providerCourseLink.providerCourseConfiguration,
         providerTeeTimeId: teeTimes.providerTeeTimeId,

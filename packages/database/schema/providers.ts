@@ -1,6 +1,6 @@
 import type { InferSelectModel } from "drizzle-orm";
 import { relations } from "drizzle-orm";
-import { primaryKey, text, varchar } from "drizzle-orm/mysql-core";
+import { boolean, primaryKey, text, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 import { assets } from "./assets";
 import { providerCourseLink } from "./providersCourseLink";
@@ -14,6 +14,7 @@ export const providers = mySqlTable(
     description: text("description"),
     website: text("website"),
     logo: varchar("id", { length: 36 }),
+    isWebhookAvailable: boolean("isWebhookAvailable").default(false),
   },
   (table) => {
     return {
