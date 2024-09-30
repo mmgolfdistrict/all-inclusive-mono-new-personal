@@ -1,4 +1,8 @@
-import type { CombinedObject, NotificationObject } from "@golf-district/shared";
+import {
+  TeeTimeType,
+  type CombinedObject,
+  type NotificationObject,
+} from "@golf-district/shared";
 import { WeatherIcons } from "~/constants/weather-icons";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useFiltersContext } from "~/contexts/FiltersContext";
@@ -276,7 +280,7 @@ export const DailyTeeTimes = ({
         >
           {allTeeTimes?.map((i: CombinedObject, idx: number) => {
             if (
-              i.firstOrSecondHandTeeTime === "SECOND_HAND" ||
+              i.firstOrSecondHandTeeTime === TeeTimeType.SECOND_HAND ||
               i.availableSlots >= playersCount
             ) {
               return (
