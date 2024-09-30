@@ -275,7 +275,10 @@ export const DailyTeeTimes = ({
           onMouseDown={onMouseDown}
         >
           {allTeeTimes?.map((i: CombinedObject, idx: number) => {
-            if (i.availableSlots >= playersCount) {
+            if (
+              i.firstOrSecondHandTeeTime === "SECOND_HAND" ||
+              i.availableSlots >= playersCount
+            ) {
               return (
                 <TeeTime
                   time={i.date}
