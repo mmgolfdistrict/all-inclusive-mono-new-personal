@@ -11,11 +11,16 @@ export const OrderSummary = ({
   isLoading,
   sensibleDataToMountComp,
   isSensibleInvalid,
+  privacyPolicyAndTCByCourseUrl,
 }: {
   teeTime: SearchObject | null | undefined;
   isLoading: boolean;
   sensibleDataToMountComp: SensibleDataToMountCompType;
   isSensibleInvalid: boolean;
+  privacyPolicyAndTCByCourseUrl?: {
+    privacyPolicyURL: string | null;
+    termsAndConditionsURL: string | null;
+  };
 }) => {
   return (
     <section className="mx-auto flex w-full h-fit flex-col gap-4 bg-white px-3 py-2 md:rounded-xl md:p-6 md:py-4">
@@ -44,6 +49,26 @@ export const OrderSummary = ({
         Please send your feedback to{" "}
         <a href="mailto:support@golfdistrict.com">support@golfdistrict.com</a>.
       </h2>
+      {privacyPolicyAndTCByCourseUrl?.privacyPolicyURL && (
+        <a
+          href={privacyPolicyAndTCByCourseUrl.privacyPolicyURL}
+          className="text-blue-600 underline"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Course Privacy Policy: Click Here
+        </a>
+      )}
+      {privacyPolicyAndTCByCourseUrl?.termsAndConditionsURL && (
+        <a
+          href={privacyPolicyAndTCByCourseUrl.termsAndConditionsURL}
+          className="text-blue-600 underline"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Course T&C: Click Here
+        </a>
+      )}
     </section>
   );
 };
