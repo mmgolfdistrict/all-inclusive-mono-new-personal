@@ -74,6 +74,10 @@ export default function Checkout({
       roundsToBook: amountOfPlayers,
       courseId: courseId,
     });
+  const { data: privacyPolicyAndTCByCourseUrl } =
+    api.course.getPrivacyPolicyAndTCByCourse.useQuery({
+      courseId: courseId ?? "",
+    });
 
   const {
     data: teeTimeData,
@@ -413,6 +417,7 @@ export default function Checkout({
                   Number(data?.pricePerGolfer) * amountOfPlayers ?? 0,
               }}
               isSensibleInvalid={isSensibleInvalid}
+              privacyPolicyAndTCByCourseUrl={privacyPolicyAndTCByCourseUrl}
             />
           </div>
           <div className="md:w-2/5">

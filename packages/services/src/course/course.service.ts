@@ -82,7 +82,7 @@ export class CourseService extends DomainService {
         sellerFee: courses.sellerFee,
         internalId: providers.internalId,
         roundUpCharityId: courses?.roundUpCharityId,
-        providerConfiguration: providerCourseLink.providerCourseConfiguration
+        providerConfiguration: providerCourseLink.providerCourseConfiguration,
       })
       .from(courses)
       .innerJoin(providerCourseLink, eq(providerCourseLink.courseId, courses.id))
@@ -180,7 +180,11 @@ export class CourseService extends DomainService {
         charityId: d.charityId,
       }));
 
-      const { provider } = await this.providerService.getProviderAndKey(courseDetails.internalId, courseId, providerConfiguration ?? "");
+      const { provider } = await this.providerService.getProviderAndKey(
+        courseDetails.internalId,
+        courseId,
+        providerConfiguration ?? ""
+      );
       const supportsPlayerNameChange = provider.supportsPlayerNameChange() ?? false;
 
       return {
@@ -199,13 +203,13 @@ export class CourseService extends DomainService {
         charityName: charities.name,
         charityId: charities.id,
         logo: charities.logoAssetId,
-        logoCdn:assets.cdn,
-        logoExtension:assets.extension,
-        logoKey:assets.key
+        logoCdn: assets.cdn,
+        logoExtension: assets.extension,
+        logoKey: assets.key,
       })
       .from(charityCourseLink)
       .leftJoin(charities, eq(charityCourseLink.charityId, charities.id))
-      .leftJoin(assets,eq(assets.id,charities.logoAssetId))
+      .leftJoin(assets, eq(assets.id, charities.logoAssetId))
       .where(eq(charityCourseLink.courseId, courseId))
       .execute()
       .catch((err) => {
@@ -217,7 +221,7 @@ export class CourseService extends DomainService {
       charityDescription: d.charityDescription,
       charityName: d.charityName,
       charityId: d.charityId,
-      charityLogo: d.logo?`https://${d.logoCdn}/${d.logoKey}.${d.logoExtension}`:''
+      charityLogo: d.logo ? `https://${d.logoCdn}/${d.logoKey}.${d.logoExtension}` : "",
     }));
     return supportedCharities;
   };
@@ -640,5 +644,17 @@ export class CourseService extends DomainService {
         : PlayersOptions;
 
     return numberOfPlayers;
+  };
+
+  getPrivacyPolicyAndTCByCourse = async (courseId: string) => {
+    const privacyPolicyAndTC = await this.database
+      .select({
+        privacyPolicyURL: courses.privacyPolicy,
+        termsAndConditionsURL: courses.termsAndConditions,
+      })
+      .from(courses)
+      .where(eq(courses.id, courseId));
+
+    return privacyPolicyAndTC[0];
   };
 }
