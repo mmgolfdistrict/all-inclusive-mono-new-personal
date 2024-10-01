@@ -1,4 +1,6 @@
 import * as accounts from "./accounts";
+import * as adminUserCourse from "./adminUserCourse";
+import * as adminUsers from "./adminUsers";
 import * as appSettings from "./appSetting";
 import * as assets from "./assets";
 import * as auctionAssets from "./auctionAssets";
@@ -11,6 +13,7 @@ import * as charities from "./charities";
 import * as charityCourseLink from "./charityCourseLink";
 import * as courseAssets from "./courseAssets";
 import * as courseException from "./courseException";
+import * as courseGlobalNotification from "./courseGlobalNotification";
 import * as courseMarkup from "./courseMarkup";
 import * as coursePromoCodeLink from "./coursePromoCodeLink";
 import * as courses from "./courses";
@@ -47,8 +50,6 @@ import * as users from "./users";
 import * as userWaitlists from "./userWaitlists";
 import * as verificationTokens from "./verificationTokens";
 import * as withdrawals from "./withdrawals";
-import * as adminUsers from "./adminUsers";
-import * as adminUserCourse from "./adminUserCourse";
 import * as providerAuthTokens from "./providerAuthTokens";
 
 export const schema = {
@@ -103,5 +104,6 @@ export const schema = {
   ...majorEvents,
   ...adminUsers,
   ...adminUserCourse,
+  ...courseGlobalNotification,
   ...providerAuthTokens
 };

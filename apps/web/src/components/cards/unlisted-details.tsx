@@ -34,6 +34,7 @@ export const UnlistedDetails = ({
   teeTimeId: string;
   props?: ComponentProps<"div">;
 }) => {
+  const { course } = useCourseContext();
   const [players, setPlayers] = useState<string>("1");
   const [, copy] = useCopyToClipboard();
   const [isCopied, setIsCopied] = useState<boolean>(false);
@@ -73,7 +74,6 @@ export const UnlistedDetails = ({
 
   const { user } = useUserContext();
   const router = useRouter();
-  const { course } = useCourseContext();
 
   const toggleWatchlist = api.watchlist.toggleWatchlist.useMutation();
 
@@ -185,6 +185,7 @@ export const UnlistedDetails = ({
               playersOptions={PlayersOptions}
               availableSlots={bookingData?.bookings?.length || 0}
               teeTimeId={teeTimeId}
+              numberOfPlayers={PlayersOptions}
             />
           </div>
           <div className="flex flex-col flex-wrap justify-between gap-2 md:flex-row">

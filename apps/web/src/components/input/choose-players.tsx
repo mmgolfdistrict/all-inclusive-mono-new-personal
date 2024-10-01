@@ -1,4 +1,5 @@
 import * as ToggleGroup from "@radix-ui/react-toggle-group";
+import { toast } from "react-toastify";
 import { Item } from "../course-page/filters";
 
 export const ChoosePlayers = ({
@@ -9,6 +10,8 @@ export const ChoosePlayers = ({
   isDisabled,
   className,
   teeTimeId,
+  status,
+  numberOfPlayers,
 }: {
   players: string | number;
   setPlayers: (v: string) => void;
@@ -17,6 +20,8 @@ export const ChoosePlayers = ({
   isDisabled?: boolean;
   className?: string;
   teeTimeId: string | undefined;
+  status?: string;
+  numberOfPlayers: string[];
 }) => {
   return (
     <ToggleGroup.Root
@@ -25,6 +30,9 @@ export const ChoosePlayers = ({
       onValueChange={(value: string) => {
         if (isDisabled) return;
         if (availableSlots < parseInt(value)) return;
+        if (!numberOfPlayers?.includes(value) || status === "SECOND_HAND") {
+          return;
+        }
         if (value) setPlayers(value);
       }}
       orientation="horizontal"
@@ -50,9 +58,11 @@ export const ChoosePlayers = ({
               : "border-b border-r border-t border-stroke"
           } px-[1rem] py-[.25rem] ${
             availableSlots < index + 1 ? "opacity-50 cursor-not-allowed" : ""
-          } ${isDisabled ? "opacity-50 cursor-not-allowed" : ""} ${
-            className ?? ""
-          }`}
+          } ${
+            isDisabled || !numberOfPlayers?.includes(value)
+              ? "opacity-50 cursor-not-allowed"
+              : ""
+          } ${className ?? ""}`}
         />
       ))}
     </ToggleGroup.Root>

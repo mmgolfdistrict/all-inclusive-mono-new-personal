@@ -11,7 +11,7 @@ import { lists } from "@golf-district/database/schema/lists";
 import { promoCodes } from "@golf-district/database/schema/promoCodes";
 import { providers } from "@golf-district/database/schema/providers";
 import { providerCourseLink } from "@golf-district/database/schema/providersCourseLink";
-import { teeTimes } from "@golf-district/database/schema/teeTimes";
+import { InsertTeeTimes, teeTimes } from "@golf-district/database/schema/teeTimes";
 import { userPromoCodeLink } from "@golf-district/database/schema/userPromoCodeLink";
 import { users } from "@golf-district/database/schema/users";
 import { currentUtcTimestamp } from "@golf-district/shared";
@@ -20,6 +20,7 @@ import { AuctionService } from "../auction/auction.service";
 import { HyperSwitchService } from "../payment-processor/hyperswitch.service";
 //import { StripeService } from "../payment-processor/stripe.service";
 import type { ProviderService } from "../tee-sheet-provider/providers.service";
+import { clubprophetWebhookService } from "../webhooks/clubprophet.webhook.service";
 import type { ForeUpWebhookService } from "../webhooks/foreup.webhook.service";
 import type {
   AuctionProduct,
@@ -72,6 +73,7 @@ export class CheckoutService {
   private readonly logger = Logger(CheckoutService.name);
   private hyperSwitch: HyperSwitchService;
   private readonly profileId: string;
+  private clubProphetWebhook: clubprophetWebhookService;
   //private stripeService: StripeService;
 
   /**
@@ -90,6 +92,7 @@ export class CheckoutService {
     this.hyperSwitch = new HyperSwitchService(config.hyperSwitchApiKey);
     this.auctionService = new AuctionService(database, this.hyperSwitch);
     this.profileId = config.profileId;
+    this.clubProphetWebhook = new clubprophetWebhookService(database, providerService);
     //this.stripeService = new StripeService(config.stripeApiKey);
   }
 
@@ -247,6 +250,9 @@ export class CheckoutService {
       .reduce((acc, item) => {
         return acc + item.price;
       }, 0);
+    const isFirstHand = customerCart.cart.filter(
+      ({ product_data }) => product_data.metadata.type === "first_hand"
+    );
     // const tax = await this.stripeService.getTaxRate(customerCart.cart).catch((err) => {
     //   this.logger.error(`Error calculating tax: ${err}`);
     //   throw new Error(`Error calculating tax: ${err}`);
@@ -256,23 +262,62 @@ export class CheckoutService {
     // debugger;
     console.log("===>", total);
     console.log("===>", parseInt(total.toString()));
-    const paymentIntent = await this.hyperSwitch
-      .createPaymentIntent({
-        // @ts-ignore
-        customer_id: customerCart.customerId,
-        name: user.name,
-        email: user.email,
-        phone: user.phoneNumber,
-        amount: parseInt(total.toString()),
-        currency: "USD",
-        profile_id: this.profileId,
-        // @ts-ignore
-        metadata: customerCart.courseId,
+    const [record] = await this.database
+      .select({
+        internalId: providers.internalId,
       })
-      .catch((err) => {
-        this.logger.error(` ${err}`);
-        throw new Error(`Error creating payment intent: ${err}`);
-      });
+      .from(providerCourseLink)
+      .innerJoin(providers, eq(providers.id, providerCourseLink.providerId))
+      .where(eq(providerCourseLink.courseId, customerCart.courseId))
+      .execute();
+
+    // let paymentData;
+    // if (String(record?.internalId) === "club-prophet" && isFirstHand.length > 0) {
+    //   paymentData = {
+    //     customer_id: customerCart.customerId,
+    //     confirm: true,
+    //     amount_to_capture: total,
+    //     //TODO: add ENV for host
+    //     return_url: `http://localhost:3000/${customerCart.courseId}/checkout/processing?teeTimeId=${
+    //       (customerCart.cart[0] as FirstHandProduct)?.product_data?.metadata?.tee_time_id
+    //     }`,
+    //     payment_method: "card_redirect",
+    //     business_country: "US",
+    //     payment_method_type: "card_redirect",
+    //     payment_method_data: {
+    //       card_redirect: {
+    //         card_redirect: {},
+    //       },
+    //     },
+    //     routing: {
+    //       type: "single",
+    //       data: "prophetpay",
+    //     },
+    //     amount: total,
+    //     currency: "USD",
+    //     metadata: customerCart.courseId,
+    //     profile_id: process.env.HYPERSWITCH_PROFILE_ID,
+    //   };
+    // } else {
+    const paymentData = {
+      // @ts-ignore
+      customer_id: customerCart.customerId,
+      name: user.name,
+      email: user.email,
+      phone: user.phoneNumber,
+      amount: parseInt(total.toString()),
+      currency: "USD",
+      profile_id: this.profileId,
+      // @ts-ignore
+      metadata: customerCart.courseId,
+      setup_future_usage: "off_session",
+    };
+    // }
+
+    const paymentIntent = await this.hyperSwitch.createPaymentIntent(paymentData).catch((err) => {
+      this.logger.error(` ${err}`);
+      throw new Error(`Error creating payment intent: ${err}`);
+    });
 
     let teeTimeId;
     let listingId;
@@ -298,10 +343,38 @@ export class CheckoutService {
       teeTimeId,
     });
 
+    // if (String(record?.internalId) === "club-prophet" && isFirstHand.length > 0) {
+    //   const sensibleItem = customerCart.cart.find(
+    //     ({ product_data }) => product_data.metadata.type === "sensible"
+    //   ) as SensibleProduct;
+    //   paymentIntent = await this.hyperSwitch.updatePaymentIntent(paymentIntent.payment_id, {
+    //     amount: parseInt(total.toString()),
+    //     currency: "USD",
+    //     return_url: `http://localhost:3000/${customerCart.courseId}/checkout/processing?teeTimeId=${(customerCart.cart[0] as FirstHandProduct)?.product_data?.metadata?.tee_time_id
+    //       }&cart_id=${cartId}&sensible_quote_id=${sensibleItem?.product_data?.metadata?.sensible_quote_id
+    //       }&payment_id=${paymentIntent.payment_id}`,
+    //     confirm: true,
+    //     amount_to_capture: total,
+    //     payment_method: "card_redirect",
+    //     business_country: "US",
+    //     payment_method_type: "card_redirect",
+    //     payment_method_data: {
+    //       card_redirect: {
+    //         card_redirect: {},
+    //       },
+    //     },
+    //     routing: {
+    //       type: "single",
+    //       data: "prophetpay",
+    //     },
+    //   });
+    // }
+
     return {
       clientSecret: paymentIntent.client_secret,
       paymentId: paymentIntent.payment_id,
       cartId: cartId,
+      next_action: paymentIntent.next_action,
     };
   };
 
@@ -323,12 +396,57 @@ export class CheckoutService {
     console.log(`cartId = ${cartId}`);
     console.log(customerCartData);
 
-    const paymentIntent = await this.hyperSwitch
-      .updatePaymentIntent(paymentId || "", {
-        currency: "USD",
-        amount: parseInt(total.toString()),
-        // @ts-ignore
+    // let intentData;
+
+    const isFirstHand = customerCart.cart.filter(
+      ({ product_data }) => product_data.metadata.type === "first_hand"
+    );
+
+    const [record] = await this.database
+      .select({
+        internalId: providers.internalId,
       })
+      .from(providerCourseLink)
+      .innerJoin(providers, eq(providers.id, providerCourseLink.providerId))
+      .where(eq(providerCourseLink.courseId, customerCart.courseId))
+      .execute();
+
+    // if (String(record?.internalId) === "club-prophet" && isFirstHand.length > 0) {
+    //   const sensibleItem = customerCart.cart.find(
+    //     ({ product_data }) => product_data.metadata.type === "sensible"
+    //   ) as SensibleProduct;
+    //   intentData = {
+    //     amount: parseInt(total.toString()),
+    //     currency: "USD",
+    //     return_url: `http://localhost:3000/${customerCart.courseId}/checkout/processing?teeTimeId=${(customerCart.cart[0] as FirstHandProduct)?.product_data?.metadata?.tee_time_id
+    //       }&cart_id=${cartId}&sensible_quote_id=${sensibleItem?.product_data?.metadata?.sensible_quote_id
+    //       }&payment_id=${paymentId}`,
+    //     confirm: true,
+    //     amount_to_capture: parseInt(total.toString()),
+    //     payment_method: "card_redirect",
+    //     business_country: "US",
+    //     payment_method_type: "card_redirect",
+    //     payment_method_data: {
+    //       card_redirect: {
+    //         card_redirect: {},
+    //       },
+    //     },
+    //     routing: {
+    //       type: "single",
+    //       data: "prophetpay",
+    //     },
+    //   };
+    // } else {
+    const intentData = {
+      currency: "USD",
+      amount: parseInt(total.toString()),
+      amount_to_capture: parseInt(total.toString()),
+    };
+    // }
+
+    // @ts-ignore
+    const paymentIntent = await this.hyperSwitch
+      .updatePaymentIntent(paymentId || "", intentData)
       .catch((err) => {
         this.logger.error(` ${err}`);
         throw new Error(`Error updating payment intent: ${err}`);
@@ -364,6 +482,7 @@ export class CheckoutService {
       clientSecret: paymentIntent.client_secret,
       paymentId: paymentIntent.payment_id,
       cartId,
+      next_action: paymentIntent.next_action,
     };
   };
 
@@ -445,10 +564,11 @@ export class CheckoutService {
         providerDate: teeTimes.providerDate,
         providerCourseId: providerCourseLink.providerCourseId,
         providerTeeSheetId: providerCourseLink.providerTeeSheetId,
+        providerCourseConfiguration: providerCourseLink.providerCourseConfiguration,
         providerId: providerCourseLink.providerId,
+        providerTeeTimeId: teeTimes.providerTeeTimeId,
         internalId: providers.internalId,
         time: teeTimes.time,
-        providerCourseConfiguration: providerCourseLink.providerCourseConfiguration,
       })
       .from(teeTimes)
       .leftJoin(courses, eq(courses.id, teeTimes.courseId))
@@ -487,20 +607,28 @@ export class CheckoutService {
     console.log(`formattedDateUTC: ${formattedDateUTC}`);
     console.log(`formattedDate: ${formattedDate}`);
 
+    if (provider.providerId === "club-prophet") {
+      await this.clubProphetWebhook
+        .indexTeeTime(formattedDate!, teeTime.providerCourseId!, provider, teeTime.providerTeeTimeId, token)
+        .catch((err) => {
+          console.log("err in index ======>", err.error);
+          throw new Error(`Error indexing day ${formattedDate} please return to course page`);
+        });
+    }
+
     if (teeTime.providerCourseId && teeTime.providerTeeSheetId && formattedDate) {
-      //TODO: Provider update
       let response;
-      if (teeTime.internalId === "fore-up") {
-        response = await this.foreupIndexer.indexTeeTime(
-          formattedDate,
-          teeTime.providerCourseId,
-          teeTime.providerTeeSheetId,
-          provider,
-          token,
-          teeTime.time,
-          teeTime.id
-        );
-      } else {
+      // if (teeTime.internalId === "fore-up") {
+      //   response = await this.foreupIndexer.indexTeeTime(
+      //     formattedDate,
+      //     teeTime.providerCourseId,
+      //     teeTime.providerTeeSheetId,
+      //     provider,
+      //     token,
+      //     teeTime.time,
+      //     teeTime.id
+      //   );
+      // } else {
         response = await provider.indexTeeTime(
           formattedDate,
           teeTime.providerCourseId,
@@ -508,9 +636,10 @@ export class CheckoutService {
           provider,
           token,
           teeTime.time,
-          teeTime.id
+          teeTime.id,
+          teeTime.providerTeeTimeId
         )
-      }
+      // }
       if (response?.error) {
         errors.push({
           errorType: CartValidationErrors.TEE_TIME_NOT_AVAILABLE,

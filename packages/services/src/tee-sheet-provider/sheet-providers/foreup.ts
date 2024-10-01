@@ -2,15 +2,21 @@ import { randomUUID } from "crypto";
 import Logger from "@golf-district/shared/src/logger";
 import type {
   BookingCreationData,
-  BookingResponse,
+  BookingResponse as ForeupBookingResponse,
   CartData,
-  CustomerCreationData,
-  CustomerData,
-  TeeTimeResponse,
+  CustomerCreationData as ForeUpCustomerCreationData,
+  CustomerData as ForeUpCustomerCreationResponse,
+  ForeupSaleDataOptions,
   TeeTimeUpdateRequest,
+  TeeTimeResponse as ForeupTeeTimeResponse,
 } from "./types/foreup.type";
+import type { BookingResponse, CustomerCreationData, SalesDataOptions, TeeTimeResponse } from "./types/interface";
 import type { BuyerData, ProviderAPI, TeeTimeData } from "./types/interface";
-import { BaseProvider } from "./types/interface";
+import { BaseProvider, type BookingDetails } from "./types/interface";
+import { db, eq } from "@golf-district/database";
+import { teeTimes } from "@golf-district/database/schema/teeTimes";
+import { dateToUtcTimestamp } from "@golf-district/shared";
+import isEqual from "lodash.isequal";
 
 export class foreUp extends BaseProvider {
   providerId = "fore-up";
@@ -101,7 +107,7 @@ export class foreUp extends BaseProvider {
     });
 
     if (!response.ok) {
-      this.logger.error(JSON.stringify(response));
+      this.logger.error(JSON.stringify(await response.json()));
 
       if (response.status === 403) {
         this.logger.error(`Error creating booking: ${response.statusText}`);
@@ -113,14 +119,6 @@ export class foreUp extends BaseProvider {
 
     const booking: BookingResponse = await response.json();
 
-    // await this.addSalesData(
-    //   totalAmountPaid,
-    //   bookingData.data.attributes.players,
-    //   courseId,
-    //   teesheetId,
-    //   booking.data.id,
-    //   token
-    // );
     return booking;
   }
 
@@ -167,8 +165,9 @@ export class foreUp extends BaseProvider {
     token: string,
     courseId: string,
     customerData: CustomerCreationData
-  ): Promise<CustomerData> {
+  ): Promise<ForeUpCustomerCreationResponse> {
     const { defaultPriceClassID } = JSON.parse(this.providerConfiguration ?? "{}");
+    customerData = customerData as ForeUpCustomerCreationData;
     // Fetch required fields for the course
     const requiredFieldsUrl = `${this.getBasePoint()}/courses/${courseId}/settings/customerFieldSettings`;
 
@@ -216,10 +215,10 @@ export class foreUp extends BaseProvider {
       throw new Error(`Error creating customer: ${response.statusText}`);
     }
 
-    return (await response.json()) as CustomerData;
+    return (await response.json()) as ForeUpCustomerCreationResponse;
   }
 
-  async getCustomer(token: string, courseId: string, customerId: string): Promise<CustomerData> {
+  async getCustomer(token: string, courseId: string, customerId: string): Promise<ForeUpCustomerCreationResponse> {
     const endpoint = this.getBasePoint();
     const url = `${endpoint}/courses/${courseId}/customers/${customerId}`;
 
@@ -238,18 +237,13 @@ export class foreUp extends BaseProvider {
       throw new Error(`Error fetching customer: ${response.statusText}`);
     }
 
-    return (await response.json()) as CustomerData;
+    return (await response.json()) as ForeUpCustomerCreationResponse;
   }
 
-  addSalesData = async (
-    totalAmountPaid: number,
-    players: number,
-    courseId: string | number,
-    teesheetId: string | number,
-    bookingId: string,
-    token: string
-  ): Promise<void> => {
+  async addSalesData(options: SalesDataOptions): Promise<void> {
+    const opts = options as ForeupSaleDataOptions;
     try {
+      const { totalAmountPaid, players, courseId, teesheetId, bookingId, token } = opts;
       if (!totalAmountPaid) {
         return;
       }
@@ -402,9 +396,9 @@ export class foreUp extends BaseProvider {
     bookingId: string,
     slots: number,
     customerId: string,
-    providerBookingId: string,
-    providerId: string,
-    courseId: string,
+    providerBookingId: string | string[],
+    _providerId: string,
+    _courseId: string
   ) {
     const bookingSlots: {
       id: string;
@@ -433,26 +427,85 @@ export class foreUp extends BaseProvider {
     return bookingSlots;
   }
 
-
-  getCustomerCreationData(buyerData: BuyerData): any {
-    return buyerData;
+  shouldAddSaleData() {
+    return false;
   }
 
-  getCustomerId(customerData: any): string {
-    return "";
+  getSalesDataOptions(reservationData: BookingResponse, bookingDetails: BookingDetails): ForeupSaleDataOptions {
+    reservationData = reservationData as ForeupBookingResponse;
+    const salesDataOptions: ForeupSaleDataOptions = {
+      bookingId: reservationData.data.id,
+      courseId: bookingDetails.providerCourseId,
+      teesheetId: bookingDetails.providerTeeSheetId,
+      players: bookingDetails.playerCount,
+      totalAmountPaid: bookingDetails.totalAmountPaid,
+      token: bookingDetails.token
+    }
+
+    return salesDataOptions;
   }
 
-  getBookingCreationData(teeTimeData: TeeTimeData): any {
+  supportsPlayerNameChange() {
+    return true;
+  };
 
-    return {};
+
+  getCustomerCreationData(buyerData: BuyerData): ForeUpCustomerCreationData {
+    const nameOfCustomer = buyerData.name ? buyerData.name.split(' ') : ['', ''];
+    const customer: ForeUpCustomerCreationData = {
+      type: "customer",
+      attributes: {
+        username: buyerData.handel ?? "",
+        email_subscribed: buyerData.emailNotification ?? false,
+        taxable: true,
+        contact_info: {
+          account_number: buyerData.accountNumber,
+          phone_number: buyerData.phone ?? "",
+          address_1: buyerData.address1 ?? "",
+          first_name: nameOfCustomer?.[0] ? nameOfCustomer[0] ?? "guest" : "guest",
+          last_name: nameOfCustomer?.[1] ? nameOfCustomer[1] : "N/A",
+          email: buyerData.email,
+        },
+      },
+    }
+    return customer;
   }
 
-  getBookingId(bookingData: any): string {
-    return "";
+  getCustomerId(customerData: ForeUpCustomerCreationResponse): string {
+    return (customerData.data.id).toString();
   }
 
-  getAvailableSpotsOnTeeTime(teeTimeData: any): number {
-    return 1;
+  getBookingCreationData(teeTimeData: TeeTimeData): BookingCreationData {
+    const bookedPLayers = [
+      {
+        accountNumber: teeTimeData.providerAccountNumber as number,
+      },
+    ];
+
+    const bookingData: BookingCreationData = {
+      totalAmountPaid: teeTimeData.totalAmountPaid,
+      data: {
+        type: "bookings",
+        attributes: {
+          start: teeTimeData.startTime,
+          holes: typeof teeTimeData.holes === "number" ? teeTimeData.holes.toString() : teeTimeData.holes,
+          players: teeTimeData.playerCount,
+          bookedPlayers: bookedPLayers,
+          event_type: "tee_time",
+          details: teeTimeData.notes ?? "",
+        },
+      },
+    }
+    return bookingData;
+  }
+
+  getBookingId(bookingData: BookingResponse): string {
+    bookingData = bookingData as ForeupBookingResponse;
+    return bookingData.data.id;
+  }
+
+  getAvailableSpotsOnTeeTime(teeTimeData: ForeupTeeTimeResponse): number {
+    return teeTimeData.attributes.availableSpots;
   }
 
   indexTeeTime = async (
@@ -462,12 +515,133 @@ export class foreUp extends BaseProvider {
     provider: ProviderAPI,
     token: string,
     time: number,
-    teeTimeId: string
+    teeTimeId: string,
+    _providerTeeTimeId: string
   ) => {
+    try {
+      const teeTimeResponse = await provider.getTeeTimes(
+        token,
+        providerCourseId,
+        providerTeeSheetId,
+        time.toString().padStart(4, "0"),
+        (time + 1).toString().padStart(4, "0"),
+        formattedDate
+      ) as ForeupTeeTimeResponse[]
+      let teeTime;
+      if (teeTimeResponse && teeTimeResponse.length > 0) {
+        teeTime = teeTimeResponse[0]!;
+      }
+      if (!teeTime) {
+        await db
+          .update(teeTimes)
+          .set({ availableFirstHandSpots: 0 })
+          .where(eq(teeTimes.id, teeTimeId))
+          .execute();
+        throw new Error("Tee time not available for booking");
+      }
+      const [indexedTeeTime] = await db
+        .select({
+          id: teeTimes.id,
+          courseId: teeTimes.courseId,
+          availableFirstHandSpots: teeTimes.availableFirstHandSpots,
+          availableSecondHandSpots: teeTimes.availableSecondHandSpots,
+        })
+        .from(teeTimes)
+        .where(eq(teeTimes.providerTeeTimeId, teeTime.id))
+        .execute()
+        .catch((err: Error) => {
+          this.logger.error(err);
+          throw new Error(`Error finding tee time id`);
+        });
 
+      if (indexedTeeTime) {
+        const attributes = teeTime.attributes;
+
+        if (!attributes) {
+          this.logger.error(`No TeeTimeSlotAttributes available for: ${JSON.stringify(teeTimeResponse)}`);
+          throw new Error("No TeeTimeSlotAttributes available");
+        }
+        const maxPlayers = Math.max(...attributes.allowedGroupSizes);
+
+        // format of attributes.time -> 2023-12-20T01:28:00-07:00
+        const hours = Number(attributes.time?.split("T")?.[1]?.split(":")?.[0]);
+        const minutes = Number(attributes.time?.split("T")?.[1]?.split(":")?.[1]?.split(":")?.[0]);
+        const militaryTime = hours * 100 + minutes;
+
+        const providerTeeTime = {
+          id: indexedTeeTime.id,
+          courseId: indexedTeeTime.courseId,
+          providerTeeTimeId: teeTime.id,
+          numberOfHoles: attributes.holes,
+          date: attributes.time,
+          time: militaryTime,
+          maxPlayersPerBooking: maxPlayers,
+          availableFirstHandSpots: attributes.availableSpots,
+          availableSecondHandSpots: indexedTeeTime.availableSecondHandSpots,
+          greenFeePerPlayer: attributes.greenFee * 100,
+          cartFeePerPlayer: attributes.cartFee * 100,
+          greenFeeTaxPerPlayer: attributes.greenFeeTax ? attributes.greenFeeTax : 0,
+          cartFeeTaxPerPlayer: attributes.cartFeeTax,
+          providerDate: attributes.time,
+        };
+        const providerTeeTimeMatchingKeys = {
+          id: indexedTeeTime.id,
+          providerTeeTimeId: teeTime.id,
+          numberOfHoles: attributes.holes,
+          date: dateToUtcTimestamp(new Date(attributes.time)),
+          time: militaryTime,
+          maxPlayersPerBooking: maxPlayers,
+          greenFeePerPlayer: attributes.greenFee * 100,
+          cartFeePerPlayer: attributes.cartFee * 100,
+          greenFeeTaxPerPlayer: (attributes.greenFeeTax ? attributes.greenFeeTax : 0) * 100,
+          cartFeeTaxPerPlayer: attributes.cartFeeTax * 100,
+          courseId: indexedTeeTime.courseId,
+          availableFirstHandSpots: attributes.availableSpots,
+          availableSecondHandSpots: indexedTeeTime.availableSecondHandSpots,
+          providerDate: attributes.time,
+        };
+        if (isEqual(indexedTeeTime, providerTeeTimeMatchingKeys)) {
+          // no changes to tee time do nothing
+          return;
+        } else {
+          await db
+            .update(teeTimes)
+            .set(providerTeeTime)
+            .where(eq(teeTimes.id, indexedTeeTime.id))
+            .execute()
+            .catch((err) => {
+              this.logger.error(err);
+              throw new Error(`Error updating tee time: ${err}`);
+            });
+        }
+      }
+    } catch (error) {
+      this.logger.error(error);
+      // throw new Error(`Error indexing tee time: ${error}`);
+      // throw new Error(
+      //   `We're sorry. This time is no longer available. Someone just booked this. It may take a minute for the sold time you selected to be removed. Please select another time.`
+      // );
+      return {
+        error: true,
+        message: `We're sorry. This time is no longer available. Someone just booked this. It may take a minute for the sold time you selected to be removed. Please select another time.`
+      }
+    }
   }
+
   getSlotIdsFromBooking = (bookingData: any): string[] => {
     return undefined as any;
+  }
+
+  getPlayerCount(bookingData: BookingResponse): number {
+    bookingData = bookingData as ForeupBookingResponse;
+    return bookingData.data.playerCount!
+  }
+
+  findTeeTimeById(teeTimeId: string, teetimes: TeeTimeResponse[]): ForeupTeeTimeResponse | undefined {
+    const teeTimes = teetimes as ForeupTeeTimeResponse[];
+    const teeTime = teeTimes.find((teeTime) => teeTime.id.toString() === teeTimeId);
+
+    return teeTime;
   }
 }
 

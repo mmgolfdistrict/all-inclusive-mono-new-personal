@@ -2,6 +2,7 @@ import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 import { relations, sql } from "drizzle-orm";
 import { boolean, datetime, double, index, int, text, tinyint, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
+import { adminUsers } from "./adminUsers";
 import { assets } from "./assets";
 import { courseAssets } from "./courseAssets";
 import { coursePromoCodeLink } from "./coursePromoCodeLink";
@@ -11,7 +12,6 @@ import { providers } from "./providers";
 import { teeTimes } from "./teeTimes";
 import { transfers } from "./transfers";
 import { userWaitlists } from "./userWaitlists";
-import { adminUsers } from "./adminUsers";
 
 export const courses = mySqlTable(
   "course",
@@ -23,8 +23,8 @@ export const courses = mySqlTable(
     longitude: double("longitude"),
     latitude: double("latitude"),
     forecastApi: text("forecastApi"),
-    privacyPolicy: text("privacyPolicy"),
-    termsAndConditions: text("termsAndConditions"),
+    privacyPolicy: text("privacyPolicyURL"),
+    termsAndConditions: text("termsAndConditionsURL"),
     convenienceFeesFixedPerPlayer: int("convenienceFeesFixedPerPlayer"),
     markupFeesFixedPerPlayer: int("markupFeesFixedPerPlayer").default(0),
     maxListPricePerGolferPercentage: int("maxListPricePerGolferPercentage").default(0),
@@ -52,8 +52,10 @@ export const courses = mySqlTable(
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
     websiteURL: varchar("websiteURL", { length: 255 }).default("https://www.golfdistrict.com/").notNull(),
+    roundUpCharityId: varchar("roundUpCharityId", { length: 191 }),
     maxRoundsPerPeriod: tinyint("maxRoundsPerPeriod"),
     maxBookingsPerPeriod: tinyint("maxBookingsPerPeriod"),
+    primaryMarketAllowedPlayers: tinyint("primaryMarketAllowedPlayers"),
   },
   (table) => {
     return {
@@ -83,7 +85,7 @@ export const coursesRelations = relations(courses, ({ one, many }) => ({
     references: [assets.id],
   }),
   userWaitlists: many(userWaitlists),
-  adminUsers: many(adminUsers)
+  adminUsers: many(adminUsers),
 }));
 
 export type SelectCourses = InferSelectModel<typeof courses>;

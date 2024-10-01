@@ -218,6 +218,7 @@ export const MakeAnOffer = ({
                       }`}
                       dataTestId="player-item-id"
                       dataQa={value}
+                      label={value}
                     />
                   ))}
                 </ToggleGroup.Root>

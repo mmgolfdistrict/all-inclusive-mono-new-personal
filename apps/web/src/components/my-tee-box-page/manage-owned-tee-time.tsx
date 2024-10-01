@@ -408,66 +408,66 @@ export const ManageOwnedTeeTime = ({
 
                 {friends.length
                   ? friends.map((friend, index) => {
-                    return (
-                      <>
-                        {!friend.currentlyEditing ? (
-                          <div
-                            key={friend.slotId}
-                            className="mx-auto w-full max-w-[400px] rounded-lg bg-secondary-white px-4 py-1 flex justify-between text-[16px] font-semibold outline-none"
-                          >
-                            <div>{index === 0 ? "You" : friend.name}</div>
-                            {index !== 0 ? (
-                              <button
-                                onClick={() => {
-                                  removeFriend(friend.slotId);
+                      return (
+                        <>
+                          {!friend.currentlyEditing ? (
+                            <div
+                              key={friend.slotId}
+                              className="mx-auto w-full max-w-[400px] rounded-lg bg-secondary-white px-4 py-1 flex justify-between text-[16px] font-semibold outline-none"
+                            >
+                              <div>{index === 0 ? "You" : friend.name}</div>
+                              {index !== 0 && course?.supportsPlayerNameChange ? (
+                                <button
+                                  onClick={() => {
+                                    removeFriend(friend.slotId);
+                                  }}
+                                  data-testid="remove-friend-button-id"
+                                >
+                                  {!friend.currentlyEditing ? (
+                                    <Edit className="w-[20px]" />
+                                  ) : (
+                                    <Close className="w-[20px]" />
+                                  )}
+                                </button>
+                              ) : null}
+                            </div>
+                          ) : (
+                            <>
+                              <input
+                                value={friend.name}
+                                type="search"
+                                list="searchedFriends"
+                                onChange={(e) => {
+                                  handleNewFriend(e, friend);
                                 }}
-                                data-testid="remove-friend-button-id"
-                              >
-                                {!friend.currentlyEditing ? (
-                                  <Edit className="w-[20px]" />
-                                ) : (
-                                  <Close className="w-[20px]" />
-                                )}
-                              </button>
-                            ) : null}
-                          </div>
-                        ) : (
-                          <>
-                            <input
-                              value={friend.name}
-                              type="search"
-                              list="searchedFriends"
-                              onChange={(e) => {
-                                handleNewFriend(e, friend);
-                              }}
-                              onSelect={addFriend}
-                              placeholder="Username or email"
-                              className="mx-auto w-full max-w-[400px] rounded-lg bg-secondary-white px-4 py-2 flex justify-between text-[14px] font-semibold outline-none"
-                              data-testid="search-friend-id"
-                            />
-                            {friend.slotId == newFriend.slotId ? (
-                              <div className="mx-auto w-full max-w-[400px] rounded-lg py-2 flex justify-between text-[14px] font-semibold outline-none rounded-8 ">
-                                {friendList.length ? (
-                                  <ul className="w-full text-opacity-100 text-gray-700 shadow-md border border-solid border-gray-200 rounded-8 text-start">
-                                    {friendList.map((frnd, idx) => (
-                                      <li key={idx}>
-                                        <div
-                                          className="cursor-pointer p-4 border-b border-solid border-gray-300"
-                                          onClick={() => {
-                                            addFriendUpdated({
-                                              ...frnd,
-                                              slotId: friend.slotId,
-                                            });
-                                          }}
-                                        >
-                                          {frnd.email} ({frnd.handle})
-                                        </div>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                ) : null}
-                              </div>
-                            ) : null}
+                                onSelect={addFriend}
+                                placeholder="Username or email"
+                                className="mx-auto w-full max-w-[400px] rounded-lg bg-secondary-white px-4 py-2 flex justify-between text-[14px] font-semibold outline-none"
+                                data-testid="search-friend-id"
+                              />
+                              {friend.slotId == newFriend.slotId ? (
+                                <div className="mx-auto w-full max-w-[400px] rounded-lg py-2 flex justify-between text-[14px] font-semibold outline-none rounded-8 ">
+                                  {friendList.length ? (
+                                    <ul className="w-full text-opacity-100 text-gray-700 shadow-md border border-solid border-gray-200 rounded-8 text-start">
+                                      {friendList.map((frnd, idx) => (
+                                        <li key={idx}>
+                                          <div
+                                            className="cursor-pointer p-4 border-b border-solid border-gray-300"
+                                            onClick={() => {
+                                              addFriendUpdated({
+                                                ...frnd,
+                                                slotId: friend.slotId,
+                                              });
+                                            }}
+                                          >
+                                            {frnd.email} ({frnd.handle})
+                                          </div>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  ) : null}
+                                </div>
+                              ) : null}
 
                             {!isLoading &&
                               friendList?.length === 0 &&
@@ -553,7 +553,8 @@ export const ManageOwnedTeeTime = ({
                 </>
               ) : null}
               <p className="mt-4 mb-2 text-[14px] text-primary-gray md:text-[16px] font-semibold text-left">
-                Tip: If you know you can’t make your time, the earlier you can list, the greater the chance it sells.
+                Tip: If you know you can’t make your time, the earlier you can
+                list, the greater the chance it sells.
               </p>
               <div className="text-center text-[14px] font-[300] text-primary-gray">
                 All sales are final.

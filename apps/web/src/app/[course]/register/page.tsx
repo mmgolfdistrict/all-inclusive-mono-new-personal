@@ -26,7 +26,7 @@ import {
   useMemo,
   useRef,
   useState,
-  type ChangeEvent,
+  type ChangeEvent
 } from "react";
 import ReCAPTCHA from "react-google-recaptcha";
 import { Controller, useForm, type SubmitHandler } from "react-hook-form";
@@ -194,7 +194,7 @@ export default function RegisterPage() {
     try {
       const response = await registerUser.mutateAsync({
         ...data,
-        country:"USA",
+        country: "USA",
         courseId: course?.id,
       });
       if (response?.error) {

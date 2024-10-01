@@ -1,9 +1,9 @@
 import { randomUUID } from "crypto";
 import Logger from "@golf-district/shared/src/logger";
-import type { TeeTimeUpdateRequest } from "./types/foreup.type";
-import type { BookingResponse, BuyerData, CustomerCreationData, CustomerData, ProviderAPI, TeeTimeData } from "./types/interface";
+import type { ForeupSaleDataOptions, TeeTimeUpdateRequest } from "./types/foreup.type";
+import type { BookingDetails, BookingResponse, BuyerData, CustomerCreationData, CustomerData, ProviderAPI, SalesDataOptions, TeeTimeData, TeeTimeResponse } from "./types/interface";
 import { BaseProvider } from "./types/interface";
-import type { LightSpeedBookingResponse, LightSpeedReservationRequestResponse, LightspeedBookingCreationData, LightspeedCustomerCreationData, LightspeedCustomerCreationResponse, LightspeedTeeTimeDataResponse, LightspeedTeeTimeResponse } from "./types/lightspeed.type";
+import type { LightSpeedBookingResponse, LightSpeedReservationRequestResponse, LightspeedBookingCreationData, LightspeedCustomerCreationData, LightspeedCustomerCreationResponse, LightspeedSaleDataOptions, LightspeedTeeTimeDataResponse, LightspeedTeeTimeResponse } from "./types/lightspeed.type";
 import dayjs from "dayjs";
 import { CacheService } from "../../infura/cache.service";
 import { db, desc, eq } from "@golf-district/database";
@@ -134,8 +134,6 @@ export class Lightspeed extends BaseProvider {
                 }
             }
         }
-        console.log("LIGHTSPEED PAYLOAD")
-        console.dir(payload, { depth: null });
         // create reservation request
         const reservationRequestUrl = `${BASE_ENDPOINT}/partner_api/v2/organizations/${ORGANIZATION_ID}/reservation_requests`
         const reservationRequestResponse = await fetch(reservationRequestUrl, {
@@ -194,8 +192,6 @@ export class Lightspeed extends BaseProvider {
                 };
             }
 
-            console.log("LIGHTSPEED PAYLOAD");
-            console.dir(payload, { depth: null });
             debugger;
             const roundRequestResponse = await fetch(roundRequestUrl, {
                 method: 'POST',
@@ -241,7 +237,7 @@ export class Lightspeed extends BaseProvider {
 
         const bookingResponse = (await reservationResponse.json()) as LightSpeedBookingResponse;
         const bookingAmount = data.playerCount * (data.greenFee + data.cartFee);
-        await this.addSalesData(token, bookingResponse.data.relationships.rounds.data, bookingAmount);
+        // await this.addSalesData(token, bookingResponse.data.relationships.rounds.data, bookingAmount);
 
         return bookingResponse;
     }
@@ -436,7 +432,7 @@ export class Lightspeed extends BaseProvider {
         bookingId: string,
         slots: number,
         customerId: string,
-        providerBookingId: string,
+        providerBookingId: string | string[],
         _providerId: string,
         _courseId: string,
         providerSlotIds?: string[],
@@ -469,10 +465,12 @@ export class Lightspeed extends BaseProvider {
         return bookingSlots;
     }
 
-    addSalesData = async (token: string, roundIds: {
-        id: string,
-        type: "round"
-    }[], amount: number): Promise<void> => {
+    addSalesData = async (
+        options: SalesDataOptions
+    ): Promise<void> => {
+        options = options as LightspeedSaleDataOptions;
+        let { token } = options;
+        const { roundIds, amount } = options;
         try {
             if (roundIds.length <= 0) {
                 return;
@@ -590,6 +588,24 @@ export class Lightspeed extends BaseProvider {
 
     async getCustomer(): Promise<CustomerData> {
         return {} as CustomerData;
+    }
+
+    shouldAddSaleData(): boolean {
+        return true;
+    }
+
+    getSalesDataOptions(reservationData: BookingResponse, bookingDetails: BookingDetails): LightspeedSaleDataOptions {
+        const data = reservationData as LightSpeedBookingResponse;
+        const salesDataOptions: LightspeedSaleDataOptions = {
+            token: bookingDetails.token,
+            roundIds: data.data.relationships.rounds.data,
+            amount: bookingDetails.totalAmountPaid
+        }
+        return salesDataOptions
+    }
+
+    supportsPlayerNameChange(): boolean {
+        return true;
     }
 
     getCustomerCreationData(buyerData: BuyerData): LightspeedCustomerCreationData {
@@ -745,4 +761,15 @@ export class Lightspeed extends BaseProvider {
         }
     };
 
+    getPlayerCount(bookingData: BookingResponse): number {
+        bookingData = bookingData as LightSpeedBookingResponse;
+        return bookingData.data.playerCount!;
+    }
+
+    findTeeTimeById(teeTimeId: string, teetimes: TeeTimeResponse[]): LightspeedTeeTimeResponse | undefined {
+        const teeTimes = teetimes as LightspeedTeeTimeResponse[];
+        const teeTime = teeTimes.find((teeTime) => teeTime.id.toString() === teeTimeId);
+
+        return teeTime;
+    }
 }

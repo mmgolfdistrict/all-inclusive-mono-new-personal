@@ -1,13 +1,22 @@
 import type { InsertBookingSlots } from "@golf-district/database/schema/bookingslots";
 import type pino from "pino";
 import type {
+  ClubProphetBookingResponse,
+  ClubProphetCustomerCreationData,
+  ClubProphetCustomerCreationResponse,
+  ClubProphetTeeTimeResponse,
+  BookingCreationData as ClubProphetBookingCreationData,
+} from "./clubprophet.types";
+import type {
   BookingResponse as ForeUpBookingResponse,
   CustomerCreationData as ForeUpCustomerCreationData,
   CustomerData as ForeUpCustomerCreationResponse,
   TeeTimeResponse as ForeUpTeeTimeResponse,
+  BookingCreationData as ForeupBookingCreationData,
+  ForeupSaleDataOptions, 
 } from "./foreup.type";
-import type { LightSpeedBookingResponse, LightspeedBookingCreationData, LightspeedCustomerCreationData, LightspeedCustomerCreationResponse, LightspeedTeeTimeResponse } from "./lightspeed.type";
-import { CacheService } from "../../../infura/cache.service";
+import type { LightSpeedBookingResponse, LightspeedBookingCreationData, LightspeedCustomerCreationData, LightspeedCustomerCreationResponse, LightspeedSaleDataOptions, LightspeedTeeTimeResponse } from "./lightspeed.type";
+import type { CacheService } from "../../../infura/cache.service";
 
 export type ForeUpCredentials = {
   username: string;
@@ -30,6 +39,7 @@ export interface BuyerData {
   phoneNotification: boolean | null;
   emailNotification: boolean | null;
   handel: string | null;
+  accountNumber: number;
 }
 
 export interface TeeTimeData {
@@ -45,6 +55,11 @@ export interface TeeTimeData {
   greenFees: number;
   cartFees: number;
   providerCustomerId: string | null;
+  providerAccountNumber: number | string | null;
+  totalAmountPaid: number;
+  name: string | null;
+  email: string | null;
+  phone: string | null;
 }
 export interface SecondHandBookingFields {
   data: {
@@ -60,15 +75,25 @@ export interface SecondHandBookingFields {
 
 type ProviderCredentials = ForeUpCredentials;
 
-export type TeeTimeResponse = ForeUpTeeTimeResponse | LightspeedTeeTimeResponse;
+export type TeeTimeResponse = ForeUpTeeTimeResponse | ClubProphetTeeTimeResponse | LightspeedTeeTimeResponse;
 
-export type BookingResponse = (ForeUpBookingResponse | LightSpeedBookingResponse) & SecondHandBookingFields;
+export type BookingResponse = (ForeUpBookingResponse | ClubProphetBookingResponse | LightSpeedBookingResponse) & SecondHandBookingFields;
 
-export type BookingCreationData = LightspeedBookingCreationData;
+export type BookingCreationData = ForeupBookingCreationData | ClubProphetBookingCreationData | LightspeedBookingCreationData;
 
-export type CustomerCreationData = ForeUpCustomerCreationData | LightspeedCustomerCreationData;
+export type CustomerCreationData = ForeUpCustomerCreationData | ClubProphetCustomerCreationData | LightspeedCustomerCreationData;
 
-export type CustomerData = ForeUpCustomerCreationResponse | LightspeedCustomerCreationResponse;
+export type CustomerData = ForeUpCustomerCreationResponse | ClubProphetCustomerCreationResponse | LightspeedCustomerCreationResponse;
+
+export type BookingDetails = {
+  providerCourseId: string;
+  providerTeeSheetId: string;
+  playerCount: number;
+  totalAmountPaid: number;
+  token: string;
+}
+
+export type SalesDataOptions = ForeupSaleDataOptions | LightspeedSaleDataOptions;
 
 
 export interface ProviderAPI {
@@ -111,15 +136,20 @@ export interface ProviderAPI {
     bookingId: string,
     slots: number,
     clientId: string,
-    providerBookingId: string,
+    providerBookingId: string | string[],
     providerId: string,
     courseId: string,
     providerSlotIds?: string[]
   ) => Promise<InsertBookingSlots[]>;
+  shouldAddSaleData: () => boolean;
+  getSalesDataOptions: (reservationData: BookingResponse, bookingDetails: BookingDetails) => SalesDataOptions;
+  addSalesData: (options: SalesDataOptions) => Promise<void>;
+  supportsPlayerNameChange(): boolean;
   getCustomerCreationData(buyerData: BuyerData): CustomerCreationData;
   getCustomerId(customerData: CustomerData): string;
   getBookingCreationData(teeTimeData: TeeTimeData): BookingCreationData;
   getBookingId(bookingData: BookingResponse): string;
+  getPlayerCount(bookingData: BookingResponse): number;
   getSlotIdsFromBooking(bookingData: BookingResponse): string[];
   getAvailableSpotsOnTeeTime(teeTime: TeeTimeResponse): number;
   indexTeeTime(
@@ -129,8 +159,10 @@ export interface ProviderAPI {
     provider: ProviderAPI,
     token: string,
     time: number,
-    teeTimeId: string
+    teeTimeId: string,
+    providerTeeTimeId: string
   ): Promise<unknown>
+  findTeeTimeById(teeTimeId: string, teetimes: TeeTimeResponse[]): TeeTimeResponse | undefined;
 }
 
 export abstract class BaseProvider implements ProviderAPI {
@@ -186,15 +218,20 @@ export abstract class BaseProvider implements ProviderAPI {
     bookingId: string,
     slots: number,
     clientId: string,
-    providerBookingId: string,
+    providerBookingId: string | string[],
     providerId: string,
     courseId: string,
     providerSlotIds?: string[]
-  ): Promise<InsertBookingSlots[]>;
+  ): Promise<InsertBookingSlots[]>
+  abstract shouldAddSaleData(): boolean;
+  abstract getSalesDataOptions(reservationData: BookingResponse, bookingDetails: BookingDetails): SalesDataOptions;
+  abstract addSalesData(options: SalesDataOptions): Promise<void>;
+  abstract supportsPlayerNameChange(): boolean;
   abstract getCustomerCreationData(buyerData: BuyerData): CustomerCreationData;
   abstract getCustomerId(customerData: CustomerData): string;
   abstract getBookingCreationData(teeTimeData: TeeTimeData): BookingCreationData;
   abstract getBookingId(bookingData: BookingResponse): string;
+  abstract getPlayerCount(bookingData: BookingResponse): number;
   abstract getSlotIdsFromBooking(bookingData: BookingResponse): string[];
   abstract getAvailableSpotsOnTeeTime(teeTime: TeeTimeResponse): number;
   abstract indexTeeTime(
@@ -204,6 +241,8 @@ export abstract class BaseProvider implements ProviderAPI {
     provider: ProviderAPI,
     token: string,
     time: number,
-    teeTimeId: string
+    teeTimeId: string,
+    providerTeeTimeId: string
   ): Promise<unknown>
+  abstract findTeeTimeById(teeTimeId: string, teetimes: TeeTimeResponse[]): TeeTimeResponse | undefined;
 }

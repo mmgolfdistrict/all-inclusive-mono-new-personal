@@ -16,6 +16,7 @@ import {
   TokenizeService,
   UpdateWithdrawableBalance,
 } from "@golf-district/service";
+import { UserWaitlistService } from "@golf-district/service/src/user-waitlist/userWaitlist.service";
 import { LoggerService } from "@golf-district/service/src/webhooks/logging.service";
 import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "./src/root";
@@ -41,11 +42,22 @@ export const ssrGetStaticPaths = async () => {
 };
 
 export const getCourseById = async (courseId: string) => {
+  const credentials = {
+    username: process.env.FOREUP_USERNAME!,
+    password: process.env.FOREUP_PASSWORD!,
+  };
+  const providerService = new ProviderService(
+    db,
+    process.env.REDIS_URL!,
+    process.env.REDIS_TOKEN!,
+    credentials
+  );
   const courseService = new CourseService(
     db,
     process.env.VERCEL_PROJECT_ID!,
     process.env.VERCEL_TEAM_ID!,
-    process.env.VERCEL_AUTH_BEARER_TOKEN!
+    process.env.VERCEL_AUTH_BEARER_TOKEN!,
+    providerService
   );
   try {
     return await courseService.getCourseById(courseId);
@@ -53,12 +65,52 @@ export const getCourseById = async (courseId: string) => {
     console.log(error);
   }
 };
-export const getCourseImages = async (courseId: string) => {
+
+export const getSupportedCharitiesForCourseId = async (courseId: string) => {
+  const credentials = {
+    username: process.env.FOREUP_USERNAME!,
+    password: process.env.FOREUP_PASSWORD!,
+  };
+  const providerService = new ProviderService(
+    db,
+    process.env.REDIS_URL!,
+    process.env.REDIS_TOKEN!,
+    credentials
+  );
   const courseService = new CourseService(
     db,
     process.env.VERCEL_PROJECT_ID!,
     process.env.VERCEL_TEAM_ID!,
-    process.env.VERCEL_AUTH_BEARER_TOKEN!
+    process.env.VERCEL_AUTH_BEARER_TOKEN!,
+    providerService
+  );
+  
+  try {
+    return await courseService.getSupportedCharitiesForCourseId(courseId);
+  } catch (error) {
+    console.error("Error fetching supported charities:", error);
+    return []; // Return an empty array on error to avoid breaking the UI
+  }
+};
+
+
+export const getCourseImages = async (courseId: string) => {
+  const credentials = {
+    username: process.env.FOREUP_USERNAME!,
+    password: process.env.FOREUP_PASSWORD!,
+  };
+  const providerService = new ProviderService(
+    db,
+    process.env.REDIS_URL!,
+    process.env.REDIS_TOKEN!,
+    credentials
+  );
+  const courseService = new CourseService(
+    db,
+    process.env.VERCEL_PROJECT_ID!,
+    process.env.VERCEL_TEAM_ID!,
+    process.env.VERCEL_AUTH_BEARER_TOKEN!,
+    providerService
   );
   try {
     return await courseService.getImagesForCourse(courseId);
@@ -174,6 +226,7 @@ export const processHyperSwitchWebhook = async (req: any) => {
     process.env.REDIS_TOKEN!,
     credentials
   );
+  const userWaitlistService = new UserWaitlistService(db, notificationService);
   const bookingService = new BookingService(
     db,
     tokenizeService,
@@ -181,7 +234,8 @@ export const processHyperSwitchWebhook = async (req: any) => {
     notificationService,
     loggerService,
     hyperswitchService,
-    sensibleService
+    sensibleService,
+    userWaitlistService
   );
 
   // const appSettings = await appSettingService.getMultiple(

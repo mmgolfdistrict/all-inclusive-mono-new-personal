@@ -74,6 +74,10 @@ export default function Checkout({
       roundsToBook: amountOfPlayers,
       courseId: courseId,
     });
+  const { data: privacyPolicyAndTCByCourseUrl } =
+    api.course.getPrivacyPolicyAndTCByCourse.useQuery({
+      courseId: courseId ?? "",
+    });
 
   const {
     data: teeTimeData,
@@ -278,7 +282,11 @@ export default function Checkout({
       });
     }
 
-    if (selectedCharity && deboundCharityAmount && deboundCharityAmount > 0) {
+    if (
+      (selectedCharity || course?.roundUpCharityId) &&
+      deboundCharityAmount &&
+      deboundCharityAmount > 0
+    ) {
       localCart.push({
         name: "Golf District Tee Time",
         id: teeTimeId ?? data?.teeTimeId,
@@ -289,7 +297,7 @@ export default function Checkout({
         product_data: {
           metadata: {
             type: "charity",
-            charity_id: selectedCharity?.charityId,
+            charity_id: selectedCharity?.charityId ?? "",
             donation_amount: deboundCharityAmount * 100,
           },
         },
@@ -319,9 +327,30 @@ export default function Checkout({
       );
   }, [data]);
 
+  const { data: systemNotifications } =
+    api.systemNotification.getSystemNotification.useQuery({});
+
+  const { data: courseGlobalNotification } =
+    api.systemNotification.getCourseGlobalNotification.useQuery({
+      courseId: courseId ?? "",
+    });
+
+  const notificationsCount =
+    (systemNotifications ? systemNotifications.length : 0) +
+    (courseGlobalNotification ? courseGlobalNotification.length : 0);
+
+  const height =
+    notificationsCount > 0 ? `${200 + notificationsCount * 80}px` : "200px";
+
+  const marginTop =
+    notificationsCount > 0 ? `mt-${notificationsCount * 6}` : "";
+
   if (isError && error) {
     return (
-      <div className="flex justify-center flex-col items-center h-[200px]">
+      <div
+        className={`flex justify-center flex-col items-center`}
+        style={{ height }}
+      >
         <div className="text-center">Error: {error?.message}</div>
         <Link href="/" className="underline">
           Return to home
@@ -329,9 +358,12 @@ export default function Checkout({
       </div>
     );
   }
+
   return (
     <>
-      <div className="relative flex flex-col items-center gap-4 px-0 pb-8 md:px-8">
+      <div
+        className={`relative flex flex-col items-center gap-4 px-0 pb-8 md:px-8 ${marginTop}`}
+      >
         <div className="flex p-2 justify-between w-full relative">
           <div />
 
@@ -359,7 +391,7 @@ export default function Checkout({
           )}
         </div>
         <CheckoutBreadcumbs status={"checkout"} />
-        {!maxReservation?.success && (
+        {maxReservation && maxReservation?.success === false && (
           <div className="bg-alert-red text-white p-1 pl-2  w-full rounded">
             {maxReservation?.message}
           </div>
@@ -385,6 +417,7 @@ export default function Checkout({
                   Number(data?.pricePerGolfer) * amountOfPlayers ?? 0,
               }}
               isSensibleInvalid={isSensibleInvalid}
+              privacyPolicyAndTCByCourseUrl={privacyPolicyAndTCByCourseUrl}
             />
           </div>
           <div className="md:w-2/5">
@@ -407,7 +440,7 @@ export default function Checkout({
                 cartData={cartData}
                 teeTimeDate={teeTimeData?.date}
                 playerCount={playerCount}
-              // maxReservation={maxReservation}
+                // maxReservation={maxReservation}
               />
             )}
           </div>

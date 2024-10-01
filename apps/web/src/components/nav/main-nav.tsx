@@ -1,6 +1,7 @@
 "use client";
 
 import { useAppContext } from "~/contexts/AppContext";
+import { useCourseContext } from "~/contexts/CourseContext";
 import { api } from "~/utils/api";
 import { getBgColor } from "~/utils/formatters";
 import Link from "next/link";
@@ -9,9 +10,16 @@ import { PoweredBy } from "../powered-by";
 
 export const MainNav = () => {
   const { entity } = useAppContext();
+  const { course } = useCourseContext();
+  const courseId = course?.id;
 
   const { data: systemNotifications } =
     api.systemNotification.getSystemNotification.useQuery({});
+
+  const { data: courseGlobalNotification } =
+    api.systemNotification.getCourseGlobalNotification.useQuery({
+      courseId: courseId ?? "",
+    });
 
   return (
     <div>
@@ -19,7 +27,18 @@ export const MainNav = () => {
         {systemNotifications?.map((elm) => (
           <div
             key={elm.id}
-            className={`bg-${getBgColor(
+            className={`${getBgColor(
+              elm.displayType
+            )} text-white w-full p-1 text-center`}
+          >
+            {elm.shortMessage} : {elm.longMessage}
+          </div>
+        ))}
+
+        {courseGlobalNotification?.map((elm) => (
+          <div
+            key={elm.id}
+            className={`${getBgColor(
               elm.displayType
             )} text-white w-full p-1 text-center`}
           >

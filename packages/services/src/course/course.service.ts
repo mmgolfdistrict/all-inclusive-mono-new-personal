@@ -14,6 +14,9 @@ import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import { currentUtcTimestamp, getApexDomain, validDomainRegex } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
 import { DomainService } from "../domain/domain.service";
+import type { ProviderService } from "../tee-sheet-provider/providers.service";
+import { providerCourseLink } from "@golf-district/database/schema/providersCourseLink";
+import { providers } from "@golf-district/database/schema/providers";
 
 /**
  * Service handling course-related operations.
@@ -27,14 +30,16 @@ export class CourseService extends DomainService {
    * @param {string} PROJECT_ID_VERCEL - Vercel project ID.
    * @param {string} TEAM_ID_VERCEL - Vercel team ID.
    * @param {string} AUTH_BEARER_TOKEN - Bearer token for authentication.
+   * @param {ProviderService} providerService - The provider service.
    * @example
-   * const courseService = new CourseService(database, "project_id", "team_id", "bearer_token");
+   * const courseService = new CourseService(database, "project_id", "team_id", "bearer_token", providerService);
    */
   constructor(
     private readonly database: Db,
     PROJECT_ID_VERCEL: string,
     TEAM_ID_VERCEL: string,
-    AUTH_BEARER_TOKEN: string
+    AUTH_BEARER_TOKEN: string,
+    private providerService: ProviderService
   ) {
     super(PROJECT_ID_VERCEL, TEAM_ID_VERCEL, AUTH_BEARER_TOKEN, Logger(CourseService.name));
   }
@@ -75,8 +80,13 @@ export class CourseService extends DomainService {
         supportsWaitlist: courses.supportsWaitlist,
         buyerFee: courses.buyerFee,
         sellerFee: courses.sellerFee,
+        internalId: providers.internalId,
+        roundUpCharityId: courses?.roundUpCharityId,
+        providerConfiguration: providerCourseLink.providerCourseConfiguration,
       })
       .from(courses)
+      .innerJoin(providerCourseLink, eq(providerCourseLink.courseId, courses.id))
+      .innerJoin(providers, eq(providers.id, providerCourseLink.providerId))
       .where(and(eq(courses.id, courseId), eq(courses.isDeleted, false)))
       .limit(1)
       .execute()
@@ -124,11 +134,12 @@ export class CourseService extends DomainService {
     ]);
 
     // Destructure the first element from each resulting array
-    const courseDetails = courseDetailsArray[0];
+    const course = courseDetailsArray[0];
     const listTeeTimePrices = listTeeTimePricesArray[0];
     const primarySaleTeeTimePrices = primarySaleTeeTimePricesArray[0];
 
-    if (!courseDetails) return null;
+    if (!course) return null;
+    const { providerConfiguration, ...courseDetails } = course;
 
     // Assemble the final result object
     const result = {
@@ -169,9 +180,17 @@ export class CourseService extends DomainService {
         charityId: d.charityId,
       }));
 
+      const { provider } = await this.providerService.getProviderAndKey(
+        courseDetails.internalId,
+        courseId,
+        providerConfiguration ?? ""
+      );
+      const supportsPlayerNameChange = provider.supportsPlayerNameChange() ?? false;
+
       return {
         ...res,
         supportedCharities,
+        supportsPlayerNameChange,
       };
     }
     return res;
@@ -183,9 +202,14 @@ export class CourseService extends DomainService {
         charityDescription: charities.description,
         charityName: charities.name,
         charityId: charities.id,
+        logo: charities.logoAssetId,
+        logoCdn: assets.cdn,
+        logoExtension: assets.extension,
+        logoKey: assets.key,
       })
       .from(charityCourseLink)
       .leftJoin(charities, eq(charityCourseLink.charityId, charities.id))
+      .leftJoin(assets, eq(assets.id, charities.logoAssetId))
       .where(eq(charityCourseLink.courseId, courseId))
       .execute()
       .catch((err) => {
@@ -197,6 +221,7 @@ export class CourseService extends DomainService {
       charityDescription: d.charityDescription,
       charityName: d.charityName,
       charityId: d.charityId,
+      charityLogo: d.logo ? `https://${d.logoCdn}/${d.logoKey}.${d.logoExtension}` : "",
     }));
     return supportedCharities;
   };
@@ -599,5 +624,37 @@ export class CourseService extends DomainService {
         }
       }
     }
+  };
+
+  getNumberOfPlayersByCourse = async (courseId: string) => {
+    const NumberOfPlayers = await this.database
+      .select({
+        primaryMarketAllowedPlayers: courses.primaryMarketAllowedPlayers,
+      })
+      .from(courses)
+      .where(eq(courses.id, courseId));
+
+    const PlayersOptions = ["1", "2", "3", "4"];
+
+    const binaryMask = NumberOfPlayers[0]?.primaryMarketAllowedPlayers;
+
+    const numberOfPlayers =
+      binaryMask !== null && binaryMask !== undefined
+        ? PlayersOptions.filter((_, index) => (binaryMask & (1 << index)) !== 0)
+        : PlayersOptions;
+
+    return numberOfPlayers;
+  };
+
+  getPrivacyPolicyAndTCByCourse = async (courseId: string) => {
+    const privacyPolicyAndTC = await this.database
+      .select({
+        privacyPolicyURL: courses.privacyPolicy,
+        termsAndConditionsURL: courses.termsAndConditions,
+      })
+      .from(courses)
+      .where(eq(courses.id, courseId));
+
+    return privacyPolicyAndTC[0];
   };
 }

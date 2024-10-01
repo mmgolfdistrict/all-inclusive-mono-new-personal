@@ -302,3 +302,13 @@ export interface LightspeedCustomerCreationResponse {
         };
     };
 }
+
+type RoundId = {
+    id: string;
+    type: "round";
+};
+export interface LightspeedSaleDataOptions {
+    token: string;
+    roundIds: RoundId[];
+    amount: number;
+}

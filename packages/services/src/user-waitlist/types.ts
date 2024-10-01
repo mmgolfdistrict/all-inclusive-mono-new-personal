@@ -29,3 +29,14 @@ export interface WaitlistNotification {
   endTime: number;
   playerCount: number;
 }
+
+export interface NotificationQstashData {
+  json: {
+    notificationId?: string;
+    courseId: string;
+    userId: string;
+    courseLogoURL?: string;
+    subDomainURL?: string | null;
+    courseName?: string;
+  };
+}

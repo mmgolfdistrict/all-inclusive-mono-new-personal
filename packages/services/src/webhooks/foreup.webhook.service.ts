@@ -13,7 +13,7 @@ import dayjs from "dayjs";
 // import { isEqual } from "lodash";
 import type { ProviderService } from "../tee-sheet-provider/providers.service";
 import type { ProviderAPI } from "../tee-sheet-provider/sheet-providers";
-import { TeeTimeResponse } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
+import type { TeeTimeResponse } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
 
 interface IndexingSchedule {
   day: number;
