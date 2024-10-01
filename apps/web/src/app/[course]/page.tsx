@@ -389,9 +389,9 @@ export default function CourseHomePage() {
       : daysData.amountOfPages) / TAKE
   );
 
-  datesArr = datesArr.filter((date: string) =>
-    dayjs(date).isBetween(dayjs(startDate), dayjs(endDate), "day", "[]")
-  );
+  // datesArr = datesArr.filter((date: string) =>
+  //   dayjs(date).isBetween(dayjs(startDate), dayjs(endDate), "day", "[]")
+  // );
 
   if (dateType === "Furthest Day Out To Book") {
     datesArr = datesArr.reverse();
