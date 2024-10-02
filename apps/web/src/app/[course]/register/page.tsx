@@ -1,5 +1,5 @@
 "use client";
-
+ 
 import { isValidPassword } from "@golf-district/shared";
 import {
   registerSchema,
@@ -26,13 +26,12 @@ import {
   useMemo,
   useRef,
   useState,
-  type ChangeEvent
+  type ChangeEvent,
 } from "react";
 import ReCAPTCHA from "react-google-recaptcha";
 import { Controller, useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
 import { useDebounce } from "usehooks-ts";
-
 export default function RegisterPage() {
   const { course } = useCourseContext();
   const {
@@ -49,7 +48,7 @@ export default function RegisterPage() {
   });
   const libraries: any = ["places"];
   const [city, setCity] = useState(getValues("city"));
-
+ 
   const debouncedLocation = useDebounce<string>(city, 500);
   const recaptchaRef = createRef<ReCAPTCHA>();
   const registerUser = api.register.register.useMutation();
@@ -65,27 +64,27 @@ export default function RegisterPage() {
     data: profanityCheckData,
     reset: resetProfanityCheck,
   } = api.profanity.checkProfanity.useMutation();
-
+ 
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "",
     libraries,
   });
-
+ 
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
-
+ 
   const onPlaceChanged = () => {
     const place = autocompleteRef.current?.getPlace();
     if (place?.address_components) {
       const addressComponents = place.address_components;
-
+ 
       const getAddressComponent = (type: string): string => {
         return (
           addressComponents.find((component) => component.types.includes(type))
             ?.long_name || ""
         );
       };
-
+ 
       const streetNumber = getAddressComponent("street_number");
       const route = getAddressComponent("route");
       const address1 = `${streetNumber} ${route}`.trim();
@@ -94,7 +93,7 @@ export default function RegisterPage() {
       const city = getAddressComponent("locality");
       const zipcode = getAddressComponent("postal_code");
       const country = getAddressComponent("country");
-
+ 
       // Type guard before passing to setValue
       if (typeof address1 === "string") setValue("address1", address1);
       if (typeof address2 === "string") setValue("address2", address2);
@@ -104,7 +103,7 @@ export default function RegisterPage() {
       if (typeof country === "string") setValue("country", country);
     }
   };
-
+ 
   useEffect(() => {
     if (isLoaded && !loadError && inputRef?.current) {
       const autocomplete = new window.google.maps.places.Autocomplete(
@@ -120,7 +119,7 @@ export default function RegisterPage() {
       }
     }
   }, [isLoaded, loadError]);
-
+ 
   const cities = api.places.getCity.useQuery(
     { city: debouncedLocation },
     {
@@ -130,17 +129,17 @@ export default function RegisterPage() {
       refetchOnReconnect: false,
     }
   );
-
+ 
   const genUsername = () => {
     setValue("username", uName ?? "");
   };
-
+ 
   const username = watch("username");
-
+ 
   useEffect(() => {
     genUsername();
   }, [uName]);
-
+ 
   const handleCheckProfanity = async (text: string) => {
     if (!text) return;
     const data = await checkProfanity({ text });
@@ -150,12 +149,12 @@ export default function RegisterPage() {
       });
     }
   };
-
+ 
   const debouncedHandleCheckProfanity = useCallback(
     debounceFunction(handleCheckProfanity, 500),
     []
   );
-
+ 
   useEffect(() => {
     if (!username || username?.length <= 2) {
       setError("username", {
@@ -169,18 +168,18 @@ export default function RegisterPage() {
     });
     debouncedHandleCheckProfanity(username);
   }, [username]);
-
+ 
   useEffect(() => {
     const href = window.location.href;
     const cleanedHref = href.split("/register")[0];
     if (!cleanedHref) return;
     setValue("redirectHref", cleanedHref);
   }, []);
-
+ 
   useEffect(() => {
     recaptchaRef.current?.execute();
   }, []);
-
+ 
   const onSubmit: SubmitHandler<RegisterSchemaType> = async (data) => {
     if (profanityCheckData?.isProfane) {
       setError("username", {
@@ -201,13 +200,13 @@ export default function RegisterPage() {
         toast.error(response.message);
         return;
       }
-
+ 
       router.push(`/${course?.id}/verify-email`);
     } catch (error) {
       toast.error((error as Error)?.message ?? "Error registering user.");
     }
   };
-
+ 
   const onReCAPTCHAChange = (captchaCode: string | null | undefined) => {
     // If the reCAPTCHA code is null or undefined indicating that
     // the reCAPTCHA was expired then return early
@@ -216,13 +215,13 @@ export default function RegisterPage() {
     }
     setValue("ReCAPTCHA", captchaCode);
   };
-
+ 
   const passwordFeedback = useMemo(() => {
     if (!password) return;
     const feedback = isValidPassword(password).feedback;
     return feedback;
   }, [password]);
-
+ 
   return (
     <main className="bg-secondary-white py-4 md:py-6">
       <h1 className="pb-4 text-center text-[24px] md:pb-6 md:pt-8 md:text-[32px]">
@@ -313,7 +312,7 @@ export default function RegisterPage() {
               />
             )}
           />
-
+ 
           <div className="flex items-end gap-2">
             <Controller
               name="username"
@@ -383,6 +382,7 @@ export default function RegisterPage() {
                 error={errors.address1?.message}
                 data-testid="register-address1-id"
                 inputRef={inputRef}
+                autoComplete="no-password"
               />
             )}
           />
@@ -404,6 +404,7 @@ export default function RegisterPage() {
                 inputRef={(e) => {
                   field.ref(e);
                 }}
+                autoComplete="no-password"
               />
             )}
           />
@@ -426,6 +427,7 @@ export default function RegisterPage() {
                   setValue("city", e.target.value);
                   setCity(e.target.value);
                 }}
+                autoComplete="no-password"
                 inputRef={(e) => {
                   field.ref(e);
                 }}
@@ -507,6 +509,7 @@ export default function RegisterPage() {
                 inputRef={(e) => {
                   field.ref(e);
                 }}
+                autoComplete="no-password"
               />
             )}
           />
@@ -535,7 +538,7 @@ export default function RegisterPage() {
               />
             )}
           />
-
+ 
           <datalist id="places">
             {cities.data?.autocompleteCities.features.map((city, idx) => (
               <option key={idx}>{city.place_name}</option>
@@ -562,7 +565,7 @@ export default function RegisterPage() {
                 />
               )}
             />
-
+ 
             <IconButton
               onClick={(e) => {
                 e.preventDefault();
@@ -642,7 +645,7 @@ export default function RegisterPage() {
                 {errors.ReCAPTCHA?.message}
               </p>
             )}
-
+ 
           <FilledButton
             className={`w-full rounded-full ${
               isSubmitting ? "animate-pulse cursor-not-allopwed" : ""
@@ -669,7 +672,7 @@ export default function RegisterPage() {
     </main>
   );
 }
-
+ 
 const usStates = [
   { code: "AL", name: "Alabama" },
   { code: "AK", name: "Alaska" },
