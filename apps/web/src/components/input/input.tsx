@@ -47,7 +47,7 @@ export const Input = ({
             {...props}
             ref={inputRef}
             autoComplete="new-password"
-          />:
+         />:
         inputRef ?
           <input
             className={`rounded-lg bg-secondary-white px-4 py-3 text-[14px] text-gray-500 outline-none text-ellipsis`}

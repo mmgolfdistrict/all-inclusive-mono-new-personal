@@ -117,6 +117,7 @@ export default function RegisterPage() {
         autocompleteRef.current = autocomplete;
         autocomplete.addListener("place_changed", onPlaceChanged);
       }
+      
     }
   }, [isLoaded, loadError]);
  
@@ -232,7 +233,7 @@ export default function RegisterPage() {
           Using gmail? Go to the login page and select the Google icon to login
           with Google. The below form is not required for gmail users.
         </p>
-        <form className="flex flex-col gap-2" onSubmit={handleSubmit(onSubmit)}>
+        <form  className="flex flex-col gap-2" onSubmit={handleSubmit(onSubmit)}>
           <Controller
             name="firstName"
             control={control}
@@ -372,18 +373,18 @@ export default function RegisterPage() {
             render={({ field }) => (
               <Input
                 {...field}
-                label="Address1"
+                label="Addr&#8204;ess1"
                 type="text"
                 list="places"
                 placeholder="Enter your address1"
                 id="address1"
                 register={register}
-                name="address1"
+                name="addres&#8204;s1"
                 error={errors.address1?.message}
                 data-testid="register-address1-id"
                 inputRef={inputRef}
-                autoComplete="no-password"
-              />
+                autoComplete="new-password"
+             />
             )}
           />
           <Controller
@@ -404,7 +405,7 @@ export default function RegisterPage() {
                 inputRef={(e) => {
                   field.ref(e);
                 }}
-                autoComplete="no-password"
+                autoComplete="new-password"
               />
             )}
           />
@@ -427,7 +428,7 @@ export default function RegisterPage() {
                   setValue("city", e.target.value);
                   setCity(e.target.value);
                 }}
-                autoComplete="no-password"
+                autoComplete="new-password"
                 inputRef={(e) => {
                   field.ref(e);
                 }}
@@ -509,7 +510,7 @@ export default function RegisterPage() {
                 inputRef={(e) => {
                   field.ref(e);
                 }}
-                autoComplete="no-password"
+                autoComplete="new-password"
               />
             )}
           />
