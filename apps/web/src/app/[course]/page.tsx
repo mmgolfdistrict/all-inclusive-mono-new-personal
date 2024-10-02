@@ -385,7 +385,7 @@ export default function CourseHomePage() {
     (datesWithData
       ? datesWithData.length - 1 === 0
         ? 1
-        : datesWithData.length - 1
+        : datesWithData.length
       : daysData.amountOfPages) / TAKE
   );
 
