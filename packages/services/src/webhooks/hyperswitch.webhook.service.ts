@@ -912,56 +912,6 @@ export class HyperSwitchWebhookService {
       const totalAmountPaid = totalAmount * (listedSlotsCount ?? 1)
       try {
         let bookingData;
-        //TODO: Provider update
-        // if (firstBooking.internalId === "fore-up" || firstBooking.internalId === "club-prophet") {
-        //   if (firstBooking.internalId === "fore-up") {
-        //     bookingData = {
-        //       totalAmountPaid: totalAmount * (listedSlotsCount ?? 1),
-        //       data: {
-        //         type: "bookings",
-        //         attributes: {
-        //           start: firstBooking.providerDate,
-        //           holes: firstBooking.numberOfHoles,
-        //           players: listedSlotsCount,
-        //           bookedPlayers: [
-        //             {
-        //               personId: buyerCustomer?.customerId,
-        //             },
-        //           ],
-        //           event_type: "tee_time",
-        //           details,
-        //         },
-        //       },
-        //     };
-        //   }
-  
-        //   if (firstBooking.internalId === "club-prophet") {
-        //     const [firstName, lastName] = buyerCustomer.name!.split(" ");
-  
-        //     bookingData = {
-        //       teeSheetId: firstBooking.providerTeeTimeId,
-        //       holes: firstBooking.numberOfHoles,
-        //       firstName: firstName,
-        //       lastName: lastName,
-        //       email: buyerCustomer.email,
-        //       phone: buyerCustomer.phone,
-        //       players: listedSlotsCount,
-        //       notes: details,
-        //       pskUserId: 0,
-        //       terminalId: 0,
-        //       bookingTypeId: 311,
-        //       rateCode: "sticks",
-        //       // price: [totalAmount * (listedSlotsCount ?? 1)],
-        //     };
-        //   }
-  
-        //   newBooking = await provider.createBooking(
-        //     token,
-        //     firstBooking.providerCourseId!,
-        //     firstBooking.providerTeeSheetId!,
-        //     bookingData
-        //   );
-        // } else {
          bookingData = provider.getBookingCreationData({
             firstHandCharge: greenFee,
             markupCharge: 0,
@@ -988,7 +938,6 @@ export class HyperSwitchWebhookService {
             firstBooking.providerTeeSheetId!,
             bookingData
           );
-        // }
         if (provider.shouldAddSaleData()) {
           try {
             const bookingsDetails: BookingDetails = {
@@ -1064,56 +1013,6 @@ export class HyperSwitchWebhookService {
         const totalAmountPaid = totalAmount * (listedBooking.length - listedSlotsCount)
         details = await appSettingService.get("TEE_SHEET_BOOKING_MESSAGE");
         let newBookingSecond;
-      //   if (firstBooking.internalId === "fore-up" || firstBooking.internalId === "club-prophet") {
-      //     let newBookingData;
-      //   if (firstBooking.internalId === "fore-up") {
-      //     newBookingData = {
-      //       totalAmountPaid: totalAmount * (listedBooking.length - listedSlotsCount),
-      //       data: {
-      //         type: "bookings",
-      //         attributes: {
-      //           start: firstBooking.providerDate,
-      //           holes: firstBooking.numberOfHoles,
-      //           players: listedBooking.length - listedSlotsCount,
-      //           bookedPlayers: [
-      //             {
-      //               personId: sellerCustomer?.customerId,
-      //             },
-      //           ],
-      //           event_type: "tee_time",
-      //           details,
-      //         },
-      //       },
-      //     };
-      //   }
-
-      //   if (firstBooking.internalId === "club-prophet") {
-      //     const [firstName, lastName] = sellerCustomer.name!.split(" ");
-
-      //     newBookingData = {
-      //       teeSheetId: firstBooking.providerTeeTimeId,
-      //       holes: firstBooking.numberOfHoles,
-      //       firstName: firstName,
-      //       lastName: lastName,
-      //       email: sellerCustomer.email,
-      //       phone: sellerCustomer.phone,
-      //       players: listedBooking.length - listedSlotsCount,
-      //       notes: details,
-      //       pskUserId: 0,
-      //       terminalId: 0,
-      //       bookingTypeId: 311,
-      //       rateCode: "sticks",
-      //       // price: [totalAmount * (listedBooking.length - listedSlotsCount)],
-      //     };
-      //   }
-
-      //  newBookingSecond = await provider.createBooking(
-      //     token,
-      //     firstBooking.providerCourseId!,
-      //     firstBooking.providerTeeSheetId!,
-      //     newBookingData
-      //   );
-      //   } else {
           const bookingData = provider.getBookingCreationData({
             firstHandCharge: greenFee,
             markupCharge: 0,
@@ -1185,17 +1084,6 @@ export class HyperSwitchWebhookService {
       const bookingsToCreate: InsertBooking[] = [];
       const providerBookingId = provider.getBookingId(booking);
       const playerCount = provider.getPlayerCount(booking);
-
-      // if (firstBooking.internalId === "fore-up" && "data" in booking && booking.data) {
-      //   providerBookingId = booking.data.id;
-      //   playerCount = booking.data.attributes.players;
-      // }
-
-      // if (firstBooking.internalId === "club-prophet" && "reservationId" in booking) {
-      //   providerBookingId = booking.reservationId.toString();
-      //   playerCount = booking.participantIds.length;
-      // }
-      // const transfersToCreate: InsertTransfer[] = [];
       const bookingId = newBooking.data?.bookingType === "FIRST" ? bookingsIds?.id ?? "" : randomUUID();
       const totalAmount = (firstBooking?.greenFeesPerPlayer * (firstBooking.playerCount - (listedSlotsCount ?? 0))) + (firstBooking?.weatherGuaranteeAmount ?? 0) + firstBooking?.charityCharge
       if (newBooking.data?.bookingType === "SECOND") {
@@ -1241,11 +1129,7 @@ export class HyperSwitchWebhookService {
       }
 
       let providerBookingIds: string[] = [];
-      // if (firstBooking.internalId === "club-prophet" && "participantIds" in booking) {
-      //   providerBookingIds = booking.participantIds.map((id) => id.toString());
-      // } else {
-        providerBookingIds = provider?.getSlotIdsFromBooking(newBooking)
-      // }
+      providerBookingIds = provider?.getSlotIdsFromBooking(newBooking)
       const bookingSlots =
         (await provider?.getSlotIdsForBooking(
           bookingId,

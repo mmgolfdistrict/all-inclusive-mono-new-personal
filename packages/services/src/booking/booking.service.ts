@@ -2611,109 +2611,7 @@ export class BookingService {
       } catch (e) {
         console.log("ERROR in getting appsetting SENSIBLE_NOTE_TO_TEE_SHEET");
       }
-      // if(teeTime.internalId === "fore-up" || teeTime.internalId === "club-prophet") {
-      // if (teeTime.internalId === "fore-up") {
-      //   if (!providerCustomer?.playerNumber) {
-      //     this.logger.error(`Error creating customer`);
-      //     this.loggerService.errorLog({
-      //       userId: userId,
-      //       url: "/reserveBooking",
-      //       userAgent: "",
-      //       message: "ERROR CREATING CUSTOMER",
-      //       stackTrace: `Error creating customer on provider for userId ${userId}`,
-      //       additionalDetailsJSON: "Error creating customer",
-      //     });
-      //     throw new Error(`Error creating customer`);
-      //   }
-      //   bookedPLayers = [
-      //     {
-      //       accountNumber: providerCustomer.playerNumber,
-      //     },
-      //   ];
 
-      //   bookingData = {
-      //     totalAmountPaid: primaryGreenFeeCharge / 100 + taxCharge - markupCharge,
-      //     data: {
-      //       type: "bookings",
-      //       attributes: {
-      //         start: teeTime.providerDate,
-      //         holes: teeTime.holes,
-      //         players: playerCount,
-      //         bookedPlayers: bookedPLayers,
-      //         event_type: "tee_time",
-      //         details,
-      //       },
-      //     },
-      //   }
-      // }
-
-      // if (teeTime.internalId === "club-prophet") {
-      //   if (!providerCustomer?.customerId) {
-      //     this.logger.error(`Error creating customer`);
-      //     this.loggerService.errorLog({
-      //       userId: userId,
-      //       url: "/reserveBooking",
-      //       userAgent: "",
-      //       message: "ERROR CREATING CUSTOMER",
-      //       stackTrace: `Error creating customer on provider for userId ${userId}`,
-      //       additionalDetailsJSON: "Error creating customer",
-      //     });
-      //     throw new Error(`Error creating customer`);
-      //   }
-      //   const [user] = await this.database
-      //     .select({
-      //       name: users.name,
-      //       email: users.email,
-      //       phone: users.phoneNumber,
-      //     })
-      //     .from(users)
-      //     .where(eq(users.id, userId))
-      //     .execute()
-      //     .catch((err) => {
-      //       this.logger.error(err);
-      //       throw new Error(`Error finding user: ${err}`);
-      //     });
-      //   if (!user) {
-      //     throw new Error("User not found");
-      //   }
-      //   const [firstName, lastName] = user.name!.split(" ");
-
-      //   bookingData = {
-      //     teeSheetId: teeTime.providerTeeTimeId,
-      //     holes: teeTime.holes,
-      //     firstName: firstName,
-      //     lastName: lastName,
-      //     email: user.email,
-      //     phone: user.phone,
-      //     players: playerCount,
-      //     notes: details,
-      //     pskUserId: 0,
-      //     terminalId: 0,
-      //     bookingTypeId: 311,
-      //     rateCode: "sticks",
-      //     // price: [primaryGreenFeeCharge / 100 + taxCharge - markupCharge],
-      //   };
-      // }
-
-      // console.log(
-      //   `Creating booking ${teeTime.providerDate}, ${teeTime.holes}, ${playerCount}, ${teeTime.providerCourseId}, ${teeTime.providerTeeSheetId}, ${token}`
-      // );
-      // console.log(bookingData);
-      // booking = await provider
-      //   .createBooking(token, teeTime.providerCourseId!, teeTime.providerTeeSheetId!, bookingData)
-      //   .catch((err) => {
-      //     this.logger.error(err);
-      //     this.loggerService.errorLog({
-      //       userId: userId,
-      //       url: "/reserveBooking",
-      //       userAgent: "",
-      //       message: "TEE TIME BOOKING FAILED ON PROVIDER",
-      //       stackTrace: `first hand booking at provider failed for teetime ${teeTime.id}`,
-      //       additionalDetailsJSON: err,
-      //     });
-      //     throw new Error(`Error creating booking`);
-      //   });
-      // } else {
         const bookingData = provider.getBookingCreationData({
           firstHandCharge: primaryGreenFeeCharge,
           markupCharge,
@@ -2810,22 +2708,9 @@ export class BookingService {
 
       throw "Booking failed on provider";
     }
-     providerBookingIds = teeProvider.getSlotIdsFromBooking(booking);
-    // if (teeTime.internalId === "fore-up" || teeTime.internalId === "club-prophet") {
-    //   if (booking && teeTime.internalId === "fore-up" && "data" in booking && booking.data) {
-    //     providerBookingId = booking.data.id;
-    //   }
+    providerBookingIds = teeProvider.getSlotIdsFromBooking(booking);
+    providerBookingId = teeProvider.getBookingId(booking);
 
-    //   console.log("BOOKING>>>", booking)
-    //   if (booking && teeTime.internalId === "club-prophet" && "reservationId" in booking) {
-    //     providerBookingId = booking.reservationId.toString();
-    //     providerBookingIds = booking.participantIds.map((id) => id.toString());
-    //     console.log("PROVIDER_BOOKING_ID:", providerBookingId)
-    //   }
-    // } else {
-      providerBookingId = teeProvider.getBookingId(booking);
-    // providerBookingIds = teeProvider.getSlotIdsFromBooking(booking);
-    // }
     console.log(`Creating tokenized booking`);
     //create tokenized bookings
     const bookingId = await this.tokenizeService
@@ -3175,36 +3060,7 @@ export class BookingService {
       throw new Error(`Error finding tee time id`);
     }
 
-    // const { provider, token } = await this.providerService.getProviderAndKey(
-    //   teeTime.internalId!,
-    //   teeTime.courseId,
-    //   teeTime.providerCourseConfiguration!
-    // );
-
     if (teeTime.availableFirstHandSpots >= golfersCount) {
-    // if (teeTime.internalId === "fore-up" || teeTime.internalId === "club-prophet") {
-    //   const providerDetailsGetTeeTime = await this.providerService.getTeeTimes(
-    //     teeTime.providerCourseId ?? "",
-    //     teeTime.internalId ?? "",
-    //     teeTime.providerTeeSheetId!,
-    //     `${teeTime.time}`.length === 3 ? `0${teeTime.time}` : `${teeTime.time}`,
-    //     `${teeTime.time + 1}`.length === 3 ? `0${teeTime.time + 1}` : `${teeTime.time + 1}`,
-    //     teeTime.providerDate.split("T")[0] ?? ""
-    //   );
-    //   if (providerDetailsGetTeeTime && providerDetailsGetTeeTime.length) {
-    //     if (teeTime.internalId === "fore-up") {
-    //       const teeTimeData = providerDetailsGetTeeTime[0] as ForeupTeeTimeResponse;
-    //       if ((teeTimeData?.attributes?.availableSpots ?? 0) >= golfersCount) {
-    //         return true;
-    //       }
-    //     }
-    //     if (teeTime.internalId === "club-prophet") {
-    //       const teeTimeData = (providerDetailsGetTeeTime as ClubProphetTeeTimeResponse[]).find((teeTimeResponse) => teeTimeResponse.teeSheetId.toString() === teeTime.providerTeeTimeId);
-    //       if ((teeTimeData?.freeSlots ?? 0) >= golfersCount) {
-    //         return true;
-    //       }
-    //   }
-    // } else {
       const { provider, token } = await this.providerService.getProviderAndKey(
         teeTime.internalId!,
           teeTime.courseId,
@@ -3218,7 +3074,6 @@ export class BookingService {
           `${teeTime.time + 1}`.length === 3 ? `0${teeTime.time + 1}` : `${teeTime.time + 1}`,
           teeTime.providerDate.split("T")[0] ?? ""
         );
-        //TODO: Provider update
       if (providerDetailsGetTeeTime?.length) {
         const teeTimeData = provider.findTeeTimeById(teeTime.providerTeeTimeId, providerDetailsGetTeeTime);
 

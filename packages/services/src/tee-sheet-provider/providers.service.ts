@@ -232,41 +232,7 @@ export class ProviderService extends CacheService {
       }
       let customer: CustomerCreationData;
       const accountNumber = Math.floor(Math.random() * 90000) + 10000;
-      // if (buyer.internalId === "fore-up" || buyer.internalId === "club-prophet") {
-      //   if (buyer.internalId === "fore-up") {
-      //     const nameOfCustomer = buyer.name.split(" ");
-      //     customer = {
-      //       type: "customer",
-      //       //@ts-ignore
-      //       attributes: {
-      //         username: buyer.handel ?? "",
-      //         email_subscribed: buyer.emailNotification ?? "",
-      //         taxable: true,
-      //         contact_info: {
-      //           account_number: accountNumber,
-      //           phone_number: buyer.phone ?? "",
-      //           address_1: buyer.address1 ?? "",
-      //           first_name: nameOfCustomer?.[0] ? nameOfCustomer[0] ?? "guest" : "guest",
-      //           last_name: nameOfCustomer?.[1] ? nameOfCustomer[1] : "N/A",
-      //           email: buyer.email,
-      //         },
-      //       },
-      //     }
-      //   }
-      //   if (buyer.internalId === "club-prophet") {
-      //     const nameOfCustomer = buyer.name.split(" ");
-      //     const firstName = nameOfCustomer?.[0] ? nameOfCustomer[0] : "guest";
-      //     const lastName = nameOfCustomer?.[1] ? nameOfCustomer[1] : "N/A";
-      //     customer = {
-      //       email: buyer.email,
-      //       phone: buyer.phone,
-      //       firstName,
-      //       lastName,
-      //     } as ClubProphetCustomerCreationData;
-      //   }
-      // } else {
-        customer = provider.getCustomerCreationData({ ...buyer, accountNumber })
-      // }
+      customer = provider.getCustomerCreationData({ ...buyer, accountNumber })
       if (!customer) {
         this.logger.fatal(`Course internal Id doesn't match for user: ${userId}`);
         throw new Error(`Error matching provider Internal Id`);
@@ -275,16 +241,7 @@ export class ProviderService extends CacheService {
       let customerId: string | null = null;
       try {
         const customerData = await provider.createCustomer(token, providerCourseId, customer);
-        // if (buyer.internalId === "fore-up" || buyer.internalId === "club-prophet") {
-        //   if (buyer.internalId === "fore-up") {
-        //     customerId = Number((customerData as ForeUpCustomerCreationResponse).data.id);
-        //   }
-        //   if (buyer.internalId === "club-prophet") {
-        //     customerId = Number((customerData as ClubProphetCustomerCreationResponse).acct);
-        //   }
-        // } else {
-          customerId = provider.getCustomerId(customerData);
-        // }
+        customerId = provider.getCustomerId(customerData);
         customerInfo = {
           playerNumber: accountNumber,
           customerId,

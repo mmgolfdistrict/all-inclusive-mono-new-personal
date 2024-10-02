@@ -270,35 +270,6 @@ export class CheckoutService {
       .innerJoin(providers, eq(providers.id, providerCourseLink.providerId))
       .where(eq(providerCourseLink.courseId, customerCart.courseId))
       .execute();
-
-    // let paymentData;
-    // if (String(record?.internalId) === "club-prophet" && isFirstHand.length > 0) {
-    //   paymentData = {
-    //     customer_id: customerCart.customerId,
-    //     confirm: true,
-    //     amount_to_capture: total,
-    //     //TODO: add ENV for host
-    //     return_url: `http://localhost:3000/${customerCart.courseId}/checkout/processing?teeTimeId=${
-    //       (customerCart.cart[0] as FirstHandProduct)?.product_data?.metadata?.tee_time_id
-    //     }`,
-    //     payment_method: "card_redirect",
-    //     business_country: "US",
-    //     payment_method_type: "card_redirect",
-    //     payment_method_data: {
-    //       card_redirect: {
-    //         card_redirect: {},
-    //       },
-    //     },
-    //     routing: {
-    //       type: "single",
-    //       data: "prophetpay",
-    //     },
-    //     amount: total,
-    //     currency: "USD",
-    //     metadata: customerCart.courseId,
-    //     profile_id: process.env.HYPERSWITCH_PROFILE_ID,
-    //   };
-    // } else {
     const paymentData = {
       // @ts-ignore
       customer_id: customerCart.customerId,
@@ -343,33 +314,6 @@ export class CheckoutService {
       teeTimeId,
     });
 
-    // if (String(record?.internalId) === "club-prophet" && isFirstHand.length > 0) {
-    //   const sensibleItem = customerCart.cart.find(
-    //     ({ product_data }) => product_data.metadata.type === "sensible"
-    //   ) as SensibleProduct;
-    //   paymentIntent = await this.hyperSwitch.updatePaymentIntent(paymentIntent.payment_id, {
-    //     amount: parseInt(total.toString()),
-    //     currency: "USD",
-    //     return_url: `http://localhost:3000/${customerCart.courseId}/checkout/processing?teeTimeId=${(customerCart.cart[0] as FirstHandProduct)?.product_data?.metadata?.tee_time_id
-    //       }&cart_id=${cartId}&sensible_quote_id=${sensibleItem?.product_data?.metadata?.sensible_quote_id
-    //       }&payment_id=${paymentIntent.payment_id}`,
-    //     confirm: true,
-    //     amount_to_capture: total,
-    //     payment_method: "card_redirect",
-    //     business_country: "US",
-    //     payment_method_type: "card_redirect",
-    //     payment_method_data: {
-    //       card_redirect: {
-    //         card_redirect: {},
-    //       },
-    //     },
-    //     routing: {
-    //       type: "single",
-    //       data: "prophetpay",
-    //     },
-    //   });
-    // }
-
     return {
       clientSecret: paymentIntent.client_secret,
       paymentId: paymentIntent.payment_id,
@@ -411,38 +355,11 @@ export class CheckoutService {
       .where(eq(providerCourseLink.courseId, customerCart.courseId))
       .execute();
 
-    // if (String(record?.internalId) === "club-prophet" && isFirstHand.length > 0) {
-    //   const sensibleItem = customerCart.cart.find(
-    //     ({ product_data }) => product_data.metadata.type === "sensible"
-    //   ) as SensibleProduct;
-    //   intentData = {
-    //     amount: parseInt(total.toString()),
-    //     currency: "USD",
-    //     return_url: `http://localhost:3000/${customerCart.courseId}/checkout/processing?teeTimeId=${(customerCart.cart[0] as FirstHandProduct)?.product_data?.metadata?.tee_time_id
-    //       }&cart_id=${cartId}&sensible_quote_id=${sensibleItem?.product_data?.metadata?.sensible_quote_id
-    //       }&payment_id=${paymentId}`,
-    //     confirm: true,
-    //     amount_to_capture: parseInt(total.toString()),
-    //     payment_method: "card_redirect",
-    //     business_country: "US",
-    //     payment_method_type: "card_redirect",
-    //     payment_method_data: {
-    //       card_redirect: {
-    //         card_redirect: {},
-    //       },
-    //     },
-    //     routing: {
-    //       type: "single",
-    //       data: "prophetpay",
-    //     },
-    //   };
-    // } else {
     const intentData = {
       currency: "USD",
       amount: parseInt(total.toString()),
       amount_to_capture: parseInt(total.toString()),
     };
-    // }
 
     // @ts-ignore
     const paymentIntent = await this.hyperSwitch
@@ -607,28 +524,8 @@ export class CheckoutService {
     console.log(`formattedDateUTC: ${formattedDateUTC}`);
     console.log(`formattedDate: ${formattedDate}`);
 
-    if (provider.providerId === "club-prophet") {
-      await this.clubProphetWebhook
-        .indexTeeTime(formattedDate!, teeTime.providerCourseId!, provider, teeTime.providerTeeTimeId, token)
-        .catch((err) => {
-          console.log("err in index ======>", err.error);
-          throw new Error(`Error indexing day ${formattedDate} please return to course page`);
-        });
-    }
-
     if (teeTime.providerCourseId && teeTime.providerTeeSheetId && formattedDate) {
       let response;
-      // if (teeTime.internalId === "fore-up") {
-      //   response = await this.foreupIndexer.indexTeeTime(
-      //     formattedDate,
-      //     teeTime.providerCourseId,
-      //     teeTime.providerTeeSheetId,
-      //     provider,
-      //     token,
-      //     teeTime.time,
-      //     teeTime.id
-      //   );
-      // } else {
         response = await provider.indexTeeTime(
           formattedDate,
           teeTime.providerCourseId,
@@ -639,7 +536,6 @@ export class CheckoutService {
           teeTime.id,
           teeTime.providerTeeTimeId
         )
-      // }
       if (response?.error) {
         errors.push({
           errorType: CartValidationErrors.TEE_TIME_NOT_AVAILABLE,
