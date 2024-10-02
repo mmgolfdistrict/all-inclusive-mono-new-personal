@@ -53,6 +53,7 @@ export const HyperSwitch = ({
   listingId: string | undefined;
   setIsLoading?: (isLoading: boolean) => void;
   playerCount: string | undefined;
+  // maxReservation: MaxReservationResponse;
 }) => {
   const [options, setOptions] = useState<Options | undefined>(undefined);
   const { user } = useUserContext();
@@ -167,6 +168,7 @@ export const HyperSwitch = ({
             teeTimeDate={teeTimeDate}
             listingId={listingId ?? ""}
             playerCount={playerCount}
+          // maxReservation={maxReservation}
           />
         </HyperElements>
       ) : nextaction ? (

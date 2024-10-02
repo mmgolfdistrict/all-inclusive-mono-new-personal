@@ -6,17 +6,29 @@ import type {
   ClubProphetBookingResponse,
   ClubProphetCustomerCreationData,
   ClubProphetCustomerCreationResponse,
+  ClubProphetTeeTimeResponse,
 } from "./types/clubprophet.types";
-import type { TeeTimeUpdateRequest } from "./types/foreup.type";
-import type { CustomerCreationData, CustomerData, SalesDataOptions, TeeTimeResponse } from "./types/interface";
+import type { ForeUpBookingNameChangeOptions, TeeTimeUpdateRequest } from "./types/foreup.type";
+import type { BookingNameChangeOptions, BookingResponse, BuyerData, CustomerCreationData, CustomerData, NameChangeCustomerDetails, ProviderAPI, SalesDataOptions, TeeTimeData, TeeTimeResponse } from "./types/interface";
 import { BaseProvider } from "./types/interface";
+import { db, eq } from "@golf-district/database";
+import { teeTimes } from "@golf-district/database/schema/teeTimes";
+import { courses } from "@golf-district/database/schema/courses";
+import isEqual from "lodash.isequal";
+import type { CacheService } from "../../infura/cache.service";
 
-export class clubprophet {
+export class clubprophet extends BaseProvider {
   providerId = "club-prophet";
   public providerConfiguration: string;
   logger = Logger(clubprophet.name);
+  cacheService: CacheService | undefined;
 
   constructor(providerConfiguration: string) {
+    super(
+      undefined,
+      providerConfiguration,
+      undefined
+    );
     this.providerConfiguration = providerConfiguration;
   }
 
@@ -58,7 +70,7 @@ export class clubprophet {
     _coureId: string,
     _teesheetId: string,
     data: BookingCreationData
-  ): Promise<ClubProphetBookingResponse> {
+  ): Promise<BookingResponse> {
     const endpoint = this.getBasePoint();
     const url = `${endpoint}/thirdpartyapi/api/v1/TeeSheet/BookReservation`;
 
@@ -82,10 +94,10 @@ export class clubprophet {
       throw new Error(`Error creating booking: ${JSON.stringify(response)}`);
     }
 
-    const bookingResponse = (await response.json()) as ClubProphetBookingResponse;
+    const bookingResponse = (await response.json());
     // await this.addSalesData(bookingResponse.participantIds, token);
 
-    return bookingResponse;
+    return bookingResponse as BookingResponse;
   }
 
   async getToken(): Promise<string> {
@@ -284,14 +296,15 @@ export class clubprophet {
     // }
   };
 
+  //@ts-ignore
   async updateTeeTime(
     _token: string,
     _courseId: string,
     _teesheetId: string,
     _bookingId: string,
     _options?: TeeTimeUpdateRequest
-  ): Promise<ClubProphetBookingResponse> {
-    return {} as ClubProphetBookingResponse;
+  ): Promise<BookingResponse> {
+    return {} as BookingResponse;
   }
 
   async getCustomer(): Promise<CustomerData> {
@@ -301,11 +314,191 @@ export class clubprophet {
   shouldAddSaleData(): boolean {
     return false;
   }
+
   getSalesDataOptions(): SalesDataOptions {
     return {} as SalesDataOptions;
   }
 
   supportsPlayerNameChange(): boolean {
     return false;
+  }
+
+  getCustomerCreationData(buyerData: BuyerData): ClubProphetCustomerCreationData {
+    const nameOfCustomer = buyerData.name ? buyerData.name.split(' ') : ['', ''];
+    const customer: ClubProphetCustomerCreationData = {
+      email: buyerData.email ?? "",
+      phone: buyerData.phone ?? "",
+      firstName: nameOfCustomer?.[0] ? nameOfCustomer[0] : "guest",
+      lastName: nameOfCustomer?.[1] ? nameOfCustomer[1] : "N/A",
+    }
+    return customer;
+  }
+
+  getCustomerId(customerData: ClubProphetCustomerCreationResponse): string {
+    return (customerData.acct).toString();
+  }
+
+  getBookingCreationData(teeTimeData: TeeTimeData): BookingCreationData {
+    const nameOfCustomer = teeTimeData.name ? teeTimeData.name.split(' ') : ['', ''];
+    const bookingData: BookingCreationData = {
+      teeSheetId: Number(teeTimeData.providerTeeTimeId),
+      holes: Number(teeTimeData.holes),
+      firstName: nameOfCustomer?.[0] ? nameOfCustomer[0] : "guest",
+      lastName: nameOfCustomer?.[1] ? nameOfCustomer[1] : "N/A",
+      email: teeTimeData.email ?? "",
+      phone: teeTimeData.phone ?? "",
+      players: teeTimeData.playerCount,
+      notes: teeTimeData.notes ?? "",
+      pskUserId: 0,
+      terminalId: 0,
+      bookingTypeId: 311,
+      rateCode: "sticks",
+    }
+    return bookingData;
+  }
+
+  getBookingId(bookingData: BookingResponse): string {
+    const data = bookingData as ClubProphetBookingResponse;
+    return data.reservationId.toString();
+  }
+
+  getAvailableSpotsOnTeeTime(teeTimeData: ClubProphetTeeTimeResponse): number {
+    return teeTimeData.freeSlots;
+  }
+
+  indexTeeTime = async (
+    formattedDate: string,
+    providerCourseId: string,
+    _providerTeeSheetId: string,
+    provider: ProviderAPI,
+    token: string,
+    _time: number,
+    teeTimeId: string,
+    providerTeeTimeId: string
+  ) => {
+    try {
+      const teeTimeResponse = (await provider.getTeeTimes(
+        token,
+        providerCourseId,
+        "",
+        "",
+        "",
+        formattedDate
+      )) as unknown as ClubProphetTeeTimeResponse[];
+
+      let teeTime;
+      if (teeTimeResponse && teeTimeResponse.length > 0) {
+        teeTime = teeTimeResponse.find((teeTime) => teeTime.teeSheetId.toString() === providerTeeTimeId);
+      }
+      if (!teeTime) {
+        throw new Error("Tee time not available for booking");
+      }
+
+      const [indexedTeeTime] = await db
+        .select({
+          id: teeTimes.id,
+          courseId: teeTimes.courseId,
+          courseProvider: courses.providerId,
+          availableSecondHandSpots: teeTimes.availableSecondHandSpots,
+          entityId: courses.entityId,
+          greenFeeTaxPerPlayer: teeTimes.greenFeeTaxPerPlayer,
+          cartFeeTaxPerPlayer: teeTimes.cartFeeTaxPerPlayer,
+        })
+        .from(teeTimes)
+        .leftJoin(courses, eq(courses.id, teeTimes.courseId))
+        .where(eq(teeTimes.providerTeeTimeId, teeTime.teeSheetId.toString()))
+        .execute()
+        .catch((err: Error) => {
+          this.logger.error(err);
+          throw new Error(`Error finding tee time id`);
+        });
+
+      if (indexedTeeTime) {
+        const hours = Number(teeTime.startTime?.split("T")?.[1]?.split(":")?.[0]);
+        const minutes = Number(teeTime.startTime?.split("T")?.[1]?.split(":")?.[1]?.split(":")?.[0]);
+        const militaryTime = hours * 100 + minutes;
+
+        const providerTeeTime = {
+          id: indexedTeeTime.id,
+          courseId: indexedTeeTime.courseId,
+          providerTeeTimeId: String(teeTime.teeSheetId),
+          numberOfHoles: teeTime.is18HoleOnly ? 18 : teeTime.is9HoleOnly ? 9 : 18,
+          date: teeTime.startTime,
+          time: militaryTime,
+          maxPlayersPerBooking: teeTime.freeSlots,
+          availableFirstHandSpots: teeTime.freeSlots > 4 ? 4 : teeTime.freeSlots,
+          availableSecondHandSpots: indexedTeeTime.availableSecondHandSpots,
+          greenFeePerPlayer:
+            (teeTime.greenFee18 ? teeTime.greenFee18 : teeTime.greenFee9 ? teeTime.greenFee9 : 0) * 100,
+          cartFeePerPlayer:
+            (teeTime.cartFee18 ? teeTime.cartFee18 : teeTime.cartFee9 ? teeTime.cartFee9 : 0) * 100,
+          greenFeeTaxPerPlayer: indexedTeeTime.greenFeeTaxPerPlayer ? indexedTeeTime.greenFeeTaxPerPlayer : 0,
+          cartFeeTaxPerPlayer: indexedTeeTime.cartFeeTaxPerPlayer,
+          providerDate: teeTime.startTime,
+        };
+        const providerTeeTimeMatchingKeys = {
+          id: indexedTeeTime.id,
+          providerTeeTimeId: String(teeTime.teeSheetId),
+          numberOfHoles: teeTime.is18HoleOnly ? 18 : teeTime.is9HoleOnly ? 9 : 18,
+          date: teeTime.startTime,
+          time: militaryTime,
+          maxPlayersPerBooking: teeTime.freeSlots,
+          greenFeePerPlayer:
+            (teeTime.greenFee18 ? teeTime.greenFee18 : teeTime.greenFee9 ? teeTime.greenFee9 : 0) * 100,
+          cartFeePerPlayer:
+            (teeTime.cartFee18 ? teeTime.cartFee18 : teeTime.cartFee9 ? teeTime.cartFee9 : 0) * 100,
+          greenFeeTaxPerPlayer: indexedTeeTime.greenFeeTaxPerPlayer ? indexedTeeTime.greenFeeTaxPerPlayer : 0,
+          cartFeeTaxPerPlayer: indexedTeeTime.cartFeeTaxPerPlayer,
+          courseId: indexedTeeTime.courseId,
+          availableFirstHandSpots: teeTime.freeSlots > 4 ? 4 : teeTime.freeSlots,
+          availableSecondHandSpots: indexedTeeTime.availableSecondHandSpots,
+          courseProvider: indexedTeeTime.courseProvider,
+          providerDate: teeTime.startTime,
+          entityId: indexedTeeTime.entityId,
+        };
+        if (isEqual(indexedTeeTime, providerTeeTimeMatchingKeys)) {
+          // no changes to tee time do nothing
+          return;
+        } else {
+          await db
+            .update(teeTimes)
+            .set(providerTeeTime)
+            .where(eq(teeTimes.id, indexedTeeTime.id))
+            .execute()
+            .catch((err) => {
+              this.logger.error(err);
+              throw new Error(`Error updating tee time: ${err}`);
+            });
+        }
+      }
+    } catch (error) {
+      this.logger.error(error);
+      // throw new Error(`Error indexing tee time: ${error}`);
+      throw new Error(
+        `We're sorry. This time is no longer available. Someone just booked this. It may take a minute for the sold time you selected to be removed. Please select another time.`
+      );
+    }
+  }
+
+  getSlotIdsFromBooking = (bookingData: BookingResponse): string[] => {
+    const data = bookingData as ClubProphetBookingResponse;
+    const ids = data.participantIds.map((id) => id.toString());
+    return ids;
+  }
+
+  getPlayerCount(bookingData: BookingResponse): number {
+    const data = bookingData as ClubProphetBookingResponse;
+    return data.participantIds.length;
+  }
+
+  findTeeTimeById(teeTimeId: string, teetimes: TeeTimeResponse[]): ClubProphetTeeTimeResponse | undefined {
+    const teeTimes = teetimes as ClubProphetTeeTimeResponse[];
+    const teeTime = teeTimes.find((teeTime) => teeTime.teeSheetId.toString() === teeTimeId);
+
+    return teeTime;
+  }
+
+  getBookingNameChangeOptions(_customerDetails: NameChangeCustomerDetails): BookingNameChangeOptions {
+    return {} as BookingNameChangeOptions;
   }
 }

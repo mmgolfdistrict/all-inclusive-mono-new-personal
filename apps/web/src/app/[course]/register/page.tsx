@@ -32,7 +32,6 @@ import ReCAPTCHA from "react-google-recaptcha";
 import { Controller, useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
 import { useDebounce } from "usehooks-ts";
- 
 export default function RegisterPage() {
   const { course } = useCourseContext();
   const {
@@ -649,8 +648,9 @@ export default function RegisterPage() {
             )}
  
           <FilledButton
-            className={`w-full rounded-full ${isSubmitting ? "animate-pulse cursor-not-allopwed" : ""
-              }`}
+            className={`w-full rounded-full ${
+              isSubmitting ? "animate-pulse cursor-not-allopwed" : ""
+            }`}
             type="submit"
             disabled={isSubmitting}
             data-testid="register-button-id"

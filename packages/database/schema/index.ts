@@ -50,6 +50,7 @@ import * as users from "./users";
 import * as userWaitlists from "./userWaitlists";
 import * as verificationTokens from "./verificationTokens";
 import * as withdrawals from "./withdrawals";
+import * as providerAuthTokens from "./providerAuthTokens";
 
 export const schema = {
   ...accounts,
@@ -104,4 +105,5 @@ export const schema = {
   ...adminUsers,
   ...adminUserCourse,
   ...courseGlobalNotification,
+  ...providerAuthTokens
 };

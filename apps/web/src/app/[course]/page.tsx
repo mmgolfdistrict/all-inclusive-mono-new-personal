@@ -22,7 +22,8 @@ import type { GolferType } from "~/contexts/FiltersContext";
 import { useFiltersContext } from "~/contexts/FiltersContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
-import dayjs, { Dayjs } from 'dayjs';
+import type { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
 import isBetween from "dayjs/plugin/isBetween";
 import isoWeek from "dayjs/plugin/isoWeek";
 import RelativeTime from "dayjs/plugin/relativeTime";
@@ -92,6 +93,7 @@ export default function CourseHomePage() {
       console.log("error", error);
     }
   };
+  console.log("courseId", courseId);
 
   const updateCount = (balance: number) => {
     setCount(balance);
