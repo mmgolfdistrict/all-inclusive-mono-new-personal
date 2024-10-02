@@ -201,7 +201,6 @@ export class BookingService {
     _cursor: string | undefined
   ) => {
     this.logger.info(`getTransactionHistory called with userId: ${userId}`);
-    console.log(userId,"userId------------------------------------------>")
     const data = await this.database
       .select({
         transferId: transfers.id,
@@ -241,7 +240,6 @@ export class BookingService {
         )
       .orderBy(desc(transfers.createdAt))
       .execute();
-    console.log("========>", data,courseId);
 
     // const [cartData] = await this.database.select({
     //   cart: customerCarts.cart
