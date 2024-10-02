@@ -1054,22 +1054,6 @@ export class HyperSwitchWebhookService {
         newBooking.data = {};
       }
 
-      if (provider.shouldAddSaleData()) {
-        try {
-          const bookingsDetails: BookingDetails = {
-            playerCount: listedSlotsCount ?? 1,
-            providerCourseId: firstBooking.providerCourseId!,
-            providerTeeSheetId: firstBooking.providerTeeSheetId!,
-            totalAmountPaid: totalAmount * (listedSlotsCount ?? 1),
-            token: token
-          }
-          const addSalesOptions = provider.getSalesDataOptions(newBooking, bookingsDetails);
-          await provider.addSalesData(addSalesOptions);
-        } catch (error) {
-          this.logger.error(`Error adding sales data, ${error}`);
-        }
-      }
-
       newBooking.data.purchasedFor = golferPrice / (listedSlotsCount || 1) / 100;
       newBooking.data.ownerId = customer_id;
       newBooking.data.name = buyerCustomer?.name || "";
@@ -1165,11 +1149,14 @@ export class HyperSwitchWebhookService {
               totalAmountPaid: totalAmountPaid,
               token: token
             }
-            const addSalesOptions = provider.getSalesDataOptions(newBooking, bookingsDetails);
+            const addSalesOptions = provider.getSalesDataOptions(newBookingSecond, bookingsDetails);
             await provider.addSalesData(addSalesOptions);
           } catch (error) {
             this.logger.error(`Error adding sales data, ${error}`);
           }
+        }
+        if (!newBookingSecond.data) {
+          newBookingSecond.data = {}
         }
         newBookingSecond.data.ownerId = firstBooking.ownerId;
         newBooking.data.weatherGuaranteeId = firstBooking.weatherGuaranteeId || "";
@@ -1197,7 +1184,7 @@ export class HyperSwitchWebhookService {
       const newBooking = booking;
       const bookingsToCreate: InsertBooking[] = [];
       const providerBookingId = provider.getBookingId(booking);
-      let playerCount = provider.getPlayerCount(booking);
+      const playerCount = provider.getPlayerCount(booking);
 
       // if (firstBooking.internalId === "fore-up" && "data" in booking && booking.data) {
       //   providerBookingId = booking.data.id;
@@ -1264,7 +1251,7 @@ export class HyperSwitchWebhookService {
           bookingId,
           playerCount,
           booking.data?.ownerId || "",
-          providerBookingIds.length ? providerBookingIds : providerBookingId,
+          providerBookingIds?.length ? providerBookingIds : providerBookingId,
           provider.providerId,
           firstBooking.courseId ?? "",
           providerBookingIds
@@ -1295,7 +1282,6 @@ export class HyperSwitchWebhookService {
         }
       }
 
-      console.log("bookingSlots", bookingSlots.length, bookingsToCreate.length);
       if (bookingsToCreate.length) {
         await this.database.transaction(async (tx) => {
           //create each booking

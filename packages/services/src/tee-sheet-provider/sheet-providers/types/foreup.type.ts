@@ -330,3 +330,18 @@ export interface ForeupSaleDataOptions {
   bookingId: string;
   token: string;
 }
+
+export interface ForeUpBookingNameChangeOptions {
+  data: {
+    type: "Guest";
+    id: string;
+    attributes: {
+      type: "Guest";
+      name: string;
+      paid: boolean;
+      cartPaid: boolean;
+      noShow: boolean;
+      personId: string | number;
+    };
+  };
+};

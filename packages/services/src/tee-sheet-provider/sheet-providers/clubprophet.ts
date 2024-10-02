@@ -8,8 +8,8 @@ import type {
   ClubProphetCustomerCreationResponse,
   ClubProphetTeeTimeResponse,
 } from "./types/clubprophet.types";
-import type { TeeTimeUpdateRequest } from "./types/foreup.type";
-import type { BookingResponse, BuyerData, CustomerCreationData, CustomerData, ProviderAPI, SalesDataOptions, TeeTimeData, TeeTimeResponse } from "./types/interface";
+import type { ForeUpBookingNameChangeOptions, TeeTimeUpdateRequest } from "./types/foreup.type";
+import type { BookingNameChangeOptions, BookingResponse, BuyerData, CustomerCreationData, CustomerData, NameChangeCustomerDetails, ProviderAPI, SalesDataOptions, TeeTimeData, TeeTimeResponse } from "./types/interface";
 import { BaseProvider } from "./types/interface";
 import { db, eq } from "@golf-district/database";
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
@@ -496,5 +496,9 @@ export class clubprophet extends BaseProvider {
     const teeTime = teeTimes.find((teeTime) => teeTime.teeSheetId.toString() === teeTimeId);
 
     return teeTime;
+  }
+
+  getBookingNameChangeOptions(_customerDetails: NameChangeCustomerDetails): BookingNameChangeOptions {
+    return {} as BookingNameChangeOptions;
   }
 }

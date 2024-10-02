@@ -312,3 +312,8 @@ export interface LightspeedSaleDataOptions {
     roundIds: RoundId[];
     amount: number;
 }
+
+export interface LightspeedBookingNameChangeOptions {
+    firstName: string;
+    lastName: string;
+}

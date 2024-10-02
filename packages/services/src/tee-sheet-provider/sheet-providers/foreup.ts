@@ -9,8 +9,9 @@ import type {
   ForeupSaleDataOptions,
   TeeTimeUpdateRequest,
   TeeTimeResponse as ForeupTeeTimeResponse,
+  ForeUpBookingNameChangeOptions,
 } from "./types/foreup.type";
-import type { BookingResponse, CustomerCreationData, SalesDataOptions, TeeTimeResponse } from "./types/interface";
+import type { BookingResponse, CustomerCreationData, NameChangeCustomerDetails, SalesDataOptions, TeeTimeResponse } from "./types/interface";
 import type { BuyerData, ProviderAPI, TeeTimeData } from "./types/interface";
 import { BaseProvider, type BookingDetails } from "./types/interface";
 import { db, eq } from "@golf-district/database";
@@ -642,6 +643,26 @@ export class foreUp extends BaseProvider {
     const teeTime = teeTimes.find((teeTime) => teeTime.id.toString() === teeTimeId);
 
     return teeTime;
+  }
+
+  getBookingNameChangeOptions(customerDetails: NameChangeCustomerDetails): ForeUpBookingNameChangeOptions {
+    const { name, providerBookingId, providerCustomerId } = customerDetails;
+
+    const bookingNameChangeOptions: ForeUpBookingNameChangeOptions = {
+      data: {
+        type: "Guest",
+        id: providerBookingId,
+        attributes: {
+          type: "Guest",
+          name: name,
+          paid: false,
+          cartPaid: false,
+          noShow: false,
+          personId: providerCustomerId ? providerCustomerId : "",
+        },
+      },
+    };
+    return bookingNameChangeOptions;
   }
 }
 

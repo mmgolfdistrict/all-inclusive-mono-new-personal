@@ -8,6 +8,7 @@ import type {
   BookingCreationData as ClubProphetBookingCreationData,
 } from "./clubprophet.types";
 import type {
+  ForeUpBookingNameChangeOptions,
   BookingResponse as ForeUpBookingResponse,
   CustomerCreationData as ForeUpCustomerCreationData,
   CustomerData as ForeUpCustomerCreationResponse,
@@ -15,7 +16,7 @@ import type {
   BookingCreationData as ForeupBookingCreationData,
   ForeupSaleDataOptions, 
 } from "./foreup.type";
-import type { LightSpeedBookingResponse, LightspeedBookingCreationData, LightspeedCustomerCreationData, LightspeedCustomerCreationResponse, LightspeedSaleDataOptions, LightspeedTeeTimeResponse } from "./lightspeed.type";
+import type { LightSpeedBookingResponse, LightspeedBookingCreationData, LightspeedBookingNameChangeOptions, LightspeedCustomerCreationData, LightspeedCustomerCreationResponse, LightspeedSaleDataOptions, LightspeedTeeTimeResponse } from "./lightspeed.type";
 import type { CacheService } from "../../../infura/cache.service";
 
 export type ForeUpCredentials = {
@@ -72,6 +73,19 @@ export interface SecondHandBookingFields {
     playerCount?: number;
   }
 }
+export type BookingDetails = {
+  providerCourseId: string;
+  providerTeeSheetId: string;
+  playerCount: number;
+  totalAmountPaid: number;
+  token: string;
+}
+
+export type NameChangeCustomerDetails = {
+  name: string;
+  providerBookingId: string;
+  providerCustomerId: string;
+}
 
 type ProviderCredentials = ForeUpCredentials;
 
@@ -85,15 +99,9 @@ export type CustomerCreationData = ForeUpCustomerCreationData | ClubProphetCusto
 
 export type CustomerData = ForeUpCustomerCreationResponse | ClubProphetCustomerCreationResponse | LightspeedCustomerCreationResponse;
 
-export type BookingDetails = {
-  providerCourseId: string;
-  providerTeeSheetId: string;
-  playerCount: number;
-  totalAmountPaid: number;
-  token: string;
-}
-
 export type SalesDataOptions = ForeupSaleDataOptions | LightspeedSaleDataOptions;
+
+export type BookingNameChangeOptions = ForeUpBookingNameChangeOptions | LightspeedBookingNameChangeOptions
 
 
 export interface ProviderAPI {
@@ -163,6 +171,7 @@ export interface ProviderAPI {
     providerTeeTimeId: string
   ): Promise<unknown>
   findTeeTimeById(teeTimeId: string, teetimes: TeeTimeResponse[]): TeeTimeResponse | undefined;
+  getBookingNameChangeOptions(customerDetails: NameChangeCustomerDetails): BookingNameChangeOptions;
 }
 
 export abstract class BaseProvider implements ProviderAPI {
@@ -245,4 +254,5 @@ export abstract class BaseProvider implements ProviderAPI {
     providerTeeTimeId: string
   ): Promise<unknown>
   abstract findTeeTimeById(teeTimeId: string, teetimes: TeeTimeResponse[]): TeeTimeResponse | undefined;
+  abstract getBookingNameChangeOptions(customerDetails: NameChangeCustomerDetails): BookingNameChangeOptions;
 }

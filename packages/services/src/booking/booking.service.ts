@@ -2261,39 +2261,19 @@ export class BookingService {
     console.log("providerDataToUpdate:");
     console.dir(providerDataToUpdate, { depth: null });
     for (const user of providerDataToUpdate) {
-      // if (firstBooking.internalId === "fore-up") {
-      //   await provider?.updateTeeTime(
-      //     token || "",
-      //     firstBooking?.providerCourseId || "",
-      //     firstBooking?.providerTeeSheetId || "",
-      //     firstBooking.providerBookingId,
-      //     {
-      //       data: {
-      //         type: "Guest",
-      //         id: firstBooking.providerBookingId,
-      //         attributes: {
-      //           type: "Guest",
-      //           name: user.name,
-      //           paid: false,
-      //           cartPaid: false,
-      //           noShow: false,
-      //           personId: user.customerId != 0 ? user.customerId : "",
-      //         },
-      //       },
-      //     },
-      //     user.slotId || ""
-      //   );
-      // } else {
-        const [firstName, lastName] = user.name ? user.name.split(" ") : ["", ""];
+
+      const nameChangeOptions = provider?.getBookingNameChangeOptions({
+        name: user.name || "",
+        providerBookingId: firstBooking.providerBookingId,
+        providerCustomerId: typeof user.customerId === "number" ? user.customerId?.toString() : user.customerId ?? "",
+      });
+
         await provider?.updateTeeTime(
           token || "",
           firstBooking?.providerCourseId || "",
           firstBooking?.providerTeeSheetId || "",
           firstBooking.providerBookingId,
-          {
-            firstName,
-            lastName
-          },
+          nameChangeOptions,
           user.slotId || ""
         );
       }
@@ -2771,11 +2751,12 @@ export class BookingService {
       // }
       if (provider.shouldAddSaleData()) {
         try {
+          console.log("Amounts: ", primaryGreenFeeCharge / 100, taxCharge, markupCharge);
           const bookingsDetails: BookingDetails = {
             playerCount: playerCount,
             providerCourseId: teeTime.providerCourseId!,
             providerTeeSheetId: teeTime.providerTeeSheetId!,
-            totalAmountPaid: primaryGreenFeeCharge / 100 + taxCharge - markupCharge,
+            totalAmountPaid: (pricePerGolfer / 100 + taxCharge - markupCharge) * playerCount,
             token: token
           }
           const addSalesOptions = provider.getSalesDataOptions(booking, bookingsDetails);

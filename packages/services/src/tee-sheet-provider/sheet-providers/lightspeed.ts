@@ -1,9 +1,8 @@
 import { randomUUID } from "crypto";
 import Logger from "@golf-district/shared/src/logger";
-import type { ForeupSaleDataOptions, TeeTimeUpdateRequest } from "./types/foreup.type";
-import type { BookingDetails, BookingResponse, BuyerData, CustomerCreationData, CustomerData, ProviderAPI, SalesDataOptions, TeeTimeData, TeeTimeResponse } from "./types/interface";
+import type { BookingDetails, BookingResponse, BuyerData, CustomerCreationData, CustomerData, NameChangeCustomerDetails, ProviderAPI, SalesDataOptions, TeeTimeData, TeeTimeResponse } from "./types/interface";
 import { BaseProvider } from "./types/interface";
-import type { LightSpeedBookingResponse, LightSpeedReservationRequestResponse, LightspeedBookingCreationData, LightspeedCustomerCreationData, LightspeedCustomerCreationResponse, LightspeedSaleDataOptions, LightspeedTeeTimeDataResponse, LightspeedTeeTimeResponse } from "./types/lightspeed.type";
+import type { LightSpeedBookingResponse, LightSpeedReservationRequestResponse, LightspeedBookingCreationData, LightspeedBookingNameChangeOptions, LightspeedCustomerCreationData, LightspeedCustomerCreationResponse, LightspeedSaleDataOptions, LightspeedTeeTimeDataResponse, LightspeedTeeTimeResponse } from "./types/lightspeed.type";
 import dayjs from "dayjs";
 import { CacheService } from "../../infura/cache.service";
 import { db, desc, eq } from "@golf-district/database";
@@ -406,8 +405,8 @@ export class Lightspeed extends BaseProvider {
                 data: {
                     type: "customer",
                     attributes: {
-                        first_name: customerData.firstName,
-                        last_name: customerData.lastName,
+                        first_name: customerData.firstName ? customerData.firstName : "Guest",
+                        last_name: customerData.lastName ? customerData.lastName : "N/A",
                         email: customerData.email,
                         phone: customerData.phone,
                     },
@@ -500,7 +499,6 @@ export class Lightspeed extends BaseProvider {
                     }
                 }
             }
-
             const url = `${BASE_ENDPOINT}/partner_api/v2/organizations/${ORGANIZATION_ID}/payment_confirmations`;
 
             const response = await fetch(url, {
@@ -771,5 +769,15 @@ export class Lightspeed extends BaseProvider {
         const teeTime = teeTimes.find((teeTime) => teeTime.id.toString() === teeTimeId);
 
         return teeTime;
+    }
+
+    getBookingNameChangeOptions(customerDetails: NameChangeCustomerDetails): LightspeedBookingNameChangeOptions {
+        const [firstName, lastName] = customerDetails.name ? customerDetails.name.split(" ") : ["", ""];
+
+        const bookingNameChangeOptions: LightspeedBookingNameChangeOptions = {
+            firstName: firstName ? firstName : "Guesst",
+            lastName: lastName ? lastName : "N/A",
+        };
+        return bookingNameChangeOptions;
     }
 }
