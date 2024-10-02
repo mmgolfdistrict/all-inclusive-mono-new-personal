@@ -2,10 +2,10 @@ import { any, z } from "zod";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 
 export const webhookRouter = createTRPCRouter({
-  foreup: publicProcedure.mutation(async ({ ctx }) => {
-    ctx.serviceFactory.getForeupWebhookService().handleWebhook();
-    console.log("called");
-  }),
+  // foreup: publicProcedure.mutation(async ({ ctx }) => {
+  //   ctx.serviceFactory.getForeupWebhookService().handleWebhook();
+  //   console.log("called");
+  // }),
   hyperswitch: publicProcedure.mutation(async ({ ctx, input }) => {
     //@TODO validate type maybe?
     ctx.serviceFactory.getHyperSwitchWebhookService().processWebhook(input as any);
@@ -36,7 +36,7 @@ export const webhookRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       return await ctx.serviceFactory.getHyperSwitchService().cancelHyperswitchPaymentById(input.paymentId);
     }),
-    sendEmailForFailedPayment: publicProcedure
+  sendEmailForFailedPayment: publicProcedure
     .input(
       z.object({
         paymentId: z.string(),
@@ -44,7 +44,7 @@ export const webhookRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       return await ctx.serviceFactory.getHyperSwitchService().sendEmailForFailedPayment(input.paymentId);
-    }),  
+    }),
   auditLog: publicProcedure
     .input(
       z.object({

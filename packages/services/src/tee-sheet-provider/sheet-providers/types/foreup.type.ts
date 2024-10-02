@@ -88,16 +88,16 @@ export interface BookingCreationData {
     type: string;
     attributes: {
       start: string;
-      side: string;
+      side?: string;
       event_type: string;
       details: string;
-      scheduleSideId: number;
+      scheduleSideId?: number;
       holes: string;
       players: number;
       bookedPlayers: { accountNumber: number }[];
-      carts: number;
-      title: string;
-      booking_class_id: number;
+      carts?: number;
+      title?: string;
+      booking_class_id?: number;
     };
   };
 }
@@ -266,27 +266,6 @@ export interface CustomerData {
   };
 }
 
-export interface CustomerAttributes {
-  type: string; // "customer"
-  attributes: {
-    id: number; // 2073
-    accountNumber: number; // 32123
-    username: string; // "username"
-    companyName: string; // "MyCompany"
-    taxable: boolean; // true
-    discount: number; // 0
-    optOutEmail: boolean; // false
-    optOutText: boolean; // false
-    dateCreated: string; // "2017-01-09T06:07:00-0700"
-    emailSubscribed: boolean; // true
-    onlineBookingDisabled: boolean; // false
-    priceClass: string; // ""213""
-    groups: string[]; // ["Public", "Junior"]
-    contactInfo: ContactInfo; // nested interface
-    email?: string;
-  };
-}
-
 export interface CustomerCreationData {
   type: string;
   attributes: CustomerAttributes;
@@ -306,7 +285,7 @@ export interface CustomerAttributes {
   price_class?: string;
   groups?: string[];
   contact_info: ContactInfo;
-  email?: string;
+  email?: string | null;
 }
 export interface ContactInfo {
   first_name: string;
@@ -314,7 +293,7 @@ export interface ContactInfo {
   account_number?: number;
   phone_number?: string;
   cell_phone_number?: string;
-  email?: string;
+  email: string | null;
   birthday?: string;
   address_1?: string;
   address_2?: string;
@@ -351,3 +330,18 @@ export interface ForeupSaleDataOptions {
   bookingId: string;
   token: string;
 }
+
+export interface ForeUpBookingNameChangeOptions {
+  data: {
+    type: "Guest";
+    id: string;
+    attributes: {
+      type: "Guest";
+      name: string;
+      paid: boolean;
+      cartPaid: boolean;
+      noShow: boolean;
+      personId: string | number;
+    };
+  };
+};
