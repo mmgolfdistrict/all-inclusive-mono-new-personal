@@ -201,6 +201,7 @@ export class BookingService {
     _cursor: string | undefined
   ) => {
     this.logger.info(`getTransactionHistory called with userId: ${userId}`);
+    console.log(userId,"userId------------------------------------------>")
     const data = await this.database
       .select({
         transferId: transfers.id,
@@ -232,10 +233,15 @@ export class BookingService {
       .leftJoin(lists, eq(bookings.listId, lists.id))
       .leftJoin(assets, eq(assets.id, courses.logoId))
       // .leftJoin(userBookingOffers, eq(userBookingOffers.bookingId, bookings.id))
-      .where(or(eq(transfers.toUserId, userId), eq(transfers.fromUserId, userId)))
+      .where(
+        and(
+          eq(transfers.courseId,courseId),
+          or(eq(transfers.toUserId, userId), eq(transfers.fromUserId, userId))
+        )
+        )
       .orderBy(desc(transfers.createdAt))
       .execute();
-    console.log("========>", data.length);
+    console.log("========>", data,courseId);
 
     // const [cartData] = await this.database.select({
     //   cart: customerCarts.cart
