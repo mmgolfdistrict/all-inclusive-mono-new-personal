@@ -46,7 +46,7 @@ export const Input = ({
             {...register(name)}
             {...props}
             ref={inputRef}
-            autocomplete="new-password"
+            autoComplete="new-password"
          />:
         inputRef ?
           <input
