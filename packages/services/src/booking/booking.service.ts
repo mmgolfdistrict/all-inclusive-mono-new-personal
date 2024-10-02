@@ -232,10 +232,14 @@ export class BookingService {
       .leftJoin(lists, eq(bookings.listId, lists.id))
       .leftJoin(assets, eq(assets.id, courses.logoId))
       // .leftJoin(userBookingOffers, eq(userBookingOffers.bookingId, bookings.id))
-      .where(or(eq(transfers.toUserId, userId), eq(transfers.fromUserId, userId)))
+      .where(
+        and(
+          eq(transfers.courseId,courseId),
+          or(eq(transfers.toUserId, userId), eq(transfers.fromUserId, userId))
+        )
+        )
       .orderBy(desc(transfers.createdAt))
       .execute();
-    console.log("========>", data.length);
 
     // const [cartData] = await this.database.select({
     //   cart: customerCarts.cart
