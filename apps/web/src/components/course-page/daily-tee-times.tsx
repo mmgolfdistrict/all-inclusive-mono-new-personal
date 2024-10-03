@@ -69,12 +69,14 @@ export const DailyTeeTimes = ({
   const teeTimeStartTime = startTime[0];
   const teeTimeEndTime = startTime[1];
 
-  const { data: numberOfPlayers } =
+  const { data: allowedPlayers } =
     api.course.getNumberOfPlayersByCourse.useQuery({
       courseId: courseId ?? "",
     });
 
-  const playersCount = numberOfPlayers?.[0] ? Number(numberOfPlayers[0]) : 0;
+  const numberOfPlayers = allowedPlayers?.numberOfPlayers[0];
+
+  const playersCount = numberOfPlayers ? Number(numberOfPlayers) : 0;
 
   const { data: weather, isLoading: isLoadingWeather } =
     api.searchRouter.getWeatherForDay.useQuery(
