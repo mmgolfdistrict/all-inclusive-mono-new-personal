@@ -145,9 +145,8 @@ export const CourseNav = () => {
         ))}
         {isSideBarOpen && (
           <div
-            className={`fixed z-20 h-[100dvh] w-screen backdrop-blur ${
-              isSideBarOpen ? "md:hidden" : ""
-            }`}
+            className={`fixed z-20 h-[100dvh] w-screen backdrop-blur ${isSideBarOpen ? "md:hidden" : ""
+              }`}
           >
             <div className="h-screen bg-[#00000099]" />
           </div>

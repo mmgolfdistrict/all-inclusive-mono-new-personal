@@ -92,7 +92,7 @@ export interface BookingCreationData {
   terminalId: number;
   bookingTypeId: number;
   rateCode: string;
-  price: number[];
+  // price: number[];
 }
 
 export interface ClubProphetCustomerCreationData {
