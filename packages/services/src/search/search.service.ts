@@ -663,9 +663,8 @@ export class SearchService {
       .add(30, "minutes")
       .toISOString();
     console.log("------->>>---->>", startTime, endTime);
-
     const firstHandResults = await this.database
-      .selectDistinct({ providerDate: sql`Date(${teeTimes.providerDate})` })
+      .selectDistinct({ providerDate: sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))` })
       .from(teeTimes)
       .innerJoin(courses, eq(courses.id, courseId))
       .where(
@@ -680,7 +679,7 @@ export class SearchService {
           or(gte(teeTimes.availableFirstHandSpots, golfers), gte(teeTimes.availableSecondHandSpots, golfers))
         )
       )
-      .orderBy(asc(sql`Date(${teeTimes.providerDate})`))
+      .orderBy(asc(sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))`))
       .execute();
 
     const secondHandResults = await this.database
