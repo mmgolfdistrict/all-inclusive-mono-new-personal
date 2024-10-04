@@ -1026,11 +1026,11 @@ export class HyperSwitchWebhookService {
             greenFees: (existingTeeTime?.greenFee ?? 0) / 100,
             cartFees: (existingTeeTime?.cartFee ?? 0) / 100,
             providerCustomerId: sellerCustomer.customerId,
-            providerAccountNumber: buyerCustomer.playerNumber,
+            providerAccountNumber: sellerCustomer.playerNumber,
             totalAmountPaid,
-            name: buyerCustomer.name,
-            email: buyerCustomer.email,
-            phone: buyerCustomer.phone,
+            name: sellerCustomer.name,
+            email: sellerCustomer.email,
+            phone: sellerCustomer.phone,
           })
           newBookingSecond = await provider.createBooking(
             token,
