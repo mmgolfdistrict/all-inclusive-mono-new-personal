@@ -1147,11 +1147,11 @@ export class HyperSwitchWebhookService {
             token || "",
             firstBooking?.providerCourseId || "",
             firstBooking?.providerTeeSheetId || "",
-            newBooking?.data?.id || "",
+            providerBookingId || "",
             {
               data: {
                 type: "Guest",
-                id: newBooking?.data?.id || "",
+                id: providerBookingId || "",
                 attributes: {
                   type: "Guest",
                   name: "Guest",
@@ -1240,7 +1240,7 @@ export class HyperSwitchWebhookService {
         SellTeeTImeURL: `${redirectHref}/my-tee-box`,
         ManageTeeTimesURL: `${redirectHref}/my-tee-box`,
         // GolfDistrictReservationID: bookingId,
-        CourseReservationID: newBooking?.data?.id,
+        CourseReservationID: providerBookingId,
       };
 
       if (newBooking.data?.bookingType == "FIRST") {
