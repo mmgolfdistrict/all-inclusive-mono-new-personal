@@ -476,13 +476,13 @@ export const EditProfileForm = () => {
           render={({ field }) => (
             <Input
               {...field}
-              label="Address1"
+              label="Addr&#8204;ess1"
               type="text"
               list="places"
               placeholder="Enter your address1"
               id="address1"
               register={register}
-              name="address1"
+              name="addres&#8204;s1"
               error={errors.address1?.message}
               data-testid="profile-address1-id"
               content="Handle must all be in lower case or numeric and must contain a minimum of 6 characters and maximum of 64 characters. Handle cannot contain special characters other than dot(.) and underscore(_) and any form of profanity or racism related content. Golf District reserves the right to change your handle to a random handle at any time if it violates our terms of service."
