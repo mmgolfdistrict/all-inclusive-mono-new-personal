@@ -37,10 +37,12 @@ export const CheckoutItem = ({
   const { course } = useCourseContext();
   const courseId = course?.id;
 
-  const { data: NumberOfPlayers } =
+  const { data: allowedPlayers } =
     api.course.getNumberOfPlayersByCourse.useQuery({
       courseId: courseId ?? "",
     });
+
+  const numberOfPlayers = allowedPlayers?.numberOfPlayers;
   const choosePlayers = (amount: string) => {
     setAmountOfPlayers(Number(amount));
   };
@@ -121,7 +123,8 @@ export const CheckoutItem = ({
             isSecondHand={teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND"}
             teeTimeId={teeTime?.teeTimeId}
             courseException={getCourseException(teeTime?.date ?? "")}
-            NumberOfPlayers={NumberOfPlayers}
+            numberOfPlayers={numberOfPlayers}
+            selectStatus={allowedPlayers?.selectStatus}
           />
         </div>
       </div>
@@ -139,7 +142,8 @@ export const CheckoutItem = ({
         isSecondHand={teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND"}
         teeTimeId={teeTime?.teeTimeId}
         courseException={getCourseException(teeTime?.date ?? "")}
-        NumberOfPlayers={NumberOfPlayers}
+        numberOfPlayers={numberOfPlayers}
+        selectStatus={allowedPlayers?.selectStatus}
       />
       {isSensibleInvalid || isLoading ? null : (
         <SensibleWidget sensibleDataToMountComp={sensibleDataToMountComp} />
@@ -208,7 +212,8 @@ const Data = ({
   isSecondHand,
   teeTimeId,
   courseException,
-  NumberOfPlayers,
+  numberOfPlayers,
+  selectStatus,
 }: {
   className: string;
   canChoosePlayer: boolean;
@@ -223,7 +228,8 @@ const Data = ({
   isSecondHand: boolean;
   teeTimeId?: string | undefined;
   courseException: NotificationObject | null;
-  NumberOfPlayers?: string[];
+  numberOfPlayers?: string[];
+  selectStatus?: string;
 }) => {
   if (isLoading) {
     return (
@@ -295,9 +301,9 @@ const Data = ({
               setPlayers={choosePlayers}
               playersOptions={PlayersOptions}
               availableSlots={availableSlots ?? 0}
-              isDisabled={isSecondHand}
+              isDisabled={isSecondHand || selectStatus === "ALL_PLAYERS"}
               teeTimeId={teeTimeId}
-              numberOfPlayers={NumberOfPlayers ? NumberOfPlayers : []}
+              numberOfPlayers={numberOfPlayers ? numberOfPlayers : []}
             />
           ) : (
             players && (

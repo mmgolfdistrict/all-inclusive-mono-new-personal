@@ -644,7 +644,7 @@ export class CourseService extends DomainService {
         : PlayersOptions;
 
     if (binaryMask === 0) {
-      return { numberOfPlayers, selectStatus: "ALL_PLAYERS" };
+      return { numberOfPlayers: PlayersOptions, selectStatus: "ALL_PLAYERS" };
     }
 
     return { numberOfPlayers, selectStatus: "" };

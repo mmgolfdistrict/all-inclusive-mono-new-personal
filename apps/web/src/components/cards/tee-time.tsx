@@ -83,17 +83,27 @@ export const TeeTime = ({
   const [isCopied, setIsCopied] = useState<boolean>(false);
   const { course } = useCourseContext();
   const courseId = course?.id;
-  const { data: numberOfPlayers } =
+  const { data: allowedPlayers } =
     api.course.getNumberOfPlayersByCourse.useQuery({
       courseId: courseId ?? "",
     });
 
+  const numberOfPlayers = allowedPlayers?.numberOfPlayers;
   const [selectedPlayers, setSelectedPlayers] = useState<string>(() => {
+    if (allowedPlayers?.selectStatus === "ALL_PLAYERS") {
+      return String(availableSlots);
+    }
     if (numberOfPlayers?.length !== 0 && numberOfPlayers !== undefined) {
       return String(numberOfPlayers[0]);
     }
     return status === "UNLISTED" || status === "FIRST_HAND" ? "1" : players;
   });
+  console.log(
+    "allowedPlayers",
+    allowedPlayers,
+    availableSlots,
+    selectedPlayers
+  );
 
   const timezoneCorrection = course?.timezoneCorrection;
   const [isMakeAnOfferOpen, setIsMakeAnOfferOpen] = useState<boolean>(false);
@@ -388,7 +398,10 @@ export const TeeTime = ({
                 availableSlots={
                   status === "SECOND_HAND" ? listedSlots || 0 : availableSlots
                 }
-                isDisabled={status === "SECOND_HAND"}
+                isDisabled={
+                  status === "SECOND_HAND" ||
+                  allowedPlayers?.selectStatus === "ALL_PLAYERS"
+                }
                 className="md:px-[1rem] md:py-[.25rem] md:!text-[14px] !text-[10px] px-[.75rem] py-[.1rem]"
                 teeTimeId={teeTimeId}
                 numberOfPlayers={numberOfPlayers ? numberOfPlayers : []}
