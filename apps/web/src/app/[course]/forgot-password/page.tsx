@@ -37,8 +37,10 @@ export default function ForgotPassword() {
   }, []);
 
   useEffect(() => {
-    recaptchaRef.current?.execute();
-  }, []);
+    if (process.env.NEXT_PUBLIC_RECAPTCHA_IS_INVISIBLE === "true") {
+      recaptchaRef.current?.execute();
+    }
+  }, [recaptchaRef]);
 
   const onSubmit: SubmitHandler<ForgotPasswordSchemaType> = async (data) => {
     if (process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && !data.ReCAPTCHA) {
@@ -51,6 +53,7 @@ export default function ForgotPassword() {
       const forgotPasswordData = { ...data, courseProviderId: course?.id };
       await forgotFn.mutateAsync(forgotPasswordData);
     } catch (error) {
+      await recaptchaRef.current?.executeAsync();
       toast.error(
         (error as Error)?.message ??
           "An error occurred submitting your request."
@@ -101,7 +104,7 @@ export default function ForgotPassword() {
               {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (
                 <ReCAPTCHA
                   size={
-                    process.env.NEXT_PUBLIC_RECAPTCHA_IS_INVISIBLE
+                    process.env.NEXT_PUBLIC_RECAPTCHA_IS_INVISIBLE === "true"
                       ? "invisible"
                       : "normal"
                   }
