@@ -145,8 +145,9 @@ export const CourseNav = () => {
         ))}
         {isSideBarOpen && (
           <div
-            className={`fixed z-20 h-[100dvh] w-screen backdrop-blur ${isSideBarOpen ? "md:hidden" : ""
-              }`}
+            className={`fixed z-20 h-[100dvh] w-screen backdrop-blur ${
+              isSideBarOpen ? "md:hidden" : ""
+            }`}
           >
             <div className="h-screen bg-[#00000099]" />
           </div>
@@ -200,14 +201,25 @@ export const CourseNav = () => {
               <UserInNav />
             </div>
           ) : session.status == "loading" ? null : (
-            session.status != "authenticated" && (
+            session.status != "authenticated" &&
+            pathname != `/${course?.id}/login` && (
               <Link
-                href={`/${course?.id}/login`}
-                onClick={() => {
-                  setPrevPath({
-                    path: pathname,
-                    createdAt: new Date().toISOString(),
-                  });
+                href={
+                  pathname === `/${course?.id}/login`
+                    ? "#"
+                    : `/${course?.id}/login`
+                }
+                onClick={(
+                  event: React.MouseEvent<HTMLAnchorElement, MouseEvent>
+                ) => {
+                  if (pathname === `/${course?.id}/login`) {
+                    event.preventDefault();
+                  } else {
+                    setPrevPath({
+                      path: pathname,
+                      createdAt: new Date().toISOString(),
+                    });
+                  }
                 }}
               >
                 <FilledButton
