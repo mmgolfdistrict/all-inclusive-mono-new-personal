@@ -214,9 +214,9 @@ export default function RegisterPage() {
         courseId: course?.id,
       });
       if (response?.error) {
-        await logAudit(response.message);
         await recaptchaRef.current?.executeAsync();
         toast.error(response.message);
+        await logAudit(response.message);
         return;
       }
 
