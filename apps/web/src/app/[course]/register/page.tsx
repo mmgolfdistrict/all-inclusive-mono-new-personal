@@ -177,6 +177,20 @@ export default function RegisterPage() {
     setValue("redirectHref", cleanedHref);
   }, []);
 
+  const auditLog = api.webhooks.auditLog.useMutation();
+
+  const logAudit = async (message) => {
+    await auditLog.mutateAsync({
+      userId: "",
+      teeTimeId: "",
+      bookingId: "",
+      listingId: "",
+      courseId: course?.id,
+      eventId: "ERROR_DURING_SIGN_UP",
+      json: message,
+    });
+  };
+
   useEffect(() => {
     if (process.env.NEXT_PUBLIC_RECAPTCHA_IS_INVISIBLE === "true") {
       recaptchaRef.current?.execute();
@@ -200,6 +214,7 @@ export default function RegisterPage() {
         courseId: course?.id,
       });
       if (response?.error) {
+        await logAudit(response.message);
         await recaptchaRef.current?.executeAsync();
         toast.error(response.message);
         return;
