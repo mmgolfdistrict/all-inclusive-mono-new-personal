@@ -6,17 +6,19 @@ import type {
   ClubProphetCustomerCreationResponse,
   ClubProphetTeeTimeResponse,
   BookingCreationData as ClubProphetBookingCreationData,
+  ClubProphetGetCustomerResponse,
 } from "./clubprophet.types";
 import type {
   ForeUpBookingNameChangeOptions,
   BookingResponse as ForeUpBookingResponse,
   CustomerCreationData as ForeUpCustomerCreationData,
   CustomerData as ForeUpCustomerCreationResponse,
+  ForeUpGetCustomerResponse,
   TeeTimeResponse as ForeUpTeeTimeResponse,
   BookingCreationData as ForeupBookingCreationData,
   ForeupSaleDataOptions, 
 } from "./foreup.type";
-import type { LightSpeedBookingResponse, LightspeedBookingCreationData, LightspeedBookingNameChangeOptions, LightspeedCustomerCreationData, LightspeedCustomerCreationResponse, LightspeedSaleDataOptions, LightspeedTeeTimeResponse } from "./lightspeed.type";
+import type { LightSpeedBookingResponse, LightspeedBookingCreationData, LightspeedBookingNameChangeOptions, LightspeedCustomerCreationData, LightspeedCustomerCreationResponse, LightspeedGetCustomerResponse, LightspeedSaleDataOptions, LightspeedTeeTimeResponse } from "./lightspeed.type";
 import type { CacheService } from "../../../infura/cache.service";
 
 export type ForeUpCredentials = {
@@ -103,6 +105,8 @@ export type SalesDataOptions = ForeupSaleDataOptions | LightspeedSaleDataOptions
 
 export type BookingNameChangeOptions = ForeUpBookingNameChangeOptions | LightspeedBookingNameChangeOptions
 
+export type GetCustomerResponse = ForeUpGetCustomerResponse | ClubProphetGetCustomerResponse | LightspeedGetCustomerResponse;
+
 
 export interface ProviderAPI {
   providerId: string;
@@ -139,7 +143,7 @@ export interface ProviderAPI {
     courseId: string,
     customerData: CustomerCreationData
   ) => Promise<CustomerData>;
-  getCustomer: (token: string, courseId: string, customerId: string) => Promise<CustomerData>;
+  getCustomer: (token: string, courseId: string, email: string) => Promise<GetCustomerResponse | undefined>;
   getSlotIdsForBooking: (
     bookingId: string,
     slots: number,
@@ -172,6 +176,7 @@ export interface ProviderAPI {
   ): Promise<unknown>
   findTeeTimeById(teeTimeId: string, teetimes: TeeTimeResponse[]): TeeTimeResponse | undefined;
   getBookingNameChangeOptions(customerDetails: NameChangeCustomerDetails): BookingNameChangeOptions;
+  getCustomerIdFromGetCustomerResponse(getCustomerResponse: GetCustomerResponse): { customerId: string, accountNumber?: number };
 }
 
 export abstract class BaseProvider implements ProviderAPI {
@@ -222,7 +227,7 @@ export abstract class BaseProvider implements ProviderAPI {
     courseId: string,
     customerData: CustomerCreationData
   ): Promise<CustomerData>;
-  abstract getCustomer(token: string, courseId: string, customerId: string): Promise<CustomerData>;
+  abstract getCustomer(token: string, courseId: string, email: string): Promise<GetCustomerResponse | undefined>;
   abstract getSlotIdsForBooking(
     bookingId: string,
     slots: number,
@@ -255,4 +260,5 @@ export abstract class BaseProvider implements ProviderAPI {
   ): Promise<unknown>
   abstract findTeeTimeById(teeTimeId: string, teetimes: TeeTimeResponse[]): TeeTimeResponse | undefined;
   abstract getBookingNameChangeOptions(customerDetails: NameChangeCustomerDetails): BookingNameChangeOptions;
+  abstract getCustomerIdFromGetCustomerResponse(getCustomerResponse: GetCustomerResponse): { customerId: string, accountNumber?: number };
 }

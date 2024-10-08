@@ -345,3 +345,9 @@ export interface ForeUpBookingNameChangeOptions {
     };
   };
 };
+
+export interface ForeUpGetCustomerResponse {
+  type: string;
+  id: number;
+  attributes: CustomerAttributes;
+}

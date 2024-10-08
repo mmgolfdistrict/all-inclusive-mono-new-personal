@@ -1,8 +1,8 @@
 import { randomUUID } from "crypto";
 import Logger from "@golf-district/shared/src/logger";
-import type { BookingDetails, BookingResponse, BuyerData, CustomerCreationData, CustomerData, NameChangeCustomerDetails, ProviderAPI, SalesDataOptions, TeeTimeData, TeeTimeResponse } from "./types/interface";
+import type { BookingDetails, BookingResponse, BuyerData, CustomerCreationData, GetCustomerResponse, NameChangeCustomerDetails, ProviderAPI, SalesDataOptions, TeeTimeData, TeeTimeResponse } from "./types/interface";
 import { BaseProvider } from "./types/interface";
-import type { LightSpeedBookingResponse, LightSpeedReservationRequestResponse, LightspeedBookingCreationData, LightspeedBookingNameChangeOptions, LightspeedCustomerCreationData, LightspeedCustomerCreationResponse, LightspeedSaleDataOptions, LightspeedTeeTimeDataResponse, LightspeedTeeTimeResponse } from "./types/lightspeed.type";
+import type { LightSpeedBookingResponse, LightSpeedReservationRequestResponse, LightspeedBookingCreationData, LightspeedBookingNameChangeOptions, LightspeedCustomerCreationData, LightspeedCustomerCreationResponse, LightspeedGetCustomerResponse, LightspeedSaleDataOptions, LightspeedTeeTimeDataResponse, LightspeedTeeTimeResponse } from "./types/lightspeed.type";
 import dayjs from "dayjs";
 import { CacheService } from "../../infura/cache.service";
 import { db, desc, eq } from "@golf-district/database";
@@ -584,8 +584,44 @@ export class Lightspeed extends BaseProvider {
         return data as LightSpeedBookingResponse;
     }
 
-    async getCustomer(): Promise<CustomerData> {
-        return {} as CustomerData;
+    async getCustomer(token: string, courseId: string, email: string): Promise<LightspeedGetCustomerResponse | undefined> {
+        const { BASE_ENDPOINT, CONTENT_TYPE, ORGANIZATION_ID } = JSON.parse(this.providerConfiguration ?? "{}");
+        if (!token) {
+            token = await this.getToken() ?? "";
+            if (!token) {
+                throw new Error(`Error creating booking fail to get token: ${token}`);
+            }
+        }
+        const url = `${BASE_ENDPOINT}/partner_api/v2/organizations/${ORGANIZATION_ID}/customers?filter[email]=${email}`;
+
+        const headers = {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': CONTENT_TYPE,
+            'Accept': 'application/vnd.api+json',
+        };
+
+        console.log(`getCustomer - ${url}`);
+
+        const response = await fetch(url, {
+            method: "GET",
+            headers: headers,
+        });
+
+        if (!response.ok) {
+            this.logger.error(`Error fetching customer: ${response.statusText}`);
+            this.logger.error(`Error response from light-speed: ${JSON.stringify(await response.json())}`);
+            throw new Error(`Error fetching customer: ${response.statusText}`);
+        }
+
+        const customers = await response.json();
+
+        if (customers.data.length === 0) {
+            return undefined
+        }
+
+        const customer = customers.data[0];
+
+        return customer as LightspeedGetCustomerResponse;
     }
 
     shouldAddSaleData(): boolean {
@@ -779,5 +815,11 @@ export class Lightspeed extends BaseProvider {
             lastName: lastName ? lastName : "N/A",
         };
         return bookingNameChangeOptions;
+    }
+
+    getCustomerIdFromGetCustomerResponse(getCustomerResponse: GetCustomerResponse): { customerId: string, accountNumber?: number } {
+        const customer = getCustomerResponse as LightspeedGetCustomerResponse;
+
+        return { customerId: customer.id.toString() }
     }
 }

@@ -230,6 +230,35 @@ export class ProviderService extends CacheService {
         this.logger.fatal(`user missing name or email id: ${userId}`);
         throw new Error(`Error finding user id`);
       }
+      const userProviderCourseLinkId: string = randomUUID();
+      //Try to find customer on provider
+      try {
+        const customerResponse = await provider.getCustomer(token, providerCourseId, buyer.email);
+        if (customerResponse) {
+          const customerIds = provider.getCustomerIdFromGetCustomerResponse(customerResponse);
+          if (customerIds.customerId) {
+            await this.updateCustomer({
+              id: userProviderCourseLinkId,
+              courseId: courseId,
+              providerId: providerId,
+              userId: userId,
+              accountNumber: customerIds.accountNumber ?? 0,
+              customerId: customerIds.customerId,
+            })
+            return {
+              playerNumber: customerIds.accountNumber ?? 0,
+              customerId: customerIds.customerId,
+              name: buyer.name,
+              username: buyer.handel,
+              email: buyer.email,
+              phone: buyer.phone,
+            }
+          }
+        }
+      } catch (error) {
+        this.logger.error(`provider.getCustomer error: ${JSON.stringify(error)}`);
+      }
+
       let customer: CustomerCreationData;
       const accountNumber = Math.floor(Math.random() * 90000) + 10000;
       customer = provider.getCustomerCreationData({ ...buyer, accountNumber })
@@ -257,11 +286,9 @@ export class ProviderService extends CacheService {
       if (!customerId) {
         throw new Error(`Error creating customer on provider: No Customer Id`);
       }
-      const userProviderCourseLinkId: string = randomUUID();
+
       //update user with providerCustomerId
-      await this.database
-        .insert(userProviderCourseLink)
-        .values({
+      await this.updateCustomer({
           id: userProviderCourseLinkId,
           courseId: courseId,
           providerId: providerId,
@@ -269,15 +296,29 @@ export class ProviderService extends CacheService {
           accountNumber: accountNumber,
           customerId: customerId,
         })
-        .onDuplicateKeyUpdate({ set: { customerId: sql`customerId` } }) //no op on duplicate
-        .execute()
-        .catch((err) => {
-          this.logger.error(err);
-          throw new Error(`Error updating user id`);
-        });
     }
     return customerInfo;
   };
+
+  private updateCustomer = async (
+    info: {
+      id: string;
+      customerId: string;
+      courseId: string;
+      providerId: string;
+      userId: string;
+      accountNumber: number;
+    }) => {
+    await this.database
+      .insert(userProviderCourseLink)
+      .values(info)
+      .onDuplicateKeyUpdate({ set: { customerId: sql`customerId` } }) //no op on duplicate
+      .execute()
+      .catch((err) => {
+        this.logger.error(err);
+        throw new Error(`Error updating user id`);
+      });
+  }
   /**
    * Links a provider to an entity and all the courses under that entity.
    * @Todd this will be complete at during creation of admin panel
