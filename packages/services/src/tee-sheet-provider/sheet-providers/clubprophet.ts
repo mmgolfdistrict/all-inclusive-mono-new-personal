@@ -329,8 +329,6 @@ export class clubprophet extends BaseProvider {
 
     const customer = await response.json();
 
-    // if(customer.)
-
     return customer as ClubProphetGetCustomerResponse;
   }
 
