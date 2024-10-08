@@ -683,7 +683,7 @@ export class SearchService {
       .execute();
 
     const secondHandResults = await this.database
-      .selectDistinct({ providerDate: sql`Date(${teeTimes.providerDate})` })
+      .selectDistinct({ providerDate: sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))` })
       .from(lists)
       .innerJoin(bookings, eq(bookings.listId, lists.id))
       .innerJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -700,7 +700,7 @@ export class SearchService {
           or(gte(teeTimes.availableFirstHandSpots, golfers), gte(teeTimes.availableSecondHandSpots, golfers))
         )
       )
-      .orderBy(asc(sql`Date(${teeTimes.providerDate})`))
+      .orderBy(asc(sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))`))
       .execute();
 
     const firstHandAndSecondHandResult = [...firstHandResults, ...secondHandResults];
