@@ -22,14 +22,14 @@ import { useCourseContext } from "~/contexts/CourseContext";
 import { usePreviousPath } from "~/hooks/usePreviousPath";
 import { loginSchema, type LoginSchemaType } from "~/schema/login-schema";
 import { api } from "~/utils/api";
+import { microsoftClarityEvent } from "~/utils/microsoftClarityUtils";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { createRef, useEffect, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { createRef, Fragment, useEffect, useState } from "react";
 import ReCAPTCHA from "react-google-recaptcha";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
 import { LoadingContainer } from "../loader";
-import { microsoftClarityEvent } from "~/utils/microsoftClarityUtils";
 
 export default function Login() {
   const recaptchaRef = createRef<ReCAPTCHA>();
@@ -40,11 +40,13 @@ export default function Login() {
   const { course } = useCourseContext();
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [googleIsLoading, setGoogleIsLoading] = useState(false);
+  const [credentialsLoader, setCredentialsLoader] = useState(false);
   const auditLog = api.webhooks.auditLog.useMutation();
   const { data: sessionData, status } = useSession();
   const errorKey = searchParams.get("error");
   const router = useRouter();
-
+  const pathname = usePathname();
   const event = ({ action, category, label, value }: any) => {
     (window as any).gtag("event", action, {
       event_category: category,
@@ -69,12 +71,13 @@ export default function Login() {
     if (sessionData?.user?.id && course?.id && status === "authenticated") {
       logAudit(sessionData.user.id, course.id, () => {
         window.location.reload();
-        window.location.href = `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
-          ? prevPath?.path
-            ? prevPath.path
+        window.location.href = `${window.location.origin}${
+          GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+            ? prevPath?.path
+              ? prevPath.path
+              : "/"
             : "/"
-          : "/"
-          }`;
+        }`;
       });
     }
   }, [sessionData, course, status]);
@@ -131,12 +134,15 @@ export default function Login() {
 
   const onSubmit: SubmitHandler<LoginSchemaType> = async (data) => {
     try {
-      const callbackURL = `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
-        ? prevPath?.path
-          ? prevPath.path
+      setCredentialsLoader(true);
+      setIsLoading(true)
+      const callbackURL = `${window.location.origin}${
+        GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+          ? prevPath?.path
+            ? prevPath.path
+            : "/"
           : "/"
-        : "/"
-        }`;
+      }`;
       const res = await signIn("credentials", {
         // callbackUrl: callbackURL,
         redirect: false,
@@ -146,6 +152,7 @@ export default function Login() {
           ? data.ReCAPTCHA
           : undefined,
       });
+
       if (res?.error) {
         await recaptchaRef.current?.executeAsync();
         if (res.error === "AccessDenied") {
@@ -160,10 +167,11 @@ export default function Login() {
     } catch (error) {
       toast.error(
         (error as Error)?.message ??
-        "An error occurred logging in, try another option."
+          "An error occurred logging in, try another option."
       );
     } finally {
       setIsLoading(false);
+      setCredentialsLoader(false);
     }
   };
 
@@ -189,29 +197,32 @@ export default function Login() {
 
   const facebookSignIn = async () => {
     await signIn("facebook", {
-      callbackUrl: `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
-        ? prevPath?.path
-          ? prevPath.path
+      callbackUrl: `${window.location.origin}${
+        GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+          ? prevPath?.path
+            ? prevPath.path
+            : "/"
           : "/"
-        : "/"
-        }`,
+      }`,
       redirect: true,
     });
   };
 
   const appleSignIn = async () => {
     await signIn("apple", {
-      callbackUrl: `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
-        ? prevPath?.path
-          ? prevPath.path
+      callbackUrl: `${window.location.origin}${
+        GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+          ? prevPath?.path
+            ? prevPath.path
+            : "/"
           : "/"
-        : "/"
-        }`,
+      }`,
       redirect: true,
     });
   };
-
+  //console.log("login url .....", pathname
   const googleSignIn = async () => {
+    setGoogleIsLoading(true);
     event({
       action: "SIGNIN_USING_GOOGLE",
       category: "SIGNIN",
@@ -229,17 +240,21 @@ export default function Login() {
         // }`,
         redirect: false,
       });
+      localStorage.setItem("googlestate", "loggedin");
     } catch (error) {
       console.log("error", error);
     }
   };
-
   const hasProvidersSetUp =
     process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
     process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
     process.env.NEXT_PUBLIC_APPLE_ID;
 
-  return (
+  return localStorage.getItem("googlestate") || isLoading ? (
+    <LoadingContainer isLoading={true}>
+      <div></div>
+    </LoadingContainer>
+  ) : (
     <main className="bg-secondary-white py-4 md:py-6">
       <LoadingContainer isLoading={isLoading}>
         <div></div>
@@ -253,6 +268,7 @@ export default function Login() {
           use Google to login quickly, or select sign up if you prefer to use
           another email.
         </p>
+
         {process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ? (
           <div className="w-full rounded-lg shadow-outline">
             <SquareButton
@@ -260,8 +276,14 @@ export default function Login() {
               className="flex w-full items-center justify-center gap-3 text-primary-gray shadow-google-btn"
               data-testid="login-with-google-id"
             >
-              <Google className="w-[24px]" />
-              Log In with Google
+              {googleIsLoading || localStorage.getItem("googlestate") ? (
+                <div className="w-10 h-10 border-4 border-green-500 border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                <Fragment>
+                  <Google className="w-[24px]" />
+                  Log In with Google
+                </Fragment>
+              )}
             </SquareButton>
           </div>
         ) : null}
@@ -350,10 +372,14 @@ export default function Login() {
             />
           )}
           <FilledButton
-            className="w-full rounded-full"
+            className="w-full rounded-full flex justify-center items-center"
             data-testid="login-button-id"
           >
-            Log In
+            {credentialsLoader ? (
+              <div className="w-5 h-5 border-4 border-white border-t-transparent rounded-full animate-spin "></div>
+            ) : (
+              "Log In"
+            )}
           </FilledButton>
         </form>
       </section>
