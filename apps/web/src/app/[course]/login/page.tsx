@@ -250,7 +250,7 @@ export default function Login() {
     process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
     process.env.NEXT_PUBLIC_APPLE_ID;
 
-  return localStorage.getItem("googlestate") || isLoading ? (
+  return isLoading|| localStorage.getItem("googlestate") ? (
     <LoadingContainer isLoading={true}>
       <div></div>
     </LoadingContainer>
