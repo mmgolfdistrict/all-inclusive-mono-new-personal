@@ -29,7 +29,10 @@ import type { NotificationService } from "../notification/notification.service";
 import type { HyperSwitchService } from "../payment-processor/hyperswitch.service";
 import type { SensibleService } from "../sensible/sensible.service";
 import type { Customer, ProviderService } from "../tee-sheet-provider/providers.service";
-import type { ClubProphetBookingResponse, ClubProphetTeeTimeResponse } from "../tee-sheet-provider/sheet-providers/types/clubprophet.types";
+import type {
+  ClubProphetBookingResponse,
+  ClubProphetTeeTimeResponse,
+} from "../tee-sheet-provider/sheet-providers/types/clubprophet.types";
 import type { BookingDetails, BookingResponse, ProviderAPI } from "../tee-sheet-provider/sheet-providers";
 import type { TokenizeService } from "../token/tokenize.service";
 import type { UserWaitlistService } from "../user-waitlist/userWaitlist.service";
@@ -149,7 +152,7 @@ export class BookingService {
     private readonly hyperSwitchService: HyperSwitchService,
     private readonly sensibleService: SensibleService,
     private readonly userWaitlistService: UserWaitlistService
-  ) { }
+  ) {}
 
   createCounterOffer = async (userId: string, bookingIds: string[], offerId: string, amount: number) => {
     //find owner of each booking
@@ -233,10 +236,10 @@ export class BookingService {
       // .leftJoin(userBookingOffers, eq(userBookingOffers.bookingId, bookings.id))
       .where(
         and(
-          eq(transfers.courseId,courseId),
+          eq(transfers.courseId, courseId),
           or(eq(transfers.toUserId, userId), eq(transfers.fromUserId, userId))
         )
-        )
+      )
       .orderBy(desc(transfers.createdAt))
       .execute();
 
@@ -504,8 +507,39 @@ export class BookingService {
     }
     return data.map((booking) => booking.id);
   };
+
   getOwnedTeeTimes = async (userId: string, courseId: string, _limit = 10, _cursor: string | undefined) => {
     this.logger.info(`getOwnedTeeTimes called with userId: ${userId}`);
+
+    const timezoneCorrection = await this.database
+      .select({
+        timezoneCorrection: courses.timezoneCorrection,
+      })
+      .from(courses)
+      .where(and(eq(courses.id, courseId)))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error getting course by ID: ${err}`);
+        throw new Error("Error getting course");
+      });
+
+    console.log("timezoneCorrection----->--->=", timezoneCorrection);
+
+    // const nowInCourseTimezone = dayjs().utc().format("YYYY-MM-DD HH:mm:ss");
+    // const currentTimePlus30Min = dayjs
+    //   .utc(nowInCourseTimezone)
+    //   .utcOffset(timezoneCorrection)
+    //   .add(30, "minutes")
+    //   .toISOString();
+
+    const timezoneOffset = timezoneCorrection[0]?.timezoneCorrection ?? 0;
+
+    const nowInCourseTimezone = dayjs().utcOffset(timezoneOffset).format("YYYY-MM-DD HH:mm:ss");
+
+    const currentTime = dayjs.utc(nowInCourseTimezone).toISOString();
+
+    console.log("currentTime----->--->=", nowInCourseTimezone, currentTime);
+
     const data = await this.database
       .select({
         id: teeTimes.id,
@@ -554,7 +588,7 @@ export class BookingService {
           eq(bookings.ownerId, userId),
           eq(bookings.isActive, true),
           eq(teeTimes.courseId, courseId),
-          gte(teeTimes.date, currentUtcTimestamp())
+          gte(teeTimes.date, currentTime)
         )
       )
       .groupBy(
@@ -905,7 +939,7 @@ export class BookingService {
       // status: "PENDING",
       isDeleted: false,
       // splitTeeTime: false,
-      slots
+      slots,
     };
     await this.database
       .transaction(async (transaction) => {
@@ -2263,22 +2297,22 @@ export class BookingService {
     console.log("providerDataToUpdate:");
     console.dir(providerDataToUpdate, { depth: null });
     for (const user of providerDataToUpdate) {
-
       const nameChangeOptions = provider?.getBookingNameChangeOptions({
         name: user.name || "",
         providerBookingId: firstBooking.providerBookingId,
-        providerCustomerId: typeof user.customerId === "number" ? user.customerId?.toString() : user.customerId ?? "",
+        providerCustomerId:
+          typeof user.customerId === "number" ? user.customerId?.toString() : user.customerId ?? "",
       });
 
-        await provider?.updateTeeTime(
-          token || "",
-          firstBooking?.providerCourseId || "",
-          firstBooking?.providerTeeSheetId || "",
-          firstBooking.providerBookingId,
-          nameChangeOptions,
-          user.slotId || ""
-        );
-      }
+      await provider?.updateTeeTime(
+        token || "",
+        firstBooking?.providerCourseId || "",
+        firstBooking?.providerTeeSheetId || "",
+        firstBooking.providerBookingId,
+        nameChangeOptions,
+        user.slotId || ""
+      );
+    }
 
     // }
   };
@@ -2614,40 +2648,40 @@ export class BookingService {
         console.log("ERROR in getting appsetting SENSIBLE_NOTE_TO_TEE_SHEET");
       }
 
-        const bookingData = provider.getBookingCreationData({
-          firstHandCharge: primaryGreenFeeCharge,
-          markupCharge,
-          taxCharge,
-          playerCount,
-          holes: teeTime.holes,
-          notes: details,
-          teeTimeId: teeTime.id,
-          providerTeeTimeId: teeTime.providerTeeTimeId,
-          startTime: teeTime.providerDate,
-          greenFees: teeTime.greenFees / 100,
-          cartFees: teeTime.cartFees / 100,
-          providerCustomerId: providerCustomer.customerId?.toString() ?? null,
-          providerAccountNumber: providerCustomer.playerNumber,
-          totalAmountPaid: primaryGreenFeeCharge / 100 + taxCharge - markupCharge,
-          name: providerCustomer.name,
-          email: providerCustomer.email,
-          phone: providerCustomer.phone,
-        })
+      const bookingData = provider.getBookingCreationData({
+        firstHandCharge: primaryGreenFeeCharge,
+        markupCharge,
+        taxCharge,
+        playerCount,
+        holes: teeTime.holes,
+        notes: details,
+        teeTimeId: teeTime.id,
+        providerTeeTimeId: teeTime.providerTeeTimeId,
+        startTime: teeTime.providerDate,
+        greenFees: teeTime.greenFees / 100,
+        cartFees: teeTime.cartFees / 100,
+        providerCustomerId: providerCustomer.customerId?.toString() ?? null,
+        providerAccountNumber: providerCustomer.playerNumber,
+        totalAmountPaid: primaryGreenFeeCharge / 100 + taxCharge - markupCharge,
+        name: providerCustomer.name,
+        email: providerCustomer.email,
+        phone: providerCustomer.phone,
+      });
 
-        booking = await provider
-          .createBooking(token, teeTime.providerCourseId!, teeTime.providerTeeSheetId!, bookingData)
-          .catch((err) => {
-            this.logger.error(err);
-            this.loggerService.errorLog({
-              userId: userId,
-              url: "/reserveBooking",
-              userAgent: "",
-              message: "TEE TIME BOOKING FAILED ON PROVIDER",
-              stackTrace: `first hand booking at provider failed for teetime ${teeTime.id}`,
-              additionalDetailsJSON: err,
-            });
-            throw new Error(`Error creating booking`);
+      booking = await provider
+        .createBooking(token, teeTime.providerCourseId!, teeTime.providerTeeSheetId!, bookingData)
+        .catch((err) => {
+          this.logger.error(err);
+          this.loggerService.errorLog({
+            userId: userId,
+            url: "/reserveBooking",
+            userAgent: "",
+            message: "TEE TIME BOOKING FAILED ON PROVIDER",
+            stackTrace: `first hand booking at provider failed for teetime ${teeTime.id}`,
+            additionalDetailsJSON: err,
           });
+          throw new Error(`Error creating booking`);
+        });
       // }
       if (provider.shouldAddSaleData()) {
         try {
@@ -2657,8 +2691,8 @@ export class BookingService {
             providerCourseId: teeTime.providerCourseId!,
             providerTeeSheetId: teeTime.providerTeeSheetId!,
             totalAmountPaid: (pricePerGolfer / 100 + taxCharge - markupCharge) * playerCount,
-            token: token
-          }
+            token: token,
+          };
           const addSalesOptions = provider.getSalesDataOptions(booking, bookingsDetails);
           await provider.addSalesData(addSalesOptions);
         } catch (error) {
@@ -2822,8 +2856,9 @@ export class BookingService {
             url: "/confirmBooking",
             userAgent: "",
             message: "ERROR CONFIRMING BOOKING",
-            stackTrace: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${booking?.teeTimeId ?? ""
-              }`,
+            stackTrace: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${
+              booking?.teeTimeId ?? ""
+            }`,
             additionalDetailsJSON: err,
           });
         });
@@ -3065,17 +3100,17 @@ export class BookingService {
     if (teeTime.availableFirstHandSpots >= golfersCount) {
       const { provider, token } = await this.providerService.getProviderAndKey(
         teeTime.internalId!,
-          teeTime.courseId,
-          teeTime.providerCourseConfiguration!
-        );
-        const providerDetailsGetTeeTime = await provider.getTeeTimes(
-          token,
-          teeTime.providerCourseId ?? "",
-          teeTime.providerTeeSheetId!,
-          `${teeTime.time}`.length === 3 ? `0${teeTime.time}` : `${teeTime.time}`,
-          `${teeTime.time + 1}`.length === 3 ? `0${teeTime.time + 1}` : `${teeTime.time + 1}`,
-          teeTime.providerDate.split("T")[0] ?? ""
-        );
+        teeTime.courseId,
+        teeTime.providerCourseConfiguration!
+      );
+      const providerDetailsGetTeeTime = await provider.getTeeTimes(
+        token,
+        teeTime.providerCourseId ?? "",
+        teeTime.providerTeeSheetId!,
+        `${teeTime.time}`.length === 3 ? `0${teeTime.time}` : `${teeTime.time}`,
+        `${teeTime.time + 1}`.length === 3 ? `0${teeTime.time + 1}` : `${teeTime.time + 1}`,
+        teeTime.providerDate.split("T")[0] ?? ""
+      );
       if (providerDetailsGetTeeTime?.length) {
         const teeTimeData = provider.findTeeTimeById(teeTime.providerTeeTimeId, providerDetailsGetTeeTime);
 
