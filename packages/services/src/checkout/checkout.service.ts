@@ -177,7 +177,7 @@ export class CheckoutService {
         console.error("User exceeds max bookings per period.");
         return {
           success: false,
-          message: "You have already reached the maximum number of bookings allowed for a day.",
+          message: "You have already reached the maximum number of bookings allowed for a 24 hour period.",
         };
       }
 
@@ -185,7 +185,7 @@ export class CheckoutService {
         console.error("User exceeds max rounds per period.");
         return {
           success: false,
-          message: "You have already exceeded the maximum number of rounds allowed per day.",
+          message: "You have already exceeded the maximum number of rounds allowed per 24 hour period.",
         };
       }
 
@@ -526,16 +526,16 @@ export class CheckoutService {
 
     if (teeTime.providerCourseId && teeTime.providerTeeSheetId && formattedDate) {
       let response;
-        response = await provider.indexTeeTime(
-          formattedDate,
-          teeTime.providerCourseId,
-          teeTime.providerTeeSheetId,
-          provider,
-          token,
-          teeTime.time,
-          teeTime.id,
-          teeTime.providerTeeTimeId
-        )
+      response = await provider.indexTeeTime(
+        formattedDate,
+        teeTime.providerCourseId,
+        teeTime.providerTeeSheetId,
+        provider,
+        token,
+        teeTime.time,
+        teeTime.id,
+        teeTime.providerTeeTimeId
+      );
       if (response?.error) {
         errors.push({
           errorType: CartValidationErrors.TEE_TIME_NOT_AVAILABLE,
