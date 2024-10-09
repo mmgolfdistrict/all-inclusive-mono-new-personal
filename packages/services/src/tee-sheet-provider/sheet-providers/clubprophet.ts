@@ -6,10 +6,11 @@ import type {
   ClubProphetBookingResponse,
   ClubProphetCustomerCreationData,
   ClubProphetCustomerCreationResponse,
+  ClubProphetGetCustomerResponse,
   ClubProphetTeeTimeResponse,
 } from "./types/clubprophet.types";
-import type { ForeUpBookingNameChangeOptions, TeeTimeUpdateRequest } from "./types/foreup.type";
-import type { BookingNameChangeOptions, BookingResponse, BuyerData, CustomerCreationData, CustomerData, NameChangeCustomerDetails, ProviderAPI, SalesDataOptions, TeeTimeData, TeeTimeResponse } from "./types/interface";
+import type { TeeTimeUpdateRequest } from "./types/foreup.type";
+import type { BookingNameChangeOptions, BookingResponse, BuyerData, CustomerCreationData, CustomerData, GetCustomerResponse, NameChangeCustomerDetails, ProviderAPI, SalesDataOptions, TeeTimeData, TeeTimeResponse } from "./types/interface";
 import { BaseProvider } from "./types/interface";
 import { db, eq } from "@golf-district/database";
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
@@ -307,8 +308,28 @@ export class clubprophet extends BaseProvider {
     return {} as BookingResponse;
   }
 
-  async getCustomer(): Promise<CustomerData> {
-    return {} as CustomerData;
+  async getCustomer(token: string, courseId: string, email: string): Promise<ClubProphetGetCustomerResponse | undefined> {
+    const endpoint = this.getBasePoint();
+    const url = `${endpoint}/thirdpartyapi/api/v1/Customer/MemberByEMail/${email}`;
+
+    const headers = this.getHeaders(token);
+
+    console.log(`getCustomer - ${url}`);
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: headers,
+    });
+
+    if (!response.ok) {
+      this.logger.error(`Error fetching customer: ${response.statusText}`);
+      this.logger.error(`Error response from club-prophet: ${JSON.stringify(await response.json())}`);
+      throw new Error(`Error fetching customer: ${response.statusText}`);
+    }
+
+    const customer = await response.json();
+
+    return customer as ClubProphetGetCustomerResponse;
   }
 
   shouldAddSaleData(): boolean {
@@ -500,5 +521,11 @@ export class clubprophet extends BaseProvider {
 
   getBookingNameChangeOptions(_customerDetails: NameChangeCustomerDetails): BookingNameChangeOptions {
     return {} as BookingNameChangeOptions;
+  }
+
+  getCustomerIdFromGetCustomerResponse(getCustomerResponse: GetCustomerResponse): { customerId: string, accountNumber?: number } {
+    const customer = getCustomerResponse as ClubProphetGetCustomerResponse;
+
+    return { customerId: customer.memberNo.toString() };
   }
 }

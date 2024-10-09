@@ -10,8 +10,9 @@ import type {
   TeeTimeUpdateRequest,
   TeeTimeResponse as ForeupTeeTimeResponse,
   ForeUpBookingNameChangeOptions,
+  ForeUpGetCustomerResponse,
 } from "./types/foreup.type";
-import type { BookingResponse, CustomerCreationData, NameChangeCustomerDetails, SalesDataOptions, TeeTimeResponse } from "./types/interface";
+import type { BookingResponse, CustomerCreationData, GetCustomerResponse, NameChangeCustomerDetails, SalesDataOptions, TeeTimeResponse } from "./types/interface";
 import type { BuyerData, ProviderAPI, TeeTimeData } from "./types/interface";
 import { BaseProvider, type BookingDetails } from "./types/interface";
 import { db, eq } from "@golf-district/database";
@@ -219,9 +220,9 @@ export class foreUp extends BaseProvider {
     return (await response.json()) as ForeUpCustomerCreationResponse;
   }
 
-  async getCustomer(token: string, courseId: string, customerId: string): Promise<ForeUpCustomerCreationResponse> {
+  async getCustomer(token: string, courseId: string, email: string): Promise<ForeUpGetCustomerResponse | undefined> {
     const endpoint = this.getBasePoint();
-    const url = `${endpoint}/courses/${courseId}/customers/${customerId}`;
+    const url = `${endpoint}/courses/${courseId}/customers?email=eq:${email}`;
 
     const headers = this.getHeaders(token);
 
@@ -238,7 +239,15 @@ export class foreUp extends BaseProvider {
       throw new Error(`Error fetching customer: ${response.statusText}`);
     }
 
-    return (await response.json()) as ForeUpCustomerCreationResponse;
+    const customers = await response.json();
+
+    if (customers.data.length === 0) {
+      return undefined
+    }
+
+    const customer = customers.data[0];
+
+    return customer as ForeUpGetCustomerResponse;
   }
 
   async addSalesData(options: SalesDataOptions): Promise<void> {
@@ -663,6 +672,12 @@ export class foreUp extends BaseProvider {
       },
     };
     return bookingNameChangeOptions;
+  }
+
+  getCustomerIdFromGetCustomerResponse(getCustomerResponse: GetCustomerResponse): { customerId: string, accountNumber?: number } {
+    const customer = getCustomerResponse as ForeUpGetCustomerResponse;
+
+    return { customerId: customer.id.toString(), accountNumber: customer.attributes.account_number };
   }
 }
 
