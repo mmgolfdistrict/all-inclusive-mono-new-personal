@@ -182,15 +182,15 @@ export const authConfig: NextAuthConfig = {
         const getUserByIdServide = await userService.getUserById(user.id);
         console.log("getUserByIdServide", getUserByIdServide);
 
-        // if (!getUserByIdServide?.handle) {
-        //   if (account && account.provider) {
-        //     const updateData = {
-        //       ...user,
-        //       handle: username,
-        //     };
-        //     await userService.updateUser(user.id, updateData);
-        //   }
-        // }
+        if (!getUserByIdServide?.handle) {
+          if (account && account.provider) {
+            const updateData = {
+              ...user,
+              handle: username,
+            };
+            await userService.updateUser(user.id, updateData);
+          }
+        }
       }
       return true;
     },
