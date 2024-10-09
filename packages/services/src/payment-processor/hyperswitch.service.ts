@@ -259,6 +259,19 @@ export class HyperSwitchService {
     return { status: "success" };
   };
 
+sendEmailForBookingFailed = async (paymentId: string) => {
+    const adminEmail: string = process.env.ADMIN_EMAIL_LIST || "nara@golfdistrict.com";
+    const emailAterSplit = adminEmail.split(",");
+    emailAterSplit.map(async (email) => {
+      await this.notificationService.sendEmail(
+        email,
+        "A booking has failed ",
+        `Hello Admin, A booking with payment id ${paymentId} failed`
+      );
+    });
+    return { status: "success" };
+  };
+  
   cancelHyperswitchPaymentById = async (paymentMethodId: string) => {
     const options = {
       method: "POST",

@@ -2701,52 +2701,47 @@ export class BookingService {
       }
     } catch (e) {
       console.log("BOOKING FAILED ON PROVIDER, INITIATING REFUND FOR PAYMENT_ID", payment_id);
-
-      await this.hyperSwitchService.refundPayment(payment_id);
-
-      const [user] = await this.database.select().from(users).where(eq(users.id, userId));
-      if (!user) {
-        this.logger.warn(`User not found: ${userId}`);
-        throw new Error("User not found");
-      }
-
-      const template = {
-        CustomerFirstName: user?.handle ?? user.name ?? "",
-        CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${teeTime?.cdnKey}.${teeTime?.extension}`,
-        CourseURL: teeTime?.websiteURL || "",
-        CourseName: teeTime?.courseName || "-",
-        FacilityName: teeTime?.entityName || "-",
-        PlayDateTime:
-          dayjs(teeTime?.providerDate)
-            .utcOffset(teeTime.timeZoneCorrection || "-06:00")
-            .format("MM/DD/YYYY h:mm A") || "-",
-        HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
-      };
-      await this.notificationService.createNotification(
-        userId || "",
-        "Refund Initiated",
-        "Refund Initiated",
-        teeTime?.courseId,
-        process.env.SENDGRID_REFUND_EMAIL_TEMPLATE_ID ?? "d-79ca4be6569940cdb19dd2b607c17221",
-        template
-      );
-
-      this.loggerService.auditLog({
-        id: randomUUID(),
-        userId,
-        teeTimeId,
-        bookingId: "",
-        listingId: "",
-        courseId: teeTime?.courseId,
-        eventId: "REFUND_INITIATED",
-        json: `{paymentId:${payment_id}}`,
-      });
-
+      this.hyperSwitchService.sendEmailForBookingFailed(paymentId);
       throw "Booking failed on provider";
+      // await this.hyperSwitchService.refundPayment(payment_id);
+      // const [user] = await this.database.select().from(users).where(eq(users.id, userId));
+      // if (!user) {
+      //   this.logger.warn(`User not found: ${userId}`);
+      //   throw new Error("User not found");
+      // }
+      // const template = {
+      //   CustomerFirstName: user?.handle ?? user.name ?? "",
+      //   CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${teeTime?.cdnKey}.${teeTime?.extension}`,
+      //   CourseURL: teeTime?.websiteURL || "",
+      //   CourseName: teeTime?.courseName || "-",
+      //   FacilityName: teeTime?.entityName || "-",
+      //   PlayDateTime:
+      //     dayjs(teeTime?.providerDate)
+      //       .utcOffset(teeTime.timeZoneCorrection || "-06:00")
+      //       .format("MM/DD/YYYY h:mm A") || "-",
+      //   HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+      // };
+      // await this.notificationService.createNotification(
+      //   userId || "",
+      //   "Refund Initiated",
+      //   "Refund Initiated",
+      //   teeTime?.courseId,
+      //   process.env.SENDGRID_REFUND_EMAIL_TEMPLATE_ID ?? "d-79ca4be6569940cdb19dd2b607c17221",
+      //   template
+      // );
+      // this.loggerService.auditLog({
+      //   id: randomUUID(),
+      //   userId,
+      //   teeTimeId,
+      //   bookingId: "",
+      //   listingId: "",
+      //   courseId: teeTime?.courseId,
+      //   eventId: "REFUND_INITIATED",
+      //   json: `{paymentId:${payment_id}}`,
+      // });
     }
     providerBookingIds = teeProvider.getSlotIdsFromBooking(booking);
     providerBookingId = teeProvider.getBookingId(booking);
-
     console.log(`Creating tokenized booking`);
     //create tokenized bookings
     const bookingId = await this.tokenizeService
