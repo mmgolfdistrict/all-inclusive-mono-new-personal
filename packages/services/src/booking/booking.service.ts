@@ -22,6 +22,7 @@ import { currentUtcTimestamp, dateToUtcTimestamp, formatMoney, formatTime } from
 import Logger from "@golf-district/shared/src/logger";
 import dayjs from "dayjs";
 import UTC from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
 import { alias } from "drizzle-orm/mysql-core";
 import { appSettingService } from "../app-settings/initialized";
 import type { CustomerCart, ProductData } from "../checkout/types";
@@ -40,6 +41,7 @@ import type { LoggerService } from "../webhooks/logging.service";
 import type { TeeTimeResponse as ForeupTeeTimeResponse } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
 
 dayjs.extend(UTC);
+dayjs.extend(timezone);
 
 interface TeeTimeData {
   courseId: string;
@@ -511,9 +513,9 @@ export class BookingService {
   getOwnedTeeTimes = async (userId: string, courseId: string, _limit = 10, _cursor: string | undefined) => {
     this.logger.info(`getOwnedTeeTimes called with userId: ${userId}`);
 
-    const timezoneCorrection = await this.database
+    const courseTimezoneISO = await this.database
       .select({
-        timezoneCorrection: courses.timezoneCorrection,
+        timezoneISO: courses.timezoneISO,
       })
       .from(courses)
       .where(and(eq(courses.id, courseId)))
@@ -523,22 +525,10 @@ export class BookingService {
         throw new Error("Error getting course");
       });
 
-    console.log("timezoneCorrection----->--->=", timezoneCorrection);
+    const timezoneOffset = courseTimezoneISO[0]?.timezoneISO ?? "America/Los_Angeles";
+    const nowInCourseTimezone = dayjs().utc().tz(timezoneOffset).format("YYYY-MM-DD HH:mm:ss");
 
-    // const nowInCourseTimezone = dayjs().utc().format("YYYY-MM-DD HH:mm:ss");
-    // const currentTimePlus30Min = dayjs
-    //   .utc(nowInCourseTimezone)
-    //   .utcOffset(timezoneCorrection)
-    //   .add(30, "minutes")
-    //   .toISOString();
-
-    const timezoneOffset = timezoneCorrection[0]?.timezoneCorrection ?? 0;
-
-    const nowInCourseTimezone = dayjs().utcOffset(timezoneOffset).format("YYYY-MM-DD HH:mm:ss");
-
-    const currentTime = dayjs.utc(nowInCourseTimezone).toISOString();
-
-    console.log("currentTime----->--->=", nowInCourseTimezone, currentTime);
+    console.log("nowInCourseTimezone-----currentTime----->", nowInCourseTimezone);
 
     const data = await this.database
       .select({
@@ -588,7 +578,7 @@ export class BookingService {
           eq(bookings.ownerId, userId),
           eq(bookings.isActive, true),
           eq(teeTimes.courseId, courseId),
-          gte(teeTimes.date, currentTime)
+          gte(teeTimes.date, nowInCourseTimezone)
         )
       )
       .groupBy(
