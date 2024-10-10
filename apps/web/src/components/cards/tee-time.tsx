@@ -98,12 +98,6 @@ export const TeeTime = ({
     }
     return status === "UNLISTED" || status === "FIRST_HAND" ? "1" : players;
   });
-  console.log(
-    "allowedPlayers",
-    allowedPlayers,
-    availableSlots,
-    selectedPlayers
-  );
 
   const timezoneCorrection = course?.timezoneCorrection;
   const [isMakeAnOfferOpen, setIsMakeAnOfferOpen] = useState<boolean>(false);

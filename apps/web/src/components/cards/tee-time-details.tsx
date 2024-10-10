@@ -32,14 +32,15 @@ export const TeeTimeDetails = ({
   const { course } = useCourseContext();
   const courseId = course?.id;
 
-  const { data: NumberOfPlayers } =
+  const { data: allowedPlayers } =
     api.course.getNumberOfPlayersByCourse.useQuery({
       courseId: courseId ?? "",
     });
+  const numberOfPlayers = allowedPlayers?.numberOfPlayers;
 
   const [players, setPlayers] = useState<string>(
-    NumberOfPlayers?.length !== 0 && NumberOfPlayers !== undefined
-      ? String(NumberOfPlayers[0])
+    numberOfPlayers?.length !== 0 && numberOfPlayers !== undefined
+      ? String(numberOfPlayers[0])
       : "1"
   );
 
@@ -164,13 +165,18 @@ export const TeeTimeDetails = ({
           <div className="flex items-center gap-4">
             <Players className="w-[25px]" />
             <ChoosePlayers
-              players={players}
+              players={
+                allowedPlayers?.selectStatus === "ALL_PLAYERS"
+                  ? String(data?.availableSlots)
+                  : players
+              }
               setPlayers={setPlayers}
               playersOptions={PlayersOptions}
               availableSlots={data?.availableSlots ?? 0}
               teeTimeId={teeTimeId}
-              numberOfPlayers={NumberOfPlayers ? NumberOfPlayers : []}
+              numberOfPlayers={numberOfPlayers ? numberOfPlayers : []}
               status={"FIRST_HAND"}
+              isDisabled={allowedPlayers?.selectStatus === "ALL_PLAYERS"}
             />
           </div>
           <div className="flex flex-col flex-wrap justify-between gap-2 md:flex-row">
