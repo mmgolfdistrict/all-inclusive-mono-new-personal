@@ -68,6 +68,7 @@ export const UserInNav = ({ alwaysShow }: { alwaysShow?: boolean }) => {
         await signOut();
       }
     });
+    localStorage.removeItem("googlestate");
   };
 
   return (
