@@ -23,6 +23,12 @@ const errorMessages: Record<string, string> = {
   "325": "Required fields are missing from the request.",
   "326": "Invalid data in one or more request fields.",
   "327": "Void request was unsuccessful.",
+  "401":"API key not provided or invalid API key used.",
+  "404":"Unrecognized request URL",
+  "405":"The HTTP method is not applicable for this API",
+  "422":"Please pass the data in the expected format",
+  "400" :"Ensure the webhook body is correctly formatted and try again.",
+  "500":"Please try again later. If the issue persists",
 };
 
 export const getErrorMessageById = (errorId: string): string => {
