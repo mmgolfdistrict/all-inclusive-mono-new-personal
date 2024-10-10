@@ -2732,6 +2732,10 @@ export class BookingService {
     }
     providerBookingIds = teeProvider.getSlotIdsFromBooking(booking);
     providerBookingId = teeProvider.getBookingId(booking);
+    if (!providerBookingId) {
+      this.logger.error(`No booking id found in response from provider: ${JSON.stringify(booking)}`);
+      throw new Error("No booking id found in response from provider");
+    }
     console.log(`Creating tokenized booking`);
     //create tokenized bookings
     const bookingId = await this.tokenizeService
