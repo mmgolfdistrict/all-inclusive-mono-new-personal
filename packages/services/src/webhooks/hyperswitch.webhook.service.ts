@@ -787,7 +787,7 @@ export class HyperSwitchWebhookService {
       token
     );
 
-    if (!buyerCustomer?.playerNumber) {
+    if (!buyerCustomer?.customerId || !buyerCustomer?.playerNumber) {
       this.logger.error(`Error creating or finding customer`);
       this.loggerService.errorLog({
         userId: customer_id,
@@ -809,7 +809,7 @@ export class HyperSwitchWebhookService {
       token
     );
 
-    if (!sellerCustomer?.playerNumber) {
+    if (!sellerCustomer.customerId || !sellerCustomer?.playerNumber) {
       this.logger.error(`Error creating or finding customer`);
       this.loggerService.errorLog({
         userId: firstBooking.ownerId,
@@ -1082,11 +1082,26 @@ export class HyperSwitchWebhookService {
         firstBooking?.greenFeesPerPlayer * (firstBooking.playerCount - (listedSlotsCount ?? 0)) +
         (firstBooking?.weatherGuaranteeAmount ?? 0) +
         firstBooking?.charityCharge;
+      if (!providerBookingId) {
+        this.logger.error("Booking failed on provider, Can't find provider booking id");
+        await this.loggerService.errorLog({
+          userId: customer_id,
+          url: "/handleSecondHandItem",
+          userAgent: "",
+          message: "ERROR BOOKING TEE TIME",
+          stackTrace: `Error booking tee time for tee time id ${existingTeeTime?.id}`,
+          additionalDetailsJSON: JSON.stringify({
+            providerBookingId: providerBookingId,
+            bookingsIds: bookingsIds
+          })
+        })
+        throw new Error("Booking failed on provider, Can't find provider booking id");
+      }
       if (newBooking.data?.bookingType === "SECOND") {
         bookingsToCreate.push({
           id: bookingId,
           // purchasedAt: currentUtcTimestamp(),
-          providerBookingId: providerBookingId || "",
+          providerBookingId: providerBookingId,
           isListed: false,
           numberOfHoles: firstBooking.numberOfHoles,
           minimumOfferPrice: 0,

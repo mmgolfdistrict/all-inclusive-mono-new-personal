@@ -176,6 +176,7 @@ export class ProviderService extends CacheService {
     provider: ProviderAPI,
     token: string
   ) => {
+    const accountNumber = Math.floor(Math.random() * 90000) + 10000;
     const [buyer] = await this.database
       .select({
         id: users.id,
@@ -242,11 +243,11 @@ export class ProviderService extends CacheService {
               courseId: courseId,
               providerId: providerId,
               userId: userId,
-              accountNumber: customerIds.accountNumber ?? 0,
+              accountNumber: customerIds.accountNumber ?? accountNumber,
               customerId: customerIds.customerId,
             })
             return {
-              playerNumber: customerIds.accountNumber ?? 0,
+              playerNumber: customerIds.accountNumber ?? accountNumber,
               customerId: customerIds.customerId,
               name: buyer.name,
               username: buyer.handel,
@@ -260,7 +261,6 @@ export class ProviderService extends CacheService {
       }
 
       let customer: CustomerCreationData;
-      const accountNumber = Math.floor(Math.random() * 90000) + 10000;
       customer = provider.getCustomerCreationData({ ...buyer, accountNumber })
       if (!customer) {
         this.logger.fatal(`Course internal Id doesn't match for user: ${userId}`);
