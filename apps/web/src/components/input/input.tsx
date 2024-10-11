@@ -22,6 +22,7 @@ export const Input = ({
   showInfoTooltip = false,
   content,
   inputRef,
+  autoComplete,
   ...props
 }: InputProps) => {
   return (
@@ -38,6 +39,15 @@ export const Input = ({
         )}
       </div>
       {
+        autoComplete && inputRef?
+        <input
+            className={`rounded-lg bg-secondary-white px-4 py-3 text-[14px] text-gray-500 outline-none text-ellipsis`}
+            // @ts-ignore
+            {...register(name)}
+            {...props}
+            ref={inputRef}
+            autoComplete="new-password"
+         />:
         inputRef ?
           <input
             className={`rounded-lg bg-secondary-white px-4 py-3 text-[14px] text-gray-500 outline-none text-ellipsis`}

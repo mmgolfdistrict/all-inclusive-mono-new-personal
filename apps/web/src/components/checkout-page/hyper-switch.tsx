@@ -53,15 +53,15 @@ export const HyperSwitch = ({
   listingId: string | undefined;
   setIsLoading?: (isLoading: boolean) => void;
   playerCount: string | undefined;
+  // maxReservation: MaxReservationResponse;
 }) => {
   const [options, setOptions] = useState<Options | undefined>(undefined);
   const { user } = useUserContext();
   const { course } = useCourseContext();
-  const checkout = api.checkout.buildCheckoutSession.useMutation();
+  const { mutateAsync: checkout, error: err } = api.checkout.buildCheckoutSession.useMutation();
   const [cartId, setCartId] = useState<string>("");
   const [localCartData, setLocalCartData] = useState<unknown[]>(cartData);
   const [error, setError] = useState<undefined | string>(undefined);
-  const callingRef = useRef<boolean>(false);
   const [nextaction, setNextaction] = useState<NextAction | undefined>(
     undefined
   );
@@ -74,10 +74,9 @@ export const HyperSwitch = ({
   const buildSession = async () => {
     if (!user) return;
     try {
-      callingRef.current = true;
       setError(undefined);
       // setIsLoadingSession(true);
-      const data = (await checkout.mutateAsync({
+      const data = (await checkout({
         userId: user.id,
         customerId: user.id,
         courseId: course?.id ?? "",
@@ -94,6 +93,7 @@ export const HyperSwitch = ({
         cart: cartData,
         cartId,
       })) as CreatePaymentResponse;
+
       if (data?.next_action) {
         setNextaction(data?.next_action);
         setPaymentId(data?.paymentId);
@@ -109,10 +109,8 @@ export const HyperSwitch = ({
       setLocalCartData(cartData);
       setCartId(data.cartId);
       // setIsLoadingSession(false);
-      callingRef.current = false;
     } catch (error) {
       // setIsLoadingSession(false);
-      callingRef.current = false;
       setError(
         (error?.message as string) ??
         "An error occurred building checkout seesion."
@@ -121,7 +119,6 @@ export const HyperSwitch = ({
   };
 
   useEffect(() => {
-    if (callingRef.current) return;
     if (!user) return;
     let isEqualCompare = true;
     for (let i = 0; i < cartData.length; i++) {
@@ -136,6 +133,12 @@ export const HyperSwitch = ({
       }
     }
   }, [user, options, cartData]);
+
+  useEffect(() => {
+    if (err?.data?.httpStatus === 504) {
+      setError("Session timed out. Please try again.");
+    }
+  }, [err]);
 
   if (
     setIsLoading &&
@@ -167,6 +170,7 @@ export const HyperSwitch = ({
             teeTimeDate={teeTimeDate}
             listingId={listingId ?? ""}
             playerCount={playerCount}
+          // maxReservation={maxReservation}
           />
         </HyperElements>
       ) : nextaction ? (

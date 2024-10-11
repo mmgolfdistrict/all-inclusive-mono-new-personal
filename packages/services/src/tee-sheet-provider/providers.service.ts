@@ -7,17 +7,16 @@ import { userProviderCourseLink } from "@golf-district/database/schema/userProvi
 import { users } from "@golf-district/database/schema/users";
 import Logger from "@golf-district/shared/src/logger";
 import { CacheService } from "../infura/cache.service";
-import type { BookingResponse, ForeUpCredentials, TeeTimeResponse } from "./sheet-providers";
+import type { ForeUpCredentials } from "./sheet-providers";
 import { foreUp, type ProviderAPI } from "./sheet-providers";
 import { clubprophet } from "./sheet-providers/clubprophet";
+
 import type {
-  ClubProphetCustomerCreationData,
-  ClubProphetCustomerCreationResponse,
-} from "./sheet-providers/types/clubprophet.types";
-import type {
-  CustomerCreationData as ForeUpCustomerCreationData,
-  CustomerData as ForeUpCustomerCreationResponse,
-} from "./sheet-providers/types/foreup.type";
+  BookingResponse,
+  CustomerCreationData,
+  TeeTimeResponse,
+} from "./sheet-providers/types/interface";
+import { Lightspeed } from "./sheet-providers/lightspeed";
 
 export interface Customer {
   playerNumber: number | null;
@@ -50,7 +49,7 @@ export class ProviderService extends CacheService {
   ) {
     super(redisUrl, redisToken, Logger(ProviderService.name));
     //this will need to be refactored to allow for providers with different credentials per course
-    this.teeSheetProviders = [new foreUp(foreUpCredentials), new clubprophet(providerConfiguration)];
+    this.teeSheetProviders = [new foreUp(foreUpCredentials), new clubprophet(providerConfiguration), new Lightspeed(providerConfiguration, new CacheService(redisUrl, redisToken))];
   }
 
   /**
@@ -66,12 +65,6 @@ export class ProviderService extends CacheService {
   ): Promise<{ provider: ProviderAPI; token: string }> => {
     this.logger.info(`getProvider called with providerId: ${internalProviderIdentifier}`);
     const provider = this.teeSheetProviders.find((p) => p.providerId === internalProviderIdentifier);
-
-    if (provider && internalProviderIdentifier == "club-prophet") {
-      // remove after adding
-      provider.providerConfiguration = providerCourseConfiguration;
-    }
-
     if (!provider) {
       this.logger.fatal(`Provider with ID ${internalProviderIdentifier} not found`);
       throw new Error(`Provider with ID ${internalProviderIdentifier} not found`);
@@ -111,6 +104,7 @@ export class ProviderService extends CacheService {
   ): Promise<TeeTimeResponse[]> {
     this.logger.info(`getTeeTimes called with courseId: ${courseId}`);
     const { provider, token } = await this.getProviderAndKey(providerId, courseId);
+
     return provider.getTeeTimes(token, courseId, teeSheetId, startTime, endTime, date);
   }
 
@@ -129,6 +123,7 @@ export class ProviderService extends CacheService {
   ): Promise<BookingResponse> {
     this.logger.info(`createBooking called with courseId: ${courseId}`);
     const { provider, token } = await this.getProviderAndKey(providerId, courseId);
+
     return provider.createBooking(token, courseId, teeTimeId, options);
   }
 
@@ -149,6 +144,7 @@ export class ProviderService extends CacheService {
   ): Promise<BookingResponse> {
     this.logger.info(`updateTeeTime called with courseId: ${courseId}`);
     const { provider, token } = await this.getProviderAndKey(providerId, courseId);
+
     return provider.updateTeeTime(token, courseId, teeTimeId, bookingId, options, slotId);
   }
 
@@ -180,6 +176,7 @@ export class ProviderService extends CacheService {
     provider: ProviderAPI,
     token: string
   ) => {
+    const accountNumber = Math.floor(Math.random() * 90000) + 10000;
     const [buyer] = await this.database
       .select({
         id: users.id,
@@ -216,6 +213,7 @@ export class ProviderService extends CacheService {
       this.logger.fatal(`user not found id: ${userId}`);
       throw new Error(`Error finding user id`);
     }
+    console.log("BUYER: ", buyer);
     let customerInfo = {
       playerNumber: buyer.providerAccountNumber,
       customerId: buyer.providerCustomerId,
@@ -224,6 +222,7 @@ export class ProviderService extends CacheService {
       email: buyer.email,
       phone: buyer.phone,
     };
+    console.log("CUSTOMERINFO:", customerInfo);
     if (buyer.providerAccountNumber && buyer.providerCustomerId) {
       return customerInfo;
     }
@@ -232,55 +231,46 @@ export class ProviderService extends CacheService {
         this.logger.fatal(`user missing name or email id: ${userId}`);
         throw new Error(`Error finding user id`);
       }
-      let customer;
-      const accountNumber = Math.floor(Math.random() * 90000) + 10000;
-      if (buyer.internalId === "fore-up") {
-        const nameOfCustomer = buyer.name.split(" ");
-        customer = {
-          type: "customer",
-          //@ts-ignore
-          attributes: {
-            username: buyer.handel ?? "",
-            email_subscribed: buyer.emailNotification ?? "",
-            taxable: true,
-            contact_info: {
-              account_number: accountNumber,
-              phone_number: buyer.phone ?? "",
-              address_1: buyer.address1 ?? "",
-              first_name: nameOfCustomer?.[0] ? nameOfCustomer[0] ?? "guest" : "guest",
-              last_name: nameOfCustomer?.[1] ? nameOfCustomer[1] : "N/A",
+      const userProviderCourseLinkId: string = randomUUID();
+      //Try to find customer on provider
+      try {
+        const customerResponse = await provider.getCustomer(token, providerCourseId, buyer.email);
+        if (customerResponse) {
+          const customerIds = provider.getCustomerIdFromGetCustomerResponse(customerResponse);
+          if (customerIds.customerId) {
+            await this.updateCustomer({
+              id: userProviderCourseLinkId,
+              courseId: courseId,
+              providerId: providerId,
+              userId: userId,
+              accountNumber: customerIds.accountNumber ?? accountNumber,
+              customerId: customerIds.customerId,
+            })
+            return {
+              playerNumber: customerIds.accountNumber ?? accountNumber,
+              customerId: customerIds.customerId,
+              name: buyer.name,
+              username: buyer.handel,
               email: buyer.email,
-            },
-          },
-        } as ForeUpCustomerCreationData;
-      }
-      if (buyer.internalId === "club-prophet") {
-        const nameOfCustomer = buyer.name.split(" ");
-        const firstName = nameOfCustomer?.[0] ? nameOfCustomer[0] : "guest";
-        const lastName = nameOfCustomer?.[1] ? nameOfCustomer[1] : "N/A";
-        customer = {
-          email: buyer.email,
-          phone: buyer.phone,
-          firstName,
-          lastName,
-        } as ClubProphetCustomerCreationData;
+              phone: buyer.phone,
+            }
+          }
+        }
+      } catch (error) {
+        this.logger.error(`provider.getCustomer error: ${JSON.stringify(error)}`);
       }
 
+      let customer: CustomerCreationData;
+      customer = provider.getCustomerCreationData({ ...buyer, accountNumber })
       if (!customer) {
         this.logger.fatal(`Course internal Id doesn't match for user: ${userId}`);
         throw new Error(`Error matching provider Internal Id`);
       }      //create customer on provider
-      let customerId: number | null = null;
+      //create customer on provider
+      let customerId: string | null = null;
       try {
         const customerData = await provider.createCustomer(token, providerCourseId, customer);
-
-        if (buyer.internalId === "fore-up") {
-          customerId = Number((customerData as ForeUpCustomerCreationResponse).data.id);
-        }
-        if (buyer.internalId === "club-prophet") {
-          customerId = Number((customerData as ClubProphetCustomerCreationResponse).acct);
-        }
-
+        customerId = provider.getCustomerId(customerData);
         customerInfo = {
           playerNumber: accountNumber,
           customerId,
@@ -296,11 +286,9 @@ export class ProviderService extends CacheService {
       if (!customerId) {
         throw new Error(`Error creating customer on provider: No Customer Id`);
       }
-      const userProviderCourseLinkId: string = randomUUID();
+
       //update user with providerCustomerId
-      await this.database
-        .insert(userProviderCourseLink)
-        .values({
+      await this.updateCustomer({
           id: userProviderCourseLinkId,
           courseId: courseId,
           providerId: providerId,
@@ -308,15 +296,29 @@ export class ProviderService extends CacheService {
           accountNumber: accountNumber,
           customerId: customerId,
         })
-        .onDuplicateKeyUpdate({ set: { customerId: sql`customerId` } }) //no op on duplicate
-        .execute()
-        .catch((err) => {
-          this.logger.error(err);
-          throw new Error(`Error updating user id`);
-        });
     }
     return customerInfo;
   };
+
+  private updateCustomer = async (
+    info: {
+      id: string;
+      customerId: string;
+      courseId: string;
+      providerId: string;
+      userId: string;
+      accountNumber: number;
+    }) => {
+    await this.database
+      .insert(userProviderCourseLink)
+      .values(info)
+      .onDuplicateKeyUpdate({ set: { customerId: sql`customerId` } }) //no op on duplicate
+      .execute()
+      .catch((err) => {
+        this.logger.error(err);
+        throw new Error(`Error updating user id`);
+      });
+  }
   /**
    * Links a provider to an entity and all the courses under that entity.
    * @Todd this will be complete at during creation of admin panel

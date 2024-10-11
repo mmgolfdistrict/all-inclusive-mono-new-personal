@@ -92,7 +92,7 @@ export interface BookingCreationData {
   terminalId: number;
   bookingTypeId: number;
   rateCode: string;
-  price: number[];
+  // price: number[];
 }
 
 export interface ClubProphetCustomerCreationData {
@@ -115,3 +115,13 @@ export interface ClubProphetBookingResponse {
   reservationId: number;
   data?: Record<string, any>;
 }
+
+export interface ClubProphetGetCustomerResponse {
+  memberNo: string;
+  classCode: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  mobilePhone: string;
+  golferId: number;
+};

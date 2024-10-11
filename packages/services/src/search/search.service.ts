@@ -116,7 +116,7 @@ export class SearchService {
     private readonly weatherService: WeatherService,
     private readonly providerService: ProviderService,
     private readonly loggerService: LoggerService
-  ) { }
+  ) {}
 
   findBlackoutDates = async (courseId: string): Promise<Day[]> => {
     // Generate a range of dates for the next 365 days
@@ -663,9 +663,8 @@ export class SearchService {
       .add(30, "minutes")
       .toISOString();
     console.log("------->>>---->>", startTime, endTime);
-
     const firstHandResults = await this.database
-      .selectDistinct({ providerDate: sql`Date(${teeTimes.providerDate})` })
+      .selectDistinct({ providerDate: sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))` })
       .from(teeTimes)
       .innerJoin(courses, eq(courses.id, courseId))
       .where(
@@ -680,11 +679,11 @@ export class SearchService {
           or(gte(teeTimes.availableFirstHandSpots, golfers), gte(teeTimes.availableSecondHandSpots, golfers))
         )
       )
-      .orderBy(asc(sql`Date(${teeTimes.providerDate})`))
+      .orderBy(asc(sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))`))
       .execute();
 
     const secondHandResults = await this.database
-      .selectDistinct({ providerDate: sql`Date(${teeTimes.providerDate})` })
+      .selectDistinct({ providerDate: sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))` })
       .from(lists)
       .innerJoin(bookings, eq(bookings.listId, lists.id))
       .innerJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -701,7 +700,7 @@ export class SearchService {
           or(gte(teeTimes.availableFirstHandSpots, golfers), gte(teeTimes.availableSecondHandSpots, golfers))
         )
       )
-      .orderBy(asc(sql`Date(${teeTimes.providerDate})`))
+      .orderBy(asc(sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))`))
       .execute();
 
     const firstHandAndSecondHandResult = [...firstHandResults, ...secondHandResults];
@@ -819,6 +818,25 @@ export class SearchService {
         )
       );
 
+    // Allowed Players start
+    const NumberOfPlayers = await this.database
+      .select({
+        primaryMarketAllowedPlayers: courses.primaryMarketAllowedPlayers,
+      })
+      .from(courses)
+      .where(eq(courses.id, courseId));
+
+    const PlayersOptions = ["1", "2", "3", "4"];
+
+    const binaryMask = NumberOfPlayers[0]?.primaryMarketAllowedPlayers;
+
+    const numberOfPlayers =
+      binaryMask !== null && binaryMask !== undefined
+        ? PlayersOptions.filter((_, index) => (binaryMask & (1 << index)) !== 0)
+        : PlayersOptions;
+    const playersCount = numberOfPlayers?.[0] ? Number(numberOfPlayers[0]) : 0;
+    // Allowed Players end
+
     const countQuery = this.database
       .select({
         value: sql`count('*')`.mapWith(Number),
@@ -865,17 +883,18 @@ export class SearchService {
           //TODO: use isCartIncluded instead
           // includesCart ? gte(teeTimes.cartFeePerPlayer, 1) : eq(teeTimes.cartFeePerPlayer, 0),
           eq(teeTimes.numberOfHoles, holes),
-          gte(teeTimes.availableFirstHandSpots, golfers === -1 ? 1 : golfers)
+          gte(teeTimes.availableFirstHandSpots, golfers === -1 ? 1 : golfers),
+          gte(teeTimes.availableFirstHandSpots, playersCount)
         )
       )
       .orderBy(
         sortPrice === "desc"
           ? desc(teeTimes.greenFeePerPlayer)
           : sortTime === "desc"
-            ? desc(teeTimes.time)
-            : sortPrice === "asc"
-              ? asc(teeTimes.greenFeePerPlayer)
-              : asc(teeTimes.time)
+          ? desc(teeTimes.time)
+          : sortPrice === "asc"
+          ? asc(teeTimes.greenFeePerPlayer)
+          : asc(teeTimes.time)
       )
       .limit(limit);
 
@@ -889,7 +908,7 @@ export class SearchService {
       .from(courses)
       .where(eq(courses.id, courseId))
       .execute()
-      .catch(() => { });
+      .catch(() => {});
     let buyerFee = 0;
     let courseDataIfAvailable: any = {};
     if (courseData?.length) {
@@ -1001,10 +1020,10 @@ export class SearchService {
         sortPrice === "desc"
           ? desc(lists.listPrice)
           : sortTime === "desc"
-            ? desc(teeTimes.time)
-            : sortPrice === "asc"
-              ? asc(lists.listPrice)
-              : asc(teeTimes.time)
+          ? desc(teeTimes.time)
+          : sortPrice === "asc"
+          ? asc(lists.listPrice)
+          : asc(teeTimes.time)
       );
     // .limit(limit);
     const secoondHandData = await secondHandBookingsQuery.execute().catch(async (err) => {

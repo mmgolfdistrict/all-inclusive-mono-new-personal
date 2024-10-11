@@ -26,14 +26,12 @@ import {
   useMemo,
   useRef,
   useState,
-  type ChangeEvent
+  type ChangeEvent,
 } from "react";
 import ReCAPTCHA from "react-google-recaptcha";
 import { Controller, useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
 import { useDebounce } from "usehooks-ts";
-
-
 
 export default function RegisterPage() {
   const { course } = useCourseContext();
@@ -179,9 +177,25 @@ export default function RegisterPage() {
     setValue("redirectHref", cleanedHref);
   }, []);
 
+  const auditLog = api.webhooks.auditLog.useMutation();
+
+  const logAudit = async (message) => {
+    await auditLog.mutateAsync({
+      userId: "",
+      teeTimeId: "",
+      bookingId: "",
+      listingId: "",
+      courseId: course?.id,
+      eventId: "ERROR_DURING_SIGN_UP",
+      json: message,
+    });
+  };
+
   useEffect(() => {
-    recaptchaRef.current?.execute();
-  }, []);
+    if (process.env.NEXT_PUBLIC_RECAPTCHA_IS_INVISIBLE === "true") {
+      recaptchaRef.current?.execute();
+    }
+  }, [recaptchaRef]);
 
   const onSubmit: SubmitHandler<RegisterSchemaType> = async (data) => {
     if (profanityCheckData?.isProfane) {
@@ -200,7 +214,9 @@ export default function RegisterPage() {
         courseId: course?.id,
       });
       if (response?.error) {
+        await recaptchaRef.current?.executeAsync();
         toast.error(response.message);
+        await logAudit(response.message);
         return;
       }
 
@@ -375,16 +391,17 @@ export default function RegisterPage() {
             render={({ field }) => (
               <Input
                 {...field}
-                label="Address1"
+                label="Addr&#8204;ess1"
                 type="text"
                 list="places"
                 placeholder="Enter your address1"
                 id="address1"
                 register={register}
-                name="address1"
+                name="addres&#8204;s1"
                 error={errors.address1?.message}
                 data-testid="register-address1-id"
                 inputRef={inputRef}
+                autoComplete="new-password"
               />
             )}
           />
@@ -406,6 +423,7 @@ export default function RegisterPage() {
                 inputRef={(e) => {
                   field.ref(e);
                 }}
+                autoComplete="new-password"
               />
             )}
           />
@@ -428,6 +446,7 @@ export default function RegisterPage() {
                   setValue("city", e.target.value);
                   setCity(e.target.value);
                 }}
+                autoComplete="new-password"
                 inputRef={(e) => {
                   field.ref(e);
                 }}
@@ -509,6 +528,7 @@ export default function RegisterPage() {
                 inputRef={(e) => {
                   field.ref(e);
                 }}
+                autoComplete="new-password"
               />
             )}
           />
@@ -628,7 +648,7 @@ export default function RegisterPage() {
           {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (
             <ReCAPTCHA
               size={
-                process.env.NEXT_PUBLIC_RECAPTCHA_IS_INVISIBLE
+                process.env.NEXT_PUBLIC_RECAPTCHA_IS_INVISIBLE === "true"
                   ? "invisible"
                   : "normal"
               }
@@ -646,8 +666,9 @@ export default function RegisterPage() {
             )}
 
           <FilledButton
-            className={`w-full rounded-full ${isSubmitting ? "animate-pulse cursor-not-allopwed" : ""
-              }`}
+            className={`w-full rounded-full ${
+              isSubmitting ? "animate-pulse cursor-not-allopwed" : ""
+            }`}
             type="submit"
             disabled={isSubmitting}
             data-testid="register-button-id"

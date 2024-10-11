@@ -100,7 +100,7 @@ function Waitlists() {
       waitlist?.reduce((acc, item) => {
         const newItem = item as WaitlistItem;
         const date = dayjs(newItem.date);
-        const formattedDate = date.format("ddd MMM DD, YYYY");
+        const formattedDate = date.utc().format("ddd MMM DD, YYYY");
 
         const startTimeDate = dayjs(date)
           .utc()

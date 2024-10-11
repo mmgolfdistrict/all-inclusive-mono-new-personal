@@ -150,12 +150,21 @@ export class CourseService extends DomainService {
 
     if (!result) return null;
 
+    const { provider } = await this.providerService.getProviderAndKey(
+      courseDetails.internalId,
+      courseId,
+      providerConfiguration ?? ""
+    );
+
+    const supportsPlayerNameChange = provider.supportsPlayerNameChange() ?? false;
+
     const res = {
       ...result,
       highestListedTeeTime: ((result.highestListedTeeTime as number) ?? 0) / 100,
       lowestListedTeeTime: ((result.lowestListedTeeTime as number) ?? 0) / 100,
       highestPrimarySaleTeeTime: ((result.highestPrimarySaleTeeTime as number) ?? 0) / 100,
       lowestPrimarySaleTeeTime: ((result.lowestPrimarySaleTeeTime as number) ?? 0) / 100,
+      supportsPlayerNameChange,
     };
 
     if (result.supportCharity) {
@@ -180,19 +189,11 @@ export class CourseService extends DomainService {
         charityId: d.charityId,
       }));
 
-      const { provider } = await this.providerService.getProviderAndKey(
-        courseDetails.internalId,
-        courseId,
-        providerConfiguration ?? ""
-      );
-      const supportsPlayerNameChange = provider.supportsPlayerNameChange() ?? false;
-
       return {
         ...res,
         supportedCharities,
-        supportsPlayerNameChange,
       };
-    }
+    }  
     return res;
   };
 

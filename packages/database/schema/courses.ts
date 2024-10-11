@@ -56,6 +56,7 @@ export const courses = mySqlTable(
     maxRoundsPerPeriod: tinyint("maxRoundsPerPeriod"),
     maxBookingsPerPeriod: tinyint("maxBookingsPerPeriod"),
     primaryMarketAllowedPlayers: tinyint("primaryMarketAllowedPlayers"),
+    timezoneISO: varchar("timezoneISO", { length: 191 }).notNull().default("America/Los_Angeles")
   },
   (table) => {
     return {
