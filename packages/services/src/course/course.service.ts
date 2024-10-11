@@ -644,7 +644,11 @@ export class CourseService extends DomainService {
         ? PlayersOptions.filter((_, index) => (binaryMask & (1 << index)) !== 0)
         : PlayersOptions;
 
-    return numberOfPlayers;
+    if (binaryMask === 0) {
+      return { numberOfPlayers: PlayersOptions, selectStatus: "ALL_PLAYERS" };
+    }
+
+    return { numberOfPlayers, selectStatus: "" };
   };
 
   getPrivacyPolicyAndTCByCourse = async (courseId: string) => {

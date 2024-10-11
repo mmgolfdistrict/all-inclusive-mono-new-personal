@@ -37,11 +37,12 @@ export const ListedDetails = ({
   const { course } = useCourseContext();
   const courseId = course?.id;
 
-  const { data: NumberOfPlayers } =
+  const { data: allowedPlayers } =
     api.course.getNumberOfPlayersByCourse.useQuery({
       courseId: courseId ?? "",
     });
 
+  const numberOfPlayers = allowedPlayers?.numberOfPlayers;
   const [players, setPlayers] = useState<string>("1");
   const [, copy] = useCopyToClipboard();
   const [isCopied, setIsCopied] = useState<boolean>(false);
@@ -178,7 +179,7 @@ export const ListedDetails = ({
               availableSlots={data?.availableSlots ?? 0}
               isDisabled={true}
               teeTimeId={teeTimeId}
-              numberOfPlayers={NumberOfPlayers ? NumberOfPlayers : []}
+              numberOfPlayers={numberOfPlayers ? numberOfPlayers : []}
               status={"SECOND_HAND"}
             />
           </div>
