@@ -26,11 +26,6 @@ function NotifyMe({ params }: { params: { course: string } }) {
   const { user, isLoading } = useMe();
   const { course } = useCourseContext();
   const courseId = params.course;
-  const { data: numberOfPlayers } =
-    api.course.getNumberOfPlayersByCourse.useQuery({
-      courseId: courseId ?? "",
-    });
-
   const [selectedDates, setSelectedDates] = useState<Day[]>([]);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [displayDates, setDisplayDates] = useState<string>("");
@@ -38,11 +33,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
   const [startTime, setStartTime] = useState<Dayjs | null>(null);
   const [endTime, setEndTime] = useState<Dayjs | null>(null);
   const [timeRange, setTimeRange] = useState<string>("");
-  const [players, setPlayers] = useState(
-    numberOfPlayers?.length !== 0 && numberOfPlayers !== undefined
-      ? String(numberOfPlayers[0])
-      : "1"
-  );
+  const [players, setPlayers] = useState("1");
   const [errorMessage, setErrorMessage] = useState<string>("");
 
   if (!course?.supportsWaitlist || !course) {
