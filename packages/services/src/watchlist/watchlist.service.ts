@@ -11,6 +11,7 @@ import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import { users } from "@golf-district/database/schema/users";
 import { currentUtcTimestamp } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
+import { loggerService } from "../webhooks/logging.service";
 
 interface WatchlistItem {
   watchListId: string;
@@ -106,6 +107,17 @@ export class WatchlistService {
         .execute()
         .catch((err) => {
           this.logger.error(err);
+          loggerService.errorLog({
+            userId: userId,
+            url: `/WatchlistService/toggleTeeTimeInWatchlist`,
+            userAgent: "",
+            message: "ERROR_ADDING_TEE_TIME_TO_WATCHLIST",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              fav,
+              teeTimeId,
+            })
+          })
           throw new Error("Error adding tee time to watchlist");
         });
       this.logger.debug(`Added tee time ${teeTimeId} to watchlist`);
@@ -167,6 +179,16 @@ export class WatchlistService {
       .execute()
       .catch((err) => {
         this.logger.error(err);
+        loggerService.errorLog({
+          userId: userId,
+          url: `/WatchlistService/getWatchlist`,
+          userAgent: "",
+          message: "ERROR_RETRIEVING_WATCHLIST",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            courseId
+          })
+        })
         throw new Error("Error retrieving watchlist");
       });
     if (watchlistItems.length === 0 || !watchlistItems || watchlistItems === undefined) {

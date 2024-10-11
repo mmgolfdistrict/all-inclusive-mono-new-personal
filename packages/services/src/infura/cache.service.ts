@@ -1,6 +1,7 @@
 import Logger from "@golf-district/shared/src/logger";
 import { Redis } from "@upstash/redis";
 import type pino from "pino";
+import { loggerService } from "../webhooks/logging.service";
 
 /**
  * `CacheService` provides functionalities to interact with a Redis cache.
@@ -136,7 +137,17 @@ export class CacheService {
   getCache = async <T>(key: string): Promise<T | null> => {
     this.logger.info(`Getting cache for key: ${key}`);
     const cachedData = await this.redis.get<any>(key).catch((err) => {
-      this.logger.error(`Error getting cache for key: ${key}`, err);
+      this.logger.error(`Error getting cache for key: ${key}, ${err}`);
+      loggerService.errorLog({
+        userId: "",
+        url: "/CacheService/getCache",
+        userAgent: "",
+        message: "ERROR_GETTING_CACHE",
+        stackTrace: `${err.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          key,
+        })
+      })
       return null;
     });
     if (cachedData) {

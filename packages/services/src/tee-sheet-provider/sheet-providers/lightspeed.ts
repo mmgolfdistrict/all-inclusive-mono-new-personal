@@ -11,6 +11,7 @@ import { providerAuthTokens } from "@golf-district/database/schema/providerAuthT
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import { courses } from "@golf-district/database/schema/courses";
 import isEqual from "lodash.isequal";
+import { loggerService } from "../../webhooks/logging.service";
 
 // const cacheService = new CacheService(process.env.REDIS_URL!, process.env.REDIS_TOKEN!, Logger("Lightspeed"));
 
@@ -85,6 +86,18 @@ export class Lightspeed extends BaseProvider {
                 }
                 if (response.status === 403) {
                     this.logger.error(`Error fetching tee time: ${response.statusText}`);
+                    loggerService.errorLog({
+                        userId: "",
+                        url: "/Lightspeed/getTeeTimes",
+                        userAgent: "",
+                        message: "ERROR_FETCHING_TEE_TIMES",
+                        stackTrace: ``,
+                        additionalDetailsJSON: JSON.stringify({
+                            message: response.statusText,
+                            courseId,
+                            date
+                        })
+                    })
                 }
                 throw new Error(`Error fetching tee times: ${response.statusText}`);
             }
@@ -146,6 +159,16 @@ export class Lightspeed extends BaseProvider {
                 this.logger.error(`Error creating booking: ${reservationRequestResponse.statusText}`);
             }
             console.log("ERROR", await reservationRequestResponse.json());
+            loggerService.errorLog({
+                userId: "",
+                url: "/Lightspeed/createBooking",
+                userAgent: "",
+                message: "ERROR_CREATING_BOOKING",
+                stackTrace: ``,
+                additionalDetailsJSON: JSON.stringify({
+                    data
+                })
+            })
             throw new Error(`Error creating booking: ${JSON.stringify(reservationRequestResponse)}`);
         }
 
@@ -202,6 +225,16 @@ export class Lightspeed extends BaseProvider {
                     this.logger.error(`Error creating booking: ${roundRequestResponse.statusText}`);
                 }
                 console.log("ERROR", await roundRequestResponse.json());
+                loggerService.errorLog({
+                    userId: "",
+                    url: "/Lightspeed/createBooking",
+                    userAgent: "",
+                    message: "ERROR_CREATING_BOOKING",
+                    stackTrace: ``,
+                    additionalDetailsJSON: JSON.stringify({
+                        data
+                    })
+                })
                 throw new Error(`Error creating booking: ${JSON.stringify(roundRequestResponse)}`);
             }
         }
@@ -231,6 +264,16 @@ export class Lightspeed extends BaseProvider {
                 this.logger.error(`Error creating booking: ${reservationResponse.statusText}`);
             }
             console.log("ERROR", await reservationResponse.json());
+            loggerService.errorLog({
+                userId: "",
+                url: "/Lightspeed/createBooking",
+                userAgent: "",
+                message: "ERROR_CREATING_BOOKING",
+                stackTrace: ``,
+                additionalDetailsJSON: JSON.stringify({
+                    data
+                })
+            })
             throw new Error(`Error creating booking: ${JSON.stringify(reservationResponse)}`);
         }
 
@@ -369,6 +412,16 @@ export class Lightspeed extends BaseProvider {
             if (response.status === 403) {
                 await this.getToken();
             }
+            loggerService.errorLog({
+                userId: "",
+                url: "/Lightspeed/deleteBooking",
+                userAgent: "",
+                message: "ERROR_DELETING_BOOKING",
+                stackTrace: ``,
+                additionalDetailsJSON: JSON.stringify({
+                    bookingId,
+                })
+            })
             throw new Error(`Error deleting booking: ${response.statusText}`);
         }
         this.logger.info(`Booking deleted successfully: ${bookingId}`);
@@ -415,10 +468,20 @@ export class Lightspeed extends BaseProvider {
         });
 
         if (!response.ok) {
+            this.logger.error(`Error creating customer: ${response.statusText}`);
             if (response.status === 403) {
-                this.logger.error(`Error creating customer: ${response.statusText}`);
                 this.logger.error(`Error response from foreup: ${JSON.stringify(await response.json())}`);
             }
+            loggerService.errorLog({
+                userId: "",
+                url: "/Lightspeed/createCustomer",
+                userAgent: "",
+                message: "ERROR_CREATING_CUSTOMER",
+                stackTrace: ``,
+                additionalDetailsJSON: JSON.stringify({
+                    customerData
+                })
+            })
             throw new Error(`Error creating customer: ${response.statusText}`);
         }
 
@@ -508,10 +571,20 @@ export class Lightspeed extends BaseProvider {
             });
 
             if (!response.ok) {
+                this.logger.error(`Error adding sales data: ${response.statusText}`);
                 if (response.status === 403) {
-                    this.logger.error(`Error adding sales data: ${response.statusText}`);
                     this.logger.error(`Error response from foreup: ${JSON.stringify(await response.json())}`);
                 }
+                loggerService.errorLog({
+                    userId: "",
+                    url: "/Lightspeed/addSalesData",
+                    userAgent: "",
+                    message: "ERROR_ADDING_SALES_DATA",
+                    stackTrace: ``,
+                    additionalDetailsJSON: JSON.stringify({
+                        options
+                    })
+                })
                 throw new Error(`Error adding sales data: ${response.statusText}`);
             }
 
@@ -524,6 +597,16 @@ export class Lightspeed extends BaseProvider {
             );
         } catch (error) {
             this.logger.error(`Error adding sales data: ${error}`);
+            loggerService.errorLog({
+                userId: "",
+                url: "/Lightspeed/addSalesData",
+                userAgent: "",
+                message: "ERROR_ADDING_SALES_DATA",
+                stackTrace: ``,
+                additionalDetailsJSON: JSON.stringify({
+                    options
+                })
+            })
         }
     };
 
@@ -576,6 +659,18 @@ export class Lightspeed extends BaseProvider {
             if (response.status === 403) {
                 await this.getToken();
             }
+            loggerService.errorLog({
+                userId: "",
+                url: "/Lightspeed/updateTeeTime",
+                userAgent: "",
+                message: "ERROR_UPDATING_CUSTOMER_ON_BOOKING",
+                stackTrace: ``,
+                additionalDetailsJSON: JSON.stringify({
+                    token,
+                    bookingId,
+                    options
+                })
+            })
             throw new Error(`Error updating customer on booking: ${response.statusText}`);
         }
 
@@ -610,6 +705,18 @@ export class Lightspeed extends BaseProvider {
         if (!response.ok) {
             this.logger.error(`Error fetching customer: ${response.statusText}`);
             this.logger.error(`Error response from light-speed: ${JSON.stringify(await response.json())}`);
+            loggerService.errorLog({
+                userId: "",
+                url: "/Lightspeed/getCustomer",
+                userAgent: "",
+                message: "ERROR_FETCHING_CUSTOMER",
+                stackTrace: ``,
+                additionalDetailsJSON: JSON.stringify({
+                    token,
+                    courseId,
+                    email
+                })
+            })
             throw new Error(`Error fetching customer: ${response.statusText}`);
         }
 
@@ -719,6 +826,22 @@ export class Lightspeed extends BaseProvider {
                 .execute()
                 .catch((err) => {
                     this.logger.error(err);
+                    loggerService.errorLog({
+                        userId: "",
+                        url: "/Lightspeed/indexTeeTime",
+                        userAgent: "",
+                        message: "ERROR_INDEXING_TEE_TIME",
+                        stackTrace: `${err.stack}`,
+                        additionalDetailsJSON: JSON.stringify({
+                            formattedDate,
+                            providerCourseId,
+                            providerTeeSheetId,
+                            provider,
+                            token,
+                            time,
+                            teeTimeId
+                        })
+                    })
                     throw new Error(`Error finding tee time id`);
                 });
 
@@ -778,12 +901,44 @@ export class Lightspeed extends BaseProvider {
                         .execute()
                         .catch((err) => {
                             this.logger.error(err);
+                            loggerService.errorLog({
+                                userId: "",
+                                url: "/Lightspeed/updateTeeTime",
+                                userAgent: "",
+                                message: "ERROR_UPDATING_TEE_TIME",
+                                stackTrace: `${err.stack}`,
+                                additionalDetailsJSON: JSON.stringify({
+                                    formattedDate,
+                                    providerCourseId,
+                                    providerTeeSheetId,
+                                    provider,
+                                    token,
+                                    time,
+                                    teeTimeId
+                                })
+                            })
                             throw new Error(`Error updating tee time: ${err}`);
                         });
                 }
             }
-        } catch (error) {
+        } catch (error: any) {
             this.logger.error(error);
+            loggerService.errorLog({
+                userId: "",
+                url: "/Lightspeed/indexTeeTime",
+                userAgent: "",
+                message: "ERROR_INDEXING_TEE_TIME",
+                stackTrace: `${error.stack}`,
+                additionalDetailsJSON: JSON.stringify({
+                    formattedDate,
+                    providerCourseId,
+                    providerTeeSheetId,
+                    provider,
+                    token,
+                    time,
+                    teeTimeId
+                })
+            })
             // throw new Error(`Error indexing tee time: ${error}`);
             // throw new Error(
             //   `We're sorry. This time is no longer available. Someone just booked this. It may take a minute for the sold time you selected to be removed. Please select another time.`

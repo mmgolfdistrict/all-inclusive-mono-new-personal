@@ -14,6 +14,7 @@ import type {
   QuoteSuccessResponse,
   TokenErrorResponse,
 } from "./types";
+import { loggerService } from "../webhooks/logging.service";
 
 /**
  * Handles interactions with the SensibleWeather API.
@@ -142,8 +143,26 @@ export class SensibleService extends CacheService {
         await this.getToken();
         this.logger.info(`getQuote retrieved access token from SensibleWeather API.`);
         bearerToken = await this.getCache("sensible_access_token");
-      } catch (err) {
+      } catch (err: any) {
         this.logger.error(`Error getting access token: ${err}`);
+        loggerService.errorLog({
+          userId: "",
+          url: "/SensibleService/getQuote",
+          userAgent: "",
+          message: "ERROR_GETTING_ACCESS_TOKEN",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            product_id,
+            coverageStartDate,
+            coverageEndDate,
+            currency,
+            langLocale,
+            exposureName,
+            exposureLatitude,
+            exposureLongitude,
+            exposureTotalCoverageAmount,
+          })
+        })
         throw new Error(`Error getting access token: ${err}`);
       }
     }
@@ -196,8 +215,18 @@ export class SensibleService extends CacheService {
         await this.getToken();
         this.logger.info(`getQuote retrieved access token from SensibleWeather API.`);
         bearerToken = await this.getCache("sensible_access_token");
-      } catch (err) {
+      } catch (err: any) {
         this.logger.error(`Error getting access token: ${err}`);
+        loggerService.errorLog({
+          userId: "",
+          url: "/SensibleService/getQuoteById",
+          userAgent: "",
+          message: "ERROR_GETTING_ACCESS_TOKEN",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            quoteId,
+          })
+        })
         throw new Error(`Error getting access token: ${err}`);
       }
     }
@@ -234,8 +263,18 @@ export class SensibleService extends CacheService {
         await this.getToken();
         this.logger.info(`getQuote retrieved access token from SensibleWeather API.`);
         bearerToken = await this.getCache("sensible_access_token");
-      } catch (err) {
+      } catch (err: any) {
         this.logger.error(`Error getting access token: ${err}`);
+        loggerService.errorLog({
+          userId: "",
+          url: "/SensibleService/getGuarantee",
+          userAgent: "",
+          message: "ERROR_GETTING_ACCESS_TOKEN",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            params,
+          })
+        })
         throw new Error(`Error getting access token: ${err}`);
       }
     }
@@ -276,8 +315,18 @@ export class SensibleService extends CacheService {
         await this.getToken();
         this.logger.info(`getQuote retrieved access token from SensibleWeather API.`);
         bearerToken = await this.getCache("sensible_access_token");
-      } catch (err) {
+      } catch (err: any) {
         this.logger.error(`Error getting access token: ${err}`);
+        loggerService.errorLog({
+          userId: "",
+          url: "/SensibleService/cancelGuarantee",
+          userAgent: "",
+          message: "ERROR_GETTING_ACCESS_TOKEN",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            guaranteeId,
+          })
+        })
         throw new Error(`Error getting access token: ${err}`);
       }
     }
@@ -315,8 +364,18 @@ export class SensibleService extends CacheService {
         await this.getToken();
         this.logger.info(`getQuote retrieved access token from SensibleWeather API.`);
         bearerToken = await this.getCache("sensible_access_token");
-      } catch (err) {
+      } catch (err: any) {
         this.logger.error(`Error getting access token: ${err}`);
+        loggerService.errorLog({
+          userId: "",
+          url: "/SensibleService/createQuote",
+          userAgent: "",
+          message: "ERROR_GETTING_ACCESS_TOKEN",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            params,
+          })
+        })
         throw new Error(`Error getting access token: ${err}`);
       }
     }
@@ -357,8 +416,18 @@ export class SensibleService extends CacheService {
         await this.getToken();
         this.logger.info(`getQuote retrieved access token from SensibleWeather API.`);
         bearerToken = await this.getCache("sensible_access_token");
-      } catch (err) {
+      } catch (err: any) {
         this.logger.error(`Error getting access token: ${err}`);
+        loggerService.errorLog({
+          userId: "",
+          url: "/SensibleService/getGuaranteeById",
+          userAgent: "",
+          message: "ERROR_GETTING_ACCESS_TOKEN",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            guaranteeId,
+          })
+        })
         throw new Error(`Error getting access token: ${err}`);
       }
     }
@@ -397,8 +466,18 @@ export class SensibleService extends CacheService {
         await this.getToken();
         this.logger.info(`getQuote retrieved access token from SensibleWeather API.`);
         bearerToken = await this.getCache("sensible_access_token");
-      } catch (err) {
+      } catch (err: any) {
         this.logger.error(`Error getting access token: ${err}`);
+        loggerService.errorLog({
+          userId: "",
+          url: "/SensibleService/acceptQuote",
+          userAgent: "",
+          message: "ERROR_GETTING_ACCESS_TOKEN",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            params,
+          })
+        })
         throw new Error(`Error getting access token: ${err}`);
       }
     }
@@ -490,8 +569,18 @@ export class SensibleService extends CacheService {
         await this.getToken();
         this.logger.info(`getQuote retrieved access token from SensibleWeather API.`);
         bearerToken = await this.getCache("sensible_access_token");
-      } catch (err) {
+      } catch (err: any) {
         this.logger.error(`Error getting access token: ${err}`);
+        loggerService.errorLog({
+          userId: "",
+          url: "/SensibleService/cancelQuote",
+          userAgent: "",
+          message: "ERROR_GETTING_ACCESS_TOKEN",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            quoteId,
+          })
+        })
         throw new Error(`Error getting access token: ${err}`);
       }
     }

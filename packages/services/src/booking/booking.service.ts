@@ -167,17 +167,41 @@ export class BookingService {
       .where(inArray(bookings.id, bookingIds))
       .execute()
       .catch((err) => {
-        this.logger.error(`Error retrieving bookings: ${err}`);
+        this.logger.error(`Error retrieving bookings for user ${userId} and booking ids ${JSON.stringify(bookingIds)} and offer id ${offerId} and amount ${amount}: ${err}`);
+        this.loggerService.errorLog({
+          userId,
+          url: "/createCounterOffer",
+          userAgent: "",
+          message: "ERROR_RETRIEVING_BOOKINGS",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: `Error retrieving bookings for user ${userId} and booking ids ${JSON.stringify(bookingIds)} and offer id ${offerId} and amount ${amount}`,
+        })
         throw new Error("Error retrieving bookings");
       });
     if (!bookingOwners.length) {
-      this.logger.warn(`No bookings found.`);
+      this.logger.warn(`No bookings found for user ${userId} and booking ids ${JSON.stringify(bookingIds)} and offer id ${offerId} and amount ${amount}`);
+      this.loggerService.errorLog({
+        userId,
+        url: "/createCounterOffer",
+        userAgent: "",
+        message: "NO_BOOKINGS_FOUND",
+        stackTrace: "",
+        additionalDetailsJSON: `No bookings found for user ${userId} and booking ids ${JSON.stringify(bookingIds)} and offer id ${offerId} and amount ${amount}`,
+      })
       throw new Error("No bookings found.");
     }
     //check that all bookings are owned by the same user
     const ownerIds = new Set(bookingOwners.map((booking) => booking.ownerId));
     if (ownerIds.size > 1) {
-      this.logger.warn(`Bookings are not owned by the same user.`);
+      this.logger.warn(`Bookings are not owned by the same user for user ${userId} and booking ids ${JSON.stringify(bookingIds)} and offer id ${offerId} and amount ${amount}`);
+      this.loggerService.errorLog({
+        userId,
+        url: "/createCounterOffer",
+        userAgent: "",
+        message: "BOOKINGS_ARE_NOT_OWNED_BY_THE_SAME_USER",
+        stackTrace: "",
+        additionalDetailsJSON: `Bookings are not owned by the same user for user ${userId} and booking ids ${JSON.stringify(bookingIds)} and offer id ${offerId} and amount ${amount}`,
+      })
       throw new Error("Bookings are not owned by the same user.");
     }
     //two cases if the user is the owner of the bookings
@@ -368,6 +392,14 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving tee times: ${err}`);
+        this.loggerService.errorLog({
+          userId,
+          url: "/getMyListedTeeTimes",
+          userAgent: "",
+          message: "ERROR_RETRIEVING_TEE_TIMES",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: `Error retrieving tee times: ${userId} and courseId ${courseId}`,
+        });
         throw new Error("Error retrieving tee times");
       });
     const combinedData: Record<string, ListingData> = {};
@@ -404,7 +436,6 @@ export class BookingService {
     });
     return combinedData;
   };
-
   /**
    * Get the purchase history for a specific tee time.
    * @param {string} teeTimeId - The ID of the tee time.
@@ -522,6 +553,16 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error getting course by ID: ${err}`);
+        this.loggerService.errorLog({
+          userId: userId,
+          url: "/getOwnedTeeTimes",
+          userAgent: "",
+          message: "ERROR_GETTING_COURSE_BY_ID",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            courseId,
+          }),
+        })
         throw new Error("Error getting course");
       });
 
@@ -700,6 +741,17 @@ export class BookingService {
             .execute()
             .catch((err) => {
               this.logger.error(`Error retrieving user: ${err}`);
+              this.loggerService.errorLog({
+                userId: userId,
+                url: "/getOwnedTeeTimes",
+                userAgent: "",
+                message: "ERROR_RETRIEVING_USER_BY_CUSTOMER_ID",
+                stackTrace: `${err.stack}`,
+                additionalDetailsJSON: JSON.stringify({
+                  courseId,
+                  customerId: slot.customerId,
+                })
+              })
               throw new Error("Error retrieving user");
             });
           if (userData[0]) {
@@ -845,6 +897,18 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving bookings: ${err}`);
+        this.loggerService.errorLog({
+          userId: userId,
+          url: "/createListingForBookings",
+          userAgent: "",
+          message: "ERROR_RETRIEVING_BOOKINGS",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            bookingIds,
+            listPrice,
+            endTime,
+          })
+        })
         throw new Error("Error retrieving bookings");
       });
     if (!ownedBookings.length) {
@@ -915,8 +979,18 @@ export class BookingService {
       .leftJoin(assets, eq(assets.id, courses.logoId))
       .execute()
       .catch((err) => {
-        this.logger.error(err);
-        return [];
+        this.logger.error(`Error retrieving course: ${err}`);
+        this.loggerService.errorLog({
+          userId: userId,
+          url: "/createListingForBookings",
+          userAgent: "",
+          message: "ERROR_RETRIEVING_COURSE",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            courseId,
+          })
+        })
+        throw new Error(`Error retrieving course`);
       });
 
     const toCreate: InsertList = {
@@ -944,6 +1018,17 @@ export class BookingService {
             .execute()
             .catch((err) => {
               this.logger.error(`Error updating bookingId: ${id}: ${err}`);
+              this.loggerService.errorLog({
+                userId: userId,
+                url: "/createListingForBookings",
+                userAgent: "",
+                message: "ERROR_UPDATING_BOOKING_ID",
+                stackTrace: `${err.stack}`,
+                additionalDetailsJSON: JSON.stringify({
+                  courseId,
+                  bookingId: id
+                })
+              })
               transaction.rollback();
             });
         }
@@ -954,11 +1039,33 @@ export class BookingService {
           .execute()
           .catch((err) => {
             this.logger.error(`Error creating listing: ${err}`);
+            this.loggerService.errorLog({
+              userId: userId,
+              url: "/createListingForBookings",
+              userAgent: "",
+              message: "ERROR_CREATING_LISTING",
+              stackTrace: `${err.stack}`,
+              additionalDetailsJSON: JSON.stringify({
+                courseId,
+                lists: JSON.stringify(toCreate),
+              })
+            })
             transaction.rollback();
           });
       })
       .catch((err) => {
         this.logger.error(`Transaction rolled backError creating listing: ${err}`);
+        this.loggerService.errorLog({
+          userId: userId,
+          url: "/createListingForBookings",
+          userAgent: "",
+          message: "TRANSACTION_ROLLBACK_ERROR_CREATING_LISTING",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            courseId,
+            lists: JSON.stringify(toCreate),
+          })
+        })
         throw new Error("Error creating listing");
       });
     this.logger.info(`Listings created successfully. for user ${userId} teeTimeId ${firstBooking.teeTimeId}`);
@@ -975,11 +1082,31 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Failed to retrieve user: ${err}`);
+        this.loggerService.errorLog({
+          userId: userId,
+          url: "/createListingForBookings",
+          userAgent: "",
+          message: "FAILED_TO_RETRIEVE_USER",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            userId,
+          })
+        })
         throw new Error("Failed to retrieve user");
       });
 
     if (!user) {
       this.logger.error(`createNotification: User with ID ${userId} not found.`);
+      this.loggerService.errorLog({
+        userId: userId,
+        url: "/createListingForBookings",
+        userAgent: "",
+        message: "USER_NOT_FOUND",
+        stackTrace: `User with ID ${userId} not found.`,
+        additionalDetailsJSON: JSON.stringify({
+          userId,
+        })
+      })
       return;
     }
     console.log("######", ownedBookings);
@@ -1009,12 +1136,35 @@ export class BookingService {
         )
         .catch((err) => {
           this.logger.error(`Error sending email: ${err}`);
+          this.loggerService.errorLog({
+            userId: userId,
+            url: "/createListingForBookings",
+            userAgent: "",
+            message: "ERROR_SENDING_EMAIL",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              userId,
+              email: user.email,
+              name: user.name,
+              courseName: course?.name,
+            })
+          })
           throw new Error("Error sending email");
         });
     }
 
     if (!firstBooking.providerDate) {
       this.logger.error("providerDate not found in booking, Can't send notifications to users");
+      this.loggerService.errorLog({
+        userId: userId,
+        url: "/createListingForBookings",
+        userAgent: "",
+        message: "PROVIDER_DATE_NOT_FOUND",
+        stackTrace: `providerDate not found in booking, Can't send notifications to users`,
+        additionalDetailsJSON: JSON.stringify({
+          userId,
+        })
+      })
       throw new Error("providerDate not found in booking, Can't send notifications to users");
     }
 
@@ -1110,6 +1260,17 @@ export class BookingService {
         .execute()
         .catch((err) => {
           this.logger.error(`Error deleting listing: ${err}`);
+          this.loggerService.errorLog({
+            userId: userId,
+            url: "/cancelListing",
+            userAgent: "",
+            message: "ERROR_DELETING_LISTING",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              courseId,
+              listingId
+            })
+          })
           trx.rollback();
         });
       for (const booking of bookingIds) {
@@ -1123,6 +1284,17 @@ export class BookingService {
           .execute()
           .catch((err) => {
             this.logger.error(`Error updating bookingId: ${booking.id}: ${err}`);
+            this.loggerService.errorLog({
+              userId: userId,
+              url: "/cancelListing",
+              userAgent: "",
+              message: "ERROR_DELETING_BOOKING",
+              stackTrace: `${err.stack}`,
+              additionalDetailsJSON: JSON.stringify({
+                courseId,
+                listingId
+              })
+            })
             trx.rollback();
           });
       }
@@ -1149,17 +1321,50 @@ export class BookingService {
       .leftJoin(assets, eq(assets.id, courses.logoId))
       .execute()
       .catch((err) => {
-        this.logger.error(err);
-        return [];
+        this.logger.error(`error fetching course data: ${err}`);
+        this.loggerService.errorLog({
+          userId: userId,
+          url: "/cancelListing",
+          userAgent: "",
+          message: "ERROR_FETCHING_COURSE_DATA",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            courseId,
+            listingId
+          })
+        })
+        throw new Error("Error fetching course data");
       });
 
     if (!user) {
       this.logger.error(`Error fetching user data: ${userId} does not exist`);
+      this.loggerService.errorLog({
+        userId: userId,
+        url: "/cancelListing",
+        userAgent: "",
+        message: "ERROR_FETCHING_USER_DATA",
+        stackTrace: "",
+        additionalDetailsJSON: JSON.stringify({
+          courseId,
+          listingId
+        })
+      })
       throw new Error(`Error fetching user data: ${userId} does not exist`);
     }
 
     if (!course) {
       this.logger.error(`Error fetching course data: ${courseId} does not exist`);
+      this.loggerService.errorLog({
+        userId: userId,
+        url: "/cancelListing",
+        userAgent: "",
+        message: "ERROR_FETCHING_COURSE_DATA",
+        stackTrace: "",
+        additionalDetailsJSON: JSON.stringify({
+          courseId,
+          listingId
+        })
+      })
       throw new Error(`Error fetching course data: ${courseId} does not exist`);
     }
 
@@ -1230,10 +1435,30 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving listing: ${err}`);
+        this.loggerService.errorLog({
+          userId: userId,
+          url: "/updateListing",
+          userAgent: "",
+          message: "ERROR_RETRIEVING_LISTING",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            listingId
+          })
+        })
         throw new Error("Error retrieving listing");
       });
     if (!listing) {
       this.logger.warn(`Listing not found. Either listing does not exist or user does not own listing.`);
+      this.loggerService.errorLog({
+        userId: userId,
+        url: "/updateListing",
+        userAgent: "",
+        message: "LISTING_NOT_FOUND",
+        stackTrace: "",
+        additionalDetailsJSON: JSON.stringify({
+          listingId
+        })
+      })
       throw new Error("Owned listing not found");
     }
     // if (listing.status !== "PENDING") {
@@ -1242,6 +1467,16 @@ export class BookingService {
     // }
     if (listing.isDeleted) {
       this.logger.warn(`Tee time not available anymore.`);
+      this.loggerService.errorLog({
+        userId: userId,
+        url: "/updateListing",
+        userAgent: "",
+        message: "TEE_TIME_NOT_AVAILABLE",
+        stackTrace: "",
+        additionalDetailsJSON: JSON.stringify({
+          listingId
+        })
+      })
       throw new Error("Tee time not available anymore.");
     }
     const ownedBookings = await this.database
@@ -1256,6 +1491,16 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving bookings: ${err}`);
+        this.loggerService.errorLog({
+          userId: userId,
+          url: "/updateListing",
+          userAgent: "",
+          message: "ERROR_RETRIEVING_BOOKINGS",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            bookingIds
+          })
+        })
         throw new Error("Error retrieving bookings");
       });
 
@@ -1312,6 +1557,16 @@ export class BookingService {
           .execute()
           .catch((err) => {
             this.logger.error(`Error deleting listing: ${err}`);
+            this.loggerService.errorLog({
+              userId: userId,
+              url: "/updateListing",
+              userAgent: "",
+              message: "ERROR_DELETING_LISTING",
+              stackTrace: `${err.stack}`,
+              additionalDetailsJSON: JSON.stringify({
+                listingId
+              })
+            })
             trx.rollback();
           });
         //create a new listing
@@ -1321,6 +1576,16 @@ export class BookingService {
           .execute()
           .catch((err) => {
             this.logger.error(`Error creating listing: ${err}`);
+            this.loggerService.errorLog({
+              userId: userId,
+              url: "/updateListing",
+              userAgent: "",
+              message: "ERROR_CREATING_LISTING",
+              stackTrace: `${err.stack}`,
+              additionalDetailsJSON: JSON.stringify({
+                listingId
+              })
+            })
             trx.rollback();
           });
         //update all bookings
@@ -1335,6 +1600,16 @@ export class BookingService {
             .execute()
             .catch((err) => {
               this.logger.error(`Error updating bookingId: ${id}: ${err}`);
+              this.loggerService.errorLog({
+                userId: userId,
+                url: "/updateListing",
+                userAgent: "",
+                message: "ERROR_UPDATING_BOOKING",
+                stackTrace: `${err.stack}`,
+                additionalDetailsJSON: JSON.stringify({
+                  bookingId: id
+                })
+              })
               trx.rollback();
             });
         }
@@ -1350,12 +1625,32 @@ export class BookingService {
             .execute()
             .catch((err) => {
               this.logger.error(`Error updating bookingId: ${booking.id}: ${err}`);
+              this.loggerService.errorLog({
+                userId: userId,
+                url: "/updateListing",
+                userAgent: "",
+                message: "ERROR_UPDATING_BOOKING",
+                stackTrace: `${err.stack}`,
+                additionalDetailsJSON: JSON.stringify({
+                  bookingId: booking.id
+                })
+              })
               trx.rollback();
             });
         }
       })
       .catch((err) => {
         this.logger.error(`Error updating listing: ${err}`);
+        this.loggerService.errorLog({
+          userId: userId,
+          url: "/updateListing",
+          userAgent: "",
+          message: "ERROR_UPDATING_LISTING",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            listingId
+          })
+        })
         throw new Error("Error updating listing");
       });
   };
@@ -1425,23 +1720,86 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving bookings: ${err}`);
+        this.loggerService.errorLog({
+          userId: userId,
+          url: "/createOfferOnBookings",
+          userAgent: "",
+          message: "ERROR_RETRIEVING_BOOKINGS",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            bookingIds,
+            price,
+            expiration
+          })
+        })
         throw new Error("Error retrieving bookings");
       });
     if (!data.length || data.length !== bookingIds.length || !data[0]) {
       this.logger.warn(`No bookings found.`);
+      this.loggerService.errorLog({
+        userId: userId,
+        url: "/createOfferOnBookings",
+        userAgent: "",
+        message: "NO_BOOKINGS_FOUND",
+        stackTrace: "",
+        additionalDetailsJSON: JSON.stringify({
+          bookingIds,
+          price,
+          expiration
+        })
+      })
       throw new Error("No bookings found");
     }
     const firstTeeTime = data[0].teeTimeId;
     const courseId = data[0].courseId ?? "";
     if (!data.every((booking) => booking.teeTimeId === firstTeeTime)) {
+      this.logger.error(`All bookings must be under the same tee time.`);
+      this.loggerService.errorLog({
+        userId: userId,
+        url: "/createOfferOnBookings",
+        userAgent: "",
+        message: "ALL_BOOKINGS_MUST_BE_UNDER_SAME_TEE_TIME",
+        stackTrace: "",
+        additionalDetailsJSON: JSON.stringify({
+          bookingIds,
+          price,
+          expiration
+        })
+      })
       throw new Error("All bookings must be under the same tee time.");
     }
 
     const minimumOfferPrice = Math.max(...data.map((booking) => booking.minimumOfferPrice));
     if (price === 0) {
+      this.logger.error(`Offer price must be higher than 0.`);
+      this.loggerService.errorLog({
+        userId: userId,
+        url: "/createOfferOnBookings",
+        userAgent: "",
+        message: "OFFER_PRICE_MUST_BE_HIGHER_THAN_0",
+        stackTrace: "",
+        additionalDetailsJSON: JSON.stringify({
+          bookingIds,
+          price,
+          expiration
+        })
+      })
       throw new Error("Offer price must be higher than 0");
     }
     if (price < minimumOfferPrice) {
+      this.logger.error(`Offer price must be higher than the minimum offer price.`);
+      this.loggerService.errorLog({
+        userId: userId,
+        url: "/createOfferOnBookings",
+        userAgent: "",
+        message: "OFFER_PRICE_MUST_BE_HIGHER_THAN_MINIMUM_OFFER_PRICE",
+        stackTrace: "",
+        additionalDetailsJSON: JSON.stringify({
+          bookingIds,
+          price,
+          expiration
+        })
+      })
       throw new Error("Offer price must be higher than the minimum offer price.");
     }
     await this.database.transaction(async (trx) => {
@@ -1460,6 +1818,16 @@ export class BookingService {
         .execute()
         .catch((err) => {
           this.logger.error(`Error creating offer: ${err}`);
+          this.loggerService.errorLog({
+            userId: userId,
+            url: "/createOfferOnBookings",
+            userAgent: "",
+            message: "ERROR_CREATING_OFFER",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              bookingIds
+            })
+          })
           throw new Error("Error creating offer");
         });
       await trx
@@ -1473,6 +1841,16 @@ export class BookingService {
         .execute()
         .catch((err) => {
           this.logger.error(`Error creating booking offer: ${err}`);
+          this.loggerService.errorLog({
+            userId: userId,
+            url: "/createOfferOnBookings",
+            userAgent: "",
+            message: "ERROR_CREATING_BOOKING_OFFER",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              bookingIds
+            })
+          })
           throw new Error("Error creating booking offer");
         });
     });
@@ -1494,6 +1872,16 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving offers: ${err}`);
+        this.loggerService.errorLog({
+          userId: userId,
+          url: "/createOfferOnBookings",
+          userAgent: "",
+          message: "ERROR_RETRIEVING_OFFERS",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            bookingIds
+          })
+        })
         throw new Error("Error active offers");
       });
 
@@ -1546,24 +1934,74 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving offer: ${err}`);
+        this.loggerService.errorLog({
+          userId: userId,
+          url: "/cancelOfferOnBooking",
+          userAgent: "",
+          message: "ERROR_RETRIEVING_OFFER",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            offerId
+          })
+        })
         throw new Error("Error retrieving offer");
       });
     if (!offerData?.[0]) {
       this.logger.warn(`Offer not found.`);
+      this.loggerService.errorLog({
+        userId: userId,
+        url: "/cancelOfferOnBooking",
+        userAgent: "",
+        message: "OFFER_NOT_FOUND",
+        stackTrace: "",
+        additionalDetailsJSON: JSON.stringify({
+          offerId
+        })
+      })
       throw new Error("Offer not found");
     }
     const bookingIds = offerData.map((offers) => offers.linkedBookingOffer);
     const { buyerId, status, isDeleted } = offerData[0];
     if (buyerId !== userId) {
       this.logger.warn(`User does not own offer.`);
+      this.loggerService.errorLog({
+        userId: userId,
+        url: "/cancelOfferOnBooking",
+        userAgent: "",
+        message: "USER_DOES_NOT_OWN_OFFER",
+        stackTrace: "",
+        additionalDetailsJSON: JSON.stringify({
+          offerId
+        })
+      })
       throw new Error("User does not own offer");
     }
     if (status !== "PENDING") {
       this.logger.warn(`Offer is not pending.`);
+      this.loggerService.errorLog({
+        userId: userId,
+        url: "/cancelOfferOnBooking",
+        userAgent: "",
+        message: "OFFER_IS_NOT_PENDING",
+        stackTrace: "",
+        additionalDetailsJSON: JSON.stringify({
+          offerId
+        })
+      })
       throw new Error("Offer is not pending");
     }
     if (isDeleted) {
       this.logger.warn(`Offer is already deleted.`);
+      this.loggerService.errorLog({
+        userId: userId,
+        url: "/cancelOfferOnBooking",
+        userAgent: "",
+        message: "OFFER_IS_ALREADY_DELETED",
+        stackTrace: "",
+        additionalDetailsJSON: JSON.stringify({
+          offerId
+        })
+      })
       throw new Error("Offer is already deleted");
     }
     await this.database.transaction(async (trx) => {
@@ -1576,6 +2014,16 @@ export class BookingService {
         .execute()
         .catch((err) => {
           this.logger.error(`Error deleting offer: ${err}`);
+          this.loggerService.errorLog({
+            userId: userId,
+            url: "/cancelOfferOnBooking",
+            userAgent: "",
+            message: "ERROR_DELETING_OFFER",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              offerId
+            })
+          })
           trx.rollback();
         });
       await trx
@@ -1590,6 +2038,16 @@ export class BookingService {
         .execute()
         .catch((err) => {
           this.logger.error(`Error deleting booking offer: ${err}`);
+          this.loggerService.errorLog({
+            userId: userId,
+            url: "/cancelOfferOnBooking",
+            userAgent: "",
+            message: "ERROR_DELETING_BOOKING_OFFER",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              offerId
+            })
+          })
           trx.rollback();
         });
     });
@@ -1621,11 +2079,31 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving offer: ${err}`);
+        this.loggerService.errorLog({
+          userId: userId,
+          url: "/acceptOffer",
+          userAgent: "",
+          message: "ERROR_RETRIEVING_OFFER",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            offerId
+          })
+        })
         throw new Error("Error retrieving offer");
       });
 
     if (!offer?.[0]) {
       this.logger.warn(`Offer not found.`);
+      this.loggerService.errorLog({
+        userId: userId,
+        url: "/acceptOffer",
+        userAgent: "",
+        message: "OFFER_NOT_FOUND",
+        stackTrace: "",
+        additionalDetailsJSON: JSON.stringify({
+          offerId
+        })
+      })
       throw new Error("Offer not found");
     }
     const bookingIds = offer.map((offers) => offers.bookingIds);
@@ -1635,11 +2113,31 @@ export class BookingService {
     const listingIds = offer.map((offers) => offers.listingId);
     if (!bookingsOwner.every((id) => id === userId)) {
       this.logger.warn(`User does not own all bookings.`);
+      this.loggerService.errorLog({
+        userId: userId,
+        url: "/acceptOffer",
+        userAgent: "",
+        message: "USER_DOES_NOT_OWN_ALL_BOOKINGS",
+        stackTrace: "",
+        additionalDetailsJSON: JSON.stringify({
+          offerId
+        })
+      })
       throw new Error("User does not own all bookings");
     }
     //check that booking ids are not null or empty
     if (!bookingIds.length || !bookingIds[0]?.length) {
       this.logger.warn(`Booking not found.`);
+      this.loggerService.errorLog({
+        userId: userId,
+        url: "/acceptOffer",
+        userAgent: "",
+        message: "BOOKING_NOT_FOUND",
+        stackTrace: "",
+        additionalDetailsJSON: JSON.stringify({
+          offerId
+        })
+      })
       throw new Error("Booking not found");
     }
     //@TODO capture payment intent
@@ -1658,6 +2156,16 @@ export class BookingService {
         .execute()
         .catch((err) => {
           this.logger.error(`Error accepting offer: ${err}`);
+          this.loggerService.errorLog({
+            userId: userId,
+            url: "/acceptOffer",
+            userAgent: "",
+            message: "ERROR_ACCEPTING_OFFER",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              offerId
+            })
+          })
           trx.rollback();
         });
       await trx
@@ -1672,6 +2180,16 @@ export class BookingService {
         .execute()
         .catch((err) => {
           this.logger.error(`Error accepting booking offer: ${err}`);
+          this.loggerService.errorLog({
+            userId: userId,
+            url: "/acceptOffer",
+            userAgent: "",
+            message: "ERROR_ACCEPTING_BOOKING_OFFER",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              offerId
+            })
+          })
           trx.rollback();
         });
       //delete all listing associated with purchased bookings
@@ -1683,6 +2201,16 @@ export class BookingService {
           .execute()
           .catch((err) => {
             this.logger.error(`Error deleting listing: ${err}`);
+            this.loggerService.errorLog({
+              userId: userId,
+              url: "/acceptOffer",
+              userAgent: "",
+              message: "ERROR_DELETING_LISTING",
+              stackTrace: `${err.stack}`,
+              additionalDetailsJSON: JSON.stringify({
+                offerId
+              })
+            })
             trx.rollback();
           });
         await trx
@@ -1692,6 +2220,16 @@ export class BookingService {
           .execute()
           .catch((err) => {
             this.logger.error(`Error deleting listing: ${err}`);
+            this.loggerService.errorLog({
+              userId: userId,
+              url: "/acceptOffer",
+              userAgent: "",
+              message: "ERROR_DELETING_LISTING",
+              stackTrace: `${err.stack}`,
+              additionalDetailsJSON: JSON.stringify({
+                offerId
+              })
+            })
             trx.rollback();
           });
       }
@@ -1731,16 +2269,46 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving offer: ${err}`);
+        this.loggerService.errorLog({
+          userId: userId,
+          url: "/rejectOffer",
+          userAgent: "",
+          message: "ERROR_REJECTING_OFFER",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            offerId
+          })
+        })
         throw new Error("Error retrieving offer");
       });
     if (!offer) {
       this.logger.warn(`Offer not found.`);
+      this.loggerService.errorLog({
+        userId: userId,
+        url: "/rejectOffer",
+        userAgent: "",
+        message: "OFFER_NOT_FOUND",
+        stackTrace: "",
+        additionalDetailsJSON: JSON.stringify({
+          offerId
+        })
+      })
       throw new Error("Offer not found");
     }
     const bookingIds = offer.map((offers) => offers.bookingIds);
     const bookingsOwned = offer.map((offers) => offers.bookingOwnerId);
     if (!bookingsOwned.every((ownerId) => ownerId === userId)) {
       this.logger.warn(`User does not own all bookings.`);
+      this.loggerService.errorLog({
+        userId: userId,
+        url: "/rejectOffer",
+        userAgent: "",
+        message: "USER_DOES_NOT_OWN_ALL_BOOKINGS",
+        stackTrace: "",
+        additionalDetailsJSON: JSON.stringify({
+          offerId
+        })
+      })
       throw new Error("User does not own all bookings");
     }
 
@@ -1755,6 +2323,16 @@ export class BookingService {
         .execute()
         .catch((err) => {
           this.logger.error(`Error accepting offer: ${err}`);
+          this.loggerService.errorLog({
+            userId: userId,
+            url: "/rejectOffer",
+            userAgent: "",
+            message: "ERROR_ACCEPTING_OFFER",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              offerId
+            })
+          })
           throw new Error("Error accepting offer");
         });
       //update userBookingOffers
@@ -1855,6 +2433,16 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving offers: ${err}`);
+        this.loggerService.errorLog({
+          userId: "",
+          url: "/getOffersForBooking",
+          userAgent: "",
+          message: "ERROR_RETRIEVING_OFFERS",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            bookingId
+          })
+        })
         throw new Error("Error retrieving offers");
       });
 
@@ -1999,6 +2587,16 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving offers: ${err}`);
+        this.loggerService.errorLog({
+          userId: userId,
+          url: "/getOfferSentForUser",
+          userAgent: "",
+          message: "ERROR_RETRIEVING_OFFERS",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            courseId,
+          })
+        })
         throw new Error("Error retrieving offers");
       });
 
@@ -2127,6 +2725,16 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving offers: ${err}`);
+        this.loggerService.errorLog({
+          userId: userId,
+          url: "/getOfferReceivedForUser",
+          userAgent: "",
+          message: "ERROR_RETRIEVING_OFFERS",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            courseId,
+          })
+        })
         throw new Error("Error retrieving offers");
       });
 
@@ -2206,11 +2814,33 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving bookings: ${err}`);
+        this.loggerService.errorLog({
+          userId: userId,
+          url: "/updateNamesOnBookings",
+          userAgent: "",
+          message: "ERROR_RETRIEVING_BOOKINGS",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            bookingId,
+            usersToUpdate
+          })
+        })
         throw new Error("Error retrieving bookings");
       });
 
     if (!data.length || !data[0]) {
       this.logger.warn(`No bookings found. or user does not own all bookings`);
+      this.loggerService.errorLog({
+        userId: userId,
+        url: "/updateNamesOnBookings",
+        userAgent: "",
+        message: "NO_BOOKINGS_FOUND",
+        stackTrace: "",
+        additionalDetailsJSON: JSON.stringify({
+          bookingId,
+          usersToUpdate
+        })
+      })
       throw new Error("No bookings found");
     }
 
@@ -2220,6 +2850,18 @@ export class BookingService {
 
     const firstBooking = data[0];
     if (!firstBooking) {
+      this.logger.warn(`bookings not found`);
+      this.loggerService.errorLog({
+        userId: userId,
+        url: "/updateNamesOnBookings",
+        userAgent: "",
+        message: "BOOKING_NOT_FOUND",
+        stackTrace: "",
+        additionalDetailsJSON: JSON.stringify({
+          bookingId,
+          usersToUpdate
+        })
+      })
       throw new Error("bookings not found");
     }
     const { token, provider } = await this.providerService.getProviderAndKey(
@@ -2228,6 +2870,18 @@ export class BookingService {
       firstBooking.providerCourseConfiguration!
     );
     if (!firstBooking.providerId || !firstBooking.providerCourseId || !firstBooking.courseId) {
+      this.logger.error(`provider id, course id, or provider course id not found`);
+      this.loggerService.errorLog({
+        userId: userId,
+        url: "/updateNamesOnBookings",
+        userAgent: "",
+        message: "PROVIDER_ID_OR_COURSE_ID_NOT_FOUND",
+        stackTrace: "",
+        additionalDetailsJSON: JSON.stringify({
+          bookingId,
+          usersToUpdate
+        })
+      })
       throw new Error("provider id, course id, or provider course id not found");
     }
     if (!provider.supportsPlayerNameChange) {
@@ -2245,7 +2899,18 @@ export class BookingService {
           .where(eq(bookingslots.slotnumber, user.slotId))
           .execute()
           .catch((err) => {
-            console.log("Error setting names on booking: ", err);
+            this.logger.error(`Error setting names on booking: ${err}`);
+            this.loggerService.errorLog({
+              userId: userId,
+              url: "/updateNamesOnBookings",
+              userAgent: "",
+              message: "ERROR_SETTING_NAMES_ON_BOOKING",
+              stackTrace: `${err.stack}`,
+              additionalDetailsJSON: JSON.stringify({
+                bookingId,
+                usersToUpdate
+              })
+            })
           });
       })
     );
@@ -2335,6 +3000,18 @@ export class BookingService {
         .execute()
         .catch((err) => {
           this.logger.error(`Error retrieving bookings: ${err}`);
+          this.loggerService.errorLog({
+            userId: userId,
+            url: "/setMinimumOfferPrice",
+            userAgent: "",
+            message: "ERROR_RETRIEVING_BOOKINGS",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              userId,
+              teeTimeId,
+              minimumOfferPrice
+            })
+          })
           message = "Error retrieving bookings";
           trx.rollback();
         });
@@ -2354,6 +3031,18 @@ export class BookingService {
           .execute()
           .catch((err) => {
             this.logger.error(`Error updating bookingId: ${booking.id}: ${err}`);
+            this.loggerService.errorLog({
+              userId: userId,
+              url: "/setMinimumOfferPrice",
+              userAgent: "",
+              message: "ERROR_UPDATING_BOOKING",
+              stackTrace: `${err.stack}`,
+              additionalDetailsJSON: JSON.stringify({
+                userId,
+                teeTimeId,
+                minimumOfferPrice
+              })
+            })
             message = "Error updating bookingId";
             trx.rollback();
           });
@@ -2592,11 +3281,33 @@ export class BookingService {
       .where(eq(teeTimes.id, teeTimeId as string))
       .execute()
       .catch((err) => {
-        this.logger.error(err);
+        this.logger.error(`Error finding tee time id ${teeTimeId}: ${err}`);
+        this.loggerService.errorLog({
+          userId: userId,
+          url: "/reserveBooking",
+          userAgent: "",
+          message: "ERROR_FINDING_TEE_TIME_ID",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            userId,
+            teeTimeId,
+          })
+        })
         throw new Error(`Error finding tee time id`);
       });
     if (!teeTime) {
       this.logger.fatal(`tee time not found id: ${teeTimeId}`);
+      this.loggerService.errorLog({
+        userId: userId,
+        url: "/reserveBooking",
+        userAgent: "",
+        message: "ERROR_FINDING_TEE_TIME_ID",
+        stackTrace: `tee time not found id: ${teeTimeId}`,
+        additionalDetailsJSON: JSON.stringify({
+          userId,
+          teeTimeId,
+        })
+      })
       throw new Error(`Error finding tee time id`);
     }
 
@@ -2661,14 +3372,14 @@ export class BookingService {
       booking = await provider
         .createBooking(token, teeTime.providerCourseId!, teeTime.providerTeeSheetId!, bookingData)
         .catch((err) => {
-          this.logger.error(err);
+          this.logger.error(`first hand booking at provider failed for teetime ${teeTime.id}: ${err}`);
           this.loggerService.errorLog({
             userId: userId,
             url: "/reserveBooking",
             userAgent: "",
             message: "TEE TIME BOOKING FAILED ON PROVIDER",
-            stackTrace: `first hand booking at provider failed for teetime ${teeTime.id}`,
-            additionalDetailsJSON: err,
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: `first hand booking at provider failed for teetime ${teeTime.id}`,
           });
           throw new Error(`Error creating booking`);
         });
@@ -2687,6 +3398,18 @@ export class BookingService {
           await provider.addSalesData(addSalesOptions);
         } catch (error) {
           this.logger.error(`Error adding sales data, ${error}`);
+          this.loggerService.errorLog({
+            userId: userId,
+            url: "/reserveBooking",
+            userAgent: "",
+            message: "ERROR_ADDING_SALES_DATA",
+            stackTrace: `${JSON.stringify(error)}`,
+            additionalDetailsJSON: JSON.stringify({
+              userId,
+              teeTimeId,
+              error,
+            }),
+          })
         }
       }
     } catch (e) {
@@ -2769,7 +3492,7 @@ export class BookingService {
         providerBookingIds,
       })
       .catch(async (err) => {
-        this.logger.error(err);
+        this.logger.error(`Error creating booking, ${err}`);
         //@TODO this email should be removed
         await this.notificationService.createNotification(
           userId,
@@ -2782,8 +3505,8 @@ export class BookingService {
           url: "/reserveBooking",
           userAgent: "",
           message: "TEE TIME BOOKING FAILED ON GOLF DISTRIC",
-          stackTrace: `first hand booking at provider failed for teetime ${teeTime.id}`,
-          additionalDetailsJSON: JSON.stringify(err),
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: `first hand booking at provider failed for teetime ${teeTime.id}`,
         });
         throw new Error(`Error creating booking`);
       });
@@ -2822,12 +3545,27 @@ export class BookingService {
           json: err,
         });
         this.logger.error(`Error retrieving bookings by payment id: ${err}`);
+        this.loggerService.errorLog({
+          userId: userId,
+          url: "/confirmBooking",
+          userAgent: "",
+          message: "ERROR CONFIRMING BOOKING",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${booking?.teeTimeId ?? ""
+            }`,
+        })
         throw "Error retrieving booking";
       });
     if (!booking) {
-      // TODO: need to refund the payment.
       console.log(`Booking not found for payment id ${paymentId}`);
-
+      this.loggerService.errorLog({
+        userId: userId,
+        url: "/confirmBooking",
+        userAgent: "",
+        message: "BOOKING_NOT_FOUND",
+        stackTrace: `booking not found for payment id ${paymentId}`,
+        additionalDetailsJSON: JSON.stringify({ paymentId }),
+      })
       throw "Booking not found for payment id";
     } else {
       console.log("Set confirm status on booking id ", booking.bookingId);
@@ -2982,7 +3720,19 @@ export class BookingService {
         .values(bookingsToCreate)
         .execute()
         .catch((err) => {
-          this.logger.error(err);
+          this.logger.error(`Error creating booking ${err}`);
+          this.loggerService.errorLog({
+            userId: userId,
+            url: "/reserveSecondHandBooking",
+            userAgent: "",
+            message: "ERROR_CREATING_BOOKING",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              userId,
+              teeTimeId,
+              bookingsToCreate
+            })
+          })
           tx.rollback();
         });
 
@@ -2991,7 +3741,19 @@ export class BookingService {
         .values(transfersToCreate)
         .execute()
         .catch((err) => {
-          this.logger.error(err);
+          this.logger.error(`Error creating transfer ${err}`);
+          this.loggerService.errorLog({
+            userId: userId,
+            url: "/reserveSecondHandBooking",
+            userAgent: "",
+            message: "ERROR_CREATING_TRANSFER",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              userId,
+              teeTimeId,
+              transfersToCreate
+            })
+          })
         });
     });
     await this.sendMessageToVerifyPayment(payment_id, userId, bookingId, redirectHref);
@@ -3028,6 +3790,17 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving bookings by payment id: ${err}`);
+        this.loggerService.errorLog({
+          userId,
+          url: "/getOwnedBookingById",
+          userAgent: "",
+          message: "ERROR_RETRIEVING_BOOKING",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            userId,
+            bookingId,
+          })
+        })
         throw "Error retrieving booking";
       });
     if (booking && booking?.transferedFromBookingId !== "0x000") {
@@ -3078,11 +3851,33 @@ export class BookingService {
       .where(eq(teeTimes.id, teeTimeId))
       .execute()
       .catch((err) => {
-        this.logger.error(err);
+        this.logger.error(`Error finding tee time id: ${err}`);
+        this.loggerService.errorLog({
+          userId,
+          url: "/checkIfTeeTimeAvailableOnProvider",
+          userAgent: "",
+          message: "ERROR_CHECKING_TEE_TIME_AVAILABILITY",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            userId,
+            teeTimeId,
+          })
+        })
         throw new Error(`Error finding tee time id`);
       });
     if (!teeTime) {
       this.logger.fatal(`tee time not found id: ${teeTimeId}`);
+      this.loggerService.errorLog({
+        userId,
+        url: "/checkIfTeeTimeAvailableOnProvider",
+        userAgent: "",
+        message: "TEE_TIME_NOT_FOUND",
+        stackTrace: `tee time not found id: ${teeTimeId}`,
+        additionalDetailsJSON: JSON.stringify({
+          userId,
+          teeTimeId,
+        })
+      })
       throw new Error(`Error finding tee time id`);
     }
 

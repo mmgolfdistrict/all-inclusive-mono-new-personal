@@ -10,6 +10,7 @@ import Logger from "@golf-district/shared/src/logger";
 import { SensibleService } from "../sensible/sensible.service";
 import { ProviderService } from "../tee-sheet-provider/providers.service";
 import type { HyperSwitchWebhookService } from "./hyperswitch.webhook.service";
+import { loggerService } from "./logging.service";
 
 export class PaymentVerifierService {
   protected hyperSwitchBaseUrl = process.env.HYPERSWITCH_BASE_URL;
@@ -57,6 +58,15 @@ export class PaymentVerifierService {
 
     if (!records) {
       this.logger.error(`Error fetching bookings`);
+      loggerService.errorLog({
+        userId: "",
+        url: `/PaymentVerifierService/verifyPayment`,
+        userAgent: "",
+        message: "ERROR_GETTING_BOOKINGS",
+        stackTrace: `Error fetching bookings`,
+        additionalDetailsJSON: JSON.stringify({
+        })
+      })
       throw new Error(`Error creating or finding customer`);
     }
 
@@ -99,6 +109,17 @@ export class PaymentVerifierService {
           )
           .catch((err) => {
             this.logger.error(`Error deleting booking: ${err}`);
+            loggerService.errorLog({
+              userId: "",
+              url: `/PaymentVerifierService/verifyPayment`,
+              userAgent: "",
+              message: "ERROR_DELETING_BOOKING",
+              stackTrace: `${err.stack}`,
+              additionalDetailsJSON: JSON.stringify({
+                record,
+                paymentData,
+              })
+            })
             throw new Error(`Error deleting booking`);
           });
       }

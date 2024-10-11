@@ -19,6 +19,7 @@ import { db, eq } from "@golf-district/database";
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import { dateToUtcTimestamp } from "@golf-district/shared";
 import isEqual from "lodash.isequal";
+import { loggerService } from "../../webhooks/logging.service";
 
 export class foreUp extends BaseProvider {
   providerId = "fore-up";
@@ -50,6 +51,20 @@ export class foreUp extends BaseProvider {
       if (response.status === 403) {
         this.logger.error(`Error fetching tee time: ${response.statusText}`);
         this.logger.error(`Error response from foreup: ${JSON.stringify(await response.json())}`);
+        loggerService.errorLog({
+          userId: "",
+          url: "/Foreup/getTeeTimes",
+          userAgent: "",
+          message: "ERROR_FETCHING_TEE_TIMES",
+          stackTrace: ``,
+          additionalDetailsJSON: JSON.stringify({
+            courseId,
+            teesheetId,
+            startTime,
+            endTime,
+            date,
+          })
+        })
         await this.getToken();
       }
 
@@ -82,6 +97,18 @@ export class foreUp extends BaseProvider {
       if (response.status === 403) {
         await this.getToken();
       }
+      loggerService.errorLog({
+        userId: "",
+        url: "/Foreup/deleteBooking",
+        userAgent: "",
+        message: "ERROR_DELETING_BOOKING",
+        stackTrace: ``,
+        additionalDetailsJSON: JSON.stringify({
+          courseId,
+          teesheetId,
+          bookingId,
+        })
+      })
       throw new Error(`Error deleting booking: ${response.statusText}`);
     }
     this.logger.info(`Booking deleted successfully: ${bookingId}`);
@@ -109,13 +136,23 @@ export class foreUp extends BaseProvider {
     });
 
     if (!response.ok) {
-      this.logger.error(JSON.stringify(await response.json()));
-
+      this.logger.error(`Error creating booking: ${response.statusText}`);
       if (response.status === 403) {
-        this.logger.error(`Error creating booking: ${response.statusText}`);
         this.logger.error(`Error response from foreup: ${JSON.stringify(await response.json())}`);
         await this.getToken();
       }
+      loggerService.errorLog({
+        userId: "",
+        url: "/Foreup/createBooking",
+        userAgent: "",
+        message: "ERROR_CREATING_BOOKING",
+        stackTrace: ``,
+        additionalDetailsJSON: JSON.stringify({
+          courseId,
+          teesheetId,
+          data
+        })
+      })
       throw new Error(`Error creating booking: ${JSON.stringify(response)}`);
     }
 
@@ -152,11 +189,24 @@ export class foreUp extends BaseProvider {
     });
     // console.log(response);
     if (!response.ok) {
+      this.logger.error(`Error updating tee time: ${response.statusText}`);
       if (response.status === 403) {
-        this.logger.error(`Error updating tee time: ${response.statusText}`);
         this.logger.error(`Error response from foreup: ${JSON.stringify(await response.json())}`);
         await this.getToken();
       }
+      loggerService.errorLog({
+        userId: "",
+        url: "/Foreup/updateTeeTime",
+        userAgent: "",
+        message: "ERROR_UPDATING_TEE_TIME",
+        stackTrace: ``,
+        additionalDetailsJSON: JSON.stringify({
+          courseId,
+          teesheetId,
+          bookingId,
+          options
+        })
+      })
       throw new Error(`Error updating tee time: ${response.statusText}`);
     }
 
@@ -182,6 +232,17 @@ export class foreUp extends BaseProvider {
 
     if (!requiredFieldsResponse.ok) {
       this.logger.error(`Error response from foreup: ${JSON.stringify(await requiredFieldsResponse.json())}`);
+      loggerService.errorLog({
+        userId: "",
+        url: "/Foreup/createCustomer",
+        userAgent: "",
+        message: "ERROR_FETCHING_REQUIRED_FIELDS",
+        stackTrace: ``,
+        additionalDetailsJSON: JSON.stringify({
+          courseId,
+          customerData
+        })
+      })
       throw new Error(`Error fetching required fields: ${requiredFieldsResponse.statusText}`);
     }
 
@@ -190,6 +251,18 @@ export class foreUp extends BaseProvider {
     //Validate required fields in customerData
     for (const field in requiredFields) {
       if (requiredFields[field].required && !customerData.attributes.contact_info.hasOwnProperty(field)) {
+        loggerService.errorLog({
+          userId: "",
+          url: "/Foreup/createCustomer",
+          userAgent: "",
+          message: "MISSING_REQUIRED_FIELD",
+          stackTrace: ``,
+          additionalDetailsJSON: JSON.stringify({
+            courseId,
+            customerData,
+            field
+          })
+        })
         throw new Error(`Missing required field: ${field}`);
       }
     }
@@ -210,10 +283,21 @@ export class foreUp extends BaseProvider {
     });
 
     if (!response.ok) {
+      this.logger.error(`Error creating customer: ${response.statusText}`);
       if (response.status === 403) {
-        this.logger.error(`Error creating customer: ${response.statusText}`);
         this.logger.error(`Error response from foreup: ${JSON.stringify(await response.json())}`);
       }
+      loggerService.errorLog({
+        userId: "",
+        url: "/Foreup/createCustomer",
+        userAgent: "",
+        message: "ERROR_CREATING_CUSTOMER",
+        stackTrace: ``,
+        additionalDetailsJSON: JSON.stringify({
+          courseId,
+          customerData
+        })
+      })
       throw new Error(`Error creating customer: ${response.statusText}`);
     }
 
@@ -236,6 +320,17 @@ export class foreUp extends BaseProvider {
     if (!response.ok) {
       this.logger.error(`Error fetching customer: ${response.statusText}`);
       this.logger.error(`Error response from foreup: ${JSON.stringify(await response.json())}`);
+      loggerService.errorLog({
+        userId: "",
+        url: "/Foreup/getCustomer",
+        userAgent: "",
+        message: "ERROR_FETCHING_CUSTOMER",
+        stackTrace: ``,
+        additionalDetailsJSON: JSON.stringify({
+          courseId,
+          email
+        })
+      })
       throw new Error(`Error fetching customer: ${response.statusText}`);
     }
 
@@ -357,8 +452,18 @@ export class foreUp extends BaseProvider {
           completeCartData
         )}`
       );
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Error adding sales data: ${error}`);
+      loggerService.errorLog({
+        userId: "",
+        url: "/Foreup/addSalesData",
+        userAgent: "",
+        message: "ERROR_ADDING_SALES_DATA",
+        stackTrace: `${error.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          options,
+        })
+      })
     }
   };
 
@@ -376,6 +481,14 @@ export class foreUp extends BaseProvider {
     if (!response.ok) {
       this.logger.error(`Error fetching token: ${response.statusText}`);
       this.logger.error(`Error response from foreup: ${JSON.stringify(await response.json())}`);
+      loggerService.errorLog({
+        userId: "",
+        url: "/Foreup/getToken",
+        userAgent: "",
+        message: "ERROR_FETCHING_TOKEN",
+        stackTrace: ``,
+        additionalDetailsJSON: "{}"
+      })
       throw new Error(`Error fetching token: ${response.statusText}`);
     }
 
@@ -561,6 +674,22 @@ export class foreUp extends BaseProvider {
         .execute()
         .catch((err: Error) => {
           this.logger.error(err);
+          loggerService.errorLog({
+            userId: "",
+            url: "/Foreup/indexTeeTime",
+            userAgent: "",
+            message: "ERROR_INDEXING_TEE_TIME",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              formattedDate,
+              providerCourseId,
+              providerTeeSheetId,
+              provider,
+              token,
+              time,
+              teeTimeId,
+            })
+          })
           throw new Error(`Error finding tee time id`);
         });
 
@@ -569,6 +698,22 @@ export class foreUp extends BaseProvider {
 
         if (!attributes) {
           this.logger.error(`No TeeTimeSlotAttributes available for: ${JSON.stringify(teeTimeResponse)}`);
+          loggerService.errorLog({
+            userId: "",
+            url: "/Foreup/indexTeeTime",
+            userAgent: "",
+            message: "ERROR_CREATING_BOOKING",
+            stackTrace: ``,
+            additionalDetailsJSON: JSON.stringify({
+              formattedDate,
+              providerCourseId,
+              providerTeeSheetId,
+              provider,
+              token,
+              time,
+              teeTimeId,
+            })
+          })
           throw new Error("No TeeTimeSlotAttributes available");
         }
         const maxPlayers = Math.max(...attributes.allowedGroupSizes);
@@ -621,12 +766,44 @@ export class foreUp extends BaseProvider {
             .execute()
             .catch((err) => {
               this.logger.error(err);
+              loggerService.errorLog({
+                userId: "",
+                url: "/Foreup/indexTeeTime",
+                userAgent: "",
+                message: "ERROR_UPDATING_TEE_TIME",
+                stackTrace: `${err.stack}`,
+                additionalDetailsJSON: JSON.stringify({
+                  formattedDate,
+                  providerCourseId,
+                  providerTeeSheetId,
+                  provider,
+                  token,
+                  time,
+                  teeTimeId,
+                })
+              })
               throw new Error(`Error updating tee time: ${err}`);
             });
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(error);
+      loggerService.errorLog({
+        userId: "",
+        url: "/Foreup/indexTeeTime",
+        userAgent: "",
+        message: "ERROR_INDEXING_TEE_TIME",
+        stackTrace: `${error.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          formattedDate,
+          providerCourseId,
+          providerTeeSheetId,
+          provider,
+          token,
+          time,
+          teeTimeId,
+        })
+      })
       // throw new Error(`Error indexing tee time: ${error}`);
       // throw new Error(
       //   `We're sorry. This time is no longer available. Someone just booked this. It may take a minute for the sold time you selected to be removed. Please select another time.`

@@ -2,6 +2,7 @@ import type { Db } from "@golf-district/database";
 import { or, sql } from "@golf-district/database";
 import { profanities } from "@golf-district/database/schema/profanities";
 import Logger from "@golf-district/shared/src/logger";
+import { loggerService } from "../webhooks/logging.service";
 
 export class ProfanityService {
   private readonly db: Db;
@@ -73,6 +74,16 @@ export class ProfanityService {
         )
         .catch((err) => {
           this.logger.error(err);
+          loggerService.errorLog({
+            userId: "",
+            url: "/ProfanityService/isProfane",
+            userAgent: "",
+            message: "ERROR_MATCHING_WORDS",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              profanityText
+            })
+          })
           throw new Error(err);
         });
 
@@ -105,8 +116,18 @@ export class ProfanityService {
       //     isProfane: false,
       //   };
       // }
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(error);
+      loggerService.errorLog({
+        userId: "",
+        url: "/ProfanityService/isProfane",
+        userAgent: "",
+        message: "ERROR_WHILE_VALIDATING_PROFANITY",
+        stackTrace: `${error.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          profanityText
+        })
+      })
       return {
         isProfane: false,
       };

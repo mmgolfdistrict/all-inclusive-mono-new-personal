@@ -13,6 +13,7 @@ import Logger from "@golf-district/shared/src/logger";
 // @TODO - update to use env validation
 //import { env } from "./env.mjs";
 import { verifyCaptcha } from "../api/src/googleCaptcha";
+import { loggerService } from "@golf-district/service/src/webhooks/logging.service";
 
 const DEPLOYMENT = !!process.env.VERCEL_URL;
 export type { Session } from "next-auth";
@@ -93,6 +94,16 @@ export const authConfig: NextAuthConfig = {
 
         if (!isNotRobot) {
           logger.error(`Captcha not verified`);
+          await loggerService.errorLog({
+            message: "CAPTCHA NOT VERIFIED",
+            userId: "",
+            url: "/auth",
+            userAgent: "",
+            stackTrace: `Captcha verification failed for user with email: ${credentials.email}`,
+            additionalDetailsJSON: JSON.stringify({
+              email: credentials.email,
+            }),
+          })
           return null;
         }
         const notificationService = new NotificationService(

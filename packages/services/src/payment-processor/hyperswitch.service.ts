@@ -11,6 +11,7 @@ import type {
   CustomerPaymentMethodsResponse,
 } from "./types/hyperSwitch.types";
 import { NotificationService } from "../notification/notification.service";
+import { loggerService } from "../webhooks/logging.service";
 
 /**
  * Service for interacting with the HyperSwitch API.
@@ -56,8 +57,18 @@ export class HyperSwitchService {
    * @throws Will throw an error if the customer creation fails.
    */
   createCustomer = async (params: CustomerDetails) => {
-    return await this.hyper.customers.create(params).catch((err: unknown) => {
+    return await this.hyper.customers.create(params).catch((err: any) => {
       this.logger.error(`Error creating customer: ${err}`);
+      loggerService.errorLog({
+        userId: "",
+        url: "/HyperSwitchService/createCustomer",
+        userAgent: "",
+        message: "ERROR_CREATING_CUSTOMER",
+        stackTrace: `${err.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          params,
+        })
+      })
       throw new Error(`Error creating customer: ${err}`);
     });
   };
@@ -69,8 +80,18 @@ export class HyperSwitchService {
    * @throws Will throw an error if retrieving the customer fails.
    */
   retrieveCustomer = async (customerId: string) => {
-    return await this.hyper.customers.retrieve(customerId).catch((err: unknown) => {
+    return await this.hyper.customers.retrieve(customerId).catch((err: any) => {
       this.logger.error(`Error retrieving customer: ${err}`);
+      loggerService.errorLog({
+        userId: "",
+        url: "/HyperSwitchService/createCustomer",
+        userAgent: "",
+        message: "ERROR_CREATING_CUSTOMER",
+        stackTrace: `${err.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          customerId
+        })
+      })
       throw new Error(`Error retrieving customer: ${err}`);
     });
   };
@@ -82,8 +103,18 @@ export class HyperSwitchService {
    * @throws Will throw an error if the customer deletion fails.
    */
   deleteCustomer = async (customerId: string) => {
-    return await this.hyper.customers.del(customerId).catch((err: unknown) => {
+    return await this.hyper.customers.del(customerId).catch((err: any) => {
       this.logger.error(`Error deleting customer: ${err}`);
+      loggerService.errorLog({
+        userId: "",
+        url: "/HyperSwitchService/deleteCustomer",
+        userAgent: "",
+        message: "ERROR_DELETING_CUSTOMER",
+        stackTrace: `${err.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          customerId,
+        })
+      })
       throw new Error(`Error deleting customer: ${err}`);
     });
   };
@@ -95,8 +126,19 @@ export class HyperSwitchService {
    * @throws Will throw an error if the payment intent creation fails.
    */
   createPaymentIntent = async (params: any, options?: HyperSwitch.RequestOptions | undefined) => {
-    return await this.hyper.paymentIntents.create(params, options).catch((err: unknown) => {
+    return await this.hyper.paymentIntents.create(params, options).catch((err: any) => {
       this.logger.error(`Error creating payment intent: ${err}`);
+      loggerService.errorLog({
+        userId: "",
+        url: "/HyperSwitchService/createPaymentIntent",
+        userAgent: "",
+        message: "ERROR_CREATING_PAYMENT_INTENT",
+        stackTrace: `${err.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          params,
+          options
+        })
+      })
       throw new Error(`Error creating payment intent: ${err}`);
     });
   };
@@ -108,8 +150,19 @@ export class HyperSwitchService {
    * @throws Will throw an error if the payment intent updation fails.
    */
   updatePaymentIntent = async (paymentId: string, params: UpdatePayment) => {
-    return await this.hyper.paymentIntents.update(paymentId, params).catch((err: unknown) => {
+    return await this.hyper.paymentIntents.update(paymentId, params).catch((err: any) => {
       this.logger.error(`Error updating payment intent: ${err}`);
+      loggerService.errorLog({
+        userId: "",
+        url: "/HyperSwitchService/updatePaymentIntent",
+        userAgent: "",
+        message: "ERROR_UPDATING_PAYMENT_INTENT",
+        stackTrace: `${err.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          params,
+          paymentId
+        })
+      })
       throw new Error(`Error updating payment intent: ${err}`);
     });
   };
@@ -121,8 +174,18 @@ export class HyperSwitchService {
    * @throws Will throw an error if the payment intent confirmation fails.
    */
   confirmPaymentIntent = async (paymentId: string) => {
-    return await this.hyper.paymentIntents.confirm(paymentId).catch((err: unknown) => {
+    return await this.hyper.paymentIntents.confirm(paymentId).catch((err: any) => {
       this.logger.error(`Error confirming payment intent: ${err}`);
+      loggerService.errorLog({
+        userId: "",
+        url: "/HyperSwitchService/confirmPaymentIntent",
+        userAgent: "",
+        message: "ERROR_CONFIRMING_PAYMENT_INTENT",
+        stackTrace: `${err.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          paymentId
+        })
+      })
       throw new Error(`Error confirming payment intent: ${err}`);
     });
   };
@@ -136,8 +199,18 @@ export class HyperSwitchService {
   retrievePaymentIntent = async (
     paymentId: string
   ): Promise<HyperSwitch.Response<HyperSwitch.PaymentIntent>> => {
-    return await this.hyper.paymentIntents.retrieve(paymentId).catch((err: unknown) => {
+    return await this.hyper.paymentIntents.retrieve(paymentId).catch((err: any) => {
       this.logger.error(`Error retrieving payment intent: ${err}`);
+      loggerService.errorLog({
+        userId: "",
+        url: "/HyperSwitchService/retrievePaymentIntent",
+        userAgent: "",
+        message: "ERROR_RETRIEVING_PAYMENT_INTENT",
+        stackTrace: `${err.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          paymentId
+        })
+      })
       throw new Error(`Error retrieving payment intent: ${err}`);
     });
   };
@@ -151,8 +224,18 @@ export class HyperSwitchService {
   capturePaymentIntent = async (
     paymentId: string
   ): Promise<HyperSwitch.Response<HyperSwitch.PaymentIntent>> => {
-    return await this.hyperSwitch.paymentIntents.capture(paymentId).catch((err: unknown) => {
+    return await this.hyperSwitch.paymentIntents.capture(paymentId).catch((err: any) => {
       this.logger.error(`Error capturing payment intent: ${err}`);
+      loggerService.errorLog({
+        userId: "",
+        url: "/HyperSwitchService/capturePaymentIntent",
+        userAgent: "",
+        message: "ERROR_CAPTURING_PAYMENT_INTENT",
+        stackTrace: `${err.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          paymentId
+        })
+      })
       throw new Error(`Error capturing payment intent: ${err}`);
     });
   };
@@ -168,6 +251,16 @@ export class HyperSwitchService {
   ): Promise<HyperSwitch.Response<HyperSwitch.PaymentIntent>> => {
     return await this.hyperSwitch.paymentIntents.cancel(paymentId).catch((err) => {
       this.logger.error(`Error cancelling payment intent: ${err}`);
+      loggerService.errorLog({
+        userId: "",
+        url: "/HyperSwitchService/cancelPaymentIntent",
+        userAgent: "",
+        message: "ERROR_CANCELLING_PAYMENT_INTENT",
+        stackTrace: `${err.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          paymentId
+        })
+      })
       throw new Error(`Error cancelling payment intent: ${err}`);
     });
   };
@@ -221,8 +314,18 @@ export class HyperSwitchService {
       console.log("paymentMethods");
       console.log(paymentMethods);
       return paymentMethods.customer_payment_methods;
-    } catch (error) {
-      this.logger.error("Error retrieving payment methods: ", error);
+    } catch (error: any) {
+      this.logger.error(`Error retrieving payment methods: ${error}`);
+      loggerService.errorLog({
+        userId: "",
+        url: "/HyperSwitchService/retrievePaymentMethods",
+        userAgent: "",
+        message: "ERROR_RETRIEVING_PAYMENT_METHODS",
+        stackTrace: `${error.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          customerId
+        })
+      })
     }
   };
 
@@ -239,9 +342,18 @@ export class HyperSwitchService {
       const deletedMethod = await deletePaymentMethodResponse.json();
       this.logger.info("Payment method deleted: ", deletedMethod);
       console.log("Payment method deleted", deletedMethod);
-    } catch (error) {
-      this.logger.error("Error removing payment method: ", error);
-
+    } catch (error: any) {
+      this.logger.error(`Error removing payment method: ${error}`);
+      loggerService.errorLog({
+        userId: "",
+        url: "/HyperSwitchService/removePaymentMethod",
+        userAgent: "",
+        message: "ERROR_REMOVING_PAYMENT_METHOD",
+        stackTrace: `${error.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          paymentMethodId
+        })
+      })
       console.log("Payment method deleted");
     }
   };

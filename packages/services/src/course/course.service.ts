@@ -17,6 +17,7 @@ import { DomainService } from "../domain/domain.service";
 import type { ProviderService } from "../tee-sheet-provider/providers.service";
 import { providerCourseLink } from "@golf-district/database/schema/providersCourseLink";
 import { providers } from "@golf-district/database/schema/providers";
+import { loggerService } from "../webhooks/logging.service";
 
 /**
  * Service handling course-related operations.
@@ -92,6 +93,16 @@ export class CourseService extends DomainService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error getting course by ID: ${err}`);
+        loggerService.errorLog({
+          userId: "",
+          url: "/CourseService/getCourseById",
+          userAgent: "",
+          message: "ERROR_GETTING_COURSE_BY_ID",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            courseId,
+          })
+        })
         throw new Error("Error getting course");
       });
     //Get the highest and lowest tee time prices
@@ -180,6 +191,16 @@ export class CourseService extends DomainService {
         .execute()
         .catch((err) => {
           this.logger.error(`Error getting charity for course: ${err}`);
+          loggerService.errorLog({
+            userId: "",
+            url: "/CourseService/getCourseById",
+            userAgent: "",
+            message: "ERROR_GETTING_CHARITY_FOR_COURSE",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              courseId,
+            })
+          })
           throw new Error("Error getting charity");
         });
 
@@ -215,6 +236,16 @@ export class CourseService extends DomainService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error getting charity for course: ${err}`);
+        loggerService.errorLog({
+          userId: "",
+          url: "/CourseService/getSupportedCharitiesForCourseId",
+          userAgent: "",
+          message: "ERROR_GETTING_CHARITY_FOR_COURSE",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            courseId,
+          })
+        })
         throw new Error("Error getting charity");
       });
 
@@ -268,6 +299,16 @@ export class CourseService extends DomainService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error getting images for course: ${err}`);
+        loggerService.errorLog({
+          userId: "",
+          url: "/CourseService/getImagesForCourse",
+          userAgent: "",
+          message: "ERROR_GETTING_IMAGES_FOR_COURSE",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            courseId,
+          })
+        })
         throw new Error("Error getting images");
       });
     return {
@@ -339,10 +380,32 @@ export class CourseService extends DomainService {
         .where(eq(assets.id, options.logoAssetId))
         .catch((err) => {
           this.logger.error(`Error getting asset: ${err}`);
+          loggerService.errorLog({
+            userId: "",
+            url: "/CourseService/updateCourseInfo",
+            userAgent: "",
+            message: "ERROR_GETTING_ASSET",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              courseId,
+              options
+            })
+          })
           throw new Error("Error getting asset");
         });
       if (!logo[0]) {
         this.logger.warn(`Asset ${options.logoAssetId} does not exist`);
+        loggerService.errorLog({
+          userId: "",
+          url: "/CourseService/updateCourseInfo",
+          userAgent: "",
+          message: "ASSET_DOES_NOT_EXIST",
+          stackTrace: `Asset ${options.logoAssetId} does not exist`,
+          additionalDetailsJSON: JSON.stringify({
+            courseId,
+            options
+          })
+        })
         throw new Error("Asset for logo does not exist");
       }
     }
@@ -361,6 +424,17 @@ export class CourseService extends DomainService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error updating course: ${err}`);
+        loggerService.errorLog({
+          userId: "",
+          url: "/CourseService/updateCourseInfo",
+          userAgent: "",
+          message: "ERROR_UPDATING_COURSE",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            courseId,
+            options
+          })
+        })
         throw new Error("Error updating course");
       });
   };
@@ -386,6 +460,17 @@ export class CourseService extends DomainService {
     let highestExistingOrder = (
       await highestOrderQuery.execute().catch((err) => {
         this.logger.error(`Error getting highest order: ${err}`);
+        loggerService.errorLog({
+          userId: "",
+          url: "/CourseService/addAssetsToCourse",
+          userAgent: "",
+          message: "ERROR_GETTING_HIGHEST_ORDER",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            courseId,
+            assetIds
+          })
+        })
         throw new Error("Error getting highest order");
       })
     )[0]?.order;
@@ -401,6 +486,17 @@ export class CourseService extends DomainService {
         .execute()
         .catch((err) => {
           this.logger.error(`Error checking existing course asset: ${err}`);
+          loggerService.errorLog({
+            userId: "",
+            url: "/CourseService/addAssetsToCourse",
+            userAgent: "",
+            message: "ERROR_CHECKING_EXISTING_COURSE_ASSET",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              courseId,
+              assetIds
+            })
+          })
           throw new Error("Error checking existing course asset");
         });
       if (existingAsset[0]) {
@@ -420,6 +516,17 @@ export class CourseService extends DomainService {
         .execute()
         .catch((err) => {
           this.logger.error(`Error adding course asset: ${err}`);
+          loggerService.errorLog({
+            userId: "",
+            url: "/CourseService/addAssetsToCourse",
+            userAgent: "",
+            message: "ERROR_ADDING_COURSE_ASSET",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              courseId,
+              assetIds
+            })
+          })
           throw new Error("Error adding course asset");
         });
     }
@@ -452,6 +559,17 @@ export class CourseService extends DomainService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error fetching existing asset IDs: ${err}`);
+        loggerService.errorLog({
+          userId: "",
+          url: "/CourseService/updateAssetsOrder",
+          userAgent: "",
+          message: "ERROR_FETCHING_EXISTING_ASSET_IDS",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            courseId,
+            assetIds
+          })
+        })
         throw new Error("Error validating asset IDs");
       });
     const existingAssetIdsSet = new Set(existingAssetIds.map((a) => a.assetId));
@@ -477,6 +595,17 @@ export class CourseService extends DomainService {
       })
       .catch((err) => {
         this.logger.error(`Error updating asset order: ${err}`);
+        loggerService.errorLog({
+          userId: "",
+          url: "/CourseService/updateAssetsOrder",
+          userAgent: "",
+          message: "ERROR_UPDATING_ASSET_ORDER",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            courseId,
+            assetIds
+          })
+        })
         throw new Error("Error updating asset order");
       });
   };
@@ -502,6 +631,16 @@ export class CourseService extends DomainService {
   }): Promise<void> {
     if (!data.name) {
       this.logger.error("Error creating course: name is required");
+      loggerService.errorLog({
+        userId: "",
+        url: "/CourseService/createCourse",
+        userAgent: "",
+        message: "ERROR_CREATING_COURSE",
+        stackTrace: `Error creating course: name is required`,
+        additionalDetailsJSON: JSON.stringify({
+          data
+        })
+      })
       throw new Error("Error creating course: name is required");
     }
     const courseData: InsertCourses = {
@@ -524,6 +663,16 @@ export class CourseService extends DomainService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error creating course: ${err}`);
+        loggerService.errorLog({
+          userId: "",
+          url: "/CourseService/createCourse",
+          userAgent: "",
+          message: "ERROR_CREATING_COURSE",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            data
+          })
+        })
         throw new Error("Error creating course");
       });
   }
@@ -556,6 +705,17 @@ export class CourseService extends DomainService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error getting course: ${err}`);
+        loggerService.errorLog({
+          userId: "",
+          url: "/CourseService/updateCourseDomain",
+          userAgent: "",
+          message: "ERROR_GETTING_COURSE",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            entityId,
+            domain
+          })
+        })
         throw new Error("Error getting course");
       });
 
@@ -573,6 +733,17 @@ export class CourseService extends DomainService {
         .execute()
         .catch((err) => {
           this.logger.error(`Error updating course: ${err}`);
+          loggerService.errorLog({
+            userId: "",
+            url: "/CourseService/updateCourseDomain",
+            userAgent: "",
+            message: "ERROR_UPDATING_COURSE",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              entityId,
+              domain
+            })
+          })
           throw new Error("Error updating course");
         });
       //add both domains to vercel
@@ -581,6 +752,17 @@ export class CourseService extends DomainService {
         await this.addDomainToVercel(`www.${domain}`),
       ]).catch((err) => {
         this.logger.error(`Error adding domains to vercel: ${err}`);
+        loggerService.errorLog({
+          userId: "",
+          url: "/CourseService/updateCourseDomain",
+          userAgent: "",
+          message: "ERROR_ADDING_DOMAINS_TO_VERCEL",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            entityId,
+            domain
+          })
+        })
         throw new Error(`Error adding domains to vercel: ${err}`);
       });
     }
@@ -595,6 +777,17 @@ export class CourseService extends DomainService {
         .execute()
         .catch((err) => {
           this.logger.error(`Error updating course: ${err}`);
+          loggerService.errorLog({
+            userId: "",
+            url: "/CourseService/updateCourseDomain",
+            userAgent: "",
+            message: "ERROR_UPDATING_COURSE",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              entityId,
+              domain
+            })
+          })
           throw new Error("Error updating course");
         });
       //the custom dolman has been updated remove the old domain from the vercel
@@ -608,18 +801,51 @@ export class CourseService extends DomainService {
           .execute()
           .catch((err) => {
             this.logger.error(`Error getting course: ${err}`);
+            loggerService.errorLog({
+              userId: "",
+              url: "/CourseService/updateCourseDomain",
+              userAgent: "",
+              message: "ERROR_GETTING_COURSE",
+              stackTrace: `${err.stack}`,
+              additionalDetailsJSON: JSON.stringify({
+                entityId,
+                domain
+              })
+            })
             throw new Error("Error getting course");
           });
         //Domain is only use by this site remove it from the team
         if (!domainCount[0]?.count || domainCount[0]?.count === 0) {
           await this.removeDomainFromVercelTeam(apexDomain).catch((err) => {
             this.logger.error(`Error removing domain from vercel team: ${err}`);
+            loggerService.errorLog({
+              userId: "",
+              url: "/CourseService/updateCourseDomain",
+              userAgent: "",
+              message: "ERROR_REMOVING_DOMAIN_FROM_VERCEL_TEAM",
+              stackTrace: `${err.stack}`,
+              additionalDetailsJSON: JSON.stringify({
+                entityId,
+                domain
+              })
+            })
             throw new Error(`Error removing domain from vercel team: ${err}`);
           });
           //Domain is used by other sites remove it from the project
         } else {
           await this.removeDomainFromVercelProject(courseDomain[0]?.customDomain).catch((err) => {
             this.logger.error(`Error removing domain from vercel team: ${err}`);
+            loggerService.errorLog({
+              userId: "",
+              url: "/CourseService/updateCourseDomain",
+              userAgent: "",
+              message: "ERROR_REMOVING_DOMAIN_FROM_VERCEL_TEAM",
+              stackTrace: `${err.stack}`,
+              additionalDetailsJSON: JSON.stringify({
+                entityId,
+                domain
+              })
+            })
             throw new Error(`Error removing domain from vercel team: ${err}`);
           });
         }

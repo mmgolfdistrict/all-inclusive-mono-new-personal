@@ -21,6 +21,7 @@ import { alias } from "drizzle-orm/mysql-core";
 import { verifyCaptcha } from "../../../api/src/googleCaptcha";
 import { generateUtcTimestamp } from "../../helpers";
 import type { NotificationService } from "../notification/notification.service";
+import { loggerService } from "../webhooks/logging.service";
 
 const s3Client = new S3Client({
   region: process.env.AWS_REGION,
@@ -160,6 +161,17 @@ export class UserService {
     //if the captcha is not valid, return null
     if (process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && !isNotRobot) {
       this.logger.error(`Invalid captcha`);
+      loggerService.errorLog({
+        userId: "",
+        url: `/UserService/createUser`,
+        userAgent: "",
+        message: "INVALID_CAPTCHA",
+        stackTrace: ``,
+        additionalDetailsJSON: JSON.stringify({
+          data,
+          courseId
+        })
+      })
       throw new Error("Invalid captcha");
     }
     // if (containsBadWords(data.firstName, this.filter)) {
@@ -218,6 +230,17 @@ export class UserService {
         .execute()
         .catch((err) => {
           this.logger.error(err);
+          loggerService.errorLog({
+            userId: "",
+            url: `/UserService/createUser`,
+            userAgent: "",
+            message: "ERROR_GETTING_COURSE_DATA",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              data,
+              courseId
+            })
+          })
           return [];
         });
 
@@ -324,6 +347,17 @@ export class UserService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving bookings: ${err}`);
+        loggerService.errorLog({
+          userId: userId,
+          url: `/UserService/getBookingsOwnedForTeeTime`,
+          userAgent: "",
+          message: "ERROR_GETTING_OWNED_BOOKINGS",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            teeTimeId,
+            userId,
+          })
+        })
         throw new Error("Error retrieving bookings");
       });
     if (!data || data.length == 0) {
@@ -357,9 +391,19 @@ export class UserService {
           .execute()
           .catch((err) => {
             this.logger.error(`Error retrieving user: ${err}`);
+            loggerService.errorLog({
+              userId: userId,
+              url: `/UserService/getBookingsOwnedForTeeTime`,
+              userAgent: "",
+              message: "ERROR_RETRIEVING_USER",
+              stackTrace: `${err.stack}`,
+              additionalDetailsJSON: JSON.stringify({
+                unit,
+              })
+            })
             throw new Error("Error retrieving user");
           });
-        if (userData && userData[0]) {
+        if (userData?.[0]) {
           finalData.push({
             ...userData[0],
             name: unit.nameOnBooking?.length ? unit.nameOnBooking : "Guest",
@@ -504,8 +548,16 @@ export class UserService {
   deleteUserById = async (userId: string) => {
     try {
       await this.database.delete(users).where(eq(users.id, userId)).execute();
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Error deleting user: ${userId} - ${(error as Error)?.message}`);
+      loggerService.errorLog({
+        userId: userId,
+        url: `/UserService/deleteUserById`,
+        userAgent: "",
+        message: "ERROR_DELETING_USER",
+        stackTrace: `${error.stack}`,
+        additionalDetailsJSON: JSON.stringify({})
+      })
       throw new Error("Error deleting user from expired email verification token");
     }
   };
@@ -567,6 +619,16 @@ export class UserService {
         .where(and(eq(assets.id, data.bannerImageAssetId), eq(assets.createdById, userId)))
         .catch((err) => {
           this.logger.error(`Error recovering asset: ${data.bannerImageAssetId}, Error: ${err}`);
+          loggerService.errorLog({
+            userId: userId,
+            url: `/UserService/updateUser`,
+            userAgent: "",
+            message: "ERROR_GETTING_ASSET",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              data
+            })
+          })
           throw new Error(`Error recovering asset: ${data.bannerImageAssetId}`);
         });
       if (!bannerAsset) {
@@ -582,6 +644,16 @@ export class UserService {
         .execute()
         .catch((err) => {
           this.logger.error(`Error recovering asset: ${data.profilePictureAssetId}, Error: ${err}`);
+          loggerService.errorLog({
+            userId: userId,
+            url: `/UserService/updateUser`,
+            userAgent: "",
+            message: "ERROR_GETTING_ASSET",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              data
+            }),
+          })
           throw new Error(`Error recovering asset: ${data.profilePictureAssetId}`);
         });
       if (!profileAsset) {
@@ -610,11 +682,31 @@ export class UserService {
         .execute()
         .catch((err) => {
           this.logger.error(`Failed to retrieve user: ${err}`);
+          loggerService.errorLog({
+            userId: userId,
+            url: `/UserService/updateUser`,
+            userAgent: "",
+            message: "ERROR_GETTING_USER",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              data
+            })
+          })
           throw new Error("Failed to retrieve user");
         });
 
       if (!user) {
         this.logger.error(`createNotification: User with ID ${userId} not found.`);
+        loggerService.errorLog({
+          userId: userId,
+          url: `/UserService/updateUser`,
+          userAgent: "",
+          message: "USER_NOT_FOUND",
+          stackTrace: `User with ID ${userId} not found.`,
+          additionalDetailsJSON: JSON.stringify({
+            data
+          })
+        })
         return;
       }
 
@@ -631,6 +723,16 @@ export class UserService {
         .execute()
         .catch((err) => {
           this.logger.error(err);
+          loggerService.errorLog({
+            userId: userId,
+            url: `/UserService/updateUser`,
+            userAgent: "",
+            message: "ERROR_GETTING_COURSE",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              data
+            })
+          })
           return [];
         });
 
@@ -651,6 +753,16 @@ export class UserService {
           )
           .catch((err) => {
             this.logger.error(`Error sending email: ${err}`);
+            loggerService.errorLog({
+              userId: userId,
+              url: `/UserService/updateUser`,
+              userAgent: "",
+              message: "ERROR_SENDING_EMAIL",
+              stackTrace: `${err.stack}`,
+              additionalDetailsJSON: JSON.stringify({
+                data
+              })
+            })
             throw new Error("Error sending email");
           });
       }
@@ -685,6 +797,17 @@ export class UserService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error updating user: ${userId} - ${err}`);
+        loggerService.errorLog({
+          userId: userId,
+          url: `/UserService/updateUser`,
+          userAgent: "",
+          message: "ERROR_UPDATING_USER",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            data,
+            updateData
+          })
+        })
         throw new Error("Error updating user");
       });
   };
@@ -738,6 +861,16 @@ export class UserService {
       .sendEmail(email, "Verify your email", `${verificationToken}`)
       .catch((err) => {
         this.logger.error(`Error sending email: ${err}`);
+        loggerService.errorLog({
+          userId: userId,
+          url: `/UserService/requestEmailUpdate`,
+          userAgent: "",
+          message: "ERROR_SENDING_EMAIL",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            email,
+          })
+        })
         throw new Error("Error sending email");
       });
   };
@@ -767,18 +900,54 @@ export class UserService {
     const [user] = await this.database.select().from(users).where(eq(users.id, userId));
     if (!user) {
       this.logger.warn(`User not found: ${userId}`);
+      loggerService.errorLog({
+        userId: userId,
+        url: `/UserService/executeEmailUpdate`,
+        userAgent: "",
+        message: "USER_NOT_FOUND",
+        stackTrace: `User not found: ${userId}`,
+        additionalDetailsJSON: JSON.stringify({
+        })
+      })
       throw new Error("User not found");
     }
     if (user.verificationRequestExpiry && user.verificationRequestExpiry < currentUtcTimestamp()) {
       this.logger.warn(`Verification token expired: ${userId}`);
+      loggerService.errorLog({
+        userId: userId,
+        url: `/UserService/executeEmailUpdate`,
+        userAgent: "",
+        message: "VERIFICATION_TOKEN_EXPIRED",
+        stackTrace: `Verification token expired: ${userId}`,
+        additionalDetailsJSON: JSON.stringify({
+        })
+      })
       throw new Error("Verification token expired");
     }
     const valid = await bcrypt.compare(token, user.verificationRequestToken!).catch((err) => {
       this.logger.error(`Error comparing token: ${err}`);
+      loggerService.errorLog({
+        userId: userId,
+        url: `/UserService/executeEmailUpdate`,
+        userAgent: "",
+        message: "ERROR_COMPARING_TOKEN",
+        stackTrace: `Error comparing token: ${err.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+        })
+      })
       throw new Error("Error comparing token");
     });
     if (!valid) {
       this.logger.warn(`Invalid verification token: ${userId}`);
+      loggerService.errorLog({
+        userId: userId,
+        url: `/UserService/executeEmailUpdate`,
+        userAgent: "",
+        message: "INVALID_VERIFICATION_TOKEN",
+        stackTrace: `Invalid verification token: ${userId}`,
+        additionalDetailsJSON: JSON.stringify({
+        })
+      })
       throw new Error("Invalid verification token");
     }
     await this.database
@@ -827,6 +996,17 @@ export class UserService {
     }
     if (process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && !isNotRobot) {
       this.logger.error(`Invalid captcha`);
+      loggerService.errorLog({
+        userId: "",
+        url: `/UserService/forgotPasswordRequest`,
+        userAgent: "",
+        message: "INVALID_CAPTCHA",
+        stackTrace: `Invalid captcha`,
+        additionalDetailsJSON: JSON.stringify({
+          handleOrEmail,
+          courseProviderId
+        })
+      })
       throw new Error("Invalid captcha");
     }
     let CourseURL: string | undefined;
@@ -887,6 +1067,17 @@ export class UserService {
 
     if (!templateId) {
       this.logger.error("Missing SendGrid template ID for forgot password email.");
+      loggerService.errorLog({
+        userId: "",
+        url: `/UserService/forgotPasswordRequest`,
+        userAgent: "",
+        message: "MISSING_EMAIL_TEMPLATE_ID",
+        stackTrace: `Missing SendGrid template ID for forgot password email.`,
+        additionalDetailsJSON: JSON.stringify({
+          handleOrEmail,
+          courseProviderId
+        })
+      })
       throw new Error("Missing email template ID");
     }
 
@@ -899,6 +1090,17 @@ export class UserService {
         )
         .catch((err) => {
           this.logger.error(`Error sending email: ${err}`);
+          loggerService.errorLog({
+            userId: "",
+            url: `/UserService/forgotPasswordRequest`,
+            userAgent: "",
+            message: "ERROR_SENDING_EMAIL",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              handleOrEmail,
+              user
+            })
+          })
           throw new Error("Error sending email");
         });
     }
@@ -921,6 +1123,16 @@ export class UserService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error updating forgotPasswordToken for user: ${user.id} - ${err}`);
+        loggerService.errorLog({
+          userId: user.id,
+          url: `/UserService/forgotPasswordRequest`,
+          userAgent: "",
+          message: "ERROR_UPDATING_FORGOT_PASSWORD_TOKEN",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            handleOrEmail,
+          })
+        })
       });
 
     const emailParams = {
@@ -948,6 +1160,17 @@ export class UserService {
         )
         .catch((err) => {
           this.logger.error(`Error sending email: ${err}`);
+          loggerService.errorLog({
+            userId: user.id,
+            url: `/UserService/forgotPasswordRequest`,
+            userAgent: "",
+            message: "ERROR_SENDING_EMAIL",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              handleOrEmail,
+              user
+            })
+          })
           throw new Error("Error sending email");
         });
     } else {
@@ -961,6 +1184,17 @@ export class UserService {
         )
         .catch((err) => {
           this.logger.error(`Error sending email: ${err}`);
+          loggerService.errorLog({
+            userId: user.id,
+            url: `/UserService/forgotPasswordRequest`,
+            userAgent: "",
+            message: "ERROR_SENDING_EMAIL",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              handleOrEmail,
+              user
+            })
+          })
           throw new Error("Error sending email");
         });
     }
@@ -1034,6 +1268,17 @@ export class UserService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error updating password for user: ${userId} - ${err}`);
+        loggerService.errorLog({
+          userId: userId,
+          url: `/UserService/executeForgotPassword`,
+          userAgent: "",
+          message: "ERROR_UPDATING_PASSWORD",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            courseId,
+            userId
+          })
+        })
         throw new Error("Error updating password");
       });
 
@@ -1055,6 +1300,16 @@ export class UserService {
         .execute()
         .catch((err) => {
           this.logger.error(err);
+          loggerService.errorLog({
+            userId: userId,
+            url: `/UserService/executeForgotPassword`,
+            userAgent: "",
+            message: "ERROR_GETTING_COURSE",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              courseId,
+            })
+          })
           return [];
         });
 
@@ -1114,10 +1369,28 @@ export class UserService {
     const [user] = await this.database.select().from(users).where(eq(users.id, userId));
     if (!user) {
       this.logger.warn(`User not found: ${userId}`);
+      loggerService.errorLog({
+        userId: userId,
+        url: `/UserService/updatePassword`,
+        userAgent: "",
+        message: "USER_NOT_FOUND",
+        stackTrace: `User not found: ${userId}`,
+        additionalDetailsJSON: JSON.stringify({
+        })
+      })
       throw new Error("User not found");
     }
     if (isValidPassword(newPassword).score < 8) {
       this.logger.warn(`Invalid password format: ${newPassword}`);
+      loggerService.errorLog({
+        userId: userId,
+        url: `/UserService/updatePassword`,
+        userAgent: "",
+        message: "INVALID_PASSWORD_FORMAT",
+        stackTrace: `User not found: ${userId}`,
+        additionalDetailsJSON: JSON.stringify({
+        })
+      })
       throw new Error("Invalid password format");
     }
     const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -1133,12 +1406,30 @@ export class UserService {
         .execute()
         .catch((err) => {
           this.logger.error(`Error setting password for user: ${userId} - ${err}`);
+          loggerService.errorLog({
+            userId: userId,
+            url: `/UserService/updatePassword`,
+            userAgent: "",
+            message: "ERROR_SETTING_PASSWORD",
+            stackTrace: `User not found: ${userId}`,
+            additionalDetailsJSON: JSON.stringify({
+            })
+          })
           throw new Error("Error setting password");
         });
     } else {
       const valid = await bcrypt.compare(oldPassword, user.gdPassword);
       if (!valid) {
         this.logger.warn(`Invalid password: ${userId}`);
+        loggerService.errorLog({
+          userId: userId,
+          url: `/UserService/updatePassword`,
+          userAgent: "",
+          message: "INVALID_PASSWORD",
+          stackTrace: `Invalid password: ${userId}`,
+          additionalDetailsJSON: JSON.stringify({
+          })
+        })
         throw new Error("Invalid password");
       }
       this.logger.debug(`Updating password for user: ${userId}`);
@@ -1152,6 +1443,15 @@ export class UserService {
         .execute()
         .catch((err) => {
           this.logger.error(`Error updating password for user: ${userId} - ${err}`);
+          loggerService.errorLog({
+            userId: userId,
+            url: `/UserService/updatePassword`,
+            userAgent: "",
+            message: "ERROR_UPDATING_PASSWORD",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+            })
+          })
           throw new Error("Error updating password");
         });
     }

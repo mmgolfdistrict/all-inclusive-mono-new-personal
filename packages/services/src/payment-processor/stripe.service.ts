@@ -1,6 +1,7 @@
 import Logger from "@golf-district/shared/src/logger";
 import type pino from "pino";
 import Stripe from "stripe";
+import { loggerService } from "../webhooks/logging.service";
 
 export class StripeService {
   protected stripe: Stripe;
@@ -67,6 +68,16 @@ export class StripeService {
       })
       .catch((err) => {
         this.logger.error(`Error creating stripe account: ${err}`);
+        loggerService.errorLog({
+          userId: "",
+          url: "/StripeService/createStandardStripeAccount",
+          userAgent: "",
+          message: "ERROR_CREATING_STRIPE_ACCOUNT",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            userEmail
+          })
+        })
         throw new Error(`Error creating stripe account: ${err}`);
       });
 
@@ -102,6 +113,18 @@ export class StripeService {
       })
       .catch((err) => {
         this.logger.error(`Error creating stripe account link: ${err}`);
+        loggerService.errorLog({
+          userId: "",
+          url: "/StripeService/createAccountLink",
+          userAgent: "",
+          message: "ERROR_CREATING_STRIPE_ACCOUNT_LINK",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            accountId,
+            refreshUrl,
+            returnUrl
+          })
+        })
         throw new Error(`Error creating stripe account link: ${err}`);
       });
   };
@@ -120,6 +143,17 @@ export class StripeService {
       })
       .catch((err) => {
         this.logger.error(`Error creating stripe payout: ${err}`);
+        loggerService.errorLog({
+          userId: "",
+          url: "/StripeService/createPayout",
+          userAgent: "",
+          message: "ERROR_CREATING_STRIPE_PAYOUT",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            accountId,
+            currency
+          })
+        })
         throw new Error(`Error creating stripe payout: ${err}`);
       });
   };
@@ -127,6 +161,16 @@ export class StripeService {
   isAccountLinked = async (accountId: string): Promise<boolean> => {
     const account = await this.stripe.accounts.retrieve(accountId).catch((err) => {
       this.logger.error(`Error retrieving account: ${err}`);
+      loggerService.errorLog({
+        userId: "",
+        url: "/StripeService/isAccountLinked",
+        userAgent: "",
+        message: "ERROR_RETRIEVING_STRIPE_ACCOUNT",
+        stackTrace: `${err.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          accountId
+        })
+      })
       throw new Error(`Error retrieving account: ${err}`);
     });
     return account.details_submitted;
@@ -136,8 +180,19 @@ export class StripeService {
     let event: Stripe.Event;
     try {
       event = this.stripe.webhooks.constructEvent(request, sig, endpointSecret);
-    } catch (err) {
+    } catch (err: any) {
       this.logger.error(`Error constructing event: ${err}`);
+      loggerService.errorLog({
+        userId: "",
+        url: "/StripeService/constructEvent",
+        userAgent: "",
+        message: "ERROR_CONSTRUCTING_STRIPE_EVENT",
+        stackTrace: `${err.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          request,
+          sig
+        })
+      })
       throw new Error(`Error constructing event: ${err}`);
     }
     return event;
