@@ -5,6 +5,7 @@ import { courseAssets } from "@golf-district/database/schema/courseAssets";
 import { courses } from "@golf-district/database/schema/courses";
 import { entities } from "@golf-district/database/schema/entities";
 import Logger from "@golf-district/shared/src/logger";
+import { loggerService } from "../webhooks/logging.service";
 
 /**
  * Service class for handling entity-related operations.
@@ -120,6 +121,18 @@ export class EntityService {
     }
     const [entity] = await query.execute().catch((err) => {
       this.logger.error(`Error getting entity from domain: ${err}`);
+      loggerService.errorLog({
+        userId: "",
+        url: "/EntityService/getEntityFromDomain",
+        userAgent: "",
+        message: "ERROR_GETTING_ENTITY_FROM_DOMAIN",
+        stackTrace: `${err.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          domain,
+          subdomain,
+          rootDomain,
+        })
+      })
       throw new Error(`Error getting entity from domain: ${err}`);
     });
     return {
@@ -150,6 +163,16 @@ export class EntityService {
       .execute()
       .catch((err) => {
         this.logger.error(err);
+        loggerService.errorLog({
+          userId: "",
+          url: "/EntityService/getCoursesByEntityId",
+          userAgent: "",
+          message: "ERROR_GETTING_COURSES_FOR_ENTITY",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            entityId,
+          })
+        })
         throw new Error(`Error getting courses for entity: ${entityId}`);
       });
     //find all images for each course

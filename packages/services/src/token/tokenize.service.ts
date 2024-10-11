@@ -213,6 +213,17 @@ export class TokenizeService {
       .execute()
       .catch((err) => {
         this.logger.error(err);
+        this.loggerService.errorLog({
+          userId: userId,
+          url: "`/TokenizeService/tokenizeBooking`",
+          userAgent: "",
+          message: "ERROR_GETTING_EXISTING_TEETIME",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            providerTeeTimeId,
+            providerBookingId
+          })
+        })
         return [];
       });
 
@@ -395,6 +406,18 @@ export class TokenizeService {
         .execute()
         .catch((err) => {
           this.logger.error(err);
+          this.loggerService.errorLog({
+            userId: userId,
+            url: `/TokenizeService/tokenizeBooking`,
+            userAgent: "",
+            message: "ERROR_CREATING_BOOKING",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              bookingsToCreate,
+              providerTeeTimeId,
+              providerBookingId,
+            })
+          })
           tx.rollback();
         });
       await tx
@@ -403,6 +426,18 @@ export class TokenizeService {
         .execute()
         .catch((err) => {
           this.logger.error(err);
+          this.loggerService.errorLog({
+            userId: userId,
+            url: `/TokenizeService/tokenizeBooking`,
+            userAgent: "",
+            message: "ERROR_CREATING_BOOKING_SLOTS",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              bookingSlots,
+              providerTeeTimeId,
+              providerBookingId,
+            })
+          })
           tx.rollback();
         });
       if (!isWebhookAvailable) {
@@ -422,6 +457,18 @@ export class TokenizeService {
         .execute()
         .catch((err) => {
           this.logger.error(err);
+          this.loggerService.errorLog({
+            userId: userId,
+            url: `/TokenizeService/tokenizeBooking`,
+            userAgent: "",
+            message: "ERROR_CREATING_TRANSFER",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              providerTeeTimeId,
+              providerBookingId,
+              transfersToCreate
+            })
+          })
           tx.rollback();
         });
     });
@@ -542,6 +589,16 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       .execute()
       .catch((err) => {
         this.logger.error(err);
+        this.loggerService.errorLog({
+          userId: userId,
+          url: `/TokenizeService/transferBookings`,
+          userAgent: "",
+          message: "ERROR_GETTING_BOOKINGS_TO_TRANSFER",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            bookingIds,
+          })
+        })
         throw new Error(`Error finding bookings with id: ${bookingIds}`);
       });
     if (!bookingsToTransfer) {
@@ -658,12 +715,34 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
             .execute()
             .catch((err) => {
               this.logger.error(err);
+              this.loggerService.errorLog({
+                userId: userId,
+                url: `/TokenizeService/addNamesToOwnedBookings`,
+                userAgent: "",
+                message: "ERROR_ADDING_NAMES_TO_OWNED_BOOKINGS",
+                stackTrace: `${err.stack}`,
+                additionalDetailsJSON: JSON.stringify({
+                  bookingId: bookingIds[i],
+                  names,
+                })
+              })
               throw new Error(`Error updating booking with id: ${bookingIds[i]}`);
             });
         }
       })
       .catch((err) => {
         this.logger.error(err);
+        this.loggerService.errorLog({
+          userId: userId,
+          url: `/TokenizeService/addNamesToOwnedBookings`,
+          userAgent: "",
+          message: "ERROR_ADDING_NAMES_TO_OWNED_BOOKINGS",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            bookingIds,
+            names,
+          })
+        })
         throw new Error(`Error updating booking with id: ${bookingIds}`);
       });
   };

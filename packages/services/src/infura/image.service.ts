@@ -5,6 +5,7 @@ import { assets } from "@golf-district/database/schema/assets";
 import { users } from "@golf-district/database/schema/users";
 import { assetToURL } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
+import { loggerService } from "../webhooks/logging.service";
 
 /**
  * `ImageService` provides methods to interact with images, allowing retrieval and storage of image assets in the database.
@@ -73,6 +74,18 @@ export class ImageService {
     const user = await this.database.select().from(users).where(eq(users.id, createdById));
     if (!user[0]) {
       this.logger.error(`User not found: ${createdById}`);
+      loggerService.errorLog({
+        userId: "",
+        url: "/ImageService/storeAsset",
+        userAgent: "",
+        message: "USER_NOT_FOUND",
+        stackTrace: `User not found: ${createdById}`,
+        additionalDetailsJSON: JSON.stringify({
+          createdById,
+          key,
+          extension,
+        })
+      })
       throw new Error("User not found");
     }
 
@@ -89,6 +102,19 @@ export class ImageService {
       .execute()
       .catch((err) => {
         this.logger.error(err);
+        loggerService.errorLog({
+          userId: "",
+          url: "/ImageService/storeAsset",
+          userAgent: "",
+          message: "ERROR_STORING_ASSET",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            createdById,
+            key,
+            extension,
+            assetData
+          })
+        })
         throw new Error("Error storing asset");
       });
 
@@ -99,10 +125,32 @@ export class ImageService {
       .execute()
       .catch((err) => {
         this.logger.error("Error retrieving inserted asset", err);
+        loggerService.errorLog({
+          userId: "",
+          url: "/ImageService/storeAsset",
+          userAgent: "",
+          message: "ERROR_RETRIEVING_INSERTED_ASSET",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            createdById,
+            assetData
+          })
+        })
         throw new Error("Error retrieving inserted asset");
       });
     if (!insertedAsset) {
       this.logger.error(`Error asset not found for key ${key}`);
+      loggerService.errorLog({
+        userId: "",
+        url: "/ImageService/storeAsset",
+        userAgent: "",
+        message: "ERROR_ASSET_NOT_FOUND",
+        stackTrace: `Error asset not found for key ${key}`,
+        additionalDetailsJSON: JSON.stringify({
+          createdById,
+          assetData
+        })
+      })
       throw new Error("Error asset not found for key ${key}");
     }
     return insertedAsset.id;

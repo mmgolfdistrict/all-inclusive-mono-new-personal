@@ -9,6 +9,7 @@ import { currentUtcTimestamp } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
 import type { NotificationService } from "../notification/notification.service";
 import type { StripeService } from "../payment-processor/stripe.service";
+import { loggerService } from "../webhooks/logging.service";
 
 export class CashOutService {
   private readonly logger = Logger(CashOutService.name);
@@ -33,12 +34,32 @@ export class CashOutService {
       .execute();
     if (!user) {
       this.logger.error(`Error creating stripe account: user ${userId} does not exist`);
+      loggerService.errorLog({
+        userId,
+        url: "/CashOutService/createStripeAccountLink",
+        userAgent: "",
+        message: "ERROR_CREATING_STRIPE_ACCOUNT",
+        stackTrace: `Error creating stripe account: user ${userId} does not exist`,
+        additionalDetailsJSON: JSON.stringify({
+          userId,
+        })
+      })
       throw new Error(`Error creating stripe account: user ${userId} does not exist`);
     }
     if (user.stripeConnectAccountStatus === "CONNECTED") {
       this.logger.warn(
         `Error creating stripe account: user ${userId} already has a connected stripe account`
       );
+      loggerService.errorLog({
+        userId,
+        url: "/CashOutService/createStripeAccountLink",
+        userAgent: "",
+        message: "ERROR_CREATING_STRIPE_ACCOUNT",
+        stackTrace: `Error creating stripe account: user ${userId} already has a connected stripe account`,
+        additionalDetailsJSON: JSON.stringify({
+          userId,
+        })
+      })
       throw new Error(`Error creating stripe account: user ${userId} already has a connected stripe account`);
     }
     if (user.stripeAccountId) {
@@ -53,6 +74,16 @@ export class CashOutService {
     }
     if (!user.email) {
       this.logger.error(`Error creating stripe account: user ${userId} does not have an email`);
+      loggerService.errorLog({
+        userId,
+        url: "/CashOutService/createStripeAccountLink",
+        userAgent: "",
+        message: "ERROR_CREATING_STRIPE_ACCOUNT",
+        stackTrace: `Error creating stripe account: user ${userId} does not have an email`,
+        additionalDetailsJSON: JSON.stringify({
+          userId,
+        })
+      })
       throw new Error(`Error creating stripe account: user ${userId} does not have an email`);
     }
     //create stripe account
@@ -91,20 +122,60 @@ export class CashOutService {
     //check if user has a non pending balance
     if (!user) {
       this.logger.error(`Error requesting cash out: user ${userId} does not exist`);
+      loggerService.errorLog({
+        userId,
+        url: "/CashOutService/requestCashOut",
+        userAgent: "",
+        message: "ERROR_REQUESTING_CASH_OUT",
+        stackTrace: `Error requesting cash out: user ${userId} does not exist`,
+        additionalDetailsJSON: JSON.stringify({
+          userId,
+        })
+      })
       throw new Error(`Error requesting cash out: user does not exist`);
     }
     if (user.stripeConnectAccountStatus !== "CONNECTED" || !user.stripeAccountId) {
       this.logger.error(`Error requesting cash out: user ${userId} does not have a connected stripe account`);
+      loggerService.errorLog({
+        userId,
+        url: "/CashOutService/requestCashOut",
+        userAgent: "",
+        message: "ERROR_REQUESTING_CASH_OUT",
+        stackTrace: `Error requesting cash out: user ${userId} does not have a connected stripe account`,
+        additionalDetailsJSON: JSON.stringify({
+          userId,
+        })
+      })
       throw new Error(`Error requesting cash out: user does not have a connected stripe account`);
     }
     //@TODO: create a minimum balance constant
     if (user.balance < 10) {
       this.logger.error(`Error requesting cash out: user ${userId} does not have enough balance`);
+      loggerService.errorLog({
+        userId,
+        url: "/CashOutService/requestCashOut",
+        userAgent: "",
+        message: "ERROR_REQUESTING_CASH_OUT",
+        stackTrace: `Error requesting cash out: user ${userId} does not have enough balance`,
+        additionalDetailsJSON: JSON.stringify({
+          userId,
+        })
+      })
       throw new Error(`Error requesting cash out: user ${userId} does not have enough balance`);
     }
     //create stripe payout
     await this.stripeService.createPayout(user.stripeAccountId, user.balance, "usd").catch((err) => {
       this.logger.error(`Error creating stripe payout: ${err}`);
+      loggerService.errorLog({
+        userId,
+        url: "/CashOutService/requestCashOut",
+        userAgent: "",
+        message: "ERROR_CREATING_STRIPE_PAYOUT",
+        stackTrace: `${err.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          userId,
+        })
+      })
       throw new Error(
         `Error creating stripe payout funds have not been withdrawn if this error persists please contact support`
       );

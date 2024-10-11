@@ -17,6 +17,7 @@ import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import { courses } from "@golf-district/database/schema/courses";
 import isEqual from "lodash.isequal";
 import type { CacheService } from "../../infura/cache.service";
+import { loggerService } from "../../webhooks/logging.service";
 
 export class clubprophet extends BaseProvider {
   providerId = "club-prophet";
@@ -92,6 +93,16 @@ export class clubprophet extends BaseProvider {
         await this.getToken();
       }
       console.log("ERROR", await response.json());
+      loggerService.errorLog({
+        userId: "",
+        url: "/Clubprophet/createBooking",
+        userAgent: "",
+        message: "ERROR_CREATING_BOOKING",
+        stackTrace: ``,
+        additionalDetailsJSON: JSON.stringify({
+          data,
+        })
+      })
       throw new Error(`Error creating booking: ${JSON.stringify(response)}`);
     }
 
@@ -176,9 +187,22 @@ export class clubprophet extends BaseProvider {
       }),
     });
 
-    if (!response.ok) {
+    const isError = !response.ok;
+    const data = await response.json();
+
+    if (isError || data === false) {
       this.logger.error(`Error deleting booking: ${response.statusText}`);
-      this.logger.error(`Error response from club-prophet: ${JSON.stringify(await response.json())}`);
+      this.logger.error(`Error response from club-prophet: ${JSON.stringify(data)}`);
+      loggerService.errorLog({
+        userId: "",
+        url: "/Clubprophet/deleteBooking",
+        userAgent: "",
+        message: "ERROR_DELETING_BOOKING",
+        stackTrace: ``,
+        additionalDetailsJSON: JSON.stringify({
+          bookingId: bookingId,
+        })
+      })
       if (response.status === 403) {
         await this.getToken();
       }
@@ -208,8 +232,18 @@ export class clubprophet extends BaseProvider {
     if (!response.ok) {
       if (response.status === 403) {
         this.logger.error(`Error creating customer: ${response.statusText}`);
-        this.logger.error(`Error response from foreup: ${JSON.stringify(await response.json())}`);
+        this.logger.error(`Error response from club-prophet: ${JSON.stringify(await response.json())}`);
       }
+      loggerService.errorLog({
+        userId: "",
+        url: "/Clubprophet/createCustomer",
+        userAgent: "",
+        message: "ERROR_CREATING_CUSTOMER",
+        stackTrace: `Error creating customer`,
+        additionalDetailsJSON: JSON.stringify({
+          customerData: customerData,
+        })
+      })
       throw new Error(`Error creating customer: ${response.statusText}`);
     }
 
@@ -324,6 +358,16 @@ export class clubprophet extends BaseProvider {
     if (!response.ok) {
       this.logger.error(`Error fetching customer: ${response.statusText}`);
       this.logger.error(`Error response from club-prophet: ${JSON.stringify(await response.json())}`);
+      loggerService.errorLog({
+        userId: "",
+        url: "/Clubprophet/getCustomer",
+        userAgent: "",
+        message: "ERROR_FETCHING_CUSTOMER",
+        stackTrace: ``,
+        additionalDetailsJSON: JSON.stringify({
+          email,
+        })
+      })
       throw new Error(`Error fetching customer: ${response.statusText}`);
     }
 
@@ -431,6 +475,17 @@ export class clubprophet extends BaseProvider {
         .execute()
         .catch((err: Error) => {
           this.logger.error(err);
+          loggerService.errorLog({
+            userId: "",
+            url: "/Clubprophet/indexTeeTime",
+            userAgent: "",
+            message: "ERROR_FINDING_INDEXED_TEE_TIME_BY_ID",
+            stackTrace: ``,
+            additionalDetailsJSON: JSON.stringify({
+              teeTimeId,
+              providerTeeTimeId,
+            })
+          })
           throw new Error(`Error finding tee time id`);
         });
 
@@ -488,12 +543,34 @@ export class clubprophet extends BaseProvider {
             .execute()
             .catch((err) => {
               this.logger.error(err);
+              loggerService.errorLog({
+                userId: "",
+                url: "/Clubprophet/indexTeeTime",
+                userAgent: "",
+                message: "ERROR_UPDATING_INDEXED_TEE_TIME",
+                stackTrace: ``,
+                additionalDetailsJSON: JSON.stringify({
+                  teeTimeId,
+                  providerTeeTimeId,
+                  indexedTeeTime,
+                })
+              })
               throw new Error(`Error updating tee time: ${err}`);
             });
         }
       }
     } catch (error) {
       this.logger.error(error);
+      loggerService.errorLog({
+        userId: "",
+        url: "/Clubprophet/indexTeeTime",
+        userAgent: "",
+        message: "ERROR_INDEXING_TEE_TIME",
+        stackTrace: ``,
+        additionalDetailsJSON: JSON.stringify({
+          teeTimeId,
+        })
+      })
       // throw new Error(`Error indexing tee time: ${error}`);
       throw new Error(
         `We're sorry. This time is no longer available. Someone just booked this. It may take a minute for the sold time you selected to be removed. Please select another time.`

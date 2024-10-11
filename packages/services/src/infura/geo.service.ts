@@ -1,5 +1,6 @@
 import { LocationClient, SearchPlaceIndexForTextCommand } from "@aws-sdk/client-location";
 import Logger from "@golf-district/shared/src/logger";
+import { loggerService } from "../webhooks/logging.service";
 
 /**
  * Constructs a new instance of `GeoService`.
@@ -72,6 +73,16 @@ export class GeoService {
     });
     const data = await client.send(command).catch((err) => {
       this.logger.error(`Error geocoding address: ${err}`);
+      loggerService.errorLog({
+        userId: "",
+        url: "/GeoService/geoCodeAddress",
+        userAgent: "",
+        message: "ERROR_GEOCODING_ADDRESS",
+        stackTrace: `${err.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          address,
+        })
+      })
       throw new Error(`Error geocoding address: ${err}`);
     });
 
@@ -82,6 +93,16 @@ export class GeoService {
       }
     }
     this.logger.error(`Unexpected response structure from Amazon Location Service: ${JSON.stringify(data)}`);
+    loggerService.errorLog({
+      userId: "",
+      url: "/GeoService/geoCodeAddress",
+      userAgent: "",
+      message: "UNEXPECTED_RESPONSE_STRUCTURE_FROM_AMAZON_LOCATION_SERVICE",
+      stackTrace: `${JSON.stringify(data)}`,
+      additionalDetailsJSON: JSON.stringify({
+        address
+      })
+    })
     throw new Error("Unexpected response structure from Amazon Location Service");
   }
 }

@@ -876,6 +876,18 @@ export class HyperSwitchWebhookService {
       .execute()
       .catch((err) => {
         this.logger.error(err);
+        this.loggerService.errorLog({
+          userId: "",
+          url: `/HyperSwitchWebhookService/handleSecondHandItem`,
+          userAgent: "",
+          message: "ERROR_GETTING_EXISTING_TEE_TIME",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            item,
+            customer_id,
+            paymentId,
+          })
+        })
         return [];
       });
 
@@ -1121,6 +1133,17 @@ export class HyperSwitchWebhookService {
           .execute()
           .catch((err) => {
             this.logger.error(err);
+            this.loggerService.errorLog({
+              userId: customer_id,
+              url: `/HyperSwitchWebhookService/handleSecondHandItem`,
+              userAgent: "",
+              message: "ERROR_UPDATING_BOOKING_FOR_TEE_TIME",
+              stackTrace: `${err.stack}`,
+              additionalDetailsJSON: JSON.stringify({
+                bookingId,
+                providerBookingId,
+              })
+            })
           });
       }
 
@@ -1171,6 +1194,16 @@ export class HyperSwitchWebhookService {
             .execute()
             .catch((err) => {
               this.logger.error(err);
+              this.loggerService.errorLog({
+                userId: customer_id,
+                url: `/HyperSwitchWebhookService/handleSecondHandItem`,
+                userAgent: "",
+                message: "ERROR_CREATING_BOOKING_FOR_TEE_TIME",
+                stackTrace: `${err.stack}`,
+                additionalDetailsJSON: JSON.stringify({
+                  bookingsToCreate,
+                })
+              })
               tx.rollback();
             });
           await tx
@@ -1178,7 +1211,17 @@ export class HyperSwitchWebhookService {
             .values(bookingSlots)
             .execute()
             .catch((err) => {
-              this.logger.error(err);
+              this.logger.error(err); 
+              this.loggerService.errorLog({
+                userId: customer_id,
+                url: `/HyperSwitchWebhookService/handleSecondHandItem`,
+                userAgent: "",
+                message: "ERROR_CREATING_BOOKING_SLOT_FOR_TEE_TIME",
+                stackTrace: `${err.stack}`,
+                additionalDetailsJSON: JSON.stringify({
+                  bookingSlots,
+                })
+              })
               tx.rollback();
             });
         });
@@ -1191,6 +1234,16 @@ export class HyperSwitchWebhookService {
             .execute()
             .catch((err) => {
               this.logger.error(err);
+              this.loggerService.errorLog({
+                userId: customer_id,
+                url: `/HyperSwitchWebhookService/handleSecondHandItem`,
+                userAgent: "",
+                message: "ERROR_CREATING_BOOKING_SLOT_FOR_TEE_TIME",
+                stackTrace: `${err.stack}`,
+                additionalDetailsJSON: JSON.stringify({
+                  bookingSlots,
+                })
+              })
               tx.rollback();
             });
         });
@@ -1380,6 +1433,16 @@ export class HyperSwitchWebhookService {
       .values(customerRecievableData)
       .catch((err: any) => {
         this.logger.error(err);
+        this.loggerService.errorLog({
+          userId: "",
+          url: `/HyperSwitchWebhookService/handleSecondHandItem`,
+          userAgent: "",
+          message: "ERROR_CREATING_BOOKING_FOR_TEE_TIME",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            customerRecievableData
+          })
+        })
       });
   };
 
@@ -1465,8 +1528,18 @@ export class HyperSwitchWebhookService {
           .where(eq(bookings.id, acceptedQuote.reservation_id));
       }
       return acceptedQuote;
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error("Error handling Sensible item:", error);
+      this.loggerService.errorLog({
+        userId: customer_id,
+        url: `/HyperSwitchWebhookService/handleSensibleItem`,
+        userAgent: "",
+        message: "ERROR_CREATING_BOOKING_FOR_TEE_TIME",
+        stackTrace: `${error.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          item,
+        })
+      })
       throw new Error("Failed to handle Sensible item");
     }
   };
