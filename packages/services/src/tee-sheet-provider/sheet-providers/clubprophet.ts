@@ -193,6 +193,15 @@ export class clubprophet extends BaseProvider {
     if (isError || data === false) {
       this.logger.error(`Error deleting booking: ${response.statusText}`);
       this.logger.error(`Error response from club-prophet: ${JSON.stringify(data)}`);
+
+      const url = `${endpoint}/thirdpartyapi/api/v1/TeeSheet/ReservationDetailByConfirmId?reservationConfirmId=${bookingId}`
+      const bookingResponse = await fetch(url, {
+        method: "GET",
+        headers: headers,
+      });
+      const reservation = await bookingResponse.json();
+
+      this.logger.info(`Reservation: ${JSON.stringify(reservation)}`);
       loggerService.errorLog({
         userId: "",
         url: "/Clubprophet/deleteBooking",
@@ -201,8 +210,12 @@ export class clubprophet extends BaseProvider {
         stackTrace: ``,
         additionalDetailsJSON: JSON.stringify({
           bookingId: bookingId,
+          isError,
+          data,
+          reservation
         })
       })
+
       if (response.status === 403) {
         await this.getToken();
       }

@@ -293,7 +293,7 @@ export class TokenizeService {
                 : "",
             },
           });
-        } catch (error) {
+        } catch (error: any) {
           const adminEmail: string = process.env.ADMIN_EMAIL_LIST || "nara@golfdistrict.com";
           const emailAterSplit = adminEmail.split(",");
           emailAterSplit.map(async (email) => {
@@ -302,11 +302,29 @@ export class TokenizeService {
 
           this.loggerService.errorLog({
             userId: userId,
-            url: "/checkout",
+            url: "/TokenizeService/tokenizeBooking",
             userAgent: "",
-            message: "SENSIBLE_ERROR",
-            stackTrace: "",
-            additionalDetailsJSON: "Error in accepting quote ",
+            message: "SENSIBLE_ERROR_ACCEPTING_QUOTE",
+            stackTrace: `${error.stack}`,
+            additionalDetailsJSON: `${JSON.stringify({
+              error: error,
+              acceptedQuote,
+              weatherGuaranteeData,
+              normalizedCartData,
+              requestBody: {
+                quoteId: weatherGuaranteeData[0].product_data.metadata.sensible_quote_id,
+                price_charged: weatherGuaranteeData[0].price / 100,
+                reservation_id: bookingId,
+                lang_locale: "en_US",
+                user: {
+                  email: normalizedCartData?.cart?.email,
+                  name: normalizedCartData.cart?.name,
+                  phone: normalizedCartData.cart?.phone
+                    ? `+${normalizedCartData?.cart?.phone_country_code}${normalizedCartData?.cart?.phone}`
+                    : "",
+                },
+              }
+            })}`,
           });
         }
       }
@@ -363,7 +381,7 @@ export class TokenizeService {
         bookingId,
         players,
         userId,
-       providerBookingId,
+        providerBookingId,
         provider.providerId,
         existingTeeTime.courseId,
         providerBookingIds
