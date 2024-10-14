@@ -1,7 +1,14 @@
 "use client";
 
 import * as ToggleGroup from "@radix-ui/react-toggle-group";
-import { Fragment, forwardRef, useEffect, useImperativeHandle, useMemo, useState } from "react";
+import {
+  forwardRef,
+  Fragment,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useState,
+} from "react";
 import { Switch } from "../buttons/switch";
 import { Hidden } from "../icons/hidden";
 import { Info } from "../icons/info";
@@ -16,6 +23,7 @@ import { api } from "~/utils/api";
 import { getDisabledDays } from "~/utils/calendar";
 import { debounceFunction } from "~/utils/debounce";
 import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
+import Image from "next/image";
 import { useMediaQuery } from "usehooks-ts";
 
 interface DayValue {
@@ -30,7 +38,6 @@ interface DayValue {
 interface ChildComponentRef {
   getChildValue: () => any;
 }
-
 
 const HoleOptions = ["Any", "18", "9"];
 
@@ -67,10 +74,10 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
   const { course } = useCourseContext();
   const [dateTypeMobile, setDateTypeMobile] = useState(dateType);
   const [timeMobile, setTimeMobile] = useState(startTime);
-  const [switchMobile, setSwitchMobile] = useState(showUnlisted)
-  const [holeMobile, setHoleMobile] = useState(holes)
-  const [golferMobile, setGolferMobile] = useState(golfers)
-  const [selectedDayMobile, setSelectedDayMobile] = useState(selectedDay)
+  const [switchMobile, setSwitchMobile] = useState(showUnlisted);
+  const [holeMobile, setHoleMobile] = useState(holes);
+  const [golferMobile, setGolferMobile] = useState(golfers);
+  const [selectedDayMobile, setSelectedDayMobile] = useState(selectedDay);
 
   const isMobile = useMediaQuery("(max-width: 768px)");
 
@@ -150,14 +157,14 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
         holes: holeMobile,
         selectedDay: selectedDayMobile,
         golfers: golferMobile,
-        priceRange: priceMobile
+        priceRange: priceMobile,
       };
-    }
+    },
   }));
 
   const setFilter = (type, value) => {
     switch (type) {
-      case 'dateType': {
+      case "dateType": {
         if (isMobile) {
           setDateTypeMobile(value);
         } else {
@@ -165,7 +172,7 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
         }
         break;
       }
-      case 'time': {
+      case "time": {
         if (isMobile) {
           setTimeMobile(value as [number, number]);
         } else {
@@ -173,7 +180,7 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
         }
         break;
       }
-      case 'hole': {
+      case "hole": {
         if (isMobile) {
           setHoleMobile(value as HoleType);
         } else {
@@ -181,7 +188,7 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
         }
         break;
       }
-      case 'golfer': {
+      case "golfer": {
         if (isMobile) {
           setGolferMobile(value as GolferType);
         } else {
@@ -189,7 +196,7 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
         }
         break;
       }
-      case 'price': {
+      case "price": {
         if (isMobile) {
           setPriceMobile(value as [number, number]);
         } else {
@@ -197,17 +204,21 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
         }
         break;
       }
-      case 'selectedDay': {
+      case "selectedDay": {
         if (isMobile) {
-          setSelectedDayMobile(value as {
-            from: DayValue;
-            to: DayValue;
-          });
+          setSelectedDayMobile(
+            value as {
+              from: DayValue;
+              to: DayValue;
+            }
+          );
         } else {
-          setSelectedDay(value as {
-            from: DayValue;
-            to: DayValue;
-          });
+          setSelectedDay(
+            value as {
+              from: DayValue;
+              to: DayValue;
+            }
+          );
         }
         break;
       }
@@ -226,6 +237,7 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
   const { data: specialEvents } = api.searchRouter.getSpecialEvents.useQuery({
     courseId: course?.id ?? "",
   });
+  console.log("specialEvents", specialEvents);
 
   const DateOptions = useMemo(() => {
     const defaultDateOptions = [
@@ -238,12 +250,12 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
       "Custom",
     ];
 
-    // Extract the names of the first two special events
     const specialEventOptions =
       specialEvents?.slice(0, 2).map((event) => event.eventName) || [];
 
     return [...specialEventOptions, ...defaultDateOptions];
   }, [specialEvents]);
+
   const dateToDayValue = (date: Date): DayValue => ({
     year: date.getFullYear(),
     month: date.getMonth() + 1,
@@ -261,7 +273,7 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
           value={isMobile ? dateTypeMobile : dateType}
           onValueChange={(dateType: DateType) => {
             if (dateType) {
-              setFilter("dateType", dateType)
+              setFilter("dateType", dateType);
               googleAnalyticsEvent({
                 action: `FILTER BY ${dateType}`,
                 category: "FILTER_DATA",
@@ -278,23 +290,35 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
               <Item
                 key={index}
                 value={value}
+                icon={
+                  specialEvents?.find((event) => event.eventName === value)
+                    ?.iconUrl || null
+                }
                 label={
                   value === "Custom" ? (
                     <div className="flex justify-between">
                       <span>{value}</span>
                       {isMobile
                         ? dateTypeMobile === "Custom" && (
-                          <>
-                            {selectedDayMobile.from ? formatDate(selectedDayMobile.from) : ""}
-                            {selectedDayMobile.to ? ` - ${formatDate(selectedDayMobile.to)}` : ""}
-                          </>
-                        )
+                            <>
+                              {selectedDayMobile.from
+                                ? formatDate(selectedDayMobile.from)
+                                : ""}
+                              {selectedDayMobile.to
+                                ? ` - ${formatDate(selectedDayMobile.to)}`
+                                : ""}
+                            </>
+                          )
                         : dateType === "Custom" && (
-                          <>
-                            {selectedDay.from ? formatDate(selectedDay.from) : ""}
-                            {selectedDay.to ? ` - ${formatDate(selectedDay.to)}` : ""}
-                          </>
-                        )}
+                            <>
+                              {selectedDay.from
+                                ? formatDate(selectedDay.from)
+                                : ""}
+                              {selectedDay.to
+                                ? ` - ${formatDate(selectedDay.to)}`
+                                : ""}
+                            </>
+                          )}
                     </div>
                   ) : (
                     value
@@ -302,14 +326,15 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
                 }
                 dataTestId="date-filter-id"
                 dataQa={value}
-                className={`${index === 0
-                  ? "rounded-t-2xl border border-stroke"
-                  : index === DateOptions.length - 1 && dateType === "Custom"
+                className={`${
+                  index === 0
+                    ? "rounded-t-2xl border border-stroke"
+                    : index === DateOptions.length - 1 && dateType === "Custom"
                     ? "border-l border-r border-stroke"
                     : index === DateOptions.length - 1
-                      ? "rounded-b-2xl border-b border-l border-r border-stroke"
-                      : "border-b border-l border-r border-stroke"
-                  }`}
+                    ? "rounded-b-2xl border-b border-l border-r border-stroke"
+                    : "border-b border-l border-r border-stroke"
+                }`}
               />
               {dateType === "Custom" && value === "Custom" ? (
                 <>
@@ -317,7 +342,9 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
                     <Calendar
                       value={isMobile ? selectedDayMobile : selectedDay}
                       calendarClassName="responsive-calendar"
-                      onChange={isMobile ? setSelectedDayMobile : setSelectedDay}
+                      onChange={
+                        isMobile ? setSelectedDayMobile : setSelectedDay
+                      }
                       colorPrimary="#40942A"
                       minimumDate={minimumDate}
                       disabledDays={blackOutDays}
@@ -329,15 +356,16 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
                         <>
                           <button
                             key={i}
-                            className={`inline-block mt-1 ${isMobile ? "mx-4" : "mx-2"
-                              }`}
+                            className={`inline-block mt-1 ${
+                              isMobile ? "mx-4" : "mx-2"
+                            }`}
                             onClick={() => {
                               const startDate = new Date(event.startDate);
                               const endDate = new Date(event.endDate);
                               setFilter("selectedDay", {
                                 from: dateToDayValue(startDate),
                                 to: dateToDayValue(endDate),
-                              })
+                              });
                             }}
                           >
                             {event.eventName}
@@ -357,40 +385,46 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
         <div className="flex items-center justify-between">
           <div>Start Time</div>
           <div>
-            {
-              isMobile ?
-                startTimeOptions[
+            {isMobile
+              ? startTimeOptions[
                   startTimeOptions.findIndex((i) => i.value === timeMobile[0])
                 ]?.displayTime
-                :
-                startTimeOptions[
-                  startTimeOptions.findIndex((i) => i.value === localStartTime[0])
-                ]?.displayTime
-            }
+              : startTimeOptions[
+                  startTimeOptions.findIndex(
+                    (i) => i.value === localStartTime[0]
+                  )
+                ]?.displayTime}
             -
-            {
-              isMobile ?
-                startTimeOptions[
+            {isMobile
+              ? startTimeOptions[
                   startTimeOptions.findIndex((i) => i.value === timeMobile[1])
                 ]?.displayTime
-                :
-                startTimeOptions[
-                  startTimeOptions.findIndex((i) => i.value === localStartTime[1])
-                ]?.displayTime
-            }
+              : startTimeOptions[
+                  startTimeOptions.findIndex(
+                    (i) => i.value === localStartTime[1]
+                  )
+                ]?.displayTime}
           </div>
         </div>
         <Slider
           min={0}
           max={startTimeOptions.length - 1}
           step={1}
-          value={isMobile ? [
-            startTimeOptions.findIndex((i) => i.value === timeMobile[0]),
-            startTimeOptions.findIndex((i) => i.value === timeMobile[1]),
-          ] : [
-            startTimeOptions.findIndex((i) => i.value === localStartTime[0]),
-            startTimeOptions.findIndex((i) => i.value === localStartTime[1]),
-          ]}
+          value={
+            isMobile
+              ? [
+                  startTimeOptions.findIndex((i) => i.value === timeMobile[0]),
+                  startTimeOptions.findIndex((i) => i.value === timeMobile[1]),
+                ]
+              : [
+                  startTimeOptions.findIndex(
+                    (i) => i.value === localStartTime[0]
+                  ),
+                  startTimeOptions.findIndex(
+                    (i) => i.value === localStartTime[1]
+                  ),
+                ]
+          }
           onPointerUp={() => {
             handleSetStartTime();
           }}
@@ -410,16 +444,18 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
               const option1 = startTimeOptions[time[0]];
               const option2 = startTimeOptions[time[1]];
               if (option1 && option2) {
-                setFilter("time", [option1.value, option2.value])
+                setFilter("time", [option1.value, option2.value]);
               }
             }
           }}
           data-testid="slider-start-time-id"
-          data-qa={`${startTimeOptions.find((i) => i.value === localStartTime[0])
-            ?.displayTime
-            } - ${startTimeOptions.find((i) => i.value === localStartTime[1])
+          data-qa={`${
+            startTimeOptions.find((i) => i.value === localStartTime[0])
               ?.displayTime
-            }`}
+          } - ${
+            startTimeOptions.find((i) => i.value === localStartTime[1])
+              ?.displayTime
+          }`}
         />
       </section>
 
@@ -482,12 +518,13 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
               label={value}
               dataTestId="hole-filter-id"
               dataQa={value}
-              className={`${index === 0
-                ? "rounded-l-full border-b border-l border-t border-stroke"
-                : index === HoleOptions.length - 1
+              className={`${
+                index === 0
+                  ? "rounded-l-full border-b border-l border-t border-stroke"
+                  : index === HoleOptions.length - 1
                   ? "rounded-r-full border-b border-r border-t border-stroke"
                   : "border border-stroke"
-                } px-[2.5rem]`}
+              } px-[2.5rem]`}
             />
           ))}
         </ToggleGroup.Root>
@@ -508,7 +545,7 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
               setGolfers("Any");
               return;
             }
-            if (golfer) setFilter("golfer", Number(golfer) as GolferType)
+            if (golfer) setFilter("golfer", Number(golfer) as GolferType);
           }}
           orientation="horizontal"
           className="flex"
@@ -520,12 +557,13 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
               label={value}
               dataTestId="golfer-filter-id"
               dataQa={value}
-              className={`${index === 0
-                ? "rounded-l-full border-b border-l border-t border-stroke"
-                : index === GolferOptions.length - 1
+              className={`${
+                index === 0
+                  ? "rounded-l-full border-b border-l border-t border-stroke"
+                  : index === GolferOptions.length - 1
                   ? "rounded-r-full border border-stroke"
                   : "border-b border-l border-t border-stroke"
-                } px-[1.44rem]`}
+              } px-[1.44rem]`}
             />
           ))}
         </ToggleGroup.Root>
@@ -559,7 +597,11 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
             debounceFunction(setFilter("price", value), 1000);
           }}
           data-testid="slider-price-range-id"
-          data-qa={isMobile ? `${priceMobile?.[0]}-${priceMobile?.[1]}` : `${localPriceRange?.[0]}-${localPriceRange?.[1]}`}
+          data-qa={
+            isMobile
+              ? `${priceMobile?.[0]}-${priceMobile?.[1]}`
+              : `${localPriceRange?.[0]}-${localPriceRange?.[1]}`
+          }
         />
       </section>
     </div>
@@ -574,6 +616,7 @@ export const Item = ({
   dataTest,
   dataCy,
   label,
+  icon,
 }: {
   value: string;
   className?: string;
@@ -582,17 +625,28 @@ export const Item = ({
   dataTest?: string;
   dataCy?: string;
   label?: any;
+  icon?: string | null;
 }) => {
   return (
     <ToggleGroup.Item
       value={value}
-      className={`bg-white px-4 py-2 text-left text-[14px] text-primary-gray transition-colors data-[state=on]:bg-primary data-[state=on]:text-white ${className ?? ""
-        }`}
+      className={`bg-white flex items-center px-4 py-2 text-left text-[14px] text-primary-gray transition-colors data-[state=on]:bg-primary data-[state=on]:text-white ${
+        className ?? ""
+      }`}
       data-testid={dataTestId}
       data-qa={dataQa}
       data-test={dataTest}
       data-cy={dataCy}
     >
+      {icon && (
+        <Image
+          src={icon}
+          alt={`${value} icon`}
+          width={22}
+          height={22}
+          className="mr-2 h-5 w-5"
+        />
+      )}
       {label}
     </ToggleGroup.Item>
   );
