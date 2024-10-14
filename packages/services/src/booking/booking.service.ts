@@ -3685,7 +3685,6 @@ export class BookingService {
     const bookingsToCreate: InsertBooking[] = [];
     const transfersToCreate: InsertTransfer[] = [];
 
-    console.log("ASSOCIATED BOOKING", associatedBooking);
     bookingsToCreate.push({
       id: bookingId,
       // purchasedAt: currentUtcTimestamp(),
