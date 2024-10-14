@@ -243,6 +243,8 @@ export default function Login() {
       localStorage.setItem("googlestate", "loggedin");
     } catch (error) {
       console.log("error", error);
+    }finally{
+      localStorage.removeItem("googlestate");
     }
   };
   const hasProvidersSetUp =
