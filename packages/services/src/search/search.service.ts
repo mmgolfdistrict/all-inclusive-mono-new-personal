@@ -167,6 +167,16 @@ export class SearchService {
       .execute()
       .catch((err) => {
         this.logger.error(err);
+        this.loggerService.errorLog({
+          userId: "",
+          url: "/SearchService/searchUsers",
+          userAgent: "",
+          message: "ERROR_GETTING_USERS",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            searchText
+          })
+        })
         return [];
       });
     if (!data) {
@@ -232,7 +242,18 @@ export class SearchService {
       return null;
     }
     const forecast = await this.weatherService.getForecast(firstBooking.courseId).catch((err) => {
-      this.logger.error("error getting forecast", err);
+      this.logger.error(`error getting forecast, ${err}`);
+      this.loggerService.errorLog({
+        userId: "",
+        url: "/SearchService/getUnlistedTeeTimes",
+        userAgent: "",
+        message: "ERROR_GETTING_FORECAST",
+        stackTrace: `${err.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          ownerId,
+          teeTimeId,
+        })
+      })
       return [];
     });
     let weather;
@@ -394,6 +415,17 @@ export class SearchService {
       .execute()
       .catch((err) => {
         this.logger.error(err);
+        this.loggerService.errorLog({
+          userId: "",
+          url: "/SearchService/getTeeTimeById",
+          userAgent: "",
+          message: "ERROR_GETTING_TEE_TIMES",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            teeTimeId,
+            userId,
+          })
+        })
         return [];
       });
     if (!tee) {
@@ -437,6 +469,16 @@ export class SearchService {
       .execute()
       .catch((err) => {
         this.logger.error(err);
+        this.loggerService.errorLog({
+          userId: "",
+          url: "/SearchService/getTeeTimeById",
+          userAgent: "",
+          message: "ERROR_GETTING_WATCHERS",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            teeTimeId,
+          })
+        })
         return [];
       });
 
@@ -517,6 +559,16 @@ export class SearchService {
       .execute()
       .catch((err) => {
         this.logger.error(err);
+        this.loggerService.errorLog({
+          userId: "",
+          url: "/SearchService/getLastTeeTimeDate",
+          userAgent: "",
+          message: "ERROR_GETTING_LAST_TEE_TIME_DATE",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            courseId,
+          })
+        })
         return [];
       });
 
@@ -579,6 +631,16 @@ export class SearchService {
       .execute()
       .catch((err) => {
         this.logger.error(err);
+        this.loggerService.errorLog({
+          userId: "",
+          url: "/SearchService/searchUsers",
+          userAgent: "",
+          message: "ERROR_GETTING_FARTHEST_TEE_TIME_DATE",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            courseId,
+          })
+        })
         return [];
       });
 
@@ -930,6 +992,27 @@ export class SearchService {
         additionalDetailsJSON: `Error getting tee times for ${date}: ${err}`,
       });
       this.logger.error(err);
+      this.loggerService.errorLog({
+        userId: "",
+        url: "/SearchService/getTeeTimesForDay",
+        userAgent: "",
+        message: "ERROR_GETTING_TEE_TIMES_FOR_DAY",
+        stackTrace: `${err.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          courseId,
+          date,
+          minDate,
+          maxDate,
+          startTime,
+          endTime,
+          holes,
+          golfers,
+          sortPrice,
+          sortTime,
+          limit,
+          userId: _userId,
+        })
+      })
       throw new Error(`Error getting tee times for ${date}: ${err}`);
     });
     const priceAccordingToDate: any[] = await this.getTeeTimesPriceWithRange(

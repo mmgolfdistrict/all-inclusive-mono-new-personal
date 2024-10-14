@@ -13,6 +13,7 @@ import { MailService } from "@sendgrid/mail";
 import type pino from "pino";
 import twilio from "twilio";
 import { AppSettingsService } from "../app-settings/app-settings.service";
+import { loggerService } from "../webhooks/logging.service";
 
 interface EmailParams {
   CustomerFirstName?: string;
@@ -131,6 +132,18 @@ export class NotificationService {
       })
       .catch((err) => {
         this.logger.error(err);
+        loggerService.errorLog({
+          userId: "",
+          url: "/NotificationService/sendEmail",
+          userAgent: "",
+          message: "ERROR_SENDING_EMAIL",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            email,
+            subject,
+            body,
+          })
+        })
         throw new Error(`Failed to send email to: ${email}`);
       });
     // } else {
@@ -168,6 +181,20 @@ export class NotificationService {
         })
         .catch((err) => {
           this.logger.error(err);
+          loggerService.errorLog({
+            userId: "",
+            url: "/NotificationService/sendEmailByTemplate",
+            userAgent: "",
+            message: "ERROR_SENDING_EMAIL_BY_TEMPLATE",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              email,
+              subject,
+              template,
+              templateId,
+              attachments
+            })
+          })
           throw new Error(`Failed to send email to: ${email}`);
         });
     } else {
@@ -182,6 +209,20 @@ export class NotificationService {
         })
         .catch((err) => {
           this.logger.error(err);
+          loggerService.errorLog({
+            userId: "",
+            url: "/NotificationService/sendEmailByTemplate",
+            userAgent: "",
+            message: "ERROR_SENDING_EMAIL_BY_TEMPLATE",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              email,
+              subject,
+              template,
+              templateId,
+              attachments
+            })
+          })
           throw new Error(`Failed to send email to: ${email}`);
         });
     }
@@ -210,6 +251,17 @@ export class NotificationService {
         })
         .catch((err) => {
           this.logger.error(err);
+          loggerService.errorLog({
+            userId: "",
+            url: "/NotificationService/sendSMS",
+            userAgent: "",
+            message: "ERROR_SENDING_SMS",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              phoneNumber,
+              body,
+            })
+          })
           throw new Error(`Failed to send SMS to: ${phoneNumber}`);
         });
     } else {
@@ -358,11 +410,39 @@ export class NotificationService {
       .execute()
       .catch((err) => {
         this.logger.error(`Failed to retrieve user: ${err}`);
+        loggerService.errorLog({
+          userId: userId,
+          url: "/NotificationService/createNotification",
+          userAgent: "",
+          message: "FAILED_TO_RETRIEVE_USER",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            courseId,
+            subject,
+            template,
+            templateId,
+            attachments
+          })
+        })
         throw new Error("Failed to retrieve user");
       });
 
     if (!user) {
       this.logger.error(`createNotification: User with ID ${userId} not found.`);
+      loggerService.errorLog({
+        userId: userId,
+        url: "/NotificationService/createNotification",
+        userAgent: "",
+        message: "USER_NOT_FOUND",
+        stackTrace: `createNotification: User with ID ${userId} not found.`,
+        additionalDetailsJSON: JSON.stringify({
+          courseId,
+          subject,
+          template,
+          templateId,
+          attachments
+        })
+      })
       return;
     }
     this.logger.info(`Creating notification for user ${userId}`);
@@ -380,6 +460,20 @@ export class NotificationService {
       .values(notification)
       .catch((err) => {
         this.logger.error(`Failed to create notification: ${err}`);
+        loggerService.errorLog({
+          userId: userId,
+          url: "/NotificationService/createNotification",
+          userAgent: "",
+          message: "FAILED_TO_CREATE_NOTIFICATION",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            courseId,
+            subject,
+            template,
+            templateId,
+            attachments
+          })
+        })
         throw new Error("Failed to create notification");
       });
 
@@ -433,6 +527,17 @@ export class NotificationService {
 
     const userNotifications = await query.execute().catch((err) => {
       this.logger.error(err);
+      loggerService.errorLog({
+        userId: userId,
+        url: "/NotificationService/getNotifications",
+        userAgent: "",
+        message: "FAILED_TO_RETRIEVE_NOTIFICATIONS",
+        stackTrace: `${err.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          userId,
+          entityId,
+        })
+      })
       throw new Error("Failed to retrieve notifications");
     });
 
@@ -499,6 +604,17 @@ export class NotificationService {
       .execute()
       .catch((err) => {
         this.logger.error(err);
+        loggerService.errorLog({
+          userId: userId,
+          url: "/NotificationService/markNotificationsAsDeleted",
+          userAgent: "",
+          message: "FAILED_TO_MARK_NOTIFICATIONS_AS_DELETED",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            userId,
+            notificationIds
+          })
+        })
         throw new Error("Failed to mark notifications as deleted");
       });
   };

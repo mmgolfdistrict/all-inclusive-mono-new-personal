@@ -2,6 +2,7 @@ import type { Db } from "@golf-district/database";
 import { eq } from "@golf-district/database";
 import { courseSEOs } from "@golf-district/database/schema/courseSEO";
 import Logger from "@golf-district/shared/src/logger";
+import { loggerService } from "../webhooks/logging.service";
 
 export class CourseSEOService {
   private readonly db: Db;
@@ -26,8 +27,18 @@ export class CourseSEOService {
 
       this.logger.info(`Course render settings fetched: ${courseId}, ${JSON.stringify(courseSEO)}`);
       return courseSEO;
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(error);
+      loggerService.errorLog({
+        userId: "",
+        url: "/CourseSEOService/getCourseSEO",
+        userAgent: "",
+        message: "ERROR_FETCHING_COURSE_SEO",
+        stackTrace: `${error.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          courseId,
+        })
+      })
     }
   };
 }

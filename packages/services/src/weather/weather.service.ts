@@ -4,6 +4,7 @@ import { courses } from "@golf-district/database/schema/courses";
 import Logger from "@golf-district/shared/src/logger";
 import { CacheService } from "../infura/cache.service";
 import type { _ForecastData, _WeatherData } from "./types";
+import { loggerService } from "../webhooks/logging.service";
 
 /**
  * `WeatherService` - A service for fetching and optionally caching weather data.
@@ -73,6 +74,16 @@ export class WeatherService extends CacheService {
       .execute()
       .catch((err) => {
         this.logger.error(err);
+        loggerService.errorLog({
+          userId: "",
+          url: `/WeatherService/getForecast`,
+          userAgent: "",
+          message: "COURSE_FORECAST_NOT_FOUND",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            courseId,
+          })
+        })
         return [];
       });
     if (!endpoint) {

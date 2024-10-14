@@ -12,6 +12,7 @@ import { assets } from "@golf-district/database/schema/assets";
 import { users } from "@golf-district/database/schema/users";
 import Logger from "@golf-district/shared/src/logger";
 import type { ImageService } from "./image.service";
+import { loggerService } from "../webhooks/logging.service";
 
 export interface Part {
   ETag: string;
@@ -123,6 +124,17 @@ export class UploadService {
       uniqueFileName
     ).catch((err) => {
       this.logger.error(`createPresignedUploadURL error generating presigned URLs: ${err}`);
+      loggerService.errorLog({
+        userId: "",
+        url: "/UploadService/CreatePresignedUploadURL",
+        userAgent: "",
+        message: "ERROR_GENERATE_PRE_SIGNED_URLS",
+        stackTrace: `${err.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          originalFileName,
+          size,
+        })
+      })
       throw err;
     });
     return {
@@ -158,6 +170,18 @@ export class UploadService {
 
     await this.s3.send(command).catch((err) => {
       this.logger.error(`completeUpload error completing multipart upload: ${err}`);
+      loggerService.errorLog({
+        userId,
+        url: "/UploadService/CompleteUpload",
+        userAgent: "",
+        message: "ERROR_COMPLETE_MULTIPART_UPLOAD",
+        stackTrace: `${err.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          s3Key,
+          uploadId,
+          parts,
+        })
+      })
       throw err;
     });
     const fileNameWithoutExtension = s3Key.replace(/\.[^/.]+$/, "");
@@ -166,7 +190,17 @@ export class UploadService {
       .storeAsset(userId, fileNameWithoutExtension, extension)
       .catch((err) => {
         this.logger.error(`completeUpload error storing asset: ${err}`);
-        console.log("upload:", err);
+        loggerService.errorLog({
+          userId,
+          url: "/UploadService/CompleteUpload",
+          userAgent: "",
+          message: "ERROR_STORE_ASSET",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            s3Key,
+            uploadId,
+          })
+        })
         throw Error("Error storing asset");
       });
     return {
@@ -196,6 +230,17 @@ export class UploadService {
     const command = new AbortMultipartUploadCommand(params);
     await this.s3.send(command).catch((err) => {
       this.logger.error(`abortUpload error aborting upload: ${err}`);
+      loggerService.errorLog({
+        userId: "",
+        url: "/UploadService/AbortUpload",
+        userAgent: "",
+        message: "ERROR_ABORTING_UPLOAD",
+        stackTrace: `${err.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          s3Key,
+          uploadId,
+        })
+      })
       throw err;
     });
     this.logger.debug(`abortUpload upload aborted for s3Key: ${s3Key}, uploadId: ${uploadId}`);
@@ -243,10 +288,36 @@ export class UploadService {
         })
       ).catch((err) => {
         this.logger.error(`generatePresignedUrlsParts error generating presigned URLs: ${err}`);
+        loggerService.errorLog({
+          userId: "",
+          url: "/UploadService/GeneratePresignedUrlsParts",
+          userAgent: "",
+          message: "ERROR_GENERATING_PRE_SIGNED_URLS",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            uploadId,
+            parts,
+            bucketName,
+            key,
+          })
+        })
         throw err;
       })
     ).catch((err) => {
       this.logger.error(`generatePresignedUrlsParts error generating presigned URLs: ${err}`);
+      loggerService.errorLog({
+        userId: "",
+        url: "/UploadService/GeneratePresignedUrlsParts",
+        userAgent: "",
+        message: "ERROR_GENERATING_PRE_SIGNED_URLS",
+        stackTrace: `${err.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          uploadId,
+          parts,
+          bucketName,
+          key,
+        })
+      })
       throw err;
     });
     return res.reduce((map, part, index) => {
@@ -318,8 +389,21 @@ export class UploadService {
     try {
       await this.s3.send(new DeleteObjectCommand(params));
       await db.update(assets).set({ isDeleted: true }).where(eq(assets.id, assetId)).execute();
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`deleteFileFromS3Bucket error deleting file: ${error}`);
+      loggerService.errorLog({
+        userId: "",
+        url: "/UploadService/DeleteFile",
+        userAgent: "",
+        message: "ERROR_DELETING_FILE",
+        stackTrace: `${error.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          userId,
+          imageType,
+          assetId,
+          s3Key,
+        })
+      })
       throw error;
     }
   };

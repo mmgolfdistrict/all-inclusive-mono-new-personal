@@ -15,6 +15,7 @@ import type {
   NotificationQstashData,
   UpdateWaitlistNotification,
 } from "./types";
+import { loggerService } from "../webhooks/logging.service";
 
 dayjs.extend(UTC);
 /**
@@ -55,8 +56,18 @@ export class UserWaitlistService {
           throw new Error("Error getting waitlist");
         });
       return waitlist;
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(error);
+      loggerService.errorLog({
+        userId: userId,
+        url: `/UserWaitlistService/getWaitlist`,
+        userAgent: "",
+        message: "ERROR_GETTING_WAITLIST",
+        stackTrace: `${error.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          courseId
+        })
+      })
       throw error;
     }
   };
@@ -73,8 +84,18 @@ export class UserWaitlistService {
         });
 
       return "Notification inserted successfully";
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(error);
+      loggerService.errorLog({
+        userId: "",
+        url: `/UserWaitlistService/insertWaitlistNotifications`,
+        userAgent: "",
+        message: "ERROR_CREATING_WAITLIST_NOTIFICATION",
+        stackTrace: `${error.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          waitlistNotificationsList
+        })
+      })
       throw error;
     }
   };
@@ -94,8 +115,19 @@ export class UserWaitlistService {
           throw new Error("Error updating waitlist notification");
         });
       return "Notification updated successfully";
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(error);
+      loggerService.errorLog({
+        userId: "",
+        url: `/UserWaitlistService/updateWaitlistNotification`,
+        userAgent: "",
+        message: "ERROR_UPDATING_WAITLIST_NOTIFICATION",
+        stackTrace: `${error.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          notificationId,
+          notificationData
+        })
+      })
       throw error;
     }
   };
@@ -114,8 +146,18 @@ export class UserWaitlistService {
           throw new Error("Error deleting waitlist notification");
         });
       return "Notification deleted successfully";
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(error);
+      loggerService.errorLog({
+        userId: "",
+        url: `/UserWaitlistService/deleteWaitlistNotifications`,
+        userAgent: "",
+        message: "ERROR_DELETING_WAITLIST_NOTIFICATION",
+        stackTrace: `${error.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          notificationIds
+        })
+      })
       throw error;
     }
   };
@@ -143,8 +185,18 @@ export class UserWaitlistService {
       }
 
       return "Notifications created successfully";
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(error);
+      loggerService.errorLog({
+        userId: "",
+        url: `/UserWaitlistService/createWaitlistNotifications`,
+        userAgent: "",
+        message: "ERROR_CREATING_WAITLIST_NOTIFICATIONS",
+        stackTrace: `${error.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          waitlistNotifications
+        })
+      })
       throw error;
     }
   };
@@ -177,6 +229,16 @@ export class UserWaitlistService {
         .execute()
         .catch((err) => {
           this.logger.error(`error getting waitlist from database: ${err}`);
+          loggerService.errorLog({
+            userId: "",
+            url: `/UserWaitlistService/calculateOverlappingNotifications`,
+            userAgent: "",
+            message: "ERROR_GETTING_WAITLIST",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              waitlistNotification
+            })
+          })
           throw new Error("Error getting waitlist");
         });
 
@@ -214,8 +276,18 @@ export class UserWaitlistService {
         date: date,
       });
       return [insertNotifications, deleteNotifications];
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(error);
+      loggerService.errorLog({
+        userId: "",
+        url: `/UserWaitlistService/calculateOverlappingNotifications`,
+        userAgent: "",
+        message: "ERROR_CALCULATING_OVERLAPPING_NOTIFICATIONS",
+        stackTrace: `${error.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          waitlistNotification
+        })
+      })
       throw error;
     }
   };
@@ -262,6 +334,18 @@ export class UserWaitlistService {
         .execute()
         .catch((err) => {
           this.logger.error(`error getting notifications from database: ${err}`);
+          loggerService.errorLog({
+            userId: "",
+            url: `/UserWaitlistService/sendNotificationsForAvailableTeeTime`,
+            userAgent: "",
+            message: "ERROR_GETTING_NOTIFICATIONS",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              date,
+              time,
+              courseId
+            })
+          })
           throw new Error("Error getting notifications");
         });
 
@@ -286,8 +370,20 @@ export class UserWaitlistService {
 
         await this.sendQstashMessage(data);
       }
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(error);
+      loggerService.errorLog({
+        userId: "",
+        url: `/UserWaitlistService/sendNotificationsForAvailableTeeTime`,
+        userAgent: "",
+        message: "ERROR_SENDING_NOTIFICATIONS",
+        stackTrace: `${error.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          date,
+          time,
+          courseId
+        })
+      })
     }
   };
 
@@ -312,6 +408,16 @@ export class UserWaitlistService {
       this.logger.error(
         `error sending message for user: ${data.json.userId} and course: ${data.json.courseId}`
       );
+      loggerService.errorLog({
+        userId: "",
+        url: `/UserWaitlistService/sendQstashMessage`,
+        userAgent: "",
+        message: "ERROR_SENDING_QSTASH_MESSAGE",
+        stackTrace: `Error sending message for user: ${data.json.userId} and course: ${data.json.courseId}`,
+        additionalDetailsJSON: JSON.stringify({
+          data
+        })
+      })
     }
   };
 }

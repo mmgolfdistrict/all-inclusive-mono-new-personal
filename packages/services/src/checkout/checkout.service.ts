@@ -40,6 +40,7 @@ import { CartValidationErrors } from "./types";
 import dayjs from "dayjs";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 import UTC from "dayjs/plugin/utc";
+import { loggerService } from "../webhooks/logging.service";
 
 /**
  * Configuration options for the CheckoutService.
@@ -287,6 +288,17 @@ export class CheckoutService {
 
     const paymentIntent = await this.hyperSwitch.createPaymentIntent(paymentData).catch((err) => {
       this.logger.error(` ${err}`);
+      loggerService.errorLog({
+        userId,
+        url: "/CheckoutService/createCheckoutSession",
+        userAgent: "",
+        message: "ERROR_CREATING_PAYMENT_INTENT",
+        stackTrace: `${err.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          customerCartData,
+          paymentData,
+        })
+      })
       throw new Error(`Error creating payment intent: ${err}`);
     });
 
@@ -366,6 +378,17 @@ export class CheckoutService {
       .updatePaymentIntent(paymentId || "", intentData)
       .catch((err) => {
         this.logger.error(` ${err}`);
+        loggerService.errorLog({
+          userId,
+          url: "/CheckoutService/updateCheckoutSession",
+          userAgent: "",
+          message: "ERROR_UPDATING_PAYMENT_INTENT",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            cartId,
+            paymentId,
+          })
+        })
         throw new Error(`Error updating payment intent: ${err}`);
       });
 
@@ -392,6 +415,17 @@ export class CheckoutService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error updating customer cart: ${err}`);
+        loggerService.errorLog({
+          userId,
+          url: "/CheckoutService/updateCheckoutSession",
+          userAgent: "",
+          message: "ERROR_UPDATING_CUSTOMER_CART",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            paymentId,
+            cartId,
+          })
+        })
         throw new Error("Error updating customer cart");
       });
 
@@ -460,6 +494,16 @@ export class CheckoutService {
           break;
         default:
           this.logger.error(`Unknown product type: ${item.product_data.metadata}`);
+          loggerService.errorLog({
+            userId: "",
+            url: "/CheckoutService/validateCartItems",
+            userAgent: "",
+            message: "UNKNOWN_PRODUCT_TYPE",
+            stackTrace: `Unknown product type: ${item.product_data.metadata}`,
+            additionalDetailsJSON: JSON.stringify({
+              customerCart,
+            })
+          })
           errors.push({
             errorType: CartValidationErrors.UNKNOWN_PRODUCT_TYPE,
             product_id: item.id,
@@ -502,6 +546,16 @@ export class CheckoutService {
       .execute()
       .catch((err) => {
         this.logger.error(err);
+        loggerService.errorLog({
+          userId: "",
+          url: "/CheckoutService/validateFirstHandItem",
+          userAgent: "",
+          message: "ERROR_FINDING_TEE_TIME",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            item,
+          })
+        })
         throw new Error(`Error finding tee time id`);
       });
     if (!teeTime) {
@@ -580,6 +634,16 @@ export class CheckoutService {
       .execute()
       .catch((err) => {
         this.logger.error(err);
+        loggerService.errorLog({
+          userId: "",
+          url: "/CheckoutService/validateSecondHandItem",
+          userAgent: "",
+          message: "ERROR_FINDING_LISTING",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            item,
+          })
+        })
         throw new Error(`Error finding listing id`);
       });
     if (!listing || listing.isDeleted) {
@@ -649,6 +713,17 @@ export class CheckoutService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error validatin charity item: ${err}`);
+        loggerService.errorLog({
+          userId: "",
+          url: "/CheckoutService/validateCharityItem",
+          userAgent: "",
+          message: "ERROR_GETTING_CHARITY",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            item,
+            courseId
+          })
+        })
         throw new Error("Error validatin charity item");
       });
     if (!data) {
@@ -750,20 +825,62 @@ export class CheckoutService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving bookings: ${err}`);
+        loggerService.errorLog({
+          userId: "",
+          url: "/CheckoutService/validateOfferItem",
+          userAgent: "",
+          message: "ERROR_GETTING_BOOKINGS",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            item,
+          })
+        })
         throw new Error("Error retrieving bookings");
       });
     if (!data.length || data.length !== bookingIds.length || !data[0]) {
       this.logger.warn(`No bookings found.`);
+      loggerService.errorLog({
+        userId: "",
+        url: "/CheckoutService/validateOfferItem",
+        userAgent: "",
+        message: "NO_BOOKINGS_FOUND",
+        stackTrace: `No bookings found`,
+        additionalDetailsJSON: JSON.stringify({
+          item,
+        })
+      })
       throw new Error("No bookings found");
     }
     const firstTeeTime = data[0].teeTimeId;
     if (!data.every((booking) => booking.teeTimeId === firstTeeTime)) {
+      this.logger.error(`All bookings must be under the same tee time.`);
+      loggerService.errorLog({
+        userId: "",
+        url: "/CheckoutService/validateOfferItem",
+        userAgent: "",
+        message: "ALL_BOOKINGS_MUST_BE_UNDER_THE_SAME_TEE_TIME",
+        stackTrace: `All bookings must be under the same tee time.`,
+        additionalDetailsJSON: JSON.stringify({
+          item,
+        })
+      })
       throw new Error("All bookings must be under the same tee time.");
     }
     //price must to higher than the largest minimum offer price
 
     const minimumOfferPrice = Math.max(...data.map((booking) => booking.minimumOfferPrice));
     if (price < minimumOfferPrice) {
+      this.logger.error(`Offer price must be higher than the minimum offer price.`);
+      loggerService.errorLog({
+        userId: "",
+        url: "/CheckoutService/validateOfferItem",
+        userAgent: "",
+        message: "OFFER_PRICE_MUST_BE_HIGHER_THAN_THE_MINIMUM_OFFER_PRICE",
+        stackTrace: `Offer price must be higher than the minimum offer price.`,
+        additionalDetailsJSON: JSON.stringify({
+          item,
+        })
+      })
       throw new Error("Offer price must be higher than the minimum offer price.");
     }
     return errors;

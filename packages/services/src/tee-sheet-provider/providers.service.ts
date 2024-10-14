@@ -17,6 +17,7 @@ import type {
   TeeTimeResponse,
 } from "./sheet-providers/types/interface";
 import { Lightspeed } from "./sheet-providers/lightspeed";
+import { loggerService } from "../webhooks/logging.service";
 
 export interface Customer {
   playerNumber: number | null;
@@ -207,6 +208,17 @@ export class ProviderService extends CacheService {
       .execute()
       .catch((err) => {
         this.logger.error(err);
+        loggerService.errorLog({
+          userId: "",
+          url: "/ProvidersService/findOrCreateCustomer",
+          userAgent: "",
+          message: "ERROR_FINDING_USER",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            courseId,
+            userId,
+          })
+        })
         throw new Error(`Error finding user id`);
       });
     if (!buyer) {
@@ -256,8 +268,19 @@ export class ProviderService extends CacheService {
             }
           }
         }
-      } catch (error) {
-        this.logger.error(`provider.getCustomer error: ${JSON.stringify(error)}`);
+      } catch (error: any) {
+        this.logger.error(`provider.getCustomer error: ${error}`);
+        loggerService.errorLog({
+          userId: "",
+          url: "/ProvidersService/findOrCreateCustomer",
+          userAgent: "",
+          message: "ERROR_GETTING_CUSTOMER_FROM_PROVIDER",
+          stackTrace: `${error.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            courseId,
+            userId,
+          })
+        })
       }
 
       let customer: CustomerCreationData;
@@ -316,6 +339,16 @@ export class ProviderService extends CacheService {
       .execute()
       .catch((err) => {
         this.logger.error(err);
+        loggerService.errorLog({
+          userId: "",
+          url: "/ProvidersService/updateCustomer",
+          userAgent: "",
+          message: "ERROR_UPDATING_USER_ID",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            info,
+          })
+        })
         throw new Error(`Error updating user id`);
       });
   }
