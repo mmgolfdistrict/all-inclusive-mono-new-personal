@@ -602,6 +602,7 @@ export class BookingService {
         purchasedFor: bookings.greenFeePerPlayer,
         providerBookingId: bookings.providerBookingId,
         slots: lists.slots,
+        playerCount: bookings.playerCount
       })
       .from(teeTimes)
       .innerJoin(bookings, eq(bookings.teeTimeId, teeTimes.id))
@@ -659,6 +660,12 @@ export class BookingService {
 
     data.forEach((teeTime) => {
       if (!combinedData[teeTime.providerBookingId]) {
+        const slotData = !teeTime.providerBookingId ? Array.from({ length: teeTime.playerCount - 1 }, (_, i) => ({
+          name: "",
+          slotId: "",
+          customerId: "",
+        })) : []
+
         combinedData[teeTime.providerBookingId] = {
           courseId,
           courseName: teeTime.courseName,
@@ -673,12 +680,12 @@ export class BookingService {
           golfers: [],
           purchasedFor: Number(teeTime.purchasedFor) / 100,
           bookingIds: [teeTime.bookingId],
-          slotsData: [
+          slotsData: [ 
             {
               name: teeTime.slotCustomerName || "",
               slotId: teeTime.slotId || "",
               customerId: teeTime.slotCustomerId || "",
-            },
+            }, ...slotData
           ],
           status: teeTime.listing && !teeTime.listingIsDeleted ? "LISTED" : "UNLISTED",
           offers: teeTime.offers ? parseInt(teeTime.offers.toString()) : 0,
@@ -3677,6 +3684,8 @@ export class BookingService {
     const bookingId = randomUUID();
     const bookingsToCreate: InsertBooking[] = [];
     const transfersToCreate: InsertTransfer[] = [];
+
+    console.log("ASSOCIATED BOOKING", associatedBooking);
     bookingsToCreate.push({
       id: bookingId,
       // purchasedAt: currentUtcTimestamp(),
@@ -3689,7 +3698,7 @@ export class BookingService {
       nameOnBooking: userData?.handle ?? "",
       includesCart: associatedBooking?.includesCart,
       listId: null,
-      weatherGuaranteeAmount: sensibleCharge,
+      weatherGuaranteeAmount: sensibleCharge * 100,
       weatherGuaranteeId: "",
       cartId: cartId,
       playerCount: associatedBooking?.listedSlotsCount ?? 0,

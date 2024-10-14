@@ -267,15 +267,15 @@ const TableRow = ({
       </td> */}
       <td className="whitespace-nowrap px-4 py-3">
         {golfers.length > 2
-          ? `You, ${golfers[1]?.name} & ${golfers.length - 2} ${
+          ? `You, ${golfers[1]?.name || "Guest"} & ${golfers.length - 2} ${
               golfers.length - 2 === 1 ? "golfers" : "golfers"
             }`
           : golfers.map((i, idx) => {
               if (idx === 0) return "You ";
               if (golfers.length === 1) return "You";
-              if (idx === golfers.length - 1) return `& ${i.name}`;
-              if (idx === golfers.length - 2) return `${i.name} `;
-              return `${i.name}, `;
+            if (idx === golfers.length - 1) return `& ${i.name || "Guest"}`;
+            if (idx === golfers.length - 2) return `${i.name || "Guest"} `;
+            return `${i.name || "Guest"}, `;
             })}
       </td>
       <td className="flex items-center gap-1 whitespace-nowrap px-4 pb-3 pt-6">
