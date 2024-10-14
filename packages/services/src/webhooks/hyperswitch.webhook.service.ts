@@ -837,7 +837,7 @@ export class HyperSwitchWebhookService {
           userAgent: "",
           message: "ERROR DELETING BOOKING ON PROVIDER",
           stackTrace: `Error deleting booking on provider for provider booking Id ${firstBooking.providerBookingId}`,
-          additionalDetailsJSON: "Error creating customer",
+          additionalDetailsJSON: JSON.stringify({ message: "Error Deleting Booking", ...firstBooking }),
         });
         throw new Error(`Error deleting booking`);
       });
