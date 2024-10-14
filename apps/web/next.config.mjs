@@ -29,6 +29,12 @@ const config = {
       },
       {
         protocol: "https",
+        hostname: "dev-assets.golfdistrict.in",
+        port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
         hostname: "lh3.google.com",
         port: "",
         pathname: "/**",

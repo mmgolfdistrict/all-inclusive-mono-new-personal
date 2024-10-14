@@ -664,7 +664,9 @@ export class SearchService {
       .toISOString();
     console.log("------->>>---->>", startTime, endTime);
     const firstHandResults = await this.database
-      .selectDistinct({ providerDate: sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))` })
+      .selectDistinct({
+        providerDate: sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))`,
+      })
       .from(teeTimes)
       .innerJoin(courses, eq(courses.id, courseId))
       .where(
@@ -683,7 +685,9 @@ export class SearchService {
       .execute();
 
     const secondHandResults = await this.database
-      .selectDistinct({ providerDate: sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))` })
+      .selectDistinct({
+        providerDate: sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))`,
+      })
       .from(lists)
       .innerJoin(bookings, eq(bookings.listId, lists.id))
       .innerJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -1183,8 +1187,14 @@ export class SearchService {
         eventName: majorEvents.eventName,
         startDate: majorEvents.startDate,
         endDate: majorEvents.endDate,
+        logo: {
+          cdn: assets.cdn,
+          key: assets.key,
+          extension: assets.extension,
+        },
       })
       .from(majorEvents)
+      .leftJoin(assets, eq(assets.id, majorEvents.iconAssetId))
       .where(
         and(
           eq(majorEvents.courseId, courseId),
@@ -1200,6 +1210,13 @@ export class SearchService {
       .catch((e) => {
         console.log("Error in getting special Events");
       });
-    return events;
+
+    const finalEvents = events?.map((event) => ({
+      ...event,
+      iconUrl: event.logo
+        ? `https://${event?.logo?.cdn}/${event?.logo?.key}.${event?.logo?.extension}`
+        : null,
+    }));
+    return finalEvents;
   };
 }
