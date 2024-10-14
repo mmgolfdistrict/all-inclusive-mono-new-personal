@@ -81,26 +81,34 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
   };
 
   const logOutUser = () => {
-    logAudit(async () => {
-      localStorage.clear();
-      sessionStorage.clear();
-      session.data = null;
-      session.status = "unauthenticated";
-      await session.update(null);
-      if (PathsThatNeedRedirectOnLogout.some((i) => pathname.includes(i))) {
+    try {
+      logAudit(async () => {
+        localStorage.clear();
+        sessionStorage.clear();
+        session.data = null;
+        session.status = "unauthenticated";
+        await session.update(null);
+        if (PathsThatNeedRedirectOnLogout.some((i) => pathname.includes(i))) {
+          const data = await signOut({
+            callbackUrl: `/${courseId}/login`,
+            //callbackUrl:pathname,
+            redirect: false,
+          });
+          router.push(data.url);
+          return;
+        }
         const data = await signOut({
-          callbackUrl: `/${courseId}`,
+          callbackUrl: `/${courseId}/login`,
           redirect: false,
         });
         router.push(data.url);
-        return;
-      }
-      const data = await signOut({
-        callbackUrl: pathname,
-        redirect: false,
       });
-      router.push(data.url);
-    });
+      localStorage.removeItem("googlestate");
+    } catch (error) {
+      console.log(error);
+    }finally{
+      localStorage.removeItem("googlestate");
+    }
   };
   return (
     <>

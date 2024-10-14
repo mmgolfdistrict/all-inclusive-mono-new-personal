@@ -134,8 +134,8 @@ export default function Login() {
 
   const onSubmit: SubmitHandler<LoginSchemaType> = async (data) => {
     try {
-      setCredentialsLoader(true);
-      setIsLoading(true)
+      setIsLoading(true);
+      localStorage.setItem("credentials","credentials");
       const callbackURL = `${window.location.origin}${
         GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
           ? prevPath?.path
@@ -375,7 +375,7 @@ export default function Login() {
             className="w-full rounded-full flex justify-center items-center"
             data-testid="login-button-id"
           >
-            {credentialsLoader ? (
+            {localStorage.getItem("credentials") ? (
               <div className="w-5 h-5 border-4 border-white border-t-transparent rounded-full animate-spin "></div>
             ) : (
               "Log In"

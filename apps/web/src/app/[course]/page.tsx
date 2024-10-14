@@ -379,7 +379,10 @@ export default function CourseHomePage() {
       }
     }
   }, [dateType]);
-
+  useEffect(()=>{
+    localStorage.removeItem("googlestate");
+    localStorage.removeItem("credentials");
+  },[])
   let datesArr = JSON.parse(
     JSON.stringify(datesWithData ?? daysData.arrayOfDates)
   );
