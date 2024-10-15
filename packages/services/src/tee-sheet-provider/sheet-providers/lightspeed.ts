@@ -213,8 +213,8 @@ export class Lightspeed extends BaseProvider {
                     }
                 };
             }
-
-            debugger;
+            console.log("LIGHTSPEED PAYLOAD");
+            console.dir(payload, { depth: null });
             const roundRequestResponse = await fetch(roundRequestUrl, {
                 method: 'POST',
                 headers: headers,
@@ -237,6 +237,9 @@ export class Lightspeed extends BaseProvider {
                 })
                 throw new Error(`Error creating booking: ${JSON.stringify(roundRequestResponse)}`);
             }
+            const roundRequestData = await roundRequestResponse.json()
+            console.log("LIGHTSPEED ROUND REQUEST RESPONSE");
+            console.dir(roundRequestData, { depth: null });
         }
         // create reservation
         const reservationUrl = `${BASE_ENDPOINT}/partner_api/v2/organizations/${ORGANIZATION_ID}/reservations`
