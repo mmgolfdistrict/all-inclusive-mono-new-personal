@@ -15,6 +15,7 @@ import * as courseAssets from "./courseAssets";
 import * as courseException from "./courseException";
 import * as courseGlobalNotification from "./courseGlobalNotification";
 import * as courseMarkup from "./courseMarkup";
+import * as coursePayment from "./coursePayment";
 import * as coursePromoCodeLink from "./coursePromoCodeLink";
 import * as courses from "./courses";
 import * as courseScheduleDetails from "./courseScheduleDetails";
@@ -35,6 +36,7 @@ import * as offerRead from "./offerRead";
 import * as offers from "./offers";
 import * as profanities from "./profanities";
 import * as promoCodes from "./promoCodes";
+import * as providerAuthTokens from "./providerAuthTokens";
 import * as providers from "./providers";
 import * as providerScheduleDetails from "./providerScheduleDetails";
 import * as providerCourseLink from "./providersCourseLink";
@@ -50,7 +52,6 @@ import * as users from "./users";
 import * as userWaitlists from "./userWaitlists";
 import * as verificationTokens from "./verificationTokens";
 import * as withdrawals from "./withdrawals";
-import * as providerAuthTokens from "./providerAuthTokens";
 
 export const schema = {
   ...accounts,
@@ -105,5 +106,6 @@ export const schema = {
   ...adminUsers,
   ...adminUserCourse,
   ...courseGlobalNotification,
-  ...providerAuthTokens
+  ...providerAuthTokens,
+  ...coursePayment,
 };
