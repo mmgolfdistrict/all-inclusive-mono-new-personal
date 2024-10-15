@@ -292,7 +292,7 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
                 value={value}
                 icon={
                   specialEvents?.find((event) => event.eventName === value)
-                    ?.iconUrl || null
+                    ?.iconUrl || "no-icon"
                 }
                 label={
                   value === "Custom" ? (
@@ -638,14 +638,18 @@ export const Item = ({
       data-test={dataTest}
       data-cy={dataCy}
     >
-      {icon && (
-        <Image
-          src={icon}
-          alt={`${value} icon`}
-          width={22}
-          height={22}
-          className="mr-2 h-5 w-5"
-        />
+      {icon === "no-icon" ? (
+        <div className="mr-2 h-5 w-5" />
+      ) : (
+        icon && (
+          <Image
+            src={icon}
+            alt={`${value} icon`}
+            width={22}
+            height={22}
+            className="mr-2 h-5 w-5"
+          />
+        )
       )}
       {label}
     </ToggleGroup.Item>
