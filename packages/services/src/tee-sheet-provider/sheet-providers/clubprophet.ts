@@ -618,4 +618,8 @@ export class clubprophet extends BaseProvider {
 
     return { customerId: customer.memberNo.toString() };
   }
+
+  requireToCreatePlayerSlots(): boolean {
+    return false;
+  }
 }

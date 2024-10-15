@@ -856,6 +856,10 @@ export class foreUp extends BaseProvider {
 
     return { customerId: customer.id.toString(), accountNumber: customer.attributes.account_number };
   }
+
+  requireToCreatePlayerSlots(): boolean {
+    return true;
+  }
 }
 
 // // "id": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJmb3JldXBzb2Z0d2FyZS5jb20iLCJhdWQiOiJmb3JldXBzb2Z0d2FyZS5jb20iLCJpYXQiOjE3MDI0ODQ5NzksImV4cCI6MTcwNTA3Njk3OSwibGV2ZWwiOjMsImNpZCI6OTAzOSwiZW1wbG95ZWUiOmZhbHNlLCJ1aWQiOjcxNzk5MDUsImFwaVZlcnNpb24iOm51bGwsImFwcElkIjo2NDgyNzI4LCJwcmljZUNsYXNzSWQiOm51bGwsImFwaXYySWQiOjEyMCwibGltaXRhdGlvbnMiOnsiY3VzdG9tZXJzIjp0cnVlLCJlbXBsb3llZXMiOnRydWUsImludmVudG9yeSI6dHJ1ZSwiaWRlbnRpdHlfcHJvdmlkZXIiOnRydWUsImVtYWlscyI6dHJ1ZSwic2FsZXMiOnRydWUsInRlZXNoZWV0Ijp0cnVlLCJ0cmFkaW5nX2VuYWJsZWQiOmZhbHNlLCJ0cmFkZXNfYnlfcGxheWVyX2NvdW50IjpmYWxzZSwibWFnaWNfYXV0aF92aWFfZW1haWwiOmZhbHNlfX0.KBfzS0EHqPu09VL7W9A2U7GkAnh8OGP3QkRzePHmQ9mfcLLZD1z2Q0Zuv9aJVCEgtb1KXvX-XzZahK_edA08-Q",

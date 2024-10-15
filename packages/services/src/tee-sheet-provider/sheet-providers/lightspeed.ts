@@ -980,4 +980,8 @@ export class Lightspeed extends BaseProvider {
 
         return { customerId: customer.id.toString() }
     }
+
+    requireToCreatePlayerSlots(): boolean {
+        return false;
+    }
 }
