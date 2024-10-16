@@ -3421,7 +3421,7 @@ export class BookingService {
       }
     } catch (e) {
       console.log("BOOKING FAILED ON PROVIDER, INITIATING REFUND FOR PAYMENT_ID", payment_id);
-      this.hyperSwitchService.sendEmailForBookingFailed(paymentId);
+      this.hyperSwitchService.sendEmailForBookingFailed(paymentId, teeTime.courseId, cartId, sensibleQuoteId, userId);
       throw "Booking failed on provider";
       // await this.hyperSwitchService.refundPayment(payment_id);
       // const [user] = await this.database.select().from(users).where(eq(users.id, userId));

@@ -358,33 +358,33 @@ export class HyperSwitchService {
     }
   };
 
-  sendEmailForFailedPayment = async (paymentMethodId: string) => {
+  sendEmailForFailedPayment = async (paymentMethodId: string, teeTimeId: string, listingId: string, courseId: string, cartId: string, userId?: string, userEmail?: string, phone?: string) => {
     const adminEmail: string = process.env.ADMIN_EMAIL_LIST || "nara@golfdistrict.com";
     const emailAterSplit = adminEmail.split(",");
     emailAterSplit.map(async (email) => {
       await this.notificationService.sendEmail(
         email,
         "A payment has failed ",
-        `payment with paymentid ${paymentMethodId} failed`
+        `payment with paymentid ${paymentMethodId} failed. UserId: ${userId}, Email: ${userEmail}, Phone: ${phone}, ${teeTimeId ? `TeeTimeId: ${teeTimeId}` : `ListingId: ${listingId}`}, CourseId: ${courseId}, CartId: ${cartId}`
       );
     });
     return { status: "success" };
   };
 
-sendEmailForBookingFailed = async (paymentId: string) => {
+  sendEmailForBookingFailed = async (paymentId: string, courseId: string, cartId: string, sensibleQuoteId: string, userId: string) => {
     const adminEmail: string = process.env.ADMIN_EMAIL_LIST || "nara@golfdistrict.com";
     const emailAterSplit = adminEmail.split(",");
     emailAterSplit.map(async (email) => {
       await this.notificationService.sendEmail(
         email,
         "A booking has failed ",
-        `Hello Admin, A booking with payment id ${paymentId} failed`
+        `Hello Admin, A booking with payment id ${paymentId} failed, CourseId: ${courseId}, CartId: ${cartId}, SensibleQuoteId: ${sensibleQuoteId}, UserId: ${userId}`
       );
     });
     return { status: "success" };
   };
   
-  cancelHyperswitchPaymentById = async (paymentMethodId: string) => {
+  cancelHyperswitchPaymentById = async (paymentMethodId: string, teeTimeId: string, courseId: string, userId?: string, userEmail?: string, phone?: string) => {
     const options = {
       method: "POST",
       headers: { "api-key": this.hyperSwitchApiKey, "Content-Type": "application/json" },
@@ -399,7 +399,7 @@ sendEmailForBookingFailed = async (paymentId: string) => {
       await this.notificationService.sendEmail(
         email,
         "A payment has failed ",
-        `payment with paymentid ${paymentMethodId} failed`
+        `payment with paymentid ${paymentMethodId} failed. UserId: ${userId}, Email: ${userEmail}, Phone: ${phone}, TeeTimeId: ${teeTimeId}, CourseId: ${courseId}`
       );
     });
     if (jsonRes.error) {
