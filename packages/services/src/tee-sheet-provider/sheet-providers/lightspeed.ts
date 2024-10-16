@@ -213,8 +213,6 @@ export class Lightspeed extends BaseProvider {
                     }
                 };
             }
-            console.log("LIGHTSPEED PAYLOAD");
-            console.dir(payload, { depth: null });
             const roundRequestResponse = await fetch(roundRequestUrl, {
                 method: 'POST',
                 headers: headers,
@@ -232,14 +230,12 @@ export class Lightspeed extends BaseProvider {
                     message: "ERROR_CREATING_BOOKING",
                     stackTrace: ``,
                     additionalDetailsJSON: JSON.stringify({
-                        data
+                        data,
+                        payload
                     })
                 })
                 throw new Error(`Error creating booking: ${JSON.stringify(roundRequestResponse)}`);
             }
-            const roundRequestData = await roundRequestResponse.json()
-            console.log("LIGHTSPEED ROUND REQUEST RESPONSE");
-            console.dir(roundRequestData, { depth: null });
         }
         // create reservation
         const reservationUrl = `${BASE_ENDPOINT}/partner_api/v2/organizations/${ORGANIZATION_ID}/reservations`
@@ -281,8 +277,30 @@ export class Lightspeed extends BaseProvider {
         }
 
         const bookingResponse = (await reservationResponse.json()) as LightSpeedBookingResponse;
-        const bookingAmount = data.playerCount * (data.greenFee + data.cartFee);
-        // await this.addSalesData(token, bookingResponse.data.relationships.rounds.data, bookingAmount);
+
+        if (data.playerCount > 1) {
+            const rounds: { id: string, type: "round" }[] = [];
+            for (const item of bookingResponse.included) {
+                if (item.type === "round" && item.relationships.customer.data !== null) {
+                    rounds.push({
+                        id: item.id,
+                        type: item.type,
+                    })
+                }
+            }
+            for (const item of bookingResponse.included) {
+                if (item.type === "round" && item.relationships.customer.data === null) {
+                    rounds.push({
+                        id: item.id,
+                        type: item.type,
+                    })
+                }
+            }
+
+            bookingResponse.data.relationships.rounds = {
+                data: rounds
+            }
+        }
 
         return bookingResponse;
     }
