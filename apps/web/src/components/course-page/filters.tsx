@@ -296,29 +296,31 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
                 }
                 label={
                   value === "Custom" ? (
-                    <div className="flex justify-between">
+                    <div className="w-full flex justify-between">
                       <span>{value}</span>
-                      {isMobile
-                        ? dateTypeMobile === "Custom" && (
-                            <>
-                              {selectedDayMobile.from
-                                ? formatDate(selectedDayMobile.from)
-                                : ""}
-                              {selectedDayMobile.to
-                                ? ` - ${formatDate(selectedDayMobile.to)}`
-                                : ""}
-                            </>
-                          )
-                        : dateType === "Custom" && (
-                            <>
-                              {selectedDay.from
-                                ? formatDate(selectedDay.from)
-                                : ""}
-                              {selectedDay.to
-                                ? ` - ${formatDate(selectedDay.to)}`
-                                : ""}
-                            </>
-                          )}
+                      <span>
+                        {isMobile
+                          ? dateTypeMobile === "Custom" && (
+                              <>
+                                {selectedDayMobile.from
+                                  ? formatDate(selectedDayMobile.from)
+                                  : ""}
+                                {selectedDayMobile.to
+                                  ? ` - ${formatDate(selectedDayMobile.to)}`
+                                  : ""}
+                              </>
+                            )
+                          : dateType === "Custom" && (
+                              <>
+                                {selectedDay.from
+                                  ? formatDate(selectedDay.from)
+                                  : ""}
+                                {selectedDay.to
+                                  ? ` - ${formatDate(selectedDay.to)}`
+                                  : ""}
+                              </>
+                            )}
+                      </span>
                     </div>
                   ) : (
                     value
