@@ -28,7 +28,7 @@ export default function CheckoutConfirmation() {
     api.checkout.retrivePaymentIntent.useQuery({
       clientSecret: clientSecret?.split("secret")[0]?.slice(0, -1) ?? "",
     });
-
+  
   const { setReservationData } = useCheckoutContext();
 
   const reserveBookingFirstHand = async (
@@ -151,7 +151,6 @@ export default function CheckoutConfirmation() {
       // setIsLoading(false);
     }
   };
-
   useEffect(() => {
     if (!isLoadingPaymentIntent && paymentIntent) {
       void handlePayment();

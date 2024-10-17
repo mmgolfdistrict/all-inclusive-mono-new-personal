@@ -78,7 +78,9 @@ export default function Checkout({
     api.course.getPrivacyPolicyAndTCByCourse.useQuery({
       courseId: courseId ?? "",
     });
-
+    const { data: multipleTransaction } =
+    api.checkout.checkMultipleTeeTimeTransactionByUser.useQuery({});
+  console.log("multiple transactions============>",multipleTransaction);
   const {
     data: teeTimeData,
     isLoading: isLoadingTeeTime,

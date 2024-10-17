@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
-import { and, eq, gte, inArray, sql } from "@golf-district/database";
+import { and, eq, gt, gte, inArray, sql,desc } from "@golf-district/database";
 import { bookings } from "@golf-district/database/schema/bookings";
 import { charities } from "@golf-district/database/schema/charities";
 import { charityCourseLink } from "@golf-district/database/schema/charityCourseLink";
@@ -297,8 +297,8 @@ export class CheckoutService {
         additionalDetailsJSON: JSON.stringify({
           customerCartData,
           paymentData,
-        })
-      })
+        }),
+      });
       throw new Error(`Error creating payment intent: ${err}`);
     });
 
@@ -387,8 +387,8 @@ export class CheckoutService {
           additionalDetailsJSON: JSON.stringify({
             cartId,
             paymentId,
-          })
-        })
+          }),
+        });
         throw new Error(`Error updating payment intent: ${err}`);
       });
 
@@ -424,8 +424,8 @@ export class CheckoutService {
           additionalDetailsJSON: JSON.stringify({
             paymentId,
             cartId,
-          })
-        })
+          }),
+        });
         throw new Error("Error updating customer cart");
       });
 
@@ -502,8 +502,8 @@ export class CheckoutService {
             stackTrace: `Unknown product type: ${item.product_data.metadata}`,
             additionalDetailsJSON: JSON.stringify({
               customerCart,
-            })
-          })
+            }),
+          });
           errors.push({
             errorType: CartValidationErrors.UNKNOWN_PRODUCT_TYPE,
             product_id: item.id,
@@ -554,8 +554,8 @@ export class CheckoutService {
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
             item,
-          })
-        })
+          }),
+        });
         throw new Error(`Error finding tee time id`);
       });
     if (!teeTime) {
@@ -642,8 +642,8 @@ export class CheckoutService {
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
             item,
-          })
-        })
+          }),
+        });
         throw new Error(`Error finding listing id`);
       });
     if (!listing || listing.isDeleted) {
@@ -721,9 +721,9 @@ export class CheckoutService {
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
             item,
-            courseId
-          })
-        })
+            courseId,
+          }),
+        });
         throw new Error("Error validatin charity item");
       });
     if (!data) {
@@ -833,8 +833,8 @@ export class CheckoutService {
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
             item,
-          })
-        })
+          }),
+        });
         throw new Error("Error retrieving bookings");
       });
     if (!data.length || data.length !== bookingIds.length || !data[0]) {
@@ -847,8 +847,8 @@ export class CheckoutService {
         stackTrace: `No bookings found`,
         additionalDetailsJSON: JSON.stringify({
           item,
-        })
-      })
+        }),
+      });
       throw new Error("No bookings found");
     }
     const firstTeeTime = data[0].teeTimeId;
@@ -862,8 +862,8 @@ export class CheckoutService {
         stackTrace: `All bookings must be under the same tee time.`,
         additionalDetailsJSON: JSON.stringify({
           item,
-        })
-      })
+        }),
+      });
       throw new Error("All bookings must be under the same tee time.");
     }
     //price must to higher than the largest minimum offer price
@@ -879,10 +879,34 @@ export class CheckoutService {
         stackTrace: `Offer price must be higher than the minimum offer price.`,
         additionalDetailsJSON: JSON.stringify({
           item,
-        })
-      })
+        }),
+      });
       throw new Error("Offer price must be higher than the minimum offer price.");
     }
     return errors;
+  };
+  checkMultipleTeeTimeTransactionByUser = async (userId: string) => {
+    try {
+      const [userDetails] = await this.database.select().from(users).where(eq(users.id, userId));
+      if (!userDetails) {
+        throw new Error("User details not found");
+      }
+     const [userResult]=await this.database
+        .select({
+           id:users.id,
+           email:users.email,
+           bookingCount: sql`Count(${bookings.id})`.as('bookingCount'),
+        })
+        .from(bookings)
+        .innerJoin(users, eq(bookings.ownerId, users.id))
+        .where(eq(users.email, userDetails?.email??""))
+        .groupBy(users.id,users.email)
+        .having(gt(sql`Count(${bookings.id})`, 1))
+        .orderBy(desc(sql`Count(${bookings.id})`));
+        return {data:userResult};
+    } catch (error: any) {
+      this.logger.error("", error.message);
+      throw error.message;
+    }
   };
 }
