@@ -135,7 +135,7 @@ export default function Login() {
   const onSubmit: SubmitHandler<LoginSchemaType> = async (data) => {
     try {
       setIsLoading(true);
-      localStorage.setItem("credentials","credentials");
+      localStorage.setItem("credentials", "credentials");
       const callbackURL = `${window.location.origin}${
         GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
           ? prevPath?.path
@@ -159,8 +159,12 @@ export default function Login() {
           toast.error(
             "Unable to login. Please call customer support at 877-TeeTrade or email at support@golfdistrict.com"
           );
+          setCredentialsLoader(false);
+          localStorage.removeItem("credentials");
         } else {
           toast.error("The email or password you entered is incorrect.");
+          setCredentialsLoader(false);
+          localStorage.removeItem("credentials");
         }
         setValue("password", "");
       }
@@ -243,7 +247,7 @@ export default function Login() {
       localStorage.setItem("googlestate", "loggedin");
     } catch (error) {
       console.log("error", error);
-    }finally{
+    } finally {
       localStorage.removeItem("googlestate");
     }
   };
@@ -252,7 +256,7 @@ export default function Login() {
     process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
     process.env.NEXT_PUBLIC_APPLE_ID;
 
-  return isLoading|| localStorage.getItem("googlestate") ? (
+  return isLoading || localStorage.getItem("googlestate") ? (
     <LoadingContainer isLoading={true}>
       <div></div>
     </LoadingContainer>
