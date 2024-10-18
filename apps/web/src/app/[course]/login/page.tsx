@@ -159,8 +159,12 @@ export default function Login() {
           toast.error(
             "Unable to login. Please call customer support at 877-TeeTrade or email at support@golfdistrict.com"
           );
+          setCredentialsLoader(false);
+          localStorage.removeItem("credentials");
         } else {
           toast.error("The email or password you entered is incorrect.");
+          setCredentialsLoader(false);
+          localStorage.removeItem("credentials");
         }
         setValue("password", "");
       }
@@ -243,6 +247,7 @@ export default function Login() {
       localStorage.setItem("googlestate", "loggedin");
     } catch (error) {
       console.log("error", error);
+    } finally {
       localStorage.removeItem("googlestate");
       setGoogleIsLoading(false);
     }
