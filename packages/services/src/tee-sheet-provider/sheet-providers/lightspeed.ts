@@ -80,6 +80,7 @@ export class Lightspeed extends BaseProvider {
                 headers: headers,
             });
             if (!response.ok) {
+                const responseData = await response.json();
                 if (response.status === 401) {
                     await this.cacheService?.invalidateCache(`provider-${this.providerId}-token`);
                     await this.getToken();
@@ -95,11 +96,13 @@ export class Lightspeed extends BaseProvider {
                         additionalDetailsJSON: JSON.stringify({
                             message: response.statusText,
                             courseId,
-                            date
+                            date,
+                            responseData,
+                            providerConfiguration
                         })
                     })
                 }
-                throw new Error(`Error fetching tee times: ${response.statusText}`);
+                throw new Error(`Error fetching tee times: ${JSON.stringify(responseData)}`);
             }
             const teetimesResponse = await response.json() as LightspeedTeeTimeDataResponse;
             return teetimesResponse;
@@ -155,10 +158,10 @@ export class Lightspeed extends BaseProvider {
         });
 
         if (!reservationRequestResponse.ok) {
+            const responseData = await reservationRequestResponse.json();
             if (reservationRequestResponse.status === 403) {
                 this.logger.error(`Error creating booking: ${reservationRequestResponse.statusText}`);
             }
-            console.log("ERROR", await reservationRequestResponse.json());
             loggerService.errorLog({
                 userId: "",
                 url: "/Lightspeed/createBooking",
@@ -166,10 +169,11 @@ export class Lightspeed extends BaseProvider {
                 message: "ERROR_CREATING_BOOKING",
                 stackTrace: ``,
                 additionalDetailsJSON: JSON.stringify({
-                    data
+                    data,
+                    responseData
                 })
             })
-            throw new Error(`Error creating booking: ${JSON.stringify(reservationRequestResponse)}`);
+            throw new Error(`Error creating booking: ${JSON.stringify(responseData)}`);
         }
 
         const reservationRequest = (await reservationRequestResponse.json()) as LightSpeedReservationRequestResponse;
@@ -221,10 +225,11 @@ export class Lightspeed extends BaseProvider {
                 body: JSON.stringify(payload),
             });
             if (!roundRequestResponse.ok) {
+                const responseData = await roundRequestResponse.json();
+                this.logger.error(`Error creating booking: ${roundRequestResponse.statusText}`);
                 if (roundRequestResponse.status === 403) {
-                    this.logger.error(`Error creating booking: ${roundRequestResponse.statusText}`);
+                    this.logger.error(`Error creating booking: ${JSON.stringify(responseData)}`);
                 }
-                console.log("ERROR", await roundRequestResponse.json());
                 loggerService.errorLog({
                     userId: "",
                     url: "/Lightspeed/createBooking",
@@ -232,10 +237,11 @@ export class Lightspeed extends BaseProvider {
                     message: "ERROR_CREATING_BOOKING",
                     stackTrace: ``,
                     additionalDetailsJSON: JSON.stringify({
-                        data
+                        data,
+                        responseData
                     })
                 })
-                throw new Error(`Error creating booking: ${JSON.stringify(roundRequestResponse)}`);
+                throw new Error(`Error creating booking: ${JSON.stringify(responseData)}`);
             }
             const roundRequestData = await roundRequestResponse.json()
             console.log("LIGHTSPEED ROUND REQUEST RESPONSE");
@@ -263,10 +269,10 @@ export class Lightspeed extends BaseProvider {
             }),
         });
         if (!reservationResponse.ok) {
+            const responseData = await reservationResponse.json();
             if (reservationResponse.status === 403) {
                 this.logger.error(`Error creating booking: ${reservationResponse.statusText}`);
             }
-            console.log("ERROR", await reservationResponse.json());
             loggerService.errorLog({
                 userId: "",
                 url: "/Lightspeed/createBooking",
@@ -274,10 +280,11 @@ export class Lightspeed extends BaseProvider {
                 message: "ERROR_CREATING_BOOKING",
                 stackTrace: ``,
                 additionalDetailsJSON: JSON.stringify({
-                    data
+                    data,
+                    responseData
                 })
             })
-            throw new Error(`Error creating booking: ${JSON.stringify(reservationResponse)}`);
+            throw new Error(`Error creating booking: ${JSON.stringify(responseData)}`);
         }
 
         const bookingResponse = (await reservationResponse.json()) as LightSpeedBookingResponse;
@@ -411,7 +418,8 @@ export class Lightspeed extends BaseProvider {
 
         if (!response.ok) {
             this.logger.error(`Error deleting booking: ${response.statusText}`);
-            this.logger.error(`Error response from light-speed: ${JSON.stringify(await response.json())}`);
+            const responseData = await response.json();
+            this.logger.error(`Error response from light-speed: ${JSON.stringify(responseData)}`);
             if (response.status === 403) {
                 await this.getToken();
             }
@@ -423,9 +431,10 @@ export class Lightspeed extends BaseProvider {
                 stackTrace: ``,
                 additionalDetailsJSON: JSON.stringify({
                     bookingId,
+                    responseData
                 })
             })
-            throw new Error(`Error deleting booking: ${response.statusText}`);
+            throw new Error(`Error deleting booking: ${JSON.stringify(responseData)}`);
         }
         this.logger.info(`Booking deleted successfully: ${bookingId}`);
     }
@@ -472,8 +481,9 @@ export class Lightspeed extends BaseProvider {
 
         if (!response.ok) {
             this.logger.error(`Error creating customer: ${response.statusText}`);
+            const responseData = await response.json();
             if (response.status === 403) {
-                this.logger.error(`Error response from foreup: ${JSON.stringify(await response.json())}`);
+                this.logger.error(`Error response from light-speed: ${JSON.stringify(responseData)}`);
             }
             loggerService.errorLog({
                 userId: "",
@@ -482,10 +492,11 @@ export class Lightspeed extends BaseProvider {
                 message: "ERROR_CREATING_CUSTOMER",
                 stackTrace: ``,
                 additionalDetailsJSON: JSON.stringify({
-                    customerData
+                    customerData,
+                    responseData
                 })
             })
-            throw new Error(`Error creating customer: ${response.statusText}`);
+            throw new Error(`Error creating customer: ${JSON.stringify(responseData)}`);
         }
 
         const data = (await response.json()) as LightspeedCustomerCreationResponse;
@@ -575,8 +586,9 @@ export class Lightspeed extends BaseProvider {
 
             if (!response.ok) {
                 this.logger.error(`Error adding sales data: ${response.statusText}`);
+                const responseData = await response.json();
                 if (response.status === 403) {
-                    this.logger.error(`Error response from foreup: ${JSON.stringify(await response.json())}`);
+                    this.logger.error(`Error response from light-speed: ${JSON.stringify(responseData)}`);
                 }
                 loggerService.errorLog({
                     userId: "",
@@ -585,10 +597,11 @@ export class Lightspeed extends BaseProvider {
                     message: "ERROR_ADDING_SALES_DATA",
                     stackTrace: ``,
                     additionalDetailsJSON: JSON.stringify({
-                        options
+                        options,
+                        responseData
                     })
                 })
-                throw new Error(`Error adding sales data: ${response.statusText}`);
+                throw new Error(`Error adding sales data: ${responseData}`);
             }
 
             const salesResponse = await response.json();
@@ -607,7 +620,7 @@ export class Lightspeed extends BaseProvider {
                 message: "ERROR_ADDING_SALES_DATA",
                 stackTrace: ``,
                 additionalDetailsJSON: JSON.stringify({
-                    options
+                    options,
                 })
             })
         }
@@ -658,7 +671,8 @@ export class Lightspeed extends BaseProvider {
 
         if (!response.ok) {
             this.logger.error(`Error updating customer on booking: ${response.statusText}`);
-            this.logger.error(`Error response from light-speed: ${JSON.stringify(await response.json())}`);
+            const responseData = await response.json();
+            this.logger.error(`Error response from light-speed: ${JSON.stringify(responseData)}`);
             if (response.status === 403) {
                 await this.getToken();
             }
@@ -671,10 +685,11 @@ export class Lightspeed extends BaseProvider {
                 additionalDetailsJSON: JSON.stringify({
                     token,
                     bookingId,
-                    options
+                    options,
+                    responseData
                 })
             })
-            throw new Error(`Error updating customer on booking: ${response.statusText}`);
+            throw new Error(`Error updating customer on booking: ${JSON.stringify(responseData)}`);
         }
 
         const data = await response.json();
@@ -707,7 +722,8 @@ export class Lightspeed extends BaseProvider {
 
         if (!response.ok) {
             this.logger.error(`Error fetching customer: ${response.statusText}`);
-            this.logger.error(`Error response from light-speed: ${JSON.stringify(await response.json())}`);
+            const responseData = await response.json();
+            this.logger.error(`Error response from light-speed: ${JSON.stringify(responseData)}`);
             loggerService.errorLog({
                 userId: "",
                 url: "/Lightspeed/getCustomer",
@@ -717,10 +733,11 @@ export class Lightspeed extends BaseProvider {
                 additionalDetailsJSON: JSON.stringify({
                     token,
                     courseId,
-                    email
+                    email,
+                    responseData
                 })
             })
-            throw new Error(`Error fetching customer: ${response.statusText}`);
+            throw new Error(`Error fetching customer: ${JSON.stringify(responseData)}`);
         }
 
         const customers = await response.json();
