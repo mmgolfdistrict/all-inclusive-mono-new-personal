@@ -8,9 +8,11 @@ import { api } from "~/utils/api";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useUserContext } from "~/contexts/UserContext";
 
 export default function CheckoutConfirmation() {
   const { course } = useCourseContext();
+  const { user } = useUserContext();
   const params = useSearchParams();
   const status = params.get("status");
   const clientSecret = params.get("payment_intent_client_secret");
@@ -84,6 +86,11 @@ export default function CheckoutConfirmation() {
       if (paymentIntent!.status === "processing") {
         void cancelHyperswitchPaymentById.mutateAsync({
           paymentId: paymentId!,
+          email: user?.email,
+          phone: user?.phone,
+          userId: user?.id,
+          teeTimeId: teeTimeId!,
+          courseId: course!.id,
         });
         // setMessage(
         //   getErrorMessageById((response?.error_code ?? "") as string)

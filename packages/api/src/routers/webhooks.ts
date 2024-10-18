@@ -31,19 +31,31 @@ export const webhookRouter = createTRPCRouter({
     .input(
       z.object({
         paymentId: z.string(),
+        email: z.string().optional(),
+        phone: z.string().optional(),
+        userId: z.string().optional(),
+        teeTimeId: z.string(),
+        courseId: z.string(),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      return await ctx.serviceFactory.getHyperSwitchService().cancelHyperswitchPaymentById(input.paymentId);
+      return await ctx.serviceFactory.getHyperSwitchService().cancelHyperswitchPaymentById(input.paymentId, input.teeTimeId, input.courseId, input.userId, input.email, input.phone);
     }),
   sendEmailForFailedPayment: publicProcedure
     .input(
       z.object({
         paymentId: z.string(),
+        email: z.string().optional(),
+        phone: z.string().optional(),
+        userId: z.string().optional(),
+        teeTimeId: z.string(),
+        courseId: z.string(),
+        cartId: z.string(),
+        listingId: z.string(),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      return await ctx.serviceFactory.getHyperSwitchService().sendEmailForFailedPayment(input.paymentId);
+      return await ctx.serviceFactory.getHyperSwitchService().sendEmailForFailedPayment(input.paymentId, input.teeTimeId, input.listingId, input.courseId, input.cartId, input.userId, input.email, input.phone);
     }),
   auditLog: publicProcedure
     .input(
