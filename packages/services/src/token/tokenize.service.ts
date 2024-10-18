@@ -297,7 +297,15 @@ export class TokenizeService {
           const adminEmail: string = process.env.ADMIN_EMAIL_LIST || "nara@golfdistrict.com";
           const emailAterSplit = adminEmail.split(",");
           emailAterSplit.map(async (email) => {
-            await this.notificationService.sendEmail(email, "sensible Failed", "error in sensible");
+            await this.notificationService.sendEmail(email, "sensible Failed",
+              `error while accepting quote in sensible: ${error.message}
+                Email: ${normalizedCartData?.cart?.email},
+                Name: ${normalizedCartData.cart?.name},
+                Phone: ${normalizedCartData.cart?.phone}
+                TeeTimeId: ${existingTeeTime.id},
+                ProviderBookingID: ${providerBookingId},
+              `
+            );
           });
 
           this.loggerService.errorLog({
@@ -388,29 +396,31 @@ export class TokenizeService {
       )) ?? [];
 
     console.log(`Looping through and updating the booking slots.`);
-    for (let i = 0; i < bookingSlots.length; i++) {
-      //TODO: Why can't we use if( i === 0 ) { continue; }? Would it be cleaner?
-      if (i != 0) {
-        await provider?.updateTeeTime(
-          token ?? "",
-          teeTime?.providerCourseId ?? "",
-          teeTime?.providerTeeSheetId ?? "",
-          providerBookingId,
-          {
-            data: {
-              type: "Guest",
-              id: providerBookingId,
-              attributes: {
+    if (provider?.requireToCreatePlayerSlots()) {
+      for (let i = 0; i < bookingSlots.length; i++) {
+        //TODO: Why can't we use if( i === 0 ) { continue; }? Would it be cleaner?
+        if (i != 0) {
+          await provider?.updateTeeTime(
+            token ?? "",
+            teeTime?.providerCourseId ?? "",
+            teeTime?.providerTeeSheetId ?? "",
+            providerBookingId,
+            {
+              data: {
                 type: "Guest",
-                name: "Guest",
-                paid: false,
-                cartPaid: false,
-                noShow: false,
+                id: providerBookingId,
+                attributes: {
+                  type: "Guest",
+                  name: "Guest",
+                  paid: false,
+                  cartPaid: false,
+                  noShow: false,
+                },
               },
             },
-          },
-          bookingSlots[i]?.slotnumber
-        );
+            bookingSlots[i]?.slotnumber
+          );
+        }
       }
     }
 

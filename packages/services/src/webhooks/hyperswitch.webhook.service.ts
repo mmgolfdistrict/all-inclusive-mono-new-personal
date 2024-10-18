@@ -1001,7 +1001,7 @@ export class HyperSwitchWebhookService {
         //   process.env.SENDGRID_REFUND_EMAIL_TEMPLATE_ID ?? "d-79ca4be6569940cdb19dd2b607c17221",
         //   template
         // );
-        this.hyperSwitchService.sendEmailForBookingFailed(paymentId);
+        this.hyperSwitchService.sendEmailForBookingFailed(paymentId, existingTeeTime?.courseId!, "", weatherQuoteId, customer_id);
         throw "Booking failed on provider";
       }
       if (!newBooking.data) {
@@ -1176,31 +1176,32 @@ export class HyperSwitchWebhookService {
           providerBookingIds
         )) || [];
 
-      for (let i = 0; i < bookingSlots.length; i++) {
-        if (i != 0) {
-          await provider?.updateTeeTime(
-            token || "",
-            firstBooking?.providerCourseId || "",
-            firstBooking?.providerTeeSheetId || "",
-            providerBookingId || "",
-            {
-              data: {
-                type: "Guest",
-                id: providerBookingId || "",
-                attributes: {
+      if (provider.requireToCreatePlayerSlots()) {
+        for (let i = 0; i < bookingSlots.length; i++) {
+          if (i != 0) {
+            await provider?.updateTeeTime(
+              token || "",
+              firstBooking?.providerCourseId || "",
+              firstBooking?.providerTeeSheetId || "",
+              providerBookingId || "",
+              {
+                data: {
                   type: "Guest",
-                  name: "Guest",
-                  paid: false,
-                  cartPaid: false,
-                  noShow: false,
+                  id: providerBookingId || "",
+                  attributes: {
+                    type: "Guest",
+                    name: "Guest",
+                    paid: false,
+                    cartPaid: false,
+                    noShow: false,
+                  },
                 },
               },
-            },
-            bookingSlots[i]?.slotnumber
-          );
+              bookingSlots[i]?.slotnumber
+            );
+          }
         }
       }
-
       if (bookingsToCreate.length) {
         await this.database.transaction(async (tx) => {
           //create each booking

@@ -330,6 +330,12 @@ export const CheckoutForm = ({
         if (response.status === "processing") {
           void sendEmailForFailedPayment.mutateAsync({
             paymentId: response?.payment_id as string,
+            teeTimeId: teeTimeId,
+            cartId: cartId,
+            userId: user?.id,
+            email: user?.email,
+            listingId: listingId,
+            courseId: courseId!,
           });
           setMessage(
             getErrorMessageById((response?.error_code ?? "") as string)
@@ -749,7 +755,7 @@ export const CheckoutForm = ({
           {isLoading ? "Processing..." : <>Pay Now</>}
         </FilledButton>
       )}
-      <LoadingContainer isLoading={isLoading}>
+      <LoadingContainer isLoading={isLoading} title={"Please wait while we process your order."} subtitle="Do not close or refresh your browser as this may take up to 30 seconds.">
         <div></div>
       </LoadingContainer>
       {/* Show any error or success messages */}

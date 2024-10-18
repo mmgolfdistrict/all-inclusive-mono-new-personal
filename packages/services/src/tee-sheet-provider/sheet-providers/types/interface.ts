@@ -177,6 +177,7 @@ export interface ProviderAPI {
   findTeeTimeById(teeTimeId: string, teetimes: TeeTimeResponse[]): TeeTimeResponse | undefined;
   getBookingNameChangeOptions(customerDetails: NameChangeCustomerDetails): BookingNameChangeOptions;
   getCustomerIdFromGetCustomerResponse(getCustomerResponse: GetCustomerResponse): { customerId: string, accountNumber?: number };
+  requireToCreatePlayerSlots(): boolean;
 }
 
 export abstract class BaseProvider implements ProviderAPI {
@@ -261,4 +262,9 @@ export abstract class BaseProvider implements ProviderAPI {
   abstract findTeeTimeById(teeTimeId: string, teetimes: TeeTimeResponse[]): TeeTimeResponse | undefined;
   abstract getBookingNameChangeOptions(customerDetails: NameChangeCustomerDetails): BookingNameChangeOptions;
   abstract getCustomerIdFromGetCustomerResponse(getCustomerResponse: GetCustomerResponse): { customerId: string, accountNumber?: number };
+
+  /**
+   * Whether to require to create player slots to allow players for name changes
+   */
+  abstract requireToCreatePlayerSlots(): boolean;
 }

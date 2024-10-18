@@ -5,12 +5,17 @@ interface LoadingContainerProps {
   isLoading: boolean;
   loadingText?: string;
   children: ReactNode;
+  title?:string;
+  subtitle?:string;
 }
 
 export const LoadingContainer: FC<LoadingContainerProps> = ({
   isLoading,
   loadingText,
   children,
+  title,
+  subtitle
+  
 }) => {
   useEffect(() => {
     if (isLoading) {
@@ -25,7 +30,7 @@ export const LoadingContainer: FC<LoadingContainerProps> = ({
 
   return (
     <div
-      className=" inset-0 flex justify-center items-center bg-black bg-opacity-40"
+      className=" inset-0 flex justify-center items-center bg-black bg-opacity-70"
       style={{ zIndex: isLoading ? 999 : -1, position: "fixed" }}
     >
       {isLoading && (
@@ -50,11 +55,11 @@ export const LoadingContainer: FC<LoadingContainerProps> = ({
               fy=".3125"
               gradientTransform="scale(1.5)"
             >
-              <stop offset="0" stopColor="#225816"></stop>
-              <stop offset=".3" stopColor="#225816" stopOpacity=".9"></stop>
-              <stop offset=".6" stopColor="#225816" stopOpacity=".6"></stop>
-              <stop offset=".8" stopColor="#225816" stopOpacity=".3"></stop>
-              <stop offset="1" stopColor="#225816" stopOpacity="0"></stop>
+              <stop offset="0" stopColor="#ffffff"></stop>
+              <stop offset=".3" stopColor="#ffffff" stopOpacity=".9"></stop>
+              <stop offset=".6" stopColor="#ffffff" stopOpacity=".6"></stop>
+              <stop offset=".8" stopColor="#ffffff" stopOpacity=".3"></stop>
+              <stop offset="1" stopColor="#ffffff" stopOpacity="0"></stop>
             </radialGradient>
             <circle
               fill="none"
@@ -82,7 +87,7 @@ export const LoadingContainer: FC<LoadingContainerProps> = ({
             <circle
               fill="none"
               opacity=".2"
-              stroke="#225816"
+              stroke="#ffffff"
               strokeWidth="15"
               strokeLinecap="round"
               cx="100"
@@ -90,7 +95,22 @@ export const LoadingContainer: FC<LoadingContainerProps> = ({
               r="70"
             ></circle>
           </svg>
-          <div>{loadingText}</div>
+          <div
+            style={{
+              color: 'white',
+              fontSize: '18px',
+              textAlign: 'center',
+              marginTop: '10px',
+              lineHeight: '1.5',
+            }}
+          >
+            <div className="text-xs md:text-xl">{title??loadingText}</div>
+            {
+              subtitle && <div className="text-xs md:text-xl">{subtitle}</div>
+            }
+            
+          </div>
+          
         </div>
       )}
       <div style={{ display: isLoading ? "none" : "block" }}>{children}</div>

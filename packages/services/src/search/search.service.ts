@@ -174,9 +174,9 @@ export class SearchService {
           message: "ERROR_GETTING_USERS",
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
-            searchText
-          })
-        })
+            searchText,
+          }),
+        });
         return [];
       });
     if (!data) {
@@ -252,8 +252,8 @@ export class SearchService {
         additionalDetailsJSON: JSON.stringify({
           ownerId,
           teeTimeId,
-        })
-      })
+        }),
+      });
       return [];
     });
     let weather;
@@ -424,8 +424,8 @@ export class SearchService {
           additionalDetailsJSON: JSON.stringify({
             teeTimeId,
             userId,
-          })
-        })
+          }),
+        });
         return [];
       });
     if (!tee) {
@@ -477,8 +477,8 @@ export class SearchService {
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
             teeTimeId,
-          })
-        })
+          }),
+        });
         return [];
       });
 
@@ -567,8 +567,8 @@ export class SearchService {
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
             courseId,
-          })
-        })
+          }),
+        });
         return [];
       });
 
@@ -639,8 +639,8 @@ export class SearchService {
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
             courseId,
-          })
-        })
+          }),
+        });
         return [];
       });
 
@@ -1011,8 +1011,8 @@ export class SearchService {
           sortTime,
           limit,
           userId: _userId,
-        })
-      })
+        }),
+      });
       throw new Error(`Error getting tee times for ${date}: ${err}`);
     });
     const priceAccordingToDate: any[] = await this.getTeeTimesPriceWithRange(
@@ -1297,7 +1297,7 @@ export class SearchService {
     const finalEvents = events?.map((event) => ({
       ...event,
       iconUrl: event.logo
-        ? `https://${event?.logo?.cdn}/${event?.logo?.key}.${event?.logo?.extension}`
+        ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${event?.logo?.key}.${event?.logo?.extension}`
         : null,
     }));
     return finalEvents;

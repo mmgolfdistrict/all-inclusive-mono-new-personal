@@ -2894,33 +2894,6 @@ export class BookingService {
     if (!provider.supportsPlayerNameChange) {
       return { success: false, message: "Course doesn't support name changes" };
     }
-    //updating bookingslots data
-    await Promise.all(
-      usersToUpdate.map((user, index) => {
-        this.database
-          .update(bookingslots)
-          .set({
-            name: user.name || "",
-            customerId: user.id || "",
-          })
-          .where(eq(bookingslots.slotnumber, user.slotId))
-          .execute()
-          .catch((err) => {
-            this.logger.error(`Error setting names on booking: ${err}`);
-            this.loggerService.errorLog({
-              userId: userId,
-              url: "/updateNamesOnBookings",
-              userAgent: "",
-              message: "ERROR_SETTING_NAMES_ON_BOOKING",
-              stackTrace: `${err.stack}`,
-              additionalDetailsJSON: JSON.stringify({
-                bookingId,
-                usersToUpdate
-              })
-            })
-          });
-      })
-    );
 
     //check if user created in fore-up or not
     // call find or create for user and update according to slot
@@ -2975,8 +2948,33 @@ export class BookingService {
         user.slotId || ""
       );
     }
-
-    // }
+    //updating bookingslots data
+    await Promise.all(
+      usersToUpdate.map((user, index) => {
+        this.database
+          .update(bookingslots)
+          .set({
+            name: user.name || "",
+            customerId: user.id || "",
+          })
+          .where(eq(bookingslots.slotnumber, user.slotId))
+          .execute()
+          .catch((err) => {
+            this.logger.error(`Error setting names on booking: ${err}`);
+            this.loggerService.errorLog({
+              userId: userId,
+              url: "/updateNamesOnBookings",
+              userAgent: "",
+              message: "ERROR_SETTING_NAMES_ON_BOOKING",
+              stackTrace: `${err.stack}`,
+              additionalDetailsJSON: JSON.stringify({
+                bookingId,
+                usersToUpdate
+              })
+            })
+          });
+      })
+    );
   };
 
   /**
@@ -3421,7 +3419,7 @@ export class BookingService {
       }
     } catch (e) {
       console.log("BOOKING FAILED ON PROVIDER, INITIATING REFUND FOR PAYMENT_ID", payment_id);
-      this.hyperSwitchService.sendEmailForBookingFailed(paymentId);
+      this.hyperSwitchService.sendEmailForBookingFailed(paymentId, teeTime.courseId, cartId, sensibleQuoteId, userId);
       throw "Booking failed on provider";
       // await this.hyperSwitchService.refundPayment(payment_id);
       // const [user] = await this.database.select().from(users).where(eq(users.id, userId));
