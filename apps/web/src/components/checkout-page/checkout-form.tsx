@@ -755,7 +755,7 @@ export const CheckoutForm = ({
           {isLoading ? "Processing..." : <>Pay Now</>}
         </FilledButton>
       )}
-      <LoadingContainer isLoading={isLoading}>
+      <LoadingContainer isLoading={isLoading} title={"Please wait while we process your order."} subtitle="Do not close or refresh your browser as this may take up to 30 seconds.">
         <div></div>
       </LoadingContainer>
       {/* Show any error or success messages */}
