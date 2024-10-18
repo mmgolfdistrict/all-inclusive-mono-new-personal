@@ -224,7 +224,7 @@ export default function Login() {
       redirect: true,
     });
   };
-  //console.log("login url .....", pathname
+
   const googleSignIn = async () => {
     setGoogleIsLoading(true);
     event({
@@ -234,7 +234,7 @@ export default function Login() {
       value: "",
     });
     try {
-      await signIn("google", {
+      const result = await signIn("google", {
         // callbackUrl: `${window.location.origin}${
         //   GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
         //     ? prevPath?.path
@@ -249,13 +249,21 @@ export default function Login() {
       console.log("error", error);
     } finally {
       localStorage.removeItem("googlestate");
+      setGoogleIsLoading(false);
     }
   };
   const hasProvidersSetUp =
     process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
     process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
     process.env.NEXT_PUBLIC_APPLE_ID;
-
+  useEffect(() => {
+    if (localStorage.getItem("googlestate")) {
+      localStorage.removeItem("googlestate");
+    } else {
+      setGoogleIsLoading(false);
+      localStorage.removeItem("googlestate");
+    }
+  }, []);
   return isLoading || localStorage.getItem("googlestate") ? (
     <LoadingContainer isLoading={true}>
       <div></div>

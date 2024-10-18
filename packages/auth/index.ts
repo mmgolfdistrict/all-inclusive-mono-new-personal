@@ -103,7 +103,7 @@ export const authConfig: NextAuthConfig = {
             additionalDetailsJSON: JSON.stringify({
               email: credentials.email,
             }),
-          })
+          });
           return null;
         }
         const notificationService = new NotificationService(
