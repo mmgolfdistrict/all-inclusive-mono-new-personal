@@ -1176,31 +1176,32 @@ export class HyperSwitchWebhookService {
           providerBookingIds
         )) || [];
 
-      for (let i = 0; i < bookingSlots.length; i++) {
-        if (i != 0) {
-          await provider?.updateTeeTime(
-            token || "",
-            firstBooking?.providerCourseId || "",
-            firstBooking?.providerTeeSheetId || "",
-            providerBookingId || "",
-            {
-              data: {
-                type: "Guest",
-                id: providerBookingId || "",
-                attributes: {
+      if (provider.requireToCreatePlayerSlots()) {
+        for (let i = 0; i < bookingSlots.length; i++) {
+          if (i != 0) {
+            await provider?.updateTeeTime(
+              token || "",
+              firstBooking?.providerCourseId || "",
+              firstBooking?.providerTeeSheetId || "",
+              providerBookingId || "",
+              {
+                data: {
                   type: "Guest",
-                  name: "Guest",
-                  paid: false,
-                  cartPaid: false,
-                  noShow: false,
+                  id: providerBookingId || "",
+                  attributes: {
+                    type: "Guest",
+                    name: "Guest",
+                    paid: false,
+                    cartPaid: false,
+                    noShow: false,
+                  },
                 },
               },
-            },
-            bookingSlots[i]?.slotnumber
-          );
+              bookingSlots[i]?.slotnumber
+            );
+          }
         }
       }
-
       if (bookingsToCreate.length) {
         await this.database.transaction(async (tx) => {
           //create each booking

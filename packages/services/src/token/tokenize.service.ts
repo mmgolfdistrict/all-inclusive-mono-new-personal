@@ -396,29 +396,31 @@ export class TokenizeService {
       )) ?? [];
 
     console.log(`Looping through and updating the booking slots.`);
-    for (let i = 0; i < bookingSlots.length; i++) {
-      //TODO: Why can't we use if( i === 0 ) { continue; }? Would it be cleaner?
-      if (i != 0) {
-        await provider?.updateTeeTime(
-          token ?? "",
-          teeTime?.providerCourseId ?? "",
-          teeTime?.providerTeeSheetId ?? "",
-          providerBookingId,
-          {
-            data: {
-              type: "Guest",
-              id: providerBookingId,
-              attributes: {
+    if (provider?.requireToCreatePlayerSlots()) {
+      for (let i = 0; i < bookingSlots.length; i++) {
+        //TODO: Why can't we use if( i === 0 ) { continue; }? Would it be cleaner?
+        if (i != 0) {
+          await provider?.updateTeeTime(
+            token ?? "",
+            teeTime?.providerCourseId ?? "",
+            teeTime?.providerTeeSheetId ?? "",
+            providerBookingId,
+            {
+              data: {
                 type: "Guest",
-                name: "Guest",
-                paid: false,
-                cartPaid: false,
-                noShow: false,
+                id: providerBookingId,
+                attributes: {
+                  type: "Guest",
+                  name: "Guest",
+                  paid: false,
+                  cartPaid: false,
+                  noShow: false,
+                },
               },
             },
-          },
-          bookingSlots[i]?.slotnumber
-        );
+            bookingSlots[i]?.slotnumber
+          );
+        }
       }
     }
 
