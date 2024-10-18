@@ -1001,7 +1001,7 @@ export class HyperSwitchWebhookService {
         //   process.env.SENDGRID_REFUND_EMAIL_TEMPLATE_ID ?? "d-79ca4be6569940cdb19dd2b607c17221",
         //   template
         // );
-        this.hyperSwitchService.sendEmailForBookingFailed(paymentId);
+        this.hyperSwitchService.sendEmailForBookingFailed(paymentId, existingTeeTime?.courseId!, "", weatherQuoteId, customer_id);
         throw "Booking failed on provider";
       }
       if (!newBooking.data) {

@@ -88,11 +88,12 @@ export class clubprophet extends BaseProvider {
     });
 
     if (!response.ok) {
+      this.logger.error(`Error creating booking: ${response.statusText}`);
+      const responseData = await response.json();
       if (response.status === 403) {
-        // this.logger.error(`Error creating booking: ${response.statusText}`);
+        this.logger.error(`Error creating booking: ${JSON.stringify(responseData)}`);
         await this.getToken();
       }
-      console.log("ERROR", await response.json());
       loggerService.errorLog({
         userId: "",
         url: "/Clubprophet/createBooking",
@@ -103,7 +104,7 @@ export class clubprophet extends BaseProvider {
           data,
         })
       })
-      throw new Error(`Error creating booking: ${JSON.stringify(response)}`);
+      throw new Error(`Error creating booking: ${JSON.stringify(responseData)}`);
     }
 
     const bookingResponse = (await response.json());
@@ -131,9 +132,10 @@ export class clubprophet extends BaseProvider {
     });
 
     if (!response.ok) {
-      console.log("ERROR", await response.json());
-      // this.logger.fatal(`Error fetching token: ${response.statusText}`);
-      throw new Error(`Error fetching token: ${response.statusText}`);
+      this.logger.error(`Error fetching token: ${response.statusText}`);
+      const responseData = await response.json();
+      this.logger.fatal(`Error response from club-prophet: ${JSON.stringify(responseData)}`);
+      throw new Error(`Error fetching token: ${JSON.stringify(responseData)}`);
     }
 
     const responseData = await response.json();
@@ -219,7 +221,7 @@ export class clubprophet extends BaseProvider {
       if (response.status === 403) {
         await this.getToken();
       }
-      throw new Error(`Error deleting booking: ${response.statusText}`);
+      throw new Error(`Error deleting booking: ${JSON.stringify(reservation)}`);
     }
     this.logger.info(`Booking deleted successfully: ${bookingId}`);
   }
@@ -243,9 +245,10 @@ export class clubprophet extends BaseProvider {
     });
 
     if (!response.ok) {
+      this.logger.error(`Error creating customer: ${response.statusText}`);
+      const responseData = await response.json();
       if (response.status === 403) {
-        this.logger.error(`Error creating customer: ${response.statusText}`);
-        this.logger.error(`Error response from club-prophet: ${JSON.stringify(await response.json())}`);
+        this.logger.error(`Error response from club-prophet: ${JSON.stringify(responseData)}`);
       }
       loggerService.errorLog({
         userId: "",
@@ -255,9 +258,10 @@ export class clubprophet extends BaseProvider {
         stackTrace: `Error creating customer`,
         additionalDetailsJSON: JSON.stringify({
           customerData: customerData,
+          responseData
         })
       })
-      throw new Error(`Error creating customer: ${response.statusText}`);
+      throw new Error(`Error creating customer: ${JSON.stringify(responseData)}`);
     }
 
     return (await response.json()) as ClubProphetCustomerCreationResponse;
@@ -370,7 +374,8 @@ export class clubprophet extends BaseProvider {
 
     if (!response.ok) {
       this.logger.error(`Error fetching customer: ${response.statusText}`);
-      this.logger.error(`Error response from club-prophet: ${JSON.stringify(await response.json())}`);
+      const responseData = await response.json();
+      this.logger.error(`Error response from club-prophet: ${JSON.stringify(JSON.stringify(responseData))}`);
       loggerService.errorLog({
         userId: "",
         url: "/Clubprophet/getCustomer",
@@ -379,9 +384,10 @@ export class clubprophet extends BaseProvider {
         stackTrace: ``,
         additionalDetailsJSON: JSON.stringify({
           email,
+          responseData
         })
       })
-      throw new Error(`Error fetching customer: ${response.statusText}`);
+      throw new Error(`Error fetching customer: ${JSON.stringify(responseData)}`);
     }
 
     const customer = await response.json();

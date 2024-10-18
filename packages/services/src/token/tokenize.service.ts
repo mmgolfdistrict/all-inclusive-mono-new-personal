@@ -297,7 +297,15 @@ export class TokenizeService {
           const adminEmail: string = process.env.ADMIN_EMAIL_LIST || "nara@golfdistrict.com";
           const emailAterSplit = adminEmail.split(",");
           emailAterSplit.map(async (email) => {
-            await this.notificationService.sendEmail(email, "sensible Failed", "error in sensible");
+            await this.notificationService.sendEmail(email, "sensible Failed",
+              `error while accepting quote in sensible: ${error.message}
+                Email: ${normalizedCartData?.cart?.email},
+                Name: ${normalizedCartData.cart?.name},
+                Phone: ${normalizedCartData.cart?.phone}
+                TeeTimeId: ${existingTeeTime.id},
+                ProviderBookingID: ${providerBookingId},
+              `
+            );
           });
 
           this.loggerService.errorLog({
