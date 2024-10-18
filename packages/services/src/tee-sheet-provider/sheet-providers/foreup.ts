@@ -11,6 +11,7 @@ import type {
   TeeTimeResponse as ForeupTeeTimeResponse,
   ForeUpBookingNameChangeOptions,
   ForeUpGetCustomerResponse,
+  ForeupGetCustomers,
 } from "./types/foreup.type";
 import type { BookingResponse, CustomerCreationData, GetCustomerResponse, NameChangeCustomerDetails, SalesDataOptions, TeeTimeResponse } from "./types/interface";
 import type { BuyerData, ProviderAPI, TeeTimeData } from "./types/interface";
@@ -346,15 +347,15 @@ export class foreUp extends BaseProvider {
       throw new Error(`Error fetching customer: ${JSON.stringify(responseData)}`);
     }
 
-    const customers = await response.json();
+    const customers: ForeupGetCustomers = await response.json();
 
     if (customers.data.length === 0) {
       return undefined
     }
 
-    const customer = customers.data[0];
+    const customer = customers.data.find(customer => customer.attributes.account_number !== null && customer.attributes.online_booking_disabled === false);
 
-    return customer as ForeUpGetCustomerResponse;
+    return customer!;
   }
 
   async addSalesData(options: SalesDataOptions): Promise<void> {

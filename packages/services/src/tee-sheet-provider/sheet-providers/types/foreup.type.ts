@@ -351,3 +351,8 @@ export interface ForeUpGetCustomerResponse {
   id: number;
   attributes: CustomerAttributes;
 }
+
+export interface ForeupGetCustomers {
+  data: ForeUpGetCustomerResponse[];
+
+}
