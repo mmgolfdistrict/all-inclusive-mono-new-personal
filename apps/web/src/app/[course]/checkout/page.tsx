@@ -31,6 +31,8 @@ import type {
   TaxProduct,
 } from "~/utils/types";
 import dayjs from "dayjs";
+import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useDebounce } from "usehooks-ts";
@@ -52,7 +54,8 @@ export default function Checkout({
   const { user } = useUserContext();
   const { status } = useSession();
   const [isSessionLoading, setIsSessionLoading] = useState(true);
-
+  dayjs.extend(utc);
+  dayjs.extend(timezone);
   const {
     shouldAddSensible,
     sensibleData,
@@ -78,9 +81,7 @@ export default function Checkout({
     api.course.getPrivacyPolicyAndTCByCourse.useQuery({
       courseId: courseId ?? "",
     });
-    const { data: multipleTransaction } =
-    api.checkout.checkMultipleTeeTimeTransactionByUser.useQuery({});
-  console.log("multiple transactions============>",multipleTransaction);
+
   const {
     data: teeTimeData,
     isLoading: isLoadingTeeTime,
@@ -175,14 +176,14 @@ export default function Checkout({
       | TaxProduct =
       saleType === "first_hand"
         ? {
-          type: "first_hand",
-          tee_time_id: teeTimeId,
-          number_of_bookings: amountOfPlayers,
-        }
+            type: "first_hand",
+            tee_time_id: teeTimeId,
+            number_of_bookings: amountOfPlayers,
+          }
         : {
-          type: "second_hand",
-          second_hand_id: listingId,
-        };
+            type: "second_hand",
+            second_hand_id: listingId,
+          };
 
     const localCart: CartProduct[] = [
       {
@@ -217,7 +218,7 @@ export default function Checkout({
         display_price: formatMoney(
           ((data?.greenFeeTaxPerPlayer ?? 0) +
             (data?.cartFeeTaxPerPlayer ?? 0)) *
-          amountOfPlayers
+            amountOfPlayers
         ),
         product_data: {
           metadata: {

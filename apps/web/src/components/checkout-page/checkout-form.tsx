@@ -12,7 +12,7 @@ import { api } from "~/utils/api";
 import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
 import type { CartProduct, MaxReservationResponse } from "~/utils/types";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { Fragment, useEffect, useState, type FormEvent } from "react";
 import { toast } from "react-toastify";
 import { number } from "zod";
 import { FilledButton } from "../buttons/filled-button";
@@ -188,6 +188,9 @@ export const CheckoutForm = ({
   const reserveSecondHandBookingApi =
     api.teeBox.reserveSecondHandBooking.useMutation();
 
+  const { data: multipleTransaction } =
+    api.checkout.checkMultipleTeeTimeTransactionByUser.useQuery({});
+  console.log("multiple transactions============>", multipleTransaction);
   const handlePaymentStatus = (status: string) => {
     switch (status) {
       case "succeeded":
@@ -724,19 +727,36 @@ export const CheckoutForm = ({
           {maxReservation?.message}
         </div>
       )}
+      {multipleTransaction &&
+        (multipleTransaction.data > 1 ? (
+          <Fragment>
+            <div className="w-full flex text-left p-[5px]">
+              <span className="text-sm text-yellow-600">
+                We noticed that you have already bought tee times today. Card
+                issuers typically flag multiple transactions as suspicious.
+                Please consider using a different card if these problems
+                persists.
+              </span>
+            </div>
+          </Fragment>
+        ) : (
+          ""
+        ))}
       {nextAction?.type === "redirect_to_url" ? (
-        <FilledButton
-          className={`w-full rounded-full disabled:opacity-60`}
-          disabled={!hyper || !widgets || callingRef}
-          onClick={() => {
-            if (nextAction?.redirect_to_url) {
-              window.location.href = nextAction?.redirect_to_url;
-            }
-          }}
-          type="button"
-        >
-          {isLoading ? "Loading..." : <>Pay Now</>}
-        </FilledButton>
+        <Fragment>
+          <FilledButton
+            className={`w-full rounded-full disabled:opacity-60`}
+            disabled={!hyper || !widgets || callingRef}
+            onClick={() => {
+              if (nextAction?.redirect_to_url) {
+                window.location.href = nextAction?.redirect_to_url;
+              }
+            }}
+            type="button"
+          >
+            {isLoading ? "Loading..." : <>Pay Now</>}
+          </FilledButton>
+        </Fragment>
       ) : (
         <FilledButton
           type="submit"

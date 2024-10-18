@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
-import { and, eq, gt, gte, inArray, sql,desc } from "@golf-district/database";
+import { and, eq, gt, gte, inArray, sql, desc, between } from "@golf-district/database";
 import { bookings } from "@golf-district/database/schema/bookings";
 import { charities } from "@golf-district/database/schema/charities";
 import { charityCourseLink } from "@golf-district/database/schema/charityCourseLink";
@@ -891,19 +891,25 @@ export class CheckoutService {
       if (!userDetails) {
         throw new Error("User details not found");
       }
-     const [userResult]=await this.database
+      //2024-10-18T02:29:03Z 2024-10-17T14:29:03Z
+      const [userResult] = await this.database
         .select({
-           id:users.id,
-           email:users.email,
-           bookingCount: sql`Count(${bookings.id})`.as('bookingCount'),
+          id: users.id,
+          email: users.email,
+          bookingCount: sql`Count(${bookings.id})`.as("bookingCount"),
         })
         .from(bookings)
         .innerJoin(users, eq(bookings.ownerId, users.id))
-        .where(eq(users.email, userDetails?.email??""))
-        .groupBy(users.id,users.email)
+        .where(
+          and(
+            eq(users.email, userDetails.email ?? ""),
+            gte(bookings.purchasedAt, sql`NOW() - INTERVAL 12 HOUR`)
+          )
+        )
+        .groupBy(users.id, users.email)
         .having(gt(sql`Count(${bookings.id})`, 1))
         .orderBy(desc(sql`Count(${bookings.id})`));
-        return {data:userResult};
+      return { data: Number(userResult?.bookingCount) || 1 };
     } catch (error: any) {
       this.logger.error("", error.message);
       throw error.message;
