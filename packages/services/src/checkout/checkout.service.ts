@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
-import { and, eq, gt, gte, inArray, sql, desc, between } from "@golf-district/database";
+import { and, eq, gt, gte, inArray, sql, desc, between, db } from "@golf-district/database";
 import { bookings } from "@golf-district/database/schema/bookings";
 import { charities } from "@golf-district/database/schema/charities";
 import { charityCourseLink } from "@golf-district/database/schema/charityCourseLink";
@@ -41,6 +41,7 @@ import dayjs from "dayjs";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 import UTC from "dayjs/plugin/utc";
 import { loggerService } from "../webhooks/logging.service";
+import { AppSettingsService } from "../app-settings/app-settings.service";
 
 /**
  * Configuration options for the CheckoutService.
@@ -75,6 +76,7 @@ export class CheckoutService {
   private hyperSwitch: HyperSwitchService;
   private readonly profileId: string;
   private clubProphetWebhook: clubprophetWebhookService;
+  private appSettings: AppSettingsService;
   //private stripeService: StripeService;
 
   /**
@@ -94,7 +96,13 @@ export class CheckoutService {
     this.auctionService = new AuctionService(database, this.hyperSwitch);
     this.profileId = config.profileId;
     this.clubProphetWebhook = new clubprophetWebhookService(database, providerService);
+    this.appSettings = new AppSettingsService(
+      this.database,
+      process.env.REDIS_URL!,
+      process.env.REDIS_TOKEN!
+    );
     //this.stripeService = new StripeService(config.stripeApiKey);
+    //this.appSettings=new AppSettingsService()
   }
 
   /**
@@ -887,6 +895,11 @@ export class CheckoutService {
   };
   checkMultipleTeeTimeTransactionByUser = async (userId: string) => {
     try {
+      //"USER_BUY_MULTIPLE_TEETIME_IN_SAME_DAY",
+      let appSettingsResult: any = [];
+      let appSettingsValue: number;
+      appSettingsResult = await this.appSettings.getAppSetting("USER_BUY_MULTIPLE_TEETIME_IN_SAME_DAY");
+      appSettingsValue = Number(appSettingsResult.value) || 12;
       const [userDetails] = await this.database.select().from(users).where(eq(users.id, userId));
       if (!userDetails) {
         throw new Error("User details not found");
