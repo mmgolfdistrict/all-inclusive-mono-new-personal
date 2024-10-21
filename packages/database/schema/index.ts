@@ -15,7 +15,6 @@ import * as courseAssets from "./courseAssets";
 import * as courseException from "./courseException";
 import * as courseGlobalNotification from "./courseGlobalNotification";
 import * as courseMarkup from "./courseMarkup";
-import * as coursePayment from "./coursePayment";
 import * as coursePromoCodeLink from "./coursePromoCodeLink";
 import * as courses from "./courses";
 import * as courseScheduleDetails from "./courseScheduleDetails";
@@ -107,5 +106,4 @@ export const schema = {
   ...adminUserCourse,
   ...courseGlobalNotification,
   ...providerAuthTokens,
-  ...coursePayment,
 };
