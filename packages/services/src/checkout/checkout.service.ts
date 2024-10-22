@@ -916,7 +916,7 @@ export class CheckoutService {
         .where(
           and(
             eq(users.email, userDetails.email ?? ""),
-            gte(bookings.purchasedAt, sql`NOW() - INTERVAL ${appSettingsValue} HOUR`)
+            gte(bookings.purchasedAt, sql`NOW() - INTERVAL 12 HOUR`)
           )
         )
         .groupBy(users.id, users.email)
