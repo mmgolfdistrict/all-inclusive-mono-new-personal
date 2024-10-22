@@ -1271,7 +1271,7 @@ export class SearchService {
         startDate: majorEvents.startDate,
         endDate: majorEvents.endDate,
         logo: {
-          cdn: assets.cdn,
+          //cdn: assets.cdn,
           key: assets.key,
           extension: assets.extension,
         },
@@ -1293,9 +1293,13 @@ export class SearchService {
       .catch((e) => {
         console.log("Error in getting special Events");
       });
-
+    const cdnUrl = process.env.GOLF_DISTRICT_ASSET_CDN;
     const finalEvents = events?.map((event) => ({
       ...event,
+      logo: {
+        ...event.logo,
+        cdn: cdnUrl,
+      },
       iconUrl: event.logo
         ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${event?.logo?.key}.${event?.logo?.extension}`
         : null,
