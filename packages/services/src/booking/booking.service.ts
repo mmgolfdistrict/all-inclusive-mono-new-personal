@@ -2899,7 +2899,7 @@ export class BookingService {
     // call find or create for user and update according to slot
     const customers: Customer[] = [];
     const providerDataToUpdate: {
-      playerNumber: number | null;
+      playerNumber: string | null;
       customerId: string | number | null;
       name: string | null;
       slotId: string | null;
@@ -2921,7 +2921,7 @@ export class BookingService {
           providerDataToUpdate.push({ ...customerData, slotId: user.slotId });
           //update on foreup with the slotId with the personId recieved in customer
         } else if (user.name !== "") {
-          providerDataToUpdate.push({ name: user.name, playerNumber: 0, customerId: 0, slotId: user.slotId });
+          providerDataToUpdate.push({ name: user.name, playerNumber: "", customerId: 0, slotId: user.slotId });
         }
       } catch (error) {
         console.log("Error creating customer", error);

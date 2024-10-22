@@ -14,8 +14,7 @@ export const userProviderCourseLink = mySqlTable(
     providerId: varchar("providerId", { length: 36 }).notNull(),
     courseId: varchar("courseId", { length: 36 }).notNull(),
     customerId: varchar("customerId", { length: 36 }).notNull(),
-    // customerId: int("customerId").notNull(),
-    accountNumber: int("accountNumber").notNull(),
+    accountNumber: varchar("accountNumber", { length: 36 }).notNull(),
     createdDateTime: datetime("createdDateTime", { mode: "string", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
