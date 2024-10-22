@@ -40,6 +40,7 @@ export default function Login() {
   const { course } = useCourseContext();
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [localStorageGoogle, setLocalStorageGoogle] = useState("");
   const [googleIsLoading, setGoogleIsLoading] = useState(false);
   const [credentialsLoader, setCredentialsLoader] = useState(false);
   const auditLog = api.webhooks.auditLog.useMutation();
@@ -264,7 +265,12 @@ export default function Login() {
       localStorage.removeItem("googlestate");
     }
   }, []);
-  return isLoading || localStorage.getItem("googlestate") ? (
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setLocalStorageGoogle(localStorage.getItem("googlestate") || "");
+    }
+  }, []);
+  return isLoading || localStorageGoogle ? (
     <LoadingContainer isLoading={true}>
       <div></div>
     </LoadingContainer>
@@ -290,7 +296,7 @@ export default function Login() {
               className="flex w-full items-center justify-center gap-3 text-primary-gray shadow-google-btn"
               data-testid="login-with-google-id"
             >
-              {googleIsLoading || localStorage.getItem("googlestate") ? (
+              {googleIsLoading || localStorageGoogle ? (
                 <div className="w-10 h-10 border-4 border-green-500 border-t-transparent rounded-full animate-spin"></div>
               ) : (
                 <Fragment>
