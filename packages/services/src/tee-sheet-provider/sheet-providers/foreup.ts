@@ -122,7 +122,8 @@ export class foreUp extends BaseProvider {
     token: string,
     courseId: string,
     teesheetId: string,
-    data: BookingCreationData
+    data: BookingCreationData,
+    userId: string
   ): Promise<BookingResponse> {
     const { defaultBookingClassID } = JSON.parse(this.providerConfiguration ?? "{}");
     const { totalAmountPaid, ...bookingData } = data;
@@ -147,7 +148,7 @@ export class foreUp extends BaseProvider {
         await this.getToken();
       }
       loggerService.errorLog({
-        userId: "",
+        userId,
         url: "/Foreup/createBooking",
         userAgent: "",
         message: "ERROR_CREATING_BOOKING",

@@ -244,7 +244,7 @@ export class SearchService {
     const forecast = await this.weatherService.getForecast(firstBooking.courseId).catch((err) => {
       this.logger.error(`error getting forecast, ${err}`);
       this.loggerService.errorLog({
-        userId: "",
+        userId,
         url: "/SearchService/getUnlistedTeeTimes",
         userAgent: "",
         message: "ERROR_GETTING_FORECAST",
@@ -416,7 +416,7 @@ export class SearchService {
       .catch((err) => {
         this.logger.error(err);
         this.loggerService.errorLog({
-          userId: "",
+          userId,
           url: "/SearchService/getTeeTimeById",
           userAgent: "",
           message: "ERROR_GETTING_TEE_TIMES",
@@ -993,7 +993,7 @@ export class SearchService {
       });
       this.logger.error(err);
       this.loggerService.errorLog({
-        userId: "",
+        userId,
         url: "/SearchService/getTeeTimesForDay",
         userAgent: "",
         message: "ERROR_GETTING_TEE_TIMES_FOR_DAY",
