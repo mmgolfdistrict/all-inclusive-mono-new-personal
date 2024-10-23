@@ -137,8 +137,27 @@ export class clubprophet extends BaseProvider {
       this.logger.fatal(`Error response from club-prophet: ${JSON.stringify(responseData)}`);
       throw new Error(`Error fetching token: ${JSON.stringify(responseData)}`);
     }
-
-    const responseData = await response.json();
+    let responseData;
+    try {
+      responseData = await response.json();
+      if (!responseData.access_token) {
+        throw new Error(`Error Token not found in the response: ${JSON.stringify(responseData)}`);
+      }
+    } catch (error: any) {
+      this.logger.error(`Error parsing token response: ${error}`);
+      loggerService.errorLog({
+        userId: "",
+        url: "/Clubprophet/getToken",
+        userAgent: "",
+        message: "ERROR_PARSING_TOKEN_RESPONSE",
+        stackTrace: `${error.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          response: JSON.stringify(response),
+          responseData: JSON.stringify(responseData),
+        })
+      })
+      throw new Error(`Error parsing token response: ${error}`);
+    }
     return responseData.access_token as string;
   }
 

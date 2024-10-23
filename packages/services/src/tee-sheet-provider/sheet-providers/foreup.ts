@@ -505,8 +505,27 @@ export class foreUp extends BaseProvider {
       })
       throw new Error(`Error fetching token: ${JSON.stringify(responseData)}`);
     }
-
-    const responseData = await response.json();
+    let responseData;
+    try {
+      responseData = await response.json();
+      if (!responseData.data.id) {
+        throw new Error(`Error Token not found in the response: ${JSON.stringify(responseData)}`);
+      }
+    } catch (error: any) {
+      this.logger.error(`Error parsing token response: ${error}`);
+      loggerService.errorLog({
+        userId: "",
+        url: "/Foreup/getToken",
+        userAgent: "",
+        message: "ERROR_PARSING_TOKEN_RESPONSE",
+        stackTrace: `${error.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          response: JSON.stringify(response),
+          responseData: JSON.stringify(responseData),
+        })
+      })
+      throw new Error(`Error parsing token response: ${error}`);
+    }
     return responseData.data.id as string;
   };
 
