@@ -4,7 +4,7 @@ import { courses } from "@golf-district/database/schema/courses";
 import Logger from "@golf-district/shared/src/logger";
 import { CacheService } from "../infura/cache.service";
 import type { _ForecastData, _WeatherData } from "./types";
-import { loggerService } from "../webhooks/logging.service";
+import { LoggerService, loggerService } from "../webhooks/logging.service";
 
 /**
  * `WeatherService` - A service for fetching and optionally caching weather data.
@@ -39,8 +39,9 @@ import { loggerService } from "../webhooks/logging.service";
  */
 
 export class WeatherService extends CacheService {
-  constructor(private readonly database: Db, redisUrl: string, redisToken: string) {
+  constructor(private readonly database: Db, redisUrl: string, redisToken: string, private readonly loggerService: LoggerService,) {
     super(redisUrl, redisToken, Logger(WeatherService.name));
+    this.loggerService = loggerService;
   }
   /**
    * Fetches the forecast for course with optional caching.
@@ -120,19 +121,33 @@ export class WeatherService extends CacheService {
     const response = await fetch(forecastEndpoint);
     if (!response.ok) {
       this.logger.warn(`fetchForecastData failed to fetch forecast data: ${response.statusText}`);
-      throw new Error(`Failed to fetch forecast data: ${response.statusText}`);
+      this.loggerService.errorLog({
+        userId: "",
+        url: `/getForecast`,
+        userAgent: "",
+        message: "Error in getting weather forcast",
+        stackTrace: `Weather forcast service is down`,
+        additionalDetailsJSON: ""
+      })
+      return []
     }
 
     const data: _ForecastData = (await response.json()) as _ForecastData;
 
-    return data.properties.periods.map((period) => ({
-      name: period.name,
-      startTime: period.startTime,
-      endTime: period.endTime,
-      temperature: period.temperature,
-      shortForecast: period.shortForecast,
-      iconCode: period?.icon.split("/")?.pop()?.split("?")?.[0]?.split(",")?.[0] ?? "",
-    }));
+    if(data?.properties && data?.properties.periods){
+      return data.properties.periods.map((period) => ({
+        name: period.name,
+        startTime: period.startTime,
+        endTime: period.endTime,
+        temperature: period.temperature,
+        shortForecast: period.shortForecast,
+        iconCode: period?.icon.split("/")?.pop()?.split("?")?.[0]?.split(",")?.[0] ?? "",
+      }));
+    }else{
+      return []
+    }
+
+    
   }
 
   /**

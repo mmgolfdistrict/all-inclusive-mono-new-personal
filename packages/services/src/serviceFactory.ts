@@ -244,7 +244,7 @@ export class ServiceFactory {
    * @returns An instance of WeatherService.
    */
   getWeatherService = (): WeatherService => {
-    return new WeatherService(this.config.database, this.config.redisUrl, this.config.redisToken);
+    return new WeatherService(this.config.database, this.config.redisUrl, this.config.redisToken, this.getLoggerService());
   };
 
   /**
