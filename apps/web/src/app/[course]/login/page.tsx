@@ -41,6 +41,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(false);
   const [localStorageGoogle, setLocalStorageGoogle] = useState("");
+  const [localstorageCredentials, setLocalStorageCredentials] = useState("");
   const [googleIsLoading, setGoogleIsLoading] = useState(false);
   const [credentialsLoader, setCredentialsLoader] = useState(false);
   const auditLog = api.webhooks.auditLog.useMutation();
@@ -136,7 +137,10 @@ export default function Login() {
   const onSubmit: SubmitHandler<LoginSchemaType> = async (data) => {
     try {
       setIsLoading(true);
-      localStorage.setItem("credentials", "credentials");
+      if (typeof window !== "undefined") {
+        localStorage.setItem("credentials", "credentials");
+        //setLocalStorageCredentials(localStorage.getItem("credentials"));
+      }
       const callbackURL = `${window.location.origin}${
         GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
           ? prevPath?.path
@@ -161,11 +165,15 @@ export default function Login() {
             "Unable to login. Please call customer support at 877-TeeTrade or email at support@golfdistrict.com"
           );
           setCredentialsLoader(false);
-          localStorage.removeItem("credentials");
+          if (typeof window !== "undefined") {
+            localStorage.removeItem("credentials");
+          }
         } else {
           toast.error("The email or password you entered is incorrect.");
           setCredentialsLoader(false);
-          localStorage.removeItem("credentials");
+          if (typeof window !== "undefined") {
+            localStorage.removeItem("credentials");
+          }
         }
         setValue("password", "");
       }
@@ -245,12 +253,17 @@ export default function Login() {
         // }`,
         redirect: false,
       });
-      localStorage.setItem("googlestate", "loggedin");
+
+      if (typeof window !== "undefined") {
+        localStorage.setItem("googlestate", "loggedin");
+      }
     } catch (error) {
       console.log("error", error);
     } finally {
-      localStorage.removeItem("googlestate");
-      setGoogleIsLoading(false);
+      // if (typeof window !== "undefined") {
+      //   localStorage.removeItem("googlestate");
+      // }
+      // setGoogleIsLoading(false);
     }
   };
   const hasProvidersSetUp =
@@ -258,11 +271,14 @@ export default function Login() {
     process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
     process.env.NEXT_PUBLIC_APPLE_ID;
   useEffect(() => {
-    if (localStorage.getItem("googlestate")) {
-      localStorage.removeItem("googlestate");
-    } else {
-      setGoogleIsLoading(false);
-      localStorage.removeItem("googlestate");
+    if (typeof window !== "undefined") {
+      if (localStorage.getItem("googlestate")) {
+        setGoogleIsLoading(true);
+      }
+      // if (!localStorage.getItem("googlestate")) {
+      //   setGoogleIsLoading(false);
+      //   localStorage.removeItem("googlestate");
+      // }
     }
   }, []);
   useEffect(() => {
@@ -270,6 +286,12 @@ export default function Login() {
       setLocalStorageGoogle(localStorage.getItem("googlestate") || "");
     }
   }, []);
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setLocalStorageCredentials(localStorage.getItem("credentials") || "");
+    }
+  }, []);
+
   return isLoading || localStorageGoogle ? (
     <LoadingContainer isLoading={true}>
       <div></div>
@@ -395,7 +417,7 @@ export default function Login() {
             className="w-full rounded-full flex justify-center items-center"
             data-testid="login-button-id"
           >
-            {localStorage.getItem("credentials") ? (
+            {localstorageCredentials ? (
               <div className="w-5 h-5 border-4 border-white border-t-transparent rounded-full animate-spin "></div>
             ) : (
               "Log In"

@@ -22,8 +22,8 @@ import type { GolferType } from "~/contexts/FiltersContext";
 import { useFiltersContext } from "~/contexts/FiltersContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
-import type { Dayjs } from 'dayjs';
-import dayjs from 'dayjs';
+import type { Dayjs } from "dayjs";
+import dayjs from "dayjs";
 import isBetween from "dayjs/plugin/isBetween";
 import isoWeek from "dayjs/plugin/isoWeek";
 import RelativeTime from "dayjs/plugin/relativeTime";
@@ -126,15 +126,19 @@ export default function CourseHomePage() {
       : null;
   };
 
-  const formatDateString = (date: string | number | Date | Dayjs | null | undefined): string => {
+  const formatDateString = (
+    date: string | number | Date | Dayjs | null | undefined
+  ): string => {
     if (!date) {
-      return ''; // Handle the case where date is null or undefined
+      return ""; // Handle the case where date is null or undefined
     }
-    return dayjs(date).utc().format('ddd, DD MMM YYYY HH:mm:ss [GMT]');
+    return dayjs(date).utc().format("ddd, DD MMM YYYY HH:mm:ss [GMT]");
   };
-  
 
-  const getUtcDate = (date: string | number | Dayjs | Date | null | undefined, timezoneCorrection = 0):string => {
+  const getUtcDate = (
+    date: string | number | Dayjs | Date | null | undefined,
+    timezoneCorrection = 0
+  ): string => {
     const currentDate = dayjs.utc(formatDateString(date));
     return currentDate.add(timezoneCorrection, "hour").toString();
   };
@@ -155,9 +159,11 @@ export default function CourseHomePage() {
         return getUtcDate(new Date(), course?.timezoneCorrection);
       case "This Weekend":
         return formatDateString(dayjs().day(5).toDate());
-      case "Custom":{
+      case "Custom": {
         if (!selectedDay.from) return formatDateString(new Date());
-        const customDate = dayjs(`${selectedDay.from.year}-${selectedDay.from.month}-${selectedDay.from.day}`).toDate();
+        const customDate = dayjs(
+          `${selectedDay.from.year}-${selectedDay.from.month}-${selectedDay.from.day}`
+        ).toDate();
         return formatDateString(customDate);
       }
       default:
@@ -175,33 +181,52 @@ export default function CourseHomePage() {
       case "All":
         return formatDateString(dayjs(farthestDateOut).toDate());
       case "Today":
-        return getUtcDate(dayjs().endOf("day").toDate(), course?.timezoneCorrection);
+        return getUtcDate(
+          dayjs().endOf("day").toDate(),
+          course?.timezoneCorrection
+        );
       case "This Week":
-        return getUtcDate(dayjs().endOf("isoWeek").toDate(), course?.timezoneCorrection);
+        return getUtcDate(
+          dayjs().endOf("isoWeek").toDate(),
+          course?.timezoneCorrection
+        );
       case "This Weekend":
         return formatDateString(dayjs().day(7).toDate());
-      case "This Month":{
+      case "This Month": {
         const endOfMonth = dayjs().endOf("month").toDate();
-        return endOfMonth > dayjs(farthestDateOut).toDate() ? formatDateString(farthestDateOut) : formatDateString(endOfMonth);
+        return endOfMonth > dayjs(farthestDateOut).toDate()
+          ? formatDateString(farthestDateOut)
+          : formatDateString(endOfMonth);
       }
       case "Furthest Day Out To Book":
-        return formatDateString(dayjs(farthestDateOut).utc().hour(23).minute(59).second(59).millisecond(999).toDate());
-      case "Custom":{
+        return formatDateString(
+          dayjs(farthestDateOut)
+            .utc()
+            .hour(23)
+            .minute(59)
+            .second(59)
+            .millisecond(999)
+            .toDate()
+        );
+      case "Custom": {
         if (!selectedDay.to) {
           if (selectedDay.from) {
-            const endOfDay = dayjs(`${selectedDay.from.year}-${selectedDay.from.month}-${selectedDay.from.day}`).endOf("day");
+            const endOfDay = dayjs(
+              `${selectedDay.from.year}-${selectedDay.from.month}-${selectedDay.from.day}`
+            ).endOf("day");
             return getUtcDate(endOfDay.toDate(), course?.timezoneCorrection);
           }
           return formatDateString(dayjs().endOf("day").toDate());
         }
-        const endDateCustom = dayjs(`${selectedDay.to.year}-${selectedDay.to.month}-${selectedDay.to.day}`).endOf("day");
+        const endDateCustom = dayjs(
+          `${selectedDay.to.year}-${selectedDay.to.month}-${selectedDay.to.day}`
+        ).endOf("day");
         return getUtcDate(endDateCustom.toDate(), course?.timezoneCorrection);
       }
       default:
-        return formatDateString(dayjs().add(360, 'days').toDate());
+        return formatDateString(dayjs().add(360, "days").toDate());
     }
   }, [dateType, selectedDay, farthestDateOut]);
-
 
   const utcStartDate = dayjs
     .utc(startDate)
@@ -256,14 +281,14 @@ export default function CourseHomePage() {
           sortValue === "Sort by time - Early to Late"
             ? "asc"
             : sortValue === "Sort by time - Late to Early"
-              ? "desc"
-              : "",
+            ? "desc"
+            : "",
         sortPrice:
           sortValue === "Sort by price - Low to High"
             ? "asc"
             : sortValue === "Sort by price - High to Low"
-              ? "desc"
-              : "",
+            ? "desc"
+            : "",
         timezoneCorrection: course?.timezoneCorrection,
       },
       {
@@ -379,10 +404,12 @@ export default function CourseHomePage() {
       }
     }
   }, [dateType]);
-  useEffect(()=>{
-    localStorage.removeItem("googlestate");
-    localStorage.removeItem("credentials");
-  },[])
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("googlestate");
+      localStorage.removeItem("credentials");
+    }
+  }, []);
   let datesArr = JSON.parse(
     JSON.stringify(datesWithData ?? daysData.arrayOfDates)
   );
@@ -502,10 +529,11 @@ export default function CourseHomePage() {
         </div>
         <div className="flex w-full flex-col gap-1 md:gap-4 overflow-x-hidden pr-0 md:pr-6">
           <div
-            className={`flex space-x-2 md:hidden px-4 ${scrollY > 333
-              ? "fixed top-[7.8rem] left-0 w-full z-10 bg-secondary-white pt-2 pb-3 shadow-md"
-              : "relative"
-              }`}
+            className={`flex space-x-2 md:hidden px-4 ${
+              scrollY > 333
+                ? "fixed top-[7.8rem] left-0 w-full z-10 bg-secondary-white pt-2 pb-3 shadow-md"
+                : "relative"
+            }`}
           >
             <button
               onClick={toggleFilters}
@@ -563,8 +591,9 @@ export default function CourseHomePage() {
               {daysData.amountOfPages > 1 ? (
                 <div className="flex items-center justify-center gap-2 pt-1 md:pt-0 md:pb-4">
                   <FilledButton
-                    className={`!px-3 !py-2 !min-w-fit !rounded-md ${pageNumber === 1 ? "opacity-50 cursor-not-allowed" : ""
-                      }`}
+                    className={`!px-3 !py-2 !min-w-fit !rounded-md ${
+                      pageNumber === 1 ? "opacity-50 cursor-not-allowed" : ""
+                    }`}
                     onClick={pageDown}
                     data-testid="chevron-down-id"
                   >
@@ -574,10 +603,11 @@ export default function CourseHomePage() {
                     {pageNumber} / {amountOfPage}
                   </div>
                   <FilledButton
-                    className={`!px-3 !py-2 !min-w-fit !rounded-md ${pageNumber === amountOfPage
-                      ? "opacity-50 cursor-not-allowed"
-                      : ""
-                      }`}
+                    className={`!px-3 !py-2 !min-w-fit !rounded-md ${
+                      pageNumber === amountOfPage
+                        ? "opacity-50 cursor-not-allowed"
+                        : ""
+                    }`}
                     onClick={pageUp}
                     data-testid="chevron-up-id"
                   >
