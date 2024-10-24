@@ -126,7 +126,8 @@ export interface ProviderAPI {
     token: string,
     courseId: string,
     teeTimeId: string,
-    options: any
+    options: any,
+    userId: string
   ) => Promise<BookingResponse>;
   updateTeeTime: (
     token: string,
@@ -206,7 +207,8 @@ export abstract class BaseProvider implements ProviderAPI {
     token: string,
     courseId: string,
     teeTimeId: string,
-    options: any
+    options: any,
+    userId: string
   ): Promise<BookingResponse>;
   abstract updateTeeTime(
     token: string,

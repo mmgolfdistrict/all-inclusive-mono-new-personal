@@ -392,7 +392,7 @@ export class UploadService {
     } catch (error: any) {
       this.logger.error(`deleteFileFromS3Bucket error deleting file: ${error}`);
       loggerService.errorLog({
-        userId: "",
+        userId,
         url: "/UploadService/DeleteFile",
         userAgent: "",
         message: "ERROR_DELETING_FILE",

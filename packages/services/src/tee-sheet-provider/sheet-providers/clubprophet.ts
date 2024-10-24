@@ -71,7 +71,8 @@ export class clubprophet extends BaseProvider {
     token: string,
     _coureId: string,
     _teesheetId: string,
-    data: BookingCreationData
+    data: BookingCreationData,
+    userId: string
   ): Promise<BookingResponse> {
     const endpoint = this.getBasePoint();
     const url = `${endpoint}/thirdpartyapi/api/v1/TeeSheet/BookReservation`;
@@ -95,7 +96,7 @@ export class clubprophet extends BaseProvider {
         await this.getToken();
       }
       loggerService.errorLog({
-        userId: "",
+        userId,
         url: "/Clubprophet/createBooking",
         userAgent: "",
         message: "ERROR_CREATING_BOOKING",

@@ -3385,7 +3385,7 @@ export class BookingService {
 
       bookingStage = "Creating Booking on Provider";
       booking = await provider
-        .createBooking(token, teeTime.providerCourseId!, teeTime.providerTeeSheetId!, bookingData)
+        .createBooking(token, teeTime.providerCourseId!, teeTime.providerTeeSheetId!, bookingData, userId)
         .catch((err) => {
           this.logger.error(`first hand booking at provider failed for teetime ${teeTime.id}: ${err}`);
           this.loggerService.errorLog({

@@ -120,12 +120,13 @@ export class ProviderService extends CacheService {
     courseId: string,
     teeTimeId: string,
     providerId: string,
-    options: { data: any }
+    options: { data: any },
+    userId: string
   ): Promise<BookingResponse> {
     this.logger.info(`createBooking called with courseId: ${courseId}`);
     const { provider, token } = await this.getProviderAndKey(providerId, courseId);
 
-    return provider.createBooking(token, courseId, teeTimeId, options);
+    return provider.createBooking(token, courseId, teeTimeId, options, userId);
   }
 
   /**
@@ -209,7 +210,7 @@ export class ProviderService extends CacheService {
       .catch((err) => {
         this.logger.error(err);
         loggerService.errorLog({
-          userId: "",
+          userId,
           url: "/ProvidersService/findOrCreateCustomer",
           userAgent: "",
           message: "ERROR_FINDING_USER",
@@ -271,7 +272,7 @@ export class ProviderService extends CacheService {
       } catch (error: any) {
         this.logger.error(`provider.getCustomer error: ${error}`);
         loggerService.errorLog({
-          userId: "",
+          userId,
           url: "/ProvidersService/findOrCreateCustomer",
           userAgent: "",
           message: "ERROR_GETTING_CUSTOMER_FROM_PROVIDER",
@@ -340,7 +341,7 @@ export class ProviderService extends CacheService {
       .catch((err) => {
         this.logger.error(err);
         loggerService.errorLog({
-          userId: "",
+          userId: info.userId,
           url: "/ProvidersService/updateCustomer",
           userAgent: "",
           message: "ERROR_UPDATING_USER_ID",

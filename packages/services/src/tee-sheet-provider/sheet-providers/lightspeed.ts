@@ -116,7 +116,8 @@ export class Lightspeed extends BaseProvider {
         token: string,
         _coureId: string,
         _teesheetId: string,
-        data: LightspeedBookingCreationData
+        data: LightspeedBookingCreationData,
+        userId: string
     ): Promise<LightSpeedBookingResponse> {
         const { BASE_ENDPOINT, CONTENT_TYPE, ORGANIZATION_ID } = JSON.parse(this.providerConfiguration ?? "{}");
         if (!token) {
@@ -163,7 +164,7 @@ export class Lightspeed extends BaseProvider {
                 this.logger.error(`Error creating booking: ${reservationRequestResponse.statusText}`);
             }
             loggerService.errorLog({
-                userId: "",
+                userId,
                 url: "/Lightspeed/createBooking",
                 userAgent: "",
                 message: "ERROR_CREATING_BOOKING",
@@ -229,7 +230,7 @@ export class Lightspeed extends BaseProvider {
                     this.logger.error(`Error creating booking: ${JSON.stringify(responseData)}`);
                 }
                 loggerService.errorLog({
-                    userId: "",
+                    userId,
                     url: "/Lightspeed/createBooking",
                     userAgent: "",
                     message: "ERROR_CREATING_BOOKING",
@@ -270,7 +271,7 @@ export class Lightspeed extends BaseProvider {
                 this.logger.error(`Error creating booking: ${reservationResponse.statusText}`);
             }
             loggerService.errorLog({
-                userId: "",
+                userId,
                 url: "/Lightspeed/createBooking",
                 userAgent: "",
                 message: "ERROR_CREATING_BOOKING",

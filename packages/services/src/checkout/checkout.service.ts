@@ -383,7 +383,7 @@ export class CheckoutService {
 
     // @ts-ignore
     const paymentIntent = await this.hyperSwitch
-      .updatePaymentIntent(paymentId || "", intentData)
+      .updatePaymentIntent(paymentId || "", intentData, userId)
       .catch((err) => {
         this.logger.error(` ${err}`);
         loggerService.errorLog({

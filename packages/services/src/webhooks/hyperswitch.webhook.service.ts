@@ -888,7 +888,7 @@ export class HyperSwitchWebhookService {
       .catch((err) => {
         this.logger.error(err);
         this.loggerService.errorLog({
-          userId: "",
+          userId: customer_id,
           url: `/HyperSwitchWebhookService/handleSecondHandItem`,
           userAgent: "",
           message: "ERROR_GETTING_EXISTING_TEE_TIME",
@@ -955,7 +955,8 @@ export class HyperSwitchWebhookService {
           token,
           firstBooking.providerCourseId!,
           firstBooking.providerTeeSheetId!,
-          bookingData
+          bookingData,
+          customer_id
         );
         if (provider.shouldAddSaleData()) {
           try {
@@ -1058,7 +1059,8 @@ export class HyperSwitchWebhookService {
           token,
           firstBooking.providerCourseId!,
           firstBooking.providerTeeSheetId!,
-          bookingData
+          bookingData,
+          firstBooking.ownerId
         );
         // }
         if (provider.shouldAddSaleData()) {
@@ -1467,10 +1469,10 @@ export class HyperSwitchWebhookService {
       .catch((err: any) => {
         this.logger.error(err);
         this.loggerService.errorLog({
-          userId: "",
+          userId: customer_id,
           url: `/HyperSwitchWebhookService/handleSecondHandItem`,
           userAgent: "",
-          message: "ERROR_CREATING_BOOKING_FOR_TEE_TIME",
+          message: "ERROR_CREATING_CUSTOMER_RECEIVABLE_FOR_TEE_TIME",
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
             customerRecievableData
