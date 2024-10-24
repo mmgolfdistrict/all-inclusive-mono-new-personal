@@ -1150,11 +1150,11 @@ export class SearchService {
 
     //group objects that have the same teeTimeId and add one
     const groupedSecondHandData = secoondHandData.reduce(
-      (acc, booking) => {
+      (acc, booking, idx) => {
         const teeTimeId = booking?.teeTimeId;
         if (teeTimeId) {
           if (!acc[teeTimeId]) {
-            acc[teeTimeId] = {
+            acc[`${teeTimeId}___${idx}`] = {
               ...booking,
               soldById: booking?.ownerId,
               soldByName: booking?.ownerName ?? "Anonymous",
