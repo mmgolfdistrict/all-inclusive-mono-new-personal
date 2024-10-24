@@ -730,9 +730,10 @@ export class SearchService {
         providerDate: sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))`,
       })
       .from(teeTimes)
-      .innerJoin(courses, eq(courses.id, courseId))
+      .innerJoin(courses, eq(courses.id, teeTimes.courseId))
       .where(
         and(
+          eq(courses.id,courseId),
           gte(teeTimes.providerDate, currentTimePlus30Min),
           between(teeTimes.providerDate, minDateSubquery, maxDateSubquery),
           and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
@@ -756,6 +757,7 @@ export class SearchService {
       .innerJoin(courses, eq(courses.id, teeTimes.courseId))
       .where(
         and(
+          eq(courses.id,courseId),
           gte(teeTimes.providerDate, currentTimePlus30Min),
           between(teeTimes.providerDate, minDateSubquery, maxDateSubquery),
           eq(lists.isDeleted, false),
