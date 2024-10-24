@@ -193,13 +193,13 @@ export const DailyTeeTimes = ({
   return (
     <div className="flex flex-col gap-1 md:gap-4 bg-white px-4 py-2 md:rounded-xl md:px-8 md:py-6">
       <div className="flex flex-wrap justify-between gap-2">
-        <div
+        {isLoading ? (<div className="h-8 min-w-[150px] w-[20%] bg-gray-200 rounded-md  animate-pulse" />) : (<div
           className="text-[13px] md:text-lg"
           data-testid="date-group-id"
           data-qa={dayMonthDate(date)}
         >
           {dayMonthDate(date)}
-        </div>
+        </div>)}
         {courseException &&
           (isMobile ? (
             <div className={` flex-1`}>

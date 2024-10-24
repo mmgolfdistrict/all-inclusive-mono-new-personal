@@ -246,7 +246,7 @@ export default function CourseHomePage() {
         minDate: utcStartDate.toString(),
         maxDate: utcEndDate.toString(),
         holes: holes === "Any" || holes === "18" ? 18 : 9,
-        golfers: golfers === "Any" ? -1 : golfers,
+        golfers: golfers === "Any" ? 1 : golfers,
         showUnlisted: showUnlisted,
         includesCart: includesCart,
         lowerPrice: priceRange[0] ?? 0,
