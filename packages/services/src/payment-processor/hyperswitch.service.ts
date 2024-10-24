@@ -60,7 +60,7 @@ export class HyperSwitchService {
     return await this.hyper.customers.create(params).catch((err: any) => {
       this.logger.error(`Error creating customer: ${err}`);
       loggerService.errorLog({
-        userId: "",
+        userId: params.customer_id as string,
         url: "/HyperSwitchService/createCustomer",
         userAgent: "",
         message: "ERROR_CREATING_CUSTOMER",
@@ -129,7 +129,7 @@ export class HyperSwitchService {
     return await this.hyper.paymentIntents.create(params, options).catch((err: any) => {
       this.logger.error(`Error creating payment intent: ${err}`);
       loggerService.errorLog({
-        userId: "",
+        userId: params.customer_id,
         url: "/HyperSwitchService/createPaymentIntent",
         userAgent: "",
         message: "ERROR_CREATING_PAYMENT_INTENT",
@@ -149,11 +149,11 @@ export class HyperSwitchService {
    * @returns Promise resolving to the updated payment intent's data.
    * @throws Will throw an error if the payment intent updation fails.
    */
-  updatePaymentIntent = async (paymentId: string, params: UpdatePayment) => {
+  updatePaymentIntent = async (paymentId: string, params: UpdatePayment, userId: string) => {
     return await this.hyper.paymentIntents.update(paymentId, params).catch((err: any) => {
       this.logger.error(`Error updating payment intent: ${err}`);
       loggerService.errorLog({
-        userId: "",
+        userId,
         url: "/HyperSwitchService/updatePaymentIntent",
         userAgent: "",
         message: "ERROR_UPDATING_PAYMENT_INTENT",
@@ -371,13 +371,13 @@ export class HyperSwitchService {
     return { status: "success" };
   };
 
-  sendEmailForBookingFailed = async (paymentId: string, courseId: string, cartId: string, sensibleQuoteId: string, userId: string) => {
+  sendEmailForBookingFailed = async (paymentId: string, courseId: string, cartId: string, sensibleQuoteId: string, userId: string, bookingStage: string) => {
     const adminEmail: string = process.env.ADMIN_EMAIL_LIST || "nara@golfdistrict.com";
     const emailAterSplit = adminEmail.split(",");
     emailAterSplit.map(async (email) => {
       await this.notificationService.sendEmail(
         email,
-        "A booking has failed ",
+        `A booking has failed - (${bookingStage})`,
         `Hello Admin, A booking with payment id ${paymentId} failed, CourseId: ${courseId}, CartId: ${cartId}, SensibleQuoteId: ${sensibleQuoteId}, UserId: ${userId}`
       );
     });

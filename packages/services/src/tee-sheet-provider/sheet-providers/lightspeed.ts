@@ -116,7 +116,8 @@ export class Lightspeed extends BaseProvider {
         token: string,
         _coureId: string,
         _teesheetId: string,
-        data: LightspeedBookingCreationData
+        data: LightspeedBookingCreationData,
+        userId: string
     ): Promise<LightSpeedBookingResponse> {
         const { BASE_ENDPOINT, CONTENT_TYPE, ORGANIZATION_ID } = JSON.parse(this.providerConfiguration ?? "{}");
         if (!token) {
@@ -163,7 +164,7 @@ export class Lightspeed extends BaseProvider {
                 this.logger.error(`Error creating booking: ${reservationRequestResponse.statusText}`);
             }
             loggerService.errorLog({
-                userId: "",
+                userId,
                 url: "/Lightspeed/createBooking",
                 userAgent: "",
                 message: "ERROR_CREATING_BOOKING",
@@ -229,7 +230,7 @@ export class Lightspeed extends BaseProvider {
                     this.logger.error(`Error creating booking: ${JSON.stringify(responseData)}`);
                 }
                 loggerService.errorLog({
-                    userId: "",
+                    userId,
                     url: "/Lightspeed/createBooking",
                     userAgent: "",
                     message: "ERROR_CREATING_BOOKING",
@@ -270,7 +271,7 @@ export class Lightspeed extends BaseProvider {
                 this.logger.error(`Error creating booking: ${reservationResponse.statusText}`);
             }
             loggerService.errorLog({
-                userId: "",
+                userId,
                 url: "/Lightspeed/createBooking",
                 userAgent: "",
                 message: "ERROR_CREATING_BOOKING",
@@ -353,7 +354,27 @@ export class Lightspeed extends BaseProvider {
                         'Content-Type': `${CONTENT_TYPE}`,
                     }
                 });
-                const authResponse = await response.json();
+                let authResponse;
+                try {
+                    authResponse = await response.json();
+                    if (!authResponse.access_token) {
+                        throw new Error(`Error Token not found in the response: ${JSON.stringify(authResponse)}`);
+                    }
+                } catch (error: any) {
+                    this.logger.error(`Error parsing token response: ${error}`);
+                    loggerService.errorLog({
+                        userId: "",
+                        url: "/Lightspeed/getToken",
+                        userAgent: "",
+                        message: "ERROR_PARSING_TOKEN_RESPONSE",
+                        stackTrace: `${error.stack}`,
+                        additionalDetailsJSON: JSON.stringify({
+                            response: JSON.stringify(response),
+                            responseData: JSON.stringify(authResponse),
+                        })
+                    })
+                    throw new Error(`Error parsing token response: ${error}`);
+                }
                 console.log("TOKEN RESPONSE:", authResponse);
                 if (!response.ok) {
                     throw new Error(`Error fetching token: ${response.statusText}`);

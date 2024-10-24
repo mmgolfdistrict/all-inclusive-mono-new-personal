@@ -87,7 +87,7 @@ export class UserWaitlistService {
     } catch (error: any) {
       this.logger.error(error);
       loggerService.errorLog({
-        userId: "",
+        userId: waitlistNotificationsList[0]?.userId ?? "",
         url: `/UserWaitlistService/insertWaitlistNotifications`,
         userAgent: "",
         message: "ERROR_CREATING_WAITLIST_NOTIFICATION",
@@ -188,7 +188,7 @@ export class UserWaitlistService {
     } catch (error: any) {
       this.logger.error(error);
       loggerService.errorLog({
-        userId: "",
+        userId: waitlistNotifications.userId ?? "",
         url: `/UserWaitlistService/createWaitlistNotifications`,
         userAgent: "",
         message: "ERROR_CREATING_WAITLIST_NOTIFICATIONS",
@@ -230,7 +230,7 @@ export class UserWaitlistService {
         .catch((err) => {
           this.logger.error(`error getting waitlist from database: ${err}`);
           loggerService.errorLog({
-            userId: "",
+            userId: waitlistNotification.userId,
             url: `/UserWaitlistService/calculateOverlappingNotifications`,
             userAgent: "",
             message: "ERROR_GETTING_WAITLIST",
@@ -279,7 +279,7 @@ export class UserWaitlistService {
     } catch (error: any) {
       this.logger.error(error);
       loggerService.errorLog({
-        userId: "",
+        userId: waitlistNotification.userId,
         url: `/UserWaitlistService/calculateOverlappingNotifications`,
         userAgent: "",
         message: "ERROR_CALCULATING_OVERLAPPING_NOTIFICATIONS",
@@ -335,7 +335,7 @@ export class UserWaitlistService {
         .catch((err) => {
           this.logger.error(`error getting notifications from database: ${err}`);
           loggerService.errorLog({
-            userId: "",
+            userId: userId ?? "",
             url: `/UserWaitlistService/sendNotificationsForAvailableTeeTime`,
             userAgent: "",
             message: "ERROR_GETTING_NOTIFICATIONS",
@@ -373,7 +373,7 @@ export class UserWaitlistService {
     } catch (error: any) {
       this.logger.error(error);
       loggerService.errorLog({
-        userId: "",
+        userId: userId ?? "",
         url: `/UserWaitlistService/sendNotificationsForAvailableTeeTime`,
         userAgent: "",
         message: "ERROR_SENDING_NOTIFICATIONS",

@@ -244,7 +244,7 @@ export class SearchService {
     const forecast = await this.weatherService.getForecast(firstBooking.courseId).catch((err) => {
       this.logger.error(`error getting forecast, ${err}`);
       this.loggerService.errorLog({
-        userId: "",
+        userId,
         url: "/SearchService/getUnlistedTeeTimes",
         userAgent: "",
         message: "ERROR_GETTING_FORECAST",
@@ -416,7 +416,7 @@ export class SearchService {
       .catch((err) => {
         this.logger.error(err);
         this.loggerService.errorLog({
-          userId: "",
+          userId,
           url: "/SearchService/getTeeTimeById",
           userAgent: "",
           message: "ERROR_GETTING_TEE_TIMES",
@@ -725,7 +725,26 @@ export class SearchService {
       .add(30, "minutes")
       .toISOString();
     console.log("------->>>---->>", startTime, endTime);
-    const firstHandResults = await this.database
+
+    // Allowed Players start
+    const NumberOfPlayers = await this.database
+      .select({
+        primaryMarketAllowedPlayers: courses.primaryMarketAllowedPlayers,
+      })
+      .from(courses)
+      .where(eq(courses.id, courseId));
+
+    const PlayersOptions = ["1", "2", "3", "4"];
+
+    const binaryMask = NumberOfPlayers[0]?.primaryMarketAllowedPlayers;
+
+    const numberOfPlayers =
+      binaryMask !== null && binaryMask !== undefined
+        ? PlayersOptions.filter((_, index) => (binaryMask & (1 << index)) !== 0)
+        : [];
+    const playersCount = numberOfPlayers?.[0] ? Number(numberOfPlayers[0]) : golfers;
+
+    const firstHandResultsQuery = this.database
       .selectDistinct({
         providerDate: sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))`,
       })
@@ -740,14 +759,14 @@ export class SearchService {
           sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 >= ${lowerPrice}`,
           sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 <= ${upperPrice}`,
           eq(teeTimes.numberOfHoles, holes),
-          gt(teeTimes.availableFirstHandSpots, 0),
-          or(gte(teeTimes.availableFirstHandSpots, golfers), gte(teeTimes.availableSecondHandSpots, golfers))
+          gte(teeTimes.availableFirstHandSpots, playersCount)
         )
       )
       .orderBy(asc(sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))`))
-      .execute();
 
-    const secondHandResults = await this.database
+    const firstHandResults = await firstHandResultsQuery.execute();
+
+    const secondHandResultsQuery = this.database
       .selectDistinct({
         providerDate: sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))`,
       })
@@ -765,11 +784,12 @@ export class SearchService {
           sql`(${lists.listPrice}*(${courses.buyerFee}/100)+${lists.listPrice})/100 >= ${lowerPrice}`,
           sql`(${lists.listPrice}*(${courses.buyerFee}/100)+${lists.listPrice})/100 <= ${upperPrice}`,
           eq(teeTimes.numberOfHoles, holes),
-          or(gte(teeTimes.availableFirstHandSpots, golfers), gte(teeTimes.availableSecondHandSpots, golfers))
+          gte(teeTimes.availableSecondHandSpots, golfers)
         )
       )
-      .orderBy(asc(sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))`))
-      .execute();
+      .orderBy(asc(sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))`));
+
+    const secondHandResults = await secondHandResultsQuery.execute();
 
     const firstHandAndSecondHandResult = [...firstHandResults, ...secondHandResults];
     const firstHandAndSecondHandResultDates = firstHandAndSecondHandResult.map((el) =>
@@ -995,7 +1015,7 @@ export class SearchService {
       });
       this.logger.error(err);
       this.loggerService.errorLog({
-        userId: "",
+        userId,
         url: "/SearchService/getTeeTimesForDay",
         userAgent: "",
         message: "ERROR_GETTING_TEE_TIMES_FOR_DAY",
@@ -1130,11 +1150,11 @@ export class SearchService {
 
     //group objects that have the same teeTimeId and add one
     const groupedSecondHandData = secoondHandData.reduce(
-      (acc, booking) => {
+      (acc, booking, idx) => {
         const teeTimeId = booking?.teeTimeId;
         if (teeTimeId) {
           if (!acc[teeTimeId]) {
-            acc[teeTimeId] = {
+            acc[`${teeTimeId}___${idx}`] = {
               ...booking,
               soldById: booking?.ownerId,
               soldByName: booking?.ownerName ?? "Anonymous",

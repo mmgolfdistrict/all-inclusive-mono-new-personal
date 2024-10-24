@@ -1068,7 +1068,7 @@ export class UserService {
     if (!templateId) {
       this.logger.error("Missing SendGrid template ID for forgot password email.");
       loggerService.errorLog({
-        userId: "",
+        userId: user.id,
         url: `/UserService/forgotPasswordRequest`,
         userAgent: "",
         message: "MISSING_EMAIL_TEMPLATE_ID",
@@ -1091,7 +1091,7 @@ export class UserService {
         .catch((err) => {
           this.logger.error(`Error sending email: ${err}`);
           loggerService.errorLog({
-            userId: "",
+            userId: user.id,
             url: `/UserService/forgotPasswordRequest`,
             userAgent: "",
             message: "ERROR_SENDING_EMAIL",
