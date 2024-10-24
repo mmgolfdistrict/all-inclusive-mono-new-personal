@@ -118,7 +118,7 @@ export class WeatherService extends CacheService {
    */
   private async fetchForecastData(forecastEndpoint: string) {
     this.logger.info(`fetchForecastData called with forecastEndpoint: ${forecastEndpoint}`);
-    const response = await fetch(`${forecastEndpoint}kugiu`);
+    const response = await fetch(forecastEndpoint);
     if (!response.ok) {
       this.logger.warn(`fetchForecastData failed to fetch forecast data: ${response.statusText}`);
       this.loggerService.errorLog({
