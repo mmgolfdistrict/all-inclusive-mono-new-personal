@@ -256,11 +256,11 @@ export class ProviderService extends CacheService {
               courseId: courseId,
               providerId: providerId,
               userId: userId,
-              accountNumber: customerIds.accountNumber ?? accountNumber,
+              accountNumber: (customerIds.accountNumber ?? accountNumber).toString(),
               customerId: customerIds.customerId,
             })
             return {
-              playerNumber: customerIds.accountNumber ?? accountNumber,
+              playerNumber: (customerIds.accountNumber ?? accountNumber).toString(),
               customerId: customerIds.customerId,
               name: buyer.name,
               username: buyer.handel,
@@ -296,7 +296,7 @@ export class ProviderService extends CacheService {
         const customerData = await provider.createCustomer(token, providerCourseId, customer);
         customerId = provider.getCustomerId(customerData);
         customerInfo = {
-          playerNumber: accountNumber,
+          playerNumber: accountNumber.toString(),
           customerId,
           name: buyer.name,
           username: buyer.handel,
@@ -317,7 +317,7 @@ export class ProviderService extends CacheService {
           courseId: courseId,
           providerId: providerId,
           userId: userId,
-          accountNumber: accountNumber,
+        accountNumber: accountNumber.toString(),
           customerId: customerId,
         })
     }
@@ -331,7 +331,7 @@ export class ProviderService extends CacheService {
       courseId: string;
       providerId: string;
       userId: string;
-      accountNumber: number;
+      accountNumber: string;
     }) => {
     await this.database
       .insert(userProviderCourseLink)
