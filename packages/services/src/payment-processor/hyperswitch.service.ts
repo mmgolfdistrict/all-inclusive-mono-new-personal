@@ -371,13 +371,13 @@ export class HyperSwitchService {
     return { status: "success" };
   };
 
-  sendEmailForBookingFailed = async (paymentId: string, courseId: string, cartId: string, sensibleQuoteId: string, userId: string) => {
+  sendEmailForBookingFailed = async (paymentId: string, courseId: string, cartId: string, sensibleQuoteId: string, userId: string, bookingStage: string) => {
     const adminEmail: string = process.env.ADMIN_EMAIL_LIST || "nara@golfdistrict.com";
     const emailAterSplit = adminEmail.split(",");
     emailAterSplit.map(async (email) => {
       await this.notificationService.sendEmail(
         email,
-        "A booking has failed ",
+        `A booking has failed - (${bookingStage})`,
         `Hello Admin, A booking with payment id ${paymentId} failed, CourseId: ${courseId}, CartId: ${cartId}, SensibleQuoteId: ${sensibleQuoteId}, UserId: ${userId}`
       );
     });

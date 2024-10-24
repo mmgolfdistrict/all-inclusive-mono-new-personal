@@ -3202,6 +3202,7 @@ export class BookingService {
     sensibleQuoteId: string,
     redirectHref: string
   ) => {
+    let bookingStage = "Normalizing Cart Data";
     const {
       cart,
       playerCount,
@@ -3221,16 +3222,20 @@ export class BookingService {
       cartId,
       userId,
     });
+
+    bookingStage = "Checking if payment id is valid";
     console.log(`Check if payment id is valid ${payment_id}`);
     const isValid = await this.checkIfPaymentIdIsValid(payment_id);
     if (!isValid) {
       throw new Error("Payment Id not is not valid");
     }
     if (!weatherQuoteId) {
+      bookingStage = "Cancelling sensible quote Because it is not valid";
       console.log("Cancel Sensible Quote ID : ", sensibleQuoteId);
       this.sensibleService.cancelQuote(sensibleQuoteId);
     }
 
+    bookingStage = "Checking if booking is already done";
     const [bookedAlready] = await this.database
       .select({
         id: bookings.id,
@@ -3244,6 +3249,7 @@ export class BookingService {
 
     const pricePerGolfer = primaryGreenFeeCharge / playerCount;
 
+    bookingStage = "Retrieving tee time from database";
     console.log(`Retrieving tee time from database ${teeTimeId}`);
     const [teeTime] = await this.database
       .select({
@@ -3316,6 +3322,7 @@ export class BookingService {
       throw new Error(`Error finding tee time id`);
     }
 
+    bookingStage = "Retrieving provider and token";
     console.log(`Retrieving provider and token ${teeTime.internalId}, ${teeTime.courseId}`);
     let booking: BookingResponse | null = null;
     let teeProvider: ProviderAPI | null = null;
@@ -3332,6 +3339,7 @@ export class BookingService {
       );
       teeProvider = provider;
       teeToken = token;
+      bookingStage = "Finding or creating customer";
       console.log(
         `Finding or creating customer ${userId}, ${teeTime.courseId}, ${teeTime.providerId}, ${teeTime.providerCourseId}, ${token}`
       );
@@ -3354,6 +3362,7 @@ export class BookingService {
         console.log("ERROR in getting appsetting SENSIBLE_NOTE_TO_TEE_SHEET");
       }
 
+      bookingStage = "Getting booking Creation Data"
       const bookingData = provider.getBookingCreationData({
         firstHandCharge: primaryGreenFeeCharge,
         markupCharge,
@@ -3374,6 +3383,7 @@ export class BookingService {
         phone: providerCustomer.phone,
       });
 
+      bookingStage = "Creating Booking on Provider";
       booking = await provider
         .createBooking(token, teeTime.providerCourseId!, teeTime.providerTeeSheetId!, bookingData)
         .catch((err) => {
@@ -3390,6 +3400,7 @@ export class BookingService {
         });
       // }
       if (provider.shouldAddSaleData()) {
+        bookingStage = "Adding Sales Data";
         try {
           console.log("Amounts: ", primaryGreenFeeCharge / 100, taxCharge, markupCharge);
           const bookingsDetails: BookingDetails = {
@@ -3419,7 +3430,7 @@ export class BookingService {
       }
     } catch (e) {
       console.log("BOOKING FAILED ON PROVIDER, INITIATING REFUND FOR PAYMENT_ID", payment_id);
-      this.hyperSwitchService.sendEmailForBookingFailed(paymentId, teeTime.courseId, cartId, sensibleQuoteId, userId);
+      this.hyperSwitchService.sendEmailForBookingFailed(paymentId, teeTime.courseId, cartId, sensibleQuoteId, userId, bookingStage);
       throw "Booking failed on provider";
       // await this.hyperSwitchService.refundPayment(payment_id);
       // const [user] = await this.database.select().from(users).where(eq(users.id, userId));

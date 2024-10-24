@@ -603,7 +603,9 @@ export class HyperSwitchWebhookService {
     golferPrice: number,
     redirectHref: string
   ) => {
+    let bookingStage = "Intializing Second hand Booking";
     const listingId = item.product_data.metadata.second_hand_id;
+    bookingStage = "Fetching listed slot details";
     const listedSlots = await this.database
       .select({
         listedSlotsCount: lists.slots,
@@ -616,6 +618,7 @@ export class HyperSwitchWebhookService {
     const listedSlotsCount: number | undefined = listedSlots?.length ? listedSlots[0]?.listedSlotsCount : 0;
     const listPrice: number | undefined = listedSlots?.length ? listedSlots[0]?.listedPrice : 0;
 
+    bookingStage = "Fetching old and new bookingId";
     const [bookingsIds]: any = await this.database
       .select({
         id: bookings.id,
@@ -642,6 +645,7 @@ export class HyperSwitchWebhookService {
         throw new Error("error fetching old and new bookingId");
       });
 
+    bookingStage = "Updating booking status on new Booking";
     await this.database
       .update(bookings)
       .set({
@@ -663,6 +667,7 @@ export class HyperSwitchWebhookService {
         throw new Error(`Error confirming booking`);
       });
 
+    bookingStage = "Updating booking status on old Booking";
     await this.database
       .update(bookings)
       .set({
@@ -697,6 +702,7 @@ export class HyperSwitchWebhookService {
       json: "Booking status updated",
     });
 
+    bookingStage = "Updating listing status";
     await this.database
       .update(lists)
       .set({
@@ -705,6 +711,7 @@ export class HyperSwitchWebhookService {
       .where(eq(lists.id, listingId))
       .execute();
 
+    bookingStage = "Fetching listing details";
     const listedBooking = await this.database
       .select({
         id: bookings.id,
@@ -772,12 +779,13 @@ export class HyperSwitchWebhookService {
       throw new Error(`Error finding first booking for listing id`);
     }
 
+    bookingStage = "Fetching provider and token";
     const { provider, token } = await this.providerService.getProviderAndKey(
       firstBooking.internalId!,
       firstBooking.courseId ?? "",
       firstBooking.providerCourseConfiguration!
     );
-
+    bookingStage = "Finding or creating buyer customer";
     const buyerCustomer = await this.providerService.findOrCreateCustomer(
       firstBooking.courseId ?? "",
       firstBooking.providerId!,
@@ -800,6 +808,7 @@ export class HyperSwitchWebhookService {
       throw new Error(`Error creating or finding customer`);
     }
 
+    bookingStage = "Finding or creating seller customer";
     const sellerCustomer = await this.providerService.findOrCreateCustomer(
       firstBooking.courseId ?? "",
       firstBooking.providerId!,
@@ -822,6 +831,7 @@ export class HyperSwitchWebhookService {
       throw new Error(`Error creating or finding customer`);
     }
 
+    bookingStage = "Deleting old booking";
     await provider
       .deleteBooking(
         token,
@@ -842,6 +852,7 @@ export class HyperSwitchWebhookService {
         throw new Error(`Error deleting booking`);
       });
     const newBookings: BookingResponse[] = [];
+    bookingStage = "Fetching tee time details of old booking"
     const [existingTeeTime] = await this.database
       .select({
         id: teeTimes.id,
@@ -890,7 +901,7 @@ export class HyperSwitchWebhookService {
         })
         return [];
       });
-
+    bookingStage = "Getting Cart Data"
     const { taxes, sensibleCharge, charityCharge, taxCharge, total, cartId, charityId, weatherQuoteId } =
       await this.getCartData({
         courseId: existingTeeTime?.courseId,
@@ -915,8 +926,10 @@ export class HyperSwitchWebhookService {
 
       const totalAmount = (greenFee + greenFeeTaxPerPlayer + cartFeePerPlayer + cartFeeTaxPerPlayer) / 100;
       const totalAmountPaid = totalAmount * (listedSlotsCount ?? 1);
+
       try {
         let bookingData;
+        bookingStage = "Getting booking creation data for buyer customer";
         bookingData = provider.getBookingCreationData({
           firstHandCharge: greenFee,
           markupCharge: 0,
@@ -937,6 +950,7 @@ export class HyperSwitchWebhookService {
           phone: buyerCustomer.phone,
         });
 
+        bookingStage = "Creating booking for buyer customer";
         newBooking = await provider.createBooking(
           token,
           firstBooking.providerCourseId!,
@@ -945,6 +959,7 @@ export class HyperSwitchWebhookService {
         );
         if (provider.shouldAddSaleData()) {
           try {
+            bookingStage = "Adding sales data for buyer customer";
             const bookingsDetails: BookingDetails = {
               playerCount: listedSlotsCount ?? 1,
               providerCourseId: firstBooking.providerCourseId!,
@@ -1001,7 +1016,7 @@ export class HyperSwitchWebhookService {
         //   process.env.SENDGRID_REFUND_EMAIL_TEMPLATE_ID ?? "d-79ca4be6569940cdb19dd2b607c17221",
         //   template
         // );
-        this.hyperSwitchService.sendEmailForBookingFailed(paymentId, existingTeeTime?.courseId!, "", weatherQuoteId, customer_id);
+        this.hyperSwitchService.sendEmailForBookingFailed(paymentId, existingTeeTime?.courseId!, "", weatherQuoteId, customer_id, bookingStage);
         throw "Booking failed on provider";
       }
       if (!newBooking.data) {
@@ -1018,6 +1033,7 @@ export class HyperSwitchWebhookService {
         const totalAmountPaid = totalAmount * (listedBooking.length - listedSlotsCount);
         details = await appSettingService.get("TEE_SHEET_BOOKING_MESSAGE");
         let newBookingSecond;
+        bookingStage = "Getting booking creation data for seller customer";
         const bookingData = provider.getBookingCreationData({
           firstHandCharge: greenFee,
           markupCharge: 0,
@@ -1037,6 +1053,7 @@ export class HyperSwitchWebhookService {
           email: sellerCustomer.email,
           phone: sellerCustomer.phone,
         });
+        bookingStage = "Creating booking for seller customer";
         newBookingSecond = await provider.createBooking(
           token,
           firstBooking.providerCourseId!,
@@ -1045,6 +1062,7 @@ export class HyperSwitchWebhookService {
         );
         // }
         if (provider.shouldAddSaleData()) {
+          bookingStage = "Adding sales data for seller customer";
           try {
             const bookingsDetails: BookingDetails = {
               playerCount: listedSlotsCount ?? 1,
@@ -1078,7 +1096,7 @@ export class HyperSwitchWebhookService {
         userAgent: "",
         message: "ERROR BOOKING TEE TIME",
         stackTrace: `Error booking tee time for tee time id ${existingTeeTime?.id}`,
-        additionalDetailsJSON: JSON.stringify(err),
+        additionalDetailsJSON: JSON.stringify({ err, bookingStage }),
       });
     }
 
