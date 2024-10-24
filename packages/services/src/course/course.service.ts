@@ -248,7 +248,7 @@ export class CourseService extends DomainService {
         });
         throw new Error("Error getting charity");
       });
-    const cdnUrl = process.env.GOLF_DISTRICT_ASSET_CDN;
+    const cdnUrl = process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL;
     const updatedData = data.map((item) => ({
       ...item,
       logoCdn: cdnUrl,
