@@ -284,7 +284,6 @@ export default function Checkout({
         },
       });
     }
-
     if (
       (selectedCharity || course?.roundUpCharityId) &&
       deboundCharityAmount &&
@@ -300,7 +299,7 @@ export default function Checkout({
         product_data: {
           metadata: {
             type: "charity",
-            charity_id: selectedCharity?.charityId ?? "",
+            charity_id: selectedCharity?.charityId ?? course?.roundUpCharityId??"",
             donation_amount: deboundCharityAmount * 100,
           },
         },
