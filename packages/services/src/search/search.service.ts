@@ -902,7 +902,8 @@ export class SearchService {
           eq(teeTimes.numberOfHoles, holes),
           eq(teeTimes.numberOfHoles, holes),
           gt(teeTimes.availableFirstHandSpots, 0),
-          or(gte(teeTimes.availableFirstHandSpots, golfers), gte(teeTimes.availableSecondHandSpots, golfers))
+          or(gte(teeTimes.availableFirstHandSpots, golfers), gte(teeTimes.availableSecondHandSpots, golfers)),
+          gt(teeTimes.greenFeePerPlayer, 0)
         )
       );
 
@@ -972,7 +973,8 @@ export class SearchService {
           // includesCart ? gte(teeTimes.cartFeePerPlayer, 1) : eq(teeTimes.cartFeePerPlayer, 0),
           eq(teeTimes.numberOfHoles, holes),
           gte(teeTimes.availableFirstHandSpots, golfers === -1 ? 1 : golfers),
-          gte(teeTimes.availableFirstHandSpots, playersCount)
+          gte(teeTimes.availableFirstHandSpots, playersCount),
+          gt(teeTimes.greenFeePerPlayer, 0)
         )
       )
       .orderBy(
@@ -1122,7 +1124,8 @@ export class SearchService {
           eq(teeTimes.courseId, courseId),
           eq(bookings.includesCart, includesCart),
           eq(teeTimes.numberOfHoles, holes),
-          eq(bookings.isListed, true)
+          eq(bookings.isListed, true),
+          gt(teeTimes.greenFeePerPlayer, 0),
         )
       )
       .orderBy(
