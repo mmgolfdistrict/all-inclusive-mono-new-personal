@@ -101,8 +101,8 @@ export class CourseService extends DomainService {
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
             courseId,
-          })
-        })
+          }),
+        });
         throw new Error("Error getting course");
       });
     //Get the highest and lowest tee time prices
@@ -199,8 +199,8 @@ export class CourseService extends DomainService {
             stackTrace: `${err.stack}`,
             additionalDetailsJSON: JSON.stringify({
               courseId,
-            })
-          })
+            }),
+          });
           throw new Error("Error getting charity");
         });
 
@@ -214,7 +214,7 @@ export class CourseService extends DomainService {
         ...res,
         supportedCharities,
       };
-    }  
+    }
     return res;
   };
 
@@ -225,7 +225,7 @@ export class CourseService extends DomainService {
         charityName: charities.name,
         charityId: charities.id,
         logo: charities.logoAssetId,
-        logoCdn: assets.cdn,
+        //logoCdn: assets.cdn,
         logoExtension: assets.extension,
         logoKey: assets.key,
       })
@@ -244,12 +244,16 @@ export class CourseService extends DomainService {
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
             courseId,
-          })
-        })
+          }),
+        });
         throw new Error("Error getting charity");
       });
-
-    const supportedCharities = data.map((d) => ({
+    const cdnUrl = process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL;
+    const updatedData = data.map((item) => ({
+      ...item,
+      logoCdn: cdnUrl,
+    }));
+    const supportedCharities = updatedData.map((d) => ({
       charityDescription: d.charityDescription,
       charityName: d.charityName,
       charityId: d.charityId,
@@ -307,8 +311,8 @@ export class CourseService extends DomainService {
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
             courseId,
-          })
-        })
+          }),
+        });
         throw new Error("Error getting images");
       });
     return {
@@ -388,9 +392,9 @@ export class CourseService extends DomainService {
             stackTrace: `${err.stack}`,
             additionalDetailsJSON: JSON.stringify({
               courseId,
-              options
-            })
-          })
+              options,
+            }),
+          });
           throw new Error("Error getting asset");
         });
       if (!logo[0]) {
@@ -403,9 +407,9 @@ export class CourseService extends DomainService {
           stackTrace: `Asset ${options.logoAssetId} does not exist`,
           additionalDetailsJSON: JSON.stringify({
             courseId,
-            options
-          })
-        })
+            options,
+          }),
+        });
         throw new Error("Asset for logo does not exist");
       }
     }
@@ -432,9 +436,9 @@ export class CourseService extends DomainService {
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
             courseId,
-            options
-          })
-        })
+            options,
+          }),
+        });
         throw new Error("Error updating course");
       });
   };
@@ -468,9 +472,9 @@ export class CourseService extends DomainService {
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
             courseId,
-            assetIds
-          })
-        })
+            assetIds,
+          }),
+        });
         throw new Error("Error getting highest order");
       })
     )[0]?.order;
@@ -494,9 +498,9 @@ export class CourseService extends DomainService {
             stackTrace: `${err.stack}`,
             additionalDetailsJSON: JSON.stringify({
               courseId,
-              assetIds
-            })
-          })
+              assetIds,
+            }),
+          });
           throw new Error("Error checking existing course asset");
         });
       if (existingAsset[0]) {
@@ -524,9 +528,9 @@ export class CourseService extends DomainService {
             stackTrace: `${err.stack}`,
             additionalDetailsJSON: JSON.stringify({
               courseId,
-              assetIds
-            })
-          })
+              assetIds,
+            }),
+          });
           throw new Error("Error adding course asset");
         });
     }
@@ -567,9 +571,9 @@ export class CourseService extends DomainService {
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
             courseId,
-            assetIds
-          })
-        })
+            assetIds,
+          }),
+        });
         throw new Error("Error validating asset IDs");
       });
     const existingAssetIdsSet = new Set(existingAssetIds.map((a) => a.assetId));
@@ -603,9 +607,9 @@ export class CourseService extends DomainService {
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
             courseId,
-            assetIds
-          })
-        })
+            assetIds,
+          }),
+        });
         throw new Error("Error updating asset order");
       });
   };
@@ -638,9 +642,9 @@ export class CourseService extends DomainService {
         message: "ERROR_CREATING_COURSE",
         stackTrace: `Error creating course: name is required`,
         additionalDetailsJSON: JSON.stringify({
-          data
-        })
-      })
+          data,
+        }),
+      });
       throw new Error("Error creating course: name is required");
     }
     const courseData: InsertCourses = {
@@ -670,9 +674,9 @@ export class CourseService extends DomainService {
           message: "ERROR_CREATING_COURSE",
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
-            data
-          })
-        })
+            data,
+          }),
+        });
         throw new Error("Error creating course");
       });
   }
@@ -713,9 +717,9 @@ export class CourseService extends DomainService {
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
             entityId,
-            domain
-          })
-        })
+            domain,
+          }),
+        });
         throw new Error("Error getting course");
       });
 
@@ -741,9 +745,9 @@ export class CourseService extends DomainService {
             stackTrace: `${err.stack}`,
             additionalDetailsJSON: JSON.stringify({
               entityId,
-              domain
-            })
-          })
+              domain,
+            }),
+          });
           throw new Error("Error updating course");
         });
       //add both domains to vercel
@@ -760,9 +764,9 @@ export class CourseService extends DomainService {
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
             entityId,
-            domain
-          })
-        })
+            domain,
+          }),
+        });
         throw new Error(`Error adding domains to vercel: ${err}`);
       });
     }
@@ -785,9 +789,9 @@ export class CourseService extends DomainService {
             stackTrace: `${err.stack}`,
             additionalDetailsJSON: JSON.stringify({
               entityId,
-              domain
-            })
-          })
+              domain,
+            }),
+          });
           throw new Error("Error updating course");
         });
       //the custom dolman has been updated remove the old domain from the vercel
@@ -809,9 +813,9 @@ export class CourseService extends DomainService {
               stackTrace: `${err.stack}`,
               additionalDetailsJSON: JSON.stringify({
                 entityId,
-                domain
-              })
-            })
+                domain,
+              }),
+            });
             throw new Error("Error getting course");
           });
         //Domain is only use by this site remove it from the team
@@ -826,9 +830,9 @@ export class CourseService extends DomainService {
               stackTrace: `${err.stack}`,
               additionalDetailsJSON: JSON.stringify({
                 entityId,
-                domain
-              })
-            })
+                domain,
+              }),
+            });
             throw new Error(`Error removing domain from vercel team: ${err}`);
           });
           //Domain is used by other sites remove it from the project
@@ -843,9 +847,9 @@ export class CourseService extends DomainService {
               stackTrace: `${err.stack}`,
               additionalDetailsJSON: JSON.stringify({
                 entityId,
-                domain
-              })
-            })
+                domain,
+              }),
+            });
             throw new Error(`Error removing domain from vercel team: ${err}`);
           });
         }
