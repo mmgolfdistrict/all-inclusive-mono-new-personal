@@ -128,6 +128,10 @@ export const EditProfileForm = () => {
       const country = getAddressComponent("country");
 
       // Type guard before passing to setValue
+      if(inputRef?.current){
+        inputRef.current.value = address1;
+      }
+     
       if (typeof address1 === "string") setValue("address1", address1);
       if (typeof address2 === "string") setValue("address2", address2);
       if (typeof state === "string") setValue("state", state);
@@ -170,6 +174,7 @@ export const EditProfileForm = () => {
       setValue("phoneNumber", userData?.phoneNumber ?? "");
       setValue("handle", userData?.handle ?? "");
       // setValue("location", userData?.location ?? "");
+      
       setValue("address1", userData?.address1 ?? "");
       setValue("address2", userData?.address2 ?? "");
       setValue("state", userData?.state ?? "");
