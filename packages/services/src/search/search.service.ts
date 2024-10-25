@@ -31,7 +31,7 @@ import { type ProviderService } from "../tee-sheet-provider/providers.service";
 import type { Forecast } from "../weather/types";
 import type { WeatherService } from "../weather/weather.service";
 import { majorEvents } from "@golf-district/database/schema/majorEvents";
-import type { LoggerService } from "../webhooks/logging.service";
+import { loggerService } from "../webhooks/logging.service";
 
 dayjs.extend(UTC);
 
@@ -115,7 +115,6 @@ export class SearchService {
     private readonly database: Db,
     private readonly weatherService: WeatherService,
     private readonly providerService: ProviderService,
-    private readonly loggerService: LoggerService
   ) {}
 
   findBlackoutDates = async (courseId: string): Promise<Day[]> => {
@@ -167,7 +166,7 @@ export class SearchService {
       .execute()
       .catch((err) => {
         this.logger.error(err);
-        this.loggerService.errorLog({
+        loggerService.errorLog({
           userId: "",
           url: "/SearchService/searchUsers",
           userAgent: "",
@@ -243,7 +242,7 @@ export class SearchService {
     }
     const forecast = await this.weatherService.getForecast(firstBooking.courseId).catch((err) => {
       this.logger.error(`error getting forecast, ${err}`);
-      this.loggerService.errorLog({
+      loggerService.errorLog({
         userId,
         url: "/SearchService/getUnlistedTeeTimes",
         userAgent: "",
@@ -415,7 +414,7 @@ export class SearchService {
       .execute()
       .catch((err) => {
         this.logger.error(err);
-        this.loggerService.errorLog({
+        loggerService.errorLog({
           userId,
           url: "/SearchService/getTeeTimeById",
           userAgent: "",
@@ -469,7 +468,7 @@ export class SearchService {
       .execute()
       .catch((err) => {
         this.logger.error(err);
-        this.loggerService.errorLog({
+        loggerService.errorLog({
           userId: "",
           url: "/SearchService/getTeeTimeById",
           userAgent: "",
@@ -559,7 +558,7 @@ export class SearchService {
       .execute()
       .catch((err) => {
         this.logger.error(err);
-        this.loggerService.errorLog({
+        loggerService.errorLog({
           userId: "",
           url: "/SearchService/getLastTeeTimeDate",
           userAgent: "",
@@ -631,7 +630,7 @@ export class SearchService {
       .execute()
       .catch((err) => {
         this.logger.error(err);
-        this.loggerService.errorLog({
+        loggerService.errorLog({
           userId: "",
           url: "/SearchService/searchUsers",
           userAgent: "",
@@ -1007,7 +1006,7 @@ export class SearchService {
     }
 
     const teeTimesData = await teeQuery.execute().catch(async (err) => {
-      await this.loggerService.errorLog({
+      await loggerService.errorLog({
         userId: _userId ?? "",
         url: `/${courseId}`,
         userAgent: "",
@@ -1016,7 +1015,7 @@ export class SearchService {
         additionalDetailsJSON: `Error getting tee times for ${date}: ${err}`,
       });
       this.logger.error(err);
-      this.loggerService.errorLog({
+      loggerService.errorLog({
         userId,
         url: "/SearchService/getTeeTimesForDay",
         userAgent: "",
@@ -1139,7 +1138,7 @@ export class SearchService {
       );
     // .limit(limit);
     const secoondHandData = await secondHandBookingsQuery.execute().catch(async (err) => {
-      await this.loggerService.errorLog({
+      await loggerService.errorLog({
         userId: _userId ?? "",
         url: `/${courseId}`,
         userAgent: "",

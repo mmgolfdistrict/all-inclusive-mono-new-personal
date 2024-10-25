@@ -30,7 +30,8 @@ interface ErrorLog {
 }
 
 export class LoggerService {
-  auditLog = async (data: AuditLog, ip: string = "") => {
+  public courseId = "";
+  auditLog = async (data: AuditLog, ip = "") => {
     data.ip = ip;
     try {
       const res = await fetch(`${process.env.QSTASH_BASE_URL}${process.env.QSTASH_AUDIT_TOPIC}`, {
@@ -52,13 +53,13 @@ export class LoggerService {
       return NextResponse.json({ error: JSON.stringify(error) }, { status: 500 });
     }
   };
-  errorLog = async (data: ErrorLog, ip: string = "") => {
+  errorLog = async (data: ErrorLog, ip = "") => {
     data.clientIP = ip;
     data.applicationName = process.env.APPLICATION_NAME ?? "";
     try {
       const res = await fetch(`${process.env.QSTASH_BASE_URL}${process.env.QSTASH_AUDIT_ERROR_LOG_TOPIC}`, {
         method: "POST",
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, courseId: this.courseId }),
         headers: {
           "content-type": "application/json",
           Authorization: `Bearer ${process.env.QSTASH_TOKEN}`,

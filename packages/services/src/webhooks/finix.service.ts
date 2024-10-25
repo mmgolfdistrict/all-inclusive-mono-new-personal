@@ -9,7 +9,7 @@ import { users } from "@golf-district/database/schema/users";
 import { appSettingService } from "../app-settings/initialized";
 import type { CashOutService } from "../cashout/cashout.service";
 import type { NotificationService } from "../notification/notification.service";
-import type { LoggerService } from "../webhooks/logging.service";
+import { loggerService } from "../webhooks/logging.service";
 
 interface TagDetails {
   customerId: string;
@@ -163,7 +163,6 @@ export class FinixService {
   constructor(
     private readonly database: Db, // private readonly hyperSwitchService: HyperSwitchWebhookService
     private readonly cashoutService: CashOutService,
-    private readonly loggerService: LoggerService,
     private readonly notificationService: NotificationService
   ) {}
   getHeaders = () => {
@@ -218,7 +217,7 @@ export class FinixService {
     const customerIdentityData = await response.json();
     if (!customerIdentityData.id) {
       console.log("Error in creating identity", JSON.stringify(customerIdentityData));
-      this.loggerService.errorLog({
+      loggerService.errorLog({
         applicationName: "golfdistrict-foreup",
         clientIP: "",
         userId,
@@ -289,7 +288,7 @@ export class FinixService {
       console.log("Transfer response data", transferData);
       return transferData;
     } catch (e) {
-      this.loggerService.errorLog({
+      loggerService.errorLog({
         applicationName: "golfdistrict-foreup",
         clientIP: "",
         userId: customerId,
