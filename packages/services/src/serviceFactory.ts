@@ -116,8 +116,7 @@ export class ServiceFactory {
     return new SearchService(
       this.config.database,
       this.getWeatherService(),
-      this.getProviderService(),
-      this.getLoggerService()
+      this.getProviderService()
     );
   };
 
@@ -131,7 +130,6 @@ export class ServiceFactory {
       this.getTokenizerService(),
       this.getProviderService(),
       this.getNotificationService(),
-      this.getLoggerService(),
       this.getHyperSwitchService(),
       this.getSensibleService(),
       this.getUserWaitlistService()
@@ -323,7 +321,6 @@ export class ServiceFactory {
     return new TokenizeService(
       this.config.database,
       this.getNotificationService(),
-      this.getLoggerService(),
       this.getSensibleService()
     );
   };
@@ -348,7 +345,6 @@ export class ServiceFactory {
       this.getNotificationService(),
       this.getBookingService(),
       this.getSensibleService(),
-      this.getLoggerService(),
       this.config.upStashClientToken,
       this.getHyperSwitchService()
     );
@@ -378,7 +374,6 @@ export class ServiceFactory {
     return new FinixService(
       this.config.database,
       this.getCashOutService(),
-      this.getLoggerService(),
       this.getNotificationService()
     );
   };

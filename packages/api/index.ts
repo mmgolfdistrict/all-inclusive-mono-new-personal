@@ -213,8 +213,7 @@ export const processHyperSwitchWebhook = async (req: any) => {
     process.env.TWILLIO_AUTH_TOKEN!,
     process.env.SENDGRID_API_KEY!
   );
-  const loggerService = new LoggerService();
-  const tokenizeService = new TokenizeService(db, notificationService, loggerService, sensibleService);
+  const tokenizeService = new TokenizeService(db, notificationService, sensibleService);
   const hyperswitchService = new HyperSwitchService(process.env.HYPERSWITCH_API_KEY ?? "");
   const credentials = {
     username: process.env.FOREUP_USERNAME!,
@@ -232,7 +231,6 @@ export const processHyperSwitchWebhook = async (req: any) => {
     tokenizeService,
     providerService,
     notificationService,
-    loggerService,
     hyperswitchService,
     sensibleService,
     userWaitlistService
@@ -259,7 +257,6 @@ export const processHyperSwitchWebhook = async (req: any) => {
     notificationService,
     bookingService,
     sensibleService,
-    loggerService,
     process.env.QSTASH_TOKEN!,
     hyperswitchService
   );
