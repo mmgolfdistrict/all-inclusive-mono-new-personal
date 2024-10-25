@@ -63,6 +63,7 @@ export class clubprophet extends BaseProvider {
       data,
     };
     const resp = await axios.request(config as any);
+    console.log(resp.data);
     return resp.data as TeeTimeResponse[];
   }
 
@@ -497,7 +498,7 @@ export class clubprophet extends BaseProvider {
       if (!teeTime) {
         throw new Error("Tee time not available for booking");
       }
-
+      console.log("teeTime", teeTime);
       const [indexedTeeTime] = await db
         .select({
           id: teeTimes.id,
@@ -551,6 +552,7 @@ export class clubprophet extends BaseProvider {
           cartFeeTaxPerPlayer: indexedTeeTime.cartFeeTaxPerPlayer,
           providerDate: teeTime.startTime,
         };
+        console.log('providerTeeTime', providerTeeTime);
         const providerTeeTimeMatchingKeys = {
           id: indexedTeeTime.id,
           providerTeeTimeId: String(teeTime.teeSheetId),
