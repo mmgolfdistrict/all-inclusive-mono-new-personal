@@ -44,6 +44,7 @@ export const bookings = mySqlTable(
     status: varchar("status", { length: 10 }).notNull().default("RESERVED"),
     markupFees: int("markupFees"),
     isTest: boolean("isTest").default(false).notNull(),
+    cartFeePerPlayer: int("cartFeePerPlayer").notNull().default(0),
   },
   (table) => {
     return {
