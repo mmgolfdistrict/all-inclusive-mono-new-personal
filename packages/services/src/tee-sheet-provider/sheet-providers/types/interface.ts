@@ -120,7 +120,6 @@ export interface ProviderAPI {
     startTime: string,
     endTime: string,
     date: string,
-    rateCode?: string
   ) => Promise<TeeTimeResponse[]>;
   createBooking: (
     token: string,
