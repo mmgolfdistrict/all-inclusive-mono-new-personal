@@ -41,9 +41,9 @@ export class clubprophet extends BaseProvider {
     _startTime: string,
     _endTime: string,
     date: string,
-    rateCode?: string
   ): Promise<TeeTimeResponse[]> {
     const baseEndpoint = this.getBasePoint();
+    const { RATECODE } = JSON.parse(this.providerConfiguration ?? "{}");
 
     const url = `${baseEndpoint}/thirdpartyapi/api/v1/TeeSheet/TeeSheets`;
 
@@ -52,7 +52,7 @@ export class clubprophet extends BaseProvider {
       fromDate: `${date}T00:00:04.192Z`,
       toDate: `${date}T23:59:04.192Z`,
       courseId: courseId,
-      rateCode: rateCode || "sticks",
+      rateCode: RATECODE,
     });
 
     const config = {
@@ -443,6 +443,7 @@ export class clubprophet extends BaseProvider {
   }
 
   getBookingCreationData(teeTimeData: TeeTimeData): BookingCreationData {
+    const { RATECODE } = JSON.parse(this.providerConfiguration ?? "{}");
     const nameOfCustomer = teeTimeData.name ? teeTimeData.name.split(' ') : ['', ''];
     const bookingData: BookingCreationData = {
       teeSheetId: Number(teeTimeData.providerTeeTimeId),
@@ -456,7 +457,7 @@ export class clubprophet extends BaseProvider {
       pskUserId: 0,
       terminalId: 0,
       bookingTypeId: 311,
-      rateCode: "sticks",
+      rateCode: RATECODE,
     }
     return bookingData;
   }
@@ -497,7 +498,6 @@ export class clubprophet extends BaseProvider {
       if (!teeTime) {
         throw new Error("Tee time not available for booking");
       }
-
       const [indexedTeeTime] = await db
         .select({
           id: teeTimes.id,

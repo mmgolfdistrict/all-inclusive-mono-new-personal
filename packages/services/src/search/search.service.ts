@@ -31,7 +31,7 @@ import { type ProviderService } from "../tee-sheet-provider/providers.service";
 import type { Forecast } from "../weather/types";
 import type { WeatherService } from "../weather/weather.service";
 import { majorEvents } from "@golf-district/database/schema/majorEvents";
-import type { LoggerService } from "../webhooks/logging.service";
+import { loggerService } from "../webhooks/logging.service";
 
 dayjs.extend(UTC);
 
@@ -114,8 +114,7 @@ export class SearchService {
   constructor(
     private readonly database: Db,
     private readonly weatherService: WeatherService,
-    private readonly providerService: ProviderService,
-    private readonly loggerService: LoggerService
+    private readonly providerService: ProviderService
   ) {}
 
   findBlackoutDates = async (courseId: string): Promise<Day[]> => {
@@ -167,7 +166,7 @@ export class SearchService {
       .execute()
       .catch((err) => {
         this.logger.error(err);
-        this.loggerService.errorLog({
+        loggerService.errorLog({
           userId: "",
           url: "/SearchService/searchUsers",
           userAgent: "",
@@ -243,7 +242,7 @@ export class SearchService {
     }
     const forecast = await this.weatherService.getForecast(firstBooking.courseId).catch((err) => {
       this.logger.error(`error getting forecast, ${err}`);
-      this.loggerService.errorLog({
+      loggerService.errorLog({
         userId,
         url: "/SearchService/getUnlistedTeeTimes",
         userAgent: "",
@@ -415,7 +414,7 @@ export class SearchService {
       .execute()
       .catch((err) => {
         this.logger.error(err);
-        this.loggerService.errorLog({
+        loggerService.errorLog({
           userId,
           url: "/SearchService/getTeeTimeById",
           userAgent: "",
@@ -469,7 +468,7 @@ export class SearchService {
       .execute()
       .catch((err) => {
         this.logger.error(err);
-        this.loggerService.errorLog({
+        loggerService.errorLog({
           userId: "",
           url: "/SearchService/getTeeTimeById",
           userAgent: "",
@@ -559,7 +558,7 @@ export class SearchService {
       .execute()
       .catch((err) => {
         this.logger.error(err);
-        this.loggerService.errorLog({
+        loggerService.errorLog({
           userId: "",
           url: "/SearchService/getLastTeeTimeDate",
           userAgent: "",
@@ -631,7 +630,7 @@ export class SearchService {
       .execute()
       .catch((err) => {
         this.logger.error(err);
-        this.loggerService.errorLog({
+        loggerService.errorLog({
           userId: "",
           url: "/SearchService/searchUsers",
           userAgent: "",
@@ -752,7 +751,7 @@ export class SearchService {
       .innerJoin(courses, eq(courses.id, teeTimes.courseId))
       .where(
         and(
-          eq(courses.id,courseId),
+          eq(courses.id, courseId),
           gte(teeTimes.providerDate, currentTimePlus30Min),
           between(teeTimes.providerDate, minDateSubquery, maxDateSubquery),
           and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
@@ -762,7 +761,7 @@ export class SearchService {
           gte(teeTimes.availableFirstHandSpots, playersCount)
         )
       )
-      .orderBy(asc(sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))`))
+      .orderBy(asc(sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))`));
 
     const firstHandResults = await firstHandResultsQuery.execute();
 
@@ -776,7 +775,7 @@ export class SearchService {
       .innerJoin(courses, eq(courses.id, teeTimes.courseId))
       .where(
         and(
-          eq(courses.id,courseId),
+          eq(courses.id, courseId),
           gte(teeTimes.providerDate, currentTimePlus30Min),
           between(teeTimes.providerDate, minDateSubquery, maxDateSubquery),
           eq(lists.isDeleted, false),
@@ -1007,7 +1006,7 @@ export class SearchService {
     }
 
     const teeTimesData = await teeQuery.execute().catch(async (err) => {
-      await this.loggerService.errorLog({
+      await loggerService.errorLog({
         userId: _userId ?? "",
         url: `/${courseId}`,
         userAgent: "",
@@ -1016,7 +1015,7 @@ export class SearchService {
         additionalDetailsJSON: `Error getting tee times for ${date}: ${err}`,
       });
       this.logger.error(err);
-      this.loggerService.errorLog({
+      loggerService.errorLog({
         userId,
         url: "/SearchService/getTeeTimesForDay",
         userAgent: "",
@@ -1125,7 +1124,7 @@ export class SearchService {
           eq(bookings.includesCart, includesCart),
           eq(teeTimes.numberOfHoles, holes),
           eq(bookings.isListed, true),
-          gt(teeTimes.greenFeePerPlayer, 0),
+          gt(teeTimes.greenFeePerPlayer, 0)
         )
       )
       .orderBy(
@@ -1139,7 +1138,7 @@ export class SearchService {
       );
     // .limit(limit);
     const secoondHandData = await secondHandBookingsQuery.execute().catch(async (err) => {
-      await this.loggerService.errorLog({
+      await loggerService.errorLog({
         userId: _userId ?? "",
         url: `/${courseId}`,
         userAgent: "",
@@ -1296,7 +1295,7 @@ export class SearchService {
         startDate: majorEvents.startDate,
         endDate: majorEvents.endDate,
         logo: {
-          cdn: assets.cdn,
+          //cdn: assets.cdn,
           key: assets.key,
           extension: assets.extension,
         },
@@ -1306,7 +1305,6 @@ export class SearchService {
       .where(
         and(
           eq(majorEvents.courseId, courseId),
-          gt(majorEvents.startDate, today),
           lt(majorEvents.startDate, threeMonthsFromNow),
           gt(majorEvents.endDate, today),
           lt(majorEvents.endDate, threeMonthsFromNow)
@@ -1318,9 +1316,13 @@ export class SearchService {
       .catch((e) => {
         console.log("Error in getting special Events");
       });
-
+    const cdnUrl = process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL;
     const finalEvents = events?.map((event) => ({
       ...event,
+      logo: {
+        ...event.logo,
+        cdn: cdnUrl,
+      },
       iconUrl: event.logo
         ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${event?.logo?.key}.${event?.logo?.extension}`
         : null,

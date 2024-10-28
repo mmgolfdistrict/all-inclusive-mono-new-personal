@@ -4,6 +4,7 @@ import { db } from "@golf-district/database";
 import { AppSettingsService, RateLimitService } from "@golf-district/service";
 import type { ServiceConfig } from "@golf-district/service/src/serviceFactory";
 import { ServiceFactory } from "@golf-district/service/src/serviceFactory";
+import { loggerService } from "@golf-district/service/src/webhooks/logging.service";
 import Logger from "@golf-district/shared/src/logger";
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
@@ -11,6 +12,7 @@ import { ZodError } from "zod";
 
 interface CreateContextOptions {
   session: Session | null;
+  courseId: string;
   //logger: pino.Logger;
 }
 
@@ -63,6 +65,7 @@ const createInnerTRPCContext = (opts: CreateContextOptions) => {
   return {
     session: opts.session,
     serviceFactory: new ServiceFactory(serviceFactoryConfig),
+    courseId: opts.courseId,
     // logger: logger,
   };
 };
@@ -73,9 +76,11 @@ export const createTRPCContext = async (opts: { req?: Request; auth?: Session })
   const ip = opts.req?.headers.get("x-forwarded-for");
   session.ip = ip ?? "";
   logger.info(">>> tRPC Request from", source, "by", session?.user?.id ?? "anonymous");
+  const courseId = opts.req?.headers.get("referer")?.split("/")[3] ?? '';
 
   return createInnerTRPCContext({
     session,
+    courseId
   });
 };
 
@@ -93,7 +98,13 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
 });
 
 export const createTRPCRouter = t.router;
-export const publicProcedure = t.procedure;
+
+export const addLoggerInfo = t.middleware(async ({ next, ctx }) => {
+  loggerService.courseId = ctx.courseId;
+  return next();
+})
+
+export const publicProcedure = t.procedure.use(addLoggerInfo);
 
 // @TODO - add captcha guard here
 export const publicProcedureWithCaptcha = t.procedure;
@@ -124,4 +135,4 @@ const enforceUserIsAuthed = t.middleware(({ ctx, next }) => {
   });
 });
 
-export const protectedProcedure = t.procedure.use(enforceUserIsAuthed);
+export const protectedProcedure = t.procedure.use(enforceUserIsAuthed).use(addLoggerInfo);

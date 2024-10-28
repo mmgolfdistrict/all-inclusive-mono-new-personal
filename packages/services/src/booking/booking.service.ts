@@ -37,7 +37,7 @@ import type {
 import type { BookingDetails, BookingResponse, ProviderAPI } from "../tee-sheet-provider/sheet-providers";
 import type { TokenizeService } from "../token/tokenize.service";
 import type { UserWaitlistService } from "../user-waitlist/userWaitlist.service";
-import type { LoggerService } from "../webhooks/logging.service";
+import { loggerService } from "../webhooks/logging.service";
 import type { TeeTimeResponse as ForeupTeeTimeResponse } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
 
 dayjs.extend(UTC);
@@ -150,7 +150,6 @@ export class BookingService {
     private readonly tokenizeService: TokenizeService,
     private readonly providerService: ProviderService,
     private readonly notificationService: NotificationService,
-    private readonly loggerService: LoggerService,
     private readonly hyperSwitchService: HyperSwitchService,
     private readonly sensibleService: SensibleService,
     private readonly userWaitlistService: UserWaitlistService
@@ -168,7 +167,7 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving bookings for user ${userId} and booking ids ${JSON.stringify(bookingIds)} and offer id ${offerId} and amount ${amount}: ${err}`);
-        this.loggerService.errorLog({
+        loggerService.errorLog({
           userId,
           url: "/createCounterOffer",
           userAgent: "",
@@ -180,7 +179,7 @@ export class BookingService {
       });
     if (!bookingOwners.length) {
       this.logger.warn(`No bookings found for user ${userId} and booking ids ${JSON.stringify(bookingIds)} and offer id ${offerId} and amount ${amount}`);
-      this.loggerService.errorLog({
+      loggerService.errorLog({
         userId,
         url: "/createCounterOffer",
         userAgent: "",
@@ -194,7 +193,7 @@ export class BookingService {
     const ownerIds = new Set(bookingOwners.map((booking) => booking.ownerId));
     if (ownerIds.size > 1) {
       this.logger.warn(`Bookings are not owned by the same user for user ${userId} and booking ids ${JSON.stringify(bookingIds)} and offer id ${offerId} and amount ${amount}`);
-      this.loggerService.errorLog({
+      loggerService.errorLog({
         userId,
         url: "/createCounterOffer",
         userAgent: "",
@@ -392,7 +391,7 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving tee times: ${err}`);
-        this.loggerService.errorLog({
+        loggerService.errorLog({
           userId,
           url: "/getMyListedTeeTimes",
           userAgent: "",
@@ -470,7 +469,7 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving tee time history: ${err}`);
-        this.loggerService.errorLog({
+        loggerService.errorLog({
           userId: "",
           url: "/getTeeTimeHistory",
           userAgent: "",
@@ -523,7 +522,7 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving bookings: ${err}`);
-        this.loggerService.errorLog({
+        loggerService.errorLog({
           applicationName: "golfdistrict-foreup",
           clientIP: "",
           userId,
@@ -553,7 +552,7 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error getting course by ID: ${err}`);
-        this.loggerService.errorLog({
+        loggerService.errorLog({
           userId: userId,
           url: "/getOwnedTeeTimes",
           userAgent: "",
@@ -644,7 +643,7 @@ export class BookingService {
       .execute();
     if (!data.length) {
       this.logger.info(`No tee times found for user: ${userId}`);
-      this.loggerService.errorLog({
+      loggerService.errorLog({
         applicationName: "golfdistrict-foreup",
         clientIP: "",
         userId,
@@ -748,7 +747,7 @@ export class BookingService {
             .execute()
             .catch((err) => {
               this.logger.error(`Error retrieving user: ${err}`);
-              this.loggerService.errorLog({
+              loggerService.errorLog({
                 userId: userId,
                 url: "/getOwnedTeeTimes",
                 userAgent: "",
@@ -862,7 +861,7 @@ export class BookingService {
     // console.log("CREATINGLISTING FOR DATE:", dayjs(endTime).utc().format('YYYY-MM-DD'), dayjs(endTime).utc().format('HHmm'));
     if (new Date().getTime() >= endTime.getTime()) {
       this.logger.warn("End time cannot be before current time");
-      this.loggerService.errorLog({
+      loggerService.errorLog({
         applicationName: "golfdistrict-foreup",
         clientIP: "",
         userId,
@@ -904,7 +903,7 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving bookings: ${err}`);
-        this.loggerService.errorLog({
+        loggerService.errorLog({
           userId: userId,
           url: "/createListingForBookings",
           userAgent: "",
@@ -925,7 +924,7 @@ export class BookingService {
     }
     if (ownedBookings.length > 4) {
       this.logger.warn(`Cannot list more than 4 bookings.`);
-      this.loggerService.errorLog({
+      loggerService.errorLog({
         applicationName: "golfdistrict-foreup",
         clientIP: "",
         userId,
@@ -940,7 +939,7 @@ export class BookingService {
     for (const booking of ownedBookings) {
       if (booking.isListed) {
         this.logger.warn(`Booking ${booking.id} is already listed.`);
-        this.loggerService.errorLog({
+        loggerService.errorLog({
           applicationName: "golfdistrict-foreup",
           clientIP: "",
           userId,
@@ -987,7 +986,7 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving course: ${err}`);
-        this.loggerService.errorLog({
+        loggerService.errorLog({
           userId: userId,
           url: "/createListingForBookings",
           userAgent: "",
@@ -1025,7 +1024,7 @@ export class BookingService {
             .execute()
             .catch((err) => {
               this.logger.error(`Error updating bookingId: ${id}: ${err}`);
-              this.loggerService.errorLog({
+              loggerService.errorLog({
                 userId: userId,
                 url: "/createListingForBookings",
                 userAgent: "",
@@ -1046,7 +1045,7 @@ export class BookingService {
           .execute()
           .catch((err) => {
             this.logger.error(`Error creating listing: ${err}`);
-            this.loggerService.errorLog({
+            loggerService.errorLog({
               userId: userId,
               url: "/createListingForBookings",
               userAgent: "",
@@ -1062,7 +1061,7 @@ export class BookingService {
       })
       .catch((err) => {
         this.logger.error(`Transaction rolled backError creating listing: ${err}`);
-        this.loggerService.errorLog({
+        loggerService.errorLog({
           userId: userId,
           url: "/createListingForBookings",
           userAgent: "",
@@ -1089,7 +1088,7 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Failed to retrieve user: ${err}`);
-        this.loggerService.errorLog({
+        loggerService.errorLog({
           userId: userId,
           url: "/createListingForBookings",
           userAgent: "",
@@ -1104,7 +1103,7 @@ export class BookingService {
 
     if (!user) {
       this.logger.error(`createNotification: User with ID ${userId} not found.`);
-      this.loggerService.errorLog({
+      loggerService.errorLog({
         userId: userId,
         url: "/createListingForBookings",
         userAgent: "",
@@ -1143,7 +1142,7 @@ export class BookingService {
         )
         .catch((err) => {
           this.logger.error(`Error sending email: ${err}`);
-          this.loggerService.errorLog({
+          loggerService.errorLog({
             userId: userId,
             url: "/createListingForBookings",
             userAgent: "",
@@ -1162,7 +1161,7 @@ export class BookingService {
 
     if (!firstBooking.providerDate) {
       this.logger.error("providerDate not found in booking, Can't send notifications to users");
-      this.loggerService.errorLog({
+      loggerService.errorLog({
         userId: userId,
         url: "/createListingForBookings",
         userAgent: "",
@@ -1218,7 +1217,7 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving listing: ${err}`);
-        this.loggerService.errorLog({
+        loggerService.errorLog({
           applicationName: "golfdistrict-foreup",
           clientIP: "",
           userId,
@@ -1267,7 +1266,7 @@ export class BookingService {
         .execute()
         .catch((err) => {
           this.logger.error(`Error deleting listing: ${err}`);
-          this.loggerService.errorLog({
+          loggerService.errorLog({
             userId: userId,
             url: "/cancelListing",
             userAgent: "",
@@ -1291,7 +1290,7 @@ export class BookingService {
           .execute()
           .catch((err) => {
             this.logger.error(`Error updating bookingId: ${booking.id}: ${err}`);
-            this.loggerService.errorLog({
+            loggerService.errorLog({
               userId: userId,
               url: "/cancelListing",
               userAgent: "",
@@ -1329,7 +1328,7 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`error fetching course data: ${err}`);
-        this.loggerService.errorLog({
+        loggerService.errorLog({
           userId: userId,
           url: "/cancelListing",
           userAgent: "",
@@ -1345,7 +1344,7 @@ export class BookingService {
 
     if (!user) {
       this.logger.error(`Error fetching user data: ${userId} does not exist`);
-      this.loggerService.errorLog({
+      loggerService.errorLog({
         userId: userId,
         url: "/cancelListing",
         userAgent: "",
@@ -1361,7 +1360,7 @@ export class BookingService {
 
     if (!course) {
       this.logger.error(`Error fetching course data: ${courseId} does not exist`);
-      this.loggerService.errorLog({
+      loggerService.errorLog({
         userId: userId,
         url: "/cancelListing",
         userAgent: "",
@@ -1442,7 +1441,7 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving listing: ${err}`);
-        this.loggerService.errorLog({
+        loggerService.errorLog({
           userId: userId,
           url: "/updateListing",
           userAgent: "",
@@ -1456,7 +1455,7 @@ export class BookingService {
       });
     if (!listing) {
       this.logger.warn(`Listing not found. Either listing does not exist or user does not own listing.`);
-      this.loggerService.errorLog({
+      loggerService.errorLog({
         userId: userId,
         url: "/updateListing",
         userAgent: "",
@@ -1474,7 +1473,7 @@ export class BookingService {
     // }
     if (listing.isDeleted) {
       this.logger.warn(`Tee time not available anymore.`);
-      this.loggerService.errorLog({
+      loggerService.errorLog({
         userId: userId,
         url: "/updateListing",
         userAgent: "",
@@ -1498,7 +1497,7 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving bookings: ${err}`);
-        this.loggerService.errorLog({
+        loggerService.errorLog({
           userId: userId,
           url: "/updateListing",
           userAgent: "",
@@ -1564,7 +1563,7 @@ export class BookingService {
           .execute()
           .catch((err) => {
             this.logger.error(`Error deleting listing: ${err}`);
-            this.loggerService.errorLog({
+            loggerService.errorLog({
               userId: userId,
               url: "/updateListing",
               userAgent: "",
@@ -1583,7 +1582,7 @@ export class BookingService {
           .execute()
           .catch((err) => {
             this.logger.error(`Error creating listing: ${err}`);
-            this.loggerService.errorLog({
+            loggerService.errorLog({
               userId: userId,
               url: "/updateListing",
               userAgent: "",
@@ -1607,7 +1606,7 @@ export class BookingService {
             .execute()
             .catch((err) => {
               this.logger.error(`Error updating bookingId: ${id}: ${err}`);
-              this.loggerService.errorLog({
+              loggerService.errorLog({
                 userId: userId,
                 url: "/updateListing",
                 userAgent: "",
@@ -1632,7 +1631,7 @@ export class BookingService {
             .execute()
             .catch((err) => {
               this.logger.error(`Error updating bookingId: ${booking.id}: ${err}`);
-              this.loggerService.errorLog({
+              loggerService.errorLog({
                 userId: userId,
                 url: "/updateListing",
                 userAgent: "",
@@ -1648,7 +1647,7 @@ export class BookingService {
       })
       .catch((err) => {
         this.logger.error(`Error updating listing: ${err}`);
-        this.loggerService.errorLog({
+        loggerService.errorLog({
           userId: userId,
           url: "/updateListing",
           userAgent: "",
@@ -1727,7 +1726,7 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving bookings: ${err}`);
-        this.loggerService.errorLog({
+        loggerService.errorLog({
           userId: userId,
           url: "/createOfferOnBookings",
           userAgent: "",
@@ -1743,7 +1742,7 @@ export class BookingService {
       });
     if (!data.length || data.length !== bookingIds.length || !data[0]) {
       this.logger.warn(`No bookings found.`);
-      this.loggerService.errorLog({
+      loggerService.errorLog({
         userId: userId,
         url: "/createOfferOnBookings",
         userAgent: "",
@@ -1761,7 +1760,7 @@ export class BookingService {
     const courseId = data[0].courseId ?? "";
     if (!data.every((booking) => booking.teeTimeId === firstTeeTime)) {
       this.logger.error(`All bookings must be under the same tee time.`);
-      this.loggerService.errorLog({
+      loggerService.errorLog({
         userId: userId,
         url: "/createOfferOnBookings",
         userAgent: "",
@@ -1779,7 +1778,7 @@ export class BookingService {
     const minimumOfferPrice = Math.max(...data.map((booking) => booking.minimumOfferPrice));
     if (price === 0) {
       this.logger.error(`Offer price must be higher than 0.`);
-      this.loggerService.errorLog({
+      loggerService.errorLog({
         userId: userId,
         url: "/createOfferOnBookings",
         userAgent: "",
@@ -1795,7 +1794,7 @@ export class BookingService {
     }
     if (price < minimumOfferPrice) {
       this.logger.error(`Offer price must be higher than the minimum offer price.`);
-      this.loggerService.errorLog({
+      loggerService.errorLog({
         userId: userId,
         url: "/createOfferOnBookings",
         userAgent: "",
@@ -1825,7 +1824,7 @@ export class BookingService {
         .execute()
         .catch((err) => {
           this.logger.error(`Error creating offer: ${err}`);
-          this.loggerService.errorLog({
+          loggerService.errorLog({
             userId: userId,
             url: "/createOfferOnBookings",
             userAgent: "",
@@ -1848,7 +1847,7 @@ export class BookingService {
         .execute()
         .catch((err) => {
           this.logger.error(`Error creating booking offer: ${err}`);
-          this.loggerService.errorLog({
+          loggerService.errorLog({
             userId: userId,
             url: "/createOfferOnBookings",
             userAgent: "",
@@ -1879,7 +1878,7 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving offers: ${err}`);
-        this.loggerService.errorLog({
+        loggerService.errorLog({
           userId: userId,
           url: "/createOfferOnBookings",
           userAgent: "",
@@ -1941,7 +1940,7 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving offer: ${err}`);
-        this.loggerService.errorLog({
+        loggerService.errorLog({
           userId: userId,
           url: "/cancelOfferOnBooking",
           userAgent: "",
@@ -1955,7 +1954,7 @@ export class BookingService {
       });
     if (!offerData?.[0]) {
       this.logger.warn(`Offer not found.`);
-      this.loggerService.errorLog({
+      loggerService.errorLog({
         userId: userId,
         url: "/cancelOfferOnBooking",
         userAgent: "",
@@ -1971,7 +1970,7 @@ export class BookingService {
     const { buyerId, status, isDeleted } = offerData[0];
     if (buyerId !== userId) {
       this.logger.warn(`User does not own offer.`);
-      this.loggerService.errorLog({
+      loggerService.errorLog({
         userId: userId,
         url: "/cancelOfferOnBooking",
         userAgent: "",
@@ -1985,7 +1984,7 @@ export class BookingService {
     }
     if (status !== "PENDING") {
       this.logger.warn(`Offer is not pending.`);
-      this.loggerService.errorLog({
+      loggerService.errorLog({
         userId: userId,
         url: "/cancelOfferOnBooking",
         userAgent: "",
@@ -1999,7 +1998,7 @@ export class BookingService {
     }
     if (isDeleted) {
       this.logger.warn(`Offer is already deleted.`);
-      this.loggerService.errorLog({
+      loggerService.errorLog({
         userId: userId,
         url: "/cancelOfferOnBooking",
         userAgent: "",
@@ -2021,7 +2020,7 @@ export class BookingService {
         .execute()
         .catch((err) => {
           this.logger.error(`Error deleting offer: ${err}`);
-          this.loggerService.errorLog({
+          loggerService.errorLog({
             userId: userId,
             url: "/cancelOfferOnBooking",
             userAgent: "",
@@ -2045,7 +2044,7 @@ export class BookingService {
         .execute()
         .catch((err) => {
           this.logger.error(`Error deleting booking offer: ${err}`);
-          this.loggerService.errorLog({
+          loggerService.errorLog({
             userId: userId,
             url: "/cancelOfferOnBooking",
             userAgent: "",
@@ -2086,7 +2085,7 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving offer: ${err}`);
-        this.loggerService.errorLog({
+        loggerService.errorLog({
           userId: userId,
           url: "/acceptOffer",
           userAgent: "",
@@ -2101,7 +2100,7 @@ export class BookingService {
 
     if (!offer?.[0]) {
       this.logger.warn(`Offer not found.`);
-      this.loggerService.errorLog({
+      loggerService.errorLog({
         userId: userId,
         url: "/acceptOffer",
         userAgent: "",
@@ -2120,7 +2119,7 @@ export class BookingService {
     const listingIds = offer.map((offers) => offers.listingId);
     if (!bookingsOwner.every((id) => id === userId)) {
       this.logger.warn(`User does not own all bookings.`);
-      this.loggerService.errorLog({
+      loggerService.errorLog({
         userId: userId,
         url: "/acceptOffer",
         userAgent: "",
@@ -2135,7 +2134,7 @@ export class BookingService {
     //check that booking ids are not null or empty
     if (!bookingIds.length || !bookingIds[0]?.length) {
       this.logger.warn(`Booking not found.`);
-      this.loggerService.errorLog({
+      loggerService.errorLog({
         userId: userId,
         url: "/acceptOffer",
         userAgent: "",
@@ -2163,7 +2162,7 @@ export class BookingService {
         .execute()
         .catch((err) => {
           this.logger.error(`Error accepting offer: ${err}`);
-          this.loggerService.errorLog({
+          loggerService.errorLog({
             userId: userId,
             url: "/acceptOffer",
             userAgent: "",
@@ -2187,7 +2186,7 @@ export class BookingService {
         .execute()
         .catch((err) => {
           this.logger.error(`Error accepting booking offer: ${err}`);
-          this.loggerService.errorLog({
+          loggerService.errorLog({
             userId: userId,
             url: "/acceptOffer",
             userAgent: "",
@@ -2208,7 +2207,7 @@ export class BookingService {
           .execute()
           .catch((err) => {
             this.logger.error(`Error deleting listing: ${err}`);
-            this.loggerService.errorLog({
+            loggerService.errorLog({
               userId: userId,
               url: "/acceptOffer",
               userAgent: "",
@@ -2227,7 +2226,7 @@ export class BookingService {
           .execute()
           .catch((err) => {
             this.logger.error(`Error deleting listing: ${err}`);
-            this.loggerService.errorLog({
+            loggerService.errorLog({
               userId: userId,
               url: "/acceptOffer",
               userAgent: "",
@@ -2276,7 +2275,7 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving offer: ${err}`);
-        this.loggerService.errorLog({
+        loggerService.errorLog({
           userId: userId,
           url: "/rejectOffer",
           userAgent: "",
@@ -2290,7 +2289,7 @@ export class BookingService {
       });
     if (!offer) {
       this.logger.warn(`Offer not found.`);
-      this.loggerService.errorLog({
+      loggerService.errorLog({
         userId: userId,
         url: "/rejectOffer",
         userAgent: "",
@@ -2306,7 +2305,7 @@ export class BookingService {
     const bookingsOwned = offer.map((offers) => offers.bookingOwnerId);
     if (!bookingsOwned.every((ownerId) => ownerId === userId)) {
       this.logger.warn(`User does not own all bookings.`);
-      this.loggerService.errorLog({
+      loggerService.errorLog({
         userId: userId,
         url: "/rejectOffer",
         userAgent: "",
@@ -2330,7 +2329,7 @@ export class BookingService {
         .execute()
         .catch((err) => {
           this.logger.error(`Error accepting offer: ${err}`);
-          this.loggerService.errorLog({
+          loggerService.errorLog({
             userId: userId,
             url: "/rejectOffer",
             userAgent: "",
@@ -2440,7 +2439,7 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving offers: ${err}`);
-        this.loggerService.errorLog({
+        loggerService.errorLog({
           userId: "",
           url: "/getOffersForBooking",
           userAgent: "",
@@ -2594,7 +2593,7 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving offers: ${err}`);
-        this.loggerService.errorLog({
+        loggerService.errorLog({
           userId: userId,
           url: "/getOfferSentForUser",
           userAgent: "",
@@ -2732,7 +2731,7 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving offers: ${err}`);
-        this.loggerService.errorLog({
+        loggerService.errorLog({
           userId: userId,
           url: "/getOfferReceivedForUser",
           userAgent: "",
@@ -2821,7 +2820,7 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving bookings: ${err}`);
-        this.loggerService.errorLog({
+        loggerService.errorLog({
           userId: userId,
           url: "/updateNamesOnBookings",
           userAgent: "",
@@ -2837,7 +2836,7 @@ export class BookingService {
 
     if (!data.length || !data[0]) {
       this.logger.warn(`No bookings found. or user does not own all bookings`);
-      this.loggerService.errorLog({
+      loggerService.errorLog({
         userId: userId,
         url: "/updateNamesOnBookings",
         userAgent: "",
@@ -2858,7 +2857,7 @@ export class BookingService {
     const firstBooking = data[0];
     if (!firstBooking) {
       this.logger.warn(`bookings not found`);
-      this.loggerService.errorLog({
+      loggerService.errorLog({
         userId: userId,
         url: "/updateNamesOnBookings",
         userAgent: "",
@@ -2878,7 +2877,7 @@ export class BookingService {
     );
     if (!firstBooking.providerId || !firstBooking.providerCourseId || !firstBooking.courseId) {
       this.logger.error(`provider id, course id, or provider course id not found`);
-      this.loggerService.errorLog({
+      loggerService.errorLog({
         userId: userId,
         url: "/updateNamesOnBookings",
         userAgent: "",
@@ -2961,7 +2960,7 @@ export class BookingService {
           .execute()
           .catch((err) => {
             this.logger.error(`Error setting names on booking: ${err}`);
-            this.loggerService.errorLog({
+            loggerService.errorLog({
               userId: userId,
               url: "/updateNamesOnBookings",
               userAgent: "",
@@ -3005,7 +3004,7 @@ export class BookingService {
         .execute()
         .catch((err) => {
           this.logger.error(`Error retrieving bookings: ${err}`);
-          this.loggerService.errorLog({
+          loggerService.errorLog({
             userId: userId,
             url: "/setMinimumOfferPrice",
             userAgent: "",
@@ -3036,7 +3035,7 @@ export class BookingService {
           .execute()
           .catch((err) => {
             this.logger.error(`Error updating bookingId: ${booking.id}: ${err}`);
-            this.loggerService.errorLog({
+            loggerService.errorLog({
               userId: userId,
               url: "/setMinimumOfferPrice",
               userAgent: "",
@@ -3293,7 +3292,7 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error finding tee time id ${teeTimeId}: ${err}`);
-        this.loggerService.errorLog({
+        loggerService.errorLog({
           userId: userId,
           url: "/reserveBooking",
           userAgent: "",
@@ -3308,7 +3307,7 @@ export class BookingService {
       });
     if (!teeTime) {
       this.logger.fatal(`tee time not found id: ${teeTimeId}`);
-      this.loggerService.errorLog({
+      loggerService.errorLog({
         userId: userId,
         url: "/reserveBooking",
         userAgent: "",
@@ -3388,7 +3387,7 @@ export class BookingService {
         .createBooking(token, teeTime.providerCourseId!, teeTime.providerTeeSheetId!, bookingData, userId)
         .catch((err) => {
           this.logger.error(`first hand booking at provider failed for teetime ${teeTime.id}: ${err}`);
-          this.loggerService.errorLog({
+          loggerService.errorLog({
             userId: userId,
             url: "/reserveBooking",
             userAgent: "",
@@ -3414,7 +3413,7 @@ export class BookingService {
           await provider.addSalesData(addSalesOptions);
         } catch (error) {
           this.logger.error(`Error adding sales data, ${error}`);
-          this.loggerService.errorLog({
+          loggerService.errorLog({
             userId: userId,
             url: "/reserveBooking",
             userAgent: "",
@@ -3458,7 +3457,7 @@ export class BookingService {
       //   process.env.SENDGRID_REFUND_EMAIL_TEMPLATE_ID ?? "d-79ca4be6569940cdb19dd2b607c17221",
       //   template
       // );
-      // this.loggerService.auditLog({
+      // loggerService.auditLog({
       //   id: randomUUID(),
       //   userId,
       //   teeTimeId,
@@ -3516,7 +3515,7 @@ export class BookingService {
           "An error occurred while creating booking with provider",
           teeTime.courseId
         );
-        this.loggerService.errorLog({
+        loggerService.errorLog({
           userId: userId,
           url: "/reserveBooking",
           userAgent: "",
@@ -3550,7 +3549,7 @@ export class BookingService {
       .where(and(eq(customerCarts.paymentId, paymentId), eq(bookings.ownerId, userId)))
       .execute()
       .catch((err) => {
-        this.loggerService.auditLog({
+        loggerService.auditLog({
           id: randomUUID(),
           userId,
           teeTimeId: booking?.teeTimeId ?? "",
@@ -3561,7 +3560,7 @@ export class BookingService {
           json: err,
         });
         this.logger.error(`Error retrieving bookings by payment id: ${err}`);
-        this.loggerService.errorLog({
+        loggerService.errorLog({
           userId: userId,
           url: "/confirmBooking",
           userAgent: "",
@@ -3574,7 +3573,7 @@ export class BookingService {
       });
     if (!booking) {
       console.log(`Booking not found for payment id ${paymentId}`);
-      this.loggerService.errorLog({
+      loggerService.errorLog({
         userId: userId,
         url: "/confirmBooking",
         userAgent: "",
@@ -3594,7 +3593,7 @@ export class BookingService {
         .execute()
         .catch((err) => {
           this.logger.error(`Error in updating booking status ${err}`);
-          this.loggerService.errorLog({
+          loggerService.errorLog({
             userId: userId,
             url: "/confirmBooking",
             userAgent: "",
@@ -3606,7 +3605,7 @@ export class BookingService {
           });
         });
 
-      this.loggerService.auditLog({
+      loggerService.auditLog({
         id: randomUUID(),
         userId,
         teeTimeId: booking?.teeTimeId ?? "",
@@ -3647,7 +3646,7 @@ export class BookingService {
 
     const isValid = await this.checkIfPaymentIdIsValid(payment_id);
     if (!isValid) {
-      this.loggerService.auditLog({
+      loggerService.auditLog({
         id: randomUUID(),
         userId,
         teeTimeId: "",
@@ -3738,7 +3737,7 @@ export class BookingService {
         .execute()
         .catch((err) => {
           this.logger.error(`Error creating booking ${err}`);
-          this.loggerService.errorLog({
+          loggerService.errorLog({
             userId: userId,
             url: "/reserveSecondHandBooking",
             userAgent: "",
@@ -3759,7 +3758,7 @@ export class BookingService {
         .execute()
         .catch((err) => {
           this.logger.error(`Error creating transfer ${err}`);
-          this.loggerService.errorLog({
+          loggerService.errorLog({
             userId: userId,
             url: "/reserveSecondHandBooking",
             userAgent: "",
@@ -3775,7 +3774,7 @@ export class BookingService {
     });
     await this.sendMessageToVerifyPayment(payment_id, userId, bookingId, redirectHref);
 
-    this.loggerService.auditLog({
+    loggerService.auditLog({
       id: randomUUID(),
       userId,
       teeTimeId: associatedBooking?.teeTimeIdForBooking ?? "",
@@ -3807,7 +3806,7 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving bookings by payment id: ${err}`);
-        this.loggerService.errorLog({
+        loggerService.errorLog({
           userId,
           url: "/getOwnedBookingById",
           userAgent: "",
@@ -3869,7 +3868,7 @@ export class BookingService {
       .execute()
       .catch((err) => {
         this.logger.error(`Error finding tee time id: ${err}`);
-        this.loggerService.errorLog({
+        loggerService.errorLog({
           userId,
           url: "/checkIfTeeTimeAvailableOnProvider",
           userAgent: "",
@@ -3884,7 +3883,7 @@ export class BookingService {
       });
     if (!teeTime) {
       this.logger.fatal(`tee time not found id: ${teeTimeId}`);
-      this.loggerService.errorLog({
+      loggerService.errorLog({
         userId,
         url: "/checkIfTeeTimeAvailableOnProvider",
         userAgent: "",
@@ -3921,7 +3920,7 @@ export class BookingService {
       }
     }
 
-    this.loggerService.errorLog({
+    loggerService.errorLog({
       userId: userId,
       url: "/checkIfTeeTimeAvailableOnProvider",
       userAgent: "",

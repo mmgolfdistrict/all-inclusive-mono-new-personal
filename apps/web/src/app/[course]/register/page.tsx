@@ -95,6 +95,10 @@ export default function RegisterPage() {
       const zipcode = getAddressComponent("postal_code");
       const country = getAddressComponent("country");
 
+      if(inputRef?.current){
+        inputRef.current.value = address1;
+      }
+
       // Type guard before passing to setValue
       if (typeof address1 === "string") setValue("address1", address1);
       if (typeof address2 === "string") setValue("address2", address2);

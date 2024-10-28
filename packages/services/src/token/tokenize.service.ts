@@ -21,7 +21,7 @@ import type { ProductData } from "../checkout/types";
 import type { NotificationService } from "../notification/notification.service";
 import type { SensibleService } from "../sensible/sensible.service";
 import type { ProviderAPI } from "../tee-sheet-provider/sheet-providers";
-import type { LoggerService } from "../webhooks/logging.service";
+import { loggerService } from "../webhooks/logging.service";
 
 /**
  * Service class for handling booking tokenization, transfers, and updates.
@@ -44,7 +44,6 @@ export class TokenizeService {
   constructor(
     private readonly database: Db,
     private readonly notificationService: NotificationService,
-    private readonly loggerService: LoggerService,
     private readonly sensibleService: SensibleService
   ) { }
   getCartData = async ({ courseId = "", ownerId = "", paymentId = "" }) => {
@@ -213,7 +212,7 @@ export class TokenizeService {
       .execute()
       .catch((err) => {
         this.logger.error(err);
-        this.loggerService.errorLog({
+        loggerService.errorLog({
           userId: userId,
           url: "`/TokenizeService/tokenizeBooking`",
           userAgent: "",
@@ -230,7 +229,7 @@ export class TokenizeService {
     if (!existingTeeTime) {
       //how has a booking been created for a tee time that does not exist? big problem
       this.logger.fatal(`TeeTime with ID: ${providerTeeTimeId} does not exist.`);
-      this.loggerService.errorLog({
+      loggerService.errorLog({
         userId: userId,
         url: "/reserveBooking",
         userAgent: "",
@@ -247,7 +246,7 @@ export class TokenizeService {
     //     `TeeTime with ID: ${providerTeeTimeId} does not have enough spots. spot available - ${existingTeeTime.availableFirstHandSpots}, spot demanded- ${players}`
     //   );
 
-    //   this.loggerService.auditLog({
+    //   loggerService.auditLog({
     //     id: randomUUID(),
     //     userId,
     //     teeTimeId: "",
@@ -308,7 +307,7 @@ export class TokenizeService {
             );
           });
 
-          this.loggerService.errorLog({
+          loggerService.errorLog({
             userId: userId,
             url: "/TokenizeService/tokenizeBooking",
             userAgent: "",
@@ -434,7 +433,7 @@ export class TokenizeService {
         .execute()
         .catch((err) => {
           this.logger.error(err);
-          this.loggerService.errorLog({
+          loggerService.errorLog({
             userId: userId,
             url: `/TokenizeService/tokenizeBooking`,
             userAgent: "",
@@ -454,7 +453,7 @@ export class TokenizeService {
         .execute()
         .catch((err) => {
           this.logger.error(err);
-          this.loggerService.errorLog({
+          loggerService.errorLog({
             userId: userId,
             url: `/TokenizeService/tokenizeBooking`,
             userAgent: "",
@@ -485,7 +484,7 @@ export class TokenizeService {
         .execute()
         .catch((err) => {
           this.logger.error(err);
-          this.loggerService.errorLog({
+          loggerService.errorLog({
             userId: userId,
             url: `/TokenizeService/tokenizeBooking`,
             userAgent: "",
@@ -501,7 +500,7 @@ export class TokenizeService {
         });
     });
 
-    this.loggerService.auditLog({
+    loggerService.auditLog({
       id: randomUUID(),
       userId,
       teeTimeId: existingTeeTime?.id,
@@ -617,7 +616,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       .execute()
       .catch((err) => {
         this.logger.error(err);
-        this.loggerService.errorLog({
+        loggerService.errorLog({
           userId: userId,
           url: `/TokenizeService/transferBookings`,
           userAgent: "",
@@ -743,7 +742,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
             .execute()
             .catch((err) => {
               this.logger.error(err);
-              this.loggerService.errorLog({
+              loggerService.errorLog({
                 userId: userId,
                 url: `/TokenizeService/addNamesToOwnedBookings`,
                 userAgent: "",
@@ -760,7 +759,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       })
       .catch((err) => {
         this.logger.error(err);
-        this.loggerService.errorLog({
+        loggerService.errorLog({
           userId: userId,
           url: `/TokenizeService/addNamesToOwnedBookings`,
           userAgent: "",

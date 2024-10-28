@@ -47,7 +47,7 @@ import type { SensibleService } from "../sensible/sensible.service";
 import type { Customer, ProviderService } from "../tee-sheet-provider/providers.service";
 import type { ClubProphetBookingResponse } from "../tee-sheet-provider/sheet-providers/types/clubprophet.types";
 import type { TokenizeService } from "../token/tokenize.service";
-import type { LoggerService } from "./logging.service";
+import { loggerService } from "./logging.service";
 import type { HyperSwitchEvent } from "./types/hyperswitch";
 import type { BookingDetails, BookingResponse } from "../tee-sheet-provider/sheet-providers";
 
@@ -81,7 +81,6 @@ export class HyperSwitchWebhookService {
     private readonly notificationService: NotificationService,
     private readonly bookingService: BookingService,
     private readonly sensibleService: SensibleService,
-    private readonly loggerService: LoggerService,
     upStashClientToken: string,
     private readonly hyperSwitchService: HyperSwitchService
   ) {
@@ -360,7 +359,7 @@ export class HyperSwitchWebhookService {
     //   .execute()
     //   .catch((err) => {
     //     this.logger.error(err);
-    //     this.loggerService.auditLog({
+    //     loggerService.auditLog({
     //       id: randomUUID(),
     //       userId: customer_id,
     //       teeTimeId: item.product_data.metadata.tee_time_id,
@@ -374,7 +373,7 @@ export class HyperSwitchWebhookService {
     //   });
     // if (!teeTime) {
     //   this.logger.fatal(`tee time not found id: ${item.product_data.metadata.tee_time_id}`);
-    //   this.loggerService.auditLog({
+    //   loggerService.auditLog({
     //     id: randomUUID(),
     //     userId: customer_id,
     //     teeTimeId: item.product_data.metadata.tee_time_id,
@@ -401,7 +400,7 @@ export class HyperSwitchWebhookService {
     // );
     // if (!providerCustomer?.playerNumber) {
     //   this.logger.error(`Error creating customer`);
-    //   this.loggerService.auditLog({
+    //   loggerService.auditLog({
     //     id: randomUUID(),
     //     userId: customer_id,
     //     teeTimeId: item.product_data.metadata.tee_time_id,
@@ -440,7 +439,7 @@ export class HyperSwitchWebhookService {
     //   .catch((err) => {
     //     this.logger.error(err);
     //     //@TODO this email should be removed
-    //     this.loggerService.auditLog({
+    //     loggerService.auditLog({
     //       id: randomUUID(),
     //       userId: customer_id,
     //       teeTimeId: teeTime.id,
@@ -489,7 +488,7 @@ export class HyperSwitchWebhookService {
     //       "An error occurred while creating booking with provider",
     //       teeTime.courseId
     //     );
-    //     this.loggerService.auditLog({
+    //     loggerService.auditLog({
     //       id: randomUUID(),
     //       userId: customer_id,
     //       teeTimeId: teeTime.id,
@@ -632,7 +631,7 @@ export class HyperSwitchWebhookService {
       .where(eq(customerCarts.paymentId, paymentId))
       .execute()
       .catch((error) => {
-        this.loggerService.auditLog({
+        loggerService.auditLog({
           id: randomUUID(),
           userId: customer_id,
           teeTimeId: "",
@@ -654,7 +653,7 @@ export class HyperSwitchWebhookService {
       .where(eq(bookings.id, bookingsIds?.id ?? ""))
       .execute()
       .catch((err) => {
-        this.loggerService.auditLog({
+        loggerService.auditLog({
           id: randomUUID(),
           userId: customer_id,
           teeTimeId: "",
@@ -678,7 +677,7 @@ export class HyperSwitchWebhookService {
       .where(eq(bookings.id, bookingsIds?.oldBookingId ?? ""))
       .execute()
       .catch((err) => {
-        this.loggerService.auditLog({
+        loggerService.auditLog({
           id: randomUUID(),
           userId: customer_id,
           teeTimeId: "",
@@ -691,7 +690,7 @@ export class HyperSwitchWebhookService {
         throw new Error(`Error cancelling old booking`);
       });
 
-    this.loggerService.auditLog({
+    loggerService.auditLog({
       id: randomUUID(),
       userId: customer_id,
       teeTimeId: "",
@@ -762,7 +761,7 @@ export class HyperSwitchWebhookService {
 
     if (listedBooking.length === 0) {
       this.logger.fatal(`no bookings found for listing id: ${listingId}`);
-      this.loggerService.auditLog({
+      loggerService.auditLog({
         id: randomUUID(),
         userId: customer_id,
         teeTimeId: "",
@@ -797,7 +796,7 @@ export class HyperSwitchWebhookService {
 
     if (!buyerCustomer?.customerId || !buyerCustomer?.playerNumber) {
       this.logger.error(`Error creating or finding customer`);
-      this.loggerService.errorLog({
+      loggerService.errorLog({
         userId: customer_id,
         url: "/handleSecondHandItem",
         userAgent: "",
@@ -820,7 +819,7 @@ export class HyperSwitchWebhookService {
 
     if (!sellerCustomer.customerId || !sellerCustomer?.playerNumber) {
       this.logger.error(`Error creating or finding customer`);
-      this.loggerService.errorLog({
+      loggerService.errorLog({
         userId: firstBooking.ownerId,
         url: "/handleSecondHandItem",
         userAgent: "",
@@ -841,7 +840,7 @@ export class HyperSwitchWebhookService {
       )
       .catch((err) => {
         this.logger.error(`Error deleting booking: ${err}`);
-        this.loggerService.errorLog({
+        loggerService.errorLog({
           userId: firstBooking.ownerId,
           url: "/handleSecondHandItem",
           userAgent: "",
@@ -887,7 +886,7 @@ export class HyperSwitchWebhookService {
       .execute()
       .catch((err) => {
         this.logger.error(err);
-        this.loggerService.errorLog({
+        loggerService.errorLog({
           userId: customer_id,
           url: `/HyperSwitchWebhookService/handleSecondHandItem`,
           userAgent: "",
@@ -976,7 +975,7 @@ export class HyperSwitchWebhookService {
         }
       } catch (e) {
         // await this.hyperSwitchService.refundPayment(paymentId);
-        // this.loggerService.auditLog({
+        // loggerService.auditLog({
         //   id: randomUUID(),
         //   userId: customer_id,
         //   teeTimeId: existingTeeTime?.id ?? "",
@@ -987,7 +986,7 @@ export class HyperSwitchWebhookService {
         //   json: `{paymentId:${paymentId}}`,
         // });
 
-        // this.loggerService.errorLog({
+        // loggerService.errorLog({
         //   userId: customer_id,
         //   url: "/handleSecondHandItem",
         //   userAgent: "",
@@ -1092,7 +1091,7 @@ export class HyperSwitchWebhookService {
       }
     } catch (err) {
       this.logger.error(`Error creating booking: ${err}`);
-      this.loggerService.errorLog({
+      loggerService.errorLog({
         userId: customer_id,
         url: "/handleSecondHandItem",
         userAgent: "",
@@ -1117,7 +1116,7 @@ export class HyperSwitchWebhookService {
         firstBooking?.charityCharge;
       if (!providerBookingId) {
         this.logger.error("Booking failed on provider, Can't find provider booking id");
-        await this.loggerService.errorLog({
+        await loggerService.errorLog({
           userId: customer_id,
           url: "/handleSecondHandItem",
           userAgent: "",
@@ -1169,7 +1168,7 @@ export class HyperSwitchWebhookService {
           .execute()
           .catch((err) => {
             this.logger.error(err);
-            this.loggerService.errorLog({
+            loggerService.errorLog({
               userId: customer_id,
               url: `/HyperSwitchWebhookService/handleSecondHandItem`,
               userAgent: "",
@@ -1231,7 +1230,7 @@ export class HyperSwitchWebhookService {
             .execute()
             .catch((err) => {
               this.logger.error(err);
-              this.loggerService.errorLog({
+              loggerService.errorLog({
                 userId: customer_id,
                 url: `/HyperSwitchWebhookService/handleSecondHandItem`,
                 userAgent: "",
@@ -1249,7 +1248,7 @@ export class HyperSwitchWebhookService {
             .execute()
             .catch((err) => {
               this.logger.error(err); 
-              this.loggerService.errorLog({
+              loggerService.errorLog({
                 userId: customer_id,
                 url: `/HyperSwitchWebhookService/handleSecondHandItem`,
                 userAgent: "",
@@ -1271,7 +1270,7 @@ export class HyperSwitchWebhookService {
             .execute()
             .catch((err) => {
               this.logger.error(err);
-              this.loggerService.errorLog({
+              loggerService.errorLog({
                 userId: customer_id,
                 url: `/HyperSwitchWebhookService/handleSecondHandItem`,
                 userAgent: "",
@@ -1286,7 +1285,7 @@ export class HyperSwitchWebhookService {
         });
       }
 
-      this.loggerService.auditLog({
+      loggerService.auditLog({
         userId: customer_id,
         teeTimeId: existingTeeTime?.id ?? "",
         bookingId,
@@ -1468,7 +1467,7 @@ export class HyperSwitchWebhookService {
       .values(customerRecievableData)
       .catch((err: any) => {
         this.logger.error(err);
-        this.loggerService.errorLog({
+        loggerService.errorLog({
           userId: customer_id,
           url: `/HyperSwitchWebhookService/handleSecondHandItem`,
           userAgent: "",
@@ -1565,7 +1564,7 @@ export class HyperSwitchWebhookService {
       return acceptedQuote;
     } catch (error: any) {
       this.logger.error("Error handling Sensible item:", error);
-      this.loggerService.errorLog({
+      loggerService.errorLog({
         userId: customer_id,
         url: `/HyperSwitchWebhookService/handleSensibleItem`,
         userAgent: "",
