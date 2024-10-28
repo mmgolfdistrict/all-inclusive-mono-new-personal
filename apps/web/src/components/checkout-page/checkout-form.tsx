@@ -184,13 +184,13 @@ export const CheckoutForm = ({
     amountOfPlayers,
   } = useCheckoutContext();
 
+
   const reserveBookingApi = api.teeBox.reserveBooking.useMutation();
   const reserveSecondHandBookingApi =
     api.teeBox.reserveSecondHandBooking.useMutation();
 
   const { data: multipleTransaction } =
     api.checkout.checkMultipleTeeTimeTransactionByUser.useQuery({});
-  console.log("multiple transactions============>", multipleTransaction);
   const handlePaymentStatus = (status: string) => {
     switch (status) {
       case "succeeded":
@@ -304,7 +304,7 @@ export const CheckoutForm = ({
     }
     e.preventDefault();
     if (
-      selectedCharity &&
+      selectedCharity && !roundUpCharityId &&
       (!selectedCharityAmount || selectedCharityAmount === 0)
     ) {
       setCharityAmountError("Charity amount cannot be empty or zero");
@@ -420,7 +420,6 @@ export const CheckoutForm = ({
   ) => {
     const href = window.location.href;
     const redirectHref = href.split("/checkout")[0] || "";
-
     const bookingResponse = await reserveBookingApi.mutateAsync({
       cartId,
       payment_id,
@@ -483,8 +482,7 @@ export const CheckoutForm = ({
     (!roundUpCharityId ? charityCharge : 0) +
     convenienceCharge;
 
-  const roundOff = Math.ceil(primaryGreenFeeCharge + TaxCharge);
-
+  const roundOff = roundUpCharityId && noThanks?(primaryGreenFeeCharge + TaxCharge):Math.ceil(primaryGreenFeeCharge + TaxCharge);
   const handleRoundOff = () => {
     setShowTextField(false);
     setNoThanks(false);
@@ -502,6 +500,7 @@ export const CheckoutForm = ({
     }
   }, [TaxCharge]);
 
+  
   return (
     <form onSubmit={handleSubmit} className="">
       <UnifiedCheckout id="unified-checkout" options={unifiedCheckoutOptions} />
