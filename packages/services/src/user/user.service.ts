@@ -256,7 +256,7 @@ export class UserService {
       "Verify your email",
       process.env.SENDGRID_TEE_TIMES_VERIFY_EMAIL_TEMPLATE_ID!,
       {
-        CustomerFirstName: data.handle,
+        CustomerFirstName: `${data.firstName}`,
         VerifyURL: `${encodeURI(data?.redirectHref)}/verify?userId=${encodeURIComponent(
           user?.id
         )}&verificationToken=${encodeURIComponent(verificationToken)}`,
@@ -530,7 +530,7 @@ export class UserService {
           "Welcome to Golf District",
           process.env.SENDGRID_TEE_TIMES_NEW_USER_TEMPLATE_ID!,
           {
-            CustomerFirstName: user.handle ?? "",
+            CustomerFirstName: user.name?.split(" ")[0],
             CourseLogoURL,
             CourseURL,
             CourseName,
@@ -747,7 +747,7 @@ export class UserService {
               CourseURL: course?.websiteURL || "",
               CourseName: course?.name || "",
               HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
-              CustomerFirstName: user.name,
+              CustomerFirstName: user.name?.split(" ")[0],
             },
             []
           )
@@ -1327,7 +1327,7 @@ export class UserService {
           "Golf District - Password Reset Successful",
           process.env.SENDGRID_TEE_TIMES_PASSWORD_RESET_SUCCESSFUL_TEMPLATE_ID!,
           {
-            CustomerFirstName: user?.handle ?? "",
+            CustomerFirstName: user.name?.split(" ")[0],
             CourseLogoURL,
             CourseURL,
             CourseName,
