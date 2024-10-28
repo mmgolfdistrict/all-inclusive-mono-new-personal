@@ -94,9 +94,9 @@ export const Spinner = (props: ComponentProps<"svg">) => {
   }}/>
    </clipPath>
    <linearGradient id="linear-gradient" x1="139.39" y1="302.42" x2="487.13" y2="302.42" gradientUnits="userSpaceOnUse">
-     <stop offset="0" stop-color="#ec4f52"/>
-     <stop offset=".7" stop-color="#a21e20"/>
-     <stop offset=".75" stop-color="#9c1a1c"/>
+     <stop offset="0" stopColor="#ec4f52"/>
+     <stop offset=".7" stopColor="#a21e20"/>
+     <stop offset=".75" stopColor="#9c1a1c"/>
    </linearGradient>
  </defs>
  <g style={{ clipPath: "url(#clippath)" }}>
