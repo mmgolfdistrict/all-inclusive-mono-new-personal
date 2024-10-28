@@ -114,7 +114,7 @@ export class SearchService {
   constructor(
     private readonly database: Db,
     private readonly weatherService: WeatherService,
-    private readonly providerService: ProviderService,
+    private readonly providerService: ProviderService
   ) {}
 
   findBlackoutDates = async (courseId: string): Promise<Day[]> => {
@@ -751,7 +751,7 @@ export class SearchService {
       .innerJoin(courses, eq(courses.id, teeTimes.courseId))
       .where(
         and(
-          eq(courses.id,courseId),
+          eq(courses.id, courseId),
           gte(teeTimes.providerDate, currentTimePlus30Min),
           between(teeTimes.providerDate, minDateSubquery, maxDateSubquery),
           and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
@@ -761,7 +761,7 @@ export class SearchService {
           gte(teeTimes.availableFirstHandSpots, playersCount)
         )
       )
-      .orderBy(asc(sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))`))
+      .orderBy(asc(sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))`));
 
     const firstHandResults = await firstHandResultsQuery.execute();
 
@@ -775,7 +775,7 @@ export class SearchService {
       .innerJoin(courses, eq(courses.id, teeTimes.courseId))
       .where(
         and(
-          eq(courses.id,courseId),
+          eq(courses.id, courseId),
           gte(teeTimes.providerDate, currentTimePlus30Min),
           between(teeTimes.providerDate, minDateSubquery, maxDateSubquery),
           eq(lists.isDeleted, false),
@@ -1124,7 +1124,7 @@ export class SearchService {
           eq(bookings.includesCart, includesCart),
           eq(teeTimes.numberOfHoles, holes),
           eq(bookings.isListed, true),
-          gt(teeTimes.greenFeePerPlayer, 0),
+          gt(teeTimes.greenFeePerPlayer, 0)
         )
       )
       .orderBy(
@@ -1305,7 +1305,6 @@ export class SearchService {
       .where(
         and(
           eq(majorEvents.courseId, courseId),
-          gt(majorEvents.startDate, today),
           lt(majorEvents.startDate, threeMonthsFromNow),
           gt(majorEvents.endDate, today),
           lt(majorEvents.endDate, threeMonthsFromNow)
