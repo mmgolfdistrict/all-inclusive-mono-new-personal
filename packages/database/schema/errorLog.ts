@@ -7,6 +7,7 @@ export const errorLog = mySqlTable("errorLog", {
   id: varchar("id", { length: 36 }).notNull().primaryKey(),
   applicationName: varchar("applicationName", { length: 50 }),
   clientIP: varchar("clientIP", { length: 25 }),
+  domainName: varchar("domainName", { length: 255 }),
   userId: varchar("userId", { length: 36 }),
   courseId: varchar("courseId", { length: 36 }),
   url: varchar("url", { length: 1024 }),
