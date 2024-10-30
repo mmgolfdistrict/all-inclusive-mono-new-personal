@@ -275,6 +275,9 @@ export default function Login() {
       const result = await signIn("linkedin", {
         redirect: false,
       });
+      if (typeof window !== "undefined") {
+        localStorage.setItem("linkedinstate", "loggedin");
+      }
     } catch (error) {
       console.log(error, "error");
     }
@@ -304,7 +307,7 @@ export default function Login() {
       setLocalStorageCredentials(localStorage.getItem("credentials") || "");
     }
   }, []);
-
+  
   return isLoading || localStorageGoogle ? (
     <LoadingContainer isLoading={true}>
       <div></div>
@@ -351,7 +354,7 @@ export default function Login() {
               className="flex w-full items-center justify-center gap-3 text-primary-gray shadow-google-btn"
               data-testid="login-with-google-id"
             >
-              {linkedinIsLoading ? (
+              {linkedinIsLoading || localStorage.getItem("linkedinstate") ? (
                 <div className="w-10 h-10">
                   <Spinner />
                 </div>
