@@ -17,6 +17,7 @@ import { Google } from "~/components/icons/google";
 import { Hidden } from "~/components/icons/hidden";
 import { Visible } from "~/components/icons/visible";
 import { Input } from "~/components/input/input";
+import { Spinner } from "~/components/loading/spinner";
 import { useAppContext } from "~/contexts/AppContext";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { usePreviousPath } from "~/hooks/usePreviousPath";
@@ -30,7 +31,6 @@ import ReCAPTCHA from "react-google-recaptcha";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
 import { LoadingContainer } from "../loader";
-import { Spinner } from "~/components/loading/spinner";
 
 export default function Login() {
   const recaptchaRef = createRef<ReCAPTCHA>();
@@ -267,6 +267,15 @@ export default function Login() {
       // setGoogleIsLoading(false);
     }
   };
+  const linkedinSignIn = async () => {
+    try {
+      const result = await signIn("linkedin", {
+        redirect: false,
+      });
+    } catch (error) {
+      console.log(error, "error");
+    }
+  };
   const hasProvidersSetUp =
     process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
     process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
@@ -321,7 +330,7 @@ export default function Login() {
             >
               {googleIsLoading || localStorageGoogle ? (
                 <div className="w-10 h-10">
-                  <Spinner/>
+                  <Spinner />
                 </div>
               ) : (
                 <Fragment>
@@ -332,6 +341,18 @@ export default function Login() {
             </SquareButton>
           </div>
         ) : null}
+        <div className="w-full rounded-lg shadow-outline">
+          <SquareButton
+            onClick={linkedinSignIn}
+            className="flex w-full items-center justify-center gap-3 text-primary-gray shadow-google-btn"
+            data-testid="login-with-google-id"
+          >
+            <Fragment>
+              <Google className="w-[24px]" />
+              Log In with Linkedin
+            </Fragment>
+          </SquareButton>
+        </div>
         {process.env.NEXT_PUBLIC_APPLE_ID ? (
           <SquareButton
             onClick={appleSignIn}
