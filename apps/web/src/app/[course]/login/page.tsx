@@ -15,6 +15,7 @@ import { Apple } from "~/components/icons/apple";
 import { Facebook } from "~/components/icons/facebook";
 import { Google } from "~/components/icons/google";
 import { Hidden } from "~/components/icons/hidden";
+import { LinkedinLogo } from "~/components/icons/linkedin";
 import { Visible } from "~/components/icons/visible";
 import { Input } from "~/components/input/input";
 import { Spinner } from "~/components/loading/spinner";
@@ -44,6 +45,7 @@ export default function Login() {
   const [localStorageGoogle, setLocalStorageGoogle] = useState("");
   const [localstorageCredentials, setLocalStorageCredentials] = useState("");
   const [googleIsLoading, setGoogleIsLoading] = useState(false);
+  const [linkedinIsLoading, setLinkedinIsLoading] = useState(false);
   const [credentialsLoader, setCredentialsLoader] = useState(false);
   const auditLog = api.webhooks.auditLog.useMutation();
   const { data: sessionData, status } = useSession();
@@ -269,6 +271,7 @@ export default function Login() {
   };
   const linkedinSignIn = async () => {
     try {
+      setLinkedinIsLoading(true);
       const result = await signIn("linkedin", {
         redirect: false,
       });
@@ -341,18 +344,26 @@ export default function Login() {
             </SquareButton>
           </div>
         ) : null}
-        <div className="w-full rounded-lg shadow-outline">
-          <SquareButton
-            onClick={linkedinSignIn}
-            className="flex w-full items-center justify-center gap-3 text-primary-gray shadow-google-btn"
-            data-testid="login-with-google-id"
-          >
-            <Fragment>
-              <Google className="w-[24px]" />
-              Log In with Linkedin
-            </Fragment>
-          </SquareButton>
-        </div>
+        {process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID ? (
+          <div className="w-full rounded-lg shadow-outline">
+            <SquareButton
+              onClick={linkedinSignIn}
+              className="flex w-full items-center justify-center gap-3 text-primary-gray shadow-google-btn"
+              data-testid="login-with-google-id"
+            >
+              {linkedinIsLoading ? (
+                <div className="w-10 h-10">
+                  <Spinner />
+                </div>
+              ) : (
+                <Fragment>
+                  <LinkedinLogo className="w-[30px] h-[30px]" />
+                  Log In with Linkedin
+                </Fragment>
+              )}
+            </SquareButton>
+          </div>
+        ) : null}
         {process.env.NEXT_PUBLIC_APPLE_ID ? (
           <SquareButton
             onClick={appleSignIn}

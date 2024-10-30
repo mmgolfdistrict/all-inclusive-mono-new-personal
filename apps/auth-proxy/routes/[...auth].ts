@@ -19,8 +19,8 @@ export default eventHandler(async (event) =>
         clientSecret: process.env.AUTH_GITHUB_SECRET,
       }),
       LinkedInProvider({
-        clientId: "78rbprguxmjodr",
-        clientSecret: "WPL_AP1.iw8Pb2NohiAmIJrA.GDIaqw==",
+        clientId: process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID,
+        clientSecret: process.env.NEXT_PUBLIC_LINKEDIN_SECRET,
         authorization: {
           params: { scope: "openid profile email" },
         },
