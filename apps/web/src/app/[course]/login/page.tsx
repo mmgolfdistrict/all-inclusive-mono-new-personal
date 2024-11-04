@@ -44,6 +44,7 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [localStorageGoogle, setLocalStorageGoogle] = useState("");
   const [localstorageCredentials, setLocalStorageCredentials] = useState("");
+  const [localstorageLinkedin,setLocalStorageLinkedin]=useState("");
   const [googleIsLoading, setGoogleIsLoading] = useState(false);
   const [linkedinIsLoading, setLinkedinIsLoading] = useState(false);
   const [credentialsLoader, setCredentialsLoader] = useState(false);
@@ -113,7 +114,7 @@ export default function Login() {
       toast.error("An error occurred logging in, try another option.");
     }
   }, []);
-
+  
   const {
     register,
     handleSubmit,
@@ -304,11 +305,16 @@ export default function Login() {
   }, []);
   useEffect(() => {
     if (typeof window !== "undefined") {
+      setLocalStorageLinkedin(localStorage.getItem("linkedinstate") || "");
+    }
+  }, []);
+  useEffect(() => {
+    if (typeof window !== "undefined") {
       setLocalStorageCredentials(localStorage.getItem("credentials") || "");
     }
   }, []);
   
-  return isLoading || localStorageGoogle ? (
+  return isLoading || localStorageGoogle || localstorageLinkedin ? (
     <LoadingContainer isLoading={true}>
       <div></div>
     </LoadingContainer>
@@ -354,7 +360,7 @@ export default function Login() {
               className="flex w-full items-center justify-center gap-3 text-primary-gray shadow-google-btn"
               data-testid="login-with-google-id"
             >
-              {linkedinIsLoading || localStorage.getItem("linkedinstate") ? (
+              {linkedinIsLoading || localstorageLinkedin ? (
                 <div className="w-10 h-10">
                   <Spinner />
                 </div>
