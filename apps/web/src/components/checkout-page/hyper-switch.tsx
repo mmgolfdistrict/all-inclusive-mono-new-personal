@@ -62,6 +62,7 @@ export const HyperSwitch = ({
   const [cartId, setCartId] = useState<string>("");
   const [localCartData, setLocalCartData] = useState<unknown[]>(cartData);
   const [error, setError] = useState<undefined | string>(undefined);
+  const [roundOffStatus, setRoundOffStatus] = useState("roundup");
   const [nextaction, setNextaction] = useState<NextAction | undefined>(
     undefined
   );
@@ -170,6 +171,8 @@ export const HyperSwitch = ({
             teeTimeDate={teeTimeDate}
             listingId={listingId ?? ""}
             playerCount={playerCount}
+            roundOffStatus={roundOffStatus}
+            setRoundOffStatus={setRoundOffStatus}
           // maxReservation={maxReservation}
           />
         </HyperElements>
