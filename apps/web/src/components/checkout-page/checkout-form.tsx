@@ -490,7 +490,7 @@ export const CheckoutForm = ({
     setShowTextField(false);
     setNoThanks(false);
     // setRoundOffClick(true);
-    let donation = parseFloat(
+    const donation = parseFloat(
       (roundOff - (primaryGreenFeeCharge + TaxCharge)).toFixed(2)
     );
     setDonateValue(donation);
