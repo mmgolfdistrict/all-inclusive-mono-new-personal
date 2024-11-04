@@ -48,8 +48,17 @@ const minimumDate = {
   month: new Date().getMonth() + 1,
   day: new Date().getDate(),
 };
+const nextYearDate = new Date();
+nextYearDate.setFullYear(new Date().getFullYear() + 1);
 
-const disabledDays = getDisabledDays(minimumDate);
+const maximumDate = {
+  year: nextYearDate.getFullYear(),
+  month: nextYearDate.getMonth() + 1,
+  day: nextYearDate.getDate()
+};
+
+
+// const disabledDays = getDisabledDays(minimumDate);
 
 export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
   const {
@@ -81,12 +90,14 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
 
   const isMobile = useMediaQuery("(max-width: 768px)");
 
-  const { data } = api.searchRouter.findBlackoutDates.useQuery(
-    { courseId: course?.id ?? "" },
-    { enabled: course?.id !== undefined }
-  );
+  // const { data } = api.searchRouter.findBlackoutDates.useQuery(
+  //   { courseId: course?.id ?? "" },
+  //   { enabled: course?.id !== undefined }
+  // );
 
-  const blackOutDays = disabledDays.concat(data ?? []);
+  // console.log(data,"blackOutDaysblackOutDaysblackOutDaysblackOutDaysblackOutDaysblackOutDays")
+
+  const blackOutDays = []
 
   const highestPrice = useMemo(() => {
     if (!course) return 0;
@@ -348,7 +359,8 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
                       }
                       colorPrimary="#40942A"
                       minimumDate={minimumDate}
-                      disabledDays={blackOutDays}
+                      maximumDate={maximumDate}
+                      // disabledDays={blackOutDays}
                     />
                     <div
                       className={`z-50 text-sm w-full flex justify-center flex-wrap p-0 px-4 pb-4 `}
