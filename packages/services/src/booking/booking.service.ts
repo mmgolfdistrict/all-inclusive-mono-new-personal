@@ -3683,7 +3683,7 @@ export class BookingService {
 
     const [userData] = await this.database
       .select({
-        handle: users.handle,
+        handle: users.name,
       })
       .from(users)
       .where(eq(users.id, userId))
