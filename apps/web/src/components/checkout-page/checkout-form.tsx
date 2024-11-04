@@ -12,7 +12,7 @@ import { api } from "~/utils/api";
 import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
 import type { CartProduct, MaxReservationResponse } from "~/utils/types";
 import { useRouter } from "next/navigation";
-import { Fragment, useEffect, useState, type FormEvent } from "react";
+import { Fragment, useEffect, useState, type FormEvent, SetStateAction, Dispatch } from "react";
 import { toast } from "react-toastify";
 import { number } from "zod";
 import { FilledButton } from "../buttons/filled-button";
@@ -39,6 +39,8 @@ export const CheckoutForm = ({
   nextAction,
   callingRef,
   playerCount,
+  roundOffStatus,
+  setRoundOffStatus,
 }: {
   isBuyNowAuction: boolean;
   teeTimeId: string;
@@ -49,6 +51,8 @@ export const CheckoutForm = ({
   nextAction?: NextAction;
   callingRef?: boolean;
   playerCount: string | undefined;
+  roundOffStatus: string | undefined;
+  setRoundOffStatus:Dispatch<SetStateAction<string>>
 }) => {
   const MAX_CHARITY_AMOUNT = 1000;
   const { course } = useCourseContext();
@@ -183,7 +187,6 @@ export const CheckoutForm = ({
     sensibleData,
     amountOfPlayers,
   } = useCheckoutContext();
-
 
   const reserveBookingApi = api.teeBox.reserveBooking.useMutation();
   const reserveSecondHandBookingApi =
@@ -482,11 +485,11 @@ export const CheckoutForm = ({
     (!roundUpCharityId ? charityCharge : 0) +
     convenienceCharge;
 
-  const roundOff = roundUpCharityId && noThanks?(primaryGreenFeeCharge + TaxCharge):Math.ceil(primaryGreenFeeCharge + TaxCharge);
+  const roundOff = Math.ceil(primaryGreenFeeCharge + TaxCharge);
   const handleRoundOff = () => {
     setShowTextField(false);
     setNoThanks(false);
-    setRoundOffClick(true);
+    // setRoundOffClick(true);
     const donation = parseFloat(
       (roundOff - (primaryGreenFeeCharge + TaxCharge)).toFixed(2)
     );
@@ -495,12 +498,12 @@ export const CheckoutForm = ({
   };
 
   useEffect(() => {
-    if (roundUpCharityId) {
+    if (roundUpCharityId && roundOffStatus==="roundup") {
       handleRoundOff();
     }
   }, [TaxCharge]);
 
-  
+
   return (
     <form onSubmit={handleSubmit} className="">
       <UnifiedCheckout id="unified-checkout" options={unifiedCheckoutOptions} />
@@ -660,11 +663,14 @@ export const CheckoutForm = ({
             <button
               type="button"
               className={`flex w-32 items-center justify-center rounded-md p-2 ${
-                roundOffClick
+                roundOffStatus==="roundup"
                   ? "bg-primary text-white"
                   : "bg-white text-primary border-primary border-2"
               }`}
-              onClick={handleRoundOff}
+              onClick={()=>{
+                setRoundOffStatus('roundup')
+                  handleRoundOff();
+              }}
             >
               Round Up
             </button>
@@ -672,7 +678,7 @@ export const CheckoutForm = ({
             <button
               type="button"
               className={`flex w-32 items-center justify-center rounded-md p-2 ${
-                showTextField
+              roundOffStatus==="other"
                   ? "bg-primary text-white"
                   : "bg-white text-primary border-primary border-2"
               }`}
@@ -681,6 +687,7 @@ export const CheckoutForm = ({
                 setShowTextField(true);
                 setDonateValue(5);
                 handleSelectedCharityAmount(5);
+                setRoundOffStatus('other')
               }}
             >
               Other
@@ -689,7 +696,7 @@ export const CheckoutForm = ({
             <button
               type="button"
               className={`flex w-32 items-center justify-center rounded-md p-2 ${
-                noThanks
+                roundOffStatus==="nothanks"
                   ? "bg-primary text-white"
                   : "bg-white text-primary border-primary border-2"
               }`}
@@ -699,6 +706,7 @@ export const CheckoutForm = ({
                 setDonateValue(0);
                 handleSelectedCharityAmount(0);
                 setNoThanks(true);
+                setRoundOffStatus('nothanks')
               }}
             >
               No Thanks
