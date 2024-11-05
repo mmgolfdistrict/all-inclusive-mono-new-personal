@@ -58,7 +58,7 @@ export const courses = mySqlTable(
     primaryMarketAllowedPlayers: tinyint("primaryMarketAllowedPlayers"),
     timezoneISO: varchar("timezoneISO", { length: 191 }).notNull().default("America/Los_Angeles"),
     isAutomaticPayment: boolean("isAutomaticPayment").default(false).notNull(),
-    paymentProcessorPercentage: int("paymentProcessorPercentage").default(3).notNull(),
+    paymentProcessorPercentage: double("paymentProcessorPercentage").default(3).notNull(),
     paymentInstrumentId: varchar("paymentInstrumentId", { length: 36 }).default("N/A").notNull(),
   },
   (table) => {
