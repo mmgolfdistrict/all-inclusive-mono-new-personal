@@ -353,7 +353,7 @@ export default function Login() {
             </SquareButton>
           </div>
         ) : null}
-        {process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID ? (
+        {process.env.NEXT_PUBLIC_LINKEDIN_ENABLED_AUTH_SUPPORT ? (
           <div className="w-full rounded-lg shadow-outline">
             <SquareButton
               onClick={linkedinSignIn}
