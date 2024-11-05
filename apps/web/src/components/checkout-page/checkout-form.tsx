@@ -12,7 +12,8 @@ import { api } from "~/utils/api";
 import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
 import type { CartProduct, MaxReservationResponse } from "~/utils/types";
 import { useRouter } from "next/navigation";
-import { Fragment, useEffect, useState, type FormEvent, SetStateAction, Dispatch } from "react";
+import type { SetStateAction, Dispatch } from "react";
+import { Fragment, useEffect, useState, type FormEvent } from "react";
 import { toast } from "react-toastify";
 import { number } from "zod";
 import { FilledButton } from "../buttons/filled-button";
@@ -782,7 +783,7 @@ export const CheckoutForm = ({
           {isLoading ? "Processing..." : <>Pay Now</>}
         </FilledButton>
       )}
-      <LoadingContainer isLoading={isLoading} title={"Please wait while we process your order."} subtitle="Do not close or refresh your browser as this may take up to 30 seconds.">
+      <LoadingContainer isLoading={isLoading} title={"Please wait while we process your order."} subtitle="Do not close or refresh your browser as this may take up to 60 seconds.">
         <div></div>
       </LoadingContainer>
       {/* Show any error or success messages */}
