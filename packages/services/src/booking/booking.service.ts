@@ -1127,7 +1127,7 @@ export class BookingService {
             CourseURL: course?.websiteURL || "",
             CourseName: course?.name,
             HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
-            CustomerFirstName: user.name,
+            CustomerFirstName: user?.name?.split(" ")[0],
             CourseReservationID: firstBooking?.providerBookingId ?? "-",
             PlayDateTime: formatTime(
               firstBooking.providerDate ?? "",
@@ -1384,7 +1384,7 @@ export class BookingService {
           CourseURL: course?.websiteURL || "",
           CourseName: course?.name,
           HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
-          CustomerFirstName: user.name,
+          CustomerFirstName: user?.name?.split(" ")[0],
         },
         []
       );
