@@ -23,6 +23,7 @@ import { LeftChevron } from "../icons/left-chevron";
 import { Tooltip } from "../tooltip";
 import { TooltipMobile } from "../tooltip-mobile";
 import { TeeTimeSkeleton } from "./tee-time-skeleton";
+import { Info } from "../icons/info";
 
 export const DailyTeeTimes = ({
   date,
@@ -116,14 +117,14 @@ export const DailyTeeTimes = ({
         sortValue === "Sort by time - Early to Late"
           ? "asc"
           : sortValue === "Sort by time - Late to Early"
-          ? "desc"
-          : "",
+            ? "desc"
+            : "",
       sortPrice:
         sortValue === "Sort by price - Low to High"
           ? "asc"
           : sortValue === "Sort by price - High to Low"
-          ? "desc"
-          : "",
+            ? "desc"
+            : "",
       timezoneCorrection: course?.timezoneCorrection,
       take: TAKE,
     },
@@ -189,6 +190,8 @@ export const DailyTeeTimes = ({
   if (!isLoading && isFetchedAfterMount && allTeeTimes.length === 0) {
     return null;
   }
+  console.log("courseException", courseException);
+
 
   return (
     <div className="flex flex-col gap-1 md:gap-4 bg-white px-4 py-2 md:rounded-xl md:px-8 md:py-6">
@@ -200,45 +203,28 @@ export const DailyTeeTimes = ({
         >
           {dayMonthDate(date)}
         </div>)}
-        {courseException &&
-          (isMobile ? (
-            <div className={` flex-1`}>
-              <TooltipMobile
-                className="text-left"
-                trigger={getIconForException(courseException.displayType)}
-                content={courseException.shortMessage}
-              />
-            </div>
-          ) : (
-            <div className={` flex-1`}>
+        {courseException && (
+          <div className="flex-1 flex items-center gap-1">
+            <p
+              className={`text-${getTextColor(courseException.displayType)} inline text-left text-[13px] md:text-lg`}
+            >
+              {courseException.shortMessage}
+            </p>
+
+            {courseException.longMessage && (
               <Tooltip
                 className="text-left"
                 trigger={
-                  <p
-                    className={`text-${getTextColor(
-                      courseException.displayType
-                    )} inline text-left`}
-                  >
-                    {isExpanded
-                      ? courseException.longMessage
-                      : courseException.longMessage?.substring(0, 70) +
-                        (courseException.longMessage?.length && 0 > 70
-                          ? "..."
-                          : "")}
-                  </p>
+                  <span className="cursor-pointer" title="More Info">
+                    <Info className="h-4 md:h-5" />
+                  </span>
                 }
-                content={courseException.shortMessage}
+                content={courseException.longMessage}
               />
-              {courseException.longMessage?.length && 0 > 70 && (
-                <button
-                  className="ml-1 text-blue-500 underline"
-                  onClick={toggleExpand}
-                >
-                  {isExpanded ? "Collapse" : "More"}
-                </button>
-              )}
-            </div>
-          ))}
+            )}
+          </div>
+        )}
+
         {isLoadingWeather && !weather ? (
           <div className="h-8 w-[30%] bg-gray-200 rounded-md  animate-pulse" />
         ) : weather && !isLoadingWeather ? (
@@ -324,8 +310,8 @@ export const DailyTeeTimes = ({
 
           {isLoading || isFetchingNextPage || !isFetchedAfterMount
             ? Array(TAKE)
-                .fill(null)
-                .map((_, idx) => <TeeTimeSkeleton key={idx} />)
+              .fill(null)
+              .map((_, idx) => <TeeTimeSkeleton key={idx} />)
             : null}
         </div>
 
