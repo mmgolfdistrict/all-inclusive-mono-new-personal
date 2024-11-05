@@ -2,6 +2,9 @@ import { appRouter, createTRPCContext } from "@golf-district/api";
 import { auth } from "@golf-district/auth";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 
+// overriding default function timeout
+export const maxDuration = 60;
+
 //edge api
 //export const runtime = "edge";
 
