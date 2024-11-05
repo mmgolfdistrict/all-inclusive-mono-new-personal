@@ -3,14 +3,19 @@ import { courseException } from "@golf-district/database/schema/courseException"
 import { courses } from "@golf-district/database/schema/courses";
 import type { NotificationObject } from "@golf-district/shared";
 import dayjs from "dayjs";
+import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 export class CourseExceptionService {
   constructor(private readonly database: Db) {}
 
   async getCourseException(courseId: string) {
-    const timeZone = await this.database
+    const courseData = await this.database
       .select({
-        timezoneCorrection: courses.timezoneCorrection,
+        timezoneISO: courses.timezoneISO,
       })
       .from(courses)
       .where(eq(courses.id, courseId))
@@ -20,7 +25,7 @@ export class CourseExceptionService {
         throw "Error";
       });
 
-    const offset = timeZone[0]?.timezoneCorrection ?? 0;
+    const timezoneISO = courseData[0]?.timezoneISO ?? "UTC";
 
     // const time = dayjs.utc(currentUtcTimestamp()).utcOffset(offset).format("YYYY-MM-DD HH:MM:s.000")
 
@@ -40,13 +45,12 @@ export class CourseExceptionService {
       .catch((e) => {
         console.log("Error in getting system notification");
       });
-    console.log("------------------------------------------>", notifications);
 
-    const notificationUpdated: NotificationObject[] | void= notifications?.map((element) => {
+    const notificationUpdated: NotificationObject[] | void = notifications?.map((element) => {
       return {
         ...element,
-        startDate: dayjs.utc(element.startDate).utcOffset(offset).format("YYYY-MM-DD HH:MM:s.000"),
-        endDate: dayjs.utc(element.endDate).utcOffset(offset).format("YYYY-MM-DD HH:MM:s.000"),
+        startDate: dayjs.utc(element.startDate).tz(timezoneISO, true).format("YYYY-MM-DD HH:mm:ss.SSS"),
+        endDate: dayjs.utc(element.endDate).tz(timezoneISO, true).format("YYYY-MM-DD HH:mm:ss.SSS"),
       };
     });
 
