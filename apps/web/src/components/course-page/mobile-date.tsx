@@ -10,6 +10,7 @@ import { useMediaQuery } from "usehooks-ts";
 import { FilledButton } from "../buttons/filled-button";
 import { OutlineButton } from "../buttons/outline-button";
 import { Leaflet } from "../modal/leaflet";
+import Image from "next/image";
 
 interface DayValue {
   year: number;
@@ -50,6 +51,7 @@ export const MobileDates = ({
   const { data: specialEvents } = api.searchRouter.getSpecialEvents.useQuery({
     courseId: course?.id ?? "",
   });
+  console.log("specialEvents", specialEvents);
 
   const DateOptions = useMemo(() => {
     const defaultDateOptions = [
@@ -59,8 +61,12 @@ export const MobileDates = ({
       "This Month",
       "Furthest Day Out To Book",
     ];
-    return [...defaultDateOptions];
-  }, []);
+
+    const specialEventOptions =
+      specialEvents?.slice(0, 2).map((event) => event.eventName) || [];
+
+    return [...specialEventOptions, ...defaultDateOptions];
+  }, [specialEvents]);
 
   const dateToDayValue = (date: Date): DayValue => ({
     year: date.getFullYear(),
@@ -101,16 +107,24 @@ export const MobileDates = ({
                   value={value}
                   dataTestId="date-filter-id"
                   dataQa={value}
-                  className={`${
-                    index === 0
-                      ? "rounded-t-2xl border border-stroke"
-                      : index === DateOptions.length - 1 &&
-                        dateType === "Custom"
+                  icon={
+                    specialEvents?.find((event) => event.eventName === value)
+                      ?.iconUrl || "no-icon"
+                  }
+                  label={
+
+                    value
+
+                  }
+                  className={`${index === 0
+                    ? "rounded-t-2xl border border-stroke"
+                    : index === DateOptions.length - 1 &&
+                      dateType === "Custom"
                       ? "border-l border-r border-stroke"
                       : index === DateOptions.length - 1
-                      ? "rounded-b-2xl border-b border-l border-r border-stroke"
-                      : "border-b border-l border-r border-stroke"
-                  }`}
+                        ? "rounded-b-2xl border-b border-l border-r border-stroke"
+                        : "border-b border-l border-r border-stroke"
+                    }`}
                 />
                 {dateType === "Custom" && value === "Custom" ? (
                   <>
@@ -130,9 +144,8 @@ export const MobileDates = ({
                           <>
                             <button
                               key={i}
-                              className={`inline-block mt-1 ${
-                                isMobile ? "mx-4" : "mx-2"
-                              }`}
+                              className={`inline-block mt-1 ${isMobile ? "mx-4" : "mx-2"
+                                }`}
                               onClick={() => {
                                 const startDate = new Date(event.startDate);
                                 const endDate = new Date(event.endDate);
@@ -174,6 +187,8 @@ export const Item = ({
   dataQa,
   dataTest,
   dataCy,
+  label,
+  icon,
 }: {
   value: string;
   className?: string;
@@ -181,19 +196,33 @@ export const Item = ({
   dataQa?: string;
   dataTest?: string;
   dataCy?: string;
+  label?: any;
+  icon?: string | null;
 }) => {
   return (
     <ToggleGroup.Item
       value={value}
-      className={`bg-white px-4 py-2 text-left text-[14px] text-primary-gray transition-colors data-[state=on]:bg-primary data-[state=on]:text-white ${
-        className ?? ""
-      }`}
+      className={`bg-white flex items-center px-4 py-2 text-left text-[14px] text-primary-gray transition-colors data-[state=on]:bg-primary data-[state=on]:text-white ${className ?? ""
+        }`}
       data-testid={dataTestId}
       data-qa={dataQa}
       data-test={dataTest}
       data-cy={dataCy}
     >
-      {value}
+      {icon === "no-icon" ? (
+        <div className="mr-2 h-5 w-5" />
+      ) : (
+        icon && (
+          <Image
+            src={icon}
+            alt={`${value} icon`}
+            width={22}
+            height={22}
+            className="mr-2 h-5 w-5"
+          />
+        )
+      )}
+      {label}
     </ToggleGroup.Item>
   );
 };

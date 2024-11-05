@@ -30,6 +30,7 @@ import ReCAPTCHA from "react-google-recaptcha";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
 import { LoadingContainer } from "../loader";
+import { Spinner } from "~/components/loading/spinner";
 
 export default function Login() {
   const recaptchaRef = createRef<ReCAPTCHA>();
@@ -319,7 +320,9 @@ export default function Login() {
               data-testid="login-with-google-id"
             >
               {googleIsLoading || localStorageGoogle ? (
-                <div className="w-10 h-10 border-4 border-green-500 border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-10 h-10">
+                  <Spinner/>
+                </div>
               ) : (
                 <Fragment>
                   <Google className="w-[24px]" />

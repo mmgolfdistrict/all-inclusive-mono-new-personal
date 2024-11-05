@@ -13,6 +13,9 @@ import { ZodError } from "zod";
 interface CreateContextOptions {
   session: Session | null;
   courseId: string;
+  userIpAddress: string;
+  userAgent: string;
+  userDomainName: string;
   //logger: pino.Logger;
 }
 
@@ -66,6 +69,9 @@ const createInnerTRPCContext = (opts: CreateContextOptions) => {
     session: opts.session,
     serviceFactory: new ServiceFactory(serviceFactoryConfig),
     courseId: opts.courseId,
+    userIpAddress: opts.userIpAddress,
+    userAgent: opts.userAgent,
+    userDomainName: opts.userDomainName,
     // logger: logger,
   };
 };
@@ -77,10 +83,15 @@ export const createTRPCContext = async (opts: { req?: Request; auth?: Session })
   session.ip = ip ?? "";
   logger.info(">>> tRPC Request from", source, "by", session?.user?.id ?? "anonymous");
   const courseId = opts.req?.headers.get("referer")?.split("/")[3] ?? '';
+  const userAgent = opts.req?.headers.get("user-agent");
+  const domainName = opts.req?.headers.get("x-forwarded-host");
 
   return createInnerTRPCContext({
     session,
-    courseId
+    courseId,
+    userIpAddress: ip ?? "",
+    userAgent: userAgent ?? "",
+    userDomainName: domainName ?? "",
   });
 };
 
@@ -101,6 +112,9 @@ export const createTRPCRouter = t.router;
 
 export const addLoggerInfo = t.middleware(async ({ next, ctx }) => {
   loggerService.courseId = ctx.courseId;
+  loggerService.userIpAddress = ctx.userIpAddress;
+  loggerService.userAgent = ctx.userAgent;
+  loggerService.userDomainName = ctx.userDomainName;
   return next();
 })
 

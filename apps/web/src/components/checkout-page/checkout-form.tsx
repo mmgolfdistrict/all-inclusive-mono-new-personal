@@ -12,7 +12,7 @@ import { api } from "~/utils/api";
 import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
 import type { CartProduct, MaxReservationResponse } from "~/utils/types";
 import { useRouter } from "next/navigation";
-import { Fragment, useEffect, useState, type FormEvent } from "react";
+import { Fragment, useEffect, useState, type FormEvent, SetStateAction, Dispatch } from "react";
 import { toast } from "react-toastify";
 import { number } from "zod";
 import { FilledButton } from "../buttons/filled-button";
@@ -39,6 +39,8 @@ export const CheckoutForm = ({
   nextAction,
   callingRef,
   playerCount,
+  roundOffStatus,
+  setRoundOffStatus,
 }: {
   isBuyNowAuction: boolean;
   teeTimeId: string;
@@ -49,6 +51,8 @@ export const CheckoutForm = ({
   nextAction?: NextAction;
   callingRef?: boolean;
   playerCount: string | undefined;
+  roundOffStatus: string | undefined;
+  setRoundOffStatus:Dispatch<SetStateAction<string>>
 }) => {
   const MAX_CHARITY_AMOUNT = 1000;
   const { course } = useCourseContext();
@@ -190,7 +194,6 @@ export const CheckoutForm = ({
 
   const { data: multipleTransaction } =
     api.checkout.checkMultipleTeeTimeTransactionByUser.useQuery({});
-  console.log("multiple transactions============>", multipleTransaction);
   const handlePaymentStatus = (status: string) => {
     switch (status) {
       case "succeeded":
@@ -304,7 +307,7 @@ export const CheckoutForm = ({
     }
     e.preventDefault();
     if (
-      selectedCharity &&
+      selectedCharity && !roundUpCharityId &&
       (!selectedCharityAmount || selectedCharityAmount === 0)
     ) {
       setCharityAmountError("Charity amount cannot be empty or zero");
@@ -420,7 +423,6 @@ export const CheckoutForm = ({
   ) => {
     const href = window.location.href;
     const redirectHref = href.split("/checkout")[0] || "";
-
     const bookingResponse = await reserveBookingApi.mutateAsync({
       cartId,
       payment_id,
@@ -484,11 +486,10 @@ export const CheckoutForm = ({
     convenienceCharge;
 
   const roundOff = Math.ceil(primaryGreenFeeCharge + TaxCharge);
-
   const handleRoundOff = () => {
     setShowTextField(false);
     setNoThanks(false);
-    setRoundOffClick(true);
+    // setRoundOffClick(true);
     const donation = parseFloat(
       (roundOff - (primaryGreenFeeCharge + TaxCharge)).toFixed(2)
     );
@@ -497,10 +498,11 @@ export const CheckoutForm = ({
   };
 
   useEffect(() => {
-    if (roundUpCharityId) {
+    if (roundUpCharityId && roundOffStatus==="roundup") {
       handleRoundOff();
     }
   }, [TaxCharge]);
+
 
   return (
     <form onSubmit={handleSubmit} className="">
@@ -661,11 +663,14 @@ export const CheckoutForm = ({
             <button
               type="button"
               className={`flex w-32 items-center justify-center rounded-md p-2 ${
-                roundOffClick
+                roundOffStatus==="roundup"
                   ? "bg-primary text-white"
                   : "bg-white text-primary border-primary border-2"
               }`}
-              onClick={handleRoundOff}
+              onClick={()=>{
+                setRoundOffStatus('roundup')
+                  handleRoundOff();
+              }}
             >
               Round Up
             </button>
@@ -673,7 +678,7 @@ export const CheckoutForm = ({
             <button
               type="button"
               className={`flex w-32 items-center justify-center rounded-md p-2 ${
-                showTextField
+              roundOffStatus==="other"
                   ? "bg-primary text-white"
                   : "bg-white text-primary border-primary border-2"
               }`}
@@ -682,6 +687,7 @@ export const CheckoutForm = ({
                 setShowTextField(true);
                 setDonateValue(5);
                 handleSelectedCharityAmount(5);
+                setRoundOffStatus('other')
               }}
             >
               Other
@@ -690,7 +696,7 @@ export const CheckoutForm = ({
             <button
               type="button"
               className={`flex w-32 items-center justify-center rounded-md p-2 ${
-                noThanks
+                roundOffStatus==="nothanks"
                   ? "bg-primary text-white"
                   : "bg-white text-primary border-primary border-2"
               }`}
@@ -700,6 +706,7 @@ export const CheckoutForm = ({
                 setDonateValue(0);
                 handleSelectedCharityAmount(0);
                 setNoThanks(true);
+                setRoundOffStatus('nothanks')
               }}
             >
               No Thanks
