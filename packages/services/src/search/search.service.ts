@@ -1406,7 +1406,6 @@ export class SearchService {
     });
 
     const totalCount = firstHandCount + secondHandCount;
-    // const encodedCursor = this.encode(cursor1, 0);
     return { results: sortedResults, cursor: cursor, count: totalCount };
   }
 
