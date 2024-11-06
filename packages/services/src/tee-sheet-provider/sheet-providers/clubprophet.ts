@@ -457,9 +457,6 @@ export class clubprophet extends BaseProvider {
       pskUserId: PSK_USER_ID,
       terminalId: TERMINAL_ID,
       bookingTypeId: BOOKING_TYPE_ID,
-      // pskUserId: 0,
-      // terminalId: 0,
-      // bookingTypeId: 311,
       rateCode: RATECODE,
     }
     return bookingData;
