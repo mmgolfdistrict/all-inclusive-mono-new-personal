@@ -987,7 +987,6 @@ export class SearchService {
       )
       .limit(limit);
 
-    console.log("TEE TIME QUERY", teeQuery.toSQL())
 
     const courseData = await this.database
       .select({
