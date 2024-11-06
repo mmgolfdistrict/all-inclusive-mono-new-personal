@@ -899,7 +899,7 @@ export class CheckoutService {
       let appSettingsResult: any = [];
       let appSettingsValue: number;
       appSettingsResult = await this.appSettings.getAppSetting("USER_BUY_MULTIPLE_TEETIME_IN_SAME_DAY");
-      appSettingsValue = Number(appSettingsResult.value) || 12;
+      appSettingsValue = Number(appSettingsResult.value);
       const [userDetails] = await this.database.select().from(users).where(eq(users.id, userId));
       if (!userDetails) {
         throw new Error("User details not found");
@@ -916,7 +916,7 @@ export class CheckoutService {
         .where(
           and(
             eq(users.email, userDetails.email ?? ""),
-            gte(bookings.purchasedAt, sql`NOW() - INTERVAL 12 HOUR`)
+            gte(bookings.purchasedAt, sql`NOW() - INTERVAL ${appSettingsValue} HOUR`)
           )
         )
         .groupBy(users.id, users.email)
