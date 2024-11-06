@@ -35,7 +35,7 @@ export const CourseNav = () => {
   const session = useSession();
   const router = useRouter();
 
-  console.log("session", session);
+  console.log("session", user, { session });
 
 
   const { data: unreadOffers } = api.user.getUnreadOffersForCourse.useQuery(

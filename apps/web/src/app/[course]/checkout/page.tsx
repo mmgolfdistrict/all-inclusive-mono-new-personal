@@ -52,7 +52,9 @@ export default function Checkout({
   const playerCount = searchParams?.playerCount as string | undefined;
   const { course } = useCourseContext();
   const { user } = useUserContext();
-  const { status } = useSession();
+  const session = useSession();
+  console.log("user checkout", user, { session });
+
   const [isSessionLoading, setIsSessionLoading] = useState(true);
   dayjs.extend(utc);
   dayjs.extend(timezone);
