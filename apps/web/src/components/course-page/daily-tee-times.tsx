@@ -190,7 +190,6 @@ export const DailyTeeTimes = ({
   if (!isLoading && isFetchedAfterMount && allTeeTimes.length === 0) {
     return null;
   }
-  console.log("courseException", courseException);
 
 
   return (
