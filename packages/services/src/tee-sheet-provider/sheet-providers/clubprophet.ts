@@ -443,7 +443,7 @@ export class clubprophet extends BaseProvider {
   }
 
   getBookingCreationData(teeTimeData: TeeTimeData): BookingCreationData {
-    const { RATECODE } = JSON.parse(this.providerConfiguration ?? "{}");
+    const { RATECODE, PSK_USER_ID, TERMINAL_ID, BOOKING_TYPE_ID } = JSON.parse(this.providerConfiguration ?? "{}");
     const nameOfCustomer = teeTimeData.name ? teeTimeData.name.split(' ') : ['', ''];
     const bookingData: BookingCreationData = {
       teeSheetId: Number(teeTimeData.providerTeeTimeId),
@@ -454,9 +454,12 @@ export class clubprophet extends BaseProvider {
       phone: teeTimeData.phone ?? "",
       players: teeTimeData.playerCount,
       notes: teeTimeData.notes ?? "",
-      pskUserId: 0,
-      terminalId: 0,
-      bookingTypeId: 311,
+      pskUserId: PSK_USER_ID,
+      terminalId: TERMINAL_ID,
+      bookingTypeId: BOOKING_TYPE_ID,
+      // pskUserId: 0,
+      // terminalId: 0,
+      // bookingTypeId: 311,
       rateCode: RATECODE,
     }
     return bookingData;
