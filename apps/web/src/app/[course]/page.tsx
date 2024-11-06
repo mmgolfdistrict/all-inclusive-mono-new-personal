@@ -93,7 +93,6 @@ export default function CourseHomePage() {
       console.log("error", error);
     }
   };
-  console.log("courseId", courseId);
 
   const updateCount = (balance: number) => {
     setCount(balance);
@@ -281,14 +280,14 @@ export default function CourseHomePage() {
           sortValue === "Sort by time - Early to Late"
             ? "asc"
             : sortValue === "Sort by time - Late to Early"
-            ? "desc"
-            : "",
+              ? "desc"
+              : "",
         sortPrice:
           sortValue === "Sort by price - Low to High"
             ? "asc"
             : sortValue === "Sort by price - High to Low"
-            ? "desc"
-            : "",
+              ? "desc"
+              : "",
         timezoneCorrection: course?.timezoneCorrection,
       },
       {
@@ -529,11 +528,10 @@ export default function CourseHomePage() {
         </div>
         <div className="flex w-full flex-col gap-1 md:gap-4 overflow-x-hidden pr-0 md:pr-6">
           <div
-            className={`flex space-x-2 md:hidden px-4 ${
-              scrollY > 333
+            className={`flex space-x-2 md:hidden px-4 ${scrollY > 333
                 ? "fixed top-[7.8rem] left-0 w-full z-10 bg-secondary-white pt-2 pb-3 shadow-md"
                 : "relative"
-            }`}
+              }`}
           >
             <button
               onClick={toggleFilters}
@@ -591,9 +589,8 @@ export default function CourseHomePage() {
               {daysData.amountOfPages > 1 ? (
                 <div className="flex items-center justify-center gap-2 pt-1 md:pt-0 md:pb-4">
                   <FilledButton
-                    className={`!px-3 !py-2 !min-w-fit !rounded-md ${
-                      pageNumber === 1 ? "opacity-50 cursor-not-allowed" : ""
-                    }`}
+                    className={`!px-3 !py-2 !min-w-fit !rounded-md ${pageNumber === 1 ? "opacity-50 cursor-not-allowed" : ""
+                      }`}
                     onClick={pageDown}
                     data-testid="chevron-down-id"
                   >
@@ -603,11 +600,10 @@ export default function CourseHomePage() {
                     {pageNumber} / {amountOfPage}
                   </div>
                   <FilledButton
-                    className={`!px-3 !py-2 !min-w-fit !rounded-md ${
-                      pageNumber === amountOfPage
+                    className={`!px-3 !py-2 !min-w-fit !rounded-md ${pageNumber === amountOfPage
                         ? "opacity-50 cursor-not-allowed"
                         : ""
-                    }`}
+                      }`}
                     onClick={pageUp}
                     data-testid="chevron-up-id"
                   >

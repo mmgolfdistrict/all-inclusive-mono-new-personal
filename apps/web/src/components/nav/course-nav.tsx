@@ -35,6 +35,9 @@ export const CourseNav = () => {
   const session = useSession();
   const router = useRouter();
 
+  console.log("session", session);
+
+
   const { data: unreadOffers } = api.user.getUnreadOffersForCourse.useQuery(
     {
       courseId: courseId ?? "",
@@ -145,9 +148,8 @@ export const CourseNav = () => {
         ))}
         {isSideBarOpen && (
           <div
-            className={`fixed z-20 h-[100dvh] w-screen backdrop-blur ${
-              isSideBarOpen ? "md:hidden" : ""
-            }`}
+            className={`fixed z-20 h-[100dvh] w-screen backdrop-blur ${isSideBarOpen ? "md:hidden" : ""
+              }`}
           >
             <div className="h-screen bg-[#00000099]" />
           </div>
