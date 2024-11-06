@@ -80,9 +80,9 @@ export const createTRPCContext = async (opts: { req?: Request; auth?: Session })
   const session = opts.auth ?? (await auth());
   const source = opts.req?.headers.get("x-trpc-source") ?? "unknown";
   const ip = opts.req?.headers.get("x-forwarded-for");
-  //session.ip = ip ?? "";
+  session.ip = ip ?? "";
   logger.info(">>> tRPC Request from", source, "by", session?.user?.id ?? "anonymous");
-  const courseId = opts.req?.headers.get("referer")?.split("/")[3] ?? '';
+  const courseId = opts.req?.headers.get("referer")?.split("/")[3] ?? "";
   const userAgent = opts.req?.headers.get("user-agent");
   const domainName = opts.req?.headers.get("x-forwarded-host");
 
@@ -116,7 +116,7 @@ export const addLoggerInfo = t.middleware(async ({ next, ctx }) => {
   loggerService.userAgent = ctx.userAgent;
   loggerService.userDomainName = ctx.userDomainName;
   return next();
-})
+});
 
 export const publicProcedure = t.procedure.use(addLoggerInfo);
 
