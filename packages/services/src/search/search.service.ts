@@ -763,7 +763,6 @@ export class SearchService {
         )
       )
       .orderBy(asc(sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))`));
-    console.log("firstHandResultsQuery", firstHandResultsQuery.toSQL());
     const firstHandResults = await firstHandResultsQuery.execute();
 
     const secondHandResultsQuery = this.database
