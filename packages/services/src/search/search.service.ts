@@ -1328,6 +1328,7 @@ export class SearchService {
         ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${event?.logo?.key}.${event?.logo?.extension}`
         : null,
     }));
+
     return finalEvents;
   };
 }
