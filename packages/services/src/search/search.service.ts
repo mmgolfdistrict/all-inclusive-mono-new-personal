@@ -755,6 +755,7 @@ export class SearchService {
           gte(teeTimes.providerDate, currentTimePlus30Min),
           between(teeTimes.providerDate, minDateSubquery, maxDateSubquery),
           and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
+          and(gt(teeTimes.greenFeePerPlayer, 0)),
           sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 >= ${lowerPrice}`,
           sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 <= ${upperPrice}`,
           eq(teeTimes.numberOfHoles, holes),
@@ -762,7 +763,6 @@ export class SearchService {
         )
       )
       .orderBy(asc(sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))`));
-
     const firstHandResults = await firstHandResultsQuery.execute();
 
     const secondHandResultsQuery = this.database
@@ -986,6 +986,7 @@ export class SearchService {
           : asc(teeTimes.time)
       )
       .limit(limit);
+
 
     const courseData = await this.database
       .select({
