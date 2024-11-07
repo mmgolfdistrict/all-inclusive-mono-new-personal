@@ -792,6 +792,7 @@ export class SearchService {
           eq(courses.id, courseId),
           gte(teeTimes.providerDate, currentTimePlus30Min),
           between(teeTimes.providerDate, minDateSubquery, maxDateSubquery),
+          and(gt(teeTimes.greenFeePerPlayer, 0)),
           // and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
           // sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 >= ${lowerPrice}`,
           // sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 <= ${upperPrice}`,
@@ -1029,6 +1030,7 @@ export class SearchService {
           : asc(teeTimes.time)
       )
       .limit(limit);
+
 
     const courseData = await this.database
       .select({
@@ -1370,6 +1372,7 @@ export class SearchService {
         ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${event?.logo?.key}.${event?.logo?.extension}`
         : null,
     }));
+
     return finalEvents;
   };
 }
