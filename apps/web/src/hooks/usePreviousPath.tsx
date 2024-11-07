@@ -18,19 +18,19 @@ export const usePreviousPath = () => {
   const pathname = usePathname();
 
   const isPathExpired = (timeString: string | undefined) => {
-    const MAX_ALLOWED_DIFFERENCE = 10;
+    // const MAX_ALLOWED_DIFFERENCE = 10;
 
-    if (!timeString) return true;
+    // if (!timeString) return true;
 
-    const pathTime = new Date(timeString);
+    // const pathTime = new Date(timeString);
 
-    const now = new Date();
-    const difference =
-      Math.abs(now.getTime() - pathTime.getTime()) / (1000 * 60);
+    // const now = new Date();
+    // const difference =
+    //   Math.abs(now.getTime() - pathTime.getTime()) / (1000 * 60);
 
-    if (difference > MAX_ALLOWED_DIFFERENCE) {
-      return true;
-    }
+    // if (difference > MAX_ALLOWED_DIFFERENCE) {
+    //   return true;
+    // }
     return false;
   };
 
