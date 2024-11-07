@@ -248,7 +248,6 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
   const { data: specialEvents } = api.searchRouter.getSpecialEvents.useQuery({
     courseId: course?.id ?? "",
   });
-  console.log("specialEvents", specialEvents);
 
   const DateOptions = useMemo(() => {
     const defaultDateOptions = [
@@ -360,7 +359,7 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
                       colorPrimary="#40942A"
                       minimumDate={minimumDate}
                       maximumDate={maximumDate}
-                      // disabledDays={blackOutDays}
+                    // disabledDays={blackOutDays}
                     />
                     <div
                       className={`z-50 text-sm w-full flex justify-center flex-wrap p-0 px-4 pb-4 `}

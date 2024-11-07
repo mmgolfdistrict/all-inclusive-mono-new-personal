@@ -201,7 +201,7 @@ export const CheckoutForm = ({
   console.log(checkIsBookingDisabled);
   const { data: multipleTransaction } =
     api.checkout.checkMultipleTeeTimeTransactionByUser.useQuery({});
-
+    console.log("multipleTransaction",multipleTransaction);
   const handlePaymentStatus = (status: string) => {
     switch (status) {
       case "succeeded":
