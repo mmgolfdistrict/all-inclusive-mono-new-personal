@@ -64,7 +64,26 @@ export interface CheckoutServiceConfig {
   foreUpApiKey: string;
   profileId: string;
 }
+interface Address {
+  city?: string;
+  country?: string;
+  line1?: string;
+  line2?: string;
+  line3?: string;
+  zip?: string;
+  state?: string;
+  first_name?: string;
+  last_name?: string;
+}
 
+interface CreateCustomer {
+  customer_id: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  description?: string;
+  address: Address;
+}
 /**
  * Service handling the checkout process, including cart validation and building checkout sessions.
  * @example
@@ -926,6 +945,72 @@ export class CheckoutService {
     } catch (error: any) {
       this.logger.error("", error.message);
       throw error.message;
+    }
+  };
+  createHyperSwitchNewCustomer = async (userId: string) => {
+    try {
+      const [userDetails] = await this.database.select().from(users).where(eq(users.id, userId));
+      if (!userDetails) {
+        throw new Error("User details not found");
+      }
+      const parts = userDetails?.email?.split("@") || [];
+      const hyperswitchCreateCustomer = `${process.env.HYPERSWITCH_BASE_URL}/customers`;
+      const myHeaders = new Headers();
+      myHeaders.append("api-key", process.env.HYPERSWITCH_API_KEY ?? "");
+      myHeaders.append("Content-Type", "application/json");
+      const customerDataObject = {
+        customer_id: parts[0] as string,
+        name: userDetails.name as string,
+        email: userDetails.email as string,
+        phone: userDetails.phoneNumber as string,
+        description: "default",
+        // address: {
+        //   city: userDetails.city || "",
+        //   country: userDetails.country || "",
+        //   line1: userDetails.address1 || "",
+        //   line2: userDetails.address2 || "",
+        //   zip: userDetails.zipcode || "",
+        //   state: userDetails.state || "",
+        // },
+      };
+     console.log(JSON.stringify(customerDataObject))
+      const requestOptions = {
+        method: "POST",
+        headers: myHeaders,
+        body: JSON.stringify(customerDataObject),
+      };
+      const response = await fetch(hyperswitchCreateCustomer, requestOptions);
+      const customerData = await response.json();
+      if (customerData.error && customerData?.error?.type === "invalid_request") {
+        return { error: true, message: customerData?.error?.message, code: customerData?.error?.code };
+      }
+      return { data: customerData?.customer_id || "", status_api: true, response:customerData};
+    } catch (error: any) {
+      console.log("error message", error.message);
+    }
+  };
+  retrieveHyperSwitchRegisteredCustomer = async (userId: string) => {
+    try {
+      const [userDetails] = await this.database.select().from(users).where(eq(users.id, userId));
+      if (!userDetails) {
+        throw new Error("User details not found");
+      }
+      const parts = userDetails?.email?.split("@") || [];
+      const retrieveHyperSwitchCustomerData = `${process.env.HYPERSWITCH_BASE_URL}/customers/${parts[0]}`;
+      const myHeaders = new Headers();
+      myHeaders.append("api-key", process.env.HYPERSWITCH_API_KEY ?? "");
+      const requestOptions = {
+        method: "GET",
+        headers: myHeaders,
+      };
+      const response = await fetch(retrieveHyperSwitchCustomerData, requestOptions);
+      const customerData = await response.json();
+      if (customerData.error && customerData?.error?.type === "invalid_request") {
+        return { error: true, message: customerData?.error?.message, code: customerData?.error?.code };
+      }
+      return { data: customerData?.customer_id || "", status_api: true , error :false};
+    } catch (error: any) {
+      console.log("error message", error.message);
     }
   };
 }

@@ -132,25 +132,7 @@ type RequestOptions = {
   body: string;
   redirect: RequestRedirect;
 };
-interface Address {
-  city?: string;
-  country?: string;
-  line1?: string;
-  line2?: string;
-  line3?: string;
-  zip?: string;
-  state?: string;
-  first_name?: string;
-  last_name?: string;
-}
 
-interface CreateCustomer {
-  name?: string;
-  email?: string;
-  phone?: string;
-  description?: string;
-  address: Address;
-}
 /**
  * Service for managing bookings and transaction history.
  */
@@ -3195,30 +3177,7 @@ export class BookingService {
     }
     return true;
   };
-  createHyperSwitchNewCustomer = async ({ name, email, phone, description, address }: CreateCustomer) => {
-    const hyperswitchCreateCustomer = `${process.env.HYPERSWITCH_BASE_URL}/customers`;
-    const myHeaders = new Headers();
-    myHeaders.append("api-key", process.env.HYPERSWITCH_API_KEY ?? "");
-    const customerDataObject = {
-      name,
-      email,
-      phone,
-      description,
-      address,
-    };
-    const requestOptions = {
-      method: "POST",
-      headers: myHeaders,
-      body: JSON.stringify(customerDataObject),
-    };
-    const response = await fetch(hyperswitchCreateCustomer, requestOptions);
-    const customerData = await response.json();
-    if (customerData.error && customerData?.error?.type === "invalid_request") {
-      return false
-    }
-    return customerData?.customer_id || "";
-  };
-   
+
   sendMessageToVerifyPayment = async (
     paymentId: string,
     customer_id: string,
