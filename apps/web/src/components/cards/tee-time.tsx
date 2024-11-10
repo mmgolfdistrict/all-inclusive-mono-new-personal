@@ -86,6 +86,8 @@ export const TeeTime = ({
   const { data: allowedPlayers } =
     api.course.getNumberOfPlayersByCourse.useQuery({
       courseId: courseId ?? "",
+      time: items.time,
+      date: items.date ?? ""
     });
 
   const numberOfPlayers = allowedPlayers?.numberOfPlayers;
