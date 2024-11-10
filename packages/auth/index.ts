@@ -437,6 +437,14 @@ export const authConfig: NextAuthConfig = {
   // },
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
+    async redirect({ url, baseUrl }) {
+      const redirectUrl = url.startsWith("/") ? new URL(url, baseUrl).toString() : url;
+      console.log(
+        `[next-auth] Redirecting to "${redirectUrl}" (resolved from url "${url}" and baseUrl "${baseUrl}")`
+      );
+      return redirectUrl;
+    },
+
     async signIn({ user, account }) {
       if (user) {
         const notificationService = new NotificationService(

@@ -4,7 +4,7 @@ import { eq } from "@golf-district/database";
 import { appSettings } from "@golf-district/database/schema/appSetting";
 import { CacheService } from "../infura/cache.service";
 import type { AppSetting, AppSettingsResponse } from "./types";
-
+import { createCache } from "cache-manager";
 export class AppSettingsService {
   private cacheService?: CacheService;
   private redisUrl?: string;
@@ -35,20 +35,32 @@ export class AppSettingsService {
   getAppSetting = async (internalName: string) => {
     try {
       console.log("getting app settings", internalName);
-      const appSettingData: AppSettingsResponse = await this.db
-        .select({
-          id: appSettings.id,
-          groupName: appSettings.groupName,
-          internalName: appSettings.internalName,
-          caption: appSettings.caption,
-          description: appSettings.description,
-          value: appSettings.value,
-          createdDateTime: appSettings.createdDateTime,
-          lastUpdatedDateTime: appSettings.lastUpdatedDateTime,
-        })
-        .from(appSettings)
-        .where(eq(appSettings.internalName, internalName));
-      return appSettingData[0] || [];
+      const cache = createCache({
+        ttl: 600000,
+        refreshThreshold: 3000,
+      });
+      const resultedAppSettingValue = await cache.get(internalName);
+      if (resultedAppSettingValue) {
+        return { value: resultedAppSettingValue };
+      } else {
+        const appSettingData: AppSettingsResponse = await this.db
+          .select({
+            id: appSettings.id,
+            groupName: appSettings.groupName,
+            internalName: appSettings.internalName,
+            caption: appSettings.caption,
+            description: appSettings.description,
+            value: appSettings.value,
+            createdDateTime: appSettings.createdDateTime,
+            lastUpdatedDateTime: appSettings.lastUpdatedDateTime,
+          })
+          .from(appSettings)
+          .where(eq(appSettings.internalName, internalName));
+        const internalNameToBeSet = await cache.set(internalName, appSettingData[0]?.value, 600000);
+        const resultedAppSettingValue = await cache.get(internalName);
+        console.log("settedData", resultedAppSettingValue);
+        return appSettingData[0]|| { value: resultedAppSettingValue } ;
+      }
     } catch (error: any) {
       console.log(error);
     }

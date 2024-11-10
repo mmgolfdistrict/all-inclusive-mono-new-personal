@@ -15,19 +15,10 @@ export default function CheckoutConfirmation() {
 
   return (
     <div className="relative flex flex-col items-center gap-4 px-0 pb-8 md:px-8">
-      <div className="flex p-2 justify-center w-full">
-        <Link href={`/${course?.id}`} data-testid="course-logo-id">
-          <BlurImage
-            src={course?.logo ?? ""}
-            alt="course logo"
-            width={60}
-            height={100}
-            className="w-[50px] object-fit"
-          />
-        </Link>
+      <div className="h-12 w-full ">
+
       </div>
       <CheckoutBreadcumbs status={"confirmation"} />
-
       <Confirmation teeTimeId={teeTimeId!} bookingId={bookingId ?? ""} />
     </div>
   );

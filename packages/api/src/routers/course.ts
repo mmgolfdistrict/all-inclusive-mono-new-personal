@@ -24,10 +24,12 @@ export const courseRouter = createTRPCRouter({
     .input(
       z.object({
         courseId: z.string(),
+        time: z.number().optional(),
+        date: z.string().optional(),
       })
     )
     .query(async ({ ctx, input }) => {
-      return await ctx.serviceFactory.getCourseService().getNumberOfPlayersByCourse(input.courseId);
+      return await ctx.serviceFactory.getCourseService().getNumberOfPlayersByCourse(input.courseId, input.time, input.date);
     }),
   getPrivacyPolicyAndTCByCourse: publicProcedure
     .input(

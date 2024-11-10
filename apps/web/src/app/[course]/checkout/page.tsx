@@ -52,7 +52,9 @@ export default function Checkout({
   const playerCount = searchParams?.playerCount as string | undefined;
   const { course } = useCourseContext();
   const { user } = useUserContext();
-  const { status } = useSession();
+  const session = useSession();
+  console.log("user checkout", user, { session });
+
   const [isSessionLoading, setIsSessionLoading] = useState(true);
   dayjs.extend(utc);
   dayjs.extend(timezone);
@@ -176,14 +178,14 @@ export default function Checkout({
       | TaxProduct =
       saleType === "first_hand"
         ? {
-            type: "first_hand",
-            tee_time_id: teeTimeId,
-            number_of_bookings: amountOfPlayers,
-          }
+          type: "first_hand",
+          tee_time_id: teeTimeId,
+          number_of_bookings: amountOfPlayers,
+        }
         : {
-            type: "second_hand",
-            second_hand_id: listingId,
-          };
+          type: "second_hand",
+          second_hand_id: listingId,
+        };
 
     const localCart: CartProduct[] = [
       {
@@ -218,7 +220,7 @@ export default function Checkout({
         display_price: formatMoney(
           ((data?.greenFeeTaxPerPlayer ?? 0) +
             (data?.cartFeeTaxPerPlayer ?? 0)) *
-            amountOfPlayers
+          amountOfPlayers
         ),
         product_data: {
           metadata: {
@@ -299,7 +301,7 @@ export default function Checkout({
         product_data: {
           metadata: {
             type: "charity",
-            charity_id: selectedCharity?.charityId ?? course?.roundUpCharityId??"",
+            charity_id: selectedCharity?.charityId ?? course?.roundUpCharityId ?? "",
             donation_amount: deboundCharityAmount * 100,
           },
         },
@@ -366,31 +368,8 @@ export default function Checkout({
       <div
         className={`relative flex flex-col items-center gap-4 px-0 pb-8 md:px-8 ${marginTop}`}
       >
-        <div className="flex p-2 justify-between w-full relative">
-          <div />
+        <div className="h-12 w-full ">
 
-          <Link
-            href={`/${course?.id}`}
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-            data-testid="course-logo-id"
-          >
-            <BlurImage
-              src={course?.logo ?? ""}
-              alt="course logo"
-              width={50}
-              height={100}
-              className="w-[50px] object-fit"
-            />
-          </Link>
-          {status == "loading" ? null : user && status === "authenticated" ? (
-            <div className="flex items-center gap-4">
-              <UserInNav alwaysShow={true} />
-            </div>
-          ) : (
-            <Link href={`/${course?.id}/login`} data-testid="login-button-id">
-              <FilledButton>Log In</FilledButton>
-            </Link>
-          )}
         </div>
         <CheckoutBreadcumbs status={"checkout"} />
         {maxReservation && maxReservation?.success === false && (
@@ -442,7 +421,7 @@ export default function Checkout({
                 cartData={cartData}
                 teeTimeDate={teeTimeData?.date}
                 playerCount={playerCount}
-                // maxReservation={maxReservation}
+              // maxReservation={maxReservation}
               />
             )}
           </div>
