@@ -12,6 +12,7 @@ import {
   sql,
   type Db,
   lt,
+  SQL,
 } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import { bookings } from "@golf-district/database/schema/bookings";
@@ -87,6 +88,10 @@ interface CheckTeeTimesAvailabilityParams {
   sortPrice: "asc" | "desc" | "";
   timezoneCorrection: number;
   cursor?: number | null;
+  isHolesAny?: boolean;
+  isGolferAny?: boolean;
+  highestPrice?: number;
+  lowestPrice?:number;
   _userId: string | undefined;
 }
 
@@ -687,6 +692,10 @@ export class SearchService {
     sortPrice,
     timezoneCorrection,
     cursor,
+    isHolesAny,
+    isGolferAny,
+    highestPrice,
+    lowestPrice,
     _userId,
   }: CheckTeeTimesAvailabilityParams) {
     const res: string[] = [];
@@ -723,12 +732,12 @@ export class SearchService {
       .utcOffset(timezoneCorrection)
       .add(30, "minutes")
       .toISOString();
-    console.log("------->>>---->>", startTime, endTime);
-
     // Allowed Players start
     const NumberOfPlayers = await this.database
       .select({
         primaryMarketAllowedPlayers: courses.primaryMarketAllowedPlayers,
+        openTime:courses.openTime,
+        closeTime:courses.closeTime
       })
       .from(courses)
       .where(eq(courses.id, courseId));
@@ -743,6 +752,35 @@ export class SearchService {
         : [];
     const playersCount = numberOfPlayers?.[0] ? Number(numberOfPlayers[0]) : golfers;
 
+    const conditions:SQL<unknown>[] = []
+
+    if (!isHolesAny) {
+      conditions.push(eq(teeTimes.numberOfHoles, holes));
+    }
+
+    if (!isGolferAny) {
+      conditions.push(gte(teeTimes.availableFirstHandSpots, playersCount));
+    }
+    
+    const startingHour =
+      Number(NumberOfPlayers[0]?.openTime?.split(" ")?.[1]?.split(":")?.[0]) ?? 9;
+    const closingHour =
+      Number(NumberOfPlayers[0]?.closeTime?.split(" ")?.[1]?.split(":")?.[0]) ?? 9;
+     
+    if((startingHour*100)!==startTime || (closingHour*100)!==endTime){
+       conditions.push(and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)) as any)
+    }  
+
+    const firstHandSpecificCondition:SQL<unknown>[]=[]
+    const secondHandSpecificCondition:SQL<unknown>[]=[]
+
+    if(highestPrice !== upperPrice || lowestPrice !==lowerPrice){
+      firstHandSpecificCondition.push(sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 >= ${lowerPrice}`)
+      firstHandSpecificCondition.push(sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 <= ${upperPrice}`)
+      secondHandSpecificCondition.push(sql`(${lists.listPrice}*(${courses.buyerFee}/100)+${lists.listPrice})/100 >= ${lowerPrice}`)
+      secondHandSpecificCondition.push(sql`(${lists.listPrice}*(${courses.buyerFee}/100)+${lists.listPrice})/100 <= ${upperPrice}`)
+    }
+
     const firstHandResultsQuery = this.database
       .selectDistinct({
         providerDate: sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))`,
@@ -754,15 +792,19 @@ export class SearchService {
           eq(courses.id, courseId),
           gte(teeTimes.providerDate, currentTimePlus30Min),
           between(teeTimes.providerDate, minDateSubquery, maxDateSubquery),
-          and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
           and(gt(teeTimes.greenFeePerPlayer, 0)),
-          sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 >= ${lowerPrice}`,
-          sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 <= ${upperPrice}`,
-          eq(teeTimes.numberOfHoles, holes),
-          gte(teeTimes.availableFirstHandSpots, playersCount)
+          // and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
+          // sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 >= ${lowerPrice}`,
+          // sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 <= ${upperPrice}`,
+          // // eq(teeTimes.numberOfHoles, holes),
+          // gte(teeTimes.availableFirstHandSpots, playersCount)
+          ...conditions,
+          ...firstHandSpecificCondition
         )
       )
       .orderBy(asc(sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))`));
+      
+
     const firstHandResults = await firstHandResultsQuery.execute();
 
     const secondHandResultsQuery = this.database
@@ -779,11 +821,13 @@ export class SearchService {
           gte(teeTimes.providerDate, currentTimePlus30Min),
           between(teeTimes.providerDate, minDateSubquery, maxDateSubquery),
           eq(lists.isDeleted, false),
-          and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
-          sql`(${lists.listPrice}*(${courses.buyerFee}/100)+${lists.listPrice})/100 >= ${lowerPrice}`,
-          sql`(${lists.listPrice}*(${courses.buyerFee}/100)+${lists.listPrice})/100 <= ${upperPrice}`,
-          eq(teeTimes.numberOfHoles, holes),
-          gte(teeTimes.availableSecondHandSpots, golfers)
+          // and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
+          // sql`(${lists.listPrice}*(${courses.buyerFee}/100)+${lists.listPrice})/100 >= ${lowerPrice}`,
+          // sql`(${lists.listPrice}*(${courses.buyerFee}/100)+${lists.listPrice})/100 <= ${upperPrice}`,
+          // eq(teeTimes.numberOfHoles, holes),
+          // gte(teeTimes.availableSecondHandSpots, golfers)
+          ...conditions,
+          ...secondHandSpecificCondition
         )
       )
       .orderBy(asc(sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))`));
