@@ -279,6 +279,11 @@ const Data = ({
             }
           />
           <p
+            className={`text-${getTextColor(courseException?.displayType)} font-semibold`}
+          >
+            {courseException?.shortMessage}
+          </p>
+          <p
             className={`text-${getTextColor(
               courseException?.displayType
             )} font-semibold`}
