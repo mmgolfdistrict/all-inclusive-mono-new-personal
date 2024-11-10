@@ -429,7 +429,6 @@ export default function CourseHomePage() {
     if (typeof window !== "undefined") {
       localStorage.removeItem("googlestate");
       localStorage.removeItem("credentials");
-      localStorage.removeItem("linkedinstate");
     }
   }, []);
   let datesArr = JSON.parse(

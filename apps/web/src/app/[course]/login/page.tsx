@@ -15,10 +15,8 @@ import { Apple } from "~/components/icons/apple";
 import { Facebook } from "~/components/icons/facebook";
 import { Google } from "~/components/icons/google";
 import { Hidden } from "~/components/icons/hidden";
-import { LinkedinLogo } from "~/components/icons/linkedin";
 import { Visible } from "~/components/icons/visible";
 import { Input } from "~/components/input/input";
-import { Spinner } from "~/components/loading/spinner";
 import { useAppContext } from "~/contexts/AppContext";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { usePreviousPath } from "~/hooks/usePreviousPath";
@@ -32,6 +30,7 @@ import ReCAPTCHA from "react-google-recaptcha";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
 import { LoadingContainer } from "../loader";
+import { Spinner } from "~/components/loading/spinner";
 
 export default function Login() {
   const recaptchaRef = createRef<ReCAPTCHA>();
@@ -44,9 +43,7 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [localStorageGoogle, setLocalStorageGoogle] = useState("");
   const [localstorageCredentials, setLocalStorageCredentials] = useState("");
-  const [localstorageLinkedin,setLocalStorageLinkedin]=useState("");
   const [googleIsLoading, setGoogleIsLoading] = useState(false);
-  const [linkedinIsLoading, setLinkedinIsLoading] = useState(false);
   const [credentialsLoader, setCredentialsLoader] = useState(false);
   const auditLog = api.webhooks.auditLog.useMutation();
   const { data: sessionData, status } = useSession();
@@ -114,7 +111,7 @@ export default function Login() {
       toast.error("An error occurred logging in, try another option.");
     }
   }, []);
-  
+
   const {
     register,
     handleSubmit,
@@ -270,19 +267,6 @@ export default function Login() {
       // setGoogleIsLoading(false);
     }
   };
-  const linkedinSignIn = async () => {
-    try {
-      setLinkedinIsLoading(true);
-      const result = await signIn("linkedin", {
-        redirect: false,
-      });
-      if (typeof window !== "undefined") {
-        localStorage.setItem("linkedinstate", "loggedin");
-      }
-    } catch (error) {
-      console.log(error, "error");
-    }
-  };
   const hasProvidersSetUp =
     process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
     process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
@@ -305,16 +289,11 @@ export default function Login() {
   }, []);
   useEffect(() => {
     if (typeof window !== "undefined") {
-      setLocalStorageLinkedin(localStorage.getItem("linkedinstate") || "");
-    }
-  }, []);
-  useEffect(() => {
-    if (typeof window !== "undefined") {
       setLocalStorageCredentials(localStorage.getItem("credentials") || "");
     }
   }, []);
-  
-  return isLoading || localStorageGoogle || localstorageLinkedin ? (
+
+  return isLoading || localStorageGoogle ? (
     <LoadingContainer isLoading={true}>
       <div></div>
     </LoadingContainer>
@@ -342,32 +321,12 @@ export default function Login() {
             >
               {googleIsLoading || localStorageGoogle ? (
                 <div className="w-10 h-10">
-                  <Spinner />
+                  <Spinner/>
                 </div>
               ) : (
                 <Fragment>
                   <Google className="w-[24px]" />
                   Log In with Google
-                </Fragment>
-              )}
-            </SquareButton>
-          </div>
-        ) : null}
-        {process.env.NEXT_PUBLIC_LINKEDIN_ENABLED_AUTH_SUPPORT ? (
-          <div className="w-full rounded-lg shadow-outline">
-            <SquareButton
-              onClick={linkedinSignIn}
-              className="flex w-full items-center justify-center gap-3 text-primary-gray shadow-google-btn"
-              data-testid="login-with-google-id"
-            >
-              {linkedinIsLoading || localstorageLinkedin ? (
-                <div className="w-10 h-10">
-                  <Spinner />
-                </div>
-              ) : (
-                <Fragment>
-                  <LinkedinLogo className="w-[30px] h-[30px]" />
-                  Log In with Linkedin
                 </Fragment>
               )}
             </SquareButton>
