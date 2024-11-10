@@ -61,7 +61,7 @@ export class Lightspeed extends BaseProvider {
 
     fetchTeeTimes = async (courseId: string, date: string, providerConfiguration: any, page: number) => {
         try {
-            const { BASE_ENDPOINT, CONTENT_TYPE, ORGANIZATION_ID } = JSON.parse(providerConfiguration ?? "{}");
+            const { BASE_ENDPOINT, CONTENT_TYPE, ORGANIZATION_ID, ACCEPT } = JSON.parse(providerConfiguration ?? "{}");
 
             const token = await this.getToken();
 
@@ -73,7 +73,7 @@ export class Lightspeed extends BaseProvider {
             const headers = {
                 Authorization: `Bearer ${token}`,
                 'Content-Type': CONTENT_TYPE,
-                'Accept': 'application/vnd.api+json',
+                'Accept': ACCEPT,
             };
             const response = await fetch(url, {
                 method: 'GET',
@@ -119,7 +119,7 @@ export class Lightspeed extends BaseProvider {
         data: LightspeedBookingCreationData,
         userId: string
     ): Promise<LightSpeedBookingResponse> {
-        const { BASE_ENDPOINT, CONTENT_TYPE, ORGANIZATION_ID } = JSON.parse(this.providerConfiguration ?? "{}");
+        const { BASE_ENDPOINT, CONTENT_TYPE, ORGANIZATION_ID, ACCEPT } = JSON.parse(this.providerConfiguration ?? "{}");
         if (!token) {
             token = await this.getToken() ?? "";
             if (!token) {
@@ -129,7 +129,7 @@ export class Lightspeed extends BaseProvider {
         const headers = {
             Authorization: `Bearer ${token}`,
             'Content-Type': CONTENT_TYPE,
-            'Accept': 'application/vnd.api+json',
+            'Accept': ACCEPT,
         };
         console.log("LIGHTSPEED DATA", data);
         const payload = {
@@ -434,7 +434,7 @@ export class Lightspeed extends BaseProvider {
         _teesheetId: string,
         bookingId: string
     ): Promise<void> {
-        const { BASE_ENDPOINT, CONTENT_TYPE } = JSON.parse(this.providerConfiguration ?? "{}");
+        const { BASE_ENDPOINT, CONTENT_TYPE, ACCEPT } = JSON.parse(this.providerConfiguration ?? "{}");
         if (!token) {
             token = await this.getToken() ?? "";
             if (!token) {
@@ -444,7 +444,7 @@ export class Lightspeed extends BaseProvider {
         const headers = {
             Authorization: `Bearer ${token}`,
             'Content-Type': CONTENT_TYPE,
-            'Accept': 'application/vnd.api+json',
+            'Accept': ACCEPT,
         };
         const url = `${BASE_ENDPOINT}/partner_api/v2/reservations/${bookingId}`;
 
@@ -485,7 +485,7 @@ export class Lightspeed extends BaseProvider {
     ): Promise<LightspeedCustomerCreationResponse> {
         customerData = customerData as LightspeedCustomerCreationData;
         //Create Customer
-        const { BASE_ENDPOINT, CONTENT_TYPE, ORGANIZATION_ID } = JSON.parse(this.providerConfiguration ?? "{}");
+        const { BASE_ENDPOINT, CONTENT_TYPE, ORGANIZATION_ID, ACCEPT } = JSON.parse(this.providerConfiguration ?? "{}");
         if (!token) {
             token = await this.getToken() ?? "";
             if (!token) {
@@ -495,7 +495,7 @@ export class Lightspeed extends BaseProvider {
         const headers = {
             Authorization: `Bearer ${token}`,
             'Content-Type': CONTENT_TYPE,
-            'Accept': 'application/vnd.api+json',
+            'Accept': ACCEPT,
         };
 
         const url = `${BASE_ENDPOINT}/partner_api/v2/organizations/${ORGANIZATION_ID}/customers`;
@@ -590,7 +590,7 @@ export class Lightspeed extends BaseProvider {
             if (roundIds.length <= 0) {
                 return;
             }
-            const { BASE_ENDPOINT, CONTENT_TYPE, ORGANIZATION_ID } = JSON.parse(this.providerConfiguration ?? "{}");
+            const { BASE_ENDPOINT, CONTENT_TYPE, ORGANIZATION_ID, ACCEPT } = JSON.parse(this.providerConfiguration ?? "{}");
             if (!token) {
                 token = await this.getToken() ?? "";
                 if (!token) {
@@ -600,7 +600,7 @@ export class Lightspeed extends BaseProvider {
             const headers = {
                 Authorization: `Bearer ${token}`,
                 'Content-Type': CONTENT_TYPE,
-                'Accept': 'application/vnd.api+json',
+                'Accept': ACCEPT,
             };
             const payload = {
                 data: {
@@ -676,7 +676,7 @@ export class Lightspeed extends BaseProvider {
         },
         slotId?: string
     ): Promise<LightSpeedBookingResponse> {
-        const { BASE_ENDPOINT, CONTENT_TYPE, ORGANIZATION_ID } = JSON.parse(this.providerConfiguration ?? "{}");
+        const { BASE_ENDPOINT, CONTENT_TYPE, ORGANIZATION_ID, ACCEPT } = JSON.parse(this.providerConfiguration ?? "{}");
         if (!token) {
             token = await this.getToken() ?? "";
             if (!token) {
@@ -686,7 +686,7 @@ export class Lightspeed extends BaseProvider {
         const headers = {
             Authorization: `Bearer ${token}`,
             'Content-Type': CONTENT_TYPE,
-            'Accept': 'application/vnd.api+json',
+            'Accept': ACCEPT,
         };
         const payload = {
             data: {
@@ -737,7 +737,7 @@ export class Lightspeed extends BaseProvider {
     }
 
     async getCustomer(token: string, courseId: string, email: string): Promise<LightspeedGetCustomerResponse | undefined> {
-        const { BASE_ENDPOINT, CONTENT_TYPE, ORGANIZATION_ID } = JSON.parse(this.providerConfiguration ?? "{}");
+        const { BASE_ENDPOINT, CONTENT_TYPE, ORGANIZATION_ID, ACCEPT } = JSON.parse(this.providerConfiguration ?? "{}");
         if (!token) {
             token = await this.getToken() ?? "";
             if (!token) {
@@ -749,7 +749,7 @@ export class Lightspeed extends BaseProvider {
         const headers = {
             Authorization: `Bearer ${token}`,
             'Content-Type': CONTENT_TYPE,
-            'Accept': 'application/vnd.api+json',
+            'Accept': ACCEPT,
         };
 
         console.log(`getCustomer - ${url}`);
