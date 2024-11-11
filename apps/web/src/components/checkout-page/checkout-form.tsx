@@ -178,7 +178,7 @@ export const CheckoutForm = ({
   // const [isPaymentCompleted, setIsPaymentCompleted] = useState(false);
   const [message, setMessage] = useState("");
   const [charityAmountError, setCharityAmountError] = useState("");
-  const [customerID, setCustomerID] = useState("");
+
   const {
     promoCode,
     handlePromoCode,
@@ -201,53 +201,7 @@ export const CheckoutForm = ({
   console.log(checkIsBookingDisabled);
   const { data: multipleTransaction } =
     api.checkout.checkMultipleTeeTimeTransactionByUser.useQuery({});
-  console.log("multipleTransaction", multipleTransaction);
-  const { refetch: createCustomerInHyperSwitchHandler } =
-    api.checkout.createCustomerForHyperSwitch.useQuery(
-      {},
-      {
-        enabled: false,
-      }
-    );
-  const { refetch: retrieveCustomerHandler } =
-    api.checkout.retrieveCustomerDataByCustomer_ID.useQuery(
-      {},
-      {
-        enabled: false,
-      }
-    );
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const retrieveCustomerResponse = await retrieveCustomerHandler();
-        if (retrieveCustomerResponse.data?.error) {
-          const createCustomerResponse =
-            await createCustomerInHyperSwitchHandler();
-
-          if (createCustomerResponse.data?.error) {
-            console.log(
-              createCustomerResponse.data?.message,
-              "createCustomerForHyperSwitch"
-            );
-          }
-          console.log(
-            createCustomerResponse.data?.data,
-            "New customer created"
-          );
-        }
-        console.log(
-          retrieveCustomerResponse.data?.data,
-          "created customer created"
-        );
-        setCustomerID(retrieveCustomerResponse.data?.data);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
-    };
-    fetchData();
-  }, []);
-
+    console.log("multipleTransaction",multipleTransaction);
   const handlePaymentStatus = (status: string) => {
     switch (status) {
       case "succeeded":
