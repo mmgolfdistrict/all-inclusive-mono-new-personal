@@ -122,6 +122,10 @@ export class NotificationService {
    */
   sendEmail = async (email: string, subject: string, body: string) => {
     this.logger.info(`Sending email to ${email}`);
+
+    const bccEmailsList = process.env.BCC_CUSTOMER_EMAIL_LIST ? process.env.BCC_CUSTOMER_EMAIL_LIST : "";
+    const bccEmails = bccEmailsList.split(",");
+
     //if (process.env.NODE_ENV === "production") {
     await this.sendGridClient
       .send({
@@ -129,6 +133,7 @@ export class NotificationService {
         from: this.sendGrid_email,
         subject: subject,
         text: body,
+        bcc: bccEmails,
       })
       .catch((err) => {
         this.logger.error(err);
@@ -142,8 +147,8 @@ export class NotificationService {
             email,
             subject,
             body,
-          })
-        })
+          }),
+        });
         throw new Error(`Failed to send email to: ${email}`);
       });
     // } else {
@@ -168,6 +173,8 @@ export class NotificationService {
       process.env.REDIS_URL!,
       process.env.REDIS_TOKEN!
     );
+    const bccEmailsList = process.env.BCC_CUSTOMER_EMAIL_LIST ? process.env.BCC_CUSTOMER_EMAIL_LIST : "";
+    const bccEmails = bccEmailsList.split(",");
 
     const appSettings = await appSettingService.getMultiple("ENABLE_ICS_ATTACHMENT");
     if (appSettings?.ENABLE_ICS_ATTACHMENT === "false") {
@@ -178,6 +185,7 @@ export class NotificationService {
           subject,
           templateId,
           dynamicTemplateData: { ...template },
+          bcc: bccEmails,
         })
         .catch((err) => {
           this.logger.error(err);
@@ -192,9 +200,9 @@ export class NotificationService {
               subject,
               template,
               templateId,
-              attachments
-            })
-          })
+              attachments,
+            }),
+          });
           throw new Error(`Failed to send email to: ${email}`);
         });
     } else {
@@ -206,6 +214,7 @@ export class NotificationService {
           templateId,
           dynamicTemplateData: { ...template },
           attachments,
+          bcc: bccEmails,
         })
         .catch((err) => {
           this.logger.error(err);
@@ -220,9 +229,9 @@ export class NotificationService {
               subject,
               template,
               templateId,
-              attachments
-            })
-          })
+              attachments,
+            }),
+          });
           throw new Error(`Failed to send email to: ${email}`);
         });
     }
@@ -260,8 +269,8 @@ export class NotificationService {
             additionalDetailsJSON: JSON.stringify({
               phoneNumber,
               body,
-            })
-          })
+            }),
+          });
           throw new Error(`Failed to send SMS to: ${phoneNumber}`);
         });
     } else {
@@ -421,9 +430,9 @@ export class NotificationService {
             subject,
             template,
             templateId,
-            attachments
-          })
-        })
+            attachments,
+          }),
+        });
         throw new Error("Failed to retrieve user");
       });
 
@@ -440,9 +449,9 @@ export class NotificationService {
           subject,
           template,
           templateId,
-          attachments
-        })
-      })
+          attachments,
+        }),
+      });
       return;
     }
     this.logger.info(`Creating notification for user ${userId}`);
@@ -471,9 +480,9 @@ export class NotificationService {
             subject,
             template,
             templateId,
-            attachments
-          })
-        })
+            attachments,
+          }),
+        });
         throw new Error("Failed to create notification");
       });
 
@@ -536,8 +545,8 @@ export class NotificationService {
         additionalDetailsJSON: JSON.stringify({
           userId,
           entityId,
-        })
-      })
+        }),
+      });
       throw new Error("Failed to retrieve notifications");
     });
 
@@ -612,9 +621,9 @@ export class NotificationService {
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
             userId,
-            notificationIds
-          })
-        })
+            notificationIds,
+          }),
+        });
         throw new Error("Failed to mark notifications as deleted");
       });
   };

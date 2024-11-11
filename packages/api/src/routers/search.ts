@@ -136,6 +136,10 @@ export const searchRouter = createTRPCRouter({
         sortPrice: z.enum(["asc", "desc", ""]).default(""),
         timezoneCorrection: z.number().default(0),
         cursor: z.number().nullish().optional(),
+        isHolesAny: z.boolean(),
+        isGolferAny: z.boolean(),
+        highestPrice: z.number(),
+        lowestPrice: z.number()
       })
     )
     .query(async ({ ctx, input }) => {
@@ -157,6 +161,10 @@ export const searchRouter = createTRPCRouter({
         sortPrice: input.sortPrice,
         timezoneCorrection: input.timezoneCorrection,
         cursor: input.cursor,
+        isHolesAny: input.isHolesAny,
+        isGolferAny: input.isGolferAny,
+        highestPrice: input.highestPrice,
+        lowestPrice: input.lowestPrice,
         _userId: ctx.session?.user?.id,
       });
     }),

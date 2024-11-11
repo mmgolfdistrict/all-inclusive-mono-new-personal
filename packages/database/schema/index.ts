@@ -51,6 +51,7 @@ import * as users from "./users";
 import * as userWaitlists from "./userWaitlists";
 import * as verificationTokens from "./verificationTokens";
 import * as withdrawals from "./withdrawals";
+import * as courseAllowedTimeToSell from "./courseAllowedTimeToSell";
 
 export const schema = {
   ...accounts,
@@ -106,4 +107,5 @@ export const schema = {
   ...adminUserCourse,
   ...courseGlobalNotification,
   ...providerAuthTokens,
+  ...courseAllowedTimeToSell
 };

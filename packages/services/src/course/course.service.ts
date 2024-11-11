@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
-import { and, asc, desc, eq, gte, max, min, sql } from "@golf-district/database";
+import { and, asc, desc, eq, gte, lte, sql } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import { bookings } from "@golf-district/database/schema/bookings";
 import { charities } from "@golf-district/database/schema/charities";
@@ -18,6 +18,14 @@ import type { ProviderService } from "../tee-sheet-provider/providers.service";
 import { providerCourseLink } from "@golf-district/database/schema/providersCourseLink";
 import { providers } from "@golf-district/database/schema/providers";
 import { loggerService } from "../webhooks/logging.service";
+import { courseAllowedTimeToSell } from "@golf-district/database/schema/courseAllowedTimeToSell";
+import dayjs from "dayjs";
+import utc from 'dayjs/plugin/utc';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+dayjs.extend(utc);
+dayjs.extend(customParseFormat);
+
+type DayOfWeek = "MON" | "TUE" | "WED" | "THU" | "FRI" | "SAT" | "SUN";
 
 /**
  * Service handling course-related operations.
@@ -84,6 +92,7 @@ export class CourseService extends DomainService {
         internalId: providers.internalId,
         roundUpCharityId: courses?.roundUpCharityId,
         providerConfiguration: providerCourseLink.providerCourseConfiguration,
+        isBookingDisabled :courses.isBookingDisabled
       })
       .from(courses)
       .innerJoin(providerCourseLink, eq(providerCourseLink.courseId, courses.id))
@@ -857,18 +866,50 @@ export class CourseService extends DomainService {
     }
   };
 
-  getNumberOfPlayersByCourse = async (courseId: string) => {
-    const NumberOfPlayers = await this.database
-      .select({
-        primaryMarketAllowedPlayers: courses.primaryMarketAllowedPlayers,
-      })
-      .from(courses)
-      .where(eq(courses.id, courseId));
-
+  getNumberOfPlayersByCourse = async (courseId: string, time?: number, date?: string) => {
+    let binaryMask: any;
     const PlayersOptions = ["1", "2", "3", "4"];
 
-    const binaryMask = NumberOfPlayers[0]?.primaryMarketAllowedPlayers;
+    if (time && date) {
+      const day = dayjs.utc(date, "YYYY-MM-DD").format("ddd").toUpperCase() as DayOfWeek;
+      let NumberOfPlayers = await this.database
+        .select({
+          primaryMarketAllowedPlayers: courseAllowedTimeToSell.primaryMarketAllowedPlayers,
+        })
+        .from(courseAllowedTimeToSell)
+        .where(
+          and(
+            eq(courseAllowedTimeToSell.courseId, courseId),
+            eq(courseAllowedTimeToSell.day, day),
+            and(
+              gte(courseAllowedTimeToSell.fromTime, time),
+              lte(courseAllowedTimeToSell.toTime, time)
+            )
+          )
+        )
+      if (!NumberOfPlayers[0]) {
+        NumberOfPlayers = await this.database
+          .select({
+            primaryMarketAllowedPlayers: courses.primaryMarketAllowedPlayers,
+          })
+          .from(courses)
+          .where(eq(courses.id, courseId));
+      }
 
+      if (NumberOfPlayers[0]?.primaryMarketAllowedPlayers) {
+        binaryMask = NumberOfPlayers[0]?.primaryMarketAllowedPlayers;
+      }
+    } else {
+      const NumberOfPlayers = await this.database
+        .select({
+          primaryMarketAllowedPlayers: courses.primaryMarketAllowedPlayers,
+        })
+        .from(courses)
+        .where(eq(courses.id, courseId));
+      if (!NumberOfPlayers[0]?.primaryMarketAllowedPlayers) {
+        binaryMask = NumberOfPlayers[0]?.primaryMarketAllowedPlayers;
+      }
+    }
     const numberOfPlayers =
       binaryMask !== null && binaryMask !== undefined
         ? PlayersOptions.filter((_, index) => (binaryMask & (1 << index)) !== 0)
