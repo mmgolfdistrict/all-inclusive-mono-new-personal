@@ -1,7 +1,6 @@
 import { Auth } from '@auth/core';
 import GitHubProvider from '@auth/core/providers/github';
 import GoogleProvider from '@auth/core/providers/google';
-import LinkedInProvider from '@auth/core/providers/linkedin';
 import { e as eventHandler, t as toWebRequest } from './nitro/node-server.mjs';
 import 'node:http';
 import 'node:https';
@@ -23,25 +22,6 @@ const ____auth_ = eventHandler(
       GitHubProvider({
         clientId: process.env.AUTH_GITHUB_ID,
         clientSecret: process.env.AUTH_GITHUB_SECRET
-      }),
-      LinkedInProvider({
-        clientId: "78rbprguxmjodr",
-        clientSecret: "WPL_AP1.iw8Pb2NohiAmIJrA.GDIaqw==",
-        authorization: {
-          params: { scope: "openid profile email" }
-        },
-        issuer: "https://www.linkedin.com/oauth",
-        jwks_endpoint: "https://www.linkedin.com/oauth/openid/jwks",
-        profile(profile, tokens) {
-          var _a;
-          const defaultImage = "https://cdn-icons-png.flaticon.com/512/174/174857.png";
-          return {
-            id: profile.sub,
-            name: profile.name,
-            email: profile.email,
-            image: (_a = profile.picture) != null ? _a : defaultImage
-          };
-        }
       })
     ]
   })
