@@ -12,6 +12,8 @@ import {
   sql,
   type Db,
   lt,
+  isNull,
+  SQL,
 } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import { bookings } from "@golf-district/database/schema/bookings";
@@ -32,6 +34,7 @@ import type { Forecast } from "../weather/types";
 import type { WeatherService } from "../weather/weather.service";
 import { majorEvents } from "@golf-district/database/schema/majorEvents";
 import { loggerService } from "../webhooks/logging.service";
+import { courseAllowedTimeToSell } from "@golf-district/database/schema/courseAllowedTimeToSell";
 
 dayjs.extend(UTC);
 
@@ -87,6 +90,10 @@ interface CheckTeeTimesAvailabilityParams {
   sortPrice: "asc" | "desc" | "";
   timezoneCorrection: number;
   cursor?: number | null;
+  isHolesAny?: boolean;
+  isGolferAny?: boolean;
+  highestPrice?: number;
+  lowestPrice?:number;
   _userId: string | undefined;
 }
 
@@ -687,6 +694,10 @@ export class SearchService {
     sortPrice,
     timezoneCorrection,
     cursor,
+    isHolesAny,
+    isGolferAny,
+    highestPrice,
+    lowestPrice,
     _userId,
   }: CheckTeeTimesAvailabilityParams) {
     const res: string[] = [];
@@ -723,12 +734,12 @@ export class SearchService {
       .utcOffset(timezoneCorrection)
       .add(30, "minutes")
       .toISOString();
-    console.log("------->>>---->>", startTime, endTime);
-
     // Allowed Players start
     const NumberOfPlayers = await this.database
       .select({
         primaryMarketAllowedPlayers: courses.primaryMarketAllowedPlayers,
+        openTime:courses.openTime,
+        closeTime:courses.closeTime
       })
       .from(courses)
       .where(eq(courses.id, courseId));
@@ -743,26 +754,111 @@ export class SearchService {
         : [];
     const playersCount = numberOfPlayers?.[0] ? Number(numberOfPlayers[0]) : golfers;
 
+    const conditions:SQL<unknown>[] = []
+
+    if (!isHolesAny) {
+      conditions.push(eq(teeTimes.numberOfHoles, holes));
+    }
+
+    if (!isGolferAny) {
+      conditions.push(gte(teeTimes.availableFirstHandSpots, playersCount));
+    }
+    
+    const startingHour =
+      Number(NumberOfPlayers[0]?.openTime?.split(" ")?.[1]?.split(":")?.[0]) ?? 9;
+    const closingHour =
+      Number(NumberOfPlayers[0]?.closeTime?.split(" ")?.[1]?.split(":")?.[0]) ?? 9;
+     
+    if((startingHour*100)!==startTime || (closingHour*100)!==endTime){
+       conditions.push(and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)) as any)
+    }  
+
+    const firstHandSpecificCondition:SQL<unknown>[]=[]
+    const secondHandSpecificCondition:SQL<unknown>[]=[]
+
+    if(highestPrice !== upperPrice || lowestPrice !==lowerPrice){
+      firstHandSpecificCondition.push(sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 >= ${lowerPrice}`)
+      firstHandSpecificCondition.push(sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 <= ${upperPrice}`)
+      secondHandSpecificCondition.push(sql`(${lists.listPrice}*(${courses.buyerFee}/100)+${lists.listPrice})/100 >= ${lowerPrice}`)
+      secondHandSpecificCondition.push(sql`(${lists.listPrice}*(${courses.buyerFee}/100)+${lists.listPrice})/100 <= ${upperPrice}`)
+    }
+
     const firstHandResultsQuery = this.database
       .selectDistinct({
         providerDate: sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))`,
       })
       .from(teeTimes)
       .innerJoin(courses, eq(courses.id, teeTimes.courseId))
+
+    const courseAllowedTeeTimeToSellFilters = await this.database
+      .select({
+        fromTime: courseAllowedTimeToSell.fromTime,
+        toTime: courseAllowedTimeToSell.toTime,
+        primaryMarketAllowedPlayers: courseAllowedTimeToSell.primaryMarketAllowedPlayers
+      })
+      .from(courseAllowedTimeToSell)
       .where(
+        and(
+          eq(courseAllowedTimeToSell.courseId, courseId),
+        )
+      )
+      .orderBy(asc(courseAllowedTimeToSell.fromTime))
+      .execute()
+
+    if (courseAllowedTeeTimeToSellFilters.length > 0) {
+      firstHandResultsQuery
+        .leftJoin(
+          courseAllowedTimeToSell,
+          and(
+            eq(courseAllowedTimeToSell.courseId, teeTimes.courseId),
+            eq(
+              courseAllowedTimeToSell.day,
+              sql`UPPER(DATE_FORMAT(DATE(Convert_TZ(${teeTimes.providerDate}, 'UTC', ${courses.timezoneISO})), '%a'))`
+            )
+          )
+        )
+        .where(
+          and(
+            eq(courses.id, courseId),
+            gte(teeTimes.providerDate, currentTimePlus30Min),
+            between(teeTimes.providerDate, minDateSubquery, maxDateSubquery),
+            gte(teeTimes.time, startTime),
+            lte(teeTimes.time, endTime),
+            sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer}) / 100 >= ${lowerPrice}`,
+            sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer}) / 100 <= ${upperPrice}`,
+            eq(teeTimes.numberOfHoles, holes),
+            gte(teeTimes.availableFirstHandSpots, playersCount),
+            or(
+              isNull(courseAllowedTimeToSell.courseId),
+              and(
+                gte(teeTimes.time, courseAllowedTimeToSell.fromTime),
+                lte(teeTimes.time, courseAllowedTimeToSell.toTime),
+              )
+            )
+          )
+        )
+        .orderBy(asc(sql`DATE(Convert_TZ(${teeTimes.providerDate}, 'UTC', ${courses.timezoneISO}))`))
+    } else {
+      firstHandResultsQuery.where(
         and(
           eq(courses.id, courseId),
           gte(teeTimes.providerDate, currentTimePlus30Min),
           between(teeTimes.providerDate, minDateSubquery, maxDateSubquery),
-          and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
           and(gt(teeTimes.greenFeePerPlayer, 0)),
-          sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 >= ${lowerPrice}`,
-          sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 <= ${upperPrice}`,
-          eq(teeTimes.numberOfHoles, holes),
-          gte(teeTimes.availableFirstHandSpots, playersCount)
+          // and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
+          // sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 >= ${lowerPrice}`,
+          // sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 <= ${upperPrice}`,
+          // // eq(teeTimes.numberOfHoles, holes),
+          // gte(teeTimes.availableFirstHandSpots, playersCount)
+          ...conditions,
+          ...firstHandSpecificCondition
         )
       )
-      .orderBy(asc(sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))`));
+        .orderBy(asc(sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))`))
+    }
+
+    // console.log("DATES QUERY:", firstHandResultsQuery.toSQL())
+
     const firstHandResults = await firstHandResultsQuery.execute();
 
     const secondHandResultsQuery = this.database
@@ -779,11 +875,13 @@ export class SearchService {
           gte(teeTimes.providerDate, currentTimePlus30Min),
           between(teeTimes.providerDate, minDateSubquery, maxDateSubquery),
           eq(lists.isDeleted, false),
-          and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
-          sql`(${lists.listPrice}*(${courses.buyerFee}/100)+${lists.listPrice})/100 >= ${lowerPrice}`,
-          sql`(${lists.listPrice}*(${courses.buyerFee}/100)+${lists.listPrice})/100 <= ${upperPrice}`,
-          eq(teeTimes.numberOfHoles, holes),
-          gte(teeTimes.availableSecondHandSpots, golfers)
+          // and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
+          // sql`(${lists.listPrice}*(${courses.buyerFee}/100)+${lists.listPrice})/100 >= ${lowerPrice}`,
+          // sql`(${lists.listPrice}*(${courses.buyerFee}/100)+${lists.listPrice})/100 <= ${upperPrice}`,
+          // eq(teeTimes.numberOfHoles, holes),
+          // gte(teeTimes.availableSecondHandSpots, golfers)
+          ...conditions,
+          ...secondHandSpecificCondition
         )
       )
       .orderBy(asc(sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))`));
@@ -985,7 +1083,7 @@ export class SearchService {
           ? asc(teeTimes.greenFeePerPlayer)
           : asc(teeTimes.time)
       )
-      .limit(limit);
+    const teeQueryLimited = teeQuery.limit(limit);
 
 
     const courseData = await this.database
@@ -1006,7 +1104,7 @@ export class SearchService {
       courseDataIfAvailable = courseData[0];
     }
 
-    const teeTimesData = await teeQuery.execute().catch(async (err) => {
+    let teeTimesData = await teeQueryLimited.execute().catch(async (err) => {
       await loggerService.errorLog({
         userId: _userId ?? "",
         url: `/${courseId}`,
@@ -1039,6 +1137,139 @@ export class SearchService {
       });
       throw new Error(`Error getting tee times for ${date}: ${err}`);
     });
+
+    // Filter specific tee times that can be sold
+    const dayToFetch = dayjs(date)
+      .utc()
+      .hour(0)
+      .minute(0)
+      .second(0)
+      .millisecond(0)
+      .format("ddd")
+      .toUpperCase() as "MON" | "TUE" | "WED" | "THU" | "FRI" | "SAT" | "SUN";
+
+    const courseAllowedTeeTimeToSellFilters = await this.database
+      .select({
+        fromTime: courseAllowedTimeToSell.fromTime,
+        toTime: courseAllowedTimeToSell.toTime,
+        primaryMarketAllowedPlayers: courseAllowedTimeToSell.primaryMarketAllowedPlayers
+      })
+      .from(courseAllowedTimeToSell)
+      .where(
+        and(
+          eq(courseAllowedTimeToSell.courseId, courseId),
+          eq(courseAllowedTimeToSell.day, dayToFetch),
+        )
+      )
+      .orderBy(asc(courseAllowedTimeToSell.fromTime))
+      .execute()
+
+    let innerCursor = 0;
+    if (courseAllowedTeeTimeToSellFilters?.length > 0) {
+      let newTeeTimeData = [] as typeof teeTimesData;
+      let needToRepeat = false;
+      innerCursor = 0;
+      // console.log("FILTERING TEE TIMES");
+      // console.log("teeTimesData", teeTimesData.length, limit);
+      while (!(newTeeTimeData.length >= limit)) {
+        const offset = limit + (take * innerCursor);
+        // console.log("COMING IN WHILE LOOP")
+        let extraTimes = [] as typeof teeTimesData;
+        if (needToRepeat) {
+          // console.log("OFFSET: ", offset);
+          // console.log("innerCursor: ", innerCursor);
+          const extraTimesQuery = teeQuery.limit(take).offset(offset);
+
+          // console.log("extraTimesQuery", extraTimesQuery.toSQL());
+
+          extraTimes = await extraTimesQuery.execute().catch(async (err) => {
+            await loggerService.errorLog({
+              userId: _userId ?? "",
+              url: `/${courseId}`,
+              userAgent: "",
+              message: "ERROR_GETTING_TEE_TIMES",
+              stackTrace: `Error retrieving tee times where courseId: ${courseId}, date: ${date}, minDate:${minDate}, maxDate:${maxDate}, startTime:${startTime}, endTime:${endTime}, holes:${holes}, golfers:${golfers}`,
+              additionalDetailsJSON: `Error getting tee times for ${date}: ${err}`,
+            });
+            this.logger.error(err);
+            loggerService.errorLog({
+              userId,
+              url: "/SearchService/getTeeTimesForDay",
+              userAgent: "",
+              message: "ERROR_GETTING_TEE_TIMES_FOR_DAY",
+              stackTrace: `${err.stack}`,
+              additionalDetailsJSON: JSON.stringify({
+                courseId,
+                date,
+                minDate,
+                maxDate,
+                startTime,
+                endTime,
+                holes,
+                golfers,
+                sortPrice,
+                sortTime,
+                limit,
+                userId: _userId,
+              }),
+            });
+            throw new Error(`Error getting tee times for ${date}: ${err}`);
+          });
+        }
+
+        if (needToRepeat && !extraTimes?.length) {
+          break;
+        }
+        if (needToRepeat) {
+          for (const allowedTimeToSell of courseAllowedTeeTimeToSellFilters) {
+            const binaryMask = allowedTimeToSell?.primaryMarketAllowedPlayers;
+            // console.log("binaryMask", binaryMask);
+            const numberOfPlayers =
+              binaryMask !== null && binaryMask !== undefined
+                ? PlayersOptions.filter((_, index) => (binaryMask & (1 << index)) !== 0)
+                : PlayersOptions;
+            // console.log("numberOfPlayers", numberOfPlayers);
+            const playersCount = numberOfPlayers?.[0] ? Number(numberOfPlayers[0]) : 0;
+            // console.log("playersCount", playersCount);
+            const times = extraTimes.filter((teeTime) => {
+              return (teeTime.time >= allowedTimeToSell.fromTime
+                && teeTime.time <= allowedTimeToSell.toTime) && teeTime.firstPartySlots >= playersCount
+            })
+            newTeeTimeData = [...newTeeTimeData, ...times.slice(0, limit - newTeeTimeData.length)];
+            // console.log("times", times, innerCursor, limit);
+          }
+          if (newTeeTimeData.length !== limit) {
+            innerCursor += 1;
+          } else {
+            break;
+          }
+        } else {
+          for (const allowedTimeToSell of courseAllowedTeeTimeToSellFilters) {
+            const binaryMask = allowedTimeToSell.primaryMarketAllowedPlayers;
+            // console.log("binaryMask", binaryMask);
+            const numberOfPlayers =
+              binaryMask !== null && binaryMask !== undefined
+                ? PlayersOptions.filter((_, index) => (binaryMask & (1 << index)) !== 0)
+                : PlayersOptions;
+            // console.log("numberOfPlayers", numberOfPlayers);
+            const playersCount = numberOfPlayers?.[0] ? Number(numberOfPlayers[0]) : 0;
+            // console.log("playersCount", playersCount);
+            const times = teeTimesData.filter((teeTime) => {
+              return (teeTime.time >= allowedTimeToSell.fromTime
+                && teeTime.time <= allowedTimeToSell.toTime) && teeTime.firstPartySlots >= playersCount
+            })
+            // console.log("times", times, innerCursor, limit);
+            newTeeTimeData = [...newTeeTimeData, ...times.slice(0, limit - newTeeTimeData.length)];
+          }
+          if (newTeeTimeData.length !== limit) {
+            needToRepeat = true;
+          }
+        }
+        // console.log("newTeeTimeData", newTeeTimeData.length);
+      }
+      teeTimesData = newTeeTimeData;
+    }
+
     const priceAccordingToDate: any[] = await this.getTeeTimesPriceWithRange(
       courseId,
       courseDataIfAvailable?.timeZoneCorrection ?? 0
@@ -1219,7 +1450,7 @@ export class SearchService {
     });
 
     const totalCount = firstHandCount + secondHandCount;
-    return { results: sortedResults, cursor, count: totalCount };
+    return { results: sortedResults, cursor: cursor, count: totalCount };
   }
 
   /**

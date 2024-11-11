@@ -11,7 +11,7 @@ import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
 import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
 import type { CartProduct, MaxReservationResponse } from "~/utils/types";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import type { Dispatch, SetStateAction } from "react";
 import { Fragment, useEffect, useState, type FormEvent } from "react";
 import { toast } from "react-toastify";
@@ -57,6 +57,7 @@ export const CheckoutForm = ({
 }) => {
   const MAX_CHARITY_AMOUNT = 1000;
   const { course } = useCourseContext();
+  const params = useParams();
   const courseId = course?.id;
   const roundUpCharityId = course?.roundUpCharityId;
 
@@ -166,6 +167,8 @@ export const CheckoutForm = ({
   const [showTextField, setShowTextField] = useState(false);
   const [donateError, setDonateError] = useState(false);
   const [noThanks, setNoThanks] = useState(false);
+  const [isBookingCoursesDisabled, setIsBookingCoursesDisabled] =
+    useState(false);
   const [charityData, setCharityData] = useState<charityData | undefined>({
     charityDescription: "",
     charityId: "",
@@ -192,7 +195,10 @@ export const CheckoutForm = ({
   const reserveBookingApi = api.teeBox.reserveBooking.useMutation();
   const reserveSecondHandBookingApi =
     api.teeBox.reserveSecondHandBooking.useMutation();
-
+  const { data: checkIsBookingDisabled } = api.course.getCourseById.useQuery({
+    courseId: params?.course as string ?? "",
+  });
+  console.log(checkIsBookingDisabled);
   const { data: multipleTransaction } =
     api.checkout.checkMultipleTeeTimeTransactionByUser.useQuery({});
   console.log("multipleTransaction", multipleTransaction);
@@ -235,7 +241,14 @@ export const CheckoutForm = ({
       }
     });
   });
-
+  // useEffect(() => {
+  //   if (checkIsBookingDisabled?.isBookingDisabled == 1) {
+  //     setIsBookingCoursesDisabled(true);
+  //     toast.error(
+  //       "Due some issue currently Booking are unavailable for this course"
+  //     );
+  //   }
+  // }, []);
   const CharityData = async () => {
     const result = await refetchGetSupportedCharities();
     const charities = result.data;
@@ -267,6 +280,11 @@ export const CheckoutForm = ({
     });
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    if(checkIsBookingDisabled?.isBookingDisabled == 1){
+      e.preventDefault();
+      toast.error("Due some issue currently Booking are unavailable for this course");
+      return;
+    }
     googleAnalyticsEvent({
       action: `PAY NOW CLICKED`,
       category: "TEE TIME PURCHASE",
@@ -762,7 +780,9 @@ export const CheckoutForm = ({
         <Fragment>
           <FilledButton
             className={`w-full rounded-full disabled:opacity-60`}
-            disabled={!hyper || !widgets || callingRef}
+            disabled={
+              !hyper || !widgets || callingRef
+            }
             onClick={() => {
               if (nextAction?.redirect_to_url) {
                 window.location.href = nextAction?.redirect_to_url;

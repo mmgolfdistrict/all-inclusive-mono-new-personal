@@ -105,6 +105,24 @@ export default function CourseHomePage() {
       .format("YYYY-MM-DD");
   }, [course?.furthestDayToBook]);
 
+  const highestPrice = useMemo(() => {
+    if (!course) return 0;
+    if (course.highestListedTeeTime > course.highestPrimarySaleTeeTime) {
+      return Math.ceil(course.highestListedTeeTime / 10) * 10;
+    } else {
+      return Math.ceil(course.highestPrimarySaleTeeTime / 10) * 10;
+    }
+  }, [course]);
+
+  const lowestPrice = useMemo(() => {
+    if (!course) return 0;
+    if (course.lowestListedTeeTime < course.lowestPrimarySaleTeeTime) {
+      return Math.floor(course.lowestListedTeeTime / 10) * 10;
+    } else {
+      return Math.floor(course.lowestPrimarySaleTeeTime / 10) * 10;
+    }
+  }, [course]);
+
   const { data: unreadOffers } = api.user.getUnreadOffersForCourse.useQuery(
     {
       courseId: courseId ?? "",
@@ -289,6 +307,10 @@ export default function CourseHomePage() {
               ? "desc"
               : "",
         timezoneCorrection: course?.timezoneCorrection,
+        isHolesAny: holes === "Any",
+        isGolferAny: golfers === "Any",
+        highestPrice:highestPrice,
+        lowestPrice:lowestPrice
       },
       {
         enabled: course?.id !== undefined,
@@ -519,7 +541,7 @@ export default function CourseHomePage() {
               setValue={handleSetSortValue}
               values={SortOptions}
             />
-            <Filters />
+            <Filters/>
           </div>
         </div>
         <div className="fixed bottom-5 left-1/2 z-10 -translate-x-1/2 md:hidden">
