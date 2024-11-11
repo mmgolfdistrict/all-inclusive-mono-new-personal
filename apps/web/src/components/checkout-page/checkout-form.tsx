@@ -12,7 +12,7 @@ import { api } from "~/utils/api";
 import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
 import type { CartProduct, MaxReservationResponse } from "~/utils/types";
 import { useRouter } from "next/navigation";
-import type { SetStateAction, Dispatch } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import { Fragment, useEffect, useState, type FormEvent } from "react";
 import { toast } from "react-toastify";
 import { number } from "zod";
@@ -53,7 +53,7 @@ export const CheckoutForm = ({
   callingRef?: boolean;
   playerCount: string | undefined;
   roundOffStatus: string | undefined;
-  setRoundOffStatus:Dispatch<SetStateAction<string>>
+  setRoundOffStatus: Dispatch<SetStateAction<string>>;
 }) => {
   const MAX_CHARITY_AMOUNT = 1000;
   const { course } = useCourseContext();
@@ -195,7 +195,7 @@ export const CheckoutForm = ({
 
   const { data: multipleTransaction } =
     api.checkout.checkMultipleTeeTimeTransactionByUser.useQuery({});
-    console.log("multipleTransaction",multipleTransaction);
+  console.log("multipleTransaction", multipleTransaction);
   const handlePaymentStatus = (status: string) => {
     switch (status) {
       case "succeeded":
@@ -309,7 +309,8 @@ export const CheckoutForm = ({
     }
     e.preventDefault();
     if (
-      selectedCharity && !roundUpCharityId &&
+      selectedCharity &&
+      !roundUpCharityId &&
       (!selectedCharityAmount || selectedCharityAmount === 0)
     ) {
       setCharityAmountError("Charity amount cannot be empty or zero");
@@ -354,6 +355,7 @@ export const CheckoutForm = ({
             bookingId: "",
             providerBookingId: "",
             status: "",
+            isEmailSend: false,
           };
 
           if (isFirstHand.length) {
@@ -396,7 +398,7 @@ export const CheckoutForm = ({
             router.push(`/${course?.id}/auctions/confirmation`);
           } else {
             router.push(
-              `/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}&bookingId=${bookingResponse.bookingId}`
+              `/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}&bookingId=${bookingResponse.bookingId}&isEmailSend=${bookingResponse.isEmailSend}`
             );
           }
         } else if (response.status === "failed") {
@@ -500,11 +502,10 @@ export const CheckoutForm = ({
   };
 
   useEffect(() => {
-    if (roundUpCharityId && roundOffStatus==="roundup") {
+    if (roundUpCharityId && roundOffStatus === "roundup") {
       handleRoundOff();
     }
   }, [TaxCharge]);
-
 
   return (
     <form onSubmit={handleSubmit} className="">
@@ -665,13 +666,13 @@ export const CheckoutForm = ({
             <button
               type="button"
               className={`flex w-32 items-center justify-center rounded-md p-2 ${
-                roundOffStatus==="roundup"
+                roundOffStatus === "roundup"
                   ? "bg-primary text-white"
                   : "bg-white text-primary border-primary border-2"
               }`}
-              onClick={()=>{
-                setRoundOffStatus('roundup')
-                  handleRoundOff();
+              onClick={() => {
+                setRoundOffStatus("roundup");
+                handleRoundOff();
               }}
             >
               Round Up
@@ -680,7 +681,7 @@ export const CheckoutForm = ({
             <button
               type="button"
               className={`flex w-32 items-center justify-center rounded-md p-2 ${
-              roundOffStatus==="other"
+                roundOffStatus === "other"
                   ? "bg-primary text-white"
                   : "bg-white text-primary border-primary border-2"
               }`}
@@ -689,7 +690,7 @@ export const CheckoutForm = ({
                 setShowTextField(true);
                 setDonateValue(5);
                 handleSelectedCharityAmount(5);
-                setRoundOffStatus('other')
+                setRoundOffStatus("other");
               }}
             >
               Other
@@ -698,7 +699,7 @@ export const CheckoutForm = ({
             <button
               type="button"
               className={`flex w-32 items-center justify-center rounded-md p-2 ${
-                roundOffStatus==="nothanks"
+                roundOffStatus === "nothanks"
                   ? "bg-primary text-white"
                   : "bg-white text-primary border-primary border-2"
               }`}
@@ -708,7 +709,7 @@ export const CheckoutForm = ({
                 setDonateValue(0);
                 handleSelectedCharityAmount(0);
                 setNoThanks(true);
-                setRoundOffStatus('nothanks')
+                setRoundOffStatus("nothanks");
               }}
             >
               No Thanks
@@ -784,7 +785,11 @@ export const CheckoutForm = ({
           {isLoading ? "Processing..." : <>Pay Now</>}
         </FilledButton>
       )}
-      <LoadingContainer isLoading={isLoading} title={"Please wait while we process your order."} subtitle="Do not close or refresh your browser as this may take up to 60 seconds.">
+      <LoadingContainer
+        isLoading={isLoading}
+        title={"Please wait while we process your order."}
+        subtitle="Do not close or refresh your browser as this may take up to 60 seconds."
+      >
         <div></div>
       </LoadingContainer>
       {/* Show any error or success messages */}
