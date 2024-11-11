@@ -166,41 +166,59 @@ export class BookingService {
       .where(inArray(bookings.id, bookingIds))
       .execute()
       .catch((err) => {
-        this.logger.error(`Error retrieving bookings for user ${userId} and booking ids ${JSON.stringify(bookingIds)} and offer id ${offerId} and amount ${amount}: ${err}`);
+        this.logger.error(
+          `Error retrieving bookings for user ${userId} and booking ids ${JSON.stringify(
+            bookingIds
+          )} and offer id ${offerId} and amount ${amount}: ${err}`
+        );
         loggerService.errorLog({
           userId,
           url: "/createCounterOffer",
           userAgent: "",
           message: "ERROR_RETRIEVING_BOOKINGS",
           stackTrace: `${err.stack}`,
-          additionalDetailsJSON: `Error retrieving bookings for user ${userId} and booking ids ${JSON.stringify(bookingIds)} and offer id ${offerId} and amount ${amount}`,
-        })
+          additionalDetailsJSON: `Error retrieving bookings for user ${userId} and booking ids ${JSON.stringify(
+            bookingIds
+          )} and offer id ${offerId} and amount ${amount}`,
+        });
         throw new Error("Error retrieving bookings");
       });
     if (!bookingOwners.length) {
-      this.logger.warn(`No bookings found for user ${userId} and booking ids ${JSON.stringify(bookingIds)} and offer id ${offerId} and amount ${amount}`);
+      this.logger.warn(
+        `No bookings found for user ${userId} and booking ids ${JSON.stringify(
+          bookingIds
+        )} and offer id ${offerId} and amount ${amount}`
+      );
       loggerService.errorLog({
         userId,
         url: "/createCounterOffer",
         userAgent: "",
         message: "NO_BOOKINGS_FOUND",
         stackTrace: "",
-        additionalDetailsJSON: `No bookings found for user ${userId} and booking ids ${JSON.stringify(bookingIds)} and offer id ${offerId} and amount ${amount}`,
-      })
+        additionalDetailsJSON: `No bookings found for user ${userId} and booking ids ${JSON.stringify(
+          bookingIds
+        )} and offer id ${offerId} and amount ${amount}`,
+      });
       throw new Error("No bookings found.");
     }
     //check that all bookings are owned by the same user
     const ownerIds = new Set(bookingOwners.map((booking) => booking.ownerId));
     if (ownerIds.size > 1) {
-      this.logger.warn(`Bookings are not owned by the same user for user ${userId} and booking ids ${JSON.stringify(bookingIds)} and offer id ${offerId} and amount ${amount}`);
+      this.logger.warn(
+        `Bookings are not owned by the same user for user ${userId} and booking ids ${JSON.stringify(
+          bookingIds
+        )} and offer id ${offerId} and amount ${amount}`
+      );
       loggerService.errorLog({
         userId,
         url: "/createCounterOffer",
         userAgent: "",
         message: "BOOKINGS_ARE_NOT_OWNED_BY_THE_SAME_USER",
         stackTrace: "",
-        additionalDetailsJSON: `Bookings are not owned by the same user for user ${userId} and booking ids ${JSON.stringify(bookingIds)} and offer id ${offerId} and amount ${amount}`,
-      })
+        additionalDetailsJSON: `Bookings are not owned by the same user for user ${userId} and booking ids ${JSON.stringify(
+          bookingIds
+        )} and offer id ${offerId} and amount ${amount}`,
+      });
       throw new Error("Bookings are not owned by the same user.");
     }
     //two cases if the user is the owner of the bookings
@@ -561,7 +579,7 @@ export class BookingService {
           additionalDetailsJSON: JSON.stringify({
             courseId,
           }),
-        })
+        });
         throw new Error("Error getting course");
       });
 
@@ -601,7 +619,7 @@ export class BookingService {
         purchasedFor: bookings.greenFeePerPlayer,
         providerBookingId: bookings.providerBookingId,
         slots: lists.slots,
-        playerCount: bookings.playerCount
+        playerCount: bookings.playerCount,
       })
       .from(teeTimes)
       .innerJoin(bookings, eq(bookings.teeTimeId, teeTimes.id))
@@ -659,11 +677,13 @@ export class BookingService {
 
     data.forEach((teeTime) => {
       if (!combinedData[teeTime.providerBookingId]) {
-        const slotData = !teeTime.providerBookingId ? Array.from({ length: teeTime.playerCount - 1 }, (_, i) => ({
-          name: "",
-          slotId: "",
-          customerId: "",
-        })) : []
+        const slotData = !teeTime.providerBookingId
+          ? Array.from({ length: teeTime.playerCount - 1 }, (_, i) => ({
+              name: "",
+              slotId: "",
+              customerId: "",
+            }))
+          : [];
 
         combinedData[teeTime.providerBookingId] = {
           courseId,
@@ -679,12 +699,13 @@ export class BookingService {
           golfers: [],
           purchasedFor: Number(teeTime.purchasedFor) / 100,
           bookingIds: [teeTime.bookingId],
-          slotsData: [ 
+          slotsData: [
             {
               name: teeTime.slotCustomerName || "",
               slotId: teeTime.slotId || "",
               customerId: teeTime.slotCustomerId || "",
-            }, ...slotData
+            },
+            ...slotData,
           ],
           status: teeTime.listing && !teeTime.listingIsDeleted ? "LISTED" : "UNLISTED",
           offers: teeTime.offers ? parseInt(teeTime.offers.toString()) : 0,
@@ -756,8 +777,8 @@ export class BookingService {
                 additionalDetailsJSON: JSON.stringify({
                   courseId,
                   customerId: slot.customerId,
-                })
-              })
+                }),
+              });
               throw new Error("Error retrieving user");
             });
           if (userData[0]) {
@@ -913,8 +934,8 @@ export class BookingService {
             bookingIds,
             listPrice,
             endTime,
-          })
-        })
+          }),
+        });
         throw new Error("Error retrieving bookings");
       });
     if (!ownedBookings.length) {
@@ -994,8 +1015,8 @@ export class BookingService {
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
             courseId,
-          })
-        })
+          }),
+        });
         throw new Error(`Error retrieving course`);
       });
 
@@ -1032,9 +1053,9 @@ export class BookingService {
                 stackTrace: `${err.stack}`,
                 additionalDetailsJSON: JSON.stringify({
                   courseId,
-                  bookingId: id
-                })
-              })
+                  bookingId: id,
+                }),
+              });
               transaction.rollback();
             });
         }
@@ -1054,8 +1075,8 @@ export class BookingService {
               additionalDetailsJSON: JSON.stringify({
                 courseId,
                 lists: JSON.stringify(toCreate),
-              })
-            })
+              }),
+            });
             transaction.rollback();
           });
       })
@@ -1070,8 +1091,8 @@ export class BookingService {
           additionalDetailsJSON: JSON.stringify({
             courseId,
             lists: JSON.stringify(toCreate),
-          })
-        })
+          }),
+        });
         throw new Error("Error creating listing");
       });
     this.logger.info(`Listings created successfully. for user ${userId} teeTimeId ${firstBooking.teeTimeId}`);
@@ -1096,8 +1117,8 @@ export class BookingService {
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
             userId,
-          })
-        })
+          }),
+        });
         throw new Error("Failed to retrieve user");
       });
 
@@ -1111,8 +1132,8 @@ export class BookingService {
         stackTrace: `User with ID ${userId} not found.`,
         additionalDetailsJSON: JSON.stringify({
           userId,
-        })
-      })
+        }),
+      });
       return;
     }
     console.log("######", ownedBookings);
@@ -1153,8 +1174,8 @@ export class BookingService {
               email: user.email,
               name: user.name,
               courseName: course?.name,
-            })
-          })
+            }),
+          });
           throw new Error("Error sending email");
         });
     }
@@ -1169,8 +1190,8 @@ export class BookingService {
         stackTrace: `providerDate not found in booking, Can't send notifications to users`,
         additionalDetailsJSON: JSON.stringify({
           userId,
-        })
-      })
+        }),
+      });
       throw new Error("providerDate not found in booking, Can't send notifications to users");
     }
 
@@ -1274,9 +1295,9 @@ export class BookingService {
             stackTrace: `${err.stack}`,
             additionalDetailsJSON: JSON.stringify({
               courseId,
-              listingId
-            })
-          })
+              listingId,
+            }),
+          });
           trx.rollback();
         });
       for (const booking of bookingIds) {
@@ -1298,9 +1319,9 @@ export class BookingService {
               stackTrace: `${err.stack}`,
               additionalDetailsJSON: JSON.stringify({
                 courseId,
-                listingId
-              })
-            })
+                listingId,
+              }),
+            });
             trx.rollback();
           });
       }
@@ -1336,9 +1357,9 @@ export class BookingService {
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
             courseId,
-            listingId
-          })
-        })
+            listingId,
+          }),
+        });
         throw new Error("Error fetching course data");
       });
 
@@ -1352,9 +1373,9 @@ export class BookingService {
         stackTrace: "",
         additionalDetailsJSON: JSON.stringify({
           courseId,
-          listingId
-        })
-      })
+          listingId,
+        }),
+      });
       throw new Error(`Error fetching user data: ${userId} does not exist`);
     }
 
@@ -1368,9 +1389,9 @@ export class BookingService {
         stackTrace: "",
         additionalDetailsJSON: JSON.stringify({
           courseId,
-          listingId
-        })
-      })
+          listingId,
+        }),
+      });
       throw new Error(`Error fetching course data: ${courseId} does not exist`);
     }
 
@@ -1448,9 +1469,9 @@ export class BookingService {
           message: "ERROR_RETRIEVING_LISTING",
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
-            listingId
-          })
-        })
+            listingId,
+          }),
+        });
         throw new Error("Error retrieving listing");
       });
     if (!listing) {
@@ -1462,9 +1483,9 @@ export class BookingService {
         message: "LISTING_NOT_FOUND",
         stackTrace: "",
         additionalDetailsJSON: JSON.stringify({
-          listingId
-        })
-      })
+          listingId,
+        }),
+      });
       throw new Error("Owned listing not found");
     }
     // if (listing.status !== "PENDING") {
@@ -1480,9 +1501,9 @@ export class BookingService {
         message: "TEE_TIME_NOT_AVAILABLE",
         stackTrace: "",
         additionalDetailsJSON: JSON.stringify({
-          listingId
-        })
-      })
+          listingId,
+        }),
+      });
       throw new Error("Tee time not available anymore.");
     }
     const ownedBookings = await this.database
@@ -1504,9 +1525,9 @@ export class BookingService {
           message: "ERROR_RETRIEVING_BOOKINGS",
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
-            bookingIds
-          })
-        })
+            bookingIds,
+          }),
+        });
         throw new Error("Error retrieving bookings");
       });
 
@@ -1570,9 +1591,9 @@ export class BookingService {
               message: "ERROR_DELETING_LISTING",
               stackTrace: `${err.stack}`,
               additionalDetailsJSON: JSON.stringify({
-                listingId
-              })
-            })
+                listingId,
+              }),
+            });
             trx.rollback();
           });
         //create a new listing
@@ -1589,9 +1610,9 @@ export class BookingService {
               message: "ERROR_CREATING_LISTING",
               stackTrace: `${err.stack}`,
               additionalDetailsJSON: JSON.stringify({
-                listingId
-              })
-            })
+                listingId,
+              }),
+            });
             trx.rollback();
           });
         //update all bookings
@@ -1613,9 +1634,9 @@ export class BookingService {
                 message: "ERROR_UPDATING_BOOKING",
                 stackTrace: `${err.stack}`,
                 additionalDetailsJSON: JSON.stringify({
-                  bookingId: id
-                })
-              })
+                  bookingId: id,
+                }),
+              });
               trx.rollback();
             });
         }
@@ -1638,9 +1659,9 @@ export class BookingService {
                 message: "ERROR_UPDATING_BOOKING",
                 stackTrace: `${err.stack}`,
                 additionalDetailsJSON: JSON.stringify({
-                  bookingId: booking.id
-                })
-              })
+                  bookingId: booking.id,
+                }),
+              });
               trx.rollback();
             });
         }
@@ -1654,9 +1675,9 @@ export class BookingService {
           message: "ERROR_UPDATING_LISTING",
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
-            listingId
-          })
-        })
+            listingId,
+          }),
+        });
         throw new Error("Error updating listing");
       });
   };
@@ -1735,9 +1756,9 @@ export class BookingService {
           additionalDetailsJSON: JSON.stringify({
             bookingIds,
             price,
-            expiration
-          })
-        })
+            expiration,
+          }),
+        });
         throw new Error("Error retrieving bookings");
       });
     if (!data.length || data.length !== bookingIds.length || !data[0]) {
@@ -1751,9 +1772,9 @@ export class BookingService {
         additionalDetailsJSON: JSON.stringify({
           bookingIds,
           price,
-          expiration
-        })
-      })
+          expiration,
+        }),
+      });
       throw new Error("No bookings found");
     }
     const firstTeeTime = data[0].teeTimeId;
@@ -1769,9 +1790,9 @@ export class BookingService {
         additionalDetailsJSON: JSON.stringify({
           bookingIds,
           price,
-          expiration
-        })
-      })
+          expiration,
+        }),
+      });
       throw new Error("All bookings must be under the same tee time.");
     }
 
@@ -1787,9 +1808,9 @@ export class BookingService {
         additionalDetailsJSON: JSON.stringify({
           bookingIds,
           price,
-          expiration
-        })
-      })
+          expiration,
+        }),
+      });
       throw new Error("Offer price must be higher than 0");
     }
     if (price < minimumOfferPrice) {
@@ -1803,9 +1824,9 @@ export class BookingService {
         additionalDetailsJSON: JSON.stringify({
           bookingIds,
           price,
-          expiration
-        })
-      })
+          expiration,
+        }),
+      });
       throw new Error("Offer price must be higher than the minimum offer price.");
     }
     await this.database.transaction(async (trx) => {
@@ -1831,9 +1852,9 @@ export class BookingService {
             message: "ERROR_CREATING_OFFER",
             stackTrace: `${err.stack}`,
             additionalDetailsJSON: JSON.stringify({
-              bookingIds
-            })
-          })
+              bookingIds,
+            }),
+          });
           throw new Error("Error creating offer");
         });
       await trx
@@ -1854,9 +1875,9 @@ export class BookingService {
             message: "ERROR_CREATING_BOOKING_OFFER",
             stackTrace: `${err.stack}`,
             additionalDetailsJSON: JSON.stringify({
-              bookingIds
-            })
-          })
+              bookingIds,
+            }),
+          });
           throw new Error("Error creating booking offer");
         });
     });
@@ -1885,9 +1906,9 @@ export class BookingService {
           message: "ERROR_RETRIEVING_OFFERS",
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
-            bookingIds
-          })
-        })
+            bookingIds,
+          }),
+        });
         throw new Error("Error active offers");
       });
 
@@ -1947,9 +1968,9 @@ export class BookingService {
           message: "ERROR_RETRIEVING_OFFER",
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
-            offerId
-          })
-        })
+            offerId,
+          }),
+        });
         throw new Error("Error retrieving offer");
       });
     if (!offerData?.[0]) {
@@ -1961,9 +1982,9 @@ export class BookingService {
         message: "OFFER_NOT_FOUND",
         stackTrace: "",
         additionalDetailsJSON: JSON.stringify({
-          offerId
-        })
-      })
+          offerId,
+        }),
+      });
       throw new Error("Offer not found");
     }
     const bookingIds = offerData.map((offers) => offers.linkedBookingOffer);
@@ -1977,9 +1998,9 @@ export class BookingService {
         message: "USER_DOES_NOT_OWN_OFFER",
         stackTrace: "",
         additionalDetailsJSON: JSON.stringify({
-          offerId
-        })
-      })
+          offerId,
+        }),
+      });
       throw new Error("User does not own offer");
     }
     if (status !== "PENDING") {
@@ -1991,9 +2012,9 @@ export class BookingService {
         message: "OFFER_IS_NOT_PENDING",
         stackTrace: "",
         additionalDetailsJSON: JSON.stringify({
-          offerId
-        })
-      })
+          offerId,
+        }),
+      });
       throw new Error("Offer is not pending");
     }
     if (isDeleted) {
@@ -2005,9 +2026,9 @@ export class BookingService {
         message: "OFFER_IS_ALREADY_DELETED",
         stackTrace: "",
         additionalDetailsJSON: JSON.stringify({
-          offerId
-        })
-      })
+          offerId,
+        }),
+      });
       throw new Error("Offer is already deleted");
     }
     await this.database.transaction(async (trx) => {
@@ -2027,9 +2048,9 @@ export class BookingService {
             message: "ERROR_DELETING_OFFER",
             stackTrace: `${err.stack}`,
             additionalDetailsJSON: JSON.stringify({
-              offerId
-            })
-          })
+              offerId,
+            }),
+          });
           trx.rollback();
         });
       await trx
@@ -2051,9 +2072,9 @@ export class BookingService {
             message: "ERROR_DELETING_BOOKING_OFFER",
             stackTrace: `${err.stack}`,
             additionalDetailsJSON: JSON.stringify({
-              offerId
-            })
-          })
+              offerId,
+            }),
+          });
           trx.rollback();
         });
     });
@@ -2092,9 +2113,9 @@ export class BookingService {
           message: "ERROR_RETRIEVING_OFFER",
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
-            offerId
-          })
-        })
+            offerId,
+          }),
+        });
         throw new Error("Error retrieving offer");
       });
 
@@ -2107,9 +2128,9 @@ export class BookingService {
         message: "OFFER_NOT_FOUND",
         stackTrace: "",
         additionalDetailsJSON: JSON.stringify({
-          offerId
-        })
-      })
+          offerId,
+        }),
+      });
       throw new Error("Offer not found");
     }
     const bookingIds = offer.map((offers) => offers.bookingIds);
@@ -2126,9 +2147,9 @@ export class BookingService {
         message: "USER_DOES_NOT_OWN_ALL_BOOKINGS",
         stackTrace: "",
         additionalDetailsJSON: JSON.stringify({
-          offerId
-        })
-      })
+          offerId,
+        }),
+      });
       throw new Error("User does not own all bookings");
     }
     //check that booking ids are not null or empty
@@ -2141,9 +2162,9 @@ export class BookingService {
         message: "BOOKING_NOT_FOUND",
         stackTrace: "",
         additionalDetailsJSON: JSON.stringify({
-          offerId
-        })
-      })
+          offerId,
+        }),
+      });
       throw new Error("Booking not found");
     }
     //@TODO capture payment intent
@@ -2169,9 +2190,9 @@ export class BookingService {
             message: "ERROR_ACCEPTING_OFFER",
             stackTrace: `${err.stack}`,
             additionalDetailsJSON: JSON.stringify({
-              offerId
-            })
-          })
+              offerId,
+            }),
+          });
           trx.rollback();
         });
       await trx
@@ -2193,9 +2214,9 @@ export class BookingService {
             message: "ERROR_ACCEPTING_BOOKING_OFFER",
             stackTrace: `${err.stack}`,
             additionalDetailsJSON: JSON.stringify({
-              offerId
-            })
-          })
+              offerId,
+            }),
+          });
           trx.rollback();
         });
       //delete all listing associated with purchased bookings
@@ -2214,9 +2235,9 @@ export class BookingService {
               message: "ERROR_DELETING_LISTING",
               stackTrace: `${err.stack}`,
               additionalDetailsJSON: JSON.stringify({
-                offerId
-              })
-            })
+                offerId,
+              }),
+            });
             trx.rollback();
           });
         await trx
@@ -2233,9 +2254,9 @@ export class BookingService {
               message: "ERROR_DELETING_LISTING",
               stackTrace: `${err.stack}`,
               additionalDetailsJSON: JSON.stringify({
-                offerId
-              })
-            })
+                offerId,
+              }),
+            });
             trx.rollback();
           });
       }
@@ -2282,9 +2303,9 @@ export class BookingService {
           message: "ERROR_REJECTING_OFFER",
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
-            offerId
-          })
-        })
+            offerId,
+          }),
+        });
         throw new Error("Error retrieving offer");
       });
     if (!offer) {
@@ -2296,9 +2317,9 @@ export class BookingService {
         message: "OFFER_NOT_FOUND",
         stackTrace: "",
         additionalDetailsJSON: JSON.stringify({
-          offerId
-        })
-      })
+          offerId,
+        }),
+      });
       throw new Error("Offer not found");
     }
     const bookingIds = offer.map((offers) => offers.bookingIds);
@@ -2312,9 +2333,9 @@ export class BookingService {
         message: "USER_DOES_NOT_OWN_ALL_BOOKINGS",
         stackTrace: "",
         additionalDetailsJSON: JSON.stringify({
-          offerId
-        })
-      })
+          offerId,
+        }),
+      });
       throw new Error("User does not own all bookings");
     }
 
@@ -2336,9 +2357,9 @@ export class BookingService {
             message: "ERROR_ACCEPTING_OFFER",
             stackTrace: `${err.stack}`,
             additionalDetailsJSON: JSON.stringify({
-              offerId
-            })
-          })
+              offerId,
+            }),
+          });
           throw new Error("Error accepting offer");
         });
       //update userBookingOffers
@@ -2446,9 +2467,9 @@ export class BookingService {
           message: "ERROR_RETRIEVING_OFFERS",
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
-            bookingId
-          })
-        })
+            bookingId,
+          }),
+        });
         throw new Error("Error retrieving offers");
       });
 
@@ -2601,8 +2622,8 @@ export class BookingService {
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
             courseId,
-          })
-        })
+          }),
+        });
         throw new Error("Error retrieving offers");
       });
 
@@ -2739,8 +2760,8 @@ export class BookingService {
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
             courseId,
-          })
-        })
+          }),
+        });
         throw new Error("Error retrieving offers");
       });
 
@@ -2828,9 +2849,9 @@ export class BookingService {
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
             bookingId,
-            usersToUpdate
-          })
-        })
+            usersToUpdate,
+          }),
+        });
         throw new Error("Error retrieving bookings");
       });
 
@@ -2844,9 +2865,9 @@ export class BookingService {
         stackTrace: "",
         additionalDetailsJSON: JSON.stringify({
           bookingId,
-          usersToUpdate
-        })
-      })
+          usersToUpdate,
+        }),
+      });
       throw new Error("No bookings found");
     }
 
@@ -2865,9 +2886,9 @@ export class BookingService {
         stackTrace: "",
         additionalDetailsJSON: JSON.stringify({
           bookingId,
-          usersToUpdate
-        })
-      })
+          usersToUpdate,
+        }),
+      });
       throw new Error("bookings not found");
     }
     const { token, provider } = await this.providerService.getProviderAndKey(
@@ -2885,9 +2906,9 @@ export class BookingService {
         stackTrace: "",
         additionalDetailsJSON: JSON.stringify({
           bookingId,
-          usersToUpdate
-        })
-      })
+          usersToUpdate,
+        }),
+      });
       throw new Error("provider id, course id, or provider course id not found");
     }
     if (!provider.supportsPlayerNameChange) {
@@ -2920,7 +2941,12 @@ export class BookingService {
           providerDataToUpdate.push({ ...customerData, slotId: user.slotId });
           //update on foreup with the slotId with the personId recieved in customer
         } else if (user.name !== "") {
-          providerDataToUpdate.push({ name: user.name, playerNumber: "", customerId: 0, slotId: user.slotId });
+          providerDataToUpdate.push({
+            name: user.name,
+            playerNumber: "",
+            customerId: 0,
+            slotId: user.slotId,
+          });
         }
       } catch (error) {
         console.log("Error creating customer", error);
@@ -2968,9 +2994,9 @@ export class BookingService {
               stackTrace: `${err.stack}`,
               additionalDetailsJSON: JSON.stringify({
                 bookingId,
-                usersToUpdate
-              })
-            })
+                usersToUpdate,
+              }),
+            });
           });
       })
     );
@@ -3013,9 +3039,9 @@ export class BookingService {
             additionalDetailsJSON: JSON.stringify({
               userId,
               teeTimeId,
-              minimumOfferPrice
-            })
-          })
+              minimumOfferPrice,
+            }),
+          });
           message = "Error retrieving bookings";
           trx.rollback();
         });
@@ -3044,9 +3070,9 @@ export class BookingService {
               additionalDetailsJSON: JSON.stringify({
                 userId,
                 teeTimeId,
-                minimumOfferPrice
-              })
-            })
+                minimumOfferPrice,
+              }),
+            });
             message = "Error updating bookingId";
             trx.rollback();
           });
@@ -3301,8 +3327,8 @@ export class BookingService {
           additionalDetailsJSON: JSON.stringify({
             userId,
             teeTimeId,
-          })
-        })
+          }),
+        });
         throw new Error(`Error finding tee time id`);
       });
     if (!teeTime) {
@@ -3316,8 +3342,8 @@ export class BookingService {
         additionalDetailsJSON: JSON.stringify({
           userId,
           teeTimeId,
-        })
-      })
+        }),
+      });
       throw new Error(`Error finding tee time id`);
     }
 
@@ -3361,7 +3387,7 @@ export class BookingService {
         console.log("ERROR in getting appsetting SENSIBLE_NOTE_TO_TEE_SHEET");
       }
 
-      bookingStage = "Getting booking Creation Data"
+      bookingStage = "Getting booking Creation Data";
       const bookingData = provider.getBookingCreationData({
         firstHandCharge: primaryGreenFeeCharge,
         markupCharge,
@@ -3424,12 +3450,19 @@ export class BookingService {
               teeTimeId,
               error,
             }),
-          })
+          });
         }
       }
     } catch (e) {
       console.log("BOOKING FAILED ON PROVIDER, INITIATING REFUND FOR PAYMENT_ID", payment_id);
-      this.hyperSwitchService.sendEmailForBookingFailed(paymentId, teeTime.courseId, cartId, sensibleQuoteId, userId, bookingStage);
+      this.hyperSwitchService.sendEmailForBookingFailed(
+        paymentId,
+        teeTime.courseId,
+        cartId,
+        sensibleQuoteId,
+        userId,
+        bookingStage
+      );
       throw "Booking failed on provider";
       // await this.hyperSwitchService.refundPayment(payment_id);
       // const [user] = await this.database.select().from(users).where(eq(users.id, userId));
@@ -3526,11 +3559,17 @@ export class BookingService {
         throw new Error(`Error creating booking`);
       });
 
-    await this.sendMessageToVerifyPayment(paymentId as string, userId, bookingId, redirectHref);
+    await this.sendMessageToVerifyPayment(
+      paymentId as string,
+      userId,
+      bookingId.bookingId as string,
+      redirectHref
+    );
     return {
-      bookingId,
+      bookingId: bookingId.bookingId,
       providerBookingId,
       status: "Reserved",
+      isEmailSend: bookingId.isEmailSend,
     } as ReserveTeeTimeResponse;
   };
 
@@ -3566,9 +3605,10 @@ export class BookingService {
           userAgent: "",
           message: "ERROR CONFIRMING BOOKING",
           stackTrace: `${err.stack}`,
-          additionalDetailsJSON: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${booking?.teeTimeId ?? ""
-            }`,
-        })
+          additionalDetailsJSON: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${
+            booking?.teeTimeId ?? ""
+          }`,
+        });
         throw "Error retrieving booking";
       });
     if (!booking) {
@@ -3580,7 +3620,7 @@ export class BookingService {
         message: "BOOKING_NOT_FOUND",
         stackTrace: `booking not found for payment id ${paymentId}`,
         additionalDetailsJSON: JSON.stringify({ paymentId }),
-      })
+      });
       throw "Booking not found for payment id";
     } else {
       console.log("Set confirm status on booking id ", booking.bookingId);
@@ -3617,6 +3657,7 @@ export class BookingService {
       });
     }
   };
+
   reserveSecondHandBooking = async (
     userId = "",
     cartId = "",
@@ -3746,9 +3787,9 @@ export class BookingService {
             additionalDetailsJSON: JSON.stringify({
               userId,
               teeTimeId,
-              bookingsToCreate
-            })
-          })
+              bookingsToCreate,
+            }),
+          });
           tx.rollback();
         });
 
@@ -3767,9 +3808,9 @@ export class BookingService {
             additionalDetailsJSON: JSON.stringify({
               userId,
               teeTimeId,
-              transfersToCreate
-            })
-          })
+              transfersToCreate,
+            }),
+          });
         });
     });
     await this.sendMessageToVerifyPayment(payment_id, userId, bookingId, redirectHref);
@@ -3784,11 +3825,36 @@ export class BookingService {
       eventId: "TEE_TIME_BOOKED",
       json: "Tee time booked",
     });
+    //Sending teetime purchase email to user
+    const message = `
+A total of ${associatedBooking?.listedSlotsCount ?? 0} tee times have been purchased.
+Price per booking: ${total ?? "Not specified"}.
 
+Booking ID: ${bookingId ?? "Unavailable"}
+
+This purchase was made as a second-party transaction directly from the course.
+`;
+    let isEmailSend = false;
+    const attachment: any[] = [];
+    try {
+      await this.notificationService.createNotification(
+        userId,
+        "TeeTimes Purchased",
+        message,
+        "",
+        process.env.SENDGRID_TEE_TIMES_PURCHASED_TEMPLATE_ID,
+        undefined,
+        attachment
+      );
+    } catch (error: any) {
+      console.log(error.message);
+      isEmailSend = true;
+    }
     return {
       bookingId,
       providerBookingId: "",
       status: "Reserved",
+      isEmailSend,
     } as ReserveTeeTimeResponse;
   };
 
@@ -3815,8 +3881,8 @@ export class BookingService {
           additionalDetailsJSON: JSON.stringify({
             userId,
             bookingId,
-          })
-        })
+          }),
+        });
         throw "Error retrieving booking";
       });
     if (booking && booking?.transferedFromBookingId !== "0x000") {
@@ -3877,8 +3943,8 @@ export class BookingService {
           additionalDetailsJSON: JSON.stringify({
             userId,
             teeTimeId,
-          })
-        })
+          }),
+        });
         throw new Error(`Error finding tee time id`);
       });
     if (!teeTime) {
@@ -3892,8 +3958,8 @@ export class BookingService {
         additionalDetailsJSON: JSON.stringify({
           userId,
           teeTimeId,
-        })
-      })
+        }),
+      });
       throw new Error(`Error finding tee time id`);
     }
 
