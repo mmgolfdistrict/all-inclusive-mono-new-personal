@@ -24,6 +24,8 @@ export interface CustomerCart {
   phone_country_code: string | null;
   paymentId: string | null;
   cart: ProductData[];
+  teeTimeId?: string;
+  cartId?:string;
 }
 
 export interface UpdatePayment {

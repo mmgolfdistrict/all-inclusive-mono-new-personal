@@ -232,6 +232,7 @@ export class CheckoutService {
         name: users.name,
         email: users.email,
         phoneNumber: users.phoneNumber,
+        id:users?.id
       })
       .from(users)
       .where(eq(users.id, userId));
@@ -279,7 +280,7 @@ export class CheckoutService {
       .innerJoin(providers, eq(providers.id, providerCourseLink.providerId))
       .where(eq(providerCourseLink.courseId, customerCart.courseId))
       .execute();
-    const paymentData = {
+      const paymentData = {
       // @ts-ignore
       customer_id: customerCart.customerId,
       name: user.name,
@@ -289,7 +290,12 @@ export class CheckoutService {
       currency: "USD",
       profile_id: this.profileId,
       // @ts-ignore
-      metadata: customerCart.courseId,
+      metadata: {
+        courseId:customerCart.courseId,
+        userId:user?.id,
+        teeTimeId:customerCart?.teeTimeId
+      },
+      merchant_order_reference_id: customerCartData?.cartId??"",
       setup_future_usage: "off_session",
     };
     // }

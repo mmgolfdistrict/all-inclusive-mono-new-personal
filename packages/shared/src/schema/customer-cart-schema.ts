@@ -114,4 +114,5 @@ export const CustomerCartSchema = z.object({
   paymentId: z.string().nullable(),
   cart: z.array(ProductDataSchema),
   cartId: z.string().optional(),
+  teeTimeId: z.string().optional()
 });
