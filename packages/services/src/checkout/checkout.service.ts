@@ -292,9 +292,10 @@ export class CheckoutService {
       // @ts-ignore
       metadata: {
         courseId:customerCart.courseId,
-        userId:user?.id
+        userId:user?.id,
+        teeTimeId:customerCart?.teeTimeId
       },
-      merchant_order_reference_id: user?.id,
+      merchant_order_reference_id: customerCartData?.cartId??"",
       setup_future_usage: "off_session",
     };
     // }
