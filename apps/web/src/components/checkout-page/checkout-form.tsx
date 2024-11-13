@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { getErrorMessageById } from "@golf-district/shared/src/hyperSwitchErrorCodes";
 import {
   UnifiedCheckout,
@@ -216,8 +217,6 @@ export const CheckoutForm = ({
         enabled: false,
       }
     );
-
-  useEffect(() => {
     const fetchData = async () => {
       try {
         const retrieveCustomerResponse = await retrieveCustomerHandler();
@@ -245,7 +244,8 @@ export const CheckoutForm = ({
         console.error("Error fetching data:", error);
       }
     };
-    fetchData();
+  useEffect(() => {
+    void fetchData();
   }, []);
 
   const handlePaymentStatus = (status: string) => {
