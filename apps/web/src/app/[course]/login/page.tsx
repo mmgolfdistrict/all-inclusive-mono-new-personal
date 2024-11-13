@@ -44,8 +44,11 @@ export default function Login() {
   const [localStorageGoogle, setLocalStorageGoogle] = useState("");
   const [localstorageCredentials, setLocalStorageCredentials] = useState("");
   const [googleIsLoading, setGoogleIsLoading] = useState(false);
+  const [hasSessionLogged, setHasSessionLogged] = useState(false);
   const [credentialsLoader, setCredentialsLoader] = useState(false);
   const auditLog = api.webhooks.auditLog.useMutation();
+  const addUserSession = api.user.addUserSession.useMutation();
+  const addCourseUser = api.user.addCourseUser.useMutation()
   const { data: sessionData, status } = useSession();
   const errorKey = searchParams.get("error");
   const router = useRouter();
@@ -72,15 +75,16 @@ export default function Login() {
 
   useEffect(() => {
     if (sessionData?.user?.id && course?.id && status === "authenticated") {
+      addCourseToUser()
+      addLoginSession()
       logAudit(sessionData.user.id, course.id, () => {
         window.location.reload();
-        window.location.href = `${window.location.origin}${
-          GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
-            ? prevPath?.path
-              ? prevPath.path
-              : "/"
+        window.location.href = `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+          ? prevPath?.path
+            ? prevPath.path
             : "/"
-        }`;
+          : "/"
+          }`;
       });
     }
   }, [sessionData, course, status]);
@@ -105,6 +109,32 @@ export default function Login() {
         console.log("error", err);
       });
   };
+
+  const addCourseToUser = () => {
+    addCourseUser.mutateAsync({
+      courseId: course?.id ? course?.id : "",
+      userId: sessionData?.user?.id ? sessionData?.user?.id : ""
+    }).then(() => {
+      console.log("New courseUser entry added successfully");
+    })
+      .catch((err) => {
+        console.log("error", err);
+      });
+  }
+
+  const addLoginSession = () => {
+    if (!hasSessionLogged) {
+      addUserSession.mutateAsync({
+        status: "LOGIN"
+      }).then(() => {
+        console.log("login user added successfully");
+      })
+        .catch((err) => {
+          console.log("error", err);
+        });
+      setHasSessionLogged(true)
+    }
+  }
 
   useEffect(() => {
     if (loginError === "CallbackRouteError") {
@@ -142,13 +172,12 @@ export default function Login() {
         localStorage.setItem("credentials", "credentials");
         //setLocalStorageCredentials(localStorage.getItem("credentials"));
       }
-      const callbackURL = `${window.location.origin}${
-        GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
-          ? prevPath?.path
-            ? prevPath.path
-            : "/"
+      const callbackURL = `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+        ? prevPath?.path
+          ? prevPath.path
           : "/"
-      }`;
+        : "/"
+        }`;
       const res = await signIn("credentials", {
         // callbackUrl: callbackURL,
         redirect: false,
@@ -178,10 +207,11 @@ export default function Login() {
         }
         setValue("password", "");
       }
+      console.log("login done");
     } catch (error) {
       toast.error(
         (error as Error)?.message ??
-          "An error occurred logging in, try another option."
+        "An error occurred logging in, try another option."
       );
     } finally {
       setIsLoading(false);
@@ -211,26 +241,24 @@ export default function Login() {
 
   const facebookSignIn = async () => {
     await signIn("facebook", {
-      callbackUrl: `${window.location.origin}${
-        GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
-          ? prevPath?.path
-            ? prevPath.path
-            : "/"
+      callbackUrl: `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+        ? prevPath?.path
+          ? prevPath.path
           : "/"
-      }`,
+        : "/"
+        }`,
       redirect: true,
     });
   };
 
   const appleSignIn = async () => {
     await signIn("apple", {
-      callbackUrl: `${window.location.origin}${
-        GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
-          ? prevPath?.path
-            ? prevPath.path
-            : "/"
+      callbackUrl: `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+        ? prevPath?.path
+          ? prevPath.path
           : "/"
-      }`,
+        : "/"
+        }`,
       redirect: true,
     });
   };
@@ -321,7 +349,7 @@ export default function Login() {
             >
               {googleIsLoading || localStorageGoogle ? (
                 <div className="w-10 h-10">
-                  <Spinner/>
+                  <Spinner />
                 </div>
               ) : (
                 <Fragment>

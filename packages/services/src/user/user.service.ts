@@ -22,6 +22,7 @@ import { verifyCaptcha } from "../../../api/src/googleCaptcha";
 import { generateUtcTimestamp } from "../../helpers";
 import type { NotificationService } from "../notification/notification.service";
 import { loggerService } from "../webhooks/logging.service";
+import { courseUser } from "@golf-district/database/schema/courseUser";
 
 const s3Client = new S3Client({
   region: process.env.AWS_REGION,
@@ -91,7 +92,10 @@ export class UserService {
    * @example
    * const userService = new UserService(database, notificationService);
    */
-  constructor(protected readonly database: Db, private readonly notificationsService: NotificationService) {
+  constructor(
+    protected readonly database: Db,
+    private readonly notificationsService: NotificationService
+  ) {
     //this.filter = new Filter();
   }
 
@@ -169,9 +173,9 @@ export class UserService {
         stackTrace: ``,
         additionalDetailsJSON: JSON.stringify({
           data,
-          courseId
-        })
-      })
+          courseId,
+        }),
+      });
       throw new Error("Invalid captcha");
     }
     // if (containsBadWords(data.firstName, this.filter)) {
@@ -238,9 +242,9 @@ export class UserService {
             stackTrace: `${err.stack}`,
             additionalDetailsJSON: JSON.stringify({
               data,
-              courseId
-            })
-          })
+              courseId,
+            }),
+          });
           return [];
         });
 
@@ -356,8 +360,8 @@ export class UserService {
           additionalDetailsJSON: JSON.stringify({
             teeTimeId,
             userId,
-          })
-        })
+          }),
+        });
         throw new Error("Error retrieving bookings");
       });
     if (!data || data.length == 0) {
@@ -399,8 +403,8 @@ export class UserService {
               stackTrace: `${err.stack}`,
               additionalDetailsJSON: JSON.stringify({
                 unit,
-              })
-            })
+              }),
+            });
             throw new Error("Error retrieving user");
           });
         if (userData?.[0]) {
@@ -556,8 +560,8 @@ export class UserService {
         userAgent: "",
         message: "ERROR_DELETING_USER",
         stackTrace: `${error.stack}`,
-        additionalDetailsJSON: JSON.stringify({})
-      })
+        additionalDetailsJSON: JSON.stringify({}),
+      });
       throw new Error("Error deleting user from expired email verification token");
     }
   };
@@ -626,9 +630,9 @@ export class UserService {
             message: "ERROR_GETTING_ASSET",
             stackTrace: `${err.stack}`,
             additionalDetailsJSON: JSON.stringify({
-              data
-            })
-          })
+              data,
+            }),
+          });
           throw new Error(`Error recovering asset: ${data.bannerImageAssetId}`);
         });
       if (!bannerAsset) {
@@ -651,9 +655,9 @@ export class UserService {
             message: "ERROR_GETTING_ASSET",
             stackTrace: `${err.stack}`,
             additionalDetailsJSON: JSON.stringify({
-              data
+              data,
             }),
-          })
+          });
           throw new Error(`Error recovering asset: ${data.profilePictureAssetId}`);
         });
       if (!profileAsset) {
@@ -689,9 +693,9 @@ export class UserService {
             message: "ERROR_GETTING_USER",
             stackTrace: `${err.stack}`,
             additionalDetailsJSON: JSON.stringify({
-              data
-            })
-          })
+              data,
+            }),
+          });
           throw new Error("Failed to retrieve user");
         });
 
@@ -704,9 +708,9 @@ export class UserService {
           message: "USER_NOT_FOUND",
           stackTrace: `User with ID ${userId} not found.`,
           additionalDetailsJSON: JSON.stringify({
-            data
-          })
-        })
+            data,
+          }),
+        });
         return;
       }
 
@@ -730,9 +734,9 @@ export class UserService {
             message: "ERROR_GETTING_COURSE",
             stackTrace: `${err.stack}`,
             additionalDetailsJSON: JSON.stringify({
-              data
-            })
-          })
+              data,
+            }),
+          });
           return [];
         });
 
@@ -760,9 +764,9 @@ export class UserService {
               message: "ERROR_SENDING_EMAIL",
               stackTrace: `${err.stack}`,
               additionalDetailsJSON: JSON.stringify({
-                data
-              })
-            })
+                data,
+              }),
+            });
             throw new Error("Error sending email");
           });
       }
@@ -805,9 +809,9 @@ export class UserService {
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
             data,
-            updateData
-          })
-        })
+            updateData,
+          }),
+        });
         throw new Error("Error updating user");
       });
   };
@@ -869,8 +873,8 @@ export class UserService {
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
             email,
-          })
-        })
+          }),
+        });
         throw new Error("Error sending email");
       });
   };
@@ -906,9 +910,8 @@ export class UserService {
         userAgent: "",
         message: "USER_NOT_FOUND",
         stackTrace: `User not found: ${userId}`,
-        additionalDetailsJSON: JSON.stringify({
-        })
-      })
+        additionalDetailsJSON: JSON.stringify({}),
+      });
       throw new Error("User not found");
     }
     if (user.verificationRequestExpiry && user.verificationRequestExpiry < currentUtcTimestamp()) {
@@ -919,9 +922,8 @@ export class UserService {
         userAgent: "",
         message: "VERIFICATION_TOKEN_EXPIRED",
         stackTrace: `Verification token expired: ${userId}`,
-        additionalDetailsJSON: JSON.stringify({
-        })
-      })
+        additionalDetailsJSON: JSON.stringify({}),
+      });
       throw new Error("Verification token expired");
     }
     const valid = await bcrypt.compare(token, user.verificationRequestToken!).catch((err) => {
@@ -932,9 +934,8 @@ export class UserService {
         userAgent: "",
         message: "ERROR_COMPARING_TOKEN",
         stackTrace: `Error comparing token: ${err.stack}`,
-        additionalDetailsJSON: JSON.stringify({
-        })
-      })
+        additionalDetailsJSON: JSON.stringify({}),
+      });
       throw new Error("Error comparing token");
     });
     if (!valid) {
@@ -945,9 +946,8 @@ export class UserService {
         userAgent: "",
         message: "INVALID_VERIFICATION_TOKEN",
         stackTrace: `Invalid verification token: ${userId}`,
-        additionalDetailsJSON: JSON.stringify({
-        })
-      })
+        additionalDetailsJSON: JSON.stringify({}),
+      });
       throw new Error("Invalid verification token");
     }
     await this.database
@@ -1004,9 +1004,9 @@ export class UserService {
         stackTrace: `Invalid captcha`,
         additionalDetailsJSON: JSON.stringify({
           handleOrEmail,
-          courseProviderId
-        })
-      })
+          courseProviderId,
+        }),
+      });
       throw new Error("Invalid captcha");
     }
     let CourseURL: string | undefined;
@@ -1052,7 +1052,7 @@ export class UserService {
       .select()
       .from(accounts)
       .where(and(eq(accounts.userId, user.id)))
-      .execute()
+      .execute();
 
     const emailParam = {
       CustomerFirstName: user.name?.split(" ")[0],
@@ -1075,9 +1075,9 @@ export class UserService {
         stackTrace: `Missing SendGrid template ID for forgot password email.`,
         additionalDetailsJSON: JSON.stringify({
           handleOrEmail,
-          courseProviderId
-        })
-      })
+          courseProviderId,
+        }),
+      });
       throw new Error("Missing email template ID");
     }
 
@@ -1098,13 +1098,12 @@ export class UserService {
             stackTrace: `${err.stack}`,
             additionalDetailsJSON: JSON.stringify({
               handleOrEmail,
-              user
-            })
-          })
+              user,
+            }),
+          });
           throw new Error("Error sending email");
         });
     }
-
 
     if (!user.emailVerified) {
       this.logger.warn(`User email not verified: ${handleOrEmail}`);
@@ -1131,8 +1130,8 @@ export class UserService {
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
             handleOrEmail,
-          })
-        })
+          }),
+        });
       });
 
     const emailParams = {
@@ -1168,9 +1167,9 @@ export class UserService {
             stackTrace: `${err.stack}`,
             additionalDetailsJSON: JSON.stringify({
               handleOrEmail,
-              user
-            })
-          })
+              user,
+            }),
+          });
           throw new Error("Error sending email");
         });
     } else {
@@ -1192,9 +1191,9 @@ export class UserService {
             stackTrace: `${err.stack}`,
             additionalDetailsJSON: JSON.stringify({
               handleOrEmail,
-              user
-            })
-          })
+              user,
+            }),
+          });
           throw new Error("Error sending email");
         });
     }
@@ -1276,9 +1275,9 @@ export class UserService {
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
             courseId,
-            userId
-          })
-        })
+            userId,
+          }),
+        });
         throw new Error("Error updating password");
       });
 
@@ -1308,8 +1307,8 @@ export class UserService {
             stackTrace: `${err.stack}`,
             additionalDetailsJSON: JSON.stringify({
               courseId,
-            })
-          })
+            }),
+          });
           return [];
         });
 
@@ -1375,9 +1374,8 @@ export class UserService {
         userAgent: "",
         message: "USER_NOT_FOUND",
         stackTrace: `User not found: ${userId}`,
-        additionalDetailsJSON: JSON.stringify({
-        })
-      })
+        additionalDetailsJSON: JSON.stringify({}),
+      });
       throw new Error("User not found");
     }
     if (isValidPassword(newPassword).score < 8) {
@@ -1388,9 +1386,8 @@ export class UserService {
         userAgent: "",
         message: "INVALID_PASSWORD_FORMAT",
         stackTrace: `User not found: ${userId}`,
-        additionalDetailsJSON: JSON.stringify({
-        })
-      })
+        additionalDetailsJSON: JSON.stringify({}),
+      });
       throw new Error("Invalid password format");
     }
     const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -1412,9 +1409,8 @@ export class UserService {
             userAgent: "",
             message: "ERROR_SETTING_PASSWORD",
             stackTrace: `User not found: ${userId}`,
-            additionalDetailsJSON: JSON.stringify({
-            })
-          })
+            additionalDetailsJSON: JSON.stringify({}),
+          });
           throw new Error("Error setting password");
         });
     } else {
@@ -1427,9 +1423,8 @@ export class UserService {
           userAgent: "",
           message: "INVALID_PASSWORD",
           stackTrace: `Invalid password: ${userId}`,
-          additionalDetailsJSON: JSON.stringify({
-          })
-        })
+          additionalDetailsJSON: JSON.stringify({}),
+        });
         throw new Error("Invalid password");
       }
       this.logger.debug(`Updating password for user: ${userId}`);
@@ -1449,9 +1444,8 @@ export class UserService {
             userAgent: "",
             message: "ERROR_UPDATING_PASSWORD",
             stackTrace: `${err.stack}`,
-            additionalDetailsJSON: JSON.stringify({
-            })
-          })
+            additionalDetailsJSON: JSON.stringify({}),
+          });
           throw new Error("Error updating password");
         });
     }
@@ -1626,15 +1620,15 @@ export class UserService {
     const { user, profileImage, bannerImage } = data;
     const profilePicture = profileImage
       ? assetToURL({
-        key: profileImage.assetKey,
-        extension: profileImage.assetExtension,
-      })
+          key: profileImage.assetKey,
+          extension: profileImage.assetExtension,
+        })
       : "/defaults/default-profile.webp";
     const bannerPicture = bannerImage
       ? assetToURL({
-        key: bannerImage.assetKey,
-        extension: bannerImage.assetExtension,
-      })
+          key: bannerImage.assetKey,
+          extension: bannerImage.assetExtension,
+        })
       : "/defaults/default-banner.webp";
     let res;
 
@@ -1967,5 +1961,31 @@ export class UserService {
       return true;
     }
     return false;
+  };
+
+  addCourseUser = async (userId: string, courseId: string) => {
+    try {
+      const existingCourseUser = await this.database
+        .select()
+        .from(courseUser)
+        .where(and(eq(courseUser.userId, userId), eq(courseUser.courseId, courseId)))
+        .execute();
+
+      if (existingCourseUser.length > 0) {
+        console.log("Combination of userId and courseId already exists.");
+        return;
+      }
+
+      await this.database
+        .insert(courseUser)
+        .values({
+          id: randomUUID(),
+          userId: userId,
+          courseId: courseId,
+        })
+        .execute();
+    } catch (error) {
+      console.log(error);
+    }
   };
 }
