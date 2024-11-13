@@ -117,6 +117,7 @@ function Waitlists() {
           acc[formattedDate] = [];
         }
         acc[formattedDate].push(newItem);
+        acc[formattedDate].sort((a, b) => a.startTime - b.startTime);
         return acc;
       }, {}),
     [waitlist]

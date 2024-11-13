@@ -132,7 +132,6 @@ type RequestOptions = {
   body: string;
   redirect: RequestRedirect;
 };
-
 /**
  * Service for managing bookings and transaction history.
  */
@@ -3560,11 +3559,17 @@ export class BookingService {
         throw new Error(`Error creating booking`);
       });
 
-    await this.sendMessageToVerifyPayment(paymentId as string, userId, bookingId, redirectHref);
+    await this.sendMessageToVerifyPayment(
+      paymentId as string,
+      userId,
+      bookingId.bookingId as string,
+      redirectHref
+    );
     return {
-      bookingId,
+      bookingId: bookingId.bookingId,
       providerBookingId,
       status: "Reserved",
+      isEmailSend: bookingId.isEmailSend,
     } as ReserveTeeTimeResponse;
   };
 
@@ -3652,6 +3657,7 @@ export class BookingService {
       });
     }
   };
+
   reserveSecondHandBooking = async (
     userId = "",
     cartId = "",
@@ -3819,11 +3825,36 @@ export class BookingService {
       eventId: "TEE_TIME_BOOKED",
       json: "Tee time booked",
     });
+    //Sending teetime purchase email to user
+    const message = `
+A total of ${associatedBooking?.listedSlotsCount ?? 0} tee times have been purchased.
+Price per booking: ${total ?? "Not specified"}.
 
+Booking ID: ${bookingId ?? "Unavailable"}
+
+This purchase was made as a second-party transaction directly from the course.
+`;
+    let isEmailSend = false;
+    const attachment: any[] = [];
+    try {
+      await this.notificationService.createNotification(
+        userId,
+        "TeeTimes Purchased",
+        message,
+        "",
+        process.env.SENDGRID_TEE_TIMES_PURCHASED_TEMPLATE_ID,
+        undefined,
+        attachment
+      );
+    } catch (error: any) {
+      console.log(error.message);
+      isEmailSend = true;
+    }
     return {
       bookingId,
       providerBookingId: "",
       status: "Reserved",
+      isEmailSend,
     } as ReserveTeeTimeResponse;
   };
 

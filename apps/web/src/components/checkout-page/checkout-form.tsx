@@ -245,6 +245,7 @@ export const CheckoutForm = ({
       }
     };
   useEffect(() => {
+   
     void fetchData();
   }, []);
 

@@ -31,6 +31,10 @@ interface AcceptedQuoteParams {
   id: string | null;
   price_charged: number;
 }
+interface BookingTypes {
+  bookingId: string;
+  isEmailSend: boolean;
+}
 export class TokenizeService {
   private logger = Logger(TokenizeService.name);
 
@@ -45,7 +49,7 @@ export class TokenizeService {
     private readonly database: Db,
     private readonly notificationService: NotificationService,
     private readonly sensibleService: SensibleService
-  ) { }
+  ) {}
   getCartData = async ({ courseId = "", ownerId = "", paymentId = "" }) => {
     const [customerCartData]: any = await this.database
       .select({ cart: customerCarts.cart, cartId: customerCarts.id })
@@ -176,7 +180,7 @@ export class TokenizeService {
     normalizedCartData?: any;
     isWebhookAvailable?: boolean;
     providerBookingIds?: string[];
-  }): Promise<string> {
+  }): Promise<BookingTypes> {
     this.logger.info(`tokenizeBooking tokenizing booking id: ${providerTeeTimeId} for user: ${userId}`);
     //@TODO add this to the transaction
 
@@ -220,9 +224,9 @@ export class TokenizeService {
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
             providerTeeTimeId,
-            providerBookingId
-          })
-        })
+            providerBookingId,
+          }),
+        });
         return [];
       });
 
@@ -296,7 +300,9 @@ export class TokenizeService {
           const adminEmail: string = process.env.ADMIN_EMAIL_LIST || "nara@golfdistrict.com";
           const emailAterSplit = adminEmail.split(",");
           emailAterSplit.map(async (email) => {
-            await this.notificationService.sendEmail(email, "sensible Failed",
+            await this.notificationService.sendEmail(
+              email,
+              "sensible Failed",
               `error while accepting quote in sensible: ${error.message}
                 Email: ${normalizedCartData?.cart?.email},
                 Name: ${normalizedCartData.cart?.name},
@@ -330,7 +336,7 @@ export class TokenizeService {
                     ? `+${normalizedCartData?.cart?.phone_country_code}${normalizedCartData?.cart?.phone}`
                     : "",
                 },
-              }
+              },
             })}`,
           });
         }
@@ -443,8 +449,8 @@ export class TokenizeService {
               bookingsToCreate,
               providerTeeTimeId,
               providerBookingId,
-            })
-          })
+            }),
+          });
           tx.rollback();
         });
       await tx
@@ -463,8 +469,8 @@ export class TokenizeService {
               bookingSlots,
               providerTeeTimeId,
               providerBookingId,
-            })
-          })
+            }),
+          });
           tx.rollback();
         });
       if (!isWebhookAvailable) {
@@ -493,9 +499,9 @@ export class TokenizeService {
             additionalDetailsJSON: JSON.stringify({
               providerTeeTimeId,
               providerBookingId,
-              transfersToCreate
-            })
-          })
+              transfersToCreate,
+            }),
+          });
           tx.rollback();
         });
     });
@@ -569,24 +575,34 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       SellTeeTImeURL: `${redirectHref}/my-tee-box`,
       ManageTeeTimesURL: `${redirectHref}/my-tee-box`,
     };
-    await this.notificationService.createNotification(
-      userId,
-      "TeeTimes Purchased",
-      message,
-      existingTeeTime.courseId,
-      process.env.SENDGRID_TEE_TIMES_PURCHASED_TEMPLATE_ID,
-      template,
-      [
-        {
-          content: Buffer.from(icsContent).toString("base64"),
-          filename: "meeting.ics",
-          type: "text/calendar",
-          disposition: "attachment",
-          contentId: "meeting",
-        },
-      ]
-    );
-    return bookingId;
+    let isEmailSend = false;
+    try {
+      await this.notificationService.createNotification(
+        userId,
+        "TeeTimes Purchased",
+        message,
+        existingTeeTime.courseId,
+        process.env.SENDGRID_TEE_TIMES_PURCHASED_TEMPLATE_ID,
+        template,
+        [
+          {
+            content: Buffer.from(icsContent).toString("base64"),
+            filename: "meeting.ics",
+            type: "text/calendar",
+            disposition: "attachment",
+            contentId: "meeting",
+          },
+        ]
+      );
+    } catch (error: any) {
+      console.log(error.message);
+      isEmailSend = true;
+    }
+    const bookingIdObject: { bookingId: string; isEmailSend: boolean } = {
+      bookingId: bookingId,
+      isEmailSend,
+    };
+    return bookingIdObject;
   }
 
   extractTime = (dateStr: string) => {
@@ -624,8 +640,8 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
             bookingIds,
-          })
-        })
+          }),
+        });
         throw new Error(`Error finding bookings with id: ${bookingIds}`);
       });
     if (!bookingsToTransfer) {
@@ -751,8 +767,8 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
                 additionalDetailsJSON: JSON.stringify({
                   bookingId: bookingIds[i],
                   names,
-                })
-              })
+                }),
+              });
               throw new Error(`Error updating booking with id: ${bookingIds[i]}`);
             });
         }
@@ -768,8 +784,8 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
           additionalDetailsJSON: JSON.stringify({
             bookingIds,
             names,
-          })
-        })
+          }),
+        });
         throw new Error(`Error updating booking with id: ${bookingIds}`);
       });
   };
