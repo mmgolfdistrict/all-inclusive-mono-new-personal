@@ -53,8 +53,7 @@ export default function Checkout({
   const { course } = useCourseContext();
   const { user } = useUserContext();
   const session = useSession();
-  console.log("user checkout", user, { session });
-
+  
   const [isSessionLoading, setIsSessionLoading] = useState(true);
   dayjs.extend(utc);
   dayjs.extend(timezone);
@@ -322,6 +321,7 @@ export default function Checkout({
     deboundCharityAmount,
     course?.markupFeesFixedPerPlayer,
     course?.convenienceFeesFixedPerPlayer,
+    playerCount
   ]);
 
   useEffect(() => {

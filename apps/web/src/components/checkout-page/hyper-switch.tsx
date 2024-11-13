@@ -9,6 +9,7 @@ import type { CartProduct, MaxReservationResponse } from "~/utils/types";
 import { useEffect, useRef, useState } from "react";
 import { Spinner } from "../loading/spinner";
 import { CheckoutForm } from "./checkout-form";
+import { useCheckoutContext } from "~/contexts/CheckoutContext";
 
 export type NextAction = {
   type?: string;
@@ -55,6 +56,11 @@ export const HyperSwitch = ({
   playerCount: string | undefined;
   // maxReservation: MaxReservationResponse;
 }) => {
+
+  const {
+    amountOfPlayers
+  } = useCheckoutContext();
+
   const [options, setOptions] = useState<Options | undefined>(undefined);
   const { user } = useUserContext();
   const { course } = useCourseContext();
@@ -77,6 +83,12 @@ export const HyperSwitch = ({
     try {
       setError(undefined);
       // setIsLoadingSession(true);
+
+      if(Number(playerCount??0)!==amountOfPlayers){
+        return
+      }
+
+
       const data = (await checkout({
         userId: user.id,
         customerId: user.id,

@@ -44,7 +44,7 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [localStorageGoogle, setLocalStorageGoogle] = useState("");
   const [localstorageCredentials, setLocalStorageCredentials] = useState("");
-  const [localstorageLinkedin,setLocalStorageLinkedin]=useState("");
+  const [localstorageLinkedin, setLocalStorageLinkedin] = useState("");
   const [googleIsLoading, setGoogleIsLoading] = useState(false);
   const [linkedinIsLoading, setLinkedinIsLoading] = useState(false);
   const [credentialsLoader, setCredentialsLoader] = useState(false);
@@ -114,7 +114,7 @@ export default function Login() {
       toast.error("An error occurred logging in, try another option.");
     }
   }, []);
-  
+
   const {
     register,
     handleSubmit,
@@ -289,23 +289,10 @@ export default function Login() {
     process.env.NEXT_PUBLIC_APPLE_ID;
   useEffect(() => {
     if (typeof window !== "undefined") {
-      if (localStorage.getItem("googlestate")) {
-        setGoogleIsLoading(true);
-      }
-      // if (!localStorage.getItem("googlestate")) {
-      //   setGoogleIsLoading(false);
-      //   localStorage.removeItem("googlestate");
-      // }
-    }
-  }, []);
-  useEffect(() => {
-    if (typeof window !== "undefined") {
       setLocalStorageGoogle(localStorage.getItem("googlestate") || "");
-    }
-  }, []);
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setLocalStorageLinkedin(localStorage.getItem("linkedinstate") || "");
+      setTimeout(() => {
+        setLocalStorageGoogle("");
+      }, 4000);
     }
   }, []);
   useEffect(() => {
@@ -313,7 +300,15 @@ export default function Login() {
       setLocalStorageCredentials(localStorage.getItem("credentials") || "");
     }
   }, []);
-  
+  useEffect(() => {
+    if (typeof window != "undefined") {
+      setLocalStorageLinkedin(localStorage.getItem("linkedinstate") || "");
+      setTimeout(() => {
+        setLocalStorageLinkedin("");
+      }, 4000);
+    }
+  }, []);
+
   return isLoading || localStorageGoogle || localstorageLinkedin ? (
     <LoadingContainer isLoading={true}>
       <div></div>
@@ -340,7 +335,7 @@ export default function Login() {
               className="flex w-full items-center justify-center gap-3 text-primary-gray shadow-google-btn"
               data-testid="login-with-google-id"
             >
-              {googleIsLoading || localStorageGoogle ? (
+              {googleIsLoading  ? (
                 <div className="w-10 h-10">
                   <Spinner />
                 </div>

@@ -199,7 +199,6 @@ export const CheckoutForm = ({
   const { data: checkIsBookingDisabled } = api.course.getCourseById.useQuery({
     courseId: params?.course as string ?? "",
   });
-  console.log(checkIsBookingDisabled);
   const { data: multipleTransaction } =
     api.checkout.checkMultipleTeeTimeTransactionByUser.useQuery({});
   console.log("multipleTransaction", multipleTransaction);
@@ -245,7 +244,6 @@ export const CheckoutForm = ({
       }
     };
   useEffect(() => {
-   
     void fetchData();
   }, []);
 
