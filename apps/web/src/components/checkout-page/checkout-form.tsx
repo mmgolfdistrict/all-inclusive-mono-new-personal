@@ -420,6 +420,7 @@ export const CheckoutForm = ({
             bookingId: "",
             providerBookingId: "",
             status: "",
+            isEmailSend: false,
           };
 
           if (isFirstHand.length) {
@@ -462,7 +463,7 @@ export const CheckoutForm = ({
             router.push(`/${course?.id}/auctions/confirmation`);
           } else {
             router.push(
-              `/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}&bookingId=${bookingResponse.bookingId}`
+              `/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}&bookingId=${bookingResponse.bookingId}&isEmailSend=${bookingResponse.isEmailSend}`
             );
           }
         } else if (response.status === "failed") {
