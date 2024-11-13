@@ -81,6 +81,7 @@ export const UserInNav = ({ alwaysShow }: { alwaysShow?: boolean }) => {
       }
     });
     localStorage.removeItem("googlestate");
+    localStorage.removeItem("linkedinstate");
   };
 
   return (

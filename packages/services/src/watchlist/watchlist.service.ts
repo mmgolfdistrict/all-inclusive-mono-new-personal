@@ -170,6 +170,7 @@ export class WatchlistService {
       .where(
         and(
           eq(favorites.userId, userId),
+          eq(favorites.courseId,courseId),
           gte(teeTimes.date, currentUtcTimestamp()),
           or(gte(teeTimes.availableFirstHandSpots, 0), gte(teeTimes.availableSecondHandSpots, 0))
         )

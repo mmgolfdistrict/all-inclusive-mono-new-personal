@@ -93,6 +93,7 @@ export const HyperSwitch = ({
         //@ts-ignore
         cart: cartData,
         cartId,
+        teeTimeId
       })) as CreatePaymentResponse;
 
       if (data?.next_action) {

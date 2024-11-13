@@ -201,7 +201,7 @@ export const CheckoutForm = ({
   console.log(checkIsBookingDisabled);
   const { data: multipleTransaction } =
     api.checkout.checkMultipleTeeTimeTransactionByUser.useQuery({});
-    console.log("multipleTransaction",multipleTransaction);
+  console.log("multipleTransaction", multipleTransaction);
   const handlePaymentStatus = (status: string) => {
     switch (status) {
       case "succeeded":
@@ -373,6 +373,7 @@ export const CheckoutForm = ({
             bookingId: "",
             providerBookingId: "",
             status: "",
+            isEmailSend: false,
           };
 
           if (isFirstHand.length) {
@@ -415,7 +416,7 @@ export const CheckoutForm = ({
             router.push(`/${course?.id}/auctions/confirmation`);
           } else {
             router.push(
-              `/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}&bookingId=${bookingResponse.bookingId}`
+              `/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}&bookingId=${bookingResponse.bookingId}&isEmailSend=${bookingResponse.isEmailSend}`
             );
           }
         } else if (response.status === "failed") {

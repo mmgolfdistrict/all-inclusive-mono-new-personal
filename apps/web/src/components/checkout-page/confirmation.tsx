@@ -5,6 +5,7 @@ import { useCourseContext } from "~/contexts/CourseContext";
 import { api } from "~/utils/api";
 import { formatTime } from "~/utils/formatters";
 import Link from "next/link";
+import { Fragment } from "react";
 // import { useRouter } from "next/router";
 import { FilledButton } from "../buttons/filled-button";
 import { OutlineButton } from "../buttons/outline-button";
@@ -14,14 +15,16 @@ import { LinkedIn } from "../icons/share/linkedin";
 import { X } from "../icons/share/x";
 
 // import { InviteFriends } from "../tee-time-page/invite-friends";
-
+interface ConfirmationProps {
+  teeTimeId: string;
+  bookingId: string;
+  isEmailSend: boolean;
+}
 export const Confirmation = ({
   teeTimeId,
   bookingId,
-}: {
-  teeTimeId: string;
-  bookingId: string;
-}) => {
+  isEmailSend,
+}: ConfirmationProps) => {
   const { data: bookingData, isLoading: isLoadingBookingData } =
     api.teeBox.getOwnedBookingById.useQuery(
       { bookingId },
@@ -57,7 +60,7 @@ export const Confirmation = ({
                   </div>
                 ) : null}
 
-                <div style={{ paddingBottom: "65px" }}>
+                <div style={{ paddingBottom: "20px" }}>
                   <span style={{ fontWeight: 500 }}>Play Time</span>
                   <span style={{ margin: "0 15px" }}>:</span>
                   <span>
@@ -68,6 +71,19 @@ export const Confirmation = ({
                     )}
                   </span>
                 </div>
+                {isEmailSend ? (
+                  <Fragment>
+                    <div>
+                      <span className="text-yellow-600 font-semibold text-center ">
+                        Your booking is confirmed though we are unable to send
+                        the email. Rest assured our customer service
+                        representative will call you shortly
+                      </span>
+                    </div>
+                  </Fragment>
+                ) : (
+                  ""
+                )}
               </>
             )}
           </div>
@@ -105,8 +121,9 @@ export const Confirmation = ({
         </div>
       </div>
       <p className="mt-4 text-[14px] text-primary-gray md:text-[16px] font-semibold text-center">
-      Tip: If you know you can’t make your time, the earlier you can list, the greater the chance it sells.
-    </p>     
+        Tip: If you know you can’t make your time, the earlier you can list, the
+        greater the chance it sells.
+      </p>
     </section>
   );
 };
