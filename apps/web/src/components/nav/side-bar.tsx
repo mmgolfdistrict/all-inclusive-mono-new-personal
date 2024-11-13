@@ -106,7 +106,7 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
       localStorage.removeItem("googlestate");
     } catch (error) {
       console.log(error);
-    }finally{
+    } finally {
       localStorage.removeItem("googlestate");
     }
   };
