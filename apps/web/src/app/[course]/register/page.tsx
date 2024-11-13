@@ -95,7 +95,7 @@ export default function RegisterPage() {
       const zipcode = getAddressComponent("postal_code");
       const country = getAddressComponent("country");
 
-      if(inputRef?.current){
+      if (inputRef?.current) {
         inputRef.current.value = address1;
       }
 
@@ -223,7 +223,6 @@ export default function RegisterPage() {
         await logAudit(response.message);
         return;
       }
-
       router.push(`/${course?.id}/verify-email`);
     } catch (error) {
       toast.error((error as Error)?.message ?? "Error registering user.");
@@ -670,9 +669,8 @@ export default function RegisterPage() {
             )}
 
           <FilledButton
-            className={`w-full rounded-full ${
-              isSubmitting ? "animate-pulse cursor-not-allopwed" : ""
-            }`}
+            className={`w-full rounded-full ${isSubmitting ? "animate-pulse cursor-not-allopwed" : ""
+              }`}
             type="submit"
             disabled={isSubmitting}
             data-testid="register-button-id"

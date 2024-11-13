@@ -7,6 +7,8 @@ import Logger from "@golf-district/shared/src/logger";
 import bcrypt from "bcryptjs";
 import { CacheService } from "../infura/cache.service";
 import type { NotificationService } from "../notification/notification.service";
+import { userSession } from "@golf-district/database/schema/userSession";
+import { randomUUID } from "crypto";
 
 export class AuthService extends CacheService {
   /**
@@ -82,6 +84,23 @@ export class AuthService extends CacheService {
       .then(() => {
         this.logger.info(`Updated lastSuccessfulLogin for user: ${handleOrEmail}`);
       });
+  };
+
+  addUserSession = async (userId: string, status: string, ip?: string, userAgent?: string) => {
+    try {
+      await this.database
+        .insert(userSession)
+        .values({
+          id: randomUUID(),
+          userId: userId,
+          ip: ip,
+          userAgent: userAgent,
+          status: status,
+        })
+        .execute();
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   authenticateUser = async (handleOrEmail: string, password: string) => {
