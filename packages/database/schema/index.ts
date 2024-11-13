@@ -11,7 +11,6 @@ import * as bookings from "./bookings";
 import * as cashouts from "./cashout";
 import * as charities from "./charities";
 import * as charityCourseLink from "./charityCourseLink";
-import * as courseAllowedTimeToSell from "./courseAllowedTimeToSell";
 import * as courseAssets from "./courseAssets";
 import * as courseException from "./courseException";
 import * as courseGlobalNotification from "./courseGlobalNotification";
@@ -20,7 +19,6 @@ import * as coursePromoCodeLink from "./coursePromoCodeLink";
 import * as courses from "./courses";
 import * as courseScheduleDetails from "./courseScheduleDetails";
 import * as courseSEOs from "./courseSEO";
-import * as courseUser from "./courseUser";
 import * as customerCart from "./customerCart";
 import * as customerPaymentDetail from "./customerPaymentDetails";
 import * as customerRecievable from "./customerRecievable";
@@ -50,10 +48,10 @@ import * as userBookingOffers from "./userBookingOffers";
 import * as userPromoCodeLink from "./userPromoCodeLink";
 import * as userProviderCourseLink from "./userProviderCourseLink";
 import * as users from "./users";
-import * as userSession from "./userSession";
 import * as userWaitlists from "./userWaitlists";
 import * as verificationTokens from "./verificationTokens";
 import * as withdrawals from "./withdrawals";
+import * as courseAllowedTimeToSell from "./courseAllowedTimeToSell";
 
 export const schema = {
   ...accounts,
@@ -109,7 +107,5 @@ export const schema = {
   ...adminUserCourse,
   ...courseGlobalNotification,
   ...providerAuthTokens,
-  ...courseAllowedTimeToSell,
-  ...userSession,
-  ...courseUser,
+  ...courseAllowedTimeToSell
 };

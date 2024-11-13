@@ -22,7 +22,9 @@ export const UserInNav = ({ alwaysShow }: { alwaysShow?: boolean }) => {
   const courseId = course?.id;
   const pathname = usePathname();
   const router = useRouter();
-  const addUserSession = api.user.addUserSession.useMutation();
+
+  console.log("user", user);
+
   const { data: imageUrl } = api.image.getAssetUrl.useQuery(
     { assetId: user?.image ?? "" },
     {
@@ -54,20 +56,8 @@ export const UserInNav = ({ alwaysShow }: { alwaysShow?: boolean }) => {
         console.log("error", err);
       });
   };
-  const addLogoutSession = () => {
-    console.log("heree");
-    addUserSession.mutateAsync({
-      status: "LOGOUT"
-    }).then(() => {
-      console.log("logout user added successfully");
-    })
-      .catch((err) => {
-        console.log("error", err);
-      });
-  }
 
   const logOutUser = () => {
-    addLogoutSession()
     logAudit(async () => {
       if (PathsThatNeedRedirectOnLogout.some((i) => pathname.includes(i))) {
         const data = await signOut({

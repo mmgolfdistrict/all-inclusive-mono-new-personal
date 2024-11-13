@@ -131,27 +131,4 @@ export const userRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       return await ctx.serviceFactory.getUserService().isUserBlocked(input.userEmail);
     }),
-
-  addUserSession: protectedProcedure
-    .input(
-      z.object({
-        status: z.string(),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      return await ctx.serviceFactory
-        .getAuthService()
-        .addUserSession(ctx?.session.user.id, input.status, ctx?.session.ip, ctx?.session.userAgent);
-    }),
-
-  addCourseUser: publicProcedure
-    .input(
-      z.object({
-        courseId: z.string(),
-        userId: z.string(),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      return await ctx.serviceFactory.getUserService().addCourseUser(input.userId, input.courseId);
-    }),
 });
