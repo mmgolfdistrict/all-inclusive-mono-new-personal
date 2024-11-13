@@ -15,7 +15,7 @@ export default function Verify() {
   const userId = params.get("userId");
   const verificationToken = params.get("verificationToken");
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
-  const addCourseUser = api.user.addCourseUser.useMutation();
+
   const verifyEmail = api.register.verifyEmail.useMutation();
 
   const callingRef = useRef<boolean>(false);
@@ -25,20 +25,16 @@ export default function Verify() {
     if (!userId || !verificationToken) return;
     try {
       callingRef.current = true;
-      const response = await verifyEmail.mutateAsync({
+      const response= await verifyEmail.mutateAsync({
         courseId: course?.id,
         userId,
         token: verificationToken,
         redirectHref: window.location.origin,
       });
-      if (response?.error) {
+      if(response?.error){
         toast.error(response?.message);
         return
       }
-      await addCourseUser.mutateAsync({
-        courseId: course?.id ? course?.id : "",
-        userId,
-      })
       setIsSuccess(true);
       callingRef.current = false;
     } catch (error) {
@@ -46,7 +42,7 @@ export default function Verify() {
       setError((error as Error)?.message ?? "An unexpected error occurred.");
       toast.error(
         (error as Error)?.message ??
-        "An error occurred verifying your email address."
+          "An error occurred verifying your email address."
       );
     }
   };
@@ -73,10 +69,10 @@ export default function Verify() {
           {verifyEmail.isLoading && !isSuccess && !error
             ? "Verifying Email..."
             : isSuccess
-              ? "Verified Email!"
-              : error
-                ? "Something went wrong."
-                : "Verify Your Email Address"}
+            ? "Verified Email!"
+            : error
+            ? "Something went wrong."
+            : "Verify Your Email Address"}
         </h1>
         <div className="text-primary-gray">
           {verifyEmail.isLoading && !error && !isSuccess ? (

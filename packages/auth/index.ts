@@ -34,7 +34,6 @@ declare module "next-auth" {
   interface Session {
     user: User & DefaultSession["user"];
     ip?: string;
-    userAgent?: string;
   }
 }
 const logger = Logger("Auth-File");

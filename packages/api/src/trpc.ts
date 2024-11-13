@@ -80,11 +80,10 @@ export const createTRPCContext = async (opts: { req?: Request; auth?: Session })
   const session = opts.auth ?? (await auth());
   const source = opts.req?.headers.get("x-trpc-source") ?? "unknown";
   const ip = opts.req?.headers.get("x-forwarded-for");
-  const userAgent = opts.req?.headers.get("user-agent");
-  session.userAgent = userAgent ?? "";
-  session.ip = ip ?? "";
+  // session.ip = ip ?? "";
   logger.info(">>> tRPC Request from", source, "by", session?.user?.id ?? "anonymous");
   const courseId = opts.req?.headers.get("referer")?.split("/")[3] ?? "";
+  // const userAgent = opts.req?.headers.get("user-agent");
   // const domainName = opts.req?.headers.get("x-forwarded-host");
 
   return createInnerTRPCContext({
