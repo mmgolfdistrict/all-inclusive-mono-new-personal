@@ -23,7 +23,6 @@ export const UserInNav = ({ alwaysShow }: { alwaysShow?: boolean }) => {
   const pathname = usePathname();
   const router = useRouter();
 
-  console.log("user", user);
 
   const { data: imageUrl } = api.image.getAssetUrl.useQuery(
     { assetId: user?.image ?? "" },
