@@ -251,6 +251,7 @@ export class CheckoutService {
         name: users.name,
         email: users.email,
         phoneNumber: users.phoneNumber,
+        id: users.id
       })
       .from(users)
       .where(eq(users.id, userId));
@@ -308,7 +309,12 @@ export class CheckoutService {
       currency: "USD",
       profile_id: this.profileId,
       // @ts-ignore
-      metadata: customerCart.courseId,
+      metadata: {
+        courseId:customerCart.courseId,
+        userId:user?.id,
+        teeTimeId:customerCart?.teeTimeId
+      },
+      merchant_order_reference_id: customerCartData?.cartId??"",
       setup_future_usage: "off_session",
     };
     // }
@@ -398,6 +404,7 @@ export class CheckoutService {
       currency: "USD",
       amount: parseInt(total.toString()),
       amount_to_capture: parseInt(total.toString()),
+      merchant_order_reference_id: cartId??"",
     };
 
     // @ts-ignore
