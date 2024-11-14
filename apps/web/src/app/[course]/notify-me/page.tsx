@@ -4,7 +4,6 @@ import type { Day } from "@taak/react-modern-calendar-datepicker";
 import { Calendar } from "@taak/react-modern-calendar-datepicker";
 import React, { useEffect, useState } from "react";
 import "@taak/react-modern-calendar-datepicker/lib/DatePicker.css";
-import { DesktopTimePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { FilledButton } from "~/components/buttons/filled-button";
@@ -20,6 +19,7 @@ import type { Dayjs } from "dayjs";
 import dayjs from "dayjs";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
+import CustomTimePicker from "./CustomTimePicker";
 
 function NotifyMe({ params }: { params: { course: string } }) {
   const router = useRouter();
@@ -35,6 +35,8 @@ function NotifyMe({ params }: { params: { course: string } }) {
   const [timeRange, setTimeRange] = useState<string>("");
   const [players, setPlayers] = useState("1");
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const courseStartTime = dayjs(course?.openTime).format("hh:mm A");
+  const courseEndTime = dayjs(course?.closeTime).format("hh:mm A");
 
   if (!course?.supportsWaitlist || !course) {
     router.push(`/${courseId}`);
@@ -59,11 +61,20 @@ function NotifyMe({ params }: { params: { course: string } }) {
     month: currentDate.month() + 1,
     day: currentDate.date(),
   };
+  const courseStartTimeObj = dayjs(courseStartTime, "hh:mm A");
+  const courseEndTimeObj = dayjs(courseEndTime, "hh:mm A");
 
   const handleDoneSetTimeRange = () => {
     if (startTime && endTime) {
       const startTimeNum = Number(startTime?.format("HHmm"));
       const endTimeNum = Number(endTime?.format("HHmm"));
+      const courseStartNum = Number(courseStartTimeObj.format("HHmm"));
+      const courseEndNum = Number(courseEndTimeObj.format("HHmm"));
+
+      if (startTimeNum < courseStartNum || endTimeNum > courseEndNum) {
+        setErrorMessage("Please select a time within the available duration.");
+        return;
+      }
 
       if (startTimeNum > endTimeNum) {
         setErrorMessage("Start time must be before end time");
@@ -225,31 +236,24 @@ function NotifyMe({ params }: { params: { course: string } }) {
                       width={24}
                       onClick={handleTimePickerClose}
                     />
+                    <div>
+                      <span>Tee time available hours : {courseStartTime} - {courseEndTime}</span>
+                    </div>
                     <h1 className="text-[20px] md:text-2xl">
                       What time range?
                     </h1>
                     <div className="flex flex-col gap-1">
-                      <label htmlFor="startTime" className="text-primary-gray">
-                        Start Time:
-                      </label>
-                      <DesktopTimePicker
-                        name="startTime"
-                        minutesStep={5}
-                        onChange={(newTime) => setStartTime(newTime)}
-                        views={["hours", "minutes"]}
-                        value={startTime}
+                      <CustomTimePicker
+                        flag={false}
+                        label="Start Time:"
+                        setTime={setStartTime}
                       />
                     </div>
                     <div className="flex flex-col gap-1">
-                      <label htmlFor="endTime" className="text-primary-gray">
-                        End Time:
-                      </label>
-                      <DesktopTimePicker
-                        name="endTime"
-                        minutesStep={5}
-                        onChange={(newTime) => setEndTime(newTime)}
-                        views={["hours", "minutes"]}
-                        value={endTime}
+                      <CustomTimePicker
+                        flag={true}
+                        label="End Time:"
+                        setTime={setEndTime}
                       />
                     </div>
                     <div>
