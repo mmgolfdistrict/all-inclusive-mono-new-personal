@@ -11,7 +11,7 @@ import GoogleProvider from "next-auth/providers/google";
 import GithubProvider from "next-auth/providers/github";
 import CredentialsProvider from "next-auth/providers/credentials";
 import AppleProvider from "next-auth/providers/apple";
-import { Adapter } from "next-auth/adapters";
+import type { Adapter } from "next-auth/adapters";
 // @TODO - update to use env validation
 //import { env } from "./env.mjs";
 import { verifyCaptcha } from "../api/src/googleCaptcha";
@@ -34,6 +34,7 @@ declare module "next-auth" {
   interface Session {
     user: User & DefaultSession["user"];
     ip?: string;
+    userAgent?: string;
   }
 }
 const logger = Logger("Auth-File");
