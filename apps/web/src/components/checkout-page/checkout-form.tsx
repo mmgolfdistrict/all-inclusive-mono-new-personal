@@ -67,6 +67,9 @@ export const CheckoutForm = ({
   const sendEmailForFailedPayment =
     api.webhooks.sendEmailForFailedPayment.useMutation();
 
+  const sendEmailForBookingFailedByTimeout = 
+    api.webhooks.sendEmailForBookingFailedByTimeout.useMutation();  
+
   const { refetch: refetchCheckTeeTime } =
     api.teeBox.checkIfTeeTimeStillListedByListingId.useQuery(
       {
@@ -434,6 +437,41 @@ export const CheckoutForm = ({
                 playTime: teeTimeDate || "",
               });
             } catch (error) {
+
+              if (error.message.includes("Gateway Timeout")) {
+                void sendEmailForBookingFailedByTimeout.mutateAsync({
+                  paymentId: response?.payment_id as string,
+                  teeTimeId: teeTimeId,
+                  cartId: cartId,
+                  userId: user?.id??"",
+                  courseId: courseId!,
+                  sensibleQuoteId:sensibleData?.id ?? ""
+                });
+
+                await auditLog.mutateAsync({
+                  userId: user?.id ?? "",
+                  teeTimeId: teeTimeId,
+                  bookingId: "",
+                  listingId: listingId,
+                  courseId,
+                  eventId: "TEETIME INSIDE timeout",
+                  json: `TEE time error time out`,
+                });
+
+              }
+              try{
+              await auditLog.mutateAsync({
+                userId: user?.id ?? "",
+                teeTimeId: teeTimeId,
+                bookingId: "",
+                listingId: listingId,
+                courseId,
+                eventId: "TEETIME outside timeout",
+                json: JSON.stringify(error)
+              });}catch (error){
+                console.log("error logged for timeout")
+              }
+
               setMessage(
                 "Error reserving first hand booking: " + error.message
               );
