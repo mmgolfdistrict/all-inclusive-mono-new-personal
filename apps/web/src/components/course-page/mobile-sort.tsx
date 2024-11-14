@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import * as ToggleGroup from "@radix-ui/react-toggle-group";
 import { type Dispatch, type SetStateAction } from "react";
 import { FilledButton } from "../buttons/filled-button";

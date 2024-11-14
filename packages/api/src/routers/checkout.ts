@@ -69,7 +69,17 @@ export const checkoutRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       return await ctx.serviceFactory.getHyperSwitchService().retrievePaymentIntent(input.clientSecret);
     }),
-  checkMultipleTeeTimeTransactionByUser:protectedProcedure.input(z.object({})).query(async ({ctx})=>{
-    return await ctx.serviceFactory.getCheckoutService().checkMultipleTeeTimeTransactionByUser(ctx.session.user.id);
-  })
+  checkMultipleTeeTimeTransactionByUser: protectedProcedure.input(z.object({})).query(async ({ ctx }) => {
+    return await ctx.serviceFactory
+      .getCheckoutService()
+      .checkMultipleTeeTimeTransactionByUser(ctx.session.user.id);
+  }),
+  createCustomerForHyperSwitch: protectedProcedure.input(z.object({})).query(async ({ ctx }) => {
+    return await ctx.serviceFactory.getCheckoutService().createHyperSwitchNewCustomer(ctx.session.user.id);
+  }),
+  retrieveCustomerDataByCustomer_ID: protectedProcedure.input(z.object({})).query(async ({ ctx }) => {
+    return await ctx.serviceFactory
+      .getCheckoutService()
+      .retrieveHyperSwitchRegisteredCustomer(ctx.session.user.id);
+  }),
 });
