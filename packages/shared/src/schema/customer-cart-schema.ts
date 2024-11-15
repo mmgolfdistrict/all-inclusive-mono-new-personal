@@ -88,6 +88,14 @@ export const CharityProductSchema = BaseProductSchema.extend({
     }),
   }),
 });
+export const CartFeeSchema = BaseProductSchema.extend({
+  product_data: z.object({
+    metadata: z.object({
+      type: z.literal("cart_fee"),
+      amount: z.number()
+    }),
+  }),
+});
 
 // ProductData schema
 export const ProductDataSchema = z.union([
@@ -99,6 +107,7 @@ export const ProductDataSchema = z.union([
   AuctionProductSchema,
   CharityProductSchema,
   TaxSchema,
+  CartFeeSchema
 ]);
 
 // CustomerCart schema

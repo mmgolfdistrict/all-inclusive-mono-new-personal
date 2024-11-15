@@ -616,7 +616,7 @@ export class BookingService {
         slotCustomerName: bookingslots.name,
         slotCustomerId: bookingslots.customerId,
         slotPosition: bookingslots.slotPosition,
-        purchasedFor: bookings.greenFeePerPlayer,
+        purchasedFor: bookings.totalAmount,
         providerBookingId: bookings.providerBookingId,
         slots: lists.slots,
         playerCount: bookings.playerCount,
@@ -3097,8 +3097,15 @@ export class BookingService {
         ({ product_data }: ProductData) => product_data.metadata.type === "second_hand"
       );
     }
+    let cartFeeCharge;
+    let cartFeeInfo = customerCartData?.cart?.cart?.filter(
+      ({ product_data }: ProductData) => product_data.metadata.type === "cart_fee"
+    );
+    cartFeeCharge = cartFeeInfo[0]?.product_data?.metadata?.amount || 0;
     const primaryData = {
-      primaryGreenFeeCharge: slotInfo[0].price,
+      primaryGreenFeeCharge: isNaN(slotInfo[0].price - (cartFeeCharge * (slotInfo[0]?.product_data?.metadata?.number_of_bookings || 0))) 
+      ?slotInfo[0].price
+      : slotInfo[0].price - (cartFeeCharge * (slotInfo[0]?.product_data?.metadata?.number_of_bookings || 0)),  //slotInfo[0].price- cartFeeCharge*slotInfo[0]?.product_data?.metadata?.number_of_bookings,
       teeTimeId: slotInfo[0].product_data.metadata.tee_time_id,
       playerCount: slotInfo[0].product_data.metadata.number_of_bookings,
     };
@@ -3158,6 +3165,7 @@ export class BookingService {
       charityId,
       weatherQuoteId,
       paymentId: customerCartData.paymentId,
+      cartFeeCharge: cartFeeCharge,
     };
   };
 
@@ -3243,6 +3251,7 @@ export class BookingService {
       charityId,
       weatherQuoteId,
       paymentId,
+      cartFeeCharge,
     } = await this.normalizeCartData({
       cartId,
       userId,
@@ -3538,6 +3547,7 @@ export class BookingService {
         },
         isWebhookAvailable: teeTime?.isWebhookAvailable ?? false,
         providerBookingIds,
+        cartFeeCharge: cartFeeCharge,
       })
       .catch(async (err) => {
         this.logger.error(`Error creating booking, ${err}`);
@@ -3665,7 +3675,6 @@ export class BookingService {
     payment_id = "",
     redirectHref = ""
   ) => {
-    debugger;
     const {
       cart,
       playerCount,
@@ -3680,6 +3689,7 @@ export class BookingService {
       charityId,
       weatherQuoteId,
       paymentId,
+      cartFeeCharge
     } = await this.normalizeCartData({
       cartId,
       userId,
@@ -3758,6 +3768,7 @@ export class BookingService {
       providerPaymentId: paymentId,
       markupFees: 0,
       weatherQuoteId: weatherQuoteId || null,
+      cartFeePerPlayer:cartFeeCharge
     });
     transfersToCreate.push({
       id: randomUUID(),
@@ -3828,7 +3839,7 @@ export class BookingService {
     //Sending teetime purchase email to user
     const message = `
 A total of ${associatedBooking?.listedSlotsCount ?? 0} tee times have been purchased.
-Price per booking: ${total ?? "Not specified"}.
+Price per booking: ${Math.round(total) ?? "Not specified"}.
 
 Booking ID: ${bookingId ?? "Unavailable"}
 

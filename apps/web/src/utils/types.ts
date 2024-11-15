@@ -127,7 +127,8 @@ export type CartProduct = {
       | Offer
       | MarkupProduct
       | ConvenienceFeeProduct
-      | TaxProduct;
+      | TaxProduct
+      | CartFeeMetaData;
   };
 };
 
@@ -136,7 +137,10 @@ export interface FirstHandProduct {
   tee_time_id: string | undefined;
   number_of_bookings: number;
 }
-
+export interface CartFeeMetaData{
+  type:"cart_fee";
+  amount:number | undefined;
+}
 export interface SecondHandProduct {
   type: "second_hand";
   second_hand_id: string | undefined; //listing Id

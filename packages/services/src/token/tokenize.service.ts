@@ -155,6 +155,7 @@ export class TokenizeService {
     normalizedCartData,
     isWebhookAvailable,
     providerBookingIds,
+    cartFeeCharge,
   }: {
     redirectHref: string;
     userId: string;
@@ -166,6 +167,7 @@ export class TokenizeService {
     withCart?: boolean;
     provider?: ProviderAPI;
     token?: string;
+    cartFeeCharge?: number;
     teeTime?: {
       id: string;
       courseId: string;
@@ -371,6 +373,7 @@ export class TokenizeService {
       weatherGuaranteeId: acceptedQuote?.id ? acceptedQuote?.id : null,
       weatherGuaranteeAmount: acceptedQuote?.price_charged ? acceptedQuote?.price_charged * 100 : 0,
       markupFees: (normalizedCartData?.markupCharge ?? 0) * 100,
+      cartFeePerPlayer: cartFeeCharge,
     });
 
     transfersToCreate.push({
@@ -516,10 +519,10 @@ export class TokenizeService {
       eventId: "TEE_TIME_PURCHASED",
       json: "Tee time purchased",
     });
-
+    const finalAmount = Math.floor(purchasePrice + (cartFeeCharge ?? 0))*Number(players);
     const message = `
 ${players} tee times have been purchased for ${existingTeeTime.date} at ${existingTeeTime.courseId}
-    price per booking: ${purchasePrice} 
+    price per booking: ${finalAmount} 
 
     ${providerBookingId}
 

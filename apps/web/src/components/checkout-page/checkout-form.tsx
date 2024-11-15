@@ -56,6 +56,7 @@ export const CheckoutForm = ({
   roundOffStatus: string | undefined;
   setRoundOffStatus: Dispatch<SetStateAction<string>>;
 }) => {
+  console.log("cart-data", cartData);
   const MAX_CHARITY_AMOUNT = 1000;
   const { course } = useCourseContext();
   const params = useParams();
@@ -144,6 +145,12 @@ export const CheckoutForm = ({
       ?.filter(({ product_data }) => product_data.metadata.type === "charity")
       ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
 
+  const cartFeeCharge =
+    cartData
+      ?.filter(({ product_data }) => product_data.metadata.type === "cart_fee")
+      ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+  console.log("cart-fee", cartFeeCharge);
+
   const unifiedCheckoutOptions = {
     wallets: {
       walletReturnUrl: isBuyNowAuction
@@ -171,8 +178,6 @@ export const CheckoutForm = ({
   const [showTextField, setShowTextField] = useState(false);
   const [donateError, setDonateError] = useState(false);
   const [noThanks, setNoThanks] = useState(false);
-  const [isBookingCoursesDisabled, setIsBookingCoursesDisabled] =
-    useState(false);
   const [charityData, setCharityData] = useState<charityData | undefined>({
     charityDescription: "",
     charityId: "",
@@ -200,7 +205,7 @@ export const CheckoutForm = ({
   const reserveSecondHandBookingApi =
     api.teeBox.reserveSecondHandBooking.useMutation();
   const { data: checkIsBookingDisabled } = api.course.getCourseById.useQuery({
-    courseId: params?.course as string ?? "",
+    courseId: (params?.course as string) ?? "",
   });
   const { data: multipleTransaction } =
     api.checkout.checkMultipleTeeTimeTransactionByUser.useQuery({});
@@ -328,9 +333,11 @@ export const CheckoutForm = ({
     });
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    if(checkIsBookingDisabled?.isBookingDisabled == 1){
+    if (checkIsBookingDisabled?.isBookingDisabled == 1) {
       e.preventDefault();
-      toast.error("Due some issue currently Booking are unavailable for this course");
+      toast.error(
+        "Due some issue currently Booking are unavailable for this course"
+      );
       return;
     }
     googleAnalyticsEvent({
@@ -851,9 +858,7 @@ export const CheckoutForm = ({
         <Fragment>
           <FilledButton
             className={`w-full rounded-full disabled:opacity-60`}
-            disabled={
-              !hyper || !widgets || callingRef
-            }
+            disabled={!hyper || !widgets || callingRef}
             onClick={() => {
               if (nextAction?.redirect_to_url) {
                 window.location.href = nextAction?.redirect_to_url;

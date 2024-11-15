@@ -46,6 +46,8 @@ interface TeeTimeSearchObject {
   pricePerGolfer: number;
   greenFeeTaxPerPlayer: number;
   cartFeeTaxPerPlayer: number;
+  greenFee:number,
+  cartFee:number,
   teeTimeId: string;
   date: string; //day of tee time
   time: number; //military time
@@ -502,6 +504,8 @@ export class SearchService {
       markupFees: markupFeesToBeUsed * 100,
       greenFeeTaxPerPlayer: tee.greenFeeTax,
       cartFeeTaxPerPlayer: tee.cartFeeTax,
+      greenFee:tee.greenFee,
+      cartFee:tee.cartFee,
       teeTimeId: tee.id,
       userWatchListed: tee.favorites ? true : false,
       date: tee.providerDate, //day of tee time
