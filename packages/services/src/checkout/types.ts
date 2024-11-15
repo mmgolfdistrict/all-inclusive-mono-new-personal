@@ -55,7 +55,8 @@ export type ProductData =
   | Offer
   | MarkupProduct
   | ConvenienceFeeProduct
-  | TaxProduct;
+  | TaxProduct
+  | CartFeeProduct;
 
 export interface BaseProduct {
   name: string; // teeTime-course-time
@@ -77,6 +78,14 @@ export interface FirstHandProduct extends BaseProduct {
   };
 }
 
+export interface CartFeeProduct extends BaseProduct {
+  product_data: {
+    metadata: {
+      type: "cart_fee";
+      amount: number;
+    };
+  };
+}
 export interface SecondHandProduct extends BaseProduct {
   product_data: {
     metadata: {

@@ -20,6 +20,7 @@ import { api } from "~/utils/api";
 import { formatMoney, getPromoCodePrice } from "~/utils/formatters";
 import type {
   AuctionProduct,
+  CartFeeMetaData,
   CartProduct,
   CharityProduct,
   ConvenienceFeeProduct,
@@ -175,18 +176,18 @@ export default function Checkout({
       | Offer
       | MarkupProduct
       | ConvenienceFeeProduct
-      | TaxProduct =
+      | TaxProduct
+      | CartFeeMetaData =
       saleType === "first_hand"
         ? {
-          type: "first_hand",
-          tee_time_id: teeTimeId,
-          number_of_bookings: amountOfPlayers,
-        }
+            type: "first_hand",
+            tee_time_id: teeTimeId,
+            number_of_bookings: amountOfPlayers,
+          }
         : {
-          type: "second_hand",
-          second_hand_id: listingId,
-        };
-
+            type: "second_hand",
+            second_hand_id: listingId,
+          };
     const localCart: CartProduct[] = [
       {
         name: "Golf District Tee Time",
@@ -206,7 +207,46 @@ export default function Checkout({
         },
       },
     ];
-
+    
+    if(teeTimeData?.cartFee){
+      localCart.push({
+        name: "Golf District Tee Time",
+        id: teeTimeId ?? data?.teeTimeId,
+        price:teeTimeData.cartFee, //int
+        image: "", //
+        currency: "USD", //USD
+        display_price: formatMoney(
+          ((data?.greenFeeTaxPerPlayer ?? 0) +
+            (data?.cartFeeTaxPerPlayer ?? 0)) *
+            amountOfPlayers
+        ),
+        product_data: {
+          metadata: {
+            type: "cart_fee",
+            amount:teeTimeData.cartFee
+          },
+        },
+      });
+    }else{
+      localCart.push({
+        name: "Golf District Tee Time",
+        id: teeTimeId ?? data?.teeTimeId,
+        price:0 ,//int
+        image: "", //
+        currency: "USD", //USD
+        display_price: formatMoney(
+          ((data?.greenFeeTaxPerPlayer ?? 0) +
+            (data?.cartFeeTaxPerPlayer ?? 0)) *
+            amountOfPlayers
+        ),
+        product_data: {
+          metadata: {
+            type: "cart_fee",
+            amount:0
+          },
+        },
+      });
+    }
     if (data) {
       localCart.push({
         name: "Golf District Tee Time",
@@ -220,7 +260,7 @@ export default function Checkout({
         display_price: formatMoney(
           ((data?.greenFeeTaxPerPlayer ?? 0) +
             (data?.cartFeeTaxPerPlayer ?? 0)) *
-          amountOfPlayers
+            amountOfPlayers
         ),
         product_data: {
           metadata: {
@@ -229,7 +269,7 @@ export default function Checkout({
         },
       });
     }
-
+   
     if (course?.convenienceFeesFixedPerPlayer) {
       localCart.push({
         name: "Golf District Tee Time",
@@ -301,7 +341,8 @@ export default function Checkout({
         product_data: {
           metadata: {
             type: "charity",
-            charity_id: selectedCharity?.charityId ?? course?.roundUpCharityId ?? "",
+            charity_id:
+              selectedCharity?.charityId ?? course?.roundUpCharityId ?? "",
             donation_amount: deboundCharityAmount * 100,
           },
         },
@@ -368,9 +409,7 @@ export default function Checkout({
       <div
         className={`relative flex flex-col items-center gap-4 px-0 pb-8 md:px-8 ${marginTop}`}
       >
-        <div className="h-12 w-full ">
-
-        </div>
+        <div className="h-12 w-full "></div>
         <CheckoutBreadcumbs status={"checkout"} />
         {maxReservation && maxReservation?.success === false && (
           <div className="bg-alert-red text-white p-1 pl-2  w-full rounded">
@@ -421,7 +460,7 @@ export default function Checkout({
                 cartData={cartData}
                 teeTimeDate={teeTimeData?.date}
                 playerCount={playerCount}
-              // maxReservation={maxReservation}
+                // maxReservation={maxReservation}
               />
             )}
           </div>
