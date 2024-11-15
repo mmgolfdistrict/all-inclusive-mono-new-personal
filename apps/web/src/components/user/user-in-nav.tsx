@@ -23,7 +23,6 @@ export const UserInNav = ({ alwaysShow }: { alwaysShow?: boolean }) => {
   const pathname = usePathname();
   const router = useRouter();
   const addUserSession = api.user.addUserSession.useMutation();
-  console.log("iugiu")
   const { data: imageUrl } = api.image.getAssetUrl.useQuery(
     { assetId: user?.image ?? "" },
     {

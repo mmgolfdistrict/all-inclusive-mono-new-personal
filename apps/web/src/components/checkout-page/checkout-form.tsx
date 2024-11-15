@@ -454,22 +454,10 @@ export const CheckoutForm = ({
                   bookingId: "",
                   listingId: listingId,
                   courseId,
-                  eventId: "TEETIME INSIDE timeout",
-                  json: `TEE time error time out`,
+                  eventId: "Vercel function timedout",
+                  json: `Vercel function timedout`,
                 });
 
-              }
-              try{
-              await auditLog.mutateAsync({
-                userId: user?.id ?? "",
-                teeTimeId: teeTimeId,
-                bookingId: "",
-                listingId: listingId,
-                courseId,
-                eventId: "TEETIME outside timeout",
-                json: JSON.stringify(error)
-              });}catch (error){
-                console.log("error logged for timeout")
               }
 
               setMessage(

@@ -385,7 +385,7 @@ export class HyperSwitchService {
   };
 
   sendEmailForBookingFailedByTimeout = async (paymentId: string, courseId: string, cartId: string, sensibleQuoteId: string | undefined, userId: string, teeTimeId:string) => {
-    const adminEmail: string = "verti_manish_pandey@golfdistrict.com";
+    const adminEmail: string = process.env.ADMIN_EMAIL_LIST || "nara@golfdistrict.com";
     const emailAterSplit = adminEmail.split(",");
     emailAterSplit.map(async (email) => {
       await this.notificationService.sendEmail(
