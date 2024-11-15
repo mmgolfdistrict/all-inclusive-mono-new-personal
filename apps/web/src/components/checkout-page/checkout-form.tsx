@@ -438,7 +438,7 @@ export const CheckoutForm = ({
               });
             } catch (error) {
 
-              if (error.message.includes("Gateway Timeout")) {
+              if (error.meta && error.meta.response && !Object.keys(error.meta.response).length && error.name==="TRPCClientError")  {
                 void sendEmailForBookingFailedByTimeout.mutateAsync({
                   paymentId: response?.payment_id as string,
                   teeTimeId: teeTimeId,
