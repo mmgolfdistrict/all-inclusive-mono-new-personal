@@ -78,8 +78,6 @@ function NotifyMe({ params }: { params: { course: string } }) {
 
       if (startTimeNum > endTimeNum) {
         setErrorMessage("Start time must be before end time");
-        setStartTime(null);
-        setEndTime(null);
         setTimeRange("");
         return;
       } else {
