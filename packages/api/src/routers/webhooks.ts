@@ -57,6 +57,20 @@ export const webhookRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       return await ctx.serviceFactory.getHyperSwitchService().sendEmailForFailedPayment(input.paymentId, input.teeTimeId, input.listingId, input.courseId, input.cartId, input.userId, input.email, input.phone);
     }),
+    sendEmailForBookingFailedByTimeout: publicProcedure
+    .input(
+      z.object({
+        paymentId: z.string(),
+        sensibleQuoteId: z.string().optional(),
+        userId: z.string(),
+        teeTimeId: z.string(),
+        courseId: z.string(),
+        cartId: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return await ctx.serviceFactory.getHyperSwitchService().sendEmailForBookingFailedByTimeout(input.paymentId, input.courseId, input.cartId, input.sensibleQuoteId,input.userId, input.teeTimeId);
+    }),
   auditLog: publicProcedure
     .input(
       z.object({

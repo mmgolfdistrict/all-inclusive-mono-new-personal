@@ -67,6 +67,9 @@ export const CheckoutForm = ({
   const sendEmailForFailedPayment =
     api.webhooks.sendEmailForFailedPayment.useMutation();
 
+  const sendEmailForBookingFailedByTimeout = 
+    api.webhooks.sendEmailForBookingFailedByTimeout.useMutation();  
+
   const { refetch: refetchCheckTeeTime } =
     api.teeBox.checkIfTeeTimeStillListedByListingId.useQuery(
       {
@@ -434,6 +437,29 @@ export const CheckoutForm = ({
                 playTime: teeTimeDate || "",
               });
             } catch (error) {
+
+              if (error?.meta?.response && !Object.keys(error.meta.response).length && error.name==="TRPCClientError")  {
+                void sendEmailForBookingFailedByTimeout.mutateAsync({
+                  paymentId: response?.payment_id as string,
+                  teeTimeId: teeTimeId,
+                  cartId: cartId,
+                  userId: user?.id??"",
+                  courseId: courseId!,
+                  sensibleQuoteId:sensibleData?.id ?? ""
+                });
+
+                await auditLog.mutateAsync({
+                  userId: user?.id ?? "",
+                  teeTimeId: teeTimeId,
+                  bookingId: "",
+                  listingId: listingId,
+                  courseId,
+                  eventId: "Vercel function timedout",
+                  json: `Vercel function timedout`,
+                });
+
+              }
+
               setMessage(
                 "Error reserving first hand booking: " + error.message
               );

@@ -383,6 +383,19 @@ export class HyperSwitchService {
     });
     return { status: "success" };
   };
+
+  sendEmailForBookingFailedByTimeout = async (paymentId: string, courseId: string, cartId: string, sensibleQuoteId: string | undefined, userId: string, teeTimeId:string) => {
+    const adminEmail: string = process.env.ADMIN_EMAIL_LIST || "nara@golfdistrict.com";
+    const emailAterSplit = adminEmail.split(",");
+    emailAterSplit.map(async (email) => {
+      await this.notificationService.sendEmail(
+        email,
+        `A booking has failed by timeout`,
+        `Hello Admin, A booking with payment id ${paymentId} timedout, CourseId: ${courseId}, CartId: ${cartId}, SensibleQuoteId: ${sensibleQuoteId}, UserId: ${userId}`
+      );
+    });
+    return { status: "success" };
+  };
   
   cancelHyperswitchPaymentById = async (paymentMethodId: string, teeTimeId: string, courseId: string, userId?: string, userEmail?: string, phone?: string) => {
     const options = {
