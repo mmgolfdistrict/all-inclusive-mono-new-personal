@@ -1,5 +1,5 @@
 import * as ToggleGroup from "@radix-ui/react-toggle-group";
-import { toast } from "react-toastify";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Item } from "../course-page/filters";
 
 export const ChoosePlayers = ({
@@ -23,18 +23,35 @@ export const ChoosePlayers = ({
   status?: string;
   numberOfPlayers: string[];
 }) => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const handlePlayerChange = (value: string) => {
+    if (isDisabled) return;
+    if (availableSlots < parseInt(value)) return;
+    if (!numberOfPlayers?.includes(value) || status === "SECOND_HAND") {
+      return;
+    }
+    if (value) {
+      setPlayers(value);
+
+      // Check if playerCount is already present in the query
+      const newSearchParams = new URLSearchParams(searchParams.toString());
+      if (newSearchParams.has("playerCount")) {
+        // If playerCount is present, update the URL with the new playerCount value
+        newSearchParams.set("playerCount", value);
+
+        // Push the updated URL
+        router.push(`${window.location.pathname}?${newSearchParams.toString()}`);
+      }
+    }
+  };
+
   return (
     <ToggleGroup.Root
       type="single"
       value={players as string}
-      onValueChange={(value: string) => {
-        if (isDisabled) return;
-        if (availableSlots < parseInt(value)) return;
-        if (!numberOfPlayers?.includes(value) || status === "SECOND_HAND") {
-          return;
-        }
-        if (value) setPlayers(value);
-      }}
+      onValueChange={handlePlayerChange}
       orientation="horizontal"
       className={`flex ${className}`}
       data-testid="player-button-id"
