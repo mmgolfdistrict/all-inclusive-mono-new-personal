@@ -29,7 +29,6 @@ type charityData = {
   charityId: string | undefined;
   charityLogo: string | undefined;
 };
-
 export const CheckoutForm = ({
   isBuyNowAuction,
   teeTimeId,
@@ -118,7 +117,7 @@ export const CheckoutForm = ({
         )
         ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
   }
-
+  
   // const secondaryGreenFeeCharge = cartData?.filter(({ product_data }) => product_data.metadata.type === "second_hand")?.reduce((acc: number, i) => acc + i.price, 0) / 100;
   const convenienceCharge =
     cartData
@@ -143,10 +142,9 @@ export const CheckoutForm = ({
 
   const cartFeeCharge =
     cartData
-      ?.filter(({ product_data }) => product_data.metadata.type === "cart_fee")
-      ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
-  console.log("cart-fee", cartFeeCharge);
-
+      ?.filter(({ product_data }) => product_data.metadata.type === "cart_fee");
+   //console.log("cart-fee",Number(cartFeeCharge[0].product_data.metadata.amount));
+  
   const unifiedCheckoutOptions = {
     wallets: {
       walletReturnUrl: isBuyNowAuction
@@ -308,7 +306,7 @@ export const CheckoutForm = ({
       return;
     }
 
-    if (listingId.length) {
+   if (listingId.length) {
       const isTeeTimeAvailable = await refetchCheckTeeTime();
       if (!isTeeTimeAvailable.data) {
         toast.error("Oops! Tee time is not available anymore");
@@ -485,7 +483,6 @@ export const CheckoutForm = ({
     (!roundUpCharityId ? charityCharge : 0) +
     convenienceCharge +
     (!roundUpCharityId ? 0 : Number(donateValue));
-
   const TotalAmt = Total.toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,

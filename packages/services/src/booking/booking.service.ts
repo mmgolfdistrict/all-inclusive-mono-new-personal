@@ -3097,15 +3097,30 @@ export class BookingService {
         ({ product_data }: ProductData) => product_data.metadata.type === "second_hand"
       );
     }
+    debugger;
+    const markupCharge =
+      customerCartData?.cart?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "markup")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+    const markupCharge1 = customerCartData?.cart?.cart
+      ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "markup")
+      ?.reduce((acc: number, i: any) => acc + i.price, 0);
     let cartFeeCharge;
     let cartFeeInfo = customerCartData?.cart?.cart?.filter(
       ({ product_data }: ProductData) => product_data.metadata.type === "cart_fee"
     );
     cartFeeCharge = cartFeeInfo[0]?.product_data?.metadata?.amount || 0;
+
     const primaryData = {
-      primaryGreenFeeCharge: isNaN(slotInfo[0].price - (cartFeeCharge * (slotInfo[0]?.product_data?.metadata?.number_of_bookings || 0))) 
-      ?slotInfo[0].price
-      : slotInfo[0].price - (cartFeeCharge * (slotInfo[0]?.product_data?.metadata?.number_of_bookings || 0)),  //slotInfo[0].price- cartFeeCharge*slotInfo[0]?.product_data?.metadata?.number_of_bookings,
+      primaryGreenFeeCharge: isNaN(
+        slotInfo[0].price -
+          cartFeeCharge * (slotInfo[0]?.product_data?.metadata?.number_of_bookings || 0) -
+          markupCharge1
+      )
+        ? slotInfo[0].price - markupCharge1
+        : slotInfo[0].price -
+          cartFeeCharge * (slotInfo[0]?.product_data?.metadata?.number_of_bookings ?? 0) -
+          markupCharge1, //slotInfo[0].price- cartFeeCharge*slotInfo[0]?.product_data?.metadata?.number_of_bookings,
       teeTimeId: slotInfo[0].product_data.metadata.tee_time_id,
       playerCount: slotInfo[0].product_data.metadata.number_of_bookings,
     };
@@ -3128,11 +3143,6 @@ export class BookingService {
     const charityCharge =
       customerCartData?.cart?.cart
         ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "charity")
-        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
-
-    const markupCharge =
-      customerCartData?.cart?.cart
-        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "markup")
         ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
 
     const charityId = customerCartData?.cart?.cart?.find(
@@ -3416,7 +3426,6 @@ export class BookingService {
         email: providerCustomer.email,
         phone: providerCustomer.phone,
       });
-
       bookingStage = "Creating Booking on Provider";
       booking = await provider
         .createBooking(token, teeTime.providerCourseId!, teeTime.providerTeeSheetId!, bookingData, userId)
@@ -3689,7 +3698,7 @@ export class BookingService {
       charityId,
       weatherQuoteId,
       paymentId,
-      cartFeeCharge
+      cartFeeCharge,
     } = await this.normalizeCartData({
       cartId,
       userId,
@@ -3768,7 +3777,7 @@ export class BookingService {
       providerPaymentId: paymentId,
       markupFees: 0,
       weatherQuoteId: weatherQuoteId || null,
-      cartFeePerPlayer:cartFeeCharge
+      cartFeePerPlayer: cartFeeCharge,
     });
     transfersToCreate.push({
       id: randomUUID(),

@@ -209,6 +209,7 @@ export class CheckoutService {
   buildCheckoutSession = async (userId: string, customerCartData: CustomerCart, cartId = "") => {
     const { paymentId } = customerCartData;
     let data = {};
+    
     // const errors = await this.validateCartItems(customerCart);
     // if (errors.length > 0) {
     //   return {
@@ -499,6 +500,9 @@ export class CheckoutService {
           break;
         case "charity":
           errors.push(...(await this.validateCharityItem(item as CharityProduct, courseId)));
+          break;
+        case "cart_fee":
+          console.log(" switch in cart-fee");
           break;
         default:
           this.logger.error(`Unknown product type: ${item.product_data.metadata}`);

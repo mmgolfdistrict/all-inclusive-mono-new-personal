@@ -519,7 +519,7 @@ export class TokenizeService {
       eventId: "TEE_TIME_PURCHASED",
       json: "Tee time purchased",
     });
-    const finalAmount = Math.floor(purchasePrice + (cartFeeCharge ?? 0))*Number(players);
+    const finalAmount = (Math.floor(purchasePrice + (cartFeeCharge ?? 0))*Number(players))+((normalizedCartData?.markupCharge ?? 0) * 100);
     const message = `
 ${players} tee times have been purchased for ${existingTeeTime.date} at ${existingTeeTime.courseId}
     price per booking: ${finalAmount} 
