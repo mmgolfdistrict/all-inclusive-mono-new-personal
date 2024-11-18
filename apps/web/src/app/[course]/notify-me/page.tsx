@@ -37,7 +37,6 @@ function NotifyMe({ params }: { params: { course: string } }) {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const courseStartTime = dayjs(course?.openTime).format("hh:mm A");
   const courseEndTime = dayjs(course?.closeTime).format("hh:mm A");
-  console.log("displayDates", displayDates);
 
   if (!course?.supportsWaitlist || !course) {
     router.push(`/${courseId}`);
