@@ -37,6 +37,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const courseStartTime = dayjs(course?.openTime).format("hh:mm A");
   const courseEndTime = dayjs(course?.closeTime).format("hh:mm A");
+  console.log("displayDates", displayDates);
 
   if (!course?.supportsWaitlist || !course) {
     router.push(`/${courseId}`);
@@ -126,9 +127,15 @@ function NotifyMe({ params }: { params: { course: string } }) {
   };
 
   useEffect(() => {
-    const datesToDisplay = selectedDates.map((date) => {
-      return dayjs(`${date.year}-${date.month}-${date.day}`).format("MMM DD");
-    });
+    const datesToDisplay = selectedDates
+      .sort((a, b) => {
+        const dateA = new Date(a.year, a.month - 1, a.day);
+        const dateB = new Date(b.year, b.month - 1, b.day);
+        return dateA.getTime() - dateB.getTime();
+      })
+      .map((date) =>
+        dayjs(`${date.year}-${date.month}-${date.day}`).format("MMM DD")
+      );
     setDisplayDates(datesToDisplay.join(", "));
   }, [selectedDates]);
 
@@ -235,7 +242,10 @@ function NotifyMe({ params }: { params: { course: string } }) {
                       onClick={handleTimePickerClose}
                     />
                     <div>
-                      <span>Tee time available hours : {courseStartTime} - {courseEndTime}</span>
+                      <span>
+                        Tee time available hours : {courseStartTime} -{" "}
+                        {courseEndTime}
+                      </span>
                     </div>
                     <h1 className="text-[20px] md:text-2xl">
                       What time range?
