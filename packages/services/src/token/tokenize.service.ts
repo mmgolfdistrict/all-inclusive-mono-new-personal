@@ -363,7 +363,7 @@ export class TokenizeService {
       // entityId: existingTeeTime.entityId,
       cartId: normalizedCartData.cartId,
       playerCount: players ?? 0,
-      greenFeePerPlayer: normalizedCartData.primaryGreenFeeCharge / players || 0,
+      greenFeePerPlayer: purchasePrice / players || 0,
       totalTaxesAmount: normalizedCartData.taxCharge * 100 || 0,
       charityId: normalizedCartData.charityId || null,
       totalCharityAmount: normalizedCartData.charityCharge * 100 || 0,
@@ -519,7 +519,7 @@ export class TokenizeService {
       eventId: "TEE_TIME_PURCHASED",
       json: "Tee time purchased",
     });
-    const finalAmount = Math.floor(purchasePrice + (cartFeeCharge ?? 0))*Number(players);
+    const finalAmount = (Math.floor(purchasePrice + (cartFeeCharge ?? 0))*Number(players))+((normalizedCartData?.markupCharge ?? 0) * 100);
     const message = `
 ${players} tee times have been purchased for ${existingTeeTime.date} at ${existingTeeTime.courseId}
     price per booking: ${finalAmount} 
