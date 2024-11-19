@@ -1,10 +1,11 @@
 import { randomUUID } from "crypto";
-import { and, asc, eq, gte, inArray, lte, type Db } from "@golf-district/database";
+import { and, asc, eq, gte, inArray, lte, type Db, secondaryDb } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import { courses } from "@golf-district/database/schema/courses";
 import { entities } from "@golf-district/database/schema/entities";
 import type { InsertUserWaitlists } from "@golf-district/database/schema/userWaitlists";
 import { userWaitlists } from "@golf-district/database/schema/userWaitlists";
+import { userWaitlistAuditLogs } from "@golf-district/database/secondaryDbSchema/userWaitlistAuditLogs";
 import Logger from "@golf-district/shared/src/logger";
 import dayjs from "dayjs";
 import UTC from "dayjs/plugin/utc";
@@ -351,9 +352,20 @@ export class UserWaitlistService {
 
       const sentNotificationsToUsers = new Set();
 
+      const sentNotificationsToTodaysUsers = await secondaryDb.select({
+        userId: userWaitlists.userId,
+      })
+        .from(userWaitlistAuditLogs)
+        .where(
+          and(
+            eq(userWaitlistAuditLogs.date, new Date(dayjs(date).format("YYYY-MM-DD") + "T00:00:00Z")),
+            eq(userWaitlistAuditLogs.isCancelledNotification, true)
+          )
+        )
+
       for (const notification of notifications) {
         // don't send notificaton same user or to lister
-        if (sentNotificationsToUsers.has(notification.userId) || userId === notification.userId) {
+        if (sentNotificationsToUsers.has(notification.userId) || userId === notification.userId || sentNotificationsToTodaysUsers.filter((user) => user.userId === notification.userId).length > 0) {
           continue;
         }
         sentNotificationsToUsers.add(notification.userId);
