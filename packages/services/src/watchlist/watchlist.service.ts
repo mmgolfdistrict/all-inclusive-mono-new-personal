@@ -116,8 +116,8 @@ export class WatchlistService {
             additionalDetailsJSON: JSON.stringify({
               fav,
               teeTimeId,
-            })
-          })
+            }),
+          });
           throw new Error("Error adding tee time to watchlist");
         });
       this.logger.debug(`Added tee time ${teeTimeId} to watchlist`);
@@ -170,7 +170,7 @@ export class WatchlistService {
       .where(
         and(
           eq(favorites.userId, userId),
-          eq(favorites.courseId,courseId),
+          eq(favorites.courseId, courseId),
           gte(teeTimes.date, currentUtcTimestamp()),
           or(gte(teeTimes.availableFirstHandSpots, 0), gte(teeTimes.availableSecondHandSpots, 0))
         )
@@ -187,9 +187,9 @@ export class WatchlistService {
           message: "ERROR_RETRIEVING_WATCHLIST",
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
-            courseId
-          })
-        })
+            courseId,
+          }),
+        });
         throw new Error("Error retrieving watchlist");
       });
     if (watchlistItems.length === 0 || !watchlistItems || watchlistItems === undefined) {
@@ -199,6 +199,7 @@ export class WatchlistService {
       };
     }
     let res: WatchlistItem[] = [];
+    // First, include both first and second hand spots
     watchlistItems.forEach((item) => {
       if (item.availableFirstHandSpots > 0) {
         res.push({
@@ -225,19 +226,19 @@ export class WatchlistService {
       }
     });
 
-    // watch list items that have available second hand spots
-    const teeTimesWithAvailableSecondHandSpots = watchlistItems.filter((item) =>
-      item.availableSecondHandSpots ? item.availableFirstHandSpots : 0 > 0
+    // Now, process second hand spots for the `SECOND_HAND` type
+    const teeTimesWithAvailableSecondHandSpots = watchlistItems.filter(
+      (item) => item.availableSecondHandSpots > 0
     );
     let booking: any[] = [];
     if (teeTimesWithAvailableSecondHandSpots.length > 0) {
-      //find all second hand bookings for these tee times
+      // Find all second-hand bookings for these tee times
       booking = await this.database
         .select({
           teeTimeId: teeTimes.id,
           watchListId: favorites.id,
           createdAt: favorites.createdAt,
-          teeTimeDate: teeTimes.date,
+          teeTimeDate: teeTimes.providerDate,
           soldBy: bookings.ownerId,
           bookingId: bookings.id,
           soldByHandle: users.handle,
@@ -252,7 +253,7 @@ export class WatchlistService {
           listingPrice: lists.listPrice,
         })
         .from(bookings)
-        .leftJoin(teeTimes, eq(bookings.teeTimeId, teeTimes.id))
+        .innerJoin(teeTimes, and(eq(bookings.teeTimeId, teeTimes.id), eq(bookings.isListed, true)))
         .leftJoin(users, eq(bookings.ownerId, users.id))
         .leftJoin(favorites, eq(favorites.teeTimeId, teeTimes.id))
         .leftJoin(assets, eq(assets.id, users.image))
@@ -270,10 +271,8 @@ export class WatchlistService {
       booking.forEach((item) => {
         let key = "";
         if (item.listingId) {
-          //booking is part of a listing
           key = `${item.listingId}-${item.soldBy}-${item.teeTimeId}`;
         } else {
-          //booking is not listed
           key = `${item.teeTimeId}-${item.soldBy}`;
         }
         if (!groupedBookings[key]) {
@@ -304,21 +303,14 @@ export class WatchlistService {
         }
       });
     }
-    res = [
-      ...res,
-      ...Object.values(groupedBookings).map((item) => {
-        return item;
-      }),
-    ];
 
-    // Encode the last item's createdAt as the next cursor if there are enough items
-    // const nextCursor =
-    //   watchlistItems.length === limit
-    //     ? Buffer.from(watchlistItems[watchlistItems.length - 1].createdAt).toString("base64")
-    //     : null;
+    res = [...res, ...Object.values(groupedBookings).map((item) => item)];
 
-    //console.log(watchlistItems);
-    console.log("res ", res);
+    res.sort((a, b) => {
+      const dateA = new Date(a.teeTimeExpiration).getTime();
+      const dateB = new Date(b.teeTimeExpiration).getTime();
+      return dateA - dateB; // Ascending order
+    });
 
     return {
       items: res,
