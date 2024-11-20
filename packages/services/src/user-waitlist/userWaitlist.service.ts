@@ -16,6 +16,7 @@ import type {
   UpdateWaitlistNotification,
 } from "./types";
 import { loggerService } from "../webhooks/logging.service";
+import type { AppSettingsService } from "../app-settings/app-settings.service";
 
 dayjs.extend(UTC);
 /**
@@ -24,7 +25,11 @@ dayjs.extend(UTC);
 export class UserWaitlistService {
   private readonly logger = Logger(UserWaitlistService.name);
 
-  constructor(private readonly database: Db, private readonly notificationService: NotificationService) { }
+  constructor(
+    private readonly database: Db,
+    private readonly notificationService: NotificationService,
+    private readonly appSettingService: AppSettingsService
+  ) { }
 
   getWaitlist = async (userId: string, courseId: string) => {
     try {
@@ -296,7 +301,8 @@ export class UserWaitlistService {
     date: string | undefined,
     time: number,
     courseId: string,
-    userId?: string
+    userId?: string,
+    listingId?: string
   ) => {
     try {
       if (!date || !time) {
@@ -350,7 +356,7 @@ export class UserWaitlistService {
         });
 
       const sentNotificationsToUsers = new Set();
-
+      const notificationDelay = await this.appSettingService.get("WAITLIST_NOTIFICATION_DELAY_AFTER_LISTING_IN_MINUTES") 
       for (const notification of notifications) {
         // don't send notificaton same user or to lister
         if (sentNotificationsToUsers.has(notification.userId) || userId === notification.userId) {
@@ -358,17 +364,19 @@ export class UserWaitlistService {
         }
         sentNotificationsToUsers.add(notification.userId);
         const data = {
-          json: {
-            notificationId: notification.id,
-            courseId: notification.courseId,
-            userId: notification.userId,
-            courseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${notification.cdnKey}.${notification.extension}`,
-            subDomainURL: notification.subDomainURL,
-            courseName: notification.courseName,
-          },
+          notificationId: notification.id,
+          courseId: notification.courseId,
+          userId: notification.userId,
+          courseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${notification.cdnKey}.${notification.extension}`,
+          subDomainURL: notification.subDomainURL,
+          courseName: notification.courseName,
+          listingId
         };
-
-        await this.sendQstashMessage(data);
+        if (listingId) {
+          await this.sendQstashMessage(data, notificationDelay);
+        } else {
+          await this.sendQstashMessage(data);
+        }
       }
     } catch (error: any) {
       this.logger.error(error);
@@ -387,35 +395,43 @@ export class UserWaitlistService {
     }
   };
 
-  sendQstashMessage = async (data: NotificationQstashData) => {
+  sendQstashMessage = async (data: NotificationQstashData, notificationDelay?: string | null) => {
+    let headers: Record<string, string> = {
+      "content-type": "application/json",
+      Authorization: `Bearer ${process.env.QSTASH_TOKEN}`,
+    }
+    if (notificationDelay) {
+      headers = {
+        ...headers,
+        "Upstash-Delay": `${notificationDelay}m`
+      }
+    }
     const res = await fetch(
       `${process.env.QSTASH_BASE_URL}${process.env.QSTASH_WAITLIST_NOTIFICATION_TOPIC}`,
       {
         method: "POST",
         body: JSON.stringify(data),
-        headers: {
-          "content-type": "application/json",
-          Authorization: `Bearer ${process.env.QSTASH_TOKEN}`,
-        },
+        headers,
       }
     );
 
     if (res.ok) {
       this.logger.info(
-        `message sent successfully for user: ${data.json.userId} and course: ${data.json.courseId}`
+        `message sent successfully for user: ${data.userId} and course: ${data.courseId}`
       );
     } else {
       this.logger.error(
-        `error sending message for user: ${data.json.userId} and course: ${data.json.courseId}`
+        `error sending message for user: ${data.userId} and course: ${data.courseId}`
       );
       loggerService.errorLog({
         userId: "",
         url: `/UserWaitlistService/sendQstashMessage`,
         userAgent: "",
         message: "ERROR_SENDING_QSTASH_MESSAGE",
-        stackTrace: `Error sending message for user: ${data.json.userId} and course: ${data.json.courseId}`,
+        stackTrace: `Error sending message for user: ${data.userId} and course: ${data.courseId}`,
         additionalDetailsJSON: JSON.stringify({
-          data
+          data,
+          response: await res.json()
         })
       })
     }

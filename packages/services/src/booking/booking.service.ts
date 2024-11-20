@@ -1205,7 +1205,8 @@ export class BookingService {
       date,
       formattedTime,
       courseId,
-      userId
+      userId,
+      toCreate.id
     );
     // console.log("CREATING LISTING FOR DATE:", date, formattedTime);
     return { success: true, body: { listingId: toCreate.id }, message: "Listings created successfully." };

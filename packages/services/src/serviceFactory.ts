@@ -385,7 +385,7 @@ export class ServiceFactory {
   };
 
   getUserWaitlistService = (): UserWaitlistService => {
-    return new UserWaitlistService(this.config.database, this.getNotificationService());
+    return new UserWaitlistService(this.config.database, this.getNotificationService(), this.getAppSettingService());
   };
 
   getSystemNotificationService = (): SystemNotificationService => {
