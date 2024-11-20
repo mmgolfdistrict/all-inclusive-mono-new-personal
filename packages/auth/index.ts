@@ -67,6 +67,7 @@ export const {
     FacebookProvider({
       clientId: process.env.NEXT_PUBLIC_FACEBOOK_CLIENT_ID,
       clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
+      allowDangerousEmailAccountLinking: true,
     }),
     GithubProvider({
       clientId: process.env.AUTH_GITHUB_ID,
@@ -190,6 +191,7 @@ export const {
   callbacks: {
     async signIn({ user, account }) {
       console.log("user", user);
+      console.log("provider", account);
       if (user) {
         const notificationService = new NotificationService(
           db,
@@ -206,23 +208,27 @@ export const {
           process.env.REDIS_URL!,
           process.env.REDIS_TOKEN!
         );
-        const isUserBlocked = await authService.isUserBlocked(user.email ?? "");
-        if (isUserBlocked) {
-          return false;
-        }
-        // const userService = new UserService(db, notificationService);
-        // const username = await userService.generateUsername(6);
-        // const getUserByIdServide = await userService.getUserById(user?.id as string);
-
-        // if (!getUserByIdServide?.handle) {
-        //   if (account && account.provider) {
-        //     const updateData = {
-        //       ...user,
-        //       handle: username,
-        //     };
-        //     await userService.updateUser(user.id ?? "", updateData);
-        //   }
+        // const isUserBlocked = await authService.isUserBlocked(user.email ?? "");
+        // if (isUserBlocked) {
+        //   return false;
         // }
+        /*const userService = new UserService(db, notificationService);
+         const username = await userService.generateUsername(6);
+         const getUserByIdServerRide = await userService.getUserById(user?.id as string);
+
+        if (!getUserByIdServerRide?.handle) {
+          if (account && account.provider) {
+            const updateData = {
+              ...user,
+              handle: username,
+            };
+            await userService.updateUser(user.id ?? "", updateData);
+          }
+        }*/
+        //  const userService = new UserService(db, notificationService);
+        //  const insertData= await userService.insertUser({
+
+        //  })
       }
       return true;
     },
