@@ -21,6 +21,8 @@ import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import { dateToUtcTimestamp } from "@golf-district/shared";
 import isEqual from "lodash.isequal";
 import { loggerService } from "../../webhooks/logging.service";
+import { userProviderCourseLink } from "@golf-district/database/schema/userProviderCourseLink";
+import { users } from "@golf-district/database/schema/users";
 
 export class foreUp extends BaseProvider {
   providerId = "fore-up";
@@ -143,24 +145,140 @@ export class foreUp extends BaseProvider {
     if (!response.ok) {
       this.logger.error(`Error creating booking: ${response.statusText}`);
       const responseData = await response.json();
-      if (response.status === 403) {
-        this.logger.error(`Error response from foreup: ${JSON.stringify(responseData)}`);
-        await this.getToken();
-      }
-      loggerService.errorLog({
-        userId,
-        url: "/Foreup/createBooking",
-        userAgent: "",
-        message: "ERROR_CREATING_BOOKING",
-        stackTrace: ``,
-        additionalDetailsJSON: JSON.stringify({
-          courseId,
-          teesheetId,
-          data,
-          responseData
+
+      // create another booking if the account number is not found in foreup
+      if (responseData.success === false && response.status === 404 && responseData.title.includes(data.data.attributes.bookedPlayers[0]?.accountNumber)) {
+        loggerService.errorLog({
+          userId,
+          url: "/Foreup/createBooking",
+          userAgent: "",
+          message: "ERROR_CREATING_BOOKING_CUSTOMER_NOT_FOUND_ON_FOREUP",
+          stackTrace: ``,
+          additionalDetailsJSON: JSON.stringify({
+            courseId,
+            teesheetId,
+            data,
+            responseData
+          })
         })
-      })
-      throw new Error(`Error creating booking: ${JSON.stringify(responseData)}`);
+        const [customer] = await db
+          .select({
+            id: users.id,
+            name: users.name,
+            email: users.email,
+            phone: users.phoneNumber,
+            address1: users.address1,
+            address2: users.address2,
+            state: users.state,
+            zipcode: users.zipcode,
+            city: users.city,
+            country: users.country,
+            handel: users.handle,
+            phonerNotification: users.phoneNotifications,
+            emailNotification: users.emailNotifications,
+            userProviderCourseLinkId: userProviderCourseLink.id
+          })
+          .from(userProviderCourseLink)
+          .innerJoin(users, eq(users.id, userProviderCourseLink.userId))
+          .where(
+            eq(userProviderCourseLink.accountNumber, data.data.attributes.bookedPlayers[0]?.accountNumber.toString() ?? ""),
+          )
+          .execute()
+          .catch(() => {
+            this.logger.error("Error fetching customer");
+            throw new Error('Error fetching customer');
+          })
+        if (!customer) {
+          throw new Error(`Customer not found with Account Number: ${data.data.attributes.bookedPlayers[0]?.accountNumber}`);
+        }
+        const accountNumber = Math.floor(Math.random() * 90000) + 10000;
+        const customerData = this.getCustomerCreationData({
+          id: customer.id,
+          name: customer.name,
+          email: customer.email,
+          phone: customer.phone,
+          address1: customer.address1,
+          address2: customer.address2,
+          state: customer.state,
+          zipcode: customer.zipcode,
+          city: customer.city,
+          country: customer.country,
+          handel: customer.handel,
+          emailNotification: customer.emailNotification,
+          phoneNotification: customer.phonerNotification,
+          providerCustomerId: null,
+          providerAccountNumber: null,
+          accountNumber
+        })
+
+        const customerResponse = await this.createCustomer(token, courseId, customerData);
+        const customerId = this.getCustomerId(customerResponse);
+
+        await db
+          .update(userProviderCourseLink)
+          .set({
+            customerId: customerId,
+            accountNumber: accountNumber.toString(),
+          })
+          .where(eq(userProviderCourseLink.id, customer.userProviderCourseLinkId))
+          .execute()
+          .catch(() => {
+            this.logger.error("Error updating customer");
+            throw new Error('Error updating customer');
+          })
+        if (bookingData.data.attributes.bookedPlayers[0]) {
+          bookingData.data.attributes.bookedPlayers[0].accountNumber = accountNumber;
+          console.dir(bookingData, { depth: null });
+
+          const response = await fetch(url, {
+            method: "POST",
+            headers: headers,
+            body: JSON.stringify(bookingData),
+          });
+
+          if (!response.ok) {
+            this.logger.error(`Error creating booking: ${response.statusText}`);
+            const responseData = await response.json();
+            loggerService.errorLog({
+              userId,
+              url: "/Foreup/createBooking",
+              userAgent: "",
+              message: "ERROR_CREATING_BOOKING",
+              stackTrace: ``,
+              additionalDetailsJSON: JSON.stringify({
+                courseId,
+                teesheetId,
+                data,
+                responseData
+              })
+            })
+            throw new Error(`Error creating booking: ${JSON.stringify(responseData)}`);
+          }
+          const booking: BookingResponse = await response.json();
+          return booking;
+        } else {
+          throw new Error(`Customer not found on booking data`);
+        }
+      } else {
+        if (response.status === 403) {
+          this.logger.error(`Error response from foreup: ${JSON.stringify(responseData)}`);
+          await this.getToken();
+        }
+        loggerService.errorLog({
+          userId,
+          url: "/Foreup/createBooking",
+          userAgent: "",
+          message: "ERROR_CREATING_BOOKING",
+          stackTrace: ``,
+          additionalDetailsJSON: JSON.stringify({
+            courseId,
+            teesheetId,
+            data,
+            responseData
+          })
+        })
+        throw new Error(`Error creating booking: ${JSON.stringify(responseData)}`);
+      }
     }
 
     const booking: BookingResponse = await response.json();
