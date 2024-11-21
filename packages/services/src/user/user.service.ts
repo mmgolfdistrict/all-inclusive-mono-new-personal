@@ -1004,7 +1004,7 @@ console.log(`${encodeURI(data?.redirectHref)}/verify?userId=${encodeURIComponent
     handleOrEmail: string,
     ReCAPTCHA: string | undefined,
     courseProviderId: string | undefined
-  ): Promise<void> => {
+  ): Promise<{error:boolean,message:string}> => {
     let isNotRobot;
     if (ReCAPTCHA) {
       isNotRobot = await verifyCaptcha(ReCAPTCHA);
@@ -1054,13 +1054,43 @@ console.log(`${encodeURI(data?.redirectHref)}/verify?userId=${encodeURIComponent
     if (!user) {
       this.logger.warn(`User not found: ${handleOrEmail}`);
       // throw new Error("User not found");
-      return;
+      return{
+        error:true,
+        message:`User not found: ${handleOrEmail}`
+      }
     }
 
+    const [existingUserWithEmail] = await this.database
+    .select()
+    .from(users)
+    .where(eq(users.email, user.email ?? ""));
+  if (existingUserWithEmail) {
+    if (existingUserWithEmail.email == user.email ?? "") {
+      const [account] = await this.database
+        .select()
+        .from(accounts)
+        .where(eq(accounts.userId, existingUserWithEmail.id));
+      this.logger.warn(`Email already exists: ${user.email}`);
+      if (account?.provider) {
+        return {
+          error: true,
+          message: `You have already registered using ${account?.provider}. Please use the same to login.`,
+        };
+      } else {
+        return {
+          error: true,
+          message: `You have already registered using this email. Please use the same to login.`,
+        };
+      }
+    }
+  }
     if (!user.email) {
       this.logger.warn(`User email does not exists: ${handleOrEmail}`);
       // throw new Error("User does not have an email");
-      return;
+      return {
+        error:true,
+        message:"User email does not exists: ${handleOrEmail"
+      };
     }
 
     const [accountData] = await this.database
@@ -1123,7 +1153,10 @@ console.log(`${encodeURI(data?.redirectHref)}/verify?userId=${encodeURIComponent
     if (!user.emailVerified) {
       this.logger.warn(`User email not verified: ${handleOrEmail}`);
       // throw new Error("User email not verified");
-      return;
+      return {
+        error:true,
+        message:`User email not verified: ${handleOrEmail}`
+      }
     }
     const verificationToken = randomBytes(32).toString("hex");
     const hashedVerificationToken = await bcrypt.hash(verificationToken, 10);
@@ -1211,6 +1244,10 @@ console.log(`${encodeURI(data?.redirectHref)}/verify?userId=${encodeURIComponent
           });
           throw new Error("Error sending email");
         });
+    }
+    return {
+      error:false,
+      message:"Success"
     }
   };
 
