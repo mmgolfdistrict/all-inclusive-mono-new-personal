@@ -14,9 +14,9 @@ import { Avatar } from "../avatar";
 import { FilledButton } from "../buttons/filled-button";
 import { OutlineButton } from "../buttons/outline-button";
 import { Trashcan } from "../icons/trashcan";
+import { Spinner } from "../loading/spinner";
 import { SkeletonRow } from "../my-tee-box-page/skeleton-row";
 import { MakeAnOffer } from "./make-an-offer";
-import { Spinner } from "../loading/spinner";
 
 export const WatchlistTable = () => {
   const { course } = useCourseContext();
@@ -87,7 +87,7 @@ export const WatchlistTable = () => {
       <div className="flex flex-col items-center justify-center h-[200px] rounded-xl gap-4 bg-white p-6 text-center">
         <Spinner className="w-[50px] h-[150px] mx-auto" />
       </div>
-    )
+    );
   }
 
   if ((!user || !session) && status === "unauthenticated") {
@@ -240,6 +240,7 @@ const TableRow = ({
   removeFromWatchlist: (id: string) => Promise<void>;
   openMakeAnOffer: () => void;
 }) => {
+  const DEFAULT_SILHOUETTE_IMAGE = "/defaults/default-profile.webp";
   const href = useMemo(() => {
     if (type === "FIRST_PARTY") {
       return `/${courseId}/${teeTimeId}`;
@@ -254,7 +255,9 @@ const TableRow = ({
     <tr className="w-full border-b border-stroke text-primary-gray">
       <td className="gap-2 px-4 py-3">
         <div className="flex items-center gap-2">
-          <Avatar src={iconSrc} />
+          <Avatar
+            src={type === "SECOND_HAND" ? DEFAULT_SILHOUETTE_IMAGE : iconSrc}
+          />
           <div className="flex flex-col">
             <Link
               href={href}
@@ -262,27 +265,13 @@ const TableRow = ({
               data-testid="course-id"
               data-qa={course}
             >
-              {course}
+              {type === "SECOND_HAND"
+                ? "Sold by another Golf District golfer."
+                : course}
             </Link>
             <div className="whitespace-nowrap text-primary-gray">
               {formatTime(date, false, timezoneCorrection)}
             </div>
-            {type === "FIRST_PARTY" ? (
-              <div className="whitespace-nowrap">Sold by {ownedByName}</div>
-            ) : (
-              <Link
-                href={`/${courseId}/profile/${ownedById}`}
-                className="whitespace-nowrap"
-                data-testid="owned-by-name-id"
-                data-test={ownedById}
-                data-qa={ownedByName}
-              >
-                {type === "SECOND_HAND" && status === "LISTED"
-                  ? "Listed"
-                  : "Owned"}{" "}
-                by <span className="text-primary">{ownedByName}</span>
-              </Link>
-            )}
           </div>
         </div>
       </td>
