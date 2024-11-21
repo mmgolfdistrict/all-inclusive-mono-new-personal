@@ -51,7 +51,12 @@ export default function ForgotPassword() {
     if (forgotFn.isLoading) return;
     try {
       const forgotPasswordData = { ...data, courseProviderId: course?.id };
-      await forgotFn.mutateAsync(forgotPasswordData);
+      const result = await forgotFn.mutateAsync(forgotPasswordData);
+      if (result.error) {
+        toast.error(result.message);
+      } else {
+        toast.success(result.message);
+      }
     } catch (error) {
       await recaptchaRef.current?.executeAsync();
       toast.error(
