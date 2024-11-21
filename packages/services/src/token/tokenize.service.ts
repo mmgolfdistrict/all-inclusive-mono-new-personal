@@ -363,7 +363,7 @@ export class TokenizeService {
       // entityId: existingTeeTime.entityId,
       cartId: normalizedCartData.cartId,
       playerCount: players ?? 0,
-      greenFeePerPlayer:(isFirstHandBooking?existingTeeTime.greenFee: purchasePrice)  || 0,
+      greenFeePerPlayer: (isFirstHandBooking ? existingTeeTime.greenFee : purchasePrice) || 0,
       totalTaxesAmount: normalizedCartData.taxCharge * 100 || 0,
       charityId: normalizedCartData.charityId || null,
       totalCharityAmount: normalizedCartData.charityCharge * 100 || 0,
@@ -519,7 +519,9 @@ export class TokenizeService {
       eventId: "TEE_TIME_PURCHASED",
       json: "Tee time purchased",
     });
-    const finalAmount = (Math.floor(purchasePrice + (cartFeeCharge ?? 0))*Number(players))+((normalizedCartData?.markupCharge ?? 0) * 100);
+    const finalAmount =
+      Math.floor(purchasePrice + (cartFeeCharge ?? 0)) * Number(players) +
+      (normalizedCartData?.markupCharge ?? 0) * 100;
     const message = `
 ${players} tee times have been purchased for ${existingTeeTime.date} at ${existingTeeTime.courseId}
     price per booking: ${finalAmount} 
@@ -600,6 +602,18 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
     } catch (error: any) {
       console.log(error.message);
       isEmailSend = true;
+      this.logger.error(error);
+      loggerService.errorLog({
+        userId: userId,
+        url: "/reserveBooking",
+        userAgent: "",
+        message: "EMAIL_SEND_FAILED_AFTER_TEETIME_PURCHASE",
+        stackTrace: `${error.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          bookingId: bookingId,
+          teeTimeID: existingTeeTime.courseId,
+        }),
+      });
     }
     const bookingIdObject: { bookingId: string; isEmailSend: boolean } = {
       bookingId: bookingId,

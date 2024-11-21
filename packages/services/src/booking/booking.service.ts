@@ -3869,6 +3869,18 @@ This purchase was made as a second-party transaction directly from the course.
     } catch (error: any) {
       console.log(error.message);
       isEmailSend = true;
+      this.logger.error(error);
+      loggerService.errorLog({
+        userId: userId,
+        url: "/reserveBooking",
+        userAgent: "",
+        message: "EMAIL_SEND_FAILED_AFTER_TEETIME_PURCHASE",
+        stackTrace: `${error.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          bookingId: bookingId,
+          teeTimeID: associatedBooking?.teeTimeIdForBooking,
+        }),
+      });
     }
     return {
       bookingId,
