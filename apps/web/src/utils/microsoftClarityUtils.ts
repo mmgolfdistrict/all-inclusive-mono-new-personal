@@ -1,5 +1,5 @@
 interface Clarity {
-    (action: string, ...args: any[]): void;
+    (action: string, ...args: unknown[]): void;
     set(action: string, data: object): void;
 }
 

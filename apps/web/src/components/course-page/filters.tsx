@@ -4,6 +4,7 @@ import * as ToggleGroup from "@radix-ui/react-toggle-group";
 import {
   forwardRef,
   Fragment,
+  type ReactNode,
   useEffect,
   useImperativeHandle,
   useMemo,
@@ -20,7 +21,6 @@ import { useCourseContext } from "~/contexts/CourseContext";
 import type { DateType, GolferType, HoleType } from "~/contexts/FiltersContext";
 import { useFiltersContext } from "~/contexts/FiltersContext";
 import { api } from "~/utils/api";
-import { getDisabledDays } from "~/utils/calendar";
 import { debounceFunction } from "~/utils/debounce";
 import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
 import Image from "next/image";
@@ -36,7 +36,7 @@ interface DayValue {
 }
 
 interface ChildComponentRef {
-  getChildValue: () => any;
+  getChildValue: () => void;
 }
 
 const HoleOptions = ["Any", "18", "9"];
@@ -70,8 +70,6 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
     setGolfers,
     showUnlisted,
     setShowUnlisted,
-    includesCart,
-    setIncludesCart,
     priceRange,
     setPriceRange,
     startTime,
@@ -96,8 +94,6 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
   // );
 
   // console.log(data,"blackOutDaysblackOutDaysblackOutDaysblackOutDaysblackOutDaysblackOutDays")
-
-  const blackOutDays = []
 
   const highestPrice = useMemo(() => {
     if (!course) return 0;
@@ -177,7 +173,7 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
     switch (type) {
       case "dateType": {
         if (isMobile) {
-          setDateTypeMobile(value);
+          setDateTypeMobile(value as DateType);
         } else {
           setDateType(value as DateType);
         }
@@ -631,7 +627,7 @@ export const Item = ({
   dataQa?: string;
   dataTest?: string;
   dataCy?: string;
-  label?: any;
+  label?: ReactNode;
   icon?: string | null;
 }) => {
   return (

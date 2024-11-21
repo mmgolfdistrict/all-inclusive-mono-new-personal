@@ -58,7 +58,7 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
 
   const auditLog = api.webhooks.auditLog.useMutation();
 
-  const logAudit = (func: () => any) => {
+  const logAudit = (func: () => unknown) => {
     auditLog
       .mutateAsync({
         userId: user?.id ?? "",

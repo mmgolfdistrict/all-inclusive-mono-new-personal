@@ -6,7 +6,6 @@ import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
 import { formatMoney, formatTime } from "~/utils/formatters";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type ComponentProps } from "react";
 import { toast } from "react-toastify";

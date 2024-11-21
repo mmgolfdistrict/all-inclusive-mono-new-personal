@@ -8,12 +8,6 @@ import Link from "next/link";
 import { Fragment } from "react";
 // import { useRouter } from "next/router";
 import { FilledButton } from "../buttons/filled-button";
-import { OutlineButton } from "../buttons/outline-button";
-import { Facebook } from "../icons/share/facebook";
-import { Instagram } from "../icons/share/instagram";
-import { LinkedIn } from "../icons/share/linkedin";
-import { X } from "../icons/share/x";
-
 // import { InviteFriends } from "../tee-time-page/invite-friends";
 interface ConfirmationProps {
   teeTimeId: string;

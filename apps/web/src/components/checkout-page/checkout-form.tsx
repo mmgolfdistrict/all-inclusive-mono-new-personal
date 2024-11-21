@@ -11,14 +11,12 @@ import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
 import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
-import type { CartProduct, MaxReservationResponse } from "~/utils/types";
+import type { CartProduct } from "~/utils/types";
 import { useParams, useRouter } from "next/navigation";
 import type { Dispatch, SetStateAction } from "react";
 import { Fragment, useEffect, useState, type FormEvent } from "react";
 import { toast } from "react-toastify";
-import { number } from "zod";
 import { FilledButton } from "../buttons/filled-button";
-import { OutlineButton } from "../buttons/outline-button";
 import { CharitySelect } from "../input/charity-select";
 import { Input } from "../input/input";
 import styles from "./checkout.module.css";
@@ -144,9 +142,9 @@ export const CheckoutForm = ({
       ?.filter(({ product_data }) => product_data.metadata.type === "charity")
       ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
 
-  const cartFeeCharge =
-    cartData
-      ?.filter(({ product_data }) => product_data.metadata.type === "cart_fee");
+  // const cartFeeCharge =
+  //   cartData
+  //     ?.filter(({ product_data }) => product_data.metadata.type === "cart_fee");
    //console.log("cart-fee",Number(cartFeeCharge[0].product_data.metadata.amount));
   
   const unifiedCheckoutOptions = {
@@ -175,7 +173,7 @@ export const CheckoutForm = ({
   const [isLoading, setIsLoading] = useState(false);
   const [showTextField, setShowTextField] = useState(false);
   const [donateError, setDonateError] = useState(false);
-  const [noThanks, setNoThanks] = useState(false);
+  // const [noThanks, setNoThanks] = useState(false);
   const [charityData, setCharityData] = useState<charityData | undefined>({
     charityDescription: "",
     charityId: "",
@@ -185,7 +183,7 @@ export const CheckoutForm = ({
   // const [isPaymentCompleted, setIsPaymentCompleted] = useState(false);
   const [message, setMessage] = useState("");
   const [charityAmountError, setCharityAmountError] = useState("");
-  const [customerID, setCustomerID] = useState("");
+  // const [customerID, setCustomerID] = useState("");
   const {
     promoCode,
     handlePromoCode,
@@ -244,7 +242,7 @@ export const CheckoutForm = ({
           retrieveCustomerResponse.data?.data,
           "created customer created"
         );
-        setCustomerID(retrieveCustomerResponse.data?.data);
+        // setCustomerID(retrieveCustomerResponse.data?.data);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -562,7 +560,7 @@ export const CheckoutForm = ({
   const handleDonateChange = (event) => {
     const value = event.target.value.trim() as string;
     const numericValue = value.length > 0 ? parseFloat(value) : 0;
-    setNoThanks(false);
+    // setNoThanks(false);
 
     if (!numericValue || numericValue === 0) {
       setDonateValue(event?.target?.value as number);
@@ -585,7 +583,7 @@ export const CheckoutForm = ({
   const roundOff = Math.ceil(primaryGreenFeeCharge + TaxCharge);
   const handleRoundOff = () => {
     setShowTextField(false);
-    setNoThanks(false);
+    // setNoThanks(false);
     // setRoundOffClick(true);
     const donation = parseFloat(
       (roundOff - (primaryGreenFeeCharge + TaxCharge)).toFixed(2)
@@ -739,6 +737,7 @@ export const CheckoutForm = ({
         <div className="flex w-full flex-col gap-2 bg-white p-4 rounded-lg my-2 border border-primary">
           <div className="flex items-top">
             {charityData?.charityLogo && (
+               // eslint-disable-next-line  @next/next/no-img-element 
               <img
                 src={`${charityData?.charityLogo}`}
                 alt={`${charityData.charityName} logo`}
@@ -801,7 +800,7 @@ export const CheckoutForm = ({
                 setShowTextField(false);
                 setDonateValue(0);
                 handleSelectedCharityAmount(0);
-                setNoThanks(true);
+                // setNoThanks(true);
                 setRoundOffStatus("nothanks");
               }}
             >

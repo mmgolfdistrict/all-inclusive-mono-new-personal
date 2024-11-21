@@ -1,7 +1,5 @@
 "use client";
 
-import { api } from "~/utils/api";
-
 // import Image from "next/image";
 // import { userAgent } from "next/server";
 // import React, { useEffect } from "react";
@@ -11,9 +9,9 @@ export default function test() {
   //   const verify = async () => {
   //     await test.mutateAsync({ courseDomain: "https://github.com" });
   //   };
-  const { data } = api.searchRouter.findBlackoutDates.useQuery({
-    courseId: "5df5581f-6e5c-49af-a360-a7c9fd733f22",
-  });
+  // const { data } = api.searchRouter.findBlackoutDates.useQuery({
+  //   courseId: "5df5581f-6e5c-49af-a360-a7c9fd733f22",
+  // });
   // if (isLoading) {
   //   return <div style={{ textAlign: "center" }}>Loading...</div>;
   // }

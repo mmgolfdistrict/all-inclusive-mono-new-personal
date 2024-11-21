@@ -1,11 +1,9 @@
 "use client";
 
-import { BlurImage } from "~/components/images/blur-image";
 import { Spinner } from "~/components/loading/spinner";
 import { useCheckoutContext } from "~/contexts/CheckoutContext";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { api } from "~/utils/api";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useUserContext } from "~/contexts/UserContext";

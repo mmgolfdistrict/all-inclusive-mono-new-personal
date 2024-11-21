@@ -31,7 +31,7 @@ export type TxnHistoryType = {
 
 export const Cashouts = () => {
   const { course } = useCourseContext();
-  const [selectedReceipt, setSelectedReceipt] = useState<any>(null);
+  const [selectedReceipt, setSelectedReceipt] = useState<TxnHistoryType | null>(null);
   const [isReceiptOpen, setIsReceiptOpen] = useState<boolean>(false);
 
   const { data, isLoading, isError, error } =
@@ -49,7 +49,7 @@ export const Cashouts = () => {
     return arrayOfObjects;
   }
 
-  const openReceipt = (i: any) => {
+  const openReceipt = (i: TxnHistoryType) => {
     setSelectedReceipt(i);
     setIsReceiptOpen(true);
   };
@@ -135,7 +135,6 @@ const TableHeader = ({
 
 const TableRow = ({
   amount,
-  status,
   time,
   openReceipt,
 }: {

@@ -4,7 +4,7 @@ import { useCourseContext } from "~/contexts/CourseContext";
 import { api } from "~/utils/api";
 import { formatMoney, formatTime } from "~/utils/formatters";
 import type { InviteFriend } from "~/utils/types";
-import { Dispatch, SetStateAction, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Avatar } from "../avatar";
 import { OutlineButton } from "../buttons/outline-button";
 import { BookingDetails } from "./booking-details";
@@ -52,7 +52,7 @@ export const TransactionHistory = () => {
       { enabled: !!courseId }
     );
   const [selectedTxn, setSelectedTxn] = useState<TxnHistoryType | null>(null);
-  const [selectedReceipt, setSelectedReceipt] = useState<any>(null);
+  const [selectedReceipt, setSelectedReceipt] = useState<TxnHistoryType | null>(null);
 
   function sortByDate(objectOfObjects: Record<string, TxnHistoryType>) {
     const arrayOfObjects: TxnHistoryType[] = Object.values(objectOfObjects);
@@ -79,7 +79,7 @@ export const TransactionHistory = () => {
     setIsTxnDetailsOpen(true);
   };
 
-  const openReceipt = (i: any) => {
+  const openReceipt = (i: TxnHistoryType) => {
     setSelectedReceipt(i);
     setIsReceiptOpen(true);
   };
@@ -195,7 +195,6 @@ const TableRow = ({
   golfers,
   status,
   timezoneCorrection,
-  openTxnDetails,
   openReceipt,
   playerCount = 1,
 }: {

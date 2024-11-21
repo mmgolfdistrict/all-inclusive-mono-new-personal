@@ -63,7 +63,7 @@ type OperationTimeType = {
 };
 
 interface FiltersContextType {
-  dateType: any;
+  dateType: DateType;
   setDateType: React.Dispatch<React.SetStateAction<DateType>>;
   holes: HoleType;
   setHoles: React.Dispatch<React.SetStateAction<HoleType>>;

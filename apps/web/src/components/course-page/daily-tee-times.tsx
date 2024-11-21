@@ -8,20 +8,15 @@ import { useCourseContext } from "~/contexts/CourseContext";
 import { useFiltersContext } from "~/contexts/FiltersContext";
 import { api } from "~/utils/api";
 import { dayMonthDate } from "~/utils/formatters";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import {
   useElementSize,
-  useIntersectionObserver,
-  useMediaQuery,
+  useIntersectionObserver
 } from "usehooks-ts";
 import { useDraggableScroll } from "../../hooks/useDraggableScroll";
 import { TeeTime } from "../cards/tee-time";
-import { Error } from "../icons/alert/error";
-import { Success } from "../icons/alert/success";
-import { Warning } from "../icons/alert/warning";
 import { LeftChevron } from "../icons/left-chevron";
 import { Tooltip } from "../tooltip";
-import { TooltipMobile } from "../tooltip-mobile";
 import { TeeTimeSkeleton } from "./tee-time-skeleton";
 import { Info } from "../icons/info";
 
@@ -49,12 +44,6 @@ export const DailyTeeTimes = ({
   const entry = useIntersectionObserver(nextPageRef, {});
   const isVisible = !!entry?.isIntersecting;
   const [sizeRef, { width = 0 }] = useElementSize();
-  const [isExpanded, setIsExpanded] = useState(false);
-  const isMobile = useMediaQuery("(max-width: 768px)");
-
-  const toggleExpand = () => {
-    setIsExpanded(!isExpanded);
-  };
   const { course } = useCourseContext();
   const courseId = course?.id;
 
@@ -181,11 +170,11 @@ export const DailyTeeTimes = ({
     if (type === "WARNING") return "primary-gray";
   };
 
-  const getIconForException = (type) => {
-    if (type === "FAILURE") return <Error className="h-[20px] w-[20px] " />;
-    if (type === "SUCCESS") return <Success className="h-[20px] w-[20px] " />;
-    if (type === "WARNING") return <Warning className="h-[20px] w-[20px] " />;
-  };
+  // const getIconForException = (type) => {
+  //   if (type === "FAILURE") return <Error className="h-[20px] w-[20px] " />;
+  //   if (type === "SUCCESS") return <Success className="h-[20px] w-[20px] " />;
+  //   if (type === "WARNING") return <Warning className="h-[20px] w-[20px] " />;
+  // };
 
   if (!isLoading && isFetchedAfterMount && allTeeTimes.length === 0) {
     return null;

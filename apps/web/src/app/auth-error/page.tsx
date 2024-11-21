@@ -34,7 +34,7 @@ export default function AuthError() {
   const entityId = entity?.id;
   const router = useRouter();
 
-  const { data, isLoading, isError, error } =
+  const { data } =
     api.entity.getCoursesByEntityId.useQuery(
       { entityId: entityId! },
       { enabled: entityId !== undefined }

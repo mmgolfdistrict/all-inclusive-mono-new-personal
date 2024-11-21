@@ -1,7 +1,6 @@
 "use client";
 
 import type { NotificationObject } from "@golf-district/shared";
-import { formatQueryDate, formatQueryDateEnd } from "@golf-district/shared";
 import { FilledButton } from "~/components/buttons/filled-button";
 import { FilterSort } from "~/components/buttons/filters-sort";
 import { GoBack } from "~/components/buttons/go-back";
@@ -14,7 +13,6 @@ import { MobileSort, SortOptions } from "~/components/course-page/mobile-sort";
 import { Calendar } from "~/components/icons/calendar";
 import { ChevronUp } from "~/components/icons/chevron-up";
 import { FiltersIcon } from "~/components/icons/filters";
-import { SortIcon } from "~/components/icons/sort";
 import { Select } from "~/components/input/select";
 import { useAppContext } from "~/contexts/AppContext";
 import { useCourseContext } from "~/contexts/CourseContext";
@@ -80,7 +78,6 @@ export default function CourseHomePage() {
   const router = useRouter();
   const isMobile = useMediaQuery("(max-width: 768px)");
   const courseId = course?.id;
-  const [count, setCount] = useState<number>(0);
   const updateUser = api.user.updateUser.useMutation();
 
   const updateHandle = async (uName) => {
@@ -92,10 +89,6 @@ export default function CourseHomePage() {
     } catch (error) {
       console.log("error", error);
     }
-  };
-
-  const updateCount = (balance: number) => {
-    setCount(balance);
   };
 
   const farthestDateOut = useMemo(() => {

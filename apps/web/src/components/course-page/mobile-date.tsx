@@ -196,7 +196,7 @@ export const Item = ({
   dataQa?: string;
   dataTest?: string;
   dataCy?: string;
-  label?: any;
+  label?: string;
   icon?: string | null;
 }) => {
   return (
