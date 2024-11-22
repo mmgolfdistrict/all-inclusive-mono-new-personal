@@ -26,6 +26,7 @@ export type TxnHistoryType = {
   courseLogo: string;
   date: string;
   firstHandPrice: number;
+  cartFeePrice:number;
   pricePerGolfer: number[];
   golfers: InviteFriend[];
   bookingIds: string[];
@@ -69,7 +70,7 @@ export const TransactionHistory = () => {
     if (!data || Array.isArray(data)) return undefined;
     return sortByDate(data as Record<string, TxnHistoryType>);
   }, [data]);
-
+  console.log(txnHistory);
   // const loadMore = () => {
   //   setAmount(amount + 4);
   // };

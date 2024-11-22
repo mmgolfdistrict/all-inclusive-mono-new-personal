@@ -234,6 +234,7 @@ export class SearchService {
           key: assets.key,
           extension: assets.extension,
         },
+        cartFee:bookings.cartFeePerPlayer
       })
       .from(bookings)
       .leftJoin(users, eq(users.id, bookings.ownerId))

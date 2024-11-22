@@ -554,12 +554,12 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       PlayDateTime: formatTime(existingTeeTime.providerDate, true, existingTeeTime.timezoneCorrection ?? 0),
       NumberOfHoles: existingTeeTime.numberOfHoles,
       GreenFeesPerPlayer:
-        `$${(purchasePrice / 100).toLocaleString("en-US", {
+        `$${((existingTeeTime.greenFee + Number(cartFeeCharge)) / 100).toLocaleString("en-US", {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         })}` ?? "-",
       GreenFees:
-        `$${((purchasePrice * players) / 100).toLocaleString("en-US", {
+        `$${(((existingTeeTime.greenFee + Number(cartFeeCharge)) * players) / 100).toLocaleString("en-US", {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         })}` ?? "-",

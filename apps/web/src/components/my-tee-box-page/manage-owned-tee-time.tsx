@@ -100,8 +100,8 @@ export const ManageOwnedTeeTime = ({
       document.body.classList.remove("overflow-hidden");
       setMinimumOfferPrice(
         selectedTeeTime?.minimumOfferPrice ||
-        selectedTeeTime?.firstHandPrice ||
-        0
+          selectedTeeTime?.firstHandPrice ||
+          0
       ); //reset price
       setNewFriend({
         id: "",
@@ -140,7 +140,7 @@ export const ManageOwnedTeeTime = ({
     return Math.abs(minimumOfferPrice * friends.length - 45);
   }, [minimumOfferPrice, friends]);
 
-  console.log("friends,", friends)
+  console.log("friends,", friends);
   const save = async () => {
     if (!selectedTeeTime) {
       toast.error("Tee time not selected");
@@ -337,8 +337,9 @@ export const ManageOwnedTeeTime = ({
       )}
       <aside
         // ref={sidebar}
-        className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[500px] md:h-[100dvh] ${isManageOwnedTeeTimeOpen ? "translate-x-0" : "translate-x-full"
-          }`}
+        className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[500px] md:h-[100dvh] ${
+          isManageOwnedTeeTimeOpen ? "translate-x-0" : "translate-x-full"
+        }`}
       >
         <div className="relative flex h-full flex-col">
           <div className="flex items-center justify-between p-4">
@@ -416,7 +417,8 @@ export const ManageOwnedTeeTime = ({
                               className="mx-auto w-full max-w-[400px] rounded-lg bg-secondary-white px-4 py-1 flex justify-between text-[16px] font-semibold outline-none"
                             >
                               <div>{index === 0 ? "You" : friend.name}</div>
-                              {index !== 0 && course?.supportsPlayerNameChange ? (
+                              {index !== 0 &&
+                              course?.supportsPlayerNameChange ? (
                                 <button
                                   onClick={() => {
                                     removeFriend(friend.slotId);
@@ -469,53 +471,54 @@ export const ManageOwnedTeeTime = ({
                                 </div>
                               ) : null}
 
-                            {!isLoading &&
+                              {!isLoading &&
                               friendList?.length === 0 &&
                               debouncedValue.name.length > 0 ? (
-                              <div className="flex justify-center items-center flex-col gap-1 rounded-md w-full mx-auto max-w-[400px]">
-                                {inviteSucess ? (
-                                  <div className="text-center fade-in">
-                                    Friend invited successfully.
-                                  </div>
-                                ) : (
-                                  <>
+                                <div className="flex justify-center items-center flex-col gap-1 rounded-md w-full mx-auto max-w-[400px]">
+                                  {inviteSucess ? (
                                     <div className="text-center fade-in">
-                                      Friend not found. Invite them!
+                                      Friend invited successfully.
                                     </div>
-                                    <div className="flex items-center gap-1 w-full fade-in">
-                                      <input
-                                        value={inviteFriend}
-                                        type="text"
-                                        onChange={(e) => {
-                                          if (invite.isLoading) return;
-                                          setInviteFriend(e.target.value);
-                                        }}
-                                        placeholder="Email or phone number"
-                                        className="mx-auto w-full max-w-[400px] rounded-lg bg-secondary-white px-4 py-2 flex justify-between text-[14px] font-semibold outline-none"
-                                        data-testid="invite-friend-id"
-                                      />
-                                      <FilledButton
-                                        className={`w-full !max-w-fit ${invite.isLoading
-                                          ? "animate-pulse"
-                                          : ""
+                                  ) : (
+                                    <>
+                                      <div className="text-center fade-in">
+                                        Friend not found. Invite them!
+                                      </div>
+                                      <div className="flex items-center gap-1 w-full fade-in">
+                                        <input
+                                          value={inviteFriend}
+                                          type="text"
+                                          onChange={(e) => {
+                                            if (invite.isLoading) return;
+                                            setInviteFriend(e.target.value);
+                                          }}
+                                          placeholder="Email or phone number"
+                                          className="mx-auto w-full max-w-[400px] rounded-lg bg-secondary-white px-4 py-2 flex justify-between text-[14px] font-semibold outline-none"
+                                          data-testid="invite-friend-id"
+                                        />
+                                        <FilledButton
+                                          className={`w-full !max-w-fit ${
+                                            invite.isLoading
+                                              ? "animate-pulse"
+                                              : ""
                                           }`}
-                                        onClick={inviteFriendCall}
-                                        data-testid="invite-button-id"
-                                      >
-                                        {invite.isLoading
-                                          ? "Inviting..."
-                                          : "Invite"}
-                                      </FilledButton>
-                                    </div>
-                                  </>
-                                )}
-                              </div>
-                            ) : null}
-                          </>
-                        )}
-                      </>
-                    );
-                  })
+                                          onClick={inviteFriendCall}
+                                          data-testid="invite-button-id"
+                                        >
+                                          {invite.isLoading
+                                            ? "Inviting..."
+                                            : "Invite"}
+                                        </FilledButton>
+                                      </div>
+                                    </>
+                                  )}
+                                </div>
+                              ) : null}
+                            </>
+                          )}
+                        </>
+                      );
+                    })
                   : null}
               </div>
             </div>
@@ -624,7 +627,7 @@ const TeeTimeItem = ({
         <div className="text-prmiary-gray">
           You purchased for{" "}
           <span className="font-semibold text-secondary-black">
-            {formatMoney(purchasedFor * golferCount)}
+            {formatMoney(purchasedFor)}
           </span>
         </div>
       </div>

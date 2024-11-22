@@ -48,6 +48,7 @@ export const UnlistedDetails = ({
       ownerId: ownerId,
       teeTimeId: teeTimeId,
     });
+  console.log("unlistedTeetTIME",data);
   const { data: bookingData } = api.user.getBookingsOwnedForTeeTime.useQuery(
     { teeTimeId },
     {
