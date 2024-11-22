@@ -2,11 +2,8 @@
 
 import {
   signIn,
-  signOut,
   useSession,
 } from "@golf-district/auth/nextjs-exports";
-import { db } from "@golf-district/database";
-import { NotificationService, UserService } from "@golf-district/service";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FilledButton } from "~/components/buttons/filled-button";
 import { IconButton } from "~/components/buttons/icon-button";
@@ -24,14 +21,20 @@ import { useCourseContext } from "~/contexts/CourseContext";
 import { usePreviousPath } from "~/hooks/usePreviousPath";
 import { loginSchema, type LoginSchemaType } from "~/schema/login-schema";
 import { api } from "~/utils/api";
-import { microsoftClarityEvent } from "~/utils/microsoftClarityUtils";
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createRef, Fragment, useEffect, useState } from "react";
 import ReCAPTCHA from "react-google-recaptcha";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
 import { LoadingContainer } from "../loader";
+
+declare global {
+  interface Window {
+    gtag: (event: string, action: string, params: Record<string, unknown>) => void;
+  }
+}
+
 
 export default function Login() {
   const recaptchaRef = createRef<ReCAPTCHA>();
@@ -49,7 +52,6 @@ export default function Login() {
   const [googleIsLoading, setGoogleIsLoading] = useState(false);
   const [hasSessionLogged, setHasSessionLogged] = useState(false);
   const [linkedinIsLoading, setLinkedinIsLoading] = useState(false);
-  const [credentialsLoader, setCredentialsLoader] = useState(false);
   const [facebookIsLoading, setFacebookIsLoading] = useState(false);
   const auditLog = api.webhooks.auditLog.useMutation();
   const addUserSession = api.user.addUserSession.useMutation();
@@ -57,14 +59,28 @@ export default function Login() {
   const { data: sessionData, status } = useSession();
   const errorKey = searchParams.get("error");
   const router = useRouter();
-  const pathname = usePathname();
-  const event = ({ action, category, label, value }: any) => {
-    (window as any).gtag("event", action, {
-      event_category: category,
-      event_label: label,
-      value: value,
-    });
+  const event = ({
+    action,
+    category,
+    label,
+    value,
+  }: {
+    action: string;
+    category: string;
+    label: string;
+    value?: number;
+  }) => {
+    if (typeof window !== "undefined" && typeof window.gtag === "function") {
+      const params: Record<string, unknown> = {
+        event_category: category,
+        event_label: label,
+        value: value,
+      };
+  
+      window.gtag("event", action, params);
+    }
   };
+  
 
   useEffect(() => {
     if (errorKey === "AccessDenied" && !toast.isActive("accessDeniedToast")) {
@@ -182,13 +198,13 @@ export default function Login() {
         localStorage.setItem("credentials", "credentials");
         //setLocalStorageCredentials(localStorage.getItem("credentials"));
       }
-      const callbackURL = `${window.location.origin}${
-        GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
-          ? prevPath?.path
-            ? prevPath.path
-            : "/"
-          : "/"
-      }`;
+      // const callbackURL = `${window.location.origin}${
+      //   GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+      //     ? prevPath?.path
+      //       ? prevPath.path
+      //       : "/"
+      //     : "/"
+      // }`;
       const res = await signIn("credentials", {
         // callbackUrl: callbackURL,
         redirect: false,
@@ -205,13 +221,11 @@ export default function Login() {
           toast.error(
             "Unable to login. Please call customer support at 877-TeeTrade or email at support@golfdistrict.com"
           );
-          setCredentialsLoader(false);
           if (typeof window !== "undefined") {
             localStorage.removeItem("credentials");
           }
         } else {
           toast.error("The email or password you entered is incorrect.");
-          setCredentialsLoader(false);
           if (typeof window !== "undefined") {
             localStorage.removeItem("credentials");
           }
@@ -226,7 +240,6 @@ export default function Login() {
       );
     } finally {
       setIsLoading(false);
-      setCredentialsLoader(false);
     }
   };
 
@@ -288,11 +301,10 @@ export default function Login() {
     event({
       action: "SIGNIN_USING_GOOGLE",
       category: "SIGNIN",
-      label: "Sign in using google",
-      value: "",
+      label: "Sign in using google"
     });
     try {
-      const result = await signIn("google", {
+        await signIn("google", {
         // callbackUrl: `${window.location.origin}${
         //   GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
         //     ? prevPath?.path
@@ -318,7 +330,7 @@ export default function Login() {
   const linkedinSignIn = async () => {
     try {
       setLinkedinIsLoading(true);
-      const result = await signIn("linkedin", {
+     await signIn("linkedin", {
         redirect: false,
       });
       if (typeof window !== "undefined") {

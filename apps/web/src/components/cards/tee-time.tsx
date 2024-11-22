@@ -11,7 +11,7 @@ import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
 import { microsoftClarityEvent } from "~/utils/microsoftClarityUtils";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { toast } from "react-toastify";
 import { useCopyToClipboard } from "usehooks-ts";
 import { Avatar } from "../avatar";
@@ -31,11 +31,9 @@ const DEFAULT_SILHOUETTE_IMAGE = "/defaults/default-profile.webp";
 export const TeeTime = ({
   time,
   items,
-  index,
   canChoosePlayer,
   players,
   price,
-  isOwned,
   soldById,
   soldByImage,
   soldByName,
@@ -120,18 +118,14 @@ export const TeeTime = ({
     });
   };
 
-  const tooltipRefs = useRef<(HTMLSpanElement | null)[]>([]);
-  const [showTooltip, setShowTooltip] = useState<boolean[]>([]);
 
   useEffect(() => {
-    const isTextTruncated = (ref: HTMLSpanElement | null) => {
+    (ref: HTMLSpanElement | null) => {
       if (ref) {
         return ref.scrollWidth > ref.clientWidth;
       }
       return false;
     };
-
-    setShowTooltip(tooltipRefs.current.map(isTextTruncated));
   }, [items]);
 
   useEffect(() => {

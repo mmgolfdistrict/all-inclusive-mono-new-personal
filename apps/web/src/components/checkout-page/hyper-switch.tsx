@@ -4,9 +4,9 @@ import { HyperElements } from "@juspay-tech/react-hyper-js";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
-import type { CartProduct, MaxReservationResponse } from "~/utils/types";
+import type { CartProduct } from "~/utils/types";
 // import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Spinner } from "../loading/spinner";
 import { CheckoutForm } from "./checkout-form";
 import { useCheckoutContext } from "~/contexts/CheckoutContext";
@@ -73,10 +73,6 @@ export const HyperSwitch = ({
     undefined
   );
   const [paymentId, setPaymentId] = useState<string | undefined>(undefined);
-
-  const isFirstHand = localCartData?.filter(
-    ({ product_data }) => product_data.metadata.type === "first_hand"
-  );
 
   const buildSession = async () => {
     if (!user) return;

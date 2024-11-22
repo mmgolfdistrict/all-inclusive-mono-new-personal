@@ -3,7 +3,7 @@
 import { useSession } from "@golf-district/auth/nextjs-exports";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { MenuItem, Select } from "@mui/material";
-import { useLoadScript } from "@react-google-maps/api";
+import { useLoadScript, type Libraries } from "@react-google-maps/api";
 import { FilledButton } from "~/components/buttons/filled-button";
 import { DropMedia } from "~/components/input/drop-media";
 import { Input } from "~/components/input/input";
@@ -33,7 +33,7 @@ import { OutlineButton } from "../buttons/outline-button";
 
 const defaultProfilePhoto = "/defaults/default-profile.webp";
 const defaultBannerPhoto = "/defaults/default-banner.webp";
-const libraries: any = ["places"];
+const libraries: Libraries = ["places"];
 
 export const EditProfileForm = () => {
   const {

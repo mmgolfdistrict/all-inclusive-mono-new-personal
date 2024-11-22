@@ -6,7 +6,6 @@ import { AddCreditCard } from "~/components/account-settings-page/addCreditCard"
 import { BalanceHistory } from "~/components/account-settings-page/balance-history";
 import { EditProfileForm } from "~/components/account-settings-page/edit-profile-form";
 import { NotificationSettings } from "~/components/account-settings-page/notification-settings";
-import { PaymentInfoMangeProfile } from "~/components/account-settings-page/payment-info";
 import { SavedBankDetails } from "~/components/account-settings-page/savedBankDetails";
 import { GoBack } from "~/components/buttons/go-back";
 import { ProfileDetails } from "~/components/profile-page/profile-details";

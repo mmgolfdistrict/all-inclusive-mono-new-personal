@@ -1,18 +1,14 @@
 "use client";
 
-import { useSession } from "@golf-district/auth/nextjs-exports";
 import {
   formatDate,
   formatQueryDate,
   removeTimeZoneOffset,
 } from "@golf-district/shared";
-import { FilledButton } from "~/components/buttons/filled-button";
 import { HyperSwitch } from "~/components/checkout-page/hyper-switch";
 import { OrderSummary } from "~/components/checkout-page/order-summary";
-import { BlurImage } from "~/components/images/blur-image";
 import { Spinner } from "~/components/loading/spinner";
 import { CheckoutBreadcumbs } from "~/components/nav/checkout-breadcrumbs";
-import { UserInNav } from "~/components/user/user-in-nav";
 import { useCheckoutContext } from "~/contexts/CheckoutContext";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
@@ -53,7 +49,6 @@ export default function Checkout({
   const playerCount = searchParams?.playerCount as string | undefined;
   const { course } = useCourseContext();
   const { user } = useUserContext();
-  const session = useSession();
   
   const [isSessionLoading, setIsSessionLoading] = useState(true);
   dayjs.extend(utc);

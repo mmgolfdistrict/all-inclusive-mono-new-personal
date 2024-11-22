@@ -7,7 +7,7 @@ import {
 } from "@golf-district/shared/src/schema/register-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { MenuItem, Select } from "@mui/material";
-import { useLoadScript } from "@react-google-maps/api";
+import { useLoadScript, type Libraries } from "@react-google-maps/api";
 import { FilledButton } from "~/components/buttons/filled-button";
 import { IconButton } from "~/components/buttons/icon-button";
 import { Hidden } from "~/components/icons/hidden";
@@ -47,7 +47,7 @@ export default function RegisterPage() {
   } = useForm<RegisterSchemaType>({
     resolver: zodResolver(registerSchema),
   });
-  const libraries: any = ["places"];
+  const libraries: Libraries = ["places"];
   const [city, setCity] = useState(getValues("city"));
 
   const debouncedLocation = useDebounce<string>(city, 500);
@@ -55,7 +55,7 @@ export default function RegisterPage() {
   const registerUser = api.register.register.useMutation();
   const { data: uName } = api.register.generateUsername.useQuery(6);
   const [rotate, setRotate] = useState<boolean>(false);
-  const [password, setPassword] = useState<string>("");
+  const [password] = useState<string>("");
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showConfirmPassword, setShowConfirmPassword] =
     useState<boolean>(false);

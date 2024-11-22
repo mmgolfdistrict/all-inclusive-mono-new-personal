@@ -1,9 +1,9 @@
-import { useState, type Dispatch, type SetStateAction, useRef } from "react";
+import { type Dispatch, type SetStateAction, useRef } from "react";
 import { FilledButton } from "../buttons/filled-button";
 import { OutlineButton } from "../buttons/outline-button";
 import { Leaflet } from "../modal/leaflet";
 import { Filters } from "./filters";
-import { DateType, GolferType, HoleType, useFiltersContext } from "~/contexts/FiltersContext";
+import { type DateType, type GolferType, type HoleType, useFiltersContext } from "~/contexts/FiltersContext";
 
 interface DayValue {
   year: number;
@@ -12,6 +12,20 @@ interface DayValue {
   hour: number;
   minute: number;
   second: number;
+}
+
+interface FiltersRef {
+  getChildValue: () => {
+    dateType: DateType;
+    holes: HoleType;
+    golfers: GolferType;
+    priceRange: [number, number];
+    startTime: [number, number];
+    selectedDay: {
+      from: DayValue;
+      to: DayValue;
+    };
+  };
 }
 
 export const MobileFilters = ({
@@ -25,28 +39,23 @@ export const MobileFilters = ({
     setDateType,
     setHoles,
     setGolfers,
-    setShowUnlisted,
-    setIncludesCart,
     // priceRange,
     setPriceRange,
     setStartTime,
     setSelectedDay
   } = useFiltersContext();
-  const childRef: any = useRef();
+  const childRef = useRef<FiltersRef>(null);
   const getDataFromChild = () => {
     if (childRef.current) {
       const childData = childRef.current.getChildValue();
-      setDateType(childData?.dateType as DateType)
-      setHoles(childData?.holes as HoleType)
-      setGolfers(childData?.golfers as GolferType)
-      setPriceRange(childData?.priceRange as [number, number])
-      setStartTime(childData?.startTime as [number, number])
-      setSelectedDay(childData?.selectedDay as {
-        from: DayValue;
-        to: DayValue;
-      })
+      setDateType(childData.dateType); // No type assertion needed
+      setHoles(childData.holes); // No type assertion needed
+      setGolfers(childData.golfers); // No type assertion needed
+      setPriceRange(childData.priceRange);
+      setStartTime(childData.startTime);
+      setSelectedDay(childData.selectedDay);
     }
-  }
+  };
   return (
     <Leaflet setShow={setShowFilters} className="max-h-[70dvh]">
       <div className="relative flex flex-col gap-4 px-4 pb-20">

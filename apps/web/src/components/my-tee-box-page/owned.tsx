@@ -3,7 +3,7 @@
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
-import { formatMoney, formatTime } from "~/utils/formatters";
+import {  formatTime } from "~/utils/formatters";
 import { type InviteFriend } from "~/utils/types";
 import Link from "next/link";
 import { useMemo, useState } from "react";
@@ -203,7 +203,6 @@ const TableRow = ({
   iconSrc,
   date,
   course,
-  purchasePrice,
   golfers,
   status,
   offers,
