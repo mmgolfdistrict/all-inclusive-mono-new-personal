@@ -269,6 +269,7 @@ export class BookingService {
         transfersDate: transfers.createdAt,
         weatherGuaranteeId: transfers.weatherGuaranteeId,
         weatherGuaranteeAmount: transfers.weatherGuaranteeAmount,
+        cartFee:bookings.cartFeePerPlayer
       })
       .from(transfers)
       .innerJoin(bookings, eq(bookings.id, transfers.bookingId))
@@ -333,7 +334,7 @@ export class BookingService {
             ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${teeTime.teeTimeImage.key}.${teeTime.teeTimeImage.extension}`
             : "/defaults/default-course.webp",
           date: teeTime.date ? teeTime.date : "",
-          firstHandPrice: teeTime.from === userId ? teeTime.amount / 100 : teeTime.greenFee,
+          firstHandPrice: teeTime.from === userId ? teeTime.amount / 100 : teeTime.greenFee + teeTime.cartFee,
           golfers: [{ id: "", email: "", handle: "", name: "", slotId: "" }],
           pricePerGolfer:
             teeTime.from === userId
