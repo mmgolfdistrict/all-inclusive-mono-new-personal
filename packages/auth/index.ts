@@ -168,7 +168,7 @@ export const {
   pages: {
     signIn: `/`,
     // verifyRequest: `/login`,
-    // error: `/auth-error`,
+    error: "/auth/error",
     // newUser: `/profile?new`, //this will call the create customer endpoint
   },
   session: {
@@ -192,6 +192,9 @@ export const {
     async signIn({ user, account }) {
       console.log("user", user);
       console.log("provider", account);
+      if (user?.email == null) {
+        return `/auth/error?error=EmailRequired&provider=${account?.provider}`;
+      }
       if (user) {
         const notificationService = new NotificationService(
           db,
