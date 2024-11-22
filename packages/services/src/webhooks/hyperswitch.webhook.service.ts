@@ -743,6 +743,7 @@ export class HyperSwitchWebhookService {
         totalTaxesAmount: bookings.totalTaxesAmount,
         providerTeeTimeId: teeTimes.providerTeeTimeId,
         nameOnBooking: bookings.nameOnBooking,
+        cartFeePerPlayer:bookings.cartFeePerPlayer
       })
       .from(bookings)
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -1155,6 +1156,7 @@ export class HyperSwitchWebhookService {
           status: "CONFIRMED",
           markupFees: firstBooking.markupFees,
           weatherQuoteId: firstBooking.weatherQuoteId || null,
+          cartFeePerPlayer:firstBooking.cartFeePerPlayer
         });
       }
 

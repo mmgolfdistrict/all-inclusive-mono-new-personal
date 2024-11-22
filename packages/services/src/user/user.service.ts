@@ -192,11 +192,24 @@ export class UserService {
       .where(eq(users.email, data.email));
     if (existingUserWithEmail) {
       if (existingUserWithEmail.email == data.email) {
+
+        const [account] = await this.database
+        .select()
+        .from(accounts)
+        .where(eq(accounts.userId,existingUserWithEmail.id))
         this.logger.warn(`Email already exists: ${data.email}`);
-        return {
-          error: true,
-          message: "Email already exists",
-        };
+        if(account?.provider){
+          return {
+            error: true,
+            message: `You have already registered using ${account?.provider}. Please use the same to login.` ,
+          };
+        }else{
+          return {
+            error: true,
+            message: `You have already registered using this email. Please use the same to login.` ,
+          };
+        }
+     
       }
     }
     const verificationToken = randomBytes(32).toString("hex");
@@ -254,7 +267,9 @@ export class UserService {
         CourseName = course.name;
       }
     }
-
+console.log(`${encodeURI(data?.redirectHref)}/verify?userId=${encodeURIComponent(
+  user?.id
+)}&verificationToken=${encodeURIComponent(verificationToken)}`);
     await this.notificationsService.sendEmailByTemplate(
       data.email,
       "Verify your email",
@@ -989,7 +1004,7 @@ export class UserService {
     handleOrEmail: string,
     ReCAPTCHA: string | undefined,
     courseProviderId: string | undefined
-  ): Promise<void> => {
+  ): Promise<{error:boolean,message:string}> => {
     let isNotRobot;
     if (ReCAPTCHA) {
       isNotRobot = await verifyCaptcha(ReCAPTCHA);
@@ -1039,13 +1054,43 @@ export class UserService {
     if (!user) {
       this.logger.warn(`User not found: ${handleOrEmail}`);
       // throw new Error("User not found");
-      return;
+      return{
+        error:true,
+        message:`User not found: ${handleOrEmail}`
+      }
     }
 
+    const [existingUserWithEmail] = await this.database
+    .select()
+    .from(users)
+    .where(eq(users.email, user.email ?? ""));
+  if (existingUserWithEmail) {
+    if (existingUserWithEmail.email == user.email ?? "") {
+      const [account] = await this.database
+        .select()
+        .from(accounts)
+        .where(eq(accounts.userId, existingUserWithEmail.id));
+      this.logger.warn(`Email already exists: ${user.email}`);
+      if (account?.provider) {
+        return {
+          error: true,
+          message: `You have already registered using ${account?.provider}. Please use the same to login.`,
+        };
+      } else {
+        return {
+          error: true,
+          message: `You have already registered using this email. Please use the same to login.`,
+        };
+      }
+    }
+  }
     if (!user.email) {
       this.logger.warn(`User email does not exists: ${handleOrEmail}`);
       // throw new Error("User does not have an email");
-      return;
+      return {
+        error:true,
+        message:"User email does not exists: ${handleOrEmail"
+      };
     }
 
     const [accountData] = await this.database
@@ -1108,7 +1153,10 @@ export class UserService {
     if (!user.emailVerified) {
       this.logger.warn(`User email not verified: ${handleOrEmail}`);
       // throw new Error("User email not verified");
-      return;
+      return {
+        error:true,
+        message:`User email not verified: ${handleOrEmail}`
+      }
     }
     const verificationToken = randomBytes(32).toString("hex");
     const hashedVerificationToken = await bcrypt.hash(verificationToken, 10);
@@ -1196,6 +1244,10 @@ export class UserService {
           });
           throw new Error("Error sending email");
         });
+    }
+    return {
+      error:false,
+      message:"Success"
     }
   };
 
