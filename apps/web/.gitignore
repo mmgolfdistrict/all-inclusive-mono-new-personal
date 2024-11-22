@@ -43,3 +43,5 @@ yarn-error.log*
 
 # Application build related info.
 revision.json
+
+/certificates
