@@ -225,7 +225,7 @@ export const processHyperSwitchWebhook = async (req: any) => {
     process.env.REDIS_TOKEN!,
     credentials
   );
-  const userWaitlistService = new UserWaitlistService(db, notificationService);
+  const userWaitlistService = new UserWaitlistService(db, notificationService, appSettingService);
   const bookingService = new BookingService(
     db,
     tokenizeService,
