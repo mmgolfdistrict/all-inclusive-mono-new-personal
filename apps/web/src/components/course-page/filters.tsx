@@ -343,7 +343,8 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
                     : "border-b border-l border-r border-stroke"
                 }`}
               />
-              {dateTypeMobile === "Custom" && value === "Custom" ? (
+              {(dateTypeMobile === "Custom" || dateType === "Custom") &&
+              value === "Custom" ? (
                 <>
                   <div className="custom_calendar">
                     <Calendar
