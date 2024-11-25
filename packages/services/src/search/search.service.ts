@@ -458,8 +458,7 @@ export class SearchService {
         return;
       }
     });
-
-    const markupFeesFinal = filteredDate.length ? filteredDate[0].markUpFees : tee.markupFeesFixedPerPlayer;
+    const markupFeesFinal = filteredDate.length &&  filteredDate[0].markUpFees > 0  ? filteredDate[0].markUpFees : tee.markupFeesFixedPerPlayer;
     const markupFeesToBeUsed = markupFeesFinal / 100;
     const watchers = await this.database
       .select({

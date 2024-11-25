@@ -36,6 +36,7 @@ export type TxnHistoryType = {
   receiveAfterSale: number;
   weatherGuaranteeAmount: number;
   weatherGuaranteeId: string;
+  markUpFees?:number
 };
 
 export const TransactionHistory = () => {
@@ -54,7 +55,7 @@ export const TransactionHistory = () => {
     );
   const [selectedTxn, setSelectedTxn] = useState<TxnHistoryType | null>(null);
   const [selectedReceipt, setSelectedReceipt] = useState<TxnHistoryType | null>(null);
-
+  console.log("transaction_history",data);
   function sortByDate(objectOfObjects: Record<string, TxnHistoryType>) {
     const arrayOfObjects: TxnHistoryType[] = Object.values(objectOfObjects);
     arrayOfObjects.sort((a, b) => {
@@ -70,7 +71,6 @@ export const TransactionHistory = () => {
     if (!data || Array.isArray(data)) return undefined;
     return sortByDate(data as Record<string, TxnHistoryType>);
   }, [data]);
-  console.log(txnHistory);
   // const loadMore = () => {
   //   setAmount(amount + 4);
   // };

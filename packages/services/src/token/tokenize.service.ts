@@ -156,6 +156,7 @@ export class TokenizeService {
     isWebhookAvailable,
     providerBookingIds,
     cartFeeCharge,
+    markUpCharge1,
   }: {
     redirectHref: string;
     userId: string;
@@ -182,6 +183,7 @@ export class TokenizeService {
     normalizedCartData?: any;
     isWebhookAvailable?: boolean;
     providerBookingIds?: string[];
+    markUpCharge1?: number;
   }): Promise<BookingTypes> {
     this.logger.info(`tokenizeBooking tokenizing booking id: ${providerTeeTimeId} for user: ${userId}`);
     //@TODO add this to the transaction
@@ -545,6 +547,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       ),
     };
     const icsContent: string = createICS(event);
+    debugger;
     const template = {
       CustomerFirstName: existingTeeTime.customerName?.split(" ")[0],
       CourseName: existingTeeTime.courseName ?? "-",
@@ -554,12 +557,18 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       PlayDateTime: formatTime(existingTeeTime.providerDate, true, existingTeeTime.timezoneCorrection ?? 0),
       NumberOfHoles: existingTeeTime.numberOfHoles,
       GreenFeesPerPlayer:
-        `$${((existingTeeTime.greenFee + Number(cartFeeCharge)) / 100).toLocaleString("en-US", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        })}` ?? "-",
+        `$${((existingTeeTime.greenFee + Number(cartFeeCharge) + Number(markUpCharge1)) / 100).toLocaleString(
+          "en-US",
+          {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          }
+        )}` ?? "-",
       GreenFees:
-        `$${(((existingTeeTime.greenFee + Number(cartFeeCharge)) * players) / 100).toLocaleString("en-US", {
+        `$${(
+          ((existingTeeTime.greenFee + Number(cartFeeCharge) + Number(markUpCharge1)) * players) /
+          100
+        ).toLocaleString("en-US", {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         })}` ?? "-",

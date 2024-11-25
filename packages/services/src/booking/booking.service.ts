@@ -125,6 +125,7 @@ interface TransferData {
   receiveAfterSale: number;
   weatherGuaranteeId: string;
   weatherGuaranteeAmount: number;
+  markUpFees: number;
 }
 type RequestOptions = {
   method: string;
@@ -269,7 +270,8 @@ export class BookingService {
         transfersDate: transfers.createdAt,
         weatherGuaranteeId: transfers.weatherGuaranteeId,
         weatherGuaranteeAmount: transfers.weatherGuaranteeAmount,
-        cartFee:bookings.cartFeePerPlayer
+        cartFee: bookings.cartFeePerPlayer,
+        markUpFees: bookings.markupFees,
       })
       .from(transfers)
       .innerJoin(bookings, eq(bookings.id, transfers.bookingId))
@@ -347,6 +349,7 @@ export class BookingService {
           receiveAfterSale: teeTime.from === userId ? receiveAfterSaleAmount : 0,
           weatherGuaranteeAmount: teeTime.weatherGuaranteeAmount ?? 0,
           weatherGuaranteeId: teeTime.weatherGuaranteeId ?? "",
+          markUpFees: teeTime.markUpFees ?? 0,
         };
       } else {
         const currentEntry = combinedData[teeTime.transferId];
@@ -3178,6 +3181,7 @@ export class BookingService {
       weatherQuoteId,
       paymentId: customerCartData.paymentId,
       cartFeeCharge: cartFeeCharge,
+      markupCharge1:markupCharge1
     };
   };
 
@@ -3264,6 +3268,7 @@ export class BookingService {
       weatherQuoteId,
       paymentId,
       cartFeeCharge,
+      markupCharge1
     } = await this.normalizeCartData({
       cartId,
       userId,
@@ -3559,6 +3564,7 @@ export class BookingService {
         isWebhookAvailable: teeTime?.isWebhookAvailable ?? false,
         providerBookingIds,
         cartFeeCharge: cartFeeCharge,
+        markUpCharge1:markupCharge1
       })
       .catch(async (err) => {
         this.logger.error(`Error creating booking, ${err}`);
@@ -3701,6 +3707,7 @@ export class BookingService {
       weatherQuoteId,
       paymentId,
       cartFeeCharge,
+      markupCharge1
     } = await this.normalizeCartData({
       cartId,
       userId,
