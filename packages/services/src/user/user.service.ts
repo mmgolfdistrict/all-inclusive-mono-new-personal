@@ -1059,31 +1059,6 @@ export class UserService {
         message: `User not found: ${handleOrEmail}`,
       };
     }
-
-    const [existingUserWithEmail] = await this.database
-      .select()
-      .from(users)
-      .where(eq(users.email, user.email ?? ""));
-    if (existingUserWithEmail) {
-      if (existingUserWithEmail.email == user.email ?? "") {
-        const [account] = await this.database
-          .select()
-          .from(accounts)
-          .where(eq(accounts.userId, existingUserWithEmail.id));
-        this.logger.warn(`Email already exists: ${user.email}`);
-        if (account?.provider) {
-          return {
-            error: true,
-            message: `You have already registered using ${account?.provider}. Please use the same to login.`,
-          };
-        } else {
-          return {
-            error: true,
-            message: `You have already registered using this email. Please use the same to login.`,
-          };
-        }
-      }
-    }
     if (!user.email) {
       this.logger.warn(`User email does not exists: ${handleOrEmail}`);
       // throw new Error("User does not have an email");
@@ -1148,6 +1123,10 @@ export class UserService {
           });
           throw new Error("Error sending email");
         });
+        return {
+          error: true,
+          message: `Since you signed in using ${accountData?.provider},we cannot reset your password from our end. Please use ${accountData?.provider} to sign in.`,
+        };
     }
 
     if (!user.emailVerified) {
