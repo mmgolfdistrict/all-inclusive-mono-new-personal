@@ -65,8 +65,8 @@ export const CheckoutForm = ({
   const sendEmailForFailedPayment =
     api.webhooks.sendEmailForFailedPayment.useMutation();
 
-  const sendEmailForBookingFailedByTimeout = 
-    api.webhooks.sendEmailForBookingFailedByTimeout.useMutation();  
+  const sendEmailForBookingFailedByTimeout =
+    api.webhooks.sendEmailForBookingFailedByTimeout.useMutation();
 
   const { refetch: refetchCheckTeeTime } =
     api.teeBox.checkIfTeeTimeStillListedByListingId.useQuery(
@@ -119,7 +119,7 @@ export const CheckoutForm = ({
         )
         ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
   }
-  
+
   // const secondaryGreenFeeCharge = cartData?.filter(({ product_data }) => product_data.metadata.type === "second_hand")?.reduce((acc: number, i) => acc + i.price, 0) / 100;
   const convenienceCharge =
     cartData
@@ -145,8 +145,8 @@ export const CheckoutForm = ({
   // const cartFeeCharge =
   //   cartData
   //     ?.filter(({ product_data }) => product_data.metadata.type === "cart_fee");
-   //console.log("cart-fee",Number(cartFeeCharge[0].product_data.metadata.amount));
-  
+  //console.log("cart-fee",Number(cartFeeCharge[0].product_data.metadata.amount));
+
   const unifiedCheckoutOptions = {
     wallets: {
       walletReturnUrl: isBuyNowAuction
@@ -220,33 +220,29 @@ export const CheckoutForm = ({
         enabled: false,
       }
     );
-    const fetchData = async () => {
-      try {
-        const retrieveCustomerResponse = await retrieveCustomerHandler();
-        if (retrieveCustomerResponse.data?.error) {
-          const createCustomerResponse =
-            await createCustomerInHyperSwitchHandler();
+  const fetchData = async () => {
+    try {
+      const retrieveCustomerResponse = await retrieveCustomerHandler();
+      if (retrieveCustomerResponse.data?.error) {
+        const createCustomerResponse =
+          await createCustomerInHyperSwitchHandler();
 
-          if (createCustomerResponse.data?.error) {
-            console.log(
-              createCustomerResponse.data?.message,
-              "createCustomerForHyperSwitch"
-            );
-          }
+        if (createCustomerResponse.data?.error) {
           console.log(
-            createCustomerResponse.data?.data,
-            "New customer created"
+            createCustomerResponse.data?.message,
+            "createCustomerForHyperSwitch"
           );
         }
-        console.log(
-          retrieveCustomerResponse.data?.data,
-          "created customer created"
-        );
-        // setCustomerID(retrieveCustomerResponse.data?.data);
-      } catch (error) {
-        console.error("Error fetching data:", error);
       }
-    };
+      console.log(
+        retrieveCustomerResponse.data?.data,
+        "created customer created"
+      );
+      // setCustomerID(retrieveCustomerResponse.data?.data);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
   useEffect(() => {
     void fetchData();
   }, []);
@@ -352,7 +348,7 @@ export const CheckoutForm = ({
       return;
     }
 
-   if (listingId.length) {
+    if (listingId.length) {
       const isTeeTimeAvailable = await refetchCheckTeeTime();
       if (!isTeeTimeAvailable.data) {
         toast.error("Oops! Tee time is not available anymore");
@@ -440,15 +436,18 @@ export const CheckoutForm = ({
                 playTime: teeTimeDate || "",
               });
             } catch (error) {
-
-              if (error?.meta?.response && !Object.keys(error.meta.response).length && error.name==="TRPCClientError")  {
+              if (
+                error?.meta?.response &&
+                !Object.keys(error.meta.response).length &&
+                error.name === "TRPCClientError"
+              ) {
                 void sendEmailForBookingFailedByTimeout.mutateAsync({
                   paymentId: response?.payment_id as string,
                   teeTimeId: teeTimeId,
                   cartId: cartId,
-                  userId: user?.id??"",
+                  userId: user?.id ?? "",
                   courseId: courseId!,
-                  sensibleQuoteId:sensibleData?.id ?? ""
+                  sensibleQuoteId: sensibleData?.id ?? "",
                 });
 
                 await auditLog.mutateAsync({
@@ -460,7 +459,6 @@ export const CheckoutForm = ({
                   eventId: "Vercel function timedout",
                   json: `Vercel function timedout`,
                 });
-
               }
 
               setMessage(
@@ -583,11 +581,19 @@ export const CheckoutForm = ({
   const roundOff = Math.ceil(primaryGreenFeeCharge + TaxCharge);
   const handleRoundOff = () => {
     setShowTextField(false);
-    // setNoThanks(false);
-    // setRoundOffClick(true);
-    const donation = parseFloat(
-      (roundOff - (primaryGreenFeeCharge + TaxCharge)).toFixed(2)
-    );
+    const totalBeforeRoundOff = primaryGreenFeeCharge + TaxCharge;
+    const decimalPart = totalBeforeRoundOff % 1;
+
+    let donation;
+    if (decimalPart === 0) {
+      donation = 1;
+    } else if (decimalPart.toFixed(2) === "0.00") {
+      donation = 1;
+    } else {
+      donation = parseFloat(
+        (Math.ceil(totalBeforeRoundOff) - totalBeforeRoundOff).toFixed(2)
+      );
+    }
     setDonateValue(donation);
     handleSelectedCharityAmount(Number(donation));
   };
@@ -737,7 +743,7 @@ export const CheckoutForm = ({
         <div className="flex w-full flex-col gap-2 bg-white p-4 rounded-lg my-2 border border-primary">
           <div className="flex items-top">
             {charityData?.charityLogo && (
-               // eslint-disable-next-line  @next/next/no-img-element 
+              // eslint-disable-next-line  @next/next/no-img-element
               <img
                 src={`${charityData?.charityLogo}`}
                 alt={`${charityData.charityName} logo`}
