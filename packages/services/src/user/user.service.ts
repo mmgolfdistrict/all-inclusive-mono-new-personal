@@ -1067,6 +1067,7 @@ export class UserService {
         message: "User email does not exists: ${handleOrEmail",
       };
     }
+   
 
     const [accountData] = await this.database
       .select()
@@ -1101,7 +1102,7 @@ export class UserService {
       throw new Error("Missing email template ID");
     }
 
-    if (accountData) {
+    if (accountData && !user.gdPassword) {
       await this.notificationsService
         .sendEmail(
           user.email,
