@@ -36,6 +36,7 @@ export type TxnHistoryType = {
   receiveAfterSale: number;
   weatherGuaranteeAmount: number;
   weatherGuaranteeId: string;
+  markupFees?:number
 };
 
 export const TransactionHistory = () => {
@@ -70,7 +71,6 @@ export const TransactionHistory = () => {
     if (!data || Array.isArray(data)) return undefined;
     return sortByDate(data as Record<string, TxnHistoryType>);
   }, [data]);
-  console.log(txnHistory);
   // const loadMore = () => {
   //   setAmount(amount + 4);
   // };

@@ -21,7 +21,6 @@ export const BookingDetails = ({
     isOpen: isReceiptOpen,
     setIsOpen: setIsReceiptOpen,
   });
-
   return (
     <>
       {isReceiptOpen && (
@@ -158,7 +157,7 @@ export const BookingDetails = ({
                       width="50%"
                     >
                       {selectedReceipt?.firstHandPrice
-                        ? formatMoney(selectedReceipt?.firstHandPrice / 100)
+                        ? formatMoney((selectedReceipt?.firstHandPrice + (selectedReceipt.markupFees ??0))/ 100)
                         : "-"}
                     </TableCell>
                   </TableRow>
