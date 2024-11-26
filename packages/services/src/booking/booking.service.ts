@@ -125,6 +125,7 @@ interface TransferData {
   receiveAfterSale: number;
   weatherGuaranteeId: string;
   weatherGuaranteeAmount: number;
+  markupFees?:number;
 }
 type RequestOptions = {
   method: string;
@@ -269,7 +270,8 @@ export class BookingService {
         transfersDate: transfers.createdAt,
         weatherGuaranteeId: transfers.weatherGuaranteeId,
         weatherGuaranteeAmount: transfers.weatherGuaranteeAmount,
-        cartFee:bookings.cartFeePerPlayer
+        cartFee:bookings.cartFeePerPlayer,
+        markupFees:bookings.markupFees
       })
       .from(transfers)
       .innerJoin(bookings, eq(bookings.id, transfers.bookingId))
@@ -347,6 +349,7 @@ export class BookingService {
           receiveAfterSale: teeTime.from === userId ? receiveAfterSaleAmount : 0,
           weatherGuaranteeAmount: teeTime.weatherGuaranteeAmount ?? 0,
           weatherGuaranteeId: teeTime.weatherGuaranteeId ?? "",
+          markupFees:teeTime.markupFees
         };
       } else {
         const currentEntry = combinedData[teeTime.transferId];

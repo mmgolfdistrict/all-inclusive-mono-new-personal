@@ -545,6 +545,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       ),
     };
     const icsContent: string = createICS(event);
+
     const template = {
       CustomerFirstName: existingTeeTime.customerName?.split(" ")[0],
       CourseName: existingTeeTime.courseName ?? "-",
@@ -554,12 +555,12 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       PlayDateTime: formatTime(existingTeeTime.providerDate, true, existingTeeTime.timezoneCorrection ?? 0),
       NumberOfHoles: existingTeeTime.numberOfHoles,
       GreenFeesPerPlayer:
-        `$${((existingTeeTime.greenFee + Number(cartFeeCharge)) / 100).toLocaleString("en-US", {
+        `$${((existingTeeTime.greenFee + Number(cartFeeCharge) + ((normalizedCartData?.markupCharge ?? 0)*100) ) / 100).toLocaleString("en-US", {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         })}` ?? "-",
       GreenFees:
-        `$${(((existingTeeTime.greenFee + Number(cartFeeCharge)) * players) / 100).toLocaleString("en-US", {
+        `$${(((existingTeeTime.greenFee + Number(cartFeeCharge)+((normalizedCartData?.markupCharge ?? 0)*100) ) * players) / 100).toLocaleString("en-US", {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         })}` ?? "-",
@@ -580,6 +581,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       SellTeeTImeURL: `${redirectHref}/my-tee-box`,
       ManageTeeTimesURL: `${redirectHref}/my-tee-box`,
     };
+    console.log(template);
     let isEmailSend = false;
     try {
       await this.notificationService.createNotification(
