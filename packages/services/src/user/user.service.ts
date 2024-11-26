@@ -1101,7 +1101,7 @@ export class UserService {
       throw new Error("Missing email template ID");
     }
 
-    if (accountData) {
+    if (accountData && !user.gdPassword) {
       await this.notificationsService
         .sendEmail(
           user.email,
