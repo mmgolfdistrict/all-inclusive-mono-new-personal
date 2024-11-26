@@ -125,7 +125,7 @@ interface TransferData {
   receiveAfterSale: number;
   weatherGuaranteeId: string;
   weatherGuaranteeAmount: number;
-  markupFees?:number;
+  markupFees?:number|null;
 }
 type RequestOptions = {
   method: string;
