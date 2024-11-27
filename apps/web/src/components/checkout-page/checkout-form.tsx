@@ -578,7 +578,14 @@ export const CheckoutForm = ({
     (!roundUpCharityId ? charityCharge : 0) +
     convenienceCharge;
 
-  const roundOff = Math.ceil(primaryGreenFeeCharge + TaxCharge);
+  const totalBeforeRoundOff = primaryGreenFeeCharge + TaxCharge;
+  const decimalPart = totalBeforeRoundOff % 1;
+
+  const roundOff =
+    decimalPart === 0 || decimalPart.toFixed(2) === "0.00"
+      ? Math.ceil(totalBeforeRoundOff) + 1
+      : Math.ceil(totalBeforeRoundOff);
+
   const handleRoundOff = () => {
     setShowTextField(false);
     const totalBeforeRoundOff = primaryGreenFeeCharge + TaxCharge;
