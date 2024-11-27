@@ -1,15 +1,20 @@
 import { isEqual } from "@golf-district/shared";
 import { loadHyper } from "@juspay-tech/hyper-js";
 import { HyperElements } from "@juspay-tech/react-hyper-js";
+import { useCheckoutContext } from "~/contexts/CheckoutContext";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
-import type { CartProduct } from "~/utils/types";
+import type {
+  CartProduct,
+  MaxReservationResponse,
+  SearchObject,
+} from "~/utils/types";
+import dayjs from "dayjs";
 // import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Spinner } from "../loading/spinner";
 import { CheckoutForm } from "./checkout-form";
-import { useCheckoutContext } from "~/contexts/CheckoutContext";
 
 export type NextAction = {
   type?: string;
@@ -45,8 +50,9 @@ export const HyperSwitch = ({
   listingId,
   setIsLoading,
   playerCount,
-  // maxReservation,
-}: {
+  teeTimeData,
+}: // maxReservation,
+{
   cartData: CartProduct[];
   isBuyNowAuction: boolean;
   teeTimeId: string;
@@ -54,17 +60,16 @@ export const HyperSwitch = ({
   listingId: string | undefined;
   setIsLoading?: (isLoading: boolean) => void;
   playerCount: string | undefined;
+  teeTimeData: SearchObject | null | undefined;
   // maxReservation: MaxReservationResponse;
 }) => {
-
-  const {
-    amountOfPlayers
-  } = useCheckoutContext();
+  const { amountOfPlayers } = useCheckoutContext();
 
   const [options, setOptions] = useState<Options | undefined>(undefined);
   const { user } = useUserContext();
   const { course } = useCourseContext();
-  const { mutateAsync: checkout, error: err } = api.checkout.buildCheckoutSession.useMutation();
+  const { mutateAsync: checkout, error: err } =
+    api.checkout.buildCheckoutSession.useMutation();
   const [cartId, setCartId] = useState<string>("");
   const [localCartData, setLocalCartData] = useState<unknown[]>(cartData);
   const [error, setError] = useState<undefined | string>(undefined);
@@ -74,16 +79,31 @@ export const HyperSwitch = ({
   );
   const [paymentId, setPaymentId] = useState<string | undefined>(undefined);
 
+  const isFirstHand = localCartData?.filter(
+    ({ product_data }) => product_data.metadata.type === "first_hand"
+  );
+
+  const convertDateFormat = (dateString: string, utcOffset = 0) => {
+    const cleanTimeString = !dateString.includes("T")
+      ? dateString.replace(" ", "T") + "Z"
+      : dateString;
+    const timezone = cleanTimeString.slice(-6) ?? utcOffset;
+
+    return dayjs
+      .utc(cleanTimeString)
+      .utcOffset(timezone)
+      .format("DD-MMM-YYYY hh:mm A");
+  };
+
   const buildSession = async () => {
     if (!user) return;
     try {
       setError(undefined);
       // setIsLoadingSession(true);
 
-      if(Number(playerCount??0)!==amountOfPlayers){
-        return
+      if (Number(playerCount ?? 0) !== amountOfPlayers) {
+        return;
       }
-
 
       const data = (await checkout({
         userId: user.id,
@@ -96,12 +116,17 @@ export const HyperSwitch = ({
         paymentId: options?.paymentId
           ? options.paymentId
           : paymentId
-            ? paymentId
-            : null,
+          ? paymentId
+          : null,
         //@ts-ignore
         cart: cartData,
         cartId,
-        teeTimeId
+        teeTimeId,
+        courseName: course?.name ?? "",
+        playDateTime: convertDateFormat(
+          teeTimeData?.date ?? "",
+          course?.timezoneCorrection
+        ),
       })) as CreatePaymentResponse;
 
       if (data?.next_action) {
@@ -123,7 +148,7 @@ export const HyperSwitch = ({
       // setIsLoadingSession(false);
       setError(
         (error?.message as string) ??
-        "An error occurred building checkout seesion."
+          "An error occurred building checkout seesion."
       );
     }
   };
@@ -182,11 +207,12 @@ export const HyperSwitch = ({
             playerCount={playerCount}
             roundOffStatus={roundOffStatus}
             setRoundOffStatus={setRoundOffStatus}
-          // maxReservation={maxReservation}
+            // maxReservation={maxReservation}
           />
         </HyperElements>
       ) : nextaction ? (
         <></>
+      ) : (
         // <CheckoutForm
         //   teeTimeId={teeTimeId}
         //   isBuyNowAuction={isBuyNowAuction}
@@ -197,7 +223,6 @@ export const HyperSwitch = ({
         //   nextAction={nextaction}
         //   callingRef={callingRef.current}
         // />
-      ) : (
         <div className="flex justify-center items-center h-full min-h-[200px]">
           <Spinner className="w-[50px] h-[50px]" />
         </div>
