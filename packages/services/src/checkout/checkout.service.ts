@@ -322,7 +322,6 @@ export class CheckoutService {
       setup_future_usage: "off_session",
     };
     // }
-    console.log("paymentData------------>", paymentData);
 
     const paymentIntent = await this.hyperSwitch.createPaymentIntent(paymentData).catch((err) => {
       this.logger.error(` ${err}`);
