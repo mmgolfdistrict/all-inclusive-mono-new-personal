@@ -228,7 +228,7 @@ export class CheckoutService {
   buildCheckoutSession = async (userId: string, customerCartData: CustomerCart, cartId = "") => {
     const { paymentId } = customerCartData;
     let data = {};
-    
+
     // const errors = await this.validateCartItems(customerCart);
     // if (errors.length > 0) {
     //   return {
@@ -252,7 +252,7 @@ export class CheckoutService {
         name: users.name,
         email: users.email,
         phoneNumber: users.phoneNumber,
-        id: users.id
+        id: users.id,
       })
       .from(users)
       .where(eq(users.id, userId));
@@ -311,14 +311,18 @@ export class CheckoutService {
       profile_id: this.profileId,
       // @ts-ignore
       metadata: {
-        courseId:customerCart.courseId,
-        userId:user?.id,
-        teeTimeId:customerCart?.teeTimeId
+        courseId: customerCart.courseId,
+        userId: user?.id,
+        teeTimeId: customerCart?.teeTimeId,
+        courseName: customerCart?.courseName,
+        playDateTime: customerCart?.playDateTime,
+        cartId: customerCart?.cartId,
       },
-      merchant_order_reference_id: customerCartData?.cartId??"",
+      merchant_order_reference_id: customerCartData?.cartId ?? "",
       setup_future_usage: "off_session",
     };
     // }
+    console.log("paymentData------------>", paymentData);
 
     const paymentIntent = await this.hyperSwitch.createPaymentIntent(paymentData).catch((err) => {
       this.logger.error(` ${err}`);
@@ -405,7 +409,16 @@ export class CheckoutService {
       currency: "USD",
       amount: parseInt(total.toString()),
       amount_to_capture: parseInt(total.toString()),
-      merchant_order_reference_id: cartId??"",
+      merchant_order_reference_id: cartId ?? "",
+
+      metadata: {
+        courseId: customerCart.courseId,
+        userId: userId,
+        teeTimeId: customerCart?.teeTimeId,
+        courseName: customerCart?.courseName,
+        playDateTime: customerCart?.playDateTime,
+        cartId: customerCart?.cartId,
+      },
     };
 
     // @ts-ignore
@@ -970,10 +983,10 @@ export class CheckoutService {
       myHeaders.append("api-key", process.env.HYPERSWITCH_API_KEY ?? "");
       myHeaders.append("Content-Type", "application/json");
       const customerDataObject = {
-        customer_id: parts[0] as string,
-        name: userDetails.name as string,
-        email: userDetails.email as string,
-        phone: userDetails.phoneNumber as string,
+        customer_id: parts[0]!,
+        name: userDetails.name!,
+        email: userDetails.email,
+        phone: userDetails.phoneNumber!,
         description: "default",
         // address: {
         //   city: userDetails.city || "",
@@ -984,7 +997,7 @@ export class CheckoutService {
         //   state: userDetails.state || "",
         // },
       };
-     console.log(JSON.stringify(customerDataObject))
+      console.log(JSON.stringify(customerDataObject));
       const requestOptions = {
         method: "POST",
         headers: myHeaders,
@@ -995,7 +1008,7 @@ export class CheckoutService {
       if (customerData.error && customerData?.error?.type === "invalid_request") {
         return { error: true, message: customerData?.error?.message, code: customerData?.error?.code };
       }
-      return { data: customerData?.customer_id || "", status_api: true, response:customerData};
+      return { data: customerData?.customer_id || "", status_api: true, response: customerData };
     } catch (error: any) {
       console.log("error message", error.message);
     }
@@ -1019,7 +1032,7 @@ export class CheckoutService {
       if (customerData.error && customerData?.error?.type === "invalid_request") {
         return { error: true, message: customerData?.error?.message, code: customerData?.error?.code };
       }
-      return { data: customerData?.customer_id || "", status_api: true , error :false};
+      return { data: customerData?.customer_id || "", status_api: true, error: false };
     } catch (error: any) {
       console.log("error message", error.message);
     }
