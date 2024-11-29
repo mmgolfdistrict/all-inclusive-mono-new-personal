@@ -93,11 +93,7 @@ export const HyperSwitch = ({
         email: user.email ?? "",
         phone: user.phone ?? "",
         phone_country_code: "1",
-        paymentId: options?.paymentId
-          ? options.paymentId
-          : paymentId
-            ? paymentId
-            : null,
+        paymentId:  paymentId??null,
         //@ts-ignore
         cart: cartData,
         cartId,
@@ -108,6 +104,7 @@ export const HyperSwitch = ({
         setNextaction(data?.next_action);
         setPaymentId(data?.paymentId);
       } else {
+        setPaymentId(data?.paymentId);
         setOptions({
           clientSecret: data.clientSecret,
           paymentId: data.paymentId,
