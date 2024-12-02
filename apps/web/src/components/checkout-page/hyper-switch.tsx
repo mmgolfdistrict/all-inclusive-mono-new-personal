@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import { Spinner } from "../loading/spinner";
 import { CheckoutForm } from "./checkout-form";
 import { useCheckoutContext } from "~/contexts/CheckoutContext";
+import isequal from 'lodash.isequal'
 
 export type NextAction = {
   type?: string;
@@ -73,8 +74,10 @@ export const HyperSwitch = ({
     undefined
   );
   const [paymentId, setPaymentId] = useState<string | undefined>(undefined);
+  var initialLoad=true
 
   const buildSession = async () => {
+    initialLoad=false;
     if (!user) return;
     try {
       setError(undefined);
@@ -127,14 +130,14 @@ export const HyperSwitch = ({
 
   useEffect(() => {
     if (!user) return;
-    let isEqualCompare = true;
-    for (let i = 0; i < cartData.length; i++) {
-      if (!isEqual(cartData[i] as object, localCartData[i] as object)) {
-        isEqualCompare = false;
-        break;
-      }
-    }
-    if (!options || !isEqualCompare) {
+    // let isEqualCompare = true;
+    // for (let i = 0; i < cartData.length; i++) {
+    //   if (!isEqual(cartData[i] as object, localCartData[i] as object)) {
+    //     isEqualCompare = false;
+    //     break;
+    //   }
+    // }
+    if ((!options && initialLoad) || !isequal(localCartData,cartData)) {
       if (cartData?.length > 0) {
         void buildSession();
       }
