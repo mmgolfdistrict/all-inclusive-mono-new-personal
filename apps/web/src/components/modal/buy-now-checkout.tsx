@@ -39,6 +39,7 @@ export const BuyNowCheckout = ({
         ]}
         listingId={undefined}
         teeTimeDate={undefined}
+        teeTimeData={undefined}
       />
     </ModalWrapper>
   );
