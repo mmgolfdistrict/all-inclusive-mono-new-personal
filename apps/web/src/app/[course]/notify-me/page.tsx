@@ -11,15 +11,15 @@ import { GoBack } from "~/components/buttons/go-back";
 import { Close } from "~/components/icons/close";
 import { ChoosePlayers } from "~/components/input/choose-players";
 import { Input } from "~/components/input/input";
+import { Slider } from "~/components/input/slider";
 import Waitlists from "~/components/waitlist-page/waitlists";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useMe } from "~/hooks/useMe";
 import { api } from "~/utils/api";
-import type { Dayjs } from "dayjs";
 import dayjs from "dayjs";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
-import CustomTimePicker from "./CustomTimePicker";
+import { useMediaQuery } from "usehooks-ts";
 
 function NotifyMe({ params }: { params: { course: string } }) {
   const router = useRouter();
@@ -30,13 +30,72 @@ function NotifyMe({ params }: { params: { course: string } }) {
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [displayDates, setDisplayDates] = useState<string>("");
   const [isTimePickerOpen, setIsTimePickerOpen] = useState(false);
-  const [startTime, setStartTime] = useState<Dayjs | null>(null);
-  const [endTime, setEndTime] = useState<Dayjs | null>(null);
   const [timeRange, setTimeRange] = useState<string>("");
   const [players, setPlayers] = useState("1");
   const [errorMessage, setErrorMessage] = useState<string>("");
   const courseStartTime = dayjs(course?.openTime).format("hh:mm A");
   const courseEndTime = dayjs(course?.closeTime).format("hh:mm A");
+  const courseStartTimeNumber = Number(dayjs(course?.openTime).format("HHmm"));
+  const courseEndTimeNumber = Number(dayjs(course?.closeTime).format("HHmm"));
+
+  const [startTime, setStartTime] = useState<[number, number]>([
+    courseStartTimeNumber,
+    courseEndTimeNumber,
+  ]);
+  const [timeMobile, setTimeMobile] = useState(startTime);
+
+  const formatTime = (hour: number, minute: number) => {
+    const formattedHour = hour % 12 === 0 ? 12 : hour % 12;
+    const period = hour < 12 ? "AM" : "PM";
+    return `${formattedHour}:${minute === 0 ? "00" : minute} ${period}`;
+  };
+
+  const startTimeOptions: { displayTime: string; value: number }[] = [];
+
+  for (let hour = 6; hour <= 21; hour++) {
+    for (let minute = 0; minute < 60; minute += 15) {
+      startTimeOptions.push({
+        displayTime: formatTime(hour, minute),
+        value: hour * 100 + minute, // `HHmm` format
+      });
+    }
+  }
+
+  const courseStartTimeObj = dayjs(courseStartTime, "hh:mm A");
+  const courseEndTimeObj = dayjs(courseEndTime, "hh:mm A");
+
+  const [filteredStartTimeOptions, setFilteredStartTimeOptions] = useState<
+    { displayTime: string; value: number }[]
+  >([]);
+
+  useEffect(() => {
+    if (!course) return;
+
+    const courseStartTimeObj = dayjs(course.openTime, "hh:mm A");
+    const courseEndTimeObj = dayjs(course.closeTime, "hh:mm A");
+
+    const courseStartTimeNum = Number(courseStartTimeObj.format("HHmm"));
+    const courseEndTimeNum = Number(courseEndTimeObj.format("HHmm"));
+
+    const options = startTimeOptions.filter((option) => {
+      const optionTimeNum = option.value;
+      return (
+        optionTimeNum >= courseStartTimeNum && optionTimeNum <= courseEndTimeNum
+      );
+    });
+
+    setFilteredStartTimeOptions(options);
+  }, [course]);
+
+  const [localStartTime, setLocalStartTime] = useState<[number, number]>([
+    startTime[0],
+    startTime[1],
+  ]);
+  const isMobile = useMediaQuery("(max-width: 768px)");
+
+  const handleSetStartTime = () => {
+    setStartTime(localStartTime);
+  };
 
   if (!course?.supportsWaitlist || !course) {
     router.push(`/${courseId}`);
@@ -61,29 +120,47 @@ function NotifyMe({ params }: { params: { course: string } }) {
     month: currentDate.month() + 1,
     day: currentDate.date(),
   };
-  const courseStartTimeObj = dayjs(courseStartTime, "hh:mm A");
-  const courseEndTimeObj = dayjs(courseEndTime, "hh:mm A");
 
   const handleDoneSetTimeRange = () => {
-    if (startTime && endTime) {
-      const startTimeNum = Number(startTime?.format("HHmm"));
-      const endTimeNum = Number(endTime?.format("HHmm"));
-      const courseStartNum = Number(courseStartTimeObj.format("HHmm"));
-      const courseEndNum = Number(courseEndTimeObj.format("HHmm"));
+    let startTimeNum;
+    let endTimeNum;
+    if (startTime && startTime.length > 1) {
+      startTimeNum = Number(startTime[0]);
+      endTimeNum = Number(startTime[1]);
+    } else {
+      console.error("startTime is invalid:", startTime);
+    }
+    const courseStartNum = Number(courseStartTimeObj.format("HHmm"));
+    const courseEndNum = Number(courseEndTimeObj.format("HHmm"));
 
-      if (startTimeNum < courseStartNum || endTimeNum > courseEndNum) {
-        setErrorMessage("Please select a time within the available duration.");
-        return;
+    if (startTimeNum < courseStartNum || endTimeNum > courseEndNum) {
+      setErrorMessage("Please select a time within the available duration.");
+      return;
+    }
+
+    if (startTimeNum > endTimeNum) {
+      setErrorMessage("Start time must be before end time");
+      setTimeRange("");
+      return;
+    } else {
+      setErrorMessage("");
+      setIsTimePickerOpen(false);
+    }
+  };
+
+  const setFilter = (type, value) => {
+    switch (type) {
+      case "time": {
+        if (isMobile) {
+          setTimeMobile(value as [number, number]);
+        } else {
+          setLocalStartTime(value as [number, number]);
+        }
+        break;
       }
 
-      if (startTimeNum > endTimeNum) {
-        setErrorMessage("Start time must be before end time");
-        setTimeRange("");
-        return;
-      } else {
-        setErrorMessage("");
-        setIsTimePickerOpen(false);
-      }
+      default:
+        break;
     }
   };
 
@@ -97,14 +174,21 @@ function NotifyMe({ params }: { params: { course: string } }) {
       toast.error("Please select a date");
       return;
     }
-    if (!startTime || !endTime) {
+    if (!startTime[0] || !startTime[1]) {
       toast.error("Please select a time range");
       return;
     }
+    const formatTimeToHHmm = (time) => {
+      const timeString = time.toString().padStart(4, "0");
+      const hours = timeString.slice(0, 2);
+      const minutes = timeString.slice(2);
+      return `${hours}${minutes}`;
+    };
+
     const notificationsData = {
       courseId,
-      startTime: Number(startTime?.format("HHmm")),
-      endTime: Number(endTime?.format("HHmm")),
+      startTime: Number(formatTimeToHHmm(startTime[0])),
+      endTime: Number(formatTimeToHHmm(startTime[1])),
       dates: selectedDates.map(
         (date) => `${date.year}-${date.month}-${date.day}`
       ),
@@ -116,12 +200,13 @@ function NotifyMe({ params }: { params: { course: string } }) {
         toast.success(data);
 
         setSelectedDates([]);
-        setStartTime(null);
-        setEndTime(null);
         setTimeRange("");
         setPlayers("1");
+        setLocalStartTime([courseStartTimeNumber, courseEndTimeNumber]);
+        setTimeMobile([courseStartTimeNumber, courseEndTimeNumber]);
       },
     });
+
     await refetchWaitlist();
   };
 
@@ -139,13 +224,28 @@ function NotifyMe({ params }: { params: { course: string } }) {
   }, [selectedDates]);
 
   useEffect(() => {
-    if (startTime && endTime) {
-      const startTimeString = startTime?.format("hh:mm a");
-      const endTimeString = endTime?.format("hh:mm a");
+    console.log("startTime[0] && startTime[1]", startTime[0], startTime[1]);
+
+    if (startTime[0] && startTime[1]) {
+      const formatTime = (time) => {
+        const timeString = time.toString().padStart(4, "0");
+        const hours = parseInt(timeString.slice(0, 2), 10);
+        const minutes = parseInt(timeString.slice(2), 10);
+        return dayjs().hour(hours).minute(minutes).format("hh:mm a");
+      };
+
+      const startTimeString = formatTime(startTime[0]);
+      const endTimeString = formatTime(startTime[1]);
       setTimeRange(`${startTimeString} - ${endTimeString}`);
       setErrorMessage("");
     }
-  }, [startTime, endTime]);
+  }, [startTime[0], startTime[1]]);
+
+  useEffect(() => {
+    console.log("hello Filtered Start Options:", filteredStartTimeOptions);
+    console.log("hello Start Time:", startTime);
+    console.log("hello Local Start Time on Modal Open:", localStartTime);
+  }, [filteredStartTimeOptions, startTime, localStartTime]);
 
   if (!isLoading && !user) {
     router.push(`/${courseId}/login`);
@@ -249,20 +349,89 @@ function NotifyMe({ params }: { params: { course: string } }) {
                     <h1 className="text-[20px] md:text-2xl">
                       What time range?
                     </h1>
-                    <div className="flex flex-col gap-1">
-                      <CustomTimePicker
-                        flag={false}
-                        label="Start Time:"
-                        setTime={setStartTime}
+                    <section className="flex flex-col gap-2">
+                      <div className="flex items-center justify-between">
+                        <div>Start Time</div>
+                        <div>
+                          {isMobile
+                            ? startTimeOptions[
+                                startTimeOptions.findIndex(
+                                  (i) => i.value === timeMobile[0]
+                                )
+                              ]?.displayTime
+                            : startTimeOptions[
+                                startTimeOptions.findIndex(
+                                  (i) => i.value === localStartTime[0]
+                                )
+                              ]?.displayTime}
+                          -
+                          {isMobile
+                            ? startTimeOptions[
+                                startTimeOptions.findIndex(
+                                  (i) => i.value === timeMobile[1]
+                                )
+                              ]?.displayTime
+                            : startTimeOptions[
+                                startTimeOptions.findIndex(
+                                  (i) => i.value === localStartTime[1]
+                                )
+                              ]?.displayTime}
+                        </div>
+                      </div>
+                      <Slider
+                        min={0}
+                        max={filteredStartTimeOptions.length - 1}
+                        step={1}
+                        value={
+                          isMobile
+                            ? [
+                                filteredStartTimeOptions.findIndex(
+                                  (i) => i.value === timeMobile[0]
+                                ),
+                                filteredStartTimeOptions.findIndex(
+                                  (i) => i.value === timeMobile[1]
+                                ),
+                              ]
+                            : [
+                                filteredStartTimeOptions.findIndex(
+                                  (i) => i.value === localStartTime[0]
+                                ),
+                                filteredStartTimeOptions.findIndex(
+                                  (i) => i.value === localStartTime[1]
+                                ),
+                              ]
+                        }
+                        onValueChange={(values) => {
+                          const [startIndex, endIndex] = values;
+                          const startOption =
+                            filteredStartTimeOptions[startIndex];
+                          const endOption = filteredStartTimeOptions[endIndex];
+
+                          if (startOption && endOption) {
+                            setLocalStartTime([
+                              startOption.value,
+                              endOption.value,
+                            ]);
+                          }
+
+                          if (
+                            values &&
+                            values.length >= 2 &&
+                            typeof values[0] === "number" &&
+                            typeof values[1] === "number"
+                          ) {
+                            const option1 = filteredStartTimeOptions[values[0]];
+                            const option2 = filteredStartTimeOptions[values[1]];
+                            if (option1 && option2) {
+                              setFilter("time", [option1.value, option2.value]);
+                            }
+                          }
+                        }}
+                        onPointerUp={handleSetStartTime}
+                        aria-label="Select start and end times"
+                        data-testid="slider-time-range"
                       />
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <CustomTimePicker
-                        flag={true}
-                        label="End Time:"
-                        setTime={setEndTime}
-                      />
-                    </div>
+                    </section>{" "}
                     <div>
                       <span
                         className={`text-[12px] text-red ${
@@ -273,7 +442,11 @@ function NotifyMe({ params }: { params: { course: string } }) {
                       </span>
                       <FilledButton
                         className="w-full mt-2 py-[.28rem] md:py-1.5 text-[10px] md:text-[14px]"
-                        onClick={handleDoneSetTimeRange}
+                        onClick={() => {
+                          console.log("hey");
+
+                          handleDoneSetTimeRange();
+                        }}
                       >
                         Done
                       </FilledButton>
