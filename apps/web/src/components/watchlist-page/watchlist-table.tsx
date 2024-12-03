@@ -240,6 +240,9 @@ const TableRow = ({
   removeFromWatchlist: (id: string) => Promise<void>;
   openMakeAnOffer: () => void;
 }) => {
+  const router = useRouter();
+  const { data: session } = useSession();
+  const { user } = useUserContext();
   const DEFAULT_SILHOUETTE_IMAGE = "/defaults/default-profile.webp";
   const href = useMemo(() => {
     if (type === "FIRST_PARTY") {
@@ -250,6 +253,15 @@ const TableRow = ({
     }
     return `/${courseId}/${teeTimeId}/owner/${ownedById}`;
   }, [status, listingId, teeTimeId, courseId, ownedById]);
+
+  const openManage = () => {
+    if (status === "UNLISTED") {
+      router.push(`/${courseId}/my-tee-box`);
+      return;
+    }
+    router.push(`/${courseId}/my-tee-box`);
+    // setIsManageOpen(true);
+  };
 
   return (
     <tr className="w-full border-b border-stroke text-primary-gray">
@@ -290,7 +302,18 @@ const TableRow = ({
           <Link href={href} data-testid="details-button-id">
             <OutlineButton className="min-w-[155px]">Details</OutlineButton>
           </Link>
-          {status === "LISTED" ? (
+          {ownedById === user?.id && session ? (
+            <FilledButton
+              onClick={openManage}
+              className="whitespace-nowrap"
+              data-testid="sell-button-id"
+              data-test={teeTimeId}
+              data-qa="Buy"
+              // data-cy={time}
+            >
+              {status === "UNLISTED" ? "Sell" : "Manage"}
+            </FilledButton>
+          ) : status === "LISTED" ? (
             <FilledButton
               className="min-w-[155px]"
               onClick={buyTeeTime}
