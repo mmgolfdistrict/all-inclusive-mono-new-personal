@@ -133,6 +133,13 @@ function NotifyMe({ params }: { params: { course: string } }) {
     const courseStartNum = Number(courseStartTimeObj.format("HHmm"));
     const courseEndNum = Number(courseEndTimeObj.format("HHmm"));
 
+    const formatTime = (time) => {
+      const timeString = time.toString().padStart(4, "0");
+      const hours = parseInt(timeString.slice(0, 2), 10);
+      const minutes = parseInt(timeString.slice(2), 10);
+      return dayjs().hour(hours).minute(minutes).format("hh:mm a");
+    };
+
     if (startTimeNum < courseStartNum || endTimeNum > courseEndNum) {
       setErrorMessage("Please select a time within the available duration.");
       return;
@@ -140,7 +147,10 @@ function NotifyMe({ params }: { params: { course: string } }) {
 
     if (startTimeNum > endTimeNum) {
       setErrorMessage("Start time must be before end time");
-      setTimeRange("");
+      const startTimeString = formatTime(courseStartNum);
+      const endTimeString = formatTime(courseEndNum);
+      setTimeRange(`${startTimeString} - ${endTimeString}`);
+      // setTimeRange("");
       return;
     } else {
       setErrorMessage("");
@@ -195,12 +205,22 @@ function NotifyMe({ params }: { params: { course: string } }) {
       playerCount: Number(players),
     };
 
+    const formatTime = (time) => {
+      const timeString = time.toString().padStart(4, "0");
+      const hours = parseInt(timeString.slice(0, 2), 10);
+      const minutes = parseInt(timeString.slice(2), 10);
+      return dayjs().hour(hours).minute(minutes).format("hh:mm a");
+    };
+
     await createNotifications(notificationsData, {
       onSuccess: (data) => {
         toast.success(data);
 
         setSelectedDates([]);
-        setTimeRange("");
+        const startTimeString = formatTime(courseStartTimeNumber);
+        const endTimeString = formatTime(courseEndTimeNumber);
+        setTimeRange(`${startTimeString} - ${endTimeString}`);
+        // setTimeRange("");
         setPlayers("1");
         setLocalStartTime([courseStartTimeNumber, courseEndTimeNumber]);
         setTimeMobile([courseStartTimeNumber, courseEndTimeNumber]);
@@ -224,8 +244,6 @@ function NotifyMe({ params }: { params: { course: string } }) {
   }, [selectedDates]);
 
   useEffect(() => {
-    console.log("startTime[0] && startTime[1]", startTime[0], startTime[1]);
-
     if (startTime[0] && startTime[1]) {
       const formatTime = (time) => {
         const timeString = time.toString().padStart(4, "0");
@@ -240,12 +258,6 @@ function NotifyMe({ params }: { params: { course: string } }) {
       setErrorMessage("");
     }
   }, [startTime[0], startTime[1]]);
-
-  useEffect(() => {
-    console.log("hello Filtered Start Options:", filteredStartTimeOptions);
-    console.log("hello Start Time:", startTime);
-    console.log("hello Local Start Time on Modal Open:", localStartTime);
-  }, [filteredStartTimeOptions, startTime, localStartTime]);
 
   if (!isLoading && !user) {
     router.push(`/${courseId}/login`);
@@ -442,11 +454,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
                       </span>
                       <FilledButton
                         className="w-full mt-2 py-[.28rem] md:py-1.5 text-[10px] md:text-[14px]"
-                        onClick={() => {
-                          console.log("hey");
-
-                          handleDoneSetTimeRange();
-                        }}
+                        onClick={handleDoneSetTimeRange}
                       >
                         Done
                       </FilledButton>
