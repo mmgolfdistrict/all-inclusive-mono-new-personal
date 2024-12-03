@@ -133,7 +133,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
     const courseStartNum = Number(courseStartTimeObj.format("HHmm"));
     const courseEndNum = Number(courseEndTimeObj.format("HHmm"));
 
-    const formatTime = (time: string | number): string => {
+    const formatTime = (time: string | number) => {
       const timeString = time.toString().padStart(4, "0");
       const hours = parseInt(timeString.slice(0, 2), 10);
       const minutes = parseInt(timeString.slice(2), 10);
@@ -205,7 +205,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
       playerCount: Number(players),
     };
 
-    const formatTime = (time: string | number): string => {
+    const formatTime = (time: string | number) => {
       const timeString = time.toString().padStart(4, "0");
       const hours = parseInt(timeString.slice(0, 2), 10);
       const minutes = parseInt(timeString.slice(2), 10);
@@ -245,7 +245,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
 
   useEffect(() => {
     if (startTime[0] && startTime[1]) {
-      const formatTime = (time: string | number): string => {
+      const formatTime = (time: string | number) => {
         const timeString = time.toString().padStart(4, "0");
         const hours = parseInt(timeString.slice(0, 2), 10);
         const minutes = parseInt(timeString.slice(2), 10);
@@ -414,28 +414,34 @@ function NotifyMe({ params }: { params: { course: string } }) {
                               ]
                         }
                         onValueChange={(values) => {
-                          const [startIndex, endIndex] = values;
-                          const startOption =
-                            filteredStartTimeOptions[startIndex];
-                          const endOption = filteredStartTimeOptions[endIndex];
+                          if (Array.isArray(values) && values.length === 2) {
+                            const startIndex = values[0];
+                            const endIndex = values[1];
 
-                          if (startOption && endOption) {
-                            setLocalStartTime([
-                              startOption.value,
-                              endOption.value,
-                            ]);
-                          }
+                            if (
+                              typeof startIndex === "number" &&
+                              typeof endIndex === "number" &&
+                              startIndex >= 0 &&
+                              endIndex >= 0 &&
+                              startIndex < filteredStartTimeOptions.length &&
+                              endIndex < filteredStartTimeOptions.length
+                            ) {
+                              const startOption =
+                                filteredStartTimeOptions[startIndex];
+                              const endOption =
+                                filteredStartTimeOptions[endIndex];
 
-                          if (
-                            values &&
-                            values.length >= 2 &&
-                            typeof values[0] === "number" &&
-                            typeof values[1] === "number"
-                          ) {
-                            const option1 = filteredStartTimeOptions[values[0]];
-                            const option2 = filteredStartTimeOptions[values[1]];
-                            if (option1 && option2) {
-                              setFilter("time", [option1.value, option2.value]);
+                              if (startOption && endOption) {
+                                setLocalStartTime([
+                                  startOption.value,
+                                  endOption.value,
+                                ]);
+
+                                setFilter("time", [
+                                  startOption.value,
+                                  endOption.value,
+                                ]);
+                              }
                             }
                           }
                         }}
