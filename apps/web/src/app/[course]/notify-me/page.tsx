@@ -133,7 +133,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
     const courseStartNum = Number(courseStartTimeObj.format("HHmm"));
     const courseEndNum = Number(courseEndTimeObj.format("HHmm"));
 
-    const formatTime = (time) => {
+    const formatTime = (time: string | number): string => {
       const timeString = time.toString().padStart(4, "0");
       const hours = parseInt(timeString.slice(0, 2), 10);
       const minutes = parseInt(timeString.slice(2), 10);
@@ -205,7 +205,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
       playerCount: Number(players),
     };
 
-    const formatTime = (time) => {
+    const formatTime = (time: string | number): string => {
       const timeString = time.toString().padStart(4, "0");
       const hours = parseInt(timeString.slice(0, 2), 10);
       const minutes = parseInt(timeString.slice(2), 10);
@@ -245,7 +245,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
 
   useEffect(() => {
     if (startTime[0] && startTime[1]) {
-      const formatTime = (time) => {
+      const formatTime = (time: string | number): string => {
         const timeString = time.toString().padStart(4, "0");
         const hours = parseInt(timeString.slice(0, 2), 10);
         const minutes = parseInt(timeString.slice(2), 10);
