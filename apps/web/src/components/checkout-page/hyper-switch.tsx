@@ -15,6 +15,7 @@ import dayjs from "dayjs";
 import { useEffect, useRef, useState } from "react";
 import { Spinner } from "../loading/spinner";
 import { CheckoutForm } from "./checkout-form";
+import isequal from 'lodash.isequal'
 
 export type NextAction = {
   type?: string;
@@ -78,10 +79,7 @@ export const HyperSwitch = ({
     undefined
   );
   const [paymentId, setPaymentId] = useState<string | undefined>(undefined);
-
-  const isFirstHand = localCartData?.filter(
-    ({ product_data }) => product_data.metadata.type === "first_hand"
-  );
+  let initialLoad=true
 
   const convertDateFormat = (dateString: string, utcOffset = 0) => {
     const cleanTimeString = !dateString.includes("T")
@@ -96,6 +94,7 @@ export const HyperSwitch = ({
   };
 
   const buildSession = async () => {
+    initialLoad=false;
     if (!user) return;
     try {
       setError(undefined);
@@ -133,6 +132,7 @@ export const HyperSwitch = ({
         setNextaction(data?.next_action);
         setPaymentId(data?.paymentId);
       } else {
+        setPaymentId(data?.paymentId);
         setOptions({
           clientSecret: data.clientSecret,
           paymentId: data.paymentId,
@@ -155,14 +155,14 @@ export const HyperSwitch = ({
 
   useEffect(() => {
     if (!user) return;
-    let isEqualCompare = true;
-    for (let i = 0; i < cartData.length; i++) {
-      if (!isEqual(cartData[i] as object, localCartData[i] as object)) {
-        isEqualCompare = false;
-        break;
-      }
-    }
-    if (!options || !isEqualCompare) {
+    // let isEqualCompare = true;
+    // for (let i = 0; i < cartData.length; i++) {
+    //   if (!isEqual(cartData[i] as object, localCartData[i] as object)) {
+    //     isEqualCompare = false;
+    //     break;
+    //   }
+    // }
+    if ((!options && initialLoad) || !isequal(localCartData,cartData)) {
       if (cartData?.length > 0) {
         void buildSession();
       }
