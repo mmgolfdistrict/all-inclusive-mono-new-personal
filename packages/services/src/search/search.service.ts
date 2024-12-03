@@ -1363,6 +1363,7 @@ export class SearchService {
           eq(bookings.includesCart, includesCart),
           eq(teeTimes.numberOfHoles, holes),
           eq(bookings.isListed, true),
+          or(eq(bookings.status,'CONFIRMED'),eq(bookings.status,'RESERVED')),
           gt(teeTimes.greenFeePerPlayer, 0)
         )
       )
