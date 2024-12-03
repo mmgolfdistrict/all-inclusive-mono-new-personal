@@ -92,7 +92,7 @@ export class CourseService extends DomainService {
         internalId: providers.internalId,
         roundUpCharityId: courses?.roundUpCharityId,
         providerConfiguration: providerCourseLink.providerCourseConfiguration,
-        isBookingDisabled :courses.isBookingDisabled
+        isBookingDisabled: courses.isBookingDisabled
       })
       .from(courses)
       .innerJoin(providerCourseLink, eq(providerCourseLink.courseId, courses.id))
@@ -906,7 +906,7 @@ export class CourseService extends DomainService {
         })
         .from(courses)
         .where(eq(courses.id, courseId));
-      if (!NumberOfPlayers[0]?.primaryMarketAllowedPlayers) {
+      if (NumberOfPlayers[0]?.primaryMarketAllowedPlayers) {
         binaryMask = NumberOfPlayers[0]?.primaryMarketAllowedPlayers;
       }
     }
