@@ -92,7 +92,7 @@ export const CartFeeSchema = BaseProductSchema.extend({
   product_data: z.object({
     metadata: z.object({
       type: z.literal("cart_fee"),
-      amount: z.number()
+      amount: z.number(),
     }),
   }),
 });
@@ -107,7 +107,7 @@ export const ProductDataSchema = z.union([
   AuctionProductSchema,
   CharityProductSchema,
   TaxSchema,
-  CartFeeSchema
+  CartFeeSchema,
 ]);
 
 // CustomerCart schema
@@ -123,5 +123,7 @@ export const CustomerCartSchema = z.object({
   paymentId: z.string().nullable(),
   cart: z.array(ProductDataSchema),
   cartId: z.string().optional(),
-  teeTimeId: z.string().optional()
+  teeTimeId: z.string().optional(),
+  courseName: z.string().optional(),
+  playDateTime: z.string().optional(),
 });
