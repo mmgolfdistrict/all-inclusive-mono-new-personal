@@ -221,8 +221,9 @@ function NotifyMe({ params }: { params: { course: string } }) {
         const endTimeString = formatTime(courseEndTimeNumber);
         setTimeRange(`${startTimeString} - ${endTimeString}`);
         // setTimeRange("");
-        setPlayers("1");
         setLocalStartTime([courseStartTimeNumber, courseEndTimeNumber]);
+        setStartTime([courseStartTimeNumber, courseEndTimeNumber]);
+        setPlayers("1");
         setTimeMobile([courseStartTimeNumber, courseEndTimeNumber]);
       },
     });
