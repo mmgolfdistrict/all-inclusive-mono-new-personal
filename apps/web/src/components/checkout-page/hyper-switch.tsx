@@ -74,7 +74,7 @@ export const HyperSwitch = ({
     undefined
   );
   const [paymentId, setPaymentId] = useState<string | undefined>(undefined);
-  var initialLoad=true
+  let initialLoad=true
 
   const buildSession = async () => {
     initialLoad=false;
