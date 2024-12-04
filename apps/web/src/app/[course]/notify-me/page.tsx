@@ -274,13 +274,13 @@ function NotifyMe({ params }: { params: { course: string } }) {
           Tee Time Waitlist
         </h1>
         <h2 className="md:text-center text-[14px] text-primary-gray md:text-[20px] mb-4">
-          Get notified when tee times are available
+          Get alerted when tee times are available
         </h2>
         <div className="grid grid-cols-3 md:grid-cols-6 lg:grid-cols-8 gap-4">
           <div className="col-span-3">
             <Input
               className="cursor-pointer text-ellipsis"
-              label="When do you want to play?"
+              label="Pick Date(s)"
               name="dates"
               register={() => undefined}
               value={displayDates}
@@ -303,9 +303,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
                     width={24}
                     onClick={() => setIsDatePickerOpen(false)}
                   />
-                  <h1 className="text-[20px] md:text-2xl">
-                    When do you want to play?
-                  </h1>
+                  <h1 className="text-[20px] md:text-2xl">Pick Date(s)</h1>
                   <p className="text-[14px] mb-4 md:text-md">
                     *Schedule your notifications for the rest of the year
                   </p>
@@ -329,7 +327,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
           <div className="col-span-3">
             <Input
               className="cursor-pointer text-ellipsis"
-              label="What time do you want to play?"
+              label="Select Time Range"
               placeholder="Times..."
               name="times"
               register={() => undefined}
@@ -360,7 +358,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
                       </span>
                     </div>
                     <h1 className="text-[20px] md:text-2xl">
-                      What time range?
+                      Select Time Range
                     </h1>
                     <section className="flex flex-col gap-2">
                       <div className="flex items-center justify-between">
@@ -473,7 +471,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
           </div>
           <div className="col-span-2">
             <label className="text-[14px] text-primary-gray">
-              {"How many players?"}
+              {"Number of Players"}
             </label>
             <ChoosePlayers
               className="py-2 !text-[10px] md:!text-[14px]"
@@ -491,8 +489,14 @@ function NotifyMe({ params }: { params: { course: string } }) {
           className="max-w-[200px] w-full mt-4 self-center py-[.28rem] md:py-1.5 text-[10px] md:text-[14px] disabled:opacity-50 transition-opacity duration-300"
           disabled={isCreatingNotifications}
         >
-          Get Notified
+          Get Alerted
         </FilledButton>
+        <div className="flex justify-center items-center mt-2 italic text-primary-gray">
+          <p>
+            Bookings are paid in advance and non-refundable. If plans change
+            simply list your time for sale, and easily cash out.
+          </p>
+        </div>
       </div>
       <Waitlists />
     </section>
