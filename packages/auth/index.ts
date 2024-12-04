@@ -12,6 +12,8 @@ import GithubProvider from "next-auth/providers/github";
 import CredentialsProvider from "next-auth/providers/credentials";
 import AppleProvider from "next-auth/providers/apple";
 import type { Adapter } from "next-auth/adapters";
+import { SignJWT } from "jose";
+import { createPrivateKey } from "crypto";
 // @TODO - update to use env validation
 //import { env } from "./env.mjs";
 import { verifyCaptcha } from "../api/src/googleCaptcha";
@@ -22,7 +24,23 @@ export type { Session } from "next-auth";
 
 export const providers = ["google", "credentials"] as const;
 export type OAuthProviders = (typeof providers)[number];
+async function generateAppleClientSecret(): Promise<string> {
+  const teamId = process.env.APPLE_TEAM_ID as string;
+  const clientId = process.env.APPLE_CLIENT_ID as string;
+  const keyId = process.env.APPLE_KEY_ID as string;
+  const privateKey = process.env.APPLE_PRIVATE_KEY as string;
 
+  const expirationTime = Math.floor(Date.now() / 1000) + 86400 * 180;
+
+  return new SignJWT({})
+    .setIssuer(teamId)
+    .setSubject(clientId)
+    .setAudience("https://appleid.apple.com")
+    .setExpirationTime(expirationTime)
+    .setIssuedAt()
+    .setProtectedHeader({ alg: "ES256", kid: keyId })
+    .sign(createPrivateKey(privateKey.replace(/\\n/g, "\n")));
+}
 interface User {
   id: string;
   name: string;
@@ -61,8 +79,8 @@ export const {
       allowDangerousEmailAccountLinking: true,
     }),
     AppleProvider({
-      clientId: process.env.NEXT_PUBLIC_APPLE_ID,
-      clientSecret: process.env.APPLE_SECRET ?? "",
+      clientId: process.env.APPLE_CLIENT_ID,
+      clientSecret: process.env.APPLE_CLIENT_SECRET
     }),
     FacebookProvider({
       clientId: process.env.NEXT_PUBLIC_FACEBOOK_CLIENT_ID,

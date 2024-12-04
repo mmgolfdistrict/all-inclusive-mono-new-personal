@@ -2,6 +2,7 @@ import { Auth } from '@auth/core';
 import GitHubProvider from '@auth/core/providers/github';
 import GoogleProvider from '@auth/core/providers/google';
 import LinkedInProvider from '@auth/core/providers/linkedin';
+import AppleProvider from '@auth/core/providers/apple';
 import { e as eventHandler, t as toWebRequest } from './nitro/node-server.mjs';
 import 'node:http';
 import 'node:https';
@@ -18,7 +19,8 @@ const ____auth_ = eventHandler(
     providers: [
       GoogleProvider({
         clientId: process.env.GOOGLE_CLIENT_ID,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        allowDangerousEmailAccountLinking: true
       }),
       GitHubProvider({
         clientId: process.env.AUTH_GITHUB_ID,
@@ -42,6 +44,10 @@ const ____auth_ = eventHandler(
             image: (_a = profile.picture) != null ? _a : defaultImage
           };
         }
+      }),
+      AppleProvider({
+        clientId: process.env.APPLE_CLIENT_ID,
+        clientSecret: process.env.APPLE_CLIENT_SECRET
       })
     ]
   })

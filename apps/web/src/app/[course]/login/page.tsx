@@ -437,7 +437,7 @@ export default function Login() {
             </SquareButton>
           </div>
         ) : null}
-        {process.env.NEXT_PUBLIC_APPLE_ID ? (
+        {process.env.NEXT_PUBLIC_AUTH_APPLE_CLIENT_ID ? (
           <SquareButton
             onClick={appleSignIn}
             className="flex items-center justify-center gap-3 bg-black text-white"
