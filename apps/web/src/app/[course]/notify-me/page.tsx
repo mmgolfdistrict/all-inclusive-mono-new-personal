@@ -491,7 +491,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
         >
           Get Alerted
         </FilledButton>
-        <div className="flex justify-center items-center mt-2 italic text-primary-gray">
+        <div className="flex justify-center items-center mt-2 italic text-primary-gray text-[12px] md:text-[16px]">
           <p>
             Bookings are paid in advance and non-refundable. If plans change
             simply list your time for sale, and easily cash out.
