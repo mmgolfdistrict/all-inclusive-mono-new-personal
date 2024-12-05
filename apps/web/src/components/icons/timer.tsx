@@ -1,6 +1,6 @@
 import { type ComponentProps } from "react";
 
-export const Stopwatch = (props: ComponentProps<"svg">) => (
+export const Timer = (props: ComponentProps<"svg">) => (
   <svg
     width="36"
     height="36"

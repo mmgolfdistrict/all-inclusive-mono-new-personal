@@ -8,12 +8,12 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { FilledButton } from "~/components/buttons/filled-button";
 import { GoBack } from "~/components/buttons/go-back";
-import { Announcement } from "~/components/icons/announcement";
 import { Bell } from "~/components/icons/bell";
+import { Campaign } from "~/components/icons/campaign";
 import { Close } from "~/components/icons/close";
 import { GolfCourse } from "~/components/icons/golf-course";
 import { PlaylistAddCheck } from "~/components/icons/playlist-add-check";
-import { Stopwatch } from "~/components/icons/stop-watch";
+import { Timer } from "~/components/icons/timer";
 import { ChoosePlayers } from "~/components/input/choose-players";
 import { Input } from "~/components/input/input";
 import { Slider } from "~/components/input/slider";
@@ -300,7 +300,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
 
             <div className="flex items-start mb-6">
               <div className="flex-shrink-0 mr-4">
-                <Announcement width={isMobile ? "25px" : "30px"} />
+                <Campaign width={isMobile ? "25px" : "30px"} />
               </div>
               <div>
                 <h2 className="text-[14px] md:text-[18px] font-semibold">
@@ -316,7 +316,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
 
             <div className="flex items-start mb-6">
               <div className="flex-shrink-0 mr-4">
-                <Stopwatch width={isMobile ? "25px" : "30px"} />
+                <Timer width={isMobile ? "25px" : "30px"} />
               </div>
               <div>
                 <h2 className="text-[14px] md:text-[18px] font-semibold">
@@ -348,10 +348,10 @@ function NotifyMe({ params }: { params: { course: string } }) {
 
         {/* Second Column - your existing code */}
         <div className="col-span-5 flex flex-col justify-center gap-1 bg-white  py-2 rounded-xl md:py-6 shadow">
-          <h1 className="md:text-center text-[20px] capitalize text-secondary-black md:text-[32px]">
+          <h1 className="md:text-center text-[20px] capitalize text-secondary-black px-4 md:text-[32px]">
             Tee Time Waitlist
           </h1>
-          <h2 className="md:text-center text-[14px] text-primary-gray md:text-[20px] mb-4">
+          <h2 className="md:text-center text-[14px] text-primary-gray px-4 md:text-[20px] mb-4">
             Get alerted when tee times are available
           </h2>
           <hr />

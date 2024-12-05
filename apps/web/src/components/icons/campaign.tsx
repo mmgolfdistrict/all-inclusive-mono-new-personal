@@ -1,6 +1,6 @@
 import { type ComponentProps } from "react";
 
-export const Announcement = (props: ComponentProps<"svg">) => (
+export const Campaign = (props: ComponentProps<"svg">) => (
   <svg
     width="36"
     height="36"
