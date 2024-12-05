@@ -68,34 +68,6 @@ function Waitlists() {
     }
   };
 
-  const handleDeleteNotification = async (id) => {
-    await deleteNotifications(
-      { ids: [id] },
-      {
-        onSuccess: (msg) => {
-          toast.success(msg);
-          setIsDeleteModalOpen(false);
-          setSelectedNotifications([]);
-        },
-      }
-    );
-    await refetchWaitlist();
-  };
-
-  const handleDeleteByDate = async (ids) => {
-    await deleteNotifications(
-      { ids },
-      {
-        onSuccess: (msg) => {
-          toast.success(msg);
-          setIsDeleteModalOpen(false);
-          setSelectedNotifications([]);
-        },
-      }
-    );
-    await refetchWaitlist();
-  };
-
   const handleDeleteNotifications = async () => {
     let notificationsToDelete;
 

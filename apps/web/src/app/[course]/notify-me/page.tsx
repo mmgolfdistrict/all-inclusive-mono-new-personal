@@ -57,7 +57,9 @@ function NotifyMe({ params }: { params: { course: string } }) {
 
   const startTimeOptions: { displayTime: string; value: number }[] = [];
 
-  for (let hour = 6; hour <= 21; hour++) {
+  const openHour = new Date(course?.openTime ?? "").getHours();
+  const closeHour = new Date(course?.closeTime ?? "").getHours();
+  for (let hour = openHour; hour <= closeHour; hour++) {
     for (let minute = 0; minute < 60; minute += 15) {
       startTimeOptions.push({
         displayTime: formatTime(hour, minute),
@@ -76,16 +78,11 @@ function NotifyMe({ params }: { params: { course: string } }) {
   useEffect(() => {
     if (!course) return;
 
-    const courseStartTimeObj = dayjs(course.openTime, "hh:mm A");
-    const courseEndTimeObj = dayjs(course.closeTime, "hh:mm A");
-
-    const courseStartTimeNum = Number(courseStartTimeObj.format("HHmm"));
-    const courseEndTimeNum = Number(courseEndTimeObj.format("HHmm"));
-
     const options = startTimeOptions.filter((option) => {
       const optionTimeNum = option.value;
       return (
-        optionTimeNum >= courseStartTimeNum && optionTimeNum <= courseEndTimeNum
+        optionTimeNum >= courseStartTimeNumber &&
+        optionTimeNum <= courseEndTimeNumber
       );
     });
 

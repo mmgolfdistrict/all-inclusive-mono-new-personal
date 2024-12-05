@@ -2,11 +2,12 @@ import { type ComponentProps } from "react";
 
 export const Campaign = (props: ComponentProps<"svg">) => (
   <svg
-    width="36"
+    width="100%"
     height="36"
     viewBox="0 0 36 36"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
+    {...props}
   >
     <path
       d="M27 16.5C27 17.505 27 18.495 27 19.5C28.8 19.5 31.14 19.5 33 19.5C33 18.495 33 17.505 33 16.5C31.14 16.5 28.8 16.5 27 16.5Z"

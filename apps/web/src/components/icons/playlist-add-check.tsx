@@ -2,11 +2,12 @@ import { type ComponentProps } from "react";
 
 export const PlaylistAddCheck = (props: ComponentProps<"svg">) => (
   <svg
-    width="36"
+    width="100%"
     height="36"
     viewBox="0 0 36 36"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
+    {...props}
   >
     <path d="M20.25 14.25H3.75V17.25H20.25V14.25Z" fill="#41942A" />
     <path d="M20.25 8.25H3.75V11.25H20.25V8.25Z" fill="#41942A" />
