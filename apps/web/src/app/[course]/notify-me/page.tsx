@@ -9,6 +9,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { FilledButton } from "~/components/buttons/filled-button";
 import { GoBack } from "~/components/buttons/go-back";
 import { Announcement } from "~/components/icons/announcement";
+import { Bell } from "~/components/icons/bell";
 import { Close } from "~/components/icons/close";
 import { GolfCourse } from "~/components/icons/golf-course";
 import { PlaylistAddCheck } from "~/components/icons/playlist-add-check";
@@ -564,9 +565,10 @@ function NotifyMe({ params }: { params: { course: string } }) {
           </div>
           <FilledButton
             onClick={handleSubmit}
-            className="max-w-[200px] w-full mt-4 self-center py-[.28rem] md:py-1.5 text-[10px] md:text-[14px] disabled:opacity-50 transition-opacity duration-300"
+            className="flex items-center justify-center gap-1 max-w-[200px] w-full mt-4 self-center py-[.28rem] md:py-1.5 text-[10px] md:text-[14px] disabled:opacity-50 transition-opacity duration-300"
             disabled={isCreatingNotifications}
           >
+            <Bell width="15px" />
             Get Alerted
           </FilledButton>
           <div className="flex justify-center items-center mt-2 italic text-primary-gray text-[12px] md:text-[16px]">
