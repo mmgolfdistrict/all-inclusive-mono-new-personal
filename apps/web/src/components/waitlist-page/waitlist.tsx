@@ -45,7 +45,7 @@ function Waitlist({
   return (
     <div>
       {/* Header Row */}
-      <div className="flex flex-row items-center gap-2 md:px-4">
+      <div className="flex flex-row items-center gap-2 md:px-4 md:mt-2">
         {waitlist && (
           <Checkbox
             isChecked={areAllSelectedForDate()}
@@ -61,7 +61,7 @@ function Waitlist({
           disabled={!areAllSelectedForDate()} // Enable button only if all items for the date are selected
         >
           <DeleteIcon color="#fff" width="15px" />
-          Delete Hey
+          Delete
         </FilledButton>
       </div>
 

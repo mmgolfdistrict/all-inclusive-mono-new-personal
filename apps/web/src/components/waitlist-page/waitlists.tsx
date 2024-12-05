@@ -160,7 +160,7 @@ function Waitlists() {
 
   return (
     <div className="flex flex-col mb-4 justify-center gap-2 md:gap-1  px-4 py-3 rounded-xl md:px-8 md:py-6">
-      <div className="relative flex items-center justify-between">
+      <div className="relative flex items-center justify-between md:mb-2">
         <h1 className="text-[20px] capitalize text-secondary-black md:text-[32px] flex items-center gap-6">
           Your Alerts
           <FilledButton
