@@ -11,8 +11,7 @@ function Waitlist({
   handleSelectNotification,
   handleSelectNotifications,
   selectedNotifications,
-  handleDeleteNotification,
-  handleDeleteByDate, // Updated handler for deleting all items for the date
+  setIsDeleteModalOpen,
 }: {
   waitlist: WaitlistItem[] | undefined;
   formattedDate: string;
@@ -22,8 +21,7 @@ function Waitlist({
     selected: boolean
   ) => void;
   selectedNotifications: WaitlistItem[];
-  handleDeleteNotification: (id: string) => void;
-  handleDeleteByDate: (ids: string[]) => void; // New handler for deleting all items for the date
+  setIsDeleteModalOpen: (value: boolean) => void;
 }) {
   const areAllSelectedForDate = () => {
     return (
@@ -35,11 +33,6 @@ function Waitlist({
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     handleSelectNotifications(waitlist ?? [], e.target.checked);
-  };
-
-  const handleDeleteAllClick = () => {
-    const idsToDelete = waitlist?.map((item) => item.id) ?? [];
-    handleDeleteByDate(idsToDelete);
   };
 
   return (
@@ -56,7 +49,7 @@ function Waitlist({
           {formattedDate}
         </h2>
         <FilledButton
-          onClick={handleDeleteAllClick}
+          onClick={() => setIsDeleteModalOpen(true)}
           className="flex items-center gap-1 py-[.28rem] md:py-1.5 text-[10px] md:text-[14px] disabled:opacity-50"
           disabled={!areAllSelectedForDate()} // Enable button only if all items for the date are selected
         >
@@ -88,10 +81,7 @@ function Waitlist({
             <div className="flex items-center">
               <OutlineButton
                 className="flex items-center gap-1 !px-2 !py-1 text-[10px] md:text-[14px] disabled:opacity-50"
-                onClick={(e) => {
-                  e.stopPropagation(); // Prevent triggering onClick for the container
-                  handleDeleteNotification(item.id); // Delete individual notification
-                }}
+                onClick={() => setIsDeleteModalOpen(true)}
               >
                 <DeleteIcon color="#40942b" width="15px" />
                 Delete

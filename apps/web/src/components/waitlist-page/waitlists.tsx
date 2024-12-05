@@ -104,6 +104,7 @@ function Waitlists() {
     } else {
       notificationsToDelete = waitlist?.map((item) => item.id);
     }
+    console.log("notificationsToDelete", notificationsToDelete);
     await deleteNotifications(
       { ids: notificationsToDelete },
       {
@@ -200,8 +201,7 @@ function Waitlists() {
                   handleSelectNotification={handleNotificationClick}
                   handleSelectNotifications={handleSelectNotifications}
                   selectedNotifications={selectedNotifications}
-                  handleDeleteNotification={handleDeleteNotification}
-                  handleDeleteByDate={handleDeleteByDate}
+                  setIsDeleteModalOpen={setIsDeleteModalOpen}
                 />
               ))
             : null}

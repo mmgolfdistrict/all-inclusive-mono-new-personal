@@ -276,7 +276,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
       </div>
       <div className="grid grid-cols-3 md:grid-cols-6 lg:grid-cols-8 gap-4">
         {/* First Column */}
-        <div className="col-span-3 flex flex-col justify-center items-start pl-4 md:px-6">
+        <div className="col-span-3 flex flex-col items-start pl-4 md:px-6">
           <h1 className="md:text-center text-[20px] capitalize text-secondary-black md:text-[32px]">
             How Waitlist Works
           </h1>
@@ -347,7 +347,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
         </div>
 
         {/* Second Column - your existing code */}
-        <div className="col-span-5 flex flex-col justify-center gap-1 bg-white px-4 py-2 rounded-xl md:px-8 md:py-6">
+        <div className="col-span-5 flex flex-col justify-center gap-1 bg-white  py-2 rounded-xl md:py-6 shadow">
           <h1 className="md:text-center text-[20px] capitalize text-secondary-black md:text-[32px]">
             Tee Time Waitlist
           </h1>
@@ -355,7 +355,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
             Get alerted when tee times are available
           </h2>
           <hr />
-          <div className="grid grid-rows-3 md:grid-rows-3 lg:grid-rows-3 gap-4">
+          <div className="grid grid-rows-3 md:grid-rows-3 lg:grid-rows-3 gap-4 px-4 py-2 md:px-8 md:py-6">
             <div className="">
               <Input
                 className="cursor-pointer text-ellipsis"
@@ -571,7 +571,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
             <Bell width="15px" />
             Get Alerted
           </FilledButton>
-          <div className="flex justify-center items-center mt-2 italic text-primary-gray text-[12px] md:text-[16px]">
+          <div className="flex justify-center items-center mt-2 italic text-primary-gray text-[12px] md:text-[16px] px-4 py-2 md:px-8 md:py-6">
             <p>
               Bookings are paid in advance and non-refundable. If plans change
               simply list your time for sale, and easily cash out.

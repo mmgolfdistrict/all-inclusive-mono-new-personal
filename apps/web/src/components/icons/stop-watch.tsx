@@ -2,23 +2,15 @@ import { type ComponentProps } from "react";
 
 export const Stopwatch = (props: ComponentProps<"svg">) => (
   <svg
-    width="100%"
-    preserveAspectRatio="xMidYMid meet"
-    viewBox="0 0 24 24"
+    width="36"
+    height="36"
+    viewBox="0 0 36 36"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
-    {...props}
   >
-    <circle
-      cx="12"
-      cy="14"
-      r="8"
-      stroke="#008000"
-      strokeWidth="2"
-      fill="none"
+    <path
+      d="M22.5 2.25H13.5V5.25H22.5V2.25ZM16.5 21.75H19.5V12.75H16.5V21.75ZM28.545 11.835L30.675 9.705C30.03 8.94 29.325 8.22 28.56 7.59L26.43 9.72C24.105 7.86 21.18 6.75 18 6.75C10.545 6.75 4.5 12.795 4.5 20.25C4.5 27.705 10.53 33.75 18 33.75C25.47 33.75 31.5 27.705 31.5 20.25C31.5 17.07 30.39 14.145 28.545 11.835ZM18 30.75C12.195 30.75 7.5 26.055 7.5 20.25C7.5 14.445 12.195 9.75 18 9.75C23.805 9.75 28.5 14.445 28.5 20.25C28.5 26.055 23.805 30.75 18 30.75Z"
+      fill="#41942A"
     />
-    <rect x="11" y="8" width="2" height="6" fill="#008000" />
-    <rect x="10" y="3" width="4" height="2" fill="#008000" />
-    <path d="M16.5 6.5L18 5" stroke="#008000" strokeWidth="2" />
   </svg>
 );

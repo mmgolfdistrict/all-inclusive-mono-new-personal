@@ -2,25 +2,18 @@ import { type ComponentProps } from "react";
 
 export const PlaylistAddCheck = (props: ComponentProps<"svg">) => (
   <svg
-    width="100%"
-    preserveAspectRatio="xMidYMid meet"
-    viewBox="0 0 24 24"
+    width="36"
+    height="36"
+    viewBox="0 0 36 36"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
-    {...props}
   >
-    {/* Horizontal lines for playlist */}
-    <rect x="3" y="6" width="14" height="2" fill="#008000" />
-    <rect x="3" y="10" width="14" height="2" fill="#008000" />
-    <rect x="3" y="14" width="10" height="2" fill="#008000" />
-
-    {/* Tick/Checkmark */}
+    <path d="M20.25 14.25H3.75V17.25H20.25V14.25Z" fill="#41942A" />
+    <path d="M20.25 8.25H3.75V11.25H20.25V8.25Z" fill="#41942A" />
+    <path d="M14.25 20.25H3.75V23.25H14.25V20.25Z" fill="#41942A" />
     <path
-      d="M17 18L19.5 20.5L23 16"
-      stroke="#008000"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
+      d="M30.135 17.145L23.76 23.505L20.58 20.325L18.465 22.44L23.76 27.75L32.25 19.26L30.135 17.145Z"
+      fill="#41942A"
     />
   </svg>
 );
