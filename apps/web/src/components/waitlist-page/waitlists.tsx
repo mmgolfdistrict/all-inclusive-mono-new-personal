@@ -76,7 +76,7 @@ function Waitlists() {
     } else {
       notificationsToDelete = waitlist?.map((item) => item.id);
     }
-    console.log("notificationsToDelete", notificationsToDelete);
+
     await deleteNotifications(
       { ids: notificationsToDelete },
       {

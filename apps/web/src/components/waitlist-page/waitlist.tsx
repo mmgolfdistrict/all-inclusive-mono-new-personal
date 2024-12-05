@@ -23,7 +23,7 @@ function Waitlist({
   selectedNotifications: WaitlistItem[];
   setIsDeleteModalOpen: (value: boolean) => void;
 }) {
-  const areAllSelectedForDate = () => {
+  const handleIsChecked = () => {
     return (
       waitlist?.every((item) => selectedNotifications.includes(item)) ?? false
     );
@@ -41,7 +41,7 @@ function Waitlist({
       <div className="flex flex-row items-center gap-2 md:px-4 md:mt-2">
         {waitlist && (
           <Checkbox
-            isChecked={areAllSelectedForDate()}
+            isChecked={handleIsChecked()}
             onChange={handleSelectAllCheckboxChange}
           />
         )}
@@ -51,7 +51,7 @@ function Waitlist({
         <FilledButton
           onClick={() => setIsDeleteModalOpen(true)}
           className="flex items-center gap-1 py-[.28rem] md:py-1.5 text-[10px] md:text-[14px] disabled:opacity-50"
-          disabled={!areAllSelectedForDate()} // Enable button only if all items for the date are selected
+          disabled={!handleIsChecked()}
         >
           <DeleteIcon color="#fff" width="15px" />
           Delete
@@ -66,7 +66,7 @@ function Waitlist({
             className="bg-white p-3 rounded-xl max-w-[280px] md:max-w-none md:w-[300px] flex gap-6 text-[12px] md:text-[16px] text-secondary-black cursor-pointer"
             onClick={() => handleSelectNotification(item)}
           >
-            {/* First Column: Time and Player Count */}
+            {/* First Column */}
             <div className="flex flex-col justify-between">
               <span className="truncate">
                 {item.startTimeFormated} - {item.endTimeFormated}
@@ -77,7 +77,7 @@ function Waitlist({
               </div>
             </div>
 
-            {/* Second Column: Individual Delete Button */}
+            {/* Second Column */}
             <div className="flex items-center">
               <OutlineButton
                 className="flex items-center gap-1 !px-2 !py-1 text-[10px] md:text-[14px] disabled:opacity-50"
