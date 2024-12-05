@@ -304,7 +304,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
                   Receive Alerts Instantly
                 </h2>
                 <p className="text-[12px] md:text-[16px] text-gray-600">
-                  We'll alert you when a tee time becomes avialable or listed
+                  We will alert you when a tee time becomes available or listed
                   for sale.
                 </p>
               </div>
