@@ -275,7 +275,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
       </div>
       <div className="grid grid-cols-3 md:grid-cols-6 lg:grid-cols-8 gap-4">
         {/* First Column */}
-        <div className="col-span-3 flex flex-col justify-center items-start">
+        <div className="col-span-3 flex flex-col justify-center items-start pl-4 md:px-6">
           <h1 className="md:text-center text-[20px] capitalize text-secondary-black md:text-[32px]">
             How Waitlist Works
           </h1>
@@ -283,7 +283,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
           <div className="mt-4 w-full">
             <div className="flex items-start mb-6">
               <div className="flex-shrink-0 mr-4">
-                <PlaylistAddCheck width="30px" />
+                <PlaylistAddCheck width={isMobile ? "25px" : "30px"} />
               </div>
               <div>
                 <h2 className="text-[14px] md:text-[18px] font-semibold">
@@ -299,7 +299,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
 
             <div className="flex items-start mb-6">
               <div className="flex-shrink-0 mr-4">
-                <Announcement width="30px" />
+                <Announcement width={isMobile ? "25px" : "30px"} />
               </div>
               <div>
                 <h2 className="text-[14px] md:text-[18px] font-semibold">
@@ -315,7 +315,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
 
             <div className="flex items-start mb-6">
               <div className="flex-shrink-0 mr-4">
-                <Stopwatch width="30px" />
+                <Stopwatch width={isMobile ? "25px" : "30px"} />
               </div>
               <div>
                 <h2 className="text-[14px] md:text-[18px] font-semibold">
@@ -330,7 +330,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
 
             <div className="flex items-start">
               <div className="flex-shrink-0 mr-4">
-                <GolfCourse width="40px" />
+                <GolfCourse width={isMobile ? "25px" : "30px"} />
               </div>
               <div>
                 <h2 className="text-[14px] md:text-[18px] font-semibold">
