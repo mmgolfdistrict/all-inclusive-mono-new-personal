@@ -1,62 +1,28 @@
 import React from "react";
+import { FilledButton } from "../buttons/filled-button";
+import { OutlineButton } from "../buttons/outline-button";
+import { DeleteIcon } from "../icons/delete";
 import { Checkbox } from "../input/checkbox";
 import type { WaitlistItem } from "./waitlists";
 
 function Waitlist({
   waitlist,
   formattedDate,
-  // refetchWaitlist,
   handleSelectNotification,
   handleSelectNotifications,
   selectedNotifications,
+  handleDeleteNotification, // Added prop for individual delete handler
 }: {
   waitlist: WaitlistItem[] | undefined;
   formattedDate: string;
-  // refetchWaitlist: () => void;
   handleSelectNotification: (notification: WaitlistItem) => void;
   handleSelectNotifications: (
     notifications: WaitlistItem[],
     selected: boolean
   ) => void;
   selectedNotifications: WaitlistItem[];
+  handleDeleteNotification: (id: string) => void; // Handler for deleting individual notifications
 }) {
-  // const [selectedNotifications, setSelectedNotifications] = useState<string[]>(
-  //   []
-  // );
-
-  // const { mutateAsync: deleteNotifications } =
-  //   api.userWaitlist.deleteWaitlistNotification.useMutation();
-
-  // const handleNotificationClick = (notificationId: string) => {
-  //   if (selectedNotifications.includes(notificationId)) {
-  //     setSelectedNotifications(
-  //       selectedNotifications.filter((item) => item !== notificationId)
-  //     );
-  //   } else {
-  //     setSelectedNotifications([...selectedNotifications, notificationId]);
-  //   }
-  // };
-
-  // const handleDeleteNotifications = async () => {
-  //   let notificationsToDelete;
-
-  //   if (selectedNotifications.length > 0) {
-  //     notificationsToDelete = selectedNotifications;
-  //   } else {
-  //     notificationsToDelete = waitlist?.map((item) => item.id);
-  //   }
-  //   await deleteNotifications(
-  //     { ids: notificationsToDelete },
-  //     {
-  //       onSuccess: (msg) => {
-  //         toast.success(msg);
-  //         setSelectedNotifications([]);
-  //       },
-  //     }
-  //   );
-  //   refetchWaitlist();
-  // };
-
   const handleIsChecked = () => {
     return (
       waitlist
@@ -83,29 +49,46 @@ function Waitlist({
         <h2 className="text-[13px] md:text-lg capitalize text-secondary-black">
           {formattedDate}
         </h2>
-        {/* <FilledButton
-          onClick={handleDeleteNotifications}
-          className="py-[.28rem] md:py-1.5 text-[10px] md:text-[14px]"
+        <FilledButton
+          // onClick={() => setIsDeleteModalOpen(true)}
+          className="flex items-center gap-1 py-[.28rem] md:py-1.5 text-[10px] md:text-[14px] disabled:opacity-50"
+          disabled={selectedNotifications.length === 0}
         >
-          {selectedNotifications.length > 0 ? "Delete Selected" : "Delete Day"}
-        </FilledButton> */}
+          <DeleteIcon color="#fff" width="15px" />
+          Delete
+        </FilledButton>
       </div>
       <div className="flex flex-row h-[100%] gap-4 overflow-x-auto my-2">
         {waitlist?.map((item) => (
           <div
             key={item.id}
-            className="bg-secondary-white p-3 rounded-xl max-w-[200px] md:max-w-none md:w-[260px] flex flex-col gap-1 text-[12px] md:text-[16px] text-secondary-black cursor-pointer"
+            className="bg-white p-3 rounded-xl max-w-[280px] md:max-w-none md:w-[300px] flex gap-6 text-[12px] md:text-[16px] text-secondary-black cursor-pointer"
             onClick={() => handleSelectNotification(item)}
           >
-            <div className="flex flex-row justify-between items-end ">
-              <span className="max-w-[80%] truncate">
+            {/* First Column: Time and Player Count */}
+            <div className="flex flex-col justify-between">
+              <span className="truncate">
                 {item.startTimeFormated} - {item.endTimeFormated}
               </span>
-              <Checkbox isChecked={selectedNotifications.includes(item)} />
+              <div className="flex flex-row gap-2">
+                <span className="text-primary-gray">Player count:</span>
+                <span>{item.playerCount}</span>
+              </div>
             </div>
-            <div className="flex flex-row justify-between">
-              <span className="text-primary-gray">Player count:</span>
-              <span>{item.playerCount}</span>
+
+            {/* Second Column: Delete Button */}
+            <div className="flex items-center">
+              <OutlineButton
+                className="flex items-center gap-1 !px-2 !py-1 text-[10px] md:text-[14px] disabled:opacity-50"
+                // className="!px-2 !py-1 text-sm rounded-md flex items-center gap-1"
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent triggering onClick for the container
+                  handleDeleteNotification(item.id); // Trigger delete handler
+                }}
+              >
+                <DeleteIcon color="#40942b" width="15px" />
+                Delete
+              </OutlineButton>
             </div>
           </div>
         ))}
