@@ -82,6 +82,20 @@ function Waitlists() {
     await refetchWaitlist();
   };
 
+  const handleDeleteByDate = async (ids) => {
+    await deleteNotifications(
+      { ids },
+      {
+        onSuccess: (msg) => {
+          toast.success(msg);
+          setIsDeleteModalOpen(false);
+          setSelectedNotifications([]);
+        },
+      }
+    );
+    await refetchWaitlist();
+  };
+
   const handleDeleteNotifications = async () => {
     let notificationsToDelete;
 
@@ -187,6 +201,7 @@ function Waitlists() {
                   handleSelectNotifications={handleSelectNotifications}
                   selectedNotifications={selectedNotifications}
                   handleDeleteNotification={handleDeleteNotification}
+                  handleDeleteByDate={handleDeleteByDate}
                 />
               ))
             : null}

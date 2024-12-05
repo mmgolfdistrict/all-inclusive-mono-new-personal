@@ -11,7 +11,8 @@ function Waitlist({
   handleSelectNotification,
   handleSelectNotifications,
   selectedNotifications,
-  handleDeleteNotification, // Added prop for individual delete handler
+  handleDeleteNotification,
+  handleDeleteByDate, // Updated handler for deleting all items for the date
 }: {
   waitlist: WaitlistItem[] | undefined;
   formattedDate: string;
@@ -21,13 +22,12 @@ function Waitlist({
     selected: boolean
   ) => void;
   selectedNotifications: WaitlistItem[];
-  handleDeleteNotification: (id: string) => void; // Handler for deleting individual notifications
+  handleDeleteNotification: (id: string) => void;
+  handleDeleteByDate: (ids: string[]) => void; // New handler for deleting all items for the date
 }) {
-  const handleIsChecked = () => {
+  const areAllSelectedForDate = () => {
     return (
-      waitlist
-        ?.map((item) => item)
-        .every((item) => selectedNotifications.includes(item)) ?? false
+      waitlist?.every((item) => selectedNotifications.includes(item)) ?? false
     );
   };
 
@@ -37,12 +37,18 @@ function Waitlist({
     handleSelectNotifications(waitlist ?? [], e.target.checked);
   };
 
+  const handleDeleteAllClick = () => {
+    const idsToDelete = waitlist?.map((item) => item.id) ?? [];
+    handleDeleteByDate(idsToDelete);
+  };
+
   return (
     <div>
+      {/* Header Row */}
       <div className="flex flex-row items-center gap-2 md:px-4">
         {waitlist && (
           <Checkbox
-            isChecked={handleIsChecked()}
+            isChecked={areAllSelectedForDate()}
             onChange={handleSelectAllCheckboxChange}
           />
         )}
@@ -50,14 +56,16 @@ function Waitlist({
           {formattedDate}
         </h2>
         <FilledButton
-          // onClick={() => setIsDeleteModalOpen(true)}
+          onClick={handleDeleteAllClick}
           className="flex items-center gap-1 py-[.28rem] md:py-1.5 text-[10px] md:text-[14px] disabled:opacity-50"
-          disabled={selectedNotifications.length === 0}
+          disabled={!areAllSelectedForDate()} // Enable button only if all items for the date are selected
         >
           <DeleteIcon color="#fff" width="15px" />
-          Delete
+          Delete Hey
         </FilledButton>
       </div>
+
+      {/* Waitlist Items */}
       <div className="flex flex-row h-[100%] gap-4 overflow-x-auto my-2">
         {waitlist?.map((item) => (
           <div
@@ -76,14 +84,13 @@ function Waitlist({
               </div>
             </div>
 
-            {/* Second Column: Delete Button */}
+            {/* Second Column: Individual Delete Button */}
             <div className="flex items-center">
               <OutlineButton
                 className="flex items-center gap-1 !px-2 !py-1 text-[10px] md:text-[14px] disabled:opacity-50"
-                // className="!px-2 !py-1 text-sm rounded-md flex items-center gap-1"
                 onClick={(e) => {
                   e.stopPropagation(); // Prevent triggering onClick for the container
-                  handleDeleteNotification(item.id); // Trigger delete handler
+                  handleDeleteNotification(item.id); // Delete individual notification
                 }}
               >
                 <DeleteIcon color="#40942b" width="15px" />
