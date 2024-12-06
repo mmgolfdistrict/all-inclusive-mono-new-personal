@@ -6,12 +6,13 @@ import dayjs from "dayjs";
 import UTC from "dayjs/plugin/utc";
 import { useParams } from "next/navigation";
 import React, { useMemo, useState } from "react";
+import { toast } from "react-toastify";
+import { FilledButton } from "../buttons/filled-button";
+import { OutlineButton } from "../buttons/outline-button";
+import { Close } from "../icons/close";
+import { DeleteIcon } from "../icons/delete";
 import { Spinner } from "../loading/spinner";
 import Waitlist from "./waitlist";
-import { FilledButton } from "../buttons/filled-button";
-import { toast } from "react-toastify";
-import { Close } from "../icons/close";
-import { OutlineButton } from "../buttons/outline-button";
 
 dayjs.extend(UTC);
 
@@ -30,9 +31,9 @@ export type WaitlistItem = {
 function Waitlists() {
   const { user } = useMe();
   const { course } = useParams();
-  const [selectedNotifications, setSelectedNotifications] = useState<WaitlistItem[]>(
-    []
-  );
+  const [selectedNotifications, setSelectedNotifications] = useState<
+    WaitlistItem[]
+  >([]);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const { mutateAsync: deleteNotifications } =
     api.userWaitlist.deleteWaitlistNotification.useMutation();
@@ -47,14 +48,20 @@ function Waitlists() {
     }
   };
 
-  const handleSelectNotifications = (notifications: WaitlistItem[], selected: boolean) => {
+  const handleSelectNotifications = (
+    notifications: WaitlistItem[],
+    selected: boolean
+  ) => {
     for (const notification of notifications) {
       if (selected) {
         if (!selectedNotifications.includes(notification)) {
-          setSelectedNotifications(previosNotifications => [...previosNotifications, notification]);
+          setSelectedNotifications((previosNotifications) => [
+            ...previosNotifications,
+            notification,
+          ]);
         }
       } else {
-        setSelectedNotifications(previosNotifications =>
+        setSelectedNotifications((previosNotifications) =>
           previosNotifications.filter((item) => item.id !== notification.id)
         );
       }
@@ -69,6 +76,7 @@ function Waitlists() {
     } else {
       notificationsToDelete = waitlist?.map((item) => item.id);
     }
+
     await deleteNotifications(
       { ids: notificationsToDelete },
       {
@@ -124,19 +132,21 @@ function Waitlists() {
   );
 
   return (
-    <div className="flex flex-col mb-4 justify-center gap-2 md:gap-1 bg-white px-4 py-3 rounded-xl md:px-8 md:py-6">
-      <div className="relative">
-        <h1 className="md:text-center text-[20px] capitalize text-secondary-black md:text-[32px]">
-          Your notifications
+    <div className="flex flex-col mb-4 justify-center gap-2 md:gap-1  px-4 py-3 rounded-xl md:px-8 md:py-6">
+      <div className="relative flex items-center justify-between md:mb-2">
+        <h1 className="text-[20px] capitalize text-secondary-black md:text-[32px] flex items-center gap-6">
+          Your Alerts
+          <FilledButton
+            onClick={() => setIsDeleteModalOpen(true)}
+            className="flex items-center gap-1 py-[.28rem] md:py-1.5 text-[10px] md:text-[14px] disabled:opacity-50"
+            disabled={selectedNotifications.length === 0}
+          >
+            <DeleteIcon color="#fff" width="15px" />
+            Delete Selected Alerts
+          </FilledButton>
         </h1>
-        <FilledButton
-          onClick={() => setIsDeleteModalOpen(true)}
-          className="py-[.28rem] md:py-1.5 text-[10px] md:text-[14px] float-right absolute right-[20px] top-[50%] -translate-y-[50%] disabled:opacity-50"
-          disabled={selectedNotifications.length === 0}
-        >
-          Delete Selected
-        </FilledButton>
       </div>
+
       {isLoading ? (
         <div className="flex justify-center items-center h-[200px] w-full md:min-w-[370px]">
           <Spinner className="w-[50px] h-[50px]" />
@@ -155,16 +165,17 @@ function Waitlists() {
         <div className="max-h-[50vh] overflow-y-auto flex flex-col gap-4">
           {groupedByDate
             ? Object.keys(groupedByDate).map((formattedDate) => (
-              <Waitlist
-                key={formattedDate}
-                waitlist={groupedByDate[formattedDate]}
-                formattedDate={formattedDate}
-                // refetchWaitlist={refetchWaitlist}
-                handleSelectNotification={handleNotificationClick}
-                handleSelectNotifications={handleSelectNotifications}
-                selectedNotifications={selectedNotifications}
-              />
-            ))
+                <Waitlist
+                  key={formattedDate}
+                  waitlist={groupedByDate[formattedDate]}
+                  formattedDate={formattedDate}
+                  // refetchWaitlist={refetchWaitlist}
+                  handleSelectNotification={handleNotificationClick}
+                  handleSelectNotifications={handleSelectNotifications}
+                  selectedNotifications={selectedNotifications}
+                  setIsDeleteModalOpen={setIsDeleteModalOpen}
+                />
+              ))
             : null}
         </div>
       )}
@@ -187,7 +198,8 @@ function Waitlists() {
               Delete selected notifications
             </h1>
             <p className="text-[14px] mb-4 md:text-md">
-              You have selected the following dates and times to delete below. Are you sure you want to delete?
+              You have selected the following dates and times to delete below.
+              Are you sure you want to delete?
             </p>
 
             <div className="flex flex-col gap-2 self-center max-h-[250px] overflow-y-auto">
