@@ -53,7 +53,6 @@ export const CheckoutForm = ({
   roundOffStatus: string | undefined;
   setRoundOffStatus: Dispatch<SetStateAction<string>>;
 }) => {
-  console.log("cart-data", cartData);
   const MAX_CHARITY_AMOUNT = 1000;
   const { course } = useCourseContext();
   const params = useParams();
@@ -151,11 +150,11 @@ export const CheckoutForm = ({
     wallets: {
       walletReturnUrl: isBuyNowAuction
         ? `${window.location.origin}/${course?.id}/auctions/confirmation`
-        : `${window.location.origin}/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}`,
+        : `${window.location.origin}/${course?.id}/checkout/processing?teeTimeId=${teeTimeId}&cart_id=${cartId}&listing_id=${listingId}`,
       applePay: "auto",
       googlePay: "auto",
     },
-    paymentMethodOrder: ["card", "google_pay", "apple_pay"],
+    paymentMethodOrder: ["card", "google_pay", "apple_pay", "paypal"],
     billingAddress: {
       isUseBillingAddress: true,
       usePrefilledValues: "never", // or "auto",
@@ -197,6 +196,7 @@ export const CheckoutForm = ({
     amountOfPlayers,
   } = useCheckoutContext();
 
+
   const reserveBookingApi = api.teeBox.reserveBooking.useMutation();
   const reserveSecondHandBookingApi =
     api.teeBox.reserveSecondHandBooking.useMutation();
@@ -205,7 +205,6 @@ export const CheckoutForm = ({
   });
   const { data: multipleTransaction } =
     api.checkout.checkMultipleTeeTimeTransactionByUser.useQuery({});
-  console.log("multipleTransaction", multipleTransaction);
   const { refetch: createCustomerInHyperSwitchHandler } =
     api.checkout.createCustomerForHyperSwitch.useQuery(
       {},
@@ -394,7 +393,7 @@ export const CheckoutForm = ({
         // Make sure to change this to your payment completion page
         return_url: isBuyNowAuction
           ? `${window.location.origin}/${course?.id}/auctions/confirmation`
-          : `${window.location.origin}/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}`,
+          : `${window.location.origin}/${course?.id}/checkout/processing?teeTimeId=${teeTimeId}&cart_id=${cartId}&listing_id=${listingId}`,
       },
       redirect: "if_required",
     });
@@ -763,11 +762,10 @@ export const CheckoutForm = ({
           <div className="flex gap-2 mt-5 ml-3 mb-4">
             <button
               type="button"
-              className={`flex w-32 items-center justify-center rounded-md p-2 ${
-                roundOffStatus === "roundup"
-                  ? "bg-primary text-white"
-                  : "bg-white text-primary border-primary border-2"
-              }`}
+              className={`flex w-32 items-center justify-center rounded-md p-2 ${roundOffStatus === "roundup"
+                ? "bg-primary text-white"
+                : "bg-white text-primary border-primary border-2"
+                }`}
               onClick={() => {
                 setRoundOffStatus("roundup");
                 handleRoundOff();
@@ -778,11 +776,10 @@ export const CheckoutForm = ({
 
             <button
               type="button"
-              className={`flex w-32 items-center justify-center rounded-md p-2 ${
-                roundOffStatus === "other"
-                  ? "bg-primary text-white"
-                  : "bg-white text-primary border-primary border-2"
-              }`}
+              className={`flex w-32 items-center justify-center rounded-md p-2 ${roundOffStatus === "other"
+                ? "bg-primary text-white"
+                : "bg-white text-primary border-primary border-2"
+                }`}
               onClick={() => {
                 setRoundOffClick(false);
                 setShowTextField(true);
@@ -796,11 +793,10 @@ export const CheckoutForm = ({
 
             <button
               type="button"
-              className={`flex w-32 items-center justify-center rounded-md p-2 ${
-                roundOffStatus === "nothanks"
-                  ? "bg-primary text-white"
-                  : "bg-white text-primary border-primary border-2"
-              }`}
+              className={`flex w-32 items-center justify-center rounded-md p-2 ${roundOffStatus === "nothanks"
+                ? "bg-primary text-white"
+                : "bg-white text-primary border-primary border-2"
+                }`}
               onClick={() => {
                 setRoundOffClick(false);
                 setShowTextField(false);
@@ -821,9 +817,8 @@ export const CheckoutForm = ({
                 placeholder="Enter Donation Amount"
                 value={donateValue}
                 onChange={handleDonateChange}
-                className={`p-2 border rounded-md ${
-                  donateError ? "border-red" : "border-primary"
-                }`}
+                className={`p-2 border rounded-md ${donateError ? "border-red" : "border-primary"
+                  }`}
                 min="1"
                 step="1"
               />
