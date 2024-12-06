@@ -576,8 +576,28 @@ export const CheckoutForm = ({
     sensibleCharge +
     (!roundUpCharityId ? charityCharge : 0) +
     convenienceCharge;
+  const totalBeforeRoundOff = primaryGreenFeeCharge + TaxCharge;
+  const decimalPart = totalBeforeRoundOff % 1;
 
-  const roundOff = Math.ceil(primaryGreenFeeCharge + TaxCharge);
+  const roundOff =
+    decimalPart === 0 || decimalPart.toFixed(2) === "0.00"
+      ? Math.ceil(totalBeforeRoundOff) + 1
+      : Math.ceil(totalBeforeRoundOff);
+
+  useEffect(() => {
+    let donation;
+    if (decimalPart === 0) {
+      donation = 1;
+    } else if (decimalPart.toFixed(2) === "0.00") {
+      donation = 1;
+    } else {
+      donation = parseFloat(
+        (Math.ceil(totalBeforeRoundOff) - totalBeforeRoundOff).toFixed(2)
+      );
+    }
+    setDonateValue(donation);
+  }, [primaryGreenFeeCharge]);
+
   const handleRoundOff = () => {
     setShowTextField(false);
     const totalBeforeRoundOff = primaryGreenFeeCharge + TaxCharge;

@@ -31,7 +31,7 @@ export const users = mySqlTable(
     id: varchar("id", { length: 36 }).notNull(),
     name: varchar("name", { length: 191 }),
     handle: varchar("handle", { length: 191 }),
-    email: varchar("email", { length: 191 }).notNull().unique(),
+    email: varchar("email", { length: 191 }).notNull(),
     emailVerified: timestamp("emailVerified", { mode: "string", fsp: 3 }),
     image: text("image"),
     gdImage: varchar("golfDistrictImage", { length: 191 }),
