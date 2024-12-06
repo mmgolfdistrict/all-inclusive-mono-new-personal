@@ -251,8 +251,9 @@ export default function RegisterPage() {
       </h1>
       <section className="mx-auto flex w-full flex-col gap-2 bg-white p-5 sm:max-w-[500px] sm:rounded-xl sm:p-6">
         <p>
-          Using gmail? Go to the login page and select the Google icon to login
-          with Google. The below form is not required for gmail users.
+          Using social login like Google or Facebook? Go to the login page and
+          select the respective social icon to login. The below form is not
+          require for social logins.
         </p>
         <form className="flex flex-col gap-2" onSubmit={handleSubmit(onSubmit)}>
           <Controller
@@ -669,8 +670,9 @@ export default function RegisterPage() {
             )}
 
           <FilledButton
-            className={`w-full rounded-full ${isSubmitting ? "animate-pulse cursor-not-allopwed" : ""
-              }`}
+            className={`w-full rounded-full ${
+              isSubmitting ? "animate-pulse cursor-not-allopwed" : ""
+            }`}
             type="submit"
             disabled={isSubmitting}
             data-testid="register-button-id"
