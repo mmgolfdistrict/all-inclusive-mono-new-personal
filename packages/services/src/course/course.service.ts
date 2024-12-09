@@ -914,7 +914,6 @@ export class CourseService extends DomainService {
       binaryMask !== null && binaryMask !== undefined
         ? PlayersOptions.filter((_, index) => (binaryMask & (1 << index)) !== 0)
         : PlayersOptions;
-    console.log("numberOfPlayers", numberOfPlayers);
     if (binaryMask === 0) {
       return { numberOfPlayers: PlayersOptions, selectStatus: "ALL_PLAYERS" };
     }
