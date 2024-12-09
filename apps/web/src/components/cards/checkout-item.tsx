@@ -40,6 +40,8 @@ export const CheckoutItem = ({
   const { data: allowedPlayers } =
     api.course.getNumberOfPlayersByCourse.useQuery({
       courseId: courseId ?? "",
+      time: teeTime?.time,
+      date: teeTime?.date ?? "",
     });
 
   const numberOfPlayers = allowedPlayers?.numberOfPlayers;
