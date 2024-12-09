@@ -882,8 +882,8 @@ export class CourseService extends DomainService {
             eq(courseAllowedTimeToSell.courseId, courseId),
             eq(courseAllowedTimeToSell.day, day),
             and(
-              gte(courseAllowedTimeToSell.fromTime, time),
-              lte(courseAllowedTimeToSell.toTime, time)
+              lte(courseAllowedTimeToSell.fromTime, time),
+              gte(courseAllowedTimeToSell.toTime, time)
             )
           )
         )
@@ -914,7 +914,6 @@ export class CourseService extends DomainService {
       binaryMask !== null && binaryMask !== undefined
         ? PlayersOptions.filter((_, index) => (binaryMask & (1 << index)) !== 0)
         : PlayersOptions;
-
     if (binaryMask === 0) {
       return { numberOfPlayers: PlayersOptions, selectStatus: "ALL_PLAYERS" };
     }
