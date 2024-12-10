@@ -1,9 +1,6 @@
 "use client";
 
-import {
-  signIn,
-  useSession,
-} from "@golf-district/auth/nextjs-exports";
+import { signIn, useSession } from "@golf-district/auth/nextjs-exports";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FilledButton } from "~/components/buttons/filled-button";
 import { IconButton } from "~/components/buttons/icon-button";
@@ -31,10 +28,13 @@ import { LoadingContainer } from "../loader";
 
 declare global {
   interface Window {
-    gtag: (event: string, action: string, params: Record<string, unknown>) => void;
+    gtag: (
+      event: string,
+      action: string,
+      params: Record<string, unknown>
+    ) => void;
   }
 }
-
 
 export default function Login() {
   const recaptchaRef = createRef<ReCAPTCHA>();
@@ -49,10 +49,12 @@ export default function Login() {
   const [localstorageCredentials, setLocalStorageCredentials] = useState("");
   const [localstorageLinkedin, setLocalStorageLinkedin] = useState("");
   const [localstorageFacebook, setLocalStorageFacebook] = useState("");
+  const [localstorageApple, setLocalStorageApple] = useState("");
   const [googleIsLoading, setGoogleIsLoading] = useState(false);
   const [hasSessionLogged, setHasSessionLogged] = useState(false);
   const [linkedinIsLoading, setLinkedinIsLoading] = useState(false);
   const [facebookIsLoading, setFacebookIsLoading] = useState(false);
+  const [appleIsLoading, setAppleIsLoading] = useState(false);
   const auditLog = api.webhooks.auditLog.useMutation();
   const addUserSession = api.user.addUserSession.useMutation();
   const addCourseUser = api.user.addCourseUser.useMutation();
@@ -76,11 +78,10 @@ export default function Login() {
         event_label: label,
         value: value,
       };
-  
+
       window.gtag("event", action, params);
     }
   };
-  
 
   useEffect(() => {
     if (errorKey === "AccessDenied" && !toast.isActive("accessDeniedToast")) {
@@ -284,16 +285,22 @@ export default function Login() {
   };
 
   const appleSignIn = async () => {
-    await signIn("apple", {
-      callbackUrl: `${window.location.origin}${
-        GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
-          ? prevPath?.path
-            ? prevPath.path
+    try {
+      setAppleIsLoading(true);
+      await signIn("apple", {
+        callbackUrl: `${window.location.origin}${
+          GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+            ? prevPath?.path
+              ? prevPath.path
+              : "/"
             : "/"
-          : "/"
-      }`,
-      redirect: true,
-    });
+        }`,
+        redirect: true,
+      });
+      localStorage.setItem("applestate", "loggedin");
+    } catch (error) {
+      console.log(error, "error");
+    }
   };
 
   const googleSignIn = async () => {
@@ -301,10 +308,10 @@ export default function Login() {
     event({
       action: "SIGNIN_USING_GOOGLE",
       category: "SIGNIN",
-      label: "Sign in using google"
+      label: "Sign in using google",
     });
     try {
-        await signIn("google", {
+      await signIn("google", {
         // callbackUrl: `${window.location.origin}${
         //   GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
         //     ? prevPath?.path
@@ -330,7 +337,7 @@ export default function Login() {
   const linkedinSignIn = async () => {
     try {
       setLinkedinIsLoading(true);
-     await signIn("linkedin", {
+      await signIn("linkedin", {
         redirect: false,
       });
       if (typeof window !== "undefined") {
@@ -375,9 +382,20 @@ export default function Login() {
       setLocalStorageFacebook(localStorage.getItem("facebookstate") || "");
     }
   }, []);
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const appleLocalStorage = localStorage.getItem("applestate") as string;
+      setLocalStorageApple(appleLocalStorage || "");
+    }
+    setTimeout(() => {
+      setLocalStorageApple("");
+      localStorage.removeItem("applestate");
+    }, 3000);
+  }, []);
   return isLoading ||
     localStorageGoogle ||
     localstorageLinkedin ||
+    localstorageApple ||
     localstorageFacebook ? (
     <LoadingContainer isLoading={true}>
       <div></div>
@@ -443,8 +461,16 @@ export default function Login() {
             className="flex items-center justify-center gap-3 bg-black text-white"
             data-testid="login-with-apple-id"
           >
-            <Apple className="w-[24px]" />
-            Log In with Apple
+            {appleIsLoading || localstorageApple ? (
+              <div className="w-10 h-10">
+                <Spinner />
+              </div>
+            ) : (
+              <Fragment>
+                <Apple className="w-[24px]" />
+                Log In with Apple
+              </Fragment>
+            )}
           </SquareButton>
         ) : null}
         {process.env.NEXT_PUBLIC_FACEBOOK_CLIENT_ID ? (
