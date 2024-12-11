@@ -61,7 +61,7 @@ export class Lightspeed extends BaseProvider {
 
     fetchTeeTimes = async (courseId: string, date: string, providerConfiguration: any, page: number) => {
         try {
-            const { BASE_ENDPOINT, CONTENT_TYPE, ORGANIZATION_ID, ACCEPT } = JSON.parse(providerConfiguration ?? "{}");
+            const { BASE_ENDPOINT, CONTENT_TYPE, ORGANIZATION_ID, ACCEPT, DEFAULT_PLAYER_TYPE_ID } = JSON.parse(providerConfiguration ?? "{}");
 
             const token = await this.getToken();
 
@@ -69,7 +69,7 @@ export class Lightspeed extends BaseProvider {
                 throw new Error(`Error fetching tee times fail to get token: ${token}`);
             }
 
-            const url = `${BASE_ENDPOINT}/partner_api/v2/organizations/${ORGANIZATION_ID}/teetimes?custom_params[player_count]=4&custom_params[holes]=18&custom_params[with_pricing]=true&filter[course]=${courseId}&page[size]=100&page[number]=${page}&filter[date]=${date}`;
+            const url = `${BASE_ENDPOINT}/partner_api/v2/organizations/${ORGANIZATION_ID}/teetimes?custom_params[player_count]=4&custom_params[holes]=18&custom_params[with_pricing]=true&filter[course]=${courseId}&page[size]=100&page[number]=${page}&filter[date]=${date}${DEFAULT_PLAYER_TYPE_ID ? `&custom_params[player_types][]=${DEFAULT_PLAYER_TYPE_ID}` : ""}`;
             const headers = {
                 Authorization: `Bearer ${token}`,
                 'Content-Type': CONTENT_TYPE,
@@ -119,7 +119,7 @@ export class Lightspeed extends BaseProvider {
         data: LightspeedBookingCreationData,
         userId: string
     ): Promise<LightSpeedBookingResponse> {
-        const { BASE_ENDPOINT, CONTENT_TYPE, ORGANIZATION_ID, ACCEPT } = JSON.parse(this.providerConfiguration ?? "{}");
+        const { BASE_ENDPOINT, CONTENT_TYPE, ORGANIZATION_ID, ACCEPT, DEFAULT_PLAYER_TYPE_ID } = JSON.parse(this.providerConfiguration ?? "{}");
         if (!token) {
             token = await this.getToken() ?? "";
             if (!token) {
@@ -195,7 +195,19 @@ export class Lightspeed extends BaseProvider {
                                 type: "reservation_request",
                                 id: reservationRequest.data.id
                             }
-                        },
+                        }
+                    }
+                }
+            }
+
+            if (DEFAULT_PLAYER_TYPE_ID) {
+                payload.data.relationships = {
+                    ...payload.data.relationships,
+                    player_type: {
+                        data: {
+                            type: "player_type",
+                            id: DEFAULT_PLAYER_TYPE_ID
+                        }
                     }
                 }
             }

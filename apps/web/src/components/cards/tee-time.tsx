@@ -84,20 +84,22 @@ export const TeeTime = ({
   const { data: allowedPlayers } =
     api.course.getNumberOfPlayersByCourse.useQuery({
       courseId: courseId ?? "",
-      time: items.time,
+      time: items.time ?? "",
       date: items.date ?? ""
     });
 
+  const [selectedPlayers, setSelectedPlayers] = useState<string>("");
+
   const numberOfPlayers = allowedPlayers?.numberOfPlayers;
-  const [selectedPlayers, setSelectedPlayers] = useState<string>(() => {
-    if (allowedPlayers?.selectStatus === "ALL_PLAYERS") {
-      return String(availableSlots);
+  useEffect(() => {
+    if (numberOfPlayers?.length !== 0 && numberOfPlayers?.[0]) {
+      setSelectedPlayers(String(numberOfPlayers[0]));
+    } else if (allowedPlayers?.selectStatus === "ALL_PLAYERS") {
+      setSelectedPlayers(String(availableSlots));
+    } else {
+      setSelectedPlayers(status === "UNLISTED" || status === "FIRST_HAND" ? "1" : players);
     }
-    if (numberOfPlayers?.length !== 0 && numberOfPlayers !== undefined) {
-      return String(numberOfPlayers[0]);
-    }
-    return status === "UNLISTED" || status === "FIRST_HAND" ? "1" : players;
-  });
+  }, [allowedPlayers, courseId, items.time, items.date, status, availableSlots, players]);
 
   const timezoneCorrection = course?.timezoneCorrection;
   const [isMakeAnOfferOpen, setIsMakeAnOfferOpen] = useState<boolean>(false);
@@ -275,9 +277,8 @@ export const TeeTime = ({
         data-test={
           status === "SECOND_HAND" ? "secondary_listed" : "primary_listed"
         }
-        className={`md:rounded-xl rounded-lg bg-secondary-white w-fit min-w-[230px] md:min-w-[265px] ${
-          className ?? ""
-        }`}
+        className={`md:rounded-xl rounded-lg bg-secondary-white w-fit min-w-[230px] md:min-w-[265px] ${className ?? ""
+          }`}
       >
         <div className="border-b border-stroke">
           <div className="flex justify-between py-1 px-2 md:px-3 md:p-3 items-center">

@@ -411,8 +411,15 @@ export default function Login() {
       <section className="mx-auto flex w-full flex-col gap-2 bg-white p-5 sm:max-w-[500px] sm:rounded-xl sm:p-6">
         <p>
           First time users of Golf District need to create a new account. Simply
-          use Google to login quickly, or select sign up if you prefer to use
-          another email.
+          use any social login like Google to login quickly, or select{" "}
+          <Link
+            className="text-primary"
+            href={`/${course?.id}/register`}
+            data-testid="signup-button-id"
+          >
+            sign up
+          </Link>{" "}
+          if you prefer to use another email.
         </p>
 
         {process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ? (
