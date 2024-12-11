@@ -384,8 +384,8 @@ export default function Login() {
   }, []);
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const appleLocalStorage = localStorage.getItem("applestate") as string;
-      setLocalStorageApple(appleLocalStorage || "");
+      const appleLocalStorage = localStorage.getItem("applestate") ?? "";
+      setLocalStorageApple(appleLocalStorage);
     }
     setTimeout(() => {
       setLocalStorageApple("");
