@@ -294,13 +294,14 @@ export const TeeTime = ({
               <Tooltip
                 trigger={
                   <Avatar
-                    src={
-                      status === "SECOND_HAND"
-                        ? DEFAULT_SILHOUETTE_IMAGE
-                        : soldByImage
-                    }
-                    className="!min-h-[24px] !min-w-[24px] max-h-[24px] max-w-[24px] h-[24px] w-[24px] md:min-h-[30px] md:min-w-[30px] md:max-h-[30px] md:max-w-[30px] md:h-[30px] md:w-[30px]"
-                  />
+                  src={
+                    status === "SECOND_HAND"
+                      ? DEFAULT_SILHOUETTE_IMAGE
+                      : soldByImage
+                  }
+                  className="!min-h-[24px] !min-w-[24px] max-h-[24px] max-w-[24px] h-[24px] w-[24px] md:min-h-[30px] md:min-w-[30px] md:max-h-[30px] md:max-w-[30px] md:h-[30px] md:w-[30px]"
+                  isRounded={false} // Conditional rounding
+                />
                 }
                 content={
                   "Sold by " +
