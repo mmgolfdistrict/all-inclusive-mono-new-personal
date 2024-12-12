@@ -355,6 +355,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
           <div className="grid grid-rows-3 md:grid-rows-3 lg:grid-rows-3 gap-4 px-4 py-2 md:px-8 md:py-6">
             <div className="">
               <Input
+                readOnly
                 className="cursor-pointer text-ellipsis"
                 label="Pick Date(s)"
                 name="dates"
@@ -402,6 +403,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
             </div>
             <div className="">
               <Input
+                readOnly
                 className="cursor-pointer text-ellipsis"
                 label="Select Time Range"
                 placeholder="Times..."
