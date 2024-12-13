@@ -1,3 +1,6 @@
+import type {
+  SQL
+} from "@golf-district/database";
 import {
   and,
   asc,
@@ -12,8 +15,7 @@ import {
   sql,
   type Db,
   lt,
-  isNull,
-  SQL,
+  isNull
 } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import { bookings } from "@golf-district/database/schema/bookings";
@@ -46,8 +48,8 @@ interface TeeTimeSearchObject {
   pricePerGolfer: number;
   greenFeeTaxPerPlayer: number;
   cartFeeTaxPerPlayer: number;
-  greenFee:number,
-  cartFee:number,
+  greenFee: number,
+  cartFee: number,
   teeTimeId: string;
   date: string; //day of tee time
   time: number; //military time
@@ -95,7 +97,7 @@ interface CheckTeeTimesAvailabilityParams {
   isHolesAny?: boolean;
   isGolferAny?: boolean;
   highestPrice?: number;
-  lowestPrice?:number;
+  lowestPrice?: number;
   _userId: string | undefined;
 }
 
@@ -124,7 +126,7 @@ export class SearchService {
     private readonly database: Db,
     private readonly weatherService: WeatherService,
     private readonly providerService: ProviderService
-  ) {}
+  ) { }
 
   findBlackoutDates = async (courseId: string): Promise<Day[]> => {
     // Generate a range of dates for the next 365 days
@@ -234,7 +236,7 @@ export class SearchService {
           key: assets.key,
           extension: assets.extension,
         },
-        cartFee:bookings.cartFeePerPlayer
+        cartFee: bookings.cartFeePerPlayer
       })
       .from(bookings)
       .leftJoin(users, eq(users.id, bookings.ownerId))
@@ -505,8 +507,8 @@ export class SearchService {
       markupFees: markupFeesToBeUsed * 100,
       greenFeeTaxPerPlayer: tee.greenFeeTax,
       cartFeeTaxPerPlayer: tee.cartFeeTax,
-      greenFee:tee.greenFee,
-      cartFee:tee.cartFee,
+      greenFee: tee.greenFee,
+      cartFee: tee.cartFee,
       teeTimeId: tee.id,
       userWatchListed: tee.favorites ? true : false,
       date: tee.providerDate, //day of tee time
@@ -743,8 +745,8 @@ export class SearchService {
     const NumberOfPlayers = await this.database
       .select({
         primaryMarketAllowedPlayers: courses.primaryMarketAllowedPlayers,
-        openTime:courses.openTime,
-        closeTime:courses.closeTime
+        openTime: courses.openTime,
+        closeTime: courses.closeTime
       })
       .from(courses)
       .where(eq(courses.id, courseId));
@@ -759,7 +761,7 @@ export class SearchService {
         : [];
     const playersCount = numberOfPlayers?.[0] ? Number(numberOfPlayers[0]) : golfers;
 
-    const conditions:SQL<unknown>[] = []
+    const conditions: SQL<unknown>[] = []
 
     if (!isHolesAny) {
       conditions.push(eq(teeTimes.numberOfHoles, holes));
@@ -768,20 +770,20 @@ export class SearchService {
     if (!isGolferAny) {
       conditions.push(gte(teeTimes.availableFirstHandSpots, playersCount));
     }
-    
+
     const startingHour =
       Number(NumberOfPlayers[0]?.openTime?.split(" ")?.[1]?.split(":")?.[0]) ?? 9;
     const closingHour =
       Number(NumberOfPlayers[0]?.closeTime?.split(" ")?.[1]?.split(":")?.[0]) ?? 9;
-     
-    if((startingHour*100)!==startTime || (closingHour*100)!==endTime){
-       conditions.push(and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)) as any)
-    }  
 
-    const firstHandSpecificCondition:SQL<unknown>[]=[]
-    const secondHandSpecificCondition:SQL<unknown>[]=[]
+    if ((startingHour * 100) !== startTime || (closingHour * 100) !== endTime) {
+      conditions.push(and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)) as any)
+    }
 
-    if(highestPrice !== upperPrice || lowestPrice !==lowerPrice){
+    const firstHandSpecificCondition: SQL<unknown>[] = []
+    const secondHandSpecificCondition: SQL<unknown>[] = []
+
+    if (highestPrice !== upperPrice || lowestPrice !== lowerPrice) {
       firstHandSpecificCondition.push(sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 >= ${lowerPrice}`)
       firstHandSpecificCondition.push(sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 <= ${upperPrice}`)
       secondHandSpecificCondition.push(sql`(${lists.listPrice}*(${courses.buyerFee}/100)+${lists.listPrice})/100 >= ${lowerPrice}`)
@@ -1085,10 +1087,10 @@ export class SearchService {
         sortPrice === "desc"
           ? desc(teeTimes.greenFeePerPlayer)
           : sortTime === "desc"
-          ? desc(teeTimes.time)
-          : sortPrice === "asc"
-          ? asc(teeTimes.greenFeePerPlayer)
-          : asc(teeTimes.time)
+            ? desc(teeTimes.time)
+            : sortPrice === "asc"
+              ? asc(teeTimes.greenFeePerPlayer)
+              : asc(teeTimes.time)
       )
     const teeQueryLimited = teeQuery.limit(limit);
 
@@ -1103,7 +1105,7 @@ export class SearchService {
       .from(courses)
       .where(eq(courses.id, courseId))
       .execute()
-      .catch(() => {});
+      .catch(() => { });
     let buyerFee = 0;
     let courseDataIfAvailable: any = {};
     if (courseData?.length) {
@@ -1370,10 +1372,10 @@ export class SearchService {
         sortPrice === "desc"
           ? desc(lists.listPrice)
           : sortTime === "desc"
-          ? desc(teeTimes.time)
-          : sortPrice === "asc"
-          ? asc(lists.listPrice)
-          : asc(teeTimes.time)
+            ? desc(teeTimes.time)
+            : sortPrice === "asc"
+              ? asc(lists.listPrice)
+              : asc(teeTimes.time)
       );
     // .limit(limit);
     const secoondHandData = await secondHandBookingsQuery.execute().catch(async (err) => {
@@ -1546,7 +1548,6 @@ export class SearchService {
           eq(majorEvents.courseId, courseId),
           lt(majorEvents.startDate, threeMonthsFromNow),
           gt(majorEvents.endDate, today),
-          lt(majorEvents.endDate, threeMonthsFromNow)
         )
       )
       .orderBy(asc(majorEvents.startDate))
