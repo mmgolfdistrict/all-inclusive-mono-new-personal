@@ -132,7 +132,7 @@ export class NotificationService {
         to: email,
         from: this.sendGrid_email,
         subject: subject,
-        text: body,
+        html: body,
         bcc: bccEmails,
       })
       .catch((err) => {

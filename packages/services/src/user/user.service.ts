@@ -297,10 +297,11 @@ export class UserService {
     return user;
   };
 
-  inviteUser = async (userId: string, emailOrPhoneNumber: string) => {
+  inviteUser = async (userId: string, emailOrPhoneNumber: string, courseId: string) => {
     const [user] = await this.database
       .select({
         handle: users.handle,
+        name: users.name,
       })
       .from(users)
       .where(eq(users.id, userId));
@@ -310,20 +311,53 @@ export class UserService {
     }
     //determine if email or phone number
 
+    let EntityName: string | undefined;
+    let SubDomain: string | undefined;
+
+    if (courseId) {
+      const [courseWithEntity] = await this.database
+        .select({
+          entityName: entities.name,
+          subDomain: entities.subdomain,
+        })
+        .from(courses)
+        .leftJoin(entities, eq(courses.entityId, entities.id))
+        .where(eq(courses.id, courseId));
+
+      if (courseWithEntity) {
+        EntityName = courseWithEntity.entityName ?? "";
+        SubDomain = courseWithEntity.subDomain ?? "";
+
+        console.log("Entity Name:", EntityName);
+        console.log("SubDomain:", SubDomain);
+      }
+    }
+
     const phoneRegex = /^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$/;
     if (isValidEmail(emailOrPhoneNumber)) {
       await this.notificationsService.sendEmail(
         emailOrPhoneNumber,
         "You've been invited to Golf District",
-        `${user.handle} has invited to Golf District. link`
+        `<p>${user?.name?.split(" ")[0]} has invited you to Golf District.</p>
+        ${
+          courseId && SubDomain && EntityName
+            ? `<p>Visit the course website <a href="https://${SubDomain}/${courseId}" target="_blank" style="color: #1a0dab; text-decoration: underline;">${EntityName}</a></p>`
+            : ""
+        }
+        <br>`
       );
       return;
     }
     if (phoneRegex.test(emailOrPhoneNumber)) {
-      const userName = user.handle;
+      console.log("emailOrPhoneNumber", emailOrPhoneNumber);
+      const userName = user?.name?.split(" ")[0];
       await this.notificationsService.sendSMS(
         emailOrPhoneNumber,
-        `${userName} has invited to Golf District link`
+        `${userName} has invited you to Golf District ${
+          courseId && SubDomain && EntityName
+            ? `Visit the course website: https://${SubDomain}/${courseId} (${EntityName})`
+            : ""
+        }`
       );
       return;
     } else {
@@ -1123,10 +1157,10 @@ export class UserService {
           });
           throw new Error("Error sending email");
         });
-        return {
-          error: true,
-          message: `Since you signed in using ${accountData?.provider},we cannot reset your password from our end. Please use ${accountData?.provider} to sign in.`,
-        };
+      return {
+        error: true,
+        message: `Since you signed in using ${accountData?.provider},we cannot reset your password from our end. Please use ${accountData?.provider} to sign in.`,
+      };
     }
 
     if (!user.emailVerified) {

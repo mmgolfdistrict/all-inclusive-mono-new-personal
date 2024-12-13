@@ -1,5 +1,6 @@
 "use client";
 
+import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
 import { type InviteFriend } from "~/utils/types";
@@ -33,6 +34,7 @@ export const InviteFriends = ({
     }
   );
   const { user } = useUserContext();
+  const { course } = useCourseContext();
   const selectedTeeTime: InviteFriend[] = bookingData?.bookings || [];
 
   const [newFriend, setNewFriend] = useState<InviteFriend>({
@@ -61,7 +63,10 @@ export const InviteFriends = ({
   const inviteFriendCall = async () => {
     if (invite.isLoading) return;
     try {
-      await invite.mutateAsync({ emailOrPhone: inviteFriend });
+      await invite.mutateAsync({
+        emailOrPhone: inviteFriend,
+        courseId: course?.id || "",
+      });
       setInviteSucess(true);
       setInviteFriend("");
       setTimeout(() => {
