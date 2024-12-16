@@ -63,7 +63,6 @@ export const ManageOwnedTeeTime = ({
         emailOrPhone: friend.name || "",
         courseId: course?.id || "",
       });
-      // setInviteSucess(true);
       setInviteSuccess((prev) => ({ ...prev, [friend.slotId]: true }));
       toast.success("Invitation sent successfully.");
     } catch (error) {
