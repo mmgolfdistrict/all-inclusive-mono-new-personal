@@ -50,8 +50,28 @@ export const ManageOwnedTeeTime = ({
     currentlyEditing: false,
   });
   const debouncedValue = useDebounce<InviteFriend>(newFriend, 500);
-  const [inviteFriend, setInviteFriend] = useState<string>("");
-  const [inviteSucess, setInviteSucess] = useState<boolean>(false);
+
+  const [inviteSuccess, setInviteSuccess] = useState<Record<string, boolean>>(
+    {}
+  );
+
+  const handleInviteFriend = async (friend: InviteFriend) => {
+    if (invite.isLoading) return;
+
+    try {
+      await invite.mutateAsync({
+        emailOrPhone: friend.name || "",
+        courseId: course?.id || "",
+      });
+      // setInviteSucess(true);
+      setInviteSuccess((prev) => ({ ...prev, [friend.slotId]: true }));
+      toast.success("Invitation sent successfully.");
+    } catch (error) {
+      toast.error(
+        (error as Error)?.message ?? "An error occurred inviting friend."
+      );
+    }
+  };
 
   const invite = api.user.inviteUser.useMutation();
 
@@ -112,10 +132,8 @@ export const ManageOwnedTeeTime = ({
         bookingId: "",
         currentlyEditing: false,
       });
-      setInviteFriend("");
-      setInviteSucess(false);
     }
-  }, [isManageOwnedTeeTimeOpen, selectedTeeTime]);
+  }, [isManageOwnedTeeTimeOpen, selectedTeeTime, inviteSuccess]);
 
   const handleFocus = () => {
     if (!minimumOfferPrice) setMinimumOfferPrice(0);
@@ -140,7 +158,6 @@ export const ManageOwnedTeeTime = ({
     return Math.abs(minimumOfferPrice * friends.length - 45);
   }, [minimumOfferPrice, friends]);
 
-  console.log("friends,", friends);
   const save = async () => {
     if (!selectedTeeTime) {
       toast.error("Tee time not selected");
@@ -297,38 +314,6 @@ export const ManageOwnedTeeTime = ({
     });
   };
 
-  const inviteFriendCall = async () => {
-    if (invite.isLoading) return;
-    try {
-      await invite.mutateAsync({
-        emailOrPhone: inviteFriend,
-        courseId: course?.id || "",
-      });
-      setInviteSucess(true);
-      setInviteFriend("");
-      setTimeout(() => {
-        setNewFriend({
-          id: "",
-          handle: "",
-          name: "",
-          email: "",
-          slotId: "",
-          bookingId: "",
-          currentlyEditing: false,
-        });
-      }, 4500);
-      setTimeout(() => {
-        setInviteSucess(false);
-      }, 5000);
-    } catch (error) {
-      setInviteSucess(false);
-      setInviteFriend("");
-      toast.error(
-        (error as Error)?.message ?? "An error occurred inviting friend."
-      );
-    }
-  };
-
   return (
     <>
       {isManageOwnedTeeTimeOpen && (
@@ -409,30 +394,22 @@ export const ManageOwnedTeeTime = ({
                 >
                   Add/edit invited friends
                 </label>
-
                 {friends.length
                   ? friends.map((friend, index) => {
                       return (
-                        <>
+                        <div
+                          key={friend.slotId}
+                          className="w-full max-w-[400px] rounded-lg"
+                        >
                           {!friend.currentlyEditing ? (
-                            <div
-                              key={friend.slotId}
-                              className="mx-auto w-full max-w-[400px] rounded-lg bg-secondary-white px-4 py-1 flex justify-between text-[16px] font-semibold outline-none"
-                            >
+                            <div className="mx-auto w-full rounded-lg bg-secondary-white px-4 py-1 flex justify-between text-[16px] font-semibold outline-none">
                               <div>{index === 0 ? "You" : friend.name}</div>
                               {index !== 0 &&
                               course?.supportsPlayerNameChange ? (
                                 <button
-                                  onClick={() => {
-                                    removeFriend(friend.slotId);
-                                  }}
-                                  data-testid="remove-friend-button-id"
+                                  onClick={() => removeFriend(friend.slotId)}
                                 >
-                                  {!friend.currentlyEditing ? (
-                                    <Edit className="w-[20px]" />
-                                  ) : (
-                                    <Close className="w-[20px]" />
-                                  )}
+                                  <Edit className="w-[20px]" />
                                 </button>
                               ) : null}
                             </div>
@@ -442,84 +419,68 @@ export const ManageOwnedTeeTime = ({
                                 value={friend.name}
                                 type="search"
                                 list="searchedFriends"
-                                onChange={(e) => {
-                                  handleNewFriend(e, friend);
-                                }}
+                                onChange={(e) => handleNewFriend(e, friend)}
                                 onSelect={addFriend}
                                 placeholder="Username or email"
                                 className="mx-auto w-full max-w-[400px] rounded-lg bg-secondary-white px-4 py-2 flex justify-between text-[14px] font-semibold outline-none"
                                 data-testid="search-friend-id"
+                                disabled={inviteSuccess[friend.slotId]}
                               />
-                              {friend.slotId == newFriend.slotId ? (
-                                <div className="mx-auto w-full max-w-[400px] rounded-lg py-2 flex justify-between text-[14px] font-semibold outline-none rounded-8 ">
-                                  {friendList.length ? (
-                                    <ul className="w-full text-opacity-100 text-gray-700 shadow-md border border-solid border-gray-200 rounded-8 text-start">
-                                      {friendList.map((frnd, idx) => (
-                                        <li key={idx}>
-                                          <div
-                                            className="cursor-pointer p-4 border-b border-solid border-gray-300"
-                                            onClick={() => {
-                                              addFriendUpdated({
-                                                ...frnd,
-                                                slotId: friend.slotId,
-                                              });
-                                            }}
-                                          >
-                                            {frnd.email} ({frnd.handle})
-                                          </div>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  ) : null}
+                              {friend.slotId === newFriend.slotId &&
+                              friendList.length ? (
+                                <div className="mx-auto w-full max-w-[400px] rounded-lg py-2 flex justify-between text-[14px] font-semibold outline-none">
+                                  <ul className="w-full text-opacity-100 text-gray-700 shadow-md border border-solid border-gray-200 rounded-8 text-start">
+                                    {friendList.map((frnd, idx) => (
+                                      <li key={idx}>
+                                        <div
+                                          className="cursor-pointer p-4 border-b border-solid border-gray-300"
+                                          onClick={() =>
+                                            addFriendUpdated({
+                                              ...frnd,
+                                              slotId: friend.slotId,
+                                            })
+                                          }
+                                        >
+                                          {frnd.email} ({frnd.handle})
+                                        </div>
+                                      </li>
+                                    ))}
+                                  </ul>
                                 </div>
                               ) : null}
 
-                              {!isLoading &&
-                              friendList?.length === 0 &&
-                              debouncedValue.name.length > 0 ? (
-                                <div className="flex justify-center items-center flex-col gap-1 rounded-md w-full mx-auto max-w-[400px]">
-                                  {inviteSucess ? (
-                                    <div className="text-center fade-in">
-                                      Friend invited successfully.
-                                    </div>
-                                  ) : (
-                                    <>
-                                      <div className="text-center fade-in">
-                                        Friend not found. Invite them!
-                                      </div>
-                                      <div className="flex items-center gap-1 w-full fade-in">
-                                        <input
-                                          value={inviteFriend}
-                                          type="text"
-                                          onChange={(e) => {
-                                            if (invite.isLoading) return;
-                                            setInviteFriend(e.target.value);
-                                          }}
-                                          placeholder="Email or phone number"
-                                          className="mx-auto w-full max-w-[400px] rounded-lg bg-secondary-white px-4 py-2 flex justify-between text-[14px] font-semibold outline-none"
-                                          data-testid="invite-friend-id"
-                                        />
-                                        <FilledButton
-                                          className={`w-full !max-w-fit ${
-                                            invite.isLoading
-                                              ? "animate-pulse"
-                                              : ""
-                                          }`}
-                                          onClick={inviteFriendCall}
-                                          data-testid="invite-button-id"
-                                        >
-                                          {invite.isLoading
-                                            ? "Inviting..."
-                                            : "Invite"}
-                                        </FilledButton>
-                                      </div>
-                                    </>
-                                  )}
-                                </div>
-                              ) : null}
+                              {friend.slotId === newFriend.slotId &&
+                                debouncedValue.name.length > 0 &&
+                                !isLoading &&
+                                !friendList.length && (
+                                  <div className="flex justify-center items-center flex-col gap-1 rounded-md w-full mx-auto max-w-[400px]">
+                                    {!inviteSuccess[friend.slotId] && (
+                                      <>
+                                        <div className="flex justify-center gap-4 mt-2 items-center w-full fade-in">
+                                          Friend not found. Invite them!
+                                          <FilledButton
+                                            className={`w-full !max-w-fit ${
+                                              invite.isLoading
+                                                ? "animate-pulse"
+                                                : ""
+                                            }`}
+                                            onClick={() =>
+                                              handleInviteFriend(friend)
+                                            }
+                                            data-testid="invite-button-id"
+                                          >
+                                            {invite.isLoading
+                                              ? "Inviting..."
+                                              : "Invite"}
+                                          </FilledButton>
+                                        </div>
+                                      </>
+                                    )}
+                                  </div>
+                                )}
                             </>
                           )}
-                        </>
+                        </div>
                       );
                     })
                   : null}

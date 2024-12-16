@@ -327,9 +327,6 @@ export class UserService {
       if (courseWithEntity) {
         EntityName = courseWithEntity.entityName ?? "";
         SubDomain = courseWithEntity.subDomain ?? "";
-
-        console.log("Entity Name:", EntityName);
-        console.log("SubDomain:", SubDomain);
       }
     }
 
