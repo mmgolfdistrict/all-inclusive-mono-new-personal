@@ -9,6 +9,8 @@ export const majorEvents = mySqlTable("majorEvents", {
   eventName: varchar("eventName", { length: 191 }).notNull(),
   startDate: datetime("startDate", { mode: "string", fsp: 3 }).notNull(),
   endDate: datetime("endDate", { mode: "string", fsp: 3 }).notNull(),
+  eventStartDate: datetime("eventStartDate", { mode: "string", fsp: 3 }),
+  eventEndDate: datetime("eventEndDate", { mode: "string", fsp: 3 }),
   iconAssetId: varchar("iconAssetId", { length: 36 }),
   createdDateTime: datetime("createdDateTime", { mode: "string", fsp: 3 })
     .notNull()
