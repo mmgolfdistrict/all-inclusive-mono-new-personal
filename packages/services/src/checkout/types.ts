@@ -25,7 +25,9 @@ export interface CustomerCart {
   paymentId: string | null;
   cart: ProductData[];
   teeTimeId?: string;
-  cartId?:string;
+  cartId?: string;
+  courseName?: string;
+  playDateTime?: string;
 }
 
 export interface UpdatePayment {

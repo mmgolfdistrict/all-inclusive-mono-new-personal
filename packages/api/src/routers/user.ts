@@ -8,10 +8,13 @@ export const userRouter = createTRPCRouter({
     .input(
       z.object({
         emailOrPhone: z.string(),
+        courseId: z.string(),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      return await ctx.serviceFactory.getUserService().inviteUser(ctx.session.user.id, input.emailOrPhone);
+      return await ctx.serviceFactory
+        .getUserService()
+        .inviteUser(ctx.session.user.id, input.emailOrPhone, input.courseId);
     }),
   getUser: publicProcedure
     .input(

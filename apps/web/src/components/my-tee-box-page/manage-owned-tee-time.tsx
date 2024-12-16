@@ -300,7 +300,10 @@ export const ManageOwnedTeeTime = ({
   const inviteFriendCall = async () => {
     if (invite.isLoading) return;
     try {
-      await invite.mutateAsync({ emailOrPhone: inviteFriend });
+      await invite.mutateAsync({
+        emailOrPhone: inviteFriend,
+        courseId: course?.id || "",
+      });
       setInviteSucess(true);
       setInviteFriend("");
       setTimeout(() => {

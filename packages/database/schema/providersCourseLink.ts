@@ -1,6 +1,6 @@
 import type { InferSelectModel } from "drizzle-orm";
 import { relations, sql } from "drizzle-orm";
-import { datetime, primaryKey, text, tinyint, varchar } from "drizzle-orm/mysql-core";
+import { datetime, index, primaryKey, text, tinyint, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 import { courses } from "./courses";
 import { providers } from "./providers";
@@ -30,7 +30,11 @@ export const providerCourseLink = mySqlTable(
   },
   (table) => {
     return {
-      providerId: primaryKey(table.id),
+      providerIdPK: primaryKey(table.id),
+      providerCourseIdx: index("ProviderCourseLink_providerId_courseId_idx").on(
+        table.providerId,
+        table.courseId
+      ),
     };
   }
 );

@@ -92,7 +92,7 @@ export class CourseService extends DomainService {
         internalId: providers.internalId,
         roundUpCharityId: courses?.roundUpCharityId,
         providerConfiguration: providerCourseLink.providerCourseConfiguration,
-        isBookingDisabled :courses.isBookingDisabled
+        isBookingDisabled: courses.isBookingDisabled
       })
       .from(courses)
       .innerJoin(providerCourseLink, eq(providerCourseLink.courseId, courses.id))
@@ -882,8 +882,8 @@ export class CourseService extends DomainService {
             eq(courseAllowedTimeToSell.courseId, courseId),
             eq(courseAllowedTimeToSell.day, day),
             and(
-              gte(courseAllowedTimeToSell.fromTime, time),
-              lte(courseAllowedTimeToSell.toTime, time)
+              lte(courseAllowedTimeToSell.fromTime, time),
+              gte(courseAllowedTimeToSell.toTime, time)
             )
           )
         )
@@ -906,7 +906,7 @@ export class CourseService extends DomainService {
         })
         .from(courses)
         .where(eq(courses.id, courseId));
-      if (!NumberOfPlayers[0]?.primaryMarketAllowedPlayers) {
+      if (NumberOfPlayers[0]?.primaryMarketAllowedPlayers) {
         binaryMask = NumberOfPlayers[0]?.primaryMarketAllowedPlayers;
       }
     }
@@ -914,7 +914,6 @@ export class CourseService extends DomainService {
       binaryMask !== null && binaryMask !== undefined
         ? PlayersOptions.filter((_, index) => (binaryMask & (1 << index)) !== 0)
         : PlayersOptions;
-
     if (binaryMask === 0) {
       return { numberOfPlayers: PlayersOptions, selectStatus: "ALL_PLAYERS" };
     }

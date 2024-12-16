@@ -49,7 +49,7 @@ export default function Checkout({
   const playerCount = searchParams?.playerCount as string | undefined;
   const { course } = useCourseContext();
   const { user } = useUserContext();
-  
+
   const [isSessionLoading, setIsSessionLoading] = useState(true);
   dayjs.extend(utc);
   dayjs.extend(timezone);
@@ -201,12 +201,12 @@ export default function Checkout({
         },
       },
     ];
-    
-    if(teeTimeData?.cartFee){
+
+    if (teeTimeData?.cartFee) {
       localCart.push({
         name: "Golf District Tee Time",
         id: teeTimeId ?? data?.teeTimeId,
-        price:0, //int
+        price: 0, //int
         image: "", //
         currency: "USD", //USD
         display_price: formatMoney(
@@ -217,15 +217,15 @@ export default function Checkout({
         product_data: {
           metadata: {
             type: "cart_fee",
-            amount:teeTimeData.cartFee
+            amount: teeTimeData.cartFee,
           },
         },
       });
-    }else{
+    } else {
       localCart.push({
         name: "Golf District Tee Time",
         id: teeTimeId ?? data?.teeTimeId,
-        price:0 ,//int
+        price: 0, //int
         image: "", //
         currency: "USD", //USD
         display_price: formatMoney(
@@ -236,7 +236,7 @@ export default function Checkout({
         product_data: {
           metadata: {
             type: "cart_fee",
-            amount:0
+            amount: 0,
           },
         },
       });
@@ -263,7 +263,7 @@ export default function Checkout({
         },
       });
     }
-   
+
     if (course?.convenienceFeesFixedPerPlayer) {
       localCart.push({
         name: "Golf District Tee Time",
@@ -356,7 +356,7 @@ export default function Checkout({
     deboundCharityAmount,
     course?.markupFeesFixedPerPlayer,
     course?.convenienceFeesFixedPerPlayer,
-    playerCount
+    playerCount,
   ]);
 
   useEffect(() => {
@@ -454,6 +454,7 @@ export default function Checkout({
                 cartData={cartData}
                 teeTimeDate={teeTimeData?.date}
                 playerCount={playerCount}
+                teeTimeData={data}
                 // maxReservation={maxReservation}
               />
             )}

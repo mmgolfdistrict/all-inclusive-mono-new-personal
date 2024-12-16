@@ -1,9 +1,6 @@
 "use client";
 
-import {
-  signIn,
-  useSession,
-} from "@golf-district/auth/nextjs-exports";
+import { signIn, useSession } from "@golf-district/auth/nextjs-exports";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FilledButton } from "~/components/buttons/filled-button";
 import { IconButton } from "~/components/buttons/icon-button";
@@ -31,10 +28,13 @@ import { LoadingContainer } from "../loader";
 
 declare global {
   interface Window {
-    gtag: (event: string, action: string, params: Record<string, unknown>) => void;
+    gtag: (
+      event: string,
+      action: string,
+      params: Record<string, unknown>
+    ) => void;
   }
 }
-
 
 export default function Login() {
   const recaptchaRef = createRef<ReCAPTCHA>();
@@ -76,11 +76,10 @@ export default function Login() {
         event_label: label,
         value: value,
       };
-  
+
       window.gtag("event", action, params);
     }
   };
-  
 
   useEffect(() => {
     if (errorKey === "AccessDenied" && !toast.isActive("accessDeniedToast")) {
@@ -301,10 +300,10 @@ export default function Login() {
     event({
       action: "SIGNIN_USING_GOOGLE",
       category: "SIGNIN",
-      label: "Sign in using google"
+      label: "Sign in using google",
     });
     try {
-        await signIn("google", {
+      await signIn("google", {
         // callbackUrl: `${window.location.origin}${
         //   GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
         //     ? prevPath?.path
@@ -330,7 +329,7 @@ export default function Login() {
   const linkedinSignIn = async () => {
     try {
       setLinkedinIsLoading(true);
-     await signIn("linkedin", {
+      await signIn("linkedin", {
         redirect: false,
       });
       if (typeof window !== "undefined") {
@@ -393,8 +392,15 @@ export default function Login() {
       <section className="mx-auto flex w-full flex-col gap-2 bg-white p-5 sm:max-w-[500px] sm:rounded-xl sm:p-6">
         <p>
           First time users of Golf District need to create a new account. Simply
-          use Google to login quickly, or select sign up if you prefer to use
-          another email.
+          use any social login like Google to login quickly, or select{" "}
+          <Link
+            className="text-primary"
+            href={`/${course?.id}/register`}
+            data-testid="signup-button-id"
+          >
+            sign up
+          </Link>{" "}
+          if you prefer to use another email.
         </p>
 
         {process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ? (
