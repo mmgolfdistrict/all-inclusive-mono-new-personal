@@ -137,9 +137,48 @@ export const CheckoutForm = ({
       ?.filter(({ product_data }) => product_data.metadata.type === "sensible")
       ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
 
-  const charityCharge =
+      const charityCharge =
+      cartData
+        ?.filter(({ product_data }) => product_data.metadata.type === "charity")
+        ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+      const cartFeeCharge =
+        cartData
+          ?.filter(({ product_data }) => product_data.metadata.type === "cart_fee")
+          ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+        
+       
+        const greenFeeTaxPercent =
     cartData
-      ?.filter(({ product_data }) => product_data.metadata.type === "charity")
+      ?.filter(
+        ({ product_data }) =>
+          product_data.metadata.type === "greenFeeTaxPercent"
+      )
+      ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+  const cartFeeTaxPercent =
+    cartData
+      ?.filter(
+        ({ product_data }) => product_data.metadata.type === "cartFeeTaxPercent"
+      )
+      ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+  const weatherGuaranteeTaxPercent =
+    cartData
+      ?.filter(
+        ({ product_data }) =>
+          product_data.metadata.type === "weatherGuaranteeTaxPercent"
+      )
+      ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+  const markupFee =
+    cartData
+      ?.filter(
+        ({ product_data }) => product_data.metadata.type === "markup"
+      )
+      ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+
+  const markupTaxPercent =
+    cartData
+      ?.filter(
+        ({ product_data }) => product_data.metadata.type === "markupTaxPercent"
+      )
       ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
 
   // const cartFeeCharge =
@@ -571,13 +610,32 @@ export const CheckoutForm = ({
       handleSelectedCharityAmount(Number(numericValue));
     }
   };
+ 
+  const playersInNumber= Number(playerCount || 1)
+  const greenFeeChargePerPlayer = ((primaryGreenFeeCharge )/ playersInNumber) - (cartFeeCharge) - markupFee
+  const greenFeeTaxAmount = ( ( greenFeeChargePerPlayer ) * ( greenFeeTaxPercent  ) ) * playersInNumber  
+  const cartFeeTaxAmount = ( ( cartFeeCharge  ) * ( cartFeeTaxPercent ) ) * playersInNumber
+  const markupFeesTaxAmount = ( ( markupFee  ) * ( markupTaxPercent ) ) * playersInNumber
+  const weatherGuaranteeTaxAmount = ( ( sensibleCharge / 100 ) * ( weatherGuaranteeTaxPercent / 100 ) )
+  const additionalTaxes = (greenFeeTaxAmount+markupFeesTaxAmount+weatherGuaranteeTaxAmount+cartFeeTaxAmount)/100
+  console.log({
+    primaryGreenFeeCharge,
+    greenFeeChargePerPlayer,
+    greenFeeTaxPercent,
+    markupFee,
+    markupTaxPercent,
+    sensibleCharge,
+    weatherGuaranteeTaxPercent
+
+  });
+console.log({greenFeeTaxAmount,cartFeeTaxAmount,markupFeesTaxAmount,weatherGuaranteeTaxAmount});
 
   const TaxCharge =
     taxCharge +
     sensibleCharge +
     (!roundUpCharityId ? charityCharge : 0) +
-    convenienceCharge;
-  const totalBeforeRoundOff = primaryGreenFeeCharge + TaxCharge;
+    convenienceCharge + additionalTaxes;
+  const totalBeforeRoundOff = primaryGreenFeeCharge + TaxCharge ;
   const decimalPart = totalBeforeRoundOff % 1;
 
   const roundOff =

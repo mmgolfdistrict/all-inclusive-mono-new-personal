@@ -74,6 +74,10 @@ interface TeeTimeSearchObject {
   bookingIds?: string[];
   minimumOfferPrice?: number;
   firstHandPurchasePrice?: number;
+  greenFeeTaxPercent:number;
+  cartFeeTaxPercent:number;
+  weatherGuaranteeTaxPercent:number;
+  markupTaxPercent:number;
 }
 
 interface CheckTeeTimesAvailabilityParams {
@@ -432,6 +436,10 @@ export class SearchService {
           extension: assets.extension,
         },
         timezoneCorrection: courses.timezoneCorrection,
+        greenFeeTaxPercent:courses.greenFeeTaxPercent,
+        cartFeeTaxPercent:courses.cartFeeTaxPercent,
+        weatherGuaranteeTaxPercent:courses.weatherGuaranteeTaxPercent,
+        markupTaxPercent:courses.markupTaxPercent
       })
       .from(teeTimes)
       .where(eq(teeTimes.id, teeTimeId))
@@ -544,6 +552,10 @@ export class SearchService {
         };
       }),
       weather,
+      greenFeeTaxPercent:tee.greenFeeTaxPercent,
+        cartFeeTaxPercent:tee.cartFeeTaxPercent,
+        weatherGuaranteeTaxPercent:tee.weatherGuaranteeTaxPercent,
+        markupTaxPercent:tee.markupTaxPercent
     };
     return res;
   };

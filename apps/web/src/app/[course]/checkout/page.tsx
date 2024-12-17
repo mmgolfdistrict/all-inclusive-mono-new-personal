@@ -206,7 +206,7 @@ export default function Checkout({
       localCart.push({
         name: "Golf District Tee Time",
         id: teeTimeId ?? data?.teeTimeId,
-        price: 0, //int
+        price: teeTimeData.cartFee, //int
         image: "", //
         currency: "USD", //USD
         display_price: formatMoney(
@@ -342,6 +342,64 @@ export default function Checkout({
         },
       });
     }
+
+    if(saleType === 'first_hand'){
+     
+        localCart.push({
+          name: "green fee tax percent",
+          id: teeTimeId ?? data?.teeTimeId,
+          price: teeTimeData?.greenFeeTaxPercent || 0, //int
+          image: "", //
+          currency: "USD", //USD
+          display_price: formatMoney( teeTimeData?.greenFeeTaxPercent || 0),
+          product_data: {
+            metadata: {
+              type: "greenFeeTaxPercent"
+            },
+          },
+        });
+        localCart.push({
+          name: "cart fee tax percent",
+          id: teeTimeId ?? data?.teeTimeId,
+          price: teeTimeData?.cartFeeTaxPercent || 0, //int
+          image: "", //
+          currency: "USD", //USD
+          display_price: formatMoney( teeTimeData?.cartFeeTaxPercent || 0),
+          product_data: {
+            metadata: {
+              type: "cartFeeTaxPercent"
+            },
+          },
+        });
+        localCart.push({
+          name: "weather guarantee tax percent",
+          id: teeTimeId ?? data?.teeTimeId,
+          price: teeTimeData?.weatherGuaranteeTaxPercent || 0, //int
+          image: "", //
+          currency: "USD", //USD
+          display_price: formatMoney( teeTimeData?.weatherGuaranteeTaxPercent || 0),
+          product_data: {
+            metadata: {
+              type: "weatherGuaranteeTaxPercent"
+            },
+          },
+        });
+        localCart.push({
+          name: "markup tax percent",
+          id: teeTimeId ?? data?.teeTimeId,
+          price: teeTimeData?.markupTaxPercent || 0, //int
+          image: "", //
+          currency: "USD", //USD
+          display_price: formatMoney( teeTimeData?.markupTaxPercent || 0),
+          product_data: {
+            metadata: {
+              type: "markupTaxPercent"
+            },
+          },
+        }); 
+      
+    }
+
     return localCart;
   }, [
     sensibleData,

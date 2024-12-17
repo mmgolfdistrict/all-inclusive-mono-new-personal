@@ -96,6 +96,34 @@ export const CartFeeSchema = BaseProductSchema.extend({
     }),
   }),
 });
+export const CartFeeTaxPercentSchema = BaseProductSchema.extend({
+  product_data: z.object({
+    metadata: z.object({
+      type: z.literal("cartFeeTaxPercent"),
+     }),
+  }),
+});
+export const WeatherGuaranteeTaxPercentSchema = BaseProductSchema.extend({
+  product_data: z.object({
+    metadata: z.object({
+      type: z.literal("weatherGuaranteeTaxPercent"),
+     }),
+  }),
+});
+export const MarkupTaxPercentSchema = BaseProductSchema.extend({
+  product_data: z.object({
+    metadata: z.object({
+      type: z.literal("markupTaxPercent"),
+     }),
+  }),
+});
+export const GreenFeeTaxPercentSchema = BaseProductSchema.extend({
+  product_data: z.object({
+    metadata: z.object({
+      type: z.literal("greenFeeTaxPercent"),
+     }),
+  }),
+});
 
 // ProductData schema
 export const ProductDataSchema = z.union([
@@ -108,6 +136,11 @@ export const ProductDataSchema = z.union([
   CharityProductSchema,
   TaxSchema,
   CartFeeSchema,
+  CartFeeTaxPercentSchema,
+  GreenFeeTaxPercentSchema,
+  WeatherGuaranteeTaxPercentSchema,
+  MarkupTaxPercentSchema
+
 ]);
 
 // CustomerCart schema

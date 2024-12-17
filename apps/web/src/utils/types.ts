@@ -128,7 +128,11 @@ export type CartProduct = {
       | MarkupProduct
       | ConvenienceFeeProduct
       | TaxProduct
-      | CartFeeMetaData;
+      | CartFeeMetaData
+      | WeatherGuaranteeTaxPercentMetaData
+      | MarkupTaxPercentMetaData
+      | GreenFeeTaxPercentMetaData
+      | CartFeeTaxPercentMetaData;
   };
 };
 
@@ -140,6 +144,22 @@ export interface FirstHandProduct {
 export interface CartFeeMetaData{
   type:"cart_fee";
   amount:number | undefined;
+}
+export interface GreenFeeTaxPercentMetaData{
+  type:"greenFeeTaxPercent";
+  
+}
+export interface CartFeeTaxPercentMetaData{
+  type:"cartFeeTaxPercent";
+  
+}
+export interface WeatherGuaranteeTaxPercentMetaData{
+  type:"weatherGuaranteeTaxPercent";
+ 
+}
+export interface MarkupTaxPercentMetaData{
+  type:"markupTaxPercent";
+  
 }
 export interface SecondHandProduct {
   type: "second_hand";
