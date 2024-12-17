@@ -386,10 +386,7 @@ export class TokenizeService {
       totalCartFeeTaxAmount:additionalTaxes.cartFeeTaxPercentTotal*100,
       totalWeatherGuaranteeTaxAmount:additionalTaxes.weatherGuaranteeTaxTotal*100,
       totalMarkupFeeTaxAmount:additionalTaxes.markupTaxTotal*100,
-      cancellationFeePerPlayer:0,
-      cancellationTotalFee:0
     });
-console.log("====>Additional taxes json ",additionalTaxes);
     transfersToCreate.push({
       id: randomUUID(),
       amount: purchasePrice + (additionalTaxes.additionalTaxes*100),
@@ -588,7 +585,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       PlayerCount: players ?? 0,
       TotalAmount: formatMoney((normalizedCartData.total / 100 )+additionalTaxes.additionalTaxes),
       CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
-      CourseURL: existingTeeTime?.websiteURL,
+      CourseURL: existingTeeTime?.websiteURL ?? "",
       HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
       // BuyTeeTImeURL: `${redirectHref}`,
       // CashOutURL: `${redirectHref}/account-settings/${userId}`,
