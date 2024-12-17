@@ -100,6 +100,7 @@ export const CartFeeTaxPercentSchema = BaseProductSchema.extend({
   product_data: z.object({
     metadata: z.object({
       type: z.literal("cartFeeTaxPercent"),
+      amount:z.number().optional()
      }),
   }),
 });

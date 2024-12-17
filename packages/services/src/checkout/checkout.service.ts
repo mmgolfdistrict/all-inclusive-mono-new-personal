@@ -275,14 +275,60 @@ export class CheckoutService {
     //   const message = errors.map((message) => message.errorType)
     //   throw new Error(errors);
     // }
-    const total = customerCart.cart
-      .filter(({ product_data }) => product_data.metadata.type !== "markup")
+    const skipItemsForTotal = ["markup" ,"cart_fee" ,"greenFeeTaxPercent","cartFeeTaxPercent" ,"weatherGuaranteeTaxPercent" ,"markupTaxPercent" ]
+    
+    let total = customerCart.cart
+      .filter(({ product_data }) => !skipItemsForTotal.includes( product_data.metadata.type ))
       .reduce((acc, item) => {
         return acc + item.price;
       }, 0);
-    const isFirstHand = customerCart.cart.filter(
-      ({ product_data }) => product_data.metadata.type === "first_hand"
-    );
+    
+      const isFirstHand = customerCart.cart.filter(
+        ({ product_data }) => product_data.metadata.type === "first_hand"
+      );
+      const sensibleCharge = customerCartData?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "sensible")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+        const markupCharge =customerCartData?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "markup")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+        const cartFeeCharge =customerCartData?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "cart_fee")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+    if(isFirstHand.length){
+        if(isFirstHand[0]?.product_data.metadata.type === "first_hand"){
+          const teetimeId =  customerCart?.teeTimeId ?? ''
+          const [teeTime] = await this.database
+          .select({
+            id: teeTimes.id,
+            greenFees: teeTimes.greenFeePerPlayer,
+            cartFees: teeTimes.cartFeePerPlayer,
+            greenFeeTaxPercent:courses.greenFeeTaxPercent,
+            cartFeeTaxPercent:courses.cartFeeTaxPercent,
+            weatherGuaranteeTaxPercent:courses.weatherGuaranteeTaxPercent,
+            markupTaxPercent:courses.markupTaxPercent
+          })
+          .from(teeTimes)
+          .leftJoin(courses, eq(teeTimes.courseId, courses.id))
+          .where(eq(teeTimes.id, teetimeId))
+          .execute()
+          .catch((err) => {
+           
+            throw new Error(`Error finding tee time id`);
+          });
+          const playerCount =  isFirstHand[0]?.product_data.metadata.number_of_bookings;
+          const greenFeeTaxTotal = ( ( (teeTime?.greenFees??0) / 100 ) * (( (teeTime?.greenFeeTaxPercent??0 )/ 100)/100 ) ) * playerCount
+          const markupTaxTotal = ( ( markupCharge / 100 ) * ( (teeTime?.markupTaxPercent ?? 0) / 100 ) ) * playerCount
+          const weatherGuaranteeTaxTotal =  ( ( sensibleCharge / 100 ) * ( (teeTime?.weatherGuaranteeTaxPercent??0) / 100 ) )
+          const cartFeeTaxPercentTotal = ( ( cartFeeCharge  ) * (( teeTime?.cartFeeTaxPercent??0) / 100 )/100 ) * playerCount
+          const additionalTaxes = greenFeeTaxTotal+markupTaxTotal+weatherGuaranteeTaxTotal+cartFeeTaxPercentTotal;
+       
+         total = total + (additionalTaxes*100)
+       
+         }    
+      }
+     
+   
     // const tax = await this.stripeService.getTaxRate(customerCart.cart).catch((err) => {
     //   this.logger.error(`Error calculating tax: ${err}`);
     //   throw new Error(`Error calculating tax: ${err}`);
@@ -290,8 +336,6 @@ export class CheckoutService {
     //@TODO: metadata to include sensible
     //@TODO: update total form discount
     // debugger;
-    console.log("===>", total);
-    console.log("===>", parseInt(total.toString()));
     const [record] = await this.database
       .select({
         internalId: providers.internalId,
@@ -377,12 +421,58 @@ export class CheckoutService {
     const errors = await this.validateCartItems(customerCartData);
     console.log("errors ", JSON.stringify(errors));
 
-    const total = customerCart.cart
-      .filter(({ product_data }) => product_data.metadata.type !== "markup")
+    const skipItemsForTotal = ["markup" ,"cart_fee" ,"greenFeeTaxPercent","cartFeeTaxPercent" ,"weatherGuaranteeTaxPercent" ,"markupTaxPercent" ]
+    
+    let total = customerCart.cart
+      .filter(({ product_data }) => !skipItemsForTotal.includes( product_data.metadata.type ))
       .reduce((acc, item) => {
         return acc + item.price;
       }, 0);
-
+    
+      const isFirstHand = customerCart.cart.filter(
+        ({ product_data }) => product_data.metadata.type === "first_hand"
+      );
+      const sensibleCharge = customerCartData?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "sensible")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+        const markupCharge =customerCartData?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "markup")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+        const cartFeeCharge =customerCartData?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "cart_fee")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+    if(isFirstHand.length){
+        if(isFirstHand[0]?.product_data.metadata.type === "first_hand"){
+          const teetimeId =  customerCart?.teeTimeId ?? ''
+          const [teeTime] = await this.database
+          .select({
+            id: teeTimes.id,
+            greenFees: teeTimes.greenFeePerPlayer,
+            cartFees: teeTimes.cartFeePerPlayer,
+            greenFeeTaxPercent:courses.greenFeeTaxPercent,
+            cartFeeTaxPercent:courses.cartFeeTaxPercent,
+            weatherGuaranteeTaxPercent:courses.weatherGuaranteeTaxPercent,
+            markupTaxPercent:courses.markupTaxPercent
+          })
+          .from(teeTimes)
+          .leftJoin(courses, eq(teeTimes.courseId, courses.id))
+          .where(eq(teeTimes.id, teetimeId))
+          .execute()
+          .catch((err) => {
+           
+            throw new Error(`Error finding tee time id`);
+          });
+          const playerCount =  isFirstHand[0]?.product_data.metadata.number_of_bookings;
+          const greenFeeTaxTotal = ( ( (teeTime?.greenFees??0) / 100 ) * (( (teeTime?.greenFeeTaxPercent??0 )/ 100)/100 ) ) * playerCount
+          const markupTaxTotal = ( ( markupCharge / 100 ) * ( (teeTime?.markupTaxPercent ?? 0) / 100 ) ) * playerCount
+          const weatherGuaranteeTaxTotal =  ( ( sensibleCharge / 100 ) * ( (teeTime?.weatherGuaranteeTaxPercent??0) / 100 ) )
+          const cartFeeTaxPercentTotal = ( ( cartFeeCharge  ) * (( teeTime?.cartFeeTaxPercent??0) / 100 )/100 ) * playerCount
+          const additionalTaxes = greenFeeTaxTotal+markupTaxTotal+weatherGuaranteeTaxTotal+cartFeeTaxPercentTotal;
+       
+         total = total + (additionalTaxes*100)
+       
+         }    
+      }
     console.log(`paymentId = ${paymentId}`);
     console.log(`total = ${total}`);
     console.log(`userId = ${userId}`);
@@ -390,10 +480,6 @@ export class CheckoutService {
     console.log(customerCartData);
 
     // let intentData;
-
-    const isFirstHand = customerCart.cart.filter(
-      ({ product_data }) => product_data.metadata.type === "first_hand"
-    );
 
     const [record] = await this.database
       .select({

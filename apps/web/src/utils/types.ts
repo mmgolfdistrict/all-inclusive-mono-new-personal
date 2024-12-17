@@ -151,6 +151,7 @@ export interface GreenFeeTaxPercentMetaData{
 }
 export interface CartFeeTaxPercentMetaData{
   type:"cartFeeTaxPercent";
+  amount?:number
   
 }
 export interface WeatherGuaranteeTaxPercentMetaData{

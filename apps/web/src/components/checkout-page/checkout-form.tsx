@@ -618,18 +618,7 @@ export const CheckoutForm = ({
   const markupFeesTaxAmount = ( ( markupFee  ) * ( markupTaxPercent ) ) * playersInNumber
   const weatherGuaranteeTaxAmount = ( ( sensibleCharge / 100 ) * ( weatherGuaranteeTaxPercent / 100 ) )
   const additionalTaxes = (greenFeeTaxAmount+markupFeesTaxAmount+weatherGuaranteeTaxAmount+cartFeeTaxAmount)/100
-  console.log({
-    primaryGreenFeeCharge,
-    greenFeeChargePerPlayer,
-    greenFeeTaxPercent,
-    markupFee,
-    markupTaxPercent,
-    sensibleCharge,
-    weatherGuaranteeTaxPercent
-
-  });
-console.log({greenFeeTaxAmount,cartFeeTaxAmount,markupFeesTaxAmount,weatherGuaranteeTaxAmount});
-
+  
   const TaxCharge =
     taxCharge +
     sensibleCharge +
@@ -807,8 +796,8 @@ console.log({greenFeeTaxAmount,cartFeeTaxAmount,markupFeesTaxAmount,weatherGuara
             {(
               (roundUpCharityId
                 ? roundOffClick
-                  ? roundOff
-                  : TotalAmt
+                  ? roundOff 
+                  : Number(TotalAmt)+ Number(additionalTaxes)
                 : TotalAmt) || 0
             ).toLocaleString("en-US", {
               minimumFractionDigits: 2,

@@ -367,7 +367,8 @@ export default function Checkout({
           display_price: formatMoney( teeTimeData?.cartFeeTaxPercent || 0),
           product_data: {
             metadata: {
-              type: "cartFeeTaxPercent"
+              type: "cartFeeTaxPercent",
+              amount:teeTimeData?.cartFeeTaxPercent || 0
             },
           },
         });
