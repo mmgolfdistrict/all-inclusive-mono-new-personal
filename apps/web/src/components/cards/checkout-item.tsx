@@ -271,6 +271,8 @@ const Data = ({
                 src={
                   isSecondHand === true ? DEFAULT_SILHOUETTE_IMAGE : soldByImage
                 }
+                className="!min-h-[40px] !min-w-[80px] max-h-[40px] max-w-[80px] h-[40px] w-[80px] md:min-h-[40px] md:min-w-[80px] md:max-h-[40px] md:max-w-[80px] md:h-[40px] md:w-[80px] lg:w-[80px] lg:h-[40px]"
+                isRounded={false} // Conditional rounding
               />
             }
             content={
