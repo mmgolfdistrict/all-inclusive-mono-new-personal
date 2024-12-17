@@ -491,6 +491,8 @@ export const EditProfileForm = () => {
               register={register}
               name="addres&#8204;s1"
               error={errors.address1?.message}
+              data-testid="profile-address1-id"
+              inputRef={inputRef}
               showInfoTooltip={true}
               additionalContent={true}
               content="To ensure accuracy, you must type your address and select from the auto complete to automatically populate all the address fields."
