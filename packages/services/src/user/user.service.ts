@@ -23,6 +23,10 @@ import { generateUtcTimestamp } from "../../helpers";
 import type { NotificationService } from "../notification/notification.service";
 import { loggerService } from "../webhooks/logging.service";
 import { courseUser } from "@golf-district/database/schema/courseUser";
+import client from "@sendgrid/client";
+import { AppSettingsService } from "../app-settings/app-settings.service";
+
+client.setApiKey(process.env.SENDGRID_EMAIL_VALIDATION_KEY??"");
 
 const s3Client = new S3Client({
   region: process.env.AWS_REGION,
@@ -155,6 +159,16 @@ export class UserService {
         error: true,
         message:
           "Password must include uppercase, lowercase letters, numbers, and special characters (!@#$%^&*).",
+      };
+    }
+
+    const validateEmail= await this.validateEmail(data?.email)
+    
+    if(!validateEmail){
+      return {
+        error: true,
+        message:
+          "Please enter valid email address, disposable emails not allowed.",
       };
     }
 
@@ -1569,6 +1583,54 @@ export class UserService {
     return true;
   };
 
+  validateEmail= async (email: string): Promise<boolean> => {
+
+    debugger
+
+    const appSettingService = new AppSettingsService(this.database, process.env.REDIS_URL!, process.env.REDIS_TOKEN!);
+
+    const appSettings = await appSettingService.getMultiple(
+      "ALLOW_DISPOSABLE_EMAIL_ADDRESS"
+    );
+    
+    if(appSettings?.ALLOW_DISPOSABLE_EMAIL_ADDRESS=='true'){
+      return true;
+    }
+
+
+    const data = {
+      email: email,
+    };
+  
+    const request = {
+      url: "/v3/validations/email",
+      method: "POST",
+      body: data,
+    };
+  
+    try {
+      const [response, body] = await client.request(request as any);
+      // Check if the status code indicates success
+      
+      if (response.statusCode === 200) {
+        console.log("Email is valid.");
+
+        const validDomain= body?.result?.checks?.domain?.is_suspected_disposable_address
+
+        if(validDomain){
+          return false;
+        }
+
+        return true; // Return true if the email is valid
+      } else {
+        console.error("Invalid email:", body);
+        return false; // Return false if email is invalid
+      }
+    } catch (error) {
+      console.error("Error during email validation:", error);
+      return false; // If there's an error, treat it as an invalid email
+    }
+  }
   /**
    * Asynchronously inserts a new user into the database.
    *
