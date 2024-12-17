@@ -335,7 +335,6 @@ export default function RegisterPage() {
               />
             )}
           />
-
           <div className="flex items-end gap-2">
             <Controller
               name="username"
@@ -406,6 +405,9 @@ export default function RegisterPage() {
                 data-testid="register-address1-id"
                 inputRef={inputRef}
                 autoComplete="new-password"
+                showInfoTooltip={true}
+                additionalContent={true}
+                content="To ensure accuracy, you must type your address and select from the auto complete to automatically populate all the address fields."
               />
             )}
           />
@@ -561,7 +563,6 @@ export default function RegisterPage() {
               />
             )}
           />
-
           <datalist id="places">
             {cities.data?.autocompleteCities.features.map((city, idx) => (
               <option key={idx}>{city.place_name}</option>
@@ -668,7 +669,6 @@ export default function RegisterPage() {
                 {errors.ReCAPTCHA?.message}
               </p>
             )}
-
           <FilledButton
             className={`w-full rounded-full ${
               isSubmitting ? "animate-pulse cursor-not-allopwed" : ""
