@@ -86,7 +86,10 @@ export class AuthService extends CacheService {
       });
   };
 
-  addUserSession = async (userId: string, status: string, ip?: string, userAgent?: string) => {
+  addUserSession = async (userId: string, status: string, courseId: string, loginMethod: string, ip?: string, userAgent?: string) => {
+
+    console.log("loginMethod", loginMethod);
+
     try {
       await this.database
         .insert(userSession)
@@ -96,10 +99,12 @@ export class AuthService extends CacheService {
           ip: ip,
           userAgent: userAgent,
           status: status,
+          courseId: courseId,
+          loginMethod: loginMethod
         })
         .execute();
     } catch (error) {
-      console.log(error);
+      console.log("error", error);
     }
   };
 
