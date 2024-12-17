@@ -1585,8 +1585,6 @@ export class UserService {
 
   validateEmail= async (email: string): Promise<boolean> => {
 
-    debugger
-
     const appSettingService = new AppSettingsService(this.database, process.env.REDIS_URL!, process.env.REDIS_TOKEN!);
 
     const appSettings = await appSettingService.getMultiple(
