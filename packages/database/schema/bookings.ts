@@ -45,7 +45,11 @@ export const bookings = mySqlTable(
     markupFees: int("markupFees"),
     isTest: boolean("isTest").default(false).notNull(),
     cartFeePerPlayer: int("cartFeePerPlayer").notNull().default(0),
-  },
+    totalGreenFeeTaxAmount: int("totalGreenFeeTaxAmount").notNull().default(0),
+    totalCartFeeTaxAmount: int("totalCartFeeTaxAmount").notNull().default(0),
+    totalWeatherGuaranteeTaxAmount: int("totalWeatherGuaranteeTaxAmount").notNull().default(0),
+    totalMarkupFeeTaxAmount: int("totalMarkupFeeTaxAmount").notNull().default(0)
+    },
   (table) => {
     return {
       listIdIdx: index("Booking_listId_idx").on(table.listId),
