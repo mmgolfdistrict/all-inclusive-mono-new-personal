@@ -321,11 +321,9 @@ export class CheckoutService {
           const markupTaxTotal = ( ( markupCharge / 100 ) * ( (teeTime?.markupTaxPercent ?? 0) / 100 ) ) * playerCount
           const weatherGuaranteeTaxTotal =  ( ( sensibleCharge / 100 ) * ( (teeTime?.weatherGuaranteeTaxPercent??0) / 100 ) )
           const cartFeeTaxPercentTotal = ( ( cartFeeCharge  ) * (( teeTime?.cartFeeTaxPercent??0) / 100 )/100 ) * playerCount
-          const additionalTaxes = greenFeeTaxTotal+markupTaxTotal+weatherGuaranteeTaxTotal+cartFeeTaxPercentTotal;
-       
-         total = total + (additionalTaxes*100)
-       
-         }    
+          const additionalTaxes =Number((greenFeeTaxTotal+markupTaxTotal+weatherGuaranteeTaxTotal+cartFeeTaxPercentTotal).toFixed(2));
+          total = total + (additionalTaxes*100)
+        }    
       }
      
    
@@ -423,7 +421,7 @@ export class CheckoutService {
 
     const skipItemsForTotal = ["markup" ,"cart_fee" ,"greenFeeTaxPercent","cartFeeTaxPercent" ,"weatherGuaranteeTaxPercent" ,"markupTaxPercent" ]
     
-    let total = customerCart.cart
+    let total:number = customerCart.cart
       .filter(({ product_data }) => !skipItemsForTotal.includes( product_data.metadata.type ))
       .reduce((acc, item) => {
         return acc + item.price;
@@ -467,9 +465,8 @@ export class CheckoutService {
           const markupTaxTotal = ( ( markupCharge / 100 ) * ( (teeTime?.markupTaxPercent ?? 0) / 100 ) ) * playerCount
           const weatherGuaranteeTaxTotal =  ( ( sensibleCharge / 100 ) * ( (teeTime?.weatherGuaranteeTaxPercent??0) / 100 ) )
           const cartFeeTaxPercentTotal = ( ( cartFeeCharge  ) * (( teeTime?.cartFeeTaxPercent??0) / 100 )/100 ) * playerCount
-          const additionalTaxes = greenFeeTaxTotal+markupTaxTotal+weatherGuaranteeTaxTotal+cartFeeTaxPercentTotal;
-       
-         total = total + (additionalTaxes*100)
+          const additionalTaxes =Number((greenFeeTaxTotal+markupTaxTotal+weatherGuaranteeTaxTotal+cartFeeTaxPercentTotal).toFixed(2));
+          total = total + (additionalTaxes*100)
        
          }    
       }

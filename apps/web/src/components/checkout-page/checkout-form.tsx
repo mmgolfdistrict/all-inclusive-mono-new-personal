@@ -127,7 +127,7 @@ export const CheckoutForm = ({
         ({ product_data }) => product_data.metadata.type === "convenience_fee"
       )
       ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
-  const taxCharge =
+  let taxCharge =
     cartData
       ?.filter(({ product_data }) => product_data.metadata.type === "taxes")
       ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
@@ -582,17 +582,7 @@ export const CheckoutForm = ({
     return bookingResponse;
   };
 
-  const Total =
-    primaryGreenFeeCharge +
-    taxCharge +
-    sensibleCharge +
-    (!roundUpCharityId ? charityCharge : 0) +
-    convenienceCharge +
-    (!roundUpCharityId ? 0 : Number(donateValue));
-  const TotalAmt = Total.toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
+  
 
   const handleDonateChange = (event) => {
     const value = event.target.value.trim() as string;
@@ -616,14 +606,26 @@ export const CheckoutForm = ({
   const greenFeeTaxAmount = ( ( greenFeeChargePerPlayer ) * ( greenFeeTaxPercent  ) ) * playersInNumber  
   const cartFeeTaxAmount = ( ( cartFeeCharge  ) * ( cartFeeTaxPercent ) ) * playersInNumber
   const markupFeesTaxAmount = ( ( markupFee  ) * ( markupTaxPercent ) ) * playersInNumber
-  const weatherGuaranteeTaxAmount = ( ( sensibleCharge / 100 ) * ( weatherGuaranteeTaxPercent / 100 ) )
+  const weatherGuaranteeTaxAmount = ( ( sensibleCharge  ) * ( (weatherGuaranteeTaxPercent ) ) )
   const additionalTaxes = (greenFeeTaxAmount+markupFeesTaxAmount+weatherGuaranteeTaxAmount+cartFeeTaxAmount)/100
   
+  taxCharge += additionalTaxes;
+  const Total =
+    primaryGreenFeeCharge +
+    taxCharge +
+    sensibleCharge +
+    (!roundUpCharityId ? charityCharge : 0) +
+    convenienceCharge +
+    (!roundUpCharityId ? 0 : Number(donateValue));
+  const TotalAmt = Total.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
   const TaxCharge =
     taxCharge +
     sensibleCharge +
     (!roundUpCharityId ? charityCharge : 0) +
-    convenienceCharge + additionalTaxes;
+    convenienceCharge ;
   const totalBeforeRoundOff = primaryGreenFeeCharge + TaxCharge ;
   const decimalPart = totalBeforeRoundOff % 1;
 
@@ -797,7 +799,7 @@ export const CheckoutForm = ({
               (roundUpCharityId
                 ? roundOffClick
                   ? roundOff 
-                  : Number(TotalAmt)+ Number(additionalTaxes)
+                  : Number(TotalAmt)
                 : TotalAmt) || 0
             ).toLocaleString("en-US", {
               minimumFractionDigits: 2,
