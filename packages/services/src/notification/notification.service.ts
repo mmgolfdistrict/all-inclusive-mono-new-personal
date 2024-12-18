@@ -127,7 +127,7 @@ export class NotificationService {
     const bccEmails = bccEmailsList.split(",");
 
     //if (process.env.NODE_ENV === "production") {
-    await this.sendGridClient
+    const response = await this.sendGridClient
       .send({
         to: email,
         from: this.sendGrid_email,
@@ -149,7 +149,7 @@ export class NotificationService {
             body,
           }),
         });
-        throw new Error(`Failed to send email to: ${email}`);
+        throw new Error(`Failed to send email to: ${email}, Response: ${JSON.stringify(response)}`);
       });
     // } else {
     //   console.log("Sending email (simulated):", {
@@ -178,7 +178,7 @@ export class NotificationService {
 
     const appSettings = await appSettingService.getMultiple("ENABLE_ICS_ATTACHMENT");
     if (appSettings?.ENABLE_ICS_ATTACHMENT === "false") {
-      await this.sendGridClient
+      const response = await this.sendGridClient
         .send({
           to: email,
           from: this.sendGrid_email,
@@ -203,10 +203,10 @@ export class NotificationService {
               attachments,
             }),
           });
-          throw new Error(`Failed to send email to: ${email}`);
+          throw new Error(`Failed to send email to: ${email}, Response: ${JSON.stringify(response)}`);
         });
     } else {
-      await this.sendGridClient
+      const response = await this.sendGridClient
         .send({
           to: email,
           from: this.sendGrid_email,
@@ -232,7 +232,7 @@ export class NotificationService {
               attachments,
             }),
           });
-          throw new Error(`Failed to send email to: ${email}`);
+          throw new Error(`Failed to send email to: ${email}, Response: ${JSON.stringify(response)}`);
         });
     }
   };

@@ -3477,8 +3477,8 @@ const additionalTaxes = greenFeeTaxTotal+markupTaxTotal+weatherGuaranteeTaxTotal
           };
           const addSalesOptions = provider.getSalesDataOptions(booking, bookingsDetails);
           await provider.addSalesData(addSalesOptions);
-        } catch (error) {
-          this.logger.error(`Error adding sales data, ${error}`);
+        } catch (error: any) {
+          this.logger.error(`Error adding sales data, ${JSON.stringify(error.message)}`);
           loggerService.errorLog({
             userId: userId,
             url: "/reserveBooking",
@@ -3489,6 +3489,7 @@ const additionalTaxes = greenFeeTaxTotal+markupTaxTotal+weatherGuaranteeTaxTotal
               userId,
               teeTimeId,
               error,
+              booking: JSON.stringify(booking),
             }),
           });
         }

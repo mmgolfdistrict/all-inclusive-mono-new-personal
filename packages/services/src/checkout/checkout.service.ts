@@ -629,7 +629,7 @@ export class CheckoutService {
           console.log(" switch in cart-fee");
           break;
         default:
-          this.logger.error(`Unknown product type: ${item.product_data.metadata}`);
+          this.logger.error(`Unknown product type: ${JSON.stringify(item.product_data.metadata)}`);
           loggerService.errorLog({
             userId: "",
             url: "/CheckoutService/validateCartItems",

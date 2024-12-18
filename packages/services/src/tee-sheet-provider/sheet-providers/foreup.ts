@@ -585,7 +585,7 @@ export class foreUp extends BaseProvider {
         )}`
       );
     } catch (error: any) {
-      this.logger.error(`Error adding sales data: ${error}`);
+      this.logger.error(`Error adding sales data: ${JSON.stringify(error)}`);
       loggerService.errorLog({
         userId: "",
         url: "/Foreup/addSalesData",

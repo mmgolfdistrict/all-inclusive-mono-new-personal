@@ -971,7 +971,7 @@ export class HyperSwitchWebhookService {
             const addSalesOptions = provider.getSalesDataOptions(newBooking, bookingsDetails);
             await provider.addSalesData(addSalesOptions);
           } catch (error) {
-            this.logger.error(`Error adding sales data, ${error}`);
+            this.logger.error(`Error adding sales data, ${JSON.stringify(error)}`);
           }
         }
       } catch (e) {
@@ -1076,7 +1076,7 @@ export class HyperSwitchWebhookService {
             const addSalesOptions = provider.getSalesDataOptions(newBookingSecond, bookingsDetails);
             await provider.addSalesData(addSalesOptions);
           } catch (error) {
-            this.logger.error(`Error adding sales data, ${error}`);
+            this.logger.error(`Error adding sales data, ${JSON.stringify(error)}`);
           }
         }
         if (!newBookingSecond.data) {
