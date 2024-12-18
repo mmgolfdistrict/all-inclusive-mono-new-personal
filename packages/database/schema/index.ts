@@ -6,6 +6,7 @@ import * as assets from "./assets";
 import * as auctionAssets from "./auctionAssets";
 import * as auctions from "./auctions";
 import * as auditlog from "./auditlog";
+import * as authenticationMethod from "./authenticationMethod";
 import * as bids from "./bids";
 import * as bookings from "./bookings";
 import * as cashouts from "./cashout";
@@ -112,4 +113,5 @@ export const schema = {
   ...courseAllowedTimeToSell,
   ...userSession,
   ...courseUser,
+  ...authenticationMethod
 };

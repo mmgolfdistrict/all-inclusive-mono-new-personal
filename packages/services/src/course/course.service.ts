@@ -22,6 +22,7 @@ import { courseAllowedTimeToSell } from "@golf-district/database/schema/courseAl
 import dayjs from "dayjs";
 import utc from 'dayjs/plugin/utc';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
+import { authenticationMethod } from "@golf-district/database/schema/authenticationMethod";
 dayjs.extend(utc);
 dayjs.extend(customParseFormat);
 
@@ -932,4 +933,41 @@ export class CourseService extends DomainService {
 
     return privacyPolicyAndTC[0];
   };
+  getAuthenticationMethods = async (courseId: string) => {
+
+    const selecteCourse = await this.database
+      .select({
+        authenticationMethods: courses.authenticationMethods
+      })
+      .from(courses)
+      .where(eq(courses.id, courseId));
+
+    if (!selecteCourse?.[0]) {
+      return [];
+    }
+
+    if (selecteCourse[0].authenticationMethods === null) {
+      const allMethods = await this.database.select({
+        name: authenticationMethod.name
+      }).from(authenticationMethod).execute();
+      return allMethods.map(method => method.name);
+    }
+
+    const authenticationMethodsValue = selecteCourse[0].authenticationMethods;
+
+    const supportedMethods = await this.database
+      .select({
+        id: authenticationMethod.id,
+        value: authenticationMethod.value,
+        name: authenticationMethod.name
+      })
+      .from(authenticationMethod)
+      .execute();
+
+    const filteredMethodNames = supportedMethods
+      .filter((method) => (authenticationMethodsValue & method.value) > 0)
+      .map((method) => method.name);
+
+    return filteredMethodNames;
+  }
 }
