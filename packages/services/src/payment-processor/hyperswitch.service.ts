@@ -362,11 +362,15 @@ export class HyperSwitchService {
     const adminEmail: string = process.env.ADMIN_EMAIL_LIST || "nara@golfdistrict.com";
     const emailAterSplit = adminEmail.split(",");
     emailAterSplit.map(async (email) => {
-      await this.notificationService.sendEmail(
-        email,
-        "A payment has failed ",
-        `payment with paymentid ${paymentMethodId} failed. UserId: ${userId}, Email: ${userEmail}, Phone: ${phone}, ${teeTimeId ? `TeeTimeId: ${teeTimeId}` : `ListingId: ${listingId}`}, CourseId: ${courseId}, CartId: ${cartId}`
-      );
+      try {
+        await this.notificationService.sendEmail(
+          email,
+          "A payment has failed ",
+          `payment with paymentid ${paymentMethodId} failed. UserId: ${userId}, Email: ${userEmail}, Phone: ${phone}, ${teeTimeId ? `TeeTimeId: ${teeTimeId}` : `ListingId: ${listingId}`}, CourseId: ${courseId}, CartId: ${cartId}`
+        );
+      } catch (error) {
+        console.log(`Error sending email to ${email}: ${JSON.stringify(error)}`);
+      }
     });
     return { status: "success" };
   };
@@ -375,11 +379,15 @@ export class HyperSwitchService {
     const adminEmail: string = process.env.ADMIN_EMAIL_LIST || "nara@golfdistrict.com";
     const emailAterSplit = adminEmail.split(",");
     emailAterSplit.map(async (email) => {
-      await this.notificationService.sendEmail(
-        email,
-        `A booking has failed - (${bookingStage})`,
-        `Hello Admin, A booking with payment id ${paymentId} failed, CourseId: ${courseId}, CartId: ${cartId}, SensibleQuoteId: ${sensibleQuoteId}, UserId: ${userId}`
-      );
+      try {
+        await this.notificationService.sendEmail(
+          email,
+          `A booking has failed - (${bookingStage})`,
+          `Hello Admin, A booking with payment id ${paymentId} failed, CourseId: ${courseId}, CartId: ${cartId}, SensibleQuoteId: ${sensibleQuoteId}, UserId: ${userId}`
+        );
+      } catch (error) {
+        console.log(`Error sending email to ${email}: ${JSON.stringify(error)}`);
+      }
     });
     return { status: "success" };
   };
@@ -388,11 +396,15 @@ export class HyperSwitchService {
     const adminEmail: string = process.env.ADMIN_EMAIL_LIST || "nara@golfdistrict.com";
     const emailAterSplit = adminEmail.split(",");
     emailAterSplit.map(async (email) => {
-      await this.notificationService.sendEmail(
-        email,
-        `A booking has failed by timeout`,
-        `Hello Admin, A booking with payment id ${paymentId} timedout, CourseId: ${courseId}, CartId: ${cartId}, SensibleQuoteId: ${sensibleQuoteId}, UserId: ${userId}`
-      );
+      try {
+        await this.notificationService.sendEmail(
+          email,
+          `A booking has failed by timeout`,
+          `Hello Admin, A booking with payment id ${paymentId} timedout, CourseId: ${courseId}, CartId: ${cartId}, SensibleQuoteId: ${sensibleQuoteId}, UserId: ${userId}`
+        );
+      } catch (error) {
+        console.log(`Error sending email to ${email}: ${JSON.stringify(error)}`);
+      }
     });
     return { status: "success" };
   };
@@ -409,11 +421,15 @@ export class HyperSwitchService {
     const adminEmail: string = process.env.ADMIN_EMAIL_LIST || "nara@golfdistrict.com";
     const emailAterSplit = adminEmail.split(",");
     emailAterSplit.map(async (email) => {
-      await this.notificationService.sendEmail(
-        email,
-        "A payment has failed ",
-        `payment with paymentid ${paymentMethodId} failed. UserId: ${userId}, Email: ${userEmail}, Phone: ${phone}, TeeTimeId: ${teeTimeId}, CourseId: ${courseId}`
-      );
+      try {
+        await this.notificationService.sendEmail(
+          email,
+          "A payment has failed ",
+          `payment with paymentid ${paymentMethodId} failed. UserId: ${userId}, Email: ${userEmail}, Phone: ${phone}, TeeTimeId: ${teeTimeId}, CourseId: ${courseId}`
+        );
+      } catch (error) {
+        console.log(`Error sending email to ${email}: ${JSON.stringify(error)}`);
+      }
     });
     if (jsonRes.error) {
       return { status: "Cannot delete payment" };

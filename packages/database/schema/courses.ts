@@ -62,6 +62,10 @@ export const courses = mySqlTable(
     paymentInstrumentId: varchar("paymentInstrumentId", { length: 36 }).default("N/A").notNull(),
     isBookingDisabled: tinyint("isBookingDisabled").default(0).notNull(),
     authenticationMethods: int("authenticationMethods"),
+    greenFeeTaxPercent: int("greenFeeTaxPercent").default(0).notNull(),
+    cartFeeTaxPercent: int("cartFeeTaxPercent").default(0).notNull(),
+    weatherGuaranteeTaxPercent: int("weatherGuaranteeTaxPercent").default(0).notNull(),
+    markupTaxPercent: int("markupTaxPercent").default(0).notNull(),
   },
   (table) => {
     return {

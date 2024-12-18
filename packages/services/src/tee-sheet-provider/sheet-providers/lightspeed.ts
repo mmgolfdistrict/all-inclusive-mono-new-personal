@@ -652,7 +652,7 @@ export class Lightspeed extends BaseProvider {
                         responseData
                     })
                 })
-                throw new Error(`Error adding sales data: ${responseData}`);
+                throw new Error(`Error adding sales data: ${JSON.stringify(responseData)}`);
             }
 
             const salesResponse = await response.json();
@@ -662,8 +662,8 @@ export class Lightspeed extends BaseProvider {
                     salesResponse
                 )}`
             );
-        } catch (error) {
-            this.logger.error(`Error adding sales data: ${error}`);
+        } catch (error: any) {
+            this.logger.error(`Error adding sales data: ${JSON.stringify(error.message)}`);
             loggerService.errorLog({
                 userId: "",
                 url: "/Lightspeed/addSalesData",
@@ -674,6 +674,7 @@ export class Lightspeed extends BaseProvider {
                     options,
                 })
             })
+            throw new Error(`Error adding sales data: ${JSON.stringify(error.message)}`);
         }
     };
 
