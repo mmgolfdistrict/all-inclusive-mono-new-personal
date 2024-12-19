@@ -25,6 +25,7 @@ import ReCAPTCHA from "react-google-recaptcha";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
 import { LoadingContainer } from "../loader";
+import { AuthenticationMethodEnum } from "@golf-district/shared";
 
 declare global {
   interface Window {
@@ -81,12 +82,12 @@ export default function Login() {
     }
   };
 
-  const { data: authenticationMethods } =
+  const { data: authenticationMethods, isLoading: authenticationMethodsLoading } =
     api.course.getAuthenticationMethods.useQuery({
       courseId: course?.id ?? "",
-    });
+    })
 
-  const isMethodSupported = (method: string) => {
+  const isMethodSupported = (method: AuthenticationMethodEnum) => {
     return authenticationMethods?.includes(method);
   };
 
@@ -384,7 +385,7 @@ export default function Login() {
   return isLoading ||
     localStorageGoogle ||
     localstorageLinkedin ||
-    localstorageFacebook ? (
+    localstorageFacebook || authenticationMethodsLoading ? (
     <LoadingContainer isLoading={true}>
       <div></div>
     </LoadingContainer>
@@ -398,7 +399,7 @@ export default function Login() {
       </h1>
       <section className="mx-auto flex w-full flex-col gap-2 bg-white p-5 sm:max-w-[500px] sm:rounded-xl sm:p-6">
 
-        {isMethodSupported("Email/Password") ? <p>
+        {isMethodSupported(AuthenticationMethodEnum.EMAIL_PASSWORD) ? <p>
           First time users of Golf District need to create a new account. Simply
           use any social login like Google to login quickly, or select{" "}
           <Link
@@ -416,7 +417,7 @@ export default function Login() {
         </p>}
 
 
-        {isMethodSupported("Google") &&
+        {isMethodSupported(AuthenticationMethodEnum.GOOGLE) &&
           process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ? (
           <div className="w-full rounded-lg shadow-outline">
             <SquareButton
@@ -437,7 +438,7 @@ export default function Login() {
             </SquareButton>
           </div>
         ) : null}
-        {isMethodSupported("LinkedIn") &&
+        {isMethodSupported(AuthenticationMethodEnum.LINKEDIN) &&
           process.env.NEXT_PUBLIC_LINKEDIN_ENABLED_AUTH_SUPPORT ? (
           <div className="w-full rounded-lg shadow-outline">
             <SquareButton
@@ -458,7 +459,7 @@ export default function Login() {
             </SquareButton>
           </div>
         ) : null}
-        {isMethodSupported("Apple") && process.env.NEXT_PUBLIC_APPLE_ID ? (
+        {isMethodSupported(AuthenticationMethodEnum.APPLE) && process.env.NEXT_PUBLIC_APPLE_ID ? (
           <SquareButton
             onClick={appleSignIn}
             className="flex items-center justify-center gap-3 bg-black text-white"
@@ -468,7 +469,7 @@ export default function Login() {
             Log In with Apple
           </SquareButton>
         ) : null}
-        {isMethodSupported("Facebook") &&
+        {isMethodSupported(AuthenticationMethodEnum.FACEBOOK) &&
           process.env.NEXT_PUBLIC_FACEBOOK_CLIENT_ID ? (
           <SquareButton
             onClick={facebookSignIn}
@@ -489,14 +490,14 @@ export default function Login() {
             )}
           </SquareButton>
         ) : null}
-        {isMethodSupported("Email/Password") && authenticationMethods?.length !== 1 && hasProvidersSetUp ? (
+        {isMethodSupported(AuthenticationMethodEnum.EMAIL_PASSWORD) && authenticationMethods?.length !== 1 && hasProvidersSetUp ? (
           <div className="flex items-center py-4">
             <div className="h-[1px] w-full bg-stroke" />
             <div className="px-2 text-primary-gray">or</div>
             <div className="h-[1px] w-full bg-stroke" />
           </div>
         ) : null}
-        {isMethodSupported("Email/Password") && (
+        {isMethodSupported(AuthenticationMethodEnum.EMAIL_PASSWORD) && (
           <form
             className="flex flex-col gap-2"
             onSubmit={handleSubmit(onSubmit)}
@@ -571,7 +572,7 @@ export default function Login() {
         )}
       </section>
       {
-        isMethodSupported("Email/Password") && <div className="pt-4 text-center text-[14px] text-primary-gray">
+        isMethodSupported(AuthenticationMethodEnum.EMAIL_PASSWORD) && <div className="pt-4 text-center text-[14px] text-primary-gray">
           Don&apos;t have an account?{" "}
           <Link
             className="text-primary"
