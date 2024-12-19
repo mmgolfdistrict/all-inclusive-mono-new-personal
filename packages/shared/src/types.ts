@@ -208,7 +208,7 @@ export type ReserveTeeTimeResponse = {
   bookingId: string;
   providerBookingId: string;
   status: string;
-  isEmailSend:boolean
+  isEmailSend: boolean
 };
 
 export type NotificationObject = {
@@ -219,4 +219,14 @@ export type NotificationObject = {
   displayType: string;
   startDate: string;
   endDate: string;
+}
+
+export enum AuthenticationMethodEnum {
+  EMAIL_PASSWORD = 1,   // 00000001
+  GOOGLE = 2,           // 00000010
+  LINKEDIN = 4,         // 00000100
+  FACEBOOK = 8,         // 00001000
+  INSTAGRAM = 16,       // 00010000
+  MICROSOFT = 32,      // 00100000
+  APPLE = 64,           // 01000000
 }

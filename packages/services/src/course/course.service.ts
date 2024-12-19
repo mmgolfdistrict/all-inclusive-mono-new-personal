@@ -11,7 +11,7 @@ import type { InsertCourses } from "@golf-district/database/schema/courses";
 import { entities } from "@golf-district/database/schema/entities";
 import { lists } from "@golf-district/database/schema/lists";
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
-import { currentUtcTimestamp, getApexDomain, validDomainRegex } from "@golf-district/shared";
+import { AuthenticationMethodEnum, currentUtcTimestamp, getApexDomain, validDomainRegex } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
 import { DomainService } from "../domain/domain.service";
 import type { ProviderService } from "../tee-sheet-provider/providers.service";
@@ -934,40 +934,35 @@ export class CourseService extends DomainService {
     return privacyPolicyAndTC[0];
   };
   getAuthenticationMethods = async (courseId: string) => {
-
-    const selecteCourse = await this.database
+    const selectedCourse = await this.database
       .select({
         authenticationMethods: courses.authenticationMethods
       })
       .from(courses)
       .where(eq(courses.id, courseId));
 
-    if (!selecteCourse?.[0]) {
+    if (!selectedCourse?.[0]) {
       return [];
     }
 
-    if (selecteCourse[0].authenticationMethods === null) {
-      const allMethods = await this.database.select({
-        name: authenticationMethod.name
-      }).from(authenticationMethod).execute();
-      return allMethods.map(method => method.name);
+    const authenticationMethodsValue = selectedCourse[0].authenticationMethods;
+
+    if (authenticationMethodsValue === null || authenticationMethodsValue === undefined) {
+      return Object.keys(AuthenticationMethodEnum)
+        .filter(key => isNaN(Number(key)))
+        .map(key => AuthenticationMethodEnum[key as keyof typeof AuthenticationMethodEnum])
     }
 
-    const authenticationMethodsValue = selecteCourse[0].authenticationMethods;
+    const filteredMethodNames = Object.keys(AuthenticationMethodEnum)
+      .filter(key => isNaN(Number(key)))
+      .filter((key) => {
+        const methodValue = AuthenticationMethodEnum[key as keyof typeof AuthenticationMethodEnum];
+        return (authenticationMethodsValue & methodValue) > 0;
+      }).map(key => AuthenticationMethodEnum[key as keyof typeof AuthenticationMethodEnum]);
 
-    const supportedMethods = await this.database
-      .select({
-        id: authenticationMethod.id,
-        value: authenticationMethod.value,
-        name: authenticationMethod.name
-      })
-      .from(authenticationMethod)
-      .execute();
-
-    const filteredMethodNames = supportedMethods
-      .filter((method) => (authenticationMethodsValue & method.value) > 0)
-      .map((method) => method.name);
+    console.log("filteredMethodNames", filteredMethodNames);
 
     return filteredMethodNames;
   }
+
 }
