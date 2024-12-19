@@ -81,6 +81,15 @@ export default function Login() {
     }
   };
 
+  const { data: authenticationMethods } =
+    api.course.getAuthenticationMethods.useQuery({
+      courseId: course?.id ?? "",
+    });
+
+  const isMethodSupported = (method: string) => {
+    return authenticationMethods?.includes(method);
+  };
+
   useEffect(() => {
     if (errorKey === "AccessDenied" && !toast.isActive("accessDeniedToast")) {
       const url = new URL(window.location.href);
@@ -99,13 +108,12 @@ export default function Login() {
       addLoginSession();
       logAudit(sessionData.user.id, course.id, () => {
         window.location.reload();
-        window.location.href = `${window.location.origin}${
-          GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
-            ? prevPath?.path
-              ? prevPath.path
-              : "/"
+        window.location.href = `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+          ? prevPath?.path
+            ? prevPath.path
             : "/"
-        }`;
+          : "/"
+          }`;
       });
     }
   }, [sessionData, course, status]);
@@ -235,7 +243,7 @@ export default function Login() {
     } catch (error) {
       toast.error(
         (error as Error)?.message ??
-          "An error occurred logging in, try another option."
+        "An error occurred logging in, try another option."
       );
     } finally {
       setIsLoading(false);
@@ -284,13 +292,12 @@ export default function Login() {
 
   const appleSignIn = async () => {
     await signIn("apple", {
-      callbackUrl: `${window.location.origin}${
-        GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
-          ? prevPath?.path
-            ? prevPath.path
-            : "/"
+      callbackUrl: `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+        ? prevPath?.path
+          ? prevPath.path
           : "/"
-      }`,
+        : "/"
+        }`,
       redirect: true,
     });
   };
@@ -390,7 +397,8 @@ export default function Login() {
         Login
       </h1>
       <section className="mx-auto flex w-full flex-col gap-2 bg-white p-5 sm:max-w-[500px] sm:rounded-xl sm:p-6">
-        <p>
+
+        {isMethodSupported("Email/Password") ? <p>
           First time users of Golf District need to create a new account. Simply
           use any social login like Google to login quickly, or select{" "}
           <Link
@@ -401,9 +409,15 @@ export default function Login() {
             sign up
           </Link>{" "}
           if you prefer to use another email.
-        </p>
+        </p> : <p>
+          First time users of Golf District need to create a new account. Simply
+          use any social login like Google to login quickly.
 
-        {process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ? (
+        </p>}
+
+
+        {isMethodSupported("Google") &&
+          process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ? (
           <div className="w-full rounded-lg shadow-outline">
             <SquareButton
               onClick={googleSignIn}
@@ -423,7 +437,8 @@ export default function Login() {
             </SquareButton>
           </div>
         ) : null}
-        {process.env.NEXT_PUBLIC_LINKEDIN_ENABLED_AUTH_SUPPORT ? (
+        {isMethodSupported("LinkedIn") &&
+          process.env.NEXT_PUBLIC_LINKEDIN_ENABLED_AUTH_SUPPORT ? (
           <div className="w-full rounded-lg shadow-outline">
             <SquareButton
               onClick={linkedinSignIn}
@@ -443,7 +458,7 @@ export default function Login() {
             </SquareButton>
           </div>
         ) : null}
-        {process.env.NEXT_PUBLIC_APPLE_ID ? (
+        {isMethodSupported("Apple") && process.env.NEXT_PUBLIC_APPLE_ID ? (
           <SquareButton
             onClick={appleSignIn}
             className="flex items-center justify-center gap-3 bg-black text-white"
@@ -453,7 +468,8 @@ export default function Login() {
             Log In with Apple
           </SquareButton>
         ) : null}
-        {process.env.NEXT_PUBLIC_FACEBOOK_CLIENT_ID ? (
+        {isMethodSupported("Facebook") &&
+          process.env.NEXT_PUBLIC_FACEBOOK_CLIENT_ID ? (
           <SquareButton
             onClick={facebookSignIn}
             className="flex items-center justify-center gap-3 bg-facebook text-white"
@@ -473,93 +489,101 @@ export default function Login() {
             )}
           </SquareButton>
         ) : null}
-        {hasProvidersSetUp ? (
+        {isMethodSupported("Email/Password") && authenticationMethods?.length !== 1 && hasProvidersSetUp ? (
           <div className="flex items-center py-4">
             <div className="h-[1px] w-full bg-stroke" />
             <div className="px-2 text-primary-gray">or</div>
             <div className="h-[1px] w-full bg-stroke" />
           </div>
         ) : null}
-        <form className="flex flex-col gap-2" onSubmit={handleSubmit(onSubmit)}>
-          <Input
-            label="Email"
-            type="email"
-            placeholder="Enter your email address"
-            id="email"
-            register={register}
-            name="email"
-            error={errors.email?.message}
-            data-testid="login-email-id"
-          />
-          <div className="relative">
+        {isMethodSupported("Email/Password") && (
+          <form
+            className="flex flex-col gap-2"
+            onSubmit={handleSubmit(onSubmit)}
+          >
             <Input
-              label="Password"
-              type={showPassword ? "text" : "password"}
-              id="password"
-              placeholder="Enter your password"
+              label="Email"
+              type="email"
+              placeholder="Enter your email address"
+              id="email"
               register={register}
-              name="password"
-              error={errors.password?.message}
-              data-testid="login-password-id"
+              name="email"
+              error={errors.email?.message}
+              data-testid="login-email-id"
             />
-            <IconButton
-              onClick={(e) => {
-                e.preventDefault();
-                setShowPassword(!showPassword);
-              }}
-              className={`absolute right-2 !top-[90%] border-none !bg-transparent !transform !-translate-y-[90%]`}
-              data-testid="login-show-password-id"
+            <div className="relative">
+              <Input
+                label="Password"
+                type={showPassword ? "text" : "password"}
+                id="password"
+                placeholder="Enter your password"
+                register={register}
+                name="password"
+                error={errors.password?.message}
+                data-testid="login-password-id"
+              />
+              <IconButton
+                onClick={(e) => {
+                  e.preventDefault();
+                  setShowPassword(!showPassword);
+                }}
+                className={`absolute right-2 !top-[90%] border-none !bg-transparent !transform !-translate-y-[90%]`}
+                data-testid="login-show-password-id"
+              >
+                {showPassword ? (
+                  <Hidden className="h-[14px] w-[14px]" />
+                ) : (
+                  <Visible className="h-[14px] w-[14px]" />
+                )}
+              </IconButton>
+            </div>
+            <Link
+              className="text-[12px] text-primary"
+              href={`/${course?.id}/forgot-password`}
+              data-testid="forgot-password-id"
             >
-              {showPassword ? (
-                <Hidden className="h-[14px] w-[14px]" />
-              ) : (
-                <Visible className="h-[14px] w-[14px]" />
-              )}
-            </IconButton>
-          </div>
-          <Link
-            className="text-[12px] text-primary"
-            href={`/${course?.id}/forgot-password`}
-            data-testid="forgot-password-id"
-          >
-            Forgot password?
-          </Link>
-          {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (
-            <ReCAPTCHA
-              size={
-                process.env.NEXT_PUBLIC_RECAPTCHA_IS_INVISIBLE === "true"
-                  ? "invisible"
-                  : "normal"
-              }
-              sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ?? ""}
-              onChange={onReCAPTCHAChange}
-              ref={recaptchaRef}
-              data-testid="login-recaptcha-id"
-            />
-          )}
-          <FilledButton
-            className="w-full rounded-full flex justify-center items-center"
-            data-testid="login-button-id"
-          >
-            {localstorageCredentials ? (
-              <div className="w-5 h-5 border-4 border-white border-t-transparent rounded-full animate-spin "></div>
-            ) : (
-              "Log In"
+              Forgot password?
+            </Link>
+            {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (
+              <ReCAPTCHA
+                size={
+                  process.env.NEXT_PUBLIC_RECAPTCHA_IS_INVISIBLE === "true"
+                    ? "invisible"
+                    : "normal"
+                }
+                sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ?? ""}
+                onChange={onReCAPTCHAChange}
+                ref={recaptchaRef}
+                data-testid="login-recaptcha-id"
+              />
             )}
-          </FilledButton>
-        </form>
+            <FilledButton
+              className="w-full rounded-full flex justify-center items-center"
+              data-testid="login-button-id"
+            >
+              {localstorageCredentials ? (
+                <div className="w-5 h-5 border-4 border-white border-t-transparent rounded-full animate-spin "></div>
+              ) : (
+                "Log In"
+              )}
+            </FilledButton>
+          </form>
+        )}
       </section>
-      <div className="pt-4 text-center text-[14px] text-primary-gray">
-        Don&apos;t have an account?{" "}
-        <Link
-          className="text-primary"
-          href={`/${course?.id}/register`}
-          data-testid="signup-button-id"
-        >
-          Sign Up
-        </Link>{" "}
-        instead
-      </div>
+      {
+        isMethodSupported("Email/Password") && <div className="pt-4 text-center text-[14px] text-primary-gray">
+          Don&apos;t have an account?{" "}
+          <Link
+            className="text-primary"
+            href={`/${course?.id}/register`}
+            data-testid="signup-button-id"
+          >
+            Sign Up
+          </Link>{" "}
+          instead
+        </div>
+      }
+
     </main>
   );
 }
