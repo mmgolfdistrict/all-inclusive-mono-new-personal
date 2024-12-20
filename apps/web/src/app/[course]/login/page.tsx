@@ -102,7 +102,6 @@ export default function Login() {
       );
     }
   }, [errorKey]);
-
   useEffect(() => {
     if (sessionData?.user?.id && course?.id && status === "authenticated") {
       addCourseToUser();
@@ -152,13 +151,18 @@ export default function Login() {
       .catch((err) => {
         console.log("error", err);
       });
+
   };
 
   const addLoginSession = () => {
     if (!hasSessionLogged) {
+
+      const loginMethod = localStorage.getItem("loginMethod") as unknown as string
       addUserSession
         .mutateAsync({
           status: "LOGIN",
+          courseId: course?.id ?? "",
+          loginMethod: loginMethod ?? ""
         })
         .then(() => {
           console.log("login user added successfully");
@@ -239,8 +243,9 @@ export default function Login() {
           }
         }
         setValue("password", "");
+      } else {
+        localStorage.setItem("loginMethod", "EMAIL_PASSWORD");
       }
-      console.log("login done");
     } catch (error) {
       toast.error(
         (error as Error)?.message ??
@@ -274,7 +279,7 @@ export default function Login() {
   const facebookSignIn = async () => {
     try {
       setFacebookIsLoading(true);
-      await signIn("facebook", {
+      const res = await signIn("facebook", {
         // callbackUrl: `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
         //   ? prevPath?.path
         //     ? prevPath.path
@@ -283,6 +288,11 @@ export default function Login() {
         //   }`,
         redirect: false,
       });
+
+
+      if (!res?.error) {
+        localStorage.setItem("loginMethod", "FACEBOOK");
+      }
       if (typeof window !== "undefined") {
         localStorage.setItem("facebookstate", "loggedin");
       }
@@ -292,7 +302,7 @@ export default function Login() {
   };
 
   const appleSignIn = async () => {
-    await signIn("apple", {
+    const res = await signIn("apple", {
       callbackUrl: `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
         ? prevPath?.path
           ? prevPath.path
@@ -301,6 +311,9 @@ export default function Login() {
         }`,
       redirect: true,
     });
+    if (!res?.error) {
+      localStorage.setItem("loginMethod", "APPLE");
+    }
   };
 
   const googleSignIn = async () => {
@@ -311,7 +324,7 @@ export default function Login() {
       label: "Sign in using google",
     });
     try {
-      await signIn("google", {
+      const res = await signIn("google", {
         // callbackUrl: `${window.location.origin}${
         //   GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
         //     ? prevPath?.path
@@ -322,6 +335,9 @@ export default function Login() {
         redirect: false,
       });
 
+      if (!res?.error) {
+        localStorage.setItem("loginMethod", "GOOGLE");
+      }
       if (typeof window !== "undefined") {
         localStorage.setItem("googlestate", "loggedin");
       }
@@ -334,12 +350,16 @@ export default function Login() {
       // setGoogleIsLoading(false);
     }
   };
+
   const linkedinSignIn = async () => {
     try {
       setLinkedinIsLoading(true);
-      await signIn("linkedin", {
+      const res = await signIn("linkedin", {
         redirect: false,
       });
+      if (!res?.error) {
+        localStorage.setItem("loginMethod", "LINKEDIN");
+      }
       if (typeof window !== "undefined") {
         localStorage.setItem("linkedinstate", "loggedin");
       }
