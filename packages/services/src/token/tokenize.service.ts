@@ -306,6 +306,7 @@ export class TokenizeService {
                 : "",
             },
           });
+          console.log("================================+>",acceptedQuote);
         } catch (error: any) {
           const adminEmail: string = process.env.ADMIN_EMAIL_LIST || "nara@golfdistrict.com";
           const emailAterSplit = adminEmail.split(",");
@@ -372,7 +373,7 @@ export class TokenizeService {
       cartId: normalizedCartData.cartId,
       playerCount: players ?? 0,
       greenFeePerPlayer: (isFirstHandBooking ? existingTeeTime.greenFee : purchasePrice) || 0,
-      totalTaxesAmount: normalizedCartData.taxCharge * 100 || 0,
+      totalTaxesAmount:  additionalTaxes.additionalTaxes * 100,       // normalizedCartData.taxCharge * 100 || 0,
       charityId: normalizedCartData.charityId || null,
       totalCharityAmount: normalizedCartData.charityCharge * 100 || 0,
       totalAmount: (normalizedCartData.total || 0) + (additionalTaxes.additionalTaxes*100),
