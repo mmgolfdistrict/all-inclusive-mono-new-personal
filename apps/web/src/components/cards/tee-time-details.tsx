@@ -7,7 +7,7 @@ import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
 import { formatMoney, formatTime } from "~/utils/formatters";
 import { useRouter } from "next/navigation";
-import { useState, type ComponentProps } from "react";
+import { useState, type ComponentProps, useEffect } from "react";
 import { toast } from "react-toastify";
 import { useCopyToClipboard } from "usehooks-ts";
 import { Avatar } from "../avatar";
@@ -32,9 +32,14 @@ export const TeeTimeDetails = ({
   const { course } = useCourseContext();
   const courseId = course?.id;
 
+  const { data, isLoading, error, isError, refetch } =
+    api.searchRouter.getTeeTimeById.useQuery({ teeTimeId: teeTimeId });
+
   const { data: allowedPlayers } =
     api.course.getNumberOfPlayersByCourse.useQuery({
       courseId: courseId ?? "",
+      time: data?.time,
+      date: data?.date ?? "",
     });
   const numberOfPlayers = allowedPlayers?.numberOfPlayers;
 
@@ -46,9 +51,6 @@ export const TeeTimeDetails = ({
 
   const [, copy] = useCopyToClipboard();
   const [isCopied, setIsCopied] = useState<boolean>(false);
-
-  const { data, isLoading, error, isError, refetch } =
-    api.searchRouter.getTeeTimeById.useQuery({ teeTimeId: teeTimeId });
 
   const { user } = useUserContext();
   const router = useRouter();
@@ -98,6 +100,12 @@ export const TeeTimeDetails = ({
       toast.error((error as Error)?.message ?? "Error adding to watchlist");
     }
   };
+
+  useEffect(() => {
+    if (numberOfPlayers?.length !== 0 && numberOfPlayers !== undefined) {
+      setPlayers(String(numberOfPlayers[0]));
+    }
+  }, [allowedPlayers])
 
   if (isLoading) {
     return <Skeleton />;

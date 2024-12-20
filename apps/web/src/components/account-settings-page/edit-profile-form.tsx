@@ -128,10 +128,10 @@ export const EditProfileForm = () => {
       const country = getAddressComponent("country");
 
       // Type guard before passing to setValue
-      if(inputRef?.current){
+      if (inputRef?.current) {
         inputRef.current.value = address1;
       }
-     
+
       if (typeof address1 === "string") setValue("address1", address1);
       if (typeof address2 === "string") setValue("address2", address2);
       if (typeof state === "string") setValue("state", state);
@@ -174,7 +174,7 @@ export const EditProfileForm = () => {
       setValue("phoneNumber", userData?.phoneNumber ?? "");
       setValue("handle", userData?.handle ?? "");
       // setValue("location", userData?.location ?? "");
-      
+
       setValue("address1", userData?.address1 ?? "");
       setValue("address2", userData?.address2 ?? "");
       setValue("state", userData?.state ?? "");
@@ -338,7 +338,10 @@ export const EditProfileForm = () => {
         dataToUpdate.bannerImageAssetId = "";
         deleteFileAsset({ fileType: "bannerImage" });
       }
-      const response = await updateUser.mutateAsync({ ...dataToUpdate, courseId });
+      const response = await updateUser.mutateAsync({
+        ...dataToUpdate,
+        courseId,
+      });
 
       if (response?.error) {
         toast.error(response.message);
@@ -360,7 +363,6 @@ export const EditProfileForm = () => {
       await refetchMe();
       await refetch();
       toast.success("Profile updated successfully");
-
     } catch (error) {
       if (error?.message === "Handle already exists") {
         setError("handle", {
@@ -490,8 +492,10 @@ export const EditProfileForm = () => {
               name="addres&#8204;s1"
               error={errors.address1?.message}
               data-testid="profile-address1-id"
-              content="Handle must all be in lower case or numeric and must contain a minimum of 6 characters and maximum of 64 characters. Handle cannot contain special characters other than dot(.) and underscore(_) and any form of profanity or racism related content. Golf District reserves the right to change your handle to a random handle at any time if it violates our terms of service."
               inputRef={inputRef}
+              showInfoTooltip={true}
+              additionalContent={true}
+              content="To ensure accuracy, you must type your address and select from the auto complete to automatically populate all the address fields."
               autoComplete="new-password"
             />
           )}

@@ -74,6 +74,10 @@ interface TeeTimeSearchObject {
   bookingIds?: string[];
   minimumOfferPrice?: number;
   firstHandPurchasePrice?: number;
+  greenFeeTaxPercent:number;
+  cartFeeTaxPercent:number;
+  weatherGuaranteeTaxPercent:number;
+  markupTaxPercent:number;
 }
 
 interface CheckTeeTimesAvailabilityParams {
@@ -99,6 +103,23 @@ interface CheckTeeTimesAvailabilityParams {
   highestPrice?: number;
   lowestPrice?: number;
   _userId: string | undefined;
+}
+
+interface EventLogo {
+  key: string;
+  extension: string;
+  cdn: string;
+}
+
+interface SpecialEvent {
+  id: string;
+  eventName: string;
+  startDate: string;
+  endDate: string;
+  eventStartDate: string | null;
+  eventEndDate: string | null;
+  logo: EventLogo;
+  iconUrl: string | null;
 }
 
 type Day = {
@@ -415,6 +436,10 @@ export class SearchService {
           extension: assets.extension,
         },
         timezoneCorrection: courses.timezoneCorrection,
+        greenFeeTaxPercent:courses.greenFeeTaxPercent,
+        cartFeeTaxPercent:courses.cartFeeTaxPercent,
+        weatherGuaranteeTaxPercent:courses.weatherGuaranteeTaxPercent,
+        markupTaxPercent:courses.markupTaxPercent
       })
       .from(teeTimes)
       .where(eq(teeTimes.id, teeTimeId))
@@ -527,6 +552,10 @@ export class SearchService {
         };
       }),
       weather,
+      greenFeeTaxPercent:tee.greenFeeTaxPercent,
+        cartFeeTaxPercent:tee.cartFeeTaxPercent,
+        weatherGuaranteeTaxPercent:tee.weatherGuaranteeTaxPercent,
+        markupTaxPercent:tee.markupTaxPercent
     };
     return res;
   };
@@ -1525,7 +1554,7 @@ export class SearchService {
       : primaryDomain;
   };
 
-  getSpecialEvents = async (courseId: string) => {
+  getSpecialEvents = async (courseId: string): Promise<SpecialEvent[]> => {
     const today = dayjs().startOf("day").format("YYYY-MM-DD HH:mm:ss");
     const threeMonthsFromNow = dayjs().add(3, "month").endOf("day").format("YYYY-MM-DD HH:mm:ss");
 
@@ -1535,8 +1564,9 @@ export class SearchService {
         eventName: majorEvents.eventName,
         startDate: majorEvents.startDate,
         endDate: majorEvents.endDate,
+        eventStartDate: majorEvents.eventStartDate,
+        eventEndDate: majorEvents.eventEndDate,
         logo: {
-          //cdn: assets.cdn,
           key: assets.key,
           extension: assets.extension,
         },
@@ -1546,7 +1576,6 @@ export class SearchService {
       .where(
         and(
           eq(majorEvents.courseId, courseId),
-          lt(majorEvents.startDate, threeMonthsFromNow),
           gt(majorEvents.endDate, today),
         )
       )
@@ -1554,20 +1583,62 @@ export class SearchService {
       .limit(6)
       .execute()
       .catch((e) => {
-        console.log("Error in getting special Events");
+        console.log("Error in getting special Events", e);
+        return [];
       });
-    const cdnUrl = process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL;
-    const finalEvents = events?.map((event) => ({
-      ...event,
-      logo: {
-        ...event.logo,
-        cdn: cdnUrl,
-      },
-      iconUrl: event.logo
-        ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${event?.logo?.key}.${event?.logo?.extension}`
-        : null,
-    }));
 
-    return finalEvents;
+    const cdnUrl = process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL;
+
+    const finalEvents = events?.map((event) => {
+      let finalStartDate = today;
+      let finalEndDate = threeMonthsFromNow;
+
+      // Case 1: Both eventStartDate and eventEndDate are empty
+      if (!event.eventStartDate && !event.eventEndDate) {
+        finalStartDate = dayjs(event.startDate).subtract(3, "month").startOf("day").format("YYYY-MM-DD HH:mm:ss");
+        finalEndDate = dayjs(event.endDate).endOf("day").format("YYYY-MM-DD HH:mm:ss");
+      }
+      // Case 2: eventStartDate is present and eventEndDate is empty
+      else if (event.eventStartDate && !event.eventEndDate) {
+        finalStartDate = dayjs(event.eventStartDate).startOf("day").format("YYYY-MM-DD HH:mm:ss");
+        finalEndDate = dayjs(event.endDate).endOf("day").format("YYYY-MM-DD HH:mm:ss");
+      }
+      // Case 3: eventStartDate is empty and eventEndDate is present
+      else if (!event.eventStartDate && event.eventEndDate) {
+        finalStartDate = dayjs(event.startDate).subtract(3, "month").startOf("day").format("YYYY-MM-DD HH:mm:ss");
+        finalEndDate = dayjs(event.eventEndDate).endOf("day").format("YYYY-MM-DD HH:mm:ss");
+      }
+      // Case 4: Both eventStartDate and eventEndDate are present
+      else if (event.eventStartDate && event.eventEndDate) {
+        finalStartDate = dayjs(event.eventStartDate).startOf("day").format("YYYY-MM-DD HH:mm:ss");
+        finalEndDate = dayjs(event.eventEndDate).endOf("day").format("YYYY-MM-DD HH:mm:ss");
+      }
+
+      if (dayjs(finalStartDate).isAfter(today) || dayjs(finalEndDate).isBefore(today)) {
+        return;
+      }
+
+      return {
+        ...event,
+        eventStartDate: finalStartDate,
+        eventEndDate: finalEndDate,
+        logo: {
+          ...event.logo,
+          cdn: cdnUrl,
+        },
+        iconUrl: event.logo
+          ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${event?.logo?.key}.${event?.logo?.extension}`
+          : null,
+      };
+    }).filter(Boolean);
+
+    const sortedEvents = finalEvents?.sort((a, b) => {
+      const dateA = dayjs(a?.eventStartDate);
+      const dateB = dayjs(b?.eventStartDate);
+      return dateA.isBefore(dateB) ? -1 : dateA.isAfter(dateB) ? 1 : 0;
+    });
+    console.log("sortedEvents", sortedEvents);
+
+    return sortedEvents;
   };
 }

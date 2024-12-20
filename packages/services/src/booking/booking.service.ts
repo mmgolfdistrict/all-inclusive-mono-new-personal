@@ -3102,7 +3102,7 @@ export class BookingService {
         ({ product_data }: ProductData) => product_data.metadata.type === "second_hand"
       );
     }
-    debugger;
+    const playerCountFromCart = slotInfo[0]?.product_data?.metadata?.number_of_bookings
     const markupCharge =
       customerCartData?.cart?.cart
         ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "markup")
@@ -3110,11 +3110,11 @@ export class BookingService {
     const markupCharge1 = customerCartData?.cart?.cart
       ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "markup")
       ?.reduce((acc: number, i: any) => acc + i.price, 0);
-    let cartFeeCharge;
-    let cartFeeInfo = customerCartData?.cart?.cart?.filter(
+    ;
+    const cartFeeInfo = customerCartData?.cart?.cart?.filter(
       ({ product_data }: ProductData) => product_data.metadata.type === "cart_fee"
     );
-    cartFeeCharge = cartFeeInfo[0]?.product_data?.metadata?.amount || 0;
+    const cartFeeCharge = cartFeeInfo[0]?.product_data?.metadata?.amount || 0;
 
     const primaryData = {
       primaryGreenFeeCharge: isNaN(
@@ -3159,13 +3159,15 @@ export class BookingService {
     )?.product_data.metadata.sensible_quote_id;
 
     const taxes = taxCharge + sensibleCharge + charityCharge + convenienceCharge;
-
+    const skipItemsForTotal = ["markup" ,"cart_fee" ,"greenFeeTaxPercent","cartFeeTaxPercent" ,"weatherGuaranteeTaxPercent" ,"markupTaxPercent" ]
     const total = customerCartData?.cart?.cart
-      .filter(({ product_data }: ProductData) => product_data.metadata.type !== "markup")
+      .filter(({ product_data }: ProductData) => {
+        return( !skipItemsForTotal.includes( product_data.metadata.type ))
+      })
       .reduce((acc: number, i: any) => {
         return acc + i.price;
       }, 0);
-
+      
     return {
       ...primaryData,
       cart: customerCartData.cart as CustomerCart,
@@ -3324,6 +3326,10 @@ export class BookingService {
         providerCourseConfiguration: providerCourseLink.providerCourseConfiguration,
         greenFees: teeTimes.greenFeePerPlayer,
         cartFees: teeTimes.cartFeePerPlayer,
+        greenFeeTaxPercent:courses.greenFeeTaxPercent,
+        cartFeeTaxPercent:courses.cartFeeTaxPercent,
+        weatherGuaranteeTaxPercent:courses.weatherGuaranteeTaxPercent,
+        markupTaxPercent:courses.markupTaxPercent
       })
       .from(teeTimes)
       .leftJoin(courses, eq(teeTimes.courseId, courses.id))
@@ -3355,6 +3361,17 @@ export class BookingService {
         });
         throw new Error(`Error finding tee time id`);
       });
+
+// Calculate additional taxes
+
+const greenFeeTaxTotal = ( ( (teeTime?.greenFees??0) / 100 ) * (( (teeTime?.greenFeeTaxPercent??0 )/ 100)/100 ) ) * playerCount
+const markupTaxTotal = ( ( markupCharge / 100 ) * ( (teeTime?.markupTaxPercent ?? 0) / 100 ) ) * playerCount
+const weatherGuaranteeTaxTotal =  ( ( sensibleCharge / 100 ) * ( (teeTime?.weatherGuaranteeTaxPercent??0) / 100 ) )
+const cartFeeTaxPercentTotal = ( ( cartFeeCharge / 100 ) * (( teeTime?.cartFeeTaxPercent??0) / 100 )/100 ) * playerCount
+
+const additionalTaxes = greenFeeTaxTotal+markupTaxTotal+weatherGuaranteeTaxTotal+cartFeeTaxPercentTotal;
+
+
     if (!teeTime) {
       this.logger.fatal(`tee time not found id: ${teeTimeId}`);
       loggerService.errorLog({
@@ -3460,8 +3477,8 @@ export class BookingService {
           };
           const addSalesOptions = provider.getSalesDataOptions(booking, bookingsDetails);
           await provider.addSalesData(addSalesOptions);
-        } catch (error) {
-          this.logger.error(`Error adding sales data, ${error}`);
+        } catch (error: any) {
+          this.logger.error(`Error adding sales data, ${JSON.stringify(error.message)}`);
           loggerService.errorLog({
             userId: userId,
             url: "/reserveBooking",
@@ -3472,6 +3489,7 @@ export class BookingService {
               userId,
               teeTimeId,
               error,
+              booking: JSON.stringify(booking),
             }),
           });
         }
@@ -3531,7 +3549,10 @@ export class BookingService {
       throw new Error("No booking id found in response from provider");
     }
     console.log(`Creating tokenized booking`);
+    
+
     //create tokenized bookings
+    
     const bookingId = await this.tokenizeService
       .tokenizeBooking({
         redirectHref,
@@ -3562,6 +3583,13 @@ export class BookingService {
         isWebhookAvailable: teeTime?.isWebhookAvailable ?? false,
         providerBookingIds,
         cartFeeCharge: cartFeeCharge,
+        additionalTaxes:{
+          greenFeeTaxTotal,
+          markupTaxTotal,
+          weatherGuaranteeTaxTotal,
+          cartFeeTaxPercentTotal,
+          additionalTaxes
+        }
       })
       .catch(async (err) => {
         this.logger.error(`Error creating booking, ${err}`);
@@ -3586,7 +3614,7 @@ export class BookingService {
     await this.sendMessageToVerifyPayment(
       paymentId as string,
       userId,
-      bookingId.bookingId as string,
+      bookingId.bookingId ,
       redirectHref
     );
     return {
