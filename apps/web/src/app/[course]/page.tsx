@@ -16,7 +16,7 @@ import { FiltersIcon } from "~/components/icons/filters";
 import { Select } from "~/components/input/select";
 import { useAppContext } from "~/contexts/AppContext";
 import { useCourseContext } from "~/contexts/CourseContext";
-import type { GolferType } from "~/contexts/FiltersContext";
+import type { DateType, GolferType } from "~/contexts/FiltersContext";
 import { useFiltersContext } from "~/contexts/FiltersContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
@@ -79,6 +79,9 @@ export default function CourseHomePage() {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const courseId = course?.id;
   const updateUser = api.user.updateUser.useMutation();
+  const { data: specialEvents, isLoading: specialEventsLoading } = api.searchRouter.getSpecialEvents.useQuery({
+    courseId: courseId ?? "",
+  });
 
   const updateHandle = async (uName) => {
     try {
@@ -125,17 +128,6 @@ export default function CourseHomePage() {
     }
   );
 
-  const { data: specialEvents } = api.searchRouter.getSpecialEvents.useQuery({
-    courseId: courseId ?? "",
-  });
-
-  const getSpecialDayDate = (label) => {
-    const specialDay = specialEvents?.find((day) => day.eventName === label);
-    return specialDay
-      ? { start: dayjs(specialDay.startDate), end: dayjs(specialDay.endDate) }
-      : null;
-  };
-
   const formatDateString = (
     date: string | number | Date | Dayjs | null | undefined
   ): string => {
@@ -153,8 +145,56 @@ export default function CourseHomePage() {
     return currentDate.add(timezoneCorrection, "hour").toString();
   };
 
+  useEffect(() => {
+    if (queryDateType === "custom" && queryDate) {
+      setDateType("Custom");
+
+      const courseOpenTime = Number(dayjs(course?.openTime).format("HHmm"));
+      const courseCloseTime = Number(dayjs(course?.closeTime).format("HHmm"));
+      const startTime = Math.max(courseOpenTime, Number(queryStartTime));
+      const endTime = Math.min(courseCloseTime, Number(queryEndTime));
+      setStartTime([startTime, endTime]);
+
+      const playerCount =
+        Number(queryPlayerCount) <= 0 || Number(queryPlayerCount) > 4
+          ? "Any"
+          : Number(queryPlayerCount);
+      setGolfers((playerCount as GolferType) || "Any");
+    }
+  }, [queryDateType]);
+
+  useEffect(() => {
+    if (queryDateType === "custom" && queryDate) {
+      const [year, month, day] = queryDate.split("-");
+      if (year && month && day) {
+        setSelectedDay({
+          from: { year: Number(year), month: Number(month), day: Number(day) },
+          to: { year: Number(year), month: Number(month), day: Number(day) },
+        });
+      }
+    }
+    const specialDate = getSpecialDayDate(queryDateType);
+    console.log("queryDateType", queryDateType, specialDate);
+    if (queryDateType) {
+      if (specialDate) {
+        setDateType(queryDateType as DateType);  // Set the DateType to queryDateType if specialDate exists
+      } else {
+        setDateType("All");  // If no specialDate, set the DateType to "All"
+      }
+    }
+  }, [specialEvents, queryDateType]);
+
+  const getSpecialDayDate = (label) => {
+    const specialDay = specialEvents?.find((day) => day.eventName === label);
+    return specialDay
+      ? { start: dayjs(specialDay.startDate), end: dayjs(specialDay.endDate) }
+      : null;
+  };
+
   const startDate = useMemo(() => {
+
     const specialDate = getSpecialDayDate(dateType);
+
     if (specialDate) {
       return formatDateString(dayjs(specialDate.start).toDate());
     }
@@ -179,7 +219,7 @@ export default function CourseHomePage() {
       default:
         return formatDateString(new Date());
     }
-  }, [dateType, selectedDay]);
+  }, [dateType, selectedDay, queryDateType, specialEvents]);
 
   const endDate = useMemo(() => {
     const specialDate = getSpecialDayDate(dateType);
@@ -236,7 +276,7 @@ export default function CourseHomePage() {
       default:
         return formatDateString(dayjs().add(360, "days").toDate());
     }
-  }, [dateType, selectedDay, farthestDateOut]);
+  }, [dateType, selectedDay, farthestDateOut, specialEvents]);
 
   const utcStartDate = dayjs
     .utc(startDate)
@@ -291,14 +331,14 @@ export default function CourseHomePage() {
           sortValue === "Sort by time - Early to Late"
             ? "asc"
             : sortValue === "Sort by time - Late to Early"
-            ? "desc"
-            : "",
+              ? "desc"
+              : "",
         sortPrice:
           sortValue === "Sort by price - Low to High"
             ? "asc"
             : sortValue === "Sort by price - High to Low"
-            ? "desc"
-            : "",
+              ? "desc"
+              : "",
         timezoneCorrection: course?.timezoneCorrection,
         isHolesAny: holes === "Any",
         isGolferAny: golfers === "Any",
@@ -389,35 +429,7 @@ export default function CourseHomePage() {
     setPageNumber(1);
   }, [priceRange]);
 
-  useEffect(() => {
-    if (queryDateType === "custom" && queryDate) {
-      setDateType("Custom");
 
-      const courseOpenTime = Number(dayjs(course?.openTime).format("HHmm"));
-      const courseCloseTime = Number(dayjs(course?.closeTime).format("HHmm"));
-      const startTime = Math.max(courseOpenTime, Number(queryStartTime));
-      const endTime = Math.min(courseCloseTime, Number(queryEndTime));
-      setStartTime([startTime, endTime]);
-
-      const playerCount =
-        Number(queryPlayerCount) <= 0 || Number(queryPlayerCount) > 4
-          ? "Any"
-          : Number(queryPlayerCount);
-      setGolfers((playerCount as GolferType) || "Any");
-    }
-  }, [queryDateType]);
-
-  useEffect(() => {
-    if (queryDateType === "custom" && queryDate) {
-      const [year, month, day] = queryDate.split("-");
-      if (year && month && day) {
-        setSelectedDay({
-          from: { year: Number(year), month: Number(month), day: Number(day) },
-          to: { year: Number(year), month: Number(month), day: Number(day) },
-        });
-      }
-    }
-  }, [dateType]);
   useEffect(() => {
     if (typeof window !== "undefined") {
       localStorage.removeItem("googlestate");
@@ -498,9 +510,10 @@ export default function CourseHomePage() {
   const marginTop =
     notificationsCount > 0 ? `mt-${notificationsCount * 6}` : "";
 
+
   return (
     <main className={`bg-secondary-white py-4 md:py-6 ${marginTop}`}>
-      <LoadingContainer isLoading={isLoadingTeeTimeDate || isLoading}>
+      <LoadingContainer isLoading={isLoadingTeeTimeDate || isLoading || specialEventsLoading}>
         <div></div>
       </LoadingContainer>
       <div className="flex items-center justify-between px-4 md:px-6">
@@ -545,11 +558,10 @@ export default function CourseHomePage() {
         </div>
         <div className="flex w-full flex-col gap-1 md:gap-4 overflow-x-hidden pr-0 md:pr-6">
           <div
-            className={`flex space-x-2 md:hidden px-4 ${
-              scrollY > 333
-                ? "fixed top-[7.8rem] left-0 w-full z-10 bg-secondary-white pt-2 pb-3 shadow-md"
-                : "relative"
-            }`}
+            className={`flex space-x-2 md:hidden px-4 ${scrollY > 333
+              ? "fixed top-[7.8rem] left-0 w-full z-10 bg-secondary-white pt-2 pb-3 shadow-md"
+              : "relative"
+              }`}
           >
             <button
               onClick={toggleFilters}
@@ -607,9 +619,8 @@ export default function CourseHomePage() {
               {daysData.amountOfPages > 1 ? (
                 <div className="flex items-center justify-center gap-2 pt-1 md:pt-0 md:pb-4">
                   <FilledButton
-                    className={`!px-3 !py-2 !min-w-fit !rounded-md ${
-                      pageNumber === 1 ? "opacity-50 cursor-not-allowed" : ""
-                    }`}
+                    className={`!px-3 !py-2 !min-w-fit !rounded-md ${pageNumber === 1 ? "opacity-50 cursor-not-allowed" : ""
+                      }`}
                     onClick={pageDown}
                     data-testid="chevron-down-id"
                   >
@@ -619,11 +630,10 @@ export default function CourseHomePage() {
                     {pageNumber} / {amountOfPage}
                   </div>
                   <FilledButton
-                    className={`!px-3 !py-2 !min-w-fit !rounded-md ${
-                      pageNumber === amountOfPage
-                        ? "opacity-50 cursor-not-allowed"
-                        : ""
-                    }`}
+                    className={`!px-3 !py-2 !min-w-fit !rounded-md ${pageNumber === amountOfPage
+                      ? "opacity-50 cursor-not-allowed"
+                      : ""
+                      }`}
                     onClick={pageUp}
                     data-testid="chevron-up-id"
                   >

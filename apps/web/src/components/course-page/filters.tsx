@@ -25,6 +25,7 @@ import { debounceFunction } from "~/utils/debounce";
 import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
 import Image from "next/image";
 import { useMediaQuery } from "usehooks-ts";
+import { useRouter } from "next/navigation";
 
 interface DayValue {
   year: number;
@@ -84,7 +85,7 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
   const [holeMobile, setHoleMobile] = useState(holes);
   const [golferMobile, setGolferMobile] = useState(golfers);
   const [selectedDayMobile, setSelectedDayMobile] = useState(selectedDay);
-
+  const router = useRouter();
   const isMobile = useMediaQuery("(max-width: 768px)");
 
   // const { data } = api.searchRouter.findBlackoutDates.useQuery(
@@ -169,6 +170,8 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
   }));
 
   const setFilter = (type, value) => {
+    router.push(`/${course?.id}`)
+
     switch (type) {
       case "dateType": {
         if (isMobile) {
