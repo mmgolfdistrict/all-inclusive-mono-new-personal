@@ -45,7 +45,7 @@ export class Lightspeed extends BaseProvider {
         let teeTimes = [] as LightspeedTeeTimeResponse[], fetch = true, page = 1;
 
         while (fetch) {
-            const teeTimesResponse = await this.fetchTeeTimes(courseId, date, this.providerConfiguration, page);
+            const teeTimesResponse = await this.fetchTeeTimes(token, courseId, date, this.providerConfiguration, page);
             const filteredTeeTimes = teeTimesResponse.data.filter(teeTime => teeTime.attributes.rates.length > 0);
             teeTimes = [...teeTimes, ...filteredTeeTimes];
 
@@ -59,15 +59,10 @@ export class Lightspeed extends BaseProvider {
         return teeTimes;
     }
 
-    fetchTeeTimes = async (courseId: string, date: string, providerConfiguration: any, page: number) => {
+    fetchTeeTimes = async (token: string, courseId: string, date: string, providerConfiguration: any, page: number) => {
         try {
             const { BASE_ENDPOINT, CONTENT_TYPE, ORGANIZATION_ID, ACCEPT, DEFAULT_PLAYER_TYPE_ID } = JSON.parse(providerConfiguration ?? "{}");
 
-            const token = await this.getToken();
-
-            if (!token) {
-                throw new Error(`Error fetching tee times fail to get token: ${token}`);
-            }
 
             const url = `${BASE_ENDPOINT}/partner_api/v2/organizations/${ORGANIZATION_ID}/teetimes?custom_params[player_count]=4&custom_params[holes]=18&custom_params[with_pricing]=true&filter[course]=${courseId}&page[size]=100&page[number]=${page}&filter[date]=${date}${DEFAULT_PLAYER_TYPE_ID ? `&custom_params[player_types][]=${DEFAULT_PLAYER_TYPE_ID}` : ""}`;
             const headers = {
@@ -404,7 +399,7 @@ export class Lightspeed extends BaseProvider {
                     .execute();
 
                 await this.cacheService?.setCache(`provider-${this.providerId}-refresh-token`, authResponse.refresh_token, 86400);
-                await this.cacheService?.setCache(`provider-${this.providerId}-token`, authResponse.access_token, 7200);
+                // await this.cacheService?.setCache(`provider-${this.providerId}-token`, authResponse.access_token, 7200);
             }
 
             return token as string;
