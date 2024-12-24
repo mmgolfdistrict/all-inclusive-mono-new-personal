@@ -266,10 +266,6 @@ function NotifyMe({ params }: { params: { course: string } }) {
     }
   }, [startTime[0], startTime[1]]);
 
-  // if (!isLoading && !user) {
-  //   router.push(`/${courseId}/login`);
-  // }
-
   return (
     <section className="mx-auto px-2 flex w-full flex-col gap-4 pt-4 md:max-w-[1360px] md:px-6">
       <div className="flex items-center justify-between px-4 md:px-6">
