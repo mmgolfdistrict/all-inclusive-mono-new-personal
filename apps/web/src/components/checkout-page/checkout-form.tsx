@@ -111,6 +111,7 @@ export const CheckoutForm = ({
   if (isFirstHand.length) {
     primaryGreenFeeCharge =
       isFirstHand?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+      console.log("primaryGreenFeeCharge ---", primaryGreenFeeCharge)
   } else {
     primaryGreenFeeCharge =
       cartData
@@ -601,14 +602,13 @@ export const CheckoutForm = ({
     }
   };
  
-  const playersInNumber= Number(playerCount || 1)
+  const playersInNumber= Number(amountOfPlayers || 0);
   const greenFeeChargePerPlayer = ((primaryGreenFeeCharge )/ playersInNumber) - (cartFeeCharge) - markupFee
   const greenFeeTaxAmount = ( ( greenFeeChargePerPlayer ) * ( greenFeeTaxPercent  ) ) * playersInNumber  
   const cartFeeTaxAmount = ( ( cartFeeCharge  ) * ( cartFeeTaxPercent ) ) * playersInNumber
   const markupFeesTaxAmount = ( ( markupFee  ) * ( markupTaxPercent ) ) * playersInNumber
   const weatherGuaranteeTaxAmount = ( ( sensibleCharge  ) * ( (weatherGuaranteeTaxPercent ) ) )
   const additionalTaxes = (greenFeeTaxAmount+markupFeesTaxAmount+weatherGuaranteeTaxAmount+cartFeeTaxAmount)/100
-  
   taxCharge += additionalTaxes;
   const Total =
     primaryGreenFeeCharge +
@@ -621,11 +621,14 @@ export const CheckoutForm = ({
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
+  
   const TaxCharge =
     taxCharge +
     sensibleCharge +
     (!roundUpCharityId ? charityCharge : 0) +
     convenienceCharge ;
+
+   
   const totalBeforeRoundOff = primaryGreenFeeCharge + TaxCharge ;
   const decimalPart = totalBeforeRoundOff % 1;
 
