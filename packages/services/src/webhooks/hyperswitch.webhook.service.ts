@@ -644,6 +644,28 @@ export class HyperSwitchWebhookService {
         throw new Error("error fetching old and new bookingId");
       });
 
+    const [bookingDetails] = await this.database
+      .select({
+        additionalNoteFromCustomer: bookings.customerComment,
+        needsRentals: bookings.needClubRental
+      })
+      .from(bookings)
+      .where(eq(bookings.id, bookingsIds?.id ?? ""))
+      .execute()
+      .catch((error) => {
+        loggerService.auditLog({
+          id: randomUUID(),
+          userId: customer_id,
+          teeTimeId: "",
+          bookingId: "",
+          listingId,
+          courseId: "",
+          eventId: "BOOKING_ID_NOT_FOUND_FOR_ADDITIONAL_DATA",
+          json: error,
+        });
+        throw new Error("error fetching additional data for new booking");
+      })
+
     bookingStage = "Updating booking status on new Booking";
     await this.database
       .update(bookings)
@@ -743,7 +765,9 @@ export class HyperSwitchWebhookService {
         totalTaxesAmount: bookings.totalTaxesAmount,
         providerTeeTimeId: teeTimes.providerTeeTimeId,
         nameOnBooking: bookings.nameOnBooking,
-        cartFeePerPlayer:bookings.cartFeePerPlayer
+        cartFeePerPlayer: bookings.cartFeePerPlayer,
+        additionalNoteFromCustomer: bookings.customerComment,
+        needRentals: bookings.needClubRental
       })
       .from(bookings)
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -918,6 +942,7 @@ export class HyperSwitchWebhookService {
       } catch (e) {
         console.log("ERROR in getting appsetting SENSIBLE_NOTE_TO_TEE_SHEET");
       }
+      details = `${details}\n<br />\n${bookingDetails?.additionalNoteFromCustomer}`;
       let newBooking: BookingResponse | null = null;
       const greenFee = existingTeeTime?.greenFee ?? 0;
       const greenFeeTaxPerPlayer = existingTeeTime?.greenFeeTaxPerPlayer ?? 0;
@@ -1033,6 +1058,7 @@ export class HyperSwitchWebhookService {
       if (listedSlotsCount && listedSlotsCount < firstBooking?.playerCount) {
         const totalAmountPaid = totalAmount * (listedBooking.length - listedSlotsCount);
         details = await appSettingService.get("TEE_SHEET_BOOKING_MESSAGE");
+        details = `${details}\n<br />\n${firstBooking?.additionalNoteFromCustomer}`;
         let newBookingSecond;
         bookingStage = "Getting booking creation data for seller customer";
         const bookingData = provider.getBookingCreationData({
@@ -1156,7 +1182,9 @@ export class HyperSwitchWebhookService {
           status: "CONFIRMED",
           markupFees: firstBooking.markupFees,
           weatherQuoteId: firstBooking.weatherQuoteId || null,
-          cartFeePerPlayer:firstBooking.cartFeePerPlayer
+          cartFeePerPlayer: firstBooking.cartFeePerPlayer,
+          customerComment: firstBooking.additionalNoteFromCustomer,
+          needClubRental: firstBooking.needRentals
         });
       }
 
