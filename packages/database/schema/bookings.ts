@@ -48,7 +48,8 @@ export const bookings = mySqlTable(
     totalGreenFeeTaxAmount: int("totalGreenFeeTaxAmount").notNull().default(0),
     totalCartFeeTaxAmount: int("totalCartFeeTaxAmount").notNull().default(0),
     totalWeatherGuaranteeTaxAmount: int("totalWeatherGuaranteeTaxAmount").notNull().default(0),
-    totalMarkupFeeTaxAmount: int("totalMarkupFeeTaxAmount").notNull().default(0)
+    totalMarkupFeeTaxAmount: int("totalMarkupFeeTaxAmount").notNull().default(0),
+    source: varchar("source", { length: 50 }).default(""),
     },
   (table) => {
     return {

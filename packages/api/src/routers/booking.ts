@@ -259,6 +259,7 @@ export const bookingRouter = createTRPCRouter({
         cartId: z.string(),
         payment_id: z.string(),
         sensibleQuoteId: z.string(),
+        source: z.string(),
         redirectHref: z.string().url(),
       })
     )
@@ -270,6 +271,7 @@ export const bookingRouter = createTRPCRouter({
           input.cartId,
           input.payment_id,
           input.sensibleQuoteId,
+          input.source,
           input.redirectHref
         );
     }),
@@ -279,6 +281,7 @@ export const bookingRouter = createTRPCRouter({
         cartId: z.string(),
         listingId: z.string(),
         payment_id: z.string(),
+        source: z.string(),
         redirectHref: z.string().url(),
       })
     )
@@ -290,6 +293,7 @@ export const bookingRouter = createTRPCRouter({
           input.cartId,
           input.listingId,
           input.payment_id,
+          input.source,
           input.redirectHref
         );
     }),

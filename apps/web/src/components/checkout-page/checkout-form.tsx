@@ -21,6 +21,7 @@ import { CharitySelect } from "../input/charity-select";
 import { Input } from "../input/input";
 import styles from "./checkout.module.css";
 import type { NextAction } from "./hyper-switch";
+import { useBookingSourceContext } from "~/contexts/BookingSourceContext";
 
 type charityData = {
   charityDescription: string | undefined;
@@ -61,6 +62,7 @@ export const CheckoutForm = ({
   const roundUpCharityId = course?.roundUpCharityId;
 
   const { user } = useUserContext();
+  const { bookingSource, setBookingSource } = useBookingSourceContext();
   const auditLog = api.webhooks.auditLog.useMutation();
   const sendEmailForFailedPayment =
     api.webhooks.sendEmailForFailedPayment.useMutation();
@@ -523,6 +525,8 @@ export const CheckoutForm = ({
           }
 
           setMessage("Payment Successful");
+          setBookingSource("");
+          sessionStorage.removeItem("source");
           if (isBuyNowAuction) {
             router.push(`/${course?.id}/auctions/confirmation`);
           } else {
@@ -560,6 +564,7 @@ export const CheckoutForm = ({
       cartId,
       payment_id,
       sensibleQuoteId,
+      source: bookingSource ? bookingSource : sessionStorage.getItem("source") ?? "",
       redirectHref,
     });
     return bookingResponse;
@@ -577,6 +582,7 @@ export const CheckoutForm = ({
       cartId,
       listingId,
       payment_id,
+      source: bookingSource ? bookingSource : sessionStorage.getItem("source") ?? "",
       redirectHref,
     });
     return bookingResponse;
