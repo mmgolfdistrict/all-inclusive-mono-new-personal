@@ -277,6 +277,7 @@ export class BookingService {
       // .leftJoin(userBookingOffers, eq(userBookingOffers.bookingId, bookings.id))
       .where(
         and(
+          not(eq(bookings.providerBookingId, "")),
           eq(transfers.courseId, courseId),
           or(eq(transfers.toUserId, userId), eq(transfers.fromUserId, userId))
         )
