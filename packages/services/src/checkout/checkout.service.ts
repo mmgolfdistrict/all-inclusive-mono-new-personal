@@ -279,7 +279,14 @@ export class CheckoutService {
     //   const message = errors.map((message) => message.errorType)
     //   throw new Error(errors);
     // }
-    const skipItemsForTotal = ["markup", "cart_fee", "greenFeeTaxPercent", "cartFeeTaxPercent", "weatherGuaranteeTaxPercent", "markupTaxPercent"]
+    const skipItemsForTotal = [
+      "markup",
+      "cart_fee",
+      "greenFeeTaxPercent",
+      "cartFeeTaxPercent",
+      "weatherGuaranteeTaxPercent",
+      "markupTaxPercent",
+    ];
 
     let total = customerCart.cart
       .filter(({ product_data }) => !skipItemsForTotal.includes(product_data.metadata.type))
@@ -290,18 +297,21 @@ export class CheckoutService {
     const isFirstHand = customerCart.cart.filter(
       ({ product_data }) => product_data.metadata.type === "first_hand"
     );
-    const sensibleCharge = customerCartData?.cart
-      ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "sensible")
-      ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
-    const markupCharge = customerCartData?.cart
-      ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "markup")
-      ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
-    const cartFeeCharge = customerCartData?.cart
-      ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "cart_fee")
-      ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+    const sensibleCharge =
+      customerCartData?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "sensible")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+    const markupCharge =
+      customerCartData?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "markup")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+    const cartFeeCharge =
+      customerCartData?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "cart_fee")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
     if (isFirstHand.length) {
       if (isFirstHand[0]?.product_data.metadata.type === "first_hand") {
-        const teetimeId = customerCart?.teeTimeId ?? ''
+        const teetimeId = customerCart?.teeTimeId ?? "";
         const [teeTime] = await this.database
           .select({
             id: teeTimes.id,
@@ -310,26 +320,29 @@ export class CheckoutService {
             greenFeeTaxPercent: courses.greenFeeTaxPercent,
             cartFeeTaxPercent: courses.cartFeeTaxPercent,
             weatherGuaranteeTaxPercent: courses.weatherGuaranteeTaxPercent,
-            markupTaxPercent: courses.markupTaxPercent
+            markupTaxPercent: courses.markupTaxPercent,
           })
           .from(teeTimes)
           .leftJoin(courses, eq(teeTimes.courseId, courses.id))
           .where(eq(teeTimes.id, teetimeId))
           .execute()
           .catch((err) => {
-
             throw new Error(`Error finding tee time id`);
           });
         const playerCount = isFirstHand[0]?.product_data.metadata.number_of_bookings;
-        const greenFeeTaxTotal = (((teeTime?.greenFees ?? 0) / 100) * (((teeTime?.greenFeeTaxPercent ?? 0) / 100) / 100)) * playerCount
-        const markupTaxTotal = ((markupCharge / 100) * ((teeTime?.markupTaxPercent ?? 0) / 100)) * playerCount
-        const weatherGuaranteeTaxTotal = ((sensibleCharge / 100) * ((teeTime?.weatherGuaranteeTaxPercent ?? 0) / 100))
-        const cartFeeTaxPercentTotal = ((cartFeeCharge) * ((teeTime?.cartFeeTaxPercent ?? 0) / 100) / 100) * playerCount
-        const additionalTaxes = Number((greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal).toFixed(2));
-        total = total + (additionalTaxes * 100)
+        const greenFeeTaxTotal =
+          ((teeTime?.greenFees ?? 0) / 100) * ((teeTime?.greenFeeTaxPercent ?? 0) / 100 / 100) * playerCount;
+        const markupTaxTotal = (markupCharge / 100) * ((teeTime?.markupTaxPercent ?? 0) / 100) * playerCount;
+        const weatherGuaranteeTaxTotal =
+          (sensibleCharge / 100) * ((teeTime?.weatherGuaranteeTaxPercent ?? 0) / 100);
+        const cartFeeTaxPercentTotal =
+          ((cartFeeCharge * ((teeTime?.cartFeeTaxPercent ?? 0) / 100)) / 100) * playerCount;
+        const additionalTaxes = Number(
+          (greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal).toFixed(2)
+        );
+        total = total + additionalTaxes * 100;
       }
     }
-
 
     // const tax = await this.stripeService.getTaxRate(customerCart.cart).catch((err) => {
     //   this.logger.error(`Error calculating tax: ${err}`);
@@ -423,7 +436,14 @@ export class CheckoutService {
     const errors = await this.validateCartItems(customerCartData);
     console.log("errors ", JSON.stringify(errors));
 
-    const skipItemsForTotal = ["markup", "cart_fee", "greenFeeTaxPercent", "cartFeeTaxPercent", "weatherGuaranteeTaxPercent", "markupTaxPercent"]
+    const skipItemsForTotal = [
+      "markup",
+      "cart_fee",
+      "greenFeeTaxPercent",
+      "cartFeeTaxPercent",
+      "weatherGuaranteeTaxPercent",
+      "markupTaxPercent",
+    ];
 
     let total: number = customerCart.cart
       .filter(({ product_data }) => !skipItemsForTotal.includes(product_data.metadata.type))
@@ -434,18 +454,21 @@ export class CheckoutService {
     const isFirstHand = customerCart.cart.filter(
       ({ product_data }) => product_data.metadata.type === "first_hand"
     );
-    const sensibleCharge = customerCartData?.cart
-      ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "sensible")
-      ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
-    const markupCharge = customerCartData?.cart
-      ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "markup")
-      ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
-    const cartFeeCharge = customerCartData?.cart
-      ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "cart_fee")
-      ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+    const sensibleCharge =
+      customerCartData?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "sensible")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+    const markupCharge =
+      customerCartData?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "markup")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+    const cartFeeCharge =
+      customerCartData?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "cart_fee")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
     if (isFirstHand.length) {
       if (isFirstHand[0]?.product_data.metadata.type === "first_hand") {
-        const teetimeId = customerCart?.teeTimeId ?? ''
+        const teetimeId = customerCart?.teeTimeId ?? "";
         const [teeTime] = await this.database
           .select({
             id: teeTimes.id,
@@ -454,24 +477,27 @@ export class CheckoutService {
             greenFeeTaxPercent: courses.greenFeeTaxPercent,
             cartFeeTaxPercent: courses.cartFeeTaxPercent,
             weatherGuaranteeTaxPercent: courses.weatherGuaranteeTaxPercent,
-            markupTaxPercent: courses.markupTaxPercent
+            markupTaxPercent: courses.markupTaxPercent,
           })
           .from(teeTimes)
           .leftJoin(courses, eq(teeTimes.courseId, courses.id))
           .where(eq(teeTimes.id, teetimeId))
           .execute()
           .catch((err) => {
-
             throw new Error(`Error finding tee time id`);
           });
         const playerCount = isFirstHand[0]?.product_data.metadata.number_of_bookings;
-        const greenFeeTaxTotal = (((teeTime?.greenFees ?? 0) / 100) * (((teeTime?.greenFeeTaxPercent ?? 0) / 100) / 100)) * playerCount
-        const markupTaxTotal = ((markupCharge / 100) * ((teeTime?.markupTaxPercent ?? 0) / 100)) * playerCount
-        const weatherGuaranteeTaxTotal = ((sensibleCharge / 100) * ((teeTime?.weatherGuaranteeTaxPercent ?? 0) / 100))
-        const cartFeeTaxPercentTotal = ((cartFeeCharge) * ((teeTime?.cartFeeTaxPercent ?? 0) / 100) / 100) * playerCount
-        const additionalTaxes = Number((greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal).toFixed(2));
-        total = total + (additionalTaxes * 100)
-
+        const greenFeeTaxTotal =
+          ((teeTime?.greenFees ?? 0) / 100) * ((teeTime?.greenFeeTaxPercent ?? 0) / 100 / 100) * playerCount;
+        const markupTaxTotal = (markupCharge / 100) * ((teeTime?.markupTaxPercent ?? 0) / 100) * playerCount;
+        const weatherGuaranteeTaxTotal =
+          (sensibleCharge / 100) * ((teeTime?.weatherGuaranteeTaxPercent ?? 0) / 100);
+        const cartFeeTaxPercentTotal =
+          ((cartFeeCharge * ((teeTime?.cartFeeTaxPercent ?? 0) / 100)) / 100) * playerCount;
+        const additionalTaxes = Number(
+          (greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal).toFixed(2)
+        );
+        total = total + additionalTaxes * 100;
       }
     }
     console.log(`paymentId = ${paymentId}`);
@@ -636,7 +662,9 @@ export class CheckoutService {
           errors.push(...(await this.validateMarkupTaxPercentItem(item as MarkupTaxPercentProduct)));
           break;
         case "weatherGuaranteeTaxPercent":
-          errors.push(...(await this.validateWeatherGuaranteeTaxPercentItem(item as WeatherGuaranteeTaxPercentProduct)));
+          errors.push(
+            ...(await this.validateWeatherGuaranteeTaxPercentItem(item as WeatherGuaranteeTaxPercentProduct))
+          );
           break;
         case "cart_fee":
           console.log(" switch in cart-fee");
@@ -822,7 +850,9 @@ export class CheckoutService {
     return errors;
   };
 
-  validateGreenFeeTaxPercentItem = async (item: GreenFeeTaxPercentProduct): Promise<CartValidationError[]> => {
+  validateGreenFeeTaxPercentItem = async (
+    item: GreenFeeTaxPercentProduct
+  ): Promise<CartValidationError[]> => {
     const errors: CartValidationError[] = [];
     //@TODO: validate quote
     return errors;
@@ -840,7 +870,9 @@ export class CheckoutService {
     return errors;
   };
 
-  validateWeatherGuaranteeTaxPercentItem = async (item: WeatherGuaranteeTaxPercentProduct): Promise<CartValidationError[]> => {
+  validateWeatherGuaranteeTaxPercentItem = async (
+    item: WeatherGuaranteeTaxPercentProduct
+  ): Promise<CartValidationError[]> => {
     const errors: CartValidationError[] = [];
     //@TODO: validate quote
     return errors;
@@ -1065,29 +1097,20 @@ export class CheckoutService {
       let appSettingsValue: number;
       appSettingsResult = await this.appSettings.getAppSetting("USER_BUY_MULTIPLE_TEETIME_IN_SAME_DAY");
       appSettingsValue = Number(appSettingsResult.value);
-      const [userDetails] = await this.database.select().from(users).where(eq(users.id, userId));
-      if (!userDetails) {
-        throw new Error("User details not found");
-      }
-      //2024-10-18T02:29:03Z 2024-10-17T14:29:03Z
+
       const [userResult] = await this.database
         .select({
-          id: users.id,
-          email: users.email,
           bookingCount: sql`Count(${bookings.id})`.as("bookingCount"),
         })
         .from(bookings)
-        .innerJoin(users, eq(bookings.ownerId, users.id))
         .where(
           and(
-            eq(users.email, userDetails.email ?? ""),
+            eq(bookings.ownerId, userId ?? ""),
             gte(bookings.purchasedAt, sql`NOW() - INTERVAL ${appSettingsValue} HOUR`)
           )
-        )
-        .groupBy(users.id, users.email)
-        .having(gt(sql`Count(${bookings.id})`, 1))
-        .orderBy(desc(sql`Count(${bookings.id})`));
+        );
       return { data: Number(userResult?.bookingCount) || 1 };
+    
     } catch (error: any) {
       this.logger.error("", error.message);
       throw error.message;
