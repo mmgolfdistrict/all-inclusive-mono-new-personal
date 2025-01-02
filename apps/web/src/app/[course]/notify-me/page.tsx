@@ -182,6 +182,10 @@ function NotifyMe({ params }: { params: { course: string } }) {
   };
 
   const handleSubmit = async () => {
+    if (!isLoading && !user) {
+      router.push(`/${courseId}/login`);
+      return;
+    }
     if (selectedDates.length === 0) {
       toast.error("Please select a date");
       return;
@@ -271,10 +275,6 @@ function NotifyMe({ params }: { params: { course: string } }) {
       setErrorMessage("");
     }
   }, [startTime[0], startTime[1]]);
-
-  if (!isLoading && !user) {
-    router.push(`/${courseId}/login`);
-  }
 
   return (
     <section className="mx-auto px-2 flex w-full flex-col gap-4 pt-4 md:max-w-[1360px] md:px-6">
