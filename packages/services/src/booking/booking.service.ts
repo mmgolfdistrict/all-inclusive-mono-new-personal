@@ -3256,6 +3256,8 @@ export class BookingService {
     cartId: string,
     payment_id: string,
     sensibleQuoteId: string,
+    additionalNoteFromUser: string | undefined,
+    needRentals: boolean,
     redirectHref: string
   ) => {
     let bookingStage = "Normalizing Cart Data";
@@ -3436,6 +3438,7 @@ export class BookingService {
       } catch (e) {
         console.log("ERROR in getting appsetting SENSIBLE_NOTE_TO_TEE_SHEET");
       }
+      details = `${details}\n<br />\n${additionalNoteFromUser}`;
 
       bookingStage = "Getting booking Creation Data";
       const bookingData = provider.getBookingCreationData({
@@ -3598,6 +3601,8 @@ export class BookingService {
           cartFeeTaxPercentTotal,
           additionalTaxes,
         },
+        additionalNoteFromUser,
+        needRentals
       })
       .catch(async (err) => {
         this.logger.error(`Error creating booking, ${err}`);
@@ -3718,6 +3723,8 @@ export class BookingService {
     cartId = "",
     listingId = "",
     payment_id = "",
+    additionalNoteFromUser = "",
+    needRentals = false,
     redirectHref = ""
   ) => {
     const {
@@ -3814,6 +3821,8 @@ export class BookingService {
       markupFees: 0,
       weatherQuoteId: weatherQuoteId || null,
       cartFeePerPlayer: cartFeeCharge,
+      customerComment: additionalNoteFromUser,
+      needClubRental: needRentals,
     });
     transfersToCreate.push({
       id: randomUUID(),

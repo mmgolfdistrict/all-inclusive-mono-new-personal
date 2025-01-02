@@ -17,13 +17,13 @@ import type { Dispatch, SetStateAction } from "react";
 import { Fragment, useEffect, useState, type FormEvent } from "react";
 import { toast } from "react-toastify";
 import { FilledButton } from "../buttons/filled-button";
+import { Switch } from "../buttons/switch";
 import { CharitySelect } from "../input/charity-select";
 import { Input } from "../input/input";
+import { CheckoutAccordionRoot } from "./checkout-accordian";
+import CheckoutItemAccordion from "./checkout-item-accordian";
 import styles from "./checkout.module.css";
 import type { NextAction } from "./hyper-switch";
-import { AccordionRoot } from "../accordion/accordion";
-import { AccordionItem } from "../accordion/accordion-item";
-import CheckoutItemAccordion from "./checkout-item-accordian";
 
 type charityData = {
   charityDescription: string | undefined;
@@ -114,6 +114,7 @@ export const CheckoutForm = ({
   if (isFirstHand.length) {
     primaryGreenFeeCharge =
       isFirstHand?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+    console.log("primaryGreenFeeCharge ---", primaryGreenFeeCharge);
   } else {
     primaryGreenFeeCharge =
       cartData
@@ -222,6 +223,8 @@ export const CheckoutForm = ({
   // const [isPaymentCompleted, setIsPaymentCompleted] = useState(false);
   const [message, setMessage] = useState("");
   const [charityAmountError, setCharityAmountError] = useState("");
+  const [needRentals, setNeedRentals] = useState(false);
+  const [additionalNote, setAdditionalNote] = useState("");
   // const [customerID, setCustomerID] = useState("");
   const {
     promoCode,
@@ -560,6 +563,8 @@ export const CheckoutForm = ({
       cartId,
       payment_id,
       sensibleQuoteId,
+      additionalNoteFromUser: additionalNote,
+      needRentals,
       redirectHref,
     });
     return bookingResponse;
@@ -577,6 +582,8 @@ export const CheckoutForm = ({
       cartId,
       listingId,
       payment_id,
+      additionalNoteFromUser: additionalNote,
+      needRentals,
       redirectHref,
     });
     return bookingResponse;
@@ -599,7 +606,7 @@ export const CheckoutForm = ({
     }
   };
 
-  const playersInNumber = Number(playerCount || 1);
+  const playersInNumber = Number(amountOfPlayers || 0);
   const greenFeeChargePerPlayer =
     primaryGreenFeeCharge / playersInNumber - cartFeeCharge - markupFee;
   const greenFeeTaxAmount =
@@ -613,7 +620,6 @@ export const CheckoutForm = ({
       weatherGuaranteeTaxAmount +
       cartFeeTaxAmount) /
     100;
-
   taxCharge += additionalTaxes;
   const Total =
     primaryGreenFeeCharge +
@@ -626,11 +632,13 @@ export const CheckoutForm = ({
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
+
   const TaxCharge =
     taxCharge +
     sensibleCharge +
     (!roundUpCharityId ? charityCharge : 0) +
     convenienceCharge;
+
   const totalBeforeRoundOff = primaryGreenFeeCharge + TaxCharge;
   const decimalPart = totalBeforeRoundOff % 1;
 
@@ -760,7 +768,30 @@ export const CheckoutForm = ({
             />
           </div>
         ) : null}
-        {checkIsBookingDisabled?.showPricingBreakdown === 0 ? (
+        <Input
+          label="Any Special Requests?"
+          register={() => null}
+          name="notes"
+          maxLength={200}
+          placeholder="Message"
+          value={additionalNote}
+          onChange={(e) => setAdditionalNote(e.target.value)}
+        />
+        <div className="flex flex-row items-center gap-2">
+          <Switch
+            value={needRentals}
+            setValue={setNeedRentals}
+            id="need-rentals"
+          />
+          <label
+            className="text-primary-gray text-[14px] cursor-pointer select-none"
+            htmlFor="need-rentals"
+          >
+            Need Rentals?
+          </label>
+        </div>
+        {checkIsBookingDisabled &&
+        checkIsBookingDisabled?.showPricingBreakdown === 0 ? (
           <Fragment>
             <div className="flex justify-between">
               <div>
@@ -815,71 +846,78 @@ export const CheckoutForm = ({
               </div>
             </div>
           </Fragment>
-        ) : <Fragment>
-            <AccordionRoot defaultValue="single"> 
-              <CheckoutItemAccordion title="Subtotal" value="item-1" position="left" amountValues={`$${primaryGreenFeeCharge.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}>
-                  <div  className=" flex flex-col gap-2">
-                    <div className="flex justify-between">
-                      <div>Green Fees</div>
-                      <div>
-                        $ {greenFeeChargePerPlayer + markupFee}
-                      </div>
-                    </div>
-                    <div className="flex justify-between">
-                      <div>Cart Fees</div>
-                      <div>
-                        $ {cartFeeCharge}
-                      </div>
-                    </div>
+        ) : (
+          <Fragment>
+            <CheckoutAccordionRoot defaultValue="">
+              <CheckoutItemAccordion
+                title="Subtotal"
+                value="item-1"
+                position="left"
+                amountValues={`$${primaryGreenFeeCharge.toLocaleString(
+                  "en-US",
+                  { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+                )}`}
+              >
+                <div className=" flex flex-col gap-2">
+                  <div className="flex justify-between">
+                    <div>Green Fees</div>
+                    <div>$ {greenFeeChargePerPlayer + markupFee}</div>
                   </div>
-              </CheckoutItemAccordion>
-              <CheckoutItemAccordion title="Taxes and Others" value="item-2" position="left" amountValues={`$${TaxCharge.toLocaleString("en-US", {minimumFractionDigits: 2, maximumFractionDigits: 2, })}`}>
-                  <div  className=" flex flex-col gap-1">
-                    <div className="flex justify-between">
-                      <div>Green Fee Tax Amount</div>
-                      <div>
-                        $ {(greenFeeTaxAmount + markupFeesTaxAmount)/100}
-                      </div>
-                    </div>
-                    <div className="flex justify-between">
-                      <div>Cart Fee Tax</div>
-                      <div>
-                        $ {(cartFeeTaxAmount/100)}
-                      </div>
-                    </div>
-                    <div className="flex justify-between">
-                      <div>Sensible</div>
-                      <div>
-                        $ {sensibleCharge}
-                      </div>
-                    </div>
-                    <div className="flex justify-between">
-                      <div>Sensible Tax</div>
-                      <div>
-                        $ {weatherGuaranteeTaxAmount}
-                      </div>
-                    </div>
+                  <div className="flex justify-between">
+                    <div>Cart Fees</div>
+                    <div>$ {cartFeeCharge}</div>
                   </div>
+                </div>
               </CheckoutItemAccordion>
-              <div className="flex justify-between px-2">
-              <div>Total</div>
-              <div>
-                $
-                {(
-                  (roundUpCharityId
-                    ? roundOffClick
-                      ? roundOff
-                      : Number(TotalAmt)
-                    : TotalAmt) || 0
-                ).toLocaleString("en-US", {
+              <CheckoutItemAccordion
+                title="Taxes and Others"
+                value="item-2"
+                position="left"
+                amountValues={`$${TaxCharge.toLocaleString("en-US", {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
-                })}
+                })}`}
+              >
+                <div className=" flex flex-col gap-1">
+                  <div className="flex justify-between">
+                    <div>Green Fee Tax Amount</div>
+                    <div>
+                      $ {(greenFeeTaxAmount + markupFeesTaxAmount) / 100}
+                    </div>
+                  </div>
+                  <div className="flex justify-between">
+                    <div>Cart Fee Tax</div>
+                    <div>$ {cartFeeTaxAmount / 100}</div>
+                  </div>
+                  <div className="flex justify-between">
+                    <div>Sensible</div>
+                    <div>$ {sensibleCharge}</div>
+                  </div>
+                  <div className="flex justify-between">
+                    <div>Sensible Tax</div>
+                    <div>$ {weatherGuaranteeTaxAmount}</div>
+                  </div>
+                </div>
+              </CheckoutItemAccordion>
+              <div className="flex justify-between px-2">
+                <div>Total</div>
+                <div>
+                  $
+                  {(
+                    (roundUpCharityId
+                      ? roundOffClick
+                        ? roundOff
+                        : Number(TotalAmt)
+                      : TotalAmt) || 0
+                  ).toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </div>
               </div>
-            </div>
-            </AccordionRoot>
+            </CheckoutAccordionRoot>
           </Fragment>
-          }
+        )}
       </div>
       {roundUpCharityId && (
         <div className="flex w-full flex-col gap-2 bg-white p-4 rounded-lg my-2 border border-primary">

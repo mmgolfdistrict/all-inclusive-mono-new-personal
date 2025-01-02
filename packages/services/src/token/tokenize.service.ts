@@ -156,7 +156,9 @@ export class TokenizeService {
     isWebhookAvailable,
     providerBookingIds,
     cartFeeCharge,
-    additionalTaxes
+    additionalTaxes,
+    additionalNoteFromUser,
+    needRentals
   }: {
     redirectHref: string;
     userId: string;
@@ -189,7 +191,9 @@ export class TokenizeService {
       weatherGuaranteeTaxTotal:number,
       cartFeeTaxPercentTotal:number,
       additionalTaxes:number
-    }
+      },
+      additionalNoteFromUser?: string,
+      needRentals: boolean
   }): Promise<BookingTypes> {
     this.logger.info(`tokenizeBooking tokenizing booking id: ${providerTeeTimeId} for user: ${userId}`);
     //@TODO add this to the transaction
@@ -387,6 +391,8 @@ export class TokenizeService {
       totalCartFeeTaxAmount:additionalTaxes.cartFeeTaxPercentTotal*100,
       totalWeatherGuaranteeTaxAmount:additionalTaxes.weatherGuaranteeTaxTotal*100,
       totalMarkupFeeTaxAmount:additionalTaxes.markupTaxTotal*100,
+      customerComment: additionalNoteFromUser,
+      needClubRental: needRentals
     });
     transfersToCreate.push({
       id: randomUUID(),

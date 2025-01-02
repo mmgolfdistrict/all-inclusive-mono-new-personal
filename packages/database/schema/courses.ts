@@ -66,6 +66,7 @@ export const courses = mySqlTable(
     cartFeeTaxPercent: int("cartFeeTaxPercent").default(0).notNull(),
     weatherGuaranteeTaxPercent: int("weatherGuaranteeTaxPercent").default(0).notNull(),
     markupTaxPercent: int("markupTaxPercent").default(0).notNull(),
+    displayOrder: tinyint("displayOrder").notNull().default(-1),
     showPricingBreakdown: tinyint("showPricingBreakdown").default(0).notNull(),
   },
   (table) => {

@@ -1,4 +1,4 @@
-import { eq, inArray, isNull, not } from "@golf-district/database";
+import { asc, eq, inArray, isNull, not } from "@golf-district/database";
 import type { Db } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import { courseAssets } from "@golf-district/database/schema/courseAssets";
@@ -16,7 +16,7 @@ export class EntityService {
    * Constructs the EntityService.
    * @param database - The database instance to use for queries.
    */
-  constructor(private readonly database: Db) { }
+  constructor(private readonly database: Db) {}
 
   /**
    * Retrieves an entity associated with a given course ID.
@@ -131,8 +131,8 @@ export class EntityService {
           domain,
           subdomain,
           rootDomain,
-        })
-      })
+        }),
+      });
       throw new Error(`Error getting entity from domain: ${err}`);
     });
     return {
@@ -157,9 +157,11 @@ export class EntityService {
         description: courses.description,
         address: courses.address,
         logo: courses.logoId,
+        displayOrder: courses.displayOrder,
       })
       .from(courses)
       .where(eq(courses.entityId, entityId))
+      .orderBy(asc(courses.displayOrder), asc(courses.name))
       .execute()
       .catch((err) => {
         this.logger.error(err);
@@ -171,8 +173,8 @@ export class EntityService {
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
             entityId,
-          })
-        })
+          }),
+        });
         throw new Error(`Error getting courses for entity: ${entityId}`);
       });
     //find all images for each course
