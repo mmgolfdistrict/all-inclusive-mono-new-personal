@@ -3599,7 +3599,7 @@ export class BookingService {
           cartFeeTaxPercentTotal,
           additionalTaxes,
         },
-        source
+        source,
         additionalNoteFromUser,
         needRentals
       })
