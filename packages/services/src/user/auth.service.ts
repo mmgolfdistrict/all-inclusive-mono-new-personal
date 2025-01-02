@@ -135,25 +135,79 @@ export class AuthService extends CacheService {
     if (!data) {
       this.logger.warn(`User not found: ${handleOrEmail}`);
       if (process.env.NODE_ENV !== "production") {
-        throw new Error("User not found");
+        return {
+          id: "",
+          email: "",
+          image: "",
+          name: "",
+          phoneNumber: "",
+          profilePicture: "",
+          error: true,
+          message: "User not found",
+        };
       }
-      return null;
+      return {
+        id: "",
+        email: "",
+        image: "",
+        name: "",
+        phoneNumber: "",
+        profilePicture: "",
+        error: true,
+        message: "User not found",
+      };
     }
 
     if (!data.user.emailVerified) {
       this.logger.warn(`User email not verified: ${handleOrEmail}`);
       if (process.env.NODE_ENV !== "production") {
-        throw new Error("User email not verified");
+        return {
+          id: "",
+          email: data.user.email,
+          image: "",
+          name: "",
+          phoneNumber: "",
+          profilePicture: "",
+          error: true,
+          message: "User email not verified",
+        };
       }
-      return null;
+      return {
+        id: "",
+        email: data.user.email,
+        image: "",
+        name: "",
+        phoneNumber: "",
+        profilePicture: "",
+        error: true,
+        message: "User email not verified",
+      };
     }
     // console.log("EMail verified");
     if (!data.user.gdPassword) {
       this.logger.warn(`User has no password: ${handleOrEmail}`);
       if (process.env.NODE_ENV !== "production") {
-        throw new Error("User has no password");
+        return {
+          id: "",
+          email: data.user.email,
+          image: "",
+          name: "",
+          phoneNumber: "",
+          profilePicture: "",
+          error: true,
+          message: "User has no password",
+        };
       }
-      return null;
+      return {
+        id: "",
+        email: data.user.email,
+        image: "",
+        name: "",
+        phoneNumber: "",
+        profilePicture: "",
+        error: true,
+        message: "User has no password",
+      };
     }
     // console.log("GD password found");
 
