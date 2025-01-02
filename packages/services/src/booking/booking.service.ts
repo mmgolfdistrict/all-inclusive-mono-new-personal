@@ -94,7 +94,6 @@ interface OwnedTeeTimeData {
   weatherGuaranteeAmount: number | null;
   teeTimeId: string;
   slots: number;
-  bookingStatus:string
 }
 
 interface ListingData {
@@ -625,7 +624,6 @@ export class BookingService {
         providerBookingId: bookings.providerBookingId,
         slots: lists.slots,
         playerCount: bookings.playerCount,
-        bookingStatus: bookings.status
       })
       .from(teeTimes)
       .innerJoin(bookings, eq(bookings.teeTimeId, teeTimes.id))
@@ -643,8 +641,7 @@ export class BookingService {
           eq(bookings.ownerId, userId),
           eq(bookings.isActive, true),
           eq(teeTimes.courseId, courseId),
-          gte(teeTimes.date, nowInCourseTimezone),
-          or(eq(bookings.status,"RESERVED"),eq(bookings.status,"CONFIRMED"))
+          gte(teeTimes.date, nowInCourseTimezone)
         )
       )
       .groupBy(
@@ -723,7 +720,6 @@ export class BookingService {
           weatherGuaranteeAmount: teeTime.weatherGuaranteeAmount,
           teeTimeId: teeTime.id,
           slots: teeTime.slots || 0,
-          bookingStatus: teeTime.bookingStatus
         };
       } else {
         const currentEntry = combinedData[teeTime.providerBookingId];
