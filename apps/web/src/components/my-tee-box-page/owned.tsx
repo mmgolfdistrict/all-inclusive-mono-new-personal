@@ -34,7 +34,6 @@ export type OwnedTeeTime = {
   weatherGuaranteeAmount?: number;
   selectedSlotsCount?: "1" | "2" | "3" | "4";
   slots?: number;
-  bookingStatus: string;
 };
 
 export const Owned = () => {
@@ -116,7 +115,6 @@ export const Owned = () => {
               {/* <TableHeader text="Purchase Price" /> */}
               <TableHeader text="Golfers" />
               <TableHeader text="Status" />
-              <TableHeader text="Booking Status" />
               <TableHeader text="" className="text-right" />
             </tr>
           </thead>
@@ -146,7 +144,6 @@ export const Owned = () => {
                     listingId={i.listingId}
                     ownerId={user?.id ?? ""}
                     timezoneCorrection={course?.timezoneCorrection}
-                    bookingStatus={i.bookingStatus}
                   />
                 ))}
           </tbody>
@@ -218,7 +215,6 @@ const TableRow = ({
   openListTeeTime,
   openCancelListing,
   openManageListTeeTime,
-  bookingStatus
 }: {
   course: string;
   date: string;
@@ -236,7 +232,6 @@ const TableRow = ({
   openListTeeTime: () => void;
   openCancelListing: () => void;
   openManageListTeeTime: () => void;
-  bookingStatus: string;
 }) => {
   const href = useMemo(() => {
     if (isListed) {
@@ -294,9 +289,6 @@ const TableRow = ({
           </div>
         ) : null}
         <span className="capitalize">{status.toLowerCase()}</span>
-      </td>
-      <td className="whitespace-nowrap px-4 py-3">
-      <span className="capitalize">{bookingStatus.toLowerCase()}</span>
       </td>
       <td className="whitespace-nowrap px-4 py-3">
         <div className="flex w-full justify-end gap-2">
