@@ -86,8 +86,14 @@ export class AuthService extends CacheService {
       });
   };
 
-  addUserSession = async (userId: string, status: string, courseId: string, loginMethod: string, ip?: string, userAgent?: string) => {
-
+  addUserSession = async (
+    userId: string,
+    status: string,
+    courseId: string,
+    loginMethod: string,
+    ip?: string,
+    userAgent?: string
+  ) => {
     console.log("loginMethod", loginMethod);
 
     try {
@@ -100,7 +106,7 @@ export class AuthService extends CacheService {
           userAgent: userAgent,
           status: status,
           courseId: courseId,
-          loginMethod: loginMethod
+          loginMethod: loginMethod,
         })
         .execute();
     } catch (error) {
@@ -154,9 +160,18 @@ export class AuthService extends CacheService {
     const valid = await bcrypt.compare(password, data.user.gdPassword);
     // console.log("Bcrypt compare");
     if (!valid) {
-      this.logger.warn(`Invalid password: ${handleOrEmail}`);
+      this.logger.warn(`Invalid password of email: ${handleOrEmail}`);
       if (process.env.NODE_ENV !== "production") {
-        throw new Error("Invalid password");
+        return {
+          id: "",
+          email: data.user.email,
+          image: "",
+          name: "",
+          phoneNumber: "",
+          profilePicture: "",
+          error: true,
+          message: "Invalid password",
+        };
       }
 
       const signInAttempts = await this.incrementOrSetKey(`signinAttempts:${data.user.id}`);
@@ -168,8 +183,16 @@ export class AuthService extends CacheService {
           `We have detected suspicious activity on your account. If you are not the one attempting to login, please contact support immediately.`
         );
       }
-
-      return null;
+      return {
+        id: "",
+        email: data.user.email,
+        image: "",
+        name: "",
+        phoneNumber: "",
+        profilePicture: "",
+        error: true,
+        message: "Invalid password",
+      };
     }
     this.logger.warn(`Password Verified`);
 

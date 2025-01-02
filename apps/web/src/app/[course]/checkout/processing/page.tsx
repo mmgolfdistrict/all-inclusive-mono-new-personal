@@ -44,6 +44,8 @@ export default function CheckoutConfirmation() {
       payment_id,
       sensibleQuoteId,
       source: "",
+      additionalNoteFromUser: "",
+      needRentals: false,
       redirectHref,
     });
     return bookingResponse;

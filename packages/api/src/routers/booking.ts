@@ -260,6 +260,8 @@ export const bookingRouter = createTRPCRouter({
         payment_id: z.string(),
         sensibleQuoteId: z.string(),
         source: z.string(),
+        additionalNoteFromUser: z.string().max(200).optional(),
+        needRentals: z.boolean(),
         redirectHref: z.string().url(),
       })
     )
@@ -272,6 +274,8 @@ export const bookingRouter = createTRPCRouter({
           input.payment_id,
           input.sensibleQuoteId,
           input.source,
+          input.additionalNoteFromUser,
+          input.needRentals,
           input.redirectHref
         );
     }),
@@ -282,6 +286,8 @@ export const bookingRouter = createTRPCRouter({
         listingId: z.string(),
         payment_id: z.string(),
         source: z.string(),
+        additionalNoteFromUser: z.string().max(200).optional(),
+        needRentals: z.boolean(),
         redirectHref: z.string().url(),
       })
     )
@@ -294,6 +300,8 @@ export const bookingRouter = createTRPCRouter({
           input.listingId,
           input.payment_id,
           input.source,
+          input.additionalNoteFromUser,
+          input.needRentals,
           input.redirectHref
         );
     }),

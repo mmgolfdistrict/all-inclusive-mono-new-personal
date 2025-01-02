@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { and, asc, desc, eq, gte, inArray, or, sql, type Db } from "@golf-district/database";
+import { and, asc, desc, eq, gte, inArray, or, sql, type Db, not } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import type { InsertBooking } from "@golf-district/database/schema/bookings";
 import { bookings } from "@golf-district/database/schema/bookings";
@@ -30,15 +30,10 @@ import type { NotificationService } from "../notification/notification.service";
 import type { HyperSwitchService } from "../payment-processor/hyperswitch.service";
 import type { SensibleService } from "../sensible/sensible.service";
 import type { Customer, ProviderService } from "../tee-sheet-provider/providers.service";
-import type {
-  ClubProphetBookingResponse,
-  ClubProphetTeeTimeResponse,
-} from "../tee-sheet-provider/sheet-providers/types/clubprophet.types";
 import type { BookingDetails, BookingResponse, ProviderAPI } from "../tee-sheet-provider/sheet-providers";
 import type { TokenizeService } from "../token/tokenize.service";
 import type { UserWaitlistService } from "../user-waitlist/userWaitlist.service";
 import { loggerService } from "../webhooks/logging.service";
-import type { TeeTimeResponse as ForeupTeeTimeResponse } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
 
 dayjs.extend(UTC);
 dayjs.extend(timezone);
@@ -282,6 +277,7 @@ export class BookingService {
       // .leftJoin(userBookingOffers, eq(userBookingOffers.bookingId, bookings.id))
       .where(
         and(
+          not(eq(bookings.providerBookingId, "")),
           eq(transfers.courseId, courseId),
           or(eq(transfers.toUserId, userId), eq(transfers.fromUserId, userId))
         )
@@ -638,6 +634,7 @@ export class BookingService {
       .leftJoin(bookingslots, eq(bookingslots.bookingId, bookings.id))
       .where(
         and(
+          not(eq(bookings.providerBookingId, "")),
           eq(bookings.ownerId, userId),
           eq(bookings.isActive, true),
           eq(teeTimes.courseId, courseId),
@@ -3257,6 +3254,8 @@ export class BookingService {
     payment_id: string,
     sensibleQuoteId: string,
     source: string,
+    additionalNoteFromUser: string | undefined,
+    needRentals: boolean,
     redirectHref: string
   ) => {
     let bookingStage = "Normalizing Cart Data";
@@ -3437,6 +3436,7 @@ export class BookingService {
       } catch (e) {
         console.log("ERROR in getting appsetting SENSIBLE_NOTE_TO_TEE_SHEET");
       }
+      details = `${details}\n<br />\n${additionalNoteFromUser}`;
 
       bookingStage = "Getting booking Creation Data";
       const bookingData = provider.getBookingCreationData({
@@ -3600,6 +3600,8 @@ export class BookingService {
           additionalTaxes,
         },
         source
+        additionalNoteFromUser,
+        needRentals
       })
       .catch(async (err) => {
         this.logger.error(`Error creating booking, ${err}`);
@@ -3721,6 +3723,8 @@ export class BookingService {
     listingId = "",
     payment_id = "",
     source = "",
+    additionalNoteFromUser = "",
+    needRentals = false,
     redirectHref = ""
   ) => {
     const {
@@ -3817,7 +3821,9 @@ export class BookingService {
       markupFees: 0,
       weatherQuoteId: weatherQuoteId || null,
       cartFeePerPlayer: cartFeeCharge,
-      source
+      source,
+      customerComment: additionalNoteFromUser,
+      needClubRental: needRentals,
     });
     transfersToCreate.push({
       id: randomUUID(),
