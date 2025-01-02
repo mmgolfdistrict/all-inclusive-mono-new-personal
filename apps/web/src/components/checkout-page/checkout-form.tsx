@@ -17,11 +17,11 @@ import type { Dispatch, SetStateAction } from "react";
 import { Fragment, useEffect, useState, type FormEvent } from "react";
 import { toast } from "react-toastify";
 import { FilledButton } from "../buttons/filled-button";
+import { Switch } from "../buttons/switch";
 import { CharitySelect } from "../input/charity-select";
 import { Input } from "../input/input";
 import styles from "./checkout.module.css";
 import type { NextAction } from "./hyper-switch";
-import { Switch } from "../buttons/switch";
 
 type charityData = {
   charityDescription: string | undefined;
@@ -112,7 +112,7 @@ export const CheckoutForm = ({
   if (isFirstHand.length) {
     primaryGreenFeeCharge =
       isFirstHand?.reduce((acc: number, i) => acc + i.price, 0) / 100;
-      console.log("primaryGreenFeeCharge ---", primaryGreenFeeCharge)
+    console.log("primaryGreenFeeCharge ---", primaryGreenFeeCharge);
   } else {
     primaryGreenFeeCharge =
       cartData
@@ -139,17 +139,16 @@ export const CheckoutForm = ({
       ?.filter(({ product_data }) => product_data.metadata.type === "sensible")
       ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
 
-      const charityCharge =
-      cartData
-        ?.filter(({ product_data }) => product_data.metadata.type === "charity")
-        ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
-      const cartFeeCharge =
-        cartData
-          ?.filter(({ product_data }) => product_data.metadata.type === "cart_fee")
-          ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
-        
-       
-        const greenFeeTaxPercent =
+  const charityCharge =
+    cartData
+      ?.filter(({ product_data }) => product_data.metadata.type === "charity")
+      ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+  const cartFeeCharge =
+    cartData
+      ?.filter(({ product_data }) => product_data.metadata.type === "cart_fee")
+      ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+
+  const greenFeeTaxPercent =
     cartData
       ?.filter(
         ({ product_data }) =>
@@ -171,9 +170,7 @@ export const CheckoutForm = ({
       ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
   const markupFee =
     cartData
-      ?.filter(
-        ({ product_data }) => product_data.metadata.type === "markup"
-      )
+      ?.filter(({ product_data }) => product_data.metadata.type === "markup")
       ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
 
   const markupTaxPercent =
@@ -214,6 +211,7 @@ export const CheckoutForm = ({
   const [isLoading, setIsLoading] = useState(false);
   const [showTextField, setShowTextField] = useState(false);
   const [donateError, setDonateError] = useState(false);
+  const [otherDonateValue,setOtherDonateValue]=useState(5);
   // const [noThanks, setNoThanks] = useState(false);
   const [charityData, setCharityData] = useState<charityData | undefined>({
     charityDescription: "",
@@ -590,32 +588,38 @@ export const CheckoutForm = ({
     return bookingResponse;
   };
 
-  
-
   const handleDonateChange = (event) => {
     const value = event.target.value.trim() as string;
     const numericValue = value.length > 0 ? parseFloat(value) : 0;
     // setNoThanks(false);
 
     if (!numericValue || numericValue === 0) {
-      setDonateValue(event?.target?.value as number);
+      setOtherDonateValue(event?.target?.value as number);
       setDonateError(true);
     } else if (numericValue < 1) {
       setDonateError(true);
     } else {
       setDonateError(false);
-      setDonateValue(numericValue);
+      setOtherDonateValue(numericValue);
       handleSelectedCharityAmount(Number(numericValue));
     }
+    setDonateValue(otherDonateValue);
   };
- 
-  const playersInNumber= Number(amountOfPlayers || 0);
-  const greenFeeChargePerPlayer = ((primaryGreenFeeCharge )/ playersInNumber) - (cartFeeCharge) - markupFee
-  const greenFeeTaxAmount = ( ( greenFeeChargePerPlayer ) * ( greenFeeTaxPercent  ) ) * playersInNumber  
-  const cartFeeTaxAmount = ( ( cartFeeCharge  ) * ( cartFeeTaxPercent ) ) * playersInNumber
-  const markupFeesTaxAmount = ( ( markupFee  ) * ( markupTaxPercent ) ) * playersInNumber
-  const weatherGuaranteeTaxAmount = ( ( sensibleCharge  ) * ( (weatherGuaranteeTaxPercent ) ) )
-  const additionalTaxes = (greenFeeTaxAmount+markupFeesTaxAmount+weatherGuaranteeTaxAmount+cartFeeTaxAmount)/100
+
+  const playersInNumber = Number(amountOfPlayers || 0);
+  const greenFeeChargePerPlayer =
+    primaryGreenFeeCharge / playersInNumber - cartFeeCharge - markupFee;
+  const greenFeeTaxAmount =
+    greenFeeChargePerPlayer * greenFeeTaxPercent * playersInNumber;
+  const cartFeeTaxAmount = cartFeeCharge * cartFeeTaxPercent * playersInNumber;
+  const markupFeesTaxAmount = markupFee * markupTaxPercent * playersInNumber;
+  const weatherGuaranteeTaxAmount = sensibleCharge * weatherGuaranteeTaxPercent;
+  const additionalTaxes =
+    (greenFeeTaxAmount +
+      markupFeesTaxAmount +
+      weatherGuaranteeTaxAmount +
+      cartFeeTaxAmount) /
+    100;
   taxCharge += additionalTaxes;
   const Total =
     primaryGreenFeeCharge +
@@ -628,15 +632,14 @@ export const CheckoutForm = ({
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
-  
+
   const TaxCharge =
     taxCharge +
     sensibleCharge +
     (!roundUpCharityId ? charityCharge : 0) +
-    convenienceCharge ;
+    convenienceCharge;
 
-   
-  const totalBeforeRoundOff = primaryGreenFeeCharge + TaxCharge ;
+  const totalBeforeRoundOff = primaryGreenFeeCharge + TaxCharge;
   const decimalPart = totalBeforeRoundOff % 1;
 
   const roundOff =
@@ -650,6 +653,10 @@ export const CheckoutForm = ({
       donation = 1;
     } else if (decimalPart.toFixed(2) === "0.00") {
       donation = 1;
+    } else if (roundOffStatus === "nothanks") {
+      donation = 0;
+    } else if(roundOffStatus === "other"){
+      donation = otherDonateValue
     } else {
       donation = parseFloat(
         (Math.ceil(totalBeforeRoundOff) - totalBeforeRoundOff).toFixed(2)
@@ -682,7 +689,6 @@ export const CheckoutForm = ({
       handleRoundOff();
     }
   }, [TaxCharge]);
-
   return (
     <form onSubmit={handleSubmit} className="">
       <UnifiedCheckout id="unified-checkout" options={unifiedCheckoutOptions} />
@@ -780,7 +786,10 @@ export const CheckoutForm = ({
             setValue={setNeedRentals}
             id="need-rentals"
           />
-          <label className="text-primary-gray text-[14px] cursor-pointer select-none" htmlFor="need-rentals">
+          <label
+            className="text-primary-gray text-[14px] cursor-pointer select-none"
+            htmlFor="need-rentals"
+          >
             Need Rentals?
           </label>
         </div>
@@ -827,7 +836,7 @@ export const CheckoutForm = ({
             {(
               (roundUpCharityId
                 ? roundOffClick
-                  ? roundOff 
+                  ? roundOff
                   : Number(TotalAmt)
                 : TotalAmt) || 0
             ).toLocaleString("en-US", {
