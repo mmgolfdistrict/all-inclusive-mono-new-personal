@@ -6,6 +6,7 @@ export const Switch = ({
   setValue,
   disabled,
   dataTestId,
+  id
 }: {
   value: boolean;
   setValue: (
@@ -13,6 +14,7 @@ export const Switch = ({
   ) => void | Promise<void> | Dispatch<SetStateAction<boolean>>;
   disabled?: boolean;
   dataTestId?: string;
+    id?: string
 }) => {
   return (
     <RadixSwitch.Root
@@ -23,6 +25,7 @@ export const Switch = ({
       className={`relative h-[26px] w-[40px] rounded-full bg-stroke shadow-inner transition-colors data-[state=checked]:bg-primary ${
         disabled ? "opacity-60 cursor-not-allowed" : ""
       }`}
+      id={id}
     >
       <RadixSwitch.Thumb className="block h-[16px] w-[16px] translate-x-[4px] transform rounded-full bg-white shadow-md transition-transform data-[state=checked]:translate-x-[20px]" />
     </RadixSwitch.Root>

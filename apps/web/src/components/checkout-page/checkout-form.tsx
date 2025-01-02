@@ -21,6 +21,7 @@ import { CharitySelect } from "../input/charity-select";
 import { Input } from "../input/input";
 import styles from "./checkout.module.css";
 import type { NextAction } from "./hyper-switch";
+import { Switch } from "../buttons/switch";
 
 type charityData = {
   charityDescription: string | undefined;
@@ -111,6 +112,7 @@ export const CheckoutForm = ({
   if (isFirstHand.length) {
     primaryGreenFeeCharge =
       isFirstHand?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+      console.log("primaryGreenFeeCharge ---", primaryGreenFeeCharge)
   } else {
     primaryGreenFeeCharge =
       cartData
@@ -222,6 +224,8 @@ export const CheckoutForm = ({
   // const [isPaymentCompleted, setIsPaymentCompleted] = useState(false);
   const [message, setMessage] = useState("");
   const [charityAmountError, setCharityAmountError] = useState("");
+  const [needRentals, setNeedRentals] = useState(false);
+  const [additionalNote, setAdditionalNote] = useState("");
   // const [customerID, setCustomerID] = useState("");
   const {
     promoCode,
@@ -560,6 +564,8 @@ export const CheckoutForm = ({
       cartId,
       payment_id,
       sensibleQuoteId,
+      additionalNoteFromUser: additionalNote,
+      needRentals,
       redirectHref,
     });
     return bookingResponse;
@@ -577,6 +583,8 @@ export const CheckoutForm = ({
       cartId,
       listingId,
       payment_id,
+      additionalNoteFromUser: additionalNote,
+      needRentals,
       redirectHref,
     });
     return bookingResponse;
@@ -601,14 +609,13 @@ export const CheckoutForm = ({
     }
   };
  
-  const playersInNumber= Number(playerCount || 1)
+  const playersInNumber= Number(amountOfPlayers || 0);
   const greenFeeChargePerPlayer = ((primaryGreenFeeCharge )/ playersInNumber) - (cartFeeCharge) - markupFee
   const greenFeeTaxAmount = ( ( greenFeeChargePerPlayer ) * ( greenFeeTaxPercent  ) ) * playersInNumber  
   const cartFeeTaxAmount = ( ( cartFeeCharge  ) * ( cartFeeTaxPercent ) ) * playersInNumber
   const markupFeesTaxAmount = ( ( markupFee  ) * ( markupTaxPercent ) ) * playersInNumber
   const weatherGuaranteeTaxAmount = ( ( sensibleCharge  ) * ( (weatherGuaranteeTaxPercent ) ) )
   const additionalTaxes = (greenFeeTaxAmount+markupFeesTaxAmount+weatherGuaranteeTaxAmount+cartFeeTaxAmount)/100
-  
   taxCharge += additionalTaxes;
   const Total =
     primaryGreenFeeCharge +
@@ -621,11 +628,14 @@ export const CheckoutForm = ({
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
+  
   const TaxCharge =
     taxCharge +
     sensibleCharge +
     (!roundUpCharityId ? charityCharge : 0) +
     convenienceCharge ;
+
+   
   const totalBeforeRoundOff = primaryGreenFeeCharge + TaxCharge ;
   const decimalPart = totalBeforeRoundOff % 1;
 
@@ -755,6 +765,25 @@ export const CheckoutForm = ({
             />
           </div>
         ) : null}
+        <Input
+          label="Any Special Requests?"
+          register={() => null}
+          name="notes"
+          maxLength={200}
+          placeholder="Message"
+          value={additionalNote}
+          onChange={(e) => setAdditionalNote(e.target.value)}
+        />
+        <div className="flex flex-row items-center gap-2">
+          <Switch
+            value={needRentals}
+            setValue={setNeedRentals}
+            id="need-rentals"
+          />
+          <label className="text-primary-gray text-[14px] cursor-pointer select-none" htmlFor="need-rentals">
+            Need Rentals?
+          </label>
+        </div>
         <div className="flex justify-between">
           <div>
             Subtotal
