@@ -1,6 +1,7 @@
 "use client";
 
 import { signIn, useSession } from "@golf-district/auth/nextjs-exports";
+import { AuthenticationMethodEnum } from "@golf-district/shared";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FilledButton } from "~/components/buttons/filled-button";
 import { IconButton } from "~/components/buttons/icon-button";
@@ -25,7 +26,6 @@ import ReCAPTCHA from "react-google-recaptcha";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
 import { LoadingContainer } from "../loader";
-import { AuthenticationMethodEnum } from "@golf-district/shared";
 
 declare global {
   interface Window {
@@ -82,10 +82,12 @@ export default function Login() {
     }
   };
 
-  const { data: authenticationMethods, isLoading: authenticationMethodsLoading } =
-    api.course.getAuthenticationMethods.useQuery({
-      courseId: course?.id ?? "",
-    })
+  const {
+    data: authenticationMethods,
+    isLoading: authenticationMethodsLoading,
+  } = api.course.getAuthenticationMethods.useQuery({
+    courseId: course?.id ?? "",
+  });
 
   const isMethodSupported = (method: AuthenticationMethodEnum) => {
     return authenticationMethods?.includes(method);
@@ -108,12 +110,13 @@ export default function Login() {
       addLoginSession();
       logAudit(sessionData.user.id, course.id, () => {
         window.location.reload();
-        window.location.href = `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
-          ? prevPath?.path
-            ? prevPath.path
+        window.location.href = `${window.location.origin}${
+          GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+            ? prevPath?.path
+              ? prevPath.path
+              : "/"
             : "/"
-          : "/"
-          }`;
+        }`;
       });
     }
   }, [sessionData, course, status]);
@@ -151,18 +154,18 @@ export default function Login() {
       .catch((err) => {
         console.log("error", err);
       });
-
   };
 
   const addLoginSession = () => {
     if (!hasSessionLogged) {
-
-      const loginMethod = localStorage.getItem("loginMethod") as unknown as string
+      const loginMethod = localStorage.getItem(
+        "loginMethod"
+      ) as unknown as string;
       addUserSession
         .mutateAsync({
           status: "LOGIN",
           courseId: course?.id ?? "",
-          loginMethod: loginMethod ?? ""
+          loginMethod: loginMethod ?? "",
         })
         .then(() => {
           console.log("login user added successfully");
@@ -249,7 +252,7 @@ export default function Login() {
     } catch (error) {
       toast.error(
         (error as Error)?.message ??
-        "An error occurred logging in, try another option."
+          "An error occurred logging in, try another option."
       );
     } finally {
       setIsLoading(false);
@@ -289,7 +292,6 @@ export default function Login() {
         redirect: false,
       });
 
-
       if (!res?.error) {
         localStorage.setItem("loginMethod", "FACEBOOK");
       }
@@ -303,12 +305,13 @@ export default function Login() {
 
   const appleSignIn = async () => {
     const res = await signIn("apple", {
-      callbackUrl: `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
-        ? prevPath?.path
-          ? prevPath.path
+      callbackUrl: `${window.location.origin}${
+        GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+          ? prevPath?.path
+            ? prevPath.path
+            : "/"
           : "/"
-        : "/"
-        }`,
+      }`,
       redirect: true,
     });
     if (!res?.error) {
@@ -405,7 +408,8 @@ export default function Login() {
   return isLoading ||
     localStorageGoogle ||
     localstorageLinkedin ||
-    localstorageFacebook || authenticationMethodsLoading ? (
+    localstorageFacebook ||
+    authenticationMethodsLoading ? (
     <LoadingContainer isLoading={true}>
       <div></div>
     </LoadingContainer>
@@ -418,27 +422,28 @@ export default function Login() {
         Login
       </h1>
       <section className="mx-auto flex w-full flex-col gap-2 bg-white p-5 sm:max-w-[500px] sm:rounded-xl sm:p-6">
-
-        {isMethodSupported(AuthenticationMethodEnum.EMAIL_PASSWORD) ? <p>
-          First time users of Golf District need to create a new account. Simply
-          use any social login like Google to login quickly, or select{" "}
-          <Link
-            className="text-primary"
-            href={`/${course?.id}/register`}
-            data-testid="signup-button-id"
-          >
-            sign up
-          </Link>{" "}
-          if you prefer to use another email.
-        </p> : <p>
-          First time users of Golf District need to create a new account. Simply
-          use any social login like Google to login quickly.
-
-        </p>}
-
+        {isMethodSupported(AuthenticationMethodEnum.EMAIL_PASSWORD) ? (
+          <p>
+            First time users of Golf District need to create a new account.
+            Simply use any social login like Google to login quickly, or select{" "}
+            <Link
+              className="text-primary"
+              href={`/${course?.id}/register`}
+              data-testid="signup-button-id"
+            >
+              sign up
+            </Link>{" "}
+            if you prefer to use another email.
+          </p>
+        ) : (
+          <p>
+            First time users of Golf District need to create a new account.
+            Simply use any social login like Google to login quickly.
+          </p>
+        )}
 
         {isMethodSupported(AuthenticationMethodEnum.GOOGLE) &&
-          process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ? (
+        process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ? (
           <div className="w-full rounded-lg shadow-outline">
             <SquareButton
               onClick={googleSignIn}
@@ -459,7 +464,7 @@ export default function Login() {
           </div>
         ) : null}
         {isMethodSupported(AuthenticationMethodEnum.LINKEDIN) &&
-          process.env.NEXT_PUBLIC_LINKEDIN_ENABLED_AUTH_SUPPORT ? (
+        process.env.NEXT_PUBLIC_LINKEDIN_ENABLED_AUTH_SUPPORT ? (
           <div className="w-full rounded-lg shadow-outline">
             <SquareButton
               onClick={linkedinSignIn}
@@ -479,7 +484,8 @@ export default function Login() {
             </SquareButton>
           </div>
         ) : null}
-        {isMethodSupported(AuthenticationMethodEnum.APPLE) && process.env.NEXT_PUBLIC_APPLE_ID ? (
+        {isMethodSupported(AuthenticationMethodEnum.APPLE) &&
+        process.env.NEXT_PUBLIC_APPLE_ID ? (
           <SquareButton
             onClick={appleSignIn}
             className="flex items-center justify-center gap-3 bg-black text-white"
@@ -490,7 +496,7 @@ export default function Login() {
           </SquareButton>
         ) : null}
         {isMethodSupported(AuthenticationMethodEnum.FACEBOOK) &&
-          process.env.NEXT_PUBLIC_FACEBOOK_CLIENT_ID ? (
+        process.env.NEXT_PUBLIC_FACEBOOK_CLIENT_ID ? (
           <SquareButton
             onClick={facebookSignIn}
             className="flex items-center justify-center gap-3 bg-facebook text-white"
@@ -510,7 +516,9 @@ export default function Login() {
             )}
           </SquareButton>
         ) : null}
-        {isMethodSupported(AuthenticationMethodEnum.EMAIL_PASSWORD) && authenticationMethods?.length !== 1 && hasProvidersSetUp ? (
+        {isMethodSupported(AuthenticationMethodEnum.EMAIL_PASSWORD) &&
+        authenticationMethods?.length !== 1 &&
+        hasProvidersSetUp ? (
           <div className="flex items-center py-4">
             <div className="h-[1px] w-full bg-stroke" />
             <div className="px-2 text-primary-gray">or</div>
@@ -548,7 +556,9 @@ export default function Login() {
                   e.preventDefault();
                   setShowPassword(!showPassword);
                 }}
-                className={`absolute right-2 !top-[90%] border-none !bg-transparent !transform !-translate-y-[90%]`}
+                className={`absolute right-2 !top-[90%] border-none !bg-transparent !transform !-translate-y-[90%] ${
+                  errors.password?.message ? "pb-10" : ""
+                }`}
                 data-testid="login-show-password-id"
               >
                 {showPassword ? (
@@ -591,8 +601,8 @@ export default function Login() {
           </form>
         )}
       </section>
-      {
-        isMethodSupported(AuthenticationMethodEnum.EMAIL_PASSWORD) && <div className="pt-4 text-center text-[14px] text-primary-gray">
+      {isMethodSupported(AuthenticationMethodEnum.EMAIL_PASSWORD) && (
+        <div className="pt-4 text-center text-[14px] text-primary-gray">
           Don&apos;t have an account?{" "}
           <Link
             className="text-primary"
@@ -603,8 +613,7 @@ export default function Login() {
           </Link>{" "}
           instead
         </div>
-      }
-
+      )}
     </main>
   );
 }
