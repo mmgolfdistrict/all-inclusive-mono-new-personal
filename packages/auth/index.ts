@@ -129,17 +129,17 @@ export const {
           credentials.email as string,
           credentials.password as string
         );
-        if(data?.error){
+        if (data?.error) {
           return {
             error: data?.error,
-            message: data?.message
-          }
+            message: data?.message,
+          };
         }
         if (!data) {
           logger.warn(`User not authenticated`);
           return null;
         }
-        
+
         logger.warn(`User authentication successful`);
         return {
           id: data.id,
@@ -170,6 +170,11 @@ export const {
       allowDangerousEmailAccountLinking: true,
     }),
   ],
+  logger: {
+    error(error: Error) {
+      console.log(error.message);
+    },
+  },
   pages: {
     signIn: `/`,
     // verifyRequest: `/login`,
