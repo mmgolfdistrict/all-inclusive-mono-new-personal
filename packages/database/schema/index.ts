@@ -55,6 +55,7 @@ import * as userSession from "./userSession";
 import * as userWaitlists from "./userWaitlists";
 import * as verificationTokens from "./verificationTokens";
 import * as withdrawals from "./withdrawals";
+import * as courseContacts from "./courseContacts";
 
 export const schema = {
   ...accounts,
@@ -113,5 +114,6 @@ export const schema = {
   ...courseAllowedTimeToSell,
   ...userSession,
   ...courseUser,
-  ...authenticationMethod
+  ...authenticationMethod,
+  ...courseContacts
 };

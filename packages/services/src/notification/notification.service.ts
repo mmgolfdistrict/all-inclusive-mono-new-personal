@@ -41,6 +41,8 @@ interface EmailParams {
   PreviousBalance?: number;
   AvailableBalance?: number;
   BalanceProcessing?: number | string;
+  NoteFromUser?: string;
+  NeedRentals?: string;
 }
 
 interface Attachment {
@@ -161,13 +163,13 @@ export class NotificationService {
   };
 
   sendEmailByTemplate = async (
-    email: string,
+    email: string | string[],
     subject: string,
     templateId: string,
     template: EmailParams,
     attachments: Attachment[]
   ) => {
-    this.logger.info(`Sending email to ${email}`);
+    this.logger.info(`Sending email to ${email.toString()}`);
     const appSettingService = new AppSettingsService(
       this.database,
       process.env.REDIS_URL!,
@@ -203,7 +205,7 @@ export class NotificationService {
               attachments,
             }),
           });
-          throw new Error(`Failed to send email to: ${email}, Response: ${JSON.stringify(response)}`);
+          throw new Error(`Failed to send email to: ${email.toString()}, Response: ${JSON.stringify(response)}`);
         });
     } else {
       const response = await this.sendGridClient
@@ -232,7 +234,7 @@ export class NotificationService {
               attachments,
             }),
           });
-          throw new Error(`Failed to send email to: ${email}, Response: ${JSON.stringify(response)}`);
+          throw new Error(`Failed to send email to: ${email.toString()}, Response: ${JSON.stringify(response)}`);
         });
     }
   };

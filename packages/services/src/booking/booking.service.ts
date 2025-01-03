@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { and, asc, desc, eq, gte, inArray, or, sql, type Db } from "@golf-district/database";
+import { and, asc, desc, eq, gte, inArray, or, sql, type Db, not } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import type { InsertBooking } from "@golf-district/database/schema/bookings";
 import { bookings } from "@golf-district/database/schema/bookings";
@@ -30,15 +30,11 @@ import type { NotificationService } from "../notification/notification.service";
 import type { HyperSwitchService } from "../payment-processor/hyperswitch.service";
 import type { SensibleService } from "../sensible/sensible.service";
 import type { Customer, ProviderService } from "../tee-sheet-provider/providers.service";
-import type {
-  ClubProphetBookingResponse,
-  ClubProphetTeeTimeResponse,
-} from "../tee-sheet-provider/sheet-providers/types/clubprophet.types";
 import type { BookingDetails, BookingResponse, ProviderAPI } from "../tee-sheet-provider/sheet-providers";
 import type { TokenizeService } from "../token/tokenize.service";
 import type { UserWaitlistService } from "../user-waitlist/userWaitlist.service";
 import { loggerService } from "../webhooks/logging.service";
-import type { TeeTimeResponse as ForeupTeeTimeResponse } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
+import { courseContacts } from "@golf-district/database/schema/courseContacts";
 
 dayjs.extend(UTC);
 dayjs.extend(timezone);
@@ -282,6 +278,7 @@ export class BookingService {
       // .leftJoin(userBookingOffers, eq(userBookingOffers.bookingId, bookings.id))
       .where(
         and(
+          not(eq(bookings.providerBookingId, "")),
           eq(transfers.courseId, courseId),
           or(eq(transfers.toUserId, userId), eq(transfers.fromUserId, userId))
         )
@@ -638,6 +635,7 @@ export class BookingService {
       .leftJoin(bookingslots, eq(bookingslots.bookingId, bookings.id))
       .where(
         and(
+          not(eq(bookings.providerBookingId, "")),
           eq(bookings.ownerId, userId),
           eq(bookings.isActive, true),
           eq(teeTimes.courseId, courseId),
@@ -3257,7 +3255,7 @@ export class BookingService {
     payment_id: string,
     sensibleQuoteId: string,
     additionalNoteFromUser: string | undefined,
-    needRentals: boolean,
+    needRentals: boolean, 
     redirectHref: string
   ) => {
     let bookingStage = "Normalizing Cart Data";
@@ -3338,6 +3336,7 @@ export class BookingService {
         cartFeeTaxPercent: courses.cartFeeTaxPercent,
         weatherGuaranteeTaxPercent: courses.weatherGuaranteeTaxPercent,
         markupTaxPercent: courses.markupTaxPercent,
+        timezoneCorrection: courses.timezoneCorrection,
       })
       .from(teeTimes)
       .leftJoin(courses, eq(teeTimes.courseId, courses.id))
@@ -3505,6 +3504,51 @@ export class BookingService {
             }),
           });
         }
+      }
+      if (additionalNoteFromUser || needRentals) {
+        const courseContactsList = await this.database
+          .select({
+            email: courseContacts.email,
+            phone: courseContacts.phone1,
+          })
+          .from(courseContacts)
+          .where(
+            and(
+              eq(courseContacts.courseId, teeTime.courseId),
+              eq(courseContacts.sendNotification, true)
+            )
+          )
+          .execute()
+          .catch((err) => {
+            this.logger.error(`Error getting course contacts list, ${JSON.stringify(err.message)}`);
+            loggerService.errorLog({
+              userId: userId,
+              url: "/reserveBooking",
+              userAgent: "",
+              message: "ERROR_GETTING_COURSE_CONTACTS_LIST",
+              stackTrace: `${JSON.stringify(err)}`,
+              additionalDetailsJSON: JSON.stringify({
+                userId,
+                teeTimeId,
+                error: err,
+              }),
+            });
+            return [];
+          })
+        const emailList = courseContactsList.map((contact) => contact.email);
+        await this.notificationService.sendEmailByTemplate(
+          emailList,
+          "Reservation Additional Request",
+          process.env.SENDGRID_COURSE_CONTACT_NOTIFICATION_TEMPLATE_ID!,
+          {
+            NoteFromUser: additionalNoteFromUser || "-",
+            NeedRentals: needRentals ? "Yes" : "No",
+            PlayDateTime: formatTime(teeTime.providerDate, true, teeTime.timezoneCorrection ?? 0),
+            HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+            CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${teeTime.cdnKey}.${teeTime.extension}`,
+          },
+          []
+        )
       }
     } catch (e) {
       console.log("BOOKING FAILED ON PROVIDER, INITIATING REFUND FOR PAYMENT_ID", payment_id);

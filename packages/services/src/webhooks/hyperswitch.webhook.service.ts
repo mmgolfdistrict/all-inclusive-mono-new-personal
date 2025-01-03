@@ -50,6 +50,7 @@ import type { TokenizeService } from "../token/tokenize.service";
 import { loggerService } from "./logging.service";
 import type { HyperSwitchEvent } from "./types/hyperswitch";
 import type { BookingDetails, BookingResponse } from "../tee-sheet-provider/sheet-providers";
+import { courseContacts } from "@golf-district/database/schema/courseContacts";
 
 /**
  * `HyperSwitchWebhookService` - A service for processing webhooks from HyperSwitch.
@@ -767,7 +768,8 @@ export class HyperSwitchWebhookService {
         nameOnBooking: bookings.nameOnBooking,
         cartFeePerPlayer: bookings.cartFeePerPlayer,
         additionalNoteFromCustomer: bookings.customerComment,
-        needRentals: bookings.needClubRental
+        needRentals: bookings.needClubRental,
+        timezoneCorrection: courses.timezoneCorrection,
       })
       .from(bookings)
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -998,6 +1000,51 @@ export class HyperSwitchWebhookService {
           } catch (error) {
             this.logger.error(`Error adding sales data, ${JSON.stringify(error)}`);
           }
+        }
+        if (bookingDetails?.additionalNoteFromCustomer || bookingDetails?.needsRentals) {
+          const courseContactsList = await this.database
+            .select({
+              email: courseContacts.email,
+              phone: courseContacts.phone1,
+            })
+            .from(courseContacts)
+            .where(
+              and(
+                eq(courseContacts.courseId, existingTeeTime?.courseId || firstBooking.courseId || ""),
+                eq(courseContacts.sendNotification, true)
+              )
+            )
+            .execute()
+            .catch((e) => {
+              this.logger.error(e);
+              loggerService.errorLog({
+                userId: customer_id,
+                url: `/HyperSwitchWebhookService/handleSecondHandItem`,
+                userAgent: "",
+                message: "ERROR_GETTING_COURSE_CONTACTS",
+                stackTrace: `${e.stack}`,
+                additionalDetailsJSON: JSON.stringify({
+                  item,
+                  customer_id,
+                  paymentId,
+                })
+              })
+              return [];
+            })
+          const emailList = courseContactsList.map((contact) => contact.email);
+          await this.notificationService.sendEmailByTemplate(
+            emailList,
+            "Reservation Additional Request",
+            process.env.SENDGRID_COURSE_CONTACT_NOTIFICATION_TEMPLATE_ID!,
+            {
+              NoteFromUser: bookingDetails?.additionalNoteFromCustomer || "-",
+              NeedRentals: bookingDetails?.needsRentals ? "Yes" : "No",
+              PlayDateTime: formatTime(firstBooking.providerDate ?? "", true, firstBooking.timezoneCorrection ?? 0),
+              HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+              CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
+            },
+            []
+          )
         }
       } catch (e) {
         // await this.hyperSwitchService.refundPayment(paymentId);
