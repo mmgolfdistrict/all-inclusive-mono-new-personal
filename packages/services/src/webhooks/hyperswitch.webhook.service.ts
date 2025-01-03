@@ -1032,19 +1032,21 @@ export class HyperSwitchWebhookService {
               return [];
             })
           const emailList = courseContactsList.map((contact) => contact.email);
-          await this.notificationService.sendEmailByTemplate(
-            emailList,
-            "Reservation Additional Request",
-            process.env.SENDGRID_COURSE_CONTACT_NOTIFICATION_TEMPLATE_ID!,
-            {
-              NoteFromUser: bookingDetails?.additionalNoteFromCustomer || "-",
-              NeedRentals: bookingDetails?.needsRentals ? "Yes" : "No",
-              PlayDateTime: formatTime(firstBooking.providerDate ?? "", true, firstBooking.timezoneCorrection ?? 0),
-              HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
-              CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
-            },
-            []
-          )
+          if (emailList.length > 0) {
+            await this.notificationService.sendEmailByTemplate(
+              emailList,
+              "Reservation Additional Request",
+              process.env.SENDGRID_COURSE_CONTACT_NOTIFICATION_TEMPLATE_ID!,
+              {
+                NoteFromUser: bookingDetails?.additionalNoteFromCustomer || "-",
+                NeedRentals: bookingDetails?.needsRentals ? "Yes" : "No",
+                PlayDateTime: formatTime(firstBooking.providerDate ?? "", true, firstBooking.timezoneCorrection ?? 0),
+                HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+                CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
+              },
+              []
+            )
+          }
         }
       } catch (e) {
         // await this.hyperSwitchService.refundPayment(paymentId);
