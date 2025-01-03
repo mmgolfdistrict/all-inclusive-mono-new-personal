@@ -213,6 +213,7 @@ export const CheckoutForm = ({
   const [isLoading, setIsLoading] = useState(false);
   const [showTextField, setShowTextField] = useState(false);
   const [donateError, setDonateError] = useState(false);
+  const [otherDonateValue, setOtherDonateValue] = useState(5);
   // const [noThanks, setNoThanks] = useState(false);
   const [charityData, setCharityData] = useState<charityData | undefined>({
     charityDescription: "",
@@ -595,15 +596,16 @@ export const CheckoutForm = ({
     // setNoThanks(false);
 
     if (!numericValue || numericValue === 0) {
-      setDonateValue(event?.target?.value as number);
+      setOtherDonateValue(event?.target?.value as number);
       setDonateError(true);
     } else if (numericValue < 1) {
       setDonateError(true);
     } else {
       setDonateError(false);
-      setDonateValue(numericValue);
+      setOtherDonateValue(numericValue);
       handleSelectedCharityAmount(Number(numericValue));
     }
+    setDonateValue(otherDonateValue);
   };
 
   const playersInNumber = Number(amountOfPlayers || 0);
@@ -653,6 +655,10 @@ export const CheckoutForm = ({
       donation = 1;
     } else if (decimalPart.toFixed(2) === "0.00") {
       donation = 1;
+    } else if (roundOffStatus === "nothanks") {
+      donation = 0;
+    } else if (roundOffStatus === "other") {
+      donation = otherDonateValue;
     } else {
       donation = parseFloat(
         (Math.ceil(totalBeforeRoundOff) - totalBeforeRoundOff).toFixed(2)
@@ -685,7 +691,6 @@ export const CheckoutForm = ({
       handleRoundOff();
     }
   }, [TaxCharge]);
-
   return (
     <form onSubmit={handleSubmit} className="">
       <UnifiedCheckout id="unified-checkout" options={unifiedCheckoutOptions} />
