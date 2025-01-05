@@ -19,7 +19,7 @@ export const foreupBooking = mySqlTable(
     attributes_playerCount: tinyint("attributes_playerCount"),
     attributes_holes: tinyint("attributes_holes"),
     attributes_noShowCount: tinyint("attributes_noShowCount"),
-    attributes_title: varchar("attributes_title", { length: 127 }),
+    attributes_title: varchar("attributes_title", { length: 256 }),
     attributes_details: varchar("attributes_details", { length: 2048 }),
     attributes_teeSheetSideId: varchar("attributes_teeSheetSideId", { length: 15 }),
     attributes_bookingSource: varchar("attributes_bookingSource", { length: 15 }),
