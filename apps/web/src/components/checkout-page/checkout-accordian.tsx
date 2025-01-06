@@ -10,14 +10,14 @@ export const CheckoutAccordionRoot = ({
 }: {
   children: ReactNode;
   className?: string;
-  defaultValue?: string;
+  defaultValue?: string[];
 }) => {
   return (
     <Accordion.Root
       className={`flex w-full flex-col gap-2 ${className ?? ""}`}
-      type="single"
+      type="multiple"
       defaultValue={defaultValue}
-      collapsible
+      // collapsible
     >
       {children}
     </Accordion.Root>
