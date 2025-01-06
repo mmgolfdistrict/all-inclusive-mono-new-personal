@@ -1,6 +1,6 @@
 import type { InferSelectModel } from "drizzle-orm";
 import { sql } from "drizzle-orm";
-import { boolean, datetime, tinyint, unique, varchar } from "drizzle-orm/mysql-core";
+import { boolean, datetime, smallint, tinyint, unique, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 
 export const foreupBooking = mySqlTable(
@@ -16,10 +16,10 @@ export const foreupBooking = mySqlTable(
     attributes_start: varchar("attributes_start", { length: 25 }),
     attributes_end: varchar("attributes_end", { length: 25 }),
     attributes_duration: tinyint("attributes_duration"),
-    attributes_playerCount: tinyint("attributes_playerCount"),
+    attributes_playerCount: smallint("attributes_playerCount"),
     attributes_holes: tinyint("attributes_holes"),
     attributes_noShowCount: tinyint("attributes_noShowCount"),
-    attributes_title: varchar("attributes_title", { length: 127 }),
+    attributes_title: varchar("attributes_title", { length: 256 }),
     attributes_details: varchar("attributes_details", { length: 2048 }),
     attributes_teeSheetSideId: varchar("attributes_teeSheetSideId", { length: 15 }),
     attributes_bookingSource: varchar("attributes_bookingSource", { length: 15 }),

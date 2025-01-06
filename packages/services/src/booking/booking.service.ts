@@ -3536,7 +3536,8 @@ export class BookingService {
             return [];
           })
         const emailList = courseContactsList.map((contact) => contact.email);
-        await this.notificationService.sendEmailByTemplate(
+        if (emailList.length > 0) {
+          await this.notificationService.sendEmailByTemplate(
           emailList,
           "Reservation Additional Request",
           process.env.SENDGRID_COURSE_CONTACT_NOTIFICATION_TEMPLATE_ID!,
@@ -3549,6 +3550,7 @@ export class BookingService {
           },
           []
         )
+      }
       }
     } catch (e) {
       console.log("BOOKING FAILED ON PROVIDER, INITIATING REFUND FOR PAYMENT_ID", payment_id);

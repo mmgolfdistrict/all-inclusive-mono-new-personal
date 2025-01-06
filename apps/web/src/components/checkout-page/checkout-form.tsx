@@ -20,6 +20,8 @@ import { FilledButton } from "../buttons/filled-button";
 import { Switch } from "../buttons/switch";
 import { CharitySelect } from "../input/charity-select";
 import { Input } from "../input/input";
+import { CheckoutAccordionRoot } from "./checkout-accordian";
+import CheckoutItemAccordion from "./checkout-item-accordian";
 import styles from "./checkout.module.css";
 import type { NextAction } from "./hyper-switch";
 
@@ -211,7 +213,7 @@ export const CheckoutForm = ({
   const [isLoading, setIsLoading] = useState(false);
   const [showTextField, setShowTextField] = useState(false);
   const [donateError, setDonateError] = useState(false);
-  const [otherDonateValue,setOtherDonateValue]=useState(5);
+  const [otherDonateValue, setOtherDonateValue] = useState(5);
   // const [noThanks, setNoThanks] = useState(false);
   const [charityData, setCharityData] = useState<charityData | undefined>({
     charityDescription: "",
@@ -655,8 +657,8 @@ export const CheckoutForm = ({
       donation = 1;
     } else if (roundOffStatus === "nothanks") {
       donation = 0;
-    } else if(roundOffStatus === "other"){
-      donation = otherDonateValue
+    } else if (roundOffStatus === "other") {
+      donation = otherDonateValue;
     } else {
       donation = parseFloat(
         (Math.ceil(totalBeforeRoundOff) - totalBeforeRoundOff).toFixed(2)
@@ -793,58 +795,134 @@ export const CheckoutForm = ({
             Need Rentals?
           </label>
         </div>
-        <div className="flex justify-between">
-          <div>
-            Subtotal
-            {/* {isBuyNowAuction ? null : ` (1 item)`} */}
-          </div>
+        {checkIsBookingDisabled &&
+        checkIsBookingDisabled?.showPricingBreakdown === 0 ? (
+          <Fragment>
+            <div className="flex justify-between">
+              <div>
+                Subtotal
+                {/* {isBuyNowAuction ? null : ` (1 item)`} */}
+              </div>
 
-          <div>
-            $
-            {primaryGreenFeeCharge.toLocaleString("en-US", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
-          </div>
-        </div>
-        <div className="flex justify-between">
-          <div>Taxes & Others</div>
-          <div>
-            $
-            {TaxCharge.toLocaleString("en-US", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
-          </div>
-        </div>
-        {roundUpCharityId && (
-          <div className="flex justify-between">
-            <div>Charitable Donation</div>
-            <div>
-              $
-              {(donateValue || 0).toLocaleString("en-US", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
+              <div>
+                $
+                {primaryGreenFeeCharge.toLocaleString("en-US", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </div>
             </div>
-          </div>
+            <div className="flex justify-between">
+              <div>Taxes & Others</div>
+              <div>
+                $
+                {TaxCharge.toLocaleString("en-US", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </div>
+            </div>
+            {roundUpCharityId && (
+              <div className="flex justify-between">
+                <div>Charitable Donation</div>
+                <div>
+                  $
+                  {(donateValue || 0).toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </div>
+              </div>
+            )}
+            <div className="flex justify-between">
+              <div>Total</div>
+              <div>
+                $
+                {(
+                  (roundUpCharityId
+                    ? roundOffClick
+                      ? roundOff
+                      : Number(TotalAmt)
+                    : TotalAmt) || 0
+                ).toLocaleString("en-US", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </div>
+            </div>
+          </Fragment>
+        ) : (
+          <Fragment>
+            <CheckoutAccordionRoot defaultValue="">
+              <CheckoutItemAccordion
+                title="Subtotal"
+                value="item-1"
+                position="left"
+                amountValues={`$${primaryGreenFeeCharge.toLocaleString(
+                  "en-US",
+                  { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+                )}`}
+              >
+                <div className=" flex flex-col gap-2">
+                  <div className="flex justify-between">
+                    <div>Green Fees</div>
+                    <div>$ {greenFeeChargePerPlayer + markupFee}</div>
+                  </div>
+                  <div className="flex justify-between">
+                    <div>Cart Fees</div>
+                    <div>$ {cartFeeCharge}</div>
+                  </div>
+                </div>
+              </CheckoutItemAccordion>
+              <CheckoutItemAccordion
+                title="Taxes and Others"
+                value="item-2"
+                position="left"
+                amountValues={`$${TaxCharge.toLocaleString("en-US", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}`}
+              >
+                <div className=" flex flex-col gap-1">
+                  <div className="flex justify-between">
+                    <div>Green Fee Tax Amount</div>
+                    <div>
+                      $ {(greenFeeTaxAmount + markupFeesTaxAmount) / 100}
+                    </div>
+                  </div>
+                  <div className="flex justify-between">
+                    <div>Cart Fee Tax</div>
+                    <div>$ {cartFeeTaxAmount / 100}</div>
+                  </div>
+                  <div className="flex justify-between">
+                    <div>Sensible</div>
+                    <div>$ {sensibleCharge}</div>
+                  </div>
+                  <div className="flex justify-between">
+                    <div>Sensible Tax</div>
+                    <div>$ {weatherGuaranteeTaxAmount}</div>
+                  </div>
+                </div>
+              </CheckoutItemAccordion>
+              <div className="flex justify-between px-2">
+                <div>Total</div>
+                <div>
+                  $
+                  {(
+                    (roundUpCharityId
+                      ? roundOffClick
+                        ? roundOff
+                        : Number(TotalAmt)
+                      : TotalAmt) || 0
+                  ).toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </div>
+              </div>
+            </CheckoutAccordionRoot>
+          </Fragment>
         )}
-        <div className="flex justify-between">
-          <div>Total</div>
-          <div>
-            $
-            {(
-              (roundUpCharityId
-                ? roundOffClick
-                  ? roundOff
-                  : Number(TotalAmt)
-                : TotalAmt) || 0
-            ).toLocaleString("en-US", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
-          </div>
-        </div>
       </div>
       {roundUpCharityId && (
         <div className="flex w-full flex-col gap-2 bg-white p-4 rounded-lg my-2 border border-primary">
