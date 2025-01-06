@@ -1,12 +1,22 @@
 import type { InferSelectModel } from "drizzle-orm";
 import { sql } from "drizzle-orm";
-import { datetime, decimal, double, smallint, tinyint, unique, varchar } from "drizzle-orm/mysql-core";
+import {
+  bigint,
+  datetime,
+  decimal,
+  double,
+  smallint,
+  tinyint,
+  unique,
+  varchar,
+} from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 
 export const foreupBookingSaleItem = mySqlTable(
   "foreupBookingSaleItem",
   {
     id: varchar("id", { length: 36 }).notNull().primaryKey(),
+    nid: bigint("nid", { mode: "number", unsigned: true }).notNull().autoincrement().unique(),
     courseId: varchar("courseId", { length: 36 }).notNull(),
     reservationId: varchar("reservationId", { length: 36 }).notNull(),
     foreupBookingId: varchar("foreupBookingId", { length: 36 }).notNull(),
