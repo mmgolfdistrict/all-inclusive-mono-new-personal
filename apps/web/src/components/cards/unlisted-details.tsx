@@ -301,6 +301,7 @@ export const UnlistedDetails = ({
           teeTimeId: data?.teeTimeId ?? "",
           listPrice: null,
           minimumOfferPrice: data?.minimumOfferPrice ?? 0,
+          bookingStatus: ""
         }}
         refetch={refetchData}
         isListTeeTimeOpen={isListTeeTimeOpen}
@@ -327,6 +328,7 @@ export const UnlistedDetails = ({
           teeTimeId: data?.teeTimeId ?? "",
           listPrice: null,
           minimumOfferPrice: data?.minimumOfferPrice ?? 0,
+          bookingStatus: ""
         }}
       />
       <MakeAnOffer
