@@ -21,12 +21,12 @@ import { Heart } from "../icons/heart";
 import { Hidden } from "../icons/hidden";
 import { OutlineClub } from "../icons/outline-club";
 import { ChoosePlayers } from "../input/choose-players";
+import { Spinner } from "../loading/spinner";
 import { ManageTeeTimeListing } from "../my-tee-box-page/manage-tee-time-listing";
 import { Tooltip } from "../tooltip";
 import { MakeAnOffer } from "../watchlist-page/make-an-offer";
 
 const PlayersOptions = ["1", "2", "3", "4"];
-const DEFAULT_SILHOUETTE_IMAGE = "/defaults/default-profile.webp";
 
 export const TeeTime = ({
   time,
@@ -85,7 +85,7 @@ export const TeeTime = ({
     api.course.getNumberOfPlayersByCourse.useQuery({
       courseId: courseId ?? "",
       time: items.time ?? "",
-      date: items.date ?? ""
+      date: items.date ?? "",
     });
 
   const [selectedPlayers, setSelectedPlayers] = useState<string>("");
@@ -97,9 +97,19 @@ export const TeeTime = ({
     } else if (allowedPlayers?.selectStatus === "ALL_PLAYERS") {
       setSelectedPlayers(String(availableSlots));
     } else {
-      setSelectedPlayers(status === "UNLISTED" || status === "FIRST_HAND" ? "1" : players);
+      setSelectedPlayers(
+        status === "UNLISTED" || status === "FIRST_HAND" ? "1" : players
+      );
     }
-  }, [allowedPlayers, courseId, items.time, items.date, status, availableSlots, players]);
+  }, [
+    allowedPlayers,
+    courseId,
+    items.time,
+    items.date,
+    status,
+    availableSlots,
+    players,
+  ]);
 
   const timezoneCorrection = course?.timezoneCorrection;
   const [isMakeAnOfferOpen, setIsMakeAnOfferOpen] = useState<boolean>(false);
@@ -119,7 +129,6 @@ export const TeeTime = ({
       json: `TEE_TIME_IN_CART `,
     });
   };
-
 
   useEffect(() => {
     (ref: HTMLSpanElement | null) => {
@@ -277,8 +286,9 @@ export const TeeTime = ({
         data-test={
           status === "SECOND_HAND" ? "secondary_listed" : "primary_listed"
         }
-        className={`md:rounded-xl rounded-lg bg-secondary-white w-fit min-w-[230px] md:min-w-[265px] ${className ?? ""
-          }`}
+        className={`md:rounded-xl rounded-lg bg-secondary-white w-fit min-w-[230px] md:min-w-[265px] ${
+          className ?? ""
+        }`}
       >
         <div className="border-b border-stroke">
           <div className="flex justify-between py-1 px-2 md:px-3 md:p-3 items-center">
@@ -293,15 +303,15 @@ export const TeeTime = ({
               ) : null}
               <Tooltip
                 trigger={
-                  <Avatar
-                    src={
-                      status === "SECOND_HAND"
-                        ? DEFAULT_SILHOUETTE_IMAGE
-                        : soldByImage
-                    }
-                    className="!min-h-[40px] !min-w-[80px] max-h-[40px] max-w-[80px] h-[40px] w-[80px] md:min-h-[40px] md:min-w-[80px] md:max-h-[40px] md:max-w-[80px] md:h-[40px] md:w-[80px] lg:w-[80px] lg:h-[40px]"
-                    isRounded={false} // Conditional rounding
-                  />
+                  status === "SECOND_HAND" ? (
+                    <Spinner className="w-[40px] h-[40px]" />
+                  ) : (
+                    <Avatar
+                      src={soldByImage}
+                      className="!min-h-[40px] !min-w-[80px] max-h-[40px] max-w-[80px] h-[40px] w-[80px] md:min-h-[40px] md:min-w-[80px] md:max-h-[40px] md:max-w-[80px] md:h-[40px] md:w-[80px] lg:w-[80px] lg:h-[40px]"
+                      isRounded={false}
+                    />
+                  )
                 }
                 content={
                   "Sold by " +
@@ -310,7 +320,6 @@ export const TeeTime = ({
                     : soldByName)
                 }
               />
-
             </div>
           </div>
         </div>
