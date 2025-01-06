@@ -38,7 +38,7 @@ const CheckoutItemAccordion = ({
                   />
                   <div className="text-[16px]" >{title}</div>
                 </div>
-                <div className="text-[16px]" >{amountValues}</div>
+                <div className="text-[16px] pr-1.5" >  {amountValues}</div>
               </Fragment>
             ) : null}
           </div>
@@ -47,7 +47,7 @@ const CheckoutItemAccordion = ({
       <Accordion.Content
         className={`overflow-hidden bg-white text-[15px] data-[state=closed]:animate-slideUp data-[state=open]:animate-slideDown md:rounded-b-xl`}
       >
-        <div className="px-5 py-[15px] text-[14px] font-light text-primary-gray md:text-[16px]">
+        <div className="px-3 py-[15px] text-[14px] font-light text-primary-gray md:text-[16px]">
           {children}
         </div>
       </Accordion.Content>
