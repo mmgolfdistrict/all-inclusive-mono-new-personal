@@ -23,10 +23,53 @@ import dayjs from "dayjs";
 import utc from 'dayjs/plugin/utc';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { authenticationMethod } from "@golf-district/database/schema/authenticationMethod";
+import { cacheManager } from "@golf-district/shared/src/utils/cacheManager";
 dayjs.extend(utc);
 dayjs.extend(customParseFormat);
 
 type DayOfWeek = "MON" | "TUE" | "WED" | "THU" | "FRI" | "SAT" | "SUN";
+
+type CourseDetailsQuery = {
+  id: string;
+  name: string;
+  address: string | null;
+  description: string | null;
+  longitude: number | null;
+  latitude: number | null;
+  forecastApi: string | null;
+  convenienceFeesFixedPerPlayer: number | null;
+  markupFeesFixedPerPlayer: number | null;
+  maxListPricePerGolferPercentage: number | null;
+  openTime: string | null;
+  closeTime: string | null;
+  supportCharity: boolean;
+  supportSensibleWeather: boolean;
+  timezoneCorrection: number | null;
+  furthestDayToBook: number | null;
+  allowAuctions: boolean;
+  supportsOffers: boolean;
+  supportsWatchlist: boolean;
+  supportsPromocode: boolean;
+  supportsWaitlist: boolean;
+  buyerFee: number | null;
+  sellerFee: number | null;
+  internalId: string;
+  roundUpCharityId: string | null;
+  providerConfiguration: string | null;
+  isBookingDisabled: number;
+};
+
+type CharityDetails = {
+  charityDescription: string | null; // Assuming description might be nullable
+  charityName: string | null; // Assuming name is required
+  charityId: string | null; // Assuming ID is a string (update if it's a number or UUID)
+  logo: string | null; // Assuming logoAssetId might be nullable
+  // logoCdn: string; // Uncomment if `cdn` is required and included in the data
+  logoExtension: string | null; // Assuming extension is always present
+  logoKey: string | null; // Assuming key is always present
+};
+
+
 
 /**
  * Service handling course-related operations.
@@ -65,7 +108,13 @@ export class CourseService extends DomainService {
    * @throws Will throw an error if the query fails.
    */
   getCourseById = async (courseId: string) => {
-    const courseDetailsQuery = this.database
+
+    const cacheKey = `courseDetails:${courseId}`;
+    const cacheTTL = 600; // Cache TTL in seconds
+
+    let courseDetailsQuery:any= await cacheManager.get(cacheKey);
+    if (!courseDetailsQuery) {
+      courseDetailsQuery =  await this.database
       .select({
         id: courses.id,
         name: courses.name,
@@ -115,6 +164,12 @@ export class CourseService extends DomainService {
         });
         throw new Error("Error getting course");
       });
+
+      await cacheManager.set(cacheKey, courseDetailsQuery, 600000);
+    
+    }
+
+
     //Get the highest and lowest tee time prices
     //Cache if possible
     const listTeeTimePriceQuery = this.database
@@ -229,7 +284,13 @@ export class CourseService extends DomainService {
   };
 
   getSupportedCharitiesForCourseId = async (courseId: string) => {
-    const data = await this.database
+
+    const cacheKey = `supportedCharitiesForCourseId:${courseId}`;
+
+    let data:CharityDetails[]|null= await cacheManager.get(cacheKey);
+
+    if(!data){
+      data = await this.database
       .select({
         charityDescription: charities.description,
         charityName: charities.name,
@@ -258,8 +319,12 @@ export class CourseService extends DomainService {
         });
         throw new Error("Error getting charity");
       });
+
+      await cacheManager.set(cacheKey, data, 600000);
+    }
+
     const cdnUrl = process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL;
-    const updatedData = data.map((item) => ({
+    const updatedData = data?.map((item) => ({
       ...item,
       logoCdn: cdnUrl,
     }));
