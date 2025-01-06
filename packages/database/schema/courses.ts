@@ -60,11 +60,14 @@ export const courses = mySqlTable(
     isAutomaticPayment: boolean("isAutomaticPayment").default(false).notNull(),
     paymentProcessorPercentage: double("paymentProcessorPercentage").default(3).notNull(),
     paymentInstrumentId: varchar("paymentInstrumentId", { length: 36 }).default("N/A").notNull(),
-    isBookingDisabled : tinyint("isBookingDisabled").default(0).notNull(),
+    isBookingDisabled: tinyint("isBookingDisabled").default(0).notNull(),
+    authenticationMethods: int("authenticationMethods"),
     greenFeeTaxPercent: int("greenFeeTaxPercent").default(0).notNull(),
     cartFeeTaxPercent: int("cartFeeTaxPercent").default(0).notNull(),
     weatherGuaranteeTaxPercent: int("weatherGuaranteeTaxPercent").default(0).notNull(),
     markupTaxPercent: int("markupTaxPercent").default(0).notNull(),
+    displayOrder: tinyint("displayOrder").notNull().default(-1),
+    showPricingBreakdown: tinyint("showPricingBreakdown").default(0).notNull(),
   },
   (table) => {
     return {

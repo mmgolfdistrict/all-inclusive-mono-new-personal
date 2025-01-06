@@ -158,6 +158,8 @@ export default function Checkout({
     .add(6, "hours")
     .hour();
 
+ 
+
   const cartData: CartProduct[] = useMemo(() => {
     if (!data || data === null) return [];
 
@@ -268,7 +270,7 @@ export default function Checkout({
       localCart.push({
         name: "Golf District Tee Time",
         id: teeTimeId ?? data?.teeTimeId,
-        price: course?.convenienceFeesFixedPerPlayer * amountOfPlayers ?? 0, //int
+        price: course?.convenienceFeesFixedPerPlayer * amountOfPlayers || 0, //int
         image: "", //
         currency: "USD", //USD
         display_price: formatMoney(
@@ -303,7 +305,6 @@ export default function Checkout({
         },
       });
     }
-
     if (shouldAddSensible && !isSensibleInvalid) {
       localCart.push({
         name: "Golf District Tee Time",
@@ -343,62 +344,62 @@ export default function Checkout({
       });
     }
 
-    if(saleType === 'first_hand'){
-     
-        localCart.push({
-          name: "green fee tax percent",
-          id: teeTimeId ?? data?.teeTimeId,
-          price: teeTimeData?.greenFeeTaxPercent || 0, //int
-          image: "", //
-          currency: "USD", //USD
-          display_price: formatMoney( teeTimeData?.greenFeeTaxPercent || 0),
-          product_data: {
-            metadata: {
-              type: "greenFeeTaxPercent"
-            },
+    if (saleType === "first_hand") {
+      localCart.push({
+        name: "green fee tax percent",
+        id: teeTimeId ?? data?.teeTimeId,
+        price: teeTimeData?.greenFeeTaxPercent || 0, //int
+        image: "", //
+        currency: "USD", //USD
+        display_price: formatMoney(teeTimeData?.greenFeeTaxPercent || 0),
+        product_data: {
+          metadata: {
+            type: "greenFeeTaxPercent",
           },
-        });
-        localCart.push({
-          name: "cart fee tax percent",
-          id: teeTimeId ?? data?.teeTimeId,
-          price: teeTimeData?.cartFeeTaxPercent || 0, //int
-          image: "", //
-          currency: "USD", //USD
-          display_price: formatMoney( teeTimeData?.cartFeeTaxPercent || 0),
-          product_data: {
-            metadata: {
-              type: "cartFeeTaxPercent",
-              amount:teeTimeData?.cartFeeTaxPercent || 0
-            },
+        },
+      });
+      localCart.push({
+        name: "cart fee tax percent",
+        id: teeTimeId ?? data?.teeTimeId,
+        price: teeTimeData?.cartFeeTaxPercent || 0, //int
+        image: "", //
+        currency: "USD", //USD
+        display_price: formatMoney(teeTimeData?.cartFeeTaxPercent || 0),
+        product_data: {
+          metadata: {
+            type: "cartFeeTaxPercent",
+            amount: teeTimeData?.cartFeeTaxPercent || 0,
           },
-        });
-        localCart.push({
-          name: "weather guarantee tax percent",
-          id: teeTimeId ?? data?.teeTimeId,
-          price: teeTimeData?.weatherGuaranteeTaxPercent || 0, //int
-          image: "", //
-          currency: "USD", //USD
-          display_price: formatMoney( teeTimeData?.weatherGuaranteeTaxPercent || 0),
-          product_data: {
-            metadata: {
-              type: "weatherGuaranteeTaxPercent"
-            },
+        },
+      });
+      localCart.push({
+        name: "weather guarantee tax percent",
+        id: teeTimeId ?? data?.teeTimeId,
+        price: teeTimeData?.weatherGuaranteeTaxPercent || 0, //int
+        image: "", //
+        currency: "USD", //USD
+        display_price: formatMoney(
+          teeTimeData?.weatherGuaranteeTaxPercent || 0
+        ),
+        product_data: {
+          metadata: {
+            type: "weatherGuaranteeTaxPercent",
           },
-        });
-        localCart.push({
-          name: "markup tax percent",
-          id: teeTimeId ?? data?.teeTimeId,
-          price: teeTimeData?.markupTaxPercent || 0, //int
-          image: "", //
-          currency: "USD", //USD
-          display_price: formatMoney( teeTimeData?.markupTaxPercent || 0),
-          product_data: {
-            metadata: {
-              type: "markupTaxPercent"
-            },
+        },
+      });
+      localCart.push({
+        name: "markup tax percent",
+        id: teeTimeId ?? data?.teeTimeId,
+        price: teeTimeData?.markupTaxPercent || 0, //int
+        image: "", //
+        currency: "USD", //USD
+        display_price: formatMoney(teeTimeData?.markupTaxPercent || 0),
+        product_data: {
+          metadata: {
+            type: "markupTaxPercent",
           },
-        }); 
-      
+        },
+      });
     }
 
     return localCart;
@@ -415,7 +416,7 @@ export default function Checkout({
     deboundCharityAmount,
     course?.markupFeesFixedPerPlayer,
     course?.convenienceFeesFixedPerPlayer,
-    playerCount,
+    // playerCount,
   ]);
 
   useEffect(() => {
@@ -486,8 +487,7 @@ export default function Checkout({
                 exposureName: course?.name ?? "",
                 exposureLatitude: course?.latitude ?? 0,
                 exposureLongitude: course?.longitude ?? 0,
-                exposureTotalCoverageAmount:
-                  Number(data?.pricePerGolfer) * amountOfPlayers ?? 0,
+                exposureTotalCoverageAmount: Number(data?.pricePerGolfer) * amountOfPlayers || 0
               }}
               isSensibleInvalid={isSensibleInvalid}
               privacyPolicyAndTCByCourseUrl={privacyPolicyAndTCByCourseUrl}

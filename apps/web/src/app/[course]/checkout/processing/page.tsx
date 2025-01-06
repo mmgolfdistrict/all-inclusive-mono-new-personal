@@ -43,6 +43,8 @@ export default function CheckoutConfirmation() {
       cartId,
       payment_id,
       sensibleQuoteId,
+      additionalNoteFromUser: "",
+      needRentals: false,
       redirectHref,
     });
     return bookingResponse;

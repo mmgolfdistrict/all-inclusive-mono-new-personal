@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { and, asc, desc, eq, gte, inArray, or, sql, type Db } from "@golf-district/database";
+import { and, asc, desc, eq, gte, inArray, or, sql, type Db, not } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import type { InsertBooking } from "@golf-district/database/schema/bookings";
 import { bookings } from "@golf-district/database/schema/bookings";
@@ -30,15 +30,11 @@ import type { NotificationService } from "../notification/notification.service";
 import type { HyperSwitchService } from "../payment-processor/hyperswitch.service";
 import type { SensibleService } from "../sensible/sensible.service";
 import type { Customer, ProviderService } from "../tee-sheet-provider/providers.service";
-import type {
-  ClubProphetBookingResponse,
-  ClubProphetTeeTimeResponse,
-} from "../tee-sheet-provider/sheet-providers/types/clubprophet.types";
 import type { BookingDetails, BookingResponse, ProviderAPI } from "../tee-sheet-provider/sheet-providers";
 import type { TokenizeService } from "../token/tokenize.service";
 import type { UserWaitlistService } from "../user-waitlist/userWaitlist.service";
 import { loggerService } from "../webhooks/logging.service";
-import type { TeeTimeResponse as ForeupTeeTimeResponse } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
+import { courseContacts } from "@golf-district/database/schema/courseContacts";
 
 dayjs.extend(UTC);
 dayjs.extend(timezone);
@@ -94,7 +90,6 @@ interface OwnedTeeTimeData {
   weatherGuaranteeAmount: number | null;
   teeTimeId: string;
   slots: number;
-  bookingStatus:string
 }
 
 interface ListingData {
@@ -126,7 +121,7 @@ interface TransferData {
   receiveAfterSale: number;
   weatherGuaranteeId: string;
   weatherGuaranteeAmount: number;
-  markupFees?:number|null;
+  markupFees?: number | null;
 }
 type RequestOptions = {
   method: string;
@@ -271,8 +266,8 @@ export class BookingService {
         transfersDate: transfers.createdAt,
         weatherGuaranteeId: transfers.weatherGuaranteeId,
         weatherGuaranteeAmount: transfers.weatherGuaranteeAmount,
-        cartFee:bookings.cartFeePerPlayer,
-        markupFees:bookings.markupFees
+        cartFee: bookings.cartFeePerPlayer,
+        markupFees: bookings.markupFees,
       })
       .from(transfers)
       .innerJoin(bookings, eq(bookings.id, transfers.bookingId))
@@ -283,6 +278,7 @@ export class BookingService {
       // .leftJoin(userBookingOffers, eq(userBookingOffers.bookingId, bookings.id))
       .where(
         and(
+          not(eq(bookings.providerBookingId, "")),
           eq(transfers.courseId, courseId),
           or(eq(transfers.toUserId, userId), eq(transfers.fromUserId, userId))
         )
@@ -350,7 +346,7 @@ export class BookingService {
           receiveAfterSale: teeTime.from === userId ? receiveAfterSaleAmount : 0,
           weatherGuaranteeAmount: teeTime.weatherGuaranteeAmount ?? 0,
           weatherGuaranteeId: teeTime.weatherGuaranteeId ?? "",
-          markupFees:teeTime.markupFees
+          markupFees: teeTime.markupFees,
         };
       } else {
         const currentEntry = combinedData[teeTime.transferId];
@@ -625,7 +621,6 @@ export class BookingService {
         providerBookingId: bookings.providerBookingId,
         slots: lists.slots,
         playerCount: bookings.playerCount,
-        bookingStatus: bookings.status
       })
       .from(teeTimes)
       .innerJoin(bookings, eq(bookings.teeTimeId, teeTimes.id))
@@ -640,11 +635,11 @@ export class BookingService {
       .leftJoin(bookingslots, eq(bookingslots.bookingId, bookings.id))
       .where(
         and(
+          not(eq(bookings.providerBookingId, "")),
           eq(bookings.ownerId, userId),
           eq(bookings.isActive, true),
           eq(teeTimes.courseId, courseId),
-          gte(teeTimes.date, nowInCourseTimezone),
-          or(eq(bookings.status,"RESERVED"),eq(bookings.status,"CONFIRMED"))
+          gte(teeTimes.date, nowInCourseTimezone)
         )
       )
       .groupBy(
@@ -723,7 +718,6 @@ export class BookingService {
           weatherGuaranteeAmount: teeTime.weatherGuaranteeAmount,
           teeTimeId: teeTime.id,
           slots: teeTime.slots || 0,
-          bookingStatus: teeTime.bookingStatus
         };
       } else {
         const currentEntry = combinedData[teeTime.providerBookingId];
@@ -3106,7 +3100,7 @@ export class BookingService {
         ({ product_data }: ProductData) => product_data.metadata.type === "second_hand"
       );
     }
-    const playerCountFromCart = slotInfo[0]?.product_data?.metadata?.number_of_bookings
+    const playerCountFromCart = slotInfo[0]?.product_data?.metadata?.number_of_bookings;
     const markupCharge =
       customerCartData?.cart?.cart
         ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "markup")
@@ -3114,7 +3108,6 @@ export class BookingService {
     const markupCharge1 = customerCartData?.cart?.cart
       ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "markup")
       ?.reduce((acc: number, i: any) => acc + i.price, 0);
-    ;
     const cartFeeInfo = customerCartData?.cart?.cart?.filter(
       ({ product_data }: ProductData) => product_data.metadata.type === "cart_fee"
     );
@@ -3163,15 +3156,22 @@ export class BookingService {
     )?.product_data.metadata.sensible_quote_id;
 
     const taxes = taxCharge + sensibleCharge + charityCharge + convenienceCharge;
-    const skipItemsForTotal = ["markup" ,"cart_fee" ,"greenFeeTaxPercent","cartFeeTaxPercent" ,"weatherGuaranteeTaxPercent" ,"markupTaxPercent" ]
+    const skipItemsForTotal = [
+      "markup",
+      "cart_fee",
+      "greenFeeTaxPercent",
+      "cartFeeTaxPercent",
+      "weatherGuaranteeTaxPercent",
+      "markupTaxPercent",
+    ];
     const total = customerCartData?.cart?.cart
       .filter(({ product_data }: ProductData) => {
-        return( !skipItemsForTotal.includes( product_data.metadata.type ))
+        return !skipItemsForTotal.includes(product_data.metadata.type);
       })
       .reduce((acc: number, i: any) => {
         return acc + i.price;
       }, 0);
-      
+
     return {
       ...primaryData,
       cart: customerCartData.cart as CustomerCart,
@@ -3254,6 +3254,8 @@ export class BookingService {
     cartId: string,
     payment_id: string,
     sensibleQuoteId: string,
+    additionalNoteFromUser: string | undefined,
+    needRentals: boolean, 
     redirectHref: string
   ) => {
     let bookingStage = "Normalizing Cart Data";
@@ -3330,10 +3332,11 @@ export class BookingService {
         providerCourseConfiguration: providerCourseLink.providerCourseConfiguration,
         greenFees: teeTimes.greenFeePerPlayer,
         cartFees: teeTimes.cartFeePerPlayer,
-        greenFeeTaxPercent:courses.greenFeeTaxPercent,
-        cartFeeTaxPercent:courses.cartFeeTaxPercent,
-        weatherGuaranteeTaxPercent:courses.weatherGuaranteeTaxPercent,
-        markupTaxPercent:courses.markupTaxPercent
+        greenFeeTaxPercent: courses.greenFeeTaxPercent,
+        cartFeeTaxPercent: courses.cartFeeTaxPercent,
+        weatherGuaranteeTaxPercent: courses.weatherGuaranteeTaxPercent,
+        markupTaxPercent: courses.markupTaxPercent,
+        timezoneCorrection: courses.timezoneCorrection,
       })
       .from(teeTimes)
       .leftJoin(courses, eq(teeTimes.courseId, courses.id))
@@ -3366,15 +3369,18 @@ export class BookingService {
         throw new Error(`Error finding tee time id`);
       });
 
-// Calculate additional taxes
+    // Calculate additional taxes
 
-const greenFeeTaxTotal = ( ( (teeTime?.greenFees??0) / 100 ) * (( (teeTime?.greenFeeTaxPercent??0 )/ 100)/100 ) ) * playerCount
-const markupTaxTotal = ( ( markupCharge / 100 ) * ( (teeTime?.markupTaxPercent ?? 0) / 100 ) ) * playerCount
-const weatherGuaranteeTaxTotal =  ( ( sensibleCharge / 100 ) * ( (teeTime?.weatherGuaranteeTaxPercent??0) / 100 ) )
-const cartFeeTaxPercentTotal = ( ( cartFeeCharge / 100 ) * (( teeTime?.cartFeeTaxPercent??0) / 100 )/100 ) * playerCount
+    const greenFeeTaxTotal =
+      ((teeTime?.greenFees ?? 0) / 100) * ((teeTime?.greenFeeTaxPercent ?? 0) / 100 / 100) * playerCount;
+    const markupTaxTotal = (markupCharge / 100) * ((teeTime?.markupTaxPercent ?? 0) / 100) * playerCount;
+    const weatherGuaranteeTaxTotal =
+      (sensibleCharge / 100) * ((teeTime?.weatherGuaranteeTaxPercent ?? 0) / 100);
+    const cartFeeTaxPercentTotal =
+      (((cartFeeCharge / 100) * ((teeTime?.cartFeeTaxPercent ?? 0) / 100)) / 100) * playerCount;
 
-const additionalTaxes = greenFeeTaxTotal+markupTaxTotal+weatherGuaranteeTaxTotal+cartFeeTaxPercentTotal;
-
+    const additionalTaxes =
+      greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal;
 
     if (!teeTime) {
       this.logger.fatal(`tee time not found id: ${teeTimeId}`);
@@ -3431,6 +3437,7 @@ const additionalTaxes = greenFeeTaxTotal+markupTaxTotal+weatherGuaranteeTaxTotal
       } catch (e) {
         console.log("ERROR in getting appsetting SENSIBLE_NOTE_TO_TEE_SHEET");
       }
+      details = `${details}\n<br />\n${additionalNoteFromUser}`;
 
       bookingStage = "Getting booking Creation Data";
       const bookingData = provider.getBookingCreationData({
@@ -3481,8 +3488,8 @@ const additionalTaxes = greenFeeTaxTotal+markupTaxTotal+weatherGuaranteeTaxTotal
           };
           const addSalesOptions = provider.getSalesDataOptions(booking, bookingsDetails);
           await provider.addSalesData(addSalesOptions);
-        } catch (error) {
-          this.logger.error(`Error adding sales data, ${error}`);
+        } catch (error: any) {
+          this.logger.error(`Error adding sales data, ${JSON.stringify(error.message)}`);
           loggerService.errorLog({
             userId: userId,
             url: "/reserveBooking",
@@ -3493,9 +3500,57 @@ const additionalTaxes = greenFeeTaxTotal+markupTaxTotal+weatherGuaranteeTaxTotal
               userId,
               teeTimeId,
               error,
+              booking: JSON.stringify(booking),
             }),
           });
         }
+      }
+      if (additionalNoteFromUser || needRentals) {
+        const courseContactsList = await this.database
+          .select({
+            email: courseContacts.email,
+            phone: courseContacts.phone1,
+          })
+          .from(courseContacts)
+          .where(
+            and(
+              eq(courseContacts.courseId, teeTime.courseId),
+              eq(courseContacts.sendNotification, true)
+            )
+          )
+          .execute()
+          .catch((err) => {
+            this.logger.error(`Error getting course contacts list, ${JSON.stringify(err.message)}`);
+            loggerService.errorLog({
+              userId: userId,
+              url: "/reserveBooking",
+              userAgent: "",
+              message: "ERROR_GETTING_COURSE_CONTACTS_LIST",
+              stackTrace: `${JSON.stringify(err)}`,
+              additionalDetailsJSON: JSON.stringify({
+                userId,
+                teeTimeId,
+                error: err,
+              }),
+            });
+            return [];
+          })
+        const emailList = courseContactsList.map((contact) => contact.email);
+        if (emailList.length > 0) {
+          await this.notificationService.sendEmailByTemplate(
+          emailList,
+          "Reservation Additional Request",
+          process.env.SENDGRID_COURSE_CONTACT_NOTIFICATION_TEMPLATE_ID!,
+          {
+            NoteFromUser: additionalNoteFromUser || "-",
+            NeedRentals: needRentals ? "Yes" : "No",
+            PlayDateTime: formatTime(teeTime.providerDate, true, teeTime.timezoneCorrection ?? 0),
+            HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+            CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${teeTime.cdnKey}.${teeTime.extension}`,
+          },
+          []
+        )
+      }
       }
     } catch (e) {
       console.log("BOOKING FAILED ON PROVIDER, INITIATING REFUND FOR PAYMENT_ID", payment_id);
@@ -3552,10 +3607,9 @@ const additionalTaxes = greenFeeTaxTotal+markupTaxTotal+weatherGuaranteeTaxTotal
       throw new Error("No booking id found in response from provider");
     }
     console.log(`Creating tokenized booking`);
-    
 
     //create tokenized bookings
-    
+
     const bookingId = await this.tokenizeService
       .tokenizeBooking({
         redirectHref,
@@ -3586,13 +3640,15 @@ const additionalTaxes = greenFeeTaxTotal+markupTaxTotal+weatherGuaranteeTaxTotal
         isWebhookAvailable: teeTime?.isWebhookAvailable ?? false,
         providerBookingIds,
         cartFeeCharge: cartFeeCharge,
-        additionalTaxes:{
+        additionalTaxes: {
           greenFeeTaxTotal,
           markupTaxTotal,
           weatherGuaranteeTaxTotal,
           cartFeeTaxPercentTotal,
-          additionalTaxes
-        }
+          additionalTaxes,
+        },
+        additionalNoteFromUser,
+        needRentals
       })
       .catch(async (err) => {
         this.logger.error(`Error creating booking, ${err}`);
@@ -3614,12 +3670,7 @@ const additionalTaxes = greenFeeTaxTotal+markupTaxTotal+weatherGuaranteeTaxTotal
         throw new Error(`Error creating booking`);
       });
 
-    await this.sendMessageToVerifyPayment(
-      paymentId as string,
-      userId,
-      bookingId.bookingId ,
-      redirectHref
-    );
+    await this.sendMessageToVerifyPayment(paymentId as string, userId, bookingId.bookingId, redirectHref);
     return {
       bookingId: bookingId.bookingId,
       providerBookingId,
@@ -3718,6 +3769,8 @@ const additionalTaxes = greenFeeTaxTotal+markupTaxTotal+weatherGuaranteeTaxTotal
     cartId = "",
     listingId = "",
     payment_id = "",
+    additionalNoteFromUser = "",
+    needRentals = false,
     redirectHref = ""
   ) => {
     const {
@@ -3814,6 +3867,8 @@ const additionalTaxes = greenFeeTaxTotal+markupTaxTotal+weatherGuaranteeTaxTotal
       markupFees: 0,
       weatherQuoteId: weatherQuoteId || null,
       cartFeePerPlayer: cartFeeCharge,
+      customerComment: additionalNoteFromUser,
+      needClubRental: needRentals,
     });
     transfersToCreate.push({
       id: randomUUID(),
@@ -3882,14 +3937,16 @@ const additionalTaxes = greenFeeTaxTotal+markupTaxTotal+weatherGuaranteeTaxTotal
       json: "Tee time booked",
     });
     //Sending teetime purchase email to user
+    const pricePerBooking = ((Math.round(total) / 100) / (associatedBooking?.listedSlotsCount ?? 0));
     const message = `
-A total of ${associatedBooking?.listedSlotsCount ?? 0} tee times have been purchased.
-Price per booking: ${Math.round(total) ?? "Not specified"}.
-
-Booking ID: ${bookingId ?? "Unavailable"}
-
-This purchase was made as a second-party transaction directly from the course.
-`;
+    A total of $${(Math.round(total) / 100)} tee times have been purchased.
+    
+    - **Number of Players:** ${associatedBooking?.listedSlotsCount ?? 0}
+    - **Price per Booking:** ${pricePerBooking ?? "Not specified"}
+    - **Booking ID:** ${bookingId ?? "Unavailable"}
+    
+    This purchase was made as a second-party transaction directly from the course.
+    `;
     let isEmailSend = false;
     const attachment: any[] = [];
     try {

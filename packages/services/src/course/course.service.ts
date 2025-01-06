@@ -11,7 +11,7 @@ import type { InsertCourses } from "@golf-district/database/schema/courses";
 import { entities } from "@golf-district/database/schema/entities";
 import { lists } from "@golf-district/database/schema/lists";
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
-import { currentUtcTimestamp, getApexDomain, validDomainRegex } from "@golf-district/shared";
+import { AuthenticationMethodEnum, currentUtcTimestamp, getApexDomain, validDomainRegex } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
 import { DomainService } from "../domain/domain.service";
 import type { ProviderService } from "../tee-sheet-provider/providers.service";
@@ -22,6 +22,7 @@ import { courseAllowedTimeToSell } from "@golf-district/database/schema/courseAl
 import dayjs from "dayjs";
 import utc from 'dayjs/plugin/utc';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
+import { authenticationMethod } from "@golf-district/database/schema/authenticationMethod";
 dayjs.extend(utc);
 dayjs.extend(customParseFormat);
 
@@ -92,7 +93,8 @@ export class CourseService extends DomainService {
         internalId: providers.internalId,
         roundUpCharityId: courses?.roundUpCharityId,
         providerConfiguration: providerCourseLink.providerCourseConfiguration,
-        isBookingDisabled: courses.isBookingDisabled
+        isBookingDisabled: courses.isBookingDisabled,
+        showPricingBreakdown:courses.showPricingBreakdown
       })
       .from(courses)
       .innerJoin(providerCourseLink, eq(providerCourseLink.courseId, courses.id))
@@ -932,4 +934,36 @@ export class CourseService extends DomainService {
 
     return privacyPolicyAndTC[0];
   };
+  getAuthenticationMethods = async (courseId: string) => {
+    const selectedCourse = await this.database
+      .select({
+        authenticationMethods: courses.authenticationMethods
+      })
+      .from(courses)
+      .where(eq(courses.id, courseId));
+
+    if (!selectedCourse?.[0]) {
+      return [];
+    }
+
+    const authenticationMethodsValue = selectedCourse[0].authenticationMethods;
+
+    if (authenticationMethodsValue === null || authenticationMethodsValue === undefined) {
+      return Object.keys(AuthenticationMethodEnum)
+        .filter(key => isNaN(Number(key)))
+        .map(key => AuthenticationMethodEnum[key as keyof typeof AuthenticationMethodEnum])
+    }
+
+    const filteredMethodNames = Object.keys(AuthenticationMethodEnum)
+      .filter(key => isNaN(Number(key)))
+      .filter((key) => {
+        const methodValue = AuthenticationMethodEnum[key as keyof typeof AuthenticationMethodEnum];
+        return (authenticationMethodsValue & methodValue) > 0;
+      }).map(key => AuthenticationMethodEnum[key as keyof typeof AuthenticationMethodEnum]);
+
+    console.log("filteredMethodNames", filteredMethodNames);
+
+    return filteredMethodNames;
+  }
+
 }

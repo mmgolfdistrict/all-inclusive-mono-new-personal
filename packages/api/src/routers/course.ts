@@ -40,4 +40,14 @@ export const courseRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       return await ctx.serviceFactory.getCourseService().getPrivacyPolicyAndTCByCourse(input.courseId);
     }),
+
+  getAuthenticationMethods: publicProcedure
+    .input(
+      z.object({
+        courseId: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return await ctx.serviceFactory.getCourseService().getAuthenticationMethods(input.courseId);
+    }),
 });
