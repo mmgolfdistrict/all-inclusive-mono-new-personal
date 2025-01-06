@@ -1,4 +1,4 @@
-import { eq, inArray, isNull, not } from "@golf-district/database";
+import { asc, eq, inArray, isNull, not } from "@golf-district/database";
 import type { Db } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import { courseAssets } from "@golf-district/database/schema/courseAssets";
@@ -17,7 +17,7 @@ export class EntityService {
    * Constructs the EntityService.
    * @param database - The database instance to use for queries.
    */
-  constructor(private readonly database: Db) { }
+  constructor(private readonly database: Db) {}
 
   /**
    * Retrieves an entity associated with a given course ID.
@@ -104,7 +104,7 @@ export class EntityService {
    * @TODO entity return as url
    */
   getEntityFromDomain = async (domain: string, rootDomain: string) => {
-     const subdomain = domain.endsWith(`.${rootDomain}`) ? domain.replace(`.${rootDomain}`, "") : null;
+    const subdomain = domain.endsWith(`.${rootDomain}`) ? domain.replace(`.${rootDomain}`, "") : null;
     this.logger.debug(`getEntityFromDomain called for: ${subdomain ? subdomain : domain}`);
 
     const query = this.database
@@ -147,8 +147,8 @@ export class EntityService {
           domain,
           subdomain,
           rootDomain,
-        })
-      })
+        }),
+      });
       throw new Error(`Error getting entity from domain: ${err}`);
     });
     return {
