@@ -32,9 +32,8 @@ const CheckoutItemAccordion = ({
               <Fragment>
                 <div className="flex gap-x-1 items-center">
                   <DownArrow
-                    fill="#6D777C"
                     aria-hidden
-                    className="w-[35px] h-auto transition-transform duration-300 ease-[cubic-bezier(0.87,_0,_0.13,_1)] group-data-[state=open]:rotate-180"
+                    className="w-[30px] h-auto transition-transform duration-300 ease-[cubic-bezier(0.87,_0,_0.13,_1)] group-data-[state=open]:rotate-180"
                   />
                   <div className="text-[16px]" >{title}</div>
                 </div>
