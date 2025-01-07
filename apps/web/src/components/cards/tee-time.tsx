@@ -282,7 +282,7 @@ export const TeeTime = ({
       >
         <div className="border-b border-stroke">
           <div className="flex justify-between py-1 px-2 md:px-3 md:p-3 items-center">
-            <div className="font-semibold text-[12px] md:text-[16px]">
+            <div className="font-semibold text-[12px] md:text-[16px] unmask-time">
               {showFullDate
                 ? formatTime(time, true, timezoneCorrection)
                 : getTime(time, timezoneCorrection)}

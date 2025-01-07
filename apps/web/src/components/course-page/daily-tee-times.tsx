@@ -183,9 +183,9 @@ export const DailyTeeTimes = ({
 
   return (
     <div className="flex flex-col gap-1 md:gap-4 bg-white px-4 py-2 md:rounded-xl md:px-8 md:py-6">
-      <div className="flex flex-wrap justify-between gap-2">
-        {isLoading ? (<div className="h-8 min-w-[150px] w-[20%] bg-gray-200 rounded-md  animate-pulse" />) : (<div
-          className="text-[13px] md:text-lg"
+      <div className="flex flex-wrap justify-between gap-2 unmask-time">
+        {isLoading ? (<div className="h-8 min-w-[150px] w-[20%] bg-gray-200 rounded-md  animate-pulse unmask-time" />) : (<div
+          className="text-[13px] md:text-lg unmask-time"
           data-testid="date-group-id"
           data-qa={dayMonthDate(date)}
         >
@@ -219,7 +219,7 @@ export const DailyTeeTimes = ({
           <div className="flex items-center gap-1">
             <div>{WeatherIcons[weather?.iconCode ?? ""]}</div>
             <div
-              className="text-[12px] md:text-[16px]"
+              className="text-[12px] md:text-[16px] unmask-temperature"
               data-testid="weather-degrees-id"
               data-qa={weather?.temperature}
             >

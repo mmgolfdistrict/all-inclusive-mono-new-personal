@@ -137,17 +137,17 @@ export const CheckoutForm = ({
       ?.filter(({ product_data }) => product_data.metadata.type === "sensible")
       ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
 
-      const charityCharge =
-      cartData
-        ?.filter(({ product_data }) => product_data.metadata.type === "charity")
-        ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
-      const cartFeeCharge =
-        cartData
-          ?.filter(({ product_data }) => product_data.metadata.type === "cart_fee")
-          ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
-        
-       
-        const greenFeeTaxPercent =
+  const charityCharge =
+    cartData
+      ?.filter(({ product_data }) => product_data.metadata.type === "charity")
+      ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+  const cartFeeCharge =
+    cartData
+      ?.filter(({ product_data }) => product_data.metadata.type === "cart_fee")
+      ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+
+
+  const greenFeeTaxPercent =
     cartData
       ?.filter(
         ({ product_data }) =>
@@ -582,7 +582,7 @@ export const CheckoutForm = ({
     return bookingResponse;
   };
 
-  
+
 
   const handleDonateChange = (event) => {
     const value = event.target.value.trim() as string;
@@ -600,15 +600,15 @@ export const CheckoutForm = ({
       handleSelectedCharityAmount(Number(numericValue));
     }
   };
- 
-  const playersInNumber= Number(playerCount || 1)
-  const greenFeeChargePerPlayer = ((primaryGreenFeeCharge )/ playersInNumber) - (cartFeeCharge) - markupFee
-  const greenFeeTaxAmount = ( ( greenFeeChargePerPlayer ) * ( greenFeeTaxPercent  ) ) * playersInNumber  
-  const cartFeeTaxAmount = ( ( cartFeeCharge  ) * ( cartFeeTaxPercent ) ) * playersInNumber
-  const markupFeesTaxAmount = ( ( markupFee  ) * ( markupTaxPercent ) ) * playersInNumber
-  const weatherGuaranteeTaxAmount = ( ( sensibleCharge  ) * ( (weatherGuaranteeTaxPercent ) ) )
-  const additionalTaxes = (greenFeeTaxAmount+markupFeesTaxAmount+weatherGuaranteeTaxAmount+cartFeeTaxAmount)/100
-  
+
+  const playersInNumber = Number(playerCount || 1)
+  const greenFeeChargePerPlayer = ((primaryGreenFeeCharge) / playersInNumber) - (cartFeeCharge) - markupFee
+  const greenFeeTaxAmount = ((greenFeeChargePerPlayer) * (greenFeeTaxPercent)) * playersInNumber
+  const cartFeeTaxAmount = ((cartFeeCharge) * (cartFeeTaxPercent)) * playersInNumber
+  const markupFeesTaxAmount = ((markupFee) * (markupTaxPercent)) * playersInNumber
+  const weatherGuaranteeTaxAmount = ((sensibleCharge) * ((weatherGuaranteeTaxPercent)))
+  const additionalTaxes = (greenFeeTaxAmount + markupFeesTaxAmount + weatherGuaranteeTaxAmount + cartFeeTaxAmount) / 100
+
   taxCharge += additionalTaxes;
   const Total =
     primaryGreenFeeCharge +
@@ -625,8 +625,8 @@ export const CheckoutForm = ({
     taxCharge +
     sensibleCharge +
     (!roundUpCharityId ? charityCharge : 0) +
-    convenienceCharge ;
-  const totalBeforeRoundOff = primaryGreenFeeCharge + TaxCharge ;
+    convenienceCharge;
+  const totalBeforeRoundOff = primaryGreenFeeCharge + TaxCharge;
   const decimalPart = totalBeforeRoundOff % 1;
 
   const roundOff =
@@ -761,7 +761,7 @@ export const CheckoutForm = ({
             {/* {isBuyNowAuction ? null : ` (1 item)`} */}
           </div>
 
-          <div>
+          <div className="price">
             $
             {primaryGreenFeeCharge.toLocaleString("en-US", {
               minimumFractionDigits: 2,
@@ -771,7 +771,7 @@ export const CheckoutForm = ({
         </div>
         <div className="flex justify-between">
           <div>Taxes & Others</div>
-          <div>
+          <div className="price">
             $
             {TaxCharge.toLocaleString("en-US", {
               minimumFractionDigits: 2,
@@ -782,7 +782,7 @@ export const CheckoutForm = ({
         {roundUpCharityId && (
           <div className="flex justify-between">
             <div>Charitable Donation</div>
-            <div>
+            <div className="price">
               $
               {(donateValue || 0).toLocaleString("en-US", {
                 minimumFractionDigits: 2,
@@ -793,12 +793,12 @@ export const CheckoutForm = ({
         )}
         <div className="flex justify-between">
           <div>Total</div>
-          <div>
+          <div className="price">
             $
             {(
               (roundUpCharityId
                 ? roundOffClick
-                  ? roundOff 
+                  ? roundOff
                   : Number(TotalAmt)
                 : TotalAmt) || 0
             ).toLocaleString("en-US", {
@@ -832,11 +832,10 @@ export const CheckoutForm = ({
           <div className="flex gap-2 mt-5 ml-3 mb-4">
             <button
               type="button"
-              className={`flex w-32 items-center justify-center rounded-md p-2 ${
-                roundOffStatus === "roundup"
-                  ? "bg-primary text-white"
-                  : "bg-white text-primary border-primary border-2"
-              }`}
+              className={`flex w-32 items-center justify-center rounded-md p-2 ${roundOffStatus === "roundup"
+                ? "bg-primary text-white"
+                : "bg-white text-primary border-primary border-2"
+                }`}
               onClick={() => {
                 setRoundOffStatus("roundup");
                 handleRoundOff();
@@ -847,11 +846,10 @@ export const CheckoutForm = ({
 
             <button
               type="button"
-              className={`flex w-32 items-center justify-center rounded-md p-2 ${
-                roundOffStatus === "other"
-                  ? "bg-primary text-white"
-                  : "bg-white text-primary border-primary border-2"
-              }`}
+              className={`flex w-32 items-center justify-center rounded-md p-2 ${roundOffStatus === "other"
+                ? "bg-primary text-white"
+                : "bg-white text-primary border-primary border-2"
+                }`}
               onClick={() => {
                 setRoundOffClick(false);
                 setShowTextField(true);
@@ -865,11 +863,10 @@ export const CheckoutForm = ({
 
             <button
               type="button"
-              className={`flex w-32 items-center justify-center rounded-md p-2 ${
-                roundOffStatus === "nothanks"
-                  ? "bg-primary text-white"
-                  : "bg-white text-primary border-primary border-2"
-              }`}
+              className={`flex w-32 items-center justify-center rounded-md p-2 ${roundOffStatus === "nothanks"
+                ? "bg-primary text-white"
+                : "bg-white text-primary border-primary border-2"
+                }`}
               onClick={() => {
                 setRoundOffClick(false);
                 setShowTextField(false);
@@ -890,9 +887,8 @@ export const CheckoutForm = ({
                 placeholder="Enter Donation Amount"
                 value={donateValue}
                 onChange={handleDonateChange}
-                className={`p-2 border rounded-md ${
-                  donateError ? "border-red" : "border-primary"
-                }`}
+                className={`p-2 border rounded-md ${donateError ? "border-red" : "border-primary"
+                  }`}
                 min="1"
                 step="1"
               />
