@@ -29,7 +29,7 @@ export type WaitlistItem = {
 };
 
 function Waitlists() {
-  const { user } = useMe();
+  const { user, isLoading: isUserLoading } = useMe();
   const { course } = useParams();
   const [selectedNotifications, setSelectedNotifications] = useState<
     WaitlistItem[]
@@ -147,7 +147,13 @@ function Waitlists() {
         </h1>
       </div>
 
-      {isLoading ? (
+      {!isUserLoading && !user ?
+        (<div className="flex justify-center items-center h-[200px]">
+          <div className="text-center">
+            Login to View
+          </div>
+        </div>
+        ) : (isLoading ? (
         <div className="flex justify-center items-center h-[200px] w-full md:min-w-[370px]">
           <Spinner className="w-[50px] h-[50px]" />
         </div>
@@ -178,7 +184,7 @@ function Waitlists() {
               ))
             : null}
         </div>
-      )}
+        ))}
       {isDeleteModalOpen && (
         <>
           <div

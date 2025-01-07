@@ -1,12 +1,13 @@
 import type { InferSelectModel } from "drizzle-orm";
 import { sql } from "drizzle-orm";
-import { boolean, datetime, double, tinyint, unique, varchar } from "drizzle-orm/mysql-core";
+import { bigint, boolean, datetime, double, tinyint, unique, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 
 export const foreupBookingSale = mySqlTable(
   "foreupBookingSale",
   {
     id: varchar("id", { length: 36 }).notNull().primaryKey(),
+    nid: bigint("nid", { mode: "number", unsigned: true }).notNull().autoincrement().unique(),
     courseId: varchar("courseId", { length: 36 }).notNull(),
     reservationId: varchar("reservationId", { length: 36 }).notNull(),
     foreupBookingId: varchar("foreupBookingId", { length: 36 }).notNull(),
@@ -16,7 +17,7 @@ export const foreupBookingSale = mySqlTable(
     attributes_comment: varchar("attributes_comment", { length: 2048 }),
     attribute_guestCount: tinyint("attribute_guestCount"),
     attribute_number: varchar("attribute_number", { length: 36 }),
-    attribute_paymentType: varchar("attribute_paymentType", { length: 127 }),
+    attribute_paymentType: varchar("attribute_paymentType", { length: 256 }),
     attribute_refundComment: varchar("attribute_refundComment", { length: 255 }),
     attribute_refundReason: varchar("attribute_refundReason", { length: 255 }),
     attributes_total: double("attributes_total"),

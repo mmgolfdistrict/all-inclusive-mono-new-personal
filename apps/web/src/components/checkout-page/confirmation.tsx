@@ -8,6 +8,7 @@ import Link from "next/link";
 import { Fragment } from "react";
 // import { useRouter } from "next/router";
 import { FilledButton } from "../buttons/filled-button";
+
 // import { InviteFriends } from "../tee-time-page/invite-friends";
 interface ConfirmationProps {
   teeTimeId: string;
@@ -98,11 +99,19 @@ export const Confirmation = ({
         </div>
       </div>
       <div>
-        <div className="flex w-full flex-col items-center justify-center gap-2 md:flex-row">
+        <div className="w-full flex-col items-center justify-center md:gap-2 md:flex-row">
           Please send your feedback to{" "}
           <a href="mailto:support@golfdistrict.com">support@golfdistrict.com</a>
           <br />
           <br />
+        </div>
+        <div className="flex w-full flex-col items-center justify-center mb-4 text-[14px] md:text-[16px]">
+          <p className="text-red text-center">
+            You should receive a confirmation email. If you don’t see the
+            confirmation email within the next 5 mins, please check your Junk
+            Mail or Spam folder. Remember to add no-reply@golfdistrict.com to
+            the safe senders list.
+          </p>
         </div>
         <div className="flex w-full flex-col items-center justify-center gap-2 md:flex-row">
           <Link

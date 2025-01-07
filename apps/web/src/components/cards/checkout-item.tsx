@@ -14,11 +14,11 @@ import { Avatar } from "../avatar";
 import { OutlineClub } from "../icons/outline-club";
 import { BlurImage } from "../images/blur-image";
 import { ChoosePlayers } from "../input/choose-players";
+import { Spinner } from "../loading/spinner";
 import { SensibleWidget } from "../sensible/sensible-widget";
 import { Tooltip } from "../tooltip";
 
 const PlayersOptions = ["1", "2", "3", "4"];
-const DEFAULT_SILHOUETTE_IMAGE = "/defaults/default-profile.webp";
 
 export const CheckoutItem = ({
   teeTime,
@@ -267,23 +267,26 @@ const Data = ({
         <div className="flex gap-1 flex-col items-start">
           <Tooltip
             trigger={
-              <Avatar
-                src={
-                  isSecondHand === true ? DEFAULT_SILHOUETTE_IMAGE : soldByImage
-                }
-                className="!min-h-[40px] !min-w-[80px] max-h-[40px] max-w-[80px] h-[40px] w-[80px] md:min-h-[40px] md:min-w-[80px] md:max-h-[40px] md:max-w-[80px] md:h-[40px] md:w-[80px] lg:w-[80px] lg:h-[40px]"
-                isRounded={false} // Conditional rounding
-              />
+              isSecondHand ? (
+                <Spinner className="w-[40px] h-[40px]" />
+              ) : (
+                <Avatar
+                  src={soldByImage}
+                  className="!min-h-[40px] !min-w-[80px] max-h-[40px] max-w-[80px] h-[40px] w-[80px] md:min-h-[40px] md:min-w-[80px] md:max-h-[40px] md:max-w-[80px] md:h-[40px] md:w-[80px] lg:w-[80px] lg:h-[40px]"
+                  isRounded={false}
+                />
+              )
             }
             content={
               "Sold by " +
-              (isSecondHand === true
-                ? "another Golf District golfer."
-                : soldByName)
+              (isSecondHand ? "another Golf District golfer." : soldByName)
             }
           />
+
           <p
-            className={`text-${getTextColor(courseException?.displayType)} font-semibold`}
+            className={`text-${getTextColor(
+              courseException?.displayType
+            )} font-semibold`}
           >
             {courseException?.shortMessage}
           </p>

@@ -182,6 +182,10 @@ function NotifyMe({ params }: { params: { course: string } }) {
   };
 
   const handleSubmit = async () => {
+    if (!isLoading && !user) {
+      router.push(`/${courseId}/login`);
+      return;
+    }
     if (selectedDates.length === 0) {
       toast.error("Please select a date");
       return;
@@ -216,7 +220,17 @@ function NotifyMe({ params }: { params: { course: string } }) {
 
     await createNotifications(notificationsData, {
       onSuccess: (data) => {
-        toast.success(data);
+        const toastContent = (
+          <div>
+            <p>{data}</p>
+            <p className="text-green-600 text-[14px] font-bold">
+              If you don’t see the notification emails please check your Junk
+              Mail or Spam folder. Remember to add no-reply@golfdistrict.com to
+              the safe senders list.
+            </p>
+          </div>
+        );
+        toast.success(toastContent);
 
         setSelectedDates([]);
         const startTimeString = formatTime(courseStartTimeNumber);
@@ -261,10 +275,6 @@ function NotifyMe({ params }: { params: { course: string } }) {
       setErrorMessage("");
     }
   }, [startTime[0], startTime[1]]);
-
-  if (!isLoading && !user) {
-    router.push(`/${courseId}/login`);
-  }
 
   return (
     <section className="mx-auto px-2 flex w-full flex-col gap-4 pt-4 md:max-w-[1360px] md:px-6">
