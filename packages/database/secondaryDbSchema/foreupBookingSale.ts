@@ -17,7 +17,7 @@ export const foreupBookingSale = mySqlTable(
     attributes_comment: varchar("attributes_comment", { length: 2048 }),
     attribute_guestCount: tinyint("attribute_guestCount"),
     attribute_number: varchar("attribute_number", { length: 36 }),
-    attribute_paymentType: varchar("attribute_paymentType", { length: 127 }),
+    attribute_paymentType: varchar("attribute_paymentType", { length: 256 }),
     attribute_refundComment: varchar("attribute_refundComment", { length: 255 }),
     attribute_refundReason: varchar("attribute_refundReason", { length: 255 }),
     attributes_total: double("attributes_total"),
