@@ -96,7 +96,7 @@ export const EditProfileForm = () => {
         inputRef.current,
         {
           types: ["address"],
-          componentRestrictions: { country: "us" },
+          componentRestrictions: { country: ["us", "ca"] },
         }
       );
       if (autocomplete) {
@@ -127,6 +127,11 @@ export const EditProfileForm = () => {
       const zipcode = getAddressComponent("postal_code");
       const country = getAddressComponent("country");
 
+      let countryByCode=country
+      if(country==="United States"){
+        countryByCode="USA"
+      }
+
       // Type guard before passing to setValue
       if (inputRef?.current) {
         inputRef.current.value = address1;
@@ -137,7 +142,7 @@ export const EditProfileForm = () => {
       if (typeof state === "string") setValue("state", state);
       if (typeof city === "string") setValue("city", city);
       if (typeof zipcode === "string") setValue("zipcode", zipcode);
-      if (typeof country === "string") setValue("country", country);
+      if (typeof country === "string") setValue("country", countryByCode);
     }
   };
 
@@ -180,7 +185,7 @@ export const EditProfileForm = () => {
       setValue("state", userData?.state ?? "");
       setValue("city", userData?.city ?? "");
       setValue("zipcode", userData?.zipcode ?? "");
-      setValue("country", "USA");
+      setValue("country", userData?.country??"");
       setValue("profilePictureAssetId", userData?.image ?? "");
       setValue("bannerImageAssetId", userData?.bannerImage ?? "");
       setBanner(
@@ -300,7 +305,7 @@ export const EditProfileForm = () => {
         state: data?.state,
         city: data?.city,
         zipcode: data?.zipcode,
-        country: "USA", // data?.country,
+        country: data?.country,
         phoneNumber: data.phoneNumber,
         profilePictureAssetId:
           data.profilePictureAssetId === defaultProfilePhoto
@@ -614,7 +619,7 @@ export const EditProfileForm = () => {
             />
           )}
         />
-        <Controller
+        {/* <Controller
           name="country"
           control={control}
           render={({ field }) => (
@@ -638,7 +643,68 @@ export const EditProfileForm = () => {
               }}
             />
           )}
-        />
+        /> */}
+
+<Controller
+  name="country"
+  control={control}
+  render={({ field }) => (
+    <div>
+      <label
+        htmlFor="country"
+        style={{ fontSize: "14px", color: "rgb(109 119 124)" }}
+      >
+        Country
+      </label>
+      <Select
+        size="small"
+        {...field}
+        id="country"
+        placeholder="Select Your Country"
+        fullWidth
+        name="country"
+        data-testid="register-country-id"
+        inputRef={(e) => {
+          field.ref(e);
+        }}
+        sx={{
+          fontSize: "14px",
+          color: "rgb(109 119 124)",
+          backgroundColor: "rgb(247, 249, 250)",
+          border: "none",
+          "& fieldset": { border: "none" },
+        }}
+        value={field.value || ""}
+        MenuProps={{
+          PaperProps: {
+            sx: {
+              "& .MuiMenuItem-root.Mui-selected": {
+                backgroundColor: "rgb(0, 0, 0)",
+                color: "white",
+                "&:hover": {
+                  backgroundColor: "rgb(0, 0, 0)",
+                  color: "white",
+                },
+              },
+            },
+          },
+        }}
+        displayEmpty
+      >
+        {/* <MenuItem value="" disabled>
+          Select your country
+        </MenuItem> */}
+        <MenuItem value="USA">USA</MenuItem>
+        <MenuItem value="Canada">Canada</MenuItem>
+      </Select>
+      {errors.country && (
+        <span style={{ fontSize: "12px", color: "red" }}>
+          {errors.country.message}
+        </span>
+      )}
+    </div>
+  )}
+/>
 
         <datalist id="places">
           {cities.data?.autocompleteCities.features.map((city, idx) => (
@@ -761,4 +827,17 @@ const usStates = [
   { code: "WV", name: "West Virginia" },
   { code: "WI", name: "Wisconsin" },
   { code: "WY", name: "Wyoming" },
+  { code: "AB", name: "Alberta" },
+  { code: "BC", name: "British Columbia" },
+  { code: "MB", name: "Manitoba" },
+  { code: "NB", name: "New Brunswick" },
+  { code: "NL", name: "Newfoundland and Labrador" },
+  { code: "NT", name: "Northwest Territories" },
+  { code: "NS", name: "Nova Scotia" },
+  { code: "NU", name: "Nunavut" },
+  { code: "ON", name: "Ontario" },
+  { code: "PE", name: "Prince Edward Island" },
+  { code: "QC", name: "Quebec" },
+  { code: "SK", name: "Saskatchewan" },
+  { code: "YT", name: "Yukon" },
 ];
