@@ -59,6 +59,7 @@ export const CheckoutForm = ({
   console.log("cart-data", cartData);
   const MAX_CHARITY_AMOUNT = 1000;
   const { course } = useCourseContext();
+  const { shouldAddSensible } = useCheckoutContext();
   const params = useParams();
   const courseId = course?.id;
   const roundUpCharityId = course?.roundUpCharityId;
@@ -858,7 +859,7 @@ export const CheckoutForm = ({
           </Fragment>
         ) : (
           <Fragment>
-            <CheckoutAccordionRoot defaultValue={["item-1", "item-2"]}>
+            <CheckoutAccordionRoot defaultValue={[]}>
               <CheckoutItemAccordion
                 title="Subtotal"
                 value="item-1"
@@ -870,13 +871,17 @@ export const CheckoutForm = ({
               >
                 <div className=" flex flex-col gap-2">
                   <div className="flex justify-between">
-                    <div className="px-8">Green Fees</div>
+                    <div className="px-8">
+                      Green Fees{" "}
+                      {`($${(
+                        greenFeeChargePerPlayer + markupFee
+                      ).toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })} * ${playersInNumber})`}{" "}
+                    </div>
                     <div>
-                      <span className="pr-1.5">
-                        ${greenFeeChargePerPlayer + markupFee} *{" "}
-                        {playersInNumber}{" "}
-                      </span>{" "}
-                      <span className="pl-1"> = </span> &nbsp; ${" "}
+                      $
                       {totalGreenFeesPerPlayer.toLocaleString("en-US", {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
@@ -884,13 +889,15 @@ export const CheckoutForm = ({
                     </div>
                   </div>
                   <div className="flex justify-between">
-                    <div className="px-8">Cart Fees</div>
+                    <div className="px-8">
+                      Cart Fees{" "}
+                      {`($${cartFeeCharge.toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}*${playersInNumber})`}
+                    </div>
                     <div>
-                      <span className="pr-3">
-                        {" "}
-                        ${cartFeeCharge} * {playersInNumber}
-                      </span>{" "}
-                      <span className="pr-1"> = </span> &nbsp; ${" "}
+                      $
                       {totalCartFeePerPlayer.toLocaleString("en-US", {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
@@ -910,7 +917,15 @@ export const CheckoutForm = ({
               >
                 <div className=" flex flex-col gap-1">
                   <div className="flex justify-between">
-                    <div className="px-8">Green Fee Tax</div>
+                    <div className="px-8">
+                      Green Fee Tax{" "}
+                      {`($${(
+                        greenFeeChargePerPlayer + markupFee
+                      ).toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })} @ ${greenFeeTaxPercent}% * ${playersInNumber})`}
+                    </div>
                     <div>
                       ${" "}
                       {(
@@ -923,7 +938,13 @@ export const CheckoutForm = ({
                     </div>
                   </div>
                   <div className="flex justify-between">
-                    <div className="px-8">Cart Fee Tax</div>
+                    <div className="px-8">
+                      Cart Fee Tax &nbsp;
+                      {`($${cartFeeCharge.toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })} @  ${cartFeeTaxPercent}% * ${playersInNumber})`}
+                    </div>
                     <div>
                       ${" "}
                       {(cartFeeTaxAmount / 100).toLocaleString("en-US", {
@@ -932,39 +953,53 @@ export const CheckoutForm = ({
                       })}
                     </div>
                   </div>
-                  <div className="flex justify-between">
-                    <div className="px-8">Sensible</div>
-                    <div>
-                      ${" "}
-                      {sensibleCharge.toLocaleString("en-US", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                    </div>
-                  </div>
-                  <div className="flex justify-between">
-                    <div className="px-8">Sensible Tax</div>
-                    <div>
-                      ${" "}
-                      {(weatherGuaranteeTaxAmount / 100).toLocaleString(
-                        "en-US",
-                        {
+                  {roundUpCharityId && roundOffStatus !== "nothanks" ? (
+                    <div className="flex justify-between">
+                      <div className="px-8">Charity Donations</div>
+                      <div>
+                        ${" "}
+                        {donateValue.toLocaleString("en-US", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
-                        }
-                      )}
+                        })}
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex justify-between">
-                    <div className="px-8">Charity Donations</div>
-                    <div>
-                      ${" "}
-                      {donateValue.toLocaleString("en-US", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
+                  ) : null}
+                  {shouldAddSensible ? (
+                    <div className="flex justify-between">
+                      <div className="px-8">
+                        Sensible {`($${sensibleCharge})`}
+                      </div>
+                      <div>
+                        ${" "}
+                        {sensibleCharge.toLocaleString("en-US", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </div>
                     </div>
-                  </div>
+                  ) : null}
+                  {shouldAddSensible ? (
+                    <div className="flex justify-between">
+                      <div className="px-8">
+                        Sensible Tax
+                        {`($${sensibleCharge.toLocaleString("en-US", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })} @ ${weatherGuaranteeTaxPercent}%)`}
+                      </div>
+                      <div>
+                        ${" "}
+                        {(weatherGuaranteeTaxAmount / 100).toLocaleString(
+                          "en-US",
+                          {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          }
+                        )}
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               </CheckoutItemAccordion>
               <div className="flex justify-between px-2">
