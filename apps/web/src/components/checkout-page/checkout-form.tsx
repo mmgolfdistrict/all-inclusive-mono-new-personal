@@ -808,7 +808,7 @@ export const CheckoutForm = ({
                 {/* {isBuyNowAuction ? null : ` (1 item)`} */}
               </div>
 
-              <div className="price">
+              <div className="unmask-price">
                 $
                 {primaryGreenFeeCharge.toLocaleString("en-US", {
                   minimumFractionDigits: 2,
@@ -818,7 +818,7 @@ export const CheckoutForm = ({
             </div>
             <div className="flex justify-between">
               <div>Taxes & Others</div>
-              <div className="price">
+              <div className="unmask-price">
                 $
                 {TaxCharge.toLocaleString("en-US", {
                   minimumFractionDigits: 2,
@@ -829,7 +829,7 @@ export const CheckoutForm = ({
             {roundUpCharityId && (
               <div className="flex justify-between">
                 <div>Charitable Donation</div>
-                <div className="price">
+                <div className="unmask-price">
                   $
                   {(donateValue || 0).toLocaleString("en-US", {
                     minimumFractionDigits: 2,
@@ -840,7 +840,7 @@ export const CheckoutForm = ({
             )}
             <div className="flex justify-between">
               <div>Total</div>
-              <div className="price">
+              <div className="unmask-price">
                 $
                 {(
                   (roundUpCharityId
@@ -870,7 +870,7 @@ export const CheckoutForm = ({
                 <div className=" flex flex-col gap-2">
                   <div className="flex justify-between">
                     <div className="px-8">Green Fees</div>
-                    <div className="price">
+                    <div className="unmask-price">
                       <span className="pr-1.5">
                         ${greenFeeChargePerPlayer + markupFee} *{" "}
                         {playersInNumber}{" "}
@@ -884,7 +884,7 @@ export const CheckoutForm = ({
                   </div>
                   <div className="flex justify-between">
                     <div className="px-8">Cart Fees</div>
-                    <div className="price">
+                    <div className="unmask-price">
                       <span className="pr-3">
                         {" "}
                         ${cartFeeCharge} * {playersInNumber}
@@ -910,7 +910,7 @@ export const CheckoutForm = ({
                 <div className=" flex flex-col gap-1">
                   <div className="flex justify-between">
                     <div className="px-8">Green Fee Tax</div>
-                    <div className="price">
+                    <div className="unmask-price">
                       ${" "}
                       {(
                         (greenFeeTaxAmount + markupFeesTaxAmount) /
@@ -923,7 +923,7 @@ export const CheckoutForm = ({
                   </div>
                   <div className="flex justify-between">
                     <div className="px-8">Cart Fee Tax</div>
-                    <div className="price">
+                    <div className="unmask-price">
                       ${" "}
                       {(cartFeeTaxAmount / 100).toLocaleString("en-US", {
                         minimumFractionDigits: 2,
@@ -933,7 +933,7 @@ export const CheckoutForm = ({
                   </div>
                   <div className="flex justify-between">
                     <div className="px-8">Sensible</div>
-                    <div className="price">
+                    <div className="unmask-price">
                       ${" "}
                       {sensibleCharge.toLocaleString("en-US", {
                         minimumFractionDigits: 2,
@@ -943,7 +943,7 @@ export const CheckoutForm = ({
                   </div>
                   <div className="flex justify-between">
                     <div className="px-8">Sensible Tax</div>
-                    <div className="price">
+                    <div className="unmask-price">
                       ${" "}
                       {(weatherGuaranteeTaxAmount / 100).toLocaleString(
                         "en-US",
@@ -968,7 +968,7 @@ export const CheckoutForm = ({
               </CheckoutItemAccordion>
               <div className="flex justify-between px-2">
                 <div className="px-10">Total</div>
-                <div className="price">
+                <div className="unmask-price">
                   $
                   {(
                     (roundUpCharityId
