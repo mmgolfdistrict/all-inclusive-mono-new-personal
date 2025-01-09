@@ -903,7 +903,7 @@ export const CheckoutForm = ({
                       {`($${cartFeeCharge.toLocaleString("en-US", {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
-                      })}*${playersInNumber})`}
+                      })} * ${playersInNumber})`}
                     </div>
                     <div>
                       $
