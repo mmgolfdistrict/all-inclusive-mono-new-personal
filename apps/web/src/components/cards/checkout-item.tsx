@@ -37,12 +37,17 @@ export const CheckoutItem = ({
   const { course } = useCourseContext();
   const courseId = course?.id;
 
+  const { data: coursePreviewImage } =
+    api.course.getCoursePreviewImage.useQuery({ courseId: courseId ?? "" });
+
   const { data: allowedPlayers } =
     api.course.getNumberOfPlayersByCourse.useQuery({
       courseId: courseId ?? "",
       time: teeTime?.time,
       date: teeTime?.date ?? "",
     });
+
+  console.log("coursePreviewImage", coursePreviewImage);
 
   const numberOfPlayers = allowedPlayers?.numberOfPlayers;
   const choosePlayers = (amount: string) => {
@@ -75,6 +80,8 @@ export const CheckoutItem = ({
       courseId: course?.id ?? "",
     });
 
+  console.log("courseException", courseException);
+
   const getCourseException = (playDate: string): NotificationObject | null => {
     let flag = false;
     let msg: NotificationObject | null = null;
@@ -96,6 +103,7 @@ export const CheckoutItem = ({
   return (
     <div className="relative flex w-full flex-col gap-2 bg-secondary-white  pt-4 lg:rounded-lg">
       <div className="flex items-center gap-2 px-4 pb-4 lg:items-start">
+        hey
         <BlurImage
           src={placeholderImage.src}
           width={placeholderImage.width}
@@ -265,6 +273,7 @@ const Data = ({
     >
       <div className="flex gap-1 lg:items-start">
         <div className="flex gap-1 flex-col items-start">
+          hey
           <Tooltip
             trigger={
               isSecondHand ? (
@@ -282,7 +291,6 @@ const Data = ({
               (isSecondHand ? "another Golf District golfer." : soldByName)
             }
           />
-
           <p
             className={`text-${getTextColor(
               courseException?.displayType
