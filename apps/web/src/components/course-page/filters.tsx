@@ -269,6 +269,10 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
     minute: date.getMinutes(),
     second: date.getSeconds(),
   });
+
+  console.log("dateTypeMobile", dateTypeMobile);
+  console.log("dateType", dateType);
+
   return (
     <div className="flex flex-col gap-4 pr-1">
       <section className="flex flex-col gap-2">
@@ -334,12 +338,12 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
                 dataTestId="date-filter-id"
                 dataQa={value}
                 className={`${index === 0
-                    ? "rounded-t-2xl border border-stroke"
-                    : index === DateOptions.length - 1 && dateType === "Custom"
-                      ? "border-l border-r border-stroke"
-                      : index === DateOptions.length - 1
-                        ? "rounded-b-2xl border-b border-l border-r border-stroke"
-                        : "border-b border-l border-r border-stroke"
+                  ? "rounded-t-2xl border border-stroke"
+                  : index === DateOptions.length - 1 && dateType === "Custom"
+                    ? "border-l border-r border-stroke"
+                    : index === DateOptions.length - 1
+                      ? "rounded-b-2xl border-b border-l border-r border-stroke"
+                      : "border-b border-l border-r border-stroke"
                   }`}
               />
               {(dateTypeMobile === "Custom" || dateType === "Custom") &&
@@ -457,7 +461,7 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
           }}
           data-testid="slider-start-time-id"
           data-qa={`${startTimeOptions.find((i) => i.value === localStartTime[0])
-              ?.displayTime
+            ?.displayTime
             } - ${startTimeOptions.find((i) => i.value === localStartTime[1])
               ?.displayTime
             }`}
@@ -524,10 +528,10 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
               dataTestId="hole-filter-id"
               dataQa={value}
               className={`${index === 0
-                  ? "rounded-l-full border-b border-l border-t border-stroke"
-                  : index === HoleOptions.length - 1
-                    ? "rounded-r-full border-b border-r border-t border-stroke"
-                    : "border border-stroke"
+                ? "rounded-l-full border-b border-l border-t border-stroke"
+                : index === HoleOptions.length - 1
+                  ? "rounded-r-full border-b border-r border-t border-stroke"
+                  : "border border-stroke"
                 } px-[2.5rem]`}
             />
           ))}
@@ -562,10 +566,10 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
               dataTestId="golfer-filter-id"
               dataQa={value}
               className={`${index === 0
-                  ? "rounded-l-full border-b border-l border-t border-stroke"
-                  : index === GolferOptions.length - 1
-                    ? "rounded-r-full border border-stroke"
-                    : "border-b border-l border-t border-stroke"
+                ? "rounded-l-full border-b border-l border-t border-stroke"
+                : index === GolferOptions.length - 1
+                  ? "rounded-r-full border border-stroke"
+                  : "border-b border-l border-t border-stroke"
                 } px-[1.44rem]`}
             />
           ))}

@@ -32,6 +32,7 @@ import { toast } from "react-toastify";
 import { ViewportList } from "react-viewport-list";
 import { useMediaQuery } from "usehooks-ts";
 import { LoadingContainer } from "./loader";
+import { microsoftClarityEvent } from "~/utils/microsoftClarityUtils";
 
 dayjs.extend(Weekday);
 dayjs.extend(RelativeTime);
@@ -424,6 +425,17 @@ export default function CourseHomePage() {
       localStorage.removeItem("credentials");
       localStorage.removeItem("linkedinstate");
       localStorage.removeItem("facebookstate");
+
+      microsoftClarityEvent({
+        action: ``,
+        category: "",
+        label: "",
+        value: "",
+        additionalContent:{
+           courseName: course?.name,
+           websiteURL: course?.websiteURL
+        }
+      });
     }
   }, []);
   let datesArr = JSON.parse(
