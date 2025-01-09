@@ -14,6 +14,7 @@ const AllowedPathsForMainNav = [
   "/register",
   "/forgot-password",
   "/faq",
+  "/release-history",
   "/how-to-guide",
   "/about-us",
 ];
