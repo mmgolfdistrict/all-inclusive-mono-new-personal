@@ -349,7 +349,7 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
               {(dateTypeMobile === "Custom" || dateType === "Custom") &&
                 value === "Custom" ? (
                 <>
-                  <div className="custom_calendar">
+                  <div className="custom_calendar unmask-time">
                     <Calendar
                       value={isMobile ? selectedDayMobile : selectedDay}
                       calendarClassName="responsive-calendar"
@@ -395,7 +395,7 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
       <section className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
           <div>Start Time</div>
-          <div>
+          <div className="unmask-time">
             {isMobile
               ? startTimeOptions[
                 startTimeOptions.findIndex((i) => i.value === timeMobile[0])
@@ -637,7 +637,7 @@ export const Item = ({
   return (
     <ToggleGroup.Item
       value={value}
-      className={`bg-white flex items-center px-4 py-2 text-left text-[14px] text-primary-gray transition-colors data-[state=on]:bg-primary data-[state=on]:text-white ${className ?? ""
+      className={`bg-white flex items-center px-4 py-2 text-left text-[14px] text-primary-gray transition-colors data-[state=on]:bg-primary data-[state=on]:text-white unmask-players ${className ?? ""
         }`}
       data-testid={dataTestId}
       data-qa={dataQa}
