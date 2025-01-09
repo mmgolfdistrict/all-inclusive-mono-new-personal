@@ -1047,7 +1047,7 @@ export const CheckoutForm = ({
                 {charityData?.charityName}
                 <Tooltip
                   trigger={<Info className="ml-1 h-[20px] w-[20px]" />}
-                  content="Course operator pays a 3% card processing fee and the remaining goes to the actual charity."
+                  content="Course operator pays a card processing fee and the remaining goes to the course."
                 />
               </h2>
 
