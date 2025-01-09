@@ -94,6 +94,10 @@ export default function RegisterPage() {
       const city = getAddressComponent("locality");
       const zipcode = getAddressComponent("postal_code");
       const country = getAddressComponent("country");
+      let countryByCode=country
+      if(country==="United States"){
+        countryByCode="USA"
+      }
 
       if (inputRef?.current) {
         inputRef.current.value = address1;
@@ -105,7 +109,7 @@ export default function RegisterPage() {
       if (typeof state === "string") setValue("state", state);
       if (typeof city === "string") setValue("city", city);
       if (typeof zipcode === "string") setValue("zipcode", zipcode);
-      if (typeof country === "string") setValue("country", country);
+      if (typeof country === "string") setValue("country", countryByCode);
     }
   };
 
@@ -115,7 +119,7 @@ export default function RegisterPage() {
         inputRef.current,
         {
           types: ["address"],
-          componentRestrictions: { country: "us" },
+          componentRestrictions: { country: ["us", "ca"] },
         }
       );
       if (autocomplete) {
@@ -214,7 +218,7 @@ export default function RegisterPage() {
     try {
       const response = await registerUser.mutateAsync({
         ...data,
-        country: "USA",
+        // country: "USA",
         courseId: course?.id,
       });
       if (response?.error) {
@@ -538,7 +542,7 @@ export default function RegisterPage() {
               />
             )}
           />
-          <Controller
+          {/* <Controller
             name="country"
             control={control}
             render={({ field }) => (
@@ -554,7 +558,7 @@ export default function RegisterPage() {
                 error={errors.country?.message}
                 showInfoTooltip={true}
                 disabled={true}
-                value={"USA"}
+                // value={"USA"}
                 content="We only support cash outs for US banks at this time"
                 data-testid="register-country-id"
                 inputRef={(e) => {
@@ -562,7 +566,69 @@ export default function RegisterPage() {
                 }}
               />
             )}
-          />
+          /> */}
+
+<Controller
+  name="country"
+  control={control}
+  render={({ field }) => (
+    <div>
+      <label
+        htmlFor="country"
+        style={{ fontSize: "14px", color: "rgb(109 119 124)" }}
+      >
+        Country
+      </label>
+      <Select
+        size="small"
+        {...field}
+        id="country"
+        placeholder="Select Your Country"
+        fullWidth
+        name="country"
+        data-testid="register-country-id"
+        inputRef={(e) => {
+          field.ref(e);
+        }}
+        sx={{
+          fontSize: "14px",
+          color: "rgb(109 119 124)",
+          backgroundColor: "rgb(247, 249, 250)",
+          border: "none",
+          "& fieldset": { border: "none" },
+        }}
+        value={field.value || ""}
+        MenuProps={{
+          PaperProps: {
+            sx: {
+              "& .MuiMenuItem-root.Mui-selected": {
+                backgroundColor: "rgb(0, 0, 0)",
+                color: "white",
+                "&:hover": {
+                  backgroundColor: "rgb(0, 0, 0)",
+                  color: "white",
+                },
+              },
+            },
+          },
+        }}
+        displayEmpty
+      >
+        {/* <MenuItem value="" disabled>
+          Select your country
+        </MenuItem> */}
+        <MenuItem value="USA">USA</MenuItem>
+        <MenuItem value="Canada">Canada</MenuItem>
+      </Select>
+      {errors.country && (
+        <span style={{ fontSize: "12px", color: "red" }}>
+          {errors.country.message}
+        </span>
+      )}
+    </div>
+  )}
+/>
+
           <datalist id="places">
             {cities.data?.autocompleteCities.features.map((city, idx) => (
               <option key={idx}>{city.place_name}</option>
@@ -697,6 +763,7 @@ export default function RegisterPage() {
 }
 
 const usStates = [
+  // US States
   { code: "AL", name: "Alabama" },
   { code: "AK", name: "Alaska" },
   { code: "AZ", name: "Arizona" },
@@ -747,4 +814,19 @@ const usStates = [
   { code: "WV", name: "West Virginia" },
   { code: "WI", name: "Wisconsin" },
   { code: "WY", name: "Wyoming" },
+
+  // Canadian Provinces and Territories
+  { code: "AB", name: "Alberta" },
+  { code: "BC", name: "British Columbia" },
+  { code: "MB", name: "Manitoba" },
+  { code: "NB", name: "New Brunswick" },
+  { code: "NL", name: "Newfoundland and Labrador" },
+  { code: "NT", name: "Northwest Territories" },
+  { code: "NS", name: "Nova Scotia" },
+  { code: "NU", name: "Nunavut" },
+  { code: "ON", name: "Ontario" },
+  { code: "PE", name: "Prince Edward Island" },
+  { code: "QC", name: "Quebec" },
+  { code: "SK", name: "Saskatchewan" },
+  { code: "YT", name: "Yukon" },
 ];
