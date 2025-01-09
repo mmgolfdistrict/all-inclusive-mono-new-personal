@@ -16,10 +16,13 @@ import { useParams, useRouter } from "next/navigation";
 import type { Dispatch, SetStateAction } from "react";
 import { Fragment, useEffect, useState, type FormEvent } from "react";
 import { toast } from "react-toastify";
+import { useMediaQuery } from "usehooks-ts";
 import { FilledButton } from "../buttons/filled-button";
 import { Switch } from "../buttons/switch";
+import { Info } from "../icons/info";
 import { CharitySelect } from "../input/charity-select";
 import { Input } from "../input/input";
+import { Tooltip } from "../tooltip";
 import { CheckoutAccordionRoot } from "./checkout-accordian";
 import CheckoutItemAccordion from "./checkout-item-accordian";
 import styles from "./checkout.module.css";
@@ -63,6 +66,12 @@ export const CheckoutForm = ({
   const params = useParams();
   const courseId = course?.id;
   const roundUpCharityId = course?.roundUpCharityId;
+  const [isExpanded, setIsExpanded] = useState(false);
+  const isMobile = useMediaQuery("(max-width: 768px)");
+
+  const handleToggle = () => {
+    setIsExpanded(!isExpanded);
+  };
 
   const { user } = useUserContext();
   const auditLog = api.webhooks.auditLog.useMutation();
@@ -646,7 +655,6 @@ export const CheckoutForm = ({
     sensibleCharge +
     (!roundUpCharityId ? charityCharge : 0) +
     convenienceCharge;
-
   const totalBeforeRoundOff = primaryGreenFeeCharge + TaxCharge;
   const decimalPart = totalBeforeRoundOff % 1;
 
@@ -802,7 +810,7 @@ export const CheckoutForm = ({
           </label>
         </div>
         {checkIsBookingDisabled &&
-        checkIsBookingDisabled?.showPricingBreakdown === 0 ? (
+          checkIsBookingDisabled?.showPricingBreakdown === 0 ? (
           <Fragment>
             <div className="flex justify-between">
               <div>
@@ -810,7 +818,7 @@ export const CheckoutForm = ({
                 {/* {isBuyNowAuction ? null : ` (1 item)`} */}
               </div>
 
-              <div>
+              <div className="unmask-price">
                 $
                 {primaryGreenFeeCharge.toLocaleString("en-US", {
                   minimumFractionDigits: 2,
@@ -820,7 +828,7 @@ export const CheckoutForm = ({
             </div>
             <div className="flex justify-between">
               <div>Taxes & Others</div>
-              <div>
+              <div className="unmask-price">
                 $
                 {TaxCharge.toLocaleString("en-US", {
                   minimumFractionDigits: 2,
@@ -831,7 +839,7 @@ export const CheckoutForm = ({
             {roundUpCharityId && (
               <div className="flex justify-between">
                 <div>Charitable Donation</div>
-                <div>
+                <div className="unmask-price">
                   $
                   {(donateValue || 0).toLocaleString("en-US", {
                     minimumFractionDigits: 2,
@@ -842,7 +850,7 @@ export const CheckoutForm = ({
             )}
             <div className="flex justify-between">
               <div>Total</div>
-              <div>
+              <div className="unmask-price">
                 $
                 {(
                   (roundUpCharityId
@@ -880,7 +888,7 @@ export const CheckoutForm = ({
                         maximumFractionDigits: 2,
                       })} * ${playersInNumber})`}{" "}
                     </div>
-                    <div>
+                    <div className="unmask-price">
                       $
                       {totalGreenFeesPerPlayer.toLocaleString("en-US", {
                         minimumFractionDigits: 2,
@@ -894,9 +902,9 @@ export const CheckoutForm = ({
                       {`($${cartFeeCharge.toLocaleString("en-US", {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
-                      })}*${playersInNumber})`}
+                      })} * ${playersInNumber})`}
                     </div>
-                    <div>
+                    <div className="unmask-price">
                       $
                       {totalCartFeePerPlayer.toLocaleString("en-US", {
                         minimumFractionDigits: 2,
@@ -926,7 +934,7 @@ export const CheckoutForm = ({
                         maximumFractionDigits: 2,
                       })} @ ${greenFeeTaxPercent}% * ${playersInNumber})`}
                     </div>
-                    <div>
+                    <div className="unmask-price">
                       ${" "}
                       {(
                         (greenFeeTaxAmount + markupFeesTaxAmount) /
@@ -945,7 +953,7 @@ export const CheckoutForm = ({
                         maximumFractionDigits: 2,
                       })} @  ${cartFeeTaxPercent}% * ${playersInNumber})`}
                     </div>
-                    <div>
+                    <div className="unmask-price">
                       ${" "}
                       {(cartFeeTaxAmount / 100).toLocaleString("en-US", {
                         minimumFractionDigits: 2,
@@ -956,7 +964,7 @@ export const CheckoutForm = ({
                   {roundUpCharityId && roundOffStatus !== "nothanks" ? (
                     <div className="flex justify-between">
                       <div className="px-8">Charity Donations</div>
-                      <div>
+                      <div className="unmask-price">
                         ${" "}
                         {donateValue.toLocaleString("en-US", {
                           minimumFractionDigits: 2,
@@ -970,7 +978,7 @@ export const CheckoutForm = ({
                       <div className="px-8">
                         Sensible {`($${sensibleCharge})`}
                       </div>
-                      <div>
+                      <div className="unmask-price">
                         ${" "}
                         {sensibleCharge.toLocaleString("en-US", {
                           minimumFractionDigits: 2,
@@ -988,7 +996,7 @@ export const CheckoutForm = ({
                           maximumFractionDigits: 2,
                         })} @ ${weatherGuaranteeTaxPercent}%)`}
                       </div>
-                      <div>
+                      <div className="unmask-price">
                         ${" "}
                         {(weatherGuaranteeTaxAmount / 100).toLocaleString(
                           "en-US",
@@ -1004,7 +1012,7 @@ export const CheckoutForm = ({
               </CheckoutItemAccordion>
               <div className="flex justify-between px-2">
                 <div className="px-10">Total</div>
-                <div>
+                <div className="unmask-price">
                   $
                   {(
                     (roundUpCharityId
@@ -1034,11 +1042,26 @@ export const CheckoutForm = ({
               />
             )}
             <div>
-              <h2 className="text-lg font-semibold">
+              <h2 className="text-lg font-semibold flex items-center">
                 {charityData?.charityName}
+                <Tooltip
+                  trigger={<Info className="ml-1 h-[20px] w-[20px]" />}
+                  content="Course operator pays a card processing fee and the remaining goes to the course."
+                />
               </h2>
+
               <p className="text-sm text-gray-600">
-                {charityData?.charityDescription}
+                {isMobile && !isExpanded
+                  ? `${charityData?.charityDescription?.slice(0, 50)}...`
+                  : charityData?.charityDescription}
+                {isMobile && (
+                  <span
+                    className="text-xs text-primary cursor-pointer ml-2"
+                    onClick={handleToggle}
+                  >
+                    {isExpanded ? "...Read Less" : "Read More..."}
+                  </span>
+                )}
               </p>
             </div>
           </div>
@@ -1046,11 +1069,10 @@ export const CheckoutForm = ({
           <div className="flex gap-2 mt-5 ml-3 mb-4">
             <button
               type="button"
-              className={`flex w-32 items-center justify-center rounded-md p-2 ${
-                roundOffStatus === "roundup"
-                  ? "bg-primary text-white"
-                  : "bg-white text-primary border-primary border-2"
-              }`}
+              className={`flex w-32 items-center justify-center rounded-md p-2 ${roundOffStatus === "roundup"
+                ? "bg-primary text-white"
+                : "bg-white text-primary border-primary border-2"
+                }`}
               onClick={() => {
                 setRoundOffStatus("roundup");
                 handleRoundOff();
@@ -1061,11 +1083,10 @@ export const CheckoutForm = ({
 
             <button
               type="button"
-              className={`flex w-32 items-center justify-center rounded-md p-2 ${
-                roundOffStatus === "other"
-                  ? "bg-primary text-white"
-                  : "bg-white text-primary border-primary border-2"
-              }`}
+              className={`flex w-32 items-center justify-center rounded-md p-2 ${roundOffStatus === "other"
+                ? "bg-primary text-white"
+                : "bg-white text-primary border-primary border-2"
+                }`}
               onClick={() => {
                 setRoundOffClick(false);
                 setShowTextField(true);
@@ -1079,11 +1100,10 @@ export const CheckoutForm = ({
 
             <button
               type="button"
-              className={`flex w-32 items-center justify-center rounded-md p-2 ${
-                roundOffStatus === "nothanks"
-                  ? "bg-primary text-white"
-                  : "bg-white text-primary border-primary border-2"
-              }`}
+              className={`flex w-32 items-center justify-center rounded-md p-2 ${roundOffStatus === "nothanks"
+                ? "bg-primary text-white"
+                : "bg-white text-primary border-primary border-2"
+                }`}
               onClick={() => {
                 setRoundOffClick(false);
                 setShowTextField(false);
@@ -1104,9 +1124,8 @@ export const CheckoutForm = ({
                 placeholder="Enter Donation Amount"
                 value={donateValue}
                 onChange={handleDonateChange}
-                className={`p-2 border rounded-md ${
-                  donateError ? "border-red" : "border-primary"
-                }`}
+                className={`p-2 border rounded-md ${donateError ? "border-red" : "border-primary"
+                  }`}
                 min="1"
                 step="1"
               />

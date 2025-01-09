@@ -104,7 +104,7 @@ export const CheckoutItem = ({
           className="h-[60px] w-[60px] rounded-lg object-cover lg:h-[100px] lg:w-[100px]"
         />
         <div className="flex w-full flex-col gap-2">
-          <div className="font-semibold ">
+          <div className="font-semibold unmask-time">
             {isLoading ? (
               <div className="h-6 w-[50%] bg-gray-200 rounded-md  animate-pulse" />
             ) : (

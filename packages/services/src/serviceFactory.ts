@@ -1,4 +1,5 @@
 import { type Db } from "@golf-district/database";
+import { ReleaseHistoryService } from "./index";
 import {
   AppSettingsService,
   AuctionService,
@@ -81,7 +82,7 @@ export interface ServiceConfig {
  * ```
  */
 export class ServiceFactory {
-  constructor(protected readonly config: ServiceConfig) { }
+  constructor(protected readonly config: ServiceConfig) {}
 
   /**
    * Returns an instance of HyperSwitchService with the provided API key.
@@ -113,11 +114,7 @@ export class ServiceFactory {
    * @returns An instance of SearchService.
    */
   getSearchService = (): SearchService => {
-    return new SearchService(
-      this.config.database,
-      this.getWeatherService(),
-      this.getProviderService()
-    );
+    return new SearchService(this.config.database, this.getWeatherService(), this.getProviderService());
   };
 
   /**
@@ -242,7 +239,12 @@ export class ServiceFactory {
    * @returns An instance of WeatherService.
    */
   getWeatherService = (): WeatherService => {
-    return new WeatherService(this.config.database, this.config.redisUrl, this.config.redisToken, this.getLoggerService());
+    return new WeatherService(
+      this.config.database,
+      this.config.redisUrl,
+      this.config.redisToken,
+      this.getLoggerService()
+    );
   };
 
   /**
@@ -371,11 +373,7 @@ export class ServiceFactory {
   };
 
   getFinixService = (): FinixService => {
-    return new FinixService(
-      this.config.database,
-      this.getCashOutService(),
-      this.getNotificationService()
-    );
+    return new FinixService(this.config.database, this.getCashOutService(), this.getNotificationService());
   };
   getLoggerService = (): LoggerService => {
     return new LoggerService();
@@ -385,7 +383,11 @@ export class ServiceFactory {
   };
 
   getUserWaitlistService = (): UserWaitlistService => {
-    return new UserWaitlistService(this.config.database, this.getNotificationService(), this.getAppSettingService());
+    return new UserWaitlistService(
+      this.config.database,
+      this.getNotificationService(),
+      this.getAppSettingService()
+    );
   };
 
   getSystemNotificationService = (): SystemNotificationService => {
@@ -394,5 +396,9 @@ export class ServiceFactory {
 
   getCourseExceptionService = (): CourseExceptionService => {
     return new CourseExceptionService(this.config.database);
+  };
+
+  getReleaseHistoryService = (): ReleaseHistoryService => {
+    return new ReleaseHistoryService(this.config.database);
   };
 }
