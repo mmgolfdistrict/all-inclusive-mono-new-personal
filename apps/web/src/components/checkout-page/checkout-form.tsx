@@ -16,10 +16,13 @@ import { useParams, useRouter } from "next/navigation";
 import type { Dispatch, SetStateAction } from "react";
 import { Fragment, useEffect, useState, type FormEvent } from "react";
 import { toast } from "react-toastify";
+import { useMediaQuery } from "usehooks-ts";
 import { FilledButton } from "../buttons/filled-button";
 import { Switch } from "../buttons/switch";
+import { Info } from "../icons/info";
 import { CharitySelect } from "../input/charity-select";
 import { Input } from "../input/input";
+import { Tooltip } from "../tooltip";
 import { CheckoutAccordionRoot } from "./checkout-accordian";
 import CheckoutItemAccordion from "./checkout-item-accordian";
 import styles from "./checkout.module.css";
@@ -63,6 +66,12 @@ export const CheckoutForm = ({
   const params = useParams();
   const courseId = course?.id;
   const roundUpCharityId = course?.roundUpCharityId;
+  const [isExpanded, setIsExpanded] = useState(false);
+  const isMobile = useMediaQuery("(max-width: 768px)");
+
+  const handleToggle = () => {
+    setIsExpanded(!isExpanded);
+  };
 
   const { user } = useUserContext();
   const auditLog = api.webhooks.auditLog.useMutation();
@@ -1034,11 +1043,26 @@ export const CheckoutForm = ({
               />
             )}
             <div>
-              <h2 className="text-lg font-semibold">
+              <h2 className="text-lg font-semibold flex items-center">
                 {charityData?.charityName}
+                <Tooltip
+                  trigger={<Info className="ml-1 h-[20px] w-[20px]" />}
+                  content="Course operator pays a 3% card processing fee and the remaining goes to the actual charity."
+                />
               </h2>
+
               <p className="text-sm text-gray-600">
-                {charityData?.charityDescription}
+                {isMobile && !isExpanded
+                  ? `${charityData?.charityDescription?.slice(0, 50)}...`
+                  : charityData?.charityDescription}
+                {isMobile && (
+                  <span
+                    className="text-xs text-primary cursor-pointer ml-2"
+                    onClick={handleToggle}
+                  >
+                    {isExpanded ? "...Read Less" : "Read More..."}
+                  </span>
+                )}
               </p>
             </div>
           </div>
