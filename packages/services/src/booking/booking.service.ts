@@ -90,7 +90,7 @@ interface OwnedTeeTimeData {
   weatherGuaranteeAmount: number | null;
   teeTimeId: string;
   slots: number;
-  bookingStatus:string
+  bookingStatus: string
 }
 
 interface ListingData {
@@ -151,7 +151,7 @@ export class BookingService {
     private readonly hyperSwitchService: HyperSwitchService,
     private readonly sensibleService: SensibleService,
     private readonly userWaitlistService: UserWaitlistService
-  ) {}
+  ) { }
 
   createCounterOffer = async (userId: string, bookingIds: string[], offerId: string, amount: number) => {
     //find owner of each booking
@@ -642,7 +642,7 @@ export class BookingService {
           eq(bookings.isActive, true),
           eq(teeTimes.courseId, courseId),
           gte(teeTimes.date, nowInCourseTimezone),
-          or(eq(bookings.status,"RESERVED"),eq(bookings.status,"CONFIRMED"))
+          or(eq(bookings.status, "RESERVED"), eq(bookings.status, "CONFIRMED"))
         )
       )
       .groupBy(
@@ -684,10 +684,10 @@ export class BookingService {
       if (!combinedData[teeTime.providerBookingId]) {
         const slotData = !teeTime.providerBookingId
           ? Array.from({ length: teeTime.playerCount - 1 }, (_, i) => ({
-              name: "",
-              slotId: "",
-              customerId: "",
-            }))
+            name: "",
+            slotId: "",
+            customerId: "",
+          }))
           : [];
 
         combinedData[teeTime.providerBookingId] = {
@@ -3120,13 +3120,13 @@ export class BookingService {
     const primaryData = {
       primaryGreenFeeCharge: isNaN(
         slotInfo[0].price -
-          cartFeeCharge * (slotInfo[0]?.product_data?.metadata?.number_of_bookings || 0) -
-          markupCharge1
+        cartFeeCharge * (slotInfo[0]?.product_data?.metadata?.number_of_bookings || 0) -
+        markupCharge1
       )
         ? slotInfo[0].price - markupCharge1
         : slotInfo[0].price -
-          cartFeeCharge * (slotInfo[0]?.product_data?.metadata?.number_of_bookings ?? 0) -
-          markupCharge1, //slotInfo[0].price- cartFeeCharge*slotInfo[0]?.product_data?.metadata?.number_of_bookings,
+        cartFeeCharge * (slotInfo[0]?.product_data?.metadata?.number_of_bookings ?? 0) -
+        markupCharge1, //slotInfo[0].price- cartFeeCharge*slotInfo[0]?.product_data?.metadata?.number_of_bookings,
       teeTimeId: slotInfo[0].product_data.metadata.tee_time_id,
       playerCount: slotInfo[0].product_data.metadata.number_of_bookings,
     };
@@ -3259,7 +3259,7 @@ export class BookingService {
     payment_id: string,
     sensibleQuoteId: string,
     additionalNoteFromUser: string | undefined,
-    needRentals: boolean, 
+    needRentals: boolean,
     redirectHref: string
   ) => {
     let bookingStage = "Normalizing Cart Data";
@@ -3542,19 +3542,19 @@ export class BookingService {
         const emailList = courseContactsList.map((contact) => contact.email);
         if (emailList.length > 0) {
           await this.notificationService.sendEmailByTemplate(
-          emailList,
-          "Reservation Additional Request",
-          process.env.SENDGRID_COURSE_CONTACT_NOTIFICATION_TEMPLATE_ID!,
-          {
-            NoteFromUser: additionalNoteFromUser || "-",
-            NeedRentals: needRentals ? "Yes" : "No",
-            PlayDateTime: formatTime(teeTime.providerDate, true, teeTime.timezoneCorrection ?? 0),
-            HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
-            CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${teeTime.cdnKey}.${teeTime.extension}`,
-          },
-          []
-        )
-      }
+            emailList,
+            "Reservation Additional Request",
+            process.env.SENDGRID_COURSE_CONTACT_NOTIFICATION_TEMPLATE_ID!,
+            {
+              NoteFromUser: additionalNoteFromUser || "-",
+              NeedRentals: needRentals ? "Yes" : "No",
+              PlayDateTime: formatTime(teeTime.providerDate, true, teeTime.timezoneCorrection ?? 0),
+              HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+              CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${teeTime.cdnKey}.${teeTime.extension}`,
+            },
+            []
+          )
+        }
       }
     } catch (e) {
       console.log("BOOKING FAILED ON PROVIDER, INITIATING REFUND FOR PAYMENT_ID", payment_id);
@@ -3715,9 +3715,8 @@ export class BookingService {
           userAgent: "",
           message: "ERROR CONFIRMING BOOKING",
           stackTrace: `${err.stack}`,
-          additionalDetailsJSON: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${
-            booking?.teeTimeId ?? ""
-          }`,
+          additionalDetailsJSON: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${booking?.teeTimeId ?? ""
+            }`,
         });
         throw "Error retrieving booking";
       });
@@ -3748,9 +3747,8 @@ export class BookingService {
             url: "/confirmBooking",
             userAgent: "",
             message: "ERROR CONFIRMING BOOKING",
-            stackTrace: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${
-              booking?.teeTimeId ?? ""
-            }`,
+            stackTrace: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${booking?.teeTimeId ?? ""
+              }`,
             additionalDetailsJSON: err,
           });
         });
@@ -3941,49 +3939,49 @@ export class BookingService {
       json: "Tee time booked",
     });
     //Sending teetime purchase email to user
-    const pricePerBooking = ((Math.round(total) / 100) / (associatedBooking?.listedSlotsCount ?? 0));
-    const message = `
-    A total of $${(Math.round(total) / 100)} tee times have been purchased.
-    
-    - **Number of Players:** ${associatedBooking?.listedSlotsCount ?? 0}
-    - **Price per Booking:** ${pricePerBooking ?? "Not specified"}
-    - **Booking ID:** ${bookingId ?? "Unavailable"}
-    
-    This purchase was made as a second-party transaction directly from the course.
-    `;
-    let isEmailSend = false;
-    const attachment: any[] = [];
-    try {
-      await this.notificationService.createNotification(
-        userId,
-        "TeeTimes Purchased",
-        message,
-        "",
-        process.env.SENDGRID_TEE_TIMES_PURCHASED_TEMPLATE_ID,
-        undefined,
-        attachment
-      );
-    } catch (error: any) {
-      console.log(error.message);
-      isEmailSend = true;
-      this.logger.error(error);
-      loggerService.errorLog({
-        userId: userId,
-        url: "/reserveBooking",
-        userAgent: "",
-        message: "EMAIL_SEND_FAILED_AFTER_TEETIME_PURCHASE",
-        stackTrace: `${error.stack}`,
-        additionalDetailsJSON: JSON.stringify({
-          bookingId: bookingId,
-          teeTimeID: associatedBooking?.teeTimeIdForBooking,
-        }),
-      });
-    }
+    // const pricePerBooking = ((Math.round(total) / 100) / (associatedBooking?.listedSlotsCount ?? 0));
+    // const message = `
+    // A total of $${(Math.round(total) / 100)} tee times have been purchased.
+
+    // - **Number of Players:** ${associatedBooking?.listedSlotsCount ?? 0}
+    // - **Price per Booking:** ${pricePerBooking ?? "Not specified"}
+    // - **Booking ID:** ${bookingId ?? "Unavailable"}
+
+    // This purchase was made as a second-party transaction directly from the course.
+    // `;
+    // let isEmailSend = false;
+    // const attachment: any[] = [];
+    // try {
+    //   await this.notificationService.createNotification(
+    //     userId,
+    //     "TeeTimes Purchased",
+    //     message,
+    //     "",
+    //     process.env.SENDGRID_TEE_TIMES_PURCHASED_TEMPLATE_ID,
+    //     undefined,
+    //     attachment
+    //   );
+    // } catch (error: any) {
+    //   console.log(error.message);
+    //   isEmailSend = true;
+    //   this.logger.error(error);
+    //   loggerService.errorLog({
+    //     userId: userId,
+    //     url: "/reserveBooking",
+    //     userAgent: "",
+    //     message: "EMAIL_SEND_FAILED_AFTER_TEETIME_PURCHASE",
+    //     stackTrace: `${error.stack}`,
+    //     additionalDetailsJSON: JSON.stringify({
+    //       bookingId: bookingId,
+    //       teeTimeID: associatedBooking?.teeTimeIdForBooking,
+    //     }),
+    //   });
+    // }
     return {
       bookingId,
       providerBookingId: "",
       status: "Reserved",
-      isEmailSend,
+      isEmailSend: true,
     } as ReserveTeeTimeResponse;
   };
 
