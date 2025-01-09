@@ -90,7 +90,7 @@ interface OwnedTeeTimeData {
   weatherGuaranteeAmount: number | null;
   teeTimeId: string;
   slots: number;
-  bookingStatus:string
+  bookingStatus: string;
 }
 
 interface ListingData {
@@ -622,7 +622,7 @@ export class BookingService {
         providerBookingId: bookings.providerBookingId,
         slots: lists.slots,
         playerCount: bookings.playerCount,
-        bookingStatus: bookings.status
+        bookingStatus: bookings.status,
       })
       .from(teeTimes)
       .innerJoin(bookings, eq(bookings.teeTimeId, teeTimes.id))
@@ -642,7 +642,7 @@ export class BookingService {
           eq(bookings.isActive, true),
           eq(teeTimes.courseId, courseId),
           gte(teeTimes.date, nowInCourseTimezone),
-          or(eq(bookings.status,"RESERVED"),eq(bookings.status,"CONFIRMED"))
+          or(eq(bookings.status, "RESERVED"), eq(bookings.status, "CONFIRMED"))
         )
       )
       .groupBy(
@@ -721,7 +721,7 @@ export class BookingService {
           weatherGuaranteeAmount: teeTime.weatherGuaranteeAmount,
           teeTimeId: teeTime.id,
           slots: teeTime.slots || 0,
-          bookingStatus: teeTime.bookingStatus
+          bookingStatus: teeTime.bookingStatus,
         };
       } else {
         const currentEntry = combinedData[teeTime.providerBookingId];
@@ -3441,7 +3441,12 @@ export class BookingService {
       } catch (e) {
         console.log("ERROR in getting appsetting SENSIBLE_NOTE_TO_TEE_SHEET");
       }
-      details = `${details}\n<br />\n${additionalNoteFromUser}`;
+
+      if (additionalNoteFromUser) {
+        details = `${details}\n${additionalNoteFromUser}`;
+      } else {
+        details = `${details}`;
+      }
 
       bookingStage = "Getting booking Creation Data";
       const bookingData = provider.getBookingCreationData({
