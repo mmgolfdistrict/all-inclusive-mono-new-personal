@@ -3259,7 +3259,7 @@ export class BookingService {
     payment_id: string,
     sensibleQuoteId: string,
     additionalNoteFromUser: string | undefined,
-    needRentals: boolean, 
+    needRentals: boolean,
     redirectHref: string
   ) => {
     let bookingStage = "Normalizing Cart Data";
@@ -3517,10 +3517,7 @@ export class BookingService {
           })
           .from(courseContacts)
           .where(
-            and(
-              eq(courseContacts.courseId, teeTime.courseId),
-              eq(courseContacts.sendNotification, true)
-            )
+            and(eq(courseContacts.courseId, teeTime.courseId), eq(courseContacts.sendNotification, true))
           )
           .execute()
           .catch((err) => {
@@ -3538,23 +3535,28 @@ export class BookingService {
               }),
             });
             return [];
-          })
+          });
+
+        const [user] = await this.database.select().from(users).where(eq(users.id, userId)).execute();
+
         const emailList = courseContactsList.map((contact) => contact.email);
         if (emailList.length > 0) {
           await this.notificationService.sendEmailByTemplate(
-          emailList,
-          "Reservation Additional Request",
-          process.env.SENDGRID_COURSE_CONTACT_NOTIFICATION_TEMPLATE_ID!,
-          {
-            NoteFromUser: additionalNoteFromUser || "-",
-            NeedRentals: needRentals ? "Yes" : "No",
-            PlayDateTime: formatTime(teeTime.providerDate, true, teeTime.timezoneCorrection ?? 0),
-            HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
-            CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${teeTime.cdnKey}.${teeTime.extension}`,
-          },
-          []
-        )
-      }
+            emailList,
+            "Reservation Additional Request",
+            process.env.SENDGRID_COURSE_CONTACT_NOTIFICATION_TEMPLATE_ID!,
+            {
+              EMail: user?.email ?? "",
+              CustomerName: user?.name ?? "",
+              NoteFromUser: additionalNoteFromUser || "-",
+              NeedRentals: needRentals ? "Yes" : "No",
+              PlayDateTime: formatTime(teeTime.providerDate, true, teeTime.timezoneCorrection ?? 0),
+              HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+              CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${teeTime.cdnKey}.${teeTime.extension}`,
+            },
+            []
+          );
+        }
       }
     } catch (e) {
       console.log("BOOKING FAILED ON PROVIDER, INITIATING REFUND FOR PAYMENT_ID", payment_id);
@@ -3652,7 +3654,7 @@ export class BookingService {
           additionalTaxes,
         },
         additionalNoteFromUser,
-        needRentals
+        needRentals,
       })
       .catch(async (err) => {
         this.logger.error(`Error creating booking, ${err}`);
@@ -3941,9 +3943,9 @@ export class BookingService {
       json: "Tee time booked",
     });
     //Sending teetime purchase email to user
-    const pricePerBooking = ((Math.round(total) / 100) / (associatedBooking?.listedSlotsCount ?? 0));
+    const pricePerBooking = Math.round(total) / 100 / (associatedBooking?.listedSlotsCount ?? 0);
     const message = `
-    A total of $${(Math.round(total) / 100)} tee times have been purchased.
+    A total of $${Math.round(total) / 100} tee times have been purchased.
     
     - **Number of Players:** ${associatedBooking?.listedSlotsCount ?? 0}
     - **Price per Booking:** ${pricePerBooking ?? "Not specified"}
