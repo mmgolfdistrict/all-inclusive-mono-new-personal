@@ -47,8 +47,6 @@ export const CheckoutItem = ({
       date: teeTime?.date ?? "",
     });
 
-  console.log("coursePreviewImage", coursePreviewImage);
-
   const numberOfPlayers = allowedPlayers?.numberOfPlayers;
   const choosePlayers = (amount: string) => {
     setAmountOfPlayers(Number(amount));
@@ -80,8 +78,6 @@ export const CheckoutItem = ({
       courseId: course?.id ?? "",
     });
 
-  console.log("courseException", courseException);
-
   const getCourseException = (playDate: string): NotificationObject | null => {
     let flag = false;
     let msg: NotificationObject | null = null;
@@ -103,9 +99,8 @@ export const CheckoutItem = ({
   return (
     <div className="relative flex w-full flex-col gap-2 bg-secondary-white  pt-4 lg:rounded-lg">
       <div className="flex items-center gap-2 px-4 pb-4 lg:items-start">
-        hey
         <BlurImage
-          src={placeholderImage.src}
+          src={coursePreviewImage ?? ""}
           width={placeholderImage.width}
           height={placeholderImage.height}
           alt="placeholder"
@@ -273,7 +268,6 @@ const Data = ({
     >
       <div className="flex gap-1 lg:items-start">
         <div className="flex gap-1 flex-col items-start">
-          hey
           <Tooltip
             trigger={
               isSecondHand ? (

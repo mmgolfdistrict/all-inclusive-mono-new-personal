@@ -252,9 +252,7 @@ export class CourseService extends DomainService {
         throw new Error("Error retrieving Course Assets");
       });
 
-    console.log("courseAssets----------------- ", courseAssets);
-
-    return courseAssets;
+    return `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${courseAssets[0]?.key}.${courseAssets[0]?.extension}`;
   };
 
   getSupportedCharitiesForCourseId = async (courseId: string) => {
