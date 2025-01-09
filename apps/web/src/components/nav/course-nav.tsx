@@ -23,6 +23,7 @@ import { PoweredBy } from "../powered-by";
 import { PathsThatNeedRedirectOnLogout, UserInNav } from "../user/user-in-nav";
 import { NavItem } from "./nav-item";
 import { SideBar } from "./side-bar";
+import { useFiltersContext } from "~/contexts/FiltersContext";
 
 export const CourseNav = () => {
   const { user } = useUserContext();
@@ -33,6 +34,11 @@ export const CourseNav = () => {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const pathname = usePathname();
   const session = useSession();
+  const {
+
+    setDateType,
+
+  } = useFiltersContext();
   const router = useRouter();
 
   const { data: unreadOffers } = api.user.getUnreadOffersForCourse.useQuery(
@@ -118,6 +124,9 @@ export const CourseNav = () => {
     setIsSideBarOpen(!isSideBarOpen);
   };
 
+  const handleResetFilters = () => {
+    setDateType("All")
+  }
   // if (pathname.includes("/checkout")) return null;
 
   return (
@@ -242,6 +251,7 @@ export const CourseNav = () => {
               icon={<Search className="w-[16px]" />}
               data-testid="tee-time-id"
               data-test={courseId}
+              onClick={handleResetFilters}
             />
             {course?.supportsWaitlist ? (
               <NavItem
@@ -250,6 +260,7 @@ export const CourseNav = () => {
                 icon={<Megaphone className="w-[16px]" />}
                 data-testid="notify-me-id"
                 data-test={courseId}
+                onClick={handleResetFilters}
               />
             ) : null}
             {course?.allowAuctions ? (
@@ -259,6 +270,7 @@ export const CourseNav = () => {
                 icon={<Auction className="w-[16px]" />}
                 data-testid="auction-id"
                 data-test={courseId}
+                onClick={handleResetFilters}
               />
             ) : null}
             <NavItem
@@ -267,6 +279,7 @@ export const CourseNav = () => {
               icon={<Marketplace className="w-[16px]" />}
               data-testid="sell-your-tee-time-id"
               data-test={courseId}
+              onClick={handleResetFilters}
             />
             <NavItem
               href={`/${courseId}/my-tee-box?section=owned`}
@@ -274,6 +287,7 @@ export const CourseNav = () => {
               icon={<Calendar className="w-[16px]" />}
               data-testid="sell-your-tee-time-id"
               data-test={courseId}
+              onClick={handleResetFilters}
             />
 
             {course?.supportsOffers ? (
@@ -296,6 +310,7 @@ export const CourseNav = () => {
                 }
                 data-testid="my-offer-id"
                 data-test={courseId}
+                onClick={handleResetFilters}
               />
             ) : null}
           </div>

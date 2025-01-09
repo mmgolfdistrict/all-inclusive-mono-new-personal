@@ -9,8 +9,15 @@ declare global {
     }
 }
 
-export const microsoftClarityEvent = ({ action, category, label, value }: { action: string; category: string; label: string; value?: string }) => {
+export const microsoftClarityEvent = ({ action, category, label, value, additionalContent }: { action: string; category: string; label: string; value?: string, additionalContent?:any }) => {
     if (window.clarity) {
+
+        if(additionalContent){
+            window.clarity('set','name',additionalContent?.courseName)
+            window.clarity('set','website',additionalContent?.websiteURL)
+            window.clarity('set','source', window.location.href)
+        }
+
         window.clarity('set', 'customEvent', {
             action,
             category,
