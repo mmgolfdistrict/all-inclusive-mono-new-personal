@@ -810,7 +810,7 @@ export const CheckoutForm = ({
           </label>
         </div>
         {checkIsBookingDisabled &&
-          checkIsBookingDisabled?.showPricingBreakdown === 0 ? (
+        checkIsBookingDisabled?.showPricingBreakdown === 0 ? (
           <Fragment>
             <div className="flex justify-between">
               <div>
@@ -1046,7 +1046,7 @@ export const CheckoutForm = ({
                 {charityData?.charityName}
                 <Tooltip
                   trigger={<Info className="ml-1 h-[20px] w-[20px]" />}
-                  content="Course operator pays a card processing fee and the remaining goes to the course."
+                  content="Course operator pays a 3% card processing fee and the remaining goes to the actual charity."
                 />
               </h2>
 
@@ -1069,10 +1069,11 @@ export const CheckoutForm = ({
           <div className="flex gap-2 mt-5 ml-3 mb-4">
             <button
               type="button"
-              className={`flex w-32 items-center justify-center rounded-md p-2 ${roundOffStatus === "roundup"
-                ? "bg-primary text-white"
-                : "bg-white text-primary border-primary border-2"
-                }`}
+              className={`flex w-32 items-center justify-center rounded-md p-2 ${
+                roundOffStatus === "roundup"
+                  ? "bg-primary text-white"
+                  : "bg-white text-primary border-primary border-2"
+              }`}
               onClick={() => {
                 setRoundOffStatus("roundup");
                 handleRoundOff();
@@ -1083,10 +1084,11 @@ export const CheckoutForm = ({
 
             <button
               type="button"
-              className={`flex w-32 items-center justify-center rounded-md p-2 ${roundOffStatus === "other"
-                ? "bg-primary text-white"
-                : "bg-white text-primary border-primary border-2"
-                }`}
+              className={`flex w-32 items-center justify-center rounded-md p-2 ${
+                roundOffStatus === "other"
+                  ? "bg-primary text-white"
+                  : "bg-white text-primary border-primary border-2"
+              }`}
               onClick={() => {
                 setRoundOffClick(false);
                 setShowTextField(true);
@@ -1100,10 +1102,11 @@ export const CheckoutForm = ({
 
             <button
               type="button"
-              className={`flex w-32 items-center justify-center rounded-md p-2 ${roundOffStatus === "nothanks"
-                ? "bg-primary text-white"
-                : "bg-white text-primary border-primary border-2"
-                }`}
+              className={`flex w-32 items-center justify-center rounded-md p-2 ${
+                roundOffStatus === "nothanks"
+                  ? "bg-primary text-white"
+                  : "bg-white text-primary border-primary border-2"
+              }`}
               onClick={() => {
                 setRoundOffClick(false);
                 setShowTextField(false);
@@ -1124,8 +1127,9 @@ export const CheckoutForm = ({
                 placeholder="Enter Donation Amount"
                 value={donateValue}
                 onChange={handleDonateChange}
-                className={`p-2 border rounded-md ${donateError ? "border-red" : "border-primary"
-                  }`}
+                className={`p-2 border rounded-md ${
+                  donateError ? "border-red" : "border-primary"
+                }`}
                 min="1"
                 step="1"
               />
