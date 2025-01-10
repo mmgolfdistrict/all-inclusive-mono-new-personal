@@ -1,6 +1,7 @@
 import type { NotificationObject } from "@golf-district/shared";
 import { useCheckoutContext } from "~/contexts/CheckoutContext";
 import { useCourseContext } from "~/contexts/CourseContext";
+import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
 import { formatMoney, formatTime } from "~/utils/formatters";
 import {
@@ -8,7 +9,7 @@ import {
   type SensibleDataToMountCompType,
 } from "~/utils/types";
 import { useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { Fragment, useEffect, useState } from "react";
 import placeholderImage from "../../../public/placeholders/course.png";
 import { Avatar } from "../avatar";
 import { OutlineClub } from "../icons/outline-club";
@@ -34,16 +35,24 @@ export const CheckoutItem = ({
   const searchParams = useSearchParams();
   const playerCount = searchParams.get("playerCount");
   const { setAmountOfPlayers, amountOfPlayers } = useCheckoutContext();
+  const [membershipStatus, setMembershipStatus] = useState("no_membership");
   const { course } = useCourseContext();
+  const { user } = useUserContext();
   const courseId = course?.id;
-
+  const [playerEmails, setPlayerEmails] = useState(
+    Array.from({ length: amountOfPlayers }, (_, index) =>
+      index === 0 ? user?.email : ""
+    )
+  );
   const { data: allowedPlayers } =
     api.course.getNumberOfPlayersByCourse.useQuery({
       courseId: courseId ?? "",
       time: teeTime?.time,
       date: teeTime?.date ?? "",
     });
-
+  const { data: isSupportMemberShip } = api.course.getCourseById.useQuery({
+    courseId: courseId ?? "",
+  });
   const numberOfPlayers = allowedPlayers?.numberOfPlayers;
   const choosePlayers = (amount: string) => {
     setAmountOfPlayers(Number(amount));
@@ -93,6 +102,13 @@ export const CheckoutItem = ({
     return null;
   };
 
+  const handleChangeMemberShipStatus = (event) => {
+    setMembershipStatus(event.target.value);
+  };
+  const handleValidateMemberShipUser = (index: number, email: string) => {
+    console.log("index", index + 1);
+    console.log("email", email);
+  };
   return (
     <div className="relative flex w-full flex-col gap-2 bg-secondary-white  pt-4 lg:rounded-lg">
       <div className="flex items-center gap-2 px-4 pb-4 lg:items-start">
@@ -147,6 +163,62 @@ export const CheckoutItem = ({
         numberOfPlayers={numberOfPlayers}
         selectStatus={allowedPlayers?.selectStatus}
       />
+      <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-2">
+          {isSupportMemberShip?.supportsProviderMembership === 1 ? (
+            <Fragment>
+              <div className="flex gap-2 px-2">
+                <h5 className="">Select MemberShip:</h5>
+                <select
+                  value={membershipStatus}
+                  onChange={handleChangeMemberShipStatus}
+                >
+                  <option value="no_membership">No Membership</option>
+                  <option value="membership">Membership</option>
+                </select>
+              </div>
+              <div className="flex flex-wrap gap-3 p-2">
+                {membershipStatus === "no_membership" ? null : (
+                  <Fragment>
+                    {Array.from({ length: amountOfPlayers }, (_, index) => (
+                      <div className="flex gap-2 justify-center items-center">
+                        <h5 className="text-sm">Player {index + 1}:</h5>
+                        <input
+                          type="text"
+                          className="border border-black focus:border-black focus:outline-none px-2 py-1 text-sm rounded-sm"
+                          placeholder={
+                            index === 0
+                              ? "Current user full email"
+                              : "Enter member full email"
+                          }
+                          disabled={index === 0}
+                          value={playerEmails[index]}
+                          onChange={(e) => {
+                            const updatedEmails = [...playerEmails];
+                            updatedEmails[index] = e.target.value;
+                            setPlayerEmails(updatedEmails);
+                          }}
+                        />
+                        <button
+                          onClick={() =>
+                            handleValidateMemberShipUser(
+                              index,
+                              playerEmails[index] ?? ""
+                            )
+                          }
+                          className="bg-primary px-3 py-1 rounded-[20px] text-white text-sm"
+                        >
+                          Validate
+                        </button>
+                      </div>
+                    ))}
+                  </Fragment>
+                )}
+              </div>
+            </Fragment>
+          ) : null}
+        </div>
+      </div>
       {isSensibleInvalid || isLoading ? null : (
         <SensibleWidget sensibleDataToMountComp={sensibleDataToMountComp} />
         // <section className="flex flex-col items-center justify-between gap-4 border-t border-stroke p-4 lg:flex-row">
