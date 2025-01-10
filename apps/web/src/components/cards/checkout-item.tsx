@@ -37,6 +37,9 @@ export const CheckoutItem = ({
   const { course } = useCourseContext();
   const courseId = course?.id;
 
+  const { data: coursePreviewImage } =
+    api.course.getCoursePreviewImage.useQuery({ courseId: courseId ?? "" });
+
   const { data: allowedPlayers } =
     api.course.getNumberOfPlayersByCourse.useQuery({
       courseId: courseId ?? "",
@@ -97,7 +100,7 @@ export const CheckoutItem = ({
     <div className="relative flex w-full flex-col gap-2 bg-secondary-white  pt-4 lg:rounded-lg">
       <div className="flex items-center gap-2 px-4 pb-4 lg:items-start">
         <BlurImage
-          src={placeholderImage.src}
+          src={coursePreviewImage ?? ""}
           width={placeholderImage.width}
           height={placeholderImage.height}
           alt="placeholder"
@@ -282,7 +285,6 @@ const Data = ({
               (isSecondHand ? "another Golf District golfer." : soldByName)
             }
           />
-
           <p
             className={`text-${getTextColor(
               courseException?.displayType

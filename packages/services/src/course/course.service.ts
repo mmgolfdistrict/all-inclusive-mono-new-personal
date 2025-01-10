@@ -11,7 +11,12 @@ import type { InsertCourses } from "@golf-district/database/schema/courses";
 import { entities } from "@golf-district/database/schema/entities";
 import { lists } from "@golf-district/database/schema/lists";
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
-import { AuthenticationMethodEnum, currentUtcTimestamp, getApexDomain, validDomainRegex } from "@golf-district/shared";
+import {
+  AuthenticationMethodEnum,
+  currentUtcTimestamp,
+  getApexDomain,
+  validDomainRegex,
+} from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
 import { DomainService } from "../domain/domain.service";
 import type { ProviderService } from "../tee-sheet-provider/providers.service";
@@ -20,8 +25,8 @@ import { providers } from "@golf-district/database/schema/providers";
 import { loggerService } from "../webhooks/logging.service";
 import { courseAllowedTimeToSell } from "@golf-district/database/schema/courseAllowedTimeToSell";
 import dayjs from "dayjs";
-import utc from 'dayjs/plugin/utc';
-import customParseFormat from 'dayjs/plugin/customParseFormat';
+import utc from "dayjs/plugin/utc";
+import customParseFormat from "dayjs/plugin/customParseFormat";
 import { authenticationMethod } from "@golf-district/database/schema/authenticationMethod";
 dayjs.extend(utc);
 dayjs.extend(customParseFormat);
@@ -94,8 +99,8 @@ export class CourseService extends DomainService {
         roundUpCharityId: courses?.roundUpCharityId,
         providerConfiguration: providerCourseLink.providerCourseConfiguration,
         isBookingDisabled: courses.isBookingDisabled,
-        showPricingBreakdown:courses.showPricingBreakdown,
-        websiteURL: courses.websiteURL
+        showPricingBreakdown: courses.showPricingBreakdown,
+        websiteURL: courses.websiteURL,
       })
       .from(courses)
       .innerJoin(providerCourseLink, eq(providerCourseLink.courseId, courses.id))
@@ -228,6 +233,26 @@ export class CourseService extends DomainService {
       };
     }
     return res;
+  };
+
+  getCoursePreviewImage = async (courseId: string) => {
+    const courseAssets = await this.database
+      .select({
+        id: assets.id,
+        key: assets.key,
+        extension: assets.extension,
+        courseId: courses.id,
+      })
+      .from(courses)
+      .innerJoin(assets, eq(assets.courseId, courses.id))
+      .where(eq(courses.id, courseId))
+      .execute()
+      .catch((err) => {
+        this.logger.error(err);
+        throw new Error("Error retrieving Course Assets");
+      });
+
+    return `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${courseAssets[0]?.key}.${courseAssets[0]?.extension}`;
   };
 
   getSupportedCharitiesForCourseId = async (courseId: string) => {
@@ -884,12 +909,9 @@ export class CourseService extends DomainService {
           and(
             eq(courseAllowedTimeToSell.courseId, courseId),
             eq(courseAllowedTimeToSell.day, day),
-            and(
-              lte(courseAllowedTimeToSell.fromTime, time),
-              gte(courseAllowedTimeToSell.toTime, time)
-            )
+            and(lte(courseAllowedTimeToSell.fromTime, time), gte(courseAllowedTimeToSell.toTime, time))
           )
-        )
+        );
       if (!NumberOfPlayers[0]) {
         NumberOfPlayers = await this.database
           .select({
@@ -938,7 +960,7 @@ export class CourseService extends DomainService {
   getAuthenticationMethods = async (courseId: string) => {
     const selectedCourse = await this.database
       .select({
-        authenticationMethods: courses.authenticationMethods
+        authenticationMethods: courses.authenticationMethods,
       })
       .from(courses)
       .where(eq(courses.id, courseId));
@@ -951,20 +973,20 @@ export class CourseService extends DomainService {
 
     if (authenticationMethodsValue === null || authenticationMethodsValue === undefined) {
       return Object.keys(AuthenticationMethodEnum)
-        .filter(key => isNaN(Number(key)))
-        .map(key => AuthenticationMethodEnum[key as keyof typeof AuthenticationMethodEnum])
+        .filter((key) => isNaN(Number(key)))
+        .map((key) => AuthenticationMethodEnum[key as keyof typeof AuthenticationMethodEnum]);
     }
 
     const filteredMethodNames = Object.keys(AuthenticationMethodEnum)
-      .filter(key => isNaN(Number(key)))
+      .filter((key) => isNaN(Number(key)))
       .filter((key) => {
         const methodValue = AuthenticationMethodEnum[key as keyof typeof AuthenticationMethodEnum];
         return (authenticationMethodsValue & methodValue) > 0;
-      }).map(key => AuthenticationMethodEnum[key as keyof typeof AuthenticationMethodEnum]);
+      })
+      .map((key) => AuthenticationMethodEnum[key as keyof typeof AuthenticationMethodEnum]);
 
     console.log("filteredMethodNames", filteredMethodNames);
 
     return filteredMethodNames;
-  }
-
+  };
 }
