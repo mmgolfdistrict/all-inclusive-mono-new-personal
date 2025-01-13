@@ -826,7 +826,7 @@ const usStates = [
   { code: "NU", name: "Nunavut" },
   { code: "ON", name: "Ontario" },
   { code: "PE", name: "Prince Edward Island" },
-  { code: "QC", name: "Quebec" },
+  { code: "QC", name: "Québec" },
   { code: "SK", name: "Saskatchewan" },
   { code: "YT", name: "Yukon" },
 ];
