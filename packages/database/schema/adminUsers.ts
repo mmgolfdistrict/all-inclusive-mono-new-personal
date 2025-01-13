@@ -21,6 +21,7 @@ export const adminUsers = mySqlTable(
     lastUpdatedDateTime: timestamp("lastUpdatedDateTime", { mode: "string", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
+    adminPersonaId: varchar("adminPersonaId", { length: 36 }).notNull(),
   },
   (table) => {
     return {
