@@ -353,6 +353,11 @@ export class ProviderService extends CacheService {
         throw new Error(`Error updating user id`);
       });
   }
+
+  searchCustomerViaEmail = async (email:string,providerInternalIdentifier:string,providerCourseId:string,providerTeeSheetId:string,providerCourseConfiguration:string)=>{
+    const { provider,token } = await this.getProviderAndKey(providerInternalIdentifier,providerCourseId,providerCourseConfiguration);
+    return await provider.SearchCustomer(token,providerCourseId,email);
+  }
   /**
    * Links a provider to an entity and all the courses under that entity.
    * @Todd this will be complete at during creation of admin panel

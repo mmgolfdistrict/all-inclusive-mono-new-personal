@@ -1110,7 +1110,6 @@ export class CheckoutService {
           )
         );
       return { data: Number(userResult?.bookingCount) || 1 };
-    
     } catch (error: any) {
       this.logger.error("", error.message);
       throw error.message;
@@ -1181,5 +1180,28 @@ export class CheckoutService {
     } catch (error: any) {
       console.log("error message", error.message);
     }
+  };
+  searchCustomerAndValidate = async (userId: string, teeTimeId: string, email: string) => {
+    const [teeTimeResult] = await this.database
+      .select({
+        courseId: teeTimes.courseId,
+        providerCourseId: providerCourseLink.providerCourseId,
+        providerCourseConfiguration: providerCourseLink.providerCourseConfiguration,
+        providerInternalId: providers.internalId,
+        providerTeeSheet: providerCourseLink.providerTeeSheetId,
+      })
+      .from(teeTimes)
+      .leftJoin(providerCourseLink, eq(teeTimes.courseId, providerCourseLink.courseId))
+      .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))
+      .where(eq(teeTimes.id, teeTimeId));
+    const result = await this.providerService.searchCustomerViaEmail(
+      email,
+      teeTimeResult?.providerInternalId ?? "",
+      teeTimeResult?.providerCourseId ?? "",
+      teeTimeResult?.providerTeeSheet ?? "",
+      teeTimeResult?.providerCourseConfiguration ?? ""
+    );
+    console.log("searchCustomerAndValidate ==============+>",result);
+    return result;
   };
 }

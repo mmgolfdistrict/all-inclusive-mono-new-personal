@@ -10,6 +10,7 @@ import {
 } from "~/utils/types";
 import { useSearchParams } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
+import { toast } from "react-toastify";
 import placeholderImage from "../../../public/placeholders/course.png";
 import { Avatar } from "../avatar";
 import { OutlineClub } from "../icons/outline-club";
@@ -34,8 +35,16 @@ export const CheckoutItem = ({
 }) => {
   const searchParams = useSearchParams();
   const playerCount = searchParams.get("playerCount");
-  const { setAmountOfPlayers, amountOfPlayers } = useCheckoutContext();
+  const teeTimeId = searchParams?.get("teeTimeId");
+
+  const {
+    setAmountOfPlayers,
+    amountOfPlayers,
+    setValidatePlayers,
+    validatePlayers,
+  } = useCheckoutContext();
   const [membershipStatus, setMembershipStatus] = useState("no_membership");
+
   const { course } = useCourseContext();
   const { user } = useUserContext();
   const courseId = course?.id;
@@ -53,6 +62,18 @@ export const CheckoutItem = ({
   const { data: isSupportMemberShip } = api.course.getCourseById.useQuery({
     courseId: courseId ?? "",
   });
+  // const { data: searchCustomer, refetch: refetchSearchCustomerViaEmail } =
+  //   api.checkout.searchCustomerViaEmail.(
+  //     {
+  //       email: memberEmail ?? "",
+  //       teeTimeId: teeTimeId ?? "",
+  //     },
+  //     {
+  //       enabled: false,
+  //     }
+  //   );
+  const searchCustomerByEmail =
+    api.checkout.searchCustomerViaEmail.useMutation();
   const numberOfPlayers = allowedPlayers?.numberOfPlayers;
   const choosePlayers = (amount: string) => {
     setAmountOfPlayers(Number(amount));
@@ -105,10 +126,47 @@ export const CheckoutItem = ({
   const handleChangeMemberShipStatus = (event) => {
     setMembershipStatus(event.target.value);
   };
-  const handleValidateMemberShipUser = (index: number, email: string) => {
+  const handleValidateMemberShipUser = async (index: number, email: string) => {
     console.log("index", index + 1);
     console.log("email", email);
+    try {
+      if (email == "") {
+        toast.error("email is required");
+        return;
+      }
+      const isDuplicate = validatePlayers.some(
+        (player) => player.playerEmail === email
+      );
+      if (isDuplicate) {
+        toast.error("this email is already validated");
+        return;
+      }
+      const result = await searchCustomerByEmail.mutateAsync({
+        email: email,
+        teeTimeId: teeTimeId ?? "",
+      });
+      console.log("======>", result);
+      if (result.length > 0) {
+        setValidatePlayers((prevPlayers) => [
+          ...prevPlayers,
+          {
+            isValidPlayer: true,
+            playerEmail: email,
+            playerIndex: index,
+          },
+        ]);
+      } else {
+        toast.error("email not found in provider");
+        return;
+      }
+    } catch (error) {
+      console.log(error);
+    }
   };
+  useEffect(() => {
+    console.log("validatePlayers========>", validatePlayers);
+  }, [validatePlayers]);
+
   return (
     <div className="relative flex w-full flex-col gap-2 bg-secondary-white  pt-4 lg:rounded-lg">
       <div className="flex items-center gap-2 px-4 pb-4 lg:items-start">
@@ -180,7 +238,7 @@ export const CheckoutItem = ({
               <div className="flex flex-wrap gap-3 p-2">
                 {membershipStatus === "no_membership" ? null : (
                   <Fragment>
-                    {Array.from({ length: amountOfPlayers }, (_, index) => (
+                    {Array.from({ length: Number(playerCount) }, (_, index) => (
                       <div className="flex gap-2 justify-center items-center">
                         <h5 className="text-sm">Player {index + 1}:</h5>
                         <input
@@ -199,17 +257,25 @@ export const CheckoutItem = ({
                             setPlayerEmails(updatedEmails);
                           }}
                         />
-                        <button
-                          onClick={() =>
-                            handleValidateMemberShipUser(
-                              index,
-                              playerEmails[index] ?? ""
-                            )
-                          }
-                          className="bg-primary px-3 py-1 rounded-[20px] text-white text-sm"
-                        >
-                          Validate
-                        </button>
+                        {validatePlayers[index]?.isValidPlayer ? (
+                          <Fragment>
+                            <p>validated</p>
+                          </Fragment>
+                        ) : (
+                          <Fragment>
+                            <button
+                              onClick={() =>
+                                handleValidateMemberShipUser(
+                                  index,
+                                  playerEmails[index] ?? ""
+                                )
+                              }
+                              className="bg-primary px-3 py-1 rounded-[20px] text-white text-sm"
+                            >
+                              Validate
+                            </button>
+                          </Fragment>
+                        )}
                       </div>
                     ))}
                   </Fragment>

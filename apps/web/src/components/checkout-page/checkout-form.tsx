@@ -62,7 +62,7 @@ export const CheckoutForm = ({
   console.log("cart-data", cartData);
   const MAX_CHARITY_AMOUNT = 1000;
   const { course } = useCourseContext();
-  const { shouldAddSensible } = useCheckoutContext();
+  const { shouldAddSensible,validatePlayers,handleShouldAddSensible } = useCheckoutContext();
   const params = useParams();
   const courseId = course?.id;
   const roundUpCharityId = course?.roundUpCharityId;
@@ -618,9 +618,11 @@ export const CheckoutForm = ({
     setDonateValue(otherDonateValue);
   };
 
-  const playersInNumber = Number(amountOfPlayers || 0);
+  const playersInNumber = Number((amountOfPlayers-validatePlayers.length) || 0);
   const greenFeeChargePerPlayer =
-    primaryGreenFeeCharge / playersInNumber - cartFeeCharge - markupFee;
+  playersInNumber && playersInNumber > 0
+      ? primaryGreenFeeCharge / playersInNumber - cartFeeCharge - markupFee
+      : 0;
   const greenFeeTaxAmount =
     greenFeeChargePerPlayer * greenFeeTaxPercent * playersInNumber;
   const cartFeeTaxAmount = cartFeeCharge * cartFeeTaxPercent * playersInNumber;

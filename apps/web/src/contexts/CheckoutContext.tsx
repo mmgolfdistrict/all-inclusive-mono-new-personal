@@ -16,7 +16,11 @@ type ReservationData = {
   providerReservationId: string;
   playTime: string;
 };
-
+type ValidatePlayerType = {
+  isValidPlayer: boolean;
+  playerEmail: string;
+  playerIndex: number;
+};
 interface CheckoutContextType {
   shouldAddSensible: boolean;
   handleShouldAddSensible: (bool: boolean) => void;
@@ -35,6 +39,8 @@ interface CheckoutContextType {
   handleRemoveSelectedCharity: () => void;
   reservationData: ReservationData;
   setReservationData: Dispatch<SetStateAction<ReservationData>>;
+  validatePlayers: ValidatePlayerType[];
+  setValidatePlayers: Dispatch<SetStateAction<ValidatePlayerType[]>>;
 }
 
 const CheckoutContext = createContext<CheckoutContextType>({
@@ -57,6 +63,8 @@ const CheckoutContext = createContext<CheckoutContextType>({
     playTime: "",
   },
   setReservationData: () => undefined,
+  validatePlayers: [],
+  setValidatePlayers: () => undefined,
 });
 
 export const CheckoutWrapper = ({ children }: { children: ReactNode }) => {
@@ -77,6 +85,9 @@ export const CheckoutWrapper = ({ children }: { children: ReactNode }) => {
     number | null
   >(null);
   const [promoCode, setPromoCode] = useState<string>("");
+  const [validatePlayers, setValidatePlayers] = useState<ValidatePlayerType[]>(
+    []
+  );
   const { course } = useCourseContext();
 
   const handleShouldAddSensible = (bool: boolean) => {
@@ -102,7 +113,9 @@ export const CheckoutWrapper = ({ children }: { children: ReactNode }) => {
   const handleSelectedCharityAmount = (amount: number) => {
     setSelectedCharityAmount(amount);
   };
+  
 
+  
   const settings = {
     shouldAddSensible,
     handleShouldAddSensible,
@@ -119,6 +132,8 @@ export const CheckoutWrapper = ({ children }: { children: ReactNode }) => {
     handleRemoveSelectedCharity,
     reservationData,
     setReservationData,
+    validatePlayers,
+    setValidatePlayers,
   };
 
   return (

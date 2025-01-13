@@ -61,6 +61,8 @@ export default function Checkout({
     selectedCharity,
     selectedCharityAmount,
     setAmountOfPlayers,
+    validatePlayers,
+    setValidatePlayers
   } = useCheckoutContext();
 
   // useEffect(() => {
@@ -178,7 +180,7 @@ export default function Checkout({
         ? {
             type: "first_hand",
             tee_time_id: teeTimeId,
-            number_of_bookings: amountOfPlayers,
+            number_of_bookings: amountOfPlayers - validatePlayers.length,
           }
         : {
             type: "second_hand",
@@ -191,7 +193,7 @@ export default function Checkout({
         price:
           debouncedPromoCode && promoCodePrice !== undefined
             ? promoCodePrice * 100
-            : Number(data?.pricePerGolfer * 100) * amountOfPlayers, //int
+            : Number(data?.pricePerGolfer * 100) * (amountOfPlayers - validatePlayers.length), //int
         image: "", //
         currency: "USD", //USD
         display_price:
@@ -417,6 +419,7 @@ export default function Checkout({
     course?.markupFeesFixedPerPlayer,
     course?.convenienceFeesFixedPerPlayer,
     // playerCount,
+    validatePlayers
   ]);
 
   useEffect(() => {
