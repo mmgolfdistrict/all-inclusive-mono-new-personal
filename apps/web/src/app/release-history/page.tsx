@@ -9,6 +9,9 @@ import dayjs from "dayjs";
 export default function ReleaseHistory() {
   const { data } = api.releaseHistory.getReleaseHistory.useQuery({});
 
+  const { data: systemNotifications } =
+    api.systemNotification.getSystemNotification.useQuery({});
+
   const groupedData = data?.reduce((acc, item) => {
     const date = dayjs(item.releaseDateTime).format("DD-MMM-YYYY");
     if (!acc[date]) {
@@ -20,7 +23,11 @@ export default function ReleaseHistory() {
 
   return (
     <main className="bg-secondary-white py-4 md:py-6">
-      <div className="mx-auto flex items-center justify-between px-4 md:max-w-[1360px] md:px-6">
+      <div
+        className={`mx-auto flex items-center justify-between px-4 md:max-w-[1360px] md:px-6 ${
+          systemNotifications?.length ? "mt-12" : ""
+        }`}
+      >
         <GoBack href="" usePrevRoute={true} text={`Back`} />
       </div>
       <section className="mx-auto flex w-full flex-col pt-4 md:max-w-[1360px] md:gap-4 md:px-6">

@@ -90,7 +90,7 @@ interface OwnedTeeTimeData {
   weatherGuaranteeAmount: number | null;
   teeTimeId: string;
   slots: number;
-  bookingStatus: string
+  bookingStatus: string;
 }
 
 interface ListingData {
@@ -622,7 +622,7 @@ export class BookingService {
         providerBookingId: bookings.providerBookingId,
         slots: lists.slots,
         playerCount: bookings.playerCount,
-        bookingStatus: bookings.status
+        bookingStatus: bookings.status,
       })
       .from(teeTimes)
       .innerJoin(bookings, eq(bookings.teeTimeId, teeTimes.id))
@@ -721,7 +721,7 @@ export class BookingService {
           weatherGuaranteeAmount: teeTime.weatherGuaranteeAmount,
           teeTimeId: teeTime.id,
           slots: teeTime.slots || 0,
-          bookingStatus: teeTime.bookingStatus
+          bookingStatus: teeTime.bookingStatus,
         };
       } else {
         const currentEntry = combinedData[teeTime.providerBookingId];
@@ -3441,7 +3441,12 @@ export class BookingService {
       } catch (e) {
         console.log("ERROR in getting appsetting SENSIBLE_NOTE_TO_TEE_SHEET");
       }
-      details = `${details}\n<br />\n${additionalNoteFromUser}`;
+
+      if (additionalNoteFromUser) {
+        details = `${details}\n${additionalNoteFromUser}`;
+      } else {
+        details = `${details}`;
+      }
 
       bookingStage = "Getting booking Creation Data";
       const bookingData = provider.getBookingCreationData({
@@ -3546,11 +3551,8 @@ export class BookingService {
             "Reservation Additional Request",
             process.env.SENDGRID_COURSE_CONTACT_NOTIFICATION_TEMPLATE_ID!,
             {
-<<<<<<< HEAD
-=======
               EMail: user?.email ?? "",
               CustomerName: user?.name ?? "",
->>>>>>> b54b4ec1eccdb6db041869390721452432a84c88
               NoteFromUser: additionalNoteFromUser || "-",
               NeedRentals: needRentals ? "Yes" : "No",
               PlayDateTime: formatTime(teeTime.providerDate, true, teeTime.timezoneCorrection ?? 0),
@@ -3558,11 +3560,7 @@ export class BookingService {
               CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${teeTime.cdnKey}.${teeTime.extension}`,
             },
             []
-<<<<<<< HEAD
-          )
-=======
           );
->>>>>>> b54b4ec1eccdb6db041869390721452432a84c88
         }
       }
     } catch (e) {
