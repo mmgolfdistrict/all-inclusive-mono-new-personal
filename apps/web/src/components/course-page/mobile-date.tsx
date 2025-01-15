@@ -11,6 +11,7 @@ import { FilledButton } from "../buttons/filled-button";
 import { OutlineButton } from "../buttons/outline-button";
 import { Leaflet } from "../modal/leaflet";
 import Image from "next/image";
+import { Forecast } from "../icons/forecast";
 
 interface DayValue {
   year: number;
@@ -32,9 +33,11 @@ const disabledDays = getDisabledDays(minimumDate);
 export const MobileDates = ({
   setShowFilters,
   toggleFilters,
+  openForecastModal
 }: {
   setShowFilters: Dispatch<SetStateAction<boolean>>;
   toggleFilters: () => void;
+  openForecastModal: () => void;
 }) => {
   const { dateType, setDateType, selectedDay, setSelectedDay } =
     useFiltersContext();
@@ -77,12 +80,29 @@ export const MobileDates = ({
     second: date.getSeconds(),
   });
 
+  const forecastModalIcon = () => {
+    if (setShowFilters) {
+      setShowFilters(false)
+    }
+    openForecastModal();
+  }
+
   return (
     <Leaflet setShow={setShowFilters} className="max-h-[70dvh]">
       <div className="relative flex flex-col gap-4 px-4 pb-20">
         <div className="border-b py-2 text-xl font-semibold">Date Filters</div>
         <section className="flex flex-col gap-2">
-          <div>Date</div>
+          <div className="flex items-center justify-between">
+            <div>
+              Date
+            </div>
+            {
+              dateType !== "Today" &&
+              <div className="cursor-pointer" onClick={forecastModalIcon}>
+                <Forecast className="cursor-pointer" height="32px" width="32px" />
+              </div>
+            }
+          </div>
           <ToggleGroup.Root
             type="single"
             value={dateType}
