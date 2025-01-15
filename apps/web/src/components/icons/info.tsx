@@ -1,7 +1,7 @@
 import { type ComponentProps } from "react";
 
 interface InfoProps extends ComponentProps<"svg"> {
-  longMessage: boolean;
+  longMessage?: boolean;
 }
 
 export const Info = ({ longMessage, ...props }: InfoProps) => (
