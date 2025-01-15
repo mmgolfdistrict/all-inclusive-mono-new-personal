@@ -90,7 +90,7 @@ interface OwnedTeeTimeData {
   weatherGuaranteeAmount: number | null;
   teeTimeId: string;
   slots: number;
-  bookingStatus:string
+  bookingStatus: string;
 }
 
 interface ListingData {
@@ -622,7 +622,7 @@ export class BookingService {
         providerBookingId: bookings.providerBookingId,
         slots: lists.slots,
         playerCount: bookings.playerCount,
-        bookingStatus: bookings.status
+        bookingStatus: bookings.status,
       })
       .from(teeTimes)
       .innerJoin(bookings, eq(bookings.teeTimeId, teeTimes.id))
@@ -642,7 +642,7 @@ export class BookingService {
           eq(bookings.isActive, true),
           eq(teeTimes.courseId, courseId),
           gte(teeTimes.date, nowInCourseTimezone),
-          or(eq(bookings.status,"RESERVED"),eq(bookings.status,"CONFIRMED"))
+          or(eq(bookings.status, "RESERVED"), eq(bookings.status, "CONFIRMED"))
         )
       )
       .groupBy(
@@ -721,7 +721,7 @@ export class BookingService {
           weatherGuaranteeAmount: teeTime.weatherGuaranteeAmount,
           teeTimeId: teeTime.id,
           slots: teeTime.slots || 0,
-          bookingStatus: teeTime.bookingStatus
+          bookingStatus: teeTime.bookingStatus,
         };
       } else {
         const currentEntry = combinedData[teeTime.providerBookingId];
@@ -885,6 +885,7 @@ export class BookingService {
     slots: number
   ) => {
     this.logger.info(`createListingForBookings called with userId: ${userId}`);
+    console.warn("bookingIds", bookingIds);
     // console.log("CREATINGLISTING FOR DATE:", dayjs(endTime).utc().format('YYYY-MM-DD'), dayjs(endTime).utc().format('HHmm'));
     if (new Date().getTime() >= endTime.getTime()) {
       this.logger.warn("End time cannot be before current time");
@@ -3260,7 +3261,9 @@ export class BookingService {
     sensibleQuoteId: string,
     additionalNoteFromUser: string | undefined,
     needRentals: boolean,
-    redirectHref: string
+    redirectHref: string,
+    courseMembershipId: string,
+    playerCountForMemberShip: string
   ) => {
     let bookingStage = "Normalizing Cart Data";
     const {
@@ -3308,7 +3311,8 @@ export class BookingService {
       throw new Error("Booking already done");
     }
 
-    const pricePerGolfer = primaryGreenFeeCharge / playerCount;
+    // const pricePerGolfer = primaryGreenFeeCharge / playerCount;
+    const pricePerGolfer = playerCount !== 0 ? primaryGreenFeeCharge / playerCount : 0;
 
     bookingStage = "Retrieving tee time from database";
     console.log(`Retrieving tee time from database ${teeTimeId}`);
@@ -3448,7 +3452,7 @@ export class BookingService {
         firstHandCharge: primaryGreenFeeCharge,
         markupCharge,
         taxCharge,
-        playerCount,
+        playerCount: courseMembershipId ? playerCountForMemberShip : playerCount,
         holes: teeTime.holes,
         notes: details,
         teeTimeId: teeTime.id,
@@ -3484,7 +3488,7 @@ export class BookingService {
         try {
           console.log("Amounts: ", primaryGreenFeeCharge / 100, taxCharge, markupCharge);
           const bookingsDetails: BookingDetails = {
-            playerCount: playerCount,
+            playerCount: courseMembershipId ? playerCountForMemberShip : playerCount,
             providerCourseId: teeTime.providerCourseId!,
             providerTeeSheetId: teeTime.providerTeeSheetId!,
             totalAmountPaid: (pricePerGolfer / 100 + taxCharge - markupCharge) * playerCount,
@@ -3655,6 +3659,8 @@ export class BookingService {
         },
         additionalNoteFromUser,
         needRentals,
+        courseMembershipId: courseMembershipId,
+        playerCountForMemberShip,
       })
       .catch(async (err) => {
         this.logger.error(`Error creating booking, ${err}`);
@@ -3682,6 +3688,7 @@ export class BookingService {
       providerBookingId,
       status: "Reserved",
       isEmailSend: bookingId.isEmailSend,
+      
     } as ReserveTeeTimeResponse;
   };
 
@@ -4126,5 +4133,13 @@ export class BookingService {
       additionalDetailsJSON: "",
     });
     return false;
+  };
+
+  checkIfUserIsOptMemberShip = async (userId: string, bookingId: string) => {
+    const [canReSellResult] = await this.database
+      .select({canResell:bookings.canResell})
+      .from(bookings)
+      .where(eq(bookings.id, bookingId ?? ""));
+    return canReSellResult?.canResell;
   };
 }

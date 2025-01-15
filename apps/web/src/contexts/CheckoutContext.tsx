@@ -20,6 +20,7 @@ type ValidatePlayerType = {
   isValidPlayer: boolean;
   playerEmail: string;
   playerIndex: number;
+  courseMemberShipId?:string
 };
 interface CheckoutContextType {
   shouldAddSensible: boolean;

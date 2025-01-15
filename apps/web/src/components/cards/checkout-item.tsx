@@ -146,17 +146,20 @@ export const CheckoutItem = ({
         teeTimeId: teeTimeId ?? "",
       });
       console.log("======>", result);
-      if (result.length > 0) {
+      if (result.isValidated) {
         setValidatePlayers((prevPlayers) => [
           ...prevPlayers,
           {
             isValidPlayer: true,
             playerEmail: email,
             playerIndex: index,
+            courseMemberShipId: result.providerCourseMembership,
           },
         ]);
+        toast.success(result.message);
+        return;
       } else {
-        toast.error("email not found in provider");
+        toast.error(result.message);
         return;
       }
     } catch (error) {

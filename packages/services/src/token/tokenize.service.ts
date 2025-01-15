@@ -158,7 +158,9 @@ export class TokenizeService {
     cartFeeCharge,
     additionalTaxes,
     additionalNoteFromUser,
-    needRentals
+    needRentals,
+    courseMembershipId,
+    playerCountForMemberShip,
   }: {
     redirectHref: string;
     userId: string;
@@ -193,7 +195,9 @@ export class TokenizeService {
       additionalTaxes:number
       },
       additionalNoteFromUser?: string,
-      needRentals: boolean
+      needRentals: boolean,
+      courseMembershipId?:string,
+      playerCountForMemberShip:string
   }): Promise<BookingTypes> {
     this.logger.info(`tokenizeBooking tokenizing booking id: ${providerTeeTimeId} for user: ${userId}`);
     //@TODO add this to the transaction
@@ -375,7 +379,7 @@ export class TokenizeService {
       listId: null,
       // entityId: existingTeeTime.entityId,
       cartId: normalizedCartData.cartId,
-      playerCount: players ?? 0,
+      playerCount: courseMembershipId? Number(playerCountForMemberShip): players ?? 0,
       greenFeePerPlayer: (isFirstHandBooking ? existingTeeTime.greenFee : purchasePrice) || 0,
       totalTaxesAmount:  additionalTaxes.additionalTaxes * 100,       // normalizedCartData.taxCharge * 100 || 0,
       charityId: normalizedCartData.charityId || null,
@@ -392,7 +396,9 @@ export class TokenizeService {
       totalWeatherGuaranteeTaxAmount:additionalTaxes.weatherGuaranteeTaxTotal*100,
       totalMarkupFeeTaxAmount:additionalTaxes.markupTaxTotal*100,
       customerComment: additionalNoteFromUser,
-      needClubRental: needRentals
+      needClubRental: needRentals,
+      courseMembershipId:courseMembershipId,
+      canResell:courseMembershipId? 1 :0
     });
     transfersToCreate.push({
       id: randomUUID(),
@@ -413,7 +419,7 @@ export class TokenizeService {
     const bookingSlots =
       (await provider?.getSlotIdsForBooking(
         bookingId,
-        players,
+        courseMembershipId ? Number(playerCountForMemberShip) : players ?? 0,
         userId,
         providerBookingId,
         provider.providerId,

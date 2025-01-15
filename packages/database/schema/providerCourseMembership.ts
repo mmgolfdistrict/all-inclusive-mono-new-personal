@@ -3,7 +3,7 @@ import { sql } from "drizzle-orm";
 import { boolean, datetime, smallint, tinyint, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 
-export const providerCourseMembership = mySqlTable("courseMembership", {
+export const providerCourseMembership = mySqlTable("providerCourseMembership", {
     id: varchar("id", { length: 36 }).notNull(),
     courseMembershipId: varchar("courseMembershipId", { length: 36 }).notNull(),
     name: varchar("name", { length: 25 }).notNull(),

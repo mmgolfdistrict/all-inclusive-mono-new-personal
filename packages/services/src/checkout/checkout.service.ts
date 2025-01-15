@@ -11,6 +11,8 @@ import { lists } from "@golf-district/database/schema/lists";
 import { promoCodes } from "@golf-district/database/schema/promoCodes";
 import { providers } from "@golf-district/database/schema/providers";
 import { providerCourseLink } from "@golf-district/database/schema/providersCourseLink";
+import { courseMembership } from "@golf-district/database/schema/courseMembership";
+import { providerCourseMembership } from "@golf-district/database/schema/providerCourseMembership";
 import { InsertTeeTimes, teeTimes } from "@golf-district/database/schema/teeTimes";
 import { userPromoCodeLink } from "@golf-district/database/schema/userPromoCodeLink";
 import { users } from "@golf-district/database/schema/users";
@@ -1194,14 +1196,33 @@ export class CheckoutService {
       .leftJoin(providerCourseLink, eq(teeTimes.courseId, providerCourseLink.courseId))
       .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))
       .where(eq(teeTimes.id, teeTimeId));
-    const result = await this.providerService.searchCustomerViaEmail(
+    let result = await this.providerService.searchCustomerViaEmail(
       email,
       teeTimeResult?.providerInternalId ?? "",
       teeTimeResult?.providerCourseId ?? "",
       teeTimeResult?.providerTeeSheet ?? "",
       teeTimeResult?.providerCourseConfiguration ?? ""
-    );
-    console.log("searchCustomerAndValidate ==============+>",result);
-    return result;
+    ); 
+    if(result.length===0){
+      return {isValidated:false,providerCourseMembership:"",message:"this email not found in provider"};
+    }  
+    const checkingGroupsLoyalty = await this.database
+      .select({
+        name: courseMembership.name,
+        courseMemberShipId:providerCourseMembership.courseMembershipId
+      })
+      .from(providerCourseMembership)
+      .leftJoin(courseMembership, eq(providerCourseMembership.courseMembershipId, courseMembership.id))
+      .where(eq(courseMembership.courseId, teeTimeResult?.courseId ?? ""));
+      //this is will change currently dummy values 
+      const dummyCreatedAnswer = result.map((item: any) => {
+        item.attributes.groups = ["ace", "loyalty"];
+        return item;
+      });
+      // add validation for groups if they are empty 
+      const dummyResult=dummyCreatedAnswer[0]?.attributes?.groups;
+      const anyIncluded = checkingGroupsLoyalty.some(item => dummyResult.includes(item.name));
+      console.log("anyIncluded=============>",anyIncluded);
+    return {isValidated:anyIncluded,providerCourseMembership:checkingGroupsLoyalty[0]?.courseMemberShipId,message:"User Validated successfully"};
   };
 }
