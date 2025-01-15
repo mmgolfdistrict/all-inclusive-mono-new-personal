@@ -1,6 +1,10 @@
 "use client";
 
 import * as ToggleGroup from "@radix-ui/react-toggle-group";
+import type {
+  Dispatch,
+  SetStateAction
+} from "react";
 import {
   forwardRef,
   Fragment,
@@ -25,6 +29,7 @@ import { debounceFunction } from "~/utils/debounce";
 import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
 import Image from "next/image";
 import { useMediaQuery } from "usehooks-ts";
+import { Forecast } from "../icons/forecast";
 
 interface DayValue {
   year: number;
@@ -37,6 +42,10 @@ interface DayValue {
 
 interface ChildComponentRef {
   getChildValue: () => void;
+}
+interface FiltersProps {
+  openForecastModal: () => void;
+  setShowFilters?: Dispatch<SetStateAction<boolean>> | undefined;
 }
 
 const HoleOptions = ["Any", "18", "9"];
@@ -59,7 +68,8 @@ const maximumDate = {
 
 // const disabledDays = getDisabledDays(minimumDate);
 
-export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
+export const Filters = forwardRef<ChildComponentRef, FiltersProps>((props, ref) => {
+  const { openForecastModal, setShowFilters } = props;
   const {
     dateType,
     setDateType,
@@ -84,8 +94,8 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
   const [holeMobile, setHoleMobile] = useState(holes);
   const [golferMobile, setGolferMobile] = useState(golfers);
   const [selectedDayMobile, setSelectedDayMobile] = useState(selectedDay);
-
   const isMobile = useMediaQuery("(max-width: 768px)");
+  console.log("sadsada", dateType);
 
   // const { data } = api.searchRouter.findBlackoutDates.useQuery(
   //   { courseId: course?.id ?? "" },
@@ -93,6 +103,7 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
   // );
 
   // console.log(data,"blackOutDaysblackOutDaysblackOutDaysblackOutDaysblackOutDaysblackOutDays")
+
 
   const highestPrice = useMemo(() => {
     if (!course) return 0;
@@ -270,13 +281,27 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
     second: date.getSeconds(),
   });
 
-  console.log("dateTypeMobile", dateTypeMobile);
-  console.log("dateType", dateType);
+  const forecastModalIcon = () => {
+    if (setShowFilters) {
+      setShowFilters(false)
+    }
+    openForecastModal();
+  }
 
   return (
     <div className="flex flex-col gap-4 pr-1">
       <section className="flex flex-col gap-2">
-        <div>Date</div>
+        <div className="flex items-center justify-between">
+          <div>
+            Date
+          </div>
+          {
+            dateType !== "Today" &&
+            <div className="cursor-pointer" onClick={forecastModalIcon}>
+              <Forecast className="cursor-pointer" height="32px" width="32px" />
+            </div>
+          }
+        </div>
         <ToggleGroup.Root
           type="single"
           value={isMobile ? dateTypeMobile : dateType}
