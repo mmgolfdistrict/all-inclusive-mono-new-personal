@@ -16,6 +16,7 @@ import { useEffect, useRef, useState } from "react";
 import { Spinner } from "../loading/spinner";
 import { CheckoutForm } from "./checkout-form";
 import isequal from 'lodash.isequal'
+import { getIpInfo } from "~/utils/ipInfo";
 
 export type NextAction = {
   type?: string;
@@ -104,6 +105,12 @@ export const HyperSwitch = ({
         return;
       }
 
+      let ipInfo;
+
+      if (!cartId) {
+        ipInfo = await getIpInfo();
+      }
+
       const data = (await checkout({
         userId: user.id,
         customerId: user.id,
@@ -126,6 +133,7 @@ export const HyperSwitch = ({
           teeTimeData?.date ?? "",
           course?.timezoneCorrection
         ),
+        ipInfo,
       })) as CreatePaymentResponse;
 
       if (data?.next_action) {

@@ -28,6 +28,7 @@ export interface CustomerCart {
   cartId?: string;
   courseName?: string;
   playDateTime?: string;
+  ipInfo?: string;
 }
 
 export interface UpdatePayment {

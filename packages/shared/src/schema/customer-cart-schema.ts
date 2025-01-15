@@ -160,4 +160,5 @@ export const CustomerCartSchema = z.object({
   teeTimeId: z.string().optional(),
   courseName: z.string().optional(),
   playDateTime: z.string().optional(),
+  ipInfo: z.string().optional(),
 });

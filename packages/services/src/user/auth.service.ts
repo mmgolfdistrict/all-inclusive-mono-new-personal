@@ -91,6 +91,7 @@ export class AuthService extends CacheService {
     status: string,
     courseId: string,
     loginMethod: string,
+    ipInfo: string,
     ip?: string,
     userAgent?: string
   ) => {
@@ -107,6 +108,7 @@ export class AuthService extends CacheService {
           status: status,
           courseId: courseId,
           loginMethod: loginMethod,
+          ipinfoJSON: ipInfo,
         })
         .execute();
     } catch (error) {

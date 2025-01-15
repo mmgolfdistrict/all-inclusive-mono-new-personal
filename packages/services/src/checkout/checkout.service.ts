@@ -248,7 +248,7 @@ export class CheckoutService {
   };
 
   createCheckoutSession = async (userId: string, customerCartData: CustomerCart) => {
-    const { paymentId, ...customerCart } = customerCartData;
+    const { paymentId: _, ipInfo, ...customerCart } = customerCartData;
 
     this.logger.debug(`${JSON.stringify(customerCart)}`);
     const [user] = await this.database
@@ -420,6 +420,7 @@ export class CheckoutService {
       cart: customerCart,
       listingId,
       teeTimeId,
+      ipinfoJSON: ipInfo,
     });
 
     return {
@@ -431,7 +432,7 @@ export class CheckoutService {
   };
 
   updateCheckoutSession = async (userId: string, customerCartData: CustomerCart, cartId: string) => {
-    const { paymentId, ...customerCart } = customerCartData;
+    const { paymentId, ipInfo: _, ...customerCart } = customerCartData;
 
     const errors = await this.validateCartItems(customerCartData);
     console.log("errors ", JSON.stringify(errors));

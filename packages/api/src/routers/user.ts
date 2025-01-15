@@ -141,12 +141,13 @@ export const userRouter = createTRPCRouter({
         status: z.string(),
         courseId: z.string(),
         loginMethod: z.string(),
+        ipInfo: z.string(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       return await ctx.serviceFactory
         .getAuthService()
-        .addUserSession(ctx?.session.user.id, input.status, input.courseId, input.loginMethod, ctx?.session.ip, ctx?.session.userAgent);
+        .addUserSession(ctx?.session.user.id, input.status, input.courseId, input.loginMethod, input.ipInfo, ctx?.session.ip, ctx?.session.userAgent);
     }),
 
   addCourseUser: publicProcedure
