@@ -1202,27 +1202,39 @@ export class CheckoutService {
       teeTimeResult?.providerCourseId ?? "",
       teeTimeResult?.providerTeeSheet ?? "",
       teeTimeResult?.providerCourseConfiguration ?? ""
-    ); 
-    if(result.length===0){
-      return {isValidated:false,providerCourseMembership:"",message:"this email not found in provider"};
-    }  
+    );
+    if (result.length === 0) {
+      return {
+        isValidated: false,
+        providerCourseMembership: "",
+        message: "this email not found in provider",
+      };
+    }
     const checkingGroupsLoyalty = await this.database
       .select({
-        name: courseMembership.name,
-        courseMemberShipId:providerCourseMembership.courseMembershipId
+        name: providerCourseMembership.name,
+        courseMemberShipId: courseMembership.id,
       })
-      .from(providerCourseMembership)
-      .leftJoin(courseMembership, eq(providerCourseMembership.courseMembershipId, courseMembership.id))
+      .from(courseMembership)
+      .leftJoin(
+        providerCourseMembership,
+        eq(providerCourseMembership.courseMembershipId, courseMembership.id)
+      )
       .where(eq(courseMembership.courseId, teeTimeResult?.courseId ?? ""));
-      //this is will change currently dummy values 
-      const dummyCreatedAnswer = result.map((item: any) => {
-        item.attributes.groups = ["ace", "loyalty"];
-        return item;
-      });
-      // add validation for groups if they are empty 
-      const dummyResult=dummyCreatedAnswer[0]?.attributes?.groups;
-      const anyIncluded = checkingGroupsLoyalty.some(item => dummyResult.includes(item.name));
-      console.log("anyIncluded=============>",anyIncluded);
-    return {isValidated:anyIncluded,providerCourseMembership:checkingGroupsLoyalty[0]?.courseMemberShipId,message:"User Validated successfully"};
+    console.log("checkingGroupsLoyalty", checkingGroupsLoyalty);
+    //this is will change currently dummy values
+    const dummyCreatedAnswer = result.map((item: any) => {
+      item.attributes.groups = ["ace", "loyalty"];
+      return item;
+    });
+    // add validation for groups if they are empty
+    const dummyResult = dummyCreatedAnswer[0]?.attributes?.groups;
+    const anyIncluded = checkingGroupsLoyalty.some((item) => dummyResult.includes(item.name));
+    console.log("anyIncluded=============>", anyIncluded);
+    return {
+      isValidated: anyIncluded,
+      providerCourseMembership: checkingGroupsLoyalty[0]?.courseMemberShipId,
+      message: "User Validated successfully",
+    };
   };
 }
