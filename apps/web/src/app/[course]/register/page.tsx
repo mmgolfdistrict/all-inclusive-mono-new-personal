@@ -74,6 +74,15 @@ export default function RegisterPage() {
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
+  const normalizeString = (str: string): string => {
+    return str
+      .normalize("NFD") // Decompose accents
+      .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
+      .toLowerCase() // Convert to lowercase
+      .replace(/^\w/, (c) => c.toUpperCase()); // Capitalize the first letter
+  };
+  
+
   const onPlaceChanged = () => {
     const place = autocompleteRef.current?.getPlace();
     if (place?.address_components) {
@@ -90,10 +99,13 @@ export default function RegisterPage() {
       const route = getAddressComponent("route");
       const address1 = `${streetNumber} ${route}`.trim();
       const address2 = getAddressComponent("sublocality");
-      const state = getAddressComponent("administrative_area_level_1");
+      let state = getAddressComponent("administrative_area_level_1");
       const city = getAddressComponent("locality");
       const zipcode = getAddressComponent("postal_code");
       const country = getAddressComponent("country");
+
+      state = normalizeString(state);
+
       let countryByCode=country
       if(country==="United States"){
         countryByCode="USA"
@@ -826,7 +838,7 @@ const usStates = [
   { code: "NU", name: "Nunavut" },
   { code: "ON", name: "Ontario" },
   { code: "PE", name: "Prince Edward Island" },
-  { code: "QC", name: "Québec" },
+  { code: "QC", name: "Quebec" },
   { code: "SK", name: "Saskatchewan" },
   { code: "YT", name: "Yukon" },
 ];
