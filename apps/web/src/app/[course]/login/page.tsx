@@ -26,7 +26,6 @@ import ReCAPTCHA from "react-google-recaptcha";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
 import { LoadingContainer } from "../loader";
-import { getIpInfo } from "~/utils/ipInfo";
 
 declare global {
   interface Window {
@@ -108,7 +107,6 @@ export default function Login() {
   useEffect(() => {
     if (sessionData?.user?.id && course?.id && status === "authenticated") {
       addCourseToUser();
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       addLoginSession();
       logAudit(sessionData.user.id, course.id, () => {
         window.location.reload();
@@ -158,9 +156,8 @@ export default function Login() {
       });
   };
 
-  const addLoginSession = async () => {
+  const addLoginSession = () => {
     if (!hasSessionLogged) {
-      const ipInfo = await getIpInfo();
       const loginMethod = localStorage.getItem(
         "loginMethod"
       ) as unknown as string;
@@ -169,7 +166,6 @@ export default function Login() {
           status: "LOGIN",
           courseId: course?.id ?? "",
           loginMethod: loginMethod ?? "",
-          ipInfo: ipInfo,
         })
         .then(() => {
           console.log("login user added successfully");

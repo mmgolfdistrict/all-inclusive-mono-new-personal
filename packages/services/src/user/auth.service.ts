@@ -9,6 +9,7 @@ import { CacheService } from "../infura/cache.service";
 import type { NotificationService } from "../notification/notification.service";
 import { userSession } from "@golf-district/database/schema/userSession";
 import { randomUUID } from "crypto";
+import type { IpInfoService } from "../ipinfo/ipinfo.service";
 
 export class AuthService extends CacheService {
   /**
@@ -19,6 +20,7 @@ export class AuthService extends CacheService {
   constructor(
     private readonly database: Db,
     private readonly notificationService: NotificationService,
+    private readonly ipInfoService: IpInfoService,
     redisUrl: string,
     redisToken: string
   ) {
@@ -91,13 +93,13 @@ export class AuthService extends CacheService {
     status: string,
     courseId: string,
     loginMethod: string,
-    ipInfo: string,
     ip?: string,
     userAgent?: string
   ) => {
     console.log("loginMethod", loginMethod);
 
     try {
+      const ipInfo = await this.ipInfoService.getIpInfo(ip);
       await this.database
         .insert(userSession)
         .values({
