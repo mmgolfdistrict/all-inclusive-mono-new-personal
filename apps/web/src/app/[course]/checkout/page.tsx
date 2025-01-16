@@ -158,7 +158,7 @@ export default function Checkout({
     .add(6, "hours")
     .hour();
 
- 
+
 
   const cartData: CartProduct[] = useMemo(() => {
     if (!data || data === null) return [];
@@ -176,14 +176,14 @@ export default function Checkout({
       | CartFeeMetaData =
       saleType === "first_hand"
         ? {
-            type: "first_hand",
-            tee_time_id: teeTimeId,
-            number_of_bookings: amountOfPlayers,
-          }
+          type: "first_hand",
+          tee_time_id: teeTimeId,
+          number_of_bookings: amountOfPlayers,
+        }
         : {
-            type: "second_hand",
-            second_hand_id: listingId,
-          };
+          type: "second_hand",
+          second_hand_id: listingId,
+        };
     const localCart: CartProduct[] = [
       {
         name: "Golf District Tee Time",
@@ -214,7 +214,7 @@ export default function Checkout({
         display_price: formatMoney(
           ((data?.greenFeeTaxPerPlayer ?? 0) +
             (data?.cartFeeTaxPerPlayer ?? 0)) *
-            amountOfPlayers
+          amountOfPlayers
         ),
         product_data: {
           metadata: {
@@ -233,7 +233,7 @@ export default function Checkout({
         display_price: formatMoney(
           ((data?.greenFeeTaxPerPlayer ?? 0) +
             (data?.cartFeeTaxPerPlayer ?? 0)) *
-            amountOfPlayers
+          amountOfPlayers
         ),
         product_data: {
           metadata: {
@@ -256,7 +256,7 @@ export default function Checkout({
         display_price: formatMoney(
           ((data?.greenFeeTaxPerPlayer ?? 0) +
             (data?.cartFeeTaxPerPlayer ?? 0)) *
-            amountOfPlayers
+          amountOfPlayers
         ),
         product_data: {
           metadata: {
@@ -441,8 +441,7 @@ export default function Checkout({
   const height =
     notificationsCount > 0 ? `${200 + notificationsCount * 80}px` : "200px";
 
-  const marginTop =
-    notificationsCount > 0 ? `mt-${notificationsCount * 6}` : "";
+  const marginTop = notificationsCount > 0 ? `${notificationsCount * 10}px` : "0";
 
   if (isError && error) {
     return (
@@ -461,7 +460,8 @@ export default function Checkout({
   return (
     <>
       <div
-        className={`relative flex flex-col items-center gap-4 px-0 pb-8 md:px-8 ${marginTop}`}
+        className={`relative flex flex-col items-center gap-4 px-0 pb-8 md:px-8`}
+        style={{ marginTop }}
       >
         <div className="h-12 w-full "></div>
         <CheckoutBreadcumbs status={"checkout"} />
@@ -514,7 +514,7 @@ export default function Checkout({
                 teeTimeDate={teeTimeData?.date}
                 playerCount={playerCount}
                 teeTimeData={data}
-                // maxReservation={maxReservation}
+              // maxReservation={maxReservation}
               />
             )}
           </div>

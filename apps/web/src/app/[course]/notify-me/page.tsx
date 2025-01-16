@@ -454,27 +454,27 @@ function NotifyMe({ params }: { params: { course: string } }) {
                           <div>
                             {isMobile
                               ? startTimeOptions[
-                                  startTimeOptions.findIndex(
-                                    (i) => i.value === timeMobile[0]
-                                  )
-                                ]?.displayTime
+                                startTimeOptions.findIndex(
+                                  (i) => i.value === timeMobile[0]
+                                )
+                              ]?.displayTime
                               : startTimeOptions[
-                                  startTimeOptions.findIndex(
-                                    (i) => i.value === localStartTime[0]
-                                  )
-                                ]?.displayTime}
+                                startTimeOptions.findIndex(
+                                  (i) => i.value === localStartTime[0]
+                                )
+                              ]?.displayTime}
                             -
                             {isMobile
                               ? startTimeOptions[
-                                  startTimeOptions.findIndex(
-                                    (i) => i.value === timeMobile[1]
-                                  )
-                                ]?.displayTime
+                                startTimeOptions.findIndex(
+                                  (i) => i.value === timeMobile[1]
+                                )
+                              ]?.displayTime
                               : startTimeOptions[
-                                  startTimeOptions.findIndex(
-                                    (i) => i.value === localStartTime[1]
-                                  )
-                                ]?.displayTime}
+                                startTimeOptions.findIndex(
+                                  (i) => i.value === localStartTime[1]
+                                )
+                              ]?.displayTime}
                           </div>
                         </div>
                         <Slider
@@ -484,21 +484,21 @@ function NotifyMe({ params }: { params: { course: string } }) {
                           value={
                             isMobile
                               ? [
-                                  filteredStartTimeOptions.findIndex(
-                                    (i) => i.value === timeMobile[0]
-                                  ),
-                                  filteredStartTimeOptions.findIndex(
-                                    (i) => i.value === timeMobile[1]
-                                  ),
-                                ]
+                                filteredStartTimeOptions.findIndex(
+                                  (i) => i.value === timeMobile[0]
+                                ),
+                                filteredStartTimeOptions.findIndex(
+                                  (i) => i.value === timeMobile[1]
+                                ),
+                              ]
                               : [
-                                  filteredStartTimeOptions.findIndex(
-                                    (i) => i.value === localStartTime[0]
-                                  ),
-                                  filteredStartTimeOptions.findIndex(
-                                    (i) => i.value === localStartTime[1]
-                                  ),
-                                ]
+                                filteredStartTimeOptions.findIndex(
+                                  (i) => i.value === localStartTime[0]
+                                ),
+                                filteredStartTimeOptions.findIndex(
+                                  (i) => i.value === localStartTime[1]
+                                ),
+                              ]
                           }
                           onValueChange={(values) => {
                             if (Array.isArray(values) && values.length === 2) {
@@ -539,9 +539,8 @@ function NotifyMe({ params }: { params: { course: string } }) {
                       </section>
                       <div>
                         <span
-                          className={`text-[12px] text-red ${
-                            errorMessage ? "" : "hidden"
-                          }`}
+                          className={`text-[12px] text-red ${errorMessage ? "" : "hidden"
+                            }`}
                         >
                           {errorMessage}
                         </span>
