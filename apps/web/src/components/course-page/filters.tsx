@@ -298,7 +298,7 @@ export const Filters = forwardRef<ChildComponentRef, FiltersProps>((props, ref) 
           {
             dateType !== "Today" &&
             <div className="cursor-pointer" onClick={forecastModalIcon}>
-              <Forecast className="cursor-pointer" height="32px" width="32px" />
+              <Forecast className="cursor-pointer" height="16px" width="16px" />
             </div>
           }
         </div>
