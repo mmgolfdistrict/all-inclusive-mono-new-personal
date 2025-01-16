@@ -9,16 +9,13 @@ import { useFiltersContext } from "~/contexts/FiltersContext";
 import { api } from "~/utils/api";
 import { dayMonthDate } from "~/utils/formatters";
 import { useEffect, useRef } from "react";
-import {
-  useElementSize,
-  useIntersectionObserver
-} from "usehooks-ts";
+import { useElementSize, useIntersectionObserver } from "usehooks-ts";
 import { useDraggableScroll } from "../../hooks/useDraggableScroll";
 import { TeeTime } from "../cards/tee-time";
+import { Info } from "../icons/info";
 import { LeftChevron } from "../icons/left-chevron";
 import { Tooltip } from "../tooltip";
 import { TeeTimeSkeleton } from "./tee-time-skeleton";
-import { Info } from "../icons/info";
 
 export const DailyTeeTimes = ({
   date,
@@ -106,14 +103,14 @@ export const DailyTeeTimes = ({
         sortValue === "Sort by time - Early to Late"
           ? "asc"
           : sortValue === "Sort by time - Late to Early"
-            ? "desc"
-            : "",
+          ? "desc"
+          : "",
       sortPrice:
         sortValue === "Sort by price - Low to High"
           ? "asc"
           : sortValue === "Sort by price - High to Low"
-            ? "desc"
-            : "",
+          ? "desc"
+          : "",
       timezoneCorrection: course?.timezoneCorrection,
       take: TAKE,
     },
@@ -180,21 +177,26 @@ export const DailyTeeTimes = ({
     return null;
   }
 
-
   return (
     <div className="flex flex-col gap-1 md:gap-4 bg-white px-4 py-2 md:rounded-xl md:px-8 md:py-6">
-      <div className="flex flex-wrap justify-between gap-2">
-        {isLoading ? (<div className="h-8 min-w-[150px] w-[20%] bg-gray-200 rounded-md  animate-pulse" />) : (<div
-          className="text-[13px] md:text-lg"
-          data-testid="date-group-id"
-          data-qa={dayMonthDate(date)}
-        >
-          {dayMonthDate(date)}
-        </div>)}
+      <div className="flex flex-wrap justify-between gap-2 unmask-time">
+        {isLoading ? (
+          <div className="h-8 min-w-[150px] w-[20%] bg-gray-200 rounded-md  animate-pulse unmask-time" />
+        ) : (
+          <div
+            className="text-[16px] md:text-[20px] unmask-time"
+            data-testid="date-group-id"
+            data-qa={dayMonthDate(date)}
+          >
+            {dayMonthDate(date)}
+          </div>
+        )}
         {courseException && (
           <div className="flex-1 flex items-center gap-1">
             <p
-              className={`text-${getTextColor(courseException.displayType)} inline text-left text-[13px] md:text-lg`}
+              className={`text-${getTextColor(
+                courseException.displayType
+              )} inline text-left text-[13px] md:text-lg`}
             >
               {courseException.shortMessage}
             </p>
@@ -219,7 +221,7 @@ export const DailyTeeTimes = ({
           <div className="flex items-center gap-1">
             <div>{WeatherIcons[weather?.iconCode ?? ""]}</div>
             <div
-              className="text-[12px] md:text-[16px]"
+              className="text-[12px] md:text-[16px] unmask-temperature"
               data-testid="weather-degrees-id"
               data-qa={weather?.temperature}
             >
@@ -298,8 +300,8 @@ export const DailyTeeTimes = ({
 
           {isLoading || isFetchingNextPage || !isFetchedAfterMount
             ? Array(TAKE)
-              .fill(null)
-              .map((_, idx) => <TeeTimeSkeleton key={idx} />)
+                .fill(null)
+                .map((_, idx) => <TeeTimeSkeleton key={idx} />)
             : null}
         </div>
 

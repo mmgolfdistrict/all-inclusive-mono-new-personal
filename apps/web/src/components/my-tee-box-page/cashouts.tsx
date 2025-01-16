@@ -92,21 +92,21 @@ export const Cashouts = () => {
         <tbody className={`max-h-[300px] w-full flex-col overflow-scroll`}>
           {isLoading
             ? Array(3)
-                .fill(null)
-                .map((_, idx) => <SkeletonRow key={idx} />)
+              .fill(null)
+              .map((_, idx) => <SkeletonRow key={idx} />)
             : txnHistory?.map((i, idx) => (
-                <TableRow
-                  key={idx}
-                  amount={formatMoney((i?.amount ?? 0) / 100)}
-                  status={i.externalStatus ?? ""}
-                  time={formatTime(
-                    i.createdDateTime ?? "",
-                    false,
-                    course?.timezoneCorrection
-                  )}
-                  openReceipt={() => openReceipt(i)}
-                />
-              ))}
+              <TableRow
+                key={idx}
+                amount={formatMoney((i?.amount ?? 0) / 100)}
+                status={i.externalStatus ?? ""}
+                time={formatTime(
+                  i.createdDateTime ?? "",
+                  false,
+                  course?.timezoneCorrection
+                )}
+                openReceipt={() => openReceipt(i)}
+              />
+            ))}
         </tbody>
       </table>
 
@@ -145,7 +145,7 @@ const TableRow = ({
 }) => {
   return (
     <tr className="w-full border-b border-stroke text-primary-gray">
-      <td className="whitespace-nowrap px-4 py-3">{time}</td>
+      <td className="whitespace-nowrap px-4 py-3 unmask-time">{time}</td>
       <td className="whitespace-nowrap px-4 py-3">{amount}</td>
       <td className="whitespace-nowrap px-4 py-3">
         <OutlineButton onClick={openReceipt} data-testid="receipt-button-id">

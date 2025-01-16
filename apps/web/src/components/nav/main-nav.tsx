@@ -3,10 +3,11 @@
 import { useAppContext } from "~/contexts/AppContext";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { api } from "~/utils/api";
-import { getBgColor } from "~/utils/formatters";
 import Link from "next/link";
+import { Info } from "../icons/info";
 import { BlurImage } from "../images/blur-image";
 import { PoweredBy } from "../powered-by";
+import { Tooltip } from "../tooltip";
 
 export const MainNav = () => {
   const { entity } = useAppContext();
@@ -27,22 +28,42 @@ export const MainNav = () => {
         {systemNotifications?.map((elm) => (
           <div
             key={elm.id}
-            className={`${getBgColor(
-              elm.displayType
-            )} text-white w-full p-1 text-center`}
+            style={{
+              backgroundColor: elm.bgColor,
+              color: elm.color,
+            }}
+            className="text-white w-full p-1 text-center flex items-center justify-center"
           >
-            {elm.shortMessage} : {elm.longMessage}
+            {elm.shortMessage}
+            {elm.longMessage && (
+              <Tooltip
+                trigger={
+                  <Info longMessage className="ml-2 h-[20px] w-[20px]" />
+                }
+                content={elm.longMessage}
+              />
+            )}
           </div>
         ))}
 
         {courseGlobalNotification?.map((elm) => (
           <div
             key={elm.id}
-            className={`${getBgColor(
-              elm.displayType
-            )} text-white w-full p-1 text-center`}
+            style={{
+              backgroundColor: elm.bgColor,
+              color: elm.color,
+            }}
+            className="text-white w-full p-1 text-center flex items-center justify-center"
           >
-            {elm.shortMessage} : {elm.longMessage}
+            {elm.shortMessage}
+            {elm.longMessage && (
+              <Tooltip
+                trigger={
+                  <Info longMessage className="ml-2 h-[20px] w-[20px]" />
+                }
+                content={elm.longMessage}
+              />
+            )}
           </div>
         ))}
         <div className="relative z-10 min-h-[75px] md:min-h-[95px] flex w-full items-center justify-end border-b border-stroke-secondary bg-white p-4 md:p-6">

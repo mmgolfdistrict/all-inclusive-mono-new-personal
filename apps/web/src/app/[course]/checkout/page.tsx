@@ -51,6 +51,8 @@ export default function Checkout({
   const { user } = useUserContext();
 
   const [isSessionLoading, setIsSessionLoading] = useState(true);
+  const [isErrorBookingCancelled, setIsErrorBookingCancelled] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   dayjs.extend(utc);
   dayjs.extend(timezone);
   const {
@@ -78,6 +80,13 @@ export default function Checkout({
     api.course.getPrivacyPolicyAndTCByCourse.useQuery({
       courseId: courseId ?? "",
     });
+  const {
+    data: providerBookingStatusResult,
+    refetch: refetchProviderBookingStatus,
+  } = api.teeBox.providerBookingStatus.useQuery(
+    { listingId: listingId ?? "" },
+    { enabled: false }
+  );
 
   const {
     data: teeTimeData,
@@ -129,6 +138,21 @@ export default function Checkout({
     undefined
   );
 
+  const getProviderBookingStatus = async () => {
+    const result = await refetchProviderBookingStatus();
+    console.log("result=====>", result?.data?.providerBookingStatus);
+    if (result?.data?.providerBookingStatus) {
+      setErrorMessage(
+        "Currently, you cannot book this tee time due to an issue."
+      );
+      setIsErrorBookingCancelled(true);
+    }
+  };
+
+  useEffect(() => {
+    void getProviderBookingStatus();
+  }, [listingId]);
+
   const checkPromoCode = async () => {
     const currentPrice = Number(data?.pricePerGolfer) * amountOfPlayers;
     try {
@@ -157,8 +181,6 @@ export default function Checkout({
   const endHourNumber = dayjs(removeTimeZoneOffset(data?.date))
     .add(6, "hours")
     .hour();
-
-
 
   const cartData: CartProduct[] = useMemo(() => {
     if (!data || data === null) return [];
@@ -457,6 +479,20 @@ export default function Checkout({
     );
   }
 
+  if (isErrorBookingCancelled) {
+    return (
+      <div
+        className={`flex justify-center flex-col items-center`}
+        style={{ height }}
+      >
+        <div className="text-center">Error: {errorMessage}</div>
+        <Link href="/" className="underline">
+          Return to home
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <>
       <div
@@ -487,7 +523,8 @@ export default function Checkout({
                 exposureName: course?.name ?? "",
                 exposureLatitude: course?.latitude ?? 0,
                 exposureLongitude: course?.longitude ?? 0,
-                exposureTotalCoverageAmount: Number(data?.pricePerGolfer) * amountOfPlayers || 0
+                exposureTotalCoverageAmount:
+                  Number(data?.pricePerGolfer) * amountOfPlayers || 0,
               }}
               isSensibleInvalid={isSensibleInvalid}
               privacyPolicyAndTCByCourseUrl={privacyPolicyAndTCByCourseUrl}

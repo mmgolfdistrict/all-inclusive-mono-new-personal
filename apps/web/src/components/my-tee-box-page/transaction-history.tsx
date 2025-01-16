@@ -26,7 +26,7 @@ export type TxnHistoryType = {
   courseLogo: string;
   date: string;
   firstHandPrice: number;
-  cartFeePrice:number;
+  cartFeePrice: number;
   pricePerGolfer: number[];
   golfers: InviteFriend[];
   bookingIds: string[];
@@ -36,7 +36,7 @@ export type TxnHistoryType = {
   receiveAfterSale: number;
   weatherGuaranteeAmount: number;
   weatherGuaranteeId: string;
-  markupFees?:number
+  markupFees?: number
 };
 
 export const TransactionHistory = () => {
@@ -134,23 +134,23 @@ export const TransactionHistory = () => {
           <tbody className={`max-h-[300px] w-full flex-col overflow-scroll`}>
             {isLoading
               ? Array(3)
-                  .fill(null)
-                  .map((_, idx) => <SkeletonRow key={idx} />)
+                .fill(null)
+                .map((_, idx) => <SkeletonRow key={idx} />)
               : txnHistory?.map((i, idx) => (
-                  <TableRow
-                    course={i.courseName}
-                    date={i.date}
-                    iconSrc={i.courseLogo}
-                    key={idx}
-                    purchasePrice={i.pricePerGolfer[0] ?? i.firstHandPrice}
-                    golfers={i.golfers}
-                    playerCount={i.playerCount}
-                    status={i.status}
-                    openTxnDetails={() => openTxnDetails(i)}
-                    openReceipt={() => openReceipt(i)}
-                    timezoneCorrection={course?.timezoneCorrection}
-                  />
-                ))}
+                <TableRow
+                  course={i.courseName}
+                  date={i.date}
+                  iconSrc={i.courseLogo}
+                  key={idx}
+                  purchasePrice={i.pricePerGolfer[0] ?? i.firstHandPrice}
+                  golfers={i.golfers}
+                  playerCount={i.playerCount}
+                  status={i.status}
+                  openTxnDetails={() => openTxnDetails(i)}
+                  openReceipt={() => openReceipt(i)}
+                  timezoneCorrection={course?.timezoneCorrection}
+                />
+              ))}
           </tbody>
         </table>
         {/* <OutlineButton
@@ -219,7 +219,7 @@ const TableRow = ({
             <div className="whitespace-nowrap text-secondary-black">
               {course}
             </div>
-            <div className="text-primary-gray">
+            <div className="text-primary-gray unmask-time">
               {formatTime(date, false, timezoneCorrection)}
             </div>
           </div>
@@ -229,17 +229,16 @@ const TableRow = ({
         {formatMoney(purchasePrice * golfers.length)}
         <span className="font-[300]"> Transaction Total</span>
       </td>
-      <td className="whitespace-nowrap px-4 py-3">
+      <td className="whitespace-nowrap px-4 py-3 unmask-players">
         {playerCount > 2
-          ? `You, Guest & ${playerCount - 2} ${
-              playerCount - 2 === 1 ? "golfers" : "golfers"
-            }`
+          ? `You, Guest & ${playerCount - 2} ${playerCount - 2 === 1 ? "golfers" : "golfers"
+          }`
           : golfers.map((i, idx) => {
-              if (playerCount === 1) return "Guest";
-              if (idx === playerCount - 1) return `& You`;
-              if (idx === playerCount - 2) return `Guest `;
-              return `Guest, `;
-            })}
+            if (playerCount === 1) return "Guest";
+            if (idx === playerCount - 1) return `& You`;
+            if (idx === playerCount - 2) return `Guest `;
+            return `Guest, `;
+          })}
       </td>
       <td className="flex items-center gap-1 whitespace-nowrap px-4 pb-3 pt-6 capitalize">
         {status.toLowerCase()}

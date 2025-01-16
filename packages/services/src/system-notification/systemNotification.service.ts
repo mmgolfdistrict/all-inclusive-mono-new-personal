@@ -12,7 +12,8 @@ export class SystemNotificationService {
         id: systemNotification.id,
         shortMessage: systemNotification.shortMessage,
         longMessage: systemNotification.longMessage,
-        displayType: systemNotification.displayType,
+        bgColor: systemNotification.bgColor,
+        color: systemNotification.color,
       })
       .from(systemNotification)
       .where(
@@ -34,7 +35,8 @@ export class SystemNotificationService {
         id: courseGlobalNotification.id,
         shortMessage: courseGlobalNotification.shortMessage,
         longMessage: courseGlobalNotification.longMessage,
-        displayType: courseGlobalNotification.displayType,
+        bgColor: courseGlobalNotification.bgColor,
+        color: courseGlobalNotification.color,
       })
       .from(courseGlobalNotification)
       .where(
