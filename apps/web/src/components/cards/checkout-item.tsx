@@ -111,7 +111,13 @@ export const CheckoutItem = ({
             {isLoading ? (
               <div className="h-6 w-[50%] bg-gray-200 rounded-md  animate-pulse" />
             ) : (
-              formatTime(teeTime?.date ?? "", true, course?.timezoneCorrection)
+              <span className="text-[20px] ">
+                {formatTime(
+                  teeTime?.date ?? "",
+                  true,
+                  course?.timezoneCorrection
+                )}
+              </span>
             )}
           </div>
           <Data
@@ -328,7 +334,7 @@ const Data = ({
           )}
         </div>
         <div className="flex">
-          <div className="text-[20px] font-semibold text-secondary-black">
+          <div className="text-[18px] font-semibold text-secondary-black">
             {formatMoney(pricePerGolfer ?? 1 ?? 0)}
           </div>
           <div className="text-[16px] text-primary-gray">/golfer</div>
