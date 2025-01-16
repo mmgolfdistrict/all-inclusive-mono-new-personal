@@ -32,6 +32,9 @@ import { toast } from "react-toastify";
 import { ViewportList } from "react-viewport-list";
 import { useMediaQuery } from "usehooks-ts";
 import { LoadingContainer } from "./loader";
+import { microsoftClarityEvent } from "~/utils/microsoftClarityUtils";
+import { Close } from "~/components/icons/close";
+import { ForecastModal } from "~/components/modal/forecast-modal";
 
 dayjs.extend(Weekday);
 dayjs.extend(RelativeTime);
@@ -54,6 +57,8 @@ export default function CourseHomePage() {
   const [showDates, setShowDates] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isFirstRender, setIsFirstRender] = useState<boolean>(true);
+  const [isForecastModalOpen, setIsForecastModalOpen] =
+    useState<boolean>(false);
   const [take, setTake] = useState<number>(TAKE);
   const [pageNumber, setPageNumber] = useState<number>(1);
   const { user } = useUserContext();
@@ -291,14 +296,14 @@ export default function CourseHomePage() {
           sortValue === "Sort by time - Early to Late"
             ? "asc"
             : sortValue === "Sort by time - Late to Early"
-            ? "desc"
-            : "",
+              ? "desc"
+              : "",
         sortPrice:
           sortValue === "Sort by price - Low to High"
             ? "asc"
             : sortValue === "Sort by price - High to Low"
-            ? "desc"
-            : "",
+              ? "desc"
+              : "",
         timezoneCorrection: course?.timezoneCorrection,
         isHolesAny: holes === "Any",
         isGolferAny: golfers === "Any",
@@ -424,6 +429,17 @@ export default function CourseHomePage() {
       localStorage.removeItem("credentials");
       localStorage.removeItem("linkedinstate");
       localStorage.removeItem("facebookstate");
+
+      microsoftClarityEvent({
+        action: ``,
+        category: "",
+        label: "",
+        value: "",
+        additionalContent: {
+          courseName: course?.name,
+          websiteURL: course?.websiteURL
+        }
+      });
     }
   }, []);
   let datesArr = JSON.parse(
@@ -498,6 +514,14 @@ export default function CourseHomePage() {
   const marginTop =
     notificationsCount > 0 ? `mt-${notificationsCount * 6}` : "";
 
+  const openForecastModal = () => {
+    setIsForecastModalOpen(true);
+  };
+
+  // Function to close the modal
+  const closeForecastModal = () => {
+    setIsForecastModalOpen(false);
+  };
   return (
     <main className={`bg-secondary-white py-4 md:py-6 ${marginTop}`}>
       <LoadingContainer isLoading={isLoadingTeeTimeDate || isLoading}>
@@ -536,7 +560,7 @@ export default function CourseHomePage() {
               setValue={handleSetSortValue}
               values={SortOptions}
             />
-            <Filters />
+            <Filters openForecastModal={openForecastModal} />
           </div>
         </div>
         <div className="fixed bottom-5 left-1/2 z-10 -translate-x-1/2 md:hidden">
@@ -545,11 +569,10 @@ export default function CourseHomePage() {
         </div>
         <div className="flex w-full flex-col gap-1 md:gap-4 overflow-x-hidden pr-0 md:pr-6">
           <div
-            className={`flex space-x-2 md:hidden px-4 ${
-              scrollY > 333
-                ? "fixed top-[7.8rem] left-0 w-full z-10 bg-secondary-white pt-2 pb-3 shadow-md"
-                : "relative"
-            }`}
+            className={`flex space-x-2 md:hidden px-4 ${scrollY > 333
+              ? "fixed top-[7.8rem] left-0 w-full z-10 bg-secondary-white pt-2 pb-3 shadow-md"
+              : "relative"
+              }`}
           >
             <button
               onClick={toggleFilters}
@@ -607,23 +630,21 @@ export default function CourseHomePage() {
               {daysData.amountOfPages > 1 ? (
                 <div className="flex items-center justify-center gap-2 pt-1 md:pt-0 md:pb-4">
                   <FilledButton
-                    className={`!px-3 !py-2 !min-w-fit !rounded-md ${
-                      pageNumber === 1 ? "opacity-50 cursor-not-allowed" : ""
-                    }`}
+                    className={`!px-3 !py-2 !min-w-fit !rounded-md ${pageNumber === 1 ? "opacity-50 cursor-not-allowed" : ""
+                      }`}
                     onClick={pageDown}
                     data-testid="chevron-down-id"
                   >
                     <ChevronUp fill="#fff" className="-rotate-90" />
                   </FilledButton>
-                  <div className="text-primary-gray px-3 py-2 bg-[#ffffff] rounded-md">
+                  <div className="text-primary-gray px-3 py-2 bg-[#ffffff] rounded-md unmask-pagination">
                     {pageNumber} / {amountOfPage}
                   </div>
                   <FilledButton
-                    className={`!px-3 !py-2 !min-w-fit !rounded-md ${
-                      pageNumber === amountOfPage
-                        ? "opacity-50 cursor-not-allowed"
-                        : ""
-                    }`}
+                    className={`!px-3 !py-2 !min-w-fit !rounded-md ${pageNumber === amountOfPage
+                      ? "opacity-50 cursor-not-allowed"
+                      : ""
+                      }`}
                     onClick={pageUp}
                     data-testid="chevron-up-id"
                   >
@@ -648,13 +669,18 @@ export default function CourseHomePage() {
         <MobileFilters
           setShowFilters={setShowFilters}
           toggleFilters={toggleFilters}
+          openForecastModal={openForecastModal}
         />
       )}
       {showDates && (
         <MobileDates
           setShowFilters={setShowDates}
           toggleFilters={toggleDates}
+          openForecastModal={openForecastModal}
         />
+      )}
+      {isForecastModalOpen && (
+        <ForecastModal closeForecastModal={closeForecastModal} startDate={startDate} endDate={endDate} />
       )}
     </main>
   );
