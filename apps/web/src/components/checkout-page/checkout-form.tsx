@@ -602,9 +602,9 @@ export const CheckoutForm = ({
 
   const handleDonateChange = (event) => {
     const value = event.target.value.trim() as string;
-    const numericValue = value.length > 0 ? parseFloat(value) : 0;
+    const numericValue = parseFloat(value)
     // setNoThanks(false);
-
+     // const numericValue = value.length > 0 ? parseFloat(value) : 0;
     if (!numericValue || numericValue === 0) {
       setOtherDonateValue(event?.target?.value as number);
       setDonateError(true);
@@ -615,7 +615,7 @@ export const CheckoutForm = ({
       setOtherDonateValue(numericValue);
       handleSelectedCharityAmount(Number(numericValue));
     }
-    setDonateValue(otherDonateValue);
+    setDonateValue(numericValue);
   };
 
   const playersInNumber = Number(amountOfPlayers || 0);
