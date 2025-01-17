@@ -658,6 +658,7 @@ export const CheckoutForm = ({
     convenienceCharge;
   const totalBeforeRoundOff = primaryGreenFeeCharge + TaxCharge;
   const decimalPart = totalBeforeRoundOff % 1;
+  const [hasUserSelectedDonation, setHasUserSelectedDonation] = useState(false);
 
   const roundOff =
     decimalPart === 0 || decimalPart.toFixed(2) === "0.00"
@@ -718,15 +719,36 @@ export const CheckoutForm = ({
   }, [TaxCharge, roundUpCharityId, roundOffStatus]);
 
   useEffect(() => {
-    if (primaryGreenFeeCharge < 200) {
-      setDonateValue(Math.ceil(primaryGreenFeeCharge) - primaryGreenFeeCharge);
-      setRoundOffStatus("roundup");
-    } else if (primaryGreenFeeCharge >= 201 && primaryGreenFeeCharge <= 500) {
-      setDonateValue(2);
-      setRoundOffStatus("twoDollars");
-    } else {
-      setDonateValue(5);
-      setRoundOffStatus("fiveDollars");
+    if (!hasUserSelectedDonation) {
+      if (primaryGreenFeeCharge <= 5) {
+        // setDonateValue(
+        //   Math.ceil(primaryGreenFeeCharge) - primaryGreenFeeCharge
+        // );
+        let donation;
+        if (decimalPart === 0) {
+          donation = 1;
+        } else if (decimalPart.toFixed(2) === "0.00") {
+          donation = 1;
+        } else {
+          donation = parseFloat(
+            (Math.ceil(primaryGreenFeeCharge) - primaryGreenFeeCharge).toFixed(
+              2
+            )
+          );
+        }
+        console.log("donation", donation);
+
+        setDonateValue(donation);
+        setRoundOffStatus("roundup");
+      } else if (primaryGreenFeeCharge >= 6 && primaryGreenFeeCharge <= 10) {
+        console.log("donation 1");
+        setDonateValue(2);
+        setRoundOffStatus("twoDollars");
+      } else {
+        console.log("donation 2");
+        setDonateValue(5);
+        setRoundOffStatus("fiveDollars");
+      }
     }
   }, [totalBeforeRoundOff]);
 
@@ -1081,7 +1103,10 @@ export const CheckoutForm = ({
                   ? "bg-primary text-white"
                   : "bg-white text-primary border-primary border-2"
               }`}
-              onClick={() => handleRoundOff(0, "roundup")}
+              onClick={() => {
+                handleRoundOff(0, "roundup");
+                setHasUserSelectedDonation(true);
+              }}
             >
               Round Up
             </button>
@@ -1093,7 +1118,10 @@ export const CheckoutForm = ({
                   ? "bg-primary text-white"
                   : "bg-white text-primary border-primary border-2"
               }`}
-              onClick={() => handleRoundOff(2, "twoDollars")}
+              onClick={() => {
+                handleRoundOff(2, "twoDollars");
+                setHasUserSelectedDonation(true);
+              }}
             >
               $2.00
             </button>
@@ -1105,7 +1133,10 @@ export const CheckoutForm = ({
                   ? "bg-primary text-white"
                   : "bg-white text-primary border-primary border-2"
               }`}
-              onClick={() => handleRoundOff(5, "fiveDollars")}
+              onClick={() => {
+                handleRoundOff(5, "fiveDollars");
+                setHasUserSelectedDonation(true);
+              }}
             >
               $5.00
             </button>
@@ -1117,7 +1148,10 @@ export const CheckoutForm = ({
                   ? "bg-primary text-white"
                   : "bg-white text-primary border-primary border-2"
               }`}
-              onClick={() => handleRoundOff(5, "other")}
+              onClick={() => {
+                handleRoundOff(5, "other");
+                setHasUserSelectedDonation(true);
+              }}
             >
               Other
             </button>
@@ -1132,6 +1166,7 @@ export const CheckoutForm = ({
                   setRoundOffStatus("nothanks");
                   setDonateValue(0);
                   setShowTextField(false);
+                  setHasUserSelectedDonation(true);
                 }}
               >
                 No Thanks
