@@ -262,9 +262,9 @@ export const bookingRouter = createTRPCRouter({
         additionalNoteFromUser: z.string().max(200).optional(),
         needRentals: z.boolean(),
         redirectHref: z.string().url(),
-        courseMembershipId:z.string(),
-        playerCountForMemberShip:z.string(),
-        providerCourseMembershipId:z.string(),
+        courseMembershipId:z.string().optional(),
+        playerCountForMemberShip:z.string().optional(),
+        providerCourseMembershipId:z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -278,9 +278,9 @@ export const bookingRouter = createTRPCRouter({
           input.additionalNoteFromUser,
           input.needRentals,
           input.redirectHref,
-          input.courseMembershipId,
-          input.playerCountForMemberShip,
-          input.providerCourseMembershipId
+          input.courseMembershipId ?? '',
+          input.playerCountForMemberShip ?? '',
+          input.providerCourseMembershipId ?? ''
         );
     }),
   reserveSecondHandBooking: protectedProcedure

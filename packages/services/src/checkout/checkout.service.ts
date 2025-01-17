@@ -1203,7 +1203,7 @@ export class CheckoutService {
       teeTimeResult?.providerTeeSheet ?? "",
       teeTimeResult?.providerCourseConfiguration ?? ""
     );
-    if (result.length === 0) {
+    if (!Array.isArray(result) || result.length === 0) {
       return {
         isValidated: false,
         providerCourseMembership: "",

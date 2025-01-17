@@ -135,7 +135,7 @@ export const CheckoutItem = ({
     return null;
   };
 
-  const handleChangeMemberShipStatus = (event) => {
+  const handleChangeMemberShipStatus = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setMembershipStatus(event.target.value);
   };
   const handleValidateMemberShipUser = async (index: number, email: string) => {
@@ -277,7 +277,7 @@ export const CheckoutItem = ({
                 {courseMemberships.length === 0 ? null : (
                   <Fragment>
                     {Array.from({ length: Number(playerCount) }, (_, index) => (
-                      <div className="flex gap-2 justify-center items-center">
+                      <div key={index} className="flex gap-2 justify-center items-center">
                         <h5 className="text-sm">Player {index + 1}:</h5>
                         <input
                           type="text"

@@ -303,6 +303,7 @@ export class clubprophet extends BaseProvider {
     providerBookingIds: string | string[],
     _providerId: string,
     _courseId: string,
+    providerSlotIds: string[],
     providerCourseMembershipId: string
   ) {
     const bookingSlots: {
@@ -329,7 +330,7 @@ export class clubprophet extends BaseProvider {
         slotPosition: i + 1,
         lastUpdatedDateTime: null,
         createdDateTime: null,
-        providerCourseMembershipId: providerCourseMembershipId,
+        providerCourseMembershipId: providerCourseMembershipId ?? null,
       });
     }
     return bookingSlots;

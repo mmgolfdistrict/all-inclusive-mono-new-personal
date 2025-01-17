@@ -632,7 +632,7 @@ export class Lightspeed extends BaseProvider {
                 slotPosition: i + 1,
                 lastUpdatedDateTime: null,
                 createdDateTime: null,
-                providerCourseMembershipId: providerCourseMembershipId ?? null,
+                providerCourseMembershipId: providerCourseMembershipId || null,
             });
         }
         return bookingSlots;

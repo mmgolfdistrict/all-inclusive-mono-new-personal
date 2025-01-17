@@ -158,7 +158,9 @@ export class ProviderService extends CacheService {
     customerId: string,
     providerBookingId: string,
     providerId: string,
-    courseId: string
+    courseId: string,
+    providerSlotIds: string[] | undefined,
+    providerCourseMembershipId: string
   ): Promise<InsertBookingSlots[]> {
     // this.logger.info(`updateTeeTime called with courseId: ${courseId}`);
     const { provider } = await this.getProviderAndKey(providerId, courseId);
@@ -168,7 +170,9 @@ export class ProviderService extends CacheService {
       customerId,
       providerBookingId,
       providerId,
-      courseId
+      courseId,
+      providerSlotIds || [],
+      providerCourseMembershipId || ""
     );
   }
 

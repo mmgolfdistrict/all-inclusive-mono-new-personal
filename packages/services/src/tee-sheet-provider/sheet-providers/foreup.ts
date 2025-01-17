@@ -704,6 +704,7 @@ export class foreUp extends BaseProvider {
     providerBookingId: string | string[],
     _providerId: string,
     _courseId: string,
+    providerSlotIds: string[],
     providerCourseMembershipId: string
   ) {
     const bookingSlots: {
