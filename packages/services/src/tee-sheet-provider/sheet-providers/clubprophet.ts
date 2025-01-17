@@ -32,6 +32,7 @@ import type { CacheService } from "../../infura/cache.service";
 import { loggerService } from "../../webhooks/logging.service";
 
 export class clubprophet extends BaseProvider {
+  
   providerId = "club-prophet";
   public providerConfiguration: string;
   logger = Logger(clubprophet.name);
@@ -300,7 +301,7 @@ export class clubprophet extends BaseProvider {
     bookingId: string,
     slots: number,
     customerId: string,
-    providerBookingIds: string | string[],
+    providerBookingId: string | string[],
     _providerId: string,
     _courseId: string,
     providerSlotIds: string[],
@@ -316,14 +317,14 @@ export class clubprophet extends BaseProvider {
       slotPosition: number;
       lastUpdatedDateTime: string | null;
       createdDateTime: string | null;
-      providerCourseMembershipId?: string | null;
+      providerCourseMembershipId: string | null;
     }[] = [];
 
     for (let i = 0; i < slots; i++) {
       bookingSlots.push({
         id: randomUUID(),
         bookingId: bookingId,
-        slotnumber: providerBookingIds[i]!,
+        slotnumber: providerBookingId[i]!,
         name: i === 0 ? "" : "Guest",
         customerId: i === 0 ? customerId : "",
         isActive: true,
@@ -681,7 +682,7 @@ export class clubprophet extends BaseProvider {
       headers: headers,
     });
     const clubProphetBookingDeleted = await response.json();
-    console.log("clubProphetBookingDeleted",clubProphetBookingDeleted)
+    console.log("clubProphetBookingDeleted", clubProphetBookingDeleted);
     if (clubProphetBookingDeleted.length == 0) {
       bookingIsDeleted = true;
     } else {
@@ -689,6 +690,9 @@ export class clubprophet extends BaseProvider {
     }
     // console.log("bookingIsDeleted================8888888>",bookingIsDeleted)
     return bookingIsDeleted;
+  }
+  async SearchCustomer(token: string, providerCourseId: string, email: string): Promise<CustomerData> {
+    return {} as CustomerData;
   }
   requireToCreatePlayerSlots(): boolean {
     return false;

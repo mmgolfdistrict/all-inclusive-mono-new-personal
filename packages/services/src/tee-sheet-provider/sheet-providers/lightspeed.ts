@@ -5,6 +5,7 @@ import type {
   BookingResponse,
   BuyerData,
   CustomerCreationData,
+  CustomerData,
   GetCustomerResponse,
   NameChangeCustomerDetails,
   ProviderAPI,
@@ -597,46 +598,46 @@ export class Lightspeed extends BaseProvider {
     return data;
   }
 
-    // eslint-disable-next-line @typescript-eslint/require-await
-    async getSlotIdsForBooking(
-        bookingId: string,
-        slots: number,
-        customerId: string,
-        providerBookingId: string | string[],
-        _providerId: string,
-        _courseId: string,
-        providerSlotIds?: string[],
-        providerCourseMembershipId?: string
-    ) {
-        const bookingSlots: {
-            id: string;
-            bookingId: string;
-            slotnumber: string;
-            name: string;
-            customerId: string;
-            isActive: boolean;
-            slotPosition: number;
-            lastUpdatedDateTime: string | null;
-            createdDateTime: string | null;
-            providerCourseMembershipId?: string | null;
-        }[] = [];
+  // eslint-disable-next-line @typescript-eslint/require-await
+  async getSlotIdsForBooking(
+    bookingId: string,
+    slots: number,
+    customerId: string,
+    providerBookingId: string | string[],
+    _providerId: string,
+    _courseId: string,
+    providerSlotIds: string[],
+    providerCourseMembershipId: string
+  ) {
+    const bookingSlots: {
+      id: string;
+      bookingId: string;
+      slotnumber: string;
+      name: string;
+      customerId: string;
+      isActive: boolean;
+      slotPosition: number;
+      lastUpdatedDateTime: string | null;
+      createdDateTime: string | null;
+      providerCourseMembershipId: string | null;
+    }[] = [];
 
-        for (let i = 0; i < slots; i++) {
-            bookingSlots.push({
-                id: randomUUID(),
-                bookingId: bookingId,
-                slotnumber: providerSlotIds ? providerSlotIds[i] ?? "" : providerBookingId + "-" + (i + 1),
-                name: i === 0 ? "" : "Guest",
-                customerId: i === 0 ? customerId : "",
-                isActive: true,
-                slotPosition: i + 1,
-                lastUpdatedDateTime: null,
-                createdDateTime: null,
-                providerCourseMembershipId: providerCourseMembershipId || null,
-            });
-        }
-        return bookingSlots;
+    for (let i = 0; i < slots; i++) {
+      bookingSlots.push({
+        id: randomUUID(),
+        bookingId: bookingId,
+        slotnumber: providerSlotIds ? providerSlotIds[i] ?? "" : providerBookingId + "-" + (i + 1),
+        name: i === 0 ? "" : "Guest",
+        customerId: i === 0 ? customerId : "",
+        isActive: true,
+        slotPosition: i + 1,
+        lastUpdatedDateTime: null,
+        createdDateTime: null,
+        providerCourseMembershipId: providerCourseMembershipId || null,
+      });
     }
+    return bookingSlots;
+  }
 
   addSalesData = async (options: SalesDataOptions): Promise<void> => {
     options = options as LightspeedSaleDataOptions;
@@ -1150,4 +1151,7 @@ export class Lightspeed extends BaseProvider {
   requireToCreatePlayerSlots(): boolean {
     return false;
   }
+   async SearchCustomer(token: string, providerCourseId: string, email: string): Promise<CustomerData> {
+      return {} as CustomerData;
+    }
 }
