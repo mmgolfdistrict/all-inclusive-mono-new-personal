@@ -195,7 +195,6 @@ export const CheckoutForm = ({
   // const cartFeeCharge =
   //   cartData
   //     ?.filter(({ product_data }) => product_data.metadata.type === "cart_fee");
-  //console.log("cart-fee",Number(cartFeeCharge[0].product_data.metadata.amount));
 
   const unifiedCheckoutOptions = {
     wallets: {
@@ -649,10 +648,12 @@ export const CheckoutForm = ({
     (!roundUpCharityId ? charityCharge : 0) +
     convenienceCharge +
     (!roundUpCharityId ? 0 : Number(donateValue));
+
   const TotalAmt = Total.toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
+
   /**==============UI CALCULATION Variables==================== */
   const totalGreenFeesPerPlayer =
     (greenFeeChargePerPlayer + markupFee) * playersInNumber;
@@ -687,38 +688,62 @@ export const CheckoutForm = ({
       );
     }
     setDonateValue(donation);
-  }, [primaryGreenFeeCharge]);
+  }, [Total, primaryGreenFeeCharge, totalBeforeRoundOff]);
 
-  const handleRoundOff = () => {
-    setShowTextField(false);
-    const totalBeforeRoundOff = primaryGreenFeeCharge + TaxCharge;
-    const decimalPart = totalBeforeRoundOff % 1;
-
+  const handleRoundOff = (value: any, status: any) => {
     let donation;
-    if (decimalPart === 0) {
-      donation = 1;
-    } else if (decimalPart.toFixed(2) === "0.00") {
-      donation = 1;
-    } else {
-      donation = parseFloat(
-        (Math.ceil(totalBeforeRoundOff) - totalBeforeRoundOff).toFixed(2)
-      );
+    switch (status) {
+      case "roundup":
+        setShowTextField(false);
+        setRoundOffStatus("roundup");
+        donation =
+          decimalPart === 0
+            ? 1
+            : parseFloat(
+                (Math.ceil(totalBeforeRoundOff) - totalBeforeRoundOff).toFixed(
+                  2
+                )
+              );
+        break;
+
+      case "other":
+        setShowTextField(true);
+        donation = value;
+        break;
+
+      default:
+        setShowTextField(false);
+        donation = value;
+        break;
     }
     setDonateValue(donation);
+    setRoundOffStatus(status);
     handleSelectedCharityAmount(Number(donation));
   };
 
   useEffect(() => {
-    if (roundUpCharityId && roundOffStatus === "roundup") {
-      handleRoundOff();
+    if (roundUpCharityId) handleRoundOff(donateValue, roundOffStatus);
+  }, [TaxCharge, roundUpCharityId, roundOffStatus]);
+
+  useEffect(() => {
+    if (primaryGreenFeeCharge < 200) {
+      setDonateValue(Math.ceil(primaryGreenFeeCharge) - primaryGreenFeeCharge);
+      setRoundOffStatus("roundup");
+    } else if (primaryGreenFeeCharge >= 201 && primaryGreenFeeCharge <= 500) {
+      setDonateValue(2);
+      setRoundOffStatus("twoDollars");
+    } else {
+      setDonateValue(5);
+      setRoundOffStatus("fiveDollars");
     }
-  }, [TaxCharge]);
+  }, [totalBeforeRoundOff]);
 
   useEffect(() => {
     if (Number(TotalAmt) == 0) {
       handleShouldAddSensible(false);
     }
   }, [TotalAmt]);
+
   return (
     <form onSubmit={handleSubmit} className="">
       <UnifiedCheckout id="unified-checkout" options={unifiedCheckoutOptions} />
@@ -844,35 +869,17 @@ export const CheckoutForm = ({
               <div>Taxes & Others</div>
               <div className="unmask-price">
                 $
-                {TaxCharge.toLocaleString("en-US", {
+                {(TaxCharge + (donateValue || 0)).toLocaleString("en-US", {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })}
               </div>
             </div>
-            {roundUpCharityId && (
-              <div className="flex justify-between">
-                <div>Charitable Donation</div>
-                <div className="unmask-price">
-                  $
-                  {(donateValue || 0).toLocaleString("en-US", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-                </div>
-              </div>
-            )}
             <div className="flex justify-between">
               <div>Total</div>
               <div className="unmask-price">
                 $
-                {(
-                  (roundUpCharityId
-                    ? roundOffClick
-                      ? roundOff
-                      : Number(TotalAmt)
-                    : TotalAmt) || 0
-                ).toLocaleString("en-US", {
+                {(TotalAmt || 0).toLocaleString("en-US", {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })}
@@ -1080,7 +1087,7 @@ export const CheckoutForm = ({
             </div>
           </div>
 
-          <div className="flex gap-2 mt-5 ml-3 mb-4">
+          <div className="flex gap-2 mt-5 ml-1 mb-4 items-center">
             <button
               type="button"
               className={`flex w-32 items-center justify-center rounded-md p-2 ${
@@ -1088,12 +1095,33 @@ export const CheckoutForm = ({
                   ? "bg-primary text-white"
                   : "bg-white text-primary border-primary border-2"
               }`}
-              onClick={() => {
-                setRoundOffStatus("roundup");
-                handleRoundOff();
-              }}
+              onClick={() => handleRoundOff(0, "roundup")}
             >
               Round Up
+            </button>
+
+            <button
+              type="button"
+              className={`flex w-20 items-center justify-center rounded-md p-2 ${
+                roundOffStatus === "twoDollars"
+                  ? "bg-primary text-white"
+                  : "bg-white text-primary border-primary border-2"
+              }`}
+              onClick={() => handleRoundOff(2, "twoDollars")}
+            >
+              $2.00
+            </button>
+
+            <button
+              type="button"
+              className={`flex w-20 items-center justify-center rounded-md p-2 ${
+                roundOffStatus === "fiveDollars"
+                  ? "bg-primary text-white"
+                  : "bg-white text-primary border-primary border-2"
+              }`}
+              onClick={() => handleRoundOff(5, "fiveDollars")}
+            >
+              $5.00
             </button>
 
             <button
@@ -1103,35 +1131,26 @@ export const CheckoutForm = ({
                   ? "bg-primary text-white"
                   : "bg-white text-primary border-primary border-2"
               }`}
-              onClick={() => {
-                setRoundOffClick(false);
-                setShowTextField(true);
-                setDonateValue(5);
-                handleSelectedCharityAmount(5);
-                setRoundOffStatus("other");
-              }}
+              onClick={() => handleRoundOff(5, "other")}
             >
               Other
             </button>
 
-            <button
-              type="button"
-              className={`flex w-32 items-center justify-center rounded-md p-2 ${
-                roundOffStatus === "nothanks"
-                  ? "bg-primary text-white"
-                  : "bg-white text-primary border-primary border-2"
-              }`}
-              onClick={() => {
-                setRoundOffClick(false);
-                setShowTextField(false);
-                setDonateValue(0);
-                handleSelectedCharityAmount(0);
-                // setNoThanks(true);
-                setRoundOffStatus("nothanks");
-              }}
-            >
-              No Thanks
-            </button>
+            <div className="flex-1 flex justify-end">
+              <button
+                type="button"
+                className={`text-primary text-xs underline ${
+                  roundOffStatus === "nothanks" ? "font-semibold" : ""
+                }`}
+                onClick={() => {
+                  setRoundOffStatus("nothanks");
+                  setDonateValue(0);
+                  setShowTextField(false);
+                }}
+              >
+                No Thanks
+              </button>
+            </div>
           </div>
 
           {showTextField && (
