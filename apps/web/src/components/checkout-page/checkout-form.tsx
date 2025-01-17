@@ -861,18 +861,6 @@ export const CheckoutForm = ({
                 })}
               </div>
             </div>
-            {roundUpCharityId && (
-              <div className="flex justify-between">
-                <div>Charitable Donation</div>
-                <div className="unmask-price">
-                  $
-                  {(donateValue || 0).toLocaleString("en-US", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-                </div>
-              </div>
-            )}
             <div className="flex justify-between">
               <div>Total</div>
               <div className="unmask-price">
