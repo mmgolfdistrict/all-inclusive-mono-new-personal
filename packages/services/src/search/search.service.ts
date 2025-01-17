@@ -1710,7 +1710,7 @@ export class SearchService extends CacheService {
       await this.setCache(
         `${courseId}-${startDate}-${endDate}-${process.env.NODE_ENV}`,
         forecastData,
-        2 * 24 * 60 * 60
+        60 * 60
       );
     }
 
@@ -1718,11 +1718,11 @@ export class SearchService extends CacheService {
       const formattedData = forecastData.map((item: PriceForecast) => ({
         ...item,
         providerDate: item.providerDate,
-        EarlyMorning: item.EarlyMorning,
-        MidMorning: item.MidMorning,
-        EarlyAfternoon: item.EarlyAfternoon,
-        Afternoon: item.Afternoon,
-        Twilight: item.Twilight,
+        EarlyMorning: item.EarlyMorning ? item.EarlyMorning / 100 : null,
+        MidMorning: item.MidMorning ? item.MidMorning / 100 : null,
+        EarlyAfternoon: item.EarlyAfternoon ? item.EarlyAfternoon / 100 : null,
+        Afternoon: item.Afternoon ? item.Afternoon / 100 : null,
+        Twilight: item.Twilight ? item.Twilight / 100 : null,
       }));
 
       return formattedData;
