@@ -164,8 +164,21 @@ export default function CheckoutConfirmation() {
     }
   }, [isLoadingPaymentIntent]);
 
+  const { data: systemNotifications } =
+    api.systemNotification.getSystemNotification.useQuery({});
+
+  const { data: courseGlobalNotification } =
+    api.systemNotification.getCourseGlobalNotification.useQuery({
+      courseId: course?.id ?? "",
+    });
+
+  const notificationsCount =
+    (systemNotifications ? systemNotifications.length : 0) +
+    (courseGlobalNotification ? courseGlobalNotification.length : 0);
+
+  const marginTop = notificationsCount > 0 ? `${notificationsCount * 8}px` : "0";
   return (
-    <div className="relative flex flex-col items-center gap-4 px-0 pb-8 md:px-8">
+    <div className="relative flex flex-col items-center gap-4 px-0 pb-8 md:px-8" style={{ marginTop }}>
       <div className="h-12 w-full ">
       </div>
       {/* <CheckoutBreadcumbs status={"processing"} /> */}
