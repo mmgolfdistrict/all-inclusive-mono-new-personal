@@ -195,7 +195,6 @@ export const CheckoutForm = ({
   // const cartFeeCharge =
   //   cartData
   //     ?.filter(({ product_data }) => product_data.metadata.type === "cart_fee");
-  //console.log("cart-fee",Number(cartFeeCharge[0].product_data.metadata.amount));
 
   const unifiedCheckoutOptions = {
     wallets: {
@@ -646,7 +645,7 @@ export const CheckoutForm = ({
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
-  console.log("Total", Total);
+
   /**==============UI CALCULATION Variables==================== */
   const totalGreenFeesPerPlayer =
     (greenFeeChargePerPlayer + markupFee) * playersInNumber;
