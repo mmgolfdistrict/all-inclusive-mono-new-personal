@@ -51,6 +51,8 @@ export default function Checkout({
   const { user } = useUserContext();
 
   const [isSessionLoading, setIsSessionLoading] = useState(true);
+  const [isErrorBookingCancelled, setIsErrorBookingCancelled] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   dayjs.extend(utc);
   dayjs.extend(timezone);
   const {
@@ -80,6 +82,13 @@ export default function Checkout({
     api.course.getPrivacyPolicyAndTCByCourse.useQuery({
       courseId: courseId ?? "",
     });
+  const {
+    data: providerBookingStatusResult,
+    refetch: refetchProviderBookingStatus,
+  } = api.teeBox.providerBookingStatus.useQuery(
+    { listingId: listingId ?? "" },
+    { enabled: false }
+  );
 
   const {
     data: teeTimeData,
@@ -131,6 +140,21 @@ export default function Checkout({
     undefined
   );
 
+  const getProviderBookingStatus = async () => {
+    const result = await refetchProviderBookingStatus();
+    console.log("result=====>", result?.data?.providerBookingStatus);
+    if (result?.data?.providerBookingStatus) {
+      setErrorMessage(
+        "Currently, you cannot book this tee time due to an issue."
+      );
+      setIsErrorBookingCancelled(true);
+    }
+  };
+
+  useEffect(() => {
+    void getProviderBookingStatus();
+  }, [listingId]);
+
   const checkPromoCode = async () => {
     const currentPrice = Number(data?.pricePerGolfer) * amountOfPlayers;
     try {
@@ -160,8 +184,6 @@ export default function Checkout({
     .add(6, "hours")
     .hour();
 
- 
-
   const cartData: CartProduct[] = useMemo(() => {
     if (!data || data === null) return [];
 
@@ -183,9 +205,9 @@ export default function Checkout({
             number_of_bookings: amountOfPlayers - validatePlayers.length,
           }
         : {
-            type: "second_hand",
-            second_hand_id: listingId,
-          };
+          type: "second_hand",
+          second_hand_id: listingId,
+        };
     const localCart: CartProduct[] = [
       {
         name: "Golf District Tee Time",
@@ -221,7 +243,7 @@ export default function Checkout({
         display_price: formatMoney(
           ((data?.greenFeeTaxPerPlayer ?? 0) +
             (data?.cartFeeTaxPerPlayer ?? 0)) *
-            amountOfPlayers
+          amountOfPlayers
         ),
         product_data: {
           metadata: {
@@ -240,7 +262,7 @@ export default function Checkout({
         display_price: formatMoney(
           ((data?.greenFeeTaxPerPlayer ?? 0) +
             (data?.cartFeeTaxPerPlayer ?? 0)) *
-            amountOfPlayers
+          amountOfPlayers
         ),
         product_data: {
           metadata: {
@@ -263,7 +285,7 @@ export default function Checkout({
         display_price: formatMoney(
           ((data?.greenFeeTaxPerPlayer ?? 0) +
             (data?.cartFeeTaxPerPlayer ?? 0)) *
-            amountOfPlayers
+          amountOfPlayers
         ),
         product_data: {
           metadata: {
@@ -449,8 +471,7 @@ export default function Checkout({
   const height =
     notificationsCount > 0 ? `${200 + notificationsCount * 80}px` : "200px";
 
-  const marginTop =
-    notificationsCount > 0 ? `mt-${notificationsCount * 6}` : "";
+  const marginTop = notificationsCount > 0 ? `${notificationsCount * 10}px` : "0";
 
   if (isError && error) {
     return (
@@ -466,10 +487,25 @@ export default function Checkout({
     );
   }
 
+  if (isErrorBookingCancelled) {
+    return (
+      <div
+        className={`flex justify-center flex-col items-center`}
+        style={{ height }}
+      >
+        <div className="text-center">Error: {errorMessage}</div>
+        <Link href="/" className="underline">
+          Return to home
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <>
       <div
-        className={`relative flex flex-col items-center gap-4 px-0 pb-8 md:px-8 ${marginTop}`}
+        className={`relative flex flex-col items-center gap-4 px-0 pb-8 md:px-8`}
+        style={{ marginTop }}
       >
         <div className="h-12 w-full "></div>
         <CheckoutBreadcumbs status={"checkout"} />
@@ -495,7 +531,8 @@ export default function Checkout({
                 exposureName: course?.name ?? "",
                 exposureLatitude: course?.latitude ?? 0,
                 exposureLongitude: course?.longitude ?? 0,
-                exposureTotalCoverageAmount: Number(data?.pricePerGolfer) * amountOfPlayers || 0
+                exposureTotalCoverageAmount:
+                  Number(data?.pricePerGolfer) * amountOfPlayers || 0,
               }}
               isSensibleInvalid={isSensibleInvalid}
               privacyPolicyAndTCByCourseUrl={privacyPolicyAndTCByCourseUrl}
@@ -522,7 +559,7 @@ export default function Checkout({
                 teeTimeDate={teeTimeData?.date}
                 playerCount={playerCount}
                 teeTimeData={data}
-                // maxReservation={maxReservation}
+              // maxReservation={maxReservation}
               />
             )}
           </div>

@@ -61,6 +61,9 @@ export const CheckoutItem = ({
     )
   );
 
+  const { data: coursePreviewImage } =
+    api.course.getCoursePreviewImage.useQuery({ courseId: courseId ?? "" });
+
   const { data: allowedPlayers } =
     api.course.getNumberOfPlayersByCourse.useQuery({
       courseId: courseId ?? "",
@@ -189,7 +192,7 @@ export const CheckoutItem = ({
     <div className="relative flex w-full flex-col gap-2 bg-secondary-white  pt-4 lg:rounded-lg">
       <div className="flex items-center gap-2 px-4 pb-4 lg:items-start">
         <BlurImage
-          src={placeholderImage.src}
+          src={coursePreviewImage ?? ""}
           width={placeholderImage.width}
           height={placeholderImage.height}
           alt="placeholder"
@@ -200,7 +203,13 @@ export const CheckoutItem = ({
             {isLoading ? (
               <div className="h-6 w-[50%] bg-gray-200 rounded-md  animate-pulse" />
             ) : (
-              formatTime(teeTime?.date ?? "", true, course?.timezoneCorrection)
+              <span className="text-[20px] ">
+                {formatTime(
+                  teeTime?.date ?? "",
+                  true,
+                  course?.timezoneCorrection
+                )}
+              </span>
             )}
           </div>
           <Data
@@ -457,7 +466,6 @@ const Data = ({
               (isSecondHand ? "another Golf District golfer." : soldByName)
             }
           />
-
           <p
             className={`text-${getTextColor(
               courseException?.displayType
@@ -501,7 +509,7 @@ const Data = ({
           )}
         </div>
         <div className="flex">
-          <div className="text-[20px] font-semibold text-secondary-black">
+          <div className="text-[18px] font-semibold text-secondary-black">
             {formatMoney(pricePerGolfer ?? 1 ?? 0)}
           </div>
           <div className="text-[16px] text-primary-gray">/golfer</div>

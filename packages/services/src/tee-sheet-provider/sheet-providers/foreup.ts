@@ -1019,7 +1019,19 @@ export class foreUp extends BaseProvider {
 
     return teeTime;
   }
-
+  async checkBookingIsCancelledOrNot(providerBookingId:string,providerCourseId:string,providerTeeSheetId:string,token:string){
+    let bookingIsDeleted=false;
+    const endpoint = this.getBasePoint();
+    const url = `${endpoint}/courses/${providerCourseId}/teesheets/${providerTeeSheetId}/bookings/${providerBookingId}`;
+    const headers = this.getHeaders(token);
+    const response = await fetch(url, { headers, method: "GET" });
+    const forUpResponse=await response.json();
+    // console.log("forUpResponse",forUpResponse);
+    if(forUpResponse.data.attributes.status ==="deleted"){
+      bookingIsDeleted=true;
+    }
+    return bookingIsDeleted;
+  }
   getBookingNameChangeOptions(customerDetails: NameChangeCustomerDetails): ForeUpBookingNameChangeOptions {
     const { name, providerBookingId, providerCustomerId } = customerDetails;
 
@@ -1067,6 +1079,9 @@ export class foreUp extends BaseProvider {
     const customerData = await response.json();
     return customerData.data as CustomerData;
   }
+
+
+
   requireToCreatePlayerSlots(): boolean {
     return true;
   }

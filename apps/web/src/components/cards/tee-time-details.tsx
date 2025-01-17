@@ -7,7 +7,7 @@ import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
 import { formatMoney, formatTime } from "~/utils/formatters";
 import { useRouter } from "next/navigation";
-import { useState, type ComponentProps, useEffect } from "react";
+import { useEffect, useState, type ComponentProps } from "react";
 import { toast } from "react-toastify";
 import { useCopyToClipboard } from "usehooks-ts";
 import { Avatar } from "../avatar";
@@ -105,7 +105,7 @@ export const TeeTimeDetails = ({
     if (numberOfPlayers?.length !== 0 && numberOfPlayers !== undefined) {
       setPlayers(String(numberOfPlayers[0]));
     }
-  }, [allowedPlayers])
+  }, [allowedPlayers]);
 
   if (isLoading) {
     return <Skeleton />;
@@ -117,7 +117,7 @@ export const TeeTimeDetails = ({
       {...props}
     >
       <div className="stroke flex flex-wrap justify-between gap-4 border-b px-4 py-3 md:gap-2 md:px-6 md:py-4">
-        <div className="text-lg font-semibold">
+        <div className="md:text-[20px] text-[18px] font-semibold">
           {isError || data === null ? (
             <div className="h-4" />
           ) : (
@@ -190,7 +190,7 @@ export const TeeTimeDetails = ({
           <div className="flex flex-col flex-wrap justify-between gap-2 md:flex-row">
             {data?.pricePerGolfer ? (
               <div className="flex items-center">
-                <div className="text-[20px] font-semibold text-secondary-black">
+                <div className="md:text-[18px] text-[16px] font-semibold text-secondary-black">
                   {formatMoney(data?.pricePerGolfer)}
                 </div>
                 <div className="text-[16px] text-primary-gray"> /golfer</div>

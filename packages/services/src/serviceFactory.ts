@@ -82,7 +82,7 @@ export interface ServiceConfig {
  * ```
  */
 export class ServiceFactory {
-  constructor(protected readonly config: ServiceConfig) {}
+  constructor(protected readonly config: ServiceConfig) { }
 
   /**
    * Returns an instance of HyperSwitchService with the provided API key.
@@ -114,7 +114,8 @@ export class ServiceFactory {
    * @returns An instance of SearchService.
    */
   getSearchService = (): SearchService => {
-    return new SearchService(this.config.database, this.getWeatherService(), this.getProviderService());
+    return new SearchService(this.config.database, this.getWeatherService(), this.getProviderService(), this.config.redisUrl,
+      this.config.redisToken);
   };
 
   /**

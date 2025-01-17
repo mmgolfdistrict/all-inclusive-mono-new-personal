@@ -33,6 +33,8 @@ import { ViewportList } from "react-viewport-list";
 import { useMediaQuery } from "usehooks-ts";
 import { LoadingContainer } from "./loader";
 import { microsoftClarityEvent } from "~/utils/microsoftClarityUtils";
+import { Close } from "~/components/icons/close";
+import { ForecastModal } from "~/components/modal/forecast-modal";
 
 dayjs.extend(Weekday);
 dayjs.extend(RelativeTime);
@@ -55,6 +57,8 @@ export default function CourseHomePage() {
   const [showDates, setShowDates] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isFirstRender, setIsFirstRender] = useState<boolean>(true);
+  const [isForecastModalOpen, setIsForecastModalOpen] =
+    useState<boolean>(false);
   const [take, setTake] = useState<number>(TAKE);
   const [pageNumber, setPageNumber] = useState<number>(1);
   const { user } = useUserContext();
@@ -431,9 +435,9 @@ export default function CourseHomePage() {
         category: "",
         label: "",
         value: "",
-        additionalContent:{
-           courseName: course?.name,
-           websiteURL: course?.websiteURL
+        additionalContent: {
+          courseName: course?.name,
+          websiteURL: course?.websiteURL
         }
       });
     }
@@ -510,6 +514,14 @@ export default function CourseHomePage() {
   const marginTop =
     notificationsCount > 0 ? `mt-${notificationsCount * 6}` : "";
 
+  const openForecastModal = () => {
+    setIsForecastModalOpen(true);
+  };
+
+  // Function to close the modal
+  const closeForecastModal = () => {
+    setIsForecastModalOpen(false);
+  };
   return (
     <main className={`bg-secondary-white py-4 md:py-6 ${marginTop}`}>
       <LoadingContainer isLoading={isLoadingTeeTimeDate || isLoading}>
@@ -548,7 +560,7 @@ export default function CourseHomePage() {
               setValue={handleSetSortValue}
               values={SortOptions}
             />
-            <Filters />
+            <Filters openForecastModal={openForecastModal} />
           </div>
         </div>
         <div className="fixed bottom-5 left-1/2 z-10 -translate-x-1/2 md:hidden">
@@ -558,8 +570,8 @@ export default function CourseHomePage() {
         <div className="flex w-full flex-col gap-1 md:gap-4 overflow-x-hidden pr-0 md:pr-6">
           <div
             className={`flex space-x-2 md:hidden px-4 ${scrollY > 333
-                ? "fixed top-[7.8rem] left-0 w-full z-10 bg-secondary-white pt-2 pb-3 shadow-md"
-                : "relative"
+              ? "fixed top-[7.8rem] left-0 w-full z-10 bg-secondary-white pt-2 pb-3 shadow-md"
+              : "relative"
               }`}
           >
             <button
@@ -630,8 +642,8 @@ export default function CourseHomePage() {
                   </div>
                   <FilledButton
                     className={`!px-3 !py-2 !min-w-fit !rounded-md ${pageNumber === amountOfPage
-                        ? "opacity-50 cursor-not-allowed"
-                        : ""
+                      ? "opacity-50 cursor-not-allowed"
+                      : ""
                       }`}
                     onClick={pageUp}
                     data-testid="chevron-up-id"
@@ -657,13 +669,18 @@ export default function CourseHomePage() {
         <MobileFilters
           setShowFilters={setShowFilters}
           toggleFilters={toggleFilters}
+          openForecastModal={openForecastModal}
         />
       )}
       {showDates && (
         <MobileDates
           setShowFilters={setShowDates}
           toggleFilters={toggleDates}
+          openForecastModal={openForecastModal}
         />
+      )}
+      {isForecastModalOpen && (
+        <ForecastModal closeForecastModal={closeForecastModal} startDate={startDate} endDate={endDate} />
       )}
     </main>
   );

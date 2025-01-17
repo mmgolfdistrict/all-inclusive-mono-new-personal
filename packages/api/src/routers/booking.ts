@@ -325,5 +325,12 @@ export const bookingRouter = createTRPCRouter({
       })
     ).mutation(async ({ctx,input})=>{
       return ctx.serviceFactory.getBookingService().checkIfUserIsOptMemberShip(ctx.session.user.id,input.bookingId)
+    }),
+    providerBookingStatus:protectedProcedure.input(
+    z.object({
+      listingId:z.string()
     })
+  ).query(async ({ctx,input})=>{
+     return ctx.serviceFactory.getBookingService().checkCancelledBookingFromProvider(input.listingId, ctx.session.user.id)
+  })
 });

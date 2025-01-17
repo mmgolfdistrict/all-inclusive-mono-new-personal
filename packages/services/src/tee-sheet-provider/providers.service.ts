@@ -64,7 +64,9 @@ export class ProviderService extends CacheService {
     courseId: string,
     providerCourseConfiguration?: string
   ): Promise<{ provider: ProviderAPI; token: string }> => {
+    debugger;
     this.logger.info(`getProvider called with providerId: ${internalProviderIdentifier}`);
+    debugger;
     const provider = this.teeSheetProviders.find((p) => p.providerId === internalProviderIdentifier);
     if (!provider) {
       this.logger.fatal(`Provider with ID ${internalProviderIdentifier} not found`);
@@ -353,6 +355,11 @@ export class ProviderService extends CacheService {
         throw new Error(`Error updating user id`);
       });
   }
+
+  async checkCancelledBooking(bookingProviderId:string,providerTeeTimeId:string,providerCourseId:string,providerInternalId:string,courseId:string,providerCourseConfiguration:string){
+    const {provider,token}= await this.getProviderAndKey(providerInternalId,courseId,providerCourseConfiguration);
+    return provider.checkBookingIsCancelledOrNot(bookingProviderId,providerCourseId,providerTeeTimeId,token,providerInternalId,courseId,providerCourseConfiguration);
+  } 
 
   searchCustomerViaEmail = async (email:string,providerInternalIdentifier:string,providerCourseId:string,providerTeeSheetId:string,providerCourseConfiguration:string)=>{
     const { provider,token } = await this.getProviderAndKey(providerInternalIdentifier,providerCourseId,providerCourseConfiguration);
