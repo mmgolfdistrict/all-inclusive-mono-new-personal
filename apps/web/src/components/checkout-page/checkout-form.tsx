@@ -736,7 +736,6 @@ export const CheckoutForm = ({
             )
           );
         }
-        console.log("donation", donation);
 
         setDonateValue(donation);
         setRoundOffStatus("roundup");
