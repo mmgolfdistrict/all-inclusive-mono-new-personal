@@ -15,7 +15,7 @@ export const bookingslots = mySqlTable("bookingSlots", {
     sql`CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)`
   ),
   createdDateTime: datetime("createdDateTime", { mode: "string", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
-  //providerCourseMembershipId:varchar("providerCourseMembershipId",{length:36})
+  providerCourseMembershipId:varchar("providerCourseMembershipId",{length:36})
 });
 
 export type InsertBookingSlots = InferSelectModel<typeof bookingslots>;

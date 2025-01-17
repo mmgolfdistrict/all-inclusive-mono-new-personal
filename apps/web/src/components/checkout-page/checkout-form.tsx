@@ -582,6 +582,7 @@ export const CheckoutForm = ({
       redirectHref,
       courseMembershipId: validatePlayers[0]?.courseMemberShipId ?? "",
       playerCountForMemberShip: playerCount ?? "",
+      providerCourseMembershipId:validatePlayers[0]?.providerCourseMembershipId ?? "",
     });
     return bookingResponse;
   };

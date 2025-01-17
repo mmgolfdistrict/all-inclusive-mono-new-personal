@@ -13,6 +13,8 @@ import { Fragment, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import placeholderImage from "../../../public/placeholders/course.png";
 import { Avatar } from "../avatar";
+import { CheckedIcon } from "../icons/checked";
+import { LoaderIcon } from "../icons/loader";
 import { OutlineClub } from "../icons/outline-club";
 import { BlurImage } from "../images/blur-image";
 import { ChoosePlayers } from "../input/choose-players";
@@ -44,7 +46,12 @@ export const CheckoutItem = ({
     validatePlayers,
   } = useCheckoutContext();
   const [membershipStatus, setMembershipStatus] = useState("no_membership");
-
+  const [courseMemberships, setCourseMembership] = useState<
+    { id: string; name: string }[]
+  >([]);
+  const [isCustomerValidated, setIsCustomerValidated] = useState<number | null>(
+    null
+  );
   const { course } = useCourseContext();
   const { user } = useUserContext();
   const courseId = course?.id;
@@ -53,25 +60,27 @@ export const CheckoutItem = ({
       index === 0 ? user?.email : ""
     )
   );
+
   const { data: allowedPlayers } =
     api.course.getNumberOfPlayersByCourse.useQuery({
       courseId: courseId ?? "",
       time: teeTime?.time,
       date: teeTime?.date ?? "",
     });
+
   const { data: isSupportMemberShip } = api.course.getCourseById.useQuery({
     courseId: courseId ?? "",
   });
-  // const { data: searchCustomer, refetch: refetchSearchCustomerViaEmail } =
-  //   api.checkout.searchCustomerViaEmail.(
-  //     {
-  //       email: memberEmail ?? "",
-  //       teeTimeId: teeTimeId ?? "",
-  //     },
-  //     {
-  //       enabled: false,
-  //     }
-  //   );
+
+  const { data: getAllCourseMemberships } =
+    api.checkout.getAllCourseMembership.useQuery({});
+  useEffect(() => {
+    console.log("getAllCourseMemberships", getAllCourseMemberships);
+    if (getAllCourseMemberships) {
+      setCourseMembership(getAllCourseMemberships);
+    }
+  }, [getAllCourseMemberships]);
+
   const searchCustomerByEmail =
     api.checkout.searchCustomerViaEmail.useMutation();
   const numberOfPlayers = allowedPlayers?.numberOfPlayers;
@@ -132,6 +141,7 @@ export const CheckoutItem = ({
     try {
       if (email == "") {
         toast.error("email is required");
+        setIsCustomerValidated(null);
         return;
       }
       const isDuplicate = validatePlayers.some(
@@ -139,8 +149,10 @@ export const CheckoutItem = ({
       );
       if (isDuplicate) {
         toast.error("this email is already validated");
+        setIsCustomerValidated(null);
         return;
       }
+      setIsCustomerValidated(index);
       const result = await searchCustomerByEmail.mutateAsync({
         email: email,
         teeTimeId: teeTimeId ?? "",
@@ -154,12 +166,15 @@ export const CheckoutItem = ({
             playerEmail: email,
             playerIndex: index,
             courseMemberShipId: result.providerCourseMembership,
+            providerCourseMemberShipId:result.providerCourseMembershipId
           },
         ]);
         toast.success(result.message);
+        setIsCustomerValidated(null);
         return;
       } else {
         toast.error(result.message);
+        setIsCustomerValidated(null);
         return;
       }
     } catch (error) {
@@ -234,12 +249,23 @@ export const CheckoutItem = ({
                   value={membershipStatus}
                   onChange={handleChangeMemberShipStatus}
                 >
-                  <option value="no_membership">No Membership</option>
-                  <option value="membership">Membership</option>
+                  {courseMemberships.length === 0 ? (
+                    <Fragment>
+                      <option value="no_membership">
+                        No Membership Available
+                      </option>
+                    </Fragment>
+                  ) : (
+                    courseMemberships.map((membership) => (
+                      <option key={membership.id} value={membership.id}>
+                        {membership.name}
+                      </option>
+                    ))
+                  )}
                 </select>
               </div>
-              <div className="flex flex-wrap gap-3 p-2">
-                {membershipStatus === "no_membership" ? null : (
+              <div className="flex flex-wrap justify-between gap-4 p-2">
+                {courseMemberships.length === 0 ? null : (
                   <Fragment>
                     {Array.from({ length: Number(playerCount) }, (_, index) => (
                       <div className="flex gap-2 justify-center items-center">
@@ -262,7 +288,10 @@ export const CheckoutItem = ({
                         />
                         {validatePlayers[index]?.isValidPlayer ? (
                           <Fragment>
-                            <p>validated</p>
+                            <p className="flex items-center text-sm gap-1">
+                              <CheckedIcon className="text-green-600" />
+                              validated{" "}
+                            </p>
                           </Fragment>
                         ) : (
                           <Fragment>
@@ -273,9 +302,14 @@ export const CheckoutItem = ({
                                   playerEmails[index] ?? ""
                                 )
                               }
-                              className="bg-primary px-3 py-1 rounded-[20px] text-white text-sm"
+                              disabled={isCustomerValidated === index}
+                              className="bg-primary px-3 py-1 rounded-[20px] text-white text-sm min-w-[100px] flex items-center justify-center "
                             >
-                              Validate
+                              {isCustomerValidated === index ? (
+                                <LoaderIcon className="w-3 h-3" />
+                              ) : (
+                                "Validate"
+                              )}
                             </button>
                           </Fragment>
                         )}

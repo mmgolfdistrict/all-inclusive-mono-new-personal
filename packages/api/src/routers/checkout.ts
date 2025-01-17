@@ -94,4 +94,9 @@ export const checkoutRouter = createTRPCRouter({
         .getCheckoutService()
         .searchCustomerAndValidate(ctx.session.user.id, input.teeTimeId, input.email);
     }),
+    getAllCourseMembership:protectedProcedure.input(
+    z.object({})
+  ).query(async ({ctx})=>{
+     return await ctx.serviceFactory.getCheckoutService().getAllCourseMembership()
+  })
 });

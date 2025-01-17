@@ -191,9 +191,14 @@ export default function Checkout({
         name: "Golf District Tee Time",
         id: teeTimeId ?? data?.teeTimeId,
         price:
-          debouncedPromoCode && promoCodePrice !== undefined
-            ? promoCodePrice * 100
-            : Number(data?.pricePerGolfer * 100) * (amountOfPlayers - validatePlayers.length), //int
+        (() => {
+          const calculatedPrice =
+            debouncedPromoCode && promoCodePrice !== undefined
+              ? promoCodePrice * 100
+              : Number(data?.pricePerGolfer * 100) * (amountOfPlayers - validatePlayers.length);
+    
+          return calculatedPrice === 0 ? 1 : calculatedPrice; // If price is 0, return 1
+        })(), //int
         image: "", //
         currency: "USD", //USD
         display_price:

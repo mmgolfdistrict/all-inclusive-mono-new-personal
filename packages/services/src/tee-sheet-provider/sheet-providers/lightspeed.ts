@@ -563,6 +563,7 @@ export class Lightspeed extends BaseProvider {
         _providerId: string,
         _courseId: string,
         providerSlotIds?: string[],
+        providerCourseMembershipId?: string
     ) {
         const bookingSlots: {
             id: string;
@@ -574,6 +575,7 @@ export class Lightspeed extends BaseProvider {
             slotPosition: number;
             lastUpdatedDateTime: string | null;
             createdDateTime: string | null;
+            providerCourseMembershipId?: string | null;
         }[] = [];
 
         for (let i = 0; i < slots; i++) {
@@ -587,6 +589,7 @@ export class Lightspeed extends BaseProvider {
                 slotPosition: i + 1,
                 lastUpdatedDateTime: null,
                 createdDateTime: null,
+                providerCourseMembershipId: providerCourseMembershipId ?? null,
             });
         }
         return bookingSlots;

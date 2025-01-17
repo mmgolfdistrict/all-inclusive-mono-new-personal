@@ -151,7 +151,8 @@ export interface ProviderAPI {
     providerBookingId: string | string[],
     providerId: string,
     courseId: string,
-    providerSlotIds?: string[]
+    providerSlotIds?: string[],
+    providerCourseMembershipId?:string
   ) => Promise<InsertBookingSlots[]>;
   shouldAddSaleData: () => boolean;
   getSalesDataOptions: (reservationData: BookingResponse, bookingDetails: BookingDetails) => SalesDataOptions;
@@ -238,7 +239,8 @@ export abstract class BaseProvider implements ProviderAPI {
     providerBookingId: string | string[],
     providerId: string,
     courseId: string,
-    providerSlotIds?: string[]
+    providerSlotIds?: string[],
+    providerCourseMembershipId?: string
   ): Promise<InsertBookingSlots[]>
   abstract shouldAddSaleData(): boolean;
   abstract getSalesDataOptions(reservationData: BookingResponse, bookingDetails: BookingDetails): SalesDataOptions;

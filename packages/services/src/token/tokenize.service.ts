@@ -161,6 +161,7 @@ export class TokenizeService {
     needRentals,
     courseMembershipId,
     playerCountForMemberShip,
+    providerCourseMembershipId,
   }: {
     redirectHref: string;
     userId: string;
@@ -197,7 +198,8 @@ export class TokenizeService {
       additionalNoteFromUser?: string,
       needRentals: boolean,
       courseMembershipId?:string,
-      playerCountForMemberShip:string
+      playerCountForMemberShip?:string,
+      providerCourseMembershipId?:string
   }): Promise<BookingTypes> {
     this.logger.info(`tokenizeBooking tokenizing booking id: ${providerTeeTimeId} for user: ${userId}`);
     //@TODO add this to the transaction
@@ -424,7 +426,8 @@ export class TokenizeService {
         providerBookingId,
         provider.providerId,
         existingTeeTime.courseId,
-        providerBookingIds
+        providerBookingIds,
+        providerCourseMembershipId
       )) ?? [];
 
     console.log(`Looping through and updating the booking slots.`);

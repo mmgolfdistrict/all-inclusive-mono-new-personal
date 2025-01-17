@@ -1207,13 +1207,14 @@ export class CheckoutService {
       return {
         isValidated: false,
         providerCourseMembership: "",
-        message: "this email not found in provider",
+        message: "This Customer is not registered for Loyalty",
       };
     }
     const checkingGroupsLoyalty = await this.database
       .select({
         name: providerCourseMembership.name,
         courseMemberShipId: courseMembership.id,
+        providerCourseMembershipId: providerCourseMembership.id,
       })
       .from(courseMembership)
       .leftJoin(
@@ -1224,7 +1225,7 @@ export class CheckoutService {
     console.log("checkingGroupsLoyalty", checkingGroupsLoyalty);
     //this is will change currently dummy values
     const dummyCreatedAnswer = result.map((item: any) => {
-      item.attributes.groups = ["ace", "loyalty"];
+      item.attributes.groups = ["Ace", "Loyalty"];
       return item;
     });
     // add validation for groups if they are empty
@@ -1234,7 +1235,19 @@ export class CheckoutService {
     return {
       isValidated: anyIncluded,
       providerCourseMembership: checkingGroupsLoyalty[0]?.courseMemberShipId,
+      providerCourseMembershipId: checkingGroupsLoyalty[0]?.providerCourseMembershipId,
       message: "User Validated successfully",
     };
   };
+  getAllCourseMembership = async () => {
+    const courseMemberShipResult = await this.database
+      .select({
+        id: courseMembership.id,
+        name: courseMembership.name,
+      })
+      .from(courseMembership);
+    console.log("providerCourseMemberShipResult",courseMemberShipResult);
+    return courseMemberShipResult || [];
+  };
+  
 }

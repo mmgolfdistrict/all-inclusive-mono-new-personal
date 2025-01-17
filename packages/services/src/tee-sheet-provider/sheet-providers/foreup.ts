@@ -703,7 +703,8 @@ export class foreUp extends BaseProvider {
     customerId: string,
     providerBookingId: string | string[],
     _providerId: string,
-    _courseId: string
+    _courseId: string,
+    providerCourseMembershipId: string
   ) {
     const bookingSlots: {
       id: string;
@@ -715,6 +716,7 @@ export class foreUp extends BaseProvider {
       slotPosition: number;
       lastUpdatedDateTime: string | null;
       createdDateTime: string | null;
+      providerCourseMembershipId: string | null;
     }[] = [];
     for (let i = 0; i < slots; i++) {
       bookingSlots.push({
@@ -727,6 +729,7 @@ export class foreUp extends BaseProvider {
         slotPosition: i + 1,
         lastUpdatedDateTime: null,
         createdDateTime: null,
+        providerCourseMembershipId: providerCourseMembershipId,
       });
     }
     return bookingSlots;

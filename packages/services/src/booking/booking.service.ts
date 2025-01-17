@@ -3263,7 +3263,8 @@ export class BookingService {
     needRentals: boolean,
     redirectHref: string,
     courseMembershipId: string,
-    playerCountForMemberShip: string
+    playerCountForMemberShip: string,
+    providerCourseMembershipId:string
   ) => {
     let bookingStage = "Normalizing Cart Data";
     const {
