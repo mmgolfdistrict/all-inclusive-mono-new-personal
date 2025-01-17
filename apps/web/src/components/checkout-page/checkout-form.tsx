@@ -720,7 +720,7 @@ export const CheckoutForm = ({
 
   useEffect(() => {
     if (!hasUserSelectedDonation) {
-      if (primaryGreenFeeCharge <= 5) {
+      if (primaryGreenFeeCharge <= 200) {
         // setDonateValue(
         //   Math.ceil(primaryGreenFeeCharge) - primaryGreenFeeCharge
         // );
@@ -740,7 +740,7 @@ export const CheckoutForm = ({
 
         setDonateValue(donation);
         setRoundOffStatus("roundup");
-      } else if (primaryGreenFeeCharge >= 6 && primaryGreenFeeCharge <= 10) {
+      } else if (primaryGreenFeeCharge >= 201 && primaryGreenFeeCharge <= 500) {
         console.log("donation 1");
         setDonateValue(2);
         setRoundOffStatus("twoDollars");
