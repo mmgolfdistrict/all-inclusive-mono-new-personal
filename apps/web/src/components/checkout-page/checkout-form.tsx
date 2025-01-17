@@ -14,7 +14,7 @@ import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
 import type { CartProduct } from "~/utils/types";
 import { useParams, useRouter } from "next/navigation";
 import type { Dispatch, SetStateAction } from "react";
-import { Fragment, useEffect, useState, type FormEvent } from "react";
+import { Fragment, useEffect, useRef, useState, type FormEvent } from "react";
 import { toast } from "react-toastify";
 import { useMediaQuery } from "usehooks-ts";
 import { FilledButton } from "../buttons/filled-button";
@@ -67,8 +67,10 @@ export const CheckoutForm = ({
   const courseId = course?.id;
   const roundUpCharityId = course?.roundUpCharityId;
   const [isExpanded, setIsExpanded] = useState(false);
+  const [TotalAmount, setTotalAmount] = useState("");
+  const [isLoadingTotalAmount, setIsLoadingTotalAmount] = useState(false);
   const isMobile = useMediaQuery("(max-width: 768px)");
-
+  const cartDataRef = useRef(cartData);
   const handleToggle = () => {
     setIsExpanded(!isExpanded);
   };
@@ -236,6 +238,7 @@ export const CheckoutForm = ({
   const [charityAmountError, setCharityAmountError] = useState("");
   const [needRentals, setNeedRentals] = useState(false);
   const [additionalNote, setAdditionalNote] = useState("");
+ 
   // const [customerID, setCustomerID] = useState("");
   const {
     promoCode,
@@ -602,9 +605,9 @@ export const CheckoutForm = ({
 
   const handleDonateChange = (event) => {
     const value = event.target.value.trim() as string;
-    const numericValue = parseFloat(value)
+    const numericValue = parseFloat(value);
     // setNoThanks(false);
-     // const numericValue = value.length > 0 ? parseFloat(value) : 0;
+    // const numericValue = value.length > 0 ? parseFloat(value) : 0;
     if (!numericValue || numericValue === 0) {
       setOtherDonateValue(event?.target?.value as number);
       setDonateError(true);
@@ -705,6 +708,17 @@ export const CheckoutForm = ({
       handleRoundOff();
     }
   }, [TaxCharge]);
+
+  useEffect(() => {
+    cartDataRef.current = cartData;
+    setIsLoadingTotalAmount(true);
+    setTimeout(() => {
+      setTotalAmount(
+        TotalAmt
+      );
+      setIsLoadingTotalAmount(false);
+    }, 3000)
+  }, [TotalAmt,cartData]);
   return (
     <form onSubmit={handleSubmit} className="">
       <UnifiedCheckout id="unified-checkout" options={unifiedCheckoutOptions} />
@@ -849,20 +863,12 @@ export const CheckoutForm = ({
               </div>
             )}
             <div className="flex justify-between">
-              <div>Total</div>
-              <div className="unmask-price">
-                $
-                {(
-                  (roundUpCharityId
-                    ? roundOffClick
-                      ? roundOff
-                      : Number(TotalAmt)
-                    : TotalAmt) || 0
-                ).toLocaleString("en-US", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
-              </div>
+              {isLoadingTotalAmount ? (<Fragment>
+                <div className="w-full h-6 bg-gray-200 animate-pulse"></div>
+              </Fragment>):(<Fragment>
+                <div>Total</div>
+                <div>${TotalAmount}</div>
+              </Fragment>)}
             </div>
           </Fragment>
         ) : (
