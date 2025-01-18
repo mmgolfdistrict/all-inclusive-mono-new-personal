@@ -49,6 +49,7 @@ export const bookings = mySqlTable(
     totalCartFeeTaxAmount: int("totalCartFeeTaxAmount").notNull().default(0),
     totalWeatherGuaranteeTaxAmount: int("totalWeatherGuaranteeTaxAmount").notNull().default(0),
     totalMarkupFeeTaxAmount: int("totalMarkupFeeTaxAmount").notNull().default(0),
+    source: varchar("source", { length: 50 }).default(""),
     customerComment: varchar("customerComment", { length: 200 }),
     needClubRental: boolean("needClubRental").default(false).notNull(),
     },

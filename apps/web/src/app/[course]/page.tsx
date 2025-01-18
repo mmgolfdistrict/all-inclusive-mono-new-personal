@@ -32,6 +32,7 @@ import { toast } from "react-toastify";
 import { ViewportList } from "react-viewport-list";
 import { useMediaQuery } from "usehooks-ts";
 import { LoadingContainer } from "./loader";
+import { useBookingSourceContext } from "~/contexts/BookingSourceContext";
 import { microsoftClarityEvent } from "~/utils/microsoftClarityUtils";
 import { Close } from "~/components/icons/close";
 import { ForecastModal } from "~/components/modal/forecast-modal";
@@ -47,6 +48,7 @@ export default function CourseHomePage() {
   const queryStartTime = searchParams.get("startTime");
   const queryEndTime = searchParams.get("endTime");
   const queryPlayerCount = searchParams.get("playerCount");
+  const source = searchParams.get("source");
 
   const TAKE = 4;
   const ref = useRef<HTMLDivElement | null>(null);
@@ -63,6 +65,8 @@ export default function CourseHomePage() {
   const [pageNumber, setPageNumber] = useState<number>(1);
   const { user } = useUserContext();
   const { course } = useCourseContext();
+  const { setBookingSource } = useBookingSourceContext();
+
   const {
     showUnlisted,
     includesCart,
@@ -472,6 +476,10 @@ export default function CourseHomePage() {
   };
 
   useEffect(() => {
+    if (source) {
+      setBookingSource(source.slice(0, 50));
+      sessionStorage.setItem("source", source.slice(0, 50));
+    }
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);

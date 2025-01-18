@@ -27,6 +27,7 @@ import { CheckoutAccordionRoot } from "./checkout-accordian";
 import CheckoutItemAccordion from "./checkout-item-accordian";
 import styles from "./checkout.module.css";
 import type { NextAction } from "./hyper-switch";
+import { useBookingSourceContext } from "~/contexts/BookingSourceContext";
 
 type charityData = {
   charityDescription: string | undefined;
@@ -74,6 +75,7 @@ export const CheckoutForm = ({
   };
 
   const { user } = useUserContext();
+  const { bookingSource, setBookingSource } = useBookingSourceContext();
   const auditLog = api.webhooks.auditLog.useMutation();
   const sendEmailForFailedPayment =
     api.webhooks.sendEmailForFailedPayment.useMutation();
@@ -536,6 +538,8 @@ export const CheckoutForm = ({
           }
 
           setMessage("Payment Successful");
+          setBookingSource("");
+          sessionStorage.removeItem("source");
           if (isBuyNowAuction) {
             router.push(`/${course?.id}/auctions/confirmation`);
           } else {
@@ -573,6 +577,7 @@ export const CheckoutForm = ({
       cartId,
       payment_id,
       sensibleQuoteId,
+      source: bookingSource ? bookingSource : sessionStorage.getItem("source") ?? "",
       additionalNoteFromUser: additionalNote,
       needRentals,
       redirectHref,
@@ -592,6 +597,7 @@ export const CheckoutForm = ({
       cartId,
       listingId,
       payment_id,
+      source: bookingSource ? bookingSource : sessionStorage.getItem("source") ?? "",
       additionalNoteFromUser: additionalNote,
       needRentals,
       redirectHref,
