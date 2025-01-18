@@ -17,6 +17,7 @@ import { loggerService } from "../webhooks/logging.service";
 
 interface EmailParams {
   CustomerFirstName?: string;
+  CustomerName?: string;
   CourseName?: string;
   GolfDistrictReservationID?: string;
   CourseReservationID?: string;
@@ -205,7 +206,9 @@ export class NotificationService {
               attachments,
             }),
           });
-          throw new Error(`Failed to send email to: ${email.toString()}, Response: ${JSON.stringify(response)}`);
+          throw new Error(
+            `Failed to send email to: ${email.toString()}, Response: ${JSON.stringify(response)}`
+          );
         });
     } else {
       const response = await this.sendGridClient
@@ -234,7 +237,9 @@ export class NotificationService {
               attachments,
             }),
           });
-          throw new Error(`Failed to send email to: ${email.toString()}, Response: ${JSON.stringify(response)}`);
+          throw new Error(
+            `Failed to send email to: ${email.toString()}, Response: ${JSON.stringify(response)}`
+          );
         });
     }
   };

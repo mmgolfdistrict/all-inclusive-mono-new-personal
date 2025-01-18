@@ -96,6 +96,7 @@ export type FullCourseType = {
   roundUpCharityId?: string
   internalId?: string | null;
   supportsPlayerNameChange: boolean;
+  websiteURL: string;
 };
 
 export type SupportedCharity = {

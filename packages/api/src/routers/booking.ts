@@ -317,4 +317,11 @@ export const bookingRouter = createTRPCRouter({
         .getBookingService()
         .checkIfTeeTimeAvailableOnProvider(input.teeTimeId, input.golfersCount, ctx.session.user.id);
     }),
+    providerBookingStatus:protectedProcedure.input(
+    z.object({
+      listingId:z.string()
+    })
+  ).query(async ({ctx,input})=>{
+     return ctx.serviceFactory.getBookingService().checkCancelledBookingFromProvider(input.listingId, ctx.session.user.id)
+  })
 });

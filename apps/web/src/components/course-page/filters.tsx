@@ -1,14 +1,18 @@
 "use client";
 
 import * as ToggleGroup from "@radix-ui/react-toggle-group";
+import type {
+  Dispatch,
+  SetStateAction
+} from "react";
 import {
   forwardRef,
   Fragment,
-  type ReactNode,
   useEffect,
   useImperativeHandle,
   useMemo,
   useState,
+  type ReactNode,
 } from "react";
 import { Switch } from "../buttons/switch";
 import { Hidden } from "../icons/hidden";
@@ -25,6 +29,7 @@ import { debounceFunction } from "~/utils/debounce";
 import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
 import Image from "next/image";
 import { useMediaQuery } from "usehooks-ts";
+import { Forecast } from "../icons/forecast";
 
 interface DayValue {
   year: number;
@@ -37,6 +42,10 @@ interface DayValue {
 
 interface ChildComponentRef {
   getChildValue: () => void;
+}
+interface FiltersProps {
+  openForecastModal: () => void;
+  setShowFilters?: Dispatch<SetStateAction<boolean>> | undefined;
 }
 
 const HoleOptions = ["Any", "18", "9"];
@@ -59,7 +68,8 @@ const maximumDate = {
 
 // const disabledDays = getDisabledDays(minimumDate);
 
-export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
+export const Filters = forwardRef<ChildComponentRef, FiltersProps>((props, ref) => {
+  const { openForecastModal, setShowFilters } = props;
   const {
     dateType,
     setDateType,
@@ -84,8 +94,8 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
   const [holeMobile, setHoleMobile] = useState(holes);
   const [golferMobile, setGolferMobile] = useState(golfers);
   const [selectedDayMobile, setSelectedDayMobile] = useState(selectedDay);
-
   const isMobile = useMediaQuery("(max-width: 768px)");
+  console.log("sadsada", dateType);
 
   // const { data } = api.searchRouter.findBlackoutDates.useQuery(
   //   { courseId: course?.id ?? "" },
@@ -93,6 +103,7 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
   // );
 
   // console.log(data,"blackOutDaysblackOutDaysblackOutDaysblackOutDaysblackOutDaysblackOutDays")
+
 
   const highestPrice = useMemo(() => {
     if (!course) return 0;
@@ -152,7 +163,7 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
     const day = dateObj?.day;
     const month = months[dateObj?.month - 1];
 
-    return `${month}-${day}`;
+    return `${month} ${day}`;
   };
 
   useImperativeHandle(ref, () => ({
@@ -269,10 +280,28 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
     minute: date.getMinutes(),
     second: date.getSeconds(),
   });
+
+  const forecastModalIcon = () => {
+    if (setShowFilters) {
+      setShowFilters(false)
+    }
+    openForecastModal();
+  }
+
   return (
     <div className="flex flex-col gap-4 pr-1">
       <section className="flex flex-col gap-2">
-        <div>Date</div>
+        <div className="flex items-center justify-between">
+          <div>
+            Date
+          </div>
+          {
+            dateType !== "Today" &&
+            <div className="cursor-pointer" onClick={forecastModalIcon}>
+              <Forecast className="cursor-pointer" height="16px" width="16px" />
+            </div>
+          }
+        </div>
         <ToggleGroup.Root
           type="single"
           value={isMobile ? dateTypeMobile : dateType}
@@ -345,7 +374,7 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
               {(dateTypeMobile === "Custom" || dateType === "Custom") &&
                 value === "Custom" ? (
                 <>
-                  <div className="custom_calendar">
+                  <div className="custom_calendar unmask-time">
                     <Calendar
                       value={isMobile ? selectedDayMobile : selectedDay}
                       calendarClassName="responsive-calendar"
@@ -391,7 +420,7 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
       <section className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
           <div>Start Time</div>
-          <div>
+          <div className="unmask-time">
             {isMobile
               ? startTimeOptions[
                 startTimeOptions.findIndex((i) => i.value === timeMobile[0])
@@ -633,7 +662,7 @@ export const Item = ({
   return (
     <ToggleGroup.Item
       value={value}
-      className={`bg-white flex items-center px-4 py-2 text-left text-[14px] text-primary-gray transition-colors data-[state=on]:bg-primary data-[state=on]:text-white ${className ?? ""
+      className={`bg-white flex items-center px-4 py-2 text-left text-[14px] text-primary-gray transition-colors data-[state=on]:bg-primary data-[state=on]:text-white unmask-players ${className ?? ""
         }`}
       data-testid={dataTestId}
       data-qa={dataQa}

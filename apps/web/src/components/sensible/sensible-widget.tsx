@@ -10,7 +10,6 @@ export const SensibleWidget = memo(
   }: {
     sensibleDataToMountComp: SensibleDataToMountCompType;
   }) => {
-    const isWidgetInitialized = React.useRef(false);
     const [sensibleFilesLoaded, setSensibleFilesLoaded] = useState({
       module: false,
       noModule: false,
@@ -70,7 +69,7 @@ export const SensibleWidget = memo(
     }, []);
 
     useEffect(() => {
-      if (isNaN(sensibleDataToMountComp.exposureTotalCoverageAmount) ||  isWidgetInitialized.current) {
+      if (isNaN(sensibleDataToMountComp.exposureTotalCoverageAmount)) {
         return;
       }
       if (
@@ -135,7 +134,6 @@ export const SensibleWidget = memo(
           handleShouldAddSensible(false);
         });
       }
-      isWidgetInitialized.current = true;
     }, [sensibleFilesLoaded, sensibleDataToMountComp, localData]);
 
     const sensibleFilesReady =
