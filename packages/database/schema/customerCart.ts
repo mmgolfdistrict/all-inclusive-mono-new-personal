@@ -20,6 +20,7 @@ export const customerCarts = mySqlTable(
     lastUpdatedDateTime: datetime("lastUpdatedDateTime", { mode: "string", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)`)
       .notNull(),
+    ipinfoJSON: varchar("ipinfoJSON", { length: 2048 }),
   },
   (table) => {
     return {

@@ -6,7 +6,7 @@ export const checkoutRouter = createTRPCRouter({
   buildCheckoutSession: protectedProcedure.input(CustomerCartSchema).mutation(async ({ ctx, input }) => {
     return await ctx.serviceFactory
       .getCheckoutService()
-      .buildCheckoutSession(ctx.session.user.id, input, input.cartId);
+      .buildCheckoutSession(ctx.session.user.id, input, input.cartId, ctx.session?.ip);
   }),
   retrievePaymentMethods: protectedProcedure
     .input(
