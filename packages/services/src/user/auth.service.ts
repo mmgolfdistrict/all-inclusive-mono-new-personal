@@ -9,6 +9,7 @@ import { CacheService } from "../infura/cache.service";
 import type { NotificationService } from "../notification/notification.service";
 import { userSession } from "@golf-district/database/schema/userSession";
 import { randomUUID } from "crypto";
+import type { IpInfoService } from "../ipinfo/ipinfo.service";
 
 export class AuthService extends CacheService {
   /**
@@ -19,6 +20,7 @@ export class AuthService extends CacheService {
   constructor(
     private readonly database: Db,
     private readonly notificationService: NotificationService,
+    private readonly ipInfoService: IpInfoService,
     redisUrl: string,
     redisToken: string
   ) {
@@ -86,11 +88,18 @@ export class AuthService extends CacheService {
       });
   };
 
-  addUserSession = async (userId: string, status: string, courseId: string, loginMethod: string, ip?: string, userAgent?: string) => {
-
+  addUserSession = async (
+    userId: string,
+    status: string,
+    courseId: string,
+    loginMethod: string,
+    ip?: string,
+    userAgent?: string
+  ) => {
     console.log("loginMethod", loginMethod);
 
     try {
+      const ipInfo = await this.ipInfoService.getIpInfo(ip);
       await this.database
         .insert(userSession)
         .values({
@@ -100,7 +109,8 @@ export class AuthService extends CacheService {
           userAgent: userAgent,
           status: status,
           courseId: courseId,
-          loginMethod: loginMethod
+          loginMethod: loginMethod,
+          ipinfoJSON: ipInfo,
         })
         .execute();
     } catch (error) {
@@ -154,9 +164,18 @@ export class AuthService extends CacheService {
     const valid = await bcrypt.compare(password, data.user.gdPassword);
     // console.log("Bcrypt compare");
     if (!valid) {
-      this.logger.warn(`Invalid password: ${handleOrEmail}`);
+      this.logger.warn(`Invalid password of email: ${handleOrEmail}`);
       if (process.env.NODE_ENV !== "production") {
-        throw new Error("Invalid password");
+        return {
+          id: "",
+          email: data.user.email,
+          image: "",
+          name: "",
+          phoneNumber: "",
+          profilePicture: "",
+          error: true,
+          message: "Invalid password",
+        };
       }
 
       const signInAttempts = await this.incrementOrSetKey(`signinAttempts:${data.user.id}`);
@@ -168,8 +187,16 @@ export class AuthService extends CacheService {
           `We have detected suspicious activity on your account. If you are not the one attempting to login, please contact support immediately.`
         );
       }
-
-      return null;
+      return {
+        id: "",
+        email: data.user.email,
+        image: "",
+        name: "",
+        phoneNumber: "",
+        profilePicture: "",
+        error: true,
+        message: "Invalid password",
+      };
     }
     this.logger.warn(`Password Verified`);
 

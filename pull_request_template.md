@@ -37,3 +37,8 @@
 
     If Yes, please list them below with their variable names and the values we need to add:
     If no variables need to be added to the application settings then please type N/A.
+
+### Additional Details That We Need to Deploy?: Yes / No
+
+    If Yes, please enter them below:
+    If no remove this.
