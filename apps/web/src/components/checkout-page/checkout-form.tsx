@@ -61,6 +61,7 @@ export const CheckoutForm = ({
   roundOffStatus: string | undefined;
   setRoundOffStatus: Dispatch<SetStateAction<string>>;
 }) => {
+  console.log("cart-data", cartData);
   const MAX_CHARITY_AMOUNT = 1000;
   const { course } = useCourseContext();
   const { shouldAddSensible } = useCheckoutContext();
@@ -204,11 +205,11 @@ export const CheckoutForm = ({
     wallets: {
       walletReturnUrl: isBuyNowAuction
         ? `${window.location.origin}/${course?.id}/auctions/confirmation`
-        : `${window.location.origin}/${course?.id}/checkout/processing?teeTimeId=${teeTimeId}&cart_id=${cartId}&listing_id=${listingId}`,
+        : `${window.location.origin}/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}`,
       applePay: "auto",
       googlePay: "auto",
     },
-    paymentMethodOrder: ["card", "google_pay", "apple_pay", "paypal"],
+    paymentMethodOrder: ["card", "google_pay", "apple_pay"],
     billingAddress: {
       isUseBillingAddress: true,
       usePrefilledValues: "never", // or "auto",
@@ -254,7 +255,6 @@ export const CheckoutForm = ({
     amountOfPlayers,
   } = useCheckoutContext();
 
-
   const reserveBookingApi = api.teeBox.reserveBooking.useMutation();
   const reserveSecondHandBookingApi =
     api.teeBox.reserveSecondHandBooking.useMutation();
@@ -263,6 +263,7 @@ export const CheckoutForm = ({
   });
   const { data: multipleTransaction } =
     api.checkout.checkMultipleTeeTimeTransactionByUser.useQuery({});
+  console.log("multipleTransaction", multipleTransaction);
   const { refetch: createCustomerInHyperSwitchHandler } =
     api.checkout.createCustomerForHyperSwitch.useQuery(
       {},
@@ -451,7 +452,7 @@ export const CheckoutForm = ({
         // Make sure to change this to your payment completion page
         return_url: isBuyNowAuction
           ? `${window.location.origin}/${course?.id}/auctions/confirmation`
-          : `${window.location.origin}/${course?.id}/checkout/processing?teeTimeId=${teeTimeId}&cart_id=${cartId}&listing_id=${listingId}`,
+          : `${window.location.origin}/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}`,
       },
       redirect: "if_required",
     });
@@ -706,10 +707,10 @@ export const CheckoutForm = ({
           decimalPart === 0
             ? 1
             : parseFloat(
-              (Math.ceil(totalBeforeRoundOff) - totalBeforeRoundOff).toFixed(
-                2
-              )
-            );
+                (Math.ceil(totalBeforeRoundOff) - totalBeforeRoundOff).toFixed(
+                  2
+                )
+              );
         break;
 
       case "other":
@@ -874,7 +875,7 @@ export const CheckoutForm = ({
           </label>
         </div>
         {checkIsBookingDisabled &&
-          checkIsBookingDisabled?.showPricingBreakdown === 0 ? (
+        checkIsBookingDisabled?.showPricingBreakdown === 0 ? (
           <Fragment>
             <div className="flex justify-between">
               <div>
@@ -1145,10 +1146,11 @@ export const CheckoutForm = ({
           <div className="flex gap-2 mt-5 ml-1 mb-4 items-center">
             <button
               type="button"
-              className={`flex w-32 items-center justify-center rounded-md p-2 ${roundOffStatus === "roundup"
-                ? "bg-primary text-white"
-                : "bg-white text-primary border-primary border-2"
-                }`}
+              className={`flex w-32 items-center justify-center rounded-md p-2 ${
+                roundOffStatus === "roundup"
+                  ? "bg-primary text-white"
+                  : "bg-white text-primary border-primary border-2"
+              }`}
               onClick={() => {
                 handleRoundOff(0, "roundup");
                 setHasUserSelectedDonation(true);
@@ -1159,10 +1161,11 @@ export const CheckoutForm = ({
 
             <button
               type="button"
-              className={`flex w-20 items-center justify-center rounded-md p-2 ${roundOffStatus === "twoDollars"
+              className={`flex w-20 items-center justify-center rounded-md p-2 ${
+                roundOffStatus === "twoDollars"
                   ? "bg-primary text-white"
                   : "bg-white text-primary border-primary border-2"
-                }`}
+              }`}
               onClick={() => {
                 handleRoundOff(2, "twoDollars");
                 setHasUserSelectedDonation(true);
@@ -1173,10 +1176,11 @@ export const CheckoutForm = ({
 
             <button
               type="button"
-              className={`flex w-20 items-center justify-center rounded-md p-2 ${roundOffStatus === "fiveDollars"
+              className={`flex w-20 items-center justify-center rounded-md p-2 ${
+                roundOffStatus === "fiveDollars"
                   ? "bg-primary text-white"
                   : "bg-white text-primary border-primary border-2"
-                }`}
+              }`}
               onClick={() => {
                 handleRoundOff(5, "fiveDollars");
                 setHasUserSelectedDonation(true);
@@ -1187,10 +1191,11 @@ export const CheckoutForm = ({
 
             <button
               type="button"
-              className={`flex w-32 items-center justify-center rounded-md p-2 ${roundOffStatus === "other"
+              className={`flex w-32 items-center justify-center rounded-md p-2 ${
+                roundOffStatus === "other"
                   ? "bg-primary text-white"
                   : "bg-white text-primary border-primary border-2"
-                }`}
+              }`}
               onClick={() => {
                 handleRoundOff(5, "other");
                 setHasUserSelectedDonation(true);
@@ -1202,8 +1207,9 @@ export const CheckoutForm = ({
             <div className="flex-1 flex justify-end">
               <button
                 type="button"
-                className={`text-primary text-xs underline ${roundOffStatus === "nothanks" ? "font-semibold" : ""
-                  }`}
+                className={`text-primary text-xs underline ${
+                  roundOffStatus === "nothanks" ? "font-semibold" : ""
+                }`}
                 onClick={() => {
                   setRoundOffStatus("nothanks");
                   setDonateValue(0);
@@ -1223,8 +1229,9 @@ export const CheckoutForm = ({
                 placeholder="Enter Donation Amount"
                 value={donateValue}
                 onChange={handleDonateChange}
-                className={`p-2 border rounded-md ${donateError ? "border-red" : "border-primary"
-                  }`}
+                className={`p-2 border rounded-md ${
+                  donateError ? "border-red" : "border-primary"
+                }`}
                 min="1"
                 step="1"
               />
