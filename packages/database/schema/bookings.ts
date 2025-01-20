@@ -45,6 +45,13 @@ export const bookings = mySqlTable(
     markupFees: int("markupFees"),
     isTest: boolean("isTest").default(false).notNull(),
     cartFeePerPlayer: int("cartFeePerPlayer").notNull().default(0),
+    totalGreenFeeTaxAmount: int("totalGreenFeeTaxAmount").notNull().default(0),
+    totalCartFeeTaxAmount: int("totalCartFeeTaxAmount").notNull().default(0),
+    totalWeatherGuaranteeTaxAmount: int("totalWeatherGuaranteeTaxAmount").notNull().default(0),
+    totalMarkupFeeTaxAmount: int("totalMarkupFeeTaxAmount").notNull().default(0),
+    source: varchar("source", { length: 50 }),
+    customerComment: varchar("customerComment", { length: 200 }),
+    needClubRental: boolean("needClubRental").default(false).notNull(),
   },
   (table) => {
     return {

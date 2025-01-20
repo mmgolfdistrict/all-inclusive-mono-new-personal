@@ -23,6 +23,10 @@ import { generateUtcTimestamp } from "../../helpers";
 import type { NotificationService } from "../notification/notification.service";
 import { loggerService } from "../webhooks/logging.service";
 import { courseUser } from "@golf-district/database/schema/courseUser";
+import client from "@sendgrid/client";
+import { AppSettingsService } from "../app-settings/app-settings.service";
+
+client.setApiKey(process.env.SENDGRID_EMAIL_VALIDATION_KEY??"");
 
 const s3Client = new S3Client({
   region: process.env.AWS_REGION,
@@ -155,6 +159,16 @@ export class UserService {
         error: true,
         message:
           "Password must include uppercase, lowercase letters, numbers, and special characters (!@#$%^&*).",
+      };
+    }
+
+    const validateEmail= await this.validateEmail(data?.email)
+    
+    if(!validateEmail){
+      return {
+        error: true,
+        message:
+          "Please enter valid email address, disposable emails not allowed.",
       };
     }
 
@@ -297,10 +311,11 @@ export class UserService {
     return user;
   };
 
-  inviteUser = async (userId: string, emailOrPhoneNumber: string) => {
+  inviteUser = async (userId: string, emailOrPhoneNumber: string, courseId: string) => {
     const [user] = await this.database
       .select({
         handle: users.handle,
+        name: users.name,
       })
       .from(users)
       .where(eq(users.id, userId));
@@ -310,20 +325,50 @@ export class UserService {
     }
     //determine if email or phone number
 
+    let EntityName: string | undefined;
+    let SubDomain: string | undefined;
+
+    if (courseId) {
+      const [courseWithEntity] = await this.database
+        .select({
+          entityName: entities.name,
+          subDomain: entities.subdomain,
+        })
+        .from(courses)
+        .leftJoin(entities, eq(courses.entityId, entities.id))
+        .where(eq(courses.id, courseId));
+
+      if (courseWithEntity) {
+        EntityName = courseWithEntity.entityName ?? "";
+        SubDomain = courseWithEntity.subDomain ?? "";
+      }
+    }
+
     const phoneRegex = /^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$/;
     if (isValidEmail(emailOrPhoneNumber)) {
       await this.notificationsService.sendEmail(
         emailOrPhoneNumber,
         "You've been invited to Golf District",
-        `${user.handle} has invited to Golf District. link`
+        `<p>${user?.name?.split(" ")[0]} has invited you to Golf District.</p>
+        ${
+          courseId && SubDomain && EntityName
+            ? `<p>Visit the course website <a href="https://${SubDomain}/${courseId}" target="_blank" style="color: #1a0dab; text-decoration: underline;">${EntityName}</a></p>`
+            : ""
+        }
+        <br>`
       );
       return;
     }
     if (phoneRegex.test(emailOrPhoneNumber)) {
-      const userName = user.handle;
+      console.log("emailOrPhoneNumber", emailOrPhoneNumber);
+      const userName = user?.name?.split(" ")[0];
       await this.notificationsService.sendSMS(
         emailOrPhoneNumber,
-        `${userName} has invited to Golf District link`
+        `${userName} has invited you to Golf District ${
+          courseId && SubDomain && EntityName
+            ? `Visit the course website: https://${SubDomain}/${courseId} (${EntityName})`
+            : ""
+        }`
       );
       return;
     } else {
@@ -1123,10 +1168,10 @@ export class UserService {
           });
           throw new Error("Error sending email");
         });
-        return {
-          error: true,
-          message: `Since you signed in using ${accountData?.provider},we cannot reset your password from our end. Please use ${accountData?.provider} to sign in.`,
-        };
+      return {
+        error: true,
+        message: `Since you signed in using ${accountData?.provider},we cannot reset your password from our end. Please use ${accountData?.provider} to sign in.`,
+      };
     }
 
     if (!user.emailVerified) {
@@ -1535,6 +1580,59 @@ export class UserService {
     return true;
   };
 
+  validateEmail = async (email: string): Promise<boolean> => {
+  
+    // Initialize the AppSettingsService
+     const appSettingService = new AppSettingsService(
+       this.database,
+       process.env.REDIS_URL!,
+       process.env.REDIS_TOKEN!
+     );
+   
+     // Fetch app settings
+     const appSettings = await appSettingService.getMultiple(
+       "ALLOW_DISPOSABLE_EMAIL_ADDRESS"
+     );
+   
+     // If disposable emails are allowed, return true
+     if (appSettings?.ALLOW_DISPOSABLE_EMAIL_ADDRESS === 'true') {
+       return true;
+     }
+   
+     // API URL for checking disposable email
+     const apiUrl = `https://disposable.debounce.io/?email=${encodeURIComponent(email)}`;
+   
+     try {
+       // Fetch the response from the disposable email checker API
+       const response = await fetch(apiUrl);
+   
+       // Check if the response is successful
+       if (!response.ok) {
+         console.error(`API Error: ${response.status} ${response.statusText}`);
+         return false; // Treat it as invalid if the API fails
+       }
+   
+       // Parse the JSON response
+       const data = await response.json();
+   
+       // Check the disposable status
+       if (data.disposable === "true") {
+         console.log(`The email ${email} is disposable.`);
+         return false; // Disposable email, return false
+       } else if (data.disposable === "false") {
+         console.log(`The email ${email} is not disposable.`);
+         return true; // Not a disposable email, return true
+       } else {
+         console.log(
+           `Could not determine the disposable status of the email ${email}.`
+         );
+         return false; // Treat ambiguous cases as invalid
+       }
+     } catch (error) {
+       console.error("Error during email validation:", error);
+       return false; // Treat errors as invalid emails
+     }
+   };
   /**
    * Asynchronously inserts a new user into the database.
    *

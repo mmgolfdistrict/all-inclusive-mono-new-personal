@@ -363,7 +363,7 @@ export class UserWaitlistService {
       
       if(!listingId) {
         sentNotificationsToTodaysUsers = await secondaryDb.select({
-          userId: userWaitlists.userId,
+          userId: userWaitlistAuditLogs.userId,
         })
           .from(userWaitlistAuditLogs)
           .where(

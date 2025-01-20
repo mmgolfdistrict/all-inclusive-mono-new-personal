@@ -16,6 +16,7 @@ import type { Adapter } from "next-auth/adapters";
 //import { env } from "./env.mjs";
 import { verifyCaptcha } from "../api/src/googleCaptcha";
 import { loggerService } from "@golf-district/service/src/webhooks/logging.service";
+import { IpInfoService } from "@golf-district/service/src/ipinfo/ipinfo.service";
 
 const DEPLOYMENT = !!process.env.VERCEL_URL;
 export type { Session } from "next-auth";
@@ -117,10 +118,12 @@ export const {
           process.env.TWILLIO_AUTH_TOKEN!,
           process.env.SENDGRID_API_KEY!
         );
+        const ipInfoService = new IpInfoService();
 
         const authService = new AuthService(
           db,
           notificationService,
+          ipInfoService,
           process.env.REDIS_URL!,
           process.env.REDIS_TOKEN!
         );
@@ -129,7 +132,12 @@ export const {
           credentials.email as string,
           credentials.password as string
         );
-
+        if (data?.error) {
+          return {
+            error: data?.error,
+            message: data?.message,
+          };
+        }
         if (!data) {
           logger.warn(`User not authenticated`);
           return null;
@@ -165,6 +173,11 @@ export const {
       allowDangerousEmailAccountLinking: true,
     }),
   ],
+  logger: {
+    error(error: Error) {
+      console.log(error.message);
+    },
+  },
   pages: {
     signIn: `/`,
     // verifyRequest: `/login`,
@@ -204,10 +217,11 @@ export const {
           process.env.TWILLIO_AUTH_TOKEN!,
           process.env.SENDGRID_API_KEY!
         );
-
+        const ipInfoService = new IpInfoService();
         const authService = new AuthService(
           db,
           notificationService,
+          ipInfoService,
           process.env.REDIS_URL!,
           process.env.REDIS_TOKEN!
         );
@@ -244,10 +258,11 @@ export const {
         process.env.TWILLIO_AUTH_TOKEN!,
         process.env.SENDGRID_API_KEY!
       );
-
+      const ipInfoService = new IpInfoService();
       const authService = new AuthService(
         db,
         notificationService,
+        ipInfoService,
         process.env.REDIS_URL!,
         process.env.REDIS_TOKEN!
       );

@@ -182,6 +182,10 @@ function NotifyMe({ params }: { params: { course: string } }) {
   };
 
   const handleSubmit = async () => {
+    if (!isLoading && !user) {
+      router.push(`/${courseId}/login`);
+      return;
+    }
     if (selectedDates.length === 0) {
       toast.error("Please select a date");
       return;
@@ -216,7 +220,17 @@ function NotifyMe({ params }: { params: { course: string } }) {
 
     await createNotifications(notificationsData, {
       onSuccess: (data) => {
-        toast.success(data);
+        const toastContent = (
+          <div>
+            <p>{data}</p>
+            <p className="text-green-600 text-[14px] font-bold">
+              If you don’t see the notification emails please check your Junk
+              Mail or Spam folder. Remember to add no-reply@golfdistrict.com to
+              the safe senders list.
+            </p>
+          </div>
+        );
+        toast.success(toastContent);
 
         setSelectedDates([]);
         const startTimeString = formatTime(courseStartTimeNumber);
@@ -261,10 +275,6 @@ function NotifyMe({ params }: { params: { course: string } }) {
       setErrorMessage("");
     }
   }, [startTime[0], startTime[1]]);
-
-  if (!isLoading && !user) {
-    router.push(`/${courseId}/login`);
-  }
 
   return (
     <section className="mx-auto px-2 flex w-full flex-col gap-4 pt-4 md:max-w-[1360px] md:px-6">
@@ -355,7 +365,8 @@ function NotifyMe({ params }: { params: { course: string } }) {
           <div className="grid grid-rows-3 md:grid-rows-3 lg:grid-rows-3 gap-4 px-4 py-2 md:px-8 md:py-6">
             <div className="">
               <Input
-                className="cursor-pointer text-ellipsis"
+                readOnly
+                className="cursor-pointer text-ellipsis unmask-time"
                 label="Pick Date(s)"
                 name="dates"
                 register={() => undefined}
@@ -384,7 +395,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
                       *Schedule your notifications for the rest of the year
                     </p>
                     <Calendar
-                      calendarClassName="!m-[0px] !h-[100%] !w-[75%]"
+                      calendarClassName="!m-[0px] !h-[100%] !w-[75%] unmask-time"
                       colorPrimary="#40942A"
                       value={selectedDates}
                       onChange={setSelectedDates}
@@ -402,6 +413,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
             </div>
             <div className="">
               <Input
+                readOnly
                 className="cursor-pointer text-ellipsis"
                 label="Select Time Range"
                 placeholder="Times..."
@@ -414,7 +426,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
               {isTimePickerOpen && (
                 <>
                   <div
-                    className={`fixed left-0 top-0 z-20 h-[100dvh] w-screen backdrop-blur `}
+                    className={`fixed left-0 top-0 z-20 h-[100dvh] w-screen backdrop-blur unmask-time`}
                     onClick={() => setIsTimePickerOpen(false)}
                   >
                     <div className="h-screen bg-[#00000099]" />
@@ -442,27 +454,27 @@ function NotifyMe({ params }: { params: { course: string } }) {
                           <div>
                             {isMobile
                               ? startTimeOptions[
-                                  startTimeOptions.findIndex(
-                                    (i) => i.value === timeMobile[0]
-                                  )
-                                ]?.displayTime
+                                startTimeOptions.findIndex(
+                                  (i) => i.value === timeMobile[0]
+                                )
+                              ]?.displayTime
                               : startTimeOptions[
-                                  startTimeOptions.findIndex(
-                                    (i) => i.value === localStartTime[0]
-                                  )
-                                ]?.displayTime}
+                                startTimeOptions.findIndex(
+                                  (i) => i.value === localStartTime[0]
+                                )
+                              ]?.displayTime}
                             -
                             {isMobile
                               ? startTimeOptions[
-                                  startTimeOptions.findIndex(
-                                    (i) => i.value === timeMobile[1]
-                                  )
-                                ]?.displayTime
+                                startTimeOptions.findIndex(
+                                  (i) => i.value === timeMobile[1]
+                                )
+                              ]?.displayTime
                               : startTimeOptions[
-                                  startTimeOptions.findIndex(
-                                    (i) => i.value === localStartTime[1]
-                                  )
-                                ]?.displayTime}
+                                startTimeOptions.findIndex(
+                                  (i) => i.value === localStartTime[1]
+                                )
+                              ]?.displayTime}
                           </div>
                         </div>
                         <Slider
@@ -472,21 +484,21 @@ function NotifyMe({ params }: { params: { course: string } }) {
                           value={
                             isMobile
                               ? [
-                                  filteredStartTimeOptions.findIndex(
-                                    (i) => i.value === timeMobile[0]
-                                  ),
-                                  filteredStartTimeOptions.findIndex(
-                                    (i) => i.value === timeMobile[1]
-                                  ),
-                                ]
+                                filteredStartTimeOptions.findIndex(
+                                  (i) => i.value === timeMobile[0]
+                                ),
+                                filteredStartTimeOptions.findIndex(
+                                  (i) => i.value === timeMobile[1]
+                                ),
+                              ]
                               : [
-                                  filteredStartTimeOptions.findIndex(
-                                    (i) => i.value === localStartTime[0]
-                                  ),
-                                  filteredStartTimeOptions.findIndex(
-                                    (i) => i.value === localStartTime[1]
-                                  ),
-                                ]
+                                filteredStartTimeOptions.findIndex(
+                                  (i) => i.value === localStartTime[0]
+                                ),
+                                filteredStartTimeOptions.findIndex(
+                                  (i) => i.value === localStartTime[1]
+                                ),
+                              ]
                           }
                           onValueChange={(values) => {
                             if (Array.isArray(values) && values.length === 2) {
@@ -527,9 +539,8 @@ function NotifyMe({ params }: { params: { course: string } }) {
                       </section>
                       <div>
                         <span
-                          className={`text-[12px] text-red ${
-                            errorMessage ? "" : "hidden"
-                          }`}
+                          className={`text-[12px] text-red ${errorMessage ? "" : "hidden"
+                            }`}
                         >
                           {errorMessage}
                         </span>

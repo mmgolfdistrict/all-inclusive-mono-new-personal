@@ -54,20 +54,8 @@ export const UserInNav = ({ alwaysShow }: { alwaysShow?: boolean }) => {
         console.log("error", err);
       });
   };
-  const addLogoutSession = () => {
-    console.log("heree");
-    addUserSession.mutateAsync({
-      status: "LOGOUT"
-    }).then(() => {
-      console.log("logout user added successfully");
-    })
-      .catch((err) => {
-        console.log("error", err);
-      });
-  }
 
   const logOutUser = () => {
-    addLogoutSession()
     logAudit(async () => {
       if (PathsThatNeedRedirectOnLogout.some((i) => pathname.includes(i))) {
         const data = await signOut({
@@ -111,7 +99,7 @@ export const UserInNav = ({ alwaysShow }: { alwaysShow?: boolean }) => {
               }`}
           >
             <div className="flex items-center flex-col px-4 py-3 border-b border-stroke">
-              <p className="text-sm">{user?.email}</p>
+              <p className="text-sm unmask-userdetails">{user?.email}</p>
               <div className="py-3">
                 <Avatar
                   src={

@@ -1,0 +1,25 @@
+"use client";
+
+import * as Accordion from "@radix-ui/react-accordion";
+import { type ReactNode } from "react";
+
+export const CheckoutAccordionRoot = ({
+  children,
+  className,
+  defaultValue,
+}: {
+  children: ReactNode;
+  className?: string;
+  defaultValue?: string[];
+}) => {
+  return (
+    <Accordion.Root
+      className={`flex w-full flex-col gap-2 ${className ?? ""}`}
+      type="multiple"
+      defaultValue={defaultValue}
+      // collapsible
+    >
+      {children}
+    </Accordion.Root>
+  );
+};

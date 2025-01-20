@@ -14,11 +14,11 @@ import { Avatar } from "../avatar";
 import { OutlineClub } from "../icons/outline-club";
 import { BlurImage } from "../images/blur-image";
 import { ChoosePlayers } from "../input/choose-players";
+import { Spinner } from "../loading/spinner";
 import { SensibleWidget } from "../sensible/sensible-widget";
 import { Tooltip } from "../tooltip";
 
 const PlayersOptions = ["1", "2", "3", "4"];
-const DEFAULT_SILHOUETTE_IMAGE = "/defaults/default-profile.webp";
 
 export const CheckoutItem = ({
   teeTime,
@@ -37,9 +37,14 @@ export const CheckoutItem = ({
   const { course } = useCourseContext();
   const courseId = course?.id;
 
+  const { data: coursePreviewImage } =
+    api.course.getCoursePreviewImage.useQuery({ courseId: courseId ?? "" });
+
   const { data: allowedPlayers } =
     api.course.getNumberOfPlayersByCourse.useQuery({
       courseId: courseId ?? "",
+      time: teeTime?.time,
+      date: teeTime?.date ?? "",
     });
 
   const numberOfPlayers = allowedPlayers?.numberOfPlayers;
@@ -95,18 +100,24 @@ export const CheckoutItem = ({
     <div className="relative flex w-full flex-col gap-2 bg-secondary-white  pt-4 lg:rounded-lg">
       <div className="flex items-center gap-2 px-4 pb-4 lg:items-start">
         <BlurImage
-          src={placeholderImage.src}
+          src={coursePreviewImage ?? ""}
           width={placeholderImage.width}
           height={placeholderImage.height}
           alt="placeholder"
           className="h-[60px] w-[60px] rounded-lg object-cover lg:h-[100px] lg:w-[100px]"
         />
         <div className="flex w-full flex-col gap-2">
-          <div className="font-semibold ">
+          <div className="font-semibold unmask-time">
             {isLoading ? (
               <div className="h-6 w-[50%] bg-gray-200 rounded-md  animate-pulse" />
             ) : (
-              formatTime(teeTime?.date ?? "", true, course?.timezoneCorrection)
+              <span className="text-[20px] ">
+                {formatTime(
+                  teeTime?.date ?? "",
+                  true,
+                  course?.timezoneCorrection
+                )}
+              </span>
             )}
           </div>
           <Data
@@ -265,21 +276,25 @@ const Data = ({
         <div className="flex gap-1 flex-col items-start">
           <Tooltip
             trigger={
-              <Avatar
-                src={
-                  isSecondHand === true ? DEFAULT_SILHOUETTE_IMAGE : soldByImage
-                }
-              />
+              isSecondHand ? (
+                <Spinner className="w-[40px] h-[40px]" />
+              ) : (
+                <Avatar
+                  src={soldByImage}
+                  className="!min-h-[40px] !min-w-[80px] max-h-[40px] max-w-[80px] h-[40px] w-[80px] md:min-h-[40px] md:min-w-[80px] md:max-h-[40px] md:max-w-[80px] md:h-[40px] md:w-[80px] lg:w-[80px] lg:h-[40px]"
+                  isRounded={false}
+                />
+              )
             }
             content={
               "Sold by " +
-              (isSecondHand === true
-                ? "another Golf District golfer."
-                : soldByName)
+              (isSecondHand ? "another Golf District golfer." : soldByName)
             }
           />
           <p
-            className={`text-${getTextColor(courseException?.displayType)} font-semibold`}
+            className={`text-${getTextColor(
+              courseException?.displayType
+            )} font-semibold`}
           >
             {courseException?.shortMessage}
           </p>
@@ -319,7 +334,7 @@ const Data = ({
           )}
         </div>
         <div className="flex">
-          <div className="text-[20px] font-semibold text-secondary-black">
+          <div className="text-[18px] font-semibold text-secondary-black">
             {formatMoney(pricePerGolfer ?? 1 ?? 0)}
           </div>
           <div className="text-[16px] text-primary-gray">/golfer</div>

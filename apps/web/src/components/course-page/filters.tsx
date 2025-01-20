@@ -1,14 +1,18 @@
 "use client";
 
 import * as ToggleGroup from "@radix-ui/react-toggle-group";
+import type {
+  Dispatch,
+  SetStateAction
+} from "react";
 import {
   forwardRef,
   Fragment,
-  type ReactNode,
   useEffect,
   useImperativeHandle,
   useMemo,
   useState,
+  type ReactNode,
 } from "react";
 import { Switch } from "../buttons/switch";
 import { Hidden } from "../icons/hidden";
@@ -25,6 +29,8 @@ import { debounceFunction } from "~/utils/debounce";
 import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
 import Image from "next/image";
 import { useMediaQuery } from "usehooks-ts";
+import { useRouter } from "next/navigation";
+import { Forecast } from "../icons/forecast";
 
 interface DayValue {
   year: number;
@@ -37,6 +43,10 @@ interface DayValue {
 
 interface ChildComponentRef {
   getChildValue: () => void;
+}
+interface FiltersProps {
+  openForecastModal: () => void;
+  setShowFilters?: Dispatch<SetStateAction<boolean>> | undefined;
 }
 
 const HoleOptions = ["Any", "18", "9"];
@@ -59,7 +69,8 @@ const maximumDate = {
 
 // const disabledDays = getDisabledDays(minimumDate);
 
-export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
+export const Filters = forwardRef<ChildComponentRef, FiltersProps>((props, ref) => {
+  const { openForecastModal, setShowFilters } = props;
   const {
     dateType,
     setDateType,
@@ -84,8 +95,9 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
   const [holeMobile, setHoleMobile] = useState(holes);
   const [golferMobile, setGolferMobile] = useState(golfers);
   const [selectedDayMobile, setSelectedDayMobile] = useState(selectedDay);
-
+  const router = useRouter();
   const isMobile = useMediaQuery("(max-width: 768px)");
+  console.log("sadsada", dateType);
 
   // const { data } = api.searchRouter.findBlackoutDates.useQuery(
   //   { courseId: course?.id ?? "" },
@@ -93,6 +105,7 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
   // );
 
   // console.log(data,"blackOutDaysblackOutDaysblackOutDaysblackOutDaysblackOutDaysblackOutDays")
+
 
   const highestPrice = useMemo(() => {
     if (!course) return 0;
@@ -152,7 +165,7 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
     const day = dateObj?.day;
     const month = months[dateObj?.month - 1];
 
-    return `${month}-${day}`;
+    return `${month} ${day}`;
   };
 
   useImperativeHandle(ref, () => ({
@@ -169,6 +182,8 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
   }));
 
   const setFilter = (type, value) => {
+    router.push(`/${course?.id}`)
+
     switch (type) {
       case "dateType": {
         if (isMobile) {
@@ -255,7 +270,7 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
       "Custom",
     ];
 
-    const specialEventOptions =
+    const specialEventOptions: string[] =
       specialEvents?.slice(0, 2).map((event) => event.eventName) || [];
 
     return [...specialEventOptions, ...defaultDateOptions];
@@ -269,10 +284,28 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
     minute: date.getMinutes(),
     second: date.getSeconds(),
   });
+
+  const forecastModalIcon = () => {
+    if (setShowFilters) {
+      setShowFilters(false)
+    }
+    openForecastModal();
+  }
+
   return (
     <div className="flex flex-col gap-4 pr-1">
       <section className="flex flex-col gap-2">
-        <div>Date</div>
+        <div className="flex items-center justify-between">
+          <div>
+            Date
+          </div>
+          {
+            dateType !== "Today" &&
+            <div className="cursor-pointer" onClick={forecastModalIcon}>
+              <Forecast className="cursor-pointer" height="16px" width="16px" />
+            </div>
+          }
+        </div>
         <ToggleGroup.Root
           type="single"
           value={isMobile ? dateTypeMobile : dateType}
@@ -306,25 +339,25 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
                       <span>
                         {isMobile
                           ? dateTypeMobile === "Custom" && (
-                              <>
-                                {selectedDayMobile.from
-                                  ? formatDate(selectedDayMobile.from)
-                                  : ""}
-                                {selectedDayMobile.to
-                                  ? ` - ${formatDate(selectedDayMobile.to)}`
-                                  : ""}
-                              </>
-                            )
+                            <>
+                              {selectedDayMobile.from
+                                ? formatDate(selectedDayMobile.from)
+                                : ""}
+                              {selectedDayMobile.to
+                                ? ` - ${formatDate(selectedDayMobile.to)}`
+                                : ""}
+                            </>
+                          )
                           : dateType === "Custom" && (
-                              <>
-                                {selectedDay.from
-                                  ? formatDate(selectedDay.from)
-                                  : ""}
-                                {selectedDay.to
-                                  ? ` - ${formatDate(selectedDay.to)}`
-                                  : ""}
-                              </>
-                            )}
+                            <>
+                              {selectedDay.from
+                                ? formatDate(selectedDay.from)
+                                : ""}
+                              {selectedDay.to
+                                ? ` - ${formatDate(selectedDay.to)}`
+                                : ""}
+                            </>
+                          )}
                       </span>
                     </div>
                   ) : (
@@ -333,20 +366,19 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
                 }
                 dataTestId="date-filter-id"
                 dataQa={value}
-                className={`${
-                  index === 0
-                    ? "rounded-t-2xl border border-stroke"
-                    : index === DateOptions.length - 1 && dateType === "Custom"
+                className={`${index === 0
+                  ? "rounded-t-2xl border border-stroke"
+                  : index === DateOptions.length - 1 && dateType === "Custom"
                     ? "border-l border-r border-stroke"
                     : index === DateOptions.length - 1
-                    ? "rounded-b-2xl border-b border-l border-r border-stroke"
-                    : "border-b border-l border-r border-stroke"
-                }`}
+                      ? "rounded-b-2xl border-b border-l border-r border-stroke"
+                      : "border-b border-l border-r border-stroke"
+                  }`}
               />
               {(dateTypeMobile === "Custom" || dateType === "Custom") &&
-              value === "Custom" ? (
+                value === "Custom" ? (
                 <>
-                  <div className="custom_calendar">
+                  <div className="custom_calendar unmask-time">
                     <Calendar
                       value={isMobile ? selectedDayMobile : selectedDay}
                       calendarClassName="responsive-calendar"
@@ -356,7 +388,7 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
                       colorPrimary="#40942A"
                       minimumDate={minimumDate}
                       maximumDate={maximumDate}
-                      // disabledDays={blackOutDays}
+                    // disabledDays={blackOutDays}
                     />
                     <div
                       className={`z-50 text-sm w-full flex justify-center flex-wrap p-0 px-4 pb-4 `}
@@ -365,9 +397,8 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
                         <>
                           <button
                             key={i}
-                            className={`inline-block mt-1 ${
-                              isMobile ? "mx-4" : "mx-2"
-                            }`}
+                            className={`inline-block mt-1 ${isMobile ? "mx-4" : "mx-2"
+                              }`}
                             onClick={() => {
                               const startDate = new Date(event.startDate);
                               const endDate = new Date(event.endDate);
@@ -393,26 +424,26 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
       <section className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
           <div>Start Time</div>
-          <div>
+          <div className="unmask-time">
             {isMobile
               ? startTimeOptions[
-                  startTimeOptions.findIndex((i) => i.value === timeMobile[0])
-                ]?.displayTime
+                startTimeOptions.findIndex((i) => i.value === timeMobile[0])
+              ]?.displayTime
               : startTimeOptions[
-                  startTimeOptions.findIndex(
-                    (i) => i.value === localStartTime[0]
-                  )
-                ]?.displayTime}
+                startTimeOptions.findIndex(
+                  (i) => i.value === localStartTime[0]
+                )
+              ]?.displayTime}
             -
             {isMobile
               ? startTimeOptions[
-                  startTimeOptions.findIndex((i) => i.value === timeMobile[1])
-                ]?.displayTime
+                startTimeOptions.findIndex((i) => i.value === timeMobile[1])
+              ]?.displayTime
               : startTimeOptions[
-                  startTimeOptions.findIndex(
-                    (i) => i.value === localStartTime[1]
-                  )
-                ]?.displayTime}
+                startTimeOptions.findIndex(
+                  (i) => i.value === localStartTime[1]
+                )
+              ]?.displayTime}
           </div>
         </div>
         <Slider
@@ -422,17 +453,17 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
           value={
             isMobile
               ? [
-                  startTimeOptions.findIndex((i) => i.value === timeMobile[0]),
-                  startTimeOptions.findIndex((i) => i.value === timeMobile[1]),
-                ]
+                startTimeOptions.findIndex((i) => i.value === timeMobile[0]),
+                startTimeOptions.findIndex((i) => i.value === timeMobile[1]),
+              ]
               : [
-                  startTimeOptions.findIndex(
-                    (i) => i.value === localStartTime[0]
-                  ),
-                  startTimeOptions.findIndex(
-                    (i) => i.value === localStartTime[1]
-                  ),
-                ]
+                startTimeOptions.findIndex(
+                  (i) => i.value === localStartTime[0]
+                ),
+                startTimeOptions.findIndex(
+                  (i) => i.value === localStartTime[1]
+                ),
+              ]
           }
           onPointerUp={() => {
             handleSetStartTime();
@@ -458,13 +489,11 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
             }
           }}
           data-testid="slider-start-time-id"
-          data-qa={`${
-            startTimeOptions.find((i) => i.value === localStartTime[0])
+          data-qa={`${startTimeOptions.find((i) => i.value === localStartTime[0])
+            ?.displayTime
+            } - ${startTimeOptions.find((i) => i.value === localStartTime[1])
               ?.displayTime
-          } - ${
-            startTimeOptions.find((i) => i.value === localStartTime[1])
-              ?.displayTime
-          }`}
+            }`}
         />
       </section>
 
@@ -527,13 +556,12 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
               label={value}
               dataTestId="hole-filter-id"
               dataQa={value}
-              className={`${
-                index === 0
-                  ? "rounded-l-full border-b border-l border-t border-stroke"
-                  : index === HoleOptions.length - 1
+              className={`${index === 0
+                ? "rounded-l-full border-b border-l border-t border-stroke"
+                : index === HoleOptions.length - 1
                   ? "rounded-r-full border-b border-r border-t border-stroke"
                   : "border border-stroke"
-              } px-[2.5rem]`}
+                } px-[2.5rem]`}
             />
           ))}
         </ToggleGroup.Root>
@@ -566,13 +594,12 @@ export const Filters = forwardRef<ChildComponentRef>((props, ref) => {
               label={value}
               dataTestId="golfer-filter-id"
               dataQa={value}
-              className={`${
-                index === 0
-                  ? "rounded-l-full border-b border-l border-t border-stroke"
-                  : index === GolferOptions.length - 1
+              className={`${index === 0
+                ? "rounded-l-full border-b border-l border-t border-stroke"
+                : index === GolferOptions.length - 1
                   ? "rounded-r-full border border-stroke"
                   : "border-b border-l border-t border-stroke"
-              } px-[1.44rem]`}
+                } px-[1.44rem]`}
             />
           ))}
         </ToggleGroup.Root>
@@ -639,9 +666,8 @@ export const Item = ({
   return (
     <ToggleGroup.Item
       value={value}
-      className={`bg-white flex items-center px-4 py-2 text-left text-[14px] text-primary-gray transition-colors data-[state=on]:bg-primary data-[state=on]:text-white ${
-        className ?? ""
-      }`}
+      className={`bg-white flex items-center px-4 py-2 text-left text-[14px] text-primary-gray transition-colors data-[state=on]:bg-primary data-[state=on]:text-white unmask-players ${className ?? ""
+        }`}
       data-testid={dataTestId}
       data-qa={dataQa}
       data-test={dataTest}

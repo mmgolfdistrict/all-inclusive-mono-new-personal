@@ -11,6 +11,7 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   showInfoTooltip?: boolean;
   content?: string;
   inputRef?: unknown;
+  additionalContent?: boolean;
 }
 
 export const Input = ({
@@ -23,6 +24,7 @@ export const Input = ({
   content,
   inputRef,
   autoComplete,
+  additionalContent,
   ...props
 }: InputProps) => {
   return (
@@ -38,30 +40,36 @@ export const Input = ({
           />
         )}
       </div>
-      {
-        autoComplete && inputRef?
+      {additionalContent && (
+        <p className="text-[12px] text-red">
+          (Type and select from below auto complete to auto populate)
+        </p>
+      )}
+      {autoComplete && inputRef ? (
         <input
-            className={`rounded-lg bg-secondary-white px-4 py-3 text-[14px] text-gray-500 outline-none text-ellipsis`}
-            // @ts-ignore
-            {...register(name)}
-            {...props}
-            ref={inputRef}
-            autoComplete="new-password"
-         />:
-        inputRef ?
-          <input
-            className={`rounded-lg bg-secondary-white px-4 py-3 text-[14px] text-gray-500 outline-none text-ellipsis`}
-            // @ts-ignore
-            {...register(name)}
-            {...props}
-            ref={inputRef}
-          /> : <input
-            className={`rounded-lg bg-secondary-white px-4 py-3 text-[14px] text-gray-500 outline-none text-ellipsis`}
-            // @ts-ignore
-            {...register(name)}
-            {...props}
-          />
-      }
+          className={`rounded-lg bg-secondary-white px-4 py-3 text-[14px] text-gray-500 outline-none text-ellipsis`}
+          // @ts-ignore
+          {...register(name)}
+          {...props}
+          ref={inputRef}
+          autoComplete="new-password"
+        />
+      ) : inputRef ? (
+        <input
+          className={`rounded-lg bg-secondary-white px-4 py-3 text-[14px] text-gray-500 outline-none text-ellipsis`}
+          // @ts-ignore
+          {...register(name)}
+          {...props}
+          ref={inputRef}
+        />
+      ) : (
+        <input
+          className={`rounded-lg bg-secondary-white px-4 py-3 text-[14px] text-gray-500 outline-none text-ellipsis`}
+          // @ts-ignore
+          {...register(name)}
+          {...props}
+        />
+      )}
 
       {error && <p className="text-[12px] text-red">{error}</p>}
     </div>

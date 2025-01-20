@@ -14,6 +14,7 @@ import { imageRouter } from "./routers/image";
 import { placesRouter } from "./routers/places";
 import { profanityRouter } from "./routers/profanity";
 import { registerRouter } from "./routers/register";
+import { releaseHistoryRouter } from "./routers/releaseHistory";
 import { searchRouter } from "./routers/search";
 import { sensibleRouter } from "./routers/sensible";
 import { systemNotificationRouter } from "./routers/systemNotification";
@@ -51,6 +52,7 @@ export const appRouter = createTRPCRouter({
   userWaitlist: userWaitlistRouter,
   courseException: courseExceptionRouter,
   systemNotification: systemNotificationRouter,
+  releaseHistory: releaseHistoryRouter,
 });
 
 export type AppRouter = typeof appRouter;

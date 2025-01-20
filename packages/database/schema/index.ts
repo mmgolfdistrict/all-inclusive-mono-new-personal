@@ -6,6 +6,7 @@ import * as assets from "./assets";
 import * as auctionAssets from "./auctionAssets";
 import * as auctions from "./auctions";
 import * as auditlog from "./auditlog";
+import * as authenticationMethod from "./authenticationMethod";
 import * as bids from "./bids";
 import * as bookings from "./bookings";
 import * as cashouts from "./cashout";
@@ -54,6 +55,13 @@ import * as userSession from "./userSession";
 import * as userWaitlists from "./userWaitlists";
 import * as verificationTokens from "./verificationTokens";
 import * as withdrawals from "./withdrawals";
+import * as courseContacts from "./courseContacts";
+import * as adminPermissions from "./adminPermissions";
+import * as adminPersonaRole from "./adminPersonaRole";
+import * as adminPersonas from "./adminPersonas";
+import * as adminRolePermission from "./adminRolePermission";
+import * as adminRoles from "./adminRoles";
+import * as adminUserRole from "./adminUserRole";
 
 export const schema = {
   ...accounts,
@@ -112,4 +120,12 @@ export const schema = {
   ...courseAllowedTimeToSell,
   ...userSession,
   ...courseUser,
+  ...authenticationMethod,
+  ...courseContacts,
+  ...adminPermissions,
+  ...adminPersonaRole,
+  ...adminPersonas,
+  ...adminRolePermission,
+  ...adminRoles,
+  ...adminUserRole,
 };

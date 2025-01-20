@@ -156,6 +156,10 @@ export class TokenizeService {
     isWebhookAvailable,
     providerBookingIds,
     cartFeeCharge,
+    additionalTaxes,
+    source,
+    additionalNoteFromUser,
+    needRentals
   }: {
     redirectHref: string;
     userId: string;
@@ -182,6 +186,16 @@ export class TokenizeService {
     normalizedCartData?: any;
     isWebhookAvailable?: boolean;
     providerBookingIds?: string[];
+    additionalTaxes:{
+      greenFeeTaxTotal:number,
+      markupTaxTotal:number,
+      weatherGuaranteeTaxTotal:number,
+      cartFeeTaxPercentTotal:number,
+      additionalTaxes:number
+        };
+      source: string,
+      additionalNoteFromUser?: string,
+      needRentals: boolean
   }): Promise<BookingTypes> {
     this.logger.info(`tokenizeBooking tokenizing booking id: ${providerTeeTimeId} for user: ${userId}`);
     //@TODO add this to the transaction
@@ -298,6 +312,7 @@ export class TokenizeService {
                 : "",
             },
           });
+          console.log("================================+>",acceptedQuote);
         } catch (error: any) {
           const adminEmail: string = process.env.ADMIN_EMAIL_LIST || "nara@golfdistrict.com";
           const emailAterSplit = adminEmail.split(",");
@@ -364,21 +379,27 @@ export class TokenizeService {
       cartId: normalizedCartData.cartId,
       playerCount: players ?? 0,
       greenFeePerPlayer: (isFirstHandBooking ? existingTeeTime.greenFee : purchasePrice) || 0,
-      totalTaxesAmount: normalizedCartData.taxCharge * 100 || 0,
+      totalTaxesAmount:  additionalTaxes.additionalTaxes * 100,       // normalizedCartData.taxCharge * 100 || 0,
       charityId: normalizedCartData.charityId || null,
       totalCharityAmount: normalizedCartData.charityCharge * 100 || 0,
-      totalAmount: normalizedCartData.total || 0,
+      totalAmount: (normalizedCartData.total || 0) + (additionalTaxes.additionalTaxes*100),
       providerPaymentId: paymentId,
       weatherQuoteId: normalizedCartData.weatherQuoteId ?? null,
       weatherGuaranteeId: acceptedQuote?.id ? acceptedQuote?.id : null,
       weatherGuaranteeAmount: acceptedQuote?.price_charged ? acceptedQuote?.price_charged * 100 : 0,
       markupFees: (normalizedCartData?.markupCharge ?? 0) * 100,
       cartFeePerPlayer: cartFeeCharge,
+      totalGreenFeeTaxAmount:additionalTaxes.greenFeeTaxTotal *100,
+      totalCartFeeTaxAmount:additionalTaxes.cartFeeTaxPercentTotal*100,
+      totalWeatherGuaranteeTaxAmount:additionalTaxes.weatherGuaranteeTaxTotal*100,
+      totalMarkupFeeTaxAmount:additionalTaxes.markupTaxTotal*100,
+      source,
+      customerComment: additionalNoteFromUser,
+      needClubRental: needRentals
     });
-
     transfersToCreate.push({
       id: randomUUID(),
-      amount: purchasePrice,
+      amount: purchasePrice + (additionalTaxes.additionalTaxes*100),
       purchasedPrice: purchasePrice,
       bookingId: bookingId,
       transactionId: transactionId,
@@ -521,7 +542,7 @@ export class TokenizeService {
     });
     const finalAmount =
       Math.floor(purchasePrice + (cartFeeCharge ?? 0)) * Number(players) +
-      (normalizedCartData?.markupCharge ?? 0) * 100;
+      (normalizedCartData?.markupCharge ?? 0) * 100 + additionalTaxes.additionalTaxes;
     const message = `
 ${players} tee times have been purchased for ${existingTeeTime.date} at ${existingTeeTime.courseId}
     price per booking: ${finalAmount} 
@@ -565,16 +586,16 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
           maximumFractionDigits: 2,
         })}` ?? "-",
       TaxesAndOtherFees:
-        `$${normalizedCartData.taxes.toLocaleString("en-US", {
+        `$${(normalizedCartData.taxes+additionalTaxes.additionalTaxes).toLocaleString("en-US", {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
-        })}` ?? "-",
+        })}` ,
       SensibleWeatherIncluded: normalizedCartData.sensibleCharge ? "Yes" : "No",
       PurchasedFrom: existingTeeTime.courseName ?? "-",
       PlayerCount: players ?? 0,
-      TotalAmount: formatMoney(normalizedCartData.total / 100 ?? 0),
+      TotalAmount: formatMoney((normalizedCartData.total / 100 )+additionalTaxes.additionalTaxes),
       CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
-      CourseURL: existingTeeTime?.websiteURL || "",
+      CourseURL: existingTeeTime?.websiteURL ?? "",
       HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
       // BuyTeeTImeURL: `${redirectHref}`,
       // CashOutURL: `${redirectHref}/account-settings/${userId}`,

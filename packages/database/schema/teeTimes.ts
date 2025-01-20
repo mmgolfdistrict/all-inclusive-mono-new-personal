@@ -1,5 +1,5 @@
 import { relations, sql, type InferInsertModel, type InferSelectModel } from "drizzle-orm";
-import { datetime, index, int, varchar } from "drizzle-orm/mysql-core";
+import { datetime, index, int, unique, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 import { bookings } from "./bookings";
 import { courses } from "./courses";
@@ -9,7 +9,7 @@ export const teeTimes = mySqlTable(
   "teeTime",
   {
     id: varchar("id", { length: 36 }).notNull().unique().primaryKey(),
-    providerTeeTimeId: varchar("providerTeeTimeId", { length: 191 }).notNull().unique(), //maybe int
+    providerTeeTimeId: varchar("providerTeeTimeId", { length: 191 }).notNull(), //maybe int
     date: datetime("date", { mode: "string", fsp: 3 }).notNull(),
     providerDate: varchar("providerDate", { length: 191 }).notNull(),
     time: int("time").notNull(), //military time
@@ -44,6 +44,8 @@ export const teeTimes = mySqlTable(
       time: index("TeeTime_time_idx").on(table.time),
       courseId: index("TeeTime_courseId_idx").on(table.courseId),
       courseDate: index("TeeTime_courseDate_idx").on(table.courseId, table.date),
+      courseIdProviderDate: unique("TeeTime_courseId_providerDate_unique").on(table.courseId, table.providerDate),
+      courseIdProviderTeeTimeId: unique("TeeTime_courseId_providerTeeTimeId_unique").on(table.courseId, table.providerTeeTimeId),
     };
   }
 );

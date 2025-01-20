@@ -2,6 +2,11 @@ import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 
 export const courseRouter = createTRPCRouter({
+  getCoursePreviewImage: publicProcedure
+    .input(z.object({ courseId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      return await ctx.serviceFactory.getCourseService().getCoursePreviewImage(input.courseId);
+    }),
   getCourseById: publicProcedure
     .input(
       z.object({
@@ -29,7 +34,9 @@ export const courseRouter = createTRPCRouter({
       })
     )
     .query(async ({ ctx, input }) => {
-      return await ctx.serviceFactory.getCourseService().getNumberOfPlayersByCourse(input.courseId, input.time, input.date);
+      return await ctx.serviceFactory
+        .getCourseService()
+        .getNumberOfPlayersByCourse(input.courseId, input.time, input.date);
     }),
   getPrivacyPolicyAndTCByCourse: publicProcedure
     .input(
@@ -39,5 +46,15 @@ export const courseRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       return await ctx.serviceFactory.getCourseService().getPrivacyPolicyAndTCByCourse(input.courseId);
+    }),
+
+  getAuthenticationMethods: publicProcedure
+    .input(
+      z.object({
+        courseId: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return await ctx.serviceFactory.getCourseService().getAuthenticationMethods(input.courseId);
     }),
 });

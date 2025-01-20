@@ -1,4 +1,5 @@
 import { type Db } from "@golf-district/database";
+import { ReleaseHistoryService } from "./index";
 import {
   AppSettingsService,
   AuctionService,
@@ -34,6 +35,7 @@ import { FinixService } from "./webhooks/finix.service";
 import { LoggerService } from "./webhooks/logging.service";
 import { PaymentVerifierService } from "./webhooks/paymentverifier.service";
 import { CourseExceptionService } from "./course-exception/courseException.service";
+import { IpInfoService } from "./ipinfo/ipinfo.service";
 
 export interface ServiceConfig {
   database: Db;
@@ -113,11 +115,8 @@ export class ServiceFactory {
    * @returns An instance of SearchService.
    */
   getSearchService = (): SearchService => {
-    return new SearchService(
-      this.config.database,
-      this.getWeatherService(),
-      this.getProviderService()
-    );
+    return new SearchService(this.config.database, this.getWeatherService(), this.getProviderService(), this.config.redisUrl,
+      this.config.redisToken);
   };
 
   /**
@@ -198,7 +197,8 @@ export class ServiceFactory {
         profileId: this.config.hyperSwitchProfileId,
       },
       this.getForeupWebhookService(),
-      this.getProviderService()
+      this.getProviderService(),
+      this.getIpInfoService()
     );
   };
 
@@ -242,7 +242,12 @@ export class ServiceFactory {
    * @returns An instance of WeatherService.
    */
   getWeatherService = (): WeatherService => {
-    return new WeatherService(this.config.database, this.config.redisUrl, this.config.redisToken, this.getLoggerService());
+    return new WeatherService(
+      this.config.database,
+      this.config.redisUrl,
+      this.config.redisToken,
+      this.getLoggerService()
+    );
   };
 
   /**
@@ -308,6 +313,7 @@ export class ServiceFactory {
     return new AuthService(
       this.config.database,
       this.getNotificationService(),
+      this.getIpInfoService(),
       this.config.redisUrl,
       this.config.redisToken
     );
@@ -371,11 +377,7 @@ export class ServiceFactory {
   };
 
   getFinixService = (): FinixService => {
-    return new FinixService(
-      this.config.database,
-      this.getCashOutService(),
-      this.getNotificationService()
-    );
+    return new FinixService(this.config.database, this.getCashOutService(), this.getNotificationService());
   };
   getLoggerService = (): LoggerService => {
     return new LoggerService();
@@ -385,7 +387,11 @@ export class ServiceFactory {
   };
 
   getUserWaitlistService = (): UserWaitlistService => {
-    return new UserWaitlistService(this.config.database, this.getNotificationService(), this.getAppSettingService());
+    return new UserWaitlistService(
+      this.config.database,
+      this.getNotificationService(),
+      this.getAppSettingService()
+    );
   };
 
   getSystemNotificationService = (): SystemNotificationService => {
@@ -394,5 +400,13 @@ export class ServiceFactory {
 
   getCourseExceptionService = (): CourseExceptionService => {
     return new CourseExceptionService(this.config.database);
+  };
+
+  getReleaseHistoryService = (): ReleaseHistoryService => {
+    return new ReleaseHistoryService(this.config.database);
+  };
+
+  getIpInfoService = (): IpInfoService => {
+    return new IpInfoService();
   };
 }

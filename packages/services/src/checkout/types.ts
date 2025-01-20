@@ -60,7 +60,11 @@ export type ProductData =
   | MarkupProduct
   | ConvenienceFeeProduct
   | TaxProduct
-  | CartFeeProduct;
+  | CartFeeProduct
+  | CartFeeTaxPercentProduct
+  | GreenFeeTaxPercentProduct
+  | MarkupTaxPercentProduct
+  | WeatherGuaranteeTaxPercentProduct;
 
 export interface BaseProduct {
   name: string; // teeTime-course-time
@@ -154,6 +158,35 @@ export interface TaxProduct extends BaseProduct {
   product_data: {
     metadata: {
       type: "taxes";
+    };
+  };
+}
+
+export interface CartFeeTaxPercentProduct extends BaseProduct {
+  product_data: {
+    metadata: {
+      type: "cartFeeTaxPercent";
+    };
+  };
+}
+export interface WeatherGuaranteeTaxPercentProduct extends BaseProduct {
+  product_data: {
+    metadata: {
+      type: "weatherGuaranteeTaxPercent";
+    };
+  };
+}
+export interface MarkupTaxPercentProduct extends BaseProduct {
+  product_data: {
+    metadata: {
+      type: "markupTaxPercent";
+    };
+  };
+}
+export interface GreenFeeTaxPercentProduct extends BaseProduct {
+  product_data: {
+    metadata: {
+      type: "greenFeeTaxPercent";
     };
   };
 }

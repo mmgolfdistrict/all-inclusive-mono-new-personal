@@ -1,3 +1,4 @@
+import type { SQL } from "@golf-district/database";
 import {
   and,
   asc,
@@ -13,7 +14,7 @@ import {
   type Db,
   lt,
   isNull,
-  SQL,
+  min,
 } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import { bookings } from "@golf-district/database/schema/bookings";
@@ -26,7 +27,7 @@ import { users } from "@golf-district/database/schema/users";
 import type { CombinedObject, SearchObject } from "@golf-district/shared";
 import { addDays, TeeTimeType, type IconCodeType } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
-import { isSameDay, parseISO } from "date-fns";
+import { add, isSameDay, parseISO } from "date-fns";
 import dayjs from "dayjs";
 import UTC from "dayjs/plugin/utc";
 import { type ProviderService } from "../tee-sheet-provider/providers.service";
@@ -35,6 +36,7 @@ import type { WeatherService } from "../weather/weather.service";
 import { majorEvents } from "@golf-district/database/schema/majorEvents";
 import { loggerService } from "../webhooks/logging.service";
 import { courseAllowedTimeToSell } from "@golf-district/database/schema/courseAllowedTimeToSell";
+import { CacheService } from "../infura/cache.service";
 
 dayjs.extend(UTC);
 
@@ -46,8 +48,8 @@ interface TeeTimeSearchObject {
   pricePerGolfer: number;
   greenFeeTaxPerPlayer: number;
   cartFeeTaxPerPlayer: number;
-  greenFee:number,
-  cartFee:number,
+  greenFee: number;
+  cartFee: number;
   teeTimeId: string;
   date: string; //day of tee time
   time: number; //military time
@@ -72,6 +74,10 @@ interface TeeTimeSearchObject {
   bookingIds?: string[];
   minimumOfferPrice?: number;
   firstHandPurchasePrice?: number;
+  greenFeeTaxPercent: number;
+  cartFeeTaxPercent: number;
+  weatherGuaranteeTaxPercent: number;
+  markupTaxPercent: number;
 }
 
 interface CheckTeeTimesAvailabilityParams {
@@ -95,8 +101,25 @@ interface CheckTeeTimesAvailabilityParams {
   isHolesAny?: boolean;
   isGolferAny?: boolean;
   highestPrice?: number;
-  lowestPrice?:number;
+  lowestPrice?: number;
   _userId: string | undefined;
+}
+
+interface EventLogo {
+  key: string;
+  extension: string;
+  cdn: string;
+}
+
+interface SpecialEvent {
+  id: string;
+  eventName: string;
+  startDate: string;
+  endDate: string;
+  eventStartDate: string | null;
+  eventEndDate: string | null;
+  logo: EventLogo;
+  iconUrl: string | null;
 }
 
 type Day = {
@@ -108,11 +131,22 @@ type TeeTimeRow = {
   teeDate: string;
 };
 
+type PriceForecast = {
+  courseId: string;
+  name: string;
+  providerDate: string;
+  EarlyMorning: number | null;
+  MidMorning: number | null;
+  EarlyAfternoon: number | null;
+  Afternoon: number | null;
+  Twilight: number | null;
+};
+
 /**
  * Service for searching users and retrieving tee time listings.
  */
-export class SearchService {
-  private readonly logger = Logger(SearchService.name);
+export class SearchService extends CacheService {
+  protected readonly logger = Logger(SearchService.name);
 
   /**
    * Constructs a new SearchService.
@@ -123,8 +157,12 @@ export class SearchService {
   constructor(
     private readonly database: Db,
     private readonly weatherService: WeatherService,
-    private readonly providerService: ProviderService
-  ) {}
+    private readonly providerService: ProviderService,
+    redisUrl: string,
+    redisToken: string
+  ) {
+    super(redisUrl, redisToken, Logger(SearchService.name));
+  }
 
   findBlackoutDates = async (courseId: string): Promise<Day[]> => {
     // Generate a range of dates for the next 365 days
@@ -234,7 +272,7 @@ export class SearchService {
           key: assets.key,
           extension: assets.extension,
         },
-        cartFee:bookings.cartFeePerPlayer
+        cartFee: bookings.cartFeePerPlayer,
       })
       .from(bookings)
       .leftJoin(users, eq(users.id, bookings.ownerId))
@@ -413,6 +451,10 @@ export class SearchService {
           extension: assets.extension,
         },
         timezoneCorrection: courses.timezoneCorrection,
+        greenFeeTaxPercent: courses.greenFeeTaxPercent,
+        cartFeeTaxPercent: courses.cartFeeTaxPercent,
+        weatherGuaranteeTaxPercent: courses.weatherGuaranteeTaxPercent,
+        markupTaxPercent: courses.markupTaxPercent,
       })
       .from(teeTimes)
       .where(eq(teeTimes.id, teeTimeId))
@@ -505,8 +547,8 @@ export class SearchService {
       markupFees: markupFeesToBeUsed * 100,
       greenFeeTaxPerPlayer: tee.greenFeeTax,
       cartFeeTaxPerPlayer: tee.cartFeeTax,
-      greenFee:tee.greenFee,
-      cartFee:tee.cartFee,
+      greenFee: tee.greenFee,
+      cartFee: tee.cartFee,
       teeTimeId: tee.id,
       userWatchListed: tee.favorites ? true : false,
       date: tee.providerDate, //day of tee time
@@ -525,6 +567,10 @@ export class SearchService {
         };
       }),
       weather,
+      greenFeeTaxPercent: tee.greenFeeTaxPercent,
+      cartFeeTaxPercent: tee.cartFeeTaxPercent,
+      weatherGuaranteeTaxPercent: tee.weatherGuaranteeTaxPercent,
+      markupTaxPercent: tee.markupTaxPercent,
     };
     return res;
   };
@@ -743,8 +789,8 @@ export class SearchService {
     const NumberOfPlayers = await this.database
       .select({
         primaryMarketAllowedPlayers: courses.primaryMarketAllowedPlayers,
-        openTime:courses.openTime,
-        closeTime:courses.closeTime
+        openTime: courses.openTime,
+        closeTime: courses.closeTime,
       })
       .from(courses)
       .where(eq(courses.id, courseId));
@@ -759,7 +805,7 @@ export class SearchService {
         : [];
     const playersCount = numberOfPlayers?.[0] ? Number(numberOfPlayers[0]) : golfers;
 
-    const conditions:SQL<unknown>[] = []
+    const conditions: SQL<unknown>[] = [];
 
     if (!isHolesAny) {
       conditions.push(eq(teeTimes.numberOfHoles, holes));
@@ -768,24 +814,30 @@ export class SearchService {
     if (!isGolferAny) {
       conditions.push(gte(teeTimes.availableFirstHandSpots, playersCount));
     }
-    
-    const startingHour =
-      Number(NumberOfPlayers[0]?.openTime?.split(" ")?.[1]?.split(":")?.[0]) ?? 9;
-    const closingHour =
-      Number(NumberOfPlayers[0]?.closeTime?.split(" ")?.[1]?.split(":")?.[0]) ?? 9;
-     
-    if((startingHour*100)!==startTime || (closingHour*100)!==endTime){
-       conditions.push(and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)) as any)
-    }  
 
-    const firstHandSpecificCondition:SQL<unknown>[]=[]
-    const secondHandSpecificCondition:SQL<unknown>[]=[]
+    const startingHour = Number(NumberOfPlayers[0]?.openTime?.split(" ")?.[1]?.split(":")?.[0]) ?? 9;
+    const closingHour = Number(NumberOfPlayers[0]?.closeTime?.split(" ")?.[1]?.split(":")?.[0]) ?? 9;
 
-    if(highestPrice !== upperPrice || lowestPrice !==lowerPrice){
-      firstHandSpecificCondition.push(sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 >= ${lowerPrice}`)
-      firstHandSpecificCondition.push(sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 <= ${upperPrice}`)
-      secondHandSpecificCondition.push(sql`(${lists.listPrice}*(${courses.buyerFee}/100)+${lists.listPrice})/100 >= ${lowerPrice}`)
-      secondHandSpecificCondition.push(sql`(${lists.listPrice}*(${courses.buyerFee}/100)+${lists.listPrice})/100 <= ${upperPrice}`)
+    if (startingHour * 100 !== startTime || closingHour * 100 !== endTime) {
+      conditions.push(and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)) as any);
+    }
+
+    const firstHandSpecificCondition: SQL<unknown>[] = [];
+    const secondHandSpecificCondition: SQL<unknown>[] = [];
+
+    if (highestPrice !== upperPrice || lowestPrice !== lowerPrice) {
+      firstHandSpecificCondition.push(
+        sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 >= ${lowerPrice}`
+      );
+      firstHandSpecificCondition.push(
+        sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 <= ${upperPrice}`
+      );
+      secondHandSpecificCondition.push(
+        sql`(${lists.listPrice}*(${courses.buyerFee}/100)+${lists.listPrice})/100 >= ${lowerPrice}`
+      );
+      secondHandSpecificCondition.push(
+        sql`(${lists.listPrice}*(${courses.buyerFee}/100)+${lists.listPrice})/100 <= ${upperPrice}`
+      );
     }
 
     const firstHandResultsQuery = this.database
@@ -793,22 +845,18 @@ export class SearchService {
         providerDate: sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))`,
       })
       .from(teeTimes)
-      .innerJoin(courses, eq(courses.id, teeTimes.courseId))
+      .innerJoin(courses, eq(courses.id, teeTimes.courseId));
 
     const courseAllowedTeeTimeToSellFilters = await this.database
       .select({
         fromTime: courseAllowedTimeToSell.fromTime,
         toTime: courseAllowedTimeToSell.toTime,
-        primaryMarketAllowedPlayers: courseAllowedTimeToSell.primaryMarketAllowedPlayers
+        primaryMarketAllowedPlayers: courseAllowedTimeToSell.primaryMarketAllowedPlayers,
       })
       .from(courseAllowedTimeToSell)
-      .where(
-        and(
-          eq(courseAllowedTimeToSell.courseId, courseId),
-        )
-      )
+      .where(and(eq(courseAllowedTimeToSell.courseId, courseId)))
       .orderBy(asc(courseAllowedTimeToSell.fromTime))
-      .execute()
+      .execute();
 
     if (courseAllowedTeeTimeToSellFilters.length > 0) {
       firstHandResultsQuery
@@ -839,29 +887,30 @@ export class SearchService {
               isNull(courseAllowedTimeToSell.courseId),
               and(
                 gte(teeTimes.time, courseAllowedTimeToSell.fromTime),
-                lte(teeTimes.time, courseAllowedTimeToSell.toTime),
+                lte(teeTimes.time, courseAllowedTimeToSell.toTime)
               )
             )
           )
         )
-        .orderBy(asc(sql`DATE(Convert_TZ(${teeTimes.providerDate}, 'UTC', ${courses.timezoneISO}))`))
+        .orderBy(asc(sql`DATE(Convert_TZ(${teeTimes.providerDate}, 'UTC', ${courses.timezoneISO}))`));
     } else {
-      firstHandResultsQuery.where(
-        and(
-          eq(courses.id, courseId),
-          gte(teeTimes.providerDate, currentTimePlus30Min),
-          between(teeTimes.providerDate, minDateSubquery, maxDateSubquery),
-          and(gt(teeTimes.greenFeePerPlayer, 0)),
-          // and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
-          // sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 >= ${lowerPrice}`,
-          // sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 <= ${upperPrice}`,
-          // // eq(teeTimes.numberOfHoles, holes),
-          // gte(teeTimes.availableFirstHandSpots, playersCount)
-          ...conditions,
-          ...firstHandSpecificCondition
+      firstHandResultsQuery
+        .where(
+          and(
+            eq(courses.id, courseId),
+            gte(teeTimes.providerDate, currentTimePlus30Min),
+            between(teeTimes.providerDate, minDateSubquery, maxDateSubquery),
+            and(gt(teeTimes.greenFeePerPlayer, 0)),
+            // and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
+            // sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 >= ${lowerPrice}`,
+            // sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 <= ${upperPrice}`,
+            // // eq(teeTimes.numberOfHoles, holes),
+            // gte(teeTimes.availableFirstHandSpots, playersCount)
+            ...conditions,
+            ...firstHandSpecificCondition
+          )
         )
-      )
-        .orderBy(asc(sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))`))
+        .orderBy(asc(sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))`));
     }
 
     // console.log("DATES QUERY:", firstHandResultsQuery.toSQL())
@@ -1085,13 +1134,12 @@ export class SearchService {
         sortPrice === "desc"
           ? desc(teeTimes.greenFeePerPlayer)
           : sortTime === "desc"
-          ? desc(teeTimes.time)
-          : sortPrice === "asc"
-          ? asc(teeTimes.greenFeePerPlayer)
-          : asc(teeTimes.time)
-      )
+            ? desc(teeTimes.time)
+            : sortPrice === "asc"
+              ? asc(teeTimes.greenFeePerPlayer)
+              : asc(teeTimes.time)
+      );
     const teeQueryLimited = teeQuery.limit(limit);
-
 
     const courseData = await this.database
       .select({
@@ -1103,7 +1151,7 @@ export class SearchService {
       .from(courses)
       .where(eq(courses.id, courseId))
       .execute()
-      .catch(() => {});
+      .catch(() => { });
     let buyerFee = 0;
     let courseDataIfAvailable: any = {};
     if (courseData?.length) {
@@ -1159,17 +1207,12 @@ export class SearchService {
       .select({
         fromTime: courseAllowedTimeToSell.fromTime,
         toTime: courseAllowedTimeToSell.toTime,
-        primaryMarketAllowedPlayers: courseAllowedTimeToSell.primaryMarketAllowedPlayers
+        primaryMarketAllowedPlayers: courseAllowedTimeToSell.primaryMarketAllowedPlayers,
       })
       .from(courseAllowedTimeToSell)
-      .where(
-        and(
-          eq(courseAllowedTimeToSell.courseId, courseId),
-          eq(courseAllowedTimeToSell.day, dayToFetch),
-        )
-      )
+      .where(and(eq(courseAllowedTimeToSell.courseId, courseId), eq(courseAllowedTimeToSell.day, dayToFetch)))
       .orderBy(asc(courseAllowedTimeToSell.fromTime))
-      .execute()
+      .execute();
 
     let innerCursor = 0;
     if (courseAllowedTeeTimeToSellFilters?.length > 0) {
@@ -1179,7 +1222,7 @@ export class SearchService {
       // console.log("FILTERING TEE TIMES");
       // console.log("teeTimesData", teeTimesData.length, limit);
       while (!(newTeeTimeData.length >= limit)) {
-        const offset = limit + (take * innerCursor);
+        const offset = limit + take * innerCursor;
         // console.log("COMING IN WHILE LOOP")
         let extraTimes = [] as typeof teeTimesData;
         if (needToRepeat) {
@@ -1239,9 +1282,12 @@ export class SearchService {
             const playersCount = numberOfPlayers?.[0] ? Number(numberOfPlayers[0]) : 0;
             // console.log("playersCount", playersCount);
             const times = extraTimes.filter((teeTime) => {
-              return (teeTime.time >= allowedTimeToSell.fromTime
-                && teeTime.time <= allowedTimeToSell.toTime) && teeTime.firstPartySlots >= playersCount
-            })
+              return (
+                teeTime.time >= allowedTimeToSell.fromTime &&
+                teeTime.time <= allowedTimeToSell.toTime &&
+                teeTime.firstPartySlots >= playersCount
+              );
+            });
             newTeeTimeData = [...newTeeTimeData, ...times.slice(0, limit - newTeeTimeData.length)];
             // console.log("times", times, innerCursor, limit);
           }
@@ -1262,9 +1308,12 @@ export class SearchService {
             const playersCount = numberOfPlayers?.[0] ? Number(numberOfPlayers[0]) : 0;
             // console.log("playersCount", playersCount);
             const times = teeTimesData.filter((teeTime) => {
-              return (teeTime.time >= allowedTimeToSell.fromTime
-                && teeTime.time <= allowedTimeToSell.toTime) && teeTime.firstPartySlots >= playersCount
-            })
+              return (
+                teeTime.time >= allowedTimeToSell.fromTime &&
+                teeTime.time <= allowedTimeToSell.toTime &&
+                teeTime.firstPartySlots >= playersCount
+              );
+            });
             // console.log("times", times, innerCursor, limit);
             newTeeTimeData = [...newTeeTimeData, ...times.slice(0, limit - newTeeTimeData.length)];
           }
@@ -1370,10 +1419,10 @@ export class SearchService {
         sortPrice === "desc"
           ? desc(lists.listPrice)
           : sortTime === "desc"
-          ? desc(teeTimes.time)
-          : sortPrice === "asc"
-          ? asc(lists.listPrice)
-          : asc(teeTimes.time)
+            ? desc(teeTimes.time)
+            : sortPrice === "asc"
+              ? asc(lists.listPrice)
+              : asc(teeTimes.time)
       );
     // .limit(limit);
     const secoondHandData = await secondHandBookingsQuery.execute().catch(async (err) => {
@@ -1523,7 +1572,7 @@ export class SearchService {
       : primaryDomain;
   };
 
-  getSpecialEvents = async (courseId: string) => {
+  getSpecialEvents = async (courseId: string): Promise<SpecialEvent[]> => {
     const today = dayjs().startOf("day").format("YYYY-MM-DD HH:mm:ss");
     const threeMonthsFromNow = dayjs().add(3, "month").endOf("day").format("YYYY-MM-DD HH:mm:ss");
 
@@ -1533,40 +1582,154 @@ export class SearchService {
         eventName: majorEvents.eventName,
         startDate: majorEvents.startDate,
         endDate: majorEvents.endDate,
+        eventStartDate: majorEvents.eventStartDate,
+        eventEndDate: majorEvents.eventEndDate,
         logo: {
-          //cdn: assets.cdn,
           key: assets.key,
           extension: assets.extension,
         },
       })
       .from(majorEvents)
       .leftJoin(assets, eq(assets.id, majorEvents.iconAssetId))
-      .where(
-        and(
-          eq(majorEvents.courseId, courseId),
-          lt(majorEvents.startDate, threeMonthsFromNow),
-          gt(majorEvents.endDate, today),
-          lt(majorEvents.endDate, threeMonthsFromNow)
-        )
-      )
+      .where(and(eq(majorEvents.courseId, courseId), gt(majorEvents.endDate, today)))
       .orderBy(asc(majorEvents.startDate))
       .limit(6)
       .execute()
       .catch((e) => {
-        console.log("Error in getting special Events");
+        console.log("Error in getting special Events", e);
+        return [];
       });
-    const cdnUrl = process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL;
-    const finalEvents = events?.map((event) => ({
-      ...event,
-      logo: {
-        ...event.logo,
-        cdn: cdnUrl,
-      },
-      iconUrl: event.logo
-        ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${event?.logo?.key}.${event?.logo?.extension}`
-        : null,
-    }));
 
-    return finalEvents;
+    const cdnUrl = process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL;
+
+    const finalEvents = events
+      ?.map((event) => {
+        let finalStartDate = today;
+        let finalEndDate = threeMonthsFromNow;
+
+        // Case 1: Both eventStartDate and eventEndDate are empty
+        if (!event.eventStartDate && !event.eventEndDate) {
+          finalStartDate = dayjs(event.startDate)
+            .subtract(3, "month")
+            .startOf("day")
+            .format("YYYY-MM-DD HH:mm:ss");
+          finalEndDate = dayjs(event.endDate).endOf("day").format("YYYY-MM-DD HH:mm:ss");
+        }
+        // Case 2: eventStartDate is present and eventEndDate is empty
+        else if (event.eventStartDate && !event.eventEndDate) {
+          finalStartDate = dayjs(event.eventStartDate).startOf("day").format("YYYY-MM-DD HH:mm:ss");
+          finalEndDate = dayjs(event.endDate).endOf("day").format("YYYY-MM-DD HH:mm:ss");
+        }
+        // Case 3: eventStartDate is empty and eventEndDate is present
+        else if (!event.eventStartDate && event.eventEndDate) {
+          finalStartDate = dayjs(event.startDate)
+            .subtract(3, "month")
+            .startOf("day")
+            .format("YYYY-MM-DD HH:mm:ss");
+          finalEndDate = dayjs(event.eventEndDate).endOf("day").format("YYYY-MM-DD HH:mm:ss");
+        }
+        // Case 4: Both eventStartDate and eventEndDate are present
+        else if (event.eventStartDate && event.eventEndDate) {
+          finalStartDate = dayjs(event.eventStartDate).startOf("day").format("YYYY-MM-DD HH:mm:ss");
+          finalEndDate = dayjs(event.eventEndDate).endOf("day").format("YYYY-MM-DD HH:mm:ss");
+        }
+
+        if (dayjs(finalStartDate).isAfter(today) || dayjs(finalEndDate).isBefore(today)) {
+          return;
+        }
+
+        return {
+          ...event,
+          eventStartDate: finalStartDate,
+          eventEndDate: finalEndDate,
+          logo: {
+            ...event.logo,
+            cdn: cdnUrl,
+          },
+          iconUrl: event.logo
+            ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${event?.logo?.key}.${event?.logo?.extension}`
+            : null,
+        };
+      })
+      .filter(Boolean);
+
+    const sortedEvents = finalEvents?.sort((a, b) => {
+      const dateA = dayjs(a?.eventStartDate);
+      const dateB = dayjs(b?.eventStartDate);
+      return dateA.isBefore(dateB) ? -1 : dateA.isAfter(dateB) ? 1 : 0;
+    });
+    console.log("sortedEvents", sortedEvents);
+
+    return sortedEvents;
   };
+
+  getPriceForecast = async (courseId: string, startDate: string, endDate: string): Promise<PriceForecast[]> => {
+    console.log("startDate", startDate);
+    let forecastData = await this.getCache(
+      `${courseId}-${startDate}-${endDate}-${process.env.NODE_ENV}`
+    )!
+    console.log("forecastData for cash", forecastData);
+
+
+    if (!forecastData) {
+      console.log("databasehit");
+
+      forecastData = await this.database
+        .select({
+          courseId: teeTimes.courseId,
+          name: courses.name,
+          providerDate: sql`DATE(${teeTimes.providerDate})`.as('providerDate'),
+          EarlyMorning: sql`Min(If(${teeTimes.time} >= 600 And ${teeTimes.time} <= 800, ${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer}, Null))`.as('EarlyMorning'),
+          MidMorning: sql`Min(If(${teeTimes.time} >= 801 And ${teeTimes.time} <= 1030, ${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer}, Null))`.as('MidMorning'),
+          EarlyAfternoon: sql`Min(If(${teeTimes.time} >= 1031 AND ${teeTimes.time} <= 1400, ${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer}, Null))`.as('EarlyAfternoon'),
+          Afternoon: sql`Min(If(${teeTimes.time} >= 1401 And ${teeTimes.time} <= 1600, ${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer}, Null))`.as('Afternoon'),
+          Twilight: sql`Min(If(${teeTimes.time} >= 1601 And ${teeTimes.time} <= 1800, ${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer}, Null))`.as('Twilight'),
+        })
+        .from(teeTimes)
+        .innerJoin(courses, eq(teeTimes.courseId, courses.id))
+        .where(
+          and(
+            between(sql`Date(${teeTimes.providerDate})`, startDate, endDate),
+            eq(teeTimes.courseId, courseId),
+            sql`${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} > 0`,
+            sql`${teeTimes.availableFirstHandSpots} > 0`
+          )
+        )
+        .groupBy(
+          teeTimes.courseId,
+          courses.name,
+          sql`Date(${teeTimes.providerDate})`
+        )
+        .orderBy(
+          asc(teeTimes.courseId),
+          asc(courses.name),
+          asc(sql`Date(${teeTimes.providerDate})`)
+        )
+        .execute();
+
+      await this.setCache(
+        `${courseId}-${startDate}-${endDate}-${process.env.NODE_ENV}`,
+        forecastData,
+        60 * 60
+      );
+    }
+
+    if (forecastData && Array.isArray(forecastData)) {
+      const formattedData = forecastData.map((item: PriceForecast) => ({
+        ...item,
+        providerDate: item.providerDate,
+        EarlyMorning: item.EarlyMorning ? item.EarlyMorning / 100 : null,
+        MidMorning: item.MidMorning ? item.MidMorning / 100 : null,
+        EarlyAfternoon: item.EarlyAfternoon ? item.EarlyAfternoon / 100 : null,
+        Afternoon: item.Afternoon ? item.Afternoon / 100 : null,
+        Twilight: item.Twilight ? item.Twilight / 100 : null,
+      }));
+
+      return formattedData;
+    }
+    else {
+      return []
+    }
+  };
+
 }
