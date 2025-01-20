@@ -12,6 +12,7 @@ import { CourseWrapper } from "~/contexts/CourseContext";
 import { FiltersWrapper } from "~/contexts/FiltersContext";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { BookingSourceWrapper } from "~/contexts/BookingSourceContext";
 
 export async function generateMetadata({
   params,
@@ -60,10 +61,12 @@ export default async function CoursePageLayout({
       ) : (
         <CourseWrapper courseData={courseData} courseImages={courseImages}>
           <FiltersWrapper>
-            <div className="flex w-full flex-col">
-              <CourseNav />
-              <CourseLayout>{children}</CourseLayout>
-            </div>
+              <BookingSourceWrapper>
+                <div className="flex w-full flex-col">
+                  <CourseNav />
+                  <CourseLayout>{children}</CourseLayout>
+                </div>
+              </BookingSourceWrapper>
           </FiltersWrapper>
         </CourseWrapper>
       )}
