@@ -96,6 +96,8 @@ export type FullCourseType = {
   internalId?: string | null;
   supportsPlayerNameChange: boolean;
   websiteURL: string;
+  courseOpenTime: number;
+  courseCloseTime: number;
 };
 
 export type SupportedCharity = {

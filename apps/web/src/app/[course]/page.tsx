@@ -158,8 +158,10 @@ export default function CourseHomePage() {
     if (queryDateType === "custom" && queryDate) {
       setDateType("Custom");
 
-      const courseOpenTime = Number(dayjs(course?.openTime).format("HHmm"));
-      const courseCloseTime = Number(dayjs(course?.closeTime).format("HHmm"));
+      // const courseOpenTime = Number(dayjs(course?.openTime).format("HHmm"));
+      // const courseCloseTime = Number(dayjs(course?.closeTime).format("HHmm"));
+      const courseOpenTime = course?.courseOpenTime??9;
+      const courseCloseTime = course?.courseCloseTime??9;
       const startTime = Math.max(courseOpenTime, Number(queryStartTime));
       const endTime = Math.min(courseCloseTime, Number(queryEndTime));
       setStartTime([startTime, endTime]);

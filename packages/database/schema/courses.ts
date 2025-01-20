@@ -68,6 +68,8 @@ export const courses = mySqlTable(
     markupTaxPercent: int("markupTaxPercent").default(0).notNull(),
     displayOrder: tinyint("displayOrder").notNull().default(-1),
     showPricingBreakdown: tinyint("showPricingBreakdown").default(0).notNull(),
+    courseOpenTime: int("courseOpenTime").default(0).notNull(),
+    courseCloseTime: int("courseCloseTime").default(0).notNull(),
   },
   (table) => {
     return {
