@@ -1580,52 +1580,59 @@ export class UserService {
     return true;
   };
 
-  validateEmail= async (email: string): Promise<boolean> => {
-
-    const appSettingService = new AppSettingsService(this.database, process.env.REDIS_URL!, process.env.REDIS_TOKEN!);
-
-    const appSettings = await appSettingService.getMultiple(
-      "ALLOW_DISPOSABLE_EMAIL_ADDRESS"
-    );
-    
-    if(appSettings?.ALLOW_DISPOSABLE_EMAIL_ADDRESS=='true'){
-      return true;
-    }
-
-
-    const data = {
-      email: email,
-    };
+  validateEmail = async (email: string): Promise<boolean> => {
   
-    const request = {
-      url: "/v3/validations/email",
-      method: "POST",
-      body: data,
-    };
-  
-    try {
-      const [response, body] = await client.request(request as any);
-      // Check if the status code indicates success
-      
-      if (response.statusCode === 200) {
-        console.log("Email is valid.");
-
-        const validDomain= body?.result?.checks?.domain?.is_suspected_disposable_address
-
-        if(validDomain){
-          return false;
-        }
-
-        return true; // Return true if the email is valid
-      } else {
-        console.error("Invalid email:", body);
-        return false; // Return false if email is invalid
-      }
-    } catch (error) {
-      console.error("Error during email validation:", error);
-      return false; // If there's an error, treat it as an invalid email
-    }
-  }
+    // Initialize the AppSettingsService
+     const appSettingService = new AppSettingsService(
+       this.database,
+       process.env.REDIS_URL!,
+       process.env.REDIS_TOKEN!
+     );
+   
+     // Fetch app settings
+     const appSettings = await appSettingService.getMultiple(
+       "ALLOW_DISPOSABLE_EMAIL_ADDRESS"
+     );
+   
+     // If disposable emails are allowed, return true
+     if (appSettings?.ALLOW_DISPOSABLE_EMAIL_ADDRESS === 'true') {
+       return true;
+     }
+   
+     // API URL for checking disposable email
+     const apiUrl = `https://disposable.debounce.io/?email=${encodeURIComponent(email)}`;
+   
+     try {
+       // Fetch the response from the disposable email checker API
+       const response = await fetch(apiUrl);
+   
+       // Check if the response is successful
+       if (!response.ok) {
+         console.error(`API Error: ${response.status} ${response.statusText}`);
+         return false; // Treat it as invalid if the API fails
+       }
+   
+       // Parse the JSON response
+       const data = await response.json();
+   
+       // Check the disposable status
+       if (data.disposable === "true") {
+         console.log(`The email ${email} is disposable.`);
+         return false; // Disposable email, return false
+       } else if (data.disposable === "false") {
+         console.log(`The email ${email} is not disposable.`);
+         return true; // Not a disposable email, return true
+       } else {
+         console.log(
+           `Could not determine the disposable status of the email ${email}.`
+         );
+         return false; // Treat ambiguous cases as invalid
+       }
+     } catch (error) {
+       console.error("Error during email validation:", error);
+       return false; // Treat errors as invalid emails
+     }
+   };
   /**
    * Asynchronously inserts a new user into the database.
    *
