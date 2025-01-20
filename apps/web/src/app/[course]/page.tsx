@@ -158,8 +158,10 @@ export default function CourseHomePage() {
     if (queryDateType === "custom" && queryDate) {
       setDateType("Custom");
 
-      const courseOpenTime = Number(dayjs(course?.openTime).format("HHmm"));
-      const courseCloseTime = Number(dayjs(course?.closeTime).format("HHmm"));
+      // const courseOpenTime = Number(dayjs(course?.openTime).format("HHmm"));
+      // const courseCloseTime = Number(dayjs(course?.closeTime).format("HHmm"));
+      const courseOpenTime = course?.courseOpenTime??9;
+      const courseCloseTime = course?.courseCloseTime??9;
       const startTime = Math.max(courseOpenTime, Number(queryStartTime));
       const endTime = Math.min(courseCloseTime, Number(queryEndTime));
       setStartTime([startTime, endTime]);
@@ -519,20 +521,20 @@ export default function CourseHomePage() {
     return null;
   };
 
-  const { data: systemNotifications } =
-    api.systemNotification.getSystemNotification.useQuery({});
+  // const { data: systemNotifications } =
+  //   api.systemNotification.getSystemNotification.useQuery({});
 
-  const { data: courseGlobalNotification } =
-    api.systemNotification.getCourseGlobalNotification.useQuery({
-      courseId: courseId ?? "",
-    });
+  // const { data: courseGlobalNotification } =
+  //   api.systemNotification.getCourseGlobalNotification.useQuery({
+  //     courseId: courseId ?? "",
+  //   });
 
-  const notificationsCount =
-    (systemNotifications ? systemNotifications.length : 0) +
-    (courseGlobalNotification ? courseGlobalNotification.length : 0);
+  // const notificationsCount =
+  //   (systemNotifications ? systemNotifications.length : 0) +
+  //   (courseGlobalNotification ? courseGlobalNotification.length : 0);
 
-  const marginTop =
-    notificationsCount > 0 ? `mt-${notificationsCount * 6}` : "";
+  // const marginTop =
+  //   notificationsCount > 0 ? `mt-${notificationsCount * 6}` : "";
 
   const openForecastModal = () => {
     setIsForecastModalOpen(true);
@@ -543,7 +545,7 @@ export default function CourseHomePage() {
     setIsForecastModalOpen(false);
   };
   return (
-    <main className={`bg-secondary-white py-4 md:py-6 ${marginTop}`}>
+    <main className={`bg-secondary-white py-4 md:py-6`}>
       <LoadingContainer isLoading={isLoadingTeeTimeDate || isLoading || specialEventsLoading}>
         <div></div>
       </LoadingContainer>

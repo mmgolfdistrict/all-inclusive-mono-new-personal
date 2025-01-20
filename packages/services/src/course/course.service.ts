@@ -101,6 +101,8 @@ export class CourseService extends DomainService {
         isBookingDisabled: courses.isBookingDisabled,
         showPricingBreakdown:courses.showPricingBreakdown,
         websiteURL: courses.websiteURL,
+        courseOpenTime:courses.courseOpenTime,
+        courseCloseTime:courses.courseCloseTime,
         supportsProviderMembership:courses.supportsProviderMembership
       })
       .from(courses)

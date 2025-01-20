@@ -9,6 +9,8 @@ import { useMediaQuery } from "usehooks-ts";
 export const CourseLayout = ({ children }: { children: React.ReactNode }) => {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const pathname = usePathname();
+  console.log("pathname", pathname);
+
 
   const { course } = useCourseContext();
   const courseId = course?.id;
@@ -28,10 +30,15 @@ export const CourseLayout = ({ children }: { children: React.ReactNode }) => {
   const marginTop = notificationsCount > 0 ? `${notificationsCount * 27}px` : "0";
 
   const styling = useMemo(() => {
+    const coursePathPattern = `/${courseId}/`;
+
     if (pathname.includes("/checkout")) {
       return "";
+    } if (courseId && pathname.includes(coursePathPattern)) {
+      return isMobile ? "pt-28" : "pt-16";
     } else {
-      return isMobile ? "pt-28" : "pt-20";
+      return isMobile ? "pt-28" : "pt-12";
+
     }
   }, [pathname, notificationsCount, isMobile]);
 

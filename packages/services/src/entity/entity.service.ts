@@ -102,7 +102,6 @@ export class EntityService {
         color3: entities.color3,
         subdomain: entities.subdomain,
         customDomain: entities.customDomain,
-        message404: entities.message404,
         createdAt: entities.createdAt,
         updatedAt: entities.updatedAt,
         updatedById: entities.updatedById,

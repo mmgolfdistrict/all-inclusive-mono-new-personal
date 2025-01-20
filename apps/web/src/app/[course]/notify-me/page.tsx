@@ -40,8 +40,8 @@ function NotifyMe({ params }: { params: { course: string } }) {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const courseStartTime = dayjs(course?.openTime).format("hh:mm A");
   const courseEndTime = dayjs(course?.closeTime).format("hh:mm A");
-  const courseStartTimeNumber = Number(dayjs(course?.openTime).format("HHmm"));
-  const courseEndTimeNumber = Number(dayjs(course?.closeTime).format("HHmm"));
+  const courseStartTimeNumber = course?.courseOpenTime??9;
+  const courseEndTimeNumber = course?.courseCloseTime??9;
 
   const [startTime, setStartTime] = useState<[number, number]>([
     courseStartTimeNumber,

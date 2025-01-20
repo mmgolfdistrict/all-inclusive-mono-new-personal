@@ -45,7 +45,6 @@ export type EntityType = {
   color3?: string;
   subdomain?: string | null;
   customDomain?: string | null;
-  message404?: string | null;
   createdAt?: string;
   updatedAt?: Date;
   updatedById?: string | null;
@@ -97,6 +96,8 @@ export type FullCourseType = {
   internalId?: string | null;
   supportsPlayerNameChange: boolean;
   websiteURL: string;
+  courseOpenTime: number;
+  courseCloseTime: number;
 };
 
 export type SupportedCharity = {
