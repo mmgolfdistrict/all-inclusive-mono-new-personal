@@ -13,7 +13,6 @@ import Link from "next/link";
 import { FilledButton } from "~/components/buttons/filled-button";
 import styles from "../../../../components/checkout-page/checkout.module.css";
 import { useBookingSourceContext } from "~/contexts/BookingSourceContext";
-import { boolean } from "zod";
 
 export default function CheckoutProcessing() {
   const { bookingSource, setBookingSource } = useBookingSourceContext();

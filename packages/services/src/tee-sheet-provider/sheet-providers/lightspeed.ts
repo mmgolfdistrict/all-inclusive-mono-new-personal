@@ -5,6 +5,7 @@ import type {
   BookingResponse,
   BuyerData,
   CustomerCreationData,
+  CustomerData,
   GetCustomerResponse,
   NameChangeCustomerDetails,
   ProviderAPI,
@@ -605,7 +606,8 @@ export class Lightspeed extends BaseProvider {
     providerBookingId: string | string[],
     _providerId: string,
     _courseId: string,
-    providerSlotIds?: string[]
+    providerSlotIds: string[],
+    providerCourseMembershipId: string
   ) {
     const bookingSlots: {
       id: string;
@@ -617,6 +619,7 @@ export class Lightspeed extends BaseProvider {
       slotPosition: number;
       lastUpdatedDateTime: string | null;
       createdDateTime: string | null;
+      providerCourseMembershipId: string | null;
     }[] = [];
 
     for (let i = 0; i < slots; i++) {
@@ -630,6 +633,7 @@ export class Lightspeed extends BaseProvider {
         slotPosition: i + 1,
         lastUpdatedDateTime: null,
         createdDateTime: null,
+        providerCourseMembershipId: providerCourseMembershipId || null,
       });
     }
     return bookingSlots;
@@ -1147,4 +1151,7 @@ export class Lightspeed extends BaseProvider {
   requireToCreatePlayerSlots(): boolean {
     return false;
   }
+   async SearchCustomer(token: string, providerCourseId: string, email: string): Promise<CustomerData> {
+      return {} as CustomerData;
+    }
 }

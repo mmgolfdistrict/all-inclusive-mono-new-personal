@@ -210,7 +210,9 @@ export type ReserveTeeTimeResponse = {
   bookingId: string;
   providerBookingId: string;
   status: string;
-  isEmailSend: boolean
+  isEmailSend: boolean;
+  courseMembershipId?:string;
+  playerCountForMemberShip?:string
 };
 
 export type NotificationObject = {

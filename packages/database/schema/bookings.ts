@@ -1,6 +1,6 @@
 import type { InferInsertModel } from "drizzle-orm";
 import { relations, sql } from "drizzle-orm";
-import { boolean, datetime, index, int, unique, varchar } from "drizzle-orm/mysql-core";
+import { boolean, datetime, index, int, tinyint, unique, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 import { lists } from "./lists";
 import { teeTimes } from "./teeTimes";
@@ -52,6 +52,8 @@ export const bookings = mySqlTable(
     source: varchar("source", { length: 50 }),
     customerComment: varchar("customerComment", { length: 200 }),
     needClubRental: boolean("needClubRental").default(false).notNull(),
+    canResell:tinyint("canResell").notNull().default(0),
+    courseMembershipId:varchar("courseMembershipId",{length:26})
   },
   (table) => {
     return {

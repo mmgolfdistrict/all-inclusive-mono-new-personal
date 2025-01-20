@@ -61,9 +61,11 @@ export const CheckoutForm = ({
   roundOffStatus: string | undefined;
   setRoundOffStatus: Dispatch<SetStateAction<string>>;
 }) => {
+  console.log("cart-data", cartData);
   const MAX_CHARITY_AMOUNT = 1000;
   const { course } = useCourseContext();
-  const { shouldAddSensible } = useCheckoutContext();
+  const { shouldAddSensible, validatePlayers, handleShouldAddSensible } =
+    useCheckoutContext();
   const params = useParams();
   const courseId = course?.id;
   const roundUpCharityId = course?.roundUpCharityId;
@@ -209,7 +211,7 @@ export const CheckoutForm = ({
       applePay: "auto",
       googlePay: "auto",
     },
-    paymentMethodOrder: ["card", "google_pay", "apple_pay", "paypal"],
+    paymentMethodOrder: ["card", "google_pay", "apple_pay"],
     billingAddress: {
       isUseBillingAddress: true,
       usePrefilledValues: "never", // or "auto",
@@ -254,7 +256,6 @@ export const CheckoutForm = ({
     amountOfPlayers,
   } = useCheckoutContext();
 
-
   const reserveBookingApi = api.teeBox.reserveBooking.useMutation();
   const reserveSecondHandBookingApi =
     api.teeBox.reserveSecondHandBooking.useMutation();
@@ -263,6 +264,7 @@ export const CheckoutForm = ({
   });
   const { data: multipleTransaction } =
     api.checkout.checkMultipleTeeTimeTransactionByUser.useQuery({});
+  console.log("multipleTransaction", multipleTransaction);
   const { refetch: createCustomerInHyperSwitchHandler } =
     api.checkout.createCustomerForHyperSwitch.useQuery(
       {},
@@ -576,16 +578,20 @@ export const CheckoutForm = ({
   ) => {
     const href = window.location.href;
     const redirectHref = href.split("/checkout")[0] || "";
+
     const bookingResponse = await reserveBookingApi.mutateAsync({
       cartId,
       payment_id,
       sensibleQuoteId,
-      source: bookingSource
-        ? bookingSource
-        : sessionStorage.getItem("source") ?? "",
-      additionalNoteFromUser: additionalNote,
+      source: bookingSource ? bookingSource : sessionStorage.getItem("source") ?? "",
+      additionalNoteFromUser: validatePlayers[0]?.courseMemberShipId
+        ? `There are ${validatePlayers.length} players participating in membership program \n Total Amount Paid:$${TotalAmt} \n with courseMembershipID:${validatePlayers[0]?.courseMemberShipId}`
+        : additionalNote,
       needRentals,
       redirectHref,
+      courseMembershipId: validatePlayers[0]?.courseMemberShipId ?? "",
+      playerCountForMemberShip: playerCount ?? "",
+      providerCourseMembershipId: validatePlayers[0]?.providerCourseMembershipId ?? "",
     });
     return bookingResponse;
   };
@@ -630,9 +636,11 @@ export const CheckoutForm = ({
     setDonateValue(numericValue);
   };
 
-  const playersInNumber = Number(amountOfPlayers || 0);
+  const playersInNumber = Number(amountOfPlayers - validatePlayers.length || 0);
   const greenFeeChargePerPlayer =
-    primaryGreenFeeCharge / playersInNumber - cartFeeCharge - markupFee;
+    playersInNumber && playersInNumber > 0
+      ? primaryGreenFeeCharge / playersInNumber - cartFeeCharge - markupFee
+      : 0;
   const greenFeeTaxAmount =
     greenFeeChargePerPlayer * greenFeeTaxPercent * playersInNumber;
   const cartFeeTaxAmount = cartFeeCharge * cartFeeTaxPercent * playersInNumber;
@@ -769,6 +777,12 @@ export const CheckoutForm = ({
       setIsLoadingTotalAmount(false);
     }, 2000);
   }, [TotalAmt]);
+  useEffect(() => {
+    if (Number(TotalAmt) == 0) {
+      handleShouldAddSensible(false);
+    }
+  }, [TotalAmt]);
+
   return (
     <form onSubmit={handleSubmit} className="">
       <UnifiedCheckout id="unified-checkout" options={unifiedCheckoutOptions} />
@@ -1146,8 +1160,8 @@ export const CheckoutForm = ({
             <button
               type="button"
               className={`flex w-32 items-center justify-center rounded-md p-2 ${roundOffStatus === "roundup"
-                ? "bg-primary text-white"
-                : "bg-white text-primary border-primary border-2"
+                  ? "bg-primary text-white"
+                  : "bg-white text-primary border-primary border-2"
                 }`}
               onClick={() => {
                 handleRoundOff(0, "roundup");

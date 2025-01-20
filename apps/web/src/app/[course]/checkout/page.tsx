@@ -63,6 +63,8 @@ export default function Checkout({
     selectedCharity,
     selectedCharityAmount,
     setAmountOfPlayers,
+    validatePlayers,
+    setValidatePlayers
   } = useCheckoutContext();
 
   // useEffect(() => {
@@ -198,10 +200,10 @@ export default function Checkout({
       | CartFeeMetaData =
       saleType === "first_hand"
         ? {
-          type: "first_hand",
-          tee_time_id: teeTimeId,
-          number_of_bookings: amountOfPlayers,
-        }
+            type: "first_hand",
+            tee_time_id: teeTimeId,
+            number_of_bookings: amountOfPlayers - validatePlayers.length,
+          }
         : {
           type: "second_hand",
           second_hand_id: listingId,
@@ -211,9 +213,14 @@ export default function Checkout({
         name: "Golf District Tee Time",
         id: teeTimeId ?? data?.teeTimeId,
         price:
-          debouncedPromoCode && promoCodePrice !== undefined
-            ? promoCodePrice * 100
-            : Number(data?.pricePerGolfer * 100) * amountOfPlayers, //int
+        (() => {
+          const calculatedPrice =
+            debouncedPromoCode && promoCodePrice !== undefined
+              ? promoCodePrice * 100
+              : Number(data?.pricePerGolfer * 100) * (amountOfPlayers - validatePlayers.length);
+    
+          return calculatedPrice === 0 ? 1 : calculatedPrice; // If price is 0, return 1
+        })(), //int
         image: "", //
         currency: "USD", //USD
         display_price:
@@ -439,6 +446,7 @@ export default function Checkout({
     course?.markupFeesFixedPerPlayer,
     course?.convenienceFeesFixedPerPlayer,
     // playerCount,
+    validatePlayers
   ]);
 
   useEffect(() => {

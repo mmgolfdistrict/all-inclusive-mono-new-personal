@@ -34,6 +34,8 @@ import type { BookingDetails, BookingResponse, ProviderAPI } from "../tee-sheet-
 import type { TokenizeService } from "../token/tokenize.service";
 import type { UserWaitlistService } from "../user-waitlist/userWaitlist.service";
 import { loggerService } from "../webhooks/logging.service";
+import type { TeeTimeResponse as ForeupTeeTimeResponse } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
+import { cacheManager } from "@golf-district/shared/src/utils/cacheManager";
 import { courseContacts } from "@golf-district/database/schema/courseContacts";
 
 dayjs.extend(UTC);
@@ -885,6 +887,7 @@ export class BookingService {
     slots: number
   ) => {
     this.logger.info(`createListingForBookings called with userId: ${userId}`);
+    console.warn("bookingIds", bookingIds);
     // console.log("CREATINGLISTING FOR DATE:", dayjs(endTime).utc().format('YYYY-MM-DD'), dayjs(endTime).utc().format('HHmm'));
     if (new Date().getTime() >= endTime.getTime()) {
       this.logger.warn("End time cannot be before current time");
@@ -3261,7 +3264,10 @@ export class BookingService {
     source: string,
     additionalNoteFromUser: string | undefined,
     needRentals: boolean,
-    redirectHref: string
+    redirectHref: string,
+    courseMembershipId: string,
+    playerCountForMemberShip: string,
+    providerCourseMembershipId:string
   ) => {
     let bookingStage = "Normalizing Cart Data";
     const {
@@ -3309,11 +3315,15 @@ export class BookingService {
       throw new Error("Booking already done");
     }
 
-    const pricePerGolfer = primaryGreenFeeCharge / playerCount;
+    // const pricePerGolfer = primaryGreenFeeCharge / playerCount;
+    const pricePerGolfer = playerCount !== 0 ? primaryGreenFeeCharge / playerCount : 0;
 
     bookingStage = "Retrieving tee time from database";
     console.log(`Retrieving tee time from database ${teeTimeId}`);
-    const [teeTime] = await this.database
+
+    let teeTime:any = await cacheManager.get(`teeTime:${teeTimeId}`);
+    if (!teeTime) {
+     teeTime = await this.database
       .select({
         id: teeTimes.id,
         courseId: teeTimes.courseId,
@@ -3373,6 +3383,10 @@ export class BookingService {
         });
         throw new Error(`Error finding tee time id`);
       });
+
+      await cacheManager.set(`teeTime:${teeTimeId}`, teeTime); // Cache for 1 hour
+    }
+      
 
     // Calculate additional taxes
 
@@ -3454,7 +3468,7 @@ export class BookingService {
         firstHandCharge: primaryGreenFeeCharge,
         markupCharge,
         taxCharge,
-        playerCount,
+        playerCount: courseMembershipId ? playerCountForMemberShip : playerCount,
         holes: teeTime.holes,
         notes: details,
         teeTimeId: teeTime.id,
@@ -3490,7 +3504,7 @@ export class BookingService {
         try {
           console.log("Amounts: ", primaryGreenFeeCharge / 100, taxCharge, markupCharge);
           const bookingsDetails: BookingDetails = {
-            playerCount: playerCount,
+            playerCount: courseMembershipId ? playerCountForMemberShip : playerCount,
             providerCourseId: teeTime.providerCourseId!,
             providerTeeSheetId: teeTime.providerTeeSheetId!,
             totalAmountPaid: (pricePerGolfer / 100 + taxCharge - markupCharge) * playerCount,
@@ -3662,6 +3676,8 @@ export class BookingService {
         source,
         additionalNoteFromUser,
         needRentals,
+        courseMembershipId: courseMembershipId,
+        playerCountForMemberShip,
       })
       .catch(async (err) => {
         this.logger.error(`Error creating booking, ${err}`);
@@ -3689,6 +3705,7 @@ export class BookingService {
       providerBookingId,
       status: "Reserved",
       isEmailSend: bookingId.isEmailSend,
+      
     } as ReserveTeeTimeResponse;
   };
 
@@ -4098,77 +4115,95 @@ export class BookingService {
   };
 
   checkIfTeeTimeAvailableOnProvider = async (teeTimeId: string, golfersCount: number, userId: string) => {
-    const [teeTime] = await this.database
-      .select({
-        id: teeTimes.id,
-        courseId: teeTimes.courseId,
-        time: teeTimes.time,
-        // entityId: teeTimes.entityId,
-        entityId: courses.entityId,
-        date: teeTimes.date,
-        availableFirstHandSpots: teeTimes.availableFirstHandSpots,
-        providerCourseId: providerCourseLink.providerCourseId,
-        providerTeeSheetId: providerCourseLink.providerTeeSheetId,
-        providerId: providerCourseLink.providerId,
-        internalId: providers.internalId,
-        providerDate: teeTimes.providerDate,
-        holes: teeTimes.numberOfHoles,
-        cdnKey: assets.key,
-        extension: assets.extension,
-        websiteURL: courses.websiteURL,
-        courseName: courses.name,
-        entityName: entities.name,
-        isWebhookAvailable: providers.isWebhookAvailable,
-        timeZoneCorrection: courses.timezoneCorrection,
-        providerCourseConfiguration: providerCourseLink.providerCourseConfiguration,
-        providerTeeTimeId: teeTimes.providerTeeTimeId,
-      })
-      .from(teeTimes)
-      .leftJoin(courses, eq(teeTimes.courseId, courses.id))
-      .leftJoin(assets, eq(assets.id, courses.logoId))
-      .leftJoin(entities, eq(courses.entityId, entities.id))
-      .leftJoin(
-        providerCourseLink,
-        and(
-          eq(providerCourseLink.courseId, teeTimes.courseId),
-          eq(providerCourseLink.providerId, courses.providerId)
+
+    const cacheKey = `teeTimeData:${teeTimeId}`;
+    const cacheTTL = 600; // Cache TTL in seconds
+    let teeTime:any = await cacheManager.get(cacheKey);
+  
+    if (!teeTime) {
+      // Fetch tee time data from the database if not in cache
+      const [teeTimeData] = await this.database
+        .select({
+          id: teeTimes.id,
+          courseId: teeTimes.courseId,
+          time: teeTimes.time,
+          entityId: courses.entityId,
+          date: teeTimes.date,
+          availableFirstHandSpots: teeTimes.availableFirstHandSpots,
+          providerCourseId: providerCourseLink.providerCourseId,
+          providerTeeSheetId: providerCourseLink.providerTeeSheetId,
+          providerId: providerCourseLink.providerId,
+          internalId: providers.internalId,
+          providerDate: teeTimes.providerDate,
+          holes: teeTimes.numberOfHoles,
+          cdnKey: assets.key,
+          extension: assets.extension,
+          websiteURL: courses.websiteURL,
+          courseName: courses.name,
+          entityName: entities.name,
+          isWebhookAvailable: providers.isWebhookAvailable,
+          timeZoneCorrection: courses.timezoneCorrection,
+          providerCourseConfiguration: providerCourseLink.providerCourseConfiguration,
+          providerTeeTimeId: teeTimes.providerTeeTimeId,
+          greenFees: teeTimes.greenFeePerPlayer,
+          cartFees: teeTimes.cartFeePerPlayer,
+          greenFeeTaxPercent: courses.greenFeeTaxPercent,
+          cartFeeTaxPercent: courses.cartFeeTaxPercent,
+          weatherGuaranteeTaxPercent: courses.weatherGuaranteeTaxPercent,
+          markupTaxPercent: courses.markupTaxPercent
+          
+        })
+        .from(teeTimes)
+        .leftJoin(courses, eq(teeTimes.courseId, courses.id))
+        .leftJoin(assets, eq(assets.id, courses.logoId))
+        .leftJoin(entities, eq(courses.entityId, entities.id))
+        .leftJoin(
+          providerCourseLink,
+          and(
+            eq(providerCourseLink.courseId, teeTimes.courseId),
+            eq(providerCourseLink.providerId, courses.providerId)
+          )
         )
-      )
-      //.leftJoin(courses, eq(courses.id, teeTimes.courseId))
-      .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))
-      .where(eq(teeTimes.id, teeTimeId))
-      .execute()
-      .catch((err) => {
-        this.logger.error(`Error finding tee time id: ${err}`);
+        .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))
+        .where(eq(teeTimes.id, teeTimeId))
+        .execute()
+        .catch((err) => {
+          this.logger.error(`Error finding tee time id: ${err}`);
+          loggerService.errorLog({
+            userId,
+            url: "/checkIfTeeTimeAvailableOnProvider",
+            userAgent: "",
+            message: "ERROR_CHECKING_TEE_TIME_AVAILABILITY",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              userId,
+              teeTimeId,
+            }),
+          });
+          throw new Error(`Error finding tee time id`);
+        });
+  
+      if (!teeTimeData) {
+        this.logger.fatal(`tee time not found id: ${teeTimeId}`);
         loggerService.errorLog({
           userId,
           url: "/checkIfTeeTimeAvailableOnProvider",
           userAgent: "",
-          message: "ERROR_CHECKING_TEE_TIME_AVAILABILITY",
-          stackTrace: `${err.stack}`,
+          message: "TEE_TIME_NOT_FOUND",
+          stackTrace: `tee time not found id: ${teeTimeId}`,
           additionalDetailsJSON: JSON.stringify({
             userId,
             teeTimeId,
           }),
         });
         throw new Error(`Error finding tee time id`);
-      });
-    if (!teeTime) {
-      this.logger.fatal(`tee time not found id: ${teeTimeId}`);
-      loggerService.errorLog({
-        userId,
-        url: "/checkIfTeeTimeAvailableOnProvider",
-        userAgent: "",
-        message: "TEE_TIME_NOT_FOUND",
-        stackTrace: `tee time not found id: ${teeTimeId}`,
-        additionalDetailsJSON: JSON.stringify({
-          userId,
-          teeTimeId,
-        }),
-      });
-      throw new Error(`Error finding tee time id`);
+      }
+  
+      // Cache the fetched tee time data
+      teeTime = teeTimeData;
+      await cacheManager.set(cacheKey, teeTime, cacheTTL);
     }
-
+  
     if (teeTime.availableFirstHandSpots >= golfersCount) {
       const { provider, token } = await this.providerService.getProviderAndKey(
         teeTime.internalId!,
@@ -4201,5 +4236,13 @@ export class BookingService {
       additionalDetailsJSON: "",
     });
     return false;
+  };
+
+  checkIfUserIsOptMemberShip = async (userId: string, bookingId: string) => {
+    const [canReSellResult] = await this.database
+      .select({canResell:bookings.canResell})
+      .from(bookings)
+      .where(eq(bookings.id, bookingId ?? ""));
+    return canReSellResult?.canResell;
   };
 }
