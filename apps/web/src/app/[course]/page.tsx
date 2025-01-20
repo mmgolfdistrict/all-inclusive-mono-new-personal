@@ -16,7 +16,7 @@ import { FiltersIcon } from "~/components/icons/filters";
 import { Select } from "~/components/input/select";
 import { useAppContext } from "~/contexts/AppContext";
 import { useCourseContext } from "~/contexts/CourseContext";
-import type { GolferType } from "~/contexts/FiltersContext";
+import type { DateType, GolferType } from "~/contexts/FiltersContext";
 import { useFiltersContext } from "~/contexts/FiltersContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
@@ -32,6 +32,7 @@ import { toast } from "react-toastify";
 import { ViewportList } from "react-viewport-list";
 import { useMediaQuery } from "usehooks-ts";
 import { LoadingContainer } from "./loader";
+import { useBookingSourceContext } from "~/contexts/BookingSourceContext";
 import { microsoftClarityEvent } from "~/utils/microsoftClarityUtils";
 import { Close } from "~/components/icons/close";
 import { ForecastModal } from "~/components/modal/forecast-modal";
@@ -47,6 +48,7 @@ export default function CourseHomePage() {
   const queryStartTime = searchParams.get("startTime");
   const queryEndTime = searchParams.get("endTime");
   const queryPlayerCount = searchParams.get("playerCount");
+  const source = searchParams.get("source");
 
   const TAKE = 4;
   const ref = useRef<HTMLDivElement | null>(null);
@@ -63,6 +65,8 @@ export default function CourseHomePage() {
   const [pageNumber, setPageNumber] = useState<number>(1);
   const { user } = useUserContext();
   const { course } = useCourseContext();
+  const { setBookingSource } = useBookingSourceContext();
+
   const {
     showUnlisted,
     includesCart,
@@ -84,6 +88,9 @@ export default function CourseHomePage() {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const courseId = course?.id;
   const updateUser = api.user.updateUser.useMutation();
+  const { data: specialEvents, isLoading: specialEventsLoading } = api.searchRouter.getSpecialEvents.useQuery({
+    courseId: courseId ?? "",
+  });
 
   const updateHandle = async (uName) => {
     try {
@@ -130,17 +137,6 @@ export default function CourseHomePage() {
     }
   );
 
-  const { data: specialEvents } = api.searchRouter.getSpecialEvents.useQuery({
-    courseId: courseId ?? "",
-  });
-
-  const getSpecialDayDate = (label) => {
-    const specialDay = specialEvents?.find((day) => day.eventName === label);
-    return specialDay
-      ? { start: dayjs(specialDay.startDate), end: dayjs(specialDay.endDate) }
-      : null;
-  };
-
   const formatDateString = (
     date: string | number | Date | Dayjs | null | undefined
   ): string => {
@@ -158,8 +154,56 @@ export default function CourseHomePage() {
     return currentDate.add(timezoneCorrection, "hour").toString();
   };
 
+  useEffect(() => {
+    if (queryDateType === "custom" && queryDate) {
+      setDateType("Custom");
+
+      const courseOpenTime = Number(dayjs(course?.openTime).format("HHmm"));
+      const courseCloseTime = Number(dayjs(course?.closeTime).format("HHmm"));
+      const startTime = Math.max(courseOpenTime, Number(queryStartTime));
+      const endTime = Math.min(courseCloseTime, Number(queryEndTime));
+      setStartTime([startTime, endTime]);
+
+      const playerCount =
+        Number(queryPlayerCount) <= 0 || Number(queryPlayerCount) > 4
+          ? "Any"
+          : Number(queryPlayerCount);
+      setGolfers((playerCount as GolferType) || "Any");
+    }
+  }, [queryDateType]);
+
+  useEffect(() => {
+    if (queryDateType === "custom" && queryDate) {
+      const [year, month, day] = queryDate.split("-");
+      if (year && month && day) {
+        setSelectedDay({
+          from: { year: Number(year), month: Number(month), day: Number(day) },
+          to: { year: Number(year), month: Number(month), day: Number(day) },
+        });
+      }
+    }
+    const specialDate = getSpecialDayDate(queryDateType);
+    console.log("queryDateType", queryDateType, specialDate);
+    if (queryDateType) {
+      if (specialDate) {
+        setDateType(queryDateType as DateType);  // Set the DateType to queryDateType if specialDate exists
+      } else {
+        setDateType("All");  // If no specialDate, set the DateType to "All"
+      }
+    }
+  }, [specialEvents, queryDateType]);
+
+  const getSpecialDayDate = (label) => {
+    const specialDay = specialEvents?.find((day) => day.eventName === label);
+    return specialDay
+      ? { start: dayjs(specialDay.startDate), end: dayjs(specialDay.endDate) }
+      : null;
+  };
+
   const startDate = useMemo(() => {
+
     const specialDate = getSpecialDayDate(dateType);
+
     if (specialDate) {
       return formatDateString(dayjs(specialDate.start).toDate());
     }
@@ -184,7 +228,7 @@ export default function CourseHomePage() {
       default:
         return formatDateString(new Date());
     }
-  }, [dateType, selectedDay]);
+  }, [dateType, selectedDay, queryDateType, specialEvents]);
 
   const endDate = useMemo(() => {
     const specialDate = getSpecialDayDate(dateType);
@@ -241,7 +285,7 @@ export default function CourseHomePage() {
       default:
         return formatDateString(dayjs().add(360, "days").toDate());
     }
-  }, [dateType, selectedDay, farthestDateOut]);
+  }, [dateType, selectedDay, farthestDateOut, specialEvents]);
 
   const utcStartDate = dayjs
     .utc(startDate)
@@ -394,35 +438,7 @@ export default function CourseHomePage() {
     setPageNumber(1);
   }, [priceRange]);
 
-  useEffect(() => {
-    if (queryDateType === "custom" && queryDate) {
-      setDateType("Custom");
 
-      const courseOpenTime = Number(dayjs(course?.openTime).format("HHmm"));
-      const courseCloseTime = Number(dayjs(course?.closeTime).format("HHmm"));
-      const startTime = Math.max(courseOpenTime, Number(queryStartTime));
-      const endTime = Math.min(courseCloseTime, Number(queryEndTime));
-      setStartTime([startTime, endTime]);
-
-      const playerCount =
-        Number(queryPlayerCount) <= 0 || Number(queryPlayerCount) > 4
-          ? "Any"
-          : Number(queryPlayerCount);
-      setGolfers((playerCount as GolferType) || "Any");
-    }
-  }, [queryDateType]);
-
-  useEffect(() => {
-    if (queryDateType === "custom" && queryDate) {
-      const [year, month, day] = queryDate.split("-");
-      if (year && month && day) {
-        setSelectedDay({
-          from: { year: Number(year), month: Number(month), day: Number(day) },
-          to: { year: Number(year), month: Number(month), day: Number(day) },
-        });
-      }
-    }
-  }, [dateType]);
   useEffect(() => {
     if (typeof window !== "undefined") {
       localStorage.removeItem("googlestate");
@@ -472,6 +488,10 @@ export default function CourseHomePage() {
   };
 
   useEffect(() => {
+    if (source) {
+      setBookingSource(source.slice(0, 50));
+      sessionStorage.setItem("source", source.slice(0, 50));
+    }
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -523,8 +543,8 @@ export default function CourseHomePage() {
     setIsForecastModalOpen(false);
   };
   return (
-    <main className={`bg-secondary-white py-4 md:py-6 `}>
-      <LoadingContainer isLoading={isLoadingTeeTimeDate || isLoading}>
+    <main className={`bg-secondary-white py-4 md:py-6`}>
+      <LoadingContainer isLoading={isLoadingTeeTimeDate || isLoading || specialEventsLoading}>
         <div></div>
       </LoadingContainer>
       <div className="flex items-center justify-between px-4 md:px-6">

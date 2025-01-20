@@ -29,6 +29,7 @@ import { debounceFunction } from "~/utils/debounce";
 import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
 import Image from "next/image";
 import { useMediaQuery } from "usehooks-ts";
+import { useRouter } from "next/navigation";
 import { Forecast } from "../icons/forecast";
 
 interface DayValue {
@@ -94,6 +95,7 @@ export const Filters = forwardRef<ChildComponentRef, FiltersProps>((props, ref) 
   const [holeMobile, setHoleMobile] = useState(holes);
   const [golferMobile, setGolferMobile] = useState(golfers);
   const [selectedDayMobile, setSelectedDayMobile] = useState(selectedDay);
+  const router = useRouter();
   const isMobile = useMediaQuery("(max-width: 768px)");
   console.log("sadsada", dateType);
 
@@ -180,6 +182,8 @@ export const Filters = forwardRef<ChildComponentRef, FiltersProps>((props, ref) 
   }));
 
   const setFilter = (type, value) => {
+    router.push(`/${course?.id}`)
+
     switch (type) {
       case "dateType": {
         if (isMobile) {

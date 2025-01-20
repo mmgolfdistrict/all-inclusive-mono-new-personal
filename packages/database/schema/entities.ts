@@ -12,7 +12,6 @@ export const entities = mySqlTable(
   "entity",
   {
     id: varchar("id", { length: 191 }).notNull(),
-    requiredTimeBeforeTeeTime: int("requiredTimeBeforeTeeTime"),
     name: varchar("name", { length: 191 }),
     description: text("description"),
     logo: varchar("logo", { length: 36 }),
@@ -22,7 +21,6 @@ export const entities = mySqlTable(
     color3: varchar("color3", { length: 191 }).notNull(),
     subdomain: varchar("subdomain", { length: 191 }),
     customDomain: varchar("customDomain", { length: 191 }),
-    message404: text("message404"),
     createdAt: datetime("createdAt", { mode: "string", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
