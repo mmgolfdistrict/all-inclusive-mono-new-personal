@@ -45,7 +45,6 @@ export type EntityType = {
   color3?: string;
   subdomain?: string | null;
   customDomain?: string | null;
-  message404?: string | null;
   createdAt?: string;
   updatedAt?: Date;
   updatedById?: string | null;
@@ -96,6 +95,9 @@ export type FullCourseType = {
   roundUpCharityId?: string
   internalId?: string | null;
   supportsPlayerNameChange: boolean;
+  websiteURL: string;
+  courseOpenTime: number;
+  courseCloseTime: number;
 };
 
 export type SupportedCharity = {
@@ -208,7 +210,9 @@ export type ReserveTeeTimeResponse = {
   bookingId: string;
   providerBookingId: string;
   status: string;
-  isEmailSend: boolean
+  isEmailSend: boolean;
+  courseMembershipId?:string;
+  playerCountForMemberShip?:string
 };
 
 export type NotificationObject = {

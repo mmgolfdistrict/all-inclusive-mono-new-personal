@@ -259,9 +259,13 @@ export const bookingRouter = createTRPCRouter({
         cartId: z.string(),
         payment_id: z.string(),
         sensibleQuoteId: z.string(),
+        source: z.string(),
         additionalNoteFromUser: z.string().max(200).optional(),
         needRentals: z.boolean(),
         redirectHref: z.string().url(),
+        courseMembershipId:z.string().optional(),
+        playerCountForMemberShip:z.string().optional(),
+        providerCourseMembershipId:z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -272,9 +276,13 @@ export const bookingRouter = createTRPCRouter({
           input.cartId,
           input.payment_id,
           input.sensibleQuoteId,
+          input.source,
           input.additionalNoteFromUser,
           input.needRentals,
-          input.redirectHref
+          input.redirectHref,
+          input.courseMembershipId ?? '',
+          input.playerCountForMemberShip ?? '',
+          input.providerCourseMembershipId ?? ''
         );
     }),
   reserveSecondHandBooking: protectedProcedure
@@ -283,6 +291,7 @@ export const bookingRouter = createTRPCRouter({
         cartId: z.string(),
         listingId: z.string(),
         payment_id: z.string(),
+        source: z.string(),
         additionalNoteFromUser: z.string().max(200).optional(),
         needRentals: z.boolean(),
         redirectHref: z.string().url(),
@@ -296,6 +305,7 @@ export const bookingRouter = createTRPCRouter({
           input.cartId,
           input.listingId,
           input.payment_id,
+          input.source,
           input.additionalNoteFromUser,
           input.needRentals,
           input.redirectHref
@@ -313,4 +323,18 @@ export const bookingRouter = createTRPCRouter({
         .getBookingService()
         .checkIfTeeTimeAvailableOnProvider(input.teeTimeId, input.golfersCount, ctx.session.user.id);
     }),
+    checkIfUserIsOptMemberShip:protectedProcedure.input(
+      z.object({
+        bookingId:z.string()
+      })
+    ).mutation(async ({ctx,input})=>{
+      return ctx.serviceFactory.getBookingService().checkIfUserIsOptMemberShip(ctx.session.user.id,input.bookingId)
+    }),
+    providerBookingStatus:protectedProcedure.input(
+    z.object({
+      listingId:z.string()
+    })
+  ).query(async ({ctx,input})=>{
+     return ctx.serviceFactory.getBookingService().checkCancelledBookingFromProvider(input.listingId, ctx.session.user.id)
+  })
 });

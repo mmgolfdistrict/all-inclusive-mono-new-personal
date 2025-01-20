@@ -37,7 +37,7 @@ export const ModalWrapper: FC<ModalProps> = ({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 flex items-center justify-center z-50 bg-[#00000099]"
+          className="fixed inset-0 flex items-center justify-center z-500 bg-[#00000099]"
           style={{ willChange: "opacity" }}
           variants={backdropVariants}
           initial="hidden"
@@ -55,9 +55,8 @@ export const ModalWrapper: FC<ModalProps> = ({
             transition={{ duration: 0.2 }}
           >
             <div
-              className={`overflow-y-auto max-h-[100dvh] pt-12 pb-6 relative ${
-                className ?? ""
-              }`}
+              className={`overflow-y-auto max-h-[100dvh] pt-12 pb-6 relative ${className ?? ""
+                }`}
             >
               <button
                 className="absolute top-2 right-0 p-2"

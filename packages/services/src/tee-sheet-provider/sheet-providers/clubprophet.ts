@@ -10,7 +10,19 @@ import type {
   ClubProphetTeeTimeResponse,
 } from "./types/clubprophet.types";
 import type { TeeTimeUpdateRequest } from "./types/foreup.type";
-import type { BookingNameChangeOptions, BookingResponse, BuyerData, CustomerCreationData, CustomerData, GetCustomerResponse, NameChangeCustomerDetails, ProviderAPI, SalesDataOptions, TeeTimeData, TeeTimeResponse } from "./types/interface";
+import type {
+  BookingNameChangeOptions,
+  BookingResponse,
+  BuyerData,
+  CustomerCreationData,
+  CustomerData,
+  GetCustomerResponse,
+  NameChangeCustomerDetails,
+  ProviderAPI,
+  SalesDataOptions,
+  TeeTimeData,
+  TeeTimeResponse,
+} from "./types/interface";
 import { BaseProvider } from "./types/interface";
 import { db, eq } from "@golf-district/database";
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
@@ -20,17 +32,14 @@ import type { CacheService } from "../../infura/cache.service";
 import { loggerService } from "../../webhooks/logging.service";
 
 export class clubprophet extends BaseProvider {
+  
   providerId = "club-prophet";
   public providerConfiguration: string;
   logger = Logger(clubprophet.name);
   cacheService: CacheService | undefined;
 
   constructor(providerConfiguration: string) {
-    super(
-      undefined,
-      providerConfiguration,
-      undefined
-    );
+    super(undefined, providerConfiguration, undefined);
     this.providerConfiguration = providerConfiguration;
   }
 
@@ -40,7 +49,7 @@ export class clubprophet extends BaseProvider {
     _teesheetId: string | null,
     _startTime: string,
     _endTime: string,
-    date: string,
+    date: string
   ): Promise<TeeTimeResponse[]> {
     const baseEndpoint = this.getBasePoint();
     const { RATECODE } = JSON.parse(this.providerConfiguration ?? "{}");
@@ -103,12 +112,12 @@ export class clubprophet extends BaseProvider {
         stackTrace: ``,
         additionalDetailsJSON: JSON.stringify({
           data,
-        })
-      })
+        }),
+      });
       throw new Error(`Error creating booking: ${JSON.stringify(responseData)}`);
     }
 
-    const bookingResponse = (await response.json());
+    const bookingResponse = await response.json();
     // await this.addSalesData(bookingResponse.participantIds, token);
 
     return bookingResponse as BookingResponse;
@@ -155,8 +164,8 @@ export class clubprophet extends BaseProvider {
         additionalDetailsJSON: JSON.stringify({
           response: JSON.stringify(response),
           responseData: JSON.stringify(responseData),
-        })
-      })
+        }),
+      });
       throw new Error(`Error parsing token response: ${error}`);
     }
     return responseData.access_token as string;
@@ -172,7 +181,7 @@ export class clubprophet extends BaseProvider {
       "client-secret": CLIENT_SECRET,
       "client-id": CLIENT_ID,
       "X-componentid": X_Component_Id,
-      "x-moduleId": X_Module_Id
+      "x-moduleId": X_Module_Id,
     };
   }
 
@@ -216,7 +225,7 @@ export class clubprophet extends BaseProvider {
       this.logger.error(`Error deleting booking: ${response.statusText}`);
       this.logger.error(`Error response from club-prophet: ${JSON.stringify(data)}`);
 
-      const url = `${endpoint}/thirdpartyapi/api/v1/TeeSheet/ReservationDetailByConfirmId?reservationConfirmId=${bookingId}`
+      const url = `${endpoint}/thirdpartyapi/api/v1/TeeSheet/ReservationDetailByConfirmId?reservationConfirmId=${bookingId}`;
       const bookingResponse = await fetch(url, {
         method: "GET",
         headers: headers,
@@ -234,9 +243,9 @@ export class clubprophet extends BaseProvider {
           bookingId: bookingId,
           isError,
           data,
-          reservation
-        })
-      })
+          reservation,
+        }),
+      });
 
       if (response.status === 403) {
         await this.getToken();
@@ -278,9 +287,9 @@ export class clubprophet extends BaseProvider {
         stackTrace: `Error creating customer`,
         additionalDetailsJSON: JSON.stringify({
           customerData: customerData,
-          responseData
-        })
-      })
+          responseData,
+        }),
+      });
       throw new Error(`Error creating customer: ${JSON.stringify(responseData)}`);
     }
 
@@ -292,9 +301,11 @@ export class clubprophet extends BaseProvider {
     bookingId: string,
     slots: number,
     customerId: string,
-    providerBookingIds: string | string[],
+    providerBookingId: string | string[],
     _providerId: string,
-    _courseId: string
+    _courseId: string,
+    providerSlotIds: string[],
+    providerCourseMembershipId: string
   ) {
     const bookingSlots: {
       id: string;
@@ -306,43 +317,42 @@ export class clubprophet extends BaseProvider {
       slotPosition: number;
       lastUpdatedDateTime: string | null;
       createdDateTime: string | null;
+      providerCourseMembershipId: string | null;
     }[] = [];
 
     for (let i = 0; i < slots; i++) {
       bookingSlots.push({
         id: randomUUID(),
         bookingId: bookingId,
-        slotnumber: providerBookingIds[i]!,
+        slotnumber: providerBookingId[i]!,
         name: i === 0 ? "" : "Guest",
         customerId: i === 0 ? customerId : "",
         isActive: true,
         slotPosition: i + 1,
         lastUpdatedDateTime: null,
         createdDateTime: null,
+        providerCourseMembershipId: providerCourseMembershipId ?? null,
       });
     }
     return bookingSlots;
   }
 
   addSalesData = async (Options: SalesDataOptions): Promise<void> => {
-  // try {
-  //   if (bookingIds.length <= 0) {
-  //     return;
-  //   }
-  //   const endpoint = this.getBasePoint();
-  //   const headers = this.getHeaders(token);
-
+    // try {
+    //   if (bookingIds.length <= 0) {
+    //     return;
+    //   }
+    //   const endpoint = this.getBasePoint();
+    //   const headers = this.getHeaders(token);
     //   const addSalesUrl = `${endpoint}/thirdpartyapi/api/v1/Sale/SaleOnlineByBookingId`;
     //   this.logger.info(`Add sales url - ${addSalesUrl}`);
     //   this.logger.info(`Adding sales for booking Ids: ${bookingIds}`);
-
     //   const addSalesData = {
     //     bookingIds,
     //     approvalCode: "123123", // Fake value
     //     refNum: "1212", // Fake value
     //     cardIssuedBy: "",
     //   };
-
     //   const addSalesResponse = await fetch(addSalesUrl, {
     //     method: "POST",
     //     headers: headers,
@@ -357,7 +367,6 @@ export class clubprophet extends BaseProvider {
     //     );
     //   }
     //   const salesResponse = await addSalesResponse.json();
-
     //   this.logger.info(
     //     `Sales data added successfully for booking with ids: ${bookingIds}, cart data: ${JSON.stringify(
     //       salesResponse
@@ -379,7 +388,11 @@ export class clubprophet extends BaseProvider {
     return {} as BookingResponse;
   }
 
-  async getCustomer(token: string, courseId: string, email: string): Promise<ClubProphetGetCustomerResponse | undefined> {
+  async getCustomer(
+    token: string,
+    courseId: string,
+    email: string
+  ): Promise<ClubProphetGetCustomerResponse | undefined> {
     const endpoint = this.getBasePoint();
     const url = `${endpoint}/thirdpartyapi/api/v1/Customer/MemberByEMail/${email}`;
 
@@ -404,9 +417,9 @@ export class clubprophet extends BaseProvider {
         stackTrace: ``,
         additionalDetailsJSON: JSON.stringify({
           email,
-          responseData
-        })
-      })
+          responseData,
+        }),
+      });
       throw new Error(`Error fetching customer: ${JSON.stringify(responseData)}`);
     }
 
@@ -428,23 +441,25 @@ export class clubprophet extends BaseProvider {
   }
 
   getCustomerCreationData(buyerData: BuyerData): ClubProphetCustomerCreationData {
-    const nameOfCustomer = buyerData.name ? buyerData.name.split(' ') : ['', ''];
+    const nameOfCustomer = buyerData.name ? buyerData.name.split(" ") : ["", ""];
     const customer: ClubProphetCustomerCreationData = {
       email: buyerData.email ?? "",
       phone: buyerData.phone ?? "",
       firstName: nameOfCustomer?.[0] ? nameOfCustomer[0] : "guest",
       lastName: nameOfCustomer?.[1] ? nameOfCustomer[1] : "N/A",
-    }
+    };
     return customer;
   }
 
   getCustomerId(customerData: ClubProphetCustomerCreationResponse): string {
-    return (customerData.acct).toString();
+    return customerData.acct.toString();
   }
 
   getBookingCreationData(teeTimeData: TeeTimeData): BookingCreationData {
-    const { RATECODE, PSK_USER_ID, TERMINAL_ID, BOOKING_TYPE_ID } = JSON.parse(this.providerConfiguration ?? "{}");
-    const nameOfCustomer = teeTimeData.name ? teeTimeData.name.split(' ') : ['', ''];
+    const { RATECODE, PSK_USER_ID, TERMINAL_ID, BOOKING_TYPE_ID } = JSON.parse(
+      this.providerConfiguration ?? "{}"
+    );
+    const nameOfCustomer = teeTimeData.name ? teeTimeData.name.split(" ") : ["", ""];
     const bookingData: BookingCreationData = {
       teeSheetId: Number(teeTimeData.providerTeeTimeId),
       holes: Number(teeTimeData.holes),
@@ -458,7 +473,7 @@ export class clubprophet extends BaseProvider {
       terminalId: TERMINAL_ID,
       bookingTypeId: BOOKING_TYPE_ID,
       rateCode: RATECODE,
-    }
+    };
     return bookingData;
   }
 
@@ -523,8 +538,8 @@ export class clubprophet extends BaseProvider {
             additionalDetailsJSON: JSON.stringify({
               teeTimeId,
               providerTeeTimeId,
-            })
-          })
+            }),
+          });
           throw new Error(`Error finding tee time id`);
         });
 
@@ -592,8 +607,8 @@ export class clubprophet extends BaseProvider {
                   teeTimeId,
                   providerTeeTimeId,
                   indexedTeeTime,
-                })
-              })
+                }),
+              });
               throw new Error(`Error updating tee time: ${err}`);
             });
         }
@@ -608,20 +623,20 @@ export class clubprophet extends BaseProvider {
         stackTrace: ``,
         additionalDetailsJSON: JSON.stringify({
           teeTimeId,
-        })
-      })
+        }),
+      });
       // throw new Error(`Error indexing tee time: ${error}`);
       throw new Error(
         `We're sorry. This time is no longer available. Someone just booked this. It may take a minute for the sold time you selected to be removed. Please select another time.`
       );
     }
-  }
+  };
 
   getSlotIdsFromBooking = (bookingData: BookingResponse): string[] => {
     const data = bookingData as ClubProphetBookingResponse;
     const ids = data.participantIds.map((id) => id.toString());
     return ids;
-  }
+  };
 
   getPlayerCount(bookingData: BookingResponse): number {
     const data = bookingData as ClubProphetBookingResponse;
@@ -639,12 +654,46 @@ export class clubprophet extends BaseProvider {
     return {} as BookingNameChangeOptions;
   }
 
-  getCustomerIdFromGetCustomerResponse(getCustomerResponse: GetCustomerResponse): { customerId: string, accountNumber?: number } {
+  getCustomerIdFromGetCustomerResponse(getCustomerResponse: GetCustomerResponse): {
+    customerId: string;
+    accountNumber?: number;
+  } {
     const customer = getCustomerResponse as ClubProphetGetCustomerResponse;
 
     return { customerId: customer.memberNo.toString() };
   }
-
+  async checkBookingIsCancelledOrNot(
+    providerBookingId: string,
+    providerCourseId: string,
+    providerTeeSheetId: string,
+    token: string,
+    providerInternalId: string,
+    courseId: string,
+    providerCourseConfiguration: string
+  ): Promise<boolean> {
+    let bookingIsDeleted = false;
+    const endpoint = this.getBasePoint();
+    this.providerConfiguration = providerCourseConfiguration;
+    const clubProphetToken = await this.getToken();
+    const url = `${endpoint}/thirdpartyapi/api/v1/TeeSheet/ReservationDetailByConfirmId?reservationConfirmId=${providerBookingId}`;
+    const headers = this.getHeaders(clubProphetToken);
+    const response = await fetch(url, {
+      method: "GET",
+      headers: headers,
+    });
+    const clubProphetBookingDeleted = await response.json();
+    console.log("clubProphetBookingDeleted", clubProphetBookingDeleted);
+    if (clubProphetBookingDeleted.length == 0) {
+      bookingIsDeleted = true;
+    } else {
+      bookingIsDeleted = false;
+    }
+    // console.log("bookingIsDeleted================8888888>",bookingIsDeleted)
+    return bookingIsDeleted;
+  }
+  async SearchCustomer(token: string, providerCourseId: string, email: string): Promise<CustomerData> {
+    return {} as CustomerData;
+  }
   requireToCreatePlayerSlots(): boolean {
     return false;
   }
