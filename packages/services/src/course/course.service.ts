@@ -101,6 +101,8 @@ export class CourseService extends DomainService {
         isBookingDisabled: courses.isBookingDisabled,
         showPricingBreakdown: courses.showPricingBreakdown,
         websiteURL: courses.websiteURL,
+        courseOpenTime:courses.courseOpenTime,
+        courseCloseTime:courses.courseCloseTime
       })
       .from(courses)
       .innerJoin(providerCourseLink, eq(providerCourseLink.courseId, courses.id))

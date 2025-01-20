@@ -789,8 +789,10 @@ export class SearchService extends CacheService {
     const NumberOfPlayers = await this.database
       .select({
         primaryMarketAllowedPlayers: courses.primaryMarketAllowedPlayers,
-        openTime: courses.openTime,
-        closeTime: courses.closeTime,
+        // openTime: courses.openTime,
+        // closeTime: courses.closeTime,
+        openTime: courses.courseOpenTime,
+        closeTime: courses.courseCloseTime
       })
       .from(courses)
       .where(eq(courses.id, courseId));
@@ -815,10 +817,13 @@ export class SearchService extends CacheService {
       conditions.push(gte(teeTimes.availableFirstHandSpots, playersCount));
     }
 
-    const startingHour = Number(NumberOfPlayers[0]?.openTime?.split(" ")?.[1]?.split(":")?.[0]) ?? 9;
-    const closingHour = Number(NumberOfPlayers[0]?.closeTime?.split(" ")?.[1]?.split(":")?.[0]) ?? 9;
+    // const startingHour = Number(NumberOfPlayers[0]?.openTime?.split(" ")?.[1]?.split(":")?.[0]) ?? 9;
+    // const closingHour = Number(NumberOfPlayers[0]?.closeTime?.split(" ")?.[1]?.split(":")?.[0]) ?? 9;
 
-    if (startingHour * 100 !== startTime || closingHour * 100 !== endTime) {
+    const startingHour = NumberOfPlayers[0]?.openTime ?? 9;
+    const closingHour = NumberOfPlayers[0]?.closeTime ?? 9;
+
+    if (startingHour  !== startTime || closingHour !== endTime) {
       conditions.push(and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)) as any);
     }
 
