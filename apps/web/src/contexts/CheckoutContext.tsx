@@ -35,6 +35,9 @@ interface CheckoutContextType {
   handleRemoveSelectedCharity: () => void;
   reservationData: ReservationData;
   setReservationData: Dispatch<SetStateAction<ReservationData>>;
+  setIsSensibleLoading:Dispatch<SetStateAction<boolean>>;
+  isSensibleLoading:boolean;
+  
 }
 
 const CheckoutContext = createContext<CheckoutContextType>({
@@ -57,10 +60,13 @@ const CheckoutContext = createContext<CheckoutContextType>({
     playTime: "",
   },
   setReservationData: () => undefined,
+  setIsSensibleLoading:()=>undefined,
+  isSensibleLoading:false
 });
 
 export const CheckoutWrapper = ({ children }: { children: ReactNode }) => {
   const [shouldAddSensible, setShouldAddSensible] = useState<boolean>(false);
+  const [isSensibleLoading, setIsSensibleLoading] = useState(false);
   const [reservationData, setReservationData] = useState<ReservationData>({
     golfReservationId: "",
     providerReservationId: "",
@@ -119,6 +125,7 @@ export const CheckoutWrapper = ({ children }: { children: ReactNode }) => {
     handleRemoveSelectedCharity,
     reservationData,
     setReservationData,
+    isSensibleLoading, setIsSensibleLoading
   };
 
   return (
