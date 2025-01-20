@@ -12,8 +12,11 @@ import { getErrorMessageById } from "@golf-district/shared/src/hyperSwitchErrorC
 import Link from "next/link";
 import { FilledButton } from "~/components/buttons/filled-button";
 import styles from "../../../../components/checkout-page/checkout.module.css";
+import { useBookingSourceContext } from "~/contexts/BookingSourceContext";
+import { boolean } from "zod";
 
 export default function CheckoutProcessing() {
+  const { bookingSource, setBookingSource } = useBookingSourceContext();
   const { course } = useCourseContext();
   const { user } = useUserContext();
   const params = useSearchParams();
@@ -22,6 +25,7 @@ export default function CheckoutProcessing() {
   const teeTimeId = params.get("teeTimeId");
   const paymentId = params.get("payment_id");
   const cartId = params.get("cart_id");
+  const needRentals = params.get("need_rentals") === "true";
   const listingId = params.get("listing_id");
   const [message, setMessage] = useState("");
   const router = useRouter();
@@ -56,9 +60,11 @@ export default function CheckoutProcessing() {
       cartId,
       payment_id,
       sensibleQuoteId,
-      source: "",
+      source: bookingSource
+        ? bookingSource
+        : sessionStorage.getItem("source") ?? "",
       additionalNoteFromUser: "",
-      needRentals: false,
+      needRentals,
       redirectHref,
     });
     return bookingResponse;
@@ -77,6 +83,10 @@ export default function CheckoutProcessing() {
       listingId,
       payment_id,
       redirectHref,
+      source: bookingSource
+        ? bookingSource
+        : sessionStorage.getItem("source") ?? "",
+      needRentals,
     });
     return bookingResponse;
   };
@@ -99,7 +109,7 @@ export default function CheckoutProcessing() {
 
   const checkIfTeeTimeAvailableOnProvider =
     api.teeBox.checkIfTeeTimeAvailableOnProvider.useMutation();
-
+  console.log("paymentIntent", paymentIntent);
 
   const handlePayment = async () => {
     if (checkIsBookingDisabled?.isBookingDisabled == 1) {
@@ -152,7 +162,7 @@ export default function CheckoutProcessing() {
           courseId: course!.id,
         });
         setMessage(
-          getErrorMessageById(paymentIntent?.error_code ?? "")
+          getErrorMessageById("Error Processing Payment with unknown error")
         );
       } else if (paymentIntent!.status === "succeeded") {
         let bookingResponse = {
@@ -196,13 +206,14 @@ export default function CheckoutProcessing() {
         }
 
         setMessage("Booking Successful");
+        setBookingSource("");
         router.push(
           `${window.location.origin}/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}&bookingId=${bookingResponse.bookingId}`
         );
       }
       else {
         setMessage(
-          getErrorMessageById(paymentIntent?.error_code ?? "")
+          getErrorMessageById("Error Processing Payment with unknown error")
         );
       }
 

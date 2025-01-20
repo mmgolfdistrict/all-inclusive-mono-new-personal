@@ -71,6 +71,7 @@ export const CheckoutForm = ({
   const [TotalAmount, setTotalAmount] = useState("");
   const [isLoadingTotalAmount, setIsLoadingTotalAmount] = useState(false);
   const isMobile = useMediaQuery("(max-width: 768px)");
+  const [needRentals, setNeedRentals] = useState(false);
   const cartDataRef = useRef(cartData);
   const handleToggle = () => {
     setIsExpanded(!isExpanded);
@@ -204,7 +205,7 @@ export const CheckoutForm = ({
     wallets: {
       walletReturnUrl: isBuyNowAuction
         ? `${window.location.origin}/${course?.id}/auctions/confirmation`
-        : `${window.location.origin}/${course?.id}/checkout/processing?teeTimeId=${teeTimeId}&cart_id=${cartId}&listing_id=${listingId}`,
+        : `${window.location.origin}/${course?.id}/checkout/processing?teeTimeId=${teeTimeId}&cart_id=${cartId}&listing_id=${listingId}&need_rentals=${needRentals}`,
       applePay: "auto",
       googlePay: "auto",
     },
@@ -237,7 +238,6 @@ export const CheckoutForm = ({
   // const [isPaymentCompleted, setIsPaymentCompleted] = useState(false);
   const [message, setMessage] = useState("");
   const [charityAmountError, setCharityAmountError] = useState("");
-  const [needRentals, setNeedRentals] = useState(false);
   const [additionalNote, setAdditionalNote] = useState("");
 
   // const [customerID, setCustomerID] = useState("");
@@ -451,7 +451,7 @@ export const CheckoutForm = ({
         // Make sure to change this to your payment completion page
         return_url: isBuyNowAuction
           ? `${window.location.origin}/${course?.id}/auctions/confirmation`
-          : `${window.location.origin}/${course?.id}/checkout/processing?teeTimeId=${teeTimeId}&cart_id=${cartId}&listing_id=${listingId}`,
+          : `${window.location.origin}/${course?.id}/checkout/processing?teeTimeId=${teeTimeId}&cart_id=${cartId}&listing_id=${listingId}&need_rentals=${needRentals}`,
       },
       redirect: "if_required",
     });
@@ -1160,8 +1160,8 @@ export const CheckoutForm = ({
             <button
               type="button"
               className={`flex w-20 items-center justify-center rounded-md p-2 ${roundOffStatus === "twoDollars"
-                  ? "bg-primary text-white"
-                  : "bg-white text-primary border-primary border-2"
+                ? "bg-primary text-white"
+                : "bg-white text-primary border-primary border-2"
                 }`}
               onClick={() => {
                 handleRoundOff(2, "twoDollars");
@@ -1174,8 +1174,8 @@ export const CheckoutForm = ({
             <button
               type="button"
               className={`flex w-20 items-center justify-center rounded-md p-2 ${roundOffStatus === "fiveDollars"
-                  ? "bg-primary text-white"
-                  : "bg-white text-primary border-primary border-2"
+                ? "bg-primary text-white"
+                : "bg-white text-primary border-primary border-2"
                 }`}
               onClick={() => {
                 handleRoundOff(5, "fiveDollars");
@@ -1188,8 +1188,8 @@ export const CheckoutForm = ({
             <button
               type="button"
               className={`flex w-32 items-center justify-center rounded-md p-2 ${roundOffStatus === "other"
-                  ? "bg-primary text-white"
-                  : "bg-white text-primary border-primary border-2"
+                ? "bg-primary text-white"
+                : "bg-white text-primary border-primary border-2"
                 }`}
               onClick={() => {
                 handleRoundOff(5, "other");
