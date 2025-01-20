@@ -35,6 +35,7 @@ import { FinixService } from "./webhooks/finix.service";
 import { LoggerService } from "./webhooks/logging.service";
 import { PaymentVerifierService } from "./webhooks/paymentverifier.service";
 import { CourseExceptionService } from "./course-exception/courseException.service";
+import { IpInfoService } from "./ipinfo/ipinfo.service";
 
 export interface ServiceConfig {
   database: Db;
@@ -196,7 +197,8 @@ export class ServiceFactory {
         profileId: this.config.hyperSwitchProfileId,
       },
       this.getForeupWebhookService(),
-      this.getProviderService()
+      this.getProviderService(),
+      this.getIpInfoService()
     );
   };
 
@@ -311,6 +313,7 @@ export class ServiceFactory {
     return new AuthService(
       this.config.database,
       this.getNotificationService(),
+      this.getIpInfoService(),
       this.config.redisUrl,
       this.config.redisToken
     );
@@ -401,5 +404,9 @@ export class ServiceFactory {
 
   getReleaseHistoryService = (): ReleaseHistoryService => {
     return new ReleaseHistoryService(this.config.database);
+  };
+
+  getIpInfoService = (): IpInfoService => {
+    return new IpInfoService();
   };
 }

@@ -27,6 +27,7 @@ import { CheckoutAccordionRoot } from "./checkout-accordian";
 import CheckoutItemAccordion from "./checkout-item-accordian";
 import styles from "./checkout.module.css";
 import type { NextAction } from "./hyper-switch";
+import { useBookingSourceContext } from "~/contexts/BookingSourceContext";
 
 type charityData = {
   charityDescription: string | undefined;
@@ -74,6 +75,7 @@ export const CheckoutForm = ({
   };
 
   const { user } = useUserContext();
+  const { bookingSource, setBookingSource } = useBookingSourceContext();
   const auditLog = api.webhooks.auditLog.useMutation();
   const sendEmailForFailedPayment =
     api.webhooks.sendEmailForFailedPayment.useMutation();
@@ -536,6 +538,8 @@ export const CheckoutForm = ({
           }
 
           setMessage("Payment Successful");
+          setBookingSource("");
+          sessionStorage.removeItem("source");
           if (isBuyNowAuction) {
             router.push(`/${course?.id}/auctions/confirmation`);
           } else {
@@ -574,6 +578,7 @@ export const CheckoutForm = ({
       cartId,
       payment_id,
       sensibleQuoteId,
+      source: bookingSource ? bookingSource : sessionStorage.getItem("source") ?? "",
       additionalNoteFromUser: validatePlayers[0]?.courseMemberShipId
         ? `There are ${validatePlayers.length} players participating in membership program \n Total Amount Paid:$${TotalAmt} \n with courseMembershipID:${validatePlayers[0]?.courseMemberShipId}`
         : additionalNote,
@@ -598,6 +603,7 @@ export const CheckoutForm = ({
       cartId,
       listingId,
       payment_id,
+      source: bookingSource ? bookingSource : sessionStorage.getItem("source") ?? "",
       additionalNoteFromUser: additionalNote,
       needRentals,
       redirectHref,
@@ -666,6 +672,7 @@ export const CheckoutForm = ({
     convenienceCharge;
   const totalBeforeRoundOff = primaryGreenFeeCharge + TaxCharge;
   const decimalPart = totalBeforeRoundOff % 1;
+  const [hasUserSelectedDonation, setHasUserSelectedDonation] = useState(false);
 
   const roundOff =
     decimalPart === 0 || decimalPart.toFixed(2) === "0.00"
@@ -726,15 +733,35 @@ export const CheckoutForm = ({
   }, [TaxCharge, roundUpCharityId, roundOffStatus]);
 
   useEffect(() => {
-    if (primaryGreenFeeCharge < 200) {
-      setDonateValue(Math.ceil(primaryGreenFeeCharge) - primaryGreenFeeCharge);
-      setRoundOffStatus("roundup");
-    } else if (primaryGreenFeeCharge >= 201 && primaryGreenFeeCharge <= 500) {
-      setDonateValue(2);
-      setRoundOffStatus("twoDollars");
-    } else {
-      setDonateValue(5);
-      setRoundOffStatus("fiveDollars");
+    if (!hasUserSelectedDonation) {
+      if (primaryGreenFeeCharge <= 200) {
+        // setDonateValue(
+        //   Math.ceil(primaryGreenFeeCharge) - primaryGreenFeeCharge
+        // );
+        let donation;
+        if (decimalPart === 0) {
+          donation = 1;
+        } else if (decimalPart.toFixed(2) === "0.00") {
+          donation = 1;
+        } else {
+          donation = parseFloat(
+            (Math.ceil(primaryGreenFeeCharge) - primaryGreenFeeCharge).toFixed(
+              2
+            )
+          );
+        }
+
+        setDonateValue(donation);
+        setRoundOffStatus("roundup");
+      } else if (primaryGreenFeeCharge >= 201 && primaryGreenFeeCharge <= 500) {
+        console.log("donation 1");
+        setDonateValue(2);
+        setRoundOffStatus("twoDollars");
+      } else {
+        console.log("donation 2");
+        setDonateValue(5);
+        setRoundOffStatus("fiveDollars");
+      }
     }
   }, [totalBeforeRoundOff]);
 
@@ -1095,7 +1122,10 @@ export const CheckoutForm = ({
                   ? "bg-primary text-white"
                   : "bg-white text-primary border-primary border-2"
               }`}
-              onClick={() => handleRoundOff(0, "roundup")}
+              onClick={() => {
+                handleRoundOff(0, "roundup");
+                setHasUserSelectedDonation(true);
+              }}
             >
               Round Up
             </button>
@@ -1107,7 +1137,10 @@ export const CheckoutForm = ({
                   ? "bg-primary text-white"
                   : "bg-white text-primary border-primary border-2"
               }`}
-              onClick={() => handleRoundOff(2, "twoDollars")}
+              onClick={() => {
+                handleRoundOff(2, "twoDollars");
+                setHasUserSelectedDonation(true);
+              }}
             >
               $2.00
             </button>
@@ -1119,7 +1152,10 @@ export const CheckoutForm = ({
                   ? "bg-primary text-white"
                   : "bg-white text-primary border-primary border-2"
               }`}
-              onClick={() => handleRoundOff(5, "fiveDollars")}
+              onClick={() => {
+                handleRoundOff(5, "fiveDollars");
+                setHasUserSelectedDonation(true);
+              }}
             >
               $5.00
             </button>
@@ -1131,7 +1167,10 @@ export const CheckoutForm = ({
                   ? "bg-primary text-white"
                   : "bg-white text-primary border-primary border-2"
               }`}
-              onClick={() => handleRoundOff(5, "other")}
+              onClick={() => {
+                handleRoundOff(5, "other");
+                setHasUserSelectedDonation(true);
+              }}
             >
               Other
             </button>
@@ -1146,6 +1185,7 @@ export const CheckoutForm = ({
                   setRoundOffStatus("nothanks");
                   setDonateValue(0);
                   setShowTextField(false);
+                  setHasUserSelectedDonation(true);
                 }}
               >
                 No Thanks

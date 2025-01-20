@@ -14,6 +14,7 @@ export const userSession = mySqlTable("userSession", {
   createdDateTime: datetime("createdDateTime", { mode: "string", fsp: 3 })
     .notNull()
     .default(sql`CURRENT_TIMESTAMP(3)`),
+  ipinfoJSON: varchar("ipinfoJSON", { length: 2048 }),
 });
 
 export type InsertUserSession = InferSelectModel<typeof userSession>;

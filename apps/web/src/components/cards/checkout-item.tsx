@@ -273,7 +273,7 @@ export const CheckoutItem = ({
                   )}
                 </select>
               </div>
-              <div className="flex flex-wrap justify-between gap-4 p-2">
+              <div className="flex flex-wrap justify-between gap-1">
                 {courseMemberships.length === 0 ? null : (
                   <Fragment>
                     {Array.from({ length: Number(playerCount) }, (_, index) => (
