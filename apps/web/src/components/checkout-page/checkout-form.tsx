@@ -64,7 +64,8 @@ export const CheckoutForm = ({
   console.log("cart-data", cartData);
   const MAX_CHARITY_AMOUNT = 1000;
   const { course } = useCourseContext();
-  const { shouldAddSensible } = useCheckoutContext();
+  const { shouldAddSensible, validatePlayers, handleShouldAddSensible } =
+    useCheckoutContext();
   const params = useParams();
   const courseId = course?.id;
   const roundUpCharityId = course?.roundUpCharityId;
@@ -577,16 +578,20 @@ export const CheckoutForm = ({
   ) => {
     const href = window.location.href;
     const redirectHref = href.split("/checkout")[0] || "";
+
     const bookingResponse = await reserveBookingApi.mutateAsync({
       cartId,
       payment_id,
       sensibleQuoteId,
-      source: bookingSource
-        ? bookingSource
-        : sessionStorage.getItem("source") ?? "",
-      additionalNoteFromUser: additionalNote,
+      source: bookingSource ? bookingSource : sessionStorage.getItem("source") ?? "",
+      additionalNoteFromUser: validatePlayers[0]?.courseMemberShipId
+        ? `There are ${validatePlayers.length} players participating in membership program \n Total Amount Paid:$${TotalAmt} \n with courseMembershipID:${validatePlayers[0]?.courseMemberShipId}`
+        : additionalNote,
       needRentals,
       redirectHref,
+      courseMembershipId: validatePlayers[0]?.courseMemberShipId ?? "",
+      playerCountForMemberShip: playerCount ?? "",
+      providerCourseMembershipId:validatePlayers[0]?.providerCourseMembershipId ?? "",
     });
     return bookingResponse;
   };
@@ -631,9 +636,11 @@ export const CheckoutForm = ({
     setDonateValue(numericValue);
   };
 
-  const playersInNumber = Number(amountOfPlayers || 0);
+  const playersInNumber = Number(amountOfPlayers - validatePlayers.length || 0);
   const greenFeeChargePerPlayer =
-    primaryGreenFeeCharge / playersInNumber - cartFeeCharge - markupFee;
+    playersInNumber && playersInNumber > 0
+      ? primaryGreenFeeCharge / playersInNumber - cartFeeCharge - markupFee
+      : 0;
   const greenFeeTaxAmount =
     greenFeeChargePerPlayer * greenFeeTaxPercent * playersInNumber;
   const cartFeeTaxAmount = cartFeeCharge * cartFeeTaxPercent * playersInNumber;
@@ -770,6 +777,12 @@ export const CheckoutForm = ({
       setIsLoadingTotalAmount(false);
     }, 2000);
   }, [TotalAmt]);
+  useEffect(() => {
+    if (Number(TotalAmt) == 0) {
+      handleShouldAddSensible(false);
+    }
+  }, [TotalAmt]);
+
   return (
     <form onSubmit={handleSubmit} className="">
       <UnifiedCheckout id="unified-checkout" options={unifiedCheckoutOptions} />

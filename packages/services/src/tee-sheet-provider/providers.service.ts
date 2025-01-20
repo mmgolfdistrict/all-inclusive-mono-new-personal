@@ -158,7 +158,9 @@ export class ProviderService extends CacheService {
     customerId: string,
     providerBookingId: string,
     providerId: string,
-    courseId: string
+    courseId: string,
+    providerSlotIds: string[] | undefined,
+    providerCourseMembershipId: string
   ): Promise<InsertBookingSlots[]> {
     // this.logger.info(`updateTeeTime called with courseId: ${courseId}`);
     const { provider } = await this.getProviderAndKey(providerId, courseId);
@@ -168,7 +170,9 @@ export class ProviderService extends CacheService {
       customerId,
       providerBookingId,
       providerId,
-      courseId
+      courseId,
+      providerSlotIds || [],
+      providerCourseMembershipId || ""
     );
   }
 
@@ -360,6 +364,11 @@ export class ProviderService extends CacheService {
     const {provider,token}= await this.getProviderAndKey(providerInternalId,courseId,providerCourseConfiguration);
     return provider.checkBookingIsCancelledOrNot(bookingProviderId,providerCourseId,providerTeeTimeId,token,providerInternalId,courseId,providerCourseConfiguration);
   } 
+
+  searchCustomerViaEmail = async (email:string,providerInternalIdentifier:string,providerCourseId:string,providerTeeSheetId:string,providerCourseConfiguration:string)=>{
+    const { provider,token } = await this.getProviderAndKey(providerInternalIdentifier,providerCourseId,providerCourseConfiguration);
+    return await provider.SearchCustomer(token,providerCourseId,email);
+  }
   /**
    * Links a provider to an entity and all the courses under that entity.
    * @Todd this will be complete at during creation of admin panel

@@ -176,7 +176,8 @@ export interface ProviderAPI {
     providerBookingId: string | string[],
     providerId: string,
     courseId: string,
-    providerSlotIds?: string[]
+    providerSlotIds?: string[],
+    providerCourseMembershipId?:string
   ) => Promise<InsertBookingSlots[]>;
   shouldAddSaleData: () => boolean;
   getSalesDataOptions: (reservationData: BookingResponse, bookingDetails: BookingDetails) => SalesDataOptions;
@@ -215,6 +216,7 @@ export interface ProviderAPI {
     courseId: string,
     providerCourseConfiguration: string
   ): Promise<boolean>;
+  SearchCustomer(token: string, providerCourseId: string,email:string): Promise<CustomerData>
 }
 
 export abstract class BaseProvider implements ProviderAPI {
@@ -282,7 +284,8 @@ export abstract class BaseProvider implements ProviderAPI {
     providerBookingId: string | string[],
     providerId: string,
     courseId: string,
-    providerSlotIds?: string[]
+    providerSlotIds?: string[],
+    providerCourseMembershipId?: string
   ): Promise<InsertBookingSlots[]>;
   abstract shouldAddSaleData(): boolean;
   abstract getSalesDataOptions(
@@ -322,7 +325,7 @@ export abstract class BaseProvider implements ProviderAPI {
     providerInternalId: string,
     courseId: string,
     providerCourseConfiguration: string
-  ): Promise<boolean>;
+  ): Promise<boolean>;  abstract SearchCustomer(token: string, providerCourseId: string,email:string): Promise<CustomerData>
   /**
    * Whether to require to create player slots to allow players for name changes
    */

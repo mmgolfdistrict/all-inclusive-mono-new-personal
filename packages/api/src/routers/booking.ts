@@ -263,6 +263,9 @@ export const bookingRouter = createTRPCRouter({
         additionalNoteFromUser: z.string().max(200).optional(),
         needRentals: z.boolean(),
         redirectHref: z.string().url(),
+        courseMembershipId:z.string().optional(),
+        playerCountForMemberShip:z.string().optional(),
+        providerCourseMembershipId:z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -276,7 +279,10 @@ export const bookingRouter = createTRPCRouter({
           input.source,
           input.additionalNoteFromUser,
           input.needRentals,
-          input.redirectHref
+          input.redirectHref,
+          input.courseMembershipId ?? '',
+          input.playerCountForMemberShip ?? '',
+          input.providerCourseMembershipId ?? ''
         );
     }),
   reserveSecondHandBooking: protectedProcedure
@@ -316,6 +322,13 @@ export const bookingRouter = createTRPCRouter({
       return ctx.serviceFactory
         .getBookingService()
         .checkIfTeeTimeAvailableOnProvider(input.teeTimeId, input.golfersCount, ctx.session.user.id);
+    }),
+    checkIfUserIsOptMemberShip:protectedProcedure.input(
+      z.object({
+        bookingId:z.string()
+      })
+    ).mutation(async ({ctx,input})=>{
+      return ctx.serviceFactory.getBookingService().checkIfUserIsOptMemberShip(ctx.session.user.id,input.bookingId)
     }),
     providerBookingStatus:protectedProcedure.input(
     z.object({

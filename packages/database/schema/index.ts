@@ -62,7 +62,7 @@ import * as adminPersonas from "./adminPersonas";
 import * as adminRolePermission from "./adminRolePermission";
 import * as adminRoles from "./adminRoles";
 import * as adminUserRole from "./adminUserRole";
-
+import * as courseMembership from "./courseMembership"
 export const schema = {
   ...accounts,
   ...assets,
@@ -122,6 +122,7 @@ export const schema = {
   ...courseUser,
   ...authenticationMethod,
   ...courseContacts,
+  ...courseMembership,
   ...adminPermissions,
   ...adminPersonaRole,
   ...adminPersonas,

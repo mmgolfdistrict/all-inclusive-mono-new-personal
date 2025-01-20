@@ -82,4 +82,21 @@ export const checkoutRouter = createTRPCRouter({
       .getCheckoutService()
       .retrieveHyperSwitchRegisteredCustomer(ctx.session.user.id);
   }),
+  searchCustomerViaEmail: protectedProcedure
+    .input(
+      z.object({
+        teeTimeId: z.string(),
+        email: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return await ctx.serviceFactory
+        .getCheckoutService()
+        .searchCustomerAndValidate(ctx.session.user.id, input.teeTimeId, input.email);
+    }),
+    getAllCourseMembership:protectedProcedure.input(
+    z.object({})
+  ).query(async ({ctx})=>{
+     return await ctx.serviceFactory.getCheckoutService().getAllCourseMembership()
+  })
 });
