@@ -23,48 +23,9 @@ export const ForecastModal = ({
 }: Props) => {
     const { course } = useCourseContext();
     const isMobile = useMediaQuery("(max-width: 768px)");
-    const [startDate, setStartDate] = useState<string>(propStartDate);
-    const [endDate, setEndDate] = useState<string>(propEndDate);
     console.log("propStartDate", propStartDate);
-    console.log("startDate", startDate);
     console.log("propEndDate", propEndDate);
-    console.log("endDate", endDate);
-    useEffect(() => {
-        const today = new Date();
-        const parsedStartDate = new Date(propStartDate);
 
-        if (parsedStartDate.toDateString() === today.toDateString()) {
-            const tomorrow = new Date(today);
-            tomorrow.setDate(today.getDate() + 1);
-            setStartDate(formatDate(tomorrow));
-            setEndDate(getNext7Days(tomorrow, propEndDate));
-        } else {
-            setStartDate(formatDate(parsedStartDate));
-            setEndDate(getNext7Days(parsedStartDate, propEndDate));
-        }
-    }, [propStartDate, propEndDate]);
-
-    const { data, isLoading } = api.searchRouter.getPriceForecast.useQuery({
-        courseId: course?.id ?? "",
-        startDate,
-        endDate,
-    });
-    console.log("data", data);
-
-    const getNext7Days = (
-        currentStartDate: Date | string,
-        propEndDate: string
-    ): string => {
-        const start = new Date(currentStartDate);
-        const end = new Date(start);
-        end.setDate(start.getDate() + 6);
-
-        const parsedPropEndDate = new Date(propEndDate);
-        if (end > parsedPropEndDate) {
-            return formatDate(parsedPropEndDate);
-        }
-        return formatDate(end);
-    };
     const formatDate = (date: Date | string): string => {
         const parsedDate = new Date(date);
         const year = parsedDate.getFullYear();
@@ -73,10 +34,59 @@ export const ForecastModal = ({
         return `${year}-${month}-${day}`;
     };
 
-    const handleNext = () => {
-        if (new Date(endDate) >= new Date(propEndDate)) {
-            return;
+    // const tomorrow = new Date();
+    // tomorrow.setDate(tomorrow.getDate() + 1);
+    // const initialStartDate = formatDate(tomorrow);
+
+    // const sevenDaysFromTomorrow = new Date(tomorrow);
+    // sevenDaysFromTomorrow.setDate(tomorrow.getDate() + 6);
+    // const initialEndDate = formatDate(sevenDaysFromTomorrow);
+
+    const [startDate, setStartDate] = useState<string>(propStartDate);
+    const [endDate, setEndDate] = useState<string>(propEndDate);
+
+    const [filteredData, setFilteredData] = useState<any[]>([]);
+    const { data, isLoading } = api.searchRouter.getPriceForecast.useQuery({
+        courseId: course?.id ?? "",
+        startDate: propStartDate,
+        endDate: propEndDate,
+    });
+
+    useEffect(() => {
+        setStartDate(propStartDate);
+
+        const sevenDaysFromTomorrow = new Date(propStartDate);
+        sevenDaysFromTomorrow.setDate(sevenDaysFromTomorrow.getDate() + 7);
+        const initialEndDate = formatDate(sevenDaysFromTomorrow);
+        setEndDate(initialEndDate);
+    }, [propStartDate, propEndDate]);
+    console.log("startDate", startDate);
+    console.log("endDate", endDate);
+    console.log("data", data);
+    console.log("filtered", filteredData);
+
+
+
+    useEffect(() => {
+        if (data) {
+            const today = new Date();
+            const isStartDateToday = new Date(startDate).toDateString() === today.toDateString();
+
+            const filtered = data.filter((item) => {
+                const itemDate = new Date(item.providerDate);
+                if (isStartDateToday && itemDate.toDateString() === today.toDateString()) {
+                    console.log("here");
+                    return false;
+                }
+                return itemDate >= new Date(startDate) && itemDate <= new Date(endDate);
+            });
+
+            setFilteredData(filtered);
         }
+    }, [data, startDate, endDate]);
+
+    const handleNext = () => {
+
         const newStartDate = new Date(startDate);
         newStartDate.setDate(newStartDate.getDate() + 7);
 
@@ -93,6 +103,15 @@ export const ForecastModal = ({
 
         setStartDate(formatDate(newStartDate));
         setEndDate(formatDate(newEndDate));
+
+        const newData = data?.filter(
+            (item) =>
+                new Date(item.providerDate) >= newStartDate &&
+                new Date(item.providerDate) <= newEndDate
+        );
+        console.log("newData", newData);
+
+        setFilteredData(newData ?? []);
     };
 
     const handlePrevious = () => {
@@ -112,9 +131,20 @@ export const ForecastModal = ({
 
         setStartDate(formatDate(newStartDate));
         setEndDate(formatDate(newEndDate));
+
+        const newData = data?.filter(
+            (item) =>
+                new Date(item.providerDate) >= newStartDate &&
+                new Date(item.providerDate) <= newEndDate
+        );
+        setFilteredData(newData ?? []);
     };
-    console.log(isMobile);
-    const isNextDisabled = new Date(endDate) >= new Date(propEndDate);
+
+    const isNextDisabled =
+        new Date(endDate) >= new Date(propEndDate) ||
+        filteredData.length < 6;
+
+
 
     return (
         <div className="fixed inset-0 z-20 flex items-center justify-center bg-black w-screen backdrop-blur bg-opacity-50 overflow-hidden">
@@ -147,12 +177,12 @@ export const ForecastModal = ({
                     <table className=" w-full border-collapse text-sm">
                         <thead className="top-0 table-header-group">
                             <tr className="text-left">
-                                {isLoading ? "" : data?.length === 0 ? (
+                                {isLoading ? "" : filteredData?.length === 0 ? (
                                     ""
                                 ) : (
                                     <TableHeader text="Dates / Times" />
                                 )}
-                                {data?.map((item) => (
+                                {filteredData?.map((item) => (
                                     <TableHeader
                                         key={item.providerDate}
                                         text={formatShowDate(item.providerDate)}
@@ -168,10 +198,9 @@ export const ForecastModal = ({
                                     .map((_, index) => (
                                         <SkeletonRow key={index} isMobile={isMobile} />
                                     ))
-                            ) : data?.length === 0 ? (
+                            ) : data?.length === 0 || filteredData?.length === 0 ? (
                                 <div className={`${isMobile ? "py-36" : "p-36"}  text-center`}>
-                                    Data is not available for {formatShowDate(startDate)} -{" "}
-                                    {formatShowDate(endDate)}
+                                    Data is not available for selected date
                                 </div>
                             ) : (
                                 <>
@@ -180,7 +209,7 @@ export const ForecastModal = ({
                                             <p className="text-secondary-black">Early Morning</p>{" "}
                                             06:00 AM – 07:30 AM
                                         </td>
-                                        {data?.map((item) => (
+                                        {filteredData?.map((item) => (
                                             <td
                                                 key={item.providerDate}
                                                 className="px-4 py-2 text-center"
@@ -196,7 +225,7 @@ export const ForecastModal = ({
                                             <p className="text-secondary-black">Mid-Morning</p> 08:00
                                             AM – 10:30 AM
                                         </td>
-                                        {data?.map((item) => (
+                                        {filteredData?.map((item) => (
                                             <td
                                                 key={item.providerDate}
                                                 className="px-4 py-2 text-center"
@@ -212,7 +241,7 @@ export const ForecastModal = ({
                                             <p className="text-secondary-black">Early Afternoon</p>{" "}
                                             10:30 AM – 1:30 PM
                                         </td>
-                                        {data?.map((item) => (
+                                        {filteredData?.map((item) => (
                                             <td
                                                 key={item.providerDate}
                                                 className="px-4 py-2 text-center"
@@ -228,7 +257,7 @@ export const ForecastModal = ({
                                             <p className="text-secondary-black">Afternoon</p> 02:00 PM
                                             – 04:00 PM
                                         </td>
-                                        {data?.map((item) => (
+                                        {filteredData?.map((item) => (
                                             <td
                                                 key={item.providerDate}
                                                 className="px-4 py-2 text-center"
@@ -244,7 +273,7 @@ export const ForecastModal = ({
                                             <p className="text-secondary-black">Twilight</p> 04:00 PM
                                             – 06:00 PM
                                         </td>
-                                        {data?.map((item) => (
+                                        {filteredData?.map((item) => (
                                             <td
                                                 key={item.providerDate}
                                                 className="px-4 py-2 text-center"
