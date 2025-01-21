@@ -138,8 +138,22 @@ export const DailyTeeTimes = ({
     if (!isLoading) {
       await fetchNextPage();
     }
+    const boxWidth = overflowRef.current?.children[0]?.clientWidth || 265;
+
+    const getScrollWidth = () => {
+      if (width < 700) {
+        // return width - (90 - (rightClickCount * 10) / rightClickCount);
+        return boxWidth * 3 + 16 * 3;
+      }
+      // return width - (160 - (rightClickCount * 10) / rightClickCount);
+      // return width - boxWidth / ((rightClickCount * 10) / rightClickCount);
+      return boxWidth * 4 + 16 * 4;
+    };
+
     overflowRef.current?.classList.add("scroll-smooth");
-    overflowRef.current?.scrollBy({ left: width });
+    overflowRef.current?.scrollBy({
+      left: getScrollWidth(),
+    });
     overflowRef.current?.classList.remove("scroll-smooth");
   };
 
@@ -156,8 +170,16 @@ export const DailyTeeTimes = ({
   }, [isVisible]);
 
   const scrollLeft = () => {
+    const boxWidth = overflowRef.current?.children[0]?.clientWidth || 265;
+    const getScrollWidth = () => {
+      if (width < 700) {
+        return boxWidth * 2 + 16 * 2;
+      }
+      return boxWidth * 3 + 16 * 3;
+    };
+
     overflowRef.current?.classList.add("scroll-smooth");
-    overflowRef.current?.scrollBy({ left: -`${width}` });
+    overflowRef.current?.scrollBy({ left: -`${getScrollWidth()}` });
     overflowRef.current?.classList.remove("scroll-smooth");
   };
 
