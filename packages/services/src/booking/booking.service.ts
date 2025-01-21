@@ -3321,9 +3321,9 @@ export class BookingService {
     bookingStage = "Retrieving tee time from database";
     console.log(`Retrieving tee time from database ${teeTimeId}`);
 
-    let teeTime: any = await cacheManager.get(`teeTime:${teeTimeId}`);
+    // let teeTime: any = await cacheManager.get(`teeTime:${teeTimeId}`);
     // if (!teeTime) {
-    teeTime = await this.database
+    const tempTeeTimes = await this.database
       .select({
         id: teeTimes.id,
         courseId: teeTimes.courseId,
@@ -3386,6 +3386,8 @@ export class BookingService {
 
     //   await cacheManager.set(`teeTime:${teeTimeId}`, teeTime); // Cache for 1 hour
     // }
+
+    const teeTime = tempTeeTimes[0];
 
     // Calculate additional taxes
 
