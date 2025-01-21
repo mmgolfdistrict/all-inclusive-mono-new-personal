@@ -142,11 +142,8 @@ export const DailyTeeTimes = ({
 
     const getScrollWidth = () => {
       if (width < 700) {
-        // return width - (90 - (rightClickCount * 10) / rightClickCount);
         return boxWidth * 3 + 16 * 3;
       }
-      // return width - (160 - (rightClickCount * 10) / rightClickCount);
-      // return width - boxWidth / ((rightClickCount * 10) / rightClickCount);
       return boxWidth * 4 + 16 * 4;
     };
 
