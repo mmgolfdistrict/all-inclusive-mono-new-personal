@@ -22,20 +22,20 @@ export default function ManangeProfile({
   const router = useRouter();
   const { status, data } = useSession();
 
-  const { data: systemNotifications } =
-    api.systemNotification.getSystemNotification.useQuery({});
+  // const { data: systemNotifications } =
+  //   api.systemNotification.getSystemNotification.useQuery({});
 
-  const { data: courseGlobalNotification } =
-    api.systemNotification.getCourseGlobalNotification.useQuery({
-      courseId: courseId ?? "",
-    });
+  // const { data: courseGlobalNotification } =
+  //   api.systemNotification.getCourseGlobalNotification.useQuery({
+  //     courseId: courseId ?? "",
+  //   });
 
-  const notificationsCount =
-    (systemNotifications ? systemNotifications.length : 0) +
-    (courseGlobalNotification ? courseGlobalNotification.length : 0);
+  // const notificationsCount =
+  //   (systemNotifications ? systemNotifications.length : 0) +
+  //   (courseGlobalNotification ? courseGlobalNotification.length : 0);
 
-  const marginTop =
-    notificationsCount > 0 ? `mt-${notificationsCount * 6}` : "";
+  // const marginTop =
+  //   notificationsCount > 0 ? `mt-${notificationsCount * 6}` : "";
 
   if (
     status === "unauthenticated" ||
@@ -46,7 +46,7 @@ export default function ManangeProfile({
   }
 
   return (
-    <main className={`bg-secondary-white py-4 md:py-6 ${marginTop}`}>
+    <main className={`bg-secondary-white py-4 md:py-6`}>
       <div className="mx-auto flex items-center justify-between px-4 md:max-w-[1360px] md:px-6">
         <GoBack href={`/${courseId}`} text={`Back to tee times`} />
       </div>
