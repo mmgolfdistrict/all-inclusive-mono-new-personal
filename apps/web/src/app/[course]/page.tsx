@@ -544,14 +544,6 @@ export default function CourseHomePage() {
   const closeForecastModal = () => {
     setIsForecastModalOpen(false);
   };
-
-  const formatDate = (date: Date | string): string => {
-    const parsedDate = new Date(date);
-    const year = parsedDate.getFullYear();
-    const month = String(parsedDate.getMonth() + 1).padStart(2, "0");
-    const day = String(parsedDate.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  };
   return (
     <main className={`bg-secondary-white py-4 md:py-6`}>
       <LoadingContainer isLoading={isLoadingTeeTimeDate || isLoading || specialEventsLoading}>
@@ -710,7 +702,7 @@ export default function CourseHomePage() {
         />
       )}
       {isForecastModalOpen && (
-        <ForecastModal closeForecastModal={closeForecastModal} startDate={formatDate(startDate)} endDate={formatDate(endDate)} />
+        <ForecastModal closeForecastModal={closeForecastModal} startDate={startDate} endDate={endDate} />
       )}
     </main>
   );
