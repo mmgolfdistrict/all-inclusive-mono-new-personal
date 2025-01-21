@@ -153,7 +153,7 @@ export class BookingService {
     private readonly hyperSwitchService: HyperSwitchService,
     private readonly sensibleService: SensibleService,
     private readonly userWaitlistService: UserWaitlistService
-  ) { }
+  ) {}
 
   createCounterOffer = async (userId: string, bookingIds: string[], offerId: string, amount: number) => {
     //find owner of each booking
@@ -686,10 +686,10 @@ export class BookingService {
       if (!combinedData[teeTime.providerBookingId]) {
         const slotData = !teeTime.providerBookingId
           ? Array.from({ length: teeTime.playerCount - 1 }, (_, i) => ({
-            name: "",
-            slotId: "",
-            customerId: "",
-          }))
+              name: "",
+              slotId: "",
+              customerId: "",
+            }))
           : [];
 
         combinedData[teeTime.providerBookingId] = {
@@ -3123,13 +3123,13 @@ export class BookingService {
     const primaryData = {
       primaryGreenFeeCharge: isNaN(
         slotInfo[0].price -
-        cartFeeCharge * (slotInfo[0]?.product_data?.metadata?.number_of_bookings || 0) -
-        markupCharge1
+          cartFeeCharge * (slotInfo[0]?.product_data?.metadata?.number_of_bookings || 0) -
+          markupCharge1
       )
         ? slotInfo[0].price - markupCharge1
         : slotInfo[0].price -
-        cartFeeCharge * (slotInfo[0]?.product_data?.metadata?.number_of_bookings ?? 0) -
-        markupCharge1, //slotInfo[0].price- cartFeeCharge*slotInfo[0]?.product_data?.metadata?.number_of_bookings,
+          cartFeeCharge * (slotInfo[0]?.product_data?.metadata?.number_of_bookings ?? 0) -
+          markupCharge1, //slotInfo[0].price- cartFeeCharge*slotInfo[0]?.product_data?.metadata?.number_of_bookings,
       teeTimeId: slotInfo[0].product_data.metadata.tee_time_id,
       playerCount: slotInfo[0].product_data.metadata.number_of_bookings,
     };
@@ -3267,7 +3267,7 @@ export class BookingService {
     redirectHref: string,
     courseMembershipId: string,
     playerCountForMemberShip: string,
-    providerCourseMembershipId:string
+    providerCourseMembershipId: string
   ) => {
     let bookingStage = "Normalizing Cart Data";
     const {
@@ -3321,9 +3321,9 @@ export class BookingService {
     bookingStage = "Retrieving tee time from database";
     console.log(`Retrieving tee time from database ${teeTimeId}`);
 
-    let teeTime:any = await cacheManager.get(`teeTime:${teeTimeId}`);
-    if (!teeTime) {
-     teeTime = await this.database
+    let teeTime: any = await cacheManager.get(`teeTime:${teeTimeId}`);
+    // if (!teeTime) {
+    teeTime = await this.database
       .select({
         id: teeTimes.id,
         courseId: teeTimes.courseId,
@@ -3384,9 +3384,8 @@ export class BookingService {
         throw new Error(`Error finding tee time id`);
       });
 
-      await cacheManager.set(`teeTime:${teeTimeId}`, teeTime); // Cache for 1 hour
-    }
-      
+    //   await cacheManager.set(`teeTime:${teeTimeId}`, teeTime); // Cache for 1 hour
+    // }
 
     // Calculate additional taxes
 
@@ -3705,7 +3704,6 @@ export class BookingService {
       providerBookingId,
       status: "Reserved",
       isEmailSend: bookingId.isEmailSend,
-      
     } as ReserveTeeTimeResponse;
   };
 
@@ -3741,8 +3739,9 @@ export class BookingService {
           userAgent: "",
           message: "ERROR CONFIRMING BOOKING",
           stackTrace: `${err.stack}`,
-          additionalDetailsJSON: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${booking?.teeTimeId ?? ""
-            }`,
+          additionalDetailsJSON: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${
+            booking?.teeTimeId ?? ""
+          }`,
         });
         throw "Error retrieving booking";
       });
@@ -3773,8 +3772,9 @@ export class BookingService {
             url: "/confirmBooking",
             userAgent: "",
             message: "ERROR CONFIRMING BOOKING",
-            stackTrace: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${booking?.teeTimeId ?? ""
-              }`,
+            stackTrace: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${
+              booking?.teeTimeId ?? ""
+            }`,
             additionalDetailsJSON: err,
           });
         });
@@ -4115,11 +4115,10 @@ export class BookingService {
   };
 
   checkIfTeeTimeAvailableOnProvider = async (teeTimeId: string, golfersCount: number, userId: string) => {
-
     const cacheKey = `teeTimeData:${teeTimeId}`;
     const cacheTTL = 600; // Cache TTL in seconds
-    let teeTime:any = await cacheManager.get(cacheKey);
-  
+    let teeTime: any = await cacheManager.get(cacheKey);
+
     if (!teeTime) {
       // Fetch tee time data from the database if not in cache
       const [teeTimeData] = await this.database
@@ -4150,8 +4149,7 @@ export class BookingService {
           greenFeeTaxPercent: courses.greenFeeTaxPercent,
           cartFeeTaxPercent: courses.cartFeeTaxPercent,
           weatherGuaranteeTaxPercent: courses.weatherGuaranteeTaxPercent,
-          markupTaxPercent: courses.markupTaxPercent
-          
+          markupTaxPercent: courses.markupTaxPercent,
         })
         .from(teeTimes)
         .leftJoin(courses, eq(teeTimes.courseId, courses.id))
@@ -4182,7 +4180,7 @@ export class BookingService {
           });
           throw new Error(`Error finding tee time id`);
         });
-  
+
       if (!teeTimeData) {
         this.logger.fatal(`tee time not found id: ${teeTimeId}`);
         loggerService.errorLog({
@@ -4198,12 +4196,12 @@ export class BookingService {
         });
         throw new Error(`Error finding tee time id`);
       }
-  
+
       // Cache the fetched tee time data
       teeTime = teeTimeData;
       await cacheManager.set(cacheKey, teeTime, cacheTTL);
     }
-  
+
     if (teeTime.availableFirstHandSpots >= golfersCount) {
       const { provider, token } = await this.providerService.getProviderAndKey(
         teeTime.internalId!,
@@ -4240,7 +4238,7 @@ export class BookingService {
 
   checkIfUserIsOptMemberShip = async (userId: string, bookingId: string) => {
     const [canReSellResult] = await this.database
-      .select({canResell:bookings.canResell})
+      .select({ canResell: bookings.canResell })
       .from(bookings)
       .where(eq(bookings.id, bookingId ?? ""));
     return canReSellResult?.canResell;

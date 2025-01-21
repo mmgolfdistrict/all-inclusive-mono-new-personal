@@ -4,7 +4,7 @@ import { boolean, datetime, smallint, tinyint, varchar } from "drizzle-orm/mysql
 import { mySqlTable } from "./_table";
 
 export const courseMembership = mySqlTable("courseMembership", {
-  id: varchar("id", { length: 36 }).notNull(),
+  id: varchar("id", { length: 36 }).notNull().primaryKey(),
   courseId: varchar("courseId", { length: 36 }).notNull(),
   name: varchar("name", { length: 25 }).notNull(),
   description: varchar("description", { length: 255 }),
@@ -16,4 +16,4 @@ export const courseMembership = mySqlTable("courseMembership", {
     .default(sql`CURRENT_TIMESTAMP(3)`)
     .notNull(),
 });
-export type InsertCourseMembership= InferSelectModel<typeof courseMembership>;
+export type InsertCourseMembership = InferSelectModel<typeof courseMembership>;
