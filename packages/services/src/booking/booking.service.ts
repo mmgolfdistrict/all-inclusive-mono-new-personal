@@ -3559,24 +3559,25 @@ export class BookingService {
           });
 
         const [user] = await this.database.select().from(users).where(eq(users.id, userId)).execute();
-
         const emailList = courseContactsList.map((contact) => contact.email);
         if (emailList.length > 0) {
-          await this.notificationService.sendEmailByTemplate(
-            emailList,
-            "Reservation Additional Request",
-            process.env.SENDGRID_COURSE_CONTACT_NOTIFICATION_TEMPLATE_ID!,
-            {
-              EMail: user?.email ?? "",
-              CustomerName: user?.name ?? "",
-              NoteFromUser: additionalNoteFromUser || "-",
-              NeedRentals: needRentals ? "Yes" : "No",
-              PlayDateTime: formatTime(teeTime.providerDate, true, teeTime.timezoneCorrection ?? 0),
-              HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
-              CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${teeTime.cdnKey}.${teeTime.extension}`,
-            },
-            []
-          );
+          emailList.map(async (email) => {
+            await this.notificationService.sendEmailByTemplate(
+              email,
+              "Reservation Additional Request",
+              process.env.SENDGRID_COURSE_CONTACT_NOTIFICATION_TEMPLATE_ID!,
+              {
+                EMail: user?.email ?? "",
+                CustomerName: user?.name ?? "",
+                NoteFromUser: additionalNoteFromUser || "-",
+                NeedRentals: needRentals ? "Yes" : "No",
+                PlayDateTime: formatTime(teeTime.providerDate, true, teeTime.timezoneCorrection ?? 0),
+                HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+                CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${teeTime.cdnKey}.${teeTime.extension}`,
+              },
+              []
+            );
+          });
         }
       }
     } catch (e) {
