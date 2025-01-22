@@ -74,8 +74,6 @@ type CharityDetails = {
   logoKey: string | null; // Assuming key is always present
 };
 
-
-
 /**
  * Service handling course-related operations.
  * Extends `DomainService` and provides functionality to retrieve course information,
@@ -113,72 +111,70 @@ export class CourseService extends DomainService {
    * @throws Will throw an error if the query fails.
    */
   getCourseById = async (courseId: string) => {
-
     const cacheKey = `courseDetails:${courseId}`;
     const cacheTTL = 600; // Cache TTL in seconds
 
-    let courseDetailsQuery:any= await cacheManager.get(cacheKey);
+    let courseDetailsQuery: any = await cacheManager.get(cacheKey);
     if (!courseDetailsQuery) {
-      courseDetailsQuery =  await this.database
-      .select({
-        id: courses.id,
-        name: courses.name,
-        address: courses.address,
-        description: courses.description,
-        longitude: courses.longitude,
-        latitude: courses.latitude,
-        forecastApi: courses.forecastApi,
-        convenienceFeesFixedPerPlayer: courses.convenienceFeesFixedPerPlayer,
-        markupFeesFixedPerPlayer: courses.markupFeesFixedPerPlayer,
-        maxListPricePerGolferPercentage: courses.maxListPricePerGolferPercentage,
-        openTime: courses.openTime,
-        closeTime: courses.closeTime,
-        supportCharity: courses.supportCharity,
-        supportSensibleWeather: courses.supportSensibleWeather,
-        timezoneCorrection: courses.timezoneCorrection,
-        furthestDayToBook: courses.furthestDayToBook,
-        allowAuctions: courses.allowAuctions,
-        supportsOffers: courses.supportsOffers,
-        supportsWatchlist: courses.supportsWatchlist,
-        supportsPromocode: courses.supportsPromocode,
-        supportsWaitlist: courses.supportsWaitlist,
-        buyerFee: courses.buyerFee,
-        sellerFee: courses.sellerFee,
-        internalId: providers.internalId,
-        roundUpCharityId: courses?.roundUpCharityId,
-        providerConfiguration: providerCourseLink.providerCourseConfiguration,
-        isBookingDisabled: courses.isBookingDisabled,
-        showPricingBreakdown:courses.showPricingBreakdown,
-        websiteURL: courses.websiteURL,
-        courseOpenTime:courses.courseOpenTime,
-        courseCloseTime:courses.courseCloseTime,
-        supportsProviderMembership:courses.supportsProviderMembership
-      })
-      .from(courses)
-      .innerJoin(providerCourseLink, eq(providerCourseLink.courseId, courses.id))
-      .innerJoin(providers, eq(providers.id, providerCourseLink.providerId))
-      .where(and(eq(courses.id, courseId), eq(courses.isDeleted, false)))
-      .limit(1)
-      .execute()
-      .catch((err) => {
-        this.logger.error(`Error getting course by ID: ${err}`);
-        loggerService.errorLog({
-          userId: "",
-          url: "/CourseService/getCourseById",
-          userAgent: "",
-          message: "ERROR_GETTING_COURSE_BY_ID",
-          stackTrace: `${err.stack}`,
-          additionalDetailsJSON: JSON.stringify({
-            courseId,
-          }),
+      courseDetailsQuery = await this.database
+        .select({
+          id: courses.id,
+          name: courses.name,
+          address: courses.address,
+          description: courses.description,
+          longitude: courses.longitude,
+          latitude: courses.latitude,
+          forecastApi: courses.forecastApi,
+          convenienceFeesFixedPerPlayer: courses.convenienceFeesFixedPerPlayer,
+          markupFeesFixedPerPlayer: courses.markupFeesFixedPerPlayer,
+          maxListPricePerGolferPercentage: courses.maxListPricePerGolferPercentage,
+          openTime: courses.openTime,
+          closeTime: courses.closeTime,
+          supportCharity: courses.supportCharity,
+          supportSensibleWeather: courses.supportSensibleWeather,
+          timezoneCorrection: courses.timezoneCorrection,
+          furthestDayToBook: courses.furthestDayToBook,
+          allowAuctions: courses.allowAuctions,
+          supportsOffers: courses.supportsOffers,
+          supportsWatchlist: courses.supportsWatchlist,
+          supportsPromocode: courses.supportsPromocode,
+          supportsWaitlist: courses.supportsWaitlist,
+          buyerFee: courses.buyerFee,
+          sellerFee: courses.sellerFee,
+          internalId: providers.internalId,
+          roundUpCharityId: courses?.roundUpCharityId,
+          providerConfiguration: providerCourseLink.providerCourseConfiguration,
+          isBookingDisabled: courses.isBookingDisabled,
+          showPricingBreakdown: courses.showPricingBreakdown,
+          websiteURL: courses.websiteURL,
+          courseOpenTime: courses.courseOpenTime,
+          courseCloseTime: courses.courseCloseTime,
+          supportsProviderMembership: courses.supportsProviderMembership,
+          supportsGroupBooking: courses.supportsGroupBooking,
+        })
+        .from(courses)
+        .innerJoin(providerCourseLink, eq(providerCourseLink.courseId, courses.id))
+        .innerJoin(providers, eq(providers.id, providerCourseLink.providerId))
+        .where(and(eq(courses.id, courseId), eq(courses.isDeleted, false)))
+        .limit(1)
+        .execute()
+        .catch((err) => {
+          this.logger.error(`Error getting course by ID: ${err}`);
+          loggerService.errorLog({
+            userId: "",
+            url: "/CourseService/getCourseById",
+            userAgent: "",
+            message: "ERROR_GETTING_COURSE_BY_ID",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              courseId,
+            }),
+          });
+          throw new Error("Error getting course");
         });
-        throw new Error("Error getting course");
-      });
 
       await cacheManager.set(cacheKey, courseDetailsQuery, 600000);
-    
     }
-
 
     //Get the highest and lowest tee time prices
     //Cache if possible
@@ -314,41 +310,40 @@ export class CourseService extends DomainService {
   };
 
   getSupportedCharitiesForCourseId = async (courseId: string) => {
-
     const cacheKey = `supportedCharitiesForCourseId:${courseId}`;
 
-    let data:CharityDetails[]|null= await cacheManager.get(cacheKey);
+    let data: CharityDetails[] | null = await cacheManager.get(cacheKey);
 
-    if(!data){
+    if (!data) {
       data = await this.database
-      .select({
-        charityDescription: charities.description,
-        charityName: charities.name,
-        charityId: charities.id,
-        logo: charities.logoAssetId,
-        //logoCdn: assets.cdn,
-        logoExtension: assets.extension,
-        logoKey: assets.key,
-      })
-      .from(charityCourseLink)
-      .leftJoin(charities, eq(charityCourseLink.charityId, charities.id))
-      .leftJoin(assets, eq(assets.id, charities.logoAssetId))
-      .where(eq(charityCourseLink.courseId, courseId))
-      .execute()
-      .catch((err) => {
-        this.logger.error(`Error getting charity for course: ${err}`);
-        loggerService.errorLog({
-          userId: "",
-          url: "/CourseService/getSupportedCharitiesForCourseId",
-          userAgent: "",
-          message: "ERROR_GETTING_CHARITY_FOR_COURSE",
-          stackTrace: `${err.stack}`,
-          additionalDetailsJSON: JSON.stringify({
-            courseId,
-          }),
+        .select({
+          charityDescription: charities.description,
+          charityName: charities.name,
+          charityId: charities.id,
+          logo: charities.logoAssetId,
+          //logoCdn: assets.cdn,
+          logoExtension: assets.extension,
+          logoKey: assets.key,
+        })
+        .from(charityCourseLink)
+        .leftJoin(charities, eq(charityCourseLink.charityId, charities.id))
+        .leftJoin(assets, eq(assets.id, charities.logoAssetId))
+        .where(eq(charityCourseLink.courseId, courseId))
+        .execute()
+        .catch((err) => {
+          this.logger.error(`Error getting charity for course: ${err}`);
+          loggerService.errorLog({
+            userId: "",
+            url: "/CourseService/getSupportedCharitiesForCourseId",
+            userAgent: "",
+            message: "ERROR_GETTING_CHARITY_FOR_COURSE",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              courseId,
+            }),
+          });
+          throw new Error("Error getting charity");
         });
-        throw new Error("Error getting charity");
-      });
 
       await cacheManager.set(cacheKey, data, 600000);
     }
