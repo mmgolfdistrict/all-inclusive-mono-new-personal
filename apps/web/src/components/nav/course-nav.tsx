@@ -3,9 +3,9 @@
 import { signOut, useSession } from "@golf-district/auth/nextjs-exports";
 import { useAppContext } from "~/contexts/AppContext";
 import { useCourseContext } from "~/contexts/CourseContext";
+import { useFiltersContext } from "~/contexts/FiltersContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
-import { getBgColor } from "~/utils/formatters";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -14,16 +14,17 @@ import { FilledButton } from "../buttons/filled-button";
 import { Auction } from "../icons/auction";
 import { Calendar } from "../icons/calendar";
 import { Hamburger } from "../icons/hamburger";
+import { Info } from "../icons/info";
 import { Marketplace } from "../icons/marketplace";
 import { Megaphone } from "../icons/megaphone";
 import { MyOffers } from "../icons/my-offers";
 import { Search } from "../icons/search";
 import { BlurImage } from "../images/blur-image";
 import { PoweredBy } from "../powered-by";
+import { Tooltip } from "../tooltip";
 import { PathsThatNeedRedirectOnLogout, UserInNav } from "../user/user-in-nav";
 import { NavItem } from "./nav-item";
 import { SideBar } from "./side-bar";
-import { useFiltersContext } from "~/contexts/FiltersContext";
 
 export const CourseNav = () => {
   const { user } = useUserContext();
@@ -34,11 +35,7 @@ export const CourseNav = () => {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const pathname = usePathname();
   const session = useSession();
-  const {
-
-    setDateType,
-
-  } = useFiltersContext();
+  const { setDateType } = useFiltersContext();
   const router = useRouter();
 
   const { data: unreadOffers } = api.user.getUnreadOffersForCourse.useQuery(
@@ -125,8 +122,8 @@ export const CourseNav = () => {
   };
 
   const handleResetFilters = () => {
-    setDateType("All")
-  }
+    setDateType("All");
+  };
   // if (pathname.includes("/checkout")) return null;
 
   return (
@@ -135,27 +132,48 @@ export const CourseNav = () => {
         {systemNotifications?.map((elm) => (
           <div
             key={elm.id}
-            className={`${getBgColor(
-              elm.displayType
-            )} text-white w-full p-1 text-center`}
+            style={{
+              backgroundColor: elm.bgColor,
+              color: elm.color,
+            }}
+            className="w-full p-1 text-center flex items-center justify-center"
           >
-            {elm.shortMessage} : {elm.longMessage}
+            {elm.shortMessage}
+            {elm.longMessage && (
+              <Tooltip
+                trigger={
+                  <Info longMessage className="ml-2 h-[20px] w-[20px]" />
+                }
+                content={elm.longMessage}
+              />
+            )}
           </div>
         ))}
         {courseGlobalNotification?.map((elm) => (
           <div
             key={elm.id}
-            className={`${getBgColor(
-              elm.displayType
-            )} text-white w-full p-1 text-center`}
+            style={{
+              backgroundColor: elm.bgColor,
+              color: elm.color,
+            }}
+            className="text-white w-full p-1 text-center flex items-center justify-center"
           >
-            {elm.shortMessage} : {elm.longMessage}
+            {elm.shortMessage}
+            {elm.longMessage && (
+              <Tooltip
+                trigger={
+                  <Info longMessage className="ml-2 h-[20px] w-[20px]" />
+                }
+                content={elm.longMessage}
+              />
+            )}
           </div>
         ))}
         {isSideBarOpen && (
           <div
-            className={`fixed z-20 h-[100dvh] w-screen backdrop-blur ${isSideBarOpen ? "md:hidden" : ""
-              }`}
+            className={`fixed z-20 h-[100dvh] w-screen backdrop-blur ${
+              isSideBarOpen ? "md:hidden" : ""
+            }`}
           >
             <div className="h-screen bg-[#00000099]" />
           </div>

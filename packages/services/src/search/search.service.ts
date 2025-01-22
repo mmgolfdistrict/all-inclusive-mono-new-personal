@@ -36,6 +36,7 @@ import type { WeatherService } from "../weather/weather.service";
 import { majorEvents } from "@golf-district/database/schema/majorEvents";
 import { loggerService } from "../webhooks/logging.service";
 import { courseAllowedTimeToSell } from "@golf-district/database/schema/courseAllowedTimeToSell";
+import { cacheManager } from "@golf-district/shared/src/utils/cacheManager";
 import { CacheService } from "../infura/cache.service";
 
 dayjs.extend(UTC);
@@ -78,6 +79,12 @@ interface TeeTimeSearchObject {
   cartFeeTaxPercent: number;
   weatherGuaranteeTaxPercent: number;
   markupTaxPercent: number;
+}
+
+interface MarkupData {
+  toDay: number;
+  fromDay: number;
+  markUp: number;
 }
 
 interface CheckTeeTimesAvailabilityParams {
@@ -779,6 +786,10 @@ export class SearchService extends CacheService {
     //   .second(59)
     //   .millisecond(999)
     //   .toISOString();
+
+    const cacheKey = `${courseId}-NumberOfPlayers`;
+    const cacheTTL = 600;
+
     const nowInCourseTimezone = dayjs().utc().utcOffset(timezoneCorrection).format("YYYY-MM-DD HH:mm:ss");
     const currentTimePlus30Min = dayjs
       .utc(nowInCourseTimezone)
@@ -786,14 +797,24 @@ export class SearchService extends CacheService {
       .add(30, "minutes")
       .toISOString();
     // Allowed Players start
-    const NumberOfPlayers = await this.database
+
+    let NumberOfPlayers:any= await cacheManager.get(cacheKey)
+
+    if(!NumberOfPlayers){
+       NumberOfPlayers = await this.database
       .select({
         primaryMarketAllowedPlayers: courses.primaryMarketAllowedPlayers,
-        openTime: courses.openTime,
-        closeTime: courses.closeTime,
+        // openTime: courses.openTime,
+        // closeTime: courses.closeTime,
+        openTime: courses.courseOpenTime,
+        closeTime: courses.courseCloseTime
       })
       .from(courses)
       .where(eq(courses.id, courseId));
+
+      await cacheManager.set(cacheKey, NumberOfPlayers, 600000);
+
+    }
 
     const PlayersOptions = ["1", "2", "3", "4"];
 
@@ -815,10 +836,13 @@ export class SearchService extends CacheService {
       conditions.push(gte(teeTimes.availableFirstHandSpots, playersCount));
     }
 
-    const startingHour = Number(NumberOfPlayers[0]?.openTime?.split(" ")?.[1]?.split(":")?.[0]) ?? 9;
-    const closingHour = Number(NumberOfPlayers[0]?.closeTime?.split(" ")?.[1]?.split(":")?.[0]) ?? 9;
+    // const startingHour = Number(NumberOfPlayers[0]?.openTime?.split(" ")?.[1]?.split(":")?.[0]) ?? 9;
+    // const closingHour = Number(NumberOfPlayers[0]?.closeTime?.split(" ")?.[1]?.split(":")?.[0]) ?? 9;
 
-    if (startingHour * 100 !== startTime || closingHour * 100 !== endTime) {
+    const startingHour = NumberOfPlayers[0]?.openTime ?? 9;
+    const closingHour = NumberOfPlayers[0]?.closeTime ?? 9;
+
+    if (startingHour  !== startTime || closingHour !== endTime) {
       conditions.push(and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)) as any);
     }
 
@@ -954,38 +978,90 @@ export class SearchService extends CacheService {
     );
     return this.sortDates(uniqueArrayfirstHandAndSecondHandResultDates);
   }
-  getTeeTimesPriceWithRange = async (courseId: string, timeZoneCorrection: number) => {
-    const markupData = await this.database
-      .select()
-      .from(courseMarkup)
-      .where(eq(courseMarkup.courseId, courseId))
-      .execute();
 
+   getTeeTimesPriceWithRange = async (
+    courseId: string,
+    timeZoneCorrection: number
+  ): Promise<{ toDayFormatted: string; fromDayFormatted: string; markUpFees: number }[]> => {
+    const markupCacheKey = `${courseId}-markup`;
+  
+    let markupData: MarkupData[] | null = await cacheManager.get(markupCacheKey);
+  
+    if (!markupData) {
+      const dbResult = await this.database
+        .select()
+        .from(courseMarkup)
+        .where(eq(courseMarkup.courseId, courseId))
+        .execute();
+  
+      // Assuming dbResult is an array of MarkupData
+      markupData = dbResult as MarkupData[];
+      await cacheManager.set(markupCacheKey, markupData, 600000);
+    }
+  
+    if (!Array.isArray(markupData)) {
+      throw new Error("Invalid markup data format");
+    }
+  
     const currentDate = dayjs();
     const currentdateWithTimeZone = currentDate.add(timeZoneCorrection ?? 0, "hour");
-    console.log(
-      currentDate.toString(),
-      currentdateWithTimeZone.toString(),
-      "ewfwfewfewfewwfe",
-      timeZoneCorrection
-    );
-    const priceAccordingToDate: any[] = [];
-
+    const priceAccordingToDate: { toDayFormatted: string; fromDayFormatted: string; markUpFees: number }[] = [];
+  
     markupData.forEach((el) => {
-      const toDay = currentdateWithTimeZone.add(el?.toDay, "day");
+      const toDay = currentdateWithTimeZone.add(el.toDay, "day");
       const fromDay = currentdateWithTimeZone
-        .add(el?.fromDay, "day")
+        .add(el.fromDay, "day")
         .set("hours", 0)
         .set("minutes", 0)
         .set("seconds", 0);
+  
       priceAccordingToDate.push({
         toDayFormatted: toDay.toString(),
         fromDayFormatted: fromDay.toString(),
         markUpFees: el.markUp,
       });
     });
+  
     return priceAccordingToDate;
   };
+
+  // getTeeTimesPriceWithRange = async (courseId: string, timeZoneCorrection: number) => {
+
+  //   const markupCacheKey = `${courseId}-markup`;
+
+  //   let markupData = await cacheManager.get(markupCacheKey)
+
+  //   if(!markupData){
+
+  //     markupData = await this.database
+  //     .select()
+  //     .from(courseMarkup)
+  //     .where(eq(courseMarkup.courseId, courseId))
+  //     .execute();
+
+  //     await cacheManager.set(markupCacheKey, markupData, 600000);
+  
+  //   }
+
+  //   const currentDate = dayjs();
+  //   const currentdateWithTimeZone = currentDate.add(timeZoneCorrection ?? 0, "hour");
+  //   const priceAccordingToDate: any[] = [];
+
+  //   markupData.forEach((el) => {
+  //     const toDay = currentdateWithTimeZone.add(el?.toDay, "day");
+  //     const fromDay = currentdateWithTimeZone
+  //       .add(el?.fromDay, "day")
+  //       .set("hours", 0)
+  //       .set("minutes", 0)
+  //       .set("seconds", 0);
+  //     priceAccordingToDate.push({
+  //       toDayFormatted: toDay.toString(),
+  //       fromDayFormatted: fromDay.toString(),
+  //       markUpFees: el.markUp,
+  //     });
+  //   });
+  //   return priceAccordingToDate;
+  // };
   async getTeeTimesForDay(
     courseId: string,
     date: string,
@@ -1059,15 +1135,23 @@ export class SearchService extends CacheService {
           gt(teeTimes.greenFeePerPlayer, 0)
         )
       );
+      const cacheKey = `${courseId}-NumberOfPlayers`;
+      let NumberOfPlayers:any= await cacheManager.get(cacheKey)
 
-    // Allowed Players start
-    const NumberOfPlayers = await this.database
-      .select({
-        primaryMarketAllowedPlayers: courses.primaryMarketAllowedPlayers,
-      })
-      .from(courses)
-      .where(eq(courses.id, courseId));
-
+      if(!NumberOfPlayers){
+         NumberOfPlayers = await this.database
+        .select({
+          primaryMarketAllowedPlayers: courses.primaryMarketAllowedPlayers,
+          openTime: courses.openTime,
+          closeTime: courses.closeTime
+        })
+        .from(courses)
+        .where(eq(courses.id, courseId));
+  
+        await cacheManager.set(cacheKey, NumberOfPlayers, 600000);
+  
+      }
+  
     const PlayersOptions = ["1", "2", "3", "4"];
 
     const binaryMask = NumberOfPlayers[0]?.primaryMarketAllowedPlayers;
@@ -1141,17 +1225,24 @@ export class SearchService extends CacheService {
       );
     const teeQueryLimited = teeQuery.limit(limit);
 
-    const courseData = await this.database
-      .select({
-        buyerFee: courses.buyerFee,
-        sellerFee: courses.sellerFee,
-        markupFees: courses.markupFeesFixedPerPlayer,
-        timeZoneCorrection: courses.timezoneCorrection,
-      })
-      .from(courses)
-      .where(eq(courses.id, courseId))
-      .execute()
-      .catch(() => { });
+    const cacheCourseDataKey = `${courseId}-course-data`;
+    let courseData:any= await cacheManager.get(cacheCourseDataKey)
+    if(!courseData){
+      courseData = await this.database
+        .select({
+          buyerFee: courses.buyerFee,
+          sellerFee: courses.sellerFee,
+          markupFees: courses.markupFeesFixedPerPlayer,
+          timeZoneCorrection: courses.timezoneCorrection,
+        })
+        .from(courses)
+        .where(eq(courses.id, courseId))
+        .execute()
+        .catch(() => { });
+
+        await cacheManager.set(cacheCourseDataKey, courseData, 600000); 
+    }
+
     let buyerFee = 0;
     let courseDataIfAvailable: any = {};
     if (courseData?.length) {

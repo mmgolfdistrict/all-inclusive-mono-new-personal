@@ -56,7 +56,13 @@ import * as userWaitlists from "./userWaitlists";
 import * as verificationTokens from "./verificationTokens";
 import * as withdrawals from "./withdrawals";
 import * as courseContacts from "./courseContacts";
-
+import * as adminPermissions from "./adminPermissions";
+import * as adminPersonaRole from "./adminPersonaRole";
+import * as adminPersonas from "./adminPersonas";
+import * as adminRolePermission from "./adminRolePermission";
+import * as adminRoles from "./adminRoles";
+import * as adminUserRole from "./adminUserRole";
+import * as courseMembership from "./courseMembership"
 export const schema = {
   ...accounts,
   ...assets,
@@ -115,5 +121,12 @@ export const schema = {
   ...userSession,
   ...courseUser,
   ...authenticationMethod,
-  ...courseContacts
+  ...courseContacts,
+  ...courseMembership,
+  ...adminPermissions,
+  ...adminPersonaRole,
+  ...adminPersonas,
+  ...adminRolePermission,
+  ...adminRoles,
+  ...adminUserRole,
 };

@@ -1,6 +1,7 @@
 import type { NotificationObject } from "@golf-district/shared";
 import { useCheckoutContext } from "~/contexts/CheckoutContext";
 import { useCourseContext } from "~/contexts/CourseContext";
+import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
 import { formatMoney, formatTime } from "~/utils/formatters";
 import {
@@ -8,9 +9,12 @@ import {
   type SensibleDataToMountCompType,
 } from "~/utils/types";
 import { useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { Fragment, useEffect, useState } from "react";
+import { toast } from "react-toastify";
 import placeholderImage from "../../../public/placeholders/course.png";
 import { Avatar } from "../avatar";
+import { CheckedIcon } from "../icons/checked";
+import { LoaderIcon } from "../icons/loader";
 import { OutlineClub } from "../icons/outline-club";
 import { BlurImage } from "../images/blur-image";
 import { ChoosePlayers } from "../input/choose-players";
@@ -33,9 +37,29 @@ export const CheckoutItem = ({
 }) => {
   const searchParams = useSearchParams();
   const playerCount = searchParams.get("playerCount");
-  const { setAmountOfPlayers, amountOfPlayers } = useCheckoutContext();
+  const teeTimeId = searchParams?.get("teeTimeId");
+  const listingId = searchParams?.get("listingId");
+  const {
+    setAmountOfPlayers,
+    amountOfPlayers,
+    setValidatePlayers,
+    validatePlayers,
+  } = useCheckoutContext();
+  const [membershipStatus, setMembershipStatus] = useState("no_membership");
+  const [courseMemberships, setCourseMembership] = useState<
+    { id: string; name: string }[]
+  >([]);
+  const [isCustomerValidated, setIsCustomerValidated] = useState<number | null>(
+    null
+  );
   const { course } = useCourseContext();
+  const { user } = useUserContext();
   const courseId = course?.id;
+  const [playerEmails, setPlayerEmails] = useState(
+    Array.from({ length: amountOfPlayers }, (_, index) =>
+      index === 0 ? user?.email : ""
+    )
+  );
 
   const { data: coursePreviewImage } =
     api.course.getCoursePreviewImage.useQuery({ courseId: courseId ?? "" });
@@ -47,6 +71,21 @@ export const CheckoutItem = ({
       date: teeTime?.date ?? "",
     });
 
+  const { data: isSupportMemberShip } = api.course.getCourseById.useQuery({
+    courseId: courseId ?? "",
+  });
+
+  const { data: getAllCourseMemberships } =
+    api.checkout.getAllCourseMembership.useQuery({});
+  useEffect(() => {
+    console.log("getAllCourseMemberships", getAllCourseMemberships);
+    if (getAllCourseMemberships) {
+      setCourseMembership(getAllCourseMemberships);
+    }
+  }, [getAllCourseMemberships]);
+
+  const searchCustomerByEmail =
+    api.checkout.searchCustomerViaEmail.useMutation();
   const numberOfPlayers = allowedPlayers?.numberOfPlayers;
   const choosePlayers = (amount: string) => {
     setAmountOfPlayers(Number(amount));
@@ -96,6 +135,65 @@ export const CheckoutItem = ({
     return null;
   };
 
+  const handleChangeMemberShipStatus = (
+    event: React.ChangeEvent<HTMLSelectElement>
+  ) => {
+    setMembershipStatus(event.target.value);
+  };
+  const handleValidateMemberShipUser = async (index: number, email: string) => {
+    console.log("index", index + 1);
+    console.log("email", email);
+    try {
+      if (email == "") {
+        toast.error("email is required");
+        setIsCustomerValidated(null);
+        return;
+      }
+      const isDuplicate = validatePlayers.some(
+        (player) => player.playerEmail === email
+      );
+      if (isDuplicate) {
+        toast.error("this email is already validated");
+        setIsCustomerValidated(null);
+        return;
+      }
+      setIsCustomerValidated(index);
+      const result = await searchCustomerByEmail.mutateAsync({
+        email: email,
+        teeTimeId: teeTimeId ?? "",
+        selectedProviderCourseMembershipId: membershipStatus,
+      });
+      console.log("======>", result);
+      if (result.isValidated) {
+        setValidatePlayers((prevPlayers) => [
+          ...prevPlayers,
+          {
+            isValidPlayer: true,
+            playerEmail: email,
+            playerIndex: index,
+            courseMemberShipId: result.providerCourseMembership,
+            providerCourseMemberShipId: result.providerCourseMembershipId,
+          },
+        ]);
+        toast.success(result.message);
+        setIsCustomerValidated(null);
+        return;
+      } else {
+        toast.error(result.message);
+        setIsCustomerValidated(null);
+        return;
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error("something went wrong");
+      setIsCustomerValidated(null);
+      return;
+    }
+  };
+  useEffect(() => {
+    console.log("validatePlayers========>", validatePlayers);
+  }, [validatePlayers]);
+
   return (
     <div className="relative flex w-full flex-col gap-2 bg-secondary-white  pt-4 lg:rounded-lg">
       <div className="flex items-center gap-2 px-4 pb-4 lg:items-start">
@@ -111,7 +209,13 @@ export const CheckoutItem = ({
             {isLoading ? (
               <div className="h-6 w-[50%] bg-gray-200 rounded-md  animate-pulse" />
             ) : (
-              formatTime(teeTime?.date ?? "", true, course?.timezoneCorrection)
+              <span className="text-[20px] ">
+                {formatTime(
+                  teeTime?.date ?? "",
+                  true,
+                  course?.timezoneCorrection
+                )}
+              </span>
             )}
           </div>
           <Data
@@ -150,6 +254,103 @@ export const CheckoutItem = ({
         numberOfPlayers={numberOfPlayers}
         selectStatus={allowedPlayers?.selectStatus}
       />
+      <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-2">
+          {isSupportMemberShip?.supportsProviderMembership === 1 && listingId == null ? (
+            <Fragment>
+              <div className="flex gap-2 px-2">
+                <h5 className="">Select MemberShip:</h5>
+                <select
+                  value={membershipStatus}
+                  onChange={handleChangeMemberShipStatus}
+                >
+                  <option value="no_membership">No Membership Selected</option>
+                  {courseMemberships && courseMemberships.length > 0 ? (
+                    <Fragment>
+                      {courseMemberships.map((membership) => (
+                        <option key={membership.id} value={membership.id}>
+                          {membership.name}
+                        </option>
+                      ))}
+                    </Fragment>
+                  ) : null}
+                  {/* {courseMemberships.length === 0 ? (
+                    <Fragment>
+                      <option value="no_membership">
+                        No Membership Selected
+                      </option>
+                    </Fragment>
+                  ) : (
+                    courseMemberships.map((membership) => (
+                      <option key={membership.id} value={membership.id}>
+                        {membership.name}
+                      </option>
+                    ))
+                  )} */}
+                </select>
+              </div>
+              <div className="flex flex-wrap justify-between gap-1">
+                {courseMemberships.length === 0 ||
+                membershipStatus === "no_membership" ? null : (
+                  <Fragment>
+                    {Array.from({ length: Number(playerCount) }, (_, index) => (
+                      <div
+                        key={index}
+                        className="flex gap-2 justify-center items-center"
+                      >
+                        <h5 className="text-sm">Player {index + 1}:</h5>
+                        <input
+                          type="text"
+                          className="border border-black focus:border-black focus:outline-none px-2 py-1 text-sm rounded-sm"
+                          placeholder={
+                            index === 0
+                              ? "Current user full email"
+                              : "Enter member full email"
+                          }
+                          disabled={index === 0}
+                          value={playerEmails[index]}
+                          onChange={(e) => {
+                            const updatedEmails = [...playerEmails];
+                            updatedEmails[index] = e.target.value;
+                            setPlayerEmails(updatedEmails);
+                          }}
+                        />
+                        {validatePlayers[index]?.isValidPlayer ? (
+                          <Fragment>
+                            <p className="flex items-center text-sm gap-1">
+                              <CheckedIcon className="text-green-600" />
+                              validated{" "}
+                            </p>
+                          </Fragment>
+                        ) : (
+                          <Fragment>
+                            <button
+                              onClick={() =>
+                                handleValidateMemberShipUser(
+                                  index,
+                                  playerEmails[index] ?? ""
+                                )
+                              }
+                              disabled={isCustomerValidated === index}
+                              className="bg-primary px-3 py-1 rounded-[20px] text-white text-sm min-w-[100px] flex items-center justify-center "
+                            >
+                              {isCustomerValidated === index ? (
+                                <LoaderIcon className="w-3 h-3" />
+                              ) : (
+                                "Validate"
+                              )}
+                            </button>
+                          </Fragment>
+                        )}
+                      </div>
+                    ))}
+                  </Fragment>
+                )}
+              </div>
+            </Fragment>
+          ) : null}
+        </div>
+      </div>
       {isSensibleInvalid || isLoading ? null : (
         <SensibleWidget sensibleDataToMountComp={sensibleDataToMountComp} />
         // <section className="flex flex-col items-center justify-between gap-4 border-t border-stroke p-4 lg:flex-row">
@@ -328,7 +529,7 @@ const Data = ({
           )}
         </div>
         <div className="flex">
-          <div className="text-[20px] font-semibold text-secondary-black">
+          <div className="text-[18px] font-semibold text-secondary-black">
             {formatMoney(pricePerGolfer ?? 1 ?? 0)}
           </div>
           <div className="text-[16px] text-primary-gray">/golfer</div>

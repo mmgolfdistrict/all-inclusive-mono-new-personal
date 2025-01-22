@@ -1,6 +1,5 @@
 import * as RadixTooltip from "@radix-ui/react-tooltip";
-import { useState } from "react";
-import { type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 export const Tooltip = ({
   trigger,
@@ -27,18 +26,27 @@ export const Tooltip = ({
     }
   };
 
+  const handleClick = (event: React.MouseEvent) => {
+    event.preventDefault();
+  };
+
   return (
     <>
       {isDisabled ? (
         <>{trigger}</>
       ) : (
         <RadixTooltip.Provider>
-          <RadixTooltip.Root open={isOpen} onOpenChange={setIsOpen} delayDuration={0}>
+          <RadixTooltip.Root
+            open={isOpen}
+            onOpenChange={setIsOpen}
+            delayDuration={0}
+          >
             <RadixTooltip.Trigger
               className={`${className ?? ""}`}
               data-testid="trigger-button-id"
               onTouchStart={handleTouchStart}
               onTouchEnd={handleTouchEnd}
+              onClick={handleClick}
             >
               {trigger}
             </RadixTooltip.Trigger>

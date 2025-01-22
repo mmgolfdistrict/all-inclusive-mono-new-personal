@@ -13,8 +13,15 @@ import type {
   ForeUpGetCustomerResponse,
   ForeupGetCustomers,
 } from "./types/foreup.type";
-import type { BookingResponse, CustomerCreationData, GetCustomerResponse, NameChangeCustomerDetails, SalesDataOptions, TeeTimeResponse } from "./types/interface";
-import type { BuyerData, ProviderAPI, TeeTimeData } from "./types/interface";
+import type {
+  BookingResponse,
+  CustomerCreationData,
+  GetCustomerResponse,
+  NameChangeCustomerDetails,
+  SalesDataOptions,
+  TeeTimeResponse,
+} from "./types/interface";
+import type { BuyerData, ProviderAPI, TeeTimeData, CustomerData } from "./types/interface";
 import { BaseProvider, type BookingDetails } from "./types/interface";
 import { db, eq } from "@golf-district/database";
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
@@ -69,9 +76,9 @@ export class foreUp extends BaseProvider {
           startTime,
           endTime,
           date,
-          responseData
-        })
-      })
+          responseData,
+        }),
+      });
       throw new Error(`Error fetching tee times: ${JSON.stringify(responseData)}`);
     }
 
@@ -112,9 +119,9 @@ export class foreUp extends BaseProvider {
           courseId,
           teesheetId,
           bookingId,
-          responseData
-        })
-      })
+          responseData,
+        }),
+      });
       throw new Error(`Error deleting booking: ${JSON.stringify(responseData)}`);
     }
     this.logger.info(`Booking deleted successfully: ${bookingId}`);
@@ -147,7 +154,11 @@ export class foreUp extends BaseProvider {
       const responseData = await response.json();
 
       // create another booking if the account number is not found in foreup
-      if (responseData.success === false && response.status === 404 && responseData.title.includes(data.data.attributes.bookedPlayers[0]?.accountNumber)) {
+      if (
+        responseData.success === false &&
+        response.status === 404 &&
+        responseData.title.includes(data.data.attributes.bookedPlayers[0]?.accountNumber)
+      ) {
         loggerService.errorLog({
           userId,
           url: "/Foreup/createBooking",
@@ -158,9 +169,9 @@ export class foreUp extends BaseProvider {
             courseId,
             teesheetId,
             data,
-            responseData
-          })
-        })
+            responseData,
+          }),
+        });
         const [customer] = await db
           .select({
             id: users.id,
@@ -176,20 +187,25 @@ export class foreUp extends BaseProvider {
             handel: users.handle,
             phonerNotification: users.phoneNotifications,
             emailNotification: users.emailNotifications,
-            userProviderCourseLinkId: userProviderCourseLink.id
+            userProviderCourseLinkId: userProviderCourseLink.id,
           })
           .from(userProviderCourseLink)
           .innerJoin(users, eq(users.id, userProviderCourseLink.userId))
           .where(
-            eq(userProviderCourseLink.accountNumber, data.data.attributes.bookedPlayers[0]?.accountNumber.toString() ?? ""),
+            eq(
+              userProviderCourseLink.accountNumber,
+              data.data.attributes.bookedPlayers[0]?.accountNumber.toString() ?? ""
+            )
           )
           .execute()
           .catch(() => {
             this.logger.error("Error fetching customer");
-            throw new Error('Error fetching customer');
-          })
+            throw new Error("Error fetching customer");
+          });
         if (!customer) {
-          throw new Error(`Customer not found with Account Number: ${data.data.attributes.bookedPlayers[0]?.accountNumber}`);
+          throw new Error(
+            `Customer not found with Account Number: ${data.data.attributes.bookedPlayers[0]?.accountNumber}`
+          );
         }
         const accountNumber = Math.floor(Math.random() * 90000) + 10000;
         const customerData = this.getCustomerCreationData({
@@ -208,8 +224,8 @@ export class foreUp extends BaseProvider {
           phoneNotification: customer.phonerNotification,
           providerCustomerId: null,
           providerAccountNumber: null,
-          accountNumber
-        })
+          accountNumber,
+        });
 
         const customerResponse = await this.createCustomer(token, courseId, customerData);
         const customerId = this.getCustomerId(customerResponse);
@@ -224,8 +240,8 @@ export class foreUp extends BaseProvider {
           .execute()
           .catch(() => {
             this.logger.error("Error updating customer");
-            throw new Error('Error updating customer');
-          })
+            throw new Error("Error updating customer");
+          });
         if (bookingData.data.attributes.bookedPlayers[0]) {
           bookingData.data.attributes.bookedPlayers[0].accountNumber = accountNumber;
           console.dir(bookingData, { depth: null });
@@ -249,9 +265,9 @@ export class foreUp extends BaseProvider {
                 courseId,
                 teesheetId,
                 data,
-                responseData
-              })
-            })
+                responseData,
+              }),
+            });
             throw new Error(`Error creating booking: ${JSON.stringify(responseData)}`);
           }
           const booking: BookingResponse = await response.json();
@@ -274,9 +290,9 @@ export class foreUp extends BaseProvider {
             courseId,
             teesheetId,
             data,
-            responseData
-          })
-        })
+            responseData,
+          }),
+        });
         throw new Error(`Error creating booking: ${JSON.stringify(responseData)}`);
       }
     }
@@ -297,8 +313,9 @@ export class foreUp extends BaseProvider {
     const endpoint = this.getBasePoint();
     const { defaultPriceClassID } = JSON.parse(this.providerConfiguration ?? "{}");
     // https://api.foreupsoftware.com/api_rest/index.php/courses/courseId/teesheets/teesheetId/bookings/bookingId/bookedPlayers/bookedPlayerId
-    const url = `${endpoint}/courses/${courseId}/teesheets/${teesheetId}/bookings/${bookingId}/bookedPlayers/${slotId ? slotId : bookingId
-      }`;
+    const url = `${endpoint}/courses/${courseId}/teesheets/${teesheetId}/bookings/${bookingId}/bookedPlayers/${
+      slotId ? slotId : bookingId
+    }`;
     const headers = this.getHeaders(token);
 
     if (options) {
@@ -331,9 +348,9 @@ export class foreUp extends BaseProvider {
           teesheetId,
           bookingId,
           options,
-          responseData
-        })
-      })
+          responseData,
+        }),
+      });
       throw new Error(`Error updating tee time: ${JSON.stringify(responseData)}`);
     }
 
@@ -369,9 +386,9 @@ export class foreUp extends BaseProvider {
         additionalDetailsJSON: JSON.stringify({
           courseId,
           customerData,
-          responseData
-        })
-      })
+          responseData,
+        }),
+      });
       throw new Error(`Error fetching required fields: ${JSON.stringify(responseData)}`);
     }
 
@@ -389,9 +406,9 @@ export class foreUp extends BaseProvider {
           additionalDetailsJSON: JSON.stringify({
             courseId,
             customerData,
-            field
-          })
-        })
+            field,
+          }),
+        });
         throw new Error(`Missing required field: ${field}`);
       }
     }
@@ -425,16 +442,20 @@ export class foreUp extends BaseProvider {
         stackTrace: ``,
         additionalDetailsJSON: JSON.stringify({
           courseId,
-          customerData
-        })
-      })
+          customerData,
+        }),
+      });
       throw new Error(`Error creating customer: ${JSON.stringify(responseData)}`);
     }
 
     return (await response.json()) as ForeUpCustomerCreationResponse;
   }
 
-  async getCustomer(token: string, courseId: string, email: string): Promise<ForeUpGetCustomerResponse | undefined> {
+  async getCustomer(
+    token: string,
+    courseId: string,
+    email: string
+  ): Promise<ForeUpGetCustomerResponse | undefined> {
     const endpoint = this.getBasePoint();
     const url = `${endpoint}/courses/${courseId}/customers?email=eq:${email}`;
 
@@ -460,19 +481,22 @@ export class foreUp extends BaseProvider {
         additionalDetailsJSON: JSON.stringify({
           courseId,
           email,
-          responseData
-        })
-      })
+          responseData,
+        }),
+      });
       throw new Error(`Error fetching customer: ${JSON.stringify(responseData)}`);
     }
 
     const customers: ForeupGetCustomers = await response.json();
 
     if (customers.data.length === 0) {
-      return undefined
+      return undefined;
     }
 
-    const customer = customers.data.find(customer => customer.attributes.account_number !== null && customer.attributes.online_booking_disabled === false);
+    const customer = customers.data.find(
+      (customer) =>
+        customer.attributes.account_number !== null && customer.attributes.online_booking_disabled === false
+    );
 
     return customer!;
   }
@@ -508,8 +532,11 @@ export class foreUp extends BaseProvider {
       });
       if (!checkInResponse.ok) {
         throw new Error(
-          `Error doing booking checkin for booking: ${bookingId}, status code: ${checkInResponse.status
-          }, status text: ${checkInResponse.statusText}, response: ${JSON.stringify(await checkInResponse.json())}`
+          `Error doing booking checkin for booking: ${bookingId}, status code: ${
+            checkInResponse.status
+          }, status text: ${checkInResponse.statusText}, response: ${JSON.stringify(
+            await checkInResponse.json()
+          )}`
         );
       }
       const cartData: CartData = await checkInResponse.json();
@@ -545,7 +572,8 @@ export class foreUp extends BaseProvider {
       });
       if (!addPaymentsResponse.ok) {
         throw new Error(
-          `Error adding payment to cart for booking: ${bookingId}, status code: ${addPaymentsResponse.status
+          `Error adding payment to cart for booking: ${bookingId}, status code: ${
+            addPaymentsResponse.status
           }, status text: ${addPaymentsResponse.statusText}, response: ${JSON.stringify(addPaymentsResponse)}`
         );
       }
@@ -554,7 +582,8 @@ export class foreUp extends BaseProvider {
       const completeCartUrl = `${endpoint}/courses/${courseId}/carts/${cartData.data.id}`;
       this.logger.info(`Complete cart url - ${completeCartUrl}`);
       this.logger.info(
-        `Completing cart for provider booking: ${bookingId}, cart id: ${cartData.data.id
+        `Completing cart for provider booking: ${bookingId}, cart id: ${
+          cartData.data.id
         }, with paymentData: ${JSON.stringify(paymentData)}`
       );
       const completeCartResponse = await fetch(completeCartUrl, {
@@ -572,7 +601,8 @@ export class foreUp extends BaseProvider {
       });
       if (!completeCartResponse.ok) {
         throw new Error(
-          `Error completing cart for booking: ${bookingId}, status code: ${completeCartResponse.status
+          `Error completing cart for booking: ${bookingId}, status code: ${
+            completeCartResponse.status
           }, status text: ${completeCartResponse.statusText}, response: ${JSON.stringify(
             await completeCartResponse.json()
           )}`
@@ -594,10 +624,10 @@ export class foreUp extends BaseProvider {
         stackTrace: `${error.stack}`,
         additionalDetailsJSON: JSON.stringify({
           options,
-        })
-      })
+        }),
+      });
     }
-  };
+  }
 
   getToken = async (): Promise<string> => {
     const endpoint = this.getBasePoint();
@@ -620,8 +650,8 @@ export class foreUp extends BaseProvider {
         userAgent: "",
         message: "ERROR_FETCHING_TOKEN",
         stackTrace: ``,
-        additionalDetailsJSON: "{}"
-      })
+        additionalDetailsJSON: "{}",
+      });
       throw new Error(`Error fetching token: ${JSON.stringify(responseData)}`);
     }
     let responseData;
@@ -641,8 +671,8 @@ export class foreUp extends BaseProvider {
         additionalDetailsJSON: JSON.stringify({
           response: JSON.stringify(response),
           responseData: JSON.stringify(responseData),
-        })
-      })
+        }),
+      });
       throw new Error(`Error parsing token response: ${error}`);
     }
     return responseData.data.id as string;
@@ -673,7 +703,9 @@ export class foreUp extends BaseProvider {
     customerId: string,
     providerBookingId: string | string[],
     _providerId: string,
-    _courseId: string
+    _courseId: string,
+    providerSlotIds: string[],
+    providerCourseMembershipId: string
   ) {
     const bookingSlots: {
       id: string;
@@ -685,6 +717,7 @@ export class foreUp extends BaseProvider {
       slotPosition: number;
       lastUpdatedDateTime: string | null;
       createdDateTime: string | null;
+      providerCourseMembershipId: string | null;
     }[] = [];
     for (let i = 0; i < slots; i++) {
       bookingSlots.push({
@@ -697,6 +730,7 @@ export class foreUp extends BaseProvider {
         slotPosition: i + 1,
         lastUpdatedDateTime: null,
         createdDateTime: null,
+        providerCourseMembershipId: providerCourseMembershipId,
       });
     }
     return bookingSlots;
@@ -706,7 +740,10 @@ export class foreUp extends BaseProvider {
     return false;
   }
 
-  getSalesDataOptions(reservationData: BookingResponse, bookingDetails: BookingDetails): ForeupSaleDataOptions {
+  getSalesDataOptions(
+    reservationData: BookingResponse,
+    bookingDetails: BookingDetails
+  ): ForeupSaleDataOptions {
     reservationData = reservationData as ForeupBookingResponse;
     const salesDataOptions: ForeupSaleDataOptions = {
       bookingId: reservationData.data.id,
@@ -714,19 +751,18 @@ export class foreUp extends BaseProvider {
       teesheetId: bookingDetails.providerTeeSheetId,
       players: bookingDetails.playerCount,
       totalAmountPaid: bookingDetails.totalAmountPaid,
-      token: bookingDetails.token
-    }
+      token: bookingDetails.token,
+    };
 
     return salesDataOptions;
   }
 
   supportsPlayerNameChange() {
     return true;
-  };
-
+  }
 
   getCustomerCreationData(buyerData: BuyerData): ForeUpCustomerCreationData {
-    const nameOfCustomer = buyerData.name ? buyerData.name.split(' ') : ['', ''];
+    const nameOfCustomer = buyerData.name ? buyerData.name.split(" ") : ["", ""];
     const customer: ForeUpCustomerCreationData = {
       type: "customer",
       attributes: {
@@ -742,12 +778,12 @@ export class foreUp extends BaseProvider {
           email: buyerData.email,
         },
       },
-    }
+    };
     return customer;
   }
 
   getCustomerId(customerData: ForeUpCustomerCreationResponse): string {
-    return (customerData.data.id).toString();
+    return customerData.data.id.toString();
   }
 
   getBookingCreationData(teeTimeData: TeeTimeData): BookingCreationData {
@@ -770,7 +806,7 @@ export class foreUp extends BaseProvider {
           details: teeTimeData.notes ?? "",
         },
       },
-    }
+    };
     return bookingData;
   }
 
@@ -794,14 +830,14 @@ export class foreUp extends BaseProvider {
     _providerTeeTimeId: string
   ) => {
     try {
-      const teeTimeResponse = await provider.getTeeTimes(
+      const teeTimeResponse = (await provider.getTeeTimes(
         token,
         providerCourseId,
         providerTeeSheetId,
         time.toString().padStart(4, "0"),
         (time + 1).toString().padStart(4, "0"),
         formattedDate
-      ) as ForeupTeeTimeResponse[]
+      )) as ForeupTeeTimeResponse[];
       let teeTime;
       if (teeTimeResponse && teeTimeResponse.length > 0) {
         teeTime = teeTimeResponse[0]!;
@@ -840,9 +876,9 @@ export class foreUp extends BaseProvider {
               token,
               time,
               teeTimeId,
-              errorMessage: err.message
-            })
-          })
+              errorMessage: err.message,
+            }),
+          });
           throw new Error(`Error finding tee time id`);
         });
 
@@ -865,8 +901,8 @@ export class foreUp extends BaseProvider {
               token,
               time,
               teeTimeId,
-            })
-          })
+            }),
+          });
           throw new Error("No TeeTimeSlotAttributes available");
         }
         const maxPlayers = Math.max(...attributes.allowedGroupSizes);
@@ -933,8 +969,8 @@ export class foreUp extends BaseProvider {
                   token,
                   time,
                   teeTimeId,
-                })
-              })
+                }),
+              });
               throw new Error(`Error updating tee time: ${err}`);
             });
         }
@@ -955,27 +991,27 @@ export class foreUp extends BaseProvider {
           token,
           time,
           teeTimeId,
-          errorMessage: error.message
-        })
-      })
+          errorMessage: error.message,
+        }),
+      });
       // throw new Error(`Error indexing tee time: ${error}`);
       // throw new Error(
       //   `We're sorry. This time is no longer available. Someone just booked this. It may take a minute for the sold time you selected to be removed. Please select another time.`
       // );
       return {
         error: true,
-        message: `We're sorry. This time is no longer available. Someone just booked this. It may take a minute for the sold time you selected to be removed. Please select another time.`
-      }
+        message: `We're sorry. This time is no longer available. Someone just booked this. It may take a minute for the sold time you selected to be removed. Please select another time.`,
+      };
     }
-  }
+  };
 
   getSlotIdsFromBooking = (bookingData: any): string[] => {
     return undefined as any;
-  }
+  };
 
   getPlayerCount(bookingData: BookingResponse): number {
     bookingData = bookingData as ForeupBookingResponse;
-    return bookingData.data.playerCount!
+    return bookingData.data.playerCount!;
   }
 
   findTeeTimeById(teeTimeId: string, teetimes: TeeTimeResponse[]): ForeupTeeTimeResponse | undefined {
@@ -984,7 +1020,19 @@ export class foreUp extends BaseProvider {
 
     return teeTime;
   }
-
+  async checkBookingIsCancelledOrNot(providerBookingId:string,providerCourseId:string,providerTeeSheetId:string,token:string){
+    let bookingIsDeleted=false;
+    const endpoint = this.getBasePoint();
+    const url = `${endpoint}/courses/${providerCourseId}/teesheets/${providerTeeSheetId}/bookings/${providerBookingId}`;
+    const headers = this.getHeaders(token);
+    const response = await fetch(url, { headers, method: "GET" });
+    const forUpResponse=await response.json();
+    // console.log("forUpResponse",forUpResponse);
+    if(forUpResponse.data.attributes.status ==="deleted"){
+      bookingIsDeleted=true;
+    }
+    return bookingIsDeleted;
+  }
   getBookingNameChangeOptions(customerDetails: NameChangeCustomerDetails): ForeUpBookingNameChangeOptions {
     const { name, providerBookingId, providerCustomerId } = customerDetails;
 
@@ -1005,11 +1053,35 @@ export class foreUp extends BaseProvider {
     return bookingNameChangeOptions;
   }
 
-  getCustomerIdFromGetCustomerResponse(getCustomerResponse: GetCustomerResponse): { customerId: string, accountNumber?: number } {
+  getCustomerIdFromGetCustomerResponse(getCustomerResponse: GetCustomerResponse): {
+    customerId: string;
+    accountNumber?: number;
+  } {
     const customer = getCustomerResponse as ForeUpGetCustomerResponse;
 
     return { customerId: customer.id.toString(), accountNumber: customer.attributes.account_number };
   }
+  async SearchCustomer(token: any, providerCourseId: string, email: string): Promise<CustomerData> {
+    const endpoint = this.getBasePoint();
+    const headers = this.getHeaders(token);
+    const url = `${endpoint}/courses/${providerCourseId}/customers?email=${email}`;
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: headers,
+    });
+
+    // if (!response.ok) {
+    //   this.logger.error(`Error searching customer: ${response.statusText}`);
+    //   const responseData = await response.json();
+    //   this.logger.error(`Error response from foreup: ${JSON.stringify(responseData)}`);
+    //   throw new Error(`Error searching customer: ${JSON.stringify(responseData)}`);
+    // }
+    const customerData = await response.json();
+    return customerData.data as CustomerData;
+  }
+
+
 
   requireToCreatePlayerSlots(): boolean {
     return true;

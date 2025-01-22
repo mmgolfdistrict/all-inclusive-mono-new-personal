@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
-import { and, eq, gt, gte, inArray, sql, desc, between, db } from "@golf-district/database";
+import { and, eq, gt, gte, inArray, sql, desc, between, db, isNotNull } from "@golf-district/database";
 import { bookings } from "@golf-district/database/schema/bookings";
 import { charities } from "@golf-district/database/schema/charities";
 import { charityCourseLink } from "@golf-district/database/schema/charityCourseLink";
@@ -11,6 +11,8 @@ import { lists } from "@golf-district/database/schema/lists";
 import { promoCodes } from "@golf-district/database/schema/promoCodes";
 import { providers } from "@golf-district/database/schema/providers";
 import { providerCourseLink } from "@golf-district/database/schema/providersCourseLink";
+import { courseMembership } from "@golf-district/database/schema/courseMembership";
+import { providerCourseMembership } from "@golf-district/database/schema/providerCourseMembership";
 import { InsertTeeTimes, teeTimes } from "@golf-district/database/schema/teeTimes";
 import { userPromoCodeLink } from "@golf-district/database/schema/userPromoCodeLink";
 import { users } from "@golf-district/database/schema/users";
@@ -46,6 +48,7 @@ import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 import UTC from "dayjs/plugin/utc";
 import { loggerService } from "../webhooks/logging.service";
 import { AppSettingsService } from "../app-settings/app-settings.service";
+import type { IpInfoService } from "../ipinfo/ipinfo.service";
 
 /**
  * Configuration options for the CheckoutService.
@@ -113,7 +116,8 @@ export class CheckoutService {
     private readonly database: Db,
     config: CheckoutServiceConfig,
     private readonly foreupIndexer: ForeUpWebhookService,
-    private readonly providerService: ProviderService
+    private readonly providerService: ProviderService,
+    private readonly ipInfoService: IpInfoService
   ) {
     this.hyperSwitch = new HyperSwitchService(config.hyperSwitchApiKey);
     this.auctionService = new AuctionService(database, this.hyperSwitch);
@@ -229,7 +233,12 @@ export class CheckoutService {
     }
   };
 
-  buildCheckoutSession = async (userId: string, customerCartData: CustomerCart, cartId = "") => {
+  buildCheckoutSession = async (
+    userId: string,
+    customerCartData: CustomerCart,
+    cartId = "",
+    ipAddress?: string
+  ) => {
     const { paymentId } = customerCartData;
     let data = {};
 
@@ -242,13 +251,13 @@ export class CheckoutService {
     if (paymentId) {
       data = this.updateCheckoutSession(userId, customerCartData, cartId);
     } else {
-      data = this.createCheckoutSession(userId, customerCartData);
+      data = this.createCheckoutSession(userId, customerCartData, ipAddress);
     }
     return data;
   };
 
-  createCheckoutSession = async (userId: string, customerCartData: CustomerCart) => {
-    const { paymentId, ...customerCart } = customerCartData;
+  createCheckoutSession = async (userId: string, customerCartData: CustomerCart, ipAddress?: string) => {
+    const { paymentId: _, ...customerCart } = customerCartData;
 
     this.logger.debug(`${JSON.stringify(customerCart)}`);
     const [user] = await this.database
@@ -412,6 +421,7 @@ export class CheckoutService {
 
     //save customerCart to database
     const cartId: string = randomUUID();
+    const ipInfo = await this.ipInfoService.getIpInfo(ipAddress);
     await this.database.insert(customerCarts).values({
       id: cartId,
       userId: userId,
@@ -420,6 +430,7 @@ export class CheckoutService {
       cart: customerCart,
       listingId,
       teeTimeId,
+      ipinfoJSON: ipInfo,
     });
 
     return {
@@ -1110,7 +1121,6 @@ export class CheckoutService {
           )
         );
       return { data: Number(userResult?.bookingCount) || 1 };
-    
     } catch (error: any) {
       this.logger.error("", error.message);
       throw error.message;
@@ -1181,5 +1191,97 @@ export class CheckoutService {
     } catch (error: any) {
       console.log("error message", error.message);
     }
+  };
+  searchCustomerAndValidate = async (
+    userId: string,
+    teeTimeId: string,
+    email: string,
+    selectedProviderCourseMembershipId: string
+  ) => {
+    const [teeTimeResult] = await this.database
+      .select({
+        courseId: teeTimes.courseId,
+        providerCourseId: providerCourseLink.providerCourseId,
+        providerCourseConfiguration: providerCourseLink.providerCourseConfiguration,
+        providerInternalId: providers.internalId,
+        providerTeeSheet: providerCourseLink.providerTeeSheetId,
+      })
+      .from(teeTimes)
+      .leftJoin(providerCourseLink, eq(teeTimes.courseId, providerCourseLink.courseId))
+      .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))
+      .where(eq(teeTimes.id, teeTimeId));
+    let result = await this.providerService.searchCustomerViaEmail(
+      email,
+      teeTimeResult?.providerInternalId ?? "",
+      teeTimeResult?.providerCourseId ?? "",
+      teeTimeResult?.providerTeeSheet ?? "",
+      teeTimeResult?.providerCourseConfiguration ?? ""
+    );
+    if (!Array.isArray(result) || result.length === 0) {
+      return {
+        isValidated: false,
+        providerCourseMembership: "",
+        message: "This Customer is not registered for Loyalty",
+      };
+    }
+    const checkingGroupsLoyalty = await this.database
+      .select({
+        name: providerCourseMembership.name,
+        courseMemberShipId: courseMembership.id,
+        providerCourseMembershipId: providerCourseMembership.id,
+      })
+      .from(courseMembership)
+      .leftJoin(
+        providerCourseMembership,
+        eq(providerCourseMembership.courseMembershipId, courseMembership.id)
+      )
+      .where(
+        and(
+          eq(courseMembership.courseId, teeTimeResult?.courseId ?? ""),
+          isNotNull(providerCourseMembership.id),
+          eq(courseMembership.id, selectedProviderCourseMembershipId)
+        )
+      );
+    // console.log(selectedProviderCourseMembershipId);
+    // console.log("checkingGroupsLoyalty======>", checkingGroupsLoyalty);
+    const dummyCreatedAnswer = result.map((item: any) => {
+      return item;
+    });
+    // add validation for groups if they are empty
+    const dummyResult = dummyCreatedAnswer[0]?.attributes?.groups;
+    if (dummyResult.length === 0) {
+      return {
+        isValidated: false,
+        providerCourseMembership: "",
+        providerCourseMembershipId: "",
+        message: "User Is registered but not part of any loyalty group",
+      };
+    }
+    const anyIncluded = checkingGroupsLoyalty.some((item) => dummyResult.includes(item.name));
+    console.log("anyIncluded=============>", anyIncluded);
+    if (!anyIncluded) {
+      return {
+        isValidated: anyIncluded,
+        providerCourseMembership: "",
+        providerCourseMembershipId: "",
+        message: "mismatch in loyalty group",
+      };
+    }
+    return {
+      isValidated: anyIncluded,
+      providerCourseMembership: checkingGroupsLoyalty[0]?.courseMemberShipId,
+      providerCourseMembershipId: checkingGroupsLoyalty[0]?.providerCourseMembershipId,
+      message: "User Validated successfully",
+    };
+  };
+  getAllCourseMembership = async () => {
+    const courseMemberShipResult = await this.database
+      .select({
+        id: courseMembership.id,
+        name: courseMembership.name,
+      })
+      .from(courseMembership);
+    console.log("providerCourseMemberShipResult", courseMemberShipResult);
+    return courseMemberShipResult || [];
   };
 }
