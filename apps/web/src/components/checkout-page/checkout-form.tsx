@@ -583,7 +583,9 @@ export const CheckoutForm = ({
       cartId,
       payment_id,
       sensibleQuoteId,
-      source: bookingSource ? bookingSource : sessionStorage.getItem("source") ?? "",
+      source: bookingSource
+        ? bookingSource
+        : sessionStorage.getItem("source") ?? "",
       additionalNoteFromUser: validatePlayers[0]?.courseMemberShipId
         ? `There are ${validatePlayers.length} players participating in membership program \n Total Amount Paid:$${TotalAmt} \n with courseMembershipID:${validatePlayers[0]?.courseMemberShipId}`
         : additionalNote,
@@ -591,7 +593,8 @@ export const CheckoutForm = ({
       redirectHref,
       courseMembershipId: validatePlayers[0]?.courseMemberShipId ?? "",
       playerCountForMemberShip: playerCount ?? "",
-      providerCourseMembershipId: validatePlayers[0]?.providerCourseMembershipId ?? "",
+      providerCourseMembershipId:
+        validatePlayers[0]?.providerCourseMembershipId ?? "",
     });
     return bookingResponse;
   };
@@ -714,10 +717,10 @@ export const CheckoutForm = ({
           decimalPart === 0
             ? 1
             : parseFloat(
-              (Math.ceil(totalBeforeRoundOff) - totalBeforeRoundOff).toFixed(
-                2
-              )
-            );
+                (Math.ceil(totalBeforeRoundOff) - totalBeforeRoundOff).toFixed(
+                  2
+                )
+              );
         break;
 
       case "other":
@@ -775,7 +778,7 @@ export const CheckoutForm = ({
     setIsLoadingTotalAmount(true);
     setTimeout(() => {
       setIsLoadingTotalAmount(false);
-    }, 700);
+    }, 800);
   }, [TotalAmt]);
   // useEffect(() => {
   //   if (Number(TotalAmt) == 0.01) {
@@ -888,7 +891,7 @@ export const CheckoutForm = ({
           </label>
         </div>
         {checkIsBookingDisabled &&
-          checkIsBookingDisabled?.showPricingBreakdown === 0 ? (
+        checkIsBookingDisabled?.showPricingBreakdown === 0 ? (
           <Fragment>
             <div className="flex justify-between">
               <div>
@@ -1159,10 +1162,11 @@ export const CheckoutForm = ({
           <div className="flex gap-2 mt-5 ml-1 mb-4 items-center">
             <button
               type="button"
-              className={`flex w-32 items-center justify-center rounded-md p-2 ${roundOffStatus === "roundup"
+              className={`flex w-32 items-center justify-center rounded-md p-2 ${
+                roundOffStatus === "roundup"
                   ? "bg-primary text-white"
                   : "bg-white text-primary border-primary border-2"
-                }`}
+              }`}
               onClick={() => {
                 handleRoundOff(0, "roundup");
                 setHasUserSelectedDonation(true);
@@ -1173,10 +1177,11 @@ export const CheckoutForm = ({
 
             <button
               type="button"
-              className={`flex w-20 items-center justify-center rounded-md p-2 ${roundOffStatus === "twoDollars"
-                ? "bg-primary text-white"
-                : "bg-white text-primary border-primary border-2"
-                }`}
+              className={`flex w-20 items-center justify-center rounded-md p-2 ${
+                roundOffStatus === "twoDollars"
+                  ? "bg-primary text-white"
+                  : "bg-white text-primary border-primary border-2"
+              }`}
               onClick={() => {
                 handleRoundOff(2, "twoDollars");
                 setHasUserSelectedDonation(true);
@@ -1187,10 +1192,11 @@ export const CheckoutForm = ({
 
             <button
               type="button"
-              className={`flex w-20 items-center justify-center rounded-md p-2 ${roundOffStatus === "fiveDollars"
-                ? "bg-primary text-white"
-                : "bg-white text-primary border-primary border-2"
-                }`}
+              className={`flex w-20 items-center justify-center rounded-md p-2 ${
+                roundOffStatus === "fiveDollars"
+                  ? "bg-primary text-white"
+                  : "bg-white text-primary border-primary border-2"
+              }`}
               onClick={() => {
                 handleRoundOff(5, "fiveDollars");
                 setHasUserSelectedDonation(true);
@@ -1201,10 +1207,11 @@ export const CheckoutForm = ({
 
             <button
               type="button"
-              className={`flex w-32 items-center justify-center rounded-md p-2 ${roundOffStatus === "other"
-                ? "bg-primary text-white"
-                : "bg-white text-primary border-primary border-2"
-                }`}
+              className={`flex w-32 items-center justify-center rounded-md p-2 ${
+                roundOffStatus === "other"
+                  ? "bg-primary text-white"
+                  : "bg-white text-primary border-primary border-2"
+              }`}
               onClick={() => {
                 handleRoundOff(5, "other");
                 setHasUserSelectedDonation(true);
@@ -1216,8 +1223,9 @@ export const CheckoutForm = ({
             <div className="flex-1 flex justify-end">
               <button
                 type="button"
-                className={`text-primary text-xs underline ${roundOffStatus === "nothanks" ? "font-semibold" : ""
-                  }`}
+                className={`text-primary text-xs underline ${
+                  roundOffStatus === "nothanks" ? "font-semibold" : ""
+                }`}
                 onClick={() => {
                   setRoundOffStatus("nothanks");
                   setDonateValue(0);
@@ -1237,8 +1245,9 @@ export const CheckoutForm = ({
                 placeholder="Enter Donation Amount"
                 value={donateValue}
                 onChange={handleDonateChange}
-                className={`p-2 border rounded-md ${donateError ? "border-red" : "border-primary"
-                  }`}
+                className={`p-2 border rounded-md ${
+                  donateError ? "border-red" : "border-primary"
+                }`}
                 min="1"
                 step="1"
               />
