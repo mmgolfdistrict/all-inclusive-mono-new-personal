@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
-import { and, eq, gt, gte, inArray, sql, desc, between, db } from "@golf-district/database";
+import { and, eq, gt, gte, inArray, sql, desc, between, db, isNotNull } from "@golf-district/database";
 import { bookings } from "@golf-district/database/schema/bookings";
 import { charities } from "@golf-district/database/schema/charities";
 import { charityCourseLink } from "@golf-district/database/schema/charityCourseLink";
@@ -233,7 +233,12 @@ export class CheckoutService {
     }
   };
 
-  buildCheckoutSession = async (userId: string, customerCartData: CustomerCart, cartId = "", ipAddress?: string) => {
+  buildCheckoutSession = async (
+    userId: string,
+    customerCartData: CustomerCart,
+    cartId = "",
+    ipAddress?: string
+  ) => {
     const { paymentId } = customerCartData;
     let data = {};
 
@@ -1187,7 +1192,12 @@ export class CheckoutService {
       console.log("error message", error.message);
     }
   };
-  searchCustomerAndValidate = async (userId: string, teeTimeId: string, email: string) => {
+  searchCustomerAndValidate = async (
+    userId: string,
+    teeTimeId: string,
+    email: string,
+    selectedProviderCourseMembershipId: string
+  ) => {
     const [teeTimeResult] = await this.database
       .select({
         courseId: teeTimes.courseId,
@@ -1225,17 +1235,38 @@ export class CheckoutService {
         providerCourseMembership,
         eq(providerCourseMembership.courseMembershipId, courseMembership.id)
       )
-      .where(eq(courseMembership.courseId, teeTimeResult?.courseId ?? ""));
-    console.log("checkingGroupsLoyalty", checkingGroupsLoyalty);
-    //this is will change currently dummy values
+      .where(
+        and(
+          eq(courseMembership.courseId, teeTimeResult?.courseId ?? ""),
+          isNotNull(providerCourseMembership.id),
+          eq(courseMembership.id, selectedProviderCourseMembershipId)
+        )
+      );
+    // console.log(selectedProviderCourseMembershipId);
+    // console.log("checkingGroupsLoyalty======>", checkingGroupsLoyalty);
     const dummyCreatedAnswer = result.map((item: any) => {
-      item.attributes.groups = ["Ace", "Loyalty"];
       return item;
     });
     // add validation for groups if they are empty
     const dummyResult = dummyCreatedAnswer[0]?.attributes?.groups;
+    if (dummyResult.length === 0) {
+      return {
+        isValidated: false,
+        providerCourseMembership: "",
+        providerCourseMembershipId: "",
+        message: "User Is registered but not part of any loyalty group",
+      };
+    }
     const anyIncluded = checkingGroupsLoyalty.some((item) => dummyResult.includes(item.name));
     console.log("anyIncluded=============>", anyIncluded);
+    if (!anyIncluded) {
+      return {
+        isValidated: anyIncluded,
+        providerCourseMembership: "",
+        providerCourseMembershipId: "",
+        message: "mismatch in loyalty group",
+      };
+    }
     return {
       isValidated: anyIncluded,
       providerCourseMembership: checkingGroupsLoyalty[0]?.courseMemberShipId,
@@ -1250,8 +1281,7 @@ export class CheckoutService {
         name: courseMembership.name,
       })
       .from(courseMembership);
-    console.log("providerCourseMemberShipResult",courseMemberShipResult);
+    console.log("providerCourseMemberShipResult", courseMemberShipResult);
     return courseMemberShipResult || [];
   };
-  
 }
