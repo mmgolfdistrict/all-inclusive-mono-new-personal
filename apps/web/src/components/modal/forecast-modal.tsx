@@ -185,7 +185,7 @@ export const ForecastModal = ({
                                 {filteredData?.map((item) => (
                                     <TableHeader
                                         key={item.providerDate}
-                                        text={formatShowDate(item.providerDate)}
+                                        text={formatShowDate(item.providerDate as string)}
                                         className="text-center"
                                     />
                                 ))}
