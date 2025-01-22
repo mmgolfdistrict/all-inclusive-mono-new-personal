@@ -87,16 +87,20 @@ export const checkoutRouter = createTRPCRouter({
       z.object({
         teeTimeId: z.string(),
         email: z.string(),
+        selectedProviderCourseMembershipId: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       return await ctx.serviceFactory
         .getCheckoutService()
-        .searchCustomerAndValidate(ctx.session.user.id, input.teeTimeId, input.email);
+        .searchCustomerAndValidate(
+          ctx.session.user.id,
+          input.teeTimeId,
+          input.email,
+          input.selectedProviderCourseMembershipId ?? ""
+        );
     }),
-    getAllCourseMembership:protectedProcedure.input(
-    z.object({})
-  ).query(async ({ctx})=>{
-     return await ctx.serviceFactory.getCheckoutService().getAllCourseMembership()
-  })
+  getAllCourseMembership: protectedProcedure.input(z.object({})).query(async ({ ctx }) => {
+    return await ctx.serviceFactory.getCheckoutService().getAllCourseMembership();
+  }),
 });

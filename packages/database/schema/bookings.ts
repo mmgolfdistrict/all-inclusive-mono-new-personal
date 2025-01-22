@@ -53,7 +53,7 @@ export const bookings = mySqlTable(
     customerComment: varchar("customerComment", { length: 200 }),
     needClubRental: boolean("needClubRental").default(false).notNull(),
     canResell:tinyint("canResell").notNull().default(0),
-    courseMembershipId:varchar("courseMembershipId",{length:26})
+    courseMembershipId:varchar("courseMembershipId",{length:36})
   },
   (table) => {
     return {

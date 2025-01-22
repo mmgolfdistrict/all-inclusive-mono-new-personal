@@ -777,11 +777,11 @@ export const CheckoutForm = ({
       setIsLoadingTotalAmount(false);
     }, 700);
   }, [TotalAmt]);
-  useEffect(() => {
-    if (Number(TotalAmt) == 0) {
-      handleShouldAddSensible(false);
-    }
-  }, [TotalAmt]);
+  // useEffect(() => {
+  //   if (Number(TotalAmt) == 0.01) {
+  //     handleShouldAddSensible(false);
+  //   }
+  // }, [TotalAmt]);
 
   return (
     <form onSubmit={handleSubmit} className="">

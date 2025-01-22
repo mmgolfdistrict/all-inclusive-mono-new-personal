@@ -38,7 +38,7 @@ export const CheckoutItem = ({
   const searchParams = useSearchParams();
   const playerCount = searchParams.get("playerCount");
   const teeTimeId = searchParams?.get("teeTimeId");
-
+  const listingId = searchParams?.get("listingId");
   const {
     setAmountOfPlayers,
     amountOfPlayers,
@@ -135,7 +135,9 @@ export const CheckoutItem = ({
     return null;
   };
 
-  const handleChangeMemberShipStatus = (event: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleChangeMemberShipStatus = (
+    event: React.ChangeEvent<HTMLSelectElement>
+  ) => {
     setMembershipStatus(event.target.value);
   };
   const handleValidateMemberShipUser = async (index: number, email: string) => {
@@ -159,6 +161,7 @@ export const CheckoutItem = ({
       const result = await searchCustomerByEmail.mutateAsync({
         email: email,
         teeTimeId: teeTimeId ?? "",
+        selectedProviderCourseMembershipId: membershipStatus,
       });
       console.log("======>", result);
       if (result.isValidated) {
@@ -169,7 +172,7 @@ export const CheckoutItem = ({
             playerEmail: email,
             playerIndex: index,
             courseMemberShipId: result.providerCourseMembership,
-            providerCourseMemberShipId:result.providerCourseMembershipId
+            providerCourseMemberShipId: result.providerCourseMembershipId,
           },
         ]);
         toast.success(result.message);
@@ -182,6 +185,9 @@ export const CheckoutItem = ({
       }
     } catch (error) {
       console.log(error);
+      toast.error("something went wrong");
+      setIsCustomerValidated(null);
+      return;
     }
   };
   useEffect(() => {
@@ -250,7 +256,7 @@ export const CheckoutItem = ({
       />
       <div className="flex flex-col gap-1">
         <div className="flex flex-col gap-2">
-          {isSupportMemberShip?.supportsProviderMembership === 1 ? (
+          {isSupportMemberShip?.supportsProviderMembership === 1 && listingId == null ? (
             <Fragment>
               <div className="flex gap-2 px-2">
                 <h5 className="">Select MemberShip:</h5>
@@ -258,10 +264,20 @@ export const CheckoutItem = ({
                   value={membershipStatus}
                   onChange={handleChangeMemberShipStatus}
                 >
-                  {courseMemberships.length === 0 ? (
+                  <option value="no_membership">No Membership Selected</option>
+                  {courseMemberships && courseMemberships.length > 0 ? (
+                    <Fragment>
+                      {courseMemberships.map((membership) => (
+                        <option key={membership.id} value={membership.id}>
+                          {membership.name}
+                        </option>
+                      ))}
+                    </Fragment>
+                  ) : null}
+                  {/* {courseMemberships.length === 0 ? (
                     <Fragment>
                       <option value="no_membership">
-                        No Membership Available
+                        No Membership Selected
                       </option>
                     </Fragment>
                   ) : (
@@ -270,14 +286,18 @@ export const CheckoutItem = ({
                         {membership.name}
                       </option>
                     ))
-                  )}
+                  )} */}
                 </select>
               </div>
               <div className="flex flex-wrap justify-between gap-1">
-                {courseMemberships.length === 0 ? null : (
+                {courseMemberships.length === 0 ||
+                membershipStatus === "no_membership" ? null : (
                   <Fragment>
                     {Array.from({ length: Number(playerCount) }, (_, index) => (
-                      <div key={index} className="flex gap-2 justify-center items-center">
+                      <div
+                        key={index}
+                        className="flex gap-2 justify-center items-center"
+                      >
                         <h5 className="text-sm">Player {index + 1}:</h5>
                         <input
                           type="text"
