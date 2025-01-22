@@ -775,7 +775,7 @@ export const CheckoutForm = ({
     setIsLoadingTotalAmount(true);
     setTimeout(() => {
       setIsLoadingTotalAmount(false);
-    }, 2000);
+    }, 700);
   }, [TotalAmt]);
   useEffect(() => {
     if (Number(TotalAmt) == 0) {
