@@ -42,8 +42,8 @@ export const ProfileDetails = ({
             <div className="flex flex-col items-center md:justify-start justify-center gap-1 text-[22px] md:flex-row md:gap-4 md:text-[32px]">
               <div className="text-secondary-black">
                 {!isThirdPartyProfile ||
-                  (isThirdPartyProfile &&
-                    userData?.profileVisibility !== "PRIVATE")
+                (isThirdPartyProfile &&
+                  userData?.profileVisibility !== "PRIVATE")
                   ? userData?.name
                   : ""}
               </div>
@@ -53,9 +53,9 @@ export const ProfileDetails = ({
             </div>
             <div className="flex items-center md:justify-start justify-center gap-1 text-primary-gray">
               {!isThirdPartyProfile ||
-                (isThirdPartyProfile &&
-                  userData?.city &&
-                  userData?.profileVisibility === "PUBLIC") ? (
+              (isThirdPartyProfile &&
+                userData?.city &&
+                userData?.profileVisibility === "PUBLIC") ? (
                 <>
                   <Location className="w-[16px] md:w-[22px]" />
                   <div>{userData?.city}</div>

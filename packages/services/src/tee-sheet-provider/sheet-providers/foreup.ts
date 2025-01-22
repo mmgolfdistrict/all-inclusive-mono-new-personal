@@ -1,35 +1,38 @@
 import { randomUUID } from "crypto";
+import { db, eq } from "@golf-district/database";
+import { teeTimes } from "@golf-district/database/schema/teeTimes";
+import { userProviderCourseLink } from "@golf-district/database/schema/userProviderCourseLink";
+import { users } from "@golf-district/database/schema/users";
+import { dateToUtcTimestamp } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
+import isEqual from "lodash.isequal";
+import { loggerService } from "../../webhooks/logging.service";
 import type {
   BookingCreationData,
-  BookingResponse as ForeupBookingResponse,
   CartData,
+  ForeUpBookingNameChangeOptions,
+  BookingResponse as ForeupBookingResponse,
   CustomerCreationData as ForeUpCustomerCreationData,
   CustomerData as ForeUpCustomerCreationResponse,
-  ForeupSaleDataOptions,
-  TeeTimeUpdateRequest,
-  TeeTimeResponse as ForeupTeeTimeResponse,
-  ForeUpBookingNameChangeOptions,
   ForeUpGetCustomerResponse,
   ForeupGetCustomers,
+  ForeupSaleDataOptions,
+  TeeTimeResponse as ForeupTeeTimeResponse,
+  TeeTimeUpdateRequest,
 } from "./types/foreup.type";
 import type {
   BookingResponse,
+  BuyerData,
   CustomerCreationData,
+  CustomerData,
   GetCustomerResponse,
   NameChangeCustomerDetails,
+  ProviderAPI,
   SalesDataOptions,
+  TeeTimeData,
   TeeTimeResponse,
 } from "./types/interface";
-import type { BuyerData, ProviderAPI, TeeTimeData, CustomerData } from "./types/interface";
 import { BaseProvider, type BookingDetails } from "./types/interface";
-import { db, eq } from "@golf-district/database";
-import { teeTimes } from "@golf-district/database/schema/teeTimes";
-import { dateToUtcTimestamp } from "@golf-district/shared";
-import isEqual from "lodash.isequal";
-import { loggerService } from "../../webhooks/logging.service";
-import { userProviderCourseLink } from "@golf-district/database/schema/userProviderCourseLink";
-import { users } from "@golf-district/database/schema/users";
 
 export class foreUp extends BaseProvider {
   providerId = "fore-up";
@@ -1020,16 +1023,21 @@ export class foreUp extends BaseProvider {
 
     return teeTime;
   }
-  async checkBookingIsCancelledOrNot(providerBookingId:string,providerCourseId:string,providerTeeSheetId:string,token:string){
-    let bookingIsDeleted=false;
+  async checkBookingIsCancelledOrNot(
+    providerBookingId: string,
+    providerCourseId: string,
+    providerTeeSheetId: string,
+    token: string
+  ) {
+    let bookingIsDeleted = false;
     const endpoint = this.getBasePoint();
     const url = `${endpoint}/courses/${providerCourseId}/teesheets/${providerTeeSheetId}/bookings/${providerBookingId}`;
     const headers = this.getHeaders(token);
     const response = await fetch(url, { headers, method: "GET" });
-    const forUpResponse=await response.json();
+    const forUpResponse = await response.json();
     // console.log("forUpResponse",forUpResponse);
-    if(forUpResponse.data.attributes.status ==="deleted"){
-      bookingIsDeleted=true;
+    if (forUpResponse.data.attributes.status === "deleted") {
+      bookingIsDeleted = true;
     }
     return bookingIsDeleted;
   }
@@ -1080,8 +1088,6 @@ export class foreUp extends BaseProvider {
     const customerData = await response.json();
     return customerData.data as CustomerData;
   }
-
-
 
   requireToCreatePlayerSlots(): boolean {
     return true;

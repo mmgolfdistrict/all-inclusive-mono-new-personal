@@ -157,7 +157,11 @@ export const BookingDetails = ({
                       width="50%"
                     >
                       {selectedReceipt?.firstHandPrice
-                        ? formatMoney((selectedReceipt?.firstHandPrice + (selectedReceipt.markupFees ??0))/ 100)
+                        ? formatMoney(
+                            (selectedReceipt?.firstHandPrice +
+                              (selectedReceipt.markupFees ?? 0)) /
+                              100
+                          )
                         : "-"}
                     </TableCell>
                   </TableRow>

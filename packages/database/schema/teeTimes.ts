@@ -44,8 +44,14 @@ export const teeTimes = mySqlTable(
       time: index("TeeTime_time_idx").on(table.time),
       courseId: index("TeeTime_courseId_idx").on(table.courseId),
       courseDate: index("TeeTime_courseDate_idx").on(table.courseId, table.date),
-      courseIdProviderDate: unique("TeeTime_courseId_providerDate_unique").on(table.courseId, table.providerDate),
-      courseIdProviderTeeTimeId: unique("TeeTime_courseId_providerTeeTimeId_unique").on(table.courseId, table.providerTeeTimeId),
+      courseIdProviderDate: unique("TeeTime_courseId_providerDate_unique").on(
+        table.courseId,
+        table.providerDate
+      ),
+      courseIdProviderTeeTimeId: unique("TeeTime_courseId_providerTeeTimeId_unique").on(
+        table.courseId,
+        table.providerTeeTimeId
+      ),
     };
   }
 );

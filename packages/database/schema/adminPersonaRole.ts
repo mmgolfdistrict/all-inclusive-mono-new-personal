@@ -14,7 +14,10 @@ export const adminPersonaRole = mySqlTable(
   },
   (table) => {
     return {
-      unique_admin_persona_id_role_id: unique("unique_admin_persona_id_role_id").on(table.adminPersonaId, table.adminRoleId),
+      unique_admin_persona_id_role_id: unique("unique_admin_persona_id_role_id").on(
+        table.adminPersonaId,
+        table.adminRoleId
+      ),
     };
   }
 );

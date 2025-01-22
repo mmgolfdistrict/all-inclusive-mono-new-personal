@@ -35,9 +35,9 @@ const CheckoutItemAccordion = ({
                     aria-hidden
                     className="w-[30px] h-auto transition-transform duration-300 ease-[cubic-bezier(0.87,_0,_0.13,_1)] group-data-[state=open]:rotate-180"
                   />
-                  <div className="text-[16px]" >{title}</div>
+                  <div className="text-[16px]">{title}</div>
                 </div>
-                <div className="text-[16px] pr-1.5" >  {amountValues}</div>
+                <div className="text-[16px] pr-1.5"> {amountValues}</div>
               </Fragment>
             ) : null}
           </div>

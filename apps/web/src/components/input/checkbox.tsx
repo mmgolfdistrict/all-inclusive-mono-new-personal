@@ -3,11 +3,11 @@ import type { ChangeEvent } from "react";
 export const Checkbox = ({
   label,
   isChecked,
-  onChange
+  onChange,
 }: {
   label?: string;
   isChecked: boolean;
-    onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
+  onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
 }) => {
   return (
     <div className="flex items-center gap-2">

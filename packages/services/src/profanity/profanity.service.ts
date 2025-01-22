@@ -81,9 +81,9 @@ export class ProfanityService {
             message: "ERROR_MATCHING_WORDS",
             stackTrace: `${err.stack}`,
             additionalDetailsJSON: JSON.stringify({
-              profanityText
-            })
-          })
+              profanityText,
+            }),
+          });
           throw new Error(err);
         });
 
@@ -125,9 +125,9 @@ export class ProfanityService {
         message: "ERROR_WHILE_VALIDATING_PROFANITY",
         stackTrace: `${error.stack}`,
         additionalDetailsJSON: JSON.stringify({
-          profanityText
-        })
-      })
+          profanityText,
+        }),
+      });
       return {
         isProfane: false,
       };

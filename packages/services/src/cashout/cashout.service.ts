@@ -42,8 +42,8 @@ export class CashOutService {
         stackTrace: `Error creating stripe account: user ${userId} does not exist`,
         additionalDetailsJSON: JSON.stringify({
           userId,
-        })
-      })
+        }),
+      });
       throw new Error(`Error creating stripe account: user ${userId} does not exist`);
     }
     if (user.stripeConnectAccountStatus === "CONNECTED") {
@@ -58,8 +58,8 @@ export class CashOutService {
         stackTrace: `Error creating stripe account: user ${userId} already has a connected stripe account`,
         additionalDetailsJSON: JSON.stringify({
           userId,
-        })
-      })
+        }),
+      });
       throw new Error(`Error creating stripe account: user ${userId} already has a connected stripe account`);
     }
     if (user.stripeAccountId) {
@@ -82,8 +82,8 @@ export class CashOutService {
         stackTrace: `Error creating stripe account: user ${userId} does not have an email`,
         additionalDetailsJSON: JSON.stringify({
           userId,
-        })
-      })
+        }),
+      });
       throw new Error(`Error creating stripe account: user ${userId} does not have an email`);
     }
     //create stripe account
@@ -130,8 +130,8 @@ export class CashOutService {
         stackTrace: `Error requesting cash out: user ${userId} does not exist`,
         additionalDetailsJSON: JSON.stringify({
           userId,
-        })
-      })
+        }),
+      });
       throw new Error(`Error requesting cash out: user does not exist`);
     }
     if (user.stripeConnectAccountStatus !== "CONNECTED" || !user.stripeAccountId) {
@@ -144,8 +144,8 @@ export class CashOutService {
         stackTrace: `Error requesting cash out: user ${userId} does not have a connected stripe account`,
         additionalDetailsJSON: JSON.stringify({
           userId,
-        })
-      })
+        }),
+      });
       throw new Error(`Error requesting cash out: user does not have a connected stripe account`);
     }
     //@TODO: create a minimum balance constant
@@ -159,8 +159,8 @@ export class CashOutService {
         stackTrace: `Error requesting cash out: user ${userId} does not have enough balance`,
         additionalDetailsJSON: JSON.stringify({
           userId,
-        })
-      })
+        }),
+      });
       throw new Error(`Error requesting cash out: user ${userId} does not have enough balance`);
     }
     //create stripe payout
@@ -174,8 +174,8 @@ export class CashOutService {
         stackTrace: `${err.stack}`,
         additionalDetailsJSON: JSON.stringify({
           userId,
-        })
-      })
+        }),
+      });
       throw new Error(
         `Error creating stripe payout funds have not been withdrawn if this error persists please contact support`
       );

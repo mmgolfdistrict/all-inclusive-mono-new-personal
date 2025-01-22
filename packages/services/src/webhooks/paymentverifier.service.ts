@@ -64,9 +64,8 @@ export class PaymentVerifierService {
         userAgent: "",
         message: "ERROR_GETTING_BOOKINGS",
         stackTrace: `Error fetching bookings`,
-        additionalDetailsJSON: JSON.stringify({
-        })
-      })
+        additionalDetailsJSON: JSON.stringify({}),
+      });
       throw new Error(`Error creating or finding customer`);
     }
 
@@ -118,8 +117,8 @@ export class PaymentVerifierService {
               additionalDetailsJSON: JSON.stringify({
                 record,
                 paymentData,
-              })
-            })
+              }),
+            });
             throw new Error(`Error deleting booking`);
           });
       }

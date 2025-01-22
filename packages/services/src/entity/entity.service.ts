@@ -5,8 +5,8 @@ import { courseAssets } from "@golf-district/database/schema/courseAssets";
 import { courses } from "@golf-district/database/schema/courses";
 import { entities } from "@golf-district/database/schema/entities";
 import Logger from "@golf-district/shared/src/logger";
+import { cacheManager } from "@golf-district/shared/src/utils/cacheManager";
 import { loggerService } from "../webhooks/logging.service";
-import {cacheManager} from "@golf-district/shared/src/utils/cacheManager"
 
 /**
  * Service class for handling entity-related operations.
@@ -52,47 +52,46 @@ export class EntityService {
    */
   getStaticParams = async () => {
     const cacheKey = "staticParams";
-        let staticParams = await cacheManager.get(cacheKey);
+    let staticParams = await cacheManager.get(cacheKey);
 
-        if (!staticParams) {
-            this.logger.info("Cache miss for staticParams. Querying database.");
+    if (!staticParams) {
+      this.logger.info("Cache miss for staticParams. Querying database.");
 
-            const [subdomains, customDomains] = await Promise.all([
-                this.database
-                    .select({
-                        subdomain: entities.subdomain,
-                    })
-                    .from(entities)
-                    .execute(),
-                this.database
-                    .select({
-                        customDomain: entities.customDomain,
-                    })
-                    .from(entities)
-                    .where(not(isNull(entities.customDomain)))
-                    .execute(),
-            ]);
+      const [subdomains, customDomains] = await Promise.all([
+        this.database
+          .select({
+            subdomain: entities.subdomain,
+          })
+          .from(entities)
+          .execute(),
+        this.database
+          .select({
+            customDomain: entities.customDomain,
+          })
+          .from(entities)
+          .where(not(isNull(entities.customDomain)))
+          .execute(),
+      ]);
 
-            const allPaths = [
-                ...subdomains.map(({ subdomain }) => subdomain),
-                ...customDomains.map(({ customDomain }) => customDomain),
-            ].filter((path) => path) as string[];
+      const allPaths = [
+        ...subdomains.map(({ subdomain }) => subdomain),
+        ...customDomains.map(({ customDomain }) => customDomain),
+      ].filter((path) => path) as string[];
 
-            staticParams = allPaths.map((domain) => ({
-                params: {
-                    domain,
-                },
-            }));
+      staticParams = allPaths.map((domain) => ({
+        params: {
+          domain,
+        },
+      }));
 
-            // Store the result in cache for 10 minutes
-            await cacheManager.set(cacheKey, staticParams, 600000);
-        } else {
-            this.logger.info("Cache hit for staticParams. Returning cached data.");
-        }
+      // Store the result in cache for 10 minutes
+      await cacheManager.set(cacheKey, staticParams, 600000);
+    } else {
+      this.logger.info("Cache hit for staticParams. Returning cached data.");
+    }
 
-        return staticParams;
-};
-
+    return staticParams;
+  };
 
   //@TODO get faq for entity
 
@@ -165,11 +164,11 @@ export class EntityService {
    */
   getCoursesByEntityId = async (entityId: string) => {
     this.logger.info(`findCoursesByEntityId called with entityId: ${entityId}`);
-  
+
     const cacheKey = `coursesForEntity_${entityId}`;
-    let coursesData = await cacheManager.get(cacheKey) as any;
+    let coursesData = (await cacheManager.get(cacheKey)) as any;
     if (!coursesData) {
-      this.logger.info(`Cache miss for entityId: ${entityId}. Querying database.`);   
+      this.logger.info(`Cache miss for entityId: ${entityId}. Querying database.`);
       // Fetch courses data
       const data = await this.database
         .select({
@@ -196,7 +195,7 @@ export class EntityService {
           });
           throw new Error(`Error getting courses for entity: ${entityId}`);
         });
-  
+
       // Find all images for each course
       const images = await this.database
         .select({
@@ -214,14 +213,15 @@ export class EntityService {
             data.map(({ id }) => id)
           )
         );
-  
+
       // Map courses with their images
       coursesData = data.map((course) => ({
         ...course,
         logo: images
           .filter((i) => i.id === course.logo)
           .map(
-            ({ key, extension }) => `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${key}.${extension}`
+            ({ key, extension }) =>
+              `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${key}.${extension}`
           )[0],
         images: images
           .filter((i) => i.coursesId === course.id && i.id !== course.logo)
@@ -231,17 +231,17 @@ export class EntityService {
             return orderA - orderB;
           })
           .map(
-            ({ key, extension }) => `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${key}.${extension}`
+            ({ key, extension }) =>
+              `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${key}.${extension}`
           ),
       }));
-  
+
       // Store the result in cache for 10 minutes
       await cacheManager.set(cacheKey, coursesData, 600000);
     } else {
       this.logger.info(`Cache hit for entityId: ${entityId}. Returning cached data.`);
     }
-  
+
     return coursesData;
   };
-  
 }
