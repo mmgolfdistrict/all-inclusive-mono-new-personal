@@ -1783,6 +1783,7 @@ export class UserService {
         city: user.city,
         zipcode: user.zipcode,
         country: user.country,
+        allowDeleteCreditCard: user.allowDeleteCreditCard
       };
     }
     return res;
