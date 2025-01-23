@@ -186,8 +186,8 @@ function GroupBooking({ params }: { params: { course: string } }) {
     }
   }, [startTime[0], startTime[1]]);
 
-  const handleSingleSliderChange = (e: any) => {
-    setPlayers(e);
+  const handleSingleSliderChange = () => {
+    // setPlayers(e);
   };
 
   return (
@@ -492,7 +492,7 @@ function GroupBooking({ params }: { params: { course: string } }) {
                   min={10}
                   max={24}
                   step={1}
-                  onValueChange={(e) => handleSingleSliderChange(e)}
+                  //   onValueChange={(e) => handleSingleSliderChange(e)}
                   aria-label="Select number of players"
                   data-testid="slider-number-of-players"
                 />
