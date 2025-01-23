@@ -4,6 +4,7 @@ import * as Accordion from "@radix-ui/react-accordion";
 import { Fragment, type ReactNode } from "react";
 import { DownArrow } from "../icons/down-arrow";
 import { DownChevron } from "../icons/down-chevron";
+import Skeleton from "../skeleton/skeleton";
 
 const CheckoutItemAccordion = ({
   title,
@@ -12,6 +13,7 @@ const CheckoutItemAccordion = ({
   icons,
   position = "right",
   amountValues,
+  isLoading
 }: {
   title: string;
   value: string;
@@ -19,6 +21,7 @@ const CheckoutItemAccordion = ({
   icons?: ReactNode;
   position?: string;
   amountValues?: string;
+  isLoading?: boolean;
 }) => {
   return (
     <Accordion.Item value={value}>
@@ -37,7 +40,15 @@ const CheckoutItemAccordion = ({
                   />
                   <div className="text-[16px]" >{title}</div>
                 </div>
-                <div className="text-[16px] pr-1.5" >  {amountValues}</div>
+                <div className="text-[16px] pr-1.5">
+                  {isLoading ? (
+                    <Fragment>
+                      <p className="px-6 py-0.5 bg-gray-200 text-gray-200 text-sm">Loading...</p>
+                    </Fragment>
+                  ) : (
+                    amountValues
+                  )}
+                </div>
               </Fragment>
             ) : null}
           </div>

@@ -104,7 +104,8 @@ export class EntityService {
    * @TODO entity return as url
    */
   getEntityFromDomain = async (domain: string, rootDomain: string) => {
-    const subdomain = domain.endsWith(`.${rootDomain}`) ? domain.replace(`.${rootDomain}`, "") : null;
+    const subdomain='demo.golfdistrict.in';
+    //const subdomain = domain.endsWith(`.${rootDomain}`) ? domain.replace(`.${rootDomain}`, "") : null;
     this.logger.debug(`getEntityFromDomain called for: ${subdomain ? subdomain : domain}`);
 
     const query = this.database
