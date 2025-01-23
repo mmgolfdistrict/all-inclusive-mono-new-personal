@@ -48,6 +48,8 @@
     "typescript": "^5.2.2"
   },
   "devDependencies": {
+    "@commitlint/cli": "^19.6.1",
+    "@commitlint/config-conventional": "^19.6.0",
     "@next/bundle-analyzer": "^14.2.11",
     "cross-env": "^7.0.3",
     "eslint": "^8.45.0",
