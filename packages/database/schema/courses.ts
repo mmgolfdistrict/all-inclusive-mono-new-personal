@@ -70,8 +70,7 @@ export const courses = mySqlTable(
     showPricingBreakdown: tinyint("showPricingBreakdown").default(0).notNull(),
     courseOpenTime: int("courseOpenTime").default(0).notNull(),
     courseCloseTime: int("courseCloseTime").default(0).notNull(),
-    supportsProviderMembership: tinyint("supportsProviderMembership").default(0).notNull(),
-    supportsGroupBooking: tinyint("supportsGroupBooking").default(0).notNull(),
+    supportsProviderMembership:tinyint("supportsProviderMembership").default(0).notNull()
   },
   (table) => {
     return {
