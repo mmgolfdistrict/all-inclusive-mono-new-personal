@@ -281,6 +281,16 @@ export const CourseNav = () => {
                 onClick={handleResetFilters}
               />
             ) : null}
+            {course?.supportsGroupBooking ? (
+              <NavItem
+                href={`/${courseId}/group-booking`}
+                text="Group Booking"
+                icon={<Megaphone className="w-[16px]" />}
+                data-testid="group-booking-id"
+                data-test={courseId}
+                onClick={handleResetFilters}
+              />
+            ) : null}
             {course?.allowAuctions ? (
               <NavItem
                 href={`/${courseId}/auctions`}
