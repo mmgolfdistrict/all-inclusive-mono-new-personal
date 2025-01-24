@@ -19,6 +19,7 @@ import { Slider } from "~/components/input/slider";
 import { useCourseContext } from "~/contexts/CourseContext";
 import dayjs from "dayjs";
 import { useMediaQuery } from "usehooks-ts";
+import GroupBookingPage from "./GroupBookingPage";
 
 function GroupBooking({ params }: { params: { course: string } }) {
   const { course } = useCourseContext();
@@ -514,6 +515,8 @@ function GroupBooking({ params }: { params: { course: string } }) {
           </div>
         </div>
       </div>
+      <hr />
+      <GroupBookingPage />
     </section>
   );
 }
