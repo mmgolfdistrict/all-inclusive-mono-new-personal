@@ -1,25 +1,34 @@
+const { isCommitValid } = require("commitlint-plugin-function-rules");
+
 module.exports = {
   extends: ["@commitlint/config-conventional"],
+  plugins: [
+    "commitlint-plugin-function-rules", // Enable the plugin
+  ],
   rules: {
-    // Allow custom types like ENG and PROD
-    "type-enum": [
+    // Rule to allow dynamic numbers in the type section (e.g., ENG-<number>)
+    "header-pattern": [
       2,
       "always",
-      ["ENG", "PROD", "feat", "fix", "docs", "chore"], // Add other project types as needed
+      (commit) => isCommitValid(commit, /^[A-Z]+-\d+: .+/), // Regex for ENG-<number>: <message>
     ],
-    // Ensure the type is in lowercase (ENG -> eng)
-    "type-case": [2, "always", "upper-case"],
 
-    // Allow any case for the subject (disable or adjust subject-case)
-    "subject-case": [0], // Disable subject-case rule or set it to lowercase if you prefer
+    // Ensure that the type is not empty (before the colon)
+    "type-empty": [2, "never"],
 
-    // Allow the header to have custom case (ENG-xxx format)
-    "header-case": [0], // Disable this rule if you want to allow uppercase types like ENG
-
-    // Ensure the subject is not empty
+    // Ensure the subject is not empty (message after the colon)
     "subject-empty": [2, "never"],
 
-    // Ensure the type is not empty
-    "type-empty": [2, "never"],
+    // Allow uppercase types like ENG, PROD, etc.
+    "type-enum": [2, "always", ["ENG", "PROD", "feat", "fix", "docs", "chore"]],
+
+    // Allow uppercase types (disable case restrictions)
+    "type-case": [0],
+
+    // Allow any case for the subject (e.g., sentence or any case)
+    "subject-case": [0],
+
+    // Enforce max header length (you can adjust this to your needs)
+    "header-max-length": [2, "always", 100],
   },
 };
