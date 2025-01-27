@@ -5,6 +5,7 @@ import type { Dispatch, SetStateAction } from "react";
 import { OutlineButton } from "../buttons/outline-button";
 import { Close } from "../icons/close";
 import type { TxnHistoryType } from "./transaction-history";
+import { Document, Page, Text, View, StyleSheet, PDFDownloadLink, Image } from '@react-pdf/renderer';
 
 type BookingDetailsProps = {
   isReceiptOpen: boolean;
@@ -183,7 +184,7 @@ export const BookingDetails = ({
               )}
             </table>
             {/* </div> */}
-            <div className="flex flex-col gap-4 px-4 pb-8">
+            <div className="flex flex-col gap-4">
               {selectedReceipt?.status === "SOLD" && (
                 <table border={0} cellPadding={0} cellSpacing={0} width="100%">
                   <TableRow>
@@ -243,6 +244,16 @@ export const BookingDetails = ({
                 </table>
               )}
               <div className="flex flex-col gap-2">
+                {selectedReceipt?.status === "PURCHASED" ?
+                  <PDFDownloadLink className="w-full" document={<BookingReceipt selectedReceipt={selectedReceipt} />} fileName="booking_receipt.pdf">
+                    <OutlineButton
+                      className="w-full"
+                      data-testid="cancel-button-id"
+                    >
+                      Download
+                    </OutlineButton>
+                  </PDFDownloadLink> : null}
+
                 <OutlineButton
                   onClick={() => setIsReceiptOpen(false)}
                   data-testid="cancel-button-id"
@@ -255,5 +266,144 @@ export const BookingDetails = ({
         </div>
       </aside>
     </>
+  );
+};
+
+const styles = StyleSheet.create({
+  page: {
+    flexDirection: 'column',
+    padding: 20,
+    fontFamily: 'Helvetica',
+  },
+  section: {
+    margin: 10,
+    padding: 10,
+    flexGrow: 1,
+  },
+  title: {
+    fontSize: 24,
+    marginBottom: 10,
+    fontWeight: 'bold',
+  },
+  header: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#4A4A4A',
+  },
+  table: {
+    width: '100%',
+    marginBottom: 10,
+  },
+  tableRow: {
+    flexDirection: 'row',
+    padding: 5,
+  },
+  tableCell: {
+    width: '50%',
+    padding: 5,
+    fontSize: 12,
+  },
+  headerCell: {
+    fontWeight: 'bold',
+    color: '#4A4A4A',
+  },
+  valueCell: {
+    color: '#000000',
+    fontSize: 12,
+  },
+  logoCell: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 20
+  },
+  headerLogo: {
+    position: 'relative',
+    marginLeft: 10
+  },
+  courseLogo: {
+    flex: 1,
+    alignItems: 'center'
+  }
+});
+
+const BookingReceipt = ({ selectedReceipt }: { selectedReceipt: TxnHistoryType | null }) => {
+  return (
+    <Document>
+      <Page size="A4" style={styles.page}>
+        <View style={styles.section}>
+          <View style={styles.logoCell}>
+            <View style={styles.courseLogo}>
+              <Image src={selectedReceipt?.courseLogo} style={{ width: 150, height: 50 }} />
+            </View>
+            <View style={styles.headerLogo}>
+              <Image src={`https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`} style={{ width: 100, height: 30, position: 'absolute', top: 0, right: 0 }} />
+            </View>
+          </View>
+          <Text style={styles.title}>Booking Receipt</Text>
+          <View style={styles.table}>
+            <View style={styles.tableRow}>
+              <Text style={[styles.tableCell, styles.headerCell]}>
+                Play Date Time:
+              </Text>
+              <Text style={[styles.tableCell, styles.valueCell]}>
+                {selectedReceipt?.date ? formatTime(selectedReceipt?.date) : '-'}
+              </Text>
+            </View>
+            <View style={styles.tableRow}>
+              <Text style={[styles.tableCell, styles.headerCell]}>
+                Players:
+              </Text>
+              <Text style={[styles.tableCell, styles.valueCell]}>
+                {selectedReceipt?.playerCount ?? '-'}
+              </Text>
+            </View>
+            <View style={styles.tableRow}>
+              <Text style={[styles.tableCell, styles.headerCell]}>
+                Status:
+              </Text>
+              <Text style={[styles.tableCell, styles.valueCell]}>
+                {selectedReceipt?.status ?? '-'}
+              </Text>
+            </View>
+            <View style={styles.tableRow}>
+              <Text style={[styles.tableCell, styles.headerCell]}>
+                Weather Guarantee Amount:
+              </Text>
+              <Text style={[styles.tableCell, styles.valueCell]}>
+                {selectedReceipt?.weatherGuaranteeAmount
+                  ? formatMoney(selectedReceipt?.weatherGuaranteeAmount / 100)
+                  : '-'}
+              </Text>
+            </View>
+            {selectedReceipt?.status === 'PURCHASED' && (
+              <>
+                <View style={styles.tableRow}>
+                  <Text style={[styles.tableCell, styles.headerCell]}>
+                    Green Fees Per Player:
+                  </Text>
+                  <Text style={[styles.tableCell, styles.valueCell]}>
+                    {selectedReceipt?.firstHandPrice
+                      ? formatMoney(
+                        (selectedReceipt?.firstHandPrice + (selectedReceipt.markupFees ?? 0)) / 100
+                      )
+                      : '-'}
+                  </Text>
+                </View>
+                <View style={styles.tableRow}>
+                  <Text style={[styles.tableCell, styles.headerCell]}>
+                    Total Amount:
+                  </Text>
+                  <Text style={[styles.tableCell, styles.valueCell]}>
+                    {selectedReceipt?.pricePerGolfer[0]
+                      ? formatMoney(selectedReceipt?.pricePerGolfer[0])
+                      : '-'}
+                  </Text>
+                </View>
+              </>
+            )}
+          </View>
+        </View>
+      </Page>
+    </Document>
   );
 };
