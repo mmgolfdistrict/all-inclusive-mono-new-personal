@@ -87,6 +87,12 @@ const config = {
         port: "",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "demo-cdn.golfdistrict.in",
+        port: "",
+        pathname: "/**",
+      }
     ],
   },
   transpilePackages: ["@juspay-tech/hyper-js", "@juspay-tech/react-hyper-js"],

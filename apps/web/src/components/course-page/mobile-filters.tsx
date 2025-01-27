@@ -31,9 +31,11 @@ interface FiltersRef {
 export const MobileFilters = ({
   setShowFilters,
   toggleFilters,
+  openForecastModal
 }: {
   setShowFilters: Dispatch<SetStateAction<boolean>>;
   toggleFilters: () => void;
+  openForecastModal: () => void;
 }) => {
   const {
     setDateType,
@@ -60,7 +62,7 @@ export const MobileFilters = ({
     <Leaflet setShow={setShowFilters} className="max-h-[70dvh]">
       <div className="relative flex flex-col gap-4 px-4 pb-20">
         <div className="border-b py-2 text-xl font-semibold">Filters</div>
-        <Filters ref={childRef} />
+        <Filters ref={childRef} openForecastModal={openForecastModal} setShowFilters={setShowFilters} />
         <div className="fixed bottom-10 left-1/2 z-10 flex w-full -translate-x-1/2 gap-2 px-4">
           <OutlineButton className="min-w-[40%]" onClick={() => setShowFilters(false)}>
             Cancel

@@ -243,7 +243,6 @@ const TableRow = ({
   const router = useRouter();
   const { data: session } = useSession();
   const { user } = useUserContext();
-  const DEFAULT_SILHOUETTE_IMAGE = "/defaults/default-profile.webp";
   const href = useMemo(() => {
     if (type === "FIRST_PARTY") {
       return `/${courseId}/${teeTimeId}`;
@@ -267,9 +266,11 @@ const TableRow = ({
     <tr className="w-full border-b border-stroke text-primary-gray">
       <td className="gap-2 px-4 py-3">
         <div className="flex items-center gap-2">
-          <Avatar
-            src={type === "SECOND_HAND" ? DEFAULT_SILHOUETTE_IMAGE : iconSrc}
-          />
+          {type === "SECOND_HAND" ? (
+            <Spinner className="w-[40px] h-[40px]" />
+          ) : (
+            <Avatar src={iconSrc} />
+          )}
           <div className="flex flex-col">
             <Link
               href={href}

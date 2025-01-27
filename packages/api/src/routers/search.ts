@@ -177,4 +177,16 @@ export const searchRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       return await ctx.serviceFactory.getSearchService().getSpecialEvents(input?.courseId);
     }),
+
+  getPriceForecast: publicProcedure.input(
+    z.object({
+      courseId: z.string(),
+      startDate: z.string(),
+      endDate: z.string(),
+    })
+  )
+    .query(async ({ ctx, input }) => {
+      return await ctx.serviceFactory.getSearchService().getPriceForecast(input?.courseId, input.startDate, input.endDate);
+    }),
 });
+
