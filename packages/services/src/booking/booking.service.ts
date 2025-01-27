@@ -3868,7 +3868,7 @@ export class BookingService {
       markupFees: 0,
       weatherQuoteId: weatherQuoteId || null,
       cartFeePerPlayer: cartFeeCharge,
-      source,
+      source: source ? source : null,
       customerComment: additionalNoteFromUser,
       needClubRental: needRentals,
     });
