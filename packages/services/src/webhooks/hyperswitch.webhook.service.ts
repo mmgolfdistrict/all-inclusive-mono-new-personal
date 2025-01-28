@@ -1031,6 +1031,7 @@ export class HyperSwitchWebhookService {
               });
               return [];
             });
+          const [user] = await this.database.select().from(users).where(eq(users.id, customer_id)).execute();
           const emailList = courseContactsList.map((contact) => contact.email);
           if (emailList.length > 0) {
             await this.notificationService.sendEmailByTemplate(
@@ -1038,6 +1039,8 @@ export class HyperSwitchWebhookService {
               "Reservation Additional Request",
               process.env.SENDGRID_COURSE_CONTACT_NOTIFICATION_TEMPLATE_ID!,
               {
+                EMail: user?.email ?? "",
+                CustomerName: user?.name ?? "",
                 NoteFromUser: bookingDetails?.additionalNoteFromCustomer || "-",
                 NeedRentals: bookingDetails?.needsRentals ? "Yes" : "No",
                 PlayDateTime: formatTime(

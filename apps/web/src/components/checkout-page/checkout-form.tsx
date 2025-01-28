@@ -774,6 +774,11 @@ export const CheckoutForm = ({
       }
     }
   }, [totalBeforeRoundOff]);
+
+  useEffect(() => {
+    setHasUserSelectedDonation(true);
+  }, []);
+
   useEffect(() => {
     setIsLoadingTotalAmount(true);
     setTimeout(() => {

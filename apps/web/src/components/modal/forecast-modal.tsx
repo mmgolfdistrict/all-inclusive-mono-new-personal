@@ -119,9 +119,8 @@ export const ForecastModal = ({
   return (
     <div className="fixed inset-0 z-20 flex items-center justify-center bg-black w-screen backdrop-blur bg-opacity-50 overflow-hidden">
       <div
-        className={`bg-white p-6 rounded-lg  sm:max-w-4xl md:max-w-3xl lg:max-w-2xl xl:max-w-5xl w-full ${
-          isMobile && "w-full"
-        }`}
+        className={`bg-white p-6 rounded-lg  sm:max-w-4xl md:max-w-3xl lg:max-w-2xl xl:max-w-5xl w-full ${isMobile && "w-full"
+          }`}
       >
         <div className="flex justify-between items-center">
           <div className="flex justify-between items-center mb-2 w-[170px]">
