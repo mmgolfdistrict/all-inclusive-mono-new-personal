@@ -155,6 +155,7 @@ export const ForecastModal = ({
                                 {data?.map((item) => (
                                     <TableHeader
                                         key={item.providerDate}
+                                        // @typescript - eslint / no - unnecessary - type - assertion
                                         text={formatShowDate(item.providerDate)}
                                         className="text-center"
                                     />
