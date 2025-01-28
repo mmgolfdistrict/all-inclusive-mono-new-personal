@@ -11,6 +11,8 @@ import { GoBack } from "~/components/buttons/go-back";
 import { ProfileDetails } from "~/components/profile-page/profile-details";
 import { api } from "~/utils/api";
 import { useRouter } from "next/navigation";
+import { PaymentInfoMangeProfile } from "~/components/account-settings-page/payment-info";
+import { useUser } from "~/hooks/useUser";
 
 export default function ManangeProfile({
   params,
@@ -21,6 +23,7 @@ export default function ManangeProfile({
   const userId = params.userId;
   const router = useRouter();
   const { status, data } = useSession();
+  const { isLoading: isUserLoading, data: user } = useUser(userId);
 
   // const { data: systemNotifications } =
   //   api.systemNotification.getSystemNotification.useQuery({});
@@ -73,7 +76,9 @@ export default function ManangeProfile({
           </div>
           <div className="flex flex-col gap-4 md:flex-col md:w-[50%]">
             <AddCreditCard />
-            {/* <PaymentInfoMangeProfile /> */}
+            {!isUserLoading && user?.allowDeleteCreditCard
+              ? <PaymentInfoMangeProfile />
+              : null}
             <SavedBankDetails />
           </div>
         </div>

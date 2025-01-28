@@ -23,7 +23,7 @@
     "@golf-district/database": "^0.1.0",
     "@golf-district/shared": "^0.1.0",
     "@juspay-tech/hyper-node": "1.0.3",
-    "@juspay-tech/hyperswitch-node": "1.0.3",
+    "@juspay-tech/hyperswitch-node": "^1.0.5",
     "@sendgrid/mail": "^7.7.0",
     "@types/lodash.isequal": "^4.5.8",
     "@upstash/qstash": "^2.3.0",

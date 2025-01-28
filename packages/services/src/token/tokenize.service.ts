@@ -49,7 +49,7 @@ export class TokenizeService {
     private readonly database: Db,
     private readonly notificationService: NotificationService,
     private readonly sensibleService: SensibleService
-  ) {}
+  ) { }
   getCartData = async ({ courseId = "", ownerId = "", paymentId = "" }) => {
     const [customerCartData]: any = await this.database
       .select({ cart: customerCarts.cart, cartId: customerCarts.id })
@@ -399,7 +399,7 @@ export class TokenizeService {
       totalCartFeeTaxAmount: additionalTaxes.cartFeeTaxPercentTotal * 100,
       totalWeatherGuaranteeTaxAmount: additionalTaxes.weatherGuaranteeTaxTotal * 100,
       totalMarkupFeeTaxAmount: additionalTaxes.markupTaxTotal * 100,
-      source,
+      source: source ? source : null,
       customerComment: additionalNoteFromUser,
       needClubRental: needRentals,
       courseMembershipId: courseMembershipId,

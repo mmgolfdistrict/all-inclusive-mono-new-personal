@@ -387,7 +387,7 @@ export class CheckoutService {
         cartId: customerCart?.cartId,
       },
       merchant_order_reference_id: customerCartData?.cartId ?? "",
-      setup_future_usage: "off_session",
+      setup_future_usage: "on_session",
     };
     // }
 
@@ -1210,7 +1210,7 @@ export class CheckoutService {
       .leftJoin(providerCourseLink, eq(teeTimes.courseId, providerCourseLink.courseId))
       .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))
       .where(eq(teeTimes.id, teeTimeId));
-    let result = await this.providerService.searchCustomerViaEmail(
+    const result = await this.providerService.searchCustomerViaEmail(
       email,
       teeTimeResult?.providerInternalId ?? "",
       teeTimeResult?.providerCourseId ?? "",

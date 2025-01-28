@@ -40,6 +40,7 @@ type UserType = {
   profilePicture: string;
   bannerPicture: string;
   stripeConnectAccountStatus: "DISCONNECTED" | "CONNECTED";
+  allowDeleteCreditCard: boolean;
 };
 
 export const useUser = (userId?: string) => {

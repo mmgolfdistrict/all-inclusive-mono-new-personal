@@ -98,6 +98,7 @@ export type FullCourseType = {
   websiteURL: string;
   courseOpenTime: number;
   courseCloseTime: number;
+  supportsGroupBooking: boolean;
 };
 
 export type SupportedCharity = {
