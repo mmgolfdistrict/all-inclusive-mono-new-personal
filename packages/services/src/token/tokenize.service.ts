@@ -399,7 +399,7 @@ export class TokenizeService {
       totalCartFeeTaxAmount:additionalTaxes.cartFeeTaxPercentTotal*100,
       totalWeatherGuaranteeTaxAmount:additionalTaxes.weatherGuaranteeTaxTotal*100,
       totalMarkupFeeTaxAmount:additionalTaxes.markupTaxTotal*100,
-      source,
+      source: source ? source : null,
       customerComment: additionalNoteFromUser,
       needClubRental: needRentals,
       courseMembershipId:courseMembershipId,
