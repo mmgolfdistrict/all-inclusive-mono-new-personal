@@ -13,7 +13,7 @@ const CheckoutItemAccordion = ({
   icons,
   position = "right",
   amountValues,
-  isLoading
+  isLoading,
 }: {
   title: string;
   value: string;
@@ -43,7 +43,9 @@ const CheckoutItemAccordion = ({
                 <div className="text-[16px] pr-1.5">
                   {isLoading ? (
                     <Fragment>
-                      <p className="px-6 py-0.5 bg-gray-200 text-gray-200 text-sm">Loading...</p>
+                      <p className="px-6 py-0.5 bg-gray-200 text-gray-200 text-sm">
+                        Loading...
+                      </p>
                     </Fragment>
                   ) : (
                     amountValues
