@@ -267,7 +267,7 @@ export const DailyTeeTimes = ({
       <div className="relative" ref={sizeRef}>
         <div className="absolute top-1/2 hidden md:block -translate-y-1/2 z-[2] flex items-center justify-center -left-1 md:-left-6">
           <button
-            onClick={scrollLeft}
+            onClick={() => scrollLeft()}
             className="flex h-fit items-center justify-center rounded-full bg-white p-2 shadow-overflow-indicator"
             data-testid="tee-time-left-chevron-id"
             data-qa={dayMonthDate(date)}
