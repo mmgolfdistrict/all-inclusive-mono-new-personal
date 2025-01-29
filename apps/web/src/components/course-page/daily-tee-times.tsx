@@ -166,7 +166,7 @@ export const DailyTeeTimes = ({
     }
   }, [isVisible]);
 
-  const scrollLeft = (scrollWidth = 0) => {
+  const scrollLeft = () => {
     const boxWidth = overflowRef.current?.children[0]?.clientWidth || 265;
     const getScrollWidth = () => {
       if (width < 700) {
@@ -176,15 +176,9 @@ export const DailyTeeTimes = ({
     };
 
     overflowRef.current?.classList.add("scroll-smooth");
-    overflowRef.current?.scrollBy({
-      left: -`${scrollWidth > 0 ? scrollWidth : getScrollWidth()}`,
-    });
+    overflowRef.current?.scrollBy({ left: -`${getScrollWidth()}` });
     overflowRef.current?.classList.remove("scroll-smooth");
   };
-
-  useEffect(() => {
-    scrollLeft(width);
-  }, [isLoading]);
 
   const getTextColor = (type) => {
     if (type === "FAILURE") return "red";
