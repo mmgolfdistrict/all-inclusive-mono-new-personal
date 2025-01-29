@@ -48,7 +48,7 @@ export const UnlistedDetails = ({
       ownerId: ownerId,
       teeTimeId: teeTimeId,
     });
-  console.log("unlistedTeetTIME",data);
+  console.log("unlistedTeetTIME", data);
   const { data: bookingData } = api.user.getBookingsOwnedForTeeTime.useQuery(
     { teeTimeId },
     {
@@ -301,7 +301,7 @@ export const UnlistedDetails = ({
           teeTimeId: data?.teeTimeId ?? "",
           listPrice: null,
           minimumOfferPrice: data?.minimumOfferPrice ?? 0,
-          bookingStatus: ""
+          bookingStatus: "",
         }}
         refetch={refetchData}
         isListTeeTimeOpen={isListTeeTimeOpen}
@@ -328,7 +328,7 @@ export const UnlistedDetails = ({
           teeTimeId: data?.teeTimeId ?? "",
           listPrice: null,
           minimumOfferPrice: data?.minimumOfferPrice ?? 0,
-          bookingStatus: ""
+          bookingStatus: "",
         }}
       />
       <MakeAnOffer

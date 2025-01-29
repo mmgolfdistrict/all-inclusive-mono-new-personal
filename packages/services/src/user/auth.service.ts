@@ -1,15 +1,15 @@
+import { randomUUID } from "crypto";
 import { eq, or } from "@golf-district/database";
 import type { Db } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import { users } from "@golf-district/database/schema/users";
+import { userSession } from "@golf-district/database/schema/userSession";
 import { assetToURL, currentUtcTimestamp } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
 import bcrypt from "bcryptjs";
 import { CacheService } from "../infura/cache.service";
-import type { NotificationService } from "../notification/notification.service";
-import { userSession } from "@golf-district/database/schema/userSession";
-import { randomUUID } from "crypto";
 import type { IpInfoService } from "../ipinfo/ipinfo.service";
+import type { NotificationService } from "../notification/notification.service";
 
 export class AuthService extends CacheService {
   /**

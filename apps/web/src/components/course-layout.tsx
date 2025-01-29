@@ -11,7 +11,6 @@ export const CourseLayout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
   console.log("pathname", pathname);
 
-
   const { course } = useCourseContext();
   const courseId = course?.id;
 
@@ -27,20 +26,25 @@ export const CourseLayout = ({ children }: { children: React.ReactNode }) => {
     (systemNotifications ? systemNotifications.length : 0) +
     (courseGlobalNotification ? courseGlobalNotification.length : 0);
 
-  const marginTop = notificationsCount > 0 ? `${notificationsCount * 27}px` : "0";
+  const marginTop =
+    notificationsCount > 0 ? `${notificationsCount * 27}px` : "0";
 
   const styling = useMemo(() => {
     const coursePathPattern = `/${courseId}/`;
 
     if (pathname.includes("/checkout")) {
       return "";
-    } if (courseId && pathname.includes(coursePathPattern)) {
+    }
+    if (courseId && pathname.includes(coursePathPattern)) {
       return isMobile ? "pt-28" : "pt-16";
     } else {
       return isMobile ? "pt-28" : "pt-12";
-
     }
   }, [pathname, notificationsCount, isMobile]);
 
-  return <div className={styling} style={{ marginTop }}>{children}</div>;
+  return (
+    <div className={styling} style={{ marginTop }}>
+      {children}
+    </div>
+  );
 };

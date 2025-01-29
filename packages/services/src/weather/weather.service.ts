@@ -3,8 +3,8 @@ import { eq } from "@golf-district/database";
 import { courses } from "@golf-district/database/schema/courses";
 import Logger from "@golf-district/shared/src/logger";
 import { CacheService } from "../infura/cache.service";
-import type { _ForecastData, _WeatherData } from "./types";
 import { LoggerService, loggerService } from "../webhooks/logging.service";
+import type { _ForecastData, _WeatherData } from "./types";
 
 /**
  * `WeatherService` - A service for fetching and optionally caching weather data.
@@ -39,7 +39,12 @@ import { LoggerService, loggerService } from "../webhooks/logging.service";
  */
 
 export class WeatherService extends CacheService {
-  constructor(private readonly database: Db, redisUrl: string, redisToken: string, private readonly loggerService: LoggerService,) {
+  constructor(
+    private readonly database: Db,
+    redisUrl: string,
+    redisToken: string,
+    private readonly loggerService: LoggerService
+  ) {
     super(redisUrl, redisToken, Logger(WeatherService.name));
     this.loggerService = loggerService;
   }
@@ -83,8 +88,8 @@ export class WeatherService extends CacheService {
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
             courseId,
-          })
-        })
+          }),
+        });
         return [];
       });
     if (!endpoint) {
@@ -127,14 +132,14 @@ export class WeatherService extends CacheService {
         userAgent: "",
         message: "Error in getting weather forcast",
         stackTrace: `Weather forcast service is down`,
-        additionalDetailsJSON: ""
-      })
-      return []
+        additionalDetailsJSON: "",
+      });
+      return [];
     }
 
     const data: _ForecastData = (await response.json()) as _ForecastData;
 
-    if(data?.properties && data?.properties.periods){
+    if (data?.properties && data?.properties.periods) {
       return data.properties.periods.map((period) => ({
         name: period.name,
         startTime: period.startTime,
@@ -143,11 +148,9 @@ export class WeatherService extends CacheService {
         shortForecast: period.shortForecast,
         iconCode: period?.icon.split("/")?.pop()?.split("?")?.[0]?.split(",")?.[0] ?? "",
       }));
-    }else{
-      return []
+    } else {
+      return [];
     }
-
-    
   }
 
   /**

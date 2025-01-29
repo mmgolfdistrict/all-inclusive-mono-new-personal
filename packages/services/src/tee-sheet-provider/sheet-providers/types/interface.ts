@@ -1,34 +1,34 @@
 import type { InsertBookingSlots } from "@golf-district/database/schema/bookingslots";
 import type pino from "pino";
+import type { CacheService } from "../../../infura/cache.service";
 import type {
+  BookingCreationData as ClubProphetBookingCreationData,
   ClubProphetBookingResponse,
   ClubProphetCustomerCreationData,
   ClubProphetCustomerCreationResponse,
-  ClubProphetTeeTimeResponse,
-  BookingCreationData as ClubProphetBookingCreationData,
   ClubProphetGetCustomerResponse,
+  ClubProphetTeeTimeResponse,
 } from "./clubprophet.types";
 import type {
+  BookingCreationData as ForeupBookingCreationData,
   ForeUpBookingNameChangeOptions,
   BookingResponse as ForeUpBookingResponse,
   CustomerCreationData as ForeUpCustomerCreationData,
   CustomerData as ForeUpCustomerCreationResponse,
   ForeUpGetCustomerResponse,
-  TeeTimeResponse as ForeUpTeeTimeResponse,
-  BookingCreationData as ForeupBookingCreationData,
   ForeupSaleDataOptions,
+  TeeTimeResponse as ForeUpTeeTimeResponse,
 } from "./foreup.type";
 import type {
-  LightSpeedBookingResponse,
   LightspeedBookingCreationData,
   LightspeedBookingNameChangeOptions,
+  LightSpeedBookingResponse,
   LightspeedCustomerCreationData,
   LightspeedCustomerCreationResponse,
   LightspeedGetCustomerResponse,
   LightspeedSaleDataOptions,
   LightspeedTeeTimeResponse,
 } from "./lightspeed.type";
-import type { CacheService } from "../../../infura/cache.service";
 
 export type ForeUpCredentials = {
   username: string;
@@ -177,7 +177,7 @@ export interface ProviderAPI {
     providerId: string,
     courseId: string,
     providerSlotIds?: string[],
-    providerCourseMembershipId?:string
+    providerCourseMembershipId?: string
   ) => Promise<InsertBookingSlots[]>;
   shouldAddSaleData: () => boolean;
   getSalesDataOptions: (reservationData: BookingResponse, bookingDetails: BookingDetails) => SalesDataOptions;
@@ -216,7 +216,7 @@ export interface ProviderAPI {
     courseId: string,
     providerCourseConfiguration: string
   ): Promise<boolean>;
-  SearchCustomer(token: string, providerCourseId: string,email:string): Promise<CustomerData>
+  SearchCustomer(token: string, providerCourseId: string, email: string): Promise<CustomerData>;
 }
 
 export abstract class BaseProvider implements ProviderAPI {
@@ -325,7 +325,8 @@ export abstract class BaseProvider implements ProviderAPI {
     providerInternalId: string,
     courseId: string,
     providerCourseConfiguration: string
-  ): Promise<boolean>;  abstract SearchCustomer(token: string, providerCourseId: string,email:string): Promise<CustomerData>
+  ): Promise<boolean>;
+  abstract SearchCustomer(token: string, providerCourseId: string, email: string): Promise<CustomerData>;
   /**
    * Whether to require to create player slots to allow players for name changes
    */

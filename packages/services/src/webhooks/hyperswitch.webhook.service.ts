@@ -7,6 +7,7 @@ import { bookings } from "@golf-district/database/schema/bookings";
 import type { InsertBooking } from "@golf-district/database/schema/bookings";
 import { bookingslots } from "@golf-district/database/schema/bookingslots";
 import { charityCourseLink } from "@golf-district/database/schema/charityCourseLink";
+import { courseContacts } from "@golf-district/database/schema/courseContacts";
 import { courses } from "@golf-district/database/schema/courses";
 import { customerCarts } from "@golf-district/database/schema/customerCart";
 import { customerRecievable } from "@golf-district/database/schema/customerRecievable";
@@ -45,12 +46,11 @@ import type { NotificationService } from "../notification/notification.service";
 import type { HyperSwitchService } from "../payment-processor/hyperswitch.service";
 import type { SensibleService } from "../sensible/sensible.service";
 import type { Customer, ProviderService } from "../tee-sheet-provider/providers.service";
+import type { BookingDetails, BookingResponse } from "../tee-sheet-provider/sheet-providers";
 import type { ClubProphetBookingResponse } from "../tee-sheet-provider/sheet-providers/types/clubprophet.types";
 import type { TokenizeService } from "../token/tokenize.service";
 import { loggerService } from "./logging.service";
 import type { HyperSwitchEvent } from "./types/hyperswitch";
-import type { BookingDetails, BookingResponse } from "../tee-sheet-provider/sheet-providers";
-import { courseContacts } from "@golf-district/database/schema/courseContacts";
 
 /**
  * `HyperSwitchWebhookService` - A service for processing webhooks from HyperSwitch.

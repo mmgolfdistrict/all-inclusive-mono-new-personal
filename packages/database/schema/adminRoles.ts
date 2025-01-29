@@ -1,5 +1,5 @@
 import type { InferInsertModel } from "drizzle-orm";
-import { sql, type InferSelectModel, relations } from "drizzle-orm";
+import { relations, sql, type InferSelectModel } from "drizzle-orm";
 import { boolean, datetime, unique, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 import { courses } from "./courses";
@@ -32,7 +32,7 @@ relations(adminRoles, ({ one }) => ({
     fields: [adminRoles.courseId],
     references: [courses.id],
   }),
-}))
+}));
 
 export type SelectAdminRole = InferSelectModel<typeof adminRoles>;
 export type InsertAdminRole = InferInsertModel<typeof adminRoles>;

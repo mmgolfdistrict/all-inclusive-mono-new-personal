@@ -2,6 +2,7 @@
 
 import { type DayValue } from "@taak/react-modern-calendar-datepicker";
 import type { SortType } from "~/components/course-page/mobile-sort";
+import { useSearchParams } from "next/navigation";
 import {
   createContext,
   useContext,
@@ -11,7 +12,6 @@ import {
   type ReactNode,
 } from "react";
 import { useCourseContext } from "./CourseContext";
-import { useSearchParams } from "next/navigation";
 
 export type DateType =
   | "All"
@@ -122,7 +122,9 @@ export const FiltersWrapper = ({ children }: { children: ReactNode }) => {
 
   const queryDateType = searchParams.get("dateType");
 
-  const [dateType, setDateType] = useState<DateType>(queryDateType ? queryDateType as DateType : "All");
+  const [dateType, setDateType] = useState<DateType>(
+    queryDateType ? (queryDateType as DateType) : "All"
+  );
   const [holes, setHoles] = useState<HoleType>("Any");
   const [golfers, setGolfers] = useState<GolferType>("Any");
   const [showUnlisted, setShowUnlisted] = useState<boolean>(false);

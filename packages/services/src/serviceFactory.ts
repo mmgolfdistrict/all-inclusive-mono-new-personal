@@ -1,5 +1,5 @@
 import { type Db } from "@golf-district/database";
-import { ReleaseHistoryService } from "./index";
+import { CourseExceptionService } from "./course-exception/courseException.service";
 import {
   AppSettingsService,
   AuctionService,
@@ -17,6 +17,7 @@ import {
   HyperSwitchWebhookService,
   ImageService,
   NotificationService,
+  ReleaseHistoryService,
   SearchService,
   SensibleService,
   StripeService,
@@ -26,16 +27,15 @@ import {
   WatchlistService,
   WeatherService,
 } from "./index";
+import { IpInfoService } from "./ipinfo/ipinfo.service";
 import { ProfanityService } from "./profanity/profanity.service";
 import { SystemNotificationService } from "./system-notification/systemNotification.service";
 import { ProviderService } from "./tee-sheet-provider/providers.service";
-import { clubprophetWebhookService } from "./webhooks/clubprophet.webhook.service";
 import { UserWaitlistService } from "./user-waitlist/userWaitlist.service";
+import { clubprophetWebhookService } from "./webhooks/clubprophet.webhook.service";
 import { FinixService } from "./webhooks/finix.service";
 import { LoggerService } from "./webhooks/logging.service";
 import { PaymentVerifierService } from "./webhooks/paymentverifier.service";
-import { CourseExceptionService } from "./course-exception/courseException.service";
-import { IpInfoService } from "./ipinfo/ipinfo.service";
 
 export interface ServiceConfig {
   database: Db;
@@ -83,7 +83,7 @@ export interface ServiceConfig {
  * ```
  */
 export class ServiceFactory {
-  constructor(protected readonly config: ServiceConfig) { }
+  constructor(protected readonly config: ServiceConfig) {}
 
   /**
    * Returns an instance of HyperSwitchService with the provided API key.
@@ -115,8 +115,13 @@ export class ServiceFactory {
    * @returns An instance of SearchService.
    */
   getSearchService = (): SearchService => {
-    return new SearchService(this.config.database, this.getWeatherService(), this.getProviderService(), this.config.redisUrl,
-      this.config.redisToken);
+    return new SearchService(
+      this.config.database,
+      this.getWeatherService(),
+      this.getProviderService(),
+      this.config.redisUrl,
+      this.config.redisToken
+    );
   };
 
   /**

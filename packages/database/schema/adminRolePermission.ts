@@ -2,8 +2,8 @@ import type { InferInsertModel } from "drizzle-orm";
 import { relations, type InferSelectModel } from "drizzle-orm";
 import { unique, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
-import { adminRoles } from "./adminRoles";
 import { adminPermissions } from "./adminPermissions";
+import { adminRoles } from "./adminRoles";
 
 export const adminRolePermission = mySqlTable(
   "adminRolePermission",
@@ -14,7 +14,10 @@ export const adminRolePermission = mySqlTable(
   },
   (table) => {
     return {
-      unique_admin_role_id_permission_id: unique("unique_admin_role_id_permission_id").on(table.adminRoleId, table.adminPermissionId),
+      unique_admin_role_id_permission_id: unique("unique_admin_role_id_permission_id").on(
+        table.adminRoleId,
+        table.adminPermissionId
+      ),
     };
   }
 );

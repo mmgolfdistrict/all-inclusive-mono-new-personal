@@ -19,14 +19,19 @@
     "dev": "dotenv -- turbo dev --parallel --filter=golf-district-platforms",
     "dev:tunnel": "dotenv -- turbo dev --parallel",
     "devbuild": "( export QSTASH_CURRENT_SIGNING_KEY='sig_XYZ' && export QSTASH_NEXT_SIGNING_KEY='sig_XYZ' && turbo run build )",
-    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,md,css}\"",
-    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,md,css}\" && npm run build && npm run lint",
+    "lint": "turbo run lint --max-warnings=0",
     "pre-commit": "lint-staged",
     "prettier-check": "prettier --check \"**/*.{js,jsx,ts,tsx,md,css}\" --ignore-path .prettierignore",
     "revision": "node ./revision/generateRevision.js && node ./revision/route.js",
     "start": "npm run dev",
     "test": "turbo run test",
     "typecheck": "turbo typecheck"
+  },
+  "husky": {
+    "hooks": {
+      "format": "npm run format"
+    }
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,md,css}": [
@@ -43,12 +48,15 @@
     "typescript": "^5.2.2"
   },
   "devDependencies": {
+    "@commitlint/cli": "^19.6.1",
+    "@commitlint/config-conventional": "^19.6.0",
+    "@next/bundle-analyzer": "^14.2.11",
+    "commitlint-plugin-function-rules": "^3.1.0",
     "cross-env": "^7.0.3",
     "eslint": "^8.45.0",
     "eslint-config-custom": "*",
-    "husky": "^8.0.3",
-    "lint-staged": "^13.2.3",
-    "@next/bundle-analyzer": "^14.2.11"
+    "husky": "^7.0.4",
+    "lint-staged": "^13.2.3"
   },
   "packageManager": "npm@9.8.0",
   "engines": {
