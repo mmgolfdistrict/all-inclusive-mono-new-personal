@@ -16,6 +16,7 @@ import { useEffect, useRef, useState } from "react";
 import { Spinner } from "../loading/spinner";
 import { CheckoutForm } from "./checkout-form";
 import isequal from 'lodash.isequal'
+import { toast } from "react-toastify";
 
 export type NextAction = {
   type?: string;
@@ -27,6 +28,7 @@ type CreatePaymentResponse = {
   paymentId: string | undefined;
   cartId: string;
   next_action?: NextAction;
+  error?: string;
 };
 
 type Options = {
@@ -127,7 +129,10 @@ export const HyperSwitch = ({
           course?.timezoneCorrection
         ),
       })) as CreatePaymentResponse;
-
+      if (data?.error) {
+        // setError(data.error);
+        toast.error(data.error);
+      }
       if (data?.next_action) {
         setNextaction(data?.next_action);
         setPaymentId(data?.paymentId);
