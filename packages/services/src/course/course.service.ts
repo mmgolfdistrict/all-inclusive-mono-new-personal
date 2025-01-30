@@ -2,31 +2,78 @@ import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
 import { and, asc, desc, eq, gte, lte, sql } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
+import { authenticationMethod } from "@golf-district/database/schema/authenticationMethod";
 import { bookings } from "@golf-district/database/schema/bookings";
 import { charities } from "@golf-district/database/schema/charities";
 import { charityCourseLink } from "@golf-district/database/schema/charityCourseLink";
+import { courseAllowedTimeToSell } from "@golf-district/database/schema/courseAllowedTimeToSell";
 import { courseAssets } from "@golf-district/database/schema/courseAssets";
 import { courses } from "@golf-district/database/schema/courses";
 import type { InsertCourses } from "@golf-district/database/schema/courses";
 import { entities } from "@golf-district/database/schema/entities";
 import { lists } from "@golf-district/database/schema/lists";
+import { providers } from "@golf-district/database/schema/providers";
+import { providerCourseLink } from "@golf-district/database/schema/providersCourseLink";
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
-import { AuthenticationMethodEnum, currentUtcTimestamp, getApexDomain, validDomainRegex } from "@golf-district/shared";
+import {
+  AuthenticationMethodEnum,
+  currentUtcTimestamp,
+  getApexDomain,
+  validDomainRegex,
+} from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
+import { cacheManager } from "@golf-district/shared/src/utils/cacheManager";
+import dayjs from "dayjs";
+import customParseFormat from "dayjs/plugin/customParseFormat";
+import utc from "dayjs/plugin/utc";
 import { DomainService } from "../domain/domain.service";
 import type { ProviderService } from "../tee-sheet-provider/providers.service";
-import { providerCourseLink } from "@golf-district/database/schema/providersCourseLink";
-import { providers } from "@golf-district/database/schema/providers";
 import { loggerService } from "../webhooks/logging.service";
-import { courseAllowedTimeToSell } from "@golf-district/database/schema/courseAllowedTimeToSell";
-import dayjs from "dayjs";
-import utc from 'dayjs/plugin/utc';
-import customParseFormat from 'dayjs/plugin/customParseFormat';
-import { authenticationMethod } from "@golf-district/database/schema/authenticationMethod";
+
 dayjs.extend(utc);
 dayjs.extend(customParseFormat);
 
 type DayOfWeek = "MON" | "TUE" | "WED" | "THU" | "FRI" | "SAT" | "SUN";
+
+type CourseDetailsQuery = {
+  id: string;
+  name: string;
+  address: string | null;
+  description: string | null;
+  longitude: number | null;
+  latitude: number | null;
+  forecastApi: string | null;
+  convenienceFeesFixedPerPlayer: number | null;
+  markupFeesFixedPerPlayer: number | null;
+  maxListPricePerGolferPercentage: number | null;
+  openTime: string | null;
+  closeTime: string | null;
+  supportCharity: boolean;
+  supportSensibleWeather: boolean;
+  timezoneCorrection: number | null;
+  furthestDayToBook: number | null;
+  allowAuctions: boolean;
+  supportsOffers: boolean;
+  supportsWatchlist: boolean;
+  supportsPromocode: boolean;
+  supportsWaitlist: boolean;
+  buyerFee: number | null;
+  sellerFee: number | null;
+  internalId: string;
+  roundUpCharityId: string | null;
+  providerConfiguration: string | null;
+  isBookingDisabled: number;
+};
+
+type CharityDetails = {
+  charityDescription: string | null; // Assuming description might be nullable
+  charityName: string | null; // Assuming name is required
+  charityId: string | null; // Assuming ID is a string (update if it's a number or UUID)
+  logo: string | null; // Assuming logoAssetId might be nullable
+  // logoCdn: string; // Uncomment if `cdn` is required and included in the data
+  logoExtension: string | null; // Assuming extension is always present
+  logoKey: string | null; // Assuming key is always present
+};
 
 /**
  * Service handling course-related operations.
@@ -65,56 +112,71 @@ export class CourseService extends DomainService {
    * @throws Will throw an error if the query fails.
    */
   getCourseById = async (courseId: string) => {
-    const courseDetailsQuery = this.database
-      .select({
-        id: courses.id,
-        name: courses.name,
-        address: courses.address,
-        description: courses.description,
-        longitude: courses.longitude,
-        latitude: courses.latitude,
-        forecastApi: courses.forecastApi,
-        convenienceFeesFixedPerPlayer: courses.convenienceFeesFixedPerPlayer,
-        markupFeesFixedPerPlayer: courses.markupFeesFixedPerPlayer,
-        maxListPricePerGolferPercentage: courses.maxListPricePerGolferPercentage,
-        openTime: courses.openTime,
-        closeTime: courses.closeTime,
-        supportCharity: courses.supportCharity,
-        supportSensibleWeather: courses.supportSensibleWeather,
-        timezoneCorrection: courses.timezoneCorrection,
-        furthestDayToBook: courses.furthestDayToBook,
-        allowAuctions: courses.allowAuctions,
-        supportsOffers: courses.supportsOffers,
-        supportsWatchlist: courses.supportsWatchlist,
-        supportsPromocode: courses.supportsPromocode,
-        supportsWaitlist: courses.supportsWaitlist,
-        buyerFee: courses.buyerFee,
-        sellerFee: courses.sellerFee,
-        internalId: providers.internalId,
-        roundUpCharityId: courses?.roundUpCharityId,
-        providerConfiguration: providerCourseLink.providerCourseConfiguration,
-        isBookingDisabled: courses.isBookingDisabled
-      })
-      .from(courses)
-      .innerJoin(providerCourseLink, eq(providerCourseLink.courseId, courses.id))
-      .innerJoin(providers, eq(providers.id, providerCourseLink.providerId))
-      .where(and(eq(courses.id, courseId), eq(courses.isDeleted, false)))
-      .limit(1)
-      .execute()
-      .catch((err) => {
-        this.logger.error(`Error getting course by ID: ${err}`);
-        loggerService.errorLog({
-          userId: "",
-          url: "/CourseService/getCourseById",
-          userAgent: "",
-          message: "ERROR_GETTING_COURSE_BY_ID",
-          stackTrace: `${err.stack}`,
-          additionalDetailsJSON: JSON.stringify({
-            courseId,
-          }),
+    const cacheKey = `courseDetails:${courseId}`;
+    const cacheTTL = 600; // Cache TTL in seconds
+
+    let courseDetailsQuery: any = await cacheManager.get(cacheKey);
+    if (!courseDetailsQuery) {
+      courseDetailsQuery = await this.database
+        .select({
+          id: courses.id,
+          name: courses.name,
+          address: courses.address,
+          description: courses.description,
+          longitude: courses.longitude,
+          latitude: courses.latitude,
+          forecastApi: courses.forecastApi,
+          convenienceFeesFixedPerPlayer: courses.convenienceFeesFixedPerPlayer,
+          markupFeesFixedPerPlayer: courses.markupFeesFixedPerPlayer,
+          maxListPricePerGolferPercentage: courses.maxListPricePerGolferPercentage,
+          openTime: courses.openTime,
+          closeTime: courses.closeTime,
+          supportCharity: courses.supportCharity,
+          supportSensibleWeather: courses.supportSensibleWeather,
+          timezoneCorrection: courses.timezoneCorrection,
+          furthestDayToBook: courses.furthestDayToBook,
+          allowAuctions: courses.allowAuctions,
+          supportsOffers: courses.supportsOffers,
+          supportsWatchlist: courses.supportsWatchlist,
+          supportsPromocode: courses.supportsPromocode,
+          supportsWaitlist: courses.supportsWaitlist,
+          buyerFee: courses.buyerFee,
+          sellerFee: courses.sellerFee,
+          internalId: providers.internalId,
+          roundUpCharityId: courses?.roundUpCharityId,
+          providerConfiguration: providerCourseLink.providerCourseConfiguration,
+          isBookingDisabled: courses.isBookingDisabled,
+          showPricingBreakdown: courses.showPricingBreakdown,
+          websiteURL: courses.websiteURL,
+          courseOpenTime: courses.courseOpenTime,
+          courseCloseTime: courses.courseCloseTime,
+          supportsProviderMembership: courses.supportsProviderMembership,
+          supportsGroupBooking: courses.supportsGroupBooking,
+        })
+        .from(courses)
+        .innerJoin(providerCourseLink, eq(providerCourseLink.courseId, courses.id))
+        .innerJoin(providers, eq(providers.id, providerCourseLink.providerId))
+        .where(and(eq(courses.id, courseId), eq(courses.isDeleted, false)))
+        .limit(1)
+        .execute()
+        .catch((err) => {
+          this.logger.error(`Error getting course by ID: ${err}`);
+          loggerService.errorLog({
+            userId: "",
+            url: "/CourseService/getCourseById",
+            userAgent: "",
+            message: "ERROR_GETTING_COURSE_BY_ID",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              courseId,
+            }),
+          });
+          throw new Error("Error getting course");
         });
-        throw new Error("Error getting course");
-      });
+
+      await cacheManager.set(cacheKey, courseDetailsQuery, 600000);
+    }
+
     //Get the highest and lowest tee time prices
     //Cache if possible
     const listTeeTimePriceQuery = this.database
@@ -228,38 +290,67 @@ export class CourseService extends DomainService {
     return res;
   };
 
-  getSupportedCharitiesForCourseId = async (courseId: string) => {
-    const data = await this.database
+  getCoursePreviewImage = async (courseId: string) => {
+    const courseAssets = await this.database
       .select({
-        charityDescription: charities.description,
-        charityName: charities.name,
-        charityId: charities.id,
-        logo: charities.logoAssetId,
-        //logoCdn: assets.cdn,
-        logoExtension: assets.extension,
-        logoKey: assets.key,
+        id: assets.id,
+        key: assets.key,
+        extension: assets.extension,
+        courseId: courses.id,
       })
-      .from(charityCourseLink)
-      .leftJoin(charities, eq(charityCourseLink.charityId, charities.id))
-      .leftJoin(assets, eq(assets.id, charities.logoAssetId))
-      .where(eq(charityCourseLink.courseId, courseId))
+      .from(courses)
+      .innerJoin(assets, eq(assets.courseId, courses.id))
+      .where(eq(courses.id, courseId))
       .execute()
       .catch((err) => {
-        this.logger.error(`Error getting charity for course: ${err}`);
-        loggerService.errorLog({
-          userId: "",
-          url: "/CourseService/getSupportedCharitiesForCourseId",
-          userAgent: "",
-          message: "ERROR_GETTING_CHARITY_FOR_COURSE",
-          stackTrace: `${err.stack}`,
-          additionalDetailsJSON: JSON.stringify({
-            courseId,
-          }),
-        });
-        throw new Error("Error getting charity");
+        this.logger.error(err);
+        throw new Error("Error retrieving Course Assets");
       });
+
+    return `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${courseAssets[0]?.key}.${courseAssets[0]?.extension}`;
+  };
+
+  getSupportedCharitiesForCourseId = async (courseId: string) => {
+    const cacheKey = `supportedCharitiesForCourseId:${courseId}`;
+
+    let data: CharityDetails[] | null = await cacheManager.get(cacheKey);
+
+    if (!data) {
+      data = await this.database
+        .select({
+          charityDescription: charities.description,
+          charityName: charities.name,
+          charityId: charities.id,
+          logo: charities.logoAssetId,
+          //logoCdn: assets.cdn,
+          logoExtension: assets.extension,
+          logoKey: assets.key,
+        })
+        .from(charityCourseLink)
+        .leftJoin(charities, eq(charityCourseLink.charityId, charities.id))
+        .leftJoin(assets, eq(assets.id, charities.logoAssetId))
+        .where(eq(charityCourseLink.courseId, courseId))
+        .execute()
+        .catch((err) => {
+          this.logger.error(`Error getting charity for course: ${err}`);
+          loggerService.errorLog({
+            userId: "",
+            url: "/CourseService/getSupportedCharitiesForCourseId",
+            userAgent: "",
+            message: "ERROR_GETTING_CHARITY_FOR_COURSE",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              courseId,
+            }),
+          });
+          throw new Error("Error getting charity");
+        });
+
+      await cacheManager.set(cacheKey, data, 600000);
+    }
+
     const cdnUrl = process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL;
-    const updatedData = data.map((item) => ({
+    const updatedData = data?.map((item) => ({
       ...item,
       logoCdn: cdnUrl,
     }));
@@ -882,12 +973,9 @@ export class CourseService extends DomainService {
           and(
             eq(courseAllowedTimeToSell.courseId, courseId),
             eq(courseAllowedTimeToSell.day, day),
-            and(
-              lte(courseAllowedTimeToSell.fromTime, time),
-              gte(courseAllowedTimeToSell.toTime, time)
-            )
+            and(lte(courseAllowedTimeToSell.fromTime, time), gte(courseAllowedTimeToSell.toTime, time))
           )
-        )
+        );
       if (!NumberOfPlayers[0]) {
         NumberOfPlayers = await this.database
           .select({
@@ -936,7 +1024,7 @@ export class CourseService extends DomainService {
   getAuthenticationMethods = async (courseId: string) => {
     const selectedCourse = await this.database
       .select({
-        authenticationMethods: courses.authenticationMethods
+        authenticationMethods: courses.authenticationMethods,
       })
       .from(courses)
       .where(eq(courses.id, courseId));
@@ -949,20 +1037,20 @@ export class CourseService extends DomainService {
 
     if (authenticationMethodsValue === null || authenticationMethodsValue === undefined) {
       return Object.keys(AuthenticationMethodEnum)
-        .filter(key => isNaN(Number(key)))
-        .map(key => AuthenticationMethodEnum[key as keyof typeof AuthenticationMethodEnum])
+        .filter((key) => isNaN(Number(key)))
+        .map((key) => AuthenticationMethodEnum[key as keyof typeof AuthenticationMethodEnum]);
     }
 
     const filteredMethodNames = Object.keys(AuthenticationMethodEnum)
-      .filter(key => isNaN(Number(key)))
+      .filter((key) => isNaN(Number(key)))
       .filter((key) => {
         const methodValue = AuthenticationMethodEnum[key as keyof typeof AuthenticationMethodEnum];
         return (authenticationMethodsValue & methodValue) > 0;
-      }).map(key => AuthenticationMethodEnum[key as keyof typeof AuthenticationMethodEnum]);
+      })
+      .map((key) => AuthenticationMethodEnum[key as keyof typeof AuthenticationMethodEnum]);
 
     console.log("filteredMethodNames", filteredMethodNames);
 
     return filteredMethodNames;
-  }
-
+  };
 }

@@ -75,9 +75,9 @@ export class StripeService {
           message: "ERROR_CREATING_STRIPE_ACCOUNT",
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
-            userEmail
-          })
-        })
+            userEmail,
+          }),
+        });
         throw new Error(`Error creating stripe account: ${err}`);
       });
 
@@ -122,9 +122,9 @@ export class StripeService {
           additionalDetailsJSON: JSON.stringify({
             accountId,
             refreshUrl,
-            returnUrl
-          })
-        })
+            returnUrl,
+          }),
+        });
         throw new Error(`Error creating stripe account link: ${err}`);
       });
   };
@@ -151,9 +151,9 @@ export class StripeService {
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
             accountId,
-            currency
-          })
-        })
+            currency,
+          }),
+        });
         throw new Error(`Error creating stripe payout: ${err}`);
       });
   };
@@ -168,9 +168,9 @@ export class StripeService {
         message: "ERROR_RETRIEVING_STRIPE_ACCOUNT",
         stackTrace: `${err.stack}`,
         additionalDetailsJSON: JSON.stringify({
-          accountId
-        })
-      })
+          accountId,
+        }),
+      });
       throw new Error(`Error retrieving account: ${err}`);
     });
     return account.details_submitted;
@@ -190,9 +190,9 @@ export class StripeService {
         stackTrace: `${err.stack}`,
         additionalDetailsJSON: JSON.stringify({
           request,
-          sig
-        })
-      })
+          sig,
+        }),
+      });
       throw new Error(`Error constructing event: ${err}`);
     }
     return event;

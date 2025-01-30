@@ -12,14 +12,18 @@ import { MobileFilters } from "~/components/course-page/mobile-filters";
 import { MobileSort, SortOptions } from "~/components/course-page/mobile-sort";
 import { Calendar } from "~/components/icons/calendar";
 import { ChevronUp } from "~/components/icons/chevron-up";
+import { Close } from "~/components/icons/close";
 import { FiltersIcon } from "~/components/icons/filters";
 import { Select } from "~/components/input/select";
+import { ForecastModal } from "~/components/modal/forecast-modal";
 import { useAppContext } from "~/contexts/AppContext";
+import { useBookingSourceContext } from "~/contexts/BookingSourceContext";
 import { useCourseContext } from "~/contexts/CourseContext";
-import type { GolferType } from "~/contexts/FiltersContext";
+import type { DateType, GolferType } from "~/contexts/FiltersContext";
 import { useFiltersContext } from "~/contexts/FiltersContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
+import { microsoftClarityEvent } from "~/utils/microsoftClarityUtils";
 import type { Dayjs } from "dayjs";
 import dayjs from "dayjs";
 import isBetween from "dayjs/plugin/isBetween";
@@ -44,6 +48,7 @@ export default function CourseHomePage() {
   const queryStartTime = searchParams.get("startTime");
   const queryEndTime = searchParams.get("endTime");
   const queryPlayerCount = searchParams.get("playerCount");
+  const source = searchParams.get("source");
 
   const TAKE = 4;
   const ref = useRef<HTMLDivElement | null>(null);
@@ -54,10 +59,14 @@ export default function CourseHomePage() {
   const [showDates, setShowDates] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isFirstRender, setIsFirstRender] = useState<boolean>(true);
+  const [isForecastModalOpen, setIsForecastModalOpen] =
+    useState<boolean>(false);
   const [take, setTake] = useState<number>(TAKE);
   const [pageNumber, setPageNumber] = useState<number>(1);
   const { user } = useUserContext();
   const { course } = useCourseContext();
+  const { setBookingSource } = useBookingSourceContext();
+
   const {
     showUnlisted,
     includesCart,
@@ -79,6 +88,10 @@ export default function CourseHomePage() {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const courseId = course?.id;
   const updateUser = api.user.updateUser.useMutation();
+  const { data: specialEvents, isLoading: specialEventsLoading } =
+    api.searchRouter.getSpecialEvents.useQuery({
+      courseId: courseId ?? "",
+    });
 
   const updateHandle = async (uName) => {
     try {
@@ -125,17 +138,6 @@ export default function CourseHomePage() {
     }
   );
 
-  const { data: specialEvents } = api.searchRouter.getSpecialEvents.useQuery({
-    courseId: courseId ?? "",
-  });
-
-  const getSpecialDayDate = (label) => {
-    const specialDay = specialEvents?.find((day) => day.eventName === label);
-    return specialDay
-      ? { start: dayjs(specialDay.startDate), end: dayjs(specialDay.endDate) }
-      : null;
-  };
-
   const formatDateString = (
     date: string | number | Date | Dayjs | null | undefined
   ): string => {
@@ -153,8 +155,57 @@ export default function CourseHomePage() {
     return currentDate.add(timezoneCorrection, "hour").toString();
   };
 
+  useEffect(() => {
+    if (queryDateType === "custom" && queryDate) {
+      setDateType("Custom");
+
+      // const courseOpenTime = Number(dayjs(course?.openTime).format("HHmm"));
+      // const courseCloseTime = Number(dayjs(course?.closeTime).format("HHmm"));
+      const courseOpenTime = course?.courseOpenTime ?? 9;
+      const courseCloseTime = course?.courseCloseTime ?? 9;
+      const startTime = Math.max(courseOpenTime, Number(queryStartTime));
+      const endTime = Math.min(courseCloseTime, Number(queryEndTime));
+      setStartTime([startTime, endTime]);
+
+      const playerCount =
+        Number(queryPlayerCount) <= 0 || Number(queryPlayerCount) > 4
+          ? "Any"
+          : Number(queryPlayerCount);
+      setGolfers((playerCount as GolferType) || "Any");
+    }
+  }, [queryDateType]);
+
+  useEffect(() => {
+    if (queryDateType === "custom" && queryDate) {
+      const [year, month, day] = queryDate.split("-");
+      if (year && month && day) {
+        setSelectedDay({
+          from: { year: Number(year), month: Number(month), day: Number(day) },
+          to: { year: Number(year), month: Number(month), day: Number(day) },
+        });
+      }
+    }
+    const specialDate = getSpecialDayDate(queryDateType);
+    console.log("queryDateType", queryDateType, specialDate);
+    if (queryDateType) {
+      if (specialDate) {
+        setDateType(queryDateType as DateType); // Set the DateType to queryDateType if specialDate exists
+      } else {
+        setDateType("All"); // If no specialDate, set the DateType to "All"
+      }
+    }
+  }, [specialEvents, queryDateType]);
+
+  const getSpecialDayDate = (label) => {
+    const specialDay = specialEvents?.find((day) => day.eventName === label);
+    return specialDay
+      ? { start: dayjs(specialDay.startDate), end: dayjs(specialDay.endDate) }
+      : null;
+  };
+
   const startDate = useMemo(() => {
     const specialDate = getSpecialDayDate(dateType);
+
     if (specialDate) {
       return formatDateString(dayjs(specialDate.start).toDate());
     }
@@ -179,7 +230,7 @@ export default function CourseHomePage() {
       default:
         return formatDateString(new Date());
     }
-  }, [dateType, selectedDay]);
+  }, [dateType, selectedDay, queryDateType, specialEvents]);
 
   const endDate = useMemo(() => {
     const specialDate = getSpecialDayDate(dateType);
@@ -236,7 +287,7 @@ export default function CourseHomePage() {
       default:
         return formatDateString(dayjs().add(360, "days").toDate());
     }
-  }, [dateType, selectedDay, farthestDateOut]);
+  }, [dateType, selectedDay, farthestDateOut, specialEvents]);
 
   const utcStartDate = dayjs
     .utc(startDate)
@@ -390,40 +441,22 @@ export default function CourseHomePage() {
   }, [priceRange]);
 
   useEffect(() => {
-    if (queryDateType === "custom" && queryDate) {
-      setDateType("Custom");
-
-      const courseOpenTime = Number(dayjs(course?.openTime).format("HHmm"));
-      const courseCloseTime = Number(dayjs(course?.closeTime).format("HHmm"));
-      const startTime = Math.max(courseOpenTime, Number(queryStartTime));
-      const endTime = Math.min(courseCloseTime, Number(queryEndTime));
-      setStartTime([startTime, endTime]);
-
-      const playerCount =
-        Number(queryPlayerCount) <= 0 || Number(queryPlayerCount) > 4
-          ? "Any"
-          : Number(queryPlayerCount);
-      setGolfers((playerCount as GolferType) || "Any");
-    }
-  }, [queryDateType]);
-
-  useEffect(() => {
-    if (queryDateType === "custom" && queryDate) {
-      const [year, month, day] = queryDate.split("-");
-      if (year && month && day) {
-        setSelectedDay({
-          from: { year: Number(year), month: Number(month), day: Number(day) },
-          to: { year: Number(year), month: Number(month), day: Number(day) },
-        });
-      }
-    }
-  }, [dateType]);
-  useEffect(() => {
     if (typeof window !== "undefined") {
       localStorage.removeItem("googlestate");
       localStorage.removeItem("credentials");
       localStorage.removeItem("linkedinstate");
       localStorage.removeItem("facebookstate");
+
+      microsoftClarityEvent({
+        action: ``,
+        category: "",
+        label: "",
+        value: "",
+        additionalContent: {
+          courseName: course?.name,
+          websiteURL: course?.websiteURL,
+        },
+      });
     }
   }, []);
   let datesArr = JSON.parse(
@@ -456,6 +489,10 @@ export default function CourseHomePage() {
   };
 
   useEffect(() => {
+    if (source) {
+      setBookingSource(source.slice(0, 50));
+      sessionStorage.setItem("source", source.slice(0, 50));
+    }
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -483,24 +520,34 @@ export default function CourseHomePage() {
     return null;
   };
 
-  const { data: systemNotifications } =
-    api.systemNotification.getSystemNotification.useQuery({});
+  // const { data: systemNotifications } =
+  //   api.systemNotification.getSystemNotification.useQuery({});
 
-  const { data: courseGlobalNotification } =
-    api.systemNotification.getCourseGlobalNotification.useQuery({
-      courseId: courseId ?? "",
-    });
+  // const { data: courseGlobalNotification } =
+  //   api.systemNotification.getCourseGlobalNotification.useQuery({
+  //     courseId: courseId ?? "",
+  //   });
 
-  const notificationsCount =
-    (systemNotifications ? systemNotifications.length : 0) +
-    (courseGlobalNotification ? courseGlobalNotification.length : 0);
+  // const notificationsCount =
+  //   (systemNotifications ? systemNotifications.length : 0) +
+  //   (courseGlobalNotification ? courseGlobalNotification.length : 0);
 
-  const marginTop =
-    notificationsCount > 0 ? `mt-${notificationsCount * 6}` : "";
+  // const marginTop =
+  //   notificationsCount > 0 ? `mt-${notificationsCount * 6}` : "";
 
+  const openForecastModal = () => {
+    setIsForecastModalOpen(true);
+  };
+
+  // Function to close the modal
+  const closeForecastModal = () => {
+    setIsForecastModalOpen(false);
+  };
   return (
-    <main className={`bg-secondary-white py-4 md:py-6 ${marginTop}`}>
-      <LoadingContainer isLoading={isLoadingTeeTimeDate || isLoading}>
+    <main className={`bg-secondary-white py-4 md:py-6`}>
+      <LoadingContainer
+        isLoading={isLoadingTeeTimeDate || isLoading || specialEventsLoading}
+      >
         <div></div>
       </LoadingContainer>
       <div className="flex items-center justify-between px-4 md:px-6">
@@ -536,7 +583,7 @@ export default function CourseHomePage() {
               setValue={handleSetSortValue}
               values={SortOptions}
             />
-            <Filters />
+            <Filters openForecastModal={openForecastModal} />
           </div>
         </div>
         <div className="fixed bottom-5 left-1/2 z-10 -translate-x-1/2 md:hidden">
@@ -615,7 +662,7 @@ export default function CourseHomePage() {
                   >
                     <ChevronUp fill="#fff" className="-rotate-90" />
                   </FilledButton>
-                  <div className="text-primary-gray px-3 py-2 bg-[#ffffff] rounded-md">
+                  <div className="text-primary-gray px-3 py-2 bg-[#ffffff] rounded-md unmask-pagination">
                     {pageNumber} / {amountOfPage}
                   </div>
                   <FilledButton
@@ -648,12 +695,21 @@ export default function CourseHomePage() {
         <MobileFilters
           setShowFilters={setShowFilters}
           toggleFilters={toggleFilters}
+          openForecastModal={openForecastModal}
         />
       )}
       {showDates && (
         <MobileDates
           setShowFilters={setShowDates}
           toggleFilters={toggleDates}
+          openForecastModal={openForecastModal}
+        />
+      )}
+      {isForecastModalOpen && (
+        <ForecastModal
+          closeForecastModal={closeForecastModal}
+          startDate={startDate}
+          endDate={endDate}
         />
       )}
     </main>

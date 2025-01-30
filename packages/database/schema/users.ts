@@ -86,6 +86,7 @@ export const users = mySqlTable(
       mode: "string",
       fsp: 3,
     }),
+    allowDeleteCreditCard: boolean("allowDeleteCreditCard").default(false).notNull(),
   },
   (table) => {
     return {

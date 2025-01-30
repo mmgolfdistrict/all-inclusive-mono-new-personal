@@ -1,6 +1,6 @@
+import { sql } from "drizzle-orm";
 import { datetime, index, unique, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
-import { sql } from "drizzle-orm";
 
 export const providerAuthTokens = mySqlTable(
   "providerAuthToken",
@@ -14,7 +14,11 @@ export const providerAuthTokens = mySqlTable(
       .notNull(),
   },
   (table) => ({
-    uniqueKey: unique("provider_access_token_refresh_token_idx").on(table.providerId, table.accessToken, table.refreshToken),
+    uniqueKey: unique("provider_access_token_refresh_token_idx").on(
+      table.providerId,
+      table.accessToken,
+      table.refreshToken
+    ),
     providerIndex: index("provider_index").on(table.providerId),
   })
 );

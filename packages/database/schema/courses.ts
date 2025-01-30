@@ -66,6 +66,12 @@ export const courses = mySqlTable(
     cartFeeTaxPercent: int("cartFeeTaxPercent").default(0).notNull(),
     weatherGuaranteeTaxPercent: int("weatherGuaranteeTaxPercent").default(0).notNull(),
     markupTaxPercent: int("markupTaxPercent").default(0).notNull(),
+    displayOrder: tinyint("displayOrder").notNull().default(-1),
+    showPricingBreakdown: tinyint("showPricingBreakdown").default(0).notNull(),
+    courseOpenTime: int("courseOpenTime").default(0).notNull(),
+    courseCloseTime: int("courseCloseTime").default(0).notNull(),
+    supportsProviderMembership: tinyint("supportsProviderMembership").default(0).notNull(),
+    supportsGroupBooking: tinyint("supportsGroupBooking").default(0).notNull(),
   },
   (table) => {
     return {

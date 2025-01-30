@@ -34,6 +34,7 @@ export const OrderSummary = ({
           />
         </h2>
       </div>
+
       <div className="flex flex-col gap-4">
         <CheckoutItem
           isLoading={isLoading}

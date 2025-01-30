@@ -2,6 +2,7 @@
 
 import { type DayValue } from "@taak/react-modern-calendar-datepicker";
 import type { SortType } from "~/components/course-page/mobile-sort";
+import { useSearchParams } from "next/navigation";
 import {
   createContext,
   useContext,
@@ -117,7 +118,13 @@ const FiltersContext = createContext<FiltersContextType>({
 });
 
 export const FiltersWrapper = ({ children }: { children: ReactNode }) => {
-  const [dateType, setDateType] = useState<DateType>("All");
+  const searchParams = useSearchParams();
+
+  const queryDateType = searchParams.get("dateType");
+
+  const [dateType, setDateType] = useState<DateType>(
+    queryDateType ? (queryDateType as DateType) : "All"
+  );
   const [holes, setHoles] = useState<HoleType>("Any");
   const [golfers, setGolfers] = useState<GolferType>("Any");
   const [showUnlisted, setShowUnlisted] = useState<boolean>(false);
@@ -137,12 +144,14 @@ export const FiltersWrapper = ({ children }: { children: ReactNode }) => {
   const startTimeOptions = useMemo(() => {
     if (!course) return StartTimeOptions;
     if (!course?.openTime) return StartTimeOptions;
-    const startingHour =
-      Number(course?.openTime?.split(" ")?.[1]?.split(":")?.[0]) ?? 9;
-    const closingHour =
-      Number(course?.closeTime?.split(" ")?.[1]?.split(":")?.[0]) ?? 9;
+    // const startingHour =
+    //   Number(course?.openTime?.split(" ")?.[1]?.split(":")?.[0]) ?? 9;
+    // const closingHour =
+    //   Number(course?.closeTime?.split(" ")?.[1]?.split(":")?.[0]) ?? 9;
+    // const hoursOpen = closingHour - startingHour;
+    const startingHour = Math.floor(course.courseOpenTime / 100);
+    const closingHour = Math.floor(course.courseCloseTime / 100);
     const hoursOpen = closingHour - startingHour;
-
     const options: OperationTimeType[] = [];
     for (let i = 0; i <= hoursOpen; i++) {
       const amOrPm = startingHour + i >= 12 ? "PM" : "AM";

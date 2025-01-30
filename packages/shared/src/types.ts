@@ -45,7 +45,6 @@ export type EntityType = {
   color3?: string;
   subdomain?: string | null;
   customDomain?: string | null;
-  message404?: string | null;
   createdAt?: string;
   updatedAt?: Date;
   updatedById?: string | null;
@@ -93,9 +92,13 @@ export type FullCourseType = {
   sellerFee?: number;
   buyerFee?: number;
   furthestDayToBook?: number;
-  roundUpCharityId?: string
+  roundUpCharityId?: string;
   internalId?: string | null;
   supportsPlayerNameChange: boolean;
+  websiteURL: string;
+  courseOpenTime: number;
+  courseCloseTime: number;
+  supportsGroupBooking: boolean;
 };
 
 export type SupportedCharity = {
@@ -208,7 +211,9 @@ export type ReserveTeeTimeResponse = {
   bookingId: string;
   providerBookingId: string;
   status: string;
-  isEmailSend: boolean
+  isEmailSend: boolean;
+  courseMembershipId?: string;
+  playerCountForMemberShip?: string;
 };
 
 export type NotificationObject = {
@@ -219,14 +224,14 @@ export type NotificationObject = {
   displayType: string;
   startDate: string;
   endDate: string;
-}
+};
 
 export enum AuthenticationMethodEnum {
-  EMAIL_PASSWORD = 1,   // 00000001
-  GOOGLE = 2,           // 00000010
-  LINKEDIN = 4,         // 00000100
-  FACEBOOK = 8,         // 00001000
-  INSTAGRAM = 16,       // 00010000
-  MICROSOFT = 32,      // 00100000
-  APPLE = 64,           // 01000000
+  EMAIL_PASSWORD = 1, // 00000001
+  GOOGLE = 2, // 00000010
+  LINKEDIN = 4, // 00000100
+  FACEBOOK = 8, // 00001000
+  INSTAGRAM = 16, // 00010000
+  MICROSOFT = 32, // 00100000
+  APPLE = 64, // 01000000
 }

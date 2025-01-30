@@ -1,4 +1,5 @@
 import { type Db } from "@golf-district/database";
+import { CourseExceptionService } from "./course-exception/courseException.service";
 import {
   AppSettingsService,
   AuctionService,
@@ -16,6 +17,7 @@ import {
   HyperSwitchWebhookService,
   ImageService,
   NotificationService,
+  ReleaseHistoryService,
   SearchService,
   SensibleService,
   StripeService,
@@ -25,15 +27,15 @@ import {
   WatchlistService,
   WeatherService,
 } from "./index";
+import { IpInfoService } from "./ipinfo/ipinfo.service";
 import { ProfanityService } from "./profanity/profanity.service";
 import { SystemNotificationService } from "./system-notification/systemNotification.service";
 import { ProviderService } from "./tee-sheet-provider/providers.service";
-import { clubprophetWebhookService } from "./webhooks/clubprophet.webhook.service";
 import { UserWaitlistService } from "./user-waitlist/userWaitlist.service";
+import { clubprophetWebhookService } from "./webhooks/clubprophet.webhook.service";
 import { FinixService } from "./webhooks/finix.service";
 import { LoggerService } from "./webhooks/logging.service";
 import { PaymentVerifierService } from "./webhooks/paymentverifier.service";
-import { CourseExceptionService } from "./course-exception/courseException.service";
 
 export interface ServiceConfig {
   database: Db;
@@ -81,7 +83,7 @@ export interface ServiceConfig {
  * ```
  */
 export class ServiceFactory {
-  constructor(protected readonly config: ServiceConfig) { }
+  constructor(protected readonly config: ServiceConfig) {}
 
   /**
    * Returns an instance of HyperSwitchService with the provided API key.
@@ -116,7 +118,9 @@ export class ServiceFactory {
     return new SearchService(
       this.config.database,
       this.getWeatherService(),
-      this.getProviderService()
+      this.getProviderService(),
+      this.config.redisUrl,
+      this.config.redisToken
     );
   };
 
@@ -198,7 +202,8 @@ export class ServiceFactory {
         profileId: this.config.hyperSwitchProfileId,
       },
       this.getForeupWebhookService(),
-      this.getProviderService()
+      this.getProviderService(),
+      this.getIpInfoService()
     );
   };
 
@@ -242,7 +247,12 @@ export class ServiceFactory {
    * @returns An instance of WeatherService.
    */
   getWeatherService = (): WeatherService => {
-    return new WeatherService(this.config.database, this.config.redisUrl, this.config.redisToken, this.getLoggerService());
+    return new WeatherService(
+      this.config.database,
+      this.config.redisUrl,
+      this.config.redisToken,
+      this.getLoggerService()
+    );
   };
 
   /**
@@ -308,6 +318,7 @@ export class ServiceFactory {
     return new AuthService(
       this.config.database,
       this.getNotificationService(),
+      this.getIpInfoService(),
       this.config.redisUrl,
       this.config.redisToken
     );
@@ -371,11 +382,7 @@ export class ServiceFactory {
   };
 
   getFinixService = (): FinixService => {
-    return new FinixService(
-      this.config.database,
-      this.getCashOutService(),
-      this.getNotificationService()
-    );
+    return new FinixService(this.config.database, this.getCashOutService(), this.getNotificationService());
   };
   getLoggerService = (): LoggerService => {
     return new LoggerService();
@@ -385,7 +392,11 @@ export class ServiceFactory {
   };
 
   getUserWaitlistService = (): UserWaitlistService => {
-    return new UserWaitlistService(this.config.database, this.getNotificationService(), this.getAppSettingService());
+    return new UserWaitlistService(
+      this.config.database,
+      this.getNotificationService(),
+      this.getAppSettingService()
+    );
   };
 
   getSystemNotificationService = (): SystemNotificationService => {
@@ -394,5 +405,13 @@ export class ServiceFactory {
 
   getCourseExceptionService = (): CourseExceptionService => {
     return new CourseExceptionService(this.config.database);
+  };
+
+  getReleaseHistoryService = (): ReleaseHistoryService => {
+    return new ReleaseHistoryService(this.config.database);
+  };
+
+  getIpInfoService = (): IpInfoService => {
+    return new IpInfoService();
   };
 }

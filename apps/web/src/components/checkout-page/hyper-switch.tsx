@@ -11,11 +11,11 @@ import type {
   SearchObject,
 } from "~/utils/types";
 import dayjs from "dayjs";
+import isequal from "lodash.isequal";
 // import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 import { useEffect, useRef, useState } from "react";
 import { Spinner } from "../loading/spinner";
 import { CheckoutForm } from "./checkout-form";
-import isequal from 'lodash.isequal'
 
 export type NextAction = {
   type?: string;
@@ -79,7 +79,7 @@ export const HyperSwitch = ({
     undefined
   );
   const [paymentId, setPaymentId] = useState<string | undefined>(undefined);
-  let initialLoad=true
+  let initialLoad = true;
 
   const convertDateFormat = (dateString: string, utcOffset = 0) => {
     const cleanTimeString = !dateString.includes("T")
@@ -94,7 +94,7 @@ export const HyperSwitch = ({
   };
 
   const buildSession = async () => {
-    initialLoad=false;
+    initialLoad = false;
     if (!user) return;
     try {
       setError(undefined);
@@ -162,7 +162,7 @@ export const HyperSwitch = ({
     //     break;
     //   }
     // }
-    if ((!options && initialLoad) || !isequal(localCartData,cartData)) {
+    if ((!options && initialLoad) || !isequal(localCartData, cartData)) {
       if (cartData?.length > 0) {
         void buildSession();
       }

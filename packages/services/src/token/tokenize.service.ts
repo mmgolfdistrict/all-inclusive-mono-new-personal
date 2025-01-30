@@ -156,7 +156,13 @@ export class TokenizeService {
     isWebhookAvailable,
     providerBookingIds,
     cartFeeCharge,
-    additionalTaxes
+    additionalTaxes,
+    source,
+    additionalNoteFromUser,
+    needRentals,
+    courseMembershipId,
+    playerCountForMemberShip,
+    providerCourseMembershipId,
   }: {
     redirectHref: string;
     userId: string;
@@ -183,13 +189,19 @@ export class TokenizeService {
     normalizedCartData?: any;
     isWebhookAvailable?: boolean;
     providerBookingIds?: string[];
-    additionalTaxes:{
-      greenFeeTaxTotal:number,
-      markupTaxTotal:number,
-      weatherGuaranteeTaxTotal:number,
-      cartFeeTaxPercentTotal:number,
-      additionalTaxes:number
-    }
+    additionalTaxes: {
+      greenFeeTaxTotal: number;
+      markupTaxTotal: number;
+      weatherGuaranteeTaxTotal: number;
+      cartFeeTaxPercentTotal: number;
+      additionalTaxes: number;
+    };
+    source: string;
+    additionalNoteFromUser?: string;
+    needRentals: boolean;
+    courseMembershipId?: string;
+    playerCountForMemberShip?: string;
+    providerCourseMembershipId?: string;
   }): Promise<BookingTypes> {
     this.logger.info(`tokenizeBooking tokenizing booking id: ${providerTeeTimeId} for user: ${userId}`);
     //@TODO add this to the transaction
@@ -306,7 +318,7 @@ export class TokenizeService {
                 : "",
             },
           });
-          console.log("================================+>",acceptedQuote);
+          console.log("================================+>", acceptedQuote);
         } catch (error: any) {
           const adminEmail: string = process.env.ADMIN_EMAIL_LIST || "nara@golfdistrict.com";
           const emailAterSplit = adminEmail.split(",");
@@ -371,26 +383,31 @@ export class TokenizeService {
       listId: null,
       // entityId: existingTeeTime.entityId,
       cartId: normalizedCartData.cartId,
-      playerCount: players ?? 0,
+      playerCount: courseMembershipId ? Number(playerCountForMemberShip) : players ?? 0,
       greenFeePerPlayer: (isFirstHandBooking ? existingTeeTime.greenFee : purchasePrice) || 0,
-      totalTaxesAmount:  additionalTaxes.additionalTaxes * 100,       // normalizedCartData.taxCharge * 100 || 0,
+      totalTaxesAmount: additionalTaxes.additionalTaxes * 100, // normalizedCartData.taxCharge * 100 || 0,
       charityId: normalizedCartData.charityId || null,
       totalCharityAmount: normalizedCartData.charityCharge * 100 || 0,
-      totalAmount: (normalizedCartData.total || 0) + (additionalTaxes.additionalTaxes*100),
+      totalAmount: (normalizedCartData.total || 0) + additionalTaxes.additionalTaxes * 100,
       providerPaymentId: paymentId,
       weatherQuoteId: normalizedCartData.weatherQuoteId ?? null,
       weatherGuaranteeId: acceptedQuote?.id ? acceptedQuote?.id : null,
       weatherGuaranteeAmount: acceptedQuote?.price_charged ? acceptedQuote?.price_charged * 100 : 0,
       markupFees: (normalizedCartData?.markupCharge ?? 0) * 100,
       cartFeePerPlayer: cartFeeCharge,
-      totalGreenFeeTaxAmount:additionalTaxes.greenFeeTaxTotal *100,
-      totalCartFeeTaxAmount:additionalTaxes.cartFeeTaxPercentTotal*100,
-      totalWeatherGuaranteeTaxAmount:additionalTaxes.weatherGuaranteeTaxTotal*100,
-      totalMarkupFeeTaxAmount:additionalTaxes.markupTaxTotal*100,
+      totalGreenFeeTaxAmount: additionalTaxes.greenFeeTaxTotal * 100,
+      totalCartFeeTaxAmount: additionalTaxes.cartFeeTaxPercentTotal * 100,
+      totalWeatherGuaranteeTaxAmount: additionalTaxes.weatherGuaranteeTaxTotal * 100,
+      totalMarkupFeeTaxAmount: additionalTaxes.markupTaxTotal * 100,
+      source: source ? source : null,
+      customerComment: additionalNoteFromUser,
+      needClubRental: needRentals,
+      courseMembershipId: courseMembershipId,
+      canResell: courseMembershipId ? 1 : 0,
     });
     transfersToCreate.push({
       id: randomUUID(),
-      amount: purchasePrice + (additionalTaxes.additionalTaxes*100),
+      amount: purchasePrice + additionalTaxes.additionalTaxes * 100,
       purchasedPrice: purchasePrice,
       bookingId: bookingId,
       transactionId: transactionId,
@@ -407,12 +424,13 @@ export class TokenizeService {
     const bookingSlots =
       (await provider?.getSlotIdsForBooking(
         bookingId,
-        players,
+        courseMembershipId ? Number(playerCountForMemberShip) : players ?? 0,
         userId,
         providerBookingId,
         provider.providerId,
         existingTeeTime.courseId,
-        providerBookingIds
+        providerBookingIds,
+        providerCourseMembershipId
       )) ?? [];
 
     console.log(`Looping through and updating the booking slots.`);
@@ -533,7 +551,8 @@ export class TokenizeService {
     });
     const finalAmount =
       Math.floor(purchasePrice + (cartFeeCharge ?? 0)) * Number(players) +
-      (normalizedCartData?.markupCharge ?? 0) * 100 + additionalTaxes.additionalTaxes;
+      (normalizedCartData?.markupCharge ?? 0) * 100 +
+      additionalTaxes.additionalTaxes;
     const message = `
 ${players} tee times have been purchased for ${existingTeeTime.date} at ${existingTeeTime.courseId}
     price per booking: ${finalAmount} 
@@ -567,24 +586,35 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       PlayDateTime: formatTime(existingTeeTime.providerDate, true, existingTeeTime.timezoneCorrection ?? 0),
       NumberOfHoles: existingTeeTime.numberOfHoles,
       GreenFeesPerPlayer:
-        `$${((existingTeeTime.greenFee + Number(cartFeeCharge) + ((normalizedCartData?.markupCharge ?? 0)*100) ) / 100).toLocaleString("en-US", {
+        `$${(
+          (existingTeeTime.greenFee + Number(cartFeeCharge) + (normalizedCartData?.markupCharge ?? 0) * 100) /
+          100
+        ).toLocaleString("en-US", {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         })}` ?? "-",
       GreenFees:
-        `$${(((existingTeeTime.greenFee + Number(cartFeeCharge)+((normalizedCartData?.markupCharge ?? 0)*100) ) * players) / 100).toLocaleString("en-US", {
+        `$${(
+          ((existingTeeTime.greenFee +
+            Number(cartFeeCharge) +
+            (normalizedCartData?.markupCharge ?? 0) * 100) *
+            players) /
+          100
+        ).toLocaleString("en-US", {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         })}` ?? "-",
-      TaxesAndOtherFees:
-        `$${(normalizedCartData.taxes+additionalTaxes.additionalTaxes).toLocaleString("en-US", {
+      TaxesAndOtherFees: `$${(normalizedCartData.taxes + additionalTaxes.additionalTaxes).toLocaleString(
+        "en-US",
+        {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
-        })}` ,
+        }
+      )}`,
       SensibleWeatherIncluded: normalizedCartData.sensibleCharge ? "Yes" : "No",
       PurchasedFrom: existingTeeTime.courseName ?? "-",
       PlayerCount: players ?? 0,
-      TotalAmount: formatMoney((normalizedCartData.total / 100 )+additionalTaxes.additionalTaxes),
+      TotalAmount: formatMoney(normalizedCartData.total / 100 + additionalTaxes.additionalTaxes),
       CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
       CourseURL: existingTeeTime?.websiteURL ?? "",
       HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,

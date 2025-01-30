@@ -37,7 +37,7 @@ export const ModalWrapper: FC<ModalProps> = ({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 flex items-center justify-center z-50 bg-[#00000099]"
+          className="fixed inset-0 flex items-center justify-center z-500 bg-[#00000099]"
           style={{ willChange: "opacity" }}
           variants={backdropVariants}
           initial="hidden"

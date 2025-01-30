@@ -31,11 +31,11 @@ export interface WaitlistNotification {
 }
 
 export interface NotificationQstashData {
-    notificationId?: string;
-    courseId: string;
-    userId: string;
-    courseLogoURL?: string;
-    subDomainURL?: string | null;
-    courseName?: string;
+  notificationId?: string;
+  courseId: string;
+  userId: string;
+  courseLogoURL?: string;
+  subDomainURL?: string | null;
+  courseName?: string;
   listingId?: string;
 }

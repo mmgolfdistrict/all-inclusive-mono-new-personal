@@ -1,25 +1,34 @@
 import type { InsertBookingSlots } from "@golf-district/database/schema/bookingslots";
 import type pino from "pino";
+import type { CacheService } from "../../../infura/cache.service";
 import type {
+  BookingCreationData as ClubProphetBookingCreationData,
   ClubProphetBookingResponse,
   ClubProphetCustomerCreationData,
   ClubProphetCustomerCreationResponse,
-  ClubProphetTeeTimeResponse,
-  BookingCreationData as ClubProphetBookingCreationData,
   ClubProphetGetCustomerResponse,
+  ClubProphetTeeTimeResponse,
 } from "./clubprophet.types";
 import type {
+  BookingCreationData as ForeupBookingCreationData,
   ForeUpBookingNameChangeOptions,
   BookingResponse as ForeUpBookingResponse,
   CustomerCreationData as ForeUpCustomerCreationData,
   CustomerData as ForeUpCustomerCreationResponse,
   ForeUpGetCustomerResponse,
+  ForeupSaleDataOptions,
   TeeTimeResponse as ForeUpTeeTimeResponse,
-  BookingCreationData as ForeupBookingCreationData,
-  ForeupSaleDataOptions, 
 } from "./foreup.type";
-import type { LightSpeedBookingResponse, LightspeedBookingCreationData, LightspeedBookingNameChangeOptions, LightspeedCustomerCreationData, LightspeedCustomerCreationResponse, LightspeedGetCustomerResponse, LightspeedSaleDataOptions, LightspeedTeeTimeResponse } from "./lightspeed.type";
-import type { CacheService } from "../../../infura/cache.service";
+import type {
+  LightspeedBookingCreationData,
+  LightspeedBookingNameChangeOptions,
+  LightSpeedBookingResponse,
+  LightspeedCustomerCreationData,
+  LightspeedCustomerCreationResponse,
+  LightspeedGetCustomerResponse,
+  LightspeedSaleDataOptions,
+  LightspeedTeeTimeResponse,
+} from "./lightspeed.type";
 
 export type ForeUpCredentials = {
   username: string;
@@ -73,7 +82,7 @@ export interface SecondHandBookingFields {
     weatherGuaranteeAmount?: number;
     weatherGuaranteeId?: string;
     playerCount?: number;
-  }
+  };
 }
 export type BookingDetails = {
   providerCourseId: string;
@@ -81,32 +90,48 @@ export type BookingDetails = {
   playerCount: number;
   totalAmountPaid: number;
   token: string;
-}
+};
 
 export type NameChangeCustomerDetails = {
   name: string;
   providerBookingId: string;
   providerCustomerId: string;
-}
+};
 
 type ProviderCredentials = ForeUpCredentials;
 
 export type TeeTimeResponse = ForeUpTeeTimeResponse | ClubProphetTeeTimeResponse | LightspeedTeeTimeResponse;
 
-export type BookingResponse = (ForeUpBookingResponse | ClubProphetBookingResponse | LightSpeedBookingResponse) & SecondHandBookingFields;
+export type BookingResponse = (
+  | ForeUpBookingResponse
+  | ClubProphetBookingResponse
+  | LightSpeedBookingResponse
+) &
+  SecondHandBookingFields;
 
-export type BookingCreationData = ForeupBookingCreationData | ClubProphetBookingCreationData | LightspeedBookingCreationData;
+export type BookingCreationData =
+  | ForeupBookingCreationData
+  | ClubProphetBookingCreationData
+  | LightspeedBookingCreationData;
 
-export type CustomerCreationData = ForeUpCustomerCreationData | ClubProphetCustomerCreationData | LightspeedCustomerCreationData;
+export type CustomerCreationData =
+  | ForeUpCustomerCreationData
+  | ClubProphetCustomerCreationData
+  | LightspeedCustomerCreationData;
 
-export type CustomerData = ForeUpCustomerCreationResponse | ClubProphetCustomerCreationResponse | LightspeedCustomerCreationResponse;
+export type CustomerData =
+  | ForeUpCustomerCreationResponse
+  | ClubProphetCustomerCreationResponse
+  | LightspeedCustomerCreationResponse;
 
 export type SalesDataOptions = ForeupSaleDataOptions | LightspeedSaleDataOptions;
 
-export type BookingNameChangeOptions = ForeUpBookingNameChangeOptions | LightspeedBookingNameChangeOptions
+export type BookingNameChangeOptions = ForeUpBookingNameChangeOptions | LightspeedBookingNameChangeOptions;
 
-export type GetCustomerResponse = ForeUpGetCustomerResponse | ClubProphetGetCustomerResponse | LightspeedGetCustomerResponse;
-
+export type GetCustomerResponse =
+  | ForeUpGetCustomerResponse
+  | ClubProphetGetCustomerResponse
+  | LightspeedGetCustomerResponse;
 
 export interface ProviderAPI {
   providerId: string;
@@ -119,7 +144,7 @@ export interface ProviderAPI {
     teesheetId: string,
     startTime: string,
     endTime: string,
-    date: string,
+    date: string
   ) => Promise<TeeTimeResponse[]>;
   createBooking: (
     token: string,
@@ -151,7 +176,8 @@ export interface ProviderAPI {
     providerBookingId: string | string[],
     providerId: string,
     courseId: string,
-    providerSlotIds?: string[]
+    providerSlotIds?: string[],
+    providerCourseMembershipId?: string
   ) => Promise<InsertBookingSlots[]>;
   shouldAddSaleData: () => boolean;
   getSalesDataOptions: (reservationData: BookingResponse, bookingDetails: BookingDetails) => SalesDataOptions;
@@ -173,11 +199,24 @@ export interface ProviderAPI {
     time: number,
     teeTimeId: string,
     providerTeeTimeId: string
-  ): Promise<unknown>
+  ): Promise<unknown>;
   findTeeTimeById(teeTimeId: string, teetimes: TeeTimeResponse[]): TeeTimeResponse | undefined;
   getBookingNameChangeOptions(customerDetails: NameChangeCustomerDetails): BookingNameChangeOptions;
-  getCustomerIdFromGetCustomerResponse(getCustomerResponse: GetCustomerResponse): { customerId: string, accountNumber?: number };
+  getCustomerIdFromGetCustomerResponse(getCustomerResponse: GetCustomerResponse): {
+    customerId: string;
+    accountNumber?: number;
+  };
   requireToCreatePlayerSlots(): boolean;
+  checkBookingIsCancelledOrNot(
+    providerBookingId: string,
+    providerCourseId: string,
+    providerTeeSheetId: string,
+    token: string,
+    providerInternalId: string,
+    courseId: string,
+    providerCourseConfiguration: string
+  ): Promise<boolean>;
+  SearchCustomer(token: string, providerCourseId: string, email: string): Promise<CustomerData>;
 }
 
 export abstract class BaseProvider implements ProviderAPI {
@@ -187,7 +226,11 @@ export abstract class BaseProvider implements ProviderAPI {
   providerConfiguration: string | undefined;
   cacheService: CacheService | undefined;
 
-  constructor(credentials?: ProviderCredentials, providerConfiguration?: string, cacheService?: CacheService) {
+  constructor(
+    credentials?: ProviderCredentials,
+    providerConfiguration?: string,
+    cacheService?: CacheService
+  ) {
     this.credentials = credentials;
     this.providerConfiguration = providerConfiguration;
     this.cacheService = cacheService;
@@ -229,7 +272,11 @@ export abstract class BaseProvider implements ProviderAPI {
     courseId: string,
     customerData: CustomerCreationData
   ): Promise<CustomerData>;
-  abstract getCustomer(token: string, courseId: string, email: string): Promise<GetCustomerResponse | undefined>;
+  abstract getCustomer(
+    token: string,
+    courseId: string,
+    email: string
+  ): Promise<GetCustomerResponse | undefined>;
   abstract getSlotIdsForBooking(
     bookingId: string,
     slots: number,
@@ -237,10 +284,14 @@ export abstract class BaseProvider implements ProviderAPI {
     providerBookingId: string | string[],
     providerId: string,
     courseId: string,
-    providerSlotIds?: string[]
-  ): Promise<InsertBookingSlots[]>
+    providerSlotIds?: string[],
+    providerCourseMembershipId?: string
+  ): Promise<InsertBookingSlots[]>;
   abstract shouldAddSaleData(): boolean;
-  abstract getSalesDataOptions(reservationData: BookingResponse, bookingDetails: BookingDetails): SalesDataOptions;
+  abstract getSalesDataOptions(
+    reservationData: BookingResponse,
+    bookingDetails: BookingDetails
+  ): SalesDataOptions;
   abstract addSalesData(options: SalesDataOptions): Promise<void>;
   abstract supportsPlayerNameChange(): boolean;
   abstract getCustomerCreationData(buyerData: BuyerData): CustomerCreationData;
@@ -259,11 +310,23 @@ export abstract class BaseProvider implements ProviderAPI {
     time: number,
     teeTimeId: string,
     providerTeeTimeId: string
-  ): Promise<unknown>
+  ): Promise<unknown>;
   abstract findTeeTimeById(teeTimeId: string, teetimes: TeeTimeResponse[]): TeeTimeResponse | undefined;
   abstract getBookingNameChangeOptions(customerDetails: NameChangeCustomerDetails): BookingNameChangeOptions;
-  abstract getCustomerIdFromGetCustomerResponse(getCustomerResponse: GetCustomerResponse): { customerId: string, accountNumber?: number };
-
+  abstract getCustomerIdFromGetCustomerResponse(getCustomerResponse: GetCustomerResponse): {
+    customerId: string;
+    accountNumber?: number;
+  };
+  abstract checkBookingIsCancelledOrNot(
+    providerBookingId: string,
+    providerCourseId: string,
+    providerTeeSheetId: string,
+    token: string,
+    providerInternalId: string,
+    courseId: string,
+    providerCourseConfiguration: string
+  ): Promise<boolean>;
+  abstract SearchCustomer(token: string, providerCourseId: string, email: string): Promise<CustomerData>;
   /**
    * Whether to require to create player slots to allow players for name changes
    */

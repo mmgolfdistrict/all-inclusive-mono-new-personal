@@ -8,6 +8,7 @@ import {
 } from "@golf-district/api";
 import type { FullCourseType } from "@golf-district/shared";
 import { CourseLayout } from "~/components/course-layout";
+import { BookingSourceWrapper } from "~/contexts/BookingSourceContext";
 import { CourseWrapper } from "~/contexts/CourseContext";
 import { FiltersWrapper } from "~/contexts/FiltersContext";
 import type { Metadata } from "next";
@@ -60,10 +61,12 @@ export default async function CoursePageLayout({
       ) : (
         <CourseWrapper courseData={courseData} courseImages={courseImages}>
           <FiltersWrapper>
-            <div className="flex w-full flex-col">
-              <CourseNav />
-              <CourseLayout>{children}</CourseLayout>
-            </div>
+            <BookingSourceWrapper>
+              <div className="flex w-full flex-col">
+                <CourseNav />
+                <CourseLayout>{children}</CourseLayout>
+              </div>
+            </BookingSourceWrapper>
           </FiltersWrapper>
         </CourseWrapper>
       )}

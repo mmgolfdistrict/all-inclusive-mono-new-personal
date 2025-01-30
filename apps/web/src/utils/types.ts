@@ -141,26 +141,22 @@ export interface FirstHandProduct {
   tee_time_id: string | undefined;
   number_of_bookings: number;
 }
-export interface CartFeeMetaData{
-  type:"cart_fee";
-  amount:number | undefined;
+export interface CartFeeMetaData {
+  type: "cart_fee";
+  amount: number | undefined;
 }
-export interface GreenFeeTaxPercentMetaData{
-  type:"greenFeeTaxPercent";
-  
+export interface GreenFeeTaxPercentMetaData {
+  type: "greenFeeTaxPercent";
 }
-export interface CartFeeTaxPercentMetaData{
-  type:"cartFeeTaxPercent";
-  amount?:number
-  
+export interface CartFeeTaxPercentMetaData {
+  type: "cartFeeTaxPercent";
+  amount?: number;
 }
-export interface WeatherGuaranteeTaxPercentMetaData{
-  type:"weatherGuaranteeTaxPercent";
- 
+export interface WeatherGuaranteeTaxPercentMetaData {
+  type: "weatherGuaranteeTaxPercent";
 }
-export interface MarkupTaxPercentMetaData{
-  type:"markupTaxPercent";
-  
+export interface MarkupTaxPercentMetaData {
+  type: "markupTaxPercent";
 }
 export interface SecondHandProduct {
   type: "second_hand";

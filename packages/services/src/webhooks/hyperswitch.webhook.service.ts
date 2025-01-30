@@ -7,6 +7,7 @@ import { bookings } from "@golf-district/database/schema/bookings";
 import type { InsertBooking } from "@golf-district/database/schema/bookings";
 import { bookingslots } from "@golf-district/database/schema/bookingslots";
 import { charityCourseLink } from "@golf-district/database/schema/charityCourseLink";
+import { courseContacts } from "@golf-district/database/schema/courseContacts";
 import { courses } from "@golf-district/database/schema/courses";
 import { customerCarts } from "@golf-district/database/schema/customerCart";
 import { customerRecievable } from "@golf-district/database/schema/customerRecievable";
@@ -45,11 +46,11 @@ import type { NotificationService } from "../notification/notification.service";
 import type { HyperSwitchService } from "../payment-processor/hyperswitch.service";
 import type { SensibleService } from "../sensible/sensible.service";
 import type { Customer, ProviderService } from "../tee-sheet-provider/providers.service";
+import type { BookingDetails, BookingResponse } from "../tee-sheet-provider/sheet-providers";
 import type { ClubProphetBookingResponse } from "../tee-sheet-provider/sheet-providers/types/clubprophet.types";
 import type { TokenizeService } from "../token/tokenize.service";
 import { loggerService } from "./logging.service";
 import type { HyperSwitchEvent } from "./types/hyperswitch";
-import type { BookingDetails, BookingResponse } from "../tee-sheet-provider/sheet-providers";
 
 /**
  * `HyperSwitchWebhookService` - A service for processing webhooks from HyperSwitch.
@@ -644,6 +645,28 @@ export class HyperSwitchWebhookService {
         throw new Error("error fetching old and new bookingId");
       });
 
+    const [bookingDetails] = await this.database
+      .select({
+        additionalNoteFromCustomer: bookings.customerComment,
+        needsRentals: bookings.needClubRental,
+      })
+      .from(bookings)
+      .where(eq(bookings.id, bookingsIds?.id ?? ""))
+      .execute()
+      .catch((error) => {
+        loggerService.auditLog({
+          id: randomUUID(),
+          userId: customer_id,
+          teeTimeId: "",
+          bookingId: "",
+          listingId,
+          courseId: "",
+          eventId: "BOOKING_ID_NOT_FOUND_FOR_ADDITIONAL_DATA",
+          json: error,
+        });
+        throw new Error("error fetching additional data for new booking");
+      });
+
     bookingStage = "Updating booking status on new Booking";
     await this.database
       .update(bookings)
@@ -743,7 +766,10 @@ export class HyperSwitchWebhookService {
         totalTaxesAmount: bookings.totalTaxesAmount,
         providerTeeTimeId: teeTimes.providerTeeTimeId,
         nameOnBooking: bookings.nameOnBooking,
-        cartFeePerPlayer:bookings.cartFeePerPlayer
+        cartFeePerPlayer: bookings.cartFeePerPlayer,
+        additionalNoteFromCustomer: bookings.customerComment,
+        needRentals: bookings.needClubRental,
+        timezoneCorrection: courses.timezoneCorrection,
       })
       .from(bookings)
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -852,7 +878,7 @@ export class HyperSwitchWebhookService {
         throw new Error(`Error deleting booking`);
       });
     const newBookings: BookingResponse[] = [];
-    bookingStage = "Fetching tee time details of old booking"
+    bookingStage = "Fetching tee time details of old booking";
     const [existingTeeTime] = await this.database
       .select({
         id: teeTimes.id,
@@ -897,11 +923,11 @@ export class HyperSwitchWebhookService {
             item,
             customer_id,
             paymentId,
-          })
-        })
+          }),
+        });
         return [];
       });
-    bookingStage = "Getting Cart Data"
+    bookingStage = "Getting Cart Data";
     const { taxes, sensibleCharge, charityCharge, taxCharge, total, cartId, charityId, weatherQuoteId } =
       await this.getCartData({
         courseId: existingTeeTime?.courseId,
@@ -918,6 +944,7 @@ export class HyperSwitchWebhookService {
       } catch (e) {
         console.log("ERROR in getting appsetting SENSIBLE_NOTE_TO_TEE_SHEET");
       }
+      details = `${details}\n<br />\n${bookingDetails?.additionalNoteFromCustomer}`;
       let newBooking: BookingResponse | null = null;
       const greenFee = existingTeeTime?.greenFee ?? 0;
       const greenFeeTaxPerPlayer = existingTeeTime?.greenFeeTaxPerPlayer ?? 0;
@@ -974,6 +1001,60 @@ export class HyperSwitchWebhookService {
             this.logger.error(`Error adding sales data, ${JSON.stringify(error)}`);
           }
         }
+        if (bookingDetails?.additionalNoteFromCustomer || bookingDetails?.needsRentals) {
+          const courseContactsList = await this.database
+            .select({
+              email: courseContacts.email,
+              phone: courseContacts.phone1,
+            })
+            .from(courseContacts)
+            .where(
+              and(
+                eq(courseContacts.courseId, existingTeeTime?.courseId || firstBooking.courseId || ""),
+                eq(courseContacts.sendNotification, true)
+              )
+            )
+            .execute()
+            .catch((e) => {
+              this.logger.error(e);
+              loggerService.errorLog({
+                userId: customer_id,
+                url: `/HyperSwitchWebhookService/handleSecondHandItem`,
+                userAgent: "",
+                message: "ERROR_GETTING_COURSE_CONTACTS",
+                stackTrace: `${e.stack}`,
+                additionalDetailsJSON: JSON.stringify({
+                  item,
+                  customer_id,
+                  paymentId,
+                }),
+              });
+              return [];
+            });
+          const [user] = await this.database.select().from(users).where(eq(users.id, customer_id)).execute();
+          const emailList = courseContactsList.map((contact) => contact.email);
+          if (emailList.length > 0) {
+            await this.notificationService.sendEmailByTemplate(
+              emailList,
+              "Reservation Additional Request",
+              process.env.SENDGRID_COURSE_CONTACT_NOTIFICATION_TEMPLATE_ID!,
+              {
+                EMail: user?.email ?? "",
+                CustomerName: user?.name ?? "",
+                NoteFromUser: bookingDetails?.additionalNoteFromCustomer || "-",
+                NeedRentals: bookingDetails?.needsRentals ? "Yes" : "No",
+                PlayDateTime: formatTime(
+                  firstBooking.providerDate ?? "",
+                  true,
+                  firstBooking.timezoneCorrection ?? 0
+                ),
+                HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+                CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
+              },
+              []
+            );
+          }
+        }
       } catch (e) {
         // await this.hyperSwitchService.refundPayment(paymentId);
         // loggerService.auditLog({
@@ -1017,7 +1098,14 @@ export class HyperSwitchWebhookService {
         //   process.env.SENDGRID_REFUND_EMAIL_TEMPLATE_ID ?? "d-79ca4be6569940cdb19dd2b607c17221",
         //   template
         // );
-        this.hyperSwitchService.sendEmailForBookingFailed(paymentId, existingTeeTime?.courseId!, "", weatherQuoteId, customer_id, bookingStage);
+        this.hyperSwitchService.sendEmailForBookingFailed(
+          paymentId,
+          existingTeeTime?.courseId!,
+          "",
+          weatherQuoteId,
+          customer_id,
+          bookingStage
+        );
         throw "Booking failed on provider";
       }
       if (!newBooking.data) {
@@ -1033,6 +1121,7 @@ export class HyperSwitchWebhookService {
       if (listedSlotsCount && listedSlotsCount < firstBooking?.playerCount) {
         const totalAmountPaid = totalAmount * (listedBooking.length - listedSlotsCount);
         details = await appSettingService.get("TEE_SHEET_BOOKING_MESSAGE");
+        details = `${details}\n<br />\n${firstBooking?.additionalNoteFromCustomer}`;
         let newBookingSecond;
         bookingStage = "Getting booking creation data for seller customer";
         const bookingData = provider.getBookingCreationData({
@@ -1125,9 +1214,9 @@ export class HyperSwitchWebhookService {
           stackTrace: `Error booking tee time for tee time id ${existingTeeTime?.id}`,
           additionalDetailsJSON: JSON.stringify({
             providerBookingId: providerBookingId,
-            bookingsIds: bookingsIds
-          })
-        })
+            bookingsIds: bookingsIds,
+          }),
+        });
         throw new Error("Booking failed on provider, Can't find provider booking id");
       }
       if (newBooking.data?.bookingType === "SECOND") {
@@ -1156,7 +1245,9 @@ export class HyperSwitchWebhookService {
           status: "CONFIRMED",
           markupFees: firstBooking.markupFees,
           weatherQuoteId: firstBooking.weatherQuoteId || null,
-          cartFeePerPlayer:firstBooking.cartFeePerPlayer
+          cartFeePerPlayer: firstBooking.cartFeePerPlayer,
+          customerComment: firstBooking.additionalNoteFromCustomer,
+          needClubRental: firstBooking.needRentals,
         });
       }
 
@@ -1179,8 +1270,8 @@ export class HyperSwitchWebhookService {
               additionalDetailsJSON: JSON.stringify({
                 bookingId,
                 providerBookingId,
-              })
-            })
+              }),
+            });
           });
       }
 
@@ -1240,8 +1331,8 @@ export class HyperSwitchWebhookService {
                 stackTrace: `${err.stack}`,
                 additionalDetailsJSON: JSON.stringify({
                   bookingsToCreate,
-                })
-              })
+                }),
+              });
               tx.rollback();
             });
           await tx
@@ -1249,7 +1340,7 @@ export class HyperSwitchWebhookService {
             .values(bookingSlots)
             .execute()
             .catch((err) => {
-              this.logger.error(err); 
+              this.logger.error(err);
               loggerService.errorLog({
                 userId: customer_id,
                 url: `/HyperSwitchWebhookService/handleSecondHandItem`,
@@ -1258,8 +1349,8 @@ export class HyperSwitchWebhookService {
                 stackTrace: `${err.stack}`,
                 additionalDetailsJSON: JSON.stringify({
                   bookingSlots,
-                })
-              })
+                }),
+              });
               tx.rollback();
             });
         });
@@ -1280,8 +1371,8 @@ export class HyperSwitchWebhookService {
                 stackTrace: `${err.stack}`,
                 additionalDetailsJSON: JSON.stringify({
                   bookingSlots,
-                })
-              })
+                }),
+              });
               tx.rollback();
             });
         });
@@ -1397,7 +1488,9 @@ export class HyperSwitchWebhookService {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}` || "-",
-            Payout: formatMoney(((listedPrice - totalTax) * (listedSlotsCount || 1)) + (sellerWeatherGuaranteeAmount / 100)),
+            Payout: formatMoney(
+              (listedPrice - totalTax) * (listedSlotsCount || 1) + sellerWeatherGuaranteeAmount / 100
+            ),
             PurchasedFrom: existingTeeTime?.courseName || "-",
             BuyTeeTImeURL: `${redirectHref}`,
             CashOutURL: `${redirectHref}/account-settings/${firstBooking.ownerId}`,
@@ -1429,7 +1522,9 @@ export class HyperSwitchWebhookService {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}` || "-",
-          Payout: formatMoney(((listedPrice - totalTax) * (listedSlotsCount || 1)) + (sellerWeatherGuaranteeAmount / 100)),
+          Payout: formatMoney(
+            (listedPrice - totalTax) * (listedSlotsCount || 1) + sellerWeatherGuaranteeAmount / 100
+          ),
           SensibleWeatherIncluded: firstBooking.weatherGuaranteeId?.length ? "Yes" : "No",
           PurchasedFrom: existingTeeTime?.courseName || "-",
           BuyTeeTImeURL: `${redirectHref}`,
@@ -1476,9 +1571,9 @@ export class HyperSwitchWebhookService {
           message: "ERROR_CREATING_CUSTOMER_RECEIVABLE_FOR_TEE_TIME",
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
-            customerRecievableData
-          })
-        })
+            customerRecievableData,
+          }),
+        });
       });
   };
 
@@ -1574,8 +1669,8 @@ export class HyperSwitchWebhookService {
         stackTrace: `${error.stack}`,
         additionalDetailsJSON: JSON.stringify({
           item,
-        })
-      })
+        }),
+      });
       throw new Error("Failed to handle Sensible item");
     }
   };

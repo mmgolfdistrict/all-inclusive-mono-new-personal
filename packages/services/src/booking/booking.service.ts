@@ -1,9 +1,10 @@
 import { randomUUID } from "crypto";
-import { and, asc, desc, eq, gte, inArray, or, sql, type Db } from "@golf-district/database";
+import { and, asc, desc, eq, gte, inArray, not, or, sql, type Db } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import type { InsertBooking } from "@golf-district/database/schema/bookings";
 import { bookings } from "@golf-district/database/schema/bookings";
 import { bookingslots } from "@golf-district/database/schema/bookingslots";
+import { courseContacts } from "@golf-district/database/schema/courseContacts";
 import { courses } from "@golf-district/database/schema/courses";
 import { customerCarts } from "@golf-district/database/schema/customerCart";
 import { entities } from "@golf-district/database/schema/entities";
@@ -20,9 +21,10 @@ import { users } from "@golf-district/database/schema/users";
 import type { ReserveTeeTimeResponse } from "@golf-district/shared";
 import { currentUtcTimestamp, dateToUtcTimestamp, formatMoney, formatTime } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
+import { cacheManager } from "@golf-district/shared/src/utils/cacheManager";
 import dayjs from "dayjs";
-import UTC from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
+import UTC from "dayjs/plugin/utc";
 import { alias } from "drizzle-orm/mysql-core";
 import { appSettingService } from "../app-settings/initialized";
 import type { CustomerCart, ProductData } from "../checkout/types";
@@ -30,15 +32,11 @@ import type { NotificationService } from "../notification/notification.service";
 import type { HyperSwitchService } from "../payment-processor/hyperswitch.service";
 import type { SensibleService } from "../sensible/sensible.service";
 import type { Customer, ProviderService } from "../tee-sheet-provider/providers.service";
-import type {
-  ClubProphetBookingResponse,
-  ClubProphetTeeTimeResponse,
-} from "../tee-sheet-provider/sheet-providers/types/clubprophet.types";
 import type { BookingDetails, BookingResponse, ProviderAPI } from "../tee-sheet-provider/sheet-providers";
+import type { TeeTimeResponse as ForeupTeeTimeResponse } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
 import type { TokenizeService } from "../token/tokenize.service";
 import type { UserWaitlistService } from "../user-waitlist/userWaitlist.service";
 import { loggerService } from "../webhooks/logging.service";
-import type { TeeTimeResponse as ForeupTeeTimeResponse } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
 
 dayjs.extend(UTC);
 dayjs.extend(timezone);
@@ -94,6 +92,7 @@ interface OwnedTeeTimeData {
   weatherGuaranteeAmount: number | null;
   teeTimeId: string;
   slots: number;
+  bookingStatus: string;
 }
 
 interface ListingData {
@@ -282,6 +281,7 @@ export class BookingService {
       // .leftJoin(userBookingOffers, eq(userBookingOffers.bookingId, bookings.id))
       .where(
         and(
+          not(eq(bookings.providerBookingId, "")),
           eq(transfers.courseId, courseId),
           or(eq(transfers.toUserId, userId), eq(transfers.fromUserId, userId))
         )
@@ -624,6 +624,7 @@ export class BookingService {
         providerBookingId: bookings.providerBookingId,
         slots: lists.slots,
         playerCount: bookings.playerCount,
+        bookingStatus: bookings.status,
       })
       .from(teeTimes)
       .innerJoin(bookings, eq(bookings.teeTimeId, teeTimes.id))
@@ -638,10 +639,12 @@ export class BookingService {
       .leftJoin(bookingslots, eq(bookingslots.bookingId, bookings.id))
       .where(
         and(
+          not(eq(bookings.providerBookingId, "")),
           eq(bookings.ownerId, userId),
           eq(bookings.isActive, true),
           eq(teeTimes.courseId, courseId),
-          gte(teeTimes.date, nowInCourseTimezone)
+          gte(teeTimes.date, nowInCourseTimezone),
+          or(eq(bookings.status, "RESERVED"), eq(bookings.status, "CONFIRMED"))
         )
       )
       .groupBy(
@@ -720,6 +723,7 @@ export class BookingService {
           weatherGuaranteeAmount: teeTime.weatherGuaranteeAmount,
           teeTimeId: teeTime.id,
           slots: teeTime.slots || 0,
+          bookingStatus: teeTime.bookingStatus,
         };
       } else {
         const currentEntry = combinedData[teeTime.providerBookingId];
@@ -883,6 +887,7 @@ export class BookingService {
     slots: number
   ) => {
     this.logger.info(`createListingForBookings called with userId: ${userId}`);
+    console.warn("bookingIds", bookingIds);
     // console.log("CREATINGLISTING FOR DATE:", dayjs(endTime).utc().format('YYYY-MM-DD'), dayjs(endTime).utc().format('HHmm'));
     if (new Date().getTime() >= endTime.getTime()) {
       this.logger.warn("End time cannot be before current time");
@@ -3256,7 +3261,13 @@ export class BookingService {
     cartId: string,
     payment_id: string,
     sensibleQuoteId: string,
-    redirectHref: string
+    source: string,
+    additionalNoteFromUser: string | undefined,
+    needRentals: boolean,
+    redirectHref: string,
+    courseMembershipId: string,
+    playerCountForMemberShip: string,
+    providerCourseMembershipId: string
   ) => {
     let bookingStage = "Normalizing Cart Data";
     const {
@@ -3304,11 +3315,15 @@ export class BookingService {
       throw new Error("Booking already done");
     }
 
-    const pricePerGolfer = primaryGreenFeeCharge / playerCount;
+    // const pricePerGolfer = primaryGreenFeeCharge / playerCount;
+    const pricePerGolfer = playerCount !== 0 ? primaryGreenFeeCharge / playerCount : 0;
 
     bookingStage = "Retrieving tee time from database";
     console.log(`Retrieving tee time from database ${teeTimeId}`);
-    const [teeTime] = await this.database
+
+    // let teeTime: any = await cacheManager.get(`teeTime:${teeTimeId}`);
+    // if (!teeTime) {
+    const tempTeeTimes = await this.database
       .select({
         id: teeTimes.id,
         courseId: teeTimes.courseId,
@@ -3336,6 +3351,7 @@ export class BookingService {
         cartFeeTaxPercent: courses.cartFeeTaxPercent,
         weatherGuaranteeTaxPercent: courses.weatherGuaranteeTaxPercent,
         markupTaxPercent: courses.markupTaxPercent,
+        timezoneCorrection: courses.timezoneCorrection,
       })
       .from(teeTimes)
       .leftJoin(courses, eq(teeTimes.courseId, courses.id))
@@ -3367,6 +3383,11 @@ export class BookingService {
         });
         throw new Error(`Error finding tee time id`);
       });
+
+    //   await cacheManager.set(`teeTime:${teeTimeId}`, teeTime); // Cache for 1 hour
+    // }
+
+    const teeTime = tempTeeTimes[0];
 
     // Calculate additional taxes
 
@@ -3437,12 +3458,18 @@ export class BookingService {
         console.log("ERROR in getting appsetting SENSIBLE_NOTE_TO_TEE_SHEET");
       }
 
+      if (additionalNoteFromUser) {
+        details = `${details}\n${additionalNoteFromUser}`;
+      } else {
+        details = `${details}`;
+      }
+
       bookingStage = "Getting booking Creation Data";
       const bookingData = provider.getBookingCreationData({
         firstHandCharge: primaryGreenFeeCharge,
         markupCharge,
         taxCharge,
-        playerCount,
+        playerCount: courseMembershipId ? playerCountForMemberShip : playerCount,
         holes: teeTime.holes,
         notes: details,
         teeTimeId: teeTime.id,
@@ -3478,7 +3505,7 @@ export class BookingService {
         try {
           console.log("Amounts: ", primaryGreenFeeCharge / 100, taxCharge, markupCharge);
           const bookingsDetails: BookingDetails = {
-            playerCount: playerCount,
+            playerCount: courseMembershipId ? playerCountForMemberShip : playerCount,
             providerCourseId: teeTime.providerCourseId!,
             providerTeeSheetId: teeTime.providerTeeSheetId!,
             totalAmountPaid: (pricePerGolfer / 100 + taxCharge - markupCharge) * playerCount,
@@ -3500,6 +3527,56 @@ export class BookingService {
               error,
               booking: JSON.stringify(booking),
             }),
+          });
+        }
+      }
+      if (additionalNoteFromUser || needRentals) {
+        const courseContactsList = await this.database
+          .select({
+            email: courseContacts.email,
+            phone: courseContacts.phone1,
+          })
+          .from(courseContacts)
+          .where(
+            and(eq(courseContacts.courseId, teeTime.courseId), eq(courseContacts.sendNotification, true))
+          )
+          .execute()
+          .catch((err) => {
+            this.logger.error(`Error getting course contacts list, ${JSON.stringify(err.message)}`);
+            loggerService.errorLog({
+              userId: userId,
+              url: "/reserveBooking",
+              userAgent: "",
+              message: "ERROR_GETTING_COURSE_CONTACTS_LIST",
+              stackTrace: `${JSON.stringify(err)}`,
+              additionalDetailsJSON: JSON.stringify({
+                userId,
+                teeTimeId,
+                error: err,
+              }),
+            });
+            return [];
+          });
+
+        const [user] = await this.database.select().from(users).where(eq(users.id, userId)).execute();
+        const emailList = courseContactsList.map((contact) => contact.email);
+        if (emailList.length > 0) {
+          emailList.map(async (email) => {
+            await this.notificationService.sendEmailByTemplate(
+              email,
+              "Reservation Additional Request",
+              process.env.SENDGRID_COURSE_CONTACT_NOTIFICATION_TEMPLATE_ID!,
+              {
+                EMail: user?.email ?? "",
+                CustomerName: user?.name ?? "",
+                NoteFromUser: additionalNoteFromUser || "-",
+                NeedRentals: needRentals ? "Yes" : "No",
+                PlayDateTime: formatTime(teeTime.providerDate, true, teeTime.timezoneCorrection ?? 0),
+                HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+                CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${teeTime.cdnKey}.${teeTime.extension}`,
+              },
+              []
+            );
           });
         }
       }
@@ -3598,6 +3675,11 @@ export class BookingService {
           cartFeeTaxPercentTotal,
           additionalTaxes,
         },
+        source,
+        additionalNoteFromUser,
+        needRentals,
+        courseMembershipId: courseMembershipId,
+        playerCountForMemberShip,
       })
       .catch(async (err) => {
         this.logger.error(`Error creating booking, ${err}`);
@@ -3713,11 +3795,83 @@ export class BookingService {
     }
   };
 
+  checkCancelledBookingFromProvider = async (listingId: string, userId: string) => {
+    try {
+      const [bookingResult] = await this.database
+        .select({
+          bookingTeeTimeId: bookings.teeTimeId,
+          bookingProviderId: bookings.providerBookingId,
+          courseId: teeTimes.courseId,
+          providerId: providerCourseLink.providerId,
+          providerCourseId: providerCourseLink.providerCourseId,
+          providerCourseConfiguration: providerCourseLink.providerCourseConfiguration,
+          providerInternalId: providers.internalId,
+          providerTeeSheet: providerCourseLink.providerTeeSheetId,
+        })
+        .from(bookings)
+        .leftJoin(teeTimes, eq(bookings.teeTimeId, teeTimes.id))
+        .leftJoin(providerCourseLink, eq(teeTimes.courseId, providerCourseLink.courseId))
+        .leftJoin(providers, eq(providerCourseLink.providerId, providers.id))
+        .where(eq(bookings.listId, listingId));
+      const result = await this.providerService.checkCancelledBooking(
+        bookingResult?.bookingProviderId!,
+        bookingResult?.providerTeeSheet!,
+        bookingResult?.providerCourseId!,
+        bookingResult?.providerInternalId!,
+        bookingResult?.courseId!,
+        bookingResult?.providerCourseConfiguration!
+      );
+      if (result) {
+        loggerService.auditLog({
+          id: randomUUID(),
+          userId,
+          teeTimeId: bookingResult?.bookingTeeTimeId ?? "",
+          bookingId: bookingResult?.bookingProviderId ?? "",
+          listingId: listingId,
+          courseId: bookingResult?.courseId ?? "",
+          eventId: "TEE_TIME_DELETED_BY_PROVIDER_LISTED_IN_COURSE",
+          json: "TEE_TIME_DELETED_BY_PROVIDER",
+        });
+        const adminEmail: string = process.env.ADMIN_EMAIL_LIST || "nara@golfdistrict.com";
+        const emailAfterSplit = adminEmail.split(",");
+        emailAfterSplit.map(async (email) => {
+          await this.notificationService.sendEmail(
+            email,
+            "TEE_TIME_DELETED_BY_PROVIDER_LISTED_IN_COURSE",
+            `
+            The customer attempted to purchase a tee time, but the provider canceled it. The following details pertain to the canceled tee time:
+            Tee Time ID ====> ${bookingResult?.bookingTeeTimeId} , 
+           Provider Booking ID ====> ${bookingResult?.bookingProviderId} , 
+           Course ID ====> ${bookingResult?.courseId}, 
+           Listing ID ====> ${listingId}, 
+           This information indicates that the tee time was listed in the course but was subsequently deleted by the provider.
+            `
+          );
+        });
+        return { providerBookingStatus: result };
+      } else {
+        return { providerBookingStatus: result };
+      }
+    } catch (error: any) {
+      await loggerService.errorLog({
+        message: error.message,
+        userId: "",
+        url: "/bookingProvideStatus",
+        userAgent: "",
+        stackTrace: `${error}`,
+        additionalDetailsJSON: JSON.stringify({ error: error.message }),
+      });
+    }
+  };
+
   reserveSecondHandBooking = async (
     userId = "",
     cartId = "",
     listingId = "",
     payment_id = "",
+    source = "",
+    additionalNoteFromUser = "",
+    needRentals = false,
     redirectHref = ""
   ) => {
     const {
@@ -3754,7 +3908,6 @@ export class BookingService {
       });
       throw new Error("Payment Id not is not valid");
     }
-
     const [associatedBooking] = await this.database
       .select({
         id: bookings.id,
@@ -3814,6 +3967,9 @@ export class BookingService {
       markupFees: 0,
       weatherQuoteId: weatherQuoteId || null,
       cartFeePerPlayer: cartFeeCharge,
+      source: source ? source : null,
+      customerComment: additionalNoteFromUser,
+      needClubRental: needRentals,
     });
     transfersToCreate.push({
       id: randomUUID(),
@@ -3882,49 +4038,49 @@ export class BookingService {
       json: "Tee time booked",
     });
     //Sending teetime purchase email to user
-    const pricePerBooking = ((Math.round(total) / 100) / (associatedBooking?.listedSlotsCount ?? 0));
-    const message = `
-    A total of $${(Math.round(total) / 100)} tee times have been purchased.
-    
-    - **Number of Players:** ${associatedBooking?.listedSlotsCount ?? 0}
-    - **Price per Booking:** ${pricePerBooking ?? "Not specified"}
-    - **Booking ID:** ${bookingId ?? "Unavailable"}
-    
-    This purchase was made as a second-party transaction directly from the course.
-    `;
-    let isEmailSend = false;
-    const attachment: any[] = [];
-    try {
-      await this.notificationService.createNotification(
-        userId,
-        "TeeTimes Purchased",
-        message,
-        "",
-        process.env.SENDGRID_TEE_TIMES_PURCHASED_TEMPLATE_ID,
-        undefined,
-        attachment
-      );
-    } catch (error: any) {
-      console.log(error.message);
-      isEmailSend = true;
-      this.logger.error(error);
-      loggerService.errorLog({
-        userId: userId,
-        url: "/reserveBooking",
-        userAgent: "",
-        message: "EMAIL_SEND_FAILED_AFTER_TEETIME_PURCHASE",
-        stackTrace: `${error.stack}`,
-        additionalDetailsJSON: JSON.stringify({
-          bookingId: bookingId,
-          teeTimeID: associatedBooking?.teeTimeIdForBooking,
-        }),
-      });
-    }
+    // const pricePerBooking = ((Math.round(total) / 100) / (associatedBooking?.listedSlotsCount ?? 0));
+    // const message = `
+    // A total of $${(Math.round(total) / 100)} tee times have been purchased.
+
+    // - **Number of Players:** ${associatedBooking?.listedSlotsCount ?? 0}
+    // - **Price per Booking:** ${pricePerBooking ?? "Not specified"}
+    // - **Booking ID:** ${bookingId ?? "Unavailable"}
+
+    // This purchase was made as a second-party transaction directly from the course.
+    // `;
+    // let isEmailSend = false;
+    // const attachment: any[] = [];
+    // try {
+    //   await this.notificationService.createNotification(
+    //     userId,
+    //     "TeeTimes Purchased",
+    //     message,
+    //     "",
+    //     process.env.SENDGRID_TEE_TIMES_PURCHASED_TEMPLATE_ID,
+    //     undefined,
+    //     attachment
+    //   );
+    // } catch (error: any) {
+    //   console.log(error.message);
+    //   isEmailSend = true;
+    //   this.logger.error(error);
+    //   loggerService.errorLog({
+    //     userId: userId,
+    //     url: "/reserveBooking",
+    //     userAgent: "",
+    //     message: "EMAIL_SEND_FAILED_AFTER_TEETIME_PURCHASE",
+    //     stackTrace: `${error.stack}`,
+    //     additionalDetailsJSON: JSON.stringify({
+    //       bookingId: bookingId,
+    //       teeTimeID: associatedBooking?.teeTimeIdForBooking,
+    //     }),
+    //   });
+    // }
     return {
       bookingId,
       providerBookingId: "",
       status: "Reserved",
-      isEmailSend,
+      isEmailSend: true,
     } as ReserveTeeTimeResponse;
   };
 
@@ -3962,75 +4118,91 @@ export class BookingService {
   };
 
   checkIfTeeTimeAvailableOnProvider = async (teeTimeId: string, golfersCount: number, userId: string) => {
-    const [teeTime] = await this.database
-      .select({
-        id: teeTimes.id,
-        courseId: teeTimes.courseId,
-        time: teeTimes.time,
-        // entityId: teeTimes.entityId,
-        entityId: courses.entityId,
-        date: teeTimes.date,
-        availableFirstHandSpots: teeTimes.availableFirstHandSpots,
-        providerCourseId: providerCourseLink.providerCourseId,
-        providerTeeSheetId: providerCourseLink.providerTeeSheetId,
-        providerId: providerCourseLink.providerId,
-        internalId: providers.internalId,
-        providerDate: teeTimes.providerDate,
-        holes: teeTimes.numberOfHoles,
-        cdnKey: assets.key,
-        extension: assets.extension,
-        websiteURL: courses.websiteURL,
-        courseName: courses.name,
-        entityName: entities.name,
-        isWebhookAvailable: providers.isWebhookAvailable,
-        timeZoneCorrection: courses.timezoneCorrection,
-        providerCourseConfiguration: providerCourseLink.providerCourseConfiguration,
-        providerTeeTimeId: teeTimes.providerTeeTimeId,
-      })
-      .from(teeTimes)
-      .leftJoin(courses, eq(teeTimes.courseId, courses.id))
-      .leftJoin(assets, eq(assets.id, courses.logoId))
-      .leftJoin(entities, eq(courses.entityId, entities.id))
-      .leftJoin(
-        providerCourseLink,
-        and(
-          eq(providerCourseLink.courseId, teeTimes.courseId),
-          eq(providerCourseLink.providerId, courses.providerId)
+    const cacheKey = `teeTimeData:${teeTimeId}`;
+    const cacheTTL = 600; // Cache TTL in seconds
+    let teeTime: any = await cacheManager.get(cacheKey);
+
+    if (!teeTime) {
+      // Fetch tee time data from the database if not in cache
+      const [teeTimeData] = await this.database
+        .select({
+          id: teeTimes.id,
+          courseId: teeTimes.courseId,
+          time: teeTimes.time,
+          entityId: courses.entityId,
+          date: teeTimes.date,
+          availableFirstHandSpots: teeTimes.availableFirstHandSpots,
+          providerCourseId: providerCourseLink.providerCourseId,
+          providerTeeSheetId: providerCourseLink.providerTeeSheetId,
+          providerId: providerCourseLink.providerId,
+          internalId: providers.internalId,
+          providerDate: teeTimes.providerDate,
+          holes: teeTimes.numberOfHoles,
+          cdnKey: assets.key,
+          extension: assets.extension,
+          websiteURL: courses.websiteURL,
+          courseName: courses.name,
+          entityName: entities.name,
+          isWebhookAvailable: providers.isWebhookAvailable,
+          timeZoneCorrection: courses.timezoneCorrection,
+          providerCourseConfiguration: providerCourseLink.providerCourseConfiguration,
+          providerTeeTimeId: teeTimes.providerTeeTimeId,
+          greenFees: teeTimes.greenFeePerPlayer,
+          cartFees: teeTimes.cartFeePerPlayer,
+          greenFeeTaxPercent: courses.greenFeeTaxPercent,
+          cartFeeTaxPercent: courses.cartFeeTaxPercent,
+          weatherGuaranteeTaxPercent: courses.weatherGuaranteeTaxPercent,
+          markupTaxPercent: courses.markupTaxPercent,
+        })
+        .from(teeTimes)
+        .leftJoin(courses, eq(teeTimes.courseId, courses.id))
+        .leftJoin(assets, eq(assets.id, courses.logoId))
+        .leftJoin(entities, eq(courses.entityId, entities.id))
+        .leftJoin(
+          providerCourseLink,
+          and(
+            eq(providerCourseLink.courseId, teeTimes.courseId),
+            eq(providerCourseLink.providerId, courses.providerId)
+          )
         )
-      )
-      //.leftJoin(courses, eq(courses.id, teeTimes.courseId))
-      .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))
-      .where(eq(teeTimes.id, teeTimeId))
-      .execute()
-      .catch((err) => {
-        this.logger.error(`Error finding tee time id: ${err}`);
+        .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))
+        .where(eq(teeTimes.id, teeTimeId))
+        .execute()
+        .catch((err) => {
+          this.logger.error(`Error finding tee time id: ${err}`);
+          loggerService.errorLog({
+            userId,
+            url: "/checkIfTeeTimeAvailableOnProvider",
+            userAgent: "",
+            message: "ERROR_CHECKING_TEE_TIME_AVAILABILITY",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              userId,
+              teeTimeId,
+            }),
+          });
+          throw new Error(`Error finding tee time id`);
+        });
+
+      if (!teeTimeData) {
+        this.logger.fatal(`tee time not found id: ${teeTimeId}`);
         loggerService.errorLog({
           userId,
           url: "/checkIfTeeTimeAvailableOnProvider",
           userAgent: "",
-          message: "ERROR_CHECKING_TEE_TIME_AVAILABILITY",
-          stackTrace: `${err.stack}`,
+          message: "TEE_TIME_NOT_FOUND",
+          stackTrace: `tee time not found id: ${teeTimeId}`,
           additionalDetailsJSON: JSON.stringify({
             userId,
             teeTimeId,
           }),
         });
         throw new Error(`Error finding tee time id`);
-      });
-    if (!teeTime) {
-      this.logger.fatal(`tee time not found id: ${teeTimeId}`);
-      loggerService.errorLog({
-        userId,
-        url: "/checkIfTeeTimeAvailableOnProvider",
-        userAgent: "",
-        message: "TEE_TIME_NOT_FOUND",
-        stackTrace: `tee time not found id: ${teeTimeId}`,
-        additionalDetailsJSON: JSON.stringify({
-          userId,
-          teeTimeId,
-        }),
-      });
-      throw new Error(`Error finding tee time id`);
+      }
+
+      // Cache the fetched tee time data
+      teeTime = teeTimeData;
+      await cacheManager.set(cacheKey, teeTime, cacheTTL);
     }
 
     if (teeTime.availableFirstHandSpots >= golfersCount) {
@@ -4065,5 +4237,13 @@ export class BookingService {
       additionalDetailsJSON: "",
     });
     return false;
+  };
+
+  checkIfUserIsOptMemberShip = async (userId: string, bookingId: string) => {
+    const [canReSellResult] = await this.database
+      .select({ canResell: bookings.canResell })
+      .from(bookings)
+      .where(eq(bookings.id, bookingId ?? ""));
+    return canReSellResult?.canResell;
   };
 }

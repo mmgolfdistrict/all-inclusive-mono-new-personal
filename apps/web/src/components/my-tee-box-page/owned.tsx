@@ -3,7 +3,7 @@
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
-import {  formatTime } from "~/utils/formatters";
+import { formatTime } from "~/utils/formatters";
 import { type InviteFriend } from "~/utils/types";
 import Link from "next/link";
 import { useMemo, useState } from "react";
@@ -34,6 +34,7 @@ export type OwnedTeeTime = {
   weatherGuaranteeAmount?: number;
   selectedSlotsCount?: "1" | "2" | "3" | "4";
   slots?: number;
+  bookingStatus: string;
 };
 
 export const Owned = () => {
@@ -115,6 +116,7 @@ export const Owned = () => {
               {/* <TableHeader text="Purchase Price" /> */}
               <TableHeader text="Golfers" />
               <TableHeader text="Status" />
+              <TableHeader text="Booking Status" />
               <TableHeader text="" className="text-right" />
             </tr>
           </thead>
@@ -144,6 +146,7 @@ export const Owned = () => {
                     listingId={i.listingId}
                     ownerId={user?.id ?? ""}
                     timezoneCorrection={course?.timezoneCorrection}
+                    bookingStatus={i.bookingStatus}
                   />
                 ))}
           </tbody>
@@ -215,6 +218,7 @@ const TableRow = ({
   openListTeeTime,
   openCancelListing,
   openManageListTeeTime,
+  bookingStatus,
 }: {
   course: string;
   date: string;
@@ -232,6 +236,7 @@ const TableRow = ({
   openListTeeTime: () => void;
   openCancelListing: () => void;
   openManageListTeeTime: () => void;
+  bookingStatus: string;
 }) => {
   const href = useMemo(() => {
     if (isListed) {
@@ -255,7 +260,7 @@ const TableRow = ({
             <div className="whitespace-nowrap underline text-secondary-black">
               {course}
             </div>
-            <div className="text-primary-gray">
+            <div className="text-primary-gray unmask-time">
               {formatTime(date, false, timezoneCorrection)}
             </div>
           </div>
@@ -264,7 +269,7 @@ const TableRow = ({
       {/* <td className="whitespace-nowrap px-4 py-3">
         {formatMoney(purchasePrice)}
       </td> */}
-      <td className="whitespace-nowrap px-4 py-3">
+      <td className="whitespace-nowrap px-4 py-3 unmask-players">
         {golfers.length > 2
           ? `You, ${golfers[1]?.name || "Guest"} & ${golfers.length - 2} ${
               golfers.length - 2 === 1 ? "golfers" : "golfers"
@@ -272,9 +277,9 @@ const TableRow = ({
           : golfers.map((i, idx) => {
               if (idx === 0) return "You ";
               if (golfers.length === 1) return "You";
-            if (idx === golfers.length - 1) return `& ${i.name || "Guest"}`;
-            if (idx === golfers.length - 2) return `${i.name || "Guest"} `;
-            return `${i.name || "Guest"}, `;
+              if (idx === golfers.length - 1) return `& ${i.name || "Guest"}`;
+              if (idx === golfers.length - 2) return `${i.name || "Guest"} `;
+              return `${i.name || "Guest"}, `;
             })}
       </td>
       <td className="flex items-center gap-1 whitespace-nowrap px-4 pb-3 pt-6">
@@ -289,6 +294,9 @@ const TableRow = ({
           </div>
         ) : null}
         <span className="capitalize">{status.toLowerCase()}</span>
+      </td>
+      <td className="whitespace-nowrap px-4 py-3">
+        <span className="capitalize">{bookingStatus.toLowerCase()}</span>
       </td>
       <td className="whitespace-nowrap px-4 py-3">
         <div className="flex w-full justify-end gap-2">

@@ -181,7 +181,7 @@ const TableRow = ({
             <div className="whitespace-nowrap underline text-secondary-black">
               {course}
             </div>
-            <div className="text-primary-gray">
+            <div className="text-primary-gray unmask-time">
               {formatTime(date, false, timezoneCorrection)}
             </div>
           </div>
@@ -191,7 +191,7 @@ const TableRow = ({
         {formatMoney(listedPrice)}
         <span className="font-[300]">/golfer</span>
       </td>
-      <td className="whitespace-nowrap px-4 py-3">
+      <td className="whitespace-nowrap px-4 py-3 unmask-players">
         {golfers} {golfers === 1 ? "golfer" : "golfers"}
       </td>
       <td className="flex items-center gap-1 whitespace-nowrap px-4 pb-3 pt-6 capitalize">

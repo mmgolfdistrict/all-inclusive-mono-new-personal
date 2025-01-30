@@ -20,9 +20,7 @@ export const Avatar = ({
       <RadixAvatar.Image
         className={`h-full w-full ${
           isRounded ? "rounded-full" : "rounded-none"
-        } ${
-          isRounded ? "object-cover" : "object-contain bg-white"
-        }`}
+        } ${isRounded ? "object-cover" : "object-contain bg-white"}`}
         src={src ?? "/defaults/default-profile.webp"}
         alt="user"
         draggable={false}

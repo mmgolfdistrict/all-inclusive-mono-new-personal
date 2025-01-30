@@ -6,9 +6,11 @@ import { AddCreditCard } from "~/components/account-settings-page/addCreditCard"
 import { BalanceHistory } from "~/components/account-settings-page/balance-history";
 import { EditProfileForm } from "~/components/account-settings-page/edit-profile-form";
 import { NotificationSettings } from "~/components/account-settings-page/notification-settings";
+import { PaymentInfoMangeProfile } from "~/components/account-settings-page/payment-info";
 import { SavedBankDetails } from "~/components/account-settings-page/savedBankDetails";
 import { GoBack } from "~/components/buttons/go-back";
 import { ProfileDetails } from "~/components/profile-page/profile-details";
+import { useUser } from "~/hooks/useUser";
 import { api } from "~/utils/api";
 import { useRouter } from "next/navigation";
 
@@ -21,21 +23,22 @@ export default function ManangeProfile({
   const userId = params.userId;
   const router = useRouter();
   const { status, data } = useSession();
+  const { isLoading: isUserLoading, data: user } = useUser(userId);
 
-  const { data: systemNotifications } =
-    api.systemNotification.getSystemNotification.useQuery({});
+  // const { data: systemNotifications } =
+  //   api.systemNotification.getSystemNotification.useQuery({});
 
-  const { data: courseGlobalNotification } =
-    api.systemNotification.getCourseGlobalNotification.useQuery({
-      courseId: courseId ?? "",
-    });
+  // const { data: courseGlobalNotification } =
+  //   api.systemNotification.getCourseGlobalNotification.useQuery({
+  //     courseId: courseId ?? "",
+  //   });
 
-  const notificationsCount =
-    (systemNotifications ? systemNotifications.length : 0) +
-    (courseGlobalNotification ? courseGlobalNotification.length : 0);
+  // const notificationsCount =
+  //   (systemNotifications ? systemNotifications.length : 0) +
+  //   (courseGlobalNotification ? courseGlobalNotification.length : 0);
 
-  const marginTop =
-    notificationsCount > 0 ? `mt-${notificationsCount * 6}` : "";
+  // const marginTop =
+  //   notificationsCount > 0 ? `mt-${notificationsCount * 6}` : "";
 
   if (
     status === "unauthenticated" ||
@@ -46,7 +49,7 @@ export default function ManangeProfile({
   }
 
   return (
-    <main className={`bg-secondary-white py-4 md:py-6 ${marginTop}`}>
+    <main className={`bg-secondary-white py-4 md:py-6`}>
       <div className="mx-auto flex items-center justify-between px-4 md:max-w-[1360px] md:px-6">
         <GoBack href={`/${courseId}`} text={`Back to tee times`} />
       </div>
@@ -73,7 +76,9 @@ export default function ManangeProfile({
           </div>
           <div className="flex flex-col gap-4 md:flex-col md:w-[50%]">
             <AddCreditCard />
-            {/* <PaymentInfoMangeProfile /> */}
+            {!isUserLoading && user?.allowDeleteCreditCard ? (
+              <PaymentInfoMangeProfile />
+            ) : null}
             <SavedBankDetails />
           </div>
         </div>

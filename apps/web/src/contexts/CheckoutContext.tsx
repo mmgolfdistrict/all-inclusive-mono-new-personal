@@ -16,7 +16,13 @@ type ReservationData = {
   providerReservationId: string;
   playTime: string;
 };
-
+type ValidatePlayerType = {
+  isValidPlayer: boolean;
+  playerEmail: string;
+  playerIndex: number;
+  courseMemberShipId?: string;
+  providerCourseMembershipId?: string;
+};
 interface CheckoutContextType {
   shouldAddSensible: boolean;
   handleShouldAddSensible: (bool: boolean) => void;
@@ -35,6 +41,10 @@ interface CheckoutContextType {
   handleRemoveSelectedCharity: () => void;
   reservationData: ReservationData;
   setReservationData: Dispatch<SetStateAction<ReservationData>>;
+  validatePlayers: ValidatePlayerType[];
+  setValidatePlayers: Dispatch<SetStateAction<ValidatePlayerType[]>>;
+  setIsSensibleLoading: Dispatch<SetStateAction<boolean>>;
+  isSensibleLoading: boolean;
 }
 
 const CheckoutContext = createContext<CheckoutContextType>({
@@ -57,10 +67,15 @@ const CheckoutContext = createContext<CheckoutContextType>({
     playTime: "",
   },
   setReservationData: () => undefined,
+  validatePlayers: [],
+  setValidatePlayers: () => undefined,
+  setIsSensibleLoading: () => undefined,
+  isSensibleLoading: false,
 });
 
 export const CheckoutWrapper = ({ children }: { children: ReactNode }) => {
   const [shouldAddSensible, setShouldAddSensible] = useState<boolean>(false);
+  const [isSensibleLoading, setIsSensibleLoading] = useState(false);
   const [reservationData, setReservationData] = useState<ReservationData>({
     golfReservationId: "",
     providerReservationId: "",
@@ -77,6 +92,9 @@ export const CheckoutWrapper = ({ children }: { children: ReactNode }) => {
     number | null
   >(null);
   const [promoCode, setPromoCode] = useState<string>("");
+  const [validatePlayers, setValidatePlayers] = useState<ValidatePlayerType[]>(
+    []
+  );
   const { course } = useCourseContext();
 
   const handleShouldAddSensible = (bool: boolean) => {
@@ -119,6 +137,10 @@ export const CheckoutWrapper = ({ children }: { children: ReactNode }) => {
     handleRemoveSelectedCharity,
     reservationData,
     setReservationData,
+    validatePlayers,
+    setValidatePlayers,
+    isSensibleLoading,
+    setIsSensibleLoading,
   };
 
   return (

@@ -78,7 +78,7 @@ export class LightspeedWebhookService {
    * @param {Db} database - The database instance to interact with.
    * @param {ProviderService} providerService - The provider service for fetching tee times from ForeUp.
    */
-  constructor(private readonly database: Db, private readonly providerService: ProviderService) { }
+  constructor(private readonly database: Db, private readonly providerService: ProviderService) {}
 
   indexTeeTime = async (
     formattedDate: string,
@@ -90,14 +90,14 @@ export class LightspeedWebhookService {
     teeTimeId: string
   ) => {
     try {
-      const teeTimeResponse = await provider.getTeeTimes(
+      const teeTimeResponse = (await provider.getTeeTimes(
         token,
         providerCourseId,
         providerTeeSheetId,
         time.toString().padStart(4, "0"),
         (time + 1).toString().padStart(4, "0"),
         formattedDate
-      ) as LightspeedTeeTimeResponse[]
+      )) as LightspeedTeeTimeResponse[];
 
       const [indexedTeeTime] = await this.database
         .select({
@@ -117,14 +117,18 @@ export class LightspeedWebhookService {
           throw new Error(`Error finding tee time id`);
         });
 
-      const teeTime = teeTimeResponse.find(teetime => teetime.id === indexedTeeTime?.providerTeeTimeId);
+      const teeTime = teeTimeResponse.find((teetime) => teetime.id === indexedTeeTime?.providerTeeTimeId);
 
       if (indexedTeeTime && teeTime) {
-        const hours = Number(teeTime.attributes.start_time.split(':')?.[0]);
-        const minutes = Number(teeTime.attributes.start_time?.split(':')?.[1]);
+        const hours = Number(teeTime.attributes.start_time.split(":")?.[0]);
+        const minutes = Number(teeTime.attributes.start_time?.split(":")?.[1]);
         const militaryTime = hours * 100 + minutes;
-        const formattedDatetime = dayjs(`${teeTime.attributes.date} ${teeTime.attributes.start_time}`).utc().format('YYYY-MM-DD HH:mm:ss.SSS');
-        const formattedProviderDate = dayjs(`${teeTime.attributes.date} ${teeTime.attributes.start_time}`).format('YYYY-MM-DDTHH:mm:ss.SSS');
+        const formattedDatetime = dayjs(`${teeTime.attributes.date} ${teeTime.attributes.start_time}`)
+          .utc()
+          .format("YYYY-MM-DD HH:mm:ss.SSS");
+        const formattedProviderDate = dayjs(
+          `${teeTime.attributes.date} ${teeTime.attributes.start_time}`
+        ).format("YYYY-MM-DDTHH:mm:ss.SSS");
 
         const providerTeeTime = {
           id: randomUUID(),
@@ -136,10 +140,8 @@ export class LightspeedWebhookService {
           maxPlayersPerBooking: teeTime.attributes.free_slots,
           availableFirstHandSpots: teeTime.attributes.free_slots,
           availableSecondHandSpots: 0,
-          greenFeePerPlayer:
-            (teeTime.attributes.rates[0]?.green_fee ?? 0) * 100,
-          cartFeePerPlayer:
-            (teeTime.attributes.rates[0]?.one_person_cart ?? 0) * 100,
+          greenFeePerPlayer: (teeTime.attributes.rates[0]?.green_fee ?? 0) * 100,
+          cartFeePerPlayer: (teeTime.attributes.rates[0]?.one_person_cart ?? 0) * 100,
           greenFeeTaxPerPlayer: 0,
           cartFeeTaxPerPlayer: 0,
           providerDate: formattedProviderDate,
@@ -184,8 +186,8 @@ export class LightspeedWebhookService {
       // );
       return {
         error: true,
-        message: `We're sorry. This time is no longer available. Someone just booked this. It may take a minute for the sold time you selected to be removed. Please select another time.`
-      }
+        message: `We're sorry. This time is no longer available. Someone just booked this. It may take a minute for the sold time you selected to be removed. Please select another time.`,
+      };
     }
   };
 }

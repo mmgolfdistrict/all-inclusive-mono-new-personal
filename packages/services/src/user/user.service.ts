@@ -7,6 +7,7 @@ import { assets } from "@golf-district/database/schema/assets";
 import { bookings } from "@golf-district/database/schema/bookings";
 import { bookingslots } from "@golf-district/database/schema/bookingslots";
 import { courses } from "@golf-district/database/schema/courses";
+import { courseUser } from "@golf-district/database/schema/courseUser";
 import { entities } from "@golf-district/database/schema/entities";
 import { favorites } from "@golf-district/database/schema/favorites";
 import { lists } from "@golf-district/database/schema/lists";
@@ -16,13 +17,16 @@ import { users } from "@golf-district/database/schema/users";
 import type { GroupedBookings } from "@golf-district/shared";
 import { assetToURL, currentUtcTimestamp, isValidEmail, isValidPassword } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
+import client from "@sendgrid/client";
 import bcrypt from "bcryptjs";
 import { alias } from "drizzle-orm/mysql-core";
 import { verifyCaptcha } from "../../../api/src/googleCaptcha";
 import { generateUtcTimestamp } from "../../helpers";
+import { AppSettingsService } from "../app-settings/app-settings.service";
 import type { NotificationService } from "../notification/notification.service";
 import { loggerService } from "../webhooks/logging.service";
-import { courseUser } from "@golf-district/database/schema/courseUser";
+
+client.setApiKey(process.env.SENDGRID_EMAIL_VALIDATION_KEY ?? "");
 
 const s3Client = new S3Client({
   region: process.env.AWS_REGION,
@@ -92,10 +96,7 @@ export class UserService {
    * @example
    * const userService = new UserService(database, notificationService);
    */
-  constructor(
-    protected readonly database: Db,
-    private readonly notificationsService: NotificationService
-  ) {
+  constructor(protected readonly database: Db, private readonly notificationsService: NotificationService) {
     //this.filter = new Filter();
   }
 
@@ -155,6 +156,15 @@ export class UserService {
         error: true,
         message:
           "Password must include uppercase, lowercase letters, numbers, and special characters (!@#$%^&*).",
+      };
+    }
+
+    const validateEmail = await this.validateEmail(data?.email);
+
+    if (!validateEmail) {
+      return {
+        error: true,
+        message: "Please enter valid email address, disposable emails not allowed.",
       };
     }
 
@@ -327,9 +337,6 @@ export class UserService {
       if (courseWithEntity) {
         EntityName = courseWithEntity.entityName ?? "";
         SubDomain = courseWithEntity.subDomain ?? "";
-
-        console.log("Entity Name:", EntityName);
-        console.log("SubDomain:", SubDomain);
       }
     }
 
@@ -1569,6 +1576,54 @@ export class UserService {
     return true;
   };
 
+  validateEmail = async (email: string): Promise<boolean> => {
+    // Initialize the AppSettingsService
+    const appSettingService = new AppSettingsService(
+      this.database,
+      process.env.REDIS_URL!,
+      process.env.REDIS_TOKEN!
+    );
+
+    // Fetch app settings
+    const appSettings = await appSettingService.getMultiple("ALLOW_DISPOSABLE_EMAIL_ADDRESS");
+
+    // If disposable emails are allowed, return true
+    if (appSettings?.ALLOW_DISPOSABLE_EMAIL_ADDRESS === "true") {
+      return true;
+    }
+
+    // API URL for checking disposable email
+    const apiUrl = `https://disposable.debounce.io/?email=${encodeURIComponent(email)}`;
+
+    try {
+      // Fetch the response from the disposable email checker API
+      const response = await fetch(apiUrl);
+
+      // Check if the response is successful
+      if (!response.ok) {
+        console.error(`API Error: ${response.status} ${response.statusText}`);
+        return false; // Treat it as invalid if the API fails
+      }
+
+      // Parse the JSON response
+      const data = await response.json();
+
+      // Check the disposable status
+      if (data.disposable === "true") {
+        console.log(`The email ${email} is disposable.`);
+        return false; // Disposable email, return false
+      } else if (data.disposable === "false") {
+        console.log(`The email ${email} is not disposable.`);
+        return true; // Not a disposable email, return true
+      } else {
+        console.log(`Could not determine the disposable status of the email ${email}.`);
+        return false; // Treat ambiguous cases as invalid
+      }
+    } catch (error) {
+      console.error("Error during email validation:", error);
+      return false; // Treat errors as invalid emails
+    }
+  };
   /**
    * Asynchronously inserts a new user into the database.
    *
@@ -1719,6 +1774,7 @@ export class UserService {
         city: user.city,
         zipcode: user.zipcode,
         country: user.country,
+        allowDeleteCreditCard: user.allowDeleteCreditCard,
       };
     }
     return res;

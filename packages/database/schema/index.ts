@@ -1,5 +1,11 @@
 import * as accounts from "./accounts";
+import * as adminPermissions from "./adminPermissions";
+import * as adminPersonaRole from "./adminPersonaRole";
+import * as adminPersonas from "./adminPersonas";
+import * as adminRolePermission from "./adminRolePermission";
+import * as adminRoles from "./adminRoles";
 import * as adminUserCourse from "./adminUserCourse";
+import * as adminUserRole from "./adminUserRole";
 import * as adminUsers from "./adminUsers";
 import * as appSettings from "./appSetting";
 import * as assets from "./assets";
@@ -14,9 +20,11 @@ import * as charities from "./charities";
 import * as charityCourseLink from "./charityCourseLink";
 import * as courseAllowedTimeToSell from "./courseAllowedTimeToSell";
 import * as courseAssets from "./courseAssets";
+import * as courseContacts from "./courseContacts";
 import * as courseException from "./courseException";
 import * as courseGlobalNotification from "./courseGlobalNotification";
 import * as courseMarkup from "./courseMarkup";
+import * as courseMembership from "./courseMembership";
 import * as coursePromoCodeLink from "./coursePromoCodeLink";
 import * as courses from "./courses";
 import * as courseScheduleDetails from "./courseScheduleDetails";
@@ -113,5 +121,13 @@ export const schema = {
   ...courseAllowedTimeToSell,
   ...userSession,
   ...courseUser,
-  ...authenticationMethod
+  ...authenticationMethod,
+  ...courseContacts,
+  ...courseMembership,
+  ...adminPermissions,
+  ...adminPersonaRole,
+  ...adminPersonas,
+  ...adminRolePermission,
+  ...adminRoles,
+  ...adminUserRole,
 };

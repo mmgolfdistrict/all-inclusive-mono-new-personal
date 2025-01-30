@@ -1,14 +1,16 @@
 import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
-import { and, eq, gt, gte, inArray, sql, desc, between, db } from "@golf-district/database";
+import { and, between, db, desc, eq, gt, gte, inArray, isNotNull, sql } from "@golf-district/database";
 import { bookings } from "@golf-district/database/schema/bookings";
 import { charities } from "@golf-district/database/schema/charities";
 import { charityCourseLink } from "@golf-district/database/schema/charityCourseLink";
+import { courseMembership } from "@golf-district/database/schema/courseMembership";
 import { coursePromoCodeLink } from "@golf-district/database/schema/coursePromoCodeLink";
 import { courses } from "@golf-district/database/schema/courses";
 import { customerCarts } from "@golf-district/database/schema/customerCart";
 import { lists } from "@golf-district/database/schema/lists";
 import { promoCodes } from "@golf-district/database/schema/promoCodes";
+import { providerCourseMembership } from "@golf-district/database/schema/providerCourseMembership";
 import { providers } from "@golf-district/database/schema/providers";
 import { providerCourseLink } from "@golf-district/database/schema/providersCourseLink";
 import { InsertTeeTimes, teeTimes } from "@golf-district/database/schema/teeTimes";
@@ -16,12 +18,18 @@ import { userPromoCodeLink } from "@golf-district/database/schema/userPromoCodeL
 import { users } from "@golf-district/database/schema/users";
 import { currentUtcTimestamp } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
+import dayjs from "dayjs";
+import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
+import UTC from "dayjs/plugin/utc";
+import { AppSettingsService } from "../app-settings/app-settings.service";
 import { AuctionService } from "../auction/auction.service";
+import type { IpInfoService } from "../ipinfo/ipinfo.service";
 import { HyperSwitchService } from "../payment-processor/hyperswitch.service";
 //import { StripeService } from "../payment-processor/stripe.service";
 import type { ProviderService } from "../tee-sheet-provider/providers.service";
 import { clubprophetWebhookService } from "../webhooks/clubprophet.webhook.service";
 import type { ForeUpWebhookService } from "../webhooks/foreup.webhook.service";
+import { loggerService } from "../webhooks/logging.service";
 import type {
   AuctionProduct,
   CartFeeTaxPercentProduct,
@@ -41,11 +49,6 @@ import type {
   WeatherGuaranteeTaxPercentProduct,
 } from "./types";
 import { CartValidationErrors } from "./types";
-import dayjs from "dayjs";
-import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
-import UTC from "dayjs/plugin/utc";
-import { loggerService } from "../webhooks/logging.service";
-import { AppSettingsService } from "../app-settings/app-settings.service";
 
 /**
  * Configuration options for the CheckoutService.
@@ -113,7 +116,8 @@ export class CheckoutService {
     private readonly database: Db,
     config: CheckoutServiceConfig,
     private readonly foreupIndexer: ForeUpWebhookService,
-    private readonly providerService: ProviderService
+    private readonly providerService: ProviderService,
+    private readonly ipInfoService: IpInfoService
   ) {
     this.hyperSwitch = new HyperSwitchService(config.hyperSwitchApiKey);
     this.auctionService = new AuctionService(database, this.hyperSwitch);
@@ -229,7 +233,12 @@ export class CheckoutService {
     }
   };
 
-  buildCheckoutSession = async (userId: string, customerCartData: CustomerCart, cartId = "") => {
+  buildCheckoutSession = async (
+    userId: string,
+    customerCartData: CustomerCart,
+    cartId = "",
+    ipAddress?: string
+  ) => {
     const { paymentId } = customerCartData;
     let data = {};
 
@@ -242,13 +251,13 @@ export class CheckoutService {
     if (paymentId) {
       data = this.updateCheckoutSession(userId, customerCartData, cartId);
     } else {
-      data = this.createCheckoutSession(userId, customerCartData);
+      data = this.createCheckoutSession(userId, customerCartData, ipAddress);
     }
     return data;
   };
 
-  createCheckoutSession = async (userId: string, customerCartData: CustomerCart) => {
-    const { paymentId, ...customerCart } = customerCartData;
+  createCheckoutSession = async (userId: string, customerCartData: CustomerCart, ipAddress?: string) => {
+    const { paymentId: _, ...customerCart } = customerCartData;
 
     this.logger.debug(`${JSON.stringify(customerCart)}`);
     const [user] = await this.database
@@ -279,7 +288,14 @@ export class CheckoutService {
     //   const message = errors.map((message) => message.errorType)
     //   throw new Error(errors);
     // }
-    const skipItemsForTotal = ["markup", "cart_fee", "greenFeeTaxPercent", "cartFeeTaxPercent", "weatherGuaranteeTaxPercent", "markupTaxPercent"]
+    const skipItemsForTotal = [
+      "markup",
+      "cart_fee",
+      "greenFeeTaxPercent",
+      "cartFeeTaxPercent",
+      "weatherGuaranteeTaxPercent",
+      "markupTaxPercent",
+    ];
 
     let total = customerCart.cart
       .filter(({ product_data }) => !skipItemsForTotal.includes(product_data.metadata.type))
@@ -290,18 +306,21 @@ export class CheckoutService {
     const isFirstHand = customerCart.cart.filter(
       ({ product_data }) => product_data.metadata.type === "first_hand"
     );
-    const sensibleCharge = customerCartData?.cart
-      ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "sensible")
-      ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
-    const markupCharge = customerCartData?.cart
-      ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "markup")
-      ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
-    const cartFeeCharge = customerCartData?.cart
-      ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "cart_fee")
-      ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+    const sensibleCharge =
+      customerCartData?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "sensible")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+    const markupCharge =
+      customerCartData?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "markup")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+    const cartFeeCharge =
+      customerCartData?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "cart_fee")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
     if (isFirstHand.length) {
       if (isFirstHand[0]?.product_data.metadata.type === "first_hand") {
-        const teetimeId = customerCart?.teeTimeId ?? ''
+        const teetimeId = customerCart?.teeTimeId ?? "";
         const [teeTime] = await this.database
           .select({
             id: teeTimes.id,
@@ -310,26 +329,29 @@ export class CheckoutService {
             greenFeeTaxPercent: courses.greenFeeTaxPercent,
             cartFeeTaxPercent: courses.cartFeeTaxPercent,
             weatherGuaranteeTaxPercent: courses.weatherGuaranteeTaxPercent,
-            markupTaxPercent: courses.markupTaxPercent
+            markupTaxPercent: courses.markupTaxPercent,
           })
           .from(teeTimes)
           .leftJoin(courses, eq(teeTimes.courseId, courses.id))
           .where(eq(teeTimes.id, teetimeId))
           .execute()
           .catch((err) => {
-
             throw new Error(`Error finding tee time id`);
           });
         const playerCount = isFirstHand[0]?.product_data.metadata.number_of_bookings;
-        const greenFeeTaxTotal = (((teeTime?.greenFees ?? 0) / 100) * (((teeTime?.greenFeeTaxPercent ?? 0) / 100) / 100)) * playerCount
-        const markupTaxTotal = ((markupCharge / 100) * ((teeTime?.markupTaxPercent ?? 0) / 100)) * playerCount
-        const weatherGuaranteeTaxTotal = ((sensibleCharge / 100) * ((teeTime?.weatherGuaranteeTaxPercent ?? 0) / 100))
-        const cartFeeTaxPercentTotal = ((cartFeeCharge) * ((teeTime?.cartFeeTaxPercent ?? 0) / 100) / 100) * playerCount
-        const additionalTaxes = Number((greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal).toFixed(2));
-        total = total + (additionalTaxes * 100)
+        const greenFeeTaxTotal =
+          ((teeTime?.greenFees ?? 0) / 100) * ((teeTime?.greenFeeTaxPercent ?? 0) / 100 / 100) * playerCount;
+        const markupTaxTotal = (markupCharge / 100) * ((teeTime?.markupTaxPercent ?? 0) / 100) * playerCount;
+        const weatherGuaranteeTaxTotal =
+          (sensibleCharge / 100) * ((teeTime?.weatherGuaranteeTaxPercent ?? 0) / 100);
+        const cartFeeTaxPercentTotal =
+          ((cartFeeCharge * ((teeTime?.cartFeeTaxPercent ?? 0) / 100)) / 100) * playerCount;
+        const additionalTaxes = Number(
+          (greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal).toFixed(2)
+        );
+        total = total + additionalTaxes * 100;
       }
     }
-
 
     // const tax = await this.stripeService.getTaxRate(customerCart.cart).catch((err) => {
     //   this.logger.error(`Error calculating tax: ${err}`);
@@ -365,7 +387,7 @@ export class CheckoutService {
         cartId: customerCart?.cartId,
       },
       merchant_order_reference_id: customerCartData?.cartId ?? "",
-      setup_future_usage: "off_session",
+      setup_future_usage: "on_session",
     };
     // }
 
@@ -399,6 +421,7 @@ export class CheckoutService {
 
     //save customerCart to database
     const cartId: string = randomUUID();
+    const ipInfo = await this.ipInfoService.getIpInfo(ipAddress);
     await this.database.insert(customerCarts).values({
       id: cartId,
       userId: userId,
@@ -407,6 +430,7 @@ export class CheckoutService {
       cart: customerCart,
       listingId,
       teeTimeId,
+      ipinfoJSON: ipInfo,
     });
 
     return {
@@ -423,7 +447,14 @@ export class CheckoutService {
     const errors = await this.validateCartItems(customerCartData);
     console.log("errors ", JSON.stringify(errors));
 
-    const skipItemsForTotal = ["markup", "cart_fee", "greenFeeTaxPercent", "cartFeeTaxPercent", "weatherGuaranteeTaxPercent", "markupTaxPercent"]
+    const skipItemsForTotal = [
+      "markup",
+      "cart_fee",
+      "greenFeeTaxPercent",
+      "cartFeeTaxPercent",
+      "weatherGuaranteeTaxPercent",
+      "markupTaxPercent",
+    ];
 
     let total: number = customerCart.cart
       .filter(({ product_data }) => !skipItemsForTotal.includes(product_data.metadata.type))
@@ -434,18 +465,21 @@ export class CheckoutService {
     const isFirstHand = customerCart.cart.filter(
       ({ product_data }) => product_data.metadata.type === "first_hand"
     );
-    const sensibleCharge = customerCartData?.cart
-      ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "sensible")
-      ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
-    const markupCharge = customerCartData?.cart
-      ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "markup")
-      ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
-    const cartFeeCharge = customerCartData?.cart
-      ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "cart_fee")
-      ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+    const sensibleCharge =
+      customerCartData?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "sensible")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+    const markupCharge =
+      customerCartData?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "markup")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+    const cartFeeCharge =
+      customerCartData?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "cart_fee")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
     if (isFirstHand.length) {
       if (isFirstHand[0]?.product_data.metadata.type === "first_hand") {
-        const teetimeId = customerCart?.teeTimeId ?? ''
+        const teetimeId = customerCart?.teeTimeId ?? "";
         const [teeTime] = await this.database
           .select({
             id: teeTimes.id,
@@ -454,24 +488,27 @@ export class CheckoutService {
             greenFeeTaxPercent: courses.greenFeeTaxPercent,
             cartFeeTaxPercent: courses.cartFeeTaxPercent,
             weatherGuaranteeTaxPercent: courses.weatherGuaranteeTaxPercent,
-            markupTaxPercent: courses.markupTaxPercent
+            markupTaxPercent: courses.markupTaxPercent,
           })
           .from(teeTimes)
           .leftJoin(courses, eq(teeTimes.courseId, courses.id))
           .where(eq(teeTimes.id, teetimeId))
           .execute()
           .catch((err) => {
-
             throw new Error(`Error finding tee time id`);
           });
         const playerCount = isFirstHand[0]?.product_data.metadata.number_of_bookings;
-        const greenFeeTaxTotal = (((teeTime?.greenFees ?? 0) / 100) * (((teeTime?.greenFeeTaxPercent ?? 0) / 100) / 100)) * playerCount
-        const markupTaxTotal = ((markupCharge / 100) * ((teeTime?.markupTaxPercent ?? 0) / 100)) * playerCount
-        const weatherGuaranteeTaxTotal = ((sensibleCharge / 100) * ((teeTime?.weatherGuaranteeTaxPercent ?? 0) / 100))
-        const cartFeeTaxPercentTotal = ((cartFeeCharge) * ((teeTime?.cartFeeTaxPercent ?? 0) / 100) / 100) * playerCount
-        const additionalTaxes = Number((greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal).toFixed(2));
-        total = total + (additionalTaxes * 100)
-
+        const greenFeeTaxTotal =
+          ((teeTime?.greenFees ?? 0) / 100) * ((teeTime?.greenFeeTaxPercent ?? 0) / 100 / 100) * playerCount;
+        const markupTaxTotal = (markupCharge / 100) * ((teeTime?.markupTaxPercent ?? 0) / 100) * playerCount;
+        const weatherGuaranteeTaxTotal =
+          (sensibleCharge / 100) * ((teeTime?.weatherGuaranteeTaxPercent ?? 0) / 100);
+        const cartFeeTaxPercentTotal =
+          ((cartFeeCharge * ((teeTime?.cartFeeTaxPercent ?? 0) / 100)) / 100) * playerCount;
+        const additionalTaxes = Number(
+          (greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal).toFixed(2)
+        );
+        total = total + additionalTaxes * 100;
       }
     }
     console.log(`paymentId = ${paymentId}`);
@@ -636,7 +673,9 @@ export class CheckoutService {
           errors.push(...(await this.validateMarkupTaxPercentItem(item as MarkupTaxPercentProduct)));
           break;
         case "weatherGuaranteeTaxPercent":
-          errors.push(...(await this.validateWeatherGuaranteeTaxPercentItem(item as WeatherGuaranteeTaxPercentProduct)));
+          errors.push(
+            ...(await this.validateWeatherGuaranteeTaxPercentItem(item as WeatherGuaranteeTaxPercentProduct))
+          );
           break;
         case "cart_fee":
           console.log(" switch in cart-fee");
@@ -822,7 +861,9 @@ export class CheckoutService {
     return errors;
   };
 
-  validateGreenFeeTaxPercentItem = async (item: GreenFeeTaxPercentProduct): Promise<CartValidationError[]> => {
+  validateGreenFeeTaxPercentItem = async (
+    item: GreenFeeTaxPercentProduct
+  ): Promise<CartValidationError[]> => {
     const errors: CartValidationError[] = [];
     //@TODO: validate quote
     return errors;
@@ -840,7 +881,9 @@ export class CheckoutService {
     return errors;
   };
 
-  validateWeatherGuaranteeTaxPercentItem = async (item: WeatherGuaranteeTaxPercentProduct): Promise<CartValidationError[]> => {
+  validateWeatherGuaranteeTaxPercentItem = async (
+    item: WeatherGuaranteeTaxPercentProduct
+  ): Promise<CartValidationError[]> => {
     const errors: CartValidationError[] = [];
     //@TODO: validate quote
     return errors;
@@ -1065,28 +1108,18 @@ export class CheckoutService {
       let appSettingsValue: number;
       appSettingsResult = await this.appSettings.getAppSetting("USER_BUY_MULTIPLE_TEETIME_IN_SAME_DAY");
       appSettingsValue = Number(appSettingsResult.value);
-      const [userDetails] = await this.database.select().from(users).where(eq(users.id, userId));
-      if (!userDetails) {
-        throw new Error("User details not found");
-      }
-      //2024-10-18T02:29:03Z 2024-10-17T14:29:03Z
+
       const [userResult] = await this.database
         .select({
-          id: users.id,
-          email: users.email,
           bookingCount: sql`Count(${bookings.id})`.as("bookingCount"),
         })
         .from(bookings)
-        .innerJoin(users, eq(bookings.ownerId, users.id))
         .where(
           and(
-            eq(users.email, userDetails.email ?? ""),
+            eq(bookings.ownerId, userId ?? ""),
             gte(bookings.purchasedAt, sql`NOW() - INTERVAL ${appSettingsValue} HOUR`)
           )
-        )
-        .groupBy(users.id, users.email)
-        .having(gt(sql`Count(${bookings.id})`, 1))
-        .orderBy(desc(sql`Count(${bookings.id})`));
+        );
       return { data: Number(userResult?.bookingCount) || 1 };
     } catch (error: any) {
       this.logger.error("", error.message);
@@ -1158,5 +1191,97 @@ export class CheckoutService {
     } catch (error: any) {
       console.log("error message", error.message);
     }
+  };
+  searchCustomerAndValidate = async (
+    userId: string,
+    teeTimeId: string,
+    email: string,
+    selectedProviderCourseMembershipId: string
+  ) => {
+    const [teeTimeResult] = await this.database
+      .select({
+        courseId: teeTimes.courseId,
+        providerCourseId: providerCourseLink.providerCourseId,
+        providerCourseConfiguration: providerCourseLink.providerCourseConfiguration,
+        providerInternalId: providers.internalId,
+        providerTeeSheet: providerCourseLink.providerTeeSheetId,
+      })
+      .from(teeTimes)
+      .leftJoin(providerCourseLink, eq(teeTimes.courseId, providerCourseLink.courseId))
+      .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))
+      .where(eq(teeTimes.id, teeTimeId));
+    const result = await this.providerService.searchCustomerViaEmail(
+      email,
+      teeTimeResult?.providerInternalId ?? "",
+      teeTimeResult?.providerCourseId ?? "",
+      teeTimeResult?.providerTeeSheet ?? "",
+      teeTimeResult?.providerCourseConfiguration ?? ""
+    );
+    if (!Array.isArray(result) || result.length === 0) {
+      return {
+        isValidated: false,
+        providerCourseMembership: "",
+        message: "This Customer is not registered for Loyalty",
+      };
+    }
+    const checkingGroupsLoyalty = await this.database
+      .select({
+        name: providerCourseMembership.name,
+        courseMemberShipId: courseMembership.id,
+        providerCourseMembershipId: providerCourseMembership.id,
+      })
+      .from(courseMembership)
+      .leftJoin(
+        providerCourseMembership,
+        eq(providerCourseMembership.courseMembershipId, courseMembership.id)
+      )
+      .where(
+        and(
+          eq(courseMembership.courseId, teeTimeResult?.courseId ?? ""),
+          isNotNull(providerCourseMembership.id),
+          eq(courseMembership.id, selectedProviderCourseMembershipId)
+        )
+      );
+    // console.log(selectedProviderCourseMembershipId);
+    // console.log("checkingGroupsLoyalty======>", checkingGroupsLoyalty);
+    const dummyCreatedAnswer = result.map((item: any) => {
+      return item;
+    });
+    // add validation for groups if they are empty
+    const dummyResult = dummyCreatedAnswer[0]?.attributes?.groups;
+    if (dummyResult.length === 0) {
+      return {
+        isValidated: false,
+        providerCourseMembership: "",
+        providerCourseMembershipId: "",
+        message: "User Is registered but not part of any loyalty group",
+      };
+    }
+    const anyIncluded = checkingGroupsLoyalty.some((item) => dummyResult.includes(item.name));
+    console.log("anyIncluded=============>", anyIncluded);
+    if (!anyIncluded) {
+      return {
+        isValidated: anyIncluded,
+        providerCourseMembership: "",
+        providerCourseMembershipId: "",
+        message: "mismatch in loyalty group",
+      };
+    }
+    return {
+      isValidated: anyIncluded,
+      providerCourseMembership: checkingGroupsLoyalty[0]?.courseMemberShipId,
+      providerCourseMembershipId: checkingGroupsLoyalty[0]?.providerCourseMembershipId,
+      message: "User Validated successfully",
+    };
+  };
+  getAllCourseMembership = async () => {
+    const courseMemberShipResult = await this.database
+      .select({
+        id: courseMembership.id,
+        name: courseMembership.name,
+      })
+      .from(courseMembership);
+    console.log("providerCourseMemberShipResult", courseMemberShipResult);
+    return courseMemberShipResult || [];
   };
 }

@@ -47,7 +47,7 @@ export const ProfileDetails = ({
                   ? userData?.name
                   : ""}
               </div>
-              <div className="-mt-2 text-primary-gray md:mt-0 whitespace-nowrap overflow-hidden text-ellipsis w-1/4">
+              <div className="-mt-2 text-primary-gray md:mt-0 whitespace-nowrap overflow-hidden text-ellipsis w-1/4 unmask-userdetails">
                 {userData?.handle ?? ""}
               </div>
             </div>

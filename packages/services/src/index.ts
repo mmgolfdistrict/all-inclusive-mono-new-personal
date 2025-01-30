@@ -30,4 +30,5 @@ export * from "./cashout/cashout.service";
 export * from "./webhooks/updateWithdrawlableAmount";
 export * from "./webhooks/stripeConnect.webhook.service";
 export * from "./course-seo/courseSEO.service";
+export * from "./release-history/releaseHistory.service";
 export { verifySignatureAppRouter } from "@upstash/qstash/dist/nextjs";
