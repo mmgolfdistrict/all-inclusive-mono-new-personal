@@ -15,7 +15,7 @@ export const providers = mySqlTable(
     website: text("website"),
     logo: varchar("id", { length: 36 }),
     isWebhookAvailable: boolean("isWebhookAvailable").default(false),
-    supportsCentralizedAccessToken: boolean("supportsCentralizedAccessToken").notNull(),
+    supportsCentralizedAccessToken: boolean("supportsCentralizedAccessToken").default(false).notNull(),
   },
   (table) => {
     return {
