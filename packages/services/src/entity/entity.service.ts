@@ -17,7 +17,7 @@ export class EntityService {
    * Constructs the EntityService.
    * @param database - The database instance to use for queries.
    */
-  constructor(private readonly database: Db) {}
+  constructor(private readonly database: Db) { }
 
   /**
    * Retrieves an entity associated with a given course ID.
@@ -177,9 +177,11 @@ export class EntityService {
           description: courses.description,
           address: courses.address,
           logo: courses.logoId,
+          display: courses.displayOrder
         })
         .from(courses)
         .where(eq(courses.entityId, entityId))
+        .orderBy(courses.displayOrder)
         .execute()
         .catch((err) => {
           this.logger.error(err);
@@ -195,6 +197,7 @@ export class EntityService {
           });
           throw new Error(`Error getting courses for entity: ${entityId}`);
         });
+      console.log("datadata", data);
 
       // Find all images for each course
       const images = await this.database
