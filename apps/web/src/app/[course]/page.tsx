@@ -12,14 +12,18 @@ import { MobileFilters } from "~/components/course-page/mobile-filters";
 import { MobileSort, SortOptions } from "~/components/course-page/mobile-sort";
 import { Calendar } from "~/components/icons/calendar";
 import { ChevronUp } from "~/components/icons/chevron-up";
+import { Close } from "~/components/icons/close";
 import { FiltersIcon } from "~/components/icons/filters";
 import { Select } from "~/components/input/select";
+import { ForecastModal } from "~/components/modal/forecast-modal";
 import { useAppContext } from "~/contexts/AppContext";
+import { useBookingSourceContext } from "~/contexts/BookingSourceContext";
 import { useCourseContext } from "~/contexts/CourseContext";
 import type { DateType, GolferType } from "~/contexts/FiltersContext";
 import { useFiltersContext } from "~/contexts/FiltersContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
+import { microsoftClarityEvent } from "~/utils/microsoftClarityUtils";
 import type { Dayjs } from "dayjs";
 import dayjs from "dayjs";
 import isBetween from "dayjs/plugin/isBetween";
@@ -32,10 +36,6 @@ import { toast } from "react-toastify";
 import { ViewportList } from "react-viewport-list";
 import { useMediaQuery } from "usehooks-ts";
 import { LoadingContainer } from "./loader";
-import { useBookingSourceContext } from "~/contexts/BookingSourceContext";
-import { microsoftClarityEvent } from "~/utils/microsoftClarityUtils";
-import { Close } from "~/components/icons/close";
-import { ForecastModal } from "~/components/modal/forecast-modal";
 
 dayjs.extend(Weekday);
 dayjs.extend(RelativeTime);
@@ -88,9 +88,10 @@ export default function CourseHomePage() {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const courseId = course?.id;
   const updateUser = api.user.updateUser.useMutation();
-  const { data: specialEvents, isLoading: specialEventsLoading } = api.searchRouter.getSpecialEvents.useQuery({
-    courseId: courseId ?? "",
-  });
+  const { data: specialEvents, isLoading: specialEventsLoading } =
+    api.searchRouter.getSpecialEvents.useQuery({
+      courseId: courseId ?? "",
+    });
 
   const updateHandle = async (uName) => {
     try {
@@ -188,9 +189,9 @@ export default function CourseHomePage() {
     console.log("queryDateType", queryDateType, specialDate);
     if (queryDateType) {
       if (specialDate) {
-        setDateType(queryDateType as DateType);  // Set the DateType to queryDateType if specialDate exists
+        setDateType(queryDateType as DateType); // Set the DateType to queryDateType if specialDate exists
       } else {
-        setDateType("All");  // If no specialDate, set the DateType to "All"
+        setDateType("All"); // If no specialDate, set the DateType to "All"
       }
     }
   }, [specialEvents, queryDateType]);
@@ -203,7 +204,6 @@ export default function CourseHomePage() {
   };
 
   const startDate = useMemo(() => {
-
     const specialDate = getSpecialDayDate(dateType);
 
     if (specialDate) {
@@ -440,7 +440,6 @@ export default function CourseHomePage() {
     setPageNumber(1);
   }, [priceRange]);
 
-
   useEffect(() => {
     if (typeof window !== "undefined") {
       localStorage.removeItem("googlestate");
@@ -455,8 +454,8 @@ export default function CourseHomePage() {
         value: "",
         additionalContent: {
           courseName: course?.name,
-          websiteURL: course?.websiteURL
-        }
+          websiteURL: course?.websiteURL,
+        },
       });
     }
   }, []);
@@ -554,7 +553,9 @@ export default function CourseHomePage() {
   };
   return (
     <main className={`bg-secondary-white py-4 md:py-6`}>
-      <LoadingContainer isLoading={isLoadingTeeTimeDate || isLoading || specialEventsLoading}>
+      <LoadingContainer
+        isLoading={isLoadingTeeTimeDate || isLoading || specialEventsLoading}
+      >
         <div></div>
       </LoadingContainer>
       <div className="flex items-center justify-between px-4 md:px-6">
@@ -710,7 +711,10 @@ export default function CourseHomePage() {
         />
       )}
       {isForecastModalOpen && (
-        <ForecastModal closeForecastModal={closeForecastModal} startDate={formatDate(startDate)} endDate={formatDate(endDate)} />
+        <ForecastModal
+          closeForecastModal={closeForecastModal}
+          startDate={formatDate(startDate)} endDate={formatDate(endDate)}
+        />
       )}
     </main>
   );

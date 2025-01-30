@@ -1,5 +1,6 @@
 import Logger from "@golf-district/shared/src/logger";
 import { CacheService } from "../infura/cache.service";
+import { loggerService } from "../webhooks/logging.service";
 import type {
   AcceptQuoteParams,
   AcceptQuoteSuccessResponse,
@@ -14,7 +15,6 @@ import type {
   QuoteSuccessResponse,
   TokenErrorResponse,
 } from "./types";
-import { loggerService } from "../webhooks/logging.service";
 
 /**
  * Handles interactions with the SensibleWeather API.
@@ -161,8 +161,8 @@ export class SensibleService extends CacheService {
             exposureLatitude,
             exposureLongitude,
             exposureTotalCoverageAmount,
-          })
-        })
+          }),
+        });
         throw new Error(`Error getting access token: ${err}`);
       }
     }
@@ -225,8 +225,8 @@ export class SensibleService extends CacheService {
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
             quoteId,
-          })
-        })
+          }),
+        });
         throw new Error(`Error getting access token: ${err}`);
       }
     }
@@ -273,8 +273,8 @@ export class SensibleService extends CacheService {
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
             params,
-          })
-        })
+          }),
+        });
         throw new Error(`Error getting access token: ${err}`);
       }
     }
@@ -325,8 +325,8 @@ export class SensibleService extends CacheService {
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
             guaranteeId,
-          })
-        })
+          }),
+        });
         throw new Error(`Error getting access token: ${err}`);
       }
     }
@@ -374,8 +374,8 @@ export class SensibleService extends CacheService {
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
             params,
-          })
-        })
+          }),
+        });
         throw new Error(`Error getting access token: ${err}`);
       }
     }
@@ -426,8 +426,8 @@ export class SensibleService extends CacheService {
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
             guaranteeId,
-          })
-        })
+          }),
+        });
         throw new Error(`Error getting access token: ${err}`);
       }
     }
@@ -476,8 +476,8 @@ export class SensibleService extends CacheService {
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
             params,
-          })
-        })
+          }),
+        });
         throw new Error(`Error getting access token: ${err}`);
       }
     }
@@ -579,8 +579,8 @@ export class SensibleService extends CacheService {
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
             quoteId,
-          })
-        })
+          }),
+        });
         throw new Error(`Error getting access token: ${err}`);
       }
     }

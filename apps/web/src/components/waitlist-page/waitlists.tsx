@@ -147,13 +147,11 @@ function Waitlists() {
         </h1>
       </div>
 
-      {!isUserLoading && !user ?
-        (<div className="flex justify-center items-center h-[200px]">
-          <div className="text-center">
-            Login to View
-          </div>
+      {!isUserLoading && !user ? (
+        <div className="flex justify-center items-center h-[200px]">
+          <div className="text-center">Login to View</div>
         </div>
-        ) : (isLoading ? (
+      ) : isLoading ? (
         <div className="flex justify-center items-center h-[200px] w-full md:min-w-[370px]">
           <Spinner className="w-[50px] h-[50px]" />
         </div>
@@ -184,7 +182,7 @@ function Waitlists() {
               ))
             : null}
         </div>
-        ))}
+      )}
       {isDeleteModalOpen && (
         <>
           <div

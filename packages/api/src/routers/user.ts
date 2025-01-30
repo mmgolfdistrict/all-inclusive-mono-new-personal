@@ -146,7 +146,14 @@ export const userRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       return await ctx.serviceFactory
         .getAuthService()
-        .addUserSession(ctx?.session.user.id, input.status, input.courseId, input.loginMethod, ctx?.session.ip, ctx?.session.userAgent);
+        .addUserSession(
+          ctx?.session.user.id,
+          input.status,
+          input.courseId,
+          input.loginMethod,
+          ctx?.session.ip,
+          ctx?.session.userAgent
+        );
     }),
 
   addCourseUser: publicProcedure

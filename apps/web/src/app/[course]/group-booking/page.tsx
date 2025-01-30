@@ -8,27 +8,20 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { FilledButton } from "~/components/buttons/filled-button";
 import { GoBack } from "~/components/buttons/go-back";
-import { Bell } from "~/components/icons/bell";
 import { Campaign } from "~/components/icons/campaign";
 import { Close } from "~/components/icons/close";
 import { GolfCourse } from "~/components/icons/golf-course";
 import { PlaylistAddCheck } from "~/components/icons/playlist-add-check";
 import { Timer } from "~/components/icons/timer";
-import { ChoosePlayers } from "~/components/input/choose-players";
 import { Input } from "~/components/input/input";
+import { SingleSlider } from "~/components/input/single-slider";
 import { Slider } from "~/components/input/slider";
-import Waitlists from "~/components/waitlist-page/waitlists";
 import { useCourseContext } from "~/contexts/CourseContext";
-import { useMe } from "~/hooks/useMe";
-import { api } from "~/utils/api";
 import dayjs from "dayjs";
-import { useRouter } from "next/navigation";
-import { toast } from "react-toastify";
 import { useMediaQuery } from "usehooks-ts";
+import GroupBookingPage from "./GroupBookingPage";
 
-function NotifyMe({ params }: { params: { course: string } }) {
-  const router = useRouter();
-  const { user, isLoading } = useMe();
+function GroupBooking({ params }: { params: { course: string } }) {
   const { course } = useCourseContext();
   const courseId = params.course;
   const [selectedDates, setSelectedDates] = useState<Day[]>([]);
@@ -36,7 +29,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
   const [displayDates, setDisplayDates] = useState<string>("");
   const [isTimePickerOpen, setIsTimePickerOpen] = useState(false);
   const [timeRange, setTimeRange] = useState<string>("");
-  const [players, setPlayers] = useState("1");
+  const [players, setPlayers] = useState(10);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const courseStartTime = dayjs(course?.openTime).format("hh:mm A");
   const courseEndTime = dayjs(course?.closeTime).format("hh:mm A");
@@ -98,22 +91,6 @@ function NotifyMe({ params }: { params: { course: string } }) {
   const handleSetStartTime = () => {
     setStartTime(localStartTime);
   };
-
-  if (!course?.supportsWaitlist || !course) {
-    router.push(`/${courseId}`);
-  }
-
-  const { refetch: refetchWaitlist } = api.userWaitlist.getWaitlist.useQuery(
-    { courseId },
-    {
-      enabled: user?.id ? true : false,
-    }
-  );
-
-  const {
-    mutateAsync: createNotifications,
-    isLoading: isCreatingNotifications,
-  } = api.userWaitlist.createWaitlistNotification.useMutation();
 
   const currentDate = dayjs().add(1, "day");
 
@@ -181,72 +158,6 @@ function NotifyMe({ params }: { params: { course: string } }) {
     setErrorMessage("");
   };
 
-  const handleSubmit = async () => {
-    if (!isLoading && !user) {
-      router.push(`/${courseId}/login`);
-      return;
-    }
-    if (selectedDates.length === 0) {
-      toast.error("Please select a date");
-      return;
-    }
-    if (!startTime[0] || !startTime[1]) {
-      toast.error("Please select a time range");
-      return;
-    }
-    const formatTimeToHHmm = (time) => {
-      const timeString = time.toString().padStart(4, "0");
-      const hours = timeString.slice(0, 2);
-      const minutes = timeString.slice(2);
-      return `${hours}${minutes}`;
-    };
-
-    const notificationsData = {
-      courseId,
-      startTime: Number(formatTimeToHHmm(startTime[0])),
-      endTime: Number(formatTimeToHHmm(startTime[1])),
-      dates: selectedDates.map(
-        (date) => `${date.year}-${date.month}-${date.day}`
-      ),
-      playerCount: Number(players),
-    };
-
-    const formatTime = (time: string | number) => {
-      const timeString = time.toString().padStart(4, "0");
-      const hours = parseInt(timeString.slice(0, 2), 10);
-      const minutes = parseInt(timeString.slice(2), 10);
-      return dayjs().hour(hours).minute(minutes).format("hh:mm a");
-    };
-
-    await createNotifications(notificationsData, {
-      onSuccess: (data) => {
-        const toastContent = (
-          <div>
-            <p>{data}</p>
-            <p className="text-green-600 text-[14px] font-bold">
-              If you don’t see the notification emails please check your Junk
-              Mail or Spam folder. Remember to add no-reply@golfdistrict.com to
-              the safe senders list.
-            </p>
-          </div>
-        );
-        toast.success(toastContent);
-
-        setSelectedDates([]);
-        const startTimeString = formatTime(courseStartTimeNumber);
-        const endTimeString = formatTime(courseEndTimeNumber);
-        setTimeRange(`${startTimeString} - ${endTimeString}`);
-        // setTimeRange("");
-        setLocalStartTime([courseStartTimeNumber, courseEndTimeNumber]);
-        setStartTime([courseStartTimeNumber, courseEndTimeNumber]);
-        setPlayers("1");
-        setTimeMobile([courseStartTimeNumber, courseEndTimeNumber]);
-      },
-    });
-
-    await refetchWaitlist();
-  };
-
   useEffect(() => {
     const datesToDisplay = selectedDates
       .sort((a, b) => {
@@ -276,6 +187,10 @@ function NotifyMe({ params }: { params: { course: string } }) {
     }
   }, [startTime[0], startTime[1]]);
 
+  const handleSingleSliderChange = () => {
+    // setPlayers(e);
+  };
+
   return (
     <section className="mx-auto px-2 flex w-full flex-col gap-4 pt-4 md:max-w-[1360px] md:px-6">
       <div className="flex items-center justify-between px-4 md:px-6">
@@ -285,7 +200,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
         {/* First Column */}
         <div className="col-span-3 flex flex-col items-start pl-4 md:px-6">
           <h1 className="md:text-center text-[20px] capitalize text-secondary-black md:text-[32px]">
-            How Waitlist Works
+            How Group Booking Works
           </h1>
 
           <div className="mt-4 w-full">
@@ -311,11 +226,10 @@ function NotifyMe({ params }: { params: { course: string } }) {
               </div>
               <div>
                 <h2 className="text-[14px] md:text-[18px] font-semibold">
-                  Receive Alerts Instantly
+                  Visual Time Breakdown
                 </h2>
                 <p className="text-[12px] md:text-[16px] text-gray-600">
-                  We will alert you when a tee time becomes available or listed
-                  for sale.
+                  See your times visually how they are spread apart.
                 </p>
               </div>
             </div>
@@ -356,10 +270,10 @@ function NotifyMe({ params }: { params: { course: string } }) {
         {/* Second Column - your existing code */}
         <div className="col-span-5 flex flex-col justify-center gap-1 bg-white  py-2 rounded-xl md:py-6 shadow">
           <h1 className="md:text-center text-[20px] capitalize text-secondary-black px-4 md:text-[32px]">
-            Tee Time Waitlist
+            Group Booking
           </h1>
           <h2 className="md:text-center text-[14px] text-primary-gray px-4 md:text-[20px] mb-4">
-            Get alerted when tee times are available
+            Configure your group to book them together.
           </h2>
           <hr />
           <div className="grid grid-rows-3 md:grid-rows-3 lg:grid-rows-3 gap-4 px-4 py-2 md:px-8 md:py-6">
@@ -561,24 +475,37 @@ function NotifyMe({ params }: { params: { course: string } }) {
               <label className="text-[14px] text-primary-gray">
                 {"Number of Players"}
               </label>
-              <ChoosePlayers
-                className="py-2 !text-[10px] md:!text-[14px]"
-                availableSlots={4}
-                players={players}
-                setPlayers={setPlayers}
-                teeTimeId={"-"}
-                playersOptions={["1", "2", "3", "4"]}
-                numberOfPlayers={["1", "2", "3", "4"]}
-              />
+              <div className="relative mt-2">
+                <div className="flex justify-between text-sm mb-2">
+                  {Array.from({ length: 15 }, (_, i) => 10 + i).map(
+                    (number) => (
+                      <span
+                        key={number}
+                        className="text-center"
+                        style={{ width: "6.66%" }}
+                      >
+                        {number}
+                      </span>
+                    )
+                  )}
+                </div>
+                <SingleSlider
+                  min={10}
+                  max={24}
+                  step={1}
+                  //   onValueChange={(e) => handleSingleSliderChange(e)}
+                  aria-label="Select number of players"
+                  data-testid="slider-number-of-players"
+                />
+              </div>
             </div>
           </div>
           <FilledButton
-            onClick={handleSubmit}
+            // onClick={handleSubmit}
             className="flex items-center justify-center gap-1 max-w-[200px] w-full mt-4 self-center py-[.28rem] md:py-1.5 text-[10px] md:text-[14px] disabled:opacity-50 transition-opacity duration-300"
-            disabled={isCreatingNotifications}
+            // disabled={}
           >
-            <Bell width="15px" />
-            Get Alerted
+            See Available Times
           </FilledButton>
           <div className="flex justify-center items-center mt-2 italic text-primary-gray text-[12px] md:text-[16px] px-4 py-2 md:px-8 md:py-6">
             <p>
@@ -589,8 +516,8 @@ function NotifyMe({ params }: { params: { course: string } }) {
         </div>
       </div>
       <hr />
-      <Waitlists />
+      <GroupBookingPage />
     </section>
   );
 }
-export default NotifyMe;
+export default GroupBooking;

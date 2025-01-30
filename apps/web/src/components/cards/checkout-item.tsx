@@ -256,7 +256,8 @@ export const CheckoutItem = ({
       />
       <div className="flex flex-col gap-1">
         <div className="flex flex-col gap-2">
-          {isSupportMemberShip?.supportsProviderMembership === 1 && listingId == null ? (
+          {isSupportMemberShip?.supportsProviderMembership === 1 &&
+          listingId == null ? (
             <Fragment>
               <div className="flex gap-2 px-2">
                 <h5 className="">Select MemberShip:</h5>

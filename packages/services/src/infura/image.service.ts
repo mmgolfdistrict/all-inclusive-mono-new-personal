@@ -84,8 +84,8 @@ export class ImageService {
           createdById,
           key,
           extension,
-        })
-      })
+        }),
+      });
       throw new Error("User not found");
     }
 
@@ -112,9 +112,9 @@ export class ImageService {
             createdById,
             key,
             extension,
-            assetData
-          })
-        })
+            assetData,
+          }),
+        });
         throw new Error("Error storing asset");
       });
 
@@ -133,9 +133,9 @@ export class ImageService {
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
             createdById,
-            assetData
-          })
-        })
+            assetData,
+          }),
+        });
         throw new Error("Error retrieving inserted asset");
       });
     if (!insertedAsset) {
@@ -148,9 +148,9 @@ export class ImageService {
         stackTrace: `Error asset not found for key ${key}`,
         additionalDetailsJSON: JSON.stringify({
           createdById,
-          assetData
-        })
-      })
+          assetData,
+        }),
+      });
       throw new Error("Error asset not found for key ${key}");
     }
     return insertedAsset.id;

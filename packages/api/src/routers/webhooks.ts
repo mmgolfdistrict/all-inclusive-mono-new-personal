@@ -39,7 +39,16 @@ export const webhookRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      return await ctx.serviceFactory.getHyperSwitchService().cancelHyperswitchPaymentById(input.paymentId, input.teeTimeId, input.courseId, input.userId, input.email, input.phone);
+      return await ctx.serviceFactory
+        .getHyperSwitchService()
+        .cancelHyperswitchPaymentById(
+          input.paymentId,
+          input.teeTimeId,
+          input.courseId,
+          input.userId,
+          input.email,
+          input.phone
+        );
     }),
   sendEmailForFailedPayment: publicProcedure
     .input(
@@ -55,9 +64,20 @@ export const webhookRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      return await ctx.serviceFactory.getHyperSwitchService().sendEmailForFailedPayment(input.paymentId, input.teeTimeId, input.listingId, input.courseId, input.cartId, input.userId, input.email, input.phone);
+      return await ctx.serviceFactory
+        .getHyperSwitchService()
+        .sendEmailForFailedPayment(
+          input.paymentId,
+          input.teeTimeId,
+          input.listingId,
+          input.courseId,
+          input.cartId,
+          input.userId,
+          input.email,
+          input.phone
+        );
     }),
-    sendEmailForBookingFailedByTimeout: publicProcedure
+  sendEmailForBookingFailedByTimeout: publicProcedure
     .input(
       z.object({
         paymentId: z.string(),
@@ -69,7 +89,16 @@ export const webhookRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      return await ctx.serviceFactory.getHyperSwitchService().sendEmailForBookingFailedByTimeout(input.paymentId, input.courseId, input.cartId, input.sensibleQuoteId,input.userId, input.teeTimeId);
+      return await ctx.serviceFactory
+        .getHyperSwitchService()
+        .sendEmailForBookingFailedByTimeout(
+          input.paymentId,
+          input.courseId,
+          input.cartId,
+          input.sensibleQuoteId,
+          input.userId,
+          input.teeTimeId
+        );
     }),
   auditLog: publicProcedure
     .input(

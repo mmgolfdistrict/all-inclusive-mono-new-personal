@@ -1,29 +1,35 @@
 import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
-import { and, eq, gt, gte, inArray, sql, desc, between, db, isNotNull } from "@golf-district/database";
+import { and, between, db, desc, eq, gt, gte, inArray, isNotNull, sql } from "@golf-district/database";
 import { bookings } from "@golf-district/database/schema/bookings";
 import { charities } from "@golf-district/database/schema/charities";
 import { charityCourseLink } from "@golf-district/database/schema/charityCourseLink";
+import { courseMembership } from "@golf-district/database/schema/courseMembership";
 import { coursePromoCodeLink } from "@golf-district/database/schema/coursePromoCodeLink";
 import { courses } from "@golf-district/database/schema/courses";
 import { customerCarts } from "@golf-district/database/schema/customerCart";
 import { lists } from "@golf-district/database/schema/lists";
 import { promoCodes } from "@golf-district/database/schema/promoCodes";
+import { providerCourseMembership } from "@golf-district/database/schema/providerCourseMembership";
 import { providers } from "@golf-district/database/schema/providers";
 import { providerCourseLink } from "@golf-district/database/schema/providersCourseLink";
-import { courseMembership } from "@golf-district/database/schema/courseMembership";
-import { providerCourseMembership } from "@golf-district/database/schema/providerCourseMembership";
 import { InsertTeeTimes, teeTimes } from "@golf-district/database/schema/teeTimes";
 import { userPromoCodeLink } from "@golf-district/database/schema/userPromoCodeLink";
 import { users } from "@golf-district/database/schema/users";
 import { currentUtcTimestamp } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
+import dayjs from "dayjs";
+import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
+import UTC from "dayjs/plugin/utc";
+import { AppSettingsService } from "../app-settings/app-settings.service";
 import { AuctionService } from "../auction/auction.service";
+import type { IpInfoService } from "../ipinfo/ipinfo.service";
 import { HyperSwitchService } from "../payment-processor/hyperswitch.service";
 //import { StripeService } from "../payment-processor/stripe.service";
 import type { ProviderService } from "../tee-sheet-provider/providers.service";
 import { clubprophetWebhookService } from "../webhooks/clubprophet.webhook.service";
 import type { ForeUpWebhookService } from "../webhooks/foreup.webhook.service";
+import { loggerService } from "../webhooks/logging.service";
 import type {
   AuctionProduct,
   CartFeeTaxPercentProduct,
@@ -43,12 +49,6 @@ import type {
   WeatherGuaranteeTaxPercentProduct,
 } from "./types";
 import { CartValidationErrors } from "./types";
-import dayjs from "dayjs";
-import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
-import UTC from "dayjs/plugin/utc";
-import { loggerService } from "../webhooks/logging.service";
-import { AppSettingsService } from "../app-settings/app-settings.service";
-import type { IpInfoService } from "../ipinfo/ipinfo.service";
 
 /**
  * Configuration options for the CheckoutService.
@@ -387,7 +387,7 @@ export class CheckoutService {
         cartId: customerCart?.cartId,
       },
       merchant_order_reference_id: customerCartData?.cartId ?? "",
-      setup_future_usage: "off_session",
+      setup_future_usage: "on_session",
     };
     // }
 
@@ -1210,7 +1210,7 @@ export class CheckoutService {
       .leftJoin(providerCourseLink, eq(teeTimes.courseId, providerCourseLink.courseId))
       .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))
       .where(eq(teeTimes.id, teeTimeId));
-    let result = await this.providerService.searchCustomerViaEmail(
+    const result = await this.providerService.searchCustomerViaEmail(
       email,
       teeTimeResult?.providerInternalId ?? "",
       teeTimeResult?.providerCourseId ?? "",

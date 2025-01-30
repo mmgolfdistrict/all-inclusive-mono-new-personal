@@ -20,7 +20,10 @@ export const adminPermissions = mySqlTable(
   },
   (table) => {
     return {
-      unique_permission_isDeleted: unique("unique_permission_isDeleted").on(table.permission, table.isDeleted),
+      unique_permission_isDeleted: unique("unique_permission_isDeleted").on(
+        table.permission,
+        table.isDeleted
+      ),
     };
   }
 );

@@ -37,8 +37,8 @@ export class CourseSEOService {
         stackTrace: `${error.stack}`,
         additionalDetailsJSON: JSON.stringify({
           courseId,
-        })
-      })
+        }),
+      });
     }
   };
 }

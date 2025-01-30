@@ -1,17 +1,17 @@
 /* eslint no-use-before-define: 0 */
-import Logger from "@golf-district/shared/src/logger";
-import HyperSwitch from "@juspay-tech/hyper-node";
 import { db } from "@golf-district/database";
 import type { Db } from "@golf-district/database";
+import Logger from "@golf-district/shared/src/logger";
+import HyperSwitch from "@juspay-tech/hyper-node";
 import type pino from "pino";
 import type { UpdatePayment } from "../checkout/types";
+import { NotificationService } from "../notification/notification.service";
+import { loggerService } from "../webhooks/logging.service";
 import type {
   CustomerDetails,
   CustomerPaymentMethod,
   CustomerPaymentMethodsResponse,
 } from "./types/hyperSwitch.types";
-import { NotificationService } from "../notification/notification.service";
-import { loggerService } from "../webhooks/logging.service";
 
 /**
  * Service for interacting with the HyperSwitch API.
@@ -67,8 +67,8 @@ export class HyperSwitchService {
         stackTrace: `${err.stack}`,
         additionalDetailsJSON: JSON.stringify({
           params,
-        })
-      })
+        }),
+      });
       throw new Error(`Error creating customer: ${err}`);
     });
   };
@@ -89,9 +89,9 @@ export class HyperSwitchService {
         message: "ERROR_CREATING_CUSTOMER",
         stackTrace: `${err.stack}`,
         additionalDetailsJSON: JSON.stringify({
-          customerId
-        })
-      })
+          customerId,
+        }),
+      });
       throw new Error(`Error retrieving customer: ${err}`);
     });
   };
@@ -113,8 +113,8 @@ export class HyperSwitchService {
         stackTrace: `${err.stack}`,
         additionalDetailsJSON: JSON.stringify({
           customerId,
-        })
-      })
+        }),
+      });
       throw new Error(`Error deleting customer: ${err}`);
     });
   };
@@ -136,9 +136,9 @@ export class HyperSwitchService {
         stackTrace: `${err.stack}`,
         additionalDetailsJSON: JSON.stringify({
           params,
-          options
-        })
-      })
+          options,
+        }),
+      });
       throw new Error(`Error creating payment intent: ${err}`);
     });
   };
@@ -160,9 +160,9 @@ export class HyperSwitchService {
         stackTrace: `${err.stack}`,
         additionalDetailsJSON: JSON.stringify({
           params,
-          paymentId
-        })
-      })
+          paymentId,
+        }),
+      });
       throw new Error(`Error updating payment intent: ${err}`);
     });
   };
@@ -183,9 +183,9 @@ export class HyperSwitchService {
         message: "ERROR_CONFIRMING_PAYMENT_INTENT",
         stackTrace: `${err.stack}`,
         additionalDetailsJSON: JSON.stringify({
-          paymentId
-        })
-      })
+          paymentId,
+        }),
+      });
       throw new Error(`Error confirming payment intent: ${err}`);
     });
   };
@@ -208,9 +208,9 @@ export class HyperSwitchService {
         message: "ERROR_RETRIEVING_PAYMENT_INTENT",
         stackTrace: `${err.stack}`,
         additionalDetailsJSON: JSON.stringify({
-          paymentId
-        })
-      })
+          paymentId,
+        }),
+      });
       throw new Error(`Error retrieving payment intent: ${err}`);
     });
   };
@@ -233,9 +233,9 @@ export class HyperSwitchService {
         message: "ERROR_CAPTURING_PAYMENT_INTENT",
         stackTrace: `${err.stack}`,
         additionalDetailsJSON: JSON.stringify({
-          paymentId
-        })
-      })
+          paymentId,
+        }),
+      });
       throw new Error(`Error capturing payment intent: ${err}`);
     });
   };
@@ -258,9 +258,9 @@ export class HyperSwitchService {
         message: "ERROR_CANCELLING_PAYMENT_INTENT",
         stackTrace: `${err.stack}`,
         additionalDetailsJSON: JSON.stringify({
-          paymentId
-        })
-      })
+          paymentId,
+        }),
+      });
       throw new Error(`Error cancelling payment intent: ${err}`);
     });
   };
@@ -323,9 +323,9 @@ export class HyperSwitchService {
         message: "ERROR_RETRIEVING_PAYMENT_METHODS",
         stackTrace: `${error.stack}`,
         additionalDetailsJSON: JSON.stringify({
-          customerId
-        })
-      })
+          customerId,
+        }),
+      });
     }
   };
 
@@ -351,14 +351,23 @@ export class HyperSwitchService {
         message: "ERROR_REMOVING_PAYMENT_METHOD",
         stackTrace: `${error.stack}`,
         additionalDetailsJSON: JSON.stringify({
-          paymentMethodId
-        })
-      })
+          paymentMethodId,
+        }),
+      });
       console.log("Payment method deleted");
     }
   };
 
-  sendEmailForFailedPayment = async (paymentMethodId: string, teeTimeId: string, listingId: string, courseId: string, cartId: string, userId?: string, userEmail?: string, phone?: string) => {
+  sendEmailForFailedPayment = async (
+    paymentMethodId: string,
+    teeTimeId: string,
+    listingId: string,
+    courseId: string,
+    cartId: string,
+    userId?: string,
+    userEmail?: string,
+    phone?: string
+  ) => {
     const adminEmail: string = process.env.ADMIN_EMAIL_LIST || "nara@golfdistrict.com";
     const emailAterSplit = adminEmail.split(",");
     emailAterSplit.map(async (email) => {
@@ -366,7 +375,9 @@ export class HyperSwitchService {
         await this.notificationService.sendEmail(
           email,
           "A payment has failed ",
-          `payment with paymentid ${paymentMethodId} failed. UserId: ${userId}, Email: ${userEmail}, Phone: ${phone}, ${teeTimeId ? `TeeTimeId: ${teeTimeId}` : `ListingId: ${listingId}`}, CourseId: ${courseId}, CartId: ${cartId}`
+          `payment with paymentid ${paymentMethodId} failed. UserId: ${userId}, Email: ${userEmail}, Phone: ${phone}, ${
+            teeTimeId ? `TeeTimeId: ${teeTimeId}` : `ListingId: ${listingId}`
+          }, CourseId: ${courseId}, CartId: ${cartId}`
         );
       } catch (error) {
         console.log(`Error sending email to ${email}: ${JSON.stringify(error)}`);
@@ -375,7 +386,14 @@ export class HyperSwitchService {
     return { status: "success" };
   };
 
-  sendEmailForBookingFailed = async (paymentId: string, courseId: string, cartId: string, sensibleQuoteId: string, userId: string, bookingStage: string) => {
+  sendEmailForBookingFailed = async (
+    paymentId: string,
+    courseId: string,
+    cartId: string,
+    sensibleQuoteId: string,
+    userId: string,
+    bookingStage: string
+  ) => {
     const adminEmail: string = process.env.ADMIN_EMAIL_LIST || "nara@golfdistrict.com";
     const emailAterSplit = adminEmail.split(",");
     emailAterSplit.map(async (email) => {
@@ -392,7 +410,14 @@ export class HyperSwitchService {
     return { status: "success" };
   };
 
-  sendEmailForBookingFailedByTimeout = async (paymentId: string, courseId: string, cartId: string, sensibleQuoteId: string | undefined, userId: string, teeTimeId:string) => {
+  sendEmailForBookingFailedByTimeout = async (
+    paymentId: string,
+    courseId: string,
+    cartId: string,
+    sensibleQuoteId: string | undefined,
+    userId: string,
+    teeTimeId: string
+  ) => {
     const adminEmail: string = process.env.ADMIN_EMAIL_LIST || "nara@golfdistrict.com";
     const emailAterSplit = adminEmail.split(",");
     emailAterSplit.map(async (email) => {
@@ -408,8 +433,15 @@ export class HyperSwitchService {
     });
     return { status: "success" };
   };
-  
-  cancelHyperswitchPaymentById = async (paymentMethodId: string, teeTimeId: string, courseId: string, userId?: string, userEmail?: string, phone?: string) => {
+
+  cancelHyperswitchPaymentById = async (
+    paymentMethodId: string,
+    teeTimeId: string,
+    courseId: string,
+    userId?: string,
+    userEmail?: string,
+    phone?: string
+  ) => {
     const options = {
       method: "POST",
       headers: { "api-key": this.hyperSwitchApiKey, "Content-Type": "application/json" },

@@ -1,6 +1,12 @@
 import { randomUUID } from "crypto";
+import { db, eq } from "@golf-district/database";
+import { courses } from "@golf-district/database/schema/courses";
+import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import Logger from "@golf-district/shared/src/logger";
 import axios from "axios";
+import isEqual from "lodash.isequal";
+import type { CacheService } from "../../infura/cache.service";
+import { loggerService } from "../../webhooks/logging.service";
 import type {
   BookingCreationData,
   ClubProphetBookingResponse,
@@ -24,15 +30,8 @@ import type {
   TeeTimeResponse,
 } from "./types/interface";
 import { BaseProvider } from "./types/interface";
-import { db, eq } from "@golf-district/database";
-import { teeTimes } from "@golf-district/database/schema/teeTimes";
-import { courses } from "@golf-district/database/schema/courses";
-import isEqual from "lodash.isequal";
-import type { CacheService } from "../../infura/cache.service";
-import { loggerService } from "../../webhooks/logging.service";
 
 export class clubprophet extends BaseProvider {
-  
   providerId = "club-prophet";
   public providerConfiguration: string;
   logger = Logger(clubprophet.name);

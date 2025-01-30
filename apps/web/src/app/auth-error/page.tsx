@@ -34,11 +34,10 @@ export default function AuthError() {
   const entityId = entity?.id;
   const router = useRouter();
 
-  const { data } =
-    api.entity.getCoursesByEntityId.useQuery(
-      { entityId: entityId! },
-      { enabled: entityId !== undefined }
-    );
+  const { data } = api.entity.getCoursesByEntityId.useQuery(
+    { entityId: entityId! },
+    { enabled: entityId !== undefined }
+  );
 
   useEffect(() => {
     if (errorKey === "AccessDenied" && data?.length) {

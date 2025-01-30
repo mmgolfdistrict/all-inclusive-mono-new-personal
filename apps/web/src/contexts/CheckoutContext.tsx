@@ -20,8 +20,8 @@ type ValidatePlayerType = {
   isValidPlayer: boolean;
   playerEmail: string;
   playerIndex: number;
-  courseMemberShipId?:string,
-  providerCourseMembershipId?:string,
+  courseMemberShipId?: string;
+  providerCourseMembershipId?: string;
 };
 interface CheckoutContextType {
   shouldAddSensible: boolean;
@@ -43,9 +43,8 @@ interface CheckoutContextType {
   setReservationData: Dispatch<SetStateAction<ReservationData>>;
   validatePlayers: ValidatePlayerType[];
   setValidatePlayers: Dispatch<SetStateAction<ValidatePlayerType[]>>;
-  setIsSensibleLoading:Dispatch<SetStateAction<boolean>>;
-  isSensibleLoading:boolean;
-  
+  setIsSensibleLoading: Dispatch<SetStateAction<boolean>>;
+  isSensibleLoading: boolean;
 }
 
 const CheckoutContext = createContext<CheckoutContextType>({
@@ -70,8 +69,8 @@ const CheckoutContext = createContext<CheckoutContextType>({
   setReservationData: () => undefined,
   validatePlayers: [],
   setValidatePlayers: () => undefined,
-  setIsSensibleLoading:()=>undefined,
-  isSensibleLoading:false
+  setIsSensibleLoading: () => undefined,
+  isSensibleLoading: false,
 });
 
 export const CheckoutWrapper = ({ children }: { children: ReactNode }) => {
@@ -121,9 +120,7 @@ export const CheckoutWrapper = ({ children }: { children: ReactNode }) => {
   const handleSelectedCharityAmount = (amount: number) => {
     setSelectedCharityAmount(amount);
   };
-  
 
-  
   const settings = {
     shouldAddSensible,
     handleShouldAddSensible,
@@ -142,7 +139,8 @@ export const CheckoutWrapper = ({ children }: { children: ReactNode }) => {
     setReservationData,
     validatePlayers,
     setValidatePlayers,
-    isSensibleLoading, setIsSensibleLoading
+    isSensibleLoading,
+    setIsSensibleLoading,
   };
 
   return (

@@ -1,9 +1,10 @@
 import { randomUUID } from "crypto";
-import { and, asc, desc, eq, gte, inArray, or, sql, type Db, not } from "@golf-district/database";
+import { and, asc, desc, eq, gte, inArray, not, or, sql, type Db } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import type { InsertBooking } from "@golf-district/database/schema/bookings";
 import { bookings } from "@golf-district/database/schema/bookings";
 import { bookingslots } from "@golf-district/database/schema/bookingslots";
+import { courseContacts } from "@golf-district/database/schema/courseContacts";
 import { courses } from "@golf-district/database/schema/courses";
 import { customerCarts } from "@golf-district/database/schema/customerCart";
 import { entities } from "@golf-district/database/schema/entities";
@@ -20,9 +21,10 @@ import { users } from "@golf-district/database/schema/users";
 import type { ReserveTeeTimeResponse } from "@golf-district/shared";
 import { currentUtcTimestamp, dateToUtcTimestamp, formatMoney, formatTime } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
+import { cacheManager } from "@golf-district/shared/src/utils/cacheManager";
 import dayjs from "dayjs";
-import UTC from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
+import UTC from "dayjs/plugin/utc";
 import { alias } from "drizzle-orm/mysql-core";
 import { appSettingService } from "../app-settings/initialized";
 import type { CustomerCart, ProductData } from "../checkout/types";
@@ -31,12 +33,10 @@ import type { HyperSwitchService } from "../payment-processor/hyperswitch.servic
 import type { SensibleService } from "../sensible/sensible.service";
 import type { Customer, ProviderService } from "../tee-sheet-provider/providers.service";
 import type { BookingDetails, BookingResponse, ProviderAPI } from "../tee-sheet-provider/sheet-providers";
+import type { TeeTimeResponse as ForeupTeeTimeResponse } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
 import type { TokenizeService } from "../token/tokenize.service";
 import type { UserWaitlistService } from "../user-waitlist/userWaitlist.service";
 import { loggerService } from "../webhooks/logging.service";
-import type { TeeTimeResponse as ForeupTeeTimeResponse } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
-import { cacheManager } from "@golf-district/shared/src/utils/cacheManager";
-import { courseContacts } from "@golf-district/database/schema/courseContacts";
 
 dayjs.extend(UTC);
 dayjs.extend(timezone);
@@ -3967,7 +3967,7 @@ export class BookingService {
       markupFees: 0,
       weatherQuoteId: weatherQuoteId || null,
       cartFeePerPlayer: cartFeeCharge,
-      source,
+      source: source ? source : null,
       customerComment: additionalNoteFromUser,
       needClubRental: needRentals,
     });

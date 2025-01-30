@@ -81,8 +81,8 @@ export class GeoService {
         stackTrace: `${err.stack}`,
         additionalDetailsJSON: JSON.stringify({
           address,
-        })
-      })
+        }),
+      });
       throw new Error(`Error geocoding address: ${err}`);
     });
 
@@ -100,9 +100,9 @@ export class GeoService {
       message: "UNEXPECTED_RESPONSE_STRUCTURE_FROM_AMAZON_LOCATION_SERVICE",
       stackTrace: `${JSON.stringify(data)}`,
       additionalDetailsJSON: JSON.stringify({
-        address
-      })
-    })
+        address,
+      }),
+    });
     throw new Error("Unexpected response structure from Amazon Location Service");
   }
 }

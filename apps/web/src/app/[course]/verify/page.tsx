@@ -33,12 +33,12 @@ export default function Verify() {
       });
       if (response?.error) {
         toast.error(response?.message);
-        return
+        return;
       }
       await addCourseUser.mutateAsync({
         courseId: course?.id ? course?.id : "",
         userId,
-      })
+      });
       setIsSuccess(true);
       callingRef.current = false;
     } catch (error) {
@@ -46,7 +46,7 @@ export default function Verify() {
       setError((error as Error)?.message ?? "An unexpected error occurred.");
       toast.error(
         (error as Error)?.message ??
-        "An error occurred verifying your email address."
+          "An error occurred verifying your email address."
       );
     }
   };
@@ -73,10 +73,10 @@ export default function Verify() {
           {verifyEmail.isLoading && !isSuccess && !error
             ? "Verifying Email..."
             : isSuccess
-              ? "Verified Email!"
-              : error
-                ? "Something went wrong."
-                : "Verify Your Email Address"}
+            ? "Verified Email!"
+            : error
+            ? "Something went wrong."
+            : "Verify Your Email Address"}
         </h1>
         <div className="text-primary-gray">
           {verifyEmail.isLoading && !error && !isSuccess ? (

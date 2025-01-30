@@ -2,8 +2,8 @@ import type { InferSelectModel } from "drizzle-orm";
 import { relations, sql } from "drizzle-orm";
 import { datetime, unique, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
-import { courses } from "./courses";
 import { adminUsers } from "./adminUsers";
+import { courses } from "./courses";
 
 export const adminUserCourse = mySqlTable(
   "adminUserCourse",
@@ -20,7 +20,7 @@ export const adminUserCourse = mySqlTable(
   },
   (table) => ({
     primaryKey: unique("UK_admin_user_id_course_id").on(table.courseId, table.adminUserId),
-  }),
+  })
 );
 
 export const adminUserCourseRelations = relations(adminUserCourse, ({ one }) => ({

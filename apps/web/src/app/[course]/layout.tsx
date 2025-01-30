@@ -8,11 +8,11 @@ import {
 } from "@golf-district/api";
 import type { FullCourseType } from "@golf-district/shared";
 import { CourseLayout } from "~/components/course-layout";
+import { BookingSourceWrapper } from "~/contexts/BookingSourceContext";
 import { CourseWrapper } from "~/contexts/CourseContext";
 import { FiltersWrapper } from "~/contexts/FiltersContext";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BookingSourceWrapper } from "~/contexts/BookingSourceContext";
 
 export async function generateMetadata({
   params,
@@ -61,12 +61,12 @@ export default async function CoursePageLayout({
       ) : (
         <CourseWrapper courseData={courseData} courseImages={courseImages}>
           <FiltersWrapper>
-              <BookingSourceWrapper>
-                <div className="flex w-full flex-col">
-                  <CourseNav />
-                  <CourseLayout>{children}</CourseLayout>
-                </div>
-              </BookingSourceWrapper>
+            <BookingSourceWrapper>
+              <div className="flex w-full flex-col">
+                <CourseNav />
+                <CourseLayout>{children}</CourseLayout>
+              </div>
+            </BookingSourceWrapper>
           </FiltersWrapper>
         </CourseWrapper>
       )}
