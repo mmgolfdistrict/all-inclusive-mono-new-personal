@@ -6,7 +6,6 @@ import { api } from "~/utils/api";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { Course } from "../cards/course";
-import { doesSectionFormatHaveLeadingZeros } from "@mui/x-date-pickers/internals/hooks/useField/useField.utils";
 
 export const Courses = () => {
   const { entity } = useAppContext();
