@@ -935,13 +935,7 @@ export const CheckoutForm = ({
                 <Fragment>
                   <div className="unmask-price">
                     $
-                    {(
-                      (roundUpCharityId
-                        ? roundOffClick
-                          ? roundOff
-                          : Number(TotalAmt)
-                        : TotalAmt) || 0
-                    ).toLocaleString("en-US", {
+                    {(TotalAmt || 0).toLocaleString("en-US", {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
                     })}
@@ -1003,7 +997,9 @@ export const CheckoutForm = ({
                 title="Taxes and Others"
                 value="item-2"
                 position="left"
-                amountValues={`$${TaxCharge.toLocaleString("en-US", {
+                amountValues={`$${(
+                  TaxCharge + (donateValue || 0)
+                ).toLocaleString("en-US", {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })}`}
@@ -1105,13 +1101,7 @@ export const CheckoutForm = ({
                     <Fragment>
                       <div className="unmask-price">
                         $
-                        {(
-                          (roundUpCharityId
-                            ? roundOffClick
-                              ? roundOff
-                              : Number(TotalAmt)
-                            : TotalAmt) || 0
-                        ).toLocaleString("en-US", {
+                        {(TotalAmt || 0).toLocaleString("en-US", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
