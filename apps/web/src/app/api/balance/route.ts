@@ -1,6 +1,4 @@
-import {
-  processUpdateWithdrawableBalance,
-} from "@golf-district/api";
+import { processUpdateWithdrawableBalance } from "@golf-district/api";
 import { NextResponse, type NextRequest } from "next/server";
 
 export const POST = async (req: NextRequest) => {

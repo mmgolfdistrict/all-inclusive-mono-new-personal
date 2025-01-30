@@ -1,5 +1,14 @@
 import { randomUUID } from "crypto";
+import { db, desc, eq } from "@golf-district/database";
+import { courses } from "@golf-district/database/schema/courses";
+import { providerAuthTokens } from "@golf-district/database/schema/providerAuthTokens";
+import { providers } from "@golf-district/database/schema/providers";
+import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import Logger from "@golf-district/shared/src/logger";
+import dayjs from "dayjs";
+import isEqual from "lodash.isequal";
+import { CacheService } from "../../infura/cache.service";
+import { loggerService } from "../../webhooks/logging.service";
 import type {
   BookingDetails,
   BookingResponse,
@@ -15,26 +24,17 @@ import type {
 } from "./types/interface";
 import { BaseProvider } from "./types/interface";
 import type {
-  LightSpeedBookingResponse,
-  LightSpeedReservationRequestResponse,
   LightspeedBookingCreationData,
   LightspeedBookingNameChangeOptions,
+  LightSpeedBookingResponse,
   LightspeedCustomerCreationData,
   LightspeedCustomerCreationResponse,
   LightspeedGetCustomerResponse,
+  LightSpeedReservationRequestResponse,
   LightspeedSaleDataOptions,
   LightspeedTeeTimeDataResponse,
   LightspeedTeeTimeResponse,
 } from "./types/lightspeed.type";
-import dayjs from "dayjs";
-import { CacheService } from "../../infura/cache.service";
-import { db, desc, eq } from "@golf-district/database";
-import { providers } from "@golf-district/database/schema/providers";
-import { providerAuthTokens } from "@golf-district/database/schema/providerAuthTokens";
-import { teeTimes } from "@golf-district/database/schema/teeTimes";
-import { courses } from "@golf-district/database/schema/courses";
-import isEqual from "lodash.isequal";
-import { loggerService } from "../../webhooks/logging.service";
 
 // const cacheService = new CacheService(process.env.REDIS_URL!, process.env.REDIS_TOKEN!, Logger("Lightspeed"));
 
@@ -70,7 +70,13 @@ export class Lightspeed extends BaseProvider {
       page = 1;
 
     while (fetch) {
-      const teeTimesResponse = await this.fetchTeeTimes(courseId, date, this.providerConfiguration, page);
+      const teeTimesResponse = await this.fetchTeeTimes(
+        token,
+        courseId,
+        date,
+        this.providerConfiguration,
+        page
+      );
       const filteredTeeTimes = teeTimesResponse.data.filter((teeTime) => teeTime.attributes.rates.length > 0);
       teeTimes = [...teeTimes, ...filteredTeeTimes];
 
@@ -84,7 +90,13 @@ export class Lightspeed extends BaseProvider {
     return teeTimes;
   }
 
-  fetchTeeTimes = async (courseId: string, date: string, providerConfiguration: any, page: number) => {
+  fetchTeeTimes = async (
+    token: string,
+    courseId: string,
+    date: string,
+    providerConfiguration: any,
+    page: number
+  ) => {
     try {
       const { BASE_ENDPOINT, CONTENT_TYPE, ORGANIZATION_ID, ACCEPT, DEFAULT_PLAYER_TYPE_ID } = JSON.parse(
         providerConfiguration ?? "{}"
@@ -442,11 +454,11 @@ export class Lightspeed extends BaseProvider {
           authResponse.refresh_token,
           86400
         );
-        await this.cacheService?.setCache(
-          `provider-${this.providerId}-token`,
-          authResponse.access_token,
-          7200
-        );
+        // await this.cacheService?.setCache(
+        //   `provider-${this.providerId}-token`,
+        //   authResponse.access_token,
+        //   7200
+        // );
       }
 
       return token as string;
@@ -1151,7 +1163,7 @@ export class Lightspeed extends BaseProvider {
   requireToCreatePlayerSlots(): boolean {
     return false;
   }
-   async SearchCustomer(token: string, providerCourseId: string, email: string): Promise<CustomerData> {
-      return {} as CustomerData;
-    }
+  async SearchCustomer(token: string, providerCourseId: string, email: string): Promise<CustomerData> {
+    return {} as CustomerData;
+  }
 }

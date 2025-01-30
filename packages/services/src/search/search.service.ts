@@ -7,37 +7,37 @@ import {
   eq,
   gt,
   gte,
+  isNull,
   like,
+  lt,
   lte,
+  min,
   or,
   sql,
   type Db,
-  lt,
-  isNull,
-  min,
 } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import { bookings } from "@golf-district/database/schema/bookings";
+import { courseAllowedTimeToSell } from "@golf-district/database/schema/courseAllowedTimeToSell";
 import { courseMarkup } from "@golf-district/database/schema/courseMarkup";
 import { courses } from "@golf-district/database/schema/courses";
 import { favorites } from "@golf-district/database/schema/favorites";
 import { lists } from "@golf-district/database/schema/lists";
+import { majorEvents } from "@golf-district/database/schema/majorEvents";
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import { users } from "@golf-district/database/schema/users";
 import type { CombinedObject, SearchObject } from "@golf-district/shared";
 import { addDays, TeeTimeType, type IconCodeType } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
+import { cacheManager } from "@golf-district/shared/src/utils/cacheManager";
 import { add, isSameDay, parseISO } from "date-fns";
 import dayjs from "dayjs";
 import UTC from "dayjs/plugin/utc";
+import { CacheService } from "../infura/cache.service";
 import { type ProviderService } from "../tee-sheet-provider/providers.service";
 import type { Forecast } from "../weather/types";
 import type { WeatherService } from "../weather/weather.service";
-import { majorEvents } from "@golf-district/database/schema/majorEvents";
 import { loggerService } from "../webhooks/logging.service";
-import { courseAllowedTimeToSell } from "@golf-district/database/schema/courseAllowedTimeToSell";
-import { cacheManager } from "@golf-district/shared/src/utils/cacheManager";
-import { CacheService } from "../infura/cache.service";
 
 dayjs.extend(UTC);
 
@@ -811,22 +811,21 @@ export class SearchService extends CacheService {
     //   .toISOString();
     // Allowed Players start
 
-    let NumberOfPlayers:any= await cacheManager.get(cacheKey)
+    let NumberOfPlayers: any = await cacheManager.get(cacheKey);
 
-    if(!NumberOfPlayers){
-       NumberOfPlayers = await this.database
-      .select({
-        primaryMarketAllowedPlayers: courses.primaryMarketAllowedPlayers,
-        // openTime: courses.openTime,
-        // closeTime: courses.closeTime,
-        openTime: courses.courseOpenTime,
-        closeTime: courses.courseCloseTime
-      })
-      .from(courses)
-      .where(eq(courses.id, courseId));
+    if (!NumberOfPlayers) {
+      NumberOfPlayers = await this.database
+        .select({
+          primaryMarketAllowedPlayers: courses.primaryMarketAllowedPlayers,
+          // openTime: courses.openTime,
+          // closeTime: courses.closeTime,
+          openTime: courses.courseOpenTime,
+          closeTime: courses.courseCloseTime,
+        })
+        .from(courses)
+        .where(eq(courses.id, courseId));
 
       await cacheManager.set(cacheKey, NumberOfPlayers, 600000);
-
     }
 
     const PlayersOptions = ["1", "2", "3", "4"];
@@ -855,7 +854,7 @@ export class SearchService extends CacheService {
     const startingHour = NumberOfPlayers[0]?.openTime ?? 9;
     const closingHour = NumberOfPlayers[0]?.closeTime ?? 9;
 
-    if (startingHour  !== startTime || closingHour !== endTime) {
+    if (startingHour !== startTime || closingHour !== endTime) {
       conditions.push(and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)) as any);
     }
 
@@ -974,34 +973,35 @@ export class SearchService extends CacheService {
     return this.sortDates(uniqueArrayfirstHandAndSecondHandResultDates);
   }
 
-   getTeeTimesPriceWithRange = async (
+  getTeeTimesPriceWithRange = async (
     courseId: string,
     timeZoneCorrection: number
   ): Promise<{ toDayFormatted: string; fromDayFormatted: string; markUpFees: number }[]> => {
     const markupCacheKey = `${courseId}-markup`;
-  
+
     let markupData: MarkupData[] | null = await cacheManager.get(markupCacheKey);
-  
+
     if (!markupData) {
       const dbResult = await this.database
         .select()
         .from(courseMarkup)
         .where(eq(courseMarkup.courseId, courseId))
         .execute();
-  
+
       // Assuming dbResult is an array of MarkupData
       markupData = dbResult as MarkupData[];
       await cacheManager.set(markupCacheKey, markupData, 600000);
     }
-  
+
     if (!Array.isArray(markupData)) {
       throw new Error("Invalid markup data format");
     }
-  
+
     const currentDate = dayjs();
     const currentdateWithTimeZone = currentDate.add(timeZoneCorrection ?? 0, "hour");
-    const priceAccordingToDate: { toDayFormatted: string; fromDayFormatted: string; markUpFees: number }[] = [];
-  
+    const priceAccordingToDate: { toDayFormatted: string; fromDayFormatted: string; markUpFees: number }[] =
+      [];
+
     markupData.forEach((el) => {
       const toDay = currentDate.add(el.toDay, "day");
       const fromDay = currentDate
@@ -1009,7 +1009,7 @@ export class SearchService extends CacheService {
         .set("hours", 0)
         .set("minutes", 0)
         .set("seconds", 0);
-  
+
       priceAccordingToDate.push({
         // toDayFormatted: toDay.toString(),
         // fromDayFormatted: fromDay.toString(),
@@ -1018,7 +1018,7 @@ export class SearchService extends CacheService {
         markUpFees: el.markUp,
       });
     });
-  
+
     return priceAccordingToDate;
   };
 
@@ -1037,7 +1037,7 @@ export class SearchService extends CacheService {
   //     .execute();
 
   //     await cacheManager.set(markupCacheKey, markupData, 600000);
-  
+
   //   }
 
   //   const currentDate = dayjs();
@@ -1142,23 +1142,22 @@ export class SearchService extends CacheService {
           gt(teeTimes.greenFeePerPlayer, 0)
         )
       );
-      const cacheKey = `${courseId}-NumberOfPlayers`;
-      let NumberOfPlayers:any= await cacheManager.get(cacheKey)
+    const cacheKey = `${courseId}-NumberOfPlayers`;
+    let NumberOfPlayers: any = await cacheManager.get(cacheKey);
 
-      if(!NumberOfPlayers){
-         NumberOfPlayers = await this.database
+    if (!NumberOfPlayers) {
+      NumberOfPlayers = await this.database
         .select({
           primaryMarketAllowedPlayers: courses.primaryMarketAllowedPlayers,
           openTime: courses.openTime,
-          closeTime: courses.closeTime
+          closeTime: courses.closeTime,
         })
         .from(courses)
         .where(eq(courses.id, courseId));
-  
-        await cacheManager.set(cacheKey, NumberOfPlayers, 600000);
-  
-      }
-  
+
+      await cacheManager.set(cacheKey, NumberOfPlayers, 600000);
+    }
+
     const PlayersOptions = ["1", "2", "3", "4"];
 
     const binaryMask = NumberOfPlayers[0]?.primaryMarketAllowedPlayers;
@@ -1222,16 +1221,16 @@ export class SearchService extends CacheService {
         sortPrice === "desc"
           ? desc(teeTimes.greenFeePerPlayer)
           : sortTime === "desc"
-            ? desc(teeTimes.time)
-            : sortPrice === "asc"
-              ? asc(teeTimes.greenFeePerPlayer)
-              : asc(teeTimes.time)
+          ? desc(teeTimes.time)
+          : sortPrice === "asc"
+          ? asc(teeTimes.greenFeePerPlayer)
+          : asc(teeTimes.time)
       );
     const teeQueryLimited = teeQuery.limit(limit);
 
     const cacheCourseDataKey = `${courseId}-course-data`;
-    let courseData:any= await cacheManager.get(cacheCourseDataKey)
-    if(!courseData){
+    let courseData: any = await cacheManager.get(cacheCourseDataKey);
+    if (!courseData) {
       courseData = await this.database
         .select({
           buyerFee: courses.buyerFee,
@@ -1242,9 +1241,9 @@ export class SearchService extends CacheService {
         .from(courses)
         .where(eq(courses.id, courseId))
         .execute()
-        .catch(() => { });
+        .catch(() => {});
 
-        await cacheManager.set(cacheCourseDataKey, courseData, 600000); 
+      await cacheManager.set(cacheCourseDataKey, courseData, 600000);
     }
 
     let buyerFee = 0;
@@ -1514,10 +1513,10 @@ export class SearchService extends CacheService {
         sortPrice === "desc"
           ? desc(lists.listPrice)
           : sortTime === "desc"
-            ? desc(teeTimes.time)
-            : sortPrice === "asc"
-              ? asc(lists.listPrice)
-              : asc(teeTimes.time)
+          ? desc(teeTimes.time)
+          : sortPrice === "asc"
+          ? asc(lists.listPrice)
+          : asc(teeTimes.time)
       );
     // .limit(limit);
     const secoondHandData = await secondHandBookingsQuery.execute().catch(async (err) => {
@@ -1758,13 +1757,14 @@ export class SearchService extends CacheService {
     return sortedEvents;
   };
 
-  getPriceForecast = async (courseId: string, startDate: string, endDate: string): Promise<PriceForecast[]> => {
+  getPriceForecast = async (
+    courseId: string,
+    startDate: string,
+    endDate: string
+  ): Promise<PriceForecast[]> => {
     console.log("startDate", startDate);
-    let forecastData = await this.getCache(
-      `${courseId}-${startDate}-${endDate}-${process.env.NODE_ENV}`
-    )!
+    let forecastData = await this.getCache(`${courseId}-${startDate}-${endDate}-${process.env.NODE_ENV}`)!;
     console.log("forecastData for cash", forecastData);
-
 
     if (!forecastData) {
       console.log("databasehit");
@@ -1773,12 +1773,27 @@ export class SearchService extends CacheService {
         .select({
           courseId: teeTimes.courseId,
           name: courses.name,
-          providerDate: sql`DATE(${teeTimes.providerDate})`.as('providerDate'),
-          EarlyMorning: sql`Min(If(${teeTimes.time} >= 600 And ${teeTimes.time} <= 800, ${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer}, Null))`.as('EarlyMorning'),
-          MidMorning: sql`Min(If(${teeTimes.time} >= 801 And ${teeTimes.time} <= 1030, ${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer}, Null))`.as('MidMorning'),
-          EarlyAfternoon: sql`Min(If(${teeTimes.time} >= 1031 AND ${teeTimes.time} <= 1400, ${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer}, Null))`.as('EarlyAfternoon'),
-          Afternoon: sql`Min(If(${teeTimes.time} >= 1401 And ${teeTimes.time} <= 1600, ${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer}, Null))`.as('Afternoon'),
-          Twilight: sql`Min(If(${teeTimes.time} >= 1601 And ${teeTimes.time} <= 1800, ${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer}, Null))`.as('Twilight'),
+          providerDate: sql`DATE(${teeTimes.providerDate})`.as("providerDate"),
+          EarlyMorning:
+            sql`Min(If(${teeTimes.time} >= 600 And ${teeTimes.time} <= 800, ${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer}, Null))`.as(
+              "EarlyMorning"
+            ),
+          MidMorning:
+            sql`Min(If(${teeTimes.time} >= 801 And ${teeTimes.time} <= 1030, ${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer}, Null))`.as(
+              "MidMorning"
+            ),
+          EarlyAfternoon:
+            sql`Min(If(${teeTimes.time} >= 1031 AND ${teeTimes.time} <= 1400, ${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer}, Null))`.as(
+              "EarlyAfternoon"
+            ),
+          Afternoon:
+            sql`Min(If(${teeTimes.time} >= 1401 And ${teeTimes.time} <= 1600, ${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer}, Null))`.as(
+              "Afternoon"
+            ),
+          Twilight:
+            sql`Min(If(${teeTimes.time} >= 1601 And ${teeTimes.time} <= 1800, ${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer}, Null))`.as(
+              "Twilight"
+            ),
         })
         .from(teeTimes)
         .innerJoin(courses, eq(teeTimes.courseId, courses.id))
@@ -1790,16 +1805,8 @@ export class SearchService extends CacheService {
             sql`${teeTimes.availableFirstHandSpots} > 0`
           )
         )
-        .groupBy(
-          teeTimes.courseId,
-          courses.name,
-          sql`Date(${teeTimes.providerDate})`
-        )
-        .orderBy(
-          asc(teeTimes.courseId),
-          asc(courses.name),
-          asc(sql`Date(${teeTimes.providerDate})`)
-        )
+        .groupBy(teeTimes.courseId, courses.name, sql`Date(${teeTimes.providerDate})`)
+        .orderBy(asc(teeTimes.courseId), asc(courses.name), asc(sql`Date(${teeTimes.providerDate})`))
         .execute();
 
       await this.setCache(
@@ -1821,10 +1828,8 @@ export class SearchService extends CacheService {
       }));
 
       return formattedData;
-    }
-    else {
-      return []
+    } else {
+      return [];
     }
   };
-
 }

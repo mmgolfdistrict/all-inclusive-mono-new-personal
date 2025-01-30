@@ -1,5 +1,6 @@
 "use client";
 
+import { doesSectionFormatHaveLeadingZeros } from "@mui/x-date-pickers/internals/hooks/useField/useField.utils";
 import { LoadingContainer } from "~/app/[course]/loader";
 import { useAppContext } from "~/contexts/AppContext";
 import { api } from "~/utils/api";
@@ -17,6 +18,7 @@ export const Courses = () => {
       { entityId: entityId! },
       { enabled: entityId !== undefined }
     );
+  console.log("data", data);
 
   if (entity?.redirectToCourseFlag && data?.length) {
     router.push(`/${data[0]?.id}`);

@@ -31,7 +31,9 @@ export type TxnHistoryType = {
 
 export const Cashouts = () => {
   const { course } = useCourseContext();
-  const [selectedReceipt, setSelectedReceipt] = useState<TxnHistoryType | null>(null);
+  const [selectedReceipt, setSelectedReceipt] = useState<TxnHistoryType | null>(
+    null
+  );
   const [isReceiptOpen, setIsReceiptOpen] = useState<boolean>(false);
 
   const { data, isLoading, isError, error } =
@@ -92,21 +94,21 @@ export const Cashouts = () => {
         <tbody className={`max-h-[300px] w-full flex-col overflow-scroll`}>
           {isLoading
             ? Array(3)
-              .fill(null)
-              .map((_, idx) => <SkeletonRow key={idx} />)
+                .fill(null)
+                .map((_, idx) => <SkeletonRow key={idx} />)
             : txnHistory?.map((i, idx) => (
-              <TableRow
-                key={idx}
-                amount={formatMoney((i?.amount ?? 0) / 100)}
-                status={i.externalStatus ?? ""}
-                time={formatTime(
-                  i.createdDateTime ?? "",
-                  false,
-                  course?.timezoneCorrection
-                )}
-                openReceipt={() => openReceipt(i)}
-              />
-            ))}
+                <TableRow
+                  key={idx}
+                  amount={formatMoney((i?.amount ?? 0) / 100)}
+                  status={i.externalStatus ?? ""}
+                  time={formatTime(
+                    i.createdDateTime ?? "",
+                    false,
+                    course?.timezoneCorrection
+                  )}
+                  openReceipt={() => openReceipt(i)}
+                />
+              ))}
         </tbody>
       </table>
 

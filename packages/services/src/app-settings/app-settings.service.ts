@@ -2,9 +2,10 @@ import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
 import { eq } from "@golf-district/database";
 import { appSettings } from "@golf-district/database/schema/appSetting";
+import { createCache } from "cache-manager";
 import { CacheService } from "../infura/cache.service";
 import type { AppSetting, AppSettingsResponse } from "./types";
-import { createCache } from "cache-manager";
+
 export class AppSettingsService {
   private cacheService?: CacheService;
   private redisUrl?: string;
@@ -59,7 +60,7 @@ export class AppSettingsService {
         const internalNameToBeSet = await cache.set(internalName, appSettingData[0]?.value, 600000);
         const resultedAppSettingValue = await cache.get(internalName);
         console.log("settedData", resultedAppSettingValue);
-        return appSettingData[0]|| { value: resultedAppSettingValue } ;
+        return appSettingData[0] || { value: resultedAppSettingValue };
       }
     } catch (error: any) {
       console.log(error);

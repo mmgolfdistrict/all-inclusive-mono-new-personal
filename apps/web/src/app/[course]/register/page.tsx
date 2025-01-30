@@ -81,7 +81,6 @@ export default function RegisterPage() {
       .toLowerCase() // Convert to lowercase
       .replace(/^\w/, (c) => c.toUpperCase()); // Capitalize the first letter
   };
-  
 
   const onPlaceChanged = () => {
     const place = autocompleteRef.current?.getPlace();
@@ -106,9 +105,9 @@ export default function RegisterPage() {
 
       state = normalizeString(state);
 
-      let countryByCode=country
-      if(country==="United States"){
-        countryByCode="USA"
+      let countryByCode = country;
+      if (country === "United States") {
+        countryByCode = "USA";
       }
 
       if (inputRef?.current) {
@@ -580,66 +579,66 @@ export default function RegisterPage() {
             )}
           /> */}
 
-<Controller
-  name="country"
-  control={control}
-  render={({ field }) => (
-    <div>
-      <label
-        htmlFor="country"
-        style={{ fontSize: "14px", color: "rgb(109 119 124)" }}
-      >
-        Country
-      </label>
-      <Select
-        size="small"
-        {...field}
-        id="country"
-        placeholder="Select Your Country"
-        fullWidth
-        name="country"
-        data-testid="register-country-id"
-        inputRef={(e) => {
-          field.ref(e);
-        }}
-        sx={{
-          fontSize: "14px",
-          color: "rgb(109 119 124)",
-          backgroundColor: "rgb(247, 249, 250)",
-          border: "none",
-          "& fieldset": { border: "none" },
-        }}
-        value={field.value || ""}
-        MenuProps={{
-          PaperProps: {
-            sx: {
-              "& .MuiMenuItem-root.Mui-selected": {
-                backgroundColor: "rgb(0, 0, 0)",
-                color: "white",
-                "&:hover": {
-                  backgroundColor: "rgb(0, 0, 0)",
-                  color: "white",
-                },
-              },
-            },
-          },
-        }}
-        displayEmpty
-      >
-        {/* <MenuItem value="" disabled>
+          <Controller
+            name="country"
+            control={control}
+            render={({ field }) => (
+              <div>
+                <label
+                  htmlFor="country"
+                  style={{ fontSize: "14px", color: "rgb(109 119 124)" }}
+                >
+                  Country
+                </label>
+                <Select
+                  size="small"
+                  {...field}
+                  id="country"
+                  placeholder="Select Your Country"
+                  fullWidth
+                  name="country"
+                  data-testid="register-country-id"
+                  inputRef={(e) => {
+                    field.ref(e);
+                  }}
+                  sx={{
+                    fontSize: "14px",
+                    color: "rgb(109 119 124)",
+                    backgroundColor: "rgb(247, 249, 250)",
+                    border: "none",
+                    "& fieldset": { border: "none" },
+                  }}
+                  value={field.value || ""}
+                  MenuProps={{
+                    PaperProps: {
+                      sx: {
+                        "& .MuiMenuItem-root.Mui-selected": {
+                          backgroundColor: "rgb(0, 0, 0)",
+                          color: "white",
+                          "&:hover": {
+                            backgroundColor: "rgb(0, 0, 0)",
+                            color: "white",
+                          },
+                        },
+                      },
+                    },
+                  }}
+                  displayEmpty
+                >
+                  {/* <MenuItem value="" disabled>
           Select your country
         </MenuItem> */}
-        <MenuItem value="USA">USA</MenuItem>
-        <MenuItem value="Canada">Canada</MenuItem>
-      </Select>
-      {errors.country && (
-        <span style={{ fontSize: "12px", color: "red" }}>
-          {errors.country.message}
-        </span>
-      )}
-    </div>
-  )}
-/>
+                  <MenuItem value="USA">USA</MenuItem>
+                  <MenuItem value="Canada">Canada</MenuItem>
+                </Select>
+                {errors.country && (
+                  <span style={{ fontSize: "12px", color: "red" }}>
+                    {errors.country.message}
+                  </span>
+                )}
+              </div>
+            )}
+          />
 
           <datalist id="places">
             {cities.data?.autocompleteCities.features.map((city, idx) => (

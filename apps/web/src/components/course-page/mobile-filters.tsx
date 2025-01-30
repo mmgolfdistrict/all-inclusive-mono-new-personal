@@ -1,9 +1,14 @@
-import { type Dispatch, type SetStateAction, useRef } from "react";
+import {
+  useFiltersContext,
+  type DateType,
+  type GolferType,
+  type HoleType,
+} from "~/contexts/FiltersContext";
+import { useRef, type Dispatch, type SetStateAction } from "react";
 import { FilledButton } from "../buttons/filled-button";
 import { OutlineButton } from "../buttons/outline-button";
 import { Leaflet } from "../modal/leaflet";
 import { Filters } from "./filters";
-import { type DateType, type GolferType, type HoleType, useFiltersContext } from "~/contexts/FiltersContext";
 
 interface DayValue {
   year: number;
@@ -31,7 +36,7 @@ interface FiltersRef {
 export const MobileFilters = ({
   setShowFilters,
   toggleFilters,
-  openForecastModal
+  openForecastModal,
 }: {
   setShowFilters: Dispatch<SetStateAction<boolean>>;
   toggleFilters: () => void;
@@ -44,7 +49,7 @@ export const MobileFilters = ({
     // priceRange,
     setPriceRange,
     setStartTime,
-    setSelectedDay
+    setSelectedDay,
   } = useFiltersContext();
   const childRef = useRef<FiltersRef>(null);
   const getDataFromChild = () => {
@@ -62,12 +67,25 @@ export const MobileFilters = ({
     <Leaflet setShow={setShowFilters} className="max-h-[70dvh]">
       <div className="relative flex flex-col gap-4 px-4 pb-20">
         <div className="border-b py-2 text-xl font-semibold">Filters</div>
-        <Filters ref={childRef} openForecastModal={openForecastModal} setShowFilters={setShowFilters} />
+        <Filters
+          ref={childRef}
+          openForecastModal={openForecastModal}
+          setShowFilters={setShowFilters}
+        />
         <div className="fixed bottom-10 left-1/2 z-10 flex w-full -translate-x-1/2 gap-2 px-4">
-          <OutlineButton className="min-w-[40%]" onClick={() => setShowFilters(false)}>
+          <OutlineButton
+            className="min-w-[40%]"
+            onClick={() => setShowFilters(false)}
+          >
             Cancel
           </OutlineButton>
-          <FilledButton className="w-full" onClick={() => { toggleFilters(); getDataFromChild() }}>
+          <FilledButton
+            className="w-full"
+            onClick={() => {
+              toggleFilters();
+              getDataFromChild();
+            }}
+          >
             Apply
           </FilledButton>
         </div>

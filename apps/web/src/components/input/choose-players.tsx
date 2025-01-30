@@ -42,7 +42,9 @@ export const ChoosePlayers = ({
         newSearchParams.set("playerCount", value);
 
         // Push the updated URL
-        router.push(`${window.location.pathname}?${newSearchParams.toString()}`);
+        router.push(
+          `${window.location.pathname}?${newSearchParams.toString()}`
+        );
       }
     }
   };

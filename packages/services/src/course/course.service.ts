@@ -2,14 +2,18 @@ import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
 import { and, asc, desc, eq, gte, lte, sql } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
+import { authenticationMethod } from "@golf-district/database/schema/authenticationMethod";
 import { bookings } from "@golf-district/database/schema/bookings";
 import { charities } from "@golf-district/database/schema/charities";
 import { charityCourseLink } from "@golf-district/database/schema/charityCourseLink";
+import { courseAllowedTimeToSell } from "@golf-district/database/schema/courseAllowedTimeToSell";
 import { courseAssets } from "@golf-district/database/schema/courseAssets";
 import { courses } from "@golf-district/database/schema/courses";
 import type { InsertCourses } from "@golf-district/database/schema/courses";
 import { entities } from "@golf-district/database/schema/entities";
 import { lists } from "@golf-district/database/schema/lists";
+import { providers } from "@golf-district/database/schema/providers";
+import { providerCourseLink } from "@golf-district/database/schema/providersCourseLink";
 import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import {
   AuthenticationMethodEnum,
@@ -18,17 +22,14 @@ import {
   validDomainRegex,
 } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
+import { cacheManager } from "@golf-district/shared/src/utils/cacheManager";
+import dayjs from "dayjs";
+import customParseFormat from "dayjs/plugin/customParseFormat";
+import utc from "dayjs/plugin/utc";
 import { DomainService } from "../domain/domain.service";
 import type { ProviderService } from "../tee-sheet-provider/providers.service";
-import { providerCourseLink } from "@golf-district/database/schema/providersCourseLink";
-import { providers } from "@golf-district/database/schema/providers";
 import { loggerService } from "../webhooks/logging.service";
-import { courseAllowedTimeToSell } from "@golf-district/database/schema/courseAllowedTimeToSell";
-import dayjs from "dayjs";
-import utc from "dayjs/plugin/utc";
-import customParseFormat from "dayjs/plugin/customParseFormat";
-import { authenticationMethod } from "@golf-district/database/schema/authenticationMethod";
-import { cacheManager } from "@golf-district/shared/src/utils/cacheManager";
+
 dayjs.extend(utc);
 dayjs.extend(customParseFormat);
 
