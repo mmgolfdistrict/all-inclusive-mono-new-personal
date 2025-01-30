@@ -178,6 +178,7 @@ export class EntityService {
           description: courses.description,
           address: courses.address,
           logo: courses.logoId,
+          timezoneIso: courses.timezoneISO
         })
         .from(courses)
         .where(eq(courses.entityId, entityId))
