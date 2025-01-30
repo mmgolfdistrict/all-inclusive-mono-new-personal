@@ -26,9 +26,11 @@ export const CourseLayout = ({ children }: { children: React.ReactNode }) => {
     (systemNotifications ? systemNotifications.length : 0) +
     (courseGlobalNotification ? courseGlobalNotification.length : 0);
 
-  const marginTop =
-    notificationsCount > 0 ? `${notificationsCount * 27}px` : "0";
-
+  const marginTop = notificationsCount > 0
+    ? notificationsCount >= 5
+      ? `${notificationsCount * 27 + 20}px`
+      : `${notificationsCount * 27}px`
+    : "0";
   const styling = useMemo(() => {
     const coursePathPattern = `/${courseId}/`;
 
