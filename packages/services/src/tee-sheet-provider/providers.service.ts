@@ -76,17 +76,76 @@ export class ProviderService extends CacheService {
     }
 
     provider.providerConfiguration = providerCourseConfiguration;
-    let token = await this.getCache(
-      `provider-${internalProviderIdentifier}-${courseId}-${process.env.NODE_ENV}`
-    )!;
-    if (!token) {
-      token = await provider.getToken();
-      await this.setCache(
-        `provider-${internalProviderIdentifier}-${courseId}-${process.env.NODE_ENV}`,
-        token,
-        60 * 60
-      );
+    let token;
+
+    const [course] = await this.database
+      .select({
+        supportsCentralizedAccessToken: providers.supportsCentralizedAccessToken,
+      })
+      .from(providers)
+      .where(eq(providers.internalId, internalProviderIdentifier))
+      .execute()
+      .catch((error) => {
+        this.logger.error(`Error fetching course data: ${error}`);
+        throw new Error(`Error fetching course data: ${error}`);
+      });
+
+    if (!course) {
+      throw new Error(`Course with ID ${courseId} not found`);
     }
+
+    if (course.supportsCentralizedAccessToken) {
+      token = await this.getCache(`provider-${internalProviderIdentifier}-token`);
+    } else {
+      token = await this.getCache(`provider-${internalProviderIdentifier}-${courseId}-token`);
+    }
+
+    let tokenNeedsLocalGeneration = false;
+    if (!token) {
+      try {
+        const response = await fetch(`${process.env.INTERNAL_WEB_SERVICE_URL}/api/generateToken/${courseId}`);
+        const apiFailure = response.status >= 400;
+
+        if (!response.ok && !apiFailure) {
+          this.logger.error(`Error fetching token: ${response.statusText}`);
+          throw new Error(`Error fetching token: ${response.statusText}`);
+        }
+        const responseData = await response.json();
+        token = responseData.token;
+        if (apiFailure) {
+          tokenNeedsLocalGeneration = true;
+        }
+      } catch (error) {
+        this.logger.error(`Error fetching token: ${error}`);
+        this.logger.info("Token needs to be generated locally");
+        tokenNeedsLocalGeneration = true;
+      } finally {
+        if (tokenNeedsLocalGeneration) {
+          if (!token) {
+            token = await provider.getToken();
+            let prevToken;
+            if (course.supportsCentralizedAccessToken) {
+              prevToken = await this.getCache(`provider-${internalProviderIdentifier}-token`);
+            } else {
+              prevToken = await this.getCache(`provider-${internalProviderIdentifier}-${courseId}-token`);
+            }
+
+            if (!prevToken) {
+              if (course.supportsCentralizedAccessToken) {
+                await this.setCache(`provider-${internalProviderIdentifier}-token`, token, 60 * 60);
+              } else {
+                await this.setCache(
+                  `provider-${internalProviderIdentifier}-${courseId}-token`,
+                  token,
+                  60 * 60
+                );
+              }
+            }
+          }
+        }
+      }
+    }
+
     return {
       provider: provider,
       token: token as string,

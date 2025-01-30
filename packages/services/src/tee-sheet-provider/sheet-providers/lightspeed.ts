@@ -70,7 +70,13 @@ export class Lightspeed extends BaseProvider {
       page = 1;
 
     while (fetch) {
-      const teeTimesResponse = await this.fetchTeeTimes(courseId, date, this.providerConfiguration, page);
+      const teeTimesResponse = await this.fetchTeeTimes(
+        token,
+        courseId,
+        date,
+        this.providerConfiguration,
+        page
+      );
       const filteredTeeTimes = teeTimesResponse.data.filter((teeTime) => teeTime.attributes.rates.length > 0);
       teeTimes = [...teeTimes, ...filteredTeeTimes];
 
@@ -84,7 +90,13 @@ export class Lightspeed extends BaseProvider {
     return teeTimes;
   }
 
-  fetchTeeTimes = async (courseId: string, date: string, providerConfiguration: any, page: number) => {
+  fetchTeeTimes = async (
+    token: string,
+    courseId: string,
+    date: string,
+    providerConfiguration: any,
+    page: number
+  ) => {
     try {
       const { BASE_ENDPOINT, CONTENT_TYPE, ORGANIZATION_ID, ACCEPT, DEFAULT_PLAYER_TYPE_ID } = JSON.parse(
         providerConfiguration ?? "{}"
@@ -442,11 +454,11 @@ export class Lightspeed extends BaseProvider {
           authResponse.refresh_token,
           86400
         );
-        await this.cacheService?.setCache(
-          `provider-${this.providerId}-token`,
-          authResponse.access_token,
-          7200
-        );
+        // await this.cacheService?.setCache(
+        //   `provider-${this.providerId}-token`,
+        //   authResponse.access_token,
+        //   7200
+        // );
       }
 
       return token as string;
