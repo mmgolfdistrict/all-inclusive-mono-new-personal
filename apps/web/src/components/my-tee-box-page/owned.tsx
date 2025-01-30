@@ -35,6 +35,7 @@ export type OwnedTeeTime = {
   selectedSlotsCount?: "1" | "2" | "3" | "4";
   slots?: number;
   bookingStatus: string;
+  slotsData: string[];
 };
 
 export const Owned = () => {
@@ -244,6 +245,7 @@ const TableRow = ({
     }
     return `/${courseId}/${teeTimeId}/owner/${ownerId}`;
   }, [courseId, teeTimeId, listingId, ownerId, isListed]);
+  console.log("golfers", golfers);
 
   return (
     <tr className="w-full border-b border-stroke text-primary-gray">

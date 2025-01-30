@@ -13,6 +13,7 @@ import { type ReactNode } from "react";
 import { Badge } from "../badge";
 import { FilledButton } from "../buttons/filled-button";
 import { Cashouts } from "./cashouts";
+import InvitedTeeTimes from "./invited-tee-times";
 import { MyListedTeeTimes } from "./my-listed-tee-times";
 import { OffersReceived } from "./offers-received";
 import { OffersSent } from "./offers-sent";
@@ -58,17 +59,20 @@ export const TableView = () => {
   return (
     <Tabs.Root value={section ?? "owned"}>
       <Tabs.List className="flex gap-10 overflow-x-auto border-b border-stroke bg-white px-6 pt-4 md:rounded-t-xl">
-        <TabTrigger value={"owned"}>Owned</TabTrigger>
+        <TabTrigger value="owned">Owned</TabTrigger>
         <TabTrigger
-          value={"my-listed-tee-times"}
+          value="my-listed-tee-times"
           data-testid="my-listed-tee-time-id"
         >
           My Listed Tee Times
         </TabTrigger>
+        <TabTrigger value="invited-tee-times" data-testid="invited-tee-time-id">
+          Invited Tee Times
+        </TabTrigger>
         {course?.supportsOffers ? (
           <>
-            <TabTrigger value={"offers-sent"}>Offers Sent</TabTrigger>
-            <TabTrigger value={"offers-received"} handleClick={markAsRead}>
+            <TabTrigger value="offers-sent">Offers Sent</TabTrigger>
+            <TabTrigger value="offers-received" handleClick={markAsRead}>
               Offers Received{" "}
               {unreadOffers && unreadOffers > 0 ? (
                 <Badge className="py-[.15rem] text-[12px]">
@@ -78,13 +82,12 @@ export const TableView = () => {
             </TabTrigger>
           </>
         ) : null}
-        <TabTrigger value={"transaction-history"}>
-          Transaction History
-        </TabTrigger>
-        <TabTrigger value={"cashouts"}>Cash out History</TabTrigger>
+        <TabTrigger value="transaction-history">Transaction History</TabTrigger>
+        <TabTrigger value="cashouts">Cash out History</TabTrigger>
       </Tabs.List>
+
       {!session ? (
-        status == "loading" ? null : (
+        status === "loading" ? null : (
           <Tabs.Content value={section ?? "owned"} className="bg-white p-2">
             <div className="min-h-[250px] flex items-center justify-center">
               <Link
@@ -109,6 +112,9 @@ export const TableView = () => {
           </Tabs.Content>
           <Tabs.Content value="my-listed-tee-times" className="bg-white p-2">
             <MyListedTeeTimes />
+          </Tabs.Content>
+          <Tabs.Content value="invited-tee-times" className="bg-white p-2">
+            <InvitedTeeTimes />
           </Tabs.Content>
           <Tabs.Content value="offers-sent" className="bg-white p-2">
             <OffersSent />

@@ -1,11 +1,12 @@
 import { randomBytes, randomUUID } from "crypto";
 import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import { and, asc, desc, eq, gt, lt, or } from "@golf-district/database";
+import { and, asc, desc, eq, gt, inArray, lt, or } from "@golf-district/database";
 import type { Db } from "@golf-district/database";
 import { accounts } from "@golf-district/database/schema/accounts";
 import { assets } from "@golf-district/database/schema/assets";
 import { bookings } from "@golf-district/database/schema/bookings";
 import { bookingslots } from "@golf-district/database/schema/bookingslots";
+import { invitedTeeTimes } from "@golf-district/database/schema/invitedTeeTimes";
 import { courses } from "@golf-district/database/schema/courses";
 import { courseUser } from "@golf-district/database/schema/courseUser";
 import { entities } from "@golf-district/database/schema/entities";
@@ -96,7 +97,10 @@ export class UserService {
    * @example
    * const userService = new UserService(database, notificationService);
    */
-  constructor(protected readonly database: Db, private readonly notificationsService: NotificationService) {
+  constructor(
+    protected readonly database: Db,
+    private readonly notificationsService: NotificationService
+  ) {
     //this.filter = new Filter();
   }
 
@@ -307,66 +311,75 @@ export class UserService {
     return user;
   };
 
-  inviteUser = async (userId: string, emailOrPhoneNumber: string, courseId: string) => {
+  inviteUser = async (
+    userId: string,
+    emailOrPhoneNumber: string,
+    teeTimeId: string,
+    bookingSlotId: string[]
+  ) => {
+    // Fetch user details
     const [user] = await this.database
-      .select({
-        handle: users.handle,
-        name: users.name,
-      })
+      .select({ handle: users.handle, name: users.name })
       .from(users)
       .where(eq(users.id, userId));
+
     if (!user) {
       this.logger.warn(`User not found: ${userId}`);
       throw new Error("User not found");
     }
-    //determine if email or phone number
-
-    let EntityName: string | undefined;
-    let SubDomain: string | undefined;
-
-    if (courseId) {
-      const [courseWithEntity] = await this.database
-        .select({
-          entityName: entities.name,
-          subDomain: entities.subdomain,
-        })
-        .from(courses)
-        .leftJoin(entities, eq(courses.entityId, entities.id))
-        .where(eq(courses.id, courseId));
-
-      if (courseWithEntity) {
-        EntityName = courseWithEntity.entityName ?? "";
-        SubDomain = courseWithEntity.subDomain ?? "";
-      }
+    if (!bookingSlotId || !Array.isArray(bookingSlotId) || bookingSlotId.length === 0) {
+      throw new Error("Invalid or empty bookingSlotId array");
     }
 
+    // Fetch slot details to check availability
+    const [bookingSlot] = await this.database
+      .select({
+        bookingId: bookingslots.bookingId,
+        slotPosition: bookingslots.slotPosition,
+        externalSlotId: bookingslots.externalSlotId,
+      })
+      .from(bookingslots)
+      .where(inArray(bookingslots.externalSlotId, bookingSlotId));
+
+    if (!bookingSlot) {
+      throw new Error("Booking slot not available");
+    }
+    console.log("bookingSlot----------------------------->", bookingSlot);
+
+    // Check if invite already exists
+    const [existingInvite] = await this.database
+      .select({ id: invitedTeeTimes.id })
+      .from(invitedTeeTimes)
+      .where(and(eq(invitedTeeTimes.email, emailOrPhoneNumber), eq(invitedTeeTimes.teeTimeId, teeTimeId)));
+
+    if (existingInvite) {
+      throw new Error("Invite already sent to this user for this tee time");
+    }
+
+    // Save invitation
+    await this.database.insert(invitedTeeTimes).values({
+      id: randomUUID(),
+      email: emailOrPhoneNumber,
+      teeTimeId: teeTimeId,
+      bookingId: bookingSlot.bookingId,
+      bookingSlotId: bookingSlot.externalSlotId,
+      slotPosition: bookingSlot.slotPosition,
+      status: 0, // Pending (0 = not accepted, 1 = accepted)
+    });
+
+    // Determine invite method (email or phone)
     const phoneRegex = /^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$/;
     if (isValidEmail(emailOrPhoneNumber)) {
       await this.notificationsService.sendEmail(
         emailOrPhoneNumber,
         "You've been invited to Golf District",
-        `<p>${user?.name?.split(" ")[0]} has invited you to Golf District.</p>
-        ${
-          courseId && SubDomain && EntityName
-            ? `<p>Visit the course website <a href="https://${SubDomain}/${courseId}" target="_blank" style="color: #1a0dab; text-decoration: underline;">${EntityName}</a></p>`
-            : ""
-        }
-        <br>`
+        `<p>${user?.name?.split(" ")[0]} has invited you to Golf District.</p>`
       );
-      return;
-    }
-    if (phoneRegex.test(emailOrPhoneNumber)) {
-      console.log("emailOrPhoneNumber", emailOrPhoneNumber);
-      const userName = user?.name?.split(" ")[0];
+    } else if (phoneRegex.test(emailOrPhoneNumber)) {
       await this.notificationsService.sendSMS(
         emailOrPhoneNumber,
-        `${userName} has invited you to Golf District ${
-          courseId && SubDomain && EntityName
-            ? `Visit the course website: https://${SubDomain}/${courseId} (${EntityName})`
-            : ""
-        }`
+        `${user?.name?.split(" ")[0]} has invited you to Golf District.`
       );
-      return;
     } else {
       throw new Error("Invalid email or phone number");
     }

@@ -54,14 +54,19 @@ export const ManageOwnedTeeTime = ({
   const [inviteSuccess, setInviteSuccess] = useState<Record<string, boolean>>(
     {}
   );
+  console.log("course", selectedTeeTime);
 
   const handleInviteFriend = async (friend: InviteFriend) => {
     if (invite.isLoading) return;
+    const slotIds = selectedTeeTime?.slotsData.map((slot) => slot.slotId);
 
+    console.log("slotIds", slotIds);
     try {
       await invite.mutateAsync({
         emailOrPhone: friend.name || "",
         courseId: course?.id || "",
+        teeTimeId: selectedTeeTime?.teeTimeId || "",
+        bookingSlotId: slotIds || [],
       });
       setInviteSuccess((prev) => ({ ...prev, [friend.slotId]: true }));
       toast.success("Invitation sent successfully.");
