@@ -104,6 +104,7 @@ export class clubprophetWebhookService {
         courseProvider: courses.providerId,
         // entityId: teeTimes.entityId,
         providerDate: teeTimes.providerDate,
+        providerDateWithoutOffset: teeTimes.providerDateWithoutOffset,
       })
       .from(teeTimes)
       .leftJoin(courses, eq(courses.id, courseId))
@@ -179,6 +180,7 @@ export class clubprophetWebhookService {
             greenFeeTaxPerPlayer: indexedTeeTime.greenFeeTax ? indexedTeeTime.greenFeeTax : 0,
             cartFeeTaxPerPlayer: indexedTeeTime.cartFeeTax,
             providerDate: teeTimeResponse.startTime,
+            providerDateWithoutOffset: teeTimeResponse.startTime,
             // entityId: entityId ? entityId : "",
           };
           if (providerTeeTime.availableFirstHandSpots !== indexedTeeTime.availableFirstHandSpots) {
@@ -211,6 +213,7 @@ export class clubprophetWebhookService {
             greenFeeTaxPerPlayer: 0, // hardcode
             cartFeeTaxPerPlayer: 0,
             providerDate: teeTimeResponse.startTime,
+            providerDateWithoutOffset: teeTimeResponse.startTime,
             // entityId: entityId ? entityId : "",
           };
           teeTimesToInsert.push(providerTeeTime);

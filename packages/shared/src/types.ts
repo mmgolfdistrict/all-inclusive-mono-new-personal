@@ -99,6 +99,7 @@ export type FullCourseType = {
   courseOpenTime: number;
   courseCloseTime: number;
   supportsGroupBooking: boolean;
+  timezoneISO?: string | undefined;
 };
 
 export type SupportedCharity = {

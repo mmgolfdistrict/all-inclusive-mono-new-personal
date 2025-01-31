@@ -36,11 +36,15 @@ import { toast } from "react-toastify";
 import { ViewportList } from "react-viewport-list";
 import { useMediaQuery } from "usehooks-ts";
 import { LoadingContainer } from "./loader";
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
 
 dayjs.extend(Weekday);
 dayjs.extend(RelativeTime);
 dayjs.extend(isoWeek);
 dayjs.extend(isBetween);
+dayjs.extend(utc);
+dayjs.extend(timezone);
 export default function CourseHomePage() {
   const searchParams = useSearchParams();
   const queryDateType = searchParams.get("dateType");
@@ -66,6 +70,44 @@ export default function CourseHomePage() {
   const { user } = useUserContext();
   const { course } = useCourseContext();
   const { setBookingSource } = useBookingSourceContext();
+
+
+  function getUserTimezone() {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone;
+  }
+
+  function compareTimesWithTimezones( ) {
+    // Parse the ISO time strings with specified timezones
+    const date1 = dayjs.tz(new Date(), getUserTimezone());
+    const date2 = dayjs.tz(new Date(), course?.timezoneISO);
+  
+    // Compare the two times
+    if (date1.isAfter(date2)) {
+      return `user`;
+    } else if (date1.isBefore(date2)) {
+      return `course`;
+    } else {
+      return `user`;
+    }
+  }
+
+  const formatDateString = (date: string | number | Date | Dayjs | null | undefined): string => {
+    if (!date) {
+      return ''; // Handle the case where date is null or undefined
+    }
+    if(compareTimesWithTimezones()==='user'){
+      return dayjs(date).format('ddd, DD MMM YYYY HH:mm:ss [GMT]')
+    }
+    return dayjs(date).tz(course?.timezoneISO).format('ddd, DD MMM YYYY HH:mm:ss [GMT]');
+  };
+
+  const formatDateStringEnd = (date: string | number | Date | Dayjs | null | undefined): string => {
+    if (!date) {
+      return ''; // Handle the case where date is null or undefined
+    }
+    return dayjs(date).hour(23).minute(59).second(59).millisecond(999).format('ddd, DD MMM YYYY HH:mm:ss [GMT]');
+  };
+  
 
   const {
     showUnlisted,
@@ -138,15 +180,6 @@ export default function CourseHomePage() {
     }
   );
 
-  const formatDateString = (
-    date: string | number | Date | Dayjs | null | undefined
-  ): string => {
-    if (!date) {
-      return ""; // Handle the case where date is null or undefined
-    }
-    return dayjs(date).utc().format("ddd, DD MMM YYYY HH:mm:ss [GMT]");
-  };
-
   const getUtcDate = (
     date: string | number | Dayjs | Date | null | undefined,
     timezoneCorrection = 0
@@ -205,9 +238,8 @@ export default function CourseHomePage() {
 
   const startDate = useMemo(() => {
     const specialDate = getSpecialDayDate(dateType);
-
     if (specialDate) {
-      return formatDateString(dayjs(specialDate.start).toDate());
+      return formatDateString(specialDate.start);
     }
 
     switch (dateType) {
@@ -215,16 +247,18 @@ export default function CourseHomePage() {
       case "This Week":
       case "This Month":
       case "Furthest Day Out To Book":
-        return formatDateString(new Date());
+        return formatDateString(dayjs(new Date()).add(30,'minute'));
       case "Today":
-        return getUtcDate(new Date(), course?.timezoneCorrection);
+        return formatDateString(dayjs(new Date()).add(30,'minute'));
       case "This Weekend":
-        return formatDateString(dayjs().day(5).toDate());
-      case "Custom": {
+        return formatDateString(dayjs().day(5).add(30,'minute').toDate());
+      case "Custom":{
         if (!selectedDay.from) return formatDateString(new Date());
-        const customDate = dayjs(
-          `${selectedDay.from.year}-${selectedDay.from.month}-${selectedDay.from.day}`
-        ).toDate();
+        const customDate = dayjs(`${selectedDay.from.year}-${selectedDay.from.month}-${selectedDay.from.day}`).startOf('day');
+        const today = dayjs().startOf('day');
+        if(customDate.isSame(today)){
+          return formatDateString(dayjs(new Date()).add(30,'minute'))
+        }
         return formatDateString(customDate);
       }
       default:
@@ -232,60 +266,39 @@ export default function CourseHomePage() {
     }
   }, [dateType, selectedDay, queryDateType, specialEvents]);
 
+
   const endDate = useMemo(() => {
     const specialDate = getSpecialDayDate(dateType);
     if (specialDate) {
-      return formatDateString(dayjs(specialDate.end).toDate());
+      return formatDateString(specialDate.end);
     }
 
     switch (dateType) {
       case "All":
-        return formatDateString(dayjs(farthestDateOut).toDate());
+        return formatDateStringEnd(farthestDateOut);
       case "Today":
-        return getUtcDate(
-          dayjs().endOf("day").toDate(),
-          course?.timezoneCorrection
-        );
+        return formatDateStringEnd(dayjs().endOf("day").toDate());
       case "This Week":
-        return getUtcDate(
-          dayjs().endOf("isoWeek").toDate(),
-          course?.timezoneCorrection
-        );
+        return formatDateStringEnd(dayjs().endOf("isoWeek").toDate());
       case "This Weekend":
-        return formatDateString(dayjs().day(7).toDate());
-      case "This Month": {
-        const endOfMonth = dayjs().endOf("month").toDate();
-        return endOfMonth > dayjs(farthestDateOut).toDate()
-          ? formatDateString(farthestDateOut)
-          : formatDateString(endOfMonth);
-      }
+        return formatDateStringEnd(dayjs().day(7).toDate());
+      case "This Month":
+        return formatDateStringEnd(dayjs().endOf("month").toDate());
       case "Furthest Day Out To Book":
-        return formatDateString(
-          dayjs(farthestDateOut)
-            .utc()
-            .hour(23)
-            .minute(59)
-            .second(59)
-            .millisecond(999)
-            .toDate()
-        );
-      case "Custom": {
+        return formatDateStringEnd(dayjs(farthestDateOut).toDate());
+      case "Custom":{
         if (!selectedDay.to) {
           if (selectedDay.from) {
-            const endOfDay = dayjs(
-              `${selectedDay.from.year}-${selectedDay.from.month}-${selectedDay.from.day}`
-            ).endOf("day");
-            return getUtcDate(endOfDay.toDate(), course?.timezoneCorrection);
+            const endOfDay = dayjs(`${selectedDay.from.year}-${selectedDay.from.month}-${selectedDay.from.day}`).endOf("day");
+            return formatDateStringEnd(endOfDay);
           }
-          return formatDateString(dayjs().endOf("day").toDate());
+          return formatDateStringEnd(dayjs().endOf("day").toDate());
         }
-        const endDateCustom = dayjs(
-          `${selectedDay.to.year}-${selectedDay.to.month}-${selectedDay.to.day}`
-        ).endOf("day");
-        return getUtcDate(endDateCustom.toDate(), course?.timezoneCorrection);
+        const endDateCustom = dayjs(`${selectedDay.to.year}-${selectedDay.to.month}-${selectedDay.to.day}`).endOf("day");
+        return formatDateStringEnd(endDateCustom);
       }
       default:
-        return formatDateString(dayjs().add(360, "days").toDate());
+        return formatDateString(dayjs().add(360, 'days').toDate());
     }
   }, [dateType, selectedDay, farthestDateOut, specialEvents]);
 
@@ -298,7 +311,7 @@ export default function CourseHomePage() {
     .utcOffset(course?.timezoneCorrection ?? 0);
 
   const daysData = useMemo(() => {
-    const amountOfDays = dayjs(utcEndDate).diff(utcStartDate, "day");
+    const amountOfDays = dayjs(utcEndDate).diff(startDate, "day");
     const daysToTake = amountOfDays;
     const arrayOfDates: string[] = [];
 
@@ -311,8 +324,8 @@ export default function CourseHomePage() {
         arrayOfDates.push(date.toString());
         continue;
       } else {
-        let date = utcStartDate;
-        date = date.add(i, "day");
+        const date = startDate;
+        // date = date.add(i, "day");
         arrayOfDates.push(date.toString());
         continue;
       }
@@ -329,8 +342,8 @@ export default function CourseHomePage() {
         courseId: course?.id ?? "",
         startTime: startTime[0],
         endTime: startTime[1],
-        minDate: utcStartDate.toString(),
-        maxDate: utcEndDate.toString(),
+        minDate: startDate,
+        maxDate: endDate,
         holes: holes === "Any" || holes === "18" ? 18 : 9,
         golfers: golfers === "Any" ? 1 : golfers,
         showUnlisted: showUnlisted,
@@ -644,8 +657,8 @@ export default function CourseHomePage() {
                       courseException={getCourseException(date as string)}
                       key={idx}
                       date={date}
-                      minDate={utcStartDate.toString()}
-                      maxDate={utcEndDate.toString()}
+                      minDate={startDate.toString()}
+                      maxDate={endDate.toString()}
                       handleLoading={handleLoading}
                     />
                   )}

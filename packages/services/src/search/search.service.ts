@@ -462,6 +462,7 @@ export class SearchService extends CacheService {
         cartFeeTaxPercent: courses.cartFeeTaxPercent,
         weatherGuaranteeTaxPercent: courses.weatherGuaranteeTaxPercent,
         markupTaxPercent: courses.markupTaxPercent,
+        providerDateWithoutOffset: teeTimes.providerDateWithoutOffset,
       })
       .from(teeTimes)
       .where(eq(teeTimes.id, teeTimeId))
@@ -495,18 +496,30 @@ export class SearchService extends CacheService {
     );
     const filteredDate: any[] = [];
 
-    const date = dayjs(tee?.providerDate).utc();
-    const dateWithTimezone = date.add(tee?.timezoneCorrection).toString();
+    const date = this.formatDateToAppropriateFormat(tee?.providerDateWithoutOffset);
     priceAccordingToDate.forEach((el) => {
-      if (
-        dayjs(el.toDayFormatted).isAfter(dateWithTimezone) &&
-        dayjs(el.fromDayFormatted).isBefore(dateWithTimezone) &&
-        !filteredDate.length
-      ) {
-        filteredDate.push(el);
-        return;
-      }
-    });
+     if (
+       dayjs(el.toDayFormatted).isAfter(date) &&
+       dayjs(el.fromDayFormatted).isBefore(date) &&
+       !filteredDate.length
+     ) {
+       filteredDate.push(el);
+       return;
+     }
+   });
+
+    // const date = dayjs(tee?.providerDate).utc();
+    // const dateWithTimezone = date.add(tee?.timezoneCorrection).toString();
+    // priceAccordingToDate.forEach((el) => {
+    //   if (
+    //     dayjs(el.toDayFormatted).isAfter(dateWithTimezone) &&
+    //     dayjs(el.fromDayFormatted).isBefore(dateWithTimezone) &&
+    //     !filteredDate.length
+    //   ) {
+    //     filteredDate.push(el);
+    //     return;
+    //   }
+    // });
 
     const markupFeesFinal = filteredDate.length ? filteredDate[0].markUpFees : tee.markupFeesFixedPerPlayer;
     const markupFeesToBeUsed = markupFeesFinal / 100;
@@ -687,10 +700,10 @@ export class SearchService extends CacheService {
     const startOfToday = dayjs().utc().hour(0).minute(0).second(0).millisecond(0).toISOString();
 
     const teeTimeDate = await this.database
-      .select({ date: teeTimes.providerDate })
+    .select({ date: teeTimes.providerDateWithoutOffset })
       .from(teeTimes)
       .where(and(eq(teeTimes.courseId, courseId), gte(teeTimes.date, startOfToday)))
-      .orderBy(order === "asc" ? asc(teeTimes.providerDate) : desc(teeTimes.providerDate))
+      .orderBy(order === "asc" ? asc(teeTimes.providerDateWithoutOffset) : desc(teeTimes.providerDateWithoutOffset))
       .limit(1)
       .execute()
       .catch((err) => {
@@ -790,12 +803,12 @@ export class SearchService extends CacheService {
     const cacheKey = `${courseId}-NumberOfPlayers`;
     const cacheTTL = 600;
 
-    const nowInCourseTimezone = dayjs().utc().utcOffset(timezoneCorrection).format("YYYY-MM-DD HH:mm:ss");
-    const currentTimePlus30Min = dayjs
-      .utc(nowInCourseTimezone)
-      .utcOffset(timezoneCorrection)
-      .add(30, "minutes")
-      .toISOString();
+    // const nowInCourseTimezone = dayjs().utc().utcOffset(timezoneCorrection).format("YYYY-MM-DD HH:mm:ss");
+    // const currentTimePlus30Min = dayjs
+    //   .utc(nowInCourseTimezone)
+    //   .utcOffset(timezoneCorrection)
+    //   .add(30, "minutes")
+    //   .toISOString();
     // Allowed Players start
 
     let NumberOfPlayers: any = await cacheManager.get(cacheKey);
@@ -865,7 +878,8 @@ export class SearchService extends CacheService {
 
     const firstHandResultsQuery = this.database
       .selectDistinct({
-        providerDate: sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))`,
+        // providerDate: sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))`,
+        providerDate: sql`Date(${teeTimes.providerDateWithoutOffset})`
       })
       .from(teeTimes)
       .innerJoin(courses, eq(courses.id, teeTimes.courseId));
@@ -896,14 +910,7 @@ export class SearchService extends CacheService {
         .where(
           and(
             eq(courses.id, courseId),
-            gte(teeTimes.providerDate, currentTimePlus30Min),
-            between(teeTimes.providerDate, minDateSubquery, maxDateSubquery),
-            // gte(teeTimes.time, startTime),
-            // lte(teeTimes.time, endTime),
-            // sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer}) / 100 >= ${lowerPrice}`,
-            // sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer}) / 100 <= ${upperPrice}`,
-            // eq(teeTimes.numberOfHoles, holes),
-            // gte(teeTimes.availableFirstHandSpots, playersCount),
+            between(teeTimes.providerDateWithoutOffset, minDateSubquery, maxDateSubquery),
             ...conditions,
             ...firstHandSpecificCondition,
             or(
@@ -915,25 +922,19 @@ export class SearchService extends CacheService {
             )
           )
         )
-        .orderBy(asc(sql`DATE(Convert_TZ(${teeTimes.providerDate}, 'UTC', ${courses.timezoneISO}))`));
+        .orderBy(asc(sql`Date(${teeTimes.providerDateWithoutOffset})`));
     } else {
       firstHandResultsQuery
         .where(
           and(
             eq(courses.id, courseId),
-            gte(teeTimes.providerDate, currentTimePlus30Min),
-            between(teeTimes.providerDate, minDateSubquery, maxDateSubquery),
+            between(teeTimes.providerDateWithoutOffset, minDateSubquery, maxDateSubquery),
             and(gt(teeTimes.greenFeePerPlayer, 0)),
-            // and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
-            // sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 >= ${lowerPrice}`,
-            // sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 <= ${upperPrice}`,
-            // // eq(teeTimes.numberOfHoles, holes),
-            // gte(teeTimes.availableFirstHandSpots, playersCount)
             ...conditions,
             ...firstHandSpecificCondition
           )
         )
-        .orderBy(asc(sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))`));
+        .orderBy(asc(sql`Date(${teeTimes.providerDateWithoutOffset})`))
     }
 
     // console.log("DATES QUERY:", firstHandResultsQuery.toSQL())
@@ -942,7 +943,7 @@ export class SearchService extends CacheService {
 
     const secondHandResultsQuery = this.database
       .selectDistinct({
-        providerDate: sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))`,
+        providerDate: sql`Date(${teeTimes.providerDateWithoutOffset})`
       })
       .from(lists)
       .innerJoin(bookings, eq(bookings.listId, lists.id))
@@ -951,19 +952,13 @@ export class SearchService extends CacheService {
       .where(
         and(
           eq(courses.id, courseId),
-          gte(teeTimes.providerDate, currentTimePlus30Min),
-          between(teeTimes.providerDate, minDateSubquery, maxDateSubquery),
+          between(teeTimes.providerDateWithoutOffset, minDateSubquery, maxDateSubquery),
           eq(lists.isDeleted, false),
-          // and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
-          // sql`(${lists.listPrice}*(${courses.buyerFee}/100)+${lists.listPrice})/100 >= ${lowerPrice}`,
-          // sql`(${lists.listPrice}*(${courses.buyerFee}/100)+${lists.listPrice})/100 <= ${upperPrice}`,
-          // eq(teeTimes.numberOfHoles, holes),
-          // gte(teeTimes.availableSecondHandSpots, golfers)
           ...conditions,
           ...secondHandSpecificCondition
         )
       )
-      .orderBy(asc(sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))`));
+      .orderBy(asc(sql`Date(${teeTimes.providerDateWithoutOffset})`))
 
     const secondHandResults = await secondHandResultsQuery.execute();
 
@@ -1008,16 +1003,18 @@ export class SearchService extends CacheService {
       [];
 
     markupData.forEach((el) => {
-      const toDay = currentdateWithTimeZone.add(el.toDay, "day");
-      const fromDay = currentdateWithTimeZone
+      const toDay = currentDate.add(el.toDay, "day");
+      const fromDay = currentDate
         .add(el.fromDay, "day")
         .set("hours", 0)
         .set("minutes", 0)
         .set("seconds", 0);
 
       priceAccordingToDate.push({
-        toDayFormatted: toDay.toString(),
-        fromDayFormatted: fromDay.toString(),
+        // toDayFormatted: toDay.toString(),
+        // fromDayFormatted: fromDay.toString(),
+        toDayFormatted: toDay.format('ddd, DD MMM YYYY HH:mm:ss [GMT]'),
+        fromDayFormatted: fromDay.format('ddd, DD MMM YYYY HH:mm:ss [GMT]'),
         markUpFees: el.markUp,
       });
     });
@@ -1094,8 +1091,18 @@ export class SearchService extends CacheService {
       .millisecond(999)
       .toISOString();
     console.log("=====>", minDateSubquery, maxDateSubquery);
-    const startDate = dayjs(date).utc().hour(0).minute(0).second(0).millisecond(0).toISOString();
-    const endDate = dayjs(date).utc().hour(23).minute(59).second(59).millisecond(999).toISOString();
+    // const startDate = dayjs(date).utc().hour(0).minute(0).second(0).millisecond(0).toISOString();
+    // const endDate = dayjs(date).utc().hour(23).minute(59).second(59).millisecond(999).toISOString();
+
+    const today = dayjs(date).startOf('day');
+    const currentday= dayjs(minDate).startOf('day')
+    let startOfDay:any= ""
+    if(currentday.isSame(today)){
+      startOfDay= this.convertDateFormat(minDate)
+    }else{
+      startOfDay = dayjs(date).utc().hour(0).minute(0).second(0).millisecond(0).toISOString()
+    }
+    const endOfDay= dayjs(date).utc().hour(23).minute(59).second(59).millisecond(999).toISOString();
 
     const nowInCourseTimezone = dayjs().utc().utcOffset(timezoneCorrection).format("YYYY-MM-DD HH:mm:ss");
     const currentTimePlus30Min = dayjs
@@ -1123,8 +1130,8 @@ export class SearchService extends CacheService {
         and(
           and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
           between(teeTimes.greenFeePerPlayer, lowerPrice, upperPrice),
-          gte(teeTimes.providerDate, currentTimePlus30Min),
-          between(teeTimes.providerDate, minDateSubquery, maxDateSubquery),
+          gte(teeTimes.providerDateWithoutOffset, currentTimePlus30Min),
+          between(teeTimes.providerDateWithoutOffset, startOfDay, endOfDay),
           eq(teeTimes.courseId, courseId),
           //TODO: use isCartIncluded instead
           // includesCart ? gte(teeTimes.cartFeePerPlayer, 1) : eq(teeTimes.cartFeePerPlayer, 0),
@@ -1201,12 +1208,9 @@ export class SearchService extends CacheService {
       .where(
         and(
           and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
-          // between(teeTimes.greenFeePerPlayer, lowerPrice, upperPrice),
-          gte(teeTimes.providerDate, currentTimePlus30Min),
-          between(teeTimes.providerDate, startDate, endDate),
+          gte(teeTimes.providerDateWithoutOffset, currentTimePlus30Min),
+          between(teeTimes.providerDateWithoutOffset, startOfDay, endOfDay),
           eq(teeTimes.courseId, courseId),
-          //TODO: use isCartIncluded instead
-          // includesCart ? gte(teeTimes.cartFeePerPlayer, 1) : eq(teeTimes.cartFeePerPlayer, 0),
           eq(teeTimes.numberOfHoles, holes),
           gte(teeTimes.availableFirstHandSpots, golfers === -1 ? 1 : golfers),
           gte(teeTimes.availableFirstHandSpots, playersCount),
@@ -1496,8 +1500,8 @@ export class SearchService extends CacheService {
         and(
           and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
           // between(lists.listPrice, lowerPrice, upperPrice),
-          gte(teeTimes.providerDate, currentTimePlus30Min),
-          between(teeTimes.providerDate, startDate, endDate),
+          gte(teeTimes.providerDateWithoutOffset, currentTimePlus30Min),
+          between(teeTimes.providerDate, startOfDay, endOfDay),
           eq(teeTimes.courseId, courseId),
           eq(bookings.includesCart, includesCart),
           eq(teeTimes.numberOfHoles, holes),

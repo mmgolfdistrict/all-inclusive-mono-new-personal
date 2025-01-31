@@ -177,6 +177,7 @@ export class EntityService {
           description: courses.description,
           address: courses.address,
           logo: courses.logoId,
+          timezoneIso: courses.timezoneISO,
           display: courses.displayOrder,
           isDeleted: courses.isDeleted
         })
