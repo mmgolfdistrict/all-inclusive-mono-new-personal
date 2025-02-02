@@ -3,8 +3,6 @@
 import * as Accordion from "@radix-ui/react-accordion";
 import { Fragment, type ReactNode } from "react";
 import { DownArrow } from "../icons/down-arrow";
-import { DownChevron } from "../icons/down-chevron";
-import Skeleton from "../skeleton/skeleton";
 
 const CheckoutItemAccordion = ({
   title,

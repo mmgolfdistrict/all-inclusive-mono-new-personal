@@ -498,15 +498,15 @@ export class SearchService extends CacheService {
 
     const date = this.formatDateToAppropriateFormat(tee?.providerDateWithoutOffset);
     priceAccordingToDate.forEach((el) => {
-     if (
-       dayjs(el.toDayFormatted).isAfter(date) &&
-       dayjs(el.fromDayFormatted).isBefore(date) &&
-       !filteredDate.length
-     ) {
-       filteredDate.push(el);
-       return;
-     }
-   });
+      if (
+        dayjs(el.toDayFormatted).isAfter(date) &&
+        dayjs(el.fromDayFormatted).isBefore(date) &&
+        !filteredDate.length
+      ) {
+        filteredDate.push(el);
+        return;
+      }
+    });
 
     // const date = dayjs(tee?.providerDate).utc();
     // const dateWithTimezone = date.add(tee?.timezoneCorrection).toString();
@@ -700,10 +700,12 @@ export class SearchService extends CacheService {
     const startOfToday = dayjs().utc().hour(0).minute(0).second(0).millisecond(0).toISOString();
 
     const teeTimeDate = await this.database
-    .select({ date: teeTimes.providerDateWithoutOffset })
+      .select({ date: teeTimes.providerDateWithoutOffset })
       .from(teeTimes)
       .where(and(eq(teeTimes.courseId, courseId), gte(teeTimes.date, startOfToday)))
-      .orderBy(order === "asc" ? asc(teeTimes.providerDateWithoutOffset) : desc(teeTimes.providerDateWithoutOffset))
+      .orderBy(
+        order === "asc" ? asc(teeTimes.providerDateWithoutOffset) : desc(teeTimes.providerDateWithoutOffset)
+      )
       .limit(1)
       .execute()
       .catch((err) => {
@@ -879,7 +881,7 @@ export class SearchService extends CacheService {
     const firstHandResultsQuery = this.database
       .selectDistinct({
         // providerDate: sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))`,
-        providerDate: sql`Date(${teeTimes.providerDateWithoutOffset})`
+        providerDate: sql`Date(${teeTimes.providerDateWithoutOffset})`,
       })
       .from(teeTimes)
       .innerJoin(courses, eq(courses.id, teeTimes.courseId));
@@ -934,7 +936,7 @@ export class SearchService extends CacheService {
             ...firstHandSpecificCondition
           )
         )
-        .orderBy(asc(sql`Date(${teeTimes.providerDateWithoutOffset})`))
+        .orderBy(asc(sql`Date(${teeTimes.providerDateWithoutOffset})`));
     }
 
     // console.log("DATES QUERY:", firstHandResultsQuery.toSQL())
@@ -943,7 +945,7 @@ export class SearchService extends CacheService {
 
     const secondHandResultsQuery = this.database
       .selectDistinct({
-        providerDate: sql`Date(${teeTimes.providerDateWithoutOffset})`
+        providerDate: sql`Date(${teeTimes.providerDateWithoutOffset})`,
       })
       .from(lists)
       .innerJoin(bookings, eq(bookings.listId, lists.id))
@@ -958,7 +960,7 @@ export class SearchService extends CacheService {
           ...secondHandSpecificCondition
         )
       )
-      .orderBy(asc(sql`Date(${teeTimes.providerDateWithoutOffset})`))
+      .orderBy(asc(sql`Date(${teeTimes.providerDateWithoutOffset})`));
 
     const secondHandResults = await secondHandResultsQuery.execute();
 
@@ -1004,17 +1006,13 @@ export class SearchService extends CacheService {
 
     markupData.forEach((el) => {
       const toDay = currentDate.add(el.toDay, "day");
-      const fromDay = currentDate
-        .add(el.fromDay, "day")
-        .set("hours", 0)
-        .set("minutes", 0)
-        .set("seconds", 0);
+      const fromDay = currentDate.add(el.fromDay, "day").set("hours", 0).set("minutes", 0).set("seconds", 0);
 
       priceAccordingToDate.push({
         // toDayFormatted: toDay.toString(),
         // fromDayFormatted: fromDay.toString(),
-        toDayFormatted: toDay.format('ddd, DD MMM YYYY HH:mm:ss [GMT]'),
-        fromDayFormatted: fromDay.format('ddd, DD MMM YYYY HH:mm:ss [GMT]'),
+        toDayFormatted: toDay.format("ddd, DD MMM YYYY HH:mm:ss [GMT]"),
+        fromDayFormatted: fromDay.format("ddd, DD MMM YYYY HH:mm:ss [GMT]"),
         markUpFees: el.markUp,
       });
     });
@@ -1094,15 +1092,15 @@ export class SearchService extends CacheService {
     // const startDate = dayjs(date).utc().hour(0).minute(0).second(0).millisecond(0).toISOString();
     // const endDate = dayjs(date).utc().hour(23).minute(59).second(59).millisecond(999).toISOString();
 
-    const today = dayjs(date).startOf('day');
-    const currentday= dayjs(minDate).startOf('day')
-    let startOfDay:any= ""
-    if(currentday.isSame(today)){
-      startOfDay= this.convertDateFormat(minDate)
-    }else{
-      startOfDay = dayjs(date).utc().hour(0).minute(0).second(0).millisecond(0).toISOString()
+    const today = dayjs(date).startOf("day");
+    const currentday = dayjs(minDate).startOf("day");
+    let startOfDay: any = "";
+    if (currentday.isSame(today)) {
+      startOfDay = this.convertDateFormat(minDate);
+    } else {
+      startOfDay = dayjs(date).utc().hour(0).minute(0).second(0).millisecond(0).toISOString();
     }
-    const endOfDay= dayjs(date).utc().hour(23).minute(59).second(59).millisecond(999).toISOString();
+    const endOfDay = dayjs(date).utc().hour(23).minute(59).second(59).millisecond(999).toISOString();
 
     const nowInCourseTimezone = dayjs().utc().utcOffset(timezoneCorrection).format("YYYY-MM-DD HH:mm:ss");
     const currentTimePlus30Min = dayjs

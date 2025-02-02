@@ -152,7 +152,7 @@ export class CourseService extends DomainService {
           courseCloseTime: courses.courseCloseTime,
           supportsProviderMembership: courses.supportsProviderMembership,
           supportsGroupBooking: courses.supportsGroupBooking,
-          timezoneISO: courses?.timezoneISO
+          timezoneISO: courses?.timezoneISO,
         })
         .from(courses)
         .innerJoin(providerCourseLink, eq(providerCourseLink.courseId, courses.id))

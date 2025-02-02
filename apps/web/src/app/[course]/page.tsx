@@ -12,7 +12,6 @@ import { MobileFilters } from "~/components/course-page/mobile-filters";
 import { MobileSort, SortOptions } from "~/components/course-page/mobile-sort";
 import { Calendar } from "~/components/icons/calendar";
 import { ChevronUp } from "~/components/icons/chevron-up";
-import { Close } from "~/components/icons/close";
 import { FiltersIcon } from "~/components/icons/filters";
 import { Select } from "~/components/input/select";
 import { ForecastModal } from "~/components/modal/forecast-modal";
@@ -29,6 +28,8 @@ import dayjs from "dayjs";
 import isBetween from "dayjs/plugin/isBetween";
 import isoWeek from "dayjs/plugin/isoWeek";
 import RelativeTime from "dayjs/plugin/relativeTime";
+import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc";
 import Weekday from "dayjs/plugin/weekday";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -36,8 +37,6 @@ import { toast } from "react-toastify";
 import { ViewportList } from "react-viewport-list";
 import { useMediaQuery } from "usehooks-ts";
 import { LoadingContainer } from "./loader";
-import utc from 'dayjs/plugin/utc';
-import timezone from 'dayjs/plugin/timezone';
 
 dayjs.extend(Weekday);
 dayjs.extend(RelativeTime);
@@ -71,16 +70,15 @@ export default function CourseHomePage() {
   const { course } = useCourseContext();
   const { setBookingSource } = useBookingSourceContext();
 
-
   function getUserTimezone() {
     return Intl.DateTimeFormat().resolvedOptions().timeZone;
   }
 
-  function compareTimesWithTimezones( ) {
+  function compareTimesWithTimezones() {
     // Parse the ISO time strings with specified timezones
     const date1 = dayjs.tz(new Date(), getUserTimezone());
     const date2 = dayjs.tz(new Date(), course?.timezoneISO);
-  
+
     // Compare the two times
     if (date1.isAfter(date2)) {
       return `user`;
@@ -91,23 +89,33 @@ export default function CourseHomePage() {
     }
   }
 
-  const formatDateString = (date: string | number | Date | Dayjs | null | undefined): string => {
+  const formatDateString = (
+    date: string | number | Date | Dayjs | null | undefined
+  ): string => {
     if (!date) {
-      return ''; // Handle the case where date is null or undefined
+      return ""; // Handle the case where date is null or undefined
     }
-    if(compareTimesWithTimezones()==='user'){
-      return dayjs(date).format('ddd, DD MMM YYYY HH:mm:ss [GMT]')
+    if (compareTimesWithTimezones() === "user") {
+      return dayjs(date).format("ddd, DD MMM YYYY HH:mm:ss [GMT]");
     }
-    return dayjs(date).tz(course?.timezoneISO).format('ddd, DD MMM YYYY HH:mm:ss [GMT]');
+    return dayjs(date)
+      .tz(course?.timezoneISO)
+      .format("ddd, DD MMM YYYY HH:mm:ss [GMT]");
   };
 
-  const formatDateStringEnd = (date: string | number | Date | Dayjs | null | undefined): string => {
+  const formatDateStringEnd = (
+    date: string | number | Date | Dayjs | null | undefined
+  ): string => {
     if (!date) {
-      return ''; // Handle the case where date is null or undefined
+      return ""; // Handle the case where date is null or undefined
     }
-    return dayjs(date).hour(23).minute(59).second(59).millisecond(999).format('ddd, DD MMM YYYY HH:mm:ss [GMT]');
+    return dayjs(date)
+      .hour(23)
+      .minute(59)
+      .second(59)
+      .millisecond(999)
+      .format("ddd, DD MMM YYYY HH:mm:ss [GMT]");
   };
-  
 
   const {
     showUnlisted,
@@ -180,13 +188,13 @@ export default function CourseHomePage() {
     }
   );
 
-  const getUtcDate = (
-    date: string | number | Dayjs | Date | null | undefined,
-    timezoneCorrection = 0
-  ): string => {
-    const currentDate = dayjs.utc(formatDateString(date));
-    return currentDate.add(timezoneCorrection, "hour").toString();
-  };
+  // const getUtcDate = (
+  //   date: string | number | Dayjs | Date | null | undefined,
+  //   timezoneCorrection = 0
+  // ): string => {
+  //   const currentDate = dayjs.utc(formatDateString(date));
+  //   return currentDate.add(timezoneCorrection, "hour").toString();
+  // };
 
   useEffect(() => {
     if (queryDateType === "custom" && queryDate) {
@@ -247,17 +255,19 @@ export default function CourseHomePage() {
       case "This Week":
       case "This Month":
       case "Furthest Day Out To Book":
-        return formatDateString(dayjs(new Date()).add(30,'minute'));
+        return formatDateString(dayjs(new Date()).add(30, "minute"));
       case "Today":
-        return formatDateString(dayjs(new Date()).add(30,'minute'));
+        return formatDateString(dayjs(new Date()).add(30, "minute"));
       case "This Weekend":
-        return formatDateString(dayjs().day(5).add(30,'minute').toDate());
-      case "Custom":{
+        return formatDateString(dayjs().day(5).add(30, "minute").toDate());
+      case "Custom": {
         if (!selectedDay.from) return formatDateString(new Date());
-        const customDate = dayjs(`${selectedDay.from.year}-${selectedDay.from.month}-${selectedDay.from.day}`).startOf('day');
-        const today = dayjs().startOf('day');
-        if(customDate.isSame(today)){
-          return formatDateString(dayjs(new Date()).add(30,'minute'))
+        const customDate = dayjs(
+          `${selectedDay.from.year}-${selectedDay.from.month}-${selectedDay.from.day}`
+        ).startOf("day");
+        const today = dayjs().startOf("day");
+        if (customDate.isSame(today)) {
+          return formatDateString(dayjs(new Date()).add(30, "minute"));
         }
         return formatDateString(customDate);
       }
@@ -265,7 +275,6 @@ export default function CourseHomePage() {
         return formatDateString(new Date());
     }
   }, [dateType, selectedDay, queryDateType, specialEvents]);
-
 
   const endDate = useMemo(() => {
     const specialDate = getSpecialDayDate(dateType);
@@ -286,25 +295,29 @@ export default function CourseHomePage() {
         return formatDateStringEnd(dayjs().endOf("month").toDate());
       case "Furthest Day Out To Book":
         return formatDateStringEnd(dayjs(farthestDateOut).toDate());
-      case "Custom":{
+      case "Custom": {
         if (!selectedDay.to) {
           if (selectedDay.from) {
-            const endOfDay = dayjs(`${selectedDay.from.year}-${selectedDay.from.month}-${selectedDay.from.day}`).endOf("day");
+            const endOfDay = dayjs(
+              `${selectedDay.from.year}-${selectedDay.from.month}-${selectedDay.from.day}`
+            ).endOf("day");
             return formatDateStringEnd(endOfDay);
           }
           return formatDateStringEnd(dayjs().endOf("day").toDate());
         }
-        const endDateCustom = dayjs(`${selectedDay.to.year}-${selectedDay.to.month}-${selectedDay.to.day}`).endOf("day");
+        const endDateCustom = dayjs(
+          `${selectedDay.to.year}-${selectedDay.to.month}-${selectedDay.to.day}`
+        ).endOf("day");
         return formatDateStringEnd(endDateCustom);
       }
       default:
-        return formatDateString(dayjs().add(360, 'days').toDate());
+        return formatDateString(dayjs().add(360, "days").toDate());
     }
   }, [dateType, selectedDay, farthestDateOut, specialEvents]);
 
-  const utcStartDate = dayjs
-    .utc(startDate)
-    .utcOffset(course?.timezoneCorrection ?? 0);
+  // const utcStartDate = dayjs
+  //   .utc(startDate)
+  //   .utcOffset(course?.timezoneCorrection ?? 0);
 
   const utcEndDate = dayjs
     .utc(endDate)

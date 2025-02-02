@@ -1,12 +1,12 @@
 "use client";
 
 // Make sure to mark this as a client component if using React hooks.
-import { Facebook } from "~/components/icons/facebook";
+// import { Facebook } from "~/components/icons/facebook";
 import { useSearchParams } from "next/navigation";
 
 const AuthErrorPage = () => {
   const searchParams = useSearchParams(); // Hook to access query parameters
-  const error = searchParams.get("error"); // Get the error code from the query string
+  // const error = searchParams.get("error"); // Get the error code from the query string
   const provider = searchParams.get("provider") || "";
   return (
     <div className="flex items-center justify-center bg-gray-100">

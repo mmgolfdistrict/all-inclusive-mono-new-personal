@@ -1858,7 +1858,7 @@ export class HyperSwitchWebhookService {
       console.log("cancel weather guarantee since payment is failed", weatherGuaranteeId);
       try {
         await this.sensibleService.cancelGuarantee(weatherGuaranteeId);
-      } catch (e:any) {
+      } catch (e: any) {
         this.logger.error("Error cancelling sensible guarantee ===> ", e.message);
         await loggerService.errorLog({
           message: "ERROR_CANCELLING_SENSIBLE_GUARANTEE",
@@ -1867,10 +1867,10 @@ export class HyperSwitchWebhookService {
           userAgent: "",
           stackTrace: `Payment Id not is not valid`,
           additionalDetailsJSON: JSON.stringify({
-            customer_id:  customer_id,
+            customer_id: customer_id,
             bookingId: bookingId,
             internalId: internalId,
-            courseId:courseId,
+            courseId: courseId,
             teesheetId: teesheetId,
             providerBookingId: providerBookingId,
             weatherGuaranteeId: weatherGuaranteeId,

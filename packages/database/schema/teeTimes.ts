@@ -30,7 +30,7 @@ export const teeTimes = mySqlTable(
     lastUpdatedDateTime: datetime("lastUpdatedDateTime", { mode: "string", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)`)
       .notNull(),
-    providerDateWithoutOffset: varchar("providerDateWithoutOffset", { length: 191 }).notNull(),  
+    providerDateWithoutOffset: varchar("providerDateWithoutOffset", { length: 191 }).notNull(),
   },
   (table) => {
     return {
