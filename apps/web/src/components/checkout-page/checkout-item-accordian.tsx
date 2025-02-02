@@ -8,7 +8,7 @@ const CheckoutItemAccordion = ({
   title,
   value,
   children,
-  icons,
+  // icons,
   position = "right",
   amountValues,
   isLoading,
@@ -16,7 +16,7 @@ const CheckoutItemAccordion = ({
   title: string;
   value: string;
   children?: ReactNode;
-  icons?: ReactNode;
+  // icons?: ReactNode;
   position?: string;
   amountValues?: string;
   isLoading?: boolean;
