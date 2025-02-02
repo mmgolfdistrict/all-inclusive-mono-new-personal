@@ -58,7 +58,7 @@ export const CheckoutForm = ({
   nextAction?: NextAction;
   callingRef?: boolean;
   playerCount: string | undefined;
-  roundOffStatus: string | undefined;
+  roundOffStatus: string;
   setRoundOffStatus: Dispatch<SetStateAction<string>>;
 }) => {
   console.log("cart-data", cartData);
@@ -710,7 +710,7 @@ export const CheckoutForm = ({
     setDonateValue(donation);
   }, [Total, primaryGreenFeeCharge, totalBeforeRoundOff]);
 
-  const handleRoundOff = (value: any, status: any) => {
+  const handleRoundOff = (value: number, status: string) => {
     let donation;
     switch (status) {
       case "roundup":
