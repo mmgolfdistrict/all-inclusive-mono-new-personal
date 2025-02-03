@@ -253,9 +253,6 @@ export class CheckoutService {
     } else {
       data = this.createCheckoutSession(userId, customerCartData, ipAddress);
     }
-    if (data?.error) {
-      return { error: data.error };
-    }
     return data;
   };
 
@@ -394,25 +391,7 @@ export class CheckoutService {
     };
     // }
 
-    // const paymentIntent = await this.hyperSwitch.createPaymentIntent(paymentData).catch((err) => {
-    //   this.logger.error(` ${err}`);
-    //   loggerService.errorLog({
-    //     userId,
-    //     url: "/CheckoutService/createCheckoutSession",
-    //     userAgent: "",
-    //     message: "ERROR_CREATING_PAYMENT_INTENT",
-    //     stackTrace: `${err.stack}`,
-    //     additionalDetailsJSON: JSON.stringify({
-    //       customerCartData,
-    //       paymentData,
-    //     }),
-    //   });
-    //   throw new Error(`Error creating payment intent: ${err}`);
-    // });
-    let paymentIntent;
-    try {
-      paymentIntent = await this.hyperSwitch.createPaymentIntent(paymentData);
-    } catch (err: any) {
+    const paymentIntent = await this.hyperSwitch.createPaymentIntent(paymentData).catch((err) => {
       this.logger.error(` ${err}`);
       loggerService.errorLog({
         userId,
@@ -425,8 +404,9 @@ export class CheckoutService {
           paymentData,
         }),
       });
-      return { error: "Currently we are not able to process the payment please reload" };
-    }
+      throw new Error(`Error creating payment intent: ${err}`);
+    });
+
     let teeTimeId;
     let listingId;
 
@@ -565,43 +545,23 @@ export class CheckoutService {
     };
 
     // @ts-ignore
-    let paymentIntent;
-    try {
-      paymentIntent = await this.hyperSwitch.updatePaymentIntent(paymentId || "", intentData, userId);
-    } catch (err: any) {
-      this.logger.error(` ${err}`);
-      await loggerService.errorLog({
-        userId,
-        url: "/CheckoutService/createCheckoutSession",
-        userAgent: "",
-        message: "ERROR_CREATING_PAYMENT_INTENT",
-        stackTrace: `${err.stack}`,
-        additionalDetailsJSON: JSON.stringify({
-          customerCartData,
-          paymentId: paymentId,
-          // paymentData,
-        }),
+    const paymentIntent = await this.hyperSwitch
+      .updatePaymentIntent(paymentId || "", intentData, userId)
+      .catch((err) => {
+        this.logger.error(` ${err}`);
+        loggerService.errorLog({
+          userId,
+          url: "/CheckoutService/updateCheckoutSession",
+          userAgent: "",
+          message: "ERROR_UPDATING_PAYMENT_INTENT",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            cartId,
+            paymentId,
+          }),
+        });
+        throw new Error(`Error updating payment intent: ${err}`);
       });
-      return { error: "Currently we are not able to process the payment please reload" };
-    }
-
-    // const paymentIntent = await this.hyperSwitch
-    //   .updatePaymentIntent(paymentId || "", intentData, userId)
-    //   .catch((err) => {
-    //     this.logger.error(` ${err}`);
-    //     loggerService.errorLog({
-    //       userId,
-    //       url: "/CheckoutService/updateCheckoutSession",
-    //       userAgent: "",
-    //       message: "ERROR_UPDATING_PAYMENT_INTENT",
-    //       stackTrace: `${err.stack}`,
-    //       additionalDetailsJSON: JSON.stringify({
-    //         cartId,
-    //         paymentId,
-    //       }),
-    //     });
-    //     throw new Error(`Error updating payment intent: ${err}`);
-    //   });
 
     let teeTimeId;
     let listingId;
