@@ -146,8 +146,8 @@ export class CacheService {
         stackTrace: `${err.stack}`,
         additionalDetailsJSON: JSON.stringify({
           key,
-        })
-      })
+        }),
+      });
       return null;
     });
     if (cachedData) {

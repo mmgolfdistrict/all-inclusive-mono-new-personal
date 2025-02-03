@@ -1,11 +1,11 @@
 import { FilledButton } from "~/components/buttons/filled-button";
-import { useMe } from "~/hooks/useMe";
-import { useParams } from "next/navigation";
+// import { useMe } from "~/hooks/useMe";
+// import { useParams } from "next/navigation";
 import React from "react";
 
 const GroupBookingPage = () => {
-  const { user, isLoading: isUserLoading } = useMe();
-  const { course } = useParams();
+  // const { user, isLoading: isUserLoading } = useMe();
+  // const { course } = useParams();
   return (
     <div className="flex flex-col mb-4 justify-center gap-2 md:gap-1  px-4 py-3 rounded-xl md:px-8 md:py-6">
       <div className="relative flex items-center justify-between md:mb-2">

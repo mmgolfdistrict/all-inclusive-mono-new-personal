@@ -3,22 +3,20 @@
 import * as Accordion from "@radix-ui/react-accordion";
 import { Fragment, type ReactNode } from "react";
 import { DownArrow } from "../icons/down-arrow";
-import { DownChevron } from "../icons/down-chevron";
-import Skeleton from "../skeleton/skeleton";
 
 const CheckoutItemAccordion = ({
   title,
   value,
   children,
-  icons,
+  // icons,
   position = "right",
   amountValues,
-  isLoading
+  isLoading,
 }: {
   title: string;
   value: string;
   children?: ReactNode;
-  icons?: ReactNode;
+  // icons?: ReactNode;
   position?: string;
   amountValues?: string;
   isLoading?: boolean;
@@ -38,12 +36,14 @@ const CheckoutItemAccordion = ({
                     aria-hidden
                     className="w-[30px] h-auto transition-transform duration-300 ease-[cubic-bezier(0.87,_0,_0.13,_1)] group-data-[state=open]:rotate-180"
                   />
-                  <div className="text-[16px]" >{title}</div>
+                  <div className="text-[16px]">{title}</div>
                 </div>
                 <div className="text-[16px] pr-1.5">
                   {isLoading ? (
                     <Fragment>
-                      <p className="px-6 py-0.5 bg-gray-200 text-gray-200 text-sm">Loading...</p>
+                      <p className="px-6 py-0.5 bg-gray-200 text-gray-200 text-sm">
+                        Loading...
+                      </p>
                     </Fragment>
                   ) : (
                     amountValues

@@ -127,9 +127,9 @@ export const EditProfileForm = () => {
       const zipcode = getAddressComponent("postal_code");
       const country = getAddressComponent("country");
 
-      let countryByCode=country
-      if(country==="United States"){
-        countryByCode="USA"
+      let countryByCode = country;
+      if (country === "United States") {
+        countryByCode = "USA";
       }
 
       // Type guard before passing to setValue
@@ -185,7 +185,7 @@ export const EditProfileForm = () => {
       setValue("state", userData?.state ?? "");
       setValue("city", userData?.city ?? "");
       setValue("zipcode", userData?.zipcode ?? "");
-      setValue("country", userData?.country??"");
+      setValue("country", userData?.country ?? "");
       setValue("profilePictureAssetId", userData?.image ?? "");
       setValue("bannerImageAssetId", userData?.bannerImage ?? "");
       setBanner(
@@ -397,7 +397,10 @@ export const EditProfileForm = () => {
   return (
     <section className="mx-auto flex h-fit w-full flex-col bg-white px-3 py-2  md:rounded-xl md:p-6 md:py-4">
       <h1 className="pb-6  text-[18px]  md:text-[24px]">Account Information</h1>
-      <form className="flex flex-col gap-2 unmask-userdetails" onSubmit={handleSubmit(onSubmit)}>
+      <form
+        className="flex flex-col gap-2 unmask-userdetails"
+        onSubmit={handleSubmit(onSubmit)}
+      >
         <Controller
           name="name"
           control={control}
@@ -645,66 +648,66 @@ export const EditProfileForm = () => {
           )}
         /> */}
 
-<Controller
-  name="country"
-  control={control}
-  render={({ field }) => (
-    <div>
-      <label
-        htmlFor="country"
-        style={{ fontSize: "14px", color: "rgb(109 119 124)" }}
-      >
-        Country
-      </label>
-      <Select
-        size="small"
-        {...field}
-        id="country"
-        placeholder="Select Your Country"
-        fullWidth
-        name="country"
-        data-testid="register-country-id"
-        inputRef={(e) => {
-          field.ref(e);
-        }}
-        sx={{
-          fontSize: "14px",
-          color: "rgb(109 119 124)",
-          backgroundColor: "rgb(247, 249, 250)",
-          border: "none",
-          "& fieldset": { border: "none" },
-        }}
-        value={field.value || ""}
-        MenuProps={{
-          PaperProps: {
-            sx: {
-              "& .MuiMenuItem-root.Mui-selected": {
-                backgroundColor: "rgb(0, 0, 0)",
-                color: "white",
-                "&:hover": {
-                  backgroundColor: "rgb(0, 0, 0)",
-                  color: "white",
-                },
-              },
-            },
-          },
-        }}
-        displayEmpty
-      >
-        {/* <MenuItem value="" disabled>
+        <Controller
+          name="country"
+          control={control}
+          render={({ field }) => (
+            <div>
+              <label
+                htmlFor="country"
+                style={{ fontSize: "14px", color: "rgb(109 119 124)" }}
+              >
+                Country
+              </label>
+              <Select
+                size="small"
+                {...field}
+                id="country"
+                placeholder="Select Your Country"
+                fullWidth
+                name="country"
+                data-testid="register-country-id"
+                inputRef={(e) => {
+                  field.ref(e);
+                }}
+                sx={{
+                  fontSize: "14px",
+                  color: "rgb(109 119 124)",
+                  backgroundColor: "rgb(247, 249, 250)",
+                  border: "none",
+                  "& fieldset": { border: "none" },
+                }}
+                value={field.value || ""}
+                MenuProps={{
+                  PaperProps: {
+                    sx: {
+                      "& .MuiMenuItem-root.Mui-selected": {
+                        backgroundColor: "rgb(0, 0, 0)",
+                        color: "white",
+                        "&:hover": {
+                          backgroundColor: "rgb(0, 0, 0)",
+                          color: "white",
+                        },
+                      },
+                    },
+                  },
+                }}
+                displayEmpty
+              >
+                {/* <MenuItem value="" disabled>
           Select your country
         </MenuItem> */}
-        <MenuItem value="USA">USA</MenuItem>
-        <MenuItem value="Canada">Canada</MenuItem>
-      </Select>
-      {errors.country && (
-        <span style={{ fontSize: "12px", color: "red" }}>
-          {errors.country.message}
-        </span>
-      )}
-    </div>
-  )}
-/>
+                <MenuItem value="USA">USA</MenuItem>
+                <MenuItem value="Canada">Canada</MenuItem>
+              </Select>
+              {errors.country && (
+                <span style={{ fontSize: "12px", color: "red" }}>
+                  {errors.country.message}
+                </span>
+              )}
+            </div>
+          )}
+        />
 
         <datalist id="places">
           {cities.data?.autocompleteCities.features.map((city, idx) => (
@@ -712,8 +715,9 @@ export const EditProfileForm = () => {
           ))}
         </datalist>
         <div
-          className={`flex items-end justify-between w-full gap-2 ${isUploading ? "pointer-events-none cursor-not-allowed" : ""
-            }`}
+          className={`flex items-end justify-between w-full gap-2 ${
+            isUploading ? "pointer-events-none cursor-not-allowed" : ""
+          }`}
         >
           <DropMedia
             label="Upload your profile photo"
@@ -736,8 +740,9 @@ export const EditProfileForm = () => {
         </div>
 
         <div
-          className={`flex items-end justify-between w-full gap-2 ${isUploading ? "pointer-events-none cursor-not-allowed" : ""
-            }`}
+          className={`flex items-end justify-between w-full gap-2 ${
+            isUploading ? "pointer-events-none cursor-not-allowed" : ""
+          }`}
         >
           <DropMedia
             label="Upload your background photo"
@@ -751,7 +756,7 @@ export const EditProfileForm = () => {
             dataTestId="upload-background-photo-id"
           />
           {userData?.bannerImage &&
-            userData?.bannerImage !== defaultBannerPhoto ? (
+          userData?.bannerImage !== defaultBannerPhoto ? (
             <OutlineButton
               className="!px-2 !py-1 text-sm rounded-md"
               onClick={resetBanner}
@@ -762,8 +767,9 @@ export const EditProfileForm = () => {
         </div>
         <FilledButton
           disabled={isSubmitting || isUploading}
-          className={`w-full rounded-full ${isSubmitting || isUploading ? "opacity-50" : ""
-            }`}
+          className={`w-full rounded-full ${
+            isSubmitting || isUploading ? "opacity-50" : ""
+          }`}
           data-testid="update-button-id"
         >
           {isSubmitting ? "Updating..." : "Update"}

@@ -6,7 +6,7 @@ export const Switch = ({
   setValue,
   disabled,
   dataTestId,
-  id
+  id,
 }: {
   value: boolean;
   setValue: (
@@ -14,7 +14,7 @@ export const Switch = ({
   ) => void | Promise<void> | Dispatch<SetStateAction<boolean>>;
   disabled?: boolean;
   dataTestId?: string;
-    id?: string
+  id?: string;
 }) => {
   return (
     <RadixSwitch.Root

@@ -30,6 +30,7 @@ export const teeTimes = mySqlTable(
     lastUpdatedDateTime: datetime("lastUpdatedDateTime", { mode: "string", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)`)
       .notNull(),
+    providerDateWithoutOffset: varchar("providerDateWithoutOffset", { length: 191 }).notNull(),
   },
   (table) => {
     return {
@@ -44,8 +45,14 @@ export const teeTimes = mySqlTable(
       time: index("TeeTime_time_idx").on(table.time),
       courseId: index("TeeTime_courseId_idx").on(table.courseId),
       courseDate: index("TeeTime_courseDate_idx").on(table.courseId, table.date),
-      courseIdProviderDate: unique("TeeTime_courseId_providerDate_unique").on(table.courseId, table.providerDate),
-      courseIdProviderTeeTimeId: unique("TeeTime_courseId_providerTeeTimeId_unique").on(table.courseId, table.providerTeeTimeId),
+      courseIdProviderDate: unique("TeeTime_courseId_providerDate_unique").on(
+        table.courseId,
+        table.providerDate
+      ),
+      courseIdProviderTeeTimeId: unique("TeeTime_courseId_providerTeeTimeId_unique").on(
+        table.courseId,
+        table.providerTeeTimeId
+      ),
     };
   }
 );

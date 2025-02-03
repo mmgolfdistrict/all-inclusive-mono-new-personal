@@ -1,21 +1,16 @@
-import { isEqual } from "@golf-district/shared";
 import { loadHyper } from "@juspay-tech/hyper-js";
 import { HyperElements } from "@juspay-tech/react-hyper-js";
 import { useCheckoutContext } from "~/contexts/CheckoutContext";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
-import type {
-  CartProduct,
-  MaxReservationResponse,
-  SearchObject,
-} from "~/utils/types";
+import type { CartProduct, SearchObject } from "~/utils/types";
 import dayjs from "dayjs";
+import isequal from "lodash.isequal";
 // import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Spinner } from "../loading/spinner";
 import { CheckoutForm } from "./checkout-form";
-import isequal from 'lodash.isequal'
 import { toast } from "react-toastify";
 
 export type NextAction = {
@@ -81,7 +76,7 @@ export const HyperSwitch = ({
     undefined
   );
   const [paymentId, setPaymentId] = useState<string | undefined>(undefined);
-  let initialLoad=true
+  let initialLoad = true;
 
   const convertDateFormat = (dateString: string, utcOffset = 0) => {
     const cleanTimeString = !dateString.includes("T")
@@ -96,7 +91,7 @@ export const HyperSwitch = ({
   };
 
   const buildSession = async () => {
-    initialLoad=false;
+    initialLoad = false;
     if (!user) return;
     try {
       setError(undefined);
@@ -167,7 +162,7 @@ export const HyperSwitch = ({
     //     break;
     //   }
     // }
-    if ((!options && initialLoad) || !isequal(localCartData,cartData)) {
+    if ((!options && initialLoad) || !isequal(localCartData, cartData)) {
       if (cartData?.length > 0) {
         void buildSession();
       }

@@ -12,6 +12,7 @@ const bundleAnalyzer = withBundleAnalyzer({
 /** @type {import("next").NextConfig} */
 const config = {
   reactStrictMode: true,
+  productionBrowserSourceMaps: true,
 
   experimental: {
     serverComponentsExternalPackages: ["bcrypt"],
@@ -92,7 +93,7 @@ const config = {
         hostname: "demo-cdn.golfdistrict.in",
         port: "",
         pathname: "/**",
-      }
+      },
     ],
   },
   transpilePackages: ["@juspay-tech/hyper-js", "@juspay-tech/react-hyper-js"],

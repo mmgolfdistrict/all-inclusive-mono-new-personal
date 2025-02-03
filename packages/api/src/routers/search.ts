@@ -139,7 +139,7 @@ export const searchRouter = createTRPCRouter({
         isHolesAny: z.boolean(),
         isGolferAny: z.boolean(),
         highestPrice: z.number(),
-        lowestPrice: z.number()
+        lowestPrice: z.number(),
       })
     )
     .query(async ({ ctx, input }) => {
@@ -178,15 +178,17 @@ export const searchRouter = createTRPCRouter({
       return await ctx.serviceFactory.getSearchService().getSpecialEvents(input?.courseId);
     }),
 
-  getPriceForecast: publicProcedure.input(
-    z.object({
-      courseId: z.string(),
-      startDate: z.string(),
-      endDate: z.string(),
-    })
-  )
+  getPriceForecast: publicProcedure
+    .input(
+      z.object({
+        courseId: z.string(),
+        startDate: z.string(),
+        endDate: z.string(),
+      })
+    )
     .query(async ({ ctx, input }) => {
-      return await ctx.serviceFactory.getSearchService().getPriceForecast(input?.courseId, input.startDate, input.endDate);
+      return await ctx.serviceFactory
+        .getSearchService()
+        .getPriceForecast(input?.courseId, input.startDate, input.endDate);
     }),
 });
-

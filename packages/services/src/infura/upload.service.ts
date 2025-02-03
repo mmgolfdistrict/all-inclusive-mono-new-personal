@@ -11,8 +11,8 @@ import { db, eq, type Db } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import { users } from "@golf-district/database/schema/users";
 import Logger from "@golf-district/shared/src/logger";
-import type { ImageService } from "./image.service";
 import { loggerService } from "../webhooks/logging.service";
+import type { ImageService } from "./image.service";
 
 export interface Part {
   ETag: string;
@@ -133,8 +133,8 @@ export class UploadService {
         additionalDetailsJSON: JSON.stringify({
           originalFileName,
           size,
-        })
-      })
+        }),
+      });
       throw err;
     });
     return {
@@ -180,8 +180,8 @@ export class UploadService {
           s3Key,
           uploadId,
           parts,
-        })
-      })
+        }),
+      });
       throw err;
     });
     const fileNameWithoutExtension = s3Key.replace(/\.[^/.]+$/, "");
@@ -199,8 +199,8 @@ export class UploadService {
           additionalDetailsJSON: JSON.stringify({
             s3Key,
             uploadId,
-          })
-        })
+          }),
+        });
         throw Error("Error storing asset");
       });
     return {
@@ -239,8 +239,8 @@ export class UploadService {
         additionalDetailsJSON: JSON.stringify({
           s3Key,
           uploadId,
-        })
-      })
+        }),
+      });
       throw err;
     });
     this.logger.debug(`abortUpload upload aborted for s3Key: ${s3Key}, uploadId: ${uploadId}`);
@@ -299,8 +299,8 @@ export class UploadService {
             parts,
             bucketName,
             key,
-          })
-        })
+          }),
+        });
         throw err;
       })
     ).catch((err) => {
@@ -316,8 +316,8 @@ export class UploadService {
           parts,
           bucketName,
           key,
-        })
-      })
+        }),
+      });
       throw err;
     });
     return res.reduce((map, part, index) => {
@@ -402,8 +402,8 @@ export class UploadService {
           imageType,
           assetId,
           s3Key,
-        })
-      })
+        }),
+      });
       throw error;
     }
   };

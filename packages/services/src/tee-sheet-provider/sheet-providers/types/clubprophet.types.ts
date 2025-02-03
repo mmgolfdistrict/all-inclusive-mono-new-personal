@@ -124,4 +124,4 @@ export interface ClubProphetGetCustomerResponse {
   lastName: string;
   mobilePhone: string;
   golferId: number;
-};
+}

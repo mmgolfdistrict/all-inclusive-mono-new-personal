@@ -64,7 +64,7 @@ export default function Checkout({
     selectedCharityAmount,
     setAmountOfPlayers,
     validatePlayers,
-    setValidatePlayers
+    setValidatePlayers: _setValidatePlayers,
   } = useCheckoutContext();
 
   // useEffect(() => {
@@ -83,7 +83,7 @@ export default function Checkout({
       courseId: courseId ?? "",
     });
   const {
-    data: providerBookingStatusResult,
+    data: _providerBookingStatusResult,
     refetch: refetchProviderBookingStatus,
   } = api.teeBox.providerBookingStatus.useQuery(
     { listingId: listingId ?? "" },
@@ -205,20 +205,20 @@ export default function Checkout({
             number_of_bookings: amountOfPlayers - validatePlayers.length,
           }
         : {
-          type: "second_hand",
-          second_hand_id: listingId,
-        };
+            type: "second_hand",
+            second_hand_id: listingId,
+          };
     const localCart: CartProduct[] = [
       {
         name: "Golf District Tee Time",
         id: teeTimeId ?? data?.teeTimeId,
-        price:
-        (() => {
+        price: (() => {
           const calculatedPrice =
             debouncedPromoCode && promoCodePrice !== undefined
               ? promoCodePrice * 100
-              : Number(data?.pricePerGolfer * 100) * (amountOfPlayers - validatePlayers.length);
-    
+              : Number(data?.pricePerGolfer * 100) *
+                (amountOfPlayers - validatePlayers.length);
+
           return calculatedPrice === 0 ? 1 : calculatedPrice; // If price is 0, return 1
         })(), //int
         image: "", //
@@ -243,7 +243,7 @@ export default function Checkout({
         display_price: formatMoney(
           ((data?.greenFeeTaxPerPlayer ?? 0) +
             (data?.cartFeeTaxPerPlayer ?? 0)) *
-          amountOfPlayers
+            amountOfPlayers
         ),
         product_data: {
           metadata: {
@@ -262,7 +262,7 @@ export default function Checkout({
         display_price: formatMoney(
           ((data?.greenFeeTaxPerPlayer ?? 0) +
             (data?.cartFeeTaxPerPlayer ?? 0)) *
-          amountOfPlayers
+            amountOfPlayers
         ),
         product_data: {
           metadata: {
@@ -285,7 +285,7 @@ export default function Checkout({
         display_price: formatMoney(
           ((data?.greenFeeTaxPerPlayer ?? 0) +
             (data?.cartFeeTaxPerPlayer ?? 0)) *
-          amountOfPlayers
+            amountOfPlayers
         ),
         product_data: {
           metadata: {
@@ -446,7 +446,7 @@ export default function Checkout({
     course?.markupFeesFixedPerPlayer,
     course?.convenienceFeesFixedPerPlayer,
     // playerCount,
-    validatePlayers
+    validatePlayers,
   ]);
 
   useEffect(() => {
@@ -471,7 +471,8 @@ export default function Checkout({
   const height =
     notificationsCount > 0 ? `${200 + notificationsCount * 80}px` : "200px";
 
-  const marginTop = notificationsCount > 0 ? `${notificationsCount * 10}px` : "0";
+  const marginTop =
+    notificationsCount > 0 ? `${notificationsCount * 10}px` : "0";
 
   if (isError && error) {
     return (
@@ -559,7 +560,7 @@ export default function Checkout({
                 teeTimeDate={teeTimeData?.date}
                 playerCount={playerCount}
                 teeTimeData={data}
-              // maxReservation={maxReservation}
+                // maxReservation={maxReservation}
               />
             )}
           </div>

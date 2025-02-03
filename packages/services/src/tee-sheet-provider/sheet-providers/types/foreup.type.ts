@@ -344,7 +344,7 @@ export interface ForeUpBookingNameChangeOptions {
       personId: string | number;
     };
   };
-};
+}
 
 export interface ForeUpGetCustomerResponse {
   type: string;
@@ -354,5 +354,4 @@ export interface ForeUpGetCustomerResponse {
 
 export interface ForeupGetCustomers {
   data: ForeUpGetCustomerResponse[];
-
 }

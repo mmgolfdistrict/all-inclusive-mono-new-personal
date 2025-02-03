@@ -25,7 +25,9 @@ export const userWaitlistAuditLogs = mySqlTable(
     userId: index("userWaitlistRecord_userId_idx").on(table.userId),
     courseId: index("userWaitlistRecord_courseId_idx").on(table.courseId),
     date: index("userWaitlistRecord_date_idx").on(table.date),
-    isCancelledNotification: index("userWaitlistRecord_isCancelledNotification_idx").on(table.isCancelledNotification),
+    isCancelledNotification: index("userWaitlistRecord_isCancelledNotification_idx").on(
+      table.isCancelledNotification
+    ),
   })
 );
 

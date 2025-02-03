@@ -22,7 +22,7 @@ export const UserInNav = ({ alwaysShow }: { alwaysShow?: boolean }) => {
   const courseId = course?.id;
   const pathname = usePathname();
   const router = useRouter();
-  const addUserSession = api.user.addUserSession.useMutation();
+  // const addUserSession = api.user.addUserSession.useMutation();
   const { data: imageUrl } = api.image.getAssetUrl.useQuery(
     { assetId: user?.image ?? "" },
     {
@@ -95,8 +95,9 @@ export const UserInNav = ({ alwaysShow }: { alwaysShow?: boolean }) => {
         <DropdownMenu.Portal>
           <DropdownMenu.Content
             sideOffset={5}
-            className={`z-20 mr-5 min-w-[300px] overflow-y-auto rounded-xl border border-stroke bg-white shadow-md ${alwaysShow ? "block" : "hidden md:block"
-              }`}
+            className={`z-20 mr-5 min-w-[300px] overflow-y-auto rounded-xl border border-stroke bg-white shadow-md ${
+              alwaysShow ? "block" : "hidden md:block"
+            }`}
           >
             <div className="flex items-center flex-col px-4 py-3 border-b border-stroke">
               <p className="text-sm unmask-userdetails">{user?.email}</p>

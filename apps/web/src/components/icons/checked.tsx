@@ -1,7 +1,7 @@
 import type { ComponentProps } from "react";
 
 export const CheckedIcon = (props: ComponentProps<"svg">) => {
-  const { fill, ...rest } = props;
+  const { fill: _fill, ...rest } = props;
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"

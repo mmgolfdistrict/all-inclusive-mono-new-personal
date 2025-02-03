@@ -18,7 +18,7 @@ export class clubprophetWebhookService {
   private readonly clubProphetId = "club-prophet";
   private readonly providerName = "club-prophet";
 
-  constructor(private readonly database: Db, private readonly providerService: ProviderService) { }
+  constructor(private readonly database: Db, private readonly providerService: ProviderService) {}
   private readonly logger = Logger(clubprophetWebhookService.name);
 
   initializeData = async () => {
@@ -104,6 +104,7 @@ export class clubprophetWebhookService {
         courseProvider: courses.providerId,
         // entityId: teeTimes.entityId,
         providerDate: teeTimes.providerDate,
+        providerDateWithoutOffset: teeTimes.providerDateWithoutOffset,
       })
       .from(teeTimes)
       .leftJoin(courses, eq(courses.id, courseId))
@@ -168,17 +169,18 @@ export class clubprophetWebhookService {
               (teeTimeResponse.greenFee18
                 ? teeTimeResponse.greenFee18
                 : teeTimeResponse.greenFee9
-                  ? teeTimeResponse.greenFee9
-                  : 0) * 100,
+                ? teeTimeResponse.greenFee9
+                : 0) * 100,
             cartFeePerPlayer:
               (teeTimeResponse.cartFee18
                 ? teeTimeResponse.cartFee18
                 : teeTimeResponse.cartFee9
-                  ? teeTimeResponse.cartFee9
-                  : 0) * 100,
+                ? teeTimeResponse.cartFee9
+                : 0) * 100,
             greenFeeTaxPerPlayer: indexedTeeTime.greenFeeTax ? indexedTeeTime.greenFeeTax : 0,
             cartFeeTaxPerPlayer: indexedTeeTime.cartFeeTax,
             providerDate: teeTimeResponse.startTime,
+            providerDateWithoutOffset: teeTimeResponse.startTime,
             // entityId: entityId ? entityId : "",
           };
           if (providerTeeTime.availableFirstHandSpots !== indexedTeeTime.availableFirstHandSpots) {
@@ -200,17 +202,18 @@ export class clubprophetWebhookService {
               (teeTimeResponse.greenFee18
                 ? teeTimeResponse.greenFee18
                 : teeTimeResponse.greenFee9
-                  ? teeTimeResponse.greenFee9
-                  : 0) * 100,
+                ? teeTimeResponse.greenFee9
+                : 0) * 100,
             cartFeePerPlayer:
               (teeTimeResponse.cartFee18
                 ? teeTimeResponse.cartFee18
                 : teeTimeResponse.cartFee9
-                  ? teeTimeResponse.cartFee9
-                  : 0) * 100,
+                ? teeTimeResponse.cartFee9
+                : 0) * 100,
             greenFeeTaxPerPlayer: 0, // hardcode
             cartFeeTaxPerPlayer: 0,
             providerDate: teeTimeResponse.startTime,
+            providerDateWithoutOffset: teeTimeResponse.startTime,
             // entityId: entityId ? entityId : "",
           };
           teeTimesToInsert.push(providerTeeTime);
