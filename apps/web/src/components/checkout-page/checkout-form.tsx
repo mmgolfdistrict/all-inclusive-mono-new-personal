@@ -15,7 +15,7 @@ import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
 import type { CartProduct } from "~/utils/types";
 import { useParams, useRouter } from "next/navigation";
 import type { Dispatch, SetStateAction } from "react";
-import { Fragment, useEffect, useRef, useState, type FormEvent } from "react";
+import { Fragment, useEffect, useState, type FormEvent } from "react";
 import { toast } from "react-toastify";
 import { useMediaQuery } from "usehooks-ts";
 import { FilledButton } from "../buttons/filled-button";
@@ -58,23 +58,26 @@ export const CheckoutForm = ({
   nextAction?: NextAction;
   callingRef?: boolean;
   playerCount: string | undefined;
-  roundOffStatus: string | undefined;
+  roundOffStatus: string;
   setRoundOffStatus: Dispatch<SetStateAction<string>>;
 }) => {
   console.log("cart-data", cartData);
   const MAX_CHARITY_AMOUNT = 1000;
   const { course } = useCourseContext();
-  const { shouldAddSensible, validatePlayers, handleShouldAddSensible } =
-    useCheckoutContext();
+  const {
+    shouldAddSensible,
+    validatePlayers,
+    handleShouldAddSensible: _handleShouldAddSensible,
+  } = useCheckoutContext();
   const params = useParams();
   const courseId = course?.id;
   const roundUpCharityId = course?.roundUpCharityId;
   const [isExpanded, setIsExpanded] = useState(false);
-  const [TotalAmount, setTotalAmount] = useState("");
+  // const [TotalAmount, setTotalAmount] = useState("");
   const [isLoadingTotalAmount, setIsLoadingTotalAmount] = useState(false);
   const isMobile = useMediaQuery("(max-width: 768px)");
   const [needRentals, setNeedRentals] = useState(false);
-  const cartDataRef = useRef(cartData);
+  // const cartDataRef = useRef(cartData);
   const handleToggle = () => {
     setIsExpanded(!isExpanded);
   };
@@ -225,7 +228,7 @@ export const CheckoutForm = ({
 
   const router = useRouter();
   const [donateValue, setDonateValue] = useState(5);
-  const [roundOffClick, setRoundOffClick] = useState(true);
+  // const [roundOffClick, setRoundOffClick] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [showTextField, setShowTextField] = useState(false);
   const [donateError, setDonateError] = useState(false);
@@ -684,10 +687,10 @@ export const CheckoutForm = ({
   const decimalPart = totalBeforeRoundOff % 1;
   const [hasUserSelectedDonation, setHasUserSelectedDonation] = useState(false);
 
-  const roundOff =
-    decimalPart === 0 || decimalPart.toFixed(2) === "0.00"
-      ? Math.ceil(totalBeforeRoundOff) + 1
-      : Math.ceil(totalBeforeRoundOff);
+  // const roundOff =
+  //   decimalPart === 0 || decimalPart.toFixed(2) === "0.00"
+  //     ? Math.ceil(totalBeforeRoundOff) + 1
+  //     : Math.ceil(totalBeforeRoundOff);
 
   useEffect(() => {
     let donation;
@@ -707,7 +710,7 @@ export const CheckoutForm = ({
     setDonateValue(donation);
   }, [Total, primaryGreenFeeCharge, totalBeforeRoundOff]);
 
-  const handleRoundOff = (value: any, status: any) => {
+  const handleRoundOff = (value: number, status: string) => {
     let donation;
     switch (status) {
       case "roundup":

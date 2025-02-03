@@ -1,7 +1,8 @@
 import type { ComponentProps } from "react";
 
-export const LoaderIcon = (props: ComponentProps<"svg">) => {
-  const { fill, ...rest } = props;
+export const LoaderIcon = (_props: ComponentProps<"svg">) => {
+  // const { fill, ...rest } = props;
+
   return (
     <svg
       aria-hidden="true"

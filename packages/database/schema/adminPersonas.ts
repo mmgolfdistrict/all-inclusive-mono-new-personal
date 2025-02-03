@@ -1,6 +1,6 @@
 import type { InferInsertModel } from "drizzle-orm";
-import { type InferSelectModel } from "drizzle-orm";
-import { unique, varchar } from "drizzle-orm/mysql-core";
+import { sql, type InferSelectModel } from "drizzle-orm";
+import { datetime, unique, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 
 export const adminPersonas = mySqlTable(
@@ -8,6 +8,12 @@ export const adminPersonas = mySqlTable(
   {
     id: varchar("id", { length: 36 }).notNull().primaryKey().unique(),
     persona: varchar("persona", { length: 191 }).notNull(),
+    createdDateTime: datetime("createdDateTime", { mode: "string", fsp: 3 })
+      .default(sql`CURRENT_TIMESTAMP(3)`)
+      .notNull(),
+    lastUpdatedDateTime: datetime("lastUpdatedDateTime", { mode: "string", fsp: 3 })
+      .default(sql`CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)`)
+      .notNull(),
   },
   (table) => {
     return {

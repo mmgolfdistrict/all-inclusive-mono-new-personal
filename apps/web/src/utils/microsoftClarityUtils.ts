@@ -20,6 +20,7 @@ export const microsoftClarityEvent = ({
   category: string;
   label: string;
   value?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   additionalContent?: any;
 }) => {
   if (window.clarity) {

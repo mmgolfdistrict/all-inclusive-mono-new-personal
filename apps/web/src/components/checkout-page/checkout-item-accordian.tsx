@@ -3,14 +3,12 @@
 import * as Accordion from "@radix-ui/react-accordion";
 import { Fragment, type ReactNode } from "react";
 import { DownArrow } from "../icons/down-arrow";
-import { DownChevron } from "../icons/down-chevron";
-import Skeleton from "../skeleton/skeleton";
 
 const CheckoutItemAccordion = ({
   title,
   value,
   children,
-  icons,
+  // icons,
   position = "right",
   amountValues,
   isLoading,
@@ -18,7 +16,7 @@ const CheckoutItemAccordion = ({
   title: string;
   value: string;
   children?: ReactNode;
-  icons?: ReactNode;
+  // icons?: ReactNode;
   position?: string;
   amountValues?: string;
   isLoading?: boolean;

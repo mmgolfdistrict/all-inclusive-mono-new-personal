@@ -22,7 +22,7 @@ export const UserInNav = ({ alwaysShow }: { alwaysShow?: boolean }) => {
   const courseId = course?.id;
   const pathname = usePathname();
   const router = useRouter();
-  const addUserSession = api.user.addUserSession.useMutation();
+  // const addUserSession = api.user.addUserSession.useMutation();
   const { data: imageUrl } = api.image.getAssetUrl.useQuery(
     { assetId: user?.image ?? "" },
     {

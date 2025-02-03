@@ -179,13 +179,10 @@ export class EntityService {
           logo: courses.logoId,
           timezoneIso: courses.timezoneISO,
           display: courses.displayOrder,
-          isDeleted: courses.isDeleted
+          isDeleted: courses.isDeleted,
         })
         .from(courses)
-        .where(and(
-          eq(courses.entityId, entityId),
-          eq(courses.isDeleted, false)
-        ))
+        .where(and(eq(courses.entityId, entityId), eq(courses.isDeleted, false)))
         .orderBy(courses.displayOrder)
         .execute()
         .catch(async (err) => {
