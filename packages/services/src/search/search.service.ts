@@ -201,12 +201,6 @@ export class SearchService extends CacheService {
     }));
   };
 
-  convertDateToRemoveOffset=(date:any)=>{
-    console.log("================================",)
-    let formattedString = date.substring(0, 19);
-    return formattedString
-  }
-
   /**
    * Searches for users based on handle or email.
    * @param {string} searchText - The search text to filter users.
