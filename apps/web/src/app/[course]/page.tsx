@@ -373,7 +373,7 @@ export default function CourseHomePage() {
         enabled: course?.id !== undefined,
       }
     );
-
+  
   useEffect(() => {
     if ((showSort || showFilters) && isMobile) {
       document.body.classList.add("overflow-hidden");
