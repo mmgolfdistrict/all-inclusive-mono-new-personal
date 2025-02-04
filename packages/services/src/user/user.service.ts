@@ -6,7 +6,7 @@ import { accounts } from "@golf-district/database/schema/accounts";
 import { assets } from "@golf-district/database/schema/assets";
 import { bookings } from "@golf-district/database/schema/bookings";
 import { bookingslots } from "@golf-district/database/schema/bookingslots";
-import { invitedTeeTimes } from "@golf-district/database/schema/invitedTeeTimes";
+import { invitedTeeTime } from "@golf-district/database/schema/invitedTeeTime";
 import { courses } from "@golf-district/database/schema/courses";
 import { courseUser } from "@golf-district/database/schema/courseUser";
 import { entities } from "@golf-district/database/schema/entities";
@@ -340,24 +340,24 @@ export class UserService {
       })
       .from(bookingslots)
       .where(inArray(bookingslots.externalSlotId, bookingSlotId));
-
+    console.log("bookingSlot 1----------------------------->", bookingslots.externalSlotId, bookingSlotId);
     if (!bookingSlot) {
       throw new Error("Booking slot not available");
     }
-    console.log("bookingSlot----------------------------->", bookingSlot);
+    console.log("bookingSlot 2----------------------------->", bookingSlot);
 
     // Check if invite already exists
     const [existingInvite] = await this.database
-      .select({ id: invitedTeeTimes.id })
-      .from(invitedTeeTimes)
-      .where(and(eq(invitedTeeTimes.email, emailOrPhoneNumber), eq(invitedTeeTimes.teeTimeId, teeTimeId)));
+      .select({ id: invitedTeeTime.id })
+      .from(invitedTeeTime)
+      .where(and(eq(invitedTeeTime.email, emailOrPhoneNumber), eq(invitedTeeTime.teeTimeId, teeTimeId)));
 
     if (existingInvite) {
       throw new Error("Invite already sent to this user for this tee time");
     }
 
     // Save invitation
-    await this.database.insert(invitedTeeTimes).values({
+    await this.database.insert(invitedTeeTime).values({
       id: randomUUID(),
       email: emailOrPhoneNumber,
       teeTimeId: teeTimeId,

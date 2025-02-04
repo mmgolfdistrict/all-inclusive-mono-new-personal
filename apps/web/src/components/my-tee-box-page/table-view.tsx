@@ -13,7 +13,7 @@ import { type ReactNode } from "react";
 import { Badge } from "../badge";
 import { FilledButton } from "../buttons/filled-button";
 import { Cashouts } from "./cashouts";
-import InvitedTeeTimes from "./invited-tee-times";
+import InvitedTeeTime from "./invited-tee-time";
 import { MyListedTeeTimes } from "./my-listed-tee-times";
 import { OffersReceived } from "./offers-received";
 import { OffersSent } from "./offers-sent";
@@ -114,7 +114,7 @@ export const TableView = () => {
             <MyListedTeeTimes />
           </Tabs.Content>
           <Tabs.Content value="invited-tee-times" className="bg-white p-2">
-            <InvitedTeeTimes />
+            <InvitedTeeTime />
           </Tabs.Content>
           <Tabs.Content value="offers-sent" className="bg-white p-2">
             <OffersSent />

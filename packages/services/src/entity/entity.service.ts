@@ -1,4 +1,4 @@
-import { asc, eq, inArray, isNull, not } from "@golf-district/database";
+import { and, asc, eq, inArray, isNull, not } from "@golf-district/database";
 import type { Db } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import { courseAssets } from "@golf-district/database/schema/courseAssets";
@@ -177,13 +177,17 @@ export class EntityService {
           description: courses.description,
           address: courses.address,
           logo: courses.logoId,
+          timezoneIso: courses.timezoneISO,
+          display: courses.displayOrder,
+          isDeleted: courses.isDeleted,
         })
         .from(courses)
-        .where(eq(courses.entityId, entityId))
+        .where(and(eq(courses.entityId, entityId), eq(courses.isDeleted, false)))
+        .orderBy(courses.displayOrder)
         .execute()
-        .catch((err) => {
+        .catch(async (err) => {
           this.logger.error(err);
-          loggerService.errorLog({
+          await loggerService.errorLog({
             userId: "",
             url: "/EntityService/getCoursesByEntityId",
             userAgent: "",
@@ -195,6 +199,7 @@ export class EntityService {
           });
           throw new Error(`Error getting courses for entity: ${entityId}`);
         });
+      console.log("datadata", data);
 
       // Find all images for each course
       const images = await this.database

@@ -170,12 +170,56 @@ export class HyperSwitchWebhookService {
     };
     console.log("processing payment=======>", { paymentId, customer_id, bookingId });
     if (!paymentStatus) {
-      throw new Error("Payment status not available");
+      this.logger.warn(`Payment status not available for paymentId: ${paymentId}`);
+      await loggerService.errorLog({
+        message: "PAYMENT STATUS NOT AVAILABLE",
+        userId: "",
+        url: "/webhooks/processPayment",
+        userAgent: "",
+        stackTrace: `Payment status not available for paymentId: ${paymentId}`,
+        additionalDetailsJSON: JSON.stringify({
+          paymentId: paymentId,
+          customer_id: customer_id,
+          bookingId: bookingId,
+        }),
+      });
+      return;
+      //throw new Error("Payment status not available");
     }
     if (paymentStatus === "invalid_request") {
-      throw new Error("Payment Id not is not valid");
+      this.logger.warn(`Payment Id not is not valid`);
+      await loggerService.errorLog({
+        message: "PAYMENT ID NOT VALID",
+        userId: "",
+        url: "/webhooks/processPayment",
+        userAgent: "",
+        stackTrace: `Payment Id not is not valid`,
+        additionalDetailsJSON: JSON.stringify({
+          paymentId: paymentId,
+          customer_id: customer_id,
+          bookingId: bookingId,
+        }),
+      });
+      return;
+      //throw new Error("Payment Id not is not valid");
     }
-    if (!customer_id) throw new Error("Customer id not found");
+    if (!customer_id) {
+      this.logger.warn(`Customer id not found`);
+      await loggerService.errorLog({
+        message: "CUSTOMER ID NOT FOUND",
+        userId: "",
+        url: "/webhooks/processPayment",
+        userAgent: "",
+        stackTrace: `Customer id not found`,
+        additionalDetailsJSON: JSON.stringify({
+          paymentId: paymentId,
+          customer_id: customer_id,
+          bookingId: bookingId,
+        }),
+      });
+      return;
+      //throw new Error("Customer id not found");
+    }
     const customerCart = await this.getCustomerCartData(paymentId);
 
     if (paymentStatus === "succeeded") {
@@ -216,8 +260,35 @@ export class HyperSwitchWebhookService {
         .where(eq(bookings.id, bookingId))
         .execute();
       if (!booking) {
-        throw new Error("Booking not found");
+        this.logger.warn(`Booking not found`);
+        await loggerService.errorLog({
+          message: "BOOKING NOT FOUND",
+          userId: "",
+          url: "/webhooks/processPayment",
+          userAgent: "",
+          stackTrace: `Booking not found`,
+          additionalDetailsJSON: JSON.stringify({
+            paymentId: paymentId,
+            customer_id: customer_id,
+            bookingId: bookingId,
+          }),
+        });
+        return;
+        // throw new Error("Booking not found");
       }
+      await loggerService.errorLog({
+        message: `PAYMENT_FAILED_OR_EXPIRED`,
+        userId: "",
+        url: "/webhooks/processPayment",
+        userAgent: "",
+        stackTrace: `Payment failed or expired`,
+        additionalDetailsJSON: JSON.stringify({
+          paymentStatus: paymentStatus,
+          paymentId: paymentId,
+          customer_id: customer_id,
+          bookingId: bookingId,
+        }),
+      });
       return this.paymentFailureHandler(
         customer_id,
         bookingId,
@@ -229,7 +300,21 @@ export class HyperSwitchWebhookService {
       );
     } else {
       this.logger.warn(`Something went wrong`);
-      throw new Error("Something went wrong.");
+      await loggerService.errorLog({
+        message: paymentStatus,
+        userId: "",
+        url: "/webhooks/processPayment",
+        userAgent: "",
+        stackTrace: `Unknown payment status ${paymentStatus}`,
+        additionalDetailsJSON: JSON.stringify({
+          paymentStatus: paymentStatus,
+          paymentId: paymentId,
+          customer_id: customer_id,
+          bookingId: bookingId,
+        }),
+      });
+      return;
+      //throw new Error("Something went wrong.");
     }
   };
 
@@ -1773,8 +1858,24 @@ export class HyperSwitchWebhookService {
       console.log("cancel weather guarantee since payment is failed", weatherGuaranteeId);
       try {
         await this.sensibleService.cancelGuarantee(weatherGuaranteeId);
-      } catch (e) {
-        console.log(e);
+      } catch (e: any) {
+        this.logger.error("Error cancelling sensible guarantee ===> ", e.message);
+        await loggerService.errorLog({
+          message: "ERROR_CANCELLING_SENSIBLE_GUARANTEE",
+          userId: "",
+          url: "/webhooks/processPayment",
+          userAgent: "",
+          stackTrace: `Payment Id not is not valid`,
+          additionalDetailsJSON: JSON.stringify({
+            customer_id: customer_id,
+            bookingId: bookingId,
+            internalId: internalId,
+            courseId: courseId,
+            teesheetId: teesheetId,
+            providerBookingId: providerBookingId,
+            weatherGuaranteeId: weatherGuaranteeId,
+          }),
+        });
       }
     }
     await this.notificationService.createNotification(

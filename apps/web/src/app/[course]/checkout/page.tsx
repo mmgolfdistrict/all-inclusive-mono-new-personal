@@ -64,7 +64,7 @@ export default function Checkout({
     selectedCharityAmount,
     setAmountOfPlayers,
     validatePlayers,
-    setValidatePlayers,
+    setValidatePlayers: _setValidatePlayers,
   } = useCheckoutContext();
 
   // useEffect(() => {
@@ -83,7 +83,7 @@ export default function Checkout({
       courseId: courseId ?? "",
     });
   const {
-    data: providerBookingStatusResult,
+    data: _providerBookingStatusResult,
     refetch: refetchProviderBookingStatus,
   } = api.teeBox.providerBookingStatus.useQuery(
     { listingId: listingId ?? "" },

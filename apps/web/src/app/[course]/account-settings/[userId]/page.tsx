@@ -11,7 +11,6 @@ import { SavedBankDetails } from "~/components/account-settings-page/savedBankDe
 import { GoBack } from "~/components/buttons/go-back";
 import { ProfileDetails } from "~/components/profile-page/profile-details";
 import { useUser } from "~/hooks/useUser";
-import { api } from "~/utils/api";
 import { useRouter } from "next/navigation";
 
 export default function ManangeProfile({

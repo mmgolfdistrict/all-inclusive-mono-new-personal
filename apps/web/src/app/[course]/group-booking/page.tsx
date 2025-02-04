@@ -29,7 +29,7 @@ function GroupBooking({ params }: { params: { course: string } }) {
   const [displayDates, setDisplayDates] = useState<string>("");
   const [isTimePickerOpen, setIsTimePickerOpen] = useState(false);
   const [timeRange, setTimeRange] = useState<string>("");
-  const [players, setPlayers] = useState(10);
+  // const [players, setPlayers] = useState(10);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const courseStartTime = dayjs(course?.openTime).format("hh:mm A");
   const courseEndTime = dayjs(course?.closeTime).format("hh:mm A");
@@ -187,9 +187,9 @@ function GroupBooking({ params }: { params: { course: string } }) {
     }
   }, [startTime[0], startTime[1]]);
 
-  const handleSingleSliderChange = () => {
-    // setPlayers(e);
-  };
+  // const handleSingleSliderChange = () => {
+  //   // setPlayers(e);
+  // };
 
   return (
     <section className="mx-auto px-2 flex w-full flex-col gap-4 pt-4 md:max-w-[1360px] md:px-6">

@@ -1,21 +1,17 @@
-import { isEqual } from "@golf-district/shared";
 import { loadHyper } from "@juspay-tech/hyper-js";
 import { HyperElements } from "@juspay-tech/react-hyper-js";
 import { useCheckoutContext } from "~/contexts/CheckoutContext";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
-import type {
-  CartProduct,
-  MaxReservationResponse,
-  SearchObject,
-} from "~/utils/types";
+import type { CartProduct, SearchObject } from "~/utils/types";
 import dayjs from "dayjs";
 import isequal from "lodash.isequal";
 // import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Spinner } from "../loading/spinner";
 import { CheckoutForm } from "./checkout-form";
+import { toast } from "react-toastify";
 
 export type NextAction = {
   type?: string;
@@ -27,6 +23,7 @@ type CreatePaymentResponse = {
   paymentId: string | undefined;
   cartId: string;
   next_action?: NextAction;
+  error?: string;
 };
 
 type Options = {
@@ -127,6 +124,10 @@ export const HyperSwitch = ({
           course?.timezoneCorrection
         ),
       })) as CreatePaymentResponse;
+
+      if (data?.error) {
+        toast.error(data?.error);
+      }
 
       if (data?.next_action) {
         setNextaction(data?.next_action);

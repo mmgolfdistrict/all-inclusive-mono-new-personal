@@ -3,7 +3,7 @@ import { sql } from "drizzle-orm";
 import { datetime, smallint, tinyint, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 
-export const invitedTeeTimes = mySqlTable("invitedTeeTimes", {
+export const invitedTeeTime = mySqlTable("invitedTeeTime", {
   id: varchar("id", { length: 191 }).notNull().primaryKey(),
   email: varchar("email", { length: 191 }).notNull(),
   teeTimeId: varchar("teeTimeId", { length: 191 }).notNull(),
@@ -17,4 +17,4 @@ export const invitedTeeTimes = mySqlTable("invitedTeeTimes", {
   ),
 });
 
-export type InsertInvitedTeeTimes = InferSelectModel<typeof invitedTeeTimes>;
+export type InsertInvitedTeeTime = InferSelectModel<typeof invitedTeeTime>;
