@@ -213,7 +213,6 @@ const TableRow = ({
   golfers,
   status,
   teeTimeId,
-  // ownedByName,
   type,
   courseId,
   ownedById,

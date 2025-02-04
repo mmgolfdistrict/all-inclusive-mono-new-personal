@@ -95,8 +95,7 @@ export const Filters = forwardRef<ChildComponentRef, FiltersProps>(
     const [selectedDayMobile, setSelectedDayMobile] = useState(selectedDay);
     const router = useRouter();
     const isMobile = useMediaQuery("(max-width: 768px)");
-    console.log("sadsada", dateType);
-
+   
     // const { data } = api.searchRouter.findBlackoutDates.useQuery(
     //   { courseId: course?.id ?? "" },
     //   { enabled: course?.id !== undefined }

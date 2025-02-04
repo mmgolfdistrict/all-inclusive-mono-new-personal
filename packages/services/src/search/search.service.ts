@@ -465,7 +465,6 @@ export class SearchService extends CacheService {
         cartFeeTaxPercent: courses.cartFeeTaxPercent,
         weatherGuaranteeTaxPercent: courses.weatherGuaranteeTaxPercent,
         markupTaxPercent: courses.markupTaxPercent,
-        providerDateWithoutOffset: teeTimes.providerDateWithoutOffset,
       })
       .from(teeTimes)
       .where(eq(teeTimes.id, teeTimeId))
@@ -499,7 +498,7 @@ export class SearchService extends CacheService {
     );
     const filteredDate: any[] = [];
 
-    const date = this.formatDateToAppropriateFormat(tee?.providerDateWithoutOffset);
+    const date = this.formatDateToAppropriateFormat(tee?.providerDate);
     priceAccordingToDate.forEach((el) => {
       if (
         dayjs(el.toDayFormatted).isAfter(date) &&
@@ -703,12 +702,10 @@ export class SearchService extends CacheService {
     const startOfToday = dayjs().utc().hour(0).minute(0).second(0).millisecond(0).toISOString();
 
     const teeTimeDate = await this.database
-      .select({ date: teeTimes.providerDateWithoutOffset })
+    .select({ date: teeTimes.providerDate })
       .from(teeTimes)
       .where(and(eq(teeTimes.courseId, courseId), gte(teeTimes.date, startOfToday)))
-      .orderBy(
-        order === "asc" ? asc(teeTimes.providerDateWithoutOffset) : desc(teeTimes.providerDateWithoutOffset)
-      )
+      .orderBy(order === "asc" ? asc(teeTimes.providerDate) : desc(teeTimes.providerDate))
       .limit(1)
       .execute()
       .catch((err) => {
@@ -752,6 +749,7 @@ export class SearchService extends CacheService {
 
     return sortedDateStrings;
   };
+  
   async checkTeeTimesAvailabilityForDateRange({
     dates,
     courseId,
@@ -884,7 +882,7 @@ export class SearchService extends CacheService {
     const firstHandResultsQuery = this.database
       .selectDistinct({
         // providerDate: sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))`,
-        providerDate: sql`Date(${teeTimes.providerDateWithoutOffset})`,
+        providerDate: sql`DATE(SUBSTRING_INDEX(${teeTimes.providerDate}, '-', 3))`
       })
       .from(teeTimes)
       .innerJoin(courses, eq(courses.id, teeTimes.courseId));
@@ -915,7 +913,7 @@ export class SearchService extends CacheService {
         .where(
           and(
             eq(courses.id, courseId),
-            between(teeTimes.providerDateWithoutOffset, minDateSubquery, maxDateSubquery),
+            between(teeTimes.providerDate, minDateSubquery, maxDateSubquery),
             ...conditions,
             ...firstHandSpecificCondition,
             or(
@@ -927,28 +925,29 @@ export class SearchService extends CacheService {
             )
           )
         )
-        .orderBy(asc(sql`Date(${teeTimes.providerDateWithoutOffset})`));
+        .orderBy(asc(sql`DATE(SUBSTRING_INDEX(${teeTimes.providerDate}, '-', 3))`));
     } else {
       firstHandResultsQuery
         .where(
           and(
             eq(courses.id, courseId),
-            between(teeTimes.providerDateWithoutOffset, minDateSubquery, maxDateSubquery),
+            between(teeTimes.providerDate, minDateSubquery, maxDateSubquery),
             and(gt(teeTimes.greenFeePerPlayer, 0)),
             ...conditions,
             ...firstHandSpecificCondition
           )
         )
-        .orderBy(asc(sql`Date(${teeTimes.providerDateWithoutOffset})`));
+        .orderBy(asc(sql`DATE(SUBSTRING_INDEX(${teeTimes.providerDate}, '-', 3))`))
     }
 
     // console.log("DATES QUERY:", firstHandResultsQuery.toSQL())
 
     const firstHandResults = await firstHandResultsQuery.execute();
 
+    
     const secondHandResultsQuery = this.database
       .selectDistinct({
-        providerDate: sql`Date(${teeTimes.providerDateWithoutOffset})`,
+        providerDate: sql`DATE(SUBSTRING_INDEX(${teeTimes.providerDate}, '-', 3))`
       })
       .from(lists)
       .innerJoin(bookings, eq(bookings.listId, lists.id))
@@ -957,17 +956,16 @@ export class SearchService extends CacheService {
       .where(
         and(
           eq(courses.id, courseId),
-          between(teeTimes.providerDateWithoutOffset, minDateSubquery, maxDateSubquery),
+          between(teeTimes.providerDate, minDateSubquery, maxDateSubquery),
           eq(lists.isDeleted, false),
           ...conditions,
           ...secondHandSpecificCondition
         )
       )
-      .orderBy(asc(sql`Date(${teeTimes.providerDateWithoutOffset})`));
+      .orderBy(asc(sql`DATE(SUBSTRING_INDEX(${teeTimes.providerDate}, '-', 3))`))
 
     const secondHandResults = await secondHandResultsQuery.execute();
-
-    const firstHandAndSecondHandResult = [...firstHandResults, ...secondHandResults];
+     const firstHandAndSecondHandResult = [...firstHandResults,...secondHandResults];
     const firstHandAndSecondHandResultDates = firstHandAndSecondHandResult.map((el) =>
       this.formatDateToAppropriateFormat(el.providerDate as string)
     );
@@ -1131,8 +1129,8 @@ export class SearchService extends CacheService {
         and(
           and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
           between(teeTimes.greenFeePerPlayer, lowerPrice, upperPrice),
-          gte(teeTimes.providerDateWithoutOffset, currentTimePlus30Min),
-          between(teeTimes.providerDateWithoutOffset, startOfDay, endOfDay),
+          gte(teeTimes.providerDate, currentTimePlus30Min),
+          between(teeTimes.providerDate, startOfDay, endOfDay),
           eq(teeTimes.courseId, courseId),
           //TODO: use isCartIncluded instead
           // includesCart ? gte(teeTimes.cartFeePerPlayer, 1) : eq(teeTimes.cartFeePerPlayer, 0),
@@ -1209,8 +1207,8 @@ export class SearchService extends CacheService {
       .where(
         and(
           and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
-          gte(teeTimes.providerDateWithoutOffset, currentTimePlus30Min),
-          between(teeTimes.providerDateWithoutOffset, startOfDay, endOfDay),
+          gte(teeTimes.providerDate, currentTimePlus30Min),
+          between(teeTimes.providerDate, startOfDay, endOfDay),
           eq(teeTimes.courseId, courseId),
           eq(teeTimes.numberOfHoles, holes),
           gte(teeTimes.availableFirstHandSpots, golfers === -1 ? 1 : golfers),
@@ -1501,7 +1499,7 @@ export class SearchService extends CacheService {
         and(
           and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
           // between(lists.listPrice, lowerPrice, upperPrice),
-          gte(teeTimes.providerDateWithoutOffset, currentTimePlus30Min),
+          gte(teeTimes.providerDate, currentTimePlus30Min),
           between(teeTimes.providerDate, startOfDay, endOfDay),
           eq(teeTimes.courseId, courseId),
           eq(bookings.includesCart, includesCart),
