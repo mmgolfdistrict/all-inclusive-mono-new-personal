@@ -8,7 +8,8 @@ import { useCourseContext } from "~/contexts/CourseContext";
 import { useFiltersContext } from "~/contexts/FiltersContext";
 import { api } from "~/utils/api";
 import { dayMonthDate } from "~/utils/formatters";
-import { useEffect, useRef } from "react";
+import { debounce, throttle } from "lodash";
+import { useEffect, useRef, useState } from "react";
 import { useElementSize, useIntersectionObserver } from "usehooks-ts";
 import { useDraggableScroll } from "../../hooks/useDraggableScroll";
 import { TeeTime } from "../cards/tee-time";
@@ -43,6 +44,48 @@ export const DailyTeeTimes = ({
   const [sizeRef, { width = 0 }] = useElementSize();
   const { course } = useCourseContext();
   const courseId = course?.id;
+
+  // Scroll left or right smoothly when using the mouse wheel
+  // const handleWheel = (event: WheelEvent) => {
+  //   // event.preventDefault(); // Prevent default scroll behavior
+
+  //   const container = overflowRef.current;
+  //   if (!container) return;
+
+  //   // Ensure only horizontal scrolling is considered
+  //   if (Math.abs(event.deltaY) < Math.abs(event.deltaX)) {
+  //     event.preventDefault();
+  //   }
+
+  //   // Get item width & scroll amount
+  //   const boxWidth = container.children[0]?.clientWidth || 265;
+  //   // const scrollAmount = calculateVisibleBoxes() * (boxWidth + 16);
+
+  //   const getScrollWidth = () => {
+  //     if (width < 700) {
+  //       return boxWidth * 3 + 16 * 3;
+  //     }
+  //     return boxWidth * 4 + 16 * 4;
+  //   };
+  //   console.log("scrollAmount", getScrollWidth());
+  //   // Scroll left or right based on deltaX direction
+  //   const scrollAmountNew =
+  //     event.deltaX > 0 ? getScrollWidth() : -getScrollWidth();
+  //   container.scrollBy({ left: scrollAmountNew, behavior: "smooth" });
+  // };
+
+  // Set up the event listener for scroll
+
+  // useEffect(() => {
+  //   const container = overflowRef.current;
+  //   if (!container) return;
+
+  //   container.addEventListener("wheel", handleWheel, { passive: false });
+
+  //   return () => {
+  //     container.removeEventListener("wheel", handleWheel);
+  //   };
+  // }, []);
 
   const {
     showUnlisted,
@@ -134,7 +177,50 @@ export const DailyTeeTimes = ({
   const allTeeTimes =
     teeTimeData?.pages[teeTimeData?.pages?.length - 1]?.results ?? [];
 
+  useEffect(() => {
+    const container = overflowRef.current;
+    if (!container) return;
+    const handleWheel = (event) => {
+      event.preventDefault();
+
+      const boxWidth = container.children[0]?.clientWidth || 265;
+
+      const getScrollWidth = () => {
+        if (width < 700) {
+          return boxWidth * 3 + 16 * 3;
+        }
+        return boxWidth * 4 + 16 * 4;
+      };
+
+      const scrollAmount = event.deltaX > 0 ? 730 : -730;
+      container.scrollBy({
+        left: scrollAmount,
+        behavior: "smooth",
+      });
+    };
+    // Add event listener with passive: false
+    container.addEventListener("wheel", handleWheel, { passive: false });
+    return () => {
+      container.removeEventListener("wheel", handleWheel);
+    };
+  }, [isLoading]);
+
+  const calculateVisibleBoxes = () => {
+    const boxWidth = overflowRef.current?.children[0]?.clientWidth || 265; // default box width if not available
+    const containerWidth = overflowRef.current?.clientWidth || 0; // container width
+
+    if (containerWidth === 0 || boxWidth === 0) return 0;
+
+    const visibleCount = Math.floor(containerWidth / (boxWidth + 16)); // 16 is the gap
+    return visibleCount;
+  };
+
+  const isScrolling = useRef(false);
+
   const scrollRight = async () => {
+    if (isScrolling.current) return;
+    isScrolling.current = true;
+
     if (!isLoading) {
       await fetchNextPage();
     }
@@ -142,15 +228,14 @@ export const DailyTeeTimes = ({
     if (!container) return;
 
     const boxWidth = container.children[0]?.clientWidth || 265;
-    const containerWidth = container.clientWidth;
-    const totalBoxes = container.children.length;
+    const scrollAmount = calculateVisibleBoxes() * (boxWidth + 16);
 
-    const visibleCount = Math.floor(containerWidth / (boxWidth + 16)); // 16 is the gap
-    const scrollAmount = visibleCount * (boxWidth + 16);
-    console.log("boxWidth", boxWidth, visibleCount, scrollAmount);
     container.classList.add("scroll-smooth");
     container.scrollBy({ left: scrollAmount, behavior: "smooth" });
-    container.classList.remove("scroll-smooth");
+
+    setTimeout(() => {
+      isScrolling.current = false;
+    }, 500); // Wait for the scroll animation to complete
   };
 
   const scrollLeft = () => {
@@ -160,8 +245,8 @@ export const DailyTeeTimes = ({
     const boxWidth = container.children[0]?.clientWidth || 265;
     const containerWidth = container.clientWidth;
 
-    const visibleCount = Math.floor(containerWidth / (boxWidth + 16));
-    const scrollAmount = visibleCount * (boxWidth + 16);
+    const visibleCount = calculateVisibleBoxes(); // Get the visible count
+    const scrollAmount = visibleCount * (boxWidth + 16); // Calculate scroll amount
 
     container.classList.add("scroll-smooth");
     container.scrollBy({ left: -scrollAmount, behavior: "smooth" });
@@ -275,9 +360,10 @@ export const DailyTeeTimes = ({
         </div>
 
         <div
+          // id="abc"
           className="scrollbar-none w-full flex overflow-x-auto overflow-y-hidden gap-4"
           ref={overflowRef}
-          onMouseDown={onMouseDown}
+          // onWheel={(e) => handleWheel(e)}
         >
           {allTeeTimes?.map((i: CombinedObject, idx: number) => {
             if (
