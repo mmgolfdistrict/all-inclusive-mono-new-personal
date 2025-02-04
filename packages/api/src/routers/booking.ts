@@ -271,7 +271,7 @@ export const bookingRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       return ctx.serviceFactory
         .getBookingService()
-        .reserveBooking(
+        .reserveGroupBooking(
           ctx.session.user.id,
           input.cartId,
           input.payment_id,
@@ -344,5 +344,50 @@ export const bookingRouter = createTRPCRouter({
       return ctx.serviceFactory
         .getBookingService()
         .checkCancelledBookingFromProvider(input.listingId, ctx.session.user.id);
+    }),
+  checkIfTeeTimeGroupAvailableOnProvider: protectedProcedure
+    .input(
+      z.object({
+        teeTimeIds: z.string().array(),
+        golfersCount: z.number(),
+        minimumPlayersPerBooking: z.number(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return ctx.serviceFactory
+        .getBookingService()
+        .checkIfTeeTimeGroupAvailableOnProvider(input.teeTimeIds, input.golfersCount, input.minimumPlayersPerBooking, ctx.session.user.id);
+    }),
+  reserveGroupBooking: protectedProcedure
+    .input(
+      z.object({
+        cartId: z.string(),
+        payment_id: z.string(),
+        sensibleQuoteId: z.string(),
+        source: z.string(),
+        additionalNoteFromUser: z.string().max(200).optional(),
+        needRentals: z.boolean(),
+        redirectHref: z.string().url(),
+        courseMembershipId: z.string().optional(),
+        playerCountForMemberShip: z.string().optional(),
+        providerCourseMembershipId: z.string().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return ctx.serviceFactory
+        .getBookingService()
+        .reserveGroupBooking(
+          ctx.session.user.id,
+          input.cartId,
+          input.payment_id,
+          input.sensibleQuoteId,
+          input.source,
+          input.additionalNoteFromUser,
+          input.needRentals,
+          input.redirectHref,
+          input.courseMembershipId ?? "",
+          input.playerCountForMemberShip ?? "",
+          input.providerCourseMembershipId ?? ""
+        );
     }),
 });

@@ -29,11 +29,13 @@ export const CheckoutItem = ({
   isLoading,
   isSensibleInvalid,
   sensibleDataToMountComp,
+  isGroupBooking = false
 }: {
   teeTime: SearchObject | null | undefined;
   isLoading: boolean;
   isSensibleInvalid: boolean;
   sensibleDataToMountComp: SensibleDataToMountCompType;
+    isGroupBooking?: boolean
 }) => {
   const searchParams = useSearchParams();
   const playerCount = searchParams.get("playerCount");
@@ -234,6 +236,7 @@ export const CheckoutItem = ({
             courseException={getCourseException(teeTime?.date ?? "")}
             numberOfPlayers={numberOfPlayers}
             selectStatus={allowedPlayers?.selectStatus}
+            canShowPlayers={!isGroupBooking}
           />
         </div>
       </div>
@@ -253,6 +256,7 @@ export const CheckoutItem = ({
         courseException={getCourseException(teeTime?.date ?? "")}
         numberOfPlayers={numberOfPlayers}
         selectStatus={allowedPlayers?.selectStatus}
+        canShowPlayers={!isGroupBooking}
       />
       <div className="flex flex-col gap-1">
         <div className="flex flex-col gap-2">
@@ -421,6 +425,7 @@ const Data = ({
   courseException,
   numberOfPlayers,
   selectStatus,
+  canShowPlayers
 }: {
   className: string;
   canChoosePlayer: boolean;
@@ -437,6 +442,7 @@ const Data = ({
   courseException: NotificationObject | null;
   numberOfPlayers?: string[];
   selectStatus?: string;
+    canShowPlayers?: boolean;
 }) => {
   if (isLoading) {
     return (
@@ -509,7 +515,7 @@ const Data = ({
         </div> */}
       </div>
       <div className="flex flex-col gap-2 lg:items-end">
-        <div className="flex min-h-[31px] items-center gap-2">
+        {canShowPlayers ? <div className="flex min-h-[31px] items-center gap-2">
           <OutlineClub />
           {canChoosePlayer ? (
             <ChoosePlayers
@@ -528,7 +534,7 @@ const Data = ({
               </div>
             )
           )}
-        </div>
+        </div> : null}
         <div className="flex">
           <div className="text-[18px] font-semibold text-secondary-black">
             {formatMoney(pricePerGolfer ?? 1 ?? 0)}

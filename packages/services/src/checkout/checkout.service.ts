@@ -49,6 +49,7 @@ import type {
   WeatherGuaranteeTaxPercentProduct,
 } from "./types";
 import { CartValidationErrors } from "./types";
+import { courseSetting } from "@golf-district/database/schema/courseSetting";
 
 /**
  * Configuration options for the CheckoutService.
@@ -306,6 +307,9 @@ export class CheckoutService {
     const isFirstHand = customerCart.cart.filter(
       ({ product_data }) => product_data.metadata.type === "first_hand"
     );
+    const isFirstHandGroup = customerCart.cart.filter(
+      ({ product_data }) => product_data.metadata.type === "first_hand_group"
+    )
     const sensibleCharge =
       customerCartData?.cart
         ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "sensible")
@@ -353,6 +357,70 @@ export class CheckoutService {
       }
     }
 
+    if (isFirstHandGroup.length) {
+      if (isFirstHandGroup[0]?.product_data.metadata.type === "first_hand_group") {
+        const playerCount = isFirstHandGroup[0]?.product_data.metadata.number_of_bookings;
+        const teeTimeIds = isFirstHandGroup[0]?.product_data.metadata.tee_time_ids;
+        const teeTimesResponse = await this.database
+          .selectDistinct({
+            id: teeTimes.id,
+            greenFees: teeTimes.greenFeePerPlayer,
+            cartFees: teeTimes.cartFeePerPlayer,
+            greenFeeTaxPercent: courses.greenFeeTaxPercent,
+            cartFeeTaxPercent: courses.cartFeeTaxPercent,
+            weatherGuaranteeTaxPercent: courses.weatherGuaranteeTaxPercent,
+            markupTaxPercent: courses.markupTaxPercent,
+            groupBookingPriceSelectionMethod: courseSetting.value
+          })
+          .from(teeTimes)
+          .leftJoin(courses, eq(teeTimes.courseId, courses.id))
+          .leftJoin(courseSetting, eq(courseSetting.courseId, courses.id))
+          .where(
+            and(
+              inArray(teeTimes.id, teeTimeIds),
+              eq(courseSetting.internalName, "GROUP_BOOKING_PRICE_SELECTION_METHOD")
+            ))
+          .execute()
+          .catch((err) => {
+            this.logger.error(`Error finding tee time ids: ${JSON.stringify(err)}`);
+            throw new Error(`Error finding tee time ids`);
+          });
+
+        if (!teeTimesResponse?.length) {
+          throw new Error(`Error finding tee times with ids: ${JSON.stringify(teeTimeIds)}`);
+        }
+        const teeTime = teeTimesResponse[0];
+        const groupBookingPriceSelectionMethod = teeTime?.groupBookingPriceSelectionMethod
+        let greenFees = 0
+
+        // get fees for players
+        if (groupBookingPriceSelectionMethod === "MAX") {
+          for (const teeTime of teeTimesResponse) {
+            greenFees = Math.max(greenFees, teeTime.greenFees);
+          }
+        } else if (groupBookingPriceSelectionMethod === "SUM") {
+          let totalGreenFees = 0
+          for (const teeTime of teeTimesResponse) {
+            totalGreenFees += teeTime.greenFees;
+          }
+          greenFees = totalGreenFees / playerCount;
+        } else {
+          throw new Error("Invalid groupBookingPriceSelectionMethod");
+        }
+
+        const greenFeeTaxTotal =
+          ((greenFees ?? 0) / 100) * ((teeTime?.greenFeeTaxPercent ?? 0) / 100 / 100) * playerCount;
+        const markupTaxTotal = (markupCharge / 100) * ((teeTime?.markupTaxPercent ?? 0) / 100) * playerCount;
+        const weatherGuaranteeTaxTotal =
+          (sensibleCharge / 100) * ((teeTime?.weatherGuaranteeTaxPercent ?? 0) / 100);
+        const cartFeeTaxPercentTotal =
+          ((cartFeeCharge * ((teeTime?.cartFeeTaxPercent ?? 0) / 100)) / 100) * playerCount;
+        const additionalTaxes = Number(
+          (greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal).toFixed(2)
+        );
+        total = total + additionalTaxes * 100;
+      }
+    }
     // const tax = await this.stripeService.getTaxRate(customerCart.cart).catch((err) => {
     //   this.logger.error(`Error calculating tax: ${err}`);
     //   throw new Error(`Error calculating tax: ${err}`);
@@ -416,6 +484,9 @@ export class CheckoutService {
       }
       if (product_data.metadata.type === "second_hand") {
         listingId = product_data.metadata.second_hand_id;
+      }
+      if (product_data.metadata.type === "first_hand_group") {
+        teeTimeId = product_data.metadata.tee_time_ids[0]
       }
     });
 
@@ -572,6 +643,9 @@ export class CheckoutService {
       }
       if (product_data.metadata.type === "second_hand") {
         listingId = product_data.metadata.second_hand_id;
+      }
+      if (product_data.metadata.type === "first_hand_group") {
+        teeTimeId = product_data.metadata.tee_time_ids[0]
       }
     });
 

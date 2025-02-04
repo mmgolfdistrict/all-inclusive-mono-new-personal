@@ -19,7 +19,10 @@ import { Slider } from "~/components/input/slider";
 import { useCourseContext } from "~/contexts/CourseContext";
 import dayjs from "dayjs";
 import { useMediaQuery } from "usehooks-ts";
+import type { TeeTimeGroups } from "./GroupBookingPage";
 import GroupBookingPage from "./GroupBookingPage";
+import { api } from "~/utils/api";
+import { toast } from "react-toastify";
 
 function GroupBooking({ params }: { params: { course: string } }) {
   const { course } = useCourseContext();
@@ -29,7 +32,7 @@ function GroupBooking({ params }: { params: { course: string } }) {
   const [displayDates, setDisplayDates] = useState<string>("");
   const [isTimePickerOpen, setIsTimePickerOpen] = useState(false);
   const [timeRange, setTimeRange] = useState<string>("");
-  // const [players, setPlayers] = useState(10);
+  const [players, setPlayers] = useState(10);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const courseStartTime = dayjs(course?.openTime).format("hh:mm A");
   const courseEndTime = dayjs(course?.closeTime).format("hh:mm A");
@@ -41,6 +44,7 @@ function GroupBooking({ params }: { params: { course: string } }) {
     courseEndTimeNumber,
   ]);
   const [timeMobile, setTimeMobile] = useState(startTime);
+  const [teeTimeData, setTeeTimeData] = useState<TeeTimeGroups | null>(null);
 
   const formatTime = (hour: number, minute: number) => {
     const formattedHour = hour % 12 === 0 ? 12 : hour % 12;
@@ -67,6 +71,8 @@ function GroupBooking({ params }: { params: { course: string } }) {
   const [filteredStartTimeOptions, setFilteredStartTimeOptions] = useState<
     { displayTime: string; value: number }[]
   >([]);
+
+  const { mutateAsync: fetchAvailableTeeTimes, isLoading: isTeeTimesLoading } = api.searchRouter.getAvailableTimesForGroupedBookings.useMutation();
 
   useEffect(() => {
     if (!course) return;
@@ -158,6 +164,26 @@ function GroupBooking({ params }: { params: { course: string } }) {
     setErrorMessage("");
   };
 
+  const handleSubmit = async () => {
+    try {
+      const data = await fetchAvailableTeeTimes({
+        courseId,
+        startTime: startTime[0],
+        endTime: startTime[1],
+        dates: selectedDates.map((date) => `${(date.year)}-${date.month.toString().padStart(2, '0')}-${(date.day).toString().padStart(2, '0')}`),
+        golferCount: players,
+        minimumGolferGroup: 4
+      });
+      console.log("DATA", data);
+      if (data) {
+        setTeeTimeData(data);
+      }
+    } catch (error) {
+      toast.error("Failed to get tee times");
+      console.error("Error fetching tee times:", error);
+    }
+  }
+
   useEffect(() => {
     const datesToDisplay = selectedDates
       .sort((a, b) => {
@@ -187,9 +213,13 @@ function GroupBooking({ params }: { params: { course: string } }) {
     }
   }, [startTime[0], startTime[1]]);
 
-  // const handleSingleSliderChange = () => {
-  //   // setPlayers(e);
-  // };
+  const handleSingleSliderChange = (value: number[]) => {
+    if (value[0]) {
+      setPlayers(value[0]);
+    } else {
+      toast.error("Error selecting number of players");
+    }
+  };
 
   return (
     <section className="mx-auto px-2 flex w-full flex-col gap-4 pt-4 md:max-w-[1360px] md:px-6">
@@ -493,7 +523,7 @@ function GroupBooking({ params }: { params: { course: string } }) {
                   min={10}
                   max={24}
                   step={1}
-                  //   onValueChange={(e) => handleSingleSliderChange(e)}
+                  onValueChange={(value) => handleSingleSliderChange(value)}
                   aria-label="Select number of players"
                   data-testid="slider-number-of-players"
                 />
@@ -501,9 +531,9 @@ function GroupBooking({ params }: { params: { course: string } }) {
             </div>
           </div>
           <FilledButton
-            // onClick={handleSubmit}
+            onClick={handleSubmit}
             className="flex items-center justify-center gap-1 max-w-[200px] w-full mt-4 self-center py-[.28rem] md:py-1.5 text-[10px] md:text-[14px] disabled:opacity-50 transition-opacity duration-300"
-            // disabled={}
+            disabled={isTeeTimesLoading || selectedDates.length === 0}
           >
             See Available Times
           </FilledButton>
@@ -516,7 +546,7 @@ function GroupBooking({ params }: { params: { course: string } }) {
         </div>
       </div>
       <hr />
-      <GroupBookingPage />
+      <GroupBookingPage teeTimesData={teeTimeData} isTeeTimesLoading={isTeeTimesLoading} playerCount={players} />
     </section>
   );
 }

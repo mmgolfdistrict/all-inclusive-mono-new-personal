@@ -15,6 +15,7 @@ import {
   or,
   sql,
   type Db,
+  inArray,
 } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import { bookings } from "@golf-district/database/schema/bookings";
@@ -38,6 +39,7 @@ import { type ProviderService } from "../tee-sheet-provider/providers.service";
 import type { Forecast } from "../weather/types";
 import type { WeatherService } from "../weather/weather.service";
 import { loggerService } from "../webhooks/logging.service";
+import { courseSetting } from "@golf-district/database/schema/courseSetting";
 
 dayjs.extend(UTC);
 
@@ -79,6 +81,7 @@ interface TeeTimeSearchObject {
   cartFeeTaxPercent: number;
   weatherGuaranteeTaxPercent: number;
   markupTaxPercent: number;
+  pricePerGolferForGroup?: number;
 }
 
 interface MarkupData {
@@ -1829,5 +1832,405 @@ export class SearchService extends CacheService {
     } else {
       return [];
     }
+  };
+
+  /*
+    startTime = 1200,
+    endTime = 1500,
+    dates = ["2025-01-29", "2025-01-30"],
+    golferCount = 11,
+    courseId = "5df5581f-6e5c-49af-a360-a7c9fd733f22",
+    minimumGolferGroup = 4
+  */
+  getAvailableTimesForGroupedBookings = async (
+    startTime: number,
+    endTime: number,
+    dates: string[],
+    golferCount: number,
+    courseId: string,
+    minimumGolferGroup = 4
+  ) => {
+    try {
+      const availableTimes: Record<string, any> = {};
+      const [courseSettingResponse] = await this.database
+        .select({
+          value: courseSetting.value,
+          fixedMarkup: courses.markupFeesFixedPerPlayer,
+          timeZoneCorrection: courses.timezoneCorrection
+        })
+        .from(courseSetting)
+        .innerJoin(courses, eq(courseSetting.courseId, courses.id))
+        .where(
+          and(
+            eq(courseSetting.courseId, courseId),
+            eq(courseSetting.internalName, "GROUP_BOOKING_PRICE_SELECTION_METHOD")
+          )
+        )
+        .execute()
+        .catch((err) => {
+          this.logger.error(err);
+          loggerService.errorLog({
+            userId: "",
+            url: "/getAvailableTimesForGroupedBookings",
+            userAgent: "",
+            message: "ERROR_GETTING_GROUP_BOOKING_PRICE_SELECTION_METHOD",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              courseId,
+            }),
+          });
+          return [];
+        })
+
+      const priceAccordingToDate = await this.getTeeTimesPriceWithRange(
+        courseId,
+        courseSettingResponse?.timeZoneCorrection ?? 0
+      );
+
+      const groupBookingPriceSelectionMethod = courseSettingResponse?.value ?? "MAX";
+
+      const slidingWindowSize = Math.ceil(golferCount / minimumGolferGroup);
+      for (const date of dates) {
+        const filteredDate = [] as typeof priceAccordingToDate;
+        priceAccordingToDate.forEach((el) => {
+          if (
+            ((dayjs(el.toDayFormatted).isAfter(date) && dayjs(el.fromDayFormatted).isBefore(date)) ||
+              dayjs(date).isSame(dayjs(el.fromDayFormatted))) &&
+            !filteredDate.length
+          ) {
+            filteredDate.push(el);
+            return;
+          } else {
+          }
+        });
+
+        const markupFeesFinal = filteredDate.length
+          ? filteredDate[0]?.markUpFees
+          : courseSettingResponse?.fixedMarkup;
+        const markupFeesToBeUsed = (markupFeesFinal ?? 0) / 100;
+
+        console.log("fetching tee times for date", date)
+        const teeTimesResponse = await this.database
+          .select()
+          .from(teeTimes)
+          .where(
+            and(
+              eq(teeTimes.courseId, courseId),
+              like(teeTimes.providerDate, `${date}%`)
+            )
+          )
+          .orderBy(asc(teeTimes.providerDate))
+          .execute()
+          .catch((err) => {
+            this.logger.error(err);
+            loggerService.errorLog({
+              userId: "",
+              url: "/getAvailableTimesForGroupedBookings",
+              userAgent: "",
+              message: "ERROR_GETTING_TEE_TIMES",
+              stackTrace: `${err.stack}`,
+              additionalDetailsJSON: JSON.stringify({
+                courseId,
+                date,
+              }),
+            });
+            throw new Error("Error fetching tee times");
+          })
+
+        let minTimeGapBetweenTwoTeeTimes = Number.MAX_VALUE;
+        for (let i = 0; i < teeTimesResponse.length - 1; i++) {
+          const currentTeeTime = teeTimesResponse[i];
+          const nextTeeTime = teeTimesResponse[i + 1];
+
+          if (!currentTeeTime || !nextTeeTime) {
+            continue
+          }
+          const timeGap = nextTeeTime?.time - currentTeeTime?.time
+          if (timeGap < minTimeGapBetweenTwoTeeTimes && timeGap > 0) {
+            minTimeGapBetweenTwoTeeTimes = timeGap;
+          }
+        }
+        if (minTimeGapBetweenTwoTeeTimes < 0 || minTimeGapBetweenTwoTeeTimes === Number.MAX_VALUE) {
+          continue;
+        }
+
+        const teeTimesToCheck = teeTimesResponse.filter((teeTime) => {
+          return teeTime.time >= startTime && teeTime.time <= endTime
+        })
+
+        // Based on the sliding window size, check available times for each tee time
+        for (let i = 0; i < teeTimesToCheck.length - slidingWindowSize; i++) {
+          const window = teeTimesToCheck.slice(i, i + slidingWindowSize);
+          let areSpotsAvailable = true, isContinuous = true;
+          let remainingGolferCount = golferCount;
+          for (const teeTime of window) {
+            if (teeTime.availableFirstHandSpots >= Math.min(minimumGolferGroup, remainingGolferCount)) {
+              remainingGolferCount -= teeTime.availableFirstHandSpots;
+            } else {
+              areSpotsAvailable = false;
+              break;
+            }
+          }
+          for (let i = 0; i < window.length - 1; i++) {
+            const currentTeeTime = window[i];
+            const nextTeeTime = window[i + 1];
+            if (nextTeeTime && currentTeeTime && nextTeeTime.time - currentTeeTime.time === minTimeGapBetweenTwoTeeTimes) {
+              continue;
+            } else {
+              isContinuous = false;
+              break;
+            }
+          }
+
+          let pricePerGolfer: number;
+          if (groupBookingPriceSelectionMethod === "MAX") {
+            pricePerGolfer = window.reduce((acc, teeTime) => {
+              return Math.max(acc, ((teeTime.greenFeePerPlayer + teeTime.cartFeePerPlayer) / 100 + markupFeesToBeUsed));
+            }, 0);
+          } else if (groupBookingPriceSelectionMethod === "SUM") {
+            const totalPrice = window.reduce((acc, teeTime) => {
+              return acc + ((teeTime.greenFeePerPlayer + teeTime.cartFeePerPlayer) / 100 + markupFeesToBeUsed);
+            }, 0);
+            pricePerGolfer = totalPrice / golferCount;
+          } else {
+            throw new Error("Invalid groupBookingPriceSelectionMethod");
+          }
+
+          if (areSpotsAvailable && isContinuous) {
+            if (!availableTimes[date]) {
+              availableTimes[date] = [];
+            }
+            availableTimes[date].push({
+              teeTimes: window,
+              time: window[0]!.time,
+              pricePerGolfer,
+              teeTimeIds: window.map((teeTime) => teeTime.id),
+              date: window[0]!.providerDate
+            })
+          }
+        }
+        console.dir(availableTimes, { depth: null })
+      }
+      return availableTimes;
+    } catch (err) {
+      this.logger.error(`${JSON.stringify(err)}`)
+    }
+  }
+  getTeeTimesByIds = async (teeTimeIds: string[], playerCount: number, _userId?: string) => {
+    let userId = "00000000-0000-0000-0000-000000000000";
+    if (_userId) {
+      userId = _userId;
+    }
+
+    const teeTimesData = await this.database
+      .select({
+        id: teeTimes.id,
+        courseId: teeTimes.courseId,
+        time: teeTimes.time,
+        date: teeTimes.date,
+        numberOfHoles: teeTimes.numberOfHoles,
+        firstPartySlots: teeTimes.availableFirstHandSpots,
+        greenFee: teeTimes.greenFeePerPlayer,
+        cartFee: teeTimes.cartFeePerPlayer,
+        courseName: courses.name,
+        markupFeesFixedPerPlayer: courses.markupFeesFixedPerPlayer,
+        favorites: favorites.id,
+        providerDate: teeTimes.providerDate,
+        greenFeeTax: teeTimes.greenFeeTaxPerPlayer,
+        cartFeeTax: teeTimes.cartFeeTaxPerPlayer,
+        numberOfWatchers: sql<number>`(
+          SELECT COUNT(*)
+          FROM ${favorites}
+          WHERE ${favorites.teeTimeId} = ${teeTimes.id}
+        )`,
+        logo: {
+          key: assets.key,
+          extension: assets.extension,
+        },
+        timezoneCorrection: courses.timezoneCorrection,
+        greenFeeTaxPercent: courses.greenFeeTaxPercent,
+        cartFeeTaxPercent: courses.cartFeeTaxPercent,
+        weatherGuaranteeTaxPercent: courses.weatherGuaranteeTaxPercent,
+        markupTaxPercent: courses.markupTaxPercent,
+      })
+      .from(teeTimes)
+      .where(inArray(teeTimes.id, teeTimeIds))
+      .innerJoin(courses, eq(courses.id, teeTimes.courseId))
+      // .leftJoin(assets, and(eq(assets.courseId, teeTimes.courseId), eq(assets.id, courses.logoId)))
+      .leftJoin(assets, eq(assets.id, courses.logoId))
+      .leftJoin(favorites, and(eq(favorites.teeTimeId, teeTimes.id), eq(favorites.userId, userId)))
+      .execute()
+      .catch((err) => {
+        this.logger.error(err);
+        loggerService.errorLog({
+          userId,
+          url: "/SearchService/getTeeTimeById",
+          userAgent: "",
+          message: "ERROR_GETTING_TEE_TIMES",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            teeTimeIds,
+            userId,
+          }),
+        });
+        return [];
+      });
+    if (!teeTimesData.length) {
+      return null;
+    }
+
+    const mappedTeeTimes = await Promise.all(
+      teeTimesData.map(async (tee) => {
+        const priceAccordingToDate: any[] = await this.getTeeTimesPriceWithRange(
+          tee?.courseId,
+          tee?.timezoneCorrection
+        );
+        const filteredDate: any[] = [];
+
+        const date = dayjs(tee?.providerDate).utc();
+        const dateWithTimezone = date.add(tee?.timezoneCorrection).toString();
+        priceAccordingToDate.forEach((el) => {
+          if (
+            dayjs(el.toDayFormatted).isAfter(dateWithTimezone) &&
+            dayjs(el.fromDayFormatted).isBefore(dateWithTimezone) &&
+            !filteredDate.length
+          ) {
+            filteredDate.push(el);
+            return;
+          }
+        });
+
+        const markupFeesFinal = filteredDate.length ? filteredDate[0].markUpFees : tee.markupFeesFixedPerPlayer;
+        const markupFeesToBeUsed = markupFeesFinal / 100;
+        const watchers = await this.database
+          .select({
+            userId: favorites.userId,
+            handle: users.handle,
+            image: {
+              key: assets.key,
+              extension: assets.extension,
+            },
+          })
+          .from(favorites)
+          .innerJoin(users, eq(users.id, favorites.userId))
+          .leftJoin(assets, eq(assets.id, users.image))
+          .where(eq(favorites.teeTimeId, tee.id))
+          .limit(10)
+          .execute()
+          .catch((err) => {
+            this.logger.error(err);
+            loggerService.errorLog({
+              userId: "",
+              url: "/SearchService/getTeeTimeById",
+              userAgent: "",
+              message: "ERROR_GETTING_WATCHERS",
+              stackTrace: `${err.stack}`,
+              additionalDetailsJSON: JSON.stringify({
+                teeTimeId: tee.id,
+              }),
+            });
+            return [];
+          });
+
+        const forecast = await this.weatherService.getForecast(tee.courseId);
+        const teeTimeDate = new Date(tee.date);
+        const weather = this.matchForecastToTeeTime(teeTimeDate, forecast);
+        const res: TeeTimeSearchObject = {
+          soldById: tee.courseId,
+          soldByName: tee.courseName ? tee.courseName : "Golf District",
+          soldByImage: tee.logo
+            ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${tee.logo.key}.${tee.logo.extension}`
+            : "/defaults/default-profile.webp",
+          availableSlots: tee.firstPartySlots,
+          pricePerGolfer: tee.greenFee / 100 + tee.cartFee / 100 + markupFeesToBeUsed,
+          markupFees: markupFeesToBeUsed * 100,
+          greenFeeTaxPerPlayer: tee.greenFeeTax,
+          cartFeeTaxPerPlayer: tee.cartFeeTax,
+          greenFee: tee.greenFee,
+          cartFee: tee.cartFee,
+          teeTimeId: tee.id,
+          userWatchListed: tee.favorites ? true : false,
+          date: tee.providerDate, //day of tee time
+          time: tee.time, //military time
+          includesCart: true,
+          firstOrSecondHandTeeTime: TeeTimeType.FIRST_HAND,
+          isListed: false,
+          numberOfWatchers: tee.numberOfWatchers,
+          watchers: watchers.map((watcher) => {
+            return {
+              userId: watcher.userId,
+              handle: watcher.handle ? watcher.handle : "Anonymous",
+              image: watcher.image
+                ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${watcher.image.key}.${watcher.image.extension}`
+                : "/defaults/default-profile.webp",
+            };
+          }),
+          weather,
+          greenFeeTaxPercent: tee.greenFeeTaxPercent,
+          cartFeeTaxPercent: tee.cartFeeTaxPercent,
+          weatherGuaranteeTaxPercent: tee.weatherGuaranteeTaxPercent,
+          markupTaxPercent: tee.markupTaxPercent,
+        };
+        return res;
+      })
+    )
+
+    const courseId = teeTimesData[0]?.courseId ?? "";
+
+    const [courseSettingResponse] = await this.database
+      .select({
+        value: courseSetting.value,
+      })
+      .from(courseSetting)
+      .innerJoin(courses, eq(courseSetting.courseId, courses.id))
+      .where(
+        and(
+          eq(courseSetting.courseId, courseId),
+          eq(courseSetting.internalName, "GROUP_BOOKING_PRICE_SELECTION_METHOD")
+        )
+      )
+      .execute()
+      .catch((err) => {
+        this.logger.error(err);
+        loggerService.errorLog({
+          userId: "",
+          url: "/getAvailableTimesForGroupedBookings",
+          userAgent: "",
+          message: "ERROR_GETTING_GROUP_BOOKING_PRICE_SELECTION_METHOD",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            teeTimesData,
+          }),
+        });
+        return [];
+      })
+
+    const groupBookingPriceSelectionMethod = courseSettingResponse?.value ?? "MAX";
+    let pricePerGolfer = 0, cartFeesForGroup = 0;
+    if (groupBookingPriceSelectionMethod === "MAX") {
+      for (const teeTime of mappedTeeTimes) {
+        pricePerGolfer = Math.max(pricePerGolfer, teeTime.pricePerGolfer);
+        cartFeesForGroup = Math.max(cartFeesForGroup, teeTime.cartFee);
+      }
+    } else if (groupBookingPriceSelectionMethod === "SUM") {
+      let totalGreenFees = 0, totalCartFees = 0;
+      for (const teeTime of mappedTeeTimes) {
+        totalGreenFees += teeTime.pricePerGolfer;
+        totalCartFees += teeTime.cartFee;
+      }
+      pricePerGolfer = totalGreenFees / playerCount;
+      cartFeesForGroup = totalCartFees / playerCount;
+    } else {
+      throw new Error("Invalid groupBookingPriceSelectionMethod");
+    }
+
+    const teeTimesResponse = mappedTeeTimes.map((teeTime) => {
+      return {
+        ...teeTime,
+        pricePerGolferForGroup: pricePerGolfer ?? 0,
+        cartFeesForGroup: cartFeesForGroup ?? 0
+      }
+    })
+    return teeTimesResponse;
   };
 }
