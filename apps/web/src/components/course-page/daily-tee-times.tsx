@@ -138,20 +138,34 @@ export const DailyTeeTimes = ({
     if (!isLoading) {
       await fetchNextPage();
     }
-    const boxWidth = overflowRef.current?.children[0]?.clientWidth || 265;
+    const container = overflowRef.current;
+    if (!container) return;
 
-    const getScrollWidth = () => {
-      if (width < 700) {
-        return boxWidth * 3 + 16 * 3;
-      }
-      return boxWidth * 4 + 16 * 4;
-    };
+    const boxWidth = container.children[0]?.clientWidth || 265;
+    const containerWidth = container.clientWidth;
+    const totalBoxes = container.children.length;
 
-    overflowRef.current?.classList.add("scroll-smooth");
-    overflowRef.current?.scrollBy({
-      left: getScrollWidth(),
-    });
-    overflowRef.current?.classList.remove("scroll-smooth");
+    const visibleCount = Math.floor(containerWidth / (boxWidth + 16)); // 16 is the gap
+    const scrollAmount = visibleCount * (boxWidth + 16);
+    console.log("boxWidth", boxWidth, visibleCount, scrollAmount);
+    container.classList.add("scroll-smooth");
+    container.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    container.classList.remove("scroll-smooth");
+  };
+
+  const scrollLeft = () => {
+    const container = overflowRef.current;
+    if (!container) return;
+
+    const boxWidth = container.children[0]?.clientWidth || 265;
+    const containerWidth = container.clientWidth;
+
+    const visibleCount = Math.floor(containerWidth / (boxWidth + 16));
+    const scrollAmount = visibleCount * (boxWidth + 16);
+
+    container.classList.add("scroll-smooth");
+    container.scrollBy({ left: -scrollAmount, behavior: "smooth" });
+    container.classList.remove("scroll-smooth");
   };
 
   const getNextPage = async () => {
@@ -166,24 +180,8 @@ export const DailyTeeTimes = ({
     }
   }, [isVisible]);
 
-  const scrollLeft = (scrollWidth = 0) => {
-    const boxWidth = overflowRef.current?.children[0]?.clientWidth || 265;
-    const getScrollWidth = () => {
-      if (width < 700) {
-        return boxWidth * 2 + 16 * 2;
-      }
-      return boxWidth * 3 + 16 * 3;
-    };
-
-    overflowRef.current?.classList.add("scroll-smooth");
-    overflowRef.current?.scrollBy({
-      left: -`${scrollWidth > 0 ? scrollWidth : getScrollWidth()}`,
-    });
-    overflowRef.current?.classList.remove("scroll-smooth");
-  };
-
   useEffect(() => {
-    scrollLeft(width);
+    scrollLeft();
   }, [isLoading]);
 
   const getTextColor = (type) => {
