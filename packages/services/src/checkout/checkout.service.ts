@@ -58,7 +58,6 @@ type MaxReservationsAndMaxRoundsResult = {
   success: boolean;
   message: string;
 };
-
 dayjs.extend(UTC);
 dayjs.extend(isSameOrBefore);
 export interface CheckoutServiceConfig {
@@ -240,7 +239,7 @@ export class CheckoutService {
     ipAddress?: string
   ) => {
     const { paymentId } = customerCartData;
-    let data = {};
+    let data:any = {};
 
     // const errors = await this.validateCartItems(customerCart);
     // if (errors.length > 0) {
