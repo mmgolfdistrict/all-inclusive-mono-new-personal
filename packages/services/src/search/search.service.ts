@@ -940,10 +940,11 @@ export class SearchService extends CacheService {
     // console.log("DATES QUERY:", firstHandResultsQuery.toSQL())
 
     const firstHandResults = await firstHandResultsQuery.execute();
-   
+
+    
     const secondHandResultsQuery = this.database
       .selectDistinct({
-        providerDate: sql`SUBSTRING_INDEX(${teeTimes.providerDate}, '-', 3)`
+        providerDate: sql`DATE(SUBSTRING_INDEX(${teeTimes.providerDate}, '-', 3))`
       })
       .from(lists)
       .innerJoin(bookings, eq(bookings.listId, lists.id))
@@ -958,11 +959,10 @@ export class SearchService extends CacheService {
           ...secondHandSpecificCondition
         )
       )
-      .orderBy(asc(sql`SUBSTRING_INDEX(${teeTimes.providerDate}, '-', 3)`))
+      .orderBy(asc(sql`DATE(SUBSTRING_INDEX(${teeTimes.providerDate}, '-', 3))`))
 
     const secondHandResults = await secondHandResultsQuery.execute();
-
-    const firstHandAndSecondHandResult = [...firstHandResults,...secondHandResults];
+     const firstHandAndSecondHandResult = [...firstHandResults,...secondHandResults];
     const firstHandAndSecondHandResultDates = firstHandAndSecondHandResult.map((el) =>
       this.formatDateToAppropriateFormat(el.providerDate as string)
     );
