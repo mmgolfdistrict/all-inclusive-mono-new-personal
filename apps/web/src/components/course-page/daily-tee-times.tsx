@@ -209,7 +209,6 @@ export const DailyTeeTimes = ({
           <div className="h-8 min-w-[150px] w-[20%] bg-gray-200 rounded-md  animate-pulse unmask-time" />
         ) : (
           <div
-            id="tee-time-box"
             className="text-[16px] md:text-[20px] unmask-time"
             data-testid="date-group-id"
             data-qa={dayMonthDate(date)}

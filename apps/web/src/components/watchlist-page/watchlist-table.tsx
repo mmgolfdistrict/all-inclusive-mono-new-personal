@@ -131,7 +131,7 @@ export const WatchlistTable = () => {
   return (
     <>
       <div className="relative flex max-w-full flex-col gap-4 overflow-auto  rounded-xl bg-white px-6 pb-14 pt-4 text-[14px]">
-        <table className="w-full table-auto  overflow-auto"  id="table-watchlist">
+        <table className="w-full table-auto  overflow-auto">
           <thead className="top-0 table-header-group">
             <tr className="text-left">
               <TableHeader text="Details" />
@@ -297,8 +297,8 @@ const TableRow = ({
       {/* <td className="whitespace-nowrap px-4 py-3 capitalize">
         {status.toLowerCase()}
       </td> */}
-      <td className="whitespace-nowrap px-4 py-3" >
-        <div className="flex  justify-end gap-2" id="buttons-watchlist">
+      <td className="whitespace-nowrap px-4 py-3">
+        <div className="flex  justify-end gap-2">
           <Link href={href} data-testid="details-button-id">
             <OutlineButton className="min-w-[155px]">Details</OutlineButton>
           </Link>

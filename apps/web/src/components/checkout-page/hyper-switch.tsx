@@ -195,7 +195,7 @@ export const HyperSwitch = ({
   }
 
   return (
-    <div className="w-full md:min-w-[370px] px-2 md:px-0" >
+    <div className="w-full md:min-w-[370px] px-2 md:px-0">
       {options !== undefined && hyperPromise !== undefined ? (
         <HyperElements options={options} hyper={hyperPromise}>
           <CheckoutForm

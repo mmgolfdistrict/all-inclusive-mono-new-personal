@@ -290,7 +290,7 @@ export const Filters = forwardRef<ChildComponentRef, FiltersProps>(
 
     return (
       <div className="flex flex-col gap-4 pr-1">
-        <section className="flex flex-col gap-2" id="data-filter">
+        <section className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <div>Date</div>
             {dateType !== "Today" && (
@@ -421,7 +421,7 @@ export const Filters = forwardRef<ChildComponentRef, FiltersProps>(
           </ToggleGroup.Root>
         </section>
 
-        <section className="flex flex-col gap-2" id="time-filter">
+        <section className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <div>Start Time</div>
             <div className="unmask-time">
@@ -538,7 +538,7 @@ export const Filters = forwardRef<ChildComponentRef, FiltersProps>(
         </div> */}
         </section>
 
-        <section className="flex flex-col gap-2" id="holes-filter">
+        <section className="flex flex-col gap-2">
           <div>Holes</div>
           <ToggleGroup.Root
             type="single"
@@ -573,8 +573,7 @@ export const Filters = forwardRef<ChildComponentRef, FiltersProps>(
             ))}
           </ToggleGroup.Root>
         </section>
-
-        <section className="flex flex-col gap-2" id="golfers-filter">
+        <section className="flex flex-col gap-2">
           <div>Golfers</div>
           <ToggleGroup.Root
             type="single"
@@ -613,8 +612,7 @@ export const Filters = forwardRef<ChildComponentRef, FiltersProps>(
             ))}
           </ToggleGroup.Root>
         </section>
-
-        <section className="flex flex-col gap-2" id="price-filter">
+        <section className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <div>
               Price Range <span className="font-[300]">(per golfer)</span>

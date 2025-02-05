@@ -305,7 +305,6 @@ const TableRow = ({
             data-testid="manage-button-id"
             data-test={courseId}
             data-qa={course}
-            id="manage-teetime-button"
           >
             Manage
           </OutlineButton>

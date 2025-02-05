@@ -12,7 +12,6 @@ export const ChoosePlayers = ({
   teeTimeId,
   status,
   numberOfPlayers,
-  id
 }: {
   players: string | number;
   setPlayers: (v: string) => void;
@@ -23,7 +22,6 @@ export const ChoosePlayers = ({
   teeTimeId: string | undefined;
   status?: string;
   numberOfPlayers: string[];
-  id?: string;
 }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -62,7 +60,6 @@ export const ChoosePlayers = ({
       data-test={teeTimeId}
       data-qa={availableSlots}
       data-cy={players}
-      id={id}
     >
       {playersOptions.map((value, index) => (
         <Item
