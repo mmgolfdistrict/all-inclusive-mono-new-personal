@@ -59,10 +59,13 @@ export const TableView = () => {
   return (
     <Tabs.Root value={section ?? "owned"}>
       <Tabs.List className="flex gap-10 overflow-x-auto border-b border-stroke bg-white px-6 pt-4 md:rounded-t-xl">
-        <TabTrigger value="owned">Owned</TabTrigger>
+        <TabTrigger id="sell-owned" value={"owned"}>
+          Owned
+        </TabTrigger>
         <TabTrigger
           value="my-listed-tee-times"
           data-testid="my-listed-tee-time-id"
+          id="sell-my-listed-tee-times"
         >
           My Listed Tee Times
         </TabTrigger>
@@ -71,8 +74,14 @@ export const TableView = () => {
         </TabTrigger>
         {course?.supportsOffers ? (
           <>
-            <TabTrigger value="offers-sent">Offers Sent</TabTrigger>
-            <TabTrigger value="offers-received" handleClick={markAsRead}>
+            <TabTrigger id="sell-offers-send" value={"offers-sent"}>
+              Offers Sent
+            </TabTrigger>
+            <TabTrigger
+              id="sell-offers-recieved"
+              value={"offers-received"}
+              handleClick={markAsRead}
+            >
               Offers Received{" "}
               {unreadOffers && unreadOffers > 0 ? (
                 <Badge className="py-[.15rem] text-[12px]">
@@ -82,8 +91,12 @@ export const TableView = () => {
             </TabTrigger>
           </>
         ) : null}
-        <TabTrigger value="transaction-history">Transaction History</TabTrigger>
-        <TabTrigger value="cashouts">Cash out History</TabTrigger>
+        <TabTrigger id="sell-transaction-history" value={"transaction-history"}>
+          Transaction History
+        </TabTrigger>
+        <TabTrigger id="sell-cash-out-history" value={"cashouts"}>
+          Cash out History
+        </TabTrigger>
       </Tabs.List>
 
       {!session ? (
@@ -107,10 +120,14 @@ export const TableView = () => {
         )
       ) : (
         <>
-          <Tabs.Content value="owned" className="bg-white p-2">
+          <Tabs.Content value="owned" className="bg-white p-2" id="sell-owned">
             <Owned />
           </Tabs.Content>
-          <Tabs.Content value="my-listed-tee-times" className="bg-white p-2">
+          <Tabs.Content
+            value="my-listed-tee-times"
+            className="bg-white p-2"
+            id="sell-my-listed-tee-times"
+          >
             <MyListedTeeTimes />
           </Tabs.Content>
           <Tabs.Content value="invited-tee-times" className="bg-white p-2">
@@ -119,13 +136,25 @@ export const TableView = () => {
           <Tabs.Content value="offers-sent" className="bg-white p-2">
             <OffersSent />
           </Tabs.Content>
-          <Tabs.Content value="offers-received" className="bg-white p-2">
+          <Tabs.Content
+            value="offers-received"
+            className="bg-white p-2"
+            id="sell-offers-recieved"
+          >
             <OffersReceived />
           </Tabs.Content>
-          <Tabs.Content value="transaction-history" className="bg-white p-2">
+          <Tabs.Content
+            value="transaction-history"
+            className="bg-white p-2"
+            id="sell-transaction-history"
+          >
             <TransactionHistory />
           </Tabs.Content>
-          <Tabs.Content value="cashouts" className="bg-white p-2">
+          <Tabs.Content
+            value="cashouts"
+            className="bg-white p-2"
+            id="sell-cash-out-history"
+          >
             <Cashouts />
           </Tabs.Content>
         </>
@@ -138,10 +167,12 @@ const TabTrigger = ({
   value,
   children,
   handleClick,
+  id,
 }: {
   value: string;
   children: ReactNode;
   handleClick?: () => Promise<void>;
+  id?: string;
 }) => {
   return (
     <Link
@@ -149,6 +180,7 @@ const TabTrigger = ({
       onClick={handleClick ? () => void handleClick() : undefined}
       data-testid="tab-trigger-id"
       data-qa={value}
+      id={id ?? ""}
     >
       <Tabs.Trigger
         value={value}

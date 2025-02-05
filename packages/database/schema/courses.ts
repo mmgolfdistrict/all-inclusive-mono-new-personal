@@ -72,7 +72,7 @@ export const courses = mySqlTable(
     courseCloseTime: int("courseCloseTime").default(0).notNull(),
     supportsProviderMembership: tinyint("supportsProviderMembership").default(0).notNull(),
     supportsGroupBooking: tinyint("supportsGroupBooking").default(0).notNull(),
-    daysToWithHoldPayment: int("daysToWithHoldPayment").default(0).notNull(),
+    daysToWithHoldPayment: tinyint("daysToWithHoldPayment").default(0).notNull(),
   },
   (table) => {
     return {
