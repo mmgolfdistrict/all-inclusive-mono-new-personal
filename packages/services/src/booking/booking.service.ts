@@ -132,6 +132,13 @@ type RequestOptions = {
   body: string;
   redirect: RequestRedirect;
 };
+
+export type ProviderBooking = {
+  providerBookingId: string;
+  providerBookingSlotIds: string[];
+  playerCount: number;
+  teeTimeId: string;
+}
 /**
  * Service for managing bookings and transaction history.
  */
@@ -3109,6 +3116,11 @@ export class BookingService {
         ({ product_data }: ProductData) => product_data.metadata.type === "second_hand"
       );
     }
+    if (!slotInfo.length) {
+      slotInfo = customerCartData?.cart?.cart?.filter(
+        ({ product_data }: ProductData) => product_data.metadata.type === "first_hand_group"
+      )
+    }
     const playerCountFromCart = slotInfo[0]?.product_data?.metadata?.number_of_bookings;
     const markupCharge =
       customerCartData?.cart?.cart
@@ -3134,6 +3146,8 @@ export class BookingService {
           markupCharge1, //slotInfo[0].price- cartFeeCharge*slotInfo[0]?.product_data?.metadata?.number_of_bookings,
       teeTimeId: slotInfo[0].product_data.metadata.tee_time_id,
       playerCount: slotInfo[0].product_data.metadata.number_of_bookings,
+      teeTimeIds: slotInfo[0].product_data.metadata.tee_time_ids,
+      minPlayersPerBooking: slotInfo[0].product_data.metadata.min_players_per_booking,
     };
     console.log("primaryData=======>", primaryData);
     const convenienceCharge =
@@ -4092,6 +4106,7 @@ export class BookingService {
         providerId: bookings.providerBookingId,
         playTime: teeTimes.providerDate,
         transferedFromBookingId: transfers.fromUserId,
+        groupId: bookings.groupId,
       })
       .from(bookings)
       .innerJoin(transfers, eq(transfers.bookingId, bookings.id))
@@ -4113,10 +4128,26 @@ export class BookingService {
         });
         throw "Error retrieving booking";
       });
+    let playerCount = 0;
+    if (booking?.groupId) {
+      //need to count how many players are in the group via playerCount on bookings table
+      const groupBookings = await this.database
+        .select({
+          playerCount: bookings.playerCount,
+        })
+        .from(bookings)
+        .where(eq(bookings.groupId, booking.groupId))
+        .execute();
+
+      for (const groupBooking of groupBookings) {
+        playerCount += groupBooking.playerCount;
+      }
+    }
     if (booking && booking?.transferedFromBookingId !== "0x000") {
       booking.providerId = "";
     }
-    return booking;
+
+    return { ...booking, playerCount };
   };
 
   checkIfTeeTimeAvailableOnProvider = async (teeTimeId: string, golfersCount: number, userId: string) => {
@@ -4241,6 +4272,127 @@ export class BookingService {
     return false;
   };
 
+  checkIfTeeTimeGroupAvailableOnProvider = async (teeTimeIds: string[], golfersCount: number, minimumPlayersPerBooking: number, userId: string) => {
+    const cacheKey = `teeTimeData:${teeTimeIds.toString()}`;
+    const cacheTTL = 600; // Cache TTL in seconds
+    let teeTimesData: any = await cacheManager.get(cacheKey);
+
+    if (!teeTimesData) {
+
+      // Fetch tee time data from the database if not in cache
+      const teeTimeData = await this.database
+        .select({
+          id: teeTimes.id,
+          courseId: teeTimes.courseId,
+          time: teeTimes.time,
+          availableFirstHandSpots: teeTimes.availableFirstHandSpots,
+          providerCourseId: providerCourseLink.providerCourseId,
+          providerTeeSheetId: providerCourseLink.providerTeeSheetId,
+          internalId: providers.internalId,
+          providerDate: teeTimes.providerDate,
+          providerCourseConfiguration: providerCourseLink.providerCourseConfiguration,
+          providerTeeTimeId: teeTimes.providerTeeTimeId,
+        })
+        .from(teeTimes)
+        .leftJoin(courses, eq(teeTimes.courseId, courses.id))
+        .leftJoin(
+          providerCourseLink,
+          and(
+            eq(providerCourseLink.courseId, teeTimes.courseId),
+            eq(providerCourseLink.providerId, courses.providerId)
+          )
+        )
+        .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))
+        .where(inArray(teeTimes.id, teeTimeIds))
+        .orderBy(asc(teeTimes.providerDate))
+        .execute()
+        .catch((err) => {
+          this.logger.error(`Error finding tee time id: ${err}`);
+          loggerService.errorLog({
+            userId,
+            url: "/checkIfTeeTimeAvailableOnProvider",
+            userAgent: "",
+            message: "ERROR_CHECKING_TEE_TIME_AVAILABILITY",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              userId,
+              teeTimeIds,
+            }),
+          });
+          throw new Error(`Error finding tee time id`);
+        });
+
+      if (!teeTimeData) {
+        this.logger.fatal(`tee time not found id: ${teeTimeIds.toString()}`);
+        loggerService.errorLog({
+          userId,
+          url: "/checkIfTeeTimeGroupAvailableOnProvider",
+          userAgent: "",
+          message: "TEE_TIME_NOT_FOUND",
+          stackTrace: `tee time not found id: ${teeTimeIds.toString()}`,
+          additionalDetailsJSON: JSON.stringify({
+            userId,
+            teeTimeIds,
+          }),
+        });
+        throw new Error(`Error finding tee time id`);
+      }
+
+      // Cache the fetched tee time data
+      teeTimesData = teeTimeData;
+      await cacheManager.set(cacheKey, teeTimesData, cacheTTL);
+    }
+
+    const firstTeeTime = teeTimesData[0];
+    const lastTeeTime = teeTimesData[teeTimesData.length - 1];
+    const { provider, token } = await this.providerService.getProviderAndKey(
+      firstTeeTime.internalId!,
+      firstTeeTime.courseId,
+      firstTeeTime.providerCourseConfiguration!
+    );
+    const providerDetailsGetTeeTime = await provider.getTeeTimes(
+      token,
+      firstTeeTime.providerCourseId ?? "",
+      firstTeeTime.providerTeeSheetId!,
+      `${firstTeeTime.time}`.length === 3 ? `0${firstTeeTime.time}` : `${firstTeeTime.time}`,
+      `${lastTeeTime.time + 1}`.length === 3 ? `0${lastTeeTime.time + 1}` : `${lastTeeTime.time + 1}`,
+      firstTeeTime.providerDate.split("T")[0] ?? ""
+    );
+    if (providerDetailsGetTeeTime?.length) {
+      let playerCount = golfersCount;
+      for (const teeTime of teeTimesData) {
+        const teeTimeData = provider.findTeeTimeById(teeTime.providerTeeTimeId, providerDetailsGetTeeTime);
+        if (!teeTimeData) {
+          loggerService.errorLog({
+            userId: userId,
+            url: "/checkIfTeeTimeGroupAvailableOnProvider",
+            userAgent: "",
+            message: "Tee time already booked couldn't find tee Time",
+            stackTrace: `Tee time already booked  teetimeId${teeTimeIds.toString()} userId:${userId}`,
+            additionalDetailsJSON: "",
+          });
+          return false;
+        }
+        const requiredPlayers = Math.min(playerCount, minimumPlayersPerBooking);
+        const availableSpots = provider.getAvailableSpotsOnTeeTime(teeTimeData);
+
+        if (availableSpots < requiredPlayers) {
+          loggerService.errorLog({
+            userId: userId,
+            url: "/checkIfTeeTimeGroupAvailableOnProvider",
+            userAgent: "",
+            message: "Tee time already booked",
+            stackTrace: `Tee time already booked  teetimeId${teeTimeIds.toString()} userId:${userId}`,
+            additionalDetailsJSON: "",
+          });
+          return false;
+        }
+        playerCount -= requiredPlayers;
+      }
+    }
+    return true;
+  }
+
   checkIfUserIsOptMemberShip = async (userId: string, bookingId: string) => {
     const [canReSellResult] = await this.database
       .select({ canResell: bookings.canResell })
@@ -4248,4 +4400,506 @@ export class BookingService {
       .where(eq(bookings.id, bookingId ?? ""));
     return canReSellResult?.canResell;
   };
+
+  reserveGroupBooking = async (
+    userId: string,
+    cartId: string,
+    payment_id: string,
+    sensibleQuoteId: string,
+    source: string,
+    additionalNoteFromUser: string | undefined,
+    needRentals: boolean,
+    redirectHref: string,
+    courseMembershipId: string,
+    playerCountForMemberShip: string,
+    providerCourseMembershipId: string
+  ) => {
+    let bookingStage = "Normalizing Cart Data";
+    const {
+      cart,
+      playerCount,
+      primaryGreenFeeCharge,
+      // teeTimeId,
+      taxCharge,
+      sensibleCharge,
+      convenienceCharge,
+      charityCharge,
+      markupCharge,
+      taxes,
+      total,
+      charityId,
+      weatherQuoteId,
+      paymentId,
+      cartFeeCharge,
+      teeTimeIds,
+      minPlayersPerBooking
+    } = await this.normalizeCartData({
+      cartId,
+      userId,
+    });
+    const teeTimeIdsAsString = teeTimeIds.toString();
+
+    bookingStage = "Checking if payment id is valid";
+    console.log(`Check if payment id is valid ${payment_id}`);
+    const isValid = await this.checkIfPaymentIdIsValid(payment_id);
+    if (!isValid) {
+      throw new Error("Payment Id not is not valid");
+    }
+    if (!weatherQuoteId) {
+      bookingStage = "Cancelling sensible quote Because it is not valid";
+      console.log("Cancel Sensible Quote ID : ", sensibleQuoteId);
+      this.sensibleService.cancelQuote(sensibleQuoteId);
+    }
+
+    bookingStage = "Checking if booking is already done";
+    const [bookedAlready] = await this.database
+      .select({
+        id: bookings.id,
+      })
+      .from(bookings)
+      .where(eq(bookings.providerPaymentId, payment_id));
+
+    if (bookedAlready) {
+      throw new Error("Booking already done");
+    }
+
+    // const pricePerGolfer = primaryGreenFeeCharge / playerCount;
+    const pricePerGolfer = playerCount !== 0 ? primaryGreenFeeCharge / playerCount : 0;
+
+    bookingStage = "Retrieving tee time from database";
+    console.log(`Retrieving tee time from database ${teeTimeIdsAsString}`);
+
+    // let teeTime: any = await cacheManager.get(`teeTime:${teeTimeId}`);
+    // if (!teeTime) {
+    const tempTeeTimes = await this.database
+      .select({
+        id: teeTimes.id,
+        courseId: teeTimes.courseId,
+        // entityId: teeTimes.entityId,
+        entityId: courses.entityId,
+        date: teeTimes.date,
+        providerCourseId: providerCourseLink.providerCourseId,
+        providerTeeSheetId: providerCourseLink.providerTeeSheetId,
+        providerId: providerCourseLink.providerId,
+        internalId: providers.internalId,
+        providerDate: teeTimes.providerDate,
+        holes: teeTimes.numberOfHoles,
+        cdnKey: assets.key,
+        extension: assets.extension,
+        websiteURL: courses.websiteURL,
+        courseName: courses.name,
+        entityName: entities.name,
+        providerTeeTimeId: teeTimes.providerTeeTimeId,
+        isWebhookAvailable: providers.isWebhookAvailable,
+        timeZoneCorrection: courses.timezoneCorrection,
+        providerCourseConfiguration: providerCourseLink.providerCourseConfiguration,
+        greenFees: teeTimes.greenFeePerPlayer,
+        cartFees: teeTimes.cartFeePerPlayer,
+        greenFeeTaxPercent: courses.greenFeeTaxPercent,
+        cartFeeTaxPercent: courses.cartFeeTaxPercent,
+        weatherGuaranteeTaxPercent: courses.weatherGuaranteeTaxPercent,
+        markupTaxPercent: courses.markupTaxPercent,
+        timezoneCorrection: courses.timezoneCorrection,
+        firstHandSpotsAvailable: teeTimes.availableFirstHandSpots,
+      })
+      .from(teeTimes)
+      .leftJoin(courses, eq(teeTimes.courseId, courses.id))
+      .leftJoin(assets, eq(assets.id, courses.logoId))
+      .leftJoin(entities, eq(courses.entityId, entities.id))
+      .leftJoin(
+        providerCourseLink,
+        and(
+          eq(providerCourseLink.courseId, teeTimes.courseId),
+          eq(providerCourseLink.providerId, courses.providerId)
+        )
+      )
+      //.leftJoin(courses, eq(courses.id, teeTimes.courseId))
+      .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))
+      .where(inArray(teeTimes.id, teeTimeIds as string[]))
+      .orderBy(asc(teeTimes.providerDate))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error finding tee time id ${teeTimeIdsAsString}: ${err}`);
+        loggerService.errorLog({
+          userId: userId,
+          url: "/reserveGroupBooking",
+          userAgent: "",
+          message: "ERROR_FINDING_TEE_TIME_ID",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            userId,
+            teeTimeIds,
+          }),
+        });
+        throw new Error(`Error finding tee time id`);
+      });
+
+    //   await cacheManager.set(`teeTime:${teeTimeId}`, teeTime); // Cache for 1 hour
+    // }
+
+    const firstTeeTime = tempTeeTimes[0];
+
+    // Calculate additional taxes
+
+    const greenFeeTaxTotal =
+      ((firstTeeTime?.greenFees ?? 0) / 100) * ((firstTeeTime?.greenFeeTaxPercent ?? 0) / 100 / 100) * playerCount;
+    const markupTaxTotal = (markupCharge / 100) * ((firstTeeTime?.markupTaxPercent ?? 0) / 100) * playerCount;
+    const weatherGuaranteeTaxTotal =
+      (sensibleCharge / 100) * ((firstTeeTime?.weatherGuaranteeTaxPercent ?? 0) / 100);
+    const cartFeeTaxPercentTotal =
+      (((cartFeeCharge / 100) * ((firstTeeTime?.cartFeeTaxPercent ?? 0) / 100)) / 100) * playerCount;
+
+    const additionalTaxes =
+      greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal;
+
+    if (!firstTeeTime) {
+      this.logger.fatal(`tee time not found id: ${teeTimeIdsAsString}`);
+      loggerService.errorLog({
+        userId: userId,
+        url: "/reserveGroupBooking",
+        userAgent: "",
+        message: "ERROR_FINDING_TEE_TIME_ID",
+        stackTrace: `tee time not found id: ${teeTimeIdsAsString}`,
+        additionalDetailsJSON: JSON.stringify({
+          userId,
+          teeTimeIds,
+        }),
+      });
+      throw new Error(`Error finding tee time id`);
+    }
+
+    bookingStage = "Retrieving provider and token";
+    console.log(`Retrieving provider and token ${firstTeeTime.internalId}, ${firstTeeTime.courseId}`);
+    const providerBookings: ProviderBooking[] = [];
+    const teeProvider: ProviderAPI | null = null;
+    const teeToken: string | null = null;
+    const bookedPLayers: { accountNumber: number }[] = [];
+    let bookingData;
+    const providerBookingId = "";
+    const providerBookingIds: string[] = [];
+    let remainingPlayersToBook = playerCount;
+    const { provider, token } = await this.providerService.getProviderAndKey(
+      firstTeeTime.internalId!,
+      firstTeeTime.courseId,
+      firstTeeTime.providerCourseConfiguration!
+    );
+    for (const teeTime of tempTeeTimes) {
+      try {
+        bookingStage = "Finding or creating customer";
+        console.log(
+          `Finding or creating customer ${userId}, ${firstTeeTime.courseId}, ${firstTeeTime.providerId}, ${firstTeeTime.providerCourseId}, ${token}`
+        );
+
+        //check if the teeTime has valid amount of spots available
+        const requiredSpots = Math.min(remainingPlayersToBook as number, minPlayersPerBooking as number);
+        if (requiredSpots > teeTime.firstHandSpotsAvailable) {
+          loggerService.errorLog({
+            userId: userId,
+            url: "/reserveGroupBooking",
+            userAgent: "",
+            message: "Tee time already booked",
+            stackTrace: `Tee time already booked  teetimeId${teeTimeIdsAsString} userId:${userId}`,
+            additionalDetailsJSON: "",
+          });
+          throw new Error("Tee time already booked");
+        }
+
+        const providerCustomer = await this.providerService.findOrCreateCustomer(
+          firstTeeTime.courseId,
+          firstTeeTime.providerId ?? "",
+          firstTeeTime.providerCourseId!,
+          userId,
+          provider,
+          token
+        );
+        let details = await appSettingService.get("TEE_SHEET_BOOKING_MESSAGE");
+        try {
+          const isSensibleNoteAvailable = await appSettingService.get("SENSIBLE_NOTE_TO_TEE_SHEET");
+          if (weatherQuoteId && isSensibleNoteAvailable) {
+            details = `${details}: ${isSensibleNoteAvailable}`;
+          }
+        } catch (e) {
+          console.log("ERROR in getting appsetting SENSIBLE_NOTE_TO_TEE_SHEET");
+        }
+
+        if (additionalNoteFromUser) {
+          details = `${details}\n${additionalNoteFromUser}`;
+        } else {
+          details = `${details}`;
+        }
+
+        bookingStage = "Getting booking Creation Data";
+        const bookingData = provider.getBookingCreationData({
+          firstHandCharge: primaryGreenFeeCharge,
+          markupCharge,
+          taxCharge,
+          playerCount: courseMembershipId ? +playerCountForMemberShip : requiredSpots,
+          holes: teeTime.holes,
+          notes: details,
+          teeTimeId: teeTime.id,
+          providerTeeTimeId: teeTime.providerTeeTimeId,
+          startTime: teeTime.providerDate,
+          greenFees: teeTime.greenFees / 100,
+          cartFees: teeTime.cartFees / 100,
+          providerCustomerId: providerCustomer.customerId?.toString() ?? null,
+          providerAccountNumber: providerCustomer.playerNumber,
+          totalAmountPaid: primaryGreenFeeCharge / 100 + taxCharge - markupCharge,
+          name: providerCustomer.name,
+          email: providerCustomer.email,
+          phone: providerCustomer.phone,
+        });
+        bookingStage = "Creating Booking on Provider";
+        const booking = await provider
+          .createBooking(token, teeTime.providerCourseId!, teeTime.providerTeeSheetId!, bookingData, userId)
+          .catch((err) => {
+            this.logger.error(`first hand booking at provider failed for teetime ${teeTime.id}: ${err}`);
+            loggerService.errorLog({
+              userId: userId,
+              url: "/reserveGroupBooking",
+              userAgent: "",
+              message: "TEE TIME BOOKING FAILED ON PROVIDER",
+              stackTrace: `${err.stack}`,
+              additionalDetailsJSON: `first hand booking at provider failed for teetime ${teeTime.id}`,
+            });
+            throw new Error(`Error creating booking`);
+          });
+
+        if (provider.shouldAddSaleData()) {
+          bookingStage = "Adding Sales Data";
+          try {
+            console.log("Amounts: ", primaryGreenFeeCharge / 100, taxCharge, markupCharge);
+            const bookingsDetails: BookingDetails = {
+              playerCount: courseMembershipId ? +playerCountForMemberShip : requiredSpots,
+              providerCourseId: teeTime.providerCourseId!,
+              providerTeeSheetId: teeTime.providerTeeSheetId!,
+              totalAmountPaid: (pricePerGolfer / 100 + taxCharge - markupCharge) * requiredSpots,
+              token: token,
+            };
+            const addSalesOptions = provider.getSalesDataOptions(booking, bookingsDetails);
+            await provider.addSalesData(addSalesOptions);
+          } catch (error: any) {
+            this.logger.error(`Error adding sales data, ${JSON.stringify(error.message)}`);
+            loggerService.errorLog({
+              userId: userId,
+              url: "/reserveGroupBooking",
+              userAgent: "",
+              message: "ERROR_ADDING_SALES_DATA",
+              stackTrace: `${JSON.stringify(error)}`,
+              additionalDetailsJSON: JSON.stringify({
+                userId,
+                teeTimeId: teeTime.id,
+                error,
+                booking: JSON.stringify(booking),
+              }),
+            });
+          }
+        }
+        if (additionalNoteFromUser || needRentals) {
+          const courseContactsList = await this.database
+            .select({
+              email: courseContacts.email,
+              phone: courseContacts.phone1,
+            })
+            .from(courseContacts)
+            .where(
+              and(eq(courseContacts.courseId, teeTime.courseId), eq(courseContacts.sendNotification, true))
+            )
+            .execute()
+            .catch((err) => {
+              this.logger.error(`Error getting course contacts list, ${JSON.stringify(err.message)}`);
+              loggerService.errorLog({
+                userId: userId,
+                url: "/reserveGroupBooking",
+                userAgent: "",
+                message: "ERROR_GETTING_COURSE_CONTACTS_LIST",
+                stackTrace: `${JSON.stringify(err)}`,
+                additionalDetailsJSON: JSON.stringify({
+                  userId,
+                  teeTimeId: teeTime.id,
+                  error: err,
+                }),
+              });
+              return [];
+            });
+
+          const [user] = await this.database.select().from(users).where(eq(users.id, userId)).execute();
+          const emailList = courseContactsList.map((contact) => contact.email);
+          if (emailList.length > 0) {
+            emailList.map(async (email) => {
+              await this.notificationService.sendEmailByTemplate(
+                email,
+                "Reservation Additional Request",
+                process.env.SENDGRID_COURSE_CONTACT_NOTIFICATION_TEMPLATE_ID!,
+                {
+                  EMail: user?.email ?? "",
+                  CustomerName: user?.name ?? "",
+                  NoteFromUser: additionalNoteFromUser || "-",
+                  NeedRentals: needRentals ? "Yes" : "No",
+                  PlayDateTime: formatTime(teeTime.providerDate, true, teeTime.timezoneCorrection ?? 0),
+                  HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+                  CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${teeTime.cdnKey}.${teeTime.extension}`,
+                },
+                []
+              );
+            });
+          }
+        }
+
+        const providerBooking = {
+          providerBookingId: provider.getBookingId(booking),
+          providerBookingSlotIds: provider.getSlotIdsFromBooking(booking),
+          playerCount: courseMembershipId ? +playerCountForMemberShip : requiredSpots,
+          teeTimeId: teeTime.id
+        }
+        if (!providerBooking.providerBookingId) {
+          this.logger.error(`No booking id found in response from provider: ${JSON.stringify(booking)}`);
+          throw new Error("No booking id found in response from provider");
+        }
+        remainingPlayersToBook -= requiredSpots;
+        providerBookings.push(providerBooking);
+      } catch (e) {
+        console.log("BOOKING FAILED ON PROVIDER, INITIATING REFUND FOR PAYMENT_ID", payment_id);
+        this.hyperSwitchService.sendEmailForBookingFailed(
+          paymentId,
+          teeTime.courseId,
+          cartId,
+          sensibleQuoteId,
+          userId,
+          bookingStage
+        );
+        for (const providerBooking of providerBookings) {
+          const providerBookingId = providerBooking.providerBookingId;
+          try {
+            await provider.deleteBooking(token, teeTime.providerCourseId!, teeTime.providerTeeSheetId!, providerBookingId);
+          } catch (error: any) {
+            this.logger.error(`Error removing booking, ${JSON.stringify(error.message)}`);
+            loggerService.errorLog({
+              userId: userId,
+              url: "/reserveGroupBooking",
+              userAgent: "",
+              message: "ERROR_REMOVING_BOOKING",
+              stackTrace: `${JSON.stringify(error)}`,
+              additionalDetailsJSON: JSON.stringify({
+                userId,
+                teeTimeId: teeTime.id,
+                error,
+                booking: JSON.stringify(providerBooking),
+              }),
+            })
+          }
+        }
+        throw "Booking failed on provider";
+      }
+    }
+
+    console.log(`Creating tokenized booking`);
+
+    //create tokenized bookings
+
+    const bookingId = await this.tokenizeService
+      .tokenizeBooking({
+        redirectHref,
+        userId,
+        purchasePrice: pricePerGolfer,
+        players: playerCount as number,
+        providerBookingId,
+        providerTeeTimeId: "" as string,
+        paymentId: paymentId as string,
+        withCart: true,
+        provider: provider,
+        token: token,
+        teeTime: firstTeeTime,
+        normalizedCartData: {
+          cart,
+          primaryGreenFeeCharge,
+          taxCharge,
+          sensibleCharge,
+          convenienceCharge,
+          charityCharge,
+          taxes,
+          total,
+          charityId,
+          weatherQuoteId,
+          cartId,
+          markupCharge,
+        },
+        isWebhookAvailable: firstTeeTime?.isWebhookAvailable ?? false,
+        providerBookingIds,
+        cartFeeCharge: cartFeeCharge,
+        additionalTaxes: {
+          greenFeeTaxTotal,
+          markupTaxTotal,
+          weatherGuaranteeTaxTotal,
+          cartFeeTaxPercentTotal,
+          additionalTaxes,
+        },
+        source,
+        additionalNoteFromUser,
+        needRentals,
+        courseMembershipId: courseMembershipId,
+        playerCountForMemberShip,
+        isFirstHandGroupBooking: true,
+        providerBookings
+      })
+      .catch(async (err) => {
+        this.logger.error(`Error creating booking, ${err}`);
+        //@TODO this email should be removed
+        await this.notificationService.createNotification(
+          userId,
+          "Error creating group booking",
+          "An error occurred while creating booking with provider",
+          firstTeeTime.courseId
+        );
+        this.hyperSwitchService.sendEmailForBookingFailed(
+          paymentId,
+          firstTeeTime.courseId,
+          cartId,
+          sensibleQuoteId,
+          userId,
+          bookingStage
+        );
+        for (const providerBooking of providerBookings) {
+          const providerBookingId = providerBooking.providerBookingId;
+          try {
+            await provider.deleteBooking(token, firstTeeTime.providerCourseId!, firstTeeTime.providerTeeSheetId!, providerBookingId);
+          } catch (error: any) {
+            this.logger.error(`Error removing booking, ${JSON.stringify(error.message)}`);
+            loggerService.errorLog({
+              userId: userId,
+              url: "/reserveGroupBooking",
+              userAgent: "",
+              message: "ERROR_REMOVING_BOOKING",
+              stackTrace: `${JSON.stringify(error)}`,
+              additionalDetailsJSON: JSON.stringify({
+                userId,
+                teeTimeIds: teeTimeIdsAsString,
+                error,
+                booking: JSON.stringify(providerBooking),
+              }),
+            })
+          }
+        }
+        loggerService.errorLog({
+          userId: userId,
+          url: "/reserveGroupBooking",
+          userAgent: "",
+          message: "TEE TIME BOOKING FAILED ON GOLF DISTRIC",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: `first hand booking at provider failed for teetime ${teeTimeIdsAsString}`,
+        });
+        throw new Error(`Error creating booking`);
+      });
+
+    const bookingIds = bookingId.bookingId.split(",");
+    for (const bookingId of bookingIds) {
+      await this.sendMessageToVerifyPayment(paymentId as string, userId, bookingId, redirectHref);
+    }
+    return {
+      bookingId: bookingIds[0],
+      providerBookingId,
+      status: "Reserved",
+      isEmailSend: bookingId.isEmailSend,
+    } as ReserveTeeTimeResponse;
+  };
+
 }

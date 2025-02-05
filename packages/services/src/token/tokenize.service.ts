@@ -4,6 +4,7 @@ import { and, eq, inArray } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import type { InsertBooking } from "@golf-district/database/schema/bookings";
 import { bookings } from "@golf-district/database/schema/bookings";
+import type { InsertBookingSlots } from "@golf-district/database/schema/bookingslots";
 import { bookingslots } from "@golf-district/database/schema/bookingslots";
 import { courses } from "@golf-district/database/schema/courses";
 import { customerCarts } from "@golf-district/database/schema/customerCart";
@@ -22,6 +23,9 @@ import type { NotificationService } from "../notification/notification.service";
 import type { SensibleService } from "../sensible/sensible.service";
 import type { ProviderAPI } from "../tee-sheet-provider/sheet-providers";
 import { loggerService } from "../webhooks/logging.service";
+import type { ProviderBooking } from "../booking/booking.service";
+import { groupBookings } from "@golf-district/database/schema/groupBooking";
+
 
 /**
  * Service class for handling booking tokenization, transfers, and updates.
@@ -163,6 +167,8 @@ export class TokenizeService {
     courseMembershipId,
     playerCountForMemberShip,
     providerCourseMembershipId,
+    isFirstHandGroupBooking,
+    providerBookings
   }: {
     redirectHref: string;
     userId: string;
@@ -202,12 +208,29 @@ export class TokenizeService {
     courseMembershipId?: string;
     playerCountForMemberShip?: string;
     providerCourseMembershipId?: string;
+      isFirstHandGroupBooking?: boolean;
+      providerBookings?: ProviderBooking[];
   }): Promise<BookingTypes> {
     this.logger.info(`tokenizeBooking tokenizing booking id: ${providerTeeTimeId} for user: ${userId}`);
     //@TODO add this to the transaction
 
+    if (!providerBookings && isFirstHandGroupBooking) {
+      this.logger.fatal("No provider bookings found");
+      loggerService.errorLog({
+        userId: userId,
+        url: "/TokenizeService/tokenizeBooking",
+        userAgent: "",
+        message: "NO_PROVIDER_BOOKINGS",
+        stackTrace: "No provider bookings found",
+        additionalDetailsJSON: "",
+      })
+      throw new Error("No provider bookings found");
+    }
+
+    const teeTimeIds = providerBookings?.map(booking => booking.teeTimeId) ?? [];
+
     console.log(`Retrieving tee time ${providerTeeTimeId}`);
-    const [existingTeeTime] = await this.database
+    const existingTeeTimes = await this.database
       .select({
         id: teeTimes.id,
         // entityId: teeTimes.entityId,
@@ -230,7 +253,11 @@ export class TokenizeService {
         timezoneCorrection: courses.timezoneCorrection,
       })
       .from(teeTimes)
-      .where(eq(teeTimes.id, providerTeeTimeId))
+      .where(
+        isFirstHandGroupBooking ?
+          inArray(teeTimes.id, teeTimeIds) :
+          eq(teeTimes.id, providerTeeTimeId)
+      )
       .leftJoin(courses, eq(courses.id, teeTimes.courseId))
       .leftJoin(assets, eq(assets.id, courses.logoId))
       .leftJoin(entities, eq(courses.entityId, entities.id))
@@ -249,10 +276,11 @@ export class TokenizeService {
             providerBookingId,
           }),
         });
-        return [];
+        throw new Error("ERROR_GETTING_EXISTING_TEETIME");
       });
 
-    if (!existingTeeTime) {
+    const existingTeeTime = existingTeeTimes[0];
+    if (!existingTeeTimes.length || !existingTeeTime) {
       //how has a booking been created for a tee time that does not exist? big problem
       this.logger.fatal(`TeeTime with ID: ${providerTeeTimeId} does not exist.`);
       loggerService.errorLog({
@@ -265,7 +293,6 @@ export class TokenizeService {
       });
       throw new Error(`TeeTime with ID: ${providerTeeTimeId} does not exist.`);
     }
-
     // TODO: Shouldn't this logic not be present before sending the booking to the provider?
     // if (existingTeeTime.availableFirstHandSpots < players) {
     //   this.logger.fatal(
@@ -286,8 +313,11 @@ export class TokenizeService {
 
     const bookingsToCreate: InsertBooking[] = [];
     const transfersToCreate: InsertTransfer[] = [];
+    let bookingSlots: InsertBookingSlots[] = [];
     const transactionId = randomUUID();
     const bookingId = randomUUID();
+    const groupId = randomUUID();
+    const bookingIds: string[] = [];
 
     let acceptedQuote: AcceptedQuoteParams = { id: null, price_charged: 0 };
 
@@ -296,7 +326,7 @@ export class TokenizeService {
     );
 
     console.log(`isFirstHandBooking= ${isFirstHandBooking}`);
-    if (isFirstHandBooking) {
+    if (isFirstHandBooking || isFirstHandGroupBooking) {
       const weatherGuaranteeData = normalizedCartData.cart?.cart?.filter(
         (item: ProductData) => item.product_data.metadata.type === "sensible"
       );
@@ -308,7 +338,7 @@ export class TokenizeService {
           acceptedQuote = await this.sensibleService.acceptQuote({
             quoteId: weatherGuaranteeData[0].product_data.metadata.sensible_quote_id,
             price_charged: weatherGuaranteeData[0].price / 100,
-            reservation_id: bookingId,
+            reservation_id: isFirstHandGroupBooking ? groupId : bookingId,
             lang_locale: "en_US",
             user: {
               email: normalizedCartData?.cart?.email,
@@ -366,98 +396,202 @@ export class TokenizeService {
       }
     }
 
-    bookingsToCreate.push({
-      id: bookingId,
-      // purchasedAt: currentUtcTimestamp(),
-      // time: existingTeeTime.date,
-      providerBookingId: providerBookingId,
-      // withCart: withCart,
-      isListed: false,
-      numberOfHoles: existingTeeTime.numberOfHoles,
-      minimumOfferPrice: 0,
-      ownerId: userId,
-      // courseId: existingTeeTime.courseId,
-      teeTimeId: existingTeeTime.id,
-      nameOnBooking: existingTeeTime.customerName ?? "Guest",
-      includesCart: withCart,
-      listId: null,
-      // entityId: existingTeeTime.entityId,
-      cartId: normalizedCartData.cartId,
-      playerCount: courseMembershipId ? Number(playerCountForMemberShip) : players ?? 0,
-      greenFeePerPlayer: (isFirstHandBooking ? existingTeeTime.greenFee : purchasePrice) || 0,
-      totalTaxesAmount: additionalTaxes.additionalTaxes * 100, // normalizedCartData.taxCharge * 100 || 0,
-      charityId: normalizedCartData.charityId || null,
-      totalCharityAmount: normalizedCartData.charityCharge * 100 || 0,
-      totalAmount: (normalizedCartData.total || 0) + additionalTaxes.additionalTaxes * 100,
-      providerPaymentId: paymentId,
-      weatherQuoteId: normalizedCartData.weatherQuoteId ?? null,
-      weatherGuaranteeId: acceptedQuote?.id ? acceptedQuote?.id : null,
-      weatherGuaranteeAmount: acceptedQuote?.price_charged ? acceptedQuote?.price_charged * 100 : 0,
-      markupFees: (normalizedCartData?.markupCharge ?? 0) * 100,
-      cartFeePerPlayer: cartFeeCharge,
-      totalGreenFeeTaxAmount: additionalTaxes.greenFeeTaxTotal * 100,
-      totalCartFeeTaxAmount: additionalTaxes.cartFeeTaxPercentTotal * 100,
-      totalWeatherGuaranteeTaxAmount: additionalTaxes.weatherGuaranteeTaxTotal * 100,
-      totalMarkupFeeTaxAmount: additionalTaxes.markupTaxTotal * 100,
-      source: source ? source : null,
-      customerComment: additionalNoteFromUser,
-      needClubRental: needRentals,
-      courseMembershipId: courseMembershipId,
-      canResell: courseMembershipId ? 1 : 0,
-    });
-    transfersToCreate.push({
-      id: randomUUID(),
-      amount: purchasePrice + additionalTaxes.additionalTaxes * 100,
-      purchasedPrice: purchasePrice,
-      bookingId: bookingId,
-      transactionId: transactionId,
-      fromUserId: "0x000", //first hand sales are from the platform
-      toUserId: userId,
-      courseId: existingTeeTime.courseId,
-      weatherGuaranteeId: acceptedQuote?.id ? acceptedQuote?.id : "",
-      weatherGuaranteeAmount: acceptedQuote?.price_charged ? acceptedQuote?.price_charged * 100 : 0,
-    });
+    if (isFirstHandGroupBooking && providerBookings) {
+      for (const booking of providerBookings) {
+        const teeTimeData = existingTeeTimes.find((existingTeeTime) => existingTeeTime.id === booking.teeTimeId);
+        const transactionId = randomUUID();
+        const bookingId = randomUUID();
+        bookingIds.push(bookingId);
+        const totalAmountPerPlayer = ((normalizedCartData.total || 0) + additionalTaxes.additionalTaxes * 100) / players;
 
-    console.log(`Getting slot IDs for booking.`);
+        bookingsToCreate.push({
+          id: bookingId,
+          providerBookingId: booking.providerBookingId,
+          isListed: false,
+          numberOfHoles: teeTimeData?.numberOfHoles,
+          minimumOfferPrice: 0,
+          ownerId: userId,
+          teeTimeId: booking.teeTimeId,
+          nameOnBooking: teeTimeData?.customerName ?? "Guest",
+          includesCart: withCart,
+          listId: null,
+          cartId: normalizedCartData.cartId,
+          playerCount: courseMembershipId ? Number(playerCountForMemberShip) : booking.playerCount ?? 0,
+          greenFeePerPlayer: purchasePrice || 0,
+          totalTaxesAmount: additionalTaxes.additionalTaxes * 100, // normalizedCartData.taxCharge * 100 || 0,
+          charityId: normalizedCartData.charityId || null,
+          totalCharityAmount: normalizedCartData.charityCharge * 100 || 0,
+          totalAmount: totalAmountPerPlayer * booking.playerCount,
+          providerPaymentId: paymentId,
+          weatherQuoteId: normalizedCartData.weatherQuoteId ?? null,
+          weatherGuaranteeId: acceptedQuote?.id ? acceptedQuote?.id : null,
+          weatherGuaranteeAmount: acceptedQuote?.price_charged ? acceptedQuote?.price_charged * 100 : 0,
+          markupFees: (normalizedCartData?.markupCharge ?? 0) * 100,
+          cartFeePerPlayer: cartFeeCharge,
+          totalGreenFeeTaxAmount: additionalTaxes.greenFeeTaxTotal * 100,
+          totalCartFeeTaxAmount: additionalTaxes.cartFeeTaxPercentTotal * 100,
+          totalWeatherGuaranteeTaxAmount: additionalTaxes.weatherGuaranteeTaxTotal * 100,
+          totalMarkupFeeTaxAmount: additionalTaxes.markupTaxTotal * 100,
+          source: source ? source : null,
+          customerComment: additionalNoteFromUser,
+          needClubRental: needRentals,
+          courseMembershipId: courseMembershipId,
+          canResell: courseMembershipId ? 1 : 0,
+          groupId: groupId,
+        });
+        transfersToCreate.push({
+          id: randomUUID(),
+          amount: purchasePrice + additionalTaxes.additionalTaxes * 100,
+          purchasedPrice: purchasePrice,
+          bookingId: bookingId,
+          transactionId: transactionId,
+          fromUserId: "0x000", //first hand sales are from the platform
+          toUserId: userId,
+          courseId: existingTeeTime.courseId,
+          weatherGuaranteeId: acceptedQuote?.id ? acceptedQuote?.id : "",
+          weatherGuaranteeAmount: acceptedQuote?.price_charged ? acceptedQuote?.price_charged * 100 : 0,
+        });
 
-    //create bookings according to slot in bookingslot tables
-    const bookingSlots =
-      (await provider?.getSlotIdsForBooking(
-        bookingId,
-        courseMembershipId ? Number(playerCountForMemberShip) : players ?? 0,
-        userId,
-        providerBookingId,
-        provider.providerId,
-        existingTeeTime.courseId,
-        providerBookingIds,
-        providerCourseMembershipId
-      )) ?? [];
+        console.log(`Getting slot IDs for booking.`);
 
-    console.log(`Looping through and updating the booking slots.`);
-    if (provider?.requireToCreatePlayerSlots()) {
-      for (let i = 0; i < bookingSlots.length; i++) {
-        //TODO: Why can't we use if( i === 0 ) { continue; }? Would it be cleaner?
-        if (i != 0) {
-          await provider?.updateTeeTime(
-            token ?? "",
-            teeTime?.providerCourseId ?? "",
-            teeTime?.providerTeeSheetId ?? "",
-            providerBookingId,
-            {
-              data: {
-                type: "Guest",
-                id: providerBookingId,
-                attributes: {
+        //create bookings according to slot in bookingslot tables
+        const slots =
+          (await provider?.getSlotIdsForBooking(
+            bookingId,
+            courseMembershipId ? Number(playerCountForMemberShip) : booking.playerCount ?? 0,
+            userId,
+            booking.providerBookingId,
+            provider.providerId,
+            existingTeeTime.courseId,
+            booking.providerBookingSlotIds,
+            providerCourseMembershipId
+          )) ?? [];
+        bookingSlots = [...bookingSlots, ...slots];
+
+        console.log(`Looping through and updating the booking slots.`);
+        if (provider?.requireToCreatePlayerSlots()) {
+          for (let i = 0; i < slots.length; i++) {
+            //TODO: Why can't we use if( i === 0 ) { continue; }? Would it be cleaner?
+            if (i != 0) {
+              await provider?.updateTeeTime(
+                token ?? "",
+                teeTime?.providerCourseId ?? "",
+                teeTime?.providerTeeSheetId ?? "",
+                booking.providerBookingId,
+                {
+                  data: {
+                    type: "Guest",
+                    id: booking.providerBookingId,
+                    attributes: {
+                      type: "Guest",
+                      name: "Guest",
+                      paid: false,
+                      cartPaid: false,
+                      noShow: false,
+                    },
+                  },
+                },
+                bookingSlots[i]?.slotnumber
+              );
+            }
+          }
+        }
+      }
+    } else {
+      bookingsToCreate.push({
+        id: bookingId,
+        // purchasedAt: currentUtcTimestamp(),
+        // time: existingTeeTime.date,
+        providerBookingId: providerBookingId,
+        // withCart: withCart,
+        isListed: false,
+        numberOfHoles: existingTeeTime.numberOfHoles,
+        minimumOfferPrice: 0,
+        ownerId: userId,
+        // courseId: existingTeeTime.courseId,
+        teeTimeId: existingTeeTime.id,
+        nameOnBooking: existingTeeTime.customerName ?? "Guest",
+        includesCart: withCart,
+        listId: null,
+        // entityId: existingTeeTime.entityId,
+        cartId: normalizedCartData.cartId,
+        playerCount: courseMembershipId ? Number(playerCountForMemberShip) : players ?? 0,
+        greenFeePerPlayer: (isFirstHandBooking ? existingTeeTime.greenFee : purchasePrice) || 0,
+        totalTaxesAmount: additionalTaxes.additionalTaxes * 100, // normalizedCartData.taxCharge * 100 || 0,
+        charityId: normalizedCartData.charityId || null,
+        totalCharityAmount: normalizedCartData.charityCharge * 100 || 0,
+        totalAmount: (normalizedCartData.total || 0) + additionalTaxes.additionalTaxes * 100,
+        providerPaymentId: paymentId,
+        weatherQuoteId: normalizedCartData.weatherQuoteId ?? null,
+        weatherGuaranteeId: acceptedQuote?.id ? acceptedQuote?.id : null,
+        weatherGuaranteeAmount: acceptedQuote?.price_charged ? acceptedQuote?.price_charged * 100 : 0,
+        markupFees: (normalizedCartData?.markupCharge ?? 0) * 100,
+        cartFeePerPlayer: cartFeeCharge,
+        totalGreenFeeTaxAmount: additionalTaxes.greenFeeTaxTotal * 100,
+        totalCartFeeTaxAmount: additionalTaxes.cartFeeTaxPercentTotal * 100,
+        totalWeatherGuaranteeTaxAmount: additionalTaxes.weatherGuaranteeTaxTotal * 100,
+        totalMarkupFeeTaxAmount: additionalTaxes.markupTaxTotal * 100,
+        source: source ? source : null,
+        customerComment: additionalNoteFromUser,
+        needClubRental: needRentals,
+        courseMembershipId: courseMembershipId,
+        canResell: courseMembershipId ? 1 : 0,
+      });
+      transfersToCreate.push({
+        id: randomUUID(),
+        amount: purchasePrice + additionalTaxes.additionalTaxes * 100,
+        purchasedPrice: purchasePrice,
+        bookingId: bookingId,
+        transactionId: transactionId,
+        fromUserId: "0x000", //first hand sales are from the platform
+        toUserId: userId,
+        courseId: existingTeeTime.courseId,
+        weatherGuaranteeId: acceptedQuote?.id ? acceptedQuote?.id : "",
+        weatherGuaranteeAmount: acceptedQuote?.price_charged ? acceptedQuote?.price_charged * 100 : 0,
+      });
+
+      console.log(`Getting slot IDs for booking.`);
+
+      //create bookings according to slot in bookingslot tables
+      const slots =
+        (await provider?.getSlotIdsForBooking(
+          bookingId,
+          courseMembershipId ? Number(playerCountForMemberShip) : players ?? 0,
+          userId,
+          providerBookingId,
+          provider.providerId,
+          existingTeeTime.courseId,
+          providerBookingIds,
+          providerCourseMembershipId
+        )) ?? [];
+      bookingSlots = [...bookingSlots, ...slots];
+
+      console.log(`Looping through and updating the booking slots.`);
+      if (provider?.requireToCreatePlayerSlots()) {
+        for (let i = 0; i < bookingSlots.length; i++) {
+          //TODO: Why can't we use if( i === 0 ) { continue; }? Would it be cleaner?
+          if (i != 0) {
+            await provider?.updateTeeTime(
+              token ?? "",
+              teeTime?.providerCourseId ?? "",
+              teeTime?.providerTeeSheetId ?? "",
+              providerBookingId,
+              {
+                data: {
                   type: "Guest",
-                  name: "Guest",
-                  paid: false,
-                  cartPaid: false,
-                  noShow: false,
+                  id: providerBookingId,
+                  attributes: {
+                    type: "Guest",
+                    name: "Guest",
+                    paid: false,
+                    cartPaid: false,
+                    noShow: false,
+                  },
                 },
               },
-            },
-            bookingSlots[i]?.slotnumber
-          );
+              bookingSlots[i]?.slotnumber
+            );
+          }
         }
       }
     }
@@ -465,6 +599,35 @@ export class TokenizeService {
     console.log(`Creating bookings and slots in database.`);
     //create all booking in a transaction to ensure atomicity
     await this.database.transaction(async (tx) => {
+      if (isFirstHandGroupBooking) {
+        await tx
+          .insert(groupBookings)
+          .values({
+            id: groupId as string,
+            name: existingTeeTime.customerName ?? "Guest",
+            courseId: existingTeeTime.courseId,
+            providerPaymentId: paymentId,
+          })
+          .execute()
+          .catch((err) => {
+            this.logger.error(err);
+            loggerService.errorLog({
+              userId: userId,
+              url: `/TokenizeService/tokenizeBooking`,
+              userAgent: "",
+              message: "ERROR_CREATING_GROUP_BOOKING",
+              stackTrace: `${err.stack}`,
+              additionalDetailsJSON: JSON.stringify({
+                groupId,
+                existingTeeTime,
+                paymentId,
+                providerBookings
+              }),
+            });
+            tx.rollback();
+          })
+      }
+
       //create each booking
       await tx
         .insert(bookings)
@@ -562,68 +725,106 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
     This is a first party purchase from the course
     `;
 
-    const event: Event = {
-      startDate: existingTeeTime.date,
-      endDate: existingTeeTime.date,
-      email: existingTeeTime.email ?? "",
-      address: existingTeeTime.address,
-      name: existingTeeTime.name,
-      reservationId: bookingId,
-      courseReservation: providerBookingId,
-      numberOfPlayer: players.toString(),
-      playTime: this.extractTime(
-        formatTime(existingTeeTime.providerDate, true, existingTeeTime.timezoneCorrection ?? 0)
-      ),
-    };
+    let event: Event, template;
+    if (isFirstHandGroupBooking) {
+      event = {
+        startDate: existingTeeTime.date,
+        endDate: existingTeeTime.date,
+        email: existingTeeTime.email ?? "",
+        address: existingTeeTime.address,
+        name: existingTeeTime.name,
+        reservationGroupId: groupId,
+        numberOfPlayer: players.toString(),
+        playTime: this.extractTime(
+          formatTime(existingTeeTime.providerDate, true, existingTeeTime.timezoneCorrection ?? 0)
+        ),
+      };
+
+      template = {
+        CustomerFirstName: existingTeeTime.customerName?.split(" ")[0],
+        CourseName: existingTeeTime.courseName ?? "-",
+        FacilityName: existingTeeTime.entityName ?? "-",
+        PlayDateTime: formatTime(existingTeeTime.providerDate, true, existingTeeTime.timezoneCorrection ?? 0),
+        NumberOfHoles: existingTeeTime.numberOfHoles,
+        SensibleWeatherIncluded: normalizedCartData.sensibleCharge ? "Yes" : "No",
+        PurchasedFrom: existingTeeTime.courseName ?? "-",
+        PlayerCount: players ?? 0,
+        TotalAmount: formatMoney(normalizedCartData.total / 100 + additionalTaxes.additionalTaxes),
+        CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
+        CourseURL: existingTeeTime?.websiteURL ?? "",
+        HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+        SellTeeTImeURL: `${redirectHref}/my-tee-box`,
+        ManageTeeTimesURL: `${redirectHref}/my-tee-box`,
+      };
+    } else {
+      event = {
+        startDate: existingTeeTime.date,
+        endDate: existingTeeTime.date,
+        email: existingTeeTime.email ?? "",
+        address: existingTeeTime.address,
+        name: existingTeeTime.name,
+        reservationId: bookingId,
+        courseReservation: providerBookingId,
+        numberOfPlayer: players.toString(),
+        playTime: this.extractTime(
+          formatTime(existingTeeTime.providerDate, true, existingTeeTime.timezoneCorrection ?? 0)
+        ),
+      };
+
+      template = {
+        CustomerFirstName: existingTeeTime.customerName?.split(" ")[0],
+        CourseName: existingTeeTime.courseName ?? "-",
+        // GolfDistrictReservationID: bookingsToCreate?.[0]?.id ?? "-",
+        CourseReservationID: providerBookingId ?? "-",
+        FacilityName: existingTeeTime.entityName ?? "-",
+        PlayDateTime: formatTime(existingTeeTime.providerDate, true, existingTeeTime.timezoneCorrection ?? 0),
+        NumberOfHoles: existingTeeTime.numberOfHoles,
+        GreenFeesPerPlayer:
+          `$${(
+            (existingTeeTime.greenFee + Number(cartFeeCharge) + (normalizedCartData?.markupCharge ?? 0) * 100) /
+            100
+          ).toLocaleString("en-US", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}` ?? "-",
+        GreenFees:
+          `$${(
+            ((existingTeeTime.greenFee +
+              Number(cartFeeCharge) +
+              (normalizedCartData?.markupCharge ?? 0) * 100) *
+              players) /
+            100
+          ).toLocaleString("en-US", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}` ?? "-",
+        TaxesAndOtherFees: `$${(normalizedCartData.taxes + additionalTaxes.additionalTaxes).toLocaleString(
+          "en-US",
+          {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          }
+        )}`,
+        SensibleWeatherIncluded: normalizedCartData.sensibleCharge ? "Yes" : "No",
+        PurchasedFrom: existingTeeTime.courseName ?? "-",
+        PlayerCount: players ?? 0,
+        TotalAmount: formatMoney(normalizedCartData.total / 100 + additionalTaxes.additionalTaxes),
+        CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
+        CourseURL: existingTeeTime?.websiteURL ?? "",
+        HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+        // BuyTeeTImeURL: `${redirectHref}`,
+        // CashOutURL: `${redirectHref}/account-settings/${userId}`,
+        SellTeeTImeURL: `${redirectHref}/my-tee-box`,
+        ManageTeeTimesURL: `${redirectHref}/my-tee-box`,
+      };
+    }
+
     const icsContent: string = createICS(event);
 
-    const template = {
-      CustomerFirstName: existingTeeTime.customerName?.split(" ")[0],
-      CourseName: existingTeeTime.courseName ?? "-",
-      // GolfDistrictReservationID: bookingsToCreate?.[0]?.id ?? "-",
-      CourseReservationID: providerBookingId ?? "-",
-      FacilityName: existingTeeTime.entityName ?? "-",
-      PlayDateTime: formatTime(existingTeeTime.providerDate, true, existingTeeTime.timezoneCorrection ?? 0),
-      NumberOfHoles: existingTeeTime.numberOfHoles,
-      GreenFeesPerPlayer:
-        `$${(
-          (existingTeeTime.greenFee + Number(cartFeeCharge) + (normalizedCartData?.markupCharge ?? 0) * 100) /
-          100
-        ).toLocaleString("en-US", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        })}` ?? "-",
-      GreenFees:
-        `$${(
-          ((existingTeeTime.greenFee +
-            Number(cartFeeCharge) +
-            (normalizedCartData?.markupCharge ?? 0) * 100) *
-            players) /
-          100
-        ).toLocaleString("en-US", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        })}` ?? "-",
-      TaxesAndOtherFees: `$${(normalizedCartData.taxes + additionalTaxes.additionalTaxes).toLocaleString(
-        "en-US",
-        {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        }
-      )}`,
-      SensibleWeatherIncluded: normalizedCartData.sensibleCharge ? "Yes" : "No",
-      PurchasedFrom: existingTeeTime.courseName ?? "-",
-      PlayerCount: players ?? 0,
-      TotalAmount: formatMoney(normalizedCartData.total / 100 + additionalTaxes.additionalTaxes),
-      CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
-      CourseURL: existingTeeTime?.websiteURL ?? "",
-      HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
-      // BuyTeeTImeURL: `${redirectHref}`,
-      // CashOutURL: `${redirectHref}/account-settings/${userId}`,
-      SellTeeTImeURL: `${redirectHref}/my-tee-box`,
-      ManageTeeTimesURL: `${redirectHref}/my-tee-box`,
-    };
     console.log(template);
+
+    const sendgridTemplateId = isFirstHandGroupBooking ? process.env.SENDGRID_TEE_TIMES_GROUP_PURCHASED_TEMPLATE_ID : process.env.SENDGRID_TEE_TIMES_PURCHASED_TEMPLATE_ID;
+
     let isEmailSend = false;
     try {
       await this.notificationService.createNotification(
@@ -631,7 +832,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
         "TeeTimes Purchased",
         message,
         existingTeeTime.courseId,
-        process.env.SENDGRID_TEE_TIMES_PURCHASED_TEMPLATE_ID,
+        sendgridTemplateId,
         template,
         [
           {
@@ -660,7 +861,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
       });
     }
     const bookingIdObject: { bookingId: string; isEmailSend: boolean } = {
-      bookingId: bookingId,
+      bookingId: isFirstHandGroupBooking ? bookingIds.toString() : bookingId,
       isEmailSend,
     };
     return bookingIdObject;
