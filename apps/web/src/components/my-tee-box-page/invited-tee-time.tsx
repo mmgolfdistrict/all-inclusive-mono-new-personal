@@ -24,22 +24,29 @@ const InvitedTeeTime = () => {
               </tr>
             </thead>
             <tbody className={`max-h-[300px] w-full flex-col overflow-scroll`}>
-              <tr className="w-full border-b border-stroke text-primary-gray">
-                <td className="flex items-center gap-2 px-4 py-3">
-                  <Avatar src={course?.logo} />
-                  <div className="whitespace-nowrap underline text-secondary-black">
-                    {data?.courseName}
-                  </div>
-                </td>
+              {data?.map((item, index) => {
+                return (
+                  <tr
+                    key={index}
+                    className="w-full border-b border-stroke text-primary-gray"
+                  >
+                    <td className="flex items-center gap-2 px-4 py-3">
+                      <Avatar src={course?.logo} />
+                      <div className="whitespace-nowrap underline text-secondary-black">
+                        {item?.courseName}
+                      </div>
+                    </td>
 
-                <td className="whitespace-nowrap px-4 py-3 unmask-players">
-                  {formatTime(
-                    data?.date ?? "",
-                    false,
-                    data?.timezoneCorrection ?? 0
-                  )}
-                </td>
-              </tr>
+                    <td className="whitespace-nowrap px-4 py-3 unmask-players">
+                      {formatTime(
+                        item?.date ?? "",
+                        false,
+                        item?.timezoneCorrection ?? 0
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

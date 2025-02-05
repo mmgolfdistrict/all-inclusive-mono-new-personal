@@ -324,7 +324,7 @@ export class UserService {
     }
 
     // Fetch slot details to check availability
-    const [invitedUsers] = await this.database
+    const invitedUsers = await this.database
       .select({
         email: invitedTeeTime.email,
         teeTimeId: invitedTeeTime.teeTimeId,
@@ -341,7 +341,7 @@ export class UserService {
       .leftJoin(courses, eq(courses.id, teeTimes.courseId))
       .where(eq(invitedTeeTime.email, emailOrPhoneNumber));
 
-    if (!invitedUsers) {
+    if (!invitedUsers || invitedUsers.length === 0) {
       throw new Error("Invited users not available");
     }
     return invitedUsers;
