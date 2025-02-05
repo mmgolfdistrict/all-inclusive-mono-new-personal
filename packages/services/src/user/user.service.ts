@@ -409,7 +409,9 @@ export class UserService {
       await this.notificationsService.sendEmail(
         emailOrPhoneNumber,
         "You've been invited to Golf District",
-        `<p>${user?.name?.split(" ")[0]} has invited you to Golf District.</p>`
+        `<p>${user?.name?.split(
+          " "
+        )[0]} has invited you to Golf District. Create a new account or login with your existing account to see the tee times you are part of.</p>`
       );
     } else if (phoneRegex.test(emailOrPhoneNumber)) {
       await this.notificationsService.sendSMS(
