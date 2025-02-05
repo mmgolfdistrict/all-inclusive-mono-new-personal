@@ -40,6 +40,7 @@ export const TeeTimeDetails = ({
       courseId: courseId ?? "",
       time: data?.time,
       date: data?.date ?? "",
+      availableSlots: data?.availableSlots,
     });
   const numberOfPlayers = allowedPlayers?.numberOfPlayers;
 
