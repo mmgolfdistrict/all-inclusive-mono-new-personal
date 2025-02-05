@@ -20,6 +20,7 @@ import type {
   CartProduct,
   CharityProduct,
   ConvenienceFeeProduct,
+  FirstHandGroupProduct,
   FirstHandProduct,
   MarkupProduct,
   Offer,
@@ -197,7 +198,8 @@ export default function Checkout({
       | MarkupProduct
       | ConvenienceFeeProduct
       | TaxProduct
-      | CartFeeMetaData =
+      | CartFeeMetaData
+      | FirstHandGroupProduct =
       saleType === "first_hand"
         ? {
             type: "first_hand",

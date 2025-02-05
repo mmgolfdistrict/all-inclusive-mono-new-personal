@@ -12,6 +12,7 @@ export default function CheckoutConfirmation() {
   const teeTimeId = params.get("teeTimeId");
   const bookingId = params.get("bookingId");
   const isEmailSend = params.get("isEmailSend") === "true";
+  const isGroupBooking = params.get("isGroupBooking") === "true";
 
   const { data: systemNotifications } =
     api.systemNotification.getSystemNotification.useQuery({});
@@ -38,6 +39,7 @@ export default function CheckoutConfirmation() {
         teeTimeId={teeTimeId!}
         bookingId={bookingId ?? ""}
         isEmailSend={isEmailSend}
+        isGroupBooking={isGroupBooking}
       />
     </div>
   );

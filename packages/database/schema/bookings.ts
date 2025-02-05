@@ -54,6 +54,7 @@ export const bookings = mySqlTable(
     needClubRental: boolean("needClubRental").default(false).notNull(),
     canResell: tinyint("canResell").notNull().default(0),
     courseMembershipId: varchar("courseMembershipId", { length: 36 }),
+    groupId: varchar("groupId", { length: 36 }),
   },
   (table) => {
     return {

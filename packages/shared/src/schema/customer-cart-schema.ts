@@ -126,6 +126,18 @@ export const GreenFeeTaxPercentSchema = BaseProductSchema.extend({
   }),
 });
 
+// Firsthand group schema
+export const FirstHandGroupProductSchema = BaseProductSchema.extend({
+  product_data: z.object({
+    metadata: z.object({
+      type: z.literal("first_hand_group"),
+      tee_time_ids: z.array(z.string()),
+      number_of_bookings: z.number(),
+      min_players_per_booking: z.number(),
+    }),
+  }),
+});
+
 // ProductData schema
 export const ProductDataSchema = z.union([
   FirstHandProductSchema,
@@ -141,6 +153,7 @@ export const ProductDataSchema = z.union([
   GreenFeeTaxPercentSchema,
   WeatherGuaranteeTaxPercentSchema,
   MarkupTaxPercentSchema,
+  FirstHandGroupProductSchema
 ]);
 
 // CustomerCart schema
