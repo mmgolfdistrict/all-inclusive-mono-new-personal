@@ -331,7 +331,6 @@ export class UserService {
         bookingId: invitedTeeTime.bookingId,
         bookingSlotId: invitedTeeTime.bookingSlotId,
         slotPosition: invitedTeeTime.slotPosition,
-        status: invitedTeeTime.status,
         courseName: courses.name,
         date: teeTimes.providerDate,
         timezoneCorrection: courses.timezoneCorrection,

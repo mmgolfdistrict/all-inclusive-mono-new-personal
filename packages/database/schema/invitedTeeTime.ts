@@ -10,7 +10,6 @@ export const invitedTeeTime = mySqlTable("invitedTeeTime", {
   bookingId: varchar("bookingId", { length: 191 }),
   bookingSlotId: varchar("bookingSlotId", { length: 191 }),
   slotPosition: smallint("slotPosition").default(0),
-  status: tinyint("status").default(0).notNull(),
   createdDateTime: datetime("createdDateTime", { mode: "string", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
   lastUpdatedDateTime: datetime("lastUpdatedDateTime", { mode: "string", fsp: 3 }).default(
     sql`CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)`
