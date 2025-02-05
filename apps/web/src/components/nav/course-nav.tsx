@@ -205,7 +205,7 @@ export const CourseNav = () => {
         const buttons = [
           {
             text: "Next",
-            action: tour.next,
+            action:()=>tour.next(),
             classes:
               "!bg-primary !rounded-xl !min-w-[110px] !border-2 !border-primary !px-5 !py-1.5 !text-white",
           },
@@ -217,7 +217,7 @@ export const CourseNav = () => {
             action: () => {
               const element = document.querySelector(`#${section.sectionId}`)!;
               if (element instanceof HTMLElement) {
-                tour.cancel();
+               void tour.cancel();
                 element.click();
                 // handleGuideMe()
               }
@@ -249,7 +249,7 @@ export const CourseNav = () => {
     tour.on("cancel", removeHighlight);
     tour.on("complete", removeHighlight);
 
-    tour.start();
+   void tour.start();
   };
 
   return (
@@ -470,7 +470,7 @@ export const CourseNav = () => {
                 data-testid="my-offer-id"
                 data-test={courseId}
                 onClick={handleResetFilters}
-                id="navbar-my-offers"
+                 id="navbar-my-offers"
               />
             ) : null}
 
