@@ -906,7 +906,7 @@ export class SearchService extends CacheService {
             eq(courseAllowedTimeToSell.courseId, teeTimes.courseId),
             eq(
               courseAllowedTimeToSell.day,
-              sql`UPPER(DATE_FORMAT(DATE(Convert_TZ(${teeTimes.providerDate}, 'UTC', ${courses.timezoneISO})), '%a'))`
+              sql`UPPER(DATE_FORMAT(DATE(SUBSTRING_INDEX(${teeTimes.providerDate}, '-', 3)), '%a'))`
             )
           )
         )
@@ -1109,6 +1109,7 @@ export class SearchService extends CacheService {
       .utcOffset(timezoneCorrection)
       .add(30, "minutes")
       .toISOString();
+      
 
     const countSubQuery = this.database
       .select({
@@ -1129,8 +1130,7 @@ export class SearchService extends CacheService {
         and(
           and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
           between(teeTimes.greenFeePerPlayer, lowerPrice, upperPrice),
-          gte(teeTimes.providerDate, currentTimePlus30Min),
-          between(teeTimes.providerDate, startOfDay, endOfDay),
+          between(sql`DATE(SUBSTRING_INDEX(${teeTimes.providerDate}, '-', 3))`, startOfDay, endOfDay),
           eq(teeTimes.courseId, courseId),
           //TODO: use isCartIncluded instead
           // includesCart ? gte(teeTimes.cartFeePerPlayer, 1) : eq(teeTimes.cartFeePerPlayer, 0),
@@ -1207,8 +1207,7 @@ export class SearchService extends CacheService {
       .where(
         and(
           and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
-          gte(teeTimes.providerDate, currentTimePlus30Min),
-          between(teeTimes.providerDate, startOfDay, endOfDay),
+          between(sql`DATE(SUBSTRING_INDEX(${teeTimes.providerDate}, '-', 3))`, startOfDay, endOfDay),
           eq(teeTimes.courseId, courseId),
           eq(teeTimes.numberOfHoles, holes),
           gte(teeTimes.availableFirstHandSpots, golfers === -1 ? 1 : golfers),
