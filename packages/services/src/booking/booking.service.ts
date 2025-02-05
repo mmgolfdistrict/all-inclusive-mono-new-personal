@@ -81,7 +81,7 @@ interface OwnedTeeTimeData {
   firstHandPrice: number;
   golfers: InviteFriend[];
   bookingIds: string[];
-  slotsData: SlotsData[];
+  slotsData?: SlotsData[];
   purchasedFor: number | null;
   status: string;
   listingId: string | null;
@@ -736,7 +736,7 @@ export class BookingService {
         const currentEntry = combinedData[teeTime.providerBookingId];
         if (currentEntry) {
           currentEntry.bookingIds.push(teeTime.bookingId);
-          currentEntry.slotsData.push({
+          currentEntry?.slotsData?.push({
             name: teeTime.slotCustomerName,
             customerId: teeTime.slotCustomerId!,
             slotId: teeTime.slotId!,
@@ -769,7 +769,9 @@ export class BookingService {
     for (const t of Object.values(combinedData)) {
       const finaldata: InviteFriend[] = [];
 
-      for (const slot of t.slotsData) {
+      const slots = t.slotsData ?? [];
+
+      for (const slot of slots) {
         if (slot.customerId !== "") {
           const userData = await this.database
             .select({

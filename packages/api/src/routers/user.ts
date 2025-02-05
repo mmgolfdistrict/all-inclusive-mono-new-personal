@@ -9,12 +9,32 @@ export const userRouter = createTRPCRouter({
       z.object({
         emailOrPhone: z.string(),
         courseId: z.string(),
+        teeTimeId: z.string(),
+        bookingSlotId: z.string(),
+        slotPosition: z.number(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       return await ctx.serviceFactory
         .getUserService()
-        .inviteUser(ctx.session.user.id, input.emailOrPhone, input.courseId);
+        .inviteUser(
+          ctx.session.user.id,
+          input.emailOrPhone,
+          input.teeTimeId,
+          input.bookingSlotId,
+          input.slotPosition
+        );
+    }),
+  getInvitedUsers: protectedProcedure
+    .input(
+      z.object({
+        emailOrPhoneNumber: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return await ctx.serviceFactory
+        .getUserService()
+        .getInvitedUsers(ctx.session.user.id, input.emailOrPhoneNumber);
     }),
   getUser: publicProcedure
     .input(
