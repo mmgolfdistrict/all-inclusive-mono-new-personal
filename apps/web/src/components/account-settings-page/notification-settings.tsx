@@ -83,7 +83,6 @@ export const NotificationSettings = () => {
     <section
       className="mx-auto flex h-fit w-full flex-col gap-6 bg-white px-3 py-2  md:rounded-xl md:p-6 md:py-4"
       // style={{ height: "49%" }}
-      id="notifications-account-settings"
     >
       <div>
         <h3 className="text-[18px] md:text-[24px]">Notifications</h3>

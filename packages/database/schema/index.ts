@@ -63,8 +63,6 @@ import * as userSession from "./userSession";
 import * as userWaitlists from "./userWaitlists";
 import * as verificationTokens from "./verificationTokens";
 import * as withdrawals from "./withdrawals";
-import * as walkthrough from "./walkthrough"
-import * as walkthroughSection from "./walkthroughSection"
 import * as groupBookings from "./groupBooking"
 
 export const schema = {
@@ -133,7 +131,5 @@ export const schema = {
   ...adminRolePermission,
   ...adminRoles,
   ...adminUserRole,
-  ...walkthrough,
-  ...walkthroughSection,
   ...groupBookings
 };

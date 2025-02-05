@@ -75,7 +75,7 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
   return (
     <>
       <Modal isOpen={modalOpen} onClose={closeModal} />
-      <section className="h-full mx-auto flex w-full flex-col gap-6 bg-white px-3 py-2 mb-2  md:rounded-xl md:p-6 md:py-4"  id="add-bank-account-account-settings">
+      <section className="h-full mx-auto flex w-full flex-col gap-6 bg-white px-3 py-2 mb-2  md:rounded-xl md:p-6 md:py-4">
         <div>
           <h3 className="text-[18px]  md:text-[24px]">Balance</h3>
           <p className=" text-[14px] text-primary-gray md:text-[16px]">
@@ -139,7 +139,6 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
             </div>
 
             <FilledButton
-           
               onClick={openModal}
               disabled={connectAccount.isLoading}
               className={`${

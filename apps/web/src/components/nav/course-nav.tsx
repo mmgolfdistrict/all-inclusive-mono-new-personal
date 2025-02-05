@@ -25,10 +25,6 @@ import { Tooltip } from "../tooltip";
 import { PathsThatNeedRedirectOnLogout, UserInNav } from "../user/user-in-nav";
 import { NavItem } from "./nav-item";
 import { SideBar } from "./side-bar";
-import Shepherd from "shepherd.js";
-import "shepherd.js/dist/css/shepherd.css";
-import { toast } from "react-toastify";
-import "./courseNav.css";
 
 export const CourseNav = () => {
   const { user } = useUserContext();
@@ -128,129 +124,7 @@ export const CourseNav = () => {
   const handleResetFilters = () => {
     setDateType("All");
   };
-
-
-  const { data: walkthrough } =
-    api.systemNotification.getWalkthroughSetting.useQuery({});
-  const { data: walkthroughSections } =
-    api.systemNotification.getGuidMeSetting.useQuery({});
-
-  console.log("walkthrough", walkthrough);
-  console.log("walkthroughSections", walkthroughSections);
-
-  const handleGuideMe = () => {
-    if (!walkthroughSections?.length || !walkthrough?.length) {
-      console.warn("No walkthrough or walkthrough sections available.");
-      return;
-    }
-
-    let internalNameToMatch;
-
-    if (/^\/[^/]+$/.test(pathname)) {
-      internalNameToMatch = "teeTime";
-    } else {
-      const matchedWalkthrough = walkthrough.find((wt) =>
-        pathname.includes(wt.internalName)
-      );
-      if (!matchedWalkthrough) {
-        toast.error("No help available.");
-        return;
-      }
-      internalNameToMatch = matchedWalkthrough.internalName;
-    }
-
-    console.log(internalNameToMatch, "internalNameToMatchinternalNameToMatch");
-
-    const selectedWalkthrough = walkthrough.find(
-      (wt) => wt.internalName === internalNameToMatch
-    );
-
-    if (!selectedWalkthrough) {
-      toast.error("No help available.");
-      return;
-    }
-
-    const filteredSections = walkthroughSections.filter(
-      (section) => section.walkthroughId === selectedWalkthrough.id
-    );
-
-    if (!filteredSections.length) {
-      return;
-    }
-
-    // Shepherd Tour initialization
-    const tour = new Shepherd.Tour({
-      useModalOverlay: true,
-      defaultStepOptions: {
-        cancelIcon: {
-          enabled: true,
-        },
-        classes: "shadow-md bg-blue-dark mt-2.5",
-        scrollTo: { behavior: "smooth", block: "center" },
-      },
-    });
-
-    const removeHighlight = () => {
-      document.querySelectorAll('[data-highlighted="true"]').forEach((el) => {
-        const highlightedEl = el as HTMLElement;
-        highlightedEl.style.border = "";
-        highlightedEl.style.padding = "1px";
-        highlightedEl.style.borderRadius = "";
-        highlightedEl.removeAttribute("data-highlighted");
-      });
-    };
-    filteredSections
-      .sort((a, b) => (a?.displayOrder || 0) - (b?.displayOrder || 0))
-      .forEach((section) => {
-        const buttons = [
-          {
-            text: "Next",
-            action:()=>tour.next(),
-            classes:
-              "!bg-primary !rounded-xl !min-w-[110px] !border-2 !border-primary !px-5 !py-1.5 !text-white",
-          },
-        ];
-
-        if (section.sectionId === "manage-teetime-button") {
-          buttons.unshift({
-            text: "Open",
-            action: () => {
-              const element = document.querySelector(`#${section.sectionId}`)!;
-              if (element instanceof HTMLElement) {
-               void tour.cancel();
-                element.click();
-                // handleGuideMe()
-              }
-            },
-            classes: "!bg-secondary",
-          });
-        }
-
-        tour.addStep({
-          id: section.id,
-          text: section.message,
-          attachTo: { element: `#${section.sectionId}`, on: "bottom" },
-          when: {
-            "before-show": () => {
-              removeHighlight();
-              const element = document.querySelector(`#${section.sectionId}`)!;
-              if (element instanceof HTMLElement) {
-                element.style.padding = "10px";
-                element.setAttribute("data-highlighted", "true");
-              }
-            },
-            "after-hide": removeHighlight,
-          },
-          buttons,
-          classes: "!rounded-xl",
-          title: selectedWalkthrough?.name,
-        });
-      });
-    tour.on("cancel", removeHighlight);
-    tour.on("complete", removeHighlight);
-
-   void tour.start();
-  };
+  // if (pathname.includes("/checkout")) return null;
 
   return (
     <div className="fixed top-0 w-full z-20">
@@ -396,7 +270,6 @@ export const CourseNav = () => {
               data-testid="tee-time-id"
               data-test={courseId}
               onClick={handleResetFilters}
-              id="navbar-find-times"
             />
             {course?.supportsWaitlist ? (
               <NavItem
@@ -406,7 +279,6 @@ export const CourseNav = () => {
                 data-testid="notify-me-id"
                 data-test={courseId}
                 onClick={handleResetFilters}
-                id="navbar-waitlist"
               />
             ) : null}
             {course?.supportsGroupBooking ? (
@@ -427,7 +299,6 @@ export const CourseNav = () => {
                 data-testid="auction-id"
                 data-test={courseId}
                 onClick={handleResetFilters}
-                id="navbar-auctions"
               />
             ) : null}
             <NavItem
@@ -437,7 +308,6 @@ export const CourseNav = () => {
               data-testid="sell-your-tee-time-id"
               data-test={courseId}
               onClick={handleResetFilters}
-              id="navbar-sell"
             />
             <NavItem
               href={`/${courseId}/my-tee-box?section=owned`}
@@ -446,7 +316,6 @@ export const CourseNav = () => {
               data-testid="sell-your-tee-time-id"
               data-test={courseId}
               onClick={handleResetFilters}
-              id="navbar-my-tee-box"
             />
 
             {course?.supportsOffers ? (
@@ -470,18 +339,8 @@ export const CourseNav = () => {
                 data-testid="my-offer-id"
                 data-test={courseId}
                 onClick={handleResetFilters}
-                 id="navbar-my-offers"
               />
             ) : null}
-
-            <NavItem
-              href=""
-              text="Guide Me"
-              icon={<Calendar className="w-[16px]" />}
-              data-testid="sell-your-tee-time-id"
-              data-test={courseId}
-              onClick={handleGuideMe}
-            />
           </div>
         </div>
       </div>
