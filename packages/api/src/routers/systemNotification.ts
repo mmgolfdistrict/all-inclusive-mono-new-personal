@@ -17,4 +17,19 @@ export const systemNotificationRouter = createTRPCRouter({
         .getSystemNotificationService()
         .getCourseGlobalNotification(input.courseId);
     }),
+
+    getWalkthroughSetting: publicProcedure.input(z.object({}))
+    .query(async ({ ctx }) => {
+      return await ctx.serviceFactory
+        .getSystemNotificationService()
+        .getWalkthroughSetting();
+    }), 
+
+    getGuidMeSetting: publicProcedure.input(z.object({}))
+        .query(async ({ ctx }) => {
+          return await ctx.serviceFactory
+            .getSystemNotificationService()
+            .getGuidMeSetting();
+        }),
+
 });
