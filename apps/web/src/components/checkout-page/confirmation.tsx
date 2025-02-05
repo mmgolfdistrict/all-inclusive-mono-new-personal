@@ -14,11 +14,13 @@ interface ConfirmationProps {
   teeTimeId: string;
   bookingId: string;
   isEmailSend: boolean;
+  isGroupBooking: boolean
 }
 export const Confirmation = ({
   teeTimeId,
   bookingId,
   isEmailSend,
+  isGroupBooking
 }: ConfirmationProps) => {
   const { data: bookingData, isLoading: isLoadingBookingData } =
     api.teeBox.getOwnedBookingById.useQuery(
@@ -45,7 +47,7 @@ export const Confirmation = ({
               <span>Loading ...</span>
             ) : (
               <>
-                {bookingData?.providerId?.length ? (
+                  {bookingData?.providerId?.length && !isGroupBooking ? (
                   <div style={{ paddingBottom: "5px" }}>
                     <span style={{ fontWeight: 500 }}>
                       Course Reservation ID
@@ -53,7 +55,15 @@ export const Confirmation = ({
                     <span style={{ margin: "0 15px" }}>:</span>
                     <span>{bookingData?.providerId}</span>
                   </div>
-                ) : null}
+                  ) : (
+                    <div style={{ paddingBottom: "5px" }}>
+                      <span style={{ fontWeight: 500 }}>
+                        Player Count
+                      </span>
+                      <span style={{ margin: "0 15px" }}>:</span>
+                      <span>{bookingData?.playerCount}</span>
+                    </div>
+                  )}
 
                 <div style={{ paddingBottom: "20px" }}>
                   <span style={{ fontWeight: 500 }}>Play Time</span>

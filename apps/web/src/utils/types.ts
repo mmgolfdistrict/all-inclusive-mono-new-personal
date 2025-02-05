@@ -132,7 +132,8 @@ export type CartProduct = {
       | WeatherGuaranteeTaxPercentMetaData
       | MarkupTaxPercentMetaData
       | GreenFeeTaxPercentMetaData
-      | CartFeeTaxPercentMetaData;
+    | CartFeeTaxPercentMetaData
+    | FirstHandGroupProduct;
   };
 };
 
@@ -192,6 +193,12 @@ export interface ConvenienceFeeProduct {
 }
 export interface TaxProduct {
   type: "taxes";
+}
+export interface FirstHandGroupProduct {
+  type: "first_hand_group";
+  number_of_bookings: number;
+  tee_time_ids: string[];
+  min_players_per_booking: number;
 }
 
 export type MaxReservationResponse =

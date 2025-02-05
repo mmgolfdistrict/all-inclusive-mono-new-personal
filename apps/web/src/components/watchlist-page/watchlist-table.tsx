@@ -165,7 +165,7 @@ export const WatchlistTable = () => {
                     removeFromWatchlist={removeFromWatchlist}
                     openMakeAnOffer={() => openMakeAnOffer(i)}
                     teeTimeId={i.teeTimeId}
-                    ownedByName={i.ownedBy}
+                  // ownedByName={i.ownedBy}
                     courseId={courseId ?? ""}
                     ownedById={i.ownedById}
                     listingId={i.listId ?? ""}
@@ -230,7 +230,7 @@ const TableRow = ({
   status: "LISTED" | "UNLISTED";
   teeTimeId: string;
   type: "FIRST_PARTY" | "SECOND_HAND";
-  ownedByName: string;
+    // ownedByName: string;
   courseId: string;
   ownedById: string;
   listingId: string;
