@@ -311,11 +311,45 @@ export class UserService {
     return user;
   };
 
+  getInvitedUsers = async (userId: string, emailOrPhoneNumber: string) => {
+    // Fetch user details
+    const [user] = await this.database
+      .select({ handle: users.handle, name: users.name })
+      .from(users)
+      .where(eq(users.id, userId));
+
+    if (!user) {
+      this.logger.warn(`User not found: ${userId}`);
+      throw new Error("User not found");
+    }
+
+    // Fetch slot details to check availability
+    const [invitedUsers] = await this.database
+      .select({
+        email: invitedTeeTime.email,
+        teeTimeId: invitedTeeTime.teeTimeId,
+        bookingId: invitedTeeTime.bookingId,
+        bookingSlotId: invitedTeeTime.bookingSlotId,
+        slotPosition: invitedTeeTime.slotPosition,
+        status: invitedTeeTime.status,
+      })
+      .from(invitedTeeTime)
+      .where(eq(invitedTeeTime.email, emailOrPhoneNumber));
+
+    console.log("invitedUsers---------------------> ", invitedUsers, emailOrPhoneNumber);
+
+    if (!invitedUsers) {
+      throw new Error("Invited users not available");
+    }
+    return invitedUsers;
+  };
+
   inviteUser = async (
     userId: string,
     emailOrPhoneNumber: string,
     teeTimeId: string,
-    bookingSlotId: string[]
+    bookingSlotId: string,
+    slotPosition: number
   ) => {
     // Fetch user details
     const [user] = await this.database
@@ -327,9 +361,6 @@ export class UserService {
       this.logger.warn(`User not found: ${userId}`);
       throw new Error("User not found");
     }
-    if (!bookingSlotId || !Array.isArray(bookingSlotId) || bookingSlotId.length === 0) {
-      throw new Error("Invalid or empty bookingSlotId array");
-    }
 
     // Fetch slot details to check availability
     const [bookingSlot] = await this.database
@@ -339,12 +370,13 @@ export class UserService {
         externalSlotId: bookingslots.externalSlotId,
       })
       .from(bookingslots)
-      .where(inArray(bookingslots.externalSlotId, bookingSlotId));
-    console.log("bookingSlot 1----------------------------->", bookingslots.externalSlotId, bookingSlotId);
+      .where(
+        and(eq(bookingslots.slotPosition, slotPosition), eq(bookingslots.externalSlotId, bookingSlotId))
+      );
+
     if (!bookingSlot) {
       throw new Error("Booking slot not available");
     }
-    console.log("bookingSlot 2----------------------------->", bookingSlot);
 
     // Check if invite already exists
     const [existingInvite] = await this.database
