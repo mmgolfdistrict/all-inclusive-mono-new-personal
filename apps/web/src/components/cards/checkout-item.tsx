@@ -211,7 +211,7 @@ export const CheckoutItem = ({
             {isLoading ? (
               <div className="h-6 w-[50%] bg-gray-200 rounded-md  animate-pulse" />
             ) : (
-              <span className="text-[20px] ">
+              <span className="text-[20px] " id="date-time-checkout">
                 {formatTime(
                   teeTime?.date ?? "",
                   true,
@@ -259,7 +259,7 @@ export const CheckoutItem = ({
         canShowPlayers={!isGroupBooking}
       />
       <div className="flex flex-col gap-1">
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2" id="select-membership-checkout">
           {isSupportMemberShip?.supportsProviderMembership === 1 &&
           listingId == null ? (
             <Fragment>
@@ -526,6 +526,7 @@ const Data = ({
               isDisabled={isSecondHand || selectStatus === "ALL_PLAYERS"}
               teeTimeId={teeTimeId}
               numberOfPlayers={numberOfPlayers ? numberOfPlayers : []}
+              id="number-of-players-checkout"
             />
           ) : (
             players && (
@@ -535,7 +536,7 @@ const Data = ({
             )
           )}
         </div> : null}
-        <div className="flex">
+        <div className="flex" id="price-per-golfer-checkout">
           <div className="text-[18px] font-semibold text-secondary-black">
             {formatMoney(pricePerGolfer ?? 1 ?? 0)}
           </div>
