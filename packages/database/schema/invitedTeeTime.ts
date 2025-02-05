@@ -1,6 +1,6 @@
 import type { InferSelectModel } from "drizzle-orm";
 import { sql } from "drizzle-orm";
-import { datetime, smallint, tinyint, varchar } from "drizzle-orm/mysql-core";
+import { datetime, smallint, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 
 export const invitedTeeTime = mySqlTable("invitedTeeTime", {
