@@ -65,6 +65,7 @@ import * as verificationTokens from "./verificationTokens";
 import * as withdrawals from "./withdrawals";
 import * as walkthrough from "./walkthrough"
 import * as walkthroughSection from "./walkthroughSection"
+import * as groupBookings from "./groupBooking"
 
 export const schema = {
   ...accounts,
@@ -134,4 +135,5 @@ export const schema = {
   ...adminUserRole,
   ...walkthrough,
   ...walkthroughSection,
+  ...groupBookings
 };

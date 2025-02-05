@@ -8,6 +8,7 @@ export interface Event {
   courseReservation?: string | null;
   numberOfPlayer?: string | null;
   playTime?: string | null;
+  reservationGroupId?: string | null;
   // summary: string;
   // location: string;
 }

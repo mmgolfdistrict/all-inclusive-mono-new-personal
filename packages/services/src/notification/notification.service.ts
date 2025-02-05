@@ -44,6 +44,9 @@ interface EmailParams {
   BalanceProcessing?: number | string;
   NoteFromUser?: string;
   NeedRentals?: string;
+  SellTeeTImeURL?: string;
+  ManageTeeTimesURL?: string;
+  GreenFeesPerPlayer?: string;
 }
 
 interface Attachment {

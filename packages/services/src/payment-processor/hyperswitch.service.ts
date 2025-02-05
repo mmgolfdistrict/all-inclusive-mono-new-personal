@@ -150,6 +150,7 @@ export class HyperSwitchService {
    * @throws Will throw an error if the payment intent updation fails.
    */
   updatePaymentIntent = async (paymentId: string, params: UpdatePayment, userId: string) => {
+    
     return await this.hyper.paymentIntents.update(paymentId, params).catch((err: any) => {
       this.logger.error(`Error updating payment intent: ${err}`);
       loggerService.errorLog({

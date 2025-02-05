@@ -12,7 +12,7 @@ import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
 import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
-import type { CartProduct } from "~/utils/types";
+import type { CartProduct, FirstHandGroupProduct } from "~/utils/types";
 import { useParams, useRouter } from "next/navigation";
 import type { Dispatch, SetStateAction } from "react";
 import { Fragment, useEffect, useState, type FormEvent } from "react";
@@ -114,6 +114,9 @@ export const CheckoutForm = ({
   const checkIfTeeTimeAvailableOnProvider =
     api.teeBox.checkIfTeeTimeAvailableOnProvider.useMutation();
 
+  const checkIfTeeTimeGroupAvailableOnProvider =
+    api.teeBox.checkIfTeeTimeGroupAvailableOnProvider.useMutation();
+
   const logAudit = async () => {
     await auditLog.mutateAsync({
       userId: user?.id ?? "",
@@ -142,6 +145,13 @@ export const CheckoutForm = ({
           ({ product_data }) => product_data.metadata.type === "second_hand"
         )
         ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+  }
+  const isFirstHandGroup = cartData?.filter(
+    ({ product_data }) => product_data.metadata.type === "first_hand_group"
+  );
+  if (isFirstHandGroup.length) {
+    primaryGreenFeeCharge =
+      isFirstHandGroup?.reduce((acc: number, i) => acc + i.price, 0) / 100;
   }
 
   // const secondaryGreenFeeCharge = cartData?.filter(({ product_data }) => product_data.metadata.type === "second_hand")?.reduce((acc: number, i) => acc + i.price, 0) / 100;
@@ -260,6 +270,7 @@ export const CheckoutForm = ({
   } = useCheckoutContext();
 
   const reserveBookingApi = api.teeBox.reserveBooking.useMutation();
+  const reserveGroupBookingApi = api.teeBox.reserveGroupBooking.useMutation();
   const reserveSecondHandBookingApi =
     api.teeBox.reserveSecondHandBooking.useMutation();
   const { data: checkIsBookingDisabled } = api.course.getCourseById.useQuery({
@@ -417,6 +428,19 @@ export const CheckoutForm = ({
         setIsLoading(false);
         return;
       }
+    } else if (isFirstHandGroup.length) {
+      const firstHandGroup = isFirstHandGroup[0]?.product_data.metadata as unknown as FirstHandGroupProduct;
+      const resp = await checkIfTeeTimeGroupAvailableOnProvider.mutateAsync({
+        teeTimeIds: firstHandGroup.tee_time_ids,
+        golfersCount: Number(playerCount ?? 0),
+        minimumPlayersPerBooking: firstHandGroup.min_players_per_booking ?? 4,
+      });
+
+      if (!resp) {
+        toast.error("Oops! Tee time is not available anymore");
+        setIsLoading(false);
+        return;
+      }
     } else {
       const resp = await checkIfTeeTimeAvailableOnProvider.mutateAsync({
         teeTimeId,
@@ -529,6 +553,50 @@ export const CheckoutForm = ({
               setIsLoading(false);
               return;
             }
+          } else if (isFirstHandGroup.length) {
+            try {
+              bookingResponse = await reserveBookingFirstHandGroup(
+                cartId,
+                response?.payment_id as string,
+                sensibleData?.id ?? ""
+              );
+              setReservationData({
+                golfReservationId: bookingResponse.bookingId,
+                providerReservationId: bookingResponse.providerBookingId,
+                playTime: teeTimeDate || "",
+              });
+            } catch (error) {
+              if (
+                error?.meta?.response &&
+                !Object.keys(error.meta.response).length &&
+                error.name === "TRPCClientError"
+              ) {
+                void sendEmailForBookingFailedByTimeout.mutateAsync({
+                  paymentId: response?.payment_id as string,
+                  teeTimeId: teeTimeId,
+                  cartId: cartId,
+                  userId: user?.id ?? "",
+                  courseId: courseId!,
+                  sensibleQuoteId: sensibleData?.id ?? "",
+                });
+
+                await auditLog.mutateAsync({
+                  userId: user?.id ?? "",
+                  teeTimeId: teeTimeId,
+                  bookingId: "",
+                  listingId: listingId,
+                  courseId,
+                  eventId: "Vercel function timedout",
+                  json: `Vercel function timedout`,
+                });
+              }
+
+              setMessage(
+                "Error reserving first hand group booking: " + error.message
+              );
+              setIsLoading(false);
+              return;
+            }
           } else {
             try {
               bookingResponse = await reserveSecondHandBooking(
@@ -552,7 +620,7 @@ export const CheckoutForm = ({
             router.push(`/${course?.id}/auctions/confirmation`);
           } else {
             router.push(
-              `/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}&bookingId=${bookingResponse.bookingId}&isEmailSend=${bookingResponse.isEmailSend}`
+              `/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}&bookingId=${bookingResponse.bookingId}&isEmailSend=${bookingResponse.isEmailSend}&isGroupBooking=${isFirstHandGroup.length ? "true" : "false"}`
             );
           }
         } else if (response.status === "failed") {
@@ -583,6 +651,34 @@ export const CheckoutForm = ({
     const redirectHref = href.split("/checkout")[0] || "";
 
     const bookingResponse = await reserveBookingApi.mutateAsync({
+      cartId,
+      payment_id,
+      sensibleQuoteId,
+      source: bookingSource
+        ? bookingSource
+        : sessionStorage.getItem("source") ?? "",
+      additionalNoteFromUser: validatePlayers[0]?.courseMemberShipId
+        ? `There are ${validatePlayers.length} players participating in membership program \n Total Amount Paid:$${TotalAmt} \n with courseMembershipID:${validatePlayers[0]?.courseMemberShipId}`
+        : additionalNote,
+      needRentals,
+      redirectHref,
+      courseMembershipId: validatePlayers[0]?.courseMemberShipId ?? "",
+      playerCountForMemberShip: playerCount ?? "",
+      providerCourseMembershipId:
+        validatePlayers[0]?.providerCourseMembershipId ?? "",
+    });
+    return bookingResponse;
+  };
+
+  const reserveBookingFirstHandGroup = async (
+    cartId: string,
+    payment_id: string,
+    sensibleQuoteId: string
+  ) => {
+    const href = window.location.href;
+    const redirectHref = href.split("/checkout")[0] || "";
+
+    const bookingResponse = await reserveGroupBookingApi.mutateAsync({
       cartId,
       payment_id,
       sensibleQuoteId,
@@ -1307,7 +1403,7 @@ export const CheckoutForm = ({
       <LoadingContainer
         isLoading={isLoading}
         title={"Please wait while we process your order."}
-        subtitle="Do not close or refresh your browser as this may take up to 60 seconds."
+        subtitle={`Do not close or refresh your browser as this may take up to ${isFirstHandGroup ? "few mins" : "60 seconds"}.`}
       >
         <div></div>
       </LoadingContainer>
