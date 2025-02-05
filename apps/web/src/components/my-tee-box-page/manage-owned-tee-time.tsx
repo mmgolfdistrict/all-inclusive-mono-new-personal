@@ -54,28 +54,28 @@ export const ManageOwnedTeeTime = ({
   const [inviteSuccess, setInviteSuccess] = useState<Record<string, boolean>>(
     {}
   );
-  console.log("course", selectedTeeTime);
-
   const handleInviteFriend = async (friend: InviteFriend, index: number) => {
     if (invite.isLoading) return;
-    const slotIds = selectedTeeTime?.slotsData.map((slot) => slot.slotId);
 
-    //  const extractedNumber = String(bookingslots.externalSlotId).split("-").pop();
+    // Ensure slotIds is an array of strings
+    const slotIds: string[] =
+      selectedTeeTime?.slotsData?.map(
+        (slot: unknown) => (slot as { slotId: string }).slotId
+      ) ?? [];
 
-    const findSlotByIndex = (index) => {
+    const findSlotByIndex = (index: number): string | undefined => {
       return slotIds.find((slot) => {
-        const slotIndex = slot.split("-").pop(); // Get the number after '-'
-        return parseInt(slotIndex, 10) === index;
+        const slotIndex = slot.split("-").pop(); // Extract the last part after '-'
+        return slotIndex !== undefined && parseInt(slotIndex, 10) === index;
       });
     };
 
-    console.log("index---------------> ", slotIds, findSlotByIndex(index + 1));
     try {
       await invite.mutateAsync({
         emailOrPhone: friend.name || "",
         courseId: course?.id || "",
         teeTimeId: selectedTeeTime?.teeTimeId || "",
-        bookingSlotId: findSlotByIndex(index + 1),
+        bookingSlotId: findSlotByIndex(index + 1) || "", // Ensure a string is passed
         slotPosition: index + 1,
       });
       setInviteSuccess((prev) => ({ ...prev, [friend.slotId]: true }));

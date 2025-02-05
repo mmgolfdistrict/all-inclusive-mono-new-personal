@@ -1,6 +1,6 @@
 import { randomBytes, randomUUID } from "crypto";
 import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import { and, asc, desc, eq, gt, inArray, lt, or } from "@golf-district/database";
+import { and, asc, desc, eq, gt, lt, or } from "@golf-district/database";
 import type { Db } from "@golf-district/database";
 import { accounts } from "@golf-district/database/schema/accounts";
 import { assets } from "@golf-district/database/schema/assets";
@@ -332,11 +332,14 @@ export class UserService {
         bookingSlotId: invitedTeeTime.bookingSlotId,
         slotPosition: invitedTeeTime.slotPosition,
         status: invitedTeeTime.status,
+        courseName: courses.name,
+        date: teeTimes.providerDate,
+        timezoneCorrection: courses.timezoneCorrection,
       })
       .from(invitedTeeTime)
+      .leftJoin(teeTimes, eq(teeTimes.id, invitedTeeTime.teeTimeId))
+      .leftJoin(courses, eq(courses.id, teeTimes.courseId))
       .where(eq(invitedTeeTime.email, emailOrPhoneNumber));
-
-    console.log("invitedUsers---------------------> ", invitedUsers, emailOrPhoneNumber);
 
     if (!invitedUsers) {
       throw new Error("Invited users not available");
@@ -378,17 +381,18 @@ export class UserService {
       throw new Error("Booking slot not available");
     }
 
-    // Check if invite already exists
+    // Check if invite already exists and delete it if present
     const [existingInvite] = await this.database
       .select({ id: invitedTeeTime.id })
       .from(invitedTeeTime)
       .where(and(eq(invitedTeeTime.email, emailOrPhoneNumber), eq(invitedTeeTime.teeTimeId, teeTimeId)));
 
     if (existingInvite) {
-      throw new Error("Invite already sent to this user for this tee time");
+      // Delete the existing invite before sending a new one
+      await this.database.delete(invitedTeeTime).where(eq(invitedTeeTime.id, existingInvite.id));
     }
 
-    // Save invitation
+    // Save new invitation
     await this.database.insert(invitedTeeTime).values({
       id: randomUUID(),
       email: emailOrPhoneNumber,

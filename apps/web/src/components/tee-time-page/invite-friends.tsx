@@ -66,6 +66,9 @@ export const InviteFriends = ({
       await invite.mutateAsync({
         emailOrPhone: inviteFriend,
         courseId: course?.id || "",
+        teeTimeId: "",
+        bookingSlotId: "",
+        slotPosition: 0,
       });
       setInviteSucess(true);
       setInviteFriend("");
