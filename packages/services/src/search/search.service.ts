@@ -1130,7 +1130,7 @@ export class SearchService extends CacheService {
         and(
           and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
           between(teeTimes.greenFeePerPlayer, lowerPrice, upperPrice),
-          between(sql`DATE(SUBSTRING_INDEX(${teeTimes.providerDate}, '-', 3))`, startOfDay, endOfDay),
+          between(teeTimes.providerDate, startOfDay, endOfDay),
           eq(teeTimes.courseId, courseId),
           //TODO: use isCartIncluded instead
           // includesCart ? gte(teeTimes.cartFeePerPlayer, 1) : eq(teeTimes.cartFeePerPlayer, 0),
@@ -1209,7 +1209,7 @@ export class SearchService extends CacheService {
       .where(
         and(
           and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
-          between(sql`DATE(SUBSTRING_INDEX(${teeTimes.providerDate}, '-', 3))`, startOfDay, endOfDay),
+          between(teeTimes.providerDate, startOfDay, endOfDay),
           eq(teeTimes.courseId, courseId),
           eq(teeTimes.numberOfHoles, holes),
           gte(teeTimes.availableFirstHandSpots, golfers === -1 ? 1 : golfers),
