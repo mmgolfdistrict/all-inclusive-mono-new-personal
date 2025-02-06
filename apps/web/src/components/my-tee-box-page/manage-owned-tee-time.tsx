@@ -54,29 +54,14 @@ export const ManageOwnedTeeTime = ({
   const [inviteSuccess, setInviteSuccess] = useState<Record<string, boolean>>(
     {}
   );
-  const handleInviteFriend = async (friend: InviteFriend, index: number) => {
+
+  const handleInviteFriend = async (friend: InviteFriend) => {
     if (invite.isLoading) return;
-
-    // Ensure slotIds is an array of strings
-    const slotIds: string[] =
-      selectedTeeTime?.slotsData?.map(
-        (slot: unknown) => (slot as { slotId: string }).slotId
-      ) ?? [];
-
-    const findSlotByIndex = (index: number): string | undefined => {
-      return slotIds.find((slot) => {
-        const slotIndex = slot.split("-").pop(); // Extract the last part after '-'
-        return slotIndex !== undefined && parseInt(slotIndex, 10) === index;
-      });
-    };
 
     try {
       await invite.mutateAsync({
         emailOrPhone: friend.name || "",
         courseId: course?.id || "",
-        teeTimeId: selectedTeeTime?.teeTimeId || "",
-        bookingSlotId: findSlotByIndex(index + 1) || "", // Ensure a string is passed
-        slotPosition: index + 1,
       });
       setInviteSuccess((prev) => ({ ...prev, [friend.slotId]: true }));
       toast.success("Invitation sent successfully.");
@@ -479,7 +464,7 @@ export const ManageOwnedTeeTime = ({
                                                 : ""
                                             }`}
                                             onClick={() =>
-                                              handleInviteFriend(friend, index)
+                                              handleInviteFriend(friend)
                                             }
                                             data-testid="invite-button-id"
                                           >

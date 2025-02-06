@@ -9,7 +9,6 @@ export const bookingslots = mySqlTable("bookingSlots", {
   slotnumber: varchar("externalSlotId", { length: 191 }).notNull(),
   bookingId: varchar("bookingId", { length: 191 }).notNull(),
   customerId: varchar("customerId", { length: 191 }).notNull(),
-  externalSlotId: varchar("externalSlotId", { length: 191 }),
   isActive: boolean("isActive").default(true).notNull(),
   slotPosition: smallint("slotPosition").default(0),
   lastUpdatedDateTime: datetime("lastUpdatedDateTime", { mode: "string", fsp: 3 }).default(
