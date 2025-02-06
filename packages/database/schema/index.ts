@@ -37,6 +37,7 @@ import * as donations from "./donations";
 import * as entities from "./entities";
 import * as entityAdmins from "./entityAdmins";
 import * as favorites from "./favorites";
+import * as groupBookings from "./groupBooking";
 import * as jobs from "./jobs";
 import * as lists from "./lists";
 import * as majorEvents from "./majorEvents";
@@ -56,16 +57,16 @@ import * as teeTimeIndexLogs from "./teeTimeIndexLogs";
 import * as teeTimes from "./teeTimes";
 import * as transfers from "./transfers";
 import * as userBookingOffers from "./userBookingOffers";
+import * as userPhoneCall from "./userPhoneCall";
 import * as userPromoCodeLink from "./userPromoCodeLink";
 import * as userProviderCourseLink from "./userProviderCourseLink";
 import * as users from "./users";
 import * as userSession from "./userSession";
 import * as userWaitlists from "./userWaitlists";
 import * as verificationTokens from "./verificationTokens";
+import * as walkthrough from "./walkthrough";
+import * as walkthroughSection from "./walkthroughSection";
 import * as withdrawals from "./withdrawals";
-import * as groupBookings from "./groupBooking"
-import * as walkthrough from "./walkthrough"
-import * as walkthroughSection from "./walkthroughSection"
 
 export const schema = {
   ...accounts,
@@ -136,4 +137,5 @@ export const schema = {
   ...groupBookings,
   ...walkthrough,
   ...walkthroughSection,
+  ...userPhoneCall,
 };
