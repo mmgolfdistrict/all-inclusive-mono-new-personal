@@ -13,7 +13,6 @@ const InvitedTeeTime = () => {
       emailOrPhoneNumber: session?.user?.email ?? "",
     }
   );
-  console.log("data", data);
 
   if (isError && error) {
     return (
