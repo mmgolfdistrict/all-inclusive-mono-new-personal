@@ -86,6 +86,7 @@ export const TeeTime = ({
       courseId: courseId ?? "",
       time: items.time ?? "",
       date: items.date ?? "",
+      availableSlots: availableSlots, 
     });
 
   const [selectedPlayers, setSelectedPlayers] = useState<string>("");

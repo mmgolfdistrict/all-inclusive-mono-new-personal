@@ -959,7 +959,7 @@ export class CourseService extends DomainService {
     }
   };
 
-  getNumberOfPlayersByCourse = async (courseId: string, time?: number, date?: string) => {
+  getNumberOfPlayersByCourse = async (courseId: string, time?: number, date?: string, availableSlots?: number) => {
     let binaryMask: any;
     const PlayersOptions = ["1", "2", "3", "4"];
 
@@ -968,6 +968,7 @@ export class CourseService extends DomainService {
       let NumberOfPlayers = await this.database
         .select({
           primaryMarketAllowedPlayers: courseAllowedTimeToSell.primaryMarketAllowedPlayers,
+          primaryMarketSellLeftoverSinglePlayer: courseAllowedTimeToSell.primaryMarketSellLeftoverSinglePlayer
         })
         .from(courseAllowedTimeToSell)
         .where(
@@ -981,6 +982,7 @@ export class CourseService extends DomainService {
         NumberOfPlayers = await this.database
           .select({
             primaryMarketAllowedPlayers: courses.primaryMarketAllowedPlayers,
+            primaryMarketSellLeftoverSinglePlayer: courses.primaryMarketSellLeftoverSinglePlayer
           })
           .from(courses)
           .where(eq(courses.id, courseId));
@@ -989,15 +991,22 @@ export class CourseService extends DomainService {
       if (NumberOfPlayers[0]?.primaryMarketAllowedPlayers) {
         binaryMask = NumberOfPlayers[0]?.primaryMarketAllowedPlayers;
       }
+      if (NumberOfPlayers[0]?.primaryMarketSellLeftoverSinglePlayer && availableSlots === 1) {
+        binaryMask = binaryMask | (1 << 0);
+      }
     } else {
       const NumberOfPlayers = await this.database
         .select({
           primaryMarketAllowedPlayers: courses.primaryMarketAllowedPlayers,
+          primaryMarketSellLeftoverSinglePlayer: courses.primaryMarketSellLeftoverSinglePlayer
         })
         .from(courses)
         .where(eq(courses.id, courseId));
       if (NumberOfPlayers[0]?.primaryMarketAllowedPlayers) {
         binaryMask = NumberOfPlayers[0]?.primaryMarketAllowedPlayers;
+      }
+      if (NumberOfPlayers[0]?.primaryMarketSellLeftoverSinglePlayer) {
+        binaryMask = binaryMask | (1 << 0);
       }
     }
     const numberOfPlayers =

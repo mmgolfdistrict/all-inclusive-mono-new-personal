@@ -71,6 +71,7 @@ export const CheckoutItem = ({
       courseId: courseId ?? "",
       time: teeTime?.time,
       date: teeTime?.date ?? "",
+      availableSlots: teeTime?.availableSlots
     });
 
   const { data: isSupportMemberShip } = api.course.getCourseById.useQuery({
