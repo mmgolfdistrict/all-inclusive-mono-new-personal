@@ -74,7 +74,6 @@ export const ManageOwnedTeeTime = ({
     try {
       await invite.mutateAsync({
         emailOrPhone: friend.name || "",
-        courseId: course?.id || "",
         teeTimeId: selectedTeeTime?.teeTimeId || "",
         bookingSlotId: findSlotByIndex(index + 1) || "", // Ensure a string is passed
         slotPosition: index + 1,
