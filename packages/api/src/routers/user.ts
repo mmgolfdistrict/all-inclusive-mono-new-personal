@@ -8,7 +8,6 @@ export const userRouter = createTRPCRouter({
     .input(
       z.object({
         emailOrPhone: z.string(),
-        courseId: z.string(),
         teeTimeId: z.string(),
         bookingSlotId: z.string(),
         slotPosition: z.number(),
@@ -20,7 +19,6 @@ export const userRouter = createTRPCRouter({
         .inviteUser(
           ctx.session.user.id,
           input.emailOrPhone,
-          input.courseId,
           input.teeTimeId,
           input.bookingSlotId,
           input.slotPosition
