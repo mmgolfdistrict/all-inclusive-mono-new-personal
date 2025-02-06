@@ -81,7 +81,7 @@ interface OwnedTeeTimeData {
   firstHandPrice: number;
   golfers: InviteFriend[];
   bookingIds: string[];
-  slotsData: SlotsData[];
+  slotsData?: SlotsData[];
   purchasedFor: number | null;
   status: string;
   listingId: string | null;
@@ -138,7 +138,7 @@ export type ProviderBooking = {
   providerBookingSlotIds: string[];
   playerCount: number;
   teeTimeId: string;
-}
+};
 /**
  * Service for managing bookings and transaction history.
  */
@@ -736,7 +736,7 @@ export class BookingService {
         const currentEntry = combinedData[teeTime.providerBookingId];
         if (currentEntry) {
           currentEntry.bookingIds.push(teeTime.bookingId);
-          currentEntry.slotsData.push({
+          currentEntry?.slotsData?.push({
             name: teeTime.slotCustomerName,
             customerId: teeTime.slotCustomerId!,
             slotId: teeTime.slotId!,
@@ -769,7 +769,9 @@ export class BookingService {
     for (const t of Object.values(combinedData)) {
       const finaldata: InviteFriend[] = [];
 
-      for (const slot of t.slotsData) {
+      const slots = t.slotsData ?? [];
+
+      for (const slot of slots) {
         if (slot.customerId !== "") {
           const userData = await this.database
             .select({
@@ -3117,7 +3119,7 @@ export class BookingService {
     if (!slotInfo.length) {
       slotInfo = customerCartData?.cart?.cart?.filter(
         ({ product_data }: ProductData) => product_data.metadata.type === "first_hand_group"
-      )
+      );
     }
     const playerCountFromCart = slotInfo[0]?.product_data?.metadata?.number_of_bookings;
     const markupCharge =
@@ -4270,13 +4272,17 @@ export class BookingService {
     return false;
   };
 
-  checkIfTeeTimeGroupAvailableOnProvider = async (teeTimeIds: string[], golfersCount: number, minimumPlayersPerBooking: number, userId: string) => {
+  checkIfTeeTimeGroupAvailableOnProvider = async (
+    teeTimeIds: string[],
+    golfersCount: number,
+    minimumPlayersPerBooking: number,
+    userId: string
+  ) => {
     const cacheKey = `teeTimeData:${teeTimeIds.toString()}`;
     const cacheTTL = 600; // Cache TTL in seconds
     let teeTimesData: any = await cacheManager.get(cacheKey);
 
     if (!teeTimesData) {
-
       // Fetch tee time data from the database if not in cache
       const teeTimeData = await this.database
         .select({
@@ -4389,7 +4395,7 @@ export class BookingService {
       }
     }
     return true;
-  }
+  };
 
   checkIfUserIsOptMemberShip = async (userId: string, bookingId: string) => {
     const [canReSellResult] = await this.database
@@ -4430,7 +4436,7 @@ export class BookingService {
       paymentId,
       cartFeeCharge,
       teeTimeIds,
-      minPlayersPerBooking
+      minPlayersPerBooking,
     } = await this.normalizeCartData({
       cartId,
       userId,
@@ -4540,7 +4546,9 @@ export class BookingService {
     // Calculate additional taxes
 
     const greenFeeTaxTotal =
-      ((firstTeeTime?.greenFees ?? 0) / 100) * ((firstTeeTime?.greenFeeTaxPercent ?? 0) / 100 / 100) * playerCount;
+      ((firstTeeTime?.greenFees ?? 0) / 100) *
+      ((firstTeeTime?.greenFeeTaxPercent ?? 0) / 100 / 100) *
+      playerCount;
     const markupTaxTotal = (markupCharge / 100) * ((firstTeeTime?.markupTaxPercent ?? 0) / 100) * playerCount;
     const weatherGuaranteeTaxTotal =
       (sensibleCharge / 100) * ((firstTeeTime?.weatherGuaranteeTaxPercent ?? 0) / 100);
@@ -4747,8 +4755,8 @@ export class BookingService {
           providerBookingId: provider.getBookingId(booking),
           providerBookingSlotIds: provider.getSlotIdsFromBooking(booking),
           playerCount: courseMembershipId ? +playerCountForMemberShip : requiredSpots,
-          teeTimeId: teeTime.id
-        }
+          teeTimeId: teeTime.id,
+        };
         if (!providerBooking.providerBookingId) {
           this.logger.error(`No booking id found in response from provider: ${JSON.stringify(booking)}`);
           throw new Error("No booking id found in response from provider");
@@ -4768,7 +4776,12 @@ export class BookingService {
         for (const providerBooking of providerBookings) {
           const providerBookingId = providerBooking.providerBookingId;
           try {
-            await provider.deleteBooking(token, teeTime.providerCourseId!, teeTime.providerTeeSheetId!, providerBookingId);
+            await provider.deleteBooking(
+              token,
+              teeTime.providerCourseId!,
+              teeTime.providerTeeSheetId!,
+              providerBookingId
+            );
           } catch (error: any) {
             this.logger.error(`Error removing booking, ${JSON.stringify(error.message)}`);
             loggerService.errorLog({
@@ -4783,7 +4796,7 @@ export class BookingService {
                 error,
                 booking: JSON.stringify(providerBooking),
               }),
-            })
+            });
           }
         }
         throw "Booking failed on provider";
@@ -4837,7 +4850,7 @@ export class BookingService {
         courseMembershipId: courseMembershipId,
         playerCountForMemberShip,
         isFirstHandGroupBooking: true,
-        providerBookings
+        providerBookings,
       })
       .catch(async (err) => {
         this.logger.error(`Error creating booking, ${err}`);
@@ -4859,7 +4872,12 @@ export class BookingService {
         for (const providerBooking of providerBookings) {
           const providerBookingId = providerBooking.providerBookingId;
           try {
-            await provider.deleteBooking(token, firstTeeTime.providerCourseId!, firstTeeTime.providerTeeSheetId!, providerBookingId);
+            await provider.deleteBooking(
+              token,
+              firstTeeTime.providerCourseId!,
+              firstTeeTime.providerTeeSheetId!,
+              providerBookingId
+            );
           } catch (error: any) {
             this.logger.error(`Error removing booking, ${JSON.stringify(error.message)}`);
             loggerService.errorLog({
@@ -4874,7 +4892,7 @@ export class BookingService {
                 error,
                 booking: JSON.stringify(providerBooking),
               }),
-            })
+            });
           }
         }
         loggerService.errorLog({
@@ -4899,5 +4917,4 @@ export class BookingService {
       isEmailSend: bookingId.isEmailSend,
     } as ReserveTeeTimeResponse;
   };
-
 }
