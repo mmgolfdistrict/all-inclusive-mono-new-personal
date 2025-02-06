@@ -363,7 +363,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
           </h2>
           <hr />
           <div className="grid grid-rows-3 md:grid-rows-3 lg:grid-rows-3 gap-4 px-4 py-2 md:px-8 md:py-6">
-            <div className="">
+            <div className="" id="notify-pick-date">
               <Input
                 readOnly
                 className="cursor-pointer text-ellipsis unmask-time"
@@ -411,7 +411,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
                 </>
               )}
             </div>
-            <div className="">
+            <div className="" id="notify-select-time-range">
               <Input
                 readOnly
                 className="cursor-pointer text-ellipsis"
@@ -557,7 +557,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
                 </>
               )}
             </div>
-            <div className="">
+            <div className="" id="notify-number-of-players">
               <label className="text-[14px] text-primary-gray">
                 {"Number of Players"}
               </label>
@@ -576,6 +576,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
             onClick={handleSubmit}
             className="flex items-center justify-center gap-1 max-w-[200px] w-full mt-4 self-center py-[.28rem] md:py-1.5 text-[10px] md:text-[14px] disabled:opacity-50 transition-opacity duration-300"
             disabled={isCreatingNotifications}
+            id="notify-get-alerted"
           >
             <Bell width="15px" />
             Get Alerted
