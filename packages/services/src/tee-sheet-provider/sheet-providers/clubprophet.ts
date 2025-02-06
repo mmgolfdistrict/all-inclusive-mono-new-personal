@@ -317,6 +317,7 @@ export class clubprophet extends BaseProvider {
       lastUpdatedDateTime: string | null;
       createdDateTime: string | null;
       providerCourseMembershipId: string | null;
+      externalSlotId: string | null;
     }[] = [];
 
     for (let i = 0; i < slots; i++) {
@@ -331,6 +332,7 @@ export class clubprophet extends BaseProvider {
         lastUpdatedDateTime: null,
         createdDateTime: null,
         providerCourseMembershipId: providerCourseMembershipId ?? null,
+        externalSlotId: providerSlotIds[i] ?? null,
       });
     }
     return bookingSlots;
