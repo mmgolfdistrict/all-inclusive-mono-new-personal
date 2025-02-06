@@ -86,6 +86,7 @@ export const TeeTime = ({
       courseId: courseId ?? "",
       time: items.time ?? "",
       date: items.date ?? "",
+      availableSlots: availableSlots, 
     });
 
   const [selectedPlayers, setSelectedPlayers] = useState<string>("");
@@ -392,6 +393,7 @@ export const TeeTime = ({
 
             {canChoosePlayer ? (
               <ChoosePlayers
+                id="choose-players"
                 players={
                   status === "SECOND_HAND" ? `${listedSlots}` : selectedPlayers
                 }
@@ -450,6 +452,7 @@ export const TeeTime = ({
                   data-test={teeTimeId}
                   data-qa="Buy"
                   data-cy={time}
+                  id="buy-button"
                 >
                   Buy
                 </FilledButton>

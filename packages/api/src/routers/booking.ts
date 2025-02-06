@@ -271,7 +271,7 @@ export const bookingRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       return ctx.serviceFactory
         .getBookingService()
-        .reserveGroupBooking(
+        .reserveBooking(
           ctx.session.user.id,
           input.cartId,
           input.payment_id,

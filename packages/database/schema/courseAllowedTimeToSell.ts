@@ -1,6 +1,6 @@
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 import { sql } from "drizzle-orm";
-import { datetime, index, mysqlEnum, smallint, tinyint, unique, varchar } from "drizzle-orm/mysql-core";
+import { boolean, datetime, index, mysqlEnum, smallint, tinyint, unique, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 
 export const courseAllowedTimeToSell = mySqlTable(
@@ -18,6 +18,7 @@ export const courseAllowedTimeToSell = mySqlTable(
     lastUpdatedDateTime: datetime("lastUpdatedDateTime", { mode: "string", fsp: 3 })
       .notNull()
       .default(sql`CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)`),
+    primaryMarketSellLeftoverSinglePlayer: boolean("primaryMarketSellLeftoverSinglePlayer").default(true).notNull(),
   },
   (table) => {
     return {

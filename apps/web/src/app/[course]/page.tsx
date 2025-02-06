@@ -75,18 +75,16 @@ export default function CourseHomePage() {
   }
 
   function compareTimesWithTimezones() {
-    // Parse the ISO time strings with specified timezones
-    const date1 = dayjs.tz(new Date(), getUserTimezone());
-    const date2 = dayjs.tz(new Date(), course?.timezoneISO);
+    const date1 = dayjs().tz(getUserTimezone()).format("ddd, DD MMM YYYY HH:mm:ss [GMT]")
+    const date2 = dayjs().tz(course?.timezoneISO).format("ddd, DD MMM YYYY HH:mm:ss [GMT]")
 
-    // Compare the two times
-    if (date1.isAfter(date2)) {
-      return `user`;
-    } else if (date1.isBefore(date2)) {
-      return `course`;
-    } else {
-      return `user`;
-    }
+    if (date1.valueOf() > date2.valueOf()) {
+      return "user";
+  } else if (date1.valueOf() < date2.valueOf()) {
+      return "course";
+  } else {
+      return "user"; 
+  }
   }
 
   const formatDateString = (
@@ -94,7 +92,10 @@ export default function CourseHomePage() {
   ): string => {
     if (!date) {
       return ""; // Handle the case where date is null or undefined
-    }
+    }    
+
+    console.log("compareTimesWithTimezones",compareTimesWithTimezones());
+    
     if (compareTimesWithTimezones() === "user") {
       return dayjs(date).format("ddd, DD MMM YYYY HH:mm:ss [GMT]");
     }
@@ -252,11 +253,10 @@ export default function CourseHomePage() {
 
     switch (dateType) {
       case "All":
+      case "Today":
       case "This Week":
       case "This Month":
       case "Furthest Day Out To Book":
-        return formatDateString(dayjs(new Date()).add(30, "minute"));
-      case "Today":
         return formatDateString(dayjs(new Date()).add(30, "minute"));
       case "This Weekend":
         return formatDateString(dayjs().day(5).add(30, "minute").toDate());
