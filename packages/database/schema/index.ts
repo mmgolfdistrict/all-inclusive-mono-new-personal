@@ -57,7 +57,6 @@ import * as teeTimeIndexLogs from "./teeTimeIndexLogs";
 import * as teeTimes from "./teeTimes";
 import * as transfers from "./transfers";
 import * as userBookingOffers from "./userBookingOffers";
-import * as userPhoneCall from "./userPhoneCall";
 import * as userPromoCodeLink from "./userPromoCodeLink";
 import * as userProviderCourseLink from "./userProviderCourseLink";
 import * as users from "./users";
@@ -137,5 +136,4 @@ export const schema = {
   ...groupBookings,
   ...walkthrough,
   ...walkthroughSection,
-  ...userPhoneCall,
 };
