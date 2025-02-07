@@ -45,7 +45,11 @@ export const DailyTeeTimes = ({
   const { course } = useCourseContext();
   const courseId = course?.id;
 
-  // Scroll left or right smoothly when using the mouse wheel
+  const handleWheel = (event: WheelEvent) => {
+    event.preventDefault();
+    // debugger;
+  };
+
   // const handleWheel = (event: WheelEvent) => {
   //   // event.preventDefault(); // Prevent default scroll behavior
 
@@ -177,33 +181,40 @@ export const DailyTeeTimes = ({
   const allTeeTimes =
     teeTimeData?.pages[teeTimeData?.pages?.length - 1]?.results ?? [];
 
-  useEffect(() => {
-    const container = overflowRef.current;
-    if (!container) return;
-    const handleWheel = (event) => {
-      event.preventDefault();
+  // useEffect(() => {
+  //   const container = overflowRef.current;
+  //   if (!container) return;
+  //   const handleWheel = (event) => {
+  //     console.log("wheel event", event);
 
-      const boxWidth = container.children[0]?.clientWidth || 265;
+  //     event.preventDefault();
 
-      const getScrollWidth = () => {
-        if (width < 700) {
-          return boxWidth * 3 + 16 * 3;
-        }
-        return boxWidth * 4 + 16 * 4;
-      };
+  //     const boxWidth = container.children[0]?.clientWidth || 265;
 
-      const scrollAmount = event.deltaX > 0 ? 730 : -730;
-      container.scrollBy({
-        left: scrollAmount,
-        behavior: "smooth",
-      });
-    };
-    // Add event listener with passive: false
-    container.addEventListener("wheel", handleWheel, { passive: false });
-    return () => {
-      container.removeEventListener("wheel", handleWheel);
-    };
-  }, [isLoading]);
+  //     // const getScrollWidth = () => {
+  //     //   if (width < 700) {
+  //     //     return boxWidth * 3 + 16 * 3;
+  //     //   }
+  //     //   return boxWidth * 4 + 16 * 4;
+  //     // };
+
+  //     const scrollAmount = event.deltaX > 0 ? 281 : -281;
+  //     container.scrollBy({
+  //       left: 281,
+  //       behavior: "smooth",
+  //     });
+  //   };
+
+  //   container.addEventListener("wheel", handleWheel, {
+  //     once: true,
+  //     passive: false,
+  //   });
+  //   return () => {
+  //     console.log("remove event listener");
+
+  //     container.removeEventListener("wheel", handleWheel);
+  //   };
+  // }, []);
 
   const calculateVisibleBoxes = () => {
     const boxWidth = overflowRef.current?.children[0]?.clientWidth || 265; // default box width if not available
@@ -212,6 +223,8 @@ export const DailyTeeTimes = ({
     if (containerWidth === 0 || boxWidth === 0) return 0;
 
     const visibleCount = Math.floor(containerWidth / (boxWidth + 16)); // 16 is the gap
+    console.log("visibleCount", visibleCount);
+
     return visibleCount;
   };
 
@@ -364,7 +377,7 @@ export const DailyTeeTimes = ({
           // id="abc"
           className="scrollbar-none w-full flex overflow-x-auto overflow-y-hidden gap-4"
           ref={overflowRef}
-          // onWheel={(e) => handleWheel(e)}
+          onWheel={(e) => handleWheel(e)}
         >
           {allTeeTimes?.map((i: CombinedObject, idx: number) => {
             if (
