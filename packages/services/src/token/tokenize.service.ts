@@ -318,6 +318,11 @@ export class TokenizeService {
     const bookingId = randomUUID();
     const groupId = randomUUID();
     const bookingIds: string[] = [];
+    const teeTimesToUpdate: {
+      id: string;
+      availableSecondHandSpots: number;
+      availableFirstHandSpots: number;
+    }[] = [];
 
     let acceptedQuote: AcceptedQuoteParams = { id: null, price_charged: 0 };
 
@@ -399,6 +404,18 @@ export class TokenizeService {
     if (isFirstHandGroupBooking && providerBookings) {
       for (const booking of providerBookings) {
         const teeTimeData = existingTeeTimes.find((existingTeeTime) => existingTeeTime.id === booking.teeTimeId);
+        if (!teeTimeData) {
+          this.logger.fatal(`TeeTime with ID: ${booking.teeTimeId} does not exist.`);
+          loggerService.errorLog({
+            userId: userId,
+            url: "/TokenizeService/tokenizeBooking",
+            userAgent: "",
+            message: "TEE TIME NOT FOUND",
+            stackTrace: `TeeTime with ID: ${booking.teeTimeId} does not exist.`,
+            additionalDetailsJSON: "",
+          });
+          throw new Error(`TeeTime with ID: ${booking.teeTimeId} does not exist.`);
+        }
         const transactionId = randomUUID();
         const bookingId = randomUUID();
         bookingIds.push(bookingId);
@@ -496,6 +513,11 @@ export class TokenizeService {
             }
           }
         }
+        teeTimesToUpdate.push({
+          id: teeTimeData.id,
+          availableSecondHandSpots: teeTimeData.availableSecondHandSpots + booking.playerCount,
+          availableFirstHandSpots: teeTimeData.availableFirstHandSpots - booking.playerCount,
+        })
       }
     } else {
       bookingsToCreate.push({
@@ -670,7 +692,19 @@ export class TokenizeService {
           tx.rollback();
         });
       if (!isWebhookAvailable) {
-        await tx
+        if (isFirstHandGroupBooking) {
+          for (const teeTime of teeTimesToUpdate) {
+            await tx
+              .update(teeTimes)
+              .set({
+                availableSecondHandSpots: teeTime.availableSecondHandSpots,
+                availableFirstHandSpots: teeTime.availableFirstHandSpots,
+              })
+              .where(eq(teeTimes.id, teeTime.id))
+              .execute();
+          }
+        } else {
+          await tx
           .update(teeTimes)
           .set({
             availableSecondHandSpots: existingTeeTime.availableSecondHandSpots + players,
@@ -678,6 +712,7 @@ export class TokenizeService {
           })
           .where(eq(teeTimes.id, existingTeeTime.id))
           .execute();
+        }
       }
 
       await tx

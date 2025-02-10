@@ -87,7 +87,6 @@ export const schema = {
   ...transfers,
   ...userBookingOffers,
   ...users,
-  ...verificationTokens,
   ...providerCourseLink,
   ...offers,
   ...offerRead,
