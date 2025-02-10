@@ -30,8 +30,10 @@ import {
 } from "react";
 import ReCAPTCHA from "react-google-recaptcha";
 import { Controller, useForm, type SubmitHandler } from "react-hook-form";
+import PhoneInput from "react-phone-input-2";
 import { toast } from "react-toastify";
 import { useDebounce } from "usehooks-ts";
+import "react-phone-input-2/lib/style.css";
 
 export default function RegisterPage() {
   const { course } = useCourseContext();
@@ -80,6 +82,16 @@ export default function RegisterPage() {
       .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
       .toLowerCase() // Convert to lowercase
       .replace(/^\w/, (c) => c.toUpperCase()); // Capitalize the first letter
+  };
+
+  const [countryCode, setCountryCode] = useState<string>("");
+  const [phoneNumber, setPhoneNumber] = useState<string>("");
+
+  const handlePhoneChange = (value: string, data: any) => {
+    const dialCode = `+${data.dialCode}`;
+    const number = value.replace(dialCode, "").trim();
+    setCountryCode(dialCode);
+    setPhoneNumber(number);
   };
 
   const onPlaceChanged = () => {
@@ -335,19 +347,28 @@ export default function RegisterPage() {
             name="phoneNumber"
             control={control}
             render={({ field }) => (
-              <Input
-                {...field}
-                label="Phone Number"
-                type="tel"
-                placeholder="Enter your phone number"
-                id="phoneNumber"
-                register={register}
-                name="phoneNumber"
-                error={errors.phoneNumber?.message}
-                inputRef={(e) => {
-                  field.ref(e);
-                }}
-              />
+              <div className={`flex flex-col gap-1`}>
+                <div className="flex gap-1">
+                  <label
+                    htmlFor="phoneNumber"
+                    className="text-[14px] text-primary-gray"
+                  >
+                    Phone Number
+                  </label>
+                </div>
+                <PhoneInput
+                  country={"us"}
+                  excludeCountries={["CU", "IR", "KP", "RU", "SY"]}
+                  onChange={handlePhoneChange}
+                  inputStyle={{ width: "100%", paddingLeft: "50px" }}
+                  buttonStyle={{
+                    border: "none",
+                    backgroundColor: "transparent",
+                  }}
+                  inputProps={{ id: "phoneNumber" }}
+                  value={field.value}
+                />
+              </div>
             )}
           />
           <div className="flex items-end gap-2">
