@@ -382,12 +382,10 @@ export class UserService {
       .select({
         bookingId: bookingslots.bookingId,
         slotPosition: bookingslots.slotPosition,
-        externalSlotId: bookingslots.externalSlotId,
+        externalSlotId: bookingslots.slotnumber,
       })
       .from(bookingslots)
-      .where(
-        and(eq(bookingslots.slotPosition, slotPosition), eq(bookingslots.externalSlotId, bookingSlotId))
-      );
+      .where(and(eq(bookingslots.slotPosition, slotPosition), eq(bookingslots.slotnumber, bookingSlotId)));
 
     if (!bookingSlot) {
       throw new Error("Booking slot not available");
