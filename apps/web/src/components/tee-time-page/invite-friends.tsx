@@ -1,6 +1,5 @@
 "use client";
 
-import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
 import { type InviteFriend } from "~/utils/types";
