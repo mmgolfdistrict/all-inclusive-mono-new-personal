@@ -25,101 +25,48 @@ export const ForecastModal = ({
   const isMobile = useMediaQuery("(max-width: 768px)");
   const [startDate, setStartDate] = useState<string>(propStartDate);
   const [endDate, setEndDate] = useState<string>(propEndDate);
-  console.log("propStartDate", propStartDate);
-  console.log("startDate", startDate);
-  console.log("propEndDate", propEndDate);
-  console.log("endDate", endDate);
-  useEffect(() => {
-    const today = new Date();
-    const parsedStartDate = new Date(propStartDate);
+  const [dateIndex, setDateIndex] = useState(0);
 
-    if (parsedStartDate.toDateString() === today.toDateString()) {
-      const tomorrow = new Date(today);
-      tomorrow.setDate(today.getDate() + 1);
-      setStartDate(formatDate(tomorrow));
-      setEndDate(getNext7Days(tomorrow, propEndDate));
-    } else {
-      setStartDate(formatDate(parsedStartDate));
-      setEndDate(getNext7Days(parsedStartDate, propEndDate));
-    }
-  }, [propStartDate, propEndDate]);
+  useEffect(() => {
+    setStartDate(formatDate(propStartDate));
+    setEndDate(formatDate(propEndDate));
+  }, []);
 
   const { data, isLoading } = api.searchRouter.getPriceForecast.useQuery({
     courseId: course?.id ?? "",
     startDate,
     endDate,
   });
-  console.log("data", data);
 
-  const getNext7Days = (
-    currentStartDate: Date | string,
-    propEndDate: string
-  ): string => {
-    const start = new Date(currentStartDate);
-    const end = new Date(start);
-    end.setDate(start.getDate() + 6);
-
-    const parsedPropEndDate = new Date(propEndDate);
-    if (end > parsedPropEndDate) {
-      return formatDate(parsedPropEndDate);
-    }
-    return formatDate(end);
-  };
   const formatDate = (date: Date | string): string => {
     const parsedDate = new Date(date);
-    const year = parsedDate.getFullYear();
-    const month = String(parsedDate.getMonth() + 1).padStart(2, "0");
-    const day = String(parsedDate.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
+    return format(parsedDate, "yyyy-MM-dd");
   };
 
+  // Define number of dates to show
+  const numDatesToShow = isMobile ? 2 : 7;
+  const totalDates = data?.length ?? 0;
+
+  // Slice data for pagination
+  const paginatedData =
+    data?.slice(dateIndex, dateIndex + numDatesToShow) || [];
+
   const handleNext = () => {
-    if (new Date(endDate) >= new Date(propEndDate)) {
-      return;
+    if (dateIndex + numDatesToShow < totalDates) {
+      setDateIndex((prev) => prev + numDatesToShow);
     }
-    const newStartDate = new Date(startDate);
-    newStartDate.setDate(newStartDate.getDate() + 7);
-
-    if (newStartDate > new Date(propEndDate)) {
-      return;
-    }
-
-    let newEndDate = new Date(newStartDate);
-    newEndDate.setDate(newStartDate.getDate() + 6);
-
-    if (newEndDate > new Date(propEndDate)) {
-      newEndDate = new Date(propEndDate);
-    }
-
-    setStartDate(formatDate(newStartDate));
-    setEndDate(formatDate(newEndDate));
   };
 
   const handlePrevious = () => {
-    const newStartDate = new Date(startDate);
-    newStartDate.setDate(newStartDate.getDate() - 7);
-
-    if (newStartDate < new Date(propStartDate)) {
-      return;
+    if (dateIndex - numDatesToShow >= 0) {
+      setDateIndex((prev) => prev - numDatesToShow);
     }
-
-    let newEndDate = new Date(newStartDate);
-    newEndDate.setDate(newStartDate.getDate() + 6);
-
-    if (newEndDate < new Date(propStartDate)) {
-      newEndDate = new Date(propStartDate);
-    }
-
-    setStartDate(formatDate(newStartDate));
-    setEndDate(formatDate(newEndDate));
   };
-  console.log(isMobile);
-  const isNextDisabled = new Date(endDate) >= new Date(propEndDate);
 
   return (
     <div className="fixed inset-0 z-20 flex items-center justify-center bg-black w-screen backdrop-blur bg-opacity-50 overflow-hidden">
       <div
-        className={`bg-white p-6 rounded-lg  sm:max-w-4xl md:max-w-3xl lg:max-w-2xl xl:max-w-5xl w-full ${
+        className={`bg-white p-6 rounded-lg sm:max-w-4xl md:max-w-3xl lg:max-w-2xl xl:max-w-5xl w-full ${
           isMobile && "w-full"
         }`}
       >
@@ -128,14 +75,14 @@ export const ForecastModal = ({
             <button
               className="text-sm font-medium hover:underline"
               onClick={handlePrevious}
-              disabled={new Date(startDate) <= new Date(propStartDate)}
+              disabled={dateIndex === 0}
             >
               &lt; Previous
             </button>
             <button
               className="text-sm font-medium hover:underline"
               onClick={handleNext}
-              disabled={isNextDisabled}
+              disabled={dateIndex + numDatesToShow >= totalDates}
             >
               Next &gt;
             </button>
@@ -145,17 +92,17 @@ export const ForecastModal = ({
           </button>
         </div>
         <div className="mt-4 overflow-x-auto">
-          <table className=" w-full border-collapse text-sm">
-            <thead className="top-0 table-header-group">
+          <table className="w-full border-collapse text-sm">
+            <thead className="top-0 table-header-group bg-gray-200">
               <tr className="text-left">
                 {isLoading ? (
                   ""
-                ) : data?.length === 0 ? (
+                ) : paginatedData.length === 0 ? (
                   ""
                 ) : (
                   <TableHeader text="Dates / Times" />
                 )}
-                {data?.map((item) => (
+                {paginatedData.map((item) => (
                   <TableHeader
                     key={item.providerDate}
                     text={formatShowDate(item.providerDate)}
@@ -171,8 +118,8 @@ export const ForecastModal = ({
                   .map((_, index) => (
                     <SkeletonRow key={index} isMobile={isMobile} />
                   ))
-              ) : data?.length === 0 ? (
-                <div className={`${isMobile ? "py-36" : "p-36"}  text-center`}>
+              ) : paginatedData.length === 0 ? (
+                <div className={`${isMobile ? "py-36" : "p-36"} text-center`}>
                   Data is not available for {formatShowDate(startDate)} -{" "}
                   {formatShowDate(endDate)}
                 </div>
@@ -181,9 +128,9 @@ export const ForecastModal = ({
                   <tr className="border-b border-stroke text-primary-gray">
                     <td className="px-4 py-2 font-semibold">
                       <p className="text-secondary-black">Early Morning</p>{" "}
-                      06:00 AM – 07:30 AM
+                      06:00 AM – 08:00 AM
                     </td>
-                    {data?.map((item) => (
+                    {paginatedData?.map((item) => (
                       <td
                         key={item.providerDate}
                         className="px-4 py-2 text-center"
@@ -199,7 +146,7 @@ export const ForecastModal = ({
                       <p className="text-secondary-black">Mid-Morning</p> 08:00
                       AM – 10:30 AM
                     </td>
-                    {data?.map((item) => (
+                    {paginatedData?.map((item) => (
                       <td
                         key={item.providerDate}
                         className="px-4 py-2 text-center"
@@ -213,9 +160,9 @@ export const ForecastModal = ({
                   <tr className="border-b border-stroke text-primary-gray">
                     <td className="px-4 py-2 font-semibold">
                       <p className="text-secondary-black">Early Afternoon</p>{" "}
-                      10:30 AM – 1:30 PM
+                      10:30 AM – 02:00 PM
                     </td>
-                    {data?.map((item) => (
+                    {paginatedData?.map((item) => (
                       <td
                         key={item.providerDate}
                         className="px-4 py-2 text-center"
@@ -231,7 +178,7 @@ export const ForecastModal = ({
                       <p className="text-secondary-black">Afternoon</p> 02:00 PM
                       – 04:00 PM
                     </td>
-                    {data?.map((item) => (
+                    {paginatedData?.map((item) => (
                       <td
                         key={item.providerDate}
                         className="px-4 py-2 text-center"
@@ -247,7 +194,7 @@ export const ForecastModal = ({
                       <p className="text-secondary-black">Twilight</p> 04:00 PM
                       – 06:00 PM
                     </td>
-                    {data?.map((item) => (
+                    {paginatedData?.map((item) => (
                       <td
                         key={item.providerDate}
                         className="px-4 py-2 text-center"
@@ -274,48 +221,33 @@ const TableHeader = ({
 }: {
   text: string;
   className?: string;
-}) => {
-  return (
-    <th className={`whitespace-nowrap px-4 font-semibold ${className ?? ""}`}>
-      {text}
-    </th>
-  );
-};
+}) => (
+  <th className={`whitespace-nowrap px-4 font-semibold ${className ?? ""}`}>
+    {text}
+  </th>
+);
 
-const SkeletonRow = ({ isMobile }) => {
-  return (
-    <tr className="w-full border-b border-stroke text-primary-gray animate-pulse">
-      <td className="px-4 py-3">
-        <div className="flex items-center gap-2">
-          <div className="flex flex-col gap-2">
-            <div className="h-4 w-28 bg-gray-200 rounded-md"></div>
-            <div className="h-3 w-22 bg-gray-200 rounded-md"></div>
-            {isMobile ? (
-              <div className="h-4 w-22 bg-gray-200 rounded-md"></div>
-            ) : (
-              ""
-            )}
-          </div>
+const SkeletonRow = ({ isMobile }) => (
+  <tr className="w-full border-b border-stroke text-primary-gray animate-pulse">
+    <td className="px-4 py-3">
+      <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-2">
+          <div className="h-4 w-28 bg-gray-200 rounded-md"></div>
+          <div className="h-3 w-22 bg-gray-200 rounded-md"></div>
+          {isMobile ? (
+            <div className="h-4 w-22 bg-gray-200 rounded-md"></div>
+          ) : (
+            ""
+          )}
         </div>
-      </td>
-      <td className="px-4 py-3">
-        <div className="h-5 w-24 bg-gray-200 rounded-md"></div>
-      </td>
-      <td className="px-4 py-3">
-        <div className="h-5 w-24 bg-gray-200 rounded-md"></div>
-      </td>
-      <td className="px-4 py-3">
-        <div className="h-5 w-24 bg-gray-200 rounded-md"></div>
-      </td>
-      <td className="px-4 py-3">
-        <div className="h-5 w-24 bg-gray-200 rounded-md"></div>
-      </td>
-      <td className="px-4 py-3">
-        <div className="h-5 w-24 bg-gray-200 rounded-md"></div>
-      </td>
-      <td className="px-4 py-3">
-        <div className="h-5 w-24 bg-gray-200 rounded-md"></div>
-      </td>
-    </tr>
-  );
-};
+      </div>
+    </td>
+    {Array(7)
+      .fill(0)
+      .map((_, index) => (
+        <td key={index} className="px-4 py-3">
+          <div className="h-5 w-24 bg-gray-200 rounded-md"></div>
+        </td>
+      ))}
+  </tr>
+);
