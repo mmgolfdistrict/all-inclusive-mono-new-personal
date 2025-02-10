@@ -29,6 +29,7 @@ import utc from "dayjs/plugin/utc";
 import { DomainService } from "../domain/domain.service";
 import type { ProviderService } from "../tee-sheet-provider/providers.service";
 import { loggerService } from "../webhooks/logging.service";
+import { courseSetting } from "@golf-district/database/schema/courseSetting";
 
 dayjs.extend(utc);
 dayjs.extend(customParseFormat);
@@ -1063,4 +1064,15 @@ export class CourseService extends DomainService {
 
     return filteredMethodNames;
   };
+
+  getMobileViewVersion= async (courseId: string) => {
+    const mobileViewVersion = await this.database
+      .select({
+        mobileViewVersion:courseSetting.MOBILE_VIEW_VERSION
+      })
+      .from(courseSetting)
+      .where(eq(courseSetting.courseId, courseId));
+
+    return mobileViewVersion[0]?.mobileViewVersion || "v1";
+  }
 }

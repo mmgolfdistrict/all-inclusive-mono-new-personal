@@ -16,14 +16,20 @@ import { Info } from "../icons/info";
 import { LeftChevron } from "../icons/left-chevron";
 import { Tooltip } from "../tooltip";
 import { TeeTimeSkeleton } from "./tee-time-skeleton";
+import { ChevronUp } from "../icons/chevron-up";
+import { TeeTimeV2 } from "../cards/tee-time-v2";
+import { TeeTimeSkeletonV2 } from "./tee-time-skeleton-v2";
 
-export const DailyTeeTimes = ({
+export const DailyTeeTimesV2 = ({
   date,
   minDate,
   maxDate,
   setError,
   handleLoading,
   courseException,
+  pageDown,
+  pageUp
+  // datesWithData
 }: {
   date: string;
   minDate: string;
@@ -31,6 +37,9 @@ export const DailyTeeTimes = ({
   setError: (t: string | null) => void;
   handleLoading?: (val: boolean) => void;
   courseException: NotificationObject | null;
+  pageDown: () => void,
+  pageUp: () => void
+  // datesWithData:string[]
 }) => {
   const overflowRef = useRef<HTMLDivElement>(null);
   const nextPageRef = useRef<HTMLDivElement>(null);
@@ -75,6 +84,8 @@ export const DailyTeeTimes = ({
         enabled: course?.id !== undefined && date !== undefined,
       }
     );
+  console.log(":maxDate", minDate, maxDate, date);
+
   const TAKE = 8;
   const {
     data: teeTimeData,
@@ -102,14 +113,14 @@ export const DailyTeeTimes = ({
         sortValue === "Sort by time - Early to Late"
           ? "asc"
           : sortValue === "Sort by time - Late to Early"
-          ? "desc"
-          : "",
+            ? "desc"
+            : "",
       sortPrice:
         sortValue === "Sort by price - Low to High"
           ? "asc"
           : sortValue === "Sort by price - High to Low"
-          ? "desc"
-          : "",
+            ? "desc"
+            : "",
       timezoneCorrection: course?.timezoneCorrection,
       take: TAKE,
     },
@@ -207,77 +218,72 @@ export const DailyTeeTimes = ({
         {isLoading ? (
           <div className="h-8 min-w-[150px] w-[20%] bg-gray-200 rounded-md  animate-pulse unmask-time" />
         ) : (
-          <div
-            id="tee-time-box"
-            className="text-[16px] md:text-[20px] unmask-time"
-            data-testid="date-group-id"
-            data-qa={dayMonthDate(date)}
-          >
-            {dayMonthDate(date)}
-          </div>
-        )}
-        {courseException && (
-          <div className="flex-1 flex items-center gap-1">
-            <p
-              className={`text-${getTextColor(
-                courseException.displayType
-              )} inline text-left text-[13px] md:text-lg`}
-            >
-              {courseException.shortMessage}
-            </p>
+          <div className="w-full flex items-center gap-3 flex-col">
+            <div className="w-full flex items-center justify-between">
+              <ChevronUp fill="#000" className="-rotate-90" onClick={pageDown} />
+              <div
+                id="tee-time-box"
+                className="text-[16px] md:text-[20px] unmask-time"
+                data-testid="date-group-id"
+                data-qa={dayMonthDate(date)}
+              >
+                {dayMonthDate(date)}
+              </div>
+              {isLoadingWeather && !weather ? (
+                <div className="h-8 w-[30%] bg-gray-200 rounded-md  animate-pulse" />
+              ) : weather && !isLoadingWeather ? (
+                <div className="flex items-center gap-1">
+                  <div>{WeatherIcons[weather?.iconCode ?? ""]}</div>
+                  <div
+                    className="text-[12px] md:text-[16px] unmask-temperature"
+                    data-testid="weather-degrees-id"
+                    data-qa={weather?.temperature}
+                  >
+                    {weather?.temperature !== 0 ? `${weather?.temperature}°F` : ""}
+                  </div>
+                  <div
+                    className="hidden text-sm text-primary-gray md:block"
+                    data-testid="weather-text-id"
+                    data-qa={weather?.shortForecast}
+                  >
+                    {weather?.shortForecast ?? ""}
+                  </div>
+                </div>
+              ) : (
+                <div />
+              )}
+              <ChevronUp fill="#000" className="rotate-90" onClick={pageUp} />
+            </div>
+            {courseException && (
+              <div className="flex-1 flex items-center gap-1">
+                <p
+                  className={`text-${getTextColor(
+                    courseException.displayType
+                  )} inline text-left text-[13px] md:text-lg`}
+                >
+                  {courseException.shortMessage}
+                </p>
 
-            {courseException.longMessage && (
-              <Tooltip
-                className="text-left"
-                trigger={
-                  <span className="cursor-pointer" title="More Info">
-                    <Info className="h-4 md:h-5" />
-                  </span>
-                }
-                content={courseException.longMessage}
-              />
+                {courseException.longMessage && (
+                  <Tooltip
+                    className="text-left"
+                    trigger={
+                      <span className="cursor-pointer" title="More Info">
+                        <Info className="h-4 md:h-5" />
+                      </span>
+                    }
+                    content={courseException.longMessage}
+                  />
+                )}
+              </div>
             )}
           </div>
         )}
-
-        {isLoadingWeather && !weather ? (
-          <div className="h-8 w-[30%] bg-gray-200 rounded-md  animate-pulse" />
-        ) : weather && !isLoadingWeather ? (
-          <div className="flex items-center gap-1">
-            <div>{WeatherIcons[weather?.iconCode ?? ""]}</div>
-            <div
-              className="text-[12px] md:text-[16px] unmask-temperature"
-              data-testid="weather-degrees-id"
-              data-qa={weather?.temperature}
-            >
-              {weather?.temperature !== 0 ? `${weather?.temperature}°F` : ""}
-            </div>
-            <div
-              className="hidden text-sm text-primary-gray md:block"
-              data-testid="weather-text-id"
-              data-qa={weather?.shortForecast}
-            >
-              {weather?.shortForecast ?? ""}
-            </div>
-          </div>
-        ) : (
-          <div />
-        )}
       </div>
       <div className="relative" ref={sizeRef}>
-        <div className="absolute top-1/2 hidden md:block -translate-y-1/2 z-[2] flex items-center justify-center -left-1 md:-left-6">
-          <button
-            onClick={() => scrollLeft()}
-            className="flex h-fit items-center justify-center rounded-full bg-white p-2 shadow-overflow-indicator"
-            data-testid="tee-time-left-chevron-id"
-            data-qa={dayMonthDate(date)}
-          >
-            <LeftChevron fill="#40942A" className="w-[21px]" />
-          </button>
-        </div>
 
         <div
-          className="scrollbar-none w-full flex overflow-x-auto overflow-y-hidden gap-4"
+          className="scrollbar-none w-full flex flex-col overflow-x-auto overflow-y-hidden gap-4"
           ref={overflowRef}
           onMouseDown={onMouseDown}
         >
@@ -287,7 +293,7 @@ export const DailyTeeTimes = ({
               i.availableSlots >= playersCount
             ) {
               return (
-                <TeeTime
+                <TeeTimeV2
                   time={i.date}
                   key={idx}
                   items={i}
@@ -318,28 +324,19 @@ export const DailyTeeTimes = ({
 
           <div
             ref={nextPageRef}
-            className="h-[50px] w-[1px] text-[1px] text-white"
+            className="h-[1px] w-[1px] text-[1px] text-white"
           >
             Loading
           </div>
 
+
           {isLoading || isFetchingNextPage || !isFetchedAfterMount
             ? Array(TAKE)
-                .fill(null)
-                .map((_, idx) => <TeeTimeSkeleton key={idx} />)
+              .fill(null)
+              .map((_, idx) => <TeeTimeSkeletonV2 key={idx} />)
             : null}
         </div>
 
-        <div className="absolute z-[2] hidden md:block top-1/2 -translate-y-1/2 flex items-center justify-center -right-1 md:-right-6">
-          <button
-            onClick={scrollRight}
-            className="flex h-fit items-center justify-center rounded-full bg-white p-2 shadow-overflow-indicator"
-            data-testid="tee-time-right-chevron-id"
-            data-qa={dayMonthDate(date)}
-          >
-            <LeftChevron fill="#40942A" className="w-[21px] rotate-180" />
-          </button>
-        </div>
       </div>
     </div>
   );
