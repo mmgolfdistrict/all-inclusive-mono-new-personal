@@ -1400,7 +1400,7 @@ export const CheckoutForm = ({
       <LoadingContainer
         isLoading={isLoading}
         title={"Please wait while we process your order."}
-        subtitle={`Do not close or refresh your browser as this may take up to ${isFirstHandGroup ? "few mins" : "60 seconds"}.`}
+        subtitle={`Do not close or refresh your browser as this may take up to ${isFirstHandGroup.length ? "few mins" : "60 seconds"}.`}
       >
         <div></div>
       </LoadingContainer>

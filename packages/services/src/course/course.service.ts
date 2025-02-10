@@ -29,6 +29,7 @@ import utc from "dayjs/plugin/utc";
 import { DomainService } from "../domain/domain.service";
 import type { ProviderService } from "../tee-sheet-provider/providers.service";
 import { loggerService } from "../webhooks/logging.service";
+import { courseSetting } from "@golf-district/database/schema/courseSetting";
 
 dayjs.extend(utc);
 dayjs.extend(customParseFormat);
@@ -242,7 +243,7 @@ export class CourseService extends DomainService {
 
     const supportsPlayerNameChange = provider.supportsPlayerNameChange() ?? false;
 
-    const res = {
+    let res = {
       ...result,
       highestListedTeeTime: ((result.highestListedTeeTime as number) ?? 0) / 100,
       lowestListedTeeTime: ((result.lowestListedTeeTime as number) ?? 0) / 100,
@@ -283,10 +284,67 @@ export class CourseService extends DomainService {
         charityId: d.charityId,
       }));
 
-      return {
+      res = {
         ...res,
         supportedCharities,
       };
+    }
+
+    if (result.supportsGroupBooking) {
+      const courseSettings = await this.database
+        .select({
+          id: courseSetting.id,
+          internalName: courseSetting.internalName,
+          value: courseSetting.value,
+        })
+        .from(courseSetting)
+        .where(eq(courseSetting.courseId, courseId))
+        .execute()
+        .catch((err) => {
+          this.logger.error(`Error getting course settings for course: ${err}`);
+          loggerService.errorLog({
+            userId: "",
+            url: "/CourseService/getCourseById",
+            userAgent: "",
+            message: "ERROR_GETTING_COURSE_SETTINGS_FOR_COURSE",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              courseId,
+            }),
+          });
+          throw new Error("Error getting course settings");
+        })
+
+      let groupBookingMinSize = Number(courseSettings.find(
+        (setting) => setting.internalName === "GROUP_BOOKING_MIN_SIZE"
+      )?.value)
+      let groupBookingMaxSize = Number(courseSettings.find(
+        (setting) => setting.internalName === "GROUP_BOOKING_MAX_SIZE"
+      )?.value);
+
+      const isOnlyGroupOfFourAllowed = (Number(courseSettings.find(
+        (setting) => setting.internalName === "GROUP_BOOKING_ALLOW_SIZE_ONLY_IN_4"
+      )?.value) ?? 0) === 1
+
+      if (isOnlyGroupOfFourAllowed) {
+        let sliderMin = groupBookingMinSize;
+        let sliderMax = groupBookingMaxSize;
+        while (sliderMin % 4 !== 0) {
+          sliderMin++;
+        }
+        while (sliderMax % 4 !== 0) {
+          sliderMax++;
+        }
+        groupBookingMinSize = sliderMin;
+        groupBookingMaxSize = sliderMax;
+      }
+
+      res = {
+        ...res,
+        groupBookingMinSize,
+        groupBookingMaxSize,
+        isOnlyGroupOfFourAllowed
+      }
     }
     return res;
   };

@@ -131,6 +131,15 @@ export const getTime = (date: string, utcOffset = 0): string => {
   return dayjs.utc(cleanTimeString).utcOffset(timezone).format("h:mm A");
 };
 
+export const getHour = (date: string, utcOffset = 0): string => {
+  const cleanTimeString = !date.includes("T")
+    ? date.replace(" ", "T") + "Z"
+    : date;
+  const timezone = cleanTimeString.slice(-6) ?? utcOffset;
+
+  return dayjs.utc(cleanTimeString).utcOffset(timezone).format("h A");
+};
+
 export const cleanTimeString = (timestamp: string): string => {
   return !timestamp.includes("T")
     ? timestamp.replace(" ", "T") + "Z"
