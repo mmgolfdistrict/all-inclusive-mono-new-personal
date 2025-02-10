@@ -30,6 +30,7 @@ import { DomainService } from "../domain/domain.service";
 import type { ProviderService } from "../tee-sheet-provider/providers.service";
 import { loggerService } from "../webhooks/logging.service";
 import { courseSetting } from "@golf-district/database/schema/courseSetting";
+import { appSettingService } from "../app-settings/initialized";
 
 dayjs.extend(utc);
 dayjs.extend(customParseFormat);
@@ -1066,13 +1067,8 @@ export class CourseService extends DomainService {
   };
 
   getMobileViewVersion= async (courseId: string) => {
-    const mobileViewVersion = await this.database
-      .select({
-        mobileViewVersion:courseSetting.MOBILE_VIEW_VERSION
-      })
-      .from(courseSetting)
-      .where(eq(courseSetting.courseId, courseId));
-
-    return mobileViewVersion[0]?.mobileViewVersion || "v1";
+    console.log(courseId)
+    const mobileViewVersion: string| undefined | null = await appSettingService.get("MOBILE_VIEW_VERSION");
+    return mobileViewVersion??"v1";
   }
 }

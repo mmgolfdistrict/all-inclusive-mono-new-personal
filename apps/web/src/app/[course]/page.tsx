@@ -138,7 +138,7 @@ export default function CourseHomePage() {
   const { entity, alertOffersShown, setAlertOffersShown } = useAppContext();
   const router = useRouter();
   const courseId = course?.id;
-  const { data: MOBILE_VIEW_VERSION, isLoading: mobileViewVersionLoading } =
+  const { data: MOBILE_VIEW_VERSION } =
   api.course.getMobileViewVersion.useQuery({
     courseId: courseId ?? "",
   });

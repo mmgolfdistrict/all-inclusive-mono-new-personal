@@ -11,11 +11,8 @@ import { dayMonthDate } from "~/utils/formatters";
 import { useEffect, useRef } from "react";
 import { useElementSize, useIntersectionObserver } from "usehooks-ts";
 import { useDraggableScroll } from "../../hooks/useDraggableScroll";
-import { TeeTime } from "../cards/tee-time";
 import { Info } from "../icons/info";
-import { LeftChevron } from "../icons/left-chevron";
 import { Tooltip } from "../tooltip";
-import { TeeTimeSkeleton } from "./tee-time-skeleton";
 import { ChevronUp } from "../icons/chevron-up";
 import { TeeTimeV2 } from "../cards/tee-time-v2";
 import { TeeTimeSkeletonV2 } from "./tee-time-skeleton-v2";
@@ -143,26 +140,6 @@ export const DailyTeeTimesV2 = ({
 
   const allTeeTimes =
     teeTimeData?.pages[teeTimeData?.pages?.length - 1]?.results ?? [];
-
-  const scrollRight = async () => {
-    if (!isLoading) {
-      await fetchNextPage();
-    }
-    const boxWidth = overflowRef.current?.children[0]?.clientWidth || 265;
-
-    const getScrollWidth = () => {
-      if (width < 700) {
-        return boxWidth * 3 + 16 * 3;
-      }
-      return boxWidth * 4 + 16 * 4;
-    };
-
-    overflowRef.current?.classList.add("scroll-smooth");
-    overflowRef.current?.scrollBy({
-      left: getScrollWidth(),
-    });
-    overflowRef.current?.classList.remove("scroll-smooth");
-  };
 
   const getNextPage = async () => {
     if (!isLoading && !isFetchingNextPage) {
