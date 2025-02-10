@@ -879,9 +879,9 @@ export class SearchService extends CacheService {
       );
     }
 
-    const firstHandResultsQuery = this.database
+    let firstHandResultsQuery = this.database
       .selectDistinct({
-        // providerDate: sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))`,
+        // providerDate: sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))`, 
         providerDate: sql`DATE(SUBSTRING_INDEX(${teeTimes.providerDate}, '-', 3))`
       })
       .from(teeTimes)
@@ -896,7 +896,6 @@ export class SearchService extends CacheService {
       .from(courseAllowedTimeToSell)
       .where(and(eq(courseAllowedTimeToSell.courseId, courseId)))
       .orderBy(asc(courseAllowedTimeToSell.fromTime))
-      .execute();
 
     if (courseAllowedTeeTimeToSellFilters.length > 0) {
       firstHandResultsQuery
@@ -943,8 +942,8 @@ export class SearchService extends CacheService {
     // console.log("DATES QUERY:", firstHandResultsQuery.toSQL())
 
     const firstHandResults = await firstHandResultsQuery.execute();
-
     
+
     const secondHandResultsQuery = this.database
       .selectDistinct({
         providerDate: sql`DATE(SUBSTRING_INDEX(${teeTimes.providerDate}, '-', 3))`
@@ -1129,7 +1128,7 @@ export class SearchService extends CacheService {
       .where(
         and(
           and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
-          between(teeTimes.greenFeePerPlayer, lowerPrice, upperPrice),
+          between(sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100`, lowerPrice, upperPrice),
           between(teeTimes.providerDate, startOfDay, endOfDay),
           eq(teeTimes.courseId, courseId),
           //TODO: use isCartIncluded instead
@@ -1209,6 +1208,7 @@ export class SearchService extends CacheService {
       .where(
         and(
           and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
+          between(sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100`, lowerPrice, upperPrice),
           between(teeTimes.providerDate, startOfDay, endOfDay),
           eq(teeTimes.courseId, courseId),
           eq(teeTimes.numberOfHoles, holes),
