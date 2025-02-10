@@ -34,7 +34,6 @@ export const InviteFriends = ({
     }
   );
   const { user } = useUserContext();
-  const { course } = useCourseContext();
   const selectedTeeTime: InviteFriend[] = bookingData?.bookings || [];
 
   const [newFriend, setNewFriend] = useState<InviteFriend>({
