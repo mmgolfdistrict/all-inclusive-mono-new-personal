@@ -35,6 +35,7 @@ export type OwnedTeeTime = {
   selectedSlotsCount?: "1" | "2" | "3" | "4";
   slots?: number;
   bookingStatus: string;
+  slotsData?: string[];
 };
 
 export const Owned = () => {
@@ -305,6 +306,7 @@ const TableRow = ({
             data-testid="manage-button-id"
             data-test={courseId}
             data-qa={course}
+            id="manage-teetime-button"
           >
             Manage
           </OutlineButton>

@@ -30,6 +30,7 @@ import { DomainService } from "../domain/domain.service";
 import type { ProviderService } from "../tee-sheet-provider/providers.service";
 import { loggerService } from "../webhooks/logging.service";
 import { courseSetting } from "@golf-district/database/schema/courseSetting";
+import { appSettingService } from "../app-settings/initialized";
 
 dayjs.extend(utc);
 dayjs.extend(customParseFormat);
@@ -1017,7 +1018,7 @@ export class CourseService extends DomainService {
     }
   };
 
-  getNumberOfPlayersByCourse = async (courseId: string, time?: number, date?: string) => {
+  getNumberOfPlayersByCourse = async (courseId: string, time?: number, date?: string, availableSlots?: number) => {
     let binaryMask: any;
     const PlayersOptions = ["1", "2", "3", "4"];
 
@@ -1026,6 +1027,7 @@ export class CourseService extends DomainService {
       let NumberOfPlayers = await this.database
         .select({
           primaryMarketAllowedPlayers: courseAllowedTimeToSell.primaryMarketAllowedPlayers,
+          primaryMarketSellLeftoverSinglePlayer: courseAllowedTimeToSell.primaryMarketSellLeftoverSinglePlayer
         })
         .from(courseAllowedTimeToSell)
         .where(
@@ -1039,6 +1041,7 @@ export class CourseService extends DomainService {
         NumberOfPlayers = await this.database
           .select({
             primaryMarketAllowedPlayers: courses.primaryMarketAllowedPlayers,
+            primaryMarketSellLeftoverSinglePlayer: courses.primaryMarketSellLeftoverSinglePlayer
           })
           .from(courses)
           .where(eq(courses.id, courseId));
@@ -1047,15 +1050,22 @@ export class CourseService extends DomainService {
       if (NumberOfPlayers[0]?.primaryMarketAllowedPlayers) {
         binaryMask = NumberOfPlayers[0]?.primaryMarketAllowedPlayers;
       }
+      if (NumberOfPlayers[0]?.primaryMarketSellLeftoverSinglePlayer && availableSlots === 1) {
+        binaryMask = binaryMask | (1 << 0);
+      }
     } else {
       const NumberOfPlayers = await this.database
         .select({
           primaryMarketAllowedPlayers: courses.primaryMarketAllowedPlayers,
+          primaryMarketSellLeftoverSinglePlayer: courses.primaryMarketSellLeftoverSinglePlayer
         })
         .from(courses)
         .where(eq(courses.id, courseId));
       if (NumberOfPlayers[0]?.primaryMarketAllowedPlayers) {
         binaryMask = NumberOfPlayers[0]?.primaryMarketAllowedPlayers;
+      }
+      if (NumberOfPlayers[0]?.primaryMarketSellLeftoverSinglePlayer) {
+        binaryMask = binaryMask | (1 << 0);
       }
     }
     const numberOfPlayers =
@@ -1112,4 +1122,10 @@ export class CourseService extends DomainService {
 
     return filteredMethodNames;
   };
+
+  getMobileViewVersion= async (courseId: string) => {
+    console.log(courseId)
+    const mobileViewVersion: string| undefined | null = await appSettingService.get("MOBILE_VIEW_VERSION");
+    return mobileViewVersion??"v1";
+  }
 }

@@ -73,6 +73,7 @@ export const courses = mySqlTable(
     supportsProviderMembership: tinyint("supportsProviderMembership").default(0).notNull(),
     supportsGroupBooking: tinyint("supportsGroupBooking").default(0).notNull(),
     daysToWithHoldPayment: int("daysToWithHoldPayment").default(0).notNull(),
+    primaryMarketSellLeftoverSinglePlayer: boolean("primaryMarketSellLeftoverSinglePlayer").default(true).notNull(),
   },
   (table) => {
     return {

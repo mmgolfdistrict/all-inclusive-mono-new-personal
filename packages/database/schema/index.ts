@@ -37,6 +37,7 @@ import * as donations from "./donations";
 import * as entities from "./entities";
 import * as entityAdmins from "./entityAdmins";
 import * as favorites from "./favorites";
+import * as groupBookings from "./groupBooking";
 import * as jobs from "./jobs";
 import * as lists from "./lists";
 import * as majorEvents from "./majorEvents";
@@ -61,8 +62,10 @@ import * as userProviderCourseLink from "./userProviderCourseLink";
 import * as users from "./users";
 import * as userSession from "./userSession";
 import * as userWaitlists from "./userWaitlists";
+import * as verificationTokens from "./verificationTokens";
+import * as walkthrough from "./walkthrough";
+import * as walkthroughSection from "./walkthroughSection";
 import * as withdrawals from "./withdrawals";
-import * as groupBookings from "./groupBooking"
 
 export const schema = {
   ...accounts,
@@ -129,5 +132,7 @@ export const schema = {
   ...adminRolePermission,
   ...adminRoles,
   ...adminUserRole,
-  ...groupBookings
+  ...groupBookings,
+  ...walkthrough,
+  ...walkthroughSection,
 };

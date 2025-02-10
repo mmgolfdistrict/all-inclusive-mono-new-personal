@@ -933,7 +933,7 @@ export class SearchService extends CacheService {
             eq(courseAllowedTimeToSell.courseId, teeTimes.courseId),
             eq(
               courseAllowedTimeToSell.day,
-              sql`UPPER(DATE_FORMAT(DATE(Convert_TZ(${teeTimes.providerDate}, 'UTC', ${courses.timezoneISO})), '%a'))`
+              sql`UPPER(DATE_FORMAT(DATE(SUBSTRING_INDEX(${teeTimes.providerDate}, '-', 3)), '%a'))`
             )
           )
         )
@@ -1136,6 +1136,7 @@ export class SearchService extends CacheService {
       .utcOffset(timezoneCorrection)
       .add(30, "minutes")
       .toISOString();
+      
 
     const countSubQuery = this.database
       .select({
@@ -1156,7 +1157,6 @@ export class SearchService extends CacheService {
         and(
           and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
           between(teeTimes.greenFeePerPlayer, lowerPrice, upperPrice),
-          gte(teeTimes.providerDate, currentTimePlus30Min),
           between(teeTimes.providerDate, startOfDay, endOfDay),
           eq(teeTimes.courseId, courseId),
           //TODO: use isCartIncluded instead
@@ -1177,6 +1177,7 @@ export class SearchService extends CacheService {
           primaryMarketAllowedPlayers: courses.primaryMarketAllowedPlayers,
           openTime: courses.openTime,
           closeTime: courses.closeTime,
+          primaryMarketSellLeftoverSinglePlayer: courses.primaryMarketSellLeftoverSinglePlayer
         })
         .from(courses)
         .where(eq(courses.id, courseId));
@@ -1187,6 +1188,7 @@ export class SearchService extends CacheService {
     const PlayersOptions = ["1", "2", "3", "4"];
 
     const binaryMask = NumberOfPlayers[0]?.primaryMarketAllowedPlayers;
+    const isSellingLeftoverSinglePlayer = NumberOfPlayers[0]?.primaryMarketSellLeftoverSinglePlayer;
 
     const numberOfPlayers =
       binaryMask !== null && binaryMask !== undefined
@@ -1234,13 +1236,15 @@ export class SearchService extends CacheService {
       .where(
         and(
           and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
-          gte(teeTimes.providerDate, currentTimePlus30Min),
           between(teeTimes.providerDate, startOfDay, endOfDay),
           eq(teeTimes.courseId, courseId),
           eq(teeTimes.numberOfHoles, holes),
           gte(teeTimes.availableFirstHandSpots, golfers === -1 ? 1 : golfers),
-          gte(teeTimes.availableFirstHandSpots, playersCount),
-          gt(teeTimes.greenFeePerPlayer, 0)
+          or(
+            gte(teeTimes.availableFirstHandSpots, playersCount),
+            (isSellingLeftoverSinglePlayer ? eq(teeTimes.availableFirstHandSpots, 1) : undefined)
+          ),
+          gt(teeTimes.greenFeePerPlayer, 0),
         )
       )
       .orderBy(
@@ -1328,6 +1332,7 @@ export class SearchService extends CacheService {
         fromTime: courseAllowedTimeToSell.fromTime,
         toTime: courseAllowedTimeToSell.toTime,
         primaryMarketAllowedPlayers: courseAllowedTimeToSell.primaryMarketAllowedPlayers,
+        primaryMarketSellLeftoverSinglePlayer: courseAllowedTimeToSell.primaryMarketSellLeftoverSinglePlayer,
       })
       .from(courseAllowedTimeToSell)
       .where(and(eq(courseAllowedTimeToSell.courseId, courseId), eq(courseAllowedTimeToSell.day, dayToFetch)))
@@ -1393,6 +1398,7 @@ export class SearchService extends CacheService {
         if (needToRepeat) {
           for (const allowedTimeToSell of courseAllowedTeeTimeToSellFilters) {
             const binaryMask = allowedTimeToSell?.primaryMarketAllowedPlayers;
+            const isSellingLeftoverSinglePlayer = allowedTimeToSell?.primaryMarketSellLeftoverSinglePlayer;
             // console.log("binaryMask", binaryMask);
             const numberOfPlayers =
               binaryMask !== null && binaryMask !== undefined
@@ -1405,7 +1411,9 @@ export class SearchService extends CacheService {
               return (
                 teeTime.time >= allowedTimeToSell.fromTime &&
                 teeTime.time <= allowedTimeToSell.toTime &&
-                teeTime.firstPartySlots >= playersCount
+                (teeTime.firstPartySlots >= playersCount
+                  || (isSellingLeftoverSinglePlayer && teeTime.firstPartySlots === 1)
+                )
               );
             });
             newTeeTimeData = [...newTeeTimeData, ...times.slice(0, limit - newTeeTimeData.length)];
@@ -1419,6 +1427,7 @@ export class SearchService extends CacheService {
         } else {
           for (const allowedTimeToSell of courseAllowedTeeTimeToSellFilters) {
             const binaryMask = allowedTimeToSell.primaryMarketAllowedPlayers;
+            const isSellingLeftoverSinglePlayer = allowedTimeToSell.primaryMarketSellLeftoverSinglePlayer;
             // console.log("binaryMask", binaryMask);
             const numberOfPlayers =
               binaryMask !== null && binaryMask !== undefined
@@ -1431,7 +1440,9 @@ export class SearchService extends CacheService {
               return (
                 teeTime.time >= allowedTimeToSell.fromTime &&
                 teeTime.time <= allowedTimeToSell.toTime &&
-                teeTime.firstPartySlots >= playersCount
+                (teeTime.firstPartySlots >= playersCount
+                  || (isSellingLeftoverSinglePlayer && teeTime.firstPartySlots === 1)
+                )
               );
             });
             // console.log("times", times, innerCursor, limit);
