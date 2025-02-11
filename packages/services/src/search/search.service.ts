@@ -1290,6 +1290,13 @@ export class SearchService extends CacheService {
       throw new Error(`Error getting tee times for ${date}: ${err}`);
     });
 
+    teeTimesData.sort((a, b) => {
+      if (b.greenFee === a.greenFee) {
+        return a.time - b.time;
+      }
+      return a.greenFee - b.greenFee;
+    });
+
     // Filter specific tee times that can be sold
     const dayToFetch = dayjs(date)
       .utc()
