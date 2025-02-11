@@ -86,6 +86,7 @@ export default function RegisterPage() {
 
   const [currentCountry, setCurrentCountry] = useState<string>("");
   const [currentPhoneNumber, setCurrentPhoneNumber] = useState<string>("");
+  const debouncedPhoneNumber = useDebounce<string>(currentPhoneNumber, 2000);
 
   useEffect(() => {
     const fetchCountry = async () => {
@@ -113,6 +114,28 @@ export default function RegisterPage() {
       setCurrentPhoneNumber("");
     }
   }, [currentCountry, setValue]);
+
+  useEffect(() => {
+    if (!debouncedPhoneNumber) return;
+
+    const fetchPhoneValidation = async () => {
+      try {
+        const response = await fetch(
+          `https://phonevalidation.abstractapi.com/v1/?api_key=${process.env.NEXT_PUBLIC_ABSTRACT_API_KEY}&phone=${debouncedPhoneNumber}`
+        );
+        const result = await response.json();
+        if (!result.valid) {
+          setError("phoneNumber", {
+            message: "Invalid phone number.",
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching phone validation:", error);
+      }
+    };
+
+    fetchPhoneValidation();
+  }, [debouncedPhoneNumber]);
 
   const onPlaceChanged = () => {
     const place = autocompleteRef.current?.getPlace();
