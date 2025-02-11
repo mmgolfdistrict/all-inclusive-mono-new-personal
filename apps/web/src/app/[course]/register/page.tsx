@@ -84,15 +84,35 @@ export default function RegisterPage() {
       .replace(/^\w/, (c) => c.toUpperCase()); // Capitalize the first letter
   };
 
-  const [countryCode, setCountryCode] = useState<string>("");
-  const [phoneNumber, setPhoneNumber] = useState<string>("");
+  const [currentCountry, setCurrentCountry] = useState<string>("");
+  const [currentPhoneNumber, setCurrentPhoneNumber] = useState<string>("");
 
-  const handlePhoneChange = (value: string, data: any) => {
-    const dialCode = `+${data.dialCode}`;
-    const number = value.replace(dialCode, "").trim();
-    setCountryCode(dialCode);
-    setPhoneNumber(number);
-  };
+  useEffect(() => {
+    const fetchCountry = async () => {
+      try {
+        const result = await fetch(
+          `https://ipinfo.io/json?token=${process.env.NEXT_PUBLIC_IPINFO_API_TOKEN}`
+        );
+        const data = await result.json();
+        if (data?.country) {
+          if (typeof data.country === "string") {
+            setCurrentCountry(data.country.toLowerCase());
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching country:", error);
+      }
+    };
+
+    fetchCountry();
+  }, []);
+
+  useEffect(() => {
+    if (currentCountry) {
+      setValue("phoneNumber", "");
+      setCurrentPhoneNumber("");
+    }
+  }, [currentCountry, setValue]);
 
   const onPlaceChanged = () => {
     const place = autocompleteRef.current?.getPlace();
@@ -357,17 +377,40 @@ export default function RegisterPage() {
                   </label>
                 </div>
                 <PhoneInput
-                  country={"us"}
-                  excludeCountries={["CU", "IR", "KP", "RU", "SY"]}
-                  onChange={handlePhoneChange}
+                  {...field}
+                  country={currentCountry}
+                  value={currentPhoneNumber}
+                  autoFormat={false}
+                  onChange={(
+                    phone,
+                    countryData: { dialCode: string; countryCode: string }
+                  ) => {
+                    const nationalNumber = phone.replace(
+                      countryData.dialCode,
+                      ""
+                    );
+                    console.log("countryData.dialCode:", countryData.dialCode);
+                    setCurrentPhoneNumber(phone);
+                    setValue("phoneNumber", nationalNumber);
+                    setValue("phoneNumberCountryCode", +countryData.dialCode);
+                  }}
+                  enableSearch
                   inputStyle={{ width: "100%", paddingLeft: "50px" }}
                   buttonStyle={{
                     border: "none",
                     backgroundColor: "transparent",
                   }}
-                  inputProps={{ id: "phoneNumber" }}
-                  value={field.value}
                 />
+                {errors.phoneNumber && (
+                  <p className="text-[12px] text-red">
+                    {errors.phoneNumber.message}
+                  </p>
+                )}
+                {errors.phoneNumberCountryCode && (
+                  <p className="text-[12px] text-red">
+                    {errors.phoneNumberCountryCode.message}
+                  </p>
+                )}
               </div>
             )}
           />
