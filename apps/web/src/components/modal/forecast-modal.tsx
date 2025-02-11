@@ -126,7 +126,7 @@ export const ForecastModal = ({
               ) : (
                 <>
                   <tr className="border-b border-stroke text-primary-gray">
-                    <td className="px-4 py-2 font-semibold">
+                    <td className="px-4 py-2 font-semibold bg-gray-200">
                       <p className="text-secondary-black">Early Morning</p>{" "}
                       06:00 AM – 08:00 AM
                     </td>
@@ -142,7 +142,7 @@ export const ForecastModal = ({
                     ))}
                   </tr>
                   <tr className="border-b border-stroke text-primary-gray">
-                    <td className="px-4 py-2 font-semibold">
+                    <td className="px-4 py-2 font-semibold bg-gray-200">
                       <p className="text-secondary-black">Mid-Morning</p> 08:00
                       AM – 10:30 AM
                     </td>
@@ -158,7 +158,7 @@ export const ForecastModal = ({
                     ))}
                   </tr>
                   <tr className="border-b border-stroke text-primary-gray">
-                    <td className="px-4 py-2 font-semibold">
+                    <td className="px-4 py-2 font-semibold bg-gray-200">
                       <p className="text-secondary-black">Early Afternoon</p>{" "}
                       10:30 AM – 02:00 PM
                     </td>
@@ -174,7 +174,7 @@ export const ForecastModal = ({
                     ))}
                   </tr>
                   <tr className="border-b border-stroke text-primary-gray">
-                    <td className="px-4 py-2 font-semibold">
+                    <td className="px-4 py-2 font-semibold bg-gray-200">
                       <p className="text-secondary-black">Afternoon</p> 02:00 PM
                       – 04:00 PM
                     </td>
@@ -190,7 +190,7 @@ export const ForecastModal = ({
                     ))}
                   </tr>
                   <tr className="border-b border-stroke text-primary-gray pr-1">
-                    <td className="px-4 py-2 font-semibold">
+                    <td className="px-4 py-2 font-semibold bg-gray-200">
                       <p className="text-secondary-black">Twilight</p> 04:00 PM
                       – 06:00 PM
                     </td>
