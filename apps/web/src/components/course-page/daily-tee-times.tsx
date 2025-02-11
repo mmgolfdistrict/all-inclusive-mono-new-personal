@@ -122,7 +122,6 @@ export const DailyTeeTimes = ({
         enabled: course?.id !== undefined && date !== undefined,
       }
     );
-
   const TAKE = 8;
   const {
     data: teeTimeData,

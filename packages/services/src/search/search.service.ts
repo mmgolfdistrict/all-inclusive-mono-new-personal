@@ -152,6 +152,33 @@ type PriceForecast = {
   Twilight: number | null;
 };
 
+interface TeeTimeForGroup {
+  id: string;
+  providerTeeTimeId: string;
+  date: string;
+  providerDate: string;
+  time: number;
+  numberOfHoles: number;
+  maxPlayersPerBooking: number;
+  availableFirstHandSpots: number;
+  availableSecondHandSpots: number;
+  greenFeePerPlayer: number;
+  cartFeePerPlayer: number;
+  greenFeeTaxPerPlayer: number;
+  cartFeeTaxPerPlayer: number;
+  courseId: string;
+  createdDateTime: string;
+  lastUpdatedDateTime: string;
+}
+
+interface TeeTimeGroup {
+  teeTimes: TeeTimeForGroup[];
+  time: number;
+  pricePerGolfer: number;
+  teeTimeIds: string[];
+  date: string;
+}
+
 /**
  * Service for searching users and retrieving tee time listings.
  */
@@ -879,9 +906,9 @@ export class SearchService extends CacheService {
       );
     }
 
-    const firstHandResultsQuery = this.database
+    let firstHandResultsQuery = this.database
       .selectDistinct({
-        // providerDate: sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))`,
+        // providerDate: sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))`, 
         providerDate: sql`DATE(SUBSTRING_INDEX(${teeTimes.providerDate}, '-', 3))`
       })
       .from(teeTimes)
@@ -896,7 +923,6 @@ export class SearchService extends CacheService {
       .from(courseAllowedTimeToSell)
       .where(and(eq(courseAllowedTimeToSell.courseId, courseId)))
       .orderBy(asc(courseAllowedTimeToSell.fromTime))
-      .execute();
 
     if (courseAllowedTeeTimeToSellFilters.length > 0) {
       firstHandResultsQuery
@@ -943,8 +969,8 @@ export class SearchService extends CacheService {
     // console.log("DATES QUERY:", firstHandResultsQuery.toSQL())
 
     const firstHandResults = await firstHandResultsQuery.execute();
-
     
+
     const secondHandResultsQuery = this.database
       .selectDistinct({
         providerDate: sql`DATE(SUBSTRING_INDEX(${teeTimes.providerDate}, '-', 3))`
@@ -1129,7 +1155,7 @@ export class SearchService extends CacheService {
       .where(
         and(
           and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
-          between(teeTimes.greenFeePerPlayer, lowerPrice, upperPrice),
+          between(sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100`, lowerPrice, upperPrice),
           between(teeTimes.providerDate, startOfDay, endOfDay),
           eq(teeTimes.courseId, courseId),
           //TODO: use isCartIncluded instead
@@ -1209,6 +1235,7 @@ export class SearchService extends CacheService {
       .where(
         and(
           and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
+          between(sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100`, lowerPrice, upperPrice),
           between(teeTimes.providerDate, startOfDay, endOfDay),
           eq(teeTimes.courseId, courseId),
           eq(teeTimes.numberOfHoles, holes),
@@ -1860,7 +1887,8 @@ export class SearchService extends CacheService {
     minimumGolferGroup = 4
   ) => {
     try {
-      const availableTimes: Record<string, any> = {};
+      // const availableTimes: Record<string, any> = {};
+      const availableTimes: TeeTimeGroup[] = [];
       const [courseSettingResponse] = await this.database
         .select({
           value: courseSetting.value,
@@ -2006,10 +2034,7 @@ export class SearchService extends CacheService {
           }
 
           if (areSpotsAvailable && isContinuous) {
-            if (!availableTimes[date]) {
-              availableTimes[date] = [];
-            }
-            availableTimes[date].push({
+            availableTimes.push({
               teeTimes: window,
               time: window[0]!.time,
               pricePerGolfer,
@@ -2018,7 +2043,6 @@ export class SearchService extends CacheService {
             })
           }
         }
-        console.dir(availableTimes, { depth: null })
       }
       return availableTimes;
     } catch (err) {
@@ -2068,6 +2092,7 @@ export class SearchService extends CacheService {
       // .leftJoin(assets, and(eq(assets.courseId, teeTimes.courseId), eq(assets.id, courses.logoId)))
       .leftJoin(assets, eq(assets.id, courses.logoId))
       .leftJoin(favorites, and(eq(favorites.teeTimeId, teeTimes.id), eq(favorites.userId, userId)))
+      .orderBy(asc(teeTimes.providerDate))
       .execute()
       .catch((err) => {
         this.logger.error(err);
