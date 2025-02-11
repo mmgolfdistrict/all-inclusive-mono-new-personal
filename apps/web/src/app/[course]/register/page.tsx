@@ -30,8 +30,10 @@ import {
 } from "react";
 import ReCAPTCHA from "react-google-recaptcha";
 import { Controller, useForm, type SubmitHandler } from "react-hook-form";
+import PhoneInput from "react-phone-input-2";
 import { toast } from "react-toastify";
 import { useDebounce } from "usehooks-ts";
+import "react-phone-input-2/lib/style.css";
 
 export default function RegisterPage() {
   const { course } = useCourseContext();
@@ -81,6 +83,59 @@ export default function RegisterPage() {
       .toLowerCase() // Convert to lowercase
       .replace(/^\w/, (c) => c.toUpperCase()); // Capitalize the first letter
   };
+
+  const [currentCountry, setCurrentCountry] = useState<string>("");
+  const [currentPhoneNumber, setCurrentPhoneNumber] = useState<string>("");
+  const debouncedPhoneNumber = useDebounce<string>(currentPhoneNumber, 2000);
+
+  useEffect(() => {
+    const fetchCountry = async () => {
+      try {
+        const result = await fetch(
+          `https://ipinfo.io/json?token=${process.env.NEXT_PUBLIC_IPINFO_API_TOKEN}`
+        );
+        const data = await result.json();
+        if (data?.country) {
+          if (typeof data.country === "string") {
+            setCurrentCountry(data.country.toLowerCase());
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching country:", error);
+      }
+    };
+
+    fetchCountry();
+  }, []);
+
+  useEffect(() => {
+    if (currentCountry) {
+      setValue("phoneNumber", "");
+      setCurrentPhoneNumber("");
+    }
+  }, [currentCountry, setValue]);
+
+  useEffect(() => {
+    if (!debouncedPhoneNumber) return;
+
+    const fetchPhoneValidation = async () => {
+      try {
+        const response = await fetch(
+          `https://phonevalidation.abstractapi.com/v1/?api_key=${process.env.NEXT_PUBLIC_ABSTRACT_API_KEY}&phone=${debouncedPhoneNumber}`
+        );
+        const result = await response.json();
+        if (!result.valid) {
+          setError("phoneNumber", {
+            message: "Invalid phone number.",
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching phone validation:", error);
+      }
+    };
+
+    fetchPhoneValidation();
+  }, [debouncedPhoneNumber]);
 
   const onPlaceChanged = () => {
     const place = autocompleteRef.current?.getPlace();
@@ -335,19 +390,51 @@ export default function RegisterPage() {
             name="phoneNumber"
             control={control}
             render={({ field }) => (
-              <Input
-                {...field}
-                label="Phone Number"
-                type="tel"
-                placeholder="Enter your phone number"
-                id="phoneNumber"
-                register={register}
-                name="phoneNumber"
-                error={errors.phoneNumber?.message}
-                inputRef={(e) => {
-                  field.ref(e);
-                }}
-              />
+              <div className={`flex flex-col gap-1`}>
+                <div className="flex gap-1">
+                  <label
+                    htmlFor="phoneNumber"
+                    className="text-[14px] text-primary-gray"
+                  >
+                    Phone Number
+                  </label>
+                </div>
+                <PhoneInput
+                  {...field}
+                  country={currentCountry}
+                  value={currentPhoneNumber}
+                  autoFormat={false}
+                  onChange={(
+                    phone,
+                    countryData: { dialCode: string; countryCode: string }
+                  ) => {
+                    const nationalNumber = phone.replace(
+                      countryData.dialCode,
+                      ""
+                    );
+                    console.log("countryData.dialCode:", countryData.dialCode);
+                    setCurrentPhoneNumber(phone);
+                    setValue("phoneNumber", nationalNumber);
+                    setValue("phoneNumberCountryCode", +countryData.dialCode);
+                  }}
+                  enableSearch
+                  inputStyle={{ width: "100%", paddingLeft: "50px" }}
+                  buttonStyle={{
+                    border: "none",
+                    backgroundColor: "transparent",
+                  }}
+                />
+                {errors.phoneNumber && (
+                  <p className="text-[12px] text-red">
+                    {errors.phoneNumber.message}
+                  </p>
+                )}
+                {errors.phoneNumberCountryCode && (
+                  <p className="text-[12px] text-red">
+                    {errors.phoneNumberCountryCode.message}
+                  </p>
+                )}
+              </div>
             )}
           />
           <div className="flex items-end gap-2">

@@ -12,6 +12,7 @@ export const registerSchema = z
     //   message: "Username cannot contain '@'",
     // }),
     email: z.string().email({ message: "Invalid email" }).min(1, "Email is required"),
+    phoneNumberCountryCode: z.number().min(1, { message: "Phone number country code is required" }),
     phoneNumber: z
       .string()
       .min(1, { message: "Phone number is required" })
