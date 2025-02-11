@@ -6,19 +6,27 @@ import {
   useWidgets,
 } from "@juspay-tech/react-hyper-js";
 import { LoadingContainer } from "~/app/[course]/loader";
+import { useBookingSourceContext } from "~/contexts/BookingSourceContext";
 import { useCheckoutContext } from "~/contexts/CheckoutContext";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
 import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
-import type { CartProduct } from "~/utils/types";
+import type { CartProduct, FirstHandGroupProduct } from "~/utils/types";
 import { useParams, useRouter } from "next/navigation";
 import type { Dispatch, SetStateAction } from "react";
 import { Fragment, useEffect, useState, type FormEvent } from "react";
 import { toast } from "react-toastify";
+import { useMediaQuery } from "usehooks-ts";
 import { FilledButton } from "../buttons/filled-button";
+import { Switch } from "../buttons/switch";
+import { Info } from "../icons/info";
 import { CharitySelect } from "../input/charity-select";
 import { Input } from "../input/input";
+import Skeleton from "../skeleton/skeleton";
+import { Tooltip } from "../tooltip";
+import { CheckoutAccordionRoot } from "./checkout-accordian";
+import CheckoutItemAccordion from "./checkout-item-accordian";
 import styles from "./checkout.module.css";
 import type { NextAction } from "./hyper-switch";
 
@@ -50,17 +58,32 @@ export const CheckoutForm = ({
   nextAction?: NextAction;
   callingRef?: boolean;
   playerCount: string | undefined;
-  roundOffStatus: string | undefined;
+  roundOffStatus: string;
   setRoundOffStatus: Dispatch<SetStateAction<string>>;
 }) => {
   console.log("cart-data", cartData);
   const MAX_CHARITY_AMOUNT = 1000;
   const { course } = useCourseContext();
+  const {
+    shouldAddSensible,
+    validatePlayers,
+    handleShouldAddSensible: _handleShouldAddSensible,
+  } = useCheckoutContext();
   const params = useParams();
   const courseId = course?.id;
   const roundUpCharityId = course?.roundUpCharityId;
+  const [isExpanded, setIsExpanded] = useState(false);
+  // const [TotalAmount, setTotalAmount] = useState("");
+  const [isLoadingTotalAmount, setIsLoadingTotalAmount] = useState(false);
+  const isMobile = useMediaQuery("(max-width: 768px)");
+  const [needRentals, setNeedRentals] = useState(false);
+  // const cartDataRef = useRef(cartData);
+  const handleToggle = () => {
+    setIsExpanded(!isExpanded);
+  };
 
   const { user } = useUserContext();
+  const { bookingSource, setBookingSource } = useBookingSourceContext();
   const auditLog = api.webhooks.auditLog.useMutation();
   const sendEmailForFailedPayment =
     api.webhooks.sendEmailForFailedPayment.useMutation();
@@ -91,6 +114,9 @@ export const CheckoutForm = ({
   const checkIfTeeTimeAvailableOnProvider =
     api.teeBox.checkIfTeeTimeAvailableOnProvider.useMutation();
 
+  const checkIfTeeTimeGroupAvailableOnProvider =
+    api.teeBox.checkIfTeeTimeGroupAvailableOnProvider.useMutation();
+
   const logAudit = async () => {
     await auditLog.mutateAsync({
       userId: user?.id ?? "",
@@ -111,6 +137,7 @@ export const CheckoutForm = ({
   if (isFirstHand.length) {
     primaryGreenFeeCharge =
       isFirstHand?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+    console.log("primaryGreenFeeCharge ---", primaryGreenFeeCharge);
   } else {
     primaryGreenFeeCharge =
       cartData
@@ -118,6 +145,13 @@ export const CheckoutForm = ({
           ({ product_data }) => product_data.metadata.type === "second_hand"
         )
         ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+  }
+  const isFirstHandGroup = cartData?.filter(
+    ({ product_data }) => product_data.metadata.type === "first_hand_group"
+  );
+  if (isFirstHandGroup.length) {
+    primaryGreenFeeCharge =
+      isFirstHandGroup?.reduce((acc: number, i) => acc + i.price, 0) / 100;
   }
 
   // const secondaryGreenFeeCharge = cartData?.filter(({ product_data }) => product_data.metadata.type === "second_hand")?.reduce((acc: number, i) => acc + i.price, 0) / 100;
@@ -127,7 +161,7 @@ export const CheckoutForm = ({
         ({ product_data }) => product_data.metadata.type === "convenience_fee"
       )
       ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
-  const taxCharge =
+  let taxCharge =
     cartData
       ?.filter(({ product_data }) => product_data.metadata.type === "taxes")
       ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
@@ -141,17 +175,52 @@ export const CheckoutForm = ({
     cartData
       ?.filter(({ product_data }) => product_data.metadata.type === "charity")
       ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+  const cartFeeCharge =
+    cartData
+      ?.filter(({ product_data }) => product_data.metadata.type === "cart_fee")
+      ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+
+  const greenFeeTaxPercent =
+    cartData
+      ?.filter(
+        ({ product_data }) =>
+          product_data.metadata.type === "greenFeeTaxPercent"
+      )
+      ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+  const cartFeeTaxPercent =
+    cartData
+      ?.filter(
+        ({ product_data }) => product_data.metadata.type === "cartFeeTaxPercent"
+      )
+      ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+  const weatherGuaranteeTaxPercent =
+    cartData
+      ?.filter(
+        ({ product_data }) =>
+          product_data.metadata.type === "weatherGuaranteeTaxPercent"
+      )
+      ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+  const markupFee =
+    cartData
+      ?.filter(({ product_data }) => product_data.metadata.type === "markup")
+      ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+
+  const markupTaxPercent =
+    cartData
+      ?.filter(
+        ({ product_data }) => product_data.metadata.type === "markupTaxPercent"
+      )
+      ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
 
   // const cartFeeCharge =
   //   cartData
   //     ?.filter(({ product_data }) => product_data.metadata.type === "cart_fee");
-  //console.log("cart-fee",Number(cartFeeCharge[0].product_data.metadata.amount));
 
   const unifiedCheckoutOptions = {
     wallets: {
       walletReturnUrl: isBuyNowAuction
         ? `${window.location.origin}/${course?.id}/auctions/confirmation`
-        : `${window.location.origin}/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}`,
+        : `${window.location.origin}/${course?.id}/checkout/processing?teeTimeId=${teeTimeId}&cart_id=${cartId}&listing_id=${listingId}&need_rentals=${needRentals}`,
       applePay: "auto",
       googlePay: "auto",
     },
@@ -169,10 +238,11 @@ export const CheckoutForm = ({
 
   const router = useRouter();
   const [donateValue, setDonateValue] = useState(5);
-  const [roundOffClick, setRoundOffClick] = useState(true);
+  // const [roundOffClick, setRoundOffClick] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [showTextField, setShowTextField] = useState(false);
   const [donateError, setDonateError] = useState(false);
+  const [otherDonateValue, setOtherDonateValue] = useState(5);
   // const [noThanks, setNoThanks] = useState(false);
   const [charityData, setCharityData] = useState<charityData | undefined>({
     charityDescription: "",
@@ -183,6 +253,8 @@ export const CheckoutForm = ({
   // const [isPaymentCompleted, setIsPaymentCompleted] = useState(false);
   const [message, setMessage] = useState("");
   const [charityAmountError, setCharityAmountError] = useState("");
+  const [additionalNote, setAdditionalNote] = useState("");
+
   // const [customerID, setCustomerID] = useState("");
   const {
     promoCode,
@@ -198,6 +270,7 @@ export const CheckoutForm = ({
   } = useCheckoutContext();
 
   const reserveBookingApi = api.teeBox.reserveBooking.useMutation();
+  const reserveGroupBookingApi = api.teeBox.reserveGroupBooking.useMutation();
   const reserveSecondHandBookingApi =
     api.teeBox.reserveSecondHandBooking.useMutation();
   const { data: checkIsBookingDisabled } = api.course.getCourseById.useQuery({
@@ -355,6 +428,19 @@ export const CheckoutForm = ({
         setIsLoading(false);
         return;
       }
+    } else if (isFirstHandGroup.length) {
+      const firstHandGroup = isFirstHandGroup[0]?.product_data.metadata as unknown as FirstHandGroupProduct;
+      const resp = await checkIfTeeTimeGroupAvailableOnProvider.mutateAsync({
+        teeTimeIds: firstHandGroup.tee_time_ids,
+        golfersCount: Number(playerCount ?? 0),
+        minimumPlayersPerBooking: firstHandGroup.min_players_per_booking ?? 4,
+      });
+
+      if (!resp) {
+        toast.error("Oops! Tee time is not available anymore");
+        setIsLoading(false);
+        return;
+      }
     } else {
       const resp = await checkIfTeeTimeAvailableOnProvider.mutateAsync({
         teeTimeId,
@@ -394,7 +480,7 @@ export const CheckoutForm = ({
         // Make sure to change this to your payment completion page
         return_url: isBuyNowAuction
           ? `${window.location.origin}/${course?.id}/auctions/confirmation`
-          : `${window.location.origin}/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}`,
+          : `${window.location.origin}/${course?.id}/checkout/processing?teeTimeId=${teeTimeId}&cart_id=${cartId}&listing_id=${listingId}&need_rentals=${needRentals}`,
       },
       redirect: "if_required",
     });
@@ -467,6 +553,50 @@ export const CheckoutForm = ({
               setIsLoading(false);
               return;
             }
+          } else if (isFirstHandGroup.length) {
+            try {
+              bookingResponse = await reserveBookingFirstHandGroup(
+                cartId,
+                response?.payment_id as string,
+                sensibleData?.id ?? ""
+              );
+              setReservationData({
+                golfReservationId: bookingResponse.bookingId,
+                providerReservationId: bookingResponse.providerBookingId,
+                playTime: teeTimeDate || "",
+              });
+            } catch (error) {
+              if (
+                error?.meta?.response &&
+                !Object.keys(error.meta.response).length &&
+                error.name === "TRPCClientError"
+              ) {
+                void sendEmailForBookingFailedByTimeout.mutateAsync({
+                  paymentId: response?.payment_id as string,
+                  teeTimeId: teeTimeId,
+                  cartId: cartId,
+                  userId: user?.id ?? "",
+                  courseId: courseId!,
+                  sensibleQuoteId: sensibleData?.id ?? "",
+                });
+
+                await auditLog.mutateAsync({
+                  userId: user?.id ?? "",
+                  teeTimeId: teeTimeId,
+                  bookingId: "",
+                  listingId: listingId,
+                  courseId,
+                  eventId: "Vercel function timedout",
+                  json: `Vercel function timedout`,
+                });
+              }
+
+              setMessage(
+                "Error reserving first hand group booking: " + error.message
+              );
+              setIsLoading(false);
+              return;
+            }
           } else {
             try {
               bookingResponse = await reserveSecondHandBooking(
@@ -484,11 +614,13 @@ export const CheckoutForm = ({
           }
 
           setMessage("Payment Successful");
+          setBookingSource("");
+          sessionStorage.removeItem("source");
           if (isBuyNowAuction) {
             router.push(`/${course?.id}/auctions/confirmation`);
           } else {
             router.push(
-              `/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}&bookingId=${bookingResponse.bookingId}&isEmailSend=${bookingResponse.isEmailSend}`
+              `/${course?.id}/checkout/confirmation?teeTimeId=${teeTimeId}&bookingId=${bookingResponse.bookingId}&isEmailSend=${bookingResponse.isEmailSend}&isGroupBooking=${isFirstHandGroup.length ? "true" : "false"}`
             );
           }
         } else if (response.status === "failed") {
@@ -517,11 +649,51 @@ export const CheckoutForm = ({
   ) => {
     const href = window.location.href;
     const redirectHref = href.split("/checkout")[0] || "";
+
     const bookingResponse = await reserveBookingApi.mutateAsync({
       cartId,
       payment_id,
       sensibleQuoteId,
+      source: bookingSource
+        ? bookingSource
+        : sessionStorage.getItem("source") ?? "",
+      additionalNoteFromUser: validatePlayers[0]?.courseMemberShipId
+        ? `There are ${validatePlayers.length} players participating in membership program \n Total Amount Paid:$${TotalAmt} \n with courseMembershipID:${validatePlayers[0]?.courseMemberShipId}`
+        : additionalNote,
+      needRentals,
       redirectHref,
+      courseMembershipId: validatePlayers[0]?.courseMemberShipId ?? "",
+      playerCountForMemberShip: playerCount ?? "",
+      providerCourseMembershipId:
+        validatePlayers[0]?.providerCourseMembershipId ?? "",
+    });
+    return bookingResponse;
+  };
+
+  const reserveBookingFirstHandGroup = async (
+    cartId: string,
+    payment_id: string,
+    sensibleQuoteId: string
+  ) => {
+    const href = window.location.href;
+    const redirectHref = href.split("/checkout")[0] || "";
+
+    const bookingResponse = await reserveGroupBookingApi.mutateAsync({
+      cartId,
+      payment_id,
+      sensibleQuoteId,
+      source: bookingSource
+        ? bookingSource
+        : sessionStorage.getItem("source") ?? "",
+      additionalNoteFromUser: validatePlayers[0]?.courseMemberShipId
+        ? `There are ${validatePlayers.length} players participating in membership program \n Total Amount Paid:$${TotalAmt} \n with courseMembershipID:${validatePlayers[0]?.courseMemberShipId}`
+        : additionalNote,
+      needRentals,
+      redirectHref,
+      courseMembershipId: validatePlayers[0]?.courseMemberShipId ?? "",
+      playerCountForMemberShip: playerCount ?? "",
+      providerCourseMembershipId:
+        validatePlayers[0]?.providerCourseMembershipId ?? "",
     });
     return bookingResponse;
   };
@@ -538,11 +710,52 @@ export const CheckoutForm = ({
       cartId,
       listingId,
       payment_id,
+      source: bookingSource
+        ? bookingSource
+        : sessionStorage.getItem("source") ?? "",
+      additionalNoteFromUser: additionalNote,
+      needRentals,
       redirectHref,
     });
     return bookingResponse;
   };
 
+  const handleDonateChange = (event) => {
+    const value = event.target.value.trim() as string;
+    const numericValue = parseFloat(value);
+    // setNoThanks(false);
+    // const numericValue = value.length > 0 ? parseFloat(value) : 0;
+    if (!numericValue || numericValue === 0) {
+      setOtherDonateValue(event?.target?.value as number);
+      setDonateError(true);
+    } else if (numericValue < 1) {
+      setDonateError(true);
+    } else {
+      setDonateError(false);
+      setOtherDonateValue(numericValue);
+      handleSelectedCharityAmount(Number(numericValue));
+    }
+    setDonateValue(numericValue);
+  };
+
+  const playersInNumber = Number(amountOfPlayers - validatePlayers.length || 0);
+  const greenFeeChargePerPlayer =
+    playersInNumber && playersInNumber > 0
+      ? primaryGreenFeeCharge / playersInNumber - cartFeeCharge - markupFee
+      : 0;
+  const greenFeeTaxAmount =
+    greenFeeChargePerPlayer * greenFeeTaxPercent * playersInNumber;
+  const cartFeeTaxAmount = cartFeeCharge * cartFeeTaxPercent * playersInNumber;
+  const markupFeesTaxAmount = markupFee * markupTaxPercent * playersInNumber;
+  const weatherGuaranteeTaxAmount = sensibleCharge * weatherGuaranteeTaxPercent;
+
+  const additionalTaxes =
+    (greenFeeTaxAmount +
+      markupFeesTaxAmount +
+      weatherGuaranteeTaxAmount +
+      cartFeeTaxAmount) /
+    100;
+  taxCharge += additionalTaxes;
   const Total =
     primaryGreenFeeCharge +
     taxCharge +
@@ -550,28 +763,17 @@ export const CheckoutForm = ({
     (!roundUpCharityId ? charityCharge : 0) +
     convenienceCharge +
     (!roundUpCharityId ? 0 : Number(donateValue));
+
   const TotalAmt = Total.toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
 
-  const handleDonateChange = (event) => {
-    const value = event.target.value.trim() as string;
-    const numericValue = value.length > 0 ? parseFloat(value) : 0;
-    // setNoThanks(false);
-
-    if (!numericValue || numericValue === 0) {
-      setDonateValue(event?.target?.value as number);
-      setDonateError(true);
-    } else if (numericValue < 1) {
-      setDonateError(true);
-    } else {
-      setDonateError(false);
-      setDonateValue(numericValue);
-      handleSelectedCharityAmount(Number(numericValue));
-    }
-  };
-
+  /**==============UI CALCULATION Variables==================== */
+  const totalGreenFeesPerPlayer =
+    (greenFeeChargePerPlayer + markupFee) * playersInNumber;
+  const totalCartFeePerPlayer = cartFeeCharge * playersInNumber;
+  /**================================== */
   const TaxCharge =
     taxCharge +
     sensibleCharge +
@@ -579,11 +781,12 @@ export const CheckoutForm = ({
     convenienceCharge;
   const totalBeforeRoundOff = primaryGreenFeeCharge + TaxCharge;
   const decimalPart = totalBeforeRoundOff % 1;
+  const [hasUserSelectedDonation, setHasUserSelectedDonation] = useState(false);
 
-  const roundOff =
-    decimalPart === 0 || decimalPart.toFixed(2) === "0.00"
-      ? Math.ceil(totalBeforeRoundOff) + 1
-      : Math.ceil(totalBeforeRoundOff);
+  // const roundOff =
+  //   decimalPart === 0 || decimalPart.toFixed(2) === "0.00"
+  //     ? Math.ceil(totalBeforeRoundOff) + 1
+  //     : Math.ceil(totalBeforeRoundOff);
 
   useEffect(() => {
     let donation;
@@ -591,42 +794,101 @@ export const CheckoutForm = ({
       donation = 1;
     } else if (decimalPart.toFixed(2) === "0.00") {
       donation = 1;
+    } else if (roundOffStatus === "nothanks") {
+      donation = 0;
+    } else if (roundOffStatus === "other") {
+      donation = otherDonateValue;
     } else {
       donation = parseFloat(
         (Math.ceil(totalBeforeRoundOff) - totalBeforeRoundOff).toFixed(2)
       );
     }
     setDonateValue(donation);
-  }, [primaryGreenFeeCharge]);
+  }, [Total, primaryGreenFeeCharge, totalBeforeRoundOff]);
 
-  const handleRoundOff = () => {
-    setShowTextField(false);
-    const totalBeforeRoundOff = primaryGreenFeeCharge + TaxCharge;
-    const decimalPart = totalBeforeRoundOff % 1;
-
+  const handleRoundOff = (value: number, status: string) => {
     let donation;
-    if (decimalPart === 0) {
-      donation = 1;
-    } else if (decimalPart.toFixed(2) === "0.00") {
-      donation = 1;
-    } else {
-      donation = parseFloat(
-        (Math.ceil(totalBeforeRoundOff) - totalBeforeRoundOff).toFixed(2)
-      );
+    switch (status) {
+      case "roundup":
+        setShowTextField(false);
+        setRoundOffStatus("roundup");
+        donation =
+          decimalPart === 0
+            ? 1
+            : parseFloat(
+              (Math.ceil(totalBeforeRoundOff) - totalBeforeRoundOff).toFixed(
+                2
+              )
+            );
+        break;
+
+      case "other":
+        setShowTextField(true);
+        donation = value;
+        break;
+
+      default:
+        setShowTextField(false);
+        donation = value;
+        break;
     }
     setDonateValue(donation);
+    setRoundOffStatus(status);
     handleSelectedCharityAmount(Number(donation));
   };
 
   useEffect(() => {
-    if (roundUpCharityId && roundOffStatus === "roundup") {
-      handleRoundOff();
-    }
-  }, [TaxCharge]);
+    if (roundUpCharityId) handleRoundOff(donateValue, roundOffStatus);
+  }, [TaxCharge, roundUpCharityId, roundOffStatus]);
 
+  useEffect(() => {
+    if (!hasUserSelectedDonation) {
+      if (primaryGreenFeeCharge <= 200) {
+        // setDonateValue(
+        //   Math.ceil(primaryGreenFeeCharge) - primaryGreenFeeCharge
+        // );
+        let donation;
+        if (decimalPart === 0) {
+          donation = 1;
+        } else if (decimalPart.toFixed(2) === "0.00") {
+          donation = 1;
+        } else {
+          donation = parseFloat(
+            (Math.ceil(primaryGreenFeeCharge) - primaryGreenFeeCharge).toFixed(
+              2
+            )
+          );
+        }
+
+        setDonateValue(donation);
+        setRoundOffStatus("roundup");
+      } else if (primaryGreenFeeCharge >= 201 && primaryGreenFeeCharge <= 500) {
+        console.log("donation 1");
+        setDonateValue(2);
+        setRoundOffStatus("twoDollars");
+      } else {
+        console.log("donation 2");
+        setDonateValue(5);
+        setRoundOffStatus("fiveDollars");
+      }
+    }
+  }, [totalBeforeRoundOff]);
+
+  useEffect(() => {
+    setHasUserSelectedDonation(true);
+  }, []);
+
+  useEffect(() => {
+    setIsLoadingTotalAmount(true);
+    setTimeout(() => {
+      setIsLoadingTotalAmount(false);
+    }, 800);
+  }, [TotalAmt]);
   return (
     <form onSubmit={handleSubmit} className="">
-      <UnifiedCheckout id="unified-checkout" options={unifiedCheckoutOptions} />
+      <div id="card-detail-form-checkout">
+        <UnifiedCheckout id="unified-checkout" options={unifiedCheckoutOptions} />
+      </div>
       <div className="flex w-full flex-col gap-2 bg-white p-4 rounded-lg my-2">
         {course?.supportCharity && !roundUpCharityId ? (
           <div className="flex flex-col gap-1">
@@ -689,7 +951,7 @@ export const CheckoutForm = ({
           </div>
         ) : null}
         {isBuyNowAuction ? null : course?.supportsPromocode ? (
-          <div className={`flex flex-col gap-1`}>
+          <div className={`flex flex-col gap-1`} id="promo-code-checkout">
             <label
               className="text-[14px] text-primary-gray"
               htmlFor={"promo-code"}
@@ -706,58 +968,253 @@ export const CheckoutForm = ({
             />
           </div>
         ) : null}
-        <div className="flex justify-between">
-          <div>
-            Subtotal
-            {/* {isBuyNowAuction ? null : ` (1 item)`} */}
-          </div>
+        <Input
+          label="Any Special Requests?"
+          register={() => null}
+          name="notes"
+          maxLength={200}
+          placeholder="Message"
+          value={additionalNote}
+          onChange={(e) => setAdditionalNote(e.target.value)}
+          id="any-special-request-checkout"
+        />
+        <div className="flex flex-row items-center gap-2" id="need-rentals-checkout">
+          <Switch
+            value={needRentals}
+            setValue={setNeedRentals}
+            id="need-rentals"
+          />
+          <label
+            className="text-primary-gray text-[14px] cursor-pointer select-none"
+            htmlFor="need-rentals"
+          >
+            Need Rentals?
+          </label>
+        </div>
+        {checkIsBookingDisabled &&
+          checkIsBookingDisabled?.showPricingBreakdown === 0 ? (
+          <Fragment>
+            <div className="flex justify-between">
+              <div>
+                Subtotal
+                {/* {isBuyNowAuction ? null : ` (1 item)`} */}
+              </div>
 
-          <div>
-            $
-            {primaryGreenFeeCharge.toLocaleString("en-US", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
-          </div>
-        </div>
-        <div className="flex justify-between">
-          <div>Taxes & Others</div>
-          <div>
-            $
-            {TaxCharge.toLocaleString("en-US", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
-          </div>
-        </div>
-        {roundUpCharityId && (
-          <div className="flex justify-between">
-            <div>Charitable Donation</div>
-            <div>
-              $
-              {(donateValue || 0).toLocaleString("en-US", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
+              <div className="unmask-price">
+                $
+                {primaryGreenFeeCharge.toLocaleString("en-US", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </div>
             </div>
-          </div>
+            <div className="flex justify-between">
+              <Fragment>
+                <div>Taxes & Others</div>
+                {isLoadingTotalAmount ? (
+                  <Skeleton />
+                ) : (
+                  <Fragment>
+                    <div className="unmask-price">
+                      $
+                      {(TaxCharge + (donateValue || 0)).toLocaleString(
+                        "en-US",
+                        {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        }
+                      )}
+                    </div>
+                  </Fragment>
+                )}
+              </Fragment>
+            </div>
+            <div className="flex justify-between" id="total-checkout">
+              <div>Total</div>
+              {isLoadingTotalAmount ? (
+                <Skeleton />
+              ) : (
+                <Fragment>
+                  <div className="unmask-price">
+                    $
+                    {(TotalAmt || 0).toLocaleString("en-US", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </div>
+                </Fragment>
+              )}
+            </div>
+          </Fragment>
+        ) : (
+          <Fragment>
+            <CheckoutAccordionRoot defaultValue={[]}>
+              <CheckoutItemAccordion
+                title="Subtotal"
+                value="item-1"
+                position="left"
+                amountValues={`$${primaryGreenFeeCharge.toLocaleString(
+                  "en-US",
+                  { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+                )}`}
+              >
+                <div className=" flex flex-col gap-2">
+                  <div className="flex justify-between">
+                    <div className="px-8">
+                      Green Fees{" "}
+                      {`($${(
+                        greenFeeChargePerPlayer + markupFee
+                      ).toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })} * ${playersInNumber})`}{" "}
+                    </div>
+                    <div className="unmask-price">
+                      $
+                      {totalGreenFeesPerPlayer.toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </div>
+                  </div>
+                  <div className="flex justify-between">
+                    <div className="px-8">
+                      Cart Fees{" "}
+                      {`($${cartFeeCharge.toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })} * ${playersInNumber})`}
+                    </div>
+                    <div className="unmask-price">
+                      $
+                      {totalCartFeePerPlayer.toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}{" "}
+                    </div>
+                  </div>
+                </div>
+              </CheckoutItemAccordion>
+              <CheckoutItemAccordion
+                title="Taxes and Others"
+                value="item-2"
+                position="left"
+                amountValues={`$${(
+                  TaxCharge + (donateValue || 0)
+                ).toLocaleString("en-US", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}`}
+                isLoading={isLoadingTotalAmount}
+              >
+                <div className=" flex flex-col gap-1">
+                  <div className="flex justify-between">
+                    <div className="px-8">
+                      Green Fee Tax{" "}
+                      {`($${(
+                        greenFeeChargePerPlayer + markupFee
+                      ).toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })} @ ${greenFeeTaxPercent}% * ${playersInNumber})`}
+                    </div>
+                    <div className="unmask-price">
+                      ${" "}
+                      {(
+                        (greenFeeTaxAmount + markupFeesTaxAmount) /
+                        100
+                      ).toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </div>
+                  </div>
+                  <div className="flex justify-between">
+                    <div className="px-8">
+                      Cart Fee Tax &nbsp;
+                      {`($${cartFeeCharge.toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })} @  ${cartFeeTaxPercent}% * ${playersInNumber})`}
+                    </div>
+                    <div className="unmask-price">
+                      ${" "}
+                      {(cartFeeTaxAmount / 100).toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </div>
+                  </div>
+                  {roundUpCharityId && roundOffStatus !== "nothanks" ? (
+                    <div className="flex justify-between">
+                      <div className="px-8">Charity Donations</div>
+                      <div className="unmask-price">
+                        ${" "}
+                        {donateValue.toLocaleString("en-US", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </div>
+                    </div>
+                  ) : null}
+                  {shouldAddSensible ? (
+                    <div className="flex justify-between">
+                      <div className="px-8">
+                        Sensible {`($${sensibleCharge})`}
+                      </div>
+                      <div className="unmask-price">
+                        ${" "}
+                        {sensibleCharge.toLocaleString("en-US", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </div>
+                    </div>
+                  ) : null}
+                  {shouldAddSensible ? (
+                    <div className="flex justify-between">
+                      <div className="px-8">
+                        Sensible Tax
+                        {`($${sensibleCharge.toLocaleString("en-US", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })} @ ${weatherGuaranteeTaxPercent}%)`}
+                      </div>
+                      <div className="unmask-price">
+                        ${" "}
+                        {(weatherGuaranteeTaxAmount / 100).toLocaleString(
+                          "en-US",
+                          {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          }
+                        )}
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              </CheckoutItemAccordion>
+              <Fragment>
+                <div className="flex justify-between px-2">
+                  <div className="px-10">Total</div>
+                  {isLoadingTotalAmount ? (
+                    <Skeleton />
+                  ) : (
+                    <Fragment>
+                      <div className="unmask-price">
+                        $
+                        {(TotalAmt || 0).toLocaleString("en-US", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </div>
+                    </Fragment>
+                  )}
+                </div>
+              </Fragment>
+            </CheckoutAccordionRoot>
+          </Fragment>
         )}
-        <div className="flex justify-between">
-          <div>Total</div>
-          <div>
-            $
-            {(
-              (roundUpCharityId
-                ? roundOffClick
-                  ? roundOff
-                  : TotalAmt
-                : TotalAmt) || 0
-            ).toLocaleString("en-US", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
-          </div>
-        </div>
       </div>
       {roundUpCharityId && (
         <div className="flex w-full flex-col gap-2 bg-white p-4 rounded-lg my-2 border border-primary">
@@ -771,67 +1228,107 @@ export const CheckoutForm = ({
               />
             )}
             <div>
-              <h2 className="text-lg font-semibold">
+              <h2 className="text-lg font-semibold flex items-center" id="charity-name-checkout">
                 {charityData?.charityName}
+                <Tooltip
+                  trigger={<Info className="ml-1 h-[20px] w-[20px]" />}
+                  content="Course operator pays a card processing fee and the remaining goes to the course."
+                />
               </h2>
+
               <p className="text-sm text-gray-600">
-                {charityData?.charityDescription}
+                {isMobile && !isExpanded
+                  ? `${charityData?.charityDescription?.slice(0, 50)}...`
+                  : charityData?.charityDescription}
+                {isMobile && (
+                  <span
+                    className="text-xs text-primary cursor-pointer ml-2"
+                    onClick={handleToggle}
+                  >
+                    {isExpanded ? "...Read Less" : "Read More..."}
+                  </span>
+                )}
               </p>
             </div>
           </div>
 
-          <div className="flex gap-2 mt-5 ml-3 mb-4">
+          <div className="flex gap-2 mt-5 ml-1 mb-4 items-center">
             <button
+            id="charity-button-roundup-checkout"
               type="button"
-              className={`flex w-32 items-center justify-center rounded-md p-2 ${
-                roundOffStatus === "roundup"
+              className={`flex w-32 items-center justify-center rounded-md p-2 ${roundOffStatus === "roundup"
                   ? "bg-primary text-white"
                   : "bg-white text-primary border-primary border-2"
-              }`}
+                }`}
               onClick={() => {
-                setRoundOffStatus("roundup");
-                handleRoundOff();
+                handleRoundOff(0, "roundup");
+                setHasUserSelectedDonation(true);
               }}
             >
               Round Up
             </button>
 
             <button
+            id="charity-button-2-checkout"
               type="button"
-              className={`flex w-32 items-center justify-center rounded-md p-2 ${
-                roundOffStatus === "other"
+              className={`flex w-20 items-center justify-center rounded-md p-2 ${roundOffStatus === "twoDollars"
                   ? "bg-primary text-white"
                   : "bg-white text-primary border-primary border-2"
-              }`}
+                }`}
               onClick={() => {
-                setRoundOffClick(false);
-                setShowTextField(true);
-                setDonateValue(5);
-                handleSelectedCharityAmount(5);
-                setRoundOffStatus("other");
+                handleRoundOff(2, "twoDollars");
+                setHasUserSelectedDonation(true);
+              }}
+            >
+              $2.00
+            </button>
+
+            <button
+            id="charity-button-5-checkout"
+              type="button"
+              className={`flex w-20 items-center justify-center rounded-md p-2 ${roundOffStatus === "fiveDollars"
+                  ? "bg-primary text-white"
+                  : "bg-white text-primary border-primary border-2"
+                }`}
+              onClick={() => {
+                handleRoundOff(5, "fiveDollars");
+                setHasUserSelectedDonation(true);
+              }}
+            >
+              $5.00
+            </button>
+
+            <button
+            id="charity-button-other-checkout"
+              type="button"
+              className={`flex w-32 items-center justify-center rounded-md p-2 ${roundOffStatus === "other"
+                  ? "bg-primary text-white"
+                  : "bg-white text-primary border-primary border-2"
+                }`}
+              onClick={() => {
+                handleRoundOff(5, "other");
+                setHasUserSelectedDonation(true);
               }}
             >
               Other
             </button>
 
-            <button
-              type="button"
-              className={`flex w-32 items-center justify-center rounded-md p-2 ${
-                roundOffStatus === "nothanks"
-                  ? "bg-primary text-white"
-                  : "bg-white text-primary border-primary border-2"
-              }`}
-              onClick={() => {
-                setRoundOffClick(false);
-                setShowTextField(false);
-                setDonateValue(0);
-                handleSelectedCharityAmount(0);
-                // setNoThanks(true);
-                setRoundOffStatus("nothanks");
-              }}
-            >
-              No Thanks
-            </button>
+            <div className="flex-1 flex justify-end">
+              <button
+              id="no-thanks-checkout"
+                type="button"
+                className={`text-primary text-xs underline ${roundOffStatus === "nothanks" ? "font-semibold" : ""
+                  }`}
+                onClick={() => {
+                  setRoundOffStatus("nothanks");
+                  setDonateValue(0);
+                  setShowTextField(false);
+                  setHasUserSelectedDonation(true);
+                }}
+              >
+                No Thanks
+              </button>
+            </div>
           </div>
 
           {showTextField && (
@@ -841,9 +1338,8 @@ export const CheckoutForm = ({
                 placeholder="Enter Donation Amount"
                 value={donateValue}
                 onChange={handleDonateChange}
-                className={`p-2 border rounded-md ${
-                  donateError ? "border-red" : "border-primary"
-                }`}
+                className={`p-2 border rounded-md ${donateError ? "border-red" : "border-primary"
+                  }`}
                 min="1"
                 step="1"
               />
@@ -893,6 +1389,7 @@ export const CheckoutForm = ({
         </Fragment>
       ) : (
         <FilledButton
+        id="pay-now-checkout"
           type="submit"
           className={`w-full rounded-full disabled:opacity-60`}
           disabled={
@@ -906,7 +1403,7 @@ export const CheckoutForm = ({
       <LoadingContainer
         isLoading={isLoading}
         title={"Please wait while we process your order."}
-        subtitle="Do not close or refresh your browser as this may take up to 60 seconds."
+        subtitle={`Do not close or refresh your browser as this may take up to ${isFirstHandGroup.length ? "few mins" : "60 seconds"}.`}
       >
         <div></div>
       </LoadingContainer>

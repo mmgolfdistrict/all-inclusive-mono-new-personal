@@ -6,7 +6,9 @@ import { accounts } from "@golf-district/database/schema/accounts";
 import { assets } from "@golf-district/database/schema/assets";
 import { bookings } from "@golf-district/database/schema/bookings";
 import { bookingslots } from "@golf-district/database/schema/bookingslots";
+import { invitedTeeTime } from "@golf-district/database/schema/invitedTeeTime";
 import { courses } from "@golf-district/database/schema/courses";
+import { courseUser } from "@golf-district/database/schema/courseUser";
 import { entities } from "@golf-district/database/schema/entities";
 import { favorites } from "@golf-district/database/schema/favorites";
 import { lists } from "@golf-district/database/schema/lists";
@@ -16,13 +18,16 @@ import { users } from "@golf-district/database/schema/users";
 import type { GroupedBookings } from "@golf-district/shared";
 import { assetToURL, currentUtcTimestamp, isValidEmail, isValidPassword } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
+import client from "@sendgrid/client";
 import bcrypt from "bcryptjs";
 import { alias } from "drizzle-orm/mysql-core";
 import { verifyCaptcha } from "../../../api/src/googleCaptcha";
 import { generateUtcTimestamp } from "../../helpers";
+import { AppSettingsService } from "../app-settings/app-settings.service";
 import type { NotificationService } from "../notification/notification.service";
 import { loggerService } from "../webhooks/logging.service";
-import { courseUser } from "@golf-district/database/schema/courseUser";
+
+client.setApiKey(process.env.SENDGRID_EMAIL_VALIDATION_KEY ?? "");
 
 const s3Client = new S3Client({
   region: process.env.AWS_REGION,
@@ -155,6 +160,15 @@ export class UserService {
         error: true,
         message:
           "Password must include uppercase, lowercase letters, numbers, and special characters (!@#$%^&*).",
+      };
+    }
+
+    const validateEmail = await this.validateEmail(data?.email);
+
+    if (!validateEmail) {
+      return {
+        error: true,
+        message: "Please enter valid email address, disposable emails not allowed.",
       };
     }
 
@@ -297,35 +311,122 @@ export class UserService {
     return user;
   };
 
-  inviteUser = async (userId: string, emailOrPhoneNumber: string) => {
+  getInvitedUsers = async (userId: string, emailOrPhoneNumber: string) => {
+    // Fetch user details
     const [user] = await this.database
-      .select({
-        handle: users.handle,
-      })
+      .select({ handle: users.handle, name: users.name })
       .from(users)
       .where(eq(users.id, userId));
+
     if (!user) {
       this.logger.warn(`User not found: ${userId}`);
       throw new Error("User not found");
     }
-    //determine if email or phone number
 
+    // Fetch slot details to check availability
+    const invitedUsers = await this.database
+      .select({
+        email: invitedTeeTime.email,
+        teeTimeId: invitedTeeTime.teeTimeId,
+        bookingId: invitedTeeTime.bookingId,
+        bookingSlotId: invitedTeeTime.bookingSlotId,
+        slotPosition: invitedTeeTime.slotPosition,
+        courseName: courses.name,
+        date: teeTimes.providerDate,
+        timezoneCorrection: courses.timezoneCorrection,
+      })
+      .from(invitedTeeTime)
+      .leftJoin(teeTimes, eq(teeTimes.id, invitedTeeTime.teeTimeId))
+      .leftJoin(courses, eq(courses.id, teeTimes.courseId))
+      .where(eq(invitedTeeTime.email, emailOrPhoneNumber))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error retrieving Invited tee times: ${err}`);
+        loggerService.errorLog({
+          userId: userId,
+          url: `/UserService/getInvitedUsers`,
+          userAgent: "",
+          message: "ERROR_GETTING_INVITED_TEE_TIME",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            emailOrPhoneNumber,
+            userId,
+          }),
+        });
+        throw new Error("Error retrieving bookings");
+      });
+
+    return invitedUsers;
+  };
+
+  inviteUser = async (
+    userId: string,
+    emailOrPhoneNumber: string,
+    teeTimeId: string,
+    bookingSlotId: string,
+    slotPosition: number
+  ) => {
+    // Fetch user details
+    const [user] = await this.database
+      .select({ handle: users.handle, name: users.name })
+      .from(users)
+      .where(eq(users.id, userId));
+
+    if (!user) {
+      this.logger.warn(`User not found: ${userId}`);
+      throw new Error("User not found");
+    }
+
+    // Fetch slot details to check availability
+    const [bookingSlot] = await this.database
+      .select({
+        bookingId: bookingslots.bookingId,
+        slotPosition: bookingslots.slotPosition,
+        externalSlotId: bookingslots.slotnumber,
+      })
+      .from(bookingslots)
+      .where(and(eq(bookingslots.slotPosition, slotPosition), eq(bookingslots.slotnumber, bookingSlotId)));
+
+    if (!bookingSlot) {
+      throw new Error("Booking slot not available");
+    }
+
+    // Check if invite already exists and delete it if present
+    const [existingInvite] = await this.database
+      .select({ id: invitedTeeTime.id })
+      .from(invitedTeeTime)
+      .where(and(eq(invitedTeeTime.email, emailOrPhoneNumber), eq(invitedTeeTime.teeTimeId, teeTimeId)));
+
+    if (existingInvite) {
+      // Delete the existing invite before sending a new one
+      await this.database.delete(invitedTeeTime).where(eq(invitedTeeTime.id, existingInvite.id));
+    }
+
+    // Save new invitation
+    await this.database.insert(invitedTeeTime).values({
+      id: randomUUID(),
+      email: emailOrPhoneNumber,
+      teeTimeId: teeTimeId,
+      bookingId: bookingSlot.bookingId,
+      bookingSlotId: bookingSlot.externalSlotId,
+      slotPosition: bookingSlot.slotPosition,
+    });
+
+    // Determine invite method (email or phone)
     const phoneRegex = /^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$/;
     if (isValidEmail(emailOrPhoneNumber)) {
       await this.notificationsService.sendEmail(
         emailOrPhoneNumber,
         "You've been invited to Golf District",
-        `${user.handle} has invited to Golf District. link`
+        `<p>${user?.name?.split(
+          " "
+        )[0]} has invited you to Golf District. Create a new account or login with your existing account to see the tee times you are part of.</p>`
       );
-      return;
-    }
-    if (phoneRegex.test(emailOrPhoneNumber)) {
-      const userName = user.handle;
+    } else if (phoneRegex.test(emailOrPhoneNumber)) {
       await this.notificationsService.sendSMS(
         emailOrPhoneNumber,
-        `${userName} has invited to Golf District link`
+        `${user?.name?.split(" ")[0]} has invited you to Golf District.`
       );
-      return;
     } else {
       throw new Error("Invalid email or phone number");
     }
@@ -1123,10 +1224,10 @@ export class UserService {
           });
           throw new Error("Error sending email");
         });
-        return {
-          error: true,
-          message: `Since you signed in using ${accountData?.provider},we cannot reset your password from our end. Please use ${accountData?.provider} to sign in.`,
-        };
+      return {
+        error: true,
+        message: `Since you signed in using ${accountData?.provider},we cannot reset your password from our end. Please use ${accountData?.provider} to sign in.`,
+      };
     }
 
     if (!user.emailVerified) {
@@ -1535,6 +1636,54 @@ export class UserService {
     return true;
   };
 
+  validateEmail = async (email: string): Promise<boolean> => {
+    // Initialize the AppSettingsService
+    const appSettingService = new AppSettingsService(
+      this.database,
+      process.env.REDIS_URL!,
+      process.env.REDIS_TOKEN!
+    );
+
+    // Fetch app settings
+    const appSettings = await appSettingService.getMultiple("ALLOW_DISPOSABLE_EMAIL_ADDRESS");
+
+    // If disposable emails are allowed, return true
+    if (appSettings?.ALLOW_DISPOSABLE_EMAIL_ADDRESS === "true") {
+      return true;
+    }
+
+    // API URL for checking disposable email
+    const apiUrl = `https://disposable.debounce.io/?email=${encodeURIComponent(email)}`;
+
+    try {
+      // Fetch the response from the disposable email checker API
+      const response = await fetch(apiUrl);
+
+      // Check if the response is successful
+      if (!response.ok) {
+        console.error(`API Error: ${response.status} ${response.statusText}`);
+        return false; // Treat it as invalid if the API fails
+      }
+
+      // Parse the JSON response
+      const data = await response.json();
+
+      // Check the disposable status
+      if (data.disposable === "true") {
+        console.log(`The email ${email} is disposable.`);
+        return false; // Disposable email, return false
+      } else if (data.disposable === "false") {
+        console.log(`The email ${email} is not disposable.`);
+        return true; // Not a disposable email, return true
+      } else {
+        console.log(`Could not determine the disposable status of the email ${email}.`);
+        return false; // Treat ambiguous cases as invalid
+      }
+    } catch (error) {
+      console.error("Error during email validation:", error);
+      return false; // Treat errors as invalid emails
+    }
+  };
   /**
    * Asynchronously inserts a new user into the database.
    *
@@ -1685,6 +1834,7 @@ export class UserService {
         city: user.city,
         zipcode: user.zipcode,
         country: user.country,
+        allowDeleteCreditCard: user.allowDeleteCreditCard,
       };
     }
     return res;

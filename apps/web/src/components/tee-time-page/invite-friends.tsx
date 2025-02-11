@@ -61,7 +61,12 @@ export const InviteFriends = ({
   const inviteFriendCall = async () => {
     if (invite.isLoading) return;
     try {
-      await invite.mutateAsync({ emailOrPhone: inviteFriend });
+      await invite.mutateAsync({
+        emailOrPhone: inviteFriend,
+        teeTimeId: "",
+        bookingSlotId: "",
+        slotPosition: 0,
+      });
       setInviteSucess(true);
       setInviteFriend("");
       setTimeout(() => {

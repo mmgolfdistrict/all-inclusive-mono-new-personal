@@ -1,6 +1,7 @@
 "use client";
 
 import { signIn, useSession } from "@golf-district/auth/nextjs-exports";
+import { AuthenticationMethodEnum } from "@golf-district/shared";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FilledButton } from "~/components/buttons/filled-button";
 import { IconButton } from "~/components/buttons/icon-button";
@@ -83,6 +84,17 @@ export default function Login() {
     }
   };
 
+  const {
+    data: authenticationMethods,
+    isLoading: authenticationMethodsLoading,
+  } = api.course.getAuthenticationMethods.useQuery({
+    courseId: course?.id ?? "",
+  });
+
+  const isMethodSupported = (method: AuthenticationMethodEnum) => {
+    return authenticationMethods?.includes(method);
+  };
+
   useEffect(() => {
     if (errorKey === "AccessDenied" && !toast.isActive("accessDeniedToast")) {
       const url = new URL(window.location.href);
@@ -94,7 +106,6 @@ export default function Login() {
       );
     }
   }, [errorKey]);
-
   useEffect(() => {
     if (sessionData?.user?.id && course?.id && status === "authenticated") {
       addCourseToUser();
@@ -149,9 +160,14 @@ export default function Login() {
 
   const addLoginSession = () => {
     if (!hasSessionLogged) {
+      const loginMethod = localStorage.getItem(
+        "loginMethod"
+      ) as unknown as string;
       addUserSession
         .mutateAsync({
           status: "LOGIN",
+          courseId: course?.id ?? "",
+          loginMethod: loginMethod ?? "",
         })
         .then(() => {
           console.log("login user added successfully");
@@ -232,8 +248,9 @@ export default function Login() {
           }
         }
         setValue("password", "");
+      } else {
+        localStorage.setItem("loginMethod", "EMAIL_PASSWORD");
       }
-      console.log("login done");
     } catch (error) {
       toast.error(
         (error as Error)?.message ??
@@ -267,7 +284,7 @@ export default function Login() {
   const facebookSignIn = async () => {
     try {
       setFacebookIsLoading(true);
-      await signIn("facebook", {
+      const res = await signIn("facebook", {
         // callbackUrl: `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
         //   ? prevPath?.path
         //     ? prevPath.path
@@ -276,6 +293,10 @@ export default function Login() {
         //   }`,
         redirect: false,
       });
+
+      if (!res?.error) {
+        localStorage.setItem("loginMethod", "FACEBOOK");
+      }
       if (typeof window !== "undefined") {
         localStorage.setItem("facebookstate", "loggedin");
       }
@@ -311,7 +332,7 @@ export default function Login() {
       label: "Sign in using google",
     });
     try {
-      await signIn("google", {
+      const res = await signIn("google", {
         // callbackUrl: `${window.location.origin}${
         //   GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
         //     ? prevPath?.path
@@ -322,6 +343,9 @@ export default function Login() {
         redirect: false,
       });
 
+      if (!res?.error) {
+        localStorage.setItem("loginMethod", "GOOGLE");
+      }
       if (typeof window !== "undefined") {
         localStorage.setItem("googlestate", "loggedin");
       }
@@ -334,12 +358,16 @@ export default function Login() {
       // setGoogleIsLoading(false);
     }
   };
+
   const linkedinSignIn = async () => {
     try {
       setLinkedinIsLoading(true);
-      await signIn("linkedin", {
+      const res = await signIn("linkedin", {
         redirect: false,
       });
+      if (!res?.error) {
+        localStorage.setItem("loginMethod", "LINKEDIN");
+      }
       if (typeof window !== "undefined") {
         localStorage.setItem("linkedinstate", "loggedin");
       }
@@ -396,7 +424,8 @@ export default function Login() {
     localStorageGoogle ||
     localstorageLinkedin ||
     localstorageApple ||
-    localstorageFacebook ? (
+    localstorageFacebook ||
+    authenticationMethodsLoading ? (
     <LoadingContainer isLoading={true}>
       <div></div>
     </LoadingContainer>
@@ -409,20 +438,28 @@ export default function Login() {
         Login
       </h1>
       <section className="mx-auto flex w-full flex-col gap-2 bg-white p-5 sm:max-w-[500px] sm:rounded-xl sm:p-6">
-        <p>
-          First time users of Golf District need to create a new account. Simply
-          use any social login like Google to login quickly, or select{" "}
-          <Link
-            className="text-primary"
-            href={`/${course?.id}/register`}
-            data-testid="signup-button-id"
-          >
-            sign up
-          </Link>{" "}
-          if you prefer to use another email.
-        </p>
+        {isMethodSupported(AuthenticationMethodEnum.EMAIL_PASSWORD) ? (
+          <p>
+            First time users of Golf District need to create a new account.
+            Simply use any social login like Google to login quickly, or select{" "}
+            <Link
+              className="text-primary"
+              href={`/${course?.id}/register`}
+              data-testid="signup-button-id"
+            >
+              sign up
+            </Link>{" "}
+            if you prefer to use another email.
+          </p>
+        ) : (
+          <p>
+            First time users of Golf District need to create a new account.
+            Simply use any social login like Google to login quickly.
+          </p>
+        )}
 
-        {process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ? (
+        {isMethodSupported(AuthenticationMethodEnum.GOOGLE) &&
+        process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ? (
           <div className="w-full rounded-lg shadow-outline">
             <SquareButton
               onClick={googleSignIn}
@@ -442,7 +479,8 @@ export default function Login() {
             </SquareButton>
           </div>
         ) : null}
-        {process.env.NEXT_PUBLIC_LINKEDIN_ENABLED_AUTH_SUPPORT ? (
+        {isMethodSupported(AuthenticationMethodEnum.LINKEDIN) &&
+        process.env.NEXT_PUBLIC_LINKEDIN_ENABLED_AUTH_SUPPORT ? (
           <div className="w-full rounded-lg shadow-outline">
             <SquareButton
               onClick={linkedinSignIn}
@@ -462,7 +500,8 @@ export default function Login() {
             </SquareButton>
           </div>
         ) : null}
-        {process.env.NEXT_PUBLIC_AUTH_APPLE_CLIENT_ID ? (
+        {isMethodSupported(AuthenticationMethodEnum.APPLE) &&
+        process.env.NEXT_PUBLIC_AUTH_APPLE_CLIENT_ID ? (
           <SquareButton
             onClick={appleSignIn}
             className="flex items-center justify-center gap-3 bg-black text-white"
@@ -480,7 +519,8 @@ export default function Login() {
             )}
           </SquareButton>
         ) : null}
-        {process.env.NEXT_PUBLIC_FACEBOOK_CLIENT_ID ? (
+        {isMethodSupported(AuthenticationMethodEnum.FACEBOOK) &&
+        process.env.NEXT_PUBLIC_FACEBOOK_CLIENT_ID ? (
           <SquareButton
             onClick={facebookSignIn}
             className="flex items-center justify-center gap-3 bg-facebook text-white"
@@ -500,93 +540,104 @@ export default function Login() {
             )}
           </SquareButton>
         ) : null}
-        {hasProvidersSetUp ? (
+        {isMethodSupported(AuthenticationMethodEnum.EMAIL_PASSWORD) &&
+        authenticationMethods?.length !== 1 &&
+        hasProvidersSetUp ? (
           <div className="flex items-center py-4">
             <div className="h-[1px] w-full bg-stroke" />
             <div className="px-2 text-primary-gray">or</div>
             <div className="h-[1px] w-full bg-stroke" />
           </div>
         ) : null}
-        <form className="flex flex-col gap-2" onSubmit={handleSubmit(onSubmit)}>
-          <Input
-            label="Email"
-            type="email"
-            placeholder="Enter your email address"
-            id="email"
-            register={register}
-            name="email"
-            error={errors.email?.message}
-            data-testid="login-email-id"
-          />
-          <div className="relative">
+        {isMethodSupported(AuthenticationMethodEnum.EMAIL_PASSWORD) && (
+          <form
+            className="flex flex-col gap-2"
+            onSubmit={handleSubmit(onSubmit)}
+          >
             <Input
-              label="Password"
-              type={showPassword ? "text" : "password"}
-              id="password"
-              placeholder="Enter your password"
+              label="Email"
+              type="email"
+              placeholder="Enter your email address"
+              id="email"
               register={register}
-              name="password"
-              error={errors.password?.message}
-              data-testid="login-password-id"
+              name="email"
+              error={errors.email?.message}
+              data-testid="login-email-id"
             />
-            <IconButton
-              onClick={(e) => {
-                e.preventDefault();
-                setShowPassword(!showPassword);
-              }}
-              className={`absolute right-2 !top-[90%] border-none !bg-transparent !transform !-translate-y-[90%]`}
-              data-testid="login-show-password-id"
+            <div className="relative">
+              <Input
+                label="Password"
+                type={showPassword ? "text" : "password"}
+                id="password"
+                placeholder="Enter your password"
+                register={register}
+                name="password"
+                error={errors.password?.message}
+                data-testid="login-password-id"
+              />
+              <IconButton
+                onClick={(e) => {
+                  e.preventDefault();
+                  setShowPassword(!showPassword);
+                }}
+                className={`absolute right-2 !top-[90%] border-none !bg-transparent !transform !-translate-y-[90%] ${
+                  errors.password?.message ? "pb-10" : ""
+                }`}
+                data-testid="login-show-password-id"
+              >
+                {showPassword ? (
+                  <Hidden className="h-[14px] w-[14px]" />
+                ) : (
+                  <Visible className="h-[14px] w-[14px]" />
+                )}
+              </IconButton>
+            </div>
+            <Link
+              className="text-[12px] text-primary"
+              href={`/${course?.id}/forgot-password`}
+              data-testid="forgot-password-id"
             >
-              {showPassword ? (
-                <Hidden className="h-[14px] w-[14px]" />
-              ) : (
-                <Visible className="h-[14px] w-[14px]" />
-              )}
-            </IconButton>
-          </div>
-          <Link
-            className="text-[12px] text-primary"
-            href={`/${course?.id}/forgot-password`}
-            data-testid="forgot-password-id"
-          >
-            Forgot password?
-          </Link>
-          {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (
-            <ReCAPTCHA
-              size={
-                process.env.NEXT_PUBLIC_RECAPTCHA_IS_INVISIBLE === "true"
-                  ? "invisible"
-                  : "normal"
-              }
-              sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ?? ""}
-              onChange={onReCAPTCHAChange}
-              ref={recaptchaRef}
-              data-testid="login-recaptcha-id"
-            />
-          )}
-          <FilledButton
-            className="w-full rounded-full flex justify-center items-center"
-            data-testid="login-button-id"
-          >
-            {localstorageCredentials ? (
-              <div className="w-5 h-5 border-4 border-white border-t-transparent rounded-full animate-spin "></div>
-            ) : (
-              "Log In"
+              Forgot password?
+            </Link>
+            {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (
+              <ReCAPTCHA
+                size={
+                  process.env.NEXT_PUBLIC_RECAPTCHA_IS_INVISIBLE === "true"
+                    ? "invisible"
+                    : "normal"
+                }
+                sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ?? ""}
+                onChange={onReCAPTCHAChange}
+                ref={recaptchaRef}
+                data-testid="login-recaptcha-id"
+              />
             )}
-          </FilledButton>
-        </form>
+            <FilledButton
+              className="w-full rounded-full flex justify-center items-center"
+              data-testid="login-button-id"
+            >
+              {localstorageCredentials ? (
+                <div className="w-5 h-5 border-4 border-white border-t-transparent rounded-full animate-spin "></div>
+              ) : (
+                "Log In"
+              )}
+            </FilledButton>
+          </form>
+        )}
       </section>
-      <div className="pt-4 text-center text-[14px] text-primary-gray">
-        Don&apos;t have an account?{" "}
-        <Link
-          className="text-primary"
-          href={`/${course?.id}/register`}
-          data-testid="signup-button-id"
-        >
-          Sign Up
-        </Link>{" "}
-        instead
-      </div>
+      {isMethodSupported(AuthenticationMethodEnum.EMAIL_PASSWORD) && (
+        <div className="pt-4 text-center text-[14px] text-primary-gray">
+          Don&apos;t have an account?{" "}
+          <Link
+            className="text-primary"
+            href={`/${course?.id}/register`}
+            data-testid="signup-button-id"
+          >
+            Sign Up
+          </Link>{" "}
+          instead
+        </div>
+      )}
     </main>
   );
 }

@@ -31,7 +31,9 @@ export type TxnHistoryType = {
 
 export const Cashouts = () => {
   const { course } = useCourseContext();
-  const [selectedReceipt, setSelectedReceipt] = useState<TxnHistoryType | null>(null);
+  const [selectedReceipt, setSelectedReceipt] = useState<TxnHistoryType | null>(
+    null
+  );
   const [isReceiptOpen, setIsReceiptOpen] = useState<boolean>(false);
 
   const { data, isLoading, isError, error } =
@@ -145,7 +147,7 @@ const TableRow = ({
 }) => {
   return (
     <tr className="w-full border-b border-stroke text-primary-gray">
-      <td className="whitespace-nowrap px-4 py-3">{time}</td>
+      <td className="whitespace-nowrap px-4 py-3 unmask-time">{time}</td>
       <td className="whitespace-nowrap px-4 py-3">{amount}</td>
       <td className="whitespace-nowrap px-4 py-3">
         <OutlineButton onClick={openReceipt} data-testid="receipt-button-id">

@@ -10,7 +10,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, type ComponentProps } from "react";
 import { toast } from "react-toastify";
 import { useCopyToClipboard } from "usehooks-ts";
-import { Avatar } from "../avatar";
 import { FilledButton } from "../buttons/filled-button";
 import { OutlineButton } from "../buttons/outline-button";
 import { Check } from "../icons/check";
@@ -18,11 +17,11 @@ import { Heart } from "../icons/heart";
 import { Players } from "../icons/players";
 import { Share } from "../icons/share";
 import { ChoosePlayers } from "../input/choose-players";
+import { Spinner } from "../loading/spinner";
 import { ManageTeeTimeListing } from "../my-tee-box-page/manage-tee-time-listing";
 import { Tooltip } from "../tooltip";
 
 const PlayersOptions = ["1", "2", "3", "4"];
-const DEFAULT_SILHOUETTE_IMAGE = "/defaults/default-profile.webp";
 
 export const ListedDetails = ({
   listingId,
@@ -120,7 +119,7 @@ export const ListedDetails = ({
       <div className="stroke flex flex-wrap justify-between gap-4 border-b px-4 py-3 md:gap-2 md:px-6 md:py-4">
         <div className="text-lg font-semibold flex gap-2 items-center">
           <Tooltip
-            trigger={<Avatar src={DEFAULT_SILHOUETTE_IMAGE} />}
+            trigger={<Spinner className="w-[40px] h-[40px]" />}
             content={"Sold by another Golf District golfer"}
           />
           {isError || data === null ? (

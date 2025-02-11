@@ -45,7 +45,7 @@ function Waitlist({
             onChange={handleSelectAllCheckboxChange}
           />
         )}
-        <h2 className="text-[13px] md:text-lg capitalize text-secondary-black">
+        <h2 className="text-[13px] md:text-lg capitalize text-secondary-black unmask-time">
           {formattedDate}
         </h2>
         <FilledButton
@@ -67,13 +67,13 @@ function Waitlist({
             onClick={() => handleSelectNotification(item)}
           >
             {/* First Column */}
-            <div className="flex flex-col justify-between">
+            <div className="flex flex-col justify-between unmask-time">
               <span className="truncate">
                 {item.startTimeFormated} - {item.endTimeFormated}
               </span>
               <div className="flex flex-row gap-2">
                 <span className="text-primary-gray">Player count:</span>
-                <span>{item.playerCount}</span>
+                <span className="unmask-players">{item.playerCount}</span>
               </div>
             </div>
 

@@ -7,17 +7,16 @@ import { userProviderCourseLink } from "@golf-district/database/schema/userProvi
 import { users } from "@golf-district/database/schema/users";
 import Logger from "@golf-district/shared/src/logger";
 import { CacheService } from "../infura/cache.service";
+import { loggerService } from "../webhooks/logging.service";
 import type { ForeUpCredentials } from "./sheet-providers";
 import { foreUp, type ProviderAPI } from "./sheet-providers";
 import { clubprophet } from "./sheet-providers/clubprophet";
-
+import { Lightspeed } from "./sheet-providers/lightspeed";
 import type {
   BookingResponse,
   CustomerCreationData,
   TeeTimeResponse,
 } from "./sheet-providers/types/interface";
-import { Lightspeed } from "./sheet-providers/lightspeed";
-import { loggerService } from "../webhooks/logging.service";
 
 export interface Customer {
   playerNumber: number | null;
@@ -50,7 +49,11 @@ export class ProviderService extends CacheService {
   ) {
     super(redisUrl, redisToken, Logger(ProviderService.name));
     //this will need to be refactored to allow for providers with different credentials per course
-    this.teeSheetProviders = [new foreUp(foreUpCredentials), new clubprophet(providerConfiguration), new Lightspeed(providerConfiguration, new CacheService(redisUrl, redisToken))];
+    this.teeSheetProviders = [
+      new foreUp(foreUpCredentials),
+      new clubprophet(providerConfiguration),
+      new Lightspeed(providerConfiguration, new CacheService(redisUrl, redisToken)),
+    ];
   }
 
   /**
@@ -65,6 +68,7 @@ export class ProviderService extends CacheService {
     providerCourseConfiguration?: string
   ): Promise<{ provider: ProviderAPI; token: string }> => {
     this.logger.info(`getProvider called with providerId: ${internalProviderIdentifier}`);
+
     const provider = this.teeSheetProviders.find((p) => p.providerId === internalProviderIdentifier);
     if (!provider) {
       this.logger.fatal(`Provider with ID ${internalProviderIdentifier} not found`);
@@ -72,17 +76,76 @@ export class ProviderService extends CacheService {
     }
 
     provider.providerConfiguration = providerCourseConfiguration;
-    let token = await this.getCache(
-      `provider-${internalProviderIdentifier}-${courseId}-${process.env.NODE_ENV}`
-    )!;
-    if (!token) {
-      token = await provider.getToken();
-      await this.setCache(
-        `provider-${internalProviderIdentifier}-${courseId}-${process.env.NODE_ENV}`,
-        token,
-        60 * 60
-      );
+    let token;
+
+    const [course] = await this.database
+      .select({
+        supportsCentralizedAccessToken: providers.supportsCentralizedAccessToken,
+      })
+      .from(providers)
+      .where(eq(providers.internalId, internalProviderIdentifier))
+      .execute()
+      .catch((error) => {
+        this.logger.error(`Error fetching course data: ${error}`);
+        throw new Error(`Error fetching course data: ${error}`);
+      });
+
+    if (!course) {
+      throw new Error(`Course with ID ${courseId} not found`);
     }
+
+    if (course.supportsCentralizedAccessToken) {
+      token = await this.getCache(`provider-${internalProviderIdentifier}-token`);
+    } else {
+      token = await this.getCache(`provider-${internalProviderIdentifier}-${courseId}-token`);
+    }
+
+    let tokenNeedsLocalGeneration = false;
+    if (!token) {
+      try {
+        const response = await fetch(`${process.env.INTERNAL_WEB_SERVICE_URL}/api/generateToken/${courseId}`);
+        const apiFailure = response.status >= 400;
+
+        if (!response.ok && !apiFailure) {
+          this.logger.error(`Error fetching token: ${response.statusText}`);
+          throw new Error(`Error fetching token: ${response.statusText}`);
+        }
+        const responseData = await response.json();
+        token = responseData.token;
+        if (apiFailure) {
+          tokenNeedsLocalGeneration = true;
+        }
+      } catch (error) {
+        this.logger.error(`Error fetching token: ${error}`);
+        this.logger.info("Token needs to be generated locally");
+        tokenNeedsLocalGeneration = true;
+      } finally {
+        if (tokenNeedsLocalGeneration) {
+          if (!token) {
+            token = await provider.getToken();
+            let prevToken;
+            if (course.supportsCentralizedAccessToken) {
+              prevToken = await this.getCache(`provider-${internalProviderIdentifier}-token`);
+            } else {
+              prevToken = await this.getCache(`provider-${internalProviderIdentifier}-${courseId}-token`);
+            }
+
+            if (!prevToken) {
+              if (course.supportsCentralizedAccessToken) {
+                await this.setCache(`provider-${internalProviderIdentifier}-token`, token, 60 * 60);
+              } else {
+                await this.setCache(
+                  `provider-${internalProviderIdentifier}-${courseId}-token`,
+                  token,
+                  60 * 60
+                );
+              }
+            }
+          }
+        }
+      }
+    }
+
     return {
       provider: provider,
       token: token as string,
@@ -156,7 +219,9 @@ export class ProviderService extends CacheService {
     customerId: string,
     providerBookingId: string,
     providerId: string,
-    courseId: string
+    courseId: string,
+    providerSlotIds: string[] | undefined,
+    providerCourseMembershipId: string
   ): Promise<InsertBookingSlots[]> {
     // this.logger.info(`updateTeeTime called with courseId: ${courseId}`);
     const { provider } = await this.getProviderAndKey(providerId, courseId);
@@ -166,7 +231,9 @@ export class ProviderService extends CacheService {
       customerId,
       providerBookingId,
       providerId,
-      courseId
+      courseId,
+      providerSlotIds || [],
+      providerCourseMembershipId || ""
     );
   }
 
@@ -218,8 +285,8 @@ export class ProviderService extends CacheService {
           additionalDetailsJSON: JSON.stringify({
             courseId,
             userId,
-          })
-        })
+          }),
+        });
         throw new Error(`Error finding user id`);
       });
     if (!buyer) {
@@ -258,7 +325,7 @@ export class ProviderService extends CacheService {
               userId: userId,
               accountNumber: (customerIds.accountNumber ?? accountNumber).toString(),
               customerId: customerIds.customerId,
-            })
+            });
             return {
               playerNumber: (customerIds.accountNumber ?? accountNumber).toString(),
               customerId: customerIds.customerId,
@@ -266,7 +333,7 @@ export class ProviderService extends CacheService {
               username: buyer.handel,
               email: buyer.email,
               phone: buyer.phone,
-            }
+            };
           }
         }
       } catch (error: any) {
@@ -280,16 +347,16 @@ export class ProviderService extends CacheService {
           additionalDetailsJSON: JSON.stringify({
             courseId,
             userId,
-          })
-        })
+          }),
+        });
       }
 
       let customer: CustomerCreationData;
-      customer = provider.getCustomerCreationData({ ...buyer, accountNumber })
+      customer = provider.getCustomerCreationData({ ...buyer, accountNumber });
       if (!customer) {
         this.logger.fatal(`Course internal Id doesn't match for user: ${userId}`);
         throw new Error(`Error matching provider Internal Id`);
-      }      //create customer on provider
+      } //create customer on provider
       //create customer on provider
       let customerId: string | null = null;
       try {
@@ -313,26 +380,25 @@ export class ProviderService extends CacheService {
 
       //update user with providerCustomerId
       await this.updateCustomer({
-          id: userProviderCourseLinkId,
-          courseId: courseId,
-          providerId: providerId,
-          userId: userId,
+        id: userProviderCourseLinkId,
+        courseId: courseId,
+        providerId: providerId,
+        userId: userId,
         accountNumber: accountNumber.toString(),
-          customerId: customerId,
-        })
+        customerId: customerId,
+      });
     }
     return customerInfo;
   };
 
-  private updateCustomer = async (
-    info: {
-      id: string;
-      customerId: string;
-      courseId: string;
-      providerId: string;
-      userId: string;
-      accountNumber: string;
-    }) => {
+  private updateCustomer = async (info: {
+    id: string;
+    customerId: string;
+    courseId: string;
+    providerId: string;
+    userId: string;
+    accountNumber: string;
+  }) => {
     await this.database
       .insert(userProviderCourseLink)
       .values(info)
@@ -348,11 +414,50 @@ export class ProviderService extends CacheService {
           stackTrace: `${err.stack}`,
           additionalDetailsJSON: JSON.stringify({
             info,
-          })
-        })
+          }),
+        });
         throw new Error(`Error updating user id`);
       });
+  };
+
+  async checkCancelledBooking(
+    bookingProviderId: string,
+    providerTeeTimeId: string,
+    providerCourseId: string,
+    providerInternalId: string,
+    courseId: string,
+    providerCourseConfiguration: string
+  ) {
+    const { provider, token } = await this.getProviderAndKey(
+      providerInternalId,
+      courseId,
+      providerCourseConfiguration
+    );
+    return provider.checkBookingIsCancelledOrNot(
+      bookingProviderId,
+      providerCourseId,
+      providerTeeTimeId,
+      token,
+      providerInternalId,
+      courseId,
+      providerCourseConfiguration
+    );
   }
+
+  searchCustomerViaEmail = async (
+    email: string,
+    providerInternalIdentifier: string,
+    providerCourseId: string,
+    providerTeeSheetId: string,
+    providerCourseConfiguration: string
+  ) => {
+    const { provider, token } = await this.getProviderAndKey(
+      providerInternalIdentifier,
+      providerCourseId,
+      providerCourseConfiguration
+    );
+    return await provider.SearchCustomer(token, providerCourseId, email);
+  };
   /**
    * Links a provider to an entity and all the courses under that entity.
    * @Todd this will be complete at during creation of admin panel

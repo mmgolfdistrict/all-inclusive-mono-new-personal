@@ -81,7 +81,7 @@ export default function ForgotPassword() {
         Forgot Password
       </h1>
       <section className="mx-auto flex w-full flex-col gap-2 bg-white p-5 sm:max-w-[500px] sm:rounded-xl sm:p-6">
-        {forgotFn.isSuccess && ! forgotFn.data.error ? (
+        {forgotFn.isSuccess && !forgotFn.data.error ? (
           <div className="text-[16px] text-center fade-in text-primary-gray">
             If your email exists in a Golf District account with the email
             provided then you should receive a password reset link. Please open

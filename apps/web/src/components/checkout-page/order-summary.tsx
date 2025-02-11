@@ -12,6 +12,7 @@ export const OrderSummary = ({
   sensibleDataToMountComp,
   isSensibleInvalid,
   privacyPolicyAndTCByCourseUrl,
+  isGroupBooking = false
 }: {
   teeTime: SearchObject | null | undefined;
   isLoading: boolean;
@@ -21,6 +22,7 @@ export const OrderSummary = ({
     privacyPolicyURL: string | null;
     termsAndConditionsURL: string | null;
   };
+    isGroupBooking?: boolean
 }) => {
   return (
     <section className="mx-auto flex w-full h-fit flex-col gap-4 bg-white px-3 py-2 md:rounded-xl md:p-6 md:py-4">
@@ -34,12 +36,14 @@ export const OrderSummary = ({
           />
         </h2>
       </div>
+
       <div className="flex flex-col gap-4">
         <CheckoutItem
           isLoading={isLoading}
           teeTime={teeTime}
           isSensibleInvalid={isSensibleInvalid}
           sensibleDataToMountComp={sensibleDataToMountComp}
+          isGroupBooking={isGroupBooking}
         />
       </div>
       <h2 className="italic">

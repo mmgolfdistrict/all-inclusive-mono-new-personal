@@ -40,8 +40,8 @@ function NotifyMe({ params }: { params: { course: string } }) {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const courseStartTime = dayjs(course?.openTime).format("hh:mm A");
   const courseEndTime = dayjs(course?.closeTime).format("hh:mm A");
-  const courseStartTimeNumber = Number(dayjs(course?.openTime).format("HHmm"));
-  const courseEndTimeNumber = Number(dayjs(course?.closeTime).format("HHmm"));
+  const courseStartTimeNumber = course?.courseOpenTime ?? 9;
+  const courseEndTimeNumber = course?.courseCloseTime ?? 9;
 
   const [startTime, setStartTime] = useState<[number, number]>([
     courseStartTimeNumber,
@@ -182,6 +182,10 @@ function NotifyMe({ params }: { params: { course: string } }) {
   };
 
   const handleSubmit = async () => {
+    if (!isLoading && !user) {
+      router.push(`/${courseId}/login`);
+      return;
+    }
     if (selectedDates.length === 0) {
       toast.error("Please select a date");
       return;
@@ -216,7 +220,17 @@ function NotifyMe({ params }: { params: { course: string } }) {
 
     await createNotifications(notificationsData, {
       onSuccess: (data) => {
-        toast.success(data);
+        const toastContent = (
+          <div>
+            <p>{data}</p>
+            <p className="text-green-600 text-[14px] font-bold">
+              If you don’t see the notification emails please check your Junk
+              Mail or Spam folder. Remember to add no-reply@golfdistrict.com to
+              the safe senders list.
+            </p>
+          </div>
+        );
+        toast.success(toastContent);
 
         setSelectedDates([]);
         const startTimeString = formatTime(courseStartTimeNumber);
@@ -261,10 +275,6 @@ function NotifyMe({ params }: { params: { course: string } }) {
       setErrorMessage("");
     }
   }, [startTime[0], startTime[1]]);
-
-  if (!isLoading && !user) {
-    router.push(`/${courseId}/login`);
-  }
 
   return (
     <section className="mx-auto px-2 flex w-full flex-col gap-4 pt-4 md:max-w-[1360px] md:px-6">
@@ -353,9 +363,10 @@ function NotifyMe({ params }: { params: { course: string } }) {
           </h2>
           <hr />
           <div className="grid grid-rows-3 md:grid-rows-3 lg:grid-rows-3 gap-4 px-4 py-2 md:px-8 md:py-6">
-            <div className="">
+            <div className="" id="notify-pick-date">
               <Input
-                className="cursor-pointer text-ellipsis"
+                readOnly
+                className="cursor-pointer text-ellipsis unmask-time"
                 label="Pick Date(s)"
                 name="dates"
                 register={() => undefined}
@@ -384,7 +395,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
                       *Schedule your notifications for the rest of the year
                     </p>
                     <Calendar
-                      calendarClassName="!m-[0px] !h-[100%] !w-[75%]"
+                      calendarClassName="!m-[0px] !h-[100%] !w-[75%] unmask-time"
                       colorPrimary="#40942A"
                       value={selectedDates}
                       onChange={setSelectedDates}
@@ -400,8 +411,9 @@ function NotifyMe({ params }: { params: { course: string } }) {
                 </>
               )}
             </div>
-            <div className="">
+            <div className="" id="notify-select-time-range">
               <Input
+                readOnly
                 className="cursor-pointer text-ellipsis"
                 label="Select Time Range"
                 placeholder="Times..."
@@ -414,7 +426,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
               {isTimePickerOpen && (
                 <>
                   <div
-                    className={`fixed left-0 top-0 z-20 h-[100dvh] w-screen backdrop-blur `}
+                    className={`fixed left-0 top-0 z-20 h-[100dvh] w-screen backdrop-blur unmask-time`}
                     onClick={() => setIsTimePickerOpen(false)}
                   >
                     <div className="h-screen bg-[#00000099]" />
@@ -545,7 +557,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
                 </>
               )}
             </div>
-            <div className="">
+            <div className="" id="notify-number-of-players">
               <label className="text-[14px] text-primary-gray">
                 {"Number of Players"}
               </label>
@@ -564,6 +576,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
             onClick={handleSubmit}
             className="flex items-center justify-center gap-1 max-w-[200px] w-full mt-4 self-center py-[.28rem] md:py-1.5 text-[10px] md:text-[14px] disabled:opacity-50 transition-opacity duration-300"
             disabled={isCreatingNotifications}
+            id="notify-get-alerted"
           >
             <Bell width="15px" />
             Get Alerted

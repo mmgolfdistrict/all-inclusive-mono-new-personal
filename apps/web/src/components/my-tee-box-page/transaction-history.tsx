@@ -26,7 +26,7 @@ export type TxnHistoryType = {
   courseLogo: string;
   date: string;
   firstHandPrice: number;
-  cartFeePrice:number;
+  cartFeePrice: number;
   pricePerGolfer: number[];
   golfers: InviteFriend[];
   bookingIds: string[];
@@ -36,7 +36,7 @@ export type TxnHistoryType = {
   receiveAfterSale: number;
   weatherGuaranteeAmount: number;
   weatherGuaranteeId: string;
-  markupFees?:number
+  markupFees?: number;
 };
 
 export const TransactionHistory = () => {
@@ -54,7 +54,9 @@ export const TransactionHistory = () => {
       { enabled: !!courseId }
     );
   const [selectedTxn, setSelectedTxn] = useState<TxnHistoryType | null>(null);
-  const [selectedReceipt, setSelectedReceipt] = useState<TxnHistoryType | null>(null);
+  const [selectedReceipt, setSelectedReceipt] = useState<TxnHistoryType | null>(
+    null
+  );
 
   function sortByDate(objectOfObjects: Record<string, TxnHistoryType>) {
     const arrayOfObjects: TxnHistoryType[] = Object.values(objectOfObjects);
@@ -219,7 +221,7 @@ const TableRow = ({
             <div className="whitespace-nowrap text-secondary-black">
               {course}
             </div>
-            <div className="text-primary-gray">
+            <div className="text-primary-gray unmask-time">
               {formatTime(date, false, timezoneCorrection)}
             </div>
           </div>
@@ -229,7 +231,7 @@ const TableRow = ({
         {formatMoney(purchasePrice * golfers.length)}
         <span className="font-[300]"> Transaction Total</span>
       </td>
-      <td className="whitespace-nowrap px-4 py-3">
+      <td className="whitespace-nowrap px-4 py-3 unmask-players">
         {playerCount > 2
           ? `You, Guest & ${playerCount - 2} ${
               playerCount - 2 === 1 ? "golfers" : "golfers"

@@ -60,7 +60,12 @@ export type ProductData =
   | MarkupProduct
   | ConvenienceFeeProduct
   | TaxProduct
-  | CartFeeProduct;
+  | CartFeeProduct
+  | CartFeeTaxPercentProduct
+  | GreenFeeTaxPercentProduct
+  | MarkupTaxPercentProduct
+  | WeatherGuaranteeTaxPercentProduct
+  | FirstHandGroupProductSchema;
 
 export interface BaseProduct {
   name: string; // teeTime-course-time
@@ -154,6 +159,46 @@ export interface TaxProduct extends BaseProduct {
   product_data: {
     metadata: {
       type: "taxes";
+    };
+  };
+}
+
+export interface CartFeeTaxPercentProduct extends BaseProduct {
+  product_data: {
+    metadata: {
+      type: "cartFeeTaxPercent";
+    };
+  };
+}
+export interface WeatherGuaranteeTaxPercentProduct extends BaseProduct {
+  product_data: {
+    metadata: {
+      type: "weatherGuaranteeTaxPercent";
+    };
+  };
+}
+export interface MarkupTaxPercentProduct extends BaseProduct {
+  product_data: {
+    metadata: {
+      type: "markupTaxPercent";
+    };
+  };
+}
+export interface GreenFeeTaxPercentProduct extends BaseProduct {
+  product_data: {
+    metadata: {
+      type: "greenFeeTaxPercent";
+    };
+  };
+}
+
+export interface FirstHandGroupProductSchema extends BaseProduct {
+  product_data: {
+    metadata: {
+      type: "first_hand_group";
+      tee_time_ids: string[];
+      number_of_bookings: number;
+      min_players_per_booking: number;
     };
   };
 }

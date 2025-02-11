@@ -131,7 +131,7 @@ export const WatchlistTable = () => {
   return (
     <>
       <div className="relative flex max-w-full flex-col gap-4 overflow-auto  rounded-xl bg-white px-6 pb-14 pt-4 text-[14px]">
-        <table className="w-full table-auto  overflow-auto">
+        <table className="w-full table-auto  overflow-auto"  id="table-watchlist">
           <thead className="top-0 table-header-group">
             <tr className="text-left">
               <TableHeader text="Details" />
@@ -165,7 +165,7 @@ export const WatchlistTable = () => {
                     removeFromWatchlist={removeFromWatchlist}
                     openMakeAnOffer={() => openMakeAnOffer(i)}
                     teeTimeId={i.teeTimeId}
-                    ownedByName={i.ownedBy}
+                  // ownedByName={i.ownedBy}
                     courseId={courseId ?? ""}
                     ownedById={i.ownedById}
                     listingId={i.listId ?? ""}
@@ -213,7 +213,6 @@ const TableRow = ({
   golfers,
   status,
   teeTimeId,
-  ownedByName,
   type,
   courseId,
   ownedById,
@@ -231,7 +230,7 @@ const TableRow = ({
   status: "LISTED" | "UNLISTED";
   teeTimeId: string;
   type: "FIRST_PARTY" | "SECOND_HAND";
-  ownedByName: string;
+    // ownedByName: string;
   courseId: string;
   ownedById: string;
   listingId: string;
@@ -243,7 +242,6 @@ const TableRow = ({
   const router = useRouter();
   const { data: session } = useSession();
   const { user } = useUserContext();
-  const DEFAULT_SILHOUETTE_IMAGE = "/defaults/default-profile.webp";
   const href = useMemo(() => {
     if (type === "FIRST_PARTY") {
       return `/${courseId}/${teeTimeId}`;
@@ -267,9 +265,11 @@ const TableRow = ({
     <tr className="w-full border-b border-stroke text-primary-gray">
       <td className="gap-2 px-4 py-3">
         <div className="flex items-center gap-2">
-          <Avatar
-            src={type === "SECOND_HAND" ? DEFAULT_SILHOUETTE_IMAGE : iconSrc}
-          />
+          {type === "SECOND_HAND" ? (
+            <Spinner className="w-[40px] h-[40px]" />
+          ) : (
+            <Avatar src={iconSrc} />
+          )}
           <div className="flex flex-col">
             <Link
               href={href}
@@ -297,8 +297,8 @@ const TableRow = ({
       {/* <td className="whitespace-nowrap px-4 py-3 capitalize">
         {status.toLowerCase()}
       </td> */}
-      <td className="whitespace-nowrap px-4 py-3">
-        <div className="flex  justify-end gap-2">
+      <td className="whitespace-nowrap px-4 py-3" >
+        <div className="flex  justify-end gap-2" id="buttons-watchlist">
           <Link href={href} data-testid="details-button-id">
             <OutlineButton className="min-w-[155px]">Details</OutlineButton>
           </Link>

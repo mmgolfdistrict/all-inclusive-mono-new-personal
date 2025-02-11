@@ -1,6 +1,6 @@
 import type { InferInsertModel } from "drizzle-orm";
 import { sql } from "drizzle-orm";
-import { datetime, varchar } from "drizzle-orm/mysql-core";
+import { datetime, text, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 
 export const errorLog = mySqlTable("errorLog", {
@@ -14,7 +14,7 @@ export const errorLog = mySqlTable("errorLog", {
   userAgent: varchar("userAgent", { length: 1024 }),
   message: varchar("message", { length: 255 }),
   stackTrace: varchar("stackTrace", { length: 2048 }),
-  additionalDetailsJSON: varchar("additionalDetailsJSON", { length: 2048 }),
+  additionalDetailsJSON: text("additionalDetailsJSON"),
   createdDateTime: datetime("createdDateTime", { mode: "string", fsp: 3 })
     .default(sql`CURRENT_TIMESTAMP(3)`)
     .notNull(),

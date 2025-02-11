@@ -1,11 +1,18 @@
 import * as accounts from "./accounts";
+import * as adminPermissions from "./adminPermissions";
+import * as adminPersonaRole from "./adminPersonaRole";
+import * as adminPersonas from "./adminPersonas";
+import * as adminRolePermission from "./adminRolePermission";
+import * as adminRoles from "./adminRoles";
 import * as adminUserCourse from "./adminUserCourse";
+import * as adminUserRole from "./adminUserRole";
 import * as adminUsers from "./adminUsers";
 import * as appSettings from "./appSetting";
 import * as assets from "./assets";
 import * as auctionAssets from "./auctionAssets";
 import * as auctions from "./auctions";
 import * as auditlog from "./auditlog";
+import * as authenticationMethod from "./authenticationMethod";
 import * as bids from "./bids";
 import * as bookings from "./bookings";
 import * as cashouts from "./cashout";
@@ -13,9 +20,11 @@ import * as charities from "./charities";
 import * as charityCourseLink from "./charityCourseLink";
 import * as courseAllowedTimeToSell from "./courseAllowedTimeToSell";
 import * as courseAssets from "./courseAssets";
+import * as courseContacts from "./courseContacts";
 import * as courseException from "./courseException";
 import * as courseGlobalNotification from "./courseGlobalNotification";
 import * as courseMarkup from "./courseMarkup";
+import * as courseMembership from "./courseMembership";
 import * as coursePromoCodeLink from "./coursePromoCodeLink";
 import * as courses from "./courses";
 import * as courseScheduleDetails from "./courseScheduleDetails";
@@ -28,6 +37,7 @@ import * as donations from "./donations";
 import * as entities from "./entities";
 import * as entityAdmins from "./entityAdmins";
 import * as favorites from "./favorites";
+import * as groupBookings from "./groupBooking";
 import * as jobs from "./jobs";
 import * as lists from "./lists";
 import * as majorEvents from "./majorEvents";
@@ -52,7 +62,8 @@ import * as userProviderCourseLink from "./userProviderCourseLink";
 import * as users from "./users";
 import * as userSession from "./userSession";
 import * as userWaitlists from "./userWaitlists";
-import * as verificationTokens from "./verificationTokens";
+import * as walkthrough from "./walkthrough";
+import * as walkthroughSection from "./walkthroughSection";
 import * as withdrawals from "./withdrawals";
 
 export const schema = {
@@ -75,7 +86,6 @@ export const schema = {
   ...transfers,
   ...userBookingOffers,
   ...users,
-  ...verificationTokens,
   ...providerCourseLink,
   ...offers,
   ...offerRead,
@@ -112,4 +122,16 @@ export const schema = {
   ...courseAllowedTimeToSell,
   ...userSession,
   ...courseUser,
+  ...authenticationMethod,
+  ...courseContacts,
+  ...courseMembership,
+  ...adminPermissions,
+  ...adminPersonaRole,
+  ...adminPersonas,
+  ...adminRolePermission,
+  ...adminRoles,
+  ...adminUserRole,
+  ...groupBookings,
+  ...walkthrough,
+  ...walkthroughSection,
 };

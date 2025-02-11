@@ -14,17 +14,22 @@ import { Calendar } from "~/components/icons/calendar";
 import { ChevronUp } from "~/components/icons/chevron-up";
 import { FiltersIcon } from "~/components/icons/filters";
 import { Select } from "~/components/input/select";
+import { ForecastModal } from "~/components/modal/forecast-modal";
 import { useAppContext } from "~/contexts/AppContext";
+import { useBookingSourceContext } from "~/contexts/BookingSourceContext";
 import { useCourseContext } from "~/contexts/CourseContext";
-import type { GolferType } from "~/contexts/FiltersContext";
+import type { DateType, GolferType } from "~/contexts/FiltersContext";
 import { useFiltersContext } from "~/contexts/FiltersContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
+import { microsoftClarityEvent } from "~/utils/microsoftClarityUtils";
 import type { Dayjs } from "dayjs";
 import dayjs from "dayjs";
 import isBetween from "dayjs/plugin/isBetween";
 import isoWeek from "dayjs/plugin/isoWeek";
 import RelativeTime from "dayjs/plugin/relativeTime";
+import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc";
 import Weekday from "dayjs/plugin/weekday";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -32,20 +37,25 @@ import { toast } from "react-toastify";
 import { ViewportList } from "react-viewport-list";
 import { useMediaQuery } from "usehooks-ts";
 import { LoadingContainer } from "./loader";
+import { DailyTeeTimesV2 } from "~/components/course-page/daily-tee-times-v2";
 
 dayjs.extend(Weekday);
 dayjs.extend(RelativeTime);
 dayjs.extend(isoWeek);
 dayjs.extend(isBetween);
+dayjs.extend(utc);
+dayjs.extend(timezone);
 export default function CourseHomePage() {
+  const isMobile = useMediaQuery("(max-width: 768px)");
+
   const searchParams = useSearchParams();
   const queryDateType = searchParams.get("dateType");
   const queryDate = searchParams.get("date");
   const queryStartTime = searchParams.get("startTime");
   const queryEndTime = searchParams.get("endTime");
   const queryPlayerCount = searchParams.get("playerCount");
+  const source = searchParams.get("source");
 
-  const TAKE = 4;
   const ref = useRef<HTMLDivElement | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -54,10 +64,61 @@ export default function CourseHomePage() {
   const [showDates, setShowDates] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isFirstRender, setIsFirstRender] = useState<boolean>(true);
-  const [take, setTake] = useState<number>(TAKE);
+  const [isForecastModalOpen, setIsForecastModalOpen] =
+    useState<boolean>(false);
   const [pageNumber, setPageNumber] = useState<number>(1);
   const { user } = useUserContext();
   const { course } = useCourseContext();
+  const { setBookingSource } = useBookingSourceContext();
+
+  function getUserTimezone() {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone;
+  }
+
+  function compareTimesWithTimezones() {
+    const date1 = dayjs().tz(getUserTimezone()).format("ddd, DD MMM YYYY HH:mm:ss [GMT]")
+    const date2 = dayjs().tz(course?.timezoneISO).format("ddd, DD MMM YYYY HH:mm:ss [GMT]")
+
+    if (date1.valueOf() > date2.valueOf()) {
+      return "user";
+    } else if (date1.valueOf() < date2.valueOf()) {
+      return "course";
+    } else {
+      return "user";
+    }
+  }
+
+  const formatDateString = (
+    date: string | number | Date | Dayjs | null | undefined
+  ): string => {
+    if (!date) {
+      return ""; // Handle the case where date is null or undefined
+    }
+
+    console.log("compareTimesWithTimezones", compareTimesWithTimezones());
+
+    if (compareTimesWithTimezones() === "user") {
+      return dayjs(date).format("ddd, DD MMM YYYY HH:mm:ss [GMT]");
+    }
+    return dayjs(date)
+      .tz(course?.timezoneISO)
+      .format("ddd, DD MMM YYYY HH:mm:ss [GMT]");
+  };
+
+  const formatDateStringEnd = (
+    date: string | number | Date | Dayjs | null | undefined
+  ): string => {
+    if (!date) {
+      return ""; // Handle the case where date is null or undefined
+    }
+    return dayjs(date)
+      .hour(23)
+      .minute(59)
+      .second(59)
+      .millisecond(999)
+      .format("ddd, DD MMM YYYY HH:mm:ss [GMT]");
+  };
+
   const {
     showUnlisted,
     includesCart,
@@ -76,9 +137,21 @@ export default function CourseHomePage() {
   } = useFiltersContext();
   const { entity, alertOffersShown, setAlertOffersShown } = useAppContext();
   const router = useRouter();
-  const isMobile = useMediaQuery("(max-width: 768px)");
   const courseId = course?.id;
+  const { data: MOBILE_VIEW_VERSION } =
+  api.course.getMobileViewVersion.useQuery({
+    courseId: courseId ?? "",
+  });
+  console.log("MOBILE_VIEW_VERSION",MOBILE_VIEW_VERSION);
+  
+  const TAKE = MOBILE_VIEW_VERSION === "v2" && isMobile ? 1 : 4;
+  const [take, setTake] = useState<number>(TAKE);
+
   const updateUser = api.user.updateUser.useMutation();
+  const { data: specialEvents, isLoading: specialEventsLoading } =
+    api.searchRouter.getSpecialEvents.useQuery({
+      courseId: courseId ?? "",
+    });
 
   const updateHandle = async (uName) => {
     try {
@@ -125,9 +198,54 @@ export default function CourseHomePage() {
     }
   );
 
-  const { data: specialEvents } = api.searchRouter.getSpecialEvents.useQuery({
-    courseId: courseId ?? "",
-  });
+  // const getUtcDate = (
+  //   date: string | number | Dayjs | Date | null | undefined,
+  //   timezoneCorrection = 0
+  // ): string => {
+  //   const currentDate = dayjs.utc(formatDateString(date));
+  //   return currentDate.add(timezoneCorrection, "hour").toString();
+  // };
+
+  useEffect(() => {
+    if (queryDateType === "custom" && queryDate) {
+      setDateType("Custom");
+
+      // const courseOpenTime = Number(dayjs(course?.openTime).format("HHmm"));
+      // const courseCloseTime = Number(dayjs(course?.closeTime).format("HHmm"));
+      const courseOpenTime = course?.courseOpenTime ?? 9;
+      const courseCloseTime = course?.courseCloseTime ?? 9;
+      const startTime = Math.max(courseOpenTime, Number(queryStartTime));
+      const endTime = Math.min(courseCloseTime, Number(queryEndTime));
+      setStartTime([startTime, endTime]);
+
+      const playerCount =
+        Number(queryPlayerCount) <= 0 || Number(queryPlayerCount) > 4
+          ? "Any"
+          : Number(queryPlayerCount);
+      setGolfers((playerCount as GolferType) || "Any");
+    }
+  }, [queryDateType]);
+
+  useEffect(() => {
+    if (queryDateType === "custom" && queryDate) {
+      const [year, month, day] = queryDate.split("-");
+      if (year && month && day) {
+        setSelectedDay({
+          from: { year: Number(year), month: Number(month), day: Number(day) },
+          to: { year: Number(year), month: Number(month), day: Number(day) },
+        });
+      }
+    }
+    const specialDate = getSpecialDayDate(queryDateType);
+    console.log("queryDateType", queryDateType, specialDate);
+    if (queryDateType) {
+      if (specialDate) {
+        setDateType(queryDateType as DateType); // Set the DateType to queryDateType if specialDate exists
+      } else {
+        setDateType("All"); // If no specialDate, set the DateType to "All"
+      }
+    }
+  }, [specialEvents, queryDateType]);
 
   const getSpecialDayDate = (label) => {
     const specialDay = specialEvents?.find((day) => day.eventName === label);
@@ -136,118 +254,86 @@ export default function CourseHomePage() {
       : null;
   };
 
-  const formatDateString = (
-    date: string | number | Date | Dayjs | null | undefined
-  ): string => {
-    if (!date) {
-      return ""; // Handle the case where date is null or undefined
-    }
-    return dayjs(date).utc().format("ddd, DD MMM YYYY HH:mm:ss [GMT]");
-  };
-
-  const getUtcDate = (
-    date: string | number | Dayjs | Date | null | undefined,
-    timezoneCorrection = 0
-  ): string => {
-    const currentDate = dayjs.utc(formatDateString(date));
-    return currentDate.add(timezoneCorrection, "hour").toString();
-  };
-
   const startDate = useMemo(() => {
     const specialDate = getSpecialDayDate(dateType);
     if (specialDate) {
-      return formatDateString(dayjs(specialDate.start).toDate());
+      return formatDateString(specialDate.start);
     }
 
     switch (dateType) {
       case "All":
+      case "Today":
       case "This Week":
       case "This Month":
       case "Furthest Day Out To Book":
-        return formatDateString(new Date());
-      case "Today":
-        return getUtcDate(new Date(), course?.timezoneCorrection);
+        return formatDateString(dayjs(new Date()).add(30, "minute"));
       case "This Weekend":
-        return formatDateString(dayjs().day(5).toDate());
+        return formatDateString(dayjs().day(5).add(30, "minute").toDate());
       case "Custom": {
         if (!selectedDay.from) return formatDateString(new Date());
         const customDate = dayjs(
           `${selectedDay.from.year}-${selectedDay.from.month}-${selectedDay.from.day}`
-        ).toDate();
+        ).startOf("day");
+        const today = dayjs().startOf("day");
+        if (customDate.isSame(today)) {
+          return formatDateString(dayjs(new Date()).add(30, "minute"));
+        }
         return formatDateString(customDate);
       }
       default:
         return formatDateString(new Date());
     }
-  }, [dateType, selectedDay]);
+  }, [dateType, selectedDay, queryDateType, specialEvents]);
 
   const endDate = useMemo(() => {
     const specialDate = getSpecialDayDate(dateType);
     if (specialDate) {
-      return formatDateString(dayjs(specialDate.end).toDate());
+      return formatDateString(specialDate.end);
     }
 
     switch (dateType) {
       case "All":
-        return formatDateString(dayjs(farthestDateOut).toDate());
+        return formatDateStringEnd(farthestDateOut);
       case "Today":
-        return getUtcDate(
-          dayjs().endOf("day").toDate(),
-          course?.timezoneCorrection
-        );
+        return formatDateStringEnd(dayjs().endOf("day").toDate());
       case "This Week":
-        return getUtcDate(
-          dayjs().endOf("isoWeek").toDate(),
-          course?.timezoneCorrection
-        );
+        return formatDateStringEnd(dayjs().endOf("isoWeek").toDate());
       case "This Weekend":
-        return formatDateString(dayjs().day(7).toDate());
-      case "This Month": {
-        const endOfMonth = dayjs().endOf("month").toDate();
-        return endOfMonth > dayjs(farthestDateOut).toDate()
-          ? formatDateString(farthestDateOut)
-          : formatDateString(endOfMonth);
-      }
+        return formatDateStringEnd(dayjs().day(7).toDate());
+      case "This Month":
+        return formatDateStringEnd(dayjs().endOf("month").toDate());
       case "Furthest Day Out To Book":
-        return formatDateString(
-          dayjs(farthestDateOut)
-            .utc()
-            .hour(23)
-            .minute(59)
-            .second(59)
-            .millisecond(999)
-            .toDate()
-        );
+        return formatDateStringEnd(dayjs(farthestDateOut).toDate());
       case "Custom": {
         if (!selectedDay.to) {
           if (selectedDay.from) {
             const endOfDay = dayjs(
               `${selectedDay.from.year}-${selectedDay.from.month}-${selectedDay.from.day}`
             ).endOf("day");
-            return getUtcDate(endOfDay.toDate(), course?.timezoneCorrection);
+            return formatDateStringEnd(endOfDay);
           }
-          return formatDateString(dayjs().endOf("day").toDate());
+          return formatDateStringEnd(dayjs().endOf("day").toDate());
         }
         const endDateCustom = dayjs(
           `${selectedDay.to.year}-${selectedDay.to.month}-${selectedDay.to.day}`
         ).endOf("day");
-        return getUtcDate(endDateCustom.toDate(), course?.timezoneCorrection);
+        return formatDateStringEnd(endDateCustom);
       }
       default:
         return formatDateString(dayjs().add(360, "days").toDate());
     }
-  }, [dateType, selectedDay, farthestDateOut]);
+  }, [dateType, selectedDay, farthestDateOut, specialEvents]);
 
-  const utcStartDate = dayjs
-    .utc(startDate)
-    .utcOffset(course?.timezoneCorrection ?? 0);
+  // const utcStartDate = dayjs
+  //   .utc(startDate)
+  //   .utcOffset(course?.timezoneCorrection ?? 0);
 
   const utcEndDate = dayjs
     .utc(endDate)
     .utcOffset(course?.timezoneCorrection ?? 0);
 
   const daysData = useMemo(() => {
-    const amountOfDays = dayjs(utcEndDate).diff(utcStartDate, "day");
+    const amountOfDays = dayjs(utcEndDate).diff(startDate, "day");
     const daysToTake = amountOfDays;
     const arrayOfDates: string[] = [];
 
@@ -260,8 +346,8 @@ export default function CourseHomePage() {
         arrayOfDates.push(date.toString());
         continue;
       } else {
-        let date = utcStartDate;
-        date = date.add(i, "day");
+        const date = startDate;
+        // date = date.add(i, "day");
         arrayOfDates.push(date.toString());
         continue;
       }
@@ -278,8 +364,8 @@ export default function CourseHomePage() {
         courseId: course?.id ?? "",
         startTime: startTime[0],
         endTime: startTime[1],
-        minDate: utcStartDate.toString(),
-        maxDate: utcEndDate.toString(),
+        minDate: startDate,
+        maxDate: endDate,
         holes: holes === "Any" || holes === "18" ? 18 : 9,
         golfers: golfers === "Any" ? 1 : golfers,
         showUnlisted: showUnlisted,
@@ -291,14 +377,14 @@ export default function CourseHomePage() {
           sortValue === "Sort by time - Early to Late"
             ? "asc"
             : sortValue === "Sort by time - Late to Early"
-            ? "desc"
-            : "",
+              ? "desc"
+              : "",
         sortPrice:
           sortValue === "Sort by price - Low to High"
             ? "asc"
             : sortValue === "Sort by price - High to Low"
-            ? "desc"
-            : "",
+              ? "desc"
+              : "",
         timezoneCorrection: course?.timezoneCorrection,
         isHolesAny: holes === "Any",
         isGolferAny: golfers === "Any",
@@ -390,41 +476,23 @@ export default function CourseHomePage() {
   }, [priceRange]);
 
   useEffect(() => {
-    if (queryDateType === "custom" && queryDate) {
-      setDateType("Custom");
-
-      const courseOpenTime = Number(dayjs(course?.openTime).format("HHmm"));
-      const courseCloseTime = Number(dayjs(course?.closeTime).format("HHmm"));
-      const startTime = Math.max(courseOpenTime, Number(queryStartTime));
-      const endTime = Math.min(courseCloseTime, Number(queryEndTime));
-      setStartTime([startTime, endTime]);
-
-      const playerCount =
-        Number(queryPlayerCount) <= 0 || Number(queryPlayerCount) > 4
-          ? "Any"
-          : Number(queryPlayerCount);
-      setGolfers((playerCount as GolferType) || "Any");
-    }
-  }, [queryDateType]);
-
-  useEffect(() => {
-    if (queryDateType === "custom" && queryDate) {
-      const [year, month, day] = queryDate.split("-");
-      if (year && month && day) {
-        setSelectedDay({
-          from: { year: Number(year), month: Number(month), day: Number(day) },
-          to: { year: Number(year), month: Number(month), day: Number(day) },
-        });
-      }
-    }
-  }, [dateType]);
-  useEffect(() => {
     if (typeof window !== "undefined") {
       localStorage.removeItem("googlestate");
       localStorage.removeItem("credentials");
       localStorage.removeItem("linkedinstate");
       localStorage.removeItem("facebookstate");
       localStorage.removeItem("applestate");
+
+      microsoftClarityEvent({
+        action: ``,
+        category: "",
+        label: "",
+        value: "",
+        additionalContent: {
+          courseName: course?.name,
+          websiteURL: course?.websiteURL,
+        },
+      });
     }
   }, []);
   let datesArr = JSON.parse(
@@ -450,6 +518,9 @@ export default function CourseHomePage() {
     pageNumber * TAKE
   );
 
+  console.log("finalRes", finalRes);
+
+
   const [scrollY, setScrollY] = useState(0);
 
   const handleScroll = () => {
@@ -457,6 +528,10 @@ export default function CourseHomePage() {
   };
 
   useEffect(() => {
+    if (source) {
+      setBookingSource(source.slice(0, 50));
+      sessionStorage.setItem("source", source.slice(0, 50));
+    }
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -484,24 +559,34 @@ export default function CourseHomePage() {
     return null;
   };
 
-  const { data: systemNotifications } =
-    api.systemNotification.getSystemNotification.useQuery({});
+  // const { data: systemNotifications } =
+  //   api.systemNotification.getSystemNotification.useQuery({});
 
-  const { data: courseGlobalNotification } =
-    api.systemNotification.getCourseGlobalNotification.useQuery({
-      courseId: courseId ?? "",
-    });
+  // const { data: courseGlobalNotification } =
+  //   api.systemNotification.getCourseGlobalNotification.useQuery({
+  //     courseId: courseId ?? "",
+  //   });
 
-  const notificationsCount =
-    (systemNotifications ? systemNotifications.length : 0) +
-    (courseGlobalNotification ? courseGlobalNotification.length : 0);
+  // const notificationsCount =
+  //   (systemNotifications ? systemNotifications.length : 0) +
+  //   (courseGlobalNotification ? courseGlobalNotification.length : 0);
 
-  const marginTop =
-    notificationsCount > 0 ? `mt-${notificationsCount * 6}` : "";
+  // const marginTop =
+  //   notificationsCount > 0 ? `mt-${notificationsCount * 6}` : "";
 
+  const openForecastModal = () => {
+    setIsForecastModalOpen(true);
+  };
+
+  // Function to close the modal
+  const closeForecastModal = () => {
+    setIsForecastModalOpen(false);
+  };
   return (
-    <main className={`bg-secondary-white py-4 md:py-6 ${marginTop}`}>
-      <LoadingContainer isLoading={isLoadingTeeTimeDate || isLoading}>
+    <main className={`bg-secondary-white py-4 md:py-6`}>
+      <LoadingContainer
+        isLoading={isLoadingTeeTimeDate || isLoading || specialEventsLoading}
+      >
         <div></div>
       </LoadingContainer>
       <div className="flex items-center justify-between px-4 md:px-6">
@@ -537,7 +622,7 @@ export default function CourseHomePage() {
               setValue={handleSetSortValue}
               values={SortOptions}
             />
-            <Filters />
+            <Filters openForecastModal={openForecastModal} />
           </div>
         </div>
         <div className="fixed bottom-5 left-1/2 z-10 -translate-x-1/2 md:hidden">
@@ -546,11 +631,10 @@ export default function CourseHomePage() {
         </div>
         <div className="flex w-full flex-col gap-1 md:gap-4 overflow-x-hidden pr-0 md:pr-6">
           <div
-            className={`flex space-x-2 md:hidden px-4 ${
-              scrollY > 333
-                ? "fixed top-[7.8rem] left-0 w-full z-10 bg-secondary-white pt-2 pb-3 shadow-md"
-                : "relative"
-            }`}
+            className={`flex space-x-2 md:hidden px-4 ${scrollY > 333
+              ? "fixed top-[7.8rem] left-0 w-full z-10 bg-secondary-white pt-2 pb-3 shadow-md"
+              : "relative"
+              }`}
           >
             <button
               onClick={toggleFilters}
@@ -587,52 +671,74 @@ export default function CourseHomePage() {
               </div>
             </div>
           ) : (
-            <>
-              <div className="flex w-full flex-col gap-1 md:gap-4" ref={ref}>
-                <ViewportList viewportRef={ref} items={finalRes}>
-                  {(date, idx) => (
-                    <DailyTeeTimes
-                      setError={(e: string | null) => {
-                        setError(e);
-                      }}
-                      courseException={getCourseException(date as string)}
-                      key={idx}
-                      date={date}
-                      minDate={utcStartDate.toString()}
-                      maxDate={utcEndDate.toString()}
-                      handleLoading={handleLoading}
-                    />
-                  )}
-                </ViewportList>
-              </div>
-              {daysData.amountOfPages > 1 ? (
-                <div className="flex items-center justify-center gap-2 pt-1 md:pt-0 md:pb-4">
-                  <FilledButton
-                    className={`!px-3 !py-2 !min-w-fit !rounded-md ${
-                      pageNumber === 1 ? "opacity-50 cursor-not-allowed" : ""
-                    }`}
-                    onClick={pageDown}
-                    data-testid="chevron-down-id"
-                  >
-                    <ChevronUp fill="#fff" className="-rotate-90" />
-                  </FilledButton>
-                  <div className="text-primary-gray px-3 py-2 bg-[#ffffff] rounded-md">
-                    {pageNumber} / {amountOfPage}
-                  </div>
-                  <FilledButton
-                    className={`!px-3 !py-2 !min-w-fit !rounded-md ${
-                      pageNumber === amountOfPage
+            MOBILE_VIEW_VERSION === "v2" && isMobile ?
+              <>
+                <div className="flex w-full flex-col gap-1 md:gap-4" ref={ref}>
+                  <ViewportList viewportRef={ref} items={finalRes}>
+                    {(date, idx) => (
+                      <DailyTeeTimesV2
+                        setError={(e: string | null) => {
+                          setError(e);
+                        }}
+                        courseException={getCourseException(date as string)}
+                        key={idx}
+                        date={date}
+                        minDate={startDate.toString()}
+                        maxDate={endDate.toString()}
+                        handleLoading={handleLoading}
+                        pageUp={pageUp}
+                        pageDown={pageDown}
+                      // datesWithData={datesWithData}
+                      />
+                    )}
+                  </ViewportList>
+                </div>
+              </>
+              :
+              <>
+                <div className="flex w-full flex-col gap-1 md:gap-4" ref={ref}>
+                  <ViewportList viewportRef={ref} items={finalRes}>
+                    {(date, idx) => (
+                      <DailyTeeTimes
+                        setError={(e: string | null) => {
+                          setError(e);
+                        }}
+                        courseException={getCourseException(date as string)}
+                        key={idx}
+                        date={date}
+                        minDate={startDate.toString()}
+                        maxDate={endDate.toString()}
+                        handleLoading={handleLoading}
+                      />
+                    )}
+                  </ViewportList>
+                </div>
+                {daysData.amountOfPages > 1 ? (
+                  <div className="flex items-center justify-center gap-2 pt-1 md:pt-0 md:pb-4">
+                    <FilledButton
+                      className={`!px-3 !py-2 !min-w-fit !rounded-md ${pageNumber === 1 ? "opacity-50 cursor-not-allowed" : ""
+                        }`}
+                      onClick={pageDown}
+                      data-testid="chevron-down-id"
+                    >
+                      <ChevronUp fill="#fff" className="-rotate-90" />
+                    </FilledButton>
+                    <div className="text-primary-gray px-3 py-2 bg-[#ffffff] rounded-md unmask-pagination">
+                      {pageNumber} / {amountOfPage}
+                    </div>
+                    <FilledButton
+                      className={`!px-3 !py-2 !min-w-fit !rounded-md ${pageNumber === amountOfPage
                         ? "opacity-50 cursor-not-allowed"
                         : ""
-                    }`}
-                    onClick={pageUp}
-                    data-testid="chevron-up-id"
-                  >
-                    <ChevronUp fill="#fff" className="rotate-90" />
-                  </FilledButton>
-                </div>
-              ) : null}
-            </>
+                        }`}
+                      onClick={pageUp}
+                      data-testid="chevron-up-id"
+                    >
+                      <ChevronUp fill="#fff" className="rotate-90" />
+                    </FilledButton>
+                  </div>
+                ) : null}
+              </>
           )}
         </div>
       </section>
@@ -649,12 +755,21 @@ export default function CourseHomePage() {
         <MobileFilters
           setShowFilters={setShowFilters}
           toggleFilters={toggleFilters}
+          openForecastModal={openForecastModal}
         />
       )}
       {showDates && (
         <MobileDates
           setShowFilters={setShowDates}
           toggleFilters={toggleDates}
+          openForecastModal={openForecastModal}
+        />
+      )}
+      {isForecastModalOpen && (
+        <ForecastModal
+          closeForecastModal={closeForecastModal}
+          startDate={startDate}
+          endDate={endDate}
         />
       )}
     </main>

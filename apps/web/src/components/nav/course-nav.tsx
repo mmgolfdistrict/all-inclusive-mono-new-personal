@@ -3,9 +3,9 @@
 import { signOut, useSession } from "@golf-district/auth/nextjs-exports";
 import { useAppContext } from "~/contexts/AppContext";
 import { useCourseContext } from "~/contexts/CourseContext";
+import { useFiltersContext } from "~/contexts/FiltersContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
-import { getBgColor } from "~/utils/formatters";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -14,15 +14,21 @@ import { FilledButton } from "../buttons/filled-button";
 import { Auction } from "../icons/auction";
 import { Calendar } from "../icons/calendar";
 import { Hamburger } from "../icons/hamburger";
+import { Info } from "../icons/info";
 import { Marketplace } from "../icons/marketplace";
 import { Megaphone } from "../icons/megaphone";
 import { MyOffers } from "../icons/my-offers";
 import { Search } from "../icons/search";
 import { BlurImage } from "../images/blur-image";
 import { PoweredBy } from "../powered-by";
+import { Tooltip } from "../tooltip";
 import { PathsThatNeedRedirectOnLogout, UserInNav } from "../user/user-in-nav";
 import { NavItem } from "./nav-item";
 import { SideBar } from "./side-bar";
+import Shepherd from "shepherd.js";
+import "shepherd.js/dist/css/shepherd.css";
+import { toast } from "react-toastify";
+import "./courseNav.css";
 
 export const CourseNav = () => {
   const { user } = useUserContext();
@@ -33,6 +39,7 @@ export const CourseNav = () => {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const pathname = usePathname();
   const session = useSession();
+  const { setDateType } = useFiltersContext();
   const router = useRouter();
 
   const { data: unreadOffers } = api.user.getUnreadOffersForCourse.useQuery(
@@ -118,7 +125,127 @@ export const CourseNav = () => {
     setIsSideBarOpen(!isSideBarOpen);
   };
 
-  // if (pathname.includes("/checkout")) return null;
+  const handleResetFilters = () => {
+    setDateType("All");
+  };
+
+
+  const { data: walkthrough } =
+    api.systemNotification.getWalkthroughSetting.useQuery({});
+  const { data: walkthroughSections } =
+    api.systemNotification.getGuidMeSetting.useQuery({});
+
+  const handleGuideMe = () => {
+    if (!walkthroughSections?.length || !walkthrough?.length) {
+      console.warn("No walkthrough or walkthrough sections available.");
+      return;
+    }
+
+    let internalNameToMatch;
+
+    if (/^\/[^/]+$/.test(pathname)) {
+      internalNameToMatch = "teeTime";
+    } else {
+      const matchedWalkthrough = walkthrough.find((wt) =>
+        pathname.includes(wt.internalName)
+      );
+      if (!matchedWalkthrough) {
+        toast.error("No help available.");
+        return;
+      }
+      internalNameToMatch = matchedWalkthrough.internalName;
+    }
+
+    const selectedWalkthrough = walkthrough.find(
+      (wt) => wt.internalName === internalNameToMatch
+    );
+
+    if (!selectedWalkthrough) {
+      toast.error("No help available.");
+      return;
+    }
+
+    const filteredSections = walkthroughSections.filter(
+      (section) => section.walkthroughId === selectedWalkthrough.id
+    );
+
+    if (!filteredSections.length) {
+      return;
+    }
+
+    // Shepherd Tour initialization
+    const tour = new Shepherd.Tour({
+      useModalOverlay: true,
+      defaultStepOptions: {
+        cancelIcon: {
+          enabled: true,
+        },
+        classes: "shadow-md bg-blue-dark mt-2.5",
+        scrollTo: { behavior: "smooth", block: "center" },
+      },
+    });
+
+    const removeHighlight = () => {
+      document.querySelectorAll('[data-highlighted="true"]').forEach((el) => {
+        const highlightedEl = el as HTMLElement;
+        highlightedEl.style.border = "";
+        highlightedEl.style.padding = "1px";
+        highlightedEl.style.borderRadius = "";
+        highlightedEl.removeAttribute("data-highlighted");
+      });
+    };
+    filteredSections
+      .sort((a, b) => (a?.displayOrder || 0) - (b?.displayOrder || 0))
+      .forEach((section) => {
+        const buttons = [
+          {
+            text: "Next",
+            action:()=>tour.next(),
+            classes:
+              "!bg-primary !rounded-xl !min-w-[110px] !border-2 !border-primary !px-5 !py-1.5 !text-white",
+          },
+        ];
+
+        if (section.sectionId === "manage-teetime-button") {
+          buttons.unshift({
+            text: "Open",
+            action: () => {
+              const element = document.querySelector(`#${section.sectionId}`)!;
+              if (element instanceof HTMLElement) {
+               void tour.cancel();
+                element.click();
+                // handleGuideMe()
+              }
+            },
+            classes: "!bg-secondary",
+          });
+        }
+
+        tour.addStep({
+          id: section.id,
+          text: section.message,
+          attachTo: { element: `#${section.sectionId}`, on: "bottom" },
+          when: {
+            "before-show": () => {
+              removeHighlight();
+              const element = document.querySelector(`#${section.sectionId}`)!;
+              if (element instanceof HTMLElement) {
+                element.style.padding = "10px";
+                element.setAttribute("data-highlighted", "true");
+              }
+            },
+            "after-hide": removeHighlight,
+          },
+          buttons,
+          classes: "!rounded-xl",
+          title: selectedWalkthrough?.name,
+        });
+      });
+    tour.on("cancel", removeHighlight);
+    tour.on("complete", removeHighlight);
+
+   void tour.start();
+  };
 
   return (
     <div className="fixed top-0 w-full z-20">
@@ -126,27 +253,48 @@ export const CourseNav = () => {
         {systemNotifications?.map((elm) => (
           <div
             key={elm.id}
-            className={`${getBgColor(
-              elm.displayType
-            )} text-white w-full p-1 text-center`}
+            style={{
+              backgroundColor: elm.bgColor,
+              color: elm.color,
+            }}
+            className="w-full p-1 text-center flex items-center justify-center"
           >
-            {elm.shortMessage} : {elm.longMessage}
+            {elm.shortMessage}
+            {elm.longMessage && (
+              <Tooltip
+                trigger={
+                  <Info longMessage className="ml-2 h-[20px] w-[20px]" />
+                }
+                content={elm.longMessage}
+              />
+            )}
           </div>
         ))}
         {courseGlobalNotification?.map((elm) => (
           <div
             key={elm.id}
-            className={`${getBgColor(
-              elm.displayType
-            )} text-white w-full p-1 text-center`}
+            style={{
+              backgroundColor: elm.bgColor,
+              color: elm.color,
+            }}
+            className="text-white w-full p-1 text-center flex items-center justify-center"
           >
-            {elm.shortMessage} : {elm.longMessage}
+            {elm.shortMessage}
+            {elm.longMessage && (
+              <Tooltip
+                trigger={
+                  <Info longMessage className="ml-2 h-[20px] w-[20px]" />
+                }
+                content={elm.longMessage}
+              />
+            )}
           </div>
         ))}
         {isSideBarOpen && (
           <div
-            className={`fixed z-20 h-[100dvh] w-screen backdrop-blur ${isSideBarOpen ? "md:hidden" : ""
-              }`}
+            className={`fixed z-20 h-[100dvh] w-screen backdrop-blur ${
+              isSideBarOpen ? "md:hidden" : ""
+            }`}
           >
             <div className="h-screen bg-[#00000099]" />
           </div>
@@ -242,6 +390,8 @@ export const CourseNav = () => {
               icon={<Search className="w-[16px]" />}
               data-testid="tee-time-id"
               data-test={courseId}
+              onClick={handleResetFilters}
+              id="navbar-find-times"
             />
             {course?.supportsWaitlist ? (
               <NavItem
@@ -250,6 +400,18 @@ export const CourseNav = () => {
                 icon={<Megaphone className="w-[16px]" />}
                 data-testid="notify-me-id"
                 data-test={courseId}
+                onClick={handleResetFilters}
+                id="navbar-waitlist"
+              />
+            ) : null}
+            {course?.supportsGroupBooking ? (
+              <NavItem
+                href={`/${courseId}/group-booking`}
+                text="Group Booking"
+                icon={<Megaphone className="w-[16px]" />}
+                data-testid="group-booking-id"
+                data-test={courseId}
+                onClick={handleResetFilters}
               />
             ) : null}
             {course?.allowAuctions ? (
@@ -259,6 +421,8 @@ export const CourseNav = () => {
                 icon={<Auction className="w-[16px]" />}
                 data-testid="auction-id"
                 data-test={courseId}
+                onClick={handleResetFilters}
+                id="navbar-auctions"
               />
             ) : null}
             <NavItem
@@ -267,6 +431,8 @@ export const CourseNav = () => {
               icon={<Marketplace className="w-[16px]" />}
               data-testid="sell-your-tee-time-id"
               data-test={courseId}
+              onClick={handleResetFilters}
+              id="navbar-sell"
             />
             <NavItem
               href={`/${courseId}/my-tee-box?section=owned`}
@@ -274,6 +440,8 @@ export const CourseNav = () => {
               icon={<Calendar className="w-[16px]" />}
               data-testid="sell-your-tee-time-id"
               data-test={courseId}
+              onClick={handleResetFilters}
+              id="navbar-my-tee-box"
             />
 
             {course?.supportsOffers ? (
@@ -296,8 +464,19 @@ export const CourseNav = () => {
                 }
                 data-testid="my-offer-id"
                 data-test={courseId}
+                onClick={handleResetFilters}
+                 id="navbar-my-offers"
               />
             ) : null}
+
+            <NavItem
+              href=""
+              text="Guide Me"
+              icon={<Calendar className="w-[16px]" />}
+              data-testid="sell-your-tee-time-id"
+              data-test={courseId}
+              onClick={handleGuideMe}
+            />
           </div>
         </div>
       </div>

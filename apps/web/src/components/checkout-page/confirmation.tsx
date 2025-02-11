@@ -8,16 +8,19 @@ import Link from "next/link";
 import { Fragment } from "react";
 // import { useRouter } from "next/router";
 import { FilledButton } from "../buttons/filled-button";
+
 // import { InviteFriends } from "../tee-time-page/invite-friends";
 interface ConfirmationProps {
   teeTimeId: string;
   bookingId: string;
   isEmailSend: boolean;
+  isGroupBooking: boolean
 }
 export const Confirmation = ({
   teeTimeId,
   bookingId,
   isEmailSend,
+  isGroupBooking
 }: ConfirmationProps) => {
   const { data: bookingData, isLoading: isLoadingBookingData } =
     api.teeBox.getOwnedBookingById.useQuery(
@@ -44,7 +47,7 @@ export const Confirmation = ({
               <span>Loading ...</span>
             ) : (
               <>
-                {bookingData?.providerId?.length ? (
+                  {bookingData?.providerId?.length && !isGroupBooking ? (
                   <div style={{ paddingBottom: "5px" }}>
                     <span style={{ fontWeight: 500 }}>
                       Course Reservation ID
@@ -52,7 +55,15 @@ export const Confirmation = ({
                     <span style={{ margin: "0 15px" }}>:</span>
                     <span>{bookingData?.providerId}</span>
                   </div>
-                ) : null}
+                  ) : (
+                    <div style={{ paddingBottom: "5px" }}>
+                      <span style={{ fontWeight: 500 }}>
+                        Player Count
+                      </span>
+                      <span style={{ margin: "0 15px" }}>:</span>
+                      <span>{bookingData?.playerCount}</span>
+                    </div>
+                  )}
 
                 <div style={{ paddingBottom: "20px" }}>
                   <span style={{ fontWeight: 500 }}>Play Time</span>
@@ -98,11 +109,19 @@ export const Confirmation = ({
         </div>
       </div>
       <div>
-        <div className="flex w-full flex-col items-center justify-center gap-2 md:flex-row">
+        <div className="w-full flex-col items-center justify-center md:gap-2 md:flex-row">
           Please send your feedback to{" "}
           <a href="mailto:support@golfdistrict.com">support@golfdistrict.com</a>
           <br />
           <br />
+        </div>
+        <div className="flex w-full flex-col items-center justify-center mb-4 text-[14px] md:text-[16px]">
+          <p className="text-red text-center">
+            You should receive a confirmation email. If you don’t see the
+            confirmation email within the next 5 mins, please check your Junk
+            Mail or Spam folder. Remember to add no-reply@golfdistrict.com to
+            the safe senders list.
+          </p>
         </div>
         <div className="flex w-full flex-col items-center justify-center gap-2 md:flex-row">
           <Link

@@ -1,10 +1,11 @@
-import { eq, inArray, isNull, not } from "@golf-district/database";
+import { and, asc, eq, inArray, isNull, not } from "@golf-district/database";
 import type { Db } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import { courseAssets } from "@golf-district/database/schema/courseAssets";
 import { courses } from "@golf-district/database/schema/courses";
 import { entities } from "@golf-district/database/schema/entities";
 import Logger from "@golf-district/shared/src/logger";
+import { cacheManager } from "@golf-district/shared/src/utils/cacheManager";
 import { loggerService } from "../webhooks/logging.service";
 
 /**
@@ -16,7 +17,7 @@ export class EntityService {
    * Constructs the EntityService.
    * @param database - The database instance to use for queries.
    */
-  constructor(private readonly database: Db) { }
+  constructor(private readonly database: Db) {}
 
   /**
    * Retrieves an entity associated with a given course ID.
@@ -50,32 +51,46 @@ export class EntityService {
    * console.log(staticParams);
    */
   getStaticParams = async () => {
-    const [subdomains, customDomains] = await Promise.all([
-      this.database
-        .select({
-          subdomain: entities.subdomain,
-        })
-        .from(entities)
-        .execute(),
-      this.database
-        .select({
-          customDomain: entities.customDomain,
-        })
-        .from(entities)
-        .where(not(isNull(entities.customDomain)))
-        .execute(),
-    ]);
+    const cacheKey = "staticParams";
+    let staticParams = await cacheManager.get(cacheKey);
 
-    const allPaths = [
-      ...subdomains.map(({ subdomain }) => subdomain),
-      ...customDomains.map(({ customDomain }) => customDomain),
-    ].filter((path) => path) as string[];
+    if (!staticParams) {
+      this.logger.info("Cache miss for staticParams. Querying database.");
 
-    return allPaths.map((domain) => ({
-      params: {
-        domain,
-      },
-    }));
+      const [subdomains, customDomains] = await Promise.all([
+        this.database
+          .select({
+            subdomain: entities.subdomain,
+          })
+          .from(entities)
+          .execute(),
+        this.database
+          .select({
+            customDomain: entities.customDomain,
+          })
+          .from(entities)
+          .where(not(isNull(entities.customDomain)))
+          .execute(),
+      ]);
+
+      const allPaths = [
+        ...subdomains.map(({ subdomain }) => subdomain),
+        ...customDomains.map(({ customDomain }) => customDomain),
+      ].filter((path) => path) as string[];
+
+      staticParams = allPaths.map((domain) => ({
+        params: {
+          domain,
+        },
+      }));
+
+      // Store the result in cache for 10 minutes
+      await cacheManager.set(cacheKey, staticParams, 600000);
+    } else {
+      this.logger.info("Cache hit for staticParams. Returning cached data.");
+    }
+
+    return staticParams;
   };
 
   //@TODO get faq for entity
@@ -88,7 +103,8 @@ export class EntityService {
    * @TODO entity return as url
    */
   getEntityFromDomain = async (domain: string, rootDomain: string) => {
-     const subdomain = domain.endsWith(`.${rootDomain}`) ? domain.replace(`.${rootDomain}`, "") : null;
+    const subdomain = domain.endsWith(`.${rootDomain}`) ? domain.replace(`.${rootDomain}`, "") : null;
+    // const subdomain = "demo.golfdistrict.in";
     this.logger.debug(`getEntityFromDomain called for: ${subdomain ? subdomain : domain}`);
 
     const query = this.database
@@ -102,7 +118,6 @@ export class EntityService {
         color3: entities.color3,
         subdomain: entities.subdomain,
         customDomain: entities.customDomain,
-        message404: entities.message404,
         createdAt: entities.createdAt,
         updatedAt: entities.updatedAt,
         updatedById: entities.updatedById,
@@ -131,8 +146,8 @@ export class EntityService {
           domain,
           subdomain,
           rootDomain,
-        })
-      })
+        }),
+      });
       throw new Error(`Error getting entity from domain: ${err}`);
     });
     return {
@@ -150,68 +165,89 @@ export class EntityService {
    */
   getCoursesByEntityId = async (entityId: string) => {
     this.logger.info(`findCoursesByEntityId called with entityId: ${entityId}`);
-    const data = await this.database
-      .select({
-        id: courses.id,
-        name: courses.name,
-        description: courses.description,
-        address: courses.address,
-        logo: courses.logoId,
-      })
-      .from(courses)
-      .where(eq(courses.entityId, entityId))
-      .execute()
-      .catch((err) => {
-        this.logger.error(err);
-        loggerService.errorLog({
-          userId: "",
-          url: "/EntityService/getCoursesByEntityId",
-          userAgent: "",
-          message: "ERROR_GETTING_COURSES_FOR_ENTITY",
-          stackTrace: `${err.stack}`,
-          additionalDetailsJSON: JSON.stringify({
-            entityId,
+
+    const cacheKey = `coursesForEntity_${entityId}`;
+    let coursesData = (await cacheManager.get(cacheKey)) as any;
+    if (!coursesData) {
+      this.logger.info(`Cache miss for entityId: ${entityId}. Querying database.`);
+      // Fetch courses data
+      const data = await this.database
+        .select({
+          id: courses.id,
+          name: courses.name,
+          description: courses.description,
+          address: courses.address,
+          logo: courses.logoId,
+          timezoneIso: courses.timezoneISO,
+          display: courses.displayOrder,
+          isDeleted: courses.isDeleted,
+        })
+        .from(courses)
+        .where(and(eq(courses.entityId, entityId), eq(courses.isDeleted, false)))
+        .orderBy(courses.displayOrder)
+        .execute()
+        .catch(async (err) => {
+          this.logger.error(err);
+          await loggerService.errorLog({
+            userId: "",
+            url: "/EntityService/getCoursesByEntityId",
+            userAgent: "",
+            message: "ERROR_GETTING_COURSES_FOR_ENTITY",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              entityId,
+            }),
+          });
+          throw new Error(`Error getting courses for entity: ${entityId}`);
+        });
+      console.log("datadata", data);
+
+      // Find all images for each course
+      const images = await this.database
+        .select({
+          id: assets.id,
+          coursesId: assets.courseId,
+          key: assets.key,
+          extension: assets.extension,
+          order: courseAssets.order,
+        })
+        .from(assets)
+        .leftJoin(courseAssets, eq(assets.id, courseAssets.assetId))
+        .where(
+          inArray(
+            assets.courseId,
+            data.map(({ id }) => id)
+          )
+        );
+
+      // Map courses with their images
+      coursesData = data.map((course) => ({
+        ...course,
+        logo: images
+          .filter((i) => i.id === course.logo)
+          .map(
+            ({ key, extension }) =>
+              `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${key}.${extension}`
+          )[0],
+        images: images
+          .filter((i) => i.coursesId === course.id && i.id !== course.logo)
+          .sort((a, b) => {
+            const orderA = a.order !== null ? a.order : Number.MAX_SAFE_INTEGER;
+            const orderB = b.order !== null ? b.order : Number.MAX_SAFE_INTEGER;
+            return orderA - orderB;
           })
-        })
-        throw new Error(`Error getting courses for entity: ${entityId}`);
-      });
-    //find all images for each course
-    const images = await this.database
-      .select({
-        id: assets.id,
-        coursesId: assets.courseId,
-        key: assets.key,
-        extension: assets.extension,
-        order: courseAssets.order,
-      })
-      .from(assets)
-      .leftJoin(courseAssets, eq(assets.id, courseAssets.assetId))
-      .where(
-        inArray(
-          assets.courseId,
-          data.map(({ id }) => id)
-        )
-      );
+          .map(
+            ({ key, extension }) =>
+              `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${key}.${extension}`
+          ),
+      }));
 
-    const res = data.map((course) => ({
-      ...course,
-      logo: images
-        .filter((i) => i.id === course.logo)
-        .map(
-          ({ key, extension }) => `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${key}.${extension}`
-        )[0],
-      images: images
-        .filter((i) => i.coursesId === course.id && i.id !== course.logo)
-        .sort((a, b) => {
-          const orderA = a.order !== null ? a.order : Number.MAX_SAFE_INTEGER;
-          const orderB = b.order !== null ? b.order : Number.MAX_SAFE_INTEGER;
-          return orderA - orderB;
-        })
-        .map(
-          ({ key, extension }) => `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${key}.${extension}`
-        ),
-    }));
+      // Store the result in cache for 10 minutes
+      await cacheManager.set(cacheKey, coursesData, 600000);
+    } else {
+      this.logger.info(`Cache hit for entityId: ${entityId}. Returning cached data.`);
+    }
 
-    return res;
+    return coursesData;
   };
 }

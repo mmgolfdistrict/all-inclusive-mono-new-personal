@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { and, asc, eq, gte, inArray, lte, type Db, secondaryDb } from "@golf-district/database";
+import { and, asc, eq, gte, inArray, lte, secondaryDb, type Db } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import { courses } from "@golf-district/database/schema/courses";
 import { entities } from "@golf-district/database/schema/entities";
@@ -9,15 +9,15 @@ import { userWaitlistAuditLogs } from "@golf-district/database/secondaryDbSchema
 import Logger from "@golf-district/shared/src/logger";
 import dayjs from "dayjs";
 import UTC from "dayjs/plugin/utc";
+import type { AppSettingsService } from "../app-settings/app-settings.service";
 import type { NotificationService } from "../notification/notification.service";
+import { loggerService } from "../webhooks/logging.service";
 import type {
   CreateWaitlistNotification,
   CreateWaitlistNotifications,
   NotificationQstashData,
   UpdateWaitlistNotification,
 } from "./types";
-import { loggerService } from "../webhooks/logging.service";
-import type { AppSettingsService } from "../app-settings/app-settings.service";
 
 dayjs.extend(UTC);
 /**
@@ -30,7 +30,7 @@ export class UserWaitlistService {
     private readonly database: Db,
     private readonly notificationService: NotificationService,
     private readonly appSettingService: AppSettingsService
-  ) { }
+  ) {}
 
   getWaitlist = async (userId: string, courseId: string) => {
     try {
@@ -71,9 +71,9 @@ export class UserWaitlistService {
         message: "ERROR_GETTING_WAITLIST",
         stackTrace: `${error.stack}`,
         additionalDetailsJSON: JSON.stringify({
-          courseId
-        })
-      })
+          courseId,
+        }),
+      });
       throw error;
     }
   };
@@ -99,9 +99,9 @@ export class UserWaitlistService {
         message: "ERROR_CREATING_WAITLIST_NOTIFICATION",
         stackTrace: `${error.stack}`,
         additionalDetailsJSON: JSON.stringify({
-          waitlistNotificationsList
-        })
-      })
+          waitlistNotificationsList,
+        }),
+      });
       throw error;
     }
   };
@@ -131,9 +131,9 @@ export class UserWaitlistService {
         stackTrace: `${error.stack}`,
         additionalDetailsJSON: JSON.stringify({
           notificationId,
-          notificationData
-        })
-      })
+          notificationData,
+        }),
+      });
       throw error;
     }
   };
@@ -161,9 +161,9 @@ export class UserWaitlistService {
         message: "ERROR_DELETING_WAITLIST_NOTIFICATION",
         stackTrace: `${error.stack}`,
         additionalDetailsJSON: JSON.stringify({
-          notificationIds
-        })
-      })
+          notificationIds,
+        }),
+      });
       throw error;
     }
   };
@@ -200,9 +200,9 @@ export class UserWaitlistService {
         message: "ERROR_CREATING_WAITLIST_NOTIFICATIONS",
         stackTrace: `${error.stack}`,
         additionalDetailsJSON: JSON.stringify({
-          waitlistNotifications
-        })
-      })
+          waitlistNotifications,
+        }),
+      });
       throw error;
     }
   };
@@ -242,9 +242,9 @@ export class UserWaitlistService {
             message: "ERROR_GETTING_WAITLIST",
             stackTrace: `${err.stack}`,
             additionalDetailsJSON: JSON.stringify({
-              waitlistNotification
-            })
-          })
+              waitlistNotification,
+            }),
+          });
           throw new Error("Error getting waitlist");
         });
 
@@ -291,9 +291,9 @@ export class UserWaitlistService {
         message: "ERROR_CALCULATING_OVERLAPPING_NOTIFICATIONS",
         stackTrace: `${error.stack}`,
         additionalDetailsJSON: JSON.stringify({
-          waitlistNotification
-        })
-      })
+          waitlistNotification,
+        }),
+      });
       throw error;
     }
   };
@@ -350,33 +350,40 @@ export class UserWaitlistService {
             additionalDetailsJSON: JSON.stringify({
               date,
               time,
-              courseId
-            })
-          })
+              courseId,
+            }),
+          });
           throw new Error("Error getting notifications");
         });
 
       const sentNotificationsToUsers = new Set();
-      const notificationDelay = await this.appSettingService.get("WAITLIST_NOTIFICATION_DELAY_AFTER_LISTING_IN_MINUTES") 
+      const notificationDelay = await this.appSettingService.get(
+        "WAITLIST_NOTIFICATION_DELAY_AFTER_LISTING_IN_MINUTES"
+      );
 
-      let sentNotificationsToTodaysUsers = [] as { userId: string; }[]; 
-      
-      if(!listingId) {
-        sentNotificationsToTodaysUsers = await secondaryDb.select({
-          userId: userWaitlists.userId,
-        })
+      let sentNotificationsToTodaysUsers = [] as { userId: string }[];
+
+      if (!listingId) {
+        sentNotificationsToTodaysUsers = await secondaryDb
+          .select({
+            userId: userWaitlistAuditLogs.userId,
+          })
           .from(userWaitlistAuditLogs)
           .where(
             and(
               eq(userWaitlistAuditLogs.date, new Date(dayjs(date).format("YYYY-MM-DD") + "T00:00:00Z")),
               eq(userWaitlistAuditLogs.isCancelledNotification, true)
             )
-          )
+          );
       }
 
       for (const notification of notifications) {
         // don't send notificaton same user or to lister
-        if (sentNotificationsToUsers.has(notification.userId) || userId === notification.userId || sentNotificationsToTodaysUsers.filter((user) => user.userId === notification.userId).length > 0) {
+        if (
+          sentNotificationsToUsers.has(notification.userId) ||
+          userId === notification.userId ||
+          sentNotificationsToTodaysUsers.filter((user) => user.userId === notification.userId).length > 0
+        ) {
           continue;
         }
         sentNotificationsToUsers.add(notification.userId);
@@ -387,7 +394,7 @@ export class UserWaitlistService {
           courseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${notification.cdnKey}.${notification.extension}`,
           subDomainURL: notification.subDomainURL,
           courseName: notification.courseName,
-          listingId
+          listingId,
         };
         if (listingId) {
           await this.sendQstashMessage(data, notificationDelay);
@@ -406,9 +413,9 @@ export class UserWaitlistService {
         additionalDetailsJSON: JSON.stringify({
           date,
           time,
-          courseId
-        })
-      })
+          courseId,
+        }),
+      });
     }
   };
 
@@ -416,12 +423,12 @@ export class UserWaitlistService {
     let headers: Record<string, string> = {
       "content-type": "application/json",
       Authorization: `Bearer ${process.env.QSTASH_TOKEN}`,
-    }
+    };
     if (notificationDelay) {
       headers = {
         ...headers,
-        "Upstash-Delay": `${notificationDelay}m`
-      }
+        "Upstash-Delay": `${notificationDelay}m`,
+      };
     }
     const res = await fetch(
       `${process.env.QSTASH_BASE_URL}${process.env.QSTASH_WAITLIST_NOTIFICATION_TOPIC}`,
@@ -433,13 +440,9 @@ export class UserWaitlistService {
     );
 
     if (res.ok) {
-      this.logger.info(
-        `message sent successfully for user: ${data.userId} and course: ${data.courseId}`
-      );
+      this.logger.info(`message sent successfully for user: ${data.userId} and course: ${data.courseId}`);
     } else {
-      this.logger.error(
-        `error sending message for user: ${data.userId} and course: ${data.courseId}`
-      );
+      this.logger.error(`error sending message for user: ${data.userId} and course: ${data.courseId}`);
       loggerService.errorLog({
         userId: "",
         url: `/UserWaitlistService/sendQstashMessage`,
@@ -448,9 +451,9 @@ export class UserWaitlistService {
         stackTrace: `Error sending message for user: ${data.userId} and course: ${data.courseId}`,
         additionalDetailsJSON: JSON.stringify({
           data,
-          response: await res.json()
-        })
-      })
+          response: await res.json(),
+        }),
+      });
     }
   };
 }

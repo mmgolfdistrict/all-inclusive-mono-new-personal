@@ -5,12 +5,13 @@ import { useFiltersContext, type DateType } from "~/contexts/FiltersContext";
 import { api } from "~/utils/api";
 import { getDisabledDays } from "~/utils/calendar";
 import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
+import Image from "next/image";
 import { Fragment, useMemo, type Dispatch, type SetStateAction } from "react";
 import { useMediaQuery } from "usehooks-ts";
 import { FilledButton } from "../buttons/filled-button";
 import { OutlineButton } from "../buttons/outline-button";
+import { Forecast } from "../icons/forecast";
 import { Leaflet } from "../modal/leaflet";
-import Image from "next/image";
 
 interface DayValue {
   year: number;
@@ -32,9 +33,11 @@ const disabledDays = getDisabledDays(minimumDate);
 export const MobileDates = ({
   setShowFilters,
   toggleFilters,
+  openForecastModal,
 }: {
   setShowFilters: Dispatch<SetStateAction<boolean>>;
   toggleFilters: () => void;
+  openForecastModal: () => void;
 }) => {
   const { dateType, setDateType, selectedDay, setSelectedDay } =
     useFiltersContext();
@@ -77,12 +80,30 @@ export const MobileDates = ({
     second: date.getSeconds(),
   });
 
+  const forecastModalIcon = () => {
+    if (setShowFilters) {
+      setShowFilters(false);
+    }
+    openForecastModal();
+  };
+
   return (
     <Leaflet setShow={setShowFilters} className="max-h-[70dvh]">
       <div className="relative flex flex-col gap-4 px-4 pb-20">
         <div className="border-b py-2 text-xl font-semibold">Date Filters</div>
         <section className="flex flex-col gap-2">
-          <div>Date</div>
+          <div className="flex items-center justify-between">
+            <div>Date</div>
+            {dateType !== "Today" && (
+              <div className="cursor-pointer" onClick={forecastModalIcon}>
+                <Forecast
+                  className="cursor-pointer"
+                  height="16px"
+                  width="16px"
+                />
+              </div>
+            )}
+          </div>
           <ToggleGroup.Root
             type="single"
             value={dateType}
@@ -111,20 +132,17 @@ export const MobileDates = ({
                     specialEvents?.find((event) => event.eventName === value)
                       ?.iconUrl || "no-icon"
                   }
-                  label={
-
-                    value
-
-                  }
-                  className={`${index === 0
-                    ? "rounded-t-2xl border border-stroke"
-                    : index === DateOptions.length - 1 &&
-                      dateType === "Custom"
+                  label={value}
+                  className={`${
+                    index === 0
+                      ? "rounded-t-2xl border border-stroke"
+                      : index === DateOptions.length - 1 &&
+                        dateType === "Custom"
                       ? "border-l border-r border-stroke"
                       : index === DateOptions.length - 1
-                        ? "rounded-b-2xl border-b border-l border-r border-stroke"
-                        : "border-b border-l border-r border-stroke"
-                    }`}
+                      ? "rounded-b-2xl border-b border-l border-r border-stroke"
+                      : "border-b border-l border-r border-stroke"
+                  }`}
                 />
                 {dateType === "Custom" && value === "Custom" ? (
                   <>
@@ -144,8 +162,9 @@ export const MobileDates = ({
                           <>
                             <button
                               key={i}
-                              className={`inline-block mt-1 ${isMobile ? "mx-4" : "mx-2"
-                                }`}
+                              className={`inline-block mt-1 ${
+                                isMobile ? "mx-4" : "mx-2"
+                              }`}
                               onClick={() => {
                                 const startDate = new Date(event.startDate);
                                 const endDate = new Date(event.endDate);
@@ -202,8 +221,9 @@ export const Item = ({
   return (
     <ToggleGroup.Item
       value={value}
-      className={`bg-white flex items-center px-4 py-2 text-left text-[14px] text-primary-gray transition-colors data-[state=on]:bg-primary data-[state=on]:text-white ${className ?? ""
-        }`}
+      className={`bg-white flex items-center px-4 py-2 text-left text-[14px] text-primary-gray transition-colors data-[state=on]:bg-primary data-[state=on]:text-white ${
+        className ?? ""
+      }`}
       data-testid={dataTestId}
       data-qa={dataQa}
       data-test={dataTest}

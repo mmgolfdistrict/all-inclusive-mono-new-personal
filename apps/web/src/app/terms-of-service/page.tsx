@@ -1,8 +1,8 @@
 "use client";
 
+import { GoBack } from "~/components/buttons/go-back";
 import { api } from "~/utils/api";
 import { LoadingContainer } from "../[course]/loader";
-import { GoBack } from "~/components/buttons/go-back";
 
 export default function TermsOfService() {
   const { data: termsOfServices, isLoading } =

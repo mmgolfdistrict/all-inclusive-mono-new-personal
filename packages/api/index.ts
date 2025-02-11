@@ -84,7 +84,7 @@ export const getSupportedCharitiesForCourseId = async (courseId: string) => {
     process.env.VERCEL_AUTH_BEARER_TOKEN!,
     providerService
   );
-  
+
   try {
     return await courseService.getSupportedCharitiesForCourseId(courseId);
   } catch (error) {
@@ -92,7 +92,6 @@ export const getSupportedCharitiesForCourseId = async (courseId: string) => {
     return []; // Return an empty array on error to avoid breaking the UI
   }
 };
-
 
 export const getCourseImages = async (courseId: string) => {
   const credentials = {

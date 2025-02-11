@@ -2,6 +2,8 @@ import { and, eq, gt, gte, lt, lte, type Db } from "@golf-district/database";
 import { courseGlobalNotification } from "@golf-district/database/schema/courseGlobalNotification";
 import { systemNotification } from "@golf-district/database/schema/systemNotification";
 import { currentUtcTimestamp } from "@golf-district/shared";
+import { walkthrough } from "@golf-district/database/schema/walkthrough";
+import { walkthroughSection } from "@golf-district/database/schema/walkthroughSection";
 
 export class SystemNotificationService {
   constructor(private readonly database: Db) {}
@@ -12,7 +14,8 @@ export class SystemNotificationService {
         id: systemNotification.id,
         shortMessage: systemNotification.shortMessage,
         longMessage: systemNotification.longMessage,
-        displayType: systemNotification.displayType,
+        bgColor: systemNotification.bgColor,
+        color: systemNotification.color,
       })
       .from(systemNotification)
       .where(
@@ -34,7 +37,8 @@ export class SystemNotificationService {
         id: courseGlobalNotification.id,
         shortMessage: courseGlobalNotification.shortMessage,
         longMessage: courseGlobalNotification.longMessage,
-        displayType: courseGlobalNotification.displayType,
+        bgColor: courseGlobalNotification.bgColor,
+        color: courseGlobalNotification.color,
       })
       .from(courseGlobalNotification)
       .where(
@@ -52,4 +56,32 @@ export class SystemNotificationService {
       });
     return courseNotifications;
   }
+
+  getWalkthroughSetting = async () =>{
+    const walkthroughSetting = await this.database
+    .select({
+      id: walkthrough.id,
+      internalName: walkthrough.internalName,
+      name: walkthrough.name,     
+    })
+    .from(walkthrough)
+
+    return walkthroughSetting
+  }
+
+  getGuidMeSetting = async () =>{
+    const guideMeSetting = await this.database
+    .select({
+      id: walkthroughSection.id,
+      walkthroughId: walkthroughSection.walkthroughId,
+      sectionId: walkthroughSection.sectionId,
+      message: walkthroughSection.message,
+      displayOrder: walkthroughSection.displayOrder,
+    })
+    .from(walkthroughSection)
+    .orderBy(walkthroughSection.displayOrder)
+
+    return guideMeSetting
+  }
+
 }

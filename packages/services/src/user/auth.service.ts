@@ -1,14 +1,15 @@
+import { randomUUID } from "crypto";
 import { eq, or } from "@golf-district/database";
 import type { Db } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import { users } from "@golf-district/database/schema/users";
+import { userSession } from "@golf-district/database/schema/userSession";
 import { assetToURL, currentUtcTimestamp } from "@golf-district/shared";
 import Logger from "@golf-district/shared/src/logger";
 import bcrypt from "bcryptjs";
 import { CacheService } from "../infura/cache.service";
+import type { IpInfoService } from "../ipinfo/ipinfo.service";
 import type { NotificationService } from "../notification/notification.service";
-import { userSession } from "@golf-district/database/schema/userSession";
-import { randomUUID } from "crypto";
 
 export class AuthService extends CacheService {
   /**
@@ -19,6 +20,7 @@ export class AuthService extends CacheService {
   constructor(
     private readonly database: Db,
     private readonly notificationService: NotificationService,
+    private readonly ipInfoService: IpInfoService,
     redisUrl: string,
     redisToken: string
   ) {
@@ -86,8 +88,18 @@ export class AuthService extends CacheService {
       });
   };
 
-  addUserSession = async (userId: string, status: string, ip?: string, userAgent?: string) => {
+  addUserSession = async (
+    userId: string,
+    status: string,
+    courseId: string,
+    loginMethod: string,
+    ip?: string,
+    userAgent?: string
+  ) => {
+    console.log("loginMethod", loginMethod);
+
     try {
+      const ipInfo = await this.ipInfoService.getIpInfo(ip);
       await this.database
         .insert(userSession)
         .values({
@@ -96,10 +108,13 @@ export class AuthService extends CacheService {
           ip: ip,
           userAgent: userAgent,
           status: status,
+          courseId: courseId,
+          loginMethod: loginMethod,
+          ipinfoJSON: ipInfo,
         })
         .execute();
     } catch (error) {
-      console.log(error);
+      console.log("error", error);
     }
   };
 
@@ -124,34 +139,97 @@ export class AuthService extends CacheService {
     if (!data) {
       this.logger.warn(`User not found: ${handleOrEmail}`);
       if (process.env.NODE_ENV !== "production") {
-        throw new Error("User not found");
+        return {
+          id: "",
+          email: "",
+          image: "",
+          name: "",
+          phoneNumber: "",
+          profilePicture: "",
+          error: true,
+          message: "User not found",
+        };
       }
-      return null;
+      return {
+        id: "",
+        email: "",
+        image: "",
+        name: "",
+        phoneNumber: "",
+        profilePicture: "",
+        error: true,
+        message: "User not found",
+      };
     }
 
     if (!data.user.emailVerified) {
       this.logger.warn(`User email not verified: ${handleOrEmail}`);
       if (process.env.NODE_ENV !== "production") {
-        throw new Error("User email not verified");
+        return {
+          id: "",
+          email: data.user.email,
+          image: "",
+          name: "",
+          phoneNumber: "",
+          profilePicture: "",
+          error: true,
+          message: "User email not verified",
+        };
       }
-      return null;
+      return {
+        id: "",
+        email: data.user.email,
+        image: "",
+        name: "",
+        phoneNumber: "",
+        profilePicture: "",
+        error: true,
+        message: "User email not verified",
+      };
     }
     // console.log("EMail verified");
     if (!data.user.gdPassword) {
       this.logger.warn(`User has no password: ${handleOrEmail}`);
       if (process.env.NODE_ENV !== "production") {
-        throw new Error("User has no password");
+        return {
+          id: "",
+          email: data.user.email,
+          image: "",
+          name: "",
+          phoneNumber: "",
+          profilePicture: "",
+          error: true,
+          message: "User has no password",
+        };
       }
-      return null;
+      return {
+        id: "",
+        email: data.user.email,
+        image: "",
+        name: "",
+        phoneNumber: "",
+        profilePicture: "",
+        error: true,
+        message: "User has no password",
+      };
     }
     // console.log("GD password found");
 
     const valid = await bcrypt.compare(password, data.user.gdPassword);
     // console.log("Bcrypt compare");
     if (!valid) {
-      this.logger.warn(`Invalid password: ${handleOrEmail}`);
+      this.logger.warn(`Invalid password of email: ${handleOrEmail}`);
       if (process.env.NODE_ENV !== "production") {
-        throw new Error("Invalid password");
+        return {
+          id: "",
+          email: data.user.email,
+          image: "",
+          name: "",
+          phoneNumber: "",
+          profilePicture: "",
+          error: true,
+          message: "Invalid password",
+        };
       }
 
       const signInAttempts = await this.incrementOrSetKey(`signinAttempts:${data.user.id}`);
@@ -163,8 +241,16 @@ export class AuthService extends CacheService {
           `We have detected suspicious activity on your account. If you are not the one attempting to login, please contact support immediately.`
         );
       }
-
-      return null;
+      return {
+        id: "",
+        email: data.user.email,
+        image: "",
+        name: "",
+        phoneNumber: "",
+        profilePicture: "",
+        error: true,
+        message: "Invalid password",
+      };
     }
     this.logger.warn(`Password Verified`);
 

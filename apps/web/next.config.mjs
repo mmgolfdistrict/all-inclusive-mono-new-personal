@@ -12,6 +12,7 @@ const bundleAnalyzer = withBundleAnalyzer({
 /** @type {import("next").NextConfig} */
 const config = {
   reactStrictMode: true,
+  productionBrowserSourceMaps: true,
 
   experimental: {
     serverComponentsExternalPackages: ["bcrypt"],
@@ -84,6 +85,12 @@ const config = {
       {
         protocol: "https",
         hostname: "d3aqhblezti4.cloudfront.net",
+        port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "demo-cdn.golfdistrict.in",
         port: "",
         pathname: "/**",
       },

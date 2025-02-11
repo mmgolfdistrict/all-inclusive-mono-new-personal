@@ -139,7 +139,7 @@ export const searchRouter = createTRPCRouter({
         isHolesAny: z.boolean(),
         isGolferAny: z.boolean(),
         highestPrice: z.number(),
-        lowestPrice: z.number()
+        lowestPrice: z.number(),
       })
     )
     .query(async ({ ctx, input }) => {
@@ -176,5 +176,46 @@ export const searchRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       return await ctx.serviceFactory.getSearchService().getSpecialEvents(input?.courseId);
+    }),
+
+  getPriceForecast: publicProcedure
+    .input(
+      z.object({
+        courseId: z.string(),
+        startDate: z.string(),
+        endDate: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return await ctx.serviceFactory
+        .getSearchService()
+        .getPriceForecast(input?.courseId, input.startDate, input.endDate);
+    }),
+  getAvailableTimesForGroupedBookings: publicProcedure
+    .input(
+      z.object({
+        startTime: z.number(),
+        endTime: z.number(),
+        dates: z.string().array(),
+        golferCount: z.number(),
+        courseId: z.string(),
+        minimumGolferGroup: z.number()
+      })
+    ).mutation(async ({ ctx, input }) => {
+      return ctx.serviceFactory
+        .getSearchService()
+        .getAvailableTimesForGroupedBookings(input.startTime, input.endTime, input.dates, input.golferCount, input.courseId, input.minimumGolferGroup);
+    }),
+  getTeeTimesByIds: publicProcedure
+    .input(
+      z.object({
+        teeTimeIds: z.string().array(),
+        playerCount: z.number()
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return await ctx.serviceFactory
+        .getSearchService()
+        .getTeeTimesByIds(input.teeTimeIds, input.playerCount, ctx.session?.user?.id);
     }),
 });
