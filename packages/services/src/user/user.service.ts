@@ -43,7 +43,6 @@ export interface UserCreationData {
   firstName: string;
   lastName: string;
   handle: string;
-  phoneNumberCountryCode: number;
   phoneNumber: string;
   // location?: string;
   address1?: string;
@@ -1738,7 +1737,6 @@ export class UserService {
         city: data.city,
         zipcode: data.zipcode,
         country: data.country,
-        phoneNumberCountryCode: data.phoneNumberCountryCode,
         phoneNumber: data.phoneNumber,
         verificationRequestToken: verificationToken,
         verificationRequestExpiry: generateUtcTimestamp(90), //90 minutes
