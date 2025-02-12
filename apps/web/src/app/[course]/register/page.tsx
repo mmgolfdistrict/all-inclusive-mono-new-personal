@@ -96,17 +96,17 @@ export default function RegisterPage() {
           `https://ipinfo.io/json?token=${process.env.NEXT_PUBLIC_IPINFO_API_TOKEN}`
         );
         const data = await result.json();
-        if (data?.country) {
-          if (typeof data.country === "string") {
-            setCurrentCountry(data.country.toLowerCase());
-          }
+        if (data?.country && typeof data.country === "string") {
+          setCurrentCountry(data.country.toLowerCase() as string);
         }
       } catch (error) {
         console.error("Error fetching country:", error);
       }
     };
 
-    fetchCountry();
+    fetchCountry().catch((error) => {
+      console.error("Error fetching country:", error);
+    });
   }, []);
 
   useEffect(() => {
@@ -138,7 +138,9 @@ export default function RegisterPage() {
       }
     };
 
-    fetchPhoneValidation();
+    fetchPhoneValidation().catch((error) => {
+      console.error("Error validating phone number:", error);
+    });
   }, [debouncedPhoneNumber]);
 
   const onPlaceChanged = () => {

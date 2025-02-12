@@ -239,7 +239,9 @@ export const EditProfileForm = () => {
       }
     };
 
-    fetchPhoneValidation();
+    fetchPhoneValidation().catch((error) => {
+      console.error("Error validating phone number:", error);
+    });
   }, [debouncedPhoneNumber]);
 
   const image = watch("profilePictureAssetId");
