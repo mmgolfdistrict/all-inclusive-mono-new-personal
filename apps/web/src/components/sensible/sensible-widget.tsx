@@ -24,7 +24,7 @@ export const SensibleWidget = memo(
     useEffect(() => {
       const sensibleModuleScript = document.createElement("script");
       sensibleModuleScript.src =
-        "https://static.sensibleweather.io/js-sdk/v1.2.2/build/sensible-sdk.esm.js";
+        "https://static.sensibleweather.io/js-sdk/v1.5.2/build/sensible-sdk.esm.js";
       sensibleModuleScript.async = true;
       sensibleModuleScript.type = "module";
       document.body.appendChild(sensibleModuleScript);
@@ -37,7 +37,7 @@ export const SensibleWidget = memo(
 
       const sensibleNoModuleScript = document.createElement("script");
       sensibleNoModuleScript.src =
-        "https://static.sensibleweather.io/js-sdk/v1.2.2/build/sensible-sdk.js";
+        "https://static.sensibleweather.io/js-sdk/v1.5.2/build/sensible-sdk.js";
       sensibleNoModuleScript.async = true;
       sensibleNoModuleScript.noModule = true;
       document.body.appendChild(sensibleNoModuleScript);
@@ -50,7 +50,7 @@ export const SensibleWidget = memo(
 
       const sensibleCssLink = document.createElement("link");
       sensibleCssLink.href =
-        "https://static.sensibleweather.io/js-sdk/v1.2.2/assets/css/fonts.css";
+        "https://static.sensibleweather.io/js-sdk/v1.5.2/assets/css/fonts.css";
       // @ts-ignore
       sensibleCssLink.async = true;
       sensibleCssLink.rel = "stylesheet";

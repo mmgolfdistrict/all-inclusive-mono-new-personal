@@ -57,13 +57,11 @@ import * as teeTimeIndexLogs from "./teeTimeIndexLogs";
 import * as teeTimes from "./teeTimes";
 import * as transfers from "./transfers";
 import * as userBookingOffers from "./userBookingOffers";
-import * as userPhoneCall from "./userPhoneCall";
 import * as userPromoCodeLink from "./userPromoCodeLink";
 import * as userProviderCourseLink from "./userProviderCourseLink";
 import * as users from "./users";
 import * as userSession from "./userSession";
 import * as userWaitlists from "./userWaitlists";
-import * as verificationTokens from "./verificationTokens";
 import * as walkthrough from "./walkthrough";
 import * as walkthroughSection from "./walkthroughSection";
 import * as withdrawals from "./withdrawals";
@@ -88,7 +86,6 @@ export const schema = {
   ...transfers,
   ...userBookingOffers,
   ...users,
-  ...verificationTokens,
   ...providerCourseLink,
   ...offers,
   ...offerRead,
@@ -137,5 +134,4 @@ export const schema = {
   ...groupBookings,
   ...walkthrough,
   ...walkthroughSection,
-  ...userPhoneCall,
 };

@@ -9,6 +9,7 @@ import { foreupBookingPlayer } from "./foreupBookingPlayer";
 import { foreupBookingSale } from "./foreupBookingSale";
 import { foreupBookingSaleItem } from "./foreupBookingSaleItem";
 import * as teeTimeIndexLogs from "./teeTimeIndexLogs";
+import * as userPhoneCall from "./userPhoneCall";
 import * as userWaitlistAuditLogs from "./userWaitlistAuditLogs";
 import * as userWaitlistRecords from "./userWaitlistRecords";
 
@@ -26,4 +27,5 @@ export const schema = {
   ...foreupBookingPeople,
   ...courseTeeSheetBooking,
   ...courseTeeSheetBookingLog,
+  ...userPhoneCall,
 };

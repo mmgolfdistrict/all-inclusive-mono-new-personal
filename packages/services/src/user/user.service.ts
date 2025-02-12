@@ -43,7 +43,6 @@ export interface UserCreationData {
   firstName: string;
   lastName: string;
   handle: string;
-  phoneNumberCountryCode: number;
   phoneNumber: string;
   // location?: string;
   address1?: string;
@@ -383,12 +382,10 @@ export class UserService {
       .select({
         bookingId: bookingslots.bookingId,
         slotPosition: bookingslots.slotPosition,
-        externalSlotId: bookingslots.externalSlotId,
+        externalSlotId: bookingslots.slotnumber,
       })
       .from(bookingslots)
-      .where(
-        and(eq(bookingslots.slotPosition, slotPosition), eq(bookingslots.externalSlotId, bookingSlotId))
-      );
+      .where(and(eq(bookingslots.slotPosition, slotPosition), eq(bookingslots.slotnumber, bookingSlotId)));
 
     if (!bookingSlot) {
       throw new Error("Booking slot not available");
@@ -1740,7 +1737,6 @@ export class UserService {
         city: data.city,
         zipcode: data.zipcode,
         country: data.country,
-        phoneNumberCountryCode: data.phoneNumberCountryCode,
         phoneNumber: data.phoneNumber,
         verificationRequestToken: verificationToken,
         verificationRequestExpiry: generateUtcTimestamp(90), //90 minutes

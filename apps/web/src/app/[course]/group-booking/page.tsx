@@ -4,8 +4,6 @@ import type { Day } from "@taak/react-modern-calendar-datepicker";
 import { Calendar } from "@taak/react-modern-calendar-datepicker";
 import React, { useEffect, useState } from "react";
 import "@taak/react-modern-calendar-datepicker/lib/DatePicker.css";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { FilledButton } from "~/components/buttons/filled-button";
 import { GoBack } from "~/components/buttons/go-back";
 import { Campaign } from "~/components/icons/campaign";
@@ -15,7 +13,6 @@ import { PlaylistAddCheck } from "~/components/icons/playlist-add-check";
 import { Timer } from "~/components/icons/timer";
 import { Input } from "~/components/input/input";
 import { SingleSlider } from "~/components/input/single-slider";
-import { Slider } from "~/components/input/slider";
 import { useCourseContext } from "~/contexts/CourseContext";
 import dayjs from "dayjs";
 import { useMediaQuery } from "usehooks-ts";
@@ -23,19 +20,18 @@ import type { TeeTimeGroups } from "./GroupBookingPage";
 import GroupBookingPage from "./GroupBookingPage";
 import { api } from "~/utils/api";
 import { toast } from "react-toastify";
+const tomorrow = dayjs().add(1, "day");
 
 function GroupBooking({ params }: { params: { course: string } }) {
   const { course } = useCourseContext();
+  const STEP = course?.isOnlyGroupOfFourAllowed ? 4 : 1;
+  const SLIDER_MIN = course?.groupBookingMinSize ?? 0;
+  const SLIDER_MAX = course?.groupBookingMaxSize ?? 0;
   const courseId = params.course;
-  const [selectedDates, setSelectedDates] = useState<Day[]>([]);
+  const [selectedDate, setSelectedDate] = useState<Day>({ day: tomorrow.date(), month: tomorrow.month() + 1, year: tomorrow.year() });
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [displayDates, setDisplayDates] = useState<string>("");
-  const [isTimePickerOpen, setIsTimePickerOpen] = useState(false);
-  const [timeRange, setTimeRange] = useState<string>("");
-  const [players, setPlayers] = useState(10);
-  const [errorMessage, setErrorMessage] = useState<string>("");
-  const courseStartTime = dayjs(course?.openTime).format("hh:mm A");
-  const courseEndTime = dayjs(course?.closeTime).format("hh:mm A");
+  const [players, setPlayers] = useState(SLIDER_MIN);
   const courseStartTimeNumber = course?.courseOpenTime ?? 9;
   const courseEndTimeNumber = course?.courseCloseTime ?? 9;
 
@@ -64,10 +60,6 @@ function GroupBooking({ params }: { params: { course: string } }) {
       });
     }
   }
-
-  const courseStartTimeObj = dayjs(courseStartTime, "hh:mm A");
-  const courseEndTimeObj = dayjs(courseEndTime, "hh:mm A");
-
   const [filteredStartTimeOptions, setFilteredStartTimeOptions] = useState<
     { displayTime: string; value: number }[]
   >([]);
@@ -106,43 +98,6 @@ function GroupBooking({ params }: { params: { course: string } }) {
     day: currentDate.date(),
   };
 
-  const handleDoneSetTimeRange = () => {
-    let startTimeNum;
-    let endTimeNum;
-    if (startTime && startTime.length > 1) {
-      startTimeNum = Number(startTime[0]);
-      endTimeNum = Number(startTime[1]);
-    } else {
-      console.error("startTime is invalid:", startTime);
-    }
-    const courseStartNum = Number(courseStartTimeObj.format("HHmm"));
-    const courseEndNum = Number(courseEndTimeObj.format("HHmm"));
-
-    const formatTime = (time: string | number) => {
-      const timeString = time.toString().padStart(4, "0");
-      const hours = parseInt(timeString.slice(0, 2), 10);
-      const minutes = parseInt(timeString.slice(2), 10);
-      return dayjs().hour(hours).minute(minutes).format("hh:mm a");
-    };
-
-    if (startTimeNum < courseStartNum || endTimeNum > courseEndNum) {
-      setErrorMessage("Please select a time within the available duration.");
-      return;
-    }
-
-    if (startTimeNum > endTimeNum) {
-      setErrorMessage("Start time must be before end time");
-      const startTimeString = formatTime(courseStartNum);
-      const endTimeString = formatTime(courseEndNum);
-      setTimeRange(`${startTimeString} - ${endTimeString}`);
-      // setTimeRange("");
-      return;
-    } else {
-      setErrorMessage("");
-      setIsTimePickerOpen(false);
-    }
-  };
-
   const setFilter = (type, value) => {
     switch (type) {
       case "time": {
@@ -159,24 +114,20 @@ function GroupBooking({ params }: { params: { course: string } }) {
     }
   };
 
-  const handleTimePickerClose = () => {
-    setIsTimePickerOpen(false);
-    setErrorMessage("");
-  };
-
   const handleSubmit = async () => {
     try {
+      window.location.hash = ""
       const data = await fetchAvailableTeeTimes({
         courseId,
         startTime: startTime[0],
         endTime: startTime[1],
-        dates: selectedDates.map((date) => `${(date.year)}-${date.month.toString().padStart(2, '0')}-${(date.day).toString().padStart(2, '0')}`),
+        dates: [`${(selectedDate.year)}-${selectedDate.month.toString().padStart(2, '0')}-${(selectedDate.day).toString().padStart(2, '0')}`],
         golferCount: players,
         minimumGolferGroup: 4
       });
-      console.log("DATA", data);
       if (data) {
         setTeeTimeData(data);
+        document.getElementById('your-selection')?.scrollIntoView({ behavior: 'smooth' });
       }
     } catch (error) {
       toast.error("Failed to get tee times");
@@ -185,33 +136,10 @@ function GroupBooking({ params }: { params: { course: string } }) {
   }
 
   useEffect(() => {
-    const datesToDisplay = selectedDates
-      .sort((a, b) => {
-        const dateA = new Date(a.year, a.month - 1, a.day);
-        const dateB = new Date(b.year, b.month - 1, b.day);
-        return dateA.getTime() - dateB.getTime();
-      })
-      .map((date) =>
-        dayjs(`${date.year}-${date.month}-${date.day}`).format("MMM DD")
-      );
-    setDisplayDates(datesToDisplay.join(", "));
-  }, [selectedDates]);
+    const datesToDisplay = dayjs(`${selectedDate.year ?? ""}-${selectedDate.month ?? ""}-${selectedDate.day ?? ""}`).format("MMM DD")
 
-  useEffect(() => {
-    if (startTime[0] && startTime[1]) {
-      const formatTime = (time: string | number) => {
-        const timeString = time.toString().padStart(4, "0");
-        const hours = parseInt(timeString.slice(0, 2), 10);
-        const minutes = parseInt(timeString.slice(2), 10);
-        return dayjs().hour(hours).minute(minutes).format("hh:mm a");
-      };
-
-      const startTimeString = formatTime(startTime[0]);
-      const endTimeString = formatTime(startTime[1]);
-      setTimeRange(`${startTimeString} - ${endTimeString}`);
-      setErrorMessage("");
-    }
-  }, [startTime[0], startTime[1]]);
+    setDisplayDates(datesToDisplay);
+  }, [selectedDate]);
 
   const handleSingleSliderChange = (value: number[]) => {
     if (value[0]) {
@@ -222,7 +150,7 @@ function GroupBooking({ params }: { params: { course: string } }) {
   };
 
   return (
-    <section className="mx-auto px-2 flex w-full flex-col gap-4 pt-4 md:max-w-[1360px] md:px-6">
+    <section className="mx-auto px-2 flex w-full flex-col gap-4 pt-4 md:max-w-[1360px] justify-center md:px-6">
       <div className="flex items-center justify-between px-4 md:px-6">
         <GoBack href={`/${courseId}`} text={`Back to tee times`} />
       </div>
@@ -306,12 +234,12 @@ function GroupBooking({ params }: { params: { course: string } }) {
             Configure your group to book them together.
           </h2>
           <hr />
-          <div className="grid grid-rows-3 md:grid-rows-3 lg:grid-rows-3 gap-4 px-4 py-2 md:px-8 md:py-6">
+          <div className="grid grid-rows-3 md:grid-rows-3 lg:grid-rows-3 gap-4 px-4 py-2 md:px-8 md:py-6 items-center">
             <div className="">
               <Input
                 readOnly
                 className="cursor-pointer text-ellipsis unmask-time"
-                label="Pick Date(s)"
+                label="Pick Date"
                 name="dates"
                 register={() => undefined}
                 value={displayDates}
@@ -341,8 +269,8 @@ function GroupBooking({ params }: { params: { course: string } }) {
                     <Calendar
                       calendarClassName="!m-[0px] !h-[100%] !w-[75%] unmask-time"
                       colorPrimary="#40942A"
-                      value={selectedDates}
-                      onChange={setSelectedDates}
+                      value={selectedDate}
+                      onChange={(date: Day) => setSelectedDate(date)}
                       minimumDate={minimumDate}
                     />
                     <FilledButton
@@ -355,164 +283,72 @@ function GroupBooking({ params }: { params: { course: string } }) {
                 </>
               )}
             </div>
-            <div className="">
-              <Input
-                readOnly
-                className="cursor-pointer text-ellipsis"
-                label="Select Time Range"
-                placeholder="Times..."
-                name="times"
-                register={() => undefined}
-                onClick={() => setIsTimePickerOpen(true)}
-                value={timeRange}
-                onChange={() => null}
-              />
-              {isTimePickerOpen && (
-                <>
-                  <div
-                    className={`fixed left-0 top-0 z-20 h-[100dvh] w-screen backdrop-blur unmask-time`}
-                    onClick={() => setIsTimePickerOpen(false)}
-                  >
-                    <div className="h-screen bg-[#00000099]" />
-                  </div>
-                  <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <div className="w-[95%] flex flex-col max-w-[500px] p-6 gap-4 mt-14 rounded-xl bg-white fixed top-[50%] left-[50%] -translate-x-[50%] -translate-y-[60%] z-50">
-                      <Close
-                        className="absolute right-4 top-4 cursor-pointer"
-                        height={24}
-                        width={24}
-                        onClick={handleTimePickerClose}
-                      />
-                      <div>
-                        <span>
-                          Tee time available hours : {courseStartTime} -{" "}
-                          {courseEndTime}
-                        </span>
-                      </div>
-                      <h1 className="text-[20px] md:text-2xl">
-                        Select Time Range
-                      </h1>
-                      <section className="flex flex-col gap-2">
-                        <div className="flex items-center justify-between">
-                          <div>Start Time</div>
-                          <div>
-                            {isMobile
-                              ? startTimeOptions[
-                                  startTimeOptions.findIndex(
-                                    (i) => i.value === timeMobile[0]
-                                  )
-                                ]?.displayTime
-                              : startTimeOptions[
-                                  startTimeOptions.findIndex(
-                                    (i) => i.value === localStartTime[0]
-                                  )
-                                ]?.displayTime}
-                            -
-                            {isMobile
-                              ? startTimeOptions[
-                                  startTimeOptions.findIndex(
-                                    (i) => i.value === timeMobile[1]
-                                  )
-                                ]?.displayTime
-                              : startTimeOptions[
-                                  startTimeOptions.findIndex(
-                                    (i) => i.value === localStartTime[1]
-                                  )
-                                ]?.displayTime}
-                          </div>
-                        </div>
-                        <Slider
-                          min={0}
-                          max={filteredStartTimeOptions.length - 1}
-                          step={1}
-                          value={
-                            isMobile
-                              ? [
-                                  filteredStartTimeOptions.findIndex(
-                                    (i) => i.value === timeMobile[0]
-                                  ),
-                                  filteredStartTimeOptions.findIndex(
-                                    (i) => i.value === timeMobile[1]
-                                  ),
-                                ]
-                              : [
-                                  filteredStartTimeOptions.findIndex(
-                                    (i) => i.value === localStartTime[0]
-                                  ),
-                                  filteredStartTimeOptions.findIndex(
-                                    (i) => i.value === localStartTime[1]
-                                  ),
-                                ]
-                          }
-                          onValueChange={(values) => {
-                            if (Array.isArray(values) && values.length === 2) {
-                              const startIndex = values[0];
-                              const endIndex = values[1];
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <label className="text-[14px] text-primary-gray" htmlFor="time-range">
+                  Select Ideal Start Time
+                </label>
+                <div>
+                  {isMobile
+                    ? startTimeOptions[
+                      startTimeOptions.findIndex(
+                        (i) => i.value === timeMobile[0]
+                      )
+                    ]?.displayTime
+                    : startTimeOptions[
+                      startTimeOptions.findIndex(
+                        (i) => i.value === localStartTime[0]
+                      )
+                    ]?.displayTime}
+                </div>
+              </div>
+              <section className="flex flex-col gap-2">
+                <SingleSlider
+                  id="time-range"
+                  min={0}
+                  max={filteredStartTimeOptions.length - 1}
+                  step={1}
+                  onValueChange={(values) => {
+                    const startIndex = values[0];
+                    if (
+                      typeof startIndex === "number" &&
+                      startIndex >= 0 &&
+                      startIndex < filteredStartTimeOptions.length
+                    ) {
+                      const startOption = filteredStartTimeOptions[startIndex];
 
-                              if (
-                                typeof startIndex === "number" &&
-                                typeof endIndex === "number" &&
-                                startIndex >= 0 &&
-                                endIndex >= 0 &&
-                                startIndex < filteredStartTimeOptions.length &&
-                                endIndex < filteredStartTimeOptions.length
-                              ) {
-                                const startOption =
-                                  filteredStartTimeOptions[startIndex];
-                                const endOption =
-                                  filteredStartTimeOptions[endIndex];
+                      if (startOption) {
+                        setLocalStartTime((prev) => [
+                          startOption.value,
+                          prev[1],
+                        ]);
 
-                                if (startOption && endOption) {
-                                  setLocalStartTime([
-                                    startOption.value,
-                                    endOption.value,
-                                  ]);
-
-                                  setFilter("time", [
-                                    startOption.value,
-                                    endOption.value,
-                                  ]);
-                                }
-                              }
-                            }
-                          }}
-                          onPointerUp={handleSetStartTime}
-                          aria-label="Select start and end times"
-                          data-testid="slider-time-range"
-                        />
-                      </section>
-                      <div>
-                        <span
-                          className={`text-[12px] text-red ${
-                            errorMessage ? "" : "hidden"
-                          }`}
-                        >
-                          {errorMessage}
-                        </span>
-                        <FilledButton
-                          className="w-full mt-2 py-[.28rem] md:py-1.5 text-[10px] md:text-[14px]"
-                          onClick={handleDoneSetTimeRange}
-                        >
-                          Done
-                        </FilledButton>
-                      </div>
-                    </div>
-                  </LocalizationProvider>
-                </>
-              )}
+                        setFilter("time", [
+                          startOption.value,
+                          localStartTime[1],
+                        ]);
+                      }
+                    }
+                  }
+                  }
+                  onPointerUp={handleSetStartTime}
+                  aria-label="Select start and end times"
+                  data-testid="slider-time-range"
+                />
+              </section>
             </div>
             <div className="">
               <label className="text-[14px] text-primary-gray">
                 {"Number of Players"}
               </label>
               <div className="relative mt-2">
-                <div className="flex justify-between text-sm mb-2">
-                  {Array.from({ length: 15 }, (_, i) => 10 + i).map(
-                    (number) => (
+                <div className="flex justify-between text-sm mb-2 ">
+                  {Array.from({ length: (SLIDER_MAX - SLIDER_MIN) + 1 }, (_, i) => (SLIDER_MIN + i) % STEP === 0 ? (SLIDER_MIN + i) : "").map(
+                    (number, idx) => (
                       <span
-                        key={number}
+                        key={`${number}_${idx}`}
                         className="text-center"
-                        style={{ width: "6.66%" }}
+                        style={{ width: `20px` }}
                       >
                         {number}
                       </span>
@@ -520,9 +356,9 @@ function GroupBooking({ params }: { params: { course: string } }) {
                   )}
                 </div>
                 <SingleSlider
-                  min={10}
-                  max={24}
-                  step={1}
+                  min={SLIDER_MIN}
+                  max={SLIDER_MAX}
+                  step={STEP}
                   onValueChange={(value) => handleSingleSliderChange(value)}
                   aria-label="Select number of players"
                   data-testid="slider-number-of-players"
@@ -533,7 +369,7 @@ function GroupBooking({ params }: { params: { course: string } }) {
           <FilledButton
             onClick={handleSubmit}
             className="flex items-center justify-center gap-1 max-w-[200px] w-full mt-4 self-center py-[.28rem] md:py-1.5 text-[10px] md:text-[14px] disabled:opacity-50 transition-opacity duration-300"
-            disabled={isTeeTimesLoading || selectedDates.length === 0}
+            disabled={isTeeTimesLoading || !displayDates}
           >
             See Available Times
           </FilledButton>

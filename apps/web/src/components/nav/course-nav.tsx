@@ -135,9 +135,6 @@ export const CourseNav = () => {
   const { data: walkthroughSections } =
     api.systemNotification.getGuidMeSetting.useQuery({});
 
-  console.log("walkthrough", walkthrough);
-  console.log("walkthroughSections", walkthroughSections);
-
   const handleGuideMe = () => {
     if (!walkthroughSections?.length || !walkthrough?.length) {
       console.warn("No walkthrough or walkthrough sections available.");
@@ -158,8 +155,6 @@ export const CourseNav = () => {
       }
       internalNameToMatch = matchedWalkthrough.internalName;
     }
-
-    console.log(internalNameToMatch, "internalNameToMatchinternalNameToMatch");
 
     const selectedWalkthrough = walkthrough.find(
       (wt) => wt.internalName === internalNameToMatch
