@@ -27,11 +27,9 @@ import {
   type ChangeEvent,
 } from "react";
 import { Controller, useForm, type SubmitHandler } from "react-hook-form";
-import PhoneInput from "react-phone-input-2";
 import { toast } from "react-toastify";
 import { useDebounce } from "usehooks-ts";
 import { OutlineButton } from "../buttons/outline-button";
-import "react-phone-input-2/lib/style.css";
 
 const defaultProfilePhoto = "/defaults/default-profile.webp";
 const defaultBannerPhoto = "/defaults/default-banner.webp";
@@ -44,7 +42,6 @@ export const EditProfileForm = () => {
     watch,
     handleSubmit,
     setError,
-    clearErrors,
     getValues,
     control,
     formState: { isSubmitting, errors },
@@ -108,9 +105,6 @@ export const EditProfileForm = () => {
       }
     }
   }, [isLoaded, loadError]);
-
-  const [currentPhoneNumber, setCurrentPhoneNumber] = useState<string>("");
-  const debouncedPhoneNumber = useDebounce<string>(currentPhoneNumber, 2000);
 
   const onPlaceChanged = () => {
     const place = autocompleteRef.current?.getPlace();
@@ -182,17 +176,7 @@ export const EditProfileForm = () => {
     if (!isLoading && userData) {
       setValue("name", userData?.name ?? "");
       setValue("email", userData?.email ?? "");
-      setValue(
-        "phoneNumberCountryCode",
-        userData?.phoneNumberCountryCode ?? null
-      );
       setValue("phoneNumber", userData?.phoneNumber ?? "");
-      const countryCode =
-        userData?.phoneNumberCountryCode === 0
-          ? 1
-          : userData?.phoneNumberCountryCode;
-      const phoneNumber = userData?.phoneNumber;
-      setCurrentPhoneNumber((prev) => `${countryCode}${phoneNumber}`);
       setValue("handle", userData?.handle ?? "");
       // setValue("location", userData?.location ?? "");
 
@@ -438,10 +422,7 @@ export const EditProfileForm = () => {
   };
 
   return (
-    <section
-      className="mx-auto flex h-fit w-full flex-col bg-white px-3 py-2  md:rounded-xl md:p-6 md:py-4"
-      id="account-info-account-settings"
-    >
+    <section className="mx-auto flex h-fit w-full flex-col bg-white px-3 py-2  md:rounded-xl md:p-6 md:py-4" id="account-info-account-settings">
       <h1 className="pb-6  text-[18px]  md:text-[24px]">Account Information</h1>
       <form
         className="flex flex-col gap-2 unmask-userdetails"
@@ -492,51 +473,19 @@ export const EditProfileForm = () => {
           name="phoneNumber"
           control={control}
           render={({ field }) => (
-            <div className={`flex flex-col gap-1`}>
-              <div className="flex gap-1">
-                <label
-                  htmlFor="phoneNumber"
-                  className="text-[14px] text-primary-gray"
-                >
-                  Phone Number
-                </label>
-              </div>
-              <PhoneInput
-                {...field}
-                value={currentPhoneNumber || ""}
-                autoFormat={false}
-                onChange={(
-                  phone,
-                  countryData: { dialCode: string; countryCode: string }
-                ) => {
-                  const nationalNumber = phone.replace(
-                    countryData.dialCode,
-                    ""
-                  );
-
-                  setCurrentPhoneNumber(phone);
-                  setValue("phoneNumber", nationalNumber);
-                  setValue("phoneNumberCountryCode", +countryData.dialCode);
-                }}
-                enableSearch
-                inputStyle={{ width: "100%", paddingLeft: "50px" }}
-                buttonStyle={{
-                  border: "none",
-                  backgroundColor: "transparent",
-                }}
-                placeholder="Enter your phone number"
-              />
-              {errors.phoneNumber && (
-                <p className="text-[12px] text-red">
-                  {errors.phoneNumber.message}
-                </p>
-              )}
-              {errors.phoneNumberCountryCode && (
-                <p className="text-[12px] text-red">
-                  {errors.phoneNumberCountryCode.message}
-                </p>
-              )}
-            </div>
+            <Input
+              {...field}
+              label="Phone Number"
+              type="tel"
+              placeholder="Enter your phone number"
+              id="phoneNumber"
+              register={register}
+              name="phoneNumber"
+              error={errors.phoneNumber?.message}
+              inputRef={(e) => {
+                field.ref(e);
+              }}
+            />
           )}
         />
         <Controller
