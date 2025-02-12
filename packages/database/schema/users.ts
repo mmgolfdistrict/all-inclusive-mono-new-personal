@@ -8,6 +8,7 @@ import {
   primaryKey,
   text,
   timestamp,
+  tinyint,
   unique,
   varchar,
 } from "drizzle-orm/mysql-core";
@@ -71,7 +72,8 @@ export const users = mySqlTable(
       .default("DISCONNECTED")
       .notNull(),
     phoneNotifications: boolean("phoneNotifications").default(true).notNull(),
-    phoneNumber: varchar("phoneNumber", { length: 191 }),
+    phoneNumberCountryCode: tinyint("phoneNumberCountryCode").notNull(),
+    phoneNumber: varchar("phoneNumber", { length: 25 }),
     phoneNumberVerified: timestamp("phoneNumberVerified", { mode: "string", fsp: 3 }),
     emailNotifications: boolean("emailNotifications").default(true).notNull(),
     verificationRequestToken: varchar("verificationRequestToken", {
