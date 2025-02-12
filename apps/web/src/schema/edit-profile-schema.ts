@@ -29,6 +29,12 @@ export const editProfileSchema = z.object({
     .string()
     .email({ message: "Invalid email" })
     .min(1, "Email is required"),
+  phoneNumberCountryCode: z
+    .number()
+    .min(1, {
+      message:
+        "Invalid phone number. Please enter a valid phone number with country code. No dashes, or spaces required.",
+    }),
   phoneNumber: z
     .string()
     .min(1, { message: "Phone number is required" })
