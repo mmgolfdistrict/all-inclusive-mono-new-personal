@@ -12,13 +12,12 @@ export const registerSchema = z
     //   message: "Username cannot contain '@'",
     // }),
     email: z.string().email({ message: "Invalid email" }).min(1, "Email is required"),
-    phoneNumberCountryCode: z.number().min(1, { message: "Phone number country code is required" }),
     phoneNumber: z
       .string()
       .min(1, { message: "Phone number is required" })
       .refine((phoneNumber) => /^\d{10}$/.test(phoneNumber), {
         message:
-          "Invalid phone number. Please enter a valid phone number with area code. No dashes, or spaces required.",
+          "Invalid phone number. Please enter a valid US phone number with area code. No country code required, dashes, or spaces.",
       }),
     // location: z.string().min(1, { message: "Location is required" }),
     address1: z.string().min(1, { message: "Address1 is required" }),
