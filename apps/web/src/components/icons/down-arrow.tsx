@@ -1,7 +1,10 @@
 import Image from "next/image";
-import type { ImageProps } from 'next/image';
+import type { ComponentProps } from "react";
+
+// Change the url here for production
+
 export const DownArrow = (
-  props: Omit<ImageProps, "src" | "alt">
+  props: Omit<ComponentProps<typeof Image>, "src" | "alt" | "width" | "height">
 ): JSX.Element => (
   <Image
     {...props}
