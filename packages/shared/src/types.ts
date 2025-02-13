@@ -188,6 +188,7 @@ export type SearchObject = {
   minimumOfferPrice?: number;
   firstHandPurchasePrice?: number;
   ownerId: string;
+  groupId?: string;
 };
 
 export type CombinedObject = {
@@ -209,6 +210,7 @@ export type CombinedObject = {
   minimumOfferPrice?: number;
   firstHandPurchasePrice?: number;
   listedSlots: number | null;
+  groupId?: string;
 };
 
 export type ReserveTeeTimeResponse = {

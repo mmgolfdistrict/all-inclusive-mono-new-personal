@@ -285,6 +285,7 @@ export const ListedDetails = ({
           status: "LISTED",
           listedSpots: Array(data?.availableSlots ?? 0),
           teeTimeId: teeTimeId,
+          groupId: data?.groupId ?? "",
         }}
         needRedirect={true}
       />

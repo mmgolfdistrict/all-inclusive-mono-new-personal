@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { and, asc, desc, eq, gte, inArray, not, or, sql, type Db } from "@golf-district/database";
+import { and, asc, desc, eq, gte, inArray, not, or, sql, type Db, isNull } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import type { InsertBooking } from "@golf-district/database/schema/bookings";
 import { bookings } from "@golf-district/database/schema/bookings";
@@ -37,6 +37,7 @@ import type { TeeTimeResponse as ForeupTeeTimeResponse } from "../tee-sheet-prov
 import type { TokenizeService } from "../token/tokenize.service";
 import type { UserWaitlistService } from "../user-waitlist/userWaitlist.service";
 import { loggerService } from "../webhooks/logging.service";
+import { groupBookings } from "@golf-district/database/schema/groupBooking";
 
 dayjs.extend(UTC);
 dayjs.extend(timezone);
@@ -93,6 +94,8 @@ interface OwnedTeeTimeData {
   teeTimeId: string;
   slots: number;
   bookingStatus: string;
+  isGroupBooking: boolean;
+  groupId: string;
 }
 
 interface ListingData {
@@ -107,6 +110,7 @@ interface ListingData {
   status: string;
   listedSpots: string[] | null;
   listedSlotsCount: number;
+  groupId: string | null;
 }
 
 interface TransferData {
@@ -403,6 +407,7 @@ export class BookingService {
         listedSlots: lists.slots,
         greenFeePerPlayer: teeTimes.greenFeePerPlayer,
         minimumOfferPrice: bookings.minimumOfferPrice,
+        groupId: bookings.groupId,
       })
       .from(bookings)
       .innerJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -448,6 +453,7 @@ export class BookingService {
             status: "LISTED",
             listedSpots: [teeTime.bookingId],
             listedSlotsCount: teeTime.listedSlots,
+            groupId: teeTime.groupId ?? "",
           };
         } else {
           const currentEntry = combinedData[teeTime.teeTimesId];
@@ -651,7 +657,8 @@ export class BookingService {
           eq(bookings.isActive, true),
           eq(teeTimes.courseId, courseId),
           gte(teeTimes.date, nowInCourseTimezone),
-          or(eq(bookings.status, "RESERVED"), eq(bookings.status, "CONFIRMED"))
+          or(eq(bookings.status, "RESERVED"), eq(bookings.status, "CONFIRMED")),
+          isNull(bookings.groupId)
         )
       )
       .groupBy(
@@ -731,6 +738,8 @@ export class BookingService {
           teeTimeId: teeTime.id,
           slots: teeTime.slots || 0,
           bookingStatus: teeTime.bookingStatus,
+          isGroupBooking: false,
+          groupId: ""
         };
       } else {
         const currentEntry = combinedData[teeTime.providerBookingId];
@@ -874,7 +883,182 @@ export class BookingService {
       t.slotsData = finaldata;
       t.golfers = finaldata;
     }
-    return combinedData;
+
+
+    const groupTeeTimeData = await this.database
+      .select({
+        id: teeTimes.id,
+        date: teeTimes.providerDate,
+        courseId: teeTimes.courseId,
+        courseName: courses.name,
+        courseMarkup: courses.markupFeesFixedPerPlayer,
+        greenFeePerPlayer: teeTimes.greenFeePerPlayer,
+        cartFeePerPlayer: teeTimes.cartFeePerPlayer,
+        lastHighestSale: sql<number | null>`MAX(${transfers.amount})`,
+        teeTimeImage: {
+          key: assets.key,
+          extension: assets.extension,
+        },
+        listing: lists.id,
+        listingIsListed: groupBookings.isListed,
+        players: bookings.nameOnBooking,
+        bookingId: bookings.id,
+        offers: sql<number>`COUNT(DISTINCT${userBookingOffers.offerId})`,
+        golferCount: sql<number | null>`COUNT(${bookings.ownerId})`,
+        listPrice: groupBookings.listPricePerGolfer,
+        bookingListed: bookings.isListed,
+        minimumOfferPrice: bookings.minimumOfferPrice,
+        weatherGuaranteeAmount: bookings.weatherGuaranteeAmount,
+        slotId: bookingslots.slotnumber,
+        slotCustomerName: bookingslots.name,
+        slotCustomerId: bookingslots.customerId,
+        slotPosition: bookingslots.slotPosition,
+        purchasedFor: bookings.totalAmount,
+        providerBookingId: bookings.providerBookingId,
+        slots: groupBookings.listSlots,
+        playerCount: bookings.playerCount,
+        bookingStatus: bookings.status,
+        groupId: bookings.groupId,
+      })
+      .from(teeTimes)
+      .innerJoin(bookings, eq(bookings.teeTimeId, teeTimes.id))
+      .innerJoin(courses, eq(courses.id, teeTimes.courseId))
+      .leftJoin(
+        lists,
+        and(eq(lists.id, bookings.listId), eq(lists.isDeleted, false), eq(bookings.ownerId, lists.userId))
+      )
+      .leftJoin(assets, eq(assets.id, courses.logoId))
+      .leftJoin(userBookingOffers, eq(userBookingOffers.bookingId, bookings.id))
+      .leftJoin(transfers, eq(transfers.bookingId, bookings.id))
+      .leftJoin(bookingslots, eq(bookingslots.bookingId, bookings.id))
+      .innerJoin(groupBookings, eq(groupBookings.id, bookings.groupId))
+      .where(
+        and(
+          not(eq(bookings.providerBookingId, "")),
+          eq(bookings.ownerId, userId),
+          eq(bookings.isActive, true),
+          eq(teeTimes.courseId, courseId),
+          gte(teeTimes.date, nowInCourseTimezone),
+          or(eq(bookings.status, "RESERVED"), eq(bookings.status, "CONFIRMED")),
+          not(isNull(bookings.groupId))
+        )
+      )
+      .groupBy(
+        teeTimes.id,
+        teeTimes.date,
+        teeTimes.courseId,
+        courses.name,
+        teeTimes.greenFeePerPlayer,
+        assets.key,
+        assets.extension,
+        bookings.nameOnBooking,
+        lists.id,
+        bookings.id,
+        lists.listPrice,
+        bookingslots.slotnumber,
+        bookingslots.customerId,
+        bookingslots.name,
+        bookingslots.slotPosition
+      )
+      .orderBy(
+        asc(teeTimes.date),
+        asc(bookingslots.slotPosition)
+      )
+      .execute();
+
+    const combinedGroupData: Record<string, OwnedTeeTimeData> = {};
+
+    groupTeeTimeData.forEach((teeTime) => {
+      if (!combinedGroupData[teeTime.groupId!]) {
+        const slotData = !teeTime.providerBookingId
+          ? Array.from({ length: teeTime.playerCount - 1 }, (_, i) => ({
+            name: "",
+            slotId: "",
+            customerId: "",
+          }))
+          : [];
+
+        combinedGroupData[teeTime.groupId!] = {
+          courseId,
+          courseName: teeTime.courseName,
+          courseLogo: teeTime.teeTimeImage
+            ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${teeTime.teeTimeImage.key}.${teeTime.teeTimeImage.extension}`
+            : "/defaults/default-course.webp",
+          date: teeTime.date,
+          firstHandPrice:
+            teeTime.greenFeePerPlayer +
+            teeTime.cartFeePerPlayer +
+            (teeTime.courseMarkup ? teeTime.courseMarkup / 100 : 0),
+          golfers: [],
+          purchasedFor: Number(teeTime.purchasedFor) / (teeTime.playerCount * 100),
+          bookingIds: [teeTime.bookingId],
+          slotsData: [
+            {
+              name: teeTime.slotCustomerName || "",
+              slotId: teeTime.slotId || "",
+              customerId: teeTime.slotCustomerId || "",
+            },
+            ...slotData,
+          ],
+          status: teeTime.listing && teeTime.listingIsListed ? "LISTED" : "UNLISTED",
+          offers: teeTime.offers ? parseInt(teeTime.offers.toString()) : 0,
+          listingId: teeTime.listing && teeTime.listingIsListed ? teeTime.listing : null,
+          listedSpots: teeTime.listing && teeTime.listingIsListed ? [teeTime.bookingId] : null,
+          listPrice: teeTime.listPrice,
+          minimumOfferPrice: teeTime.minimumOfferPrice,
+          weatherGuaranteeAmount: teeTime.weatherGuaranteeAmount,
+          teeTimeId: teeTime.id,
+          slots: teeTime.slots || 0,
+          bookingStatus: teeTime.bookingStatus,
+          isGroupBooking: true,
+          groupId: teeTime.groupId ?? "",
+        };
+      } else {
+        const currentEntry = combinedGroupData[teeTime.groupId!];
+        if (currentEntry) {
+          currentEntry.bookingIds.push(teeTime.bookingId);
+          currentEntry.slotsData!.push({
+            name: teeTime.slotCustomerName,
+            customerId: teeTime.slotCustomerId!,
+            slotId: teeTime.slotId!,
+          });
+          if (teeTime.offers) {
+            currentEntry.offers = currentEntry.offers
+              ? parseInt(currentEntry.offers.toString()) + parseInt(teeTime.offers.toString())
+              : 0;
+          }
+          currentEntry.slots = teeTime.slots || 0;
+          if (teeTime.listing && teeTime.listingIsListed) {
+            currentEntry.status = "LISTED";
+            currentEntry.listingId = teeTime.listing;
+            if (teeTime.bookingListed) {
+              currentEntry.listedSpots
+                ? currentEntry.listedSpots.push(teeTime.bookingId)
+                : [teeTime.bookingId];
+            }
+          }
+          currentEntry.purchasedFor = (currentEntry.purchasedFor ?? 0) + (Number(teeTime.purchasedFor) / (teeTime.playerCount * 100));
+        }
+      }
+    });
+
+    for (const t of Object.values(combinedGroupData)) {
+      const finaldata: InviteFriend[] = [];
+      if (!t.slotsData) t.slotsData = [];
+
+      for (const slot of t.slotsData) {
+        finaldata.push({
+          id: "",
+          handle: "",
+          name: slot.name,
+          email: "",
+          slotId: slot.slotId,
+        });
+      }
+      t.golfers = finaldata;
+    }
+
+    return { ...combinedData, ...combinedGroupData };
   };
 
   /**
@@ -4917,4 +5101,805 @@ export class BookingService {
       isEmailSend: bookingId.isEmailSend,
     } as ReserveTeeTimeResponse;
   };
+  /**
+     * Lists a Group booking for sale.
+     * @todo add validation for max price
+     * @param userId - The ID of the user listing the booking.
+     * @param listPrice - The price at which the booking is listed.
+     * @param groupId - ID of the group booking being listed.
+     * @param courseId - ID of the course for the bookings.
+     * @param endTime - End time for the booking listing.
+     * @returns A promise that resolves when the operation completes.
+     * @throws Error - Throws an error if end time is before start time, if the user does not own a tee time, or if other conditions like allowed players are not met.
+     */
+  createListingForGroupBookings = async (
+    userId: string,
+    listPrice: number,
+    groupId: string,
+    endTime: Date,
+    slots: number
+  ) => {
+    this.logger.info(`createListingForGroupBookings called with userId: ${userId}`);
+    console.warn("Group ID:", groupId);
+    // console.log("CREATINGLISTING FOR DATE:", dayjs(endTime).utc().format('YYYY-MM-DD'), dayjs(endTime).utc().format('HHmm'));
+    if (new Date().getTime() >= endTime.getTime()) {
+      this.logger.warn("End time cannot be before current time");
+      loggerService.errorLog({
+        applicationName: "golfdistrict-foreup",
+        clientIP: "",
+        userId,
+        url: "/createListingForGroupBookings",
+        userAgent: "",
+        message: "TEE_TIME_LISTED_FAILED",
+        stackTrace: "",
+        additionalDetailsJSON: "End time cannot be before current time.",
+      });
+      throw new Error("End time cannot be before current time");
+    }
+
+    if (!slots) {
+      this.logger.warn(`Slots less than one`);
+      throw new Error("Slots less than one");
+    }
+    if (!groupId) {
+      this.logger.warn(`No group specified.`);
+      throw new Error("No group specified.");
+    }
+
+    const ownedBookings = await this.database
+      .select({
+        id: bookings.id,
+        courseId: teeTimes.courseId,
+        teeTimeId: bookings.teeTimeId,
+        isListed: bookings.isListed,
+        providerDate: teeTimes.providerDate,
+        playerCount: bookings.playerCount,
+        totalAmount: bookings.totalAmount,
+        timezoneCorrection: courses.timezoneCorrection,
+        providerBookingId: bookings.providerBookingId,
+      })
+      .from(bookings)
+      .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
+      .leftJoin(courses, eq(courses.id, teeTimes.courseId))
+      .where(
+        and(
+          eq(bookings.ownerId, userId),
+          eq(bookings.groupId, groupId),
+          or(eq(bookings.status, "RESERVED"), eq(bookings.status, "CONFIRMED"))
+        )
+      )
+      .orderBy(asc(teeTimes.providerDate))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error retrieving bookings: ${err}`);
+        loggerService.errorLog({
+          userId: userId,
+          url: "/createListingForGroupBookings",
+          userAgent: "",
+          message: "ERROR_RETRIEVING_BOOKINGS",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            groupId,
+            listPrice,
+            endTime,
+            slots,
+          }),
+        });
+        throw new Error("Error retrieving bookings");
+      });
+    if (!ownedBookings.length) {
+      this.logger.debug(`Owned bookings: ${JSON.stringify(ownedBookings)}`);
+      this.logger.warn(`User ${userId} does not own  specified bookings.`);
+      throw new Error("User does not  own specified bookings.");
+    }
+    for (const booking of ownedBookings) {
+      if (booking.isListed) {
+        this.logger.warn(`Booking ${booking.id} is already listed.`);
+        loggerService.errorLog({
+          applicationName: "golfdistrict-foreup",
+          clientIP: "",
+          userId,
+          url: "/createListingForBookings",
+          userAgent: "",
+          message: "TEE_TIME_LISTED_FAILED",
+          stackTrace: "",
+          additionalDetailsJSON: "One or more bookings from this tee time is already listed",
+        });
+        throw new Error(`One or more bookings from this tee time is already listed.`);
+      }
+    }
+
+    const firstBooking = ownedBookings[0];
+
+    const [lastBooking] = ownedBookings.slice(-1);
+    if (!lastBooking || !firstBooking) {
+      this.logger.warn(`Bookings by Group id: ${groupId}, not found.`);
+      throw new Error(`Bookings by Group id: ${groupId}, not found.`);
+    }
+    const courseId = lastBooking.courseId ?? "";
+
+    const [course] = await this.database
+      .select({
+        key: assets.key,
+        extension: assets.extension,
+        websiteURL: courses.websiteURL,
+        name: courses.name,
+        id: courses.id,
+      })
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .leftJoin(assets, eq(assets.id, courses.logoId))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error retrieving course: ${err}`);
+        loggerService.errorLog({
+          userId: userId,
+          url: "/createListingForGroupBookings",
+          userAgent: "",
+          message: "ERROR_RETRIEVING_COURSE",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            courseId,
+          }),
+        });
+        throw new Error(`Error retrieving course`);
+      });
+
+    const toCreate: InsertList = {
+      id: randomUUID(),
+      userId: userId,
+      listPrice: listPrice * 100,
+      isDeleted: false,
+      slots: lastBooking.playerCount,
+    };
+    await this.database
+      .transaction(async (transaction) => {
+        await transaction
+          .update(bookings)
+          .set({
+            isListed: true,
+            listId: toCreate.id,
+          })
+          .where(eq(bookings.id, lastBooking.id))
+          .execute()
+          .catch((err) => {
+            this.logger.error(`Error updating bookingId: ${lastBooking.id}: ${err}`);
+            loggerService.errorLog({
+              userId: userId,
+              url: "/createListingForGroupBookings",
+              userAgent: "",
+              message: "ERROR_UPDATING_BOOKING_ID",
+              stackTrace: `${err.stack}`,
+              additionalDetailsJSON: JSON.stringify({
+                courseId,
+                bookingId: lastBooking.id,
+              }),
+            });
+            transaction.rollback();
+          });
+
+        await transaction
+          .update(groupBookings)
+          .set({
+            isListed: true,
+            listPricePerGolfer: listPrice * 100,
+            listSlots: slots
+          })
+          .where(eq(groupBookings.id, groupId))
+          .execute()
+          .catch(
+            (err) => {
+              this.logger.error(`Error updating groupBookingId: ${groupId}: ${err}`);
+              loggerService.errorLog({
+                userId: userId,
+                url: "/createListingForGroupBookings",
+                userAgent: "",
+                message: "ERROR_UPDATING_GROUP_BOOKING_ID",
+                stackTrace: `${err.stack}`,
+                additionalDetailsJSON: JSON.stringify({
+                  courseId,
+                  groupBookingId: groupId,
+                }),
+              });
+              transaction.rollback();
+            }
+          )
+
+        //create listing
+        await transaction
+          .insert(lists)
+          .values(toCreate)
+          .execute()
+          .catch((err) => {
+            this.logger.error(`Error creating listing: ${err}`);
+            loggerService.errorLog({
+              userId: userId,
+              url: "/createListingForGroupBookings",
+              userAgent: "",
+              message: "ERROR_CREATING_LISTING",
+              stackTrace: `${err.stack}`,
+              additionalDetailsJSON: JSON.stringify({
+                courseId,
+                lists: JSON.stringify(toCreate),
+              }),
+            });
+            transaction.rollback();
+          });
+      })
+      .catch((err) => {
+        this.logger.error(`Transaction rolled backError creating listing: ${err}`);
+        loggerService.errorLog({
+          userId: userId,
+          url: "/createListingForGroupBookings",
+          userAgent: "",
+          message: "TRANSACTION_ROLLBACK_ERROR_CREATING_LISTING",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            courseId,
+            lists: JSON.stringify(toCreate),
+          }),
+        });
+        throw new Error("Error creating listing");
+      });
+    this.logger.info(`Listings created successfully. for user ${userId} teeTimeId ${lastBooking.teeTimeId}`);
+
+    const [user] = await this.database
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Failed to retrieve user: ${err}`);
+        loggerService.errorLog({
+          userId: userId,
+          url: "/createListingForGroupBookings",
+          userAgent: "",
+          message: "FAILED_TO_RETRIEVE_USER",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            userId,
+          }),
+        });
+        throw new Error("Failed to retrieve user");
+      });
+
+    if (!user) {
+      this.logger.error(`createNotification: User with ID ${userId} not found.`);
+      loggerService.errorLog({
+        userId: userId,
+        url: "/createListingForGroupBookings",
+        userAgent: "",
+        message: "USER_NOT_FOUND",
+        stackTrace: `User with ID ${userId} not found.`,
+        additionalDetailsJSON: JSON.stringify({
+          userId,
+        }),
+      });
+      return;
+    }
+    console.log("######", ownedBookings);
+    if (user.email && user.name) {
+      await this.notificationService
+        .sendEmailByTemplate(
+          user.email,
+          "Listing Created",
+          process.env.SENDGRID_LISTING_CREATED_TEMPLATE_ID!,
+          {
+            CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`,
+            CourseURL: course?.websiteURL || "",
+            CourseName: course?.name,
+            HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+            CustomerFirstName: user?.name?.split(" ")[0],
+            // CourseReservationID: lastBooking?.providerBookingId ?? "-",
+            PlayDateTime: formatTime(
+              firstBooking.providerDate ?? "",
+              true,
+              firstBooking.timezoneCorrection ?? 0
+            ),
+            PlayerCount: slots ?? 0,
+            ListedPricePerPlayer: listPrice ? `${listPrice}` : "-",
+            TotalAmount: formatMoney(lastBooking.totalAmount / 100 ?? 0),
+          },
+          []
+        )
+        .catch((err) => {
+          this.logger.error(`Error sending email: ${err}`);
+          loggerService.errorLog({
+            userId: userId,
+            url: "/createListingForGroupBookings",
+            userAgent: "",
+            message: "ERROR_SENDING_EMAIL",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              userId,
+              email: user.email,
+              name: user.name,
+              courseName: course?.name,
+            }),
+          });
+          throw new Error("Error sending email");
+        });
+    }
+
+    if (!lastBooking.providerDate) {
+      this.logger.error("providerDate not found in booking, Can't send notifications to users");
+      loggerService.errorLog({
+        userId: userId,
+        url: "/createListingForGroupBookings",
+        userAgent: "",
+        message: "PROVIDER_DATE_NOT_FOUND",
+        stackTrace: `providerDate not found in booking, Can't send notifications to users`,
+        additionalDetailsJSON: JSON.stringify({
+          userId,
+        }),
+      });
+      throw new Error("providerDate not found in booking, Can't send notifications to users");
+    }
+
+    const [date, time] = lastBooking.providerDate.split("T");
+
+    const splittedTime = time!.split("-")[0]!.split(":");
+    const formattedTime = Number(splittedTime[0]! + splittedTime[1]!);
+
+    // send notifications to users
+    await this.userWaitlistService.sendNotificationsForAvailableTeeTime(
+      date,
+      formattedTime,
+      courseId,
+      userId,
+      toCreate.id
+    );
+    return { success: true, body: { listingId: toCreate.id }, message: "Listings created successfully." };
+  };
+
+
+  /**
+   * Cancel a pending listing and update associated bookings.
+   * @param {string} userId - The ID of the user canceling the listing.
+   * @param {string} groupId - The group ID of the listing to be canceled.
+   * @returns {Promise<void>} - Resolves when the listing is successfully canceled.
+   * @throws {Error} - Throws an error if the listing is not found, is not pending, or is already deleted.
+   * @example
+   * // Example usage:
+   * const userId = "user123";
+   * const groupId = "grouping456";
+   * await bookingService.cancelGroupListing(userId, listingId);
+   */
+  cancelGroupListing = async (userId: string, groupId: string) => {
+    this.logger.info(`cancelGroupListing called with userId: ${userId}`);
+
+    if (!groupId) {
+      this.logger.error("Invalid group ID");
+      throw new Error("Invalid group ID");
+    }
+
+    const groupedBookings = await this.database
+      .select({
+        id: bookings.id,
+        courseId: teeTimes.courseId,
+        listingId: bookings.listId
+      })
+      .from(bookings)
+      .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
+      .where(
+        and(
+          eq(bookings.groupId, groupId),
+          or(eq(bookings.status, "RESERVED"), eq(bookings.status, "CONFIRMED")),
+          eq(bookings.isListed, true)
+        )
+      )
+      .execute();
+
+    if (groupedBookings && !groupedBookings.length) {
+      throw new Error("No booking found for this listing");
+    }
+    const courseId = groupedBookings[0]?.courseId ?? "";
+
+    await this.database.transaction(async (trx) => {
+      for (const booking of groupedBookings) {
+        const listId = booking.listingId ?? ""
+        if (!listId) {
+          this.logger.error(`Invalid listing for group ID: ${groupId}`);
+          loggerService.errorLog({
+            userId: userId,
+            url: "/cancelGroupListing",
+            userAgent: "",
+            message: "INVALID_LISTING_FOR_GROUP_ID",
+            stackTrace: `Invalid listing for group ID: ${groupId}`,
+            additionalDetailsJSON: JSON.stringify({
+              courseId,
+              listingId: booking.listingId,
+              groupId
+            })
+          })
+        }
+
+        await trx
+          .update(lists)
+          .set({
+            isDeleted: true,
+            cancelledByUserId: userId,
+          })
+          .where(eq(lists.id, listId))
+          .execute()
+          .catch((err) => {
+            this.logger.error(`Error deleting listing: ${err}`);
+            loggerService.errorLog({
+              userId: userId,
+              url: "/cancelGroupListing",
+              userAgent: "",
+              message: "ERROR_DELETING_LISTING",
+              stackTrace: `${err.stack}`,
+              additionalDetailsJSON: JSON.stringify({
+                courseId,
+                listId,
+              }),
+            });
+            trx.rollback();
+          });
+
+        await trx
+          .update(bookings)
+          .set({
+            isListed: false,
+            listId: null,
+          })
+          .where(eq(bookings.id, booking.id))
+          .execute()
+          .catch((err) => {
+            this.logger.error(`Error updating bookingId: ${booking.id}: ${err}`);
+            loggerService.errorLog({
+              userId: userId,
+              url: "/cancelGroupListing",
+              userAgent: "",
+              message: "ERROR_DELETING_BOOKING",
+              stackTrace: `${err.stack}`,
+              additionalDetailsJSON: JSON.stringify({
+                courseId,
+                groupId,
+              }),
+            });
+            trx.rollback();
+          });
+      }
+
+      await trx
+        .update(groupBookings)
+        .set({
+          isListed: false,
+          listPricePerGolfer: 0,
+          listSlots: 0
+        })
+        .where(eq(groupBookings.id, groupId))
+        .execute()
+        .catch(
+          (err) => {
+            this.logger.error(`Error updating groupBookingId: ${groupId}: ${err}`);
+            loggerService.errorLog({
+              userId: userId,
+              url: "/cancelGroupListing",
+              userAgent: "",
+              message: "ERROR_DELETING_GROUP_BOOKING_LISTING",
+              stackTrace: `${err.stack}`,
+              additionalDetailsJSON: JSON.stringify({
+                courseId,
+              })
+            })
+          }
+        )
+    });
+    this.logger.info(`Listings cancelled successfully. for user ${userId} groupId ${groupId}`);
+    const [user] = await this.database
+      .select({
+        email: users.email,
+        name: users.name,
+      })
+      .from(users)
+      .where(eq(users.id, userId))
+      .execute();
+
+    const [course] = await this.database
+      .select({
+        websiteURL: courses.websiteURL,
+        key: assets.key,
+        extension: assets.extension,
+        name: courses.name,
+      })
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .leftJoin(assets, eq(assets.id, courses.logoId))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`error fetching course data: ${err}`);
+        loggerService.errorLog({
+          userId: userId,
+          url: "/cancelGroupListing",
+          userAgent: "",
+          message: "ERROR_FETCHING_COURSE_DATA",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            courseId,
+            groupId,
+          }),
+        });
+        throw new Error("Error fetching course data");
+      });
+
+    if (!user) {
+      this.logger.error(`Error fetching user data: ${userId} does not exist`);
+      loggerService.errorLog({
+        userId: userId,
+        url: "/cancelGroupListing",
+        userAgent: "",
+        message: "ERROR_FETCHING_USER_DATA",
+        stackTrace: "",
+        additionalDetailsJSON: JSON.stringify({
+          courseId,
+          groupId,
+        }),
+      });
+      throw new Error(`Error fetching user data: ${userId} does not exist`);
+    }
+
+    if (!course) {
+      this.logger.error(`Error fetching course data: ${courseId} does not exist`);
+      loggerService.errorLog({
+        userId: userId,
+        url: "/cancelGroupListing",
+        userAgent: "",
+        message: "ERROR_FETCHING_COURSE_DATA",
+        stackTrace: "",
+        additionalDetailsJSON: JSON.stringify({
+          courseId,
+          groupId,
+        }),
+      });
+      throw new Error(`Error fetching course data: ${courseId} does not exist`);
+    }
+
+    if (user.email && user.name && course) {
+      await this.notificationService.sendEmailByTemplate(
+        user.email,
+        "Listing Cancelled",
+        process.env.SENDGRID_LISTING_CANCELLED_TEMPLATE_ID!,
+        {
+          CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`,
+          CourseURL: course?.websiteURL || "",
+          CourseName: course?.name,
+          HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+          CustomerFirstName: user?.name?.split(" ")[0],
+        },
+        []
+      );
+    }
+  };
+
+  addListingForRemainingSlots = async (groupId: string, listedSlotsCount = 0, ownerId: string) => {
+    try {
+      if (listedSlotsCount === 0) {
+        this.logger.error("Invalid listing slots count");
+        throw new Error("Invalid listing slots count");
+      }
+      const [groupBooking] = await this.database
+        .select({
+          courseId: groupBookings.courseId,
+          listPricePerGolfer: groupBookings.listPricePerGolfer,
+          listSlots: groupBookings.listSlots,
+          isListed: groupBookings.isListed,
+        })
+        .from(groupBookings)
+        .where(eq(groupBookings.id, groupId))
+        .execute();
+
+      if (!groupBooking) {
+        this.logger.error(`Group booking not found for group ID: ${groupId}`);
+        throw new Error(`Group booking not found for group ID: ${groupId}`);
+      }
+
+      if (groupBooking.isListed && groupBooking.listSlots > listedSlotsCount) {
+        const ownedBookings = await this.database
+          .select({
+            id: bookings.id,
+            courseId: teeTimes.courseId,
+            teeTimeId: bookings.teeTimeId,
+            isListed: bookings.isListed,
+            providerDate: teeTimes.providerDate,
+            playerCount: bookings.playerCount,
+            totalAmount: bookings.totalAmount,
+            timezoneCorrection: courses.timezoneCorrection,
+            providerBookingId: bookings.providerBookingId,
+            userId: bookings.ownerId
+          })
+          .from(bookings)
+          .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
+          .leftJoin(courses, eq(courses.id, teeTimes.courseId))
+          .where(
+            and(
+              eq(bookings.groupId, groupId),
+              or(eq(bookings.status, "RESERVED"), eq(bookings.status, "CONFIRMED"))
+            )
+          )
+          .orderBy(asc(teeTimes.providerDate))
+          .execute()
+          .catch((err) => {
+            this.logger.error(`Error retrieving bookings: ${err}`);
+            loggerService.errorLog({
+              userId: "",
+              url: "/addListingForRemainingSlots",
+              userAgent: "",
+              message: "ERROR_RETRIEVING_BOOKINGS",
+              stackTrace: `${err.stack}`,
+              additionalDetailsJSON: JSON.stringify({
+                groupId,
+                groupBooking
+              }),
+            });
+            throw new Error("Error retrieving bookings");
+          });
+        if (!ownedBookings.length) {
+          this.logger.debug(`Owned bookings: ${JSON.stringify(ownedBookings)}`);
+          throw new Error("Can not  specified bookings.");
+        }
+        for (const booking of ownedBookings) {
+          if (booking.isListed) {
+            this.logger.warn(`Booking ${booking.id} is already listed.`);
+            loggerService.errorLog({
+              applicationName: "golfdistrict-foreup",
+              clientIP: "",
+              userId: "",
+              url: "/addListingForRemainingSlots",
+              userAgent: "",
+              message: "TEE_TIME_LISTED_FAILED",
+              stackTrace: "",
+              additionalDetailsJSON: "One or more bookings from this tee time is already listed",
+            });
+            throw new Error(`One or more bookings from this tee time is already listed.`);
+          }
+        }
+
+        const [lastBooking] = ownedBookings.slice(-1);
+        if (!lastBooking) {
+          this.logger.warn(`Bookings by Group id: ${groupId}, not found.`);
+          throw new Error(`Bookings by Group id: ${groupId}, not found.`);
+        }
+
+        const remainingSlots = groupBooking.listSlots - listedSlotsCount;
+        const toCreate: InsertList = {
+          id: randomUUID(),
+          userId: lastBooking.userId,
+          listPrice: groupBooking.listPricePerGolfer,
+          isDeleted: false,
+          slots: Math.min(lastBooking.playerCount, remainingSlots),
+        };
+        await this.database
+          .transaction(async (transaction) => {
+            await transaction
+              .update(bookings)
+              .set({
+                isListed: true,
+                listId: toCreate.id,
+              })
+              .where(eq(bookings.id, lastBooking.id))
+              .execute()
+              .catch((err) => {
+                this.logger.error(`Error updating bookingId: ${lastBooking.id}: ${err}`);
+                loggerService.errorLog({
+                  userId: "",
+                  url: "/addListingForRemainingSlots",
+                  userAgent: "",
+                  message: "ERROR_UPDATING_BOOKING_ID",
+                  stackTrace: `${err.stack}`,
+                  additionalDetailsJSON: JSON.stringify({
+                    groupId,
+                    groupBooking,
+                    bookingId: lastBooking.id,
+                  }),
+                });
+                transaction.rollback();
+              });
+
+            await transaction
+              .update(groupBookings)
+              .set({
+                listSlots: remainingSlots
+              })
+              .where(eq(groupBookings.id, groupId))
+              .execute()
+              .catch(
+                (err) => {
+                  this.logger.error(`Error updating groupBookingId: ${groupId}: ${err}`);
+                  loggerService.errorLog({
+                    userId: "",
+                    url: "/addListingForRemainingSlots",
+                    userAgent: "",
+                    message: "ERROR_UPDATING_GROUP_BOOKING_ID",
+                    stackTrace: `${err.stack}`,
+                    additionalDetailsJSON: JSON.stringify({
+                      groupBooking,
+                      groupBookingId: groupId,
+                    }),
+                  });
+                  transaction.rollback();
+                }
+              )
+
+            //create listing
+            await transaction
+              .insert(lists)
+              .values(toCreate)
+              .execute()
+              .catch((err) => {
+                this.logger.error(`Error creating listing: ${err}`);
+                loggerService.errorLog({
+                  userId: "",
+                  url: "/addListingForRemainingSlots",
+                  userAgent: "",
+                  message: "ERROR_CREATING_LISTING",
+                  stackTrace: `${err.stack}`,
+                  additionalDetailsJSON: JSON.stringify({
+                    groupBooking,
+                    lists: JSON.stringify(toCreate),
+                  }),
+                });
+                transaction.rollback();
+              });
+          })
+          .catch((err) => {
+            this.logger.error(`Transaction rolled backError creating listing: ${err}`);
+            loggerService.errorLog({
+              userId: "",
+              url: "/addListingForRemainingSlots",
+              userAgent: "",
+              message: "TRANSACTION_ROLLBACK_ERROR_CREATING_LISTING",
+              stackTrace: `${err.stack}`,
+              additionalDetailsJSON: JSON.stringify({
+                groupBooking,
+                lists: JSON.stringify(toCreate),
+                ownerId
+              }),
+            });
+            throw new Error("Error creating listing");
+          });
+        this.logger.info(`Listing created successfully. for groupId ${groupId} teeTimeId ${lastBooking.teeTimeId}`);
+
+        const [date, time] = lastBooking.providerDate!.split("T");
+
+        const splittedTime = time!.split("-")[0]!.split(":");
+        const formattedTime = Number(splittedTime[0]! + splittedTime[1]!);
+
+        // send notifications to users
+        await this.userWaitlistService.sendNotificationsForAvailableTeeTime(
+          date,
+          formattedTime,
+          groupBooking.courseId,
+          ownerId,
+          toCreate.id
+        );
+      } else {
+        // update the group to be unlisted
+        await this.database
+          .update(groupBookings)
+          .set({
+            isListed: false,
+            listSlots: 0,
+            listPricePerGolfer: 0
+          })
+          .where(eq(groupBookings.id, groupId))
+          .execute();
+      }
+    } catch (error: any) {
+      this.logger.error(`Error adding listing for remaining slots, ${JSON.stringify(error)}`);
+      loggerService.errorLog({
+        userId: "",
+        url: "/addListingForRemainingSlots",
+        userAgent: "",
+        message: "ERROR_ADDING_LISTING_FOR_REMAINING_SLOTS",
+        stackTrace: `${error.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          groupId,
+          listedSlotsCount,
+        }),
+      });
+    }
+  }
 }

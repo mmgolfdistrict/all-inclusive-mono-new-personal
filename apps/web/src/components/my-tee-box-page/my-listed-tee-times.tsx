@@ -23,6 +23,7 @@ export type MyListedTeeTimeType = {
   listedSpots: string[] | null;
   teeTimeId: string;
   listedSlotsCount?: number;
+  groupId: string | null;
 };
 
 export const MyListedTeeTimes = () => {

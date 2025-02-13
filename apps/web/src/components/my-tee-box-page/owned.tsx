@@ -36,6 +36,8 @@ export type OwnedTeeTime = {
   slots?: number;
   bookingStatus: string;
   slotsData?: string[];
+  isGroupBooking: boolean;
+  groupId: string;
 };
 
 export const Owned = () => {
@@ -64,6 +66,11 @@ export const Owned = () => {
     if (!data) return undefined;
     return Object.keys(data).map((key) => {
       return { ...data[key], teeTimeId: data[key].teeTimeId } as OwnedTeeTime;
+    }).sort((a, b) => {
+      const dateA = a.date;
+      const dateB = b.date;
+
+      return Number(new Date(dateA)) - Number(new Date(dateB));
     });
   }, [data]);
   // const loadMore = () => {
@@ -183,6 +190,8 @@ export const Owned = () => {
           selectedTeeTime?.listPrice ? selectedTeeTime?.listPrice / 100 : 0
         }
         listingId={selectedTeeTime?.listingId ?? undefined}
+        isGroupBooking={selectedTeeTime?.isGroupBooking}
+        groupBookingId={selectedTeeTime?.groupId ?? undefined}
         refetch={refetch}
       />
     </>

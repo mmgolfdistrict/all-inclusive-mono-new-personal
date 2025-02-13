@@ -390,4 +390,33 @@ export const bookingRouter = createTRPCRouter({
           input.providerCourseMembershipId ?? ""
         );
     }),
+  createListingForGroupBookings: protectedProcedure
+    .input(
+      z.object({
+        groupId: z.string(),
+        listPrice: z.number(),
+        endTime: z.date(),
+        slots: z.number(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return ctx.serviceFactory
+        .getBookingService()
+        .createListingForGroupBookings(
+          ctx.session.user.id,
+          input.listPrice,
+          input.groupId,
+          input.endTime,
+          input.slots
+        );
+    }),
+  cancelGroupListing: protectedProcedure
+    .input(
+      z.object({
+        groupId: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return ctx.serviceFactory.getBookingService().cancelGroupListing(ctx.session.user.id, input.groupId);
+    }),
 });

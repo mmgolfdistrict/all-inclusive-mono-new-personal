@@ -441,6 +441,8 @@ export const ManageOwnedTeeTime = ({
                 </div>
               ) : null}
 
+              {selectedTeeTime?.isGroupBooking ?
+                null : 
               <div className={`flex flex-col gap-2 pb-6 text-center`}>
                 <label
                   htmlFor="friends"
@@ -541,7 +543,7 @@ export const ManageOwnedTeeTime = ({
                       );
                     })
                   : null}
-              </div>
+                </div>}
             </div>
             <div className="flex flex-col gap-4 px-4 pb-6">
               {course?.supportsOffers ? (

@@ -51,6 +51,7 @@ import type { ClubProphetBookingResponse } from "../tee-sheet-provider/sheet-pro
 import type { TokenizeService } from "../token/tokenize.service";
 import { loggerService } from "./logging.service";
 import type { HyperSwitchEvent } from "./types/hyperswitch";
+import { groupBookings } from "@golf-district/database/schema/groupBooking";
 
 /**
  * `HyperSwitchWebhookService` - A service for processing webhooks from HyperSwitch.
@@ -855,6 +856,7 @@ export class HyperSwitchWebhookService {
         additionalNoteFromCustomer: bookings.customerComment,
         needRentals: bookings.needClubRental,
         timezoneCorrection: courses.timezoneCorrection,
+        groupId: bookings.groupId,
       })
       .from(bookings)
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -868,6 +870,7 @@ export class HyperSwitchWebhookService {
         )
       )
       .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))
+      .leftJoin(groupBookings, eq(groupBookings.id, bookings.groupId))
       .where(eq(bookings.id, bookingsIds?.oldBookingId ?? ""))
       .execute();
 
@@ -1660,6 +1663,10 @@ export class HyperSwitchWebhookService {
           }),
         });
       });
+
+    if (firstBooking.groupId) {
+      await this.bookingService.addListingForRemainingSlots(firstBooking.groupId, listedSlotsCount, firstBooking.ownerId)
+    }
   };
 
   extractTime = (dateStr: string) => {
