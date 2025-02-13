@@ -43,6 +43,7 @@ export interface UserCreationData {
   firstName: string;
   lastName: string;
   handle: string;
+  phoneNumberCountryCode: number;
   phoneNumber: string;
   // location?: string;
   address1?: string;
@@ -67,6 +68,7 @@ interface UserUpdateData {
   zipcode?: string | null;
   city?: string | null;
   country?: string | null;
+  phoneNumberCountryCode?: number;
   phoneNumber?: string | null;
   phoneNotifications?: boolean | null;
   emailNotifications?: boolean | null;
@@ -382,12 +384,10 @@ export class UserService {
       .select({
         bookingId: bookingslots.bookingId,
         slotPosition: bookingslots.slotPosition,
-        externalSlotId: bookingslots.externalSlotId,
+        externalSlotId: bookingslots.slotnumber,
       })
       .from(bookingslots)
-      .where(
-        and(eq(bookingslots.slotPosition, slotPosition), eq(bookingslots.externalSlotId, bookingSlotId))
-      );
+      .where(and(eq(bookingslots.slotPosition, slotPosition), eq(bookingslots.slotnumber, bookingSlotId)));
 
     if (!bookingSlot) {
       throw new Error("Booking slot not available");
@@ -911,6 +911,12 @@ export class UserService {
       updateData.phoneNumber = data.phoneNumber;
       updateData.phoneNumberVerified = null;
     }
+    if (Object.prototype.hasOwnProperty.call(data, "phoneNumberCountryCode")) {
+      updateData.phoneNumberCountryCode = data.phoneNumberCountryCode;
+    }
+
+    this.logger.info(`data: ${data.phoneNumberCountryCode}`);
+    this.logger.info(`updateData: ${updateData.phoneNumberCountryCode}`);
 
     await this.database
       .update(users)
@@ -1739,6 +1745,7 @@ export class UserService {
         city: data.city,
         zipcode: data.zipcode,
         country: data.country,
+        phoneNumberCountryCode: data.phoneNumberCountryCode,
         phoneNumber: data.phoneNumber,
         verificationRequestToken: verificationToken,
         verificationRequestExpiry: generateUtcTimestamp(90), //90 minutes

@@ -1,9 +1,8 @@
 import { FilledButton } from "~/components/buttons/filled-button";
 import { useMe } from "~/hooks/useMe";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
-import { Spinner } from "~/components/loading/spinner";
-import { dayMonthDate, formatMoney, getTime } from "~/utils/formatters";
+import React, { useEffect, useState } from "react";
+import { dayMonthDate, formatMoney, getHour, getTime } from "~/utils/formatters";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { microsoftClarityEvent } from "~/utils/microsoftClarityUtils";
 import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
@@ -38,7 +37,7 @@ interface TeeTimeGroup {
   date: string;
 }
 
-export type TeeTimeGroups = Record<string, TeeTimeGroup[]>
+export type TeeTimeGroups = TeeTimeGroup[];
 
 const GroupBookingPage = ({ teeTimesData, isTeeTimesLoading, playerCount }: {
   teeTimesData: TeeTimeGroups | null,
@@ -46,15 +45,16 @@ const GroupBookingPage = ({ teeTimesData, isTeeTimesLoading, playerCount }: {
   playerCount: number
 }) => {
   const { user } = useMe();
-  // const { course } = useParams();
   const { course } = useCourseContext();
   const { setPrevPath } = useAppContext();
   const timezoneCorrection = course?.timezoneCorrection;
   const { data: session } = useSession();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [teeTimeGroup, setTeeTimeGroup] = useState<TeeTimeGroup | null | undefined>(teeTimesData ? teeTimesData[0] : null);
+  const [otherTeeTimeGroups, setOtherTeeTimeGroups] = useState<TeeTimeGroup[] | null>(null);
 
-  const fullUrl = window.location.href;
+  const fullUrl = window?.location.href;
   const url = new URL(fullUrl);
   const pathname = url.pathname;
 
@@ -88,24 +88,68 @@ const GroupBookingPage = ({ teeTimesData, isTeeTimesLoading, playerCount }: {
     );
   };
 
+  useEffect(() => {
+    if (teeTimesData) {
+      setTeeTimeGroup(teeTimesData[0]);
+    }
+  }, [teeTimesData]);
+
+  useEffect(() => {
+    if (teeTimesData) {
+      const firstTeeTimesPerHour: Record<number, TeeTimeGroup> = {};
+      const firstTeeTime = teeTimesData[0];
+      if (!firstTeeTime) return;
+
+      const currentHour = Math.floor(firstTeeTime.time / 100);
+
+      for (const teeTime of teeTimesData) {
+        const hour = Math.floor(teeTime.time / 100);
+
+        if (!(hour in firstTeeTimesPerHour) && hour !== currentHour) {
+          firstTeeTimesPerHour[hour] = teeTime;
+        }
+      }
+      const otherTeeTimes = Object.keys(firstTeeTimesPerHour).sort().map((key) => firstTeeTimesPerHour[key] as TeeTimeGroup);
+      setOtherTeeTimeGroups(otherTeeTimes);
+    }
+  }, [teeTimesData]);
+
   return (
     <div className="flex flex-col mb-4 justify-center gap-2 md:gap-1  px-4 py-3 rounded-xl md:px-8 md:py-6">
       <LoadingContainer
-        isLoading={isLoading}
+        isLoading={isLoading || isTeeTimesLoading}
       >
         <div></div>
       </LoadingContainer>
-      <div className="relative flex items-center justify-between md:mb-2">
+      <div id="your-selection" className="relative flex items-center justify-between md:mb-2">
         <h1 className="text-[20px] capitalize text-secondary-black md:text-[32px] flex items-center gap-6">
-          Available Tee Times
+          Your Selection
         </h1>
+        {otherTeeTimeGroups && otherTeeTimeGroups.length > 0 ? <div>
+          <div className="flex flex-col item-start gap-2 lg:flex-row lg:items-center lg:gap-4 text-primary-gray text-[12px] md:text-[16px] ">
+            <span>
+              Other options for your group available.<br />
+              <i>Please adjust the start time.</i>
+            </span>
+            <div className="flex gap-2">
+              {
+                otherTeeTimeGroups.slice(0, 3).map((group, index) => {
+                  return (
+                    <span
+                      key={index}
+                      className="bg-white px-2 py-1 lg:p-3 rounded-xl border border-stroke"
+                    >
+                      {getHour(group.date, timezoneCorrection)}
+                    </span>
+                  );
+                })
+              }
+            </div>
+          </div>
+        </div> : null}
       </div>
       {
-        isTeeTimesLoading ? (
-          <div className="flex justify-center items-center h-[200px] w-full md:min-w-[370px]">
-            <Spinner className="w-[50px] h-[50px]" />
-          </div>
-        ) : (!teeTimesData ?
+        (!teeTimesData ?
           <div className="flex justify-center items-center h-[200px]">
             <div className="text-center">
               {"No Tee Times Group Available."}
@@ -113,19 +157,17 @@ const GroupBookingPage = ({ teeTimesData, isTeeTimesLoading, playerCount }: {
           </div> :
           <>
             {
-              Object.keys(teeTimesData).sort().map(date => (
-                <div key={date} className="max-h-[50vh] overflow-y-auto flex flex-col gap-4">
+              teeTimeGroup ? (
+                <div key={teeTimeGroup.date} className="max-h-[50vh] overflow-y-auto flex flex-col gap-4">
                   {/* Header Row */}
                   <div className="flex flex-row items-center gap-2 md:px-4 md:mt-2">
                     <h2 className="text-[13px] md:text-lg capitalize text-secondary-black unmask-time">
-                      {dayMonthDate(date)}
+                      {dayMonthDate(teeTimeGroup.date)}
                     </h2>
                   </div>
 
                   {/* Group booking Items */}
                   <div className="flex flex-row h-[100%] gap-4 overflow-x-auto ">
-                    {
-                      teeTimesData[date]?.map((teeTimeGroup: TeeTimeGroup) => (
                         <div key={teeTimeGroup.teeTimeIds.toString()} className="bg-white p-3 rounded-xl max-w-[280px] min-w-[280px] md:max-w-none md:w-[300px] flex flex-col text-[12px] md:text-[16px] text-secondary-black cursor-pointer">
                           {/* First Row */}
                           <div className="flex flex-row justify-between items-center unmask-time">
@@ -155,12 +197,11 @@ const GroupBookingPage = ({ teeTimesData, isTeeTimesLoading, playerCount }: {
                               Buy
                             </FilledButton>
                           </div>
-                        </div>
-                      ))
-                    }
+                    </div>
                   </div>
                 </div>
-              ))
+              )
+                : null
             }
           </>
         )}

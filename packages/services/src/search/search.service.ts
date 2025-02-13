@@ -152,6 +152,33 @@ type PriceForecast = {
   Twilight: number | null;
 };
 
+interface TeeTimeForGroup {
+  id: string;
+  providerTeeTimeId: string;
+  date: string;
+  providerDate: string;
+  time: number;
+  numberOfHoles: number;
+  maxPlayersPerBooking: number;
+  availableFirstHandSpots: number;
+  availableSecondHandSpots: number;
+  greenFeePerPlayer: number;
+  cartFeePerPlayer: number;
+  greenFeeTaxPerPlayer: number;
+  cartFeeTaxPerPlayer: number;
+  courseId: string;
+  createdDateTime: string;
+  lastUpdatedDateTime: string;
+}
+
+interface TeeTimeGroup {
+  teeTimes: TeeTimeForGroup[];
+  time: number;
+  pricePerGolfer: number;
+  teeTimeIds: string[];
+  date: string;
+}
+
 /**
  * Service for searching users and retrieving tee time listings.
  */
@@ -1290,6 +1317,13 @@ export class SearchService extends CacheService {
       throw new Error(`Error getting tee times for ${date}: ${err}`);
     });
 
+    teeTimesData.sort((a, b) => {
+      if (b.greenFee === a.greenFee) {
+        return a.time - b.time;
+      }
+      return a.greenFee - b.greenFee;
+    });
+
     // Filter specific tee times that can be sold
     const dayToFetch = dayjs(date)
       .utc()
@@ -1860,7 +1894,8 @@ export class SearchService extends CacheService {
     minimumGolferGroup = 4
   ) => {
     try {
-      const availableTimes: Record<string, any> = {};
+      // const availableTimes: Record<string, any> = {};
+      const availableTimes: TeeTimeGroup[] = [];
       const [courseSettingResponse] = await this.database
         .select({
           value: courseSetting.value,
@@ -2006,10 +2041,7 @@ export class SearchService extends CacheService {
           }
 
           if (areSpotsAvailable && isContinuous) {
-            if (!availableTimes[date]) {
-              availableTimes[date] = [];
-            }
-            availableTimes[date].push({
+            availableTimes.push({
               teeTimes: window,
               time: window[0]!.time,
               pricePerGolfer,
@@ -2018,7 +2050,6 @@ export class SearchService extends CacheService {
             })
           }
         }
-        console.dir(availableTimes, { depth: null })
       }
       return availableTimes;
     } catch (err) {
@@ -2068,6 +2099,7 @@ export class SearchService extends CacheService {
       // .leftJoin(assets, and(eq(assets.courseId, teeTimes.courseId), eq(assets.id, courses.logoId)))
       .leftJoin(assets, eq(assets.id, courses.logoId))
       .leftJoin(favorites, and(eq(favorites.teeTimeId, teeTimes.id), eq(favorites.userId, userId)))
+      .orderBy(asc(teeTimes.providerDate))
       .execute()
       .catch((err) => {
         this.logger.error(err);
