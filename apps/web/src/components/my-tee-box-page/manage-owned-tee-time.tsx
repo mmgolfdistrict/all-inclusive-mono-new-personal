@@ -61,7 +61,6 @@ export const ManageOwnedTeeTime = ({
 
   const handleInviteFriend = async (friend: InviteFriend, index: number) => {
     if (invite.isLoading) return;
-    console.log("friend", friend);
 
     // Ensure slotIds is an array of strings
     const slotIds: string[] =
