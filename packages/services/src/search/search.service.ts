@@ -272,6 +272,7 @@ export class SearchService extends CacheService {
         handle: user.handle ? user.handle : "not found",
         name: user.name ? this.sanitizeHandle(user.name) : "not found",
         email: user.email ? this.sanitizeEmail(user.email) : "not found",
+        emailOrPhoneNumber: user.email ? user.email : "not found",
       };
     });
   };
@@ -729,7 +730,7 @@ export class SearchService extends CacheService {
     const startOfToday = dayjs().utc().hour(0).minute(0).second(0).millisecond(0).toISOString();
 
     const teeTimeDate = await this.database
-    .select({ date: teeTimes.providerDate })
+      .select({ date: teeTimes.providerDate })
       .from(teeTimes)
       .where(and(eq(teeTimes.courseId, courseId), gte(teeTimes.date, startOfToday)))
       .orderBy(order === "asc" ? asc(teeTimes.providerDate) : desc(teeTimes.providerDate))
@@ -776,7 +777,7 @@ export class SearchService extends CacheService {
 
     return sortedDateStrings;
   };
-  
+
   async checkTeeTimesAvailabilityForDateRange({
     dates,
     courseId,
@@ -906,10 +907,10 @@ export class SearchService extends CacheService {
       );
     }
 
-    let firstHandResultsQuery = this.database
+    const firstHandResultsQuery = this.database
       .selectDistinct({
-        // providerDate: sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))`, 
-        providerDate: sql`DATE(SUBSTRING_INDEX(${teeTimes.providerDate}, '-', 3))`
+        // providerDate: sql` DATE(Convert_TZ( ${teeTimes.providerDate}, 'UTC', ${courses?.timezoneISO} ))`,
+        providerDate: sql`DATE(SUBSTRING_INDEX(${teeTimes.providerDate}, '-', 3))`,
       })
       .from(teeTimes)
       .innerJoin(courses, eq(courses.id, teeTimes.courseId));
@@ -922,7 +923,7 @@ export class SearchService extends CacheService {
       })
       .from(courseAllowedTimeToSell)
       .where(and(eq(courseAllowedTimeToSell.courseId, courseId)))
-      .orderBy(asc(courseAllowedTimeToSell.fromTime))
+      .orderBy(asc(courseAllowedTimeToSell.fromTime));
 
     if (courseAllowedTeeTimeToSellFilters.length > 0) {
       firstHandResultsQuery
@@ -963,17 +964,16 @@ export class SearchService extends CacheService {
             ...firstHandSpecificCondition
           )
         )
-        .orderBy(asc(sql`DATE(SUBSTRING_INDEX(${teeTimes.providerDate}, '-', 3))`))
+        .orderBy(asc(sql`DATE(SUBSTRING_INDEX(${teeTimes.providerDate}, '-', 3))`));
     }
 
     // console.log("DATES QUERY:", firstHandResultsQuery.toSQL())
 
     const firstHandResults = await firstHandResultsQuery.execute();
-    
 
     const secondHandResultsQuery = this.database
       .selectDistinct({
-        providerDate: sql`DATE(SUBSTRING_INDEX(${teeTimes.providerDate}, '-', 3))`
+        providerDate: sql`DATE(SUBSTRING_INDEX(${teeTimes.providerDate}, '-', 3))`,
       })
       .from(lists)
       .innerJoin(bookings, eq(bookings.listId, lists.id))
@@ -988,10 +988,10 @@ export class SearchService extends CacheService {
           ...secondHandSpecificCondition
         )
       )
-      .orderBy(asc(sql`DATE(SUBSTRING_INDEX(${teeTimes.providerDate}, '-', 3))`))
+      .orderBy(asc(sql`DATE(SUBSTRING_INDEX(${teeTimes.providerDate}, '-', 3))`));
 
     const secondHandResults = await secondHandResultsQuery.execute();
-     const firstHandAndSecondHandResult = [...firstHandResults,...secondHandResults];
+    const firstHandAndSecondHandResult = [...firstHandResults, ...secondHandResults];
     const firstHandAndSecondHandResultDates = firstHandAndSecondHandResult.map((el) =>
       this.formatDateToAppropriateFormat(el.providerDate as string)
     );
@@ -1135,7 +1135,6 @@ export class SearchService extends CacheService {
       .utcOffset(timezoneCorrection)
       .add(30, "minutes")
       .toISOString();
-      
 
     const countSubQuery = this.database
       .select({
@@ -1155,7 +1154,11 @@ export class SearchService extends CacheService {
       .where(
         and(
           and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
-          between(sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100`, lowerPrice, upperPrice),
+          between(
+            sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100`,
+            lowerPrice,
+            upperPrice
+          ),
           between(teeTimes.providerDate, startOfDay, endOfDay),
           eq(teeTimes.courseId, courseId),
           //TODO: use isCartIncluded instead
@@ -1176,7 +1179,7 @@ export class SearchService extends CacheService {
           primaryMarketAllowedPlayers: courses.primaryMarketAllowedPlayers,
           openTime: courses.openTime,
           closeTime: courses.closeTime,
-          primaryMarketSellLeftoverSinglePlayer: courses.primaryMarketSellLeftoverSinglePlayer
+          primaryMarketSellLeftoverSinglePlayer: courses.primaryMarketSellLeftoverSinglePlayer,
         })
         .from(courses)
         .where(eq(courses.id, courseId));
@@ -1235,16 +1238,20 @@ export class SearchService extends CacheService {
       .where(
         and(
           and(gte(teeTimes.time, startTime), lte(teeTimes.time, endTime)),
-          between(sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100`, lowerPrice, upperPrice),
+          between(
+            sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100`,
+            lowerPrice,
+            upperPrice
+          ),
           between(teeTimes.providerDate, startOfDay, endOfDay),
           eq(teeTimes.courseId, courseId),
           eq(teeTimes.numberOfHoles, holes),
           gte(teeTimes.availableFirstHandSpots, golfers === -1 ? 1 : golfers),
           or(
             gte(teeTimes.availableFirstHandSpots, playersCount),
-            (isSellingLeftoverSinglePlayer ? eq(teeTimes.availableFirstHandSpots, 1) : undefined)
+            isSellingLeftoverSinglePlayer ? eq(teeTimes.availableFirstHandSpots, 1) : undefined
           ),
-          gt(teeTimes.greenFeePerPlayer, 0),
+          gt(teeTimes.greenFeePerPlayer, 0)
         )
       )
       .orderBy(
@@ -1418,9 +1425,8 @@ export class SearchService extends CacheService {
               return (
                 teeTime.time >= allowedTimeToSell.fromTime &&
                 teeTime.time <= allowedTimeToSell.toTime &&
-                (teeTime.firstPartySlots >= playersCount
-                  || (isSellingLeftoverSinglePlayer && teeTime.firstPartySlots === 1)
-                )
+                (teeTime.firstPartySlots >= playersCount ||
+                  (isSellingLeftoverSinglePlayer && teeTime.firstPartySlots === 1))
               );
             });
             newTeeTimeData = [...newTeeTimeData, ...times.slice(0, limit - newTeeTimeData.length)];
@@ -1447,9 +1453,8 @@ export class SearchService extends CacheService {
               return (
                 teeTime.time >= allowedTimeToSell.fromTime &&
                 teeTime.time <= allowedTimeToSell.toTime &&
-                (teeTime.firstPartySlots >= playersCount
-                  || (isSellingLeftoverSinglePlayer && teeTime.firstPartySlots === 1)
-                )
+                (teeTime.firstPartySlots >= playersCount ||
+                  (isSellingLeftoverSinglePlayer && teeTime.firstPartySlots === 1))
               );
             });
             // console.log("times", times, innerCursor, limit);
@@ -1900,7 +1905,7 @@ export class SearchService extends CacheService {
         .select({
           value: courseSetting.value,
           fixedMarkup: courses.markupFeesFixedPerPlayer,
-          timeZoneCorrection: courses.timezoneCorrection
+          timeZoneCorrection: courses.timezoneCorrection,
         })
         .from(courseSetting)
         .innerJoin(courses, eq(courseSetting.courseId, courses.id))
@@ -1924,7 +1929,7 @@ export class SearchService extends CacheService {
             }),
           });
           return [];
-        })
+        });
 
       const priceAccordingToDate = await this.getTeeTimesPriceWithRange(
         courseId,
@@ -1953,16 +1958,11 @@ export class SearchService extends CacheService {
           : courseSettingResponse?.fixedMarkup;
         const markupFeesToBeUsed = (markupFeesFinal ?? 0) / 100;
 
-        console.log("fetching tee times for date", date)
+        console.log("fetching tee times for date", date);
         const teeTimesResponse = await this.database
           .select()
           .from(teeTimes)
-          .where(
-            and(
-              eq(teeTimes.courseId, courseId),
-              like(teeTimes.providerDate, `${date}%`)
-            )
-          )
+          .where(and(eq(teeTimes.courseId, courseId), like(teeTimes.providerDate, `${date}%`)))
           .orderBy(asc(teeTimes.providerDate))
           .execute()
           .catch((err) => {
@@ -1979,7 +1979,7 @@ export class SearchService extends CacheService {
               }),
             });
             throw new Error("Error fetching tee times");
-          })
+          });
 
         let minTimeGapBetweenTwoTeeTimes = Number.MAX_VALUE;
         for (let i = 0; i < teeTimesResponse.length - 1; i++) {
@@ -1987,9 +1987,9 @@ export class SearchService extends CacheService {
           const nextTeeTime = teeTimesResponse[i + 1];
 
           if (!currentTeeTime || !nextTeeTime) {
-            continue
+            continue;
           }
-          const timeGap = nextTeeTime?.time - currentTeeTime?.time
+          const timeGap = nextTeeTime?.time - currentTeeTime?.time;
           if (timeGap < minTimeGapBetweenTwoTeeTimes && timeGap > 0) {
             minTimeGapBetweenTwoTeeTimes = timeGap;
           }
@@ -1999,13 +1999,14 @@ export class SearchService extends CacheService {
         }
 
         const teeTimesToCheck = teeTimesResponse.filter((teeTime) => {
-          return teeTime.time >= startTime && teeTime.time <= endTime
-        })
+          return teeTime.time >= startTime && teeTime.time <= endTime;
+        });
 
         // Based on the sliding window size, check available times for each tee time
         for (let i = 0; i < teeTimesToCheck.length - slidingWindowSize; i++) {
           const window = teeTimesToCheck.slice(i, i + slidingWindowSize);
-          let areSpotsAvailable = true, isContinuous = true;
+          let areSpotsAvailable = true,
+            isContinuous = true;
           let remainingGolferCount = golferCount;
           for (const teeTime of window) {
             if (teeTime.availableFirstHandSpots >= Math.min(minimumGolferGroup, remainingGolferCount)) {
@@ -2018,7 +2019,11 @@ export class SearchService extends CacheService {
           for (let i = 0; i < window.length - 1; i++) {
             const currentTeeTime = window[i];
             const nextTeeTime = window[i + 1];
-            if (nextTeeTime && currentTeeTime && nextTeeTime.time - currentTeeTime.time === minTimeGapBetweenTwoTeeTimes) {
+            if (
+              nextTeeTime &&
+              currentTeeTime &&
+              nextTeeTime.time - currentTeeTime.time === minTimeGapBetweenTwoTeeTimes
+            ) {
               continue;
             } else {
               isContinuous = false;
@@ -2029,11 +2034,16 @@ export class SearchService extends CacheService {
           let pricePerGolfer: number;
           if (groupBookingPriceSelectionMethod === "MAX") {
             pricePerGolfer = window.reduce((acc, teeTime) => {
-              return Math.max(acc, ((teeTime.greenFeePerPlayer + teeTime.cartFeePerPlayer) / 100 + markupFeesToBeUsed));
+              return Math.max(
+                acc,
+                (teeTime.greenFeePerPlayer + teeTime.cartFeePerPlayer) / 100 + markupFeesToBeUsed
+              );
             }, 0);
           } else if (groupBookingPriceSelectionMethod === "SUM") {
             const totalPrice = window.reduce((acc, teeTime) => {
-              return acc + ((teeTime.greenFeePerPlayer + teeTime.cartFeePerPlayer) / 100 + markupFeesToBeUsed);
+              return (
+                acc + ((teeTime.greenFeePerPlayer + teeTime.cartFeePerPlayer) / 100 + markupFeesToBeUsed)
+              );
             }, 0);
             pricePerGolfer = totalPrice / golferCount;
           } else {
@@ -2046,16 +2056,16 @@ export class SearchService extends CacheService {
               time: window[0]!.time,
               pricePerGolfer,
               teeTimeIds: window.map((teeTime) => teeTime.id),
-              date: window[0]!.providerDate
-            })
+              date: window[0]!.providerDate,
+            });
           }
         }
       }
       return availableTimes;
     } catch (err) {
-      this.logger.error(`${JSON.stringify(err)}`)
+      this.logger.error(`${JSON.stringify(err)}`);
     }
-  }
+  };
   getTeeTimesByIds = async (teeTimeIds: string[], playerCount: number, _userId?: string) => {
     let userId = "00000000-0000-0000-0000-000000000000";
     if (_userId) {
@@ -2141,7 +2151,9 @@ export class SearchService extends CacheService {
           }
         });
 
-        const markupFeesFinal = filteredDate.length ? filteredDate[0].markUpFees : tee.markupFeesFixedPerPlayer;
+        const markupFeesFinal = filteredDate.length
+          ? filteredDate[0].markUpFees
+          : tee.markupFeesFixedPerPlayer;
         const markupFeesToBeUsed = markupFeesFinal / 100;
         const watchers = await this.database
           .select({
@@ -2214,7 +2226,7 @@ export class SearchService extends CacheService {
         };
         return res;
       })
-    )
+    );
 
     const courseId = teeTimesData[0]?.courseId ?? "";
 
@@ -2244,17 +2256,19 @@ export class SearchService extends CacheService {
           }),
         });
         return [];
-      })
+      });
 
     const groupBookingPriceSelectionMethod = courseSettingResponse?.value ?? "MAX";
-    let pricePerGolfer = 0, cartFeesForGroup = 0;
+    let pricePerGolfer = 0,
+      cartFeesForGroup = 0;
     if (groupBookingPriceSelectionMethod === "MAX") {
       for (const teeTime of mappedTeeTimes) {
         pricePerGolfer = Math.max(pricePerGolfer, teeTime.pricePerGolfer);
         cartFeesForGroup = Math.max(cartFeesForGroup, teeTime.cartFee);
       }
     } else if (groupBookingPriceSelectionMethod === "SUM") {
-      let totalGreenFees = 0, totalCartFees = 0;
+      let totalGreenFees = 0,
+        totalCartFees = 0;
       for (const teeTime of mappedTeeTimes) {
         totalGreenFees += teeTime.pricePerGolfer;
         totalCartFees += teeTime.cartFee;
@@ -2269,9 +2283,9 @@ export class SearchService extends CacheService {
       return {
         ...teeTime,
         pricePerGolferForGroup: pricePerGolfer ?? 0,
-        cartFeesForGroup: cartFeesForGroup ?? 0
-      }
-    })
+        cartFeesForGroup: cartFeesForGroup ?? 0,
+      };
+    });
     return teeTimesResponse;
   };
 }

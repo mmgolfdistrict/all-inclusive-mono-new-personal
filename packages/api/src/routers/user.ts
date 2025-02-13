@@ -11,6 +11,7 @@ export const userRouter = createTRPCRouter({
         teeTimeId: z.string(),
         bookingSlotId: z.string(),
         slotPosition: z.number(),
+        redirectHref: z.string(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -21,7 +22,8 @@ export const userRouter = createTRPCRouter({
           input.emailOrPhone,
           input.teeTimeId,
           input.bookingSlotId,
-          input.slotPosition
+          input.slotPosition,
+          input.redirectHref
         );
     }),
   getInvitedUsers: protectedProcedure

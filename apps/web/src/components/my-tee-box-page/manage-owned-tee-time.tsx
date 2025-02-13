@@ -48,12 +48,16 @@ export const ManageOwnedTeeTime = ({
     slotId: "",
     bookingId: "",
     currentlyEditing: false,
+    emailOrPhoneNumber: "",
   });
   const debouncedValue = useDebounce<InviteFriend>(newFriend, 500);
 
   const [inviteSuccess, setInviteSuccess] = useState<Record<string, boolean>>(
     {}
   );
+
+  const href = window.location.href;
+  const redirectHref = href.split("/my-tee-box")[0] || "";
 
   const handleInviteFriend = async (friend: InviteFriend, index: number) => {
     if (invite.isLoading) return;
@@ -77,6 +81,7 @@ export const ManageOwnedTeeTime = ({
         teeTimeId: selectedTeeTime?.teeTimeId || "",
         bookingSlotId: findSlotByIndex(index + 1) || "", // Ensure a string is passed
         slotPosition: index + 1,
+        redirectHref: redirectHref,
       });
       setInviteSuccess((prev) => ({ ...prev, [friend.slotId]: true }));
       toast.success("Invitation sent successfully.");
@@ -145,6 +150,7 @@ export const ManageOwnedTeeTime = ({
         slotId: "",
         bookingId: "",
         currentlyEditing: false,
+        emailOrPhoneNumber: "",
       });
     }
   }, [isManageOwnedTeeTimeOpen, selectedTeeTime, inviteSuccess]);
@@ -258,11 +264,15 @@ export const ManageOwnedTeeTime = ({
         slotId: "",
         bookingId: "",
         currentlyEditing: false,
+        emailOrPhoneNumber: "",
       });
     }
   };
 
-  const addFriendUpdated = (friendToFind: InviteFriend) => {
+  const addFriendUpdated = async (
+    friendToFind: InviteFriend,
+    index: number
+  ) => {
     const friendsCopy = [...friends];
     friendsCopy.forEach((friend) => {
       if (friend.slotId == friendToFind.slotId) {
@@ -282,7 +292,36 @@ export const ManageOwnedTeeTime = ({
       slotId: "",
       bookingId: "",
       currentlyEditing: false,
+      emailOrPhoneNumber: "",
     });
+
+    const slotIds: string[] =
+      selectedTeeTime?.slotsData?.map(
+        (slot: unknown) => (slot as { slotId: string }).slotId
+      ) ?? [];
+
+    const findSlotByIndex = (index: number): string | undefined => {
+      return slotIds.find((slot) => {
+        const slotIndex = slot.split("-").pop(); // Extract the last part after '-'
+        return slotIndex !== undefined && parseInt(slotIndex, 10) === index;
+      });
+    };
+
+    try {
+      await invite.mutateAsync({
+        emailOrPhone: friendToFind.emailOrPhoneNumber || "",
+        teeTimeId: selectedTeeTime?.teeTimeId || "",
+        bookingSlotId: findSlotByIndex(index + 1) || "", // Ensure a string is passed
+        slotPosition: index + 1,
+        redirectHref: redirectHref,
+      });
+      setInviteSuccess((prev) => ({ ...prev, [friendToFind.slotId]: true }));
+      toast.success("Invitation sent successfully.");
+    } catch (error) {
+      toast.error(
+        (error as Error)?.message ?? "An error occurred inviting friend."
+      );
+    }
 
     // }
     // if (selectedFriend) {
@@ -325,6 +364,7 @@ export const ManageOwnedTeeTime = ({
       slotId: friend.slotId,
       bookingId: "",
       currentlyEditing: false,
+      emailOrPhoneNumber: "",
     });
   };
 
@@ -449,10 +489,13 @@ export const ManageOwnedTeeTime = ({
                                         <div
                                           className="cursor-pointer p-4 border-b border-solid border-gray-300"
                                           onClick={() =>
-                                            addFriendUpdated({
-                                              ...frnd,
-                                              slotId: friend.slotId,
-                                            })
+                                            addFriendUpdated(
+                                              {
+                                                ...frnd,
+                                                slotId: friend.slotId,
+                                              },
+                                              index
+                                            )
                                           }
                                         >
                                           {frnd.email} ({frnd.handle})
@@ -542,9 +585,20 @@ export const ManageOwnedTeeTime = ({
               </div>
               <div className="flex flex-col gap-2">
                 <FilledButton
-                  className="w-full"
+                  className={`w-full ${
+                    updateNames.isLoading ||
+                    updateMinimumOfferPrice.isLoading ||
+                    invite.isLoading
+                      ? "!border-gray-200 !bg-gray-200"
+                      : ""
+                  }`}
                   onClick={() => void save()}
                   data-testid="save-button-id"
+                  disabled={
+                    updateNames.isLoading ||
+                    updateMinimumOfferPrice.isLoading ||
+                    invite.isLoading
+                  }
                 >
                   Save
                 </FilledButton>
