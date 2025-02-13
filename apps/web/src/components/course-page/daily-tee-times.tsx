@@ -1,5 +1,4 @@
 import {
-  TeeTimeType,
   type CombinedObject,
   type NotificationObject,
 } from "@golf-district/shared";
@@ -8,10 +7,8 @@ import { useCourseContext } from "~/contexts/CourseContext";
 import { useFiltersContext } from "~/contexts/FiltersContext";
 import { api } from "~/utils/api";
 import { dayMonthDate } from "~/utils/formatters";
-import { debounce, throttle } from "lodash";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useElementSize, useIntersectionObserver } from "usehooks-ts";
-import { useDraggableScroll } from "../../hooks/useDraggableScroll";
 import { TeeTime } from "../cards/tee-time";
 import { Info } from "../icons/info";
 import { LeftChevron } from "../icons/left-chevron";
@@ -35,61 +32,11 @@ export const DailyTeeTimes = ({
 }) => {
   const overflowRef = useRef<HTMLDivElement>(null);
   const nextPageRef = useRef<HTMLDivElement>(null);
-  const { onMouseDown } = useDraggableScroll(overflowRef, {
-    direction: "horizontal",
-  });
 
   const entry = useIntersectionObserver(nextPageRef, {});
   const isVisible = !!entry?.isIntersecting;
-  const [sizeRef, { width = 0 }] = useElementSize();
+  const [sizeRef] = useElementSize();
   const { course } = useCourseContext();
-  const courseId = course?.id;
-
-  const handleWheel = (event: WheelEvent) => {
-    event.preventDefault();
-    // debugger;
-  };
-
-  // const handleWheel = (event: WheelEvent) => {
-  //   // event.preventDefault(); // Prevent default scroll behavior
-
-  //   const container = overflowRef.current;
-  //   if (!container) return;
-
-  //   // Ensure only horizontal scrolling is considered
-  //   if (Math.abs(event.deltaY) < Math.abs(event.deltaX)) {
-  //     event.preventDefault();
-  //   }
-
-  //   // Get item width & scroll amount
-  //   const boxWidth = container.children[0]?.clientWidth || 265;
-  //   // const scrollAmount = calculateVisibleBoxes() * (boxWidth + 16);
-
-  //   const getScrollWidth = () => {
-  //     if (width < 700) {
-  //       return boxWidth * 3 + 16 * 3;
-  //     }
-  //     return boxWidth * 4 + 16 * 4;
-  //   };
-  //   console.log("scrollAmount", getScrollWidth());
-  //   // Scroll left or right based on deltaX direction
-  //   const scrollAmountNew =
-  //     event.deltaX > 0 ? getScrollWidth() : -getScrollWidth();
-  //   container.scrollBy({ left: scrollAmountNew, behavior: "smooth" });
-  // };
-
-  // Set up the event listener for scroll
-
-  // useEffect(() => {
-  //   const container = overflowRef.current;
-  //   if (!container) return;
-
-  //   container.addEventListener("wheel", handleWheel, { passive: false });
-
-  //   return () => {
-  //     container.removeEventListener("wheel", handleWheel);
-  //   };
-  // }, []);
 
   const {
     showUnlisted,
@@ -102,15 +49,6 @@ export const DailyTeeTimes = ({
   } = useFiltersContext();
   const teeTimeStartTime = startTime[0];
   const teeTimeEndTime = startTime[1];
-
-  const { data: allowedPlayers } =
-    api.course.getNumberOfPlayersByCourse.useQuery({
-      courseId: courseId ?? "",
-    });
-
-  const numberOfPlayers = allowedPlayers?.numberOfPlayers[0];
-
-  const playersCount = numberOfPlayers ? Number(numberOfPlayers) : 0;
 
   const { data: weather, isLoading: isLoadingWeather } =
     api.searchRouter.getWeatherForDay.useQuery(
@@ -180,90 +118,32 @@ export const DailyTeeTimes = ({
   const allTeeTimes =
     teeTimeData?.pages[teeTimeData?.pages?.length - 1]?.results ?? [];
 
-  // useEffect(() => {
-  //   const container = overflowRef.current;
-  //   if (!container) return;
-  //   const handleWheel = (event) => {
-  //     console.log("wheel event", event);
-
-  //     event.preventDefault();
-
-  //     const boxWidth = container.children[0]?.clientWidth || 265;
-
-  //     // const getScrollWidth = () => {
-  //     //   if (width < 700) {
-  //     //     return boxWidth * 3 + 16 * 3;
-  //     //   }
-  //     //   return boxWidth * 4 + 16 * 4;
-  //     // };
-
-  //     const scrollAmount = event.deltaX > 0 ? 281 : -281;
-  //     container.scrollBy({
-  //       left: 281,
-  //       behavior: "smooth",
-  //     });
-  //   };
-
-  //   container.addEventListener("wheel", handleWheel, {
-  //     once: true,
-  //     passive: false,
-  //   });
-  //   return () => {
-  //     console.log("remove event listener");
-
-  //     container.removeEventListener("wheel", handleWheel);
-  //   };
-  // }, []);
-
-  const calculateVisibleBoxes = () => {
-    const boxWidth = overflowRef.current?.children[0]?.clientWidth || 265; // default box width if not available
-    const containerWidth = overflowRef.current?.clientWidth || 0; // container width
-
-    if (containerWidth === 0 || boxWidth === 0) return 0;
-
-    const visibleCount = Math.floor(containerWidth / (boxWidth + 16)); // 16 is the gap
-    console.log("visibleCount", visibleCount);
-
-    return visibleCount;
-  };
-
   const isScrolling = useRef(false);
 
-  const scrollRight = async () => {
-    if (isScrolling.current) return;
-    isScrolling.current = true;
-
-    if (!isLoading) {
-      await fetchNextPage();
-    }
+  const scrollCarousel = (direction: "left" | "right") => {
     const container = overflowRef.current;
     if (!container) return;
 
-    const boxWidth = container.children[0]?.clientWidth || 265;
-    const scrollAmount = calculateVisibleBoxes() * (boxWidth + 16);
-
-    container.classList.add("scroll-smooth");
-    container.scrollBy({ left: scrollAmount, behavior: "smooth" });
-
-    setTimeout(() => {
-      isScrolling.current = false;
-    }, 500); // Wait for the scroll animation to complete
-  };
-
-  const scrollLeft = () => {
-    const container = overflowRef.current;
-    if (!container) return;
-
-    const boxWidth = container.children[0]?.clientWidth || 265;
+    const boxWidth = 265; // need to change when card width changes
     const containerWidth = container.clientWidth;
 
-    const visibleCount = calculateVisibleBoxes(); // Get the visible count
-    const scrollAmount = visibleCount * (boxWidth + 16); // Calculate scroll amount
+    const visibleCount = Math.floor(containerWidth / (boxWidth + 16));
+    const scrollAmount = visibleCount * (boxWidth + 16);
 
-    container.classList.add("scroll-smooth");
-    container.scrollBy({ left: -scrollAmount, behavior: "smooth" });
-    container.classList.remove("scroll-smooth");
+    if (direction === "right") {
+      container.classList.add("scroll-smooth");
+      container.scrollBy({ left: scrollAmount, behavior: "smooth" });
+      setTimeout(() => {
+        isScrolling.current = false;
+      }, 500);
+    } else {
+      container.classList.add("scroll-smooth");
+      container.scrollBy({ left: -scrollAmount, behavior: "smooth" });
+    }
   };
+
+  const scrollRight = () => scrollCarousel("right");
+  const scrollLeft = () => scrollCarousel("left");
 
   const getNextPage = async () => {
     if (!isLoading && !isFetchingNextPage) {
@@ -277,21 +157,11 @@ export const DailyTeeTimes = ({
     }
   }, [isVisible]);
 
-  useEffect(() => {
-    scrollLeft();
-  }, [isLoading]);
-
   const getTextColor = (type) => {
     if (type === "FAILURE") return "red";
     if (type === "SUCCESS") return "primary";
     if (type === "WARNING") return "primary-gray";
   };
-
-  // const getIconForException = (type) => {
-  //   if (type === "FAILURE") return <Error className="h-[20px] w-[20px] " />;
-  //   if (type === "SUCCESS") return <Success className="h-[20px] w-[20px] " />;
-  //   if (type === "WARNING") return <Warning className="h-[20px] w-[20px] " />;
-  // };
 
   if (!isLoading && isFetchedAfterMount && allTeeTimes.length === 0) {
     return null;
@@ -373,17 +243,34 @@ export const DailyTeeTimes = ({
         </div>
 
         <div
-          // id="abc"
           className="scrollbar-none w-full flex overflow-x-auto overflow-y-hidden gap-4"
           ref={overflowRef}
-          onWheel={(e) => handleWheel(e)}
+          style={{
+            scrollSnapType: "x mandatory",
+            scrollBehavior: "smooth", // Ensures smooth scrolling behavior
+          }}
         >
-          {allTeeTimes?.map((i: CombinedObject, idx: number) => {
-            if (
-              i.firstOrSecondHandTeeTime === TeeTimeType.SECOND_HAND ||
-              i.availableSlots >= playersCount
-            ) {
-              return (
+          <ul
+            style={{
+              position: "relative",
+              display: "flex",
+              margin: "0px",
+              padding: "0px",
+              listStyle: "none",
+              overflowY: "visible",
+              scrollbarWidth: "none",
+              scrollSnapType: "x mandatory", // Makes sure items snap to center
+              scrollMarginInlineStart: "2.5em", // Optional margin at the start of scroll
+            }}
+          >
+            {allTeeTimes?.map((i: CombinedObject, idx: number) => (
+              <li
+                key={idx}
+                style={{
+                  scrollSnapAlign: "start",
+                  paddingRight: "16px",
+                }}
+              >
                 <TeeTime
                   time={i.date}
                   key={idx}
@@ -408,23 +295,21 @@ export const DailyTeeTimes = ({
                   handleLoading={handleLoading}
                   refetch={refetch}
                 />
-              );
-            }
-            return null;
-          })}
+              </li>
+            ))}
+            <div
+              ref={nextPageRef}
+              className="h-[50px] w-[1px] text-[1px] text-white"
+            >
+              Loading
+            </div>
 
-          <div
-            ref={nextPageRef}
-            className="h-[50px] w-[1px] text-[1px] text-white"
-          >
-            Loading
-          </div>
-
-          {isLoading || isFetchingNextPage || !isFetchedAfterMount
-            ? Array(TAKE)
-                .fill(null)
-                .map((_, idx) => <TeeTimeSkeleton key={idx} />)
-            : null}
+            {isLoading || isFetchingNextPage || !isFetchedAfterMount
+              ? Array(TAKE)
+                  .fill(null)
+                  .map((_, idx) => <TeeTimeSkeleton key={idx} />)
+              : null}
+          </ul>
         </div>
 
         <div className="absolute z-[2] hidden md:block top-1/2 -translate-y-1/2 flex items-center justify-center -right-1 md:-right-6">
