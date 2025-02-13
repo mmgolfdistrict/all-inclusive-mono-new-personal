@@ -558,25 +558,16 @@ export default function CourseHomePage() {
     return null;
   };
 
-  // const { data: systemNotifications } =
-  //   api.systemNotification.getSystemNotification.useQuery({});
-
-  // const { data: courseGlobalNotification } =
-  //   api.systemNotification.getCourseGlobalNotification.useQuery({
-  //     courseId: courseId ?? "",
-  //   });
-
-  // const notificationsCount =
-  //   (systemNotifications ? systemNotifications.length : 0) +
-  //   (courseGlobalNotification ? courseGlobalNotification.length : 0);
-
-  // const marginTop =
-  //   notificationsCount > 0 ? `mt-${notificationsCount * 6}` : "";
+  const courseImages = useMemo(() => {
+    if (!course) return [];
+    return course?.images;
+  }, [course]);
 
   const openForecastModal = () => {
     setIsForecastModalOpen(true);
   };
-
+  const divHeight = document?.getElementById('notification-container')?.offsetHeight;
+  
   // Function to close the modal
   const closeForecastModal = () => {
     setIsForecastModalOpen(false);
@@ -628,12 +619,16 @@ export default function CourseHomePage() {
           {/* mobile  for filter/sort */}
           <FilterSort toggleFilters={toggleFilters} toggleSort={toggleSort} />
         </div>
-        <div className="flex w-full flex-col gap-1 md:gap-4 overflow-x-hidden pr-0 md:pr-6">
+        <div className="flex w-full flex-col gap-1 md:gap-4 overflow-x-hidden pr-0p md:pr-6">
           <div
-            className={`flex space-x-2 md:hidden px-4 ${scrollY > 333
-              ? "fixed top-[7.8rem] left-0 w-full z-10 bg-secondary-white pt-2 pb-3 shadow-md"
+          className={`flex space-x-2 md:hidden px-4 ${
+            (courseImages?.length > 0 ? scrollY > 333 : scrollY > 100)
+              ? `fixed left-0 w-full z-10 bg-secondary-white pt-2 pb-3 shadow-md`
               : "relative"
-              }`}
+          }`}        
+            style={{
+              top: (courseImages?.length > 0 ? scrollY > 333 : scrollY > 100) ? `${divHeight && divHeight * 1}px` : 'auto',
+            }}
           >
             <button
               onClick={toggleFilters}
