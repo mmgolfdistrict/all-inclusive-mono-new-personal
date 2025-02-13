@@ -536,7 +536,7 @@ export const CourseNav = () => {
                 href=""
                 text=""
                 icon={<ThreeDots
-                  className="h-[25px] w-[15px] cursor-pointer"
+                  className="cursor-pointer"
                 />}
                 className="flex !justify-center items-center"
                 onClick={toggleSideBar}
