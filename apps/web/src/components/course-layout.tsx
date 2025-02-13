@@ -30,7 +30,7 @@ export const CourseLayout = ({ children }: { children: React.ReactNode }) => {
     notificationsCount > 0
       ? notificationsCount >= 5
         ? `${notificationsCount * 27 + 20}px`
-        : `${notificationsCount * 27}px`
+        : `${notificationsCount * 42}px`
       : "0";
   const styling = useMemo(() => {
     const coursePathPattern = `/${courseId}/`;
@@ -39,9 +39,9 @@ export const CourseLayout = ({ children }: { children: React.ReactNode }) => {
       return "";
     }
     if (courseId && pathname.includes(coursePathPattern)) {
-      return isMobile ? "pt-28" : "pt-16";
+      return isMobile ? "pt-0" : "pt-16";
     } else {
-      return isMobile ? "pt-28" : "pt-12";
+      return isMobile ? "pt-0" : "pt-12";
     }
   }, [pathname, notificationsCount, isMobile]);
 

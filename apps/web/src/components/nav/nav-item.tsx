@@ -25,7 +25,7 @@ export const NavItem = ({
     >
       {icon ? <div>{icon}</div> : null}
       <div>
-        <div className="text-[12px] md:text-sm">{text}</div>
+        <div className="text-[12px] md:text-sm text-center">{text}</div>
       </div>
     </Link>
   );

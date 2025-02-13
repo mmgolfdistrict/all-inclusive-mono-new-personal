@@ -1762,7 +1762,6 @@ export class SearchService extends CacheService {
       const dateB = dayjs(b?.eventStartDate);
       return dateA.isBefore(dateB) ? -1 : dateA.isAfter(dateB) ? 1 : 0;
     });
-    console.log("sortedEvents", sortedEvents);
 
     return sortedEvents;
   };
