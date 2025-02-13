@@ -94,6 +94,7 @@ export type InviteFriend = {
   slotId: string;
   bookingId: string;
   currentlyEditing: boolean;
+  emailOrPhoneNumber?: string;
 };
 
 export type SensibleDataToMountCompType = {
@@ -132,8 +133,8 @@ export type CartProduct = {
       | WeatherGuaranteeTaxPercentMetaData
       | MarkupTaxPercentMetaData
       | GreenFeeTaxPercentMetaData
-    | CartFeeTaxPercentMetaData
-    | FirstHandGroupProduct;
+      | CartFeeTaxPercentMetaData
+      | FirstHandGroupProduct;
   };
 };
 

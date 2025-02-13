@@ -66,6 +66,7 @@ export const InviteFriends = ({
         teeTimeId: "",
         bookingSlotId: "",
         slotPosition: 0,
+        redirectHref: "",
       });
       setInviteSucess(true);
       setInviteFriend("");

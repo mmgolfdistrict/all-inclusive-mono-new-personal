@@ -364,7 +364,8 @@ export class UserService {
     emailOrPhoneNumber: string,
     teeTimeId: string,
     bookingSlotId: string,
-    slotPosition: number
+    slotPosition: number,
+    redirectHref: string
   ) => {
     // Fetch user details
     const [user] = await this.database
@@ -395,7 +396,7 @@ export class UserService {
     const [existingInvite] = await this.database
       .select({ id: invitedTeeTime.id })
       .from(invitedTeeTime)
-      .where(and(eq(invitedTeeTime.email, emailOrPhoneNumber), eq(invitedTeeTime.teeTimeId, teeTimeId)));
+      .where(and(eq(invitedTeeTime.bookingSlotId, bookingSlotId), eq(invitedTeeTime.teeTimeId, teeTimeId)));
 
     if (existingInvite) {
       // Delete the existing invite before sending a new one
@@ -420,7 +421,7 @@ export class UserService {
         "You've been invited to Golf District",
         `<p>${user?.name?.split(
           " "
-        )[0]} has invited you to Golf District. Create a new account or login with your existing account to see the tee times you are part of.</p>`
+        )[0]} has invited you to Golf District. <a href="${redirectHref}/register" target="_blank">Create a new account</a>  or <a href="${redirectHref}/login" target="_blank">login with your existing account</a> to see the tee times you are part of.</p>`
       );
     } else if (phoneRegex.test(emailOrPhoneNumber)) {
       await this.notificationsService.sendSMS(
