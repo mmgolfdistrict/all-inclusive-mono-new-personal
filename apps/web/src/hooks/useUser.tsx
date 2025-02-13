@@ -32,7 +32,6 @@ type UserType = {
   hyperswitchCustomerId: string | null;
   stripeConnectAccountId: string | null;
   phoneNotifications: boolean;
-  phoneNumberCountryCode: number;
   phoneNumber: string | null;
   emailNotifications: boolean;
   verificationRequestToken: string | null;
