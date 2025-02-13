@@ -94,19 +94,10 @@ button {
   background-color: var(--primary-color) !important;
 }
 
-.shepherd-enabled.shepherd-element {
+.shepherd-enabled.shepherd-element{
   margin-top: 10px !important;
 }
 
-.nextbutton {
+.nextbutton{
   background-color: green;
-}
-
-.react-tel-input {
-  @apply text-ellipsis rounded-lg bg-secondary-white px-3 py-1 text-[14px] text-gray-500 outline-none;
-  font-family: inherit !important;
-  input {
-    border: none !important;
-    background-color: unset !important;
-  }
 }

@@ -94,7 +94,6 @@ export const userRouter = createTRPCRouter({
         city: z.string().optional(),
         zipcode: z.string().optional(),
         country: z.string().optional(),
-        phoneNumberCountryCode: z.number().optional(),
         phoneNumber: z.string().optional(),
         phoneNotifications: z.boolean().optional(),
         emailNotification: z.boolean().optional(),
