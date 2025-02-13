@@ -8,13 +8,32 @@ export const userRouter = createTRPCRouter({
     .input(
       z.object({
         emailOrPhone: z.string(),
-        courseId: z.string(),
+        teeTimeId: z.string(),
+        bookingSlotId: z.string(),
+        slotPosition: z.number(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       return await ctx.serviceFactory
         .getUserService()
-        .inviteUser(ctx.session.user.id, input.emailOrPhone, input.courseId);
+        .inviteUser(
+          ctx.session.user.id,
+          input.emailOrPhone,
+          input.teeTimeId,
+          input.bookingSlotId,
+          input.slotPosition
+        );
+    }),
+  getInvitedUsers: protectedProcedure
+    .input(
+      z.object({
+        emailOrPhoneNumber: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return await ctx.serviceFactory
+        .getUserService()
+        .getInvitedUsers(ctx.session.user.id, input.emailOrPhoneNumber);
     }),
   getUser: publicProcedure
     .input(
@@ -75,6 +94,7 @@ export const userRouter = createTRPCRouter({
         city: z.string().optional(),
         zipcode: z.string().optional(),
         country: z.string().optional(),
+        phoneNumberCountryCode: z.number().optional(),
         phoneNumber: z.string().optional(),
         phoneNotifications: z.boolean().optional(),
         emailNotification: z.boolean().optional(),

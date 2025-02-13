@@ -389,12 +389,13 @@ export class CheckoutService {
           })
           .from(teeTimes)
           .leftJoin(courses, eq(teeTimes.courseId, courses.id))
-          .leftJoin(courseSetting, eq(courseSetting.courseId, courses.id))
-          .where(
+          .leftJoin(courseSetting, 
             and(
-              inArray(teeTimes.id, teeTimeIds),
+              eq(courseSetting.courseId, courses.id),
               eq(courseSetting.internalName, "GROUP_BOOKING_PRICE_SELECTION_METHOD")
-            ))
+            )
+          )
+          .where(inArray(teeTimes.id, teeTimeIds))
           .execute()
           .catch((err) => {
             this.logger.error(`Error finding tee time ids: ${JSON.stringify(err)}`);
@@ -405,7 +406,7 @@ export class CheckoutService {
           throw new Error(`Error finding tee times with ids: ${JSON.stringify(teeTimeIds)}`);
         }
         const teeTime = teeTimesResponse[0];
-        const groupBookingPriceSelectionMethod = teeTime?.groupBookingPriceSelectionMethod
+        const groupBookingPriceSelectionMethod = teeTime?.groupBookingPriceSelectionMethod ?? "MAX";
         let greenFees = 0
 
         // get fees for players

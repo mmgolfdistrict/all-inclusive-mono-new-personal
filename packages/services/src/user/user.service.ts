@@ -6,6 +6,7 @@ import { accounts } from "@golf-district/database/schema/accounts";
 import { assets } from "@golf-district/database/schema/assets";
 import { bookings } from "@golf-district/database/schema/bookings";
 import { bookingslots } from "@golf-district/database/schema/bookingslots";
+import { invitedTeeTime } from "@golf-district/database/schema/invitedTeeTime";
 import { courses } from "@golf-district/database/schema/courses";
 import { courseUser } from "@golf-district/database/schema/courseUser";
 import { entities } from "@golf-district/database/schema/entities";
@@ -42,6 +43,7 @@ export interface UserCreationData {
   firstName: string;
   lastName: string;
   handle: string;
+  phoneNumberCountryCode: number;
   phoneNumber: string;
   // location?: string;
   address1?: string;
@@ -66,6 +68,7 @@ interface UserUpdateData {
   zipcode?: string | null;
   city?: string | null;
   country?: string | null;
+  phoneNumberCountryCode?: number;
   phoneNumber?: string | null;
   phoneNotifications?: boolean | null;
   emailNotifications?: boolean | null;
@@ -96,7 +99,10 @@ export class UserService {
    * @example
    * const userService = new UserService(database, notificationService);
    */
-  constructor(protected readonly database: Db, private readonly notificationsService: NotificationService) {
+  constructor(
+    protected readonly database: Db,
+    private readonly notificationsService: NotificationService
+  ) {
     //this.filter = new Filter();
   }
 
@@ -307,66 +313,122 @@ export class UserService {
     return user;
   };
 
-  inviteUser = async (userId: string, emailOrPhoneNumber: string, courseId: string) => {
+  getInvitedUsers = async (userId: string, emailOrPhoneNumber: string) => {
+    // Fetch user details
     const [user] = await this.database
-      .select({
-        handle: users.handle,
-        name: users.name,
-      })
+      .select({ handle: users.handle, name: users.name })
       .from(users)
       .where(eq(users.id, userId));
+
     if (!user) {
       this.logger.warn(`User not found: ${userId}`);
       throw new Error("User not found");
     }
-    //determine if email or phone number
 
-    let EntityName: string | undefined;
-    let SubDomain: string | undefined;
+    // Fetch slot details to check availability
+    const invitedUsers = await this.database
+      .select({
+        email: invitedTeeTime.email,
+        teeTimeId: invitedTeeTime.teeTimeId,
+        bookingId: invitedTeeTime.bookingId,
+        bookingSlotId: invitedTeeTime.bookingSlotId,
+        slotPosition: invitedTeeTime.slotPosition,
+        courseName: courses.name,
+        date: teeTimes.providerDate,
+        timezoneCorrection: courses.timezoneCorrection,
+      })
+      .from(invitedTeeTime)
+      .leftJoin(teeTimes, eq(teeTimes.id, invitedTeeTime.teeTimeId))
+      .leftJoin(courses, eq(courses.id, teeTimes.courseId))
+      .where(eq(invitedTeeTime.email, emailOrPhoneNumber))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error retrieving Invited tee times: ${err}`);
+        loggerService.errorLog({
+          userId: userId,
+          url: `/UserService/getInvitedUsers`,
+          userAgent: "",
+          message: "ERROR_GETTING_INVITED_TEE_TIME",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            emailOrPhoneNumber,
+            userId,
+          }),
+        });
+        throw new Error("Error retrieving bookings");
+      });
 
-    if (courseId) {
-      const [courseWithEntity] = await this.database
-        .select({
-          entityName: entities.name,
-          subDomain: entities.subdomain,
-        })
-        .from(courses)
-        .leftJoin(entities, eq(courses.entityId, entities.id))
-        .where(eq(courses.id, courseId));
+    return invitedUsers;
+  };
 
-      if (courseWithEntity) {
-        EntityName = courseWithEntity.entityName ?? "";
-        SubDomain = courseWithEntity.subDomain ?? "";
-      }
+  inviteUser = async (
+    userId: string,
+    emailOrPhoneNumber: string,
+    teeTimeId: string,
+    bookingSlotId: string,
+    slotPosition: number
+  ) => {
+    // Fetch user details
+    const [user] = await this.database
+      .select({ handle: users.handle, name: users.name })
+      .from(users)
+      .where(eq(users.id, userId));
+
+    if (!user) {
+      this.logger.warn(`User not found: ${userId}`);
+      throw new Error("User not found");
     }
 
+    // Fetch slot details to check availability
+    const [bookingSlot] = await this.database
+      .select({
+        bookingId: bookingslots.bookingId,
+        slotPosition: bookingslots.slotPosition,
+        externalSlotId: bookingslots.slotnumber,
+      })
+      .from(bookingslots)
+      .where(and(eq(bookingslots.slotPosition, slotPosition), eq(bookingslots.slotnumber, bookingSlotId)));
+
+    if (!bookingSlot) {
+      throw new Error("Booking slot not available");
+    }
+
+    // Check if invite already exists and delete it if present
+    const [existingInvite] = await this.database
+      .select({ id: invitedTeeTime.id })
+      .from(invitedTeeTime)
+      .where(and(eq(invitedTeeTime.email, emailOrPhoneNumber), eq(invitedTeeTime.teeTimeId, teeTimeId)));
+
+    if (existingInvite) {
+      // Delete the existing invite before sending a new one
+      await this.database.delete(invitedTeeTime).where(eq(invitedTeeTime.id, existingInvite.id));
+    }
+
+    // Save new invitation
+    await this.database.insert(invitedTeeTime).values({
+      id: randomUUID(),
+      email: emailOrPhoneNumber,
+      teeTimeId: teeTimeId,
+      bookingId: bookingSlot.bookingId,
+      bookingSlotId: bookingSlot.externalSlotId,
+      slotPosition: bookingSlot.slotPosition,
+    });
+
+    // Determine invite method (email or phone)
     const phoneRegex = /^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$/;
     if (isValidEmail(emailOrPhoneNumber)) {
       await this.notificationsService.sendEmail(
         emailOrPhoneNumber,
         "You've been invited to Golf District",
-        `<p>${user?.name?.split(" ")[0]} has invited you to Golf District.</p>
-        ${
-          courseId && SubDomain && EntityName
-            ? `<p>Visit the course website <a href="https://${SubDomain}/${courseId}" target="_blank" style="color: #1a0dab; text-decoration: underline;">${EntityName}</a></p>`
-            : ""
-        }
-        <br>`
+        `<p>${user?.name?.split(
+          " "
+        )[0]} has invited you to Golf District. Create a new account or login with your existing account to see the tee times you are part of.</p>`
       );
-      return;
-    }
-    if (phoneRegex.test(emailOrPhoneNumber)) {
-      console.log("emailOrPhoneNumber", emailOrPhoneNumber);
-      const userName = user?.name?.split(" ")[0];
+    } else if (phoneRegex.test(emailOrPhoneNumber)) {
       await this.notificationsService.sendSMS(
         emailOrPhoneNumber,
-        `${userName} has invited you to Golf District ${
-          courseId && SubDomain && EntityName
-            ? `Visit the course website: https://${SubDomain}/${courseId} (${EntityName})`
-            : ""
-        }`
+        `${user?.name?.split(" ")[0]} has invited you to Golf District.`
       );
-      return;
     } else {
       throw new Error("Invalid email or phone number");
     }
@@ -849,6 +911,12 @@ export class UserService {
       updateData.phoneNumber = data.phoneNumber;
       updateData.phoneNumberVerified = null;
     }
+    if (Object.prototype.hasOwnProperty.call(data, "phoneNumberCountryCode")) {
+      updateData.phoneNumberCountryCode = data.phoneNumberCountryCode;
+    }
+
+    this.logger.info(`data: ${data.phoneNumberCountryCode}`);
+    this.logger.info(`updateData: ${updateData.phoneNumberCountryCode}`);
 
     await this.database
       .update(users)
@@ -1677,6 +1745,7 @@ export class UserService {
         city: data.city,
         zipcode: data.zipcode,
         country: data.country,
+        phoneNumberCountryCode: data.phoneNumberCountryCode,
         phoneNumber: data.phoneNumber,
         verificationRequestToken: verificationToken,
         verificationRequestExpiry: generateUtcTimestamp(90), //90 minutes
