@@ -237,7 +237,6 @@ export default function CourseHomePage() {
       }
     }
     const specialDate = getSpecialDayDate(queryDateType);
-    console.log("queryDateType", queryDateType, specialDate);
     if (queryDateType) {
       if (specialDate) {
         setDateType(queryDateType as DateType); // Set the DateType to queryDateType if specialDate exists
@@ -248,10 +247,21 @@ export default function CourseHomePage() {
   }, [specialEvents, queryDateType]);
 
   const getSpecialDayDate = (label) => {
+    const today = dayjs(new Date())   
     const specialDay = specialEvents?.find((day) => day.eventName === label);
-    return specialDay
-      ? { start: dayjs(specialDay.startDate), end: dayjs(specialDay.endDate) }
-      : null;
+  
+    if (specialDay) {
+      const specialStartDate = dayjs(specialDay.startDate);
+  
+      const start = today.isAfter(specialStartDate) ? today : specialStartDate;
+  
+      return {
+        start: start,
+        end: specialDay.endDate ? dayjs(specialDay.endDate) : null,
+      };
+    }
+  
+    return null;
   };
 
   const startDate = useMemo(() => {
