@@ -1024,27 +1024,40 @@ export class CourseService extends DomainService {
 
     if (time && date) {
       const day = dayjs.utc(date, "YYYY-MM-DD").format("ddd").toUpperCase() as DayOfWeek;
-      let NumberOfPlayers = await this.database
-        .select({
-          primaryMarketAllowedPlayers: courseAllowedTimeToSell.primaryMarketAllowedPlayers,
-          primaryMarketSellLeftoverSinglePlayer: courseAllowedTimeToSell.primaryMarketSellLeftoverSinglePlayer
-        })
-        .from(courseAllowedTimeToSell)
-        .where(
-          and(
-            eq(courseAllowedTimeToSell.courseId, courseId),
-            eq(courseAllowedTimeToSell.day, day),
-            and(lte(courseAllowedTimeToSell.fromTime, time), gte(courseAllowedTimeToSell.toTime, time))
-          )
-        );
-      if (!NumberOfPlayers[0]) {
+      const cacheKey = `allowed-number-of-players-${courseId}-${day}-${time}`
+
+      let NumberOfPlayers: any = await cacheManager.get(cacheKey)
+      if (!NumberOfPlayers) {
         NumberOfPlayers = await this.database
           .select({
-            primaryMarketAllowedPlayers: courses.primaryMarketAllowedPlayers,
-            primaryMarketSellLeftoverSinglePlayer: courses.primaryMarketSellLeftoverSinglePlayer
+            primaryMarketAllowedPlayers: courseAllowedTimeToSell.primaryMarketAllowedPlayers,
+            primaryMarketSellLeftoverSinglePlayer: courseAllowedTimeToSell.primaryMarketSellLeftoverSinglePlayer
           })
-          .from(courses)
-          .where(eq(courses.id, courseId));
+          .from(courseAllowedTimeToSell)
+          .where(
+            and(
+              eq(courseAllowedTimeToSell.courseId, courseId),
+              eq(courseAllowedTimeToSell.day, day),
+              and(lte(courseAllowedTimeToSell.fromTime, time), gte(courseAllowedTimeToSell.toTime, time))
+            )
+          );
+        await cacheManager.set(cacheKey, NumberOfPlayers, 600000);
+      }
+      if (!NumberOfPlayers[0]) {
+        const cacheKey = `allowed-number-of-players-${courseId}`
+
+        NumberOfPlayers = await cacheManager.get(cacheKey)
+        if (!NumberOfPlayers) {
+          NumberOfPlayers = await this.database
+            .select({
+              primaryMarketAllowedPlayers: courses.primaryMarketAllowedPlayers,
+              primaryMarketSellLeftoverSinglePlayer: courses.primaryMarketSellLeftoverSinglePlayer
+            })
+            .from(courses)
+            .where(eq(courses.id, courseId));
+
+          await cacheManager.set(cacheKey, NumberOfPlayers, 600000);
+        }
       }
 
       if (NumberOfPlayers[0]?.primaryMarketAllowedPlayers) {
@@ -1054,13 +1067,19 @@ export class CourseService extends DomainService {
         binaryMask = binaryMask | (1 << 0);
       }
     } else {
-      const NumberOfPlayers = await this.database
-        .select({
-          primaryMarketAllowedPlayers: courses.primaryMarketAllowedPlayers,
-          primaryMarketSellLeftoverSinglePlayer: courses.primaryMarketSellLeftoverSinglePlayer
-        })
-        .from(courses)
-        .where(eq(courses.id, courseId));
+      const cacheKey = `allowed-number-of-players-${courseId}`
+      let NumberOfPlayers: any = await cacheManager.get(cacheKey)
+      if (!NumberOfPlayers) {
+        NumberOfPlayers = await this.database
+          .select({
+            primaryMarketAllowedPlayers: courses.primaryMarketAllowedPlayers,
+            primaryMarketSellLeftoverSinglePlayer: courses.primaryMarketSellLeftoverSinglePlayer
+          })
+          .from(courses)
+          .where(eq(courses.id, courseId));
+        await cacheManager.set(cacheKey, NumberOfPlayers, 600000);
+
+      }
       if (NumberOfPlayers[0]?.primaryMarketAllowedPlayers) {
         binaryMask = NumberOfPlayers[0]?.primaryMarketAllowedPlayers;
       }
@@ -1123,9 +1142,9 @@ export class CourseService extends DomainService {
     return filteredMethodNames;
   };
 
-  getMobileViewVersion= async (courseId: string) => {
+  getMobileViewVersion = async (courseId: string) => {
     console.log(courseId)
-    const mobileViewVersion: string| undefined | null = await appSettingService.get("MOBILE_VIEW_VERSION");
-    return mobileViewVersion??"v1";
+    const mobileViewVersion: string | undefined | null = await appSettingService.get("MOBILE_VIEW_VERSION");
+    return mobileViewVersion ?? "v1";
   }
 }
