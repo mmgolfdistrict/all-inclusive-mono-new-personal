@@ -1940,8 +1940,8 @@ export class SearchService extends CacheService {
         const filteredDate = [] as typeof priceAccordingToDate;
         priceAccordingToDate.forEach((el) => {
           if (
-            ((dayjs(el.toDayFormatted).isAfter(date) && dayjs(el.fromDayFormatted).isBefore(date)) ||
-              dayjs(date).isSame(dayjs(el.fromDayFormatted))) &&
+            ((dayjs.utc(el.toDayFormatted).isAfter(date) && dayjs.utc(el.fromDayFormatted).isBefore(date)) ||
+              dayjs(date).isSame(dayjs.utc(el.fromDayFormatted), 'day')) &&
             !filteredDate.length
           ) {
             filteredDate.push(el);
@@ -2032,6 +2032,7 @@ export class SearchService extends CacheService {
           }
 
           let pricePerGolfer: number;
+          let remainingPlayers = golferCount;
           if (groupBookingPriceSelectionMethod === "MAX") {
             pricePerGolfer = window.reduce((acc, teeTime) => {
               return Math.max(
@@ -2041,8 +2042,10 @@ export class SearchService extends CacheService {
             }, 0);
           } else if (groupBookingPriceSelectionMethod === "SUM") {
             const totalPrice = window.reduce((acc, teeTime) => {
+              const players = Math.min(remainingPlayers, teeTime.availableFirstHandSpots);
+              remainingPlayers -= players;
               return (
-                acc + (((teeTime.greenFeePerPlayer + teeTime.cartFeePerPlayer) / 100 + markupFeesToBeUsed) * teeTime.availableFirstHandSpots)
+                acc + (((teeTime.greenFeePerPlayer + teeTime.cartFeePerPlayer) / 100 + markupFeesToBeUsed) * players)
               );
             }, 0);
             pricePerGolfer = totalPrice / golferCount;
