@@ -88,6 +88,7 @@ function GroupBooking({ params }: { params: { course: string } }) {
 
   const handleSetStartTime = () => {
     setStartTime(localStartTime);
+    handleResetQueryResults();
   };
 
   const currentDate = dayjs().add(1, "day");
@@ -128,6 +129,8 @@ function GroupBooking({ params }: { params: { course: string } }) {
       if (data) {
         setTeeTimeData(data);
         document.getElementById('your-selection')?.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        setTeeTimeData(null);
       }
     } catch (error) {
       toast.error("Failed to get tee times");
@@ -139,16 +142,21 @@ function GroupBooking({ params }: { params: { course: string } }) {
     const datesToDisplay = dayjs(`${selectedDate.year ?? ""}-${selectedDate.month ?? ""}-${selectedDate.day ?? ""}`).format("MMM DD")
 
     setDisplayDates(datesToDisplay);
+    handleResetQueryResults();
   }, [selectedDate]);
 
   const handleSingleSliderChange = (value: number[]) => {
     if (value[0]) {
       setPlayers(value[0]);
+      handleResetQueryResults();
     } else {
       toast.error("Error selecting number of players");
     }
   };
 
+  const handleResetQueryResults = () => {
+    setTeeTimeData(null);
+  }
   return (
     <section className="mx-auto px-2 flex w-full flex-col gap-4 pt-4 md:max-w-[1360px] justify-center md:px-6">
       <div className="flex items-center justify-between px-4 md:px-6">
@@ -239,7 +247,7 @@ function GroupBooking({ params }: { params: { course: string } }) {
               <Input
                 readOnly
                 className="cursor-pointer text-ellipsis unmask-time"
-                label="Pick Date"
+                label="Select Your Date"
                 name="dates"
                 register={() => undefined}
                 value={displayDates}
@@ -262,7 +270,7 @@ function GroupBooking({ params }: { params: { course: string } }) {
                       width={24}
                       onClick={() => setIsDatePickerOpen(false)}
                     />
-                    <h1 className="text-[20px] md:text-2xl">Pick Date(s)</h1>
+                    <h1 className="text-[20px] md:text-2xl">Select Your Date</h1>
                     <p className="text-[14px] mb-4 md:text-md">
                       *Schedule your notifications for the rest of the year
                     </p>
@@ -339,7 +347,7 @@ function GroupBooking({ params }: { params: { course: string } }) {
             </div>
             <div className="">
               <label className="text-[14px] text-primary-gray">
-                {"Number of Players"}
+                {"Select Group Size"}
               </label>
               <div className="relative mt-2">
                 <div className="flex justify-between text-sm mb-2 ">

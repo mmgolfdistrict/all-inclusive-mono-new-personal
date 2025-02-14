@@ -165,6 +165,17 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
                   data-test={courseId}
                 />
               ) : null}
+              {course?.supportsGroupBooking ? (
+                <NavItem
+                  href={`/${courseId}/group-booking`}
+                  text="Group Booking"
+                  icon={<Megaphone className="w-[16px]" />}
+                  className="border-t border-stroke-secondary p-2 md:p-4"
+                  data-testid="group-booking-id"
+                  data-test={courseId}
+                  onClick={toggleSidebar}
+                />
+              ) : null}
               {course?.allowAuctions ? (
                 <NavItem
                   href={`/${courseId}/auctions`}

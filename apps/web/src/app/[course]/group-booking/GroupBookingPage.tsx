@@ -91,6 +91,8 @@ const GroupBookingPage = ({ teeTimesData, isTeeTimesLoading, playerCount }: {
   useEffect(() => {
     if (teeTimesData) {
       setTeeTimeGroup(teeTimesData[0]);
+    } else {
+      setOtherTeeTimeGroups(null);
     }
   }, [teeTimesData]);
 
@@ -111,6 +113,8 @@ const GroupBookingPage = ({ teeTimesData, isTeeTimesLoading, playerCount }: {
       }
       const otherTeeTimes = Object.keys(firstTeeTimesPerHour).sort().map((key) => firstTeeTimesPerHour[key] as TeeTimeGroup);
       setOtherTeeTimeGroups(otherTeeTimes);
+    } else {
+      setOtherTeeTimeGroups(null);
     }
   }, [teeTimesData]);
 
@@ -123,7 +127,7 @@ const GroupBookingPage = ({ teeTimesData, isTeeTimesLoading, playerCount }: {
       </LoadingContainer>
       <div id="your-selection" className="relative flex items-center justify-between md:mb-2">
         <h1 className="text-[20px] capitalize text-secondary-black md:text-[32px] flex items-center gap-6">
-          Your Selection
+          Earliest Available Time
         </h1>
         {otherTeeTimeGroups && otherTeeTimeGroups.length > 0 ? <div>
           <div className="flex flex-col item-start gap-2 lg:flex-row lg:items-center lg:gap-4 text-primary-gray text-[12px] md:text-[16px] ">
@@ -168,35 +172,42 @@ const GroupBookingPage = ({ teeTimesData, isTeeTimesLoading, playerCount }: {
 
                   {/* Group booking Items */}
                   <div className="flex flex-row h-[100%] gap-4 overflow-x-auto ">
-                        <div key={teeTimeGroup.teeTimeIds.toString()} className="bg-white p-3 rounded-xl max-w-[280px] min-w-[280px] md:max-w-none md:w-[300px] flex flex-col text-[12px] md:text-[16px] text-secondary-black cursor-pointer">
-                          {/* First Row */}
-                          <div className="flex flex-row justify-between items-center unmask-time">
-                            <div className="font-semibold text-[16px] md:text-[20px] unmask-time">
-                              {getTime(teeTimeGroup.date, timezoneCorrection)}
-                            </div>
-                          </div>
+                    <div key={teeTimeGroup.teeTimeIds.toString()} className="bg-white p-3 rounded-xl max-w-[280px] min-w-[280px] md:max-w-none md:w-[300px] flex flex-col text-[12px] md:text-[16px] text-secondary-black cursor-pointer">
+                      {/* First Row */}
+                      <div className="flex flex-row justify-between items-center unmask-time">
+                        <div className="font-semibold text-[16px] md:text-[20px] unmask-time">
+                          {getTime(teeTimeGroup.date, timezoneCorrection)}
+                        </div>
+                      </div>
 
-                          {/* Second Row */}
-                          <div className="flex flex-row items-center gap-1 mt-2">
-                            <div className="text-[14px] md:text-[16px] font-semibold text-secondary-black">
-                              {formatMoney(teeTimeGroup.pricePerGolfer)}
-                            </div>
-                            <div className="text-[12px] md:text-[14px] text-primary-gray">
-                              /golfer
-                            </div>
-                          </div>
+                      {/* Second Row */}
+                      <div className="flex flex-row items-center gap-1 mt-2">
+                        <div className="text-[12px] md:text-[14px] text-primary-gray">
+                          Avg. Price
+                        </div>
+                        <div className="text-[14px] md:text-[16px] font-semibold text-secondary-black" >
+                          {formatMoney(teeTimeGroup.pricePerGolfer)}
+                        </div>
+                      </div >
 
-                          {/* Third Row */}
-                          <div className="mt-2 w-full mb-4">
-                            <FilledButton
-                              className="whitespace-nowrap !min-w-[82px] md:min-w-[110px] !py-[.28rem] md:py-1.5 w-full"
-                              data-testid="buy-tee-time-id"
-                              data-qa="Buy"
-                              onClick={() => buyTeeTimeGroup(teeTimeGroup)}
-                            >
-                              Buy
-                            </FilledButton>
-                          </div>
+                      {/* Third Row */}
+                      <div>
+                        <div className="text-[14px] md:text-[16px] font-semibold text-secondary-black" >
+                          {playerCount} Players
+                        </div>
+                      </div >
+
+                      {/* Fourth Row */}
+                      <div className="mt-2 w-full mb-4">
+                        <FilledButton
+                          className="whitespace-nowrap !min-w-[82px] md:min-w-[110px] !py-[.28rem] md:py-1.5 w-full"
+                          data-testid="buy-tee-time-id"
+                          data-qa="Buy"
+                          onClick={() => buyTeeTimeGroup(teeTimeGroup)}
+                        >
+                          Buy
+                        </FilledButton>
+                      </div>
                     </div>
                   </div>
                 </div>
