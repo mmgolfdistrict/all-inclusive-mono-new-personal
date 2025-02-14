@@ -5,6 +5,7 @@ import {
 import { WeatherIcons } from "~/constants/weather-icons";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useFiltersContext } from "~/contexts/FiltersContext";
+import { useDraggableScroll } from "~/hooks/useDraggableScroll";
 import { api } from "~/utils/api";
 import { dayMonthDate } from "~/utils/formatters";
 import { useEffect, useRef } from "react";
@@ -32,6 +33,9 @@ export const DailyTeeTimes = ({
 }) => {
   const overflowRef = useRef<HTMLDivElement>(null);
   const nextPageRef = useRef<HTMLDivElement>(null);
+  const { onMouseDown } = useDraggableScroll(overflowRef, {
+    direction: "horizontal",
+  });
 
   const entry = useIntersectionObserver(nextPageRef, {});
   const isVisible = !!entry?.isIntersecting;
@@ -245,6 +249,7 @@ export const DailyTeeTimes = ({
         <div
           className="scrollbar-none w-full flex overflow-x-auto overflow-y-hidden gap-4"
           ref={overflowRef}
+          onMouseDown={onMouseDown}
           style={{
             scrollSnapType: "x mandatory",
             scrollBehavior: "smooth", // Ensures smooth scrolling behavior
