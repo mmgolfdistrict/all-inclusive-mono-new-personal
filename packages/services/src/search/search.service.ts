@@ -1978,8 +1978,6 @@ export class SearchService extends CacheService {
             throw new Error("Error fetching tee times");
           });
 
-        console.log("TeeTimeResponse: ", teeTimesResponse);
-
         let minTimeGapBetweenTwoTeeTimes = Number.MAX_VALUE;
         for (let i = 0; i < teeTimesResponse.length - 1; i++) {
           const currentTeeTime = teeTimesResponse[i];
@@ -2051,10 +2049,6 @@ export class SearchService extends CacheService {
           } else {
             throw new Error("Invalid groupBookingPriceSelectionMethod");
           }
-
-          console.log("areSpotsAvailable", areSpotsAvailable);
-          console.log("isContinuous", isContinuous);
-          console.log("window", window);
 
           if (areSpotsAvailable && isContinuous) {
             availableTimes.push({
