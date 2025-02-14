@@ -2,8 +2,28 @@ import { Auth } from "@auth/core";
 import GitHubProvider from "@auth/core/providers/github";
 import GoogleProvider from "@auth/core/providers/google";
 import LinkedInProvider from "@auth/core/providers/linkedin";
+import AppleProvider from "@auth/core/providers/apple";
 import { eventHandler, toWebRequest } from "h3";
+import { SignJWT } from "jose";
+import { createPrivateKey } from "crypto";
 
+async function generateAppleClientSecret(): Promise<string> {
+  const teamId = process.env.APPLE_TEAM_ID as string;
+  const clientId = process.env.APPLE_CLIENT_ID as string;
+  const keyId = process.env.APPLE_KEY_ID as string;
+  const privateKey = process.env.APPLE_PRIVATE_KEY as string;
+
+  const expirationTime = Math.floor(Date.now() / 1000) + 86400 * 180;
+
+  return new SignJWT({})
+    .setIssuer(teamId)
+    .setSubject(clientId)
+    .setAudience("https://appleid.apple.com")
+    .setExpirationTime(expirationTime)
+    .setIssuedAt()
+    .setProtectedHeader({ alg: "ES256", kid: keyId })
+    .sign(createPrivateKey(privateKey.replace(/\\n/g, "\n")));
+}
 export default eventHandler(async (event) =>
   Auth(toWebRequest(event), {
     secret: process.env.AUTH_SECRET,
@@ -13,6 +33,7 @@ export default eventHandler(async (event) =>
       GoogleProvider({
         clientId: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        allowDangerousEmailAccountLinking: true,
       }),
       GitHubProvider({
         clientId: process.env.AUTH_GITHUB_ID,
@@ -35,6 +56,10 @@ export default eventHandler(async (event) =>
             image: profile.picture ?? defaultImage,
           };
         },
+      }),
+      AppleProvider({
+        clientId: process.env.APPLE_CLIENT_ID,
+        clientSecret: process.env.APPLE_CLIENT_SECRET as string,
       }),
     ],
   })

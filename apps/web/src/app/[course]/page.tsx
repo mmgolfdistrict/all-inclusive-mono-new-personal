@@ -491,6 +491,7 @@ export default function CourseHomePage() {
       localStorage.removeItem("credentials");
       localStorage.removeItem("linkedinstate");
       localStorage.removeItem("facebookstate");
+      localStorage.removeItem("applestate");
 
       microsoftClarityEvent({
         action: ``,

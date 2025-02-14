@@ -50,10 +50,12 @@ export default function Login() {
   const [localstorageCredentials, setLocalStorageCredentials] = useState("");
   const [localstorageLinkedin, setLocalStorageLinkedin] = useState("");
   const [localstorageFacebook, setLocalStorageFacebook] = useState("");
+  const [localstorageApple, setLocalStorageApple] = useState("");
   const [googleIsLoading, setGoogleIsLoading] = useState(false);
   const [hasSessionLogged, setHasSessionLogged] = useState(false);
   const [linkedinIsLoading, setLinkedinIsLoading] = useState(false);
   const [facebookIsLoading, setFacebookIsLoading] = useState(false);
+  const [appleIsLoading, setAppleIsLoading] = useState(false);
   const auditLog = api.webhooks.auditLog.useMutation();
   const addUserSession = api.user.addUserSession.useMutation();
   const addCourseUser = api.user.addCourseUser.useMutation();
@@ -304,18 +306,21 @@ export default function Login() {
   };
 
   const appleSignIn = async () => {
-    const res = await signIn("apple", {
-      callbackUrl: `${window.location.origin}${
-        GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
-          ? prevPath?.path
-            ? prevPath.path
+    try {
+      setAppleIsLoading(true);
+      await signIn("apple", {
+        callbackUrl: `${window.location.origin}${
+          GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+            ? prevPath?.path
+              ? prevPath.path
+              : "/"
             : "/"
-          : "/"
-      }`,
-      redirect: true,
-    });
-    if (!res?.error) {
-      localStorage.setItem("loginMethod", "APPLE");
+        }`,
+        redirect: true,
+      });
+      localStorage.setItem("applestate", "loggedin");
+    } catch (error) {
+      console.log(error, "error");
     }
   };
 
@@ -405,9 +410,20 @@ export default function Login() {
       setLocalStorageFacebook(localStorage.getItem("facebookstate") || "");
     }
   }, []);
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const appleLocalStorage = localStorage.getItem("applestate") ?? "";
+      setLocalStorageApple(appleLocalStorage);
+    }
+    setTimeout(() => {
+      setLocalStorageApple("");
+      localStorage.removeItem("applestate");
+    }, 3000);
+  }, []);
   return isLoading ||
     localStorageGoogle ||
     localstorageLinkedin ||
+    localstorageApple ||
     localstorageFacebook ||
     authenticationMethodsLoading ? (
     <LoadingContainer isLoading={true}>
@@ -485,14 +501,22 @@ export default function Login() {
           </div>
         ) : null}
         {isMethodSupported(AuthenticationMethodEnum.APPLE) &&
-        process.env.NEXT_PUBLIC_APPLE_ID ? (
+        process.env.NEXT_PUBLIC_AUTH_APPLE_CLIENT_ID ? (
           <SquareButton
             onClick={appleSignIn}
             className="flex items-center justify-center gap-3 bg-black text-white"
             data-testid="login-with-apple-id"
           >
-            <Apple className="w-[24px]" />
-            Log In with Apple
+            {appleIsLoading || localstorageApple ? (
+              <div className="w-10 h-10">
+                <Spinner />
+              </div>
+            ) : (
+              <Fragment>
+                <Apple className="w-[24px]" />
+                Log In with Apple
+              </Fragment>
+            )}
           </SquareButton>
         ) : null}
         {isMethodSupported(AuthenticationMethodEnum.FACEBOOK) &&
