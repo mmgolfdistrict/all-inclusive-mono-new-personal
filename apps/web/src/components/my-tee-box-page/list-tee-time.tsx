@@ -26,6 +26,7 @@ import { Info } from "../icons/info";
 import { Players } from "../icons/players";
 import { Tooltip } from "../tooltip";
 import { type OwnedTeeTime } from "./owned";
+import { SingleSlider } from "../input/single-slider";
 
 type PlayerType = "1" | "2" | "3" | "4";
 
@@ -52,6 +53,8 @@ export const ListTeeTime = ({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [sellerServiceFee, setSellerServiceFee] = useState<number>(0);
   const [players, setPlayers] = useState<string>(
+    selectedTeeTime?.isGroupBooking ?
+      "2" : 
     selectedTeeTime?.selectedSlotsCount || availableSlots.toString()
   );
   const { toggleSidebar } = useSidebar({
@@ -59,6 +62,7 @@ export const ListTeeTime = ({
     setIsOpen: setIsListTeeTimeOpen,
   });
   const sell = api.teeBox.createListingForBookings.useMutation();
+  const sellGroup = api.teeBox.createListingForGroupBookings.useMutation();
   const canResell = api.teeBox.checkIfUserIsOptMemberShip.useMutation();
   const router = useRouter();
   const { course } = useCourseContext();
@@ -93,7 +97,10 @@ export const ListTeeTime = ({
 
   useEffect(() => {
     const slots = selectedTeeTime?.golfers.length || 0;
-    setPlayers(selectedTeeTime?.selectedSlotsCount || slots.toString());
+    setPlayers(
+      selectedTeeTime?.isGroupBooking ? "2" :
+        selectedTeeTime?.selectedSlotsCount || slots.toString()
+    );
   }, [selectedTeeTime?.selectedSlotsCount, selectedTeeTime?.golfers]);
 
   useEffect(() => {
@@ -124,6 +131,14 @@ export const ListTeeTime = ({
 
     const strippedLeadingZeros = value.replace(/^0+/, "");
     setListingPrice(Number(strippedLeadingZeros));
+  };
+
+  const handleSingleSliderChange = (value: number[]) => {
+    if (value[0]) {
+      setPlayers(value[0].toString());
+    } else {
+      toast.error("Error selecting number of players");
+    }
   };
 
   const totalPayout = useMemo(() => {
@@ -212,12 +227,21 @@ export const ListTeeTime = ({
       return;
     }
     try {
-      await sell.mutateAsync({
-        bookingIds: selectedTeeTime?.bookingIds.slice(0, parseInt(players)),
-        listPrice: listingPrice,
-        endTime: new Date(selectedTeeTime?.date),
-        slots: parseInt(players),
-      });
+      if (selectedTeeTime?.isGroupBooking) {
+        await sellGroup.mutateAsync({
+          groupId: selectedTeeTime?.groupId,
+          listPrice: listingPrice,
+          endTime: new Date(selectedTeeTime?.date),
+          slots: parseInt(players),
+        })
+      } else {
+        await sell.mutateAsync({
+          bookingIds: selectedTeeTime?.bookingIds.slice(0, parseInt(players)),
+          listPrice: listingPrice,
+          endTime: new Date(selectedTeeTime?.date),
+          slots: parseInt(players),
+        });
+      }
       toast.success(
         <div className="flex flex-col ">
           <div>Your tee time has been listed.</div>
@@ -333,6 +357,7 @@ export const ListTeeTime = ({
                 >
                   Select number of spots to list
                 </label>
+                {!selectedTeeTime?.isGroupBooking ? 
                 <ToggleGroup.Root
                   id="spots"
                   type="single"
@@ -366,7 +391,18 @@ export const ListTeeTime = ({
                       label={value}
                     />
                   ))}
-                </ToggleGroup.Root>
+                  </ToggleGroup.Root> 
+                  :
+                  <SingleSlider
+                    min={1}
+                    max={selectedTeeTime?.golfers.length || 0}
+                    step={1}
+                    onValueChange={(value) => handleSingleSliderChange(value)}
+                    aria-label="Select number of players"
+                    data-testid="slider-number-of-players"
+                    value={[Number(players)]}
+                    shouldDisplayValue={true}
+                  />}
               </div>
               <div className="bg-secondary-white">
                 If you purchased weather protection, you will receive a full

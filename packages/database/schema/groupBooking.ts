@@ -1,5 +1,5 @@
 import { relations, sql } from "drizzle-orm";
-import { datetime, index, varchar } from "drizzle-orm/mysql-core";
+import { boolean, datetime, index, int, tinyint, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 import { courses } from "./courses";
 
@@ -16,6 +16,9 @@ export const groupBookings = mySqlTable(
     lastUpdatedDateTime: datetime("lastUpdatedDateTime", { mode: "string", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)`)
       .notNull(),
+    listPricePerGolfer: int("listPricePerGolfer").notNull().default(0),
+    isListed: boolean("isListed").default(false).notNull(),
+    listSlots: tinyint("listSlots").notNull().default(0),
   },
   (table) => {
     return {

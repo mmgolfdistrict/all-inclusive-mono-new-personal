@@ -47,7 +47,7 @@ export const Confirmation = ({
               <span>Loading ...</span>
             ) : (
               <>
-                  {bookingData?.providerId?.length && !isGroupBooking ? (
+                  {bookingData?.providerId?.length ? (
                   <div style={{ paddingBottom: "5px" }}>
                     <span style={{ fontWeight: 500 }}>
                       Course Reservation ID
@@ -55,7 +55,8 @@ export const Confirmation = ({
                     <span style={{ margin: "0 15px" }}>:</span>
                     <span>{bookingData?.providerId}</span>
                   </div>
-                  ) : (
+                  ) : (isGroupBooking
+                    ? (
                     <div style={{ paddingBottom: "5px" }}>
                       <span style={{ fontWeight: 500 }}>
                         Player Count
@@ -63,7 +64,8 @@ export const Confirmation = ({
                       <span style={{ margin: "0 15px" }}>:</span>
                       <span>{bookingData?.playerCount}</span>
                     </div>
-                  )}
+                    )
+                    : null)}
 
                 <div style={{ paddingBottom: "20px" }}>
                   <span style={{ fontWeight: 500 }}>Play Time</span>

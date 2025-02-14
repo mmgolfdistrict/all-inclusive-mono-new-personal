@@ -311,6 +311,7 @@ export class SearchService extends CacheService {
           extension: assets.extension,
         },
         cartFee: bookings.cartFeePerPlayer,
+        groupId: bookings.groupId,
       })
       .from(bookings)
       .leftJoin(users, eq(users.id, bookings.ownerId))
@@ -369,6 +370,7 @@ export class SearchService extends CacheService {
         return booking.id;
       }),
       weather: weather ? weather : null,
+      groupId: firstBooking.groupId,
     };
     return res;
   };
@@ -408,6 +410,7 @@ export class SearchService extends CacheService {
           extension: assets.extension,
         },
         minimumOfferPrice: bookings.minimumOfferPrice,
+        groupId: bookings.groupId,
       })
       .from(lists)
       .where(eq(lists.id, listingId))
@@ -444,6 +447,7 @@ export class SearchService extends CacheService {
       weather,
       minimumOfferPrice: firstBooking?.minimumOfferPrice ?? 0,
       ownerId: firstBooking.ownerId,
+      groupId: firstBooking.groupId ?? "",
     };
     return res;
   };
@@ -1538,6 +1542,7 @@ export class SearchService extends CacheService {
           key: assets.key,
           extension: assets.extension,
         },
+        groupId: bookings.groupId
       })
       .from(bookings)
       .leftJoin(users, eq(users.id, bookings.ownerId))
@@ -1610,6 +1615,7 @@ export class SearchService extends CacheService {
               listingId: booking.listingId ?? undefined,
               listedSlots: booking.listedSlots,
               isOwned: true,
+              groupId: booking?.groupId ?? ""
             };
           } else {
             // @ts-expect-error

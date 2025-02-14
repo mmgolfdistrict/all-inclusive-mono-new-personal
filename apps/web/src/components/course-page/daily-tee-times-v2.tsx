@@ -293,6 +293,7 @@ export const DailyTeeTimesV2 = ({
                   listedSlots={i?.listedSlots}
                   handleLoading={handleLoading}
                   refetch={refetch}
+                  groupId={i?.groupId}
                 />
               );
             }

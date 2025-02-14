@@ -51,6 +51,7 @@ export const TeeTime = ({
   listedSlots,
   handleLoading,
   refetch,
+  groupId
 }: {
   time: string;
   items: CombinedObject | BookingGroup;
@@ -76,6 +77,7 @@ export const TeeTime = ({
   listedSlots?: number | null;
   handleLoading?: (val: boolean) => void;
   refetch?: () => Promise<unknown>;
+    groupId?: string;
 }) => {
   const [, copy] = useCopyToClipboard();
   const [isCopied, setIsCopied] = useState<boolean>(false);
@@ -530,6 +532,7 @@ export const TeeTime = ({
               ) as string[],
               teeTimeId: teeTimeId,
               listedSlotsCount: listedSlots ?? 1,
+              groupId: groupId ?? "",
             }}
             refetch={refetch}
           />

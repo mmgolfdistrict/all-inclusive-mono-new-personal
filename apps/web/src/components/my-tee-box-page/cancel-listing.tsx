@@ -22,6 +22,8 @@ type SideBarProps = {
   golferCount: number | undefined;
   pricePerGolfer: number | undefined;
   listingId: string | undefined;
+  isGroupBooking: boolean | undefined;
+  groupBookingId: string | undefined;
   refetch?: () => Promise<unknown>;
   needRedirect?: boolean;
 };
@@ -35,6 +37,8 @@ export const CancelListing = ({
   golferCount,
   pricePerGolfer,
   listingId,
+  isGroupBooking,
+  groupBookingId,
   refetch,
   needRedirect,
 }: SideBarProps) => {
@@ -44,6 +48,7 @@ export const CancelListing = ({
   });
 
   const cancel = api.teeBox.cancelListing.useMutation();
+  const cancelGroupListing = api.teeBox.cancelGroupListing.useMutation();
 
   const router = useRouter();
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -71,9 +76,15 @@ export const CancelListing = ({
     }
     setIsLoading(true);
     try {
-      await cancel.mutateAsync({
-        listingId: listingId,
-      });
+      if (isGroupBooking) {
+        await cancelGroupListing.mutateAsync({
+          groupId: groupBookingId ?? ""
+        })
+      } else {
+        await cancel.mutateAsync({
+          listingId: listingId,
+        });
+      }
       await refetch?.();
       toast.success("Listing cancelled successfully");
       setIsCancelListingOpen(false);

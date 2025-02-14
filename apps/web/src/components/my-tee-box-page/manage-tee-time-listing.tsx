@@ -82,6 +82,7 @@ export const ManageTeeTimeListing = ({
 
   const manageListing = api.teeBox.updateListing.useMutation();
   const cancel = api.teeBox.cancelListing.useMutation();
+  const cancelGroupListing = api.teeBox.cancelGroupListing.useMutation();
   const auditLog = api.webhooks.auditLog.useMutation();
   const { user } = useUserContext();
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -103,9 +104,15 @@ export const ManageTeeTimeListing = ({
     }
     setIsLoading(true);
     try {
-      await cancel.mutateAsync({
-        listingId: selectedTeeTime?.listingId,
-      });
+      if (selectedTeeTime?.groupId) {
+        await cancelGroupListing.mutateAsync({
+          groupId: selectedTeeTime?.groupId ?? ""
+        })
+      } else {
+        await cancel.mutateAsync({
+          listingId: selectedTeeTime?.listingId,
+        });
+      }
       await refetch?.();
       toast.success("Listing cancelled successfully");
       setIsManageTeeTimeListingOpen(false);
@@ -414,6 +421,8 @@ export const ManageTeeTimeListing = ({
           selectedTeeTime?.listPrice ? selectedTeeTime?.listPrice / 100 : 0
         }
         listingId={selectedTeeTime?.listingId ?? undefined}
+        isGroupBooking={selectedTeeTime?.groupId ? true : false}
+        groupBookingId={selectedTeeTime?.groupId ?? undefined}
         refetch={refetch}
         needRedirect={needRedirect}
       />
