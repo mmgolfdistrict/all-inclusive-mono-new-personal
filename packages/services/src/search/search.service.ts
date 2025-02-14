@@ -1887,14 +1887,6 @@ export class SearchService extends CacheService {
     }
   };
 
-  /*
-    startTime = 1200,
-    endTime = 1500,
-    dates = ["2025-01-29", "2025-01-30"],
-    golferCount = 11,
-    courseId = "5df5581f-6e5c-49af-a360-a7c9fd733f22",
-    minimumGolferGroup = 4
-  */
   getAvailableTimesForGroupedBookings = async (
     startTime: number,
     endTime: number,
@@ -1986,6 +1978,8 @@ export class SearchService extends CacheService {
             throw new Error("Error fetching tee times");
           });
 
+        console.log("TeeTimeResponse: ", teeTimesResponse);
+
         let minTimeGapBetweenTwoTeeTimes = Number.MAX_VALUE;
         for (let i = 0; i < teeTimesResponse.length - 1; i++) {
           const currentTeeTime = teeTimesResponse[i];
@@ -1994,7 +1988,8 @@ export class SearchService extends CacheService {
           if (!currentTeeTime || !nextTeeTime) {
             continue;
           }
-          const timeGap = nextTeeTime?.time - currentTeeTime?.time;
+          const timeGap = dayjs(nextTeeTime?.providerDate).diff(dayjs(currentTeeTime?.providerDate), "minute");
+
           if (timeGap < minTimeGapBetweenTwoTeeTimes && timeGap > 0) {
             minTimeGapBetweenTwoTeeTimes = timeGap;
           }
@@ -2024,10 +2019,12 @@ export class SearchService extends CacheService {
           for (let i = 0; i < window.length - 1; i++) {
             const currentTeeTime = window[i];
             const nextTeeTime = window[i + 1];
+
+            const timeGap = dayjs(nextTeeTime?.providerDate).diff(dayjs(currentTeeTime?.providerDate), "minute");
             if (
               nextTeeTime &&
               currentTeeTime &&
-              nextTeeTime.time - currentTeeTime.time === minTimeGapBetweenTwoTeeTimes
+              timeGap === minTimeGapBetweenTwoTeeTimes
             ) {
               continue;
             } else {
@@ -2047,13 +2044,17 @@ export class SearchService extends CacheService {
           } else if (groupBookingPriceSelectionMethod === "SUM") {
             const totalPrice = window.reduce((acc, teeTime) => {
               return (
-                acc + ((teeTime.greenFeePerPlayer + teeTime.cartFeePerPlayer) / 100 + markupFeesToBeUsed)
+                acc + (((teeTime.greenFeePerPlayer + teeTime.cartFeePerPlayer) / 100 + markupFeesToBeUsed) * teeTime.availableFirstHandSpots)
               );
             }, 0);
             pricePerGolfer = totalPrice / golferCount;
           } else {
             throw new Error("Invalid groupBookingPriceSelectionMethod");
           }
+
+          console.log("areSpotsAvailable", areSpotsAvailable);
+          console.log("isContinuous", isContinuous);
+          console.log("window", window);
 
           if (areSpotsAvailable && isContinuous) {
             availableTimes.push({
