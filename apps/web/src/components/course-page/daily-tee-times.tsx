@@ -1,5 +1,4 @@
 import {
-  TeeTimeType,
   type CombinedObject,
   type NotificationObject,
 } from "@golf-district/shared";
@@ -10,7 +9,6 @@ import { api } from "~/utils/api";
 import { dayMonthDate } from "~/utils/formatters";
 import { useEffect, useRef } from "react";
 import { useElementSize, useIntersectionObserver } from "usehooks-ts";
-import { useDraggableScroll } from "../../hooks/useDraggableScroll";
 import { TeeTime } from "../cards/tee-time";
 import { Info } from "../icons/info";
 import { LeftChevron } from "../icons/left-chevron";
@@ -34,15 +32,11 @@ export const DailyTeeTimes = ({
 }) => {
   const overflowRef = useRef<HTMLDivElement>(null);
   const nextPageRef = useRef<HTMLDivElement>(null);
-  const { onMouseDown } = useDraggableScroll(overflowRef, {
-    direction: "horizontal",
-  });
 
   const entry = useIntersectionObserver(nextPageRef, {});
   const isVisible = !!entry?.isIntersecting;
-  const [sizeRef, { width = 0 }] = useElementSize();
+  const [sizeRef] = useElementSize();
   const { course } = useCourseContext();
-  const courseId = course?.id;
 
   const {
     showUnlisted,
@@ -55,15 +49,6 @@ export const DailyTeeTimes = ({
   } = useFiltersContext();
   const teeTimeStartTime = startTime[0];
   const teeTimeEndTime = startTime[1];
-
-  const { data: allowedPlayers } =
-    api.course.getNumberOfPlayersByCourse.useQuery({
-      courseId: courseId ?? "",
-    });
-
-  const numberOfPlayers = allowedPlayers?.numberOfPlayers[0];
-
-  const playersCount = numberOfPlayers ? Number(numberOfPlayers) : 0;
 
   const { data: weather, isLoading: isLoadingWeather } =
     api.searchRouter.getWeatherForDay.useQuery(
@@ -133,25 +118,32 @@ export const DailyTeeTimes = ({
   const allTeeTimes =
     teeTimeData?.pages[teeTimeData?.pages?.length - 1]?.results ?? [];
 
-  const scrollRight = async () => {
-    if (!isLoading) {
-      await fetchNextPage();
+  const isScrolling = useRef(false);
+
+  const scrollCarousel = (direction: "left" | "right") => {
+    const container = overflowRef.current;
+    if (!container) return;
+
+    const boxWidth = 265; // need to change when card width changes
+    const containerWidth = container.clientWidth;
+
+    const visibleCount = Math.floor(containerWidth / (boxWidth + 16));
+    const scrollAmount = visibleCount * (boxWidth + 16);
+
+    if (direction === "right") {
+      container.classList.add("scroll-smooth");
+      container.scrollBy({ left: scrollAmount, behavior: "smooth" });
+      setTimeout(() => {
+        isScrolling.current = false;
+      }, 500);
+    } else {
+      container.classList.add("scroll-smooth");
+      container.scrollBy({ left: -scrollAmount, behavior: "smooth" });
     }
-    const boxWidth = overflowRef.current?.children[0]?.clientWidth || 265;
-
-    const getScrollWidth = () => {
-      if (width < 700) {
-        return boxWidth * 3 + 16 * 3;
-      }
-      return boxWidth * 4 + 16 * 4;
-    };
-
-    overflowRef.current?.classList.add("scroll-smooth");
-    overflowRef.current?.scrollBy({
-      left: getScrollWidth(),
-    });
-    overflowRef.current?.classList.remove("scroll-smooth");
   };
+
+  const scrollRight = () => scrollCarousel("right");
+  const scrollLeft = () => scrollCarousel("left");
 
   const getNextPage = async () => {
     if (!isLoading && !isFetchingNextPage) {
@@ -165,37 +157,11 @@ export const DailyTeeTimes = ({
     }
   }, [isVisible]);
 
-  const scrollLeft = (scrollWidth = 0) => {
-    const boxWidth = overflowRef.current?.children[0]?.clientWidth || 265;
-    const getScrollWidth = () => {
-      if (width < 700) {
-        return boxWidth * 2 + 16 * 2;
-      }
-      return boxWidth * 3 + 16 * 3;
-    };
-
-    overflowRef.current?.classList.add("scroll-smooth");
-    overflowRef.current?.scrollBy({
-      left: -`${scrollWidth > 0 ? scrollWidth : getScrollWidth()}`,
-    });
-    overflowRef.current?.classList.remove("scroll-smooth");
-  };
-
-  useEffect(() => {
-    scrollLeft(width);
-  }, [isLoading]);
-
   const getTextColor = (type) => {
     if (type === "FAILURE") return "red";
     if (type === "SUCCESS") return "primary";
     if (type === "WARNING") return "primary-gray";
   };
-
-  // const getIconForException = (type) => {
-  //   if (type === "FAILURE") return <Error className="h-[20px] w-[20px] " />;
-  //   if (type === "SUCCESS") return <Success className="h-[20px] w-[20px] " />;
-  //   if (type === "WARNING") return <Warning className="h-[20px] w-[20px] " />;
-  // };
 
   if (!isLoading && isFetchedAfterMount && allTeeTimes.length === 0) {
     return null;
@@ -279,14 +245,32 @@ export const DailyTeeTimes = ({
         <div
           className="scrollbar-none w-full flex overflow-x-auto overflow-y-hidden gap-4"
           ref={overflowRef}
-          onMouseDown={onMouseDown}
+          style={{
+            scrollSnapType: "x mandatory",
+            scrollBehavior: "smooth", // Ensures smooth scrolling behavior
+          }}
         >
-          {allTeeTimes?.map((i: CombinedObject, idx: number) => {
-            if (
-              i.firstOrSecondHandTeeTime === TeeTimeType.SECOND_HAND ||
-              i.availableSlots >= playersCount
-            ) {
-              return (
+          <ul
+            style={{
+              position: "relative",
+              display: "flex",
+              margin: "0px",
+              padding: "0px",
+              listStyle: "none",
+              overflowY: "visible",
+              scrollbarWidth: "none",
+              scrollSnapType: "x mandatory", // Makes sure items snap to center
+              scrollMarginInlineStart: "2.5em", // Optional margin at the start of scroll
+            }}
+          >
+            {allTeeTimes?.map((i: CombinedObject, idx: number) => (
+              <li
+                key={idx}
+                style={{
+                  scrollSnapAlign: "start",
+                  paddingRight: "16px",
+                }}
+              >
                 <TeeTime
                   time={i.date}
                   key={idx}
@@ -312,23 +296,21 @@ export const DailyTeeTimes = ({
                   refetch={refetch}
                   groupId={i?.groupId}
                 />
-              );
-            }
-            return null;
-          })}
+              </li>
+            ))}
+            <div
+              ref={nextPageRef}
+              className="h-[50px] w-[1px] text-[1px] text-white"
+            >
+              Loading
+            </div>
 
-          <div
-            ref={nextPageRef}
-            className="h-[50px] w-[1px] text-[1px] text-white"
-          >
-            Loading
-          </div>
-
-          {isLoading || isFetchingNextPage || !isFetchedAfterMount
-            ? Array(TAKE)
-                .fill(null)
-                .map((_, idx) => <TeeTimeSkeleton key={idx} />)
-            : null}
+            {isLoading || isFetchingNextPage || !isFetchedAfterMount
+              ? Array(TAKE)
+                  .fill(null)
+                  .map((_, idx) => <TeeTimeSkeleton key={idx} />)
+              : null}
+          </ul>
         </div>
 
         <div className="absolute z-[2] hidden md:block top-1/2 -translate-y-1/2 flex items-center justify-center -right-1 md:-right-6">
