@@ -243,7 +243,7 @@ function GroupBooking({ params }: { params: { course: string } }) {
           </h2>
           <hr />
           <div className="grid grid-rows-3 md:grid-rows-3 lg:grid-rows-3 gap-4 px-4 py-2 md:px-8 md:py-6 items-center">
-            <div className="">
+            <div className="" id="pick-date-field">
               <Input
                 readOnly
                 className="cursor-pointer text-ellipsis unmask-time"
@@ -291,7 +291,7 @@ function GroupBooking({ params }: { params: { course: string } }) {
                 </>
               )}
             </div>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2" id="pick-start-time-field">
               <div className="flex items-center justify-between">
                 <label className="text-[14px] text-primary-gray" htmlFor="time-range">
                   Select Ideal Start Time
@@ -345,7 +345,7 @@ function GroupBooking({ params }: { params: { course: string } }) {
                 />
               </section>
             </div>
-            <div className="">
+            <div className="" id="pick-number-of-players-field">
               <label className="text-[14px] text-primary-gray">
                 {"Select Group Size"}
               </label>
@@ -375,6 +375,7 @@ function GroupBooking({ params }: { params: { course: string } }) {
             </div>
           </div>
           <FilledButton
+            id="see-available-times"
             onClick={handleSubmit}
             className="flex items-center justify-center gap-1 max-w-[200px] w-full mt-4 self-center py-[.28rem] md:py-1.5 text-[10px] md:text-[14px] disabled:opacity-50 transition-opacity duration-300"
             disabled={isTeeTimesLoading || !displayDates}
