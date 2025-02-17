@@ -9,9 +9,9 @@ import dayjs from "dayjs";
 import isequal from "lodash.isequal";
 // import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 import { Spinner } from "../loading/spinner";
 import { CheckoutForm } from "./checkout-form";
-import { toast } from "react-toastify";
 
 export type NextAction = {
   type?: string;
@@ -49,6 +49,7 @@ export const HyperSwitch = ({
   setIsLoading,
   playerCount,
   teeTimeData,
+  isAppleWidgetReload,
 }: // maxReservation,
 {
   cartData: CartProduct[];
@@ -59,10 +60,11 @@ export const HyperSwitch = ({
   setIsLoading?: (isLoading: boolean) => void;
   playerCount: string | undefined;
   teeTimeData: SearchObject | null | undefined;
+  isAppleWidgetReload?: boolean;
   // maxReservation: MaxReservationResponse;
 }) => {
-  const { amountOfPlayers } = useCheckoutContext();
-
+  const { amountOfPlayers, shouldAddSensible } = useCheckoutContext();
+  const [showCheckout, setShowCheckout] = useState(true);
   const [options, setOptions] = useState<Options | undefined>(undefined);
   const { user } = useUserContext();
   const { course } = useCourseContext();
@@ -175,6 +177,22 @@ export const HyperSwitch = ({
       setError("Session timed out. Please try again.");
     }
   }, [err]);
+  const reloadCheckout = () => {
+    setShowCheckout(false);
+  
+    setTimeout(() => {
+      void buildSession().then(() => {
+        setShowCheckout(true);
+      }).catch((error) => {
+        console.error("Error in buildSession:", error);
+      });
+    }, 100);
+  };
+  useEffect(() => {
+    if (isAppleWidgetReload) {
+      reloadCheckout();
+    }
+  }, [amountOfPlayers, shouldAddSensible]);
 
   if (
     setIsLoading &&
@@ -193,10 +211,9 @@ export const HyperSwitch = ({
       </div>
     );
   }
-
   return (
-    <div className="w-full md:min-w-[370px] px-2 md:px-0" >
-      {options !== undefined && hyperPromise !== undefined ? (
+    <div className="w-full md:min-w-[370px] px-2 md:px-0">
+      {showCheckout && options !== undefined && hyperPromise !== undefined ? (
         <HyperElements options={options} hyper={hyperPromise}>
           <CheckoutForm
             teeTimeId={teeTimeId}

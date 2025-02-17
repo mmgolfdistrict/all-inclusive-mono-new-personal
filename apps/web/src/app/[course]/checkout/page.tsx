@@ -73,7 +73,7 @@ export default function Checkout({
   //     setAmountOfPlayers(Number(playerCount));
   //   }
   // }, []);
-
+  const {data : isAppleWidgetReload}=api.checkout.isAppleEnabledReloadWidget.useQuery({});
   const { data: maxReservation } =
     api.checkout.checkMaxReservationsAndMaxRounds.useQuery({
       roundsToBook: amountOfPlayers,
@@ -83,6 +83,7 @@ export default function Checkout({
     api.course.getPrivacyPolicyAndTCByCourse.useQuery({
       courseId: courseId ?? "",
     });
+ 
   const {
     data: _providerBookingStatusResult,
     refetch: refetchProviderBookingStatus,
@@ -562,6 +563,7 @@ export default function Checkout({
                 teeTimeDate={teeTimeData?.date}
                 playerCount={playerCount}
                 teeTimeData={data}
+                isAppleWidgetReload={isAppleWidgetReload}
                 // maxReservation={maxReservation}
               />
             )}
