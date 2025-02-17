@@ -1422,4 +1422,9 @@ export class CheckoutService {
     console.log("providerCourseMemberShipResult", courseMemberShipResult);
     return courseMemberShipResult || [];
   };
+  isAppleEnabledReloadWidget =async () =>{
+    const appSettingsResult = await this.appSettings.getAppSetting("RELOAD_WIDGET_FOR_APPLE_PAY");
+    console.warn("appSettingsResult", appSettingsResult);
+    return appSettingsResult?.value === "1" ? true : false;
+  }
 }

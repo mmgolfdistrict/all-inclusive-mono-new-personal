@@ -49,6 +49,7 @@ export const HyperSwitch = ({
   setIsLoading,
   playerCount,
   teeTimeData,
+  isAppleWidgetReload
 }: // maxReservation,
 {
   cartData: CartProduct[];
@@ -59,10 +60,11 @@ export const HyperSwitch = ({
   setIsLoading?: (isLoading: boolean) => void;
   playerCount: string | undefined;
   teeTimeData: SearchObject | null | undefined;
+  isAppleWidgetReload?: boolean;
   // maxReservation: MaxReservationResponse;
 }) => {
   const { amountOfPlayers } = useCheckoutContext();
-
+  const [showCheckout, setShowCheckout] = useState(true);
   const [options, setOptions] = useState<Options | undefined>(undefined);
   const { user } = useUserContext();
   const { course } = useCourseContext();
@@ -165,6 +167,7 @@ export const HyperSwitch = ({
     // }
     if ((!options && initialLoad) || !isequal(localCartData, cartData)) {
       if (cartData?.length > 0) {
+
         void buildSession();
       }
     }
@@ -175,7 +178,20 @@ export const HyperSwitch = ({
       setError("Session timed out. Please try again.");
     }
   }, [err]);
-
+  const reloadCheckout = async () => {
+    setShowCheckout(false); 
+  
+    setTimeout(async () => {
+      await buildSession(); 
+      setShowCheckout(true); 
+    }, 100);
+  };
+ useEffect(()=>{
+  if(isAppleWidgetReload){
+    void reloadCheckout();
+  }
+ },[amountOfPlayers])
+ 
   if (
     setIsLoading &&
     (options !== undefined || nextaction !== undefined) &&
@@ -193,10 +209,10 @@ export const HyperSwitch = ({
       </div>
     );
   }
-
+  // key={isAppleWidgetReload ? playerCount : ""}
   return (
     <div className="w-full md:min-w-[370px] px-2 md:px-0" >
-      {options !== undefined && hyperPromise !== undefined ? (
+      { showCheckout && options !== undefined && hyperPromise !== undefined ? (
         <HyperElements options={options} hyper={hyperPromise}>
           <CheckoutForm
             teeTimeId={teeTimeId}
