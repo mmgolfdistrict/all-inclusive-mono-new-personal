@@ -9,9 +9,9 @@ import dayjs from "dayjs";
 import isequal from "lodash.isequal";
 // import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 import { Spinner } from "../loading/spinner";
 import { CheckoutForm } from "./checkout-form";
-import { toast } from "react-toastify";
 
 export type NextAction = {
   type?: string;
@@ -49,7 +49,7 @@ export const HyperSwitch = ({
   setIsLoading,
   playerCount,
   teeTimeData,
-  isAppleWidgetReload
+  isAppleWidgetReload,
 }: // maxReservation,
 {
   cartData: CartProduct[];
@@ -63,7 +63,7 @@ export const HyperSwitch = ({
   isAppleWidgetReload?: boolean;
   // maxReservation: MaxReservationResponse;
 }) => {
-  const { amountOfPlayers,shouldAddSensible } = useCheckoutContext();
+  const { amountOfPlayers, shouldAddSensible } = useCheckoutContext();
   const [showCheckout, setShowCheckout] = useState(true);
   const [options, setOptions] = useState<Options | undefined>(undefined);
   const { user } = useUserContext();
@@ -167,7 +167,6 @@ export const HyperSwitch = ({
     // }
     if ((!options && initialLoad) || !isequal(localCartData, cartData)) {
       if (cartData?.length > 0) {
-
         void buildSession();
       }
     }
@@ -178,20 +177,23 @@ export const HyperSwitch = ({
       setError("Session timed out. Please try again.");
     }
   }, [err]);
-  const reloadCheckout = async () => {
-    setShowCheckout(false); 
+  const reloadCheckout = () => {
+    setShowCheckout(false);
   
-    setTimeout(async () => {
-      await buildSession(); 
-      setShowCheckout(true); 
+    setTimeout(() => {
+      void buildSession().then(() => {
+        setShowCheckout(true);
+      }).catch((error) => {
+        console.error("Error in buildSession:", error);
+      });
     }, 100);
   };
- useEffect(()=>{
-  if(isAppleWidgetReload){
-    void reloadCheckout();
-  }
- },[amountOfPlayers,shouldAddSensible])
- 
+  useEffect(() => {
+    if (isAppleWidgetReload) {
+      reloadCheckout();
+    }
+  }, [amountOfPlayers, shouldAddSensible]);
+
   if (
     setIsLoading &&
     (options !== undefined || nextaction !== undefined) &&
@@ -210,8 +212,8 @@ export const HyperSwitch = ({
     );
   }
   return (
-    <div className="w-full md:min-w-[370px] px-2 md:px-0" >
-      { showCheckout && options !== undefined && hyperPromise !== undefined ? (
+    <div className="w-full md:min-w-[370px] px-2 md:px-0">
+      {showCheckout && options !== undefined && hyperPromise !== undefined ? (
         <HyperElements options={options} hyper={hyperPromise}>
           <CheckoutForm
             teeTimeId={teeTimeId}
