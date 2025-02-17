@@ -139,11 +139,10 @@ export default function CourseHomePage() {
   const router = useRouter();
   const courseId = course?.id;
   const { data: MOBILE_VIEW_VERSION } =
-  api.course.getMobileViewVersion.useQuery({
-    courseId: courseId ?? "",
-  });
-  console.log("MOBILE_VIEW_VERSION",MOBILE_VIEW_VERSION);
-  
+    api.course.getMobileViewVersion.useQuery({
+      courseId: courseId ?? "",
+    });
+
   const TAKE = MOBILE_VIEW_VERSION === "v2" && isMobile ? 1 : 4;
   const [take, setTake] = useState<number>(TAKE);
 
@@ -247,20 +246,20 @@ export default function CourseHomePage() {
   }, [specialEvents, queryDateType]);
 
   const getSpecialDayDate = (label) => {
-    const today = dayjs(new Date())   
+    const today = dayjs(new Date())
     const specialDay = specialEvents?.find((day) => day.eventName === label);
-  
+
     if (specialDay) {
       const specialStartDate = dayjs(specialDay.startDate);
-  
+
       const start = today.isAfter(specialStartDate) ? today : specialStartDate;
-  
+
       return {
         start: start,
         end: specialDay.endDate ? dayjs(specialDay.endDate) : null,
       };
     }
-  
+
     return null;
   };
 
@@ -269,7 +268,7 @@ export default function CourseHomePage() {
     if (specialDate) {
       return formatDateString(specialDate.start);
     }
-setPageNumber(1)
+    setPageNumber(1)
     switch (dateType) {
       case "All":
       case "Today":
@@ -579,7 +578,7 @@ setPageNumber(1)
     setIsForecastModalOpen(true);
   };
   const divHeight = document?.getElementById('notification-container')?.offsetHeight;
-  
+
   // Function to close the modal
   const closeForecastModal = () => {
     setIsForecastModalOpen(false);
@@ -633,11 +632,10 @@ setPageNumber(1)
         </div>
         <div className="flex w-full flex-col gap-1 md:gap-4 overflow-x-hidden pr-0p md:pr-6">
           <div
-          className={`flex space-x-2 md:hidden px-4 ${
-            (courseImages?.length > 0 ? scrollY > 333 : scrollY > 100)
-              ? `fixed left-0 w-full z-10 bg-secondary-white pt-2 pb-3 shadow-md`
-              : "relative"
-          }`}        
+            className={`flex space-x-2 md:hidden px-4 ${(courseImages?.length > 0 ? scrollY > 333 : scrollY > 100)
+                ? `fixed left-0 w-full z-10 bg-secondary-white pt-2 pb-3 shadow-md`
+                : "relative"
+              }`}
             style={{
               top: (courseImages?.length > 0 ? scrollY > 333 : scrollY > 100) ? `${divHeight && divHeight * 1}px` : 'auto',
             }}
