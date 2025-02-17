@@ -269,7 +269,7 @@ export default function CourseHomePage() {
     if (specialDate) {
       return formatDateString(specialDate.start);
     }
-
+setPageNumber(1)
     switch (dateType) {
       case "All":
       case "Today":
@@ -300,6 +300,7 @@ export default function CourseHomePage() {
     if (specialDate) {
       return formatDateString(specialDate.end);
     }
+    setPageNumber(1)
 
     switch (dateType) {
       case "All":
