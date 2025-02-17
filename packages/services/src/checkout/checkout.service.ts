@@ -471,7 +471,7 @@ export class CheckoutService {
         cartId: customerCart?.cartId,
       },
       merchant_order_reference_id: customerCartData?.cartId ?? "",
-      setup_future_usage: "on_session",
+      setup_future_usage: "off_session",
     };
     // }
 
