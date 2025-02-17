@@ -1423,8 +1423,7 @@ export class CheckoutService {
     return courseMemberShipResult || [];
   };
   isAppleEnabledReloadWidget =async () =>{
-    const appSettingsResult = await this.appSettings.getAppSetting("RELOAD_WIDGET_FOR_APPLE_PAY");
-    console.warn("appSettingsResult", appSettingsResult);
+    const appSettingsResult = await this.appSettings.getAppSetting("IS_ENABLED_APPLE_PAY");
     return appSettingsResult?.value === "1" ? true : false;
   }
 }

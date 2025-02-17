@@ -769,6 +769,8 @@ export const CheckoutForm = ({
     maximumFractionDigits: 2,
   });
 
+  
+
   /**==============UI CALCULATION Variables==================== */
   const totalGreenFeesPerPlayer =
     (greenFeeChargePerPlayer + markupFee) * playersInNumber;
@@ -804,6 +806,7 @@ export const CheckoutForm = ({
       );
     }
     setDonateValue(donation);
+
   }, [Total, primaryGreenFeeCharge, totalBeforeRoundOff]);
 
   const handleRoundOff = (value: number, status: string) => {

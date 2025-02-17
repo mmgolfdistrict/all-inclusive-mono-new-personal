@@ -63,7 +63,7 @@ export const HyperSwitch = ({
   isAppleWidgetReload?: boolean;
   // maxReservation: MaxReservationResponse;
 }) => {
-  const { amountOfPlayers } = useCheckoutContext();
+  const { amountOfPlayers,shouldAddSensible } = useCheckoutContext();
   const [showCheckout, setShowCheckout] = useState(true);
   const [options, setOptions] = useState<Options | undefined>(undefined);
   const { user } = useUserContext();
@@ -190,7 +190,7 @@ export const HyperSwitch = ({
   if(isAppleWidgetReload){
     void reloadCheckout();
   }
- },[amountOfPlayers])
+ },[amountOfPlayers,shouldAddSensible])
  
   if (
     setIsLoading &&
@@ -209,7 +209,6 @@ export const HyperSwitch = ({
       </div>
     );
   }
-  // key={isAppleWidgetReload ? playerCount : ""}
   return (
     <div className="w-full md:min-w-[370px] px-2 md:px-0" >
       { showCheckout && options !== undefined && hyperPromise !== undefined ? (
