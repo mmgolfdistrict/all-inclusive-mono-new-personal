@@ -49,15 +49,16 @@ export const UnlistedDetails = ({
       teeTimeId: teeTimeId,
     });
   console.log("unlistedTeetTIME", data);
-  const { data: bookingData } = api.user.getBookingsOwnedForTeeTime.useQuery(
-    { teeTimeId },
-    {
-      enabled: !!teeTimeId,
-      refetchOnMount: false,
-      refetchOnReconnect: false,
-      refetchOnWindowFocus: false,
-    }
-  );
+  const { data: bookingData, refetch: refetchBookingData } =
+    api.user.getBookingsOwnedForTeeTime.useQuery(
+      { teeTimeId },
+      {
+        enabled: !!teeTimeId,
+        refetchOnMount: false,
+        refetchOnReconnect: false,
+        refetchOnWindowFocus: false,
+      }
+    );
 
   const { data: bookingIds, refetch: refetchBookingIds } =
     api.teeBox.getOwnedBookingsForTeeTime.useQuery(
@@ -70,6 +71,7 @@ export const UnlistedDetails = ({
 
   const refetchData = async () => {
     await refetch();
+    await refetchBookingData();
     await refetchBookingIds();
   };
 
