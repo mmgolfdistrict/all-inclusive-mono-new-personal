@@ -11,6 +11,17 @@ const bundleAnalyzer = withBundleAnalyzer({
 
 /** @type {import("next").NextConfig} */
 const config = {
+  headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          { key: "Content-Security-Policy", value: "frame-ancestors 'self' *" },
+        ]
+      }
+    ];
+  },
   reactStrictMode: true,
   productionBrowserSourceMaps: true,
 

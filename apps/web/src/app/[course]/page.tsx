@@ -70,6 +70,19 @@ export default function CourseHomePage() {
   const { user } = useUserContext();
   const { course } = useCourseContext();
   const { setBookingSource } = useBookingSourceContext();
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data.source === 'iframe-current-user') {
+        console.log('Received data from iframe event.data: ', event.data);
+        setCurrentUser(event.data.payload);
+      }
+    }
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [])
 
   function getUserTimezone() {
     return Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -583,6 +596,16 @@ export default function CourseHomePage() {
   };
   return (
     <main className={`bg-secondary-white py-4 md:py-6`}>
+      <div id="current-user">
+        <iframe
+          src={`/${course?.id}/current-user`}
+          width={0}
+          height={0}
+          style={{ display: 'none' }}
+        >
+        </iframe>
+        {currentUser && <p>LoggedIn user: {currentUser?.email}</p>}
+      </div>
       <LoadingContainer
         isLoading={isLoadingTeeTimeDate || isLoading || specialEventsLoading}
       >
