@@ -294,7 +294,7 @@ export const TeeTimeV2 = ({
             >
                 <div className="border-b border-stroke">
                     <div className="flex justify-between py-1 px-2 md:px-3 md:p-3 items-center">
-                        <div className="font-semibold text-[16px] md:text-[20px] unmask-time">
+                        <div className="font-semibold text-[18px] md:text-[20px] unmask-time">
                             {showFullDate
                                 ? formatTime(time, true, timezoneCorrection)
                                 : getTime(time, timezoneCorrection)}
@@ -335,7 +335,7 @@ export const TeeTimeV2 = ({
                                 </div>
                             ) : null}
                             <div className="flex items-center">
-                                <div className="text-[18px] md:text-[18px] font-semibold text-secondary-black">
+                                <div className="text-[18px] md:text-[16px] font-semibold text-secondary-black">
                                     {formatMoney(price)}
                                 </div>
                                 <div className="text-[14px] md:text-[14px] text-primary-gray">

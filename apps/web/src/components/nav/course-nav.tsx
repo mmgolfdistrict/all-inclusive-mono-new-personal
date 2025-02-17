@@ -251,7 +251,7 @@ export const CourseNav = () => {
 
   return (
     <>
-
+    
       <div className="fixed top-0 w-full z-20">
         <div id="notification-container">
           <div className="relative" id="notification-container">
@@ -488,7 +488,7 @@ export const CourseNav = () => {
           : ""}
       </div>
       {isMobile &&
-        <div className={`fixed bottom-0 w-full z-20 bg-white border-b border-stroke`}>
+        <div className={`fixed bottom-0 w-full z-20 bg-white border-t border-stroke-secondary border-stroke`}>
           <div className="flex w-full justify-center bg-white p-2 md:p-4">
             <div className="flex w-full justify-evenly gap-4 md:gap-8">
               <NavItem
