@@ -261,6 +261,11 @@ export class CheckoutService {
     //     errors: errors,
     //   };
     // }
+    console.log("userId ", userId);
+    console.log("customerCartData ", JSON.stringify(customerCartData));
+    console.log("cartId ", cartId);
+    console.log("ipAddress ", ipAddress);
+    console.log("paymentId ", paymentId);
     if (paymentId) {
       data = await this.updateCheckoutSession(userId, customerCartData, cartId);
     } else {
