@@ -434,7 +434,7 @@ export class TokenizeService {
           listId: null,
           cartId: normalizedCartData.cartId,
           playerCount: courseMembershipId ? Number(playerCountForMemberShip) : booking.playerCount ?? 0,
-          greenFeePerPlayer: purchasePrice || 0,
+          greenFeePerPlayer: teeTimeData.greenFee || 0,
           totalTaxesAmount: additionalTaxes.additionalTaxes * 100, // normalizedCartData.taxCharge * 100 || 0,
           charityId: normalizedCartData.charityId || null,
           totalCharityAmount: normalizedCartData.charityCharge * 100 || 0,

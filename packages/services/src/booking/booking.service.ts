@@ -3911,7 +3911,7 @@ export class BookingService {
   };
 
   confirmBooking = async (paymentId: string, userId: string) => {
-    const [booking] = await this.database
+    const bookingItems = await this.database
       .select({
         bookingId: bookings.id,
         courseId: teeTimes.courseId,
@@ -3928,12 +3928,15 @@ export class BookingService {
         loggerService.auditLog({
           id: randomUUID(),
           userId,
-          teeTimeId: booking?.teeTimeId ?? "",
-          bookingId: booking?.bookingId ?? "",
+          teeTimeId: "",
+          bookingId: "",
           listingId: "",
-          courseId: booking?.courseId ?? "",
+          courseId: "",
           eventId: "TEE_TIME_CONFIRMATION_FAILED",
-          json: err,
+          json: JSON.stringify({
+            err,
+            paymentId,
+          }),
         });
         this.logger.error(`Error retrieving bookings by payment id: ${err}`);
         loggerService.errorLog({
@@ -3942,13 +3945,12 @@ export class BookingService {
           userAgent: "",
           message: "ERROR CONFIRMING BOOKING",
           stackTrace: `${err.stack}`,
-          additionalDetailsJSON: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${
-            booking?.teeTimeId ?? ""
+          additionalDetailsJSON: `error confirming booking with payment ID: ${paymentId}
           }`,
         });
         throw "Error retrieving booking";
       });
-    if (!booking) {
+    if (!bookingItems) {
       console.log(`Booking not found for payment id ${paymentId}`);
       loggerService.errorLog({
         userId: userId,
@@ -3960,6 +3962,8 @@ export class BookingService {
       });
       throw "Booking not found for payment id";
     } else {
+      console.log(`CURRENT BOOKINGS: ${bookingItems.length}`)
+      for (const booking of bookingItems) {
       console.log("Set confirm status on booking id ", booking.bookingId);
       await this.database
         .update(bookings)
@@ -3982,16 +3986,17 @@ export class BookingService {
           });
         });
 
-      loggerService.auditLog({
-        id: randomUUID(),
-        userId,
-        teeTimeId: booking?.teeTimeId ?? "",
-        bookingId: booking?.bookingId ?? "",
-        listingId: "",
-        courseId: booking?.courseId ?? "",
-        eventId: "BOOKING_CONFIRMED",
-        json: "Bookimg status confirmed",
-      });
+        loggerService.auditLog({
+          id: randomUUID(),
+          userId,
+          teeTimeId: booking?.teeTimeId ?? "",
+          bookingId: booking?.bookingId ?? "",
+          listingId: "",
+          courseId: booking?.courseId ?? "",
+          eventId: "BOOKING_CONFIRMED",
+          json: "Bookimg status confirmed",
+        });
+      }
     }
   };
 
@@ -5091,9 +5096,9 @@ export class BookingService {
       });
 
     const bookingIds = bookingId.bookingId.split(",");
-    for (const bookingId of bookingIds) {
-      await this.sendMessageToVerifyPayment(paymentId as string, userId, bookingId, redirectHref);
-    }
+    // for (const bookingId of bookingIds) {
+    await this.sendMessageToVerifyPayment(paymentId as string, userId, bookingId.bookingId, redirectHref);
+    // }
     return {
       bookingId: bookingIds[0],
       providerBookingId,

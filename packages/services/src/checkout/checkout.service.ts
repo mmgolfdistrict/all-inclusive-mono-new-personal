@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
-import { and, between, db, desc, eq, gt, gte, inArray, isNotNull, sql } from "@golf-district/database";
+import { and, asc, eq, gte, inArray, isNotNull, sql } from "@golf-district/database";
 import { bookings } from "@golf-district/database/schema/bookings";
 import { charities } from "@golf-district/database/schema/charities";
 import { charityCourseLink } from "@golf-district/database/schema/charityCourseLink";
@@ -37,6 +37,7 @@ import type {
   CharityProduct,
   ConvenienceFeeProduct,
   CustomerCart,
+  FirstHandGroupProduct,
   FirstHandProduct,
   GreenFeeTaxPercentProduct,
   MarkupProduct,
@@ -385,11 +386,12 @@ export class CheckoutService {
             cartFeeTaxPercent: courses.cartFeeTaxPercent,
             weatherGuaranteeTaxPercent: courses.weatherGuaranteeTaxPercent,
             markupTaxPercent: courses.markupTaxPercent,
-            groupBookingPriceSelectionMethod: courseSetting.value
+            groupBookingPriceSelectionMethod: courseSetting.value,
+            availableFirstHandSpots: teeTimes.availableFirstHandSpots
           })
           .from(teeTimes)
           .leftJoin(courses, eq(teeTimes.courseId, courses.id))
-          .leftJoin(courseSetting, 
+          .leftJoin(courseSetting,
             and(
               eq(courseSetting.courseId, courses.id),
               eq(courseSetting.internalName, "GROUP_BOOKING_PRICE_SELECTION_METHOD")
@@ -410,6 +412,7 @@ export class CheckoutService {
         let greenFees = 0
 
         // get fees for players
+        let remainingPlayers = playerCount;
         if (groupBookingPriceSelectionMethod === "MAX") {
           for (const teeTime of teeTimesResponse) {
             greenFees = Math.max(greenFees, teeTime.greenFees);
@@ -417,7 +420,9 @@ export class CheckoutService {
         } else if (groupBookingPriceSelectionMethod === "SUM") {
           let totalGreenFees = 0
           for (const teeTime of teeTimesResponse) {
-            totalGreenFees += teeTime.greenFees;
+            const players = Math.min(remainingPlayers, teeTime.availableFirstHandSpots);
+            remainingPlayers -= players;
+            totalGreenFees += teeTime.greenFees * players;
           }
           greenFees = totalGreenFees / playerCount;
         } else {
@@ -576,6 +581,9 @@ export class CheckoutService {
     const isFirstHand = customerCart.cart.filter(
       ({ product_data }) => product_data.metadata.type === "first_hand"
     );
+    const isFirstHandGroup = customerCart.cart.filter(
+      ({ product_data }) => product_data.metadata.type === "first_hand_group"
+    )
     const sensibleCharge =
       customerCartData?.cart
         ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "sensible")
@@ -611,6 +619,75 @@ export class CheckoutService {
         const playerCount = isFirstHand[0]?.product_data.metadata.number_of_bookings;
         const greenFeeTaxTotal =
           ((teeTime?.greenFees ?? 0) / 100) * ((teeTime?.greenFeeTaxPercent ?? 0) / 100 / 100) * playerCount;
+        const markupTaxTotal = (markupCharge / 100) * ((teeTime?.markupTaxPercent ?? 0) / 100) * playerCount;
+        const weatherGuaranteeTaxTotal =
+          (sensibleCharge / 100) * ((teeTime?.weatherGuaranteeTaxPercent ?? 0) / 100);
+        const cartFeeTaxPercentTotal =
+          ((cartFeeCharge * ((teeTime?.cartFeeTaxPercent ?? 0) / 100)) / 100) * playerCount;
+        const additionalTaxes = Number(
+          (greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal).toFixed(2)
+        );
+        total = total + additionalTaxes * 100;
+      }
+    }
+    if (isFirstHandGroup.length) {
+      if (isFirstHandGroup[0]?.product_data.metadata.type === "first_hand_group") {
+        const playerCount = isFirstHandGroup[0]?.product_data.metadata.number_of_bookings;
+        const teeTimeIds = isFirstHandGroup[0]?.product_data.metadata.tee_time_ids;
+        const teeTimesResponse = await this.database
+          .selectDistinct({
+            id: teeTimes.id,
+            greenFees: teeTimes.greenFeePerPlayer,
+            cartFees: teeTimes.cartFeePerPlayer,
+            greenFeeTaxPercent: courses.greenFeeTaxPercent,
+            cartFeeTaxPercent: courses.cartFeeTaxPercent,
+            weatherGuaranteeTaxPercent: courses.weatherGuaranteeTaxPercent,
+            markupTaxPercent: courses.markupTaxPercent,
+            groupBookingPriceSelectionMethod: courseSetting.value,
+            availableFirstHandSpots: teeTimes.availableFirstHandSpots
+          })
+          .from(teeTimes)
+          .leftJoin(courses, eq(teeTimes.courseId, courses.id))
+          .leftJoin(courseSetting,
+            and(
+              eq(courseSetting.courseId, courses.id),
+              eq(courseSetting.internalName, "GROUP_BOOKING_PRICE_SELECTION_METHOD")
+            )
+          )
+          .where(inArray(teeTimes.id, teeTimeIds))
+          .execute()
+          .catch((err) => {
+            this.logger.error(`Error finding tee time ids: ${JSON.stringify(err)}`);
+            throw new Error(`Error finding tee time ids`);
+          });
+
+        if (!teeTimesResponse?.length) {
+          throw new Error(`Error finding tee times with ids: ${JSON.stringify(teeTimeIds)}`);
+        }
+        const teeTime = teeTimesResponse[0];
+        const groupBookingPriceSelectionMethod = teeTime?.groupBookingPriceSelectionMethod ?? "MAX";
+        let greenFees = 0
+
+        // get fees for players
+        let remainingPlayers = playerCount;
+        if (groupBookingPriceSelectionMethod === "MAX") {
+          for (const teeTime of teeTimesResponse) {
+            greenFees = Math.max(greenFees, teeTime.greenFees);
+          }
+        } else if (groupBookingPriceSelectionMethod === "SUM") {
+          let totalGreenFees = 0
+          for (const teeTime of teeTimesResponse) {
+            const players = Math.min(remainingPlayers, teeTime.availableFirstHandSpots);
+            remainingPlayers -= players;
+            totalGreenFees += teeTime.greenFees * players;
+          }
+          greenFees = totalGreenFees / playerCount;
+        } else {
+          throw new Error("Invalid groupBookingPriceSelectionMethod");
+        }
+
+        const greenFeeTaxTotal =
+          ((greenFees ?? 0) / 100) * ((teeTime?.greenFeeTaxPercent ?? 0) / 100 / 100) * playerCount;
         const markupTaxTotal = (markupCharge / 100) * ((teeTime?.markupTaxPercent ?? 0) / 100) * playerCount;
         const weatherGuaranteeTaxTotal =
           (sensibleCharge / 100) * ((teeTime?.weatherGuaranteeTaxPercent ?? 0) / 100);
@@ -818,6 +895,9 @@ export class CheckoutService {
         case "cart_fee":
           console.log(" switch in cart-fee");
           break;
+        case "first_hand_group":
+          // errors.push(...(await this.validateFirstHandGroupItem(item as FirstHandGroupProduct)));
+          break;
         default:
           this.logger.error(`Unknown product type: ${JSON.stringify(item.product_data.metadata)}`);
           loggerService.errorLog({
@@ -944,6 +1024,122 @@ export class CheckoutService {
         product_id: item.id,
       });
       throw new Error("Expected Tee time spots may not be available anymore. Please select another time.");
+    }
+    return errors;
+  };
+
+  validateFirstHandGroupItem = async (item: FirstHandGroupProduct): Promise<CartValidationError[]> => {
+    const errors: CartValidationError[] = [];
+    const teeTimeItems = await this.database
+      .select({
+        id: teeTimes.id,
+        courseId: teeTimes.courseId,
+        // entityId: teeTimes.entityId,
+        entityId: courses.entityId,
+        date: teeTimes.date,
+        providerDate: teeTimes.providerDate,
+        providerCourseId: providerCourseLink.providerCourseId,
+        providerTeeSheetId: providerCourseLink.providerTeeSheetId,
+        providerCourseConfiguration: providerCourseLink.providerCourseConfiguration,
+        providerId: providerCourseLink.providerId,
+        providerTeeTimeId: teeTimes.providerTeeTimeId,
+        internalId: providers.internalId,
+        time: teeTimes.time,
+      })
+      .from(teeTimes)
+      .leftJoin(courses, eq(courses.id, teeTimes.courseId))
+      .leftJoin(
+        providerCourseLink,
+        and(
+          eq(providerCourseLink.courseId, teeTimes.courseId),
+          eq(providerCourseLink.providerId, courses.providerId)
+        )
+      )
+      //.leftJoin(courses, eq(courses.id, teeTimes.courseId))
+      .leftJoin(providers, eq(providers.id, providerCourseLink.providerId))
+      .where(inArray(teeTimes.id, item.product_data.metadata.tee_time_ids))
+      .orderBy(asc(teeTimes.providerDate))
+      .execute()
+      .catch((err) => {
+        this.logger.error(err);
+        loggerService.errorLog({
+          userId: "",
+          url: "/CheckoutService/validateFirstHandGroupItem",
+          userAgent: "",
+          message: "ERROR_FINDING_TEE_TIMES",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            item,
+          }),
+        });
+        throw new Error(`Error finding tee time id`);
+      });
+    if (!teeTimeItems || teeTimeItems.length === 0 || !teeTimeItems[0]) {
+      errors.push({
+        errorType: CartValidationErrors.TEE_TIME_NOT_AVAILABLE,
+        product_id: item.id,
+      });
+      throw new Error("Tee time not found.");
+    }
+
+    const firstTeeTime = teeTimeItems[0];
+
+    const { provider, token } = await this.providerService.getProviderAndKey(
+      firstTeeTime.internalId!,
+      firstTeeTime.courseId,
+      firstTeeTime.providerCourseConfiguration!
+    );
+
+    let remainingSlots = item.product_data.metadata.number_of_bookings;
+    for (const teeTime of teeTimeItems) {
+      const players = Math.min(remainingSlots, 4);
+      remainingSlots -= players;
+      // const [formattedDate] = teeTime.date.split(" ");
+      const [formattedDateUTC] = teeTime.date.split(" ");
+      const [formattedDate] = teeTime.providerDate.split("T");
+      console.log(`formattedDateUTC: ${formattedDateUTC}`);
+      console.log(`formattedDate: ${formattedDate}`);
+
+      if (teeTime.providerCourseId && teeTime.providerTeeSheetId && formattedDate) {
+        const response = await provider.indexTeeTime(
+          formattedDate,
+          teeTime.providerCourseId,
+          teeTime.providerTeeSheetId,
+          provider,
+          token,
+          teeTime.time,
+          teeTime.id,
+          teeTime.providerTeeTimeId
+        ) as any;
+        if (response?.error) {
+          errors.push({
+            errorType: CartValidationErrors.TEE_TIME_NOT_AVAILABLE,
+            product_id: item.id,
+          });
+        }
+      }
+      console.log("teeTime", item.product_data);
+      console.log("NUmber of bookings", item.product_data.metadata.number_of_bookings);
+      const stillAvailable = await this.database
+        .select({ id: teeTimes.id })
+        .from(teeTimes)
+        .where(
+          and(
+            eq(teeTimes.id, teeTime.id),
+            gte(teeTimes.availableFirstHandSpots, players)
+          )
+        )
+        .execute()
+        .catch((err) => {
+          throw new Error("Error retrieving teetime");
+        });
+      if (stillAvailable.length == 0) {
+        errors.push({
+          errorType: CartValidationErrors.TEE_TIME_NOT_AVAILABLE,
+          product_id: item.id,
+        });
+        throw new Error("Expected Tee time spots may not be available anymore. Please select another time.");
+      }
     }
     return errors;
   };

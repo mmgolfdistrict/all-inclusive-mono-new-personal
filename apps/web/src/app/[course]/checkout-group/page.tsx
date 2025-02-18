@@ -51,8 +51,7 @@ export default function CheckoutGroupBooking({
 
     const { course } = useCourseContext();
 
-    //TODO: change it to true
-    const [isSessionLoading, setIsSessionLoading] = useState(false);
+    const [isSessionLoading, setIsSessionLoading] = useState(true);
     // const [isErrorBookingCancelled, setIsErrorBookingCancelled] = useState(false);
     // const [errorMessage, setErrorMessage] = useState("");
 
