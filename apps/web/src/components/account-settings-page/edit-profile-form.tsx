@@ -224,9 +224,14 @@ export const EditProfileForm = () => {
 
     const fetchPhoneValidation = async () => {
       try {
-        const response = await fetch(
-          `https://phonevalidation.abstractapi.com/v1/?api_key=${process.env.NEXT_PUBLIC_ABSTRACT_API_KEY}&phone=${debouncedPhoneNumber}`
-        );
+        const response = await fetch('/api/validate-phone', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.NEXT_PUBLIC_GOLF_DISTRICT_AUTH_TOKEN}`,
+          },
+          body: JSON.stringify({ phoneNumber: debouncedPhoneNumber }),
+        });
         const result = await response.json();
         if (!result.valid) {
           setError("phoneNumber", {

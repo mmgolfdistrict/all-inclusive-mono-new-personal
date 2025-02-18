@@ -91,24 +91,28 @@ export default function RegisterPage() {
   const debouncedPhoneNumber = useDebounce<string>(currentPhoneNumber, 2000);
 
   useEffect(() => {
-    const fetchCountry = async () => {
-      try {
-        const result = await fetch(
-          `https://ipinfo.io/json?token=${process.env.NEXT_PUBLIC_IPINFO_API_TOKEN}`
-        );
-        const data = await result.json();
-        if (data?.country && typeof data.country === "string") {
-          setCurrentCountry(data.country.toLowerCase() as string);
-        }
-      } catch (error) {
-        console.error("Error fetching country:", error);
-      }
-    };
+  const fetchCountry = async () => {
+    try {
+      const result = await fetch('/api/country-code', {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_GOLF_DISTRICT_AUTH_TOKEN}`,
+        },
+      });
 
-    fetchCountry().catch((error) => {
-      console.error("Error fetching country:", error);
-    });
-  }, []);
+      if (result.ok) {
+        const data = await result.json();
+        setCurrentCountry(data.country.toLowerCase());
+      } else {
+        console.error('Failed to fetch country', result);
+      }
+    } catch (error) {
+      console.error('Error fetching country:', error);
+    }
+  };
+
+  fetchCountry();
+}, []);
 
   useEffect(() => {
     if (currentCountry) {
@@ -122,9 +126,14 @@ export default function RegisterPage() {
 
     const fetchPhoneValidation = async () => {
       try {
-        const response = await fetch(
-          `https://phonevalidation.abstractapi.com/v1/?api_key=${process.env.NEXT_PUBLIC_ABSTRACT_API_KEY}&phone=${debouncedPhoneNumber}`
-        );
+        const response = await fetch('/api/validate-phone', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.NEXT_PUBLIC_GOLF_DISTRICT_AUTH_TOKEN}`,
+          },
+          body: JSON.stringify({ phoneNumber: debouncedPhoneNumber }),
+        });
         const result = await response.json();
         if (!result.valid) {
           setError("phoneNumber", {
@@ -279,6 +288,7 @@ export default function RegisterPage() {
   }, [recaptchaRef]);
 
   const onSubmit: SubmitHandler<RegisterSchemaType> = async (data) => {
+    console.log('errors govinda: ', errors);
     setIsSubmitting(true);
     if (profanityCheckData?.isProfane) {
       setError("username", {
