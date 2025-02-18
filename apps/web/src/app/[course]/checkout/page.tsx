@@ -73,7 +73,8 @@ export default function Checkout({
   //     setAmountOfPlayers(Number(playerCount));
   //   }
   // }, []);
-
+  const { data: isAppleWidgetReload } =
+    api.checkout.isAppleEnabledReloadWidget.useQuery({});
   const { data: maxReservation } =
     api.checkout.checkMaxReservationsAndMaxRounds.useQuery({
       roundsToBook: amountOfPlayers,
@@ -83,6 +84,7 @@ export default function Checkout({
     api.course.getPrivacyPolicyAndTCByCourse.useQuery({
       courseId: courseId ?? "",
     });
+
   const {
     data: _providerBookingStatusResult,
     refetch: refetchProviderBookingStatus,
@@ -121,6 +123,11 @@ export default function Checkout({
     isError = true;
     error = new Error("You cannot buy your own tee time");
   }
+
+  console.log("isLoading", JSON.stringify(isLoading));
+  console.log("listingId", JSON.stringify(listingId));
+  console.log("data", JSON.stringify(data));
+  console.log("error", JSON.stringify(error));
 
   if (!isLoading && listingId && !data && !error) {
     isError = true;
@@ -562,6 +569,7 @@ export default function Checkout({
                 teeTimeDate={teeTimeData?.date}
                 playerCount={playerCount}
                 teeTimeData={data}
+                isAppleWidgetReload={isAppleWidgetReload}
                 // maxReservation={maxReservation}
               />
             )}

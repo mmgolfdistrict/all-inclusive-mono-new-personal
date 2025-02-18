@@ -154,9 +154,12 @@ export const CourseNav = () => {
 
     if (/^\/[^/]+$/.test(pathname)) {
       internalNameToMatch = "teeTime";
+    } else if (/^\/[^/]+\/[^/]+$/.test(pathname)) {
+      internalNameToMatch = "tee-time-details";
+
     } else {
       const matchedWalkthrough = walkthrough.find((wt) =>
-        pathname.includes(wt.internalName)
+        pathname.includes(wt.internalName) && !pathname.includes("/confirmation")
       );
       if (!matchedWalkthrough) {
         toast.error("No help available.");
@@ -179,6 +182,7 @@ export const CourseNav = () => {
     );
 
     if (!filteredSections.length) {
+      toast.error("No help available.");
       return;
     }
 
@@ -206,6 +210,11 @@ export const CourseNav = () => {
     filteredSections
       .sort((a, b) => (a?.displayOrder || 0) - (b?.displayOrder || 0))
       .forEach((section) => {
+        const element = document.querySelector(`#${section.sectionId}`);
+
+        if (!element) {
+          return;
+        }
         const buttons = [
           {
             text: "Next",
@@ -424,6 +433,7 @@ export const CourseNav = () => {
                     data-testid="group-booking-id"
                     data-test={courseId}
                     onClick={handleResetFilters}
+                    id="group-booking"
                   />
                 ) : null}
                 {course?.allowAuctions ? (

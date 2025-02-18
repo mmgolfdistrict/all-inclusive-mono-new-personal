@@ -35,7 +35,7 @@ export const CheckoutItem = ({
   isLoading: boolean;
   isSensibleInvalid: boolean;
   sensibleDataToMountComp: SensibleDataToMountCompType;
-    isGroupBooking?: boolean
+  isGroupBooking?: boolean
 }) => {
   const searchParams = useSearchParams();
   const playerCount = searchParams.get("playerCount");
@@ -260,10 +260,10 @@ export const CheckoutItem = ({
         canShowPlayers={!isGroupBooking}
       />
       <div className="flex flex-col gap-1">
-        <div className="flex flex-col gap-2" id="select-membership-checkout">
+        <div className="flex flex-col gap-2" >
           {isSupportMemberShip?.supportsProviderMembership === 1 &&
-          listingId == null ? (
-            <Fragment>
+            listingId == null ? (
+            <div id="select-membership-checkout">
               <div className="flex gap-2 px-2">
                 <h5 className="">Select MemberShip:</h5>
                 <select
@@ -297,7 +297,7 @@ export const CheckoutItem = ({
               </div>
               <div className="flex flex-wrap justify-between gap-1">
                 {courseMemberships.length === 0 ||
-                membershipStatus === "no_membership" ? null : (
+                  membershipStatus === "no_membership" ? null : (
                   <Fragment>
                     {Array.from({ length: Number(playerCount) }, (_, index) => (
                       <div
@@ -353,12 +353,14 @@ export const CheckoutItem = ({
                   </Fragment>
                 )}
               </div>
-            </Fragment>
+            </div>
           ) : null}
         </div>
       </div>
       {isSensibleInvalid || isLoading ? null : (
-        <SensibleWidget sensibleDataToMountComp={sensibleDataToMountComp} />
+        <div id="weather-guarantee">
+          <SensibleWidget sensibleDataToMountComp={sensibleDataToMountComp} />
+        </div>
         // <section className="flex flex-col items-center justify-between gap-4 border-t border-stroke p-4 lg:flex-row">
         //   <div className="flex flex-col gap-2">
         //     <div className="flex items-center gap-2">
@@ -443,7 +445,7 @@ const Data = ({
   courseException: NotificationObject | null;
   numberOfPlayers?: string[];
   selectStatus?: string;
-    canShowPlayers?: boolean;
+  canShowPlayers?: boolean;
 }) => {
   if (isLoading) {
     return (
