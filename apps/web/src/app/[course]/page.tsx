@@ -55,7 +55,7 @@ export default function CourseHomePage() {
   const queryEndTime = searchParams.get("endTime");
   const queryPlayerCount = searchParams.get("playerCount");
   const source = searchParams.get("source");
-
+  const {  isNavExpanded } = useAppContext();
   const ref = useRef<HTMLDivElement | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -139,11 +139,10 @@ export default function CourseHomePage() {
   const router = useRouter();
   const courseId = course?.id;
   const { data: MOBILE_VIEW_VERSION } =
-  api.course.getMobileViewVersion.useQuery({
-    courseId: courseId ?? "",
-  });
-  console.log("MOBILE_VIEW_VERSION",MOBILE_VIEW_VERSION);
-  
+    api.course.getMobileViewVersion.useQuery({
+      courseId: courseId ?? "",
+    });
+
   const TAKE = MOBILE_VIEW_VERSION === "v2" && isMobile ? 1 : 4;
   const [take, setTake] = useState<number>(TAKE);
 
@@ -247,20 +246,20 @@ export default function CourseHomePage() {
   }, [specialEvents, queryDateType]);
 
   const getSpecialDayDate = (label) => {
-    const today = dayjs(new Date())   
+    const today = dayjs(new Date())
     const specialDay = specialEvents?.find((day) => day.eventName === label);
-  
+
     if (specialDay) {
       const specialStartDate = dayjs(specialDay.startDate);
-  
+
       const start = today.isAfter(specialStartDate) ? today : specialStartDate;
-  
+
       return {
         start: start,
         end: specialDay.endDate ? dayjs(specialDay.endDate) : null,
       };
     }
-  
+
     return null;
   };
 
@@ -269,7 +268,7 @@ export default function CourseHomePage() {
     if (specialDate) {
       return formatDateString(specialDate.start);
     }
-
+    setPageNumber(1)
     switch (dateType) {
       case "All":
       case "Today":
@@ -300,6 +299,7 @@ export default function CourseHomePage() {
     if (specialDate) {
       return formatDateString(specialDate.end);
     }
+    setPageNumber(1)
 
     switch (dateType) {
       case "All":
@@ -578,11 +578,11 @@ export default function CourseHomePage() {
     setIsForecastModalOpen(true);
   };
   const divHeight = document?.getElementById('notification-container')?.offsetHeight;
-  
+
   // Function to close the modal
   const closeForecastModal = () => {
     setIsForecastModalOpen(false);
-  };
+  };  
   return (
     <main className={`bg-secondary-white py-4 md:py-6`}>
       <LoadingContainer
@@ -590,18 +590,21 @@ export default function CourseHomePage() {
       >
         <div></div>
       </LoadingContainer>
-      <div className="flex items-center justify-between px-4 md:px-6">
-        {entity?.redirectToCourseFlag ? null : (
-          <GoBack href="/" text={`Back to all ${entity?.name} Courses`} />
-        )}
-      </div>
+      {
+        !isMobile &&
+        <div className="flex items-center justify-between px-4 md:px-6">
+          {entity?.redirectToCourseFlag ? null : (
+            <GoBack href="/" text={`Back to all ${entity?.name} Courses`} />
+          )}
+        </div>
+      }
       {/* <CourseTitle
         courseName={course?.name ?? ""}
         description={course?.description ?? ""}
         className="px-4 md:px-6"
       /> */}
       <CourseBanner
-        className="pt-4"
+        className={ !isMobile ? "pt-4" : ""}
         userId={user?.id ?? ""}
         updateHandle={updateHandle}
       />
@@ -626,17 +629,24 @@ export default function CourseHomePage() {
             <Filters openForecastModal={openForecastModal} />
           </div>
         </div>
-        <div className="fixed bottom-5 left-1/2 z-10 -translate-x-1/2 md:hidden">
+        <div className={`fixed ${ isNavExpanded ? "bottom-32" :"bottom-16"} left-1/2 z-10 -translate-x-1/2 md:hidden`}>
           {/* mobile  for filter/sort */}
           <FilterSort toggleFilters={toggleFilters} toggleSort={toggleSort} />
         </div>
         <div className="flex w-full flex-col gap-1 md:gap-4 overflow-x-hidden pr-0p md:pr-6">
+        <div className="flex justify-between gap-4  px-4 md:px-0">
+            <div className="text-secondary-black">
+              {/* Showing {count?.toLocaleString() ?? "0"} tee times{" "} */}
+              <span className="text-sm text-primary-gray">
+                All times shown in course time zone
+              </span>
+            </div>
+          </div>
           <div
-          className={`flex space-x-2 md:hidden px-4 ${
-            (courseImages?.length > 0 ? scrollY > 333 : scrollY > 100)
-              ? `fixed left-0 w-full z-10 bg-secondary-white pt-2 pb-3 shadow-md`
-              : "relative"
-          }`}        
+            className={`flex space-x-2 md:hidden px-4 ${(courseImages?.length > 0 ? scrollY > 333 : scrollY > 100)
+                ? `fixed left-0 w-full z-10 bg-secondary-white pt-2 pb-3 shadow-md`
+                : "relative"
+              }`}
             style={{
               top: (courseImages?.length > 0 ? scrollY > 333 : scrollY > 100) ? `${divHeight && divHeight * 1}px` : 'auto',
             }}
@@ -655,14 +665,7 @@ export default function CourseHomePage() {
               <Calendar className="h-[14px] w-[14px]" /> Date
             </button>
           </div>
-          <div className="flex justify-between gap-4  px-4 md:px-0">
-            <div className="text-secondary-black">
-              {/* Showing {count?.toLocaleString() ?? "0"} tee times{" "} */}
-              <span className="text-sm text-primary-gray">
-                All times shown in course time zone
-              </span>
-            </div>
-          </div>
+       
           {error ? (
             <div className="flex justify-center items-center h-[200px]">
               <div className="text-center">Error: {error}</div>

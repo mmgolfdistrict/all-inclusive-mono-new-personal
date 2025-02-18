@@ -30,6 +30,8 @@ import { Controller, useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
 import { useDebounce } from "usehooks-ts";
 import { OutlineButton } from "../buttons/outline-button";
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
 
 const defaultProfilePhoto = "/defaults/default-profile.webp";
 const defaultBannerPhoto = "/defaults/default-banner.webp";
@@ -42,9 +44,10 @@ export const EditProfileForm = () => {
     watch,
     handleSubmit,
     setError,
+    clearErrors,
     getValues,
     control,
-    formState: { isSubmitting, errors },
+    formState: { errors },
   } = useForm<EditProfileSchemaType>({
     // @ts-ignore
     resolver: zodResolver(editProfileSchema),
@@ -54,6 +57,7 @@ export const EditProfileForm = () => {
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "",
     libraries,
   });
+  const [isSubmitting, setIsSubmitting] = useState<boolean|undefined>(false);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -105,6 +109,9 @@ export const EditProfileForm = () => {
       }
     }
   }, [isLoaded, loadError]);
+
+  const [currentPhoneNumber, setCurrentPhoneNumber] = useState<string>("");
+  const debouncedPhoneNumber = useDebounce<string>(currentPhoneNumber, 2000);
 
   const onPlaceChanged = () => {
     const place = autocompleteRef.current?.getPlace();
@@ -176,6 +183,17 @@ export const EditProfileForm = () => {
     if (!isLoading && userData) {
       setValue("name", userData?.name ?? "");
       setValue("email", userData?.email ?? "");
+      setValue(
+        "phoneNumberCountryCode",
+        userData?.phoneNumberCountryCode ?? null
+      );
+      setValue("phoneNumber", userData?.phoneNumber ?? "");
+      const countryCode =
+        userData?.phoneNumberCountryCode === 0
+          ? 1
+          : userData?.phoneNumberCountryCode;
+      const phoneNumber = userData?.phoneNumber;
+      setCurrentPhoneNumber((prev) => `${countryCode}${phoneNumber}`);
       setValue("phoneNumber", userData?.phoneNumber ?? "");
       setValue("handle", userData?.handle ?? "");
       // setValue("location", userData?.location ?? "");
@@ -200,6 +218,33 @@ export const EditProfileForm = () => {
       );
     }
   }, [isLoading, userData]);
+
+  useEffect(() => {
+    if (!debouncedPhoneNumber) return;
+
+    const fetchPhoneValidation = async () => {
+      try {
+        const response = await fetch(
+          `https://phonevalidation.abstractapi.com/v1/?api_key=${process.env.NEXT_PUBLIC_ABSTRACT_API_KEY}&phone=${debouncedPhoneNumber}`
+        );
+        const result = await response.json();
+        if (!result.valid) {
+          setError("phoneNumber", {
+            message:
+              "Invalid phone number. Please enter a valid phone number with country code. No dashes, or spaces required.",
+          });
+        } else {
+          clearErrors(["phoneNumber"]);
+        }
+      } catch (error) {
+        console.error("Error fetching phone validation:", error);
+      }
+    };
+
+    fetchPhoneValidation().catch((error) => {
+      console.error("Error validating phone number:", error);
+    });
+  }, [debouncedPhoneNumber]);
 
   const image = watch("profilePictureAssetId");
 
@@ -272,13 +317,18 @@ export const EditProfileForm = () => {
   };
 
   const onSubmit: SubmitHandler<EditProfileSchemaType> = async (data) => {
+    setIsSubmitting(true);
     if (profanityCheckData?.isProfane) {
       setError("handle", {
         message: errors.handle?.message || "Handle not available",
       });
+      setIsSubmitting(false);
       return;
     }
-    if (isUploading) return;
+    if (errors.phoneNumber || isUploading) {
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
       const prevData = {
@@ -306,6 +356,7 @@ export const EditProfileForm = () => {
         city: data?.city,
         zipcode: data?.zipcode,
         country: data?.country,
+        phoneNumberCountryCode: data.phoneNumberCountryCode,
         phoneNumber: data.phoneNumber,
         profilePictureAssetId:
           data.profilePictureAssetId === defaultProfilePhoto
@@ -380,6 +431,9 @@ export const EditProfileForm = () => {
         (error as Error)?.message ?? "An error occurred updating profile"
       );
     }
+    finally {
+      setIsSubmitting(false);
+    }
   };
 
   const resetProfilePicture = (e: FormEvent<HTMLButtonElement>) => {
@@ -446,19 +500,50 @@ export const EditProfileForm = () => {
           name="phoneNumber"
           control={control}
           render={({ field }) => (
-            <Input
-              {...field}
-              label="Phone Number"
-              type="tel"
-              placeholder="Enter your phone number"
-              id="phoneNumber"
-              register={register}
-              name="phoneNumber"
-              error={errors.phoneNumber?.message}
-              inputRef={(e) => {
-                field.ref(e);
-              }}
-            />
+            <div className={`flex flex-col gap-1`}>
+              <div className="flex gap-1">
+                <label
+                  htmlFor="phoneNumber"
+                  className="text-[14px] text-primary-gray"
+                >
+                  Phone Number
+                </label>
+              </div>
+              <PhoneInput
+                {...field}
+                value={currentPhoneNumber || ""}
+                autoFormat={false}
+                onChange={(
+                  phone,
+                  countryData: { dialCode: string; countryCode: string }
+                ) => {
+                  const nationalNumber = phone.replace(
+                    countryData.dialCode,
+                    ""
+                  );
+                  setCurrentPhoneNumber(phone);
+                  setValue("phoneNumber", nationalNumber);
+                  setValue("phoneNumberCountryCode", +countryData.dialCode);
+                }}
+                enableSearch
+                inputStyle={{ width: "100%", paddingLeft: "50px" }}
+                buttonStyle={{
+                  border: "none",
+                  backgroundColor: "transparent",
+                }}
+                placeholder="Enter your phone number"
+              />
+              {errors.phoneNumber && (
+                <p className="text-[12px] text-red">
+                  {errors.phoneNumber.message}
+                </p>
+              )}
+              {errors.phoneNumberCountryCode && (
+                <p className="text-[12px] text-red">
+                  {errors.phoneNumberCountryCode.message}
+                </p>
+              )}
+            </div>
           )}
         />
         <Controller

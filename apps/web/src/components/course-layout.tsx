@@ -30,7 +30,7 @@ export const CourseLayout = ({ children }: { children: React.ReactNode }) => {
     notificationsCount > 0
       ? notificationsCount >= 5
         ? `${notificationsCount * 27 + 20}px`
-        : `${notificationsCount * 42}px`
+        : `${notificationsCount * 20}px`
       : "0";
   const styling = useMemo(() => {
     const coursePathPattern = `/${courseId}/`;
@@ -44,6 +44,8 @@ export const CourseLayout = ({ children }: { children: React.ReactNode }) => {
       return isMobile ? "pt-0" : "pt-12";
     }
   }, [pathname, notificationsCount, isMobile]);
+
+  // const divHeight = document?.getElementById('notification-container')?.offsetHeight;
 
   return (
     <div className={styling} style={{ marginTop }}>
