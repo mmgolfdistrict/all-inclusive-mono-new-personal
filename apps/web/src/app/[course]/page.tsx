@@ -55,7 +55,7 @@ export default function CourseHomePage() {
   const queryEndTime = searchParams.get("endTime");
   const queryPlayerCount = searchParams.get("playerCount");
   const source = searchParams.get("source");
-
+  const {  isNavExpanded } = useAppContext();
   const ref = useRef<HTMLDivElement | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -629,7 +629,7 @@ export default function CourseHomePage() {
             <Filters openForecastModal={openForecastModal} />
           </div>
         </div>
-        <div className="fixed bottom-16 left-1/2 z-10 -translate-x-1/2 md:hidden">
+        <div className={`fixed ${ isNavExpanded ? "bottom-32" :"bottom-16"} left-1/2 z-10 -translate-x-1/2 md:hidden`}>
           {/* mobile  for filter/sort */}
           <FilterSort toggleFilters={toggleFilters} toggleSort={toggleSort} />
         </div>
