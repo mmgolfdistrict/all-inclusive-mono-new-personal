@@ -363,8 +363,13 @@ export class HyperSwitchWebhookService {
     const isFirstHandBooking = customerCart.cart.some(
       (item) => item.product_data.metadata.type === "first_hand"
     );
+    const hasFirstHandGroupBookingItem = customerCart.cart.some(
+      (item) => item.product_data.metadata.type === "first_hand_group"
+    );
+    const isFirstHandGroupBooking = hasFirstHandGroupBookingItem ? true : false;
+
     console.log(`isFirstHandBooking = ${isFirstHandBooking}`);
-    if (isFirstHandBooking) {
+    if (isFirstHandBooking || isFirstHandGroupBooking) {
       await this.bookingService.confirmBooking(paymentId, customer_id);
       return;
     }

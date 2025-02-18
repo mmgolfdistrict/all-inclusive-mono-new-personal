@@ -65,7 +65,7 @@ export type ProductData =
   | GreenFeeTaxPercentProduct
   | MarkupTaxPercentProduct
   | WeatherGuaranteeTaxPercentProduct
-  | FirstHandGroupProductSchema;
+  | FirstHandGroupProduct;
 
 export interface BaseProduct {
   name: string; // teeTime-course-time
@@ -192,7 +192,7 @@ export interface GreenFeeTaxPercentProduct extends BaseProduct {
   };
 }
 
-export interface FirstHandGroupProductSchema extends BaseProduct {
+export interface FirstHandGroupProduct extends BaseProduct {
   product_data: {
     metadata: {
       type: "first_hand_group";

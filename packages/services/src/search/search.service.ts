@@ -2263,7 +2263,8 @@ export class SearchService extends CacheService {
 
     const groupBookingPriceSelectionMethod = courseSettingResponse?.value ?? "MAX";
     let pricePerGolfer = 0,
-      cartFeesForGroup = 0;
+      cartFeesForGroup = 0,
+      remainingPlayers = playerCount;
     if (groupBookingPriceSelectionMethod === "MAX") {
       for (const teeTime of mappedTeeTimes) {
         pricePerGolfer = Math.max(pricePerGolfer, teeTime.pricePerGolfer);
@@ -2273,8 +2274,10 @@ export class SearchService extends CacheService {
       let totalGreenFees = 0,
         totalCartFees = 0;
       for (const teeTime of mappedTeeTimes) {
-        totalGreenFees += teeTime.pricePerGolfer;
-        totalCartFees += teeTime.cartFee;
+        const players = Math.min(remainingPlayers, teeTime.availableSlots);
+        remainingPlayers -= players;
+        totalGreenFees += teeTime.pricePerGolfer * players;
+        totalCartFees += teeTime.cartFee * players;
       }
       pricePerGolfer = totalGreenFees / playerCount;
       cartFeesForGroup = totalCartFees / playerCount;
