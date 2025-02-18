@@ -47,7 +47,8 @@ export const MobileSort = ({
           {SortOptions.map((value, index) => (
             <Item
               key={index}
-              value={value}
+              value={value} 
+              label={value}
               className={`${
                 index === 0
                   ? "rounded-t-2xl border border-stroke"

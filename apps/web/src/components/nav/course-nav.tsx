@@ -8,7 +8,7 @@ import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMediaQuery } from "usehooks-ts";
 import { FilledButton } from "../buttons/filled-button";
 import { Auction } from "../icons/auction";
@@ -31,10 +31,12 @@ import { toast } from "react-toastify";
 import "./courseNav.css";
 import { ThreeDots } from "../icons/threedots";
 import { UserProfile } from "../icons/user-profile";
+import { DownArrow } from "../icons/down-arrow";
 
 export const CourseNav = () => {
   const { user } = useUserContext();
-  const { entity, setPrevPath } = useAppContext();
+  const { entity, setPrevPath, isNavExpanded,
+    setIsNavExpanded } = useAppContext();
   const { course } = useCourseContext();
   const courseId = course?.id;
   const [isSideBarOpen, setIsSideBarOpen] = useState<boolean>(false);
@@ -43,6 +45,11 @@ export const CourseNav = () => {
   const session = useSession();
   const { setDateType } = useFiltersContext();
   const router = useRouter();
+  const bottomNavRef = useRef<HTMLDivElement | null>(null);
+
+  const toggleNavExpansion = () => {
+    setIsNavExpanded(!isNavExpanded);
+  };
 
   const { data: unreadOffers } = api.user.getUnreadOffersForCourse.useQuery(
     {
@@ -147,9 +154,12 @@ export const CourseNav = () => {
 
     if (/^\/[^/]+$/.test(pathname)) {
       internalNameToMatch = "teeTime";
+    } else if (/^\/[^/]+\/[^/]+$/.test(pathname)) {
+      internalNameToMatch = "tee-time-details";
+
     } else {
       const matchedWalkthrough = walkthrough.find((wt) =>
-        pathname.includes(wt.internalName)
+        pathname.includes(wt.internalName) && !pathname.includes("/confirmation")
       );
       if (!matchedWalkthrough) {
         toast.error("No help available.");
@@ -172,6 +182,7 @@ export const CourseNav = () => {
     );
 
     if (!filteredSections.length) {
+      toast.error("No help available.");
       return;
     }
 
@@ -199,6 +210,11 @@ export const CourseNav = () => {
     filteredSections
       .sort((a, b) => (a?.displayOrder || 0) - (b?.displayOrder || 0))
       .forEach((section) => {
+        const element = document.querySelector(`#${section.sectionId}`);
+
+        if (!element) {
+          return;
+        }
         const buttons = [
           {
             text: "Next",
@@ -417,6 +433,7 @@ export const CourseNav = () => {
                     data-testid="group-booking-id"
                     data-test={courseId}
                     onClick={handleResetFilters}
+                    id="group-booking"
                   />
                 ) : null}
                 {course?.allowAuctions ? (
@@ -488,64 +505,127 @@ export const CourseNav = () => {
           : ""}
       </div>
       {isMobile &&
-        <div className={`fixed bottom-0 w-full z-20 bg-white border-b border-stroke`}>
+        <div className={`fixed bottom-0 w-full z-20 bg-white border-t border-stroke-secondary border-stroke`} id="bottom-nav">
           <div className="flex w-full justify-center bg-white p-2 md:p-4">
-            <div className="flex w-full justify-evenly gap-4 md:gap-8">
-              <NavItem
-                href={`/${courseId}`}
-                text="Find Times"
-                icon={<Search className="w-[16px]" />}
-                data-testid="tee-time-id"
-                data-test={courseId}
-                onClick={handleResetFilters}
-                id="navbar-find-times"
-              />
-              {course?.supportsWaitlist ? (
+            <div className={`flex w-full ${isNavExpanded ? "gap-4" : ""} flex-col`}>
+              <div className="flex w-full justify-evenly gap-4">
                 <NavItem
-                  href={`/${courseId}/notify-me`}
-                  text="Waitlist"
-                  icon={<Megaphone className="w-[16px]" />}
-                  data-testid="notify-me-id"
+                  href={`/${courseId}`}
+                  text="Find Times"
+                  icon={<Search className="w-[16px]" />}
+                  data-testid="tee-time-id"
                   data-test={courseId}
                   onClick={handleResetFilters}
-                  id="navbar-waitlist"
+                  id="navbar-find-times"
                 />
-              ) : null}
+                {course?.supportsWaitlist ? (
+                  <NavItem
+                    href={`/${courseId}/notify-me`}
+                    text="Waitlist"
+                    icon={<Megaphone className="w-[16px]" />}
+                    data-testid="notify-me-id"
+                    data-test={courseId}
+                    onClick={handleResetFilters}
+                    id="navbar-waitlist"
+                  />
+                ) : null}
 
-              <NavItem
-                href={`/${courseId}/my-tee-box?section=owned`}
-                text="My Tee Box"
-                icon={<Calendar className="w-[16px]" />}
-                data-testid="sell-your-tee-time-id"
-                data-test={courseId}
-                onClick={handleResetFilters}
-                id="navbar-my-tee-box"
-              />
+                <NavItem
+                  href={`/${courseId}/my-tee-box?section=owned`}
+                  text="My Tee Box"
+                  icon={<Calendar className="w-[16px]" />}
+                  data-testid="sell-your-tee-time-id"
+                  data-test={courseId}
+                  onClick={handleResetFilters}
+                  id="navbar-my-tee-box"
+                />
 
-              <NavItem
-                href={`/${courseId}/account-settings/${user?.id}`}
-                text="Account"
-                icon={<UserProfile className="w-[20px] fill-[#353b3f]"/>}
-                data-testid="account-settings-id"
-                data-test={courseId}
-                onClick={handleResetFilters}
-                id="navbar-account-settings"
-              />
+                <NavItem
+                  href={`/${courseId}/account-settings/${user?.id}`}
+                  text="Account"
+                  icon={<UserProfile className="w-[20px] fill-[#353b3f]" />}
+                  data-testid="account-settings-id"
+                  data-test={courseId}
+                  onClick={handleResetFilters}
+                  id="navbar-account-settings"
+                />
 
-              <NavItem
-                href=""
-                text=""
-                icon={<ThreeDots
-                  className="cursor-pointer"
-                />}
-                className="flex !justify-center items-center"
-                onClick={toggleSideBar}
-              // data-testid="sell-your-tee-time-id"
-              // data-test={courseId}
-              // onClick={handleGuideMe}
-              />
-
+                <NavItem
+                  href=""
+                  text=""
+                  icon={isNavExpanded ? <DownArrow className="w-[35px] cursor-pointer" /> : <ThreeDots
+                    className="cursor-pointer"
+                  />}
+                  className="flex !justify-center items-center w-[35px]"
+                  onClick={toggleNavExpansion}
+                />
+              </div>
+              <div ref={bottomNavRef} className={`flex w-full justify-evenly gap-4 md:gap-8 ${isNavExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'} transition-all duration-200 ease-in-out`}>
+                {course?.supportsGroupBooking ? (
+                  <NavItem
+                    href={`/${courseId}/group-booking`}
+                    text="Group Booking"
+                    icon={<Megaphone className="w-[16px]" />}
+                    data-testid="group-booking-id"
+                    data-test={courseId}
+                    onClick={handleResetFilters}
+                  />
+                ) : null}
+                {course?.allowAuctions ? (
+                  <NavItem
+                    href={`/${courseId}/auctions`}
+                    text="Auctions"
+                    icon={<Auction className="w-[16px]" />}
+                    data-testid="auction-id"
+                    data-test={courseId}
+                    onClick={handleResetFilters}
+                    id="navbar-auctions"
+                  />
+                ) : null}
+                <NavItem
+                  href={`/${courseId}/my-tee-box`}
+                  text="Sell"
+                  icon={<Marketplace className="w-[16px]" />}
+                  data-testid="sell-your-tee-time-id"
+                  data-test={courseId}
+                  onClick={handleResetFilters}
+                  id="navbar-sell"
+                />
+                {course?.supportsOffers ? (
+                  <NavItem
+                    href={
+                      user
+                        ? `/${courseId}/my-tee-box?section=offers-received`
+                        : `/${course?.id}/login`
+                    }
+                    text="My Offers"
+                    icon={
+                      <div className="relative">
+                        <MyOffers className="w-[20px]" />
+                        {unreadOffers && unreadOffers > 0 ? (
+                          <div className="absolute -right-3.5 -top-2 md:-right-2.5 md:-top-4 flex h-5 w-5 min-w-fit select-none items-center justify-center rounded-full border-2 border-white bg-alert-red p-1 text-[10px] font-semibold text-white">
+                            {unreadOffers}
+                          </div>
+                        ) : null}
+                      </div>
+                    }
+                    data-testid="my-offer-id"
+                    data-test={courseId}
+                    onClick={handleResetFilters}
+                    id="navbar-my-offers"
+                  />
+                ) : null}
+                <NavItem
+                  href=""
+                  text=""
+                  // icon={isNavExpanded ? <DownArrow className="w-[35px] cursor-pointer"/> :<ThreeDots
+                  //   className="cursor-pointer"
+                  // />}
+                  className="flex !justify-center items-center w-[35px]"
+                />
+              </div>
             </div>
+
           </div>
         </div>
       }

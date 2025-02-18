@@ -103,4 +103,7 @@ export const checkoutRouter = createTRPCRouter({
   getAllCourseMembership: protectedProcedure.input(z.object({})).query(async ({ ctx }) => {
     return await ctx.serviceFactory.getCheckoutService().getAllCourseMembership();
   }),
+  isAppleEnabledReloadWidget: protectedProcedure.input(z.object({})).query(async ({ ctx }) => {
+    return await ctx.serviceFactory.getCheckoutService().isAppleEnabledReloadWidget();
+  }),
 });

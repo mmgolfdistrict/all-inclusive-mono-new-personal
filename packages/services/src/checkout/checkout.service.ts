@@ -262,6 +262,11 @@ export class CheckoutService {
     //     errors: errors,
     //   };
     // }
+    console.log("userId ", userId);
+    console.log("customerCartData ", JSON.stringify(customerCartData));
+    console.log("cartId ", cartId);
+    console.log("ipAddress ", ipAddress);
+    console.log("paymentId ", paymentId);
     if (paymentId) {
       data = await this.updateCheckoutSession(userId, customerCartData, cartId);
     } else {
@@ -325,7 +330,7 @@ export class CheckoutService {
     );
     const isFirstHandGroup = customerCart.cart.filter(
       ({ product_data }) => product_data.metadata.type === "first_hand_group"
-    )
+    );
     const sensibleCharge =
       customerCartData?.cart
         ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "sensible")
@@ -409,7 +414,7 @@ export class CheckoutService {
         }
         const teeTime = teeTimesResponse[0];
         const groupBookingPriceSelectionMethod = teeTime?.groupBookingPriceSelectionMethod ?? "MAX";
-        let greenFees = 0
+        let greenFees = 0;
 
         // get fees for players
         let remainingPlayers = playerCount;
@@ -418,7 +423,7 @@ export class CheckoutService {
             greenFees = Math.max(greenFees, teeTime.greenFees);
           }
         } else if (groupBookingPriceSelectionMethod === "SUM") {
-          let totalGreenFees = 0
+          let totalGreenFees = 0;
           for (const teeTime of teeTimesResponse) {
             const players = Math.min(remainingPlayers, teeTime.availableFirstHandSpots);
             remainingPlayers -= players;
@@ -476,7 +481,7 @@ export class CheckoutService {
         cartId: customerCart?.cartId,
       },
       merchant_order_reference_id: customerCartData?.cartId ?? "",
-      setup_future_usage: "on_session",
+      setup_future_usage: "off_session",
     };
     // }
 
@@ -531,7 +536,7 @@ export class CheckoutService {
         listingId = product_data.metadata.second_hand_id;
       }
       if (product_data.metadata.type === "first_hand_group") {
-        teeTimeId = product_data.metadata.tee_time_ids[0]
+        teeTimeId = product_data.metadata.tee_time_ids[0];
       }
     });
 
@@ -786,7 +791,7 @@ export class CheckoutService {
         listingId = product_data.metadata.second_hand_id;
       }
       if (product_data.metadata.type === "first_hand_group") {
-        teeTimeId = product_data.metadata.tee_time_ids[0]
+        teeTimeId = product_data.metadata.tee_time_ids[0];
       }
     });
 
@@ -1015,9 +1020,10 @@ export class CheckoutService {
         )
       )
       .execute()
-      .catch((err) => {
+      .catch((_err) => {
         throw new Error("Error retrieving teetime");
       });
+    console.log("stillAvailable", JSON.stringify(stillAvailable));
     if (stillAvailable.length == 0) {
       errors.push({
         errorType: CartValidationErrors.TEE_TIME_NOT_AVAILABLE,
@@ -1617,5 +1623,9 @@ export class CheckoutService {
       .from(courseMembership);
     console.log("providerCourseMemberShipResult", courseMemberShipResult);
     return courseMemberShipResult || [];
+  };
+  isAppleEnabledReloadWidget = async () => {
+    const appSettingsResult = await this.appSettings.getAppSetting("IS_ENABLED_APPLE_PAY");
+    return appSettingsResult?.value === "1" ? true : false;
   };
 }

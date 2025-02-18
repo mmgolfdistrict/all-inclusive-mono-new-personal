@@ -77,7 +77,7 @@ export const TeeTime = ({
   listedSlots?: number | null;
   handleLoading?: (val: boolean) => void;
   refetch?: () => Promise<unknown>;
-    groupId?: string;
+  groupId?: string;
 }) => {
   const [, copy] = useCopyToClipboard();
   const [isCopied, setIsCopied] = useState<boolean>(false);
@@ -289,9 +289,8 @@ export const TeeTime = ({
         data-test={
           status === "SECOND_HAND" ? "secondary_listed" : "primary_listed"
         }
-        className={`md:rounded-xl rounded-lg bg-secondary-white w-fit min-w-[230px] md:min-w-[265px] ${
-          className ?? ""
-        }`}
+        className={`md:rounded-xl rounded-lg bg-secondary-white w-fit min-w-[230px] md:min-w-[265px] ${className ?? ""
+          }`}
       >
         <div className="border-b border-stroke">
           <div className="flex justify-between py-1 px-2 md:px-3 md:p-3 items-center">
@@ -463,18 +462,20 @@ export const TeeTime = ({
           )}
           <div className="flex items-center gap-1">
             {course?.supportsWatchlist ? (
-              <OutlineButton
-                className="md:px-[.5rem] px-[0.375rem] py-[0.375rem] md:py-2"
-                onClick={addToWatchlist}
-                data-testid="watch-list-id"
-                data-test={teeTimeId}
-                data-qa={optimisticLike}
-              >
-                <Heart
-                  className={`w-[13px] md:w-[18px]`}
-                  fill={optimisticLike ? "#40942A" : undefined}
-                />
-              </OutlineButton>
+              <div id="add-to-watchlist">
+                <OutlineButton
+                  className="md:px-[.5rem] px-[0.375rem] py-[0.375rem] md:py-2"
+                  onClick={addToWatchlist}
+                  data-testid="watch-list-id"
+                  data-test={teeTimeId}
+                  data-qa={optimisticLike}
+                >
+                  <Heart
+                    className={`w-[13px] md:w-[18px]`}
+                    fill={optimisticLike ? "#40942A" : undefined}
+                  />
+                </OutlineButton>
+              </div>
             ) : null}
 
             <Link
@@ -483,20 +484,24 @@ export const TeeTime = ({
               data-test={teeTimeId}
               data-qa={"Details"}
               data-cy={time}
+              id="tee-time-details-button"
             >
               <OutlineButton className="!py-[.28rem] md:py-1.5">
                 Details
               </OutlineButton>
             </Link>
-            <OutlineButton
-              onClick={() => void share()}
-              className="w-full whitespace-nowrap"
-              data-testid="share-button-id"
-            >
-              <div className="flex items-center justify-center gap-2">
-                {isCopied ? <>Copied</> : <>Share</>}
-              </div>
-            </OutlineButton>
+            <div id="share-tee-time-button">
+
+              <OutlineButton
+                onClick={() => void share()}
+                className="w-full whitespace-nowrap"
+                data-testid="share-button-id"
+              >
+                <div className="flex items-center justify-center gap-2">
+                  {isCopied ? <>Copied</> : <>Share</>}
+                </div>
+              </OutlineButton>
+            </div>
           </div>
         </div>
         {isMakeAnOfferOpen && (

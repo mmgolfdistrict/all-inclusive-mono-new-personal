@@ -131,32 +131,32 @@ export const Owned = () => {
           <tbody className={`max-h-[300px] w-full flex-col overflow-scroll`}>
             {isLoading
               ? Array(3)
-                  .fill(null)
-                  .map((_, idx) => <SkeletonRow key={idx} />)
+                .fill(null)
+                .map((_, idx) => <SkeletonRow key={idx} />)
               : ownedTeeTimes?.map((i, idx) => (
-                  <TableRow
-                    course={i.courseName}
-                    date={i.date}
-                    iconSrc={i.courseLogo}
-                    key={idx}
-                    purchasePrice={
-                      (i.purchasedFor ?? i.firstHandPrice) * i.golfers.length
-                    }
-                    golfers={i.golfers}
-                    status={i.status}
-                    offers={i.offers ? parseInt(i.offers) : undefined}
-                    isListed={i.status === "LISTED"}
-                    openListTeeTime={() => openListTeeTime(i)}
-                    openCancelListing={() => openCancelListing(i)}
-                    openManageListTeeTime={() => openManageListTeeTime(i)}
-                    courseId={i.courseId}
-                    teeTimeId={i.teeTimeId}
-                    listingId={i.listingId}
-                    ownerId={user?.id ?? ""}
-                    timezoneCorrection={course?.timezoneCorrection}
-                    bookingStatus={i.bookingStatus}
-                  />
-                ))}
+                <TableRow
+                  course={i.courseName}
+                  date={i.date}
+                  iconSrc={i.courseLogo}
+                  key={idx}
+                  purchasePrice={
+                    (i.purchasedFor ?? i.firstHandPrice) * i.golfers.length
+                  }
+                  golfers={i.golfers}
+                  status={i.status}
+                  offers={i.offers ? parseInt(i.offers) : undefined}
+                  isListed={i.status === "LISTED"}
+                  openListTeeTime={() => openListTeeTime(i)}
+                  openCancelListing={() => openCancelListing(i)}
+                  openManageListTeeTime={() => openManageListTeeTime(i)}
+                  courseId={i.courseId}
+                  teeTimeId={i.teeTimeId}
+                  listingId={i.listingId}
+                  ownerId={user?.id ?? ""}
+                  timezoneCorrection={course?.timezoneCorrection}
+                  bookingStatus={i.bookingStatus}
+                />
+              ))}
           </tbody>
         </table>
         {/* <OutlineButton
@@ -281,16 +281,15 @@ const TableRow = ({
       </td> */}
       <td className="whitespace-nowrap px-4 py-3 unmask-players">
         {golfers.length > 2
-          ? `You, ${golfers[1]?.name || "Guest"} & ${golfers.length - 2} ${
-              golfers.length - 2 === 1 ? "golfers" : "golfers"
-            }`
+          ? `You, ${golfers[1]?.name || "Guest"} & ${golfers.length - 2} ${golfers.length - 2 === 1 ? "golfers" : "golfers"
+          }`
           : golfers.map((i, idx) => {
-              if (idx === 0) return "You ";
-              if (golfers.length === 1) return "You";
-              if (idx === golfers.length - 1) return `& ${i.name || "Guest"}`;
-              if (idx === golfers.length - 2) return `${i.name || "Guest"} `;
-              return `${i.name || "Guest"}, `;
-            })}
+            if (idx === 0) return "You ";
+            if (golfers.length === 1) return "You";
+            if (idx === golfers.length - 1) return `& ${i.name || "Guest"}`;
+            if (idx === golfers.length - 2) return `${i.name || "Guest"} `;
+            return `${i.name || "Guest"}, `;
+          })}
       </td>
       <td className="flex items-center gap-1 whitespace-nowrap px-4 pb-3 pt-6">
         {offers ? (
@@ -310,36 +309,38 @@ const TableRow = ({
       </td>
       <td className="whitespace-nowrap px-4 py-3">
         <div className="flex w-full justify-end gap-2">
-          <OutlineButton
-            onClick={openManageListTeeTime}
-            data-testid="manage-button-id"
-            data-test={courseId}
-            data-qa={course}
-            id="manage-teetime-button"
-          >
-            Manage
-          </OutlineButton>
-          {isListed ? (
-            <FilledButton
-              className="min-w-[145px]"
-              onClick={openCancelListing}
-              data-testid="cancel-listing-button-id"
+          <div id="manage-teetime-button">
+            <OutlineButton
+              onClick={openManageListTeeTime}
+              data-testid="manage-button-id"
               data-test={courseId}
               data-qa={course}
             >
-              Cancel Listing
-            </FilledButton>
-          ) : (
-            <FilledButton
-              className="min-w-[145px]"
-              onClick={openListTeeTime}
-              data-testid="sell-button-id"
-              data-test={courseId}
-              data-qa={course}
-            >
-              Sell
-            </FilledButton>
-          )}
+              Manage
+            </OutlineButton>
+          </div>
+            {isListed ? (
+              <FilledButton
+                className="min-w-[145px]"
+                onClick={openCancelListing}
+                data-testid="cancel-listing-button-id"
+                data-test={courseId}
+                data-qa={course}
+              >
+                Cancel Listing
+              </FilledButton>
+            ) : (
+              <FilledButton
+                className="min-w-[145px]"
+                onClick={openListTeeTime}
+                data-testid="sell-button-id"
+                data-test={courseId}
+                data-qa={course}
+                id="sell-teetime-button"
+              >
+                Sell
+              </FilledButton>
+            )}
         </div>
       </td>
     </tr>
