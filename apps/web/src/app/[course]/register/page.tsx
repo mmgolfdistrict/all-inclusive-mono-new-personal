@@ -50,7 +50,7 @@ export default function RegisterPage() {
   } = useForm<RegisterSchemaType>({
     resolver: zodResolver(registerSchema),
   });
-  const [isSubmitting, setIsSubmitting] = useState<boolean|undefined>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean | undefined>(false);
   const libraries: Libraries = ["places"];
   const [city, setCity] = useState(getValues("city"));
 
@@ -89,69 +89,56 @@ export default function RegisterPage() {
   const [currentCountry, setCurrentCountry] = useState<string>("");
   const [currentPhoneNumber, setCurrentPhoneNumber] = useState<string>("");
   const debouncedPhoneNumber = useDebounce<string>(currentPhoneNumber, 2000);
-
-  useEffect(() => {
-  const fetchCountry = async () => {
-    try {
-      const result = await fetch('/api/country-code', {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_GOLF_DISTRICT_AUTH_TOKEN}`,
-        },
-      });
-
-      if (result.ok) {
-        const data = await result.json();
-        setCurrentCountry(data.country.toLowerCase());
-      } else {
-        console.error('Failed to fetch country', result);
+  const [triggerValidateQuery, setTriggerValidateQuery] = useState<boolean>(false);
+  const { data: userCountryData, isLoading, isError, error } = api.user.getCountryCode.useQuery({});
+  const { data: phoneNumberData, error: phoneNumberError } = api.user
+    .validatePhoneNumber
+    .useQuery(
+      { phoneNumber: currentPhoneNumber },
+      {
+        enabled: triggerValidateQuery,
       }
-    } catch (error) {
-      console.error('Error fetching country:', error);
-    }
-  };
+    );
 
-  fetchCountry();
-}, []);
+  useEffect(function setCountryCode() {
+    if (!userCountryData) return;
+    const countryData = JSON.parse(userCountryData as string);
+    if (countryData?.country) {
+      setCurrentCountry(countryData.country.toLowerCase());
+    } else {
+      console.error('Failed to fetch country', error);
+    }
+  }, [userCountryData]);
+
+  useEffect(function validatePhoneNumber() {
+    if (phoneNumberError) {
+      setError("phoneNumber", {
+        message: "Failed to validate phone number. Please try again.",
+      });
+    } else if (phoneNumberData && !phoneNumberData.valid) {
+      setError("phoneNumber", {
+        message: "Invalid phone number. Please enter a valid phone number with country code. No dashes, or spaces required.",
+      });
+    } else {
+      clearErrors(["phoneNumber"]);
+    }
+  }, [phoneNumberData]);
 
   useEffect(() => {
+    if (!debouncedPhoneNumber) {
+      setTriggerValidateQuery(false);
+      return
+    } else {
+      setTriggerValidateQuery(true);
+    }
+  }, [debouncedPhoneNumber, currentPhoneNumber]);
+
+  useEffect(function setPhoneNumberValue() {
     if (currentCountry) {
       setValue("phoneNumber", "");
       setCurrentPhoneNumber("");
     }
   }, [currentCountry, setValue]);
-
-  useEffect(() => {
-    if (!debouncedPhoneNumber) return;
-
-    const fetchPhoneValidation = async () => {
-      try {
-        const response = await fetch('/api/validate-phone', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.NEXT_PUBLIC_GOLF_DISTRICT_AUTH_TOKEN}`,
-          },
-          body: JSON.stringify({ phoneNumber: debouncedPhoneNumber }),
-        });
-        const result = await response.json();
-        if (!result.valid) {
-          setError("phoneNumber", {
-            message:
-              "Invalid phone number. Please enter a valid phone number with country code. No dashes, or spaces required.",
-          });
-        } else {
-          clearErrors(["phoneNumber"]);
-        }
-      } catch (error) {
-        console.error("Error fetching phone validation:", error);
-      }
-    };
-
-    fetchPhoneValidation().catch((error) => {
-      console.error("Error validating phone number:", error);
-    });
-  }, [debouncedPhoneNumber]);
 
   const onPlaceChanged = () => {
     const place = autocompleteRef.current?.getPlace();
@@ -301,7 +288,7 @@ export default function RegisterPage() {
       setIsSubmitting(false);
       return;
     }
-    
+
     // if (registerUser.isSuccess) return;
     try {
       const response = await registerUser.mutateAsync({
@@ -350,7 +337,7 @@ export default function RegisterPage() {
           require for social logins.
         </p>
         <form className="flex flex-col gap-2" onSubmit={handleSubmit(onSubmit)}>
-        <Controller
+          <Controller
             name="firstName"
             control={control}
             render={({ field }) => (
@@ -857,9 +844,8 @@ export default function RegisterPage() {
               </p>
             )}
           <FilledButton
-            className={`w-full rounded-full ${
-              isSubmitting ? "animate-pulse cursor-not-allopwed" : ""
-            }`}
+            className={`w-full rounded-full ${isSubmitting ? "animate-pulse cursor-not-allopwed" : ""
+              }`}
             type="submit"
             disabled={isSubmitting}
             data-testid="register-button-id"

@@ -36,6 +36,7 @@ import { clubprophetWebhookService } from "./webhooks/clubprophet.webhook.servic
 import { FinixService } from "./webhooks/finix.service";
 import { LoggerService } from "./webhooks/logging.service";
 import { PaymentVerifierService } from "./webhooks/paymentverifier.service";
+import { PhoneService } from "./phone/phone.service";
 
 export interface ServiceConfig {
   database: Db;
@@ -414,4 +415,7 @@ export class ServiceFactory {
   getIpInfoService = (): IpInfoService => {
     return new IpInfoService();
   };
+  getPhoneService = (): PhoneService => {
+    return new PhoneService();
+  }
 }

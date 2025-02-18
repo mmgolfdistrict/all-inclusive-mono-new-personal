@@ -188,4 +188,19 @@ export const userRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       return await ctx.serviceFactory.getUserService().addCourseUser(input.userId, input.courseId);
     }),
+    getCountryCode: publicProcedure
+      .input(
+        z.object({})
+      )
+      .query(async ({ ctx }) => {
+        const ipAddress = ctx?.userIpAddress;
+        return await ctx.serviceFactory.getIpInfoService().getIpInfo(ipAddress);
+    }),
+    validatePhoneNumber: publicProcedure
+      .input(
+        z.object({ phoneNumber: z.string() })
+      )
+      .query(async ({ ctx, input }) => {
+        return await ctx.serviceFactory.getPhoneService().validate(input.phoneNumber);
+    }),
 });

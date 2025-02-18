@@ -13,7 +13,7 @@ import { ZodError } from "zod";
 interface CreateContextOptions {
   session: Session | null;
   courseId: string;
-  // userIpAddress: string;
+  userIpAddress: string;
   // userAgent: string;
   // userDomainName: string;
   //logger: pino.Logger;
@@ -69,7 +69,7 @@ const createInnerTRPCContext = (opts: CreateContextOptions) => {
     session: opts.session,
     serviceFactory: new ServiceFactory(serviceFactoryConfig),
     courseId: opts.courseId,
-    // userIpAddress: opts.userIpAddress,
+    userIpAddress: opts.userIpAddress,
     // userAgent: opts.userAgent,
     // userDomainName: opts.userDomainName,
     // logger: logger,
@@ -92,7 +92,7 @@ export const createTRPCContext = async (opts: { req?: Request; auth?: Session })
   return createInnerTRPCContext({
     session,
     courseId,
-    // userIpAddress: ip ?? "",
+    userIpAddress: ip ?? "",
     // userAgent: userAgent ?? "",
     // userDomainName: domainName ?? "",
   });
