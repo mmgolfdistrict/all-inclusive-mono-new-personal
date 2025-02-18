@@ -33,6 +33,7 @@ export const InviteFriends = ({
   );
   const { user } = useUserContext();
   const { course } = useCourseContext();
+  const [isInviteVisible, setIsInviteVisible] = useState(false);
   const selectedTeeTime: InviteFriend[] = bookingData?.bookings || [];
   const href = window.location.href;
   const match = href.match(/^(https?:\/\/[^/]+\/[0-9A-Fa-f-]+)/) || "";
@@ -74,6 +75,7 @@ export const InviteFriends = ({
         redirectHref: match[0],
       });
       setInviteSuccess((prev) => ({ ...prev, [bookingSlotId]: true }));
+      setIsInviteVisible(false);
       toast.success("Invitation sent successfully.");
     } catch (error) {
       toast.error(
@@ -204,6 +206,7 @@ export const InviteFriends = ({
       bookingId: "",
       currentlyEditing: false,
     });
+    setIsInviteVisible(true);
   };
 
   const save = async () => {
@@ -295,7 +298,6 @@ export const InviteFriends = ({
                           placeholder="Username or email"
                           className="mx-auto w-full max-w-[400px] rounded-lg bg-secondary-white px-4 py-2 flex justify-between text-[14px] font-semibold outline-none"
                           data-testid="search-friend-id"
-                          disabled={inviteSuccess[friend.slotId]}
                         />
                         {friend.slotId === newFriend.slotId &&
                         friendList?.length ? (
@@ -328,7 +330,8 @@ export const InviteFriends = ({
                           !isLoading &&
                           !friendList.length && (
                             <div className="flex justify-center items-center flex-col gap-1 rounded-md w-full mx-auto max-w-[400px]">
-                              {!inviteSuccess[friend.slotId] && (
+                              {(!inviteSuccess[friend.slotId] ||
+                                isInviteVisible) && (
                                 <>
                                   <div className="flex justify-center gap-4 mt-2 items-center w-full fade-in">
                                     Friend not found. Invite them!
