@@ -21,6 +21,8 @@ interface AppContextType {
   setPrevPath: Dispatch<SetStateAction<Path | null>>;
   alertOffersShown: boolean;
   setAlertOffersShown: Dispatch<SetStateAction<boolean>>;
+  setIsNavExpanded: Dispatch<SetStateAction<boolean>>;
+  isNavExpanded:boolean
 }
 
 const AppContext = createContext<AppContextType>({
@@ -30,6 +32,8 @@ const AppContext = createContext<AppContextType>({
   setPrevPath: () => undefined,
   alertOffersShown: false,
   setAlertOffersShown: () => ({}),
+  isNavExpanded : false,
+  setIsNavExpanded:() => ({})
 });
 
 export const AppWrapper = ({
@@ -41,7 +45,7 @@ export const AppWrapper = ({
 }) => {
   const { prevPath, setPrevPath } = usePreviousPath();
   const [entity, setEntity] = useState<EntityType | undefined>(entityData);
-
+  const [isNavExpanded, setIsNavExpanded] = useState(false);
   useEffect(() => {
     if (entityData) {
       setEntity(entityData);
@@ -69,6 +73,8 @@ export const AppWrapper = ({
     setPrevPath,
     alertOffersShown,
     setAlertOffersShown,
+    isNavExpanded,
+    setIsNavExpanded
   };
 
   return <AppContext.Provider value={settings}>{children}</AppContext.Provider>;
