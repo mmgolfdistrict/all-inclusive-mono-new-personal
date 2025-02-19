@@ -14,7 +14,7 @@ export default function CurrentUser() {
 
   return (
     <div>
-        <p>
+        <p className="p-4">
             Current User Email: { user ? user.email : 'Not Logged In' }
         </p>
     </div>
