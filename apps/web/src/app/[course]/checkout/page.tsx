@@ -34,6 +34,7 @@ import utc from "dayjs/plugin/utc";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useDebounce } from "usehooks-ts";
+import { useAppContext } from "~/contexts/AppContext";
 
 const currentDate = formatQueryDate(new Date());
 
@@ -67,6 +68,8 @@ export default function Checkout({
     validatePlayers,
     setValidatePlayers: _setValidatePlayers,
   } = useCheckoutContext();
+  const { setActivePage } = useAppContext();
+  setActivePage("checkout")
 
   // useEffect(() => {
   //   if (playerCount) {

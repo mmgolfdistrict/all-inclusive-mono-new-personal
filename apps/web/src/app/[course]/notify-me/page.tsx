@@ -25,6 +25,7 @@ import dayjs from "dayjs";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { useMediaQuery } from "usehooks-ts";
+import { useAppContext } from "~/contexts/AppContext";
 
 function NotifyMe({ params }: { params: { course: string } }) {
   const router = useRouter();
@@ -42,6 +43,8 @@ function NotifyMe({ params }: { params: { course: string } }) {
   const courseEndTime = dayjs(course?.closeTime).format("hh:mm A");
   const courseStartTimeNumber = course?.courseOpenTime ?? 9;
   const courseEndTimeNumber = course?.courseCloseTime ?? 9;
+  const { setActivePage } = useAppContext();
+  setActivePage("notify-me")
 
   const [startTime, setStartTime] = useState<[number, number]>([
     courseStartTimeNumber,

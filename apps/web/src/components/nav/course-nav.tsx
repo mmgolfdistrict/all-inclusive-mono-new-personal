@@ -36,7 +36,7 @@ import { DownArrow } from "../icons/down-arrow";
 export const CourseNav = () => {
   const { user } = useUserContext();
   const { entity, setPrevPath, isNavExpanded,
-    setIsNavExpanded } = useAppContext();
+    setIsNavExpanded, activePage } = useAppContext();
   const { course } = useCourseContext();
   const courseId = course?.id;
   const [isSideBarOpen, setIsSideBarOpen] = useState<boolean>(false);
@@ -138,6 +138,7 @@ export const CourseNav = () => {
     setDateType("All");
   };
 
+console.log("activePage",activePage);
 
   const { data: walkthrough } =
     api.systemNotification.getWalkthroughSetting.useQuery({});
@@ -149,24 +150,14 @@ export const CourseNav = () => {
       console.warn("No walkthrough or walkthrough sections available.");
       return;
     }
-
-    let internalNameToMatch;
-
-    if (/^\/[^/]+$/.test(pathname)) {
-      internalNameToMatch = "teeTime";
-    } else if (/^\/[^/]+\/[^/]+$/.test(pathname)) {
-      internalNameToMatch = "tee-time-details";
-
-    } else {
-      const matchedWalkthrough = walkthrough.find((wt) =>
-        pathname.includes(wt.internalName) && !pathname.includes("/confirmation")
-      );
-      if (!matchedWalkthrough) {
-        toast.error("No help available.");
-        return;
-      }
-      internalNameToMatch = matchedWalkthrough.internalName;
+    const matchedWalkthrough = walkthrough.find((wt) =>
+    wt.internalName === activePage
+    );    
+    if (!matchedWalkthrough) {
+      toast.error("No help available.");
+      return;
     }
+    const internalNameToMatch = matchedWalkthrough?.internalName
 
     const selectedWalkthrough = walkthrough.find(
       (wt) => wt.internalName === internalNameToMatch
@@ -181,7 +172,9 @@ export const CourseNav = () => {
       (section) => section.walkthroughId === selectedWalkthrough.id
     );
 
-    if (!filteredSections.length) {
+    const missingSections = filteredSections.filter(section => !document.getElementById(section.sectionId));
+
+    if (missingSections.length === filteredSections.length) {
       toast.error("No help available.");
       return;
     }

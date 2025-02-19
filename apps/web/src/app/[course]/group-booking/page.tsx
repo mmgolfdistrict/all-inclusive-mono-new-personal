@@ -20,6 +20,7 @@ import type { TeeTimeGroups } from "./GroupBookingPage";
 import GroupBookingPage from "./GroupBookingPage";
 import { api } from "~/utils/api";
 import { toast } from "react-toastify";
+import { useAppContext } from "~/contexts/AppContext";
 const tomorrow = dayjs().add(1, "day");
 
 function GroupBooking({ params }: { params: { course: string } }) {
@@ -34,7 +35,8 @@ function GroupBooking({ params }: { params: { course: string } }) {
   const [players, setPlayers] = useState(SLIDER_MIN);
   const courseStartTimeNumber = course?.courseOpenTime ?? 9;
   const courseEndTimeNumber = course?.courseCloseTime ?? 9;
-
+  const { setActivePage } = useAppContext();
+  setActivePage("group-booking")
   const [startTime, setStartTime] = useState<[number, number]>([
     courseStartTimeNumber,
     courseEndTimeNumber,
@@ -374,14 +376,16 @@ function GroupBooking({ params }: { params: { course: string } }) {
               </div>
             </div>
           </div>
+            
+          <div className="flex items-center justify-center" id="see-available-times">
           <FilledButton
-            id="see-available-times"
             onClick={handleSubmit}
             className="flex items-center justify-center gap-1 max-w-[200px] w-full mt-4 self-center py-[.28rem] md:py-1.5 text-[10px] md:text-[14px] disabled:opacity-50 transition-opacity duration-300"
             disabled={isTeeTimesLoading || !displayDates}
-          >
+            >
             See Available Times
           </FilledButton>
+            </div>
           <div className="flex justify-center items-center mt-2 italic text-primary-gray text-[12px] md:text-[16px] px-4 py-2 md:px-8 md:py-6">
             <p>
               Bookings are paid in advance and non-refundable. If plans change
