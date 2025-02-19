@@ -250,6 +250,8 @@ export default function Login() {
         setValue("password", "");
       } else {
         localStorage.setItem("loginMethod", "EMAIL_PASSWORD");
+      localStorage.setItem("showBalanceToast", "true");
+
       }
     } catch (error) {
       toast.error(
@@ -296,6 +298,8 @@ export default function Login() {
 
       if (!res?.error) {
         localStorage.setItem("loginMethod", "FACEBOOK");
+      localStorage.setItem("showBalanceToast", "true");
+
       }
       if (typeof window !== "undefined") {
         localStorage.setItem("facebookstate", "loggedin");
@@ -344,6 +348,7 @@ export default function Login() {
       });
 
       if (!res?.error) {
+      localStorage.setItem("showBalanceToast", "true");
         localStorage.setItem("loginMethod", "GOOGLE");
       }
       if (typeof window !== "undefined") {
@@ -367,6 +372,8 @@ export default function Login() {
       });
       if (!res?.error) {
         localStorage.setItem("loginMethod", "LINKEDIN");
+      localStorage.setItem("showBalanceToast", "true");
+
       }
       if (typeof window !== "undefined") {
         localStorage.setItem("linkedinstate", "loggedin");

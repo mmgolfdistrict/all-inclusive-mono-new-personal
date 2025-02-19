@@ -27,6 +27,10 @@ export const cashOutRouter = createTRPCRouter({
     return ctx.serviceFactory.getCashOutService().getRecievables(ctx.session?.user?.id ?? "");
   }),
 
+  getRecievablesMute: protectedProcedure.input(z.object({})).mutation(async ({ ctx }) => {
+    return ctx.serviceFactory.getCashOutService().getRecievables(ctx.session?.user?.id ?? "");
+  }),
+
   createCashoutCustomerIdentity: protectedProcedure
     .input(
       z.object({
