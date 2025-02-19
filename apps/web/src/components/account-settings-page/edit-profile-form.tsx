@@ -193,7 +193,7 @@ export const EditProfileForm = () => {
           ? 1
           : userData?.phoneNumberCountryCode;
       const phoneNumber = userData?.phoneNumber;
-      setCurrentPhoneNumber((prev) => `${countryCode}${phoneNumber}`);
+      setCurrentPhoneNumber(() => `${countryCode}${phoneNumber}`);
       setValue("phoneNumber", userData?.phoneNumber ?? "");
       setValue("handle", userData?.handle ?? "");
       // setValue("location", userData?.location ?? "");
