@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { Footer } from "./footer/footer";
 import { MainNav } from "./nav/main-nav";
 import { toast } from "react-toastify";
@@ -24,6 +24,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
 
   const getRecievables = api.cashOut.getRecievablesMute.useMutation();
+  
     const showBalanceToast = async () =>{
       const recievableData = await getRecievables.mutateAsync({});
       if (localStorage.getItem("showBalanceToast") === "true") {
@@ -33,9 +34,9 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
       localStorage.setItem("showBalanceToast", "false"); 
       }
     }
-    
+
   useEffect(() => {
-    showBalanceToast()
+   void showBalanceToast()
   }, []);
 
   useEffect(() => {
