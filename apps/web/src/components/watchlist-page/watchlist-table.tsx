@@ -17,6 +17,7 @@ import { Trashcan } from "../icons/trashcan";
 import { Spinner } from "../loading/spinner";
 import { SkeletonRow } from "../my-tee-box-page/skeleton-row";
 import { MakeAnOffer } from "./make-an-offer";
+import { useAppContext } from "~/contexts/AppContext";
 
 export const WatchlistTable = () => {
   const { course } = useCourseContext();
@@ -25,6 +26,8 @@ export const WatchlistTable = () => {
   const [selectedTeeTime, setSelectedTeeTime] = useState<
     WatchlistItem | undefined
   >(undefined);
+  const { setActivePage } = useAppContext();
+  setActivePage("watchlist")
 
   const { data: session, status } = useSession();
   const router = useRouter();

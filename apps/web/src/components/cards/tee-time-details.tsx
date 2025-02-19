@@ -19,6 +19,7 @@ import { Players } from "../icons/players";
 import { Share } from "../icons/share";
 import { ChoosePlayers } from "../input/choose-players";
 import { Tooltip } from "../tooltip";
+import { useAppContext } from "~/contexts/AppContext";
 
 const PlayersOptions = ["1", "2", "3", "4"];
 
@@ -31,6 +32,8 @@ export const TeeTimeDetails = ({
 }) => {
   const { course } = useCourseContext();
   const courseId = course?.id;
+  const { setActivePage } = useAppContext();
+  setActivePage("tee-time-details")
 
   const { data, isLoading, error, isError, refetch } =
     api.searchRouter.getTeeTimeById.useQuery({ teeTimeId: teeTimeId });

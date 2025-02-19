@@ -12,6 +12,7 @@ import { GoBack } from "~/components/buttons/go-back";
 import { ProfileDetails } from "~/components/profile-page/profile-details";
 import { useUser } from "~/hooks/useUser";
 import { useRouter } from "next/navigation";
+import { useAppContext } from "~/contexts/AppContext";
 
 export default function ManangeProfile({
   params,
@@ -23,6 +24,8 @@ export default function ManangeProfile({
   const router = useRouter();
   const { status, data } = useSession();
   const { isLoading: isUserLoading, data: user } = useUser(userId);
+  const { setActivePage } = useAppContext();
+  setActivePage("account-settings")
 
   // const { data: systemNotifications } =
   //   api.systemNotification.getSystemNotification.useQuery({});

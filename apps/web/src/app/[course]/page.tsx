@@ -47,7 +47,6 @@ dayjs.extend(utc);
 dayjs.extend(timezone);
 export default function CourseHomePage() {
   const isMobile = useMediaQuery("(max-width: 768px)");
-
   const searchParams = useSearchParams();
   const queryDateType = searchParams.get("dateType");
   const queryDate = searchParams.get("date");
@@ -55,7 +54,6 @@ export default function CourseHomePage() {
   const queryEndTime = searchParams.get("endTime");
   const queryPlayerCount = searchParams.get("playerCount");
   const source = searchParams.get("source");
-  const {  isNavExpanded } = useAppContext();
   const ref = useRef<HTMLDivElement | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -70,7 +68,8 @@ export default function CourseHomePage() {
   const { user } = useUserContext();
   const { course } = useCourseContext();
   const { setBookingSource } = useBookingSourceContext();
-
+  const {  isNavExpanded,setActivePage } = useAppContext();
+  setActivePage("teeTime")
   function getUserTimezone() {
     return Intl.DateTimeFormat().resolvedOptions().timeZone;
   }
@@ -527,8 +526,6 @@ export default function CourseHomePage() {
     (pageNumber - 1) * TAKE,
     pageNumber * TAKE
   );
-
-  console.log("finalRes", finalRes);
 
 
   const [scrollY, setScrollY] = useState(0);
