@@ -790,6 +790,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
         HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
         SellTeeTImeURL: `${redirectHref}/my-tee-box`,
         ManageTeeTimesURL: `${redirectHref}/my-tee-box`,
+        GroupReservationID: groupId,
       };
     } else {
       event = {

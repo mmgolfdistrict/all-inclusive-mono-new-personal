@@ -47,6 +47,7 @@ interface EmailParams {
   SellTeeTImeURL?: string;
   ManageTeeTimesURL?: string;
   GreenFeesPerPlayer?: string;
+  GroupReservationID?: string;
 }
 
 interface Attachment {

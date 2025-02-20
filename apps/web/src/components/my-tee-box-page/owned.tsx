@@ -155,6 +155,7 @@ export const Owned = () => {
                   ownerId={user?.id ?? ""}
                   timezoneCorrection={course?.timezoneCorrection}
                   bookingStatus={i.bookingStatus}
+                  isGroupBooking={i.isGroupBooking}
                 />
               ))}
           </tbody>
@@ -229,6 +230,7 @@ const TableRow = ({
   openCancelListing,
   openManageListTeeTime,
   bookingStatus,
+  isGroupBooking
 }: {
   course: string;
   date: string;
@@ -247,6 +249,7 @@ const TableRow = ({
   openCancelListing: () => void;
   openManageListTeeTime: () => void;
   bookingStatus: string;
+    isGroupBooking: boolean;
 }) => {
   const href = useMemo(() => {
     if (isListed) {
@@ -258,7 +261,20 @@ const TableRow = ({
   return (
     <tr className="w-full border-b border-stroke text-primary-gray">
       <td className="gap-2 px-4 py-3">
-        <Link
+        {isGroupBooking ? (
+          <div className="flex items-center gap-2">
+            <Avatar src={iconSrc} />
+            <div className="flex flex-col">
+              <div className="whitespace-nowrap underline text-secondary-black">
+                {course}
+              </div>
+              <div className="text-primary-gray unmask-time">
+                {formatTime(date, false, timezoneCorrection)}
+              </div>
+            </div>
+          </div>
+        ) : (
+            <Link
           href={href}
           className="flex items-center gap-2"
           data-testid="course-tee-time-listing-id"
@@ -275,6 +291,7 @@ const TableRow = ({
             </div>
           </div>
         </Link>
+        )}
       </td>
       {/* <td className="whitespace-nowrap px-4 py-3">
         {formatMoney(purchasePrice)}
