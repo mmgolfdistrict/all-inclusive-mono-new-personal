@@ -555,7 +555,7 @@ console.log("divHeight",divHeight);
                   onClick={toggleNavExpansion}
                 />
               </div>
-              <div ref={bottomNavRef} className={`flex w-full justify-evenly gap-4 md:gap-8 ${isNavExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'} transition-all duration-200 ease-in-out`}>
+              <div ref={bottomNavRef} className={`flex w-full gap-4 md:gap-8 ${isNavExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'} transition-all duration-200 ease-in-out`}>
                 {course?.supportsGroupBooking ? (
                   <NavItem
                     href={`/${courseId}/group-booking`}
