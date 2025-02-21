@@ -294,7 +294,7 @@ export const {
       }
 
       await authService.updateLastSuccessfulLogin(user?.id ?? "", user?.email ?? "");
-
+      
       if (trigger === "update" && session?.image !== undefined && token) {
         token.picture = session.image;
         token.image = session.image;

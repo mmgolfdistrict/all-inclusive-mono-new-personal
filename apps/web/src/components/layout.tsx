@@ -4,6 +4,8 @@ import { usePathname } from "next/navigation";
 import { useEffect, useMemo } from "react";
 import { Footer } from "./footer/footer";
 import { MainNav } from "./nav/main-nav";
+import { toast } from "react-toastify";
+import { api } from "~/utils/api";
 
 const AllowedPathsForMainNav = [
   "/",
@@ -18,9 +20,24 @@ const AllowedPathsForMainNav = [
   "/how-to-guide",
   "/about-us",
 ];
-
 export const Layout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
+
+  const getRecievables = api.cashOut.getRecievablesMute.useMutation();
+  
+    const showBalanceToast = async () =>{
+      const recievableData = await getRecievables.mutateAsync({});
+      if (localStorage.getItem("showBalanceToast") === "true") {
+        setTimeout(() => {
+          toast.success(`Congratulations! You have $${recievableData?.withdrawableAmount} in your account. Please visit 'Account Settings' to withdraw your balance by adding a bank account.`);
+        }, 3000);
+      localStorage.setItem("showBalanceToast", "false"); 
+      }
+    }
+
+  useEffect(() => {
+   void showBalanceToast()
+  }, []);
 
   useEffect(() => {
     const html = document.querySelector("html");
