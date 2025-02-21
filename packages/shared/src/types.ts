@@ -100,9 +100,11 @@ export type FullCourseType = {
   courseCloseTime: number;
   supportsGroupBooking: boolean;
   timezoneISO?: string | undefined;
-  groupBookingMinSize?: number,
-  groupBookingMaxSize?: number,
-  isOnlyGroupOfFourAllowed?: boolean
+  groupBookingMinSize?: number;
+  groupBookingMaxSize?: number;
+  isOnlyGroupOfFourAllowed?: boolean;
+  isAllowSpecialRequest?: boolean;
+  isAllowClubRental?: boolean;
 };
 
 export type SupportedCharity = {

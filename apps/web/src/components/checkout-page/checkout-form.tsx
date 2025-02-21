@@ -63,6 +63,17 @@ export const CheckoutForm = ({
 }) => {
   const MAX_CHARITY_AMOUNT = 1000;
   const { course } = useCourseContext();
+
+  const ALLOW_SPECIAL_REQUEST =
+    typeof course?.isAllowSpecialRequest === "string"
+      ? JSON.parse(course.isAllowSpecialRequest)
+      : course?.isAllowSpecialRequest ?? true;
+
+  const ALLOW_CLUB_RENTAL =
+    typeof course?.isAllowClubRental === "string"
+      ? JSON.parse(course.isAllowClubRental)
+      : course?.isAllowClubRental ?? true;
+
   const {
     shouldAddSensible,
     validatePlayers,
@@ -967,32 +978,52 @@ export const CheckoutForm = ({
             />
           </div>
         ) : null}
-        <Input
-          label="Any Special Requests?"
-          register={() => null}
-          name="notes"
-          maxLength={200}
-          placeholder="Message"
-          value={additionalNote}
-          onChange={(e) => setAdditionalNote(e.target.value)}
-          id="any-special-request-checkout"
-        />
-        <div
-          className="flex flex-row items-center gap-2"
-          id="need-rentals-checkout"
-        >
-          <Switch
-            value={needRentals}
-            setValue={setNeedRentals}
-            id="need-rentals"
-          />
-          <label
-            className="text-primary-gray text-[14px] cursor-pointer select-none"
-            htmlFor="need-rentals"
+        {ALLOW_SPECIAL_REQUEST && (
+          <div className="flex flex-col">
+            <label
+              htmlFor="any-special-request-checkout"
+              className="flex items-center text-[14px] text-primary-gray"
+            >
+              Any Special Requests?
+              <Tooltip
+                trigger={<Info className="ml-2 h-[20px] w-[20px]" />}
+                content="The course will be notified about your requests though the course will reach out to you if they cannot full fill your request. Special requests based on the availability and may incur an additional charge which you might pay at the course."
+              />
+            </label>
+            <Input
+              label=""
+              register={() => null}
+              name="notes"
+              maxLength={200}
+              placeholder="Message"
+              value={additionalNote}
+              onChange={(e) => setAdditionalNote(e.target.value)}
+              id="any-special-request-checkout"
+            />
+          </div>
+        )}
+        {ALLOW_CLUB_RENTAL && (
+          <div
+            className="flex flex-row items-center gap-2"
+            id="need-rentals-checkout"
           >
-            Need Rentals?
-          </label>
-        </div>
+            <Switch
+              value={needRentals}
+              setValue={setNeedRentals}
+              id="need-rentals"
+            />
+            <label
+              className="text-primary-gray text-[14px] cursor-pointer select-none"
+              htmlFor="need-rentals"
+            >
+              Need Rentals?
+            </label>
+            <Tooltip
+              trigger={<Info className="ml-1 h-[20px] w-[20px]" />}
+              content="Club rentals are strictly based on availability and may incur an additional charge which you might pay at the course."
+            />
+          </div>
+        )}
         {checkIsBookingDisabled &&
         checkIsBookingDisabled?.showPricingBreakdown === 0 ? (
           <Fragment>
