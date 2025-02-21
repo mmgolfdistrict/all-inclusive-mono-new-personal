@@ -22,7 +22,6 @@ const AllowedPathsForMainNav = [
 ];
 export const Layout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
-
   const getRecievables = api.cashOut.getRecievablesMute.useMutation();
   
     const showBalanceToast = async () =>{
@@ -44,14 +43,6 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
     html?.scrollTo(0, 0);
   }, [pathname]);
 
-  const topPadding = useMemo(() => {
-    if (pathname.includes("admin")) {
-      return "";
-    } else {
-      return "pt-[67px] md:pt-[89px]";
-    }
-  }, [pathname]);
-
   const bgColor = useMemo(() => {
     if (pathname.includes("admin")) {
       return "bg-[#FFFFFF]";
@@ -60,11 +51,14 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
     }
   }, [pathname]);
 
+  console.log("pathname",pathname);
+  
+
   return (
     <div className={`relative flex w-full flex-col ${bgColor}`}>
       {AllowedPathsForMainNav.includes(pathname) ? <MainNav /> : null}
 
-      <div className={`min-h-[100dvh] ${bgColor} ${topPadding}`}>
+      <div className={`min-h-[100dvh] ${bgColor}`} >
         {children}
       </div>
       <Footer />

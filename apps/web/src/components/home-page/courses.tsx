@@ -17,7 +17,6 @@ export const Courses = () => {
       { entityId: entityId! },
       { enabled: entityId !== undefined }
     );
-  console.log("data", data);
 
   if (entity?.redirectToCourseFlag && data?.length) {
     router.push(`/${data[0]?.id}`);

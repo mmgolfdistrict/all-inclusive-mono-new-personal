@@ -8,7 +8,7 @@ import { useCourseContext } from "~/contexts/CourseContext";
 import { useFiltersContext } from "~/contexts/FiltersContext";
 import { api } from "~/utils/api";
 import { dayMonthDate } from "~/utils/formatters";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useElementSize, useIntersectionObserver } from "usehooks-ts";
 import { useDraggableScroll } from "../../hooks/useDraggableScroll";
 import { Info } from "../icons/info";
@@ -25,7 +25,9 @@ export const DailyTeeTimesV2 = ({
   handleLoading,
   courseException,
   pageDown,
-  pageUp
+  pageUp,
+  scrollY,
+  divHeight
   // datesWithData
 }: {
   date: string;
@@ -36,6 +38,8 @@ export const DailyTeeTimesV2 = ({
   courseException: NotificationObject | null;
   pageDown: () => void,
   pageUp: () => void
+  scrollY:number,
+  divHeight?:number
   // datesWithData:string[]
 }) => {
   const overflowRef = useRef<HTMLDivElement>(null);
@@ -49,7 +53,10 @@ export const DailyTeeTimesV2 = ({
   const [sizeRef, { width = 0 }] = useElementSize();
   const { course } = useCourseContext();
   const courseId = course?.id;
-
+  const courseImages = useMemo(() => {
+    if (!course) return [];
+    return course?.images;
+  }, [course]);
   const {
     showUnlisted,
     includesCart,
@@ -196,7 +203,13 @@ export const DailyTeeTimesV2 = ({
           <div className="h-8 min-w-[150px] w-[20%] bg-gray-200 rounded-md  animate-pulse unmask-time" />
         ) : (
           <div className="w-full flex items-center gap-3 flex-col">
-            <div className="w-full flex items-center justify-between">
+            <div className={`w-full flex items-center justify-between ${(courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
+                ? `fixed bg-white left-0 w-full z-10 bg-secondary-white pt-2  px-4 pb-3 shadow-md`
+                : "relative"
+              }`} style={{
+                top: (courseImages?.length > 0 ? scrollY > 333 : scrollY > 45) ? `${divHeight && divHeight + 54}px` : 'auto',
+  
+              }}>
               <ChevronUp fill="#000" className="-rotate-90" onClick={pageDown} />
               <div
                 id="tee-time-box"
@@ -257,8 +270,9 @@ export const DailyTeeTimesV2 = ({
           </div>
         )}
       </div>
-      <div className="relative" ref={sizeRef}>
-
+      <div className="relative" ref={sizeRef} style={{
+                marginTop: (courseImages?.length > 0 ? scrollY > 333 : scrollY > 45) ? `100px` : 'auto',
+              }}>
         <div
           className="scrollbar-none w-full flex flex-col overflow-x-auto overflow-y-hidden gap-4"
           ref={overflowRef}
