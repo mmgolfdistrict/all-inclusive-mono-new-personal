@@ -371,13 +371,18 @@ export class UserService {
   ) => {
     // Fetch user details
     const [user] = await this.database
-      .select({ handle: users.handle, name: users.name })
+      .select({ handle: users.handle, name: users.name, email: users.email })
       .from(users)
       .where(eq(users.id, userId));
 
     if (!user) {
       this.logger.warn(`User not found: ${userId}`);
       throw new Error("User not found");
+    }
+
+    // Prevent self-invite
+    if (user.email === emailOrPhoneNumber) {
+      throw new Error("You cannot invite yourself.");
     }
 
     // Fetch slot details to check availability
