@@ -794,7 +794,7 @@ export const CheckoutForm = ({
   useEffect(() => {
     let donation;
     if (roundOffStatus === "other") {
-      donation = otherDonateValue;
+      donation = donateValue;
     } else if (roundOffStatus === "roundup") {
       donation =
         decimalPart === 0
@@ -1102,7 +1102,7 @@ export const CheckoutForm = ({
                 value="item-2"
                 position="left"
                 amountValues={`$${(
-                  TaxCharge + (donateValue || 0)
+                  Number(TaxCharge + (donateValue || 0))
                 ).toLocaleString("en-US", {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,

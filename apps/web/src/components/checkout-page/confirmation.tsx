@@ -48,14 +48,22 @@ export const Confirmation = ({
             ) : (
               <>
                   {bookingData?.providerId?.length && !isGroupBooking ? (
-                  <div style={{ paddingBottom: "5px" }}>
-                    <span style={{ fontWeight: 500 }}>
-                      Course Reservation ID
-                    </span>
-                    <span style={{ margin: "0 15px" }}>:</span>
-                    <span>{bookingData?.providerId}</span>
-                  </div>
-                  ) : null}
+                    <div style={{ paddingBottom: "5px" }}>
+                      <span style={{ fontWeight: 500 }}>
+                        Course Reservation ID
+                      </span>
+                      <span style={{ margin: "0 15px" }}>:</span>
+                      <span>{bookingData?.providerId}</span>
+                    </div>
+                  ) : (
+                    <div style={{ paddingBottom: "5px" }}>
+                      <span style={{ fontWeight: 500 }}>
+                        Group Reservation ID
+                      </span>
+                      <span style={{ margin: "0 15px" }}>:</span>
+                      <span>{bookingData?.groupId}</span>
+                    </div>
+                  )}
                   {(isGroupBooking
                     ? (
                     <div style={{ paddingBottom: "5px" }}>
