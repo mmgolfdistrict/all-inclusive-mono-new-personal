@@ -66,12 +66,12 @@ export const CheckoutForm = ({
 
   const ALLOW_SPECIAL_REQUEST =
     typeof course?.isAllowSpecialRequest === "string"
-      ? JSON.parse(course.isAllowSpecialRequest)
+      ? JSON.parse((course.isAllowSpecialRequest as string).toLowerCase())
       : course?.isAllowSpecialRequest ?? true;
 
   const ALLOW_CLUB_RENTAL =
     typeof course?.isAllowClubRental === "string"
-      ? JSON.parse(course.isAllowClubRental)
+      ? JSON.parse((course.isAllowClubRental as string).toLowerCase())
       : course?.isAllowClubRental ?? true;
 
   const {
@@ -1132,8 +1132,8 @@ export const CheckoutForm = ({
                 title="Taxes and Others"
                 value="item-2"
                 position="left"
-                amountValues={`$${(
-                  Number(TaxCharge + (donateValue || 0))
+                amountValues={`$${Number(
+                  TaxCharge + (donateValue || 0)
                 ).toLocaleString("en-US", {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
