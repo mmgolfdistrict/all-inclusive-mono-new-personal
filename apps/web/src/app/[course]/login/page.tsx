@@ -224,7 +224,7 @@ export default function Login() {
       }`;
       const res = await signIn("credentials", {
         callbackUrl: callbackURL,
-        redirect: false,
+        redirect: true,
         email: data.email,
         password: data.password,
         ReCAPTCHA: process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY

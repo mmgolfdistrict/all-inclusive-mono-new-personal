@@ -6,7 +6,9 @@ import { TransactionHistory } from "~/components/cards/transaction-history";
 import { UnlistedDetails } from "~/components/cards/unlisted-details";
 import { CourseDescription } from "~/components/tee-time-page/course-description";
 import { InviteFriends } from "~/components/tee-time-page/invite-friends";
+import { useAppContext } from "~/contexts/AppContext";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import React from "react";
 
 interface OwnerTeeTimeDetailsProps {
@@ -23,6 +25,8 @@ const OwnerTeeTimeDetails = ({
   isTransactionHistoryVisible,
 }: OwnerTeeTimeDetailsProps) => {
   const { data: session, status } = useSession();
+  const pathname = usePathname();
+  const { setPrevPath } = useAppContext();
 
   return (
     <div>
@@ -30,7 +34,16 @@ const OwnerTeeTimeDetails = ({
       {!session ? (
         status == "loading" ? null : (
           <div className="min-h-[450px] flex items-center justify-center">
-            <Link href={`/${courseId}/login`} data-testid="login-to-view-id">
+            <Link
+              href={`/${courseId}/login`}
+              onClick={() => {
+                setPrevPath({
+                  path: pathname,
+                  createdAt: new Date().toISOString(),
+                });
+              }}
+              data-testid="login-to-view-id"
+            >
               <FilledButton>Login to view</FilledButton>
             </Link>
           </div>
