@@ -215,16 +215,16 @@ export default function Login() {
         localStorage.setItem("credentials", "credentials");
         //setLocalStorageCredentials(localStorage.getItem("credentials"));
       }
-      // const callbackURL = `${window.location.origin}${
-      //   GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
-      //     ? prevPath?.path
-      //       ? prevPath.path
-      //       : "/"
-      //     : "/"
-      // }`;
+      const callbackURL = `${window.location.origin}${
+        GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+          ? prevPath?.path
+            ? prevPath.path
+            : "/"
+          : "/"
+      }`;
       const res = await signIn("credentials", {
-        // callbackUrl: callbackURL,
-        redirect: false,
+        callbackUrl: callbackURL,
+        redirect: true,
         email: data.email,
         password: data.password,
         ReCAPTCHA: process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY
@@ -287,13 +287,14 @@ export default function Login() {
     try {
       setFacebookIsLoading(true);
       const res = await signIn("facebook", {
-        // callbackUrl: `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
-        //   ? prevPath?.path
-        //     ? prevPath.path
-        //     : "/"
-        //   : "/"
-        //   }`,
-        redirect: false,
+        callbackUrl: `${window.location.origin}${
+          GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+            ? prevPath?.path
+              ? prevPath.path
+              : "/"
+            : "/"
+        }`,
+        redirect: true,
       });
 
       if (!res?.error) {
@@ -337,14 +338,14 @@ export default function Login() {
     });
     try {
       const res = await signIn("google", {
-        // callbackUrl: `${window.location.origin}${
-        //   GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
-        //     ? prevPath?.path
-        //       ? prevPath.path
-        //       : "/"
-        //     : "/"
-        // }`,
-        redirect: false,
+        callbackUrl: `${window.location.origin}${
+          GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+            ? prevPath?.path
+              ? prevPath.path
+              : "/"
+            : "/"
+        }`,
+        redirect: true,
       });
 
       if (!res?.error) {
@@ -368,7 +369,14 @@ export default function Login() {
     try {
       setLinkedinIsLoading(true);
       const res = await signIn("linkedin", {
-        redirect: false,
+        callbackUrl: `${window.location.origin}${
+          GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+            ? prevPath?.path
+              ? prevPath.path
+              : "/"
+            : "/"
+        }`,
+        redirect: true,
       });
       if (!res?.error) {
         localStorage.setItem("loginMethod", "LINKEDIN");
