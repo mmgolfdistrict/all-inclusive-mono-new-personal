@@ -1,27 +1,9 @@
 "use client";
 
 import { useAppContext } from "~/contexts/AppContext";
-import { useCourseContext } from "~/contexts/CourseContext";
-import { api } from "~/utils/api";
 
 export const Title = () => {
-  const { entity } = useAppContext();
-  const { course } = useCourseContext();
-  const courseId = course?.id;
-
-  const { data: systemNotifications } =
-    api.systemNotification.getSystemNotification.useQuery({});
-
-  const { data: courseGlobalNotification } =
-    api.systemNotification.getCourseGlobalNotification.useQuery({
-      courseId: courseId ?? "",
-    });
-  const notificationsCount =
-    (systemNotifications ? systemNotifications.length : 0) +
-    (courseGlobalNotification ? courseGlobalNotification.length : 0);
-
-  const marginTop =
-    notificationsCount > 0 ? `${notificationsCount * 27}px` : "0";
+  const { entity ,mainHeaderHeight} = useAppContext();
   return (
     <>
       {!entity?.name ? (
@@ -29,7 +11,7 @@ export const Title = () => {
       ) : (
         <h1
           className={`pb-4 text-center text-[24px] md:pb-6 md:text-left md:text-[32px]`}
-          style={{ marginTop }}
+          style={{marginTop: mainHeaderHeight}}
         >
           Welcome to {entity?.name}
         </h1>

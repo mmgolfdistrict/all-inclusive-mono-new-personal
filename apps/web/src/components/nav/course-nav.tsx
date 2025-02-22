@@ -36,7 +36,7 @@ import { DownArrow } from "../icons/down-arrow";
 export const CourseNav = () => {
   const { user } = useUserContext();
   const { entity, setPrevPath, isNavExpanded,
-    setIsNavExpanded, activePage } = useAppContext();
+    setIsNavExpanded, activePage  , setHeaderHeight } = useAppContext();
   const { course } = useCourseContext();
   const courseId = course?.id;
   const [isSideBarOpen, setIsSideBarOpen] = useState<boolean>(false);
@@ -60,10 +60,10 @@ export const CourseNav = () => {
     }
   );
 
-  const { data: systemNotifications } =
+  const { data: systemNotifications , isLoading:loadingSystemNotifications } =
     api.systemNotification.getSystemNotification.useQuery({});
 
-  const { data: courseGlobalNotification } =
+  const { data: courseGlobalNotification , isLoading: loadingCourseGlobalNotification } =
     api.systemNotification.getCourseGlobalNotification.useQuery({
       courseId: courseId ?? "",
     });
@@ -138,7 +138,6 @@ export const CourseNav = () => {
     setDateType("All");
   };
 
-console.log("activePage",activePage);
 
   const { data: walkthrough } =
     api.systemNotification.getWalkthroughSetting.useQuery({});
@@ -258,12 +257,15 @@ console.log("activePage",activePage);
     void tour.start();
   };
 
+  const divHeight = !loadingCourseGlobalNotification || !loadingSystemNotifications ? document?.getElementById('header')?.offsetHeight || 0 : 0;
+  setHeaderHeight(divHeight)
+console.log("divHeight",divHeight);
+
   return (
     <>
-
-      <div className="fixed top-0 w-full z-20">
+      <div className="fixed top-0 w-full z-20" id="header">
         <div id="notification-container">
-          <div className="relative" id="notification-container">
+          <div className="relative" >
             {systemNotifications?.map((elm) => (
               <div
                 key={elm.id}
@@ -498,7 +500,7 @@ console.log("activePage",activePage);
           : ""}
       </div>
       {isMobile &&
-        <div className={`fixed bottom-0 w-full z-20 bg-white border-t border-stroke-secondary border-stroke`} id="bottom-nav">
+        <div className={`fixed bottom-0 w-full z-20 bg-white border-t border-[#c6c6c6] `} id="bottom-nav">
           <div className="flex w-full justify-center bg-white p-2 md:p-4">
             <div className={`flex w-full ${isNavExpanded ? "gap-4" : ""} flex-col`}>
               <div className="flex w-full justify-evenly gap-4">
@@ -553,7 +555,7 @@ console.log("activePage",activePage);
                   onClick={toggleNavExpansion}
                 />
               </div>
-              <div ref={bottomNavRef} className={`flex w-full justify-evenly gap-4 md:gap-8 ${isNavExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'} transition-all duration-200 ease-in-out`}>
+              <div ref={bottomNavRef} className={`flex w-full gap-4 md:gap-8 ${isNavExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'} transition-all duration-200 ease-in-out`}>
                 {course?.supportsGroupBooking ? (
                   <NavItem
                     href={`/${courseId}/group-booking`}

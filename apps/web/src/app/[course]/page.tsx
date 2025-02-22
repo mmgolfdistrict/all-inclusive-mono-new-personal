@@ -605,7 +605,7 @@ export default function CourseHomePage() {
         userId={user?.id ?? ""}
         updateHandle={updateHandle}
       />
-      <section className="relative flex gap-8 pl-0 pt-6 md:pl-6 md:pt-8 mx-auto w-full">
+      <section className="relative flex gap-8 pl-0 md:pl-6 md:pt-8 mx-auto w-full">
         <div
           ref={scrollRef}
           className="absolute -top-[7.5rem] md:-top-[9.2rem]"
@@ -640,12 +640,12 @@ export default function CourseHomePage() {
             </div>
           </div>
           <div
-            className={`flex space-x-2 md:hidden px-4 ${(courseImages?.length > 0 ? scrollY > 333 : scrollY > 100)
+            className={`flex space-x-2 md:hidden px-4 ${(courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
                 ? `fixed left-0 w-full z-10 bg-secondary-white pt-2 pb-3 shadow-md`
                 : "relative"
               }`}
             style={{
-              top: (courseImages?.length > 0 ? scrollY > 333 : scrollY > 100) ? `${divHeight && divHeight * 1}px` : 'auto',
+              top: (courseImages?.length > 0 ? scrollY > 333 : scrollY > 45) ? `${divHeight && divHeight * 1}px` : 'auto',
             }}
           >
             <button
@@ -693,6 +693,8 @@ export default function CourseHomePage() {
                         handleLoading={handleLoading}
                         pageUp={pageUp}
                         pageDown={pageDown}
+                        scrollY={scrollY}
+                        divHeight={divHeight}
                       // datesWithData={datesWithData}
                       />
                     )}
