@@ -57,7 +57,7 @@ export const EditProfileForm = () => {
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "",
     libraries,
   });
-  const [isSubmitting, setIsSubmitting] = useState<boolean|undefined>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean | undefined>(false);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -112,6 +112,38 @@ export const EditProfileForm = () => {
 
   const [currentPhoneNumber, setCurrentPhoneNumber] = useState<string>("");
   const debouncedPhoneNumber = useDebounce<string>(currentPhoneNumber, 2000);
+  const [triggerValidateQuery, setTriggerValidateQuery] = useState<boolean>(false);
+  const { data: phoneNumberData, error: phoneNumberError } = api.user
+    .validatePhoneNumber
+    .useQuery(
+      { phoneNumber: currentPhoneNumber },
+      {
+        enabled: triggerValidateQuery,
+      }
+    );
+
+  useEffect(function validatePhoneNumber() {
+    if (phoneNumberError) {
+      setError("phoneNumber", {
+        message: "Failed to validate phone number. Please try again.",
+      });
+    } else if (phoneNumberData && !phoneNumberData.valid) {
+      setError("phoneNumber", {
+        message: "Invalid phone number. Please enter a valid phone number with country code. No dashes, or spaces required.",
+      });
+    } else {
+      clearErrors(["phoneNumber"]);
+    }
+  }, [phoneNumberData]);
+
+  useEffect(() => {
+    if (!debouncedPhoneNumber) {
+      setTriggerValidateQuery(false);
+      return
+    } else {
+      setTriggerValidateQuery(true);
+    }
+  }, [debouncedPhoneNumber]);
 
   const onPlaceChanged = () => {
     const place = autocompleteRef.current?.getPlace();
@@ -218,33 +250,6 @@ export const EditProfileForm = () => {
       );
     }
   }, [isLoading, userData]);
-
-  useEffect(() => {
-    if (!debouncedPhoneNumber) return;
-
-    const fetchPhoneValidation = async () => {
-      try {
-        const response = await fetch(
-          `https://phonevalidation.abstractapi.com/v1/?api_key=${process.env.NEXT_PUBLIC_ABSTRACT_API_KEY}&phone=${debouncedPhoneNumber}`
-        );
-        const result = await response.json();
-        if (!result.valid) {
-          setError("phoneNumber", {
-            message:
-              "Invalid phone number. Please enter a valid phone number with country code. No dashes, or spaces required.",
-          });
-        } else {
-          clearErrors(["phoneNumber"]);
-        }
-      } catch (error) {
-        console.error("Error fetching phone validation:", error);
-      }
-    };
-
-    fetchPhoneValidation().catch((error) => {
-      console.error("Error validating phone number:", error);
-    });
-  }, [debouncedPhoneNumber]);
 
   const image = watch("profilePictureAssetId");
 
@@ -800,9 +805,8 @@ export const EditProfileForm = () => {
           ))}
         </datalist>
         <div
-          className={`flex items-end justify-between w-full gap-2 ${
-            isUploading ? "pointer-events-none cursor-not-allowed" : ""
-          }`}
+          className={`flex items-end justify-between w-full gap-2 ${isUploading ? "pointer-events-none cursor-not-allowed" : ""
+            }`}
         >
           <DropMedia
             label="Upload your profile photo"
@@ -825,9 +829,8 @@ export const EditProfileForm = () => {
         </div>
 
         <div
-          className={`flex items-end justify-between w-full gap-2 ${
-            isUploading ? "pointer-events-none cursor-not-allowed" : ""
-          }`}
+          className={`flex items-end justify-between w-full gap-2 ${isUploading ? "pointer-events-none cursor-not-allowed" : ""
+            }`}
         >
           <DropMedia
             label="Upload your background photo"
@@ -841,7 +844,7 @@ export const EditProfileForm = () => {
             dataTestId="upload-background-photo-id"
           />
           {userData?.bannerImage &&
-          userData?.bannerImage !== defaultBannerPhoto ? (
+            userData?.bannerImage !== defaultBannerPhoto ? (
             <OutlineButton
               className="!px-2 !py-1 text-sm rounded-md"
               onClick={resetBanner}
@@ -852,9 +855,8 @@ export const EditProfileForm = () => {
         </div>
         <FilledButton
           disabled={isSubmitting || isUploading}
-          className={`w-full rounded-full ${
-            isSubmitting || isUploading ? "opacity-50" : ""
-          }`}
+          className={`w-full rounded-full ${isSubmitting || isUploading ? "opacity-50" : ""
+            }`}
           data-testid="update-button-id"
         >
           {isSubmitting ? "Updating..." : "Update"}
