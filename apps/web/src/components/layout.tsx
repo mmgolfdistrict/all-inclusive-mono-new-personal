@@ -1,11 +1,11 @@
 "use client";
 
+import { api } from "~/utils/api";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo } from "react";
+import { toast } from "react-toastify";
 import { Footer } from "./footer/footer";
 import { MainNav } from "./nav/main-nav";
-import { toast } from "react-toastify";
-import { api } from "~/utils/api";
 
 const AllowedPathsForMainNav = [
   "/",
@@ -23,19 +23,23 @@ const AllowedPathsForMainNav = [
 export const Layout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
   const getRecievables = api.cashOut.getRecievablesMute.useMutation();
-  
-    const showBalanceToast = async () =>{
-      const recievableData = await getRecievables.mutateAsync({});
+
+  const showBalanceToast = async () => {
+    const recievableData = await getRecievables.mutateAsync({});
+    if (recievableData?.withdrawableAmount > 0) {
       if (localStorage.getItem("showBalanceToast") === "true") {
         setTimeout(() => {
-          toast.success(`Congratulations! You have $${recievableData?.withdrawableAmount} in your account. Please visit 'Account Settings' to withdraw your balance by adding a bank account.`);
+          toast.success(
+            `Congratulations! You have $${recievableData?.withdrawableAmount} in your account. Please visit 'Account Settings' to withdraw your balance by adding a bank account.`
+          );
         }, 3000);
-      localStorage.setItem("showBalanceToast", "false"); 
+        localStorage.setItem("showBalanceToast", "false");
       }
     }
+  };
 
   useEffect(() => {
-   void showBalanceToast()
+    void showBalanceToast();
   }, []);
 
   useEffect(() => {
@@ -51,16 +55,13 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
     }
   }, [pathname]);
 
-  console.log("pathname",pathname);
-  
+  console.log("pathname", pathname);
 
   return (
     <div className={`relative flex w-full flex-col ${bgColor}`}>
       {AllowedPathsForMainNav.includes(pathname) ? <MainNav /> : null}
 
-      <div className={`min-h-[100dvh] ${bgColor}`} >
-        {children}
-      </div>
+      <div className={`min-h-[100dvh] ${bgColor}`}>{children}</div>
       <Footer />
     </div>
   );
