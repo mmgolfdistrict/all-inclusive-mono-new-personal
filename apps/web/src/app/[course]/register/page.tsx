@@ -102,9 +102,8 @@ export default function RegisterPage() {
 
   useEffect(function setCountryCode() {
     if (!userCountryData) return;
-    const countryData = JSON.parse(userCountryData as string);
-    if (countryData?.country) {
-      setCurrentCountry(countryData.country.toLowerCase());
+    if (userCountryData?.country) {
+      setCurrentCountry(userCountryData.country.toLowerCase());
     } else {
       console.error('Failed to fetch country', error);
     }

@@ -194,7 +194,7 @@ export const userRouter = createTRPCRouter({
       )
       .query(async ({ ctx }) => {
         const ipAddress = ctx?.userIpAddress;
-        return await ctx.serviceFactory.getIpInfoService().getIpInfo(ipAddress);
+        return await ctx.serviceFactory.getIpInfoService().getIpInfoData(ipAddress);
     }),
     validatePhoneNumber: publicProcedure
       .input(
