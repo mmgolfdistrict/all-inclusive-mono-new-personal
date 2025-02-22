@@ -90,7 +90,7 @@ export default function RegisterPage() {
   const [currentPhoneNumber, setCurrentPhoneNumber] = useState<string>("");
   const debouncedPhoneNumber = useDebounce<string>(currentPhoneNumber, 2000);
   const [triggerValidateQuery, setTriggerValidateQuery] = useState<boolean>(false);
-  const { data: userCountryData, isLoading, isError, error } = api.user.getCountryCode.useQuery({});
+  const { data: userCountryData, error } = api.user.getCountryCode.useQuery({});
   const { data: phoneNumberData, error: phoneNumberError } = api.user
     .validatePhoneNumber
     .useQuery(
