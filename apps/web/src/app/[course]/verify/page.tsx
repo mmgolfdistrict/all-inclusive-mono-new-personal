@@ -2,6 +2,7 @@
 
 import { FilledButton } from "~/components/buttons/filled-button";
 import { Spinner } from "~/components/loading/spinner";
+import { useAppContext } from "~/contexts/AppContext";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { api } from "~/utils/api";
 import Link from "next/link";
@@ -11,6 +12,7 @@ import { toast } from "react-toastify";
 
 export default function Verify() {
   const { course } = useCourseContext();
+  const { setPrevPath } = useAppContext();
   const params = useSearchParams();
   const userId = params.get("userId");
   const verificationToken = params.get("verificationToken");
@@ -87,7 +89,16 @@ export default function Verify() {
             <div className="flex flex-col gap-2 items-center">
               <div>Your email address has been verified!</div>
               <Link href={`/${course?.id}/login`} data-testid="login-button-id">
-                <FilledButton>Login</FilledButton>
+                <FilledButton
+                  onClick={() => {
+                    setPrevPath({
+                      path: `/${course?.id}`,
+                      createdAt: new Date().toISOString(),
+                    });
+                  }}
+                >
+                  Login
+                </FilledButton>
               </Link>
             </div>
           ) : error ? (
