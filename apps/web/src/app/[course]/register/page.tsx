@@ -332,7 +332,6 @@ export default function RegisterPage() {
   const onReCAPTCHAChange = (captchaCode: string | null | undefined) => {
     // If the reCAPTCHA code is null or undefined indicating that
     // the reCAPTCHA was expired then return early
-    console.log(captchaCode);
     if (!captchaCode) {
       return;
     }
