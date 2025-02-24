@@ -30,9 +30,9 @@ import {
 } from "react";
 import ReCAPTCHA from "react-google-recaptcha";
 import { Controller, useForm, type SubmitHandler } from "react-hook-form";
+import PhoneInput from "react-phone-input-2";
 import { toast } from "react-toastify";
 import { useDebounce } from "usehooks-ts";
-import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 
 export default function RegisterPage() {
@@ -50,6 +50,7 @@ export default function RegisterPage() {
   } = useForm<RegisterSchemaType>({
     resolver: zodResolver(registerSchema),
   });
+  const [tokenRefreshTrigger, setTokenRefreshTrigger] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState<boolean | undefined>(false);
   const libraries: Libraries = ["places"];
   const [city, setCity] = useState(getValues("city"));
@@ -89,55 +90,65 @@ export default function RegisterPage() {
   const [currentCountry, setCurrentCountry] = useState<string>("");
   const [currentPhoneNumber, setCurrentPhoneNumber] = useState<string>("");
   const debouncedPhoneNumber = useDebounce<string>(currentPhoneNumber, 2000);
-  const [triggerValidateQuery, setTriggerValidateQuery] = useState<boolean>(false);
+  const [triggerValidateQuery, setTriggerValidateQuery] =
+    useState<boolean>(false);
   const { data: userCountryData, error } = api.user.getCountryCode.useQuery({});
-  const { data: phoneNumberData, error: phoneNumberError } = api.user
-    .validatePhoneNumber
-    .useQuery(
+  const { data: phoneNumberData, error: phoneNumberError } =
+    api.user.validatePhoneNumber.useQuery(
       { phoneNumber: currentPhoneNumber },
       {
         enabled: triggerValidateQuery,
       }
     );
 
-  useEffect(function setCountryCode() {
-    if (!userCountryData) return;
-    if (userCountryData?.country) {
-      setCurrentCountry(userCountryData.country.toLowerCase());
-    } else {
-      console.error('Failed to fetch country', error);
-    }
-  }, [userCountryData]);
+  useEffect(
+    function setCountryCode() {
+      if (!userCountryData) return;
+      if (userCountryData?.country) {
+        setCurrentCountry(userCountryData.country.toLowerCase());
+      } else {
+        console.error("Failed to fetch country", error);
+      }
+    },
+    [userCountryData]
+  );
 
-  useEffect(function validatePhoneNumber() {
-    if (phoneNumberError) {
-      setError("phoneNumber", {
-        message: "Failed to validate phone number. Please try again.",
-      });
-    } else if (phoneNumberData && !phoneNumberData.valid) {
-      setError("phoneNumber", {
-        message: "Invalid phone number. Please enter a valid phone number with country code. No dashes, or spaces required.",
-      });
-    } else {
-      clearErrors(["phoneNumber"]);
-    }
-  }, [phoneNumberData]);
+  useEffect(
+    function validatePhoneNumber() {
+      if (phoneNumberError) {
+        setError("phoneNumber", {
+          message: "Failed to validate phone number. Please try again.",
+        });
+      } else if (phoneNumberData && !phoneNumberData.valid) {
+        setError("phoneNumber", {
+          message:
+            "Invalid phone number. Please enter a valid phone number with country code. No dashes, or spaces required.",
+        });
+      } else {
+        clearErrors(["phoneNumber"]);
+      }
+    },
+    [phoneNumberData]
+  );
 
   useEffect(() => {
     if (!debouncedPhoneNumber) {
       setTriggerValidateQuery(false);
-      return
+      return;
     } else {
       setTriggerValidateQuery(true);
     }
   }, [debouncedPhoneNumber, currentPhoneNumber]);
 
-  useEffect(function setPhoneNumberValue() {
-    if (currentCountry) {
-      setValue("phoneNumber", "");
-      setCurrentPhoneNumber("");
-    }
-  }, [currentCountry, setValue]);
+  useEffect(
+    function setPhoneNumberValue() {
+      if (currentCountry) {
+        setValue("phoneNumber", "");
+        setCurrentPhoneNumber("");
+      }
+    },
+    [currentCountry, setValue]
+  );
 
   const onPlaceChanged = () => {
     const place = autocompleteRef.current?.getPlace();
@@ -266,16 +277,25 @@ export default function RegisterPage() {
       json: message,
     });
   };
-
+  const resetReCAPTCHA = () => {
+    if (recaptchaRef.current) {
+      recaptchaRef.current.reset();
+    }
+  };
+  const refreshReCAPTCHA = () => {
+    setTokenRefreshTrigger((prev) => prev + 1); // Change state to trigger useEffect
+  };
   useEffect(() => {
     if (process.env.NEXT_PUBLIC_RECAPTCHA_IS_INVISIBLE === "true") {
       recaptchaRef.current?.execute();
     }
-  }, [recaptchaRef]);
+  }, [tokenRefreshTrigger]);
 
   const onSubmit: SubmitHandler<RegisterSchemaType> = async (data) => {
-    console.log('errors govinda: ', errors);
+    console.log("errors govinda: ", errors);
     setIsSubmitting(true);
+    resetReCAPTCHA();
+    refreshReCAPTCHA();
     if (profanityCheckData?.isProfane) {
       setError("username", {
         message: "Handle not allowed.",
@@ -312,6 +332,7 @@ export default function RegisterPage() {
   const onReCAPTCHAChange = (captchaCode: string | null | undefined) => {
     // If the reCAPTCHA code is null or undefined indicating that
     // the reCAPTCHA was expired then return early
+    console.log(captchaCode);
     if (!captchaCode) {
       return;
     }
@@ -843,8 +864,9 @@ export default function RegisterPage() {
               </p>
             )}
           <FilledButton
-            className={`w-full rounded-full ${isSubmitting ? "animate-pulse cursor-not-allopwed" : ""
-              }`}
+            className={`w-full rounded-full ${
+              isSubmitting ? "animate-pulse cursor-not-allopwed" : ""
+            }`}
             type="submit"
             disabled={isSubmitting}
             data-testid="register-button-id"

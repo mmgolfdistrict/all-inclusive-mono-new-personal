@@ -202,7 +202,7 @@ export default function Login() {
     !prevPath?.path?.includes("verify-email") &&
     !prevPath?.path?.includes("register");
 
-  const regexPattern = /^\/([^\/]+\/)/;
+  const regexPattern = /^\/([^/]+\/)/;
   const match = prevPath?.path?.match(regexPattern);
   const extractedURL = match ? match[0] : prevPath?.path;
 
