@@ -11,6 +11,7 @@ import { IconButton } from "~/components/buttons/icon-button";
 import { Hidden } from "~/components/icons/hidden";
 import { Visible } from "~/components/icons/visible";
 import { Input } from "~/components/input/input";
+import { useAppContext } from "~/contexts/AppContext";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { api } from "~/utils/api";
 import Link from "next/link";
@@ -21,7 +22,7 @@ import { toast } from "react-toastify";
 
 export default function ResetPassword() {
   const { course } = useCourseContext();
-
+  const { setPrevPath } = useAppContext();
   const params = useSearchParams();
   const userId = params.get("userId");
   const verificationToken = params.get("verificationToken");
@@ -82,7 +83,16 @@ export default function ResetPassword() {
               Successfully reset password!
             </div>
             <Link href={`/${course?.id}/login`} data-testid="login-button-id">
-              <FilledButton>Log In</FilledButton>
+              <FilledButton
+                onClick={() => {
+                  setPrevPath({
+                    path: `/${course?.id}`,
+                    createdAt: new Date().toISOString(),
+                  });
+                }}
+              >
+                Log In
+              </FilledButton>
             </Link>
           </div>
         ) : (
