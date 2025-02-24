@@ -36,7 +36,7 @@ import { DownArrow } from "../icons/down-arrow";
 export const CourseNav = () => {
   const { user } = useUserContext();
   const { entity, setPrevPath, isNavExpanded,
-    setIsNavExpanded, activePage  , setHeaderHeight } = useAppContext();
+    setIsNavExpanded, activePage, setHeaderHeight } = useAppContext();
   const { course } = useCourseContext();
   const courseId = course?.id;
   const [isSideBarOpen, setIsSideBarOpen] = useState<boolean>(false);
@@ -60,10 +60,10 @@ export const CourseNav = () => {
     }
   );
 
-  const { data: systemNotifications , isLoading:loadingSystemNotifications } =
+  const { data: systemNotifications, isLoading: loadingSystemNotifications } =
     api.systemNotification.getSystemNotification.useQuery({});
 
-  const { data: courseGlobalNotification , isLoading: loadingCourseGlobalNotification } =
+  const { data: courseGlobalNotification, isLoading: loadingCourseGlobalNotification } =
     api.systemNotification.getCourseGlobalNotification.useQuery({
       courseId: courseId ?? "",
     });
@@ -150,8 +150,8 @@ export const CourseNav = () => {
       return;
     }
     const matchedWalkthrough = walkthrough.find((wt) =>
-    wt.internalName === activePage
-    );    
+      wt.internalName === activePage
+    );
     if (!matchedWalkthrough) {
       toast.error("No help available.");
       return;
@@ -259,7 +259,6 @@ export const CourseNav = () => {
 
   const divHeight = !loadingCourseGlobalNotification || !loadingSystemNotifications ? document?.getElementById('header')?.offsetHeight || 0 : 0;
   setHeaderHeight(divHeight)
-console.log("divHeight",divHeight);
 
   return (
     <>
@@ -535,15 +534,16 @@ console.log("divHeight",divHeight);
                   id="navbar-my-tee-box"
                 />
 
-                <NavItem
-                  href={`/${courseId}/account-settings/${user?.id}`}
+                {user && session.status === "authenticated" && <NavItem
+                  href={user && session.status === "authenticated" ? `/${courseId}/account-settings/${user?.id}` : `/${courseId}/login`}
                   text="Account"
                   icon={<UserProfile className="w-[20px] fill-[#353b3f]" />}
                   data-testid="account-settings-id"
                   data-test={courseId}
                   onClick={handleResetFilters}
                   id="navbar-account-settings"
-                />
+                />}
+
 
                 <NavItem
                   href=""
