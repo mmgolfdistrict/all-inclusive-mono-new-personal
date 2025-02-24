@@ -294,9 +294,7 @@ export default function Login() {
         callbackUrl: `${window.location.origin}${
           GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
             ? prevPath?.path
-              ? prevPath.path
-              : "/"
-            : "/"
+            : extractedURL ?? "/"
         }`,
         redirect: true,
       });
@@ -320,9 +318,7 @@ export default function Login() {
         callbackUrl: `${window.location.origin}${
           GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
             ? prevPath?.path
-              ? prevPath.path
-              : "/"
-            : "/"
+            : extractedURL ?? "/"
         }`,
         redirect: true,
       });
@@ -344,9 +340,7 @@ export default function Login() {
         callbackUrl: `${window.location.origin}${
           GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
             ? prevPath?.path
-              ? prevPath.path
-              : "/"
-            : "/"
+            : extractedURL ?? "/"
         }`,
         redirect: true,
       });
@@ -375,9 +369,7 @@ export default function Login() {
         callbackUrl: `${window.location.origin}${
           GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
             ? prevPath?.path
-              ? prevPath.path
-              : "/"
-            : "/"
+            : extractedURL ?? "/"
         }`,
         redirect: true,
       });
