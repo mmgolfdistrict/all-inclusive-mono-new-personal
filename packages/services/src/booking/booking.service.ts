@@ -5266,7 +5266,7 @@ export class BookingService {
       userId: userId,
       listPrice: listPrice * 100,
       isDeleted: false,
-      slots: lastBooking.playerCount,
+      slots: Math.min(lastBooking.playerCount, slots),
     };
     await this.database
       .transaction(async (transaction) => {

@@ -55,7 +55,8 @@ export const Confirmation = ({
                       <span style={{ margin: "0 15px" }}>:</span>
                       <span>{bookingData?.providerId}</span>
                     </div>
-                  ) : (
+                  ) : null}
+                  {isGroupBooking && bookingData?.groupId ? (
                     <div style={{ paddingBottom: "5px" }}>
                       <span style={{ fontWeight: 500 }}>
                         Group Reservation ID
@@ -63,7 +64,7 @@ export const Confirmation = ({
                       <span style={{ margin: "0 15px" }}>:</span>
                       <span>{bookingData?.groupId}</span>
                     </div>
-                  )}
+                  ) : null}
                   {(isGroupBooking
                     ? (
                     <div style={{ paddingBottom: "5px" }}>
