@@ -376,9 +376,6 @@ export default function Login() {
       if (!res?.error) {
         localStorage.setItem("loginMethod", "LINKEDIN");
         localStorage.setItem("showBalanceToast", "true");
-        localStorage.setItem("showBalanceToast", "true");
-
-        localStorage.setItem("showBalanceToast", "true");
       }
       if (typeof window !== "undefined") {
         localStorage.setItem("linkedinstate", "loggedin");
