@@ -165,15 +165,6 @@ export class UserService {
       };
     }
 
-    const validateEmail = await this.validateEmail(data?.email);
-
-    if (!validateEmail) {
-      return {
-        error: true,
-        message: "Please enter valid email address, disposable emails not allowed.",
-      };
-    }
-
     let isNotRobot;
     if (data.ReCAPTCHA) {
       isNotRobot = await verifyCaptcha(data.ReCAPTCHA);
