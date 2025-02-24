@@ -238,7 +238,6 @@ export default function CheckoutProcessing() {
       className="relative flex flex-col items-center gap-4 px-0 pb-8 md:px-8"
       style={{ marginTop }}
     >
-      <div className="h-12 w-full "></div>
       {/* <CheckoutBreadcumbs status={"processing"} /> */}
 
       <section className="mx-auto flex w-full flex-col gap-4 bg-white px-3 py-2 text-center md:max-w-[80vw] md:rounded-xl md:p-6 md:py-4">

@@ -33,7 +33,6 @@ export default function CheckoutConfirmation() {
       className="relative flex flex-col items-center gap-4 px-0 pb-8 md:px-8"
       style={{ marginTop }}
     >
-      <div className="h-12 w-full "></div>
       <CheckoutBreadcumbs status={"confirmation"} />
       <Confirmation
         teeTimeId={teeTimeId!}

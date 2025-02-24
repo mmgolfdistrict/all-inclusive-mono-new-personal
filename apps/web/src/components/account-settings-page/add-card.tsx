@@ -16,6 +16,7 @@ import {
 } from "../../utils/credit-card-formatters";
 import { FilledButton } from "../buttons/filled-button";
 import { Input } from "../input/input";
+import { useMediaQuery } from "usehooks-ts";
 
 const Options = ["debit", "credit"];
 type OptionsType = "debit" | "credit";
@@ -23,6 +24,7 @@ type OptionsType = "debit" | "credit";
 export const AddCard = ({ refetchCards }: { refetchCards: () => unknown }) => {
   const { user } = useUserContext();
   const { cards } = usePaymentMethods();
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   const {
     register,
@@ -124,7 +126,7 @@ export const AddCard = ({ refetchCards }: { refetchCards: () => unknown }) => {
           }}
           data-testid="card-number-id"
         />
-        <div className="flex gap-2">
+        <div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
           <Input
             label="Expiry date (MM/YY)"
             type="tel"
