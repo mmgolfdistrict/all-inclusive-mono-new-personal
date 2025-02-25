@@ -30,8 +30,12 @@ import { Controller, useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
 import { useDebounce } from "usehooks-ts";
 import { OutlineButton } from "../buttons/outline-button";
-import PhoneInput from "react-phone-input-2";
-import "react-phone-input-2/lib/style.css";
+import CountryDropdown, { Country } from "~/components/dropdown/country-dropdown";
+import { allCountries } from "country-telephone-data";
+import { CountryData } from "~/utils/types";
+import { PhoneNumberUtil } from "google-libphonenumber";
+
+const phoneUtil = PhoneNumberUtil.getInstance();
 
 const defaultProfilePhoto = "/defaults/default-profile.webp";
 const defaultBannerPhoto = "/defaults/default-banner.webp";
@@ -110,40 +114,86 @@ export const EditProfileForm = () => {
     }
   }, [isLoaded, loadError]);
 
+  const [currentCountry, setCurrentCountry] = useState<string>("us");
   const [currentPhoneNumber, setCurrentPhoneNumber] = useState<string>("");
   const debouncedPhoneNumber = useDebounce<string>(currentPhoneNumber, 2000);
-  const [triggerValidateQuery, setTriggerValidateQuery] = useState<boolean>(false);
-  const { data: phoneNumberData, error: phoneNumberError } = api.user
-    .validatePhoneNumber
-    .useQuery(
-      { phoneNumber: currentPhoneNumber },
-      {
-        enabled: triggerValidateQuery,
+  const [excludedCountries, setExcludeCountries] = useState<string[]>(['by', 'cu', 'kp', 'sy', 've']);
+  const [countries, setCountries] = useState<Country[]>(
+    allCountries.filter(
+      (c: CountryData) => !excludedCountries.includes(c.iso2)
+    ).map((c) => {
+      return {
+        name: c.name,
+        iso2: c.iso2,
+        dialCode: c.dialCode,
+        flag: `https://flagcdn.com/w40/${c.iso2}.png`
       }
-    );
+    })
+  );
 
-  useEffect(function validatePhoneNumber() {
-    if (phoneNumberError) {
-      setError("phoneNumber", {
-        message: "Failed to validate phone number. Please try again.",
-      });
-    } else if (phoneNumberData && !phoneNumberData.valid) {
-      setError("phoneNumber", {
-        message: "Invalid phone number. Please enter a valid phone number with country code. No dashes, or spaces required.",
-      });
-    } else {
-      clearErrors(["phoneNumber"]);
+  const extractCountryISO2 = (phoneNumber: string) => {
+    try {
+      const parsedNumber = phoneUtil.parse(`+${phoneNumber}`);
+      const countryCode = parsedNumber.getCountryCode();
+      const regionCode = phoneUtil.getRegionCodeForCountryCode(countryCode);
+      return regionCode.toLowerCase();
+    } catch (error) {
+      console.error("Invalid phone number", error);
+      return "";
     }
-  }, [phoneNumberData]);
+  };
+
+  useEffect(function getCurrentCountryCode() {
+    const phoneNumber = getValues("phoneNumber");
+    const phoneNumberCountryCode = getValues("phoneNumberCountryCode");
+    if (phoneNumber) {
+      const countryCode = extractCountryISO2(`${phoneNumberCountryCode}${phoneNumber}`);
+      setCurrentCountry(countryCode);
+    }
+    setCurrentPhoneNumber(`${phoneNumberCountryCode}${phoneNumber}`);
+  }, [getValues("phoneNumber"), getValues("phoneNumberCountryCode")]);
+
+  useEffect(function setPhoneNumberValue() {
+    if (currentCountry) {
+      const flagElement = document.querySelector(`.flag-dropdown .flag`) as HTMLDivElement;
+      if (flagElement) {
+        flagElement.style.backgroundImage = `url('https://flagcdn.com/w40/${currentCountry}.png')`;
+      }
+    }
+  }, [currentCountry]);
 
   useEffect(() => {
-    if (!debouncedPhoneNumber) {
-      setTriggerValidateQuery(false);
-      return
-    } else {
-      setTriggerValidateQuery(true);
+    if (debouncedPhoneNumber && getValues("phoneNumber")) {
+      try {
+        const parsedNumber = phoneUtil.parse(`+${debouncedPhoneNumber}`, currentCountry.toUpperCase());
+        const valid = phoneUtil.isValidNumber(parsedNumber);
+        if (!valid) {
+          setError("phoneNumber", {
+            message: "Phone number seems invalid, please enter a valid phone number with country code. No dashes, or spaces required.",
+          });
+        } else {
+          clearErrors("phoneNumber");
+        }
+      } catch (error: any) {
+        setError("phoneNumber", {
+          message: "Phone number seems invalid, please enter a valid phone number with country code. No dashes, or spaces required.",
+        });
+      }
     }
   }, [debouncedPhoneNumber]);
+
+  const handleSelectCountry = (country: Country) => {
+    const { iso2, dialCode } = country;
+    setCurrentCountry(iso2);
+    setValue("phoneNumberCountryCode", +dialCode);
+  }
+
+  const handlePhoneNumberChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const countryCode = getValues("phoneNumberCountryCode");
+    setCurrentPhoneNumber(`${countryCode}${value}`);
+    setValue("phoneNumber", value);
+  }
 
   const onPlaceChanged = () => {
     const place = autocompleteRef.current?.getPlace();
@@ -514,30 +564,25 @@ export const EditProfileForm = () => {
                   Phone Number
                 </label>
               </div>
-              <PhoneInput
-                {...field}
-                value={currentPhoneNumber || ""}
-                autoFormat={false}
-                onChange={(
-                  phone,
-                  countryData: { dialCode: string; countryCode: string }
-                ) => {
-                  const nationalNumber = phone.replace(
-                    countryData.dialCode,
-                    ""
-                  );
-                  setCurrentPhoneNumber(phone);
-                  setValue("phoneNumber", nationalNumber);
-                  setValue("phoneNumberCountryCode", +countryData.dialCode);
-                }}
-                enableSearch
-                inputStyle={{ width: "100%", paddingLeft: "50px" }}
-                buttonStyle={{
-                  border: "none",
-                  backgroundColor: "transparent",
-                }}
-                placeholder="Enter your phone number"
-              />
+              <div className="flex rounded-lg bg-secondary-white px-1 text-[14px] text-gray-500 outline-none text-ellipsis h-12">
+                <CountryDropdown defaultCountry={currentCountry} items={countries} onSelect={handleSelectCountry} />
+                <Input
+                  {...field}
+                  register={register}
+                  className="input-phone-number"
+                  type="text"
+                  label=""
+                  placeholder="9988776655"
+                  id="phoneNumber"
+                  name="phoneNumber"
+                  onChange={handlePhoneNumberChange}
+                  value={getValues("phoneNumber")}
+                  data-testid="profile-phone-number-id"
+                  inputRef={(e) => {
+                    field.ref(e);
+                  }}
+                />
+              </div>
               {errors.phoneNumber && (
                 <p className="text-[12px] text-red">
                   {errors.phoneNumber.message}

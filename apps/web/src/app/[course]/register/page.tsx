@@ -34,6 +34,12 @@ import { toast } from "react-toastify";
 import { useDebounce } from "usehooks-ts";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
+import CountryDropdown, { Country } from "~/components/dropdown/country-dropdown";
+import { allCountries } from "country-telephone-data";
+import { CountryData } from "~/utils/types";
+import { PhoneNumberUtil } from "google-libphonenumber";
+
+const phoneUtil = PhoneNumberUtil.getInstance();
 
 export default function RegisterPage() {
   const { course } = useCourseContext();
@@ -88,56 +94,82 @@ export default function RegisterPage() {
 
   const [currentCountry, setCurrentCountry] = useState<string>("");
   const [currentPhoneNumber, setCurrentPhoneNumber] = useState<string>("");
-  const debouncedPhoneNumber = useDebounce<string>(currentPhoneNumber, 2000);
-  const [triggerValidateQuery, setTriggerValidateQuery] = useState<boolean>(false);
+  const debouncedPhoneNumber = useDebounce<string>(currentPhoneNumber, 1000);
   const { data: userCountryData, error } = api.user.getCountryCode.useQuery({});
-  const { data: phoneNumberData, error: phoneNumberError } = api.user
-    .validatePhoneNumber
-    .useQuery(
-      { phoneNumber: currentPhoneNumber },
-      {
-        enabled: triggerValidateQuery,
+  const [excludedCountries, setExcludeCountries] = useState<string[]>(['by', 'cu', 'kp', 'sy', 've']);
+  const [countries, setCountries] = useState<Country[]>(
+    allCountries.filter(
+      (c: CountryData) => !excludedCountries.includes(c.iso2)
+    ).map((c) => {
+      return {
+        name: c.name,
+        iso2: c.iso2,
+        dialCode: c.dialCode,
+        flag: `https://flagcdn.com/w40/${c.iso2}.png`
       }
-    );
+    })
+  );
+
+  useEffect(function setCurrentPhone() {
+    const phoneNumber = getValues("phoneNumber");
+    const phoneNumberCountryCode = getValues("phoneNumberCountryCode");
+    setCurrentPhoneNumber(`${phoneNumberCountryCode}${phoneNumber}`);
+  }, [getValues("phoneNumber"), getValues("phoneNumberCountryCode")]);
 
   useEffect(function setCountryCode() {
-    if (!userCountryData) return;
     if (userCountryData?.country) {
-      setCurrentCountry(userCountryData.country.toLowerCase());
+      const cc = userCountryData.country.toLowerCase();
+      setCurrentCountry(cc);
+      const country = countries.find((c) => c.iso2 === cc) as Country;
+      if (country) {
+        handleSelectCountry(country);
+      }
     } else {
       console.error('Failed to fetch country', error);
     }
-  }, [userCountryData]);
-
-  useEffect(function validatePhoneNumber() {
-    if (phoneNumberError) {
-      setError("phoneNumber", {
-        message: "Failed to validate phone number. Please try again.",
-      });
-    } else if (phoneNumberData && !phoneNumberData.valid) {
-      setError("phoneNumber", {
-        message: "Invalid phone number. Please enter a valid phone number with country code. No dashes, or spaces required.",
-      });
-    } else {
-      clearErrors(["phoneNumber"]);
-    }
-  }, [phoneNumberData]);
-
-  useEffect(() => {
-    if (!debouncedPhoneNumber) {
-      setTriggerValidateQuery(false);
-      return
-    } else {
-      setTriggerValidateQuery(true);
-    }
-  }, [debouncedPhoneNumber, currentPhoneNumber]);
+  }, [userCountryData?.country, setCurrentCountry]);
 
   useEffect(function setPhoneNumberValue() {
     if (currentCountry) {
-      setValue("phoneNumber", "");
-      setCurrentPhoneNumber("");
+      const flagElement = document.querySelector(`.flag-dropdown .flag`) as HTMLDivElement;
+      if (flagElement) {
+        flagElement.style.backgroundImage = `url('https://flagcdn.com/w40/${currentCountry}.png')`;
+      }
     }
-  }, [currentCountry, setValue]);
+  }, [currentCountry]);
+
+  useEffect(() => {
+    if (debouncedPhoneNumber && getValues("phoneNumber")) {
+      const parsedNumber = phoneUtil.parse(`+${debouncedPhoneNumber}`, currentCountry.toUpperCase());
+      try {
+        const valid = phoneUtil.isValidNumber(parsedNumber);
+        if (!valid) {
+          setError("phoneNumber", {
+            message: "Phone number seems invalid, please enter a valid phone number with country code. No dashes, or spaces required.",
+          });
+        } else {
+          clearErrors("phoneNumber");
+        }
+      } catch (error: any) {
+        setError("phoneNumber", {
+          message: "Phone number seems invalid, please enter a valid phone number with country code. No dashes, or spaces required.",
+        });
+      }
+    }
+  }, [debouncedPhoneNumber, getValues]);
+
+  const handleSelectCountry = (country: Country) => {
+    const { iso2, dialCode } = country;
+    setCurrentCountry(iso2);
+    setValue("phoneNumberCountryCode", +dialCode);
+  }
+
+  const handlePhoneNumberChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const countryCode = getValues("phoneNumberCountryCode");
+    setCurrentPhoneNumber(`${countryCode}${value}`);
+    setValue("phoneNumber", value);
+  }
 
   const onPlaceChanged = () => {
     const place = autocompleteRef.current?.getPlace();
@@ -274,7 +306,6 @@ export default function RegisterPage() {
   }, [recaptchaRef]);
 
   const onSubmit: SubmitHandler<RegisterSchemaType> = async (data) => {
-    console.log('errors govinda: ', errors);
     setIsSubmitting(true);
     if (profanityCheckData?.isProfane) {
       setError("username", {
@@ -409,30 +440,26 @@ export default function RegisterPage() {
                     Phone Number
                   </label>
                 </div>
-                <PhoneInput
-                  {...field}
-                  country={currentCountry}
-                  value={currentPhoneNumber}
-                  autoFormat={false}
-                  onChange={(
-                    phone,
-                    countryData: { dialCode: string; countryCode: string }
-                  ) => {
-                    const nationalNumber = phone.replace(
-                      countryData.dialCode,
-                      ""
-                    );
-                    setCurrentPhoneNumber(phone);
-                    setValue("phoneNumber", nationalNumber);
-                    setValue("phoneNumberCountryCode", +countryData.dialCode);
-                  }}
-                  enableSearch
-                  inputStyle={{ width: "100%", paddingLeft: "50px" }}
-                  buttonStyle={{
-                    border: "none",
-                    backgroundColor: "transparent",
-                  }}
-                />
+                <div className="flex rounded-lg bg-secondary-white px-1 text-[14px] text-gray-500 outline-none text-ellipsis h-12">
+                  <CountryDropdown defaultCountry={currentCountry} items={countries} onSelect={handleSelectCountry} />
+                  <Input
+                    {...field}
+                    register={register}
+                    className="input-phone-number"
+                    type="text"
+                    label=""
+                    placeholder="9988776655"
+                    id="phoneNumber"
+                    name="phoneNumber"
+                    onChange={handlePhoneNumberChange}
+                    value={getValues("phoneNumber")}
+                    data-testid="profile-phone-number-id"
+                    autoComplete="off"
+                    inputRef={(e) => {
+                      field.ref(e);
+                    }}
+                  />
+                </div>
                 {errors.phoneNumber && (
                   <p className="text-[12px] text-red">
                     {errors.phoneNumber.message}
