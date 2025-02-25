@@ -46,7 +46,7 @@ const CountryDropdown = ({ defaultCountry, items, onSelect }: CountryDropdownPro
     );
   }, [searchQuery, items]);
 
-  const handleSelect = (event: React.MouseEvent<HTMLLIElement>, country: Country) => {
+  const handleSelect = (event: React.MouseEvent<HTMLButtonElement>, country: Country) => {
     event.preventDefault();
     setSelectedCountry(country);
     setIsOpen(false);
@@ -88,11 +88,12 @@ const CountryDropdown = ({ defaultCountry, items, onSelect }: CountryDropdownPro
             {filteredCountries.map((country) => (
               <li
                 key={country.iso2}
-                onClick={(e) => handleSelect(e, country)}
                 className="p-2 flex items-center space-x-2 hover:bg-gray-100 cursor-pointer"
               >
-                <img src={country.flag} alt={country.iso2} className="w-8 h-6" />
-                <span>{country.iso2.toUpperCase()} ({country.name})</span>
+                <button className="flex gap-2" onClick={(e: React.MouseEvent<HTMLButtonElement>) => handleSelect(e, country)}>
+                  <img src={country.flag} alt={country.iso2} className="w-8 h-6" />
+                  <span>{country.iso2.toUpperCase()} ({country.name})</span>
+                </button>
               </li>
             ))}
           </ul>

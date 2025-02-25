@@ -19,7 +19,7 @@ import { api } from "~/utils/api";
 import { debounceFunction } from "~/utils/debounce";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
+import React, {
   createRef,
   useCallback,
   useEffect,
@@ -32,14 +32,18 @@ import ReCAPTCHA from "react-google-recaptcha";
 import { Controller, useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
 import { useDebounce } from "usehooks-ts";
-import PhoneInput from "react-phone-input-2";
-import "react-phone-input-2/lib/style.css";
 import CountryDropdown, { Country } from "~/components/dropdown/country-dropdown";
 import { allCountries } from "country-telephone-data";
 import { CountryData } from "~/utils/types";
 import { PhoneNumberUtil } from "google-libphonenumber";
 
 const phoneUtil = PhoneNumberUtil.getInstance();
+const countryList: Country[] = allCountries.map(({ name, iso2, dialCode }: CountryData) => ({
+  name,
+  iso2,
+  dialCode,
+  flag: `https://flagcdn.com/w40/${iso2.toLowerCase()}.png`
+}));
 
 export default function RegisterPage() {
   const { course } = useCourseContext();
@@ -98,9 +102,9 @@ export default function RegisterPage() {
   const { data: userCountryData, error } = api.user.getCountryCode.useQuery({});
   const [excludedCountries, setExcludeCountries] = useState<string[]>(['by', 'cu', 'kp', 'sy', 've']);
   const [countries, setCountries] = useState<Country[]>(
-    allCountries.filter(
-      (c: CountryData) => !excludedCountries.includes(c.iso2)
-    ).map((c) => {
+    countryList.filter(
+      (c: Country) => !excludedCountries.includes(c.iso2)
+    ).map((c: Country) => {
       return {
         name: c.name,
         iso2: c.iso2,
@@ -120,7 +124,7 @@ export default function RegisterPage() {
     if (userCountryData?.country) {
       const cc = userCountryData.country.toLowerCase();
       setCurrentCountry(cc);
-      const country = countries.find((c) => c.iso2 === cc) as Country;
+      const country = countries.find((c) => c?.iso2 === cc);
       if (country) {
         handleSelectCountry(country);
       }
@@ -128,15 +132,6 @@ export default function RegisterPage() {
       console.error('Failed to fetch country', error);
     }
   }, [userCountryData?.country, setCurrentCountry]);
-
-  useEffect(function setPhoneNumberValue() {
-    if (currentCountry) {
-      const flagElement = document.querySelector(`.flag-dropdown .flag`) as HTMLDivElement;
-      if (flagElement) {
-        flagElement.style.backgroundImage = `url('https://flagcdn.com/w40/${currentCountry}.png')`;
-      }
-    }
-  }, [currentCountry]);
 
   useEffect(() => {
     if (debouncedPhoneNumber && getValues("phoneNumber")) {

@@ -36,6 +36,12 @@ import { CountryData } from "~/utils/types";
 import { PhoneNumberUtil } from "google-libphonenumber";
 
 const phoneUtil = PhoneNumberUtil.getInstance();
+const countryList: Country[] = allCountries.map(({ name, iso2, dialCode }: CountryData) => ({
+  name,
+  iso2,
+  dialCode,
+  flag: `https://flagcdn.com/w40/${iso2.toLowerCase()}.png`
+}));
 
 const defaultProfilePhoto = "/defaults/default-profile.webp";
 const defaultBannerPhoto = "/defaults/default-banner.webp";
@@ -119,9 +125,9 @@ export const EditProfileForm = () => {
   const debouncedPhoneNumber = useDebounce<string>(currentPhoneNumber, 2000);
   const [excludedCountries, setExcludeCountries] = useState<string[]>(['by', 'cu', 'kp', 'sy', 've']);
   const [countries, setCountries] = useState<Country[]>(
-    allCountries.filter(
-      (c: CountryData) => !excludedCountries.includes(c.iso2)
-    ).map((c) => {
+    countryList.filter(
+      (c: Country) => !excludedCountries.includes(c.iso2)
+    ).map((c: Country) => {
       return {
         name: c.name,
         iso2: c.iso2,
@@ -135,7 +141,7 @@ export const EditProfileForm = () => {
     try {
       const parsedNumber = phoneUtil.parse(`+${phoneNumber}`);
       const countryCode = parsedNumber.getCountryCode();
-      const regionCode = phoneUtil.getRegionCodeForCountryCode(countryCode);
+      const regionCode: string = phoneUtil.getRegionCodeForCountryCode(countryCode);
       return regionCode.toLowerCase();
     } catch (error) {
       console.error("Invalid phone number", error);
@@ -152,15 +158,6 @@ export const EditProfileForm = () => {
     }
     setCurrentPhoneNumber(`${phoneNumberCountryCode}${phoneNumber}`);
   }, [getValues("phoneNumber"), getValues("phoneNumberCountryCode")]);
-
-  useEffect(function setPhoneNumberValue() {
-    if (currentCountry) {
-      const flagElement = document.querySelector(`.flag-dropdown .flag`) as HTMLDivElement;
-      if (flagElement) {
-        flagElement.style.backgroundImage = `url('https://flagcdn.com/w40/${currentCountry}.png')`;
-      }
-    }
-  }, [currentCountry]);
 
   useEffect(() => {
     if (debouncedPhoneNumber && getValues("phoneNumber")) {
