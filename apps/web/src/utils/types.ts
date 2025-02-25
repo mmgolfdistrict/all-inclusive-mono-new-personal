@@ -1,4 +1,5 @@
 import { type IconCodeType } from "@golf-district/shared";
+import { number } from "zod";
 
 export type DomainVerificationStatusProps =
   | "Valid Configuration"
@@ -208,3 +209,11 @@ export type MaxReservationResponse =
       message?: string;
     }
   | undefined;
+
+export type CountryData = {
+  dialCode: string,
+  format: string,
+  iso2: string,
+  name: string,
+  priority: number
+};

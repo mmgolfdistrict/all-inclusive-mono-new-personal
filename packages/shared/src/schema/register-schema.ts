@@ -15,11 +15,7 @@ export const registerSchema = z
     phoneNumberCountryCode: z.number().min(1, { message: "Phone number country code is required" }),
     phoneNumber: z
       .string()
-      .min(1, { message: "Phone number is required" })
-      .refine((phoneNumber) => /^\d{10}$/.test(phoneNumber), {
-        message:
-          "Invalid phone number. Please enter a valid phone number with area code. No dashes, or spaces required.",
-      }),
+      .min(1, { message: "Phone number is required" }),
     // location: z.string().min(1, { message: "Location is required" }),
     address1: z.string().min(1, { message: "Address1 is required" }),
     address2: z.string().optional(),
