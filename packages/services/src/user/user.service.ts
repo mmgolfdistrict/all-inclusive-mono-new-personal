@@ -165,26 +165,7 @@ export class UserService {
       };
     }
 
-    let isNotRobot;
-    if (data.ReCAPTCHA) {
-      isNotRobot = await verifyCaptcha(data.ReCAPTCHA);
-    }
-    //if the captcha is not valid, return null
-    if (process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && !isNotRobot) {
-      this.logger.error(`Invalid captcha`);
-      loggerService.errorLog({
-        userId: "",
-        url: `/UserService/createUser`,
-        userAgent: "",
-        message: "INVALID_CAPTCHA",
-        stackTrace: ``,
-        additionalDetailsJSON: JSON.stringify({
-          data,
-          courseId,
-        }),
-      });
-      throw new Error("Invalid captcha");
-    }
+   
     // if (containsBadWords(data.firstName, this.filter)) {
     //   this.logger.warn(`Invalid first name: ${data.firstName}`);
     //   throw new Error("Invalid first name due to profanity filter");
@@ -216,6 +197,26 @@ export class UserService {
           };
         }
       }
+    }
+    let isNotRobot;
+    if (data.ReCAPTCHA) {
+      isNotRobot = await verifyCaptcha(data.ReCAPTCHA);
+    }
+    //if the captcha is not valid, return null
+    if (process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && !isNotRobot) {
+      this.logger.error(`Invalid captcha`);
+      loggerService.errorLog({
+        userId: "",
+        url: `/UserService/createUser`,
+        userAgent: "",
+        message: "INVALID_CAPTCHA",
+        stackTrace: ``,
+        additionalDetailsJSON: JSON.stringify({
+          data,
+          courseId,
+        }),
+      });
+      throw new Error("Invalid captcha");
     }
     const verificationToken = randomBytes(32).toString("hex");
     const hashedVerificationToken = await bcrypt.hash(verificationToken, 10);
