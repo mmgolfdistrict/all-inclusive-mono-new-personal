@@ -38,7 +38,7 @@ export const editProfileSchema = z.object({
     .min(1, { message: "Phone number is required" })
     .refine((phoneNumber) => /^\d{10}$/.test(phoneNumber), {
       message:
-        "Invalid phone number. Please enter a valid US phone number with area code. No country code required, dashes, or spaces.",
+        "Invalid phone number",
     }),
   // location: z.string().min(1, { message: "Location is required" }),
   address1: z.string().min(1, { message: "Address1 is required" }),
