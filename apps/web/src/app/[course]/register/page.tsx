@@ -135,19 +135,19 @@ export default function RegisterPage() {
 
   useEffect(() => {
     if (debouncedPhoneNumber && getValues("phoneNumber")) {
-      const parsedNumber = phoneUtil.parse(`+${debouncedPhoneNumber}`, currentCountry.toUpperCase());
       try {
+        const parsedNumber = phoneUtil.parse(`+${debouncedPhoneNumber}`, currentCountry.toUpperCase());
         const valid = phoneUtil.isValidNumber(parsedNumber);
         if (!valid) {
           setError("phoneNumber", {
-            message: "Phone number seems invalid, please enter a valid phone number with country code. No dashes, or spaces required.",
+            message: "Phone number seems invalid, please enter a valid phone number."
           });
         } else {
           clearErrors("phoneNumber");
         }
       } catch (error: any) {
         setError("phoneNumber", {
-          message: "Phone number seems invalid, please enter a valid phone number with country code. No dashes, or spaces required.",
+          message: "Phone number seems invalid, please enter a valid phone number.",
         });
       }
     }
@@ -160,7 +160,7 @@ export default function RegisterPage() {
   }
 
   const handlePhoneNumberChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
+    const value = e.target.value.replace(/\D/g, "");
     const countryCode = getValues("phoneNumberCountryCode");
     setCurrentPhoneNumber(`${countryCode}${value}`);
     setValue("phoneNumber", value);

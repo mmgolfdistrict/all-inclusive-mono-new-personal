@@ -74,7 +74,7 @@ const CountryDropdown = ({ defaultCountry, items, onSelect }: CountryDropdownPro
         </div>
       </button>
       {isOpen && (
-        <div className="absolute mt-2 w-64 bg-white border border-gray-300 rounded-lg shadow-lg z-50">
+        <div className="absolute mt-2 w-[324px] bg-white border border-gray-300 rounded-lg shadow-lg z-50">
           <div className="p-2">
             <input
               type="text"
@@ -92,7 +92,7 @@ const CountryDropdown = ({ defaultCountry, items, onSelect }: CountryDropdownPro
               >
                 <button className="flex gap-2" onClick={(e: React.MouseEvent<HTMLButtonElement>) => handleSelect(e, country)}>
                   <img src={country.flag} alt={country.iso2} className="w-8 h-6" />
-                  <span>{country.iso2.toUpperCase()} ({country.name})</span>
+                  <span className="text-left">{country.name}</span>
                 </button>
               </li>
             ))}
