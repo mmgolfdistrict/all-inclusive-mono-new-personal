@@ -34,6 +34,7 @@ import utc from "dayjs/plugin/utc";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useDebounce } from "usehooks-ts";
+import { useAppContext } from "~/contexts/AppContext";
 
 const currentDate = formatQueryDate(new Date());
 
@@ -67,13 +68,16 @@ export default function Checkout({
     validatePlayers,
     setValidatePlayers: _setValidatePlayers,
   } = useCheckoutContext();
+  const { setActivePage } = useAppContext();
+  setActivePage("checkout")
 
   // useEffect(() => {
   //   if (playerCount) {
   //     setAmountOfPlayers(Number(playerCount));
   //   }
   // }, []);
-
+  const { data: isAppleWidgetReload } =
+    api.checkout.isAppleEnabledReloadWidget.useQuery({});
   const { data: maxReservation } =
     api.checkout.checkMaxReservationsAndMaxRounds.useQuery({
       roundsToBook: amountOfPlayers,
@@ -83,6 +87,7 @@ export default function Checkout({
     api.course.getPrivacyPolicyAndTCByCourse.useQuery({
       courseId: courseId ?? "",
     });
+
   const {
     data: _providerBookingStatusResult,
     refetch: refetchProviderBookingStatus,
@@ -121,6 +126,11 @@ export default function Checkout({
     isError = true;
     error = new Error("You cannot buy your own tee time");
   }
+
+  console.log("isLoading", JSON.stringify(isLoading));
+  console.log("listingId", JSON.stringify(listingId));
+  console.log("data", JSON.stringify(data));
+  console.log("error", JSON.stringify(error));
 
   if (!isLoading && listingId && !data && !error) {
     isError = true;
@@ -510,7 +520,6 @@ export default function Checkout({
         className={`relative flex flex-col items-center gap-4 px-0 pb-8 md:px-8`}
         style={{ marginTop }}
       >
-        <div className="h-12 w-full "></div>
         <CheckoutBreadcumbs status={"checkout"} />
         {maxReservation && maxReservation?.success === false && (
           <div className="bg-alert-red text-white p-1 pl-2  w-full rounded">
@@ -562,6 +571,7 @@ export default function Checkout({
                 teeTimeDate={teeTimeData?.date}
                 playerCount={playerCount}
                 teeTimeData={data}
+                isAppleWidgetReload={isAppleWidgetReload}
                 // maxReservation={maxReservation}
               />
             )}

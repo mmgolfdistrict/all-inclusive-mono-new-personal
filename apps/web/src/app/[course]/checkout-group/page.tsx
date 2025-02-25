@@ -51,8 +51,7 @@ export default function CheckoutGroupBooking({
 
     const { course } = useCourseContext();
 
-    //TODO: change it to true
-    const [isSessionLoading, setIsSessionLoading] = useState(false);
+    const [isSessionLoading, setIsSessionLoading] = useState(true);
     // const [isErrorBookingCancelled, setIsErrorBookingCancelled] = useState(false);
     // const [errorMessage, setErrorMessage] = useState("");
 
@@ -462,7 +461,6 @@ export default function CheckoutGroupBooking({
                 className={`relative flex flex-col items-center gap-4 px-0 pb-8 md:px-8`}
                 style={{ marginTop }}
             >
-                <div className="h-12 w-full "></div>
                 <CheckoutBreadcumbs status={"checkout"} />
                 {maxReservation && maxReservation?.success === false && (
                     <div className="bg-alert-red text-white p-1 pl-2  w-full rounded">

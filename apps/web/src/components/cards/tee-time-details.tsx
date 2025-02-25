@@ -19,6 +19,7 @@ import { Players } from "../icons/players";
 import { Share } from "../icons/share";
 import { ChoosePlayers } from "../input/choose-players";
 import { Tooltip } from "../tooltip";
+import { useAppContext } from "~/contexts/AppContext";
 
 const PlayersOptions = ["1", "2", "3", "4"];
 
@@ -31,6 +32,8 @@ export const TeeTimeDetails = ({
 }) => {
   const { course } = useCourseContext();
   const courseId = course?.id;
+  const { setActivePage } = useAppContext();
+  setActivePage("tee-time-details")
 
   const { data, isLoading, error, isError, refetch } =
     api.searchRouter.getTeeTimeById.useQuery({ teeTimeId: teeTimeId });
@@ -118,7 +121,7 @@ export const TeeTimeDetails = ({
       {...props}
     >
       <div className="stroke flex flex-wrap justify-between gap-4 border-b px-4 py-3 md:gap-2 md:px-6 md:py-4">
-        <div className="md:text-[20px] text-[18px] font-semibold">
+        <div className="md:text-[20px] text-[18px] font-semibold" id="time-detail-page">
           {isError || data === null ? (
             <div className="h-4" />
           ) : (
@@ -186,11 +189,12 @@ export const TeeTimeDetails = ({
               numberOfPlayers={numberOfPlayers ? numberOfPlayers : []}
               status={"FIRST_HAND"}
               isDisabled={allowedPlayers?.selectStatus === "ALL_PLAYERS"}
+              id="choose-players-detail-page"
             />
           </div>
           <div className="flex flex-col flex-wrap justify-between gap-2 md:flex-row">
             {data?.pricePerGolfer ? (
-              <div className="flex items-center">
+              <div className="flex items-center" id="price-detail-page">
                 <div className="md:text-[18px] text-[16px] font-semibold text-secondary-black">
                   {formatMoney(data?.pricePerGolfer)}
                 </div>
@@ -200,11 +204,13 @@ export const TeeTimeDetails = ({
               <div />
             )}
             <div className="flex flex-col md:flex-row items-center gap-2">
+              <div id="share-button-detail-page">
+
               <OutlineButton
                 onClick={() => void share()}
                 className="w-full whitespace-nowrap"
                 data-testid="share-button-id"
-              >
+                >
                 <div className="flex items-center justify-center gap-2">
                   {isCopied ? (
                     <>
@@ -217,29 +223,33 @@ export const TeeTimeDetails = ({
                   )}
                 </div>
               </OutlineButton>
-              {course?.supportsWatchlist ? (
-                <OutlineButton
-                  className="w-full whitespace-nowrap"
-                  onClick={addToWatchlist}
-                  data-testid="watch-list-button-id"
-                >
-                  <div className="flex items-center justify-center gap-2">
-                    <Heart
-                      className="w-[20px] min-w-[20px]"
-                      fill={data?.userWatchListed ? "#40942A" : undefined}
-                    />{" "}
-                    Watchlist
                   </div>
-                </OutlineButton>
+              {course?.supportsWatchlist ? (
+                <div id="watchlist-button-detail-page">
+                  <OutlineButton
+                    className="w-full whitespace-nowrap"
+                    onClick={addToWatchlist}
+                    data-testid="watch-list-button-id"
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      <Heart
+                        className="w-[20px] min-w-[20px]"
+                        fill={data?.userWatchListed ? "#40942A" : undefined}
+                      />{" "}
+                      Watchlist
+                    </div>
+                  </OutlineButton>
+                </div>
               ) : null}
-
-              <FilledButton
-                className="w-full whitespace-nowrap md:px-14"
-                onClick={buyTeeTime}
-                data-testid="buy-tee-time-button-id"
-              >
-                Buy
-              </FilledButton>
+              <div id="buy-button-detail-page">
+                <FilledButton
+                  className="w-full whitespace-nowrap md:px-14"
+                  onClick={buyTeeTime}
+                  data-testid="buy-tee-time-button-id"
+                >
+                  Buy
+                </FilledButton>
+              </div>
             </div>
           </div>
         </div>

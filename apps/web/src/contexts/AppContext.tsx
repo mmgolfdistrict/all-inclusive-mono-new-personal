@@ -21,6 +21,14 @@ interface AppContextType {
   setPrevPath: Dispatch<SetStateAction<Path | null>>;
   alertOffersShown: boolean;
   setAlertOffersShown: Dispatch<SetStateAction<boolean>>;
+  setIsNavExpanded: Dispatch<SetStateAction<boolean>>;
+  isNavExpanded: boolean;
+  activePage: string;
+  setActivePage: Dispatch<SetStateAction<string>>
+  headerHeight: number, 
+  setHeaderHeight: Dispatch<SetStateAction<number>>
+  mainHeaderHeight:number, 
+  setmainHeaderHeight:Dispatch<SetStateAction<number>>
 }
 
 const AppContext = createContext<AppContextType>({
@@ -30,6 +38,14 @@ const AppContext = createContext<AppContextType>({
   setPrevPath: () => undefined,
   alertOffersShown: false,
   setAlertOffersShown: () => ({}),
+  isNavExpanded: false,
+  setIsNavExpanded: () => ({}),
+  activePage: "",
+  setActivePage: () => ({}),
+  headerHeight: 0,
+  setHeaderHeight:() => ({}),
+  mainHeaderHeight:0,
+  setmainHeaderHeight:() => ({}),
 });
 
 export const AppWrapper = ({
@@ -41,7 +57,10 @@ export const AppWrapper = ({
 }) => {
   const { prevPath, setPrevPath } = usePreviousPath();
   const [entity, setEntity] = useState<EntityType | undefined>(entityData);
-
+  const [isNavExpanded, setIsNavExpanded] = useState(false);
+  const [activePage, setActivePage] = useState<string>("");
+  const [headerHeight, setHeaderHeight] = useState<number>(0);
+  const [mainHeaderHeight, setmainHeaderHeight] = useState<number>(0);
   useEffect(() => {
     if (entityData) {
       setEntity(entityData);
@@ -69,6 +88,14 @@ export const AppWrapper = ({
     setPrevPath,
     alertOffersShown,
     setAlertOffersShown,
+    isNavExpanded,
+    setIsNavExpanded,
+    activePage,
+    setActivePage,
+    headerHeight, 
+    setHeaderHeight,
+    mainHeaderHeight, 
+    setmainHeaderHeight
   };
 
   return <AppContext.Provider value={settings}>{children}</AppContext.Provider>;

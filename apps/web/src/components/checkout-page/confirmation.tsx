@@ -47,15 +47,25 @@ export const Confirmation = ({
               <span>Loading ...</span>
             ) : (
               <>
-                  {bookingData?.providerId?.length ? (
-                  <div style={{ paddingBottom: "5px" }}>
-                    <span style={{ fontWeight: 500 }}>
-                      Course Reservation ID
-                    </span>
-                    <span style={{ margin: "0 15px" }}>:</span>
-                    <span>{bookingData?.providerId}</span>
-                  </div>
-                  ) : (isGroupBooking
+                  {bookingData?.providerId?.length && !isGroupBooking ? (
+                    <div style={{ paddingBottom: "5px" }}>
+                      <span style={{ fontWeight: 500 }}>
+                        Course Reservation ID
+                      </span>
+                      <span style={{ margin: "0 15px" }}>:</span>
+                      <span>{bookingData?.providerId}</span>
+                    </div>
+                  ) : null}
+                  {isGroupBooking && bookingData?.groupId ? (
+                    <div style={{ paddingBottom: "5px" }}>
+                      <span style={{ fontWeight: 500 }}>
+                        Group Reservation ID
+                      </span>
+                      <span style={{ margin: "0 15px" }}>:</span>
+                      <span>{bookingData?.groupId}</span>
+                    </div>
+                  ) : null}
+                  {(isGroupBooking
                     ? (
                     <div style={{ paddingBottom: "5px" }}>
                       <span style={{ fontWeight: 500 }}>

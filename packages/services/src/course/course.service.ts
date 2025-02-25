@@ -314,18 +314,27 @@ export class CourseService extends DomainService {
             }),
           });
           throw new Error("Error getting course settings");
-        })
+        });
 
-      let groupBookingMinSize = Number(courseSettings.find(
-        (setting) => setting.internalName === "GROUP_BOOKING_MIN_SIZE"
-      )?.value)
-      let groupBookingMaxSize = Number(courseSettings.find(
-        (setting) => setting.internalName === "GROUP_BOOKING_MAX_SIZE"
-      )?.value);
+      let groupBookingMinSize = Number(
+        courseSettings.find((setting) => setting.internalName === "GROUP_BOOKING_MIN_SIZE")?.value
+      );
+      let groupBookingMaxSize = Number(
+        courseSettings.find((setting) => setting.internalName === "GROUP_BOOKING_MAX_SIZE")?.value
+      );
 
-      const isOnlyGroupOfFourAllowed = (Number(courseSettings.find(
-        (setting) => setting.internalName === "GROUP_BOOKING_ALLOW_SIZE_ONLY_IN_4"
-      )?.value) ?? 0) === 1
+      const isOnlyGroupOfFourAllowed =
+        (Number(
+          courseSettings.find((setting) => setting.internalName === "GROUP_BOOKING_ALLOW_SIZE_ONLY_IN_4")
+            ?.value
+        ) ?? 0) === 1;
+
+      const isAllowSpecialRequest = courseSettings.find(
+        (setting) => setting.internalName === "ALLOW_SPECIAL_REQUEST"
+      )?.value;
+
+      const isAllowClubRental = courseSettings.find((setting) => setting.internalName === "ALLOW_CLUB_RENTAL")
+        ?.value;
 
       if (isOnlyGroupOfFourAllowed) {
         let sliderMin = groupBookingMinSize;
@@ -344,8 +353,10 @@ export class CourseService extends DomainService {
         ...res,
         groupBookingMinSize,
         groupBookingMaxSize,
-        isOnlyGroupOfFourAllowed
-      }
+        isOnlyGroupOfFourAllowed,
+        isAllowSpecialRequest,
+        isAllowClubRental,
+      };
     }
     return res;
   };
@@ -1018,20 +1029,26 @@ export class CourseService extends DomainService {
     }
   };
 
-  getNumberOfPlayersByCourse = async (courseId: string, time?: number, date?: string, availableSlots?: number) => {
+  getNumberOfPlayersByCourse = async (
+    courseId: string,
+    time?: number,
+    date?: string,
+    availableSlots?: number
+  ) => {
     let binaryMask: any;
     const PlayersOptions = ["1", "2", "3", "4"];
 
     if (time && date) {
       const day = dayjs.utc(date, "YYYY-MM-DD").format("ddd").toUpperCase() as DayOfWeek;
-      const cacheKey = `allowed-number-of-players-${courseId}-${day}-${time}`
+      const cacheKey = `allowed-number-of-players-${courseId}-${day}-${time}`;
 
-      let NumberOfPlayers: any = await cacheManager.get(cacheKey)
+      let NumberOfPlayers: any = await cacheManager.get(cacheKey);
       if (!NumberOfPlayers) {
         NumberOfPlayers = await this.database
           .select({
             primaryMarketAllowedPlayers: courseAllowedTimeToSell.primaryMarketAllowedPlayers,
-            primaryMarketSellLeftoverSinglePlayer: courseAllowedTimeToSell.primaryMarketSellLeftoverSinglePlayer
+            primaryMarketSellLeftoverSinglePlayer:
+              courseAllowedTimeToSell.primaryMarketSellLeftoverSinglePlayer,
           })
           .from(courseAllowedTimeToSell)
           .where(
@@ -1044,14 +1061,14 @@ export class CourseService extends DomainService {
         await cacheManager.set(cacheKey, NumberOfPlayers, 600000);
       }
       if (!NumberOfPlayers[0]) {
-        const cacheKey = `allowed-number-of-players-${courseId}`
+        const cacheKey = `allowed-number-of-players-${courseId}`;
 
-        NumberOfPlayers = await cacheManager.get(cacheKey)
+        NumberOfPlayers = await cacheManager.get(cacheKey);
         if (!NumberOfPlayers) {
           NumberOfPlayers = await this.database
             .select({
               primaryMarketAllowedPlayers: courses.primaryMarketAllowedPlayers,
-              primaryMarketSellLeftoverSinglePlayer: courses.primaryMarketSellLeftoverSinglePlayer
+              primaryMarketSellLeftoverSinglePlayer: courses.primaryMarketSellLeftoverSinglePlayer,
             })
             .from(courses)
             .where(eq(courses.id, courseId));
@@ -1067,18 +1084,17 @@ export class CourseService extends DomainService {
         binaryMask = binaryMask | (1 << 0);
       }
     } else {
-      const cacheKey = `allowed-number-of-players-${courseId}`
-      let NumberOfPlayers: any = await cacheManager.get(cacheKey)
+      const cacheKey = `allowed-number-of-players-${courseId}`;
+      let NumberOfPlayers: any = await cacheManager.get(cacheKey);
       if (!NumberOfPlayers) {
         NumberOfPlayers = await this.database
           .select({
             primaryMarketAllowedPlayers: courses.primaryMarketAllowedPlayers,
-            primaryMarketSellLeftoverSinglePlayer: courses.primaryMarketSellLeftoverSinglePlayer
+            primaryMarketSellLeftoverSinglePlayer: courses.primaryMarketSellLeftoverSinglePlayer,
           })
           .from(courses)
           .where(eq(courses.id, courseId));
         await cacheManager.set(cacheKey, NumberOfPlayers, 600000);
-
       }
       if (NumberOfPlayers[0]?.primaryMarketAllowedPlayers) {
         binaryMask = NumberOfPlayers[0]?.primaryMarketAllowedPlayers;
@@ -1143,8 +1159,8 @@ export class CourseService extends DomainService {
   };
 
   getMobileViewVersion = async (courseId: string) => {
-    console.log(courseId)
+    console.log(courseId);
     const mobileViewVersion: string | undefined | null = await appSettingService.get("MOBILE_VIEW_VERSION");
     return mobileViewVersion ?? "v1";
-  }
+  };
 }

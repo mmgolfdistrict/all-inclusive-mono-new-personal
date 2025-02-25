@@ -30,7 +30,8 @@ export const TableView = () => {
     : "owned";
   const { user } = useUserContext();
   const pathname = usePathname();
-  const { setPrevPath } = useAppContext();
+  const { setPrevPath,setActivePage } = useAppContext();
+  setActivePage("my-tee-box")
 
   const { data: unreadOffers, refetch } =
     api.user.getUnreadOffersForCourse.useQuery(
