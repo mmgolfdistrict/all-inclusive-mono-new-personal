@@ -22,6 +22,7 @@ import type {
   BuyerData,
   CustomerCreationData,
   CustomerData,
+  FetchCustomerDetails,
   GetCustomerResponse,
   NameChangeCustomerDetails,
   ProviderAPI,
@@ -303,8 +304,8 @@ export class clubprophet extends BaseProvider {
     providerBookingId: string | string[],
     _providerId: string,
     _courseId: string,
-    providerSlotIds: string[],
-    providerCourseMembershipId: string
+    providerSlotIds?: string[],
+    providerCourseMembershipId?: string
   ) {
     const bookingSlots: {
       id: string;
@@ -390,8 +391,9 @@ export class clubprophet extends BaseProvider {
   async getCustomer(
     token: string,
     courseId: string,
-    email: string
+    customerDetails: FetchCustomerDetails
   ): Promise<ClubProphetGetCustomerResponse | undefined> {
+    const { email } = customerDetails;
     const endpoint = this.getBasePoint();
     const url = `${endpoint}/thirdpartyapi/api/v1/Customer/MemberByEMail/${email}`;
 

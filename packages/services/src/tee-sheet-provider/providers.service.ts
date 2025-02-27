@@ -15,8 +15,10 @@ import { Lightspeed } from "./sheet-providers/lightspeed";
 import type {
   BookingResponse,
   CustomerCreationData,
+  FetchCustomerDetails,
   TeeTimeResponse,
 } from "./sheet-providers/types/interface";
+import { QuickEighteen } from "./sheet-providers/quickEighteen";
 
 export interface Customer {
   playerNumber: number | null;
@@ -53,6 +55,7 @@ export class ProviderService extends CacheService {
       new foreUp(foreUpCredentials),
       new clubprophet(providerConfiguration),
       new Lightspeed(providerConfiguration, new CacheService(redisUrl, redisToken)),
+      new QuickEighteen(providerConfiguration),
     ];
   }
 
@@ -314,7 +317,14 @@ export class ProviderService extends CacheService {
       const userProviderCourseLinkId: string = randomUUID();
       //Try to find customer on provider
       try {
-        const customerResponse = await provider.getCustomer(token, providerCourseId, buyer.email);
+        const [firstName, lastName] = buyer.name.split(" ");
+        const customerDetails: FetchCustomerDetails = {
+          firstName: firstName ?? "",
+          lastName: lastName ?? "",
+          email: buyer.email,
+          phone: buyer.phone ?? ""
+        }
+        const customerResponse = await provider.getCustomer(token, providerCourseId, customerDetails);
         if (customerResponse) {
           const customerIds = provider.getCustomerIdFromGetCustomerResponse(customerResponse);
           if (customerIds.customerId) {
