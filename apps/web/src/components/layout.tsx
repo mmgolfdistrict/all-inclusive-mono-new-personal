@@ -26,7 +26,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
 
   const showBalanceToast = async () => {
     const recievableData = await getRecievables.mutateAsync({});
-    if (recievableData?.withdrawableAmount > 0) {
+    if (recievableData?.withdrawableAmount > 0 && recievableData?.withdrawableAmount > 0) {
       if (localStorage.getItem("showBalanceToast") === "true") {
         setTimeout(() => {
           toast.success(
