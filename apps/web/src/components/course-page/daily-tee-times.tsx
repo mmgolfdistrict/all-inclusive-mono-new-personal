@@ -1,4 +1,5 @@
 import {
+  TeeTimeType,
   type CombinedObject,
   type NotificationObject,
 } from "@golf-district/shared";
@@ -41,6 +42,7 @@ export const DailyTeeTimes = ({
   const isVisible = !!entry?.isIntersecting;
   const [sizeRef] = useElementSize();
   const { course } = useCourseContext();
+  const courseId = course?.id;
 
   const {
     showUnlisted,
@@ -53,6 +55,15 @@ export const DailyTeeTimes = ({
   } = useFiltersContext();
   const teeTimeStartTime = startTime[0];
   const teeTimeEndTime = startTime[1];
+
+  const { data: allowedPlayers } =
+    api.course.getNumberOfPlayersByCourse.useQuery({
+      courseId: courseId ?? "",
+    });
+
+  const numberOfPlayers = allowedPlayers?.numberOfPlayers[0];
+
+  const playersCount = numberOfPlayers ? Number(numberOfPlayers) : 0;
 
   const { data: weather, isLoading: isLoadingWeather } =
     api.searchRouter.getWeatherForDay.useQuery(
@@ -268,41 +279,48 @@ export const DailyTeeTimes = ({
               scrollMarginInlineStart: "2.5em", // Optional margin at the start of scroll
             }}
           >
-            {allTeeTimes?.map((i: CombinedObject, idx: number) => (
-              <li
-                key={idx}
-                style={{
-                  scrollSnapAlign: "start",
-                  paddingRight: "16px",
-                }}
-              >
-                <TeeTime
-                  time={i.date}
-                  key={idx}
-                  items={i}
-                  index={idx}
-                  canChoosePlayer={i.availableSlots > 0}
-                  availableSlots={i.availableSlots}
-                  players={String(4 - i.availableSlots)}
-                  firstHandPurchasePrice={i?.firstHandPurchasePrice}
-                  price={i.pricePerGolfer}
-                  isOwned={i?.isOwned}
-                  soldById={i?.soldById}
-                  soldByImage={i?.soldByImage}
-                  soldByName={i?.soldByName}
-                  teeTimeId={i?.teeTimeId}
-                  isLiked={i?.userWatchListed}
-                  status={i?.firstOrSecondHandTeeTime}
-                  minimumOfferPrice={i?.minimumOfferPrice}
-                  bookingIds={i?.bookingIds ?? []}
-                  listingId={i?.listingId}
-                  listedSlots={i?.listedSlots}
-                  handleLoading={handleLoading}
-                  refetch={refetch}
-                  groupId={i?.groupId}
-                />
-              </li>
-            ))}
+            {allTeeTimes?.map((i: CombinedObject, idx: number) => {
+              if (
+                i.firstOrSecondHandTeeTime === TeeTimeType.SECOND_HAND ||
+                i.availableSlots >= playersCount
+              ) {
+                return (
+                  <li
+                    key={idx}
+                    style={{
+                      scrollSnapAlign: "start",
+                      paddingRight: "16px",
+                    }}
+                  >
+                    <TeeTime
+                      time={i.date}
+                      key={idx}
+                      items={i}
+                      index={idx}
+                      canChoosePlayer={i.availableSlots > 0}
+                      availableSlots={i.availableSlots}
+                      players={String(4 - i.availableSlots)}
+                      firstHandPurchasePrice={i?.firstHandPurchasePrice}
+                      price={i.pricePerGolfer}
+                      isOwned={i?.isOwned}
+                      soldById={i?.soldById}
+                      soldByImage={i?.soldByImage}
+                      soldByName={i?.soldByName}
+                      teeTimeId={i?.teeTimeId}
+                      isLiked={i?.userWatchListed}
+                      status={i?.firstOrSecondHandTeeTime}
+                      minimumOfferPrice={i?.minimumOfferPrice}
+                      bookingIds={i?.bookingIds ?? []}
+                      listingId={i?.listingId}
+                      listedSlots={i?.listedSlots}
+                      handleLoading={handleLoading}
+                      refetch={refetch}
+                      groupId={i?.groupId}
+                    />
+                  </li>
+                );
+              }
+            })}
             <div
               ref={nextPageRef}
               className="h-[50px] w-[1px] text-[1px] text-white"
