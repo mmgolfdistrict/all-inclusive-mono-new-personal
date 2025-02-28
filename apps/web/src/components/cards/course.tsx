@@ -32,6 +32,11 @@ export const Course = ({
         className="object-cover rounded-md h-[288px] w-full bg-center"
         unoptimized
       />
+      <button
+        className={`absolute min-w-[110px] rounded-xl border-white border-[2px] bg-black px-7 py-3 mt-2 text-white`}
+      >
+        Book Now
+      </button>
       <div className="flex flex-col gap-1">
         <div className="font-bold">{courseName}</div>
         <div>{location}</div>
