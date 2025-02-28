@@ -38,8 +38,8 @@ export const DailyTeeTimesV2 = ({
   courseException: NotificationObject | null;
   pageDown: () => void,
   pageUp: () => void
-  scrollY:number,
-  divHeight?:number
+  scrollY: number,
+  divHeight?: number
   // datesWithData:string[]
 }) => {
   const overflowRef = useRef<HTMLDivElement>(null);
@@ -192,9 +192,9 @@ export const DailyTeeTimesV2 = ({
   //   if (type === "WARNING") return <Warning className="h-[20px] w-[20px] " />;
   // };
 
-  if (!isLoading && isFetchedAfterMount && allTeeTimes.length === 0) {
-    return null;
-  }
+  // if (!isLoading && isFetchedAfterMount && allTeeTimes.length === 0) {
+  //   return null;
+  // }
 
   return (
     <div className="flex flex-col gap-1 md:gap-4 bg-white px-4 py-2 md:rounded-xl md:px-8 md:py-6">
@@ -204,11 +204,11 @@ export const DailyTeeTimesV2 = ({
         ) : (
           <div className="w-full flex items-center gap-3 flex-col">
             <div className={`w-full flex items-center justify-between ${(courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
-                ? `fixed bg-white left-0 w-full z-10 bg-secondary-white pt-2  px-4 pb-3 shadow-md`
-                : "relative"
+              ? `fixed bg-white left-0 w-full z-10 bg-secondary-white pt-2  px-4 pb-3 shadow-md`
+              : "relative"
               }`} style={{
                 top: (courseImages?.length > 0 ? scrollY > 333 : scrollY > 45) ? `${divHeight && divHeight + 54}px` : 'auto',
-  
+
               }}>
               <ChevronUp fill="#000" className="-rotate-90" onClick={pageDown} />
               <div
@@ -271,14 +271,18 @@ export const DailyTeeTimesV2 = ({
         )}
       </div>
       <div className="relative" ref={sizeRef} style={{
-                marginTop: (courseImages?.length > 0 ? scrollY > 333 : scrollY > 45) ? `100px` : 'auto',
-              }}>
+        marginTop: (courseImages?.length > 0 ? scrollY > 333 : scrollY > 45) ? `100px` : 'auto',
+      }}>
         <div
           className="scrollbar-none w-full flex flex-col overflow-x-auto overflow-y-hidden gap-4"
           ref={overflowRef}
           onMouseDown={onMouseDown}
         >
-          {allTeeTimes?.map((i: CombinedObject, idx: number) => {
+          {allTeeTimes.length === 0 ? <div className="flex justify-center items-center h-[400px]">
+            <div className="text-center">
+              No Tee Times Available.
+            </div>
+          </div> : allTeeTimes?.map((i: CombinedObject, idx: number) => {
             if (
               i.firstOrSecondHandTeeTime === TeeTimeType.SECOND_HAND ||
               i.availableSlots >= playersCount
@@ -313,7 +317,6 @@ export const DailyTeeTimesV2 = ({
             }
             return null;
           })}
-
           <div
             ref={nextPageRef}
             className="h-[1px] w-[1px] text-[1px] text-white"
