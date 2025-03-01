@@ -64,8 +64,8 @@ const CountryDropdown = ({ defaultCountry, items, onSelect }: CountryDropdownPro
         <div className="flex items-center space-x-2">
           {selectedCountry && (
             <>
-              <img src={selectedCountry.flag} alt={selectedCountry.iso2} className="w-6 h-4" />
-              <span>{selectedCountry.iso2.toUpperCase()} ({selectedCountry.dialCode})</span>
+              <img src={selectedCountry.flag} alt={selectedCountry.iso2} className="w-8 h-6" />
+              <span>{selectedCountry.iso2.toUpperCase()} (+{selectedCountry.dialCode})</span>
             </>
           )}
           <svg className="w-4 h-4 relative" viewBox="0 0 10 6" fill="none" stroke="currentColor" strokeWidth="2">
@@ -86,13 +86,10 @@ const CountryDropdown = ({ defaultCountry, items, onSelect }: CountryDropdownPro
           </div>
           <ul className="max-h-48 overflow-auto">
             {filteredCountries.map((country) => (
-              <li
-                key={country.iso2}
-                className="p-2 flex items-center space-x-2 hover:bg-gray-100 cursor-pointer"
-              >
-                <button className="flex gap-2" onClick={(e: React.MouseEvent<HTMLButtonElement>) => handleSelect(e, country)}>
+              <li key={country.iso2}>
+                <button className="w-full p-2 flex items-center space-x-2 hover:bg-gray-100 cursor-pointer" onClick={(e: React.MouseEvent<HTMLButtonElement>) => handleSelect(e, country)}>
                   <img src={country.flag} alt={country.iso2} className="w-8 h-6" />
-                  <span className="text-left">{country.name}</span>
+                  <span className="text-left">(+{country.dialCode}) {country.name}</span>
                 </button>
               </li>
             ))}
