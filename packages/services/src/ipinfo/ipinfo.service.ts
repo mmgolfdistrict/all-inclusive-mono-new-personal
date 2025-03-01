@@ -51,7 +51,7 @@ export class IpInfoService {
   async getIpInfoData(ipAddress?: string): Promise<IpInfoDataType> {
     try {
       const ipInfoResponse = await fetch(
-        `https://ipinfo.io/152.58.87.207/json?token=${process.env.IP_INFO_API_KEY}`
+        `https://ipinfo.io/${ipAddress}/json?token=${process.env.IP_INFO_API_KEY}`
       );
       if (ipInfoResponse.status !== 200) {
         throw new Error(`Error getting ip info for the ip Address: ${ipAddress}`);
