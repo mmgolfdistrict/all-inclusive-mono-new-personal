@@ -41,7 +41,8 @@ const CountryDropdown = ({ defaultCountry, items, onSelect }: CountryDropdownPro
     setFilteredCountries(
       items.filter((country) =>
         country.iso2.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        country.name.toLowerCase().includes(searchQuery.toLowerCase())
+        country.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        country.dialCode.includes(searchQuery)
       )
     );
   }, [searchQuery, items]);
