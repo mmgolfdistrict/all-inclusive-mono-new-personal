@@ -37,6 +37,7 @@ type Options = {
 let hyperPromise: Promise<unknown> | undefined = undefined;
 
 if (typeof window !== "undefined") {
+  console.log("Hyperswitch - publishable key",process.env.NEXT_PUBLIC_HYPERSWITCH_PUBLISHABLE_KEY);
   hyperPromise = loadHyper(process.env.NEXT_PUBLIC_HYPERSWITCH_PUBLISHABLE_KEY);
 }
 

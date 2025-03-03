@@ -32,6 +32,7 @@ export class HyperSwitchService {
    */
   constructor(hyperSwitchApiKey: string, logger?: pino.Logger) {
     this.logger = logger ? logger : Logger(HyperSwitchService.name);
+    console.log("Initialize hyperswitch with apikey",hyperSwitchApiKey);
     this.hyper = require("@juspay-tech/hyperswitch-node")(hyperSwitchApiKey);
     (this.database = db),
       (this.notificationService = new NotificationService(
@@ -126,6 +127,7 @@ export class HyperSwitchService {
    * @throws Will throw an error if the payment intent creation fails.
    */
   createPaymentIntent = async (params: any, options?: HyperSwitch.RequestOptions | undefined) => {
+    console.log("Hyperswitch - Creating payment intent options",JSON.stringify(options));
     return await this.hyper.paymentIntents.create(params, options).catch((err: any) => {
       this.logger.error(`Error creating payment intent: ${err}`);
       loggerService.errorLog({
