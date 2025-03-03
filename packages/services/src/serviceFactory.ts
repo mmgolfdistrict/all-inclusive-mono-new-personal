@@ -91,6 +91,7 @@ export class ServiceFactory {
    * @returns An instance of HyperSwitchService.
    */
   getHyperSwitchService = (): HyperSwitchService => {
+    console.log("Hyperswitch - setting api key in service factory",this.config.hyperSwitchApiKey);
     return new HyperSwitchService(this.config.hyperSwitchApiKey);
   };
 
