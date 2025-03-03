@@ -392,11 +392,12 @@ export class CheckoutService {
             weatherGuaranteeTaxPercent: courses.weatherGuaranteeTaxPercent,
             markupTaxPercent: courses.markupTaxPercent,
             groupBookingPriceSelectionMethod: courseSetting.value,
-            availableFirstHandSpots: teeTimes.availableFirstHandSpots
+            availableFirstHandSpots: teeTimes.availableFirstHandSpots,
           })
           .from(teeTimes)
           .leftJoin(courses, eq(teeTimes.courseId, courses.id))
-          .leftJoin(courseSetting,
+          .leftJoin(
+            courseSetting,
             and(
               eq(courseSetting.courseId, courses.id),
               eq(courseSetting.internalName, "GROUP_BOOKING_PRICE_SELECTION_METHOD")
@@ -483,26 +484,64 @@ export class CheckoutService {
       merchant_order_reference_id: customerCartData?.cartId ?? "",
       setup_future_usage: "off_session",
     };
-    // }
+    let teeTimeId;
+    let listingId;
 
-    // const paymentIntent = await this.hyperSwitch.createPaymentIntent(paymentData).catch((err) => {
-    //   this.logger.error(` ${err}`);
-    //   loggerService.errorLog({
-    //     userId,
-    //     url: "/CheckoutService/createCheckoutSession",
-    //     userAgent: "",
-    //     message: "ERROR_CREATING_PAYMENT_INTENT",
-    //     stackTrace: `${err.stack}`,
-    //     additionalDetailsJSON: JSON.stringify({
-    //       customerCartData,
-    //       paymentData,
-    //     }),
-    //   });
-    //   throw new Error(`Error creating payment intent: ${err}`);
-    // });
-    let paymentIntent;
+    customerCartData?.cart?.forEach(({ product_data }: ProductData) => {
+      if (product_data.metadata.type === "first_hand") {
+        teeTimeId = product_data.metadata.tee_time_id;
+      }
+      if (product_data.metadata.type === "second_hand") {
+        listingId = product_data.metadata.second_hand_id;
+      }
+      if (product_data.metadata.type === "first_hand_group") {
+        teeTimeId = product_data.metadata.tee_time_ids[0];
+      }
+    });
+    const cartId: string = randomUUID();
+    const ipInfo = await this.ipInfoService.getIpInfo(ipAddress);
     try {
-      paymentIntent = await this.hyperSwitch.createPaymentIntent(paymentData);
+      const myHeaders = new Headers();
+      const hyperSwichApiKey = process.env.HYPERSWITCH_API_KEY;
+      myHeaders.append("api-key", `${hyperSwichApiKey}`);
+      myHeaders.append("Content-Type", "application/json");
+      const raw = JSON.stringify(paymentData);
+      const requestOptions: RequestInit = {
+        method: "POST",
+        headers: myHeaders,
+        body: raw,
+        redirect: "follow",
+      };
+
+      try {
+        const hyperswitchBaseUrl = `${process.env.HYPERSWITCH_BASE_URL}/payments`;
+        const response = await fetch(hyperswitchBaseUrl, requestOptions);
+        const result = await response.json();
+        //console.log("response=======>", result);
+        await this.database.insert(customerCarts).values({
+          id: cartId,
+          userId: userId,
+          // courseId: customerCart.courseId,
+          paymentId: result.payment_id,
+          cart: customerCart,
+          listingId,
+          teeTimeId,
+          ipinfoJSON: ipInfo,
+        });
+        return { ...result, cartId };
+      } catch (err: any) {
+        loggerService.errorLog({
+          userId,
+          url: "/CheckoutService/createCheckoutSession",
+          userAgent: "",
+          message: "ERROR_IN_HYPERSWITCH_PAYMENT_API",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            customerCartData,
+            paymentData,
+          }),
+        });
+      }
     } catch (err: any) {
       this.logger.error(` ${err}`);
       loggerService.errorLog({
@@ -524,42 +563,73 @@ export class CheckoutService {
         next_action: "",
       };
     }
+    // }
 
-    let teeTimeId;
-    let listingId;
+    // const paymentIntent = await this.hyperSwitch.createPaymentIntent(paymentData).catch((err) => {
+    //   this.logger.error(` ${err}`);
+    //   loggerService.errorLog({
+    //     userId,
+    //     url: "/CheckoutService/createCheckoutSession",
+    //     userAgent: "",
+    //     message: "ERROR_CREATING_PAYMENT_INTENT",
+    //     stackTrace: `${err.stack}`,
+    //     additionalDetailsJSON: JSON.stringify({
+    //       customerCartData,
+    //       paymentData,
+    //     }),
+    //   });
+    //   throw new Error(`Error creating payment intent: ${err}`);
+    // });
+    //   /* Add respective env enpoints
+    //    - Sandbox - https://sandbox.hyperswitch.io
+    //    - Prod - https://api.hyperswitch.io
+    //   */
+    //  console.log("api key used hyperswitch",process.env.HYPERSWITCH_API_KEY);
+    //  console.log("payment data used",paymentData);
+    //    const url = "https://sandbox.hyperswitch.io";
+    //   const apiResponse = await fetch(`${url}/payments`, {
+    //     method: "POST",
+    //     headers: {
+    //       "Content-Type": "application/json",
+    //       Accept: "application/json",
+    //       "api-key": process.env.HYPERSWITCH_API_KEY as string,
+    //     },
+    //     body: JSON.stringify(paymentData),
+    //   });
+    //   this.logger.info({
+    //     "path":"create-intent hyperswitch"
+    //   },`${JSON.stringify(apiResponse)}`)
+    //   this.logger.info({
+    //     "path":"create-intent hyperswitch",
+    //   },`api response json- ${JSON.stringify(apiResponse.json())}`)
 
-    customerCartData?.cart?.forEach(({ product_data }: ProductData) => {
-      if (product_data.metadata.type === "first_hand") {
-        teeTimeId = product_data.metadata.tee_time_id;
-      }
-      if (product_data.metadata.type === "second_hand") {
-        listingId = product_data.metadata.second_hand_id;
-      }
-      if (product_data.metadata.type === "first_hand_group") {
-        teeTimeId = product_data.metadata.tee_time_ids[0];
-      }
-    });
+    //   const paymentIntent = await apiResponse.json();
+
+    //   if (paymentIntent.error) {
+    //     console.error("Error - ", paymentIntent.error);
+    //     throw new Error(paymentIntent?.error?.message ?? "Something went wrong.");
+    //   }
 
     //save customerCart to database
-    const cartId: string = randomUUID();
-    const ipInfo = await this.ipInfoService.getIpInfo(ipAddress);
-    await this.database.insert(customerCarts).values({
-      id: cartId,
-      userId: userId,
-      // courseId: customerCart.courseId,
-      paymentId: paymentIntent.payment_id,
-      cart: customerCart,
-      listingId,
-      teeTimeId,
-      ipinfoJSON: ipInfo,
-    });
+    // const cartId: string = randomUUID();
+    // const ipInfo = await this.ipInfoService.getIpInfo(ipAddress);
+    // await this.database.insert(customerCarts).values({
+    //   id: cartId,
+    //   userId: userId,
+    //   // courseId: customerCart.courseId,
+    //   paymentId: paymentIntent.payment_id,
+    //   cart: customerCart,
+    //   listingId,
+    //   teeTimeId,
+    //   ipinfoJSON: ipInfo,
+    // });
 
-    return {
-      clientSecret: paymentIntent.client_secret,
-      paymentId: paymentIntent.payment_id,
-      cartId: cartId,
-      next_action: paymentIntent.next_action,
-    };
+    // return {
+    //   clientSecret: paymentIntent.client_secret,
+    //   paymentId: paymentIntent.payment_id,
+    //   cartId: cartId,
+    //   next_action: paymentIntent.next_action,
+    // };
   };
 
   updateCheckoutSession = async (userId: string, customerCartData: CustomerCart, cartId: string) => {
@@ -588,7 +658,7 @@ export class CheckoutService {
     );
     const isFirstHandGroup = customerCart.cart.filter(
       ({ product_data }) => product_data.metadata.type === "first_hand_group"
-    )
+    );
     const sensibleCharge =
       customerCartData?.cart
         ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "sensible")
@@ -649,11 +719,12 @@ export class CheckoutService {
             weatherGuaranteeTaxPercent: courses.weatherGuaranteeTaxPercent,
             markupTaxPercent: courses.markupTaxPercent,
             groupBookingPriceSelectionMethod: courseSetting.value,
-            availableFirstHandSpots: teeTimes.availableFirstHandSpots
+            availableFirstHandSpots: teeTimes.availableFirstHandSpots,
           })
           .from(teeTimes)
           .leftJoin(courses, eq(teeTimes.courseId, courses.id))
-          .leftJoin(courseSetting,
+          .leftJoin(
+            courseSetting,
             and(
               eq(courseSetting.courseId, courses.id),
               eq(courseSetting.internalName, "GROUP_BOOKING_PRICE_SELECTION_METHOD")
@@ -671,7 +742,7 @@ export class CheckoutService {
         }
         const teeTime = teeTimesResponse[0];
         const groupBookingPriceSelectionMethod = teeTime?.groupBookingPriceSelectionMethod ?? "MAX";
-        let greenFees = 0
+        let greenFees = 0;
 
         // get fees for players
         let remainingPlayers = playerCount;
@@ -680,7 +751,7 @@ export class CheckoutService {
             greenFees = Math.max(greenFees, teeTime.greenFees);
           }
         } else if (groupBookingPriceSelectionMethod === "SUM") {
-          let totalGreenFees = 0
+          let totalGreenFees = 0;
           for (const teeTime of teeTimesResponse) {
             const players = Math.min(remainingPlayers, teeTime.availableFirstHandSpots);
             remainingPlayers -= players;
@@ -1107,7 +1178,7 @@ export class CheckoutService {
       console.log(`formattedDate: ${formattedDate}`);
 
       if (teeTime.providerCourseId && teeTime.providerTeeSheetId && formattedDate) {
-        const response = await provider.indexTeeTime(
+        const response = (await provider.indexTeeTime(
           formattedDate,
           teeTime.providerCourseId,
           teeTime.providerTeeSheetId,
@@ -1116,7 +1187,7 @@ export class CheckoutService {
           teeTime.time,
           teeTime.id,
           teeTime.providerTeeTimeId
-        ) as any;
+        )) as any;
         if (response?.error) {
           errors.push({
             errorType: CartValidationErrors.TEE_TIME_NOT_AVAILABLE,
@@ -1129,12 +1200,7 @@ export class CheckoutService {
       const stillAvailable = await this.database
         .select({ id: teeTimes.id })
         .from(teeTimes)
-        .where(
-          and(
-            eq(teeTimes.id, teeTime.id),
-            gte(teeTimes.availableFirstHandSpots, players)
-          )
-        )
+        .where(and(eq(teeTimes.id, teeTime.id), gte(teeTimes.availableFirstHandSpots, players)))
         .execute()
         .catch((err) => {
           throw new Error("Error retrieving teetime");
