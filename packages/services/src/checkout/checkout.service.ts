@@ -514,10 +514,17 @@ export class CheckoutService {
       };
 
       try {
+        console.log("sending request for payment",raw);
         const hyperswitchBaseUrl = `${process.env.HYPERSWITCH_BASE_URL}/payments`;
         const response = await fetch(hyperswitchBaseUrl, requestOptions);
         const result = await response.json();
-        //console.log("response=======>", result);
+        try{
+          console.log("responsepaymentintent=======>", JSON.stringify(result));
+        }
+        catch(e){
+          console.log("error in payment intent response log",e);
+        }
+       
         await this.database.insert(customerCarts).values({
           id: cartId,
           userId: userId,
