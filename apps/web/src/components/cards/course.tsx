@@ -33,7 +33,11 @@ export const Course = ({
         unoptimized
       />
       <button
-        className={`absolute min-w-[110px] rounded-xl border-white border-[2px] bg-black px-7 py-3 mt-2 text-white`}
+        className={`
+          absolute min-w-[110px] rounded-xl border-white border-[2px] bg-black
+            px-7 py-3 mt-2 text-white
+        `}
+        data-testid="book-now-button-id"
       >
         Book Now
       </button>
