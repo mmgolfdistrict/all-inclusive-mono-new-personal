@@ -57,6 +57,23 @@ export const UserInNav = ({ alwaysShow }: { alwaysShow?: boolean }) => {
 
   const logOutUser = () => {
     logAudit(async () => {
+      localStorage.clear();
+      sessionStorage.clear();
+      try {
+        const cacheKeys = await caches.keys();
+        await Promise.all(cacheKeys.map((key) => caches.delete(key)));
+        console.log("All caches cleared.");
+      } catch (error) {
+        console.error("Error clearing caches:", error);
+      }
+      if (document.cookie) {
+        document.cookie.split(";").forEach((cookie) => {
+          const cookieName = cookie.split("=")[0]?.trim();
+          if (cookieName) {
+            document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname}`;
+          }
+        });
+      }
       if (PathsThatNeedRedirectOnLogout.some((i) => pathname.includes(i))) {
         const data = await signOut({
           callbackUrl: `/${courseId}`,
