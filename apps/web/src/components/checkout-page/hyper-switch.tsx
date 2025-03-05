@@ -19,8 +19,8 @@ export type NextAction = {
 };
 
 type CreatePaymentResponse = {
-  clientSecret: string;
-  paymentId: string | undefined;
+  client_secret: string;
+  payment_id: string | undefined;
   cartId: string;
   next_action?: NextAction;
   error?: string;
@@ -37,6 +37,7 @@ type Options = {
 let hyperPromise: Promise<unknown> | undefined = undefined;
 
 if (typeof window !== "undefined") {
+  console.log("Hyperswitch - publishable key",process.env.NEXT_PUBLIC_HYPERSWITCH_PUBLISHABLE_KEY);
   hyperPromise = loadHyper(process.env.NEXT_PUBLIC_HYPERSWITCH_PUBLISHABLE_KEY);
 }
 
@@ -126,19 +127,18 @@ export const HyperSwitch = ({
           course?.timezoneCorrection
         ),
       })) as CreatePaymentResponse;
-
       if (data?.error) {
         toast.error(data?.error);
       }
 
       if (data?.next_action) {
         setNextaction(data?.next_action);
-        setPaymentId(data?.paymentId);
+        setPaymentId(data?.payment_id);
       } else {
-        setPaymentId(data?.paymentId);
+        setPaymentId(data?.payment_id);
         setOptions({
-          clientSecret: data.clientSecret,
-          paymentId: data.paymentId,
+          clientSecret: data.client_secret,
+          paymentId: data.payment_id,
           appearance: {
             theme: "default",
           },

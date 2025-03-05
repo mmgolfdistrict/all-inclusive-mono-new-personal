@@ -3501,7 +3501,6 @@ export class BookingService {
       cartId,
       userId,
     });
-
     bookingStage = "Checking if payment id is valid";
     console.log(`Check if payment id is valid ${payment_id}`);
     const isValid = await this.checkIfPaymentIdIsValid(payment_id);
