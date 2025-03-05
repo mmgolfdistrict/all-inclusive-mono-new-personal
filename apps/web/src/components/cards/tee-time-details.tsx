@@ -57,6 +57,7 @@ export const TeeTimeDetails = ({
   const [isCopied, setIsCopied] = useState<boolean>(false);
 
   const { user } = useUserContext();
+  const { setPrevPath } = useAppContext();
   const router = useRouter();
   const { data: session } = useSession();
 
@@ -81,6 +82,10 @@ export const TeeTimeDetails = ({
 
   const buyTeeTime = () => {
     if (!user || !session) {
+      setPrevPath({
+        path: `/${course?.id}/checkout?teeTimeId=${teeTimeId}&playerCount=${players}`,
+        createdAt: new Date().toISOString(),
+      });
       void router.push(`/${course?.id}/login`);
       return;
     } else {
