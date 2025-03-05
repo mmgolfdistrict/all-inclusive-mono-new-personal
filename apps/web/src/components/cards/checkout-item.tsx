@@ -230,7 +230,7 @@ export const CheckoutItem = ({
             )}
           </div>
           <Data
-            className="flex lg:flex"
+            className="flex"
             canChoosePlayer={(teeTime?.availableSlots ?? 4) > 0}
             players={4 - (teeTime?.availableSlots ?? 0)}
             selectedPlayers={amountOfPlayers.toString()}
@@ -249,24 +249,6 @@ export const CheckoutItem = ({
           />
         </div>
       </div>
-      {/* <Data
-        className="lg:hidden px-4"
-        canChoosePlayer={(teeTime?.availableSlots ?? 4) > 0}
-        players={4 - (teeTime?.availableSlots ?? 0)}
-        selectedPlayers={amountOfPlayers.toString()}
-        choosePlayers={choosePlayers}
-        soldByImage={teeTime?.soldByImage}
-        pricePerGolfer={teeTime?.pricePerGolfer}
-        soldByName={teeTime?.soldByName}
-        isLoading={isLoading || teeTime === undefined || teeTime === null}
-        availableSlots={teeTime?.availableSlots}
-        isSecondHand={teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND"}
-        teeTimeId={teeTime?.teeTimeId}
-        courseException={getCourseException(teeTime?.date ?? "")}
-        numberOfPlayers={numberOfPlayers}
-        selectStatus={allowedPlayers?.selectStatus}
-        canShowPlayers={!isGroupBooking}
-      /> */}
       <div className="flex flex-col gap-1">
         <div className="flex flex-col gap-2">
           {isSupportMemberShip?.supportsProviderMembership === 1 &&
