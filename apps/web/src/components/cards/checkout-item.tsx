@@ -11,6 +11,7 @@ import {
 import { useSearchParams } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
 import { toast } from "react-toastify";
+import { useMediaQuery } from "usehooks-ts";
 import placeholderImage from "../../../public/placeholders/course.png";
 import { Avatar } from "../avatar";
 import { CheckedIcon } from "../icons/checked";
@@ -29,13 +30,13 @@ export const CheckoutItem = ({
   isLoading,
   isSensibleInvalid,
   sensibleDataToMountComp,
-  isGroupBooking = false
+  isGroupBooking = false,
 }: {
   teeTime: SearchObject | null | undefined;
   isLoading: boolean;
   isSensibleInvalid: boolean;
   sensibleDataToMountComp: SensibleDataToMountCompType;
-  isGroupBooking?: boolean
+  isGroupBooking?: boolean;
 }) => {
   const searchParams = useSearchParams();
   const playerCount = searchParams.get("playerCount");
@@ -62,7 +63,7 @@ export const CheckoutItem = ({
       index === 0 ? user?.email : ""
     )
   );
-
+  const isMobile = useMediaQuery("(max-width: 768px)");
   const { data: coursePreviewImage } =
     api.course.getCoursePreviewImage.useQuery({ courseId: courseId ?? "" });
 
@@ -71,7 +72,7 @@ export const CheckoutItem = ({
       courseId: courseId ?? "",
       time: teeTime?.time,
       date: teeTime?.date ?? "",
-      availableSlots: teeTime?.availableSlots
+      availableSlots: teeTime?.availableSlots,
     });
 
   const { data: isSupportMemberShip } = api.course.getCourseById.useQuery({
@@ -199,7 +200,11 @@ export const CheckoutItem = ({
 
   return (
     <div className="relative flex w-full flex-col gap-2 bg-secondary-white  pt-4 lg:rounded-lg">
-      <div className="flex items-center gap-2 px-4 pb-4 lg:items-start">
+      <div
+        className={`flex pb-4 lg:items-start ${
+          isMobile ? "gap-1 px-1" : " gap-2 px-4 items-center"
+        }`}
+      >
         <BlurImage
           src={coursePreviewImage ?? ""}
           width={placeholderImage.width}
@@ -212,7 +217,10 @@ export const CheckoutItem = ({
             {isLoading ? (
               <div className="h-6 w-[50%] bg-gray-200 rounded-md  animate-pulse" />
             ) : (
-              <span className="text-[20px] " id="date-time-checkout">
+              <span
+                className="md:text-[20px] text-[18px]"
+                id="date-time-checkout"
+              >
                 {formatTime(
                   teeTime?.date ?? "",
                   true,
@@ -222,7 +230,7 @@ export const CheckoutItem = ({
             )}
           </div>
           <Data
-            className="hidden lg:flex"
+            className="flex lg:flex"
             canChoosePlayer={(teeTime?.availableSlots ?? 4) > 0}
             players={4 - (teeTime?.availableSlots ?? 0)}
             selectedPlayers={amountOfPlayers.toString()}
@@ -241,7 +249,7 @@ export const CheckoutItem = ({
           />
         </div>
       </div>
-      <Data
+      {/* <Data
         className="lg:hidden px-4"
         canChoosePlayer={(teeTime?.availableSlots ?? 4) > 0}
         players={4 - (teeTime?.availableSlots ?? 0)}
@@ -258,11 +266,11 @@ export const CheckoutItem = ({
         numberOfPlayers={numberOfPlayers}
         selectStatus={allowedPlayers?.selectStatus}
         canShowPlayers={!isGroupBooking}
-      />
+      /> */}
       <div className="flex flex-col gap-1">
-        <div className="flex flex-col gap-2" >
+        <div className="flex flex-col gap-2">
           {isSupportMemberShip?.supportsProviderMembership === 1 &&
-            listingId == null ? (
+          listingId == null ? (
             <div id="select-membership-checkout">
               <div className="flex gap-2 px-2">
                 <h5 className="">Select MemberShip:</h5>
@@ -280,24 +288,11 @@ export const CheckoutItem = ({
                       ))}
                     </Fragment>
                   ) : null}
-                  {/* {courseMemberships.length === 0 ? (
-                    <Fragment>
-                      <option value="no_membership">
-                        No Membership Selected
-                      </option>
-                    </Fragment>
-                  ) : (
-                    courseMemberships.map((membership) => (
-                      <option key={membership.id} value={membership.id}>
-                        {membership.name}
-                      </option>
-                    ))
-                  )} */}
                 </select>
               </div>
               <div className="flex flex-wrap justify-between gap-1">
                 {courseMemberships.length === 0 ||
-                  membershipStatus === "no_membership" ? null : (
+                membershipStatus === "no_membership" ? null : (
                   <Fragment>
                     {Array.from({ length: Number(playerCount) }, (_, index) => (
                       <div
@@ -361,52 +356,6 @@ export const CheckoutItem = ({
         <div id="weather-guarantee">
           <SensibleWidget sensibleDataToMountComp={sensibleDataToMountComp} />
         </div>
-        // <section className="flex flex-col items-center justify-between gap-4 border-t border-stroke p-4 lg:flex-row">
-        //   <div className="flex flex-col gap-2">
-        //     <div className="flex items-center gap-2">
-        //       <div className="text-secondary-black">
-        //         Add a Weather Guarantee for{" "}
-        //         {sensiblePrice ? formatMoney(sensiblePrice) : "-"}
-        //       </div>
-        //       <Tooltip
-        //         className="hidden lg:block"
-        //         trigger={
-        //           <div className="flex items-center gap-1">
-        //             <Info className="h-[14px] w-[14px]" />
-        //             <div className="whitespace-nowrap text-[12px] text-[#B0B7BC]">
-        //               More info
-        //             </div>
-        //           </div>
-        //         }
-        //         content="Learn more about the Weather Guarantee"
-        //       />
-        //     </div>
-        //     <div className="flex items-center gap-2">
-        //       <div className="text-[12px] text-secondary-black">Offered by</div>
-        //       <SensibleIcon className="h-[24px] w-[138px]" />
-        //     </div>
-        //   </div>
-        //   <div className="flex w-full items-center justify-evenly gap-2 lg:w-fit lg:justify-end">
-        //     <Tooltip
-        //       className="block lg:hidden"
-        //       trigger={
-        //         <div className="flex items-center gap-1">
-        //           <Info className="h-[14px] w-[14px]" />
-        //           <div className="whitespace-nowrap text-[12px] text-[#B0B7BC]">
-        //             More info
-        //           </div>
-        //         </div>
-        //       }
-        //       content="Learn more about the Weather Guarantee"
-        //     />
-        //     <OutlineButton
-        //       onClick={handleSensibleModalOpen}
-        //       className="h-fit whitespace-nowrap bg-transparent"
-        //     >
-        //       Add Coverage
-        //     </OutlineButton>
-        //   </div>
-        // </section>
       )}
     </div>
   );
@@ -428,7 +377,7 @@ const Data = ({
   courseException,
   numberOfPlayers,
   selectStatus,
-  canShowPlayers
+  canShowPlayers,
 }: {
   className: string;
   canChoosePlayer: boolean;
@@ -450,7 +399,7 @@ const Data = ({
   if (isLoading) {
     return (
       <div
-        className={`flex w-full flex-col justify-between gap-2 text-sm lg:flex-row ${className}`}
+        className={`flex w-full flex-row justify-between gap-2 text-sm lg:flex-row ${className}`}
       >
         <div className="flex gap-1 lg:items-start">
           <div className="h-8 w-8 bg-gray-200 rounded-full  animate-pulse" />
@@ -475,7 +424,7 @@ const Data = ({
   };
   return (
     <div
-      className={`flex w-full flex-col justify-between gap-2 text-sm lg:flex-row ${className}`}
+      className={`flex w-full flex-row justify-between gap-2 text-sm lg:flex-row ${className}`}
     >
       <div className="flex gap-1 lg:items-start">
         <div className="flex gap-1 flex-col items-start">
@@ -511,34 +460,31 @@ const Data = ({
             {courseException?.longMessage || courseException?.longMessage}
           </p>
         </div>
-
-        {/* <div className="flex flex-wrap gap-1">
-          <div>Sold by</div>
-          {soldByName}
-        </div> */}
       </div>
       <div className="flex flex-col gap-2 lg:items-end">
-        {canShowPlayers ? <div className="flex min-h-[31px] items-center gap-2">
-          <OutlineClub />
-          {canChoosePlayer ? (
-            <ChoosePlayers
-              players={selectedPlayers}
-              setPlayers={choosePlayers}
-              playersOptions={PlayersOptions}
-              availableSlots={availableSlots ?? 0}
-              isDisabled={isSecondHand || selectStatus === "ALL_PLAYERS"}
-              teeTimeId={teeTimeId}
-              numberOfPlayers={numberOfPlayers ? numberOfPlayers : []}
-              id="number-of-players-checkout"
-            />
-          ) : (
-            players && (
-              <div>
-                {players} golfer{players > 1 ? "s" : ""}
-              </div>
-            )
-          )}
-        </div> : null}
+        {canShowPlayers ? (
+          <div className="flex min-h-[31px] items-center gap-2">
+            <OutlineClub />
+            {canChoosePlayer ? (
+              <ChoosePlayers
+                players={selectedPlayers}
+                setPlayers={choosePlayers}
+                playersOptions={PlayersOptions}
+                availableSlots={availableSlots ?? 0}
+                isDisabled={isSecondHand || selectStatus === "ALL_PLAYERS"}
+                teeTimeId={teeTimeId}
+                numberOfPlayers={numberOfPlayers ? numberOfPlayers : []}
+                id="number-of-players-checkout"
+              />
+            ) : (
+              players && (
+                <div>
+                  {players} golfer{players > 1 ? "s" : ""}
+                </div>
+              )
+            )}
+          </div>
+        ) : null}
         <div className="flex" id="price-per-golfer-checkout">
           <div className="text-[18px] font-semibold text-secondary-black">
             {formatMoney(pricePerGolfer ?? 1 ?? 0)}
