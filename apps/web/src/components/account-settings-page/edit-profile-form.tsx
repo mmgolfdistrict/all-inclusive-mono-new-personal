@@ -123,7 +123,9 @@ export const EditProfileForm = () => {
   const [currentCountry, setCurrentCountry] = useState<string>("us");
   const [currentPhoneNumber, setCurrentPhoneNumber] = useState<string>("");
   const debouncedPhoneNumber = useDebounce<string>(currentPhoneNumber, 2000);
-  const [excludedCountries, setExcludeCountries] = useState<string[]>(['by', 'cu', 'kp', 'sy', 've']);
+  const [excludedCountries, setExcludeCountries] = useState<string[]>(
+    ['by', 'cu', 'kp', 'sy', 've', 'ir']
+  );
   const [countries, setCountries] = useState<Country[]>(
     countryList.filter(
       (c: Country) => !excludedCountries.includes(c.iso2)
