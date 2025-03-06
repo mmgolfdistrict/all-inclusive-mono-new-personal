@@ -94,7 +94,7 @@ export const TransactionDetails = ({
               </TableRow>
             </table>
             <div className="flex flex-col gap-2 px-4 pb-8">
-            <FilledButton onClick={onClickDownload}>Download</FilledButton>
+            <FilledButton onClick={onClickDownload} data-testid="download-cash-out-button-id">Download</FilledButton>
               <OutlineButton
                 onClick={() => setIsReceiptOpen(false)}
                 data-testid="cancel-button-id"
