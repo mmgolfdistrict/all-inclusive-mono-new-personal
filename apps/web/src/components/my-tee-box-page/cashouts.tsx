@@ -8,6 +8,10 @@ import { useMemo, useState } from "react";
 import { OutlineButton } from "../buttons/outline-button";
 import { SkeletonRow } from "./skeleton-row";
 import { TransactionDetails } from "./transaction-details";
+import pdfMake from "pdfmake/build/pdfmake";
+import pdfFonts from "pdfmake/build/vfs_fonts";
+
+pdfMake.vfs = pdfFonts
 
 export type TxnHistoryType = {
   courseId: string;
@@ -82,6 +86,43 @@ export const Cashouts = () => {
     );
   }
 
+  const downloadCashoutReceipt = () => {
+    const docDefinition = {
+      content: [
+        { text: "Cash out Reciept", style: "header", alignment: "center" },
+        { canvas: [{ type: "line", x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 1 }] },
+        {
+          table: {
+            headerRows: 1,
+            widths: ["*", "*"],
+            body: [
+                // [
+                //   { text: "Field", style: "tableHeader", border: [] },
+                //   { text: "Value", style: "tableHeader", border: [] }
+                // ],
+              [{ text: "Amount", border: [] }, { text: selectedReceipt?.amount, border: [] }],
+              [{ text: "Created Date", border: [] }, { text: selectedReceipt?.createdDateTime, border: [] }],
+              [{ text: "Status", border: [] }, { text: selectedReceipt?.externalStatus, border: [] }]
+            ]
+          },
+          layout: "noBorders"
+        }
+      ],
+      styles: {
+        header: {
+          fontSize: 18,
+          bold: true,
+          margin: [0, 0, 0, 10]
+        },
+        tableHeader: {
+          bold: true
+        }
+      }
+    };
+  
+    pdfMake.createPdf(docDefinition).download("cashout-receipt.pdf");
+  };
+
   return (
     <div className="relative flex max-w-full flex-col gap-4 overflow-auto pb-2 text-[14px] md:pb-3">
       <table className="w-full table-auto overflow-auto">
@@ -116,6 +157,7 @@ export const Cashouts = () => {
         isReceiptOpen={isReceiptOpen}
         setIsReceiptOpen={setIsReceiptOpen}
         selectedReceipt={selectedReceipt}
+        onClickDownload={downloadCashoutReceipt}
       />
     </div>
   );

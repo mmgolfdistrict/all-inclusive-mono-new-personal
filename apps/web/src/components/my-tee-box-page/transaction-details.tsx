@@ -5,17 +5,20 @@ import type { Dispatch, SetStateAction } from "react";
 import { OutlineButton } from "../buttons/outline-button";
 import { Close } from "../icons/close";
 import type { TxnHistoryType } from "./cashouts";
+import { FilledButton } from "../buttons/filled-button";
 
 type BookingDetailsProps = {
   isReceiptOpen: boolean;
   setIsReceiptOpen: Dispatch<SetStateAction<boolean>>;
   selectedReceipt: TxnHistoryType | null;
+  onClickDownload: () => void
 };
 
 export const TransactionDetails = ({
   isReceiptOpen,
   setIsReceiptOpen,
   selectedReceipt,
+  onClickDownload
 }: BookingDetailsProps) => {
   const { toggleSidebar } = useSidebar({
     isOpen: isReceiptOpen,
@@ -91,6 +94,7 @@ export const TransactionDetails = ({
               </TableRow>
             </table>
             <div className="flex flex-col gap-2 px-4 pb-8">
+            <FilledButton onClick={onClickDownload}>Download</FilledButton>
               <OutlineButton
                 onClick={() => setIsReceiptOpen(false)}
                 data-testid="cancel-button-id"
