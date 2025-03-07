@@ -102,7 +102,7 @@ export const Cashouts = () => {
             widths: ["*", "*"],
             body: [
               [
-                { text: "User Name", style: "tableHeader", border: [] },
+                { text: "Name", style: "tableHeader", border: [] },
                 { text: user?.name, border: [] },
               ],
               [
