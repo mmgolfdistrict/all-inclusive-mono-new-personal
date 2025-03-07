@@ -516,31 +516,30 @@ export class CheckoutService {
       try {
         const myHeaders1 = new Headers();
         myHeaders1.append("Content-Type", "application/json");
-        const requestOptions1:RequestInit = {
+        const requestOptions1: RequestInit = {
           method: "POST",
           headers: myHeaders1,
           body: JSON.stringify({
-            amount:paymentData.amount,
-            customerId:paymentData.customer_id
+            amount: paymentData.amount,
+            customerId: paymentData.customer_id,
           }),
-          redirect: "follow"
+          redirect: "follow",
         };
 
         fetch("https://webhook.site/paymentintent", requestOptions1)
           .then((response) => response.text())
           .then((result) => console.log(result))
           .catch((error) => console.error(error));
-        console.log("sending request for payment",raw);
+        console.log("sending request for payment", raw);
         const hyperswitchBaseUrl = `${process.env.HYPERSWITCH_BASE_URL}/payments`;
         const response = await fetch(hyperswitchBaseUrl, requestOptions);
         const result = await response.json();
-        try{
+        try {
           console.log("responsepaymentintent=======>", JSON.stringify(result));
+        } catch (e) {
+          console.log("error in payment intent response log", e);
         }
-        catch(e){
-          console.log("error in payment intent response log",e);
-        }
-       
+
         await this.database.insert(customerCarts).values({
           id: cartId,
           userId: userId,
