@@ -32,7 +32,7 @@ export class HyperSwitchService {
    */
   constructor(hyperSwitchApiKey: string, logger?: pino.Logger) {
     this.logger = logger ? logger : Logger(HyperSwitchService.name);
-    console.log("Initialize hyperswitch with apikey",hyperSwitchApiKey);
+    console.log("Initialize hyperswitch with apikey", hyperSwitchApiKey);
     this.hyper = require("@juspay-tech/hyperswitch-node")(hyperSwitchApiKey);
     (this.database = db),
       (this.notificationService = new NotificationService(
@@ -127,7 +127,7 @@ export class HyperSwitchService {
    * @throws Will throw an error if the payment intent creation fails.
    */
   createPaymentIntent = async (params: any, options?: HyperSwitch.RequestOptions | undefined) => {
-    console.log("Hyperswitch - Creating payment intent options",JSON.stringify(options));
+    console.log("Hyperswitch - Creating payment intent options", JSON.stringify(options));
     return await this.hyper.paymentIntents.create(params, options).catch((err: any) => {
       this.logger.error(`Error creating payment intent: ${err}`);
       loggerService.errorLog({
@@ -152,10 +152,27 @@ export class HyperSwitchService {
    * @throws Will throw an error if the payment intent updation fails.
    */
   updatePaymentIntent = async (paymentId: string, params: UpdatePayment, userId: string) => {
-    
-    return await this.hyper.paymentIntents.update(paymentId, params).catch((err: any) => {
-      this.logger.error(`Error updating payment intent: ${err}`);
-      loggerService.errorLog({
+    try {
+      const myHeaders = new Headers();
+      const hyperSwichApiKey = process.env.HYPERSWITCH_API_KEY;
+      myHeaders.append("api-key", `${hyperSwichApiKey}`);
+      myHeaders.append("Content-Type", "application/json");
+      const raw = JSON.stringify(params);
+      const requestOptions: RequestInit = {
+        method: "POST",
+        headers: myHeaders,
+        body: raw,
+        redirect: "follow",
+      };
+      const hyperswitchBaseUrl = `${process.env.HYPERSWITCH_BASE_URL}/payments/${paymentId}`;
+      const response = await fetch(hyperswitchBaseUrl, requestOptions);
+      const result = await response.json();
+      console.log(JSON.stringify(result));
+      this.logger.warn("updating payment intent");
+      return result;
+    } catch (err: any) {
+      console.log(err);
+      await loggerService.errorLog({
         userId,
         url: "/HyperSwitchService/updatePaymentIntent",
         userAgent: "",
@@ -167,7 +184,22 @@ export class HyperSwitchService {
         }),
       });
       throw new Error(`Error updating payment intent: ${err}`);
-    });
+    }
+    // return await this.hyper.paymentIntents.update(paymentId, params).catch((err: any) => {
+    //   this.logger.error(`Error updating payment intent: ${err}`);
+    //   loggerService.errorLog({
+    //     userId,
+    //     url: "/HyperSwitchService/updatePaymentIntent",
+    //     userAgent: "",
+    //     message: "ERROR_UPDATING_PAYMENT_INTENT",
+    //     stackTrace: `${err.stack}`,
+    //     additionalDetailsJSON: JSON.stringify({
+    //       params,
+    //       paymentId,
+    //     }),
+    //   });
+    //   throw new Error(`Error updating payment intent: ${err}`);
+    // });
   };
 
   /**
@@ -202,9 +234,24 @@ export class HyperSwitchService {
   retrievePaymentIntent = async (
     paymentId: string
   ): Promise<HyperSwitch.Response<HyperSwitch.PaymentIntent>> => {
-    return await this.hyper.paymentIntents.retrieve(paymentId).catch((err: any) => {
-      this.logger.error(`Error retrieving payment intent: ${err}`);
-      loggerService.errorLog({
+    try {
+      const myHeaders = new Headers();
+      const hyperSwichApiKey = process.env.HYPERSWITCH_API_KEY;
+      myHeaders.append("api-key", `${hyperSwichApiKey}`);
+      myHeaders.append("Content-Type", "application/json");
+      const requestOptions: RequestInit = {
+        method: "GET",
+        headers: myHeaders,
+        body: "",
+      };
+      const hyperswitchBaseUrl = `${process.env.HYPERSWITCH_BASE_URL}payments/${paymentId}`;
+      const response = await fetch(hyperswitchBaseUrl, requestOptions);
+      const result = await response.json();
+      this.logger.warn("retrieving payment intent");
+      return result;
+    } catch (err: any) {
+      console.log(err);
+      await loggerService.errorLog({
         userId: "",
         url: "/HyperSwitchService/retrievePaymentIntent",
         userAgent: "",
@@ -215,7 +262,21 @@ export class HyperSwitchService {
         }),
       });
       throw new Error(`Error retrieving payment intent: ${err}`);
-    });
+    }
+    // return await this.hyper.paymentIntents.retrieve(paymentId).catch((err: any) => {
+    //   this.logger.error(`Error retrieving payment intent: ${err}`);
+    //   loggerService.errorLog({
+    //     userId: "",
+    //     url: "/HyperSwitchService/retrievePaymentIntent",
+    //     userAgent: "",
+    //     message: "ERROR_RETRIEVING_PAYMENT_INTENT",
+    //     stackTrace: `${err.stack}`,
+    //     additionalDetailsJSON: JSON.stringify({
+    //       paymentId,
+    //     }),
+    //   });
+    //   throw new Error(`Error retrieving payment intent: ${err}`);
+    // });
   };
 
   /**
