@@ -8,6 +8,7 @@ import { useMemo, useState } from "react";
 import { OutlineButton } from "../buttons/outline-button";
 import { SkeletonRow } from "./skeleton-row";
 import { TransactionDetails } from "./transaction-details";
+import { useUserContext } from "~/contexts/UserContext";
 import pdfMake from "pdfmake/build/pdfmake";
 import pdfFonts from "pdfmake/build/vfs_fonts";
 
@@ -86,7 +87,11 @@ export const Cashouts = () => {
     );
   }
 
+  const { user } = useUserContext();
+  
   const downloadCashoutReceipt = () => {
+    const amount = (selectedReceipt?.amount || 0) / 100;
+    const datetime = selectedReceipt?.createdDateTime || '';
     const docDefinition = {
       content: [
         { text: "Cash out Reciept", style: "header", alignment: "center" },
@@ -96,13 +101,26 @@ export const Cashouts = () => {
             headerRows: 1,
             widths: ["*", "*"],
             body: [
-                // [
-                //   { text: "Field", style: "tableHeader", border: [] },
-                //   { text: "Value", style: "tableHeader", border: [] }
-                // ],
-              [{ text: "Amount", border: [] }, { text: selectedReceipt?.amount, border: [] }],
-              [{ text: "Created Date", border: [] }, { text: selectedReceipt?.createdDateTime, border: [] }],
-              [{ text: "Status", border: [] }, { text: selectedReceipt?.externalStatus, border: [] }]
+              [
+                { text: "User Name", style: "tableHeader", border: [] },
+                { text: user?.name, border: [] },
+              ],
+              [
+                { text: "Email", style: "tableHeader", border: [] },
+                { text: user?.email, border: [] }
+              ],
+              [
+                { text: "Amount", style: "tableHeader", border: [] },
+                { text: formatMoney(amount), border: [] }
+              ],
+              [
+                { text: "Date", style: "tableHeader", border: [] },
+                { text: formatTime(datetime), border: [] }
+              ],
+              [
+                { text: "Status", style: "tableHeader", border: [] },
+                { text: selectedReceipt?.externalStatus, border: [] }
+              ]
             ]
           },
           layout: "noBorders"
