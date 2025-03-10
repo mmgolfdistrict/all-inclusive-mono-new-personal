@@ -60,6 +60,7 @@
     "google-libphonenumber": "^3.2.40",
     "next": "14.0.4",
     "payment": "^2.4.6",
+    "pdfmake": "^0.2.18",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-google-recaptcha": "^3.1.0",
