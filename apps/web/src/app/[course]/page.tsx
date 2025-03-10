@@ -94,8 +94,6 @@ export default function CourseHomePage() {
       return ""; // Handle the case where date is null or undefined
     }
 
-    console.log("compareTimesWithTimezones", compareTimesWithTimezones());
-
     if (compareTimesWithTimezones() === "user") {
       return dayjs(date).format("ddd, DD MMM YYYY HH:mm:ss [GMT]");
     }
