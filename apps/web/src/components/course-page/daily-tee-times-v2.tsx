@@ -88,7 +88,6 @@ export const DailyTeeTimesV2 = ({
         enabled: course?.id !== undefined && date !== undefined,
       }
     );
-  console.log(":maxDate", minDate, maxDate, date);
 
   const TAKE = 8;
   const {
@@ -278,7 +277,9 @@ export const DailyTeeTimesV2 = ({
           ref={overflowRef}
           onMouseDown={onMouseDown}
         >
-          {allTeeTimes.length === 0 ? <div className="flex justify-center items-center h-[400px]">
+          {allTeeTimes.length === 0 ?  isLoading || isFetchingNextPage ? Array(TAKE)
+            .fill(null)
+            .map((_, idx) => <TeeTimeSkeletonV2 key={idx} />) : <div className="flex justify-center items-center h-[400px]">
             <div className="text-center">
               No Tee Times Available.
             </div>
@@ -323,7 +324,7 @@ export const DailyTeeTimesV2 = ({
           >
             Loading
           </div>
-
+          
 
           {isLoading || isFetchingNextPage || !isFetchedAfterMount
             ? Array(TAKE)
