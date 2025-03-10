@@ -1068,6 +1068,7 @@ export class HyperSwitchWebhookService {
           name: buyerCustomer.name,
           email: buyerCustomer.email,
           phone: buyerCustomer.phone,
+          providerCourseId: firstBooking.providerCourseId,
         });
 
         bookingStage = "Creating booking for buyer customer";
@@ -1235,6 +1236,7 @@ export class HyperSwitchWebhookService {
           name: sellerCustomer.name,
           email: sellerCustomer.email,
           phone: sellerCustomer.phone,
+          providerCourseId: firstBooking.providerCourseId,
         });
         bookingStage = "Creating booking for seller customer";
         newBookingSecond = await provider.createBooking(

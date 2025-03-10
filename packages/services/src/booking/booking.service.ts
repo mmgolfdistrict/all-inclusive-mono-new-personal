@@ -3693,6 +3693,7 @@ export class BookingService {
         name: providerCustomer.name,
         email: providerCustomer.email,
         phone: providerCustomer.phone,
+        providerCourseId: teeTime.providerCourseId,
       });
       bookingStage = "Creating Booking on Provider";
       booking = await provider
@@ -4852,6 +4853,7 @@ export class BookingService {
           name: providerCustomer.name,
           email: providerCustomer.email,
           phone: providerCustomer.phone,
+          providerCourseId: teeTime.providerCourseId,
         });
         bookingStage = "Creating Booking on Provider";
         const booking = await provider
