@@ -574,9 +574,8 @@ export default function CourseHomePage() {
   const openForecastModal = () => {
     setIsForecastModalOpen(true);
   };
-  const divHeight = typeof window !== "undefined"
-  ? document.getElementById("notification-container")?.offsetHeight
-  : undefined;
+  const divHeight = document?.getElementById('notification-container')?.offsetHeight;
+
   // Function to close the modal
   const closeForecastModal = () => {
     setIsForecastModalOpen(false);
