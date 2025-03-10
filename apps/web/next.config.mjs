@@ -94,6 +94,12 @@ const config = {
         port: "",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "flagcdn.com",
+        port: "",
+        pathname: "/**",
+      },
     ],
   },
   transpilePackages: ["@juspay-tech/hyper-js", "@juspay-tech/react-hyper-js"],
