@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import React, { useState, useEffect, useRef } from 'react';
 
 export interface Country {
@@ -65,7 +66,7 @@ const CountryDropdown = ({ defaultCountry, items, onSelect }: CountryDropdownPro
         <div className="flex items-center space-x-2">
           {selectedCountry && (
             <>
-              <img src={selectedCountry.flag} alt={selectedCountry.iso2} className="w-8 h-6" />
+              <Image src={selectedCountry.flag} alt={selectedCountry.iso2} className="w-8 h-6" />
               <span>{selectedCountry.iso2.toUpperCase()} (+{selectedCountry.dialCode})</span>
             </>
           )}
@@ -89,7 +90,7 @@ const CountryDropdown = ({ defaultCountry, items, onSelect }: CountryDropdownPro
             {filteredCountries.map((country) => (
               <li key={country.iso2}>
                 <button className="w-full p-2 flex items-center space-x-2 hover:bg-gray-100 cursor-pointer" onClick={(e: React.MouseEvent<HTMLButtonElement>) => handleSelect(e, country)}>
-                  <img src={country.flag} alt={country.iso2} className="w-8 h-6" />
+                  <Image src={country.flag} alt={country.iso2} className="w-8 h-6" />
                   <span className="text-left">(+{country.dialCode}) {country.name}</span>
                 </button>
               </li>
