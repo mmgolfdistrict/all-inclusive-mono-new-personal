@@ -24,7 +24,7 @@
     "pre-commit": "lint-staged",
     "prettier-check": "prettier --check \"**/*.{js,jsx,ts,tsx,md,css}\" --ignore-path .prettierignore",
     "revision": "node ./revision/generateRevision.js && node ./revision/route.js",
-    "start": "npm run dev",
+    "start": "dotenv -- npm --prefix ./apps/web run start",
     "test": "turbo run test",
     "typecheck": "turbo typecheck"
   },
