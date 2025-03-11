@@ -162,6 +162,26 @@ export const EditProfileForm = () => {
     setCurrentPhoneNumber(`${phoneNumberCountryCode}${phoneNumber}`);
   }, [getValues("phoneNumber"), getValues("phoneNumberCountryCode")]);
 
+  useEffect(() => {
+    if (debouncedPhoneNumber && getValues("phoneNumber")) {
+      try {
+        const parsedNumber = phoneUtil.parse(`+${debouncedPhoneNumber}`, currentCountry.toUpperCase());
+        const valid = phoneUtil.isValidNumber(parsedNumber);
+        if (!valid) {
+          setError("phoneNumber", {
+            message: "Phone number seems invalid, please enter a valid phone number.",
+          });
+        } else {
+          clearErrors("phoneNumber");
+        }
+      } catch (error) {
+        setError("phoneNumber", {
+          message: "Phone number seems invalid, please enter a valid phone number.",
+        });
+      }
+    }
+  }, [debouncedPhoneNumber]);
+
   const handleSelectCountry = (country: Country) => {
     const { iso2, dialCode } = country;
     setCurrentCountry(iso2);
