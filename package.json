@@ -14,7 +14,7 @@
   ],
   "scripts": {
     "build": "turbo run build && node ./apps/web/script/generateRevision.js",
-    "clean:workspaces": "turbo clean",
+    "clean:workspaces":"turbo clean",
     "compile": "turbo run compile",
     "dev": "dotenv -- turbo dev --parallel --filter=golf-district-platforms",
     "dev:tunnel": "dotenv -- turbo dev --parallel",
