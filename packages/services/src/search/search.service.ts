@@ -820,6 +820,9 @@ export class SearchService extends CacheService {
     const minDateSubquery = this.convertDateFormat(minDate);
     const maxDateSubquery = this.convertDateFormat(maxDate);
 
+    console.log("minDateSubqueryminDateSubqueryminDateSubqueryminDateSubqueryminDateSubqueryminDateSubquery",minDateSubquery,minDate);
+    
+
     // .utc()
     // .hour(23)
     // .minute(59)
@@ -944,7 +947,7 @@ export class SearchService extends CacheService {
         .where(
           and(
             eq(courses.id, courseId),
-            between(teeTimes.providerDate, minDateSubquery, maxDateSubquery),
+            between(sql`DATE(SUBSTRING_INDEX(${teeTimes.providerDate}, '-', 3))`, minDateSubquery, maxDateSubquery),
             ...conditions,
             ...firstHandSpecificCondition,
             or(
@@ -962,7 +965,7 @@ export class SearchService extends CacheService {
         .where(
           and(
             eq(courses.id, courseId),
-            between(teeTimes.providerDate, minDateSubquery, maxDateSubquery),
+            between(sql`DATE(SUBSTRING_INDEX(${teeTimes.providerDate}, '-', 3))`, minDateSubquery, maxDateSubquery),
             and(gt(teeTimes.greenFeePerPlayer, 0)),
             ...conditions,
             ...firstHandSpecificCondition
@@ -973,7 +976,7 @@ export class SearchService extends CacheService {
 
     // console.log("DATES QUERY:", firstHandResultsQuery.toSQL())
 
-    const firstHandResults = await firstHandResultsQuery.execute();
+    const firstHandResults = await firstHandResultsQuery.execute();    
 
     const secondHandResultsQuery = this.database
       .selectDistinct({
@@ -986,7 +989,7 @@ export class SearchService extends CacheService {
       .where(
         and(
           eq(courses.id, courseId),
-          between(teeTimes.providerDate, minDateSubquery, maxDateSubquery),
+          between(sql`DATE(SUBSTRING_INDEX(${teeTimes.providerDate}, '-', 3))`, minDateSubquery, maxDateSubquery),
           eq(lists.isDeleted, false),
           ...conditions,
           ...secondHandSpecificCondition
