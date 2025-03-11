@@ -6,6 +6,7 @@ import { FilterSort } from "~/components/buttons/filters-sort";
 import { GoBack } from "~/components/buttons/go-back";
 import { CourseBanner } from "~/components/course-page/course-banner";
 import { DailyTeeTimes } from "~/components/course-page/daily-tee-times";
+import { DailyTeeTimesV2 } from "~/components/course-page/daily-tee-times-v2";
 import { Filters } from "~/components/course-page/filters";
 import { MobileDates } from "~/components/course-page/mobile-date";
 import { MobileFilters } from "~/components/course-page/mobile-filters";
@@ -37,7 +38,6 @@ import { toast } from "react-toastify";
 import { ViewportList } from "react-viewport-list";
 import { useMediaQuery } from "usehooks-ts";
 import { LoadingContainer } from "./loader";
-import { DailyTeeTimesV2 } from "~/components/course-page/daily-tee-times-v2";
 
 dayjs.extend(Weekday);
 dayjs.extend(RelativeTime);
@@ -68,15 +68,19 @@ export default function CourseHomePage() {
   const { user } = useUserContext();
   const { course } = useCourseContext();
   const { setBookingSource } = useBookingSourceContext();
-  const {  isNavExpanded,setActivePage } = useAppContext();
-  setActivePage("teeTime")
+  const { isNavExpanded, setActivePage } = useAppContext();
+  setActivePage("teeTime");
   function getUserTimezone() {
     return Intl.DateTimeFormat().resolvedOptions().timeZone;
   }
 
   function compareTimesWithTimezones() {
-    const date1 = dayjs().tz(getUserTimezone()).format("ddd, DD MMM YYYY HH:mm:ss [GMT]")
-    const date2 = dayjs().tz(course?.timezoneISO).format("ddd, DD MMM YYYY HH:mm:ss [GMT]")
+    const date1 = dayjs()
+      .tz(getUserTimezone())
+      .format("ddd, DD MMM YYYY HH:mm:ss [GMT]");
+    const date2 = dayjs()
+      .tz(course?.timezoneISO)
+      .format("ddd, DD MMM YYYY HH:mm:ss [GMT]");
 
     if (date1.valueOf() > date2.valueOf()) {
       return "user";
@@ -243,7 +247,7 @@ export default function CourseHomePage() {
   }, [specialEvents, queryDateType]);
 
   const getSpecialDayDate = (label) => {
-    const today = dayjs(new Date())
+    const today = dayjs(new Date());
     const specialDay = specialEvents?.find((day) => day.eventName === label);
 
     if (specialDay) {
@@ -265,7 +269,7 @@ export default function CourseHomePage() {
     if (specialDate) {
       return formatDateString(specialDate.start);
     }
-    setPageNumber(1)
+    setPageNumber(1);
     switch (dateType) {
       case "All":
       case "Today":
@@ -296,7 +300,7 @@ export default function CourseHomePage() {
     if (specialDate) {
       return formatDateString(specialDate.end);
     }
-    setPageNumber(1)
+    setPageNumber(1);
 
     switch (dateType) {
       case "All":
@@ -384,14 +388,14 @@ export default function CourseHomePage() {
           sortValue === "Sort by time - Early to Late"
             ? "asc"
             : sortValue === "Sort by time - Late to Early"
-              ? "desc"
-              : "",
+            ? "desc"
+            : "",
         sortPrice:
           sortValue === "Sort by price - Low to High"
             ? "asc"
             : sortValue === "Sort by price - High to Low"
-              ? "desc"
-              : "",
+            ? "desc"
+            : "",
         timezoneCorrection: course?.timezoneCorrection,
         isHolesAny: holes === "Any",
         isGolferAny: golfers === "Any",
@@ -525,7 +529,6 @@ export default function CourseHomePage() {
     pageNumber * TAKE
   );
 
-
   const [scrollY, setScrollY] = useState(0);
 
   const handleScroll = () => {
@@ -572,12 +575,15 @@ export default function CourseHomePage() {
   const openForecastModal = () => {
     setIsForecastModalOpen(true);
   };
-  const divHeight = document?.getElementById('notification-container')?.offsetHeight;
+  const divHeight =
+    typeof window != "undefined"
+      ? document?.getElementById("notification-container")?.offsetHeight
+      : undefined;
 
   // Function to close the modal
   const closeForecastModal = () => {
     setIsForecastModalOpen(false);
-  };  
+  };
   return (
     <main className={`bg-secondary-white py-4 md:py-6`}>
       <LoadingContainer
@@ -585,21 +591,20 @@ export default function CourseHomePage() {
       >
         <div></div>
       </LoadingContainer>
-      {
-        !isMobile &&
+      {!isMobile && (
         <div className="flex items-center justify-between px-4 md:px-6">
           {entity?.redirectToCourseFlag ? null : (
             <GoBack href="/" text={`Back to all ${entity?.name} Courses`} />
           )}
         </div>
-      }
+      )}
       {/* <CourseTitle
         courseName={course?.name ?? ""}
         description={course?.description ?? ""}
         className="px-4 md:px-6"
       /> */}
       <CourseBanner
-        className={ !isMobile ? "pt-4" : ""}
+        className={!isMobile ? "pt-4" : ""}
         userId={user?.id ?? ""}
         updateHandle={updateHandle}
       />
@@ -624,12 +629,16 @@ export default function CourseHomePage() {
             <Filters openForecastModal={openForecastModal} />
           </div>
         </div>
-        <div className={`fixed ${ isNavExpanded ? "bottom-32" :"bottom-16"} left-1/2 z-10 -translate-x-1/2 md:hidden`}>
+        <div
+          className={`fixed ${
+            isNavExpanded ? "bottom-32" : "bottom-16"
+          } left-1/2 z-10 -translate-x-1/2 md:hidden`}
+        >
           {/* mobile  for filter/sort */}
           <FilterSort toggleFilters={toggleFilters} toggleSort={toggleSort} />
         </div>
         <div className="flex w-full flex-col gap-1 md:gap-4 overflow-x-hidden pr-0p md:pr-6">
-        <div className="flex justify-between gap-4  px-4 md:px-0">
+          <div className="flex justify-between gap-4  px-4 md:px-0">
             <div className="text-secondary-black">
               {/* Showing {count?.toLocaleString() ?? "0"} tee times{" "} */}
               <span className="text-sm text-primary-gray">
@@ -638,12 +647,15 @@ export default function CourseHomePage() {
             </div>
           </div>
           <div
-            className={`flex space-x-2 md:hidden px-4 ${(courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
+            className={`flex space-x-2 md:hidden px-4 ${
+              (courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
                 ? `fixed left-0 w-full z-10 bg-secondary-white pt-2 pb-3 shadow-md`
                 : "relative"
-              }`}
+            }`}
             style={{
-              top: (courseImages?.length > 0 ? scrollY > 333 : scrollY > 45) ? `${divHeight && divHeight * 1}px` : 'auto',
+              top: (courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
+                ? `${divHeight && divHeight * 1}px`
+                : "auto",
             }}
           >
             <button
@@ -660,7 +672,7 @@ export default function CourseHomePage() {
               <Calendar className="h-[14px] w-[14px]" /> Date
             </button>
           </div>
-       
+
           {error ? (
             <div className="flex justify-center items-center h-[200px]">
               <div className="text-center">Error: {error}</div>
@@ -673,77 +685,78 @@ export default function CourseHomePage() {
                   : "No Tee Times Available."}
               </div>
             </div>
-          ) : (
-            MOBILE_VIEW_VERSION === "v2" && isMobile ?
-              <>
-                <div className="flex w-full flex-col gap-1 md:gap-4" ref={ref}>
-                  <ViewportList viewportRef={ref} items={finalRes}>
-                    {(date, idx) => (
-                      <DailyTeeTimesV2
-                        setError={(e: string | null) => {
-                          setError(e);
-                        }}
-                        courseException={getCourseException(date as string)}
-                        key={idx}
-                        date={date}
-                        minDate={startDate.toString()}
-                        maxDate={endDate.toString()}
-                        handleLoading={handleLoading}
-                        pageUp={pageUp}
-                        pageDown={pageDown}
-                        scrollY={scrollY}
-                        divHeight={divHeight}
+          ) : MOBILE_VIEW_VERSION === "v2" && isMobile ? (
+            <>
+              <div className="flex w-full flex-col gap-1 md:gap-4" ref={ref}>
+                <ViewportList viewportRef={ref} items={finalRes}>
+                  {(date, idx) => (
+                    <DailyTeeTimesV2
+                      setError={(e: string | null) => {
+                        setError(e);
+                      }}
+                      courseException={getCourseException(date as string)}
+                      key={idx}
+                      date={date}
+                      minDate={startDate.toString()}
+                      maxDate={endDate.toString()}
+                      handleLoading={handleLoading}
+                      pageUp={pageUp}
+                      pageDown={pageDown}
+                      scrollY={scrollY}
+                      divHeight={divHeight}
                       // datesWithData={datesWithData}
-                      />
-                    )}
-                  </ViewportList>
-                </div>
-              </>
-              :
-              <>
-                <div className="flex w-full flex-col gap-1 md:gap-4" ref={ref}>
-                  <ViewportList viewportRef={ref} items={finalRes}>
-                    {(date, idx) => (
-                      <DailyTeeTimes
-                        setError={(e: string | null) => {
-                          setError(e);
-                        }}
-                        courseException={getCourseException(date as string)}
-                        key={idx}
-                        date={date}
-                        minDate={startDate.toString()}
-                        maxDate={endDate.toString()}
-                        handleLoading={handleLoading}
-                      />
-                    )}
-                  </ViewportList>
-                </div>
-                {daysData.amountOfPages > 1 ? (
-                  <div className="flex items-center justify-center gap-2 pt-1 md:pt-0 md:pb-4">
-                    <FilledButton
-                      className={`!px-3 !py-2 !min-w-fit !rounded-md ${pageNumber === 1 ? "opacity-50 cursor-not-allowed" : ""
-                        }`}
-                      onClick={pageDown}
-                      data-testid="chevron-down-id"
-                    >
-                      <ChevronUp fill="#fff" className="-rotate-90" />
-                    </FilledButton>
-                    <div className="text-primary-gray px-3 py-2 bg-[#ffffff] rounded-md unmask-pagination">
-                      {pageNumber} / {amountOfPage}
-                    </div>
-                    <FilledButton
-                      className={`!px-3 !py-2 !min-w-fit !rounded-md ${pageNumber === amountOfPage
+                    />
+                  )}
+                </ViewportList>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex w-full flex-col gap-1 md:gap-4" ref={ref}>
+                <ViewportList viewportRef={ref} items={finalRes}>
+                  {(date, idx) => (
+                    <DailyTeeTimes
+                      setError={(e: string | null) => {
+                        setError(e);
+                      }}
+                      courseException={getCourseException(date as string)}
+                      key={idx}
+                      date={date}
+                      minDate={startDate.toString()}
+                      maxDate={endDate.toString()}
+                      handleLoading={handleLoading}
+                    />
+                  )}
+                </ViewportList>
+              </div>
+              {daysData.amountOfPages > 1 ? (
+                <div className="flex items-center justify-center gap-2 pt-1 md:pt-0 md:pb-4">
+                  <FilledButton
+                    className={`!px-3 !py-2 !min-w-fit !rounded-md ${
+                      pageNumber === 1 ? "opacity-50 cursor-not-allowed" : ""
+                    }`}
+                    onClick={pageDown}
+                    data-testid="chevron-down-id"
+                  >
+                    <ChevronUp fill="#fff" className="-rotate-90" />
+                  </FilledButton>
+                  <div className="text-primary-gray px-3 py-2 bg-[#ffffff] rounded-md unmask-pagination">
+                    {pageNumber} / {amountOfPage}
+                  </div>
+                  <FilledButton
+                    className={`!px-3 !py-2 !min-w-fit !rounded-md ${
+                      pageNumber === amountOfPage
                         ? "opacity-50 cursor-not-allowed"
                         : ""
-                        }`}
-                      onClick={pageUp}
-                      data-testid="chevron-up-id"
-                    >
-                      <ChevronUp fill="#fff" className="rotate-90" />
-                    </FilledButton>
-                  </div>
-                ) : null}
-              </>
+                    }`}
+                    onClick={pageUp}
+                    data-testid="chevron-up-id"
+                  >
+                    <ChevronUp fill="#fff" className="rotate-90" />
+                  </FilledButton>
+                </div>
+              ) : null}
+            </>
           )}
         </div>
       </section>
