@@ -144,6 +144,7 @@ export const DailyTeeTimesV2 = ({
     setError(error?.message ?? null);
   }, [error]);
 
+  const count = teeTimeData?.pages[0]?.count;
   const allTeeTimes =
     teeTimeData?.pages[teeTimeData?.pages?.length - 1]?.results ?? [];
 
@@ -154,7 +155,7 @@ export const DailyTeeTimesV2 = ({
   };
 
   useEffect(() => {
-    if (isVisible) {
+    if (isVisible && count !== allTeeTimes?.length) {
       void getNextPage();
     }
   }, [isVisible]);
