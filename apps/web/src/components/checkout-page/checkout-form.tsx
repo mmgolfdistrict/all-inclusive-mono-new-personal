@@ -543,6 +543,12 @@ export const CheckoutForm = ({
                   userId: user?.id ?? "",
                   courseId: courseId!,
                   sensibleQuoteId: sensibleData?.id ?? "",
+                  otherDetails: {
+                    courseName: course?.name ?? "",
+                    userName: user?.name ?? "",
+                    userEmail: user?.email ?? "",
+                    teeTimeDate: teeTimeDate ?? ""
+                  }
                 });
 
                 await auditLog.mutateAsync({
@@ -587,6 +593,12 @@ export const CheckoutForm = ({
                   userId: user?.id ?? "",
                   courseId: courseId!,
                   sensibleQuoteId: sensibleData?.id ?? "",
+                  otherDetails: {
+                    courseName: course?.name ?? "",
+                    userName: user?.name ?? "",
+                    userEmail: user?.email ?? "",
+                    teeTimeDate: teeTimeDate ?? ""
+                  }
                 });
 
                 await auditLog.mutateAsync({
