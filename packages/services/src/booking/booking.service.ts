@@ -4296,7 +4296,7 @@ export class BookingService {
       bookingId,
       providerBookingId: "",
       status: "Reserved",
-      isEmailSend: true,
+      isEmailSend: false,
     } as ReserveTeeTimeResponse;
   };
 
