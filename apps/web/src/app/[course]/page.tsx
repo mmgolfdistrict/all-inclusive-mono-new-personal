@@ -693,6 +693,7 @@ export default function CourseHomePage() {
                         pageDown={pageDown}
                         scrollY={scrollY}
                         divHeight={divHeight}
+                        isLoadingTeeTimeDate={isLoadingTeeTimeDate}
                       // datesWithData={datesWithData}
                       />
                     )}
