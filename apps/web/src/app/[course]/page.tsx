@@ -274,7 +274,7 @@ export default function CourseHomePage() {
       case "Furthest Day Out To Book":
         return formatDateString(dayjs(new Date()).add(30, "minute"));
       case "This Weekend":
-        return formatDateString(dayjs().day(5).add(30, "minute").toDate());
+        return formatDateString(dayjs().day(4).add(30, "minute").toDate());
       case "Custom": {
         if (!selectedDay.from) return formatDateString(new Date());
         const customDate = dayjs(
