@@ -32,9 +32,10 @@ import ReCAPTCHA from "react-google-recaptcha";
 import { Controller, useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
 import { useDebounce } from "usehooks-ts";
-import CountryDropdown, { Country } from "~/components/dropdown/country-dropdown";
+import CountryDropdown from "~/components/dropdown/country-dropdown";
+import type { Country } from "~/components/dropdown/country-dropdown";
 import { allCountries } from "country-telephone-data";
-import { CountryData } from "~/utils/types";
+import type { CountryData } from "~/utils/types";
 import { PhoneNumberUtil } from "google-libphonenumber";
 
 const phoneUtil = PhoneNumberUtil.getInstance();
@@ -100,8 +101,10 @@ export default function RegisterPage() {
   const [currentPhoneNumber, setCurrentPhoneNumber] = useState<string>("");
   const debouncedPhoneNumber = useDebounce<string>(currentPhoneNumber, 1000);
   const { data: userCountryData, error } = api.user.getCountryCode.useQuery({});
-  const [excludedCountries, setExcludeCountries] = useState<string[]>(['by', 'cu', 'kp', 'sy', 've']);
-  const [countries, setCountries] = useState<Country[]>(
+  const [excludedCountries, _setExcludeCountries] = useState<string[]>(
+    ['by', 'cu', 'kp', 'sy', 've', 'ir']
+  );
+  const [countries, _setCountries] = useState<Country[]>(
     countryList.filter(
       (c: Country) => !excludedCountries.includes(c.iso2)
     ).map((c: Country) => {
@@ -145,7 +148,7 @@ export default function RegisterPage() {
         } else {
           clearErrors("phoneNumber");
         }
-      } catch (error: any) {
+      } catch (error) {
         setError("phoneNumber", {
           message: "Phone number seems invalid, please enter a valid phone number.",
         });

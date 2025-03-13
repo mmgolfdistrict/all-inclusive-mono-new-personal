@@ -15,6 +15,7 @@ import type {
   BuyerData,
   CustomerCreationData,
   CustomerData,
+  FetchCustomerDetails,
   GetCustomerResponse,
   NameChangeCustomerDetails,
   ProviderAPI,
@@ -618,8 +619,8 @@ export class Lightspeed extends BaseProvider {
     providerBookingId: string | string[],
     _providerId: string,
     _courseId: string,
-    providerSlotIds: string[],
-    providerCourseMembershipId: string
+    providerSlotIds?: string[],
+    providerCourseMembershipId?: string
   ) {
     const bookingSlots: {
       id: string;
@@ -813,11 +814,12 @@ export class Lightspeed extends BaseProvider {
   async getCustomer(
     token: string,
     courseId: string,
-    email: string
+    customerDetails: FetchCustomerDetails
   ): Promise<LightspeedGetCustomerResponse | undefined> {
     const { BASE_ENDPOINT, CONTENT_TYPE, ORGANIZATION_ID, ACCEPT } = JSON.parse(
       this.providerConfiguration ?? "{}"
     );
+    const { email } = customerDetails;
     if (!token) {
       token = (await this.getToken()) ?? "";
       if (!token) {

@@ -11,7 +11,7 @@ export const bookingRefund = mySqlTable("bookingRefund",
         status: varchar("status", { length: 15 }).notNull().$type<"PENDING" | "INITIATED" | "COMPLETED" | "REJECTED">(),
         createdDateTime: datetime("createdDateTime", { mode: "string", fsp: 3 })
             .notNull()
-            .default(sql`CURRENT_TIMESTAMP`),
+            .default(sql`CURRENT_TIMESTAMP(3)`),
         lastUpdatedDateTime: datetime("lastUpdatedDateTime", { mode: "string", fsp: 3 })
             .notNull().default(
                 sql`CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)`

@@ -68,7 +68,7 @@ export default function CourseHomePage() {
   const { user } = useUserContext();
   const { course } = useCourseContext();
   const { setBookingSource } = useBookingSourceContext();
-  const {  isNavExpanded,setActivePage } = useAppContext();
+  const { isNavExpanded, setActivePage } = useAppContext();
   setActivePage("teeTime")
   function getUserTimezone() {
     return Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -93,8 +93,6 @@ export default function CourseHomePage() {
     if (!date) {
       return ""; // Handle the case where date is null or undefined
     }
-
-    console.log("compareTimesWithTimezones", compareTimesWithTimezones());
 
     if (compareTimesWithTimezones() === "user") {
       return dayjs(date).format("ddd, DD MMM YYYY HH:mm:ss [GMT]");
@@ -579,7 +577,7 @@ export default function CourseHomePage() {
   // Function to close the modal
   const closeForecastModal = () => {
     setIsForecastModalOpen(false);
-  };  
+  };
   return (
     <main className={`bg-secondary-white py-4 md:py-6`}>
       <LoadingContainer
@@ -589,16 +587,33 @@ export default function CourseHomePage() {
       </LoadingContainer>
       {
         !isMobile &&
-        <div className="flex items-center justify-between px-4 md:px-6">
+        <div className="flex gap-8 items-center px-4 md:px-6 ">
+          <div className="min-w-[310px]">
           {entity?.redirectToCourseFlag ? null : (
             <GoBack href="/" text={`Back to all ${entity?.name} Courses`} />
-          )}
+            )}
+            </div>
+          <div className="flex items-center justify-between w-full">
+            <div className="flex justify-between gap-4  px-4 md:px-0">
+              <div className="text-secondary-black">
+                {/* Showing {count?.toLocaleString() ?? "0"} tee times{" "} */}
+                <span className="text-sm text-primary-gray">
+                  All times shown in course time zone
+                </span>
+              </div>
+            </div>
+            <Select
+              value={sortValue}
+              setValue={handleSetSortValue}
+              values={SortOptions}
+            />
+          </div>
         </div>
       }
       {/* <CourseTitle
         courseName={course?.name ?? ""}
         description={course?.description ?? ""}
-        className="px-4 md:px-6"
+        className="px-4 md:px-6"  
       /> */}
       <CourseBanner
         className={ !isMobile ? "pt-4" : ""}
@@ -618,31 +633,28 @@ export default function CourseHomePage() {
             }}
             className="sticky overflow-y-auto overflow-x-hidden flex flex-col gap-4"
           >
-            <Select
-              value={sortValue}
-              setValue={handleSetSortValue}
-              values={SortOptions}
-            />
+
             <Filters openForecastModal={openForecastModal} />
           </div>
         </div>
-        <div className={`fixed ${ isNavExpanded ? "bottom-32" :"bottom-16"} left-1/2 z-10 -translate-x-1/2 md:hidden`}>
+        <div className={`fixed ${isNavExpanded ? "bottom-32" : "bottom-16"} left-1/2 z-10 -translate-x-1/2 md:hidden`}>
           {/* mobile  for filter/sort */}
           <FilterSort toggleFilters={toggleFilters} toggleSort={toggleSort} />
         </div>
         <div className="flex w-full flex-col gap-1 md:gap-4 overflow-x-hidden pr-0p md:pr-6">
-        <div className="flex justify-between gap-4  px-4 md:px-0">
+          {isMobile ? <div className="flex justify-between gap-4  px-4 md:px-0">
             <div className="text-secondary-black">
               {/* Showing {count?.toLocaleString() ?? "0"} tee times{" "} */}
               <span className="text-sm text-primary-gray">
                 All times shown in course time zone
               </span>
             </div>
-          </div>
+          </div> : null}
+
           <div
             className={`flex space-x-2 md:hidden px-4 ${(courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
-                ? `fixed left-0 w-full z-10 bg-secondary-white pt-2 pb-3 shadow-md`
-                : "relative"
+              ? `fixed left-0 w-full z-10 bg-secondary-white pt-2 pb-3 shadow-md`
+              : "relative"
               }`}
             style={{
               top: (courseImages?.length > 0 ? scrollY > 333 : scrollY > 45) ? `${divHeight && divHeight * 1}px` : 'auto',
@@ -662,7 +674,7 @@ export default function CourseHomePage() {
               <Calendar className="h-[14px] w-[14px]" /> Date
             </button>
           </div>
-       
+
           {error ? (
             <div className="flex justify-center items-center h-[200px]">
               <div className="text-center">Error: {error}</div>
@@ -695,6 +707,7 @@ export default function CourseHomePage() {
                         pageDown={pageDown}
                         scrollY={scrollY}
                         divHeight={divHeight}
+                        isLoadingTeeTimeDate={isLoadingTeeTimeDate}
                       // datesWithData={datesWithData}
                       />
                     )}

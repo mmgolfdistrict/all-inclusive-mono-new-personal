@@ -2,8 +2,16 @@ import { z } from "zod";
 
 export const registerSchema = z
   .object({
-    firstName: z.string().min(1, { message: "First name is required" }),
-    lastName: z.string().min(1, { message: "Last name is required" }),
+    firstName: z
+    .string()
+    .min(1, { message: "First name is required" })
+    .regex(/^[A-Za-zÀ-ÿ' ]+$/, { message: "First name can only contain letters, and single quotes." }) 
+    .transform((name) => name.trim().replace(/\s{2,}/g, ' ')) ,
+  lastName: z
+    .string()
+    .min(1, { message: "Last name is required" })
+    .regex(/^[A-Za-zÀ-ÿ' ]+$/, { message: "Last name can only contain letters, and single quotes." })
+    .transform((name) => name.trim().replace(/\s{2,}/g, ' ')) ,
     username: z
       .string()
       .min(6, { message: "Username should be at least 6 characters long" })
@@ -15,8 +23,9 @@ export const registerSchema = z
     phoneNumberCountryCode: z.number().min(1, { message: "Phone number country code is required" }),
     phoneNumber: z
       .string()
-      .min(1, { message: "Phone number is required" })
-      .max(10, { message: "Invalid phone number"}),
+      .min(10, { message: "Invalid phone number, it should have 10 digits." })
+      .max(10, { message: "Invalid phone number, it should have 10 digits." })
+      .refine((phoneNumber) => /^\d{10}$/.test(phoneNumber)),
     // location: z.string().min(1, { message: "Location is required" }),
     address1: z.string().min(1, { message: "Address1 is required" }),
     address2: z.string().optional(),

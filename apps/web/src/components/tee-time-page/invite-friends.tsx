@@ -251,16 +251,26 @@ export const InviteFriends = ({
   return (
     <div
       className={`flex w-full flex-col  ${
-        isConfirmationPage ? "bg-secondary-white" : "bg-white gap-4"
+        isConfirmationPage
+          ? "bg-secondary-white bg-white gap-4"
+          : "bg-white gap-4"
       } md:rounded-xl`}
     >
       <div
         className={`flex px-4 py-3 md:px-6 md:pr-4 ${
-          isConfirmationPage ? "justify-center" : "border-b stroke"
+          isConfirmationPage
+            ? "justify-center border-b stroke"
+            : "border-b stroke"
         }`}
       >
-        <div className={`text-lg font-semibold`}>
-          Invite friends to your tee time
+        <div
+          className={`text-lg font-semibold ${
+            isConfirmationPage ? "justify-center" : ""
+          }`}
+        >
+          {isConfirmationPage
+            ? "Tee Time Player information"
+            : "Invite friends to your tee time"}
         </div>
       </div>
       <div className="flex max-w-full flex-col gap-2 overflow-auto px-4 pb-2 text-[14px] md:px-6 md:pb-3">

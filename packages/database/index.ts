@@ -15,20 +15,16 @@ export const db = drizzle(client, { schema });
 
 export type Db = typeof db;
 */
+const primaryDatabaseClient = new Client({
+  url: process.env.DATABASE_URL,
+}).connection();
+const secondaryDatabaseClient = new Client({
+  url: process.env.SECONDARY_DATABASE_URL,
+}).connection();
 
-export const db = drizzle(
-  new Client({
-    url: process.env.DATABASE_URL,
-  }).connection(),
-  { schema, logger: false }
-);
+export const db = drizzle(primaryDatabaseClient, { schema, logger: false });
 
-export const secondaryDb = drizzle(
-  new Client({
-    url: process.env.SECONDARY_DATABASE_URL,
-  }).connection(),
-  { schema, logger: false }
-);
+export const secondaryDb = drizzle(secondaryDatabaseClient, { schema, logger: false });
 
 export type Db = typeof db;
 export type SecondaryDb = typeof secondaryDb;

@@ -512,6 +512,15 @@ export const CourseNav = () => {
                   onClick={handleResetFilters}
                   id="navbar-find-times"
                 />
+                <NavItem
+                  href={`/${courseId}/my-tee-box`}
+                  text="Sell"
+                  icon={<Marketplace className="w-[16px]" />}
+                  data-testid="sell-your-tee-time-id"
+                  data-test={courseId}
+                  onClick={handleResetFilters}
+                  id="navbar-sell"
+                />
                 {course?.supportsWaitlist ? (
                   <NavItem
                     href={`/${courseId}/notify-me`}
@@ -525,6 +534,28 @@ export const CourseNav = () => {
                 ) : null}
 
                 <NavItem
+                  href={user && session.status === "authenticated" ? `/${courseId}/account-settings/${user?.id}` : `/${courseId}/login`}
+                  text="Account"
+                  icon={<UserProfile className="w-[20px] fill-[#353b3f]" />}
+                  data-testid="account-settings-id"
+                  data-test={courseId}
+                  onClick={handleResetFilters}
+                  id="navbar-account-settings"
+                />
+
+                <NavItem
+                  href=""
+                  text=""
+                  icon={isNavExpanded ?
+                    <DownArrow className="w-[35px] cursor-pointer" /> :
+                    <ThreeDots className="cursor-pointer" direction="vertical"/>
+                  }
+                  className="flex !justify-center items-center w-[35px]"
+                  onClick={toggleNavExpansion}
+                />
+              </div>
+              <div ref={bottomNavRef} className={`flex w-full gap-4 md:gap-8 ${isNavExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'} transition-all duration-200 ease-in-out`}>
+                <NavItem
                   href={`/${courseId}/my-tee-box?section=owned`}
                   text="My Tee Box"
                   icon={<Calendar className="w-[16px]" />}
@@ -533,29 +564,6 @@ export const CourseNav = () => {
                   onClick={handleResetFilters}
                   id="navbar-my-tee-box"
                 />
-
-                {user && session.status === "authenticated" && <NavItem
-                  href={user && session.status === "authenticated" ? `/${courseId}/account-settings/${user?.id}` : `/${courseId}/login`}
-                  text="Account"
-                  icon={<UserProfile className="w-[20px] fill-[#353b3f]" />}
-                  data-testid="account-settings-id"
-                  data-test={courseId}
-                  onClick={handleResetFilters}
-                  id="navbar-account-settings"
-                />}
-
-
-                <NavItem
-                  href=""
-                  text=""
-                  icon={isNavExpanded ? <DownArrow className="w-[35px] cursor-pointer" /> : <ThreeDots
-                    className="cursor-pointer"
-                  />}
-                  className="flex !justify-center items-center w-[35px]"
-                  onClick={toggleNavExpansion}
-                />
-              </div>
-              <div ref={bottomNavRef} className={`flex w-full gap-4 md:gap-8 ${isNavExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'} transition-all duration-200 ease-in-out`}>
                 {course?.supportsGroupBooking ? (
                   <NavItem
                     href={`/${courseId}/group-booking`}
@@ -577,15 +585,6 @@ export const CourseNav = () => {
                     id="navbar-auctions"
                   />
                 ) : null}
-                <NavItem
-                  href={`/${courseId}/my-tee-box`}
-                  text="Sell"
-                  icon={<Marketplace className="w-[16px]" />}
-                  data-testid="sell-your-tee-time-id"
-                  data-test={courseId}
-                  onClick={handleResetFilters}
-                  id="navbar-sell"
-                />
                 {course?.supportsOffers ? (
                   <NavItem
                     href={

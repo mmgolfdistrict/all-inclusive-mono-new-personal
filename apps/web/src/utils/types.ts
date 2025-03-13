@@ -1,5 +1,4 @@
 import { type IconCodeType } from "@golf-district/shared";
-import { number } from "zod";
 
 export type DomainVerificationStatusProps =
   | "Valid Configuration"

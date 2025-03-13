@@ -8,6 +8,11 @@ import { useMemo, useState } from "react";
 import { OutlineButton } from "../buttons/outline-button";
 import { SkeletonRow } from "./skeleton-row";
 import { TransactionDetails } from "./transaction-details";
+import { useUserContext } from "~/contexts/UserContext";
+import pdfMake from "pdfmake/build/pdfmake";
+import pdfFonts from "pdfmake/build/vfs_fonts";
+
+pdfMake.vfs = pdfFonts
 
 export type TxnHistoryType = {
   courseId: string;
@@ -30,6 +35,7 @@ export type TxnHistoryType = {
 };
 
 export const Cashouts = () => {
+  const { user } = useUserContext();
   const { course } = useCourseContext();
   const [selectedReceipt, setSelectedReceipt] = useState<TxnHistoryType | null>(
     null
@@ -81,6 +87,58 @@ export const Cashouts = () => {
       </div>
     );
   }
+  
+  const downloadCashoutReceipt = () => {
+    const amount = (selectedReceipt?.amount || 0) / 100;
+    const datetime = selectedReceipt?.createdDateTime || '';
+    const docDefinition = {
+      content: [
+        { text: "Cash out Reciept", style: "header", alignment: "center" },
+        { canvas: [{ type: "line", x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 1 }] },
+        {
+          table: {
+            headerRows: 1,
+            widths: ["*", "*"],
+            body: [
+              [
+                { text: "Name", style: "tableHeader", border: [] },
+                { text: user?.name, border: [] },
+              ],
+              [
+                { text: "Email", style: "tableHeader", border: [] },
+                { text: user?.email, border: [] }
+              ],
+              [
+                { text: "Amount", style: "tableHeader", border: [] },
+                { text: formatMoney(amount), border: [] }
+              ],
+              [
+                { text: "Date", style: "tableHeader", border: [] },
+                { text: formatTime(datetime), border: [] }
+              ],
+              [
+                { text: "Status", style: "tableHeader", border: [] },
+                { text: selectedReceipt?.externalStatus, border: [] }
+              ]
+            ]
+          },
+          layout: "noBorders"
+        }
+      ],
+      styles: {
+        header: {
+          fontSize: 18,
+          bold: true,
+          margin: [0, 0, 0, 10]
+        },
+        tableHeader: {
+          bold: true
+        }
+      }
+    };
+  
+    pdfMake.createPdf(docDefinition).download("cashout-receipt.pdf");
+  };
 
   return (
     <div className="relative flex max-w-full flex-col gap-4 overflow-auto pb-2 text-[14px] md:pb-3">
@@ -116,6 +174,7 @@ export const Cashouts = () => {
         isReceiptOpen={isReceiptOpen}
         setIsReceiptOpen={setIsReceiptOpen}
         selectedReceipt={selectedReceipt}
+        onClickDownload={downloadCashoutReceipt}
       />
     </div>
   );
