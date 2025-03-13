@@ -947,7 +947,7 @@ export class SearchService extends CacheService {
         .where(
           and(
             eq(courses.id, courseId),
-            between(sql`DATE(SUBSTRING_INDEX(${teeTimes.providerDate}, '-', 3))`, minDateSubquery, maxDateSubquery),
+            between(teeTimes.providerDate, minDateSubquery, maxDateSubquery),
             ...conditions,
             ...firstHandSpecificCondition,
             or(
@@ -965,7 +965,7 @@ export class SearchService extends CacheService {
         .where(
           and(
             eq(courses.id, courseId),
-            between(sql`DATE(SUBSTRING_INDEX(${teeTimes.providerDate}, '-', 3))`, minDateSubquery, maxDateSubquery),
+            between(teeTimes.providerDate, minDateSubquery, maxDateSubquery),
             and(gt(teeTimes.greenFeePerPlayer, 0)),
             ...conditions,
             ...firstHandSpecificCondition
@@ -989,7 +989,7 @@ export class SearchService extends CacheService {
       .where(
         and(
           eq(courses.id, courseId),
-          between(sql`DATE(SUBSTRING_INDEX(${teeTimes.providerDate}, '-', 3))`, minDateSubquery, maxDateSubquery),
+          between(teeTimes.providerDate, minDateSubquery, maxDateSubquery),
           eq(lists.isDeleted, false),
           ...conditions,
           ...secondHandSpecificCondition
