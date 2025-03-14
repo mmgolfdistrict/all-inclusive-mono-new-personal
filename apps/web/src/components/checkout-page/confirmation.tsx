@@ -117,9 +117,9 @@ export const Confirmation = ({
           </div>
         </div>
       </div>
-      <div>
+      {/* <div>
         <InviteFriends teeTimeId={teeTimeId} isConfirmationPage />
-      </div>
+      </div> */}
       <div>
         <div className="w-full flex-col items-center justify-center md:gap-2 md:flex-row">
           Please send your feedback to{" "}
