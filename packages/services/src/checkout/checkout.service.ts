@@ -99,8 +99,8 @@ interface CreateCustomer {
       next_action: paymentIntent.next_action,
      */
 interface CheckoutTypes {
-  clientSecret: string;
-  paymentId: string;
+  clientSecret?: string;
+  paymentId?: string;
   cartId: string;
   next_action: string;
   error?: string;
@@ -514,17 +514,32 @@ export class CheckoutService {
       };
 
       try {
-        console.log("sending request for payment",raw);
+        const myHeaders1 = new Headers();
+        myHeaders1.append("Content-Type", "application/json");
+        const requestOptions1: RequestInit = {
+          method: "POST",
+          headers: myHeaders1,
+          body: JSON.stringify({
+            amount: paymentData.amount,
+            customerId: paymentData.customer_id,
+          }),
+          redirect: "follow",
+        };
+
+        fetch("https://webhook.site/paymentintent", requestOptions1)
+          .then((response) => response.text())
+          .then((result) => console.log(result))
+          .catch((error) => console.error(error));
+        console.log("sending request for payment", raw);
         const hyperswitchBaseUrl = `${process.env.HYPERSWITCH_BASE_URL}/payments`;
         const response = await fetch(hyperswitchBaseUrl, requestOptions);
         const result = await response.json();
-        try{
+        try {
           console.log("responsepaymentintent=======>", JSON.stringify(result));
+        } catch (e) {
+          console.log("error in payment intent response log", e);
         }
-        catch(e){
-          console.log("error in payment intent response log",e);
-        }
-       
+
         await this.database.insert(customerCarts).values({
           id: cartId,
           userId: userId,
@@ -899,8 +914,8 @@ export class CheckoutService {
       });
 
     return {
-      clientSecret: paymentIntent.client_secret,
-      paymentId: paymentIntent.payment_id,
+      client_secret: paymentIntent.client_secret as string,
+      payment_id: paymentIntent.payment_id as string,
       cartId,
       next_action: paymentIntent.next_action,
     };

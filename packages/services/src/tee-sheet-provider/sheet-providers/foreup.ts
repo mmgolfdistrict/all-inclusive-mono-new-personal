@@ -25,6 +25,7 @@ import type {
   BuyerData,
   CustomerCreationData,
   CustomerData,
+  FetchCustomerDetails,
   GetCustomerResponse,
   NameChangeCustomerDetails,
   ProviderAPI,
@@ -457,8 +458,9 @@ export class foreUp extends BaseProvider {
   async getCustomer(
     token: string,
     courseId: string,
-    email: string
+    customerDetails: FetchCustomerDetails
   ): Promise<ForeUpGetCustomerResponse | undefined> {
+    const { email } = customerDetails;
     const endpoint = this.getBasePoint();
     const url = `${endpoint}/courses/${courseId}/customers?email=eq:${email}`;
 
@@ -707,8 +709,8 @@ export class foreUp extends BaseProvider {
     providerBookingId: string | string[],
     _providerId: string,
     _courseId: string,
-    providerSlotIds: string[],
-    providerCourseMembershipId: string
+    providerSlotIds?: string[],
+    providerCourseMembershipId?: string
   ) {
     const bookingSlots: {
       id: string;
@@ -733,7 +735,7 @@ export class foreUp extends BaseProvider {
         slotPosition: i + 1,
         lastUpdatedDateTime: null,
         createdDateTime: null,
-        providerCourseMembershipId: providerCourseMembershipId,
+        providerCourseMembershipId: providerCourseMembershipId ?? "",
       });
     }
     return bookingSlots;

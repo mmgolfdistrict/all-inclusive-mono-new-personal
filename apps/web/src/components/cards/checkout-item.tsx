@@ -232,7 +232,11 @@ export const CheckoutItem = ({
           <Data
             className="flex"
             canChoosePlayer={(teeTime?.availableSlots ?? 4) > 0}
-            players={4 - (teeTime?.availableSlots ?? 0)}
+            players={
+              isGroupBooking
+                ? amountOfPlayers
+                : 4 - (teeTime?.availableSlots ?? 0)
+            }
             selectedPlayers={amountOfPlayers.toString()}
             choosePlayers={choosePlayers}
             soldByImage={teeTime?.soldByImage}
@@ -466,7 +470,13 @@ const Data = ({
               )
             )}
           </div>
-        ) : null}
+        ) : (
+          players && (
+            <div>
+              {players} golfer{players > 1 ? "s" : ""}
+            </div>
+          )
+        )}
         <div className="flex" id="price-per-golfer-checkout">
           <div className="text-[18px] font-semibold text-secondary-black">
             {formatMoney(pricePerGolfer ?? 1 ?? 0)}

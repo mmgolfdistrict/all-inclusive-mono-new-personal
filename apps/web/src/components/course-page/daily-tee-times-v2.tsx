@@ -27,7 +27,8 @@ export const DailyTeeTimesV2 = ({
   pageDown,
   pageUp,
   scrollY,
-  divHeight
+  divHeight,
+  isLoadingTeeTimeDate
   // datesWithData
 }: {
   date: string;
@@ -39,7 +40,8 @@ export const DailyTeeTimesV2 = ({
   pageDown: () => void,
   pageUp: () => void
   scrollY: number,
-  divHeight?: number
+  divHeight?: number,
+  isLoadingTeeTimeDate:boolean
   // datesWithData:string[]
 }) => {
   const overflowRef = useRef<HTMLDivElement>(null);
@@ -88,7 +90,6 @@ export const DailyTeeTimesV2 = ({
         enabled: course?.id !== undefined && date !== undefined,
       }
     );
-  console.log(":maxDate", minDate, maxDate, date);
 
   const TAKE = 8;
   const {
@@ -145,6 +146,7 @@ export const DailyTeeTimesV2 = ({
     setError(error?.message ?? null);
   }, [error]);
 
+  const count = teeTimeData?.pages[0]?.count;
   const allTeeTimes =
     teeTimeData?.pages[teeTimeData?.pages?.length - 1]?.results ?? [];
 
@@ -155,7 +157,7 @@ export const DailyTeeTimesV2 = ({
   };
 
   useEffect(() => {
-    if (isVisible) {
+    if (isVisible && count !== allTeeTimes?.length) {
       void getNextPage();
     }
   }, [isVisible]);
@@ -199,7 +201,7 @@ export const DailyTeeTimesV2 = ({
   return (
     <div className="flex flex-col gap-1 md:gap-4 bg-white px-4 py-2 md:rounded-xl md:px-8 md:py-6">
       <div className="flex flex-wrap justify-between gap-2 unmask-time">
-        {isLoading || isFetchingNextPage ? (
+        {isLoadingTeeTimeDate || isLoading || isFetchingNextPage ? (
           <div className="h-8 min-w-[150px] w-[20%] bg-gray-200 rounded-md  animate-pulse unmask-time" />
         ) : (
           <div className="w-full flex items-center gap-3 flex-col">
@@ -278,7 +280,9 @@ export const DailyTeeTimesV2 = ({
           ref={overflowRef}
           onMouseDown={onMouseDown}
         >
-          {allTeeTimes.length === 0 ? <div className="flex justify-center items-center h-[400px]">
+          {allTeeTimes.length === 0 ? isLoadingTeeTimeDate || isLoading || isFetchingNextPage ? Array(TAKE)
+            .fill(null)
+            .map((_, idx) => <TeeTimeSkeletonV2 key={idx} />) : <div className="flex justify-center items-center h-[400px]">
             <div className="text-center">
               No Tee Times Available.
             </div>
@@ -323,7 +327,7 @@ export const DailyTeeTimesV2 = ({
           >
             Loading
           </div>
-
+          
 
           {isLoading || isFetchingNextPage || !isFetchedAfterMount
             ? Array(TAKE)

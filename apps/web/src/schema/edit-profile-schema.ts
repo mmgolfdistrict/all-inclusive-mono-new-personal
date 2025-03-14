@@ -13,11 +13,13 @@ import { z } from "zod";
 
 export const editProfileSchema = z.object({
   name: z
-    .string()
-    .min(6, {
-      message: "Name is required (should be in at least 6 characters)",
-    })
-    .max(30, { message: "Name should be in at most 30 characters" }),
+      .string()
+      .min(6, {
+        message: "Name is required (should be in at least 6 characters)",
+      })
+      .max(30, { message: "Name should be in at most 30 characters" })
+      .regex(/^[A-Za-zÀ-ÿ' ]+$/, { message: "Name can only contain letters, spaces, and single quotes." })
+      .transform((name) => name.trim().replace(/\s{2,}/g, ' ')),
   handle: z
     .string()
     .min(6, { message: "Username should be at least 6 characters long" })
@@ -35,11 +37,9 @@ export const editProfileSchema = z.object({
     }),
   phoneNumber: z
     .string()
-    .min(1, { message: "Phone number is required" })
-    .refine((phoneNumber) => /^\d{10}$/.test(phoneNumber), {
-      message:
-        "Invalid phone number",
-    }),
+    .min(10, { message: "Invalid phone number, it should have 10 digits." })
+    .max(10, { message: "Invalid phone number, it should have 10 digits." })
+    .refine((phoneNumber) => /^\d{10}$/.test(phoneNumber)),
   // location: z.string().min(1, { message: "Location is required" }),
   address1: z.string().min(1, { message: "Address1 is required" }),
   address2: z.string().optional(),
