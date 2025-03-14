@@ -421,7 +421,8 @@ export const ManageOwnedTeeTime = ({
                             {!friend.currentlyEditing ? (
                               <div className="mx-auto w-full rounded-lg bg-secondary-white px-4 py-1 flex justify-between text-[16px] font-semibold outline-none">
                                 <div>{index === 0 ? "You" : friend.name}</div>
-                                {index !== 0 ? (
+                                {index !== 0 &&
+                                course?.supportsPlayerNameChange ? (
                                   <button
                                     onClick={() => removeFriend(friend.slotId)}
                                   >
