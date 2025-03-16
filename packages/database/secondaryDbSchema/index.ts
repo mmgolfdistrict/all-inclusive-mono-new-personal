@@ -12,6 +12,7 @@ import * as teeTimeIndexLogs from "./teeTimeIndexLogs";
 import * as userPhoneCall from "./userPhoneCall";
 import * as userWaitlistAuditLogs from "./userWaitlistAuditLogs";
 import * as userWaitlistRecords from "./userWaitlistRecords";
+import * as finixPaymentDispute from "./finixPaymentDispute";
 
 export const schema = {
   ...teeTimeIndexLogs,
@@ -28,4 +29,5 @@ export const schema = {
   ...courseTeeSheetBooking,
   ...courseTeeSheetBookingLog,
   ...userPhoneCall,
+  ...finixPaymentDispute,
 };
