@@ -272,8 +272,14 @@ export default function CourseHomePage() {
       case "This Month":
       case "Furthest Day Out To Book":
         return formatDateString(dayjs(new Date()).add(30, "minute"));
-      case "This Weekend":
-        return formatDateString(dayjs().day(5).add(30, "minute").toDate());
+      case "This Weekend": {
+          const today = dayjs().startOf("day");
+          const weekend = dayjs().day(5);
+          if (weekend.isSame(today, "day") || weekend.isBefore(today, "day")) {
+            return formatDateString(dayjs(new Date()).add(30, "minute").toDate());
+          }
+          return formatDateString(weekend.startOf("day").toDate());
+        }
       case "Custom": {
         if (!selectedDay.from) return formatDateString(new Date());
         const customDate = dayjs(
@@ -651,7 +657,7 @@ export default function CourseHomePage() {
               top: (courseImages?.length > 0 ? scrollY > 333 : scrollY > 45) ? `${divHeight && divHeight * 1}px` : 'auto',
             }}
           >
-            <div className="w-[50%] flex items-center justify-between">
+            <div className="w-[50%] flex items-center justify-around">
             <button
               onClick={toggleFilters}
               className="p-2 text-xs flex items-center space-x-2 flex items-center gap-1 rounded-full border-b border-r border-t border-l border-stroke"
