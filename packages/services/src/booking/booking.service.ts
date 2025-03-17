@@ -3594,6 +3594,30 @@ export class BookingService {
         throw new Error(`Error finding tee time id`);
       });
 
+    const [customerDetails] = await this.database
+      .select({
+        userEmail: users.email,
+        userName: users.name
+      })
+      .from(users)
+      .where(eq(users.id, userId))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error finding user with id ${userId}: ${err}`);
+        loggerService.errorLog({
+          userId: userId,
+          url: "/reserveBooking",
+          userAgent: "",
+          message: "ERROR_FINDING_USER",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            userId,
+            teeTimeId,
+          }),
+        });
+        throw new Error(`Error finding user by id`);
+      })
+
     //   await cacheManager.set(`teeTime:${teeTimeId}`, teeTime); // Cache for 1 hour
     // }
 
@@ -3799,7 +3823,14 @@ export class BookingService {
         cartId,
         sensibleQuoteId,
         userId,
-        bookingStage
+        bookingStage,
+        teeTimeId,
+        {
+          userName: customerDetails?.userName ?? "",
+          userEmail: customerDetails?.userEmail ?? "",
+          courseName: teeTime.courseName ?? "",
+          teeTimeDate: teeTime.providerDate
+        }
       );
       throw "Booking failed on provider";
       // await this.hyperSwitchService.refundPayment(payment_id);
@@ -4296,7 +4327,7 @@ export class BookingService {
       bookingId,
       providerBookingId: "",
       status: "Reserved",
-      isEmailSend: true,
+      isEmailSend: false,
     } as ReserveTeeTimeResponse;
   };
 
@@ -4738,6 +4769,30 @@ export class BookingService {
         throw new Error(`Error finding tee time id`);
       });
 
+    const [customerDetails] = await this.database
+      .select({
+        userEmail: users.email,
+        userName: users.name
+      })
+      .from(users)
+      .where(eq(users.id, userId))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error finding user with id ${userId}: ${err}`);
+        loggerService.errorLog({
+          userId: userId,
+          url: "/reserveBooking",
+          userAgent: "",
+          message: "ERROR_FINDING_USER",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            userId,
+            teeTimeIds,
+          }),
+        });
+        throw new Error(`Error finding user by id`);
+      })
+
     //   await cacheManager.set(`teeTime:${teeTimeId}`, teeTime); // Cache for 1 hour
     // }
 
@@ -4972,7 +5027,14 @@ export class BookingService {
           cartId,
           sensibleQuoteId,
           userId,
-          bookingStage
+          bookingStage,
+          teeTimeIds,
+          {
+            userName: customerDetails?.userName ?? "",
+            userEmail: customerDetails?.userEmail ?? "",
+            courseName: firstTeeTime.courseName ?? "",
+            teeTimeDate: firstTeeTime.providerDate
+          }
         );
         for (const providerBooking of providerBookings) {
           const providerBookingId = providerBooking.providerBookingId;
@@ -5068,7 +5130,14 @@ export class BookingService {
           cartId,
           sensibleQuoteId,
           userId,
-          bookingStage
+          bookingStage,
+          teeTimeIds,
+          {
+            userName: customerDetails?.userName ?? "",
+            userEmail: customerDetails?.userEmail ?? "",
+            courseName: firstTeeTime.courseName ?? "",
+            teeTimeDate: firstTeeTime.providerDate
+          }
         );
         for (const providerBooking of providerBookings) {
           const providerBookingId = providerBooking.providerBookingId;

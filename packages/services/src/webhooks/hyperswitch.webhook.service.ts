@@ -1198,7 +1198,14 @@ export class HyperSwitchWebhookService {
           "",
           weatherQuoteId,
           customer_id,
-          bookingStage
+          bookingStage,
+          existingTeeTime?.id ?? "",
+          {
+            courseName: existingTeeTime?.courseName ?? "",
+            userName: buyerCustomer?.name ?? "",
+            userEmail: buyerCustomer?.email ?? "",
+            teeTimeDate: existingTeeTime?.providerDate ?? ""
+          }
         );
         throw "Booking failed on provider";
       }

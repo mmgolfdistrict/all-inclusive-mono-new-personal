@@ -456,7 +456,14 @@ export class HyperSwitchService {
     cartId: string,
     sensibleQuoteId: string,
     userId: string,
-    bookingStage: string
+    bookingStage: string,
+    teeTimeId: string,
+    otherDetails?: {
+      userName: string;
+      userEmail: string;
+      teeTimeDate: string;
+      courseName: string;
+    }
   ) => {
     const adminEmail: string = process.env.ADMIN_EMAIL_LIST || "nara@golfdistrict.com";
     const emailAterSplit = adminEmail.split(",");
@@ -465,7 +472,7 @@ export class HyperSwitchService {
         await this.notificationService.sendEmail(
           email,
           `A booking has failed - (${bookingStage})`,
-          `Hello Admin, A booking with payment id ${paymentId} failed, CourseId: ${courseId}, CartId: ${cartId}, SensibleQuoteId: ${sensibleQuoteId}, UserId: ${userId}`
+          `Hello Admin, A booking with payment id ${paymentId} failed, Course Name: ${otherDetails?.courseName}, CourseId: ${courseId}, CartId: ${cartId}, SensibleQuoteId: ${sensibleQuoteId}, UserId: ${userId}, User Name: ${otherDetails?.userName}, User Email: ${otherDetails?.userEmail}, Tee Time Date: ${otherDetails?.teeTimeDate}, Tee Time Id: ${teeTimeId}`
         );
       } catch (error) {
         console.log(`Error sending email to ${email}: ${JSON.stringify(error)}`);
@@ -480,7 +487,13 @@ export class HyperSwitchService {
     cartId: string,
     sensibleQuoteId: string | undefined,
     userId: string,
-    teeTimeId: string
+    teeTimeId: string,
+    otherDetails?: {
+      userName: string;
+      userEmail: string;
+      teeTimeDate: string;
+      courseName: string;
+    }
   ) => {
     const adminEmail: string = process.env.ADMIN_EMAIL_LIST || "nara@golfdistrict.com";
     const emailAterSplit = adminEmail.split(",");
@@ -489,7 +502,7 @@ export class HyperSwitchService {
         await this.notificationService.sendEmail(
           email,
           `A booking has failed by timeout`,
-          `Hello Admin, A booking with payment id ${paymentId} timedout, CourseId: ${courseId}, CartId: ${cartId}, SensibleQuoteId: ${sensibleQuoteId}, UserId: ${userId}`
+          `Hello Admin, A booking with payment id ${paymentId} timedout, Course Name: ${otherDetails?.courseName}, CourseId: ${courseId}, CartId: ${cartId}, SensibleQuoteId: ${sensibleQuoteId}, UserId: ${userId}, User Name: ${otherDetails?.userName}, User Email: ${otherDetails?.userEmail}, Tee Time Date: ${otherDetails?.teeTimeDate}, Tee Time Id: ${teeTimeId}`
         );
       } catch (error) {
         console.log(`Error sending email to ${email}: ${JSON.stringify(error)}`);
