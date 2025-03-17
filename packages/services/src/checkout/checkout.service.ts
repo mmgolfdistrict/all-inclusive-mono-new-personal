@@ -482,8 +482,6 @@ export class CheckoutService {
         cartId: customerCart?.cartId,
         playerCount: customerCart?.playerCount,
         teeTimeType: customerCart?.teeTimeType,
-        customerEMail: customerCart?.email,
-        customerName: customerCart?.name,
       },
       merchant_order_reference_id: customerCartData?.cartId ?? "",
       setup_future_usage: "off_session",
@@ -833,8 +831,6 @@ export class CheckoutService {
         cartId: customerCart?.cartId,
         playerCount: customerCart?.playerCount,
         teeTimeType: customerCart?.teeTimeType,
-        customerEMail: customerCart?.email,
-        customerName: customerCart?.name,
       },
     };
 
