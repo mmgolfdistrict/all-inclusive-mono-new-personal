@@ -575,14 +575,14 @@ export default function CourseHomePage() {
     }
   }, []);
 
-  const getWeekends = (dates) =>{
+  const getWeekends = (dates: string[]): string[] => {
     return Array.isArray(dates) ? dates?.filter(dateStr => {
       const day = dayjs(dateStr).day(); 
       return day === 0 || day === 5 || day === 6; 
     }) : []
   }  
 
-  let datesArr = dateType === "This Weekend" ? getWeekends(datesWithData) : JSON.parse(
+  let datesArr = dateType === "This Weekend" ? getWeekends(datesWithData ?? daysData.arrayOfDates) : JSON.parse(
     JSON.stringify(datesWithData ?? daysData.arrayOfDates)
   );
   const amountOfPage = Math.ceil(
