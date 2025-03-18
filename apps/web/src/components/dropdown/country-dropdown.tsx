@@ -60,6 +60,7 @@ const CountryDropdown = ({ defaultCountry, items, onSelect }: CountryDropdownPro
     <div className="relative inline-block text-left max-w-36" ref={dropdownRef} onClick={(e) => e.preventDefault()}>
       {/* Dropdown Button */}
       <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
         className="bg-secondary-white text-gray-500 flex items-center px-2 py-3 rounded-lg w-full justify-between"
       >
