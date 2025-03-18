@@ -304,7 +304,7 @@ export default function CourseHomePage() {
       case "This Weekend":
         {
           const today = dayjs().startOf("day");
-          const weekend = dayjs().day(7);
+          const weekend = dayjs().day(5);
           if (weekend.isSame(today, "day") || weekend.isBefore(today, "day")) {
             return formatDateString(dayjs(new Date()).add(30, "minute").toDate());
           }
