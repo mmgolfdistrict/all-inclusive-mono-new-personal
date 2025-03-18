@@ -403,7 +403,8 @@ export const ManageOwnedTeeTime = ({
                 </div>
               ) : null}
 
-              {selectedTeeTime?.isGroupBooking ? null : (
+              {selectedTeeTime?.isGroupBooking ||
+              !course?.supportsPlayerNameChange ? null : (
                 <div className={`flex flex-col gap-2 pb-6 text-center`}>
                   <label
                     htmlFor="friends"
