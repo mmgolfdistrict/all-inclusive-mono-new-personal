@@ -233,7 +233,7 @@ export const CheckoutItem = ({
                     )}
                   </span>
                 )}
-                {/* <div>{course?.name}</div> */}
+                <div>{course?.name}</div>
               </div>
               <div className="flex-row">
                 <Data
@@ -536,13 +536,13 @@ const Data = ({
       </div>
     );
   }
-
+  const isMobile = useMediaQuery("(max-width: 768px)");
   return (
     <div className={` w-full gap-2 text-sm  ${className}`}>
       <div className="flex flex-col gap-2 lg:items-end">
         {canShowPlayers ? (
           <div className="flex min-h-[31px] items-center gap-2">
-            <OutlineClub />
+            {!isMobile && <OutlineClub />}
             {canChoosePlayer ? (
               <ChoosePlayers
                 players={selectedPlayers}
