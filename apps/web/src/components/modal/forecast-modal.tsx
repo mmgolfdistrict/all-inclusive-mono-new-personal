@@ -4,7 +4,6 @@ import { format } from "date-fns";
 import { useEffect, useState } from "react";
 import { useMediaQuery } from "usehooks-ts";
 import { Close } from "../icons/close";
-import DateRangeSlider from "../slider/date-range-slider";
 
 interface Props {
   closeForecastModal: () => void;
@@ -27,11 +26,6 @@ export const ForecastModal = ({
   const [startDate, setStartDate] = useState<string>(propStartDate);
   const [endDate, setEndDate] = useState<string>(propEndDate);
   const [dateIndex, setDateIndex] = useState(0);
-
-  const handleOnSlideDateRange = ({ startDate, endDate }) => {
-    setStartDate(formatDate(startDate));
-    setEndDate(formatDate(endDate));
-  }
 
   useEffect(() => {
     setStartDate(formatDate(propStartDate));
@@ -72,15 +66,10 @@ export const ForecastModal = ({
   return (
     <div className="fixed inset-0 z-20 flex items-center justify-center bg-black w-screen backdrop-blur bg-opacity-50 overflow-hidden">
       <div
-        className={`bg-white p-6 rounded-lg sm:max-w-4xl md:max-w-3xl lg:max-w-2xl xl:max-w-5xl w-full ${isMobile && "w-full"
-          }`}
+        className={`bg-white p-6 rounded-lg sm:max-w-4xl md:max-w-3xl lg:max-w-2xl xl:max-w-5xl w-full ${
+          isMobile && "w-full"
+        }`}
       >
-        <div className="flex items-center border-b pb-3 relative">
-          <h3 className="text-lg font-semibold mx-auto">Price Forecasting</h3>
-          <button onClick={closeForecastModal} className="text-xl">
-            <Close className="h-[25px] w-[25px]" />
-          </button>
-        </div>
         <div className="flex justify-between items-center">
           <div className="flex justify-between items-center mb-2 w-[170px]">
             <button
@@ -98,12 +87,9 @@ export const ForecastModal = ({
               Next &gt;
             </button>
           </div>
-          <DateRangeSlider
-            min={0}
-            max={course?.furthestDayToBook}
-            step={1}
-            onSlideDateRange={handleOnSlideDateRange}
-          />
+          <button onClick={closeForecastModal} className="text-xl">
+            <Close className="h-[25px] w-[25px]" />
+          </button>
         </div>
         <div className="mt-4 overflow-x-auto">
           <table className="w-full border-collapse text-sm">
