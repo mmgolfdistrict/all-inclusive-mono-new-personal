@@ -13,6 +13,7 @@ import * as userPhoneCall from "./userPhoneCall";
 import * as userWaitlistAuditLogs from "./userWaitlistAuditLogs";
 import * as userWaitlistRecords from "./userWaitlistRecords";
 import * as finixPaymentDispute from "./finixPaymentDispute";
+import * as hyperswitchPayment from "./hyperswitchPayment";
 
 export const schema = {
   ...teeTimeIndexLogs,
@@ -30,4 +31,5 @@ export const schema = {
   ...courseTeeSheetBookingLog,
   ...userPhoneCall,
   ...finixPaymentDispute,
+  ...hyperswitchPayment,
 };

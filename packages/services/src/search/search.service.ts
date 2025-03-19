@@ -818,10 +818,7 @@ export class SearchService extends CacheService {
     //   .toISOString();
     //   console.log(minDateSubquery,maxDateSubquery,"maxDateSubquerymaxDateSubquerymaxDateSubquery")
     const minDateSubquery = this.convertDateFormat(minDate);
-    const maxDateSubquery = this.convertDateFormat(maxDate);
-
-    console.log("minDateSubqueryminDateSubqueryminDateSubqueryminDateSubqueryminDateSubqueryminDateSubquery",minDateSubquery,minDate);
-    
+    const maxDateSubquery = this.convertDateFormat(maxDate);    
 
     // .utc()
     // .hour(23)

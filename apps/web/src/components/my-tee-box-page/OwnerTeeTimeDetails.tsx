@@ -7,6 +7,7 @@ import { UnlistedDetails } from "~/components/cards/unlisted-details";
 import { CourseDescription } from "~/components/tee-time-page/course-description";
 import { InviteFriends } from "~/components/tee-time-page/invite-friends";
 import { useAppContext } from "~/contexts/AppContext";
+import { useCourseContext } from "~/contexts/CourseContext";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React from "react";
@@ -27,6 +28,7 @@ const OwnerTeeTimeDetails = ({
   const { data: session, status } = useSession();
   const pathname = usePathname();
   const { setPrevPath } = useAppContext();
+  const { course } = useCourseContext();
 
   return (
     <div>
@@ -62,7 +64,9 @@ const OwnerTeeTimeDetails = ({
             {"true" === isTransactionHistoryVisible?.toLowerCase() && (
               <TransactionHistory teeTimeId={teeTimeId} />
             )}
-            <InviteFriends teeTimeId={teeTimeId} />
+            {course?.supportsPlayerNameChange && (
+              <InviteFriends teeTimeId={teeTimeId} />
+            )}
           </div>
         </section>
       )}
