@@ -20,6 +20,8 @@ const CountryDropdown = ({ defaultCountry, items, onSelect }: CountryDropdownPro
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredCountries, setFilteredCountries] = useState<Country[]>(items);
+  const countryDropDown = useRef<HTMLUListElement | null>(null);
+  const [activeCountryIndex, setActiveCountryIndex] = useState<number|null>(null);
 
   useEffect(() => {
     if (defaultCountry) {
@@ -56,6 +58,41 @@ const CountryDropdown = ({ defaultCountry, items, onSelect }: CountryDropdownPro
     setSearchQuery("");
   };
 
+  const handleInputKeyDown = (event: React.KeyboardEvent) => {
+    if (
+      event.key === 'Enter' &&
+      activeCountryIndex !== null &&
+      countryDropDown.current
+    ) {
+        const country = filteredCountries[activeCountryIndex];
+        if (country) {
+          setSelectedCountry(country);
+          setIsOpen(false);
+          onSelect(country);
+          setSearchQuery("");
+          setActiveCountryIndex(null);
+        }
+    }
+
+    if (event.key === 'ArrowDown' && countryDropDown.current) {
+      if (activeCountryIndex === null) {
+        setActiveCountryIndex(0);
+        const firstCountry = countryDropDown.current.children[0] as HTMLElement;
+        firstCountry.focus();
+      } else if (countryDropDown.current.children.length > activeCountryIndex) {
+        const country = countryDropDown.current.children[activeCountryIndex + 1] as HTMLElement;
+        country.focus();
+        setActiveCountryIndex(activeCountryIndex + 1);
+      }
+    } else if (event.key === 'ArrowUp' && countryDropDown.current && activeCountryIndex !== null) {
+      if (activeCountryIndex > 0) {
+        const country = countryDropDown.current.children[activeCountryIndex - 1] as HTMLElement;
+        country.focus();
+        setActiveCountryIndex(activeCountryIndex - 1);
+      }
+    }
+  }
+
   return (
     <div className="relative inline-block text-left max-w-36" ref={dropdownRef} onClick={(e) => e.preventDefault()}>
       {/* Dropdown Button */}
@@ -85,14 +122,36 @@ const CountryDropdown = ({ defaultCountry, items, onSelect }: CountryDropdownPro
               className="w-full p-2 border rounded-lg outline-none focus:ring focus:ring-blue-300"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={handleInputKeyDown}
             />
           </div>
-          <ul className="max-h-48 overflow-auto">
-            {filteredCountries.map((country) => (
-              <li key={country.iso2}>
-                <button className="w-full p-2 flex items-center space-x-2 hover:bg-gray-100 cursor-pointer" onClick={(e: React.MouseEvent<HTMLButtonElement>) => handleSelect(e, country)}>
-                  <Image src={country.flag} alt={country.iso2} className="w-8 h-6" width={20} height={20} />
-                  <span className="text-left">(+{country.dialCode}) {country.name}</span>
+          <ul className="max-h-48 overflow-auto" ref={countryDropDown}>
+            {filteredCountries.map((country, index) => (
+              <li
+                key={country.iso2}
+                className={
+                  `${index === activeCountryIndex ? 'bg-gray-200' : ''}
+                `}>
+                <button
+                  className="
+                    w-full p-2 flex items-center space-x-2 hover:bg-gray-100
+                    cursor-pointer
+                  "
+                  onClick={(e: React.MouseEvent<HTMLButtonElement>) => 
+                    handleSelect(e, country)
+                  }
+                >
+                  <Image
+                    src={country.flag}
+                    alt={country.iso2}
+                    className="w-8 h-6"
+                    width={20}
+                    height={20}
+                  />
+                  <span className="text-left">
+                    (+{country.dialCode}) 
+                    {country.name} - {country.iso2.toUpperCase()}
+                  </span>
                 </button>
               </li>
             ))}
