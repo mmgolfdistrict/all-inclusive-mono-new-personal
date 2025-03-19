@@ -24,6 +24,7 @@ export const DailyTeeTimes = ({
   setError,
   handleLoading,
   courseException,
+  dateType
 }: {
   date: string;
   minDate: string;
@@ -31,6 +32,7 @@ export const DailyTeeTimes = ({
   setError: (t: string | null) => void;
   handleLoading?: (val: boolean) => void;
   courseException: NotificationObject | null;
+  dateType: string
 }) => {
   const overflowRef = useRef<HTMLDivElement>(null);
   const nextPageRef = useRef<HTMLDivElement>(null);
@@ -44,30 +46,6 @@ export const DailyTeeTimes = ({
   const [sizeRef] = useElementSize();
   const { course } = useCourseContext();
   const courseId = course?.id;
-  const handleScroll = () => {
-    const container = overflowRef.current;
-    if (!container) return;
-  
-    const isAtStart = container.scrollLeft  === 0;
-    const isAtEnd =
-      container.scrollLeft + container.clientWidth + 150 >= container.scrollWidth;
-  
-    setIsAtStart(isAtStart);
-    setIsAtEnd(isAtEnd);
-  };
-
-  useEffect(() => {
-    const container = overflowRef.current;
-    if (container) {
-      container.addEventListener('scroll', handleScroll);
-    }
-  
-    return () => {
-      if (container) {
-        container.removeEventListener('scroll', handleScroll);
-      }
-    };
-  }, []);
   const {
     showUnlisted,
     includesCart,
@@ -160,12 +138,19 @@ export const DailyTeeTimes = ({
     teeTimeData?.pages[teeTimeData?.pages?.length - 1]?.results ?? [];
 
   const isScrolling = useRef(false);
+  useEffect(() => {
+    setIsAtStart(true);
+    setIsAtEnd(false);
+    if (overflowRef.current) {
+      overflowRef.current.scrollLeft = 0;
+    }
+  }, [dateType]);
 
   const scrollCarousel = (direction: "left" | "right") => {
     const container = overflowRef.current;
     if (!container) return;
 
-    const boxWidth = 265; // need to change when card width changes
+    const boxWidth = 265; 
     const containerWidth = container.clientWidth;
 
     const visibleCount = Math.floor(containerWidth / (boxWidth + 16));
@@ -181,10 +166,21 @@ export const DailyTeeTimes = ({
       container.classList.add("scroll-smooth");
       container.scrollBy({ left: -scrollAmount, behavior: "smooth" });
     }
+    updateArrowState(container)
   };
 
   const scrollRight = () => scrollCarousel("right");
   const scrollLeft = () => scrollCarousel("left");
+
+  const updateArrowState = (container: HTMLElement) => {
+    if (!container) return;
+    
+    const isAtStart = container.scrollLeft === 0;
+    const isAtEnd = container.scrollLeft + container.clientWidth >= container.scrollWidth - 20;
+
+    setIsAtStart(isAtStart);
+    setIsAtEnd(isAtEnd);
+  };
 
   const getNextPage = async () => {
     if (!isLoading && !isFetchingNextPage) {
@@ -192,6 +188,22 @@ export const DailyTeeTimes = ({
     }
   };
 
+  useEffect(() => {
+    const container = overflowRef.current;
+    if (container) {
+      updateArrowState(container);
+      
+      const handleScroll = () => {
+        updateArrowState(container);
+      };
+
+      container.addEventListener("scroll", handleScroll);
+
+      return () => {
+        container.removeEventListener("scroll", handleScroll);
+      };
+    }
+  }, [overflowRef]);
   useEffect(() => {
     if (isVisible && count !== allTeeTimes?.length) {
       void getNextPage();
