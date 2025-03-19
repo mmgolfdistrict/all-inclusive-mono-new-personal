@@ -41,6 +41,7 @@ const CountryDropdown = ({ defaultCountry, items, onSelect }: CountryDropdownPro
   }, []);
 
   useEffect(() => {
+    setActiveCountryIndex(null)
     setFilteredCountries(
       items.filter((country) =>
         country.iso2.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -149,8 +150,7 @@ const CountryDropdown = ({ defaultCountry, items, onSelect }: CountryDropdownPro
                     height={20}
                   />
                   <span className="text-left">
-                    (+{country.dialCode}) 
-                    {country.name} - {country.iso2.toUpperCase()}
+                    (+{country.dialCode}) {country.name} - {country.iso2.toUpperCase()}
                   </span>
                 </button>
               </li>
