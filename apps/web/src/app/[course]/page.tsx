@@ -576,11 +576,12 @@ export default function CourseHomePage() {
   }, []);
 
   const getWeekends = (dates: string[]): string[] => {
-    return Array.isArray(dates) ? dates?.filter(dateStr => {
-      const day = dayjs(dateStr).day(); 
-      return day === 0 || day === 5 || day === 6; 
-    }) : []
-  }  
+    return Array.isArray(dates)
+      ? dates.filter((dateStr) => {
+        return dateStr.includes('Fri') || dateStr.includes('Sat') || dateStr.includes('Sun');
+        })
+      : [];
+  };
 
   let datesArr = dateType === "This Weekend" ? getWeekends(datesWithData ?? daysData.arrayOfDates) : JSON.parse(
     JSON.stringify(datesWithData ?? daysData.arrayOfDates)
