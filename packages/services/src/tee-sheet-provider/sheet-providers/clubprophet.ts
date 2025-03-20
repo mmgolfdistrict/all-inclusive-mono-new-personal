@@ -676,7 +676,7 @@ export class clubprophet extends BaseProvider {
     const endpoint = this.getBasePoint();
     this.providerConfiguration = providerCourseConfiguration;
     const clubProphetToken = await this.getToken();
-    const url = `${endpoint}/thirdpartyapi/api/v1/TeeSheet/ReservationDetailByConfirmId?reservationConfirmId=${providerBookingId}`;
+    const url = `${endpoint}/thirdpartyapi/api/v1/TeeSheet/BookingDetailByReservationId?reservationId=${providerBookingId}`;
     const headers = this.getHeaders(clubProphetToken);
     const response = await fetch(url, {
       method: "GET",

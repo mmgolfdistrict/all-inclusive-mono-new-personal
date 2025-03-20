@@ -487,11 +487,14 @@ const Data = ({
   players,
   selectedPlayers,
   choosePlayers,
+  // soldByImage,
+  // soldByName,
   pricePerGolfer,
   isLoading,
   availableSlots,
   isSecondHand,
   teeTimeId,
+  // courseException,
   numberOfPlayers,
   selectStatus,
   canShowPlayers,
@@ -501,16 +504,18 @@ const Data = ({
   players?: number;
   selectedPlayers: string;
   choosePlayers: (amount: string) => void;
+  // soldByImage?: string;
+  // soldByName?: string;
   pricePerGolfer?: number;
   isLoading: boolean;
   availableSlots?: number;
   isSecondHand: boolean;
   teeTimeId?: string | undefined;
+  // courseException: NotificationObject | null;
   numberOfPlayers?: string[];
   selectStatus?: string;
   canShowPlayers?: boolean;
 }) => {
-  const isMobile = useMediaQuery("(max-width: 768px)");
   if (isLoading) {
     return (
       <div
@@ -531,7 +536,7 @@ const Data = ({
       </div>
     );
   }
-
+  const isMobile = useMediaQuery("(max-width: 768px)");
   return (
     <div className={` w-full gap-2 text-sm  ${className}`}>
       <div className="flex flex-col gap-2 lg:items-end">

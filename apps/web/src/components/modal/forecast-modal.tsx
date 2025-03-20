@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { useEffect, useState } from "react";
 import { useMediaQuery } from "usehooks-ts";
 import { Close } from "../icons/close";
+import DateRangeSlider from "../slider/date-range-slider";
 
 interface Props {
   closeForecastModal: () => void;
@@ -26,6 +27,13 @@ export const ForecastModal = ({
   const [startDate, setStartDate] = useState<string>(propStartDate);
   const [endDate, setEndDate] = useState<string>(propEndDate);
   const [dateIndex, setDateIndex] = useState(0);
+
+  const handleOnSlideDateRange = ({ startDate, endDate }: { startDate: string | Date; endDate: string | Date }) => {
+    console.log("startDate: ", startDate)
+    setStartDate(formatDate(startDate));
+    setEndDate(formatDate(endDate));
+    setDateIndex(0);
+  }
 
   useEffect(() => {
     setStartDate(formatDate(propStartDate));
@@ -70,6 +78,12 @@ export const ForecastModal = ({
           isMobile && "w-full"
         }`}
       >
+        <div className="flex items-center border-b pb-3 relative">
+          <h3 className="text-lg font-semibold mx-auto">Price Forecasting</h3>
+          <button onClick={closeForecastModal} className="text-xl">
+            <Close className="h-[25px] w-[25px]" />
+          </button>
+        </div>
         <div className="flex justify-between items-center">
           <div className="flex justify-between items-center mb-2 w-[170px]">
             <button
@@ -87,9 +101,12 @@ export const ForecastModal = ({
               Next &gt;
             </button>
           </div>
-          <button onClick={closeForecastModal} className="text-xl">
-            <Close className="h-[25px] w-[25px]" />
-          </button>
+          <DateRangeSlider
+            min={0}
+            max={course?.furthestDayToBook ?? 0}
+            step={1}
+            onSlideDateRange={handleOnSlideDateRange}
+          />
         </div>
         <div className="mt-4 overflow-x-auto">
           <table className="w-full border-collapse text-sm">

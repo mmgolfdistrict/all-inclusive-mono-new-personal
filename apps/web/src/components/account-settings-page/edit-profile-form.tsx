@@ -55,7 +55,6 @@ export const EditProfileForm = () => {
     watch,
     handleSubmit,
     setError,
-    clearErrors,
     getValues,
     control,
     formState: { errors },
@@ -122,8 +121,6 @@ export const EditProfileForm = () => {
   }, [isLoaded, loadError]);
 
   const [currentCountry, setCurrentCountry] = useState<string>("us");
-  const [currentPhoneNumber, setCurrentPhoneNumber] = useState<string>("");
-  const debouncedPhoneNumber = useDebounce<string>(currentPhoneNumber, 2000);
   const [excludedCountries, _setExcludeCountries] = useState<string[]>(
     ['by', 'cu', 'kp', 'sy', 've', 'ir']
   );
@@ -159,28 +156,7 @@ export const EditProfileForm = () => {
       const countryCode = extractCountryISO2(`${phoneNumberCountryCode}${phoneNumber}`);
       setCurrentCountry(countryCode);
     }
-    setCurrentPhoneNumber(`${phoneNumberCountryCode}${phoneNumber}`);
   }, [getValues("phoneNumber"), getValues("phoneNumberCountryCode")]);
-
-  useEffect(() => {
-    if (debouncedPhoneNumber && getValues("phoneNumber")) {
-      try {
-        const parsedNumber = phoneUtil.parse(`+${debouncedPhoneNumber}`, currentCountry.toUpperCase());
-        const valid = phoneUtil.isValidNumber(parsedNumber);
-        if (!valid) {
-          setError("phoneNumber", {
-            message: "Phone number seems invalid, please enter a valid phone number.",
-          });
-        } else {
-          clearErrors("phoneNumber");
-        }
-      } catch (error) {
-        setError("phoneNumber", {
-          message: "Phone number seems invalid, please enter a valid phone number.",
-        });
-      }
-    }
-  }, [debouncedPhoneNumber]);
 
   const handleSelectCountry = (country: Country) => {
     const { iso2, dialCode } = country;
@@ -190,8 +166,8 @@ export const EditProfileForm = () => {
 
   const handlePhoneNumberChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, "");
-    const countryCode = getValues("phoneNumberCountryCode");
-    setCurrentPhoneNumber(`${countryCode}${value}`);
+    // const countryCode = getValues("phoneNumberCountryCode");
+    // setCurrentPhoneNumber(`${countryCode}${value}`);
     setValue("phoneNumber", value);
   }
 
@@ -269,13 +245,7 @@ export const EditProfileForm = () => {
         "phoneNumberCountryCode",
         userData?.phoneNumberCountryCode ?? null
       );
-      setValue("phoneNumber", userData?.phoneNumber ?? "");
-      const countryCode =
-        userData?.phoneNumberCountryCode === 0
-          ? 1
-          : userData?.phoneNumberCountryCode;
-      const phoneNumber = userData?.phoneNumber;
-      setCurrentPhoneNumber(() => `${countryCode}${phoneNumber}`);
+
       setValue("phoneNumber", userData?.phoneNumber ?? "");
       setValue("handle", userData?.handle ?? "");
       // setValue("location", userData?.location ?? "");
