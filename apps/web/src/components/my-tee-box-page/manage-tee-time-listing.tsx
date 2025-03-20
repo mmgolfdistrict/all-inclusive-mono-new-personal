@@ -106,8 +106,8 @@ export const ManageTeeTimeListing = ({
     try {
       if (selectedTeeTime?.groupId) {
         await cancelGroupListing.mutateAsync({
-          groupId: selectedTeeTime?.groupId ?? ""
-        })
+          groupId: selectedTeeTime?.groupId ?? "",
+        });
       } else {
         await cancel.mutateAsync({
           listingId: selectedTeeTime?.listingId,
@@ -369,7 +369,21 @@ export const ManageTeeTimeListing = ({
                   />
                 </div>
                 <div className="text-secondary-black">
-                  {formatMoney(sellerServiceFee)}
+                  {`(${formatMoney(sellerServiceFee)})`}
+                </div>
+              </div>
+              <div className="flex justify-between">
+                <div className="font-[300] text-primary-gray">
+                  Weather Guarantee Refund{" "}
+                  <Tooltip
+                    trigger={<Info className="h-[14px] w-[14px]" />}
+                    content="Weather guarantee amount to be refunded"
+                  />
+                </div>
+                <div className="text-secondary-black">
+                  {formatMoney(
+                    (selectedTeeTime?.weatherGuaranteeAmount ?? 0) / 100
+                  )}
                 </div>
               </div>
               <div className="flex justify-between">

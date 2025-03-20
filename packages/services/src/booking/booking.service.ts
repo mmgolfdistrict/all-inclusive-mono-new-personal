@@ -111,6 +111,7 @@ interface ListingData {
   listedSpots: string[] | null;
   listedSlotsCount: number;
   groupId: string | null;
+  weatherGuaranteeAmount?: number;
 }
 
 interface TransferData {
@@ -408,6 +409,7 @@ export class BookingService {
         greenFeePerPlayer: teeTimes.greenFeePerPlayer,
         minimumOfferPrice: bookings.minimumOfferPrice,
         groupId: bookings.groupId,
+        weatherGuaranteeAmount: bookings.weatherGuaranteeAmount,
       })
       .from(bookings)
       .innerJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -454,6 +456,7 @@ export class BookingService {
             listedSpots: [teeTime.bookingId],
             listedSlotsCount: teeTime.listedSlots,
             groupId: teeTime.groupId ?? "",
+            weatherGuaranteeAmount: teeTime.weatherGuaranteeAmount ?? 0,
           };
         } else {
           const currentEntry = combinedData[teeTime.teeTimesId];
@@ -3597,7 +3600,7 @@ export class BookingService {
     const [customerDetails] = await this.database
       .select({
         userEmail: users.email,
-        userName: users.name
+        userName: users.name,
       })
       .from(users)
       .where(eq(users.id, userId))
@@ -3616,7 +3619,7 @@ export class BookingService {
           }),
         });
         throw new Error(`Error finding user by id`);
-      })
+      });
 
     //   await cacheManager.set(`teeTime:${teeTimeId}`, teeTime); // Cache for 1 hour
     // }
@@ -3829,7 +3832,7 @@ export class BookingService {
           userName: customerDetails?.userName ?? "",
           userEmail: customerDetails?.userEmail ?? "",
           courseName: teeTime.courseName ?? "",
-          teeTimeDate: teeTime.providerDate
+          teeTimeDate: teeTime.providerDate,
         }
       );
       throw "Booking failed on provider";
@@ -4772,7 +4775,7 @@ export class BookingService {
     const [customerDetails] = await this.database
       .select({
         userEmail: users.email,
-        userName: users.name
+        userName: users.name,
       })
       .from(users)
       .where(eq(users.id, userId))
@@ -4791,7 +4794,7 @@ export class BookingService {
           }),
         });
         throw new Error(`Error finding user by id`);
-      })
+      });
 
     //   await cacheManager.set(`teeTime:${teeTimeId}`, teeTime); // Cache for 1 hour
     // }
@@ -5033,7 +5036,7 @@ export class BookingService {
             userName: customerDetails?.userName ?? "",
             userEmail: customerDetails?.userEmail ?? "",
             courseName: firstTeeTime.courseName ?? "",
-            teeTimeDate: firstTeeTime.providerDate
+            teeTimeDate: firstTeeTime.providerDate,
           }
         );
         for (const providerBooking of providerBookings) {
@@ -5136,7 +5139,7 @@ export class BookingService {
             userName: customerDetails?.userName ?? "",
             userEmail: customerDetails?.userEmail ?? "",
             courseName: firstTeeTime.courseName ?? "",
-            teeTimeDate: firstTeeTime.providerDate
+            teeTimeDate: firstTeeTime.providerDate,
           }
         );
         for (const providerBooking of providerBookings) {

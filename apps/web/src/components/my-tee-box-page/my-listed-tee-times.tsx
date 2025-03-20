@@ -24,6 +24,7 @@ export type MyListedTeeTimeType = {
   teeTimeId: string;
   listedSlotsCount?: number;
   groupId: string | null;
+  weatherGuaranteeAmount?: number;
 };
 
 export const MyListedTeeTimes = () => {
