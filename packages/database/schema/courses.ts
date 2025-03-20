@@ -74,6 +74,8 @@ export const courses = mySqlTable(
     supportsGroupBooking: tinyint("supportsGroupBooking").default(0).notNull(),
     daysToWithHoldPayment: int("daysToWithHoldPayment").default(0).notNull(),
     primaryMarketSellLeftoverSinglePlayer: boolean("primaryMarketSellLeftoverSinglePlayer").default(true).notNull(),
+    internalID: varchar("internalID", { length: 25 }),
+    friendlyCourseURLPath: varchar("friendlyCourseURLPath", { length: 50 }),
   },
   (table) => {
     return {
