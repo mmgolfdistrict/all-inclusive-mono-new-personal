@@ -810,6 +810,7 @@ export default function CourseHomePage() {
                         minDate={startDate.toString()}
                         maxDate={endDate.toString()}
                         handleLoading={handleLoading}
+                        dateType={dateType}
                       />
                     )}
                   </ViewportList>
