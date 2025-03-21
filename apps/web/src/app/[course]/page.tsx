@@ -75,12 +75,12 @@ export default function CourseHomePage() {
   }
 
   function compareTimesWithTimezones() {
-    const date1 = dayjs().tz(getUserTimezone()).format("ddd, DD MMM YYYY HH:mm:ss [GMT]")
-    const date2 = dayjs().tz(course?.timezoneISO).format("ddd, DD MMM YYYY HH:mm:ss [GMT]")
-
-    if (date1.valueOf() > date2.valueOf()) {
+    const date1 = dayjs().tz(getUserTimezone())
+    const date2 = dayjs().tz(course?.timezoneISO)
+    
+    if (date1.isAfter(date2)) {
       return "user";
-    } else if (date1.valueOf() < date2.valueOf()) {
+    } else if (date1.isBefore(date2)) {
       return "course";
     } else {
       return "user";
