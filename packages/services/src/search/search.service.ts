@@ -1816,12 +1816,9 @@ export class SearchService extends CacheService {
     startDate: string,
     endDate: string
   ): Promise<PriceForecast[]> => {
-    console.log("startDate", startDate);
     let forecastData = await this.getCache(`${courseId}-${startDate}-${endDate}-${process.env.NODE_ENV}`)!;
-    console.log("forecastData for cash", forecastData);
 
     if (!forecastData) {
-      console.log("databasehit");
 
       forecastData = await this.database
         .select({
@@ -1853,7 +1850,7 @@ export class SearchService extends CacheService {
         .innerJoin(courses, eq(teeTimes.courseId, courses.id))
         .where(
           and(
-            between(sql`Date(${teeTimes.providerDate})`, startDate, endDate),
+            gte(sql`Date(${teeTimes.providerDate})`, startDate),
             eq(teeTimes.courseId, courseId),
             sql`${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} > 0`,
             sql`${teeTimes.availableFirstHandSpots} > 0`
