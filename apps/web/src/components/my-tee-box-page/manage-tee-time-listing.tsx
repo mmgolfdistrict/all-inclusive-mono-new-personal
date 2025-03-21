@@ -244,7 +244,7 @@ export const ManageTeeTimeListing = ({
     }
   };
 
-  const UpdatedSell = async () => {
+  const UpdateListing = async () => {
     setIsLoading(true);
     void logAudit();
 
@@ -424,13 +424,12 @@ export const ManageTeeTimeListing = ({
                   orientation="horizontal"
                   className="mx-auto flex"
                   data-testid="player-button-id"
-                  // disabled
                 >
                   {PlayerOptions.map((value, index) => (
                     <Item
                       key={index}
                       value={value}
-                      className={`opacity-50 ${
+                      className={`${
                         index === 0
                           ? "rounded-l-full border border-stroke"
                           : index === PlayerOptions.length - 1
@@ -439,7 +438,7 @@ export const ManageTeeTimeListing = ({
                       } px-[1.75rem] ${
                         availableSlots < index + 1
                           ? "opacity-50 cursor-not-allowed"
-                          : ""
+                          : "" // Keep only if restricting based on `availableSlots`
                       }`}
                       dataTestId="player-item-id"
                       dataQa={value}
@@ -498,7 +497,7 @@ export const ManageTeeTimeListing = ({
               <div className="flex flex-col gap-2">
                 <FilledButton
                   className="w-full"
-                  onClick={UpdatedSell}
+                  onClick={UpdateListing}
                   data-testid="save-button-id"
                 >
                   Update Listing
