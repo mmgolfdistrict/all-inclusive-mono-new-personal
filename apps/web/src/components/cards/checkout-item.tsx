@@ -198,12 +198,6 @@ export const CheckoutItem = ({
     console.log("validatePlayers========>", validatePlayers);
   }, [validatePlayers]);
 
-  const getTextColor = (type) => {
-    if (type === "FAILURE") return "red";
-    if (type === "SUCCESS") return "primary";
-    if (type === "WARNING") return "primary-gray";
-  };
-
   return (
     <div className="relative flex w-full flex-col gap-2 bg-secondary-white  pt-4 lg:rounded-lg">
       <div
@@ -218,175 +212,47 @@ export const CheckoutItem = ({
           alt="placeholder"
           className="h-[60px] w-[60px] rounded-lg object-cover lg:h-[100px] lg:w-[100px]"
         />
-        {isMobile ? (
-          <div className="flex w-full justify-between">
-            <div className="flex-col">
-              <div className="flex-row font-semibold unmask-time">
-                {isLoading ? (
-                  <div className="h-6 w-[50%] bg-gray-200 rounded-md animate-pulse" />
-                ) : (
-                  <span className="text-[16px]" id="date-time-checkout">
-                    {formatTime(
-                      teeTime?.date ?? "",
-                      true,
-                      course?.timezoneCorrection
-                    )}
-                  </span>
-                )}
-                <div>{course?.name}</div>
-              </div>
-              <div className="flex-row">
-                <Data
-                  className="flex"
-                  canChoosePlayer={(teeTime?.availableSlots ?? 4) > 0}
-                  players={
-                    isGroupBooking
-                      ? amountOfPlayers
-                      : 4 - (teeTime?.availableSlots ?? 0)
-                  }
-                  selectedPlayers={amountOfPlayers.toString()}
-                  choosePlayers={choosePlayers}
-                  pricePerGolfer={teeTime?.pricePerGolfer}
-                  isLoading={
-                    isLoading || teeTime === undefined || teeTime === null
-                  }
-                  availableSlots={teeTime?.availableSlots}
-                  isSecondHand={
-                    teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND"
-                  }
-                  teeTimeId={teeTime?.teeTimeId}
-                  numberOfPlayers={numberOfPlayers}
-                  selectStatus={allowedPlayers?.selectStatus}
-                  canShowPlayers={!isGroupBooking}
-                />
-              </div>
-            </div>
-            <div className="flex-col">
-              <div className="flex w-full gap-1 flex-col  lg:items-start items-start">
-                <Tooltip
-                  trigger={
-                    teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND" ? (
-                      <Spinner className="w-[40px] h-[40px]" />
-                    ) : (
-                      <Avatar
-                        src={teeTime?.soldByImage}
-                        className="h-[40px] w-[80px] md:h-[40px] md:w-[80px] lg:h-[40px] lg:w-[80px]"
-                        isRounded={false}
-                      />
-                    )
-                  }
-                  content={
-                    "Sold by " +
-                    (teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND"
-                      ? "another Golf District golfer."
-                      : teeTime?.soldByName)
-                  }
-                />
-                <p
-                  className={`text-${getTextColor(
-                    getCourseException(teeTime?.date ?? "")?.displayType
-                  )} font-semibold`}
-                >
-                  {getCourseException(teeTime?.date ?? "")?.shortMessage}
-                </p>
-                <p
-                  className={`text-${getTextColor(
-                    getCourseException(teeTime?.date ?? "")?.displayType
-                  )} font-semibold`}
-                >
-                  {getCourseException(teeTime?.date ?? "")?.longMessage ||
-                    getCourseException(teeTime?.date ?? "")?.longMessage}
-                </p>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="flex w-full flex-col gap-2">
-            <div className="flex w-full flex-row justify-between">
-              <div className="font-semibold unmask-time">
-                {isLoading ? (
-                  <div className="h-6 w-[50%] bg-gray-200 rounded-md animate-pulse" />
-                ) : (
-                  <span
-                    className="md:text-[20px] text-[18px]"
-                    id="date-time-checkout"
-                  >
-                    {formatTime(
-                      teeTime?.date ?? "",
-                      true,
-                      course?.timezoneCorrection
-                    )}
-                  </span>
-                )}
-                <div>{course?.name}</div>
-              </div>
-
-              <div className="flex">
-                <Data
-                  className="flex"
-                  canChoosePlayer={(teeTime?.availableSlots ?? 4) > 0}
-                  players={
-                    isGroupBooking
-                      ? amountOfPlayers
-                      : 4 - (teeTime?.availableSlots ?? 0)
-                  }
-                  selectedPlayers={amountOfPlayers.toString()}
-                  choosePlayers={choosePlayers}
-                  pricePerGolfer={teeTime?.pricePerGolfer}
-                  isLoading={
-                    isLoading || teeTime === undefined || teeTime === null
-                  }
-                  availableSlots={teeTime?.availableSlots}
-                  isSecondHand={
-                    teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND"
-                  }
-                  teeTimeId={teeTime?.teeTimeId}
-                  numberOfPlayers={numberOfPlayers}
-                  selectStatus={allowedPlayers?.selectStatus}
-                  canShowPlayers={!isGroupBooking}
-                />
-              </div>
-            </div>
-            <div className="flex w-full gap-1 flex-col  lg:items-start items-start">
-              <Tooltip
-                trigger={
-                  teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND" ? (
-                    <Spinner className="w-[40px] h-[40px]" />
-                  ) : (
-                    <Avatar
-                      src={teeTime?.soldByImage}
-                      className="!min-h-[40px] !min-w-[80px] max-h-[40px] max-w-[80px] h-[40px] w-[80px] md:min-h-[40px] md:min-w-[80px] md:max-h-[40px] md:max-w-[80px] md:h-[40px] md:w-[80px] lg:w-[80px] lg:h-[40px]"
-                      isRounded={false}
-                    />
-                  )
-                }
-                content={
-                  "Sold by " +
-                  (teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND"
-                    ? "another Golf District golfer."
-                    : teeTime?.soldByName)
-                }
-              />
-              <p
-                className={`text-${getTextColor(
-                  getCourseException(teeTime?.date ?? "")?.displayType
-                )} font-semibold`}
+        <div className="flex w-full flex-col gap-2">
+          <div className="font-semibold unmask-time">
+            {isLoading ? (
+              <div className="h-6 w-[50%] bg-gray-200 rounded-md  animate-pulse" />
+            ) : (
+              <span
+                className="md:text-[20px] text-[18px]"
+                id="date-time-checkout"
               >
-                {getCourseException(teeTime?.date ?? "")?.shortMessage}
-              </p>
-              <p
-                className={`text-${getTextColor(
-                  getCourseException(teeTime?.date ?? "")?.displayType
-                )} font-semibold`}
-              >
-                {getCourseException(teeTime?.date ?? "")?.longMessage ||
-                  getCourseException(teeTime?.date ?? "")?.longMessage}
-              </p>
-            </div>
+                {formatTime(
+                  teeTime?.date ?? "",
+                  true,
+                  course?.timezoneCorrection
+                )}
+              </span>
+            )}
           </div>
-        )}
+          <Data
+            className="flex"
+            canChoosePlayer={(teeTime?.availableSlots ?? 4) > 0}
+            players={
+              isGroupBooking
+                ? amountOfPlayers
+                : 4 - (teeTime?.availableSlots ?? 0)
+            }
+            selectedPlayers={amountOfPlayers.toString()}
+            choosePlayers={choosePlayers}
+            soldByImage={teeTime?.soldByImage}
+            soldByName={teeTime?.soldByName}
+            pricePerGolfer={teeTime?.pricePerGolfer}
+            isLoading={isLoading || teeTime === undefined || teeTime === null}
+            availableSlots={teeTime?.availableSlots}
+            isSecondHand={teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND"}
+            teeTimeId={teeTime?.teeTimeId}
+            courseException={getCourseException(teeTime?.date ?? "")}
+            numberOfPlayers={numberOfPlayers}
+            selectStatus={allowedPlayers?.selectStatus}
+            canShowPlayers={!isGroupBooking}
+          />
+        </div>
       </div>
-
       <div className="flex flex-col gap-1">
         <div className="flex flex-col gap-2">
           {isSupportMemberShip?.supportsProviderMembership === 1 &&
@@ -487,14 +353,14 @@ const Data = ({
   players,
   selectedPlayers,
   choosePlayers,
-  // soldByImage,
-  // soldByName,
+  soldByImage,
+  soldByName,
   pricePerGolfer,
   isLoading,
   availableSlots,
   isSecondHand,
   teeTimeId,
-  // courseException,
+  courseException,
   numberOfPlayers,
   selectStatus,
   canShowPlayers,
@@ -504,14 +370,14 @@ const Data = ({
   players?: number;
   selectedPlayers: string;
   choosePlayers: (amount: string) => void;
-  // soldByImage?: string;
-  // soldByName?: string;
+  soldByImage?: string;
+  soldByName?: string;
   pricePerGolfer?: number;
   isLoading: boolean;
   availableSlots?: number;
   isSecondHand: boolean;
   teeTimeId?: string | undefined;
-  // courseException: NotificationObject | null;
+  courseException: NotificationObject | null;
   numberOfPlayers?: string[];
   selectStatus?: string;
   canShowPlayers?: boolean;
@@ -536,13 +402,55 @@ const Data = ({
       </div>
     );
   }
-  const isMobile = useMediaQuery("(max-width: 768px)");
+
+  const getTextColor = (type) => {
+    if (type === "FAILURE") return "red";
+    if (type === "SUCCESS") return "primary";
+    if (type === "WARNING") return "primary-gray";
+  };
   return (
-    <div className={` w-full gap-2 text-sm  ${className}`}>
+    <div
+      className={`flex w-full flex-row justify-between gap-2 text-sm lg:flex-row ${className}`}
+    >
+      <div className="flex gap-1 lg:items-start">
+        <div className="flex gap-1 flex-col items-start">
+          <Tooltip
+            trigger={
+              isSecondHand ? (
+                <Spinner className="w-[40px] h-[40px]" />
+              ) : (
+                <Avatar
+                  src={soldByImage}
+                  className="!min-h-[40px] !min-w-[80px] max-h-[40px] max-w-[80px] h-[40px] w-[80px] md:min-h-[40px] md:min-w-[80px] md:max-h-[40px] md:max-w-[80px] md:h-[40px] md:w-[80px] lg:w-[80px] lg:h-[40px]"
+                  isRounded={false}
+                />
+              )
+            }
+            content={
+              "Sold by " +
+              (isSecondHand ? "another Golf District golfer." : soldByName)
+            }
+          />
+          <p
+            className={`text-${getTextColor(
+              courseException?.displayType
+            )} font-semibold`}
+          >
+            {courseException?.shortMessage}
+          </p>
+          <p
+            className={`text-${getTextColor(
+              courseException?.displayType
+            )} font-semibold`}
+          >
+            {courseException?.longMessage || courseException?.longMessage}
+          </p>
+        </div>
+      </div>
       <div className="flex flex-col gap-2 lg:items-end">
         {canShowPlayers ? (
           <div className="flex min-h-[31px] items-center gap-2">
-            {!isMobile && <OutlineClub />}
+            <OutlineClub />
             {canChoosePlayer ? (
               <ChoosePlayers
                 players={selectedPlayers}
@@ -570,12 +478,10 @@ const Data = ({
           )
         )}
         <div className="flex" id="price-per-golfer-checkout">
-          <div className="md:text-[18px] text-[16px] font-semibold text-secondary-black">
+          <div className="text-[18px] font-semibold text-secondary-black">
             {formatMoney(pricePerGolfer ?? 1 ?? 0)}
           </div>
-          <div className="md:text-[16px] text-[14px] text-primary-gray">
-            /golfer
-          </div>
+          <div className="text-[16px] text-primary-gray">/golfer</div>
         </div>
       </div>
     </div>
