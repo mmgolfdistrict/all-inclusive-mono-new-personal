@@ -65,34 +65,37 @@ const CountryDropdown = ({ defaultCountry, items, onSelect }: CountryDropdownPro
       activeCountryIndex !== null &&
       countryDropDown.current
     ) {
-        const country = filteredCountries[activeCountryIndex];
-        if (country) {
-          setSelectedCountry(country);
-          setIsOpen(false);
-          onSelect(country);
-          setSearchQuery("");
-          setActiveCountryIndex(null);
-        }
+      const country = filteredCountries[activeCountryIndex];
+      if (country) {
+        setSelectedCountry(country);
+        setIsOpen(false);
+        onSelect(country);
+        setSearchQuery("");
+        setActiveCountryIndex(null);
+      }
     }
-
+  
     if (event.key === 'ArrowDown' && countryDropDown.current) {
       if (activeCountryIndex === null) {
         setActiveCountryIndex(0);
         const firstCountry = countryDropDown.current.children[0] as HTMLElement;
         firstCountry.focus();
-      } else if (countryDropDown.current.children.length > activeCountryIndex) {
+        firstCountry.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      } else if (countryDropDown.current.children.length > activeCountryIndex + 1) {
         const country = countryDropDown.current.children[activeCountryIndex + 1] as HTMLElement;
-        country.focus();
         setActiveCountryIndex(activeCountryIndex + 1);
+        country.focus();
+        country.scrollIntoView({ block: "nearest", behavior: "smooth" });
       }
     } else if (event.key === 'ArrowUp' && countryDropDown.current && activeCountryIndex !== null) {
       if (activeCountryIndex > 0) {
         const country = countryDropDown.current.children[activeCountryIndex - 1] as HTMLElement;
-        country.focus();
         setActiveCountryIndex(activeCountryIndex - 1);
+        country.focus();
+        country.scrollIntoView({ block: "nearest", behavior: "smooth" });
       }
     }
-  }
+  };
 
   return (
     <div className="relative inline-block text-left max-w-36" ref={dropdownRef} onClick={(e) => e.preventDefault()}>
