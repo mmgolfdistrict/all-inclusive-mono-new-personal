@@ -112,6 +112,7 @@ interface ListingData {
   listedSlotsCount: number;
   groupId: string | null;
   weatherGuaranteeAmount?: number;
+  isGroupBooking?: boolean;
 }
 
 interface TransferData {
@@ -457,6 +458,7 @@ export class BookingService {
             listedSlotsCount: teeTime.listedSlots,
             groupId: teeTime.groupId ?? "",
             weatherGuaranteeAmount: teeTime.weatherGuaranteeAmount ?? 0,
+            isGroupBooking: false,
           };
         } else {
           const currentEntry = combinedData[teeTime.teeTimesId];
@@ -1159,22 +1161,22 @@ export class BookingService {
       });
       throw new Error("Cannot list more than 4 bookings.");
     }
-    for (const booking of ownedBookings) {
-      if (booking.isListed) {
-        this.logger.warn(`Booking ${booking.id} is already listed.`);
-        loggerService.errorLog({
-          applicationName: "golfdistrict-foreup",
-          clientIP: "",
-          userId,
-          url: "/createListingForBookings",
-          userAgent: "",
-          message: "TEE_TIME_LISTED_FAILED",
-          stackTrace: "",
-          additionalDetailsJSON: "One or more bookings from this tee time is already listed",
-        });
-        throw new Error(`One or more bookings from this tee time is already listed.`);
-      }
-    }
+    // for (const booking of ownedBookings) {
+    //   if (booking.isListed) {
+    //     this.logger.warn(`Booking ${booking.id} is already listed.`);
+    //     loggerService.errorLog({
+    //       applicationName: "golfdistrict-foreup",
+    //       clientIP: "",
+    //       userId,
+    //       url: "/createListingForBookings",
+    //       userAgent: "",
+    //       message: "TEE_TIME_LISTED_FAILED",
+    //       stackTrace: "",
+    //       additionalDetailsJSON: "One or more bookings from this tee time is already listed",
+    //     });
+    //     throw new Error(`One or more bookings from this tee time is already listed.`);
+    //   }
+    // }
     //validate that all bookings are for the same course
     // const courseIds = new Set(ownedBookings.map((booking) => booking.courseId));
     // if (courseIds.size > 1) {

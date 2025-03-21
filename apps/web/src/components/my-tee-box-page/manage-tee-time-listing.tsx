@@ -5,6 +5,7 @@ import { useUserContext } from "~/contexts/UserContext";
 import { useSidebar } from "~/hooks/useSidebar";
 import { api } from "~/utils/api";
 import { formatMoney, formatTime } from "~/utils/formatters";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   useEffect,
@@ -20,6 +21,7 @@ import { FilledButton } from "../buttons/filled-button";
 import { OutlineButton } from "../buttons/outline-button";
 import { Item } from "../course-page/filters";
 import { Close } from "../icons/close";
+import { DownChevron } from "../icons/down-chevron";
 import { Info } from "../icons/info";
 import { Players } from "../icons/players";
 import { Tooltip } from "../tooltip";
@@ -56,6 +58,9 @@ export const ManageTeeTimeListing = ({
   });
   const [isCancelListingOpen, setIsCancelListingOpen] =
     useState<boolean>(false);
+  const sell = api.teeBox.createListingForBookings.useMutation();
+  const sellGroup = api.teeBox.createListingForGroupBookings.useMutation();
+  const canResell = api.teeBox.checkIfUserIsOptMemberShip.useMutation();
   const router = useRouter();
   const { course } = useCourseContext();
   const courseId = course?.id;
@@ -68,7 +73,7 @@ export const ManageTeeTimeListing = ({
     },
     { enabled: !!selectedTeeTime?.teeTimeId }
   );
-
+  console.log("data bookingIds", bookingIds);
   const availableSlots = 4 - (selectedTeeTime?.listedSlotsCount || 0);
 
   useEffect(() => {
@@ -239,6 +244,99 @@ export const ManageTeeTimeListing = ({
     }
   };
 
+  const UpdatedSell = async () => {
+    setIsLoading(true);
+    void logAudit();
+
+    try {
+      const canResellResult = await canResell.mutateAsync({
+        bookingId: selectedTeeTime?.listedSpots?.[0] ?? "",
+      });
+      if (canResellResult === 1) {
+        toast.error("not allowed to sell because you opt membership");
+        setIsLoading(false);
+        return;
+      }
+    } catch (error) {
+      toast.error((error as Error)?.message ?? "Database error");
+    }
+
+    //You should never enter this condition.
+    if (totalPayout < 0) {
+      toast.error("Listing price must be greater than $45.");
+      setIsLoading(false);
+      return;
+    }
+    if (!selectedTeeTime) {
+      toast.error("Invalid date on tee time.");
+      setIsLoading(false);
+      return;
+    }
+
+    if (listingPrice > maxListingPrice) {
+      toast.error(
+        `Listing price cannot be greater than ${formatMoney(maxListingPrice)}.`
+      );
+      setIsLoading(false);
+      return;
+    }
+    if (listingPrice === 0) {
+      toast.error(`Enter listing price.`);
+      setIsLoading(false);
+      return;
+    }
+    if (listingPrice === 1) {
+      toast.error(`Listing price must be greater than $1.`);
+      setIsLoading(false);
+      return;
+    }
+    try {
+      if (selectedTeeTime?.isGroupBooking) {
+        await sellGroup.mutateAsync({
+          groupId: selectedTeeTime?.groupId as string,
+          listPrice: listingPrice,
+          endTime: new Date(selectedTeeTime?.date),
+          slots: parseInt(players),
+        });
+      } else {
+        await sell.mutateAsync({
+          bookingIds: selectedTeeTime?.listedSpots?.slice(
+            0,
+            parseInt(players)
+          ) as string[],
+          listPrice: listingPrice,
+          endTime: new Date(selectedTeeTime?.date),
+          slots: parseInt(players),
+        });
+      }
+      toast.success(
+        <div className="flex flex-col ">
+          <div>Your tee time has been listed.</div>
+          <Link
+            href={`?section=my-listed-tee-times`}
+            className="flex w-fit items-center gap-1 text-primary"
+          >
+            <div>View listed tee times</div>
+            <DownChevron fill={"#40942A"} className="w-[14px] -rotate-90" />
+          </Link>
+        </div>
+      );
+      if (needRedirect) {
+        return router.push(
+          `/${selectedTeeTime?.courseId}/my-tee-box?section=my-listed-tee-times`
+        );
+      }
+      setIsLoading(false);
+      await refetch?.();
+    } catch (error) {
+      toast.error(
+        (error as Error)?.message ?? "An error occurred selling tee time."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <>
       {isManageTeeTimeListingOpen && (
@@ -302,7 +400,7 @@ export const ManageTeeTimeListing = ({
                     onBlur={handleBlur}
                     className="mx-auto max-w-[300px] rounded-lg bg-secondary-white px-4 py-1 text-center text-[24px] font-semibold outline-none md:text-[32px] pl-6"
                     data-testid="lsiting-price-id"
-                    disabled
+                    // disabled
                   />
                 </div>
               </div>
@@ -326,7 +424,7 @@ export const ManageTeeTimeListing = ({
                   orientation="horizontal"
                   className="mx-auto flex"
                   data-testid="player-button-id"
-                  disabled
+                  // disabled
                 >
                   {PlayerOptions.map((value, index) => (
                     <Item
@@ -398,13 +496,13 @@ export const ManageTeeTimeListing = ({
                 All sales are final.
               </div>
               <div className="flex flex-col gap-2">
-                {/* <FilledButton
+                <FilledButton
                   className="w-full"
-                  onClick={save}
+                  onClick={UpdatedSell}
                   data-testid="save-button-id"
                 >
-                  Save
-                </FilledButton> */}
+                  Update Listing
+                </FilledButton>
                 <FilledButton
                   className="w-full"
                   onClick={cancelListing}

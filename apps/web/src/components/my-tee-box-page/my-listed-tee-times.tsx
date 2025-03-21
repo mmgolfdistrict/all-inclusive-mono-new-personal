@@ -25,6 +25,7 @@ export type MyListedTeeTimeType = {
   listedSlotsCount?: number;
   groupId: string | null;
   weatherGuaranteeAmount?: number;
+  isGroupBooking?: boolean;
 };
 
 export const MyListedTeeTimes = () => {
@@ -42,6 +43,7 @@ export const MyListedTeeTimes = () => {
       },
       { enabled: !!courseId }
     );
+  console.log("data", data);
 
   const myListedTeeTimes = useMemo(() => {
     if (!data) return undefined;
