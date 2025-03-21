@@ -4,7 +4,6 @@ import { format } from "date-fns";
 import { useEffect, useState } from "react";
 import { useMediaQuery } from "usehooks-ts";
 import { Close } from "../icons/close";
-import DateRangeSlider from "../slider/date-range-slider";
 
 interface Props {
   closeForecastModal: () => void;
@@ -27,13 +26,6 @@ export const ForecastModal = ({
   const [startDate, setStartDate] = useState<string>(propStartDate);
   const [endDate, setEndDate] = useState<string>(propEndDate);
   const [dateIndex, setDateIndex] = useState(0);
-
-  const handleOnSlideDateRange = ({ startDate, endDate }: { startDate: string | Date; endDate: string | Date }) => {
-    console.log("startDate: ", startDate)
-    setStartDate(formatDate(startDate));
-    setEndDate(formatDate(endDate));
-    setDateIndex(0);
-  }
 
   useEffect(() => {
     setStartDate(formatDate(propStartDate));
@@ -101,12 +93,6 @@ export const ForecastModal = ({
               Next &gt;
             </button>
           </div>
-          <DateRangeSlider
-            min={0}
-            max={course?.furthestDayToBook ?? 0}
-            step={1}
-            onSlideDateRange={handleOnSlideDateRange}
-          />
         </div>
         <div className="mt-4 overflow-x-auto">
           <table className="w-full border-collapse text-sm">
