@@ -5,6 +5,7 @@ import { useUserContext } from "~/contexts/UserContext";
 import { useSidebar } from "~/hooks/useSidebar";
 import { api } from "~/utils/api";
 import { formatMoney, formatTime } from "~/utils/formatters";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   useEffect,
@@ -20,6 +21,7 @@ import { FilledButton } from "../buttons/filled-button";
 import { OutlineButton } from "../buttons/outline-button";
 import { Item } from "../course-page/filters";
 import { Close } from "../icons/close";
+import { DownChevron } from "../icons/down-chevron";
 import { Info } from "../icons/info";
 import { Players } from "../icons/players";
 import { Tooltip } from "../tooltip";
@@ -50,12 +52,41 @@ export const ManageTeeTimeListing = ({
   const [minimumListingPrice, setMinimumListingPrice] = useState<number>(200);
   const [players, setPlayers] = useState<PlayerType>("1");
 
+  const [initialPrice, setInitialPrice] = useState<number | null>(null); // Initial price when sidebar opens
+  const [initialPlayers, setInitialPlayers] = useState<PlayerType | null>(null); // Initial players when sidebar opens
+
+  useEffect(() => {
+    if (selectedTeeTime) {
+      const initialTeeTimePrice = selectedTeeTime.listPrice ?? 300;
+      const initialTeeTimePlayers =
+        selectedTeeTime.listedSlotsCount?.toString() as PlayerType;
+
+      // Set initial values ONLY when tee time is selected or sidebar is opened
+      setInitialPrice(initialTeeTimePrice);
+      setInitialPlayers(initialTeeTimePlayers);
+
+      // Sync current editable fields with selectedTeeTime values
+      setListingPrice(initialTeeTimePrice);
+      setPlayers(initialTeeTimePlayers);
+    }
+  }, [selectedTeeTime, isManageTeeTimeListingOpen]);
+
+  // Check if the price and players have changed from the initial values
+  const isUnchanged =
+    initialPrice !== null &&
+    initialPlayers !== null &&
+    listingPrice === initialPrice &&
+    players === initialPlayers;
+
   const { toggleSidebar } = useSidebar({
     isOpen: isManageTeeTimeListingOpen,
     setIsOpen: setIsManageTeeTimeListingOpen,
   });
   const [isCancelListingOpen, setIsCancelListingOpen] =
     useState<boolean>(false);
+  const sell = api.teeBox.createListingForBookings.useMutation();
+  const sellGroup = api.teeBox.createListingForGroupBookings.useMutation();
+  const canResell = api.teeBox.checkIfUserIsOptMemberShip.useMutation();
   const router = useRouter();
   const { course } = useCourseContext();
   const courseId = course?.id;
@@ -68,8 +99,6 @@ export const ManageTeeTimeListing = ({
     },
     { enabled: !!selectedTeeTime?.teeTimeId }
   );
-
-  const availableSlots = 4 - (selectedTeeTime?.listedSlotsCount || 0);
 
   useEffect(() => {
     if (selectedTeeTime) {
@@ -106,8 +135,8 @@ export const ManageTeeTimeListing = ({
     try {
       if (selectedTeeTime?.groupId) {
         await cancelGroupListing.mutateAsync({
-          groupId: selectedTeeTime?.groupId ?? ""
-        })
+          groupId: selectedTeeTime?.groupId ?? "",
+        });
       } else {
         await cancel.mutateAsync({
           listingId: selectedTeeTime?.listingId,
@@ -149,7 +178,9 @@ export const ManageTeeTimeListing = ({
     if (decimals && decimals?.length > 2) return;
 
     const strippedLeadingZeros = value.replace(/^0+/, "");
-    setListingPrice(Number(strippedLeadingZeros));
+    setListingPrice(
+      strippedLeadingZeros === "" ? NaN : Number(strippedLeadingZeros)
+    );
   };
 
   // const totalPayout = useMemo(() => {
@@ -239,6 +270,97 @@ export const ManageTeeTimeListing = ({
     }
   };
 
+  const UpdateListing = async () => {
+    setIsLoading(true);
+    void logAudit();
+
+    try {
+      const canResellResult = await canResell.mutateAsync({
+        bookingId: selectedTeeTime?.listedSpots?.[0] ?? "",
+      });
+      if (canResellResult === 1) {
+        toast.error("not allowed to sell because you opt membership");
+        setIsLoading(false);
+        return;
+      }
+    } catch (error) {
+      toast.error((error as Error)?.message ?? "Database error");
+    }
+
+    //You should never enter this condition.
+    if (totalPayout < 0) {
+      toast.error("Listing price must be greater than $45.");
+      setIsLoading(false);
+      return;
+    }
+    if (!selectedTeeTime) {
+      toast.error("Invalid date on tee time.");
+      setIsLoading(false);
+      return;
+    }
+
+    if (listingPrice > maxListingPrice) {
+      toast.error(
+        `Listing price cannot be greater than ${formatMoney(maxListingPrice)}.`
+      );
+      setIsLoading(false);
+      return;
+    }
+    if (listingPrice === 0) {
+      toast.error(`Enter listing price.`);
+      setIsLoading(false);
+      return;
+    }
+    if (listingPrice === 1) {
+      toast.error(`Listing price must be greater than $1.`);
+      setIsLoading(false);
+      return;
+    }
+    try {
+      if (selectedTeeTime?.isGroupBooking) {
+        await sellGroup.mutateAsync({
+          groupId: selectedTeeTime?.groupId ?? "",
+          listPrice: listingPrice,
+          endTime: new Date(selectedTeeTime?.date),
+          slots: parseInt(players),
+        });
+      } else {
+        await sell.mutateAsync({
+          bookingIds:
+            selectedTeeTime?.listedSpots?.slice(0, parseInt(players)) ?? [],
+          listPrice: listingPrice,
+          endTime: new Date(selectedTeeTime?.date),
+          slots: parseInt(players),
+        });
+      }
+      toast.success(
+        <div className="flex flex-col ">
+          <div>Your tee time has been listed.</div>
+          <Link
+            href={`?section=my-listed-tee-times`}
+            className="flex w-fit items-center gap-1 text-primary"
+          >
+            <div>View listed tee times</div>
+            <DownChevron fill={"#40942A"} className="w-[14px] -rotate-90" />
+          </Link>
+        </div>
+      );
+      if (needRedirect) {
+        return router.push(
+          `/${selectedTeeTime?.courseId}/my-tee-box?section=my-listed-tee-times`
+        );
+      }
+      setIsLoading(false);
+      await refetch?.();
+    } catch (error) {
+      toast.error(
+        (error as Error)?.message ?? "An error occurred selling tee time."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <>
       {isManageTeeTimeListingOpen && (
@@ -290,19 +412,34 @@ export const ManageTeeTimeListing = ({
                   Listing price per golfer
                 </label>
                 <div className="relative">
-                  <span className="absolute left-1 top-1 text-[24px] md:text-[32px]">
+                  <span
+                    className={`absolute left-1 top-1 text-[24px] md:text-[32px] ${
+                      selectedTeeTime?.listingId ===
+                      selectedTeeTime?.listingIdFromRedis
+                        ? "opacity-50 cursor-not-allowed"
+                        : ""
+                    } `}
+                  >
                     $
                   </span>
                   <input
                     id="listingPrice"
-                    value={listingPrice?.toFixed(2)}
+                    value={listingPrice}
                     type="number"
                     onFocus={handleFocus}
                     onChange={handleListingPrice}
                     onBlur={handleBlur}
-                    className="mx-auto max-w-[300px] rounded-lg bg-secondary-white px-4 py-1 text-center text-[24px] font-semibold outline-none md:text-[32px] pl-6"
+                    className={`mx-auto max-w-[300px] rounded-lg bg-secondary-white px-4 py-1 text-center text-[24px] font-semibold outline-none md:text-[32px] pl-6 ${
+                      selectedTeeTime?.listingId ===
+                      selectedTeeTime?.listingIdFromRedis
+                        ? "opacity-50 cursor-not-allowed"
+                        : ""
+                    }`}
                     data-testid="lsiting-price-id"
-                    disabled
+                    disabled={
+                      selectedTeeTime?.listingId ===
+                      selectedTeeTime?.listingIdFromRedis
+                    }
                   />
                 </div>
               </div>
@@ -319,30 +456,36 @@ export const ManageTeeTimeListing = ({
                   type="single"
                   value={players}
                   onValueChange={(player: PlayerType) => {
-                    if (availableSlots < parseInt(player)) return;
+                    if ((selectedTeeTime?.playerCount || 0) < parseInt(player))
+                      return;
 
                     if (player) setPlayers(player);
                   }}
                   orientation="horizontal"
                   className="mx-auto flex"
                   data-testid="player-button-id"
-                  disabled
+                  disabled={
+                    selectedTeeTime?.listingId ===
+                    selectedTeeTime?.listingIdFromRedis
+                  }
                 >
                   {PlayerOptions.map((value, index) => (
                     <Item
                       key={index}
                       value={value}
-                      className={`opacity-50 ${
+                      className={`${
                         index === 0
                           ? "rounded-l-full border border-stroke"
                           : index === PlayerOptions.length - 1
                           ? "rounded-r-full border-b border-t border-r border-stroke"
                           : "border-b border-r border-t border-stroke"
                       } px-[1.75rem] ${
-                        availableSlots < index + 1
+                        (selectedTeeTime?.playerCount || 0) < index + 1 ||
+                        selectedTeeTime?.listingId ===
+                          selectedTeeTime?.listingIdFromRedis
                           ? "opacity-50 cursor-not-allowed"
-                          : ""
-                      }`}
+                          : "" // Keep only if restricting based on `availableSlots`
+                      } `}
                       dataTestId="player-item-id"
                       dataQa={value}
                       label={value}
@@ -351,6 +494,13 @@ export const ManageTeeTimeListing = ({
                 </ToggleGroup.Root>
               </div>
             </div>
+            {selectedTeeTime?.listingId ===
+              selectedTeeTime?.listingIdFromRedis && (
+              <div className="text-center text-[20px] text-red">
+                Users are trying to buy this tee time and hence, editing is not
+                allowed.
+              </div>
+            )}
             <div className="flex flex-col gap-4 px-4 pb-6">
               <div className="flex justify-between">
                 <div className="font-[300] text-primary-gray">
@@ -369,7 +519,21 @@ export const ManageTeeTimeListing = ({
                   />
                 </div>
                 <div className="text-secondary-black">
-                  {formatMoney(sellerServiceFee)}
+                  {`(${formatMoney(sellerServiceFee)})`}
+                </div>
+              </div>
+              <div className="flex justify-between">
+                <div className="font-[300] text-primary-gray">
+                  Weather Guarantee Refund{" "}
+                  <Tooltip
+                    trigger={<Info className="h-[14px] w-[14px]" />}
+                    content="Weather guarantee amount to be refunded"
+                  />
+                </div>
+                <div className="text-secondary-black">
+                  {formatMoney(
+                    (selectedTeeTime?.weatherGuaranteeAmount ?? 0) / 100
+                  )}
                 </div>
               </div>
               <div className="flex justify-between">
@@ -384,24 +548,38 @@ export const ManageTeeTimeListing = ({
                 All sales are final.
               </div>
               <div className="flex flex-col gap-2">
-                {/* <FilledButton
-                  className="w-full"
-                  onClick={save}
-                  data-testid="save-button-id"
-                >
-                  Save
-                </FilledButton> */}
                 <FilledButton
-                  className="w-full"
+                  className="w-full disabled:bg-gray-400  disabled:border-gray-400 disabled:cursor-not-allowed"
+                  onClick={UpdateListing}
+                  data-testid="save-button-id"
+                  disabled={
+                    selectedTeeTime?.listingId ===
+                      selectedTeeTime?.listingIdFromRedis || isUnchanged
+                  }
+                >
+                  Update Listing
+                </FilledButton>
+
+                <FilledButton
+                  className="w-full disabled:bg-gray-400  disabled:border-gray-400 disabled:cursor-not-allowed"
                   onClick={cancelListing}
                   data-testid="cancel-listing-button-id"
+                  disabled={
+                    selectedTeeTime?.listingId ===
+                    selectedTeeTime?.listingIdFromRedis
+                  }
                 >
                   Cancel Listing
                 </FilledButton>
 
                 <OutlineButton
+                  className="w-full border disabled:border-gray-400 disabled:text-gray-400 disabled:cursor-not-allowed"
                   onClick={() => setIsManageTeeTimeListingOpen(false)}
                   data-testid="cancel-button-id"
+                  disabled={
+                    selectedTeeTime?.listingId ===
+                    selectedTeeTime?.listingIdFromRedis
+                  }
                 >
                   Cancel
                 </OutlineButton>

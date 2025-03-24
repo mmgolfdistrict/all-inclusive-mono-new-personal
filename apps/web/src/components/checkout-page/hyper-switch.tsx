@@ -137,6 +137,7 @@ export const HyperSwitch = ({
             : teeTimeData?.firstOrSecondHandTeeTime === TeeTimeType.FIRST_HAND
             ? "PRIMARY"
             : "UNLISTED",
+        listingId: listingId ?? "",
       })) as CreatePaymentResponse;
       if (data?.error) {
         toast.error(data?.error);
