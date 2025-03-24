@@ -56,7 +56,6 @@ export const Owned = () => {
       },
       { enabled: !!courseId }
     );
-  console.log("data owned ", data);
 
   const [selectedTeeTime, setSelectedTeeTime] = useState<
     OwnedTeeTime | undefined
