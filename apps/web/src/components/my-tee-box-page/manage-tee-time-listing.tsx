@@ -73,8 +73,6 @@ export const ManageTeeTimeListing = ({
     },
     { enabled: !!selectedTeeTime?.teeTimeId }
   );
-  console.log("data bookingIds", bookingIds);
-  const availableSlots = 4 - (selectedTeeTime?.listedSlotsCount || 0);
 
   useEffect(() => {
     if (selectedTeeTime) {
@@ -293,17 +291,15 @@ export const ManageTeeTimeListing = ({
     try {
       if (selectedTeeTime?.isGroupBooking) {
         await sellGroup.mutateAsync({
-          groupId: selectedTeeTime?.groupId as string,
+          groupId: selectedTeeTime?.groupId ?? "",
           listPrice: listingPrice,
           endTime: new Date(selectedTeeTime?.date),
           slots: parseInt(players),
         });
       } else {
         await sell.mutateAsync({
-          bookingIds: selectedTeeTime?.listedSpots?.slice(
-            0,
-            parseInt(players)
-          ) as string[],
+          bookingIds:
+            selectedTeeTime?.listedSpots?.slice(0, parseInt(players)) ?? [],
           listPrice: listingPrice,
           endTime: new Date(selectedTeeTime?.date),
           slots: parseInt(players),
@@ -388,19 +384,34 @@ export const ManageTeeTimeListing = ({
                   Listing price per golfer
                 </label>
                 <div className="relative">
-                  <span className="absolute left-1 top-1 text-[24px] md:text-[32px]">
+                  <span
+                    className={`absolute left-1 top-1 text-[24px] md:text-[32px] ${
+                      selectedTeeTime?.listingId ===
+                      selectedTeeTime?.listingIdFromRedis
+                        ? "opacity-50 cursor-not-allowed"
+                        : ""
+                    } `}
+                  >
                     $
                   </span>
                   <input
                     id="listingPrice"
-                    value={listingPrice?.toFixed(2)}
+                    value={listingPrice}
                     type="number"
                     onFocus={handleFocus}
                     onChange={handleListingPrice}
                     onBlur={handleBlur}
-                    className="mx-auto max-w-[300px] rounded-lg bg-secondary-white px-4 py-1 text-center text-[24px] font-semibold outline-none md:text-[32px] pl-6"
+                    className={`mx-auto max-w-[300px] rounded-lg bg-secondary-white px-4 py-1 text-center text-[24px] font-semibold outline-none md:text-[32px] pl-6 ${
+                      selectedTeeTime?.listingId ===
+                      selectedTeeTime?.listingIdFromRedis
+                        ? "opacity-50 cursor-not-allowed"
+                        : ""
+                    }`}
                     data-testid="lsiting-price-id"
-                    // disabled
+                    disabled={
+                      selectedTeeTime?.listingId ===
+                      selectedTeeTime?.listingIdFromRedis
+                    }
                   />
                 </div>
               </div>
@@ -417,13 +428,18 @@ export const ManageTeeTimeListing = ({
                   type="single"
                   value={players}
                   onValueChange={(player: PlayerType) => {
-                    if (availableSlots < parseInt(player)) return;
+                    if ((selectedTeeTime?.playerCount || 0) < parseInt(player))
+                      return;
 
                     if (player) setPlayers(player);
                   }}
                   orientation="horizontal"
                   className="mx-auto flex"
                   data-testid="player-button-id"
+                  disabled={
+                    selectedTeeTime?.listingId ===
+                    selectedTeeTime?.listingIdFromRedis
+                  }
                 >
                   {PlayerOptions.map((value, index) => (
                     <Item
@@ -436,10 +452,12 @@ export const ManageTeeTimeListing = ({
                           ? "rounded-r-full border-b border-t border-r border-stroke"
                           : "border-b border-r border-t border-stroke"
                       } px-[1.75rem] ${
-                        availableSlots < index + 1
+                        (selectedTeeTime?.playerCount || 0) < index + 1 ||
+                        selectedTeeTime?.listingId ===
+                          selectedTeeTime?.listingIdFromRedis
                           ? "opacity-50 cursor-not-allowed"
                           : "" // Keep only if restricting based on `availableSlots`
-                      }`}
+                      } `}
                       dataTestId="player-item-id"
                       dataQa={value}
                       label={value}
@@ -448,6 +466,13 @@ export const ManageTeeTimeListing = ({
                 </ToggleGroup.Root>
               </div>
             </div>
+            {selectedTeeTime?.listingId ===
+              selectedTeeTime?.listingIdFromRedis && (
+              <div className="text-center text-[20px] text-red">
+                Users are trying to buy this tee time and hence, editing is not
+                allowed.
+              </div>
+            )}
             <div className="flex flex-col gap-4 px-4 pb-6">
               <div className="flex justify-between">
                 <div className="font-[300] text-primary-gray">
@@ -496,23 +521,37 @@ export const ManageTeeTimeListing = ({
               </div>
               <div className="flex flex-col gap-2">
                 <FilledButton
-                  className="w-full"
+                  className="w-full disabled:bg-gray-400  disabled:border-gray-400 disabled:cursor-not-allowed"
                   onClick={UpdateListing}
                   data-testid="save-button-id"
+                  disabled={
+                    selectedTeeTime?.listingId ===
+                    selectedTeeTime?.listingIdFromRedis
+                  }
                 >
                   Update Listing
                 </FilledButton>
+
                 <FilledButton
-                  className="w-full"
+                  className="w-full disabled:bg-gray-400  disabled:border-gray-400 disabled:cursor-not-allowed"
                   onClick={cancelListing}
                   data-testid="cancel-listing-button-id"
+                  disabled={
+                    selectedTeeTime?.listingId ===
+                    selectedTeeTime?.listingIdFromRedis
+                  }
                 >
                   Cancel Listing
                 </FilledButton>
 
                 <OutlineButton
+                  className="w-full border disabled:border-gray-400 disabled:text-gray-400 disabled:cursor-not-allowed"
                   onClick={() => setIsManageTeeTimeListingOpen(false)}
                   data-testid="cancel-button-id"
+                  disabled={
+                    selectedTeeTime?.listingId ===
+                    selectedTeeTime?.listingIdFromRedis
+                  }
                 >
                   Cancel
                 </OutlineButton>

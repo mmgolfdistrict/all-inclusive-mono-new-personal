@@ -26,6 +26,8 @@ export type MyListedTeeTimeType = {
   groupId: string | null;
   weatherGuaranteeAmount?: number;
   isGroupBooking?: boolean;
+  playerCount?: number;
+  listingIdFromRedis?: string | null;
 };
 
 export const MyListedTeeTimes = () => {
