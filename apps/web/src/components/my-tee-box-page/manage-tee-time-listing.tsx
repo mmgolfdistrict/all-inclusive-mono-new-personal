@@ -152,7 +152,9 @@ export const ManageTeeTimeListing = ({
     if (decimals && decimals?.length > 2) return;
 
     const strippedLeadingZeros = value.replace(/^0+/, "");
-    setListingPrice(Number(strippedLeadingZeros));
+    setListingPrice(
+      strippedLeadingZeros === "" ? NaN : Number(strippedLeadingZeros)
+    );
   };
 
   // const totalPayout = useMemo(() => {
