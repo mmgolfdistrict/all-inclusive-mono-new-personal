@@ -52,6 +52,32 @@ export const ManageTeeTimeListing = ({
   const [minimumListingPrice, setMinimumListingPrice] = useState<number>(200);
   const [players, setPlayers] = useState<PlayerType>("1");
 
+  const [initialPrice, setInitialPrice] = useState<number | null>(null); // Initial price when sidebar opens
+  const [initialPlayers, setInitialPlayers] = useState<PlayerType | null>(null); // Initial players when sidebar opens
+
+  useEffect(() => {
+    if (selectedTeeTime) {
+      const initialTeeTimePrice = selectedTeeTime.listPrice ?? 300;
+      const initialTeeTimePlayers =
+        selectedTeeTime.listedSlotsCount?.toString() as PlayerType;
+
+      // Set initial values ONLY when tee time is selected or sidebar is opened
+      setInitialPrice(initialTeeTimePrice);
+      setInitialPlayers(initialTeeTimePlayers);
+
+      // Sync current editable fields with selectedTeeTime values
+      setListingPrice(initialTeeTimePrice);
+      setPlayers(initialTeeTimePlayers);
+    }
+  }, [selectedTeeTime, isManageTeeTimeListingOpen]);
+
+  // Check if the price and players have changed from the initial values
+  const isUnchanged =
+    initialPrice !== null &&
+    initialPlayers !== null &&
+    listingPrice === initialPrice &&
+    players === initialPlayers;
+
   const { toggleSidebar } = useSidebar({
     isOpen: isManageTeeTimeListingOpen,
     setIsOpen: setIsManageTeeTimeListingOpen,
@@ -528,7 +554,7 @@ export const ManageTeeTimeListing = ({
                   data-testid="save-button-id"
                   disabled={
                     selectedTeeTime?.listingId ===
-                    selectedTeeTime?.listingIdFromRedis
+                      selectedTeeTime?.listingIdFromRedis || isUnchanged
                   }
                 >
                   Update Listing
