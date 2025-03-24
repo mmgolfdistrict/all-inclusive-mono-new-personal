@@ -72,7 +72,7 @@ export const ForecastModal = ({
     }
   };
 
-  const handleTabClick = (tab) => {
+  const handleTabClick = (tab : string) => {
     setActiveTab(tab);
   };
 
@@ -91,20 +91,20 @@ export const ForecastModal = ({
           </button>
         </div>
         <div className="flex gap-3 border-b mb-1 items-center">
-          <p
+          <button
             className={`cursor-pointer py-2 px-4 text-center border-b-2 ${activeTab === "dates" ? "border-[#40942B] text-[#40942B]" : "border-transparent text-gray-500"
               } hover:border-[#40942B] hover:text-[#40942B] transition-colors`}
             onClick={() => handleTabClick("dates")}
           >
             Dates
-          </p>
-          <p
+          </button>
+          <button
             className={`cursor-pointer py-2 px-4 text-center border-b-2 ${activeTab === "graph" ? "border-[#40942B] text-[#40942B]" : "border-transparent text-gray-500"
               } hover:border-[#40942B] hover:text-[#40942B] transition-colors`}
             onClick={() => handleTabClick("graph")}
           >
             Graph
-          </p>
+          </button>
         </div>
         <div>
         <div className="flex justify-between items-center">

@@ -1,11 +1,21 @@
 import React, { useEffect } from 'react';
 import * as echarts from 'echarts';
-import { EChartsOption } from 'echarts';
+import type { EChartsOption } from 'echarts';
 import { useMediaQuery } from 'usehooks-ts';
 
+interface ForecastData {
+    courseId: string;
+    name: string;
+    providerDate: string;
+    EarlyMorning: number | null;
+    MidMorning: number | null;
+    EarlyAfternoon: number | null;
+    Afternoon: number | null;
+    Twilight: number | null;
+}
 interface HeatmapChartProps {
-    data: any[];
-    fullData: any[];
+    data: ForecastData[];
+    fullData: ForecastData[];
 }
 
 const HeatmapChart = ({ data ,fullData }: HeatmapChartProps) => {
@@ -21,23 +31,21 @@ const HeatmapChart = ({ data ,fullData }: HeatmapChartProps) => {
 
         const days = data.map(item => item.providerDate);
 
-        const allValues = fullData.flatMap(item =>
-            timeSlots.map((timeSlot) => {
-                const value = item[timeSlot];
-                return value !== '-' ? value : 0; 
-            })
-        );
+        const allValues: number[] = fullData.flatMap((item: ForecastData) =>
+        timeSlots.map((timeSlot: string) => {
+            const value = item[timeSlot];
+            return value != null && value !== '-' ? (value as number) : 0;
+        })
+    );
 
         const maxValue = Math.ceil(Math.max(...allValues) / 10) * 10;
 
-        const formattedData = data.flatMap(item =>
+        const formattedData: [string, string, number | string][] = data.flatMap((item: ForecastData) =>
             timeSlots.map((timeSlot, index) => {
                 const value = item[timeSlot];
-                return [item.providerDate, timeSlots[index], value || '-'];
+                return [item.providerDate, timeSlots[index], value || '-'] as [string, string, number | string];
             })
         );
-
-       
 
         const option: EChartsOption = {
             tooltip: {
