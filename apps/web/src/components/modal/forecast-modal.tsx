@@ -4,7 +4,6 @@ import { format } from "date-fns";
 import { useEffect, useState } from "react";
 import { useMediaQuery } from "usehooks-ts";
 import { Close } from "../icons/close";
-import DateRangeSlider from "../slider/date-range-slider";
 import HeatmapChart from "../charts/heatmapChart";
 
 interface Props {
@@ -29,12 +28,6 @@ export const ForecastModal = ({
   const [endDate, setEndDate] = useState<string>(propEndDate);
   const [dateIndex, setDateIndex] = useState(0);
   const [activeTab, setActiveTab] = useState("dates");
-
-  const handleOnSlideDateRange = ({ startDate, endDate }: { startDate: string | Date; endDate: string | Date }) => {
-    setStartDate(formatDate(startDate));
-    setEndDate(formatDate(endDate));
-    setDateIndex(0);
-  }
 
   useEffect(() => {
     setStartDate(formatDate(propStartDate));
@@ -124,12 +117,6 @@ export const ForecastModal = ({
                   Next &gt;
                 </button>
               </div>
-              <DateRangeSlider
-                min={0}
-                max={course?.furthestDayToBook ?? 0}
-                step={1}
-                onSlideDateRange={handleOnSlideDateRange}
-              />
             </div>
           {activeTab === "dates" ?
             <div id="forecasting-table" className="mt-4 overflow-x-auto">
