@@ -5,12 +5,12 @@ export const registerSchema = z
     firstName: z
     .string()
     .min(1, { message: "First name is required" })
-    .regex(/^[A-Za-zÀ-ÿ'’ ]+$/, { message: "Name can only contain letters and single quotes" })
+    .regex(/^[A-Za-zÀ-ÿ'’ ]+$/, { message: "First name can only contain letters and single quotes" })
   .transform((name) => name.trim().replace(/\s{2,}/g, ' ')),
   lastName: z
     .string()
     .min(1, { message: "Last name is required" })
-    .regex(/^[A-Za-zÀ-ÿ'’ ]+$/, { message: "Name can only contain letters and single quotes" })
+    .regex(/^[A-Za-zÀ-ÿ'’ ]+$/, { message: "Last name can only contain letters and single quotes" })
     .transform((name) => name.trim().replace(/\s{2,}/g, ' ')),
     username: z
       .string()

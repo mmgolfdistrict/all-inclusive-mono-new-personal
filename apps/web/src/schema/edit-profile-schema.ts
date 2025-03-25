@@ -14,7 +14,7 @@ import { z } from "zod";
 export const editProfileSchema = z.object({
   name: z
   .string()
-  .min(2, {
+  .min(6, {
     message: "Name is required (should be at least 6 characters)",
   })
   .max(30, { message: "Name should be at most 30 characters" })

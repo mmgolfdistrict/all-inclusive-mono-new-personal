@@ -238,7 +238,7 @@ export const EditProfileForm = () => {
     []
   );
   useEffect(() => {
-    if (!isLoading && userData) {      
+    if (!isLoading && userData) {
       setValue("name", userData?.name ?? "");
       setValue("email", userData?.email ?? "");
       setValue(
@@ -354,8 +354,6 @@ export const EditProfileForm = () => {
       setIsSubmitting(false);
       return;
     }
-console.log("userData?.name",userData?.name);
-
     try {
       const prevData = {
         name: userData?.name ?? "",
