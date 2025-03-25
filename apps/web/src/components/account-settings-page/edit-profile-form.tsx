@@ -354,7 +354,6 @@ export const EditProfileForm = () => {
       setIsSubmitting(false);
       return;
     }
-
     try {
       const prevData = {
         name: userData?.name ?? "",
