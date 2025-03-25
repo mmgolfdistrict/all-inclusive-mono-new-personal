@@ -8,12 +8,11 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Avatar } from "../../avatar";
 import { FilledButton } from "../../buttons/filled-button";
-import { ChevronUp } from "../../icons/chevron-up";
 import { Counteroffer } from "./../counteroffer";
 import { CounterofferSuccess } from "./../counteroffer-success";
 import { SkeletonRow } from "./../skeleton-row";
 import { ViewOffer } from "./../view-offer";
-import { OfferType } from "../offers-received";
+import { type OfferType } from "../offers-received";
 
 export type SelectedOffer = { expirationDate: string } | undefined;
 
@@ -27,9 +26,9 @@ export const MobileOffersReceived = () => {
   const [selectedOffer, setSelectedOffer] = useState<OfferType | undefined>(
     undefined
   );
-  const [sortDetails, setSortDetails] = useState<SortDirectionType>(undefined);
-  const [sortPrice, setSortPrice] = useState<SortDirectionType>(undefined);
-  const [sortExpiresIn, setSortExpiresIn] =
+  const [sortDetails, _setSortDetails] = useState<SortDirectionType>(undefined);
+  const [sortPrice, _setSortPrice] = useState<SortDirectionType>(undefined);
+  const [sortExpiresIn, _setSortExpiresIn] =
     useState<SortDirectionType>(undefined);
   const [isCounterofferSuccessOpen, setIsCounterofferSuccessOpen] =
     useState<boolean>(false);
@@ -96,51 +95,6 @@ export const MobileOffersReceived = () => {
     return data;
   }, [data, sortDetails, sortPrice, sortExpiresIn]);
 
-  const sortDetailsFn = () => {
-    if (!sortedData) return;
-    if (sortPrice !== undefined) setSortPrice(undefined);
-    if (sortExpiresIn !== undefined) setSortExpiresIn(undefined);
-    if (sortDetails === undefined) {
-      setSortDetails("asc");
-    }
-    if (sortDetails === "asc") {
-      setSortDetails("desc");
-    }
-    if (sortDetails === "desc") {
-      setSortDetails(undefined);
-    }
-  };
-
-  const sortPriceFn = () => {
-    if (!sortedData) return;
-    if (sortExpiresIn !== undefined) setSortExpiresIn(undefined);
-    if (sortDetails !== undefined) setSortDetails(undefined);
-    if (sortPrice === undefined) {
-      setSortPrice("asc");
-    }
-    if (sortPrice === "asc") {
-      setSortPrice("desc");
-    }
-    if (sortPrice === "desc") {
-      setSortPrice(undefined);
-    }
-  };
-
-  const sortExpiresInFn = () => {
-    if (!sortedData) return;
-    if (sortDetails !== undefined) setSortDetails(undefined);
-    if (sortPrice !== undefined) setSortPrice(undefined);
-    if (sortExpiresIn === undefined) {
-      setSortExpiresIn("asc");
-    }
-    if (sortExpiresIn === "asc") {
-      setSortExpiresIn("desc");
-    }
-    if (sortExpiresIn === "desc") {
-      setSortExpiresIn(undefined);
-    }
-  };
-
   if (isError && error) {
     return (
       <div className="text-center h-[200px] flex items-center justify-center">
@@ -164,60 +118,31 @@ export const MobileOffersReceived = () => {
 
   return (
     <>
-      <div className="relative flex max-w-full flex-col gap-4  overflow-auto pb-2  text-[14px] md:pb-3">
-        <table className="w-full table-auto  overflow-auto">
-          <thead className="top-0 table-header-group">
-            <tr className="text-left">
-              <TableHeader
-                text="Details"
-                sortDirection={sortDetails}
-                className="cursor-pointer"
-                sortFn={sortDetailsFn}
-              />
-              <TableHeader text="Offered By" />
-              <TableHeader
-                text="Offer Price"
-                sortDirection={sortPrice}
-                className="cursor-pointer"
-                sortFn={sortPriceFn}
-              />
-              <TableHeader text="Golfers" />
-              <TableHeader
-                text="Expires In"
-                sortDirection={sortExpiresIn}
-                className="cursor-pointer"
-                sortFn={sortExpiresInFn}
-              />
-              <TableHeader text="" className="text-right" />
-            </tr>
-          </thead>
-          <tbody className={`max-h-[300px] w-full flex-col overflow-scroll`}>
-            {isLoading
-              ? Array(3)
-                  .fill(null)
-                  .map((_, idx) => <SkeletonRow key={idx} />)
-              : sortedData?.map((i, idx) => (
-                  <TableRow
-                    course={i.offer.details.courseName!}
-                    date={i.offer.details.teeTimeDate!}
-                    iconSrc={i.offer.details.courseImage}
-                    key={idx}
-                    offerPrice={i.offer.amountOffered}
-                    golfers={i.offer.golfers?.toString() ?? "0"}
-                    offeredBy={
-                      i.offer.offeredBy.handle ?? i.offer.offeredBy.name ?? ""
-                    }
-                    offeredById={i.offer.offeredBy.userId!}
-                    offeredByImage={i.offer.offeredBy.image ?? ""}
-                    expirationDate={i.offer.expiresAt}
-                    courseId={i.offer.courseId}
-                    teeTimeId={i.offer.details.teeTimeId!}
-                    timezoneCorrection={course?.timezoneCorrection}
-                    openViewOffer={() => openViewOffer(i)}
-                  />
-                ))}
-          </tbody>
-        </table>
+      <div className="relative flex max-w-full flex-col overflow-auto text-[14px] m-2 px-2">
+        {isLoading
+          ? Array(3)
+            .fill(null)
+            .map((_, idx) => <SkeletonRow key={idx} />)
+          : sortedData?.map((i, idx) => (
+            <TableCard
+              course={i.offer.details.courseName!}
+              date={i.offer.details.teeTimeDate!}
+              iconSrc={i.offer.details.courseImage}
+              key={idx}
+              offerPrice={i.offer.amountOffered}
+              golfers={i.offer.golfers?.toString() ?? "0"}
+              offeredBy={
+                i.offer.offeredBy.handle ?? i.offer.offeredBy.name ?? ""
+              }
+              offeredById={i.offer.offeredBy.userId!}
+              offeredByImage={i.offer.offeredBy.image ?? ""}
+              expirationDate={i.offer.expiresAt}
+              courseId={i.offer.courseId}
+              teeTimeId={i.offer.details.teeTimeId!}
+              timezoneCorrection={course?.timezoneCorrection}
+              openViewOffer={() => openViewOffer(i)}
+            />
+          ))}
       </div>
       <ViewOffer
         isViewOfferOpen={isViewOfferOpen}
@@ -240,44 +165,7 @@ export const MobileOffersReceived = () => {
   );
 };
 
-const TableHeader = ({
-  text,
-  className,
-  sortFn,
-  sortDirection,
-}: {
-  text: string;
-  className?: string;
-  sortFn?: () => void;
-  sortDirection?: SortDirectionType;
-}) => {
-  return (
-    <th
-      className={`whitespace-nowrap px-4 font-semibold select-none ${
-        className ?? ""
-      }`}
-      onClick={() => (sortFn ? sortFn() : null)}
-      data-testid="table-sort-id"
-    >
-      <div className="flex items-center gap-1">
-        {text}
-        {sortFn ? (
-          <ChevronUp
-            fill={`${sortDirection === "asc" ? "#353B3F" : "#D7DCDE"}`}
-          />
-        ) : null}
-        {sortFn ? (
-          <ChevronUp
-            fill={`${sortDirection === "desc" ? "#353B3F" : "#D7DCDE"}`}
-            className={"rotate-180"}
-          />
-        ) : null}
-      </div>
-    </th>
-  );
-};
-
-const TableRow = ({
+const TableCard = ({
   iconSrc,
   date,
   course,
@@ -312,70 +200,100 @@ const TableRow = ({
     ).toString(),
     intervalMs: 60000,
   });
-
   return (
-    <tr className="w-full border-b border-stroke text-primary-gray">
-      <td className="gap-2 px-4 py-3">
-        <Link
-          href={`/${courseId}/${teeTimeId}`}
-          className="flex items-center gap-2"
-          data-testid="course-tee-time-id"
-          data-test={teeTimeId}
-          data-qa={courseId}
-        >
-          <Avatar src={iconSrc} />
-          <div className="flex flex-col">
-            <div className="whitespace-nowrap underline text-secondary-black">
-              {course}
-            </div>
-            <div className="text-primary-gray">
-              {formatTime(date, false, timezoneCorrection)}
-            </div>
-          </div>
-        </Link>
-      </td>
-      <td className="gap-2 px-4 py-3">
-        <Link
-          href={`/${courseId}/profile/${offeredById}`}
-          target="_blank"
-          rel="noopenner noreferrer"
-          className="flex items-center gap-2 underline"
-          data-testid="offered-by-id"
-          data-test={offeredById}
-          data-qa={courseId}
-        >
-          <Avatar src={offeredByImage} />
-          <div className="text-primary-gray">{offeredBy}</div>
-        </Link>
-      </td>
-      <td className="whitespace-nowrap px-4 py-3">
-        {formatMoney(offerPrice)}
-        <span className="font-[300]">/golfer</span>
-      </td>
-      <td className="whitespace-nowrap px-4 py-3">
-        {golfers} {parseInt(golfers) === 1 ? "golfer" : "golfers"}
-      </td>
-      <td className="flex items-center gap-1 whitespace-nowrap px-4 pb-3 pt-6">
-        {count <= 0 ? (
-          <div className="text-primary-gray">Expired</div>
-        ) : (
-          <div className="flex gap-1">
-            <div className="text-primary-gray">{timeTillEnd.days}d</div>
-            <div className="text-primary-gray">{timeTillEnd.hours}h</div>
-            <div className="text-primary-gray">{timeTillEnd.minutes}m</div>
-          </div>
-        )}
-      </td>
-      <td className="whitespace-nowrap px-4 py-3">
-        <div className="flex  justify-end gap-2">
-          <FilledButton
-            onClick={openViewOffer}
-            data-testid="view-offer-button-id"
-          >
-            View Offer
-          </FilledButton>
-        </div>
-      </td>
-    </tr>
+    <div className="card w-full border border-gray-300 rounded-lg shadow-md my-2 py-2">
+      <div className="card-body">
+        <table className="w-full text-sm text-left text-gray-500">
+          <tbody className="text-xs text-gray-700 bg-gray-50">
+            <tr className="border-b border-gray-300">
+              <th scope="col" className="px-2 py-1">Course</th>
+              <td>
+                <div className="items-center">
+                  <Link
+                    href={`/${courseId}/${teeTimeId}`}
+                    className="flex items-center gap-2"
+                    data-testid="course-tee-time-id"
+                    data-test={teeTimeId}
+                    data-qa={courseId}
+                  >
+                    <Avatar src={iconSrc} />
+                    <div className="flex flex-col">
+                      <div className="whitespace-nowrap text-secondary-black">
+                        {course}
+                      </div>
+                    </div>
+                  </Link>
+                </div>
+              </td>
+            </tr>
+            <tr className="border-b border-gray-300">
+              <th scope="col" className="px-2 py-1">Tee Time</th>
+              <td>{formatTime(date, false, timezoneCorrection)}</td>
+            </tr>
+            <tr className="border-b border-gray-300">
+              <th scope="col" className="px-2 py-1">Offer By</th>
+              <td>
+                <Link
+                  href={`/${courseId}/profile/${offeredById}`}
+                  target="_blank"
+                  rel="noopenner noreferrer"
+                  className="flex items-center gap-2 underline"
+                  data-testid="offered-by-id"
+                  data-test={offeredById}
+                  data-qa={courseId}
+                >
+                  <Avatar src={offeredByImage} />
+                  <div className="text-primary-gray">{offeredBy}</div>
+                </Link>
+              </td>
+            </tr>
+            <tr className="border-b border-gray-300">
+              <th className="px-2 py-1">Offer Price</th>
+              <td>
+                <div className="flex items-center gap-1 whitespace-nowrap capitalize">
+                  {formatMoney(offerPrice)}
+                  <span className="font-[300]">/golfer</span>
+                </div>
+              </td>
+            </tr>
+            <tr className="border-b border-gray-300">
+              <th className="px-2 py-1">Golfers</th>
+              <td>
+                <div className="flex items-center gap-1 whitespace-nowrap">
+                  {golfers} {parseInt(golfers) === 1 ? "golfer" : "golfers"}
+                </div>
+              </td>
+            </tr>
+            <tr className="border-b border-gray-300">
+              <th scope="col" className="px-2 py-1">Expires In</th>
+              <td>
+                {count <= 0 ? (
+                  <div className="text-primary-gray">Expired</div>
+                ) : (
+                  <div className="flex gap-1">
+                    <div className="text-primary-gray">{timeTillEnd.days}d</div>
+                    <div className="text-primary-gray">{timeTillEnd.hours}h</div>
+                    <div className="text-primary-gray">{timeTillEnd.minutes}m</div>
+                  </div>
+                )}
+              </td>
+            </tr>
+            <tr>
+              <td className="whitespace-nowrap px-2 py-2" colSpan={2}>
+                <div className="col-span-3 flex w-full justify-center">
+                  <FilledButton
+                    onClick={openViewOffer}
+                    data-testid="view-offer-button-id"
+                    className="w-full"
+                  >
+                    View Offer
+                  </FilledButton>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 };

@@ -11,7 +11,7 @@ import { OutlineButton } from "../../buttons/outline-button";
 import { CancelOffer } from "./../cancel-offer";
 import { ManageOffer } from "./../manage-offer";
 import { SkeletonRow } from "./../skeleton-row";
-import { OfferSentType } from "../offers-sent";
+import { type OfferSentType } from "../offers-sent";
 
 export const OffersSent = () => {
   const { course } = useCourseContext();
@@ -63,44 +63,30 @@ export const OffersSent = () => {
 
   return (
     <>
-      <div className="relative flex max-w-full flex-col gap-4  overflow-auto pb-2  text-[14px] md:pb-3">
-        <table className="w-full table-auto  overflow-auto">
-          <thead className="top-0 table-header-group">
-            <tr className="text-left">
-              <TableHeader text="Details" />
-              <TableHeader text="Owned By" />
-              <TableHeader text="Offer Price" />
-              <TableHeader text="Golfers" />
-              <TableHeader text="Status" />
-              <TableHeader text="" className="text-right" />
-            </tr>
-          </thead>
-          <tbody className={`max-h-[300px] w-full flex-col overflow-scroll`}>
-            {isLoading
-              ? Array(3)
-                  .fill(null)
-                  .map((_, idx) => <SkeletonRow key={idx} />)
-              : data.map((i, idx) => (
-                  <TableRow
-                    course={i.offer.details.courseName}
-                    date={i.offer.details.teeTimeDate!}
-                    iconSrc={i.offer.details.courseImage}
-                    key={idx}
-                    offerPrice={i.offer.offerAmount ?? 0}
-                    golfers={Number(i.offer.golfers) ?? 0}
-                    ownedBy={i.offer.ownedBy.name ?? ""}
-                    ownedByImage={i.offer.ownedBy.image ?? ""}
-                    ownedById={i.offer.ownedBy.userId ?? ""}
-                    status={i.offer.status ?? ""}
-                    courseId={i.offer.courseId}
-                    teeTimeId={i.offer.details.teeTimeId ?? ""}
-                    timezoneCorrection={course?.timezoneCorrection}
-                    openCancelOffer={() => openCancelOffer(i)}
-                    openManageOffer={() => openManageOffer(i)}
-                  />
-                ))}
-          </tbody>
-        </table>
+      <div className="relative flex max-w-full flex-col overflow-auto text-[14px] m-2 px-2">
+        {isLoading
+          ? Array(3)
+            .fill(null)
+            .map((_, idx) => <SkeletonRow key={idx} />)
+          : data.map((i, idx) => (
+            <TableCard
+              course={i.offer.details.courseName}
+              date={i.offer.details.teeTimeDate!}
+              iconSrc={i.offer.details.courseImage}
+              key={idx}
+              offerPrice={i.offer.offerAmount ?? 0}
+              golfers={Number(i.offer.golfers) ?? 0}
+              ownedBy={i.offer.ownedBy.name ?? ""}
+              ownedByImage={i.offer.ownedBy.image ?? ""}
+              ownedById={i.offer.ownedBy.userId ?? ""}
+              status={i.offer.status ?? ""}
+              courseId={i.offer.courseId}
+              teeTimeId={i.offer.details.teeTimeId ?? ""}
+              timezoneCorrection={course?.timezoneCorrection}
+              openCancelOffer={() => openCancelOffer(i)}
+              openManageOffer={() => openManageOffer(i)}
+            />
+          ))}
       </div>
       <CancelOffer
         isCancelOfferOpen={isCancelOfferOpen}
@@ -117,21 +103,7 @@ export const OffersSent = () => {
   );
 };
 
-const TableHeader = ({
-  text,
-  className,
-}: {
-  text: string;
-  className?: string;
-}) => {
-  return (
-    <th className={`whitespace-nowrap px-4 font-semibold ${className ?? ""}`}>
-      {text}
-    </th>
-  );
-};
-
-const TableRow = ({
+const TableCard = ({
   iconSrc,
   date,
   course,
@@ -163,69 +135,98 @@ const TableRow = ({
   openManageOffer: () => void;
 }) => {
   return (
-    <tr className="w-full border-b border-stroke text-primary-gray">
-      <td className="gap-2 px-4 py-3">
-        <Link
-          href={`/${courseId}/${teeTimeId}`}
-          className="flex items-center gap-2"
-          data-testid="course-tee-time-id"
-          data-test={teeTimeId}
-          data-qa={courseId}
-        >
-          <Avatar src={iconSrc} />
-          <div className="flex flex-col">
-            <div className="whitespace-nowrap underline text-secondary-black">
-              {course}
-            </div>
-            <div className="text-primary-gray">
-              {formatTime(date, false, timezoneCorrection)}
-            </div>
-          </div>
-        </Link>
-      </td>
-      <td className="gap-2 px-4 py-3">
-        <Link
-          href={`/${courseId}/profile/${ownedById}`}
-          target="_blank"
-          rel="noopenner noreferrer"
-          className="flex items-center gap-2 underline"
-          data-testid="owned-by-id"
-          data-test={ownedById}
-          data-qa={courseId}
-        >
-          <Avatar src={ownedByImage} />
-          <div className="text-primary-gray">{ownedBy}</div>
-        </Link>
-      </td>
-      <td className="whitespace-nowrap px-4 py-3">
-        {formatMoney(offerPrice)}
-        <span className="font-[300]">/golfer</span>
-      </td>
-      <td className="whitespace-nowrap px-4 py-3">
-        {golfers} {golfers === 1 ? "golfer" : "golfers"}
-      </td>
-      <td className="flex items-center capitalize gap-1 whitespace-nowrap px-4 pb-3 pt-6">
-        {status.toLowerCase()}
-      </td>
-      <td className="whitespace-nowrap px-4 py-3">
-        {status === "PENDING" ? (
-          <div className="flex  justify-end gap-2">
-            <OutlineButton
-              onClick={openManageOffer}
-              data-testid="manage-button-id"
-            >
-              Manage
-            </OutlineButton>
+    <div className="card w-full border border-gray-300 rounded-lg shadow-md my-2 py-2">
+      <div className="card-body">
+        <table className="w-full text-sm text-left text-gray-500">
+          <tbody className="text-xs text-gray-700 bg-gray-50">
+            <tr className="border-b border-gray-300">
+              <th scope="col" className="px-2 py-1">Course</th>
+              <td>
+                <Link
+                  href={`/${courseId}/${teeTimeId}`}
+                  className="flex items-center gap-2"
+                  data-testid="course-tee-time-id"
+                  data-test={teeTimeId}
+                  data-qa={courseId}
+                >
+                  <Avatar src={iconSrc} />
+                  <div className="flex flex-col">
+                    <div className="whitespace-nowrap underline text-secondary-black">
+                      {course}
+                    </div>
+                    <div className="text-primary-gray">
+                      {formatTime(date, false, timezoneCorrection)}
+                    </div>
+                  </div>
+                </Link>
+              </td>
+            </tr>
+            <tr className="border-b border-gray-300">
+              <th scope="col" className="px-2 py-1">Owned By</th>
+              <td>
+                <Link
+                  href={`/${courseId}/profile/${ownedById}`}
+                  target="_blank"
+                  rel="noopenner noreferrer"
+                  className="flex items-center gap-2 underline"
+                  data-testid="owned-by-id"
+                  data-test={ownedById}
+                  data-qa={courseId}
+                >
+                  <Avatar src={ownedByImage} />
+                  <div className="text-primary-gray">{ownedBy}</div>
+                </Link>
+              </td>
+            </tr>
+            <tr className="border-b border-gray-300">
+              <th className="px-2 py-1">Offer Price</th>
+              <td>
+                <div className="flex items-center gap-1 whitespace-nowrap capitalize">
+                  {formatMoney(offerPrice)}
+                  <span className="font-[300]">/golfer</span>
+                </div>
+              </td>
+            </tr>
+            <tr className="border-b border-gray-300">
+              <th scope="col" className="px-2 py-1">Golfers</th>
+              <td>
+                <div className="whitespace-nowrap">
+                  {golfers} {golfers === 1 ? "golfer" : "golfers"}
+                </div>
+              </td>
+            </tr>
+            <tr className="border-b border-gray-300">
+              <th className="px-2 py-1">Status</th>
+              <td>
+                <div className="flex items-center gap-1 whitespace-nowrap capitalize">
+                  {status.toLowerCase()}
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td className="whitespace-nowrap px-2 py-2" colSpan={2}>
+                {status === "PENDING" ? (
+                  <div className="flex  justify-center gap-2">
+                    <OutlineButton
+                      onClick={openManageOffer}
+                      data-testid="manage-button-id"
+                    >
+                      Manage
+                    </OutlineButton>
 
-            <FilledButton
-              onClick={openCancelOffer}
-              data-testid="cancel-offer-button-id"
-            >
-              Cancel Offer
-            </FilledButton>
-          </div>
-        ) : null}
-      </td>
-    </tr>
+                    <FilledButton
+                      onClick={openCancelOffer}
+                      data-testid="cancel-offer-button-id"
+                    >
+                      Cancel Offer
+                    </FilledButton>
+                  </div>
+                ) : null}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 };

@@ -31,31 +31,32 @@ const MobileInvitedTeeTime = () => {
   }
 
   return (
-    <>
-      {!isLoading && (
-        <div className="relative flex max-w-full flex-col gap-4  overflow-auto pb-2  text-[14px] md:pb-3">
-          <table className="w-full table-auto  overflow-auto">
-            <thead className="top-0 table-header-group">
-              <tr className="text-left">
-                <TableHeader text="Course Name" />
-                <TableHeader text="Tee Time Schedule" />
-              </tr>
-            </thead>
-            <tbody className={`max-h-[300px] w-full flex-col overflow-scroll`}>
-              {data?.map((item, index) => {
-                return (
-                  <tr
-                    key={index}
-                    className="w-full border-b border-stroke text-primary-gray"
-                  >
-                    <td className="flex items-center gap-2 px-4 py-3">
-                      <Avatar src={course?.logo} />
-                      <div className="whitespace-nowrap underline text-secondary-black">
-                        {item?.courseName}
+    <div className="relative flex max-w-full flex-col overflow-auto text-[14px] m-2 px-1">
+      {!isLoading && data?.map((item, index) => {
+        return (
+          <div
+            className="card w-full border border-gray-300 rounded-lg shadow-md my-2 py-2"
+            key={index}
+          >
+            <div className="card-body">
+              <table className="w-full text-sm text-left text-gray-500">
+                <tbody className="text-xs text-gray-700 bg-gray-50">
+                  <tr className="border-b border-gray-300">
+                    <th scope="col" className="px-2 py-1">Course</th>
+                    <td>
+                      <div className="flex items-center">
+                        <Avatar src={course?.logo} />
+                        <div className="flex flex-col">
+                          <div className="whitespace-nowrap text-secondary-black">
+                            {item?.courseName}
+                          </div>
+                        </div>
                       </div>
                     </td>
-
-                    <td className="whitespace-nowrap px-4 py-3 unmask-players">
+                  </tr>
+                  <tr>
+                    <th className="px-2 py-1">Tee Time</th>
+                    <td className="whitespace-nowrap text-secondary-black">
                       {formatTime(
                         item?.date ?? "",
                         false,
@@ -63,27 +64,14 @@ const MobileInvitedTeeTime = () => {
                       )}
                     </td>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </>
-  );
-};
+                </tbody>
+              </table>
+            </div>
+          </div>
 
-const TableHeader = ({
-  text,
-  className,
-}: {
-  text: string;
-  className?: string;
-}) => {
-  return (
-    <th className={`whitespace-nowrap px-4 font-semibold ${className ?? ""}`}>
-      {text}
-    </th>
+        );
+      })}
+    </div>
   );
 };
 

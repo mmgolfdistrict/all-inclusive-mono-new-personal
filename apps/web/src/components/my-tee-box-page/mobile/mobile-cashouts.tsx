@@ -3,7 +3,6 @@
 import { useCourseContext } from "~/contexts/CourseContext";
 import { api } from "~/utils/api";
 import { formatMoney, formatTime } from "~/utils/formatters";
-import type { InviteFriend } from "~/utils/types";
 import { useMemo, useState } from "react";
 import { OutlineButton } from "../../buttons/outline-button";
 import { SkeletonRow } from "../skeleton-row";
@@ -11,7 +10,7 @@ import { TransactionDetails } from "../transaction-details";
 import { useUserContext } from "~/contexts/UserContext";
 import pdfMake from "pdfmake/build/pdfmake";
 import pdfFonts from "pdfmake/build/vfs_fonts";
-import { TxnHistoryType } from "../cashouts";
+import { type TxnHistoryType } from "../cashouts";
 
 pdfMake.vfs = pdfFonts
 
@@ -68,7 +67,7 @@ export const MobileCashouts = () => {
       </div>
     );
   }
-  
+
   const downloadCashoutReceipt = () => {
     const amount = (selectedReceipt?.amount || 0) / 100;
     const datetime = selectedReceipt?.createdDateTime || '';
@@ -117,7 +116,7 @@ export const MobileCashouts = () => {
         }
       }
     };
-  
+
     pdfMake.createPdf(docDefinition).download("cashout-receipt.pdf");
   };
 
@@ -133,21 +132,21 @@ export const MobileCashouts = () => {
         <tbody className={`max-h-[300px] w-full flex-col overflow-scroll`}>
           {isLoading
             ? Array(3)
-                .fill(null)
-                .map((_, idx) => <SkeletonRow key={idx} />)
+              .fill(null)
+              .map((_, idx) => <SkeletonRow key={idx} />)
             : txnHistory?.map((i, idx) => (
-                <TableRow
-                  key={idx}
-                  amount={formatMoney((i?.amount ?? 0) / 100)}
-                  status={i.externalStatus ?? ""}
-                  time={formatTime(
-                    i.createdDateTime ?? "",
-                    false,
-                    course?.timezoneCorrection
-                  )}
-                  openReceipt={() => openReceipt(i)}
-                />
-              ))}
+              <TableRow
+                key={idx}
+                amount={formatMoney((i?.amount ?? 0) / 100)}
+                status={i.externalStatus ?? ""}
+                time={formatTime(
+                  i.createdDateTime ?? "",
+                  false,
+                  course?.timezoneCorrection
+                )}
+                openReceipt={() => openReceipt(i)}
+              />
+            ))}
         </tbody>
       </table>
 
