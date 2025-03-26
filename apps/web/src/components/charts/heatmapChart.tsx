@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import * as echarts from 'echarts';
 import type { EChartsOption } from 'echarts';
 import { useMediaQuery } from 'usehooks-ts';
+import dayjs from 'dayjs';
 
 interface ForecastData {
     courseId: string;
@@ -17,9 +18,15 @@ interface HeatmapChartProps {
     data: ForecastData[];
     fullData: ForecastData[];
 }
+const dayMonthDate = (date: string): string => {
+    const cleanTimeString = !date.includes("T")
+      ? date.replace(" ", "T") + "Z"
+      : date;
+    return dayjs.utc(cleanTimeString).format("ddd MMM D");
+  };
 
 const HeatmapChart = ({ data ,fullData }: HeatmapChartProps) => {
-    const isMobile = useMediaQuery("(max-width: 768px)");
+    const isMobile = useMediaQuery("(max-width: 768px)");  
 
     useEffect(() => {
         const chartDom = document.getElementById('heatmapChart')!;
@@ -29,7 +36,7 @@ const HeatmapChart = ({ data ,fullData }: HeatmapChartProps) => {
             'EarlyMorning', 'MidMorning', 'EarlyAfternoon', 'Afternoon', 'Twilight'
         ];
 
-        const days = data.map(item => item.providerDate);
+        const days = data.map(item => dayMonthDate(item.providerDate));
 
         const allValues: number[] = fullData.flatMap((item: ForecastData) =>
         timeSlots.map((timeSlot: string) => {
@@ -43,7 +50,7 @@ const HeatmapChart = ({ data ,fullData }: HeatmapChartProps) => {
         const formattedData: [string, string, number | string][] = data.flatMap((item: ForecastData) =>
             timeSlots.map((timeSlot, index) => {
                 const value = item[timeSlot];
-                return [item.providerDate, timeSlots[index], value || '-'] as [string, string, number | string];
+                return [dayMonthDate(item.providerDate), timeSlots[index], value || '-'] as [string, string, number | string];
             })
         );
 
@@ -54,8 +61,8 @@ const HeatmapChart = ({ data ,fullData }: HeatmapChartProps) => {
             grid: {
                 height: isMobile ? '58%' :'48%' ,
                 width: isMobile ? "50%" : '75%',
-                top: '15%',
-                left:isMobile ? "28%" : '13%'
+                top: '10%',
+                left:isMobile ? "32%" : '13%'
             },
             xAxis: {
                 type: 'category',
@@ -71,14 +78,6 @@ const HeatmapChart = ({ data ,fullData }: HeatmapChartProps) => {
                     },
                     margin: 15,
                 },
-                name: 'Date',
-                nameLocation: 'end',
-                nameTextStyle: {
-                    fontSize: 16,
-                    fontWeight: 'bold',
-                    color: '#333'
-                },
-                position: 'bottom'
             },
             yAxis: {
                 type: 'category',
@@ -86,14 +85,6 @@ const HeatmapChart = ({ data ,fullData }: HeatmapChartProps) => {
                 splitArea: {
                     show: true
                 },
-                name: 'Time Slot',
-                nameLocation: 'end',
-                nameTextStyle: {
-                    fontSize: 16,
-                    fontWeight: 'bold',
-                    color: '#333'
-                },
-                position: 'left',
                 offset: 10
             },
             visualMap: isMobile ? {
@@ -103,18 +94,26 @@ const HeatmapChart = ({ data ,fullData }: HeatmapChartProps) => {
                 orient: 'horizontal',
                 left: '20%',
                 color: ['#0B311A', '#F7FcF5'],
-                bottom: '-3%',
-                width:"70%"
+                bottom: '2%',
+                width:"70%",
+                text: [
+                    `$${maxValue}` ,
+                    `$0`
+                ],
             } : {
                 min: 0,
                 max: maxValue,
                 calculable: true,
                 orient: 'vertical',
                 right: '0',
-                top: "5%",
+                top: "3%",
                 color: ['#0B311A', '#F7FcF5'],
-                itemHeight: 250,
-                height: '70%',
+                itemHeight: 200,
+                height: '60%',
+                text: [
+                    `$${maxValue}` ,
+                    `$0`
+                ],
             },
             series: [
                 {
@@ -122,7 +121,15 @@ const HeatmapChart = ({ data ,fullData }: HeatmapChartProps) => {
                     type: 'heatmap',
                     data: formattedData,
                     label: {
-                        show: true
+                        show: true,
+                        formatter: (params) => {
+                            const value = params?.value?.[2];  
+                            if (value != null && value !== '-') {
+                                return `$${value}`;
+                            } else {
+                                return '-';
+                            }
+                        },
                     },
                     emphasis: {
                         itemStyle: {
