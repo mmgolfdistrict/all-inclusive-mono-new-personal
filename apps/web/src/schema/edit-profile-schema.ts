@@ -13,13 +13,13 @@ import { z } from "zod";
 
 export const editProfileSchema = z.object({
   name: z
-      .string()
-      .min(6, {
-        message: "Name is required (should be in at least 6 characters)",
-      })
-      .max(30, { message: "Name should be in at most 30 characters" })
-      .regex(/^[A-Za-zÀ-ÿ' ]+$/, { message: "Name can only contain letters, spaces, and single quotes." })
-      .transform((name) => name.trim().replace(/\s{2,}/g, ' ')),
+  .string()
+  .min(6, {
+    message: "Name is required (should be at least 6 characters)",
+  })
+  .max(30, { message: "Name should be at most 30 characters" })
+  .regex(/^[A-Za-zÀ-ÿ'’ ]+$/, { message: "Name can only contain letters and single quotes" })
+  .transform((name) => name.trim().replace(/\s{2,}/g, ' ')),
   handle: z
     .string()
     .min(6, { message: "Username should be at least 6 characters long" })

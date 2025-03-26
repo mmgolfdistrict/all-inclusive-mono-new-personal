@@ -17,5 +17,10 @@
     "next/router.d.ts",
     "next/dist/client/router.d.ts"
   ],
-  "cSpell.words": ["emailverification"]
+  "cSpell.words": [
+    "emailverification"
+  ],
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  }
 }

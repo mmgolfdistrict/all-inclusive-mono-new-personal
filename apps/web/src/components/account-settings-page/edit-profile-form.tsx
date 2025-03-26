@@ -152,7 +152,7 @@ export const EditProfileForm = () => {
   useEffect(function getCurrentCountryCode() {
     const phoneNumber = getValues("phoneNumber");
     const phoneNumberCountryCode = getValues("phoneNumberCountryCode");
-    if (phoneNumber) {
+    if (phoneNumber?.length === 10 && phoneNumberCountryCode) {
       const countryCode = extractCountryISO2(`${phoneNumberCountryCode}${phoneNumber}`);
       setCurrentCountry(countryCode);
     }
@@ -354,7 +354,6 @@ export const EditProfileForm = () => {
       setIsSubmitting(false);
       return;
     }
-
     try {
       const prevData = {
         name: userData?.name ?? "",
