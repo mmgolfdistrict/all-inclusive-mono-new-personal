@@ -66,6 +66,8 @@ import * as walkthrough from "./walkthrough";
 import * as walkthroughSection from "./walkthroughSection";
 import * as withdrawals from "./withdrawals";
 import * as bookingRefund from './bookingRefund';
+import * as courseMerchandise from "./courseMerchandise";
+import * as bookingMerchandise from "./bookingMerchandise"
 
 export const schema = {
   ...accounts,
@@ -135,5 +137,7 @@ export const schema = {
   ...groupBookings,
   ...walkthrough,
   ...walkthroughSection,
-  ...bookingRefund
+  ...bookingRefund,
+  ...courseMerchandise,
+  ...bookingMerchandise,
 };
