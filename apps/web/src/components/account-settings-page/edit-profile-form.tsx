@@ -245,7 +245,7 @@ export const EditProfileForm = () => {
       setValue("email", userData?.email ?? "");
       setValue(
         "phoneNumberCountryCode",
-        userData?.phoneNumberCountryCode ?? null
+        userData?.phoneNumberCountryCode ?? 1
       );
 
       setValue("phoneNumber", userData?.phoneNumber ?? "");
