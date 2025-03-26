@@ -165,6 +165,7 @@ export class UserService {
       };
     }
 
+   
     // if (containsBadWords(data.firstName, this.filter)) {
     //   this.logger.warn(`Invalid first name: ${data.firstName}`);
     //   throw new Error("Invalid first name due to profanity filter");
@@ -388,16 +389,6 @@ export class UserService {
 
     if (!bookingSlot) {
       throw new Error("Booking slot not available");
-    }
-
-    // Check if an invite with the same email already exists for the same teeTimeId
-    const [existingEmailInvite] = await this.database
-      .select({ id: invitedTeeTime.id })
-      .from(invitedTeeTime)
-      .where(and(eq(invitedTeeTime.email, emailOrPhoneNumber), eq(invitedTeeTime.teeTimeId, teeTimeId)));
-
-    if (existingEmailInvite) {
-      throw new Error("This email ID is already invited for this tee time for another slot.");
     }
 
     // Check if invite already exists and delete it if present
