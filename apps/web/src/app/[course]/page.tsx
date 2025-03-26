@@ -219,11 +219,7 @@ export default function CourseHomePage() {
           ? "Any"
           : Number(queryPlayerCount);
       setGolfers((playerCount as GolferType) || "Any");
-    }
-  }, [queryDateType]);
 
-  useEffect(() => {
-    if (queryDateType === "custom" && queryDate) {
       const [year, month, day] = queryDate.split("-");
       if (year && month && day) {
         setSelectedDay({
@@ -231,16 +227,14 @@ export default function CourseHomePage() {
           to: { year: Number(year), month: Number(month), day: Number(day) },
         });
       }
-    }
-    const specialDate = getSpecialDayDate(queryDateType);
-    if (queryDateType) {
-      if (specialDate) {
-        setDateType(queryDateType as DateType); // Set the DateType to queryDateType if specialDate exists
-      } else {
-        setDateType("All"); // If no specialDate, set the DateType to "All"
+      const specialDate = getSpecialDayDate(queryDateType);
+      if (queryDateType) {
+        if (specialDate) {
+          setDateType(queryDateType as DateType); 
+        } 
       }
     }
-  }, [specialEvents, queryDateType]);
+  }, [queryDateType,specialEvents]);
 
   const getSpecialDayDate = (label) => {
     const today = dayjs(new Date())
