@@ -139,8 +139,8 @@ export const ManageOwnedTeeTime = ({
       document.body.classList.remove("overflow-hidden");
       setMinimumOfferPrice(
         selectedTeeTime?.minimumOfferPrice ||
-          selectedTeeTime?.firstHandPrice ||
-          0
+        selectedTeeTime?.firstHandPrice ||
+        0
       ); //reset price
       setNewFriend({
         id: "",
@@ -341,9 +341,8 @@ export const ManageOwnedTeeTime = ({
       )}
       <aside
         // ref={sidebar}
-        className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[500px] md:h-[100dvh] ${
-          isManageOwnedTeeTimeOpen ? "translate-x-0" : "translate-x-full"
-        }`}
+        className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[500px] md:h-[100dvh] ${isManageOwnedTeeTimeOpen ? "translate-x-0" : "translate-x-full"
+          }`}
       >
         <div className="relative flex h-full flex-col">
           <div className="flex items-center justify-between p-4">
@@ -404,7 +403,7 @@ export const ManageOwnedTeeTime = ({
               ) : null}
 
               {selectedTeeTime?.isGroupBooking ||
-              !course?.supportsPlayerNameChange ? null : (
+                !course?.supportsPlayerNameChange ? null : (
                 <div className={`flex flex-col gap-2 pb-6 text-center`}>
                   <label
                     htmlFor="friends"
@@ -414,77 +413,79 @@ export const ManageOwnedTeeTime = ({
                   </label>
                   {friends.length
                     ? friends.map((friend, index) => {
-                        return (
-                          <div
-                            key={friend.slotId}
-                            className="w-full max-w-[400px] rounded-lg"
-                          >
-                            {!friend.currentlyEditing ? (
-                              <div className="mx-auto w-full rounded-lg bg-secondary-white px-4 py-1 flex justify-between text-[16px] font-semibold outline-none">
-                                <div>{index === 0 ? "You" : friend.name}</div>
-                                {index !== 0 &&
+                      return (
+                        <div
+                          key={friend.slotId}
+                          className="w-full max-w-[400px] rounded-lg"
+                        >
+                          {!friend.currentlyEditing ? (
+                            <div className="mx-auto w-full rounded-lg bg-secondary-white px-4 py-1 flex justify-between text-[16px] font-semibold outline-none">
+                              <div style={{
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                              }}>{index === 0 ? "You" : friend.name}</div>
+                              {index !== 0 &&
                                 course?.supportsPlayerNameChange ? (
-                                  <button
-                                    onClick={() => removeFriend(friend.slotId)}
-                                  >
-                                    <Edit className="w-[20px]" />
-                                  </button>
-                                ) : null}
-                              </div>
-                            ) : (
-                              <>
-                                <input
-                                  value={friend.name}
-                                  type="search"
-                                  list="searchedFriends"
-                                  onChange={(e) => handleNewFriend(e, friend)}
-                                  onSelect={addFriend}
-                                  placeholder="Username or email"
-                                  className="mx-auto w-full max-w-[400px] rounded-lg bg-secondary-white px-4 py-2 flex justify-between text-[14px] font-semibold outline-none"
-                                  data-testid="search-friend-id"
-                                />
-                                {friend.slotId === newFriend.slotId &&
+                                <button
+                                  onClick={() => removeFriend(friend.slotId)}
+                                >
+                                  <Edit className="w-[20px]" />
+                                </button>
+                              ) : null}
+                            </div>
+                          ) : (
+                            <>
+                              <input
+                                value={friend.name}
+                                type="search"
+                                list="searchedFriends"
+                                onChange={(e) => handleNewFriend(e, friend)}
+                                onSelect={addFriend}
+                                placeholder="Username or email"
+                                className="mx-auto w-full max-w-[400px] rounded-lg bg-secondary-white px-4 py-2 flex justify-between text-[14px] font-semibold outline-none"
+                                data-testid="search-friend-id"
+                              />
+                              {friend.slotId === newFriend.slotId &&
                                 friendList.length ? (
-                                  <div className="mx-auto w-full max-w-[400px] rounded-lg py-2 flex justify-between text-[14px] font-semibold outline-none">
-                                    <ul className="w-full text-opacity-100 text-gray-700 shadow-md border border-solid border-gray-200 rounded-8 text-start">
-                                      {friendList.map((frnd, idx) => (
-                                        <li key={idx}>
-                                          <div
-                                            className="cursor-pointer p-4 border-b border-solid border-gray-300"
-                                            onClick={() =>
-                                              addFriendUpdated(
-                                                {
-                                                  ...frnd,
-                                                  slotId: friend.slotId,
-                                                },
-                                                index
-                                              )
-                                            }
-                                          >
-                                            {frnd.email} ({frnd.handle})
-                                          </div>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  </div>
-                                ) : null}
+                                <div className="mx-auto w-full max-w-[400px] rounded-lg py-2 flex justify-between text-[14px] font-semibold outline-none">
+                                  <ul className="w-full text-opacity-100 text-gray-700 shadow-md border border-solid border-gray-200 rounded-8 text-start">
+                                    {friendList.map((frnd, idx) => (
+                                      <li key={idx}>
+                                        <div
+                                          className="cursor-pointer p-4 border-b border-solid border-gray-300"
+                                          onClick={() =>
+                                            addFriendUpdated(
+                                              {
+                                                ...frnd,
+                                                slotId: friend.slotId,
+                                              },
+                                              index
+                                            )
+                                          }
+                                        >
+                                          {frnd.email} ({frnd.handle})
+                                        </div>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              ) : null}
 
-                                {friend.slotId === newFriend.slotId &&
-                                  debouncedValue.name.length > 0 &&
-                                  !isLoading &&
-                                  !friendList.length && (
-                                    <div className="flex justify-center items-center flex-col gap-1 rounded-md w-full mx-auto max-w-[400px]">
-                                      {(!inviteSuccess[friend.slotId] ||
-                                        isInviteVisible) && (
+                              {friend.slotId === newFriend.slotId &&
+                                debouncedValue.name.length > 0 &&
+                                !isLoading &&
+                                !friendList.length && (
+                                  <div className="flex justify-center items-center flex-col gap-1 rounded-md w-full mx-auto max-w-[400px]">
+                                    {(!inviteSuccess[friend.slotId] ||
+                                      isInviteVisible) && (
                                         <>
                                           <div className="flex justify-center gap-4 mt-2 items-center w-full fade-in">
                                             Friend not found. Invite them!
                                             <FilledButton
-                                              className={`w-full !max-w-fit ${
-                                                invite.isLoading
-                                                  ? "animate-pulse"
-                                                  : ""
-                                              }`}
+                                              className={`w-full !max-w-fit ${invite.isLoading
+                                                ? "animate-pulse"
+                                                : ""
+                                                }`}
                                               onClick={() =>
                                                 handleInviteFriend(
                                                   friend,
@@ -500,13 +501,13 @@ export const ManageOwnedTeeTime = ({
                                           </div>
                                         </>
                                       )}
-                                    </div>
-                                  )}
-                              </>
-                            )}
-                          </div>
-                        );
-                      })
+                                  </div>
+                                )}
+                            </>
+                          )}
+                        </div>
+                      );
+                    })
                     : null}
                 </div>
               )}
@@ -553,13 +554,12 @@ export const ManageOwnedTeeTime = ({
               </div>
               <div className="flex flex-col gap-2">
                 <FilledButton
-                  className={`w-full ${
-                    updateNames.isLoading ||
+                  className={`w-full ${updateNames.isLoading ||
                     updateMinimumOfferPrice.isLoading ||
                     invite.isLoading
-                      ? "!border-gray-200 !bg-gray-200"
-                      : ""
-                  }`}
+                    ? "!border-gray-200 !bg-gray-200"
+                    : ""
+                    }`}
                   onClick={() => void save()}
                   data-testid="save-button-id"
                   disabled={

@@ -6,6 +6,7 @@ import { formatTime } from "~/utils/formatters";
 import Link from "next/link";
 import { Fragment } from "react";
 import { FilledButton } from "../buttons/filled-button";
+import { InviteFriends } from "../tee-time-page/invite-friends";
 
 interface ConfirmationProps {
   teeTimeId: string;
@@ -113,11 +114,11 @@ export const Confirmation = ({
           </div>
         </div>
       </div>
-      {/* {course?.supportsPlayerNameChange && (
+      {course?.supportsPlayerNameChange && (
         <div>
           <InviteFriends teeTimeId={teeTimeId} isConfirmationPage />
         </div>
-      )} */}
+      )}
       <div>
         <div className="w-full flex-col items-center justify-center md:gap-2 md:flex-row">
           Please send your feedback to{" "}
