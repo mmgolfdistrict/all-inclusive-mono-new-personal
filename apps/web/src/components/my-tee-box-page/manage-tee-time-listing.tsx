@@ -345,6 +345,7 @@ export const ManageTeeTimeListing = ({
           </Link>
         </div>
       );
+      setIsManageTeeTimeListingOpen(false);
       if (needRedirect) {
         return router.push(
           `/${selectedTeeTime?.courseId}/my-tee-box?section=my-listed-tee-times`
@@ -375,9 +376,8 @@ export const ManageTeeTimeListing = ({
       </LoadingContainer>
       <aside
         // ref={sidebar}
-        className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[500px] md:h-[100dvh] ${
-          isManageTeeTimeListingOpen ? "translate-x-0" : "translate-x-full"
-        }`}
+        className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[500px] md:h-[100dvh] ${isManageTeeTimeListingOpen ? "translate-x-0" : "translate-x-full"
+          }`}
       >
         <div className="relative flex h-full flex-col">
           <div className="flex items-center justify-between p-4">
@@ -413,12 +413,11 @@ export const ManageTeeTimeListing = ({
                 </label>
                 <div className="relative">
                   <span
-                    className={`absolute left-1 top-1 text-[24px] md:text-[32px] ${
-                      selectedTeeTime?.listingId ===
+                    className={`absolute left-1 top-1 text-[24px] md:text-[32px] ${selectedTeeTime?.listingId ===
                       selectedTeeTime?.listingIdFromRedis
-                        ? "opacity-50 cursor-not-allowed"
-                        : ""
-                    } `}
+                      ? "opacity-50 cursor-not-allowed"
+                      : ""
+                      } `}
                   >
                     $
                   </span>
@@ -429,12 +428,11 @@ export const ManageTeeTimeListing = ({
                     onFocus={handleFocus}
                     onChange={handleListingPrice}
                     onBlur={handleBlur}
-                    className={`mx-auto max-w-[300px] rounded-lg bg-secondary-white px-4 py-1 text-center text-[24px] font-semibold outline-none md:text-[32px] pl-6 ${
-                      selectedTeeTime?.listingId ===
+                    className={`mx-auto max-w-[300px] rounded-lg bg-secondary-white px-4 py-1 text-center text-[24px] font-semibold outline-none md:text-[32px] pl-6 ${selectedTeeTime?.listingId ===
                       selectedTeeTime?.listingIdFromRedis
-                        ? "opacity-50 cursor-not-allowed"
-                        : ""
-                    }`}
+                      ? "opacity-50 cursor-not-allowed"
+                      : ""
+                      }`}
                     data-testid="lsiting-price-id"
                     disabled={
                       selectedTeeTime?.listingId ===
@@ -473,19 +471,17 @@ export const ManageTeeTimeListing = ({
                     <Item
                       key={index}
                       value={value}
-                      className={`${
-                        index === 0
-                          ? "rounded-l-full border border-stroke"
-                          : index === PlayerOptions.length - 1
+                      className={`${index === 0
+                        ? "rounded-l-full border border-stroke"
+                        : index === PlayerOptions.length - 1
                           ? "rounded-r-full border-b border-t border-r border-stroke"
                           : "border-b border-r border-t border-stroke"
-                      } px-[1.75rem] ${
-                        (selectedTeeTime?.playerCount || 0) < index + 1 ||
-                        selectedTeeTime?.listingId ===
+                        } px-[1.75rem] ${(selectedTeeTime?.playerCount || 0) < index + 1 ||
+                          selectedTeeTime?.listingId ===
                           selectedTeeTime?.listingIdFromRedis
                           ? "opacity-50 cursor-not-allowed"
                           : "" // Keep only if restricting based on `availableSlots`
-                      } `}
+                        } `}
                       dataTestId="player-item-id"
                       dataQa={value}
                       label={value}
@@ -496,11 +492,11 @@ export const ManageTeeTimeListing = ({
             </div>
             {selectedTeeTime?.listingId ===
               selectedTeeTime?.listingIdFromRedis && (
-              <div className="text-center text-[20px] text-red">
-                Users are trying to buy this tee time and hence, editing is not
-                allowed.
-              </div>
-            )}
+                <div className="text-center text-[20px] text-red">
+                  Users are trying to buy this tee time and hence, editing is not
+                  allowed.
+                </div>
+              )}
             <div className="flex flex-col gap-4 px-4 pb-6">
               <div className="flex justify-between">
                 <div className="font-[300] text-primary-gray">
@@ -554,7 +550,7 @@ export const ManageTeeTimeListing = ({
                   data-testid="save-button-id"
                   disabled={
                     selectedTeeTime?.listingId ===
-                      selectedTeeTime?.listingIdFromRedis || isUnchanged
+                    selectedTeeTime?.listingIdFromRedis || isUnchanged
                   }
                 >
                   Update Listing
