@@ -818,10 +818,7 @@ export class SearchService extends CacheService {
     //   .toISOString();
     //   console.log(minDateSubquery,maxDateSubquery,"maxDateSubquerymaxDateSubquerymaxDateSubquery")
     const minDateSubquery = this.convertDateFormat(minDate);
-    const maxDateSubquery = this.convertDateFormat(maxDate);
-
-    console.log("minDateSubqueryminDateSubqueryminDateSubqueryminDateSubqueryminDateSubqueryminDateSubquery",minDateSubquery,minDate);
-    
+    const maxDateSubquery = this.convertDateFormat(maxDate);    
 
     // .utc()
     // .hour(23)
@@ -1194,9 +1191,33 @@ export class SearchService extends CacheService {
       await cacheManager.set(cacheKey, NumberOfPlayers, 600000);
     }
 
+    // Filter specific tee times that can be sold
+    const dayToFetch = dayjs(date)
+      .utc()
+      .hour(0)
+      .minute(0)
+      .second(0)
+      .millisecond(0)
+      .format("ddd")
+      .toUpperCase() as "MON" | "TUE" | "WED" | "THU" | "FRI" | "SAT" | "SUN";
+
+    const courseAllowedTeeTimeToSellFilters = await this.database
+        .select({
+          fromTime: courseAllowedTimeToSell.fromTime,
+          toTime: courseAllowedTimeToSell.toTime,
+          primaryMarketAllowedPlayers: courseAllowedTimeToSell.primaryMarketAllowedPlayers,
+          primaryMarketSellLeftoverSinglePlayer: courseAllowedTimeToSell.primaryMarketSellLeftoverSinglePlayer,
+        })
+        .from(courseAllowedTimeToSell)
+        .where(and(eq(courseAllowedTimeToSell.courseId, courseId), eq(courseAllowedTimeToSell.day, dayToFetch)))
+        .orderBy(asc(courseAllowedTimeToSell.fromTime))
+        .execute();
+
+    const hasCourseAllowedTeeTimeToSellFilters = courseAllowedTeeTimeToSellFilters.length > 0;
+
     const PlayersOptions = ["1", "2", "3", "4"];
 
-    const binaryMask = NumberOfPlayers[0]?.primaryMarketAllowedPlayers;
+    const binaryMask = hasCourseAllowedTeeTimeToSellFilters ? undefined : NumberOfPlayers[0]?.primaryMarketAllowedPlayers;
     const isSellingLeftoverSinglePlayer = NumberOfPlayers[0]?.primaryMarketSellLeftoverSinglePlayer;
 
     const numberOfPlayers =
@@ -1256,7 +1277,7 @@ export class SearchService extends CacheService {
           gte(teeTimes.availableFirstHandSpots, golfers === -1 ? 1 : golfers),
           or(
             gte(teeTimes.availableFirstHandSpots, playersCount),
-            isSellingLeftoverSinglePlayer ? eq(teeTimes.availableFirstHandSpots, 1) : undefined
+            ...(isSellingLeftoverSinglePlayer ? [eq(teeTimes.availableFirstHandSpots, 1)] : [])
           ),
           gt(teeTimes.greenFeePerPlayer, 0)
         )
@@ -1338,27 +1359,6 @@ export class SearchService extends CacheService {
       return a.greenFee - b.greenFee;
     });
 
-    // Filter specific tee times that can be sold
-    const dayToFetch = dayjs(date)
-      .utc()
-      .hour(0)
-      .minute(0)
-      .second(0)
-      .millisecond(0)
-      .format("ddd")
-      .toUpperCase() as "MON" | "TUE" | "WED" | "THU" | "FRI" | "SAT" | "SUN";
-
-    const courseAllowedTeeTimeToSellFilters = await this.database
-      .select({
-        fromTime: courseAllowedTimeToSell.fromTime,
-        toTime: courseAllowedTimeToSell.toTime,
-        primaryMarketAllowedPlayers: courseAllowedTimeToSell.primaryMarketAllowedPlayers,
-        primaryMarketSellLeftoverSinglePlayer: courseAllowedTimeToSell.primaryMarketSellLeftoverSinglePlayer,
-      })
-      .from(courseAllowedTimeToSell)
-      .where(and(eq(courseAllowedTimeToSell.courseId, courseId), eq(courseAllowedTimeToSell.day, dayToFetch)))
-      .orderBy(asc(courseAllowedTimeToSell.fromTime))
-      .execute();
 
     let innerCursor = 0;
     if (courseAllowedTeeTimeToSellFilters?.length > 0) {
@@ -1819,12 +1819,9 @@ export class SearchService extends CacheService {
     startDate: string,
     endDate: string
   ): Promise<PriceForecast[]> => {
-    console.log("startDate", startDate);
     let forecastData = await this.getCache(`${courseId}-${startDate}-${endDate}-${process.env.NODE_ENV}`)!;
-    console.log("forecastData for cash", forecastData);
 
     if (!forecastData) {
-      console.log("databasehit");
 
       forecastData = await this.database
         .select({
@@ -1856,7 +1853,7 @@ export class SearchService extends CacheService {
         .innerJoin(courses, eq(teeTimes.courseId, courses.id))
         .where(
           and(
-            between(sql`Date(${teeTimes.providerDate})`, startDate, endDate),
+            gte(sql`Date(${teeTimes.providerDate})`, startDate),
             eq(teeTimes.courseId, courseId),
             sql`${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} > 0`,
             sql`${teeTimes.availableFirstHandSpots} > 0`

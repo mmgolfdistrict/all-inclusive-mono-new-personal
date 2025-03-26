@@ -36,9 +36,7 @@ import CountryDropdown from "~/components/dropdown/country-dropdown";
 import type { Country } from "~/components/dropdown/country-dropdown";
 import { allCountries } from "country-telephone-data";
 import type { CountryData } from "~/utils/types";
-import { PhoneNumberUtil } from "google-libphonenumber";
 
-const phoneUtil = PhoneNumberUtil.getInstance();
 const countryList: Country[] = allCountries.map(({ name, iso2, dialCode }: CountryData) => ({
   name,
   iso2,
@@ -54,7 +52,6 @@ export default function RegisterPage() {
     setValue,
     watch,
     setError,
-    clearErrors,
     control,
     getValues,
     formState: { errors },
@@ -98,8 +95,6 @@ export default function RegisterPage() {
   };
 
   const [currentCountry, setCurrentCountry] = useState<string>("");
-  const [currentPhoneNumber, setCurrentPhoneNumber] = useState<string>("");
-  const debouncedPhoneNumber = useDebounce<string>(currentPhoneNumber, 1000);
   const { data: userCountryData, error } = api.user.getCountryCode.useQuery({});
   const [excludedCountries, _setExcludeCountries] = useState<string[]>(
     ['by', 'cu', 'kp', 'sy', 've', 'ir']
@@ -117,12 +112,6 @@ export default function RegisterPage() {
     })
   );
 
-  useEffect(function setCurrentPhone() {
-    const phoneNumber = getValues("phoneNumber");
-    const phoneNumberCountryCode = getValues("phoneNumberCountryCode");
-    setCurrentPhoneNumber(`${phoneNumberCountryCode}${phoneNumber}`);
-  }, [getValues("phoneNumber"), getValues("phoneNumberCountryCode")]);
-
   useEffect(function setCountryCode() {
     if (userCountryData?.country) {
       const cc = userCountryData.country.toLowerCase();
@@ -136,26 +125,6 @@ export default function RegisterPage() {
     }
   }, [userCountryData?.country, setCurrentCountry]);
 
-  useEffect(() => {
-    if (debouncedPhoneNumber && getValues("phoneNumber")) {
-      try {
-        const parsedNumber = phoneUtil.parse(`+${debouncedPhoneNumber}`, currentCountry.toUpperCase());
-        const valid = phoneUtil.isValidNumber(parsedNumber);
-        if (!valid) {
-          setError("phoneNumber", {
-            message: "Phone number seems invalid, please enter a valid phone number."
-          });
-        } else {
-          clearErrors("phoneNumber");
-        }
-      } catch (error) {
-        setError("phoneNumber", {
-          message: "Phone number seems invalid, please enter a valid phone number.",
-        });
-      }
-    }
-  }, [debouncedPhoneNumber, getValues]);
-
   const handleSelectCountry = (country: Country) => {
     const { iso2, dialCode } = country;
     setCurrentCountry(iso2);
@@ -164,8 +133,6 @@ export default function RegisterPage() {
 
   const handlePhoneNumberChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, "");
-    const countryCode = getValues("phoneNumberCountryCode");
-    setCurrentPhoneNumber(`${countryCode}${value}`);
     setValue("phoneNumber", value);
   }
 
@@ -426,7 +393,7 @@ export default function RegisterPage() {
             )}
           />
           <Controller
-            name="firstName"
+            name="phoneNumber"
             control={control}
             render={({ field }) => (
               <div className={`flex flex-col gap-1`}>

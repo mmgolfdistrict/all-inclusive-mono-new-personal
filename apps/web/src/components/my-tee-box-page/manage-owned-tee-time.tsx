@@ -403,7 +403,8 @@ export const ManageOwnedTeeTime = ({
                 </div>
               ) : null}
 
-              {selectedTeeTime?.isGroupBooking ? null : (
+              {selectedTeeTime?.isGroupBooking ||
+              !course?.supportsPlayerNameChange ? null : (
                 <div className={`flex flex-col gap-2 pb-6 text-center`}>
                   <label
                     htmlFor="friends"
@@ -420,7 +421,14 @@ export const ManageOwnedTeeTime = ({
                           >
                             {!friend.currentlyEditing ? (
                               <div className="mx-auto w-full rounded-lg bg-secondary-white px-4 py-1 flex justify-between text-[16px] font-semibold outline-none">
-                                <div>{index === 0 ? "You" : friend.name}</div>
+                                <div
+                                  style={{
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                  }}
+                                >
+                                  {index === 0 ? "You" : friend.name}
+                                </div>
                                 {index !== 0 &&
                                 course?.supportsPlayerNameChange ? (
                                   <button

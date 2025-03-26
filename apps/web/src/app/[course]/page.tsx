@@ -75,12 +75,12 @@ export default function CourseHomePage() {
   }
 
   function compareTimesWithTimezones() {
-    const date1 = dayjs().tz(getUserTimezone()).format("ddd, DD MMM YYYY HH:mm:ss [GMT]")
-    const date2 = dayjs().tz(course?.timezoneISO).format("ddd, DD MMM YYYY HH:mm:ss [GMT]")
-
-    if (dayjs(date1).isAfter(date2)) {
+    const date1 = dayjs().tz(getUserTimezone())
+    const date2 = dayjs().tz(course?.timezoneISO)
+    
+    if (date1.isAfter(date2)) {
       return "user";
-    } else if (dayjs(date2).isAfter(date1)) {
+    } else if (date1.isBefore(date2)) {
       return "course";
     } else {
       return "user";
@@ -266,13 +266,42 @@ export default function CourseHomePage() {
     }
     setPageNumber(1)
     switch (dateType) {
-      case "All":
-      case "Today":
+      case "All":{
+        const currentTime = dayjs(new Date());
+        const currentTimePlus30 = currentTime.add(30, 'minute');
+
+        const closingHour = Math.floor(startTime[1] / 100);
+        const closingMinute = startTime[1] % 100;
+
+        const closingTime = currentTime.set('hour', closingHour).set('minute', closingMinute).set('second', 0);
+
+        if (currentTimePlus30.isAfter(closingTime)) {
+          return formatDateString(currentTime.add(1, 'day').startOf('day'))
+        }
+
+        return formatDateString(currentTimePlus30);
+        }
       case "This Week":
       case "This Month":
       case "Furthest Day Out To Book":
         return formatDateString(dayjs(new Date()).add(30, "minute"));
-      case "This Weekend": {
+      case "Today": {
+        const currentTime = dayjs();
+        const currentTimePlus30 = currentTime.add(30, 'minute');
+
+        const closingHour = Math.floor(startTime[1] / 100);
+        const closingMinute = startTime[1] % 100;
+
+        const closingTime = currentTime.set('hour', closingHour).set('minute', closingMinute).set('second', 0);
+
+        if (currentTimePlus30.isAfter(closingTime)) {
+          return formatDateString(currentTime.add(1, 'day').startOf('day').add(30, 'minute'));
+        }
+
+        return formatDateString(currentTimePlus30);
+        }
+      case "This Weekend":
+        {
           const today = dayjs().startOf("day");
           const weekend = dayjs().day(5);
           if (weekend.isSame(today, "day") || weekend.isBefore(today, "day")) {
@@ -307,13 +336,50 @@ export default function CourseHomePage() {
       case "All":
         return formatDateStringEnd(farthestDateOut);
       case "Today":
-        return formatDateStringEnd(dayjs().endOf("day").toDate());
-      case "This Week":
-        return formatDateStringEnd(dayjs().endOf("isoWeek").toDate());
-      case "This Weekend":
-        return formatDateStringEnd(dayjs().day(7).toDate());
-      case "This Month":
-        return formatDateStringEnd(dayjs().endOf("month").toDate());
+        {
+          const currentTime = dayjs();
+          const currentTimePlus30 = currentTime.add(30, 'minute');
+
+          const closingHour = Math.floor(startTime[1] / 100);
+          const closingMinute = startTime[1] % 100;
+
+          const closingTime = currentTime.set('hour', closingHour).set('minute', closingMinute).set('second', 0);
+
+          if (currentTimePlus30.isAfter(closingTime)) {
+            return formatDateStringEnd(dayjs().add(1, "day").endOf("day").toDate());
+          }
+
+          return formatDateStringEnd(dayjs().endOf("day").toDate());
+        }
+      case "This Week": {
+        const currentDay = dayjs();
+        const isSunday = currentDay.day() === 0;
+
+        if (isSunday) {
+          return formatDateStringEnd(currentDay.add(1, 'week').endOf('isoWeek').toDate());
+        }
+
+        return formatDateStringEnd(currentDay.endOf('isoWeek').toDate());
+      }
+      case "This Weekend": {
+        const currentDay = dayjs();
+        const isSunday = currentDay.day() === 0;
+
+        if (isSunday) {
+          return formatDateStringEnd(currentDay.add(1, 'week').endOf('isoWeek'));
+        }
+
+        return formatDateStringEnd(currentDay.day(7).endOf('day'));
+      }
+      case "This Month": {
+        const today = dayjs();
+        const lastDayOfMonth = today.endOf('month');
+        if (today.isSame(lastDayOfMonth, 'day')) {
+          return formatDateStringEnd(lastDayOfMonth.add(1, 'month').endOf('month').toDate());
+        }
+
+        return formatDateStringEnd(lastDayOfMonth.toDate());
+      }
       case "Furthest Day Out To Book":
         return formatDateStringEnd(dayjs(farthestDateOut).toDate());
       case "Custom": {
@@ -507,14 +573,23 @@ export default function CourseHomePage() {
       });
     }
   }, []);
-  let datesArr = JSON.parse(
+
+  const getWeekends = (dates: string[]): string[] => {
+    return Array.isArray(dates)
+      ? dates.filter((dateStr) => {
+        return dateStr.includes('Fri') || dateStr.includes('Sat') || dateStr.includes('Sun');
+        })
+      : [];
+  };
+
+  let datesArr = dateType === "This Weekend" ? getWeekends(datesWithData ?? daysData.arrayOfDates) : JSON.parse(
     JSON.stringify(datesWithData ?? daysData.arrayOfDates)
   );
   const amountOfPage = Math.ceil(
-    (datesWithData
-      ? datesWithData.length - 1 === 0
+    (datesArr
+      ? datesArr.length - 1 === 0
         ? 1
-        : datesWithData.length
+        : datesArr.length
       : daysData.amountOfPages) / TAKE
   );
 
@@ -594,10 +669,10 @@ export default function CourseHomePage() {
         !isMobile &&
         <div className="flex gap-8 items-center px-4 md:px-6 ">
           <div className="min-w-[310px]">
-          {entity?.redirectToCourseFlag ? null : (
-            <GoBack href="/" text={`Back to all ${entity?.name} Courses`} />
+            {entity?.redirectToCourseFlag ? null : (
+              <GoBack href="/" text={`Back to all ${entity?.name} Courses`} />
             )}
-            </div>
+          </div>
           <div className="flex items-center justify-between w-full">
             <div className="flex justify-between gap-4  px-4 md:px-0">
               <div className="text-secondary-black">
@@ -621,7 +696,7 @@ export default function CourseHomePage() {
         className="px-4 md:px-6"  
       /> */}
       <CourseBanner
-        className={ !isMobile ? "pt-4" : ""}
+        className={!isMobile ? "pt-4" : ""}
         userId={user?.id ?? ""}
         updateHandle={updateHandle}
       />

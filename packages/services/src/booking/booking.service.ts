@@ -38,6 +38,7 @@ import type { TokenizeService } from "../token/tokenize.service";
 import type { UserWaitlistService } from "../user-waitlist/userWaitlist.service";
 import { loggerService } from "../webhooks/logging.service";
 import { groupBookings } from "@golf-district/database/schema/groupBooking";
+import { CacheService } from "../infura/cache.service";
 
 dayjs.extend(UTC);
 dayjs.extend(timezone);
@@ -111,6 +112,10 @@ interface ListingData {
   listedSpots: string[] | null;
   listedSlotsCount: number;
   groupId: string | null;
+  weatherGuaranteeAmount?: number;
+  isGroupBooking?: boolean;
+  playerCount: number;
+  listingIdFromRedis?: string | null;
 }
 
 interface TransferData {
@@ -148,6 +153,7 @@ export type ProviderBooking = {
  */
 export class BookingService {
   private logger = Logger(BookingService.name);
+  private cacheService: CacheService;
   /**
    * Constructor for BookingService.
    * @param {Db} database - The database instance.
@@ -164,7 +170,9 @@ export class BookingService {
     private readonly hyperSwitchService: HyperSwitchService,
     private readonly sensibleService: SensibleService,
     private readonly userWaitlistService: UserWaitlistService
-  ) {}
+  ) {
+    this.cacheService = new CacheService(process.env.REDIS_URL!, process.env.REDIS_TOKEN!);
+  }
 
   createCounterOffer = async (userId: string, bookingIds: string[], offerId: string, amount: number) => {
     //find owner of each booking
@@ -392,6 +400,9 @@ export class BookingService {
     this.logger.info(`getMyListedTeeTimes called with userId: ${userId}`);
     const localDateTimePlus1Hour = dayjs.utc().utcOffset(-7).add(1, "hour");
 
+    const listingIdFromRedis = await this.cacheService?.getCache("listing_id");
+    console.log("Retrieved listingId from Redis Cache: ", listingIdFromRedis);
+
     const data = await this.database
       .select({
         bookingId: bookings.id,
@@ -408,6 +419,8 @@ export class BookingService {
         greenFeePerPlayer: teeTimes.greenFeePerPlayer,
         minimumOfferPrice: bookings.minimumOfferPrice,
         groupId: bookings.groupId,
+        weatherGuaranteeAmount: bookings.weatherGuaranteeAmount,
+        playerCount: bookings.playerCount,
       })
       .from(bookings)
       .innerJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -454,6 +467,10 @@ export class BookingService {
             listedSpots: [teeTime.bookingId],
             listedSlotsCount: teeTime.listedSlots,
             groupId: teeTime.groupId ?? "",
+            weatherGuaranteeAmount: teeTime.weatherGuaranteeAmount ?? 0,
+            isGroupBooking: false,
+            playerCount: teeTime.playerCount,
+            listingIdFromRedis: listingIdFromRedis as string | null | undefined,
           };
         } else {
           const currentEntry = combinedData[teeTime.teeTimesId];
@@ -1156,22 +1173,22 @@ export class BookingService {
       });
       throw new Error("Cannot list more than 4 bookings.");
     }
-    for (const booking of ownedBookings) {
-      if (booking.isListed) {
-        this.logger.warn(`Booking ${booking.id} is already listed.`);
-        loggerService.errorLog({
-          applicationName: "golfdistrict-foreup",
-          clientIP: "",
-          userId,
-          url: "/createListingForBookings",
-          userAgent: "",
-          message: "TEE_TIME_LISTED_FAILED",
-          stackTrace: "",
-          additionalDetailsJSON: "One or more bookings from this tee time is already listed",
-        });
-        throw new Error(`One or more bookings from this tee time is already listed.`);
-      }
-    }
+    // for (const booking of ownedBookings) {
+    //   if (booking.isListed) {
+    //     this.logger.warn(`Booking ${booking.id} is already listed.`);
+    //     loggerService.errorLog({
+    //       applicationName: "golfdistrict-foreup",
+    //       clientIP: "",
+    //       userId,
+    //       url: "/createListingForBookings",
+    //       userAgent: "",
+    //       message: "TEE_TIME_LISTED_FAILED",
+    //       stackTrace: "",
+    //       additionalDetailsJSON: "One or more bookings from this tee time is already listed",
+    //     });
+    //     throw new Error(`One or more bookings from this tee time is already listed.`);
+    //   }
+    // }
     //validate that all bookings are for the same course
     // const courseIds = new Set(ownedBookings.map((booking) => booking.courseId));
     // if (courseIds.size > 1) {
@@ -3597,7 +3614,7 @@ export class BookingService {
     const [customerDetails] = await this.database
       .select({
         userEmail: users.email,
-        userName: users.name
+        userName: users.name,
       })
       .from(users)
       .where(eq(users.id, userId))
@@ -3616,7 +3633,7 @@ export class BookingService {
           }),
         });
         throw new Error(`Error finding user by id`);
-      })
+      });
 
     //   await cacheManager.set(`teeTime:${teeTimeId}`, teeTime); // Cache for 1 hour
     // }
@@ -3829,7 +3846,7 @@ export class BookingService {
           userName: customerDetails?.userName ?? "",
           userEmail: customerDetails?.userEmail ?? "",
           courseName: teeTime.courseName ?? "",
-          teeTimeDate: teeTime.providerDate
+          teeTimeDate: teeTime.providerDate,
         }
       );
       throw "Booking failed on provider";
@@ -4772,7 +4789,7 @@ export class BookingService {
     const [customerDetails] = await this.database
       .select({
         userEmail: users.email,
-        userName: users.name
+        userName: users.name,
       })
       .from(users)
       .where(eq(users.id, userId))
@@ -4791,7 +4808,7 @@ export class BookingService {
           }),
         });
         throw new Error(`Error finding user by id`);
-      })
+      });
 
     //   await cacheManager.set(`teeTime:${teeTimeId}`, teeTime); // Cache for 1 hour
     // }
@@ -5033,7 +5050,7 @@ export class BookingService {
             userName: customerDetails?.userName ?? "",
             userEmail: customerDetails?.userEmail ?? "",
             courseName: firstTeeTime.courseName ?? "",
-            teeTimeDate: firstTeeTime.providerDate
+            teeTimeDate: firstTeeTime.providerDate,
           }
         );
         for (const providerBooking of providerBookings) {
@@ -5136,7 +5153,7 @@ export class BookingService {
             userName: customerDetails?.userName ?? "",
             userEmail: customerDetails?.userEmail ?? "",
             courseName: firstTeeTime.courseName ?? "",
-            teeTimeDate: firstTeeTime.providerDate
+            teeTimeDate: firstTeeTime.providerDate,
           }
         );
         for (const providerBooking of providerBookings) {
