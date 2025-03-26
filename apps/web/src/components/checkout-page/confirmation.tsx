@@ -1,12 +1,10 @@
 "use client";
 
-// import { useCheckoutContext } from "~/contexts/CheckoutContext";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { api } from "~/utils/api";
 import { formatTime } from "~/utils/formatters";
 import Link from "next/link";
 import { Fragment } from "react";
-// import { useRouter } from "next/router";
 import { FilledButton } from "../buttons/filled-button";
 import { InviteFriends } from "../tee-time-page/invite-friends";
 
@@ -34,7 +32,7 @@ export const Confirmation = ({
     );
 
   const { course } = useCourseContext();
-  // const { reservationData } = useCheckoutContext();
+
   return (
     <section className="mx-auto flex w-full flex-col gap-4 bg-white px-3 py-2 text-center md:max-w-[80vw] md:rounded-xl md:p-6 md:py-4">
       <div className="container mx-auto p-4">
