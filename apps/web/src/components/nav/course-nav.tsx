@@ -502,7 +502,7 @@ export const CourseNav = () => {
         <div className={`fixed bottom-0 w-full z-20 bg-white border-t border-[#c6c6c6] `} id="bottom-nav">
           <div className="flex w-full justify-center bg-white p-2 md:p-4">
             <div className={`flex w-full ${isNavExpanded ? "gap-4" : ""} flex-col`}>
-              <div className="flex w-full justify-evenly gap-4">
+              <div className="flex w-full justify-between gap-4">
                 <NavItem
                   href={`/${courseId}`}
                   text="Find Times"
@@ -511,6 +511,7 @@ export const CourseNav = () => {
                   data-test={courseId}
                   onClick={handleResetFilters}
                   id="navbar-find-times"
+                  className="max-w-[64px]"
                 />
                 <NavItem
                   href={`/${courseId}/my-tee-box`}
@@ -520,16 +521,18 @@ export const CourseNav = () => {
                   data-test={courseId}
                   onClick={handleResetFilters}
                   id="navbar-sell"
+                  className="max-w-[64px] ml-2"
                 />
                 {course?.supportsWaitlist ? (
                   <NavItem
                     href={`/${courseId}/notify-me`}
                     text="Waitlist"
-                    icon={<Megaphone className="w-[16px]" />}
+                    icon={<Megaphone className="w-[22px]" />}
                     data-testid="notify-me-id"
                     data-test={courseId}
                     onClick={handleResetFilters}
                     id="navbar-waitlist"
+                    className="max-w-[64px] ml-2"
                   />
                 ) : null}
 
@@ -541,6 +544,7 @@ export const CourseNav = () => {
                   data-test={courseId}
                   onClick={handleResetFilters}
                   id="navbar-account-settings"
+                  className="max-w-[64px]"
                 />
 
                 <NavItem
@@ -548,41 +552,50 @@ export const CourseNav = () => {
                   text=""
                   icon={isNavExpanded ?
                     <DownArrow className="w-[35px] cursor-pointer" /> :
-                    <ThreeDots className="cursor-pointer" direction="vertical"/>
+                    <ThreeDots className="cursor-pointer" direction="vertical" />
                   }
-                  className="flex !justify-center items-center w-[35px]"
+                  className="flex !justify-center items-center w-[35px] max-w-[64px]"
                   onClick={toggleNavExpansion}
+                  data-testid="sell-your-tee-time-id"
                 />
               </div>
-              <div ref={bottomNavRef} className={`flex w-full gap-4 md:gap-8 ml-4 ${isNavExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'} transition-all duration-200 ease-in-out`}>
+              <div
+                ref={bottomNavRef}
+                className={`flex w-full justify-between gap-4 transition-all duration-200 ease-in-out ${isNavExpanded
+                  ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}
+              >
                 <NavItem
                   href={`/${courseId}/my-tee-box?section=owned`}
-                  text="My Tee Box"
-                  icon={<Calendar className="w-[16px]" />}
+                  text={`My Tee Box`}
+                  icon={<Calendar className="w-[20px]" />}
                   data-testid="sell-your-tee-time-id"
                   data-test={courseId}
                   onClick={handleResetFilters}
                   id="navbar-my-tee-box"
+                  className="max-w-[64px]"
                 />
+
                 {course?.supportsGroupBooking ? (
                   <NavItem
                     href={`/${courseId}/group-booking`}
                     text="Group Booking"
-                    icon={<Megaphone className="w-[16px]" />}
+                    icon={<Megaphone className="w-[20px]" />}
                     data-testid="group-booking-id"
                     data-test={courseId}
                     onClick={handleResetFilters}
+                    className="max-w-[64px]"
                   />
                 ) : null}
                 {course?.allowAuctions ? (
                   <NavItem
                     href={`/${courseId}/auctions`}
                     text="Auctions"
-                    icon={<Auction className="w-[16px]" />}
+                    icon={<Auction className="w-[24px]" />}
                     data-testid="auction-id"
                     data-test={courseId}
                     onClick={handleResetFilters}
                     id="navbar-auctions"
+                    className="max-w-[64px]"
                   />
                 ) : null}
                 {course?.supportsOffers ? (
@@ -607,15 +620,17 @@ export const CourseNav = () => {
                     data-test={courseId}
                     onClick={handleResetFilters}
                     id="navbar-my-offers"
+                    className="max-w-[64px]"
                   />
-                ) : null}
+                ) : <NavItem
+                  href=""
+                  text="No Menu"
+                  className="flex !justify-center items-center max-w-[64px] invisible"
+                />}
                 <NavItem
                   href=""
-                  text=""
-                  // icon={isNavExpanded ? <DownArrow className="w-[35px] cursor-pointer"/> :<ThreeDots
-                  //   className="cursor-pointer"
-                  // />}
-                  className="flex !justify-center items-center w-[35px]"
+                  text="No Menu"
+                  className="flex !justify-center items-center max-w-[64px] invisible"
                 />
               </div>
             </div>
