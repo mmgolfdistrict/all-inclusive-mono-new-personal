@@ -228,7 +228,7 @@ export class AuthService extends CacheService {
           phoneNumber: "",
           profilePicture: "",
           error: true,
-          message: "Invalid password",
+          message: "The email or password you entered is incorrect.",
         };
       }
 
@@ -249,7 +249,7 @@ export class AuthService extends CacheService {
         phoneNumber: "",
         profilePicture: "",
         error: true,
-        message: "Invalid password",
+        message: "The email or password you entered is incorrect.",
       };
     }
     this.logger.warn(`Password Verified`);
