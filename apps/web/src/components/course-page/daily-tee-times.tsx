@@ -154,7 +154,7 @@ export const DailyTeeTimes = ({
     setError(error?.message ?? null);
   }, [error]);
 
-  const count = teeTimeData?.pages[0]?.count;
+    const count = teeTimeData?.pages[0]?.count;
 
   const allTeeTimes =
     teeTimeData?.pages[teeTimeData?.pages?.length - 1]?.results ?? [];
@@ -193,7 +193,7 @@ export const DailyTeeTimes = ({
   };
 
   useEffect(() => {
-    if (isVisible && count !== allTeeTimes?.length) {
+    if (isVisible) {
       void getNextPage();
     }
   }, [isVisible]);
@@ -278,7 +278,7 @@ export const DailyTeeTimes = ({
             className={`flex h-fit items-center justify-center rounded-full bg-white p-2 shadow-overflow-indicator ${isAtStart ? 'hidden' : 'flex'}`}
             data-testid="tee-time-left-chevron-id"
             data-qa={dayMonthDate(date)}
-            disabled={isAtStart}
+            // disabled={isAtStart}
           >
             <LeftChevron fill="#40942A" className="w-[21px]" />
           </button>
