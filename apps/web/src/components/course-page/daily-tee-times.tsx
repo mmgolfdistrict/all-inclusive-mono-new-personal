@@ -275,7 +275,7 @@ export const DailyTeeTimes = ({
         <div className="absolute top-1/2 hidden md:block -translate-y-1/2 z-[2] flex items-center justify-center -left-1 md:-left-6">
           <button
             onClick={() => scrollLeft()}
-            className={`flex h-fit items-center justify-center rounded-full bg-white p-2 shadow-overflow-indicator `}
+            className={`flex h-fit items-center justify-center rounded-full bg-white p-2 shadow-overflow-indicator ${isAtStart ? 'hidden' : 'flex'}`}
             data-testid="tee-time-left-chevron-id"
             data-qa={dayMonthDate(date)}
             // disabled={isAtStart}
@@ -366,7 +366,7 @@ export const DailyTeeTimes = ({
         <div className="absolute z-[2] hidden md:block top-1/2 -translate-y-1/2 flex items-center justify-center -right-1 md:-right-6">
           <button
             onClick={scrollRight}
-            className={`flex h-fit items-center justify-center rounded-full bg-white p-2 shadow-overflow-indicator ${isAtEnd ? 'opacity-50' : ''}`}
+            className={`flex h-fit items-center justify-center rounded-full bg-white p-2 shadow-overflow-indicator ${isAtEnd ? 'hidden' : 'flex'}`}
             data-testid="tee-time-right-chevron-id"
             data-qa={dayMonthDate(date)}
             disabled={isAtEnd}

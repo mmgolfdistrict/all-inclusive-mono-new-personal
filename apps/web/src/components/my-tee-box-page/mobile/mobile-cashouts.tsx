@@ -121,35 +121,24 @@ export const MobileCashouts = () => {
   };
 
   return (
-    <div className="relative flex max-w-full flex-col gap-4 overflow-auto pb-2 text-[14px] md:pb-3">
-      <table className="w-full table-auto overflow-auto">
-        <thead className="top-0 table-header-group">
-          <tr className="text-left">
-            <TableHeader text="Date" />
-            <TableHeader text="Amount" />
-          </tr>
-        </thead>
-        <tbody className={`max-h-[300px] w-full flex-col overflow-scroll`}>
-          {isLoading
-            ? Array(3)
-              .fill(null)
-              .map((_, idx) => <SkeletonRow key={idx} />)
-            : txnHistory?.map((i, idx) => (
-              <TableRow
-                key={idx}
-                amount={formatMoney((i?.amount ?? 0) / 100)}
-                status={i.externalStatus ?? ""}
-                time={formatTime(
-                  i.createdDateTime ?? "",
-                  false,
-                  course?.timezoneCorrection
-                )}
-                openReceipt={() => openReceipt(i)}
-              />
-            ))}
-        </tbody>
-      </table>
-
+    <div className="relative flex max-w-full flex-col gap-4 overflow-auto pb-2 text-[14px] mx-4">
+      {isLoading
+        ? Array(3)
+          .fill(null)
+          .map((_, idx) => <SkeletonRow key={idx} />)
+        : txnHistory?.map((i, idx) => (
+          <TableCard
+            key={idx}
+            amount={formatMoney((i?.amount ?? 0) / 100)}
+            status={i.externalStatus ?? ""}
+            time={formatTime(
+              i.createdDateTime ?? "",
+              false,
+              course?.timezoneCorrection
+            )}
+            openReceipt={() => openReceipt(i)}
+          />
+        ))}
       <TransactionDetails
         isReceiptOpen={isReceiptOpen}
         setIsReceiptOpen={setIsReceiptOpen}
@@ -160,21 +149,7 @@ export const MobileCashouts = () => {
   );
 };
 
-const TableHeader = ({
-  text,
-  className,
-}: {
-  text: string;
-  className?: string;
-}) => {
-  return (
-    <th className={`whitespace-nowrap px-4 font-semibold ${className ?? ""}`}>
-      {text}
-    </th>
-  );
-};
-
-const TableRow = ({
+const TableCard = ({
   amount,
   time,
   openReceipt,
@@ -185,14 +160,31 @@ const TableRow = ({
   openReceipt: () => void;
 }) => {
   return (
-    <tr className="w-full border-b border-stroke text-primary-gray">
-      <td className="whitespace-nowrap px-4 py-3 unmask-time">{time}</td>
-      <td className="whitespace-nowrap px-4 py-3">{amount}</td>
-      <td className="whitespace-nowrap px-4 py-3">
-        <OutlineButton onClick={openReceipt} data-testid="receipt-button-id">
-          Receipt
-        </OutlineButton>
-      </td>
-    </tr>
+    <div className="card w-full border border-gray-300 rounded-lg shadow-md my-2 py-2">
+      <div className="card-body">
+        <table className="w-full text-sm text-left text-gray-500">
+          <tbody className="text-xs text-gray-700 bg-gray-50">
+            <tr className="border-b border-gray-300">
+              <th scope="col" className="px-2 py-1">Date</th>
+              <td>{time}</td>
+            </tr>
+            <tr className="border-b border-gray-300">
+              <th scope="col" className="px-2 py-1">Amount</th>
+              <td>{amount}</td>
+            </tr>
+            <tr>
+              <td className="whitespace-nowrap px-2 py-2" colSpan={2}>
+                <OutlineButton
+                  onClick={openReceipt} data-testid="receipt-button-id"
+                  className="w-full"
+                >
+                  Receipt
+                </OutlineButton>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 };
