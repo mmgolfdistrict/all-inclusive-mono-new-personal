@@ -48,6 +48,10 @@ interface EmailParams {
   ManageTeeTimesURL?: string;
   GreenFeesPerPlayer?: string;
   GroupReservationID?: string;
+  PreviousPlayerCount?: number;
+  NewPlayerCount?: number;
+  PreviousListedPrice?: number;
+  NewListedPrice?: number;
 }
 
 interface Attachment {
