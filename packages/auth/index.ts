@@ -223,6 +223,11 @@ export const {
     async signIn({ user, account }) {
       console.log("user", user);
       console.log("provider", account);
+
+      if ("error" in user && "message" in user) {
+        return `/login?error=${user.message}`;
+      }
+
       if (user?.email == null) {
         return `/auth/error?error=EmailRequired&provider=${account?.provider}`;
       }
@@ -294,7 +299,7 @@ export const {
       }
 
       await authService.updateLastSuccessfulLogin(user?.id ?? "", user?.email ?? "");
-      
+
       if (trigger === "update" && session?.image !== undefined && token) {
         token.picture = session.image;
         token.image = session.image;
