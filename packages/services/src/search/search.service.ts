@@ -1123,14 +1123,14 @@ export class SearchService extends CacheService {
     // const startDate = dayjs(date).utc().hour(0).minute(0).second(0).millisecond(0).toISOString();
     // const endDate = dayjs(date).utc().hour(23).minute(59).second(59).millisecond(999).toISOString();
 
-    const today = dayjs(date).startOf("day");
-    const currentday = dayjs(minDate).startOf("day");
-    let startOfDay: any = "";
-    if (currentday.isSame(today)) {
-      startOfDay = this.convertDateFormat(minDate);
-    } else {
-      startOfDay = dayjs(date).utc().hour(0).minute(0).second(0).millisecond(0).toISOString();
-    }
+    // const today = dayjs(date).startOf("day");
+    // const currentday = dayjs(minDate).startOf("day");
+    let startOfDay: any = this.convertDateFormat(minDate);
+    // if (currentday.isSame(today)) {
+    //   startOfDay = this.convertDateFormat(minDate);
+    // } else {
+    //   startOfDay = dayjs(date).utc().hour(0).minute(0).second(0).millisecond(0).toISOString();
+    // }
     const endOfDay = dayjs(date).utc().hour(23).minute(59).second(59).millisecond(999).toISOString();
 
     const nowInCourseTimezone = dayjs().utc().utcOffset(timezoneCorrection).format("YYYY-MM-DD HH:mm:ss");
