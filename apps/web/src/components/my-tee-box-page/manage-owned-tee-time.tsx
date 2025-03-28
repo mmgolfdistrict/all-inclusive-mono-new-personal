@@ -420,7 +420,10 @@ export const ManageOwnedTeeTime = ({
                         >
                           {!friend.currentlyEditing ? (
                             <div className="mx-auto w-full rounded-lg bg-secondary-white px-4 py-1 flex justify-between text-[16px] font-semibold outline-none">
-                              <div>{index === 0 ? "You" : friend.name}</div>
+                              <div style={{
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                              }}>{index === 0 ? "You" : friend.name}</div>
                               {index !== 0 &&
                                 course?.supportsPlayerNameChange ? (
                                 <button
@@ -480,8 +483,8 @@ export const ManageOwnedTeeTime = ({
                                             Friend not found. Invite them!
                                             <FilledButton
                                               className={`w-full !max-w-fit ${invite.isLoading
-                                                  ? "animate-pulse"
-                                                  : ""
+                                                ? "animate-pulse"
+                                                : ""
                                                 }`}
                                               onClick={() =>
                                                 handleInviteFriend(
@@ -552,10 +555,10 @@ export const ManageOwnedTeeTime = ({
               <div className="flex flex-col gap-2">
                 <FilledButton
                   className={`w-full ${updateNames.isLoading ||
-                      updateMinimumOfferPrice.isLoading ||
-                      invite.isLoading
-                      ? "!border-gray-200 !bg-gray-200"
-                      : ""
+                    updateMinimumOfferPrice.isLoading ||
+                    invite.isLoading
+                    ? "!border-gray-200 !bg-gray-200"
+                    : ""
                     }`}
                   onClick={() => void save()}
                   data-testid="save-button-id"

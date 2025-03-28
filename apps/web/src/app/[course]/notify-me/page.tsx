@@ -34,8 +34,6 @@ function NotifyMe({ params }: { params: { course: string } }) {
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [displayDates, setDisplayDates] = useState<string>("");
   const [players, setPlayers] = useState("1");
-  // const courseStartTime = dayjs(course?.openTime).format("hh:mm A");
-  // const courseEndTime = dayjs(course?.closeTime).format("hh:mm A");
   const courseStartTimeNumber = course?.courseOpenTime ?? 9;
   const courseEndTimeNumber = course?.courseCloseTime ?? 9;
   const { setActivePage } = useAppContext();
@@ -65,9 +63,6 @@ function NotifyMe({ params }: { params: { course: string } }) {
       });
     }
   }
-
-  // const courseStartTimeObj = dayjs(courseStartTime, "hh:mm A");
-  // const courseEndTimeObj = dayjs(courseEndTime, "hh:mm A");
 
   const [filteredStartTimeOptions, setFilteredStartTimeOptions] = useState<
     { displayTime: string; value: number }[]
@@ -167,13 +162,6 @@ function NotifyMe({ params }: { params: { course: string } }) {
       playerCount: Number(players),
     };
 
-    // const formatTime = (time: string | number) => {
-    //   const timeString = time.toString().padStart(4, "0");
-    //   const hours = parseInt(timeString.slice(0, 2), 10);
-    //   const minutes = parseInt(timeString.slice(2), 10);
-    //   return dayjs().hour(hours).minute(minutes).format("hh:mm a");
-    // };
-
     await createNotifications(notificationsData, {
       onSuccess: (data) => {
         const toastContent = (
@@ -189,8 +177,6 @@ function NotifyMe({ params }: { params: { course: string } }) {
         toast.success(toastContent);
 
         setSelectedDates([]);
-        // const startTimeString = formatTime(courseStartTimeNumber);
-        // const endTimeString = formatTime(courseEndTimeNumber);
         setLocalStartTime([courseStartTimeNumber, courseEndTimeNumber]);
         setStartTime([courseStartTimeNumber, courseEndTimeNumber]);
         setPlayers("1");
@@ -213,20 +199,6 @@ function NotifyMe({ params }: { params: { course: string } }) {
       );
     setDisplayDates(datesToDisplay.join(", "));
   }, [selectedDates]);
-
-  useEffect(() => {
-    if (startTime[0] && startTime[1]) {
-      // const formatTime = (time: string | number) => {
-      //   const timeString = time.toString().padStart(4, "0");
-      //   const hours = parseInt(timeString.slice(0, 2), 10);
-      //   const minutes = parseInt(timeString.slice(2), 10);
-      //   return dayjs().hour(hours).minute(minutes).format("hh:mm a");
-      // };
-
-      // const startTimeString = formatTime(startTime[0]);
-      // const endTimeString = formatTime(startTime[1]);
-    }
-  }, [startTime[0], startTime[1]]);
 
   return (
     <section className="mx-auto px-2 flex w-full flex-col gap-4 pt-4 md:max-w-[1360px] md:px-6">
@@ -374,27 +346,27 @@ function NotifyMe({ params }: { params: { course: string } }) {
                 <div>
                   {isMobile
                     ? startTimeOptions[
-                        startTimeOptions.findIndex(
-                          (i) => i.value === timeMobile[0]
-                        )
-                      ]?.displayTime
+                      startTimeOptions.findIndex(
+                        (i) => i.value === timeMobile[0]
+                      )
+                    ]?.displayTime
                     : startTimeOptions[
-                        startTimeOptions.findIndex(
-                          (i) => i.value === localStartTime[0]
-                        )
-                      ]?.displayTime}
+                      startTimeOptions.findIndex(
+                        (i) => i.value === localStartTime[0]
+                      )
+                    ]?.displayTime}
                   -
                   {isMobile
                     ? startTimeOptions[
-                        startTimeOptions.findIndex(
-                          (i) => i.value === timeMobile[1]
-                        )
-                      ]?.displayTime
+                      startTimeOptions.findIndex(
+                        (i) => i.value === timeMobile[1]
+                      )
+                    ]?.displayTime
                     : startTimeOptions[
-                        startTimeOptions.findIndex(
-                          (i) => i.value === localStartTime[1]
-                        )
-                      ]?.displayTime}
+                      startTimeOptions.findIndex(
+                        (i) => i.value === localStartTime[1]
+                      )
+                    ]?.displayTime}
                 </div>
               </div>
               <section className="flex flex-col gap-2">
@@ -405,21 +377,21 @@ function NotifyMe({ params }: { params: { course: string } }) {
                   value={
                     isMobile
                       ? [
-                          filteredStartTimeOptions.findIndex(
-                            (i) => i.value === timeMobile[0]
-                          ),
-                          filteredStartTimeOptions.findIndex(
-                            (i) => i.value === timeMobile[1]
-                          ),
-                        ]
+                        filteredStartTimeOptions.findIndex(
+                          (i) => i.value === timeMobile[0]
+                        ),
+                        filteredStartTimeOptions.findIndex(
+                          (i) => i.value === timeMobile[1]
+                        ),
+                      ]
                       : [
-                          filteredStartTimeOptions.findIndex(
-                            (i) => i.value === localStartTime[0]
-                          ),
-                          filteredStartTimeOptions.findIndex(
-                            (i) => i.value === localStartTime[1]
-                          ),
-                        ]
+                        filteredStartTimeOptions.findIndex(
+                          (i) => i.value === localStartTime[0]
+                        ),
+                        filteredStartTimeOptions.findIndex(
+                          (i) => i.value === localStartTime[1]
+                        ),
+                      ]
                   }
                   onValueChange={(values) => {
                     if (Array.isArray(values) && values.length === 2) {
