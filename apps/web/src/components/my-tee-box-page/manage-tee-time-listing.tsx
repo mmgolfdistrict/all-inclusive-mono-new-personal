@@ -84,7 +84,7 @@ export const ManageTeeTimeListing = ({
   });
   const [isCancelListingOpen, setIsCancelListingOpen] =
     useState<boolean>(false);
-  const sell = api.teeBox.createListingForBookings.useMutation();
+  const updateListingForBooking = api.teeBox.updateListingForBookings.useMutation();
   const sellGroup = api.teeBox.createListingForGroupBookings.useMutation();
   const canResell = api.teeBox.checkIfUserIsOptMemberShip.useMutation();
   const router = useRouter();
@@ -325,14 +325,16 @@ export const ManageTeeTimeListing = ({
           slots: parseInt(players),
         });
       } else {
-        await sell.mutateAsync({
+        await updateListingForBooking.mutateAsync({
           bookingIds:
             selectedTeeTime?.listedSpots?.slice(0, parseInt(players)) ?? [],
-          listPrice: listingPrice,
+          listId: selectedTeeTime?.listingId ?? "",
+          updatedPrice: listingPrice,
+          updatedSlots: parseInt(players),
           endTime: new Date(selectedTeeTime?.date),
-          slots: parseInt(players),
         });
       }
+      setIsManageTeeTimeListingOpen(false);
       toast.success(
         <div className="flex flex-col ">
           <div>Your tee time has been listed.</div>
