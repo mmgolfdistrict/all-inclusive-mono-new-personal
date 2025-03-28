@@ -93,9 +93,13 @@ export default function CourseHomePage() {
     if (!date) {
       return ""; // Handle the case where date is null or undefined
     }
+<<<<<<< HEAD
     const compareTimeZone = compareTimesWithTimezones()
 
     if (compareTimeZone === "user") {
+=======
+    if (compareTimesWithTimezones() === "user") {
+>>>>>>> a83cdc5e70e978c523e78b298491ed0340fb2923
       return dayjs(date).format("ddd, DD MMM YYYY HH:mm:ss [GMT]");
     }
     return dayjs(date)
@@ -397,7 +401,7 @@ export default function CourseHomePage() {
         return formatDateString(dayjs().add(360, "days").toDate());
     }
   }, [dateType, selectedDay, farthestDateOut, specialEvents]);
-
+  
   // const utcStartDate = dayjs
   //   .utc(startDate)
   //   .utcOffset(course?.timezoneCorrection ?? 0);
@@ -718,14 +722,6 @@ export default function CourseHomePage() {
           <FilterSort toggleFilters={toggleFilters} toggleSort={toggleSort} />
         </div>
         <div className="flex w-full flex-col gap-1 md:gap-4 overflow-x-hidden pr-0p md:pr-6">
-          {isMobile ? <div className="flex justify-between gap-4  px-4 md:px-0">
-            <div className="text-secondary-black">
-              {/* Showing {count?.toLocaleString() ?? "0"} tee times{" "} */}
-              <span className="text-sm text-primary-gray">
-                All times shown in course time zone
-              </span>
-            </div>
-          </div> : null}
 
           <div
             className={`flex space-x-2 md:hidden px-4 ${(courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
@@ -736,6 +732,7 @@ export default function CourseHomePage() {
               top: (courseImages?.length > 0 ? scrollY > 333 : scrollY > 45) ? `${divHeight && divHeight * 1}px` : 'auto',
             }}
           >
+            <div className="w-[50%] flex items-center justify-around">
             <button
               onClick={toggleFilters}
               className="p-2 text-xs flex items-center space-x-2 flex items-center gap-1 rounded-full border-b border-r border-t border-l border-stroke"
@@ -749,6 +746,13 @@ export default function CourseHomePage() {
             >
               <Calendar className="h-[14px] w-[14px]" /> Date
             </button>
+            </div>
+            <div className="text-secondary-black w-[50%] text-center">
+              {/* Showing {count?.toLocaleString() ?? "0"} tee times{" "} */}
+              <span className="text-sm text-primary-gray">
+                All times shown in course time zone
+              </span>
+            </div>
           </div>
 
           {error ? (
@@ -784,7 +788,8 @@ export default function CourseHomePage() {
                         scrollY={scrollY}
                         divHeight={divHeight}
                         isLoadingTeeTimeDate={isLoadingTeeTimeDate}
-                      // datesWithData={datesWithData}
+                        // datesWithData={datesWithData}
+                        allDatesArr={datesArr}
                       />
                     )}
                   </ViewportList>

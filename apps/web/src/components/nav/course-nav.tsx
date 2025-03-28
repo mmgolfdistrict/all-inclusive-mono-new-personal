@@ -597,7 +597,11 @@ export const CourseNav = () => {
                     id="navbar-auctions"
                     className="max-w-[64px]"
                   />
-                ) : null}
+                ) : <NavItem
+                  href=""
+                  text="No Menu"
+                  className="flex !justify-center items-center max-w-[64px] invisible"
+                />}
                 {course?.supportsOffers ? (
                   <NavItem
                     href={
