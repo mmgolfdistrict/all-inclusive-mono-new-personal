@@ -119,6 +119,28 @@ export const bookingRouter = createTRPCRouter({
           input.slots
         );
     }),
+  updateListingForBookings: protectedProcedure
+    .input(
+      z.object({
+        listId: z.string(),
+        updatedPrice: z.number(),
+        updatedSlots: z.number(),
+        bookingIds: z.array(z.string()),
+        endTime: z.date(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return ctx.serviceFactory
+        .getBookingService()
+        .updateListingForBookings(
+          ctx.session.user.id,
+          input.listId,
+          input.updatedPrice,
+          input.updatedSlots,
+          input.bookingIds,
+          input.endTime
+        );
+    }),
   getOwnedBookingsForTeeTime: protectedProcedure
     .input(
       z.object({
@@ -356,7 +378,12 @@ export const bookingRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       return ctx.serviceFactory
         .getBookingService()
-        .checkIfTeeTimeGroupAvailableOnProvider(input.teeTimeIds, input.golfersCount, input.minimumPlayersPerBooking, ctx.session.user.id);
+        .checkIfTeeTimeGroupAvailableOnProvider(
+          input.teeTimeIds,
+          input.golfersCount,
+          input.minimumPlayersPerBooking,
+          ctx.session.user.id
+        );
     }),
   reserveGroupBooking: protectedProcedure
     .input(

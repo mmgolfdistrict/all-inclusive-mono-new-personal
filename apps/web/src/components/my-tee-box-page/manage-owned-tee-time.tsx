@@ -346,7 +346,7 @@ export const ManageOwnedTeeTime = ({
       >
         <div className="relative flex h-full flex-col">
           <div className="flex items-center justify-between p-4">
-            <div className="text-lg">Manage Owned Tee Time</div>
+            <div className="text-lg">Invite Players</div>
 
             <button
               // ref={trigger}
