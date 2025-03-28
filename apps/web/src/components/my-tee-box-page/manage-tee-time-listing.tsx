@@ -347,6 +347,7 @@ export const ManageTeeTimeListing = ({
           </Link>
         </div>
       );
+      setIsManageTeeTimeListingOpen(false);
       if (needRedirect) {
         return router.push(
           `/${selectedTeeTime?.courseId}/my-tee-box?section=my-listed-tee-times`

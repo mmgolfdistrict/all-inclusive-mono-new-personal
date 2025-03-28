@@ -144,7 +144,9 @@ export const EditProfileForm = () => {
       const regionCode: string = phoneUtil.getRegionCodeForCountryCode(countryCode);
       return regionCode.toLowerCase();
     } catch (error) {
-      console.error("Invalid phone number", error);
+      if (error) {
+        console.error("Invalid phone number", error);
+      }
       return "";
     }
   };
@@ -243,7 +245,7 @@ export const EditProfileForm = () => {
       setValue("email", userData?.email ?? "");
       setValue(
         "phoneNumberCountryCode",
-        userData?.phoneNumberCountryCode ?? null
+        userData?.phoneNumberCountryCode ?? 1
       );
 
       setValue("phoneNumber", userData?.phoneNumber ?? "");
