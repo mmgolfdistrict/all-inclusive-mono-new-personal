@@ -154,7 +154,6 @@ export const DailyTeeTimes = ({
     setError(error?.message ?? null);
   }, [error]);
 
-    const count = teeTimeData?.pages[0]?.count;
 
   const allTeeTimes =
     teeTimeData?.pages[teeTimeData?.pages?.length - 1]?.results ?? [];
