@@ -103,7 +103,9 @@ const CountryDropdown = ({ defaultCountry, items, onSelect }: CountryDropdownPro
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="bg-secondary-white text-gray-500 flex items-center px-2 py-3 rounded-lg w-full justify-between"
+        className="
+          bg-secondary-white text-gray-500 flex items-center px-2 py-3 
+          rounded-lg w-full justify-between min-w-[132px]"
       >
         <div className="flex items-center space-x-2">
           {selectedCountry && (

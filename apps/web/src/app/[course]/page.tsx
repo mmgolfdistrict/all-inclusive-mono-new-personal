@@ -75,12 +75,12 @@ export default function CourseHomePage() {
   }
 
   function compareTimesWithTimezones() {
-    const date1 = dayjs().tz(getUserTimezone()).utcOffset()
-    const date2 = dayjs().tz(course?.timezoneISO).utcOffset()
+    const date1 = dayjs().tz(getUserTimezone())
+    const date2 = dayjs().tz(course?.timezoneISO)
 
-    if (date1 > date2) {
+    if (date1.isAfter(date2)) {
       return "user";
-    } else if (date1 < date2) {
+    } else if (date1.isBefore(date2)) {
       return "course";
     } else {
       return "user";
@@ -231,8 +231,8 @@ export default function CourseHomePage() {
       const specialDate = getSpecialDayDate(queryDateType);
       if (queryDateType) {
         if (specialDate) {
-          setDateType(queryDateType as DateType);
-        }
+          setDateType(queryDateType as DateType); 
+        } 
       }
     }
   }, [queryDateType,specialEvents]);
