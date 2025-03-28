@@ -334,6 +334,7 @@ export const ManageTeeTimeListing = ({
           endTime: new Date(selectedTeeTime?.date),
         });
       }
+      setIsManageTeeTimeListingOpen(false);
       toast.success(
         <div className="flex flex-col ">
           <div>Your tee time has been listed.</div>
