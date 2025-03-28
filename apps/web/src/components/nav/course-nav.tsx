@@ -280,7 +280,11 @@ export const CourseNav = () => {
                     trigger={
                       <Info longMessage className="ml-2 h-[20px] w-[20px]" />
                     }
-                    content={elm.longMessage}
+                    content={<div>
+                      {elm.longMessage.split("\\n").map((line, index) => (
+                        <div key={index}>{line}</div>
+                      ))}
+                    </div>}
                   />
                 )}
               </div>
@@ -300,7 +304,11 @@ export const CourseNav = () => {
                     trigger={
                       <Info longMessage className="ml-2 h-[20px] w-[20px]" />
                     }
-                    content={elm.longMessage}
+                    content={<div>
+                      {elm.longMessage.split("\\n").map((line, index) => (
+                        <div key={index}>{line}</div>
+                      ))}
+                    </div>}
                   />
                 )}
               </div>
