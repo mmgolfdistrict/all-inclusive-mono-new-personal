@@ -106,7 +106,7 @@ export const CheckoutItem = ({
   }, [playerCount, teeTime]);
 
   useEffect(() => {
-    if (teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND") {
+    if (teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND" && !teeTime?.allowSplit) {
       choosePlayers(teeTime?.availableSlots.toString());
       return;
     }
@@ -258,6 +258,7 @@ export const CheckoutItem = ({
                   numberOfPlayers={numberOfPlayers}
                   selectStatus={allowedPlayers?.selectStatus}
                   canShowPlayers={!isGroupBooking}
+                  allowSplit={teeTime?.allowSplit || false}
                 />
               </div>
             </div>
@@ -344,6 +345,7 @@ export const CheckoutItem = ({
                   numberOfPlayers={numberOfPlayers}
                   selectStatus={allowedPlayers?.selectStatus}
                   canShowPlayers={!isGroupBooking}
+                    allowSplit={teeTime?.allowSplit || false}
                 />
               </div>
             </div>
@@ -495,6 +497,7 @@ const Data = ({
   numberOfPlayers,
   selectStatus,
   canShowPlayers,
+  allowSplit
 }: {
   className: string;
   canChoosePlayer: boolean;
@@ -509,6 +512,7 @@ const Data = ({
   numberOfPlayers?: string[];
   selectStatus?: string;
   canShowPlayers?: boolean;
+    allowSplit?: boolean;
 }) => {
   const isMobile = useMediaQuery("(max-width: 768px)");
   if (isLoading) {
@@ -543,7 +547,7 @@ const Data = ({
                 setPlayers={choosePlayers}
                 playersOptions={PlayersOptions}
                 availableSlots={availableSlots ?? 0}
-                isDisabled={isSecondHand || selectStatus === "ALL_PLAYERS"}
+                isDisabled={(isSecondHand && !allowSplit) || selectStatus === "ALL_PLAYERS"}
                 teeTimeId={teeTimeId}
                 numberOfPlayers={numberOfPlayers ? numberOfPlayers : []}
                 id="number-of-players-checkout"

@@ -12,7 +12,8 @@ export const ChoosePlayers = ({
   teeTimeId,
   status,
   numberOfPlayers,
-  id
+  id,
+  allowSplit
 }: {
   players: string | number;
   setPlayers: (v: string) => void;
@@ -24,6 +25,7 @@ export const ChoosePlayers = ({
   status?: string;
   numberOfPlayers: string[];
   id?: string;
+    allowSplit?: boolean;
 }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -31,7 +33,7 @@ export const ChoosePlayers = ({
   const handlePlayerChange = (value: string) => {
     if (isDisabled) return;
     if (availableSlots < parseInt(value)) return;
-    if (!numberOfPlayers?.includes(value) || status === "SECOND_HAND") {
+    if (!numberOfPlayers?.includes(value) || (status === "SECOND_HAND" && !allowSplit)) {
       return;
     }
     if (value) {
