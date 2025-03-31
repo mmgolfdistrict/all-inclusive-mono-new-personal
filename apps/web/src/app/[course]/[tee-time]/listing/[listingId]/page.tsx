@@ -4,7 +4,6 @@ import { ListedDetails } from "~/components/cards/listed-details";
 import { TransactionHistory } from "~/components/cards/transaction-history";
 import { CourseDescription } from "~/components/tee-time-page/course-description";
 import { InviteFriends } from "~/components/tee-time-page/invite-friends";
-import { useCourseContext } from "~/contexts/CourseContext";
 
 export default async function ListedPage({
   params,
@@ -17,7 +16,6 @@ export default async function ListedPage({
   const isTransactionHistoryVisible = await appSettingService.get(
     "ShowTeeTimeDetailTransactionHistory"
   );
-  const { course } = useCourseContext();
 
   return (
     <main className="bg-secondary-white py-4 md:py-6">
@@ -37,9 +35,7 @@ export default async function ListedPage({
           {"true" === isTransactionHistoryVisible?.toLowerCase() && (
             <TransactionHistory teeTimeId={teeTimeId} />
           )}
-          {course?.supportsPlayerNameChange && (
-            <InviteFriends teeTimeId={teeTimeId} />
-          )}
+          <InviteFriends teeTimeId={teeTimeId} />
         </div>
       </section>
     </main>
