@@ -75,12 +75,12 @@ export default function CourseHomePage() {
   }
 
   function compareTimesWithTimezones() {
-    const date1 = dayjs().tz(getUserTimezone())
-    const date2 = dayjs().tz(course?.timezoneISO)
+    const date1 = dayjs().tz(getUserTimezone()).utcOffset()
+    const date2 = dayjs().tz(course?.timezoneISO).utcOffset()
 
-    if (date1.isAfter(date2)) {
+    if (date1 > date2) {
       return "user";
-    } else if (date1.isBefore(date2)) {
+    }  else if (date1 < date2) {
       return "course";
     } else {
       return "user";
@@ -806,6 +806,7 @@ export default function CourseHomePage() {
                         minDate={startDate.toString()}
                         maxDate={endDate.toString()}
                         handleLoading={handleLoading}
+                        dateType={dateType}
                       />
                     )}
                   </ViewportList>
