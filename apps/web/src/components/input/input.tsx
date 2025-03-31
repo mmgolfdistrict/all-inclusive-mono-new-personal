@@ -25,6 +25,7 @@ export const Input = ({
   inputRef,
   autoComplete,
   additionalContent,
+  required,
   ...props
 }: InputProps) => {
   return (
@@ -32,6 +33,7 @@ export const Input = ({
       <div className="flex gap-1">
         <label className="text-[14px] text-primary-gray" htmlFor={props.id}>
           {label}
+          {required && <span className="text-red ml-1">*</span>}
         </label>
         {showInfoTooltip && (
           <Tooltip
