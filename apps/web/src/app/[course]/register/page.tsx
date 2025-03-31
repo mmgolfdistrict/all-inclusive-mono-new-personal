@@ -57,6 +57,7 @@ export default function RegisterPage() {
     formState: { errors },
   } = useForm<RegisterSchemaType>({
     resolver: zodResolver(registerSchema),
+    mode: "onTouched",
   });
   const [isSubmitting, setIsSubmitting] = useState<boolean | undefined>(false);
   const libraries: Libraries = ["places"];
@@ -623,6 +624,7 @@ export default function RegisterPage() {
                     </MenuItem>
                   ))}
                 </Select>
+                {errors?.state?.message && <p className="text-[12px] text-red">{errors?.state?.message}</p>}
               </div>
             )}
           />

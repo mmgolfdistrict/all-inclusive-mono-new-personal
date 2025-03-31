@@ -43,7 +43,7 @@ export const Input = ({
         )}
       </div>
       {additionalContent && (
-        <p className="text-[12px] text-red">
+        <p className="text-[12px] text-blue-500">
           (Type and select from below auto complete to auto populate)
         </p>
       )}
