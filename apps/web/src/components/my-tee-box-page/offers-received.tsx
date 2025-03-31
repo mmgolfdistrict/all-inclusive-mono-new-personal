@@ -44,7 +44,7 @@ export type OfferType = {
   };
 };
 
-export const OffersReceived = () => {
+const OffersReceived = () => {
   const { course } = useCourseContext();
   const courseId = course?.id;
   const [isViewOfferOpen, setIsViewOfferOpen] = useState<boolean>(false);
@@ -219,28 +219,28 @@ export const OffersReceived = () => {
           <tbody className={`max-h-[300px] w-full flex-col overflow-scroll`}>
             {isLoading
               ? Array(3)
-                  .fill(null)
-                  .map((_, idx) => <SkeletonRow key={idx} />)
+                .fill(null)
+                .map((_, idx) => <SkeletonRow key={idx} />)
               : sortedData?.map((i, idx) => (
-                  <TableRow
-                    course={i.offer.details.courseName!}
-                    date={i.offer.details.teeTimeDate!}
-                    iconSrc={i.offer.details.courseImage}
-                    key={idx}
-                    offerPrice={i.offer.amountOffered}
-                    golfers={i.offer.golfers?.toString() ?? "0"}
-                    offeredBy={
-                      i.offer.offeredBy.handle ?? i.offer.offeredBy.name ?? ""
-                    }
-                    offeredById={i.offer.offeredBy.userId!}
-                    offeredByImage={i.offer.offeredBy.image ?? ""}
-                    expirationDate={i.offer.expiresAt}
-                    courseId={i.offer.courseId}
-                    teeTimeId={i.offer.details.teeTimeId!}
-                    timezoneCorrection={course?.timezoneCorrection}
-                    openViewOffer={() => openViewOffer(i)}
-                  />
-                ))}
+                <TableRow
+                  course={i.offer.details.courseName!}
+                  date={i.offer.details.teeTimeDate!}
+                  iconSrc={i.offer.details.courseImage}
+                  key={idx}
+                  offerPrice={i.offer.amountOffered}
+                  golfers={i.offer.golfers?.toString() ?? "0"}
+                  offeredBy={
+                    i.offer.offeredBy.handle ?? i.offer.offeredBy.name ?? ""
+                  }
+                  offeredById={i.offer.offeredBy.userId!}
+                  offeredByImage={i.offer.offeredBy.image ?? ""}
+                  expirationDate={i.offer.expiresAt}
+                  courseId={i.offer.courseId}
+                  teeTimeId={i.offer.details.teeTimeId!}
+                  timezoneCorrection={course?.timezoneCorrection}
+                  openViewOffer={() => openViewOffer(i)}
+                />
+              ))}
           </tbody>
         </table>
       </div>
@@ -278,9 +278,8 @@ const TableHeader = ({
 }) => {
   return (
     <th
-      className={`whitespace-nowrap px-4 font-semibold select-none ${
-        className ?? ""
-      }`}
+      className={`whitespace-nowrap px-4 font-semibold select-none ${className ?? ""
+        }`}
       onClick={() => (sortFn ? sortFn() : null)}
       data-testid="table-sort-id"
     >
@@ -404,3 +403,5 @@ const TableRow = ({
     </tr>
   );
 };
+
+export default OffersReceived;

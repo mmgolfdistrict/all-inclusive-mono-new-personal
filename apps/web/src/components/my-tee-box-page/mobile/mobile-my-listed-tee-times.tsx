@@ -11,7 +11,7 @@ import { SkeletonRow } from "../skeleton-row";
 import { type MyListedTeeTimeType } from "../my-listed-tee-times";
 import Link from "next/link";
 
-export const MobileMyListedTeeTimes = () => {
+const MobileMyListedTeeTimes = () => {
   const { course } = useCourseContext();
   const courseId = course?.id;
   const [isManageTeeTimeListingOpen, setIsManageTeeTimeListingOpen] =
@@ -192,3 +192,5 @@ const TableCard = ({
     </div>
   );
 };
+
+export default MobileMyListedTeeTimes;

@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useSession } from "@golf-district/auth/nextjs-exports";
 import * as Tabs from "@radix-ui/react-tabs";
 import { useAppContext } from "~/contexts/AppContext";
@@ -12,13 +13,37 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { type ReactNode } from "react";
 import { Badge } from "../badge";
 import { FilledButton } from "../buttons/filled-button";
-import { Cashouts } from "./cashouts";
-import InvitedTeeTime from "./invited-tee-time";
-import { MyListedTeeTimes } from "./my-listed-tee-times";
-import { OffersReceived } from "./offers-received";
-import { OffersSent } from "./offers-sent";
 import { Owned } from "./owned";
-import { TransactionHistory } from "./transaction-history";
+
+const OffersReceived = dynamic(
+  () => import("./offers-received").then((mod) => mod.default),
+  { ssr: false }
+);
+
+const OffersSent = dynamic(
+  () => import("./offers-sent").then((mod) => mod.default),
+  { ssr: false }
+);
+
+const TransactionHistory = dynamic(
+  () => import("./transaction-history").then((mod) => mod.TransactionHistory),
+  { ssr: false }
+);
+
+const MyListedTeeTimes = dynamic(
+  () => import("./my-listed-tee-times").then((mod) => mod.MyListedTeeTimes),
+  { ssr: false }
+);
+
+const InvitedTeeTime = dynamic(
+  () => import("./invited-tee-time").then((mod) => mod.default),
+  { ssr: false }
+);
+
+const Cashouts = dynamic(
+  () => import("./cashouts").then((mod) => mod.Cashouts),
+  { ssr: false }
+);
 
 export const TableView = () => {
   const { course } = useCourseContext();
@@ -30,7 +55,7 @@ export const TableView = () => {
     : "owned";
   const { user } = useUserContext();
   const pathname = usePathname();
-  const { setPrevPath,setActivePage } = useAppContext();
+  const { setPrevPath, setActivePage } = useAppContext();
   setActivePage("my-tee-box")
 
   const { data: unreadOffers, refetch } =

@@ -16,7 +16,7 @@ import { SkeletonRow } from "../skeleton-row";
 import { type OwnedTeeTime } from "../owned";
 import Link from "next/link";
 
-export const MobileOwned = () => {
+const MobileOwned = () => {
   const { course } = useCourseContext();
   const courseId = course?.id;
   const [isListTeeTimeOpen, setIsListTeeTimeOpen] = useState<boolean>(false);
@@ -316,3 +316,5 @@ const TableCard = ({
     </div>
   );
 };
+
+export default MobileOwned;

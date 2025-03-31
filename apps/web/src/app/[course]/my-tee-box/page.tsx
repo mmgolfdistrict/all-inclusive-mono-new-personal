@@ -1,10 +1,24 @@
 "use client";
+
+import dynamic from "next/dynamic";
 import { GoBack } from "~/components/buttons/go-back";
 import { DownChevron } from "~/components/icons/down-chevron";
-import { TableView } from "~/components/my-tee-box-page/table-view";
 import { OpenSection } from "~/utils/tee-box-helper";
 import { useMediaQuery } from "usehooks-ts";
-import { TableViewMobile } from "~/components/my-tee-box-page/table-view-mobile";
+
+const TableViewMobile = dynamic(
+  () => import("~/components/my-tee-box-page/table-view-mobile").then(
+    (mod) => mod.default
+  ),
+  { ssr: false }
+);
+
+const TableView = dynamic(
+  () => import("~/components/my-tee-box-page/table-view").then(
+    (mod) => mod.TableView
+  ),
+  { ssr: false }
+);
 
 type OpenSectionDescriptionType = Record<string, string>;
 

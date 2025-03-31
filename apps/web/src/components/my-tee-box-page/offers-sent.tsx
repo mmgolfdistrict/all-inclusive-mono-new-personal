@@ -43,7 +43,7 @@ export type OfferSentType = {
   };
 };
 
-export const OffersSent = () => {
+const OffersSent = () => {
   const { course } = useCourseContext();
   const courseId = course?.id;
   const [isCancelOfferOpen, setIsCancelOfferOpen] = useState<boolean>(false);
@@ -108,27 +108,27 @@ export const OffersSent = () => {
           <tbody className={`max-h-[300px] w-full flex-col overflow-scroll`}>
             {isLoading
               ? Array(3)
-                  .fill(null)
-                  .map((_, idx) => <SkeletonRow key={idx} />)
+                .fill(null)
+                .map((_, idx) => <SkeletonRow key={idx} />)
               : data.map((i, idx) => (
-                  <TableRow
-                    course={i.offer.details.courseName}
-                    date={i.offer.details.teeTimeDate!}
-                    iconSrc={i.offer.details.courseImage}
-                    key={idx}
-                    offerPrice={i.offer.offerAmount ?? 0}
-                    golfers={Number(i.offer.golfers) ?? 0}
-                    ownedBy={i.offer.ownedBy.name ?? ""}
-                    ownedByImage={i.offer.ownedBy.image ?? ""}
-                    ownedById={i.offer.ownedBy.userId ?? ""}
-                    status={i.offer.status ?? ""}
-                    courseId={i.offer.courseId}
-                    teeTimeId={i.offer.details.teeTimeId ?? ""}
-                    timezoneCorrection={course?.timezoneCorrection}
-                    openCancelOffer={() => openCancelOffer(i)}
-                    openManageOffer={() => openManageOffer(i)}
-                  />
-                ))}
+                <TableRow
+                  course={i.offer.details.courseName}
+                  date={i.offer.details.teeTimeDate!}
+                  iconSrc={i.offer.details.courseImage}
+                  key={idx}
+                  offerPrice={i.offer.offerAmount ?? 0}
+                  golfers={Number(i.offer.golfers) ?? 0}
+                  ownedBy={i.offer.ownedBy.name ?? ""}
+                  ownedByImage={i.offer.ownedBy.image ?? ""}
+                  ownedById={i.offer.ownedBy.userId ?? ""}
+                  status={i.offer.status ?? ""}
+                  courseId={i.offer.courseId}
+                  teeTimeId={i.offer.details.teeTimeId ?? ""}
+                  timezoneCorrection={course?.timezoneCorrection}
+                  openCancelOffer={() => openCancelOffer(i)}
+                  openManageOffer={() => openManageOffer(i)}
+                />
+              ))}
           </tbody>
         </table>
       </div>
@@ -259,3 +259,5 @@ const TableRow = ({
     </tr>
   );
 };
+
+export default OffersSent;
