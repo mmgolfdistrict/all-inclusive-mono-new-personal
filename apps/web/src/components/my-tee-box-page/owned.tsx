@@ -64,14 +64,16 @@ export const Owned = () => {
 
   const ownedTeeTimes = useMemo(() => {
     if (!data) return undefined;
-    return Object.keys(data).map((key) => {
-      return { ...data[key], teeTimeId: data[key].teeTimeId } as OwnedTeeTime;
-    }).sort((a, b) => {
-      const dateA = a.date;
-      const dateB = b.date;
+    return Object.keys(data)
+      .map((key) => {
+        return { ...data[key], teeTimeId: data[key].teeTimeId } as OwnedTeeTime;
+      })
+      .sort((a, b) => {
+        const dateA = a.date;
+        const dateB = b.date;
 
-      return Number(new Date(dateA)) - Number(new Date(dateB));
-    });
+        return Number(new Date(dateA)) - Number(new Date(dateB));
+      });
   }, [data]);
   // const loadMore = () => {
   //   setAmount(amount + 4);
@@ -230,7 +232,7 @@ const TableRow = ({
   openCancelListing,
   openManageListTeeTime,
   bookingStatus,
-  isGroupBooking
+  isGroupBooking,
 }: {
   course: string;
   date: string;
@@ -249,7 +251,7 @@ const TableRow = ({
   openCancelListing: () => void;
   openManageListTeeTime: () => void;
   bookingStatus: string;
-    isGroupBooking: boolean;
+  isGroupBooking: boolean;
 }) => {
   const href = useMemo(() => {
     if (isListed) {
@@ -274,23 +276,23 @@ const TableRow = ({
             </div>
           </div>
         ) : (
-            <Link
-          href={href}
-          className="flex items-center gap-2"
-          data-testid="course-tee-time-listing-id"
-          data-test={teeTimeId}
-          data-qa={courseId}
-        >
-          <Avatar src={iconSrc} />
-          <div className="flex flex-col">
-            <div className="whitespace-nowrap underline text-secondary-black">
-              {course}
+          <Link
+            href={href}
+            className="flex items-center gap-2"
+            data-testid="course-tee-time-listing-id"
+            data-test={teeTimeId}
+            data-qa={courseId}
+          >
+            <Avatar src={iconSrc} />
+            <div className="flex flex-col">
+              <div className="whitespace-nowrap underline text-secondary-black">
+                {course}
+              </div>
+              <div className="text-primary-gray unmask-time">
+                {formatTime(date, false, timezoneCorrection)}
+              </div>
             </div>
-            <div className="text-primary-gray unmask-time">
-              {formatTime(date, false, timezoneCorrection)}
-            </div>
-          </div>
-        </Link>
+          </Link>
         )}
       </td>
       {/* <td className="whitespace-nowrap px-4 py-3">
@@ -333,31 +335,31 @@ const TableRow = ({
               data-test={courseId}
               data-qa={course}
             >
-              Manage
+              Invite Players
             </OutlineButton>
           </div>
-            {isListed ? (
-              <FilledButton
-                className="min-w-[145px]"
-                onClick={openCancelListing}
-                data-testid="cancel-listing-button-id"
-                data-test={courseId}
-                data-qa={course}
-              >
-                Cancel Listing
-              </FilledButton>
-            ) : (
-              <FilledButton
-                className="min-w-[145px]"
-                onClick={openListTeeTime}
-                data-testid="sell-button-id"
-                data-test={courseId}
-                data-qa={course}
-                id="sell-teetime-button"
-              >
-                Sell
-              </FilledButton>
-            )}
+          {isListed ? (
+            <FilledButton
+              className="min-w-[145px]"
+              onClick={openCancelListing}
+              data-testid="cancel-listing-button-id"
+              data-test={courseId}
+              data-qa={course}
+            >
+              Cancel Listing
+            </FilledButton>
+          ) : (
+            <FilledButton
+              className="min-w-[145px]"
+              onClick={openListTeeTime}
+              data-testid="sell-button-id"
+              data-test={courseId}
+              data-qa={course}
+              id="sell-teetime-button"
+            >
+              Sell
+            </FilledButton>
+          )}
         </div>
       </td>
     </tr>
