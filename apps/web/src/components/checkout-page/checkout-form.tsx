@@ -1298,7 +1298,6 @@ export const CheckoutForm = ({
           </div>
 
           <div className="flex flex-wrap gap-2 mt-5 ml-1 sm:mb-4 items-center justify-between">
-            {/* <div className="flex gap-2 flex-wrap"> */}
             <button
               id="charity-button-roundup-checkout"
               type="button"
@@ -1374,7 +1373,6 @@ export const CheckoutForm = ({
                 No Thanks
               </button>
             </div>
-            {/* </div> */}
           </div>
 
           {showTextField && (
