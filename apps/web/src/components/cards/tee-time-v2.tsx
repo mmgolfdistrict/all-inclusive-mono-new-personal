@@ -368,6 +368,7 @@ export const TeeTimeV2 = ({
                                     teeTimeId={teeTimeId}
                                     numberOfPlayers={numberOfPlayers ? numberOfPlayers : []}
                                     status={status}
+                                    supportsGroupBooking={course?.supportsGroupBooking}
                                 />
                             ) : (
                                 players && (

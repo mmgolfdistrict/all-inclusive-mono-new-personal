@@ -511,6 +511,7 @@ const Data = ({
   canShowPlayers?: boolean;
 }) => {
   const isMobile = useMediaQuery("(max-width: 768px)");
+  const { course } = useCourseContext();
   if (isLoading) {
     return (
       <div
@@ -547,6 +548,7 @@ const Data = ({
                 teeTimeId={teeTimeId}
                 numberOfPlayers={numberOfPlayers ? numberOfPlayers : []}
                 id="number-of-players-checkout"
+                supportsGroupBooking={course?.supportsGroupBooking}
               />
             ) : (
               players && (
