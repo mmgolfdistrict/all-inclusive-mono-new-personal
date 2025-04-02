@@ -15,7 +15,6 @@ import {
   type Dispatch,
   type SetStateAction,
 } from "react";
-
 import { Avatar } from "../avatar";
 import { FilledButton } from "../buttons/filled-button";
 import { OutlineButton } from "../buttons/outline-button";
@@ -27,6 +26,7 @@ import { Players } from "../icons/players";
 import { Input } from "../input/input";
 import { SingleSlider } from "../input/single-slider";
 import { Tooltip } from "../tooltip";
+import { toast } from "react-toastify";
 import { type OwnedTeeTime } from "./owned";
 
 type PlayerType = "1" | "2" | "3" | "4";
@@ -48,19 +48,23 @@ export const CollectPayment = ({
   refetch,
   needsRedirect,
 }: SideBarProps) => {
+  const paymentLinkResult =
+    api.checkout.getHyperSwitchPaymentLink.useMutation();
   const availableSlots = selectedTeeTime?.golfers.length || 0;
   const [emails, setEmails] = useState(
     Array.from({ length: Number(availableSlots - 1) }, () => "")
   );
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [amount, setAmount] = useState<number | null>(null);
+  const [isPaymentLoader,setIsPaymentLoader] = useState<boolean>(false);
+  const [amount, setAmount] = useState<number>(0);
   const [sellerServiceFee, setSellerServiceFee] = useState<number>(0);
   const [players, setPlayers] = useState<string>(
     selectedTeeTime?.isGroupBooking
       ? "2"
       : selectedTeeTime?.selectedSlotsCount || availableSlots.toString()
   );
-
+  //In purchase for total amount of booking is present
+  // console.log("selectedTeetime Purchasefor",selectedTeeTime?.purchasedFor);
   const { toggleSidebar } = useSidebar({
     isOpen: isCollectPaymentOpen,
     setIsOpen: setIsCollectPaymentOpen,
@@ -73,9 +77,37 @@ export const CollectPayment = ({
     setEmails(updatedEmails);
   };
 
-  const handleEmailSendOnHyperSwitchPaymentLink = (index: number) => {
-    console.log("hyperSwitchEmailSend", emails[index],amount);
-    setAmount(null);
+  const handlePriceChange = (e: any) => {
+    const totalBookingPrice = Number(e.target.value);
+    const totalPlayers = Number(selectedTeeTime?.golfers.length);
+    if (totalPlayers > 0) {
+      const splitAmount = parseFloat(
+        (totalBookingPrice / totalPlayers).toFixed(2)
+      );
+      setAmount(splitAmount);
+    } else {
+      setAmount(0);
+    }
+  };
+
+  const handleEmailSendOnHyperSwitchPaymentLink = async (index: number) => {
+    try {
+      console.log("hyperSwitchEmailSend", emails[index], amount);
+      setIsPaymentLoader(true)
+      const result = await paymentLinkResult.mutateAsync({ amount: amount ,email:emails[index] ?? ""});
+      if(result?.error){
+        toast.error("Error Creating Payment link");
+        setIsPaymentLoader(false)
+      }else{
+        toast.success(result?.message);
+        setIsPaymentLoader(false)
+      }
+    } catch (error) {
+      toast.error("Error Creating Payment link");
+      setIsPaymentLoader(false)
+    }finally {
+      setIsPaymentLoader(false)
+    }
   };
 
   return (
@@ -122,14 +154,30 @@ export const CollectPayment = ({
           </div>
           <div className="flex flex-col gap-6 px-0 py-3 sm:px-4">
             <div className=" flex flex-col w-full gap-4">
-              <p>Enter the amount</p>
-              <input
-                className="outline outline-2 outline-gray-300 focus:outline-blue-500 px-3 py-1 rounded-md w-full"
-                type="text"
-                placeholder="Enter the Amount"
-                onChange={(e) => setAmount(Number(e.target.value))}
-                value={amount ?? ""}
-              />
+              <p className="flex justify-between items-center pl-0 pr-2">
+                Total amount of booking{" "}
+                <span>${selectedTeeTime?.purchasedFor}</span>
+              </p>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <input
+                    id="option1"
+                    type="radio"
+                    name="options"
+                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                    value={selectedTeeTime?.purchasedFor}
+                    onChange={(e) => handlePriceChange(e)}
+                  />
+
+                  <label
+                    htmlFor="option1"
+                    className="ml-2 text-sm font-medium text-gray-900"
+                  >
+                    Equal Split
+                  </label>
+                </div>
+                <p className="text-sm">Split Amount : ${amount} </p>
+              </div>
             </div>
             <div>Send Payment Link</div>
             <div className="flex flex-col w-full  gap-3">
@@ -155,10 +203,7 @@ export const CollectPayment = ({
                 )
               )}
             </div>
-            <div className="flex flex-col w-full gap-3">
-               
-
-            </div>
+            <div className="flex flex-col w-full gap-3"></div>
           </div>
         </div>
       </aside>

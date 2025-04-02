@@ -106,4 +106,14 @@ export const checkoutRouter = createTRPCRouter({
   isAppleEnabledReloadWidget: protectedProcedure.input(z.object({})).query(async ({ ctx }) => {
     return await ctx.serviceFactory.getCheckoutService().isAppleEnabledReloadWidget();
   }),
+  getHyperSwitchPaymentLink: protectedProcedure
+    .input(
+      z.object({
+        amount: z.number(),
+        email:z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return await ctx.serviceFactory.getHyperSwitchService().createPaymentLink(input.amount,input.email);
+    }),
 });

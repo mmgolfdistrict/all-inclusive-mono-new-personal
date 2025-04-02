@@ -566,4 +566,55 @@ export class HyperSwitchService {
     }
     return { status: "success" };
   };
+
+  createPaymentLink = async (amount: number, email: string) => {
+    try {
+      const myHeaders = new Headers();
+      myHeaders.append("Content-Type", "application/json");
+      myHeaders.append("api-key", this.hyperSwitchApiKey);
+      const profile_id = process.env.HYPERSWITCH_PROFILE_ID;
+      const currency = "USD";
+      const options = {
+        method: "POST",
+        headers: myHeaders,
+        body: JSON.stringify({
+          profile_id: profile_id,
+          payment_link: true,
+          amount: Math.round(amount * 100),
+          authentication_type: "three_ds",
+          currency: currency,
+          confirm: false,
+          description: "Tee times",
+          payment_link_config: {
+            theme: "#014E28",
+            logo: "https://i.pinimg.com/736x/4d/83/5c/4d835ca8aafbbb15f84d07d926fda473.jpg",
+            seller_name: "teeskraft",
+            sdk_layout: "tabs",
+          },
+        }),
+      };
+      const result = await fetch(`${this.hyperSwitchBaseUrl}/payments`, options);
+      const response = await result.json();
+      console.log("response_payment_link", response);
+      if (response?.payment_link?.link) {
+        const result = this.notificationService.sendEmail(
+          email,
+          "Payment Link",
+          `Payment Link: ${response.payment_link.link || ""}`
+        );
+        console.log("Email Send successFully");
+        return {
+          error: false,
+          message: "Payment Link Send Successfully",
+        };
+      } else {
+        return {
+          error: true,
+          message: "Problem Creating Payment Link",
+        };
+      }
+    } catch (error) {
+      throw new Error("Problem creating payment link");
+    }
+  };
 }
