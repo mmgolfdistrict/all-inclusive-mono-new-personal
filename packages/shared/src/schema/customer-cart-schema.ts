@@ -174,4 +174,5 @@ export const CustomerCartSchema = z.object({
   playDateTime: z.string().optional(),
   playerCount: z.string().optional(),
   teeTimeType: z.string().optional(),
+  listingId: z.string().optional(),
 });

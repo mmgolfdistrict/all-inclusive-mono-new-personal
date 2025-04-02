@@ -51,6 +51,7 @@ import type {
 } from "./types";
 import { CartValidationErrors } from "./types";
 import { courseSetting } from "@golf-district/database/schema/courseSetting";
+import { CacheService } from "../infura/cache.service";
 
 /**
  * Configuration options for the CheckoutService.
@@ -117,6 +118,7 @@ export class CheckoutService {
   private readonly profileId: string;
   private clubProphetWebhook: clubprophetWebhookService;
   private appSettings: AppSettingsService;
+  private cacheService: CacheService;
   //private stripeService: StripeService;
 
   /**
@@ -142,6 +144,8 @@ export class CheckoutService {
       process.env.REDIS_URL!,
       process.env.REDIS_TOKEN!
     );
+    this.cacheService = new CacheService(process.env.REDIS_URL!, process.env.REDIS_TOKEN!);
+
     //this.stripeService = new StripeService(config.stripeApiKey);
     //this.appSettings=new AppSettingsService()
   }
@@ -262,6 +266,12 @@ export class CheckoutService {
     //     errors: errors,
     //   };
     // }
+
+    if (this.cacheService && customerCartData?.teeTimeType === "SECONDARY") {
+      console.log("Setting listing_id in Redis Cache: ", customerCartData?.listingId);
+      await this.cacheService.setCache("listing_id", customerCartData?.listingId);
+    }
+
     console.log("userId ", userId);
     console.log("customerCartData ", JSON.stringify(customerCartData));
     console.log("cartId ", cartId);

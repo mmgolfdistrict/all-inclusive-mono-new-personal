@@ -24,6 +24,7 @@ export const DailyTeeTimes = ({
   setError,
   handleLoading,
   courseException,
+  dateType,
 }: {
   date: string;
   minDate: string;
@@ -31,6 +32,7 @@ export const DailyTeeTimes = ({
   setError: (t: string | null) => void;
   handleLoading?: (val: boolean) => void;
   courseException: NotificationObject | null;
+  dateType:string
 }) => {
   const overflowRef = useRef<HTMLDivElement>(null);
   const nextPageRef = useRef<HTMLDivElement>(null);
@@ -154,7 +156,6 @@ export const DailyTeeTimes = ({
     setError(error?.message ?? null);
   }, [error]);
 
-  const count = teeTimeData?.pages[0]?.count;
 
   const allTeeTimes =
     teeTimeData?.pages[teeTimeData?.pages?.length - 1]?.results ?? [];
@@ -181,6 +182,7 @@ export const DailyTeeTimes = ({
       container.classList.add("scroll-smooth");
       container.scrollBy({ left: -scrollAmount, behavior: "smooth" });
     }
+    updateArrowState(container)
   };
 
   const scrollRight = () => scrollCarousel("right");
@@ -193,10 +195,45 @@ export const DailyTeeTimes = ({
   };
 
   useEffect(() => {
-    if (isVisible && count !== allTeeTimes?.length) {
+    if (isVisible) {
       void getNextPage();
     }
   }, [isVisible]);
+
+  useEffect(() => {
+    setIsAtStart(true);
+    setIsAtEnd(false);
+    if (overflowRef.current) {
+      overflowRef.current.scrollLeft = 0;
+    }
+  }, [dateType]);
+
+  const updateArrowState = (container: HTMLElement) => {
+    if (!container) return;
+
+    const isAtStart = container.scrollLeft === 0;
+    const isAtEnd = container.scrollLeft + container.clientWidth >= container.scrollWidth - 20;
+
+    setIsAtStart(isAtStart);
+    setIsAtEnd(isAtEnd);
+  };
+
+  useEffect(() => {
+    const container = overflowRef.current;
+    if (container) {
+      updateArrowState(container);
+
+      const handleScroll = () => {
+        updateArrowState(container);
+      };
+
+      container.addEventListener("scroll", handleScroll);
+
+      return () => {
+        container.removeEventListener("scroll", handleScroll);
+      };
+    }
+  }, [overflowRef]);
 
   const getTextColor = (type) => {
     if (type === "FAILURE") return "red";
@@ -275,10 +312,10 @@ export const DailyTeeTimes = ({
         <div className="absolute top-1/2 hidden md:block -translate-y-1/2 z-[2] flex items-center justify-center -left-1 md:-left-6">
           <button
             onClick={() => scrollLeft()}
-            className={`flex h-fit items-center justify-center rounded-full bg-white p-2 shadow-overflow-indicator ${isAtStart ? 'opacity-50 pointer-events-none' : ''}`}
+            className={`flex h-fit items-center justify-center rounded-full bg-white p-2 shadow-overflow-indicator ${isAtStart ? 'hidden' : 'flex'}`}
             data-testid="tee-time-left-chevron-id"
             data-qa={dayMonthDate(date)}
-            disabled={isAtStart}
+            // disabled={isAtStart}
           >
             <LeftChevron fill="#40942A" className="w-[21px]" />
           </button>
@@ -366,10 +403,10 @@ export const DailyTeeTimes = ({
         <div className="absolute z-[2] hidden md:block top-1/2 -translate-y-1/2 flex items-center justify-center -right-1 md:-right-6">
           <button
             onClick={scrollRight}
-            className={`flex h-fit items-center justify-center rounded-full bg-white p-2 shadow-overflow-indicator ${isAtEnd ? 'opacity-50' : ''}`}
+            className={`flex h-fit items-center justify-center rounded-full bg-white p-2 shadow-overflow-indicator ${isAtEnd || allTeeTimes.length <= 3 ? 'hidden' : 'flex'}`}
             data-testid="tee-time-right-chevron-id"
             data-qa={dayMonthDate(date)}
-            disabled={isAtEnd}
+            disabled={isAtEnd || allTeeTimes.length <= 3}
           >
             <LeftChevron fill="#40942A" className="w-[21px] rotate-180" />
           </button>

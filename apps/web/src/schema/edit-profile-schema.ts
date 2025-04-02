@@ -13,40 +13,51 @@ import { z } from "zod";
 
 export const editProfileSchema = z.object({
   name: z
-      .string()
-      .min(6, {
-        message: "Name is required (should be in at least 6 characters)",
-      })
-      .max(30, { message: "Name should be in at most 30 characters" })
-      .regex(/^[A-Za-zÀ-ÿ' ]+$/, { message: "Name can only contain letters, spaces, and single quotes." })
-      .transform((name) => name.trim().replace(/\s{2,}/g, ' ')),
+    .string({ required_error: "Name is required" })
+    .min(6, {
+      message: "Name is required (should be at least 6 characters)",
+    })
+    .max(30, { message: "Name should be at most 30 characters" })
+    .regex(/^[A-Za-zÀ-ÿ'’ ]+$/, {
+      message: "Name can only contain letters and single quotes",
+    })
+    .transform((name) => name.trim().replace(/\s{2,}/g, " ")),
   handle: z
-    .string()
+    .string({ required_error: "Username is required" })
     .min(6, { message: "Username should be at least 6 characters long" })
     .max(64, { message: "Username shouldn't be more than 64 characters long" }),
   // .refine((handle) => !handle.includes("@"), {
   //   message: "Handle cannot contain '@'",
   // }),
   email: z
-    .string()
+    .string({ required_error: "Email is required" })
     .email({ message: "Invalid email" })
     .min(1, "Email is required"),
-  phoneNumberCountryCode: z
-    .number().min(1, {
-      message: "Phone number country code is required.",
-    }),
+  phoneNumberCountryCode: z.number().min(1, {
+    message: "Phone number country code is required.",
+  }),
   phoneNumber: z
-    .string()
+    .string({ required_error: "Phone number is required" })
     .min(10, { message: "Invalid phone number, it should have 10 digits." })
     .max(10, { message: "Invalid phone number, it should have 10 digits." })
     .refine((phoneNumber) => /^\d{10}$/.test(phoneNumber)),
   // location: z.string().min(1, { message: "Location is required" }),
-  address1: z.string().min(1, { message: "Address1 is required" }),
+  address1: z
+    .string({ required_error: "Address1 is required" })
+    .min(1, { message: "Address1 is required" }),
   address2: z.string().optional(),
-  city: z.string().min(1, { message: "City is required" }),
-  state: z.string().min(1, { message: "State is required" }),
-  zipcode: z.string().min(1, { message: "Zipcode is required" }),
-  country: z.string().min(1, { message: "Country is required" }),
+  city: z
+    .string({ required_error: "City is required" })
+    .min(1, { message: "City is required" }),
+  state: z
+    .string({ required_error: "State is required" })
+    .min(1, { message: "State is required" }),
+  zipcode: z
+    .string({ required_error: "Zipcode is required" })
+    .min(1, { message: "Zipcode is required" }),
+  country: z
+    .string({ required_error: "Country is required" })
+    .min(1, { message: "Country is required" }),
   profilePictureAssetId: z.string().or(z.null()).or(z.object({})).optional(),
   // .refine(
   //   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access

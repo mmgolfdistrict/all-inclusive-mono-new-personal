@@ -364,7 +364,7 @@ const TableRow = ({
               data-test={courseId}
               data-qa={course}
             >
-              Manage
+              Invite Players
             </OutlineButton>
           </div>
           {isListed ? (

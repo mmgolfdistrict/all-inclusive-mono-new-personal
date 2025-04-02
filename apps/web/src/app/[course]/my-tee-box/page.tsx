@@ -1,7 +1,10 @@
+"use client";
 import { GoBack } from "~/components/buttons/go-back";
 import { DownChevron } from "~/components/icons/down-chevron";
 import { TableView } from "~/components/my-tee-box-page/table-view";
 import { OpenSection } from "~/utils/tee-box-helper";
+import { useMediaQuery } from "usehooks-ts";
+import { TableViewMobile } from "~/components/my-tee-box-page/table-view-mobile";
 
 type OpenSectionDescriptionType = Record<string, string>;
 
@@ -26,6 +29,7 @@ export default function MyTeeBox({
       : "owned"
   ) as string;
   const courseId = params.course;
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   return (
     <main className="bg-secondary-white py-4 md:py-6">
@@ -49,8 +53,7 @@ export default function MyTeeBox({
             </p>
           </div>
         </div>
-
-        <TableView />
+        {isMobile ? <TableViewMobile /> : <TableView />}
       </section>
     </main>
   );

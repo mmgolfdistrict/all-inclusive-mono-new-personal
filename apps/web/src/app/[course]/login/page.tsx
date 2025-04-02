@@ -112,13 +112,12 @@ export default function Login() {
       addLoginSession();
       logAudit(sessionData.user.id, course.id, () => {
         window.location.reload();
-        window.location.href = `${window.location.origin}${
-          GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+        window.location.href = `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
             ? prevPath?.path
               ? prevPath.path
               : "/"
             : "/"
-        }`;
+          }`;
       });
     }
   }, [sessionData, course, status]);
@@ -219,14 +218,13 @@ export default function Login() {
         localStorage.setItem("credentials", "credentials");
         //setLocalStorageCredentials(localStorage.getItem("credentials"));
       }
-      const callbackURL = `${window.location.origin}${
-        GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+      const callbackURL = `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
           ? prevPath?.path
           : extractedURL ?? "/"
-      }`;
+        }`;
       const res = await signIn("credentials", {
         callbackUrl: callbackURL,
-        redirect: true,
+        redirect: false,
         email: data.email,
         password: data.password,
         ReCAPTCHA: process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY
@@ -244,13 +242,14 @@ export default function Login() {
             localStorage.removeItem("credentials");
           }
         } else {
-          toast.error("The email or password you entered is incorrect.");
+          toast.error(res?.error);
           if (typeof window !== "undefined") {
             localStorage.removeItem("credentials");
           }
         }
         setValue("password", "");
       } else {
+        router.push(String(res?.url));
         localStorage.setItem("loginMethod", "EMAIL_PASSWORD");
         localStorage.setItem("showBalanceToast", "true");
         localStorage.setItem("showBalanceToast", "true");
@@ -260,7 +259,7 @@ export default function Login() {
     } catch (error) {
       toast.error(
         (error as Error)?.message ??
-          "An error occurred logging in, try another option."
+        "An error occurred logging in, try another option."
       );
     } finally {
       setIsLoading(false);
@@ -291,11 +290,10 @@ export default function Login() {
     try {
       setFacebookIsLoading(true);
       const res = await signIn("facebook", {
-        callbackUrl: `${window.location.origin}${
-          GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+        callbackUrl: `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
             ? prevPath?.path
             : extractedURL ?? "/"
-        }`,
+          }`,
         redirect: true,
       });
 
@@ -315,11 +313,10 @@ export default function Login() {
     try {
       setAppleIsLoading(true);
       await signIn("apple", {
-        callbackUrl: `${window.location.origin}${
-          GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+        callbackUrl: `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
             ? prevPath?.path
             : extractedURL ?? "/"
-        }`,
+          }`,
         redirect: true,
       });
       localStorage.setItem("applestate", "loggedin");
@@ -337,11 +334,10 @@ export default function Login() {
     });
     try {
       const res = await signIn("google", {
-        callbackUrl: `${window.location.origin}${
-          GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+        callbackUrl: `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
             ? prevPath?.path
             : extractedURL ?? "/"
-        }`,
+          }`,
         redirect: true,
       });
 
@@ -366,11 +362,10 @@ export default function Login() {
     try {
       setLinkedinIsLoading(true);
       const res = await signIn("linkedin", {
-        callbackUrl: `${window.location.origin}${
-          GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+        callbackUrl: `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
             ? prevPath?.path
             : extractedURL ?? "/"
-        }`,
+          }`,
         redirect: true,
       });
       if (!res?.error) {
@@ -403,11 +398,21 @@ export default function Login() {
     if (typeof window !== "undefined") {
       setLocalStorageGoogle(localStorage.getItem("googlestate") || "");
     }
+    setTimeout(() => {
+      setGoogleIsLoading(false);
+      setLocalStorageGoogle("");
+      localStorage.removeItem("googlestate");
+    }, 3000);
   }, []);
   useEffect(() => {
     if (typeof window !== "undefined") {
       setLocalStorageLinkedin(localStorage.getItem("linkedinstate") || "");
     }
+    setTimeout(() => {
+      setLinkedinIsLoading(false);
+      setLocalStorageLinkedin("");
+      localStorage.removeItem("linkedinstate");
+    }, 3000);
   }, []);
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -418,6 +423,11 @@ export default function Login() {
     if (typeof window !== "undefined") {
       setLocalStorageFacebook(localStorage.getItem("facebookstate") || "");
     }
+    setTimeout(() => {
+      setFacebookIsLoading(false);
+      setLocalStorageFacebook("");
+      localStorage.removeItem("facebookstate");
+    }, 3000);
   }, []);
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -468,7 +478,7 @@ export default function Login() {
         )}
 
         {isMethodSupported(AuthenticationMethodEnum.GOOGLE) &&
-        process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ? (
+          process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ? (
           <div className="w-full rounded-lg shadow-outline">
             <SquareButton
               onClick={googleSignIn}
@@ -489,7 +499,7 @@ export default function Login() {
           </div>
         ) : null}
         {isMethodSupported(AuthenticationMethodEnum.LINKEDIN) &&
-        process.env.NEXT_PUBLIC_LINKEDIN_ENABLED_AUTH_SUPPORT ? (
+          process.env.NEXT_PUBLIC_LINKEDIN_ENABLED_AUTH_SUPPORT ? (
           <div className="w-full rounded-lg shadow-outline">
             <SquareButton
               onClick={linkedinSignIn}
@@ -510,7 +520,7 @@ export default function Login() {
           </div>
         ) : null}
         {isMethodSupported(AuthenticationMethodEnum.APPLE) &&
-        process.env.NEXT_PUBLIC_AUTH_APPLE_CLIENT_ID ? (
+          process.env.NEXT_PUBLIC_AUTH_APPLE_CLIENT_ID ? (
           <SquareButton
             onClick={appleSignIn}
             className="flex items-center justify-center gap-3 bg-black text-white"
@@ -529,7 +539,7 @@ export default function Login() {
           </SquareButton>
         ) : null}
         {isMethodSupported(AuthenticationMethodEnum.FACEBOOK) &&
-        process.env.NEXT_PUBLIC_FACEBOOK_CLIENT_ID ? (
+          process.env.NEXT_PUBLIC_FACEBOOK_CLIENT_ID ? (
           <SquareButton
             onClick={facebookSignIn}
             className="flex items-center justify-center gap-3 bg-facebook text-white"
@@ -550,8 +560,8 @@ export default function Login() {
           </SquareButton>
         ) : null}
         {isMethodSupported(AuthenticationMethodEnum.EMAIL_PASSWORD) &&
-        authenticationMethods?.length !== 1 &&
-        hasProvidersSetUp ? (
+          authenticationMethods?.length !== 1 &&
+          hasProvidersSetUp ? (
           <div className="flex items-center py-4">
             <div className="h-[1px] w-full bg-stroke" />
             <div className="px-2 text-primary-gray">or</div>
@@ -589,9 +599,8 @@ export default function Login() {
                   e.preventDefault();
                   setShowPassword(!showPassword);
                 }}
-                className={`absolute right-2 !top-[90%] border-none !bg-transparent !transform !-translate-y-[90%] ${
-                  errors.password?.message ? "pb-10" : ""
-                }`}
+                className={`absolute right-2 !top-[90%] border-none !bg-transparent !transform !-translate-y-[90%] ${errors.password?.message ? "pb-10" : ""
+                  }`}
                 data-testid="login-show-password-id"
               >
                 {showPassword ? (
