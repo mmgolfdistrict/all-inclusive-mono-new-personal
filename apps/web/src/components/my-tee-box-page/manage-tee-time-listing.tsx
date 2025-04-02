@@ -620,7 +620,7 @@ const TeeTimeItem = ({
       <div className="flex items-center gap-4">
         <Avatar src={courseImage} />
         <div className="flex flex-col">
-          <div className="whitespace-nowrap text-secondary-black">
+          <div className="whitespace-normal overflow-y-auto text-secondary-black">
             {courseName}
           </div>
           <div className="text-primary-gray">
