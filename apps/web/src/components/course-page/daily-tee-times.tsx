@@ -160,6 +160,9 @@ export const DailyTeeTimes = ({
   const allTeeTimes =
     teeTimeData?.pages[teeTimeData?.pages?.length - 1]?.results ?? [];
 
+    console.log("allTeeTimes",date);
+    
+
   const isScrolling = useRef(false);
 
   const scrollCarousel = (direction: "left" | "right") => {

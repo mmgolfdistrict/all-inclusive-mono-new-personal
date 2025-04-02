@@ -37,7 +37,8 @@ import { toast } from "react-toastify";
 import { ViewportList } from "react-viewport-list";
 import { useMediaQuery } from "usehooks-ts";
 import { LoadingContainer } from "./loader";
-import { DailyTeeTimesV2 } from "~/components/course-page/daily-tee-times-v2";
+import { DailyTeeTimesMobileV2 } from "~/components/course-page/daily-tee-times-mobile-v2";
+import { DailyTeeTimesDesktopV2 } from "~/components/course-page/daily-tee-time-desktop-v2";
 
 dayjs.extend(Weekday);
 dayjs.extend(RelativeTime);
@@ -80,7 +81,7 @@ export default function CourseHomePage() {
 
     if (date1 > date2) {
       return "user";
-    }  else if (date1 < date2) {
+    } else if (date1 < date2) {
       return "course";
     } else {
       return "user";
@@ -141,6 +142,12 @@ export default function CourseHomePage() {
       courseId: courseId ?? "",
     });
 
+    const { data: DESKTOP_VIEW_VERSION } =
+    api.course.getDesktopViewVersion.useQuery({
+      courseId: courseId ?? "",
+    });
+    console.log("DESKTOP_VIEW_VERSIONs",DESKTOP_VIEW_VERSION);
+    
   const TAKE = MOBILE_VIEW_VERSION === "v2" && isMobile ? 1 : 4;
   const [take, setTake] = useState<number>(TAKE);
 
@@ -231,11 +238,11 @@ export default function CourseHomePage() {
       const specialDate = getSpecialDayDate(queryDateType);
       if (queryDateType) {
         if (specialDate) {
-          setDateType(queryDateType as DateType); 
-        } 
+          setDateType(queryDateType as DateType);
+        }
       }
     }
-  }, [queryDateType,specialEvents]);
+  }, [queryDateType, specialEvents]);
 
   const getSpecialDayDate = (label) => {
     const today = dayjs(new Date())
@@ -262,7 +269,7 @@ export default function CourseHomePage() {
     }
     setPageNumber(1)
     switch (dateType) {
-      case "All":{
+      case "All": {
         const currentTime = dayjs(new Date());
         const currentTimePlus30 = currentTime.add(30, 'minute');
 
@@ -397,7 +404,7 @@ export default function CourseHomePage() {
         return formatDateString(dayjs().add(360, "days").toDate());
     }
   }, [dateType, selectedDay, farthestDateOut, specialEvents]);
-  
+
   // const utcStartDate = dayjs
   //   .utc(startDate)
   //   .utcOffset(course?.timezoneCorrection ?? 0);
@@ -729,19 +736,19 @@ export default function CourseHomePage() {
             }}
           >
             <div className="w-[50%] flex items-center justify-around">
-            <button
-              onClick={toggleFilters}
-              className="p-2 text-xs flex items-center space-x-2 flex items-center gap-1 rounded-full border-b border-r border-t border-l border-stroke"
-            >
-              <FiltersIcon className="h-[14px] w-[14px]" />
-              All Filters
-            </button>
-            <button
-              onClick={toggleDates}
-              className="p-2 text-xs flex items-center space-x-2 flex items-center gap-1 rounded-full border-b border-r border-t border-l border-stroke"
-            >
-              <Calendar className="h-[14px] w-[14px]" /> Date
-            </button>
+              <button
+                onClick={toggleFilters}
+                className="p-2 text-xs flex items-center space-x-2 flex items-center gap-1 rounded-full border-b border-r border-t border-l border-stroke"
+              >
+                <FiltersIcon className="h-[14px] w-[14px]" />
+                All Filters
+              </button>
+              <button
+                onClick={toggleDates}
+                className="p-2 text-xs flex items-center space-x-2 flex items-center gap-1 rounded-full border-b border-r border-t border-l border-stroke"
+              >
+                <Calendar className="h-[14px] w-[14px]" /> Date
+              </button>
             </div>
             <div className="text-secondary-black w-[50%] text-center">
               {/* Showing {count?.toLocaleString() ?? "0"} tee times{" "} */}
@@ -769,7 +776,7 @@ export default function CourseHomePage() {
                 <div className="flex w-full flex-col gap-1 md:gap-4" ref={ref}>
                   <ViewportList viewportRef={ref} items={finalRes}>
                     {(date, idx) => (
-                      <DailyTeeTimesV2
+                      <DailyTeeTimesMobileV2
                         setError={(e: string | null) => {
                           setError(e);
                         }}
@@ -792,51 +799,68 @@ export default function CourseHomePage() {
                 </div>
               </>
               :
-              <>
+              DESKTOP_VIEW_VERSION === "v2" ?
+                <>
                 <div className="flex w-full flex-col gap-1 md:gap-4" ref={ref}>
-                  <ViewportList viewportRef={ref} items={finalRes}>
-                    {(date, idx) => (
-                      <DailyTeeTimes
-                        setError={(e: string | null) => {
-                          setError(e);
-                        }}
-                        courseException={getCourseException(date as string)}
-                        key={idx}
-                        date={date}
-                        minDate={startDate.toString()}
-                        maxDate={endDate.toString()}
-                        handleLoading={handleLoading}
-                        dateType={dateType}
-                      />
-                    )}
-                  </ViewportList>
-                </div>
-                {daysData.amountOfPages > 1 ? (
-                  <div className="flex items-center justify-center gap-2 pt-1 md:pt-0 md:pb-4">
-                    <FilledButton
-                      className={`!px-3 !py-2 !min-w-fit !rounded-md ${pageNumber === 1 ? "opacity-50 cursor-not-allowed" : ""
-                        }`}
-                      onClick={pageDown}
-                      data-testid="chevron-down-id"
-                    >
-                      <ChevronUp fill="#fff" className="-rotate-90" />
-                    </FilledButton>
-                    <div className="text-primary-gray px-3 py-2 bg-[#ffffff] rounded-md unmask-pagination">
-                      {pageNumber} / {amountOfPage}
-                    </div>
-                    <FilledButton
-                      className={`!px-3 !py-2 !min-w-fit !rounded-md ${pageNumber === amountOfPage
-                        ? "opacity-50 cursor-not-allowed"
-                        : ""
-                        }`}
-                      onClick={pageUp}
-                      data-testid="chevron-up-id"
-                    >
-                      <ChevronUp fill="#fff" className="rotate-90" />
-                    </FilledButton>
+                        <DailyTeeTimesDesktopV2
+                          setError={(e: string | null) => {
+                            setError(e);
+                          }}
+                          minDate={startDate.toString()}
+                          maxDate={endDate.toString()}
+                          handleLoading={handleLoading}
+                          dateType={dateType}
+                          dates={datesArr}
+                          isLoadingTeeTimeDate={isLoadingTeeTimeDate}
+                        />
                   </div>
-                ) : null}
-              </>
+                </>
+                :
+                <>
+                  <div className="flex w-full flex-col gap-1 md:gap-4" ref={ref}>
+                    <ViewportList viewportRef={ref} items={finalRes}>
+                      {(date, idx) => (
+                        <DailyTeeTimes
+                          setError={(e: string | null) => {
+                            setError(e);
+                          }}
+                          courseException={getCourseException(date as string)}
+                          key={idx}
+                          date={date}
+                          minDate={startDate.toString()}
+                          maxDate={endDate.toString()}
+                          handleLoading={handleLoading}
+                          dateType={dateType}
+                        />
+                      )}
+                    </ViewportList>
+                  </div>
+                  {daysData.amountOfPages > 1 ? (
+                    <div className="flex items-center justify-center gap-2 pt-1 md:pt-0 md:pb-4">
+                      <FilledButton
+                        className={`!px-3 !py-2 !min-w-fit !rounded-md ${pageNumber === 1 ? "opacity-50 cursor-not-allowed" : ""
+                          }`}
+                        onClick={pageDown}
+                        data-testid="chevron-down-id"
+                      >
+                        <ChevronUp fill="#fff" className="-rotate-90" />
+                      </FilledButton>
+                      <div className="text-primary-gray px-3 py-2 bg-[#ffffff] rounded-md unmask-pagination">
+                        {pageNumber} / {amountOfPage}
+                      </div>
+                      <FilledButton
+                        className={`!px-3 !py-2 !min-w-fit !rounded-md ${pageNumber === amountOfPage
+                          ? "opacity-50 cursor-not-allowed"
+                          : ""
+                          }`}
+                        onClick={pageUp}
+                        data-testid="chevron-up-id"
+                      >
+                        <ChevronUp fill="#fff" className="rotate-90" />
+                      </FilledButton>
+                    </div>
+                  ) : null}
+                </>
           )}
         </div>
       </section>
