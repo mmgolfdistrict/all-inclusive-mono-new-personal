@@ -591,6 +591,7 @@ export class HyperSwitchService {
             seller_name: "teeskraft",
             sdk_layout: "tabs",
           },
+         return_url:"http://localhost:3000"
         }),
       };
       const result = await fetch(`${this.hyperSwitchBaseUrl}/payments`, options);
