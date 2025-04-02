@@ -20,13 +20,15 @@ import { Avatar } from "../avatar";
 import { FilledButton } from "../buttons/filled-button";
 import { OutlineButton } from "../buttons/outline-button";
 import { Item } from "../course-page/filters";
-import { Close } from "../icons/close";
 import { DownChevron } from "../icons/down-chevron";
 import { Info } from "../icons/info";
 import { Players } from "../icons/players";
 import { Tooltip } from "../tooltip";
 import { CancelListing } from "./cancel-listing";
 import { type MyListedTeeTimeType } from "./my-listed-tee-times";
+import Flyout from "../modal/flyout";
+import { Modal } from "../modal/modal";
+import { useMediaQuery } from "usehooks-ts";
 
 type PlayerType = "1" | "2" | "3" | "4";
 
@@ -54,6 +56,7 @@ export const ManageTeeTimeListing = ({
 
   const [initialPrice, setInitialPrice] = useState<number | null>(null); // Initial price when sidebar opens
   const [initialPlayers, setInitialPlayers] = useState<PlayerType | null>(null); // Initial players when sidebar opens
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   useEffect(() => {
     if (selectedTeeTime) {
@@ -364,228 +367,221 @@ export const ManageTeeTimeListing = ({
     }
   };
 
-  return (
-    <>
-      {isManageTeeTimeListingOpen && (
-        <div
-          className={`fixed left-0 top-0 z-20 h-[100dvh] w-screen backdrop-blur `}
-        >
-          <div className="h-screen bg-[#00000099]" />
-        </div>
-      )}
-      <LoadingContainer isLoading={isLoading}>
+  const ManageTeeTimeListingDetail = () => {
+    return (<>
+      {isLoading && <LoadingContainer isLoading={isLoading}>
         <div></div>
-      </LoadingContainer>
-      <aside
-        // ref={sidebar}
-        className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[500px] md:h-[100dvh] ${isManageTeeTimeListingOpen ? "translate-x-0" : "translate-x-full"
-          }`}
-      >
-        <div className="relative flex h-full flex-col">
-          <div className="flex items-center justify-between p-4">
-            <div className="text-lg">Manage Tee Time Listing</div>
-
-            <button
-              // ref={trigger}
-              onClick={toggleSidebar}
-              aria-controls="sidebar"
-              aria-expanded={isManageTeeTimeListingOpen}
-              className="z-[2]"
-              aria-label="sidebarToggle"
-              data-testid="close-button-id"
+      </LoadingContainer>}
+      {isLoading && <LoadingContainer isLoading={isLoading}>
+        <div></div>
+      </LoadingContainer>}
+      <div className="flex h-full flex-col justify-between overflow-y-auto">
+        <div className="flex flex-col gap-6 px-0 sm:px-4">
+          <TeeTimeItem
+            courseImage={selectedTeeTime?.courseLogo ?? ""}
+            courseName={selectedTeeTime?.courseName ?? ""}
+            courseDate={selectedTeeTime?.date ?? ""}
+            golferCount={selectedTeeTime?.listedSlotsCount ?? 1}
+            timezoneCorrection={course?.timezoneCorrection}
+          />
+          <div className={`flex flex-col gap-1 text-center w-fit mx-auto`}>
+            <label
+              htmlFor="listingPrice"
+              className="text-[16px] text-primary-gray md:text-[18px]"
             >
-              <Close className="h-[25px] w-[25px]" />
-            </button>
-          </div>
-          <div className="flex h-full flex-col justify-between overflow-y-auto">
-            <div className="flex flex-col gap-6 px-0 sm:px-4">
-              <TeeTimeItem
-                courseImage={selectedTeeTime?.courseLogo ?? ""}
-                courseName={selectedTeeTime?.courseName ?? ""}
-                courseDate={selectedTeeTime?.date ?? ""}
-                golferCount={selectedTeeTime?.listedSlotsCount ?? 1}
-                timezoneCorrection={course?.timezoneCorrection}
+              Listing price per golfer
+            </label>
+            <div className="relative">
+              <span
+                className={`absolute left-1 top-1 text-[24px] md:text-[32px] ${selectedTeeTime?.listingId ===
+                  selectedTeeTime?.listingIdFromRedis
+                  ? "opacity-50 cursor-not-allowed"
+                  : ""
+                  } `}
+              >
+                $
+              </span>
+              <input
+                id="listingPrice"
+                value={listingPrice}
+                type="number"
+                onFocus={handleFocus}
+                onChange={handleListingPrice}
+                onBlur={handleBlur}
+                className={`mx-auto max-w-[300px] rounded-lg bg-secondary-white px-4 py-1 text-center text-[24px] font-semibold outline-none md:text-[32px] pl-6 ${selectedTeeTime?.listingId ===
+                  selectedTeeTime?.listingIdFromRedis
+                  ? "opacity-50 cursor-not-allowed"
+                  : ""
+                  }`}
+                data-testid="lsiting-price-id"
+                disabled={
+                  selectedTeeTime?.listingId ===
+                  selectedTeeTime?.listingIdFromRedis
+                }
               />
-              <div className={`flex flex-col gap-1 text-center w-fit mx-auto`}>
-                <label
-                  htmlFor="listingPrice"
-                  className="text-[16px] text-primary-gray md:text-[18px]"
-                >
-                  Listing price per golfer
-                </label>
-                <div className="relative">
-                  <span
-                    className={`absolute left-1 top-1 text-[24px] md:text-[32px] ${selectedTeeTime?.listingId ===
-                      selectedTeeTime?.listingIdFromRedis
-                      ? "opacity-50 cursor-not-allowed"
-                      : ""
-                      } `}
-                  >
-                    $
-                  </span>
-                  <input
-                    id="listingPrice"
-                    value={listingPrice}
-                    type="number"
-                    onFocus={handleFocus}
-                    onChange={handleListingPrice}
-                    onBlur={handleBlur}
-                    className={`mx-auto max-w-[300px] rounded-lg bg-secondary-white px-4 py-1 text-center text-[24px] font-semibold outline-none md:text-[32px] pl-6 ${selectedTeeTime?.listingId ===
-                      selectedTeeTime?.listingIdFromRedis
-                      ? "opacity-50 cursor-not-allowed"
-                      : ""
-                      }`}
-                    data-testid="lsiting-price-id"
-                    disabled={
+            </div>
+          </div>
+
+          <div className={`flex  flex-col gap-1 text-center`}>
+            <label
+              htmlFor="spot"
+              className="text-[16px] text-primary-gray md:text-[18px]"
+            >
+              Number of spots listed
+            </label>
+            <ToggleGroup.Root
+              id="spots"
+              type="single"
+              value={players}
+              onValueChange={(player: PlayerType) => {
+                if ((selectedTeeTime?.playerCount || 0) < parseInt(player))
+                  return;
+
+                if (player) setPlayers(player);
+              }}
+              orientation="horizontal"
+              className="mx-auto flex"
+              data-testid="player-button-id"
+              disabled={
+                selectedTeeTime?.listingId ===
+                selectedTeeTime?.listingIdFromRedis
+              }
+            >
+              {PlayerOptions.map((value, index) => (
+                <Item
+                  key={index}
+                  value={value}
+                  className={`${index === 0
+                    ? "rounded-l-full border border-stroke"
+                    : index === PlayerOptions.length - 1
+                      ? "rounded-r-full border-b border-t border-r border-stroke"
+                      : "border-b border-r border-t border-stroke"
+                    } px-[1.75rem] ${(selectedTeeTime?.playerCount || 0) < index + 1 ||
                       selectedTeeTime?.listingId ===
                       selectedTeeTime?.listingIdFromRedis
-                    }
-                  />
-                </div>
-              </div>
-
-              <div className={`flex  flex-col gap-1 text-center`}>
-                <label
-                  htmlFor="spot"
-                  className="text-[16px] text-primary-gray md:text-[18px]"
-                >
-                  Number of spots listed
-                </label>
-                <ToggleGroup.Root
-                  id="spots"
-                  type="single"
-                  value={players}
-                  onValueChange={(player: PlayerType) => {
-                    if ((selectedTeeTime?.playerCount || 0) < parseInt(player))
-                      return;
-
-                    if (player) setPlayers(player);
-                  }}
-                  orientation="horizontal"
-                  className="mx-auto flex"
-                  data-testid="player-button-id"
-                  disabled={
-                    selectedTeeTime?.listingId ===
-                    selectedTeeTime?.listingIdFromRedis
-                  }
-                >
-                  {PlayerOptions.map((value, index) => (
-                    <Item
-                      key={index}
-                      value={value}
-                      className={`${index === 0
-                        ? "rounded-l-full border border-stroke"
-                        : index === PlayerOptions.length - 1
-                          ? "rounded-r-full border-b border-t border-r border-stroke"
-                          : "border-b border-r border-t border-stroke"
-                        } px-[1.75rem] ${(selectedTeeTime?.playerCount || 0) < index + 1 ||
-                          selectedTeeTime?.listingId ===
-                          selectedTeeTime?.listingIdFromRedis
-                          ? "opacity-50 cursor-not-allowed"
-                          : "" // Keep only if restricting based on `availableSlots`
-                        } `}
-                      dataTestId="player-item-id"
-                      dataQa={value}
-                      label={value}
-                    />
-                  ))}
-                </ToggleGroup.Root>
-              </div>
-            </div>
-            {selectedTeeTime?.listingId ===
-              selectedTeeTime?.listingIdFromRedis && (
-                <div className="text-center text-[20px] text-red">
-                  Users are trying to buy this tee time and hence, editing is not
-                  allowed.
-                </div>
-              )}
-            <div className="flex flex-col gap-4 px-4 pb-6">
-              <div className="flex justify-between">
-                <div className="font-[300] text-primary-gray">
-                  Your Listing Price
-                </div>
-                <div className="text-secondary-black">
-                  {formatMoney(listingPrice * Number(players))}
-                </div>
-              </div>
-              <div className="flex justify-between">
-                <div className="font-[300] text-primary-gray">
-                  Service Fee{" "}
-                  <Tooltip
-                    trigger={<Info className="h-[14px] w-[14px]" />}
-                    content="This fee ensures ongoing enhancements to our service, ultimately offering golfers the best access to booking tee times"
-                  />
-                </div>
-                <div className="text-secondary-black">
-                  {`(${formatMoney(sellerServiceFee)})`}
-                </div>
-              </div>
-              <div className="flex justify-between">
-                <div className="font-[300] text-primary-gray">
-                  Weather Guarantee Refund{" "}
-                  <Tooltip
-                    trigger={<Info className="h-[14px] w-[14px]" />}
-                    content="Weather guarantee amount to be refunded"
-                  />
-                </div>
-                <div className="text-secondary-black">
-                  {formatMoney(
-                    (selectedTeeTime?.weatherGuaranteeAmount ?? 0) / 100
-                  )}
-                </div>
-              </div>
-              <div className="flex justify-between">
-                <div className="font-[300] text-primary-gray">
-                  You Receive after Sale
-                </div>
-                <div className="text-secondary-black">
-                  {formatMoney(totalPayout)}
-                </div>
-              </div>
-              <div className="text-center text-[14px] font-[300] text-primary-gray">
-                All sales are final.
-              </div>
-              <div className="flex flex-col gap-2">
-                <FilledButton
-                  className="w-full disabled:bg-gray-400  disabled:border-gray-400 disabled:cursor-not-allowed"
-                  onClick={UpdateListing}
-                  data-testid="save-button-id"
-                  disabled={
-                    selectedTeeTime?.listingId ===
-                    selectedTeeTime?.listingIdFromRedis || isUnchanged
-                  }
-                >
-                  Update Listing
-                </FilledButton>
-
-                <FilledButton
-                  className="w-full disabled:bg-gray-400  disabled:border-gray-400 disabled:cursor-not-allowed"
-                  onClick={cancelListing}
-                  data-testid="cancel-listing-button-id"
-                  disabled={
-                    selectedTeeTime?.listingId ===
-                    selectedTeeTime?.listingIdFromRedis
-                  }
-                >
-                  Cancel Listing
-                </FilledButton>
-
-                <OutlineButton
-                  className="w-full border disabled:border-gray-400 disabled:text-gray-400 disabled:cursor-not-allowed"
-                  onClick={() => setIsManageTeeTimeListingOpen(false)}
-                  data-testid="cancel-button-id"
-                  disabled={
-                    selectedTeeTime?.listingId ===
-                    selectedTeeTime?.listingIdFromRedis
-                  }
-                >
-                  Cancel
-                </OutlineButton>
-              </div>
-            </div>
+                      ? "opacity-50 cursor-not-allowed"
+                      : "" // Keep only if restricting based on `availableSlots`
+                    } `}
+                  dataTestId="player-item-id"
+                  dataQa={value}
+                  label={value}
+                />
+              ))}
+            </ToggleGroup.Root>
           </div>
         </div>
-      </aside>
+        {selectedTeeTime?.listingId ===
+          selectedTeeTime?.listingIdFromRedis && (
+            <div className="text-center text-[20px] text-red">
+              Users are trying to buy this tee time and hence, editing is not
+              allowed.
+            </div>
+          )}
+        <div className="flex flex-col gap-4 px-4 pb-6">
+          <div className="flex justify-between">
+            <div className="font-[300] text-primary-gray">
+              Your Listing Price
+            </div>
+            <div className="text-secondary-black">
+              {formatMoney(listingPrice * Number(players))}
+            </div>
+          </div>
+          <div className="flex justify-between">
+            <div className="font-[300] text-primary-gray">
+              Service Fee{" "}
+              <Tooltip
+                trigger={<Info className="h-[14px] w-[14px]" />}
+                content="This fee ensures ongoing enhancements to our service, ultimately offering golfers the best access to booking tee times"
+              />
+            </div>
+            <div className="text-secondary-black">
+              {`(${formatMoney(sellerServiceFee)})`}
+            </div>
+          </div>
+          <div className="flex justify-between">
+            <div className="font-[300] text-primary-gray">
+              Weather Guarantee Refund{" "}
+              <Tooltip
+                trigger={<Info className="h-[14px] w-[14px]" />}
+                content="Weather guarantee amount to be refunded"
+              />
+            </div>
+            <div className="text-secondary-black">
+              {formatMoney(
+                (selectedTeeTime?.weatherGuaranteeAmount ?? 0) / 100
+              )}
+            </div>
+          </div>
+          <div className="flex justify-between">
+            <div className="font-[300] text-primary-gray">
+              You Receive after Sale
+            </div>
+            <div className="text-secondary-black">
+              {formatMoney(totalPayout)}
+            </div>
+          </div>
+          <div className="text-center text-[14px] font-[300] text-primary-gray">
+            All sales are final.
+          </div>
+          <div className="flex flex-col gap-2">
+            <FilledButton
+              className="w-full disabled:bg-gray-400  disabled:border-gray-400 disabled:cursor-not-allowed"
+              onClick={UpdateListing}
+              data-testid="save-button-id"
+              disabled={
+                selectedTeeTime?.listingId ===
+                selectedTeeTime?.listingIdFromRedis || isUnchanged
+              }
+            >
+              Update Listing
+            </FilledButton>
+
+            <FilledButton
+              className="w-full disabled:bg-gray-400  disabled:border-gray-400 disabled:cursor-not-allowed"
+              onClick={cancelListing}
+              data-testid="cancel-listing-button-id"
+              disabled={
+                selectedTeeTime?.listingId ===
+                selectedTeeTime?.listingIdFromRedis
+              }
+            >
+              Cancel Listing
+            </FilledButton>
+
+            <OutlineButton
+              className="w-full border disabled:border-gray-400 disabled:text-gray-400 disabled:cursor-not-allowed"
+              onClick={() => setIsManageTeeTimeListingOpen(false)}
+              data-testid="cancel-button-id"
+              disabled={
+                selectedTeeTime?.listingId ===
+                selectedTeeTime?.listingIdFromRedis
+              }
+            >
+              Cancel
+            </OutlineButton>
+          </div>
+        </div>
+      </div>
+    </>);
+  };
+
+  return (
+    <>
+      {isMobile ?
+        <Modal
+          isOpen={isManageTeeTimeListingOpen}
+          title="Manage Tee Time Listing"
+          onClose={toggleSidebar}
+        >
+          <ManageTeeTimeListingDetail />
+        </Modal> :
+        <Flyout
+          isOpen={isManageTeeTimeListingOpen}
+          title="Manage Tee Time Listing"
+          setIsOpen={toggleSidebar}
+        >
+          <ManageTeeTimeListingDetail />
+        </Flyout>}
       <CancelListing
         isCancelListingOpen={isCancelListingOpen}
         setIsCancelListingOpen={setIsCancelListingOpen}
