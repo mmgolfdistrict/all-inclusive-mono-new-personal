@@ -27,7 +27,9 @@ export const DailyTeeTimesV2 = ({
   pageDown,
   pageUp,
   scrollY,
-  divHeight
+  divHeight,
+  isLoadingTeeTimeDate,
+  allDatesArr
   // datesWithData
 }: {
   date: string;
@@ -39,7 +41,9 @@ export const DailyTeeTimesV2 = ({
   pageDown: () => void,
   pageUp: () => void
   scrollY: number,
-  divHeight?: number
+  divHeight?: number,
+  isLoadingTeeTimeDate: boolean,
+  allDatesArr: string[]
   // datesWithData:string[]
 }) => {
   const overflowRef = useRef<HTMLDivElement>(null);
@@ -144,6 +148,7 @@ export const DailyTeeTimesV2 = ({
     setError(error?.message ?? null);
   }, [error]);
 
+  const count = teeTimeData?.pages[0]?.count;
   const allTeeTimes =
     teeTimeData?.pages[teeTimeData?.pages?.length - 1]?.results ?? [];
 
@@ -154,7 +159,7 @@ export const DailyTeeTimesV2 = ({
   };
 
   useEffect(() => {
-    if (isVisible) {
+    if (isVisible && count !== allTeeTimes?.length) {
       void getNextPage();
     }
   }, [isVisible]);
@@ -185,20 +190,13 @@ export const DailyTeeTimesV2 = ({
     if (type === "WARNING") return "primary-gray";
   };
 
-  // const getIconForException = (type) => {
-  //   if (type === "FAILURE") return <Error className="h-[20px] w-[20px] " />;
-  //   if (type === "SUCCESS") return <Success className="h-[20px] w-[20px] " />;
-  //   if (type === "WARNING") return <Warning className="h-[20px] w-[20px] " />;
-  // };
-
-  // if (!isLoading && isFetchedAfterMount && allTeeTimes.length === 0) {
-  //   return null;
-  // }
+  const isAtStart = allDatesArr[0] === date
+  const isAtEnd = allDatesArr[allDatesArr.length - 1] === date
 
   return (
     <div className="flex flex-col gap-1 md:gap-4 bg-white px-4 py-2 md:rounded-xl md:px-8 md:py-6">
       <div className="flex flex-wrap justify-between gap-2 unmask-time">
-        {isLoading || isFetchingNextPage ? (
+        {isLoadingTeeTimeDate || isLoading || isFetchingNextPage ? (
           <div className="h-8 min-w-[150px] w-[20%] bg-gray-200 rounded-md  animate-pulse unmask-time" />
         ) : (
           <div className="w-full flex items-center gap-3 flex-col">
@@ -209,7 +207,9 @@ export const DailyTeeTimesV2 = ({
                 top: (courseImages?.length > 0 ? scrollY > 333 : scrollY > 45) ? `${divHeight && divHeight + 54}px` : 'auto',
 
               }}>
-              <ChevronUp fill="#000" className="-rotate-90" onClick={pageDown} />
+              {!isAtStart ?
+                <ChevronUp fill="#000" className="-rotate-90" onClick={pageDown} /> : <div></div>
+              }
               <div
                 id="tee-time-box"
                 className="text-[16px] md:text-[20px] unmask-time"
@@ -241,7 +241,9 @@ export const DailyTeeTimesV2 = ({
               ) : (
                 <div />
               )}
-              <ChevronUp fill="#000" className="rotate-90" onClick={pageUp} />
+              {!isAtEnd ?
+                <ChevronUp fill="#000" className="rotate-90" onClick={pageUp} /> : <div></div>
+              }
             </div>
             {courseException && (
               <div className="flex-1 flex items-center gap-1">
@@ -277,7 +279,7 @@ export const DailyTeeTimesV2 = ({
           ref={overflowRef}
           onMouseDown={onMouseDown}
         >
-          {allTeeTimes.length === 0 ?  isLoading || isFetchingNextPage ? Array(TAKE)
+          {allTeeTimes.length === 0 ? isLoadingTeeTimeDate || isLoading || isFetchingNextPage ? Array(TAKE)
             .fill(null)
             .map((_, idx) => <TeeTimeSkeletonV2 key={idx} />) : <div className="flex justify-center items-center h-[400px]">
             <div className="text-center">
@@ -324,7 +326,7 @@ export const DailyTeeTimesV2 = ({
           >
             Loading
           </div>
-          
+
 
           {isLoading || isFetchingNextPage || !isFetchedAfterMount
             ? Array(TAKE)

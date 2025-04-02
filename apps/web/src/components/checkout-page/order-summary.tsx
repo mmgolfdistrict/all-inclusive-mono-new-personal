@@ -12,7 +12,7 @@ export const OrderSummary = ({
   sensibleDataToMountComp,
   isSensibleInvalid,
   privacyPolicyAndTCByCourseUrl,
-  isGroupBooking = false
+  isGroupBooking = false,
 }: {
   teeTime: SearchObject | null | undefined;
   isLoading: boolean;
@@ -22,7 +22,7 @@ export const OrderSummary = ({
     privacyPolicyURL: string | null;
     termsAndConditionsURL: string | null;
   };
-    isGroupBooking?: boolean
+  isGroupBooking?: boolean;
 }) => {
   return (
     <section className="mx-auto flex w-full h-fit flex-col gap-4 bg-white px-3 py-2 md:rounded-xl md:p-6 md:py-4">
@@ -47,10 +47,8 @@ export const OrderSummary = ({
         />
       </div>
       <h2 className="italic">
-        This purchase in non-refundable. All fees are included.
-      </h2>
-      <h2 className="italic">
-        Please send your feedback to{" "}
+        This purchase in non-refundable. All fees are included. Please send your
+        feedback to{" "}
         <a href="mailto:support@golfdistrict.com">support@golfdistrict.com</a>.
       </h2>
       {privacyPolicyAndTCByCourseUrl?.privacyPolicyURL && (

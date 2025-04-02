@@ -153,7 +153,7 @@ export const ProductDataSchema = z.union([
   GreenFeeTaxPercentSchema,
   WeatherGuaranteeTaxPercentSchema,
   MarkupTaxPercentSchema,
-  FirstHandGroupProductSchema
+  FirstHandGroupProductSchema,
 ]);
 
 // CustomerCart schema
@@ -172,4 +172,7 @@ export const CustomerCartSchema = z.object({
   teeTimeId: z.string().optional(),
   courseName: z.string().optional(),
   playDateTime: z.string().optional(),
+  playerCount: z.string().optional(),
+  teeTimeType: z.string().optional(),
+  listingId: z.string().optional(),
 });

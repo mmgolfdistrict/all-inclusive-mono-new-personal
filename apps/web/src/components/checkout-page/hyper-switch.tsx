@@ -1,3 +1,4 @@
+import { TeeTimeType } from "@golf-district/shared";
 import { loadHyper } from "@juspay-tech/hyper-js";
 import { HyperElements } from "@juspay-tech/react-hyper-js";
 import { useCheckoutContext } from "~/contexts/CheckoutContext";
@@ -37,7 +38,10 @@ type Options = {
 let hyperPromise: Promise<unknown> | undefined = undefined;
 
 if (typeof window !== "undefined") {
-  console.log("Hyperswitch - publishable key",process.env.NEXT_PUBLIC_HYPERSWITCH_PUBLISHABLE_KEY);
+  console.log(
+    "Hyperswitch - publishable key",
+    process.env.NEXT_PUBLIC_HYPERSWITCH_PUBLISHABLE_KEY
+  );
   hyperPromise = loadHyper(process.env.NEXT_PUBLIC_HYPERSWITCH_PUBLISHABLE_KEY);
 }
 
@@ -126,6 +130,14 @@ export const HyperSwitch = ({
           teeTimeData?.date ?? "",
           course?.timezoneCorrection
         ),
+        playerCount: playerCount ?? "",
+        teeTimeType:
+          teeTimeData?.firstOrSecondHandTeeTime === TeeTimeType.SECOND_HAND
+            ? "SECONDARY"
+            : teeTimeData?.firstOrSecondHandTeeTime === TeeTimeType.FIRST_HAND
+            ? "PRIMARY"
+            : "UNLISTED",
+        listingId: listingId ?? "",
       })) as CreatePaymentResponse;
       if (data?.error) {
         toast.error(data?.error);
@@ -179,13 +191,15 @@ export const HyperSwitch = ({
   }, [err]);
   const reloadCheckout = () => {
     setShowCheckout(false);
-  
+
     setTimeout(() => {
-      void buildSession().then(() => {
-        setShowCheckout(true);
-      }).catch((error) => {
-        console.error("Error in buildSession:", error);
-      });
+      void buildSession()
+        .then(() => {
+          setShowCheckout(true);
+        })
+        .catch((error) => {
+          console.error("Error in buildSession:", error);
+        });
     }, 100);
   };
   useEffect(() => {
