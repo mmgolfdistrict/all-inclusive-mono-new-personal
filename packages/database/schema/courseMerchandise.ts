@@ -1,11 +1,12 @@
 import type { InferInsertModel } from "drizzle-orm";
 import { sql } from "drizzle-orm";
-import { boolean, datetime, index, tinyint, varchar } from "drizzle-orm/mysql-core";
+import { boolean, datetime, index, int, tinyint, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 
 export const courseMerchandise = mySqlTable('courseMerchandise', {
   id: varchar('id', { length: 36 }).notNull().primaryKey(),
   courseId: varchar('courseId', { length: 36 }).notNull(),
+  price: int('price').notNull().default(0),
   sku: varchar('sku', { length: 25 }).notNull(),
   caption: varchar('caption', { length: 50 }).notNull(),
   description: varchar('description', { length: 255 }),
