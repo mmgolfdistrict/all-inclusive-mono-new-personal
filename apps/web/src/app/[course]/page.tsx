@@ -244,7 +244,7 @@ export default function CourseHomePage() {
   }, [queryDateType, specialEvents]);
 
   const getSpecialDayDate = (label) => {
-    const today = dayjs(new Date())
+    const today = dayjs(new Date());
     const specialDay = specialEvents?.find((day) => day.eventName === label);
 
     if (specialDay) {
@@ -266,7 +266,7 @@ export default function CourseHomePage() {
     if (specialDate) {
       return formatDateString(specialDate.start);
     }
-    setPageNumber(1)
+    setPageNumber(1);
     switch (dateType) {
       case "All": {
         const currentTime = dayjs(new Date());
@@ -332,7 +332,7 @@ export default function CourseHomePage() {
     if (specialDate) {
       return formatDateString(specialDate.end);
     }
-    setPageNumber(1)
+    setPageNumber(1);
 
     switch (dateType) {
       case "All":
@@ -457,14 +457,14 @@ export default function CourseHomePage() {
           sortValue === "Sort by time - Early to Late"
             ? "asc"
             : sortValue === "Sort by time - Late to Early"
-              ? "desc"
-              : "",
+            ? "desc"
+            : "",
         sortPrice:
           sortValue === "Sort by price - Low to High"
             ? "asc"
             : sortValue === "Sort by price - High to Low"
-              ? "desc"
-              : "",
+            ? "desc"
+            : "",
         timezoneCorrection: course?.timezoneCorrection,
         isHolesAny: holes === "Any",
         isGolferAny: golfers === "Any",
@@ -607,7 +607,6 @@ export default function CourseHomePage() {
     pageNumber * TAKE
   );
 
-
   const [scrollY, setScrollY] = useState(0);
 
   const handleScroll = () => {
@@ -654,7 +653,10 @@ export default function CourseHomePage() {
   const openForecastModal = () => {
     setIsForecastModalOpen(true);
   };
-  const divHeight = document?.getElementById('notification-container')?.offsetHeight;
+  const divHeight =
+    typeof window != "undefined"
+      ? document?.getElementById("notification-container")?.offsetHeight
+      : undefined;
 
   // Function to close the modal
   const closeForecastModal = () => {
@@ -731,7 +733,9 @@ export default function CourseHomePage() {
               : "relative"
               }`}
             style={{
-              top: (courseImages?.length > 0 ? scrollY > 333 : scrollY > 45) ? `${divHeight && divHeight * 1}px` : 'auto',
+              top: (courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
+                ? `${divHeight && divHeight * 1}px`
+                : "auto",
             }}
           >
             <div className="w-[50%] flex items-center justify-around">

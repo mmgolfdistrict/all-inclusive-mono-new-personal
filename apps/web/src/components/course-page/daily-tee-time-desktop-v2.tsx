@@ -387,7 +387,7 @@ export const DailyTeeTimesDesktopV2 = ({
                                     key={idx}
                                     style={{
                                         scrollSnapAlign: "start",
-                                        padding: "0 9px",
+                                        padding: "0 11px",
                                         display: "inline-block",
                                         marginTop: "20px"
                                     }}
@@ -416,7 +416,6 @@ export const DailyTeeTimesDesktopV2 = ({
                                         handleLoading={handleLoading}
                                         refetch={refetch}
                                         groupId={i?.groupId}
-                                        desktopV2={true}
                                     />
                                 </li>
                             );
