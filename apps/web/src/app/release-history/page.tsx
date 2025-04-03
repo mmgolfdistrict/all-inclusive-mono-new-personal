@@ -6,11 +6,29 @@ import { GoBack } from "~/components/buttons/go-back";
 import { api } from "~/utils/api";
 import dayjs from "dayjs";
 
-export default function ReleaseHistory() {
+export default function ReleaseHistory({
+  params,
+}: {
+  params: { course: string };
+}) {
   const { data } = api.releaseHistory.getReleaseHistory.useQuery({});
+
+  const courseId = params.course;
 
   const { data: systemNotifications } =
     api.systemNotification.getSystemNotification.useQuery({});
+
+  const { data: courseGlobalNotification } =
+    api.systemNotification.getCourseGlobalNotification.useQuery({
+      courseId: courseId ?? "",
+    });
+
+  const notificationsCount =
+    (systemNotifications ? systemNotifications.length : 0) +
+    (courseGlobalNotification ? courseGlobalNotification.length : 0);
+
+  const marginTop =
+    notificationsCount > 0 ? `${(notificationsCount * 30) + 100}px` : "0";
 
   const groupedData = data?.reduce((acc, item) => {
     const date = dayjs(item.releaseDateTime).format("DD-MMM-YYYY");
@@ -24,9 +42,8 @@ export default function ReleaseHistory() {
   return (
     <main className="bg-secondary-white py-4 md:py-6">
       <div
-        className={`mx-auto flex items-center justify-between px-4 md:max-w-[1360px] md:px-6 ${
-          systemNotifications?.length ? "mt-12" : ""
-        }`}
+        style={{ marginTop }}
+        className={`mx-auto flex items-center justify-between px-4 md:max-w-[1360px] md:px-6 `}
       >
         <GoBack href="" usePrevRoute={true} text={`Back`} />
       </div>

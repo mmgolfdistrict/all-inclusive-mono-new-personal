@@ -335,17 +335,17 @@ export const TeeTimeV2 = ({
                                 </div>
                             ) : null}
                             <div className="flex items-center">
-                                <div className="text-[18px] md:text-[16px] font-semibold text-secondary-black">
+                                <div className="text-[16px] md:text-[16px] font-semibold text-secondary-black">
                                     {formatMoney(price)}
                                 </div>
-                                <div className="text-[14px] md:text-[14px] text-primary-gray">
+                                <div className="text-[12px] md:text-[14px] text-primary-gray">
                                     {" "}
                                     /golfer
                                 </div>
                             </div>
                         </div>
                         <div className="flex md:min-h-[31px] items-center gap-2">
-                            <div className="scale-75 md:scale-100">
+                            <div className="hidden xs:block scale-75 md:scale-100">
                                 <OutlineClub />
                             </div>
 
@@ -368,6 +368,7 @@ export const TeeTimeV2 = ({
                                     teeTimeId={teeTimeId}
                                     numberOfPlayers={numberOfPlayers ? numberOfPlayers : []}
                                     status={status}
+                                    supportsGroupBooking={course?.supportsGroupBooking}
                                 />
                             ) : (
                                 players && (

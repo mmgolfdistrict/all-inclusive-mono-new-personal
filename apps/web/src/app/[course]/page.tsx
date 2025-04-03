@@ -6,6 +6,7 @@ import { FilterSort } from "~/components/buttons/filters-sort";
 import { GoBack } from "~/components/buttons/go-back";
 import { CourseBanner } from "~/components/course-page/course-banner";
 import { DailyTeeTimes } from "~/components/course-page/daily-tee-times";
+import { DailyTeeTimesV2 } from "~/components/course-page/daily-tee-times-v2";
 import { Filters } from "~/components/course-page/filters";
 import { MobileDates } from "~/components/course-page/mobile-date";
 import { MobileFilters } from "~/components/course-page/mobile-filters";
@@ -37,7 +38,6 @@ import { toast } from "react-toastify";
 import { ViewportList } from "react-viewport-list";
 import { useMediaQuery } from "usehooks-ts";
 import { LoadingContainer } from "./loader";
-import { DailyTeeTimesV2 } from "~/components/course-page/daily-tee-times-v2";
 
 dayjs.extend(Weekday);
 dayjs.extend(RelativeTime);
@@ -238,7 +238,7 @@ export default function CourseHomePage() {
   }, [queryDateType,specialEvents]);
 
   const getSpecialDayDate = (label) => {
-    const today = dayjs(new Date())
+    const today = dayjs(new Date());
     const specialDay = specialEvents?.find((day) => day.eventName === label);
 
     if (specialDay) {
@@ -260,7 +260,7 @@ export default function CourseHomePage() {
     if (specialDate) {
       return formatDateString(specialDate.start);
     }
-    setPageNumber(1)
+    setPageNumber(1);
     switch (dateType) {
       case "All":{
         const currentTime = dayjs(new Date());
@@ -326,7 +326,7 @@ export default function CourseHomePage() {
     if (specialDate) {
       return formatDateString(specialDate.end);
     }
-    setPageNumber(1)
+    setPageNumber(1);
 
     switch (dateType) {
       case "All":
@@ -451,14 +451,14 @@ export default function CourseHomePage() {
           sortValue === "Sort by time - Early to Late"
             ? "asc"
             : sortValue === "Sort by time - Late to Early"
-              ? "desc"
-              : "",
+            ? "desc"
+            : "",
         sortPrice:
           sortValue === "Sort by price - Low to High"
             ? "asc"
             : sortValue === "Sort by price - High to Low"
-              ? "desc"
-              : "",
+            ? "desc"
+            : "",
         timezoneCorrection: course?.timezoneCorrection,
         isHolesAny: holes === "Any",
         isGolferAny: golfers === "Any",
@@ -601,7 +601,6 @@ export default function CourseHomePage() {
     pageNumber * TAKE
   );
 
-
   const [scrollY, setScrollY] = useState(0);
 
   const handleScroll = () => {
@@ -648,7 +647,10 @@ export default function CourseHomePage() {
   const openForecastModal = () => {
     setIsForecastModalOpen(true);
   };
-  const divHeight = document?.getElementById('notification-container')?.offsetHeight;
+  const divHeight =
+    typeof window != "undefined"
+      ? document?.getElementById("notification-container")?.offsetHeight
+      : undefined;
 
   // Function to close the modal
   const closeForecastModal = () => {
@@ -725,7 +727,9 @@ export default function CourseHomePage() {
               : "relative"
               }`}
             style={{
-              top: (courseImages?.length > 0 ? scrollY > 333 : scrollY > 45) ? `${divHeight && divHeight * 1}px` : 'auto',
+              top: (courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
+                ? `${divHeight && divHeight * 1}px`
+                : "auto",
             }}
           >
             <div className="w-[50%] flex items-center justify-around">
@@ -828,15 +832,15 @@ export default function CourseHomePage() {
                       className={`!px-3 !py-2 !min-w-fit !rounded-md ${pageNumber === amountOfPage
                         ? "opacity-50 cursor-not-allowed"
                         : ""
-                        }`}
-                      onClick={pageUp}
-                      data-testid="chevron-up-id"
-                    >
-                      <ChevronUp fill="#fff" className="rotate-90" />
-                    </FilledButton>
-                  </div>
-                ) : null}
-              </>
+                    }`}
+                    onClick={pageUp}
+                    data-testid="chevron-up-id"
+                  >
+                    <ChevronUp fill="#fff" className="rotate-90" />
+                  </FilledButton>
+                </div>
+              ) : null}
+            </>
           )}
         </div>
       </section>

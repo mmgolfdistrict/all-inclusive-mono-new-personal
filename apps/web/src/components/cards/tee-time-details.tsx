@@ -195,6 +195,7 @@ export const TeeTimeDetails = ({
               status={"FIRST_HAND"}
               isDisabled={allowedPlayers?.selectStatus === "ALL_PLAYERS"}
               id="choose-players-detail-page"
+                  supportsGroupBooking={course?.supportsGroupBooking}
             />
           </div>
           <div className="flex flex-col flex-wrap justify-between gap-2 md:flex-row">

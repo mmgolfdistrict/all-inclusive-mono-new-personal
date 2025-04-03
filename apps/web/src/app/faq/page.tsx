@@ -1,11 +1,36 @@
+"use client";
+
 import { AccordionRoot } from "~/components/accordion/accordion";
 import { AccordionItem } from "~/components/accordion/accordion-item";
 import { GoBack } from "~/components/buttons/go-back";
+import { api } from "~/utils/api";
 
-export default function FAQ() {
+export default function FAQ({
+  params,
+}: {
+  params: { course: string };
+}) {
+
+  const courseId = params.course;
+
+  const { data: systemNotifications } =
+    api.systemNotification.getSystemNotification.useQuery({});
+
+  const { data: courseGlobalNotification } =
+    api.systemNotification.getCourseGlobalNotification.useQuery({
+      courseId: courseId ?? "",
+    });
+
+  const notificationsCount =
+    (systemNotifications ? systemNotifications.length : 0) +
+    (courseGlobalNotification ? courseGlobalNotification.length : 0);
+
+  const marginTop =
+    notificationsCount > 0 ? `${notificationsCount * 40}px` : "0";
+
   return (
-    <main className="bg-secondary-white py-4 md:py-6 ">
-      <div className="mx-auto flex items-center justify-between px-4 md:max-w-[1360px] md:px-6">
+    <main className="bg-secondary-white py-4 md:py-6 mt-20">
+      <div style={{ marginTop }} className="mx-auto flex items-center justify-between px-4 md:max-w-[1360px] md:px-6">
         <GoBack href="" usePrevRoute={true} text={`Back`} />
       </div>
       <section className="mx-auto flex w-full flex-col pt-4 md:max-w-[1360px] md:gap-4 md:px-6">
