@@ -142,12 +142,11 @@ export default function CourseHomePage() {
       courseId: courseId ?? "",
     });
 
-    const { data: DESKTOP_VIEW_VERSION } =
+  const { data: DESKTOP_VIEW_VERSION } =
     api.course.getDesktopViewVersion.useQuery({
       courseId: courseId ?? "",
     });
-    console.log("DESKTOP_VIEW_VERSIONs",DESKTOP_VIEW_VERSION);
-    
+
   const TAKE = MOBILE_VIEW_VERSION === "v2" && isMobile ? 1 : 4;
   const [take, setTake] = useState<number>(TAKE);
 
@@ -801,18 +800,18 @@ export default function CourseHomePage() {
               :
               DESKTOP_VIEW_VERSION === "v2" ?
                 <>
-                <div className="flex w-full flex-col gap-1 md:gap-4" ref={ref}>
-                        <DailyTeeTimesDesktopV2
-                          setError={(e: string | null) => {
-                            setError(e);
-                          }}
-                          minDate={startDate.toString()}
-                          maxDate={endDate.toString()}
-                          handleLoading={handleLoading}
-                          dateType={dateType}
-                          dates={datesArr}
-                          isLoadingTeeTimeDate={isLoadingTeeTimeDate}
-                        />
+                  <div className="flex w-full flex-col gap-1 md:gap-4" ref={ref}>
+                    <DailyTeeTimesDesktopV2
+                      setError={(e: string | null) => {
+                        setError(e);
+                      }}
+                      minDate={startDate.toString()}
+                      maxDate={endDate.toString()}
+                      handleLoading={handleLoading}
+                      dateType={dateType}
+                      dates={datesArr}
+                      isLoadingTeeTimeDate={isLoadingTeeTimeDate}
+                    />
                   </div>
                 </>
                 :

@@ -10,7 +10,6 @@ import { useDraggableScroll } from "~/hooks/useDraggableScroll";
 import { api } from "~/utils/api";
 import { dayMonthDate, dayMonthDateV2 } from "~/utils/formatters";
 import { useEffect, useRef, useState } from "react";
-import { useElementSize, useIntersectionObserver } from "usehooks-ts";
 import { TeeTime } from "../cards/tee-time";
 import { Info } from "../icons/info";
 import { LeftChevron } from "../icons/left-chevron";
@@ -46,7 +45,7 @@ export const DailyTeeTimesDesktopV2 = ({
     const courseId = course?.id;
     useEffect(() => {
         setDate(dates[0] ?? '')
-    }, [dates])
+    }, [dateType ,minDate])
 
     const { data: courseException } =
     api.courseException.getCourseException.useQuery({
@@ -71,7 +70,7 @@ export const DailyTeeTimesDesktopV2 = ({
     return null;
   };
 
- const courseExceptions = getCourseException(date as string)
+ const courseExceptions = getCourseException(date)
 
     const {
         showUnlisted,
@@ -104,7 +103,7 @@ export const DailyTeeTimesDesktopV2 = ({
                 enabled: course?.id !== undefined && date !== undefined,
             }
         );
-    const TAKE = 200;
+    const TAKE = 250;
     const {
         data: teeTimeData,
         isLoading,
@@ -238,8 +237,9 @@ export const DailyTeeTimesDesktopV2 = ({
                 <div className="absolute top-1/2 md:block -translate-y-1/2 z-[2] flex items-center justify-center -left-1 md:-left-6">
                     <button
                         onClick={() => scrollLeft()}
-                        className={`flex h-fit items-center justify-center rounded-full bg-white p-2 shadow-overflow-indicator ${isAtStart && 'hidden'}`}
+                        className={`flex h-fit items-center justify-center rounded-full bg-white p-2 shadow-overflow-indicator ${isAtStart ? 'hidden' : ""}`}
                         data-testid="tee-time-left-chevron-id"
+                        aria-label="Scroll Left"
                     // disabled={isAtStart}
                     >
                         <LeftChevron fill="#40942A" className="w-[16px]" />
@@ -281,16 +281,16 @@ export const DailyTeeTimesDesktopV2 = ({
                                 const isSelected = dayjs(date).format("YYYY-MM-DD") === dayjs(elm).format("YYYY-MM-DD");
 
                                 return (
-                                    <li
+                                    <button
                                         key={idx}
                                         className={`p-4 min-w-[160px] border rounded-lg text-center cursor-pointer ${isSelected ? "bg-primary text-white" : ""
                                             }`}
-                                        onClick={() => setDate(elm)}
+                                            onClick={() => setDate(elm)}
                                     >
                                         <div className={`text-gray-700 ${isSelected ? "text-white" : ""}`}>
                                             {dayMonthDateV2(elm)}
                                         </div>
-                                    </li>
+                                    </button>
                                 );
                             })}
                     </ul>
@@ -298,8 +298,9 @@ export const DailyTeeTimesDesktopV2 = ({
                 <div className="absolute z-[2] md:block top-1/2 -translate-y-1/2 flex items-center justify-center -right-1 md:-right-6">
                     <button
                         onClick={scrollRight}
-                        className={`flex h-fit items-center justify-center rounded-full bg-white p-2 shadow-overflow-indicator ${isAtEnd || dates.length <= 5 && 'hidden'}`}
+                        className={`flex h-fit items-center justify-center rounded-full bg-white p-2 shadow-overflow-indicator ${isAtEnd || dates.length <= 5 ?'hidden' : ""}`}
                         data-testid="tee-time-right-chevron-id"
+                        aria-label="Scroll Right"
                     >
                         <LeftChevron fill="#40942A" className="w-[16px] rotate-180" />
                     </button>
