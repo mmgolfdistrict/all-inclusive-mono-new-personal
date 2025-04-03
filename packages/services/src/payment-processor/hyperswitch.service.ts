@@ -1,5 +1,6 @@
 /* eslint no-use-before-define: 0 */
-import { db } from "@golf-district/database";
+import { randomUUID } from "crypto";
+import { and, db, eq } from "@golf-district/database";
 import type { Db } from "@golf-district/database";
 import Logger from "@golf-district/shared/src/logger";
 import HyperSwitch from "@juspay-tech/hyper-node";
@@ -12,7 +13,7 @@ import type {
   CustomerPaymentMethod,
   CustomerPaymentMethodsResponse,
 } from "./types/hyperSwitch.types";
-
+import { splitPayments } from "@golf-district/database/schema/splitPayment";
 /**
  * Service for interacting with the HyperSwitch API.
  */
@@ -567,7 +568,7 @@ export class HyperSwitchService {
     return { status: "success" };
   };
 
-  createPaymentLink = async (amount: number, email: string) => {
+  createPaymentLink = async (amount: number, email: string, bookingId: string) => {
     try {
       const myHeaders = new Headers();
       myHeaders.append("Content-Type", "application/json");
@@ -584,26 +585,38 @@ export class HyperSwitchService {
           authentication_type: "three_ds",
           currency: currency,
           confirm: false,
-          description: "Tee times",
+          description: email,
           payment_link_config: {
             theme: "#014E28",
             logo: "https://i.pinimg.com/736x/4d/83/5c/4d835ca8aafbbb15f84d07d926fda473.jpg",
             seller_name: "teeskraft",
             sdk_layout: "tabs",
           },
-         return_url:"http://localhost:3000"
+          return_url: "http://localhost:3000/payment-success",
         }),
       };
       const result = await fetch(`${this.hyperSwitchBaseUrl}/payments`, options);
       const response = await result.json();
       console.log("response_payment_link", response);
       if (response?.payment_link?.link) {
+        await this.database
+          .insert(splitPayments)
+          .values({
+            id: randomUUID(),
+            amount: Math.round(amount * 100),
+            email: email,
+            bookingId: bookingId,
+            paymentId: response?.payment_id,
+            paymentLink: response?.payment_link?.link,
+          })
+          .execute();
         const result = this.notificationService.sendEmail(
           email,
           "Payment Link",
           `Payment Link: ${response.payment_link.link || ""}`
         );
         console.log("Email Send successFully");
+
         return {
           error: false,
           message: "Payment Link Send Successfully",
@@ -615,7 +628,46 @@ export class HyperSwitchService {
         };
       }
     } catch (error) {
+      console.log("error", error);
       throw new Error("Problem creating payment link");
+    }
+  };
+
+  updateSplitPaymentStatus = async (paymentId: string) => {
+    try {
+      if (paymentId) {
+        await this.database
+          .update(splitPayments)
+          .set({
+            isPaid: 1,
+          })
+          .where(eq(splitPayments.paymentId, paymentId))
+          .execute();
+      }
+      return { message: "status update successFully" };
+    } catch (error) {
+      console.log(error);
+      throw new Error("Error while updating status");
+    }
+  };
+
+  isEmailedUserPaidTheAmount = async (bookingId: string) => {
+    try {
+      if(!bookingId){
+        throw new Error("bookingId is required");
+      }
+      const result = this.database
+        .select({
+          email: splitPayments.email,
+          isPaid: splitPayments.isPaid,
+          isActive: splitPayments.isActive,
+        })
+        .from(splitPayments)
+        .where(eq(splitPayments.bookingId, bookingId));
+      return result || [];
+    } catch (error:any) {
+      console.log(error);
+      throw new Error(error.message);
     }
   };
 }

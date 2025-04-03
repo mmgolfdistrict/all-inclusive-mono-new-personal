@@ -345,7 +345,6 @@ const TableRow = ({
       </td>
       <td className="whitespace-nowrap px-4 py-3">
         <div className="flex w-full justify-end gap-2">
-          {isListed && (
             <FilledButton
               className="min-w-[145px]"
               onClick={collectPaymentList}
@@ -356,7 +355,6 @@ const TableRow = ({
             >
               Collect payment
             </FilledButton>
-          )}
           <div id="manage-teetime-button">
             <OutlineButton
               onClick={openManageListTeeTime}

@@ -8,6 +8,7 @@ import { formatMoney, formatTime } from "~/utils/formatters";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  Fragment,
   useEffect,
   useMemo,
   useState,
@@ -15,18 +16,14 @@ import {
   type Dispatch,
   type SetStateAction,
 } from "react";
+import { toast } from "react-toastify";
 import { Avatar } from "../avatar";
 import { FilledButton } from "../buttons/filled-button";
-import { OutlineButton } from "../buttons/outline-button";
-import { Item } from "../course-page/filters";
 import { Close } from "../icons/close";
-import { DownChevron } from "../icons/down-chevron";
-import { Info } from "../icons/info";
 import { Players } from "../icons/players";
 import { Input } from "../input/input";
 import { SingleSlider } from "../input/single-slider";
-import { Tooltip } from "../tooltip";
-import { toast } from "react-toastify";
+import { Loader } from "../loading/spinner";
 import { type OwnedTeeTime } from "./owned";
 
 type PlayerType = "1" | "2" | "3" | "4";
@@ -50,63 +47,112 @@ export const CollectPayment = ({
 }: SideBarProps) => {
   const paymentLinkResult =
     api.checkout.getHyperSwitchPaymentLink.useMutation();
+  const { data: emailedUsers, refetch: refetchEmailedUsers } =
+    api.checkout.checkEmailedUserPaidTheAmount.useQuery(
+      {
+        bookingId: selectedTeeTime?.bookingIds[0] ?? "",
+      },
+      { enabled: false }
+    );
   const availableSlots = selectedTeeTime?.golfers.length || 0;
   const [emails, setEmails] = useState(
     Array.from({ length: Number(availableSlots - 1) }, () => "")
   );
+  const [sendEmailedUsers, setEmailedUsers] = useState<
+    { email: string; isPaid: number; isActive: number }[] | undefined
+  >(undefined);
+  const [loadingStates, setLoadingStates] = useState<boolean[]>([]);
+  const [selectedOption, setSelectedOption] = useState("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isPaymentLoader,setIsPaymentLoader] = useState<boolean>(false);
   const [amount, setAmount] = useState<number>(0);
-  const [sellerServiceFee, setSellerServiceFee] = useState<number>(0);
   const [players, setPlayers] = useState<string>(
     selectedTeeTime?.isGroupBooking
       ? "2"
       : selectedTeeTime?.selectedSlotsCount || availableSlots.toString()
   );
-  //In purchase for total amount of booking is present
-  // console.log("selectedTeetime Purchasefor",selectedTeeTime?.purchasedFor);
   const { toggleSidebar } = useSidebar({
     isOpen: isCollectPaymentOpen,
     setIsOpen: setIsCollectPaymentOpen,
   });
   const { course } = useCourseContext();
-
   const handleEmailChange = (index: number, value: string) => {
     const updatedEmails = [...emails];
     updatedEmails[index] = value;
     setEmails(updatedEmails);
   };
 
-  const handlePriceChange = (e: any) => {
-    const totalBookingPrice = Number(e.target.value);
-    const totalPlayers = Number(selectedTeeTime?.golfers.length);
-    if (totalPlayers > 0) {
-      const splitAmount = parseFloat(
-        (totalBookingPrice / totalPlayers).toFixed(2)
-      );
-      setAmount(splitAmount);
-    } else {
-      setAmount(0);
+  const handlePriceChange = () => {
+    if (selectedOption === "equalSplit") {
+      const totalBookingPrice = Number(selectedTeeTime?.purchasedFor);
+      const totalPlayers = Number(selectedTeeTime?.golfers.length);
+      if (totalPlayers > 0) {
+        const splitAmount = parseFloat(
+          (totalBookingPrice / totalPlayers).toFixed(2)
+        );
+        setAmount(splitAmount);
+      } else {
+        setAmount(0);
+      }
     }
   };
+
+  useEffect(() => {
+    handlePriceChange();
+  }, [selectedOption]);
+
+  useEffect(() => {
+    console.log("isCollectPaymentOpen changed:", isCollectPaymentOpen);
+    if (!isCollectPaymentOpen) {
+      setSelectedOption("");
+      setAmount(0);
+    }
+    refetchEmailedUsers().then((data) => {
+      console.log("data", data.data);
+      setEmailedUsers(data?.data);
+    });
+  }, [isCollectPaymentOpen]);
 
   const handleEmailSendOnHyperSwitchPaymentLink = async (index: number) => {
     try {
       console.log("hyperSwitchEmailSend", emails[index], amount);
-      setIsPaymentLoader(true)
-      const result = await paymentLinkResult.mutateAsync({ amount: amount ,email:emails[index] ?? ""});
-      if(result?.error){
+      setLoadingStates((prev) => {
+        const newLoadingStates = [...prev];
+        newLoadingStates[index] = true;
+        return newLoadingStates;
+      });
+      const result = await paymentLinkResult.mutateAsync({
+        amount: amount,
+        email: emails[index] ?? "",
+        bookingId: selectedTeeTime?.bookingIds[0] ?? "",
+      });
+      if (result?.error) {
         toast.error("Error Creating Payment link");
-        setIsPaymentLoader(false)
-      }else{
+        setLoadingStates((prev) => {
+          const newLoadingStates = [...prev];
+          newLoadingStates[index] = false; // Reset loading state after operation
+          return newLoadingStates;
+        });
+      } else {
         toast.success(result?.message);
-        setIsPaymentLoader(false)
+        setLoadingStates((prev) => {
+          const newLoadingStates = [...prev];
+          newLoadingStates[index] = false; // Reset loading state after operation
+          return newLoadingStates;
+        });
       }
     } catch (error) {
       toast.error("Error Creating Payment link");
-      setIsPaymentLoader(false)
-    }finally {
-      setIsPaymentLoader(false)
+      setLoadingStates((prev) => {
+        const newLoadingStates = [...prev];
+        newLoadingStates[index] = false; // Reset loading state after operation
+        return newLoadingStates;
+      });
+    } finally {
+      setLoadingStates((prev) => {
+        const newLoadingStates = [...prev];
+        newLoadingStates[index] = false; // Reset loading state after operation
+        return newLoadingStates;
+      });
     }
   };
 
@@ -165,10 +211,10 @@ export const CollectPayment = ({
                     type="radio"
                     name="options"
                     className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                    value={selectedTeeTime?.purchasedFor}
-                    onChange={(e) => handlePriceChange(e)}
+                    value="equalSplit"
+                    checked={selectedOption === "equalSplit"}
+                    onChange={(e) => setSelectedOption(e.target.value)}
                   />
-
                   <label
                     htmlFor="option1"
                     className="ml-2 text-sm font-medium text-gray-900"
@@ -189,16 +235,65 @@ export const CollectPayment = ({
                       type="text"
                       placeholder="Enter the email"
                       onChange={(e) => handleEmailChange(index, e.target.value)}
-                      value={emails[index]}
-                    />
-                    <FilledButton
-                      onClick={() =>
-                        handleEmailSendOnHyperSwitchPaymentLink(index)
+                      value={
+                        sendEmailedUsers
+                          ? sendEmailedUsers[index]?.email
+                          : emails[index]
                       }
-                      className="text-sm"
-                    >
-                      Send
-                    </FilledButton>
+                    />
+                    {sendEmailedUsers && sendEmailedUsers[index] ? (
+                      sendEmailedUsers[index]?.isPaid === 1 ? (
+                        <FilledButton
+                          className="text-sm flex justify-center border-white items-center bg-white text-black"
+                          disabled
+                        >
+                          Paid
+                        </FilledButton>
+                      ) : sendEmailedUsers[index]?.isPaid === 0 &&
+                        sendEmailedUsers[index]?.isActive === 1 ? (
+                        <FilledButton
+                          onClick={() =>
+                            handleEmailSendOnHyperSwitchPaymentLink(index)
+                          }
+                          className="text-sm flex justify-center items-center"
+                          disabled={loadingStates[index]}
+                        >
+                          {loadingStates[index] ? (
+                            <Loader size={20} color="fill-white-600" />
+                          ) : (
+                            "Resend"
+                          )}
+                        </FilledButton>
+                      ) : (
+                        <FilledButton
+                          onClick={() =>
+                            handleEmailSendOnHyperSwitchPaymentLink(index)
+                          }
+                          className="text-sm flex justify-center items-center"
+                          disabled={loadingStates[index]}
+                        >
+                          {loadingStates[index] ? (
+                            <Loader size={20} color="fill-white-600" />
+                          ) : (
+                            "Send"
+                          )}
+                        </FilledButton>
+                      )
+                    ) : (
+                      <FilledButton
+                        onClick={() =>
+                          handleEmailSendOnHyperSwitchPaymentLink(index)
+                        }
+                        className="text-sm flex justify-center items-center"
+                        disabled={loadingStates[index]}
+                      >
+                        {loadingStates[index] ? (
+                          <Loader size={20} color="fill-white-600" />
+                        ) : (
+                          "Send"
+                        )}
+                      </FilledButton>
+                    )}
                   </div>
                 )
               )}

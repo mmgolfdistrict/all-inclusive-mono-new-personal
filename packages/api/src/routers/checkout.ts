@@ -1,6 +1,6 @@
 import { CustomerCartSchema } from "@golf-district/shared/src/schema/customer-cart-schema";
 import { any, z } from "zod";
-import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 export const checkoutRouter = createTRPCRouter({
   buildCheckoutSession: protectedProcedure.input(CustomerCartSchema).mutation(async ({ ctx, input }) => {
@@ -111,9 +111,26 @@ export const checkoutRouter = createTRPCRouter({
       z.object({
         amount: z.number(),
         email:z.string(),
+        bookingId:z.string(),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      return await ctx.serviceFactory.getHyperSwitchService().createPaymentLink(input.amount,input.email);
+      return await ctx.serviceFactory.getHyperSwitchService().createPaymentLink(input.amount,input.email,input.bookingId);
     }),
+
+  updateSplitPaymentStatus: publicProcedure
+  .input(
+    z.object({
+      paymentId:z.string(),
+    }),
+  )
+  .query(async ({ctx,input}) => {
+    return await ctx.serviceFactory.getHyperSwitchService().updateSplitPaymentStatus(input.paymentId);
+  }),
+
+  checkEmailedUserPaidTheAmount :protectedProcedure.input( z.object({
+    bookingId:z.string(),
+  }),).query(async ({ctx, input}) => {
+    return await ctx.serviceFactory.getHyperSwitchService().isEmailedUserPaidTheAmount(input.bookingId);
+  }),
 });
