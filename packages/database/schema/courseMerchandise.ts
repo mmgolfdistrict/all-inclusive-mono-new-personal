@@ -20,6 +20,8 @@ export const courseMerchandise = mySqlTable('courseMerchandise', {
   lastUpdatedDateTime: datetime('lastUpdatedDateTime', { mode: 'string', fsp: 3 })
     .default(sql`CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)`)
     .notNull(),
+  logoURL: varchar('logoURL', { length: 1024 }),
+  longDescription: varchar('longDescription', { length: 1024 }),
 },
   (table) => ({
     courseIdIdx: index("CourseException_courseId_idx").on(table.courseId),
