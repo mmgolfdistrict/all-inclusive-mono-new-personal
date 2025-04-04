@@ -239,47 +239,55 @@ export const CourseNav = () => {
                 </Link>
               )}
             </div>
-            <div className="flex items-center gap-6 md:gap-4">
+            <div className="flex flex-col md:flex-row md:items-center md:gap-4">
+              {/* Mobile: Show PoweredBy on top */}
+              <div className="md:hidden mb-2">
+                <PoweredBy id="powered-by-sidebar" />
+              </div>
+
+              {/* Desktop: Show PoweredBy inline */}
               <div className="hidden md:block">
                 <PoweredBy id="powered-by-sidebar" />
               </div>
 
-              {user && session.status === "authenticated" ? (
-                <div className="flex items-center gap-4">
-                  <UserInNav />
-                </div>
-              ) : session.status == "loading" ? null : (
-                session.status != "authenticated" &&
-                pathname != `/${course?.id}/login` && (
-                  <Link
-                    href={
-                      pathname === `/${course?.id}/login`
-                        ? "#"
-                        : `/${course?.id}/login`
-                    }
-                    onClick={(
-                      event: React.MouseEvent<HTMLAnchorElement, MouseEvent>
-                    ) => {
-                      if (pathname === `/${course?.id}/login`) {
-                        event.preventDefault();
-                      } else {
-                        setPrevPath({
-                          path: pathname,
-                          createdAt: new Date().toISOString(),
-                        });
+              <div className="flex items-center gap-6">
+                {user && session.status === "authenticated" ? (
+                  <div className="flex items-center gap-4">
+                    <UserInNav />
+                  </div>
+                ) : session.status === "loading" ? null : (
+                  session.status !== "authenticated" &&
+                  pathname !== `/${course?.id}/login` && (
+                    <Link
+                      href={
+                        pathname === `/${course?.id}/login`
+                          ? "#"
+                          : `/${course?.id}/login`
                       }
-                    }}
-                  >
-                    <FilledButton
-                      className="hidden md:block"
-                      data-testid="signin-button-id"
+                      onClick={(event) => {
+                        if (pathname === `/${course?.id}/login`) {
+                          event.preventDefault();
+                        } else {
+                          setPrevPath({
+                            path: pathname,
+                            createdAt: new Date().toISOString(),
+                          });
+                        }
+                      }}
                     >
-                      Log In
-                    </FilledButton>
-                  </Link>
-                )
-              )}
+                      <FilledButton
+                        className="hidden md:block"
+                        data-testid="signin-button-id"
+                      >
+                        Log In
+                      </FilledButton>
+                    </Link>
+                  )
+                )}
+              </div>
             </div>
+
+
           </div>
         </div>
         {!isMobile ?
