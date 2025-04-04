@@ -17,34 +17,34 @@ export const Course = ({
   return (
     <Link
       href={`/${courseId}`}
-      className="flex w-full flex-col items-center gap-2 max-w-[720px] mx-auto"
+      className="block bg-white rounded-xl shadow-lg overflow-hidden"
       data-testid="course-id"
       data-test={courseId}
       data-qa={courseName}
     >
-      <Image
-        draggable={false}
-        src={image}
-        width={440}
-        height={288}
-        alt="course"
-        priority
-        className="object-cover rounded-md h-[288px] w-full bg-center"
-        unoptimized
-      />
-      <button
-        className={`
-          absolute min-w-[110px] rounded-xl border-white border-[2px] bg-black
-            px-7 py-3 mt-2 text-white
-        `}
-        data-testid="book-now-button-id"
-      >
-        Book Now
-      </button>
-      <div className="flex flex-col gap-1">
-        <div className="font-bold">{courseName}</div>
-        <div>{location}</div>
-        <div className=" text-sm text-justify font-[300]">{description}</div>
+      <div className="relative">
+        <Image
+          draggable={false}
+          src={image}
+          width={440}
+          height={288}
+          alt="course"
+          priority
+          className="object-cover w-full h-[288px]"
+          unoptimized
+        />
+
+        <div className="p-4 ">
+          <div className="text-center">
+
+          <button className=" bg-black text-white text-sm font-semibold px-4 py-2 rounded-xl border-2 border-white">
+            Book Now
+          </button>
+          </div>
+          <h3 className="text-lg text-center font-semibold mt-2">{courseName}</h3>
+          <p className="text-gray-600 text-sm mt-1">{location}</p>
+          <p className="text-gray-700 text-sm mt-4">{description}</p>
+        </div>
       </div>
     </Link>
   );
