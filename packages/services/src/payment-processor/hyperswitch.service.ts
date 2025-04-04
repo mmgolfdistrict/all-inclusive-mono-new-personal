@@ -14,6 +14,9 @@ import type {
   CustomerPaymentMethodsResponse,
 } from "./types/hyperSwitch.types";
 import { splitPayments } from "@golf-district/database/schema/splitPayment";
+import { appSettingService } from "../app-settings/initialized";
+import { bookings } from "@golf-district/database/schema/bookings";
+import { customerRecievable } from "@golf-district/database/schema/customerRecievable";
 /**
  * Service for interacting with the HyperSwitch API.
  */
@@ -568,8 +571,13 @@ export class HyperSwitchService {
     return { status: "success" };
   };
 
-  createPaymentLink = async (amount: number, email: string, bookingId: string) => {
+  createPaymentLink = async (amount: number, email: string, bookingId: string, origin: string) => {
     try {
+      if (amount === 0) {
+        throw new Error("Amount cannot be zero");
+      }
+      const return_url = `${origin}/payment-success`;
+
       const myHeaders = new Headers();
       myHeaders.append("Content-Type", "application/json");
       myHeaders.append("api-key", this.hyperSwitchApiKey);
@@ -592,7 +600,7 @@ export class HyperSwitchService {
             seller_name: "teeskraft",
             sdk_layout: "tabs",
           },
-          return_url: "http://localhost:3000/payment-success",
+          return_url: return_url,
         }),
       };
       const result = await fetch(`${this.hyperSwitchBaseUrl}/payments`, options);
@@ -610,10 +618,11 @@ export class HyperSwitchService {
             paymentLink: response?.payment_link?.link,
           })
           .execute();
-        const result = this.notificationService.sendEmail(
+        const newUrl = `${origin}/create-payment`;
+        const emailSend = this.notificationService.sendEmail(
           email,
           "Payment Link",
-          `Payment Link: ${response.payment_link.link || ""}`
+          `Payment Link: ${newUrl}/${response?.payment_id} `
         );
         console.log("Email Send successFully");
 
@@ -643,8 +652,30 @@ export class HyperSwitchService {
           })
           .where(eq(splitPayments.paymentId, paymentId))
           .execute();
+        const [result] = await this.database
+          .select({
+            email: splitPayments.email,
+            bookingId: splitPayments.bookingId,
+            amount: splitPayments.amount,
+            paymentId: splitPayments.paymentId,
+          })
+          .from(splitPayments)
+          .where(eq(splitPayments.paymentId, paymentId));
+        return {
+          message: "status update successFully",
+          email: result?.email,
+          bookingId: result?.bookingId,
+          error: false,
+          amount: result?.amount,
+        };
+      } else {
+        return {
+          message: "",
+          email: "",
+          bookingId: "",
+          error: true,
+        };
       }
-      return { message: "status update successFully" };
     } catch (error) {
       console.log(error);
       throw new Error("Error while updating status");
@@ -653,21 +684,170 @@ export class HyperSwitchService {
 
   isEmailedUserPaidTheAmount = async (bookingId: string) => {
     try {
-      if(!bookingId){
-        throw new Error("bookingId is required");
+      if (!bookingId) {
+        return [];
       }
-      const result = this.database
+      const result = await this.database
         .select({
           email: splitPayments.email,
           isPaid: splitPayments.isPaid,
           isActive: splitPayments.isActive,
+          paymentId: splitPayments.paymentId,
+          amount: splitPayments.amount,
         })
         .from(splitPayments)
         .where(eq(splitPayments.bookingId, bookingId));
       return result || [];
-    } catch (error:any) {
+    } catch (error: any) {
       console.log(error);
       throw new Error(error.message);
+    }
+  };
+
+  resendPaymentLinkToEmailUsers = async (
+    email: string,
+    amount: number,
+    bookingId: string,
+    isActive: number,
+    origin: string
+  ) => {
+    try {
+      const [result] = await this.database
+        .select({
+          email: splitPayments.email,
+          bookingId: splitPayments.bookingId,
+          paymentId: splitPayments.paymentId,
+        })
+        .from(splitPayments)
+        .where(
+          and(
+            eq(splitPayments.email, email),
+            eq(splitPayments.bookingId, bookingId),
+            eq(splitPayments.isActive, 1)
+          )
+        );
+      if (result?.email && result?.bookingId) {
+        const updatedResult = await this.database
+          .update(splitPayments)
+          .set({
+            isActive: 0,
+          })
+          .where(
+            and(
+              eq(splitPayments.email, result?.email),
+              eq(splitPayments.bookingId, result?.bookingId),
+              eq(splitPayments.isActive, 1),
+              eq(splitPayments.paymentId, result?.paymentId)
+            )
+          )
+          .execute();
+        await this.cancelPaymentIntent(result.paymentId);
+        const resultPaymentLink = await this.createPaymentLink(amount, email, bookingId, origin);
+        console.log("resultPaymentLink", resultPaymentLink);
+        return resultPaymentLink;
+      }
+    } catch (error: any) {
+      console.log(error);
+      throw new Error(error.message);
+    }
+  };
+
+  getPaymentLinkByPaymentId = async (paymentId: string) => {
+    try {
+      if (paymentId) {
+        const [result] = await this.database
+          .select({ paymentLink: splitPayments.paymentLink })
+          .from(splitPayments)
+          .where(and(eq(splitPayments.paymentId, paymentId)));
+        const paymentStatus = await this.retrievePaymentIntent(paymentId);
+        if ((paymentStatus?.status as string) === "cancelled") {
+          return {
+            error: false,
+            message: "Payment-Link fetch successFully",
+            paymentLink: result?.paymentLink,
+          };
+        } else {
+          return {
+            error: true,
+            message: "Payment-Link fetch failed",
+            paymentLink: "",
+          };
+        }
+        // return {
+        //   error: false,
+        //   message: "Payment-Link fetch successFully",
+        //   paymentLink: result?.paymentLink,
+        // };
+      }
+      // return {
+      //   error: true,
+      //   message: "Payment-Link fetch failed",
+      //   paymentLink: "",
+      // };
+    } catch (error) {
+      throw new Error("Error while fetching for payment link");
+    }
+  };
+  addMinutes = (date: Date, minutes: number) => {
+    const result = new Date(date);
+    result.setMinutes(result.getMinutes() + minutes);
+    return result;
+  };
+  formatCurrentDateTime = (date: Date) => {
+    const currentDate = date;
+    const year = currentDate.getFullYear();
+    const month = String(currentDate.getMonth() + 1).padStart(2, "0"); // Adding 1 because months are zero-indexed
+    const day = String(currentDate.getDate()).padStart(2, "0");
+    const hours = String(currentDate.getHours()).padStart(2, "0");
+    const minutes = String(currentDate.getMinutes()).padStart(2, "0");
+    const seconds = String(currentDate.getSeconds()).padStart(2, "0");
+    const milliseconds = String(currentDate.getMilliseconds()).padStart(3, "0");
+
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.${milliseconds}`;
+  };
+  saveSplitPaymentAmountIntoCashOut = async (bookingId: string, amount: number) => {
+    try {
+      const [result] = await this.database
+        .select({ ownerId: bookings.ownerId })
+        .from(bookings)
+        .where(eq(bookings.id, bookingId));
+      if (!result) {
+        throw new Error("Error while fetching for booking");
+      }
+      const currentDate = new Date();
+      const radeemAfterMinutes = await appSettingService.get("CASH_OUT_AFTER_MINUTES");
+      const redeemAfterDate = this.addMinutes(currentDate, Number(radeemAfterMinutes));
+      const customerRecievableData = [
+        {
+          id: randomUUID(),
+          userId: result?.ownerId,
+          amount: Number(amount),
+          type: "SPLIT_PAYMENT",
+          transferId: "",
+          sensibleAmount: 0,
+          createdDateTime: this.formatCurrentDateTime(currentDate),
+          redeemAfter: this.formatCurrentDateTime(redeemAfterDate),
+        },
+      ];
+      await this.database
+        .insert(customerRecievable)
+        .values(customerRecievableData)
+        .catch((err: any) => {
+          this.logger.error(err);
+          loggerService.errorLog({
+            userId: "",
+            url: `/HyperSwitchWebhookService/handleSecondHandItem`,
+            userAgent: "",
+            message: "ERROR_CREATING_CUSTOMER_RECEIVABLE_FOR_TEE_TIME",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              customerRecievableData,
+            }),
+          });
+        });
+    } catch (error) {
+      console.log(error);
+      throw new Error("Error while saving split payment amount");
     }
   };
 }

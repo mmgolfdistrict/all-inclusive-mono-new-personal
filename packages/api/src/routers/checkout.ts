@@ -106,31 +106,78 @@ export const checkoutRouter = createTRPCRouter({
   isAppleEnabledReloadWidget: protectedProcedure.input(z.object({})).query(async ({ ctx }) => {
     return await ctx.serviceFactory.getCheckoutService().isAppleEnabledReloadWidget();
   }),
-  getHyperSwitchPaymentLink: protectedProcedure
+  createHyperSwitchPaymentLink: protectedProcedure
     .input(
       z.object({
         amount: z.number(),
-        email:z.string(),
-        bookingId:z.string(),
+        email: z.string(),
+        bookingId: z.string(),
+        origin: z.string(),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      return await ctx.serviceFactory.getHyperSwitchService().createPaymentLink(input.amount,input.email,input.bookingId);
+      return await ctx.serviceFactory
+        .getHyperSwitchService()
+        .createPaymentLink(input.amount, input.email, input.bookingId, input.origin);
     }),
 
   updateSplitPaymentStatus: publicProcedure
-  .input(
-    z.object({
-      paymentId:z.string(),
+    .input(
+      z.object({
+        paymentId: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return await ctx.serviceFactory.getHyperSwitchService().updateSplitPaymentStatus(input.paymentId);
     }),
-  )
-  .query(async ({ctx,input}) => {
-    return await ctx.serviceFactory.getHyperSwitchService().updateSplitPaymentStatus(input.paymentId);
-  }),
 
-  checkEmailedUserPaidTheAmount :protectedProcedure.input( z.object({
-    bookingId:z.string(),
-  }),).query(async ({ctx, input}) => {
-    return await ctx.serviceFactory.getHyperSwitchService().isEmailedUserPaidTheAmount(input.bookingId);
-  }),
+  checkEmailedUserPaidTheAmount: protectedProcedure
+    .input(
+      z.object({
+        bookingId: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return await ctx.serviceFactory.getHyperSwitchService().isEmailedUserPaidTheAmount(input.bookingId);
+    }),
+  resendHyperSwitchPaymentLink: protectedProcedure
+    .input(
+      z.object({
+        amount: z.number(),
+        email: z.string(),
+        bookingId: z.string(),
+        isActive: z.number(),
+        origin: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return await ctx.serviceFactory
+        .getHyperSwitchService()
+        .resendPaymentLinkToEmailUsers(
+          input.email,
+          input.amount,
+          input.bookingId,
+          input.isActive,
+          input.origin
+        );
+    }),
+  getPaymentLinkByPaymentId: publicProcedure
+    .input(
+      z.object({
+        paymentId: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return await ctx.serviceFactory.getHyperSwitchService().getPaymentLinkByPaymentId(input.paymentId);
+    }),
+  saveSplitPaymentAmountIntoCashOut : protectedProcedure
+    .input(
+      z.object({
+        bookingId: z.string(),
+        amount: z.number(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return await ctx.serviceFactory.getHyperSwitchService().saveSplitPaymentAmountIntoCashOut(input.bookingId, input.amount);
+    }),
 });

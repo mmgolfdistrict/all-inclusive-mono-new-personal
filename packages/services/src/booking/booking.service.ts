@@ -39,6 +39,7 @@ import type { UserWaitlistService } from "../user-waitlist/userWaitlist.service"
 import { loggerService } from "../webhooks/logging.service";
 import { groupBookings } from "@golf-district/database/schema/groupBooking";
 import { CacheService } from "../infura/cache.service";
+import { splitPayments } from "@golf-district/database/schema/splitPayment";
 
 dayjs.extend(UTC);
 dayjs.extend(timezone);
@@ -134,6 +135,9 @@ interface TransferData {
   weatherGuaranteeId: string;
   weatherGuaranteeAmount: number;
   markupFees?: number | null;
+  splitPaymentsAmount?:number | null;
+  isPaidSplitAmount?:number | null
+  
 }
 type RequestOptions = {
   method: string;
@@ -290,6 +294,8 @@ export class BookingService {
         weatherGuaranteeAmount: transfers.weatherGuaranteeAmount,
         cartFee: bookings.cartFeePerPlayer,
         markupFees: bookings.markupFees,
+        splitPaymentsAmount:splitPayments.amount,
+        isPaidSplitAmount : splitPayments.isPaid
       })
       .from(transfers)
       .innerJoin(bookings, eq(bookings.id, transfers.bookingId))
@@ -297,6 +303,7 @@ export class BookingService {
       .innerJoin(courses, eq(courses.id, teeTimes.courseId))
       .leftJoin(lists, eq(bookings.listId, lists.id))
       .leftJoin(assets, eq(assets.id, courses.logoId))
+      .leftJoin(splitPayments,eq(splitPayments.bookingId,transfers.bookingId))
       // .leftJoin(userBookingOffers, eq(userBookingOffers.bookingId, bookings.id))
       .where(
         and(
@@ -369,6 +376,8 @@ export class BookingService {
           weatherGuaranteeAmount: teeTime.weatherGuaranteeAmount ?? 0,
           weatherGuaranteeId: teeTime.weatherGuaranteeId ?? "",
           markupFees: teeTime.markupFees,
+          splitPaymentsAmount:teeTime.splitPaymentsAmount ?? 0,
+          isPaidSplitAmount:teeTime.isPaidSplitAmount
         };
       } else {
         const currentEntry = combinedData[teeTime.transferId];

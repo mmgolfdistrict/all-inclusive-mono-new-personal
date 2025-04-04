@@ -30,6 +30,7 @@ export const BookingDetails = ({
     isOpen: isReceiptOpen,
     setIsOpen: setIsReceiptOpen,
   });
+  console.log(selectedReceipt);
   return (
     <>
       {isReceiptOpen && (
