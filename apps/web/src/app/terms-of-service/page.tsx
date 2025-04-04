@@ -27,7 +27,7 @@ export default function TermsOfService({
     (courseGlobalNotification ? courseGlobalNotification.length : 0);
 
   const marginTop =
-    notificationsCount > 0 ? `${(notificationsCount * 30) + 125}px` : "0";
+    notificationsCount > 0 ? `${(notificationsCount * 30) + 125}px` : "125px";
 
   return (
     <>
