@@ -31,6 +31,7 @@ import type { ProviderService } from "../tee-sheet-provider/providers.service";
 import { loggerService } from "../webhooks/logging.service";
 import { courseSetting } from "@golf-district/database/schema/courseSetting";
 import { appSettingService } from "../app-settings/initialized";
+import { courseMerchandise } from "@golf-district/database/schema/courseMerchandise";
 
 dayjs.extend(utc);
 dayjs.extend(customParseFormat);
@@ -155,6 +156,7 @@ export class CourseService extends DomainService {
           supportsProviderMembership: courses.supportsProviderMembership,
           supportsGroupBooking: courses.supportsGroupBooking,
           timezoneISO: courses?.timezoneISO,
+          supportsSellingMerchandise: courses.supportsSellingMerchandise
         })
         .from(courses)
         .innerJoin(providerCourseLink, eq(providerCourseLink.courseId, courses.id))
@@ -1163,4 +1165,43 @@ export class CourseService extends DomainService {
     const mobileViewVersion: string | undefined | null = await appSettingService.get("MOBILE_VIEW_VERSION");
     return mobileViewVersion ?? "v1";
   };
+
+  getCourseMerchandise = async (courseId: string, teeTimeDate: string) => {
+    try {
+      const merchandise = await this.database
+        .select({
+          id: courseMerchandise.id,
+          caption: courseMerchandise.caption,
+          price: courseMerchandise.price,
+          description: courseMerchandise.description,
+          longDescription: courseMerchandise.longDescription,
+          logoURL: courseMerchandise.logoURL,
+          qoh: courseMerchandise.qoh,
+        })
+        .from(courseMerchandise)
+        .innerJoin(courses, eq(courseMerchandise.courseId, courses.id))
+        .where(
+          and(
+            eq(courseMerchandise.courseId, courseId),
+            eq(courseMerchandise.showDuringBooking, true),
+            gte(sql`DATE_FORMAT(CONVERT_TZ(NOW() + INTERVAL ${courseMerchandise.showOnlyIfBookingIsWithinXDays} DAY, '+00:00', ${courses.timezoneISO}), '%Y-%m-%dT23:59:59')`, teeTimeDate),
+          )
+        );
+
+      return merchandise;
+    } catch (error: any) {
+      this.logger.error(`Error fetching course merchandise: ${JSON.stringify(error)}`);
+      void loggerService.errorLog({
+        userId: "",
+        url: "/CourseService/getCourseMerchandise",
+        userAgent: "",
+        message: "ERROR_FETCHING_COURSE_MERCHANDISE",
+        stackTrace: `${error.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          courseId,
+        }),
+      })
+      return null;
+    }
+  }
 }

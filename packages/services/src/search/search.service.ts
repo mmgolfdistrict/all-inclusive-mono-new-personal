@@ -82,6 +82,7 @@ interface TeeTimeSearchObject {
   weatherGuaranteeTaxPercent: number;
   markupTaxPercent: number;
   pricePerGolferForGroup?: number;
+  merchandiseTaxPercent: number;
 }
 
 interface MarkupData {
@@ -497,6 +498,7 @@ export class SearchService extends CacheService {
         cartFeeTaxPercent: courses.cartFeeTaxPercent,
         weatherGuaranteeTaxPercent: courses.weatherGuaranteeTaxPercent,
         markupTaxPercent: courses.markupTaxPercent,
+        merchandiseTaxPercent: courses.merchandiseTaxPercent,
       })
       .from(teeTimes)
       .where(eq(teeTimes.id, teeTimeId))
@@ -625,6 +627,7 @@ export class SearchService extends CacheService {
       cartFeeTaxPercent: tee.cartFeeTaxPercent,
       weatherGuaranteeTaxPercent: tee.weatherGuaranteeTaxPercent,
       markupTaxPercent: tee.markupTaxPercent,
+      merchandiseTaxPercent: tee.merchandiseTaxPercent ?? 0
     };
     return res;
   };
@@ -2105,6 +2108,7 @@ export class SearchService extends CacheService {
         cartFeeTaxPercent: courses.cartFeeTaxPercent,
         weatherGuaranteeTaxPercent: courses.weatherGuaranteeTaxPercent,
         markupTaxPercent: courses.markupTaxPercent,
+        merchandiseTaxPercent: courses.merchandiseTaxPercent,
       })
       .from(teeTimes)
       .where(inArray(teeTimes.id, teeTimeIds))
@@ -2226,6 +2230,7 @@ export class SearchService extends CacheService {
           cartFeeTaxPercent: tee.cartFeeTaxPercent,
           weatherGuaranteeTaxPercent: tee.weatherGuaranteeTaxPercent,
           markupTaxPercent: tee.markupTaxPercent,
+          merchandiseTaxPercent: tee.merchandiseTaxPercent,
         };
         return res;
       })

@@ -105,6 +105,7 @@ export type FullCourseType = {
   isOnlyGroupOfFourAllowed?: boolean;
   isAllowSpecialRequest?: boolean;
   isAllowClubRental?: boolean;
+  supportsSellingMerchandise: boolean;
 };
 
 export type SupportedCharity = {
