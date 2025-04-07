@@ -275,16 +275,17 @@ const TableCard = ({
             <tr>
               <td className="whitespace-nowrap px-2 py-2" colSpan={2}>
                 <div className="flex w-full justify-center gap-2">
-                  <div id="manage-teetime-button">
-                    <OutlineButton
-                      onClick={openManageListTeeTime}
-                      data-testid="manage-button-id"
-                      data-test={courseId}
-                      data-qa={course}
-                    >
-                      Manage
-                    </OutlineButton>
-                  </div>
+                  {golfers.length > 1 &&
+                    <div id="manage-teetime-button">
+                      <OutlineButton
+                        onClick={openManageListTeeTime}
+                        data-testid="manage-button-id"
+                        data-test={courseId}
+                        data-qa={course}
+                      >
+                        Invite Players
+                      </OutlineButton>
+                    </div>}
                   {isListed ? (
                     <FilledButton
                       className="min-w-[145px]"

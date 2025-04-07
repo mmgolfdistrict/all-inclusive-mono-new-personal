@@ -20,13 +20,15 @@ import { Avatar } from "../avatar";
 import { FilledButton } from "../buttons/filled-button";
 import { OutlineButton } from "../buttons/outline-button";
 import { Item } from "../course-page/filters";
-import { Close } from "../icons/close";
 import { DownChevron } from "../icons/down-chevron";
 import { Info } from "../icons/info";
 import { Players } from "../icons/players";
 import { Tooltip } from "../tooltip";
 import { type OwnedTeeTime } from "./owned";
 import { SingleSlider } from "../input/single-slider";
+import Flyout from "../modal/flyout";
+import { Modal } from "../modal/modal";
+import { useMediaQuery } from "usehooks-ts";
 
 type PlayerType = "1" | "2" | "3" | "4";
 
@@ -54,10 +56,10 @@ export const ListTeeTime = ({
   const [sellerServiceFee, setSellerServiceFee] = useState<number>(0);
   const [players, setPlayers] = useState<string>(
     selectedTeeTime?.isGroupBooking ?
-      "2" : 
-    selectedTeeTime?.selectedSlotsCount || availableSlots.toString()
+      "2" :
+      selectedTeeTime?.selectedSlotsCount || availableSlots.toString()
   );
-  const { toggleSidebar } = useSidebar({
+  useSidebar({
     isOpen: isListTeeTimeOpen,
     setIsOpen: setIsListTeeTimeOpen,
   });
@@ -194,6 +196,7 @@ export const ListTeeTime = ({
         return;
       }
     } catch (error) {
+      setIsLoading(false);
       toast.error((error as Error)?.message ?? "Database error");
     }
 
@@ -271,216 +274,195 @@ export const ListTeeTime = ({
     }
   };
 
-  return (
-    <>
-      {isListTeeTimeOpen && (
-        <div
-          className={`fixed left-0 top-0 z-20 h-[100dvh] w-screen backdrop-blur `}
-        >
-          <div className="h-screen bg-[#00000099]" />
-        </div>
-      )}
-      <LoadingContainer isLoading={isLoading}>
+  const isMobile = useMediaQuery("(max-width: 768px)");
+
+  const ListTeeTimeDetail = () => {
+    return (<>
+      {isLoading && <LoadingContainer isLoading={isLoading}>
         <div></div>
-      </LoadingContainer>
-      <aside
-        // ref={sidebar}
-        className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[500px] md:h-[100dvh] ${
-          isListTeeTimeOpen ? "translate-x-0" : "translate-x-full"
-        }`}
-      >
-        <div className="relative flex h-full flex-col">
-          <div className="flex items-center justify-between p-4">
-            <div className="text-lg">Sell</div>
-
-            <button
-              // ref={trigger}
-              onClick={toggleSidebar}
-              aria-controls="sidebar"
-              aria-expanded={isListTeeTimeOpen}
-              className="z-[2]"
-              aria-label="sidebarToggle"
-              data-testid="close-button-id"
+      </LoadingContainer>}
+      <div className="flex h-full flex-col justify-between overflow-y-auto">
+        <div className="flex flex-col gap-6 px-0 sm:px-4">
+          <TeeTimeItem
+            courseImage={selectedTeeTime?.courseLogo ?? ""}
+            courseName={selectedTeeTime?.courseName ?? ""}
+            courseDate={selectedTeeTime?.date ?? ""}
+            golferCount={selectedTeeTime?.golfers.length ?? 0}
+            timezoneCorrection={course?.timezoneCorrection}
+          />
+          <div className={`flex flex-col gap-1 text-center w-fit mx-auto`}>
+            <label
+              htmlFor="listingPrice"
+              className="text-[16px] text-primary-gray md:text-[18px]"
             >
-              <Close className="h-[25px] w-[25px]" />
-            </button>
-          </div>
-          <div className="flex h-full flex-col justify-between overflow-y-auto">
-            <div className="flex flex-col gap-6 px-0 sm:px-4">
-              <TeeTimeItem
-                courseImage={selectedTeeTime?.courseLogo ?? ""}
-                courseName={selectedTeeTime?.courseName ?? ""}
-                courseDate={selectedTeeTime?.date ?? ""}
-                golferCount={selectedTeeTime?.golfers.length ?? 0}
-                timezoneCorrection={course?.timezoneCorrection}
+              Enter listing price per golfer
+            </label>
+            <div className="relative">
+              <span className="absolute left-1 top-1 text-[24px] md:text-[32px]">
+                $
+              </span>
+              <input
+                id="listingPrice"
+                value={listingPrice
+                  ?.toString()
+                  ?.replace(/^0+/, "")
+                  .replace(".", "")
+                  .replace("-", "")}
+                type="number"
+                onFocus={handleFocus}
+                onChange={handleListingPrice}
+                onBlur={handleBlur}
+                className="mx-auto max-w-[300px] rounded-lg bg-secondary-white px-4 py-1 text-center text-[24px] font-semibold outline-none md:text-[32px] pl-6"
+                data-testid="listing-price-id"
               />
-              <div className={`flex flex-col gap-1 text-center w-fit mx-auto`}>
-                <label
-                  htmlFor="listingPrice"
-                  className="text-[16px] text-primary-gray md:text-[18px]"
-                >
-                  Enter listing price per golfer
-                </label>
-                {/* <div className="flex text-[14px] md:text-[16px]">
-                  <span className="text-primary-gray">
-                    Maximum listing price per golfer: &nbsp;
-                  </span>
-                  <span className="text-secondary-black">
-                    ${maxListingPrice}
-                  </span>
-                </div> */}
-                <div className="relative">
-                  <span className="absolute left-1 top-1 text-[24px] md:text-[32px]">
-                    $
-                  </span>
-                  <input
-                    id="listingPrice"
-                    value={listingPrice
-                      ?.toString()
-                      ?.replace(/^0+/, "")
-                      .replace(".", "")
-                      .replace("-", "")}
-                    type="number"
-                    onFocus={handleFocus}
-                    onChange={handleListingPrice}
-                    onBlur={handleBlur}
-                    className="mx-auto max-w-[300px] rounded-lg bg-secondary-white px-4 py-1 text-center text-[24px] font-semibold outline-none md:text-[32px] pl-6"
-                    data-testid="listing-price-id"
-                  />
-                </div>
-              </div>
+            </div>
+          </div>
 
-              <div className={`flex  flex-col gap-1 text-center`}>
-                <label
-                  htmlFor="spots"
-                  className="text-[16px] text-primary-gray md:text-[18px]"
-                >
-                  Select number of spots to list
-                </label>
-                {!selectedTeeTime?.isGroupBooking ? 
-                <ToggleGroup.Root
-                  id="spots"
-                  type="single"
-                  value={players}
-                  onValueChange={(player: PlayerType) => {
-                    if (availableSlots < parseInt(player)) return;
+          <div className={`flex  flex-col gap-1 text-center`}>
+            <label
+              htmlFor="spots"
+              className="text-[16px] text-primary-gray md:text-[18px]"
+            >
+              Select number of spots to list
+            </label>
+            {!selectedTeeTime?.isGroupBooking ?
+              <ToggleGroup.Root
+                id="spots"
+                type="single"
+                value={players}
+                onValueChange={(player: PlayerType) => {
+                  if (availableSlots < parseInt(player)) return;
 
-                    if (player) setPlayers(player);
-                  }}
-                  orientation="horizontal"
-                  className="mx-auto flex"
-                  data-testid="player-button-id"
-                >
-                  {PlayerOptions.map((value, index) => (
-                    <Item
-                      key={index}
-                      dataTestId="player-item-id"
-                      dataQa={value}
-                      value={value}
-                      className={`${
-                        index === 0
-                          ? "rounded-l-full border border-stroke"
-                          : index === PlayerOptions.length - 1
-                          ? "rounded-r-full border-b border-t border-r border-stroke"
-                          : "border-b border-r border-t border-stroke"
-                      } px-[1.75rem] ${
-                        availableSlots < index + 1
-                          ? "opacity-50 cursor-not-allowed"
-                          : ""
+                  if (player) setPlayers(player);
+                }}
+                orientation="horizontal"
+                className="mx-auto flex"
+                data-testid="player-button-id"
+              >
+                {PlayerOptions.map((value, index) => (
+                  <Item
+                    key={index}
+                    dataTestId="player-item-id"
+                    dataQa={value}
+                    value={value}
+                    className={`${index === 0
+                      ? "rounded-l-full border border-stroke"
+                      : index === PlayerOptions.length - 1
+                        ? "rounded-r-full border-b border-t border-r border-stroke"
+                        : "border-b border-r border-t border-stroke"
+                      } px-[1.75rem] ${availableSlots < index + 1
+                        ? "opacity-50 cursor-not-allowed"
+                        : ""
                       }`}
-                      label={value}
-                    />
-                  ))}
-                  </ToggleGroup.Root> 
-                  :
-                  <SingleSlider
-                    min={1}
-                    max={selectedTeeTime?.golfers.length || 0}
-                    step={1}
-                    onValueChange={(value) => handleSingleSliderChange(value)}
-                    aria-label="Select number of players"
-                    data-testid="slider-number-of-players"
-                    value={[Number(players)]}
-                    shouldDisplayValue={true}
-                  />}
-              </div>
-              <div className="bg-secondary-white">
-                If you purchased weather protection, you will receive a full
-                refund. Any remaining owned rounds for this time will be subject
-                to raincheck policy.
-              </div>
-            </div>
-            <div className="flex flex-col gap-4 px-4 pb-6">
-              <div className="flex justify-between">
-                <div className="font-[300] text-primary-gray">
-                  Your Listing Price{" "}
-                  <Tooltip
-                    trigger={<Info className="h-[14px] w-[14px]" />}
-                    content="Buyer sees a slightly higher amount. These buyer/seller fees help keep the lights on at Golf District and to continuously provide better service."
+                    label={value}
                   />
-                </div>
-                <div className="text-secondary-black">
-                  {formatMoney(listingPrice * Number(players))}
-                </div>
-              </div>
-              <div className="flex justify-between">
-                <div className="font-[300] text-primary-gray">
-                  Service Fee{" "}
-                  <Tooltip
-                    trigger={<Info className="h-[14px] w-[14px]" />}
-                    content="This fee ensures ongoing enhancements to our service, ultimately offering golfers the best access to booking tee times"
-                  />
-                </div>
-                <div className="text-secondary-black">
-                  ({formatMoney(sellerServiceFee)})
-                </div>
-              </div>
-              <div className="flex justify-between">
-                <div className="font-[300] text-primary-gray">
-                  Weather Guarantee Refund{" "}
-                  <Tooltip
-                    trigger={<Info className="h-[14px] w-[14px]" />}
-                    content="Weather guarantee amount to be refunded"
-                  />
-                </div>
-                <div className="text-secondary-black">
-                  {formatMoney(
-                    (selectedTeeTime?.weatherGuaranteeAmount ?? 0) / 100
-                  )}
-                </div>
-              </div>
-              <div className="flex justify-between">
-                <div className="font-[300] text-primary-gray">
-                  You Receive after Sale
-                </div>
-                <div className="text-secondary-black">
-                  {formatMoney(totalPayout)}
-                </div>
-              </div>
-              <div className="text-center text-[14px] font-[300] text-primary-gray">
-                All sales are final.
-              </div>
-              <div className="flex flex-col gap-2">
-                <FilledButton
-                  className="w-full"
-                  onClick={() => void listTeeTime()}
-                  data-testid="sell-tee-time-button-id"
-                >
-                  Sell
-                </FilledButton>
-
-                <OutlineButton
-                  onClick={() => setIsListTeeTimeOpen(false)}
-                  data-testid="cancel-button-id"
-                >
-                  Cancel
-                </OutlineButton>
-              </div>
-            </div>
+                ))}
+              </ToggleGroup.Root>
+              :
+              <SingleSlider
+                min={1}
+                max={selectedTeeTime?.golfers.length || 0}
+                step={1}
+                onValueChange={(value) => handleSingleSliderChange(value)}
+                aria-label="Select number of players"
+                data-testid="slider-number-of-players"
+                value={[Number(players)]}
+                shouldDisplayValue={true}
+              />}
+          </div>
+          <div className="bg-secondary-white">
+            If you purchased weather protection, you will receive a full
+            refund. Any remaining owned rounds for this time will be subject
+            to raincheck policy.
           </div>
         </div>
-      </aside>
-    </>
+        <div className="flex flex-col gap-4 px-4 pb-6">
+          <div className="flex justify-between">
+            <div className="font-[300] text-primary-gray">
+              Your Listing Price{" "}
+              <Tooltip
+                trigger={<Info className="h-[14px] w-[14px]" />}
+                content="Buyer sees a slightly higher amount. These buyer/seller fees help keep the lights on at Golf District and to continuously provide better service."
+              />
+            </div>
+            <div className="text-secondary-black">
+              {formatMoney(listingPrice * Number(players))}
+            </div>
+          </div>
+          <div className="flex justify-between">
+            <div className="font-[300] text-primary-gray">
+              Service Fee{" "}
+              <Tooltip
+                trigger={<Info className="h-[14px] w-[14px]" />}
+                content="This fee ensures ongoing enhancements to our service, ultimately offering golfers the best access to booking tee times"
+              />
+            </div>
+            <div className="text-secondary-black">
+              ({formatMoney(sellerServiceFee)})
+            </div>
+          </div>
+          <div className="flex justify-between">
+            <div className="font-[300] text-primary-gray">
+              Weather Guarantee Refund{" "}
+              <Tooltip
+                trigger={<Info className="h-[14px] w-[14px]" />}
+                content="Weather guarantee amount to be refunded"
+              />
+            </div>
+            <div className="text-secondary-black">
+              {formatMoney(
+                (selectedTeeTime?.weatherGuaranteeAmount ?? 0) / 100
+              )}
+            </div>
+          </div>
+          <div className="flex justify-between">
+            <div className="font-[300] text-primary-gray">
+              You Receive after Sale
+            </div>
+            <div className="text-secondary-black">
+              {formatMoney(totalPayout)}
+            </div>
+          </div>
+          <div className="text-center text-[14px] font-[300] text-primary-gray">
+            All sales are final.
+          </div>
+          <div className="flex flex-col gap-2">
+            <FilledButton
+              className="w-full"
+              onClick={() => void listTeeTime()}
+              data-testid="sell-tee-time-button-id"
+            >
+              Sell
+            </FilledButton>
+
+            <OutlineButton
+              onClick={() => setIsListTeeTimeOpen(false)}
+              data-testid="cancel-button-id"
+            >
+              Cancel
+            </OutlineButton>
+          </div>
+        </div>
+      </div>
+    </>);
+  };
+
+  return isMobile ? (
+    <Modal
+      title="Sell"
+      isOpen={isListTeeTimeOpen}
+      onClose={() => setIsListTeeTimeOpen(false)}
+    >
+      <ListTeeTimeDetail />
+    </Modal>
+  ) : (
+    <Flyout
+      title="Sell"
+      isOpen={isListTeeTimeOpen}
+      setIsOpen={() => setIsListTeeTimeOpen(false)}
+    >
+      <ListTeeTimeDetail />
+    </Flyout>
   );
 };
 

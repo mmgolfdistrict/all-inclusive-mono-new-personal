@@ -6,6 +6,7 @@ import { FilterSort } from "~/components/buttons/filters-sort";
 import { GoBack } from "~/components/buttons/go-back";
 import { CourseBanner } from "~/components/course-page/course-banner";
 import { DailyTeeTimes } from "~/components/course-page/daily-tee-times";
+import { DailyTeeTimesV2 } from "~/components/course-page/daily-tee-times-v2";
 import { Filters } from "~/components/course-page/filters";
 import { MobileDates } from "~/components/course-page/mobile-date";
 import { MobileFilters } from "~/components/course-page/mobile-filters";
@@ -37,7 +38,6 @@ import { toast } from "react-toastify";
 import { ViewportList } from "react-viewport-list";
 import { useMediaQuery } from "usehooks-ts";
 import { LoadingContainer } from "./loader";
-import { DailyTeeTimesV2 } from "~/components/course-page/daily-tee-times-v2";
 
 dayjs.extend(Weekday);
 dayjs.extend(RelativeTime);
@@ -75,12 +75,12 @@ export default function CourseHomePage() {
   }
 
   function compareTimesWithTimezones() {
-    const date1 = dayjs().tz(getUserTimezone())
-    const date2 = dayjs().tz(course?.timezoneISO)
-    
-    if (date1.isAfter(date2)) {
+    const date1 = dayjs().tz(getUserTimezone()).utcOffset()
+    const date2 = dayjs().tz(course?.timezoneISO).utcOffset()
+
+    if (date1 > date2) {
       return "user";
-    } else if (date1.isBefore(date2)) {
+    }  else if (date1 < date2) {
       return "course";
     } else {
       return "user";
@@ -93,8 +93,9 @@ export default function CourseHomePage() {
     if (!date) {
       return ""; // Handle the case where date is null or undefined
     }
+    const compareTimeZone = compareTimesWithTimezones()
 
-    if (compareTimesWithTimezones() === "user") {
+    if (compareTimeZone === "user") {
       return dayjs(date).format("ddd, DD MMM YYYY HH:mm:ss [GMT]");
     }
     return dayjs(date)
@@ -219,11 +220,7 @@ export default function CourseHomePage() {
           ? "Any"
           : Number(queryPlayerCount);
       setGolfers((playerCount as GolferType) || "Any");
-    }
-  }, [queryDateType]);
 
-  useEffect(() => {
-    if (queryDateType === "custom" && queryDate) {
       const [year, month, day] = queryDate.split("-");
       if (year && month && day) {
         setSelectedDay({
@@ -231,19 +228,17 @@ export default function CourseHomePage() {
           to: { year: Number(year), month: Number(month), day: Number(day) },
         });
       }
-    }
-    const specialDate = getSpecialDayDate(queryDateType);
-    if (queryDateType) {
-      if (specialDate) {
-        setDateType(queryDateType as DateType); // Set the DateType to queryDateType if specialDate exists
-      } else {
-        setDateType("All"); // If no specialDate, set the DateType to "All"
+      const specialDate = getSpecialDayDate(queryDateType);
+      if (queryDateType) {
+        if (specialDate) {
+          setDateType(queryDateType as DateType); 
+        } 
       }
     }
-  }, [specialEvents, queryDateType]);
+  }, [queryDateType,specialEvents]);
 
   const getSpecialDayDate = (label) => {
-    const today = dayjs(new Date())
+    const today = dayjs(new Date());
     const specialDay = specialEvents?.find((day) => day.eventName === label);
 
     if (specialDay) {
@@ -265,7 +260,7 @@ export default function CourseHomePage() {
     if (specialDate) {
       return formatDateString(specialDate.start);
     }
-    setPageNumber(1)
+    setPageNumber(1);
     switch (dateType) {
       case "All":{
         const currentTime = dayjs(new Date());
@@ -281,7 +276,7 @@ export default function CourseHomePage() {
         }
 
         return formatDateString(currentTimePlus30);
-        }
+      }
       case "This Week":
       case "This Month":
       case "Furthest Day Out To Book":
@@ -300,7 +295,7 @@ export default function CourseHomePage() {
         }
 
         return formatDateString(currentTimePlus30);
-        }
+      }
       case "This Weekend":
         {
           const today = dayjs().startOf("day");
@@ -331,7 +326,7 @@ export default function CourseHomePage() {
     if (specialDate) {
       return formatDateString(specialDate.end);
     }
-    setPageNumber(1)
+    setPageNumber(1);
 
     switch (dateType) {
       case "All":
@@ -402,7 +397,7 @@ export default function CourseHomePage() {
         return formatDateString(dayjs().add(360, "days").toDate());
     }
   }, [dateType, selectedDay, farthestDateOut, specialEvents]);
-
+  
   // const utcStartDate = dayjs
   //   .utc(startDate)
   //   .utcOffset(course?.timezoneCorrection ?? 0);
@@ -456,14 +451,14 @@ export default function CourseHomePage() {
           sortValue === "Sort by time - Early to Late"
             ? "asc"
             : sortValue === "Sort by time - Late to Early"
-              ? "desc"
-              : "",
+            ? "desc"
+            : "",
         sortPrice:
           sortValue === "Sort by price - Low to High"
             ? "asc"
             : sortValue === "Sort by price - High to Low"
-              ? "desc"
-              : "",
+            ? "desc"
+            : "",
         timezoneCorrection: course?.timezoneCorrection,
         isHolesAny: holes === "Any",
         isGolferAny: golfers === "Any",
@@ -579,7 +574,7 @@ export default function CourseHomePage() {
     return Array.isArray(dates)
       ? dates.filter((dateStr) => {
         return dateStr.includes('Fri') || dateStr.includes('Sat') || dateStr.includes('Sun');
-        })
+      })
       : [];
   };
 
@@ -605,7 +600,6 @@ export default function CourseHomePage() {
     (pageNumber - 1) * TAKE,
     pageNumber * TAKE
   );
-
 
   const [scrollY, setScrollY] = useState(0);
 
@@ -653,7 +647,10 @@ export default function CourseHomePage() {
   const openForecastModal = () => {
     setIsForecastModalOpen(true);
   };
-  const divHeight = document?.getElementById('notification-container')?.offsetHeight;
+  const divHeight =
+    typeof window != "undefined"
+      ? document?.getElementById("notification-container")?.offsetHeight
+      : undefined;
 
   // Function to close the modal
   const closeForecastModal = () => {
@@ -723,14 +720,6 @@ export default function CourseHomePage() {
           <FilterSort toggleFilters={toggleFilters} toggleSort={toggleSort} />
         </div>
         <div className="flex w-full flex-col gap-1 md:gap-4 overflow-x-hidden pr-0p md:pr-6">
-          {isMobile ? <div className="flex justify-between gap-4  px-4 md:px-0">
-            <div className="text-secondary-black">
-              {/* Showing {count?.toLocaleString() ?? "0"} tee times{" "} */}
-              <span className="text-sm text-primary-gray">
-                All times shown in course time zone
-              </span>
-            </div>
-          </div> : null}
 
           <div
             className={`flex space-x-2 md:hidden px-4 ${(courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
@@ -738,9 +727,12 @@ export default function CourseHomePage() {
               : "relative"
               }`}
             style={{
-              top: (courseImages?.length > 0 ? scrollY > 333 : scrollY > 45) ? `${divHeight && divHeight * 1}px` : 'auto',
+              top: (courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
+                ? `${divHeight && divHeight * 1}px`
+                : "auto",
             }}
           >
+            <div className="w-[50%] flex items-center justify-around">
             <button
               onClick={toggleFilters}
               className="p-2 text-xs flex items-center space-x-2 flex items-center gap-1 rounded-full border-b border-r border-t border-l border-stroke"
@@ -754,6 +746,13 @@ export default function CourseHomePage() {
             >
               <Calendar className="h-[14px] w-[14px]" /> Date
             </button>
+            </div>
+            <div className="text-secondary-black w-[50%] text-center">
+              {/* Showing {count?.toLocaleString() ?? "0"} tee times{" "} */}
+              <span className="text-sm text-primary-gray">
+                All times shown in course time zone
+              </span>
+            </div>
           </div>
 
           {error ? (
@@ -789,7 +788,8 @@ export default function CourseHomePage() {
                         scrollY={scrollY}
                         divHeight={divHeight}
                         isLoadingTeeTimeDate={isLoadingTeeTimeDate}
-                      // datesWithData={datesWithData}
+                        // datesWithData={datesWithData}
+                        allDatesArr={datesArr}
                       />
                     )}
                   </ViewportList>
@@ -810,6 +810,7 @@ export default function CourseHomePage() {
                         minDate={startDate.toString()}
                         maxDate={endDate.toString()}
                         handleLoading={handleLoading}
+                        dateType={dateType}
                       />
                     )}
                   </ViewportList>
@@ -831,15 +832,15 @@ export default function CourseHomePage() {
                       className={`!px-3 !py-2 !min-w-fit !rounded-md ${pageNumber === amountOfPage
                         ? "opacity-50 cursor-not-allowed"
                         : ""
-                        }`}
-                      onClick={pageUp}
-                      data-testid="chevron-up-id"
-                    >
-                      <ChevronUp fill="#fff" className="rotate-90" />
-                    </FilledButton>
-                  </div>
-                ) : null}
-              </>
+                    }`}
+                    onClick={pageUp}
+                    data-testid="chevron-up-id"
+                  >
+                    <ChevronUp fill="#fff" className="rotate-90" />
+                  </FilledButton>
+                </div>
+              ) : null}
+            </>
           )}
         </div>
       </section>

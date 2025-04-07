@@ -1,5 +1,4 @@
 import { useCourseContext } from "~/contexts/CourseContext";
-import { useSidebar } from "~/hooks/useSidebar";
 import { api } from "~/utils/api";
 import { formatMoney, formatTime } from "~/utils/formatters";
 import { type InviteFriend } from "~/utils/types";
@@ -12,16 +11,17 @@ import {
   type SetStateAction,
 } from "react";
 import { toast } from "react-toastify";
-import { useDebounce } from "usehooks-ts";
+import { useDebounce, useMediaQuery } from "usehooks-ts";
 import { Avatar } from "../avatar";
 import { FilledButton } from "../buttons/filled-button";
 import { OutlineButton } from "../buttons/outline-button";
-import { Close } from "../icons/close";
 import { Edit } from "../icons/edit";
 import { Info } from "../icons/info";
 import { Players } from "../icons/players";
 import { Tooltip } from "../tooltip";
 import { type OwnedTeeTime } from "./owned";
+import Flyout from "../modal/flyout";
+import { Modal } from "../modal/modal";
 
 type SideBarProps = {
   isManageOwnedTeeTimeOpen: boolean;
@@ -57,7 +57,7 @@ export const ManageOwnedTeeTime = ({
   );
 
   const href = window.location.href;
-
+  const isMobile = useMediaQuery("(max-width: 768px)");
   const redirectHref =
     (href.includes("/my-tee-box")
       ? href.split("/my-tee-box")[0]
@@ -127,11 +127,6 @@ export const ManageOwnedTeeTime = ({
     }
   }, [selectedTeeTime, isManageOwnedTeeTimeOpen]);
 
-  const { toggleSidebar } = useSidebar({
-    isOpen: isManageOwnedTeeTimeOpen,
-    setIsOpen: setIsManageOwnedTeeTimeOpen,
-  });
-
   useEffect(() => {
     if (isManageOwnedTeeTimeOpen) {
       document.body.classList.add("overflow-hidden");
@@ -139,8 +134,8 @@ export const ManageOwnedTeeTime = ({
       document.body.classList.remove("overflow-hidden");
       setMinimumOfferPrice(
         selectedTeeTime?.minimumOfferPrice ||
-          selectedTeeTime?.firstHandPrice ||
-          0
+        selectedTeeTime?.firstHandPrice ||
+        0
       ); //reset price
       setNewFriend({
         id: "",
@@ -330,259 +325,247 @@ export const ManageOwnedTeeTime = ({
     setIsInviteVisible(true);
   };
 
-  return (
-    <>
-      {isManageOwnedTeeTimeOpen && (
-        <div
-          className={`fixed left-0 top-0 z-20 h-[100dvh] w-screen backdrop-blur `}
-        >
-          <div className="h-screen bg-[#00000099]" />
-        </div>
-      )}
-      <aside
-        // ref={sidebar}
-        className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[500px] md:h-[100dvh] ${
-          isManageOwnedTeeTimeOpen ? "translate-x-0" : "translate-x-full"
-        }`}
-      >
-        <div className="relative flex h-full flex-col">
-          <div className="flex items-center justify-between p-4">
-            <div className="text-lg">Manage Owned Tee Time</div>
-
-            <button
-              // ref={trigger}
-              onClick={toggleSidebar}
-              aria-controls="sidebar"
-              aria-expanded={isManageOwnedTeeTimeOpen}
-              className="z-[2]"
-              aria-label="sidebarToggle"
-              data-testid="close-button-id"
+  const ManageOwnedTeeTimeDetail = () => {
+    return (
+      <>
+        <div className="flex flex-col gap-6 px-0 sm:px-4">
+          <TeeTimeItem
+            courseImage={selectedTeeTime?.courseLogo ?? ""}
+            courseName={selectedTeeTime?.courseName ?? ""}
+            courseDate={selectedTeeTime?.date ?? ""}
+            golferCount={selectedTeeTime?.golfers.length ?? 0}
+            purchasedFor={
+              selectedTeeTime?.purchasedFor ??
+              selectedTeeTime?.firstHandPrice ??
+              0
+            }
+            timezoneCorrection={course?.timezoneCorrection}
+            sensiblePurchasedFor={selectedTeeTime?.weatherGuaranteeAmount}
+          />
+          {course?.supportsOffers ? (
+            <div
+              className={`flex flex-col gap-1 text-center w-fit mx-auto`}
             >
-              <Close className="h-[25px] w-[25px]" />
-            </button>
-          </div>
-          <div className="flex h-full flex-col justify-between overflow-y-auto">
-            <div className="flex flex-col gap-6 px-0 sm:px-4">
-              <TeeTimeItem
-                courseImage={selectedTeeTime?.courseLogo ?? ""}
-                courseName={selectedTeeTime?.courseName ?? ""}
-                courseDate={selectedTeeTime?.date ?? ""}
-                golferCount={selectedTeeTime?.golfers.length ?? 0}
-                purchasedFor={
-                  selectedTeeTime?.purchasedFor ??
-                  selectedTeeTime?.firstHandPrice ??
-                  0
-                }
-                timezoneCorrection={course?.timezoneCorrection}
-                sensiblePurchasedFor={selectedTeeTime?.weatherGuaranteeAmount}
-              />
-              {course?.supportsOffers ? (
-                <div
-                  className={`flex flex-col gap-1 text-center w-fit mx-auto`}
-                >
-                  <label
-                    htmlFor="minimumOfferPrice"
-                    className="text-[16px] text-primary-gray md:text-[18px]"
-                  >
-                    Minimum offer price per golfer
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-1 top-1 text-[24px] md:text-[32px]">
-                      $
-                    </span>
-                    <input
-                      value={minimumOfferPrice?.toString()?.replace(/^0+/, "")}
-                      type="number"
-                      onFocus={handleFocus}
-                      onChange={handleMinimumOfferPrice}
-                      onBlur={handleBlur}
-                      className="mx-auto max-w-[300px] rounded-lg bg-secondary-white px-4 py-1 text-center text-[24px] font-semibold outline-none md:text-[32px]"
-                      data-testid="minimum-offer-price-id"
-                    />
-                  </div>
-                </div>
-              ) : null}
+              <label
+                htmlFor="minimumOfferPrice"
+                className="text-[16px] text-primary-gray md:text-[18px]"
+              >
+                Minimum offer price per golfer
+              </label>
+              <div className="relative">
+                <span className="absolute left-1 top-1 text-[24px] md:text-[32px]">
+                  $
+                </span>
+                <input
+                  value={minimumOfferPrice?.toString()?.replace(/^0+/, "")}
+                  type="number"
+                  onFocus={handleFocus}
+                  onChange={handleMinimumOfferPrice}
+                  onBlur={handleBlur}
+                  className="mx-auto max-w-[300px] rounded-lg bg-secondary-white px-4 py-1 text-center text-[24px] font-semibold outline-none md:text-[32px]"
+                  data-testid="minimum-offer-price-id"
+                />
+              </div>
+            </div>
+          ) : null}
 
-              {selectedTeeTime?.isGroupBooking ||
-              !course?.supportsPlayerNameChange ? null : (
-                <div className={`flex flex-col gap-2 pb-6 text-center`}>
-                  <label
-                    htmlFor="friends"
-                    className="text-[16px] text-primary-gray md:text-[18px]"
-                  >
-                    Add/edit invited friends
-                  </label>
-                  {friends.length
-                    ? friends.map((friend, index) => {
-                        return (
-                          <div
-                            key={friend.slotId}
-                            className="w-full max-w-[400px] rounded-lg"
-                          >
-                            {!friend.currentlyEditing ? (
-                              <div className="mx-auto w-full rounded-lg bg-secondary-white px-4 py-1 flex justify-between text-[16px] font-semibold outline-none">
-                                <div>{index === 0 ? "You" : friend.name}</div>
-                                {index !== 0 &&
-                                course?.supportsPlayerNameChange ? (
-                                  <button
-                                    onClick={() => removeFriend(friend.slotId)}
-                                  >
-                                    <Edit className="w-[20px]" />
-                                  </button>
-                                ) : null}
-                              </div>
-                            ) : (
-                              <>
-                                <input
-                                  value={friend.name}
-                                  type="search"
-                                  list="searchedFriends"
-                                  onChange={(e) => handleNewFriend(e, friend)}
-                                  onSelect={addFriend}
-                                  placeholder="Username or email"
-                                  className="mx-auto w-full max-w-[400px] rounded-lg bg-secondary-white px-4 py-2 flex justify-between text-[14px] font-semibold outline-none"
-                                  data-testid="search-friend-id"
-                                />
-                                {friend.slotId === newFriend.slotId &&
-                                friendList.length ? (
-                                  <div className="mx-auto w-full max-w-[400px] rounded-lg py-2 flex justify-between text-[14px] font-semibold outline-none">
-                                    <ul className="w-full text-opacity-100 text-gray-700 shadow-md border border-solid border-gray-200 rounded-8 text-start">
-                                      {friendList.map((frnd, idx) => (
-                                        <li key={idx}>
-                                          <div
-                                            className="cursor-pointer p-4 border-b border-solid border-gray-300"
-                                            onClick={() =>
-                                              addFriendUpdated(
-                                                {
-                                                  ...frnd,
-                                                  slotId: friend.slotId,
-                                                },
-                                                index
-                                              )
-                                            }
-                                          >
-                                            {frnd.email} ({frnd.handle})
-                                          </div>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  </div>
-                                ) : null}
-
-                                {friend.slotId === newFriend.slotId &&
-                                  debouncedValue.name.length > 0 &&
-                                  !isLoading &&
-                                  !friendList.length && (
-                                    <div className="flex justify-center items-center flex-col gap-1 rounded-md w-full mx-auto max-w-[400px]">
-                                      {(!inviteSuccess[friend.slotId] ||
-                                        isInviteVisible) && (
-                                        <>
-                                          <div className="flex justify-center gap-4 mt-2 items-center w-full fade-in">
-                                            Friend not found. Invite them!
-                                            <FilledButton
-                                              className={`w-full !max-w-fit ${
-                                                invite.isLoading
-                                                  ? "animate-pulse"
-                                                  : ""
-                                              }`}
-                                              onClick={() =>
-                                                handleInviteFriend(
-                                                  friend,
-                                                  index
-                                                )
-                                              }
-                                              data-testid="invite-button-id"
-                                            >
-                                              {invite.isLoading
-                                                ? "Inviting..."
-                                                : "Invite"}
-                                            </FilledButton>
-                                          </div>
-                                        </>
-                                      )}
+          {selectedTeeTime?.isGroupBooking ||
+            !course?.supportsPlayerNameChange ? null : (
+            <div className={`flex flex-col gap-2 pb-6 text-center`}>
+              <label
+                htmlFor="friends"
+                className="text-[16px] text-primary-gray md:text-[18px]"
+              >
+                Add/edit invited friends
+              </label>
+              {friends.length
+                ? friends.map((friend, index) => {
+                  return (
+                    <div
+                      key={friend.slotId}
+                      className="w-full max-w-[400px] rounded-lg"
+                    >
+                      {!friend.currentlyEditing ? (
+                        <div className="mx-auto w-full rounded-lg bg-secondary-white px-4 py-1 flex justify-between text-[16px] font-semibold outline-none">
+                          <div style={{
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                          }}>{index === 0 ? "You" : friend.name}</div>
+                          {index !== 0 &&
+                            course?.supportsPlayerNameChange ? (
+                            <button
+                              onClick={() => removeFriend(friend.slotId)}
+                            >
+                              <Edit className="w-[20px]" />
+                            </button>
+                          ) : null}
+                        </div>
+                      ) : (
+                        <>
+                          <input
+                            value={friend.name}
+                            type="search"
+                            list="searchedFriends"
+                            onChange={(e) => handleNewFriend(e, friend)}
+                            onSelect={addFriend}
+                            placeholder="Username or email"
+                            className="mx-auto w-full max-w-[400px] rounded-lg bg-secondary-white px-4 py-2 flex justify-between text-[14px] font-semibold outline-none"
+                            data-testid="search-friend-id"
+                          />
+                          {friend.slotId === newFriend.slotId &&
+                            friendList.length ? (
+                            <div className="mx-auto w-full max-w-[400px] rounded-lg py-2 flex justify-between text-[14px] font-semibold outline-none">
+                              <ul className="w-full text-opacity-100 text-gray-700 shadow-md border border-solid border-gray-200 rounded-8 text-start">
+                                {friendList.map((frnd, idx) => (
+                                  <li key={idx}>
+                                    <div
+                                      className="cursor-pointer p-4 border-b border-solid border-gray-300"
+                                      onClick={() =>
+                                        addFriendUpdated(
+                                          {
+                                            ...frnd,
+                                            slotId: friend.slotId,
+                                          },
+                                          index
+                                        )
+                                      }
+                                    >
+                                      {frnd.email} ({frnd.handle})
                                     </div>
-                                  )}
-                              </>
-                            )}
-                          </div>
-                        );
-                      })
-                    : null}
-                </div>
-              )}
-            </div>
-            <div className="flex flex-col gap-4 px-4 pb-6">
-              {course?.supportsOffers ? (
-                <>
-                  <div className="flex justify-between">
-                    <div className="font-[300] text-primary-gray">
-                      Your Listing Price
-                    </div>
-                    <div className="text-secondary-black">
-                      {formatMoney(minimumOfferPrice * friends.length)}
-                    </div>
-                  </div>
-                  <div className="flex justify-between">
-                    <div className="font-[300] text-primary-gray">
-                      Service Fee{" "}
-                      <Tooltip
-                        trigger={<Info className="h-[14px] w-[14px]" />}
-                        content="This fee ensures ongoing enhancements to our service, ultimately offering golfers the best access to booking tee times"
-                      />
-                    </div>
-                    <div className="text-secondary-black">
-                      {formatMoney(45)}
-                    </div>
-                  </div>
-                  <div className="flex justify-between">
-                    <div className="font-[300] text-primary-gray">
-                      You Receive after Sale
-                    </div>
-                    <div className="text-secondary-black">
-                      {formatMoney(totalPayout)}
-                    </div>
-                  </div>
-                </>
-              ) : null}
-              <p className="mt-4 mb-2 text-[14px] text-primary-gray md:text-[16px] font-semibold text-left">
-                Tip: If you know you can’t make your time, the earlier you can
-                list, the greater the chance it sells.
-              </p>
-              <div className="text-center text-[14px] font-[300] text-primary-gray">
-                All sales are final.
-              </div>
-              <div className="flex flex-col gap-2">
-                <FilledButton
-                  className={`w-full ${
-                    updateNames.isLoading ||
-                    updateMinimumOfferPrice.isLoading ||
-                    invite.isLoading
-                      ? "!border-gray-200 !bg-gray-200"
-                      : ""
-                  }`}
-                  onClick={() => void save()}
-                  data-testid="save-button-id"
-                  disabled={
-                    updateNames.isLoading ||
-                    updateMinimumOfferPrice.isLoading ||
-                    invite.isLoading
-                  }
-                >
-                  Save
-                </FilledButton>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ) : null}
 
-                <OutlineButton
-                  onClick={() => setIsManageOwnedTeeTimeOpen(false)}
-                  data-testid="cancel-button-id"
-                >
-                  Cancel
-                </OutlineButton>
-              </div>
+                          {friend.slotId === newFriend.slotId &&
+                            debouncedValue.name.length > 0 &&
+                            !isLoading &&
+                            !friendList.length && (
+                              <div className="flex justify-center items-center flex-col gap-1 rounded-md w-full mx-auto max-w-[400px]">
+                                {(!inviteSuccess[friend.slotId] ||
+                                  isInviteVisible) && (
+                                    <>
+                                      <div className="flex justify-center gap-4 mt-2 items-center w-full fade-in">
+                                        Friend not found. Invite them!
+                                        <FilledButton
+                                          className={`w-full !max-w-fit ${invite.isLoading
+                                            ? "animate-pulse"
+                                            : ""
+                                            }`}
+                                          onClick={() =>
+                                            handleInviteFriend(
+                                              friend,
+                                              index
+                                            )
+                                          }
+                                          data-testid="invite-button-id"
+                                        >
+                                          {invite.isLoading
+                                            ? "Inviting..."
+                                            : "Invite"}
+                                        </FilledButton>
+                                      </div>
+                                    </>
+                                  )}
+                              </div>
+                            )}
+                        </>
+                      )}
+                    </div>
+                  );
+                })
+                : null}
             </div>
+          )}
+        </div>
+        <div className="flex flex-col gap-4 px-4 pb-6">
+          {course?.supportsOffers ? (
+            <>
+              <div className="flex justify-between">
+                <div className="font-[300] text-primary-gray">
+                  Your Listing Price
+                </div>
+                <div className="text-secondary-black">
+                  {formatMoney(minimumOfferPrice * friends.length)}
+                </div>
+              </div>
+              <div className="flex justify-between">
+                <div className="font-[300] text-primary-gray">
+                  Service Fee{" "}
+                  <Tooltip
+                    trigger={<Info className="h-[14px] w-[14px]" />}
+                    content="This fee ensures ongoing enhancements to our service, ultimately offering golfers the best access to booking tee times"
+                  />
+                </div>
+                <div className="text-secondary-black">
+                  {formatMoney(45)}
+                </div>
+              </div>
+              <div className="flex justify-between">
+                <div className="font-[300] text-primary-gray">
+                  You Receive after Sale
+                </div>
+                <div className="text-secondary-black">
+                  {formatMoney(totalPayout)}
+                </div>
+              </div>
+            </>
+          ) : null}
+          <p className="mt-4 mb-2 text-[14px] text-primary-gray md:text-[16px] font-semibold text-left">
+            Tip: If you know you can’t make your time, the earlier you can
+            list, the greater the chance it sells.
+          </p>
+          <div className="text-center text-[14px] font-[300] text-primary-gray">
+            All sales are final.
+          </div>
+          <div className="flex flex-col gap-2">
+            <FilledButton
+              className={`w-full ${updateNames.isLoading ||
+                updateMinimumOfferPrice.isLoading ||
+                invite.isLoading
+                ? "!border-gray-200 !bg-gray-200"
+                : ""
+                }`}
+              onClick={() => void save()}
+              data-testid="save-button-id"
+              disabled={
+                updateNames.isLoading ||
+                updateMinimumOfferPrice.isLoading ||
+                invite.isLoading
+              }
+            >
+              Save
+            </FilledButton>
+            <OutlineButton
+              onClick={() => setIsManageOwnedTeeTimeOpen(false)}
+              data-testid="cancel-button-id"
+            >
+              Cancel
+            </OutlineButton>
           </div>
         </div>
-      </aside>
-    </>
+      </>
+    );
+  };
+
+
+  return isMobile ? (
+    <Modal
+      title="Invite Players"
+      isOpen={isManageOwnedTeeTimeOpen}
+      onClose={() => setIsManageOwnedTeeTimeOpen(false)}
+    >
+      <ManageOwnedTeeTimeDetail />
+    </Modal>
+  ) : (
+    <Flyout
+      title="Invite Players"
+      isOpen={isManageOwnedTeeTimeOpen}
+      setIsOpen={setIsManageOwnedTeeTimeOpen}
+    >
+      <ManageOwnedTeeTimeDetail />
+    </Flyout>
   );
 };
 
@@ -608,7 +591,7 @@ const TeeTimeItem = ({
       <div className="flex items-center gap-4">
         <Avatar src={courseImage} />
         <div className="flex flex-col">
-          <div className="whitespace-nowrap text-secondary-black">
+          <div className="whitespace-normal break-words text-secondary-black">
             {courseName}
           </div>
           <div className="text-primary-gray">

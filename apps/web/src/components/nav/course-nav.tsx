@@ -25,9 +25,7 @@ import { Tooltip } from "../tooltip";
 import { PathsThatNeedRedirectOnLogout, UserInNav } from "../user/user-in-nav";
 import { NavItem } from "./nav-item";
 import { SideBar } from "./side-bar";
-import Shepherd from "shepherd.js";
 import "shepherd.js/dist/css/shepherd.css";
-import { toast } from "react-toastify";
 import "./courseNav.css";
 import { ThreeDots } from "../icons/threedots";
 import { UserProfile } from "../icons/user-profile";
@@ -36,7 +34,7 @@ import { DownArrow } from "../icons/down-arrow";
 export const CourseNav = () => {
   const { user } = useUserContext();
   const { entity, setPrevPath, isNavExpanded,
-    setIsNavExpanded, activePage, setHeaderHeight } = useAppContext();
+    setIsNavExpanded, setHeaderHeight } = useAppContext();
   const { course } = useCourseContext();
   const courseId = course?.id;
   const [isSideBarOpen, setIsSideBarOpen] = useState<boolean>(false);
@@ -138,125 +136,6 @@ export const CourseNav = () => {
     setDateType("All");
   };
 
-
-  const { data: walkthrough } =
-    api.systemNotification.getWalkthroughSetting.useQuery({});
-  const { data: walkthroughSections } =
-    api.systemNotification.getGuidMeSetting.useQuery({});
-
-  const handleGuideMe = () => {
-    if (!walkthroughSections?.length || !walkthrough?.length) {
-      console.warn("No walkthrough or walkthrough sections available.");
-      return;
-    }
-    const matchedWalkthrough = walkthrough.find((wt) =>
-      wt.internalName === activePage
-    );
-    if (!matchedWalkthrough) {
-      toast.error("No help available.");
-      return;
-    }
-    const internalNameToMatch = matchedWalkthrough?.internalName
-
-    const selectedWalkthrough = walkthrough.find(
-      (wt) => wt.internalName === internalNameToMatch
-    );
-
-    if (!selectedWalkthrough) {
-      toast.error("No help available.");
-      return;
-    }
-
-    const filteredSections = walkthroughSections.filter(
-      (section) => section.walkthroughId === selectedWalkthrough.id
-    );
-
-    const missingSections = filteredSections.filter(section => !document.getElementById(section.sectionId));
-
-    if (missingSections.length === filteredSections.length) {
-      toast.error("No help available.");
-      return;
-    }
-
-    // Shepherd Tour initialization
-    const tour = new Shepherd.Tour({
-      useModalOverlay: true,
-      defaultStepOptions: {
-        cancelIcon: {
-          enabled: true,
-        },
-        classes: "shadow-md bg-blue-dark mt-2.5",
-        scrollTo: { behavior: "smooth", block: "center" },
-      },
-    });
-
-    const removeHighlight = () => {
-      document.querySelectorAll('[data-highlighted="true"]').forEach((el) => {
-        const highlightedEl = el as HTMLElement;
-        highlightedEl.style.border = "";
-        highlightedEl.style.padding = "1px";
-        highlightedEl.style.borderRadius = "";
-        highlightedEl.removeAttribute("data-highlighted");
-      });
-    };
-    filteredSections
-      .sort((a, b) => (a?.displayOrder || 0) - (b?.displayOrder || 0))
-      .forEach((section) => {
-        const element = document.querySelector(`#${section.sectionId}`);
-
-        if (!element) {
-          return;
-        }
-        const buttons = [
-          {
-            text: "Next",
-            action: () => tour.next(),
-            classes:
-              "!bg-primary !rounded-xl !min-w-[110px] !border-2 !border-primary !px-5 !py-1.5 !text-white",
-          },
-        ];
-
-        if (section.sectionId === "manage-teetime-button") {
-          buttons.unshift({
-            text: "Open",
-            action: () => {
-              const element = document.querySelector(`#${section.sectionId}`)!;
-              if (element instanceof HTMLElement) {
-                void tour.cancel();
-                element.click();
-                // handleGuideMe()
-              }
-            },
-            classes: "!bg-secondary",
-          });
-        }
-
-        tour.addStep({
-          id: section.id,
-          text: section.message,
-          attachTo: { element: `#${section.sectionId}`, on: "bottom" },
-          when: {
-            "before-show": () => {
-              removeHighlight();
-              const element = document.querySelector(`#${section.sectionId}`)!;
-              if (element instanceof HTMLElement) {
-                element.style.padding = "10px";
-                element.setAttribute("data-highlighted", "true");
-              }
-            },
-            "after-hide": removeHighlight,
-          },
-          buttons,
-          classes: "!rounded-xl",
-          title: selectedWalkthrough?.name,
-        });
-      });
-    tour.on("cancel", removeHighlight);
-    tour.on("complete", removeHighlight);
-
-    void tour.start();
-  };
-
   const divHeight = !loadingCourseGlobalNotification || !loadingSystemNotifications ? document?.getElementById('header')?.offsetHeight || 0 : 0;
   setHeaderHeight(divHeight)
 
@@ -280,7 +159,11 @@ export const CourseNav = () => {
                     trigger={
                       <Info longMessage className="ml-2 h-[20px] w-[20px]" />
                     }
-                    content={elm.longMessage}
+                    content={<div>
+                      {elm.longMessage.split("\\n").map((line, index) => (
+                        <div key={index}>{line}</div>
+                      ))}
+                    </div>}
                   />
                 )}
               </div>
@@ -300,7 +183,11 @@ export const CourseNav = () => {
                     trigger={
                       <Info longMessage className="ml-2 h-[20px] w-[20px]" />
                     }
-                    content={elm.longMessage}
+                    content={<div>
+                      {elm.longMessage.split("\\n").map((line, index) => (
+                        <div key={index}>{line}</div>
+                      ))}
+                    </div>}
                   />
                 )}
               </div>
@@ -352,47 +239,55 @@ export const CourseNav = () => {
                 </Link>
               )}
             </div>
-            <div className="flex items-center gap-6 md:gap-4">
+            <div className="flex flex-col md:flex-row md:items-center md:gap-4">
+              {/* Mobile: Show PoweredBy on top */}
+              <div className="md:hidden mb-2">
+                <PoweredBy id="powered-by-sidebar" />
+              </div>
+
+              {/* Desktop: Show PoweredBy inline */}
               <div className="hidden md:block">
                 <PoweredBy id="powered-by-sidebar" />
               </div>
 
-              {user && session.status === "authenticated" ? (
-                <div className="flex items-center gap-4">
-                  <UserInNav />
-                </div>
-              ) : session.status == "loading" ? null : (
-                session.status != "authenticated" &&
-                pathname != `/${course?.id}/login` && (
-                  <Link
-                    href={
-                      pathname === `/${course?.id}/login`
-                        ? "#"
-                        : `/${course?.id}/login`
-                    }
-                    onClick={(
-                      event: React.MouseEvent<HTMLAnchorElement, MouseEvent>
-                    ) => {
-                      if (pathname === `/${course?.id}/login`) {
-                        event.preventDefault();
-                      } else {
-                        setPrevPath({
-                          path: pathname,
-                          createdAt: new Date().toISOString(),
-                        });
+              <div className="flex items-center gap-6">
+                {user && session.status === "authenticated" ? (
+                  <div className="flex items-center gap-4">
+                    <UserInNav />
+                  </div>
+                ) : session.status === "loading" ? null : (
+                  session.status !== "authenticated" &&
+                  pathname !== `/${course?.id}/login` && (
+                    <Link
+                      href={
+                        pathname === `/${course?.id}/login`
+                          ? "#"
+                          : `/${course?.id}/login`
                       }
-                    }}
-                  >
-                    <FilledButton
-                      className="hidden md:block"
-                      data-testid="signin-button-id"
+                      onClick={(event) => {
+                        if (pathname === `/${course?.id}/login`) {
+                          event.preventDefault();
+                        } else {
+                          setPrevPath({
+                            path: pathname,
+                            createdAt: new Date().toISOString(),
+                          });
+                        }
+                      }}
                     >
-                      Log In
-                    </FilledButton>
-                  </Link>
-                )
-              )}
+                      <FilledButton
+                        className="hidden md:block"
+                        data-testid="signin-button-id"
+                      >
+                        Log In
+                      </FilledButton>
+                    </Link>
+                  )
+                )}
+              </div>
             </div>
+
+
           </div>
         </div>
         {!isMobile ?
@@ -484,15 +379,6 @@ export const CourseNav = () => {
                     id="navbar-my-offers"
                   />
                 ) : null}
-
-                <NavItem
-                  href=""
-                  text="Guide Me"
-                  icon={<Calendar className="w-[16px]" />}
-                  data-testid="sell-your-tee-time-id"
-                  data-test={courseId}
-                  onClick={handleGuideMe}
-                />
               </div>
             </div>
           </div>
@@ -502,7 +388,7 @@ export const CourseNav = () => {
         <div className={`fixed bottom-0 w-full z-20 bg-white border-t border-[#c6c6c6] `} id="bottom-nav">
           <div className="flex w-full justify-center bg-white p-2 md:p-4">
             <div className={`flex w-full ${isNavExpanded ? "gap-4" : ""} flex-col`}>
-              <div className="flex w-full justify-evenly gap-4">
+              <div className="flex w-full justify-between gap-4">
                 <NavItem
                   href={`/${courseId}`}
                   text="Find Times"
@@ -511,6 +397,7 @@ export const CourseNav = () => {
                   data-test={courseId}
                   onClick={handleResetFilters}
                   id="navbar-find-times"
+                  className="max-w-[64px]"
                 />
                 <NavItem
                   href={`/${courseId}/my-tee-box`}
@@ -520,16 +407,18 @@ export const CourseNav = () => {
                   data-test={courseId}
                   onClick={handleResetFilters}
                   id="navbar-sell"
+                  className="max-w-[64px] ml-2"
                 />
                 {course?.supportsWaitlist ? (
                   <NavItem
                     href={`/${courseId}/notify-me`}
                     text="Waitlist"
-                    icon={<Megaphone className="w-[16px]" />}
+                    icon={<Megaphone className="w-[22px]" />}
                     data-testid="notify-me-id"
                     data-test={courseId}
                     onClick={handleResetFilters}
                     id="navbar-waitlist"
+                    className="max-w-[64px] ml-2"
                   />
                 ) : null}
 
@@ -541,6 +430,7 @@ export const CourseNav = () => {
                   data-test={courseId}
                   onClick={handleResetFilters}
                   id="navbar-account-settings"
+                  className="max-w-[64px]"
                 />
 
                 <NavItem
@@ -548,43 +438,56 @@ export const CourseNav = () => {
                   text=""
                   icon={isNavExpanded ?
                     <DownArrow className="w-[35px] cursor-pointer" /> :
-                    <ThreeDots className="cursor-pointer" direction="vertical"/>
+                    <ThreeDots className="cursor-pointer" direction="vertical" />
                   }
-                  className="flex !justify-center items-center w-[35px]"
+                  className="flex !justify-center items-center w-[35px] max-w-[64px]"
                   onClick={toggleNavExpansion}
+                  data-testid="sell-your-tee-time-id"
                 />
               </div>
-              <div ref={bottomNavRef} className={`flex w-full gap-4 md:gap-8 ml-4 ${isNavExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'} transition-all duration-200 ease-in-out`}>
+              <div
+                ref={bottomNavRef}
+                className={`flex w-full justify-between gap-4 transition-all duration-200 ease-in-out ${isNavExpanded
+                  ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}
+              >
                 <NavItem
                   href={`/${courseId}/my-tee-box?section=owned`}
-                  text="My Tee Box"
-                  icon={<Calendar className="w-[16px]" />}
+                  text={`My Tee Box`}
+                  icon={<Calendar className="w-[20px]" />}
                   data-testid="sell-your-tee-time-id"
                   data-test={courseId}
                   onClick={handleResetFilters}
                   id="navbar-my-tee-box"
+                  className="max-w-[64px]"
                 />
+
                 {course?.supportsGroupBooking ? (
                   <NavItem
                     href={`/${courseId}/group-booking`}
                     text="Group Booking"
-                    icon={<Megaphone className="w-[16px]" />}
+                    icon={<Megaphone className="w-[20px]" />}
                     data-testid="group-booking-id"
                     data-test={courseId}
                     onClick={handleResetFilters}
+                    className="max-w-[64px]"
                   />
                 ) : null}
                 {course?.allowAuctions ? (
                   <NavItem
                     href={`/${courseId}/auctions`}
                     text="Auctions"
-                    icon={<Auction className="w-[16px]" />}
+                    icon={<Auction className="w-[24px]" />}
                     data-testid="auction-id"
                     data-test={courseId}
                     onClick={handleResetFilters}
                     id="navbar-auctions"
+                    className="max-w-[64px]"
                   />
-                ) : null}
+                ) : <NavItem
+                  href=""
+                  text="No Menu"
+                  className="flex !justify-center items-center max-w-[64px] invisible"
+                />}
                 {course?.supportsOffers ? (
                   <NavItem
                     href={
@@ -607,15 +510,17 @@ export const CourseNav = () => {
                     data-test={courseId}
                     onClick={handleResetFilters}
                     id="navbar-my-offers"
+                    className="max-w-[64px]"
                   />
-                ) : null}
+                ) : <NavItem
+                  href=""
+                  text="No Menu"
+                  className="flex !justify-center items-center max-w-[64px] invisible"
+                />}
                 <NavItem
                   href=""
-                  text=""
-                  // icon={isNavExpanded ? <DownArrow className="w-[35px] cursor-pointer"/> :<ThreeDots
-                  //   className="cursor-pointer"
-                  // />}
-                  className="flex !justify-center items-center w-[35px]"
+                  text="No Menu"
+                  className="flex !justify-center items-center max-w-[64px] invisible"
                 />
               </div>
             </div>

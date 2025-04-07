@@ -1,10 +1,10 @@
 import { useCourseContext } from "~/contexts/CourseContext";
 import { api } from "~/utils/api";
-import { format } from "date-fns";
 import { useEffect, useState } from "react";
 import { useMediaQuery } from "usehooks-ts";
 import { Close } from "../icons/close";
 import HeatmapChart from "../charts/heatmapChart";
+import dayjs from "dayjs";
 
 interface Props {
   closeForecastModal: () => void;
@@ -12,15 +12,17 @@ interface Props {
   endDate: string;
 }
 
-const formatShowDate = (dateString: string) => {
-  const date = new Date(dateString);
-  return format(date, "EEE MMM dd");
+const dayMonthDate = (date: string): string => {
+  const cleanTimeString = !date.includes("T")
+    ? date.replace(" ", "T") + "Z"
+    : date;
+  return dayjs.utc(cleanTimeString).format("ddd MMM D");
 };
 
 export const ForecastModal = ({
   closeForecastModal,
   startDate: propStartDate,
-  endDate: propEndDate,
+  endDate: propEndDate, 
 }: Props) => {
   const { course } = useCourseContext();
   const isMobile = useMediaQuery("(max-width: 768px)");
@@ -41,8 +43,7 @@ export const ForecastModal = ({
   });
   
   const formatDate = (date: Date | string): string => {
-    const parsedDate = new Date(date);
-    return format(parsedDate, "yyyy-MM-dd");
+    return dayjs(date).format('YYYY-MM-DD');
   };
 
   // Define number of dates to show
@@ -133,7 +134,7 @@ export const ForecastModal = ({
                     {paginatedData.map((item) => (
                       <TableHeader
                         key={item.providerDate}
-                        text={formatShowDate(item.providerDate)}
+                        text={dayMonthDate(item.providerDate)}
                         className="text-center"
                       />
                     ))}
@@ -148,8 +149,8 @@ export const ForecastModal = ({
                       ))
                   ) : paginatedData.length === 0 ? (
                     <div className={`${isMobile ? "py-36" : "p-36"} text-center`}>
-                      Data is not available for {formatShowDate(startDate)} -{" "}
-                      {formatShowDate(endDate)}
+                      Data is not available for {dayMonthDate(startDate)} -{" "}
+                      {dayMonthDate(endDate)}
                     </div>
                   ) : (
                     <>
