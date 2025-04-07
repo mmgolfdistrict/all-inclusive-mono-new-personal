@@ -37,6 +37,7 @@ export const CourseNav = () => {
     setIsNavExpanded, setHeaderHeight } = useAppContext();
   const { course } = useCourseContext();
   const courseId = course?.id;
+  const entityId = entity?.id;
   const [isSideBarOpen, setIsSideBarOpen] = useState<boolean>(false);
   const isMobile = useMediaQuery("(max-width: 768px)");
   const pathname = usePathname();
@@ -64,6 +65,11 @@ export const CourseNav = () => {
   const { data: courseGlobalNotification, isLoading: loadingCourseGlobalNotification } =
     api.systemNotification.getCourseGlobalNotification.useQuery({
       courseId: courseId ?? "",
+    });
+
+  const { data: entityGlobalNotification, isLoading: loadingEntityGlobalNotification } =
+    api.systemNotification.getEntityGlobalNotification.useQuery({
+      entityId: entityId ?? "",
     });
 
   const { data: isUserBlocked } = api.user.isUserBlocked.useQuery({
@@ -136,7 +142,7 @@ export const CourseNav = () => {
     setDateType("All");
   };
 
-  const divHeight = !loadingCourseGlobalNotification || !loadingSystemNotifications ? document?.getElementById('header')?.offsetHeight || 0 : 0;
+  const divHeight = !loadingCourseGlobalNotification || !loadingSystemNotifications || !loadingEntityGlobalNotification ? document?.getElementById('header')?.offsetHeight || 0 : 0;
   setHeaderHeight(divHeight)
 
   return (
@@ -152,6 +158,30 @@ export const CourseNav = () => {
                   color: elm.color,
                 }}
                 className="w-full p-1 text-center flex items-center justify-center"
+              >
+                {elm.shortMessage}
+                {elm.longMessage && (
+                  <Tooltip
+                    trigger={
+                      <Info longMessage className="ml-2 h-[20px] w-[20px]" />
+                    }
+                    content={<div>
+                      {elm.longMessage.split("\\n").map((line, index) => (
+                        <div key={index}>{line}</div>
+                      ))}
+                    </div>}
+                  />
+                )}
+              </div>
+            ))}
+            {entityGlobalNotification?.map((elm) => (
+              <div
+                key={elm.id}
+                style={{
+                  backgroundColor: elm.bgColor,
+                  color: elm.color,
+                }}
+                className="text-white w-full p-1 text-center flex items-center justify-center"
               >
                 {elm.shortMessage}
                 {elm.longMessage && (
