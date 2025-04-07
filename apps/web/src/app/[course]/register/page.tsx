@@ -57,6 +57,7 @@ export default function RegisterPage() {
     formState: { errors },
   } = useForm<RegisterSchemaType>({
     resolver: zodResolver(registerSchema),
+    mode: "onTouched",
   });
   const [isSubmitting, setIsSubmitting] = useState<boolean | undefined>(false);
   const libraries: Libraries = ["places"];
@@ -339,6 +340,7 @@ export default function RegisterPage() {
               <Input
                 {...field}
                 label="First Name"
+                required
                 type="text"
                 placeholder="Enter your first name"
                 id="firstName"
@@ -359,6 +361,7 @@ export default function RegisterPage() {
               <Input
                 {...field}
                 label="Last Name"
+                required
                 type="text"
                 placeholder="Enter your last name"
                 id="lastName"
@@ -380,6 +383,7 @@ export default function RegisterPage() {
                 {...field}
                 label="Email"
                 type="email"
+                required
                 placeholder="Enter your email address"
                 id="email"
                 register={register}
@@ -403,6 +407,7 @@ export default function RegisterPage() {
                     className="text-[14px] text-primary-gray"
                   >
                     Phone Number
+                    <span className="text-red"> *</span>
                   </label>
                 </div>
                 <div className="flex rounded-lg bg-secondary-white px-1 text-[14px] text-gray-500 outline-none text-ellipsis h-12">
@@ -448,6 +453,7 @@ export default function RegisterPage() {
                   label="Handle"
                   className="w-full"
                   type="text"
+                  required
                   placeholder="Enter your handle"
                   id="username"
                   register={register}
@@ -497,6 +503,7 @@ export default function RegisterPage() {
             render={({ field }) => (
               <Input
                 {...field}
+                required
                 label="Addr&#8204;ess1"
                 type="text"
                 list="places"
@@ -544,6 +551,7 @@ export default function RegisterPage() {
                 {...field}
                 label="City"
                 type="text"
+                required
                 list="places"
                 placeholder="Enter your city"
                 id="city"
@@ -571,7 +579,7 @@ export default function RegisterPage() {
                   htmlFor="state"
                   style={{ fontSize: "14px", color: "rgb(109 119 124" }}
                 >
-                  State
+                  State <span className="text-red"> *</span>
                 </label>
                 <Select
                   size="small"
@@ -616,6 +624,7 @@ export default function RegisterPage() {
                     </MenuItem>
                   ))}
                 </Select>
+                {errors?.state?.message && <p className="text-[12px] text-red">{errors?.state?.message}</p>}
               </div>
             )}
           />
@@ -627,6 +636,7 @@ export default function RegisterPage() {
                 {...field}
                 label="Zip"
                 type="text"
+                required
                 list="places"
                 placeholder="Enter your zip"
                 id="zipcode"
@@ -676,7 +686,7 @@ export default function RegisterPage() {
                   htmlFor="country"
                   style={{ fontSize: "14px", color: "rgb(109 119 124)" }}
                 >
-                  Country
+                  Country <span className="text-red"> *</span>
                 </label>
                 <Select
                   size="small"
@@ -741,6 +751,7 @@ export default function RegisterPage() {
                 <Input
                   {...field}
                   label="Password"
+                  required
                   type={showPassword ? "text" : "password"}
                   id="password"
                   placeholder="Enter your password"
@@ -789,6 +800,7 @@ export default function RegisterPage() {
                   label="Confirm password"
                   type={showConfirmPassword ? "text" : "password"}
                   id="confirmPassword"
+                  required
                   placeholder="Confirm your password"
                   register={register}
                   name="confirmPassword"

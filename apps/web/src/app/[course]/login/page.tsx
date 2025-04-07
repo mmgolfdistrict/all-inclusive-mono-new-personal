@@ -398,11 +398,21 @@ export default function Login() {
     if (typeof window !== "undefined") {
       setLocalStorageGoogle(localStorage.getItem("googlestate") || "");
     }
+    setTimeout(() => {
+      setGoogleIsLoading(false);
+      setLocalStorageGoogle("");
+      localStorage.removeItem("googlestate");
+    }, 3000);
   }, []);
   useEffect(() => {
     if (typeof window !== "undefined") {
       setLocalStorageLinkedin(localStorage.getItem("linkedinstate") || "");
     }
+    setTimeout(() => {
+      setLinkedinIsLoading(false);
+      setLocalStorageLinkedin("");
+      localStorage.removeItem("linkedinstate");
+    }, 3000);
   }, []);
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -413,6 +423,11 @@ export default function Login() {
     if (typeof window !== "undefined") {
       setLocalStorageFacebook(localStorage.getItem("facebookstate") || "");
     }
+    setTimeout(() => {
+      setFacebookIsLoading(false);
+      setLocalStorageFacebook("");
+      localStorage.removeItem("facebookstate");
+    }, 3000);
   }, []);
   useEffect(() => {
     if (typeof window !== "undefined") {
