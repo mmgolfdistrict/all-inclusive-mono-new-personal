@@ -8,10 +8,11 @@ import React, { Fragment, useEffect } from "react";
 const SplitPaymentSuccessPage = () => {
   const searchParams = useSearchParams();
   const paymentId = searchParams.get("payment_id") || "";
+  const referencePaymentId = searchParams.get("finixReferencePaymentId") || "";
   const paymentStatus = searchParams.get("status");
   const isSuccess = paymentStatus === "succeeded";
   const { data: result, isLoading: isLoading } =
-    api.checkout.updateSplitPaymentStatus.useQuery({ paymentId: paymentId });
+    api.checkout.updateSplitPaymentStatus.useQuery({ paymentId: paymentId, referencePaymentId: referencePaymentId });
   const saveCashOutResult =
     api.checkout.saveSplitPaymentAmountIntoCashOut.useMutation();
 
@@ -42,9 +43,8 @@ const SplitPaymentSuccessPage = () => {
         ) : (
           <div className="bg-white p-8 rounded-2xl shadow-lg max-w-md text-center">
             <h2
-              className={`text-3xl font-bold mt-4 ${
-                isSuccess ? "text-green-600" : "text-red-600"
-              }`}
+              className={`text-3xl font-bold mt-4 ${isSuccess ? "text-green-600" : "text-red-600"
+                }`}
             >
               {isSuccess ? "Payment Successful" : "Payment Failed"}
             </h2>
@@ -54,11 +54,10 @@ const SplitPaymentSuccessPage = () => {
                 : "Unfortunately, your payment could not be completed."}
             </p>
             <button
-              className={`mt-6 px-6 py-2 rounded-lg text-white font-medium ${
-                isSuccess
-                  ? "bg-green-500 hover:bg-green-600"
-                  : "bg-red-500 hover:bg-red-600"
-              }`}
+              className={`mt-6 px-6 py-2 rounded-lg text-white font-medium ${isSuccess
+                ? "bg-green-500 hover:bg-green-600"
+                : "bg-red-500 hover:bg-red-600"
+                }`}
             >
               {isSuccess ? "Go to Dashboard" : "Try Again"}
             </button>

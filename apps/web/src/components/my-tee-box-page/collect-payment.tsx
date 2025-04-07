@@ -107,7 +107,7 @@ export const CollectPayment = ({
         setAmount(amountsArray);
       }
     } else if (selectedOption === "customSplit") {
-      setAmount(Array.from({ length: Number(availableSlots - 1) }, () => ""));
+      // setAmount(Array.from({ length: Number(availableSlots - 1) }, () => ""));
     }
     // if (selectedOption === "equalSplit") {
     //   setAmount(0);

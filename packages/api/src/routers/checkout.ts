@@ -125,10 +125,11 @@ export const checkoutRouter = createTRPCRouter({
     .input(
       z.object({
         paymentId: z.string(),
+        referencePaymentId:z.string().optional(),
       })
     )
     .query(async ({ ctx, input }) => {
-      return await ctx.serviceFactory.getHyperSwitchService().updateSplitPaymentStatus(input.paymentId);
+      return await ctx.serviceFactory.getHyperSwitchService().updateSplitPaymentStatus(input.paymentId,input.referencePaymentId ?? "");
     }),
 
   checkEmailedUserPaidTheAmount: protectedProcedure

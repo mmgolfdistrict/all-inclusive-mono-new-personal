@@ -20,6 +20,85 @@ import { customerRecievable } from "@golf-district/database/schema/customerRecie
 /**
  * Service for interacting with the HyperSwitch API.
  */
+/*=======================Type interface for creating payment link=====================================================*/
+
+interface PaymentRequest {
+  merchant_id?: string;
+  application_id?: string;
+  payment_frequency?: 'ONE_TIME' | 'RECURRING';
+  is_multiple_use?: boolean;
+  allowed_payment_methods?: ('PAYMENT_CARD' | 'BANK_ACCOUNT')[];
+  nickname?: string;
+  items?: Item[];
+  amount_details?: AmountDetails;
+  additional_details?: AdditionalDetails;
+  branding?: Branding;
+}
+
+interface Item {
+  name?: string;
+  description?: string,
+  quantity?: string;
+  image_details?: {
+    primary_image_url?: string;
+  };
+  price_details?: {
+    sale_amount?: number;
+    currency?: string;
+  };
+}
+
+interface AmountDetails {
+  amount_type?: 'FIXED' | 'VARIABLE';
+  total_amount?: number;
+  currency?: string;
+}
+
+interface AdditionalDetails {
+  collect_name?: boolean;
+  collect_email?: boolean;
+  collect_phone?: boolean;
+  collect_billing_address?: boolean;
+  collect_shipping_address?: boolean;
+  expiration_in_minutes?: number;
+  terms_of_service_url?: string;
+  success_return_url?: string;
+  unsuccessful_return_url?: string;
+  expired_session_url?: string;
+  send_receipt?: boolean;
+  receipt_requested_delivery_methods?: ReceiptDeliveryMethod[];
+}
+
+interface ReceiptDeliveryMethod {
+  type?: 'EMAIL' | 'SMS';
+  destinations?: string[];
+}
+
+interface Branding {
+  brand_color?: string;
+  accent_color?: string;
+  logo?: string;
+  icon?: string;
+  logo_alternative_text?: string;
+  button_font_color?: string;
+}
+
+type RequestOptions = {
+  method: string;
+  headers: Headers;
+  body?: string;
+  redirect: RequestRedirect;
+};
+
+
+/**=========================================================================== */
+
+
+
+
+
+
+
 export class HyperSwitchService {
   protected hyperSwitch: HyperSwitch;
   protected logger: pino.Logger;
@@ -28,7 +107,13 @@ export class HyperSwitchService {
   protected hyperSwitchApiKey: string;
   protected notificationService: NotificationService;
   protected database: Db;
-
+  protected baseurl = process.env.FINIX_BASE_URL;
+  protected username = process.env.FINIX_USERNAME;
+  protected password = process.env.FINIX_PASSWORD;
+  protected merchantId = process.env.FINIX_MERCHANT_ID;
+  protected applicationId = process.env.FINIX_APPLICATION_ID;
+  protected encodedCredentials = btoa(`${this.username}:${this.password}`);
+  protected authorizationHeader = `Basic ${this.encodedCredentials}`;
   /**
    * Constructs a new HyperSwitchService.
    * @param {string} hyperSwitchApiKey - The API key for authenticating with HyperSwitch.
@@ -54,6 +139,14 @@ export class HyperSwitchService {
 
     this.hyperSwitchApiKey = hyperSwitchApiKey;
   }
+
+  getHeadersOfFinix = () => {
+    const requestHeaders = new Headers();
+    requestHeaders.append("Content-Type", "application/json");
+    requestHeaders.append("Finix-Version", process.env.FINIX_VERSION || "2022-02-01");
+    requestHeaders.append("Authorization", this.authorizationHeader);
+    return requestHeaders;
+  };
 
   /**
    * Creates a new customer using the given parameters.
@@ -246,9 +339,8 @@ export class HyperSwitchService {
       const requestOptions: RequestInit = {
         method: "GET",
         headers: myHeaders,
-        body: "",
       };
-      const hyperswitchBaseUrl = `${process.env.HYPERSWITCH_BASE_URL}payments/${paymentId}`;
+      const hyperswitchBaseUrl = `${process.env.HYPERSWITCH_BASE_URL}/payments/${paymentId}`;
       const response = await fetch(hyperswitchBaseUrl, requestOptions);
       const result = await response.json();
       this.logger.warn("retrieving payment intent");
@@ -443,8 +535,7 @@ export class HyperSwitchService {
         await this.notificationService.sendEmail(
           email,
           "A payment has failed ",
-          `payment with paymentid ${paymentMethodId} failed. UserId: ${userId}, Email: ${userEmail}, Phone: ${phone}, ${
-            teeTimeId ? `TeeTimeId: ${teeTimeId}` : `ListingId: ${listingId}`
+          `payment with paymentid ${paymentMethodId} failed. UserId: ${userId}, Email: ${userEmail}, Phone: ${phone}, ${teeTimeId ? `TeeTimeId: ${teeTimeId}` : `ListingId: ${listingId}`
           }, CourseId: ${courseId}, CartId: ${cartId}`
         );
       } catch (error) {
@@ -576,65 +667,153 @@ export class HyperSwitchService {
       if (amount === 0) {
         throw new Error("Amount cannot be zero");
       }
-      const return_url = `${origin}/payment-success`;
-
-      const myHeaders = new Headers();
-      myHeaders.append("Content-Type", "application/json");
-      myHeaders.append("api-key", this.hyperSwitchApiKey);
-      const profile_id = process.env.HYPERSWITCH_PROFILE_ID;
-      const currency = "USD";
-      const options = {
-        method: "POST",
-        headers: myHeaders,
-        body: JSON.stringify({
-          profile_id: profile_id,
-          payment_link: true,
-          amount: Math.round(amount * 100),
-          authentication_type: "three_ds",
-          currency: currency,
-          confirm: false,
-          description: email,
-          payment_link_config: {
-            theme: "#014E28",
-            logo: "https://i.pinimg.com/736x/4d/83/5c/4d835ca8aafbbb15f84d07d926fda473.jpg",
-            seller_name: "teeskraft",
-            sdk_layout: "tabs",
-          },
-          return_url: return_url,
-        }),
-      };
-      const result = await fetch(`${this.hyperSwitchBaseUrl}/payments`, options);
-      const response = await result.json();
-      console.log("response_payment_link", response);
-      if (response?.payment_link?.link) {
-        await this.database
-          .insert(splitPayments)
-          .values({
-            id: randomUUID(),
+      const paymentProcessor = String(process.env.CHANGE_PAYMENT_PROCESSOR);
+      console.log("payementProcessor",paymentProcessor);
+      if (paymentProcessor == "true") {
+        this.logger.warn("inside hyperswitch");
+        const return_url = `${origin}/payment-success`;
+        const myHeaders = new Headers();
+        myHeaders.append("Content-Type", "application/json");
+        myHeaders.append("api-key", this.hyperSwitchApiKey);
+        const profile_id = process.env.HYPERSWITCH_PROFILE_ID;
+        const currency = "USD";
+        const options = {
+          method: "POST",
+          headers: myHeaders,
+          body: JSON.stringify({
+            profile_id: profile_id,
+            payment_link: true,
             amount: Math.round(amount * 100),
-            email: email,
-            bookingId: bookingId,
-            paymentId: response?.payment_id,
-            paymentLink: response?.payment_link?.link,
-          })
-          .execute();
-        const newUrl = `${origin}/create-payment`;
-        const emailSend = this.notificationService.sendEmail(
-          email,
-          "Payment Link",
-          `Payment Link: ${newUrl}/${response?.payment_id} `
-        );
-        console.log("Email Send successFully");
+            authentication_type: "three_ds",
+            currency: currency,
+            confirm: false,
+            description: email,
+            payment_link_config: {
+              theme: "#014E28",
+              logo: "https://i.pinimg.com/736x/4d/83/5c/4d835ca8aafbbb15f84d07d926fda473.jpg",
+              seller_name: "teeskraft",
+              sdk_layout: "tabs",
+            },
+            return_url: return_url,
+          }),
+        };
+        const result = await fetch(`${this.hyperSwitchBaseUrl}/payments`, options);
+        const response = await result.json();
+        console.log("response_payment_link", response);
+        if (response?.payment_link?.link) {
+          await this.database
+            .insert(splitPayments)
+            .values({
+              id: randomUUID(),
+              amount: Math.round(amount * 100),
+              email: email,
+              bookingId: bookingId,
+              paymentId: response?.payment_id,
+              paymentLink: response?.payment_link?.link,
+              referencePaymentId: ""
+            })
+            .execute();
+          const newUrl = `${origin}/create-payment`;
+          const emailSend = this.notificationService.sendEmail(
+            email,
+            "Payment Link",
+            `Payment Link: ${newUrl}/${response?.payment_id} `
+          );
+          console.log("Email Send successFully");
 
-        return {
-          error: false,
-          message: "Payment Link Send Successfully",
-        };
+          return {
+            error: false,
+            message: "Payment Link Send Successfully",
+          };
+        } else {
+          return {
+            error: true,
+            message: "Problem Creating Payment Link",
+          };
+        }
       } else {
-        return {
-          error: true,
-          message: "Problem Creating Payment Link",
-        };
+        const referencePaymentId = randomUUID();
+        const paymentData: PaymentRequest = {
+          merchant_id: this.merchantId,
+          application_id: this.applicationId,
+          payment_frequency: "ONE_TIME",
+          is_multiple_use: false,
+          allowed_payment_methods: ["PAYMENT_CARD", "BANK_ACCOUNT"],
+          nickname: "Test account",
+          amount_details: {
+            amount_type: "FIXED",
+            total_amount: (amount * 100),
+            currency: "USD"
+          },
+          items: [
+            {
+              name: "Collect Payment",
+              quantity: "1",
+              image_details: {
+                primary_image_url: "https://golfdistrict.com/wp-content/uploads/2024/07/Primary-Logo-Single-Line.svg"
+              },
+              price_details: {
+                sale_amount: (amount * 100),
+                currency: "USD"
+              }
+            }
+          ],
+          branding: {
+            brand_color: "#40942B",
+            accent_color: "#40942B",
+            logo: "https://golfdistrict.com/wp-content/uploads/2024/07/Primary-Logo-Single-Line.svg",
+            icon: "https://golfdistrict.com/wp-content/uploads/2024/07/Primary-Logo-Single-Line.svg",
+            logo_alternative_text: "Golfdistrict",
+            button_font_color: "#FFF"
+          },
+          additional_details: {
+            collect_name: false,
+            collect_email: true,
+            collect_phone: false,
+            collect_billing_address: false,
+            collect_shipping_address: false,
+            expiration_in_minutes: 1576800,
+            terms_of_service_url: "http://localhost:3000/terms-of-service",
+            success_return_url: `http://localhost:3000/payment-success/?finixReferencePaymentId=${referencePaymentId}&status=succeeded&provider=finix`,
+            unsuccessful_return_url: `http://localhost:3000/payment-success/?finixReferencePaymentId=${referencePaymentId}&status=failed&provider=finix`,
+            expired_session_url: "http://localhost:3000/payment-success/?status=expired_sesson_url",
+            send_receipt: true,
+            receipt_requested_delivery_methods: [
+              {
+                type: "EMAIL",
+                destinations: [`${email}`]
+              },
+            ]
+          }
+        }
+        const finixPaymentData = await this.createPaymentLinkForFinix(paymentData);
+        const finix_link_url = finixPaymentData?.link_url;
+        const paymentId = finixPaymentData?.id;
+        if (finix_link_url) {
+          await this.database
+            .insert(splitPayments)
+            .values({
+              id: paymentId,
+              amount: (amount * 100),
+              email: email,
+              bookingId: bookingId,
+              paymentId: paymentId,
+              paymentLink: finix_link_url,
+              referencePaymentId: referencePaymentId
+            })
+            .execute();
+          const newUrl = `${origin}/create-payment`;
+          const emailSend = this.notificationService.sendEmail(
+            email,
+            "Payment Link",
+            `Payment Link: ${newUrl}/${paymentId} `
+          );
+          console.log("Email Send successFully");
+          return {
+            error: false,
+            message: "Payment Link Send Successfully",
+          };
+        }
       }
     } catch (error) {
       console.log("error", error);
@@ -642,7 +821,23 @@ export class HyperSwitchService {
     }
   };
 
-  updateSplitPaymentStatus = async (paymentId: string) => {
+  createPaymentLinkForFinix = async (paymentData: PaymentRequest) => {
+    try {
+      const requestOptions: RequestOptions = {
+        method: "POST",
+        headers: this.getHeadersOfFinix(),
+        body: JSON.stringify(paymentData),
+        redirect: "follow",
+      };
+      const response = await fetch(`${this.baseurl}/payment_links`, requestOptions);
+      const paymentInstrumentData = await response.json();
+      return paymentInstrumentData;
+    } catch (error) {
+      throw new Error("error while creating the payment");
+    }
+  }
+
+  updateSplitPaymentStatus = async (paymentId: string, referencePaymentId: string) => {
     try {
       if (paymentId) {
         await this.database
@@ -661,6 +856,30 @@ export class HyperSwitchService {
           })
           .from(splitPayments)
           .where(eq(splitPayments.paymentId, paymentId));
+        return {
+          message: "status update successFully",
+          email: result?.email,
+          bookingId: result?.bookingId,
+          error: false,
+          amount: result?.amount,
+        };
+      } else if (referencePaymentId) {
+        await this.database
+          .update(splitPayments)
+          .set({
+            isPaid: 1,
+          })
+          .where(eq(splitPayments.referencePaymentId, referencePaymentId))
+          .execute();
+        const [result] = await this.database
+          .select({
+            email: splitPayments.email,
+            bookingId: splitPayments.bookingId,
+            amount: splitPayments.amount,
+            paymentId: splitPayments.paymentId,
+          })
+          .from(splitPayments)
+          .where(eq(splitPayments.referencePaymentId, referencePaymentId));
         return {
           message: "status update successFully",
           email: result?.email,
@@ -712,6 +931,7 @@ export class HyperSwitchService {
     origin: string
   ) => {
     try {
+      const paymentProcessor = String(process.env.CHANGE_PAYMENT_PROCESSOR);
       const [result] = await this.database
         .select({
           email: splitPayments.email,
@@ -726,25 +946,46 @@ export class HyperSwitchService {
             eq(splitPayments.isActive, 1)
           )
         );
-      if (result?.email && result?.bookingId) {
-        const updatedResult = await this.database
-          .update(splitPayments)
-          .set({
-            isActive: 0,
-          })
-          .where(
-            and(
-              eq(splitPayments.email, result?.email),
-              eq(splitPayments.bookingId, result?.bookingId),
-              eq(splitPayments.isActive, 1),
-              eq(splitPayments.paymentId, result?.paymentId)
+      if (paymentProcessor === "true") {
+        if (result?.email && result?.bookingId) {
+          const updatedResult = await this.database
+            .update(splitPayments)
+            .set({
+              isActive: 0,
+            })
+            .where(
+              and(
+                eq(splitPayments.email, result?.email),
+                eq(splitPayments.bookingId, result?.bookingId),
+                eq(splitPayments.isActive, 1),
+                eq(splitPayments.paymentId, result?.paymentId)
+              )
             )
-          )
-          .execute();
-        await this.cancelPaymentIntent(result.paymentId);
-        const resultPaymentLink = await this.createPaymentLink(amount, email, bookingId, origin);
-        console.log("resultPaymentLink", resultPaymentLink);
-        return resultPaymentLink;
+            .execute();
+          await this.cancelPaymentIntent(result.paymentId);
+          const resultPaymentLink = await this.createPaymentLink(amount, email, bookingId, origin);
+          console.log("resultPaymentLink", resultPaymentLink);
+          return resultPaymentLink;
+        }
+      } else {
+        if (result?.email && result?.bookingId) {
+          const updatedResult = await this.database
+            .update(splitPayments)
+            .set({
+              isActive: 0,
+            })
+            .where(
+              and(
+                eq(splitPayments.email, result?.email),
+                eq(splitPayments.bookingId, result?.bookingId),
+                eq(splitPayments.isActive, 1),
+                eq(splitPayments.paymentId, result?.paymentId)
+              )
+            )
+            .execute();
+          const resultPaymentLink = await this.createPaymentLink(amount, email, bookingId, origin);
+          return resultPaymentLink;
+        }
       }
     } catch (error: any) {
       console.log(error);
@@ -754,7 +995,8 @@ export class HyperSwitchService {
 
   getPaymentLinkByPaymentId = async (paymentId: string) => {
     try {
-      if (paymentId) {
+      const paymentProcessor = String(process.env.CHANGE_PAYMENT_PROCESSOR);
+      if (paymentProcessor === "true") {
         const [result] = await this.database
           .select({ paymentLink: splitPayments.paymentLink })
           .from(splitPayments)
@@ -762,32 +1004,38 @@ export class HyperSwitchService {
         const paymentStatus = await this.retrievePaymentIntent(paymentId);
         if ((paymentStatus?.status as string) === "cancelled") {
           return {
-            error: false,
-            message: "Payment-Link fetch successFully",
-            paymentLink: result?.paymentLink,
-          };
-        } else {
-          return {
             error: true,
             message: "Payment-Link fetch failed",
             paymentLink: "",
           };
+        } else {
+          return {
+            error: false,
+            message: "Payment-Link fetch Successful",
+            paymentLink: result?.paymentLink,
+          };
         }
-        // return {
-        //   error: false,
-        //   message: "Payment-Link fetch successFully",
-        //   paymentLink: result?.paymentLink,
-        // };
+      } else {
+        const [result] = await this.database
+          .select({ paymentLink: splitPayments.paymentLink })
+          .from(splitPayments)
+          .where(and(eq(splitPayments.paymentId, paymentId)));
+        return {
+          error: false,
+          message: "Payment-Link fetch Successful",
+          paymentLink: result?.paymentLink,
+        };
       }
-      // return {
-      //   error: true,
-      //   message: "Payment-Link fetch failed",
-      //   paymentLink: "",
-      // };
     } catch (error) {
       throw new Error("Error while fetching for payment link");
     }
   };
+
+
+
+
+
+
   addMinutes = (date: Date, minutes: number) => {
     const result = new Date(date);
     result.setMinutes(result.getMinutes() + minutes);
