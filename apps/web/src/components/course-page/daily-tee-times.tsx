@@ -158,7 +158,7 @@ export const DailyTeeTimes = ({
 
 
   const allTeeTimes =
-    teeTimeData?.pages[teeTimeData?.pages?.length - 1]?.results ?? [];
+    teeTimeData?.pages[teeTimeData?.pages?.length - 1]?.results ?? [];    
 
   const isScrolling = useRef(false);
 
