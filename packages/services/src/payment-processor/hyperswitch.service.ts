@@ -667,9 +667,9 @@ export class HyperSwitchService {
       if (amount === 0) {
         throw new Error("Amount cannot be zero");
       }
-      const paymentProcessor = String(process.env.CHANGE_PAYMENT_PROCESSOR);
+      const paymentProcessor = String(process.env.SPLIT_PAYMENT_PROCESSOR);
       console.log("payementProcessor",paymentProcessor);
-      if (paymentProcessor == "true") {
+      if (paymentProcessor !== "finix") {
         this.logger.warn("inside hyperswitch");
         const return_url = `${origin}/payment-success`;
         const myHeaders = new Headers();
@@ -931,7 +931,7 @@ export class HyperSwitchService {
     origin: string
   ) => {
     try {
-      const paymentProcessor = String(process.env.CHANGE_PAYMENT_PROCESSOR);
+      const paymentProcessor = String(process.env.SPLIT_PAYMENT_PROCESSOR);
       const [result] = await this.database
         .select({
           email: splitPayments.email,
@@ -946,7 +946,7 @@ export class HyperSwitchService {
             eq(splitPayments.isActive, 1)
           )
         );
-      if (paymentProcessor === "true") {
+      if (paymentProcessor !== "finix") {
         if (result?.email && result?.bookingId) {
           const updatedResult = await this.database
             .update(splitPayments)
@@ -995,8 +995,8 @@ export class HyperSwitchService {
 
   getPaymentLinkByPaymentId = async (paymentId: string) => {
     try {
-      const paymentProcessor = String(process.env.CHANGE_PAYMENT_PROCESSOR);
-      if (paymentProcessor === "true") {
+      const paymentProcessor = String(process.env.SPLIT_PAYMENT_PROCESSOR);
+      if (paymentProcessor !== "finix") {
         const [result] = await this.database
           .select({ paymentLink: splitPayments.paymentLink })
           .from(splitPayments)
