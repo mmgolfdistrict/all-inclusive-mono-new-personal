@@ -487,6 +487,7 @@ export const EditProfileForm = () => {
           render={({ field }) => (
             <Input
               {...field}
+              required
               label="Name"
               type="text"
               placeholder="Enter your full name"
@@ -507,6 +508,7 @@ export const EditProfileForm = () => {
           render={({ field }) => (
             <Input
               {...field}
+              required
               label="Email"
               type="email"
               placeholder="Enter your email address"
@@ -533,6 +535,7 @@ export const EditProfileForm = () => {
                   className="text-[14px] text-primary-gray"
                 >
                   Phone Number
+                  <span className="text-red"> *</span>
                 </label>
               </div>
               <div className="flex rounded-lg bg-secondary-white px-1 text-[14px] text-gray-500 outline-none text-ellipsis h-12">
@@ -574,6 +577,7 @@ export const EditProfileForm = () => {
             <Input
               {...field}
               label="Handle"
+              required
               className="w-full"
               type="text"
               placeholder="Enter your handle"
@@ -597,6 +601,7 @@ export const EditProfileForm = () => {
           render={({ field }) => (
             <Input
               {...field}
+              required
               label="Addr&#8204;ess1"
               type="text"
               list="places"
@@ -642,6 +647,7 @@ export const EditProfileForm = () => {
           render={({ field }) => (
             <Input
               {...field}
+              required
               label="City"
               type="text"
               list="places"
@@ -673,6 +679,7 @@ export const EditProfileForm = () => {
                 style={{ fontSize: "14px", color: "rgb(109 119 124" }}
               >
                 State
+                <span className="text-red"> *</span>
               </label>
               <Select
                 size="small"
@@ -703,6 +710,7 @@ export const EditProfileForm = () => {
                   </MenuItem>
                 ))}
               </Select>
+              {errors?.state?.message && <p className="text-[12px] text-red">{errors?.state?.message}</p>}
             </div>
           )}
         />
@@ -713,6 +721,7 @@ export const EditProfileForm = () => {
             <Input
               {...field}
               label="Zip"
+              required
               type="text"
               list="places"
               placeholder="Enter your zip"
@@ -764,6 +773,7 @@ export const EditProfileForm = () => {
                 style={{ fontSize: "14px", color: "rgb(109 119 124)" }}
               >
                 Country
+                <span className="text-red"> *</span>
               </label>
               <Select
                 size="small"

@@ -425,6 +425,7 @@ export const TeeTime = ({
                   !(status === "SECOND_HAND") ? numberOfPlayers : PlayersOptions.filter(player => player <= (listedSlots?.toString() ?? "0"))
                 ) : []}
                 status={status}
+                supportsGroupBooking={course?.supportsGroupBooking}
                 allowSplit={allowSplit}
               />
             ) : (
@@ -475,7 +476,7 @@ export const TeeTime = ({
               )}
             </>
           )}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center justify-between gap-1">
             {course?.supportsWatchlist ? (
               <div id="add-to-watchlist">
                 <OutlineButton
@@ -493,6 +494,7 @@ export const TeeTime = ({
               </div>
             ) : null}
 
+            <div className="flex items-center gap-1">
             <Link
               href={href}
               data-testid="details-button-id"
@@ -500,22 +502,22 @@ export const TeeTime = ({
               data-qa={"Details"}
               data-cy={time}
               id="tee-time-details-button"
-            >
+              >
               <OutlineButton className="!py-[.28rem] md:py-1.5">
                 Details
               </OutlineButton>
             </Link>
-            <div id="share-tee-time-button">
-
+              <div id="share-tee-time-button">
               <OutlineButton
                 onClick={() => void share()}
                 className="w-full whitespace-nowrap"
                 data-testid="share-button-id"
-              >
+                >
                 <div className="flex items-center justify-center gap-2">
                   {isCopied ? <>Copied</> : <>Share</>}
                 </div>
               </OutlineButton>
+            </div>
             </div>
           </div>
         </div>

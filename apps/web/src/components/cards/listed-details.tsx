@@ -181,7 +181,7 @@ export const ListedDetails = ({
               setPlayers={setPlayers}
               playersOptions={PlayersOptions}
                   availableSlots={data?.availableSlots ?? 0}
-                  isDisabled={data?.allowSplit === false}
+                  isDisabled={data?.allowSplit === false || (user?.id === data.soldById)}
               teeTimeId={teeTimeId}
                   numberOfPlayers={PlayersOptions.map((player) => player <= (data?.availableSlots ?? 0).toString() ? player : "")}
               status={"SECOND_HAND"}
@@ -293,6 +293,7 @@ export const ListedDetails = ({
           listedSpots: Array(data?.availableSlots ?? 0),
           teeTimeId: teeTimeId,
           groupId: data?.groupId ?? "",
+
         }}
         needRedirect={true}
       />

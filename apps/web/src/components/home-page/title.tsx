@@ -10,7 +10,7 @@ export const Title = () => {
         <div className="animate-pulse h-12 w-[50%] md:w-[35%] bg-gray-200 mx-auto md:mx-0 rounded-md mb-4 md:mb-6" />
       ) : (
         <h1
-          className={`pb-4 text-center text-[24px] md:pb-6 md:text-left md:text-[32px]`}
+          className={`pb-4 text-center text-[24px] md:pb-6 md:text-center md:text-[32px]`}
           style={{marginTop: mainHeaderHeight}}
         >
           Welcome to {entity?.name}
