@@ -10,20 +10,26 @@ import { PoweredBy } from "../powered-by";
 import { Tooltip } from "../tooltip";
 
 export const MainNav = () => {
-  const { entity , setmainHeaderHeight } = useAppContext();
+  const { entity, setmainHeaderHeight } = useAppContext();
   const { course } = useCourseContext();
   const courseId = course?.id;
+  const entityId = entity?.id;
 
-  const { data: systemNotifications , isLoading:loadingSystemNotifications } =
+  const { data: systemNotifications, isLoading: loadingSystemNotifications } =
     api.systemNotification.getSystemNotification.useQuery({});
 
-  const { data: courseGlobalNotification ,isLoading:loadingCourseGlobalNotification } =
+  const { data: courseGlobalNotification, isLoading: loadingCourseGlobalNotification } =
     api.systemNotification.getCourseGlobalNotification.useQuery({
       courseId: courseId ?? "",
     });
 
-    const divHeight = !loadingCourseGlobalNotification || !loadingSystemNotifications ? document?.getElementById('main-header')?.offsetHeight || 0 : 0;
-    setmainHeaderHeight(divHeight)
+  const { data: entityGlobalNotification, isLoading: loadingEntityGlobalNotification } =
+    api.systemNotification.getEntityGlobalNotification.useQuery({
+      entityId: entityId ?? "",
+    });
+
+  const divHeight = !loadingCourseGlobalNotification || !loadingSystemNotifications || !loadingEntityGlobalNotification ? document?.getElementById('main-header')?.offsetHeight || 0 : 0;
+  setmainHeaderHeight(divHeight)
   return (
     <div>
       <div className={`fixed z-10 w-full bg-white transition-all top-0`} id="main-header">
@@ -42,12 +48,39 @@ export const MainNav = () => {
                 trigger={
                   <Info longMessage className="ml-2 h-[20px] w-[20px]" />
                 }
-                content={elm.longMessage}
+                content={<div>
+                  {elm.longMessage.split("\\n").map((line, index) => (
+                    <div key={index}>{line}</div>
+                  ))}
+                </div>}
               />
             )}
           </div>
         ))}
-
+        {entityGlobalNotification?.map((elm) => (
+          <div
+            key={elm.id}
+            style={{
+              backgroundColor: elm.bgColor,
+              color: elm.color,
+            }}
+            className="text-white w-full p-1 text-center flex items-center justify-center"
+          >
+            {elm.shortMessage}
+            {elm.longMessage && (
+              <Tooltip
+                trigger={
+                  <Info longMessage className="ml-2 h-[20px] w-[20px]" />
+                }
+                content={<div>
+                  {elm.longMessage.split("\\n").map((line, index) => (
+                    <div key={index}>{line}</div>
+                  ))}
+                </div>}
+              />
+            )}
+          </div>
+        ))}
         {courseGlobalNotification?.map((elm) => (
           <div
             key={elm.id}
@@ -63,7 +96,11 @@ export const MainNav = () => {
                 trigger={
                   <Info longMessage className="ml-2 h-[20px] w-[20px]" />
                 }
-                content={elm.longMessage}
+                content={<div>
+                  {elm.longMessage.split("\\n").map((line, index) => (
+                    <div key={index}>{line}</div>
+                  ))}
+                </div>}
               />
             )}
           </div>

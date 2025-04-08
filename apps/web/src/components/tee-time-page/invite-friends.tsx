@@ -31,6 +31,11 @@ export const InviteFriends = ({
       refetchOnWindowFocus: false,
     }
   );
+
+  useEffect(() => {
+    void refetch();
+  }, []);
+
   const { user } = useUserContext();
   const { course } = useCourseContext();
   const [isInviteVisible, setIsInviteVisible] = useState(false);
@@ -249,30 +254,38 @@ export const InviteFriends = ({
 
   if (!bookingData?.connectedUserIsOwner) return null;
   return (
-    <div
-      className={`flex w-full flex-col  ${
-        isConfirmationPage ? "bg-secondary-white" : "bg-white gap-4"
-      } md:rounded-xl`}
-    >
+    course?.supportsPlayerNameChange && (
       <div
-        className={`flex px-4 py-3 md:px-6 md:pr-4 ${
-          isConfirmationPage ? "justify-center" : "border-b stroke"
-        }`}
+        className={`flex w-full flex-col  ${isConfirmationPage
+          ? "bg-secondary-white bg-white gap-4"
+          : "bg-white gap-4"
+          } md:rounded-xl`}
       >
-        <div className={`text-lg font-semibold`}>
-          Invite friends to your tee time
-        </div>
-      </div>
-      <div className="flex max-w-full flex-col gap-2 overflow-auto px-4 pb-2 text-[14px] md:px-6 md:pb-3">
-        <div className={`flex flex-col gap-2 pb-6 text-center items-center`}>
-          <label
-            htmlFor="friends"
-            className="text-[16px] text-primary-gray md:text-[18px]"
+        <div
+          className={`flex px-4 py-3 md:px-6 md:pr-4 ${isConfirmationPage
+            ? "justify-center border-b stroke"
+            : "border-b stroke"
+            }`}
+        >
+          <div
+            className={`text-lg font-semibold ${isConfirmationPage ? "justify-center" : ""
+              }`}
           >
-            Add/edit invited friends
-          </label>
-          {friends.length
-            ? friends.map((friend, index) => {
+            {isConfirmationPage
+              ? "Tee Time Player information"
+              : "Invite friends to your tee time"}
+          </div>
+        </div>
+        <div className="flex max-w-full flex-col gap-2 overflow-auto px-4 pb-2 text-[14px] md:px-6 md:pb-3">
+          <div className={`flex flex-col gap-2 pb-6 text-center items-center`}>
+            <label
+              htmlFor="friends"
+              className="text-[16px] text-primary-gray md:text-[18px]"
+            >
+              Add/edit invited friends
+            </label>
+            {friends.length
+              ? friends.map((friend, index) => {
                 return (
                   <div
                     key={friend.slotId}
@@ -280,7 +293,10 @@ export const InviteFriends = ({
                   >
                     {!friend.currentlyEditing ? (
                       <div className="mx-auto w-full rounded-lg bg-secondary-white px-4 py-1 flex justify-between text-[16px] font-semibold outline-none">
-                        <div>{index === 0 ? "You" : friend.name}</div>
+                        <div style={{
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}>{index === 0 ? "You" : friend.name}</div>
                         {index !== 0 && course?.supportsPlayerNameChange ? (
                           <button onClick={() => removeFriend(friend.slotId)}>
                             <Edit className="w-[20px]" />
@@ -300,7 +316,7 @@ export const InviteFriends = ({
                           data-testid="search-friend-id"
                         />
                         {friend.slotId === newFriend.slotId &&
-                        friendList?.length ? (
+                          friendList?.length ? (
                           <div className="mx-auto w-full max-w-[400px] rounded-lg py-2 flex justify-between text-[14px] font-semibold outline-none">
                             <ul className="w-full text-opacity-100 text-gray-700 shadow-md border border-solid border-gray-200 rounded-8 text-start">
                               {friendList?.map((frnd, idx) => (
@@ -332,25 +348,24 @@ export const InviteFriends = ({
                             <div className="flex justify-center items-center flex-col gap-1 rounded-md w-full mx-auto max-w-[400px]">
                               {(!inviteSuccess[friend.slotId] ||
                                 isInviteVisible) && (
-                                <>
-                                  <div className="flex justify-center gap-4 mt-2 items-center w-full fade-in">
-                                    Friend not found. Invite them!
-                                    <FilledButton
-                                      className={`w-full !max-w-fit ${
-                                        invite.isLoading ? "animate-pulse" : ""
-                                      }`}
-                                      onClick={() =>
-                                        handleInviteFriend(friend, index)
-                                      }
-                                      data-testid="invite-button-id"
-                                    >
-                                      {invite.isLoading
-                                        ? "Inviting..."
-                                        : "Invite"}
-                                    </FilledButton>
-                                  </div>
-                                </>
-                              )}
+                                  <>
+                                    <div className="flex justify-center gap-4 mt-2 items-center w-full fade-in">
+                                      Friend not found. Invite them!
+                                      <FilledButton
+                                        className={`w-full !max-w-fit ${invite.isLoading ? "animate-pulse" : ""
+                                          }`}
+                                        onClick={() =>
+                                          handleInviteFriend(friend, index)
+                                        }
+                                        data-testid="invite-button-id"
+                                      >
+                                        {invite.isLoading
+                                          ? "Inviting..."
+                                          : "Invite"}
+                                      </FilledButton>
+                                    </div>
+                                  </>
+                                )}
                             </div>
                           )}
                       </>
@@ -358,24 +373,24 @@ export const InviteFriends = ({
                   </div>
                 );
               })
-            : null}
-        </div>
+              : null}
+          </div>
 
-        <div className="flex flex-col gap-2 w-full mx-auto max-w-[400px]">
-          <FilledButton
-            onClick={() => void save()}
-            data-testid="save-button-id"
-            className={`w-full ${
-              updateNames.isLoading || invite.isLoading
+          <div className="flex flex-col gap-2 w-full mx-auto max-w-[400px]">
+            <FilledButton
+              onClick={() => void save()}
+              data-testid="save-button-id"
+              className={`w-full ${updateNames.isLoading || invite.isLoading
                 ? "!border-gray-200 !bg-gray-200"
                 : ""
-            }`}
-            disabled={updateNames.isLoading || invite.isLoading}
-          >
-            Save
-          </FilledButton>
+                }`}
+              disabled={updateNames.isLoading || invite.isLoading}
+            >
+              Save
+            </FilledButton>
+          </div>
         </div>
       </div>
-    </div>
+    )
   );
 };

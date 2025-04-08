@@ -29,6 +29,13 @@ import type {
   LightspeedSaleDataOptions,
   LightspeedTeeTimeResponse,
 } from "./lightspeed.type";
+import type {
+  QuickEighteenBookingCreationData,
+  QuickEighteenBookingResponse,
+  QuickEighteenCustomerCreationData,
+  QuickEighteenGetCustomerResponse,
+  QuickEighteenTeeTimeResponse
+} from "./quickEighteen.types";
 
 export type ForeUpCredentials = {
   username: string;
@@ -68,6 +75,7 @@ export interface TeeTimeData {
   cartFees: number;
   providerCustomerId: string | null;
   providerAccountNumber: number | string | null;
+  providerCourseId: string | null;
   totalAmountPaid: number;
   name: string | null;
   email: string | null;
@@ -98,31 +106,42 @@ export type NameChangeCustomerDetails = {
   providerCustomerId: string;
 };
 
+export type FetchCustomerDetails = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+};
+
 type ProviderCredentials = ForeUpCredentials;
 
-export type TeeTimeResponse = ForeUpTeeTimeResponse | ClubProphetTeeTimeResponse | LightspeedTeeTimeResponse;
+export type TeeTimeResponse = ForeUpTeeTimeResponse | ClubProphetTeeTimeResponse | LightspeedTeeTimeResponse | QuickEighteenTeeTimeResponse;
 
 export type BookingResponse = (
   | ForeUpBookingResponse
   | ClubProphetBookingResponse
   | LightSpeedBookingResponse
+  | QuickEighteenBookingResponse
 ) &
   SecondHandBookingFields;
 
 export type BookingCreationData =
   | ForeupBookingCreationData
   | ClubProphetBookingCreationData
-  | LightspeedBookingCreationData;
+  | LightspeedBookingCreationData
+  | QuickEighteenBookingCreationData;
 
 export type CustomerCreationData =
   | ForeUpCustomerCreationData
   | ClubProphetCustomerCreationData
-  | LightspeedCustomerCreationData;
+  | LightspeedCustomerCreationData
+  | QuickEighteenCustomerCreationData;
 
 export type CustomerData =
   | ForeUpCustomerCreationResponse
   | ClubProphetCustomerCreationResponse
-  | LightspeedCustomerCreationResponse;
+  | LightspeedCustomerCreationResponse
+  | QuickEighteenGetCustomerResponse;
 
 export type SalesDataOptions = ForeupSaleDataOptions | LightspeedSaleDataOptions;
 
@@ -131,7 +150,8 @@ export type BookingNameChangeOptions = ForeUpBookingNameChangeOptions | Lightspe
 export type GetCustomerResponse =
   | ForeUpGetCustomerResponse
   | ClubProphetGetCustomerResponse
-  | LightspeedGetCustomerResponse;
+  | LightspeedGetCustomerResponse
+  | QuickEighteenGetCustomerResponse;
 
 export interface ProviderAPI {
   providerId: string;
@@ -168,7 +188,7 @@ export interface ProviderAPI {
     courseId: string,
     customerData: CustomerCreationData
   ) => Promise<CustomerData>;
-  getCustomer: (token: string, courseId: string, email: string) => Promise<GetCustomerResponse | undefined>;
+  getCustomer: (token: string, courseId: string, customerDetails: FetchCustomerDetails) => Promise<GetCustomerResponse | undefined>;
   getSlotIdsForBooking: (
     bookingId: string,
     slots: number,
@@ -176,7 +196,7 @@ export interface ProviderAPI {
     providerBookingId: string | string[],
     providerId: string,
     courseId: string,
-    providerSlotIds?: string[],
+    providerSlotIds?: string[] | undefined,
     providerCourseMembershipId?: string
   ) => Promise<InsertBookingSlots[]>;
   shouldAddSaleData: () => boolean;
@@ -275,7 +295,7 @@ export abstract class BaseProvider implements ProviderAPI {
   abstract getCustomer(
     token: string,
     courseId: string,
-    email: string
+    customerDetails: FetchCustomerDetails
   ): Promise<GetCustomerResponse | undefined>;
   abstract getSlotIdsForBooking(
     bookingId: string,

@@ -189,6 +189,7 @@ export const UnlistedDetails = ({
               availableSlots={bookingData?.bookings?.length || 0}
               teeTimeId={teeTimeId}
               numberOfPlayers={PlayersOptions}
+                  supportsGroupBooking={course?.supportsGroupBooking}
             />
           </div>
           <div className="flex flex-col flex-wrap justify-between gap-2 md:flex-row">

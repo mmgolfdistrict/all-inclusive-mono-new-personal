@@ -51,6 +51,9 @@ export default {
           to: { height: "0" },
         },
       },
+      screens: {
+        'xs': '480px',
+      },
     },
   },
   plugins: [],

@@ -32,12 +32,11 @@ import ReCAPTCHA from "react-google-recaptcha";
 import { Controller, useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
 import { useDebounce } from "usehooks-ts";
-import CountryDropdown, { Country } from "~/components/dropdown/country-dropdown";
+import CountryDropdown from "~/components/dropdown/country-dropdown";
+import type { Country } from "~/components/dropdown/country-dropdown";
 import { allCountries } from "country-telephone-data";
-import { CountryData } from "~/utils/types";
-import { PhoneNumberUtil } from "google-libphonenumber";
+import type { CountryData } from "~/utils/types";
 
-const phoneUtil = PhoneNumberUtil.getInstance();
 const countryList: Country[] = allCountries.map(({ name, iso2, dialCode }: CountryData) => ({
   name,
   iso2,
@@ -53,12 +52,12 @@ export default function RegisterPage() {
     setValue,
     watch,
     setError,
-    clearErrors,
     control,
     getValues,
     formState: { errors },
   } = useForm<RegisterSchemaType>({
     resolver: zodResolver(registerSchema),
+    mode: "onTouched",
   });
   const [isSubmitting, setIsSubmitting] = useState<boolean | undefined>(false);
   const libraries: Libraries = ["places"];
@@ -97,11 +96,11 @@ export default function RegisterPage() {
   };
 
   const [currentCountry, setCurrentCountry] = useState<string>("");
-  const [currentPhoneNumber, setCurrentPhoneNumber] = useState<string>("");
-  const debouncedPhoneNumber = useDebounce<string>(currentPhoneNumber, 1000);
   const { data: userCountryData, error } = api.user.getCountryCode.useQuery({});
-  const [excludedCountries, setExcludeCountries] = useState<string[]>(['by', 'cu', 'kp', 'sy', 've']);
-  const [countries, setCountries] = useState<Country[]>(
+  const [excludedCountries, _setExcludeCountries] = useState<string[]>(
+    ['by', 'cu', 'kp', 'sy', 've', 'ir']
+  );
+  const [countries, _setCountries] = useState<Country[]>(
     countryList.filter(
       (c: Country) => !excludedCountries.includes(c.iso2)
     ).map((c: Country) => {
@@ -113,12 +112,6 @@ export default function RegisterPage() {
       }
     })
   );
-
-  useEffect(function setCurrentPhone() {
-    const phoneNumber = getValues("phoneNumber");
-    const phoneNumberCountryCode = getValues("phoneNumberCountryCode");
-    setCurrentPhoneNumber(`${phoneNumberCountryCode}${phoneNumber}`);
-  }, [getValues("phoneNumber"), getValues("phoneNumberCountryCode")]);
 
   useEffect(function setCountryCode() {
     if (userCountryData?.country) {
@@ -133,26 +126,6 @@ export default function RegisterPage() {
     }
   }, [userCountryData?.country, setCurrentCountry]);
 
-  useEffect(() => {
-    if (debouncedPhoneNumber && getValues("phoneNumber")) {
-      try {
-        const parsedNumber = phoneUtil.parse(`+${debouncedPhoneNumber}`, currentCountry.toUpperCase());
-        const valid = phoneUtil.isValidNumber(parsedNumber);
-        if (!valid) {
-          setError("phoneNumber", {
-            message: "Phone number seems invalid, please enter a valid phone number."
-          });
-        } else {
-          clearErrors("phoneNumber");
-        }
-      } catch (error: any) {
-        setError("phoneNumber", {
-          message: "Phone number seems invalid, please enter a valid phone number.",
-        });
-      }
-    }
-  }, [debouncedPhoneNumber, getValues]);
-
   const handleSelectCountry = (country: Country) => {
     const { iso2, dialCode } = country;
     setCurrentCountry(iso2);
@@ -161,8 +134,6 @@ export default function RegisterPage() {
 
   const handlePhoneNumberChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, "");
-    const countryCode = getValues("phoneNumberCountryCode");
-    setCurrentPhoneNumber(`${countryCode}${value}`);
     setValue("phoneNumber", value);
   }
 
@@ -369,6 +340,7 @@ export default function RegisterPage() {
               <Input
                 {...field}
                 label="First Name"
+                required
                 type="text"
                 placeholder="Enter your first name"
                 id="firstName"
@@ -389,6 +361,7 @@ export default function RegisterPage() {
               <Input
                 {...field}
                 label="Last Name"
+                required
                 type="text"
                 placeholder="Enter your last name"
                 id="lastName"
@@ -410,6 +383,7 @@ export default function RegisterPage() {
                 {...field}
                 label="Email"
                 type="email"
+                required
                 placeholder="Enter your email address"
                 id="email"
                 register={register}
@@ -423,7 +397,7 @@ export default function RegisterPage() {
             )}
           />
           <Controller
-            name="firstName"
+            name="phoneNumber"
             control={control}
             render={({ field }) => (
               <div className={`flex flex-col gap-1`}>
@@ -433,6 +407,7 @@ export default function RegisterPage() {
                     className="text-[14px] text-primary-gray"
                   >
                     Phone Number
+                    <span className="text-red"> *</span>
                   </label>
                 </div>
                 <div className="flex rounded-lg bg-secondary-white px-1 text-[14px] text-gray-500 outline-none text-ellipsis h-12">
@@ -478,6 +453,7 @@ export default function RegisterPage() {
                   label="Handle"
                   className="w-full"
                   type="text"
+                  required
                   placeholder="Enter your handle"
                   id="username"
                   register={register}
@@ -527,6 +503,7 @@ export default function RegisterPage() {
             render={({ field }) => (
               <Input
                 {...field}
+                required
                 label="Addr&#8204;ess1"
                 type="text"
                 list="places"
@@ -574,6 +551,7 @@ export default function RegisterPage() {
                 {...field}
                 label="City"
                 type="text"
+                required
                 list="places"
                 placeholder="Enter your city"
                 id="city"
@@ -601,7 +579,7 @@ export default function RegisterPage() {
                   htmlFor="state"
                   style={{ fontSize: "14px", color: "rgb(109 119 124" }}
                 >
-                  State
+                  State <span className="text-red"> *</span>
                 </label>
                 <Select
                   size="small"
@@ -646,6 +624,7 @@ export default function RegisterPage() {
                     </MenuItem>
                   ))}
                 </Select>
+                {errors?.state?.message && <p className="text-[12px] text-red">{errors?.state?.message}</p>}
               </div>
             )}
           />
@@ -657,6 +636,7 @@ export default function RegisterPage() {
                 {...field}
                 label="Zip"
                 type="text"
+                required
                 list="places"
                 placeholder="Enter your zip"
                 id="zipcode"
@@ -706,7 +686,7 @@ export default function RegisterPage() {
                   htmlFor="country"
                   style={{ fontSize: "14px", color: "rgb(109 119 124)" }}
                 >
-                  Country
+                  Country <span className="text-red"> *</span>
                 </label>
                 <Select
                   size="small"
@@ -771,6 +751,7 @@ export default function RegisterPage() {
                 <Input
                   {...field}
                   label="Password"
+                  required
                   type={showPassword ? "text" : "password"}
                   id="password"
                   placeholder="Enter your password"
@@ -819,6 +800,7 @@ export default function RegisterPage() {
                   label="Confirm password"
                   type={showConfirmPassword ? "text" : "password"}
                   id="confirmPassword"
+                  required
                   placeholder="Confirm your password"
                   register={register}
                   name="confirmPassword"

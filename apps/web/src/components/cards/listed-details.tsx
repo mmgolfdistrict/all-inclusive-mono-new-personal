@@ -20,6 +20,7 @@ import { ChoosePlayers } from "../input/choose-players";
 import { Spinner } from "../loading/spinner";
 import { ManageTeeTimeListing } from "../my-tee-box-page/manage-tee-time-listing";
 import { Tooltip } from "../tooltip";
+import { useAppContext } from "~/contexts/AppContext";
 
 const PlayersOptions = ["1", "2", "3", "4"];
 
@@ -34,7 +35,7 @@ export const ListedDetails = ({
 }) => {
   const { course } = useCourseContext();
   const courseId = course?.id;
-
+  const { setPrevPath } = useAppContext();
   const { data: allowedPlayers } =
     api.course.getNumberOfPlayersByCourse.useQuery({
       courseId: courseId ?? "",
@@ -79,6 +80,11 @@ export const ListedDetails = ({
 
   const buyTeeTime = () => {
     if (!user || !session) {
+     
+      setPrevPath({
+        path: `/${course?.id}/checkout?listingId=${listingId}&playerCount=${data?.availableSlots}`,
+        createdAt: new Date().toISOString(),
+      });
       void router.push(`/${course?.id}/login`);
       return;
     } else {

@@ -1068,6 +1068,7 @@ export class HyperSwitchWebhookService {
           name: buyerCustomer.name,
           email: buyerCustomer.email,
           phone: buyerCustomer.phone,
+          providerCourseId: firstBooking.providerCourseId,
         });
 
         bookingStage = "Creating booking for buyer customer";
@@ -1197,7 +1198,14 @@ export class HyperSwitchWebhookService {
           "",
           weatherQuoteId,
           customer_id,
-          bookingStage
+          bookingStage,
+          existingTeeTime?.id ?? "",
+          {
+            courseName: existingTeeTime?.courseName ?? "",
+            userName: buyerCustomer?.name ?? "",
+            userEmail: buyerCustomer?.email ?? "",
+            teeTimeDate: existingTeeTime?.providerDate ?? ""
+          }
         );
         throw "Booking failed on provider";
       }
@@ -1235,6 +1243,7 @@ export class HyperSwitchWebhookService {
           name: sellerCustomer.name,
           email: sellerCustomer.email,
           phone: sellerCustomer.phone,
+          providerCourseId: firstBooking.providerCourseId,
         });
         bookingStage = "Creating booking for seller customer";
         newBookingSecond = await provider.createBooking(

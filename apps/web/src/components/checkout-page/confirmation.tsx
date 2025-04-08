@@ -1,26 +1,24 @@
 "use client";
 
-// import { useCheckoutContext } from "~/contexts/CheckoutContext";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { api } from "~/utils/api";
 import { formatTime } from "~/utils/formatters";
 import Link from "next/link";
 import { Fragment } from "react";
-// import { useRouter } from "next/router";
 import { FilledButton } from "../buttons/filled-button";
+import { InviteFriends } from "../tee-time-page/invite-friends";
 
-// import { InviteFriends } from "../tee-time-page/invite-friends";
 interface ConfirmationProps {
   teeTimeId: string;
   bookingId: string;
   isEmailSend: boolean;
-  isGroupBooking: boolean
+  isGroupBooking: boolean;
 }
 export const Confirmation = ({
   teeTimeId,
   bookingId,
   isEmailSend,
-  isGroupBooking
+  isGroupBooking,
 }: ConfirmationProps) => {
   const { data: bookingData, isLoading: isLoadingBookingData } =
     api.teeBox.getOwnedBookingById.useQuery(
@@ -34,7 +32,7 @@ export const Confirmation = ({
     );
 
   const { course } = useCourseContext();
-  // const { reservationData } = useCheckoutContext();
+
   return (
     <section className="mx-auto flex w-full flex-col gap-4 bg-white px-3 py-2 text-center md:max-w-[80vw] md:rounded-xl md:p-6 md:py-4">
       <div className="container mx-auto p-4">
@@ -47,35 +45,31 @@ export const Confirmation = ({
               <span>Loading ...</span>
             ) : (
               <>
-                  {bookingData?.providerId?.length && !isGroupBooking ? (
-                    <div style={{ paddingBottom: "5px" }}>
-                      <span style={{ fontWeight: 500 }}>
-                        Course Reservation ID
-                      </span>
-                      <span style={{ margin: "0 15px" }}>:</span>
-                      <span>{bookingData?.providerId}</span>
-                    </div>
-                  ) : null}
-                  {isGroupBooking && bookingData?.groupId ? (
-                    <div style={{ paddingBottom: "5px" }}>
-                      <span style={{ fontWeight: 500 }}>
-                        Group Reservation ID
-                      </span>
-                      <span style={{ margin: "0 15px" }}>:</span>
-                      <span>{bookingData?.groupId}</span>
-                    </div>
-                  ) : null}
-                  {(isGroupBooking
-                    ? (
-                    <div style={{ paddingBottom: "5px" }}>
-                      <span style={{ fontWeight: 500 }}>
-                        Player Count
-                      </span>
-                      <span style={{ margin: "0 15px" }}>:</span>
-                      <span>{bookingData?.playerCount}</span>
-                    </div>
-                    )
-                    : null)}
+                {bookingData?.providerId?.length && !isGroupBooking ? (
+                  <div style={{ paddingBottom: "5px" }}>
+                    <span style={{ fontWeight: 500 }}>
+                      Course Reservation ID
+                    </span>
+                    <span style={{ margin: "0 15px" }}>:</span>
+                    <span>{bookingData?.providerId}</span>
+                  </div>
+                ) : null}
+                {isGroupBooking && bookingData?.groupId ? (
+                  <div style={{ paddingBottom: "5px" }}>
+                    <span style={{ fontWeight: 500 }}>
+                      Group Reservation ID
+                    </span>
+                    <span style={{ margin: "0 15px" }}>:</span>
+                    <span>{bookingData?.groupId}</span>
+                  </div>
+                ) : null}
+                {isGroupBooking ? (
+                  <div style={{ paddingBottom: "5px" }}>
+                    <span style={{ fontWeight: 500 }}>Player Count</span>
+                    <span style={{ margin: "0 15px" }}>:</span>
+                    <span>{bookingData?.playerCount}</span>
+                  </div>
+                ) : null}
 
                 <div style={{ paddingBottom: "20px" }}>
                   <span style={{ fontWeight: 500 }}>Play Time</span>
@@ -120,6 +114,11 @@ export const Confirmation = ({
           </div>
         </div>
       </div>
+      {course?.supportsPlayerNameChange && (
+        <div>
+          <InviteFriends teeTimeId={teeTimeId} isConfirmationPage />
+        </div>
+      )}
       <div>
         <div className="w-full flex-col items-center justify-center md:gap-2 md:flex-row">
           Please send your feedback to{" "}

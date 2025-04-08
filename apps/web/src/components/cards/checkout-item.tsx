@@ -11,6 +11,7 @@ import {
 import { useSearchParams } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
 import { toast } from "react-toastify";
+import { useMediaQuery } from "usehooks-ts";
 import placeholderImage from "../../../public/placeholders/course.png";
 import { Avatar } from "../avatar";
 import { CheckedIcon } from "../icons/checked";
@@ -29,13 +30,13 @@ export const CheckoutItem = ({
   isLoading,
   isSensibleInvalid,
   sensibleDataToMountComp,
-  isGroupBooking = false
+  isGroupBooking = false,
 }: {
   teeTime: SearchObject | null | undefined;
   isLoading: boolean;
   isSensibleInvalid: boolean;
   sensibleDataToMountComp: SensibleDataToMountCompType;
-  isGroupBooking?: boolean
+  isGroupBooking?: boolean;
 }) => {
   const searchParams = useSearchParams();
   const playerCount = searchParams.get("playerCount");
@@ -62,7 +63,7 @@ export const CheckoutItem = ({
       index === 0 ? user?.email : ""
     )
   );
-
+  const isMobile = useMediaQuery("(max-width: 768px)");
   const { data: coursePreviewImage } =
     api.course.getCoursePreviewImage.useQuery({ courseId: courseId ?? "" });
 
@@ -71,7 +72,7 @@ export const CheckoutItem = ({
       courseId: courseId ?? "",
       time: teeTime?.time,
       date: teeTime?.date ?? "",
-      availableSlots: teeTime?.availableSlots
+      availableSlots: teeTime?.availableSlots,
     });
 
   const { data: isSupportMemberShip } = api.course.getCourseById.useQuery({
@@ -197,9 +198,19 @@ export const CheckoutItem = ({
     console.log("validatePlayers========>", validatePlayers);
   }, [validatePlayers]);
 
+  const getTextColor = (type) => {
+    if (type === "FAILURE") return "red";
+    if (type === "SUCCESS") return "primary";
+    if (type === "WARNING") return "primary-gray";
+  };
+
   return (
     <div className="relative flex w-full flex-col gap-2 bg-secondary-white  pt-4 lg:rounded-lg">
-      <div className="flex items-center gap-2 px-4 pb-4 lg:items-start">
+      <div
+        className={`flex pb-4 lg:items-start ${
+          isMobile ? "gap-1 px-1" : " gap-2 px-4 items-center"
+        }`}
+      >
         <BlurImage
           src={coursePreviewImage ?? ""}
           width={placeholderImage.width}
@@ -207,62 +218,179 @@ export const CheckoutItem = ({
           alt="placeholder"
           className="h-[60px] w-[60px] rounded-lg object-cover lg:h-[100px] lg:w-[100px]"
         />
-        <div className="flex w-full flex-col gap-2">
-          <div className="font-semibold unmask-time">
-            {isLoading ? (
-              <div className="h-6 w-[50%] bg-gray-200 rounded-md  animate-pulse" />
-            ) : (
-              <span className="text-[20px] " id="date-time-checkout">
-                {formatTime(
-                  teeTime?.date ?? "",
-                  true,
-                  course?.timezoneCorrection
+        {isMobile ? (
+          <div className="flex w-full justify-between">
+            <div className="flex-col">
+              <div className="flex-row font-semibold unmask-time">
+                {isLoading ? (
+                  <div className="h-6 w-[50%] bg-gray-200 rounded-md animate-pulse" />
+                ) : (
+                  <span className="text-[16px]" id="date-time-checkout">
+                    {formatTime(
+                      teeTime?.date ?? "",
+                      true,
+                      course?.timezoneCorrection
+                    )}
+                  </span>
                 )}
-              </span>
-            )}
+                <div>{course?.name}</div>
+              </div>
+              <div className="flex-row">
+                <Data
+                  className="flex"
+                  canChoosePlayer={(teeTime?.availableSlots ?? 4) > 0}
+                  players={
+                    isGroupBooking
+                      ? amountOfPlayers
+                      : 4 - (teeTime?.availableSlots ?? 0)
+                  }
+                  selectedPlayers={amountOfPlayers.toString()}
+                  choosePlayers={choosePlayers}
+                  pricePerGolfer={teeTime?.pricePerGolfer}
+                  isLoading={
+                    isLoading || teeTime === undefined || teeTime === null
+                  }
+                  availableSlots={teeTime?.availableSlots}
+                  isSecondHand={
+                    teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND"
+                  }
+                  teeTimeId={teeTime?.teeTimeId}
+                  numberOfPlayers={numberOfPlayers}
+                  selectStatus={allowedPlayers?.selectStatus}
+                  canShowPlayers={!isGroupBooking}
+                />
+              </div>
+            </div>
+            <div className="flex-col">
+              <div className="flex w-full gap-1 flex-col  lg:items-start items-start">
+                <Tooltip
+                  trigger={
+                    teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND" ? (
+                      <Spinner className="w-[40px] h-[40px]" />
+                    ) : (
+                      <Avatar
+                        src={teeTime?.soldByImage}
+                        className="h-[40px] w-[80px] md:h-[40px] md:w-[80px] lg:h-[40px] lg:w-[80px]"
+                        isRounded={false}
+                      />
+                    )
+                  }
+                  content={
+                    "Sold by " +
+                    (teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND"
+                      ? "another Golf District golfer."
+                      : teeTime?.soldByName)
+                  }
+                />
+                <p
+                  className={`text-${getTextColor(
+                    getCourseException(teeTime?.date ?? "")?.displayType
+                  )} font-semibold`}
+                >
+                  {getCourseException(teeTime?.date ?? "")?.shortMessage}
+                </p>
+                <p
+                  className={`text-${getTextColor(
+                    getCourseException(teeTime?.date ?? "")?.displayType
+                  )} font-semibold`}
+                >
+                  {getCourseException(teeTime?.date ?? "")?.longMessage ||
+                    getCourseException(teeTime?.date ?? "")?.longMessage}
+                </p>
+              </div>
+            </div>
           </div>
-          <Data
-            className="hidden lg:flex"
-            canChoosePlayer={(teeTime?.availableSlots ?? 4) > 0}
-            players={isGroupBooking ? amountOfPlayers : 4 - (teeTime?.availableSlots ?? 0)}
-            selectedPlayers={amountOfPlayers.toString()}
-            choosePlayers={choosePlayers}
-            soldByImage={teeTime?.soldByImage}
-            soldByName={teeTime?.soldByName}
-            pricePerGolfer={teeTime?.pricePerGolfer}
-            isLoading={isLoading || teeTime === undefined || teeTime === null}
-            availableSlots={teeTime?.availableSlots}
-            isSecondHand={teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND"}
-            teeTimeId={teeTime?.teeTimeId}
-            courseException={getCourseException(teeTime?.date ?? "")}
-            numberOfPlayers={numberOfPlayers}
-            selectStatus={allowedPlayers?.selectStatus}
-            canShowPlayers={!isGroupBooking}
-          />
-        </div>
+        ) : (
+          <div className="flex w-full flex-col gap-2">
+            <div className="flex w-full flex-row justify-between">
+              <div className="font-semibold unmask-time">
+                {isLoading ? (
+                  <div className="h-6 w-[50%] bg-gray-200 rounded-md animate-pulse" />
+                ) : (
+                  <span
+                    className="md:text-[20px] text-[18px]"
+                    id="date-time-checkout"
+                  >
+                    {formatTime(
+                      teeTime?.date ?? "",
+                      true,
+                      course?.timezoneCorrection
+                    )}
+                  </span>
+                )}
+                <div>{course?.name}</div>
+              </div>
+
+              <div className="flex">
+                <Data
+                  className="flex"
+                  canChoosePlayer={(teeTime?.availableSlots ?? 4) > 0}
+                  players={
+                    isGroupBooking
+                      ? amountOfPlayers
+                      : 4 - (teeTime?.availableSlots ?? 0)
+                  }
+                  selectedPlayers={amountOfPlayers.toString()}
+                  choosePlayers={choosePlayers}
+                  pricePerGolfer={teeTime?.pricePerGolfer}
+                  isLoading={
+                    isLoading || teeTime === undefined || teeTime === null
+                  }
+                  availableSlots={teeTime?.availableSlots}
+                  isSecondHand={
+                    teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND"
+                  }
+                  teeTimeId={teeTime?.teeTimeId}
+                  numberOfPlayers={numberOfPlayers}
+                  selectStatus={allowedPlayers?.selectStatus}
+                  canShowPlayers={!isGroupBooking}
+                />
+              </div>
+            </div>
+            <div className="flex w-full gap-1 flex-col  lg:items-start items-start">
+              <Tooltip
+                trigger={
+                  teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND" ? (
+                    <Spinner className="w-[40px] h-[40px]" />
+                  ) : (
+                    <Avatar
+                      src={teeTime?.soldByImage}
+                      className="!min-h-[40px] !min-w-[80px] max-h-[40px] max-w-[80px] h-[40px] w-[80px] md:min-h-[40px] md:min-w-[80px] md:max-h-[40px] md:max-w-[80px] md:h-[40px] md:w-[80px] lg:w-[80px] lg:h-[40px]"
+                      isRounded={false}
+                    />
+                  )
+                }
+                content={
+                  "Sold by " +
+                  (teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND"
+                    ? "another Golf District golfer."
+                    : teeTime?.soldByName)
+                }
+              />
+              <p
+                className={`text-${getTextColor(
+                  getCourseException(teeTime?.date ?? "")?.displayType
+                )} font-semibold`}
+              >
+                {getCourseException(teeTime?.date ?? "")?.shortMessage}
+              </p>
+              <p
+                className={`text-${getTextColor(
+                  getCourseException(teeTime?.date ?? "")?.displayType
+                )} font-semibold`}
+              >
+                {getCourseException(teeTime?.date ?? "")?.longMessage ||
+                  getCourseException(teeTime?.date ?? "")?.longMessage}
+              </p>
+            </div>
+          </div>
+        )}
       </div>
-      <Data
-        className="lg:hidden px-4"
-        canChoosePlayer={(teeTime?.availableSlots ?? 4) > 0}
-        players={isGroupBooking ? amountOfPlayers : 4 - (teeTime?.availableSlots ?? 0)}
-        selectedPlayers={amountOfPlayers.toString()}
-        choosePlayers={choosePlayers}
-        soldByImage={teeTime?.soldByImage}
-        pricePerGolfer={teeTime?.pricePerGolfer}
-        soldByName={teeTime?.soldByName}
-        isLoading={isLoading || teeTime === undefined || teeTime === null}
-        availableSlots={teeTime?.availableSlots}
-        isSecondHand={teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND"}
-        teeTimeId={teeTime?.teeTimeId}
-        courseException={getCourseException(teeTime?.date ?? "")}
-        numberOfPlayers={numberOfPlayers}
-        selectStatus={allowedPlayers?.selectStatus}
-        canShowPlayers={!isGroupBooking}
-      />
+
       <div className="flex flex-col gap-1">
-        <div className="flex flex-col gap-2" >
+        <div className="flex flex-col gap-2">
           {isSupportMemberShip?.supportsProviderMembership === 1 &&
-            listingId == null ? (
+          listingId == null ? (
             <div id="select-membership-checkout">
               <div className="flex gap-2 px-2">
                 <h5 className="">Select MemberShip:</h5>
@@ -280,24 +408,11 @@ export const CheckoutItem = ({
                       ))}
                     </Fragment>
                   ) : null}
-                  {/* {courseMemberships.length === 0 ? (
-                    <Fragment>
-                      <option value="no_membership">
-                        No Membership Selected
-                      </option>
-                    </Fragment>
-                  ) : (
-                    courseMemberships.map((membership) => (
-                      <option key={membership.id} value={membership.id}>
-                        {membership.name}
-                      </option>
-                    ))
-                  )} */}
                 </select>
               </div>
               <div className="flex flex-wrap justify-between gap-1">
                 {courseMemberships.length === 0 ||
-                  membershipStatus === "no_membership" ? null : (
+                membershipStatus === "no_membership" ? null : (
                   <Fragment>
                     {Array.from({ length: Number(playerCount) }, (_, index) => (
                       <div
@@ -361,52 +476,6 @@ export const CheckoutItem = ({
         <div id="weather-guarantee">
           <SensibleWidget sensibleDataToMountComp={sensibleDataToMountComp} />
         </div>
-        // <section className="flex flex-col items-center justify-between gap-4 border-t border-stroke p-4 lg:flex-row">
-        //   <div className="flex flex-col gap-2">
-        //     <div className="flex items-center gap-2">
-        //       <div className="text-secondary-black">
-        //         Add a Weather Guarantee for{" "}
-        //         {sensiblePrice ? formatMoney(sensiblePrice) : "-"}
-        //       </div>
-        //       <Tooltip
-        //         className="hidden lg:block"
-        //         trigger={
-        //           <div className="flex items-center gap-1">
-        //             <Info className="h-[14px] w-[14px]" />
-        //             <div className="whitespace-nowrap text-[12px] text-[#B0B7BC]">
-        //               More info
-        //             </div>
-        //           </div>
-        //         }
-        //         content="Learn more about the Weather Guarantee"
-        //       />
-        //     </div>
-        //     <div className="flex items-center gap-2">
-        //       <div className="text-[12px] text-secondary-black">Offered by</div>
-        //       <SensibleIcon className="h-[24px] w-[138px]" />
-        //     </div>
-        //   </div>
-        //   <div className="flex w-full items-center justify-evenly gap-2 lg:w-fit lg:justify-end">
-        //     <Tooltip
-        //       className="block lg:hidden"
-        //       trigger={
-        //         <div className="flex items-center gap-1">
-        //           <Info className="h-[14px] w-[14px]" />
-        //           <div className="whitespace-nowrap text-[12px] text-[#B0B7BC]">
-        //             More info
-        //           </div>
-        //         </div>
-        //       }
-        //       content="Learn more about the Weather Guarantee"
-        //     />
-        //     <OutlineButton
-        //       onClick={handleSensibleModalOpen}
-        //       className="h-fit whitespace-nowrap bg-transparent"
-        //     >
-        //       Add Coverage
-        //     </OutlineButton>
-        //   </div>
-        // </section>
       )}
     </div>
   );
@@ -418,39 +487,35 @@ const Data = ({
   players,
   selectedPlayers,
   choosePlayers,
-  soldByImage,
-  soldByName,
   pricePerGolfer,
   isLoading,
   availableSlots,
   isSecondHand,
   teeTimeId,
-  courseException,
   numberOfPlayers,
   selectStatus,
-  canShowPlayers
+  canShowPlayers,
 }: {
   className: string;
   canChoosePlayer: boolean;
   players?: number;
   selectedPlayers: string;
   choosePlayers: (amount: string) => void;
-  soldByImage?: string;
-  soldByName?: string;
   pricePerGolfer?: number;
   isLoading: boolean;
   availableSlots?: number;
   isSecondHand: boolean;
   teeTimeId?: string | undefined;
-  courseException: NotificationObject | null;
   numberOfPlayers?: string[];
   selectStatus?: string;
   canShowPlayers?: boolean;
 }) => {
+  const isMobile = useMediaQuery("(max-width: 768px)");
+  const { course } = useCourseContext();
   if (isLoading) {
     return (
       <div
-        className={`flex w-full flex-col justify-between gap-2 text-sm lg:flex-row ${className}`}
+        className={`flex w-full flex-row justify-between gap-2 text-sm lg:flex-row ${className}`}
       >
         <div className="flex gap-1 lg:items-start">
           <div className="h-8 w-8 bg-gray-200 rounded-full  animate-pulse" />
@@ -467,78 +532,33 @@ const Data = ({
       </div>
     );
   }
-
-  const getTextColor = (type) => {
-    if (type === "FAILURE") return "red";
-    if (type === "SUCCESS") return "primary";
-    if (type === "WARNING") return "primary-gray";
-  };
   return (
-    <div
-      className={`flex w-full flex-col justify-between gap-2 text-sm lg:flex-row ${className}`}
-    >
-      <div className="flex gap-1 lg:items-start">
-        <div className="flex gap-1 flex-col items-start">
-          <Tooltip
-            trigger={
-              isSecondHand ? (
-                <Spinner className="w-[40px] h-[40px]" />
-              ) : (
-                <Avatar
-                  src={soldByImage}
-                  className="!min-h-[40px] !min-w-[80px] max-h-[40px] max-w-[80px] h-[40px] w-[80px] md:min-h-[40px] md:min-w-[80px] md:max-h-[40px] md:max-w-[80px] md:h-[40px] md:w-[80px] lg:w-[80px] lg:h-[40px]"
-                  isRounded={false}
-                />
-              )
-            }
-            content={
-              "Sold by " +
-              (isSecondHand ? "another Golf District golfer." : soldByName)
-            }
-          />
-          <p
-            className={`text-${getTextColor(
-              courseException?.displayType
-            )} font-semibold`}
-          >
-            {courseException?.shortMessage}
-          </p>
-          <p
-            className={`text-${getTextColor(
-              courseException?.displayType
-            )} font-semibold`}
-          >
-            {courseException?.longMessage || courseException?.longMessage}
-          </p>
-        </div>
-
-        {/* <div className="flex flex-wrap gap-1">
-          <div>Sold by</div>
-          {soldByName}
-        </div> */}
-      </div>
+    <div className={` w-full gap-2 text-sm  ${className}`}>
       <div className="flex flex-col gap-2 lg:items-end">
-        {canShowPlayers ? <div className="flex min-h-[31px] items-center gap-2">
-          <OutlineClub />
-          {canChoosePlayer ? (
-            <ChoosePlayers
-              players={selectedPlayers}
-              setPlayers={choosePlayers}
-              playersOptions={PlayersOptions}
-              availableSlots={availableSlots ?? 0}
-              isDisabled={isSecondHand || selectStatus === "ALL_PLAYERS"}
-              teeTimeId={teeTimeId}
-              numberOfPlayers={numberOfPlayers ? numberOfPlayers : []}
-              id="number-of-players-checkout"
-            />
-          ) : (
-            players && (
-              <div>
-                {players} golfer{players > 1 ? "s" : ""}
-              </div>
-            )
-          )}
-        </div> : (
+        {canShowPlayers ? (
+          <div className="flex min-h-[31px] items-center gap-2">
+            {!isMobile && <OutlineClub />}
+            {canChoosePlayer ? (
+              <ChoosePlayers
+                players={selectedPlayers}
+                setPlayers={choosePlayers}
+                playersOptions={PlayersOptions}
+                availableSlots={availableSlots ?? 0}
+                isDisabled={isSecondHand || selectStatus === "ALL_PLAYERS"}
+                teeTimeId={teeTimeId}
+                numberOfPlayers={numberOfPlayers ? numberOfPlayers : []}
+                id="number-of-players-checkout"
+                supportsGroupBooking={course?.supportsGroupBooking}
+              />
+            ) : (
+              players && (
+                <div>
+                  {players} golfer{players > 1 ? "s" : ""}
+                </div>
+              )
+            )}
+          </div>
+        ) : (
           players && (
             <div>
               {players} golfer{players > 1 ? "s" : ""}
@@ -546,10 +566,12 @@ const Data = ({
           )
         )}
         <div className="flex" id="price-per-golfer-checkout">
-          <div className="text-[18px] font-semibold text-secondary-black">
+          <div className="md:text-[18px] text-[16px] font-semibold text-secondary-black">
             {formatMoney(pricePerGolfer ?? 1 ?? 0)}
           </div>
-          <div className="text-[16px] text-primary-gray">/golfer</div>
+          <div className="md:text-[16px] text-[14px] text-primary-gray">
+            /golfer
+          </div>
         </div>
       </div>
     </div>

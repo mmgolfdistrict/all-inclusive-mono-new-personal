@@ -30,9 +30,10 @@ import { Controller, useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
 import { useDebounce } from "usehooks-ts";
 import { OutlineButton } from "../buttons/outline-button";
-import CountryDropdown, { Country } from "~/components/dropdown/country-dropdown";
+import CountryDropdown from "~/components/dropdown/country-dropdown";
+import type { Country } from "~/components/dropdown/country-dropdown";
 import { allCountries } from "country-telephone-data";
-import { CountryData } from "~/utils/types";
+import type { CountryData } from "~/utils/types";
 import { PhoneNumberUtil } from "google-libphonenumber";
 
 const phoneUtil = PhoneNumberUtil.getInstance();
@@ -54,7 +55,6 @@ export const EditProfileForm = () => {
     watch,
     handleSubmit,
     setError,
-    clearErrors,
     getValues,
     control,
     formState: { errors },
@@ -121,10 +121,10 @@ export const EditProfileForm = () => {
   }, [isLoaded, loadError]);
 
   const [currentCountry, setCurrentCountry] = useState<string>("us");
-  const [currentPhoneNumber, setCurrentPhoneNumber] = useState<string>("");
-  const debouncedPhoneNumber = useDebounce<string>(currentPhoneNumber, 2000);
-  const [excludedCountries, setExcludeCountries] = useState<string[]>(['by', 'cu', 'kp', 'sy', 've']);
-  const [countries, setCountries] = useState<Country[]>(
+  const [excludedCountries, _setExcludeCountries] = useState<string[]>(
+    ['by', 'cu', 'kp', 'sy', 've', 'ir']
+  );
+  const [countries, _setCountries] = useState<Country[]>(
     countryList.filter(
       (c: Country) => !excludedCountries.includes(c.iso2)
     ).map((c: Country) => {
@@ -144,7 +144,9 @@ export const EditProfileForm = () => {
       const regionCode: string = phoneUtil.getRegionCodeForCountryCode(countryCode);
       return regionCode.toLowerCase();
     } catch (error) {
-      console.error("Invalid phone number", error);
+      if (error) {
+        console.error("Invalid phone number", error);
+      }
       return "";
     }
   };
@@ -152,32 +154,11 @@ export const EditProfileForm = () => {
   useEffect(function getCurrentCountryCode() {
     const phoneNumber = getValues("phoneNumber");
     const phoneNumberCountryCode = getValues("phoneNumberCountryCode");
-    if (phoneNumber) {
+    if (phoneNumber?.length === 10 && phoneNumberCountryCode) {
       const countryCode = extractCountryISO2(`${phoneNumberCountryCode}${phoneNumber}`);
       setCurrentCountry(countryCode);
     }
-    setCurrentPhoneNumber(`${phoneNumberCountryCode}${phoneNumber}`);
   }, [getValues("phoneNumber"), getValues("phoneNumberCountryCode")]);
-
-  useEffect(() => {
-    if (debouncedPhoneNumber && getValues("phoneNumber")) {
-      try {
-        const parsedNumber = phoneUtil.parse(`+${debouncedPhoneNumber}`, currentCountry.toUpperCase());
-        const valid = phoneUtil.isValidNumber(parsedNumber);
-        if (!valid) {
-          setError("phoneNumber", {
-            message: "Phone number seems invalid, please enter a valid phone number.",
-          });
-        } else {
-          clearErrors("phoneNumber");
-        }
-      } catch (error: any) {
-        setError("phoneNumber", {
-          message: "Phone number seems invalid, please enter a valid phone number.",
-        });
-      }
-    }
-  }, [debouncedPhoneNumber]);
 
   const handleSelectCountry = (country: Country) => {
     const { iso2, dialCode } = country;
@@ -187,8 +168,8 @@ export const EditProfileForm = () => {
 
   const handlePhoneNumberChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, "");
-    const countryCode = getValues("phoneNumberCountryCode");
-    setCurrentPhoneNumber(`${countryCode}${value}`);
+    // const countryCode = getValues("phoneNumberCountryCode");
+    // setCurrentPhoneNumber(`${countryCode}${value}`);
     setValue("phoneNumber", value);
   }
 
@@ -264,15 +245,9 @@ export const EditProfileForm = () => {
       setValue("email", userData?.email ?? "");
       setValue(
         "phoneNumberCountryCode",
-        userData?.phoneNumberCountryCode ?? null
+        userData?.phoneNumberCountryCode ?? 1
       );
-      setValue("phoneNumber", userData?.phoneNumber ?? "");
-      const countryCode =
-        userData?.phoneNumberCountryCode === 0
-          ? 1
-          : userData?.phoneNumberCountryCode;
-      const phoneNumber = userData?.phoneNumber;
-      setCurrentPhoneNumber(() => `${countryCode}${phoneNumber}`);
+
       setValue("phoneNumber", userData?.phoneNumber ?? "");
       setValue("handle", userData?.handle ?? "");
       // setValue("location", userData?.location ?? "");
@@ -381,7 +356,6 @@ export const EditProfileForm = () => {
       setIsSubmitting(false);
       return;
     }
-
     try {
       const prevData = {
         name: userData?.name ?? "",
@@ -513,6 +487,7 @@ export const EditProfileForm = () => {
           render={({ field }) => (
             <Input
               {...field}
+              required
               label="Name"
               type="text"
               placeholder="Enter your full name"
@@ -533,6 +508,7 @@ export const EditProfileForm = () => {
           render={({ field }) => (
             <Input
               {...field}
+              required
               label="Email"
               type="email"
               placeholder="Enter your email address"
@@ -559,6 +535,7 @@ export const EditProfileForm = () => {
                   className="text-[14px] text-primary-gray"
                 >
                   Phone Number
+                  <span className="text-red"> *</span>
                 </label>
               </div>
               <div className="flex rounded-lg bg-secondary-white px-1 text-[14px] text-gray-500 outline-none text-ellipsis h-12">
@@ -600,6 +577,7 @@ export const EditProfileForm = () => {
             <Input
               {...field}
               label="Handle"
+              required
               className="w-full"
               type="text"
               placeholder="Enter your handle"
@@ -623,6 +601,7 @@ export const EditProfileForm = () => {
           render={({ field }) => (
             <Input
               {...field}
+              required
               label="Addr&#8204;ess1"
               type="text"
               list="places"
@@ -668,6 +647,7 @@ export const EditProfileForm = () => {
           render={({ field }) => (
             <Input
               {...field}
+              required
               label="City"
               type="text"
               list="places"
@@ -699,6 +679,7 @@ export const EditProfileForm = () => {
                 style={{ fontSize: "14px", color: "rgb(109 119 124" }}
               >
                 State
+                <span className="text-red"> *</span>
               </label>
               <Select
                 size="small"
@@ -729,6 +710,7 @@ export const EditProfileForm = () => {
                   </MenuItem>
                 ))}
               </Select>
+              {errors?.state?.message && <p className="text-[12px] text-red">{errors?.state?.message}</p>}
             </div>
           )}
         />
@@ -739,6 +721,7 @@ export const EditProfileForm = () => {
             <Input
               {...field}
               label="Zip"
+              required
               type="text"
               list="places"
               placeholder="Enter your zip"
@@ -790,6 +773,7 @@ export const EditProfileForm = () => {
                 style={{ fontSize: "14px", color: "rgb(109 119 124)" }}
               >
                 Country
+                <span className="text-red"> *</span>
               </label>
               <Select
                 size="small"

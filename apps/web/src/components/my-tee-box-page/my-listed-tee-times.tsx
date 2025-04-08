@@ -24,6 +24,10 @@ export type MyListedTeeTimeType = {
   teeTimeId: string;
   listedSlotsCount?: number;
   groupId: string | null;
+  weatherGuaranteeAmount?: number;
+  isGroupBooking?: boolean;
+  playerCount?: number;
+  listingIdFromRedis?: string | null;
 };
 
 export const MyListedTeeTimes = () => {
@@ -94,26 +98,26 @@ export const MyListedTeeTimes = () => {
           <tbody className={`max-h-[300px] w-full flex-col overflow-scroll`}>
             {isLoading
               ? Array(3)
-                  .fill(null)
-                  .map((_, idx) => <SkeletonRow key={idx} />)
+                .fill(null)
+                .map((_, idx) => <SkeletonRow key={idx} />)
               : myListedTeeTimes?.map((i, idx) => (
-                  <TableRow
-                    course={i.courseName}
-                    date={i.date}
-                    iconSrc={i.courseLogo}
-                    key={idx}
-                    listedPrice={i?.listPrice ?? 0}
-                    golfers={i?.listedSlotsCount || 0}
-                    status={i.status}
-                    courseId={i.courseId}
-                    teeTimeId={i.teeTimeId}
-                    listingId={i.listingId ?? ""}
-                    timezoneCorrection={course?.timezoneCorrection}
-                    openManageListTeeTimeListing={() =>
-                      openManageListTeeTimeListing(i)
-                    }
-                  />
-                ))}
+                <TableRow
+                  course={i.courseName}
+                  date={i.date}
+                  iconSrc={i.courseLogo}
+                  key={idx}
+                  listedPrice={i?.listPrice ?? 0}
+                  golfers={i?.listedSlotsCount || 0}
+                  status={i.status}
+                  courseId={i.courseId}
+                  teeTimeId={i.teeTimeId}
+                  listingId={i.listingId ?? ""}
+                  timezoneCorrection={course?.timezoneCorrection}
+                  openManageListTeeTimeListing={() =>
+                    openManageListTeeTimeListing(i)
+                  }
+                />
+              ))}
           </tbody>
         </table>
       </div>

@@ -38,6 +38,7 @@ import type { TokenizeService } from "../token/tokenize.service";
 import type { UserWaitlistService } from "../user-waitlist/userWaitlist.service";
 import { loggerService } from "../webhooks/logging.service";
 import { groupBookings } from "@golf-district/database/schema/groupBooking";
+import { CacheService } from "../infura/cache.service";
 
 dayjs.extend(UTC);
 dayjs.extend(timezone);
@@ -111,6 +112,10 @@ interface ListingData {
   listedSpots: string[] | null;
   listedSlotsCount: number;
   groupId: string | null;
+  weatherGuaranteeAmount?: number;
+  isGroupBooking?: boolean;
+  playerCount: number;
+  listingIdFromRedis?: string | null;
 }
 
 interface TransferData {
@@ -148,6 +153,7 @@ export type ProviderBooking = {
  */
 export class BookingService {
   private logger = Logger(BookingService.name);
+  private cacheService: CacheService;
   /**
    * Constructor for BookingService.
    * @param {Db} database - The database instance.
@@ -164,7 +170,9 @@ export class BookingService {
     private readonly hyperSwitchService: HyperSwitchService,
     private readonly sensibleService: SensibleService,
     private readonly userWaitlistService: UserWaitlistService
-  ) {}
+  ) {
+    this.cacheService = new CacheService(process.env.REDIS_URL!, process.env.REDIS_TOKEN!);
+  }
 
   createCounterOffer = async (userId: string, bookingIds: string[], offerId: string, amount: number) => {
     //find owner of each booking
@@ -392,6 +400,9 @@ export class BookingService {
     this.logger.info(`getMyListedTeeTimes called with userId: ${userId}`);
     const localDateTimePlus1Hour = dayjs.utc().utcOffset(-7).add(1, "hour");
 
+    const listingIdFromRedis = await this.cacheService?.getCache("listing_id");
+    console.log("Retrieved listingId from Redis Cache: ", listingIdFromRedis);
+
     const data = await this.database
       .select({
         bookingId: bookings.id,
@@ -408,6 +419,8 @@ export class BookingService {
         greenFeePerPlayer: teeTimes.greenFeePerPlayer,
         minimumOfferPrice: bookings.minimumOfferPrice,
         groupId: bookings.groupId,
+        weatherGuaranteeAmount: bookings.weatherGuaranteeAmount,
+        playerCount: bookings.playerCount,
       })
       .from(bookings)
       .innerJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -454,6 +467,10 @@ export class BookingService {
             listedSpots: [teeTime.bookingId],
             listedSlotsCount: teeTime.listedSlots,
             groupId: teeTime.groupId ?? "",
+            weatherGuaranteeAmount: teeTime.weatherGuaranteeAmount ?? 0,
+            isGroupBooking: false,
+            playerCount: teeTime.playerCount,
+            listingIdFromRedis: listingIdFromRedis as string | null | undefined,
           };
         } else {
           const currentEntry = combinedData[teeTime.teeTimesId];
@@ -1156,22 +1173,22 @@ export class BookingService {
       });
       throw new Error("Cannot list more than 4 bookings.");
     }
-    for (const booking of ownedBookings) {
-      if (booking.isListed) {
-        this.logger.warn(`Booking ${booking.id} is already listed.`);
-        loggerService.errorLog({
-          applicationName: "golfdistrict-foreup",
-          clientIP: "",
-          userId,
-          url: "/createListingForBookings",
-          userAgent: "",
-          message: "TEE_TIME_LISTED_FAILED",
-          stackTrace: "",
-          additionalDetailsJSON: "One or more bookings from this tee time is already listed",
-        });
-        throw new Error(`One or more bookings from this tee time is already listed.`);
-      }
-    }
+    // for (const booking of ownedBookings) {
+    //   if (booking.isListed) {
+    //     this.logger.warn(`Booking ${booking.id} is already listed.`);
+    //     loggerService.errorLog({
+    //       applicationName: "golfdistrict-foreup",
+    //       clientIP: "",
+    //       userId,
+    //       url: "/createListingForBookings",
+    //       userAgent: "",
+    //       message: "TEE_TIME_LISTED_FAILED",
+    //       stackTrace: "",
+    //       additionalDetailsJSON: "One or more bookings from this tee time is already listed",
+    //     });
+    //     throw new Error(`One or more bookings from this tee time is already listed.`);
+    //   }
+    // }
     //validate that all bookings are for the same course
     // const courseIds = new Set(ownedBookings.map((booking) => booking.courseId));
     // if (courseIds.size > 1) {
@@ -1409,6 +1426,214 @@ export class BookingService {
     );
     // console.log("CREATING LISTING FOR DATE:", date, formattedTime);
     return { success: true, body: { listingId: toCreate.id }, message: "Listings created successfully." };
+  };
+
+  updateListingForBookings = async (
+    userId: string,
+    listId: string,
+    updatedPrice: number,
+    updatedSlots: number,
+    bookingIds: string[],
+    endTime: Date
+  ) => {
+    this.logger.info(`updateListingForBookings called with userId: ${userId}, listId: ${listId}`);
+
+    if (new Date().getTime() >= endTime.getTime()) {
+      this.logger.warn("End time cannot be before current time");
+      loggerService.errorLog({
+        applicationName: "golfdistrict-foreup",
+        clientIP: "",
+        userId,
+        url: "/createListingForBookings",
+        userAgent: "",
+        message: "TEE_TIME_LISTED_FAILED",
+        stackTrace: "",
+        additionalDetailsJSON: "End time cannot be before current time.",
+      });
+      throw new Error("End time cannot be before current time");
+    }
+
+    const existingListing = await this.database
+      .select()
+      .from(lists)
+      .where(eq(lists.id, listId))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error retrieving listing: ${err}`);
+        throw new Error("Error retrieving listing");
+      });
+
+    if (!existingListing.length) {
+      this.logger.warn(`Listing with ID ${listId} not found.`);
+      throw new Error(`Listing with ID ${listId} not found.`);
+    }
+
+    const [previousListing] = existingListing;
+
+    if (previousListing?.userId !== userId) {
+      this.logger.warn(`User ${userId} does not own the specified listing.`);
+      throw new Error("User does not own the specified listing.");
+    }
+
+    if (!updatedSlots) {
+      this.logger.warn(`Slots cannot be less than one.`);
+      throw new Error("Slots cannot be less than one.");
+    }
+
+    // Fetching user and booking details
+    const [user] = await this.database.select().from(users).where(eq(users.id, userId)).execute();
+
+    if (!user) {
+      this.logger.error(`User with ID ${userId} not found.`);
+      throw new Error(`User with ID ${userId} not found.`);
+    }
+
+    if (!bookingIds[0]) {
+      this.logger.warn(`No bookings specified.`);
+      throw new Error("No bookings specified.");
+    }
+
+    const bookingId: string = bookingIds[0];
+
+    const ownedBookings = await this.database
+      .select({
+        id: bookings.id,
+        courseId: teeTimes.courseId,
+        teeTimeId: bookings.teeTimeId,
+        isListed: bookings.isListed,
+        providerDate: teeTimes.providerDate,
+        playerCount: bookings.playerCount,
+        totalAmount: bookings.totalAmount,
+        timezoneCorrection: courses.timezoneCorrection,
+        providerBookingId: bookings.providerBookingId,
+      })
+      .from(bookings)
+      .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
+      .leftJoin(courses, eq(courses.id, teeTimes.courseId))
+      .where(and(eq(bookings.ownerId, userId), inArray(bookings.id, bookingIds)))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error retrieving bookings: ${err}`);
+        loggerService.errorLog({
+          userId: userId,
+          url: "/updateListingForBookings",
+          userAgent: "",
+          message: "ERROR_RETRIEVING_BOOKINGS",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            listId,
+            updatedPrice,
+            updatedSlots,
+          }),
+        });
+        throw new Error("Error retrieving bookings");
+      });
+    if (!ownedBookings.length) {
+      this.logger.debug(`Owned bookings: ${JSON.stringify(ownedBookings)}`);
+      this.logger.warn(`User ${userId} does not own  specified bookings.`);
+      throw new Error("User does not  own specified bookings.");
+    }
+    if (ownedBookings.length > 4) {
+      this.logger.warn(`Cannot list more than 4 bookings.`);
+      loggerService.errorLog({
+        applicationName: "golfdistrict-foreup",
+        clientIP: "",
+        userId,
+        url: "/updateListingForBookings",
+        userAgent: "",
+        message: "TEE_TIME_LISTED_FAILED",
+        stackTrace: "",
+        additionalDetailsJSON: "Cannot list more than 4 bookings.",
+      });
+      throw new Error("Cannot list more than 4 bookings.");
+    }
+
+    const [firstBooking] = ownedBookings;
+    if (!firstBooking) {
+      this.logger.warn(`Booking ${bookingId} not found.`);
+      throw new Error(`Booking ${bookingId} not found.`);
+    }
+    const courseId = firstBooking.courseId ?? "";
+
+    const [course] = await this.database
+      .select({
+        key: assets.key,
+        extension: assets.extension,
+        websiteURL: courses.websiteURL,
+        name: courses.name,
+        id: courses.id,
+      })
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .leftJoin(assets, eq(assets.id, courses.logoId))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error retrieving course: ${err}`);
+        loggerService.errorLog({
+          userId: userId,
+          url: "/updateListingForBookings",
+          userAgent: "",
+          message: "ERROR_RETRIEVING_COURSE",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            courseId,
+          }),
+        });
+        throw new Error(`Error retrieving course`);
+      });
+
+    // Update the listing with new slots and price
+    await this.database
+      .update(lists)
+      .set({
+        listPrice: updatedPrice * 100,
+        slots: updatedSlots,
+      })
+      .where(eq(lists.id, listId))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error updating listing: ${err}`);
+        throw new Error("Error updating listing");
+      });
+
+    this.logger.info(`Listing updated successfully for user ${userId}, listId ${listId}`);
+
+    // Send email notification about the listing update
+    await this.notificationService
+      .sendEmailByTemplate(
+        user.email,
+        "Listing Updated",
+        process.env.SENDGRID_LISTING_UPDATED_TEMPLATE_ID!,
+        {
+          CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`,
+          CourseURL: course?.websiteURL || "",
+          CourseName: course?.name,
+          HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+          CourseReservationID: firstBooking?.providerBookingId ?? "-",
+          PlayDateTime: formatTime(
+            firstBooking.providerDate ?? "",
+            true,
+            firstBooking.timezoneCorrection ?? 0
+          ),
+          PreviousPlayerCount: previousListing.slots,
+          NewPlayerCount: updatedSlots,
+          PreviousListedPrice: previousListing.listPrice / 100,
+          NewListedPrice: updatedPrice,
+          CustomerFirstName: user?.name?.split(" ")[0],
+        },
+        []
+      )
+      .catch((err) => {
+        this.logger.error(`Error sending email: ${err}`);
+        throw new Error("Error sending email");
+      });
+
+    this.logger.info(`Email sent to ${user.email} about listing update.`);
+
+    return {
+      success: true,
+      message: "Listing updated and notification sent to the user.",
+    };
   };
 
   /**
@@ -3594,6 +3819,30 @@ export class BookingService {
         throw new Error(`Error finding tee time id`);
       });
 
+    const [customerDetails] = await this.database
+      .select({
+        userEmail: users.email,
+        userName: users.name,
+      })
+      .from(users)
+      .where(eq(users.id, userId))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error finding user with id ${userId}: ${err}`);
+        loggerService.errorLog({
+          userId: userId,
+          url: "/reserveBooking",
+          userAgent: "",
+          message: "ERROR_FINDING_USER",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            userId,
+            teeTimeId,
+          }),
+        });
+        throw new Error(`Error finding user by id`);
+      });
+
     //   await cacheManager.set(`teeTime:${teeTimeId}`, teeTime); // Cache for 1 hour
     // }
 
@@ -3693,6 +3942,7 @@ export class BookingService {
         name: providerCustomer.name,
         email: providerCustomer.email,
         phone: providerCustomer.phone,
+        providerCourseId: teeTime.providerCourseId,
       });
       bookingStage = "Creating Booking on Provider";
       booking = await provider
@@ -3798,7 +4048,14 @@ export class BookingService {
         cartId,
         sensibleQuoteId,
         userId,
-        bookingStage
+        bookingStage,
+        teeTimeId,
+        {
+          userName: customerDetails?.userName ?? "",
+          userEmail: customerDetails?.userEmail ?? "",
+          courseName: teeTime.courseName ?? "",
+          teeTimeDate: teeTime.providerDate,
+        }
       );
       throw "Booking failed on provider";
       // await this.hyperSwitchService.refundPayment(payment_id);
@@ -4295,7 +4552,7 @@ export class BookingService {
       bookingId,
       providerBookingId: "",
       status: "Reserved",
-      isEmailSend: true,
+      isEmailSend: false,
     } as ReserveTeeTimeResponse;
   };
 
@@ -4737,6 +4994,30 @@ export class BookingService {
         throw new Error(`Error finding tee time id`);
       });
 
+    const [customerDetails] = await this.database
+      .select({
+        userEmail: users.email,
+        userName: users.name,
+      })
+      .from(users)
+      .where(eq(users.id, userId))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error finding user with id ${userId}: ${err}`);
+        loggerService.errorLog({
+          userId: userId,
+          url: "/reserveBooking",
+          userAgent: "",
+          message: "ERROR_FINDING_USER",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            userId,
+            teeTimeIds,
+          }),
+        });
+        throw new Error(`Error finding user by id`);
+      });
+
     //   await cacheManager.set(`teeTime:${teeTimeId}`, teeTime); // Cache for 1 hour
     // }
 
@@ -4852,6 +5133,7 @@ export class BookingService {
           name: providerCustomer.name,
           email: providerCustomer.email,
           phone: providerCustomer.phone,
+          providerCourseId: teeTime.providerCourseId,
         });
         bookingStage = "Creating Booking on Provider";
         const booking = await provider
@@ -4970,7 +5252,14 @@ export class BookingService {
           cartId,
           sensibleQuoteId,
           userId,
-          bookingStage
+          bookingStage,
+          teeTimeIds,
+          {
+            userName: customerDetails?.userName ?? "",
+            userEmail: customerDetails?.userEmail ?? "",
+            courseName: firstTeeTime.courseName ?? "",
+            teeTimeDate: firstTeeTime.providerDate,
+          }
         );
         for (const providerBooking of providerBookings) {
           const providerBookingId = providerBooking.providerBookingId;
@@ -5066,7 +5355,14 @@ export class BookingService {
           cartId,
           sensibleQuoteId,
           userId,
-          bookingStage
+          bookingStage,
+          teeTimeIds,
+          {
+            userName: customerDetails?.userName ?? "",
+            userEmail: customerDetails?.userEmail ?? "",
+            courseName: firstTeeTime.courseName ?? "",
+            teeTimeDate: firstTeeTime.providerDate,
+          }
         );
         for (const providerBooking of providerBookings) {
           const providerBookingId = providerBooking.providerBookingId;

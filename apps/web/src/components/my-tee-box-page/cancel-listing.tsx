@@ -10,8 +10,10 @@ import { toast } from "react-toastify";
 import { Avatar } from "../avatar";
 import { FilledButton } from "../buttons/filled-button";
 import { OutlineButton } from "../buttons/outline-button";
-import { Close } from "../icons/close";
 import { Players } from "../icons/players";
+import Flyout from "../modal/flyout";
+import { Modal } from "../modal/modal";
+import { useMediaQuery } from "usehooks-ts";
 
 type SideBarProps = {
   isCancelListingOpen: boolean;
@@ -42,13 +44,14 @@ export const CancelListing = ({
   refetch,
   needRedirect,
 }: SideBarProps) => {
-  const { toggleSidebar } = useSidebar({
+  useSidebar({
     isOpen: isCancelListingOpen,
     setIsOpen: setIsCancelListingOpen,
   });
 
   const cancel = api.teeBox.cancelListing.useMutation();
   const cancelGroupListing = api.teeBox.cancelGroupListing.useMutation();
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   const router = useRouter();
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -99,89 +102,77 @@ export const CancelListing = ({
     }
   };
 
-  return (
-    <>
-      {isCancelListingOpen && (
-        <div
-          className={`fixed left-0 top-0 z-20 h-[100dvh] w-screen backdrop-blur `}
-        >
-          <div className="h-screen bg-[#00000099]" />
+  const CancelListingDetail = () => {
+    return (
+      <>
+        {isLoading && <LoadingContainer isLoading={isLoading}>
+          <div></div>
+        </LoadingContainer>}
+        <div className="flex flex-col gap-6 px-0 sm:px-4">
+          <div>
+            <div className="px-4 pb-4 text-center text-2xl font-[300] md:text-3xl">
+              Are you sure you want to cancel this listing?
+            </div>
+            <TeeTimeItem
+              courseName={courseName ?? ""}
+              courseImage={courseLogo ?? ""}
+              teeTimeDate={date ?? ""}
+              golferCount={golferCount ?? 0}
+              timezoneCorrection={course?.timezoneCorrection}
+            />
+          </div>
+          <div className="flex flex-col gap-2 rounded-xl bg-secondary-white px-4 py-5 text-center">
+            <div className="font-[300] text-primary-gray">
+              List price per golfer
+            </div>
+            <div className="text-lg md:text-2xl">
+              {formatMoney(pricePerGolfer ?? 0)}
+            </div>
+            <div className="h-[1px] w-full bg-stroke" />
+            <div className="font-[300] text-primary-gray">
+              Number of spots listed
+            </div>
+            <div className="text-lg md:text-2xl">{golferCount}</div>
+          </div>
         </div>
-      )}
-      <LoadingContainer isLoading={isLoading}>
-        <div></div>
-      </LoadingContainer>
-      <aside
-        // ref={sidebar}
-        className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[500px] md:h-[100dvh] ${
-          isCancelListingOpen ? "translate-x-0" : "translate-x-full"
-        }`}
-      >
-        <div className="relative flex h-full flex-col">
-          <div className="flex items-center justify-between p-4">
-            <div className="text-lg">Cancel Listing</div>
-
-            <button
-              // ref={trigger}
-              onClick={toggleSidebar}
-              aria-controls="sidebar"
-              aria-expanded={isCancelListingOpen}
-              className="z-[2]"
-              aria-label="sidebarToggle"
+        <div className="flex flex-col gap-4 px-4 pb-6">
+          <div className="flex flex-col gap-2">
+            <FilledButton
+              className="w-full"
+              onClick={cancelListing}
+              data-testid="cancel-listing-button-id"
             >
-              <Close className="h-[25px] w-[25px]" />
-            </button>
-          </div>
-          <div className="flex h-full flex-col justify-between overflow-y-auto">
-            <div className="flex flex-col gap-6 px-0 sm:px-4">
-              <div>
-                <div className="px-4 pb-4 text-center text-2xl font-[300] md:text-3xl">
-                  Are you sure you want to cancel this listing?
-                </div>
-                <TeeTimeItem
-                  courseName={courseName ?? ""}
-                  courseImage={courseLogo ?? ""}
-                  teeTimeDate={date ?? ""}
-                  golferCount={golferCount ?? 0}
-                  timezoneCorrection={course?.timezoneCorrection}
-                />
-              </div>
-              <div className="flex flex-col gap-2 rounded-xl bg-secondary-white px-4 py-5 text-center">
-                <div className="font-[300] text-primary-gray">
-                  List price per golfer
-                </div>
-                <div className="text-lg md:text-2xl">
-                  {formatMoney(pricePerGolfer ?? 0)}
-                </div>
-                <div className="h-[1px] w-full bg-stroke" />
-                <div className="font-[300] text-primary-gray">
-                  Number of spots listed
-                </div>
-                <div className="text-lg md:text-2xl">{golferCount}</div>
-              </div>
-            </div>
-            <div className="flex flex-col gap-4 px-4 pb-6">
-              <div className="flex flex-col gap-2">
-                <FilledButton
-                  className="w-full"
-                  onClick={cancelListing}
-                  data-testid="cancel-listing-button-id"
-                >
-                  Cancel Listing
-                </FilledButton>
+              Cancel Listing
+            </FilledButton>
 
-                <OutlineButton
-                  onClick={() => setIsCancelListingOpen(false)}
-                  data-testid="cancel-button-id"
-                >
-                  Cancel
-                </OutlineButton>
-              </div>
-            </div>
+            <OutlineButton
+              onClick={() => setIsCancelListingOpen(false)}
+              data-testid="cancel-button-id"
+            >
+              Cancel
+            </OutlineButton>
           </div>
         </div>
-      </aside>
-    </>
+      </>
+    );
+  };
+
+  return isMobile ? (
+    <Modal
+      isOpen={isCancelListingOpen}
+      title="Cancel Listing"
+      onClose={() => setIsCancelListingOpen(false)}
+    >
+      <CancelListingDetail />
+    </Modal>
+  ) : (
+    <Flyout
+      isOpen={isCancelListingOpen}
+      title="Cancel Listing"
+      setIsOpen={() => setIsCancelListingOpen(false)}
+    >
+      <CancelListingDetail />
+    </Flyout>
   );
 };
 
@@ -203,7 +194,7 @@ const TeeTimeItem = ({
       <div className="flex items-center gap-4">
         <Avatar src={courseImage} />
         <div className="flex flex-col">
-          <div className="whitespace-nowrap text-secondary-black">
+          <div className="whitespace-normal text-secondary-black overlow-y-auto">
             {courseName}
           </div>
           <div className="text-primary-gray">

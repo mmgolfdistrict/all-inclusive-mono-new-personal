@@ -28,6 +28,9 @@ export interface CustomerCart {
   cartId?: string;
   courseName?: string;
   playDateTime?: string;
+  playerCount?: string;
+  teeTimeType?: string;
+  listingId?: string;
 }
 
 export interface UpdatePayment {
