@@ -380,6 +380,7 @@ export const DailyTeeTimes = ({
                       handleLoading={handleLoading}
                       refetch={refetch}
                       groupId={i?.groupId}
+                      allowSplit={i?.allowSplit}
                     />
                   </li>
                 );

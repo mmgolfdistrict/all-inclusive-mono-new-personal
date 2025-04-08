@@ -29,10 +29,30 @@ import { SingleSlider } from "../input/single-slider";
 import Flyout from "../modal/flyout";
 import { Modal } from "../modal/modal";
 import { useMediaQuery } from "usehooks-ts";
+import type { SaleTypeOption } from "../input/sale-type-select";
+import { SaleTypeSelector } from "../input/sale-type-select";
 
 type PlayerType = "1" | "2" | "3" | "4";
 
 const PlayerOptions = ["1", "2", "3", "4"];
+
+
+const saleTypeOptions: SaleTypeOption[] = [
+  {
+    value: "split",
+    caption: "Allow Sale in Splits (Recommended)",
+    description: "Buyers can purchase any number of the tee times you list. (Recommended)",
+    tooltip: "Increases the pool of potential buyers as they can choose the exact number of rounds they want.",
+  },
+  {
+    value: "whole",
+    caption: "Only Sell in Whole",
+    description: "Buyers must purchase all the listed tee times together. (This limits potential buyers)",
+    tooltip: "Ensures the entire set of rounds is sold at once, useful for group bookings. Eliminates risk seller left with partial bought.",
+  },
+];
+
+const DEFAULT_SELL_TYPE = "whole"
 
 type SideBarProps = {
   isListTeeTimeOpen: boolean;
@@ -59,6 +79,7 @@ export const ListTeeTime = ({
       "2" :
       selectedTeeTime?.selectedSlotsCount || availableSlots.toString()
   );
+  const [saleType, setSaleType] = useState<string>(DEFAULT_SELL_TYPE);
   useSidebar({
     isOpen: isListTeeTimeOpen,
     setIsOpen: setIsListTeeTimeOpen,
@@ -113,6 +134,7 @@ export const ListTeeTime = ({
       setListingPrice(0); //reset price
       // setPlayers(selectedTeeTime?.selectedSlotsCount||"1");
     }
+    setSaleType(DEFAULT_SELL_TYPE);
   }, [isListTeeTimeOpen]);
 
   const handleFocus = () => {
@@ -182,6 +204,23 @@ export const ListTeeTime = ({
     return Math.abs(totalPayoutForAllGolfers);
   }, [listingPrice, players]);
 
+  const getSaleTypeParams = (saleType: string) => {
+    switch (saleType) {
+      case "split":
+        return {
+          allowSplit: true,
+        }
+      case "whole":
+        return {
+          allowSplit: false,
+        }
+      default:
+        return {
+          allowSplit: false,
+        }
+    }
+  }
+
   const listTeeTime = async () => {
     setIsLoading(true);
     void logAudit();
@@ -238,11 +277,13 @@ export const ListTeeTime = ({
           slots: parseInt(players),
         })
       } else {
+        const saleTypeParams = getSaleTypeParams(saleType)
         await sell.mutateAsync({
           bookingIds: selectedTeeTime?.bookingIds.slice(0, parseInt(players)),
           listPrice: listingPrice,
           endTime: new Date(selectedTeeTime?.date),
           slots: parseInt(players),
+          ...saleTypeParams
         });
       }
       toast.success(
@@ -282,7 +323,7 @@ export const ListTeeTime = ({
         <div></div>
       </LoadingContainer>}
       <div className="flex h-full flex-col justify-between overflow-y-auto">
-        <div className="flex flex-col gap-6 px-0 sm:px-4">
+        <div className="flex flex-col gap-6 px-0 sm:px-4 mb-6">
           <TeeTimeItem
             courseImage={selectedTeeTime?.courseLogo ?? ""}
             courseName={selectedTeeTime?.courseName ?? ""}
@@ -332,7 +373,6 @@ export const ListTeeTime = ({
                 value={players}
                 onValueChange={(player: PlayerType) => {
                   if (availableSlots < parseInt(player)) return;
-
                   if (player) setPlayers(player);
                 }}
                 orientation="horizontal"
@@ -375,6 +415,16 @@ export const ListTeeTime = ({
             refund. Any remaining owned rounds for this time will be subject
             to raincheck policy.
           </div>
+              {!selectedTeeTime?.isGroupBooking
+                ? <SaleTypeSelector
+                  className="flex flex-col w-full"
+                  value={saleType}
+                  onValueChange={setSaleType}
+                  saleTypeOptions={saleTypeOptions}
+                  defaultValue={saleType}
+                />
+                : null
+              }
         </div>
         <div className="flex flex-col gap-4 px-4 pb-6">
           <div className="flex justify-between">

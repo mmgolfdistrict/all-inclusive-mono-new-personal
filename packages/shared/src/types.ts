@@ -191,6 +191,7 @@ export type SearchObject = {
   firstHandPurchasePrice?: number;
   ownerId: string;
   groupId?: string;
+  allowSplit?: boolean;
 };
 
 export type CombinedObject = {
@@ -213,6 +214,7 @@ export type CombinedObject = {
   firstHandPurchasePrice?: number;
   listedSlots: number | null;
   groupId?: string;
+  allowSplit: boolean;
 };
 
 export type ReserveTeeTimeResponse = {
