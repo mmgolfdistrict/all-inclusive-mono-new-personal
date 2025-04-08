@@ -181,4 +181,13 @@ export const checkoutRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       return await ctx.serviceFactory.getHyperSwitchService().saveSplitPaymentAmountIntoCashOut(input.bookingId, input.amount);
     }),
+    getSplitPaymentUsersByBookingId : protectedProcedure
+    .input(
+      z.object({
+        bookingId: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return await ctx.serviceFactory.getHyperSwitchService().getSplitPaymentUsersByBookingId(input.bookingId);
+    }),
 });

@@ -52,6 +52,7 @@ import type { TokenizeService } from "../token/tokenize.service";
 import { loggerService } from "./logging.service";
 import type { HyperSwitchEvent } from "./types/hyperswitch";
 import { groupBookings } from "@golf-district/database/schema/groupBooking";
+import { splitPayments } from "@golf-district/database/schema/splitPayment";
 
 /**
  * `HyperSwitchWebhookService` - A service for processing webhooks from HyperSwitch.
@@ -71,6 +72,13 @@ import { groupBookings } from "@golf-district/database/schema/groupBooking";
 export class HyperSwitchWebhookService {
   private readonly logger = Logger(HyperSwitchWebhookService.name);
   private readonly qStashClient: Client;
+  protected baseurl = process.env.FINIX_BASE_URL;
+  protected username = process.env.FINIX_USERNAME;
+  protected password = process.env.FINIX_PASSWORD;
+  protected merchantId = process.env.FINIX_MERCHANT_ID;
+  protected applicationId = process.env.FINIX_APPLICATION_ID;
+  protected encodedCredentials = btoa(`${this.username}:${this.password}`);
+  protected authorizationHeader = `Basic ${this.encodedCredentials}`;
   /**
    * Creates an instance of `HyperSwitchWebhookService`.
    *
@@ -84,7 +92,7 @@ export class HyperSwitchWebhookService {
     private readonly bookingService: BookingService,
     private readonly sensibleService: SensibleService,
     upStashClientToken: string,
-    private readonly hyperSwitchService: HyperSwitchService
+    private readonly hyperSwitchService: HyperSwitchService,
   ) {
     this.qStashClient = new Client({
       token: upStashClientToken,
@@ -1906,7 +1914,13 @@ export class HyperSwitchWebhookService {
       undefined
     );
   };
-
+  getHeadersOfFinix = () => {
+    const requestHeaders = new Headers();
+    requestHeaders.append("Content-Type", "application/json");
+    requestHeaders.append("Finix-Version", process.env.FINIX_VERSION || "2022-02-01");
+    requestHeaders.append("Authorization", this.authorizationHeader);
+    return requestHeaders;
+  };
   /**
    * Checks if the incoming request is from a valid domain based on the referrer or host.
    *
@@ -1925,4 +1939,24 @@ export class HyperSwitchWebhookService {
   //   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   //   return referrer?.startsWith(validHost) || false;
   // };
+
+  finixWebhookService = async (entityType: string, entity: string, paymentId: string, paymentState: string) => {
+    try {
+      this.logger.warn("paymentId is here", paymentId);
+      this.logger.warn("payment state is here", paymentState);
+      if (entityType === "updated" && entity === "payment_link" && paymentState === "COMPLETED") {
+        const updateStatus = await this.database.update(splitPayments).set({ isWebhookStatus: paymentState }).where(eq(splitPayments.paymentId, paymentId));
+        return {
+          message: "Payment Webhook status successFully",
+          error: false
+        }
+      }
+    } catch (error) {
+      console.log(error);
+      return {
+        message: "Payment Webhook status failed",
+        error: true
+      }
+    }
+  }
 }

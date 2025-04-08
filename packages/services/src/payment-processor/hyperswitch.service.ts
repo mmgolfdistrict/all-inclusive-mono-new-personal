@@ -92,13 +92,6 @@ type RequestOptions = {
 
 
 /**=========================================================================== */
-
-
-
-
-
-
-
 export class HyperSwitchService {
   protected hyperSwitch: HyperSwitch;
   protected logger: pino.Logger;
@@ -667,71 +660,18 @@ export class HyperSwitchService {
       if (amount === 0) {
         throw new Error("Amount cannot be zero");
       }
+      if (email === "") {
+        throw new Error("Email cannot be empty");
+      }
+      if (bookingId === "") {
+        throw new Error("BookingId cannot be empty");
+      }
+      if (origin === "") {
+        throw new Error("Origin cannot be empty");
+      }
       const paymentProcessor = String(process.env.SPLIT_PAYMENT_PROCESSOR);
-      console.log("payementProcessor",paymentProcessor);
-      if (paymentProcessor !== "finix") {
-        this.logger.warn("inside hyperswitch");
-        const return_url = `${origin}/payment-success`;
-        const myHeaders = new Headers();
-        myHeaders.append("Content-Type", "application/json");
-        myHeaders.append("api-key", this.hyperSwitchApiKey);
-        const profile_id = process.env.HYPERSWITCH_PROFILE_ID;
-        const currency = "USD";
-        const options = {
-          method: "POST",
-          headers: myHeaders,
-          body: JSON.stringify({
-            profile_id: profile_id,
-            payment_link: true,
-            amount: Math.round(amount * 100),
-            authentication_type: "three_ds",
-            currency: currency,
-            confirm: false,
-            description: email,
-            payment_link_config: {
-              theme: "#014E28",
-              logo: "https://i.pinimg.com/736x/4d/83/5c/4d835ca8aafbbb15f84d07d926fda473.jpg",
-              seller_name: "teeskraft",
-              sdk_layout: "tabs",
-            },
-            return_url: return_url,
-          }),
-        };
-        const result = await fetch(`${this.hyperSwitchBaseUrl}/payments`, options);
-        const response = await result.json();
-        console.log("response_payment_link", response);
-        if (response?.payment_link?.link) {
-          await this.database
-            .insert(splitPayments)
-            .values({
-              id: randomUUID(),
-              amount: Math.round(amount * 100),
-              email: email,
-              bookingId: bookingId,
-              paymentId: response?.payment_id,
-              paymentLink: response?.payment_link?.link,
-              referencePaymentId: ""
-            })
-            .execute();
-          const newUrl = `${origin}/create-payment`;
-          const emailSend = this.notificationService.sendEmail(
-            email,
-            "Payment Link",
-            `Payment Link: ${newUrl}/${response?.payment_id} `
-          );
-          console.log("Email Send successFully");
-
-          return {
-            error: false,
-            message: "Payment Link Send Successfully",
-          };
-        } else {
-          return {
-            error: true,
-            message: "Problem Creating Payment Link",
-          };
-        }
-      } else {
+      console.log("payementProcessor", paymentProcessor);
+      if (paymentProcessor === "finix") {
         const referencePaymentId = randomUUID();
         const paymentData: PaymentRequest = {
           merchant_id: this.merchantId,
@@ -793,7 +733,7 @@ export class HyperSwitchService {
           await this.database
             .insert(splitPayments)
             .values({
-              id: paymentId,
+              id: randomUUID(),
               amount: (amount * 100),
               email: email,
               bookingId: bookingId,
@@ -801,9 +741,23 @@ export class HyperSwitchService {
               paymentLink: finix_link_url,
               referencePaymentId: referencePaymentId
             })
-            .execute();
+            .execute().catch(async (e: any) => {
+              console.log(e);
+              await loggerService.errorLog({
+                message: "ERROR_INSERTING_FININX_PAYMENT_LINK",
+                userId: "",
+                url: "/auth",
+                userAgent: "",
+                stackTrace: `${JSON.stringify(e)}`,
+                additionalDetailsJSON: JSON.stringify({
+                  paymentId: "",
+                  referencePaymentId: "",
+                  provider: "hyperswitch"
+                }),
+              });
+            });
           const newUrl = `${origin}/create-payment`;
-          const emailSend = this.notificationService.sendEmail(
+          const emailSend = await this.notificationService.sendEmail(
             email,
             "Payment Link",
             `Payment Link: ${newUrl}/${paymentId} `
@@ -814,9 +768,109 @@ export class HyperSwitchService {
             message: "Payment Link Send Successfully",
           };
         }
+      } else {
+        this.logger.warn("inside hyperswitch");
+        const return_url = `${origin}/payment-success`;
+        const myHeaders = new Headers();
+        myHeaders.append("Content-Type", "application/json");
+        myHeaders.append("api-key", this.hyperSwitchApiKey);
+        const profile_id = process.env.HYPERSWITCH_PROFILE_ID;
+        const currency = "USD";
+        const options = {
+          method: "POST",
+          headers: myHeaders,
+          body: JSON.stringify({
+            profile_id: profile_id,
+            payment_link: true,
+            amount: Math.round(amount * 100),
+            authentication_type: "three_ds",
+            currency: currency,
+            confirm: false,
+            description: email,
+            payment_link_config: {
+              theme: "#014E28",
+              logo: "https://i.pinimg.com/736x/4d/83/5c/4d835ca8aafbbb15f84d07d926fda473.jpg",
+              seller_name: "teeskraft",
+              sdk_layout: "tabs",
+            },
+            return_url: return_url,
+          }),
+        };
+        const result = await fetch(`${this.hyperSwitchBaseUrl}/payments`, options);
+        const response = await result.json();
+        console.log("response_payment_link", response);
+        if (response?.payment_link?.link) {
+          await this.database
+            .insert(splitPayments)
+            .values({
+              id: randomUUID(),
+              amount: Math.round(amount * 100),
+              email: email,
+              bookingId: bookingId,
+              paymentId: response?.payment_id,
+              paymentLink: response?.payment_link?.link,
+              referencePaymentId: ""
+            })
+            .execute().catch(async (e: any) => {
+              console.log(e);
+              await loggerService.errorLog({
+                message: "ERROR_INSERTING_HYPERSWITCH_PAYMENT_LINK",
+                userId: "",
+                url: "/auth",
+                userAgent: "",
+                stackTrace: `${JSON.stringify(e)}`,
+                additionalDetailsJSON: JSON.stringify({
+                  paymentId: response?.payment_id,
+                  referencePaymentId: "",
+                  provider: "hyperswitch"
+                }),
+              });
+            });
+          const newUrl = `${origin}/create-payment`;
+          const emailSend = this.notificationService.sendEmail(
+            email,
+            "Payment Link",
+            `Payment Link: ${newUrl}/${response?.payment_id} `
+          );
+          console.log("Email Send successFully");
+          return {
+            error: false,
+            message: "Payment Link Send Successfully",
+          };
+        } else {
+          await loggerService.errorLog({
+            message: "ERROR_PAYMENT_LINK_NOT_CREATED",
+            userId: "",
+            url: "/auth",
+            userAgent: "",
+            stackTrace: `PAYMENT_LINK_NOT_CREATED`,
+            additionalDetailsJSON: JSON.stringify({
+              paymentId: response?.payment_id,
+              referencePaymentId: "",
+              provider: "hyperswitch"
+            }),
+          });
+          return {
+            error: true,
+            message: "Problem Creating Payment Link",
+          };
+        }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.log("error", error);
+      await loggerService.errorLog({
+        message: "INTERNAL_SERVER_ERROR",
+        userId: "",
+        url: "/auth",
+        userAgent: "",
+        stackTrace: `INTERNAL_SERVER_ERROR`,
+        additionalDetailsJSON: JSON.stringify({
+          paymentId: "",
+          referencePaymentId: "",
+          provider: "",
+          message: error.message
+        }),
+      });
       throw new Error("Problem creating payment link");
     }
   };
@@ -832,7 +886,20 @@ export class HyperSwitchService {
       const response = await fetch(`${this.baseurl}/payment_links`, requestOptions);
       const paymentInstrumentData = await response.json();
       return paymentInstrumentData;
-    } catch (error) {
+    } catch (e: any) {
+      console.log(e);
+      await loggerService.errorLog({
+        message: "ERROR_INSERTING_HYPERSWITCH_PAYMENT_LINK",
+        userId: "",
+        url: "/auth",
+        userAgent: "",
+        stackTrace: `${JSON.stringify(e)}`,
+        additionalDetailsJSON: JSON.stringify({
+          paymentData: paymentData,
+          referencePaymentId: "",
+          provider: "finix"
+        }),
+      });
       throw new Error("error while creating the payment");
     }
   }
@@ -846,7 +913,20 @@ export class HyperSwitchService {
             isPaid: 1,
           })
           .where(eq(splitPayments.paymentId, paymentId))
-          .execute();
+          .execute().catch(async (e: any) => {
+            await loggerService.errorLog({
+              message: "ERROR_UPDATING_HYPERSWITCH_PAYMENT_STATUS",
+              userId: "",
+              url: "/auth",
+              userAgent: "",
+              stackTrace: `${JSON.stringify(e)}`,
+              additionalDetailsJSON: JSON.stringify({
+                paymentId: paymentId,
+                referencePaymentId: referencePaymentId,
+                provider: "finix"
+              }),
+            });
+          });
         const [result] = await this.database
           .select({
             email: splitPayments.email,
@@ -856,6 +936,22 @@ export class HyperSwitchService {
           })
           .from(splitPayments)
           .where(eq(splitPayments.paymentId, paymentId));
+        await loggerService.auditLog({
+          id: randomUUID(),
+          userId: "",
+          teeTimeId: "",
+          bookingId: result?.bookingId ?? "",
+          listingId: "",
+          courseId: "",
+          eventId: "PAYMENT_STATUS_UPDATE_SUCCESSFULLY",
+          json: JSON.stringify({
+            paymentId,
+            referencePaymentId,
+            amount: result?.amount,
+            email: result?.email,
+            provider: "hyperswitch"
+          }),
+        });
         return {
           message: "status update successFully",
           email: result?.email,
@@ -870,7 +966,20 @@ export class HyperSwitchService {
             isPaid: 1,
           })
           .where(eq(splitPayments.referencePaymentId, referencePaymentId))
-          .execute();
+          .execute().catch(async (e: any) => {
+            await loggerService.errorLog({
+              message: "ERROR_UPDATING_FINIX_PAYMENT_STATUS",
+              userId: "",
+              url: "/auth",
+              userAgent: "",
+              stackTrace: `${JSON.stringify(e)}`,
+              additionalDetailsJSON: JSON.stringify({
+                paymentId: paymentId,
+                referencePaymentId: referencePaymentId,
+                provider: "finix"
+              }),
+            });
+          });
         const [result] = await this.database
           .select({
             email: splitPayments.email,
@@ -880,6 +989,22 @@ export class HyperSwitchService {
           })
           .from(splitPayments)
           .where(eq(splitPayments.referencePaymentId, referencePaymentId));
+        await loggerService.auditLog({
+          id: randomUUID(),
+          userId: "",
+          teeTimeId: "",
+          bookingId: result?.bookingId ?? "",
+          listingId: "",
+          courseId: "",
+          eventId: "PAYMENT_STATUS_UPDATE_SUCCESSFULLY",
+          json: JSON.stringify({
+            paymentId,
+            referencePaymentId,
+            amount: result?.amount,
+            email: result?.email,
+            provider: "finix"
+          }),
+        });
         return {
           message: "status update successFully",
           email: result?.email,
@@ -888,6 +1013,18 @@ export class HyperSwitchService {
           amount: result?.amount,
         };
       } else {
+        await loggerService.errorLog({
+          message: "ERROR_UPDATING_FINIX_PAYMENT_STATUS",
+          userId: "",
+          url: "/auth",
+          userAgent: "",
+          stackTrace: `FINIX_PAYMENT_ID_NOT_FOUND`,
+          additionalDetailsJSON: JSON.stringify({
+            paymentId: paymentId,
+            referencePaymentId: referencePaymentId,
+            provider: "finix"
+          }),
+        });
         return {
           message: "",
           email: "",
@@ -897,6 +1034,18 @@ export class HyperSwitchService {
       }
     } catch (error) {
       console.log(error);
+      await loggerService.errorLog({
+        message: "INTERNAL_SERVER_ERROR",
+        userId: "",
+        url: "/auth",
+        userAgent: "",
+        stackTrace: `${JSON.stringify(error)}`,
+        additionalDetailsJSON: JSON.stringify({
+          paymentId: paymentId,
+          referencePaymentId: referencePaymentId,
+          provider: "finix"
+        }),
+      });
       throw new Error("Error while updating status");
     }
   };
@@ -904,6 +1053,16 @@ export class HyperSwitchService {
   isEmailedUserPaidTheAmount = async (bookingId: string) => {
     try {
       if (!bookingId) {
+        await loggerService.errorLog({
+          message: "BOOKING_ID_REQUIRED",
+          userId: "",
+          url: "/auth",
+          userAgent: "",
+          stackTrace: ``,
+          additionalDetailsJSON: JSON.stringify({
+            MESSAGE: "bookingID is not there"
+          }),
+        });
         return [];
       }
       const result = await this.database
@@ -919,6 +1078,16 @@ export class HyperSwitchService {
       return result || [];
     } catch (error: any) {
       console.log(error);
+      await loggerService.errorLog({
+        message: "INTERNAL SERVER ERROR ",
+        userId: "",
+        url: "/auth",
+        userAgent: "",
+        stackTrace: ``,
+        additionalDetailsJSON: JSON.stringify({
+          MESSAGE: "INTERNAL SERVER ERROR"
+        }),
+      });
       throw new Error(error.message);
     }
   };
@@ -937,6 +1106,7 @@ export class HyperSwitchService {
           email: splitPayments.email,
           bookingId: splitPayments.bookingId,
           paymentId: splitPayments.paymentId,
+          referencePaymentId: splitPayments.referencePaymentId,
         })
         .from(splitPayments)
         .where(
@@ -946,8 +1116,9 @@ export class HyperSwitchService {
             eq(splitPayments.isActive, 1)
           )
         );
-      if (paymentProcessor !== "finix") {
+      if (paymentProcessor === "finix") {
         if (result?.email && result?.bookingId) {
+
           const updatedResult = await this.database
             .update(splitPayments)
             .set({
@@ -961,10 +1132,21 @@ export class HyperSwitchService {
                 eq(splitPayments.paymentId, result?.paymentId)
               )
             )
-            .execute();
-          await this.cancelPaymentIntent(result.paymentId);
+            .execute().catch(async (e: any) => {
+              await loggerService.errorLog({
+                message: "ERROR_UPDATING_FINIX_PAYMENT_STATUS",
+                userId: "",
+                url: "/auth",
+                userAgent: "",
+                stackTrace: `${JSON.stringify(e)}`,
+                additionalDetailsJSON: JSON.stringify({
+                  paymentId: result?.paymentId,
+                  referencePaymentId: result?.referencePaymentId,
+                  provider: "finix"
+                }),
+              });
+            });
           const resultPaymentLink = await this.createPaymentLink(amount, email, bookingId, origin);
-          console.log("resultPaymentLink", resultPaymentLink);
           return resultPaymentLink;
         }
       } else {
@@ -982,21 +1164,58 @@ export class HyperSwitchService {
                 eq(splitPayments.paymentId, result?.paymentId)
               )
             )
-            .execute();
+            .execute().catch(async (e: any) => {
+              await loggerService.errorLog({
+                message: "ERROR_UPDATING_FINIX_PAYMENT_STATUS",
+                userId: "",
+                url: "/auth",
+                userAgent: "",
+                stackTrace: `${JSON.stringify(e)}`,
+                additionalDetailsJSON: JSON.stringify({
+                  paymentId: result?.paymentId,
+                  referencePaymentId: result?.referencePaymentId,
+                  provider: "hyperswitch"
+                }),
+              });
+            });
+          await this.cancelPaymentIntent(result.paymentId);
           const resultPaymentLink = await this.createPaymentLink(amount, email, bookingId, origin);
+          console.log("resultPaymentLink", resultPaymentLink);
           return resultPaymentLink;
         }
       }
-    } catch (error: any) {
-      console.log(error);
-      throw new Error(error.message);
+    } catch (e: any) {
+      console.log(e);
+      await loggerService.errorLog({
+        message: "INTERNAL_SERVER_ERROR",
+        userId: "",
+        url: "/auth",
+        userAgent: "",
+        stackTrace: `${JSON.stringify(e)}`,
+        additionalDetailsJSON: JSON.stringify({
+          paymentId: "",
+          referencePaymentId: "",
+          provider: ""
+        }),
+      });
+      throw new Error(e.message);
     }
   };
 
   getPaymentLinkByPaymentId = async (paymentId: string) => {
     try {
       const paymentProcessor = String(process.env.SPLIT_PAYMENT_PROCESSOR);
-      if (paymentProcessor !== "finix") {
+      if (paymentProcessor === "finix") {
+        const [result] = await this.database
+          .select({ paymentLink: splitPayments.paymentLink })
+          .from(splitPayments)
+          .where(and(eq(splitPayments.paymentId, paymentId)));
+        return {
+          error: false,
+          message: "Payment-Link fetch Successful",
+          paymentLink: result?.paymentLink,
+        };
+      } else {
         const [result] = await this.database
           .select({ paymentLink: splitPayments.paymentLink })
           .from(splitPayments)
@@ -1015,27 +1234,22 @@ export class HyperSwitchService {
             paymentLink: result?.paymentLink,
           };
         }
-      } else {
-        const [result] = await this.database
-          .select({ paymentLink: splitPayments.paymentLink })
-          .from(splitPayments)
-          .where(and(eq(splitPayments.paymentId, paymentId)));
-        return {
-          error: false,
-          message: "Payment-Link fetch Successful",
-          paymentLink: result?.paymentLink,
-        };
       }
-    } catch (error) {
+    } catch (error: any) {
+      await loggerService.errorLog({
+        message: "INTERNAL SERVER ERROR",
+        userId: "",
+        url: "/auth",
+        userAgent: "",
+        stackTrace: `${JSON.stringify(error)}`,
+        additionalDetailsJSON: JSON.stringify({
+          paymentId: paymentId,
+          provider: ""
+        }),
+      });
       throw new Error("Error while fetching for payment link");
     }
   };
-
-
-
-
-
-
   addMinutes = (date: Date, minutes: number) => {
     const result = new Date(date);
     result.setMinutes(result.getMinutes() + minutes);
@@ -1080,9 +1294,9 @@ export class HyperSwitchService {
       await this.database
         .insert(customerRecievable)
         .values(customerRecievableData)
-        .catch((err: any) => {
+        .catch(async (err: any) => {
           this.logger.error(err);
-          loggerService.errorLog({
+          await loggerService.errorLog({
             userId: "",
             url: `/HyperSwitchWebhookService/handleSecondHandItem`,
             userAgent: "",
@@ -1093,9 +1307,42 @@ export class HyperSwitchService {
             }),
           });
         });
-    } catch (error) {
-      console.log(error);
+    } catch (err: any) {
+      await loggerService.errorLog({
+        userId: "",
+        url: `/HyperSwitchWebhookService/handleSecondHandItem`,
+        userAgent: "",
+        message: "INTERNAL SERVER ERROR",
+        stackTrace: `${err.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          bookingId: bookingId,
+          amount: amount
+        }),
+      });
       throw new Error("Error while saving split payment amount");
     }
   };
+  getSplitPaymentUsersByBookingId = async (bookingId: string) => {
+    try {
+      const result = await this.database
+        .select({ email: splitPayments.email, amount: splitPayments.amount, isPaid: splitPayments.isPaid })
+        .from(splitPayments)
+        .where(and(eq(splitPayments.bookingId, bookingId), eq(splitPayments.isActive, 1)));
+      return result;
+    } catch (err: any) {
+      await loggerService.errorLog({
+        userId: "",
+        url: '',
+        userAgent: "",
+        message: "INTERNAL SERVER ERROR",
+        stackTrace: `${err.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          bookingId: bookingId
+        }),
+      });
+      throw new Error("Error while fetching split payment users");
+    }
+
+  }
+
 }

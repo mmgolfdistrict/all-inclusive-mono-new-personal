@@ -4,8 +4,9 @@ import { Loader } from "~/components/loading/spinner";
 import { api } from "~/utils/api";
 import { useSearchParams } from "next/navigation";
 import React, { Fragment, useEffect } from "react";
-
+import { useRouter } from "next/navigation";
 const SplitPaymentSuccessPage = () => {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const paymentId = searchParams.get("payment_id") || "";
   const referencePaymentId = searchParams.get("finixReferencePaymentId") || "";
@@ -54,6 +55,9 @@ const SplitPaymentSuccessPage = () => {
                 : "Unfortunately, your payment could not be completed."}
             </p>
             <button
+              onClick={() => {
+                router.push("/");
+              }}
               className={`mt-6 px-6 py-2 rounded-lg text-white font-medium ${isSuccess
                 ? "bg-green-500 hover:bg-green-600"
                 : "bg-red-500 hover:bg-red-600"
