@@ -269,7 +269,7 @@ export class CheckoutService {
 
     if (this.cacheService && customerCartData?.teeTimeType === "SECONDARY") {
       console.log("Setting listing_id in Redis Cache: ", customerCartData?.listingId);
-      await this.cacheService.setCache("listing_id", customerCartData?.listingId);
+      await this.cacheService.setCache(`listing_id_${customerCartData?.listingId}`, customerCartData?.listingId);
     }
 
     console.log("userId ", userId);

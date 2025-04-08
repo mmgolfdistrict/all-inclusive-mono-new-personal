@@ -709,13 +709,11 @@ export class HyperSwitchWebhookService {
       .select({
         listedSlotsCount: lists.slots,
         listedPrice: lists.listPrice,
+        allowSplit: lists.allowSplit
       })
       .from(lists)
       .where(eq(lists.id, listingId))
       .execute();
-
-    const listedSlotsCount: number | undefined = listedSlots?.length ? listedSlots[0]?.listedSlotsCount : 0;
-    const listPrice: number | undefined = listedSlots?.length ? listedSlots[0]?.listedPrice : 0;
 
     bookingStage = "Fetching old and new bookingId";
     const [bookingsIds]: any = await this.database
@@ -724,6 +722,7 @@ export class HyperSwitchWebhookService {
         oldBookingId: transfers.fromBookingId,
         transferId: transfers.id,
         cart: customerCarts.cart,
+        newBookingPlayers: bookings.playerCount
       })
       .from(customerCarts)
       .innerJoin(bookings, eq(bookings.cartId, customerCarts.id))
@@ -902,6 +901,9 @@ export class HyperSwitchWebhookService {
       throw new Error(`Error finding bookings for listing id`);
     }
     const firstBooking = listedBooking[0];
+    const listedSlotsCount: number | undefined = listedSlots?.length ? (listedSlots[0]?.allowSplit ? bookingsIds?.newBookingPlayers : listedSlots[0]?.listedSlotsCount) : 0;
+    const listPrice: number | undefined = listedSlots?.length ? listedSlots[0]?.listedPrice : 0;
+
     if (!firstBooking) {
       throw new Error(`Error finding first booking for listing id`);
     }
@@ -1648,6 +1650,10 @@ export class HyperSwitchWebhookService {
           process.env.SENDGRID_TEE_TIMES_SOLD_PARTIAL_TEMPLATE_ID || "d-ef59724fe9f74e80a3768028924ea456",
           templateSeller
         );
+        const remainingSlots = (listedSlots[0]?.listedSlotsCount ?? 0) - (bookingsIds?.newBookingPlayers ?? 0);
+        if (remainingSlots > 0) {
+          await this.bookingService.addListingForRemainingSlots(bookingId as string, providerBookingId, listingId, remainingSlots, firstBooking.ownerId);
+        }
       }
     }
 
@@ -1687,7 +1693,7 @@ export class HyperSwitchWebhookService {
       });
 
     if (firstBooking.groupId) {
-      await this.bookingService.addListingForRemainingSlots(firstBooking.groupId, listedSlotsCount, firstBooking.ownerId)
+      await this.bookingService.addListingForRemainingSlotsOnGroupBooking(firstBooking.groupId, listedSlotsCount, firstBooking.ownerId)
     }
   };
 
