@@ -21,7 +21,7 @@ const CountryDropdown = ({ defaultCountry, items, onSelect }: CountryDropdownPro
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredCountries, setFilteredCountries] = useState<Country[]>(items);
   const countryDropDown = useRef<HTMLUListElement | null>(null);
-  const [activeCountryIndex, setActiveCountryIndex] = useState<number|null>(null);
+  const [activeCountryIndex, setActiveCountryIndex] = useState<number | null>(null);
 
   useEffect(() => {
     if (defaultCountry) {
@@ -74,7 +74,7 @@ const CountryDropdown = ({ defaultCountry, items, onSelect }: CountryDropdownPro
         setActiveCountryIndex(null);
       }
     }
-  
+
     if (event.key === 'ArrowDown' && countryDropDown.current) {
       if (activeCountryIndex === null) {
         setActiveCountryIndex(0);
@@ -105,12 +105,12 @@ const CountryDropdown = ({ defaultCountry, items, onSelect }: CountryDropdownPro
         onClick={() => setIsOpen(!isOpen)}
         className="
           bg-secondary-white text-gray-500 flex items-center px-2 py-3 
-          rounded-lg w-full justify-between min-w-[132px]"
+          rounded-lg w-full justify-between"
       >
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 min-w-[122px]">
           {selectedCountry && (
             <>
-              <Image src={selectedCountry.flag} alt={selectedCountry.iso2} className="w-8 h-6" width={20} height={20}/>
+              <Image src={selectedCountry.flag} alt={selectedCountry.iso2} className="w-8 h-6" width={20} height={20} />
               <span>{selectedCountry.iso2.toUpperCase()} (+{selectedCountry.dialCode})</span>
             </>
           )}
@@ -143,7 +143,7 @@ const CountryDropdown = ({ defaultCountry, items, onSelect }: CountryDropdownPro
                     w-full p-2 flex items-center space-x-2 hover:bg-gray-100
                     cursor-pointer
                   "
-                  onClick={(e: React.MouseEvent<HTMLButtonElement>) => 
+                  onClick={(e: React.MouseEvent<HTMLButtonElement>) =>
                     handleSelect(e, country)
                   }
                 >
