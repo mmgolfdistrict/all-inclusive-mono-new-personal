@@ -55,10 +55,10 @@ export const Modal: FC<ModalProps> = ({ title, isOpen, onClose, children, classN
                         transition={{ duration: 0.2 }}
                     >
                         <div className={`relative ${className ?? ""}`}>
-                            <div className="sticky top-0 bg-white z-10 px-4 pt-4 pb-2 border-b border-gray-200 flex justify-center items-center">
+                            <div className="sticky top-0 bg-white z-10 px-4 pt-2 pb-2 border-b border-gray-200 flex justify-center items-center">
                                 <h2 className="text-xl font-semibold text-center w-full">{title}</h2>
                                 <button
-                                    className="absolute top-4 right-4 p-2"
+                                    className="absolute top-2 right-0 p-2"
                                     onClick={onClose}
                                     data-testid="close-button-id"
                                 >
