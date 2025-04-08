@@ -12,9 +12,9 @@ import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
 import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
-import type { CartProduct, FirstHandGroupProduct } from "~/utils/types";
+import type { CartProduct, CountryData, FirstHandGroupProduct } from "~/utils/types";
 import { useParams, useRouter } from "next/navigation";
-import type { Dispatch, SetStateAction } from "react";
+import type { ChangeEvent, Dispatch, SetStateAction } from "react";
 import { Fragment, useEffect, useState, type FormEvent } from "react";
 import { toast } from "react-toastify";
 import { useMediaQuery } from "usehooks-ts";
@@ -29,6 +29,9 @@ import { CheckoutAccordionRoot } from "./checkout-accordian";
 import CheckoutItemAccordion from "./checkout-item-accordian";
 import styles from "./checkout.module.css";
 import type { NextAction } from "./hyper-switch";
+import CountryDropdown from "~/components/dropdown/country-dropdown";
+import type { Country } from "~/components/dropdown/country-dropdown";
+import { allCountries } from "country-telephone-data";
 
 type charityData = {
   charityDescription: string | undefined;
@@ -36,6 +39,13 @@ type charityData = {
   charityId: string | undefined;
   charityLogo: string | undefined;
 };
+
+const countryList: Country[] = allCountries.map(({ name, iso2, dialCode }: CountryData) => ({
+  name,
+  iso2,
+  dialCode,
+  flag: `https://flagcdn.com/w40/${iso2.toLowerCase()}.png`
+}));
 export const CheckoutForm = ({
   isBuyNowAuction,
   teeTimeId,
@@ -91,9 +101,27 @@ export const CheckoutForm = ({
   const handleToggle = () => {
     setIsExpanded(!isExpanded);
   };
-
   const { user } = useUserContext();
   const { bookingSource, setBookingSource } = useBookingSourceContext();
+  const [phoneNumber, setPhoneNumber] = useState<string>('');
+  const [currentCountry, setCurrentCountry] = useState<string>("us");
+  const [excludedCountries, _setExcludeCountries] = useState<string[]>(
+    ['by', 'cu', 'kp', 'sy', 've', 'ir']
+  );
+  console.log("fffsd", { phoneNumber, currentCountry });
+
+  const [countries, _setCountries] = useState<Country[]>(
+    countryList.filter(
+      (c: Country) => !excludedCountries.includes(c.iso2)
+    ).map((c: Country) => {
+      return {
+        name: c.name,
+        iso2: c.iso2,
+        dialCode: c.dialCode,
+        flag: `https://flagcdn.com/w40/${c.iso2}.png`
+      }
+    })
+  );
   const auditLog = api.webhooks.auditLog.useMutation();
   const sendEmailForFailedPayment =
     api.webhooks.sendEmailForFailedPayment.useMutation();
@@ -893,7 +921,17 @@ export const CheckoutForm = ({
   useEffect(() => {
     setHasUserSelectedDonation(true);
   }, []);
+  const handleSelectCountry = (country: Country) => {
+    const { iso2, dialCode } = country;
+    console.log({ iso2, dialCode });
 
+    setCurrentCountry(iso2);
+  }
+
+  const handlePhoneNumberChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, "");
+    setPhoneNumber(value);
+  }
   useEffect(() => {
     setIsLoadingTotalAmount(true);
     setTimeout(() => {
@@ -909,6 +947,30 @@ export const CheckoutForm = ({
         />
       </div>
       <div className="flex w-full flex-col gap-2 bg-white p-4 rounded-lg my-2">
+        {true && <div className="flex flex-col gap-1">
+          <div className="flex gap-1">
+            <label htmlFor="phoneNumber" className="text-[14px] text-primary-gray">
+              Phone Number<span className="text-red"> *</span>
+            </label>
+          </div>
+          <div className="flex h-12 rounded-lg bg-secondary-white px-1 text-[14px] text-gray-500 outline-none text-ellipsis">
+            <CountryDropdown defaultCountry={currentCountry} items={countries} onSelect={handleSelectCountry} />
+            <Input
+              className="input-phone-number"
+              type="number"
+              register={() => null}
+              label=""
+              placeholder="9988776655"
+              id="phoneNumber"
+              name="phoneNumber"
+              onChange={handlePhoneNumberChange}
+              value={phoneNumber}
+              data-testid="profile-phone-number-id"
+            />
+          </div>
+          {/* {error && <p className="text-[12px] text-red">{error}</p>} */}
+          {/* {countryError && <p className="text-[12px] text-red">{countryError}</p>} */}
+        </div>}
         {course?.supportCharity && !roundUpCharityId ? (
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
