@@ -1945,7 +1945,7 @@ export class HyperSwitchWebhookService {
       this.logger.warn("paymentId is here", paymentId);
       this.logger.warn("payment state is here", paymentState);
       if (entityType === "updated" && entity === "payment_link" && paymentState === "COMPLETED") {
-        const updateStatus = await this.database.update(splitPayments).set({ isWebhookStatus: paymentState }).where(eq(splitPayments.paymentId, paymentId));
+        const updateStatus = await this.database.update(splitPayments).set({ isPaid:1,isWebhookStatus: paymentState }).where(eq(splitPayments.paymentId, paymentId));
         return {
           message: "Payment Webhook status successFully",
           error: false

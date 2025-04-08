@@ -17,6 +17,7 @@ import { splitPayments } from "@golf-district/database/schema/splitPayment";
 import { appSettingService } from "../app-settings/initialized";
 import { bookings } from "@golf-district/database/schema/bookings";
 import { customerRecievable } from "@golf-district/database/schema/customerRecievable";
+import { users } from "@golf-district/database/schema/users";
 /**
  * Service for interacting with the HyperSwitch API.
  */
@@ -33,6 +34,7 @@ interface PaymentRequest {
   amount_details?: AmountDetails;
   additional_details?: AdditionalDetails;
   branding?: Branding;
+  tags?: object
 }
 
 interface Item {
@@ -669,6 +671,14 @@ export class HyperSwitchService {
       if (origin === "") {
         throw new Error("Origin cannot be empty");
       }
+
+      // get the username
+
+      const [bookingResult] = await this.database.select({
+        userName: users.name
+      }).from(bookings).leftJoin(users, eq(bookings.ownerId, users.id)).where(eq(bookings.id, bookingId));
+      console.log("bookingResult", bookingResult);
+      const username = bookingResult ? bookingResult?.userName : "Golf district user";
       const paymentProcessor = String(process.env.SPLIT_PAYMENT_PROCESSOR);
       console.log("payementProcessor", paymentProcessor);
       if (paymentProcessor === "finix") {
@@ -688,6 +698,7 @@ export class HyperSwitchService {
           items: [
             {
               name: "Collect Payment",
+              description: `This is on behalf of ${username}`,
               quantity: "1",
               image_details: {
                 primary_image_url: "https://golfdistrict.com/wp-content/uploads/2024/07/Primary-Logo-Single-Line.svg"
@@ -724,6 +735,9 @@ export class HyperSwitchService {
                 destinations: [`${email}`]
               },
             ]
+          },
+          tags: {
+            message: `this payment is requested from ${email}`
           }
         }
         const finixPaymentData = await this.createPaymentLinkForFinix(paymentData);
@@ -757,11 +771,16 @@ export class HyperSwitchService {
               });
             });
           const newUrl = `${origin}/create-payment`;
-          const emailSend = await this.notificationService.sendEmail(
+          const emailSend = await this.notificationService.sendEmailByTemplate(
             email,
             "Payment Link",
-            `Payment Link: ${newUrl}/${paymentId} `
-          );
+            process.env.SPLIT_PAYMENT_PROCESSOR_EMAIL_TEMPLATE_ID!,
+            {
+              USERNAME: `${username}`,
+              PAYMENT_URL: `${newUrl}/${paymentId}`
+            },
+            []
+          )
           console.log("Email Send successFully");
           return {
             error: false,
@@ -786,7 +805,7 @@ export class HyperSwitchService {
             authentication_type: "three_ds",
             currency: currency,
             confirm: false,
-            description: email,
+            description: `This is on Behalf of ${username}`,
             payment_link_config: {
               theme: "#014E28",
               logo: "https://i.pinimg.com/736x/4d/83/5c/4d835ca8aafbbb15f84d07d926fda473.jpg",
@@ -827,11 +846,16 @@ export class HyperSwitchService {
               });
             });
           const newUrl = `${origin}/create-payment`;
-          const emailSend = this.notificationService.sendEmail(
+          const emailSend = await this.notificationService.sendEmailByTemplate(
             email,
             "Payment Link",
-            `Payment Link: ${newUrl}/${response?.payment_id} `
-          );
+            process.env.SPLIT_PAYMENT_PROCESSOR_EMAIL_TEMPLATE_ID!,
+            {
+              USERNAME: `${username}`,
+              PAYMENT_URL: `${newUrl}/${response?.payment_id}`
+            },
+            []
+          )
           console.log("Email Send successFully");
           return {
             error: false,
