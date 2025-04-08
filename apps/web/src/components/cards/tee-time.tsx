@@ -52,7 +52,7 @@ export const TeeTime = ({
   handleLoading,
   refetch,
   groupId,
-  allowSplit
+  allowSplit,
 }: {
   time: string;
   items: CombinedObject | BookingGroup;
@@ -338,7 +338,7 @@ export const TeeTime = ({
             </div>
           </div>
         </div>
-        <div className="flex flex-col gap-1 md:gap-4 p-2 md:p-3 text-[10px] md:text-[14px]">
+        <div className={`flex flex-col gap-1 md:gap-4  p-2 md:p-3 text-[10px] md:text-[14px]`}>
           {/* <div className="flex items-center gap-1">
             <Avatar
               src={soldByImage}
@@ -400,7 +400,7 @@ export const TeeTime = ({
               </div>
             </div>
           </div>
-          <div className="flex md:min-h-[31px] items-center gap-2">
+          <div className={`flex md:min-h-[31px] items-center gap-2`}>
             <div className="scale-75 md:scale-100">
               <OutlineClub />
             </div>
@@ -419,7 +419,7 @@ export const TeeTime = ({
                   (status === "SECOND_HAND" && !allowSplit) ||
                   allowedPlayers?.selectStatus === "ALL_PLAYERS"
                 }
-                className="md:px-[1rem] md:py-[.25rem] md:!text-[14px] !text-[10px] px-[.75rem] py-[.1rem]"
+                className={`md:px-[1rem] md:py-[.25rem] md:!text-[14px] !text-[10px] px-[.75rem] py-[.1rem]`}
                 teeTimeId={teeTimeId}
                 numberOfPlayers={numberOfPlayers ? (
                   !(status === "SECOND_HAND") ? numberOfPlayers : PlayersOptions.filter(player => player <= (listedSlots?.toString() ?? "0"))
@@ -476,7 +476,7 @@ export const TeeTime = ({
               )}
             </>
           )}
-          <div className="flex items-center justify-between gap-1">
+          <div className={`flex items-center justify-between gap-1`}>
             {course?.supportsWatchlist ? (
               <div id="add-to-watchlist">
                 <OutlineButton
@@ -495,70 +495,70 @@ export const TeeTime = ({
             ) : null}
 
             <div className="flex items-center gap-1">
-            <Link
-              href={href}
-              data-testid="details-button-id"
-              data-test={teeTimeId}
-              data-qa={"Details"}
-              data-cy={time}
-              id="tee-time-details-button"
+              <Link
+                href={href}
+                data-testid="details-button-id"
+                data-test={teeTimeId}
+                data-qa={"Details"}
+                data-cy={time}
+                id="tee-time-details-button"
               >
-              <OutlineButton className="!py-[.28rem] md:py-1.5">
-                Details
-              </OutlineButton>
-            </Link>
+                <OutlineButton className="!py-[.28rem] md:py-1.5">
+                  Details
+                </OutlineButton>
+              </Link>
               <div id="share-tee-time-button">
-              <OutlineButton
-                onClick={() => void share()}
-                className="w-full whitespace-nowrap"
-                data-testid="share-button-id"
+                <OutlineButton
+                  onClick={() => void share()}
+                  className="w-full whitespace-nowrap"
+                  data-testid="share-button-id"
                 >
-                <div className="flex items-center justify-center gap-2">
-                  {isCopied ? <>Copied</> : <>Share</>}
-                </div>
-              </OutlineButton>
-            </div>
+                  <div className="flex items-center justify-center gap-2">
+                    {isCopied ? <>Copied</> : <>Share</>}
+                  </div>
+                </OutlineButton>
+              </div>
             </div>
           </div>
+          {isMakeAnOfferOpen && (
+            <MakeAnOffer
+              isMakeAnOfferOpen={isMakeAnOfferOpen}
+              setIsMakeAnOfferOpen={setIsMakeAnOfferOpen}
+              availableSlots={availableSlots}
+              courseName={course?.name ?? ""}
+              courseImage={course?.logo ?? ""}
+              date={time}
+              minimumOfferPrice={
+                minimumOfferPrice ?? firstHandPurchasePrice ?? price
+              }
+              bookingIds={bookingIds ?? []}
+            />
+          )}
+          {isManageOpen && (
+            <ManageTeeTimeListing
+              isManageTeeTimeListingOpen={isManageOpen}
+              setIsManageTeeTimeListingOpen={setIsManageOpen}
+              selectedTeeTime={{
+                listingId: listingId ?? "",
+                courseName: course?.name ?? "",
+                courseLogo: course?.logo ?? "",
+                courseId: courseId ?? "",
+                date: time,
+                firstHandPrice: firstHandPurchasePrice ?? 0,
+                miniumOfferPrice: minimumOfferPrice ?? 0,
+                listPrice: price,
+                status: status,
+                listedSpots: Array.from({ length: availableSlots }).fill(
+                  "golfer"
+                ) as string[],
+                teeTimeId: teeTimeId,
+                listedSlotsCount: listedSlots ?? 1,
+                groupId: groupId ?? "",
+              }}
+              refetch={refetch}
+            />
+          )}
         </div>
-        {isMakeAnOfferOpen && (
-          <MakeAnOffer
-            isMakeAnOfferOpen={isMakeAnOfferOpen}
-            setIsMakeAnOfferOpen={setIsMakeAnOfferOpen}
-            availableSlots={availableSlots}
-            courseName={course?.name ?? ""}
-            courseImage={course?.logo ?? ""}
-            date={time}
-            minimumOfferPrice={
-              minimumOfferPrice ?? firstHandPurchasePrice ?? price
-            }
-            bookingIds={bookingIds ?? []}
-          />
-        )}
-        {isManageOpen && (
-          <ManageTeeTimeListing
-            isManageTeeTimeListingOpen={isManageOpen}
-            setIsManageTeeTimeListingOpen={setIsManageOpen}
-            selectedTeeTime={{
-              listingId: listingId ?? "",
-              courseName: course?.name ?? "",
-              courseLogo: course?.logo ?? "",
-              courseId: courseId ?? "",
-              date: time,
-              firstHandPrice: firstHandPurchasePrice ?? 0,
-              miniumOfferPrice: minimumOfferPrice ?? 0,
-              listPrice: price,
-              status: status,
-              listedSpots: Array.from({ length: availableSlots }).fill(
-                "golfer"
-              ) as string[],
-              teeTimeId: teeTimeId,
-              listedSlotsCount: listedSlots ?? 1,
-              groupId: groupId ?? "",
-            }}
-            refetch={refetch}
-          />
-        )}
       </div>
     </>
   );
