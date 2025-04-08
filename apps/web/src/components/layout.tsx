@@ -23,7 +23,7 @@ const AllowedPathsForMainNav = [
 ];
 export const Layout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
-  const { data: session, status } = useSession();
+  const { status } = useSession();
 
   const getRecievables = api.cashOut.getRecievablesMute.useMutation();
 
