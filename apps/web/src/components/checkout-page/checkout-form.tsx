@@ -1059,13 +1059,12 @@ export const CheckoutForm = ({
                   <Fragment>
                     <div className="unmask-price">
                       $
-                      {Number(TaxCharge + (donateValue || 0)).toLocaleString(
-                        "en-US",
-                        {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        }
-                      )}
+                      {Number(
+                        TaxCharge + (roundUpCharityId ? donateValue || 0 : 0)
+                      ).toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
                     </div>
                   </Fragment>
                 )}
@@ -1142,7 +1141,7 @@ export const CheckoutForm = ({
                 value="item-2"
                 position="left"
                 amountValues={`$${Number(
-                  TaxCharge + (donateValue || 0)
+                  TaxCharge + (roundUpCharityId ? donateValue || 0 : 0)
                 ).toLocaleString("en-US", {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,

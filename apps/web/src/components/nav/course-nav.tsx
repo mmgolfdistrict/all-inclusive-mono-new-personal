@@ -37,6 +37,7 @@ export const CourseNav = () => {
     setIsNavExpanded, setHeaderHeight } = useAppContext();
   const { course } = useCourseContext();
   const courseId = course?.id;
+  const entityId = entity?.id;
   const [isSideBarOpen, setIsSideBarOpen] = useState<boolean>(false);
   const isMobile = useMediaQuery("(max-width: 768px)");
   const pathname = usePathname();
@@ -64,6 +65,11 @@ export const CourseNav = () => {
   const { data: courseGlobalNotification, isLoading: loadingCourseGlobalNotification } =
     api.systemNotification.getCourseGlobalNotification.useQuery({
       courseId: courseId ?? "",
+    });
+
+  const { data: entityGlobalNotification, isLoading: loadingEntityGlobalNotification } =
+    api.systemNotification.getEntityGlobalNotification.useQuery({
+      entityId: entityId ?? "",
     });
 
   const { data: isUserBlocked } = api.user.isUserBlocked.useQuery({
@@ -136,7 +142,7 @@ export const CourseNav = () => {
     setDateType("All");
   };
 
-  const divHeight = !loadingCourseGlobalNotification || !loadingSystemNotifications ? document?.getElementById('header')?.offsetHeight || 0 : 0;
+  const divHeight = !loadingCourseGlobalNotification || !loadingSystemNotifications || !loadingEntityGlobalNotification ? document?.getElementById('header')?.offsetHeight || 0 : 0;
   setHeaderHeight(divHeight)
 
   return (
@@ -152,6 +158,30 @@ export const CourseNav = () => {
                   color: elm.color,
                 }}
                 className="w-full p-1 text-center flex items-center justify-center"
+              >
+                {elm.shortMessage}
+                {elm.longMessage && (
+                  <Tooltip
+                    trigger={
+                      <Info longMessage className="ml-2 h-[20px] w-[20px]" />
+                    }
+                    content={<div>
+                      {elm.longMessage.split("\\n").map((line, index) => (
+                        <div key={index}>{line}</div>
+                      ))}
+                    </div>}
+                  />
+                )}
+              </div>
+            ))}
+            {entityGlobalNotification?.map((elm) => (
+              <div
+                key={elm.id}
+                style={{
+                  backgroundColor: elm.bgColor,
+                  color: elm.color,
+                }}
+                className="text-white w-full p-1 text-center flex items-center justify-center"
               >
                 {elm.shortMessage}
                 {elm.longMessage && (
@@ -239,47 +269,55 @@ export const CourseNav = () => {
                 </Link>
               )}
             </div>
-            <div className="flex items-center gap-6 md:gap-4">
+            <div className="flex flex-col md:flex-row md:items-center md:gap-4">
+              {/* Mobile: Show PoweredBy on top */}
+              <div className="md:hidden mb-2">
+                <PoweredBy id="powered-by-sidebar" />
+              </div>
+
+              {/* Desktop: Show PoweredBy inline */}
               <div className="hidden md:block">
                 <PoweredBy id="powered-by-sidebar" />
               </div>
 
-              {user && session.status === "authenticated" ? (
-                <div className="flex items-center gap-4">
-                  <UserInNav />
-                </div>
-              ) : session.status == "loading" ? null : (
-                session.status != "authenticated" &&
-                pathname != `/${course?.id}/login` && (
-                  <Link
-                    href={
-                      pathname === `/${course?.id}/login`
-                        ? "#"
-                        : `/${course?.id}/login`
-                    }
-                    onClick={(
-                      event: React.MouseEvent<HTMLAnchorElement, MouseEvent>
-                    ) => {
-                      if (pathname === `/${course?.id}/login`) {
-                        event.preventDefault();
-                      } else {
-                        setPrevPath({
-                          path: pathname,
-                          createdAt: new Date().toISOString(),
-                        });
+              <div className="flex items-center gap-6">
+                {user && session.status === "authenticated" ? (
+                  <div className="flex items-center gap-4">
+                    <UserInNav />
+                  </div>
+                ) : session.status === "loading" ? null : (
+                  session.status !== "authenticated" &&
+                  pathname !== `/${course?.id}/login` && (
+                    <Link
+                      href={
+                        pathname === `/${course?.id}/login`
+                          ? "#"
+                          : `/${course?.id}/login`
                       }
-                    }}
-                  >
-                    <FilledButton
-                      className="hidden md:block"
-                      data-testid="signin-button-id"
+                      onClick={(event) => {
+                        if (pathname === `/${course?.id}/login`) {
+                          event.preventDefault();
+                        } else {
+                          setPrevPath({
+                            path: pathname,
+                            createdAt: new Date().toISOString(),
+                          });
+                        }
+                      }}
                     >
-                      Log In
-                    </FilledButton>
-                  </Link>
-                )
-              )}
+                      <FilledButton
+                        className="hidden md:block"
+                        data-testid="signin-button-id"
+                      >
+                        Log In
+                      </FilledButton>
+                    </Link>
+                  )
+                )}
+              </div>
             </div>
+
+
           </div>
         </div>
         {!isMobile ?

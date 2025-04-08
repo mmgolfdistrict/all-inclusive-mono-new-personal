@@ -1,5 +1,5 @@
 export const TeeTimeSkeleton = () => (
-  <div className="rounded-xl bg-secondary-white min-w-[228px] md:min-w-[240px]">
+  <div className="rounded-xl bg-secondary-white min-w-[228px] md:min-w-[220px]">
     <div className="border-b border-stroke">
       <div className="flex justify-between py-1.5 px-3 md:p-3">
         <div className="h-4 md:h-8 w-[30%] bg-gray-200 rounded-md  animate-pulse" />
