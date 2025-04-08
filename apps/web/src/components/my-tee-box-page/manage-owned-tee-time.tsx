@@ -325,7 +325,10 @@ export const ManageOwnedTeeTime = ({
     setIsInviteVisible(true);
   };
 
-  const ManageOwnedTeeTimeDetail = () => {
+  const ManageOwnedTeeTimeDetail = ({
+    setIsManageOwnedTeeTimeOpen,
+    selectedTeeTime
+  }: Omit<SideBarProps, "isManageOwnedTeeTimeOpen" | "refetch">) => {
     return (
       <>
         <div className="flex flex-col gap-6 px-0 sm:px-4">
@@ -556,7 +559,10 @@ export const ManageOwnedTeeTime = ({
       isOpen={isManageOwnedTeeTimeOpen}
       onClose={() => setIsManageOwnedTeeTimeOpen(false)}
     >
-      <ManageOwnedTeeTimeDetail />
+      <ManageOwnedTeeTimeDetail
+        setIsManageOwnedTeeTimeOpen={setIsManageOwnedTeeTimeOpen}
+        selectedTeeTime={selectedTeeTime}
+      />
     </Modal>
   ) : (
     <Flyout
@@ -564,7 +570,10 @@ export const ManageOwnedTeeTime = ({
       isOpen={isManageOwnedTeeTimeOpen}
       setIsOpen={setIsManageOwnedTeeTimeOpen}
     >
-      <ManageOwnedTeeTimeDetail />
+      <ManageOwnedTeeTimeDetail
+        setIsManageOwnedTeeTimeOpen={setIsManageOwnedTeeTimeOpen}
+        selectedTeeTime={selectedTeeTime}
+      />
     </Flyout>
   );
 };

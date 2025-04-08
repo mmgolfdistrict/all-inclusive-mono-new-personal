@@ -1,5 +1,7 @@
+"use-client";
+
 import { AnimatePresence, motion } from "framer-motion";
-import { useRef, type ReactNode, type FC } from "react";
+import { useRef, type ReactNode, type FC, useEffect } from "react";
 import { useMediaQuery, useOnClickOutside } from "usehooks-ts";
 import { Close } from "../icons/close";
 
@@ -29,6 +31,12 @@ export const Modal: FC<ModalProps> = ({ title, isOpen, onClose, children, classN
     };
     useOnClickOutside(modalRef, handleClickOutside);
 
+    useEffect(() => {
+        if (!isOpen) {
+            document.body.classList.remove("overflow-hidden");
+        }
+    }, [isOpen]);
+
     return (
         <AnimatePresence>
             {isOpen && (
@@ -42,7 +50,7 @@ export const Modal: FC<ModalProps> = ({ title, isOpen, onClose, children, classN
                 >
                     <motion.div
                         className={`
-                            bg-white md:rounded-lg px-2 shadow-lg w-full
+                            bg-white md:rounded-lg shadow-lg w-full
                             max-w-2xl transform border border-stroke text-left
                             align-middle ${isSmallHeightMobile ? 'mt-[96px]' : 'mt-[88px]'}
                         `}
@@ -66,10 +74,8 @@ export const Modal: FC<ModalProps> = ({ title, isOpen, onClose, children, classN
                                 </button>
                             </div>
                             <div
-                                className={`
-                                    px-2 mt-2
-                                    ${isSmallHeightMobile ? 'mb-6' : 'mb-4'}
-                                `}>
+                                className={`px-2 overflow-y-auto max-h-[95vh] mb-16`}
+                            >
                                 {children}
                             </div>
                         </div>

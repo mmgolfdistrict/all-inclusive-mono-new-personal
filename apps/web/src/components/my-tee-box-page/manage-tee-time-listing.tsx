@@ -367,7 +367,13 @@ export const ManageTeeTimeListing = ({
     }
   };
 
-  const ManageTeeTimeListingDetail = () => {
+  const ManageTeeTimeListingDetail = ({
+    setIsManageTeeTimeListingOpen,
+    selectedTeeTime,
+  }: {
+    setIsManageTeeTimeListingOpen: Dispatch<SetStateAction<boolean>>;
+    selectedTeeTime: MyListedTeeTimeType | undefined;
+  }) => {
     return (<>
       {isLoading && <LoadingContainer isLoading={isLoading}>
         <div></div>
@@ -573,14 +579,20 @@ export const ManageTeeTimeListing = ({
           title="Manage Tee Time Listing"
           onClose={toggleSidebar}
         >
-          <ManageTeeTimeListingDetail />
+          <ManageTeeTimeListingDetail
+            setIsManageTeeTimeListingOpen={setIsManageTeeTimeListingOpen}
+            selectedTeeTime={selectedTeeTime}
+          />
         </Modal> :
         <Flyout
           isOpen={isManageTeeTimeListingOpen}
           title="Manage Tee Time Listing"
           setIsOpen={toggleSidebar}
         >
-          <ManageTeeTimeListingDetail />
+          <ManageTeeTimeListingDetail
+            setIsManageTeeTimeListingOpen={setIsManageTeeTimeListingOpen}
+            selectedTeeTime={selectedTeeTime}
+          />
         </Flyout>}
       <CancelListing
         isCancelListingOpen={isCancelListingOpen}
