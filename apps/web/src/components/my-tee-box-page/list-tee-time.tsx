@@ -41,7 +41,7 @@ const saleTypeOptions: SaleTypeOption[] = [
   {
     value: "split",
     caption: "Allow Sale in Splits (Recommended)",
-    description: "Buyers can purchase any number of the tee times you list. (Recommended)",
+    description: "Buyers can purchase any number of the tee times you list. (There is a risk that partial rounds can go unsold)",
     tooltip: "Increases the pool of potential buyers as they can choose the exact number of rounds they want.",
   },
   {
@@ -62,6 +62,8 @@ type SideBarProps = {
   needsRedirect?: boolean;
 };
 
+type ListTeeTimeDetailsProps = SideBarProps
+
 export const ListTeeTime = ({
   isListTeeTimeOpen,
   setIsListTeeTimeOpen,
@@ -69,6 +71,47 @@ export const ListTeeTime = ({
   refetch,
   needsRedirect,
 }: SideBarProps) => {
+
+  const isMobile = useMediaQuery("(max-width: 768px)");
+
+  return isMobile ? (
+    <Modal
+      title="Sell"
+      isOpen={isListTeeTimeOpen}
+      onClose={() => setIsListTeeTimeOpen(false)}
+    >
+      <ListTeeTimeDetail
+        isListTeeTimeOpen={isListTeeTimeOpen}
+        setIsListTeeTimeOpen={setIsListTeeTimeOpen}
+        selectedTeeTime={selectedTeeTime}
+        refetch={refetch}
+        needsRedirect={needsRedirect}
+      />
+    </Modal>
+  ) : (
+    <Flyout
+      title="Sell"
+      isOpen={isListTeeTimeOpen}
+      setIsOpen={() => setIsListTeeTimeOpen(false)}
+    >
+      <ListTeeTimeDetail
+        isListTeeTimeOpen={isListTeeTimeOpen}
+        setIsListTeeTimeOpen={setIsListTeeTimeOpen}
+        selectedTeeTime={selectedTeeTime}
+        refetch={refetch}
+        needsRedirect={needsRedirect}
+      />
+    </Flyout>
+  );
+};
+
+const ListTeeTimeDetail = ({
+  isListTeeTimeOpen,
+  setIsListTeeTimeOpen,
+  selectedTeeTime,
+  refetch,
+  needsRedirect,
+}: ListTeeTimeDetailsProps) => {
   const availableSlots = selectedTeeTime?.golfers.length || 0;
 
   const [listingPrice, setListingPrice] = useState<number>(0);
@@ -315,205 +358,183 @@ export const ListTeeTime = ({
     }
   };
 
-  const isMobile = useMediaQuery("(max-width: 768px)");
-
-  const ListTeeTimeDetail = () => {
-    return (<>
-      {isLoading && <LoadingContainer isLoading={isLoading}>
-        <div></div>
-      </LoadingContainer>}
-      <div className="flex h-full flex-col justify-between overflow-y-auto">
-        <div className="flex flex-col gap-6 px-0 sm:px-4 mb-6">
-          <TeeTimeItem
-            courseImage={selectedTeeTime?.courseLogo ?? ""}
-            courseName={selectedTeeTime?.courseName ?? ""}
-            courseDate={selectedTeeTime?.date ?? ""}
-            golferCount={selectedTeeTime?.golfers.length ?? 0}
-            timezoneCorrection={course?.timezoneCorrection}
-          />
-          <div className={`flex flex-col gap-1 text-center w-fit mx-auto`}>
-            <label
-              htmlFor="listingPrice"
-              className="text-[16px] text-primary-gray md:text-[18px]"
-            >
-              Enter listing price per golfer
-            </label>
-            <div className="relative">
-              <span className="absolute left-1 top-1 text-[24px] md:text-[32px]">
-                $
-              </span>
-              <input
-                id="listingPrice"
-                value={listingPrice
-                  ?.toString()
-                  ?.replace(/^0+/, "")
-                  .replace(".", "")
-                  .replace("-", "")}
-                type="number"
-                onFocus={handleFocus}
-                onChange={handleListingPrice}
-                onBlur={handleBlur}
-                className="mx-auto max-w-[300px] rounded-lg bg-secondary-white px-4 py-1 text-center text-[24px] font-semibold outline-none md:text-[32px] pl-6"
-                data-testid="listing-price-id"
-              />
-            </div>
+  return (<>
+    {isLoading && <LoadingContainer isLoading={isLoading}>
+      <div></div>
+    </LoadingContainer>}
+    <div className="flex h-full flex-col justify-between overflow-y-auto">
+      <div className="flex flex-col gap-6 px-0 sm:px-4 mb-6">
+        <TeeTimeItem
+          courseImage={selectedTeeTime?.courseLogo ?? ""}
+          courseName={selectedTeeTime?.courseName ?? ""}
+          courseDate={selectedTeeTime?.date ?? ""}
+          golferCount={selectedTeeTime?.golfers.length ?? 0}
+          timezoneCorrection={course?.timezoneCorrection}
+        />
+        <div className={`flex flex-col gap-1 text-center w-fit mx-auto`}>
+          <label
+            htmlFor="listingPrice"
+            className="text-[16px] text-primary-gray md:text-[18px]"
+          >
+            Enter listing price per golfer
+          </label>
+          <div className="relative">
+            <span className="absolute left-1 top-1 text-[24px] md:text-[32px]">
+              $
+            </span>
+            <input
+              id="listingPrice"
+              value={listingPrice
+                ?.toString()
+                ?.replace(/^0+/, "")
+                .replace(".", "")
+                .replace("-", "")}
+              type="number"
+              onFocus={handleFocus}
+              onChange={handleListingPrice}
+              onBlur={handleBlur}
+              className="mx-auto max-w-[300px] rounded-lg bg-secondary-white px-4 py-1 text-center text-[24px] font-semibold outline-none md:text-[32px] pl-6"
+              data-testid="listing-price-id"
+            />
           </div>
-
-          <div className={`flex  flex-col gap-1 text-center`}>
-            <label
-              htmlFor="spots"
-              className="text-[16px] text-primary-gray md:text-[18px]"
-            >
-              Select number of spots to list
-            </label>
-            {!selectedTeeTime?.isGroupBooking ?
-              <ToggleGroup.Root
-                id="spots"
-                type="single"
-                value={players}
-                onValueChange={(player: PlayerType) => {
-                  if (availableSlots < parseInt(player)) return;
-                  if (player) setPlayers(player);
-                }}
-                orientation="horizontal"
-                className="mx-auto flex"
-                data-testid="player-button-id"
-              >
-                {PlayerOptions.map((value, index) => (
-                  <Item
-                    key={index}
-                    dataTestId="player-item-id"
-                    dataQa={value}
-                    value={value}
-                    className={`${index === 0
-                      ? "rounded-l-full border border-stroke"
-                      : index === PlayerOptions.length - 1
-                        ? "rounded-r-full border-b border-t border-r border-stroke"
-                        : "border-b border-r border-t border-stroke"
-                      } px-[1.75rem] ${availableSlots < index + 1
-                        ? "opacity-50 cursor-not-allowed"
-                        : ""
-                      }`}
-                    label={value}
-                  />
-                ))}
-              </ToggleGroup.Root>
-              :
-              <SingleSlider
-                min={1}
-                max={selectedTeeTime?.golfers.length || 0}
-                step={1}
-                onValueChange={(value) => handleSingleSliderChange(value)}
-                aria-label="Select number of players"
-                data-testid="slider-number-of-players"
-                value={[Number(players)]}
-                shouldDisplayValue={true}
-              />}
-          </div>
-          <div className="bg-secondary-white">
-            If you purchased weather protection, you will receive a full
-            refund. Any remaining owned rounds for this time will be subject
-            to raincheck policy.
-          </div>
-              {!selectedTeeTime?.isGroupBooking
-                ? <SaleTypeSelector
-                  className="flex flex-col w-full"
-                  value={saleType}
-                  onValueChange={setSaleType}
-                  saleTypeOptions={saleTypeOptions}
-                  defaultValue={saleType}
-                />
-                : null
-              }
         </div>
-        <div className="flex flex-col gap-4 px-4 pb-6">
-          <div className="flex justify-between">
-            <div className="font-[300] text-primary-gray">
-              Your Listing Price{" "}
-              <Tooltip
-                trigger={<Info className="h-[14px] w-[14px]" />}
-                content="Buyer sees a slightly higher amount. These buyer/seller fees help keep the lights on at Golf District and to continuously provide better service."
-              />
-            </div>
-            <div className="text-secondary-black">
-              {formatMoney(listingPrice * Number(players))}
-            </div>
-          </div>
-          <div className="flex justify-between">
-            <div className="font-[300] text-primary-gray">
-              Service Fee{" "}
-              <Tooltip
-                trigger={<Info className="h-[14px] w-[14px]" />}
-                content="This fee ensures ongoing enhancements to our service, ultimately offering golfers the best access to booking tee times"
-              />
-            </div>
-            <div className="text-secondary-black">
-              ({formatMoney(sellerServiceFee)})
-            </div>
-          </div>
-          <div className="flex justify-between">
-            <div className="font-[300] text-primary-gray">
-              Weather Guarantee Refund{" "}
-              <Tooltip
-                trigger={<Info className="h-[14px] w-[14px]" />}
-                content="Weather guarantee amount to be refunded"
-              />
-            </div>
-            <div className="text-secondary-black">
-              {formatMoney(
-                (selectedTeeTime?.weatherGuaranteeAmount ?? 0) / 100
-              )}
-            </div>
-          </div>
-          <div className="flex justify-between">
-            <div className="font-[300] text-primary-gray">
-              You Receive after Sale
-            </div>
-            <div className="text-secondary-black">
-              {formatMoney(totalPayout)}
-            </div>
-          </div>
-          <div className="text-center text-[14px] font-[300] text-primary-gray">
-            All sales are final.
-          </div>
-          <div className="flex flex-col gap-2">
-            <FilledButton
-              className="w-full"
-              onClick={() => void listTeeTime()}
-              data-testid="sell-tee-time-button-id"
-            >
-              Sell
-            </FilledButton>
 
-            <OutlineButton
-              onClick={() => setIsListTeeTimeOpen(false)}
-              data-testid="cancel-button-id"
+        <div className={`flex  flex-col gap-1 text-center`}>
+          <label
+            htmlFor="spots"
+            className="text-[16px] text-primary-gray md:text-[18px]"
+          >
+            Select number of spots to list
+          </label>
+          {!selectedTeeTime?.isGroupBooking ?
+            <ToggleGroup.Root
+              id="spots"
+              type="single"
+              value={players}
+              onValueChange={(player: PlayerType) => {
+                if (availableSlots < parseInt(player)) return;
+                if (player) setPlayers(player);
+              }}
+              orientation="horizontal"
+              className="mx-auto flex"
+              data-testid="player-button-id"
             >
-              Cancel
-            </OutlineButton>
+              {PlayerOptions.map((value, index) => (
+                <Item
+                  key={index}
+                  dataTestId="player-item-id"
+                  dataQa={value}
+                  value={value}
+                  className={`${index === 0
+                    ? "rounded-l-full border border-stroke"
+                    : index === PlayerOptions.length - 1
+                      ? "rounded-r-full border-b border-t border-r border-stroke"
+                      : "border-b border-r border-t border-stroke"
+                    } px-[1.75rem] ${availableSlots < index + 1
+                      ? "opacity-50 cursor-not-allowed"
+                      : ""
+                    }`}
+                  label={value}
+                />
+              ))}
+            </ToggleGroup.Root>
+            :
+            <SingleSlider
+              min={1}
+              max={selectedTeeTime?.golfers.length || 0}
+              step={1}
+              onValueChange={(value) => handleSingleSliderChange(value)}
+              aria-label="Select number of players"
+              data-testid="slider-number-of-players"
+              value={[Number(players)]}
+              shouldDisplayValue={true}
+            />}
+        </div>
+        <div className="bg-secondary-white">
+          If you purchased weather protection, you will receive a full
+          refund. Any remaining owned rounds for this time will be subject
+          to raincheck policy.
+        </div>
+        {!selectedTeeTime?.isGroupBooking
+          ? <SaleTypeSelector
+            className="flex flex-col w-full"
+            value={saleType}
+            onValueChange={setSaleType}
+            saleTypeOptions={saleTypeOptions}
+            defaultValue={saleType}
+          />
+          : null
+        }
+      </div>
+      <div className="flex flex-col gap-4 px-4 pb-6">
+        <div className="flex justify-between">
+          <div className="font-[300] text-primary-gray">
+            Your Listing Price{" "}
+            <Tooltip
+              trigger={<Info className="h-[14px] w-[14px]" />}
+              content="Buyer sees a slightly higher amount. These buyer/seller fees help keep the lights on at Golf District and to continuously provide better service."
+            />
           </div>
+          <div className="text-secondary-black">
+            {formatMoney(listingPrice * Number(players))}
+          </div>
+        </div>
+        <div className="flex justify-between">
+          <div className="font-[300] text-primary-gray">
+            Service Fee{" "}
+            <Tooltip
+              trigger={<Info className="h-[14px] w-[14px]" />}
+              content="This fee ensures ongoing enhancements to our service, ultimately offering golfers the best access to booking tee times"
+            />
+          </div>
+          <div className="text-secondary-black">
+            ({formatMoney(sellerServiceFee)})
+          </div>
+        </div>
+        <div className="flex justify-between">
+          <div className="font-[300] text-primary-gray">
+            Weather Guarantee Refund{" "}
+            <Tooltip
+              trigger={<Info className="h-[14px] w-[14px]" />}
+              content="Weather guarantee amount to be refunded"
+            />
+          </div>
+          <div className="text-secondary-black">
+            {formatMoney(
+              (selectedTeeTime?.weatherGuaranteeAmount ?? 0) / 100
+            )}
+          </div>
+        </div>
+        <div className="flex justify-between">
+          <div className="font-[300] text-primary-gray">
+            You Receive after Sale
+          </div>
+          <div className="text-secondary-black">
+            {formatMoney(totalPayout)}
+          </div>
+        </div>
+        <div className="text-center text-[14px] font-[300] text-primary-gray">
+          All sales are final.
+        </div>
+        <div className="flex flex-col gap-2">
+          <FilledButton
+            className="w-full"
+            onClick={() => void listTeeTime()}
+            data-testid="sell-tee-time-button-id"
+          >
+            Sell
+          </FilledButton>
+
+          <OutlineButton
+            onClick={() => setIsListTeeTimeOpen(false)}
+            data-testid="cancel-button-id"
+          >
+            Cancel
+          </OutlineButton>
         </div>
       </div>
-    </>);
-  };
-
-  return isMobile ? (
-    <Modal
-      title="Sell"
-      isOpen={isListTeeTimeOpen}
-      onClose={() => setIsListTeeTimeOpen(false)}
-    >
-      <ListTeeTimeDetail />
-    </Modal>
-  ) : (
-    <Flyout
-      title="Sell"
-      isOpen={isListTeeTimeOpen}
-      setIsOpen={() => setIsListTeeTimeOpen(false)}
-    >
-      <ListTeeTimeDetail />
-    </Flyout>
-  );
+    </div>
+  </>);
 };
 
 const TeeTimeItem = ({
