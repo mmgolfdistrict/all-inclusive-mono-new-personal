@@ -30,6 +30,15 @@ type SideBarProps = {
   needRedirect?: boolean;
 };
 
+type CancelListingDetailProp = {
+  setIsCancelListingOpen: Dispatch<SetStateAction<boolean>>;
+  courseName: string | undefined;
+  courseLogo: string | undefined;
+  date: string | undefined;
+  golferCount: number | undefined;
+  pricePerGolfer: number | undefined;
+};
+
 export const CancelListing = ({
   isCancelListingOpen,
   setIsCancelListingOpen,
@@ -102,7 +111,14 @@ export const CancelListing = ({
     }
   };
 
-  const CancelListingDetail = () => {
+  const CancelListingDetail = ({
+    setIsCancelListingOpen,
+    courseName,
+    courseLogo,
+    date,
+    golferCount,
+    pricePerGolfer,
+  }: CancelListingDetailProp) => {
     return (
       <>
         {isLoading && <LoadingContainer isLoading={isLoading}>
@@ -163,7 +179,14 @@ export const CancelListing = ({
       title="Cancel Listing"
       onClose={() => setIsCancelListingOpen(false)}
     >
-      <CancelListingDetail />
+      <CancelListingDetail
+        setIsCancelListingOpen={setIsCancelListingOpen}
+        courseName={courseName}
+        courseLogo={courseLogo}
+        date={date}
+        golferCount={golferCount}
+        pricePerGolfer={pricePerGolfer}
+      />
     </Modal>
   ) : (
     <Flyout
@@ -171,7 +194,14 @@ export const CancelListing = ({
       title="Cancel Listing"
       setIsOpen={() => setIsCancelListingOpen(false)}
     >
-      <CancelListingDetail />
+      <CancelListingDetail
+        setIsCancelListingOpen={setIsCancelListingOpen}
+        courseName={courseName}
+        courseLogo={courseLogo}
+        date={date}
+        golferCount={golferCount}
+        pricePerGolfer={pricePerGolfer}
+      />
     </Flyout>
   );
 };
