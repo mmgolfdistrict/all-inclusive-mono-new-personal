@@ -52,6 +52,7 @@ export const TeeTime = ({
   handleLoading,
   refetch,
   groupId,
+  allowSplit,
 }: {
   time: string;
   items: CombinedObject | BookingGroup;
@@ -78,6 +79,7 @@ export const TeeTime = ({
   handleLoading?: (val: boolean) => void;
   refetch?: () => Promise<unknown>;
   groupId?: string;
+    allowSplit?: boolean;
 }) => {
   const [, copy] = useCopyToClipboard();
   const [isCopied, setIsCopied] = useState<boolean>(false);
@@ -95,13 +97,13 @@ export const TeeTime = ({
 
   const numberOfPlayers = allowedPlayers?.numberOfPlayers;
   useEffect(() => {
-    if (numberOfPlayers?.length !== 0 && numberOfPlayers?.[0]) {
+    if (numberOfPlayers?.length !== 0 && numberOfPlayers?.[0] && status === "UNLISTED") {
       setSelectedPlayers(String(numberOfPlayers[0]));
-    } else if (allowedPlayers?.selectStatus === "ALL_PLAYERS") {
+    } else if (allowedPlayers?.selectStatus === "ALL_PLAYERS" && status === "UNLISTED") {
       setSelectedPlayers(String(availableSlots));
     } else {
       setSelectedPlayers(
-        status === "UNLISTED" || status === "FIRST_HAND" ? "1" : players
+        status === "UNLISTED" || status === "FIRST_HAND" ? "1" : listedSlots?.toString() ?? players
       );
     }
   }, [
@@ -121,6 +123,7 @@ export const TeeTime = ({
   const { user } = useUserContext();
   const router = useRouter();
   const auditLog = api.webhooks.auditLog.useMutation();
+  const getCache = api.cache.getCache.useMutation();
   const logAudit = async () => {
     await auditLog.mutateAsync({
       userId: user?.id ?? "",
@@ -214,7 +217,7 @@ export const TeeTime = ({
       }
       if (status === "SECOND_HAND") {
         setPrevPath({
-          path: `/${course?.id}/checkout?listingId=${listingId}&playerCount=${listedSlots}`,
+          path: `/${course?.id}/checkout?listingId=${listingId}&playerCount=${selectedPlayers}`,
           createdAt: new Date().toISOString(),
         });
       }
@@ -227,8 +230,18 @@ export const TeeTime = ({
       );
     }
     if (status === "SECOND_HAND") {
+      const value = await getCache.mutateAsync({
+        key: `listing_id_${listingId}`,
+      })
+      if (value) {
+        toast.info("Tee time is currently being purchased by another user. Please try again in 20 minutes.");
+        if (handleLoading) {
+          handleLoading(false);
+        }
+        return;
+      }
       void router.push(
-        `/${course?.id}/checkout?listingId=${listingId}&playerCount=${listedSlots}`
+        `/${course?.id}/checkout?listingId=${listingId}&playerCount=${selectedPlayers}`
       );
     }
   };
@@ -395,23 +408,25 @@ export const TeeTime = ({
             {canChoosePlayer ? (
               <ChoosePlayers
                 id="choose-players"
-                players={
-                  status === "SECOND_HAND" ? `${listedSlots}` : selectedPlayers
-                }
+                players={selectedPlayers}
                 setPlayers={setSelectedPlayers}
                 playersOptions={PlayersOptions}
                 availableSlots={
                   status === "SECOND_HAND" ? listedSlots || 0 : availableSlots
                 }
                 isDisabled={
-                  status === "SECOND_HAND" ||
+                  soldById === user?.id ||
+                  (status === "SECOND_HAND" && !allowSplit) ||
                   allowedPlayers?.selectStatus === "ALL_PLAYERS"
                 }
                 className={`md:px-[1rem] md:py-[.25rem] md:!text-[14px] !text-[10px] px-[.75rem] py-[.1rem]`}
                 teeTimeId={teeTimeId}
-                numberOfPlayers={numberOfPlayers ? numberOfPlayers : []}
+                numberOfPlayers={numberOfPlayers ? (
+                  !(status === "SECOND_HAND") ? numberOfPlayers : PlayersOptions.filter(player => player <= (listedSlots?.toString() ?? "0"))
+                ) : []}
                 status={status}
                 supportsGroupBooking={course?.supportsGroupBooking}
+                allowSplit={allowSplit}
               />
             ) : (
               players && (

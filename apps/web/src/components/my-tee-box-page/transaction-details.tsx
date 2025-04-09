@@ -29,7 +29,11 @@ export const TransactionDetails = ({
 
   const isMobile = useMediaQuery("(max-width: 768px)");
 
-  const TransactionDetailData = () => {
+  const TransactionDetailData = ({
+    setIsReceiptOpen,
+    selectedReceipt,
+    onClickDownload
+  }: Omit<BookingDetailsProps, "isReceiptOpen">) => {
     return (<div className="
       flex h-full flex-col justify-between overflow-y-auto p-4"
     >
@@ -90,7 +94,11 @@ export const TransactionDetails = ({
       title="Cash out Reciept"
       onClose={() => setIsReceiptOpen(false)}
     >
-      <TransactionDetailData />
+      <TransactionDetailData
+        setIsReceiptOpen={setIsReceiptOpen}
+        selectedReceipt={selectedReceipt}
+        onClickDownload={onClickDownload}
+      />
     </Modal>
   ) : (
     <Flyout
@@ -98,7 +106,11 @@ export const TransactionDetails = ({
       isOpen={isReceiptOpen}
       setIsOpen={setIsReceiptOpen}
     >
-      <TransactionDetailData />
+      <TransactionDetailData
+        setIsReceiptOpen={setIsReceiptOpen}
+        selectedReceipt={selectedReceipt}
+        onClickDownload={onClickDownload}
+      />
     </Flyout>
   );
 };

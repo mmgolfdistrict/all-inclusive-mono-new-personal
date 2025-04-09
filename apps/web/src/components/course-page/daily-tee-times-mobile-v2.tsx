@@ -315,6 +315,7 @@ export const DailyTeeTimesMobileV2 = ({
                   handleLoading={handleLoading}
                   refetch={refetch}
                   groupId={i?.groupId}
+                  allowSplit={i?.allowSplit}
                 />
               );
             }
