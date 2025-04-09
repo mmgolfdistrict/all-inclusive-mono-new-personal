@@ -32,7 +32,7 @@ const SplitPaymentSuccessPage = () => {
     }
   };
   useEffect(() => {
-    saveCashOut().then((data) => {
+   void saveCashOut().then((data) => {
       console.log("data", data);
     });
   }, [result]);

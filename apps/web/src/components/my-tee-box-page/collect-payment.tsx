@@ -135,7 +135,7 @@ export const CollectPayment = ({
   }, [selectedOption]);
 
   useEffect(() => {
-    refetchEmailedUsers().then((data) => {
+   void refetchEmailedUsers().then((data) => {
       console.log("data", data.data);
       if (data?.data?.length == 0) {
         setEmailedUsers(undefined);
@@ -158,7 +158,7 @@ export const CollectPayment = ({
     if (selectedOption === "equalSplit") {
       handlePriceChange();
     }
-    refetchEmailedUsers().then((data) => {
+   void refetchEmailedUsers().then((data) => {
       console.log("data", data.data);
       if (data?.data?.length == 0) {
         setEmailedUsers(undefined);
@@ -369,11 +369,12 @@ export const CollectPayment = ({
                       type="text"
                       placeholder="Enter the email"
                       onChange={(e) => handleEmailChange(index, e.target.value)}
-                      value={
-                        sendEmailedUsers && sendEmailedUsers[index]?.email
-                          ? sendEmailedUsers[index]?.email
-                          : emails[index]
-                      }
+                      // value={
+                      //   sendEmailedUsers && sendEmailedUsers[index]?.email
+                      //     ? sendEmailedUsers[index]?.email
+                      //     : emails[index]
+                      // }
+                      value={sendEmailedUsers?.[index]?.email ?? emails[index]}
                     />
                     <div className="flex items-center justify-center">
                       <span className="text-gray-700 font-medium">$</span>
@@ -381,11 +382,12 @@ export const CollectPayment = ({
                         className=" bg-secondary-white outline-none focus:outline-white px-3 py-1 rounded-md w-20 "
                         type="text"
                         placeholder="Amt"
-                        value={
-                          sendEmailedUsers && sendEmailedUsers[index]?.amount
-                            ? sendEmailedUsers[index]?.amount / 100
-                            : amount[index]
-                        }
+                        // value={
+                        //   sendEmailedUsers && sendEmailedUsers[index]?.amount
+                        //     ? sendEmailedUsers[index]?.amount / 100
+                        //     : amount[index]
+                        // }
+                        value={sendEmailedUsers?.[index]?.email ?? emails[index]}
                         onChange={(e) =>
                           handleAmountChange(index, e.target.value)
                         }
@@ -393,7 +395,7 @@ export const CollectPayment = ({
                       />
                     </div>
 
-                    {sendEmailedUsers && sendEmailedUsers[index] ? (
+                    {sendEmailedUsers?.[index] ? (
                       sendEmailedUsers[index]?.isPaid === 1 ? (
                         <Fragment>
                           <div className="flex gap-2 px-5 py-1.5 justify-center items-center">
