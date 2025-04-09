@@ -97,6 +97,7 @@ interface OwnedTeeTimeData {
   bookingStatus: string;
   isGroupBooking: boolean;
   groupId: string;
+  allowSplit?: boolean | null;
 }
 
 interface ListingData {
@@ -116,6 +117,7 @@ interface ListingData {
   isGroupBooking?: boolean;
   playerCount: number;
   listingIdFromRedis?: string | null;
+  allowSplit: boolean;
 }
 
 interface TransferData {
@@ -418,6 +420,7 @@ export class BookingService {
         groupId: bookings.groupId,
         weatherGuaranteeAmount: bookings.weatherGuaranteeAmount,
         playerCount: bookings.playerCount,
+        allowSplit: lists.allowSplit
       })
       .from(bookings)
       .innerJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -470,6 +473,7 @@ export class BookingService {
             isGroupBooking: false,
             playerCount: teeTime.playerCount,
             listingIdFromRedis: listingIdFromRedis as string | null | undefined,
+            allowSplit: teeTime.allowSplit
           };
         } else {
           const currentEntry = combinedData[teeTime.teeTimesId];
@@ -654,6 +658,7 @@ export class BookingService {
         slots: lists.slots,
         playerCount: bookings.playerCount,
         bookingStatus: bookings.status,
+        allowSplit: lists.allowSplit
       })
       .from(teeTimes)
       .innerJoin(bookings, eq(bookings.teeTimeId, teeTimes.id))
@@ -756,6 +761,7 @@ export class BookingService {
           bookingStatus: teeTime.bookingStatus,
           isGroupBooking: false,
           groupId: "",
+          allowSplit: teeTime.allowSplit
         };
       } else {
         const currentEntry = combinedData[teeTime.providerBookingId];
@@ -1435,7 +1441,8 @@ export class BookingService {
     updatedPrice: number,
     updatedSlots: number,
     bookingIds: string[],
-    endTime: Date
+    endTime: Date,
+    allowSplit: boolean
   ) => {
     this.logger.info(`updateListingForBookings called with userId: ${userId}, listId: ${listId}`);
 
@@ -1589,6 +1596,7 @@ export class BookingService {
       .set({
         listPrice: updatedPrice * 100,
         slots: updatedSlots,
+        allowSplit
       })
       .where(eq(lists.id, listId))
       .execute()

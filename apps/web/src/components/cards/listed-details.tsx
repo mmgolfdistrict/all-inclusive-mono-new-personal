@@ -85,7 +85,7 @@ export const ListedDetails = ({
         key: `listing_id_${listingId}`,
       })
       if (value) {
-        toast.info("Tee time is currently being purchased by another user. Please try again in 20 minutes.");
+        toast.info("The tee time is currently unavailable. Please check back in 20 mins.");
         return;
       }
       void router.push(
@@ -293,7 +293,7 @@ export const ListedDetails = ({
           listedSpots: Array(data?.availableSlots ?? 0),
           teeTimeId: teeTimeId,
           groupId: data?.groupId ?? "",
-
+          allowSplit: data?.allowSplit
         }}
         needRedirect={true}
       />
