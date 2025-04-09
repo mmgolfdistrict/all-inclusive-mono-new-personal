@@ -146,6 +146,7 @@ export const MobileOwned = () => {
         isGroupBooking={selectedTeeTime?.isGroupBooking}
         groupBookingId={selectedTeeTime?.groupId ?? undefined}
         refetch={refetch}
+        allowSplit={selectedTeeTime?.allowSplit}
       />
     </>
   );

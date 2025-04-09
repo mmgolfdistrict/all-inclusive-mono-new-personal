@@ -37,7 +37,7 @@ type PlayerType = "1" | "2" | "3" | "4";
 const PlayerOptions = ["1", "2", "3", "4"];
 
 
-const saleTypeOptions: SaleTypeOption[] = [
+export const SPLIT_TYPE_OPTIONS: SaleTypeOption[] = [
   {
     value: "split",
     caption: "Allow Sale in Splits (Recommended)",
@@ -460,7 +460,7 @@ const ListTeeTimeDetail = ({
             className="flex flex-col w-full"
             value={saleType}
             onValueChange={setSaleType}
-            saleTypeOptions={saleTypeOptions}
+            saleTypeOptions={SPLIT_TYPE_OPTIONS}
             defaultValue={saleType}
           />
           : null

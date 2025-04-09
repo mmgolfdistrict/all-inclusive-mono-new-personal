@@ -29,6 +29,8 @@ import { type MyListedTeeTimeType } from "./my-listed-tee-times";
 import Flyout from "../modal/flyout";
 import { Modal } from "../modal/modal";
 import { useMediaQuery } from "usehooks-ts";
+import { SaleTypeSelector } from "../input/sale-type-select";
+import { SPLIT_TYPE_OPTIONS } from "./list-tee-time";
 
 type PlayerType = "1" | "2" | "3" | "4";
 
@@ -56,6 +58,8 @@ export const ManageTeeTimeListing = ({
 
   const [initialPrice, setInitialPrice] = useState<number | null>(null); // Initial price when sidebar opens
   const [initialPlayers, setInitialPlayers] = useState<PlayerType | null>(null); // Initial players when sidebar opens
+  const [saleType, setSaleType] = useState<string>("whole");
+  const [initialSaleType, setInitialSaleType] = useState<string>("whole"); // Initial saleType when sidebar opens
   const isMobile = useMediaQuery("(max-width: 768px)");
 
   useEffect(() => {
@@ -71,6 +75,9 @@ export const ManageTeeTimeListing = ({
       // Sync current editable fields with selectedTeeTime values
       setListingPrice(initialTeeTimePrice);
       setPlayers(initialTeeTimePlayers);
+
+      setSaleType(selectedTeeTime.allowSplit ? "split" : "whole");
+      setInitialSaleType(selectedTeeTime.allowSplit ? "split" : "whole");
     }
   }, [selectedTeeTime, isManageTeeTimeListingOpen]);
 
@@ -79,7 +86,8 @@ export const ManageTeeTimeListing = ({
     initialPrice !== null &&
     initialPlayers !== null &&
     listingPrice === initialPrice &&
-    players === initialPlayers;
+    players === initialPlayers &&
+    saleType === initialSaleType;
 
   const { toggleSidebar } = useSidebar({
     isOpen: isManageTeeTimeListingOpen,
@@ -335,6 +343,7 @@ export const ManageTeeTimeListing = ({
           updatedPrice: listingPrice,
           updatedSlots: parseInt(players),
           endTime: new Date(selectedTeeTime?.date),
+          allowSplit: saleType === "split" ? true : false
         });
       }
       setIsManageTeeTimeListingOpen(false);
@@ -475,6 +484,17 @@ export const ManageTeeTimeListing = ({
               ))}
             </ToggleGroup.Root>
           </div>
+
+          {!selectedTeeTime?.isGroupBooking
+            ? <SaleTypeSelector
+              className="flex flex-col w-full mb-4"
+              value={saleType}
+              onValueChange={setSaleType}
+              saleTypeOptions={SPLIT_TYPE_OPTIONS}
+              defaultValue={saleType}
+            />
+            : null
+          }
         </div>
         {selectedTeeTime?.listingId ===
           selectedTeeTime?.listingIdFromRedis && (
@@ -558,10 +578,6 @@ export const ManageTeeTimeListing = ({
               className="w-full border disabled:border-gray-400 disabled:text-gray-400 disabled:cursor-not-allowed"
               onClick={() => setIsManageTeeTimeListingOpen(false)}
               data-testid="cancel-button-id"
-              disabled={
-                selectedTeeTime?.listingId ===
-                selectedTeeTime?.listingIdFromRedis
-              }
             >
               Cancel
             </OutlineButton>
@@ -609,6 +625,7 @@ export const ManageTeeTimeListing = ({
         groupBookingId={selectedTeeTime?.groupId ?? undefined}
         refetch={refetch}
         needRedirect={needRedirect}
+        allowSplit={selectedTeeTime?.allowSplit}
       />
     </>
   );

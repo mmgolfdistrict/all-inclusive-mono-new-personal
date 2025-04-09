@@ -28,6 +28,7 @@ type SideBarProps = {
   groupBookingId: string | undefined;
   refetch?: () => Promise<unknown>;
   needRedirect?: boolean;
+  allowSplit: boolean | undefined;
 };
 
 type CancelListingDetailProp = {
@@ -52,6 +53,7 @@ export const CancelListing = ({
   groupBookingId,
   refetch,
   needRedirect,
+  allowSplit = false
 }: SideBarProps) => {
   useSidebar({
     isOpen: isCancelListingOpen,
@@ -149,6 +151,13 @@ export const CancelListing = ({
               Number of spots listed
             </div>
             <div className="text-lg md:text-2xl">{golferCount}</div>
+            <div className="h-[1px] w-full bg-stroke" />
+            <div className="font-[300] text-primary-gray">
+              List type
+            </div>
+            <div className="text-lg md:text-2xl">{
+              allowSplit ? "Splits" : "Whole"
+            }</div>
           </div>
         </div>
         <div className="flex flex-col gap-4 px-4 pb-6">
