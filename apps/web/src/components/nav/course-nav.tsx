@@ -37,7 +37,6 @@ export const CourseNav = () => {
     setIsNavExpanded, setHeaderHeight } = useAppContext();
   const { course } = useCourseContext();
   const courseId = course?.id;
-  const entityId = entity?.id;
   const [isSideBarOpen, setIsSideBarOpen] = useState<boolean>(false);
   const isMobile = useMediaQuery("(max-width: 768px)");
   const pathname = usePathname();
