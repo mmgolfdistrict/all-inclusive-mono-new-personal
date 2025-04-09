@@ -773,7 +773,7 @@ export class HyperSwitchService {
           const emailSend = await this.notificationService.sendEmailByTemplate(
             email,
             "Payment Link",
-            process.env.SPLIT_PAYMENT_PROCESSOR_EMAIL_TEMPLATE_ID!,
+            process.env.SPLIT_PAYMENT_EMAIL_TEMPLATE_ID!,
             {
               USERNAME: `${username}`,
               PAYMENT_URL: `${newUrl}/${paymentId}`
@@ -847,7 +847,7 @@ export class HyperSwitchService {
           const emailSend = await this.notificationService.sendEmailByTemplate(
             email,
             "Payment Link",
-            process.env.SPLIT_PAYMENT_PROCESSOR_EMAIL_TEMPLATE_ID!,
+            process.env.SPLIT_PAYMENT_EMAIL_TEMPLATE_ID!,
             {
               USERNAME: `${username}`,
               PAYMENT_URL: `${newUrl}/${response?.payment_id}`
