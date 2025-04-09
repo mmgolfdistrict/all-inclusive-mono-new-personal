@@ -51,7 +51,7 @@ const countryList: Country[] = allCountries.map(({ name, iso2, dialCode }: Count
   flag: `https://flagcdn.com/w40/${iso2.toLowerCase()}.png`
 }));
 
-const validatePhoneNumber = (value: string | null |undefined): string | null => {
+const validatePhoneNumber = (value: string | null | undefined): string | null => {
   if (!value) {
     return "Phone number is required";
   }
@@ -130,7 +130,7 @@ export const CheckoutForm = ({
     ['by', 'cu', 'kp', 'sy', 've', 'ir']
   );
   const phoneNumberRef = useRef<HTMLDivElement | null>(null);
-  const { data:session } = useSession();
+  const { data: session } = useSession();
   const extractCountryISO2 = (phoneNumber: string) => {
     try {
       const parsedNumber = phoneUtil.parse(`+${phoneNumber}`);
@@ -144,17 +144,21 @@ export const CheckoutForm = ({
       return "";
     }
   };
-const userId = session?.user?.id;
+  const userId = session?.user?.id;
   const {
     data: userData,
-    isLoading:isLoadingUser,
-  } = useUser(userId as string | undefined);
+    isLoading: isLoadingUser,
+  } = useUser(userId ?? '');
 
   useEffect(() => {
     setPhoneNumber(userData?.phoneNumber ?? '')
     setcountryCode(userData?.phoneNumberCountryCode)
   }, [userData])
-  
+  const { data: PHONE_NUMBER_MANDATORY_AT_CHECKOUT } =
+    api.course.getPhoneNumberMandatoryAtCheckout.useQuery({
+      courseId: courseId ?? "",
+    });
+
   useEffect(function getCurrentCountryCode() {
     const phoneNumber = userData?.phoneNumber;
     const phoneNumberCountryCode = userData?.phoneNumberCountryCode;
@@ -176,7 +180,7 @@ const userId = session?.user?.id;
       console.error('Failed to fetch country', error);
     }
   }, [userCountryData?.country, setCurrentCountry]);
-  
+
   const [countries, _setCountries] = useState<Country[]>(
     countryList.filter(
       (c: Country) => !excludedCountries.includes(c.iso2)
@@ -518,49 +522,51 @@ const userId = session?.user?.id;
     e.preventDefault();
     void logAudit();
     setIsLoading(true);
-    const phoneError = validatePhoneNumber(phoneNumber);
-    if (phoneError) {
-      setPhoneNumberError(phoneError);
-      setTimeout(() => {
-        phoneNumberRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 100);
-      setIsLoading(false);
-      return;
-    } else {
-      setPhoneNumberError(null);
-    }
-    
-    if (!countryCode) {
-      setCountryError("Phone number country code is required.");
-      setTimeout(() => {
-        phoneNumberRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 100);
-      setIsLoading(false);
-      return;
-    } else {
-      setPhoneNumberError(null);
-    }
 
-    const hasPhoneChanged = (
-      phoneNumber !== userData?.phoneNumber ||
-      countryCode !== userData?.phoneNumberCountryCode
-    );
-    
-    if (hasPhoneChanged) {
-
-      const dataToUpdate = {
-        phoneNumberCountryCode: countryCode,
-        phoneNumber:phoneNumber ,
-      };
-
-      const response = await updateUser.mutateAsync({
-        ...dataToUpdate,
-        courseId,
-      });
-
-      if (response?.error) {
-        toast.error(response.message);
+    if (PHONE_NUMBER_MANDATORY_AT_CHECKOUT === "true") {
+      const phoneError = validatePhoneNumber(phoneNumber);
+      if (phoneError) {
+        setPhoneNumberError(phoneError);
+        setTimeout(() => {
+          phoneNumberRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+        setIsLoading(false);
         return;
+      } else {
+        setPhoneNumberError(null);
+      }
+
+      if (!countryCode) {
+        setCountryError("Phone number country code is required.");
+        setTimeout(() => {
+          phoneNumberRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+        setIsLoading(false);
+        return;
+      } else {
+        setPhoneNumberError(null);
+      }
+
+      const hasPhoneChanged = (
+        phoneNumber !== userData?.phoneNumber ||
+        countryCode !== userData?.phoneNumberCountryCode
+      );
+
+      if (hasPhoneChanged) {
+        const dataToUpdate = {
+          phoneNumberCountryCode: countryCode,
+          phoneNumber: phoneNumber,
+        };
+
+        const response = await updateUser.mutateAsync({
+          ...dataToUpdate,
+          courseId,
+        });
+
+        if (response?.error) {
+          toast.error(response.message);
+          return;
+        }
       }
     }
 
@@ -1061,15 +1067,15 @@ const userId = session?.user?.id;
         />
       </div>
       <div className="flex w-full flex-col gap-2 bg-white p-4 rounded-lg my-2">
-        {!isLoadingUser && true && <div className="flex flex-col gap-1" ref={phoneNumberRef}>
+        {!isLoadingUser && PHONE_NUMBER_MANDATORY_AT_CHECKOUT === "true" && <div className="flex flex-col gap-1" ref={phoneNumberRef}>
           <div className="flex gap-1">
             <label htmlFor="phoneNumber" className="text-[14px] text-primary-gray">
               Phone Number<span className="text-red"> *</span>
             </label>
             <Tooltip
-                trigger={<Info className="ml-2 h-[20px] w-[20px]" />}
-                content={`${course?.name} is requiring phone numbers to be present. If you enter invalid phone number then your reservation might be cancelled by the course without any refunds.`}
-              />
+              trigger={<Info className="ml-2 h-[20px] w-[20px]" />}
+              content={`${course?.name} is requiring phone numbers to be present. If you enter invalid phone number then your reservation might be cancelled by the course without any refunds.`}
+            />
           </div>
           <div className="flex h-12 rounded-lg bg-secondary-white px-1 text-[14px] text-gray-500 outline-none text-ellipsis">
             <CountryDropdown defaultCountry={currentCountry} items={countries} onSelect={handleSelectCountry} />

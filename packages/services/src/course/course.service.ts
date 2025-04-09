@@ -1192,4 +1192,34 @@ export class CourseService extends DomainService {
 
     return desktopViewVersion ?? "v1";
   };
+  
+  getPhoneNumberMandatoryAtCheckout = async (courseId: string) => {
+    const courseSettings = await this.database
+    .select({
+      id: courseSetting.id,
+      internalName: courseSetting.internalName,
+      value: courseSetting.value,
+    })
+    .from(courseSetting)
+    .where(eq(courseSetting.courseId, courseId))
+    .execute()
+    .catch((err) => {
+      this.logger.error(`Error getting course settings for course: ${err}`);
+      loggerService.errorLog({
+        userId: "",
+        url: "/CourseService/getCourseById",
+        userAgent: "",
+        message: "ERROR_GETTING_COURSE_SETTINGS_FOR_COURSE",
+        stackTrace: `${err.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          courseId,
+        }),
+      });
+      throw new Error("Error getting course settings");
+    });
+
+    let desktopViewVersion = courseSettings.find((setting) => setting.internalName === "PHONE_NUMBER_MANDATORY_AT_CHECKOUT")?.value
+
+    return desktopViewVersion ?? "v1";
+  };
 }
