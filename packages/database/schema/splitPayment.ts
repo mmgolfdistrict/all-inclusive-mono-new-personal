@@ -16,8 +16,7 @@ export const splitPayments = mySqlTable("split_payments", {
   lastUpdatedDateTime: datetime("lastUpdatedDateTime", { mode: "string", fsp: 3 }).default(
     sql`CURRENT_TIMESTAMP(3)`
   ),
-  referencePaymentId:varchar("reference_payment_id", { length: 40 }),
-  isWebhookStatus:varchar("isWebhookStatus",{length:255})
+  webhookStatus:varchar("webhookStatus",{length:255}),
 });
 
 export type InsertSplitBooking = InferInsertModel<typeof splitPayments>;

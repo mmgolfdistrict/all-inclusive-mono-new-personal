@@ -724,10 +724,10 @@ export class HyperSwitchService {
             collect_billing_address: false,
             collect_shipping_address: false,
             expiration_in_minutes: 1576800,
-            terms_of_service_url: "http://localhost:3000/terms-of-service",
-            success_return_url: `http://localhost:3000/payment-success/?finixReferencePaymentId=${referencePaymentId}&status=succeeded&provider=finix`,
-            unsuccessful_return_url: `http://localhost:3000/payment-success/?finixReferencePaymentId=${referencePaymentId}&status=failed&provider=finix`,
-            expired_session_url: "http://localhost:3000/payment-success/?status=expired_sesson_url",
+            terms_of_service_url: `${origin}/terms-of-service`,
+            success_return_url: `${origin}/payment-success/?finixReferencePaymentId=${referencePaymentId}&status=succeeded&provider=finix`,
+            unsuccessful_return_url: `${origin}/payment-success/?finixReferencePaymentId=${referencePaymentId}&status=failed&provider=finix`,
+            expired_session_url: `${origin}/payment-success/?status=expired_sesson_url`,
             send_receipt: true,
             receipt_requested_delivery_methods: [
               {
@@ -747,13 +747,12 @@ export class HyperSwitchService {
           await this.database
             .insert(splitPayments)
             .values({
-              id: randomUUID(),
+              id: referencePaymentId,
               amount: (amount * 100),
               email: email,
               bookingId: bookingId,
               paymentId: paymentId,
               paymentLink: finix_link_url,
-              referencePaymentId: referencePaymentId
             })
             .execute().catch(async (e: any) => {
               console.log(e);
@@ -766,7 +765,7 @@ export class HyperSwitchService {
                 additionalDetailsJSON: JSON.stringify({
                   paymentId: "",
                   referencePaymentId: "",
-                  provider: "hyperswitch"
+                  provider: "finix"
                 }),
               });
             });
@@ -828,7 +827,6 @@ export class HyperSwitchService {
               bookingId: bookingId,
               paymentId: response?.payment_id,
               paymentLink: response?.payment_link?.link,
-              referencePaymentId: ""
             })
             .execute().catch(async (e: any) => {
               console.log(e);
@@ -989,7 +987,7 @@ export class HyperSwitchService {
           .set({
             isPaid: 1,
           })
-          .where(eq(splitPayments.referencePaymentId, referencePaymentId))
+          .where(eq(splitPayments.id, referencePaymentId))
           .execute().catch(async (e: any) => {
             await loggerService.errorLog({
               message: "ERROR_UPDATING_FINIX_PAYMENT_STATUS",
@@ -1012,7 +1010,7 @@ export class HyperSwitchService {
             paymentId: splitPayments.paymentId,
           })
           .from(splitPayments)
-          .where(eq(splitPayments.referencePaymentId, referencePaymentId));
+          .where(eq(splitPayments.id, referencePaymentId));
         await loggerService.auditLog({
           id: randomUUID(),
           userId: "",
@@ -1130,7 +1128,7 @@ export class HyperSwitchService {
           email: splitPayments.email,
           bookingId: splitPayments.bookingId,
           paymentId: splitPayments.paymentId,
-          referencePaymentId: splitPayments.referencePaymentId,
+          id: splitPayments.id,
         })
         .from(splitPayments)
         .where(
@@ -1165,7 +1163,7 @@ export class HyperSwitchService {
                 stackTrace: `${JSON.stringify(e)}`,
                 additionalDetailsJSON: JSON.stringify({
                   paymentId: result?.paymentId,
-                  referencePaymentId: result?.referencePaymentId,
+                  id: result?.id,
                   provider: "finix"
                 }),
               });
@@ -1197,7 +1195,7 @@ export class HyperSwitchService {
                 stackTrace: `${JSON.stringify(e)}`,
                 additionalDetailsJSON: JSON.stringify({
                   paymentId: result?.paymentId,
-                  referencePaymentId: result?.referencePaymentId,
+                  id: result?.id,
                   provider: "hyperswitch"
                 }),
               });
