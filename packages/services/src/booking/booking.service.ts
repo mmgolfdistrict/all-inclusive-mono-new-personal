@@ -452,7 +452,15 @@ export class BookingService {
     for (const teeTime of data) {
       if (teeTime.teeTimesId) {
         if (!combinedData[teeTime.teeTimesId]) {
-          const listingIdFromRedis = await this.cacheService?.getCache(`listing_id_${teeTime.listingId}`);
+          const value = await this.cacheService?.getCache(`listing_id_${teeTime.listingId}`);
+          let listingIdFromRedis;
+          if (value) {
+            const { listingId } = JSON.parse(value as string);
+            if (listingId) {
+              listingIdFromRedis = listingId;
+            }
+          }
+
           console.log("Retrieved listingId from Redis Cache: ", listingIdFromRedis);
           combinedData[teeTime.teeTimesId] = {
             courseId,

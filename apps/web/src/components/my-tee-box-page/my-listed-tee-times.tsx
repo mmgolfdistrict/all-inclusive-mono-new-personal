@@ -4,11 +4,12 @@ import { useCourseContext } from "~/contexts/CourseContext";
 import { api } from "~/utils/api";
 import { formatMoney, formatTime } from "~/utils/formatters";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Avatar } from "../avatar";
 import { OutlineButton } from "../buttons/outline-button";
 import { ManageTeeTimeListing } from "./manage-tee-time-listing";
 import { SkeletonRow } from "./skeleton-row";
+import { useSearchParams } from "next/navigation";
 
 export type MyListedTeeTimeType = {
   listingId: string | null;
@@ -34,6 +35,8 @@ export type MyListedTeeTimeType = {
 export const MyListedTeeTimes = () => {
   const { course } = useCourseContext();
   const courseId = course?.id;
+  const searchParams = useSearchParams();
+  const listId = searchParams.get("listId");
   const [isManageTeeTimeListingOpen, setIsManageTeeTimeListingOpen] =
     useState<boolean>(false);
   const [selectedTeeTime, setSelectedTeeTime] = useState<
@@ -61,6 +64,15 @@ export const MyListedTeeTimes = () => {
     setSelectedTeeTime(teeTime);
     setIsManageTeeTimeListingOpen(true);
   };
+
+  useEffect(() => {
+    if (listId && myListedTeeTimes) {
+      const teeTime = myListedTeeTimes.find((teeTime) => teeTime.listingId === listId);
+      if (teeTime) {
+        openManageListTeeTimeListing(teeTime);
+      }
+    }
+  }, [listId, myListedTeeTimes])
 
   if (isError && error) {
     return (
