@@ -492,6 +492,10 @@ export const ManageTeeTimeListing = ({
               onValueChange={setSaleType}
               saleTypeOptions={SPLIT_TYPE_OPTIONS}
               defaultValue={saleType}
+              disabled={
+                selectedTeeTime?.listingId ===
+                selectedTeeTime?.listingIdFromRedis
+              }
             />
             : null
           }

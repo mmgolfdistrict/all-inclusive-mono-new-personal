@@ -15,6 +15,7 @@ interface SaleTypeSelectorProps {
     className?: string;
     saleTypeOptions: SaleTypeOption[];
     defaultValue?: string;
+    disabled?: boolean;
 }
 
 export const SaleTypeSelector: React.FC<SaleTypeSelectorProps> = ({
@@ -22,7 +23,8 @@ export const SaleTypeSelector: React.FC<SaleTypeSelectorProps> = ({
     onValueChange,
     className = "",
     saleTypeOptions,
-    defaultValue = ""
+    defaultValue = "",
+    disabled = false,
 }) => {
     const currentValue = saleTypeOptions.some(opt => opt.value === value) ? value : defaultValue;
 
@@ -35,7 +37,7 @@ export const SaleTypeSelector: React.FC<SaleTypeSelectorProps> = ({
     };
 
     return (
-        <div className={`${className}`}>
+        <div className={`${className} ${disabled ? "opacity-50 cursor-not-allowed" : ""}`} >
             <ToggleGroup.Root
                 type="single"
                 value={currentValue}
@@ -43,6 +45,7 @@ export const SaleTypeSelector: React.FC<SaleTypeSelectorProps> = ({
                 defaultValue={defaultValue}
                 aria-label="Sale Type Selection"
                 className="flex flex-wrap gap-3"
+                disabled={disabled}
             >
                 {saleTypeOptions.map((option) => (
                     <ToggleGroup.Item
@@ -55,12 +58,14 @@ export const SaleTypeSelector: React.FC<SaleTypeSelectorProps> = ({
                             rounded-md border 
                             px-4 py-2 sm:px-5 sm:py-2.5
                             text-sm sm:text-base font-semibold
-                            cursor-pointer transition-all duration-150 ease-in-out
+                            transition-all duration-150 ease-in-out
                             focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 
                             border-primary bg-white text-primary
                             data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-white
                             w-full
+                            ${disabled ? "cursor-not-allowed" : "cursor-pointer"}
                         `}
+                        disabled={disabled} 
                     >
                         <div className="flex items-center justify-center gap-1.5">
                             <span>{option.caption}</span>
@@ -69,10 +74,12 @@ export const SaleTypeSelector: React.FC<SaleTypeSelectorProps> = ({
                                 onClick={(e) => e.stopPropagation()}
                                 aria-label={`More info about ${option.caption}`}
                                 className="flex rounded-full focus:outline-none focus-visible:ring-1 focus-visible:ring-offset-1 focus-visible:ring-offset-current"
+                                disabled={disabled}
                             >
                                 <Tooltip
-                                    trigger={<Info className="h-[14px] w-[14px]" />}
+                                    trigger={<Info className={`h-[14px] w-[14px] ${disabled ? "cursor-not-allowed" : ""}`} />}
                                     content={option.tooltip}
+                                    isDisabled={disabled}
                                 />
                             </button>
                         </div>
