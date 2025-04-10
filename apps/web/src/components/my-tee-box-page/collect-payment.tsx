@@ -48,6 +48,7 @@ export const CollectPayment = ({
   needsRedirect,
 }: SideBarProps) => {
   const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const { data: collectPaymentProcessorCharge } = api.checkout.collectPaymentProcessorPercent.useQuery({})
   const paymentLinkResult =
     api.checkout.createHyperSwitchPaymentLink.useMutation();
   const resendHyperSwitchPaymentLink =
@@ -135,7 +136,7 @@ export const CollectPayment = ({
   }, [selectedOption]);
 
   useEffect(() => {
-   void refetchEmailedUsers().then((data) => {
+    void refetchEmailedUsers().then((data) => {
       console.log("data", data.data);
       if (data?.data?.length == 0) {
         setEmailedUsers(undefined);
@@ -158,7 +159,7 @@ export const CollectPayment = ({
     if (selectedOption === "equalSplit") {
       handlePriceChange();
     }
-   void refetchEmailedUsers().then((data) => {
+    void refetchEmailedUsers().then((data) => {
       console.log("data", data.data);
       if (data?.data?.length == 0) {
         setEmailedUsers(undefined);
@@ -278,9 +279,8 @@ export const CollectPayment = ({
       </LoadingContainer>
       <aside
         // ref={sidebar}
-        className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[600px] md:h-[100dvh] ${
-          isCollectPaymentOpen ? "translate-x-0" : "translate-x-full"
-        }`}
+        className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[600px] md:h-[100dvh] ${isCollectPaymentOpen ? "translate-x-0" : "translate-x-full"
+          }`}
       >
         <div className="relative flex h-full flex-col">
           <div className="flex items-center justify-between p-4">
@@ -387,7 +387,7 @@ export const CollectPayment = ({
                         //     ? sendEmailedUsers[index]?.amount / 100
                         //     : amount[index]
                         // }
-                        value={sendEmailedUsers?.[index]?.email ?? emails[index]}
+                        value={sendEmailedUsers?.[index]?.amount?? amount[index]}
                         onChange={(e) =>
                           handleAmountChange(index, e.target.value)
                         }

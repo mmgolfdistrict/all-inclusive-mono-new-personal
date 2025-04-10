@@ -190,4 +190,11 @@ export const checkoutRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       return await ctx.serviceFactory.getHyperSwitchService().getSplitPaymentUsersByBookingId(input.bookingId);
     }),
+
+    isCollectPaymentEnabled : protectedProcedure.input(z.object({})).query(async ({ ctx }) => {
+      return await ctx.serviceFactory.getCheckoutService().isCollectPaymentEnabled();
+    }),
+    collectPaymentProcessorPercent : protectedProcedure.input(z.object({})).query(async ({ ctx }) => {
+      return await ctx.serviceFactory.getCheckoutService().collectPaymentProcessorPercent();
+    })
 });

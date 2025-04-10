@@ -53,6 +53,7 @@ export const Owned = () => {
     useState<boolean>(false);
   const [isManageOwnedTeeTimeOpen, setIsManageOwnedTeeTimeOpen] =
     useState<boolean>(false);
+  const { data: isCollectPaymemtEnabled } = api.checkout.isCollectPaymentEnabled.useQuery({});
   const { data, isLoading, isError, error, refetch } =
     api.teeBox.getOwnedTeeTimes.useQuery(
       {
@@ -98,7 +99,7 @@ export const Owned = () => {
     setSelectedTeeTime(teeTime);
     setIsManageOwnedTeeTimeOpen(true);
   };
-  const collectPaymentList = (teeTime:OwnedTeeTime)=>{
+  const collectPaymentList = (teeTime: OwnedTeeTime) => {
     setIsCollectPaymentOpen(true);
     setSelectedTeeTime(teeTime);
   }
@@ -141,34 +142,35 @@ export const Owned = () => {
           <tbody className={`max-h-[300px] w-full flex-col overflow-scroll`}>
             {isLoading
               ? Array(3)
-                  .fill(null)
-                  .map((_, idx) => <SkeletonRow key={idx} />)
+                .fill(null)
+                .map((_, idx) => <SkeletonRow key={idx} />)
               : ownedTeeTimes?.map((i, idx) => (
-                  <TableRow
-                    course={i.courseName}
-                    date={i.date}
-                    iconSrc={i.courseLogo}
-                    key={idx}
-                    purchasePrice={
-                      (i.purchasedFor ?? i.firstHandPrice) * i.golfers.length
-                    }
-                    golfers={i.golfers}
-                    status={i.status}
-                    offers={i.offers ? parseInt(i.offers) : undefined}
-                    isListed={i.status === "LISTED"}
-                    openListTeeTime={() => openListTeeTime(i)}
-                    openCancelListing={() => openCancelListing(i)}
-                    openManageListTeeTime={() => openManageListTeeTime(i)}
-                    collectPaymentList={()=>collectPaymentList(i)}
-                    courseId={i.courseId}
-                    teeTimeId={i.teeTimeId}
-                    listingId={i.listingId}
-                    ownerId={user?.id ?? ""}
-                    timezoneCorrection={course?.timezoneCorrection}
-                    bookingStatus={i.bookingStatus}
-                    isGroupBooking={i.isGroupBooking}
-                  />
-                ))}
+                <TableRow
+                  course={i.courseName}
+                  date={i.date}
+                  iconSrc={i.courseLogo}
+                  key={idx}
+                  purchasePrice={
+                    (i.purchasedFor ?? i.firstHandPrice) * i.golfers.length
+                  }
+                  golfers={i.golfers}
+                  status={i.status}
+                  offers={i.offers ? parseInt(i.offers) : undefined}
+                  isListed={i.status === "LISTED"}
+                  openListTeeTime={() => openListTeeTime(i)}
+                  openCancelListing={() => openCancelListing(i)}
+                  openManageListTeeTime={() => openManageListTeeTime(i)}
+                  collectPaymentList={() => collectPaymentList(i)}
+                  courseId={i.courseId}
+                  teeTimeId={i.teeTimeId}
+                  listingId={i.listingId}
+                  ownerId={user?.id ?? ""}
+                  timezoneCorrection={course?.timezoneCorrection}
+                  bookingStatus={i.bookingStatus}
+                  isGroupBooking={i.isGroupBooking}
+                  isCollectPaymentEnabled={isCollectPaymemtEnabled}
+                />
+              ))}
           </tbody>
         </table>
         {/* <OutlineButton
@@ -185,7 +187,7 @@ export const Owned = () => {
         selectedTeeTime={selectedTeeTime}
         refetch={refetch}
       />
-       <CollectPayment
+      <CollectPayment
         isCollectPaymentOpen={isCollectTeeTimeOpen}
         setIsCollectPaymentOpen={setIsCollectPaymentOpen}
         selectedTeeTime={selectedTeeTime}
@@ -250,6 +252,7 @@ const TableRow = ({
   collectPaymentList,
   bookingStatus,
   isGroupBooking,
+  isCollectPaymentEnabled
 }: {
   course: string;
   date: string;
@@ -267,9 +270,10 @@ const TableRow = ({
   openListTeeTime: () => void;
   openCancelListing: () => void;
   openManageListTeeTime: () => void;
-  collectPaymentList:()=>void;
+  collectPaymentList: () => void;
   bookingStatus: string;
   isGroupBooking: boolean;
+  isCollectPaymentEnabled?: boolean;
 }) => {
   const href = useMemo(() => {
     if (isListed) {
@@ -318,16 +322,15 @@ const TableRow = ({
       </td> */}
       <td className="whitespace-nowrap px-4 py-3 unmask-players">
         {golfers.length > 2
-          ? `You, ${golfers[1]?.name || "Guest"} & ${golfers.length - 2} ${
-              golfers.length - 2 === 1 ? "golfers" : "golfers"
-            }`
+          ? `You, ${golfers[1]?.name || "Guest"} & ${golfers.length - 2} ${golfers.length - 2 === 1 ? "golfers" : "golfers"
+          }`
           : golfers.map((i, idx) => {
-              if (idx === 0) return "You ";
-              if (golfers.length === 1) return "You";
-              if (idx === golfers.length - 1) return `& ${i.name || "Guest"}`;
-              if (idx === golfers.length - 2) return `${i.name || "Guest"} `;
-              return `${i.name || "Guest"}, `;
-            })}
+            if (idx === 0) return "You ";
+            if (golfers.length === 1) return "You";
+            if (idx === golfers.length - 1) return `& ${i.name || "Guest"}`;
+            if (idx === golfers.length - 2) return `${i.name || "Guest"} `;
+            return `${i.name || "Guest"}, `;
+          })}
       </td>
       <td className="flex items-center gap-1 whitespace-nowrap px-4 pb-3 pt-6">
         {offers ? (
@@ -347,6 +350,7 @@ const TableRow = ({
       </td>
       <td className="whitespace-nowrap px-4 py-3">
         <div className="flex w-full justify-end gap-2">
+          {isCollectPaymentEnabled && (
             <FilledButton
               className="min-w-[145px]"
               onClick={collectPaymentList}
@@ -357,6 +361,8 @@ const TableRow = ({
             >
               Collect payment
             </FilledButton>
+
+          )}
           <div id="manage-teetime-button">
             <OutlineButton
               onClick={openManageListTeeTime}
