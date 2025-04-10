@@ -35,7 +35,10 @@ export const BookingDetails = ({
 
   const isMobile = useMediaQuery("(max-width: 768px)");
 
-  const BookingDetailData = () => {
+  const BookingDetailData = ({
+    setIsReceiptOpen,
+    selectedReceipt,
+  }: Omit<BookingDetailsProps, "isReceiptOpen">) => {
     return (
       <div className="flex h-full flex-col justify-between overflow-y-auto p-4">
         <table border={0} cellPadding={0} cellSpacing={0} width="100%">
@@ -249,7 +252,10 @@ export const BookingDetails = ({
       isOpen={isReceiptOpen}
       onClose={() => setIsReceiptOpen(false)}
     >
-      <BookingDetailData />
+      <BookingDetailData
+        setIsReceiptOpen={setIsReceiptOpen}
+        selectedReceipt={selectedReceipt}
+      />
     </Modal>
   ) : (
     <Flyout
@@ -257,7 +263,10 @@ export const BookingDetails = ({
       isOpen={isReceiptOpen}
       setIsOpen={setIsReceiptOpen}
     >
-      <BookingDetailData />
+      <BookingDetailData
+        setIsReceiptOpen={setIsReceiptOpen}
+        selectedReceipt={selectedReceipt}
+      />
     </Flyout>
   );
 };

@@ -268,8 +268,13 @@ export class CheckoutService {
     // }
 
     if (this.cacheService && customerCartData?.teeTimeType === "SECONDARY") {
+      const LIST_TEETIME_ID_TTL = 600 // in seconds
       console.log("Setting listing_id in Redis Cache: ", customerCartData?.listingId);
-      await this.cacheService.setCache(`listing_id_${customerCartData?.listingId}`, customerCartData?.listingId);
+      const listingCacheData = JSON.stringify({
+        listingId: customerCartData?.listingId,
+        userId
+      })
+      await this.cacheService.setCache(`listing_id_${customerCartData?.listingId}`, listingCacheData, LIST_TEETIME_ID_TTL);
     }
 
     console.log("userId ", userId);

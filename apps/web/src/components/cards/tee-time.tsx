@@ -232,13 +232,16 @@ export const TeeTime = ({
     if (status === "SECOND_HAND") {
       const value = await getCache.mutateAsync({
         key: `listing_id_${listingId}`,
-      })
+      }) as string | null;
       if (value) {
-        toast.info("Tee time is currently being purchased by another user. Please try again in 20 minutes.");
-        if (handleLoading) {
-          handleLoading(false);
+        const { userId } = JSON.parse(value);
+        if (userId !== user.id) {
+          toast.info("The tee time is currently unavailable. Please check back in 20 mins.");
+          if (handleLoading) {
+            handleLoading(false);
+          }
+          return;
         }
-        return;
       }
       void router.push(
         `/${course?.id}/checkout?listingId=${listingId}&playerCount=${selectedPlayers}`
@@ -290,7 +293,7 @@ export const TeeTime = ({
       router.push(`/${courseId}/my-tee-box`);
       return;
     }
-    router.push(`/${courseId}/my-tee-box`);
+    router.push(`/${courseId}/my-tee-box?section=my-listed-tee-times&listId=${listingId}`);
     // setIsManageOpen(true);
   };
 
@@ -415,7 +418,6 @@ export const TeeTime = ({
                   status === "SECOND_HAND" ? listedSlots || 0 : availableSlots
                 }
                 isDisabled={
-                  soldById === user?.id ||
                   (status === "SECOND_HAND" && !allowSplit) ||
                   allowedPlayers?.selectStatus === "ALL_PLAYERS"
                 }

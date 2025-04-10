@@ -6,6 +6,7 @@ import { useEffect, useMemo } from "react";
 import { toast } from "react-toastify";
 import { Footer } from "./footer/footer";
 import { MainNav } from "./nav/main-nav";
+import { useSession } from "@golf-district/auth/nextjs-exports";
 
 const AllowedPathsForMainNav = [
   "/",
@@ -22,6 +23,8 @@ const AllowedPathsForMainNav = [
 ];
 export const Layout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
+  const { status } = useSession();
+
   const getRecievables = api.cashOut.getRecievablesMute.useMutation();
 
   const showBalanceToast = async () => {
@@ -39,8 +42,10 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
-    void showBalanceToast();
-  }, []);
+    if (status === "authenticated") {
+      void showBalanceToast();
+    }
+  }, [status]);
 
   useEffect(() => {
     const html = document.querySelector("html");

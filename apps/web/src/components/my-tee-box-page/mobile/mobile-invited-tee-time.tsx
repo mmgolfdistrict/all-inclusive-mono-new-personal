@@ -47,7 +47,7 @@ const MobileInvitedTeeTime = () => {
                       <div className="flex items-center">
                         <Avatar src={course?.logo} />
                         <div className="flex flex-col">
-                          <div className="whitespace-nowrap text-secondary-black">
+                          <div className="whitespace-normal overflow-y-auto text-secondary-black">
                             {item?.courseName}
                           </div>
                         </div>
