@@ -52,6 +52,11 @@ interface EmailParams {
   NewPlayerCount?: number;
   PreviousListedPrice?: number;
   NewListedPrice?: number;
+  PurchasedMerchandise?: boolean,
+  MerchandiseDetails?: {
+    caption: string;
+    qty: number;
+  }[];
 }
 
 interface Attachment {

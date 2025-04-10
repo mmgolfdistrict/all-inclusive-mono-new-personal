@@ -313,6 +313,7 @@ export class SearchService extends CacheService {
         },
         cartFee: bookings.cartFeePerPlayer,
         groupId: bookings.groupId,
+        totalMerchandiseAmount: bookings.totalMerchandiseAmount
       })
       .from(bookings)
       .leftJoin(users, eq(users.id, bookings.ownerId))
@@ -372,6 +373,7 @@ export class SearchService extends CacheService {
       }),
       weather: weather ? weather : null,
       groupId: firstBooking.groupId,
+      totalMerchandiseAmount: firstBooking?.totalMerchandiseAmount ?? 0
     };
     return res;
   };
@@ -412,6 +414,7 @@ export class SearchService extends CacheService {
         },
         minimumOfferPrice: bookings.minimumOfferPrice,
         groupId: bookings.groupId,
+        totalMerchandiseAmount: bookings.totalMerchandiseAmount,
       })
       .from(lists)
       .where(eq(lists.id, listingId))
@@ -449,6 +452,7 @@ export class SearchService extends CacheService {
       minimumOfferPrice: firstBooking?.minimumOfferPrice ?? 0,
       ownerId: firstBooking.ownerId,
       groupId: firstBooking.groupId ?? "",
+      totalMerchandiseAmount: firstBooking.totalMerchandiseAmount ?? 0,
     };
     return res;
   };
@@ -2230,7 +2234,7 @@ export class SearchService extends CacheService {
           cartFeeTaxPercent: tee.cartFeeTaxPercent,
           weatherGuaranteeTaxPercent: tee.weatherGuaranteeTaxPercent,
           markupTaxPercent: tee.markupTaxPercent,
-          merchandiseTaxPercent: tee.merchandiseTaxPercent,
+          merchandiseTaxPercent: tee.merchandiseTaxPercent ?? 0,
         };
         return res;
       })

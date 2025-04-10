@@ -28,6 +28,7 @@ export type MyListedTeeTimeType = {
   isGroupBooking?: boolean;
   playerCount?: number;
   listingIdFromRedis?: string | null;
+  totalMerchandiseAmount: number;
 };
 
 export const MyListedTeeTimes = () => {

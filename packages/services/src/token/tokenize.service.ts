@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
-import { and, eq, inArray } from "@golf-district/database";
+import { and, db, eq, inArray } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import type { InsertBooking } from "@golf-district/database/schema/bookings";
 import { bookings } from "@golf-district/database/schema/bookings";
@@ -18,13 +18,15 @@ import createICS from "@golf-district/shared/createICS";
 import type { Event } from "@golf-district/shared/createICS";
 import Logger from "@golf-district/shared/src/logger";
 import dayjs from "dayjs";
-import type { ProductData } from "../checkout/types";
+import type { MerchandiseProduct, ProductData } from "../checkout/types";
 import type { NotificationService } from "../notification/notification.service";
 import type { SensibleService } from "../sensible/sensible.service";
 import type { ProviderAPI } from "../tee-sheet-provider/sheet-providers";
 import { loggerService } from "../webhooks/logging.service";
 import type { ProviderBooking } from "../booking/booking.service";
 import { groupBookings } from "@golf-district/database/schema/groupBooking";
+import { bookingMerchandise, type InsertBookingMerchandise } from "@golf-district/database/schema/bookingMerchandise";
+import { courseMerchandise, type SelectCourseMerchandise } from "@golf-district/database/schema/courseMerchandise";
 
 
 /**
@@ -39,6 +41,13 @@ interface BookingTypes {
   bookingId: string;
   isEmailSend: boolean;
 }
+
+interface MerchandiseItem {
+  id: string;
+  qoh: number;
+  caption: string;
+}
+
 export class TokenizeService {
   private logger = Logger(TokenizeService.name);
 
@@ -201,6 +210,7 @@ export class TokenizeService {
       weatherGuaranteeTaxTotal: number;
       cartFeeTaxPercentTotal: number;
       additionalTaxes: number;
+      merchandiseTaxTotal: number;
     };
     source: string;
     additionalNoteFromUser?: string;
@@ -314,6 +324,10 @@ export class TokenizeService {
     const bookingsToCreate: InsertBooking[] = [];
     const transfersToCreate: InsertTransfer[] = [];
     let bookingSlots: InsertBookingSlots[] = [];
+    const merchandiseEntriesToCreate: InsertBookingMerchandise[] = [];
+    let puchasedMerchandise: MerchandiseItem[] = [];
+    const merchandiseItemsToUpdate: MerchandiseItem[] = [];
+    const merchandiseDetails: { caption: string, qty: number }[] = [];
     const transactionId = randomUUID();
     const bookingId = randomUUID();
     const groupId = randomUUID();
@@ -399,6 +413,64 @@ export class TokenizeService {
           });
         }
       }
+
+      const merchandiseData = normalizedCartData.cart?.cart?.filter(
+        (item: ProductData) => item.product_data.metadata.type === "merchandise"
+      ) as MerchandiseProduct[];
+
+      if (merchandiseData?.length > 0) {
+        const merchandiseItems = merchandiseData[0]!.product_data.metadata.merchandiseItems
+        for (const merchandise of merchandiseItems) {
+          merchandiseEntriesToCreate.push({
+            id: randomUUID(),
+            bookingId: isFirstHandGroupBooking ? groupId : bookingId,
+            courseMerchandiseId: merchandise.id,
+            qty: merchandise.qty
+          })
+        }
+        const merchandiseItemIds = merchandiseItems.map((item) => item.id);
+        puchasedMerchandise = await db
+          .select({
+            id: courseMerchandise.id,
+            caption: courseMerchandise.caption,
+            qoh: courseMerchandise.qoh
+          })
+          .from(courseMerchandise)
+          .where(
+            inArray(courseMerchandise.id, merchandiseItemIds)
+          )
+          .execute()
+          .catch((error) => {
+            void loggerService.errorLog({
+              userId: userId,
+              url: "/TokenizeService/tokenizeBooking",
+              userAgent: "",
+              message: "COURSE MERCHANDISE ERROR",
+              stackTrace: `${error.stack}`,
+              additionalDetailsJSON: `${JSON.stringify({
+                merchandiseItemIds,
+                merchandiseItems,
+                merchandiseData,
+                normalizedCartData,
+              })}`,
+            });
+            throw error;
+          })
+
+        if (puchasedMerchandise?.length > 0) {
+          for (const merchandise of puchasedMerchandise) {
+            const merchandiseItem = merchandiseItems.find((item) => item.id === merchandise.id);
+            merchandiseItemsToUpdate.push({
+              ...merchandise,
+              qoh: merchandise.qoh - merchandiseItem!.qty
+            })
+            merchandiseDetails.push({
+              caption: merchandise.caption,
+              qty: merchandiseItem?.qty ?? 0
+            })
+          }
+        }
+      }
     }
 
     if (isFirstHandGroupBooking && providerBookings) {
@@ -455,6 +527,8 @@ export class TokenizeService {
           courseMembershipId: courseMembershipId,
           canResell: courseMembershipId ? 1 : 0,
           groupId: groupId,
+          totalMerchandiseAmount: normalizedCartData.merchandiseCharge * 100,
+          totalMerchandiseTaxAmount: additionalTaxes.merchandiseTaxTotal * 100,
         });
         transfersToCreate.push({
           id: randomUUID(),
@@ -558,6 +632,8 @@ export class TokenizeService {
         needClubRental: needRentals,
         courseMembershipId: courseMembershipId,
         canResell: courseMembershipId ? 1 : 0,
+        totalMerchandiseAmount: normalizedCartData.merchandiseCharge * 100,
+        totalMerchandiseTaxAmount: additionalTaxes.merchandiseTaxTotal * 100,
       });
       transfersToCreate.push({
         id: randomUUID(),
@@ -735,9 +811,42 @@ export class TokenizeService {
           });
           tx.rollback();
         });
+
+      // merchandise transactions
+      if (puchasedMerchandise.length > 0 && merchandiseItemsToUpdate.length > 0) {
+        await tx
+          .insert(bookingMerchandise)
+          .values(merchandiseEntriesToCreate)
+          .execute()
+          .catch((err) => {
+            this.logger.error(err);
+            void loggerService.errorLog({
+              userId: userId,
+              url: `/TokenizeService/tokenizeBooking`,
+              userAgent: "",
+              message: "ERROR_CREATING_BOOKING_MERCHANDISE",
+              stackTrace: `${err.stack}`,
+              additionalDetailsJSON: JSON.stringify({
+                providerTeeTimeId,
+                providerBookingId,
+                merchandiseEntriesToCreate,
+              })
+            })
+          });
+        await Promise.all(merchandiseItemsToUpdate.map(
+          async (merchandiseItem) => {
+            await tx
+              .update(courseMerchandise)
+              .set(merchandiseItem)
+              .where(eq(courseMerchandise.id, merchandiseItem.id))
+              .execute();
+          }
+        ))
+      }
+
     });
 
-    loggerService.auditLog({
+    void loggerService.auditLog({
       id: randomUUID(),
       userId,
       teeTimeId: existingTeeTime?.id,
@@ -791,6 +900,8 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
         SellTeeTImeURL: `${redirectHref}/my-tee-box`,
         ManageTeeTimesURL: `${redirectHref}/my-tee-box`,
         GroupReservationID: groupId,
+        PurchasedMerchandise: puchasedMerchandise.length > 0 ? true : false,
+        MerchandiseDetails: merchandiseDetails
       };
     } else {
       event = {
@@ -852,6 +963,8 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
         // CashOutURL: `${redirectHref}/account-settings/${userId}`,
         SellTeeTImeURL: `${redirectHref}/my-tee-box`,
         ManageTeeTimesURL: `${redirectHref}/my-tee-box`,
+        PurchasedMerchandise: puchasedMerchandise.length > 0 ? true : false,
+        MerchandiseDetails: merchandiseDetails
       };
     }
 

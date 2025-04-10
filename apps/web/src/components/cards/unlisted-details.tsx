@@ -307,6 +307,7 @@ export const UnlistedDetails = ({
           bookingStatus: "",
           groupId: data?.groupId ?? "",
           isGroupBooking: data?.groupId ? true : false,
+          totalMerchandiseAmount: data?.totalMerchandiseAmount ?? 0,
         }}
         refetch={refetchData}
         isListTeeTimeOpen={isListTeeTimeOpen}
@@ -336,6 +337,7 @@ export const UnlistedDetails = ({
           bookingStatus: "",
           groupId: data?.groupId ?? "",
           isGroupBooking: data?.groupId ? true : false,
+          totalMerchandiseAmount: data?.totalMerchandiseAmount ?? 0,
         }}
       />
       <MakeAnOffer

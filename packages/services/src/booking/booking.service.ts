@@ -97,6 +97,7 @@ interface OwnedTeeTimeData {
   bookingStatus: string;
   isGroupBooking: boolean;
   groupId: string;
+  totalMerchandiseAmount: number;
 }
 
 interface ListingData {
@@ -116,6 +117,7 @@ interface ListingData {
   isGroupBooking?: boolean;
   playerCount: number;
   listingIdFromRedis?: string | null;
+  totalMerchandiseAmount: number;
 }
 
 interface TransferData {
@@ -421,6 +423,7 @@ export class BookingService {
         groupId: bookings.groupId,
         weatherGuaranteeAmount: bookings.weatherGuaranteeAmount,
         playerCount: bookings.playerCount,
+        totalMerchandiseAmount: bookings.totalMerchandiseAmount
       })
       .from(bookings)
       .innerJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -471,6 +474,7 @@ export class BookingService {
             isGroupBooking: false,
             playerCount: teeTime.playerCount,
             listingIdFromRedis: listingIdFromRedis as string | null | undefined,
+            totalMerchandiseAmount: teeTime.totalMerchandiseAmount ?? 0
           };
         } else {
           const currentEntry = combinedData[teeTime.teeTimesId];
@@ -655,6 +659,7 @@ export class BookingService {
         slots: lists.slots,
         playerCount: bookings.playerCount,
         bookingStatus: bookings.status,
+        totalMerchandiseAmount: bookings.totalMerchandiseAmount
       })
       .from(teeTimes)
       .innerJoin(bookings, eq(bookings.teeTimeId, teeTimes.id))
@@ -757,6 +762,7 @@ export class BookingService {
           bookingStatus: teeTime.bookingStatus,
           isGroupBooking: false,
           groupId: "",
+          totalMerchandiseAmount: teeTime.totalMerchandiseAmount ?? 0
         };
       } else {
         const currentEntry = combinedData[teeTime.providerBookingId];
@@ -935,6 +941,7 @@ export class BookingService {
         playerCount: bookings.playerCount,
         bookingStatus: bookings.status,
         groupId: bookings.groupId,
+        totalMerchandiseAmount: bookings.totalMerchandiseAmount
       })
       .from(teeTimes)
       .innerJoin(bookings, eq(bookings.teeTimeId, teeTimes.id))
@@ -1025,6 +1032,7 @@ export class BookingService {
           bookingStatus: teeTime.bookingStatus,
           isGroupBooking: true,
           groupId: teeTime.groupId ?? "",
+          totalMerchandiseAmount: teeTime.totalMerchandiseAmount ?? 0
         };
       } else {
         const currentEntry = combinedGroupData[teeTime.groupId!];
@@ -3590,6 +3598,11 @@ export class BookingService {
         ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "charity")
         ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
 
+    const merchandiseCharge =
+      customerCartData?.cart?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "merchandise")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+
     const charityId = customerCartData?.cart?.cart?.find(
       ({ product_data }: ProductData) => product_data.metadata.type === "charity"
     )?.product_data.metadata.charity_id;
@@ -3630,6 +3643,7 @@ export class BookingService {
       weatherQuoteId,
       paymentId: customerCartData.paymentId,
       cartFeeCharge: cartFeeCharge,
+      merchandiseCharge
     };
   };
 
@@ -3722,6 +3736,7 @@ export class BookingService {
       weatherQuoteId,
       paymentId,
       cartFeeCharge,
+      merchandiseCharge
     } = await this.normalizeCartData({
       cartId,
       userId,
@@ -3787,6 +3802,7 @@ export class BookingService {
         weatherGuaranteeTaxPercent: courses.weatherGuaranteeTaxPercent,
         markupTaxPercent: courses.markupTaxPercent,
         timezoneCorrection: courses.timezoneCorrection,
+        merchandiseTaxPercent: courses.merchandiseTaxPercent
       })
       .from(teeTimes)
       .leftJoin(courses, eq(teeTimes.courseId, courses.id))
@@ -3857,9 +3873,11 @@ export class BookingService {
       (sensibleCharge / 100) * ((teeTime?.weatherGuaranteeTaxPercent ?? 0) / 100);
     const cartFeeTaxPercentTotal =
       (((cartFeeCharge / 100) * ((teeTime?.cartFeeTaxPercent ?? 0) / 100)) / 100) * playerCount;
+    const merchandiseTaxTotal =
+      (merchandiseCharge / 100) * ((teeTime?.merchandiseTaxPercent ?? 0) / 100);
 
     const additionalTaxes =
-      greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal;
+      greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal + merchandiseTaxTotal;
 
     if (!teeTime) {
       this.logger.fatal(`tee time not found id: ${teeTimeId}`);
@@ -4131,6 +4149,7 @@ export class BookingService {
           weatherQuoteId,
           cartId,
           markupCharge,
+          merchandiseCharge
         },
         isWebhookAvailable: teeTime?.isWebhookAvailable ?? false,
         providerBookingIds,
@@ -4141,6 +4160,7 @@ export class BookingService {
           weatherGuaranteeTaxTotal,
           cartFeeTaxPercentTotal,
           additionalTaxes,
+          merchandiseTaxTotal,
         },
         source,
         additionalNoteFromUser,
@@ -4893,6 +4913,7 @@ export class BookingService {
       cartFeeCharge,
       teeTimeIds,
       minPlayersPerBooking,
+      merchandiseCharge
     } = await this.normalizeCartData({
       cartId,
       userId,
@@ -4961,6 +4982,7 @@ export class BookingService {
         markupTaxPercent: courses.markupTaxPercent,
         timezoneCorrection: courses.timezoneCorrection,
         firstHandSpotsAvailable: teeTimes.availableFirstHandSpots,
+        merchandiseTaxPercent: courses.merchandiseTaxPercent
       })
       .from(teeTimes)
       .leftJoin(courses, eq(teeTimes.courseId, courses.id))
@@ -5034,9 +5056,11 @@ export class BookingService {
       (sensibleCharge / 100) * ((firstTeeTime?.weatherGuaranteeTaxPercent ?? 0) / 100);
     const cartFeeTaxPercentTotal =
       (((cartFeeCharge / 100) * ((firstTeeTime?.cartFeeTaxPercent ?? 0) / 100)) / 100) * playerCount;
+    const merchandiseTaxTotal =
+      (merchandiseCharge / 100) * ((firstTeeTime?.merchandiseTaxPercent ?? 0) / 100);
 
     const additionalTaxes =
-      greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal;
+      greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal + merchandiseTaxTotal;
 
     if (!firstTeeTime) {
       this.logger.fatal(`tee time not found id: ${teeTimeIdsAsString}`);
@@ -5321,6 +5345,7 @@ export class BookingService {
           weatherQuoteId,
           cartId,
           markupCharge,
+          merchandiseCharge
         },
         isWebhookAvailable: firstTeeTime?.isWebhookAvailable ?? false,
         providerBookingIds,
@@ -5331,6 +5356,7 @@ export class BookingService {
           weatherGuaranteeTaxTotal,
           cartFeeTaxPercentTotal,
           additionalTaxes,
+          merchandiseTaxTotal
         },
         source,
         additionalNoteFromUser,

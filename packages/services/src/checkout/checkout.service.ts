@@ -327,6 +327,7 @@ export class CheckoutService {
       "cartFeeTaxPercent",
       "weatherGuaranteeTaxPercent",
       "markupTaxPercent",
+      "merchandiseTaxPercent"
     ];
 
     let total = customerCart.cart
@@ -353,6 +354,10 @@ export class CheckoutService {
       customerCartData?.cart
         ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "cart_fee")
         ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+    const merchandiseCharge =
+      customerCartData?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "merchandise")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
     if (isFirstHand.length) {
       if (isFirstHand[0]?.product_data.metadata.type === "first_hand") {
         const teetimeId = customerCart?.teeTimeId ?? "";
@@ -365,6 +370,7 @@ export class CheckoutService {
             cartFeeTaxPercent: courses.cartFeeTaxPercent,
             weatherGuaranteeTaxPercent: courses.weatherGuaranteeTaxPercent,
             markupTaxPercent: courses.markupTaxPercent,
+            merchandiseTaxPercent: courses.merchandiseTaxPercent
           })
           .from(teeTimes)
           .leftJoin(courses, eq(teeTimes.courseId, courses.id))
@@ -381,8 +387,10 @@ export class CheckoutService {
           (sensibleCharge / 100) * ((teeTime?.weatherGuaranteeTaxPercent ?? 0) / 100);
         const cartFeeTaxPercentTotal =
           ((cartFeeCharge * ((teeTime?.cartFeeTaxPercent ?? 0) / 100)) / 100) * playerCount;
+        const merchandiseTaxTotal =
+          ((merchandiseCharge * ((teeTime?.merchandiseTaxPercent ?? 0) / 100)) / 100);
         const additionalTaxes = Number(
-          (greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal).toFixed(2)
+          (greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal + merchandiseTaxTotal).toFixed(2)
         );
         total = total + additionalTaxes * 100;
       }
@@ -403,6 +411,7 @@ export class CheckoutService {
             markupTaxPercent: courses.markupTaxPercent,
             groupBookingPriceSelectionMethod: courseSetting.value,
             availableFirstHandSpots: teeTimes.availableFirstHandSpots,
+            merchandiseTaxPercent: courses.merchandiseTaxPercent
           })
           .from(teeTimes)
           .leftJoin(courses, eq(teeTimes.courseId, courses.id))
@@ -452,8 +461,10 @@ export class CheckoutService {
           (sensibleCharge / 100) * ((teeTime?.weatherGuaranteeTaxPercent ?? 0) / 100);
         const cartFeeTaxPercentTotal =
           ((cartFeeCharge * ((teeTime?.cartFeeTaxPercent ?? 0) / 100)) / 100) * playerCount;
+        const merchandiseTaxTotal =
+          ((merchandiseCharge * ((teeTime?.merchandiseTaxPercent ?? 0) / 100)) / 100);
         const additionalTaxes = Number(
-          (greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal).toFixed(2)
+          (greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal + merchandiseTaxTotal).toFixed(2)
         );
         total = total + additionalTaxes * 100;
       }
@@ -679,6 +690,7 @@ export class CheckoutService {
       "cartFeeTaxPercent",
       "weatherGuaranteeTaxPercent",
       "markupTaxPercent",
+      "merchandiseTaxPercent"
     ];
 
     let total: number = customerCart.cart
@@ -705,6 +717,10 @@ export class CheckoutService {
       customerCartData?.cart
         ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "cart_fee")
         ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+    const merchandiseCharge =
+      customerCartData?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "merchandise")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
     if (isFirstHand.length) {
       if (isFirstHand[0]?.product_data.metadata.type === "first_hand") {
         const teetimeId = customerCart?.teeTimeId ?? "";
@@ -717,6 +733,7 @@ export class CheckoutService {
             cartFeeTaxPercent: courses.cartFeeTaxPercent,
             weatherGuaranteeTaxPercent: courses.weatherGuaranteeTaxPercent,
             markupTaxPercent: courses.markupTaxPercent,
+            merchandiseTaxPercent: courses.merchandiseTaxPercent
           })
           .from(teeTimes)
           .leftJoin(courses, eq(teeTimes.courseId, courses.id))
@@ -733,8 +750,10 @@ export class CheckoutService {
           (sensibleCharge / 100) * ((teeTime?.weatherGuaranteeTaxPercent ?? 0) / 100);
         const cartFeeTaxPercentTotal =
           ((cartFeeCharge * ((teeTime?.cartFeeTaxPercent ?? 0) / 100)) / 100) * playerCount;
+        const merchandiseTaxTotal =
+          ((merchandiseCharge * ((teeTime?.merchandiseTaxPercent ?? 0) / 100)) / 100);
         const additionalTaxes = Number(
-          (greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal).toFixed(2)
+          (greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal + merchandiseTaxTotal).toFixed(2)
         );
         total = total + additionalTaxes * 100;
       }
@@ -754,6 +773,7 @@ export class CheckoutService {
             markupTaxPercent: courses.markupTaxPercent,
             groupBookingPriceSelectionMethod: courseSetting.value,
             availableFirstHandSpots: teeTimes.availableFirstHandSpots,
+            merchandiseTaxPercent: courses.merchandiseTaxPercent
           })
           .from(teeTimes)
           .leftJoin(courses, eq(teeTimes.courseId, courses.id))
@@ -803,8 +823,10 @@ export class CheckoutService {
           (sensibleCharge / 100) * ((teeTime?.weatherGuaranteeTaxPercent ?? 0) / 100);
         const cartFeeTaxPercentTotal =
           ((cartFeeCharge * ((teeTime?.cartFeeTaxPercent ?? 0) / 100)) / 100) * playerCount;
+        const merchandiseTaxTotal =
+          ((merchandiseCharge * ((teeTime?.merchandiseTaxPercent ?? 0) / 100)) / 100);
         const additionalTaxes = Number(
-          (greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal).toFixed(2)
+          (greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal + merchandiseTaxTotal).toFixed(2)
         );
         total = total + additionalTaxes * 100;
       }
@@ -1009,6 +1031,10 @@ export class CheckoutService {
           break;
         case "first_hand_group":
           // errors.push(...(await this.validateFirstHandGroupItem(item as FirstHandGroupProduct)));
+          break;
+        case "merchandise":
+          break;
+        case "merchandiseTaxPercent":
           break;
         default:
           this.logger.error(`Unknown product type: ${JSON.stringify(item.product_data.metadata)}`);

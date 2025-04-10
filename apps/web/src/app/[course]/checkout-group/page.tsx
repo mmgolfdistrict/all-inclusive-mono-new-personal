@@ -22,6 +22,8 @@ import type {
     FirstHandGroupProduct,
     FirstHandProduct,
     MarkupProduct,
+    MerchandiseProduct,
+    MerchandiseTaxPercentMetaData,
     Offer,
     SecondHandProduct,
     SensibleProduct,
@@ -63,7 +65,8 @@ export default function CheckoutGroupBooking({
         selectedCharity,
         selectedCharityAmount,
         setAmountOfPlayers,
-        validatePlayers
+        validatePlayers,
+        merchandiseData
     } = useCheckoutContext();
 
     const { data: maxReservation } =
@@ -170,6 +173,8 @@ export default function CheckoutGroupBooking({
             | TaxProduct
             | CartFeeMetaData
             | FirstHandGroupProduct
+            | MerchandiseProduct
+            | MerchandiseTaxPercentMetaData
             = {
             type: "first_hand_group",
             tee_time_ids: teeTimesSelectedForBooking.map((teeTime) => teeTime.teeTimeId),
@@ -397,8 +402,43 @@ export default function CheckoutGroupBooking({
                     },
                 },
             });
+            localCart.push({
+                name: "merchandise fee tax percent",
+                id: teeTimeIds ?? "",
+                price: firstTeeTime?.merchandiseTaxPercent || 0,
+                image: "", //
+                currency: "USD", //USD
+                display_price: formatMoney(firstTeeTime?.merchandiseTaxPercent || 0),
+                product_data: {
+                    metadata: {
+                        type: "merchandiseTaxPercent",
+                    },
+                },
+            });
         }
 
+        if (course?.supportsSellingMerchandise) {
+            const totalPrice = merchandiseData.reduce((totalPrice, item) => {
+                return totalPrice + (item.price * item.qty);
+            }, 0)
+            localCart.push({
+                name: "Golf District Tee Time",
+                id: teeTimeIds ?? "",
+                price: totalPrice,
+                image: "",
+                currency: "USD", //USD
+                display_price: formatMoney(totalPrice / 100),
+                product_data: {
+                    metadata: {
+                        type: "merchandise",
+                        merchandiseItems: merchandiseData.map((item) => ({
+                            id: item.id,
+                            qty: item.qty
+                        }))
+                    },
+                },
+            });
+        } 
         return localCart;
     }, [
         sensibleData,
@@ -415,7 +455,8 @@ export default function CheckoutGroupBooking({
         course?.markupFeesFixedPerPlayer,
         course?.convenienceFeesFixedPerPlayer,
         // playerCount,
-        validatePlayers
+        validatePlayers,
+        merchandiseData
     ]);
 
     const { data: systemNotifications } =

@@ -192,6 +192,7 @@ export type SearchObject = {
   firstHandPurchasePrice?: number;
   ownerId: string;
   groupId?: string;
+  totalMerchandiseAmount?: number;
 };
 
 export type CombinedObject = {

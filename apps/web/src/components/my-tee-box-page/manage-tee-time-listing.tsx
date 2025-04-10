@@ -211,7 +211,9 @@ export const ManageTeeTimeListing = ({
       sellerListingPricePerGolfer * listingBuyerFeePercentage;
     let totalPayoutForAllGolfers =
       (buyerListingPricePerGolfer - buyerFeePerGolfer - sellerFeePerGolfer) *
-      parseInt(players);
+      parseInt(players) +
+      (selectedTeeTime?.weatherGuaranteeAmount ?? 0) / 100 +
+      (selectedTeeTime?.totalMerchandiseAmount ?? 0) / 100;
 
     totalPayoutForAllGolfers =
       totalPayoutForAllGolfers <= 0 ? 0 : totalPayoutForAllGolfers;
@@ -512,6 +514,21 @@ export const ManageTeeTimeListing = ({
               )}
             </div>
           </div>
+          {course?.supportsSellingMerchandise || (selectedTeeTime?.totalMerchandiseAmount ?? 0) > 0 ?
+            < div className="flex justify-between">
+              <div className="font-[300] text-primary-gray">
+                Merchandise Purchase Refund{" "}
+                <Tooltip
+                  trigger={<Info className="h-[14px] w-[14px]" />}
+                  content="Merchandise Purchase amount to be refunded"
+                />
+              </div>
+              <div className="text-secondary-black">
+                {formatMoney(
+                  (selectedTeeTime?.totalMerchandiseAmount ?? 0) / 100
+                )}
+              </div>
+            </div> : null}
           <div className="flex justify-between">
             <div className="font-[300] text-primary-gray">
               You Receive after Sale

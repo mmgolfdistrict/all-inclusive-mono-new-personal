@@ -38,6 +38,7 @@ export type OwnedTeeTime = {
   slotsData?: string[];
   isGroupBooking: boolean;
   groupId: string;
+  totalMerchandiseAmount: number;
 };
 
 export const Owned = () => {

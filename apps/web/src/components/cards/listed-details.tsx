@@ -292,6 +292,7 @@ export const ListedDetails = ({
           listedSpots: Array(data?.availableSlots ?? 0),
           teeTimeId: teeTimeId,
           groupId: data?.groupId ?? "",
+          totalMerchandiseAmount: data?.totalMerchandiseAmount ?? 0,
         }}
         needRedirect={true}
       />
