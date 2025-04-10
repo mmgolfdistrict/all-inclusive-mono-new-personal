@@ -1,5 +1,7 @@
+"use-client";
+
 import { AnimatePresence, motion } from "framer-motion";
-import { useRef, type ReactNode, type FC } from "react";
+import { useRef, type ReactNode, type FC, useEffect } from "react";
 import { useMediaQuery, useOnClickOutside } from "usehooks-ts";
 import { Close } from "../icons/close";
 
@@ -29,12 +31,18 @@ export const Modal: FC<ModalProps> = ({ title, isOpen, onClose, children, classN
     };
     useOnClickOutside(modalRef, handleClickOutside);
 
+    useEffect(() => {
+        if (!isOpen) {
+            document.body.classList.remove("overflow-hidden");
+        }
+    }, [isOpen]);
+
     return (
         <AnimatePresence>
             {isOpen && (
                 <motion.div
                     className="fixed inset-0 flex items-center justify-center z-500 bg-[#00000099]"
-                    style={{ willChange: "opacity" }}
+                    style={{ willChange: "opacity", zIndex: 99 }}
                     variants={backdropVariants}
                     initial="hidden"
                     animate="visible"
@@ -42,7 +50,7 @@ export const Modal: FC<ModalProps> = ({ title, isOpen, onClose, children, classN
                 >
                     <motion.div
                         className={`
-                            bg-white md:rounded-lg px-2 shadow-lg w-full
+                            bg-white md:rounded-lg shadow-lg w-full
                             max-w-2xl transform border border-stroke text-left
                             align-middle ${isSmallHeightMobile ? 'mt-[96px]' : 'mt-[88px]'}
                         `}
@@ -54,13 +62,9 @@ export const Modal: FC<ModalProps> = ({ title, isOpen, onClose, children, classN
                         ref={modalRef}
                         transition={{ duration: 0.2 }}
                     >
-                        <div className={
-                            `max-h-[calc(90vh-48px)]
-                            overflow-y-auto pt-4 pb-4 relative
-                            ${className ?? ""}`
-                        }>
-                            <div className="flex justify-center">
-                                <h2 className="text-xl font-semibold text-center">{title}</h2>
+                        <div className={`relative ${className ?? ""}`}>
+                            <div className="sticky top-0 bg-white z-10 px-4 pt-2 pb-2 border-b border-gray-200 flex justify-center items-center">
+                                <h2 className="text-xl font-semibold text-center w-full">{title}</h2>
                                 <button
                                     className="absolute top-2 right-0 p-2"
                                     onClick={onClose}
@@ -70,10 +74,8 @@ export const Modal: FC<ModalProps> = ({ title, isOpen, onClose, children, classN
                                 </button>
                             </div>
                             <div
-                                className={`
-                                    px-2 mt-2
-                                    ${isSmallHeightMobile ? 'mb-6' : 'mb-4'}
-                                `}>
+                                className={`px-2 overflow-y-auto max-h-[95vh] mb-16`}
+                            >
                                 {children}
                             </div>
                         </div>

@@ -36,235 +36,20 @@ export const ManageOwnedTeeTime = ({
   selectedTeeTime,
   refetch,
 }: SideBarProps) => {
-  const { course } = useCourseContext();
-  const [minimumOfferPrice, setMinimumOfferPrice] = useState<number>(0);
-  const [friends, setFriends] = useState<InviteFriend[]>([]);
-  const [isInviteVisible, setIsInviteVisible] = useState(false);
-  const [newFriend, setNewFriend] = useState<InviteFriend>({
-    id: "",
-    handle: "",
-    name: "",
-    email: "",
-    slotId: "",
-    bookingId: "",
-    currentlyEditing: false,
-    emailOrPhoneNumber: "",
-  });
-  const debouncedValue = useDebounce<InviteFriend>(newFriend, 500);
 
-  const [inviteSuccess, setInviteSuccess] = useState<Record<string, boolean>>(
-    {}
-  );
-
-  const href = window.location.href;
   const isMobile = useMediaQuery("(max-width: 768px)");
-  const redirectHref =
-    (href.includes("/my-tee-box")
-      ? href.split("/my-tee-box")[0]
-      : href.match(/^(https?:\/\/[^/]+\/[0-9A-Fa-f-]+)/)?.[0]) || "";
 
-  const handleInviteFriend = async (friend: InviteFriend, index: number) => {
-    if (invite.isLoading) return;
-    const bookingSlotId = selectedTeeTime?.golfers[index]?.slotId || "";
+  const ManageOwnedTeeTimeDetail = ({
+    setIsManageOwnedTeeTimeOpen,
+    selectedTeeTime,
+    refetch
+  }: Omit<SideBarProps, "isManageOwnedTeeTimeOpen">) => {
 
-    try {
-      await invite.mutateAsync({
-        emailOrPhone: friend.name || "",
-        teeTimeId: selectedTeeTime?.teeTimeId || "",
-        bookingSlotId,
-        slotPosition: index + 1,
-        redirectHref: redirectHref,
-      });
-
-      setFriends((prevFriends) =>
-        prevFriends.map((f, idx) =>
-          idx === index ? { ...f, name: friend.name } : f
-        )
-      );
-      await refetch();
-      setInviteSuccess((prev) => ({ ...prev, [friend.slotId]: true }));
-      setIsInviteVisible(false);
-      toast.success("Invitation sent successfully.");
-    } catch (error) {
-      toast.error(
-        (error as Error)?.message ?? "An error occurred inviting friend."
-      );
-    }
-  };
-
-  const invite = api.user.inviteUser.useMutation();
-
-  const { data, isLoading } = api.searchRouter.searchUsers.useQuery(
-    { searchText: debouncedValue.name },
-    { enabled: debouncedValue?.name?.length > 0 }
-  );
-
-  const updateNames = api.teeBox.updateNamesOnBookings.useMutation();
-  const updateMinimumOfferPrice = api.teeBox.setMinimumOfferPrice.useMutation();
-
-  const maxFriends = useMemo(() => {
-    if (!selectedTeeTime) return 0;
-    return selectedTeeTime?.bookingIds.length;
-  }, [selectedTeeTime?.bookingIds]);
-
-  const friendList = useMemo(() => {
-    if (!data) return [];
-    return data as InviteFriend[];
-  }, [data]);
-
-  useEffect(() => {
-    if (selectedTeeTime) {
-      const friendsToSet = selectedTeeTime.golfers;
-      friendsToSet.forEach((friend) => {
-        friend.currentlyEditing = false;
-      });
-      setFriends(selectedTeeTime.golfers);
-      setMinimumOfferPrice(
-        selectedTeeTime.minimumOfferPrice > 0
-          ? selectedTeeTime.minimumOfferPrice
-          : selectedTeeTime.firstHandPrice
-      );
-    }
-  }, [selectedTeeTime, isManageOwnedTeeTimeOpen]);
-
-  useEffect(() => {
-    if (isManageOwnedTeeTimeOpen) {
-      document.body.classList.add("overflow-hidden");
-    } else {
-      document.body.classList.remove("overflow-hidden");
-      setMinimumOfferPrice(
-        selectedTeeTime?.minimumOfferPrice ||
-        selectedTeeTime?.firstHandPrice ||
-        0
-      ); //reset price
-      setNewFriend({
-        id: "",
-        handle: "",
-        name: "",
-        email: "",
-        slotId: "",
-        bookingId: "",
-        currentlyEditing: false,
-        emailOrPhoneNumber: "",
-      });
-    }
-  }, [isManageOwnedTeeTimeOpen, selectedTeeTime, inviteSuccess]);
-
-  const handleFocus = () => {
-    if (!minimumOfferPrice) setMinimumOfferPrice(0);
-  };
-
-  const handleBlur = () => {
-    if (!minimumOfferPrice) setMinimumOfferPrice(0);
-  };
-
-  const handleMinimumOfferPrice = (e: ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/[$,]/g, "");
-
-    const decimals = value.split(".")[1];
-    if (decimals && decimals?.length > 2) return;
-
-    const strippedLeadingZeros = value.replace(/^0+/, "");
-
-    setMinimumOfferPrice(Number(strippedLeadingZeros));
-  };
-
-  const totalPayout = useMemo(() => {
-    return Math.abs(minimumOfferPrice * friends.length - 45);
-  }, [minimumOfferPrice, friends]);
-
-  const save = async () => {
-    if (!selectedTeeTime) {
-      toast.error("Tee time not selected");
-      return;
-    }
-
-    if (updateNames.isLoading || updateMinimumOfferPrice.isLoading) return;
-
-    selectedTeeTime.golfers.map((el) => {
-      friends.forEach((fd) => {
-        if (!fd.slotId) {
-          fd.slotId = el.slotId;
-          fd.name = fd.name == "" ? "Guest" : fd.name;
-        }
-        fd.bookingId = selectedTeeTime.bookingIds[0] || "";
-        fd.handle = fd.handle ? fd.handle : "";
-        fd.name = fd.name == "" ? "Guest" : fd.name;
-      });
-    });
-
-    selectedTeeTime.golfers = friends;
-
-    try {
-      await updateNames.mutateAsync({
-        usersToUpdate: selectedTeeTime.golfers,
-        bookingId: selectedTeeTime.bookingIds[0] || "",
-      });
-      await updateMinimumOfferPrice.mutateAsync({
-        teeTimeId: selectedTeeTime?.teeTimeId,
-        minimumOfferPrice,
-      });
-      toast.success("Tee time listing updated successfully");
-      await refetch();
-      setIsManageOwnedTeeTimeOpen(false);
-    } catch (error) {
-      toast.error(
-        (error as Error)?.message ?? "An error occurred managing tee time"
-      );
-    }
-  };
-
-  const removeFriend = (slotId: string) => {
-    const newFriends: InviteFriend[] = JSON.parse(JSON.stringify(friends));
-
-    newFriends.forEach((friend) => {
-      if (friend.slotId == slotId) {
-        friend.currentlyEditing = true;
-      }
-    });
-    setNewFriend({ ...newFriend, name: "", slotId: slotId });
-    setFriends(newFriends);
-  };
-
-  const addFriend = (e: ChangeEvent<HTMLInputElement>) => {
-    if (friends?.length + 1 > maxFriends) return;
-    const selectedFriend = friendList?.find(
-      (friend) => `${friend.email} (${friend.handle})` === e.target.value
-    );
-    if (selectedFriend) {
-      selectedFriend.slotId = newFriend.slotId;
-    }
-    if (selectedFriend) {
-      setFriends((prev) => [...prev, selectedFriend]);
-      setNewFriend({
-        id: "",
-        handle: "",
-        name: "",
-        email: "",
-        slotId: "",
-        bookingId: "",
-        currentlyEditing: false,
-        emailOrPhoneNumber: "",
-      });
-    }
-  };
-
-  const addFriendUpdated = async (
-    friendToFind: InviteFriend,
-    index: number
-  ) => {
-    const friendsCopy = [...friends];
-    friendsCopy.forEach((friend) => {
-      if (friend.slotId == friendToFind.slotId) {
-        (friend.email = friendToFind.email),
-          (friend.name = friendToFind.name),
-          (friend.handle = friendToFind.handle),
-          (friend.id = friendToFind.id),
-          (friend.currentlyEditing = false);
-      }
-    });
-    setFriends(friendsCopy);
-    setNewFriend({
+    const { course } = useCourseContext();
+    const [minimumOfferPrice, setMinimumOfferPrice] = useState<number>(0);
+    const [friends, setFriends] = useState<InviteFriend[]>([]);
+    const [isInviteVisible, setIsInviteVisible] = useState(false);
+    const [newFriend, setNewFriend] = useState<InviteFriend>({
       id: "",
       handle: "",
       name: "",
@@ -274,58 +59,280 @@ export const ManageOwnedTeeTime = ({
       currentlyEditing: false,
       emailOrPhoneNumber: "",
     });
+    const debouncedValue = useDebounce<InviteFriend>(newFriend, 500);
 
-    const bookingSlotId = selectedTeeTime?.golfers[index]?.slotId || "";
+    const [inviteSuccess, setInviteSuccess] = useState<Record<string, boolean>>(
+      {}
+    );
 
-    try {
-      await invite.mutateAsync({
-        emailOrPhone: friendToFind.emailOrPhoneNumber || "",
-        teeTimeId: selectedTeeTime?.teeTimeId || "",
-        bookingSlotId, // Ensure a string is passed
-        slotPosition: index + 1,
-        redirectHref: redirectHref,
-      });
-      setInviteSuccess((prev) => ({ ...prev, [bookingSlotId]: true }));
-      toast.success("Invitation sent successfully.");
-    } catch (error) {
-      toast.error(
-        (error as Error)?.message ?? "An error occurred inviting friend."
-      );
-    }
-  };
+    const href = window.location.href;
+    const redirectHref =
+      (href.includes("/my-tee-box")
+        ? href.split("/my-tee-box")[0]
+        : href.match(/^(https?:\/\/[^/]+\/[0-9A-Fa-f-]+)/)?.[0]) || "";
 
-  const handleNewFriend = (
-    e: ChangeEvent<HTMLInputElement>,
-    friend: InviteFriend
-  ) => {
-    const friendsCopy = [...friends];
-    friendsCopy.forEach((frnd) => {
-      if (frnd.slotId == friend.slotId) {
-        frnd.name = e.target.value;
-        if (e.target.value == "") {
-          frnd.id = "";
-          frnd.handle = "";
-          frnd.name = "";
-          frnd.email = "";
-        }
+    const handleInviteFriend = async (friend: InviteFriend, index: number) => {
+      if (invite.isLoading) return;
+      const bookingSlotId = selectedTeeTime?.golfers[index]?.slotId || "";
+
+      try {
+        await invite.mutateAsync({
+          emailOrPhone: friend.name || "",
+          teeTimeId: selectedTeeTime?.teeTimeId || "",
+          bookingSlotId,
+          slotPosition: index + 1,
+          redirectHref: redirectHref,
+        });
+
+        setFriends((prevFriends) =>
+          prevFriends.map((f, idx) =>
+            idx === index ? { ...f, name: friend.name } : f
+          )
+        );
+        await refetch();
+        setInviteSuccess((prev) => ({ ...prev, [friend.slotId]: true }));
+        setIsInviteVisible(false);
+        toast.success("Invitation sent successfully.");
+      } catch (error) {
+        toast.error(
+          (error as Error)?.message ?? "An error occurred inviting friend."
+        );
       }
-    });
+    };
 
-    setFriends(friendsCopy);
-    setNewFriend({
-      id: "",
-      handle: "",
-      name: e.target.value,
-      email: "",
-      slotId: friend.slotId,
-      bookingId: "",
-      currentlyEditing: false,
-      emailOrPhoneNumber: "",
-    });
-    setIsInviteVisible(true);
-  };
+    const invite = api.user.inviteUser.useMutation();
 
-  const ManageOwnedTeeTimeDetail = () => {
+    const { data, isLoading } = api.searchRouter.searchUsers.useQuery(
+      { searchText: debouncedValue.name },
+      { enabled: debouncedValue?.name?.length > 0 }
+    );
+
+    const updateNames = api.teeBox.updateNamesOnBookings.useMutation();
+    const updateMinimumOfferPrice = api.teeBox.setMinimumOfferPrice.useMutation();
+
+    const maxFriends = useMemo(() => {
+      if (!selectedTeeTime) return 0;
+      return selectedTeeTime?.bookingIds.length;
+    }, [selectedTeeTime?.bookingIds]);
+
+    const friendList = useMemo(() => {
+      if (!data) return [];
+      return data as InviteFriend[];
+    }, [data]);
+
+    useEffect(() => {
+      if (selectedTeeTime) {
+        const friendsToSet = selectedTeeTime.golfers;
+        friendsToSet.forEach((friend) => {
+          friend.currentlyEditing = false;
+        });
+        setFriends(selectedTeeTime.golfers);
+        setMinimumOfferPrice(
+          selectedTeeTime.minimumOfferPrice > 0
+            ? selectedTeeTime.minimumOfferPrice
+            : selectedTeeTime.firstHandPrice
+        );
+      }
+    }, [selectedTeeTime, isManageOwnedTeeTimeOpen]);
+
+    useEffect(() => {
+      if (isManageOwnedTeeTimeOpen) {
+        document.body.classList.add("overflow-hidden");
+      } else {
+        document.body.classList.remove("overflow-hidden");
+        setMinimumOfferPrice(
+          selectedTeeTime?.minimumOfferPrice ||
+          selectedTeeTime?.firstHandPrice ||
+          0
+        ); //reset price
+        setNewFriend({
+          id: "",
+          handle: "",
+          name: "",
+          email: "",
+          slotId: "",
+          bookingId: "",
+          currentlyEditing: false,
+          emailOrPhoneNumber: "",
+        });
+      }
+    }, [isManageOwnedTeeTimeOpen, selectedTeeTime, inviteSuccess]);
+
+    const handleFocus = () => {
+      if (!minimumOfferPrice) setMinimumOfferPrice(0);
+    };
+
+    const handleBlur = () => {
+      if (!minimumOfferPrice) setMinimumOfferPrice(0);
+    };
+
+    const handleMinimumOfferPrice = (e: ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value.replace(/[$,]/g, "");
+
+      const decimals = value.split(".")[1];
+      if (decimals && decimals?.length > 2) return;
+
+      const strippedLeadingZeros = value.replace(/^0+/, "");
+
+      setMinimumOfferPrice(Number(strippedLeadingZeros));
+    };
+
+    const totalPayout = useMemo(() => {
+      return Math.abs(minimumOfferPrice * friends.length - 45);
+    }, [minimumOfferPrice, friends]);
+
+    const save = async () => {
+      if (!selectedTeeTime) {
+        toast.error("Tee time not selected");
+        return;
+      }
+
+      if (updateNames.isLoading || updateMinimumOfferPrice.isLoading) return;
+
+      selectedTeeTime.golfers.map((el) => {
+        friends.forEach((fd) => {
+          if (!fd.slotId) {
+            fd.slotId = el.slotId;
+            fd.name = fd.name == "" ? "Guest" : fd.name;
+          }
+          fd.bookingId = selectedTeeTime.bookingIds[0] || "";
+          fd.handle = fd.handle ? fd.handle : "";
+          fd.name = fd.name == "" ? "Guest" : fd.name;
+        });
+      });
+
+      selectedTeeTime.golfers = friends;
+
+      try {
+        await updateNames.mutateAsync({
+          usersToUpdate: selectedTeeTime.golfers,
+          bookingId: selectedTeeTime.bookingIds[0] || "",
+        });
+        await updateMinimumOfferPrice.mutateAsync({
+          teeTimeId: selectedTeeTime?.teeTimeId,
+          minimumOfferPrice,
+        });
+        toast.success("Tee time listing updated successfully");
+        await refetch();
+        setIsManageOwnedTeeTimeOpen(false);
+      } catch (error) {
+        toast.error(
+          (error as Error)?.message ?? "An error occurred managing tee time"
+        );
+      }
+    };
+
+    const removeFriend = (slotId: string) => {
+      const newFriends: InviteFriend[] = JSON.parse(JSON.stringify(friends));
+
+      newFriends.forEach((friend) => {
+        if (friend.slotId == slotId) {
+          friend.currentlyEditing = true;
+        }
+      });
+      setNewFriend({ ...newFriend, name: "", slotId: slotId });
+      setFriends(newFriends);
+    };
+
+    const addFriend = (e: ChangeEvent<HTMLInputElement>) => {
+      if (friends?.length + 1 > maxFriends) return;
+      const selectedFriend = friendList?.find(
+        (friend) => `${friend.email} (${friend.handle})` === e.target.value
+      );
+      if (selectedFriend) {
+        selectedFriend.slotId = newFriend.slotId;
+      }
+      if (selectedFriend) {
+        setFriends((prev) => [...prev, selectedFriend]);
+        setNewFriend({
+          id: "",
+          handle: "",
+          name: "",
+          email: "",
+          slotId: "",
+          bookingId: "",
+          currentlyEditing: false,
+          emailOrPhoneNumber: "",
+        });
+      }
+    };
+
+    const addFriendUpdated = async (
+      friendToFind: InviteFriend,
+      index: number
+    ) => {
+      const friendsCopy = [...friends];
+      friendsCopy.forEach((friend) => {
+        if (friend.slotId == friendToFind.slotId) {
+          (friend.email = friendToFind.email),
+            (friend.name = friendToFind.name),
+            (friend.handle = friendToFind.handle),
+            (friend.id = friendToFind.id),
+            (friend.currentlyEditing = false);
+        }
+      });
+      setFriends(friendsCopy);
+      setNewFriend({
+        id: "",
+        handle: "",
+        name: "",
+        email: "",
+        slotId: "",
+        bookingId: "",
+        currentlyEditing: false,
+        emailOrPhoneNumber: "",
+      });
+
+      const bookingSlotId = selectedTeeTime?.golfers[index]?.slotId || "";
+
+      try {
+        await invite.mutateAsync({
+          emailOrPhone: friendToFind.emailOrPhoneNumber || "",
+          teeTimeId: selectedTeeTime?.teeTimeId || "",
+          bookingSlotId, // Ensure a string is passed
+          slotPosition: index + 1,
+          redirectHref: redirectHref,
+        });
+        setInviteSuccess((prev) => ({ ...prev, [bookingSlotId]: true }));
+        toast.success("Invitation sent successfully.");
+      } catch (error) {
+        toast.error(
+          (error as Error)?.message ?? "An error occurred inviting friend."
+        );
+      }
+    };
+
+    const handleNewFriend = (
+      e: ChangeEvent<HTMLInputElement>,
+      friend: InviteFriend
+    ) => {
+      const friendsCopy = [...friends];
+      friendsCopy.forEach((frnd) => {
+        if (frnd.slotId == friend.slotId) {
+          frnd.name = e.target.value;
+          if (e.target.value == "") {
+            frnd.id = "";
+            frnd.handle = "";
+            frnd.name = "";
+            frnd.email = "";
+          }
+        }
+      });
+
+      setFriends(friendsCopy);
+      setNewFriend({
+        id: "",
+        handle: "",
+        name: e.target.value,
+        email: "",
+        slotId: friend.slotId,
+        bookingId: "",
+        currentlyEditing: false,
+        emailOrPhoneNumber: "",
+      });
+      setIsInviteVisible(true);
+    };
+
     return (
       <>
         <div className="flex flex-col gap-6 px-0 sm:px-4">
@@ -549,14 +556,17 @@ export const ManageOwnedTeeTime = ({
     );
   };
 
-
   return isMobile ? (
     <Modal
       title="Invite Players"
       isOpen={isManageOwnedTeeTimeOpen}
       onClose={() => setIsManageOwnedTeeTimeOpen(false)}
     >
-      <ManageOwnedTeeTimeDetail />
+      <ManageOwnedTeeTimeDetail
+        setIsManageOwnedTeeTimeOpen={setIsManageOwnedTeeTimeOpen}
+        selectedTeeTime={selectedTeeTime}
+        refetch={refetch}
+      />
     </Modal>
   ) : (
     <Flyout
@@ -564,7 +574,11 @@ export const ManageOwnedTeeTime = ({
       isOpen={isManageOwnedTeeTimeOpen}
       setIsOpen={setIsManageOwnedTeeTimeOpen}
     >
-      <ManageOwnedTeeTimeDetail />
+      <ManageOwnedTeeTimeDetail
+        setIsManageOwnedTeeTimeOpen={setIsManageOwnedTeeTimeOpen}
+        selectedTeeTime={selectedTeeTime}
+        refetch={refetch}
+      />
     </Flyout>
   );
 };

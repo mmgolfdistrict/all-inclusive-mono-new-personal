@@ -146,6 +146,7 @@ export const MobileOwned = () => {
         isGroupBooking={selectedTeeTime?.isGroupBooking}
         groupBookingId={selectedTeeTime?.groupId ?? undefined}
         refetch={refetch}
+        allowSplit={selectedTeeTime?.allowSplit}
       />
     </>
   );
@@ -226,7 +227,7 @@ const TableCard = ({
                   >
                     <Avatar src={iconSrc} />
                     <div className="flex flex-col">
-                      <div className="whitespace-nowrap underline text-secondary-black">
+                      <div className="whitespace-normal overflow-y-auto underline text-secondary-black">
                         {course}
                       </div>
                       <div className="text-primary-gray unmask-time">

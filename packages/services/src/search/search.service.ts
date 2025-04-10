@@ -414,6 +414,7 @@ export class SearchService extends CacheService {
         },
         minimumOfferPrice: bookings.minimumOfferPrice,
         groupId: bookings.groupId,
+        allowSplit: lists.allowSplit,
         totalMerchandiseAmount: bookings.totalMerchandiseAmount,
       })
       .from(lists)
@@ -452,6 +453,7 @@ export class SearchService extends CacheService {
       minimumOfferPrice: firstBooking?.minimumOfferPrice ?? 0,
       ownerId: firstBooking.ownerId,
       groupId: firstBooking.groupId ?? "",
+      allowSplit: firstBooking.allowSplit,
       totalMerchandiseAmount: firstBooking.totalMerchandiseAmount ?? 0,
     };
     return res;
@@ -1552,7 +1554,8 @@ export class SearchService extends CacheService {
           key: assets.key,
           extension: assets.extension,
         },
-        groupId: bookings.groupId
+        groupId: bookings.groupId,
+        allowSplit: lists.allowSplit,
       })
       .from(bookings)
       .leftJoin(users, eq(users.id, bookings.ownerId))
@@ -1625,7 +1628,8 @@ export class SearchService extends CacheService {
               listingId: booking.listingId ?? undefined,
               listedSlots: booking.listedSlots,
               isOwned: true,
-              groupId: booking?.groupId ?? ""
+              groupId: booking?.groupId ?? "",
+              allowSplit: booking?.allowSplit ?? false
             };
           } else {
             // @ts-expect-error

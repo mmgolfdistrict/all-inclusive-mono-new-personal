@@ -106,6 +106,7 @@ export const bookingRouter = createTRPCRouter({
         listPrice: z.number(),
         endTime: z.date(),
         slots: z.number(),
+        allowSplit: z.boolean().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -116,7 +117,8 @@ export const bookingRouter = createTRPCRouter({
           input.listPrice,
           input.bookingIds,
           input.endTime,
-          input.slots
+          input.slots,
+          input.allowSplit
         );
     }),
   updateListingForBookings: protectedProcedure
@@ -127,6 +129,7 @@ export const bookingRouter = createTRPCRouter({
         updatedSlots: z.number(),
         bookingIds: z.array(z.string()),
         endTime: z.date(),
+        allowSplit: z.boolean()
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -138,7 +141,8 @@ export const bookingRouter = createTRPCRouter({
           input.updatedPrice,
           input.updatedSlots,
           input.bookingIds,
-          input.endTime
+          input.endTime,
+          input.allowSplit
         );
     }),
   getOwnedBookingsForTeeTime: protectedProcedure

@@ -17,7 +17,7 @@ import { ChevronUp } from "../icons/chevron-up";
 import { TeeTimeV2 } from "../cards/tee-time-v2";
 import { TeeTimeSkeletonV2 } from "./tee-time-skeleton-v2";
 
-export const DailyTeeTimesV2 = ({
+export const DailyTeeTimesMobileV2 = ({
   date,
   minDate,
   maxDate,
@@ -315,6 +315,7 @@ export const DailyTeeTimesV2 = ({
                   handleLoading={handleLoading}
                   refetch={refetch}
                   groupId={i?.groupId}
+                  allowSplit={i?.allowSplit}
                 />
               );
             }

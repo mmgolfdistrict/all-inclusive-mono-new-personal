@@ -84,6 +84,7 @@ export type SearchObject = {
   bookingIds?: string[];
   listingId?: string;
   listedSlots?: number;
+  allowSplit?: boolean;
 };
 
 export type InviteFriend = {
