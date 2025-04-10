@@ -122,6 +122,13 @@ export const dayMonthDate = (date: string): string => {
   return dayjs.utc(cleanTimeString).format("dddd, MMM D");
 };
 
+export const dayMonthDateV2 = (date: string): string => {
+  const cleanTimeString = !date.includes("T")
+    ? date.replace(" ", "T") + "Z"
+    : date;
+  return dayjs.utc(cleanTimeString).format("ddd, MMM D");
+};
+
 export const getTime = (date: string, utcOffset = 0): string => {
   const cleanTimeString = !date.includes("T")
     ? date.replace(" ", "T") + "Z"

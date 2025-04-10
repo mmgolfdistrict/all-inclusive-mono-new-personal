@@ -67,6 +67,24 @@ export const courseRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       return await ctx.serviceFactory.getCourseService().getMobileViewVersion(input.courseId);
     }),
+    getDesktopViewVersion: publicProcedure
+    .input(
+      z.object({
+        courseId: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return await ctx.serviceFactory.getCourseService().getDesktopViewVersion(input.courseId);
+    }),
+    getPhoneNumberMandatoryAtCheckout: publicProcedure
+    .input(
+      z.object({
+        courseId: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return await ctx.serviceFactory.getCourseService().getPhoneNumberMandatoryAtCheckout(input.courseId);
+    }),
   getCourseMerchandise: publicProcedure
     .input(
       z.object({

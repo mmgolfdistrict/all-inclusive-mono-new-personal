@@ -38,6 +38,7 @@ export type OwnedTeeTime = {
   slotsData?: string[];
   isGroupBooking: boolean;
   groupId: string;
+  allowSplit?: boolean;
 };
 
 export const Owned = () => {
@@ -196,6 +197,7 @@ export const Owned = () => {
         isGroupBooking={selectedTeeTime?.isGroupBooking}
         groupBookingId={selectedTeeTime?.groupId ?? undefined}
         refetch={refetch}
+        allowSplit={selectedTeeTime?.allowSplit}
       />
     </>
   );

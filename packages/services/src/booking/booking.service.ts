@@ -97,6 +97,7 @@ interface OwnedTeeTimeData {
   bookingStatus: string;
   isGroupBooking: boolean;
   groupId: string;
+  allowSplit?: boolean | null;
 }
 
 interface ListingData {
@@ -116,6 +117,7 @@ interface ListingData {
   isGroupBooking?: boolean;
   playerCount: number;
   listingIdFromRedis?: string | null;
+  allowSplit: boolean;
 }
 
 interface TransferData {
@@ -400,9 +402,6 @@ export class BookingService {
     this.logger.info(`getMyListedTeeTimes called with userId: ${userId}`);
     const localDateTimePlus1Hour = dayjs.utc().utcOffset(-7).add(1, "hour");
 
-    const listingIdFromRedis = await this.cacheService?.getCache("listing_id");
-    console.log("Retrieved listingId from Redis Cache: ", listingIdFromRedis);
-
     const data = await this.database
       .select({
         bookingId: bookings.id,
@@ -421,6 +420,7 @@ export class BookingService {
         groupId: bookings.groupId,
         weatherGuaranteeAmount: bookings.weatherGuaranteeAmount,
         playerCount: bookings.playerCount,
+        allowSplit: lists.allowSplit
       })
       .from(bookings)
       .innerJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -449,9 +449,19 @@ export class BookingService {
         throw new Error("Error retrieving tee times");
       });
     const combinedData: Record<string, ListingData> = {};
-    data.forEach((teeTime) => {
+    for (const teeTime of data) {
       if (teeTime.teeTimesId) {
         if (!combinedData[teeTime.teeTimesId]) {
+          const value = await this.cacheService?.getCache(`listing_id_${teeTime.listingId}`);
+          let listingIdFromRedis;
+          if (value) {
+            const { listingId } = JSON.parse(value as string);
+            if (listingId) {
+              listingIdFromRedis = listingId;
+            }
+          }
+
+          console.log("Retrieved listingId from Redis Cache: ", listingIdFromRedis);
           combinedData[teeTime.teeTimesId] = {
             courseId,
             listingId: teeTime.listingId,
@@ -471,6 +481,7 @@ export class BookingService {
             isGroupBooking: false,
             playerCount: teeTime.playerCount,
             listingIdFromRedis: listingIdFromRedis as string | null | undefined,
+            allowSplit: teeTime.allowSplit
           };
         } else {
           const currentEntry = combinedData[teeTime.teeTimesId];
@@ -484,7 +495,7 @@ export class BookingService {
           }
         }
       }
-    });
+    };
     return combinedData;
   };
   /**
@@ -655,6 +666,7 @@ export class BookingService {
         slots: lists.slots,
         playerCount: bookings.playerCount,
         bookingStatus: bookings.status,
+        allowSplit: lists.allowSplit
       })
       .from(teeTimes)
       .innerJoin(bookings, eq(bookings.teeTimeId, teeTimes.id))
@@ -757,6 +769,7 @@ export class BookingService {
           bookingStatus: teeTime.bookingStatus,
           isGroupBooking: false,
           groupId: "",
+          allowSplit: teeTime.allowSplit
         };
       } else {
         const currentEntry = combinedData[teeTime.providerBookingId];
@@ -1091,7 +1104,8 @@ export class BookingService {
     listPrice: number,
     bookingIds: string[],
     endTime: Date,
-    slots: number
+    slots: number,
+    allowSplit?: boolean
   ) => {
     this.logger.info(`createListingForBookings called with userId: ${userId}`);
     console.warn("bookingIds", bookingIds);
@@ -1247,6 +1261,7 @@ export class BookingService {
       isDeleted: false,
       // splitTeeTime: false,
       slots,
+      allowSplit
     };
     await this.database
       .transaction(async (transaction) => {
@@ -1434,7 +1449,8 @@ export class BookingService {
     updatedPrice: number,
     updatedSlots: number,
     bookingIds: string[],
-    endTime: Date
+    endTime: Date,
+    allowSplit: boolean
   ) => {
     this.logger.info(`updateListingForBookings called with userId: ${userId}, listId: ${listId}`);
 
@@ -1588,6 +1604,7 @@ export class BookingService {
       .set({
         listPrice: updatedPrice * 100,
         slots: updatedSlots,
+        allowSplit
       })
       .where(eq(lists.id, listId))
       .execute()
@@ -3565,7 +3582,7 @@ export class BookingService {
           cartFeeCharge * (slotInfo[0]?.product_data?.metadata?.number_of_bookings ?? 0) -
           markupCharge1, //slotInfo[0].price- cartFeeCharge*slotInfo[0]?.product_data?.metadata?.number_of_bookings,
       teeTimeId: slotInfo[0].product_data.metadata.tee_time_id,
-      playerCount: slotInfo[0].product_data.metadata.number_of_bookings,
+      playerCount: slotInfo[0].product_data.metadata.number_of_bookings === undefined ? customerCartData.cart.playerCount : slotInfo[0].product_data.metadata.number_of_bookings,
       teeTimeIds: slotInfo[0].product_data.metadata.tee_time_ids,
       minPlayersPerBooking: slotInfo[0].product_data.metadata.min_players_per_booking,
     };
@@ -4392,6 +4409,7 @@ export class BookingService {
         listPrice: lists.listPrice,
         teeTimeIdForBooking: bookings.teeTimeId,
         isListed: bookings.isListed,
+        allowSplit: lists.allowSplit,
       })
       .from(bookings)
       .leftJoin(lists, eq(lists.id, listingId))
@@ -4413,6 +4431,7 @@ export class BookingService {
     const bookingId = randomUUID();
     const bookingsToCreate: InsertBooking[] = [];
     const transfersToCreate: InsertTransfer[] = [];
+    const bookedPlayers = associatedBooking?.allowSplit ? playerCount : associatedBooking?.listedSlotsCount ?? 0
 
     bookingsToCreate.push({
       id: bookingId,
@@ -4429,8 +4448,8 @@ export class BookingService {
       weatherGuaranteeAmount: sensibleCharge * 100,
       weatherGuaranteeId: "",
       cartId: cartId,
-      playerCount: associatedBooking?.listedSlotsCount ?? 0,
-      greenFeePerPlayer: primaryGreenFeeCharge / (associatedBooking?.listedSlotsCount ?? 1) ?? 0,
+      playerCount: bookedPlayers,
+      greenFeePerPlayer: primaryGreenFeeCharge / (bookedPlayers ?? 1) ?? 0,
       totalTaxesAmount: taxCharge * 100 || 0,
       charityId: charityId || null,
       totalCharityAmount: charityCharge * 100 || 0,
@@ -5980,7 +5999,7 @@ export class BookingService {
     }
   };
 
-  addListingForRemainingSlots = async (groupId: string, listedSlotsCount = 0, ownerId: string) => {
+  addListingForRemainingSlotsOnGroupBooking = async (groupId: string, listedSlotsCount = 0, ownerId: string) => {
     try {
       if (listedSlotsCount === 0) {
         this.logger.error("Invalid listing slots count");
@@ -6031,7 +6050,7 @@ export class BookingService {
             this.logger.error(`Error retrieving bookings: ${err}`);
             loggerService.errorLog({
               userId: "",
-              url: "/addListingForRemainingSlots",
+              url: "/addListingForRemainingSlotsOnGroupBooking",
               userAgent: "",
               message: "ERROR_RETRIEVING_BOOKINGS",
               stackTrace: `${err.stack}`,
@@ -6053,7 +6072,7 @@ export class BookingService {
               applicationName: "golfdistrict-foreup",
               clientIP: "",
               userId: "",
-              url: "/addListingForRemainingSlots",
+              url: "/addListingForRemainingSlotsOnGroupBooking",
               userAgent: "",
               message: "TEE_TIME_LISTED_FAILED",
               stackTrace: "",
@@ -6091,7 +6110,7 @@ export class BookingService {
                 this.logger.error(`Error updating bookingId: ${lastBooking.id}: ${err}`);
                 loggerService.errorLog({
                   userId: "",
-                  url: "/addListingForRemainingSlots",
+                  url: "/addListingForRemainingSlotsOnGroupBooking",
                   userAgent: "",
                   message: "ERROR_UPDATING_BOOKING_ID",
                   stackTrace: `${err.stack}`,
@@ -6115,7 +6134,7 @@ export class BookingService {
                 this.logger.error(`Error updating groupBookingId: ${groupId}: ${err}`);
                 loggerService.errorLog({
                   userId: "",
-                  url: "/addListingForRemainingSlots",
+                  url: "/addListingForRemainingSlotsOnGroupBooking",
                   userAgent: "",
                   message: "ERROR_UPDATING_GROUP_BOOKING_ID",
                   stackTrace: `${err.stack}`,
@@ -6136,7 +6155,7 @@ export class BookingService {
                 this.logger.error(`Error creating listing: ${err}`);
                 loggerService.errorLog({
                   userId: "",
-                  url: "/addListingForRemainingSlots",
+                  url: "/addListingForRemainingSlotsOnGroupBooking",
                   userAgent: "",
                   message: "ERROR_CREATING_LISTING",
                   stackTrace: `${err.stack}`,
@@ -6152,7 +6171,7 @@ export class BookingService {
             this.logger.error(`Transaction rolled backError creating listing: ${err}`);
             loggerService.errorLog({
               userId: "",
-              url: "/addListingForRemainingSlots",
+              url: "/addListingForRemainingSlotsOnGroupBooking",
               userAgent: "",
               message: "TRANSACTION_ROLLBACK_ERROR_CREATING_LISTING",
               stackTrace: `${err.stack}`,
@@ -6197,13 +6216,205 @@ export class BookingService {
       this.logger.error(`Error adding listing for remaining slots, ${JSON.stringify(error)}`);
       loggerService.errorLog({
         userId: "",
-        url: "/addListingForRemainingSlots",
+        url: "/addListingForRemainingSlotsOnGroupBooking",
         userAgent: "",
         message: "ERROR_ADDING_LISTING_FOR_REMAINING_SLOTS",
         stackTrace: `${error.stack}`,
         additionalDetailsJSON: JSON.stringify({
           groupId,
           listedSlotsCount,
+        }),
+      });
+    }
+  };
+  addListingForRemainingSlots = async (bookingId: string, providerBookingId: string, previousListid: string, slotsToList = 0, ownerId: string) => {
+    try {
+      if (slotsToList === 0) {
+        this.logger.error("Invalid listing slots count");
+        throw new Error("Invalid listing slots count");
+      }
+
+      const [previousListing] = await this.database
+        .select({
+          listPrice: lists.listPrice
+        })
+        .from(lists)
+        .where(eq(lists.id, previousListid))
+        .execute();
+
+      if (!previousListing) {
+        this.logger.error(`Listing not found for list ID: ${previousListid}`);
+        throw new Error(`Listing not found for list ID: ${previousListid}`);
+      }
+
+      const [previousBooking] = await this.database
+        .select({
+          providerDate: teeTimes.providerDate,
+          userName: users.name,
+          courseId: teeTimes.courseId,
+          userEmail: users.email,
+          courseName: courses.name,
+          key: assets.key,
+          extension: assets.extension,
+          courseWebsiteURL: courses.websiteURL,
+          timezoneCorrection: courses.timezoneCorrection
+        })
+        .from(bookings)
+        .innerJoin(teeTimes, eq(bookings.teeTimeId, teeTimes.id))
+        .innerJoin(users, eq(bookings.ownerId, users.id))
+        .innerJoin(courses, eq(teeTimes.courseId, courses.id))
+        .innerJoin(assets, eq(assets.id, courses.logoId))
+        .where(eq(bookings.id, bookingId))
+        .execute();
+
+      if (!previousBooking) {
+        this.logger.error(`Booking not found for booking ID: ${bookingId}`);
+        throw new Error(`Booking not found for booking ID: ${bookingId}`);
+      }
+
+      const toCreate: InsertList = {
+        id: randomUUID(),
+        userId: ownerId,
+        listPrice: previousListing.listPrice,
+        isDeleted: false,
+        slots: slotsToList,
+        allowSplit: true
+      };
+      await this.database
+        .transaction(async (transaction) => {
+          await transaction
+            .update(bookings)
+            .set({
+              isListed: true,
+              listId: toCreate.id,
+            })
+            .where(eq(bookings.id, bookingId))
+            .execute()
+            .catch((err) => {
+              this.logger.error(`Error updating bookingId: ${bookingId}: ${err}`);
+              loggerService.errorLog({
+                userId: "",
+                url: "/addListingForRemainingSlots",
+                userAgent: "",
+                message: "ERROR_UPDATING_BOOKING_ID",
+                stackTrace: `${err.stack}`,
+                additionalDetailsJSON: JSON.stringify({
+                  bookingId
+                }),
+              });
+              transaction.rollback();
+            });
+
+          //create listing
+          await transaction
+            .insert(lists)
+            .values(toCreate)
+            .execute()
+            .catch((err) => {
+              this.logger.error(`Error creating listing: ${err}`);
+              loggerService.errorLog({
+                userId: "",
+                url: "/addListingForRemainingSlots",
+                userAgent: "",
+                message: "ERROR_CREATING_LISTING",
+                stackTrace: `${err.stack}`,
+                additionalDetailsJSON: JSON.stringify({
+                  bookingId,
+                  lists: JSON.stringify(toCreate),
+                }),
+              });
+              transaction.rollback();
+            });
+        })
+        .catch((err) => {
+          this.logger.error(`Transaction rolled backError creating listing: ${err}`);
+          loggerService.errorLog({
+            userId: "",
+            url: "/addListingForRemainingSlots",
+            userAgent: "",
+            message: "TRANSACTION_ROLLBACK_ERROR_CREATING_LISTING",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              bookingId,
+              lists: JSON.stringify(toCreate),
+              ownerId,
+            }),
+          });
+          throw new Error("Error creating listing");
+        });
+      this.logger.info(
+        `Listing created successfully. for bookingId ${bookingId}`
+      );
+
+      const [date, time] = previousBooking.providerDate.split("T");
+
+      const splittedTime = time!.split("-")[0]!.split(":");
+      const formattedTime = Number(splittedTime[0]! + splittedTime[1]!);
+
+      if (previousBooking.userEmail && previousBooking.userName) {
+        await this.notificationService
+          .sendEmailByTemplate(
+            previousBooking.userEmail,
+            "Listing Created",
+            process.env.SENDGRID_LISTING_CREATED_TEMPLATE_ID!,
+            {
+              CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${previousBooking.key}.${previousBooking.extension}`,
+              CourseURL: previousBooking.courseWebsiteURL || "",
+              CourseName: previousBooking.courseName,
+              HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+              CustomerFirstName: previousBooking.userName?.split(" ")[0],
+              CourseReservationID: providerBookingId ?? "-",
+              PlayDateTime: formatTime(
+                previousBooking.providerDate ?? "",
+                true,
+                previousBooking.timezoneCorrection ?? 0
+              ),
+              PlayerCount: slotsToList ?? 0,
+              ListedPricePerPlayer: previousListing.listPrice ? `${previousListing.listPrice}` : "-"
+            },
+            []
+          )
+          .catch((err) => {
+            this.logger.error(`Error sending email: ${err}`);
+            loggerService.errorLog({
+              userId: ownerId,
+              url: "/addListingForRemainingSlots",
+              userAgent: "",
+              message: "ERROR_SENDING_EMAIL",
+              stackTrace: `${err.stack}`,
+              additionalDetailsJSON: JSON.stringify({
+                ownerId,
+                email: previousBooking.userEmail,
+                name: previousBooking.userName,
+                courseName: previousBooking.courseName,
+                previousBooking
+              }),
+            });
+            throw new Error("Error sending email");
+          });
+      }
+
+      // send notifications to users
+      await this.userWaitlistService.sendNotificationsForAvailableTeeTime(
+        date,
+        formattedTime,
+        previousBooking.courseId,
+        ownerId,
+        toCreate.id
+      );
+    } catch (error: any) {
+      this.logger.error(`Error adding listing for remaining slots, ${JSON.stringify(error)}`);
+      loggerService.errorLog({
+        userId: "",
+        url: "/addListingForRemainingSlots",
+        userAgent: "",
+        message: "ERROR_ADDING_LISTING_FOR_REMAINING_SLOTS",
+        stackTrace: `${error.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          bookingId,
+          ownerId,
+          previousListid,
+          slotsToList
         }),
       });
     }

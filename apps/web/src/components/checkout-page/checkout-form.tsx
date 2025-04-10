@@ -12,10 +12,10 @@ import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
 import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
-import type { CartProduct, FirstHandGroupProduct } from "~/utils/types";
+import type { CartProduct, CountryData, FirstHandGroupProduct } from "~/utils/types";
 import { useParams, useRouter } from "next/navigation";
-import type { Dispatch, SetStateAction } from "react";
-import { Fragment, useEffect, useState, type FormEvent } from "react";
+import type { ChangeEvent, Dispatch, SetStateAction } from "react";
+import { Fragment, useEffect, useState, type FormEvent, useRef } from "react";
 import { toast } from "react-toastify";
 import { useMediaQuery } from "usehooks-ts";
 import { FilledButton } from "../buttons/filled-button";
@@ -29,12 +29,39 @@ import { CheckoutAccordionRoot } from "./checkout-accordian";
 import CheckoutItemAccordion from "./checkout-item-accordian";
 import styles from "./checkout.module.css";
 import type { NextAction } from "./hyper-switch";
+import CountryDropdown from "~/components/dropdown/country-dropdown";
+import type { Country } from "~/components/dropdown/country-dropdown";
+import { allCountries } from "country-telephone-data";
+import { useSession } from "@golf-district/auth/nextjs-exports";
+import { useUser } from "~/hooks/useUser";
+import { PhoneNumberUtil } from "google-libphonenumber";
 
 type charityData = {
   charityDescription: string | undefined;
   charityName: string | undefined;
   charityId: string | undefined;
   charityLogo: string | undefined;
+};
+
+const phoneUtil = PhoneNumberUtil.getInstance();
+const countryList: Country[] = allCountries.map(({ name, iso2, dialCode }: CountryData) => ({
+  name,
+  iso2,
+  dialCode,
+  flag: `https://flagcdn.com/w40/${iso2.toLowerCase()}.png`
+}));
+
+const validatePhoneNumber = (value: string | null | undefined): string | null => {
+  if (!value) {
+    return "Phone number is required";
+  }
+  if (value.length !== 10) {
+    return "Invalid phone number, it should have 10 digits.";
+  }
+  if (!/^\d{10}$/.test(value)) {
+    return "Phone number must contain only digits.";
+  }
+  return null;
 };
 export const CheckoutForm = ({
   isBuyNowAuction,
@@ -91,9 +118,81 @@ export const CheckoutForm = ({
   const handleToggle = () => {
     setIsExpanded(!isExpanded);
   };
-
   const { user } = useUserContext();
   const { bookingSource, setBookingSource } = useBookingSourceContext();
+  const [phoneNumber, setPhoneNumber] = useState<string | undefined>('');
+  const [phoneNumberError, setPhoneNumberError] = useState<string | null>(null);
+  const [countryError, setCountryError] = useState<string | null>(null);
+  const [countryCode, setcountryCode] = useState<number>();
+  const [currentCountry, setCurrentCountry] = useState<string>('');
+  const { data: userCountryData, error } = api.user.getCountryCode.useQuery({});
+  const [excludedCountries, _setExcludeCountries] = useState<string[]>(
+    ['by', 'cu', 'kp', 'sy', 've', 'ir']
+  );
+  const phoneNumberRef = useRef<HTMLDivElement | null>(null);
+  const { data: session } = useSession();
+  const extractCountryISO2 = (phoneNumber: string) => {
+    try {
+      const parsedNumber = phoneUtil.parse(`+${phoneNumber}`);
+      const countryCode = parsedNumber.getCountryCode();
+      const regionCode: string = phoneUtil.getRegionCodeForCountryCode(countryCode);
+      return regionCode.toLowerCase();
+    } catch (error) {
+      if (error) {
+        console.error("Invalid phone number", error);
+      }
+      return "";
+    }
+  };
+  const userId = session?.user?.id;
+  const {
+    data: userData,
+    isLoading: isLoadingUser,
+  } = useUser(userId ?? '');
+
+  useEffect(() => {
+    setPhoneNumber(userData?.phoneNumber ?? '')
+    setcountryCode(userData?.phoneNumberCountryCode)
+  }, [userData])
+  const { data: PHONE_NUMBER_MANDATORY_AT_CHECKOUT } =
+    api.course.getPhoneNumberMandatoryAtCheckout.useQuery({
+      courseId: courseId ?? "",
+    });
+
+  useEffect(function getCurrentCountryCode() {
+    const phoneNumber = userData?.phoneNumber;
+    const phoneNumberCountryCode = userData?.phoneNumberCountryCode;
+    if (phoneNumber?.length === 10 && phoneNumberCountryCode) {
+      const countryCode = extractCountryISO2(`${phoneNumberCountryCode}${phoneNumber}`);
+      setCurrentCountry(countryCode);
+    }
+  }, [phoneNumber, countryCode]);
+
+  useEffect(function setCountryCode() {
+    if (userCountryData?.country) {
+      const cc = userCountryData.country.toLowerCase();
+      setCurrentCountry(cc);
+      const country = countries.find((c) => c?.iso2 === cc);
+      if (country) {
+        handleSelectCountry(country);
+      }
+    } else {
+      console.error('Failed to fetch country', error);
+    }
+  }, [userCountryData?.country, setCurrentCountry]);
+
+  const [countries, _setCountries] = useState<Country[]>(
+    countryList.filter(
+      (c: Country) => !excludedCountries.includes(c.iso2)
+    ).map((c: Country) => {
+      return {
+        name: c.name,
+        iso2: c.iso2,
+        dialCode: c.dialCode,
+        flag: `https://flagcdn.com/w40/${c.iso2}.png`
+      }
+    })
+  );
   const auditLog = api.webhooks.auditLog.useMutation();
   const sendEmailForFailedPayment =
     api.webhooks.sendEmailForFailedPayment.useMutation();
@@ -275,6 +374,7 @@ export const CheckoutForm = ({
   const [message, setMessage] = useState("");
   const [charityAmountError, setCharityAmountError] = useState("");
   const [additionalNote, setAdditionalNote] = useState("");
+  const updateUser = api.user.updateUser.useMutation();
 
   // const [customerID, setCustomerID] = useState("");
   const {
@@ -434,6 +534,54 @@ export const CheckoutForm = ({
     e.preventDefault();
     void logAudit();
     setIsLoading(true);
+
+    if (PHONE_NUMBER_MANDATORY_AT_CHECKOUT === "true") {
+      const phoneError = validatePhoneNumber(phoneNumber);
+      if (phoneError) {
+        setPhoneNumberError(phoneError);
+        setTimeout(() => {
+          phoneNumberRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+        setIsLoading(false);
+        return;
+      } else {
+        setPhoneNumberError(null);
+      }
+
+      if (!countryCode) {
+        setCountryError("Phone number country code is required.");
+        setTimeout(() => {
+          phoneNumberRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+        setIsLoading(false);
+        return;
+      } else {
+        setPhoneNumberError(null);
+      }
+
+      const hasPhoneChanged = (
+        phoneNumber !== userData?.phoneNumber ||
+        countryCode !== userData?.phoneNumberCountryCode
+      );
+
+      if (hasPhoneChanged) {
+        const dataToUpdate = {
+          phoneNumberCountryCode: countryCode,
+          phoneNumber: phoneNumber,
+        };
+
+        const response = await updateUser.mutateAsync({
+          ...dataToUpdate,
+          courseId,
+        });
+
+        if (response?.error) {
+          toast.error(response.message);
+          return;
+        }
+      }
+    }
+
     if (!maxReservation?.success) {
       // toast.error(maxReservation?.message);
       setIsLoading(false);
@@ -908,7 +1056,17 @@ export const CheckoutForm = ({
   useEffect(() => {
     setHasUserSelectedDonation(true);
   }, []);
+  const handleSelectCountry = (country: Country) => {
+    const { iso2, dialCode } = country;
 
+    setCurrentCountry(iso2);
+    setcountryCode(+dialCode);
+  }
+
+  const handlePhoneNumberChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, "");
+    setPhoneNumber(value);
+  }
   useEffect(() => {
     setIsLoadingTotalAmount(true);
     setTimeout(() => {
@@ -924,6 +1082,34 @@ export const CheckoutForm = ({
         />
       </div>
       <div className="flex w-full flex-col gap-2 bg-white p-4 rounded-lg my-2">
+        {!isLoadingUser && PHONE_NUMBER_MANDATORY_AT_CHECKOUT === "true" && <div className="flex flex-col gap-1" ref={phoneNumberRef}>
+          <div className="flex gap-1">
+            <label htmlFor="phoneNumber" className="text-[14px] text-primary-gray">
+              Phone Number<span className="text-red"> *</span>
+            </label>
+            <Tooltip
+              trigger={<Info className="ml-2 h-[20px] w-[20px]" />}
+              content={`${course?.name} is requiring phone numbers to be present. If you enter invalid phone number then your reservation might be cancelled by the course without any refunds.`}
+            />
+          </div>
+          <div className="flex h-12 rounded-lg bg-secondary-white px-1 text-[14px] text-gray-500 outline-none text-ellipsis">
+            <CountryDropdown defaultCountry={currentCountry} items={countries} onSelect={handleSelectCountry} />
+            <Input
+              className="input-phone-number"
+              type="number"
+              register={() => null}
+              label=""
+              placeholder="9988776655"
+              id="phoneNumber"
+              name="phoneNumber"
+              onChange={handlePhoneNumberChange}
+              value={phoneNumber || ''}
+              data-testid="profile-phone-number-id"
+            />
+          </div>
+          {phoneNumberError && <p className="text-[12px] text-red">{phoneNumberError}</p>}
+          {countryError && <p className="text-[12px] text-red">{countryError}</p>}
+        </div>}
         {course?.supportCharity && !roundUpCharityId ? (
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
