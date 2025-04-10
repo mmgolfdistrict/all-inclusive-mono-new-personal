@@ -1740,7 +1740,7 @@ export class CheckoutService {
     return appSettingsResult?.value === "1" ? true : false;
   };
   collectPaymentProcessorPercent = async () => {
-    const appSettingsResult = await this.appSettings.getAppSetting("COLLECT_PAYMENTS_ENABLED");
+    const appSettingsResult = await this.appSettings.getAppSetting("COLLECT_PAYMENT_PAYMENT_PROCESSOR_PERCENT");
     return appSettingsResult?.value;
   }
 }

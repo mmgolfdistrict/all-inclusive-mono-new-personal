@@ -657,7 +657,7 @@ export class HyperSwitchService {
     return { status: "success" };
   };
 
-  createPaymentLink = async (amount: number, email: string, bookingId: string, origin: string) => {
+  createPaymentLink = async (amount: number, email: string, bookingId: string, origin: string, totalPayoutAmount: number, collectPaymentProcessorCharge: number) => {
     try {
       if (amount === 0) {
         throw new Error("Amount cannot be zero");
@@ -681,6 +681,7 @@ export class HyperSwitchService {
       const username = bookingResult ? bookingResult?.userName : "Golf district user";
       const paymentProcessor = String(process.env.SPLIT_PAYMENT_PROCESSOR);
       console.log("payementProcessor", paymentProcessor);
+      const originalUserSplitAmount = (amount * 100) - collectPaymentProcessorCharge;
       if (paymentProcessor === "finix") {
         const referencePaymentId = randomUUID();
         const paymentData: PaymentRequest = {
@@ -743,16 +744,21 @@ export class HyperSwitchService {
         const finixPaymentData = await this.createPaymentLinkForFinix(paymentData);
         const finix_link_url = finixPaymentData?.link_url;
         const paymentId = finixPaymentData?.id;
+
         if (finix_link_url) {
+
+          //(amount * 100)
           await this.database
             .insert(splitPayments)
             .values({
               id: referencePaymentId,
-              amount: (amount * 100),
+              amount: originalUserSplitAmount,
               email: email,
               bookingId: bookingId,
               paymentId: paymentId,
               paymentLink: finix_link_url,
+              totalPayoutAmount: (totalPayoutAmount * 100),
+              paymentProcessingCharge: collectPaymentProcessorCharge
             })
             .execute().catch(async (e: any) => {
               console.log(e);
@@ -817,16 +823,19 @@ export class HyperSwitchService {
         const result = await fetch(`${this.hyperSwitchBaseUrl}/payments`, options);
         const response = await result.json();
         console.log("response_payment_link", response);
+        Math.round(amount * 100)
         if (response?.payment_link?.link) {
           await this.database
             .insert(splitPayments)
             .values({
               id: randomUUID(),
-              amount: Math.round(amount * 100),
+              amount: originalUserSplitAmount,
               email: email,
               bookingId: bookingId,
               paymentId: response?.payment_id,
               paymentLink: response?.payment_link?.link,
+              totalPayoutAmount: (totalPayoutAmount * 100),
+              paymentProcessingCharge: collectPaymentProcessorCharge
             })
             .execute().catch(async (e: any) => {
               console.log(e);
@@ -1094,6 +1103,7 @@ export class HyperSwitchService {
           isActive: splitPayments.isActive,
           paymentId: splitPayments.paymentId,
           amount: splitPayments.amount,
+          totalPayoutAmount : splitPayments.totalPayoutAmount,
         })
         .from(splitPayments)
         .where(eq(splitPayments.bookingId, bookingId));
@@ -1119,7 +1129,9 @@ export class HyperSwitchService {
     amount: number,
     bookingId: string,
     isActive: number,
-    origin: string
+    origin: string,
+    totalPayoutAmount: number,
+    collectPaymentProcessorCharge: number
   ) => {
     try {
       const paymentProcessor = String(process.env.SPLIT_PAYMENT_PROCESSOR);
@@ -1168,7 +1180,7 @@ export class HyperSwitchService {
                 }),
               });
             });
-          const resultPaymentLink = await this.createPaymentLink(amount, email, bookingId, origin);
+          const resultPaymentLink = await this.createPaymentLink(amount, email, bookingId, origin, amount, collectPaymentProcessorCharge);
           return resultPaymentLink;
         }
       } else {
@@ -1201,7 +1213,7 @@ export class HyperSwitchService {
               });
             });
           await this.cancelPaymentIntent(result.paymentId);
-          const resultPaymentLink = await this.createPaymentLink(amount, email, bookingId, origin);
+          const resultPaymentLink = await this.createPaymentLink(amount, email, bookingId, origin, totalPayoutAmount, collectPaymentProcessorCharge);
           console.log("resultPaymentLink", resultPaymentLink);
           return resultPaymentLink;
         }
@@ -1292,8 +1304,9 @@ export class HyperSwitchService {
   saveSplitPaymentAmountIntoCashOut = async (bookingId: string, amount: number) => {
     try {
       const [result] = await this.database
-        .select({ ownerId: bookings.ownerId })
+        .select({ ownerId: bookings.ownerId, originalAmountBeforeAddingCharges: splitPayments.amount })
         .from(bookings)
+        .leftJoin(splitPayments, eq(splitPayments.bookingId, bookingId))
         .where(eq(bookings.id, bookingId));
       if (!result) {
         throw new Error("Error while fetching for booking");
@@ -1305,7 +1318,7 @@ export class HyperSwitchService {
         {
           id: randomUUID(),
           userId: result?.ownerId,
-          amount: Number(amount),
+          amount: result?.originalAmountBeforeAddingCharges ?? 0,
           type: "SPLIT_PAYMENT",
           transferId: "",
           sensibleAmount: 0,

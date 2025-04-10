@@ -27,6 +27,8 @@ import { Input } from "../input/input";
 import { SingleSlider } from "../input/single-slider";
 import { Loader } from "../loading/spinner";
 import { type OwnedTeeTime } from "./owned";
+import { Tooltip } from "../tooltip";
+import { Info } from "../icons/info";
 
 type PlayerType = "1" | "2" | "3" | "4";
 
@@ -48,7 +50,7 @@ export const CollectPayment = ({
   needsRedirect,
 }: SideBarProps) => {
   const origin = typeof window !== "undefined" ? window.location.origin : "";
-  const { data: collectPaymentProcessorCharge } = api.checkout.collectPaymentProcessorPercent.useQuery({})
+  const { data: paymentProcessingCharge } = api.checkout.collectPaymentProcessorPercent.useQuery({})
   const paymentLinkResult =
     api.checkout.createHyperSwitchPaymentLink.useMutation();
   const resendHyperSwitchPaymentLink =
@@ -72,6 +74,7 @@ export const CollectPayment = ({
     | { email: string; isPaid: number; isActive: number; amount: number }[]
     | undefined
   >(undefined);
+  const [totalAmount, setTotalAmount] = useState(0);
   const [loadingStates, setLoadingStates] = useState<boolean[]>([]);
   const [selectedOption, setSelectedOption] = useState("equalSplit");
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -92,20 +95,35 @@ export const CollectPayment = ({
   };
 
   const handleAmountChange = (index: number, value: string) => {
+    // for this custom payment you just have add the value with amount
     const updatedAmount = [...amount];
     updatedAmount[index] = value;
+    console.log(updatedAmount);
     setAmount(updatedAmount);
+    const newTotal = updatedAmount.reduce((acc, curr) => acc + (Number(curr || 0) + (Number(paymentProcessingCharge) / 100)), 0).toFixed(2);
+    setTotalAmount(Number(newTotal));
   };
+
+  const handleTotalAmountChange = (amountsArray: any) => {
+    const total = amountsArray.reduce((acc, curr) => acc + curr, 0).toFixed(2);
+    setTotalAmount(total);
+  }
+
+
+
   const handlePriceChange = () => {
     if (selectedOption === "equalSplit") {
       const totalBookingPrice = Number(selectedTeeTime?.purchasedFor);
       const totalPlayers = Number(selectedTeeTime?.golfers.length);
       if (totalPlayers > 0) {
+        const processingChargeFees = (Number(paymentProcessingCharge) / 100);
+        console.log("processing fee charge", processingChargeFees)
         const splitAmount = parseFloat(
           (totalBookingPrice / totalPlayers).toFixed(2)
-        );
+        ) + processingChargeFees;
         const amountsArray = Array(totalPlayers).fill(splitAmount);
         setAmount(amountsArray);
+        handleTotalAmountChange(amountsArray);
       }
     } else if (selectedOption === "customSplit") {
       // setAmount(Array.from({ length: Number(availableSlots - 1) }, () => ""));
@@ -142,7 +160,10 @@ export const CollectPayment = ({
         setEmailedUsers(undefined);
         return;
       }
-      setEmailedUsers(data?.data);
+      setEmailedUsers(data?.data?.map(user => ({
+        ...user,
+        amount: (user.totalPayoutAmount / 100),
+      })));
     });
   }, [sendTrigger]);
 
@@ -165,7 +186,10 @@ export const CollectPayment = ({
         setEmailedUsers(undefined);
         return;
       }
-      setEmailedUsers(data?.data);
+      setEmailedUsers(data?.data?.map(user => ({
+        ...user,
+        amount: (user.totalPayoutAmount / 100),
+      })));
     });
     console.log("selectedOptions", selectedOption);
   }, [isCollectPaymentOpen, availableSlots]);
@@ -183,6 +207,8 @@ export const CollectPayment = ({
         email: emails[index] ?? "",
         bookingId: selectedTeeTime?.bookingIds[0] ?? "",
         origin: origin,
+        totalPayoutAmount: Number(amount[index]),
+        collectPaymentProcessorCharge: Number(paymentProcessingCharge)
       });
       if (result?.error) {
         toast.error("Error Creating Payment link");
@@ -233,6 +259,8 @@ export const CollectPayment = ({
         bookingId: selectedTeeTime?.bookingIds[0] ?? "",
         isActive: Number(sendEmailedUsers?.[index]?.isActive),
         origin: origin,
+        totalPayoutAmount: Number(amount[index]),
+        collectPaymentProcessorCharge: Number(paymentProcessingCharge)
       });
       if (result?.error) {
         toast.error("Error Creating Payment link");
@@ -310,7 +338,7 @@ export const CollectPayment = ({
               }
             />
           </div>
-          <div className="flex flex-col gap-6 px-0 py-3 sm:px-4">
+          <div className="flex flex-col gap-3 px-0 py-1 sm:px-4">
             <div className=" flex flex-col w-full gap-4">
               <div className="flex items-center justify-between">
                 <div className=" w-full flex justify-start items-center gap-5">
@@ -351,8 +379,16 @@ export const CollectPayment = ({
                 </div>
               </div>
             </div>
-            <div className="flex justify-between items-center w-full px-3 py-3">
-              <div>Send Payment Link</div>
+            {/* <div className="flex justify-between items-center w-full">
+            
+            </div> */}
+            <div className="flex justify-between items-center w-full px-3">
+              <div className="flex flex-col justify-start">
+                <p className="text-red text-[12px]">
+                  *Payment processor charges of {Number(paymentProcessingCharge || 0) / 100}% are included in the amount
+                </p>
+                <div>Send Payment Link</div>
+              </div>
               <Refresh
                 onClick={() => setSendTrigger((prev) => prev + 1)}
                 width={20}
@@ -387,9 +423,11 @@ export const CollectPayment = ({
                         //     ? sendEmailedUsers[index]?.amount / 100
                         //     : amount[index]
                         // }
-                        value={sendEmailedUsers?.[index]?.amount?? amount[index]}
-                        onChange={(e) =>
+                        value={sendEmailedUsers?.[index]?.amount ?? amount[index]}
+                        onChange={(e) =>{
+                          const addedValue = Number(e.target.value+paymentProcessingCharge) 
                           handleAmountChange(index, e.target.value)
+                         }
                         }
                         disabled={selectedOption === "equalSplit"}
                       />
@@ -452,7 +490,44 @@ export const CollectPayment = ({
                 )
               )}
             </div>
-            <div className="flex flex-col w-full gap-3"></div>
+            <div className="flex flex-col w-full gap-3">
+              <div className="w-full flex justify-between px-3 pt-5">
+                <div className="flex justify-start gap-2 ">
+                  Your Payout Amount
+                  <Tooltip
+                    trigger={<Info className="h-[14px] w-[14px]" />}
+                    content="This is total amount Including payment processing charges"
+                  />
+                </div>
+                <div>
+                  <p className="text-[18px]">${totalAmount}</p>
+                </div>
+              </div>
+              <div className="w-full flex justify-between px-3 pt-3" >
+                <div className="flex justify-start gap-2 ">
+                  Processing charge Fee
+                  <Tooltip
+                    trigger={<Info className="h-[14px] w-[14px]" />}
+                    content="Payment processing fee"
+                  />
+                </div>
+                <div>
+                  <p className="text-[18px]">${(Number(paymentProcessingCharge) / 100) * (Number(availableSlots - 1))}</p>
+                </div>
+              </div>
+              <div className="w-full flex justify-between px-3 pt-3">
+                <div className="flex justify-start gap-2">
+                  Received Amount
+                  <Tooltip
+                    trigger={<Info className="h-[14px] w-[14px]" />}
+                    content="This Amount you will received in Cashout"
+                  />
+                </div>
+                <div>
+                  <p className="text-[18px]">${(totalAmount - (Number(paymentProcessingCharge) / 100) * (Number(availableSlots - 1)))}</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </aside>
