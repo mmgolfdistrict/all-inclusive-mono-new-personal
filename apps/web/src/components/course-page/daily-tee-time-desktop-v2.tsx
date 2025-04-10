@@ -269,7 +269,7 @@ export const DailyTeeTimesDesktopV2 = ({
                         }}
                     >
                         {isLoadingTeeTimeDate
-                            ? Array.from({ length: 8 }).map((_, idx) => (
+                            ? Array.from({ length: 16 }).map((_, idx) => (
                                 <li
                                     key={idx}
                                     className="p-4 min-w-[160px] border rounded-lg text-center bg-gray-200 animate-pulse"
