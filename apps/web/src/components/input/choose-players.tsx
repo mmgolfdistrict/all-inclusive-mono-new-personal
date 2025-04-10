@@ -15,6 +15,7 @@ export const ChoosePlayers = ({
   numberOfPlayers,
   id,
   supportsGroupBooking,
+  allowSplit
 }: {
   players: string | number;
   setPlayers: (v: string) => void;
@@ -27,6 +28,7 @@ export const ChoosePlayers = ({
   numberOfPlayers: string[];
   id?: string;
     supportsGroupBooking?: boolean;
+    allowSplit?: boolean;
 }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -40,7 +42,7 @@ export const ChoosePlayers = ({
   const handlePlayerChange = (value: string) => {
     if (isDisabled) return;
     if (availableSlots < parseInt(value)) return;
-    if (!numberOfPlayers?.includes(value) || status === "SECOND_HAND") {
+    if (!numberOfPlayers?.includes(value) || (status === "SECOND_HAND" && !allowSplit)) {
       return;
     }
     if (value) {

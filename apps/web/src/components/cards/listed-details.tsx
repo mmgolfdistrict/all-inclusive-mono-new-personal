@@ -34,14 +34,7 @@ export const ListedDetails = ({
   props?: ComponentProps<"div">;
 }) => {
   const { course } = useCourseContext();
-  const courseId = course?.id;
   const { setPrevPath } = useAppContext();
-  const { data: allowedPlayers } =
-    api.course.getNumberOfPlayersByCourse.useQuery({
-      courseId: courseId ?? "",
-    });
-
-  const numberOfPlayers = allowedPlayers?.numberOfPlayers;
   const [players, setPlayers] = useState<string>("1");
   const [, copy] = useCopyToClipboard();
   const [isCopied, setIsCopied] = useState<boolean>(false);
@@ -50,6 +43,7 @@ export const ListedDetails = ({
 
   const { data, isLoading, error, isError, refetch } =
     api.searchRouter.getListingById.useQuery({ listingId: listingId });
+  const getCache = api.cache.getCache.useMutation();
 
   const { user } = useUserContext();
   const router = useRouter();
@@ -78,18 +72,27 @@ export const ListedDetails = ({
     }, 1000);
   };
 
-  const buyTeeTime = () => {
+  const buyTeeTime = async () => {
     if (!user || !session) {
-     
       setPrevPath({
-        path: `/${course?.id}/checkout?listingId=${listingId}&playerCount=${data?.availableSlots}`,
+        path: `/${course?.id}/checkout?listingId=${listingId}&playerCount=${players}`,
         createdAt: new Date().toISOString(),
       });
       void router.push(`/${course?.id}/login`);
       return;
     } else {
+      const value = await getCache.mutateAsync({
+        key: `listing_id_${listingId}`,
+      }) as string | null;
+      if (value) {
+        const { userId } = JSON.parse(value);
+        if (userId !== user.id) {
+          toast.info("The tee time is currently unavailable. Please check back in 20 mins.");
+          return;
+        }
+      }
       void router.push(
-        `/${course?.id}/checkout?listingId=${listingId}&playerCount=${data?.availableSlots}`
+        `/${course?.id}/checkout?listingId=${listingId}&playerCount=${players}`
       );
     }
   };
@@ -180,11 +183,12 @@ export const ListedDetails = ({
               players={players}
               setPlayers={setPlayers}
               playersOptions={PlayersOptions}
-              availableSlots={data?.availableSlots ?? 0}
-              isDisabled={true}
+                  availableSlots={data?.availableSlots ?? 0}
+                  isDisabled={data?.allowSplit === false}
               teeTimeId={teeTimeId}
-              numberOfPlayers={numberOfPlayers ? numberOfPlayers : []}
+                  numberOfPlayers={PlayersOptions.map((player) => player <= (data?.availableSlots ?? 0).toString() ? player : "")}
               status={"SECOND_HAND"}
+                  allowSplit={data?.allowSplit}
             />
           </div>
           <div className="flex flex-col flex-wrap justify-between gap-2 md:flex-row">
@@ -292,6 +296,9 @@ export const ListedDetails = ({
           listedSpots: Array(data?.availableSlots ?? 0),
           teeTimeId: teeTimeId,
           groupId: data?.groupId ?? "",
+          allowSplit: data?.allowSplit,
+          playerCount: data?.availableSlots,
+          listedSlotsCount: data?.availableSlots,
         }}
         needRedirect={true}
       />

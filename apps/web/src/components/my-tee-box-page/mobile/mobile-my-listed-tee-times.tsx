@@ -3,17 +3,20 @@
 import { useCourseContext } from "~/contexts/CourseContext";
 import { api } from "~/utils/api";
 import { formatMoney, formatTime } from "~/utils/formatters";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Avatar } from "../../avatar";
 import { OutlineButton } from "../../buttons/outline-button";
 import { ManageTeeTimeListing } from "../manage-tee-time-listing";
 import { SkeletonRow } from "../skeleton-row";
 import { type MyListedTeeTimeType } from "../my-listed-tee-times";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 export const MobileMyListedTeeTimes = () => {
   const { course } = useCourseContext();
   const courseId = course?.id;
+  const searchParams = useSearchParams();
+  const listId = searchParams.get("listId");
   const [isManageTeeTimeListingOpen, setIsManageTeeTimeListingOpen] =
     useState<boolean>(false);
   const [selectedTeeTime, setSelectedTeeTime] = useState<
@@ -41,6 +44,15 @@ export const MobileMyListedTeeTimes = () => {
     setSelectedTeeTime(teeTime);
     setIsManageTeeTimeListingOpen(true);
   };
+
+  useEffect(() => {
+    if (listId && myListedTeeTimes) {
+      const teeTime = myListedTeeTimes.find((teeTime) => teeTime.listingId === listId);
+      if (teeTime) {
+        openManageListTeeTimeListing(teeTime);
+      }
+    }
+  }, [listId, myListedTeeTimes])
 
   if (isError && error) {
     return (
@@ -140,7 +152,7 @@ const TableCard = ({
               >
                 <Avatar src={iconSrc} />
                 <div className="flex flex-col">
-                  <div className="whitespace-nowrap underline text-secondary-black">
+                  <div className="whitespace-normal overflow-y-auto underline text-secondary-black">
                     {course}
                   </div>
                   <div className="text-primary-gray unmask-time">

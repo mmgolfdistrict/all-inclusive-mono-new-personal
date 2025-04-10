@@ -28,6 +28,16 @@ type SideBarProps = {
   groupBookingId: string | undefined;
   refetch?: () => Promise<unknown>;
   needRedirect?: boolean;
+  allowSplit: boolean | undefined;
+};
+
+type CancelListingDetailProp = {
+  setIsCancelListingOpen: Dispatch<SetStateAction<boolean>>;
+  courseName: string | undefined;
+  courseLogo: string | undefined;
+  date: string | undefined;
+  golferCount: number | undefined;
+  pricePerGolfer: number | undefined;
 };
 
 export const CancelListing = ({
@@ -43,6 +53,7 @@ export const CancelListing = ({
   groupBookingId,
   refetch,
   needRedirect,
+  allowSplit = false
 }: SideBarProps) => {
   useSidebar({
     isOpen: isCancelListingOpen,
@@ -102,7 +113,14 @@ export const CancelListing = ({
     }
   };
 
-  const CancelListingDetail = () => {
+  const CancelListingDetail = ({
+    setIsCancelListingOpen,
+    courseName,
+    courseLogo,
+    date,
+    golferCount,
+    pricePerGolfer,
+  }: CancelListingDetailProp) => {
     return (
       <>
         {isLoading && <LoadingContainer isLoading={isLoading}>
@@ -133,6 +151,13 @@ export const CancelListing = ({
               Number of spots listed
             </div>
             <div className="text-lg md:text-2xl">{golferCount}</div>
+            <div className="h-[1px] w-full bg-stroke" />
+            <div className="font-[300] text-primary-gray">
+              List type
+            </div>
+            <div className="text-lg md:text-2xl">{
+              allowSplit ? "Splits" : "Whole"
+            }</div>
           </div>
         </div>
         <div className="flex flex-col gap-4 px-4 pb-6">
@@ -163,7 +188,14 @@ export const CancelListing = ({
       title="Cancel Listing"
       onClose={() => setIsCancelListingOpen(false)}
     >
-      <CancelListingDetail />
+      <CancelListingDetail
+        setIsCancelListingOpen={setIsCancelListingOpen}
+        courseName={courseName}
+        courseLogo={courseLogo}
+        date={date}
+        golferCount={golferCount}
+        pricePerGolfer={pricePerGolfer}
+      />
     </Modal>
   ) : (
     <Flyout
@@ -171,7 +203,14 @@ export const CancelListing = ({
       title="Cancel Listing"
       setIsOpen={() => setIsCancelListingOpen(false)}
     >
-      <CancelListingDetail />
+      <CancelListingDetail
+        setIsCancelListingOpen={setIsCancelListingOpen}
+        courseName={courseName}
+        courseLogo={courseLogo}
+        date={date}
+        golferCount={golferCount}
+        pricePerGolfer={pricePerGolfer}
+      />
     </Flyout>
   );
 };
