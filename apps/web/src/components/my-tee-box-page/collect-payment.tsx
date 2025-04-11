@@ -384,8 +384,8 @@ export const CollectPayment = ({
             </div> */}
             <div className="flex justify-between items-center w-full px-3">
               <div className="flex flex-col justify-start">
-                <p className="text-red text-[12px]">
-                  *Payment processor charges of {Number(paymentProcessingCharge || 0) / 100}% are included in the amount
+                <p className="text-red text-[12px] pt-4 pb-4">
+                  *Payment processor charges of {Number(paymentProcessingCharge || 0) / 100}% will be applicable.
                 </p>
                 <div>Send Payment Link</div>
               </div>
@@ -492,39 +492,39 @@ export const CollectPayment = ({
             </div>
             <div className="flex flex-col w-full gap-3">
               <div className="w-full flex justify-between px-3 pt-5">
-                <div className="flex justify-start gap-2 ">
-                  Your Payout Amount
+                <div className="text-[14px] flex justify-start gap-2 font-[300] text-primary-gray ">
+                  Total Amount
                   <Tooltip
                     trigger={<Info className="h-[14px] w-[14px]" />}
                     content="This is total amount Including payment processing charges"
                   />
                 </div>
                 <div>
-                  <p className="text-[18px]">${totalAmount}</p>
+                  <p className="text-[14px] font-[300] text-primary-gray">${totalAmount}</p>
                 </div>
               </div>
               <div className="w-full flex justify-between px-3 pt-3" >
-                <div className="flex justify-start gap-2 ">
-                  Processing charge Fee
+                <div className="text-[14px] flex justify-start gap-2 font-[300] text-primary-gray">
+                 Payment Processor Charges
                   <Tooltip
                     trigger={<Info className="h-[14px] w-[14px]" />}
                     content="Payment processing fee"
                   />
                 </div>
                 <div>
-                  <p className="text-[18px]">${(Number(paymentProcessingCharge) / 100) * (Number(availableSlots - 1))}</p>
+                  <p className="text-[14px] font-[300] text-primary-gray">${(Number(paymentProcessingCharge) / 100) * (Number(availableSlots - 1))}</p>
                 </div>
               </div>
               <div className="w-full flex justify-between px-3 pt-3">
-                <div className="flex justify-start gap-2">
-                  Received Amount
+                <div className=" text-[14px] flex justify-start gap-2 font-[300] text-primary-gray">
+                  Your Payout
                   <Tooltip
                     trigger={<Info className="h-[14px] w-[14px]" />}
                     content="This Amount you will received in Cashout"
                   />
                 </div>
                 <div>
-                  <p className="text-[18px]">${(totalAmount - (Number(paymentProcessingCharge) / 100) * (Number(availableSlots - 1)))}</p>
+                  <p className="text-[14px] font-[300] text-primary-gray">${(totalAmount - (Number(paymentProcessingCharge) / 100) * (Number(availableSlots - 1)))}</p>
                 </div>
               </div>
             </div>
