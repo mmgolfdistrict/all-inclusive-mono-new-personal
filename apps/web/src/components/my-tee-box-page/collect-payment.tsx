@@ -94,13 +94,23 @@ export const CollectPayment = ({
     setEmails(updatedEmails);
   };
 
+
+const getTotal = (updatedAmount) =>{
+  if(selectedOption === "equalSplit"){
+    return updatedAmount.reduce((acc, curr) => acc + (Number(curr || 0) + (Number(paymentProcessingCharge) / 100)), 0).toFixed(2);
+  }
+  if(selectedOption === "customSplit"){
+    return updatedAmount.reduce((acc, curr) => acc + (Number(curr || 0) ), 0).toFixed(2);
+  }
+}
   const handleAmountChange = (index: number, value: string) => {
     // for this custom payment you just have add the value with amount
     const updatedAmount = [...amount];
     updatedAmount[index] = value;
     console.log(updatedAmount);
     setAmount(updatedAmount);
-    const newTotal = updatedAmount.reduce((acc, curr) => acc + (Number(curr || 0) + (Number(paymentProcessingCharge) / 100)), 0).toFixed(2);
+    const newTotal = getTotal(updatedAmount);
+    
     setTotalAmount(Number(newTotal));
   };
 
@@ -121,7 +131,7 @@ export const CollectPayment = ({
         const splitAmount = parseFloat(
           (totalBookingPrice / totalPlayers).toFixed(2)
         ) + processingChargeFees;
-        const amountsArray = Array(totalPlayers).fill(splitAmount);
+        const amountsArray = Array(totalPlayers-1).fill(splitAmount);
         setAmount(amountsArray);
         handleTotalAmountChange(amountsArray);
       }
