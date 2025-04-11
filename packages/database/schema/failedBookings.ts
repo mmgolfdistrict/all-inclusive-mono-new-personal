@@ -10,6 +10,7 @@ export const failedBooking = mySqlTable('failedBooking', {
     userId: varchar('userId', { length: 36 }).notNull(),
     teeTimeId: varchar('teeTimeId', { length: 36 }).notNull(),
     cartId: varchar('cartId', { length: 36 }).notNull(),
+    providerPaymentId: varchar('providerPaymentId', { length: 36 }).notNull(),
     weatherGuaranteeQuoteId: varchar('weatherGuaranteeQuoteId', { length: 36 }),
     createdDateTime: datetime("createdDateTime", { mode: "string", fsp: 3 })
         .default(sql`CURRENT_TIMESTAMP(3)`)
