@@ -456,12 +456,14 @@ export class HyperSwitchService {
     userId,
     teeTimeId,
     cartId,
-    weatherGuaranteeQuoteId
+    weatherGuaranteeQuoteId,
+    paymentId
   }: {
     userId: string | null | undefined;
     teeTimeId: string | null | undefined;
     cartId: string | null | undefined;
     weatherGuaranteeQuoteId: string | null | undefined;
+      paymentId: string;
   }) => {
     try {
       const failedBookingData = {
@@ -470,6 +472,7 @@ export class HyperSwitchService {
         teeTimeId: teeTimeId ?? "",
         userId: userId ?? "",
         weatherGuaranteeQuoteId: weatherGuaranteeQuoteId ?? "",
+        providerPaymentId: paymentId
       }
       await this.database
         .insert(failedBooking)
@@ -488,7 +491,8 @@ export class HyperSwitchService {
           userId,
           teeTimeId,
           cartId,
-          weatherGuaranteeQuoteId
+          weatherGuaranteeQuoteId,
+          paymentId
         }),
       })
     }
@@ -509,7 +513,7 @@ export class HyperSwitchService {
       courseName: string;
     }
   ) => {
-    await this.saveFailedBookingOnDatabase({ userId, teeTimeId, cartId, weatherGuaranteeQuoteId: sensibleQuoteId })
+    await this.saveFailedBookingOnDatabase({ userId, teeTimeId, cartId, weatherGuaranteeQuoteId: sensibleQuoteId, paymentId })
     const adminEmail: string = process.env.ADMIN_EMAIL_LIST || "nara@golfdistrict.com";
     const emailAterSplit = adminEmail.split(",");
     emailAterSplit.map(async (email) => {
@@ -540,7 +544,7 @@ export class HyperSwitchService {
       courseName: string;
     }
   ) => {
-    await this.saveFailedBookingOnDatabase({ userId, teeTimeId, cartId, weatherGuaranteeQuoteId: sensibleQuoteId })
+    await this.saveFailedBookingOnDatabase({ userId, teeTimeId, cartId, weatherGuaranteeQuoteId: sensibleQuoteId, paymentId })
     const adminEmail: string = process.env.ADMIN_EMAIL_LIST || "nara@golfdistrict.com";
     const emailAterSplit = adminEmail.split(",");
     emailAterSplit.map(async (email) => {
