@@ -109,6 +109,7 @@ export const ChoosePlayers = ({
               `${urlWithCourse}/group-booking`
             )
           }}
+          data-testid="group-booking-button-id"
         >5+</button>
         : null}
     </ToggleGroup.Root>
