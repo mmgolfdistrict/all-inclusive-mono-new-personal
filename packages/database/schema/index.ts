@@ -67,6 +67,7 @@ import * as walkthroughSection from "./walkthroughSection";
 import * as withdrawals from "./withdrawals";
 import * as bookingRefund from './bookingRefund';
 import * as entityGlobalNotification from "./entityGlobalNotification";
+import * as failedBookings from "./failedBookings";
 
 export const schema = {
   ...accounts,
@@ -137,5 +138,6 @@ export const schema = {
   ...walkthrough,
   ...walkthroughSection,
   ...bookingRefund,
-  ...entityGlobalNotification
+  ...entityGlobalNotification,
+  ...failedBookings
 };
