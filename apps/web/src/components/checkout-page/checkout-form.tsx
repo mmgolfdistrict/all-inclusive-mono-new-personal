@@ -1204,7 +1204,7 @@ export const CheckoutForm = ({
               label=""
               register={() => null}
               name="notes"
-              maxLength={200}
+              maxLength={150}
               placeholder="Message"
               value={additionalNote}
               onChange={(e) => setAdditionalNote(e.target.value)}

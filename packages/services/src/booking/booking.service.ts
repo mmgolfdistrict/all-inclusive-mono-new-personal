@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { and, asc, desc, eq, gte, inArray, not, or, sql, type Db, isNull } from "@golf-district/database";
+import { and, asc, desc, eq, gte, inArray, not, or, sql, type Db, isNull, db } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import type { InsertBooking } from "@golf-district/database/schema/bookings";
 import { bookings } from "@golf-district/database/schema/bookings";
@@ -27,18 +27,19 @@ import timezone from "dayjs/plugin/timezone";
 import UTC from "dayjs/plugin/utc";
 import { alias } from "drizzle-orm/mysql-core";
 import { appSettingService } from "../app-settings/initialized";
-import type { CustomerCart, ProductData } from "../checkout/types";
+import type { CustomerCart, MerchandiseProduct, ProductData } from "../checkout/types";
 import type { NotificationService } from "../notification/notification.service";
 import type { HyperSwitchService } from "../payment-processor/hyperswitch.service";
 import type { SensibleService } from "../sensible/sensible.service";
 import type { Customer, ProviderService } from "../tee-sheet-provider/providers.service";
 import type { BookingDetails, BookingResponse, ProviderAPI } from "../tee-sheet-provider/sheet-providers";
 import type { TeeTimeResponse as ForeupTeeTimeResponse } from "../tee-sheet-provider/sheet-providers/types/foreup.type";
-import type { TokenizeService } from "../token/tokenize.service";
+import type { MerchandiseItem, TokenizeService } from "../token/tokenize.service";
 import type { UserWaitlistService } from "../user-waitlist/userWaitlist.service";
 import { loggerService } from "../webhooks/logging.service";
 import { groupBookings } from "@golf-district/database/schema/groupBooking";
 import { CacheService } from "../infura/cache.service";
+import { courseMerchandise } from "@golf-district/database/schema/courseMerchandise";
 
 dayjs.extend(UTC);
 dayjs.extend(timezone);
@@ -3915,6 +3916,7 @@ export class BookingService {
     bookingStage = "Retrieving provider and token";
     console.log(`Retrieving provider and token ${teeTime.internalId}, ${teeTime.courseId}`);
     let booking: BookingResponse | null = null;
+    let purchasedMerchandise: MerchandiseItem[] = [];
     let teeProvider: ProviderAPI | null = null;
     let teeToken: string | null = null;
     const bookedPLayers: { accountNumber: number }[] = [];
@@ -3950,6 +3952,10 @@ export class BookingService {
         }
       } catch (e) {
         console.log("ERROR in getting appsetting SENSIBLE_NOTE_TO_TEE_SHEET");
+      }
+
+      if (merchandiseCharge > 0) {
+        details = `${details} - Merchandise has been purchased`
       }
 
       if (additionalNoteFromUser) {
@@ -4025,7 +4031,48 @@ export class BookingService {
           });
         }
       }
-      if (additionalNoteFromUser || needRentals) {
+      if (additionalNoteFromUser || needRentals || merchandiseCharge > 0) {
+        const merchandiseDetails: { caption: string, qty: number }[] = [];
+        const merchandiseData = cart?.cart?.filter(
+          (item: ProductData) => item.product_data.metadata.type === "merchandise"
+        ) as MerchandiseProduct[];
+        const merchandiseItems = merchandiseData[0]!.product_data.metadata.merchandiseItems;
+        const merchandiseItemIds = merchandiseItems.map((item) => item.id);
+        purchasedMerchandise = await db
+          .select({
+            id: courseMerchandise.id,
+            caption: courseMerchandise.caption,
+            qoh: courseMerchandise.qoh
+          })
+          .from(courseMerchandise)
+          .where(
+            inArray(courseMerchandise.id, merchandiseItemIds)
+          )
+          .execute()
+          .catch((error) => {
+            void loggerService.errorLog({
+              userId: userId,
+              url: "/TokenizeService/tokenizeBooking",
+              userAgent: "",
+              message: "COURSE MERCHANDISE ERROR",
+              stackTrace: `${error.stack}`,
+              additionalDetailsJSON: `${JSON.stringify({
+                merchandiseItemIds,
+                merchandiseItems,
+                merchandiseData,
+                cart,
+              })}`,
+            });
+            throw error;
+          })
+        for (const merchandise of purchasedMerchandise) {
+          const merchandiseItem = merchandiseItems.find((item) => item.id === merchandise.id);
+          merchandiseDetails.push({
+            caption: merchandise.caption,
+            qty: merchandiseItem?.qty ?? 0
+          })
+        }
+
         const courseContactsList = await this.database
           .select({
             email: courseContacts.email,
@@ -4069,6 +4116,8 @@ export class BookingService {
                 PlayDateTime: formatTime(teeTime.providerDate, true, teeTime.timezoneCorrection ?? 0),
                 HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
                 CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${teeTime.cdnKey}.${teeTime.extension}`,
+                PurchasedMerchandise: purchasedMerchandise?.length > 0 ? true : false,
+                MerchandiseDetails: merchandiseDetails
               },
               []
             );
@@ -4184,6 +4233,7 @@ export class BookingService {
         needRentals,
         courseMembershipId: courseMembershipId,
         playerCountForMemberShip,
+        purchasedMerchandise
       })
       .catch(async (err) => {
         this.logger.error(`Error creating booking, ${err}`);
@@ -5100,6 +5150,7 @@ export class BookingService {
     bookingStage = "Retrieving provider and token";
     console.log(`Retrieving provider and token ${firstTeeTime.internalId}, ${firstTeeTime.courseId}`);
     const providerBookings: ProviderBooking[] = [];
+    let purchasedMerchandise: MerchandiseItem[] = [];
     const teeProvider: ProviderAPI | null = null;
     const teeToken: string | null = null;
     const bookedPLayers: { accountNumber: number }[] = [];
@@ -5149,6 +5200,10 @@ export class BookingService {
           }
         } catch (e) {
           console.log("ERROR in getting appsetting SENSIBLE_NOTE_TO_TEE_SHEET");
+        }
+
+        if (merchandiseCharge > 0) {
+          details = `${details} - Merchandise has been purchased`
         }
 
         if (additionalNoteFromUser) {
@@ -5224,7 +5279,50 @@ export class BookingService {
             });
           }
         }
-        if (additionalNoteFromUser || needRentals) {
+        if (firstTeeTime.id === teeTime.id && (additionalNoteFromUser || needRentals || merchandiseCharge > 0)) {
+          const merchandiseDetails: { caption: string, qty: number }[] = [];
+          const merchandiseData = cart?.cart?.filter(
+            (item: ProductData) => item.product_data.metadata.type === "merchandise"
+          ) as MerchandiseProduct[];
+
+          const merchandiseItems = merchandiseData[0]!.product_data.metadata.merchandiseItems;
+          const merchandiseItemIds = merchandiseItems.map((item) => item.id);
+
+          purchasedMerchandise = await db
+            .select({
+              id: courseMerchandise.id,
+              caption: courseMerchandise.caption,
+              qoh: courseMerchandise.qoh
+            })
+            .from(courseMerchandise)
+            .where(
+              inArray(courseMerchandise.id, merchandiseItemIds)
+            )
+            .execute()
+            .catch((error) => {
+              void loggerService.errorLog({
+                userId: userId,
+                url: "/TokenizeService/tokenizeBooking",
+                userAgent: "",
+                message: "COURSE MERCHANDISE ERROR",
+                stackTrace: `${error.stack}`,
+                additionalDetailsJSON: `${JSON.stringify({
+                  merchandiseItemIds,
+                  merchandiseItems,
+                  merchandiseData,
+                  cart
+                })}`,
+              });
+              throw error;
+            })
+          for (const merchandise of purchasedMerchandise) {
+            const merchandiseItem = merchandiseItems.find((item) => item.id === merchandise.id);
+            merchandiseDetails.push({
+              caption: merchandise.caption,
+              qty: merchandiseItem?.qty ?? 0
+            })
+          }
+
           const courseContactsList = await this.database
             .select({
               email: courseContacts.email,
@@ -5268,6 +5366,8 @@ export class BookingService {
                   PlayDateTime: formatTime(teeTime.providerDate, true, teeTime.timezoneCorrection ?? 0),
                   HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
                   CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${teeTime.cdnKey}.${teeTime.extension}`,
+                  PurchasedMerchandise: purchasedMerchandise?.length > 0 ? true : false,
+                  MerchandiseDetails: merchandiseDetails
                 },
                 []
               );
@@ -5384,6 +5484,7 @@ export class BookingService {
         playerCountForMemberShip,
         isFirstHandGroupBooking: true,
         providerBookings,
+        purchasedMerchandise
       })
       .catch(async (err) => {
         this.logger.error(`Error creating booking, ${err}`);
