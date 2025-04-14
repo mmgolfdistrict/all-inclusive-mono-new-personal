@@ -1965,4 +1965,32 @@ export class HyperSwitchWebhookService {
       }
     }
   }
+  updateTrackStatusOfOpenedEmail = async (id:string)=>{
+    try {
+     this.logger.warn("","email open successFully");
+     const result =   await this.database
+      .update(splitPayments)
+      .set({
+        isEmailOpened:1
+      })
+      .where(eq(splitPayments.id,id))
+      .execute().catch(async (e: any) => {
+        await loggerService.errorLog({
+          message: "ERROR_UPDATING_HYPERSWITCH_PAYMENT_STATUS",
+          userId: "",
+          url: "/auth",
+          userAgent: "",
+          stackTrace: `${JSON.stringify(e)}`,
+          additionalDetailsJSON: JSON.stringify({
+          }),
+        });
+      });
+      if(result){
+        return {success:true,message:"Email Opened"}
+      }
+    } catch (error:any) {
+      console.log(error.message);
+      throw new Error("Error while updating split payment status")
+    }
+  }
 }

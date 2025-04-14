@@ -29,6 +29,8 @@ import { Loader } from "../loading/spinner";
 import { type OwnedTeeTime } from "./owned";
 import { Tooltip } from "../tooltip";
 import { Info } from "../icons/info";
+import { Email } from "../icons/mail";
+import { EmailOpen } from "../icons/mailOpen";
 
 type PlayerType = "1" | "2" | "3" | "4";
 
@@ -71,7 +73,7 @@ export const CollectPayment = ({
     Array.from({ length: Number(availableSlots - 1) }, () => "")
   );
   const [sendEmailedUsers, setEmailedUsers] = useState<
-    | { email: string; isPaid: number; isActive: number; amount: number }[]
+    | { email: string; isPaid: number; isActive: number; amount: number; emailOpened: number }[]
     | undefined
   >(undefined);
   const [totalAmount, setTotalAmount] = useState<any>(0);
@@ -106,18 +108,18 @@ export const CollectPayment = ({
       const total = updatedAmount.reduce((acc: number, curr: any) => {
         return acc + (Number(curr || 0) + Number(paymentProcessingCharge) / 100);
       }, 0) as number;
-  
+
       return total.toFixed(2);
     }
-  
+
     if (selectedOption === "customSplit") {
       const total = updatedAmount.reduce((acc: number, curr: any) => {
         return acc + Number(curr || 0);
       }, 0) as number;
-  
+
       return total.toFixed(2);
     }
-  
+
     return "0.00";
   };
   const handleAmountChange = (index: number, value: string) => {
@@ -504,6 +506,24 @@ export const CollectPayment = ({
                         )}
                       </FilledButton>
                     )}
+                    <div>
+                      {sendEmailedUsers?.[index]?.emailOpened === 1 ? (
+                        <div className="flex justify-center items-start gap-1" >
+                          <Tooltip
+                            trigger={<EmailOpen width={30} height={30} color="green" />}
+                            content="Email opened and read"
+                          />
+                        </div>
+                      ) : (
+                        <div className="flex justify-center items-start gap-1">
+
+                          <Tooltip
+                            trigger={<Email width={30} height={30} />}
+                            content="Email has not been read"
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )
               )}

@@ -18,6 +18,7 @@ export const splitPayments = mySqlTable("split_payments", {
   ),
   webhookStatus:varchar("webhookStatus",{length:255}),
   totalPayoutAmount:int("totalPayoutAmount").notNull(),
-  paymentProcessingCharge:int("paymentProcessingCharge").notNull()
+  paymentProcessingCharge:int("paymentProcessingCharge").notNull(),
+  isEmailOpened:tinyint("isEmailOpened").default(0).notNull(),
 });
 export type InsertSplitBooking = InferInsertModel<typeof splitPayments>;

@@ -747,6 +747,7 @@ export class HyperSwitchService {
       const originalUserSplitAmount = (amount * 100) - collectPaymentProcessorCharge;
       const splitPaymentEmailTemplateId = String(process.env.SPLIT_PAYMENT_EMAIL_TEMPLATE_ID)
       if (paymentProcessor === "finix") {
+        const finixPaymentExpirationTime = await appSettingService.get("FINIX_PAYMENT_EXPIRATION_TIME");
         const referencePaymentId = randomUUID();
         const paymentData: PaymentRequest = {
           merchant_id: this.merchantId,
@@ -788,7 +789,7 @@ export class HyperSwitchService {
             collect_phone: false,
             collect_billing_address: false,
             collect_shipping_address: false,
-            expiration_in_minutes: 1576800,
+            expiration_in_minutes: Number(finixPaymentExpirationTime),
             terms_of_service_url: `${origin}/terms-of-service`,
             success_return_url: `${origin}/payment-success/?finixReferencePaymentId=${referencePaymentId}&status=succeeded&provider=finix`,
             unsuccessful_return_url: `${origin}/payment-success/?finixReferencePaymentId=${referencePaymentId}&status=failed&provider=finix`,
@@ -852,7 +853,8 @@ export class HyperSwitchService {
                 AMOUNT: `${(amount).toFixed(2)}`,
                 PLAY_TIME: formatTime(bookingResult?.bookingDateTime ?? "", false, bookingResult?.courseTimeZone ?? 0),
                 FACILITY: `${bookingResult?.facilityName}`,
-                COURSE_RESERVATION_ID: `${bookingResult?.bookingProviderId}`
+                COURSE_RESERVATION_ID: `${bookingResult?.bookingProviderId}`,
+                TRACKING_URL: `https://webhook.site/tracking-email?id=${referencePaymentId}`
               },
               []
             )
@@ -913,10 +915,11 @@ Thank you for choosing us.`;
         console.log("response_payment_link", response);
         Math.round(amount * 100)
         if (response?.payment_link?.link) {
+          const hyperswitchUUID = randomUUID();
           await this.database
             .insert(splitPayments)
             .values({
-              id: randomUUID(),
+              id: hyperswitchUUID,
               amount: originalUserSplitAmount,
               email: email,
               bookingId: bookingId,
@@ -953,7 +956,9 @@ Thank you for choosing us.`;
                 AMOUNT: `${(amount).toFixed(2)}`,
                 PLAY_TIME: formatTime(bookingResult?.bookingDateTime ?? "", false, bookingResult?.courseTimeZone ?? 0),
                 FACILITY: `${bookingResult?.facilityName}`,
-                COURSE_RESERVATION_ID: `${bookingResult?.bookingProviderId}`
+                COURSE_RESERVATION_ID: `${bookingResult?.bookingProviderId}`,
+                //TRACKING_URL:`${process.env.TRACKING_EMAIL_URL}/trackemail/?id=${hyperswitchUUID}`
+                TRACKING_URL: `https://webhook.site/tracking-email?id=${hyperswitchUUID}`
               },
               []
             )
@@ -1216,9 +1221,16 @@ Thank you for choosing us.`;
           paymentId: splitPayments.paymentId,
           amount: splitPayments.amount,
           totalPayoutAmount: splitPayments.totalPayoutAmount,
+          emailOpened: splitPayments.isEmailOpened
         })
         .from(splitPayments)
-        .where(eq(splitPayments.bookingId, bookingId));
+        .where(
+          and(
+            eq(splitPayments.bookingId, bookingId),
+            eq(splitPayments.isActive, 1)
+          )
+          //eq(splitPayments.bookingId, bookingId)
+        );
       return result || [];
     } catch (error: any) {
       console.log(error);
@@ -1269,6 +1281,7 @@ Thank you for choosing us.`;
             .update(splitPayments)
             .set({
               isActive: 0,
+              isEmailOpened: 0
             })
             .where(
               and(
@@ -1301,13 +1314,14 @@ Thank you for choosing us.`;
             .update(splitPayments)
             .set({
               isActive: 0,
+              isEmailOpened: 0
             })
             .where(
               and(
                 eq(splitPayments.email, result?.email),
                 eq(splitPayments.bookingId, result?.bookingId),
                 eq(splitPayments.isActive, 1),
-                eq(splitPayments.paymentId, result?.paymentId)
+                eq(splitPayments.paymentId, result?.paymentId),
               )
             )
             .execute().catch(async (e: any) => {
