@@ -74,7 +74,7 @@ export const CollectPayment = ({
     | { email: string; isPaid: number; isActive: number; amount: number }[]
     | undefined
   >(undefined);
-  const [totalAmount, setTotalAmount] = useState(0);
+  const [totalAmount, setTotalAmount] = useState<any>(0);
   const [loadingStates, setLoadingStates] = useState<boolean[]>([]);
   const [selectedOption, setSelectedOption] = useState("equalSplit");
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -93,16 +93,33 @@ export const CollectPayment = ({
     updatedEmails[index] = value;
     setEmails(updatedEmails);
   };
-
-
-const getTotal = (updatedAmount) =>{
-  if(selectedOption === "equalSplit"){
-    return updatedAmount.reduce((acc, curr) => acc + (Number(curr || 0) + (Number(paymentProcessingCharge) / 100)), 0).toFixed(2);
-  }
-  if(selectedOption === "customSplit"){
-    return updatedAmount.reduce((acc, curr) => acc + (Number(curr || 0) ), 0).toFixed(2);
-  }
-}
+  // const getTotal = (updatedAmount: any) => {
+  //   if (selectedOption === "equalSplit") {
+  //     return updatedAmount.reduce((acc: any, curr: any) => acc + (Number(curr || 0) + (Number(paymentProcessingCharge) / 100)), 0).toFixed(2);
+  //   }
+  //   if (selectedOption === "customSplit") {
+  //     return updatedAmount.reduce((acc: any, curr: any) => acc + (Number(curr || 0)), 0).toFixed(2);
+  //   }
+  // }
+  const getTotal = (updatedAmount: any): string => {
+    if (selectedOption === "equalSplit") {
+      const total = updatedAmount.reduce((acc: number, curr: any) => {
+        return acc + (Number(curr || 0) + Number(paymentProcessingCharge) / 100);
+      }, 0) as number;
+  
+      return total.toFixed(2);
+    }
+  
+    if (selectedOption === "customSplit") {
+      const total = updatedAmount.reduce((acc: number, curr: any) => {
+        return acc + Number(curr || 0);
+      }, 0) as number;
+  
+      return total.toFixed(2);
+    }
+  
+    return "0.00";
+  };
   const handleAmountChange = (index: number, value: string) => {
     // for this custom payment you just have add the value with amount
     const updatedAmount = [...amount];
@@ -110,13 +127,16 @@ const getTotal = (updatedAmount) =>{
     console.log(updatedAmount);
     setAmount(updatedAmount);
     const newTotal = getTotal(updatedAmount);
-    
+
     setTotalAmount(Number(newTotal));
   };
 
   const handleTotalAmountChange = (amountsArray: any) => {
-    const total = amountsArray.reduce((acc, curr) => acc + (Number(curr || 0)), 0).toFixed(2);
-    setTotalAmount(total);
+    //const total = amountsArray.reduce((acc: any, curr: any) => acc + (Number(curr || 0)), 0).toFixed(2);
+    const total = (amountsArray.reduce((acc: number, curr) => {
+      return acc + Number(curr || 0);
+    }, 0) as number);
+    setTotalAmount(total.toFixed(2));
   }
 
 
@@ -131,28 +151,14 @@ const getTotal = (updatedAmount) =>{
         const splitAmount = parseFloat(
           (totalBookingPrice / totalPlayers).toFixed(2)
         ) + processingChargeFees;
-        const amountsArray = Array(totalPlayers-1).fill(splitAmount);
+        const amountsArray = Array(totalPlayers - 1).fill(splitAmount);
         setAmount(amountsArray);
         handleTotalAmountChange(amountsArray);
       }
     } else if (selectedOption === "customSplit") {
       // setAmount(Array.from({ length: Number(availableSlots - 1) }, () => ""));
     }
-    // if (selectedOption === "equalSplit") {
-    //   setAmount(0);
-    //   const totalBookingPrice = Number(selectedTeeTime?.purchasedFor);
-    //   const totalPlayers = Number(selectedTeeTime?.golfers.length);
-    //   if (totalPlayers > 0) {
-    //     const splitAmount = parseFloat(
-    //       (totalBookingPrice / totalPlayers).toFixed(2)
-    //     );
-    //     setAmount(splitAmount);
-    //   } else {
-    //     setAmount(null);
-    //   }
-    // } else if (selectedOption === "customSplit") {
-    //   setAmount(0);
-    // }
+
   };
   const refetchValues = async () => {
     if (refetch) {
@@ -434,12 +440,12 @@ const getTotal = (updatedAmount) =>{
                         //     : amount[index]
                         // }
                         //value={sendEmailedUsers?.[index]?.amount ?? amount[index]}
-                        value = {amount[index] ?? sendEmailedUsers?.[index]?.amount}
-                        onChange={(e) =>{
+                        value={amount[index] ?? sendEmailedUsers?.[index]?.amount}
+                        onChange={(e) => {
                           //+paymentProcessingCharge
                           const addedValue = e.target.value
                           handleAmountChange(index, addedValue);
-                         }
+                        }
                         }
                         disabled={selectedOption === "equalSplit"}
                       />
@@ -517,7 +523,7 @@ const getTotal = (updatedAmount) =>{
               </div>
               <div className="w-full flex justify-between px-3 pt-3" >
                 <div className="text-[14px] flex justify-start gap-2 font-[300] text-primary-gray">
-                 Payment Processor Charges
+                  Payment Processor Charges
                   <Tooltip
                     trigger={<Info className="h-[14px] w-[14px]" />}
                     content="Payment processing fee"
