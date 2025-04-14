@@ -55,6 +55,11 @@ interface EmailParams {
   NewListedPrice?: number;
   USERNAME?:string;
   PAYMENT_URL?:string;
+  COURSE_NAME?:string;
+  AMOUNT?:string;
+  PLAY_TIME?: string;
+  FACILITY?: string;
+  COURSE_RESERVATION_ID?: string;
 }
 
 interface Attachment {

@@ -100,12 +100,14 @@ export const CollectPayment = ({
     updatedAmount[index] = value;
     console.log(updatedAmount);
     setAmount(updatedAmount);
-    const newTotal = updatedAmount.reduce((acc, curr) => acc + (Number(curr || 0) + (Number(paymentProcessingCharge) / 100)), 0).toFixed(2);
+    //+ (Number(paymentProcessingCharge) / 100)
+    const newTotal = updatedAmount.reduce((acc, curr) => acc + (Number(curr || 0) ), 0).toFixed(2);
+    
     setTotalAmount(Number(newTotal));
   };
 
   const handleTotalAmountChange = (amountsArray: any) => {
-    const total = amountsArray.reduce((acc, curr) => acc + curr, 0).toFixed(2);
+    const total = amountsArray.reduce((acc, curr) => acc + (Number(curr || 0)), 0).toFixed(2);
     setTotalAmount(total);
   }
 
@@ -121,7 +123,8 @@ export const CollectPayment = ({
         const splitAmount = parseFloat(
           (totalBookingPrice / totalPlayers).toFixed(2)
         ) + processingChargeFees;
-        const amountsArray = Array(totalPlayers).fill(splitAmount);
+        const amountsArray = Array(totalPlayers).fill(String(splitAmount));
+        console.log("amountsArray", amountsArray);
         setAmount(amountsArray);
         handleTotalAmountChange(amountsArray);
       }
@@ -423,10 +426,12 @@ export const CollectPayment = ({
                         //     ? sendEmailedUsers[index]?.amount / 100
                         //     : amount[index]
                         // }
-                        value={sendEmailedUsers?.[index]?.amount ?? amount[index]}
+                        //value={sendEmailedUsers?.[index]?.amount ?? amount[index]}
+                        value = {amount[index] ?? sendEmailedUsers?.[index]?.amount}
                         onChange={(e) =>{
-                          const addedValue = Number(e.target.value+paymentProcessingCharge) 
-                          handleAmountChange(index, e.target.value)
+                          //+paymentProcessingCharge
+                          const addedValue = e.target.value
+                          handleAmountChange(index, addedValue);
                          }
                         }
                         disabled={selectedOption === "equalSplit"}
@@ -512,7 +517,7 @@ export const CollectPayment = ({
                   />
                 </div>
                 <div>
-                  <p className="text-[18px]">${(Number(paymentProcessingCharge) / 100) * (Number(availableSlots - 1))}</p>
+                  <p className="text-[18px]">${(Number(paymentProcessingCharge) / 100) * (Number(availableSlots))}</p>
                 </div>
               </div>
               <div className="w-full flex justify-between px-3 pt-3">
@@ -524,7 +529,7 @@ export const CollectPayment = ({
                   />
                 </div>
                 <div>
-                  <p className="text-[18px]">${(totalAmount - (Number(paymentProcessingCharge) / 100) * (Number(availableSlots - 1)))}</p>
+                  <p className="text-[18px]">${(totalAmount - (Number(paymentProcessingCharge) / 100) * (Number(availableSlots)))}</p>
                 </div>
               </div>
             </div>

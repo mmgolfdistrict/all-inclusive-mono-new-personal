@@ -19,6 +19,13 @@ import { appSettingService } from "../app-settings/initialized";
 import { bookings } from "@golf-district/database/schema/bookings";
 import { customerRecievable } from "@golf-district/database/schema/customerRecievable";
 import { users } from "@golf-district/database/schema/users";
+import { teeTimes } from "@golf-district/database/schema/teeTimes";
+import { courses } from "@golf-district/database/schema/courses";
+import { entities } from "@golf-district/database/schema/entities";
+import dayjs from "dayjs";
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+import { formatTime } from "@golf-district/shared";
 /**
  * Service for interacting with the HyperSwitch API.
  */
@@ -552,7 +559,7 @@ export class HyperSwitchService {
     teeTimeId: string | null | undefined;
     cartId: string | null | undefined;
     weatherGuaranteeQuoteId: string | null | undefined;
-      paymentId: string;
+    paymentId: string;
   }) => {
     try {
       const failedBookingData = {
@@ -705,7 +712,6 @@ export class HyperSwitchService {
     }
     return { status: "success" };
   };
-
   createPaymentLink = async (amount: number, email: string, bookingId: string, origin: string, totalPayoutAmount: number, collectPaymentProcessorCharge: number) => {
     try {
       if (amount === 0) {
@@ -721,16 +727,25 @@ export class HyperSwitchService {
         throw new Error("Origin cannot be empty");
       }
 
-      // get the username
-
       const [bookingResult] = await this.database.select({
-        userName: users.name
-      }).from(bookings).leftJoin(users, eq(bookings.ownerId, users.id)).where(eq(bookings.id, bookingId));
+        userName: users.name,
+        bookingProviderId: bookings.providerBookingId,
+        courseName: courses.name,
+        courseTimeZone: courses.timezoneCorrection,
+        facilityName: entities.name,
+        bookingDateTime: teeTimes.providerDate
+      }).from(bookings)
+        .leftJoin(users, eq(bookings.ownerId, users.id))
+        .leftJoin(teeTimes, eq(bookings.teeTimeId, teeTimes.id))
+        .leftJoin(courses, eq(teeTimes.courseId, courses.id))
+        .leftJoin(entities, eq(entities.id, courses.entityId))
+        .where(eq(bookings.id, bookingId));
       console.log("bookingResult", bookingResult);
       const username = bookingResult ? bookingResult?.userName : "Golf district user";
       const paymentProcessor = String(process.env.SPLIT_PAYMENT_PROCESSOR);
       console.log("payementProcessor", paymentProcessor);
       const originalUserSplitAmount = (amount * 100) - collectPaymentProcessorCharge;
+      const splitPaymentEmailTemplateId = String(process.env.SPLIT_PAYMENT_EMAIL_TEMPLATE_ID)
       if (paymentProcessor === "finix") {
         const referencePaymentId = randomUUID();
         const paymentData: PaymentRequest = {
@@ -793,7 +808,6 @@ export class HyperSwitchService {
         const finixPaymentData = await this.createPaymentLinkForFinix(paymentData);
         const finix_link_url = finixPaymentData?.link_url;
         const paymentId = finixPaymentData?.id;
-
         if (finix_link_url) {
 
           //(amount * 100)
@@ -825,17 +839,42 @@ export class HyperSwitchService {
               });
             });
           const newUrl = `${origin}/create-payment`;
-          const emailSend = await this.notificationService.sendEmailByTemplate(
-            email,
-            "Payment Link",
-            process.env.SPLIT_PAYMENT_EMAIL_TEMPLATE_ID!,
-            {
-              USERNAME: `${username}`,
-              PAYMENT_URL: `${newUrl}/${paymentId}`
-            },
-            []
-          )
-          console.log("Email Send successFully");
+
+          if (splitPaymentEmailTemplateId) {
+            const emailSend = await this.notificationService.sendEmailByTemplate(
+              email,
+              "Payment Link",
+              splitPaymentEmailTemplateId,
+              {
+                USERNAME: `${username}`,
+                PAYMENT_URL: `${newUrl}/${paymentId}`,
+                COURSE_NAME: bookingResult?.courseName || "",
+                AMOUNT: `${(amount).toFixed(2)}`,
+                PLAY_TIME: formatTime(bookingResult?.bookingDateTime ?? "", false, bookingResult?.courseTimeZone ?? 0),
+                FACILITY: `${bookingResult?.facilityName}`,
+                COURSE_RESERVATION_ID: `${bookingResult?.bookingProviderId}`
+              },
+              []
+            )
+            console.log("Email Send successFully");
+          } else {
+            const message = `This payment has been requested on behalf of ${username}.
+Course: \`${bookingResult?.courseName || "N/A"}\`
+Facility: \`${bookingResult?.facilityName}\`
+Play Time: \`${formatTime(bookingResult?.bookingDateTime ?? "", false, bookingResult?.courseTimeZone ?? 0)}\`
+Course Reservation ID: \`${bookingResult?.bookingProviderId}\`
+Amount Due: \`₹${amount.toFixed(2)}\`
+
+Please proceed with the payment by clicking the link below:
+\`${newUrl}/${paymentId}\`
+Thank you for choosing us.`;
+            const emailSend = await this.notificationService.sendEmail(
+              email,
+              "Payment Link",
+              message
+            )
+          }
+
           return {
             error: false,
             message: "Payment Link Send Successfully",
@@ -902,17 +941,41 @@ export class HyperSwitchService {
               });
             });
           const newUrl = `${origin}/create-payment`;
-          const emailSend = await this.notificationService.sendEmailByTemplate(
-            email,
-            "Payment Link",
-            process.env.SPLIT_PAYMENT_EMAIL_TEMPLATE_ID!,
-            {
-              USERNAME: `${username}`,
-              PAYMENT_URL: `${newUrl}/${response?.payment_id}`
-            },
-            []
-          )
-          console.log("Email Send successFully");
+          if (splitPaymentEmailTemplateId) {
+            const emailSend = await this.notificationService.sendEmailByTemplate(
+              email,
+              "Payment Link",
+              process.env.SPLIT_PAYMENT_EMAIL_TEMPLATE_ID!,
+              {
+                USERNAME: `${username}`,
+                PAYMENT_URL: `${newUrl}/${response?.payment_id}`,
+                COURSE_NAME: `${bookingResult?.courseName}` || "",
+                AMOUNT: `${(amount).toFixed(2)}`,
+                PLAY_TIME: formatTime(bookingResult?.bookingDateTime ?? "", false, bookingResult?.courseTimeZone ?? 0),
+                FACILITY: `${bookingResult?.facilityName}`,
+                COURSE_RESERVATION_ID: `${bookingResult?.bookingProviderId}`
+              },
+              []
+            )
+            console.log("Email Send successFully");
+          } else {
+            const message = `This payment has been requested on behalf of ${username}.
+Course: \`${bookingResult?.courseName || "N/A"}\`
+Facility: \`${bookingResult?.facilityName}\`
+Play Time: \`${formatTime(bookingResult?.bookingDateTime ?? "", false, bookingResult?.courseTimeZone ?? 0)}\`
+Course Reservation ID: \`${bookingResult?.bookingProviderId}\`
+Amount Due: \`₹${amount.toFixed(2)}\`
+
+Please proceed with the payment by clicking the link below:
+\`${newUrl}/${response?.payment_id}\`
+Thank you for choosing us.`;
+            const emailSend = await this.notificationService.sendEmail(
+              email,
+              "Payment Link",
+              message
+            )
+
+          }
           return {
             error: false,
             message: "Payment Link Send Successfully",
@@ -1152,7 +1215,7 @@ export class HyperSwitchService {
           isActive: splitPayments.isActive,
           paymentId: splitPayments.paymentId,
           amount: splitPayments.amount,
-          totalPayoutAmount : splitPayments.totalPayoutAmount,
+          totalPayoutAmount: splitPayments.totalPayoutAmount,
         })
         .from(splitPayments)
         .where(eq(splitPayments.bookingId, bookingId));
