@@ -814,8 +814,6 @@ export class TokenizeService {
 
       // merchandise transactions
       if (puchasedMerchandise.length > 0 && merchandiseItemsToUpdate.length > 0) {
-        console.log("merchandiseItemsToUpdate", merchandiseItemsToUpdate)
-        console.log("purchansedMerchandise", puchasedMerchandise)
         await tx
           .insert(bookingMerchandise)
           .values(merchandiseEntriesToCreate)
