@@ -418,7 +418,7 @@ export class TokenizeService {
         (item: ProductData) => item.product_data.metadata.type === "merchandise"
       ) as MerchandiseProduct[];
 
-      if (merchandiseData?.length > 0) {
+      if (merchandiseData?.length > 0 && merchandiseData[0]!.price > 0) {
         const merchandiseItems = merchandiseData[0]!.product_data.metadata.merchandiseItems
         for (const merchandise of merchandiseItems) {
           merchandiseEntriesToCreate.push({
@@ -814,6 +814,8 @@ export class TokenizeService {
 
       // merchandise transactions
       if (puchasedMerchandise.length > 0 && merchandiseItemsToUpdate.length > 0) {
+        console.log("merchandiseItemsToUpdate", merchandiseItemsToUpdate)
+        console.log("purchansedMerchandise", puchasedMerchandise)
         await tx
           .insert(bookingMerchandise)
           .values(merchandiseEntriesToCreate)
