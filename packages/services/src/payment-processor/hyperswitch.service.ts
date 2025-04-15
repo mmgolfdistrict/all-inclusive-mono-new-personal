@@ -871,7 +871,8 @@ export class HyperSwitchService {
                 PLAY_TIME: formatTime(bookingResult?.bookingDateTime ?? "", false, bookingResult?.courseTimeZone ?? 0),
                 FACILITY: `${bookingResult?.facilityName}`,
                 COURSE_RESERVATION_ID: `${bookingResult?.bookingProviderId}`,
-                TRACKING_URL: `https://webhook.site/tracking-email?id=${referencePaymentId}`
+                //TRACKING_URL: `https://webhook.site/tracking-email?id=${referencePaymentId}`
+                TRACKING_URL:`${origin}/api/trackemail/?id=${referencePaymentId}`
               },
               []
             )
@@ -975,8 +976,8 @@ Thank you for choosing us.`;
                 PLAY_TIME: formatTime(bookingResult?.bookingDateTime ?? "", false, bookingResult?.courseTimeZone ?? 0),
                 FACILITY: `${bookingResult?.facilityName}`,
                 COURSE_RESERVATION_ID: `${bookingResult?.bookingProviderId}`,
-                //TRACKING_URL:`${process.env.TRACKING_EMAIL_URL}/trackemail/?id=${hyperswitchUUID}`
-                TRACKING_URL: `https://webhook.site/tracking-email?id=${hyperswitchUUID}`
+                TRACKING_URL:`${origin}/trackemail/?id=${hyperswitchUUID}`
+                //TRACKING_URL: `https://webhook.site/tracking-email?id=${hyperswitchUUID}`
               },
               []
             )
