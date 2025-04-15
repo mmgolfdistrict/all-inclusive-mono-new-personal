@@ -1720,14 +1720,27 @@ export class HyperSwitchWebhookService {
       this.logger.fatal(
         `no course charity id found for charity id: ${item.product_data.metadata.charity_id}, courseId: ${item.product_data.metadata.charity_id}`
       );
-      throw new Error(`Error finding course charity id`);
+      this.logger.error("course charity not found");
+      await loggerService.errorLog({
+        message: "CHARAITY_COURSE_ID_NOT_FOUND",
+        userId: "",
+        url: "/auth",
+        userAgent: "",
+        stackTrace: ``,
+        additionalDetailsJSON: JSON.stringify({ 
+           item:item,
+           amountReceived:amountReceived,
+           customer_id
+         }),
+      });
+      //throw new Error(`Error finding course charity id`);
     }
     await this.database.insert(donations).values({
       id: randomUUID(),
       amount: amountReceived,
       userId: customer_id,
       charityId: item.product_data.metadata.charity_id,
-      courseCharityId: courseCharity.courseCharityId,
+      courseCharityId: courseCharity?.courseCharityId || "",
     });
   };
 
@@ -1752,7 +1765,7 @@ export class HyperSwitchWebhookService {
       const acceptedQuote = await this.sensibleService.acceptQuote({
         quoteId: item.product_data.metadata.sensible_quote_id,
         price_charged: item.price / 100,
-        reservation_id: booking.id,
+        reservation_id: booking?.id || "",
         lang_locale: "en_US",
         user: {
           email: customerCart.email,
@@ -1768,7 +1781,22 @@ export class HyperSwitchWebhookService {
             weatherGuaranteeId: acceptedQuote.id,
             weatherGuaranteeAmount: item.price,
           })
-          .where(eq(bookings.id, acceptedQuote.reservation_id));
+          .where(eq(bookings.id, acceptedQuote.reservation_id)).execute().catch((e:any)=>{
+            this.logger.error(`ERROR_WHILE_UPDATING_WEATHER_SENSIBLE_QUOTE`);
+           loggerService.errorLog({
+              message: "Error while updating weather sensible quote",
+              userId: "",
+              url: "/auth",
+              userAgent: "",
+              stackTrace: `${e.message}`,
+              additionalDetailsJSON: JSON.stringify({
+                item: item,
+                amountReceived:amountReceived,
+                customer_id: customer_id,
+                customerCart: customerCart
+               }),
+            });
+          })
       }
       return acceptedQuote;
     } catch (error: any) {
@@ -1783,7 +1811,7 @@ export class HyperSwitchWebhookService {
           item,
         }),
       });
-      throw new Error("Failed to handle Sensible item");
+      //throw new Error("Failed to handle Sensible item");
     }
   };
 
@@ -1794,7 +1822,18 @@ export class HyperSwitchWebhookService {
       .where(eq(bookings.weatherQuoteId, guaranteeId));
 
     if (!booking) {
-      throw new Error("Booking details not found");
+       this.logger.error(`Booking not found`);
+                await loggerService.errorLog({
+                  message: "BOOKING_NOT_FOUND",
+                  userId: "",
+                  url: "/auth",
+                  userAgent: "",
+                  stackTrace: `Booking not found `,
+                  additionalDetailsJSON: JSON.stringify({ 
+                    guaranteeId:guaranteeId
+                   }),
+                });
+      //throw new Error("Booking details not found");
     }
     return booking;
   };
