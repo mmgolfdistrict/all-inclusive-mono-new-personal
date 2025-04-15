@@ -31,6 +31,8 @@ import { Tooltip } from "../tooltip";
 import { Info } from "../icons/info";
 import { Email } from "../icons/mail";
 import { EmailOpen } from "../icons/mailOpen";
+import { Pending } from "../icons/pending";
+import { LinkExpired } from "../icons/link-expired";
 
 type PlayerType = "1" | "2" | "3" | "4";
 
@@ -73,7 +75,7 @@ export const CollectPayment = ({
     Array.from({ length: Number(availableSlots - 1) }, () => "")
   );
   const [sendEmailedUsers, setEmailedUsers] = useState<
-    | { email: string; isPaid: number; isActive: number; amount: number; emailOpened: number }[]
+    | { email: string; isPaid: number; isActive: number; amount: number; emailOpened: number, isLinkExpired: boolean | null }[]
     | undefined
   >(undefined);
   const [totalAmount, setTotalAmount] = useState<any>(0);
@@ -414,7 +416,7 @@ export const CollectPayment = ({
                 className="cursor-pointer"
               />
             </div>
-            <div className="flex flex-col w-full  gap-3">
+            <div className="flex flex-col w-full gap-3">
               {Array.from({ length: Number(availableSlots - 1) }).map(
                 (_, index) => (
                   <div key={index} className="flex w-full gap-x-3 justify-center items-center">
@@ -456,26 +458,43 @@ export const CollectPayment = ({
                     {sendEmailedUsers?.[index] ? (
                       sendEmailedUsers[index]?.isPaid === 1 ? (
                         <Fragment>
-                          <div className="flex gap-2 px-5 py-1.5 justify-center items-center">
+                          <div className="flex gap-2 px-5 py-1.5 justify-center items-center" style={{ paddingRight: "50px" }}>
                             <CheckedIcon color="green" />
                             <p>Paid</p>
                           </div>
                         </Fragment>
                       ) : sendEmailedUsers[index]?.isPaid === 0 &&
                         sendEmailedUsers[index]?.isActive === 1 ? (
-                        <FilledButton
-                          onClick={() =>
-                            resendHyperSwitchPaymentLinkOnEmail(index)
-                          }
-                          className="text-sm flex justify-center items-center"
-                          disabled={loadingStates[index]}
-                        >
-                          {loadingStates[index] ? (
-                            <Loader size={20} color="fill-white-600" />
-                          ) : (
-                            "Resend"
-                          )}
-                        </FilledButton>
+                        <div className="flex justify-center items-center">
+                          <FilledButton
+                            onClick={() =>
+                              resendHyperSwitchPaymentLinkOnEmail(index)
+                            }
+                            className={`text-sm flex justify-center items-center ${!sendEmailedUsers[index]?.isLinkExpired ? " text-white/50 cursor-not-allowed" : "text-white"}`}
+                            disabled={loadingStates[index] || !sendEmailedUsers[index]?.isLinkExpired}
+                          >
+                            {loadingStates[index] ? (
+                              <Loader size={20} color="fill-white-600" />
+                            ) : (
+                              "Resend"
+                            )}
+                          </FilledButton>
+                          {/* {!sendEmailedUsers?.[index]?.isLinkExpired ? (
+                      <div className="flex justify-center items-start gap-1">
+                        <Tooltip
+                          trigger={<Pending width={30} height={30} />}
+                          content="Payment is pending"
+                        />
+                      </div>
+                    ):(
+                      <div>
+                         <Tooltip
+                          trigger={<LinkExpired width={30} height={30} color="red"/>}
+                          content="Payment link is expired"
+                        />
+                      </div>
+                    )} */}
+                        </div>
                       ) : (
                         <FilledButton
                           onClick={() =>
@@ -492,37 +511,55 @@ export const CollectPayment = ({
                         </FilledButton>
                       )
                     ) : (
-                      <FilledButton
-                        onClick={() =>
-                          handleEmailSendOnHyperSwitchPaymentLink(index)
-                        }
-                        className="text-sm flex justify-center items-center text-black"
-                        disabled={loadingStates[index]}
-                      >
-                        {loadingStates[index] ? (
-                          <Loader size={20} color="fill-white-600" />
-                        ) : (
-                          "Send"
-                        )}
-                      </FilledButton>
+                      <div style={{ paddingRight: "30px" }}>
+                        <FilledButton
+                          onClick={() =>
+                            handleEmailSendOnHyperSwitchPaymentLink(index)
+                          }
+                          className={`text-sm flex justify-center items-center text-black`}
+                          disabled={loadingStates[index]}
+                        >
+                          {loadingStates[index] ? (
+                            <Loader size={20} color="fill-white-600" />
+                          ) : (
+                            "Send"
+                          )}
+                        </FilledButton>
+                      </div>
                     )}
-                    <div>
-                      {sendEmailedUsers?.[index]?.emailOpened === 1 ? (
-                        <div className="flex justify-center items-start gap-1" >
-                          <Tooltip
-                            trigger={<EmailOpen width={30} height={30} color="green" />}
-                            content="Email opened and read"
-                          />
-                        </div>
-                      ) : (
+                    <div className="flex gap-1">
+                      {sendEmailedUsers?.[index] && sendEmailedUsers[index]?.isActive === 1 && sendEmailedUsers[index]?.isPaid === 0 && !sendEmailedUsers?.[index]?.isLinkExpired ? (
                         <div className="flex justify-center items-start gap-1">
-
                           <Tooltip
-                            trigger={<Email width={30} height={30} />}
-                            content="Email has not been read"
+                            trigger={<Pending width={30} height={30} />}
+                            content="Payment is pending"
                           />
                         </div>
-                      )}
+                      ) : sendEmailedUsers?.[index]?.isLinkExpired ? (
+                        <div>
+                          <Tooltip
+                            trigger={<LinkExpired width={30} height={30} color="red" />}
+                            content="Payment link is expired"
+                          />
+                        </div>
+                      ) : null}
+                      <div>
+                        {sendEmailedUsers?.[index]?.emailOpened === 1 ? (
+                          <div className="flex justify-center items-start gap-1" >
+                            <Tooltip
+                              trigger={<EmailOpen width={30} height={30} color="green" />}
+                              content="Email opened and read"
+                            />
+                          </div>
+                        ) : (
+                          <div className="flex justify-center items-start gap-1">
+                            <Tooltip
+                              trigger={<Email width={30} height={30} />}
+                              content="Email has not been read"
+                            />
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )

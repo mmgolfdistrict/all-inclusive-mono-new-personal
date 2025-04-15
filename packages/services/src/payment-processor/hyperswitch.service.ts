@@ -712,6 +712,20 @@ export class HyperSwitchService {
     }
     return { status: "success" };
   };
+
+  formatDateForMySQL(isoDateString: string): string {
+    const date = new Date(isoDateString);
+    const pad = (n: number) => n.toString().padStart(2, '0');
+
+    const year = date.getUTCFullYear();
+    const month = pad(date.getUTCMonth() + 1);
+    const day = pad(date.getUTCDate());
+    const hours = pad(date.getUTCHours());
+    const minutes = pad(date.getUTCMinutes());
+    const seconds = pad(date.getUTCSeconds());
+
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  }
   createPaymentLink = async (amount: number, email: string, bookingId: string, origin: string, totalPayoutAmount: number, collectPaymentProcessorCharge: number) => {
     try {
       if (amount === 0) {
@@ -745,9 +759,9 @@ export class HyperSwitchService {
       const paymentProcessor = String(process.env.SPLIT_PAYMENT_PROCESSOR);
       console.log("payementProcessor", paymentProcessor);
       const originalUserSplitAmount = (amount * 100) - collectPaymentProcessorCharge;
-      const splitPaymentEmailTemplateId = String(process.env.SPLIT_PAYMENT_EMAIL_TEMPLATE_ID)
+      const splitPaymentEmailTemplateId = String(process.env.SPLIT_PAYMENT_EMAIL_TEMPLATE_ID);
+      const paymentExpirationTime = await appSettingService.get("PAYMENT_EXPIRATION_TIME_IN_MINS");
       if (paymentProcessor === "finix") {
-        const finixPaymentExpirationTime = await appSettingService.get("FINIX_PAYMENT_EXPIRATION_TIME");
         const referencePaymentId = randomUUID();
         const paymentData: PaymentRequest = {
           merchant_id: this.merchantId,
@@ -789,7 +803,7 @@ export class HyperSwitchService {
             collect_phone: false,
             collect_billing_address: false,
             collect_shipping_address: false,
-            expiration_in_minutes: Number(finixPaymentExpirationTime),
+            expiration_in_minutes: Number(paymentExpirationTime),
             terms_of_service_url: `${origin}/terms-of-service`,
             success_return_url: `${origin}/payment-success/?finixReferencePaymentId=${referencePaymentId}&status=succeeded&provider=finix`,
             unsuccessful_return_url: `${origin}/payment-success/?finixReferencePaymentId=${referencePaymentId}&status=failed&provider=finix`,
@@ -810,7 +824,9 @@ export class HyperSwitchService {
         const finix_link_url = finixPaymentData?.link_url;
         const paymentId = finixPaymentData?.id;
         if (finix_link_url) {
-
+          const now = new Date();
+          const addedMins = new Date(now.getTime() + Number(paymentExpirationTime) * 60000);
+          const newexpireDate = addedMins.toISOString().slice(0, 19).replace('T', ' ');
           //(amount * 100)
           await this.database
             .insert(splitPayments)
@@ -822,7 +838,8 @@ export class HyperSwitchService {
               paymentId: paymentId,
               paymentLink: finix_link_url,
               totalPayoutAmount: (totalPayoutAmount * 100),
-              paymentProcessingCharge: collectPaymentProcessorCharge
+              paymentProcessingCharge: collectPaymentProcessorCharge,
+              expirationTime: newexpireDate
             })
             .execute().catch(async (e: any) => {
               console.log(e);
@@ -876,7 +893,6 @@ Thank you for choosing us.`;
               message
             )
           }
-
           return {
             error: false,
             message: "Payment Link Send Successfully",
@@ -908,6 +924,7 @@ Thank you for choosing us.`;
               sdk_layout: "tabs",
             },
             return_url: return_url,
+            session_expiry: (Number(paymentExpirationTime) * 60)
           }),
         };
         const result = await fetch(`${this.hyperSwitchBaseUrl}/payments`, options);
@@ -926,7 +943,8 @@ Thank you for choosing us.`;
               paymentId: response?.payment_id,
               paymentLink: response?.payment_link?.link,
               totalPayoutAmount: (totalPayoutAmount * 100),
-              paymentProcessingCharge: collectPaymentProcessorCharge
+              paymentProcessingCharge: collectPaymentProcessorCharge,
+              expirationTime: this.formatDateForMySQL(response?.expires_on)
             })
             .execute().catch(async (e: any) => {
               console.log(e);
@@ -1198,6 +1216,11 @@ Thank you for choosing us.`;
     }
   };
 
+  hasTimeExpired(utcTimeString: string) {
+    const utcTime = new Date(utcTimeString.replace(' ', 'T') + 'Z');
+    return utcTime.getTime() < Date.now();
+  }
+
   isEmailedUserPaidTheAmount = async (bookingId: string) => {
     try {
       if (!bookingId) {
@@ -1221,7 +1244,8 @@ Thank you for choosing us.`;
           paymentId: splitPayments.paymentId,
           amount: splitPayments.amount,
           totalPayoutAmount: splitPayments.totalPayoutAmount,
-          emailOpened: splitPayments.isEmailOpened
+          emailOpened: splitPayments.isEmailOpened,
+          expireTime: splitPayments.expirationTime
         })
         .from(splitPayments)
         .where(
@@ -1231,7 +1255,14 @@ Thank you for choosing us.`;
           )
           //eq(splitPayments.bookingId, bookingId)
         );
-      return result || [];
+        const newResult = result.map((item) => {
+          const isLinkExpired = item?.expireTime
+            ? this.hasTimeExpired(item.expireTime)
+            : null;
+          return { ...item, isLinkExpired };
+        });
+      this.logger.warn(newResult,"the new updated response with expired time");
+      return newResult || [];
     } catch (error: any) {
       console.log(error);
       await loggerService.errorLog({

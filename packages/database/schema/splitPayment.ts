@@ -1,6 +1,6 @@
 import type { InferInsertModel } from "drizzle-orm";
 import { relations, sql } from "drizzle-orm";
-import { boolean, datetime, index, int, tinyint, unique, varchar } from "drizzle-orm/mysql-core";
+import { boolean, date, datetime, index, int, tinyint, unique, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 
 export const splitPayments = mySqlTable("split_payments", {
@@ -20,5 +20,6 @@ export const splitPayments = mySqlTable("split_payments", {
   totalPayoutAmount:int("totalPayoutAmount").notNull(),
   paymentProcessingCharge:int("paymentProcessingCharge").notNull(),
   isEmailOpened:tinyint("isEmailOpened").default(0).notNull(),
+  expirationTime:datetime("expirationTime", { mode: "string", fsp: 3 }),
 });
 export type InsertSplitBooking = InferInsertModel<typeof splitPayments>;
