@@ -56,18 +56,18 @@ export const HyperSwitch = ({
   teeTimeData,
   isAppleWidgetReload,
 }: // maxReservation,
-{
-  cartData: CartProduct[];
-  isBuyNowAuction: boolean;
-  teeTimeId: string;
-  teeTimeDate: string | undefined;
-  listingId: string | undefined;
-  setIsLoading?: (isLoading: boolean) => void;
-  playerCount: string | undefined;
-  teeTimeData: SearchObject | null | undefined;
-  isAppleWidgetReload?: boolean;
-  // maxReservation: MaxReservationResponse;
-}) => {
+  {
+    cartData: CartProduct[];
+    isBuyNowAuction: boolean;
+    teeTimeId: string;
+    teeTimeDate: string | undefined;
+    listingId: string | undefined;
+    setIsLoading?: (isLoading: boolean) => void;
+    playerCount: string | undefined;
+    teeTimeData: SearchObject | null | undefined;
+    isAppleWidgetReload?: boolean;
+    // maxReservation: MaxReservationResponse;
+  }) => {
   const { amountOfPlayers, shouldAddSensible } = useCheckoutContext();
   const [showCheckout, setShowCheckout] = useState(true);
   const [options, setOptions] = useState<Options | undefined>(undefined);
@@ -119,8 +119,8 @@ export const HyperSwitch = ({
         paymentId: options?.paymentId
           ? options.paymentId
           : paymentId
-          ? paymentId
-          : null,
+            ? paymentId
+            : null,
         //@ts-ignore
         cart: cartData,
         cartId,
@@ -135,8 +135,8 @@ export const HyperSwitch = ({
           teeTimeData?.firstOrSecondHandTeeTime === TeeTimeType.SECOND_HAND
             ? "SECONDARY"
             : teeTimeData?.firstOrSecondHandTeeTime === TeeTimeType.FIRST_HAND
-            ? "PRIMARY"
-            : "UNLISTED",
+              ? "PRIMARY"
+              : "UNLISTED",
         listingId: listingId ?? "",
       })) as CreatePaymentResponse;
       if (data?.error) {
@@ -163,10 +163,14 @@ export const HyperSwitch = ({
       // setIsLoadingSession(false);
       setError(
         (error?.message as string) ??
-          "An error occurred building checkout seesion."
+        "An error occurred building checkout seesion."
       );
     }
   };
+
+  useEffect(() => {
+    void buildSession();
+  }, [playerCount]);
 
   useEffect(() => {
     if (!user) return;
@@ -239,7 +243,7 @@ export const HyperSwitch = ({
             playerCount={playerCount}
             roundOffStatus={roundOffStatus}
             setRoundOffStatus={setRoundOffStatus}
-            // maxReservation={maxReservation}
+          // maxReservation={maxReservation}
           />
         </HyperElements>
       ) : nextaction ? (
