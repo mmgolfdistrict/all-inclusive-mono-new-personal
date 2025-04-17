@@ -40,6 +40,7 @@ type SideBarProps = {
   selectedTeeTime: OwnedTeeTime | undefined;
   refetch?: () => Promise<unknown>;
   needsRedirect?: boolean;
+  setIsSideBarClose:Dispatch<SetStateAction<boolean>>;
 };
 
 export const CollectPayment = ({
@@ -48,6 +49,7 @@ export const CollectPayment = ({
   selectedTeeTime,
   refetch,
   needsRedirect,
+  setIsSideBarClose
 }: SideBarProps) => {
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const { data: paymentProcessingCharge } = api.checkout.collectPaymentProcessorPercent.useQuery({})
@@ -78,6 +80,7 @@ export const CollectPayment = ({
   const [loadingStates, setLoadingStates] = useState<boolean[]>([]);
   const [selectedOption, setSelectedOption] = useState("equalSplit");
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  
   const [players, setPlayers] = useState<string>(
     selectedTeeTime?.isGroupBooking
       ? "2"
@@ -86,6 +89,7 @@ export const CollectPayment = ({
   const { toggleSidebar } = useSidebar({
     isOpen: isCollectPaymentOpen,
     setIsOpen: setIsCollectPaymentOpen,
+    setClose :setIsSideBarClose
   });
   const { course } = useCourseContext();
   const handleEmailChange = (index: number, value: string) => {

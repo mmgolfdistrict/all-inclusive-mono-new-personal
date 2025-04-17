@@ -13,7 +13,7 @@ export default function CheckoutConfirmation() {
   const bookingId = params.get("bookingId");
   const isEmailSend = params.get("isEmailSend") === "true";
   const isGroupBooking = params.get("isGroupBooking") === "true";
-
+  const isValidForCollectPayment = params.get("collectPayment") === "true"
   const { data: systemNotifications } =
     api.systemNotification.getSystemNotification.useQuery({});
 
@@ -39,6 +39,7 @@ export default function CheckoutConfirmation() {
         bookingId={bookingId ?? ""}
         isEmailSend={isEmailSend}
         isGroupBooking={isGroupBooking}
+        isValidForCollectPayment={isValidForCollectPayment}
       />
     </div>
   );
