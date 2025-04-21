@@ -58,53 +58,56 @@ export const MainNav = () => {
           </div>
         ))}
         {entityGlobalNotification?.map((elm) => (
+        <div
+          key={elm.id}
+          style={{
+            backgroundColor: elm.bgColor,
+            color: elm.color,
+          }}
+          className="text-white w-full p-1 text-center flex items-center justify-center"
+        >
           <div
-            key={elm.id}
-            style={{
-              backgroundColor: elm.bgColor,
-              color: elm.color,
-            }}
-            className="text-white w-full p-1 text-center flex items-center justify-center"
-          >
-            {elm.shortMessage}
-            {elm.longMessage && (
-              <Tooltip
-                trigger={
-                  <Info longMessage className="ml-2 h-[20px] w-[20px]" />
-                }
-                content={<div>
-                  {elm.longMessage.split("\\n").map((line, index) => (
-                    <div key={index}>{line}</div>
-                  ))}
-                </div>}
-              />
-            )}
-          </div>
-        ))}
-        {courseGlobalNotification?.map((elm) => (
-          <div
-            key={elm.id}
-            style={{
-              backgroundColor: elm.bgColor,
-              color: elm.color,
-            }}
-            className="text-white w-full p-1 text-center flex items-center justify-center"
-          >
-            {elm.shortMessage}
-            {elm.longMessage && (
-              <Tooltip
-                trigger={
-                  <Info longMessage className="ml-2 h-[20px] w-[20px]" />
-                }
-                content={<div>
-                  {elm.longMessage.split("\\n").map((line, index) => (
-                    <div key={index}>{line}</div>
-                  ))}
-                </div>}
-              />
-            )}
-          </div>
-        ))}
+            dangerouslySetInnerHTML={{ __html: elm.shortMessage }}
+          />
+          {elm.longMessage && (
+            <Tooltip
+              trigger={
+                <Info longMessage className="ml-2 h-[20px] w-[20px]" />
+              }
+              content={
+                <div
+                  dangerouslySetInnerHTML={{ __html: elm.longMessage }}
+                />
+              }
+            />
+          )}
+        </div>
+      ))}
+
+      {courseGlobalNotification?.map((elm) => (
+        <div
+          key={elm.id}
+          style={{
+            backgroundColor: elm.bgColor,
+            color: elm.color,
+          }}
+          className="text-white w-full p-1 text-center flex items-center justify-center"
+        >
+          <div dangerouslySetInnerHTML={{ __html: elm.shortMessage }} />
+          
+          {elm.longMessage && (
+            <Tooltip
+              trigger={
+                <Info longMessage className="ml-2 h-[20px] w-[20px]" />
+              }
+              content={
+                <div dangerouslySetInnerHTML={{ __html: elm.longMessage }} />
+              }
+            />
+          )}
+        </div>
+      ))}
+
         <div className="relative z-10 min-h-[75px] md:min-h-[95px] flex w-full items-center justify-end border-b border-stroke-secondary bg-white p-4 md:p-6">
           <div
             className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transform`}
