@@ -97,9 +97,9 @@ export const TeeTimeV2 = ({
 
     const numberOfPlayers = allowedPlayers?.numberOfPlayers;
     useEffect(() => {
-        if (numberOfPlayers?.length !== 0 && numberOfPlayers?.[0] && status === "UNLISTED") {
+        if (numberOfPlayers?.length !== 0 && numberOfPlayers?.[0] && (status === "UNLISTED" || status === "FIRST_HAND")) {
             setSelectedPlayers(String(numberOfPlayers[0]));
-        } else if (allowedPlayers?.selectStatus === "ALL_PLAYERS" && status === "UNLISTED") {
+        } else if (allowedPlayers?.selectStatus === "ALL_PLAYERS" && (status === "UNLISTED" || status === "FIRST_HAND")) {
             setSelectedPlayers(String(availableSlots));
         } else {
             setSelectedPlayers(

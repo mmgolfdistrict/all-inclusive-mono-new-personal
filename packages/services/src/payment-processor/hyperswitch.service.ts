@@ -1,5 +1,6 @@
 /* eslint no-use-before-define: 0 */
 import { db } from "@golf-district/database";
+import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
 import Logger from "@golf-district/shared/src/logger";
 import HyperSwitch from "@juspay-tech/hyper-node";
@@ -12,6 +13,7 @@ import type {
   CustomerPaymentMethod,
   CustomerPaymentMethodsResponse,
 } from "./types/hyperSwitch.types";
+import { failedBooking } from "@golf-district/database/schema/failedBookings";
 
 /**
  * Service for interacting with the HyperSwitch API.
@@ -61,7 +63,7 @@ export class HyperSwitchService {
     return await this.hyper.customers.create(params).catch((err: any) => {
       this.logger.error(`Error creating customer: ${err}`);
       loggerService.errorLog({
-        userId: params.customer_id as string,
+        userId: params.customer_id!,
         url: "/HyperSwitchService/createCustomer",
         userAgent: "",
         message: "ERROR_CREATING_CUSTOMER",
@@ -450,6 +452,52 @@ export class HyperSwitchService {
     return { status: "success" };
   };
 
+  saveFailedBookingOnDatabase = async ({
+    userId,
+    teeTimeId,
+    cartId,
+    weatherGuaranteeQuoteId,
+    paymentId
+  }: {
+    userId: string | null | undefined;
+    teeTimeId: string | null | undefined;
+    cartId: string | null | undefined;
+    weatherGuaranteeQuoteId: string | null | undefined;
+      paymentId: string;
+  }) => {
+    try {
+      const failedBookingData = {
+        id: randomUUID(),
+        cartId: cartId ?? "",
+        teeTimeId: teeTimeId ?? "",
+        userId: userId ?? "",
+        weatherGuaranteeQuoteId: weatherGuaranteeQuoteId ?? "",
+        providerPaymentId: paymentId
+      }
+      await this.database
+        .insert(failedBooking)
+        .values(failedBookingData)
+        .execute();
+      this.logger.info(`Failed booking saved on database with id: ${failedBookingData.id}`);
+    } catch (error: any) {
+      this.logger.error(`Error saving failed booking on database: ${JSON.stringify(error)}`);
+      void loggerService.errorLog({
+        userId: userId ?? "",
+        url: "/HyperSwitchService/saveFailedBookingOnDatabase",
+        userAgent: "",
+        message: "ERROR_SAVING_FAILED_BOOKING_ON_DATABASE",
+        stackTrace: `${error.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          userId,
+          teeTimeId,
+          cartId,
+          weatherGuaranteeQuoteId,
+          paymentId
+        }),
+      })
+    }
+  }
+
   sendEmailForBookingFailed = async (
     paymentId: string,
     courseId: string,
@@ -465,6 +513,7 @@ export class HyperSwitchService {
       courseName: string;
     }
   ) => {
+    await this.saveFailedBookingOnDatabase({ userId, teeTimeId, cartId, weatherGuaranteeQuoteId: sensibleQuoteId, paymentId })
     const adminEmail: string = process.env.ADMIN_EMAIL_LIST || "nara@golfdistrict.com";
     const emailAterSplit = adminEmail.split(",");
     emailAterSplit.map(async (email) => {
@@ -495,6 +544,7 @@ export class HyperSwitchService {
       courseName: string;
     }
   ) => {
+    await this.saveFailedBookingOnDatabase({ userId, teeTimeId, cartId, weatherGuaranteeQuoteId: sensibleQuoteId, paymentId })
     const adminEmail: string = process.env.ADMIN_EMAIL_LIST || "nara@golfdistrict.com";
     const emailAterSplit = adminEmail.split(",");
     emailAterSplit.map(async (email) => {
