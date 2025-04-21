@@ -10,7 +10,7 @@ export const courseMerchandise = mySqlTable('courseMerchandise', {
   sku: varchar('sku', { length: 25 }).notNull(),
   caption: varchar('caption', { length: 50 }).notNull(),
   description: varchar('description', { length: 255 }),
-  qoh: tinyint('qoh').notNull(),
+  qoh: int('qoh').notNull(),
   isActive: boolean('isActive').notNull().default(true),
   showDuringBooking: boolean('showDuringBooking').notNull().default(true),
   showOnlyIfBookingIsWithinXDays: tinyint('showOnlyIfBookingIsWithinXDays'),
