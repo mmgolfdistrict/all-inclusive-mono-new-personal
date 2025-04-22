@@ -1,16 +1,18 @@
 import { z } from "zod";
 
+export const NAME_VALIDATION_REGEX = /^[A-Za-zÀ-ÿ'’ ]+$/;
+
 export const registerSchema = z
   .object({
     firstName: z
       .string({ required_error: "First name is required" })
       .min(1, { message: "First name is required" })
-      .regex(/^[A-Za-zÀ-ÿ'’ ]+$/, { message: "First name can only contain letters and single quotes" })
+      .regex(NAME_VALIDATION_REGEX, { message: "First name can only contain letters and single quotes" })
       .transform((name) => name.trim().replace(/\s{2,}/g, " ")),
     lastName: z
       .string({ required_error: "Last name is required" })
       .min(1, { message: "Last name is required" })
-      .regex(/^[A-Za-zÀ-ÿ'’ ]+$/, { message: "Last name can only contain letters and single quotes" })
+      .regex(NAME_VALIDATION_REGEX, { message: "Last name can only contain letters and single quotes" })
       .transform((name) => name.trim().replace(/\s{2,}/g, " ")),
     username: z
       .string({ required_error: "Username is required" })

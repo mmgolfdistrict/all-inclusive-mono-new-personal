@@ -15,7 +15,7 @@ import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
 import type { CartProduct, CountryData, FirstHandGroupProduct } from "~/utils/types";
 import { useParams, useRouter } from "next/navigation";
 import type { ChangeEvent, Dispatch, SetStateAction } from "react";
-import { Fragment, useEffect, useState, type FormEvent, useRef } from "react";
+import { Fragment, useEffect, useState, type FormEvent, useRef, useMemo } from "react";
 import { toast } from "react-toastify";
 import { useMediaQuery } from "usehooks-ts";
 import { FilledButton } from "../buttons/filled-button";
@@ -35,6 +35,7 @@ import { allCountries } from "country-telephone-data";
 import { useSession } from "@golf-district/auth/nextjs-exports";
 import { useUser } from "~/hooks/useUser";
 import { PhoneNumberUtil } from "google-libphonenumber";
+import { NAME_VALIDATION_REGEX } from "@golf-district/shared";
 
 type charityData = {
   charityDescription: string | undefined;
@@ -424,6 +425,18 @@ export const CheckoutForm = ({
       console.error("Error fetching data:", error);
     }
   };
+
+  const isValidUsername = useMemo(() => {
+    if (!userData) {
+      return true;
+    }
+    if (userData.name && !NAME_VALIDATION_REGEX.test(userData.name) && !message.length) {
+      setMessage("Your name contains foreign characters. Please update it from Account Settings before checkout.");
+      return false;
+    }
+    return true;
+  }, [userData])
+
   useEffect(() => {
     void fetchData();
   }, []);
@@ -1623,7 +1636,7 @@ export const CheckoutForm = ({
           type="submit"
           className={`w-full rounded-full disabled:opacity-60`}
           disabled={
-            isLoading || !hyper || !widgets || message === "Payment Successful"
+            isLoading || !hyper || !widgets || message === "Payment Successful" || !isValidUsername
           }
           data-testid="pay-now-id"
         >
