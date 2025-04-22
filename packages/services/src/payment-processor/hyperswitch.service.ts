@@ -244,7 +244,6 @@ export class HyperSwitchService {
       const requestOptions: RequestInit = {
         method: "GET",
         headers: myHeaders,
-        body: "",
       };
       const hyperswitchBaseUrl = `${process.env.HYPERSWITCH_BASE_URL}payments/${paymentId}`;
       const response = await fetch(hyperswitchBaseUrl, requestOptions);
