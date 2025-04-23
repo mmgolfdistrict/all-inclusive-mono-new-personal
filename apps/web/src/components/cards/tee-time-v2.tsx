@@ -233,7 +233,7 @@ export const TeeTimeV2 = ({
             const value = await getCache.mutateAsync({
                 key: `listing_id_${listingId}`,
             }) as string | null;
-            if (value) {
+            if (value && allowSplit) {
                 const { userId } = JSON.parse(value);
                 if (userId !== user.id) {
                     toast.info("The tee time is currently unavailable. Please check back in 20 mins.");

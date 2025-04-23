@@ -87,6 +87,7 @@ export default function Checkout({
     api.course.getPrivacyPolicyAndTCByCourse.useQuery({
       courseId: courseId ?? "",
     });
+  const getCache = api.cache.getCache.useMutation();
 
   const {
     data: _providerBookingStatusResult,
@@ -162,9 +163,30 @@ export default function Checkout({
     }
   };
 
+  const isAlreadyBeingCheckedout = async () => {
+    if (!listingData?.allowSplit) {
+      return;
+    }
+    const value = await getCache.mutateAsync({
+      key: `listing_id_${listingId}`,
+    }) as string | null;
+    if (value) {
+      const { userId } = JSON.parse(value);
+      if (user?.id && userId !== user.id && !errorMessage) {
+        setErrorMessage("The tee time is currently unavailable. Please check back in 20 mins.");
+        setIsErrorBookingCancelled(true);
+        return;
+      }
+    }
+  }
+
   useEffect(() => {
     void getProviderBookingStatus();
   }, [listingId]);
+
+  useEffect(() => {
+    void isAlreadyBeingCheckedout();
+  }, [user, listingData])
 
   const checkPromoCode = async () => {
     const currentPrice = Number(data?.pricePerGolfer) * amountOfPlayers;

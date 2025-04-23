@@ -84,7 +84,7 @@ export const ListedDetails = ({
       const value = await getCache.mutateAsync({
         key: `listing_id_${listingId}`,
       }) as string | null;
-      if (value) {
+      if (value && data?.allowSplit) {
         const { userId } = JSON.parse(value);
         if (userId !== user.id) {
           toast.info("The tee time is currently unavailable. Please check back in 20 mins.");
