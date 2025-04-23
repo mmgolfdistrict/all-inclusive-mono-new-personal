@@ -41,13 +41,13 @@ export const SPLIT_TYPE_OPTIONS: SaleTypeOption[] = [
   {
     value: "split",
     caption: "Allow Sale in Splits (Recommended)",
-    description: "Buyers can purchase any number of the tee times you list. (There is a risk that partial rounds can go unsold)",
+    description: "Buyers can purchase any number of the rounds you list. (There is a risk that partial rounds can go unsold)",
     tooltip: "Increases the pool of potential buyers as they can choose the exact number of rounds they want.",
   },
   {
     value: "whole",
     caption: "Only Sell in Whole",
-    description: "Buyers must purchase all the listed tee times together. (This limits potential buyers)",
+    description: "Buyers must purchase all the listed rounds together from the seller. (This may limit potential buyers)",
     tooltip: "Ensures the entire set of rounds is sold at once, useful for group bookings. Eliminates risk seller left with partial bought.",
   },
 ];
