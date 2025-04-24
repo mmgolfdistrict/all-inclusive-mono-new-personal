@@ -1281,7 +1281,7 @@ export class SearchService extends CacheService {
             gte(teeTimes.availableFirstHandSpots, playersCount),
             ...(isSellingLeftoverSinglePlayer ? [eq(teeTimes.availableFirstHandSpots, 1)] : [])
           ),
-          gte(teeTimes.greenFeePerPlayer, 0)
+          gt(teeTimes.greenFeePerPlayer, 0)
         )
       )
       .orderBy(
