@@ -6263,7 +6263,7 @@ export class BookingService {
         .innerJoin(teeTimes, eq(bookings.teeTimeId, teeTimes.id))
         .innerJoin(users, eq(bookings.ownerId, users.id))
         .innerJoin(courses, eq(teeTimes.courseId, courses.id))
-        .innerJoin(assets, eq(assets.id, courses.logoId))
+        .leftJoin(assets, eq(assets.id, courses.logoId))
         .where(eq(bookings.id, bookingId))
         .execute();
 
