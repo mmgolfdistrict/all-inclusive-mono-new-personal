@@ -94,11 +94,11 @@ button {
   background-color: var(--primary-color) !important;
 }
 
-.shepherd-enabled.shepherd-element{
+.shepherd-enabled.shepherd-element {
   margin-top: 10px !important;
 }
 
-.nextbutton{
+.nextbutton {
   background-color: green;
 }
 
@@ -127,6 +127,11 @@ button {
     border-bottom: 6px solid #555;
   }
 }
-.flag-dropdown .selected-flag, .flag-dropdown.open .selected-flag {
+.flag-dropdown .selected-flag,
+.flag-dropdown.open .selected-flag {
   background-color: unset !important;
+}
+
+[data-radix-popper-content-wrapper] {
+  z-index: 9999 !important;
 }

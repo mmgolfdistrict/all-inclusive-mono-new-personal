@@ -396,7 +396,7 @@ export const ManageTeeTimeListing = ({
         <div></div>
       </LoadingContainer>}
       <div className="flex h-full flex-col justify-between overflow-y-auto">
-        <div className="flex flex-col gap-6 px-0 sm:px-4">
+        <div className={`flex flex-col gap-6 px-0 sm:px-4 ${isMobile ? "mt-8" : ""}`}>
           <TeeTimeItem
             courseImage={selectedTeeTime?.courseLogo ?? ""}
             courseName={selectedTeeTime?.courseName ?? ""}
