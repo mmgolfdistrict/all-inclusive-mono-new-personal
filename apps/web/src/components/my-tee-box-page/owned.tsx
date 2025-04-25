@@ -6,7 +6,7 @@ import { api } from "~/utils/api";
 import { formatTime } from "~/utils/formatters";
 import { type InviteFriend } from "~/utils/types";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Avatar } from "../avatar";
 import { FilledButton } from "../buttons/filled-button";
 import { OutlineButton } from "../buttons/outline-button";
@@ -14,6 +14,8 @@ import { CancelListing } from "./cancel-listing";
 import { ListTeeTime } from "./list-tee-time";
 import { ManageOwnedTeeTime } from "./manage-owned-tee-time";
 import { SkeletonRow } from "./skeleton-row";
+import { CollectPayment } from "./collect-payment";
+import { useSearchParams } from "next/navigation";
 
 export type OwnedTeeTime = {
   courseName: string;
@@ -44,12 +46,20 @@ export type OwnedTeeTime = {
 export const Owned = () => {
   // const [amount, setAmount] = useState<number>(4);
   const { course } = useCourseContext();
+  const params = useSearchParams();
+  const paramBookingId = params.get("bookingId");
+  const collectPayment = params.get("collectPayment") === "true";
+
   const courseId = course?.id;
   const [isListTeeTimeOpen, setIsListTeeTimeOpen] = useState<boolean>(false);
+  const [sideBarClose,setIsSideBarClose] = useState<boolean>(false)
+  const [isCollectTeeTimeOpen, setIsCollectPaymentOpen] =
+    useState<boolean>(false);
   const [isCancelListingOpen, setIsCancelListingOpen] =
     useState<boolean>(false);
   const [isManageOwnedTeeTimeOpen, setIsManageOwnedTeeTimeOpen] =
     useState<boolean>(false);
+  const { data: isCollectPaymemtEnabled } = api.checkout.isCollectPaymentEnabled.useQuery({});
   const { data, isLoading, isError, error, refetch } =
     api.teeBox.getOwnedTeeTimes.useQuery(
       {
@@ -95,6 +105,20 @@ export const Owned = () => {
     setSelectedTeeTime(teeTime);
     setIsManageOwnedTeeTimeOpen(true);
   };
+  const collectPaymentList = (teeTime: OwnedTeeTime) => {
+    setIsCollectPaymentOpen(true);
+    setSelectedTeeTime(teeTime);
+  }
+
+  const filteredResult = ownedTeeTimes?.find((item) => item.bookingIds[0] === paramBookingId);
+  console.log(filteredResult, "filteredResult");
+
+  useEffect(() => {
+    if (filteredResult && !sideBarClose && collectPayment) {
+      setIsCollectPaymentOpen(true);
+      setSelectedTeeTime(filteredResult);
+    }
+  }, [paramBookingId,filteredResult])
 
   if (isError && error) {
     return (
@@ -152,6 +176,7 @@ export const Owned = () => {
                   openListTeeTime={() => openListTeeTime(i)}
                   openCancelListing={() => openCancelListing(i)}
                   openManageListTeeTime={() => openManageListTeeTime(i)}
+                  collectPaymentList={() => collectPaymentList(i)}
                   courseId={i.courseId}
                   teeTimeId={i.teeTimeId}
                   listingId={i.listingId}
@@ -159,6 +184,7 @@ export const Owned = () => {
                   timezoneCorrection={course?.timezoneCorrection}
                   bookingStatus={i.bookingStatus}
                   isGroupBooking={i.isGroupBooking}
+                  isCollectPaymentEnabled={isCollectPaymemtEnabled}
                 />
               ))}
           </tbody>
@@ -176,6 +202,13 @@ export const Owned = () => {
         setIsListTeeTimeOpen={setIsListTeeTimeOpen}
         selectedTeeTime={selectedTeeTime}
         refetch={refetch}
+      />
+      <CollectPayment
+        isCollectPaymentOpen={isCollectTeeTimeOpen}
+        setIsCollectPaymentOpen={setIsCollectPaymentOpen}
+        selectedTeeTime={selectedTeeTime}
+        refetch={refetch}
+        setIsSideBarClose = {setIsSideBarClose}
       />
       <ManageOwnedTeeTime
         isManageOwnedTeeTimeOpen={isManageOwnedTeeTimeOpen}
@@ -233,8 +266,10 @@ const TableRow = ({
   openListTeeTime,
   openCancelListing,
   openManageListTeeTime,
+  collectPaymentList,
   bookingStatus,
   isGroupBooking,
+  isCollectPaymentEnabled
 }: {
   course: string;
   date: string;
@@ -252,8 +287,10 @@ const TableRow = ({
   openListTeeTime: () => void;
   openCancelListing: () => void;
   openManageListTeeTime: () => void;
+  collectPaymentList: () => void;
   bookingStatus: string;
   isGroupBooking: boolean;
+  isCollectPaymentEnabled?: boolean;
 }) => {
   const href = useMemo(() => {
     if (isListed) {
@@ -330,6 +367,19 @@ const TableRow = ({
       </td>
       <td className="whitespace-nowrap px-4 py-3">
         <div className="flex w-full justify-end gap-2">
+          {isCollectPaymentEnabled && (
+            <FilledButton
+              className="min-w-[145px]"
+              onClick={collectPaymentList}
+              data-testid="sell-button-id"
+              data-test={courseId}
+              data-qa={course}
+              id="sell-teetime-button"
+            >
+              Collect payment
+            </FilledButton>
+
+          )}
           <div id="manage-teetime-button">
             <OutlineButton
               onClick={openManageListTeeTime}

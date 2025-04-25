@@ -39,6 +39,7 @@ import type { UserWaitlistService } from "../user-waitlist/userWaitlist.service"
 import { loggerService } from "../webhooks/logging.service";
 import { groupBookings } from "@golf-district/database/schema/groupBooking";
 import { CacheService } from "../infura/cache.service";
+import { splitPayments } from "@golf-district/database/schema/splitPayment";
 
 dayjs.extend(UTC);
 dayjs.extend(timezone);
@@ -136,6 +137,9 @@ interface TransferData {
   weatherGuaranteeId: string;
   weatherGuaranteeAmount: number;
   markupFees?: number | null;
+  splitPaymentsAmount?: number | null;
+  isPaidSplitAmount?: number | null
+
 }
 type RequestOptions = {
   method: string;
@@ -292,6 +296,8 @@ export class BookingService {
         weatherGuaranteeAmount: transfers.weatherGuaranteeAmount,
         cartFee: bookings.cartFeePerPlayer,
         markupFees: bookings.markupFees,
+        splitPaymentsAmount: splitPayments.amount,
+        isPaidSplitAmount: splitPayments.isPaid
       })
       .from(transfers)
       .innerJoin(bookings, eq(bookings.id, transfers.bookingId))
@@ -299,6 +305,7 @@ export class BookingService {
       .innerJoin(courses, eq(courses.id, teeTimes.courseId))
       .leftJoin(lists, eq(bookings.listId, lists.id))
       .leftJoin(assets, eq(assets.id, courses.logoId))
+      .leftJoin(splitPayments, eq(splitPayments.bookingId, transfers.bookingId))
       // .leftJoin(userBookingOffers, eq(userBookingOffers.bookingId, bookings.id))
       .where(
         and(
@@ -371,6 +378,8 @@ export class BookingService {
           weatherGuaranteeAmount: teeTime.weatherGuaranteeAmount ?? 0,
           weatherGuaranteeId: teeTime.weatherGuaranteeId ?? "",
           markupFees: teeTime.markupFees,
+          splitPaymentsAmount: teeTime.splitPaymentsAmount ?? 0,
+          isPaidSplitAmount: teeTime.isPaidSplitAmount
         };
       } else {
         const currentEntry = combinedData[teeTime.transferId];
@@ -729,10 +738,10 @@ export class BookingService {
       if (!combinedData[teeTime.providerBookingId]) {
         const slotData = !teeTime.providerBookingId
           ? Array.from({ length: teeTime.playerCount - 1 }, (_, i) => ({
-              name: "",
-              slotId: "",
-              customerId: "",
-            }))
+            name: "",
+            slotId: "",
+            customerId: "",
+          }))
           : [];
 
         combinedData[teeTime.providerBookingId] = {
@@ -998,10 +1007,10 @@ export class BookingService {
       if (!combinedGroupData[teeTime.groupId!]) {
         const slotData = !teeTime.providerBookingId
           ? Array.from({ length: teeTime.playerCount - 1 }, (_, i) => ({
-              name: "",
-              slotId: "",
-              customerId: "",
-            }))
+            name: "",
+            slotId: "",
+            customerId: "",
+          }))
           : [];
 
         combinedGroupData[teeTime.groupId!] = {
@@ -3574,13 +3583,13 @@ export class BookingService {
     const primaryData = {
       primaryGreenFeeCharge: isNaN(
         slotInfo[0].price -
-          cartFeeCharge * (slotInfo[0]?.product_data?.metadata?.number_of_bookings || 0) -
-          markupCharge1
+        cartFeeCharge * (slotInfo[0]?.product_data?.metadata?.number_of_bookings || 0) -
+        markupCharge1
       )
         ? slotInfo[0].price - markupCharge1
         : slotInfo[0].price -
-          cartFeeCharge * (slotInfo[0]?.product_data?.metadata?.number_of_bookings ?? 0) -
-          markupCharge1, //slotInfo[0].price- cartFeeCharge*slotInfo[0]?.product_data?.metadata?.number_of_bookings,
+        cartFeeCharge * (slotInfo[0]?.product_data?.metadata?.number_of_bookings ?? 0) -
+        markupCharge1, //slotInfo[0].price- cartFeeCharge*slotInfo[0]?.product_data?.metadata?.number_of_bookings,
       teeTimeId: slotInfo[0].product_data.metadata.tee_time_id,
       playerCount: slotInfo[0].product_data.metadata.number_of_bookings === undefined ? customerCartData.cart.playerCount : slotInfo[0].product_data.metadata.number_of_bookings,
       teeTimeIds: slotInfo[0].product_data.metadata.tee_time_ids,
@@ -4119,9 +4128,6 @@ export class BookingService {
       throw new Error("No booking id found in response from provider");
     }
     console.log(`Creating tokenized booking`);
-
-    //create tokenized bookings
-
     const bookingId = await this.tokenizeService
       .tokenizeBooking({
         redirectHref,
@@ -4191,6 +4197,7 @@ export class BookingService {
       providerBookingId,
       status: "Reserved",
       isEmailSend: bookingId.isEmailSend,
+      isValidForCollectPayment: bookingId?.validForCollectPayment
     } as ReserveTeeTimeResponse;
   };
 
@@ -4263,9 +4270,8 @@ export class BookingService {
               url: "/confirmBooking",
               userAgent: "",
               message: "ERROR CONFIRMING BOOKING",
-              stackTrace: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${
-                booking?.teeTimeId ?? ""
-              }`,
+              stackTrace: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${booking?.teeTimeId ?? ""
+                }`,
               additionalDetailsJSON: err,
             });
           });

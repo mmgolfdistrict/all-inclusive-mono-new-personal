@@ -14,6 +14,7 @@ import type pino from "pino";
 import twilio from "twilio";
 import { AppSettingsService } from "../app-settings/app-settings.service";
 import { loggerService } from "../webhooks/logging.service";
+import { S } from "vitest/dist/reporters-5f784f42";
 
 interface EmailParams {
   CustomerFirstName?: string;
@@ -52,6 +53,15 @@ interface EmailParams {
   NewPlayerCount?: number;
   PreviousListedPrice?: number;
   NewListedPrice?: number;
+  USERNAME?:string;
+  PAYMENT_URL?:string;
+  COURSE_NAME?:string;
+  AMOUNT?:string;
+  PLAY_TIME?: string;
+  FACILITY?: string;
+  COURSE_RESERVATION_ID?: string;
+  MyTeeBoxCollectPaymentUrl?:string;
+  TRACKING_URL?:string
 }
 
 interface Attachment {

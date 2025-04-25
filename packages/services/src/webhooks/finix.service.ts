@@ -153,7 +153,74 @@ type RequestOptions = {
   body?: string;
   redirect: RequestRedirect;
 };
+/*=======================Type interface for creating payment link=====================================================*/
 
+interface PaymentRequest {
+  merchant_id?: string;
+  application_id?: string;
+  payment_frequency?: 'ONE_TIME' | 'RECURRING';
+  is_multiple_use?: boolean;
+  allowed_payment_methods?: ('PAYMENT_CARD' | 'BANK_ACCOUNT')[];
+  nickname?: string;
+  items?: Item[];
+  amount_details?: AmountDetails;
+  additional_details?: AdditionalDetails;
+  branding?: Branding;
+}
+
+interface Item {
+  name?: string;
+  quantity?: string;
+  image_details?: {
+    primary_image_url?: string;
+  };
+  price_details?: {
+    sale_amount?: number;
+    currency?: string;
+  };
+}
+
+interface AmountDetails {
+  amount_type?: 'FIXED' | 'VARIABLE';
+  total_amount?: number;
+  currency?: string;
+}
+
+interface AdditionalDetails {
+  collect_name?: boolean;
+  collect_email?: boolean;
+  collect_phone?: boolean;
+  collect_billing_address?: boolean;
+  collect_shipping_address?: boolean;
+  expiration_in_minutes?: number;
+  terms_of_service_url?: string;
+  success_return_url?: string;
+  unsuccessful_return_url?: string;
+  expired_session_url?: string;
+  send_receipt?: boolean;
+  receipt_requested_delivery_methods?: ReceiptDeliveryMethod[];
+}
+
+interface ReceiptDeliveryMethod {
+  type?: 'EMAIL' | 'SMS';
+  destinations?: string[];
+}
+
+interface Branding {
+  brand_color?: string;
+  accent_color?: string;
+  logo?: string;
+  icon?: string;
+  logo_alternative_text?: string;
+  button_font_color?: string;
+}
+
+
+/**=========================================================================== */
+
+interface PaymentData {
+  merchantId: string;
+}
 export class FinixService {
   protected baseurl = process.env.FINIX_BASE_URL;
   protected username = process.env.FINIX_USERNAME;
@@ -164,7 +231,7 @@ export class FinixService {
     private readonly database: Db, // private readonly hyperSwitchService: HyperSwitchWebhookService
     private readonly cashoutService: CashOutService,
     private readonly notificationService: NotificationService
-  ) {}
+  ) { }
   getHeaders = () => {
     const requestHeaders = new Headers();
     requestHeaders.append("Content-Type", "application/json");
@@ -349,8 +416,7 @@ export class FinixService {
     const amountMultiplied = amount * 100;
     if (amountMultiplied + Number((allRecords?.sum as number) || 0) > Number(limitInAmount) * 100) {
       return new Error(
-        `You cannot withdraw more than $${limitInAmount} in a day. You have already withdrawn $${
-          ((allRecords?.sum as number) || 1) / 100 || 0
+        `You cannot withdraw more than $${limitInAmount} in a day. You have already withdrawn $${((allRecords?.sum as number) || 1) / 100 || 0
         } today.`
       );
     }
@@ -553,4 +619,5 @@ export class FinixService {
       throw error;
     }
   };
+  
 }
