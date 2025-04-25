@@ -36,6 +36,8 @@ import { useSession } from "@golf-district/auth/nextjs-exports";
 import { useUser } from "~/hooks/useUser";
 import { PhoneNumberUtil } from "google-libphonenumber";
 
+const BLOCK_CHECKOUT_WHEN_GREEN_FEE_TIMES_X_LT_MARKUP = 5;
+
 type charityData = {
   charityDescription: string | undefined;
   charityName: string | undefined;
@@ -643,7 +645,7 @@ export const CheckoutForm = ({
     });
 
     try {
-      if (greenFeeChargePerPlayer * 5 <= markupFee) {
+      if (greenFeeChargePerPlayer * BLOCK_CHECKOUT_WHEN_GREEN_FEE_TIMES_X_LT_MARKUP <= markupFee) {
         toast.error("Price too low to sell.");
       } else {
         if (response) {
