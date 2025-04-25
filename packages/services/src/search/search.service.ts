@@ -1566,7 +1566,7 @@ export class SearchService extends CacheService {
           eq(bookings.includesCart, includesCart),
           eq(teeTimes.numberOfHoles, holes),
           eq(bookings.isListed, true),
-          gt(teeTimes.greenFeePerPlayer, 0)
+          gte(teeTimes.greenFeePerPlayer, 0)
         )
       )
       .orderBy(

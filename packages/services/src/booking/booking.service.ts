@@ -4302,11 +4302,17 @@ export class BookingService {
           providerCourseConfiguration: providerCourseLink.providerCourseConfiguration,
           providerInternalId: providers.internalId,
           providerTeeSheet: providerCourseLink.providerTeeSheetId,
+          providerDate: teeTimes.providerDate,
+          courseName: courses.name,
+          userName: users.name,
+          userEmail: users.email,
         })
         .from(bookings)
         .leftJoin(teeTimes, eq(bookings.teeTimeId, teeTimes.id))
         .leftJoin(providerCourseLink, eq(teeTimes.courseId, providerCourseLink.courseId))
         .leftJoin(providers, eq(providerCourseLink.providerId, providers.id))
+        .leftJoin(courses, eq(teeTimes.courseId, courses.id))
+        .leftJoin(users, eq(bookings.ownerId, users.id))
         .where(eq(bookings.listId, listingId));
       const result = await this.providerService.checkCancelledBooking(
         bookingResult?.bookingProviderId!,
@@ -4336,9 +4342,13 @@ export class BookingService {
             `
             The customer attempted to purchase a tee time, but the provider canceled it. The following details pertain to the canceled tee time:
             Tee Time ID ====> ${bookingResult?.bookingTeeTimeId} , 
+            Tee Time Date ====> ${bookingResult?.providerDate} , 
            Provider Booking ID ====> ${bookingResult?.bookingProviderId} , 
            Course ID ====> ${bookingResult?.courseId}, 
+           Course Name ====> ${bookingResult?.courseName}, 
            Listing ID ====> ${listingId}, 
+           Customer Name ====> ${bookingResult?.userName},
+           Customer Email ====> ${bookingResult?.userEmail},
            This information indicates that the tee time was listed in the course but was subsequently deleted by the provider.
             `
           );
@@ -6269,7 +6279,7 @@ export class BookingService {
         .innerJoin(teeTimes, eq(bookings.teeTimeId, teeTimes.id))
         .innerJoin(users, eq(bookings.ownerId, users.id))
         .innerJoin(courses, eq(teeTimes.courseId, courses.id))
-        .innerJoin(assets, eq(assets.id, courses.logoId))
+        .leftJoin(assets, eq(assets.id, courses.logoId))
         .where(eq(bookings.id, bookingId))
         .execute();
 
