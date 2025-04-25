@@ -167,6 +167,7 @@ export default function CheckoutProcessing() {
           providerBookingId: "",
           status: "",
           isEmailSend: false,
+          isValidForCollectPayment:false
         };
 
         if (!listingId) {

@@ -6,7 +6,7 @@ import { api } from "~/utils/api";
 import { formatTime } from "~/utils/formatters";
 import { type InviteFriend } from "~/utils/types";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Avatar } from "../avatar";
 import { FilledButton } from "../buttons/filled-button";
 import { OutlineButton } from "../buttons/outline-button";
@@ -15,6 +15,7 @@ import { ListTeeTime } from "./list-tee-time";
 import { ManageOwnedTeeTime } from "./manage-owned-tee-time";
 import { SkeletonRow } from "./skeleton-row";
 import { CollectPayment } from "./collect-payment";
+import { useSearchParams } from "next/navigation";
 
 export type OwnedTeeTime = {
   courseName: string;
@@ -45,8 +46,13 @@ export type OwnedTeeTime = {
 export const Owned = () => {
   // const [amount, setAmount] = useState<number>(4);
   const { course } = useCourseContext();
+  const params = useSearchParams();
+  const paramBookingId = params.get("bookingId");
+  const collectPayment = params.get("collectPayment") === "true";
+
   const courseId = course?.id;
   const [isListTeeTimeOpen, setIsListTeeTimeOpen] = useState<boolean>(false);
+  const [sideBarClose,setIsSideBarClose] = useState<boolean>(false)
   const [isCollectTeeTimeOpen, setIsCollectPaymentOpen] =
     useState<boolean>(false);
   const [isCancelListingOpen, setIsCancelListingOpen] =
@@ -103,6 +109,16 @@ export const Owned = () => {
     setIsCollectPaymentOpen(true);
     setSelectedTeeTime(teeTime);
   }
+
+  const filteredResult = ownedTeeTimes?.find((item) => item.bookingIds[0] === paramBookingId);
+  console.log(filteredResult, "filteredResult");
+
+  useEffect(() => {
+    if (filteredResult && !sideBarClose && collectPayment) {
+      setIsCollectPaymentOpen(true);
+      setSelectedTeeTime(filteredResult);
+    }
+  }, [paramBookingId,filteredResult])
 
   if (isError && error) {
     return (
@@ -192,6 +208,7 @@ export const Owned = () => {
         setIsCollectPaymentOpen={setIsCollectPaymentOpen}
         selectedTeeTime={selectedTeeTime}
         refetch={refetch}
+        setIsSideBarClose = {setIsSideBarClose}
       />
       <ManageOwnedTeeTime
         isManageOwnedTeeTimeOpen={isManageOwnedTeeTimeOpen}

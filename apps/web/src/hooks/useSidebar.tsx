@@ -4,9 +4,11 @@ import { useEffect, type Dispatch, type SetStateAction } from "react";
 export const useSidebar = ({
   isOpen,
   setIsOpen,
+  setClose,
 }: {
   isOpen: boolean;
   setIsOpen: Dispatch<SetStateAction<boolean>>;
+  setClose?: Dispatch<SetStateAction<boolean>>;
 }) => {
   // const trigger = useRef<HTMLButtonElement>(null);
   // const sidebar = useRef<HTMLElement>(null);
@@ -39,6 +41,7 @@ export const useSidebar = ({
 
   const toggleSidebar = (): void => {
     setIsOpen(!isOpen);
+    setClose?.(true);
   };
 
   useEffect(() => {

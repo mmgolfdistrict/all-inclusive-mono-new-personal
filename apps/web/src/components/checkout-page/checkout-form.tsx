@@ -664,6 +664,7 @@ export const CheckoutForm = ({
             providerBookingId: "",
             status: "",
             isEmailSend: false,
+            isValidForCollectPayment:false
           };
 
           if (isFirstHand.length) {
@@ -792,7 +793,7 @@ export const CheckoutForm = ({
               `/${course?.id
               }/checkout/confirmation?teeTimeId=${teeTimeId}&bookingId=${bookingResponse.bookingId
               }&isEmailSend=${bookingResponse.isEmailSend}&isGroupBooking=${isFirstHandGroup.length ? "true" : "false"
-              }`
+              }&collectPayment=${bookingResponse.isValidForCollectPayment}`
             );
           }
         } else if (response.status === "failed") {

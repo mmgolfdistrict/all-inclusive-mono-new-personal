@@ -60,6 +60,7 @@ interface EmailParams {
   PLAY_TIME?: string;
   FACILITY?: string;
   COURSE_RESERVATION_ID?: string;
+  MyTeeBoxCollectPaymentUrl?:string;
   TRACKING_URL?:string
 }
 

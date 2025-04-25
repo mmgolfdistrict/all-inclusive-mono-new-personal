@@ -13,12 +13,14 @@ interface ConfirmationProps {
   bookingId: string;
   isEmailSend: boolean;
   isGroupBooking: boolean;
+  isValidForCollectPayment: boolean;
 }
 export const Confirmation = ({
   teeTimeId,
   bookingId,
   isEmailSend,
   isGroupBooking,
+  isValidForCollectPayment
 }: ConfirmationProps) => {
   const { data: bookingData, isLoading: isLoadingBookingData } =
     api.teeBox.getOwnedBookingById.useQuery(
@@ -134,20 +136,35 @@ export const Confirmation = ({
             the safe senders list.
           </p>
         </div>
-        <div className="flex w-full flex-col items-center justify-center gap-2 md:flex-row">
-          <Link
-            href={`/${course?.id}/my-tee-box`}
-            className="w-full md:w-fit md:min-w-[250px]"
-            data-testid="go-to-my-tee-box-button-id"
-          >
-            <FilledButton className="w-full">Go To My Tee Box</FilledButton>
-          </Link>
+        <div className="flex gap-2 justify-center" >
+          <div className="flex flex-col items-center justify-center gap-2 md:flex-row">
+            <Link
+              href={`/${course?.id}/my-tee-box`}
+              className="w-full md:w-fit md:min-w-[250px]"
+              data-testid="go-to-my-tee-box-button-id"
+            >
+              <FilledButton className="w-full">Go To My Tee Box</FilledButton>
+            </Link>
+          </div>
+          <div className="flex  flex-col items-center justify-center gap-2 md:flex-row">
+            <Link
+              href={`/${course?.id}/my-tee-box/?bookingId=${bookingId}&collectPayment=${isValidForCollectPayment}`}
+              className="w-full md:w-fit md:min-w-[250px]"
+              data-testid="go-to-my-tee-box-button-id"
+            >
+              <FilledButton className="w-full">Collect Payment</FilledButton>
+            </Link>
+          </div>
         </div>
       </div>
+      <p className="text-[14px] text-gray-700 font-medium rounded-lg px-4 py-2">
+        You can now collect the payment from the <span className="font-semibold text-green-800">Collect Payment</span> section.
+      </p>
       <p className="mt-4 text-[14px] text-primary-gray md:text-[16px] font-semibold text-center">
         Tip: If you know you can’t make your time, the earlier you can list, the
         greater the chance it sells.
       </p>
+
     </section>
   );
 };
