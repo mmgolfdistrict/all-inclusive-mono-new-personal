@@ -643,167 +643,171 @@ export const CheckoutForm = ({
     });
 
     try {
-      if (response) {
-        if (response.status === "processing") {
-          void sendEmailForFailedPayment.mutateAsync({
-            paymentId: response?.payment_id as string,
-            teeTimeId: teeTimeId,
-            cartId: cartId,
-            userId: user?.id,
-            email: user?.email,
-            listingId: listingId,
-            courseId: courseId!,
-          });
-          setMessage(
-            getErrorMessageById((response?.error_code ?? "") as string)
-          );
-          setIsLoading(false);
-        } else if (response.status === "succeeded") {
-          let bookingResponse = {
-            bookingId: "",
-            providerBookingId: "",
-            status: "",
-            isEmailSend: false,
-          };
+      if (greenFeeChargePerPlayer * 5 <= markupFee) {
+        toast.error("Price too low to sell.");
+      } else {
+        if (response) {
+          if (response.status === "processing") {
+            void sendEmailForFailedPayment.mutateAsync({
+              paymentId: response?.payment_id as string,
+              teeTimeId: teeTimeId,
+              cartId: cartId,
+              userId: user?.id,
+              email: user?.email,
+              listingId: listingId,
+              courseId: courseId!,
+            });
+            setMessage(
+              getErrorMessageById((response?.error_code ?? "") as string)
+            );
+            setIsLoading(false);
+          } else if (response.status === "succeeded") {
+            let bookingResponse = {
+              bookingId: "",
+              providerBookingId: "",
+              status: "",
+              isEmailSend: false,
+            };
 
-          if (isFirstHand.length) {
-            try {
-              bookingResponse = await reserveBookingFirstHand(
-                cartId,
-                response?.payment_id as string,
-                sensibleData?.id ?? ""
-              );
-              setReservationData({
-                golfReservationId: bookingResponse.bookingId,
-                providerReservationId: bookingResponse.providerBookingId,
-                playTime: teeTimeDate || "",
-              });
-            } catch (error) {
-              if (
-                error?.meta?.response &&
-                !Object.keys(error.meta.response).length &&
-                error.name === "TRPCClientError"
-              ) {
-                void sendEmailForBookingFailedByTimeout.mutateAsync({
-                  paymentId: response?.payment_id as string,
-                  teeTimeId: teeTimeId,
-                  cartId: cartId,
-                  userId: user?.id ?? "",
-                  courseId: courseId!,
-                  sensibleQuoteId: sensibleData?.id ?? "",
-                  otherDetails: {
-                    courseName: course?.name ?? "",
-                    userName: user?.name ?? "",
-                    userEmail: user?.email ?? "",
-                    teeTimeDate: teeTimeDate ?? ""
-                  }
+            if (isFirstHand.length) {
+              try {
+                bookingResponse = await reserveBookingFirstHand(
+                  cartId,
+                  response?.payment_id as string,
+                  sensibleData?.id ?? ""
+                );
+                setReservationData({
+                  golfReservationId: bookingResponse.bookingId,
+                  providerReservationId: bookingResponse.providerBookingId,
+                  playTime: teeTimeDate || "",
                 });
+              } catch (error) {
+                if (
+                  error?.meta?.response &&
+                  !Object.keys(error.meta.response).length &&
+                  error.name === "TRPCClientError"
+                ) {
+                  void sendEmailForBookingFailedByTimeout.mutateAsync({
+                    paymentId: response?.payment_id as string,
+                    teeTimeId: teeTimeId,
+                    cartId: cartId,
+                    userId: user?.id ?? "",
+                    courseId: courseId!,
+                    sensibleQuoteId: sensibleData?.id ?? "",
+                    otherDetails: {
+                      courseName: course?.name ?? "",
+                      userName: user?.name ?? "",
+                      userEmail: user?.email ?? "",
+                      teeTimeDate: teeTimeDate ?? ""
+                    }
+                  });
 
-                await auditLog.mutateAsync({
-                  userId: user?.id ?? "",
-                  teeTimeId: teeTimeId,
-                  bookingId: "",
-                  listingId: listingId,
-                  courseId,
-                  eventId: "Vercel function timedout",
-                  json: `Vercel function timedout`,
-                });
+                  await auditLog.mutateAsync({
+                    userId: user?.id ?? "",
+                    teeTimeId: teeTimeId,
+                    bookingId: "",
+                    listingId: listingId,
+                    courseId,
+                    eventId: "Vercel function timedout",
+                    json: `Vercel function timedout`,
+                  });
+                }
+
+                setMessage(
+                  "Error reserving first hand booking: " + error.message
+                );
+                setIsLoading(false);
+                return;
               }
-
-              setMessage(
-                "Error reserving first hand booking: " + error.message
-              );
-              setIsLoading(false);
-              return;
-            }
-          } else if (isFirstHandGroup.length) {
-            try {
-              bookingResponse = await reserveBookingFirstHandGroup(
-                cartId,
-                response?.payment_id as string,
-                sensibleData?.id ?? ""
-              );
-              setReservationData({
-                golfReservationId: bookingResponse.bookingId,
-                providerReservationId: bookingResponse.providerBookingId,
-                playTime: teeTimeDate || "",
-              });
-            } catch (error) {
-              if (
-                error?.meta?.response &&
-                !Object.keys(error.meta.response).length &&
-                error.name === "TRPCClientError"
-              ) {
-                void sendEmailForBookingFailedByTimeout.mutateAsync({
-                  paymentId: response?.payment_id as string,
-                  teeTimeId: teeTimeId,
-                  cartId: cartId,
-                  userId: user?.id ?? "",
-                  courseId: courseId!,
-                  sensibleQuoteId: sensibleData?.id ?? "",
-                  otherDetails: {
-                    courseName: course?.name ?? "",
-                    userName: user?.name ?? "",
-                    userEmail: user?.email ?? "",
-                    teeTimeDate: teeTimeDate ?? ""
-                  }
+            } else if (isFirstHandGroup.length) {
+              try {
+                bookingResponse = await reserveBookingFirstHandGroup(
+                  cartId,
+                  response?.payment_id as string,
+                  sensibleData?.id ?? ""
+                );
+                setReservationData({
+                  golfReservationId: bookingResponse.bookingId,
+                  providerReservationId: bookingResponse.providerBookingId,
+                  playTime: teeTimeDate || "",
                 });
+              } catch (error) {
+                if (
+                  error?.meta?.response &&
+                  !Object.keys(error.meta.response).length &&
+                  error.name === "TRPCClientError"
+                ) {
+                  void sendEmailForBookingFailedByTimeout.mutateAsync({
+                    paymentId: response?.payment_id as string,
+                    teeTimeId: teeTimeId,
+                    cartId: cartId,
+                    userId: user?.id ?? "",
+                    courseId: courseId!,
+                    sensibleQuoteId: sensibleData?.id ?? "",
+                    otherDetails: {
+                      courseName: course?.name ?? "",
+                      userName: user?.name ?? "",
+                      userEmail: user?.email ?? "",
+                      teeTimeDate: teeTimeDate ?? ""
+                    }
+                  });
 
-                await auditLog.mutateAsync({
-                  userId: user?.id ?? "",
-                  teeTimeId: teeTimeId,
-                  bookingId: "",
-                  listingId: listingId,
-                  courseId,
-                  eventId: "Vercel function timedout",
-                  json: `Vercel function timedout`,
-                });
+                  await auditLog.mutateAsync({
+                    userId: user?.id ?? "",
+                    teeTimeId: teeTimeId,
+                    bookingId: "",
+                    listingId: listingId,
+                    courseId,
+                    eventId: "Vercel function timedout",
+                    json: `Vercel function timedout`,
+                  });
+                }
+
+                setMessage(
+                  "Error reserving first hand group booking: " + error.message
+                );
+                setIsLoading(false);
+                return;
               }
-
-              setMessage(
-                "Error reserving first hand group booking: " + error.message
-              );
-              setIsLoading(false);
-              return;
+            } else {
+              try {
+                bookingResponse = await reserveSecondHandBooking(
+                  cartId,
+                  listingId,
+                  response?.payment_id as string
+                );
+              } catch (error) {
+                setMessage(
+                  "Error reserving second hand booking: " + error.message
+                );
+                setIsLoading(false);
+                return;
+              }
             }
-          } else {
-            try {
-              bookingResponse = await reserveSecondHandBooking(
-                cartId,
-                listingId,
-                response?.payment_id as string
-              );
-            } catch (error) {
-              setMessage(
-                "Error reserving second hand booking: " + error.message
-              );
-              setIsLoading(false);
-              return;
-            }
-          }
 
-          setMessage("Payment Successful");
-          setBookingSource("");
-          sessionStorage.removeItem("source");
-          if (isBuyNowAuction) {
-            router.push(`/${course?.id}/auctions/confirmation`);
+            setMessage("Payment Successful");
+            setBookingSource("");
+            sessionStorage.removeItem("source");
+            if (isBuyNowAuction) {
+              router.push(`/${course?.id}/auctions/confirmation`);
+            } else {
+              router.push(
+                `/${course?.id
+                }/checkout/confirmation?teeTimeId=${teeTimeId}&bookingId=${bookingResponse.bookingId
+                }&isEmailSend=${bookingResponse.isEmailSend}&isGroupBooking=${isFirstHandGroup.length ? "true" : "false"
+                }`
+              );
+            }
+          } else if (response.status === "failed") {
+            setMessage(
+              getErrorMessageById((response?.error_code ?? "") as string)
+            );
+            setIsLoading(false);
           } else {
-            router.push(
-              `/${course?.id
-              }/checkout/confirmation?teeTimeId=${teeTimeId}&bookingId=${bookingResponse.bookingId
-              }&isEmailSend=${bookingResponse.isEmailSend}&isGroupBooking=${isFirstHandGroup.length ? "true" : "false"
-              }`
+            setMessage(
+              getErrorMessageById((response?.error_code ?? "") as string)
             );
           }
-        } else if (response.status === "failed") {
-          setMessage(
-            getErrorMessageById((response?.error_code ?? "") as string)
-          );
-          setIsLoading(false);
-        } else {
-          setMessage(
-            getErrorMessageById((response?.error_code ?? "") as string)
-          );
         }
       }
     } catch (error) {
