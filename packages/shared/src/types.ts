@@ -224,6 +224,7 @@ export type ReserveTeeTimeResponse = {
   isEmailSend: boolean;
   courseMembershipId?: string;
   playerCountForMemberShip?: string;
+  isValidForCollectPayment:boolean;
 };
 
 export type NotificationObject = {

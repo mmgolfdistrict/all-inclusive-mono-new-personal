@@ -1736,4 +1736,12 @@ export class CheckoutService {
     const appSettingsResult = await this.appSettings.getAppSetting("IS_ENABLED_APPLE_PAY");
     return appSettingsResult?.value === "1" ? true : false;
   };
+  isCollectPaymentEnabled = async () => {
+    const appSettingsResult = await this.appSettings.getAppSetting("COLLECT_PAYMENTS_ENABLED");
+    return appSettingsResult?.value === "1" ? true : false;
+  };
+  collectPaymentProcessorPercent = async () => {
+    const appSettingsResult = await this.appSettings.getAppSetting("COLLECT_PAYMENT_PAYMENT_PROCESSOR_PERCENT");
+    return appSettingsResult?.value;
+  }
 }
