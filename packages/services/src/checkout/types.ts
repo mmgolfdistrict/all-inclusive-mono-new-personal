@@ -31,6 +31,7 @@ export interface CustomerCart {
   playerCount?: string;
   teeTimeType?: string;
   listingId?: string;
+  purpose?: string;
 }
 
 export interface UpdatePayment {
