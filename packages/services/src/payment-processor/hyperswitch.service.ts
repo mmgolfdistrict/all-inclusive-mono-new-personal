@@ -729,18 +729,17 @@ export class HyperSwitchService {
   createPaymentLink = async (amount: number, email: string, bookingId: string, origin: string, totalPayoutAmount: number, collectPaymentProcessorCharge: number) => {
     try {
       if (amount === 0) {
-        throw new Error("Amount cannot be zero");
+        return {
+          error: true,
+          message: "Amount Cannot be zero or empty"
+        }
       }
       if (email === "") {
-        throw new Error("Email cannot be empty");
+        return {
+          error: true,
+          message: "Email is required"
+        }
       }
-      if (bookingId === "") {
-        throw new Error("BookingId cannot be empty");
-      }
-      if (origin === "") {
-        throw new Error("Origin cannot be empty");
-      }
-
       const [bookingResult] = await this.database.select({
         userName: users.name,
         bookingProviderId: bookings.providerBookingId,
@@ -872,7 +871,7 @@ export class HyperSwitchService {
                 FACILITY: `${bookingResult?.facilityName}`,
                 COURSE_RESERVATION_ID: `${bookingResult?.bookingProviderId}`,
                 //TRACKING_URL: `https://webhook.site/tracking-email?id=${referencePaymentId}`
-                TRACKING_URL:`${origin}/api/trackemail/?id=${referencePaymentId}`
+                TRACKING_URL: `${origin}/api/trackemail/?id=${referencePaymentId}`
               },
               []
             )
@@ -976,7 +975,7 @@ Thank you for choosing us.`;
                 PLAY_TIME: formatTime(bookingResult?.bookingDateTime ?? "", false, bookingResult?.courseTimeZone ?? 0),
                 FACILITY: `${bookingResult?.facilityName}`,
                 COURSE_RESERVATION_ID: `${bookingResult?.bookingProviderId}`,
-                TRACKING_URL:`${origin}/trackemail/?id=${hyperswitchUUID}`
+                TRACKING_URL: `${origin}/trackemail/?id=${hyperswitchUUID}`
                 //TRACKING_URL: `https://webhook.site/tracking-email?id=${hyperswitchUUID}`
               },
               []
@@ -1256,13 +1255,13 @@ Thank you for choosing us.`;
           )
           //eq(splitPayments.bookingId, bookingId)
         );
-        const newResult = result.map((item) => {
-          const isLinkExpired = item?.expireTime
-            ? this.hasTimeExpired(item.expireTime)
-            : null;
-          return { ...item, isLinkExpired };
-        });
-      this.logger.warn(newResult,"the new updated response with expired time");
+      const newResult = result.map((item) => {
+        const isLinkExpired = item?.expireTime
+          ? this.hasTimeExpired(item.expireTime)
+          : null;
+        return { ...item, isLinkExpired };
+      });
+      this.logger.warn(newResult, "the new updated response with expired time");
       return newResult || [];
     } catch (error: any) {
       console.log(error);

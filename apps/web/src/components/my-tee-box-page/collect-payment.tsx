@@ -33,7 +33,9 @@ import { Email } from "../icons/mail";
 import { EmailOpen } from "../icons/mailOpen";
 import { Pending } from "../icons/pending";
 import { LinkExpired } from "../icons/link-expired";
-
+import { OutlineButton } from "../buttons/outline-button";
+import { SaleTypeOption, SaleTypeSelector } from "../input/sale-type-select";
+import { isValidEmail } from "@golf-district/shared";
 type PlayerType = "1" | "2" | "3" | "4";
 
 const PlayerOptions = ["1", "2", "3", "4"];
@@ -44,9 +46,22 @@ type SideBarProps = {
   selectedTeeTime: OwnedTeeTime | undefined;
   refetch?: () => Promise<unknown>;
   needsRedirect?: boolean;
-  setIsSideBarClose:Dispatch<SetStateAction<boolean>>;
+  setIsSideBarClose: Dispatch<SetStateAction<boolean>>;
 };
-
+const SPLIT_TYPE_OPTIONS: SaleTypeOption[] = [
+  {
+    value: "equalSplit",
+    caption: "Equally distributed among players (Recommended) ",
+    description: "The amount is evenly split among 3 out of 4 players, with a 4.5% processing charge automatically added.",
+    tooltip: "Equal Split",
+  },
+  {
+    value: "customSplit",
+    caption: "Custom amount for each player",
+    description: "The amount requested from other players in a custom split includes a 4.5% processing charge, and the amount you receive will be after this charge is deducted from their contribution.",
+    tooltip: "Custom Split",
+  },
+];
 export const CollectPayment = ({
   isCollectPaymentOpen,
   setIsCollectPaymentOpen,
@@ -84,7 +99,7 @@ export const CollectPayment = ({
   const [loadingStates, setLoadingStates] = useState<boolean[]>([]);
   const [selectedOption, setSelectedOption] = useState("equalSplit");
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  
+
   const [players, setPlayers] = useState<string>(
     selectedTeeTime?.isGroupBooking
       ? "2"
@@ -93,7 +108,7 @@ export const CollectPayment = ({
   const { toggleSidebar } = useSidebar({
     isOpen: isCollectPaymentOpen,
     setIsOpen: setIsCollectPaymentOpen,
-    setClose :setIsSideBarClose
+    setClose: setIsSideBarClose
   });
   const { course } = useCourseContext();
   const handleEmailChange = (index: number, value: string) => {
@@ -146,8 +161,6 @@ export const CollectPayment = ({
     }, 0) as number);
     setTotalAmount(total.toFixed(2));
   }
-
-
 
   const handlePriceChange = () => {
     if (selectedOption === "equalSplit") {
@@ -235,7 +248,7 @@ export const CollectPayment = ({
         collectPaymentProcessorCharge: Number(paymentProcessingCharge)
       });
       if (result?.error) {
-        toast.error("Error Creating Payment link");
+        toast.error(`${result.message}`);
         setLoadingStates((prev) => {
           const newLoadingStates = [...prev];
           newLoadingStates[index] = false;
@@ -250,8 +263,8 @@ export const CollectPayment = ({
           return newLoadingStates;
         });
       }
-    } catch (error) {
-      toast.error("Error Creating Payment link");
+    } catch (error: any) {
+      toast.error(`${error.message}`);
       setLoadingStates((prev) => {
         const newLoadingStates = [...prev];
         newLoadingStates[index] = false; // Reset loading state after operation
@@ -334,39 +347,48 @@ export const CollectPayment = ({
         className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[600px] md:h-[100dvh] ${isCollectPaymentOpen ? "translate-x-0" : "translate-x-full"
           }`}
       >
-        <div className="relative flex h-full flex-col">
-          <div className="flex items-center justify-between p-4">
-            <div className="text-lg">Collect Payment</div>
-            <button
-              // ref={trigger}
-              onClick={toggleSidebar}
-              aria-controls="sidebar"
-              aria-expanded={isCollectPaymentOpen}
-              className="z-[2]"
-              aria-label="sidebarToggle"
-              data-testid="close-button-id"
-            >
-              <Close className="h-[25px] w-[25px]" />
-            </button>
-          </div>
-          <div className="flex flex-col gap-6 px-0 sm:px-4">
-            <TeeTimeItem
-              courseImage={selectedTeeTime?.courseLogo ?? ""}
-              courseName={selectedTeeTime?.courseName ?? ""}
-              courseDate={selectedTeeTime?.date ?? ""}
-              golferCount={selectedTeeTime?.golfers.length ?? 0}
-              timezoneCorrection={course?.timezoneCorrection}
-              purchasedFor={selectedTeeTime?.purchasedFor ?? 0}
-              weatherGuaranteeAmount={
-                selectedTeeTime?.weatherGuaranteeAmount ?? 0
-              }
-            />
+        <div className="relative flex h-full flex-col overflow-y-auto ">
+          <div className="flex flex-col items-start justify-between p-4">
+            <div className="flex justify-between w-full" >
+              <div className="text-lg">Collect Payment</div>
+              <button
+                // ref={trigger}
+                onClick={toggleSidebar}
+                aria-controls="sidebar"
+                aria-expanded={isCollectPaymentOpen}
+                className="z-[2]"
+                aria-label="sidebarToggle"
+                data-testid="close-button-id"
+              >
+                <Close className="h-[25px] w-[25px]" />
+              </button>
+            </div>
+            <div className="flex flex-col gap-6 px-0 pt w-full mt-2">
+              <TeeTimeItem
+                courseImage={selectedTeeTime?.courseLogo ?? ""}
+                courseName={selectedTeeTime?.courseName ?? ""}
+                courseDate={selectedTeeTime?.date ?? ""}
+                golferCount={selectedTeeTime?.golfers.length ?? 0}
+                timezoneCorrection={course?.timezoneCorrection}
+                purchasedFor={selectedTeeTime?.purchasedFor ?? 0}
+                weatherGuaranteeAmount={
+                  selectedTeeTime?.weatherGuaranteeAmount ?? 0
+                }
+              />
+            </div>
           </div>
           <div className="flex flex-col gap-3 px-0 py-1 sm:px-4">
             <div className=" flex flex-col w-full gap-4">
               <div className="flex items-center justify-between">
                 <div className=" w-full flex justify-start items-center gap-5">
-                  <div className="flex items-center">
+                  <SaleTypeSelector
+                    className="flex flex-col w-full"
+                    value={selectedOption}
+                    onValueChange={setSelectedOption}
+                    saleTypeOptions={SPLIT_TYPE_OPTIONS}
+                    defaultValue={selectedOption}
+                  />
+                  {/* <div className="flex items-center">
                     <input
                       id="option1"
                       type="radio"
@@ -399,64 +421,78 @@ export const CollectPayment = ({
                     >
                       Custom Split
                     </label>
-                  </div>
+                  </div> */}
                 </div>
               </div>
             </div>
             {/* <div className="flex justify-between items-center w-full">
             
             </div> */}
-            <div className="flex justify-between items-center w-full px-3">
-              <div className="flex flex-col justify-start">
+            <div className="flex flex-col justify-between w-full px-3 mt-[25px]">
+              <div>
                 <p className="text-red text-[12px] pt-4 pb-4">
                   *Payment processor charges of {Number(paymentProcessingCharge || 0) / 100}% will be applicable.
                 </p>
-                <div>Send Payment Link</div>
               </div>
-              <Refresh
-                onClick={() => setSendTrigger((prev) => prev + 1)}
-                width={20}
-                height={20}
-                className="cursor-pointer"
-              />
+              <div className="flex justify-between">
+                <h4 className="text-primary-gray" >
+                  Send Payment Link
+                </h4>
+                <Refresh
+                  onClick={() => setSendTrigger((prev) => prev + 1)}
+                  width={20}
+                  height={20}
+                  className="cursor-pointer"
+                />
+              </div>
+
             </div>
-            <div className="flex flex-col w-full gap-3">
+            <div className="flex flex-col w-full gap-3 ">
               {Array.from({ length: Number(availableSlots - 1) }).map(
                 (_, index) => (
                   <div key={index} className="flex w-full gap-x-3 justify-center items-center">
-                    <input
-                      className="outline-none bg-secondary-white focus:outline-white px-3 py-1 rounded-md w-full "
-                      type="text"
-                      placeholder="Enter the email"
-                      onChange={(e) => handleEmailChange(index, e.target.value)}
-                      // value={
-                      //   sendEmailedUsers && sendEmailedUsers[index]?.email
-                      //     ? sendEmailedUsers[index]?.email
-                      //     : emails[index]
-                      // }
-                      value={sendEmailedUsers?.[index]?.email ?? emails[index]}
-                    />
+                    <div className="w-full flex flex-col">
+                      <input
+                        className="outline-none bg-secondary-white focus:outline-white px-3 py-1 rounded-md w-full "
+                        type="text"
+                        placeholder="Enter the email"
+                        onChange={(e) => handleEmailChange(index, e.target.value)}
+                        // value={
+                        //   sendEmailedUsers && sendEmailedUsers[index]?.email
+                        //     ? sendEmailedUsers[index]?.email
+                        //     : emails[index]
+                        // }
+                        value={sendEmailedUsers?.[index]?.email ?? emails[index]}
+                      />
+                      <div className="h-2 mb-1">
+                        {emails[index] && !isValidEmail(emails[index]) && (
+                          <span className="text-red text-[12px]">Invalid email address</span>
+                        )}
+                      </div>
+                    </div>
                     <div className="flex items-center justify-center">
                       <span className="text-gray-700 font-medium">$</span>
-                      <input
-                        className=" bg-secondary-white outline-none focus:outline-white px-3 py-1 rounded-md w-20 "
-                        type="text"
-                        placeholder="Amt"
-                        // value={
-                        //   sendEmailedUsers && sendEmailedUsers[index]?.amount
-                        //     ? sendEmailedUsers[index]?.amount / 100
-                        //     : amount[index]
-                        // }
-                        //value={sendEmailedUsers?.[index]?.amount ?? amount[index]}
-                        value={amount[index] ?? sendEmailedUsers?.[index]?.amount}
-                        onChange={(e) => {
-                          //+paymentProcessingCharge
-                          const addedValue = e.target.value
-                          handleAmountChange(index, addedValue);
-                        }
-                        }
-                        disabled={selectedOption === "equalSplit"}
-                      />
+                      {selectedOption === "equalSplit" ? <p>{amount[index] ?? sendEmailedUsers?.[index]?.amount}</p> : (
+                        <input
+                          className=" bg-secondary-white outline-none focus:outline-white px-3 py-1 rounded-md w-20 "
+                          type="text"
+                          placeholder="Amt"
+                          // value={
+                          //   sendEmailedUsers && sendEmailedUsers[index]?.amount
+                          //     ? sendEmailedUsers[index]?.amount / 100
+                          //     : amount[index]
+                          // }
+                          //value={sendEmailedUsers?.[index]?.amount ?? amount[index]}
+                          value={amount[index] ?? sendEmailedUsers?.[index]?.amount}
+                          onChange={(e) => {
+                            //+paymentProcessingCharge
+                            const addedValue = e.target.value
+                            handleAmountChange(index, addedValue);
+                          }
+                          }
+                          disabled={selectedOption === "equalSplit"}
+                        />
+                      )}
                     </div>
 
                     {sendEmailedUsers?.[index] ? (
@@ -504,8 +540,8 @@ export const CollectPayment = ({
                           onClick={() =>
                             handleEmailSendOnHyperSwitchPaymentLink(index)
                           }
-                          className="text-sm flex justify-center items-center text-black"
-                          disabled={loadingStates[index]}
+                          className={`text-sm flex justify-center items-center text-black ${!isValidEmail(emails[index] ?? "") ? "text-white/50 cursor-not-allowed" : "text-white"} `}
+                          disabled={loadingStates[index] || !isValidEmail(emails[index] ?? "")}
                         >
                           {loadingStates[index] ? (
                             <Loader size={20} color="fill-white-600" />
@@ -515,13 +551,13 @@ export const CollectPayment = ({
                         </FilledButton>
                       )
                     ) : (
-                      <div style={{ paddingRight: "30px" }}>
+                      <div style={{ paddingRight: "62px" }}>
                         <FilledButton
                           onClick={() =>
                             handleEmailSendOnHyperSwitchPaymentLink(index)
                           }
-                          className={`text-sm flex justify-center items-center text-black`}
-                          disabled={loadingStates[index]}
+                          className={`text-sm flex justify-center items-center text-black ${!isValidEmail(emails[index] ?? "") ? "text-white/50 cursor-not-allowed" : "text-white"} `}
+                          disabled={loadingStates[index] || !isValidEmail(emails[index] ?? "")}
                         >
                           {loadingStates[index] ? (
                             <Loader size={20} color="fill-white-600" />
@@ -542,7 +578,7 @@ export const CollectPayment = ({
                       ) : sendEmailedUsers?.[index]?.isLinkExpired ? (
                         <div>
                           <Tooltip
-                            trigger={<LinkExpired width={30} height={30} color="red" />}
+                            trigger={<LinkExpired width={30} height={30} color="#D22B2B" />}
                             content="Payment link is expired"
                           />
                         </div>
@@ -555,14 +591,14 @@ export const CollectPayment = ({
                               content="Email opened and read"
                             />
                           </div>
-                        ) : (
+                        ) : sendEmailedUsers?.[index]?.emailOpened === 0 ? (
                           <div className="flex justify-center items-start gap-1">
                             <Tooltip
                               trigger={<Email width={30} height={30} />}
                               content="Email has not been read"
                             />
                           </div>
-                        )}
+                        ) : null}
                       </div>
                     </div>
                   </div>
@@ -571,41 +607,67 @@ export const CollectPayment = ({
             </div>
             <div className="flex flex-col w-full gap-3">
               <div className="w-full flex justify-between px-3 pt-5">
-                <div className="text-[14px] flex justify-start gap-2 font-[300] text-primary-gray ">
-                  Total Amount
+                <div className="text-[16px] flex justify-start gap-2 font-[500] text-black">
+                  <h4 className="text-primary-gray">Total Amount</h4>
                   <Tooltip
                     trigger={<Info className="h-[14px] w-[14px]" />}
                     content="This is total amount Including payment processing charges"
                   />
                 </div>
                 <div>
-                  <p className="text-[14px] font-[300] text-primary-gray">${totalAmount}</p>
+                  <p className="text-[16px] font-[500] text-primary-gray">${Number(totalAmount).toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}</p>
                 </div>
               </div>
               <div className="w-full flex justify-between px-3 pt-3" >
-                <div className="text-[14px] flex justify-start gap-2 font-[300] text-primary-gray">
-                  Payment Processor Charges
+                <div className="text-[16px] flex justify-start gap-2 font-[500] text-black">
+                  <h4 className="text-primary-gray" >Payment Processor Charges</h4>
                   <Tooltip
                     trigger={<Info className="h-[14px] w-[14px]" />}
                     content="Payment processing fee"
                   />
                 </div>
                 <div>
-                  <p className="text-[14px] font-[300] text-primary-gray">${(Number(paymentProcessingCharge) / 100) * (Number(availableSlots - 1))}</p>
+                  <p className="text-primary-gray">
+                    ${(
+                      (Number(paymentProcessingCharge) / 100) * (Number(availableSlots) - 1)
+                    ).toLocaleString("en-US", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </p>
                 </div>
               </div>
               <div className="w-full flex justify-between px-3 pt-3">
-                <div className=" text-[14px] flex justify-start gap-2 font-[300] text-primary-gray">
-                  Your Payout
+                <div className=" text-[16px] flex justify-start gap-2 font-[500]">
+                  <h4 className="text-primary-gray" >Your Payout</h4>
                   <Tooltip
                     trigger={<Info className="h-[14px] w-[14px]" />}
                     content="This Amount you will received in Cashout"
                   />
                 </div>
                 <div>
-                  <p className="text-[14px] font-[300] text-primary-gray">${(totalAmount - (Number(paymentProcessingCharge) / 100) * (Number(availableSlots - 1)))}</p>
+                  <p className="text-[16px] font-[500] text-primary-gray">
+                    {(
+                      totalAmount - (Number(paymentProcessingCharge) / 100) * (Number(availableSlots) - 1)
+                    ).toLocaleString("en-US", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </p>
                 </div>
               </div>
+            </div>
+            <div className="flex w-full justify-center items-center">
+              <OutlineButton
+                onClick={() => setIsCollectPaymentOpen(false)}
+                data-testid="cancel-button-id"
+                className="w-full"
+              >
+                Cancel
+              </OutlineButton>
             </div>
           </div>
         </div>
