@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 export const bookingRouter = createTRPCRouter({
   checkIfTeeTimeStillListed: protectedProcedure
@@ -11,7 +11,7 @@ export const bookingRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       return ctx.serviceFactory.getBookingService().checkIfTeeTimeStillListed(input.bookingId);
     }),
-  checkIfTeeTimeStillListedByListingId: protectedProcedure
+  checkIfTeeTimeStillListedByListingId: publicProcedure
     .input(
       z.object({
         listingId: z.string(),
