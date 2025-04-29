@@ -52,7 +52,7 @@ import type { TokenizeService } from "../token/tokenize.service";
 import { loggerService } from "./logging.service";
 import type { HyperSwitchEvent } from "./types/hyperswitch";
 import { groupBookings } from "@golf-district/database/schema/groupBooking";
-import { splitPayments } from "@golf-district/database/schema/splitPayment";
+import { bookingSplitPayment } from "@golf-district/database/schema/bookingSplitPayment";
 
 /**
  * `HyperSwitchWebhookService` - A service for processing webhooks from HyperSwitch.
@@ -1951,7 +1951,7 @@ export class HyperSwitchWebhookService {
       this.logger.warn("paymentId is here", paymentId);
       this.logger.warn("payment state is here", paymentState);
       if (entityType === "updated" && entity === "payment_link" && paymentState === "COMPLETED") {
-        const updateStatus = await this.database.update(splitPayments).set({ isPaid:1,webhookStatus: paymentState }).where(eq(splitPayments.paymentId, paymentId));
+        const updateStatus = await this.database.update(bookingSplitPayment).set({ isPaid:1,webhookStatus: paymentState }).where(eq(bookingSplitPayment.paymentId, paymentId));
         return {
           message: "Payment Webhook status successFully",
           error: false
@@ -1969,11 +1969,11 @@ export class HyperSwitchWebhookService {
     try {
      this.logger.warn("","email open successFully");
      const result =   await this.database
-      .update(splitPayments)
+      .update(bookingSplitPayment)
       .set({
         isEmailOpened:1
       })
-      .where(eq(splitPayments.id,id))
+      .where(eq(bookingSplitPayment.id,id))
       .execute().catch(async (e: any) => {
         await loggerService.errorLog({
           message: "ERROR_UPDATING_HYPERSWITCH_PAYMENT_STATUS",

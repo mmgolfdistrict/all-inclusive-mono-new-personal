@@ -34,7 +34,7 @@ export const Confirmation = ({
     );
 
   const { course } = useCourseContext();
-
+  console.log("bookingData",bookingData);
   return (
     <section className="mx-auto flex w-full flex-col gap-4 bg-white px-3 py-2 text-center md:max-w-[80vw] md:rounded-xl md:p-6 md:py-4">
       <div className="container mx-auto p-4">
@@ -84,6 +84,17 @@ export const Confirmation = ({
                     )}
                   </span>
                 </div>
+                {bookingData && bookingData?.playerCount > 1 ? (
+                  <div className="flex  flex-col items-center justify-center gap-2 md:flex-row">
+                    <Link
+                      href={`/${course?.id}/my-tee-box/?bookingId=${bookingId}&collectPayment=${isValidForCollectPayment}`}
+                      className="w-full md:w-fit md:min-w-[250px]"
+                      data-testid="go-to-my-tee-box-button-id"
+                    >
+                      <FilledButton className="w-full">Collect Payment</FilledButton>
+                    </Link>
+                  </div>
+                ) : null}
                 {isEmailSend ? (
                   <Fragment>
                     <div>
@@ -146,20 +157,9 @@ export const Confirmation = ({
               <FilledButton className="w-full">Go To My Tee Box</FilledButton>
             </Link>
           </div>
-          <div className="flex  flex-col items-center justify-center gap-2 md:flex-row">
-            <Link
-              href={`/${course?.id}/my-tee-box/?bookingId=${bookingId}&collectPayment=${isValidForCollectPayment}`}
-              className="w-full md:w-fit md:min-w-[250px]"
-              data-testid="go-to-my-tee-box-button-id"
-            >
-              <FilledButton className="w-full">Collect Payment</FilledButton>
-            </Link>
-          </div>
+
         </div>
       </div>
-      <p className="text-[14px] text-gray-700 font-medium rounded-lg px-4 py-2">
-        You can now collect the payment from the <span className="font-semibold text-green-800">Collect Payment</span> section.
-      </p>
       <p className="mt-4 text-[14px] text-primary-gray md:text-[16px] font-semibold text-center">
         Tip: If you know you can’t make your time, the earlier you can list, the
         greater the chance it sells.

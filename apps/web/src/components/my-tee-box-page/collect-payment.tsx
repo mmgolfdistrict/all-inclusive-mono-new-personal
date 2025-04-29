@@ -70,6 +70,7 @@ export const CollectPayment = ({
   needsRedirect,
   setIsSideBarClose
 }: SideBarProps) => {
+
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const { data: paymentProcessingCharge } = api.checkout.collectPaymentProcessorPercent.useQuery({})
   const paymentLinkResult =
@@ -99,7 +100,7 @@ export const CollectPayment = ({
   const [loadingStates, setLoadingStates] = useState<boolean[]>([]);
   const [selectedOption, setSelectedOption] = useState("equalSplit");
   const [isLoading, setIsLoading] = useState<boolean>(false);
-
+  const [paidAmount, setPaidAmount] = useState<number>(0);
   const [players, setPlayers] = useState<string>(
     selectedTeeTime?.isGroupBooking
       ? "2"
@@ -111,6 +112,7 @@ export const CollectPayment = ({
     setClose: setIsSideBarClose
   });
   const { course } = useCourseContext();
+  console.log(course?.logo);
   const handleEmailChange = (index: number, value: string) => {
     const updatedEmails = [...emails];
     updatedEmails[index] = value;
@@ -124,6 +126,15 @@ export const CollectPayment = ({
   //     return updatedAmount.reduce((acc: any, curr: any) => acc + (Number(curr || 0)), 0).toFixed(2);
   //   }
   // }
+
+  function checkIfAmountExccedThePurchasePrice(currentAmount: number) {
+    const totalPaidAmount = paidAmount + currentAmount;
+
+    if (totalPaidAmount > selectedTeeTime!?.purchasedFor) {
+      return true;
+    }
+    return false;
+  }
   const getTotal = (updatedAmount: any): string => {
     if (selectedOption === "equalSplit") {
       const total = updatedAmount.reduce((acc: number, curr: any) => {
@@ -203,7 +214,20 @@ export const CollectPayment = ({
       })));
     });
   }, [sendTrigger]);
-
+  useEffect(() => {
+    if (sendEmailedUsers && Array.isArray(sendEmailedUsers)) {
+      const totalPaidAmount = sendEmailedUsers.reduce((acc: number, curr) => {
+        if (curr.isPaid === 1) {
+          return acc + (curr.amount || 0);
+        }
+        return acc;
+      }, 0);
+      console.log("totalPaidAmount>>", totalPaidAmount);
+      setPaidAmount(totalPaidAmount);
+    } else {
+      setPaidAmount(0);
+    }
+  }, [sendTrigger, sendEmailedUsers])
   useEffect(() => {
     console.log("isCollectPaymentOpen changed:", isCollectPaymentOpen);
 
@@ -239,13 +263,26 @@ export const CollectPayment = ({
         newLoadingStates[index] = true;
         return newLoadingStates;
       });
+
+      const isCollectAmountExceed = checkIfAmountExccedThePurchasePrice(Number(amount[index]));
+
+      if (isCollectAmountExceed) {
+        toast.error("The amount you are collecting is exceeding the purchase price");
+        setLoadingStates((prev) => {
+          const newLoadingStates = [...prev];
+          newLoadingStates[index] = false;
+          return newLoadingStates;
+        });
+        return;
+      }
       const result = await paymentLinkResult.mutateAsync({
         amount: Number(amount[index]) || 0,
         email: emails[index] ?? "",
         bookingId: selectedTeeTime?.bookingIds[0] ?? "",
         origin: origin,
         totalPayoutAmount: Number(amount[index]),
-        collectPaymentProcessorCharge: Number(paymentProcessingCharge)
+        collectPaymentProcessorCharge: Number(paymentProcessingCharge),
+        courseLogo: `${course?.logo}`
       });
       if (result?.error) {
         toast.error(`${result.message}`);
@@ -297,7 +334,8 @@ export const CollectPayment = ({
         isActive: Number(sendEmailedUsers?.[index]?.isActive),
         origin: origin,
         totalPayoutAmount: Number(amount[index]),
-        collectPaymentProcessorCharge: Number(paymentProcessingCharge)
+        collectPaymentProcessorCharge: Number(paymentProcessingCharge),
+        courseLogo: `${course?.logo}`
       });
       if (result?.error) {
         toast.error("Error Creating Payment link");
@@ -472,7 +510,11 @@ export const CollectPayment = ({
                     </div>
                     <div className="flex items-center justify-center">
                       <span className="text-gray-700 font-medium">$</span>
-                      {selectedOption === "equalSplit" ? <p>{amount[index] ?? sendEmailedUsers?.[index]?.amount}</p> : (
+                      {selectedOption === "equalSplit" ? <p> {(amount[index] ?? sendEmailedUsers?.[index]?.amount ?? 0).toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                      </p> : (
                         <input
                           className=" bg-secondary-white outline-none focus:outline-white px-3 py-1 rounded-md w-20 "
                           type="text"
@@ -498,7 +540,7 @@ export const CollectPayment = ({
                     {sendEmailedUsers?.[index] ? (
                       sendEmailedUsers[index]?.isPaid === 1 ? (
                         <Fragment>
-                          <div className="flex gap-2 px-5 py-1.5 justify-center items-center" style={{ paddingRight: "50px" }}>
+                          <div className="flex gap-2 px-5 py-1.5 justify-center items-center" style={{ paddingRight: "87px" }}>
                             <CheckedIcon color="green" />
                             <p>Paid</p>
                           </div>
@@ -575,7 +617,7 @@ export const CollectPayment = ({
                             content="Payment is pending"
                           />
                         </div>
-                      ) : sendEmailedUsers?.[index]?.isLinkExpired ? (
+                      ) : (sendEmailedUsers?.[index]?.isLinkExpired && sendEmailedUsers?.[index]?.isPaid === 0) ? (
                         <div>
                           <Tooltip
                             trigger={<LinkExpired width={30} height={30} color="#D22B2B" />}
@@ -591,7 +633,7 @@ export const CollectPayment = ({
                               content="Email opened and read"
                             />
                           </div>
-                        ) : sendEmailedUsers?.[index]?.emailOpened === 0 ? (
+                        ) : (sendEmailedUsers?.[index]?.emailOpened === 0 && sendEmailedUsers?.[index]?.isPaid === 0) ? (
                           <div className="flex justify-center items-start gap-1">
                             <Tooltip
                               trigger={<Email width={30} height={30} />}
@@ -606,6 +648,21 @@ export const CollectPayment = ({
               )}
             </div>
             <div className="flex flex-col w-full gap-3">
+              <div className="w-full flex justify-between px-3 pt-5">
+                <div className="text-[16px] flex justify-start gap-2 font-[500] text-black">
+                  <h4 className="text-primary-gray">Total Amount Paid</h4>
+                  <Tooltip
+                    trigger={<Info className="h-[14px] w-[14px]" />}
+                    content="The total for the number of people who have paid"
+                  />
+                </div>
+                <div>
+                  <p className="text-[16px] font-[500] text-primary-gray">${Number(paidAmount).toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}</p>
+                </div>
+              </div>
               <div className="w-full flex justify-between px-3 pt-5">
                 <div className="text-[16px] flex justify-start gap-2 font-[500] text-black">
                   <h4 className="text-primary-gray">Total Amount</h4>
