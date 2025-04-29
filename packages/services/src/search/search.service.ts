@@ -1857,7 +1857,7 @@ export class SearchService extends CacheService {
         .innerJoin(courses, eq(teeTimes.courseId, courses.id))
         .where(
           and(
-            gte(sql`Date(${teeTimes.providerDate})`, startDate),
+            gte(sql`Date(${teeTimes.providerDate})`, sql`DATE(${startDate})`),
             eq(teeTimes.courseId, courseId),
             sql`${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} > 0`,
             sql`${teeTimes.availableFirstHandSpots} > 0`
