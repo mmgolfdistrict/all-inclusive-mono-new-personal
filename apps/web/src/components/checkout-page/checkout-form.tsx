@@ -36,8 +36,6 @@ import { useSession } from "@golf-district/auth/nextjs-exports";
 import { useUser } from "~/hooks/useUser";
 import { PhoneNumberUtil } from "google-libphonenumber";
 
-const BLOCK_CHECKOUT_WHEN_GREEN_FEE_TIMES_X_LT_MARKUP = 5;
-
 type charityData = {
   charityDescription: string | undefined;
   charityName: string | undefined;
@@ -182,6 +180,8 @@ export const CheckoutForm = ({
       console.error('Failed to fetch country', error);
     }
   }, [userCountryData?.country, setCurrentCountry]);
+
+  const { data: blockCheckoutValue } = api.checkout.blockCheckoutWhenGreenFeeTimesXLtMarkup.useQuery({});
 
   const [countries, _setCountries] = useState<Country[]>(
     countryList.filter(
@@ -645,7 +645,7 @@ export const CheckoutForm = ({
     });
 
     try {
-      if (greenFeeChargePerPlayer * BLOCK_CHECKOUT_WHEN_GREEN_FEE_TIMES_X_LT_MARKUP <= markupFee) {
+      if (greenFeeChargePerPlayer * (Number(blockCheckoutValue)) <= markupFee) {
         toast.error("Price too low to sell.");
       } else {
         if (response) {
