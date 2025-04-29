@@ -1826,7 +1826,7 @@ export class SearchService extends CacheService {
     let forecastData = await this.getCache(`${courseId}-${startDate}-${endDate}-${process.env.NODE_ENV}`)!;
 
     if (!forecastData) {
-
+      const formattedStartDate = new Date(startDate).toISOString().split("T")[0];
       forecastData = await this.database
         .select({
           courseId: teeTimes.courseId,
@@ -1857,7 +1857,7 @@ export class SearchService extends CacheService {
         .innerJoin(courses, eq(teeTimes.courseId, courses.id))
         .where(
           and(
-            gte(sql`Date(${teeTimes.providerDate})`, sql`DATE(${startDate})`),
+            gte(sql`DATE(${teeTimes.providerDate})`, formattedStartDate),
             eq(teeTimes.courseId, courseId),
             sql`${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} > 0`,
             sql`${teeTimes.availableFirstHandSpots} > 0`
