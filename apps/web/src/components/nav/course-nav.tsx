@@ -392,7 +392,7 @@ export const CourseNav = () => {
                 <NavItem
                   href={`/${courseId}`}
                   text="Find Times"
-                  icon={<Search className="w-[16px]" />}
+                  icon={<Search className="w-[16px]  mt-3" />}
                   data-testid="tee-time-id"
                   data-test={courseId}
                   onClick={handleResetFilters}
@@ -402,7 +402,7 @@ export const CourseNav = () => {
                 <NavItem
                   href={`/${courseId}/my-tee-box`}
                   text="Sell"
-                  icon={<Marketplace className="w-[16px]" />}
+                  icon={<Marketplace className="w-[16px] mt-3" />}
                   data-testid="sell-your-tee-time-id"
                   data-test={courseId}
                   onClick={handleResetFilters}
@@ -422,16 +422,17 @@ export const CourseNav = () => {
                   />
                 ) : null}
 
-                <NavItem
-                  href={user && session.status === "authenticated" ? `/${courseId}/account-settings/${user?.id}` : `/${courseId}/login`}
-                  text="Account"
-                  icon={<UserProfile className="w-[20px] fill-[#353b3f]" />}
-                  data-testid="account-settings-id"
-                  data-test={courseId}
-                  onClick={handleResetFilters}
-                  id="navbar-account-settings"
-                  className="max-w-[64px]"
-                />
+                {course?.supportsGroupBooking ? (
+                  <NavItem
+                    href={`/${courseId}/group-booking`}
+                    text="Group Booking"
+                    icon={<Megaphone className="w-[20px]" />}
+                    data-testid="group-booking-id"
+                    data-test={courseId}
+                    onClick={handleResetFilters}
+                    className="max-w-[64px]"
+                  />
+                ) : null}
 
                 <NavItem
                   href=""
@@ -461,17 +462,17 @@ export const CourseNav = () => {
                   className="max-w-[64px]"
                 />
 
-                {course?.supportsGroupBooking ? (
-                  <NavItem
-                    href={`/${courseId}/group-booking`}
-                    text="Group Booking"
-                    icon={<Megaphone className="w-[20px]" />}
-                    data-testid="group-booking-id"
-                    data-test={courseId}
-                    onClick={handleResetFilters}
-                    className="max-w-[64px]"
-                  />
-                ) : null}
+                <NavItem
+                  href={user && session.status === "authenticated" ? `/${courseId}/account-settings/${user?.id}` : `/${courseId}/login`}
+                  text="Account"
+                  icon={<UserProfile className="w-[20px] fill-[#353b3f]" />}
+                  data-testid="account-settings-id"
+                  data-test={courseId}
+                  onClick={handleResetFilters}
+                  id="navbar-account-settings"
+                  className="max-w-[64px]"
+                />
+
                 {course?.allowAuctions ? (
                   <NavItem
                     href={`/${courseId}/auctions`}

@@ -21,6 +21,8 @@ import GroupBookingPage from "./GroupBookingPage";
 import { api } from "~/utils/api";
 import { toast } from "react-toastify";
 import { useAppContext } from "~/contexts/AppContext";
+import { Info } from "~/components/icons/info";
+import { Tooltip } from "~/components/tooltip";
 const tomorrow = dayjs().add(1, "day");
 
 function GroupBooking({ params }: { params: { course: string } }) {
@@ -348,9 +350,15 @@ function GroupBooking({ params }: { params: { course: string } }) {
               </section>
             </div>
             <div className="" id="pick-number-of-players-field">
-              <label className="text-[14px] text-primary-gray">
-                {"Select Group Size"}
-              </label>
+              <div className="flex items-center gap-1">
+                <label htmlFor="slider-number-of-players" className="text-[14px] text-primary-gray">
+                  Select Group Size
+                </label>
+                <Tooltip
+                  trigger={<Info className="h-[14px] w-[14px] text-primary-gray" />}
+                  content="For groups over the maximum size, call the course for special accommodations. All other bookings must be made online."
+                />
+              </div>
               <div className="relative mt-2">
                 <div className="flex justify-between text-sm mb-2 ">
                   {Array.from({ length: (SLIDER_MAX - SLIDER_MIN) + 1 }, (_, i) => (SLIDER_MIN + i) % STEP === 0 ? (SLIDER_MIN + i) : "").map(
@@ -366,6 +374,7 @@ function GroupBooking({ params }: { params: { course: string } }) {
                   )}
                 </div>
                 <SingleSlider
+                  id="slider-number-of-players"
                   min={SLIDER_MIN}
                   max={SLIDER_MAX}
                   step={STEP}
@@ -376,16 +385,16 @@ function GroupBooking({ params }: { params: { course: string } }) {
               </div>
             </div>
           </div>
-            
+
           <div className="flex items-center justify-center" id="see-available-times">
-          <FilledButton
-            onClick={handleSubmit}
-            className="flex items-center justify-center gap-1 max-w-[200px] w-full mt-4 self-center py-[.28rem] md:py-1.5 text-[10px] md:text-[14px] disabled:opacity-50 transition-opacity duration-300"
-            disabled={isTeeTimesLoading || !displayDates}
+            <FilledButton
+              onClick={handleSubmit}
+              className="flex items-center justify-center gap-1 max-w-[200px] w-full mt-4 self-center py-[.28rem] md:py-1.5 text-[10px] md:text-[14px] disabled:opacity-50 transition-opacity duration-300"
+              disabled={isTeeTimesLoading || !displayDates}
             >
-            See Available Times
-          </FilledButton>
-            </div>
+              See Available Times
+            </FilledButton>
+          </div>
           <div className="flex justify-center items-center mt-2 italic text-primary-gray text-[12px] md:text-[16px] px-4 py-2 md:px-8 md:py-6">
             <p>
               Bookings are paid in advance and non-refundable. If plans change
