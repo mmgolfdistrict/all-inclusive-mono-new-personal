@@ -362,7 +362,7 @@ const ListTeeTimeDetail = ({
     {isLoading && <LoadingContainer isLoading={isLoading}>
       <div></div>
     </LoadingContainer>}
-    <div className="flex h-full flex-col justify-between overflow-y-auto">
+    <div className="relative flex h-full flex-col justify-between overflow-y-auto">
       <div className="flex flex-col gap-6 px-0 sm:px-4 mb-6">
         <TeeTimeItem
           courseImage={selectedTeeTime?.courseLogo ?? ""}
@@ -472,7 +472,11 @@ const ListTeeTimeDetail = ({
             Your Listing Price{" "}
             <Tooltip
               trigger={<Info className="h-[14px] w-[14px]" />}
-              content="Buyer sees a slightly higher amount. These buyer/seller fees help keep the lights on at Golf District and to continuously provide better service."
+              content={
+                <div className="max-w-[220px] text-sm break-words">
+                  Buyer sees a slightly higher amount. These buyer/seller fees help keep the lights on at Golf District and to continuously provide better service.
+                </div>
+              }
             />
           </div>
           <div className="text-secondary-black">
@@ -484,7 +488,11 @@ const ListTeeTimeDetail = ({
             Service Fee{" "}
             <Tooltip
               trigger={<Info className="h-[14px] w-[14px]" />}
-              content="This fee ensures ongoing enhancements to our service, ultimately offering golfers the best access to booking tee times"
+              content={
+                <div className="max-w-[200px] text-sm break-words">
+                  This fee ensures ongoing enhancements to our service, ultimately offering golfers the best access to booking tee times
+                </div>
+              }
             />
           </div>
           <div className="text-secondary-black">

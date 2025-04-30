@@ -526,7 +526,7 @@ export const ManageTeeTimeListing = ({
               Service Fee{" "}
               <Tooltip
                 trigger={<Info className="h-[14px] w-[14px]" />}
-                content="This fee ensures ongoing enhancements to our service, ultimately offering golfers the best access to booking tee times"
+                content={<div className="max-w-[200px] text-sm break-words">This fee ensures ongoing enhancements to our service, ultimately offering golfers the best access to booking tee times</div>}
               />
             </div>
             <div className="text-secondary-black">

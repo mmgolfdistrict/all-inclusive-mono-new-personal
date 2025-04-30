@@ -138,6 +138,7 @@ export const HyperSwitch = ({
               ? "PRIMARY"
               : "UNLISTED",
         listingId: listingId ?? "",
+        purpose: "tee_time_purchase"
       })) as CreatePaymentResponse;
       if (data?.error) {
         toast.error(data?.error);

@@ -457,14 +457,14 @@ export default function CourseHomePage() {
           sortValue === "Sort by time - Early to Late"
             ? "asc"
             : sortValue === "Sort by time - Late to Early"
-            ? "desc"
-            : "",
+              ? "desc"
+              : "",
         sortPrice:
           sortValue === "Sort by price - Low to High"
             ? "asc"
             : sortValue === "Sort by price - High to Low"
-            ? "desc"
-            : "",
+              ? "desc"
+              : "",
         timezoneCorrection: course?.timezoneCorrection,
         isHolesAny: holes === "Any",
         isGolferAny: golfers === "Any",
@@ -887,7 +887,6 @@ export default function CourseHomePage() {
         <MobileDates
           setShowFilters={setShowDates}
           toggleFilters={toggleDates}
-          openForecastModal={openForecastModal}
         />
       )}
       {isForecastModalOpen && (
