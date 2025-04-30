@@ -727,7 +727,16 @@ export class HyperSwitchService {
 
     return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
   }
-  createPaymentLink = async (amount: number, email: string, bookingId: string, origin: string, totalPayoutAmount: number, collectPaymentProcessorCharge: number, courseLogo: string) => {
+  createPaymentLink = async (amount: number,
+    email: string,
+    bookingId: string,
+    origin: string,
+    totalPayoutAmount: number,
+    collectPaymentProcessorCharge: number,
+    courseLogo: string,
+    additonalMessge: string,
+    userEmail: string
+  ) => {
     try {
       if (amount === 0) {
         return {
@@ -741,6 +750,15 @@ export class HyperSwitchService {
           message: "Email is required"
         }
       }
+
+      if (email === userEmail) {
+        return {
+          error: true,
+          message: "Email cannot be same as user email"
+        }
+      }
+
+
       const [bookingResult] = await this.database.select({
         userName: users.name,
         bookingProviderId: bookings.providerBookingId,
@@ -876,7 +894,8 @@ export class HyperSwitchService {
                 //TRACKING_URL: `https://webhook.site/tracking-email?id=${referencePaymentId}`
                 TRACKING_URL: `${origin}/api/trackemail/?id=${referencePaymentId}`,
                 SUBJECT_LINE: `Payment Requested for Your Golf Tee Time by ${username}`,
-                LOGO_URL: courseLogo
+                LOGO_URL: courseLogo,
+                ADDITIONAL_MESSAGE: additonalMessge
               },
               []
             )
@@ -983,7 +1002,8 @@ Thank you for choosing us.`;
                 TRACKING_URL: `${origin}/trackemail/?id=${hyperswitchUUID}`,
                 //TRACKING_URL: `https://webhook.site/tracking-email?id=${hyperswitchUUID}`
                 SUBJECT_LINE: `Payment Requested for Your Golf Tee Time by ${username}`,
-                LOGO_URL: courseLogo
+                LOGO_URL: courseLogo,
+                ADDITIONAL_MESSAGE: additonalMessge
               },
               []
             )
@@ -1106,11 +1126,12 @@ Thank you for choosing us.`;
             bookingId: bookingSplitPayment.bookingId,
             amount: bookingSplitPayment.payoutAmount,
             paymentId: bookingSplitPayment.paymentId,
+            collectedAmount: bookingSplitPayment.collectedAmount
           })
           .from(bookingSplitPayment)
           .where(eq(bookingSplitPayment.paymentId, paymentId));
         // email send the payment completed user
-        const message: string = `Your payment of ₹${result?.amount} has been successfully processed. Thank you for your payment.`;
+        const message: string = `Your payment of $${(Number(result?.collectedAmount) / 100)} has been successfully processed. Thank you for your payment.`;
         const emailSend = await this.notificationService.sendEmail(
           result?.email ?? "",
           "Payment Successful",
@@ -1118,7 +1139,7 @@ Thank you for choosing us.`;
         )
         // email send the admins after payment completed of the user
 
-        const messageAdmin: string = `Payment of ₹${result?.amount} has been successfully processed for the user ${result?.email}. Thank you for your payment.`;
+        const messageAdmin: string = `Payment of  $${(Number(result?.collectedAmount) / 100)} has been successfully processed for the user ${result?.email}. Thank you for your payment.`;
         const adminEmails = process.env.ADMIN_EMAIL_LIST!.split(",");
 
         for (const email of adminEmails) {
@@ -1179,11 +1200,12 @@ Thank you for choosing us.`;
             bookingId: bookingSplitPayment.bookingId,
             amount: bookingSplitPayment.payoutAmount,
             paymentId: bookingSplitPayment.paymentId,
+            collectedAmount: bookingSplitPayment.collectedAmount
           })
           .from(bookingSplitPayment)
           .where(eq(bookingSplitPayment.id, referencePaymentId));
         // email send the payment completed user
-        const message: string = `Your payment of ₹${result?.amount} has been successfully processed. Thank you for your payment.`;
+        const message: string = `Your payment of$${result?.collectedAmount} has been successfully processed. Thank you for your payment.`;
         const emailSend = await this.notificationService.sendEmail(
           result?.email ?? "",
           "Payment Successful",
@@ -1191,7 +1213,7 @@ Thank you for choosing us.`;
         )
         // email send the admins after payment completed of the user
 
-        const messageAdmin: string = `Payment of ₹${result?.amount} has been successfully processed for the user ${result?.email}. Thank you for your payment.`;
+        const messageAdmin: string = `Payment of $${result?.collectedAmount} has been successfully processed for the user ${result?.email}. Thank you for your payment.`;
         const adminEmails = process.env.ADMIN_EMAIL_LIST!.split(",");
 
         for (const email of adminEmails) {
@@ -1333,8 +1355,30 @@ Thank you for choosing us.`;
     origin: string,
     totalPayoutAmount: number,
     collectPaymentProcessorCharge: number,
-    courseLogo: string
+    courseLogo: string,
+    additonalMessge: string,
+    userEmail: string
   ) => {
+
+    if (amount === 0) {
+      return {
+        error: true,
+        message: "Amount Cannot be zero or empty"
+      }
+    }
+    if (email === "") {
+      return {
+        error: true,
+        message: "Email is required"
+      }
+    }
+
+    if (email === userEmail) {
+      return {
+        error: true,
+        message: "Email cannot be same as user email"
+      }
+    }
     try {
       const paymentProcessor = String(process.env.SPLIT_PAYMENT_PROCESSOR);
       const [result] = await this.database
@@ -1383,7 +1427,7 @@ Thank you for choosing us.`;
                 }),
               });
             });
-          const resultPaymentLink = await this.createPaymentLink(amount, email, bookingId, origin, amount, collectPaymentProcessorCharge, courseLogo);
+          const resultPaymentLink = await this.createPaymentLink(amount, email, bookingId, origin, amount, collectPaymentProcessorCharge, courseLogo, additonalMessge, userEmail);
           return resultPaymentLink;
         }
       } else {
@@ -1417,7 +1461,7 @@ Thank you for choosing us.`;
               });
             });
           await this.cancelPaymentIntent(result.paymentId);
-          const resultPaymentLink = await this.createPaymentLink(amount, email, bookingId, origin, totalPayoutAmount, collectPaymentProcessorCharge, courseLogo);
+          const resultPaymentLink = await this.createPaymentLink(amount, email, bookingId, origin, totalPayoutAmount, collectPaymentProcessorCharge, courseLogo, additonalMessge, userEmail);
           console.log("resultPaymentLink", resultPaymentLink);
           return resultPaymentLink;
         }

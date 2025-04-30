@@ -15,6 +15,7 @@ import { ManageOwnedTeeTime } from "../manage-owned-tee-time";
 import { SkeletonRow } from "../skeleton-row";
 import { type OwnedTeeTime } from "../owned";
 import Link from "next/link";
+import { CollectPayment } from "../collect-payment";
 
 export const MobileOwned = () => {
   const { course } = useCourseContext();
@@ -22,8 +23,11 @@ export const MobileOwned = () => {
   const [isListTeeTimeOpen, setIsListTeeTimeOpen] = useState<boolean>(false);
   const [isCancelListingOpen, setIsCancelListingOpen] =
     useState<boolean>(false);
+  const [isCollectTeeTimeOpen, setIsCollectPaymentOpen] =
+    useState<boolean>(false);
   const [isManageOwnedTeeTimeOpen, setIsManageOwnedTeeTimeOpen] =
     useState<boolean>(false);
+  const [sideBarClose, setIsSideBarClose] = useState<boolean>(false)
   const { data, isLoading, isError, error, refetch } =
     api.teeBox.getOwnedTeeTimes.useQuery(
       {
@@ -36,7 +40,7 @@ export const MobileOwned = () => {
     OwnedTeeTime | undefined
   >(undefined);
   const { user } = useUserContext();
-
+  const { data: isCollectPaymemtEnabled } = api.checkout.isCollectPaymentEnabled.useQuery({});
   const ownedTeeTimes = useMemo(() => {
     if (!data) return undefined;
     return Object.keys(data).map((key) => {
@@ -64,6 +68,10 @@ export const MobileOwned = () => {
     setSelectedTeeTime(teeTime);
     setIsManageOwnedTeeTimeOpen(true);
   };
+  const collectPaymentList = (teeTime: OwnedTeeTime) => {
+    setIsCollectPaymentOpen(true);
+    setSelectedTeeTime(teeTime);
+  }
 
   if (isError && error) {
     return (
@@ -116,6 +124,8 @@ export const MobileOwned = () => {
               timezoneCorrection={course?.timezoneCorrection}
               bookingStatus={i.bookingStatus}
               isGroupBooking={i.isGroupBooking}
+              isCollectPaymemtEnabled={isCollectPaymemtEnabled ?? false}
+              collectPaymentList={() => collectPaymentList(i)}
             />
           ))}
       </div>
@@ -131,6 +141,13 @@ export const MobileOwned = () => {
         setIsManageOwnedTeeTimeOpen={setIsManageOwnedTeeTimeOpen}
         selectedTeeTime={selectedTeeTime}
         refetch={refetch}
+      />
+      <CollectPayment
+        isCollectPaymentOpen={isCollectTeeTimeOpen}
+        setIsCollectPaymentOpen={setIsCollectPaymentOpen}
+        selectedTeeTime={selectedTeeTime}
+        refetch={refetch}
+        setIsSideBarClose={setIsSideBarClose}
       />
       <CancelListing
         isCancelListingOpen={isCancelListingOpen}
@@ -169,7 +186,9 @@ const TableCard = ({
   openCancelListing,
   openManageListTeeTime,
   bookingStatus,
-  isGroupBooking
+  isGroupBooking,
+  isCollectPaymemtEnabled,
+  collectPaymentList
 }: {
   course: string;
   date: string;
@@ -189,6 +208,8 @@ const TableCard = ({
   openManageListTeeTime: () => void;
   bookingStatus: string;
   isGroupBooking: boolean;
+  isCollectPaymemtEnabled: boolean;
+  collectPaymentList: () => void;
 }) => {
   const href = useMemo(() => {
     if (isListed) {
@@ -276,6 +297,19 @@ const TableCard = ({
             <tr>
               <td className="whitespace-nowrap px-2 py-2" colSpan={2}>
                 <div className="flex w-full justify-center gap-2">
+                  {golfers.length > 1 && isCollectPaymemtEnabled && (
+                    <FilledButton
+                      className="min-w-[145px]"
+                      onClick={collectPaymentList}
+                      data-testid="sell-button-id"
+                      data-test={courseId}
+                      data-qa={course}
+                      id="sell-teetime-button"
+                    >
+                      Collect payment
+                    </FilledButton>
+
+                  )}
                   {golfers.length > 1 &&
                     <div id="manage-teetime-button">
                       <OutlineButton

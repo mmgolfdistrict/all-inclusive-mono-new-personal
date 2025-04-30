@@ -1,14 +1,12 @@
 import * as ToggleGroup from "@radix-ui/react-toggle-group";
 import { LoadingContainer } from "~/app/[course]/loader";
 import { useCourseContext } from "~/contexts/CourseContext";
-import { useUserContext } from "~/contexts/UserContext";
 import { useSidebar } from "~/hooks/useSidebar";
 import { api } from "~/utils/api";
 import { formatMoney, formatTime } from "~/utils/formatters";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   Fragment,
+  useCallback,
   useEffect,
   useMemo,
   useState,
@@ -97,6 +95,7 @@ export const CollectPayment = ({
     | undefined
   >(undefined);
   const [totalAmount, setTotalAmount] = useState<any>(0);
+  const [commonSplitAmount, setCommonSplitAmount] = useState<number>(0);
   const [loadingStates, setLoadingStates] = useState<boolean[]>([]);
   const [selectedOption, setSelectedOption] = useState("equalSplit");
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -106,6 +105,8 @@ export const CollectPayment = ({
       ? "2"
       : selectedTeeTime?.selectedSlotsCount || availableSlots.toString()
   );
+  const [refreshLoader, setRefreshLoader] = useState<boolean>(false);
+  const [additionalMessage, setAddtionalMessage] = useState<string>("");
   const { toggleSidebar } = useSidebar({
     isOpen: isCollectPaymentOpen,
     setIsOpen: setIsCollectPaymentOpen,
@@ -128,9 +129,9 @@ export const CollectPayment = ({
   // }
 
   function checkIfAmountExccedThePurchasePrice(currentAmount: number) {
-    const totalPaidAmount = paidAmount + currentAmount;
 
-    if (totalPaidAmount > selectedTeeTime!?.purchasedFor) {
+    const payoutAmount = totalAmount - (Number(paymentProcessingCharge) / 100) * (Number(availableSlots) - 1)
+    if (payoutAmount > selectedTeeTime!?.purchasedFor) {
       return true;
     }
     return false;
@@ -154,23 +155,54 @@ export const CollectPayment = ({
 
     return "0.00";
   };
-  const handleAmountChange = (index: number, value: string) => {
-    // for this custom payment you just have add the value with amount
-    const updatedAmount = [...amount];
-    updatedAmount[index] = value;
-    console.log(updatedAmount);
-    setAmount(updatedAmount);
-    const newTotal = getTotal(updatedAmount);
+  // const handleAmountChange = (index: number, value: string) => {
+  //   // for this custom payment you just have add the value with amount
+  //   const updatedAmount = [...amount];
+  //   updatedAmount[index] = value;
+  //   console.log(updatedAmount);
+  //   setAmount(updatedAmount);
+  //   const newTotal = getTotal(updatedAmount);
 
-    setTotalAmount(Number(newTotal));
+  //   setTotalAmount(Number(newTotal));
+  // };
+
+  const handleAmountChange = (index: number, value: string) => {
+    setAmount((prev) => {
+      const updated = [...prev];
+      updated[index] = value;
+      const emailUserAmounts = sendEmailedUsers?.map((item) => Number(item.amount)) ?? [];
+      const combinedAmounts = [
+        ...emailUserAmounts,
+        ...updated.slice(emailUserAmounts.length)
+      ];
+      const newTotal = getTotal(combinedAmounts);
+      console.log("newTotal", newTotal);
+      setTotalAmount(Number(newTotal));
+      return updated;
+    });
   };
+
+
+  console.log("currentAmountState", totalAmount, amount)
 
   const handleTotalAmountChange = (amountsArray: any) => {
     //const total = amountsArray.reduce((acc: any, curr: any) => acc + (Number(curr || 0)), 0).toFixed(2);
-    const total = (amountsArray.reduce((acc: number, curr) => {
-      return acc + Number(curr || 0);
-    }, 0) as number);
-    setTotalAmount(total.toFixed(2));
+    if (!sendEmailedUsers) {
+      const total = amountsArray.reduce((acc: number, curr) => {
+        return acc + Number(curr || 0);
+      }, 0);
+      setTotalAmount(total.toFixed(2));
+    } else {
+      const total = sendEmailedUsers.reduce((acc: number, curr) => {
+        return acc + Number(curr.amount || 0);
+      }, 0);
+      const totalPlayers = Number(selectedTeeTime?.golfers.length) - 1;
+
+      const remainingPlayer = totalPlayers - sendEmailedUsers.length
+
+      const finalTotal = Number(total + (commonSplitAmount * remainingPlayer));
+      setTotalAmount(finalTotal.toFixed(2));
+    }
   }
 
   const handlePriceChange = () => {
@@ -183,14 +215,27 @@ export const CollectPayment = ({
         const splitAmount = parseFloat(
           (totalBookingPrice / totalPlayers).toFixed(2)
         ) + processingChargeFees;
+
+        console.log("splitAmount", splitAmount);
+
+        setCommonSplitAmount(splitAmount);
         const amountsArray = Array(totalPlayers - 1).fill(splitAmount);
+        const remainingPlayer = totalPlayers - (sendEmailedUsers?.length ?? 0);
+        const sendEmailUserAmount = sendEmailedUsers?.map((item) => item.amount);
+        if (sendEmailUserAmount && sendEmailUserAmount?.length > 0) {
+          const filledEmailUserAmount = [
+            ...sendEmailUserAmount,
+            ...Array(remainingPlayer).fill(commonSplitAmount)
+          ];
+          setAmount(filledEmailUserAmount);
+        }
         setAmount(amountsArray);
         handleTotalAmountChange(amountsArray);
       }
     } else if (selectedOption === "customSplit") {
       // setAmount(Array.from({ length: Number(availableSlots - 1) }, () => ""));
-    }
 
+    }
   };
   const refetchValues = async () => {
     if (refetch) {
@@ -199,9 +244,10 @@ export const CollectPayment = ({
   };
   useEffect(() => {
     handlePriceChange();
-  }, [selectedOption]);
+  }, [selectedOption, sendTrigger, sendEmailedUsers]);
 
   useEffect(() => {
+    setRefreshLoader(true);
     void refetchEmailedUsers().then((data) => {
       console.log("data", data.data);
       if (data?.data?.length == 0) {
@@ -212,8 +258,10 @@ export const CollectPayment = ({
         ...user,
         amount: (user.totalPayoutAmount / 100),
       })));
-    });
-  }, [sendTrigger]);
+
+    }).finally(() => setRefreshLoader(false));
+  }, [sendTrigger, isCollectPaymentOpen]);
+
   useEffect(() => {
     if (sendEmailedUsers && Array.isArray(sendEmailedUsers)) {
       const totalPaidAmount = sendEmailedUsers.reduce((acc: number, curr) => {
@@ -222,12 +270,18 @@ export const CollectPayment = ({
         }
         return acc;
       }, 0);
-      console.log("totalPaidAmount>>", totalPaidAmount);
       setPaidAmount(totalPaidAmount);
     } else {
       setPaidAmount(0);
     }
   }, [sendTrigger, sendEmailedUsers])
+
+  // useEffect(() => {
+  //   if (sendEmailedUsers && sendEmailedUsers.length > 0) {
+  //     const amountsArray = sendEmailedUsers.map(user => user.amount.toFixed(2));
+  //     setAmount(amountsArray);
+  //   }
+  // }, [sendEmailedUsers, selectedOption]);
   useEffect(() => {
     console.log("isCollectPaymentOpen changed:", isCollectPaymentOpen);
 
@@ -245,12 +299,14 @@ export const CollectPayment = ({
       console.log("data", data.data);
       if (data?.data?.length == 0) {
         setEmailedUsers(undefined);
+        setRefreshLoader(false);
         return;
       }
       setEmailedUsers(data?.data?.map(user => ({
         ...user,
         amount: (user.totalPayoutAmount / 100),
       })));
+      setRefreshLoader(false);
     });
     console.log("selectedOptions", selectedOption);
   }, [isCollectPaymentOpen, availableSlots]);
@@ -282,7 +338,8 @@ export const CollectPayment = ({
         origin: origin,
         totalPayoutAmount: Number(amount[index]),
         collectPaymentProcessorCharge: Number(paymentProcessingCharge),
-        courseLogo: `${course?.logo}`
+        courseLogo: `${course?.logo}`,
+        additionalMessage: additionalMessage
       });
       if (result?.error) {
         toast.error(`${result.message}`);
@@ -313,6 +370,7 @@ export const CollectPayment = ({
         newLoadingStates[index] = false; // Reset loading state after operation
         return newLoadingStates;
       });
+      setAddtionalMessage("");
     }
   };
 
@@ -335,7 +393,8 @@ export const CollectPayment = ({
         origin: origin,
         totalPayoutAmount: Number(amount[index]),
         collectPaymentProcessorCharge: Number(paymentProcessingCharge),
-        courseLogo: `${course?.logo}`
+        courseLogo: `${course?.logo}`,
+        additionalMessage: additionalMessage,
       });
       if (result?.error) {
         toast.error("Error Creating Payment link");
@@ -366,6 +425,7 @@ export const CollectPayment = ({
         newLoadingStates[index] = false;
         return newLoadingStates;
       });
+      setAddtionalMessage("");
     }
   };
   return (
@@ -382,7 +442,8 @@ export const CollectPayment = ({
       </LoadingContainer>
       <aside
         // ref={sidebar}
-        className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[600px] md:h-[100dvh] ${isCollectPaymentOpen ? "translate-x-0" : "translate-x-full"
+        //w-[80vw]
+        className={`!duration-400 fixed right-0 top-1/2 z-20 flex w-full  h-[90dvh]  -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[600px] md:h-[100dvh] ${isCollectPaymentOpen ? "translate-x-0" : "translate-x-full"
           }`}
       >
         <div className="relative flex h-full flex-col overflow-y-auto ">
@@ -480,10 +541,9 @@ export const CollectPayment = ({
                   onClick={() => setSendTrigger((prev) => prev + 1)}
                   width={20}
                   height={20}
-                  className="cursor-pointer"
+                  className={`cursor-pointer ${refreshLoader ? "animate-spin" : ""} `}
                 />
               </div>
-
             </div>
             <div className="flex flex-col w-full gap-3 ">
               {Array.from({ length: Number(availableSlots - 1) }).map(
@@ -510,7 +570,7 @@ export const CollectPayment = ({
                     </div>
                     <div className="flex items-center justify-center">
                       <span className="text-gray-700 font-medium">$</span>
-                      {selectedOption === "equalSplit" ? <p> {(amount[index] ?? sendEmailedUsers?.[index]?.amount ?? 0).toLocaleString("en-US", {
+                      {selectedOption === "equalSplit" ? <p> {(sendEmailedUsers?.[index]?.amount ?? amount[index] ?? 0).toLocaleString("en-US", {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       })}
@@ -525,14 +585,18 @@ export const CollectPayment = ({
                           //     : amount[index]
                           // }
                           //value={sendEmailedUsers?.[index]?.amount ?? amount[index]}
-                          value={amount[index] ?? sendEmailedUsers?.[index]?.amount}
+                          value={sendEmailedUsers?.[index]?.isPaid === 1
+                            ? sendEmailedUsers?.[index]?.amount
+                            : amount[index] ?? sendEmailedUsers?.[index]?.amount}
+                          // value={amount[index]}
                           onChange={(e) => {
                             //+paymentProcessingCharge
                             const addedValue = e.target.value
                             handleAmountChange(index, addedValue);
                           }
                           }
-                          disabled={selectedOption === "equalSplit"}
+                          // disabled={selectedOption === "equalSplit"}
+                          disabled={sendEmailedUsers?.[index]?.isPaid === 1}
                         />
                       )}
                     </div>
@@ -646,6 +710,18 @@ export const CollectPayment = ({
                   </div>
                 )
               )}
+            </div>
+            <div className="w-full">
+              <label htmlFor="message" className="block text-primary-gray font-medium mb-1">
+                Additional Message
+              </label>
+              <textarea
+                id="message"
+                placeholder="Addtional message"
+                className="w-full h-32 p-4 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition resize-none"
+                onChange={(e) => setAddtionalMessage(e.target.value)}
+                value={additionalMessage}
+              ></textarea>
             </div>
             <div className="flex flex-col w-full gap-3">
               <div className="w-full flex justify-between px-3 pt-5">

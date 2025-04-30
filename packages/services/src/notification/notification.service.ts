@@ -63,7 +63,8 @@ interface EmailParams {
   MyTeeBoxCollectPaymentUrl?:string;
   TRACKING_URL?:string,
   SUBJECT_LINE?:string,
-  LOGO_URL?:string
+  LOGO_URL?:string,
+  ADDITIONAL_MESSAGE?:string
 }
 
 interface Attachment {
