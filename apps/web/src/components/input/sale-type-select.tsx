@@ -65,7 +65,7 @@ export const SaleTypeSelector: React.FC<SaleTypeSelectorProps> = ({
                             w-full
                             ${disabled ? "cursor-not-allowed" : "cursor-pointer"}
                         `}
-                        disabled={disabled} 
+                        disabled={disabled}
                     >
                         <div className="flex items-center justify-center gap-1.5">
                             <span>{option.caption}</span>
@@ -78,7 +78,7 @@ export const SaleTypeSelector: React.FC<SaleTypeSelectorProps> = ({
                             >
                                 <Tooltip
                                     trigger={<Info className={`h-[14px] w-[14px] ${disabled ? "cursor-not-allowed" : ""}`} />}
-                                    content={option.tooltip}
+                                    content={<div className="max-w-[220px] text-sm break-words">{option.tooltip}</div>}
                                     isDisabled={disabled}
                                 />
                             </button>

@@ -113,8 +113,8 @@ export const checkoutRouter = createTRPCRouter({
         email: z.string(),
         bookingId: z.string(),
         origin: z.string(),
-        totalPayoutAmount : z.number(),
-        collectPaymentProcessorCharge : z.number(),
+        totalPayoutAmount: z.number(),
+        collectPaymentProcessorCharge: z.number(),
         courseLogo:z.string(),
         additionalMessage:z.string(),
       })
@@ -138,11 +138,13 @@ export const checkoutRouter = createTRPCRouter({
     .input(
       z.object({
         paymentId: z.string(),
-        referencePaymentId:z.string().optional(),
+        referencePaymentId: z.string().optional(),
       })
     )
     .query(async ({ ctx, input }) => {
-      return await ctx.serviceFactory.getHyperSwitchService().updateSplitPaymentStatus(input.paymentId,input.referencePaymentId ?? "");
+      return await ctx.serviceFactory
+        .getHyperSwitchService()
+        .updateSplitPaymentStatus(input.paymentId, input.referencePaymentId ?? "");
     }),
 
   checkEmailedUserPaidTheAmount: protectedProcedure
@@ -193,7 +195,7 @@ export const checkoutRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       return await ctx.serviceFactory.getHyperSwitchService().getPaymentLinkByPaymentId(input.paymentId);
     }),
-  saveSplitPaymentAmountIntoCashOut : protectedProcedure
+  saveSplitPaymentAmountIntoCashOut: protectedProcedure
     .input(
       z.object({
         bookingId: z.string(),
@@ -201,22 +203,29 @@ export const checkoutRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      return await ctx.serviceFactory.getHyperSwitchService().saveSplitPaymentAmountIntoCashOut(input.bookingId, input.amount);
+      return await ctx.serviceFactory
+        .getHyperSwitchService()
+        .saveSplitPaymentAmountIntoCashOut(input.bookingId, input.amount);
     }),
-    getSplitPaymentUsersByBookingId : protectedProcedure
+  getSplitPaymentUsersByBookingId: protectedProcedure
     .input(
       z.object({
         bookingId: z.string(),
       })
     )
     .query(async ({ ctx, input }) => {
-      return await ctx.serviceFactory.getHyperSwitchService().getSplitPaymentUsersByBookingId(input.bookingId);
+      return await ctx.serviceFactory
+        .getHyperSwitchService()
+        .getSplitPaymentUsersByBookingId(input.bookingId);
     }),
 
-    isCollectPaymentEnabled : protectedProcedure.input(z.object({})).query(async ({ ctx }) => {
-      return await ctx.serviceFactory.getCheckoutService().isCollectPaymentEnabled();
-    }),
-    collectPaymentProcessorPercent : protectedProcedure.input(z.object({})).query(async ({ ctx }) => {
-      return await ctx.serviceFactory.getCheckoutService().collectPaymentProcessorPercent();
-    })
+  isCollectPaymentEnabled: protectedProcedure.input(z.object({})).query(async ({ ctx }) => {
+    return await ctx.serviceFactory.getCheckoutService().isCollectPaymentEnabled();
+  }),
+  collectPaymentProcessorPercent: protectedProcedure.input(z.object({})).query(async ({ ctx }) => {
+    return await ctx.serviceFactory.getCheckoutService().collectPaymentProcessorPercent();
+  }),
+  blockCheckoutWhenGreenFeeTimesXLtMarkup: protectedProcedure.input(z.object({})).query(async ({ ctx }) => {
+    return await ctx.serviceFactory.getCheckoutService().blockCheckoutWhenGreenFeeTimesXLtMarkup();
+  }),
 });
