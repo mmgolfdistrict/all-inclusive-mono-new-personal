@@ -1752,4 +1752,10 @@ export class CheckoutService {
     );
     return appSettingsResult?.value;
   };
+  blockCheckoutWhenGreenFeeTimesXLtMarkup = async () => {
+    const appSettingsResult = await this.appSettings.getAppSetting(
+      "BLOCK_CHECKOUT_WHEN_GREEN_FEE_TIMES_X_LT_MARKUP"
+    );
+    return appSettingsResult?.value;
+  };
 }
