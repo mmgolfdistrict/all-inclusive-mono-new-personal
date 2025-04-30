@@ -563,7 +563,7 @@ export const CollectPayment = ({
                         value={sendEmailedUsers?.[index]?.email ?? emails[index]}
                       />
                       <div className="h-2 mb-1">
-                        {emails[index] && !isValidEmail(emails[index]) && (
+                        {emails[index] && !isValidEmail(emails[index]?? "") && (
                           <span className="text-red text-[12px]">Invalid email address</span>
                         )}
                       </div>
