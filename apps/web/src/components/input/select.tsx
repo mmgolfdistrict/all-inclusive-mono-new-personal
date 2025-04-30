@@ -13,16 +13,18 @@ export const Select = ({
   values,
   value,
   setValue,
+  className
 }: {
   values: string[];
   value: string;
   setValue: (v: SortType) => void;
+  className?: string;
 }) => {
   return (
     <RadixSelect.Root value={value} onValueChange={setValue}>
       <RadixSelect.Trigger
         data-testid="sort-by-id"
-        className="flex h-[35px] items-center justify-between gap-2 whitespace-nowrap rounded-full border border-stroke bg-white px-4 py-2 text-[14px] outline-none data-[placeholder]:text-primary-gray"
+        className={`flex h-[35px] items-center justify-between gap-2 whitespace-nowrap rounded-full border border-stroke bg-white px-4 py-2 text-[14px] outline-none data-[placeholder]:text-primary-gray ${className ?? ""}`}
       >
         <RadixSelect.Value placeholder="Sort by price" aria-label={value}>
           {value}
@@ -40,7 +42,7 @@ export const Select = ({
           <RadixSelect.ScrollUpButton className="flex h-[25px] cursor-default items-center justify-center bg-white text-primary-gray">
             <DownChevron className="h-[14px] w-[14px] rotate-180" />
           </RadixSelect.ScrollUpButton>
-          <RadixSelect.Viewport className="">
+          <RadixSelect.Viewport className="max-h-[280px] overflow-y-auto">
             {values.map((item, idx) => (
               <SelectItem
                 value={item}
