@@ -129,9 +129,9 @@ export const CollectPayment = ({
   // }
 
   function checkIfAmountExccedThePurchasePrice(currentAmount: number) {
-
+    if (!selectedTeeTime?.purchasedFor) return false;
     const payoutAmount = totalAmount - (Number(paymentProcessingCharge) / 100) * (Number(availableSlots) - 1)
-    if (payoutAmount > selectedTeeTime!?.purchasedFor) {
+    if (payoutAmount > selectedTeeTime?.purchasedFor) {
       return true;
     }
     return false;
