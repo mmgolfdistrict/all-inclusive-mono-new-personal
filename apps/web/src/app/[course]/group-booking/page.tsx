@@ -23,7 +23,7 @@ import { toast } from "react-toastify";
 import { useAppContext } from "~/contexts/AppContext";
 import { Info } from "~/components/icons/info";
 import { Tooltip } from "~/components/tooltip";
-import { Select } from "~/components/input/select";
+import { SelectGroupSize } from "~/components/input/select-group-size";
 const tomorrow = dayjs().add(1, "day");
 
 function GroupBooking({ params }: { params: { course: string } }) {
@@ -373,8 +373,7 @@ function GroupBooking({ params }: { params: { course: string } }) {
               </div>
               {showNumberInBetween > 15 ? (
                 <div className="w-full">
-                  <Select
-                    className="w-full"
+                  <SelectGroupSize
                     values={Array.from(
                       { length: Math.floor((SLIDER_MAX - SLIDER_MIN) / STEP) + 1 },
                       (_, i) => (SLIDER_MIN + STEP * i).toString()
