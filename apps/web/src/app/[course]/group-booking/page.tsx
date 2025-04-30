@@ -361,7 +361,7 @@ function GroupBooking({ params }: { params: { course: string } }) {
                 />
               </section>
             </div>
-            <div className="grid grid-cols-1 gap-4" id="pick-number-of-players-field">
+            <div className="grid grid-cols-1 gap-2" id="pick-number-of-players-field">
               <div className="flex items-center gap-1">
                 <label htmlFor="slider-number-of-players" className="text-[14px] text-primary-gray">
                   Select Group Size
@@ -373,12 +373,6 @@ function GroupBooking({ params }: { params: { course: string } }) {
               </div>
               {showNumberInBetween > 15 ? (
                 <div className="w-full">
-                  <label
-                    htmlFor="select-number-of-players"
-                    className="block mb-2 text-sm font-medium text-gray-700"
-                  >
-                    Select Number of Players
-                  </label>
                   <Select
                     className="w-full"
                     values={Array.from(
