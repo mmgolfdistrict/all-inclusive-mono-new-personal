@@ -39,7 +39,7 @@ import type { UserWaitlistService } from "../user-waitlist/userWaitlist.service"
 import { loggerService } from "../webhooks/logging.service";
 import { groupBookings } from "@golf-district/database/schema/groupBooking";
 import { CacheService } from "../infura/cache.service";
-import { splitPayments } from "@golf-district/database/schema/splitPayment";
+import { bookingSplitPayment } from "@golf-district/database/schema/bookingSplitPayment";
 
 dayjs.extend(UTC);
 dayjs.extend(timezone);
@@ -296,8 +296,8 @@ export class BookingService {
         weatherGuaranteeAmount: transfers.weatherGuaranteeAmount,
         cartFee: bookings.cartFeePerPlayer,
         markupFees: bookings.markupFees,
-        splitPaymentsAmount: splitPayments.amount,
-        isPaidSplitAmount: splitPayments.isPaid
+        splitPaymentsAmount: bookingSplitPayment.payoutAmount,
+        isPaidSplitAmount: bookingSplitPayment.isPaid
       })
       .from(transfers)
       .innerJoin(bookings, eq(bookings.id, transfers.bookingId))
@@ -305,7 +305,7 @@ export class BookingService {
       .innerJoin(courses, eq(courses.id, teeTimes.courseId))
       .leftJoin(lists, eq(bookings.listId, lists.id))
       .leftJoin(assets, eq(assets.id, courses.logoId))
-      .leftJoin(splitPayments, eq(splitPayments.bookingId, transfers.bookingId))
+      .leftJoin(bookingSplitPayment, eq(bookingSplitPayment.bookingId, transfers.bookingId))
       // .leftJoin(userBookingOffers, eq(userBookingOffers.bookingId, bookings.id))
       .where(
         and(
@@ -4598,6 +4598,7 @@ export class BookingService {
         playTime: teeTimes.providerDate,
         transferedFromBookingId: transfers.fromUserId,
         groupId: bookings.groupId,
+        playerCount:bookings.playerCount
       })
       .from(bookings)
       .innerJoin(transfers, eq(transfers.bookingId, bookings.id))
@@ -4638,7 +4639,7 @@ export class BookingService {
       booking.providerId = "";
     }
 
-    return { ...booking, playerCount };
+    return { ...booking, playerCount:booking?.playerCount || playerCount};
   };
 
   checkIfTeeTimeAvailableOnProvider = async (teeTimeId: string, golfersCount: number, userId: string) => {

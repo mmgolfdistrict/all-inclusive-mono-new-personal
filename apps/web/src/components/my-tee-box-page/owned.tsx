@@ -367,7 +367,7 @@ const TableRow = ({
       </td>
       <td className="whitespace-nowrap px-4 py-3">
         <div className="flex w-full justify-end gap-2">
-          {isCollectPaymentEnabled && (
+          { golfers.length > 1 && isCollectPaymentEnabled && (
             <FilledButton
               className="min-w-[145px]"
               onClick={collectPaymentList}

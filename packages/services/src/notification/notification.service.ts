@@ -61,7 +61,10 @@ interface EmailParams {
   FACILITY?: string;
   COURSE_RESERVATION_ID?: string;
   MyTeeBoxCollectPaymentUrl?:string;
-  TRACKING_URL?:string
+  TRACKING_URL?:string,
+  SUBJECT_LINE?:string,
+  LOGO_URL?:string,
+  ADDITIONAL_MESSAGE?:string
 }
 
 interface Attachment {

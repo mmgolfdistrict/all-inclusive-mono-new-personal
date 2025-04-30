@@ -14,7 +14,7 @@ import type {
   CustomerPaymentMethodsResponse,
 } from "./types/hyperSwitch.types";
 import { failedBooking } from "@golf-district/database/schema/failedBookings";
-import { splitPayments } from "@golf-district/database/schema/splitPayment";
+import { bookingSplitPayment } from "@golf-district/database/schema/bookingSplitPayment";
 import { appSettingService } from "../app-settings/initialized";
 import { bookings } from "@golf-district/database/schema/bookings";
 import { customerRecievable } from "@golf-district/database/schema/customerRecievable";
@@ -26,6 +26,7 @@ import dayjs from "dayjs";
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import { formatTime } from "@golf-district/shared";
+import { assets } from "@golf-district/database/schema/assets";
 /**
  * Service for interacting with the HyperSwitch API.
  */
@@ -726,20 +727,37 @@ export class HyperSwitchService {
 
     return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
   }
-  createPaymentLink = async (amount: number, email: string, bookingId: string, origin: string, totalPayoutAmount: number, collectPaymentProcessorCharge: number) => {
+  createPaymentLink = async (amount: number,
+    email: string,
+    bookingId: string,
+    origin: string,
+    totalPayoutAmount: number,
+    collectPaymentProcessorCharge: number,
+    courseLogo: string,
+    additonalMessge: string,
+    userEmail: string
+  ) => {
     try {
       if (amount === 0) {
-        throw new Error("Amount cannot be zero");
+        return {
+          error: true,
+          message: "Amount Cannot be zero or empty"
+        }
       }
       if (email === "") {
-        throw new Error("Email cannot be empty");
+        return {
+          error: true,
+          message: "Email is required"
+        }
       }
-      if (bookingId === "") {
-        throw new Error("BookingId cannot be empty");
+
+      if (email === userEmail) {
+        return {
+          error: true,
+          message: "Email cannot be same as user email"
+        }
       }
-      if (origin === "") {
-        throw new Error("Origin cannot be empty");
-      }
+
 
       const [bookingResult] = await this.database.select({
         userName: users.name,
@@ -747,11 +765,13 @@ export class HyperSwitchService {
         courseName: courses.name,
         courseTimeZone: courses.timezoneCorrection,
         facilityName: entities.name,
-        bookingDateTime: teeTimes.providerDate
+        bookingDateTime: teeTimes.providerDate,
+        cdn: assets.cdn,
       }).from(bookings)
         .leftJoin(users, eq(bookings.ownerId, users.id))
         .leftJoin(teeTimes, eq(bookings.teeTimeId, teeTimes.id))
         .leftJoin(courses, eq(teeTimes.courseId, courses.id))
+        .leftJoin(assets, eq(assets.id, courses.logoId))
         .leftJoin(entities, eq(entities.id, courses.entityId))
         .where(eq(bookings.id, bookingId));
       console.log("bookingResult", bookingResult);
@@ -798,9 +818,9 @@ export class HyperSwitchService {
             button_font_color: "#FFF"
           },
           additional_details: {
-            collect_name: false,
+            collect_name: true,
             collect_email: true,
-            collect_phone: false,
+            collect_phone: true,
             collect_billing_address: false,
             collect_shipping_address: false,
             expiration_in_minutes: Number(paymentExpirationTime),
@@ -829,17 +849,17 @@ export class HyperSwitchService {
           const newexpireDate = addedMins.toISOString().slice(0, 19).replace('T', ' ');
           //(amount * 100)
           await this.database
-            .insert(splitPayments)
+            .insert(bookingSplitPayment)
             .values({
               id: referencePaymentId,
-              amount: originalUserSplitAmount,
+              payoutAmount: originalUserSplitAmount,
               email: email,
               bookingId: bookingId,
               paymentId: paymentId,
               paymentLink: finix_link_url,
-              totalPayoutAmount: (totalPayoutAmount * 100),
-              paymentProcessingCharge: collectPaymentProcessorCharge,
-              expirationTime: newexpireDate
+              collectedAmount: (totalPayoutAmount * 100),
+              paymentProcessorPercent: collectPaymentProcessorCharge,
+              expirationDateTime: newexpireDate
             })
             .execute().catch(async (e: any) => {
               console.log(e);
@@ -872,7 +892,10 @@ export class HyperSwitchService {
                 FACILITY: `${bookingResult?.facilityName}`,
                 COURSE_RESERVATION_ID: `${bookingResult?.bookingProviderId}`,
                 //TRACKING_URL: `https://webhook.site/tracking-email?id=${referencePaymentId}`
-                TRACKING_URL:`${origin}/api/trackemail/?id=${referencePaymentId}`
+                TRACKING_URL: `${origin}/api/trackemail/?id=${referencePaymentId}`,
+                SUBJECT_LINE: `Payment Requested for Your Golf Tee Time by ${username}`,
+                LOGO_URL: courseLogo,
+                ADDITIONAL_MESSAGE: additonalMessge
               },
               []
             )
@@ -935,17 +958,17 @@ Thank you for choosing us.`;
         if (response?.payment_link?.link) {
           const hyperswitchUUID = randomUUID();
           await this.database
-            .insert(splitPayments)
+            .insert(bookingSplitPayment)
             .values({
               id: hyperswitchUUID,
-              amount: originalUserSplitAmount,
+              payoutAmount: originalUserSplitAmount,
               email: email,
               bookingId: bookingId,
               paymentId: response?.payment_id,
               paymentLink: response?.payment_link?.link,
-              totalPayoutAmount: (totalPayoutAmount * 100),
-              paymentProcessingCharge: collectPaymentProcessorCharge,
-              expirationTime: this.formatDateForMySQL(response?.expires_on)
+              collectedAmount: (totalPayoutAmount * 100),
+              paymentProcessorPercent: collectPaymentProcessorCharge,
+              expirationDateTime: this.formatDateForMySQL(response?.expires_on)
             })
             .execute().catch(async (e: any) => {
               console.log(e);
@@ -966,7 +989,7 @@ Thank you for choosing us.`;
           if (splitPaymentEmailTemplateId) {
             const emailSend = await this.notificationService.sendEmailByTemplate(
               email,
-              "Payment Link",
+              "",
               process.env.SPLIT_PAYMENT_EMAIL_TEMPLATE_ID!,
               {
                 USERNAME: `${username}`,
@@ -976,8 +999,11 @@ Thank you for choosing us.`;
                 PLAY_TIME: formatTime(bookingResult?.bookingDateTime ?? "", false, bookingResult?.courseTimeZone ?? 0),
                 FACILITY: `${bookingResult?.facilityName}`,
                 COURSE_RESERVATION_ID: `${bookingResult?.bookingProviderId}`,
-                TRACKING_URL:`${origin}/trackemail/?id=${hyperswitchUUID}`
+                TRACKING_URL: `${origin}/trackemail/?id=${hyperswitchUUID}`,
                 //TRACKING_URL: `https://webhook.site/tracking-email?id=${hyperswitchUUID}`
+                SUBJECT_LINE: `Payment Requested for Your Golf Tee Time by ${username}`,
+                LOGO_URL: courseLogo,
+                ADDITIONAL_MESSAGE: additonalMessge
               },
               []
             )
@@ -1075,11 +1101,11 @@ Thank you for choosing us.`;
     try {
       if (paymentId) {
         await this.database
-          .update(splitPayments)
+          .update(bookingSplitPayment)
           .set({
             isPaid: 1,
           })
-          .where(eq(splitPayments.paymentId, paymentId))
+          .where(eq(bookingSplitPayment.paymentId, paymentId))
           .execute().catch(async (e: any) => {
             await loggerService.errorLog({
               message: "ERROR_UPDATING_HYPERSWITCH_PAYMENT_STATUS",
@@ -1096,13 +1122,33 @@ Thank you for choosing us.`;
           });
         const [result] = await this.database
           .select({
-            email: splitPayments.email,
-            bookingId: splitPayments.bookingId,
-            amount: splitPayments.amount,
-            paymentId: splitPayments.paymentId,
+            email: bookingSplitPayment.email,
+            bookingId: bookingSplitPayment.bookingId,
+            amount: bookingSplitPayment.payoutAmount,
+            paymentId: bookingSplitPayment.paymentId,
+            collectedAmount: bookingSplitPayment.collectedAmount
           })
-          .from(splitPayments)
-          .where(eq(splitPayments.paymentId, paymentId));
+          .from(bookingSplitPayment)
+          .where(eq(bookingSplitPayment.paymentId, paymentId));
+        // email send the payment completed user
+        const message: string = `Your payment of $${(Number(result?.collectedAmount) / 100)} has been successfully processed. Thank you for your payment.`;
+        const emailSend = await this.notificationService.sendEmail(
+          result?.email ?? "",
+          "Payment Successful",
+          message
+        )
+        // email send the admins after payment completed of the user
+
+        const messageAdmin: string = `Payment of  $${(Number(result?.collectedAmount) / 100)} has been successfully processed for the user ${result?.email}. Thank you for your payment.`;
+        const adminEmails = process.env.ADMIN_EMAIL_LIST!.split(",");
+
+        for (const email of adminEmails) {
+          await this.notificationService.sendEmail(
+            email.trim(),
+            "New payment is successfully received in Collect Payment",
+            messageAdmin
+          );
+        }
         await loggerService.auditLog({
           id: randomUUID(),
           userId: "",
@@ -1119,6 +1165,7 @@ Thank you for choosing us.`;
             provider: "hyperswitch"
           }),
         });
+
         return {
           message: "status update successFully",
           email: result?.email,
@@ -1128,11 +1175,11 @@ Thank you for choosing us.`;
         };
       } else if (referencePaymentId) {
         await this.database
-          .update(splitPayments)
+          .update(bookingSplitPayment)
           .set({
             isPaid: 1,
           })
-          .where(eq(splitPayments.id, referencePaymentId))
+          .where(eq(bookingSplitPayment.id, referencePaymentId))
           .execute().catch(async (e: any) => {
             await loggerService.errorLog({
               message: "ERROR_UPDATING_FINIX_PAYMENT_STATUS",
@@ -1149,13 +1196,33 @@ Thank you for choosing us.`;
           });
         const [result] = await this.database
           .select({
-            email: splitPayments.email,
-            bookingId: splitPayments.bookingId,
-            amount: splitPayments.amount,
-            paymentId: splitPayments.paymentId,
+            email: bookingSplitPayment.email,
+            bookingId: bookingSplitPayment.bookingId,
+            amount: bookingSplitPayment.payoutAmount,
+            paymentId: bookingSplitPayment.paymentId,
+            collectedAmount: bookingSplitPayment.collectedAmount
           })
-          .from(splitPayments)
-          .where(eq(splitPayments.id, referencePaymentId));
+          .from(bookingSplitPayment)
+          .where(eq(bookingSplitPayment.id, referencePaymentId));
+        // email send the payment completed user
+        const message: string = `Your payment of$${result?.collectedAmount} has been successfully processed. Thank you for your payment.`;
+        const emailSend = await this.notificationService.sendEmail(
+          result?.email ?? "",
+          "Payment Successful",
+          message
+        )
+        // email send the admins after payment completed of the user
+
+        const messageAdmin: string = `Payment of $${result?.collectedAmount} has been successfully processed for the user ${result?.email}. Thank you for your payment.`;
+        const adminEmails = process.env.ADMIN_EMAIL_LIST!.split(",");
+
+        for (const email of adminEmails) {
+          await this.notificationService.sendEmail(
+            email.trim(),
+            "New payment is successfully received in Collect Payment",
+            messageAdmin
+          );
+        }
         await loggerService.auditLog({
           id: randomUUID(),
           userId: "",
@@ -1239,30 +1306,30 @@ Thank you for choosing us.`;
       }
       const result = await this.database
         .select({
-          email: splitPayments.email,
-          isPaid: splitPayments.isPaid,
-          isActive: splitPayments.isActive,
-          paymentId: splitPayments.paymentId,
-          amount: splitPayments.amount,
-          totalPayoutAmount: splitPayments.totalPayoutAmount,
-          emailOpened: splitPayments.isEmailOpened,
-          expireTime: splitPayments.expirationTime
+          email: bookingSplitPayment.email,
+          isPaid: bookingSplitPayment.isPaid,
+          isActive: bookingSplitPayment.isActive,
+          paymentId: bookingSplitPayment.paymentId,
+          amount: bookingSplitPayment.payoutAmount,
+          totalPayoutAmount: bookingSplitPayment.collectedAmount,
+          emailOpened: bookingSplitPayment.isEmailOpened,
+          expireTime: bookingSplitPayment.expirationDateTime
         })
-        .from(splitPayments)
+        .from(bookingSplitPayment)
         .where(
           and(
-            eq(splitPayments.bookingId, bookingId),
-            eq(splitPayments.isActive, 1)
+            eq(bookingSplitPayment.bookingId, bookingId),
+            eq(bookingSplitPayment.isActive, 1)
           )
           //eq(splitPayments.bookingId, bookingId)
         );
-        const newResult = result.map((item) => {
-          const isLinkExpired = item?.expireTime
-            ? this.hasTimeExpired(item.expireTime)
-            : null;
-          return { ...item, isLinkExpired };
-        });
-      this.logger.warn(newResult,"the new updated response with expired time");
+      const newResult = result.map((item) => {
+        const isLinkExpired = item?.expireTime
+          ? this.hasTimeExpired(item.expireTime)
+          : null;
+        return { ...item, isLinkExpired };
+      });
+      this.logger.warn(newResult, "the new updated response with expired time");
       return newResult || [];
     } catch (error: any) {
       console.log(error);
@@ -1287,40 +1354,63 @@ Thank you for choosing us.`;
     isActive: number,
     origin: string,
     totalPayoutAmount: number,
-    collectPaymentProcessorCharge: number
+    collectPaymentProcessorCharge: number,
+    courseLogo: string,
+    additonalMessge: string,
+    userEmail: string
   ) => {
+
+    if (amount === 0) {
+      return {
+        error: true,
+        message: "Amount Cannot be zero or empty"
+      }
+    }
+    if (email === "") {
+      return {
+        error: true,
+        message: "Email is required"
+      }
+    }
+
+    if (email === userEmail) {
+      return {
+        error: true,
+        message: "Email cannot be same as user email"
+      }
+    }
     try {
       const paymentProcessor = String(process.env.SPLIT_PAYMENT_PROCESSOR);
       const [result] = await this.database
         .select({
-          email: splitPayments.email,
-          bookingId: splitPayments.bookingId,
-          paymentId: splitPayments.paymentId,
-          id: splitPayments.id,
+          email: bookingSplitPayment.email,
+          bookingId: bookingSplitPayment.bookingId,
+          paymentId: bookingSplitPayment.paymentId,
+          id: bookingSplitPayment.id,
         })
-        .from(splitPayments)
+        .from(bookingSplitPayment)
         .where(
           and(
-            eq(splitPayments.email, email),
-            eq(splitPayments.bookingId, bookingId),
-            eq(splitPayments.isActive, 1)
+            eq(bookingSplitPayment.email, email),
+            eq(bookingSplitPayment.bookingId, bookingId),
+            eq(bookingSplitPayment.isActive, 1)
           )
         );
       if (paymentProcessor === "finix") {
         if (result?.email && result?.bookingId) {
 
           const updatedResult = await this.database
-            .update(splitPayments)
+            .update(bookingSplitPayment)
             .set({
               isActive: 0,
               isEmailOpened: 0
             })
             .where(
               and(
-                eq(splitPayments.email, result?.email),
-                eq(splitPayments.bookingId, result?.bookingId),
-                eq(splitPayments.isActive, 1),
-                eq(splitPayments.paymentId, result?.paymentId)
+                eq(bookingSplitPayment.email, result?.email),
+                eq(bookingSplitPayment.bookingId, result?.bookingId),
+                eq(bookingSplitPayment.isActive, 1),
+                eq(bookingSplitPayment.paymentId, result?.paymentId)
               )
             )
             .execute().catch(async (e: any) => {
@@ -1337,23 +1427,23 @@ Thank you for choosing us.`;
                 }),
               });
             });
-          const resultPaymentLink = await this.createPaymentLink(amount, email, bookingId, origin, amount, collectPaymentProcessorCharge);
+          const resultPaymentLink = await this.createPaymentLink(amount, email, bookingId, origin, amount, collectPaymentProcessorCharge, courseLogo, additonalMessge, userEmail);
           return resultPaymentLink;
         }
       } else {
         if (result?.email && result?.bookingId) {
           const updatedResult = await this.database
-            .update(splitPayments)
+            .update(bookingSplitPayment)
             .set({
               isActive: 0,
               isEmailOpened: 0
             })
             .where(
               and(
-                eq(splitPayments.email, result?.email),
-                eq(splitPayments.bookingId, result?.bookingId),
-                eq(splitPayments.isActive, 1),
-                eq(splitPayments.paymentId, result?.paymentId),
+                eq(bookingSplitPayment.email, result?.email),
+                eq(bookingSplitPayment.bookingId, result?.bookingId),
+                eq(bookingSplitPayment.isActive, 1),
+                eq(bookingSplitPayment.paymentId, result?.paymentId),
               )
             )
             .execute().catch(async (e: any) => {
@@ -1371,7 +1461,7 @@ Thank you for choosing us.`;
               });
             });
           await this.cancelPaymentIntent(result.paymentId);
-          const resultPaymentLink = await this.createPaymentLink(amount, email, bookingId, origin, totalPayoutAmount, collectPaymentProcessorCharge);
+          const resultPaymentLink = await this.createPaymentLink(amount, email, bookingId, origin, totalPayoutAmount, collectPaymentProcessorCharge, courseLogo, additonalMessge, userEmail);
           console.log("resultPaymentLink", resultPaymentLink);
           return resultPaymentLink;
         }
@@ -1399,9 +1489,9 @@ Thank you for choosing us.`;
       const paymentProcessor = String(process.env.SPLIT_PAYMENT_PROCESSOR);
       if (paymentProcessor === "finix") {
         const [result] = await this.database
-          .select({ paymentLink: splitPayments.paymentLink })
-          .from(splitPayments)
-          .where(and(eq(splitPayments.paymentId, paymentId)));
+          .select({ paymentLink: bookingSplitPayment.paymentLink })
+          .from(bookingSplitPayment)
+          .where(and(eq(bookingSplitPayment.paymentId, paymentId)));
         return {
           error: false,
           message: "Payment-Link fetch Successful",
@@ -1409,9 +1499,9 @@ Thank you for choosing us.`;
         };
       } else {
         const [result] = await this.database
-          .select({ paymentLink: splitPayments.paymentLink })
-          .from(splitPayments)
-          .where(and(eq(splitPayments.paymentId, paymentId)));
+          .select({ paymentLink: bookingSplitPayment.paymentLink })
+          .from(bookingSplitPayment)
+          .where(and(eq(bookingSplitPayment.paymentId, paymentId)));
         const paymentStatus = await this.retrievePaymentIntent(paymentId);
         if ((paymentStatus?.status as string) === "cancelled") {
           return {
@@ -1462,9 +1552,9 @@ Thank you for choosing us.`;
   saveSplitPaymentAmountIntoCashOut = async (bookingId: string, amount: number) => {
     try {
       const [result] = await this.database
-        .select({ ownerId: bookings.ownerId, originalAmountBeforeAddingCharges: splitPayments.amount })
+        .select({ ownerId: bookings.ownerId, originalAmountBeforeAddingCharges: bookingSplitPayment.payoutAmount })
         .from(bookings)
-        .leftJoin(splitPayments, eq(splitPayments.bookingId, bookingId))
+        .leftJoin(bookingSplitPayment, eq(bookingSplitPayment.bookingId, bookingId))
         .where(eq(bookings.id, bookingId));
       if (!result) {
         throw new Error("Error while fetching for booking");
@@ -1518,9 +1608,9 @@ Thank you for choosing us.`;
   getSplitPaymentUsersByBookingId = async (bookingId: string) => {
     try {
       const result = await this.database
-        .select({ email: splitPayments.email, amount: splitPayments.amount, isPaid: splitPayments.isPaid })
-        .from(splitPayments)
-        .where(and(eq(splitPayments.bookingId, bookingId), eq(splitPayments.isActive, 1)));
+        .select({ email: bookingSplitPayment.email, amount: bookingSplitPayment.payoutAmount, isPaid: bookingSplitPayment.isPaid })
+        .from(bookingSplitPayment)
+        .where(and(eq(bookingSplitPayment.bookingId, bookingId), eq(bookingSplitPayment.isActive, 1)));
       return result;
     } catch (err: any) {
       await loggerService.errorLog({
