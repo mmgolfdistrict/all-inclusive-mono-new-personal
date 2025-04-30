@@ -127,6 +127,10 @@ export const TeeTimeV2 = ({
     const { refetch: refetchStillListed } = api.teeBox.checkIfTeeTimeStillListedByListingId.useQuery({
         listingId: listingId ?? "",
     }) 
+    const groupBookingParams = useMemo(() => {
+        return `date=${items.date?.split("T")[0]}&time=${items.time}`
+    }, [items])
+
     const logAudit = async () => {
         await auditLog.mutateAsync({
             userId: user?.id ?? "",
@@ -397,6 +401,7 @@ export const TeeTimeV2 = ({
                                     status={status}
                                     supportsGroupBooking={course?.supportsGroupBooking}
                                     allowSplit={allowSplit}
+                                    groupBookingParams={groupBookingParams}
                                 />
                             ) : (
                                 players && (

@@ -7,7 +7,7 @@ import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
 import { formatMoney, formatTime } from "~/utils/formatters";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type ComponentProps } from "react";
+import { useEffect, useState, type ComponentProps, useMemo } from "react";
 import { toast } from "react-toastify";
 import { useCopyToClipboard } from "usehooks-ts";
 import { Avatar } from "../avatar";
@@ -55,6 +55,9 @@ export const TeeTimeDetails = ({
 
   const [, copy] = useCopyToClipboard();
   const [isCopied, setIsCopied] = useState<boolean>(false);
+  const groupBookingParams = useMemo(() => {
+    return `date=${data?.date?.split("T")[0]}&time=${data?.time}`
+  }, [data])
 
   const { user } = useUserContext();
   const { setPrevPath } = useAppContext();
@@ -196,6 +199,7 @@ export const TeeTimeDetails = ({
               isDisabled={allowedPlayers?.selectStatus === "ALL_PLAYERS"}
               id="choose-players-detail-page"
                   supportsGroupBooking={course?.supportsGroupBooking}
+                  groupBookingParams={groupBookingParams}
             />
           </div>
           <div className="flex flex-col flex-wrap justify-between gap-2 md:flex-row">

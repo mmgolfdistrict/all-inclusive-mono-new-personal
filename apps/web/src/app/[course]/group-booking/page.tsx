@@ -24,9 +24,18 @@ import { useAppContext } from "~/contexts/AppContext";
 import { Info } from "~/components/icons/info";
 import { Tooltip } from "~/components/tooltip";
 import { SelectGroupSize } from "~/components/input/select-group-size";
+import { useSearchParams } from "next/navigation";
 const tomorrow = dayjs().add(1, "day");
 
 function GroupBooking({ params }: { params: { course: string } }) {
+  const searchParams = useSearchParams();
+  const time = searchParams.get("time");
+  const date = searchParams.get("date");
+  const dateObject = date !== "undefined" && date !== "null" ? {
+    day: Number(date?.split("-")[2]),
+    month: Number(date?.split("-")[1]),
+    year: Number(date?.split("-")[0]),
+  } : null;
   const { course } = useCourseContext();
   const STEP = course?.isOnlyGroupOfFourAllowed ? 4 : 1;
   const SLIDER_MIN = course?.groupBookingMinSize ?? 0;
@@ -43,7 +52,7 @@ function GroupBooking({ params }: { params: { course: string } }) {
   const showNumberInBetween = getSliderSteps(SLIDER_MIN, SLIDER_MAX, STEP);
 
   const courseId = params.course;
-  const [selectedDate, setSelectedDate] = useState<Day>({ day: tomorrow.date(), month: tomorrow.month() + 1, year: tomorrow.year() });
+  const [selectedDate, setSelectedDate] = useState<Day>(date && dateObject ? dateObject : { day: tomorrow.date(), month: tomorrow.month() + 1, year: tomorrow.year() });
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [displayDates, setDisplayDates] = useState<string>("");
   const [players, setPlayers] = useState(SLIDER_MIN);
@@ -57,6 +66,7 @@ function GroupBooking({ params }: { params: { course: string } }) {
   ]);
   const [timeMobile, setTimeMobile] = useState(startTime);
   const [teeTimeData, setTeeTimeData] = useState<TeeTimeGroups | null>(null);
+  const [selectedTime, setSelectedTime] = useState<number[]>([0]);
 
   const formatTime = (hour: number, minute: number) => {
     const formattedHour = hour % 12 === 0 ? 12 : hour % 12;
@@ -160,6 +170,38 @@ function GroupBooking({ params }: { params: { course: string } }) {
     setDisplayDates(datesToDisplay);
     handleResetQueryResults();
   }, [selectedDate]);
+
+  useEffect(() => {
+    if (filteredStartTimeOptions.length > 0 && time && time !== 'undefined' && time !== 'null') {
+      if (filteredStartTimeOptions[0] === undefined) return;
+      let selectedTimeOption = filteredStartTimeOptions[0];
+      let optionIndex = 0;
+
+      for (const option of filteredStartTimeOptions) {
+        if (option.value > Number(time)) {
+          break;
+        }
+        selectedTimeOption = option;
+        optionIndex++;
+      }
+      setLocalStartTime((prev) => [
+        selectedTimeOption.value,
+        prev[1],
+      ]);
+
+      setFilter("time", [
+        selectedTimeOption.value,
+        localStartTime[1],
+      ]);
+      setSelectedTime([optionIndex]);
+      setStartTime((prev) => {
+        return [
+          selectedTimeOption.value,
+          prev[1],
+        ];
+      })
+    }
+  }, [filteredStartTimeOptions])
 
   const handleSingleSliderChange = (value: number[]) => {
     if (value[0]) {
@@ -332,6 +374,7 @@ function GroupBooking({ params }: { params: { course: string } }) {
                   min={0}
                   max={filteredStartTimeOptions.length - 1}
                   step={1}
+                  value={selectedTime}
                   onValueChange={(values) => {
                     const startIndex = values[0];
                     if (
@@ -351,6 +394,7 @@ function GroupBooking({ params }: { params: { course: string } }) {
                           startOption.value,
                           localStartTime[1],
                         ]);
+                        setSelectedTime([startIndex]);
                       }
                     }
                   }
