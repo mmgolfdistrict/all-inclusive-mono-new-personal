@@ -9,7 +9,7 @@ import {
   type SensibleDataToMountCompType,
 } from "~/utils/types";
 import { useSearchParams } from "next/navigation";
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import { useMediaQuery } from "usehooks-ts";
 import placeholderImage from "../../../public/placeholders/course.png";
@@ -94,6 +94,10 @@ export const CheckoutItem = ({
   const choosePlayers = (amount: string) => {
     setAmountOfPlayers(Number(amount));
   };
+
+  const groupBookingParams = useMemo(() => {
+    return `date=${teeTime?.date?.split("T")[0]}&time=${teeTime?.time}`
+  }, [teeTime])
 
   useEffect(() => {
     if (
@@ -259,6 +263,7 @@ export const CheckoutItem = ({
                   selectStatus={allowedPlayers?.selectStatus}
                   canShowPlayers={!isGroupBooking}
                   allowSplit={teeTime?.allowSplit || false}
+                  groupBookingParams={groupBookingParams}
                 />
               </div>
             </div>
@@ -346,6 +351,7 @@ export const CheckoutItem = ({
                   selectStatus={allowedPlayers?.selectStatus}
                   canShowPlayers={!isGroupBooking}
                     allowSplit={teeTime?.allowSplit || false}
+                    groupBookingParams={groupBookingParams}
                 />
               </div>
             </div>
@@ -497,7 +503,8 @@ const Data = ({
   numberOfPlayers,
   selectStatus,
   canShowPlayers,
-  allowSplit
+  allowSplit,
+  groupBookingParams
 }: {
   className: string;
   canChoosePlayer: boolean;
@@ -513,6 +520,7 @@ const Data = ({
   selectStatus?: string;
   canShowPlayers?: boolean;
     allowSplit?: boolean;
+    groupBookingParams?: string;
 }) => {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const { course } = useCourseContext();
@@ -553,6 +561,7 @@ const Data = ({
                 numberOfPlayers={numberOfPlayers ? numberOfPlayers : []}
                 id="number-of-players-checkout"
                 supportsGroupBooking={course?.supportsGroupBooking}
+                groupBookingParams={groupBookingParams}
               />
             ) : (
               players && (

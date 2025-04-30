@@ -34,6 +34,7 @@ import { cacheManager } from "@golf-district/shared/src/utils/cacheManager";
 import { add, isSameDay, parseISO } from "date-fns";
 import dayjs from "dayjs";
 import UTC from "dayjs/plugin/utc";
+import customParseFormat from "dayjs/plugin/customParseFormat";
 import { CacheService } from "../infura/cache.service";
 import { type ProviderService } from "../tee-sheet-provider/providers.service";
 import type { Forecast } from "../weather/types";
@@ -42,6 +43,7 @@ import { loggerService } from "../webhooks/logging.service";
 import { courseSetting } from "@golf-district/database/schema/courseSetting";
 
 dayjs.extend(UTC);
+dayjs.extend(customParseFormat);
 
 interface TeeTimeSearchObject {
   soldById: string;
@@ -1900,13 +1902,17 @@ export class SearchService extends CacheService {
     minimumGolferGroup = 4
   ) => {
     try {
+      const MINUTES_PRIOR_TO_START_TIME = 30;
+      const ADDITIONAL_DAYS_TO_SEARCH = 2;
+
       // const availableTimes: Record<string, any> = {};
-      const availableTimes: TeeTimeGroup[] = [];
+      const availableTimes: Record<string, TeeTimeGroup[]> = {};
       const [courseSettingResponse] = await this.database
         .select({
           value: courseSetting.value,
           fixedMarkup: courses.markupFeesFixedPerPlayer,
           timeZoneCorrection: courses.timezoneCorrection,
+          courseOpenTime: courses.courseOpenTime,
         })
         .from(courseSetting)
         .innerJoin(courses, eq(courseSetting.courseId, courses.id))
@@ -1932,6 +1938,19 @@ export class SearchService extends CacheService {
           return [];
         });
 
+      //searchStartTime. It needs to be 30 mins priore to start time and it should be in course open time.
+      const hours = Math.floor(startTime / 100);
+      const minutes = startTime % 100;
+      const paddedHours = hours.toString().padStart(2, '0');
+      const paddedMinutes = minutes.toString().padStart(2, '0');
+      const prioreStartTime = Number(dayjs.utc(`2000-01-01T${paddedHours}:${paddedMinutes}:00`, "YYYY-MM-DDTHH:mm:ss").subtract(MINUTES_PRIOR_TO_START_TIME, "minute").format("HHmm"));
+      const searchStartTime = Math.max(prioreStartTime, courseSettingResponse?.courseOpenTime ?? 0);
+
+      for (let day = 1; day <= ADDITIONAL_DAYS_TO_SEARCH; day++) {
+        const searchedDate = dates[0];
+        dates.push(dayjs.utc(searchedDate, "YYYY-MM-DD").add(day, "day").format("YYYY-MM-DD"));
+      }
+
       const priceAccordingToDate = await this.getTeeTimesPriceWithRange(
         courseId,
         courseSettingResponse?.timeZoneCorrection ?? 0
@@ -1940,6 +1959,14 @@ export class SearchService extends CacheService {
       const groupBookingPriceSelectionMethod = courseSettingResponse?.value ?? "MAX";
 
       const slidingWindowSize = Math.ceil(golferCount / minimumGolferGroup);
+
+      const teeTimesQuery = this.database
+        .select()
+        .from(teeTimes)
+        .where(and(eq(teeTimes.courseId, courseId), like(teeTimes.providerDate, sql.placeholder("date"))))
+        .orderBy(asc(teeTimes.providerDate))
+        .prepare()
+
       for (const date of dates) {
         const filteredDate = [] as typeof priceAccordingToDate;
         priceAccordingToDate.forEach((el) => {
@@ -1960,15 +1987,13 @@ export class SearchService extends CacheService {
         const markupFeesToBeUsed = (markupFeesFinal ?? 0) / 100;
 
         console.log("fetching tee times for date", date);
-        const teeTimesResponse = await this.database
-          .select()
-          .from(teeTimes)
-          .where(and(eq(teeTimes.courseId, courseId), like(teeTimes.providerDate, `${date}%`)))
-          .orderBy(asc(teeTimes.providerDate))
-          .execute()
+        const teeTimesResponse = await teeTimesQuery
+          .execute({
+            date: `${date}%`,
+          })
           .catch((err) => {
             this.logger.error(err);
-            loggerService.errorLog({
+            void loggerService.errorLog({
               userId: "",
               url: "/getAvailableTimesForGroupedBookings",
               userAgent: "",
@@ -2001,7 +2026,7 @@ export class SearchService extends CacheService {
         }
 
         const teeTimesToCheck = teeTimesResponse.filter((teeTime) => {
-          return teeTime.time >= startTime && teeTime.time <= endTime;
+          return teeTime.time >= searchStartTime && teeTime.time <= endTime;
         });
 
         // Based on the sliding window size, check available times for each tee time
@@ -2058,7 +2083,10 @@ export class SearchService extends CacheService {
           }
 
           if (areSpotsAvailable && isContinuous) {
-            availableTimes.push({
+            if (!availableTimes[date]) {
+              availableTimes[date] = [];
+            }
+            availableTimes[date]!.push({
               teeTimes: window,
               time: window[0]!.time,
               pricePerGolfer,
@@ -2066,13 +2094,18 @@ export class SearchService extends CacheService {
               date: window[0]!.providerDate,
             });
           }
+          if (date !== dates[0] && availableTimes[date]?.length === 4) {
+            break;
+          }
         }
       }
+
       return availableTimes;
     } catch (err) {
       this.logger.error(`${JSON.stringify(err)}`);
     }
   };
+
   getTeeTimesByIds = async (teeTimeIds: string[], playerCount: number, _userId?: string) => {
     let userId = "00000000-0000-0000-0000-000000000000";
     if (_userId) {
