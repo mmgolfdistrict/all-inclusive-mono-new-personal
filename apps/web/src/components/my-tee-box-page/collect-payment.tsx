@@ -279,10 +279,10 @@ export const CollectPayment = ({
         toast.error("Please enter a valid email before sending the link");
         return;
       }
-      // if (checkDuplicateEmail(email, index)) {
-      //   toast.error(`The email ${email} is already used.`);
-      //   return;
-      // }
+      if (checkDuplicateEmail(email, index)) {
+        toast.error(`The email ${email} is already used.`);
+        return;
+      }
       const isCollectAmountExceed = checkIfAmountExccedThePurchasePrice();
       if (isCollectAmountExceed) {
         toast.error("The amount is exceeding the purchase price");
