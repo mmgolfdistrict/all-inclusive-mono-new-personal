@@ -735,7 +735,8 @@ export class HyperSwitchService {
     collectPaymentProcessorCharge: number,
     courseLogo: string,
     additonalMessge: string,
-    userEmail: string
+    userEmail: string,
+    index: number
   ) => {
     try {
       if (amount === 0) {
@@ -751,12 +752,12 @@ export class HyperSwitchService {
         }
       }
 
-      if (email === userEmail) {
-        return {
-          error: true,
-          message: "Email cannot be same as user email"
-        }
-      }
+      // if (email === userEmail) {
+      //   return {
+      //     error: true,
+      //     message: "Email cannot be same as user email"
+      //   }
+      // }
 
 
       const [bookingResult] = await this.database.select({
@@ -798,10 +799,13 @@ export class HyperSwitchService {
           items: [
             {
               name: "Collect Payment",
-              description: `This is on behalf of ${username}`,
+              description: `Your friend ${username} is requesting your share of the payment $${amount} for your tee time
+            on ${formatTime(bookingResult?.bookingDateTime ?? "", false, bookingResult?.courseTimeZone ?? 0)} 
+            at ${bookingResult?.courseName}.${additonalMessge}
+            `,
               quantity: "1",
               image_details: {
-                primary_image_url: "https://golfdistrict.com/wp-content/uploads/2024/07/Primary-Logo-Single-Line.svg"
+                primary_image_url: `${courseLogo}`
               },
               price_details: {
                 sale_amount: (amount * 100),
@@ -859,7 +863,8 @@ export class HyperSwitchService {
               paymentLink: finix_link_url,
               collectedAmount: (totalPayoutAmount * 100),
               paymentProcessorPercent: collectPaymentProcessorCharge,
-              expirationDateTime: newexpireDate
+              expirationDateTime: newexpireDate,
+              savedIndex:index
             })
             .execute().catch(async (e: any) => {
               console.log(e);
@@ -940,11 +945,14 @@ Thank you for choosing us.`;
             authentication_type: "three_ds",
             currency: currency,
             confirm: false,
-            description: `This is on Behalf of ${username}`,
+            description: `Your friend ${username} is requesting your share of the payment $${amount} for your tee time
+            on ${formatTime(bookingResult?.bookingDateTime ?? "", false, bookingResult?.courseTimeZone ?? 0)} 
+            at ${bookingResult?.courseName}.${additonalMessge}
+            `,
             payment_link_config: {
               theme: "#014E28",
-              logo: "https://i.pinimg.com/736x/4d/83/5c/4d835ca8aafbbb15f84d07d926fda473.jpg",
-              seller_name: "teeskraft",
+              logo: `${courseLogo}`,
+              seller_name: "Golfdistrict",
               sdk_layout: "tabs",
             },
             return_url: return_url,
@@ -968,7 +976,8 @@ Thank you for choosing us.`;
               paymentLink: response?.payment_link?.link,
               collectedAmount: (totalPayoutAmount * 100),
               paymentProcessorPercent: collectPaymentProcessorCharge,
-              expirationDateTime: this.formatDateForMySQL(response?.expires_on)
+              expirationDateTime: this.formatDateForMySQL(response?.expires_on),
+              savedIndex: index
             })
             .execute().catch(async (e: any) => {
               console.log(e);
@@ -1104,6 +1113,7 @@ Thank you for choosing us.`;
           .update(bookingSplitPayment)
           .set({
             isPaid: 1,
+            isActive: 1
           })
           .where(eq(bookingSplitPayment.paymentId, paymentId))
           .execute().catch(async (e: any) => {
@@ -1131,7 +1141,7 @@ Thank you for choosing us.`;
           .from(bookingSplitPayment)
           .where(eq(bookingSplitPayment.paymentId, paymentId));
         // email send the payment completed user
-        const message: string = `Your payment of $${(Number(result?.collectedAmount) / 100)} has been successfully processed. Thank you for your payment.`;
+        const message: string = `Your payment of $${(Number(result?.collectedAmount)/100)} has been successfully processed. Thank you for your payment.`;
         const emailSend = await this.notificationService.sendEmail(
           result?.email ?? "",
           "Payment Successful",
@@ -1139,7 +1149,7 @@ Thank you for choosing us.`;
         )
         // email send the admins after payment completed of the user
 
-        const messageAdmin: string = `Payment of  $${(Number(result?.collectedAmount) / 100)} has been successfully processed for the user ${result?.email}. Thank you for your payment.`;
+        const messageAdmin: string = `Payment of  $${(Number(result?.collectedAmount)/100)} has been successfully processed for the user ${result?.email}. Thank you for your payment.`;
         const adminEmails = process.env.ADMIN_EMAIL_LIST!.split(",");
 
         for (const email of adminEmails) {
@@ -1205,7 +1215,8 @@ Thank you for choosing us.`;
           .from(bookingSplitPayment)
           .where(eq(bookingSplitPayment.id, referencePaymentId));
         // email send the payment completed user
-        const message: string = `Your payment of$${result?.collectedAmount} has been successfully processed. Thank you for your payment.`;
+
+        const message: string = `Your payment of$${Number(result?.collectedAmount)/100} has been successfully processed. Thank you for your payment.`;
         const emailSend = await this.notificationService.sendEmail(
           result?.email ?? "",
           "Payment Successful",
@@ -1213,7 +1224,7 @@ Thank you for choosing us.`;
         )
         // email send the admins after payment completed of the user
 
-        const messageAdmin: string = `Payment of $${result?.collectedAmount} has been successfully processed for the user ${result?.email}. Thank you for your payment.`;
+        const messageAdmin: string = `Payment of $${Number(result?.collectedAmount)/100} has been successfully processed for the user ${result?.email}. Thank you for your payment.`;
         const adminEmails = process.env.ADMIN_EMAIL_LIST!.split(",");
 
         for (const email of adminEmails) {
@@ -1313,7 +1324,8 @@ Thank you for choosing us.`;
           amount: bookingSplitPayment.payoutAmount,
           totalPayoutAmount: bookingSplitPayment.collectedAmount,
           emailOpened: bookingSplitPayment.isEmailOpened,
-          expireTime: bookingSplitPayment.expirationDateTime
+          expireTime: bookingSplitPayment.expirationDateTime,
+          index: bookingSplitPayment.savedIndex,
         })
         .from(bookingSplitPayment)
         .where(
@@ -1357,7 +1369,9 @@ Thank you for choosing us.`;
     collectPaymentProcessorCharge: number,
     courseLogo: string,
     additonalMessge: string,
-    userEmail: string
+    userEmail: string,
+    index: number,
+    paymentId: string
   ) => {
 
     if (amount === 0) {
@@ -1373,12 +1387,12 @@ Thank you for choosing us.`;
       }
     }
 
-    if (email === userEmail) {
-      return {
-        error: true,
-        message: "Email cannot be same as user email"
-      }
-    }
+    // if (email === userEmail) {
+    //   return {
+    //     error: true,
+    //     message: "Email cannot be same as user email"
+    //   }
+    // }
     try {
       const paymentProcessor = String(process.env.SPLIT_PAYMENT_PROCESSOR);
       const [result] = await this.database
@@ -1391,9 +1405,11 @@ Thank you for choosing us.`;
         .from(bookingSplitPayment)
         .where(
           and(
-            eq(bookingSplitPayment.email, email),
+            // eq(bookingSplitPayment.email, email),
             eq(bookingSplitPayment.bookingId, bookingId),
-            eq(bookingSplitPayment.isActive, 1)
+            eq(bookingSplitPayment.isActive, isActive),
+            eq(bookingSplitPayment.paymentId, paymentId)
+            // eq(bookingSplitPayment.isActive, 1)
           )
         );
       if (paymentProcessor === "finix") {
@@ -1427,7 +1443,7 @@ Thank you for choosing us.`;
                 }),
               });
             });
-          const resultPaymentLink = await this.createPaymentLink(amount, email, bookingId, origin, amount, collectPaymentProcessorCharge, courseLogo, additonalMessge, userEmail);
+          const resultPaymentLink = await this.createPaymentLink(amount, email, bookingId, origin, amount, collectPaymentProcessorCharge, courseLogo, additonalMessge, userEmail, index);
           return resultPaymentLink;
         }
       } else {
@@ -1439,12 +1455,13 @@ Thank you for choosing us.`;
               isEmailOpened: 0
             })
             .where(
-              and(
-                eq(bookingSplitPayment.email, result?.email),
-                eq(bookingSplitPayment.bookingId, result?.bookingId),
-                eq(bookingSplitPayment.isActive, 1),
-                eq(bookingSplitPayment.paymentId, result?.paymentId),
-              )
+              eq(bookingSplitPayment.id, result?.id)
+              // and(
+              //   eq(bookingSplitPayment.email, result?.email),
+              //   eq(bookingSplitPayment.bookingId, result?.bookingId),
+              //   eq(bookingSplitPayment.isActive, 1),
+              //   eq(bookingSplitPayment.paymentId, result?.paymentId),
+              // )
             )
             .execute().catch(async (e: any) => {
               await loggerService.errorLog({
@@ -1460,8 +1477,8 @@ Thank you for choosing us.`;
                 }),
               });
             });
-          await this.cancelPaymentIntent(result.paymentId);
-          const resultPaymentLink = await this.createPaymentLink(amount, email, bookingId, origin, totalPayoutAmount, collectPaymentProcessorCharge, courseLogo, additonalMessge, userEmail);
+          //await this.cancelPaymentIntent(result.paymentId);
+          const resultPaymentLink = await this.createPaymentLink(amount, email, bookingId, origin, totalPayoutAmount, collectPaymentProcessorCharge, courseLogo, additonalMessge, userEmail, index);
           console.log("resultPaymentLink", resultPaymentLink);
           return resultPaymentLink;
         }
@@ -1608,7 +1625,7 @@ Thank you for choosing us.`;
   getSplitPaymentUsersByBookingId = async (bookingId: string) => {
     try {
       const result = await this.database
-        .select({ email: bookingSplitPayment.email, amount: bookingSplitPayment.payoutAmount, isPaid: bookingSplitPayment.isPaid })
+        .select({ email: bookingSplitPayment.email, amount: bookingSplitPayment.payoutAmount, isPaid: bookingSplitPayment.isPaid, index: bookingSplitPayment.savedIndex })
         .from(bookingSplitPayment)
         .where(and(eq(bookingSplitPayment.bookingId, bookingId), eq(bookingSplitPayment.isActive, 1)));
       return result;

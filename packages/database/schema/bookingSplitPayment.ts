@@ -21,5 +21,6 @@ export const bookingSplitPayment = mySqlTable("bookingSplitPayment", {
   paymentProcessorPercent:int("paymentProcessorPercent").notNull(),
   isEmailOpened:tinyint("isEmailOpened").default(0).notNull(),
   expirationDateTime:datetime("expirationDateTime", { mode: "string", fsp: 3 }),
+  savedIndex:int("saved_index")
 });
 export type InsertSplitBooking = InferInsertModel<typeof bookingSplitPayment>;

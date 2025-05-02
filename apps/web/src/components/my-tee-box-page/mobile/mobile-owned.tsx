@@ -298,20 +298,22 @@ const TableCard = ({
               <td className="whitespace-nowrap px-2 py-2" colSpan={2}>
                 <div className="flex w-full justify-center gap-2">
                   {golfers.length > 1 && isCollectPaymemtEnabled && (
-                    <FilledButton
-                      className="min-w-[145px]"
-                      onClick={collectPaymentList}
-                      data-testid="sell-button-id"
-                      data-test={courseId}
-                      data-qa={course}
-                      id="sell-teetime-button"
-                    >
-                      Collect payment
-                    </FilledButton>
-
+                    <div className="flex flex-col items-center justify-center min-h-[100px]">
+                      <FilledButton
+                        className="min-w-[145px] mt-5"
+                        onClick={collectPaymentList}
+                        data-testid="sell-button-id"
+                        data-test={courseId}
+                        data-qa={course}
+                        id="sell-teetime-button"
+                      >
+                        Collect payment
+                      </FilledButton>
+                      <span className="text-xs text-gray-500 mt-1">Split Cost with your group</span>
+                    </div>
                   )}
-                  {golfers.length > 1 &&
-                    <div id="manage-teetime-button">
+                  {golfers.length > 1 && (
+                    <div className="flex flex-col items-center justify-center min-h-[100px]" id="manage-teetime-button">
                       <OutlineButton
                         onClick={openManageListTeeTime}
                         data-testid="manage-button-id"
@@ -320,32 +322,36 @@ const TableCard = ({
                       >
                         Invite Players
                       </OutlineButton>
-                    </div>}
-                  {isListed ? (
-                    <FilledButton
-                      className="min-w-[145px]"
-                      onClick={openCancelListing}
-                      data-testid="cancel-listing-button-id"
-                      data-test={courseId}
-                      data-qa={course}
-                    >
-                      Cancel Listing
-                    </FilledButton>
-                  ) : (
-                    <FilledButton
-                      className="min-w-[145px]"
-                      onClick={openListTeeTime}
-                      data-testid="sell-button-id"
-                      data-test={courseId}
-                      data-qa={course}
-                      id="sell-teetime-button"
-                    >
-                      Sell
-                    </FilledButton>
+                    </div>
                   )}
+                  <div className="flex flex-col items-center justify-center min-h-[100px]">
+                    {isListed ? (
+                      <FilledButton
+                        className="min-w-[145px]"
+                        onClick={openCancelListing}
+                        data-testid="cancel-listing-button-id"
+                        data-test={courseId}
+                        data-qa={course}
+                      >
+                        Cancel Listing
+                      </FilledButton>
+                    ) : (
+                      <FilledButton
+                        className="min-w-[145px]"
+                        onClick={openListTeeTime}
+                        data-testid="sell-button-id"
+                        data-test={courseId}
+                        data-qa={course}
+                        id="sell-teetime-button"
+                      >
+                        Sell
+                      </FilledButton>
+                    )}
+                  </div>
                 </div>
               </td>
             </tr>
+
           </tbody>
         </table>
       </div>

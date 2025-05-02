@@ -1,5 +1,5 @@
 import { CustomerCartSchema } from "@golf-district/shared/src/schema/customer-cart-schema";
-import { any, z } from "zod";
+import { any, number, z } from "zod";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 export const checkoutRouter = createTRPCRouter({
@@ -115,8 +115,9 @@ export const checkoutRouter = createTRPCRouter({
         origin: z.string(),
         totalPayoutAmount: z.number(),
         collectPaymentProcessorCharge: z.number(),
-        courseLogo:z.string(),
-        additionalMessage:z.string(),
+        courseLogo: z.string(),
+        additionalMessage: z.string(),
+        index: z.number()
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -124,14 +125,15 @@ export const checkoutRouter = createTRPCRouter({
         .getHyperSwitchService()
         .createPaymentLink(input.amount,
           input.email,
-           input.bookingId,
-            input.origin,
-            input.totalPayoutAmount,
-            input.collectPaymentProcessorCharge,
-            input.courseLogo,
-            input.additionalMessage,
-            ctx.session.user.email
-          );
+          input.bookingId,
+          input.origin,
+          input.totalPayoutAmount,
+          input.collectPaymentProcessorCharge,
+          input.courseLogo,
+          input.additionalMessage,
+          ctx.session.user.email,
+          input.index
+        );
     }),
 
   updateSplitPaymentStatus: publicProcedure
@@ -164,10 +166,12 @@ export const checkoutRouter = createTRPCRouter({
         bookingId: z.string(),
         isActive: z.number(),
         origin: z.string(),
-        totalPayoutAmount : z.number(),
-        collectPaymentProcessorCharge : z.number(),
-        courseLogo:z.string(),
-        additionalMessage:z.string(),
+        totalPayoutAmount: z.number(),
+        collectPaymentProcessorCharge: z.number(),
+        courseLogo: z.string(),
+        additionalMessage: z.string(),
+        index: z.number(),
+        paymentId:z.string()
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -184,6 +188,8 @@ export const checkoutRouter = createTRPCRouter({
           input.courseLogo,
           input.additionalMessage,
           ctx.session.user.email,
+          input.index,
+          input.paymentId
         );
     }),
   getPaymentLinkByPaymentId: publicProcedure

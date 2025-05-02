@@ -34,9 +34,18 @@ import { LinkExpired } from "../icons/link-expired";
 import { OutlineButton } from "../buttons/outline-button";
 import { SaleTypeOption, SaleTypeSelector } from "../input/sale-type-select";
 import { isValidEmail } from "@golf-district/shared";
-type PlayerType = "1" | "2" | "3" | "4";
+type CollectInputs = {
+  index?: number;
+  email?: string;
+  amount?: string;
+  isActive?: number;
+  isPaid?: number;
+  isLinkExpired?: boolean;
+  emailOpened?: number;
+  paymentId?: string;
+};
 
-const PlayerOptions = ["1", "2", "3", "4"];
+
 
 type SideBarProps = {
   isCollectPaymentOpen: boolean;
@@ -94,12 +103,14 @@ export const CollectPayment = ({
     | { email: string; isPaid: number; isActive: number; amount: number; emailOpened: number, isLinkExpired: boolean | null }[]
     | undefined
   >(undefined);
+
+  const [collectPaymentInputs, setCollectPaymentInput] = useState<CollectInputs[]>([]);
   const [totalAmount, setTotalAmount] = useState<any>(0);
   const [commonSplitAmount, setCommonSplitAmount] = useState<number>(0);
   const [loadingStates, setLoadingStates] = useState<boolean[]>([]);
   const [selectedOption, setSelectedOption] = useState("equalSplit");
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [paidAmount, setPaidAmount] = useState<number>(0);
+  const [paidAmount, setTotalPaidAmount] = useState<number>(0);
   const [players, setPlayers] = useState<string>(
     selectedTeeTime?.isGroupBooking
       ? "2"
@@ -112,23 +123,39 @@ export const CollectPayment = ({
     setIsOpen: setIsCollectPaymentOpen,
     setClose: setIsSideBarClose
   });
+  const [validationMsg, setValidationMsg] = useState<string>("");
+
+
+
   const { course } = useCourseContext();
   console.log(course?.logo);
-  const handleEmailChange = (index: number, value: string) => {
-    const updatedEmails = [...emails];
-    updatedEmails[index] = value;
-    setEmails(updatedEmails);
-  };
-  // const getTotal = (updatedAmount: any) => {
-  //   if (selectedOption === "equalSplit") {
-  //     return updatedAmount.reduce((acc: any, curr: any) => acc + (Number(curr || 0) + (Number(paymentProcessingCharge) / 100)), 0).toFixed(2);
-  //   }
-  //   if (selectedOption === "customSplit") {
-  //     return updatedAmount.reduce((acc: any, curr: any) => acc + (Number(curr || 0)), 0).toFixed(2);
-  //   }
-  // }
 
-  function checkIfAmountExccedThePurchasePrice(currentAmount: number) {
+  const handleEmailChange = (index: number, value: string) => {
+    setCollectPaymentInput((prev) => {
+      const updated = [...prev];
+      if (updated[index]) {
+        updated[index] = {
+          ...updated[index],
+          email: value,
+        };
+      } else {
+        // If it doesn't exist yet, initialize it fully
+        updated[index] = {
+          index: index,
+          email: value,
+          amount: "",
+          isActive: 0,
+          isPaid: 0,
+          isLinkExpired: false,
+          emailOpened: 0,
+          paymentId: ""
+        };
+      }
+      return updated;
+    });
+  };
+
+  function checkIfAmountExccedThePurchasePrice() {
     if (!selectedTeeTime?.purchasedFor) return false;
     const payoutAmount = totalAmount - (Number(paymentProcessingCharge) / 100) * (Number(availableSlots) - 1)
     if (payoutAmount > selectedTeeTime?.purchasedFor) {
@@ -136,75 +163,51 @@ export const CollectPayment = ({
     }
     return false;
   }
-  const getTotal = (updatedAmount: any): string => {
-    if (selectedOption === "equalSplit") {
-      const total = updatedAmount.reduce((acc: number, curr: any) => {
-        return acc + (Number(curr || 0) + Number(paymentProcessingCharge) / 100);
-      }, 0) as number;
-
-      return total.toFixed(2);
-    }
-
-    if (selectedOption === "customSplit") {
-      const total = updatedAmount.reduce((acc: number, curr: any) => {
-        return acc + Number(curr || 0);
-      }, 0) as number;
-
-      return total.toFixed(2);
-    }
-
-    return "0.00";
-  };
-  // const handleAmountChange = (index: number, value: string) => {
-  //   // for this custom payment you just have add the value with amount
-  //   const updatedAmount = [...amount];
-  //   updatedAmount[index] = value;
-  //   console.log(updatedAmount);
-  //   setAmount(updatedAmount);
-  //   const newTotal = getTotal(updatedAmount);
-
-  //   setTotalAmount(Number(newTotal));
-  // };
-
   const handleAmountChange = (index: number, value: string) => {
-    setAmount((prev) => {
+    setCollectPaymentInput((prev) => {
       const updated = [...prev];
-      updated[index] = value;
-      const emailUserAmounts = sendEmailedUsers?.map((item) => Number(item.amount)) ?? [];
-      const combinedAmounts = [
-        ...emailUserAmounts,
-        ...updated.slice(emailUserAmounts.length)
-      ];
-      const newTotal = getTotal(combinedAmounts);
-      console.log("newTotal", newTotal);
-      setTotalAmount(Number(newTotal));
+      if (updated[index]) {
+        updated[index] = {
+          ...updated[index],
+          amount: value,
+        };
+      } else {
+        // If it doesn't exist yet, initialize it fully
+        updated[index] = {
+          index: index,
+          email: "",
+          amount: value,
+          isActive: 0,
+          isPaid: 0,
+          isLinkExpired: false,
+          emailOpened: 0,
+          paymentId: ""
+        };
+      }
+      const total = updated.reduce((acc, cur) => acc + (Number(cur.amount) || 0), 0);
+      setTotalAmount(total);
       return updated;
     });
-  };
-
-
-  console.log("currentAmountState", totalAmount, amount)
-
+  }
   const handleTotalAmountChange = (amountsArray: any) => {
     //const total = amountsArray.reduce((acc: any, curr: any) => acc + (Number(curr || 0)), 0).toFixed(2);
-    if (!sendEmailedUsers) {
-      const total = amountsArray.reduce((acc: number, curr) => {
-        return acc + Number(curr || 0);
-      }, 0);
-      setTotalAmount(total.toFixed(2));
-    } else {
-      const total = sendEmailedUsers.reduce((acc: number, curr) => {
-        return acc + Number(curr.amount || 0);
-      }, 0);
-      const totalPlayers = Number(selectedTeeTime?.golfers.length) - 1;
+    // if (!sendEmailedUsers) {
+    //   const total = amountsArray.reduce((acc: number, curr) => {
+    //     return acc + Number(curr || 0);
+    //   }, 0);
+    //   setTotalAmount(total.toFixed(2));
+    // } else {
+    //   const total = sendEmailedUsers.reduce((acc: number, curr) => {
+    //     return acc + Number(curr.amount || 0);
+    //   }, 0);
+    //   const totalPlayers = Number(selectedTeeTime?.golfers.length) - 1;
 
-      const remainingPlayer = totalPlayers - sendEmailedUsers.length
+    //   const remainingPlayer = totalPlayers - sendEmailedUsers.length
 
-      const finalTotal = Number(total + (commonSplitAmount * remainingPlayer));
-      setTotalAmount(finalTotal.toFixed(2));
-    }
+    //   const finalTotal = Number(total + (commonSplitAmount * remainingPlayer));
+    //   setTotalAmount(finalTotal.toFixed(2));
+    // }
   }
-
   const handlePriceChange = () => {
     if (selectedOption === "equalSplit") {
       const totalBookingPrice = Number(selectedTeeTime?.purchasedFor);
@@ -242,107 +245,63 @@ export const CollectPayment = ({
       await refetch();
     }
   };
-  useEffect(() => {
-    handlePriceChange();
-  }, [selectedOption, sendTrigger, sendEmailedUsers]);
-
-  useEffect(() => {
-    setRefreshLoader(true);
-    void refetchEmailedUsers().then((data) => {
-      console.log("data", data.data);
-      if (data?.data?.length == 0) {
-        setEmailedUsers(undefined);
-        return;
-      }
-      setEmailedUsers(data?.data?.map(user => ({
-        ...user,
-        amount: (user.totalPayoutAmount / 100),
-      })));
-
-    }).finally(() => setRefreshLoader(false));
-  }, [sendTrigger, isCollectPaymentOpen]);
-
-  useEffect(() => {
-    if (sendEmailedUsers && Array.isArray(sendEmailedUsers)) {
-      const totalPaidAmount = sendEmailedUsers.reduce((acc: number, curr) => {
-        if (curr.isPaid === 1) {
-          return acc + (curr.amount || 0);
-        }
-        return acc;
-      }, 0);
-      setPaidAmount(totalPaidAmount);
+  const isAdditionalMessageExceedingLimit = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const maxLength = 70;
+    const value = e.target.value;
+    setAddtionalMessage(value);
+    if (value.length > maxLength) {
+      setValidationMsg(`Character limit exceeded! Maximum allowed is ${maxLength} characters.`);
     } else {
-      setPaidAmount(0);
+      setValidationMsg(`Characters remaining: ${maxLength - value.length}`);
     }
-  }, [sendTrigger, sendEmailedUsers])
-
-  // useEffect(() => {
-  //   if (sendEmailedUsers && sendEmailedUsers.length > 0) {
-  //     const amountsArray = sendEmailedUsers.map(user => user.amount.toFixed(2));
-  //     setAmount(amountsArray);
-  //   }
-  // }, [sendEmailedUsers, selectedOption]);
-  useEffect(() => {
-    console.log("isCollectPaymentOpen changed:", isCollectPaymentOpen);
-
-    if (!isCollectPaymentOpen) {
-      setSelectedOption("equalSplit");
-      setAmount(Array.from({ length: Number(availableSlots - 1) }, () => ""));
-      setEmails(Array.from({ length: Number(availableSlots - 1) }, () => ""));
-      setEmailedUsers(undefined);
-      void refetchValues();
-    }
-    if (selectedOption === "equalSplit") {
-      handlePriceChange();
-    }
-    void refetchEmailedUsers().then((data) => {
-      console.log("data", data.data);
-      if (data?.data?.length == 0) {
-        setEmailedUsers(undefined);
-        setRefreshLoader(false);
-        return;
-      }
-      setEmailedUsers(data?.data?.map(user => ({
-        ...user,
-        amount: (user.totalPayoutAmount / 100),
-      })));
-      setRefreshLoader(false);
-    });
-    console.log("selectedOptions", selectedOption);
-  }, [isCollectPaymentOpen, availableSlots]);
-
+  }
+  const checkDuplicateEmail = (email: string, index: number): boolean => {
+    return collectPaymentInputs.some(
+      (input, i) => input.email?.toLowerCase() === email.toLowerCase() && i !== index
+    );
+  };
   const handleEmailSendOnHyperSwitchPaymentLink = async (index: number) => {
+
     try {
-      console.log("hyperSwitchEmailSend", emails[index], amount);
       setLoadingStates((prev) => {
         const newLoadingStates = [...prev];
         newLoadingStates[index] = true;
         return newLoadingStates;
       });
 
-      const isCollectAmountExceed = checkIfAmountExccedThePurchasePrice(Number(amount[index]));
-
-      if (isCollectAmountExceed) {
-        toast.error("The amount you are collecting is exceeding the purchase price");
-        setLoadingStates((prev) => {
-          const newLoadingStates = [...prev];
-          newLoadingStates[index] = false;
-          return newLoadingStates;
-        });
+      const currentPlayer = collectPaymentInputs.find((p) => p.index === index);
+      if (!currentPlayer) {
+        toast.error("Player data not found for this slot");
         return;
       }
+      const { email, amount } = currentPlayer;
+      if (!email || !isValidEmail(email)) {
+        toast.error("Please enter a valid email before sending the link");
+        return;
+      }
+      // if (checkDuplicateEmail(email, index)) {
+      //   toast.error(`The email ${email} is already used.`);
+      //   return;
+      // }
+      const isCollectAmountExceed = checkIfAmountExccedThePurchasePrice();
+      if (isCollectAmountExceed) {
+        toast.error("The amount is exceeding the purchase price");
+        return;
+      }
+      console.log("Sending payment link for", email, "with amount", amount);
       const result = await paymentLinkResult.mutateAsync({
-        amount: Number(amount[index]) || 0,
-        email: emails[index] ?? "",
+        amount: Number(amount),
+        email: email,
         bookingId: selectedTeeTime?.bookingIds[0] ?? "",
         origin: origin,
-        totalPayoutAmount: Number(amount[index]),
+        totalPayoutAmount: Number(amount),
         collectPaymentProcessorCharge: Number(paymentProcessingCharge),
         courseLogo: `${course?.logo}`,
-        additionalMessage: additionalMessage
+        additionalMessage: additionalMessage,
+        index: index
       });
       if (result?.error) {
-        toast.error(`${result.message}`);
+        toast.error(result?.message);
         setLoadingStates((prev) => {
           const newLoadingStates = [...prev];
           newLoadingStates[index] = false;
@@ -351,29 +310,23 @@ export const CollectPayment = ({
       } else {
         toast.success(result?.message);
         setSendTrigger((prev) => prev + 1);
-        setLoadingStates((prev) => {
-          const newLoadingStates = [...prev];
-          newLoadingStates[index] = false;
-          return newLoadingStates;
-        });
       }
     } catch (error: any) {
-      toast.error(`${error.message}`);
       setLoadingStates((prev) => {
         const newLoadingStates = [...prev];
-        newLoadingStates[index] = false; // Reset loading state after operation
+        newLoadingStates[index] = false;
         return newLoadingStates;
       });
+      setAddtionalMessage("");
     } finally {
       setLoadingStates((prev) => {
         const newLoadingStates = [...prev];
-        newLoadingStates[index] = false; // Reset loading state after operation
+        newLoadingStates[index] = false;
         return newLoadingStates;
       });
       setAddtionalMessage("");
     }
-  };
-
+  }
   const resendHyperSwitchPaymentLinkOnEmail = async (index: number) => {
     try {
       setLoadingStates((prev) => {
@@ -381,23 +334,28 @@ export const CollectPayment = ({
         newLoadingStates[index] = true;
         return newLoadingStates;
       });
-      console.log("hyperSwitchEmailSend", sendEmailedUsers, amount);
+      const currentPlayer = collectPaymentInputs.find((p) => p.index === index);
+      if (!currentPlayer) {
+        toast.error("Player data not found for this slot");
+        return;
+      }
+      const { email, amount, isActive, paymentId } = currentPlayer;
+      // console.log("hyperSwitchEmailSend", sendEmailedUsers, amount);
       const result = await resendHyperSwitchPaymentLink.mutateAsync({
-        amount: Number(amount[index]),
-        // amount != null && amount > 0
-        //   ? amount
-        //   : sendEmailedUsers?.[index]?.amount ?? 0,
-        email: sendEmailedUsers?.[index]?.email ?? "",
+        amount: Number(amount),
+        email: email || "",
         bookingId: selectedTeeTime?.bookingIds[0] ?? "",
-        isActive: Number(sendEmailedUsers?.[index]?.isActive),
+        isActive: isActive || 1,
         origin: origin,
-        totalPayoutAmount: Number(amount[index]),
+        totalPayoutAmount: Number(amount),
         collectPaymentProcessorCharge: Number(paymentProcessingCharge),
         courseLogo: `${course?.logo}`,
         additionalMessage: additionalMessage,
+        index: index,
+        paymentId: paymentId || ""
       });
       if (result?.error) {
-        toast.error("Error Creating Payment link");
+        toast.error(result?.message);
         setLoadingStates((prev) => {
           const newLoadingStates = [...prev];
           newLoadingStates[index] = false;
@@ -428,6 +386,81 @@ export const CollectPayment = ({
       setAddtionalMessage("");
     }
   };
+  useEffect(() => {
+    if (selectedOption === "equalSplit" || selectedOption === "customSplit") {
+      const totalBookingPrice = Number(selectedTeeTime?.purchasedFor);
+      const totalPlayers = Number(selectedTeeTime?.golfers.length);
+      if (totalPlayers > 0) {
+        const processingChargeFees = (Number(paymentProcessingCharge) / 100);
+        console.log("processing fee charge", processingChargeFees)
+        const splitAmount = parseFloat(
+          (totalBookingPrice / totalPlayers).toFixed(2)
+        ) + processingChargeFees;
+        const arr = Array.from({ length: Number(availableSlots - 1) }, (_, i) => ({
+          index: i,
+          email: "",
+          amount: splitAmount.toFixed(2),
+          isActive: 0,
+          isPaid: 0,
+          isLinkExpired: false,
+          emailOpened: 0,
+          paymentId: ""
+        }));
+        setCollectPaymentInput(arr);
+        setSendTrigger((prev) => prev + 1);
+      }
+    }
+    //setLoadingStates(Array(availableSlots - 1).fill(false)); 
+  }, [selectedTeeTime]);
+  useEffect(() => {
+    setRefreshLoader(true);
+    void refetchEmailedUsers()
+      .then((data) => {
+        const fetchedUsers = data?.data ?? [];
+
+        if (fetchedUsers.length === 0) return;
+
+        const updatedInputs = collectPaymentInputs.map((input, index) => {
+          const matchedUser = fetchedUsers.find(
+            (user) => user.index === input.index
+          );
+          return matchedUser
+            ? {
+              ...input,
+              email: matchedUser.email,
+              amount: (matchedUser.totalPayoutAmount / 100).toFixed(2),
+              isPaid: matchedUser.isPaid,
+              isActive: matchedUser.isActive,
+              emailOpened: matchedUser.emailOpened,
+              isLinkExpired: Boolean(matchedUser.isLinkExpired),
+              paymentId: matchedUser.paymentId,
+              // expireTime: matchedUser.expireTime,
+            }
+            : input;
+        });
+        setCollectPaymentInput(updatedInputs);
+        setRefreshLoader(false);
+      }).finally(() => setRefreshLoader(false));
+  }, [sendTrigger]);
+  useEffect(() => {
+    if (collectPaymentInputs.length > 0) {
+      const totalAmount = collectPaymentInputs.reduce((acc, input) => {
+        const amount = parseFloat(input?.amount ?? "0");
+        return isNaN(amount) ? acc : acc + amount;
+      }, 0);
+      const totalPaidAmount = collectPaymentInputs.reduce((acc, input) => {
+        if (input.isPaid === 1 && input.amount != undefined) {
+          console.log("paidamount", input.amount);
+          const amount = parseFloat(input.amount);
+          return isNaN(amount) ? acc : acc + amount;
+        }
+        return acc
+      }, 0)
+      console.log("paidamount", totalPaidAmount);
+      setTotalPaidAmount(totalPaidAmount || 0);
+      setTotalAmount(totalAmount);
+    }
+  }, [collectPaymentInputs, sendTrigger])
   return (
     <>
       {isCollectPaymentOpen && (
@@ -443,7 +476,7 @@ export const CollectPayment = ({
       <aside
         // ref={sidebar}
         //w-[80vw]
-        className={`!duration-400 fixed right-0 top-1/2 z-20 flex w-full  h-[90dvh]  -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[600px] md:h-[100dvh] ${isCollectPaymentOpen ? "translate-x-0" : "translate-x-full"
+        className={`!duration-400 fixed right-0 top-1/2 z-20 flex w-full  h-[90dvh]  -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[650px] md:h-[100dvh] ${isCollectPaymentOpen ? "translate-x-0" : "translate-x-full"
           }`}
       >
         <div className="relative flex h-full flex-col overflow-y-auto ">
@@ -476,7 +509,7 @@ export const CollectPayment = ({
               />
             </div>
           </div>
-          <div className="flex flex-col gap-3 px-0 py-1 sm:px-4">
+          <div className="flex flex-col gap-3 px-2 py-1 sm:px-4">
             <div className=" flex flex-col w-full gap-4">
               <div className="flex items-center justify-between">
                 <div className=" w-full flex justify-start items-center gap-5">
@@ -487,46 +520,10 @@ export const CollectPayment = ({
                     saleTypeOptions={SPLIT_TYPE_OPTIONS}
                     defaultValue={selectedOption}
                   />
-                  {/* <div className="flex items-center">
-                    <input
-                      id="option1"
-                      type="radio"
-                      name="options"
-                      className="w-4 h-4 text-blue-600 bg-gray-400 outline-none focus:ring-blue-500"
-                      value="equalSplit"
-                      checked={selectedOption === "equalSplit"}
-                      onChange={(e) => setSelectedOption(e.target.value)}
-                    />
-                    <label
-                      className="ml-2 text-[18px] font-medium text-gray-900"
-                      htmlFor="option1"
-                    >
-                      Equal Split
-                    </label>
-                  </div>
-                  <div className="flex items-center">
-                    <input
-                      id="option2"
-                      type="radio"
-                      name="options"
-                      className="w-4 h-4 text-blue-600 bg-gray-400 outline-none focus:ring-blue-500"
-                      value="customSplit"
-                      checked={selectedOption === "customSplit"}
-                      onChange={(e) => setSelectedOption(e.target.value)}
-                    />
-                    <label
-                      className="ml-2 text-[18px] font-medium text-gray-900"
-                      htmlFor="option2"
-                    >
-                      Custom Split
-                    </label>
-                  </div> */}
                 </div>
               </div>
             </div>
-            {/* <div className="flex justify-between items-center w-full">
-            
-            </div> */}
+
             <div className="flex flex-col justify-between w-full px-3 mt-[25px]">
               <div>
                 <p className="text-red text-[12px] pt-4 pb-4">
@@ -546,142 +543,106 @@ export const CollectPayment = ({
               </div>
             </div>
             <div className="flex flex-col w-full gap-3 ">
-              {Array.from({ length: Number(availableSlots - 1) }).map(
-                (_, index) => (
-                  <div key={index} className="flex w-full gap-x-3 justify-center items-center">
-                    <div className="w-full flex flex-col">
+
+              {collectPaymentInputs.map((player, index) => (
+                <div key={index} className="flex w-full gap-x-3 justify-center items-center">
+                  <div className="w-full flex gap-3">
+                    {(player.isPaid === 1) ? (
+                      <p
+                        className="max-w-[320px] truncate cursor-default w-full"
+                        title={player.email}
+                      >
+                        {player.email}
+                      </p>
+                    ) : (
                       <input
-                        className="outline-none bg-secondary-white focus:outline-white px-3 py-1 rounded-md w-full "
-                        type="text"
-                        placeholder="Enter the email"
-                        onChange={(e) => handleEmailChange(index, e.target.value)}
-                        // value={
-                        //   sendEmailedUsers && sendEmailedUsers[index]?.email
-                        //     ? sendEmailedUsers[index]?.email
-                        //     : emails[index]
-                        // }
-                        value={sendEmailedUsers?.[index]?.email ?? emails[index]}
-                      />
-                      <div className="h-2 mb-1">
-                        {emails[index] && !isValidEmail(emails[index]?? "") && (
-                          <span className="text-red text-[12px]">Invalid email address</span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-center">
-                      <span className="text-gray-700 font-medium">$</span>
-                      {selectedOption === "equalSplit" ? <p> {(sendEmailedUsers?.[index]?.amount ?? amount[index] ?? 0).toLocaleString("en-US", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                      </p> : (
+                      className="outline-none bg-secondary-white focus:outline-white px-3 py-1 rounded-md w-full "
+                      type="text"
+                      placeholder="Enter the email"
+                      onChange={(e) => handleEmailChange(index, e.target.value)}
+                      value={player.email}
+                    />
+                    )}
+                    {(selectedOption === "equalSplit" || player.isPaid === 1) ? (
+                      <p className="px-4">
+                        ${(Number(player.amount) || 0).toLocaleString("en-US", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </p>
+                    ) : (
+                      <div className="flex items-center">
+                        $
                         <input
-                          className=" bg-secondary-white outline-none focus:outline-white px-3 py-1 rounded-md w-20 "
+                          className=" bg-secondary-white outline-none focus:outline-white px-2 py-1 rounded-md w-20 text-center "
                           type="text"
-                          placeholder="Amt"
-                          // value={
-                          //   sendEmailedUsers && sendEmailedUsers[index]?.amount
-                          //     ? sendEmailedUsers[index]?.amount / 100
-                          //     : amount[index]
-                          // }
-                          //value={sendEmailedUsers?.[index]?.amount ?? amount[index]}
-                          value={sendEmailedUsers?.[index]?.isPaid === 1
-                            ? sendEmailedUsers?.[index]?.amount
-                            : amount[index] ?? sendEmailedUsers?.[index]?.amount}
-                          // value={amount[index]}
+                          placeholder="Enter the Amount"
+                          value={player.amount}
                           onChange={(e) => {
                             //+paymentProcessingCharge
                             const addedValue = e.target.value
                             handleAmountChange(index, addedValue);
                           }
                           }
-                          // disabled={selectedOption === "equalSplit"}
-                          disabled={sendEmailedUsers?.[index]?.isPaid === 1}
+                        // value={sendEmailedUsers?.[index]?.isPaid === 1
+                        //   ? sendEmailedUsers?.[index]?.amount
+                        //   : amount[index] ?? sendEmailedUsers?.[index]?.amount}
+                        // value={amount[index]}
+                        // disabled={selectedOption === "equalSplit"}
+                        // disabled={sendEmailedUsers?.[index]?.isPaid === 1}
+                        //style={{ paddingRight: "87px" }}
                         />
-                      )}
-                    </div>
-
-                    {sendEmailedUsers?.[index] ? (
-                      sendEmailedUsers[index]?.isPaid === 1 ? (
-                        <Fragment>
-                          <div className="flex gap-2 px-5 py-1.5 justify-center items-center" style={{ paddingRight: "87px" }}>
-                            <CheckedIcon color="green" />
-                            <p>Paid</p>
-                          </div>
-                        </Fragment>
-                      ) : sendEmailedUsers[index]?.isPaid === 0 &&
-                        sendEmailedUsers[index]?.isActive === 1 ? (
-                        <div className="flex justify-center items-center">
-                          <FilledButton
-                            onClick={() =>
-                              resendHyperSwitchPaymentLinkOnEmail(index)
-                            }
-                            className={`text-sm flex justify-center items-center ${!sendEmailedUsers[index]?.isLinkExpired ? " text-white/50 cursor-not-allowed" : "text-white"}`}
-                            disabled={loadingStates[index] || !sendEmailedUsers[index]?.isLinkExpired}
-                          >
-                            {loadingStates[index] ? (
-                              <Loader size={20} color="fill-white-600" />
-                            ) : (
-                              "Resend"
-                            )}
-                          </FilledButton>
-                          {/* {!sendEmailedUsers?.[index]?.isLinkExpired ? (
-                      <div className="flex justify-center items-start gap-1">
-                        <Tooltip
-                          trigger={<Pending width={30} height={30} />}
-                          content="Payment is pending"
-                        />
-                      </div>
-                    ):(
-                      <div>
-                         <Tooltip
-                          trigger={<LinkExpired width={30} height={30} color="red"/>}
-                          content="Payment link is expired"
-                        />
-                      </div>
-                    )} */}
-                        </div>
-                      ) : (
-                        <FilledButton
-                          onClick={() =>
-                            handleEmailSendOnHyperSwitchPaymentLink(index)
-                          }
-                          className={`text-sm flex justify-center items-center text-black ${!isValidEmail(emails[index] ?? "") ? "text-white/50 cursor-not-allowed" : "text-white"} `}
-                          disabled={loadingStates[index] || !isValidEmail(emails[index] ?? "")}
-                        >
-                          {loadingStates[index] ? (
-                            <Loader size={20} color="fill-white-600" />
-                          ) : (
-                            "Send"
-                          )}
-                        </FilledButton>
-                      )
-                    ) : (
-                      <div style={{ paddingRight: "62px" }}>
-                        <FilledButton
-                          onClick={() =>
-                            handleEmailSendOnHyperSwitchPaymentLink(index)
-                          }
-                          className={`text-sm flex justify-center items-center text-black ${!isValidEmail(emails[index] ?? "") ? "text-white/50 cursor-not-allowed" : "text-white"} `}
-                          disabled={loadingStates[index] || !isValidEmail(emails[index] ?? "")}
-                        >
-                          {loadingStates[index] ? (
-                            <Loader size={20} color="fill-white-600" />
-                          ) : (
-                            "Send"
-                          )}
-                        </FilledButton>
                       </div>
                     )}
+                    {player.isPaid === 1 ? (
+                      <Fragment>
+                        <div className="flex gap-12 px-8 py-1.5 justify-between items-center">
+                          <p>Paid</p>
+                          <CheckedIcon color="green" />
+                        </div>
+                      </Fragment>
+                    ) : player.isPaid === 0 &&
+                      player.isActive === 1 ? (
+                      <div className="flex justify-center items-center">
+                        <FilledButton
+                          onClick={() =>
+                            resendHyperSwitchPaymentLinkOnEmail(index)
+                          }
+                          className={`text-sm flex justify-center items-center ${!player.isLinkExpired ? " text-white/50 cursor-not-allowed" : "text-white"}`}
+                          disabled={loadingStates[index] || !player.isLinkExpired}
+                        >
+                          {loadingStates[index] ? (
+                            <Loader size={20} color="fill-white-600" />
+                          ) : (
+                            "Resend"
+                          )}
+                        </FilledButton>
+
+                      </div>
+                    ) : (
+                      <FilledButton
+                        onClick={() =>
+                          handleEmailSendOnHyperSwitchPaymentLink(index)
+                        }
+                        className={`text-sm flex justify-center items-center text-black ${!isValidEmail(player.email ?? "") ? "text-white/50 cursor-not-allowed" : "text-white"} mr-16 `}
+                        disabled={loadingStates[index] || !isValidEmail(player.email ?? "")}
+                      >
+                        {loadingStates[index] ? (
+                          <Loader size={20} color="fill-white-600" />
+                        ) : (
+                          "Send"
+                        )}
+                      </FilledButton>
+                    )}
                     <div className="flex gap-1">
-                      {sendEmailedUsers?.[index] && sendEmailedUsers[index]?.isActive === 1 && sendEmailedUsers[index]?.isPaid === 0 && !sendEmailedUsers?.[index]?.isLinkExpired ? (
+                      {player && player.isActive === 1 && player.isPaid === 0 && !player.isLinkExpired ? (
                         <div className="flex justify-center items-start gap-1">
                           <Tooltip
                             trigger={<Pending width={30} height={30} />}
                             content="Payment is pending"
                           />
                         </div>
-                      ) : (sendEmailedUsers?.[index]?.isLinkExpired && sendEmailedUsers?.[index]?.isPaid === 0) ? (
+                      ) : (player?.isLinkExpired && player?.isPaid === 0) ? (
                         <div>
                           <Tooltip
                             trigger={<LinkExpired width={30} height={30} color="#D22B2B" />}
@@ -690,14 +651,14 @@ export const CollectPayment = ({
                         </div>
                       ) : null}
                       <div>
-                        {sendEmailedUsers?.[index]?.emailOpened === 1 ? (
+                        {player?.emailOpened === 1 ? (
                           <div className="flex justify-center items-start gap-1" >
                             <Tooltip
                               trigger={<EmailOpen width={30} height={30} color="green" />}
                               content="Email opened and read"
                             />
                           </div>
-                        ) : (sendEmailedUsers?.[index]?.emailOpened === 0 && sendEmailedUsers?.[index]?.isPaid === 0) ? (
+                        ) : (player?.emailOpened === 0 && player?.isActive === 1 && player.isPaid === 0) ? (
                           <div className="flex justify-center items-start gap-1">
                             <Tooltip
                               trigger={<Email width={30} height={30} />}
@@ -707,9 +668,10 @@ export const CollectPayment = ({
                         ) : null}
                       </div>
                     </div>
+                    {/* etc... */}
                   </div>
-                )
-              )}
+                </div>
+              ))}
             </div>
             <div className="w-full">
               <label htmlFor="message" className="block text-primary-gray font-medium mb-1">
@@ -718,10 +680,11 @@ export const CollectPayment = ({
               <textarea
                 id="message"
                 placeholder="Addtional message"
-                className="w-full h-32 p-4 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition resize-none"
-                onChange={(e) => setAddtionalMessage(e.target.value)}
+                className="w-full h-25 p-4 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition resize-none"
+                onChange={(e) => isAdditionalMessageExceedingLimit(e)}
                 value={additionalMessage}
               ></textarea>
+              <p className="text-sm text-primary-gray" >{validationMsg}</p>
             </div>
             <div className="flex flex-col w-full gap-3">
               <div className="w-full flex justify-between px-3 pt-5">
@@ -733,10 +696,7 @@ export const CollectPayment = ({
                   />
                 </div>
                 <div>
-                  <p className="text-[16px] font-[500] text-primary-gray">${Number(paidAmount).toLocaleString("en-US", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}</p>
+                  <p className="text-[16px] font-[500] text-primary-gray">${paidAmount}</p>
                 </div>
               </div>
               <div className="w-full flex justify-between px-3 pt-5">
@@ -783,7 +743,7 @@ export const CollectPayment = ({
                 </div>
                 <div>
                   <p className="text-[16px] font-[500] text-primary-gray">
-                    {(
+                    ${(
                       totalAmount - (Number(paymentProcessingCharge) / 100) * (Number(availableSlots) - 1)
                     ).toLocaleString("en-US", {
                       minimumFractionDigits: 2,
@@ -792,6 +752,9 @@ export const CollectPayment = ({
                   </p>
                 </div>
               </div>
+              {/* 
+
+             */}
             </div>
             <div className="flex w-full justify-center items-center">
               <OutlineButton
@@ -863,3 +826,8 @@ const TeeTimeItem = ({
     </div>
   );
 };
+
+
+
+
+
