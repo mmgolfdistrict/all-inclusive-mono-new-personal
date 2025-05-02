@@ -279,7 +279,8 @@ export const CollectPayment = ({
         toast.error("Please enter a valid email before sending the link");
         return;
       }
-      if (checkDuplicateEmail(email, index)) {
+      const isDuplicateCheck = checkDuplicateEmail(email, index);
+      if (isDuplicateCheck) {
         toast.error(`The email ${email} is already used.`);
         return;
       }
