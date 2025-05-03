@@ -53,18 +53,18 @@ interface EmailParams {
   NewPlayerCount?: number;
   PreviousListedPrice?: number;
   NewListedPrice?: number;
-  USERNAME?:string;
-  PAYMENT_URL?:string;
-  COURSE_NAME?:string;
-  AMOUNT?:string;
+  USERNAME?: string;
+  PAYMENT_URL?: string;
+  COURSE_NAME?: string;
+  AMOUNT?: string;
   PLAY_TIME?: string;
   FACILITY?: string;
   COURSE_RESERVATION_ID?: string;
-  MyTeeBoxCollectPaymentUrl?:string;
-  TRACKING_URL?:string,
-  SUBJECT_LINE?:string,
-  LOGO_URL?:string,
-  ADDITIONAL_MESSAGE?:string
+  MyTeeBoxCollectPaymentUrl?: string;
+  TRACKING_URL?: string;
+  SUBJECT_LINE?: string;
+  LOGO_URL?: string;
+  ADDITIONAL_MESSAGE?: string;
 }
 
 interface Attachment {
@@ -158,6 +158,7 @@ export class NotificationService {
         subject: subject,
         html: body,
         bcc: bccEmails,
+        trackingSettings: { subscriptionTracking: { enable: false } },
       })
       .catch((err) => {
         this.logger.error(err);
@@ -210,6 +211,7 @@ export class NotificationService {
           templateId,
           dynamicTemplateData: { ...template },
           bcc: bccEmails,
+          trackingSettings: { subscriptionTracking: { enable: false } },
         })
         .catch((err) => {
           this.logger.error(err);
@@ -241,6 +243,7 @@ export class NotificationService {
           dynamicTemplateData: { ...template },
           attachments,
           bcc: bccEmails,
+          trackingSettings: { subscriptionTracking: { enable: false } },
         })
         .catch((err) => {
           this.logger.error(err);
