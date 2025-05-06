@@ -34,7 +34,6 @@ export const Confirmation = ({
     );
 
   const { course } = useCourseContext();
-  console.log("bookingData",bookingData);
   return (
     <section className="mx-auto flex w-full flex-col gap-4 bg-white px-3 py-2 text-center md:max-w-[80vw] md:rounded-xl md:p-6 md:py-4">
       <div className="container mx-auto p-4">
@@ -84,7 +83,7 @@ export const Confirmation = ({
                     )}
                   </span>
                 </div>
-                {bookingData && bookingData?.playerCount > 1 ? (
+                {bookingData && (bookingData?.playerCount ?? 0) > 1 ? (
                   <div className="flex  flex-col items-center justify-center gap-2 md:flex-row">
                     <Link
                       href={`/${course?.id}/my-tee-box/?bookingId=${bookingId}&collectPayment=${isValidForCollectPayment}`}
