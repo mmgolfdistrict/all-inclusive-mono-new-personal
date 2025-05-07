@@ -24,7 +24,7 @@ export default async function UnlistedPage({
         teeTimeId={teeTimeId}
         courseId={courseId}
         ownerId={ownerId}
-        isTransactionHistoryVisible={isTransactionHistoryVisible}
+        isTransactionHistoryVisible={String(isTransactionHistoryVisible)}
       />
     </main>
   );

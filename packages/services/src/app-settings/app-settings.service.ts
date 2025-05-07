@@ -5,6 +5,7 @@ import { appSettings } from "@golf-district/database/schema/appSetting";
 import { createCache } from "cache-manager";
 import { CacheService } from "../infura/cache.service";
 import type { AppSetting, AppSettingsResponse } from "./types";
+import { parseSettingValue } from "../../helpers";
 
 export class AppSettingsService {
   private cacheService?: CacheService;
@@ -52,15 +53,21 @@ export class AppSettingsService {
             caption: appSettings.caption,
             description: appSettings.description,
             value: appSettings.value,
+            datatype: appSettings.datatype,
             createdDateTime: appSettings.createdDateTime,
             lastUpdatedDateTime: appSettings.lastUpdatedDateTime,
           })
           .from(appSettings)
           .where(eq(appSettings.internalName, internalName));
-        const internalNameToBeSet = await cache.set(internalName, appSettingData[0]?.value, 600000);
         const resultedAppSettingValue = await cache.get(internalName);
         console.log("settedData", resultedAppSettingValue);
-        return appSettingData[0] || { value: resultedAppSettingValue };
+
+        const parsedValue = parseSettingValue(
+          appSettingData[0]?.value ?? "",
+          appSettingData[0]?.datatype ?? "string"
+        );
+        const internalNameToBeSet = await cache.set(internalName, parsedValue, 600000);
+        return { ...appSettingData[0], value: parsedValue };
       }
     } catch (error: any) {
       console.log(error);
@@ -158,6 +165,7 @@ export class AppSettingsService {
           caption: appSettings.caption,
           description: appSettings.description,
           value: appSettings.value,
+          datatype: appSettings.datatype,
           createdDateTime: appSettings.createdDateTime,
           lastUpdatedDateTime: appSettings.lastUpdatedDateTime,
         })
@@ -173,7 +181,10 @@ export class AppSettingsService {
 
       for (const appSetting of appSettingsData) {
         if (appSetting.value) {
-          await this.cacheService.setCache(appSetting.internalName, appSetting.value);
+          const parsedValue = parseSettingValue(appSetting.value ?? "", appSetting.datatype ?? "string") ?? {
+            value: appSetting.value,
+          };
+          await this.cacheService.setCache(appSetting.internalName, parsedValue);
         }
       }
     } catch (error: any) {
@@ -205,6 +216,7 @@ export class AppSettingsService {
           caption: appSettings.caption,
           description: appSettings.description,
           value: appSettings.value,
+          datatype: appSettings.datatype,
           createdDateTime: appSettings.createdDateTime,
           lastUpdatedDateTime: appSettings.lastUpdatedDateTime,
         })
@@ -219,9 +231,12 @@ export class AppSettingsService {
       if (!appSetting) {
         throw new Error("Value of field isn't available");
       }
-      await this.cacheService.setCache(internalName, appSetting.value);
+      const parsedValue = parseSettingValue(appSetting.value ?? "", appSetting.datatype ?? "string") ?? {
+        value: appSetting.value,
+      };
+      await this.cacheService.setCache(internalName, parsedValue);
 
-      return appSetting.value;
+      return parsedValue;
     } catch (error: any) {
       console.error("Error while bootstrapping the app-settings", error.message);
     }
@@ -255,6 +270,7 @@ export class AppSettingsService {
                 internalName: appSettings.internalName,
                 caption: appSettings.caption,
                 description: appSettings.description,
+                datatype: appSettings.datatype,
                 value: appSettings.value,
                 createdDateTime: appSettings.createdDateTime,
                 lastUpdatedDateTime: appSettings.lastUpdatedDateTime,
@@ -272,7 +288,11 @@ export class AppSettingsService {
             continue;
           }
           if (appSetting.value) {
-            await this.cacheService.setCache(appSetting.internalName, appSetting.value);
+            const parsedValue = parseSettingValue(
+              appSetting.value ?? "",
+              appSetting.datatype ?? "string"
+            ) ?? { value: appSetting.value };
+            await this.cacheService.setCache(appSetting.internalName, parsedValue);
           }
           cachedData[appSetting.internalName] = appSetting.value;
         }

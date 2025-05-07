@@ -124,7 +124,7 @@ export const MobileOwned = () => {
               timezoneCorrection={course?.timezoneCorrection}
               bookingStatus={i.bookingStatus}
               isGroupBooking={i.isGroupBooking}
-              isCollectPaymemtEnabled={isCollectPaymemtEnabled ?? false}
+              isCollectPaymemtEnabled={Boolean(isCollectPaymemtEnabled)}
               collectPaymentList={() => collectPaymentList(i)}
             />
           ))}
