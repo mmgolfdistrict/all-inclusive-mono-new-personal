@@ -322,7 +322,7 @@ export class SearchService extends CacheService {
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
       .leftJoin(courses, eq(courses.id, teeTimes.courseId))
       .where(
-        and(eq(bookings.ownerId, ownerId), eq(bookings.teeTimeId, teeTimeId), eq(bookings.isListed, false))
+        and(eq(bookings.ownerId, ownerId), eq(bookings.teeTimeId, teeTimeId), eq(bookings.isListed, false), eq(bookings.isActive, true))
       )
       .execute();
     const firstBooking = unlistedBookingData[0];
@@ -822,7 +822,7 @@ export class SearchService extends CacheService {
     //   .toISOString();
     //   console.log(minDateSubquery,maxDateSubquery,"maxDateSubquerymaxDateSubquerymaxDateSubquery")
     const minDateSubquery = this.convertDateFormat(minDate);
-    const maxDateSubquery = this.convertDateFormat(maxDate);    
+    const maxDateSubquery = this.convertDateFormat(maxDate);
 
     // .utc()
     // .hour(23)
@@ -977,7 +977,7 @@ export class SearchService extends CacheService {
 
     // console.log("DATES QUERY:", firstHandResultsQuery.toSQL())
 
-    const firstHandResults = await firstHandResultsQuery.execute();    
+    const firstHandResults = await firstHandResultsQuery.execute();
 
     const secondHandResultsQuery = this.database
       .selectDistinct({
@@ -1206,16 +1206,16 @@ export class SearchService extends CacheService {
       .toUpperCase() as "MON" | "TUE" | "WED" | "THU" | "FRI" | "SAT" | "SUN";
 
     const courseAllowedTeeTimeToSellFilters = await this.database
-        .select({
-          fromTime: courseAllowedTimeToSell.fromTime,
-          toTime: courseAllowedTimeToSell.toTime,
-          primaryMarketAllowedPlayers: courseAllowedTimeToSell.primaryMarketAllowedPlayers,
-          primaryMarketSellLeftoverSinglePlayer: courseAllowedTimeToSell.primaryMarketSellLeftoverSinglePlayer,
-        })
-        .from(courseAllowedTimeToSell)
-        .where(and(eq(courseAllowedTimeToSell.courseId, courseId), eq(courseAllowedTimeToSell.day, dayToFetch)))
-        .orderBy(asc(courseAllowedTimeToSell.fromTime))
-        .execute();
+      .select({
+        fromTime: courseAllowedTimeToSell.fromTime,
+        toTime: courseAllowedTimeToSell.toTime,
+        primaryMarketAllowedPlayers: courseAllowedTimeToSell.primaryMarketAllowedPlayers,
+        primaryMarketSellLeftoverSinglePlayer: courseAllowedTimeToSell.primaryMarketSellLeftoverSinglePlayer,
+      })
+      .from(courseAllowedTimeToSell)
+      .where(and(eq(courseAllowedTimeToSell.courseId, courseId), eq(courseAllowedTimeToSell.day, dayToFetch)))
+      .orderBy(asc(courseAllowedTimeToSell.fromTime))
+      .execute();
 
     const hasCourseAllowedTeeTimeToSellFilters = courseAllowedTeeTimeToSellFilters.length > 0;
 
@@ -1290,10 +1290,10 @@ export class SearchService extends CacheService {
         sortPrice === "desc"
           ? desc(teeTimes.greenFeePerPlayer)
           : sortTime === "desc"
-          ? desc(teeTimes.time)
-          : sortPrice === "asc"
-          ? asc(teeTimes.greenFeePerPlayer)
-          : asc(teeTimes.time)
+            ? desc(teeTimes.time)
+            : sortPrice === "asc"
+              ? asc(teeTimes.greenFeePerPlayer)
+              : asc(teeTimes.time)
       );
     const teeQueryLimited = teeQuery.limit(limit);
 
@@ -1310,7 +1310,7 @@ export class SearchService extends CacheService {
         .from(courses)
         .where(eq(courses.id, courseId))
         .execute()
-        .catch(() => {});
+        .catch(() => { });
 
       await cacheManager.set(cacheCourseDataKey, courseData, 600000);
     }
@@ -1575,10 +1575,10 @@ export class SearchService extends CacheService {
         sortPrice === "desc"
           ? desc(lists.listPrice)
           : sortTime === "desc"
-          ? desc(teeTimes.time)
-          : sortPrice === "asc"
-          ? asc(lists.listPrice)
-          : asc(teeTimes.time)
+            ? desc(teeTimes.time)
+            : sortPrice === "asc"
+              ? asc(lists.listPrice)
+              : asc(teeTimes.time)
       );
     // .limit(limit);
     const secoondHandData = await secondHandBookingsQuery.execute().catch(async (err) => {
