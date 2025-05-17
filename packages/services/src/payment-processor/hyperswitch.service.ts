@@ -690,7 +690,6 @@ export class HyperSwitchService {
     if (jsonRes.error) {
       return { status: "Cannot delete payment" };
     }
-
     return { status: "success" };
   };
   refundPayment = async (paymentId: string) => {
@@ -864,7 +863,7 @@ export class HyperSwitchService {
               collectedAmount: (totalPayoutAmount * 100),
               paymentProcessorPercent: collectPaymentProcessorCharge,
               expirationDateTime: newexpireDate,
-              savedIndex:index
+              savedIndex: index
             })
             .execute().catch(async (e: any) => {
               console.log(e);
@@ -1109,6 +1108,19 @@ Thank you for choosing us.`;
   updateSplitPaymentStatus = async (paymentId: string, referencePaymentId: string) => {
     try {
       if (paymentId) {
+        const [isUserAlreadyPaid] = await this.database
+          .select({ isPaid: bookingSplitPayment.isPaid })
+          .from(bookingSplitPayment)
+          .where(eq(bookingSplitPayment.paymentId, paymentId));
+        if (isUserAlreadyPaid?.isPaid === 1) {
+          return {
+            message: "This Payment is Already paid",
+            email: "",
+            bookingId: "",
+            error: true,
+            amount: "",
+          };
+        }
         await this.database
           .update(bookingSplitPayment)
           .set({
@@ -1141,7 +1153,7 @@ Thank you for choosing us.`;
           .from(bookingSplitPayment)
           .where(eq(bookingSplitPayment.paymentId, paymentId));
         // email send the payment completed user
-        const message: string = `Your payment of $${(Number(result?.collectedAmount)/100)} has been successfully processed. Thank you for your payment.`;
+        const message: string = `Your payment of $${(Number(result?.collectedAmount) / 100)} has been successfully processed. Thank you for your payment.`;
         const emailSend = await this.notificationService.sendEmail(
           result?.email ?? "",
           "Payment Successful",
@@ -1149,7 +1161,7 @@ Thank you for choosing us.`;
         )
         // email send the admins after payment completed of the user
 
-        const messageAdmin: string = `Payment of  $${(Number(result?.collectedAmount)/100)} has been successfully processed for the user ${result?.email}. Thank you for your payment.`;
+        const messageAdmin: string = `Payment of  $${(Number(result?.collectedAmount) / 100)} has been successfully processed for the user ${result?.email}. Thank you for your payment.`;
         const adminEmails = process.env.ADMIN_EMAIL_LIST!.split(",");
 
         for (const email of adminEmails) {
@@ -1184,6 +1196,20 @@ Thank you for choosing us.`;
           amount: result?.amount,
         };
       } else if (referencePaymentId) {
+        const [isUserAlreadyPaid] = await this.database
+          .select({ isPaid: bookingSplitPayment.isPaid })
+          .from(bookingSplitPayment)
+          .where(eq(bookingSplitPayment.id, referencePaymentId));
+
+        if (isUserAlreadyPaid?.isPaid === 1) {
+          return {
+            message: "This payment is already paid",
+            email: "",
+            bookingId: "",
+            error: true,
+            amount: ""
+          };
+        }
         await this.database
           .update(bookingSplitPayment)
           .set({
@@ -1216,7 +1242,7 @@ Thank you for choosing us.`;
           .where(eq(bookingSplitPayment.id, referencePaymentId));
         // email send the payment completed user
 
-        const message: string = `Your payment of$${Number(result?.collectedAmount)/100} has been successfully processed. Thank you for your payment.`;
+        const message: string = `Your payment of$${Number(result?.collectedAmount) / 100} has been successfully processed. Thank you for your payment.`;
         const emailSend = await this.notificationService.sendEmail(
           result?.email ?? "",
           "Payment Successful",
@@ -1224,7 +1250,7 @@ Thank you for choosing us.`;
         )
         // email send the admins after payment completed of the user
 
-        const messageAdmin: string = `Payment of $${Number(result?.collectedAmount)/100} has been successfully processed for the user ${result?.email}. Thank you for your payment.`;
+        const messageAdmin: string = `Payment of $${Number(result?.collectedAmount) / 100} has been successfully processed for the user ${result?.email}. Thank you for your payment.`;
         const adminEmails = process.env.ADMIN_EMAIL_LIST!.split(",");
 
         for (const email of adminEmails) {
@@ -1271,7 +1297,7 @@ Thank you for choosing us.`;
           }),
         });
         return {
-          message: "",
+          message: "Payment ID is missing",
           email: "",
           bookingId: "",
           error: true,
@@ -1569,7 +1595,7 @@ Thank you for choosing us.`;
   saveSplitPaymentAmountIntoCashOut = async (bookingId: string, amount: number) => {
     try {
       const [result] = await this.database
-        .select({ ownerId: bookings.ownerId, originalAmountBeforeAddingCharges: bookingSplitPayment.payoutAmount })
+        .select({ ownerId: bookings.ownerId, originalAmountBeforeAddingCharges: bookingSplitPayment.payoutAmount, isPaid: bookingSplitPayment.isPaid })
         .from(bookings)
         .leftJoin(bookingSplitPayment, eq(bookingSplitPayment.bookingId, bookingId))
         .where(eq(bookings.id, bookingId));
