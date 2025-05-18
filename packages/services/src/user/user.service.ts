@@ -471,7 +471,7 @@ export class UserService {
       })
       .from(bookings)
       .leftJoin(bookingslots, eq(bookingslots.bookingId, bookings.id))
-      .where(and(eq(bookings.teeTimeId, teeTimeId), eq(bookings.ownerId, userId)))
+      .where(and(eq(bookings.teeTimeId, teeTimeId), eq(bookings.ownerId, userId), eq(bookings.isActive, true)))
       .orderBy(asc(bookingslots.slotPosition))
       .execute()
       .catch((err) => {
@@ -1813,15 +1813,15 @@ export class UserService {
     const { user, profileImage, bannerImage } = data;
     const profilePicture = profileImage
       ? assetToURL({
-          key: profileImage.assetKey,
-          extension: profileImage.assetExtension,
-        })
+        key: profileImage.assetKey,
+        extension: profileImage.assetExtension,
+      })
       : "/defaults/default-profile.webp";
     const bannerPicture = bannerImage
       ? assetToURL({
-          key: bannerImage.assetKey,
-          extension: bannerImage.assetExtension,
-        })
+        key: bannerImage.assetKey,
+        extension: bannerImage.assetExtension,
+      })
       : "/defaults/default-banner.webp";
     let res;
 
