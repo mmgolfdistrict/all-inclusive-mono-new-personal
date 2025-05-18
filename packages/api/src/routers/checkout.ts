@@ -171,7 +171,7 @@ export const checkoutRouter = createTRPCRouter({
         courseLogo: z.string(),
         additionalMessage: z.string(),
         index: z.number(),
-        paymentId:z.string()
+        paymentId: z.string()
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -201,7 +201,7 @@ export const checkoutRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       return await ctx.serviceFactory.getHyperSwitchService().getPaymentLinkByPaymentId(input.paymentId);
     }),
-  saveSplitPaymentAmountIntoCashOut: protectedProcedure
+  saveSplitPaymentAmountIntoCashOut: publicProcedure
     .input(
       z.object({
         bookingId: z.string(),
