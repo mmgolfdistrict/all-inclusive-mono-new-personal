@@ -729,7 +729,6 @@ export class BookingService {
         stackTrace: "",
         additionalDetailsJSON: `No tee times found for user: ${userId}`,
       });
-      return [];
     }
     const combinedData: Record<string, OwnedTeeTimeData> = {};
 
@@ -1092,6 +1091,8 @@ export class BookingService {
       }
       t.golfers = finaldata;
     }
+
+    if (!data.length && !groupTeeTimeData.length) return [];
 
     return { ...combinedData, ...combinedGroupData };
   };
