@@ -403,7 +403,9 @@ export class TokenizeService {
     }
 
     if (isFirstHandGroupBooking && providerBookings) {
+      let remainingAmount = Math.round((normalizedCartData.total || 0) + additionalTaxes.additionalTaxes * 100);
       for (const booking of providerBookings) {
+        const isLastBooking = (providerBookings.length - bookingIds.length) === 1;
         const teeTimeData = existingTeeTimes.find((existingTeeTime) => existingTeeTime.id === booking.teeTimeId);
         if (!teeTimeData) {
           this.logger.fatal(`TeeTime with ID: ${booking.teeTimeId} does not exist.`);
@@ -421,6 +423,7 @@ export class TokenizeService {
         const bookingId = randomUUID();
         bookingIds.push(bookingId);
         const totalAmountPerPlayer = ((normalizedCartData.total || 0) + additionalTaxes.additionalTaxes * 100) / players;
+        const totalAmountForBooking = Math.round(totalAmountPerPlayer * booking.playerCount);
 
         bookingsToCreate.push({
           id: bookingId,
@@ -439,7 +442,7 @@ export class TokenizeService {
           totalTaxesAmount: additionalTaxes.additionalTaxes * 100, // normalizedCartData.taxCharge * 100 || 0,
           charityId: normalizedCartData.charityId || null,
           totalCharityAmount: normalizedCartData.charityCharge * 100 || 0,
-          totalAmount: totalAmountPerPlayer * booking.playerCount,
+          totalAmount: (isLastBooking && remainingAmount !== totalAmountForBooking) ? remainingAmount : totalAmountForBooking,
           providerPaymentId: paymentId,
           weatherQuoteId: normalizedCartData.weatherQuoteId ?? null,
           weatherGuaranteeId: acceptedQuote?.id ? acceptedQuote?.id : null,
@@ -519,6 +522,7 @@ export class TokenizeService {
           availableSecondHandSpots: teeTimeData.availableSecondHandSpots + booking.playerCount,
           availableFirstHandSpots: teeTimeData.availableFirstHandSpots - booking.playerCount,
         })
+        remainingAmount = remainingAmount - totalAmountForBooking;
       }
     } else {
       bookingsToCreate.push({
