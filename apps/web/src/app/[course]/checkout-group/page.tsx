@@ -185,7 +185,7 @@ export default function CheckoutGroupBooking({
                         const calculatedPrice =
                             debouncedPromoCode && promoCodePrice !== undefined
                                 ? promoCodePrice * 100
-                                : Number(firstTeeTime?.pricePerGolferForGroup * 100) * (amountOfPlayers - validatePlayers.length);
+                                : (Number(firstTeeTime?.pricePerGolferForGroup) * 100) * (amountOfPlayers - validatePlayers.length);
 
                         return calculatedPrice === 0 ? 1 : calculatedPrice; // If price is 0, return 1
                     })(), //int
