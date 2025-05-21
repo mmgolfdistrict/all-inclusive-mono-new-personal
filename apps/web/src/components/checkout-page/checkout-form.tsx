@@ -91,15 +91,9 @@ export const CheckoutForm = ({
   const MAX_CHARITY_AMOUNT = 1000;
   const { course } = useCourseContext();
 
-  const ALLOW_SPECIAL_REQUEST =
-    typeof course?.isAllowSpecialRequest === "string"
-      ? JSON.parse((course.isAllowSpecialRequest as string).toLowerCase())
-      : course?.isAllowSpecialRequest ?? true;
+  const ALLOW_SPECIAL_REQUEST = course?.isAllowSpecialRequest;
 
-  const ALLOW_CLUB_RENTAL =
-    typeof course?.isAllowClubRental === "string"
-      ? JSON.parse((course.isAllowClubRental as string).toLowerCase())
-      : course?.isAllowClubRental ?? true;
+  const ALLOW_CLUB_RENTAL = course?.isAllowClubRental;
 
   const {
     shouldAddSensible,

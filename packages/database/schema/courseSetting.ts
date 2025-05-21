@@ -10,6 +10,7 @@ export const courseSetting = mySqlTable(
     courseId: varchar("courseId", { length: 36 }).notNull(),
     internalName: varchar("internalName", { length: 50 }).notNull(),
     value: varchar("value", { length: 1024 }).notNull(),
+    datatype: varchar("datatype", { length: 32 }),
     createdDateTime: datetime("createdDateTime", { mode: "string", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),

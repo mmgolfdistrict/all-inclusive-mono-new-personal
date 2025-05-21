@@ -1560,7 +1560,7 @@ export class CheckoutService {
       let appSettingsResult: any = [];
       let appSettingsValue: number;
       appSettingsResult = await this.appSettings.getAppSetting("USER_BUY_MULTIPLE_TEETIME_IN_SAME_DAY");
-      appSettingsValue = Number(appSettingsResult.value);
+      appSettingsValue = Number(appSettingsResult);
 
       const [userResult] = await this.database
         .select({
@@ -1739,11 +1739,11 @@ export class CheckoutService {
   };
   isAppleEnabledReloadWidget = async () => {
     const appSettingsResult = await this.appSettings.getAppSetting("IS_ENABLED_APPLE_PAY");
-    return appSettingsResult?.value === "1" ? true : false;
+    return appSettingsResult?.value;
   };
   isCollectPaymentEnabled = async () => {
     const appSettingsResult = await this.appSettings.getAppSetting("COLLECT_PAYMENTS_ENABLED");
-    return appSettingsResult?.value === "1" ? true : false;
+    return appSettingsResult?.value;
   };
   collectPaymentProcessorPercent = async () => {
     const appSettingsResult = await this.appSettings.getAppSetting(

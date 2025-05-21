@@ -31,6 +31,7 @@ import type { ProviderService } from "../tee-sheet-provider/providers.service";
 import { loggerService } from "../webhooks/logging.service";
 import { courseSetting } from "@golf-district/database/schema/courseSetting";
 import { appSettingService } from "../app-settings/initialized";
+import { parseSettingValue } from "../../helpers";
 
 dayjs.extend(utc);
 dayjs.extend(customParseFormat);
@@ -297,6 +298,7 @@ export class CourseService extends DomainService {
           id: courseSetting.id,
           internalName: courseSetting.internalName,
           value: courseSetting.value,
+          datatype: courseSetting.datatype,
         })
         .from(courseSetting)
         .where(eq(courseSetting.courseId, courseId))
@@ -331,10 +333,11 @@ export class CourseService extends DomainService {
 
       const isAllowSpecialRequest = courseSettings.find(
         (setting) => setting.internalName === "ALLOW_SPECIAL_REQUEST"
-      )?.value;
+      );
 
-      const isAllowClubRental = courseSettings.find((setting) => setting.internalName === "ALLOW_CLUB_RENTAL")
-        ?.value;
+      const isAllowClubRental = courseSettings.find(
+        (setting) => setting.internalName === "ALLOW_CLUB_RENTAL"
+      );
 
       if (isOnlyGroupOfFourAllowed) {
         let sliderMin = groupBookingMinSize;
@@ -354,8 +357,14 @@ export class CourseService extends DomainService {
         groupBookingMinSize,
         groupBookingMaxSize,
         isOnlyGroupOfFourAllowed,
-        isAllowSpecialRequest,
-        isAllowClubRental,
+        isAllowSpecialRequest: parseSettingValue(
+          isAllowSpecialRequest?.value ?? "",
+          isAllowSpecialRequest?.datatype ?? "string"
+        ),
+        isAllowClubRental: parseSettingValue(
+          isAllowClubRental?.value ?? "",
+          isAllowClubRental?.datatype ?? "string"
+        ),
       };
     }
     return res;
@@ -1160,66 +1169,75 @@ export class CourseService extends DomainService {
 
   getMobileViewVersion = async (courseId: string) => {
     console.log(courseId);
-    const mobileViewVersion: string | undefined | null = await appSettingService.get("MOBILE_VIEW_VERSION");
-    return mobileViewVersion ?? "v1";
+    const rawValue = await appSettingService.get("MOBILE_VIEW_VERSION");
+    const mobileViewVersion: string | undefined =
+      typeof rawValue === "string" ? rawValue : String(rawValue ?? "");
+    return mobileViewVersion || "v1";
   };
   getDesktopViewVersion = async (courseId: string) => {
     const courseSettings = await this.database
-    .select({
-      id: courseSetting.id,
-      internalName: courseSetting.internalName,
-      value: courseSetting.value,
-    })
-    .from(courseSetting)
-    .where(eq(courseSetting.courseId, courseId))
-    .execute()
-    .catch((err) => {
-      this.logger.error(`Error getting course settings for course: ${err}`);
-      loggerService.errorLog({
-        userId: "",
-        url: "/CourseService/getCourseById",
-        userAgent: "",
-        message: "ERROR_GETTING_COURSE_SETTINGS_FOR_COURSE",
-        stackTrace: `${err.stack}`,
-        additionalDetailsJSON: JSON.stringify({
-          courseId,
-        }),
+      .select({
+        id: courseSetting.id,
+        internalName: courseSetting.internalName,
+        value: courseSetting.value,
+      })
+      .from(courseSetting)
+      .where(eq(courseSetting.courseId, courseId))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error getting course settings for course: ${err}`);
+        loggerService.errorLog({
+          userId: "",
+          url: "/CourseService/getCourseById",
+          userAgent: "",
+          message: "ERROR_GETTING_COURSE_SETTINGS_FOR_COURSE",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            courseId,
+          }),
+        });
+        throw new Error("Error getting course settings");
       });
-      throw new Error("Error getting course settings");
-    });
 
-    let desktopViewVersion = courseSettings.find((setting) => setting.internalName === "DESKTOP_VIEW_VERSION")?.value
+    const desktopViewVersion = courseSettings.find(
+      (setting) => setting.internalName === "DESKTOP_VIEW_VERSION"
+    )?.value;
 
     return desktopViewVersion ?? "v1";
   };
-  
+
   getPhoneNumberMandatoryAtCheckout = async (courseId: string) => {
     const courseSettings = await this.database
-    .select({
-      id: courseSetting.id,
-      internalName: courseSetting.internalName,
-      value: courseSetting.value,
-    })
-    .from(courseSetting)
-    .where(eq(courseSetting.courseId, courseId))
-    .execute()
-    .catch((err) => {
-      this.logger.error(`Error getting course settings for course: ${err}`);
-      loggerService.errorLog({
-        userId: "",
-        url: "/CourseService/getCourseById",
-        userAgent: "",
-        message: "ERROR_GETTING_COURSE_SETTINGS_FOR_COURSE",
-        stackTrace: `${err.stack}`,
-        additionalDetailsJSON: JSON.stringify({
-          courseId,
-        }),
+      .select({
+        id: courseSetting.id,
+        internalName: courseSetting.internalName,
+        value: courseSetting.value,
+        datatype: courseSetting.datatype,
+      })
+      .from(courseSetting)
+      .where(eq(courseSetting.courseId, courseId))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error getting course settings for course: ${err}`);
+        loggerService.errorLog({
+          userId: "",
+          url: "/CourseService/getCourseById",
+          userAgent: "",
+          message: "ERROR_GETTING_COURSE_SETTINGS_FOR_COURSE",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            courseId,
+          }),
+        });
+        throw new Error("Error getting course settings");
       });
-      throw new Error("Error getting course settings");
-    });
 
-    let desktopViewVersion = courseSettings.find((setting) => setting.internalName === "PHONE_NUMBER_MANDATORY_AT_CHECKOUT")?.value
+    const desktopViewVersion = courseSettings.find(
+      (setting) => setting.internalName === "PHONE_NUMBER_MANDATORY_AT_CHECKOUT"
+    );
 
-    return desktopViewVersion ?? "v1";
+    return (
+      parseSettingValue(desktopViewVersion?.value ?? "", desktopViewVersion?.datatype ?? "string") ?? "v1"
+    );
   };
 }

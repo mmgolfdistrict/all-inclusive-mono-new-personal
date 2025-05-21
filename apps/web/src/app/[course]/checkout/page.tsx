@@ -234,14 +234,14 @@ export default function Checkout({
       | FirstHandGroupProduct =
       saleType === "first_hand"
         ? {
-            type: "first_hand",
-            tee_time_id: teeTimeId,
-            number_of_bookings: amountOfPlayers - validatePlayers.length,
-          }
+          type: "first_hand",
+          tee_time_id: teeTimeId,
+          number_of_bookings: amountOfPlayers - validatePlayers.length,
+        }
         : {
-            type: "second_hand",
-            second_hand_id: listingId,
-          };
+          type: "second_hand",
+          second_hand_id: listingId,
+        };
     const localCart: CartProduct[] = [
       {
         name: "Golf District Tee Time",
@@ -251,7 +251,7 @@ export default function Checkout({
             debouncedPromoCode && promoCodePrice !== undefined
               ? promoCodePrice * 100
               : Number(data?.pricePerGolfer * 100) *
-                (amountOfPlayers - validatePlayers.length);
+              (amountOfPlayers - validatePlayers.length);
 
           return calculatedPrice === 0 ? 1 : calculatedPrice; // If price is 0, return 1
         })(), //int
@@ -277,7 +277,7 @@ export default function Checkout({
         display_price: formatMoney(
           ((data?.greenFeeTaxPerPlayer ?? 0) +
             (data?.cartFeeTaxPerPlayer ?? 0)) *
-            amountOfPlayers
+          amountOfPlayers
         ),
         product_data: {
           metadata: {
@@ -296,7 +296,7 @@ export default function Checkout({
         display_price: formatMoney(
           ((data?.greenFeeTaxPerPlayer ?? 0) +
             (data?.cartFeeTaxPerPlayer ?? 0)) *
-            amountOfPlayers
+          amountOfPlayers
         ),
         product_data: {
           metadata: {
@@ -319,7 +319,7 @@ export default function Checkout({
         display_price: formatMoney(
           ((data?.greenFeeTaxPerPlayer ?? 0) +
             (data?.cartFeeTaxPerPlayer ?? 0)) *
-            amountOfPlayers
+          amountOfPlayers
         ),
         product_data: {
           metadata: {
@@ -593,8 +593,8 @@ export default function Checkout({
                 teeTimeDate={teeTimeData?.date}
                 playerCount={playerCount}
                 teeTimeData={data}
-                isAppleWidgetReload={isAppleWidgetReload}
-                // maxReservation={maxReservation}
+                isAppleWidgetReload={Boolean(isAppleWidgetReload)}
+              // maxReservation={maxReservation}
               />
             )}
           </div>
