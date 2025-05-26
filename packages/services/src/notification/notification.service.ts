@@ -349,34 +349,6 @@ export class NotificationService {
       .limit(1)
       .execute();
 
-    // const [data] = await this.database
-    //   .select({
-    //     unreadCount: sql<number>`COUNT(*)`.as("unreadCount"),
-    //   })
-    //   .from(offers)
-    //   .leftJoin(offerRead, and(eq(offerRead.userId, userId), eq(offerRead.courseId, offers.courseId)))
-    //   .innerJoin(userBookingOffers, eq(userBookingOffers.offerId, offers.id))
-    //   .leftJoin(bookings, eq(bookings.id, userBookingOffers.bookingId))
-    //   .where(
-    //     and(
-    //       eq(offerRead.userId, userId),
-    //       eq(bookings.ownerId, userId),
-    //       or(
-    //         isNull(offerRead.lastRead),
-    //         and(
-    //           eq(offers.courseId, courseId),
-    //           eq(offers.isDeleted, false),
-    //           gt(offers.createdAt, offerRead.lastRead)
-    //         )
-    //       )
-    //     )
-    //   )
-    //   .groupBy(offers.courseId)
-    //   .execute()
-    //   .catch((err) => {
-    //     this.logger.error(err);
-    //     throw new Error("Failed to retrieve unread offers");
-    //   });
     if (!data) {
       return 0;
     }
@@ -517,17 +489,10 @@ export class NotificationService {
         throw new Error("Failed to create notification");
       });
 
-    // if (user[0].phoneNotifications && user[0].phoneNumber) {
-    //   this.logger.debug(`Sending SMS to ${user[0].phoneNumber}`);
-    //   await this.sendSMS(user[0].phoneNumber, subject);
-    // }
-
     if (user.emailNotifications && user.email) {
       if (templateId && template) {
-        this.logger.debug(`Sending email to ${user.email}`);
         await this.sendEmailByTemplate(user.email, subject, templateId, template, attachments || []);
       } else {
-        this.logger.debug(`Sending email to ${user.email}`);
         await this.sendEmail(user.email, subject, body);
       }
     }

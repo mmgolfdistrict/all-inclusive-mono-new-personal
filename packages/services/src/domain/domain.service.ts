@@ -51,24 +51,18 @@ export class DomainService {
       this.getConfigResponse(domain),
     ]);
     if (domainJson?.error?.code == "not_found") {
-      this.logger.debug(`Domain ${domain} not found`);
       status = "Domain Not Found";
     } else if (domainJson.error) {
-      this.logger.debug(`Domain ${domain} error: ${domainJson.error.message}`);
       status = "Unknown Error";
     } else if (!domainJson.verified) {
-      this.logger.debug(`Domain ${domain} not verified`);
       status = "Pending Verification";
       const verificationJson = await this.verifyDomain(domain);
       if (verificationJson && verificationJson.verified) {
-        this.logger.debug(`Domain ${domain} verified`);
         status = "Valid Configuration";
       }
     } else if (configResponse.misconfigured) {
-      this.logger.debug(`Domain ${domain} misconfigured`);
       status = "Invalid Configuration";
     } else {
-      this.logger.debug(`Domain ${domain} valid configuration`);
       status = "Valid Configuration";
     }
     return {

@@ -557,7 +557,6 @@ export class CourseService extends DomainService {
       supportCharity?: boolean;
     }
   ) => {
-    this.logger.info(`Updating course ${courseId} with options: ${JSON.stringify(options)}`);
     if (options.logoAssetId) {
       const logo = await this.database
         .select()
@@ -882,7 +881,6 @@ export class CourseService extends DomainService {
     entityId: string,
     domain: string | "" //remove domain if empty string
   ) => {
-    this.logger.info(`Updating entity ${entityId} with domain ${domain}`);
     const courseDomain = await this.database
       .select({ customDomain: entities.customDomain })
       .from(entities)

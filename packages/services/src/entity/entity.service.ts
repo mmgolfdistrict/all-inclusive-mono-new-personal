@@ -105,7 +105,6 @@ export class EntityService {
   getEntityFromDomain = async (domain: string, rootDomain: string) => {
     const subdomain = domain.endsWith(`.${rootDomain}`) ? domain.replace(`.${rootDomain}`, "") : null;
      //const subdomain = "demo.golfdistrict.in";
-    this.logger.debug(`getEntityFromDomain called for: ${subdomain ? subdomain : domain}`);
 
     const query = this.database
       .select({
@@ -200,7 +199,6 @@ export class EntityService {
           });
           throw new Error(`Error getting courses for entity: ${entityId}`);
         });
-      console.log("datadata", data);
 
       // Find all images for each course
       const images = await this.database

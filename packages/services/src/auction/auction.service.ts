@@ -53,7 +53,6 @@ export class AuctionService {
     buyNowPrice?: number
   ): Promise<void> => {
     if (startDate.getTime() < new Date().getTime()) {
-      console.log("error");
       this.logger.error("Starting bid time cannot be in the past");
       throw new Error("Starting bid time cannot be in the past");
     }
@@ -482,8 +481,6 @@ export class AuctionService {
   getAuctionById = async (
     auctionId: string
   ): Promise<{ auction: SelectAuctions; highestBid: number; assetUrl: string; bidCount: number }> => {
-    this.logger.info(`Getting auction ${auctionId}`);
-
     // Fetch auction details
     const [data] = await this.database
       .select({

@@ -976,7 +976,6 @@ export class UserService {
       this.logger.warn(`User not found: ${userId}`);
       throw new Error("User not found");
     }
-    this.logger.debug(`uploading emailVerificationToken for user: ${userId}`);
     const verificationToken = randomBytes(32).toString("hex");
     const hashedVerificationToken = await bcrypt.hash(verificationToken, 10);
     await this.database
@@ -988,7 +987,6 @@ export class UserService {
       })
       .where(eq(users.id, userId))
       .execute();
-    this.logger.debug(`emailVerificationToken uploaded for user: ${userId}`);
     await this.notificationsService
       .sendEmail(email, "Verify your email", `${verificationToken}`)
       .catch((err) => {
@@ -1028,7 +1026,6 @@ export class UserService {
    *   executeEmailUpdate('user123id', 'secureverificationtoken');
    */
   executeEmailUpdate = async (userId: string, token: string): Promise<void> => {
-    this.logger.info(`executeEmailUpdate called with userId: ${userId} and token: ${token}`);
     const [user] = await this.database.select().from(users).where(eq(users.id, userId));
     if (!user) {
       this.logger.warn(`User not found: ${userId}`);
@@ -1043,7 +1040,6 @@ export class UserService {
       throw new Error("User not found");
     }
     if (user.verificationRequestExpiry && user.verificationRequestExpiry < currentUtcTimestamp()) {
-      this.logger.warn(`Verification token expired: ${userId}`);
       loggerService.errorLog({
         userId: userId,
         url: `/UserService/executeEmailUpdate`,

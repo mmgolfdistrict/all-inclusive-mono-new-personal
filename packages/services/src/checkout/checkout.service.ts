@@ -300,8 +300,6 @@ export class CheckoutService {
 
   createCheckoutSession = async (userId: string, customerCartData: CustomerCart, ipAddress?: string) => {
     const { paymentId: _, ...customerCart } = customerCartData;
-
-    this.logger.debug(`${JSON.stringify(customerCart)}`);
     const [user] = await this.database
       .select({
         name: users.name,
@@ -607,73 +605,6 @@ export class CheckoutService {
         next_action: "",
       };
     }
-    // }
-
-    // const paymentIntent = await this.hyperSwitch.createPaymentIntent(paymentData).catch((err) => {
-    //   this.logger.error(` ${err}`);
-    //   loggerService.errorLog({
-    //     userId,
-    //     url: "/CheckoutService/createCheckoutSession",
-    //     userAgent: "",
-    //     message: "ERROR_CREATING_PAYMENT_INTENT",
-    //     stackTrace: `${err.stack}`,
-    //     additionalDetailsJSON: JSON.stringify({
-    //       customerCartData,
-    //       paymentData,
-    //     }),
-    //   });
-    //   throw new Error(`Error creating payment intent: ${err}`);
-    // });
-    //   /* Add respective env enpoints
-    //    - Sandbox - https://sandbox.hyperswitch.io
-    //    - Prod - https://api.hyperswitch.io
-    //   */
-    //  console.log("api key used hyperswitch",process.env.HYPERSWITCH_API_KEY);
-    //  console.log("payment data used",paymentData);
-    //    const url = "https://sandbox.hyperswitch.io";
-    //   const apiResponse = await fetch(`${url}/payments`, {
-    //     method: "POST",
-    //     headers: {
-    //       "Content-Type": "application/json",
-    //       Accept: "application/json",
-    //       "api-key": process.env.HYPERSWITCH_API_KEY as string,
-    //     },
-    //     body: JSON.stringify(paymentData),
-    //   });
-    //   this.logger.info({
-    //     "path":"create-intent hyperswitch"
-    //   },`${JSON.stringify(apiResponse)}`)
-    //   this.logger.info({
-    //     "path":"create-intent hyperswitch",
-    //   },`api response json- ${JSON.stringify(apiResponse.json())}`)
-
-    //   const paymentIntent = await apiResponse.json();
-
-    //   if (paymentIntent.error) {
-    //     console.error("Error - ", paymentIntent.error);
-    //     throw new Error(paymentIntent?.error?.message ?? "Something went wrong.");
-    //   }
-
-    //save customerCart to database
-    // const cartId: string = randomUUID();
-    // const ipInfo = await this.ipInfoService.getIpInfo(ipAddress);
-    // await this.database.insert(customerCarts).values({
-    //   id: cartId,
-    //   userId: userId,
-    //   // courseId: customerCart.courseId,
-    //   paymentId: paymentIntent.payment_id,
-    //   cart: customerCart,
-    //   listingId,
-    //   teeTimeId,
-    //   ipinfoJSON: ipInfo,
-    // });
-
-    // return {
-    //   clientSecret: paymentIntent.client_secret,
-    //   paymentId: paymentIntent.payment_id,
-    //   cartId: cartId,
-    //   next_action: paymentIntent.next_action,
-    // };
   };
 
   updateCheckoutSession = async (userId: string, customerCartData: CustomerCart, cartId: string) => {

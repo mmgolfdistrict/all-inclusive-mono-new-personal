@@ -64,7 +64,6 @@ export class CacheService {
 
     const data = await fetchFn();
     // Store the result in Redis cache
-    this.logger.debug(`Cache miss for key: ${key} storing in cache`);
     await this.redis.set(key, JSON.stringify(data), { ex: ttl });
 
     return data;
@@ -78,9 +77,7 @@ export class CacheService {
    * @returns {Promise<void>} A promise that resolves when the cache item is invalidated.
    */
   invalidateCache = async (key: string): Promise<void> => {
-    this.logger.info(`Invalidating cache for key: ${key}`);
     await this.redis.del(key);
-    this.logger.debug(`Cache invalidated for key: ${key}`);
   };
 
   /**
@@ -100,7 +97,6 @@ export class CacheService {
   ): Promise<void> => {
     this.logger.info(`Setting cache for key: ${key}`);
     await this.redis.set(key, JSON.stringify(data), { ex: ttl });
-    this.logger.debug(`Cache set for key: ${key}`);
   };
 
   /**
@@ -115,12 +111,10 @@ export class CacheService {
     let count;
 
     if (!keyExists) {
-      this.logger.info(`Cache miss for key: ${key}, setting to 1`);
       await this.redis.set(key, 1);
       count = 1;
     } else {
       count = await this.redis.incr(key);
-      this.logger.debug(`Cache incremented for key: ${key}`);
     }
 
     return count;
