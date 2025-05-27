@@ -392,7 +392,7 @@ export class CheckoutService {
         const cartFeeTaxPercentTotal =
           ((cartFeeCharge * ((teeTime?.cartFeeTaxPercent ?? 0) / 100)) / 100) * playerCount;
         const additionalTaxes = Number(
-          (greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal).toFixed(2)
+          (greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal)
         );
         total = total + additionalTaxes * 100;
       }

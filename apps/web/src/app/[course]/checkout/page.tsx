@@ -247,11 +247,14 @@ export default function Checkout({
         name: "Golf District Tee Time",
         id: teeTimeId ?? data?.teeTimeId,
         price: (() => {
+          const totalPrice = Number(data?.pricePerGolfer) * (amountOfPlayers - validatePlayers.length);
           const calculatedPrice =
             debouncedPromoCode && promoCodePrice !== undefined
               ? promoCodePrice * 100
-              : Number(data?.pricePerGolfer * 100) *
-              (amountOfPlayers - validatePlayers.length);
+              : Math.round(totalPrice * 100);
+              // : Number(data?.pricePerGolfer * 100) *
+              //   (amountOfPlayers);
+                // - validatePlayers.length
 
           return calculatedPrice === 0 ? 1 : calculatedPrice; // If price is 0, return 1
         })(), //int
@@ -386,22 +389,22 @@ export default function Checkout({
     }
     if (
       (selectedCharity || course?.roundUpCharityId) &&
-      deboundCharityAmount &&
-      deboundCharityAmount > 0
+      selectedCharityAmount &&
+      selectedCharityAmount > 0
     ) {
       localCart.push({
         name: "Golf District Tee Time",
         id: teeTimeId ?? data?.teeTimeId,
-        price: deboundCharityAmount * 100, //int
+        price: selectedCharityAmount * 100, //int
         image: "", //
         currency: "USD", //USD
-        display_price: formatMoney(deboundCharityAmount),
+        display_price: formatMoney(selectedCharityAmount),
         product_data: {
           metadata: {
             type: "charity",
             charity_id:
               selectedCharity?.charityId ?? course?.roundUpCharityId ?? "",
-            donation_amount: deboundCharityAmount * 100,
+            donation_amount: selectedCharityAmount * 100,
           },
         },
       });
