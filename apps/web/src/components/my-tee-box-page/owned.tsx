@@ -52,7 +52,7 @@ export const Owned = () => {
 
   const courseId = course?.id;
   const [isListTeeTimeOpen, setIsListTeeTimeOpen] = useState<boolean>(false);
-  const [sideBarClose,setIsSideBarClose] = useState<boolean>(false)
+  const [sideBarClose, setIsSideBarClose] = useState<boolean>(false)
   const [isCollectTeeTimeOpen, setIsCollectPaymentOpen] =
     useState<boolean>(false);
   const [isCancelListingOpen, setIsCancelListingOpen] =
@@ -118,7 +118,7 @@ export const Owned = () => {
       setIsCollectPaymentOpen(true);
       setSelectedTeeTime(filteredResult);
     }
-  }, [paramBookingId,filteredResult])
+  }, [paramBookingId, filteredResult])
 
   if (isError && error) {
     return (
@@ -184,7 +184,7 @@ export const Owned = () => {
                   timezoneCorrection={course?.timezoneCorrection}
                   bookingStatus={i.bookingStatus}
                   isGroupBooking={i.isGroupBooking}
-                  isCollectPaymentEnabled={isCollectPaymemtEnabled}
+                  isCollectPaymentEnabled={Boolean(isCollectPaymemtEnabled)}
                 />
               ))}
           </tbody>
@@ -208,7 +208,7 @@ export const Owned = () => {
         setIsCollectPaymentOpen={setIsCollectPaymentOpen}
         selectedTeeTime={selectedTeeTime}
         refetch={refetch}
-        setIsSideBarClose = {setIsSideBarClose}
+        setIsSideBarClose={setIsSideBarClose}
       />
       <ManageOwnedTeeTime
         isManageOwnedTeeTimeOpen={isManageOwnedTeeTimeOpen}
@@ -367,7 +367,7 @@ const TableRow = ({
       </td>
       <td className="whitespace-nowrap px-4 py-3">
         <div className="flex w-full justify-end gap-2">
-          { golfers.length > 1 && isCollectPaymentEnabled && (
+          {golfers.length > 1 && isCollectPaymentEnabled && (
             <FilledButton
               className="min-w-[145px]"
               onClick={collectPaymentList}

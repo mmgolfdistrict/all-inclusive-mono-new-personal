@@ -2325,7 +2325,7 @@ export class SearchService extends CacheService {
     const teeTimesResponse = mappedTeeTimes.map((teeTime) => {
       return {
         ...teeTime,
-        pricePerGolferForGroup: pricePerGolfer ?? 0,
+        pricePerGolferForGroup: pricePerGolfer.toFixed(2) ?? 0,
         cartFeesForGroup: cartFeesForGroup ?? 0,
       };
     });
