@@ -4605,6 +4605,7 @@ export class BookingService {
         transferedFromBookingId: transfers.fromUserId,
         groupId: bookings.groupId,
         playerCount: bookings.playerCount,
+        courseId:teeTimes.courseId
       })
       .from(bookings)
       .innerJoin(transfers, eq(transfers.bookingId, bookings.id))

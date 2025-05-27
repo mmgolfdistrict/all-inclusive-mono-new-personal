@@ -100,6 +100,7 @@ export const CheckoutForm = ({
     validatePlayers,
     handleShouldAddSensible: _handleShouldAddSensible,
   } = useCheckoutContext();
+  const router = useRouter();
   const params = useParams();
   const courseId = course?.id;
   const roundUpCharityId = course?.roundUpCharityId;
@@ -152,6 +153,21 @@ export const CheckoutForm = ({
     api.course.getPhoneNumberMandatoryAtCheckout.useQuery({
       courseId: courseId ?? "",
     });
+
+  useEffect(() => {
+    const handlePopState = () => {
+      // When back button is pressed, redirect to dashboard
+      router.push(`/${courseId}`);
+      console.log("button is present")
+    };
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [router]);
+
+
 
   useEffect(function getCurrentCountryCode() {
     const phoneNumber = userData?.phoneNumber;
@@ -340,7 +356,7 @@ export const CheckoutForm = ({
   const hyper = useHyper();
   const widgets = useWidgets();
 
-  const router = useRouter();
+
   const [donateValue, setDonateValue] = useState(5);
   // const [roundOffClick, setRoundOffClick] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -787,7 +803,7 @@ export const CheckoutForm = ({
             if (isBuyNowAuction) {
               router.push(`/${course?.id}/auctions/confirmation`);
             } else {
-              router.push(
+              router.replace(
                 `/${course?.id
                 }/checkout/confirmation?teeTimeId=${teeTimeId}&bookingId=${bookingResponse.bookingId
                 }&isEmailSend=${bookingResponse.isEmailSend}&isGroupBooking=${isFirstHandGroup.length ? "true" : "false"

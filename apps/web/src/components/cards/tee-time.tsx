@@ -79,7 +79,7 @@ export const TeeTime = ({
   handleLoading?: (val: boolean) => void;
   refetch?: () => Promise<unknown>;
   groupId?: string;
-    allowSplit?: boolean;
+  allowSplit?: boolean;
 }) => {
   const [, copy] = useCopyToClipboard();
   const [isCopied, setIsCopied] = useState<boolean>(false);
@@ -126,11 +126,11 @@ export const TeeTime = ({
   const getCache = api.cache.getCache.useMutation();
   const { refetch: refetchStillListed } = api.teeBox.checkIfTeeTimeStillListedByListingId.useQuery({
     listingId: listingId ?? ""
-  }) 
+  })
   const groupBookingParams = useMemo(() => {
     return `date=${items.date?.split("T")[0]}&time=${items.time}`
   }, [items])
-  
+
   const logAudit = async () => {
     await auditLog.mutateAsync({
       userId: user?.id ?? "",
@@ -142,7 +142,6 @@ export const TeeTime = ({
       json: `TEE_TIME_IN_CART `,
     });
   };
-
   useEffect(() => {
     (ref: HTMLSpanElement | null) => {
       if (ref) {
@@ -232,7 +231,7 @@ export const TeeTime = ({
       return;
     }
     if (status === "FIRST_HAND") {
-      void router.push(
+      void router.replace(
         `/${course?.id}/checkout?teeTimeId=${teeTimeId}&playerCount=${selectedPlayers}`
       );
     }
@@ -258,7 +257,7 @@ export const TeeTime = ({
           return;
         }
       }
-      void router.push(
+      void router.replace(
         `/${course?.id}/checkout?listingId=${listingId}&playerCount=${selectedPlayers}`
       );
     }
