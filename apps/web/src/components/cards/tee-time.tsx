@@ -79,7 +79,7 @@ export const TeeTime = ({
   handleLoading?: (val: boolean) => void;
   refetch?: () => Promise<unknown>;
   groupId?: string;
-    allowSplit?: boolean;
+  allowSplit?: boolean;
 }) => {
   const [, copy] = useCopyToClipboard();
   const [isCopied, setIsCopied] = useState<boolean>(false);
@@ -126,11 +126,18 @@ export const TeeTime = ({
   const getCache = api.cache.getCache.useMutation();
   const { refetch: refetchStillListed } = api.teeBox.checkIfTeeTimeStillListedByListingId.useQuery({
     listingId: listingId ?? ""
-  }) 
+  })
   const groupBookingParams = useMemo(() => {
     return `date=${items.date?.split("T")[0]}&time=${items.time}`
-  }, [items])
-  
+  }, [items]);
+  const shouldShowGroupBookingButton = useMemo(() => {
+    if (course?.groupStartTime && course?.groupEndTime && items.time) {
+      return (items.time >= course?.groupStartTime && items.time <= course?.groupEndTime) ? true : false
+    } else {
+      return true
+    }
+  }, [items]);
+
   const logAudit = async () => {
     await auditLog.mutateAsync({
       userId: user?.id ?? "",
@@ -442,7 +449,7 @@ export const TeeTime = ({
                   !(status === "SECOND_HAND") ? numberOfPlayers : PlayersOptions.filter(player => player <= (listedSlots?.toString() ?? "0"))
                 ) : []}
                 status={status}
-                supportsGroupBooking={course?.supportsGroupBooking}
+                supportsGroupBooking={shouldShowGroupBookingButton ? course?.supportsGroupBooking : false}
                 allowSplit={allowSplit}
                 groupBookingParams={groupBookingParams}
               />
