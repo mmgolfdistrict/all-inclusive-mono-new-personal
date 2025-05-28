@@ -744,7 +744,7 @@ export class CheckoutService {
         const cartFeeTaxPercentTotal =
           ((cartFeeCharge * ((teeTime?.cartFeeTaxPercent ?? 0) / 100)) / 100) * playerCount;
         const additionalTaxes = Number(
-          (greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal)
+          (greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal).toFixed(2)
         );
         total = total + additionalTaxes * 100;
       }
@@ -1560,7 +1560,7 @@ export class CheckoutService {
       let appSettingsResult: any = [];
       let appSettingsValue: number;
       appSettingsResult = await this.appSettings.getAppSetting("USER_BUY_MULTIPLE_TEETIME_IN_SAME_DAY");
-      appSettingsValue = Number(appSettingsResult);
+      appSettingsValue = Number(appSettingsResult.value);
 
       const [userResult] = await this.database
         .select({

@@ -217,6 +217,18 @@ export default function Checkout({
     .add(6, "hours")
     .hour();
 
+  function toCentsConditional(price: number) {
+    const formatted = price.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+
+    // Remove commas if any (like in 1,234.56)
+    const normalized = Number(formatted.replace(/,/g, ""));
+
+    return Math.round(normalized * 100);
+  }
+
   const cartData: CartProduct[] = useMemo(() => {
     if (!data || data === null) return [];
 
@@ -252,9 +264,9 @@ export default function Checkout({
             debouncedPromoCode && promoCodePrice !== undefined
               ? promoCodePrice * 100
               : Math.round(totalPrice * 100);
-              // : Number(data?.pricePerGolfer * 100) *
-              //   (amountOfPlayers);
-                // - validatePlayers.length
+          // : Number(data?.pricePerGolfer * 100) *
+          //   (amountOfPlayers);
+          // - validatePlayers.length
 
           return calculatedPrice === 0 ? 1 : calculatedPrice; // If price is 0, return 1
         })(), //int
@@ -375,7 +387,7 @@ export default function Checkout({
       localCart.push({
         name: "Golf District Tee Time",
         id: teeTimeId ?? data?.teeTimeId,
-        price: (sensibleData?.price ?? 0) * 100, //int
+        price: toCentsConditional(sensibleData?.price ?? 0), //int
         image: "", //
         currency: "USD", //USD
         display_price: formatMoney(sensibleData?.price ?? 0),
@@ -389,22 +401,22 @@ export default function Checkout({
     }
     if (
       (selectedCharity || course?.roundUpCharityId) &&
-      selectedCharityAmount &&
-      selectedCharityAmount > 0
+      deboundCharityAmount &&
+      deboundCharityAmount > 0
     ) {
       localCart.push({
         name: "Golf District Tee Time",
         id: teeTimeId ?? data?.teeTimeId,
-        price: selectedCharityAmount * 100, //int
+        price: deboundCharityAmount * 100, //int
         image: "", //
         currency: "USD", //USD
-        display_price: formatMoney(selectedCharityAmount),
+        display_price: formatMoney(deboundCharityAmount),
         product_data: {
           metadata: {
             type: "charity",
             charity_id:
               selectedCharity?.charityId ?? course?.roundUpCharityId ?? "",
-            donation_amount: selectedCharityAmount * 100,
+            donation_amount: deboundCharityAmount * 100,
           },
         },
       });
