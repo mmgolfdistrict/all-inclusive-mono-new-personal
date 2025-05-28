@@ -700,6 +700,7 @@ export default function CourseHomePage() {
         <div className="flex gap-8 items-center px-4 md:px-6 ">
           <div className="min-w-[310px]">
             {ALLOW_COURSE_SWITCHING ? <Select
+              className="w-full"
               values={
                 allSwitchCoursesData && allSwitchCoursesData.length > 0
                   ? allSwitchCoursesData.map((courseItem: { name: string }) => courseItem.name)
