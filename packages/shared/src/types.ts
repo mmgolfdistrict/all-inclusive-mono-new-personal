@@ -105,6 +105,7 @@ export type FullCourseType = {
   isOnlyGroupOfFourAllowed?: boolean;
   isAllowSpecialRequest?: boolean;
   isAllowClubRental?: boolean;
+  isAllowCourseSwitching?: boolean;
 };
 
 export type SupportedCharity = {
@@ -224,7 +225,7 @@ export type ReserveTeeTimeResponse = {
   isEmailSend: boolean;
   courseMembershipId?: string;
   playerCountForMemberShip?: string;
-  isValidForCollectPayment:boolean;
+  isValidForCollectPayment: boolean;
 };
 
 export type NotificationObject = {
