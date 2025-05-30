@@ -9,7 +9,7 @@ import {
   type SensibleDataToMountCompType,
 } from "~/utils/types";
 import { useSearchParams } from "next/navigation";
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import { useMediaQuery } from "usehooks-ts";
 import placeholderImage from "../../../public/placeholders/course.png";
@@ -63,6 +63,13 @@ export const CheckoutItem = ({
       index === 0 ? user?.email : ""
     )
   );
+  const shouldShowGroupBookingButton = useMemo(() => {
+    if (course?.groupStartTime && course?.groupEndTime && teeTime?.time) {
+      return (teeTime?.time >= course?.groupStartTime && teeTime?.time <= course?.groupEndTime) ? true : false
+    } else {
+      return true
+    }
+  }, [teeTime]);
   const isMobile = useMediaQuery("(max-width: 768px)");
   const { data: coursePreviewImage } =
     api.course.getCoursePreviewImage.useQuery({ courseId: courseId ?? "" });
@@ -94,6 +101,10 @@ export const CheckoutItem = ({
   const choosePlayers = (amount: string) => {
     setAmountOfPlayers(Number(amount));
   };
+
+  const groupBookingParams = useMemo(() => {
+    return `date=${teeTime?.date?.split("T")[0]}&time=${teeTime?.time}`
+  }, [teeTime])
 
   useEffect(() => {
     if (
@@ -207,9 +218,8 @@ export const CheckoutItem = ({
   return (
     <div className="relative flex w-full flex-col gap-2 bg-secondary-white  pt-4 lg:rounded-lg">
       <div
-        className={`flex pb-4 lg:items-start ${
-          isMobile ? "gap-1 px-1" : " gap-2 px-4 items-center"
-        }`}
+        className={`flex pb-4 lg:items-start ${isMobile ? "gap-1 px-1" : " gap-2 px-4 items-center"
+          }`}
       >
         <BlurImage
           src={coursePreviewImage ?? ""}
@@ -259,6 +269,7 @@ export const CheckoutItem = ({
                   selectStatus={allowedPlayers?.selectStatus}
                   canShowPlayers={!isGroupBooking}
                   allowSplit={teeTime?.allowSplit || false}
+                  groupBookingParams={groupBookingParams}
                 />
               </div>
             </div>
@@ -345,7 +356,9 @@ export const CheckoutItem = ({
                   numberOfPlayers={numberOfPlayers}
                   selectStatus={allowedPlayers?.selectStatus}
                   canShowPlayers={!isGroupBooking}
-                    allowSplit={teeTime?.allowSplit || false}
+                  allowSplit={teeTime?.allowSplit || false}
+                  groupBookingParams={groupBookingParams}
+                  shouldShowGroupBookingButton={shouldShowGroupBookingButton}
                 />
               </div>
             </div>
@@ -392,7 +405,7 @@ export const CheckoutItem = ({
       <div className="flex flex-col gap-1">
         <div className="flex flex-col gap-2">
           {isSupportMemberShip?.supportsProviderMembership === 1 &&
-          listingId == null ? (
+            listingId == null ? (
             <div id="select-membership-checkout">
               <div className="flex gap-2 px-2">
                 <h5 className="">Select MemberShip:</h5>
@@ -414,7 +427,7 @@ export const CheckoutItem = ({
               </div>
               <div className="flex flex-wrap justify-between gap-1">
                 {courseMemberships.length === 0 ||
-                membershipStatus === "no_membership" ? null : (
+                  membershipStatus === "no_membership" ? null : (
                   <Fragment>
                     {Array.from({ length: Number(playerCount) }, (_, index) => (
                       <div
@@ -497,7 +510,9 @@ const Data = ({
   numberOfPlayers,
   selectStatus,
   canShowPlayers,
-  allowSplit
+  allowSplit,
+  groupBookingParams,
+  shouldShowGroupBookingButton
 }: {
   className: string;
   canChoosePlayer: boolean;
@@ -512,7 +527,9 @@ const Data = ({
   numberOfPlayers?: string[];
   selectStatus?: string;
   canShowPlayers?: boolean;
-    allowSplit?: boolean;
+  allowSplit?: boolean;
+  groupBookingParams?: string;
+  shouldShowGroupBookingButton?: boolean;
 }) => {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const { course } = useCourseContext();
@@ -552,7 +569,8 @@ const Data = ({
                 teeTimeId={teeTimeId}
                 numberOfPlayers={numberOfPlayers ? numberOfPlayers : []}
                 id="number-of-players-checkout"
-                supportsGroupBooking={course?.supportsGroupBooking}
+                supportsGroupBooking={shouldShowGroupBookingButton ? course?.supportsGroupBooking : false}
+                groupBookingParams={groupBookingParams}
               />
             ) : (
               players && (

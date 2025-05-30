@@ -5,6 +5,7 @@ export interface AppSetting {
   caption: string;
   description: string | null;
   value: string | null;
+  datatype?: string | null;
   createdDateTime: string;
   lastUpdatedDateTime: string;
 }

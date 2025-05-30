@@ -397,7 +397,7 @@ export class UserWaitlistService {
           listingId,
         };
         if (listingId) {
-          await this.sendQstashMessage(data, notificationDelay);
+          await this.sendQstashMessage(data, notificationDelay?.toString());
         } else {
           await this.sendQstashMessage(data);
         }

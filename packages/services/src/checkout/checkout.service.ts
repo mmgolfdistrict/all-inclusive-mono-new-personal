@@ -267,14 +267,19 @@ export class CheckoutService {
     //   };
     // }
 
-    if (this.cacheService && customerCartData?.teeTimeType === "SECONDARY") {
-      const LIST_TEETIME_ID_TTL = 600 // in seconds
+    const cachedListingData = await this.cacheService.getCache(`listing_id_${customerCartData?.listingId}`);
+    if (this.cacheService && customerCartData?.teeTimeType === "SECONDARY" && !cachedListingData) {
+      const LIST_TEETIME_ID_TTL = 600; // in seconds
       console.log("Setting listing_id in Redis Cache: ", customerCartData?.listingId);
       const listingCacheData = JSON.stringify({
         listingId: customerCartData?.listingId,
-        userId
-      })
-      await this.cacheService.setCache(`listing_id_${customerCartData?.listingId}`, listingCacheData, LIST_TEETIME_ID_TTL);
+        userId,
+      });
+      await this.cacheService.setCache(
+        `listing_id_${customerCartData?.listingId}`,
+        listingCacheData,
+        LIST_TEETIME_ID_TTL
+      );
     }
 
     console.log("userId ", userId);
@@ -387,7 +392,7 @@ export class CheckoutService {
         const cartFeeTaxPercentTotal =
           ((cartFeeCharge * ((teeTime?.cartFeeTaxPercent ?? 0) / 100)) / 100) * playerCount;
         const additionalTaxes = Number(
-          (greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal).toFixed(2)
+          (greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal)
         );
         total = total + additionalTaxes * 100;
       }
@@ -469,7 +474,6 @@ export class CheckoutService {
     // });
     //@TODO: metadata to include sensible
     //@TODO: update total form discount
-    // debugger;
     const [record] = await this.database
       .select({
         internalId: providers.internalId,
@@ -497,6 +501,7 @@ export class CheckoutService {
         cartId: customerCart?.cartId,
         playerCount: customerCart?.playerCount,
         teeTimeType: customerCart?.teeTimeType,
+        purpose: customerCart?.purpose,
       },
       merchant_order_reference_id: customerCartData?.cartId ?? "",
       setup_future_usage: "off_session",
@@ -846,6 +851,7 @@ export class CheckoutService {
         cartId: customerCart?.cartId,
         playerCount: customerCart?.playerCount,
         teeTimeType: customerCart?.teeTimeType,
+        purpose: customerCart?.purpose,
       },
     };
 
@@ -1733,6 +1739,22 @@ export class CheckoutService {
   };
   isAppleEnabledReloadWidget = async () => {
     const appSettingsResult = await this.appSettings.getAppSetting("IS_ENABLED_APPLE_PAY");
-    return appSettingsResult?.value === "1" ? true : false;
+    return appSettingsResult?.value;
+  };
+  isCollectPaymentEnabled = async () => {
+    const appSettingsResult = await this.appSettings.getAppSetting("COLLECT_PAYMENTS_ENABLED");
+    return appSettingsResult?.value;
+  };
+  collectPaymentProcessorPercent = async () => {
+    const appSettingsResult = await this.appSettings.getAppSetting(
+      "COLLECT_PAYMENT_PAYMENT_PROCESSOR_PERCENT"
+    );
+    return appSettingsResult?.value;
+  };
+  blockCheckoutWhenGreenFeeTimesXLtMarkup = async () => {
+    const appSettingsResult = await this.appSettings.getAppSetting(
+      "BLOCK_CHECKOUT_WHEN_GREEN_FEE_TIMES_X_LT_MARKUP"
+    );
+    return appSettingsResult?.value;
   };
 }

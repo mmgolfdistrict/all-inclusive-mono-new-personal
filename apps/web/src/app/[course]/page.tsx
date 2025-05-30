@@ -68,6 +68,7 @@ export default function CourseHomePage() {
   const [pageNumber, setPageNumber] = useState<number>(1);
   const { user } = useUserContext();
   const { course } = useCourseContext();
+  const ALLOW_COURSE_SWITCHING = course?.isAllowCourseSwitching;
   const { setBookingSource } = useBookingSourceContext();
   const { isNavExpanded, setActivePage } = useAppContext();
   setActivePage("teeTime")
@@ -141,6 +142,16 @@ export default function CourseHomePage() {
     api.course.getMobileViewVersion.useQuery({
       courseId: courseId ?? "",
     });
+
+  const entityId = entity?.id;
+
+  const { data: allCoursesData, isLoading: allCoursesDataLoading } =
+    api.entity.getCoursesByEntityId.useQuery(
+      { entityId: entityId! },
+      { enabled: entityId !== undefined }
+    );
+
+  const { data: allSwitchCoursesData } = api.course.getAllSwitchCourses.useQuery({ courseId: course?.id ?? "" })
 
   const { data: DESKTOP_VIEW_VERSION } =
     api.course.getDesktopViewVersion.useQuery({
@@ -457,14 +468,14 @@ export default function CourseHomePage() {
           sortValue === "Sort by time - Early to Late"
             ? "asc"
             : sortValue === "Sort by time - Late to Early"
-            ? "desc"
-            : "",
+              ? "desc"
+              : "",
         sortPrice:
           sortValue === "Sort by price - Low to High"
             ? "asc"
             : sortValue === "Sort by price - High to Low"
-            ? "desc"
-            : "",
+              ? "desc"
+              : "",
         timezoneCorrection: course?.timezoneCorrection,
         isHolesAny: holes === "Any",
         isGolferAny: golfers === "Any",
@@ -662,10 +673,25 @@ export default function CourseHomePage() {
   const closeForecastModal = () => {
     setIsForecastModalOpen(false);
   };
+
+  const [selectedCourse, setSelectedCourse] = useState<string>("Select a course");
+
+  const handleCourseSwitch = (courseName: string) => {
+    setSelectedCourse(courseName);
+
+    const selected = allSwitchCoursesData && allSwitchCoursesData.length > 0 ?
+      allSwitchCoursesData?.find((c) => c.name === courseName) :
+      allCoursesData?.find((c) => c.name === courseName);
+
+    if (selected) {
+      allSwitchCoursesData && allSwitchCoursesData.length > 0 ? router.push(`/${selected?.switchableCourseId}`) : router.push(`/${selected?.id}`);
+    }
+  };
+
   return (
     <main className={`bg-secondary-white py-4 md:py-6`}>
       <LoadingContainer
-        isLoading={isLoadingTeeTimeDate || isLoading || specialEventsLoading}
+        isLoading={isLoadingTeeTimeDate || isLoading || specialEventsLoading || allCoursesDataLoading}
       >
         <div></div>
       </LoadingContainer>
@@ -673,9 +699,21 @@ export default function CourseHomePage() {
         !isMobile &&
         <div className="flex gap-8 items-center px-4 md:px-6 ">
           <div className="min-w-[310px]">
-            {entity?.redirectToCourseFlag ? null : (
-              <GoBack href="/" text={`Back to all ${entity?.name} Courses`} />
-            )}
+            {ALLOW_COURSE_SWITCHING ? <Select
+              className="w-full"
+              values={
+                allSwitchCoursesData && allSwitchCoursesData.length > 0
+                  ? allSwitchCoursesData.map((courseItem: { name: string }) => courseItem.name)
+                  : (allCoursesData ?? [])
+                    .filter((courseItem: { id: string }) => courseItem.id !== course.id)
+                    .map((courseItem: { name: string }) => courseItem.name)
+              }
+              value={selectedCourse}
+              setValue={handleCourseSwitch}
+            />
+              : entity?.redirectToCourseFlag ? null : (
+                <GoBack href="/" text={`Back to all ${entity?.name} Courses`} />
+              )}
           </div>
           <div className="flex items-center justify-between w-full">
             <div className="flex justify-between gap-4  px-4 md:px-0">
@@ -887,7 +925,6 @@ export default function CourseHomePage() {
         <MobileDates
           setShowFilters={setShowDates}
           toggleFilters={toggleDates}
-          openForecastModal={openForecastModal}
         />
       )}
       {isForecastModalOpen && (

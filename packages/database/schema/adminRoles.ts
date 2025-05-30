@@ -11,7 +11,6 @@ export const adminRoles = mySqlTable(
     role: varchar("role", { length: 191 }).notNull(),
     description: varchar("description", { length: 255 }),
     courseId: varchar("courseId", { length: 36 }),
-    isActive: boolean("isActive").notNull().default(true),
     isDeleted: boolean("isDeleted").notNull().default(false),
     createdDateTime: datetime("createdDateTime", { mode: "string", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
