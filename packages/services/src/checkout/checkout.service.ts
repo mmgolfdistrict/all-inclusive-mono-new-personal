@@ -400,7 +400,7 @@ export class CheckoutService {
         const merchandiseTaxTotal =
           ((merchandiseCharge * ((teeTime?.merchandiseTaxPercent ?? 0) / 100)) / 100);
         const additionalTaxes = Number(
-          (greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal)
+          (greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal + merchandiseTaxTotal)
         );
         total = total + additionalTaxes * 100;
       }

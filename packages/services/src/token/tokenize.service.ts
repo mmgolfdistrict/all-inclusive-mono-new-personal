@@ -43,7 +43,7 @@ interface BookingTypes {
   isEmailSend: boolean;
 }
 
-interface MerchandiseItem {
+export interface MerchandiseItem {
   id: string;
   qoh: number;
   caption: string;
@@ -178,7 +178,8 @@ export class TokenizeService {
     playerCountForMemberShip,
     providerCourseMembershipId,
     isFirstHandGroupBooking,
-    providerBookings
+    providerBookings,
+    purchasedMerchandise = [],
   }: {
     redirectHref: string;
     userId: string;
@@ -221,6 +222,7 @@ export class TokenizeService {
     providerCourseMembershipId?: string;
     isFirstHandGroupBooking?: boolean;
     providerBookings?: ProviderBooking[];
+    purchasedMerchandise?: MerchandiseItem[];
   }): Promise<BookingTypes> {
     this.logger.info(`tokenizeBooking tokenizing booking id: ${providerTeeTimeId} for user: ${userId}`);
     //@TODO add this to the transaction
@@ -326,7 +328,6 @@ export class TokenizeService {
     const transfersToCreate: InsertTransfer[] = [];
     let bookingSlots: InsertBookingSlots[] = [];
     const merchandiseEntriesToCreate: InsertBookingMerchandise[] = [];
-    let puchasedMerchandise: MerchandiseItem[] = [];
     const merchandiseItemsToUpdate: MerchandiseItem[] = [];
     const merchandiseDetails: { caption: string, qty: number }[] = [];
     const transactionId = randomUUID();
@@ -429,37 +430,9 @@ export class TokenizeService {
             qty: merchandise.qty
           })
         }
-        const merchandiseItemIds = merchandiseItems.map((item) => item.id);
-        puchasedMerchandise = await db
-          .select({
-            id: courseMerchandise.id,
-            caption: courseMerchandise.caption,
-            qoh: courseMerchandise.qoh
-          })
-          .from(courseMerchandise)
-          .where(
-            inArray(courseMerchandise.id, merchandiseItemIds)
-          )
-          .execute()
-          .catch((error) => {
-            void loggerService.errorLog({
-              userId: userId,
-              url: "/TokenizeService/tokenizeBooking",
-              userAgent: "",
-              message: "COURSE MERCHANDISE ERROR",
-              stackTrace: `${error.stack}`,
-              additionalDetailsJSON: `${JSON.stringify({
-                merchandiseItemIds,
-                merchandiseItems,
-                merchandiseData,
-                normalizedCartData,
-              })}`,
-            });
-            throw error;
-          })
 
-        if (puchasedMerchandise?.length > 0) {
-          for (const merchandise of puchasedMerchandise) {
+        if (purchasedMerchandise?.length > 0) {
+          for (const merchandise of purchasedMerchandise) {
             const merchandiseItem = merchandiseItems.find((item) => item.id === merchandise.id);
             merchandiseItemsToUpdate.push({
               ...merchandise,
@@ -818,7 +791,9 @@ export class TokenizeService {
         });
 
       // merchandise transactions
-      if (puchasedMerchandise.length > 0 && merchandiseItemsToUpdate.length > 0) {
+      if (purchasedMerchandise?.length > 0 && merchandiseItemsToUpdate.length > 0) {
+        console.log("purchasedMerchandise", purchasedMerchandise);
+        console.log("merchandiseItemsToUpdate", merchandiseItemsToUpdate);
         await tx
           .insert(bookingMerchandise)
           .values(merchandiseEntriesToCreate)
@@ -916,7 +891,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
         ManageTeeTimesURL: `${redirectHref}/my-tee-box`,
         GroupReservationID: groupId,
         MyTeeBoxCollectPaymentUrl: `${redirectHref}/my-tee-box/?bookingId=${bookingId}&collectPayment=${validForCollectPayment}`,
-        PurchasedMerchandise: puchasedMerchandise.length > 0 ? true : false,
+        PurchasedMerchandise: purchasedMerchandise?.length > 0 ? true : false,
         MerchandiseDetails: merchandiseDetails
       };
     } else {
@@ -980,7 +955,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
         SellTeeTImeURL: `${redirectHref}/my-tee-box`,
         ManageTeeTimesURL: `${redirectHref}/my-tee-box`,
         MyTeeBoxCollectPaymentUrl: `${redirectHref}/my-tee-box/?bookingId=${bookingId}&collectPayment=${validForCollectPayment}`,
-        PurchasedMerchandise: puchasedMerchandise.length > 0 ? true : false,
+        PurchasedMerchandise: purchasedMerchandise?.length > 0 ? true : false,
         MerchandiseDetails: merchandiseDetails
       };
     }
@@ -1131,7 +1106,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
 
     const message2 = `
     ${bookingIds.length} bookings have been purchased this is to the old owner of the bookings
-    Transfers bookings: 
+    Transfers bookings:
     `;
     // await this.notificationService.createNotification(
     //   userId,
