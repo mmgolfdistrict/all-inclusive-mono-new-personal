@@ -25,7 +25,7 @@ export const PoweredBy = (props: ComponentProps<"div">) => {
       </sup>
       <BlurImage
         alt="golf district logo"
-        src={`https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${isMobile ? "mobileheaderlogonew.png" : "desktopheaderlogo.svg"
+        src={`https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${isMobile ? "mobileheaderlogo.png" : "desktopheaderlogo.svg"
           }`}
         width={isMobile ? 45 : 157}
         height={45}

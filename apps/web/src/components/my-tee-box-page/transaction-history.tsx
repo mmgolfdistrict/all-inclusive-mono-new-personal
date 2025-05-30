@@ -37,6 +37,8 @@ export type TxnHistoryType = {
   weatherGuaranteeAmount: number;
   weatherGuaranteeId: string;
   markupFees?: number;
+  splitPaymentsAmount?:number;
+  isPaidSplitAmount?:number
 };
 
 export const TransactionHistory = () => {
@@ -209,6 +211,8 @@ const TableRow = ({
   status: string;
   timezoneCorrection: number | undefined;
   playerCount?: number;
+  splitPayments?:number;
+  isPaidSplitAmount?:number;
   openTxnDetails: () => void;
   openReceipt: () => void;
 }) => {

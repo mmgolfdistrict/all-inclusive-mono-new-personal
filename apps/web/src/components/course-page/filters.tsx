@@ -95,13 +95,6 @@ export const Filters = forwardRef<ChildComponentRef, FiltersProps>(
     const router = useRouter();
     const isMobile = useMediaQuery("(max-width: 768px)");
 
-    // const { data } = api.searchRouter.findBlackoutDates.useQuery(
-    //   { courseId: course?.id ?? "" },
-    //   { enabled: course?.id !== undefined }
-    // );
-
-    // console.log(data,"blackOutDaysblackOutDaysblackOutDaysblackOutDaysblackOutDaysblackOutDays")
-
     const highestPrice = useMemo(() => {
       if (!course) return 0;
       if (course.highestListedTeeTime > course.highestPrimarySaleTeeTime) {
@@ -280,27 +273,11 @@ export const Filters = forwardRef<ChildComponentRef, FiltersProps>(
       second: date.getSeconds(),
     });
 
-    // const forecastModalIcon = () => {
-    //   if (setShowFilters) {
-    //     setShowFilters(false);
-    //   }
-    //   openForecastModal();
-    // };
-
     return (
       <div className="flex flex-col gap-4 pr-1">
         <section className="flex flex-col gap-2" id="data-filter">
           <div className="flex items-center justify-between">
             <div>Date</div>
-            {/* {dateType !== "Today" && (
-              <div className="cursor-pointer" onClick={forecastModalIcon}>
-                <Forecast
-                  className="cursor-pointer"
-                  height="16px"
-                  width="16px"
-                />
-              </div>
-            )} */}
           </div>
           <ToggleGroup.Root
             type="single"

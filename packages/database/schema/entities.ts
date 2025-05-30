@@ -29,6 +29,7 @@ export const entities = mySqlTable(
       .notNull(),
     updatedById: varchar("updatedById", { length: 36 }),
     redirectToCourseFlag: boolean("redirectToCourseFlag").default(false).notNull(),
+    clarityAPIToken: varchar("clarityAPIToken", { length: 2048 }),
   },
   (table) => {
     return {

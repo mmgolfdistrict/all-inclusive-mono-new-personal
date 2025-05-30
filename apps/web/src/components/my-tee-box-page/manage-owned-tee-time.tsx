@@ -94,6 +94,21 @@ export const ManageOwnedTeeTime = ({
         setIsInviteVisible(false);
         toast.success("Invitation sent successfully.");
       } catch (error) {
+        // Remove the friend from UI on failure
+        setFriends((prev) =>
+          prev.map((f) =>
+            f.slotId === bookingSlotId ? { ...f, name: "", email: "", handle: "", id: "", currentlyEditing: true } : f
+          )
+        );
+        setNewFriend({
+          id: "",
+          handle: "",
+          name: "",
+          email: "",
+          slotId: bookingSlotId,
+          bookingId: "",
+          currentlyEditing: true,
+        });
         toast.error(
           (error as Error)?.message ?? "An error occurred inviting friend."
         );
@@ -262,8 +277,9 @@ export const ManageOwnedTeeTime = ({
       index: number
     ) => {
       const friendsCopy = [...friends];
+      const currentSlotId = friendToFind.slotId;
       friendsCopy.forEach((friend) => {
-        if (friend.slotId == friendToFind.slotId) {
+        if (friend.slotId == currentSlotId) {
           (friend.email = friendToFind.email),
             (friend.name = friendToFind.name),
             (friend.handle = friendToFind.handle),
@@ -296,6 +312,24 @@ export const ManageOwnedTeeTime = ({
         setInviteSuccess((prev) => ({ ...prev, [bookingSlotId]: true }));
         toast.success("Invitation sent successfully.");
       } catch (error) {
+        // Remove the friend from UI on failure
+        setFriends((prev) =>
+          prev.map((f) =>
+            f.slotId === friendToFind.slotId
+              ? { ...f, name: "", email: "", handle: "", id: "", currentlyEditing: true }
+              : f
+          )
+        );
+
+        setNewFriend({
+          id: "",
+          handle: "",
+          name: "",
+          email: "",
+          slotId: friendToFind.slotId,
+          bookingId: "",
+          currentlyEditing: true,
+        });
         toast.error(
           (error as Error)?.message ?? "An error occurred inviting friend."
         );
@@ -502,7 +536,7 @@ export const ManageOwnedTeeTime = ({
                   Service Fee{" "}
                   <Tooltip
                     trigger={<Info className="h-[14px] w-[14px]" />}
-                    content="This fee ensures ongoing enhancements to our service, ultimately offering golfers the best access to booking tee times"
+                    content={<div className="max-w-[200px] text-sm break-words">This fee ensures ongoing enhancements to our service, ultimately offering golfers the best access to booking tee times</div>}
                   />
                 </div>
                 <div className="text-secondary-black">

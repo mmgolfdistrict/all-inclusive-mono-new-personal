@@ -78,6 +78,8 @@ export const courses = mySqlTable(
     friendlyCourseURLPath: varchar("friendlyCourseURLPath", { length: 50 }),
     supportsSellingMerchandise: boolean("supportsSellingMerchandise").default(false),
     merchandiseTaxPercent: int("merchandiseTaxPercent").default(0),
+    groupStartTime: int("groupStartTime"),
+    groupEndTime: int("groupEndTime"),
   },
   (table) => {
     return {
