@@ -30,6 +30,7 @@ export type MyListedTeeTimeType = {
   playerCount?: number;
   listingIdFromRedis?: string | null;
   allowSplit?: boolean;
+  totalMerchandiseAmount: number;
 };
 
 export const MyListedTeeTimes = () => {

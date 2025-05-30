@@ -1,4 +1,4 @@
-import type { InferInsertModel } from "drizzle-orm";
+import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 import { boolean, datetime, index, int, tinyint, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
@@ -29,3 +29,4 @@ export const courseMerchandise = mySqlTable('courseMerchandise', {
 );
 
 export type InsertCourseMerchandise = InferInsertModel<typeof courseMerchandise>;
+export type SelectCourseMerchandise = InferSelectModel<typeof courseMerchandise>;

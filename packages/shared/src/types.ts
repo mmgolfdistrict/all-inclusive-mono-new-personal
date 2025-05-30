@@ -196,6 +196,7 @@ export type SearchObject = {
   ownerId: string;
   groupId?: string;
   allowSplit?: boolean;
+  totalMerchandiseAmount?: number;
 };
 
 export type CombinedObject = {

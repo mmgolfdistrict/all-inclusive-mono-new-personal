@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
-import { and, asc, desc, eq, gte, lte, sql } from "@golf-district/database";
+import { and, asc, desc, eq, gt, gte, lte, sql } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import { authenticationMethod } from "@golf-district/database/schema/authenticationMethod";
 import { bookings } from "@golf-district/database/schema/bookings";
@@ -1310,6 +1310,7 @@ export class CourseService extends DomainService {
             eq(courseMerchandise.courseId, courseId),
             eq(courseMerchandise.showDuringBooking, true),
             gte(sql`DATE_FORMAT(CONVERT_TZ(NOW() + INTERVAL ${courseMerchandise.showOnlyIfBookingIsWithinXDays} DAY, '+00:00', ${courses.timezoneISO}), '%Y-%m-%dT23:59:59')`, teeTimeDate),
+            gt(courseMerchandise.qoh, 0)
           )
         );
 

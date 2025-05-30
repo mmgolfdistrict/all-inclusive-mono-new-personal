@@ -579,7 +579,8 @@ export const TeeTime = ({
                 teeTimeId: teeTimeId,
                 listedSlotsCount: listedSlots ?? 1,
                 groupId: groupId ?? "",
-              }}
+                totalMerchandiseAmount: 0
+            }}
               refetch={refetch}
             />
           )}
