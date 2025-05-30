@@ -80,8 +80,6 @@ export const courses = mySqlTable(
     merchandiseTaxPercent: int("merchandiseTaxPercent").default(0),
     groupStartTime: int("groupStartTime"),
     groupEndTime: int("groupEndTime"),
-    supportsSellingMerchandise: boolean("supportsSellingMerchandise").default(false),
-    merchandiseTaxPercent: int("merchandiseTaxPercent").default(0),
   },
   (table) => {
     return {

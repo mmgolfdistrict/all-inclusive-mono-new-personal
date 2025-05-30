@@ -23,8 +23,6 @@ import type {
   FirstHandGroupProduct,
   FirstHandProduct,
   MarkupProduct,
-  MerchandiseProduct,
-  MerchandiseTaxPercentMetaData,
   Offer,
   SecondHandProduct,
   SensibleProduct,
@@ -69,7 +67,6 @@ export default function Checkout({
     setAmountOfPlayers,
     validatePlayers,
     setValidatePlayers: _setValidatePlayers,
-    merchandiseData,
   } = useCheckoutContext();
   const { setActivePage } = useAppContext();
   setActivePage("checkout")
@@ -246,9 +243,7 @@ export default function Checkout({
       | ConvenienceFeeProduct
       | TaxProduct
       | CartFeeMetaData
-      | FirstHandGroupProduct
-      | MerchandiseProduct
-      | MerchandiseTaxPercentMetaData =
+      | FirstHandGroupProduct =
       saleType === "first_hand"
         ? {
           type: "first_hand",
@@ -483,42 +478,6 @@ export default function Checkout({
           },
         },
       });
-      localCart.push({
-        name: "merchandise fee tax percent",
-        id: teeTimeId ?? data?.teeTimeId,
-        price: teeTimeData?.merchandiseTaxPercent || 0,
-        image: "", //
-        currency: "USD", //USD
-        display_price: formatMoney(teeTimeData?.merchandiseTaxPercent || 0),
-        product_data: {
-          metadata: {
-            type: "merchandiseTaxPercent",
-          },
-        },
-      });
-    }
-
-    if (course?.supportsSellingMerchandise) {
-      const totalPrice = merchandiseData.reduce((totalPrice, item) => {
-        return totalPrice + (item.price * item.qty);
-      }, 0)
-      localCart.push({
-        name: "Golf District Tee Time",
-        id: teeTimeId ?? data?.teeTimeId,
-        price: totalPrice,
-        image: "",
-        currency: "USD", //USD
-        display_price: formatMoney(totalPrice / 100),
-        product_data: {
-          metadata: {
-            type: "merchandise",
-            merchandiseItems: merchandiseData.map((item) => ({
-              id: item.id,
-              qty: item.qty
-            }))
-          },
-        },
-      });
     }
 
     return localCart;
@@ -537,7 +496,6 @@ export default function Checkout({
     course?.convenienceFeesFixedPerPlayer,
     // playerCount,
     validatePlayers,
-    merchandiseData,
   ]);
 
   useEffect(() => {
