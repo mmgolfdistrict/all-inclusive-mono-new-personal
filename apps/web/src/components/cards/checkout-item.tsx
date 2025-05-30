@@ -22,6 +22,7 @@ import { ChoosePlayers } from "../input/choose-players";
 import { Spinner } from "../loading/spinner";
 import { SensibleWidget } from "../sensible/sensible-widget";
 import { Tooltip } from "../tooltip";
+import MerchandiseCarousel from "../checkout-page/merchandise-carousel";
 
 const PlayersOptions = ["1", "2", "3", "4"];
 
@@ -47,6 +48,8 @@ export const CheckoutItem = ({
     amountOfPlayers,
     setValidatePlayers,
     validatePlayers,
+    merchandiseData,
+    setMerchandiseData
   } = useCheckoutContext();
   const [membershipStatus, setMembershipStatus] = useState("no_membership");
   const [courseMemberships, setCourseMembership] = useState<
@@ -85,6 +88,11 @@ export const CheckoutItem = ({
   const { data: isSupportMemberShip } = api.course.getCourseById.useQuery({
     courseId: courseId ?? "",
   });
+
+  const { data: courseMerchandise } = api.course.getCourseMerchandise.useQuery({
+    courseId: courseId ?? "",
+    teeTimeDate: teeTime?.date ?? "",
+  })
 
   const { data: getAllCourseMemberships } =
     api.checkout.getAllCourseMembership.useQuery({});
@@ -208,6 +216,27 @@ export const CheckoutItem = ({
   useEffect(() => {
     console.log("validatePlayers========>", validatePlayers);
   }, [validatePlayers]);
+
+  const handleMerchandiseUpdate = (itemId: string, newQuantity: number, price: number) => {
+    if (newQuantity === 0) {
+      setMerchandiseData((prevItems) => prevItems.filter((item) => item.id !== itemId));
+    } else {
+      const isNewItem = !merchandiseData.some((item) => item.id === itemId);
+      if (isNewItem) {
+        setMerchandiseData((prevItems) => [...prevItems, { id: itemId, qty: newQuantity, price: price }]);
+      } else {
+        setMerchandiseData((prevItems) =>
+          prevItems.map((item) => {
+            if (item.id === itemId) {
+              return { ...item, qty: newQuantity };
+            } else {
+              return item;
+            }
+          })
+        )
+      }
+    }
+  }
 
   const getTextColor = (type) => {
     if (type === "FAILURE") return "red";
@@ -492,6 +521,14 @@ export const CheckoutItem = ({
           <SensibleWidget sensibleDataToMountComp={sensibleDataToMountComp} />
         </div>
       )}
+      {(isLoading || (courseMerchandise?.length === 0) || !course?.supportsSellingMerchandise) ? null : <section className="p-0 md:p-4">
+        <div className="bg-white md:rounded-xl p-4">
+          <MerchandiseCarousel
+            items={courseMerchandise}
+            onItemQuantityChange={handleMerchandiseUpdate}
+          />
+        </div>
+      </section>}
     </div>
   );
 };

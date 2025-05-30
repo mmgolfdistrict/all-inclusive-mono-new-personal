@@ -94,4 +94,14 @@ export const courseRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       return await ctx.serviceFactory.getCourseService().getPhoneNumberMandatoryAtCheckout(input.courseId);
     }),
+  getCourseMerchandise: publicProcedure
+    .input(
+      z.object({
+        courseId: z.string(),
+        teeTimeDate: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return await ctx.serviceFactory.getCourseService().getCourseMerchandise(input.courseId, input.teeTimeDate);
+    }),
 });
