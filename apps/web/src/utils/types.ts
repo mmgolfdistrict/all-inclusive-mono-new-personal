@@ -135,7 +135,9 @@ export type CartProduct = {
       | MarkupTaxPercentMetaData
       | GreenFeeTaxPercentMetaData
       | CartFeeTaxPercentMetaData
-      | FirstHandGroupProduct;
+    | FirstHandGroupProduct
+    | MerchandiseProduct
+    | MerchandiseTaxPercentMetaData;
   };
 };
 
@@ -160,6 +162,9 @@ export interface WeatherGuaranteeTaxPercentMetaData {
 }
 export interface MarkupTaxPercentMetaData {
   type: "markupTaxPercent";
+}
+export interface MerchandiseTaxPercentMetaData {
+  type: "merchandiseTaxPercent";
 }
 export interface SecondHandProduct {
   type: "second_hand";
@@ -201,6 +206,16 @@ export interface FirstHandGroupProduct {
   number_of_bookings: number;
   tee_time_ids: string[];
   min_players_per_booking: number;
+}
+
+export interface MerchandiseProduct {
+  type: "merchandise";
+  merchandiseItems: MerchandiseItem[];
+}
+
+interface MerchandiseItem {
+  id: string;
+  qty: number;
 }
 
 export type MaxReservationResponse =

@@ -108,6 +108,7 @@ export type FullCourseType = {
   groupStartTime: number | null;
   groupEndTime: number | null;
   isAllowCourseSwitching?: boolean;
+  supportsSellingMerchandise: boolean;
 };
 
 export type SupportedCharity = {
