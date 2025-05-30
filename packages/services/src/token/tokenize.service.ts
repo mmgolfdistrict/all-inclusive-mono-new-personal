@@ -1106,7 +1106,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
 
     const message2 = `
     ${bookingIds.length} bookings have been purchased this is to the old owner of the bookings
-    Transfers bookings: 
+    Transfers bookings:
     `;
     // await this.notificationService.createNotification(
     //   userId,

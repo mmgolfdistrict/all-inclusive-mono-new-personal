@@ -680,7 +680,7 @@ export class BookingService {
         playerCount: bookings.playerCount,
         bookingStatus: bookings.status,
         allowSplit: lists.allowSplit,
-        totalMerchandiseAmount: bookings.totalMerchandiseAmount,
+        totalMerchandiseAmount: bookings.totalMerchandiseAmount
       })
       .from(teeTimes)
       .innerJoin(bookings, eq(bookings.teeTimeId, teeTimes.id))
@@ -4414,12 +4414,12 @@ export class BookingService {
             "TEE_TIME_DELETED_BY_PROVIDER_LISTED_IN_COURSE",
             `
             The customer attempted to purchase a tee time, but the provider canceled it. The following details pertain to the canceled tee time:
-            Tee Time ID ====> ${bookingResult?.bookingTeeTimeId} , 
-            Tee Time Date ====> ${bookingResult?.providerDate} , 
-           Provider Booking ID ====> ${bookingResult?.bookingProviderId} , 
-           Course ID ====> ${bookingResult?.courseId}, 
-           Course Name ====> ${bookingResult?.courseName}, 
-           Listing ID ====> ${listingId}, 
+            Tee Time ID ====> ${bookingResult?.bookingTeeTimeId} ,
+            Tee Time Date ====> ${bookingResult?.providerDate} ,
+           Provider Booking ID ====> ${bookingResult?.bookingProviderId} ,
+           Course ID ====> ${bookingResult?.courseId},
+           Course Name ====> ${bookingResult?.courseName},
+           Listing ID ====> ${listingId},
            Customer Name ====> ${bookingResult?.userName},
            Customer Email ====> ${bookingResult?.userEmail},
            This information indicates that the tee time was listed in the course but was subsequently deleted by the provider.
