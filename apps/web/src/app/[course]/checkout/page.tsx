@@ -217,6 +217,18 @@ export default function Checkout({
     .add(6, "hours")
     .hour();
 
+  function toCentsConditional(price: number) {
+    const formatted = price.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+
+    // Remove commas if any (like in 1,234.56)
+    const normalized = Number(formatted.replace(/,/g, ""));
+
+    return Math.round(normalized * 100);
+  }
+
   const cartData: CartProduct[] = useMemo(() => {
     if (!data || data === null) return [];
 
@@ -247,11 +259,14 @@ export default function Checkout({
         name: "Golf District Tee Time",
         id: teeTimeId ?? data?.teeTimeId,
         price: (() => {
+          const totalPrice = Number(data?.pricePerGolfer) * (amountOfPlayers - validatePlayers.length);
           const calculatedPrice =
             debouncedPromoCode && promoCodePrice !== undefined
               ? promoCodePrice * 100
-              : Number(data?.pricePerGolfer * 100) *
-              (amountOfPlayers - validatePlayers.length);
+              : Math.round(totalPrice * 100);
+          // : Number(data?.pricePerGolfer * 100) *
+          //   (amountOfPlayers);
+          // - validatePlayers.length
 
           return calculatedPrice === 0 ? 1 : calculatedPrice; // If price is 0, return 1
         })(), //int
@@ -372,7 +387,7 @@ export default function Checkout({
       localCart.push({
         name: "Golf District Tee Time",
         id: teeTimeId ?? data?.teeTimeId,
-        price: (sensibleData?.price ?? 0) * 100, //int
+        price: toCentsConditional(sensibleData?.price ?? 0), //int
         image: "", //
         currency: "USD", //USD
         display_price: formatMoney(sensibleData?.price ?? 0),

@@ -13,16 +13,18 @@ export const Select = ({
   values,
   value,
   setValue,
+  className
 }: {
   values: string[];
   value: string;
   setValue: (v: SortType) => void;
+  className?: string;
 }) => {
   return (
     <RadixSelect.Root value={value} onValueChange={setValue}>
       <RadixSelect.Trigger
         data-testid="sort-by-id"
-        className={`flex h-[35px] items-center justify-between gap-2 whitespace-nowrap rounded-full border border-stroke bg-white px-4 py-2 text-[14px] outline-none data-[placeholder]:text-primary-gray`}
+        className={`flex h-[35px] items-center justify-between gap-2 whitespace-nowrap rounded-full border border-stroke bg-white px-4 py-2 text-[14px] outline-none data-[placeholder]:text-primary-gray ${className}`}
       >
         <RadixSelect.Value placeholder="Sort by price" aria-label={value}>
           {value}

@@ -107,6 +107,7 @@ export type FullCourseType = {
   isAllowClubRental?: boolean;
   groupStartTime: number | null;
   groupEndTime: number | null;
+  isAllowCourseSwitching?: boolean;
 };
 
 export type SupportedCharity = {
