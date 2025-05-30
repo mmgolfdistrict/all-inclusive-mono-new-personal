@@ -14,6 +14,9 @@ import * as userWaitlistAuditLogs from "./userWaitlistAuditLogs";
 import * as userWaitlistRecords from "./userWaitlistRecords";
 import * as finixPaymentDispute from "./finixPaymentDispute";
 import * as hyperswitchPayment from "./hyperswitchPayment";
+import * as clarityMetrics from "./clarityMetric";
+import * as clarityDimensions from "./clarityDimension";
+import * as clarityMetricData from "./clarityMetricData";
 
 export const schema = {
   ...teeTimeIndexLogs,
@@ -32,4 +35,7 @@ export const schema = {
   ...userPhoneCall,
   ...finixPaymentDispute,
   ...hyperswitchPayment,
+  ...clarityMetrics,
+  ...clarityDimensions,
+  ...clarityMetricData,
 };
