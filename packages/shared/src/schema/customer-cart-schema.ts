@@ -125,13 +125,6 @@ export const GreenFeeTaxPercentSchema = BaseProductSchema.extend({
     }),
   }),
 });
-export const MerchandiseTaxPercentSchema = BaseProductSchema.extend({
-  product_data: z.object({
-    metadata: z.object({
-      type: z.literal("merchandiseTaxPercent"),
-    }),
-  }),
-})
 
 // Firsthand group schema
 export const FirstHandGroupProductSchema = BaseProductSchema.extend({
@@ -144,21 +137,6 @@ export const FirstHandGroupProductSchema = BaseProductSchema.extend({
     }),
   }),
 });
-
-// Merchandise Product schema
-export const MerchandiseProductSchema = BaseProductSchema.extend({
-  product_data: z.object({
-    metadata: z.object({
-      type: z.literal("merchandise"),
-      merchandiseItems: z.array(z.object({
-        id: z.string(),
-        qty: z.number(),
-      })),
-    }),
-  }),
-});
-
-
 
 // ProductData schema
 export const ProductDataSchema = z.union([
@@ -176,8 +154,6 @@ export const ProductDataSchema = z.union([
   WeatherGuaranteeTaxPercentSchema,
   MarkupTaxPercentSchema,
   FirstHandGroupProductSchema,
-  MerchandiseProductSchema,
-  MerchandiseTaxPercentSchema
 ]);
 
 // CustomerCart schema

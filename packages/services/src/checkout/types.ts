@@ -69,9 +69,7 @@ export type ProductData =
   | GreenFeeTaxPercentProduct
   | MarkupTaxPercentProduct
   | WeatherGuaranteeTaxPercentProduct
-  | FirstHandGroupProduct
-  | MerchandiseProduct
-  | MerchandiseTaxPercentProduct;
+  | FirstHandGroupProduct;
 
 export interface BaseProduct {
   name: string; // teeTime-course-time
@@ -205,27 +203,6 @@ export interface FirstHandGroupProduct extends BaseProduct {
       tee_time_ids: string[];
       number_of_bookings: number;
       min_players_per_booking: number;
-    };
-  };
-}
-
-interface MerchandiseItem {
-  id: string;
-  qty: number;
-}
-export interface MerchandiseProduct extends BaseProduct {
-  product_data: {
-    metadata: {
-      type: "merchandise";
-      merchandiseItems: MerchandiseItem[];
-    };
-  };
-}
-
-export interface MerchandiseTaxPercentProduct extends BaseProduct {
-  product_data: {
-    metadata: {
-      type: "merchandiseTaxPercent";
     };
   };
 }
