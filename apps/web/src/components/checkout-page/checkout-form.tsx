@@ -15,7 +15,7 @@ import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
 import type { CartProduct, CountryData, FirstHandGroupProduct } from "~/utils/types";
 import { useParams, useRouter } from "next/navigation";
 import type { ChangeEvent, Dispatch, SetStateAction } from "react";
-import { Fragment, useEffect, useState, type FormEvent, useRef } from "react";
+import { Fragment, useEffect, useState, type FormEvent, useRef, useMemo } from "react";
 import { toast } from "react-toastify";
 import { useMediaQuery } from "usehooks-ts";
 import { FilledButton } from "../buttons/filled-button";
@@ -35,6 +35,7 @@ import { allCountries } from "country-telephone-data";
 import { useSession } from "@golf-district/auth/nextjs-exports";
 import { useUser } from "~/hooks/useUser";
 import { PhoneNumberUtil } from "google-libphonenumber";
+import { NAME_VALIDATION_REGEX } from "@golf-district/shared";
 
 type charityData = {
   charityDescription: string | undefined;
@@ -91,15 +92,9 @@ export const CheckoutForm = ({
   const MAX_CHARITY_AMOUNT = 1000;
   const { course } = useCourseContext();
 
-  const ALLOW_SPECIAL_REQUEST =
-    typeof course?.isAllowSpecialRequest === "string"
-      ? JSON.parse((course.isAllowSpecialRequest as string).toLowerCase())
-      : course?.isAllowSpecialRequest ?? true;
+  const ALLOW_SPECIAL_REQUEST = course?.isAllowSpecialRequest;
 
-  const ALLOW_CLUB_RENTAL =
-    typeof course?.isAllowClubRental === "string"
-      ? JSON.parse((course.isAllowClubRental as string).toLowerCase())
-      : course?.isAllowClubRental ?? true;
+  const ALLOW_CLUB_RENTAL = course?.isAllowClubRental;
 
   const {
     shouldAddSensible,
@@ -180,6 +175,8 @@ export const CheckoutForm = ({
       console.error('Failed to fetch country', error);
     }
   }, [userCountryData?.country, setCurrentCountry]);
+
+  const { data: blockCheckoutValue } = api.checkout.blockCheckoutWhenGreenFeeTimesXLtMarkup.useQuery({});
 
   const [countries, _setCountries] = useState<Country[]>(
     countryList.filter(
@@ -436,6 +433,18 @@ export const CheckoutForm = ({
       console.error("Error fetching data:", error);
     }
   };
+
+  const isValidUsername = useMemo(() => {
+    if (!userData) {
+      return true;
+    }
+    if (userData.name && !NAME_VALIDATION_REGEX.test(userData.name) && !message.length) {
+      setMessage("Your name contains foreign characters. Please update it from Account Settings before checkout.");
+      return false;
+    }
+    return true;
+  }, [userData])
+
   useEffect(() => {
     void fetchData();
   }, []);
@@ -655,167 +664,171 @@ export const CheckoutForm = ({
     });
 
     try {
-      if (response) {
-        if (response.status === "processing") {
-          void sendEmailForFailedPayment.mutateAsync({
-            paymentId: response?.payment_id as string,
-            teeTimeId: teeTimeId,
-            cartId: cartId,
-            userId: user?.id,
-            email: user?.email,
-            listingId: listingId,
-            courseId: courseId!,
-          });
-          setMessage(
-            getErrorMessageById((response?.error_code ?? "") as string)
-          );
-          setIsLoading(false);
-        } else if (response.status === "succeeded") {
-          let bookingResponse = {
-            bookingId: "",
-            providerBookingId: "",
-            status: "",
-            isEmailSend: false,
-          };
+      if (greenFeeChargePerPlayer * (Number(blockCheckoutValue)) <= markupFee) {
+        toast.error("Price too low to sell.");
+      } else {
+        if (response) {
+          if (response.status === "processing") {
+            void sendEmailForFailedPayment.mutateAsync({
+              paymentId: response?.payment_id as string,
+              teeTimeId: teeTimeId,
+              cartId: cartId,
+              userId: user?.id,
+              email: user?.email,
+              listingId: listingId,
+              courseId: courseId!,
+            });
+            setMessage(
+              getErrorMessageById((response?.error_code ?? "") as string)
+            );
+            setIsLoading(false);
+          } else if (response.status === "succeeded") {
+            let bookingResponse = {
+              bookingId: "",
+              providerBookingId: "",
+              status: "",
+              isEmailSend: false,
+            };
 
-          if (isFirstHand.length) {
-            try {
-              bookingResponse = await reserveBookingFirstHand(
-                cartId,
-                response?.payment_id as string,
-                sensibleData?.id ?? ""
-              );
-              setReservationData({
-                golfReservationId: bookingResponse.bookingId,
-                providerReservationId: bookingResponse.providerBookingId,
-                playTime: teeTimeDate || "",
-              });
-            } catch (error) {
-              if (
-                error?.meta?.response &&
-                !Object.keys(error.meta.response).length &&
-                error.name === "TRPCClientError"
-              ) {
-                void sendEmailForBookingFailedByTimeout.mutateAsync({
-                  paymentId: response?.payment_id as string,
-                  teeTimeId: teeTimeId,
-                  cartId: cartId,
-                  userId: user?.id ?? "",
-                  courseId: courseId!,
-                  sensibleQuoteId: sensibleData?.id ?? "",
-                  otherDetails: {
-                    courseName: course?.name ?? "",
-                    userName: user?.name ?? "",
-                    userEmail: user?.email ?? "",
-                    teeTimeDate: teeTimeDate ?? ""
-                  }
+            if (isFirstHand.length) {
+              try {
+                bookingResponse = await reserveBookingFirstHand(
+                  cartId,
+                  response?.payment_id as string,
+                  sensibleData?.id ?? ""
+                );
+                setReservationData({
+                  golfReservationId: bookingResponse.bookingId,
+                  providerReservationId: bookingResponse.providerBookingId,
+                  playTime: teeTimeDate || "",
                 });
+              } catch (error) {
+                if (
+                  error?.meta?.response &&
+                  !Object.keys(error.meta.response).length &&
+                  error.name === "TRPCClientError"
+                ) {
+                  void sendEmailForBookingFailedByTimeout.mutateAsync({
+                    paymentId: response?.payment_id as string,
+                    teeTimeId: teeTimeId,
+                    cartId: cartId,
+                    userId: user?.id ?? "",
+                    courseId: courseId!,
+                    sensibleQuoteId: sensibleData?.id ?? "",
+                    otherDetails: {
+                      courseName: course?.name ?? "",
+                      userName: user?.name ?? "",
+                      userEmail: user?.email ?? "",
+                      teeTimeDate: teeTimeDate ?? ""
+                    }
+                  });
 
-                await auditLog.mutateAsync({
-                  userId: user?.id ?? "",
-                  teeTimeId: teeTimeId,
-                  bookingId: "",
-                  listingId: listingId,
-                  courseId,
-                  eventId: "Vercel function timedout",
-                  json: `Vercel function timedout`,
-                });
+                  await auditLog.mutateAsync({
+                    userId: user?.id ?? "",
+                    teeTimeId: teeTimeId,
+                    bookingId: "",
+                    listingId: listingId,
+                    courseId,
+                    eventId: "Vercel function timedout",
+                    json: `Vercel function timedout`,
+                  });
+                }
+
+                setMessage(
+                  "Error reserving first hand booking: " + error.message
+                );
+                setIsLoading(false);
+                return;
               }
-
-              setMessage(
-                "Error reserving first hand booking: " + error.message
-              );
-              setIsLoading(false);
-              return;
-            }
-          } else if (isFirstHandGroup.length) {
-            try {
-              bookingResponse = await reserveBookingFirstHandGroup(
-                cartId,
-                response?.payment_id as string,
-                sensibleData?.id ?? ""
-              );
-              setReservationData({
-                golfReservationId: bookingResponse.bookingId,
-                providerReservationId: bookingResponse.providerBookingId,
-                playTime: teeTimeDate || "",
-              });
-            } catch (error) {
-              if (
-                error?.meta?.response &&
-                !Object.keys(error.meta.response).length &&
-                error.name === "TRPCClientError"
-              ) {
-                void sendEmailForBookingFailedByTimeout.mutateAsync({
-                  paymentId: response?.payment_id as string,
-                  teeTimeId: teeTimeId,
-                  cartId: cartId,
-                  userId: user?.id ?? "",
-                  courseId: courseId!,
-                  sensibleQuoteId: sensibleData?.id ?? "",
-                  otherDetails: {
-                    courseName: course?.name ?? "",
-                    userName: user?.name ?? "",
-                    userEmail: user?.email ?? "",
-                    teeTimeDate: teeTimeDate ?? ""
-                  }
+            } else if (isFirstHandGroup.length) {
+              try {
+                bookingResponse = await reserveBookingFirstHandGroup(
+                  cartId,
+                  response?.payment_id as string,
+                  sensibleData?.id ?? ""
+                );
+                setReservationData({
+                  golfReservationId: bookingResponse.bookingId,
+                  providerReservationId: bookingResponse.providerBookingId,
+                  playTime: teeTimeDate || "",
                 });
+              } catch (error) {
+                if (
+                  error?.meta?.response &&
+                  !Object.keys(error.meta.response).length &&
+                  error.name === "TRPCClientError"
+                ) {
+                  void sendEmailForBookingFailedByTimeout.mutateAsync({
+                    paymentId: response?.payment_id as string,
+                    teeTimeId: teeTimeId,
+                    cartId: cartId,
+                    userId: user?.id ?? "",
+                    courseId: courseId!,
+                    sensibleQuoteId: sensibleData?.id ?? "",
+                    otherDetails: {
+                      courseName: course?.name ?? "",
+                      userName: user?.name ?? "",
+                      userEmail: user?.email ?? "",
+                      teeTimeDate: teeTimeDate ?? ""
+                    }
+                  });
 
-                await auditLog.mutateAsync({
-                  userId: user?.id ?? "",
-                  teeTimeId: teeTimeId,
-                  bookingId: "",
-                  listingId: listingId,
-                  courseId,
-                  eventId: "Vercel function timedout",
-                  json: `Vercel function timedout`,
-                });
+                  await auditLog.mutateAsync({
+                    userId: user?.id ?? "",
+                    teeTimeId: teeTimeId,
+                    bookingId: "",
+                    listingId: listingId,
+                    courseId,
+                    eventId: "Vercel function timedout",
+                    json: `Vercel function timedout`,
+                  });
+                }
+
+                setMessage(
+                  "Error reserving first hand group booking: " + error.message
+                );
+                setIsLoading(false);
+                return;
               }
-
-              setMessage(
-                "Error reserving first hand group booking: " + error.message
-              );
-              setIsLoading(false);
-              return;
+            } else {
+              try {
+                bookingResponse = await reserveSecondHandBooking(
+                  cartId,
+                  listingId,
+                  response?.payment_id as string
+                );
+              } catch (error) {
+                setMessage(
+                  "Error reserving second hand booking: " + error.message
+                );
+                setIsLoading(false);
+                return;
+              }
             }
-          } else {
-            try {
-              bookingResponse = await reserveSecondHandBooking(
-                cartId,
-                listingId,
-                response?.payment_id as string
-              );
-            } catch (error) {
-              setMessage(
-                "Error reserving second hand booking: " + error.message
-              );
-              setIsLoading(false);
-              return;
-            }
-          }
 
-          setMessage("Payment Successful");
-          setBookingSource("");
-          sessionStorage.removeItem("source");
-          if (isBuyNowAuction) {
-            router.push(`/${course?.id}/auctions/confirmation`);
+            setMessage("Payment Successful");
+            setBookingSource("");
+            sessionStorage.removeItem("source");
+            if (isBuyNowAuction) {
+              router.push(`/${course?.id}/auctions/confirmation`);
+            } else {
+              router.push(
+                `/${course?.id
+                }/checkout/confirmation?teeTimeId=${teeTimeId}&bookingId=${bookingResponse.bookingId
+                }&isEmailSend=${bookingResponse.isEmailSend}&isGroupBooking=${isFirstHandGroup.length ? "true" : "false"
+                }`
+              );
+            }
+          } else if (response.status === "failed") {
+            setMessage(
+              getErrorMessageById((response?.error_code ?? "") as string)
+            );
+            setIsLoading(false);
           } else {
-            router.push(
-              `/${course?.id
-              }/checkout/confirmation?teeTimeId=${teeTimeId}&bookingId=${bookingResponse.bookingId
-              }&isEmailSend=${bookingResponse.isEmailSend}&isGroupBooking=${isFirstHandGroup.length ? "true" : "false"
-              }`
+            setMessage(
+              getErrorMessageById((response?.error_code ?? "") as string)
             );
           }
-        } else if (response.status === "failed") {
-          setMessage(
-            getErrorMessageById((response?.error_code ?? "") as string)
-          );
-          setIsLoading(false);
-        } else {
-          setMessage(
-            getErrorMessageById((response?.error_code ?? "") as string)
-          );
         }
       }
     } catch (error) {
@@ -1673,7 +1686,7 @@ export const CheckoutForm = ({
           type="submit"
           className={`w-full rounded-full disabled:opacity-60`}
           disabled={
-            isLoading || !hyper || !widgets || message === "Payment Successful"
+            isLoading || !hyper || !widgets || message === "Payment Successful" || !isValidUsername
           }
           data-testid="pay-now-id"
         >

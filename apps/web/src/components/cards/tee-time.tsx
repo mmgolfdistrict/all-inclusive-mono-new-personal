@@ -79,7 +79,7 @@ export const TeeTime = ({
   handleLoading?: (val: boolean) => void;
   refetch?: () => Promise<unknown>;
   groupId?: string;
-    allowSplit?: boolean;
+  allowSplit?: boolean;
 }) => {
   const [, copy] = useCopyToClipboard();
   const [isCopied, setIsCopied] = useState<boolean>(false);
@@ -124,6 +124,20 @@ export const TeeTime = ({
   const router = useRouter();
   const auditLog = api.webhooks.auditLog.useMutation();
   const getCache = api.cache.getCache.useMutation();
+  const { refetch: refetchStillListed } = api.teeBox.checkIfTeeTimeStillListedByListingId.useQuery({
+    listingId: listingId ?? ""
+  })
+  const groupBookingParams = useMemo(() => {
+    return `date=${items.date?.split("T")[0]}&time=${items.time}`
+  }, [items]);
+  const shouldShowGroupBookingButton = useMemo(() => {
+    if (course?.groupStartTime && course?.groupEndTime && items.time) {
+      return (items.time >= course?.groupStartTime && items.time <= course?.groupEndTime) ? true : false
+    } else {
+      return true
+    }
+  }, [items]);
+
   const logAudit = async () => {
     await auditLog.mutateAsync({
       userId: user?.id ?? "",
@@ -230,10 +244,18 @@ export const TeeTime = ({
       );
     }
     if (status === "SECOND_HAND") {
+      const stillListed = await refetchStillListed();
+      if (!stillListed.data) {
+        toast.info("The tee time is no longer available, please refresh your screen.");
+        if (handleLoading) {
+          handleLoading(false);
+        }
+        return;
+      }
       const value = await getCache.mutateAsync({
         key: `listing_id_${listingId}`,
       }) as string | null;
-      if (value) {
+      if (value && allowSplit) {
         const { userId } = JSON.parse(value);
         if (userId !== user.id) {
           toast.info("The tee time is currently unavailable. Please check back in 20 mins.");
@@ -427,8 +449,9 @@ export const TeeTime = ({
                   !(status === "SECOND_HAND") ? numberOfPlayers : PlayersOptions.filter(player => player <= (listedSlots?.toString() ?? "0"))
                 ) : []}
                 status={status}
-                supportsGroupBooking={course?.supportsGroupBooking}
+                supportsGroupBooking={shouldShowGroupBookingButton ? course?.supportsGroupBooking : false}
                 allowSplit={allowSplit}
+                groupBookingParams={groupBookingParams}
               />
             ) : (
               players && (

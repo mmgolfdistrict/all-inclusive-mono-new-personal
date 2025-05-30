@@ -12,6 +12,7 @@ export const appSettings = mySqlTable(
     caption: varchar("caption", { length: 64 }).notNull(),
     description: varchar("description", { length: 255 }),
     value: varchar("value", { length: 2046 }),
+    datatype: varchar("datatype", { length: 32 }),
     createdDateTime: datetime("createdDateTime", { mode: "string", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),

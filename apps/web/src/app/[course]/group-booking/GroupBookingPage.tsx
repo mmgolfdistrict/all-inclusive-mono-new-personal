@@ -1,8 +1,8 @@
 import { FilledButton } from "~/components/buttons/filled-button";
 import { useMe } from "~/hooks/useMe";
 import { useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
-import { dayMonthDate, formatMoney, getHour, getTime } from "~/utils/formatters";
+import React, { useEffect, useMemo, useState } from "react";
+import { dayMonthDate, formatMoney, getTime } from "~/utils/formatters";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { microsoftClarityEvent } from "~/utils/microsoftClarityUtils";
 import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
@@ -37,7 +37,7 @@ interface TeeTimeGroup {
   date: string;
 }
 
-export type TeeTimeGroups = TeeTimeGroup[];
+export type TeeTimeGroups = Record<string, TeeTimeGroup[]>;
 
 const GroupBookingPage = ({ teeTimesData, isTeeTimesLoading, playerCount }: {
   teeTimesData: TeeTimeGroups | null,
@@ -51,8 +51,18 @@ const GroupBookingPage = ({ teeTimesData, isTeeTimesLoading, playerCount }: {
   const { data: session } = useSession();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [teeTimeGroup, setTeeTimeGroup] = useState<TeeTimeGroup | null | undefined>(teeTimesData ? teeTimesData[0] : null);
+  // const [teeTimeGroup, setTeeTimeGroup] = useState<TeeTimeGroup | null | undefined>(null);
   const [otherTeeTimeGroups, setOtherTeeTimeGroups] = useState<TeeTimeGroup[] | null>(null);
+
+  const sortedDates = useMemo(() => {
+    if (teeTimesData) {
+      return Object.keys(teeTimesData).sort((a, b) => {
+        const dateA = Number(new Date(a));
+        const dateB = Number(new Date(b));
+        return dateA - dateB;
+      });
+    }
+  }, [teeTimesData]);
 
   const fullUrl = window?.location.href;
   const url = new URL(fullUrl);
@@ -89,90 +99,93 @@ const GroupBookingPage = ({ teeTimesData, isTeeTimesLoading, playerCount }: {
   };
 
   useEffect(() => {
-    if (teeTimesData) {
-      setTeeTimeGroup(teeTimesData[0]);
-    } else {
-      setOtherTeeTimeGroups(null);
-    }
-  }, [teeTimesData]);
-
-  useEffect(() => {
-    if (teeTimesData) {
-      const firstTeeTimesPerHour: Record<number, TeeTimeGroup> = {};
-      const firstTeeTime = teeTimesData[0];
-      if (!firstTeeTime) return;
-
-      const currentHour = Math.floor(firstTeeTime.time / 100);
-
-      for (const teeTime of teeTimesData) {
-        const hour = Math.floor(teeTime.time / 100);
-
-        if (!(hour in firstTeeTimesPerHour) && hour !== currentHour) {
-          firstTeeTimesPerHour[hour] = teeTime;
-        }
+    if (teeTimesData && Object.keys(teeTimesData).length > 0 && sortedDates && sortedDates.length > 0) {
+      const searchedDate = sortedDates[0];
+      let teeTimeGroups: TeeTimeGroup[] | undefined = [];
+      if (searchedDate) {
+        teeTimeGroups = teeTimesData[searchedDate];
       }
-      const otherTeeTimes = Object.keys(firstTeeTimesPerHour).sort().map((key) => firstTeeTimesPerHour[key] as TeeTimeGroup);
+
+      let otherTeeTimes: TeeTimeGroup[] | undefined = [];
+      if (teeTimeGroups && teeTimeGroups.length > 0) {
+        otherTeeTimes = teeTimeGroups.slice(4, 7);
+      }
+      // const firstTeeTimesPerHour: Record<number, TeeTimeGroup> = {};
+      // const firstTeeTime = teeTimesData[0];
+      // if (!firstTeeTime) return;
+
+      // const currentHour = Math.floor(firstTeeTime.time / 100);
+
+      // for (const teeTime of teeTimesData) {
+      //   const hour = Math.floor(teeTime.time / 100);
+
+      //   if (!(hour in firstTeeTimesPerHour) && hour !== currentHour) {
+      //     firstTeeTimesPerHour[hour] = teeTime;
+      //   }
+      // }
+      // const otherTeeTimes = Object.keys(firstTeeTimesPerHour).sort().map((key) => firstTeeTimesPerHour[key] as TeeTimeGroup);
       setOtherTeeTimeGroups(otherTeeTimes);
     } else {
       setOtherTeeTimeGroups(null);
     }
-  }, [teeTimesData]);
+  }, [teeTimesData, sortedDates]);
 
   return (
-    <div className="flex flex-col mb-4 justify-center gap-2 md:gap-1  px-4 py-3 rounded-xl md:px-8 md:py-6">
+    <div className="flex flex-col mb-4 justify-center gap-4 md:gap-1  px-4 py-3 rounded-xl md:px-8 md:py-6">
       <LoadingContainer
         isLoading={isLoading || isTeeTimesLoading}
       >
         <div></div>
       </LoadingContainer>
-      <div id="your-selection" className="relative flex items-center justify-between md:mb-2">
+      <div id="your-selection" className="relative flex flex-col gap-2 sm:flex-row items-start sm:items-center justify-between md:mb-2">
         <h1 className="text-[20px] capitalize text-secondary-black md:text-[32px] flex items-center gap-6">
           Earliest Available Time
         </h1>
-        {otherTeeTimeGroups && otherTeeTimeGroups.length > 0 ? <div>
-          <div className="flex flex-col item-start gap-2 lg:flex-row lg:items-center lg:gap-4 text-primary-gray text-[12px] md:text-[16px] ">
-            <span>
-              Other options for your group available.<br />
-              <i>Please adjust the start time.</i>
-            </span>
-            <div className="flex gap-2">
-              {
-                otherTeeTimeGroups.slice(0, 3).map((group, index) => {
-                  return (
-                    <span
-                      key={index}
-                      className="bg-white px-2 py-1 lg:p-3 rounded-xl border border-stroke"
-                    >
-                      {getHour(group.date, timezoneCorrection)}
-                    </span>
-                  );
-                })
-              }
+        {otherTeeTimeGroups && otherTeeTimeGroups.length > 0 ?
+          <div className="self-end">
+            <div className="flex flex-col item-start gap-2 lg:flex-row lg:items-center lg:gap-4 text-primary-gray text-[12px] md:text-[16px] ">
+              <span>
+                Other options for your group available.<br />
+                <i>Please adjust the start time.</i>
+              </span>
+              <div className="flex gap-2">
+                {
+                  otherTeeTimeGroups.map((group, index) => {
+                    return (
+                      <span
+                        key={index}
+                        className="bg-white px-2 py-1 lg:p-3 rounded-xl border border-stroke"
+                      >
+                        {getTime(group.date, timezoneCorrection)}
+                      </span>
+                    );
+                  })
+                }
+              </div>
             </div>
-          </div>
-        </div> : null}
+          </div> : null}
       </div>
       {
-        (!teeTimesData ?
+        ((!teeTimesData || Object.keys(teeTimesData).length === 0) ?
           <div className="flex justify-center items-center h-[200px]">
             <div className="text-center">
               {"No Tee Times Group Available."}
             </div>
           </div> :
           <>
-            {
-              teeTimeGroup ? (
-                <div key={teeTimeGroup.date} className="max-h-[50vh] overflow-y-auto flex flex-col gap-4">
-                  {/* Header Row */}
-                  <div className="flex flex-row items-center gap-2 md:px-4 md:mt-2">
-                    <h2 className="text-[13px] md:text-lg capitalize text-secondary-black unmask-time">
-                      {dayMonthDate(teeTimeGroup.date)}
-                    </h2>
-                  </div>
+            {sortedDates?.map((date) =>
+            (<div key={date} className="overflow-y-auto flex flex-col gap-2 md:gap-4">
+              {/* Header Row */}
+              <div className="flex flex-row items-center gap-2 md:px-4 md:mt-2">
+                <h2 className="text-[13px] md:text-lg capitalize text-secondary-black unmask-time">
+                  {dayMonthDate(date)}
+                </h2>
+              </div>
 
-                  {/* Group booking Items */}
-                  <div className="flex flex-row h-[100%] gap-4 overflow-x-auto ">
-                    <div key={teeTimeGroup.teeTimeIds.toString()} className="bg-white p-3 rounded-xl max-w-[280px] min-w-[280px] md:max-w-none md:w-[300px] flex flex-col text-[12px] md:text-[16px] text-secondary-black cursor-pointer">
+              {/* Group booking Items */}
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-4">
+                {teeTimesData[date]?.slice(0, 4).map((teeTimeGroup: TeeTimeGroup) => (
+                  <div key={teeTimeGroup.teeTimeIds.toString()} className="bg-white p-3 rounded-xl min-w-[280px] md:max-w-[360px] flex flex-col text-[12px] md:text-[16px] text-secondary-black cursor-pointer">
                       {/* First Row */}
                       <div className="flex flex-row justify-between items-center unmask-time">
                         <div className="font-semibold text-[16px] md:text-[20px] unmask-time">
@@ -209,11 +222,10 @@ const GroupBookingPage = ({ teeTimesData, isTeeTimesLoading, playerCount }: {
                         </FilledButton>
                       </div>
                     </div>
-                  </div>
-                </div>
-              )
-                : null
-            }
+                ))}
+              </div>
+            </div>
+            ))}
           </>
         )}
     </div>

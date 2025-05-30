@@ -38,6 +38,7 @@ interface AcceptedQuoteParams {
   price_charged: number;
 }
 interface BookingTypes {
+  validForCollectPayment: boolean;
   bookingId: string;
   isEmailSend: boolean;
 }
@@ -62,7 +63,7 @@ export class TokenizeService {
     private readonly database: Db,
     private readonly notificationService: NotificationService,
     private readonly sensibleService: SensibleService
-  ) {}
+  ) { }
   getCartData = async ({ courseId = "", ownerId = "", paymentId = "" }) => {
     const [customerCartData]: any = await this.database
       .select({ cart: customerCarts.cart, cartId: customerCarts.id })
@@ -218,8 +219,8 @@ export class TokenizeService {
     courseMembershipId?: string;
     playerCountForMemberShip?: string;
     providerCourseMembershipId?: string;
-      isFirstHandGroupBooking?: boolean;
-      providerBookings?: ProviderBooking[];
+    isFirstHandGroupBooking?: boolean;
+    providerBookings?: ProviderBooking[];
   }): Promise<BookingTypes> {
     this.logger.info(`tokenizeBooking tokenizing booking id: ${providerTeeTimeId} for user: ${userId}`);
     //@TODO add this to the transaction
@@ -474,7 +475,9 @@ export class TokenizeService {
     }
 
     if (isFirstHandGroupBooking && providerBookings) {
+      let remainingAmount = Math.round((normalizedCartData.total || 0) + additionalTaxes.additionalTaxes * 100);
       for (const booking of providerBookings) {
+        const isLastBooking = (providerBookings.length - bookingIds.length) === 1;
         const teeTimeData = existingTeeTimes.find((existingTeeTime) => existingTeeTime.id === booking.teeTimeId);
         if (!teeTimeData) {
           this.logger.fatal(`TeeTime with ID: ${booking.teeTimeId} does not exist.`);
@@ -492,6 +495,7 @@ export class TokenizeService {
         const bookingId = randomUUID();
         bookingIds.push(bookingId);
         const totalAmountPerPlayer = ((normalizedCartData.total || 0) + additionalTaxes.additionalTaxes * 100) / players;
+        const totalAmountForBooking = Math.round(totalAmountPerPlayer * booking.playerCount);
 
         bookingsToCreate.push({
           id: bookingId,
@@ -510,7 +514,7 @@ export class TokenizeService {
           totalTaxesAmount: additionalTaxes.additionalTaxes * 100, // normalizedCartData.taxCharge * 100 || 0,
           charityId: normalizedCartData.charityId || null,
           totalCharityAmount: normalizedCartData.charityCharge * 100 || 0,
-          totalAmount: totalAmountPerPlayer * booking.playerCount,
+          totalAmount: (isLastBooking && remainingAmount !== totalAmountForBooking) ? remainingAmount : totalAmountForBooking,
           providerPaymentId: paymentId,
           weatherQuoteId: normalizedCartData.weatherQuoteId ?? null,
           weatherGuaranteeId: acceptedQuote?.id ? acceptedQuote?.id : null,
@@ -592,6 +596,7 @@ export class TokenizeService {
           availableSecondHandSpots: teeTimeData.availableSecondHandSpots + booking.playerCount,
           availableFirstHandSpots: teeTimeData.availableFirstHandSpots - booking.playerCount,
         })
+        remainingAmount = remainingAmount - totalAmountForBooking;
       }
     } else {
       bookingsToCreate.push({
@@ -781,13 +786,13 @@ export class TokenizeService {
           }
         } else {
           await tx
-          .update(teeTimes)
-          .set({
-            availableSecondHandSpots: existingTeeTime.availableSecondHandSpots + players,
-            availableFirstHandSpots: existingTeeTime.availableFirstHandSpots - players,
-          })
-          .where(eq(teeTimes.id, existingTeeTime.id))
-          .execute();
+            .update(teeTimes)
+            .set({
+              availableSecondHandSpots: existingTeeTime.availableSecondHandSpots + players,
+              availableFirstHandSpots: existingTeeTime.availableFirstHandSpots - players,
+            })
+            .where(eq(teeTimes.id, existingTeeTime.id))
+            .execute();
         }
       }
 
@@ -856,6 +861,15 @@ export class TokenizeService {
       eventId: "TEE_TIME_PURCHASED",
       json: "Tee time purchased",
     });
+    let validForCollectPayment = false;
+
+    if (players > 1) {
+      validForCollectPayment = true;
+    } else {
+      validForCollectPayment = false;
+    }
+
+    const collectPaymentUrl = `http://localhost:3000/${existingTeeTime.courseId}/my-tee-box/?bookingId=${bookingId}&collectPayment=${validForCollectPayment}`
     const finalAmount =
       Math.floor(purchasePrice + (cartFeeCharge ?? 0)) * Number(players) +
       (normalizedCartData?.markupCharge ?? 0) * 100 +
@@ -867,8 +881,9 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
     ${providerBookingId}
 
     This is a first party purchase from the course
-    `;
 
+    you can now collect the payment ${collectPaymentUrl}
+    `;
     let event: Event, template;
     if (isFirstHandGroupBooking) {
       event = {
@@ -900,6 +915,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
         SellTeeTImeURL: `${redirectHref}/my-tee-box`,
         ManageTeeTimesURL: `${redirectHref}/my-tee-box`,
         GroupReservationID: groupId,
+        MyTeeBoxCollectPaymentUrl: `${redirectHref}/my-tee-box/?bookingId=${bookingId}&collectPayment=${validForCollectPayment}`,
         PurchasedMerchandise: puchasedMerchandise.length > 0 ? true : false,
         MerchandiseDetails: merchandiseDetails
       };
@@ -963,6 +979,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
         // CashOutURL: `${redirectHref}/account-settings/${userId}`,
         SellTeeTImeURL: `${redirectHref}/my-tee-box`,
         ManageTeeTimesURL: `${redirectHref}/my-tee-box`,
+        MyTeeBoxCollectPaymentUrl: `${redirectHref}/my-tee-box/?bookingId=${bookingId}&collectPayment=${validForCollectPayment}`,
         PurchasedMerchandise: puchasedMerchandise.length > 0 ? true : false,
         MerchandiseDetails: merchandiseDetails
       };
@@ -1009,9 +1026,10 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
         }),
       });
     }
-    const bookingIdObject: { bookingId: string; isEmailSend: boolean } = {
+    const bookingIdObject: { bookingId: string; isEmailSend: boolean, validForCollectPayment: boolean } = {
       bookingId: isFirstHandGroupBooking ? bookingIds.toString() : bookingId,
       isEmailSend,
+      validForCollectPayment
     };
     return bookingIdObject;
   }

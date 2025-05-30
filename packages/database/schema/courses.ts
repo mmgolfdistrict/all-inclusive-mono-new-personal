@@ -76,6 +76,8 @@ export const courses = mySqlTable(
     primaryMarketSellLeftoverSinglePlayer: boolean("primaryMarketSellLeftoverSinglePlayer").default(true).notNull(),
     internalID: varchar("internalID", { length: 25 }),
     friendlyCourseURLPath: varchar("friendlyCourseURLPath", { length: 50 }),
+    groupStartTime: int("groupStartTime"),
+    groupEndTime: int("groupEndTime"),
     supportsSellingMerchandise: boolean("supportsSellingMerchandise").default(false),
     merchandiseTaxPercent: int("merchandiseTaxPercent").default(0),
   },

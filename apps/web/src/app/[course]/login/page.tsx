@@ -113,10 +113,10 @@ export default function Login() {
       logAudit(sessionData.user.id, course.id, () => {
         window.location.reload();
         window.location.href = `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
-            ? prevPath?.path
-              ? prevPath.path
-              : "/"
+          ? prevPath?.path
+            ? prevPath.path
             : "/"
+          : "/"
           }`;
       });
     }
@@ -219,8 +219,8 @@ export default function Login() {
         //setLocalStorageCredentials(localStorage.getItem("credentials"));
       }
       const callbackURL = `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
-          ? prevPath?.path
-          : extractedURL ?? "/"
+        ? prevPath?.path
+        : extractedURL ?? "/"
         }`;
       const res = await signIn("credentials", {
         callbackUrl: callbackURL,
@@ -291,8 +291,8 @@ export default function Login() {
       setFacebookIsLoading(true);
       const res = await signIn("facebook", {
         callbackUrl: `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
-            ? prevPath?.path
-            : extractedURL ?? "/"
+          ? prevPath?.path
+          : extractedURL ?? "/"
           }`,
         redirect: true,
       });
@@ -314,8 +314,8 @@ export default function Login() {
       setAppleIsLoading(true);
       await signIn("apple", {
         callbackUrl: `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
-            ? prevPath?.path
-            : extractedURL ?? "/"
+          ? prevPath?.path
+          : extractedURL ?? "/"
           }`,
         redirect: true,
       });
@@ -335,8 +335,8 @@ export default function Login() {
     try {
       const res = await signIn("google", {
         callbackUrl: `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
-            ? prevPath?.path
-            : extractedURL ?? "/"
+          ? prevPath?.path
+          : extractedURL ?? "/"
           }`,
         redirect: true,
       });
@@ -363,8 +363,8 @@ export default function Login() {
       setLinkedinIsLoading(true);
       const res = await signIn("linkedin", {
         callbackUrl: `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
-            ? prevPath?.path
-            : extractedURL ?? "/"
+          ? prevPath?.path
+          : extractedURL ?? "/"
           }`,
         redirect: true,
       });
@@ -595,6 +595,7 @@ export default function Login() {
                 data-testid="login-password-id"
               />
               <IconButton
+                type="button"
                 onClick={(e) => {
                   e.preventDefault();
                   setShowPassword(!showPassword);

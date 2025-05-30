@@ -31,7 +31,7 @@ export default async function TeeTimePage({
           <div className="md:hidden">
             <CourseDescription />
           </div>
-          {"true" === isTransactionHistoryVisible?.toLowerCase() && (
+          {"true" === isTransactionHistoryVisible && (
             <TransactionHistory teeTimeId={teeTimeId} />
           )}
           {/* <InviteFriends teeTimeId={teeTimeId} /> */}

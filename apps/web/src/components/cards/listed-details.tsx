@@ -43,6 +43,9 @@ export const ListedDetails = ({
 
   const { data, isLoading, error, isError, refetch } =
     api.searchRouter.getListingById.useQuery({ listingId: listingId });
+  const { refetch: refetchStillListed } = api.teeBox.checkIfTeeTimeStillListedByListingId.useQuery({
+    listingId: listingId
+  }) 
   const getCache = api.cache.getCache.useMutation();
 
   const { user } = useUserContext();
@@ -81,10 +84,15 @@ export const ListedDetails = ({
       void router.push(`/${course?.id}/login`);
       return;
     } else {
+      const stillListed = await refetchStillListed();
+      if (!stillListed.data) {
+        toast.info("The tee time is no longer available, please refresh your screen.");
+        return;
+      }
       const value = await getCache.mutateAsync({
         key: `listing_id_${listingId}`,
       }) as string | null;
-      if (value) {
+      if (value && data?.allowSplit) {
         const { userId } = JSON.parse(value);
         if (userId !== user.id) {
           toast.info("The tee time is currently unavailable. Please check back in 20 mins.");
