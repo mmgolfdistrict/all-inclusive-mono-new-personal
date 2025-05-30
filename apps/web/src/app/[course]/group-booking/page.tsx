@@ -2,7 +2,7 @@
 
 import type { Day } from "@taak/react-modern-calendar-datepicker";
 import { Calendar } from "@taak/react-modern-calendar-datepicker";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import "@taak/react-modern-calendar-datepicker/lib/DatePicker.css";
 import { FilledButton } from "~/components/buttons/filled-button";
 import { GoBack } from "~/components/buttons/go-back";
@@ -52,12 +52,19 @@ function GroupBooking({ params }: { params: { course: string } }) {
   const showNumberInBetween = getSliderSteps(SLIDER_MIN, SLIDER_MAX, STEP);
 
   const courseId = params.course;
+  const [courseStartTimeNumber, courseEndTimeNumber] = useMemo(() => {
+    if (course?.groupStartTime && course?.groupEndTime) {
+      return [course?.groupStartTime, course?.groupEndTime]
+    } else {
+      const endTime = course?.courseCloseTime ?? 9;
+      const startTime = course?.courseOpenTime ?? 9;
+      return [startTime, endTime];
+    }
+  }, [course]);
   const [selectedDate, setSelectedDate] = useState<Day>(date && dateObject ? dateObject : { day: tomorrow.date(), month: tomorrow.month() + 1, year: tomorrow.year() });
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [displayDates, setDisplayDates] = useState<string>("");
   const [players, setPlayers] = useState(SLIDER_MIN);
-  const courseStartTimeNumber = course?.courseOpenTime ?? 9;
-  const courseEndTimeNumber = course?.courseCloseTime ?? 9;
   const { setActivePage } = useAppContext();
   setActivePage("group-booking")
   const [startTime, setStartTime] = useState<[number, number]>([
