@@ -105,6 +105,8 @@ export type FullCourseType = {
   isOnlyGroupOfFourAllowed?: boolean;
   isAllowSpecialRequest?: boolean;
   isAllowClubRental?: boolean;
+  groupStartTime: number | null;
+  groupEndTime: number | null;
   isAllowCourseSwitching?: boolean;
 };
 
