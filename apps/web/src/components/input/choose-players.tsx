@@ -15,7 +15,8 @@ export const ChoosePlayers = ({
   numberOfPlayers,
   id,
   supportsGroupBooking,
-  allowSplit
+  allowSplit,
+  groupBookingParams
 }: {
   players: string | number;
   setPlayers: (v: string) => void;
@@ -29,6 +30,7 @@ export const ChoosePlayers = ({
   id?: string;
     supportsGroupBooking?: boolean;
     allowSplit?: boolean;
+    groupBookingParams?: string;
 }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -106,7 +108,7 @@ export const ChoosePlayers = ({
           `}
           onClick={() => {
             router.push(
-              `${urlWithCourse}/group-booking`
+              `${urlWithCourse}/group-booking?${groupBookingParams ?? ""}`
             )
           }}
           data-testid="group-booking-button-id"

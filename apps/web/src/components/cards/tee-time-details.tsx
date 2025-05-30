@@ -7,7 +7,7 @@ import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
 import { formatMoney, formatTime } from "~/utils/formatters";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type ComponentProps } from "react";
+import { useEffect, useState, type ComponentProps, useMemo } from "react";
 import { toast } from "react-toastify";
 import { useCopyToClipboard } from "usehooks-ts";
 import { Avatar } from "../avatar";
@@ -55,6 +55,16 @@ export const TeeTimeDetails = ({
 
   const [, copy] = useCopyToClipboard();
   const [isCopied, setIsCopied] = useState<boolean>(false);
+  const groupBookingParams = useMemo(() => {
+    return `date=${data?.date?.split("T")[0]}&time=${data?.time}`
+  }, [data]);
+  const shouldShowGroupBookingButton = useMemo(() => {
+    if (course?.groupStartTime && course?.groupEndTime && data?.time) {
+      return (data?.time >= course?.groupStartTime && data?.time <= course?.groupEndTime) ? true : false
+    } else {
+      return true
+    }
+  }, [data]);
 
   const { user } = useUserContext();
   const { setPrevPath } = useAppContext();
@@ -195,7 +205,8 @@ export const TeeTimeDetails = ({
               status={"FIRST_HAND"}
               isDisabled={allowedPlayers?.selectStatus === "ALL_PLAYERS"}
               id="choose-players-detail-page"
-                  supportsGroupBooking={course?.supportsGroupBooking}
+              supportsGroupBooking={shouldShowGroupBookingButton ? course?.supportsGroupBooking : false}
+              groupBookingParams={groupBookingParams}
             />
           </div>
           <div className="flex flex-col flex-wrap justify-between gap-2 md:flex-row">
@@ -212,24 +223,24 @@ export const TeeTimeDetails = ({
             <div className="flex flex-col md:flex-row items-center gap-2">
               <div id="share-button-detail-page">
 
-              <OutlineButton
-                onClick={() => void share()}
-                className="w-full whitespace-nowrap"
-                data-testid="share-button-id"
+                <OutlineButton
+                  onClick={() => void share()}
+                  className="w-full whitespace-nowrap"
+                  data-testid="share-button-id"
                 >
-                <div className="flex items-center justify-center gap-2">
-                  {isCopied ? (
-                    <>
-                      <Check className="w-[18px] min-w-[18px]" /> Copied
-                    </>
-                  ) : (
-                    <>
-                      <Share /> Share
-                    </>
-                  )}
-                </div>
-              </OutlineButton>
+                  <div className="flex items-center justify-center gap-2">
+                    {isCopied ? (
+                      <>
+                        <Check className="w-[18px] min-w-[18px]" /> Copied
+                      </>
+                    ) : (
+                      <>
+                        <Share /> Share
+                      </>
+                    )}
                   </div>
+                </OutlineButton>
+              </div>
               {course?.supportsWatchlist ? (
                 <div id="watchlist-button-detail-page">
                   <OutlineButton

@@ -39,6 +39,7 @@ import type { UserWaitlistService } from "../user-waitlist/userWaitlist.service"
 import { loggerService } from "../webhooks/logging.service";
 import { groupBookings } from "@golf-district/database/schema/groupBooking";
 import { CacheService } from "../infura/cache.service";
+import { bookingSplitPayment } from "@golf-district/database/schema/bookingSplitPayment";
 
 dayjs.extend(UTC);
 dayjs.extend(timezone);
@@ -136,6 +137,8 @@ interface TransferData {
   weatherGuaranteeId: string;
   weatherGuaranteeAmount: number;
   markupFees?: number | null;
+  splitPaymentsAmount?: number | null;
+  isPaidSplitAmount?: number | null;
 }
 type RequestOptions = {
   method: string;
@@ -292,6 +295,8 @@ export class BookingService {
         weatherGuaranteeAmount: transfers.weatherGuaranteeAmount,
         cartFee: bookings.cartFeePerPlayer,
         markupFees: bookings.markupFees,
+        splitPaymentsAmount: bookingSplitPayment.payoutAmount,
+        isPaidSplitAmount: bookingSplitPayment.isPaid,
       })
       .from(transfers)
       .innerJoin(bookings, eq(bookings.id, transfers.bookingId))
@@ -299,6 +304,7 @@ export class BookingService {
       .innerJoin(courses, eq(courses.id, teeTimes.courseId))
       .leftJoin(lists, eq(bookings.listId, lists.id))
       .leftJoin(assets, eq(assets.id, courses.logoId))
+      .leftJoin(bookingSplitPayment, eq(bookingSplitPayment.bookingId, transfers.bookingId))
       // .leftJoin(userBookingOffers, eq(userBookingOffers.bookingId, bookings.id))
       .where(
         and(
@@ -371,6 +377,8 @@ export class BookingService {
           weatherGuaranteeAmount: teeTime.weatherGuaranteeAmount ?? 0,
           weatherGuaranteeId: teeTime.weatherGuaranteeId ?? "",
           markupFees: teeTime.markupFees,
+          splitPaymentsAmount: teeTime.splitPaymentsAmount ?? 0,
+          isPaidSplitAmount: teeTime.isPaidSplitAmount,
         };
       } else {
         const currentEntry = combinedData[teeTime.transferId];
@@ -420,7 +428,7 @@ export class BookingService {
         groupId: bookings.groupId,
         weatherGuaranteeAmount: bookings.weatherGuaranteeAmount,
         playerCount: bookings.playerCount,
-        allowSplit: lists.allowSplit
+        allowSplit: lists.allowSplit,
       })
       .from(bookings)
       .innerJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -481,7 +489,7 @@ export class BookingService {
             isGroupBooking: false,
             playerCount: teeTime.playerCount,
             listingIdFromRedis: listingIdFromRedis as string | null | undefined,
-            allowSplit: teeTime.allowSplit
+            allowSplit: teeTime.allowSplit,
           };
         } else {
           const currentEntry = combinedData[teeTime.teeTimesId];
@@ -495,7 +503,7 @@ export class BookingService {
           }
         }
       }
-    };
+    }
     return combinedData;
   };
   /**
@@ -666,7 +674,7 @@ export class BookingService {
         slots: lists.slots,
         playerCount: bookings.playerCount,
         bookingStatus: bookings.status,
-        allowSplit: lists.allowSplit
+        allowSplit: lists.allowSplit,
       })
       .from(teeTimes)
       .innerJoin(bookings, eq(bookings.teeTimeId, teeTimes.id))
@@ -721,7 +729,6 @@ export class BookingService {
         stackTrace: "",
         additionalDetailsJSON: `No tee times found for user: ${userId}`,
       });
-      return [];
     }
     const combinedData: Record<string, OwnedTeeTimeData> = {};
 
@@ -769,7 +776,7 @@ export class BookingService {
           bookingStatus: teeTime.bookingStatus,
           isGroupBooking: false,
           groupId: "",
-          allowSplit: teeTime.allowSplit
+          allowSplit: teeTime.allowSplit,
         };
       } else {
         const currentEntry = combinedData[teeTime.providerBookingId];
@@ -1085,6 +1092,8 @@ export class BookingService {
       t.golfers = finaldata;
     }
 
+    if (!data.length && !groupTeeTimeData.length) return [];
+
     return { ...combinedData, ...combinedGroupData };
   };
 
@@ -1261,7 +1270,7 @@ export class BookingService {
       isDeleted: false,
       // splitTeeTime: false,
       slots,
-      allowSplit
+      allowSplit,
     };
     await this.database
       .transaction(async (transaction) => {
@@ -1604,7 +1613,7 @@ export class BookingService {
       .set({
         listPrice: updatedPrice * 100,
         slots: updatedSlots,
-        allowSplit
+        allowSplit,
       })
       .where(eq(lists.id, listId))
       .execute()
@@ -3582,7 +3591,10 @@ export class BookingService {
           cartFeeCharge * (slotInfo[0]?.product_data?.metadata?.number_of_bookings ?? 0) -
           markupCharge1, //slotInfo[0].price- cartFeeCharge*slotInfo[0]?.product_data?.metadata?.number_of_bookings,
       teeTimeId: slotInfo[0].product_data.metadata.tee_time_id,
-      playerCount: slotInfo[0].product_data.metadata.number_of_bookings === undefined ? customerCartData.cart.playerCount : slotInfo[0].product_data.metadata.number_of_bookings,
+      playerCount:
+        slotInfo[0].product_data.metadata.number_of_bookings === undefined
+          ? customerCartData.cart.playerCount
+          : slotInfo[0].product_data.metadata.number_of_bookings,
       teeTimeIds: slotInfo[0].product_data.metadata.tee_time_ids,
       minPlayersPerBooking: slotInfo[0].product_data.metadata.min_players_per_booking,
     };
@@ -4119,9 +4131,6 @@ export class BookingService {
       throw new Error("No booking id found in response from provider");
     }
     console.log(`Creating tokenized booking`);
-
-    //create tokenized bookings
-
     const bookingId = await this.tokenizeService
       .tokenizeBooking({
         redirectHref,
@@ -4191,6 +4200,7 @@ export class BookingService {
       providerBookingId,
       status: "Reserved",
       isEmailSend: bookingId.isEmailSend,
+      isValidForCollectPayment: bookingId?.validForCollectPayment,
     } as ReserveTeeTimeResponse;
   };
 
@@ -4296,11 +4306,17 @@ export class BookingService {
           providerCourseConfiguration: providerCourseLink.providerCourseConfiguration,
           providerInternalId: providers.internalId,
           providerTeeSheet: providerCourseLink.providerTeeSheetId,
+          providerDate: teeTimes.providerDate,
+          courseName: courses.name,
+          userName: users.name,
+          userEmail: users.email,
         })
         .from(bookings)
         .leftJoin(teeTimes, eq(bookings.teeTimeId, teeTimes.id))
         .leftJoin(providerCourseLink, eq(teeTimes.courseId, providerCourseLink.courseId))
         .leftJoin(providers, eq(providerCourseLink.providerId, providers.id))
+        .leftJoin(courses, eq(teeTimes.courseId, courses.id))
+        .leftJoin(users, eq(bookings.ownerId, users.id))
         .where(eq(bookings.listId, listingId));
       const result = await this.providerService.checkCancelledBooking(
         bookingResult?.bookingProviderId!,
@@ -4330,9 +4346,13 @@ export class BookingService {
             `
             The customer attempted to purchase a tee time, but the provider canceled it. The following details pertain to the canceled tee time:
             Tee Time ID ====> ${bookingResult?.bookingTeeTimeId} , 
+            Tee Time Date ====> ${bookingResult?.providerDate} , 
            Provider Booking ID ====> ${bookingResult?.bookingProviderId} , 
            Course ID ====> ${bookingResult?.courseId}, 
+           Course Name ====> ${bookingResult?.courseName}, 
            Listing ID ====> ${listingId}, 
+           Customer Name ====> ${bookingResult?.userName},
+           Customer Email ====> ${bookingResult?.userEmail},
            This information indicates that the tee time was listed in the course but was subsequently deleted by the provider.
             `
           );
@@ -4431,7 +4451,9 @@ export class BookingService {
     const bookingId = randomUUID();
     const bookingsToCreate: InsertBooking[] = [];
     const transfersToCreate: InsertTransfer[] = [];
-    const bookedPlayers = associatedBooking?.allowSplit ? playerCount : associatedBooking?.listedSlotsCount ?? 0
+    const bookedPlayers = associatedBooking?.allowSplit
+      ? playerCount
+      : associatedBooking?.listedSlotsCount ?? 0;
 
     bookingsToCreate.push({
       id: bookingId,
@@ -4582,6 +4604,7 @@ export class BookingService {
         playTime: teeTimes.providerDate,
         transferedFromBookingId: transfers.fromUserId,
         groupId: bookings.groupId,
+        playerCount: bookings.playerCount,
       })
       .from(bookings)
       .innerJoin(transfers, eq(transfers.bookingId, bookings.id))
@@ -4622,7 +4645,7 @@ export class BookingService {
       booking.providerId = "";
     }
 
-    return { ...booking, playerCount };
+    return { ...booking, playerCount: playerCount || booking?.playerCount };
   };
 
   checkIfTeeTimeAvailableOnProvider = async (teeTimeId: string, golfersCount: number, userId: string) => {
@@ -5999,7 +6022,11 @@ export class BookingService {
     }
   };
 
-  addListingForRemainingSlotsOnGroupBooking = async (groupId: string, listedSlotsCount = 0, ownerId: string) => {
+  addListingForRemainingSlotsOnGroupBooking = async (
+    groupId: string,
+    listedSlotsCount = 0,
+    ownerId: string
+  ) => {
     try {
       if (listedSlotsCount === 0) {
         this.logger.error("Invalid listing slots count");
@@ -6227,7 +6254,13 @@ export class BookingService {
       });
     }
   };
-  addListingForRemainingSlots = async (bookingId: string, providerBookingId: string, previousListid: string, slotsToList = 0, ownerId: string) => {
+  addListingForRemainingSlots = async (
+    bookingId: string,
+    providerBookingId: string,
+    previousListid: string,
+    slotsToList = 0,
+    ownerId: string
+  ) => {
     try {
       if (slotsToList === 0) {
         this.logger.error("Invalid listing slots count");
@@ -6236,7 +6269,7 @@ export class BookingService {
 
       const [previousListing] = await this.database
         .select({
-          listPrice: lists.listPrice
+          listPrice: lists.listPrice,
         })
         .from(lists)
         .where(eq(lists.id, previousListid))
@@ -6257,13 +6290,13 @@ export class BookingService {
           key: assets.key,
           extension: assets.extension,
           courseWebsiteURL: courses.websiteURL,
-          timezoneCorrection: courses.timezoneCorrection
+          timezoneCorrection: courses.timezoneCorrection,
         })
         .from(bookings)
         .innerJoin(teeTimes, eq(bookings.teeTimeId, teeTimes.id))
         .innerJoin(users, eq(bookings.ownerId, users.id))
         .innerJoin(courses, eq(teeTimes.courseId, courses.id))
-        .innerJoin(assets, eq(assets.id, courses.logoId))
+        .leftJoin(assets, eq(assets.id, courses.logoId))
         .where(eq(bookings.id, bookingId))
         .execute();
 
@@ -6278,7 +6311,7 @@ export class BookingService {
         listPrice: previousListing.listPrice,
         isDeleted: false,
         slots: slotsToList,
-        allowSplit: true
+        allowSplit: true,
       };
       await this.database
         .transaction(async (transaction) => {
@@ -6299,7 +6332,7 @@ export class BookingService {
                 message: "ERROR_UPDATING_BOOKING_ID",
                 stackTrace: `${err.stack}`,
                 additionalDetailsJSON: JSON.stringify({
-                  bookingId
+                  bookingId,
                 }),
               });
               transaction.rollback();
@@ -6342,9 +6375,7 @@ export class BookingService {
           });
           throw new Error("Error creating listing");
         });
-      this.logger.info(
-        `Listing created successfully. for bookingId ${bookingId}`
-      );
+      this.logger.info(`Listing created successfully. for bookingId ${bookingId}`);
 
       const [date, time] = previousBooking.providerDate.split("T");
 
@@ -6370,7 +6401,7 @@ export class BookingService {
                 previousBooking.timezoneCorrection ?? 0
               ),
               PlayerCount: slotsToList ?? 0,
-              ListedPricePerPlayer: previousListing.listPrice ? `${previousListing.listPrice}` : "-"
+              ListedPricePerPlayer: previousListing.listPrice ? `${previousListing.listPrice}` : "-",
             },
             []
           )
@@ -6387,7 +6418,7 @@ export class BookingService {
                 email: previousBooking.userEmail,
                 name: previousBooking.userName,
                 courseName: previousBooking.courseName,
-                previousBooking
+                previousBooking,
               }),
             });
             throw new Error("Error sending email");
@@ -6414,7 +6445,7 @@ export class BookingService {
           bookingId,
           ownerId,
           previousListid,
-          slotsToList
+          slotsToList,
         }),
       });
     }
