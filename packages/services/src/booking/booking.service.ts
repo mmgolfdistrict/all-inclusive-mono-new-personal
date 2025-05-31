@@ -272,7 +272,6 @@ export class BookingService {
     _limit = 10,
     _cursor: string | undefined
   ) => {
-    this.logger.info(`getTransactionHistory called with userId: ${userId}`);
     const data = await this.database
       .select({
         transferId: transfers.id,
@@ -410,7 +409,6 @@ export class BookingService {
    * const listedTeeTimes = await bookingService.getMyListedTeeTimes(userId, courseId, limit);
    */
   getMyListedTeeTimes = async (userId: string, courseId: string, _limit = 10, _cursor?: string) => {
-    this.logger.info(`getMyListedTeeTimes called with userId: ${userId}`);
     const localDateTimePlus1Hour = dayjs.utc().utcOffset(-7).add(1, "hour");
 
     const data = await this.database
@@ -521,7 +519,6 @@ export class BookingService {
    * const teeTimeHistory = await bookingService.getTeeTimeHistory(teeTimeId);
    */
   getTeeTimeHistory = async (teeTimeId: string) => {
-    this.logger.info(`getTeeTimeHistory called with teeTimeId: ${teeTimeId}`);
     const data = await this.database
       .select({
         bookingId: bookings.id,
@@ -588,7 +585,6 @@ export class BookingService {
    * const ownedBookings = await bookingService.getOwnedBookingsForTeeTime(userId, teeTimeId);
    */
   getOwnedBookingsForTeeTime = async (userId: string, teeTimeId: string) => {
-    this.logger.info(`getOwnedBookingsForTeeTime called with userId: ${userId}`);
     const data = await this.database
       .select({
         id: bookings.id,
@@ -617,8 +613,6 @@ export class BookingService {
   };
 
   getOwnedTeeTimes = async (userId: string, courseId: string, _limit = 10, _cursor: string | undefined) => {
-    this.logger.info(`getOwnedTeeTimes called with userId: ${userId}`);
-
     const courseTimezoneISO = await this.database
       .select({
         timezoneISO: courses.timezoneISO,
@@ -1125,7 +1119,6 @@ export class BookingService {
     slots: number,
     allowSplit?: boolean
   ) => {
-    this.logger.info(`createListingForBookings called with userId: ${userId}`);
     console.warn("bookingIds", bookingIds);
     // console.log("CREATINGLISTING FOR DATE:", dayjs(endTime).utc().format('YYYY-MM-DD'), dayjs(endTime).utc().format('HHmm'));
     if (new Date().getTime() >= endTime.getTime()) {
@@ -1187,7 +1180,6 @@ export class BookingService {
         throw new Error("Error retrieving bookings");
       });
     if (!ownedBookings.length) {
-      this.logger.debug(`Owned bookings: ${JSON.stringify(ownedBookings)}`);
       this.logger.warn(`User ${userId} does not own  specified bookings.`);
       throw new Error("User does not  own specified bookings.");
     }
@@ -1344,13 +1336,7 @@ export class BookingService {
         });
         throw new Error("Error creating listing");
       });
-    this.logger.info(`Listings created successfully. for user ${userId} teeTimeId ${firstBooking.teeTimeId}`);
-    // await this.notificationService.createNotification(
-    //   userId,
-    //   "LISTING_CREATED",
-    //   `Listing creation successful`,
-    //   courseId
-    // );
+
     const [user] = await this.database
       .select()
       .from(users)
@@ -1385,7 +1371,7 @@ export class BookingService {
       });
       return;
     }
-    console.log("######", ownedBookings);
+
     if (user.email && user.name) {
       await this.notificationService
         .sendEmailByTemplate(
@@ -1470,7 +1456,6 @@ export class BookingService {
     endTime: Date,
     allowSplit: boolean
   ) => {
-    this.logger.info(`updateListingForBookings called with userId: ${userId}, listId: ${listId}`);
 
     if (new Date().getTime() >= endTime.getTime()) {
       this.logger.warn("End time cannot be before current time");
@@ -1563,7 +1548,6 @@ export class BookingService {
         throw new Error("Error retrieving bookings");
       });
     if (!ownedBookings.length) {
-      this.logger.debug(`Owned bookings: ${JSON.stringify(ownedBookings)}`);
       this.logger.warn(`User ${userId} does not own  specified bookings.`);
       throw new Error("User does not  own specified bookings.");
     }
@@ -1631,8 +1615,6 @@ export class BookingService {
         throw new Error("Error updating listing");
       });
 
-    this.logger.info(`Listing updated successfully for user ${userId}, listId ${listId}`);
-
     // Send email notification about the listing update
     await this.notificationService
       .sendEmailByTemplate(
@@ -1663,8 +1645,6 @@ export class BookingService {
         throw new Error("Error sending email");
       });
 
-    this.logger.info(`Email sent to ${user.email} about listing update.`);
-
     return {
       success: true,
       message: "Listing updated and notification sent to the user.",
@@ -1684,7 +1664,6 @@ export class BookingService {
    * await bookingService.cancelListing(userId, listingId);
    */
   cancelListing = async (userId: string, listingId: string) => {
-    this.logger.info(`cancelListing called with userId: ${userId}`);
     const [listing] = await this.database
       .select({
         id: lists.id,
@@ -1714,10 +1693,7 @@ export class BookingService {
       this.logger.warn(`Listing not found. Either listing does not exist or user does not own listing.`);
       throw new Error("Owned listing not found");
     }
-    // if (listing.status !== "PENDING") {
-    //   this.logger.warn(`Listing is not pending.`);
-    //   throw new Error("Listing is not pending");
-    // }
+
     if (listing.isDeleted) {
       this.logger.warn(`Tee time not available anymore.`);
       throw new Error("Tee time not available anymore.");
@@ -1786,7 +1762,7 @@ export class BookingService {
           });
       }
     });
-    this.logger.info(`Listings cancelled successfully. for user ${userId} listingId ${listingId}`);
+
     const [user] = await this.database
       .select({
         email: users.email,
@@ -1900,7 +1876,6 @@ export class BookingService {
     endTime: Date,
     listingId: string
   ) => {
-    this.logger.info(`updateListing called with userId: ${userId}`);
     if (new Date().getTime() >= endTime.getTime()) {
       this.logger.warn("End time cannot be before current time");
       throw new Error("End time cannot be before current time");
@@ -1992,7 +1967,6 @@ export class BookingService {
       });
 
     if (ownedBookings.length !== bookingIds.length || !ownedBookings[0]) {
-      this.logger.debug(`Owned bookings: ${JSON.stringify(ownedBookings)}`);
       this.logger.warn(`User ${userId} does not own all specified bookings.`);
       throw new Error("User does not own all specified bookings.");
     }
@@ -2187,7 +2161,6 @@ export class BookingService {
    * @throws Error - Throws an error if one or more bookings are not found or if a booking is not active.
    */
   createOfferOnBookings = async (userId: string, bookingIds: string[], price: number, expiration: Date) => {
-    this.logger.info(`createOfferOnBookings called with userId: ${userId}`);
     if (!bookingIds.length) {
       this.logger.warn(`No bookings specified.`);
       throw new Error("No bookings specified.");
@@ -2406,7 +2379,6 @@ export class BookingService {
    * await bookingService.cancelOfferOnBooking(userId, offerId);
    */
   cancelOfferOnBooking = async (userId: string, offerId: string) => {
-    this.logger.info(`cancelOfferOnBooking called with userId: ${userId}`);
     const offerData = await this.database
       .select({
         buyerId: offers.buyerId,
@@ -2548,7 +2520,6 @@ export class BookingService {
    * @throws Error - Throws an error if the booking is not found or is not active.
    */
   acceptOffer = async (userId: string, offerId: string) => {
-    this.logger.info(`acceptOffer called with userId: ${userId}`);
     const offer = await this.database
       .select({
         id: offers.id,
@@ -2741,7 +2712,6 @@ export class BookingService {
    * // result: { success: true, message: "Offer accepted successfully." }
    */
   rejectOffer = async (userId: string, offerId: string) => {
-    this.logger.info(`rejectOffer called with userId: ${userId}`);
     const offer = await this.database
       .select({
         id: offers.id,
@@ -2845,7 +2815,6 @@ export class BookingService {
    * @returns A promise that resolves to an array of offers.
    */
   getOffersForBooking = async (bookingId: string, _limit = 10, _cursor?: string) => {
-    this.logger.info(`getOffersForBooking called with bookingId: ${bookingId}`);
     const userImage = alias(assets, "userImage");
     const courseImage = alias(assets, "courseImage");
 
@@ -2980,7 +2949,6 @@ export class BookingService {
    * // result: [{ offer: OfferData }, { offer: OfferData }, ...]
    */
   async getOfferSentForUser(userId: string, courseId: string, _limit = 10, _cursor?: string | null) {
-    this.logger.info(`getOfferSentForUser called with userId: ${userId}`);
     const userImage = alias(assets, "userImage");
     const ownerImage = alias(assets, "ownerImage");
     const bookingOwner = alias(users, "bookingOwner");
@@ -3133,7 +3101,6 @@ export class BookingService {
    * @returns A promise that resolves to an array of offers.
    */
   async getOfferReceivedForUser(userId: string, courseId: string, _limit = 10, _cursor?: string | null) {
-    this.logger.info(`getOfferReceivedForUser called with userId: ${userId}`);
     const userImage = alias(assets, "userImage");
     const courseImage = alias(assets, "courseImage");
     const userBooking = alias(bookings, "userBooking");
@@ -3272,7 +3239,6 @@ export class BookingService {
    * await bookingService.updateNamesOnBookings(userId, bookingIds, names);
    */
   updateNamesOnBookings = async (userId: string, usersToUpdate: InviteFriend[], bookingId: string) => {
-    this.logger.info(`updateNamesOnBookings called with userId: ${userId}`);
     const data = await this.database
       .select({
         id: bookings.id,
@@ -5599,7 +5565,6 @@ export class BookingService {
     endTime: Date,
     slots: number
   ) => {
-    this.logger.info(`createListingForGroupBookings called with userId: ${userId}`);
     console.warn("Group ID:", groupId);
     // console.log("CREATINGLISTING FOR DATE:", dayjs(endTime).utc().format('YYYY-MM-DD'), dayjs(endTime).utc().format('HHmm'));
     if (new Date().getTime() >= endTime.getTime()) {
@@ -5668,7 +5633,6 @@ export class BookingService {
         throw new Error("Error retrieving bookings");
       });
     if (!ownedBookings.length) {
-      this.logger.debug(`Owned bookings: ${JSON.stringify(ownedBookings)}`);
       this.logger.warn(`User ${userId} does not own  specified bookings.`);
       throw new Error("User does not  own specified bookings.");
     }
@@ -5819,7 +5783,6 @@ export class BookingService {
         });
         throw new Error("Error creating listing");
       });
-    this.logger.info(`Listings created successfully. for user ${userId} teeTimeId ${lastBooking.teeTimeId}`);
 
     const [user] = await this.database
       .select()
@@ -5943,8 +5906,6 @@ export class BookingService {
    * await bookingService.cancelGroupListing(userId, listingId);
    */
   cancelGroupListing = async (userId: string, groupId: string) => {
-    this.logger.info(`cancelGroupListing called with userId: ${userId}`);
-
     if (!groupId) {
       this.logger.error("Invalid group ID");
       throw new Error("Invalid group ID");
@@ -6063,7 +6024,6 @@ export class BookingService {
           });
         });
     });
-    this.logger.info(`Listings cancelled successfully. for user ${userId} groupId ${groupId}`);
     const [user] = await this.database
       .select({
         email: users.email,
@@ -6216,7 +6176,6 @@ export class BookingService {
             throw new Error("Error retrieving bookings");
           });
         if (!ownedBookings.length) {
-          this.logger.debug(`Owned bookings: ${JSON.stringify(ownedBookings)}`);
           throw new Error("Can not  specified bookings.");
         }
         for (const booking of ownedBookings) {
@@ -6502,7 +6461,6 @@ export class BookingService {
           });
           throw new Error("Error creating listing");
         });
-      this.logger.info(`Listing created successfully. for bookingId ${bookingId}`);
 
       const [date, time] = previousBooking.providerDate.split("T");
 

@@ -21,8 +21,6 @@ export class CashOutService {
 
   //create stripe account returns hosted account link url
   createStripeAccountLink = async (userId: string, accountSettingsHref: string) => {
-    // const refreshUrl = `${courseDomain}/reAuth`;
-    this.logger.info;
     const [user] = await this.database
       .select({
         stripeAccountId: users.stripeConnectAccountId,

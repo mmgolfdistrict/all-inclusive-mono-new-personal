@@ -98,7 +98,6 @@ export class UploadService {
   }> => {
     this.logger.info(`createPresignedUploadURL called with fileName: ${originalFileName}`);
     const extension = originalFileName.split(".").pop()?.toLowerCase();
-    this.logger.debug(`createPresignedUploadURL extension: ${extension}`);
     const allowedExtensions = ["jpg", "jpeg", "png", "gif", "webp"];
     if (!allowedExtensions.includes(extension!)) {
       this.logger.warn(`Invalid file type. Only image files are accepted. fileName: ${originalFileName}`);
@@ -115,7 +114,6 @@ export class UploadService {
     };
     const multiPartUploadCommand = new CreateMultipartUploadCommand(params);
     const uploadURL = await this.s3.send(multiPartUploadCommand);
-    this.logger.debug(`createPresignedUploadURL uploadURL: ${JSON.stringify(uploadURL)}`);
     const parts = await this.generatePresignedUrlsParts(
       this.s3,
       uploadURL.UploadId!,
@@ -243,7 +241,6 @@ export class UploadService {
       });
       throw err;
     });
-    this.logger.debug(`abortUpload upload aborted for s3Key: ${s3Key}, uploadId: ${uploadId}`);
   };
 
   /**
