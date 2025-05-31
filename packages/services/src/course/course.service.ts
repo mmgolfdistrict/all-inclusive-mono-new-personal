@@ -1,9 +1,10 @@
 import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
-import { and, asc, desc, eq, gte, lte, sql } from "@golf-district/database";
+import { and, asc, desc, eq, gt, gte, lte, sql } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import { authenticationMethod } from "@golf-district/database/schema/authenticationMethod";
 import { bookings } from "@golf-district/database/schema/bookings";
+import { courseSwitch } from "@golf-district/database/schema/courseSwitch";
 import { charities } from "@golf-district/database/schema/charities";
 import { charityCourseLink } from "@golf-district/database/schema/charityCourseLink";
 import { courseAllowedTimeToSell } from "@golf-district/database/schema/courseAllowedTimeToSell";
@@ -32,6 +33,7 @@ import { loggerService } from "../webhooks/logging.service";
 import { courseSetting } from "@golf-district/database/schema/courseSetting";
 import { appSettingService } from "../app-settings/initialized";
 import { parseSettingValue } from "../../helpers";
+import { courseMerchandise } from "@golf-district/database/schema/courseMerchandise";
 
 dayjs.extend(utc);
 dayjs.extend(customParseFormat);
@@ -62,9 +64,9 @@ type CourseDetailsQuery = {
   supportsWaitlist: boolean;
   buyerFee: number | null;
   sellerFee: number | null;
-  internalId: string;
+  internalId?: string;
   roundUpCharityId: string | null;
-  providerConfiguration: string | null;
+  providerConfiguration?: string | null;
   isBookingDisabled: number;
 };
 
@@ -103,6 +105,43 @@ export class CourseService extends DomainService {
   ) {
     super(PROJECT_ID_VERCEL, TEAM_ID_VERCEL, AUTH_BEARER_TOKEN, Logger(CourseService.name));
   }
+
+  getAllSwitchCourses = async (courseId: string) => {
+    // const cacheKey = `allSwitchCourses`;
+    // const cacheTTL = 600; // Cache TTL in seconds
+
+    // let allSwitchCoursesQuery: any[] | null = await cacheManager.get(cacheKey);
+
+    const allSwitchCoursesQuery = await this.database
+      .select({
+        id: courseSwitch.id,
+        courseId: courseSwitch.courseId,
+        switchableCourseId: courseSwitch.switchableCourseId,
+        name: courses.name,
+      })
+      .from(courseSwitch)
+      .innerJoin(courses, eq(courses.id, courseSwitch.switchableCourseId))
+      .where(eq(courseSwitch.courseId, courseId))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error getting all switch courses: ${err}`);
+        loggerService.errorLog({
+          userId: "",
+          url: "/CourseService/getAllSwitchCourses",
+          userAgent: "",
+          message: "ERROR_GETTING_ALL_SWITCH_COURSES",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({}),
+        });
+        throw new Error("Error getting all switch courses");
+      });
+
+    // await cacheManager.set(cacheKey, allSwitchCoursesQuery, cacheTTL);
+    // }
+
+    // Format if needed; currently returning as-is
+    return allSwitchCoursesQuery;
+  };
 
   /**
    * Retrieves a course by its ID.
@@ -156,6 +195,9 @@ export class CourseService extends DomainService {
           supportsProviderMembership: courses.supportsProviderMembership,
           supportsGroupBooking: courses.supportsGroupBooking,
           timezoneISO: courses?.timezoneISO,
+          groupStartTime: courses.groupStartTime,
+          groupEndTime: courses.groupEndTime,
+          supportsSellingMerchandise: courses.supportsSellingMerchandise
         })
         .from(courses)
         .innerJoin(providerCourseLink, eq(providerCourseLink.courseId, courses.id))
@@ -339,6 +381,10 @@ export class CourseService extends DomainService {
         (setting) => setting.internalName === "ALLOW_CLUB_RENTAL"
       );
 
+      const isAllowCourseSwitching = courseSettings.find(
+        (setting) => setting.internalName === "ALLOW_COURSE_SWITCHING"
+      );
+
       if (isOnlyGroupOfFourAllowed) {
         let sliderMin = groupBookingMinSize;
         let sliderMax = groupBookingMaxSize;
@@ -364,6 +410,10 @@ export class CourseService extends DomainService {
         isAllowClubRental: parseSettingValue(
           isAllowClubRental?.value ?? "",
           isAllowClubRental?.datatype ?? "string"
+        ),
+        isAllowCourseSwitching: parseSettingValue(
+          isAllowCourseSwitching?.value ?? "",
+          isAllowCourseSwitching?.datatype ?? "string"
         ),
       };
     }
@@ -1240,4 +1290,44 @@ export class CourseService extends DomainService {
       parseSettingValue(desktopViewVersion?.value ?? "", desktopViewVersion?.datatype ?? "string") ?? "v1"
     );
   };
+
+  getCourseMerchandise = async (courseId: string, teeTimeDate: string) => {
+    try {
+      const merchandise = await this.database
+        .select({
+          id: courseMerchandise.id,
+          caption: courseMerchandise.caption,
+          price: courseMerchandise.price,
+          description: courseMerchandise.description,
+          longDescription: courseMerchandise.longDescription,
+          logoURL: courseMerchandise.logoURL,
+          qoh: courseMerchandise.qoh,
+        })
+        .from(courseMerchandise)
+        .innerJoin(courses, eq(courseMerchandise.courseId, courses.id))
+        .where(
+          and(
+            eq(courseMerchandise.courseId, courseId),
+            eq(courseMerchandise.showDuringBooking, true),
+            gte(sql`DATE_FORMAT(CONVERT_TZ(NOW() + INTERVAL ${courseMerchandise.showOnlyIfBookingIsWithinXDays} DAY, '+00:00', ${courses.timezoneISO}), '%Y-%m-%dT23:59:59')`, teeTimeDate),
+            gt(courseMerchandise.qoh, 0)
+          )
+        );
+
+      return merchandise;
+    } catch (error: any) {
+      this.logger.error(`Error fetching course merchandise: ${JSON.stringify(error)}`);
+      void loggerService.errorLog({
+        userId: "",
+        url: "/CourseService/getCourseMerchandise",
+        userAgent: "",
+        message: "ERROR_FETCHING_COURSE_MERCHANDISE",
+        stackTrace: `${error.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          courseId,
+        }),
+      })
+      return null;
+    }
+  }
 }

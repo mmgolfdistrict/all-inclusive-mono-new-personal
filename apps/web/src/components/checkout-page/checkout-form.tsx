@@ -15,7 +15,7 @@ import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
 import type { CartProduct, CountryData, FirstHandGroupProduct } from "~/utils/types";
 import { useParams, useRouter } from "next/navigation";
 import type { ChangeEvent, Dispatch, SetStateAction } from "react";
-import { Fragment, useEffect, useState, type FormEvent, useRef } from "react";
+import { Fragment, useEffect, useState, type FormEvent, useRef, useMemo } from "react";
 import { toast } from "react-toastify";
 import { useMediaQuery } from "usehooks-ts";
 import { FilledButton } from "../buttons/filled-button";
@@ -35,6 +35,7 @@ import { allCountries } from "country-telephone-data";
 import { useSession } from "@golf-district/auth/nextjs-exports";
 import { useUser } from "~/hooks/useUser";
 import { PhoneNumberUtil } from "google-libphonenumber";
+import { NAME_VALIDATION_REGEX } from "@golf-district/shared";
 
 type charityData = {
   charityDescription: string | undefined;
@@ -300,6 +301,11 @@ export const CheckoutForm = ({
       ?.filter(({ product_data }) => product_data.metadata.type === "cart_fee")
       ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
 
+  const merchandiseCharge =
+    cartData
+      ?.filter(({ product_data }) => product_data.metadata.type === "merchandise")
+      ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+
   const greenFeeTaxPercent =
     cartData
       ?.filter(
@@ -329,6 +335,13 @@ export const CheckoutForm = ({
     cartData
       ?.filter(
         ({ product_data }) => product_data.metadata.type === "markupTaxPercent"
+      )
+      ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+
+  const merchandiseTaxPercent =
+    cartData
+      ?.filter(
+        ({ product_data }) => product_data.metadata.type === "merchandiseTaxPercent"
       )
       ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
 
@@ -436,6 +449,18 @@ export const CheckoutForm = ({
       console.error("Error fetching data:", error);
     }
   };
+
+  const isValidUsername = useMemo(() => {
+    if (!userData) {
+      return true;
+    }
+    if (userData.name && !NAME_VALIDATION_REGEX.test(userData.name) && !message.length) {
+      setMessage("Your name contains foreign characters. Please update it from Account Settings before checkout.");
+      return false;
+    }
+    return true;
+  }, [userData])
+
   useEffect(() => {
     void fetchData();
   }, []);
@@ -940,12 +965,14 @@ export const CheckoutForm = ({
   const cartFeeTaxAmount = cartFeeCharge * cartFeeTaxPercent * playersInNumber;
   const markupFeesTaxAmount = markupFee * markupTaxPercent * playersInNumber;
   const weatherGuaranteeTaxAmount = sensibleCharge * weatherGuaranteeTaxPercent;
+  const merchandiseTaxAmount = merchandiseCharge * merchandiseTaxPercent;
 
   const additionalTaxes =
     (greenFeeTaxAmount +
       markupFeesTaxAmount +
       weatherGuaranteeTaxAmount +
-      cartFeeTaxAmount) /
+      cartFeeTaxAmount +
+      merchandiseTaxAmount) /
     100;
   taxCharge += additionalTaxes;
   const Total =
@@ -954,7 +981,8 @@ export const CheckoutForm = ({
     sensibleCharge +
     (!roundUpCharityId ? charityCharge : 0) +
     convenienceCharge +
-    (!roundUpCharityId ? 0 : Number(donateValue));
+    (!roundUpCharityId ? 0 : Number(donateValue)) +
+    (!course?.supportsSellingMerchandise ? 0 : (merchandiseCharge));
 
   const TotalAmt = Total.toLocaleString("en-US", {
     minimumFractionDigits: 2,
@@ -1205,7 +1233,7 @@ export const CheckoutForm = ({
               label=""
               register={() => null}
               name="notes"
-              maxLength={200}
+              maxLength={150}
               placeholder="Message"
               value={additionalNote}
               onChange={(e) => setAdditionalNote(e.target.value)}
@@ -1343,7 +1371,7 @@ export const CheckoutForm = ({
                 value="item-2"
                 position="left"
                 amountValues={`$${Number(
-                  TaxCharge + (roundUpCharityId ? donateValue || 0 : 0)
+                  TaxCharge + (roundUpCharityId ? donateValue || 0 : 0) + merchandiseCharge
                 ).toLocaleString("en-US", {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
@@ -1435,6 +1463,41 @@ export const CheckoutForm = ({
                       </div>
                     </div>
                   ) : null}
+                    {
+                      course?.supportsSellingMerchandise && merchandiseCharge > 0 ? (
+                        <div className="flex justify-between">
+                          <div className="px-8">Merchandise</div>
+                          <div className="unmask-price">
+                            ${" "}
+                            {merchandiseCharge.toLocaleString("en-US", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
+                          </div>
+                        </div>
+                      ) : null}
+                    {
+                      course?.supportsSellingMerchandise && merchandiseCharge > 0 ? (
+                        <div className="flex justify-between">
+                          <div className="px-8">
+                            Merchandise Tax
+                            {`($${merchandiseCharge.toLocaleString("en-US", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })} @ ${merchandiseTaxPercent}%)`}
+                          </div>
+                          <div className="unmask-price">
+                            ${" "}
+                            {(merchandiseTaxAmount / 100).toLocaleString(
+                              "en-US",
+                              {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              }
+                            )}
+                          </div>
+                        </div>
+                      ) : null}
                 </div>
               </CheckoutItemAccordion>
               <Fragment>
@@ -1639,7 +1702,7 @@ export const CheckoutForm = ({
           type="submit"
           className={`w-full rounded-full disabled:opacity-60`}
           disabled={
-            isLoading || !hyper || !widgets || message === "Payment Successful"
+            isLoading || !hyper || !widgets || message === "Payment Successful" || !isValidUsername
           }
           data-testid="pay-now-id"
         >

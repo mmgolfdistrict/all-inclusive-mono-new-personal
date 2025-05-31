@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
 import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
-import { and, eq } from "@golf-district/database";
+import { and, db, eq } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import { bookings } from "@golf-district/database/schema/bookings";
 import type { InsertBooking } from "@golf-district/database/schema/bookings";
@@ -869,6 +869,7 @@ export class HyperSwitchWebhookService {
         needRentals: bookings.needClubRental,
         timezoneCorrection: courses.timezoneCorrection,
         groupId: bookings.groupId,
+        totalMerchandiseAmount: bookings.totalMerchandiseAmount 
       })
       .from(bookings)
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -1306,6 +1307,7 @@ export class HyperSwitchWebhookService {
     const buyerFee = (existingTeeTime?.buyerFee ?? 1) / 100;
     const sellerFee = (existingTeeTime?.sellerFee ?? 1) / 100;
     let sellerWeatherGuaranteeAmount = 0;
+    let sellerMerchandiseAmount = 0;
     for (const booking of newBookings) {
       const newBooking = booking;
       const bookingsToCreate: InsertBooking[] = [];
@@ -1583,6 +1585,9 @@ export class HyperSwitchWebhookService {
         if (firstBooking?.weatherGuaranteeId) {
           sellerWeatherGuaranteeAmount = firstBooking?.weatherGuaranteeAmount ?? 0;
         }
+        if (firstBooking?.totalMerchandiseAmount) {
+          sellerMerchandiseAmount = firstBooking?.totalMerchandiseAmount;
+        }
         if (newBookings.length === 1) {
           const listedPrice = (listPrice ?? 0) / 100;
           const totalTax = listedPrice * sellerFee;
@@ -1601,7 +1606,7 @@ export class HyperSwitchWebhookService {
                 maximumFractionDigits: 2,
               })}` || "-",
             Payout: formatMoney(
-              (listedPrice - totalTax) * (listedSlotsCount || 1) + sellerWeatherGuaranteeAmount / 100
+              (listedPrice - totalTax) * (listedSlotsCount || 1) + sellerWeatherGuaranteeAmount / 100 + (sellerMerchandiseAmount / 100)
             ),
             PurchasedFrom: existingTeeTime?.courseName || "-",
             BuyTeeTImeURL: `${redirectHref}`,
@@ -1635,7 +1640,7 @@ export class HyperSwitchWebhookService {
               maximumFractionDigits: 2,
             })}` || "-",
           Payout: formatMoney(
-            (listedPrice - totalTax) * (listedSlotsCount || 1) + sellerWeatherGuaranteeAmount / 100
+            (listedPrice - totalTax) * (listedSlotsCount || 1) + sellerWeatherGuaranteeAmount / 100 + (sellerMerchandiseAmount / 100)
           ),
           SensibleWeatherIncluded: firstBooking.weatherGuaranteeId?.length ? "Yes" : "No",
           PurchasedFrom: existingTeeTime?.courseName || "-",
@@ -1659,7 +1664,7 @@ export class HyperSwitchWebhookService {
 
     const amount = listPrice ?? 1;
     const serviceCharge = amount * sellerFee;
-    const payable = (amount - serviceCharge) * (listedSlotsCount || 1) + sellerWeatherGuaranteeAmount;
+    const payable = (amount - serviceCharge) * (listedSlotsCount || 1) + sellerWeatherGuaranteeAmount + sellerMerchandiseAmount;
     const currentDate = new Date();
     const radeemAfterMinutes = await appSettingService.get("CASH_OUT_AFTER_MINUTES");
     const redeemAfterDate = this.addMinutes(currentDate, Number(radeemAfterMinutes));
@@ -1693,6 +1698,26 @@ export class HyperSwitchWebhookService {
       });
 
     if (firstBooking.groupId) {
+      await db
+        .update(bookings)
+        .set({
+          totalMerchandiseAmount: 0,
+        })
+        .where(eq(bookings.groupId, firstBooking.groupId))
+        .execute()
+        .catch((err: any) => {
+          this.logger.error(err);
+          void loggerService.errorLog({
+            userId: customer_id,
+            url: `/HyperSwitchWebhookService/handleSecondHandItem`,
+            userAgent: "",
+            message: "ERROR_UPDATING_MERCHANDISE_AMOUNT_FOR_BOOKINGS_IN_GROUP",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              customerRecievableData,
+            }),
+          });
+        })
       await this.bookingService.addListingForRemainingSlotsOnGroupBooking(firstBooking.groupId, listedSlotsCount, firstBooking.ownerId)
     }
   };

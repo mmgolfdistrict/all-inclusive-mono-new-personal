@@ -307,6 +307,7 @@ export const ListedDetails = ({
           allowSplit: data?.allowSplit,
           playerCount: data?.availableSlots,
           listedSlotsCount: data?.availableSlots,
+          totalMerchandiseAmount: data?.totalMerchandiseAmount ?? 0,
         }}
         needRedirect={true}
       />

@@ -105,6 +105,10 @@ export type FullCourseType = {
   isOnlyGroupOfFourAllowed?: boolean;
   isAllowSpecialRequest?: boolean;
   isAllowClubRental?: boolean;
+  groupStartTime: number | null;
+  groupEndTime: number | null;
+  isAllowCourseSwitching?: boolean;
+  supportsSellingMerchandise: boolean;
 };
 
 export type SupportedCharity = {
@@ -192,6 +196,7 @@ export type SearchObject = {
   ownerId: string;
   groupId?: string;
   allowSplit?: boolean;
+  totalMerchandiseAmount?: number;
 };
 
 export type CombinedObject = {
@@ -224,7 +229,7 @@ export type ReserveTeeTimeResponse = {
   isEmailSend: boolean;
   courseMembershipId?: string;
   playerCountForMemberShip?: string;
-  isValidForCollectPayment:boolean;
+  isValidForCollectPayment: boolean;
 };
 
 export type NotificationObject = {

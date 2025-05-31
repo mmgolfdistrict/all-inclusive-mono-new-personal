@@ -22,6 +22,7 @@ import { ChoosePlayers } from "../input/choose-players";
 import { Spinner } from "../loading/spinner";
 import { SensibleWidget } from "../sensible/sensible-widget";
 import { Tooltip } from "../tooltip";
+import MerchandiseCarousel from "../checkout-page/merchandise-carousel";
 
 const PlayersOptions = ["1", "2", "3", "4"];
 
@@ -47,6 +48,8 @@ export const CheckoutItem = ({
     amountOfPlayers,
     setValidatePlayers,
     validatePlayers,
+    merchandiseData,
+    setMerchandiseData
   } = useCheckoutContext();
   const [membershipStatus, setMembershipStatus] = useState("no_membership");
   const [courseMemberships, setCourseMembership] = useState<
@@ -63,6 +66,13 @@ export const CheckoutItem = ({
       index === 0 ? user?.email : ""
     )
   );
+  const shouldShowGroupBookingButton = useMemo(() => {
+    if (course?.groupStartTime && course?.groupEndTime && teeTime?.time) {
+      return (teeTime?.time >= course?.groupStartTime && teeTime?.time <= course?.groupEndTime) ? true : false
+    } else {
+      return true
+    }
+  }, [teeTime]);
   const isMobile = useMediaQuery("(max-width: 768px)");
   const { data: coursePreviewImage } =
     api.course.getCoursePreviewImage.useQuery({ courseId: courseId ?? "" });
@@ -78,6 +88,11 @@ export const CheckoutItem = ({
   const { data: isSupportMemberShip } = api.course.getCourseById.useQuery({
     courseId: courseId ?? "",
   });
+
+  const { data: courseMerchandise } = api.course.getCourseMerchandise.useQuery({
+    courseId: courseId ?? "",
+    teeTimeDate: teeTime?.date ?? "",
+  })
 
   const { data: getAllCourseMemberships } =
     api.checkout.getAllCourseMembership.useQuery({});
@@ -202,6 +217,27 @@ export const CheckoutItem = ({
     console.log("validatePlayers========>", validatePlayers);
   }, [validatePlayers]);
 
+  const handleMerchandiseUpdate = (itemId: string, newQuantity: number, price: number) => {
+    if (newQuantity === 0) {
+      setMerchandiseData((prevItems) => prevItems.filter((item) => item.id !== itemId));
+    } else {
+      const isNewItem = !merchandiseData.some((item) => item.id === itemId);
+      if (isNewItem) {
+        setMerchandiseData((prevItems) => [...prevItems, { id: itemId, qty: newQuantity, price: price }]);
+      } else {
+        setMerchandiseData((prevItems) =>
+          prevItems.map((item) => {
+            if (item.id === itemId) {
+              return { ...item, qty: newQuantity };
+            } else {
+              return item;
+            }
+          })
+        )
+      }
+    }
+  }
+
   const getTextColor = (type) => {
     if (type === "FAILURE") return "red";
     if (type === "SUCCESS") return "primary";
@@ -211,9 +247,8 @@ export const CheckoutItem = ({
   return (
     <div className="relative flex w-full flex-col gap-2 bg-secondary-white  pt-4 lg:rounded-lg">
       <div
-        className={`flex pb-4 lg:items-start ${
-          isMobile ? "gap-1 px-1" : " gap-2 px-4 items-center"
-        }`}
+        className={`flex pb-4 lg:items-start ${isMobile ? "gap-1 px-1" : " gap-2 px-4 items-center"
+          }`}
       >
         <BlurImage
           src={coursePreviewImage ?? ""}
@@ -350,8 +385,9 @@ export const CheckoutItem = ({
                   numberOfPlayers={numberOfPlayers}
                   selectStatus={allowedPlayers?.selectStatus}
                   canShowPlayers={!isGroupBooking}
-                    allowSplit={teeTime?.allowSplit || false}
-                    groupBookingParams={groupBookingParams}
+                  allowSplit={teeTime?.allowSplit || false}
+                  groupBookingParams={groupBookingParams}
+                  shouldShowGroupBookingButton={shouldShowGroupBookingButton}
                 />
               </div>
             </div>
@@ -398,7 +434,7 @@ export const CheckoutItem = ({
       <div className="flex flex-col gap-1">
         <div className="flex flex-col gap-2">
           {isSupportMemberShip?.supportsProviderMembership === 1 &&
-          listingId == null ? (
+            listingId == null ? (
             <div id="select-membership-checkout">
               <div className="flex gap-2 px-2">
                 <h5 className="">Select MemberShip:</h5>
@@ -420,7 +456,7 @@ export const CheckoutItem = ({
               </div>
               <div className="flex flex-wrap justify-between gap-1">
                 {courseMemberships.length === 0 ||
-                membershipStatus === "no_membership" ? null : (
+                  membershipStatus === "no_membership" ? null : (
                   <Fragment>
                     {Array.from({ length: Number(playerCount) }, (_, index) => (
                       <div
@@ -485,6 +521,14 @@ export const CheckoutItem = ({
           <SensibleWidget sensibleDataToMountComp={sensibleDataToMountComp} />
         </div>
       )}
+      {(isLoading || (courseMerchandise?.length === 0) || !course?.supportsSellingMerchandise || teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND") ? null : <section className="p-0 md:p-4">
+        <div className="bg-white md:rounded-xl p-4">
+          <MerchandiseCarousel
+            items={courseMerchandise}
+            onItemQuantityChange={handleMerchandiseUpdate}
+          />
+        </div>
+      </section>}
     </div>
   );
 };
@@ -504,7 +548,8 @@ const Data = ({
   selectStatus,
   canShowPlayers,
   allowSplit,
-  groupBookingParams
+  groupBookingParams,
+  shouldShowGroupBookingButton
 }: {
   className: string;
   canChoosePlayer: boolean;
@@ -519,8 +564,9 @@ const Data = ({
   numberOfPlayers?: string[];
   selectStatus?: string;
   canShowPlayers?: boolean;
-    allowSplit?: boolean;
-    groupBookingParams?: string;
+  allowSplit?: boolean;
+  groupBookingParams?: string;
+  shouldShowGroupBookingButton?: boolean;
 }) => {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const { course } = useCourseContext();
@@ -560,7 +606,7 @@ const Data = ({
                 teeTimeId={teeTimeId}
                 numberOfPlayers={numberOfPlayers ? numberOfPlayers : []}
                 id="number-of-players-checkout"
-                supportsGroupBooking={course?.supportsGroupBooking}
+                supportsGroupBooking={shouldShowGroupBookingButton ? course?.supportsGroupBooking : false}
                 groupBookingParams={groupBookingParams}
               />
             ) : (

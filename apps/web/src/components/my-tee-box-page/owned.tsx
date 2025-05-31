@@ -41,6 +41,7 @@ export type OwnedTeeTime = {
   isGroupBooking: boolean;
   groupId: string;
   allowSplit?: boolean;
+  totalMerchandiseAmount: number;
 };
 
 export const Owned = () => {

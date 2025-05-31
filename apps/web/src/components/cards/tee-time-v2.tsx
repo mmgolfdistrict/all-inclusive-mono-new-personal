@@ -78,8 +78,8 @@ export const TeeTimeV2 = ({
     listedSlots?: number | null;
     handleLoading?: (val: boolean) => void;
     refetch?: () => Promise<unknown>;
-        groupId?: string;
-        allowSplit: boolean;
+    groupId?: string;
+    allowSplit: boolean;
 }) => {
     const [, copy] = useCopyToClipboard();
     const [isCopied, setIsCopied] = useState<boolean>(false);
@@ -126,10 +126,18 @@ export const TeeTimeV2 = ({
     const getCache = api.cache.getCache.useMutation();
     const { refetch: refetchStillListed } = api.teeBox.checkIfTeeTimeStillListedByListingId.useQuery({
         listingId: listingId ?? "",
-    }) 
+    })
     const groupBookingParams = useMemo(() => {
         return `date=${items.date?.split("T")[0]}&time=${items.time}`
-    }, [items])
+    }, [items]);
+
+    const shouldShowGroupBookingButton = useMemo(() => {
+        if (course?.groupStartTime && course?.groupEndTime && items.time) {
+            return (items.time >= course?.groupStartTime && items.time <= course?.groupEndTime) ? true : false
+        } else {
+            return true
+        }
+    }, [items]);
 
     const logAudit = async () => {
         await auditLog.mutateAsync({
@@ -399,7 +407,7 @@ export const TeeTimeV2 = ({
                                         !(status === "SECOND_HAND") ? numberOfPlayers : PlayersOptions.filter(player => player <= (listedSlots?.toString() ?? "0"))
                                     ) : []}
                                     status={status}
-                                    supportsGroupBooking={course?.supportsGroupBooking}
+                                    supportsGroupBooking={shouldShowGroupBookingButton ? course?.supportsGroupBooking : false}
                                     allowSplit={allowSplit}
                                     groupBookingParams={groupBookingParams}
                                 />
@@ -526,6 +534,7 @@ export const TeeTimeV2 = ({
                             teeTimeId: teeTimeId,
                             listedSlotsCount: listedSlots ?? 1,
                             groupId: groupId ?? "",
+                            totalMerchandiseAmount: 0
                         }}
                         refetch={refetch}
                     />

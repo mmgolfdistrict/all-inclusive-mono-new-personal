@@ -65,6 +65,11 @@ interface EmailParams {
   SUBJECT_LINE?: string;
   LOGO_URL?: string;
   ADDITIONAL_MESSAGE?: string;
+  PurchasedMerchandise?: boolean,
+  MerchandiseDetails?: {
+    caption: string;
+    qty: number;
+  }[];
 }
 
 interface Attachment {
