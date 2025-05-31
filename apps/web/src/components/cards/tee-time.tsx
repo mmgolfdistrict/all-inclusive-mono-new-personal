@@ -149,7 +149,6 @@ export const TeeTime = ({
       json: `TEE_TIME_IN_CART `,
     });
   };
-
   useEffect(() => {
     (ref: HTMLSpanElement | null) => {
       if (ref) {
@@ -239,7 +238,7 @@ export const TeeTime = ({
       return;
     }
     if (status === "FIRST_HAND") {
-      void router.push(
+      void router.replace(
         `/${course?.id}/checkout?teeTimeId=${teeTimeId}&playerCount=${selectedPlayers}`
       );
     }
@@ -265,7 +264,7 @@ export const TeeTime = ({
           return;
         }
       }
-      void router.push(
+      void router.replace(
         `/${course?.id}/checkout?listingId=${listingId}&playerCount=${selectedPlayers}`
       );
     }

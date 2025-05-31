@@ -16,7 +16,7 @@ import { ManageOwnedTeeTime } from "./manage-owned-tee-time";
 import { SkeletonRow } from "./skeleton-row";
 import { CollectPayment } from "./collect-payment";
 import { useSearchParams } from "next/navigation";
-
+import { useRouter } from "next/navigation";
 export type OwnedTeeTime = {
   courseName: string;
   courseLogo: string;
@@ -48,6 +48,7 @@ export const Owned = () => {
   // const [amount, setAmount] = useState<number>(4);
   const { course } = useCourseContext();
   const params = useSearchParams();
+  const router = useRouter();
   const paramBookingId = params.get("bookingId");
   const collectPayment = params.get("collectPayment") === "true";
 
@@ -114,6 +115,16 @@ export const Owned = () => {
   const filteredResult = ownedTeeTimes?.find((item) => item.bookingIds[0] === paramBookingId);
   console.log(filteredResult, "filteredResult");
 
+  useEffect(() => {
+    const handlePopState = () => {
+      console.log("Back button pressed");
+      void router.push(`/${courseId}`);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [router]);
   useEffect(() => {
     if (filteredResult && !sideBarClose && collectPayment) {
       setIsCollectPaymentOpen(true);

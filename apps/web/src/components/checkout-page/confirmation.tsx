@@ -4,10 +4,11 @@ import { useCourseContext } from "~/contexts/CourseContext";
 import { api } from "~/utils/api";
 import { formatTime } from "~/utils/formatters";
 import Link from "next/link";
-import { Fragment } from "react";
+import { Fragment, useEffect } from "react";
 import { FilledButton } from "../buttons/filled-button";
 import { InviteFriends } from "../tee-time-page/invite-friends";
 import { useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 interface ConfirmationProps {
   teeTimeId: string;
   bookingId: string;
@@ -34,9 +35,27 @@ export const Confirmation = ({
     );
 
   const { course } = useCourseContext();
+  const params = useParams();
   const router = useRouter();
-
-
+  useEffect(() => {
+    const handlePopState = () => {
+      // console.log(params.course);
+      // void router.replace(`/${params.course}`);
+      // console.log("button pressed");
+      if (typeof params.course === 'string') {
+      console.log(params.course);
+      void router.replace(`/${params.course}`);
+      console.log("button pressed");
+    } else {
+      console.log("Course param missing or invalid");
+      void router.replace('/dashboard'); // fallback route
+    }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [router]);
   function handleNavigationGotoMyTeeBox() {
     router.replace(`/${course?.id}/my-tee-box`);
   }
