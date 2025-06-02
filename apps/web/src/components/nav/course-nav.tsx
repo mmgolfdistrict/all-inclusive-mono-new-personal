@@ -30,6 +30,7 @@ import "./courseNav.css";
 import { ThreeDots } from "../icons/threedots";
 import { UserProfile } from "../icons/user-profile";
 import { DownArrow } from "../icons/down-arrow";
+import { formatMessage } from "~/utils/NotificationFormatter";
 
 export const CourseNav = () => {
   const { user } = useUserContext();
@@ -153,17 +154,11 @@ export const CourseNav = () => {
                 }}
                 className="w-full p-1 text-center flex items-center justify-center"
               >
-                {elm.shortMessage}
+                {formatMessage(elm.shortMessage)}
                 {elm.longMessage && (
                   <Tooltip
-                    trigger={
-                      <Info longMessage className="ml-2 h-[20px] w-[20px]" />
-                    }
-                    content={<div>
-                      {elm.longMessage.split("\\n").map((line, index) => (
-                        <div key={index}>{line}</div>
-                      ))}
-                    </div>}
+                    trigger={<Info longMessage className="ml-2 h-[20px] w-[20px]" />}
+                    content={<div>{formatMessage(elm.longMessage)}</div>}
                   />
                 )}
               </div>
@@ -177,17 +172,11 @@ export const CourseNav = () => {
                 }}
                 className="text-white w-full p-1 text-center flex items-center justify-center"
               >
-                {elm.shortMessage}
+                {formatMessage(elm.shortMessage)}
                 {elm.longMessage && (
                   <Tooltip
-                    trigger={
-                      <Info longMessage className="ml-2 h-[20px] w-[20px]" />
-                    }
-                    content={<div>
-                      {elm.longMessage.split("\\n").map((line, index) => (
-                        <div key={index}>{line}</div>
-                      ))}
-                    </div>}
+                    trigger={<Info longMessage className="ml-2 h-[20px] w-[20px]" />}
+                    content={<div>{formatMessage(elm.longMessage)}</div>}
                   />
                 )}
               </div>
