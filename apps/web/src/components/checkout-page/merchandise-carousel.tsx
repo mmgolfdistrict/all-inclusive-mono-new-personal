@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import MerchandiseCard from '../cards/merchandise-card';
 import { Close } from '../icons/close';
-import { BlurImage } from '../images/blur-image';
+import { Tooltip } from '../tooltip';
+import { Info } from '../icons/info';
 
 export interface MerchandiseItem {
     id: string;
@@ -29,7 +30,7 @@ const POPUP_BOUNDARY_PADDING = 8;
 
 const MerchandiseCarousel: React.FC<MerchandiseCarouselProps> = ({
     items,
-    title = "Select Merchandise",
+    title = "Add-Ons",
     onItemQuantityChange
 }) => {
     const [activePopupId, setActivePopupId] = useState<string | number | null>(null);
@@ -120,7 +121,14 @@ const MerchandiseCarousel: React.FC<MerchandiseCarouselProps> = ({
 
     return (
         <div className="relative" ref={componentContainerRef} >
-            {title && <h2 className="text-lg font-semibold mb-3 text-gray-800">{title}</h2>}
+            {title && <div className='flex gap-1 items-center mb-3'>
+                <h2 className="text-lg font-semibold text-gray-800">{title}</h2>
+                <Tooltip
+                    trigger={<Info className="h-[20px] w-[20px] text-primary-gray" />}
+                    content="Prepaying for add-ons guarantees your availability for your rentals and may be cheaper than paying at the course."
+                />
+            </div>
+            }
             <div
                 className="flex overflow-x-auto gap-4 pb-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
                 ref={scrollableContainerRef}
@@ -185,7 +193,8 @@ const MerchandiseInfoPopup: React.FC<MerchandiseInfoPopupProps> = ({
                 <div className='flex gap-4'>
                     {
                         item.logoURL ? (
-                            <BlurImage
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
                                 src={item.logoURL}
                                 alt={item.caption}
                                 className="object-cover w-16 h-16 rounded-md"

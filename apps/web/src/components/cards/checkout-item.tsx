@@ -516,19 +516,21 @@ export const CheckoutItem = ({
           ) : null}
         </div>
       </div>
+      {(isLoading || (courseMerchandise?.length === 0) || !course?.supportsSellingMerchandise || teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND") ?
+        null :
+        <section className="hidden md:block p-0 md:p-4">
+          <div className="bg-white md:rounded-xl p-4">
+            <MerchandiseCarousel
+              items={courseMerchandise}
+              onItemQuantityChange={handleMerchandiseUpdate}
+            />
+          </div>
+        </section>}
       {isSensibleInvalid || isLoading ? null : (
         <div id="weather-guarantee">
           <SensibleWidget sensibleDataToMountComp={sensibleDataToMountComp} />
         </div>
       )}
-      {(isLoading || (courseMerchandise?.length === 0) || !course?.supportsSellingMerchandise || teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND") ? null : <section className="p-0 md:p-4">
-        <div className="bg-white md:rounded-xl p-4">
-          <MerchandiseCarousel
-            items={courseMerchandise}
-            onItemQuantityChange={handleMerchandiseUpdate}
-          />
-        </div>
-      </section>}
     </div>
   );
 };
