@@ -8,6 +8,7 @@ import { Info } from "../icons/info";
 import { BlurImage } from "../images/blur-image";
 import { PoweredBy } from "../powered-by";
 import { Tooltip } from "../tooltip";
+import { formatMessage } from "~/utils/NotificationFormatter";
 
 export const MainNav = () => {
   const { entity, setmainHeaderHeight } = useAppContext();
@@ -42,71 +43,52 @@ export const MainNav = () => {
             }}
             className="text-white w-full p-1 text-center flex items-center justify-center"
           >
-            {elm.shortMessage}
+            {formatMessage(elm.shortMessage)}
             {elm.longMessage && (
               <Tooltip
-                trigger={
-                  <Info longMessage className="ml-2 h-[20px] w-[20px]" />
-                }
-                content={<div>
-                  {elm.longMessage.split("\\n").map((line, index) => (
-                    <div key={index}>{line}</div>
-                  ))}
-                </div>}
+                trigger={<Info longMessage className="ml-2 h-[20px] w-[20px]" />}
+                content={<div>{formatMessage(elm.longMessage)}</div>}
               />
             )}
           </div>
         ))}
         {entityGlobalNotification?.map((elm) => (
-        <div
-          key={elm.id}
-          style={{
-            backgroundColor: elm.bgColor,
-            color: elm.color,
-          }}
-          className="text-white w-full p-1 text-center flex items-center justify-center"
-        >
           <div
-            dangerouslySetInnerHTML={{ __html: elm.shortMessage }}
-          />
-          {elm.longMessage && (
-            <Tooltip
-              trigger={
-                <Info longMessage className="ml-2 h-[20px] w-[20px]" />
-              }
-              content={
-                <div
-                  dangerouslySetInnerHTML={{ __html: elm.longMessage }}
-                />
-              }
-            />
-          )}
-        </div>
-      ))}
+            key={elm.id}
+            style={{
+              backgroundColor: elm.bgColor,
+              color: elm.color,
+            }}
+            className="text-white w-full p-1 text-center flex items-center justify-center"
+          >
+            {formatMessage(elm.shortMessage)}
+            {elm.longMessage && (
+              <Tooltip
+                trigger={<Info longMessage className="ml-2 h-[20px] w-[20px]" />}
+                content={<div>{formatMessage(elm.longMessage)}</div>}
+              />
+            )}
+          </div>
+        ))}
 
-      {courseGlobalNotification?.map((elm) => (
-        <div
-          key={elm.id}
-          style={{
-            backgroundColor: elm.bgColor,
-            color: elm.color,
-          }}
-          className="text-white w-full p-1 text-center flex items-center justify-center"
-        >
-          <div dangerouslySetInnerHTML={{ __html: elm.shortMessage }} />
-          
-          {elm.longMessage && (
-            <Tooltip
-              trigger={
-                <Info longMessage className="ml-2 h-[20px] w-[20px]" />
-              }
-              content={
-                <div dangerouslySetInnerHTML={{ __html: elm.longMessage }} />
-              }
-            />
-          )}
-        </div>
-      ))}
+        {courseGlobalNotification?.map((elm) => (
+          <div
+            key={elm.id}
+            style={{
+              backgroundColor: elm.bgColor,
+              color: elm.color,
+            }}
+            className="text-white w-full p-1 text-center flex items-center justify-center"
+          >
+            {formatMessage(elm.shortMessage)}
+            {elm.longMessage && (
+              <Tooltip
+                trigger={<Info longMessage className="ml-2 h-[20px] w-[20px]" />}
+                content={<div>{formatMessage(elm.longMessage)}</div>}
+              />
+            )}
+          </div>
+        ))}
 
         <div className="relative z-10 min-h-[75px] md:min-h-[95px] flex w-full items-center justify-end border-b border-stroke-secondary bg-white p-4 md:p-6">
           <div
