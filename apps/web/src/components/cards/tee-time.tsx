@@ -518,8 +518,8 @@ export const TeeTime = ({
               </div>
             ) : null}
 
-            <div className="flex items-center gap-1 w-full">
-              {/* <Link
+            {/* <div className="flex items-center gap-1"> */}
+            {/* <Link
                 href={href}
                 data-testid="details-button-id"
                 data-test={teeTimeId}
@@ -531,18 +531,20 @@ export const TeeTime = ({
                   Details
                 </OutlineButton>
               </Link> */}
-              <div id="share-tee-time-button ">
-                <OutlineButton
-                  onClick={() => void share()}
-                  className="w-full whitespace-nowrap"
-                  data-testid="share-button-id"
-                >
-                  <div className="flex items-center justify-center gap-2">
-                    {isCopied ? <>Copied</> : <>Share</>}
-                  </div>
-                </OutlineButton>
-              </div>
+            <div id="share-tee-time-button" style={{
+              width: "190%"
+            }}>
+              <OutlineButton
+                onClick={() => void share()}
+                className="w-full whitespace-nowrap"
+                data-testid="share-button-id"
+              >
+                <div className="flex items-center justify-center gap-2">
+                  {isCopied ? <>Copied</> : <>Share</>}
+                </div>
+              </OutlineButton>
             </div>
+            {/* </div> */}
           </div>
           {isMakeAnOfferOpen && (
             <MakeAnOffer
