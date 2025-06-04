@@ -13,3 +13,4 @@ export const phoneBookingCourseConfigurations = mySqlTable(`phoneBookingCourseCo
         .default(sql`CURRENT_TIMESTAMP(3)`)
         .notNull(),
 });
+

@@ -21,3 +21,4 @@ export const phoneCallLogs = mySqlTable(
 
 export type InsertPhoneCallLogs = InferInsertModel<typeof phoneCallLogs>;
 
+

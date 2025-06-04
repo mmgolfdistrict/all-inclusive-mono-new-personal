@@ -29,3 +29,4 @@ export const phoneBookingEntry = mySqlTable(
 
 export type InsertPhoneBooking = InferInsertModel<typeof phoneBookingEntry>;
 
+
