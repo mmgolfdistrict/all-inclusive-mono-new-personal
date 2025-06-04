@@ -1010,6 +1010,8 @@ export const CheckoutForm = ({
     convenienceCharge;
   const totalBeforeRoundOff = primaryGreenFeeCharge + TaxCharge;
   const decimalPart = totalBeforeRoundOff % 1;
+  const subTotal = primaryGreenFeeCharge +
+    (!course?.supportsSellingMerchandise ? 0 : (merchandiseCharge))
   const [hasUserSelectedDonation, setHasUserSelectedDonation] = useState(false);
 
   const handleMerchandiseUpdate = (itemId: string, newQuantity: number, price: number) => {
@@ -1304,7 +1306,7 @@ export const CheckoutForm = ({
 
               <div className="unmask-price">
                 $
-                {primaryGreenFeeCharge.toLocaleString("en-US", {
+                {subTotal.toLocaleString("en-US", {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })}
@@ -1354,7 +1356,7 @@ export const CheckoutForm = ({
                 title="Subtotal"
                 value="item-1"
                 position="left"
-                amountValues={`$${primaryGreenFeeCharge.toLocaleString(
+                amountValues={`$${subTotal.toLocaleString(
                   "en-US",
                   { minimumFractionDigits: 2, maximumFractionDigits: 2 }
                 )}`}
@@ -1394,6 +1396,19 @@ export const CheckoutForm = ({
                       })}{" "}
                     </div>
                   </div>
+                  {
+                    course?.supportsSellingMerchandise && merchandiseCharge > 0 ? (
+                      <div className="flex justify-between">
+                        <div className="px-8">Merchandise</div>
+                        <div className="unmask-price">
+                          $
+                          {merchandiseCharge.toLocaleString("en-US", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </div>
+                      </div>
+                    ) : null}
                 </div>
               </CheckoutItemAccordion>
               <CheckoutItemAccordion
@@ -1401,7 +1416,7 @@ export const CheckoutForm = ({
                 value="item-2"
                 position="left"
                 amountValues={`$${Number(
-                  TaxCharge + (roundUpCharityId ? donateValue || 0 : 0) + merchandiseCharge
+                  TaxCharge + (roundUpCharityId ? donateValue || 0 : 0)
                 ).toLocaleString("en-US", {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
@@ -1493,19 +1508,6 @@ export const CheckoutForm = ({
                       </div>
                     </div>
                   ) : null}
-                  {
-                    course?.supportsSellingMerchandise && merchandiseCharge > 0 ? (
-                      <div className="flex justify-between">
-                        <div className="px-8">Merchandise</div>
-                        <div className="unmask-price">
-                          ${" "}
-                          {merchandiseCharge.toLocaleString("en-US", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
-                        </div>
-                      </div>
-                    ) : null}
                   {
                     course?.supportsSellingMerchandise && merchandiseCharge > 0 ? (
                       <div className="flex justify-between">
@@ -1698,6 +1700,7 @@ export const CheckoutForm = ({
             <MerchandiseCarousel
               items={courseMerchandise}
               onItemQuantityChange={handleMerchandiseUpdate}
+              maxPlayers={Number(playerCount)}
             />
           </div>
         </section>}
