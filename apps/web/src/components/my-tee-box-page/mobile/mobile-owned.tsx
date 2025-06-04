@@ -240,7 +240,7 @@ const TableCard = ({
                   </div>
                 ) : (
                   <Link
-                    href={href}
+                    href={"#"}
                     className="flex items-center gap-2"
                     data-testid="course-tee-time-listing-id"
                     data-test={teeTimeId}

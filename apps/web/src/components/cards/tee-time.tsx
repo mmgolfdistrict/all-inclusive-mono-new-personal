@@ -518,8 +518,8 @@ export const TeeTime = ({
               </div>
             ) : null}
 
-            <div className="flex items-center gap-1">
-              <Link
+            <div className="flex items-center gap-1 w-full">
+              {/* <Link
                 href={href}
                 data-testid="details-button-id"
                 data-test={teeTimeId}
@@ -530,8 +530,8 @@ export const TeeTime = ({
                 <OutlineButton className="!py-[.28rem] md:py-1.5">
                   Details
                 </OutlineButton>
-              </Link>
-              <div id="share-tee-time-button">
+              </Link> */}
+              <div id="share-tee-time-button ">
                 <OutlineButton
                   onClick={() => void share()}
                   className="w-full whitespace-nowrap"
@@ -579,7 +579,7 @@ export const TeeTime = ({
                 listedSlotsCount: listedSlots ?? 1,
                 groupId: groupId ?? "",
                 totalMerchandiseAmount: 0
-            }}
+              }}
               refetch={refetch}
             />
           )}
