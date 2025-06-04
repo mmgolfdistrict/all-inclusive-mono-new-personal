@@ -3615,6 +3615,7 @@ export class BookingService {
       "cartFeeTaxPercent",
       "weatherGuaranteeTaxPercent",
       "markupTaxPercent",
+      "merchandiseTaxPercent"
     ];
     const total = customerCartData?.cart?.cart
       .filter(({ product_data }: ProductData) => {
@@ -4640,7 +4641,7 @@ export class BookingService {
         transferedFromBookingId: transfers.fromUserId,
         groupId: bookings.groupId,
         playerCount: bookings.playerCount,
-        courseId:teeTimes.courseId
+        courseId: teeTimes.courseId
       })
       .from(bookings)
       .innerJoin(transfers, eq(transfers.bookingId, bookings.id))

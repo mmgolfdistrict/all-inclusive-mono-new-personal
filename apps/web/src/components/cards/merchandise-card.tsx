@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import type { MerchandiseItem } from '../checkout-page/merchandise-carousel';
 import { OutlineButton } from '../buttons/outline-button';
 import { formatMoney } from '~/utils/formatters';
@@ -6,12 +6,12 @@ import { Tooltip } from '../tooltip';
 
 interface MerchandiseCardProps {
     item: MerchandiseItem;
-    // Optional: Callback to notify parent of quantity changes
+    maxQuantity: number;
     onQuantityChange?: (itemId: string | number, newQuantity: number, price: number) => void;
     onCardClick?: (item: MerchandiseItem, event: React.MouseEvent<HTMLDivElement>) => void;
 }
 
-const MerchandiseCard: React.FC<MerchandiseCardProps> = ({ item, onQuantityChange, onCardClick }) => {
+const MerchandiseCard: React.FC<MerchandiseCardProps> = ({ item, onQuantityChange, onCardClick, maxQuantity }) => {
     const [quantity, setQuantity] = useState<number>(0);
     const [isExpanded, setIsExpanded] = useState<boolean>(false);
 
@@ -45,40 +45,62 @@ const MerchandiseCard: React.FC<MerchandiseCardProps> = ({ item, onQuantityChang
         }
     }
 
+    const isIncrementDisabled = useMemo(() => {
+        if (quantity >= item.qoh && item.qoh !== -1) {
+            return true;
+        }
+        if (item.maxQtyToAdd === 0 && quantity >= maxQuantity) {
+            return true;
+        }
+        if (item.maxQtyToAdd > 0 && quantity >= item.maxQtyToAdd) {
+            return true;
+        }
+
+        return false;
+    }, [item, maxQuantity, quantity]);
+
+    useEffect(() => {
+        if (item.maxQtyToAdd === 0 && quantity >= maxQuantity) {
+            setQuantity(maxQuantity);
+            onQuantityChange?.(item.id, maxQuantity, item.price);
+        }
+    }, [maxQuantity]);
+
     return (
         <div
             className="flex-shrink-0 w-72 bg-white border border-primary rounded-lg p-4 shadow-sm flex flex-col justify-between gap-3 cursor-pointer"
             onClick={handleCardWrapperClick}
         >
-            <div className='flex flex-col gap-2'>
-                <h2
-                    className="w-full text-lg font-semibold overflow-hidden line-clamp-1"
-                >
-                    {item.caption}
-                </h2>
-                <div className='w-full flex gap-2'>
-                    {
-                        item.logoURL ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                                src={item.logoURL}
-                                alt={item.caption}
-                                width={48}
-                                height={48}
-                                className="w-16 h-16 object-cover rounded-md flex-1"
-                            />
-                        ) : null
-                    }
+            <div className='flex gap-4'>
+                {
+                    item.logoURL ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                            src={item.logoURL}
+                            alt={item.caption}
+                            width={48}
+                            height={48}
+                            className="w-16 h-16 object-cover rounded-md flex-1 mt-2"
+                        />
+                    ) : null
+                }
+                <div className='w-full flex flex-col'>
+                    <h2
+                        className="w-full text-lg font-semibold overflow-hidden line-clamp-1"
+                    >
+                        {item.caption}
+                    </h2>
                     <Tooltip className='text-start flex-[2]' delay={1000} content={item.description} trigger={
                         <p className="w-full text-sm text-gray-600 overflow-hidden">
                             {!isExpanded
-                                ? `${item.description?.slice(0, 127)}`
+                                ? `${item.description?.slice(0, 50)}`
                                 : item.description}
-                            {(item.description?.length ?? 0) > 127 ? <span
+                            {!isExpanded && (item.description?.length ?? 0) > 50 ? "..." : ""}
+                            {(item.description?.length ?? 0) > 50 ? <span
                                 className="text-xs text-primary cursor-pointer ml-2"
                                 onClick={handleToggle}
                             >
-                                {isExpanded ? "...Read Less" : "...Read More"}
+                                {isExpanded ? "...Read Less" : "Read More..."}
                             </span> : null}
                         </p>
                     } />
@@ -92,7 +114,7 @@ const MerchandiseCard: React.FC<MerchandiseCardProps> = ({ item, onQuantityChang
                 {quantity === 0 ? (
                     <OutlineButton
                         onClick={handleAdd}
-                        className='rounded-md max-w-[180px] w-full'
+                        className='rounded-full max-w-[180px] w-full'
                         aria-label={`Add ${item.caption} to cart`}
                         type="button"
                     >
@@ -115,7 +137,7 @@ const MerchandiseCard: React.FC<MerchandiseCardProps> = ({ item, onQuantityChang
                             onClick={handleIncrement}
                             className="rounded-md min-w-[40px] !px-0 disabled:opacity-50 disabled:cursor-not-allowed"
                             aria-label={`Increase quantity of ${item.caption}`}
-                            disabled={quantity >= item.qoh}
+                            disabled={isIncrementDisabled}
                             type="button"
                         >
                             +

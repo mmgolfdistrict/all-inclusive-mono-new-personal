@@ -9,9 +9,10 @@ export interface MerchandiseItem {
     caption: string;
     price: number;
     description: string | null;
-    longDescription: string | null;
+    tooltip: string | null;
     logoURL: string | null;
     qoh: number;
+    maxQtyToAdd: number;
 }
 
 interface MerchandiseInfoPopupProps {
@@ -22,6 +23,7 @@ interface MerchandiseInfoPopupProps {
 
 interface MerchandiseCarouselProps {
     items: MerchandiseItem[] | undefined | null;
+    maxPlayers: number;
     title?: string;
     onItemQuantityChange?: (itemId: string | number, newQuantity: number, price: number) => void;
 }
@@ -31,7 +33,8 @@ const POPUP_BOUNDARY_PADDING = 8;
 const MerchandiseCarousel: React.FC<MerchandiseCarouselProps> = ({
     items,
     title = "Add-Ons",
-    onItemQuantityChange
+    onItemQuantityChange,
+    maxPlayers,
 }) => {
     const [activePopupId, setActivePopupId] = useState<string | number | null>(null);
     const [popupPosition, setPopupPosition] = useState<{ top: number; left: number } | null>(null);
@@ -139,6 +142,7 @@ const MerchandiseCarousel: React.FC<MerchandiseCarouselProps> = ({
                         item={item}
                         onQuantityChange={handleQuantityChange}
                         onCardClick={handleCardClick}
+                        maxQuantity={maxPlayers}
                     />
                 ))}
 
@@ -206,7 +210,7 @@ const MerchandiseInfoPopup: React.FC<MerchandiseInfoPopupProps> = ({
                     <div className='flex flex-col gap-1'>
                         <h3 className="text-md font-semibold text-gray-800 line-clamp-1">{item.caption}</h3>
                         <p className="text-sm text-gray-600">
-                            {item.longDescription}
+                            {item.tooltip}
                         </p>
                     </div>
                 </div>

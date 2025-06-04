@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
-import { and, asc, desc, eq, gt, gte, lte, sql } from "@golf-district/database";
+import { and, asc, desc, eq, gt, gte, isNull, lte, or, sql } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import { authenticationMethod } from "@golf-district/database/schema/authenticationMethod";
 import { bookings } from "@golf-district/database/schema/bookings";
@@ -1297,9 +1297,10 @@ export class CourseService extends DomainService {
           caption: courseMerchandise.caption,
           price: courseMerchandise.price,
           description: courseMerchandise.description,
-          longDescription: courseMerchandise.longDescription,
+          tooltip: courseMerchandise.tooltip,
           logoURL: courseMerchandise.logoURL,
           qoh: courseMerchandise.qoh,
+          maxQtyToAdd: courseMerchandise.maxQtyToAdd
         })
         .from(courseMerchandise)
         .innerJoin(courses, eq(courseMerchandise.courseId, courses.id))
@@ -1308,9 +1309,30 @@ export class CourseService extends DomainService {
             eq(courseMerchandise.courseId, courseId),
             eq(courseMerchandise.showDuringBooking, true),
             gte(sql`DATE_FORMAT(CONVERT_TZ(NOW() + INTERVAL ${courseMerchandise.showOnlyIfBookingIsWithinXDays} DAY, '+00:00', ${courses.timezoneISO}), '%Y-%m-%dT23:59:59')`, teeTimeDate),
-            gt(courseMerchandise.qoh, 0)
+            or(
+              gt(courseMerchandise.qoh, 0),
+              eq(courseMerchandise.qoh, -1)
+            ),
+            gt(courseMerchandise.price, 0)
           )
-        );
+        )
+        .orderBy(isNull(courseMerchandise.displayOrder), asc(courseMerchandise.displayOrder), asc(courseMerchandise.caption))
+        .execute()
+        .catch((err) => {
+          this.logger.error(`Error getting course merchandise for course: ${err}`);
+          void loggerService.errorLog({
+            userId: "",
+            url: "/CourseService/getCourseMerchandise",
+            userAgent: "",
+            message: "ERROR_GETTING_COURSE_MERCHANDISE_FOR_COURSE",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              courseId,
+            }),
+          })
+          throw new Error("Error getting course merchandise");
+        })
+        ;
 
       return merchandise;
     } catch (error: any) {

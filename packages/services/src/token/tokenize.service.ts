@@ -436,7 +436,7 @@ export class TokenizeService {
             const merchandiseItem = merchandiseItems.find((item) => item.id === merchandise.id);
             merchandiseItemsToUpdate.push({
               ...merchandise,
-              qoh: merchandise.qoh - merchandiseItem!.qty
+              qoh: merchandise.qoh !== -1 ? merchandise.qoh - merchandiseItem!.qty : -1
             })
             merchandiseDetails.push({
               caption: merchandise.caption,

@@ -431,10 +431,10 @@ export const CheckoutItem = ({
         )}
       </div>
 
-      <div className="flex flex-col gap-1">
-        <div className="flex flex-col gap-2">
-          {isSupportMemberShip?.supportsProviderMembership === 1 &&
-            listingId == null ? (
+      {isSupportMemberShip?.supportsProviderMembership === 1 &&
+        listingId == null ? (
+        <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-2">
             <div id="select-membership-checkout">
               <div className="flex gap-2 px-2">
                 <h5 className="">Select MemberShip:</h5>
@@ -513,16 +513,17 @@ export const CheckoutItem = ({
                 )}
               </div>
             </div>
-          ) : null}
+          </div>
         </div>
-      </div>
+      ) : null}
       {(isLoading || (courseMerchandise?.length === 0) || !course?.supportsSellingMerchandise || teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND") ?
         null :
-        <section className="hidden md:block p-0 md:p-4">
+        <section className="hidden md:block p-0 md:px-4">
           <div className="bg-white md:rounded-xl p-4">
             <MerchandiseCarousel
               items={courseMerchandise}
               onItemQuantityChange={handleMerchandiseUpdate}
+              maxPlayers={Number(amountOfPlayers)}
             />
           </div>
         </section>}
