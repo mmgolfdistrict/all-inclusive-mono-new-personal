@@ -37,6 +37,7 @@ import { useUser } from "~/hooks/useUser";
 import { PhoneNumberUtil } from "google-libphonenumber";
 import { NAME_VALIDATION_REGEX } from "@golf-district/shared";
 import MerchandiseCarousel from "./merchandise-carousel";
+import Link from "next/link";
 
 type charityData = {
   charityDescription: string | undefined;
@@ -372,7 +373,7 @@ export const CheckoutForm = ({
   const hyper = useHyper();
   const widgets = useWidgets();
 
-
+  const [isChecked, setIsChecked] = useState(false);
   const [donateValue, setDonateValue] = useState(5);
   // const [roundOffClick, setRoundOffClick] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -1701,6 +1702,28 @@ export const CheckoutForm = ({
             />
           </div>
         </section>}
+      <div className="ml-2 mb-2 flex items-start">
+        <input
+          id="terms-of-service-checkbox"
+          name="terms-of-service-checkbox"
+          data-testid="terms-of-service-checkbox-id"
+          className="mt-1 cursor-pointer !scale-125"
+          type="checkbox"
+          checked={isChecked}
+          onChange={() => setIsChecked(!isChecked)}
+        />
+        <div className="ml-2 text-[14px] text-primary-gray">
+          By checking the box and completing this reservation, I agree to the{" "}
+          <Link
+            href="/terms-of-service"
+            className="text-blue-600 underline"
+            data-testid="terms-of-service-id"
+          >
+            Terms of Service
+          </Link>.
+        </div>
+      </div>
+
       {!maxReservation?.success && (
         <div className="md:hidden bg-alert-red text-white p-1 pl-2 my-2  w-full rounded">
           {maxReservation?.message}
@@ -1725,7 +1748,7 @@ export const CheckoutForm = ({
         <Fragment>
           <FilledButton
             className={`w-full rounded-full disabled:opacity-60`}
-            disabled={!hyper || !widgets || callingRef}
+            disabled={!hyper || !widgets || callingRef || !isChecked}
             onClick={() => {
               if (nextAction?.redirect_to_url) {
                 window.location.href = nextAction?.redirect_to_url;
@@ -1742,7 +1765,7 @@ export const CheckoutForm = ({
           type="submit"
           className={`w-full rounded-full disabled:opacity-60`}
           disabled={
-            isLoading || !hyper || !widgets || message === "Payment Successful" || !isValidUsername
+            isLoading || !hyper || !widgets || message === "Payment Successful" || !isValidUsername || !isChecked
           }
           data-testid="pay-now-id"
         >
