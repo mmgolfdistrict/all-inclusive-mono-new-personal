@@ -36,6 +36,7 @@ import { useSession } from "@golf-district/auth/nextjs-exports";
 import { useUser } from "~/hooks/useUser";
 import { PhoneNumberUtil } from "google-libphonenumber";
 import { NAME_VALIDATION_REGEX } from "@golf-district/shared";
+import MerchandiseCarousel from "./merchandise-carousel";
 
 type charityData = {
   charityDescription: string | undefined;
@@ -100,6 +101,8 @@ export const CheckoutForm = ({
     shouldAddSensible,
     validatePlayers,
     handleShouldAddSensible: _handleShouldAddSensible,
+    merchandiseData,
+    setMerchandiseData
   } = useCheckoutContext();
   const router = useRouter();
   const params = useParams();
@@ -426,6 +429,12 @@ export const CheckoutForm = ({
         enabled: false,
       }
     );
+
+  const { data: courseMerchandise, isLoading: isLoadingMerchandise } = api.course.getCourseMerchandise.useQuery({
+    courseId: courseId ?? "",
+    teeTimeDate: teeTimeDate ?? "",
+  })
+
   const fetchData = async () => {
     try {
       const retrieveCustomerResponse = await retrieveCustomerHandler();
@@ -1001,7 +1010,30 @@ export const CheckoutForm = ({
     convenienceCharge;
   const totalBeforeRoundOff = primaryGreenFeeCharge + TaxCharge;
   const decimalPart = totalBeforeRoundOff % 1;
+  const subTotal = primaryGreenFeeCharge +
+    (!course?.supportsSellingMerchandise ? 0 : (merchandiseCharge))
   const [hasUserSelectedDonation, setHasUserSelectedDonation] = useState(false);
+
+  const handleMerchandiseUpdate = (itemId: string, newQuantity: number, price: number) => {
+    if (newQuantity === 0) {
+      setMerchandiseData((prevItems) => prevItems.filter((item) => item.id !== itemId));
+    } else {
+      const isNewItem = !merchandiseData.some((item) => item.id === itemId);
+      if (isNewItem) {
+        setMerchandiseData((prevItems) => [...prevItems, { id: itemId, qty: newQuantity, price: price }]);
+      } else {
+        setMerchandiseData((prevItems) =>
+          prevItems.map((item) => {
+            if (item.id === itemId) {
+              return { ...item, qty: newQuantity };
+            } else {
+              return item;
+            }
+          })
+        )
+      }
+    }
+  }
 
   useEffect(() => {
     let donation;
@@ -1274,7 +1306,7 @@ export const CheckoutForm = ({
 
               <div className="unmask-price">
                 $
-                {primaryGreenFeeCharge.toLocaleString("en-US", {
+                {subTotal.toLocaleString("en-US", {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })}
@@ -1324,7 +1356,7 @@ export const CheckoutForm = ({
                 title="Subtotal"
                 value="item-1"
                 position="left"
-                amountValues={`$${primaryGreenFeeCharge.toLocaleString(
+                amountValues={`$${subTotal.toLocaleString(
                   "en-US",
                   { minimumFractionDigits: 2, maximumFractionDigits: 2 }
                 )}`}
@@ -1364,6 +1396,19 @@ export const CheckoutForm = ({
                       })}{" "}
                     </div>
                   </div>
+                  {
+                    course?.supportsSellingMerchandise && merchandiseCharge > 0 ? (
+                      <div className="flex justify-between">
+                        <div className="px-8">Merchandise</div>
+                        <div className="unmask-price">
+                          $
+                          {merchandiseCharge.toLocaleString("en-US", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </div>
+                      </div>
+                    ) : null}
                 </div>
               </CheckoutItemAccordion>
               <CheckoutItemAccordion
@@ -1371,7 +1416,7 @@ export const CheckoutForm = ({
                 value="item-2"
                 position="left"
                 amountValues={`$${Number(
-                  TaxCharge + (roundUpCharityId ? donateValue || 0 : 0) + merchandiseCharge
+                  TaxCharge + (roundUpCharityId ? donateValue || 0 : 0)
                 ).toLocaleString("en-US", {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
@@ -1463,41 +1508,28 @@ export const CheckoutForm = ({
                       </div>
                     </div>
                   ) : null}
-                    {
-                      course?.supportsSellingMerchandise && merchandiseCharge > 0 ? (
-                        <div className="flex justify-between">
-                          <div className="px-8">Merchandise</div>
-                          <div className="unmask-price">
-                            ${" "}
-                            {merchandiseCharge.toLocaleString("en-US", {
+                  {
+                    course?.supportsSellingMerchandise && merchandiseCharge > 0 ? (
+                      <div className="flex justify-between">
+                        <div className="px-8">
+                          Merchandise Tax
+                          {`($${merchandiseCharge.toLocaleString("en-US", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })} @ ${merchandiseTaxPercent}%)`}
+                        </div>
+                        <div className="unmask-price">
+                          ${" "}
+                          {(merchandiseTaxAmount / 100).toLocaleString(
+                            "en-US",
+                            {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 2,
-                            })}
-                          </div>
+                            }
+                          )}
                         </div>
-                      ) : null}
-                    {
-                      course?.supportsSellingMerchandise && merchandiseCharge > 0 ? (
-                        <div className="flex justify-between">
-                          <div className="px-8">
-                            Merchandise Tax
-                            {`($${merchandiseCharge.toLocaleString("en-US", {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })} @ ${merchandiseTaxPercent}%)`}
-                          </div>
-                          <div className="unmask-price">
-                            ${" "}
-                            {(merchandiseTaxAmount / 100).toLocaleString(
-                              "en-US",
-                              {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              }
-                            )}
-                          </div>
-                        </div>
-                      ) : null}
+                      </div>
+                    ) : null}
                 </div>
               </CheckoutItemAccordion>
               <Fragment>
@@ -1661,6 +1693,17 @@ export const CheckoutForm = ({
           )}
         </div>
       )}
+      {(isLoadingMerchandise || (courseMerchandise?.length === 0) || !course?.supportsSellingMerchandise || !(isFirstHand.length || isFirstHandGroup.length)) ?
+        null :
+        <section className="md:hidden p-0 md:p-4">
+          <div className="bg-white md:rounded-xl p-4">
+            <MerchandiseCarousel
+              items={courseMerchandise}
+              onItemQuantityChange={handleMerchandiseUpdate}
+              maxPlayers={Number(playerCount)}
+            />
+          </div>
+        </section>}
       {!maxReservation?.success && (
         <div className="md:hidden bg-alert-red text-white p-1 pl-2 my-2  w-full rounded">
           {maxReservation?.message}

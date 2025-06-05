@@ -1,16 +1,18 @@
 import React, { useEffect, useRef, useState } from 'react';
 import MerchandiseCard from '../cards/merchandise-card';
 import { Close } from '../icons/close';
-import { BlurImage } from '../images/blur-image';
+import { Tooltip } from '../tooltip';
+import { Info } from '../icons/info';
 
 export interface MerchandiseItem {
     id: string;
     caption: string;
     price: number;
     description: string | null;
-    longDescription: string | null;
+    tooltip: string | null;
     logoURL: string | null;
     qoh: number;
+    maxQtyToAdd: number;
 }
 
 interface MerchandiseInfoPopupProps {
@@ -21,6 +23,7 @@ interface MerchandiseInfoPopupProps {
 
 interface MerchandiseCarouselProps {
     items: MerchandiseItem[] | undefined | null;
+    maxPlayers: number;
     title?: string;
     onItemQuantityChange?: (itemId: string | number, newQuantity: number, price: number) => void;
 }
@@ -29,8 +32,9 @@ const POPUP_BOUNDARY_PADDING = 8;
 
 const MerchandiseCarousel: React.FC<MerchandiseCarouselProps> = ({
     items,
-    title = "Select Merchandise",
-    onItemQuantityChange
+    title = "Add-Ons",
+    onItemQuantityChange,
+    maxPlayers,
 }) => {
     const [activePopupId, setActivePopupId] = useState<string | number | null>(null);
     const [popupPosition, setPopupPosition] = useState<{ top: number; left: number } | null>(null);
@@ -120,7 +124,14 @@ const MerchandiseCarousel: React.FC<MerchandiseCarouselProps> = ({
 
     return (
         <div className="relative" ref={componentContainerRef} >
-            {title && <h2 className="text-lg font-semibold mb-3 text-gray-800">{title}</h2>}
+            {title && <div className='flex gap-1 items-center mb-3'>
+                <h2 className="text-lg font-semibold text-gray-800">{title}</h2>
+                <Tooltip
+                    trigger={<Info className="h-[20px] w-[20px] text-primary-gray" />}
+                    content="Prepaying for add-ons guarantees your availability for your rentals and may be cheaper than paying at the course."
+                />
+            </div>
+            }
             <div
                 className="flex overflow-x-auto gap-4 pb-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
                 ref={scrollableContainerRef}
@@ -131,6 +142,7 @@ const MerchandiseCarousel: React.FC<MerchandiseCarouselProps> = ({
                         item={item}
                         onQuantityChange={handleQuantityChange}
                         onCardClick={handleCardClick}
+                        maxQuantity={maxPlayers}
                     />
                 ))}
 
@@ -185,7 +197,8 @@ const MerchandiseInfoPopup: React.FC<MerchandiseInfoPopupProps> = ({
                 <div className='flex gap-4'>
                     {
                         item.logoURL ? (
-                            <BlurImage
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
                                 src={item.logoURL}
                                 alt={item.caption}
                                 className="object-cover w-16 h-16 rounded-md"
@@ -197,7 +210,7 @@ const MerchandiseInfoPopup: React.FC<MerchandiseInfoPopupProps> = ({
                     <div className='flex flex-col gap-1'>
                         <h3 className="text-md font-semibold text-gray-800 line-clamp-1">{item.caption}</h3>
                         <p className="text-sm text-gray-600">
-                            {item.longDescription}
+                            {item.tooltip}
                         </p>
                     </div>
                 </div>

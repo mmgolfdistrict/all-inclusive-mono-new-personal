@@ -21,7 +21,9 @@ export const courseMerchandise = mySqlTable('courseMerchandise', {
     .default(sql`CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)`)
     .notNull(),
   logoURL: varchar('logoURL', { length: 1024 }),
-  longDescription: varchar('longDescription', { length: 1024 }),
+  tooltip: varchar('tooltip', { length: 1024 }),
+  maxQtyToAdd: tinyint('maxQtyToAdd').notNull().default(-1),
+  displayOrder: int('displayOrder').notNull().default(0),
 },
   (table) => ({
     courseIdIdx: index("CourseException_courseId_idx").on(table.courseId),
