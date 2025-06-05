@@ -92,7 +92,7 @@ export class HyperSwitchWebhookService {
     private readonly bookingService: BookingService,
     private readonly sensibleService: SensibleService,
     upStashClientToken: string,
-    private readonly hyperSwitchService: HyperSwitchService,
+    private readonly hyperSwitchService: HyperSwitchService
   ) {
     this.qStashClient = new Client({
       token: upStashClientToken,
@@ -709,7 +709,7 @@ export class HyperSwitchWebhookService {
       .select({
         listedSlotsCount: lists.slots,
         listedPrice: lists.listPrice,
-        allowSplit: lists.allowSplit
+        allowSplit: lists.allowSplit,
       })
       .from(lists)
       .where(eq(lists.id, listingId))
@@ -722,7 +722,7 @@ export class HyperSwitchWebhookService {
         oldBookingId: transfers.fromBookingId,
         transferId: transfers.id,
         cart: customerCarts.cart,
-        newBookingPlayers: bookings.playerCount
+        newBookingPlayers: bookings.playerCount,
       })
       .from(customerCarts)
       .innerJoin(bookings, eq(bookings.cartId, customerCarts.id))
@@ -869,7 +869,7 @@ export class HyperSwitchWebhookService {
         needRentals: bookings.needClubRental,
         timezoneCorrection: courses.timezoneCorrection,
         groupId: bookings.groupId,
-        totalMerchandiseAmount: bookings.totalMerchandiseAmount 
+        totalMerchandiseAmount: bookings.totalMerchandiseAmount,
       })
       .from(bookings)
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -902,7 +902,11 @@ export class HyperSwitchWebhookService {
       throw new Error(`Error finding bookings for listing id`);
     }
     const firstBooking = listedBooking[0];
-    const listedSlotsCount: number | undefined = listedSlots?.length ? (listedSlots[0]?.allowSplit ? bookingsIds?.newBookingPlayers : listedSlots[0]?.listedSlotsCount) : 0;
+    const listedSlotsCount: number | undefined = listedSlots?.length
+      ? listedSlots[0]?.allowSplit
+        ? bookingsIds?.newBookingPlayers
+        : listedSlots[0]?.listedSlotsCount
+      : 0;
     const listPrice: number | undefined = listedSlots?.length ? listedSlots[0]?.listedPrice : 0;
 
     if (!firstBooking) {
@@ -1215,7 +1219,7 @@ export class HyperSwitchWebhookService {
             courseName: existingTeeTime?.courseName ?? "",
             userName: buyerCustomer?.name ?? "",
             userEmail: buyerCustomer?.email ?? "",
-            teeTimeDate: existingTeeTime?.providerDate ?? ""
+            teeTimeDate: existingTeeTime?.providerDate ?? "",
           }
         );
         throw "Booking failed on provider";
@@ -1606,7 +1610,9 @@ export class HyperSwitchWebhookService {
                 maximumFractionDigits: 2,
               })}` || "-",
             Payout: formatMoney(
-              (listedPrice - totalTax) * (listedSlotsCount || 1) + sellerWeatherGuaranteeAmount / 100 + (sellerMerchandiseAmount / 100)
+              (listedPrice - totalTax) * (listedSlotsCount || 1) +
+                sellerWeatherGuaranteeAmount / 100 +
+                sellerMerchandiseAmount / 100
             ),
             PurchasedFrom: existingTeeTime?.courseName || "-",
             BuyTeeTImeURL: `${redirectHref}`,
@@ -1640,7 +1646,9 @@ export class HyperSwitchWebhookService {
               maximumFractionDigits: 2,
             })}` || "-",
           Payout: formatMoney(
-            (listedPrice - totalTax) * (listedSlotsCount || 1) + sellerWeatherGuaranteeAmount / 100 + (sellerMerchandiseAmount / 100)
+            (listedPrice - totalTax) * (listedSlotsCount || 1) +
+              sellerWeatherGuaranteeAmount / 100 +
+              sellerMerchandiseAmount / 100
           ),
           SensibleWeatherIncluded: firstBooking.weatherGuaranteeId?.length ? "Yes" : "No",
           PurchasedFrom: existingTeeTime?.courseName || "-",
@@ -1655,16 +1663,26 @@ export class HyperSwitchWebhookService {
           process.env.SENDGRID_TEE_TIMES_SOLD_PARTIAL_TEMPLATE_ID || "d-ef59724fe9f74e80a3768028924ea456",
           templateSeller
         );
-        const remainingSlots = (listedSlots[0]?.listedSlotsCount ?? 0) - (bookingsIds?.newBookingPlayers ?? 0);
+        const remainingSlots =
+          (listedSlots[0]?.listedSlotsCount ?? 0) - (bookingsIds?.newBookingPlayers ?? 0);
         if (remainingSlots > 0) {
-          await this.bookingService.addListingForRemainingSlots(bookingId as string, providerBookingId, listingId, remainingSlots, firstBooking.ownerId);
+          await this.bookingService.addListingForRemainingSlots(
+            bookingId as string,
+            providerBookingId,
+            listingId,
+            remainingSlots,
+            firstBooking.ownerId
+          );
         }
       }
     }
 
     const amount = listPrice ?? 1;
     const serviceCharge = amount * sellerFee;
-    const payable = (amount - serviceCharge) * (listedSlotsCount || 1) + sellerWeatherGuaranteeAmount + sellerMerchandiseAmount;
+    const payable =
+      (amount - serviceCharge) * (listedSlotsCount || 1) +
+      sellerWeatherGuaranteeAmount +
+      sellerMerchandiseAmount;
     const currentDate = new Date();
     const radeemAfterMinutes = await appSettingService.get("CASH_OUT_AFTER_MINUTES");
     const redeemAfterDate = this.addMinutes(currentDate, Number(radeemAfterMinutes));
@@ -1717,8 +1735,12 @@ export class HyperSwitchWebhookService {
               customerRecievableData,
             }),
           });
-        })
-      await this.bookingService.addListingForRemainingSlotsOnGroupBooking(firstBooking.groupId, listedSlotsCount, firstBooking.ownerId)
+        });
+      await this.bookingService.addListingForRemainingSlotsOnGroupBooking(
+        firstBooking.groupId,
+        listedSlotsCount,
+        firstBooking.ownerId
+      );
     }
   };
 
@@ -1971,51 +1993,142 @@ export class HyperSwitchWebhookService {
   //   return referrer?.startsWith(validHost) || false;
   // };
 
-  finixWebhookService = async (entityType: string, entity: string, paymentId: string, paymentState: string) => {
+  saveSplitPaymentAmountIntoCashOut = async (bookingId: string, amount: number) => {
+    try {
+      const [result] = await this.database
+        .select({
+          ownerId: bookings.ownerId,
+          originalAmountBeforeAddingCharges: bookingSplitPayment.payoutAmount,
+          isPaid: bookingSplitPayment.isPaid,
+        })
+        .from(bookings)
+        .leftJoin(bookingSplitPayment, eq(bookingSplitPayment.bookingId, bookingId))
+        .where(eq(bookings.id, bookingId));
+      if (!result) {
+        throw new Error("Error while fetching for booking");
+      }
+      const currentDate = new Date();
+      const radeemAfterMinutes = await appSettingService.get("CASH_OUT_AFTER_MINUTES");
+      const redeemAfterDate = this.addMinutes(currentDate, Number(radeemAfterMinutes));
+      const customerRecievableData = [
+        {
+          id: randomUUID(),
+          userId: result?.ownerId,
+          amount: result?.originalAmountBeforeAddingCharges ?? 0,
+          type: "SPLIT_PAYMENT",
+          transferId: "",
+          sensibleAmount: 0,
+          createdDateTime: this.formatCurrentDateTime(currentDate),
+          redeemAfter: this.formatCurrentDateTime(redeemAfterDate),
+        },
+      ];
+      await this.database
+        .insert(customerRecievable)
+        .values(customerRecievableData)
+        .catch(async (err: any) => {
+          this.logger.error(err);
+          await loggerService.errorLog({
+            userId: "",
+            url: `/HyperSwitchWebhookService/handleSecondHandItem`,
+            userAgent: "",
+            message: "ERROR_CREATING_CUSTOMER_RECEIVABLE_FOR_TEE_TIME",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              customerRecievableData,
+            }),
+          });
+        });
+      return {
+        message:"customer receviable amount added successfully"
+      }
+    } catch (err: any) {
+      await loggerService.errorLog({
+        userId: "",
+        url: `/HyperSwitchWebhookService/handleSecondHandItem`,
+        userAgent: "",
+        message: "INTERNAL SERVER ERROR",
+        stackTrace: `${err.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          bookingId: bookingId,
+          amount: amount,
+        }),
+      });
+      throw new Error("Error while saving split payment amount");
+    }
+  };
+
+  finixWebhookService = async (
+    entityType: string,
+    entity: string,
+    paymentId: string,
+    paymentState: string
+  ) => {
     try {
       this.logger.warn("paymentId is here", paymentId);
       this.logger.warn("payment state is here", paymentState);
       if (entityType === "updated" && entity === "payment_link" && paymentState === "COMPLETED") {
-        const updateStatus = await this.database.update(bookingSplitPayment).set({ isPaid:1,webhookStatus: paymentState }).where(eq(bookingSplitPayment.paymentId, paymentId));
+        const updateStatus = await this.database
+            .update(bookingSplitPayment)
+            .set({ webhookStatus: paymentState })
+            .where(eq(bookingSplitPayment.paymentId, paymentId));
+        const [result] = await this.database
+          .select({
+            email: bookingSplitPayment.email,
+            bookingId: bookingSplitPayment.bookingId,
+            amount: bookingSplitPayment.payoutAmount,
+            paymentId: bookingSplitPayment.paymentId,
+            collectedAmount: bookingSplitPayment.collectedAmount,
+            isPaid: bookingSplitPayment.isPaid,
+            webhookStatus: bookingSplitPayment.webhookStatus,
+          })
+          .from(bookingSplitPayment)
+          .where(eq(bookingSplitPayment.paymentId, paymentId));
+        if (result?.webhookStatus === "COMPLETED") {
+          const saveToProcessfunds = await this.saveSplitPaymentAmountIntoCashOut(
+            result.bookingId,
+            Number(result?.amount)
+          );
+           this.logger.warn("insert successfully",saveToProcessfunds);
+        }
         return {
           message: "Payment Webhook status successFully",
-          error: false
-        }
+          error: false,
+        };
       }
     } catch (error) {
       console.log(error);
       return {
         message: "Payment Webhook status failed",
-        error: true
-      }
+        error: true,
+      };
     }
-  }
-  updateTrackStatusOfOpenedEmail = async (id:string)=>{
+  };
+  updateTrackStatusOfOpenedEmail = async (id: string) => {
     try {
-     this.logger.warn("","email open successFully");
-     const result =   await this.database
-      .update(bookingSplitPayment)
-      .set({
-        isEmailOpened:1
-      })
-      .where(eq(bookingSplitPayment.id,id))
-      .execute().catch(async (e: any) => {
-        await loggerService.errorLog({
-          message: "ERROR_UPDATING_HYPERSWITCH_PAYMENT_STATUS",
-          userId: "",
-          url: "/auth",
-          userAgent: "",
-          stackTrace: `${JSON.stringify(e)}`,
-          additionalDetailsJSON: JSON.stringify({
-          }),
+      this.logger.warn("", "email open successFully");
+      const result = await this.database
+        .update(bookingSplitPayment)
+        .set({
+          isEmailOpened: 1,
+        })
+        .where(eq(bookingSplitPayment.id, id))
+        .execute()
+        .catch(async (e: any) => {
+          await loggerService.errorLog({
+            message: "ERROR_UPDATING_HYPERSWITCH_PAYMENT_STATUS",
+            userId: "",
+            url: "/auth",
+            userAgent: "",
+            stackTrace: `${JSON.stringify(e)}`,
+            additionalDetailsJSON: JSON.stringify({}),
+          });
         });
-      });
-      if(result){
-        return {success:true,message:"Email Opened"}
+      if (result) {
+        return { success: true, message: "Email Opened" };
       }
-    } catch (error:any) {
+    } catch (error: any) {
       console.log(error.message);
-      throw new Error("Error while updating split payment status")
+      throw new Error("Error while updating split payment status");
     }
-  }
+  };
 }
