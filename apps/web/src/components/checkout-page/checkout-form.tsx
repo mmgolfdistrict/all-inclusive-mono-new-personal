@@ -12,7 +12,7 @@ import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
 import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
-import type { CartProduct, CountryData, FirstHandGroupProduct } from "~/utils/types";
+import type { CartProduct, CountryData, FirstHandGroupProduct, MerchandiseWithTaxOverride } from "~/utils/types";
 import { useParams, useRouter } from "next/navigation";
 import type { ChangeEvent, Dispatch, SetStateAction } from "react";
 import { Fragment, useEffect, useState, type FormEvent, useRef, useMemo } from "react";
@@ -305,9 +305,15 @@ export const CheckoutForm = ({
       ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
 
   const merchandiseCharge =
-    cartData
+    (cartData
       ?.filter(({ product_data }) => product_data.metadata.type === "merchandise")
-      ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+      ?.reduce((acc: number, i) => acc + i.price, 0) / 100);
+
+  const merchandiseWithTaxOverrideCharge = (cartData
+    ?.filter(({ product_data }) => product_data.metadata.type === "merchandiseWithTaxOverride")
+    ?.reduce((acc: number, i) => acc + (i.product_data.metadata as unknown as MerchandiseWithTaxOverride).priceWithoutTax, 0) / 100) ?? 0;
+
+  const merchandiseTotalCharge = merchandiseCharge + merchandiseWithTaxOverrideCharge;
 
   const greenFeeTaxPercent =
     cartData
@@ -347,6 +353,10 @@ export const CheckoutForm = ({
         ({ product_data }) => product_data.metadata.type === "merchandiseTaxPercent"
       )
       ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+
+  const merchandiseOverriddenTaxCharge = (cartData
+    ?.filter(({ product_data }) => product_data.metadata.type === "merchandiseWithTaxOverride")
+    ?.reduce((acc: number, i) => acc + (i.product_data.metadata as unknown as MerchandiseWithTaxOverride).taxAmount, 0)) ?? 0;
 
   // const cartFeeCharge =
   //   cartData
@@ -974,7 +984,7 @@ export const CheckoutForm = ({
   const cartFeeTaxAmount = cartFeeCharge * cartFeeTaxPercent * playersInNumber;
   const markupFeesTaxAmount = markupFee * markupTaxPercent * playersInNumber;
   const weatherGuaranteeTaxAmount = sensibleCharge * weatherGuaranteeTaxPercent;
-  const merchandiseTaxAmount = merchandiseCharge * merchandiseTaxPercent;
+  const merchandiseTaxAmount = (merchandiseCharge * merchandiseTaxPercent) + merchandiseOverriddenTaxCharge;
 
   const additionalTaxes =
     (greenFeeTaxAmount +
@@ -991,7 +1001,7 @@ export const CheckoutForm = ({
     (!roundUpCharityId ? charityCharge : 0) +
     convenienceCharge +
     (!roundUpCharityId ? 0 : Number(donateValue)) +
-    (!course?.supportsSellingMerchandise ? 0 : (merchandiseCharge));
+    (!course?.supportsSellingMerchandise ? 0 : (merchandiseTotalCharge));
 
   const TotalAmt = Total.toLocaleString("en-US", {
     minimumFractionDigits: 2,
@@ -1011,16 +1021,16 @@ export const CheckoutForm = ({
   const totalBeforeRoundOff = primaryGreenFeeCharge + TaxCharge;
   const decimalPart = totalBeforeRoundOff % 1;
   const subTotal = primaryGreenFeeCharge +
-    (!course?.supportsSellingMerchandise ? 0 : (merchandiseCharge))
+    (!course?.supportsSellingMerchandise ? 0 : (merchandiseTotalCharge))
   const [hasUserSelectedDonation, setHasUserSelectedDonation] = useState(false);
 
-  const handleMerchandiseUpdate = (itemId: string, newQuantity: number, price: number) => {
+  const handleMerchandiseUpdate = (itemId: string, newQuantity: number, price: number, merchandiseTaxPercent?: number | null) => {
     if (newQuantity === 0) {
       setMerchandiseData((prevItems) => prevItems.filter((item) => item.id !== itemId));
     } else {
       const isNewItem = !merchandiseData.some((item) => item.id === itemId);
       if (isNewItem) {
-        setMerchandiseData((prevItems) => [...prevItems, { id: itemId, qty: newQuantity, price: price }]);
+        setMerchandiseData((prevItems) => [...prevItems, { id: itemId, qty: newQuantity, price: price, merchandiseTaxPercent: merchandiseTaxPercent }]);
       } else {
         setMerchandiseData((prevItems) =>
           prevItems.map((item) => {
@@ -1397,12 +1407,12 @@ export const CheckoutForm = ({
                     </div>
                   </div>
                   {
-                    course?.supportsSellingMerchandise && merchandiseCharge > 0 ? (
+                    course?.supportsSellingMerchandise && merchandiseTotalCharge > 0 ? (
                       <div className="flex justify-between">
                         <div className="px-8">Merchandise</div>
                         <div className="unmask-price">
                           $
-                          {merchandiseCharge.toLocaleString("en-US", {
+                          {merchandiseTotalCharge.toLocaleString("en-US", {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
                           })}
@@ -1509,14 +1519,10 @@ export const CheckoutForm = ({
                     </div>
                   ) : null}
                   {
-                    course?.supportsSellingMerchandise && merchandiseCharge > 0 ? (
+                    course?.supportsSellingMerchandise && merchandiseTotalCharge > 0 ? (
                       <div className="flex justify-between">
                         <div className="px-8">
                           Merchandise Tax
-                          {`($${merchandiseCharge.toLocaleString("en-US", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })} @ ${merchandiseTaxPercent}%)`}
                         </div>
                         <div className="unmask-price">
                           ${" "}

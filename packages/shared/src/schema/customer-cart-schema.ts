@@ -153,6 +153,26 @@ export const MerchandiseProductSchema = BaseProductSchema.extend({
       merchandiseItems: z.array(z.object({
         id: z.string(),
         qty: z.number(),
+        pricePerItem: z.number(),
+        taxAmountPerItem: z.number(),
+      })),
+    }),
+  }),
+});
+
+// Merchandise Product schema with Tax Overrides
+export const MerchandiseWithTaxOverrideProductSchema = BaseProductSchema.extend({
+  product_data: z.object({
+    metadata: z.object({
+      type: z.literal("merchandiseWithTaxOverride"),
+      priceWithoutTax: z.number(),
+      taxAmount: z.number(),
+      merchandiseItems: z.array(z.object({
+        id: z.string(),
+        qty: z.number(),
+        merchandiseTaxPercent: z.number(),
+        pricePerItem: z.number(),
+        taxAmountPerItem: z.number(),
       })),
     }),
   }),
@@ -177,7 +197,8 @@ export const ProductDataSchema = z.union([
   MarkupTaxPercentSchema,
   FirstHandGroupProductSchema,
   MerchandiseProductSchema,
-  MerchandiseTaxPercentSchema
+  MerchandiseTaxPercentSchema,
+  MerchandiseWithTaxOverrideProductSchema
 ]);
 
 // CustomerCart schema

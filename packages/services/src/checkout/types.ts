@@ -71,7 +71,8 @@ export type ProductData =
   | WeatherGuaranteeTaxPercentProduct
   | FirstHandGroupProduct
   | MerchandiseProduct
-  | MerchandiseTaxPercentProduct;
+  | MerchandiseTaxPercentProduct
+  | MerchandiseWithTaxOverride;
 
 export interface BaseProduct {
   name: string; // teeTime-course-time
@@ -212,7 +213,14 @@ export interface FirstHandGroupProduct extends BaseProduct {
 interface MerchandiseItem {
   id: string;
   qty: number;
+  pricePerItem: number;
+  taxAmountPerItem: number;
 }
+
+interface MerchandiseItemWithTax extends MerchandiseItem {
+  merchandiseTaxPercent: number;
+}
+
 export interface MerchandiseProduct extends BaseProduct {
   product_data: {
     metadata: {
@@ -226,6 +234,17 @@ export interface MerchandiseTaxPercentProduct extends BaseProduct {
   product_data: {
     metadata: {
       type: "merchandiseTaxPercent";
+    };
+  };
+}
+
+export interface MerchandiseWithTaxOverride extends BaseProduct {
+  product_data: {
+    metadata: {
+      type: "merchandiseWithTaxOverride";
+      merchandiseItems: MerchandiseItemWithTax[];
+      priceWithoutTax: number;
+      taxAmount: number;
     };
   };
 }

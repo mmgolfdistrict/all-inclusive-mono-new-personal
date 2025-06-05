@@ -217,13 +217,13 @@ export const CheckoutItem = ({
     console.log("validatePlayers========>", validatePlayers);
   }, [validatePlayers]);
 
-  const handleMerchandiseUpdate = (itemId: string, newQuantity: number, price: number) => {
+  const handleMerchandiseUpdate = (itemId: string, newQuantity: number, price: number, merchandiseTaxPercent?: number | null) => {
     if (newQuantity === 0) {
       setMerchandiseData((prevItems) => prevItems.filter((item) => item.id !== itemId));
     } else {
       const isNewItem = !merchandiseData.some((item) => item.id === itemId);
       if (isNewItem) {
-        setMerchandiseData((prevItems) => [...prevItems, { id: itemId, qty: newQuantity, price: price }]);
+        setMerchandiseData((prevItems) => [...prevItems, { id: itemId, qty: newQuantity, price: price, merchandiseTaxPercent: merchandiseTaxPercent }]);
       } else {
         setMerchandiseData((prevItems) =>
           prevItems.map((item) => {

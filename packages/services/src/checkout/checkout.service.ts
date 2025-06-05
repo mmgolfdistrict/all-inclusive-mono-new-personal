@@ -335,7 +335,8 @@ export class CheckoutService {
       "cartFeeTaxPercent",
       "weatherGuaranteeTaxPercent",
       "markupTaxPercent",
-      "merchandiseTaxPercent"
+      "merchandiseTaxPercent",
+      "merchandiseWithTaxOverride"
     ];
 
     let total = customerCart.cart
@@ -366,6 +367,14 @@ export class CheckoutService {
       customerCartData?.cart
         ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "merchandise")
         ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+    const merchandiseWithTaxOverrideCharge =
+      customerCartData?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "merchandiseWithTaxOverride")
+        ?.reduce((acc: number, i: any) => acc + i.product_data.metadata.priceWithoutTax, 0);
+    const merchandiseOverriddenTaxAmount =
+      customerCartData?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "merchandiseWithTaxOverride")
+        ?.reduce((acc: number, i: any) => acc + i.product_data.metadata.taxAmount, 0) / 100;
     if (isFirstHand.length) {
       if (isFirstHand[0]?.product_data.metadata.type === "first_hand") {
         const teetimeId = customerCart?.teeTimeId ?? "";
@@ -398,7 +407,7 @@ export class CheckoutService {
         const merchandiseTaxTotal =
           ((merchandiseCharge * ((teeTime?.merchandiseTaxPercent ?? 0) / 100)) / 100);
         const additionalTaxes = Number(
-          (greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal + merchandiseTaxTotal)
+          (greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal + merchandiseTaxTotal + merchandiseOverriddenTaxAmount)
         );
         total = total + additionalTaxes * 100;
       }
@@ -472,9 +481,9 @@ export class CheckoutService {
         const merchandiseTaxTotal =
           ((merchandiseCharge * ((teeTime?.merchandiseTaxPercent ?? 0) / 100)) / 100);
         const additionalTaxes = Number(
-          (greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal + merchandiseTaxTotal).toFixed(2)
+          (greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal + merchandiseTaxTotal + merchandiseOverriddenTaxAmount).toFixed(2)
         );
-        total = total + additionalTaxes * 100;
+        total = (total + merchandiseWithTaxOverrideCharge) + additionalTaxes * 100;
       }
     }
     // const tax = await this.stripeService.getTaxRate(customerCart.cart).catch((err) => {
@@ -631,7 +640,8 @@ export class CheckoutService {
       "cartFeeTaxPercent",
       "weatherGuaranteeTaxPercent",
       "markupTaxPercent",
-      "merchandiseTaxPercent"
+      "merchandiseTaxPercent",
+      "merchandiseWithTaxOverride"
     ];
 
     let total: number = customerCart.cart
@@ -662,6 +672,14 @@ export class CheckoutService {
       customerCartData?.cart
         ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "merchandise")
         ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+    const merchandiseWithTaxOverrideCharge =
+      customerCartData?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "merchandiseWithTaxOverride")
+        ?.reduce((acc: number, i: any) => acc + i.product_data.metadata.priceWithoutTax, 0);
+    const merchandiseOverriddenTaxAmount =
+      customerCartData?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "merchandiseWithTaxOverride")
+        ?.reduce((acc: number, i: any) => acc + i.product_data.metadata.taxAmount, 0) / 100;
     if (isFirstHand.length) {
       if (isFirstHand[0]?.product_data.metadata.type === "first_hand") {
         const teetimeId = customerCart?.teeTimeId ?? "";
@@ -694,9 +712,9 @@ export class CheckoutService {
         const merchandiseTaxTotal =
           ((merchandiseCharge * ((teeTime?.merchandiseTaxPercent ?? 0) / 100)) / 100);
         const additionalTaxes = Number(
-          (greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal + merchandiseTaxTotal).toFixed(2)
+          (greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal + merchandiseTaxTotal + merchandiseOverriddenTaxAmount).toFixed(2)
         );
-        total = total + additionalTaxes * 100;
+        total = (total + merchandiseWithTaxOverrideCharge) + additionalTaxes * 100;
       }
     }
     if (isFirstHandGroup.length) {
@@ -767,9 +785,9 @@ export class CheckoutService {
         const merchandiseTaxTotal =
           ((merchandiseCharge * ((teeTime?.merchandiseTaxPercent ?? 0) / 100)) / 100);
         const additionalTaxes = Number(
-          (greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal + merchandiseTaxTotal).toFixed(2)
+          (greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal + merchandiseTaxTotal + merchandiseOverriddenTaxAmount).toFixed(2)
         );
-        total = total + additionalTaxes * 100;
+        total = (total + merchandiseWithTaxOverrideCharge) + additionalTaxes * 100;
       }
     }
     console.log(`paymentId = ${paymentId}`);

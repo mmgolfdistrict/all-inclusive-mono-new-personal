@@ -25,6 +25,7 @@ import type {
   MarkupProduct,
   MerchandiseProduct,
   MerchandiseTaxPercentMetaData,
+  MerchandiseWithTaxOverride,
   Offer,
   SecondHandProduct,
   SensibleProduct,
@@ -248,7 +249,8 @@ export default function Checkout({
       | CartFeeMetaData
       | FirstHandGroupProduct
       | MerchandiseProduct
-      | MerchandiseTaxPercentMetaData =
+      | MerchandiseTaxPercentMetaData
+      | MerchandiseWithTaxOverride =
       saleType === "first_hand"
         ? {
           type: "first_hand",
@@ -499,9 +501,38 @@ export default function Checkout({
     }
 
     if (course?.supportsSellingMerchandise) {
+      const merchandiseWithoutTaxes: typeof merchandiseData = [];
+      const merchandiseWithTaxes: typeof merchandiseData = [];
+
       const totalPrice = merchandiseData.reduce((totalPrice, item) => {
-        return totalPrice + (item.price * item.qty);
+        if (!item.merchandiseTaxPercent) {
+          merchandiseWithoutTaxes.push({
+            ...item,
+          });
+          return totalPrice + (item.price * item.qty);
+        } else {
+          return totalPrice;
+        }
       }, 0)
+      const totalPriceForTaxOverrides = merchandiseData.reduce((totalPrice, item) => {
+        if (item.merchandiseTaxPercent) {
+          merchandiseWithTaxes.push(item);
+          const merchandisePrice = item.price * item.qty;
+          return totalPrice + merchandisePrice;
+        } else {
+          return totalPrice;
+        }
+      }, 0);
+      const totalPriceTaxForTaxOverrides = merchandiseData.reduce((totalPrice, item) => {
+        if (item.merchandiseTaxPercent) {
+          const merchandisePrice = item.price * item.qty;
+          const taxAmount = Number(merchandisePrice * ((item.merchandiseTaxPercent / 100) / 100));
+          return totalPrice + taxAmount;
+        } else {
+          return totalPrice;
+        }
+      }, 0);
+
       localCart.push({
         name: "Golf District Tee Time",
         id: teeTimeId ?? data?.teeTimeId,
@@ -512,13 +543,40 @@ export default function Checkout({
         product_data: {
           metadata: {
             type: "merchandise",
-            merchandiseItems: merchandiseData.map((item) => ({
+            merchandiseItems: merchandiseWithoutTaxes.map((item) => ({
               id: item.id,
-              qty: item.qty
+              qty: item.qty,
+              pricePerItem: item.price,
+              taxAmountPerItem: Number(item.price * (((teeTimeData?.merchandiseTaxPercent ?? 0) / 100) / 100)),
             }))
           },
         },
       });
+
+      if (merchandiseWithTaxes.length) {
+        localCart.push({
+          name: "Golf District Tee Time",
+          id: teeTimeId ?? data?.teeTimeId,
+          price: totalPriceForTaxOverrides + totalPriceTaxForTaxOverrides,
+          image: "",
+          currency: "USD", //USD
+          display_price: formatMoney((totalPriceForTaxOverrides + totalPriceTaxForTaxOverrides) / 100),
+          product_data: {
+            metadata: {
+              type: "merchandiseWithTaxOverride",
+              priceWithoutTax: totalPriceForTaxOverrides,
+              taxAmount: totalPriceTaxForTaxOverrides,
+              merchandiseItems: merchandiseWithTaxes.map((item) => ({
+                id: item.id,
+                qty: item.qty,
+                merchandiseTaxPercent: item.merchandiseTaxPercent!,
+                pricePerItem: item.price,
+                taxAmountPerItem: Number(item.price * (((item.merchandiseTaxPercent ?? 0) / 100) / 100)),
+              }))
+            },
+          },
+        });
+      }
     }
 
     return localCart;

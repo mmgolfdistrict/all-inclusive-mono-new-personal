@@ -24,6 +24,7 @@ export const courseMerchandise = mySqlTable('courseMerchandise', {
   tooltip: varchar('tooltip', { length: 1024 }),
   maxQtyToAdd: tinyint('maxQtyToAdd').notNull().default(-1),
   displayOrder: int('displayOrder').notNull().default(0),
+  merchandiseTaxPercent: int('merchandiseTaxPercent'),
 },
   (table) => ({
     courseIdIdx: index("CourseException_courseId_idx").on(table.courseId),

@@ -13,6 +13,7 @@ export interface MerchandiseItem {
     logoURL: string | null;
     qoh: number;
     maxQtyToAdd: number;
+    merchandiseTaxPercent: number | null;
 }
 
 interface MerchandiseInfoPopupProps {
@@ -25,7 +26,7 @@ interface MerchandiseCarouselProps {
     items: MerchandiseItem[] | undefined | null;
     maxPlayers: number;
     title?: string;
-    onItemQuantityChange?: (itemId: string | number, newQuantity: number, price: number) => void;
+    onItemQuantityChange?: (itemId: string | number, newQuantity: number, price: number, merchandiseTaxPercent?: number | null) => void;
 }
 
 const POPUP_BOUNDARY_PADDING = 8;
@@ -42,8 +43,8 @@ const MerchandiseCarousel: React.FC<MerchandiseCarouselProps> = ({
     const componentContainerRef = useRef<HTMLDivElement>(null);
     const scrollableContainerRef = useRef<HTMLDivElement>(null);
 
-    const handleQuantityChange = (itemId: string, newQuantity: number, price: number) => {
-        onItemQuantityChange?.(itemId, newQuantity, price);
+    const handleQuantityChange = (itemId: string, newQuantity: number, price: number, merchandiseTaxPercent?: number | null) => {
+        onItemQuantityChange?.(itemId, newQuantity, price, merchandiseTaxPercent);
     };
 
     const handleCardClick = (item: MerchandiseItem, event: React.MouseEvent<HTMLDivElement>) => {
