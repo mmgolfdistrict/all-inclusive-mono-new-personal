@@ -1705,27 +1705,33 @@ export const CheckoutForm = ({
             />
           </div>
         </section>}
-      <div className="ml-2 mb-2 flex items-start">
+      <label
+        htmlFor="terms-of-service-checkbox"
+        className={`ml-2 mb-2 flex items-start rounded-md p-2 border 
+          bg-gray-100 transition-all duration-300`}
+        style={{ borderColor: isChecked ? "transparent" : "red" }}
+      >
         <input
           id="terms-of-service-checkbox"
           name="terms-of-service-checkbox"
           data-testid="terms-of-service-checkbox-id"
-          className="mt-1 cursor-pointer !scale-125"
+          className={`cursor-pointer ${isMobile ? "w-12 h-6" : "w-6 h-6"}  `}
           type="checkbox"
           checked={isChecked}
           onChange={() => setIsChecked(!isChecked)}
         />
-        <div className="ml-2 text-[14px] text-primary-gray">
+        <div className="cursor-pointer ml-2 text-[14px] font-bold">
           By checking the box and completing this reservation, I agree to the{" "}
           <Link
             href="/terms-of-service"
             className="text-blue-600 underline"
             data-testid="terms-of-service-id"
+            target="_blank"
           >
             Terms of Service
           </Link>.
         </div>
-      </div>
+      </label>
 
       {!maxReservation?.success && (
         <div className="md:hidden bg-alert-red text-white p-1 pl-2 my-2  w-full rounded">
