@@ -211,9 +211,9 @@ export const CourseNav = () => {
                 <BlurImage
                   src={course?.logo ?? ""}
                   alt="course logo"
-                  width={60}
-                  height={100}
-                  className="w-[50px] object-fit"
+                  width={90}
+                  height={150}
+                  className="w-[80px] object-fit"
                   data-testid="course-logo-id"
                 />
               ) : (
@@ -221,9 +221,9 @@ export const CourseNav = () => {
                   <BlurImage
                     src={course?.logo ?? ""}
                     alt="course logo"
-                    width={60}
-                    height={100}
-                    className="w-[50px] object-fit"
+                    width={90}
+                    height={150}
+                    className="w-[80px] object-fit"
                   />
                 </Link>
               )}
