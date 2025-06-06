@@ -428,8 +428,8 @@ export class TokenizeService {
             bookingId: isFirstHandGroupBooking ? groupId : bookingId,
             courseMerchandiseId: merchandise.id,
             qty: merchandise.qty,
-            merchandiseFeePerItem: merchandise.pricePerItem,
-            merchandiseTaxAmountPerItem: merchandise.taxAmountPerItem
+            merchandiseAmount: merchandise.pricePerItem,
+            merchandiseTaxAmount: merchandise.taxAmountPerItem
           })
         }
 
@@ -462,8 +462,8 @@ export class TokenizeService {
             bookingId: isFirstHandGroupBooking ? groupId : bookingId,
             courseMerchandiseId: merchandise.id,
             qty: merchandise.qty,
-            merchandiseFeePerItem: merchandise.pricePerItem,
-            merchandiseTaxAmountPerItem: merchandise.taxAmountPerItem
+            merchandiseAmount: merchandise.pricePerItem,
+            merchandiseTaxAmount: merchandise.taxAmountPerItem
           })
         }
 
