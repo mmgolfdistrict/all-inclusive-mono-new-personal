@@ -218,13 +218,19 @@ export const CourseNav = () => {
                 />
               ) : (
                 <Link href="/" data-testid="course-logo-id">
-                  <BlurImage
+                  {isMobile ? <BlurImage
+                    src={course?.logo ?? ""}
+                    alt="course logo"
+                    width={60}
+                    height={100}
+                    className="w-[60px] object-fit"
+                  /> : <BlurImage
                     src={course?.logo ?? ""}
                     alt="course logo"
                     width={90}
                     height={150}
                     className="w-[80px] object-fit"
-                  />
+                  />}
                 </Link>
               )}
             </div>

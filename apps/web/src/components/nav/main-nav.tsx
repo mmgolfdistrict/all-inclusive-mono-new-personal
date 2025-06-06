@@ -119,8 +119,8 @@ export const MainNav = () => {
                 <BlurImage
                   src={entity?.logo ?? ""}
                   alt={entity?.name ?? "resort logo"}
-                  width={75}
-                  height={150}
+                  width={60}
+                  height={140}
                 />
               ) : (
                 <BlurImage
