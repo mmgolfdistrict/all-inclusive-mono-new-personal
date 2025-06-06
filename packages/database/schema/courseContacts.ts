@@ -21,6 +21,8 @@ export const courseContacts = mySqlTable(
     lastUpdatedDateTime: timestamp("lastUpdatedDateTime", { mode: "string", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
+    internalName: varchar("internalName", { length: 255 }),
+    countryCode:varchar('countryCode',{length:10})
   },
   (table) => {
     return {
