@@ -33,7 +33,7 @@ const POPUP_BOUNDARY_PADDING = 8;
 
 const MerchandiseCarousel: React.FC<MerchandiseCarouselProps> = ({
     items,
-    title = "Add-Ons",
+    title = "Priority Add-Ons",
     onItemQuantityChange,
     maxPlayers,
 }) => {
