@@ -7,7 +7,7 @@ import { Tooltip } from '../tooltip';
 interface MerchandiseCardProps {
     item: MerchandiseItem;
     maxQuantity: number;
-    onQuantityChange?: (itemId: string | number, newQuantity: number, price: number) => void;
+    onQuantityChange?: (itemId: string | number, newQuantity: number, price: number, merchandiseTaxPercent?: number | null) => void;
     onCardClick?: (item: MerchandiseItem, event: React.MouseEvent<HTMLDivElement>) => void;
 }
 
@@ -22,20 +22,20 @@ const MerchandiseCard: React.FC<MerchandiseCardProps> = ({ item, onQuantityChang
     const handleAdd = () => {
         const newQuantity = 1;
         setQuantity(newQuantity);
-        onQuantityChange?.(item.id, newQuantity, item.price);
+        onQuantityChange?.(item.id, newQuantity, item.price, item.merchandiseTaxPercent);
     };
 
     const handleIncrement = () => {
         const newQuantity = quantity + 1;
         setQuantity(newQuantity);
-        onQuantityChange?.(item.id, newQuantity, item.price);
+        onQuantityChange?.(item.id, newQuantity, item.price, item.merchandiseTaxPercent);
     };
 
     const handleDecrement = () => {
         if (quantity > 0) {
             const newQuantity = quantity - 1;
             setQuantity(newQuantity);
-            onQuantityChange?.(item.id, newQuantity, item.price);
+            onQuantityChange?.(item.id, newQuantity, item.price, item.merchandiseTaxPercent);
         }
     };
 
@@ -62,7 +62,7 @@ const MerchandiseCard: React.FC<MerchandiseCardProps> = ({ item, onQuantityChang
     useEffect(() => {
         if (item.maxQtyToAdd === 0 && quantity >= maxQuantity) {
             setQuantity(maxQuantity);
-            onQuantityChange?.(item.id, maxQuantity, item.price);
+            onQuantityChange?.(item.id, maxQuantity, item.price, item.merchandiseTaxPercent);
         }
     }, [maxQuantity]);
 

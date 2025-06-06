@@ -1300,7 +1300,8 @@ export class CourseService extends DomainService {
           tooltip: courseMerchandise.tooltip,
           logoURL: courseMerchandise.logoURL,
           qoh: courseMerchandise.qoh,
-          maxQtyToAdd: courseMerchandise.maxQtyToAdd
+          maxQtyToAdd: courseMerchandise.maxQtyToAdd,
+          merchandiseTaxPercent: courseMerchandise.merchandiseTaxPercent,
         })
         .from(courseMerchandise)
         .innerJoin(courses, eq(courseMerchandise.courseId, courses.id))

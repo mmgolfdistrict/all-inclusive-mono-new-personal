@@ -27,7 +27,7 @@ import timezone from "dayjs/plugin/timezone";
 import UTC from "dayjs/plugin/utc";
 import { alias } from "drizzle-orm/mysql-core";
 import { appSettingService } from "../app-settings/initialized";
-import type { CustomerCart, MerchandiseProduct, ProductData } from "../checkout/types";
+import type { CustomerCart, MerchandiseProduct, MerchandiseWithTaxOverride, ProductData } from "../checkout/types";
 import type { NotificationService } from "../notification/notification.service";
 import type { HyperSwitchService } from "../payment-processor/hyperswitch.service";
 import type { SensibleService } from "../sensible/sensible.service";
@@ -3599,6 +3599,16 @@ export class BookingService {
         ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "merchandise")
         ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
 
+    const merchandiseWithTaxOverrideCharge =
+      customerCartData?.cart?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "merchandiseWithTaxOverride")
+        ?.reduce((acc: number, i: any) => acc + i.product_data.metadata.priceWithoutTax, 0) / 100;
+
+    const merchandiseOverriddenTaxAmount =
+      customerCartData?.cart?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "merchandiseWithTaxOverride")
+        ?.reduce((acc: number, i: any) => acc + i.product_data.metadata.taxAmount, 0) / 100;
+
     const charityId = customerCartData?.cart?.cart?.find(
       ({ product_data }: ProductData) => product_data.metadata.type === "charity"
     )?.product_data.metadata.charity_id;
@@ -3640,7 +3650,9 @@ export class BookingService {
       weatherQuoteId,
       paymentId: customerCartData.paymentId,
       cartFeeCharge: cartFeeCharge,
-      merchandiseCharge
+      merchandiseCharge,
+      merchandiseWithTaxOverrideCharge,
+      merchandiseOverriddenTaxAmount
     };
   };
 
@@ -3733,7 +3745,9 @@ export class BookingService {
       weatherQuoteId,
       paymentId,
       cartFeeCharge,
-      merchandiseCharge
+      merchandiseCharge,
+      merchandiseWithTaxOverrideCharge,
+      merchandiseOverriddenTaxAmount
     } = await this.normalizeCartData({
       cartId,
       userId,
@@ -3875,6 +3889,7 @@ export class BookingService {
 
     const additionalTaxes =
       greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal + merchandiseTaxTotal;
+    const merchandiseTotalCharge = merchandiseCharge + merchandiseWithTaxOverrideCharge
 
     if (!teeTime) {
       this.logger.fatal(`tee time not found id: ${teeTimeId}`);
@@ -3933,7 +3948,7 @@ export class BookingService {
         console.log("ERROR in getting appsetting SENSIBLE_NOTE_TO_TEE_SHEET");
       }
 
-      if (merchandiseCharge > 0) {
+      if (merchandiseTotalCharge > 0) {
         details = `${details} - Merchandise has been purchased`
       }
 
@@ -4010,13 +4025,18 @@ export class BookingService {
           });
         }
       }
-      if (additionalNoteFromUser || needRentals || merchandiseCharge > 0) {
+      if (additionalNoteFromUser || needRentals || merchandiseTotalCharge > 0) {
         const merchandiseDetails: { caption: string, qty: number }[] = [];
         const merchandiseData = cart?.cart?.filter(
           (item: ProductData) => item.product_data.metadata.type === "merchandise"
         ) as MerchandiseProduct[];
-        const merchandiseItems = merchandiseData[0]!.product_data.metadata.merchandiseItems;
+        const merchandiseItems = merchandiseData[0]!.product_data.metadata.merchandiseItems ?? [];
         const merchandiseItemIds = merchandiseItems.map((item) => item.id);
+        const merchandiseWithTaxOverrideData = (cart?.cart?.filter(
+          (item: ProductData) => item.product_data.metadata.type === "merchandiseWithTaxOverride"
+        ) as MerchandiseWithTaxOverride[])
+        const merchandiseWithTaxOverrideItems = (merchandiseWithTaxOverrideData[0]?.product_data.metadata.merchandiseItems) ?? [];
+        merchandiseItemIds.push(...merchandiseWithTaxOverrideItems.map((item) => item.id));
         purchasedMerchandise = await db
           .select({
             id: courseMerchandise.id,
@@ -4191,7 +4211,7 @@ export class BookingService {
           weatherQuoteId,
           cartId,
           markupCharge,
-          merchandiseCharge
+          merchandiseCharge: merchandiseTotalCharge
         },
         isWebhookAvailable: teeTime?.isWebhookAvailable ?? false,
         providerBookingIds,
@@ -4202,7 +4222,7 @@ export class BookingService {
           weatherGuaranteeTaxTotal,
           cartFeeTaxPercentTotal,
           additionalTaxes,
-          merchandiseTaxTotal,
+          merchandiseTaxTotal: merchandiseTaxTotal + merchandiseOverriddenTaxAmount,
         },
         source,
         additionalNoteFromUser,
@@ -4972,7 +4992,9 @@ export class BookingService {
       cartFeeCharge,
       teeTimeIds,
       minPlayersPerBooking,
-      merchandiseCharge
+      merchandiseCharge,
+      merchandiseWithTaxOverrideCharge,
+      merchandiseOverriddenTaxAmount
     } = await this.normalizeCartData({
       cartId,
       userId,
@@ -5120,6 +5142,7 @@ export class BookingService {
 
     const additionalTaxes =
       greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal + merchandiseTaxTotal;
+    const merchandiseTotalCharge = merchandiseCharge + merchandiseWithTaxOverrideCharge
 
     if (!firstTeeTime) {
       this.logger.fatal(`tee time not found id: ${teeTimeIdsAsString}`);
@@ -5192,7 +5215,7 @@ export class BookingService {
           console.log("ERROR in getting appsetting SENSIBLE_NOTE_TO_TEE_SHEET");
         }
 
-        if (merchandiseCharge > 0) {
+        if (merchandiseTotalCharge > 0) {
           details = `${details} - Merchandise has been purchased`
         }
 
@@ -5269,14 +5292,19 @@ export class BookingService {
             });
           }
         }
-        if (firstTeeTime.id === teeTime.id && (additionalNoteFromUser || needRentals || merchandiseCharge > 0)) {
+        if (firstTeeTime.id === teeTime.id && (additionalNoteFromUser || needRentals || merchandiseTotalCharge > 0)) {
           const merchandiseDetails: { caption: string, qty: number }[] = [];
           const merchandiseData = cart?.cart?.filter(
             (item: ProductData) => item.product_data.metadata.type === "merchandise"
           ) as MerchandiseProduct[];
 
-          const merchandiseItems = merchandiseData[0]!.product_data.metadata.merchandiseItems;
+          const merchandiseItems = merchandiseData[0]!.product_data.metadata.merchandiseItems ?? [];
           const merchandiseItemIds = merchandiseItems.map((item) => item.id);
+          const merchandiseWithTaxOverrideData = (cart?.cart?.filter(
+            (item: ProductData) => item.product_data.metadata.type === "merchandiseWithTaxOverride"
+          ) as MerchandiseWithTaxOverride[])
+          const merchandiseWithTaxOverrideItems = (merchandiseWithTaxOverrideData[0]?.product_data.metadata.merchandiseItems) ?? [];
+          merchandiseItemIds.push(...merchandiseWithTaxOverrideItems.map((item) => item.id));
 
           purchasedMerchandise = await db
             .select({
@@ -5454,7 +5482,7 @@ export class BookingService {
           weatherQuoteId,
           cartId,
           markupCharge,
-          merchandiseCharge
+          merchandiseCharge: merchandiseTotalCharge
         },
         isWebhookAvailable: firstTeeTime?.isWebhookAvailable ?? false,
         providerBookingIds,
@@ -5465,7 +5493,7 @@ export class BookingService {
           weatherGuaranteeTaxTotal,
           cartFeeTaxPercentTotal,
           additionalTaxes,
-          merchandiseTaxTotal
+          merchandiseTaxTotal: merchandiseTaxTotal + merchandiseOverriddenTaxAmount,
         },
         source,
         additionalNoteFromUser,

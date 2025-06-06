@@ -28,6 +28,7 @@ type MerchandiseData = {
   id: string;
   qty: number;
   price: number;
+  merchandiseTaxPercent?: number | null;
 }[];
 
 interface CheckoutContextType {

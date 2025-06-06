@@ -18,7 +18,7 @@ import createICS from "@golf-district/shared/createICS";
 import type { Event } from "@golf-district/shared/createICS";
 import Logger from "@golf-district/shared/src/logger";
 import dayjs from "dayjs";
-import type { MerchandiseProduct, ProductData } from "../checkout/types";
+import type { MerchandiseProduct, MerchandiseWithTaxOverride, ProductData } from "../checkout/types";
 import type { NotificationService } from "../notification/notification.service";
 import type { SensibleService } from "../sensible/sensible.service";
 import type { ProviderAPI } from "../tee-sheet-provider/sheet-providers";
@@ -427,21 +427,59 @@ export class TokenizeService {
             id: randomUUID(),
             bookingId: isFirstHandGroupBooking ? groupId : bookingId,
             courseMerchandiseId: merchandise.id,
-            qty: merchandise.qty
+            qty: merchandise.qty,
+            merchandiseFeePerItem: merchandise.pricePerItem,
+            merchandiseTaxAmountPerItem: merchandise.taxAmountPerItem
           })
         }
 
         if (purchasedMerchandise?.length > 0) {
           for (const merchandise of purchasedMerchandise) {
             const merchandiseItem = merchandiseItems.find((item) => item.id === merchandise.id);
-            merchandiseItemsToUpdate.push({
-              ...merchandise,
-              qoh: merchandise.qoh !== -1 ? merchandise.qoh - merchandiseItem!.qty : -1
-            })
-            merchandiseDetails.push({
-              caption: merchandise.caption,
-              qty: merchandiseItem?.qty ?? 0
-            })
+            if (merchandiseItem) {
+              merchandiseItemsToUpdate.push({
+                ...merchandise,
+                qoh: merchandise.qoh !== -1 ? merchandise.qoh - merchandiseItem.qty : -1
+              })
+              merchandiseDetails.push({
+                caption: merchandise.caption,
+                qty: merchandiseItem?.qty ?? 0
+              })
+            }
+          }
+        }
+      }
+
+      const merchandiseWithTaxOverrideData = normalizedCartData.cart?.cart?.filter(
+        (item: ProductData) => item.product_data.metadata.type === "merchandiseWithTaxOverride"
+      ) as MerchandiseWithTaxOverride[];
+
+      if (merchandiseWithTaxOverrideData?.length > 0 && merchandiseWithTaxOverrideData[0]!.price > 0) {
+        const merchandiseItems = merchandiseWithTaxOverrideData[0]!.product_data.metadata.merchandiseItems
+        for (const merchandise of merchandiseItems) {
+          merchandiseEntriesToCreate.push({
+            id: randomUUID(),
+            bookingId: isFirstHandGroupBooking ? groupId : bookingId,
+            courseMerchandiseId: merchandise.id,
+            qty: merchandise.qty,
+            merchandiseFeePerItem: merchandise.pricePerItem,
+            merchandiseTaxAmountPerItem: merchandise.taxAmountPerItem
+          })
+        }
+
+        if (purchasedMerchandise?.length > 0) {
+          for (const merchandise of purchasedMerchandise) {
+            const merchandiseItem = merchandiseItems.find((item) => item.id === merchandise.id);
+            if (merchandiseItem) {
+              merchandiseItemsToUpdate.push({
+                ...merchandise,
+                qoh: merchandise.qoh !== -1 ? merchandise.qoh - merchandiseItem.qty : -1
+              })
+              merchandiseDetails.push({
+                caption: merchandise.caption,
+                qty: merchandiseItem?.qty ?? 0
+              })
+            }
           }
         }
       }
