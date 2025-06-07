@@ -1,7 +1,7 @@
 import type { InferInsertModel} from "drizzle-orm";
 import { relations, sql } from "drizzle-orm";
 import {  datetime, varchar } from "drizzle-orm/mysql-core";
-import { mySqlTable } from "./_table";
+import { mySqlTable } from "../schema/_table";
 
 export const phoneCallLogs = mySqlTable(
     "phoneCallLog",

@@ -57,8 +57,6 @@ export const bookings = mySqlTable(
     groupId: varchar("groupId", { length: 36 }),
     totalMerchandiseAmount: int("totalMerchandiseAmount").default(0),
     totalMerchandiseTaxAmount: int("totalMerchandiseTaxAmount").default(0),
-    bookingType: varchar("bookingSource", { length: 50 }).notNull().default("WEB_BASED_BOOKING"),
-    paymentLink:varchar("paymentLink",{length:255})
   },
   (table) => {
     return {
