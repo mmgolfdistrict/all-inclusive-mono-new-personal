@@ -95,9 +95,8 @@ const CardDisplay = ({
         )}
         <aside
           // ref={sidebar}
-          className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[500px] md:h-[100dvh] ${
-            confirmStatus ? "translate-x-0" : "translate-x-full"
-          }`}
+          className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[500px] md:h-[100dvh] ${confirmStatus ? "translate-x-0" : "translate-x-full"
+            }`}
         >
           <div className="relative flex h-full flex-col">
             <div className="flex items-center justify-between p-4">
@@ -117,7 +116,7 @@ const CardDisplay = ({
             <div className="flex h-full flex-col justify-between overflow-y-auto">
               <div className="flex flex-col gap-6 px-0 sm:px-4">
                 <div>
-                  <div className="mt-6  pb-4 text-center text-2xl font-[300] md:text-xl">
+                  <div className="mt-6  pb-4 text-justify text-2xl font-[300] md:text-xl">
                     Are you sure you want to delete this credit card?
                   </div>
                   <div>

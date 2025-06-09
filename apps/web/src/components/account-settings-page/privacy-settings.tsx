@@ -46,7 +46,7 @@ export const PrivacySettings = () => {
       setIsMutating(false);
       toast.error(
         (error as Error).message ??
-          "An error occurred updating privacy settings"
+        "An error occurred updating privacy settings"
       );
     }
   };
@@ -58,7 +58,7 @@ export const PrivacySettings = () => {
     >
       <div>
         <h3 className="text-[18px]  md:text-[24px]">Privacy Settings</h3>
-        <p className=" text-[14px] text-primary-gray md:text-[16px]">
+        <p className="text-justify text-[14px] text-primary-gray md:text-[16px]">
           Set how you&apos;d like your profile information to appear.
         </p>
       </div>
@@ -78,17 +78,15 @@ export const PrivacySettings = () => {
               key={index}
               value={value}
               choosePrivacy={choosePrivacy}
-              className={`${
-                index === 0
-                  ? "rounded-l-full border-b border-l border-t border-stroke"
-                  : index === Options.length - 1
+              className={`${index === 0
+                ? "rounded-l-full border-b border-l border-t border-stroke"
+                : index === Options.length - 1
                   ? "rounded-r-full border-b border-r border-t border-stroke"
                   : "border border-stroke"
-              } px-[2.65rem] ${
-                isMutating
+                } px-[2.65rem] ${isMutating
                   ? "pointer-events-none animate-pulse cursor-not-allowed"
                   : ""
-              }}`}
+                }}`}
             />
           ))}
         </ToggleGroup.Root>
@@ -115,9 +113,8 @@ export const Item = ({
     <ToggleGroup.Item
       value={value}
       onClick={() => void choosePrivacy(value)}
-      className={`bg-white px-4 py-2 text-left capitalize text-[14px] text-primary-gray transition-colors data-[state=on]:bg-primary data-[state=on]:text-white ${
-        className ?? ""
-      }`}
+      className={`bg-white px-4 py-2 text-left capitalize text-[14px] text-primary-gray transition-colors data-[state=on]:bg-primary data-[state=on]:text-white ${className ?? ""
+        }`}
       data-testid="toggle-item-id"
       data-qa={value}
     >

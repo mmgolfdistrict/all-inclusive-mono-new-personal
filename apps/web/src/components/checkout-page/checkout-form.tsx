@@ -1584,7 +1584,7 @@ export const CheckoutForm = ({
                 />
               </h2>
 
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 text-justify">
                 {isMobile && !isExpanded
                   ? `${charityData?.charityDescription?.slice(0, 50)}...`
                   : charityData?.charityDescription}
