@@ -85,12 +85,14 @@ interface TeeTimeSearchObject {
   markupTaxPercent: number;
   pricePerGolferForGroup?: number;
   merchandiseTaxPercent: number;
+  advancedBookingFeesPerPlayer?: number;
 }
 
 interface MarkupData {
   toDay: number;
   fromDay: number;
   markUp: number;
+  advancedBookingFeePerPlayer: number;
 }
 
 interface CheckTeeTimesAvailabilityParams {
@@ -566,6 +568,9 @@ export class SearchService extends CacheService {
     // });
 
     const markupFeesFinal = filteredDate.length ? filteredDate[0].markUpFees : tee.markupFeesFixedPerPlayer;
+    const advancedBookingFeesPerPlayer = (filteredDate.length ?
+      filteredDate[0].advancedBookingFeePerPlayer : 0);
+    const advancedBookingFeesPerPlayerDecimal = advancedBookingFeesPerPlayer / 100;
     const markupFeesToBeUsed = markupFeesFinal / 100;
     const watchers = await this.database
       .select({
@@ -607,11 +612,11 @@ export class SearchService extends CacheService {
         ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${tee.logo.key}.${tee.logo.extension}`
         : "/defaults/default-profile.webp",
       availableSlots: tee.firstPartySlots,
-      pricePerGolfer: tee.greenFee / 100 + tee.cartFee / 100 + markupFeesToBeUsed,
+      pricePerGolfer: tee.greenFee / 100 + tee.cartFee / 100 + markupFeesToBeUsed + advancedBookingFeesPerPlayerDecimal,
       markupFees: markupFeesToBeUsed * 100,
       greenFeeTaxPerPlayer: tee.greenFeeTax,
       cartFeeTaxPerPlayer: tee.cartFeeTax,
-      greenFee: tee.greenFee,
+      greenFee: tee.greenFee + advancedBookingFeesPerPlayer,
       cartFee: tee.cartFee,
       teeTimeId: tee.id,
       userWatchListed: tee.favorites ? true : false,
@@ -635,7 +640,8 @@ export class SearchService extends CacheService {
       cartFeeTaxPercent: tee.cartFeeTaxPercent,
       weatherGuaranteeTaxPercent: tee.weatherGuaranteeTaxPercent,
       markupTaxPercent: tee.markupTaxPercent,
-      merchandiseTaxPercent: tee.merchandiseTaxPercent ?? 0
+      merchandiseTaxPercent: tee.merchandiseTaxPercent ?? 0,
+      advancedBookingFeesPerPlayer: advancedBookingFeesPerPlayer ?? 0
     };
     return res;
   };
@@ -1020,7 +1026,7 @@ export class SearchService extends CacheService {
   getTeeTimesPriceWithRange = async (
     courseId: string,
     timeZoneCorrection: number
-  ): Promise<{ toDayFormatted: string; fromDayFormatted: string; markUpFees: number }[]> => {
+  ): Promise<{ toDayFormatted: string; fromDayFormatted: string; markUpFees: number, advancedBookingFeePerPlayer: number }[]> => {
     const markupCacheKey = `${courseId}-markup`;
 
     let markupData: MarkupData[] | null = await cacheManager.get(markupCacheKey);
@@ -1043,7 +1049,7 @@ export class SearchService extends CacheService {
 
     const currentDate = dayjs();
     const currentdateWithTimeZone = currentDate.add(timeZoneCorrection ?? 0, "hour");
-    const priceAccordingToDate: { toDayFormatted: string; fromDayFormatted: string; markUpFees: number }[] =
+    const priceAccordingToDate: { toDayFormatted: string; fromDayFormatted: string; markUpFees: number, advancedBookingFeePerPlayer: number }[] =
       [];
 
     markupData.forEach((el) => {
@@ -1056,6 +1062,7 @@ export class SearchService extends CacheService {
         toDayFormatted: toDay.format("ddd, DD MMM YYYY HH:mm:ss [GMT]"),
         fromDayFormatted: fromDay.format("ddd, DD MMM YYYY HH:mm:ss [GMT]"),
         markUpFees: el.markUp,
+        advancedBookingFeePerPlayer: el.advancedBookingFeePerPlayer
       });
     });
 
@@ -1509,6 +1516,9 @@ export class SearchService extends CacheService {
       ? filteredDate[0].markUpFees
       : courseDataIfAvailable.markupFees;
     const markupFeesToBeUsed = markupFeesFinal / 100;
+    const advancedBookingFeesPerPlayer = (filteredDate.length ?
+      filteredDate[0].advancedBookingFeePerPlayer : 0);
+    const advancedBookingFeesPerPlayerDecimal = advancedBookingFeesPerPlayer / 100;
     const firstHandResults = teeTimesData.map((teeTime) => {
       return {
         ...teeTime,
@@ -1527,11 +1537,13 @@ export class SearchService extends CacheService {
         firstOrSecondHandTeeTime: TeeTimeType.FIRST_HAND,
         isListed: false,
         minimumOfferPrice: teeTime.greenFee / 100, //add more fees?
-        pricePerGolfer: teeTime.greenFee / 100 + teeTime.cartFee / 100 + markupFeesToBeUsed, //add more fees?
+        pricePerGolfer: teeTime.greenFee / 100 + teeTime.cartFee / 100 + markupFeesToBeUsed + advancedBookingFeesPerPlayerDecimal, //add more fees?
         isOwned: false,
         firstHandPurchasePrice: 0,
         bookingIds: [],
         listingId: undefined,
+        greenFee: teeTime.greenFee + advancedBookingFeesPerPlayer,
+        advancedBookingFeesPerPlayer: advancedBookingFeesPerPlayer ?? 0,
       };
     });
 
@@ -1992,6 +2004,9 @@ export class SearchService extends CacheService {
           ? filteredDate[0]?.markUpFees
           : courseSettingResponse?.fixedMarkup;
         const markupFeesToBeUsed = (markupFeesFinal ?? 0) / 100;
+        const advancedBookingFeesPerPlayer = (filteredDate.length ?
+          (filteredDate[0]?.advancedBookingFeePerPlayer ?? 0) : 0);
+        const advancedBookingFeesPerPlayerDecimal = advancedBookingFeesPerPlayer / 100;
 
         console.log("fetching tee times for date", date);
         const teeTimesResponse = await teeTimesQuery
@@ -2073,7 +2088,7 @@ export class SearchService extends CacheService {
             pricePerGolfer = window.reduce((acc, teeTime) => {
               return Math.max(
                 acc,
-                (teeTime.greenFeePerPlayer + teeTime.cartFeePerPlayer) / 100 + markupFeesToBeUsed
+                (teeTime.greenFeePerPlayer + teeTime.cartFeePerPlayer) / 100 + markupFeesToBeUsed + advancedBookingFeesPerPlayerDecimal
               );
             }, 0);
           } else if (groupBookingPriceSelectionMethod === "SUM") {
@@ -2081,7 +2096,7 @@ export class SearchService extends CacheService {
               const players = Math.min(remainingPlayers, teeTime.availableFirstHandSpots);
               remainingPlayers -= players;
               return (
-                acc + (((teeTime.greenFeePerPlayer + teeTime.cartFeePerPlayer) / 100 + markupFeesToBeUsed) * players)
+                acc + (((teeTime.greenFeePerPlayer + teeTime.cartFeePerPlayer) / 100 + markupFeesToBeUsed + advancedBookingFeesPerPlayerDecimal) * players)
               );
             }, 0);
             pricePerGolfer = totalPrice / golferCount;
@@ -2203,6 +2218,9 @@ export class SearchService extends CacheService {
           ? filteredDate[0].markUpFees
           : tee.markupFeesFixedPerPlayer;
         const markupFeesToBeUsed = markupFeesFinal / 100;
+        const advancedBookingFeesPerPlayer = (filteredDate.length ?
+          filteredDate[0].advancedBookingFeePerPlayer : 0);
+        const advancedBookingFeesPerPlayerDecimal = advancedBookingFeesPerPlayer / 100;
         const watchers = await this.database
           .select({
             userId: favorites.userId,
@@ -2243,11 +2261,11 @@ export class SearchService extends CacheService {
             ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${tee.logo.key}.${tee.logo.extension}`
             : "/defaults/default-profile.webp",
           availableSlots: tee.firstPartySlots,
-          pricePerGolfer: tee.greenFee / 100 + tee.cartFee / 100 + markupFeesToBeUsed,
+          pricePerGolfer: tee.greenFee / 100 + tee.cartFee / 100 + markupFeesToBeUsed + advancedBookingFeesPerPlayerDecimal,
           markupFees: markupFeesToBeUsed * 100,
           greenFeeTaxPerPlayer: tee.greenFeeTax,
           cartFeeTaxPerPlayer: tee.cartFeeTax,
-          greenFee: tee.greenFee,
+          greenFee: tee.greenFee + advancedBookingFeesPerPlayer,
           cartFee: tee.cartFee,
           teeTimeId: tee.id,
           userWatchListed: tee.favorites ? true : false,
@@ -2272,6 +2290,7 @@ export class SearchService extends CacheService {
           weatherGuaranteeTaxPercent: tee.weatherGuaranteeTaxPercent,
           markupTaxPercent: tee.markupTaxPercent,
           merchandiseTaxPercent: tee.merchandiseTaxPercent ?? 0,
+          advancedBookingFeesPerPlayer: advancedBookingFeesPerPlayer ?? 0,
         };
         return res;
       })

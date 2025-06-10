@@ -336,7 +336,8 @@ export class CheckoutService {
       "weatherGuaranteeTaxPercent",
       "markupTaxPercent",
       "merchandiseTaxPercent",
-      "merchandiseWithTaxOverride"
+      "merchandiseWithTaxOverride",
+      "advanced_booking_fees_per_player"
     ];
 
     let total = customerCart.cart
@@ -375,6 +376,10 @@ export class CheckoutService {
       customerCartData?.cart
         ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "merchandiseWithTaxOverride")
         ?.reduce((acc: number, i: any) => acc + i.product_data.metadata.taxAmount, 0) / 100;
+    const advancedBookingAmount =
+      (customerCartData?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "advanced_booking_fees_per_player")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0)) ?? 0;
     if (isFirstHand.length) {
       if (isFirstHand[0]?.product_data.metadata.type === "first_hand") {
         const teetimeId = customerCart?.teeTimeId ?? "";
@@ -398,7 +403,7 @@ export class CheckoutService {
           });
         const playerCount = isFirstHand[0]?.product_data.metadata.number_of_bookings;
         const greenFeeTaxTotal =
-          ((teeTime?.greenFees ?? 0) / 100) * ((teeTime?.greenFeeTaxPercent ?? 0) / 100 / 100) * playerCount;
+          (((teeTime?.greenFees ?? 0) + advancedBookingAmount) / 100) * ((teeTime?.greenFeeTaxPercent ?? 0) / 100 / 100) * playerCount;
         const markupTaxTotal = (markupCharge / 100) * ((teeTime?.markupTaxPercent ?? 0) / 100) * playerCount;
         const weatherGuaranteeTaxTotal =
           (sensibleCharge / 100) * ((teeTime?.weatherGuaranteeTaxPercent ?? 0) / 100);
@@ -472,7 +477,7 @@ export class CheckoutService {
         }
 
         const greenFeeTaxTotal =
-          ((greenFees ?? 0) / 100) * ((teeTime?.greenFeeTaxPercent ?? 0) / 100 / 100) * playerCount;
+          (((teeTime?.greenFees ?? 0) + advancedBookingAmount) / 100) * ((teeTime?.greenFeeTaxPercent ?? 0) / 100 / 100) * playerCount;
         const markupTaxTotal = (markupCharge / 100) * ((teeTime?.markupTaxPercent ?? 0) / 100) * playerCount;
         const weatherGuaranteeTaxTotal =
           (sensibleCharge / 100) * ((teeTime?.weatherGuaranteeTaxPercent ?? 0) / 100);
@@ -641,7 +646,8 @@ export class CheckoutService {
       "weatherGuaranteeTaxPercent",
       "markupTaxPercent",
       "merchandiseTaxPercent",
-      "merchandiseWithTaxOverride"
+      "merchandiseWithTaxOverride",
+      "advanced_booking_fees_per_player"
     ];
 
     let total: number = customerCart.cart
@@ -680,6 +686,10 @@ export class CheckoutService {
       customerCartData?.cart
         ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "merchandiseWithTaxOverride")
         ?.reduce((acc: number, i: any) => acc + i.product_data.metadata.taxAmount, 0) / 100;
+    const advancedBookingAmount =
+      (customerCartData?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "advanced_booking_fees_per_player")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0)) ?? 0;
     if (isFirstHand.length) {
       if (isFirstHand[0]?.product_data.metadata.type === "first_hand") {
         const teetimeId = customerCart?.teeTimeId ?? "";
@@ -703,7 +713,7 @@ export class CheckoutService {
           });
         const playerCount = isFirstHand[0]?.product_data.metadata.number_of_bookings;
         const greenFeeTaxTotal =
-          ((teeTime?.greenFees ?? 0) / 100) * ((teeTime?.greenFeeTaxPercent ?? 0) / 100 / 100) * playerCount;
+          (((teeTime?.greenFees ?? 0) + advancedBookingAmount) / 100) * ((teeTime?.greenFeeTaxPercent ?? 0) / 100 / 100) * playerCount;
         const markupTaxTotal = (markupCharge / 100) * ((teeTime?.markupTaxPercent ?? 0) / 100) * playerCount;
         const weatherGuaranteeTaxTotal =
           (sensibleCharge / 100) * ((teeTime?.weatherGuaranteeTaxPercent ?? 0) / 100);
@@ -776,7 +786,7 @@ export class CheckoutService {
         }
 
         const greenFeeTaxTotal =
-          ((greenFees ?? 0) / 100) * ((teeTime?.greenFeeTaxPercent ?? 0) / 100 / 100) * playerCount;
+          (((teeTime?.greenFees ?? 0) + advancedBookingAmount) / 100) * ((teeTime?.greenFeeTaxPercent ?? 0) / 100 / 100) * playerCount;
         const markupTaxTotal = (markupCharge / 100) * ((teeTime?.markupTaxPercent ?? 0) / 100) * playerCount;
         const weatherGuaranteeTaxTotal =
           (sensibleCharge / 100) * ((teeTime?.weatherGuaranteeTaxPercent ?? 0) / 100);
