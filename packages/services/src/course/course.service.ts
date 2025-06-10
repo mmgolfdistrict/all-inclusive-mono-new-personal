@@ -405,11 +405,11 @@ export class CourseService extends DomainService {
         isOnlyGroupOfFourAllowed,
         isAllowSpecialRequest: parseSettingValue(
           isAllowSpecialRequest?.value ?? "",
-          isAllowSpecialRequest?.datatype ?? "boolean"
+          isAllowSpecialRequest?.datatype ?? "string"
         ),
         isAllowClubRental: parseSettingValue(
           isAllowClubRental?.value ?? "",
-          isAllowClubRental?.datatype ?? "boolean"
+          isAllowClubRental?.datatype ?? "string"
         ),
         isAllowCourseSwitching: parseSettingValue(
           isAllowCourseSwitching?.value ?? "",
