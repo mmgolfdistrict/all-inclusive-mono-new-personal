@@ -43,13 +43,13 @@ export const Confirmation = ({
       // void router.replace(`/${params.course}`);
       // console.log("button pressed");
       if (typeof params.course === 'string') {
-      console.log(params.course);
-      void router.replace(`/${params.course}`);
-      console.log("button pressed");
-    } else {
-      console.log("Course param missing or invalid");
-      void router.replace('/dashboard'); // fallback route
-    }
+        console.log(params.course);
+        void router.replace(`/${params.course}`);
+        console.log("button pressed");
+      } else {
+        console.log("Course param missing or invalid");
+        void router.replace('/dashboard'); // fallback route
+      }
     };
     window.addEventListener('popstate', handlePopState);
     return () => {
@@ -130,7 +130,7 @@ export const Confirmation = ({
                 {isEmailSend ? (
                   <Fragment>
                     <div>
-                      <span className="text-yellow-600 font-semibold text-center ">
+                      <span className="text-yellow-600 font-semibold text-justify">
                         Your booking is confirmed though we are unable to send
                         the email. Rest assured our customer service
                         representative will call you shortly
@@ -147,12 +147,12 @@ export const Confirmation = ({
             <h1 className="text-[24px] md:text-[32px]">
               Thanks for your purchase
             </h1>
-            <p className="text-[14px] text-primary-gray md:text-[16px]">
+            <p className="text-justify text-[14px] text-primary-gray md:text-[16px]">
               Your tee time will be viewable in My Tee Box. Please note that all
               purchases are final. You can manage or update the players in your
               party at any time before the round.
             </p>
-            <p className="text-[14px] text-primary-gray md:text-[16px]">
+            <p className="text-justify text-[14px] text-primary-gray md:text-[16px]">
               Add golfers to your tee time by entering their names, selecting
               them by their Golf District handle, or inviting them via email.
             </p>
@@ -171,8 +171,8 @@ export const Confirmation = ({
           <br />
           <br />
         </div>
-        <div className="flex w-full flex-col items-center justify-center mb-4 text-[14px] md:text-[16px]">
-          <p className="text-red text-center">
+        <div className="text-justify flex w-full flex-col items-center justify-center mb-4 text-[14px] md:text-[16px]">
+          <p className="text-red text-justify">
             You should receive a confirmation email. If you don’t see the
             confirmation email within the next 5 mins, please check your Junk
             Mail or Spam folder. Remember to add no-reply@golfdistrict.com to
@@ -196,7 +196,7 @@ export const Confirmation = ({
           </div>
         </div>
       </div>
-      <p className="mt-4 text-[14px] text-primary-gray md:text-[16px] font-semibold text-center">
+      <p className="mt-4 text-[14px] text-primary-gray md:text-[16px] font-semibold text-justify">
         Tip: If you know you can’t make your time, the earlier you can list, the
         greater the chance it sells.
       </p>

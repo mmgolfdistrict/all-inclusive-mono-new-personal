@@ -126,7 +126,7 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
               </div> */}
               {user?.stripeConnectAccountStatus === "CONNECTED" ||
                 associatedBanks?.length ? null : (
-                <div className="text-primary-gray">
+                <div className="text-justify text-primary-gray">
                   You need to connect your account to transfer your balance.
                 </div>
               )}

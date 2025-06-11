@@ -553,7 +553,7 @@ export const ManageOwnedTeeTime = ({
               </div>
             </>
           ) : null}
-          <p className="mt-4 mb-2 text-[14px] text-primary-gray md:text-[16px] font-semibold text-left">
+          <p className="mt-4 mb-2 text-[14px] text-primary-gray md:text-[16px] font-semibold text-justify">
             Tip: If you know you can’t make your time, the earlier you can
             list, the greater the chance it sells.
           </p>
@@ -655,7 +655,7 @@ const TeeTimeItem = ({
       </div>
       <div className="flex text-[14px] font-[300]">
         <div className="w-[55px]" />
-        <div className="text-prmiary-gray">
+        <div className="text-justify text-prmiary-gray">
           You purchased for{" "}
           <span className="font-semibold text-secondary-black">
             {formatMoney(purchasedFor)}
@@ -665,7 +665,7 @@ const TeeTimeItem = ({
       {sensiblePurchasedFor !== undefined && sensiblePurchasedFor !== 0 && (
         <div className="flex text-[14px] font-[300]">
           <div className="w-[55px]" />
-          <div className="text-prmiary-gray">
+          <div className="text-justify text-prmiary-gray">
             Weather guarantee purchased for{" "}
             <span className="font-semibold text-secondary-black">
               {formatMoney(sensiblePurchasedFor / 100)}
