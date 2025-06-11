@@ -39,7 +39,7 @@ const OptionDetails = ({
   return (
     <div className="container mx-auto ">
       <div className="flex justify-between">
-        <h3 className="font mb-4">Select an Account to Cashout:</h3>
+        <h3 className="font mb-2 text-gray-600">Select an Account to Cashout:</h3>
         {disabledCashOut && (
           <Tooltip
             trigger={<Info className="h-[20px] w-[20px]" />}
@@ -82,7 +82,7 @@ const OptionDetails = ({
       {selectedOption && (
         <div className="mt-4">
           {/* <h2 className="text-xl font-semibold">{account?.accountNumber}</h2> */}
-          <div className="container mx-auto py-4">
+          <div className="container mx-auto py-2">
             <div className="flex items-center justify-between">
               <label htmlFor="amount" className="mr-4">
                 Amount:
