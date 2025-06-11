@@ -78,50 +78,48 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
       <section className="h-full mx-auto flex w-full flex-col gap-4 bg-white px-3 py-2 mb-2  md:rounded-xl md:p-6 md:py-4" id="add-bank-account-account-settings">
         <div>
           <h3 className="text-[18px]  md:text-[24px]">Balance</h3>
-
+          <div
+            // className="py-4"
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-evenly",
+              width: "100%",
+            }}
+          >
+            <div className="flex justify-between items-center">
+              <div className="flex">
+                <p className="text-gray-600 md:text-[18px]">
+                  Processing Funds:&nbsp;
+                </p>
+                <p className="text-gray-800 md:text-[18px]">{`$${(
+                  (recievableData?.availableAmount ?? 0) -
+                  (recievableData?.withdrawableAmount ?? 0)
+                ).toFixed(2) || 0
+                  }`}</p>
+              </div>
+              <Tooltip
+                trigger={<Info className="h-[16px] w-[16px]" />}
+                content="These funds are currently being processed and will be available for withdrawal soon. Processing typically takes 5-8 business days."
+              />
+            </div>
+            <div className="flex justify-between items-center">
+              <div className="flex">
+                <p className="text-gray-600 md:text-[18px]">
+                  Available Funds:&nbsp;
+                </p>
+                <p className="text-gray-800 md:text-[18px]">{`$${recievableData?.withdrawableAmount.toFixed(2) || 0
+                  }`}</p>
+              </div>
+              <Tooltip
+                trigger={<Info className="h-[16px] w-[16px]" />}
+                content="These funds have completed processing and are now available for withdrawal. You can transfer these funds to your bank account. All bank information is handled through a secure PCI compliant third party and handled with care."
+              />
+            </div>
+          </div>
         </div>
         <div className="flex flex-col items-center gap-2 lg:flex-row">
           <div className="flex flex-col w-full h-full items-center justify-center gap-2 ">
-            <div
-              // className="py-4"
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-evenly",
-                width: "100%",
-              }}
-            >
-              <div className="flex justify-between items-center">
-                <div className="flex">
-                  <p className="text-gray-600 md:text-[18px]">
-                    Processing Funds:&nbsp;
-                  </p>
-                  <p className="text-gray-800 md:text-[18px]">{`$${(
-                    (recievableData?.availableAmount ?? 0) -
-                    (recievableData?.withdrawableAmount ?? 0)
-                  ).toFixed(2) || 0
-                    }`}</p>
-                </div>
-                <Tooltip
-                  trigger={<Info className="h-[16px] w-[16px]" />}
-                  content="These funds are currently being processed and will be available for withdrawal soon. Processing typically takes 5-8 business days."
-                />
-              </div>
-              <div className="flex justify-between items-center">
-                <div className="flex">
-                  <p className="text-gray-600 md:text-[18px]">
-                    Available Funds:&nbsp;
-                  </p>
-                  <p className="text-gray-800 md:text-[18px]">{`$${recievableData?.withdrawableAmount.toFixed(2) || 0
-                    }`}</p>
-                </div>
-                <Tooltip
-                  trigger={<Info className="h-[16px] w-[16px]" />}
-                  content="These funds have completed processing and are now available for withdrawal. You can transfer these funds to your bank account. All bank information is handled through a secure PCI compliant third party and handled with care."
-                />
-              </div>
-            </div>
-
             <div className="flex flex-col items-center gap-2 md:flex-row md:items-center">
               {/* <div className="text-[24px] text-secondary-black md:text-[32px]">
                 {formatMoney(user?.balance ?? 0 / 100)}
