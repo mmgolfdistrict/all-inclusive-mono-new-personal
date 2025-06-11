@@ -451,7 +451,7 @@ const ListTeeTimeDetail = ({
               shouldDisplayValue={true}
             />}
         </div>
-        <div className="bg-secondary-white">
+        <div className="text-justify bg-secondary-white">
           If you purchased weather protection, you will receive a full
           refund. Any remaining owned rounds for this time will be subject
           to raincheck policy.
@@ -514,20 +514,20 @@ const ListTeeTimeDetail = ({
             )}
           </div>
         </div>
-          {course?.supportsSellingMerchandise || (selectedTeeTime?.totalMerchandiseAmount ?? 0) > 0 ? <div className="flex justify-between">
-            <div className="font-[300] text-primary-gray">
-              Merchandise Purchase Refund{" "}
-              <Tooltip
-                trigger={<Info className="h-[14px] w-[14px]" />}
-                content="Merchandise Purchase amount to be refunded"
-              />
-            </div>
-            <div className="text-secondary-black">
-              {formatMoney(
-                (selectedTeeTime?.totalMerchandiseAmount ?? 0) / 100
-              )}
-            </div>
-          </div> : null}
+        {course?.supportsSellingMerchandise || (selectedTeeTime?.totalMerchandiseAmount ?? 0) > 0 ? <div className="flex justify-between">
+          <div className="font-[300] text-primary-gray">
+            Merchandise Purchase Refund{" "}
+            <Tooltip
+              trigger={<Info className="h-[14px] w-[14px]" />}
+              content="Merchandise Purchase amount to be refunded"
+            />
+          </div>
+          <div className="text-secondary-black">
+            {formatMoney(
+              (selectedTeeTime?.totalMerchandiseAmount ?? 0) / 100
+            )}
+          </div>
+        </div> : null}
         <div className="flex justify-between">
           <div className="font-[300] text-primary-gray">
             You Receive after Sale

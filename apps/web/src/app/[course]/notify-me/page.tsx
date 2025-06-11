@@ -221,7 +221,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
                 <h2 className="text-[14px] md:text-[18px] font-semibold">
                   Set Your Preferences
                 </h2>
-                <p className="text-[12px] md:text-[16px] text-gray-600">
+                <p className="text-justify text-[12px] md:text-[16px] text-gray-600">
                   Choose your ideal play date, time range, and number of
                   players.
                 </p>
@@ -237,7 +237,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
                 <h2 className="text-[14px] md:text-[18px] font-semibold">
                   Receive Alerts Instantly
                 </h2>
-                <p className="text-[12px] md:text-[16px] text-gray-600">
+                <p className="text-justify text-[12px] md:text-[16px] text-gray-600">
                   We will alert you when a tee time becomes available or listed
                   for sale.
                 </p>
@@ -253,7 +253,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
                 <h2 className="text-[14px] md:text-[18px] font-semibold">
                   Book in Seconds
                 </h2>
-                <p className="text-[12px] md:text-[16px] text-gray-600">
+                <p className="text-justify text-[12px] md:text-[16px] text-gray-600">
                   Act fast to lock in your spots before someone else does!
                 </p>
               </div>
@@ -268,7 +268,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
                 <h2 className="text-[14px] md:text-[18px] font-semibold">
                   Enjoy Your Round
                 </h2>
-                <p className="text-[12px] md:text-[16px] text-gray-600">
+                <p className="text-justify text-[12px] md:text-[16px] text-gray-600">
                   Confirm your bookings, hit the greens, and make the most of
                   your day!
                 </p>
@@ -455,7 +455,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
             <Bell width="15px" />
             Get Alerted
           </FilledButton>
-          <div className="flex justify-center items-center mt-2 italic text-primary-gray text-[12px] md:text-[16px] px-4 py-2 md:px-8 md:py-6">
+          <div className="flex justify-center items-center text-justify mt-2 italic text-primary-gray text-[12px] md:text-[16px] px-4 py-2 md:px-8 md:py-6">
             <p>
               Bookings are paid in advance and non-refundable. If plans change
               simply list your time for sale, and easily cash out.

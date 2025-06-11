@@ -62,7 +62,7 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
       } else {
         toast.error(
           (response as Error).message ??
-            "Could not request cashout at this moment. Please try later."
+          "Could not request cashout at this moment. Please try later."
         );
       }
     } catch (error) {
@@ -75,10 +75,10 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
   return (
     <>
       <Modal isOpen={modalOpen} onClose={closeModal} />
-      <section className="h-full mx-auto flex w-full flex-col gap-6 bg-white px-3 py-2 mb-2  md:rounded-xl md:p-6 md:py-4"  id="add-bank-account-account-settings">
+      <section className="h-full mx-auto flex w-full flex-col gap-6 bg-white px-3 py-2 mb-2  md:rounded-xl md:p-6 md:py-4" id="add-bank-account-account-settings">
         <div>
           <h3 className="text-[18px]  md:text-[24px]">Balance</h3>
-          <p className=" text-[14px] text-primary-gray md:text-[16px]">
+          <p className="text-justify text-[14px] text-primary-gray md:text-[16px]">
             You can cashout once a day up to $3000.
           </p>
         </div>
@@ -98,12 +98,11 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
                   <p className="text-gray-600 md:text-[24px]">
                     Processing Funds:&nbsp;
                   </p>
-                  <p className="text-gray-800 md:text-[24px]">{`$${
-                    (
-                      (recievableData?.availableAmount ?? 0) -
-                      (recievableData?.withdrawableAmount ?? 0)
-                    ).toFixed(2) || 0
-                  }`}</p>
+                  <p className="text-gray-800 md:text-[24px]">{`$${(
+                    (recievableData?.availableAmount ?? 0) -
+                    (recievableData?.withdrawableAmount ?? 0)
+                  ).toFixed(2) || 0
+                    }`}</p>
                 </div>
                 <Tooltip
                   trigger={<Info className="h-[20px] w-[20px]" />}
@@ -115,9 +114,8 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
                   <p className="text-gray-600 md:text-[24px]">
                     Available Funds:&nbsp;
                   </p>
-                  <p className="text-gray-800 md:text-[24px]">{`$${
-                    recievableData?.withdrawableAmount.toFixed(2) || 0
-                  }`}</p>
+                  <p className="text-gray-800 md:text-[24px]">{`$${recievableData?.withdrawableAmount.toFixed(2) || 0
+                    }`}</p>
                 </div>
                 <Tooltip
                   trigger={<Info className="h-[20px] w-[20px]" />}
@@ -131,22 +129,21 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
                 {formatMoney(user?.balance ?? 0 / 100)}
               </div> */}
               {user?.stripeConnectAccountStatus === "CONNECTED" ||
-              associatedBanks?.length ? null : (
-                <div className="text-primary-gray">
+                associatedBanks?.length ? null : (
+                <div className="text-justify text-primary-gray">
                   You need to connect your account to transfer your balance.
                 </div>
               )}
             </div>
 
             <FilledButton
-           
+
               onClick={openModal}
               disabled={connectAccount.isLoading}
-              className={`${
-                connectAccount.isLoading
-                  ? "animate-pulse cusor-not-allowed"
-                  : ""
-              }`}
+              className={`${connectAccount.isLoading
+                ? "animate-pulse cusor-not-allowed"
+                : ""
+                }`}
               data-testid="connect-button-id"
             >
               {associatedBanks?.length

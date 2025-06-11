@@ -719,7 +719,7 @@ export default function CourseHomePage() {
             <div className="flex justify-between gap-4  px-4 md:px-0">
               <div className="text-secondary-black">
                 {/* Showing {count?.toLocaleString() ?? "0"} tee times{" "} */}
-                <span className="text-sm text-primary-gray">
+                <span className="text-justify text-sm text-primary-gray">
                   All times shown in course time zone
                 </span>
               </div>
@@ -793,7 +793,7 @@ export default function CourseHomePage() {
             </div>
             <div className="text-secondary-black w-[50%] text-center">
               {/* Showing {count?.toLocaleString() ?? "0"} tee times{" "} */}
-              <span className="text-sm text-primary-gray">
+              <span className="text-justify text-sm text-primary-gray">
                 All times shown in course time zone
               </span>
             </div>
