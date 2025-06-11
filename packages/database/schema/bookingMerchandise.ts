@@ -14,8 +14,8 @@ export const bookingMerchandise = mySqlTable('bookingMerchandise', {
   lastUpdatedDateTime: datetime('lastUpdatedDateTime', { mode: 'string', fsp: 3 })
     .default(sql`CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)`)
     .notNull(),
-  merchandiseAmount: int("merchandiseAmount").default(0),
-  merchandiseTaxAmount: int("merchandiseTaxAmount").default(0),
+  merchandiseAmountPerItem: int("merchandiseAmountPerItem").default(0),
+  totalMerchandiseItemTaxAmount: int("totalMerchandiseItemTaxAmount").default(0),
 },
   (table) => ({
     bookingIdIdx: index("bookingMerchandise_bookingId_idx").on(table.bookingId),
