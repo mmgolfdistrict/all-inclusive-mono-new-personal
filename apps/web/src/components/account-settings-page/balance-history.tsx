@@ -62,7 +62,7 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
       } else {
         toast.error(
           (response as Error).message ??
-            "Could not request cashout at this moment. Please try later."
+          "Could not request cashout at this moment. Please try later."
         );
       }
     } catch (error) {
@@ -75,17 +75,15 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
   return (
     <>
       <Modal isOpen={modalOpen} onClose={closeModal} />
-      <section className="h-full mx-auto flex w-full flex-col gap-6 bg-white px-3 py-2 mb-2  md:rounded-xl md:p-6 md:py-4"  id="add-bank-account-account-settings">
+      <section className="h-full mx-auto flex w-full flex-col gap-4 bg-white px-3 py-2 mb-2  md:rounded-xl md:p-6 md:py-4" id="add-bank-account-account-settings">
         <div>
           <h3 className="text-[18px]  md:text-[24px]">Balance</h3>
-          <p className=" text-[14px] text-primary-gray md:text-[16px]">
-            You can cashout once a day up to $3000.
-          </p>
+
         </div>
         <div className="flex flex-col items-center gap-2 lg:flex-row">
           <div className="flex flex-col w-full h-full items-center justify-center gap-2 ">
             <div
-              className="py-4"
+              // className="py-4"
               style={{
                 display: "flex",
                 flexDirection: "column",
@@ -95,32 +93,30 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
             >
               <div className="flex justify-between items-center">
                 <div className="flex">
-                  <p className="text-gray-600 md:text-[24px]">
+                  <p className="text-gray-600 md:text-[18px]">
                     Processing Funds:&nbsp;
                   </p>
-                  <p className="text-gray-800 md:text-[24px]">{`$${
-                    (
-                      (recievableData?.availableAmount ?? 0) -
-                      (recievableData?.withdrawableAmount ?? 0)
-                    ).toFixed(2) || 0
-                  }`}</p>
+                  <p className="text-gray-800 md:text-[18px]">{`$${(
+                    (recievableData?.availableAmount ?? 0) -
+                    (recievableData?.withdrawableAmount ?? 0)
+                  ).toFixed(2) || 0
+                    }`}</p>
                 </div>
                 <Tooltip
-                  trigger={<Info className="h-[20px] w-[20px]" />}
+                  trigger={<Info className="h-[16px] w-[16px]" />}
                   content="These funds are currently being processed and will be available for withdrawal soon. Processing typically takes 5-8 business days."
                 />
               </div>
               <div className="flex justify-between items-center">
                 <div className="flex">
-                  <p className="text-gray-600 md:text-[24px]">
+                  <p className="text-gray-600 md:text-[18px]">
                     Available Funds:&nbsp;
                   </p>
-                  <p className="text-gray-800 md:text-[24px]">{`$${
-                    recievableData?.withdrawableAmount.toFixed(2) || 0
-                  }`}</p>
+                  <p className="text-gray-800 md:text-[18px]">{`$${recievableData?.withdrawableAmount.toFixed(2) || 0
+                    }`}</p>
                 </div>
                 <Tooltip
-                  trigger={<Info className="h-[20px] w-[20px]" />}
+                  trigger={<Info className="h-[16px] w-[16px]" />}
                   content="These funds have completed processing and are now available for withdrawal. You can transfer these funds to your bank account. All bank information is handled through a secure PCI compliant third party and handled with care."
                 />
               </div>
@@ -131,7 +127,7 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
                 {formatMoney(user?.balance ?? 0 / 100)}
               </div> */}
               {user?.stripeConnectAccountStatus === "CONNECTED" ||
-              associatedBanks?.length ? null : (
+                associatedBanks?.length ? null : (
                 <div className="text-primary-gray">
                   You need to connect your account to transfer your balance.
                 </div>
@@ -139,14 +135,13 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
             </div>
 
             <FilledButton
-           
+
               onClick={openModal}
               disabled={connectAccount.isLoading}
-              className={`${
-                connectAccount.isLoading
-                  ? "animate-pulse cusor-not-allowed"
-                  : ""
-              }`}
+              className={`${connectAccount.isLoading
+                ? "animate-pulse cusor-not-allowed"
+                : ""
+                }`}
               data-testid="connect-button-id"
             >
               {associatedBanks?.length
