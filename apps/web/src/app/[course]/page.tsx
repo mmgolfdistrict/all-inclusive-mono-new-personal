@@ -712,7 +712,7 @@ export default function CourseHomePage() {
               setValue={handleCourseSwitch}
             />
               : entity?.redirectToCourseFlag ? null : (
-                <GoBack href="/" text={`Back to all ${entity?.name} Courses`} />
+                <GoBack href="/" text={`Back to All Courses`} />
               )}
           </div>
           <div className="flex items-center justify-between w-full">
@@ -724,11 +724,11 @@ export default function CourseHomePage() {
                 </span>
               </div>
             </div>
-            <Select
+            {/* <Select
               value={sortValue}
               setValue={handleSetSortValue}
               values={SortOptions}
-            />
+            /> */}
           </div>
         </div>
       }
@@ -759,7 +759,7 @@ export default function CourseHomePage() {
             <Filters openForecastModal={openForecastModal} />
           </div>
         </div>
-        <div className={`fixed ${isNavExpanded ? "bottom-32" : "bottom-16"} left-1/2 z-10 -translate-x-1/2 md:hidden`}>
+        <div className={`fixed ${isNavExpanded ? "bottom-[9.75rem]" : "bottom-20"} left-1/2 z-10 -translate-x-1/2 md:hidden`}>
           {/* mobile  for filter/sort */}
           <FilterSort toggleFilters={toggleFilters} toggleSort={toggleSort} />
         </div>
@@ -906,14 +906,14 @@ export default function CourseHomePage() {
         </div>
       </section>
 
-      {showSort && (
+      {/* {showSort && (
         <MobileSort
           setShowSort={setShowSort}
           toggleSort={toggleSort}
           setSortValue={handleSetSortValue}
           sortValue={sortValue}
         />
-      )}
+      )} */}
       {showFilters && (
         <MobileFilters
           setShowFilters={setShowFilters}
