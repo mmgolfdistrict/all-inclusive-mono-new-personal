@@ -776,7 +776,7 @@ export default function CourseHomePage() {
                 : "auto",
             }}
           >
-            {/* <div className="w-[50%] flex items-center justify-around">
+            <div className="w-[50%] flex items-center justify-around">
               <button
                 onClick={toggleFilters}
                 className="p-2 text-xs flex items-center space-x-2 flex items-center gap-1 rounded-full border-b border-r border-t border-l border-stroke"
@@ -790,13 +790,13 @@ export default function CourseHomePage() {
               >
                 <Calendar className="h-[14px] w-[14px]" /> Date
               </button>
-            </div> 
-            {/* <div className="text-secondary-black w-[50%] text-center">
-              {/* Showing {count?.toLocaleString() ?? "0"} tee times{" "}
-            <span className="text-justify text-sm text-primary-gray">
-              All times shown in course time zone
-            </span>
-          </div> */}
+            </div>
+            <div className="text-secondary-black w-[50%] text-center">
+              {/* Showing {count?.toLocaleString() ?? "0"} tee times{" "} */}
+              <span className="text-justify text-sm text-primary-gray">
+                All times shown in course time zone
+              </span>
+            </div>
           </div>
 
           {error ? (
@@ -834,6 +834,7 @@ export default function CourseHomePage() {
                         isLoadingTeeTimeDate={isLoadingTeeTimeDate}
                         // datesWithData={datesWithData}
                         allDatesArr={datesArr}
+                        toggleFilters={toggleFilters}
                       />
                     )}
                   </ViewportList>
