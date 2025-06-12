@@ -422,7 +422,7 @@ export const CourseNav = () => {
                   <NavItem
                     href={`/${courseId}/group-booking`}
                     text="Group Booking"
-                    icon={<Megaphone className="w-[20px]" />}
+                    icon={<GroupBooking className="w-[20px]" />}
                     data-testid="group-booking-id"
                     data-test={courseId}
                     onClick={handleResetFilters}
