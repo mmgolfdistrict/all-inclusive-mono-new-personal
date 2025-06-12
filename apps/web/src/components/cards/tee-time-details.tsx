@@ -96,10 +96,10 @@ export const TeeTimeDetails = ({
         path: `/${course?.id}/checkout?teeTimeId=${teeTimeId}&playerCount=${players}`,
         createdAt: new Date().toISOString(),
       });
-      void router.push(`/${course?.id}/login`);
+      router.push(`/${course?.id}/login`);
       return;
     } else {
-      void router.push(
+       router.push(
         `/${course?.id}/checkout?teeTimeId=${teeTimeId}&playerCount=${players}`
       );
     }

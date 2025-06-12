@@ -117,7 +117,7 @@ export const Owned = () => {
 
   useEffect(() => {
     const handlePopState = () => {
-      console.log("Back button pressed");
+      console.log("Back button pressed>>>>>>",courseId);
       void router.push(`/${courseId}`);
     };
     window.addEventListener('popstate', handlePopState);
