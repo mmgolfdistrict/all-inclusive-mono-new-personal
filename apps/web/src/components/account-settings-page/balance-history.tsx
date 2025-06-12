@@ -88,33 +88,34 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
             }}
           >
             <div className="flex justify-between items-center">
-              <div className="flex">
-                <p className="text-gray-600 md:text-[18px]">
-                  Processing Funds:&nbsp;
-                </p>
-                <p className="text-gray-800 md:text-[18px]">{`$${(
+              <div className="font-[300] text-primary-gray">
+                Processing Funds{" "}
+                <Tooltip
+                  trigger={<Info className="h-[16px] w-[16px]" />}
+                  content="These funds are currently being processed and will be available for withdrawal soon. Processing typically takes 5-8 business days."
+                />
+              </div>
+              <div className="text-secondary-black">
+                {`$${(
                   (recievableData?.availableAmount ?? 0) -
                   (recievableData?.withdrawableAmount ?? 0)
                 ).toFixed(2) || 0
-                  }`}</p>
+                  }`}
               </div>
-              <Tooltip
-                trigger={<Info className="h-[16px] w-[16px]" />}
-                content="These funds are currently being processed and will be available for withdrawal soon. Processing typically takes 5-8 business days."
-              />
             </div>
-            <div className="flex justify-between items-center">
-              <div className="flex">
-                <p className="text-gray-600 md:text-[18px]">
-                  Available Funds:&nbsp;
-                </p>
-                <p className="text-gray-800 md:text-[18px]">{`$${recievableData?.withdrawableAmount.toFixed(2) || 0
-                  }`}</p>
+
+            <div className="flex justify-between">
+              <div className="font-[300] text-primary-gray">
+                Available Funds {""}
+                <Tooltip
+                  trigger={<Info className="h-[16px] w-[16px]" />}
+                  content="These funds have completed processing and are now available for withdrawal. You can transfer these funds to your bank account. All bank information is handled through a secure PCI compliant third party and handled with care."
+                />
               </div>
-              <Tooltip
-                trigger={<Info className="h-[16px] w-[16px]" />}
-                content="These funds have completed processing and are now available for withdrawal. You can transfer these funds to your bank account. All bank information is handled through a secure PCI compliant third party and handled with care."
-              />
+              <div className="text-secondary-black">
+                {`$${recievableData?.withdrawableAmount.toFixed(2) || 0
+                  }`}
+              </div>
             </div>
           </div>
         </div>
@@ -139,7 +140,7 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
               className={`${connectAccount.isLoading
                 ? "animate-pulse cusor-not-allowed"
                 : ""
-                }`}
+                } w-full`}
               data-testid="connect-button-id"
             >
               {associatedBanks?.length
