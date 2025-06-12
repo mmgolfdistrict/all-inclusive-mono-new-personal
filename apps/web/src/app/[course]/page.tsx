@@ -759,7 +759,7 @@ export default function CourseHomePage() {
             <Filters openForecastModal={openForecastModal} />
           </div>
         </div>
-        <div className={`fixed ${isNavExpanded ? "bottom-[9.75rem]" : "bottom-20"} left-1/2 z-10 -translate-x-1/2 md:hidden`}>
+        <div className={`fixed ${isNavExpanded ? "bottom-[9.5rem]" : "bottom-[4.75rem]"} left-1/2 z-10 -translate-x-1/2 md:hidden`}>
           {/* mobile  for filter/sort */}
           <FilterSort toggleFilters={toggleFilters} toggleSort={toggleSort} />
         </div>
