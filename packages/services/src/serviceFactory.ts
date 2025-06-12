@@ -37,6 +37,7 @@ import { FinixService } from "./webhooks/finix.service";
 import { LoggerService } from "./webhooks/logging.service";
 import { PaymentVerifierService } from "./webhooks/paymentverifier.service";
 import { PhoneService } from "./phone/phone.service";
+import { FailedBookingService } from "./failed-booking/failedBooking.service";
 
 export interface ServiceConfig {
   database: Db;
@@ -84,14 +85,14 @@ export interface ServiceConfig {
  * ```
  */
 export class ServiceFactory {
-  constructor(protected readonly config: ServiceConfig) {}
+  constructor(protected readonly config: ServiceConfig) { }
 
   /**
    * Returns an instance of HyperSwitchService with the provided API key.
    * @returns An instance of HyperSwitchService.
    */
   getHyperSwitchService = (): HyperSwitchService => {
-    console.log("Hyperswitch - setting api key in service factory",this.config.hyperSwitchApiKey);
+    console.log("Hyperswitch - setting api key in service factory", this.config.hyperSwitchApiKey);
     return new HyperSwitchService(this.config.hyperSwitchApiKey);
   };
 
@@ -419,4 +420,12 @@ export class ServiceFactory {
   getPhoneService = (): PhoneService => {
     return new PhoneService();
   }
+
+  /**
+   * Returns an instance of FailedBookingService with the provided database.
+   * @returns An instance of FailedBookingService.
+   */
+  getFailedBookingService = (): FailedBookingService => {
+    return new FailedBookingService(this.config.database);
+  };
 }
