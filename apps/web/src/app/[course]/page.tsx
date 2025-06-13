@@ -712,23 +712,23 @@ export default function CourseHomePage() {
               setValue={handleCourseSwitch}
             />
               : entity?.redirectToCourseFlag ? null : (
-                <GoBack href="/" text={`Back to all ${entity?.name} Courses`} />
+                <GoBack href="/" text={`Back to All Courses`} />
               )}
           </div>
           <div className="flex items-center justify-between w-full">
             <div className="flex justify-between gap-4  px-4 md:px-0">
               <div className="text-secondary-black">
                 {/* Showing {count?.toLocaleString() ?? "0"} tee times{" "} */}
-                <span className="text-sm text-primary-gray">
+                <span className="text-justify text-sm text-primary-gray">
                   All times shown in course time zone
                 </span>
               </div>
             </div>
-            <Select
+            {/* <Select
               value={sortValue}
               setValue={handleSetSortValue}
               values={SortOptions}
-            />
+            /> */}
           </div>
         </div>
       }
@@ -759,7 +759,7 @@ export default function CourseHomePage() {
             <Filters openForecastModal={openForecastModal} />
           </div>
         </div>
-        <div className={`fixed ${isNavExpanded ? "bottom-32" : "bottom-16"} left-1/2 z-10 -translate-x-1/2 md:hidden`}>
+        <div className={`fixed ${isNavExpanded ? "bottom-[9.5rem]" : "bottom-[4.75rem]"} left-1/2 z-10 -translate-x-1/2 md:hidden`}>
           {/* mobile  for filter/sort */}
           <FilterSort toggleFilters={toggleFilters} toggleSort={toggleSort} />
         </div>
@@ -793,7 +793,7 @@ export default function CourseHomePage() {
             </div>
             <div className="text-secondary-black w-[50%] text-center">
               {/* Showing {count?.toLocaleString() ?? "0"} tee times{" "} */}
-              <span className="text-sm text-primary-gray">
+              <span className="text-justify text-sm text-primary-gray">
                 All times shown in course time zone
               </span>
             </div>
@@ -834,6 +834,7 @@ export default function CourseHomePage() {
                         isLoadingTeeTimeDate={isLoadingTeeTimeDate}
                         // datesWithData={datesWithData}
                         allDatesArr={datesArr}
+                        toggleFilters={toggleFilters}
                       />
                     )}
                   </ViewportList>
@@ -906,34 +907,40 @@ export default function CourseHomePage() {
         </div>
       </section>
 
-      {showSort && (
+      {/* {showSort && (
         <MobileSort
           setShowSort={setShowSort}
           toggleSort={toggleSort}
           setSortValue={handleSetSortValue}
           sortValue={sortValue}
         />
-      )}
-      {showFilters && (
-        <MobileFilters
-          setShowFilters={setShowFilters}
-          toggleFilters={toggleFilters}
-          openForecastModal={openForecastModal}
-        />
-      )}
-      {showDates && (
-        <MobileDates
-          setShowFilters={setShowDates}
-          toggleFilters={toggleDates}
-        />
-      )}
-      {isForecastModalOpen && (
-        <ForecastModal
-          closeForecastModal={closeForecastModal}
-          startDate={startDate}
-          endDate={endDate}
-        />
-      )}
-    </main>
+      )} */}
+      {
+        showFilters && (
+          <MobileFilters
+            setShowFilters={setShowFilters}
+            toggleFilters={toggleFilters}
+            openForecastModal={openForecastModal}
+          />
+        )
+      }
+      {
+        showDates && (
+          <MobileDates
+            setShowFilters={setShowDates}
+            toggleFilters={toggleDates}
+          />
+        )
+      }
+      {
+        isForecastModalOpen && (
+          <ForecastModal
+            closeForecastModal={closeForecastModal}
+            startDate={startDate}
+            endDate={endDate}
+          />
+        )
+      }
+    </main >
   );
 }

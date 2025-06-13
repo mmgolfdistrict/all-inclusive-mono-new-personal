@@ -117,7 +117,7 @@ export const Owned = () => {
 
   useEffect(() => {
     const handlePopState = () => {
-      console.log("Back button pressed");
+      console.log("Back button pressed>>>>>>",courseId);
       void router.push(`/${courseId}`);
     };
     window.addEventListener('popstate', handlePopState);
@@ -304,12 +304,12 @@ const TableRow = ({
   isGroupBooking: boolean;
   isCollectPaymentEnabled?: boolean;
 }) => {
-  const href = useMemo(() => {
-    if (isListed) {
-      return `/${courseId}/${teeTimeId}/listing/${listingId}`;
-    }
-    return `/${courseId}/${teeTimeId}/owner/${ownerId}`;
-  }, [courseId, teeTimeId, listingId, ownerId, isListed]);
+  // const href = useMemo(() => {
+  //   if (isListed) {
+  //     return `/${courseId}/${teeTimeId}/listing/${listingId}`;
+  //   }
+  //   return `/${courseId}/${teeTimeId}/owner/${ownerId}`;
+  // }, [courseId, teeTimeId, listingId, ownerId, isListed]);
 
   return (
     <tr className="w-full border-b border-stroke text-primary-gray">
@@ -328,7 +328,7 @@ const TableRow = ({
           </div>
         ) : (
           <Link
-            href={href}
+            href="#"
             className="flex items-center gap-2"
             data-testid="course-tee-time-listing-id"
             data-test={teeTimeId}

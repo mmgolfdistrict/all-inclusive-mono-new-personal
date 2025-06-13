@@ -197,7 +197,7 @@ export class CourseService extends DomainService {
           timezoneISO: courses?.timezoneISO,
           groupStartTime: courses.groupStartTime,
           groupEndTime: courses.groupEndTime,
-          supportsSellingMerchandise: courses.supportsSellingMerchandise
+          supportsSellingMerchandise: courses.supportsSellingMerchandise,
         })
         .from(courses)
         .innerJoin(providerCourseLink, eq(providerCourseLink.courseId, courses.id))
@@ -413,7 +413,7 @@ export class CourseService extends DomainService {
         ),
         isAllowCourseSwitching: parseSettingValue(
           isAllowCourseSwitching?.value ?? "",
-          isAllowCourseSwitching?.datatype ?? "string"
+          isAllowCourseSwitching?.datatype ?? "boolean"
         ),
       };
     }
@@ -1309,15 +1309,19 @@ export class CourseService extends DomainService {
           and(
             eq(courseMerchandise.courseId, courseId),
             eq(courseMerchandise.showDuringBooking, true),
-            gte(sql`DATE_FORMAT(CONVERT_TZ(NOW() + INTERVAL ${courseMerchandise.showOnlyIfBookingIsWithinXDays} DAY, '+00:00', ${courses.timezoneISO}), '%Y-%m-%dT23:59:59')`, teeTimeDate),
-            or(
-              gt(courseMerchandise.qoh, 0),
-              eq(courseMerchandise.qoh, -1)
+            gte(
+              sql`DATE_FORMAT(CONVERT_TZ(NOW() + INTERVAL ${courseMerchandise.showOnlyIfBookingIsWithinXDays} DAY, '+00:00', ${courses.timezoneISO}), '%Y-%m-%dT23:59:59')`,
+              teeTimeDate
             ),
+            or(gt(courseMerchandise.qoh, 0), eq(courseMerchandise.qoh, -1)),
             gt(courseMerchandise.price, 0)
           )
         )
-        .orderBy(isNull(courseMerchandise.displayOrder), asc(courseMerchandise.displayOrder), asc(courseMerchandise.caption))
+        .orderBy(
+          isNull(courseMerchandise.displayOrder),
+          asc(courseMerchandise.displayOrder),
+          asc(courseMerchandise.caption)
+        )
         .execute()
         .catch((err) => {
           this.logger.error(`Error getting course merchandise for course: ${err}`);
@@ -1330,11 +1334,9 @@ export class CourseService extends DomainService {
             additionalDetailsJSON: JSON.stringify({
               courseId,
             }),
-          })
+          });
           throw new Error("Error getting course merchandise");
-        })
-        ;
-
+        });
       return merchandise;
     } catch (error: any) {
       this.logger.error(`Error fetching course merchandise: ${JSON.stringify(error)}`);
@@ -1347,8 +1349,8 @@ export class CourseService extends DomainService {
         additionalDetailsJSON: JSON.stringify({
           courseId,
         }),
-      })
+      });
       return null;
     }
-  }
+  };
 }

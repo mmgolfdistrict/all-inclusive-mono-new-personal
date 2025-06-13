@@ -39,7 +39,7 @@ const OptionDetails = ({
   return (
     <div className="container mx-auto ">
       <div className="flex justify-between">
-        <h3 className="text-xl font mb-4">Select an Account to Cashout:</h3>
+        <h3 className="font mb-2 text-gray-600">Select an Account to Cashout:</h3>
         {disabledCashOut && (
           <Tooltip
             trigger={<Info className="h-[20px] w-[20px]" />}
@@ -82,10 +82,10 @@ const OptionDetails = ({
       {selectedOption && (
         <div className="mt-4">
           {/* <h2 className="text-xl font-semibold">{account?.accountNumber}</h2> */}
-          <div className="container mx-auto py-8">
-            <div className="flex items-center justify-between">
-              <label htmlFor="amount" className="mr-4">
-                Amount:
+          <div className="container mx-auto py-2">
+            <div className="flex flex-col w-full mx-auto">
+              <label htmlFor="amount" className="font mb-2 text-gray-600">
+                Amount
               </label>
               <input
                 type="number"
@@ -95,27 +95,32 @@ const OptionDetails = ({
                 value={value}
                 onChange={(e) => {
                   const inputValue = e.target.value;
-                  // Regular expression to match numbers with up to two decimal places
                   const regex = /^\d*\.?\d{0,2}$/;
                   if (regex.test(inputValue)) {
                     setValue(inputValue);
                   }
                 }}
-                className="w-1/2 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:border-blue-400 mr-4"
+                className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:border-blue-400 mb-4"
               />
+
               <FilledButton
                 onClick={!loadingCashout ? handleCashoutClick : undefined}
-                className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 focus:outline-none"
+              // className="w-full bg-blue-500 text-white px-6 py-3 rounded-md hover:bg-blue-600 focus:outline-none"
               >
                 {loadingCashout ? "Processing..." : "Cashout"}
               </FilledButton>
+
               <LoadingContainer isLoading={loadingCashout}>
                 <div></div>
               </LoadingContainer>
             </div>
           </div>
+
         </div>
       )}
+      {selectedOption && <p className=" text-[14px] text-blue-500 md:text-[16px]">
+        You can cashout once a day up to $3000.
+      </p>}
     </div>
   );
 };

@@ -189,7 +189,7 @@ const TableRow = ({
     <tr className="w-full border-b border-stroke text-primary-gray">
       <td className="gap-2 px-4 py-3">
         <Link
-          href={`/${courseId}/${teeTimeId}/listing/${listingId}`}
+          href={`#`}
           className="flex items-center gap-2"
           data-testid="course-listing-id"
           data-test={listingId}

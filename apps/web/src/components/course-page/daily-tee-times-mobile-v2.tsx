@@ -16,6 +16,7 @@ import { Tooltip } from "../tooltip";
 import { ChevronUp } from "../icons/chevron-up";
 import { TeeTimeV2 } from "../cards/tee-time-v2";
 import { TeeTimeSkeletonV2 } from "./tee-time-skeleton-v2";
+import { OutlineButton } from "../buttons/outline-button";
 
 export const DailyTeeTimesMobileV2 = ({
   date,
@@ -29,8 +30,9 @@ export const DailyTeeTimesMobileV2 = ({
   scrollY,
   divHeight,
   isLoadingTeeTimeDate,
-  allDatesArr
+  allDatesArr,
   // datesWithData
+  toggleFilters
 }: {
   date: string;
   minDate: string;
@@ -43,8 +45,9 @@ export const DailyTeeTimesMobileV2 = ({
   scrollY: number,
   divHeight?: number,
   isLoadingTeeTimeDate: boolean,
-  allDatesArr: string[]
+  allDatesArr: string[],
   // datesWithData:string[]
+  toggleFilters?: () => void;
 }) => {
   const overflowRef = useRef<HTMLDivElement>(null);
   const nextPageRef = useRef<HTMLDivElement>(null);
@@ -216,7 +219,12 @@ export const DailyTeeTimesMobileV2 = ({
                 data-testid="date-group-id"
                 data-qa={dayMonthDate(date)}
               >
-                {dayMonthDate(date)}
+                <OutlineButton
+                  className="!px-3 !py-1 !text-black !border-gray-200"
+                  onClick={toggleFilters}
+                >
+                  {dayMonthDate(date)}
+                </OutlineButton>
               </div>
               {isLoadingWeather && !weather ? (
                 <div className="h-8 w-[30%] bg-gray-200 rounded-md  animate-pulse" />
