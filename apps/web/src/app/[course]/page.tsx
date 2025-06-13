@@ -759,46 +759,12 @@ export default function CourseHomePage() {
             <Filters openForecastModal={openForecastModal} />
           </div>
         </div>
-        <div className={`fixed ${isNavExpanded ? "bottom-[9.5rem]" : "bottom-[4.75rem]"} left-1/2 z-10 -translate-x-1/2 md:hidden`}>
+        <div className={`fixed ${isNavExpanded ? "bottom-[9.6rem]" : "bottom-[4.8rem]"} left-1/2 z-10 -translate-x-1/2 md:hidden`}>
           {/* mobile  for filter/sort */}
           <FilterSort toggleFilters={toggleFilters} toggleSort={toggleSort} />
         </div>
         <div className="flex w-full flex-col gap-1 md:gap-4 overflow-x-hidden pr-0p md:pr-6">
-
-          <div
-            className={`flex space-x-2 md:hidden px-4 ${(courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
-              ? `fixed left-0 w-full z-10 bg-secondary-white pt-2 pb-3 shadow-md`
-              : "relative"
-              }`}
-            style={{
-              top: (courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
-                ? `${divHeight && divHeight * 1}px`
-                : "auto",
-            }}
-          >
-            <div className="w-[50%] flex items-center justify-around">
-              <button
-                onClick={toggleFilters}
-                className="p-2 text-xs flex items-center space-x-2 flex items-center gap-1 rounded-full border-b border-r border-t border-l border-stroke"
-              >
-                <FiltersIcon className="h-[14px] w-[14px]" />
-                All Filters
-              </button>
-              <button
-                onClick={toggleDates}
-                className="p-2 text-xs flex items-center space-x-2 flex items-center gap-1 rounded-full border-b border-r border-t border-l border-stroke"
-              >
-                <Calendar className="h-[14px] w-[14px]" /> Date
-              </button>
-            </div>
-            <div className="text-secondary-black w-[50%] text-center">
-              {/* Showing {count?.toLocaleString() ?? "0"} tee times{" "} */}
-              <span className="text-justify text-sm text-primary-gray">
-                All times shown in course time zone
-              </span>
-            </div>
-          </div>
-
+          {/* TODO: scrollable dates  */}
           {error ? (
             <div className="flex justify-center items-center h-[200px]">
               <div className="text-center">Error: {error}</div>

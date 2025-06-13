@@ -288,7 +288,7 @@ export const CourseNav = () => {
         </div>
         {!isMobile ?
           <div className={`w-full z-20 bg-white border-b border-stroke`}>
-            <div className="flex w-full justify-center bg-gray-100 p-2 md:p-4">
+            <div className="flex w-full justify-center p-2 md:p-4">
               <div className="flex justify-between gap-4 md:gap-8">
                 <NavItem
                   href={`/${courseId}`}
@@ -382,7 +382,7 @@ export const CourseNav = () => {
       </div>
       {isMobile &&
         <div className={`fixed bottom-0 w-full z-20 bg-white border-t border-[#c6c6c6] `} id="bottom-nav">
-          <div className="flex w-full justify-center bg-white p-2 md:p-4">
+          <div className="flex w-full justify-center bg-gray-100 p-2 md:p-4">
             <div className={`flex w-full ${isNavExpanded ? "gap-4" : ""} flex-col`}>
               <div className="flex w-full justify-between gap-4">
                 <NavItem

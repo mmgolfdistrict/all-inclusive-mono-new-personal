@@ -206,10 +206,13 @@ export const DailyTeeTimesMobileV2 = ({
             <div className={`w-full flex items-center justify-between ${(courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
               ? `fixed bg-white left-0 w-full z-10 bg-secondary-white pt-2  px-4 pb-3 shadow-md`
               : "relative"
-              }`} style={{
-                top: (courseImages?.length > 0 ? scrollY > 333 : scrollY > 45) ? `${divHeight && divHeight + 54}px` : 'auto',
-
-              }}>
+              }`}
+              style={{
+                top: (courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
+                  ? `${divHeight && divHeight * 1}px`
+                  : "auto",
+              }}
+            >
               {!isAtStart ?
                 <ChevronUp fill="#000" className="-rotate-90" onClick={pageDown} /> : <div></div>
               }
@@ -220,7 +223,7 @@ export const DailyTeeTimesMobileV2 = ({
                 data-qa={dayMonthDate(date)}
               >
                 <OutlineButton
-                  className="!px-3 !py-1 !text-black !border-gray-200"
+                  className="!px-3 !py-1"
                   onClick={toggleFilters}
                 >
                   {dayMonthDate(date)}
