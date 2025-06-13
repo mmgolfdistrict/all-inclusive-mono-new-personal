@@ -368,7 +368,7 @@ export class NotificationService {
    * await readOffersForCourse('user123', 'course123');
    */
   readOffersForCourse = async (userId: string, courseId: string) => {
-    this.logger.info(`readOffers: this method is deprecated`);
+    // this.logger.info(`readOffers: this method is deprecated`);
 
     return;
     // await this.database
@@ -457,7 +457,7 @@ export class NotificationService {
       });
       return;
     }
-    this.logger.info(`Creating notification for user ${userId}`);
+    // this.logger.info(`Creating notification for user ${userId}`);
     const notification = {
       id: randomUUID(),
       userId,
@@ -513,7 +513,7 @@ export class NotificationService {
    * const notifications = await getNotifications('user123', 'entity123');
    */
   getNotifications = async (userId: string, entityId: string, cursor?: string, limit = 10) => {
-    this.logger.info(`Retrieving notifications for user ${userId}`);
+    // this.logger.info(`Retrieving notifications for user ${userId}`);
 
     let whereClause = and(
       eq(notifications.userId, userId),
@@ -574,7 +574,7 @@ export class NotificationService {
    * await markNotificationsAsRead('user123', ['notification1', 'notification2']);
    */
   markNotificationsAsRead = async (userId: string, notificationIds: string[]) => {
-    this.logger.info(`Marking notification ${notificationIds.length} as read`);
+    // this.logger.info(`Marking notification ${notificationIds.length} as read`);
     return await this.database
       .update(notifications)
       .set({
@@ -598,7 +598,7 @@ export class NotificationService {
    * await markNotificationsAsDeleted('user123', ['notification1', 'notification2']);
    */
   markNotificationsAsDeleted = async (userId: string, notificationIds: string[]) => {
-    this.logger.info(`Marking ${notificationIds.length} notifications as deleted for user ${userId}`);
+    // this.logger.info(`Marking ${notificationIds.length} notifications as deleted for user ${userId}`);
     return await this.database
       .update(notifications)
       .set({
