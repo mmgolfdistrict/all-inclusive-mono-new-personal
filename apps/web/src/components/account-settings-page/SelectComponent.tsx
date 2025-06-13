@@ -39,7 +39,7 @@ const OptionDetails = ({
   return (
     <div className="container mx-auto ">
       <div className="flex justify-between">
-        <h3 className="font mb-2 text-gray-600">Select an Account to Cashout:</h3>
+        <h3 className="font mb-2 text-gray-600">Select Your Bank Account to Deposit:</h3>
         {disabledCashOut && (
           <Tooltip
             trigger={<Info className="h-[20px] w-[20px]" />}
@@ -87,27 +87,30 @@ const OptionDetails = ({
               <label htmlFor="amount" className="font mb-2 text-gray-600">
                 Amount
               </label>
-              <input
-                type="number"
-                id="amount"
-                name="amount"
-                placeholder="Enter amount"
-                value={value}
-                onChange={(e) => {
-                  const inputValue = e.target.value;
-                  const regex = /^\d*\.?\d{0,2}$/;
-                  if (regex.test(inputValue)) {
-                    setValue(inputValue);
-                  }
-                }}
-                className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:border-blue-400 mb-4"
-              />
+              <div className="relative mb-4">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                <input
+                  type="number"
+                  id="amount"
+                  name="amount"
+                  placeholder="Enter amount"
+                  value={value}
+                  onChange={(e) => {
+                    const inputValue = e.target.value;
+                    const regex = /^\d*\.?\d{0,2}$/;
+                    if (regex.test(inputValue)) {
+                      setValue(inputValue);
+                    }
+                  }}
+                  className="pl-6 pr-2 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:border-blue-400 w-full"
+                />
+              </div>
 
               <FilledButton
                 onClick={!loadingCashout ? handleCashoutClick : undefined}
               // className="w-full bg-blue-500 text-white px-6 py-3 rounded-md hover:bg-blue-600 focus:outline-none"
               >
-                {loadingCashout ? "Processing..." : "Cashout"}
+                {loadingCashout ? "Processing..." : "Deposit From Golf District Wallet to Your Bank Account"}
               </FilledButton>
 
               <LoadingContainer isLoading={loadingCashout}>

@@ -77,7 +77,7 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
       <Modal isOpen={modalOpen} onClose={closeModal} />
       <section className="h-full mx-auto flex w-full flex-col gap-4 bg-white px-3 py-2 mb-2  md:rounded-xl md:p-6 md:py-4" id="add-bank-account-account-settings">
         <div>
-          <h3 className="text-[18px]  md:text-[24px]">Balance</h3>
+          <h3 className="text-[18px]  md:text-[24px]">Golf District Wallet</h3>
           <div
             // className="py-4"
             style={{
@@ -96,25 +96,29 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
                 />
               </div>
               <div className="text-secondary-black">
-                {`$${(
+                {`$${new Intl.NumberFormat("en-US", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                }).format(
                   (recievableData?.availableAmount ?? 0) -
                   (recievableData?.withdrawableAmount ?? 0)
-                ).toFixed(2) || 0
-                  }`}
+                )}`}
               </div>
             </div>
 
             <div className="flex justify-between">
               <div className="font-[300] text-primary-gray">
-                Available Funds {""}
+                Available to Withdraw {""}
                 <Tooltip
                   trigger={<Info className="h-[16px] w-[16px]" />}
-                  content="These funds have completed processing and are now available for withdrawal. You can transfer these funds to your bank account. All bank information is handled through a secure PCI compliant third party and handled with care."
+                  content="This is the money you’ve earned by selling tee times and is available for withdrawal. These funds have completed processing and are now available for withdrawal. You can transfer these funds to your bank account. All bank information is handled through a secure PCI compliant third party and handled with care."
                 />
               </div>
               <div className="text-secondary-black">
-                {`$${recievableData?.withdrawableAmount.toFixed(2) || 0
-                  }`}
+                {`$${new Intl.NumberFormat("en-US", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                }).format(recievableData?.withdrawableAmount || 0)}`}
               </div>
             </div>
           </div>
@@ -144,8 +148,8 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
               data-testid="connect-button-id"
             >
               {associatedBanks?.length
-                ? "Add another bank account"
-                : "Add Bank Account"}
+                ? "Add Another Bank Account for Withdrawals"
+                : "Add Your Bank Account for Withdrawals"}
             </FilledButton>
           </div>
         </div>
