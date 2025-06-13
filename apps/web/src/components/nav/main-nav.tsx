@@ -42,6 +42,8 @@ export const MainNav = () => {
       ? document?.getElementById("main-header")?.offsetHeight || 0
       : 0;
   setmainHeaderHeight(divHeight);
+
+  console.log("isMobile", isMobile);
   return (
     <div>
       <div
@@ -120,7 +122,8 @@ export const MainNav = () => {
                   src={entity?.logo ?? ""}
                   alt={entity?.name ?? "resort logo"}
                   width={60}
-                  height={150}
+                  height={100}
+                  className="w-[75px] object-fit"
                 />
               ) : (
                 <BlurImage
@@ -128,6 +131,7 @@ export const MainNav = () => {
                   alt={entity?.name ?? "resort logo"}
                   width={90}
                   height={150}
+                  className="w-[75px] object-fit"
                 />
               )}
             </Link>
