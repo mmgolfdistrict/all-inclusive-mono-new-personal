@@ -238,7 +238,7 @@ export const TeeTime = ({
       return;
     }
     if (status === "FIRST_HAND") {
-      void router.replace(
+      void router.push(
         `/${course?.id}/checkout?teeTimeId=${teeTimeId}&playerCount=${selectedPlayers}`
       );
     }
