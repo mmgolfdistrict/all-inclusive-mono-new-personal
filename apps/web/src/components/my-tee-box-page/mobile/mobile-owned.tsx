@@ -239,23 +239,18 @@ const TableCard = ({
                     </div>
                   </div>
                 ) : (
-                  <Link
-                    href={"#"}
-                    className="flex items-center gap-2"
-                    data-testid="course-tee-time-listing-id"
-                    data-test={teeTimeId}
-                    data-qa={courseId}
+                  <div className="flex items-center gap-2"
                   >
                     <Avatar src={iconSrc} />
                     <div className="flex flex-col">
-                      <div className="whitespace-normal overflow-y-auto underline text-secondary-black">
+                      <div className="whitespace-normal overflow-y-auto text-secondary-black">
                         {course}
                       </div>
                       <div className="text-primary-gray unmask-time">
                         {formatTime(date, false, timezoneCorrection)}
                       </div>
                     </div>
-                  </Link>
+                  </div>
                 )}
               </td>
             </tr>

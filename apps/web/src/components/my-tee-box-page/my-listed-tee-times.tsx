@@ -188,23 +188,17 @@ const TableRow = ({
   return (
     <tr className="w-full border-b border-stroke text-primary-gray">
       <td className="gap-2 px-4 py-3">
-        <Link
-          href={`#`}
-          className="flex items-center gap-2"
-          data-testid="course-listing-id"
-          data-test={listingId}
-          data-qa={teeTimeId}
-        >
+        <div className="flex items-center gap-2">
           <Avatar src={iconSrc} />
           <div className="flex flex-col">
-            <div className="whitespace-nowrap underline text-secondary-black">
+            <div className="whitespace-nowrap text-secondary-black">
               {course}
             </div>
             <div className="text-primary-gray unmask-time">
               {formatTime(date, false, timezoneCorrection)}
             </div>
           </div>
-        </Link>
+        </div>
       </td>
       <td className="whitespace-nowrap px-4 py-3">
         {formatMoney(listedPrice)}

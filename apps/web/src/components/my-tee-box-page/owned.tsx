@@ -117,7 +117,7 @@ export const Owned = () => {
 
   useEffect(() => {
     const handlePopState = () => {
-      console.log("Back button pressed>>>>>>",courseId);
+      console.log("Back button pressed>>>>>>", courseId);
       void router.push(`/${courseId}`);
     };
     window.addEventListener('popstate', handlePopState);
@@ -327,23 +327,17 @@ const TableRow = ({
             </div>
           </div>
         ) : (
-          <Link
-            href="#"
-            className="flex items-center gap-2"
-            data-testid="course-tee-time-listing-id"
-            data-test={teeTimeId}
-            data-qa={courseId}
-          >
+          <div className="flex items-center gap-2">
             <Avatar src={iconSrc} />
             <div className="flex flex-col">
-              <div className="whitespace-nowrap underline text-secondary-black">
+              <div className="whitespace-nowrap text-secondary-black">
                 {course}
               </div>
               <div className="text-primary-gray unmask-time">
                 {formatTime(date, false, timezoneCorrection)}
               </div>
             </div>
-          </Link>
+          </div>
         )}
       </td>
       {/* <td className="whitespace-nowrap px-4 py-3">
