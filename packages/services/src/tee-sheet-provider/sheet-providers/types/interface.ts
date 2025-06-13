@@ -59,6 +59,7 @@ export interface BuyerData {
   emailNotification: boolean | null;
   handel: string | null;
   accountNumber: number;
+  includePhone?: boolean;
 }
 
 export interface TeeTimeData {
