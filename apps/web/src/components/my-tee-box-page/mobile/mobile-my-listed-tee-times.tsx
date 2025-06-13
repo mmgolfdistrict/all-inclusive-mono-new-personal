@@ -144,7 +144,7 @@ const TableCard = ({
             <th scope="col" className="px-2 py-1">Course</th>
             <td>
               <Link
-                href={`/${courseId}/${teeTimeId}/listing/${listingId}`}
+                href={`#`}
                 className="flex items-center gap-2"
                 data-testid="course-listing-id"
                 data-test={listingId}
