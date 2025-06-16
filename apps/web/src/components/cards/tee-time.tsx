@@ -264,7 +264,7 @@ export const TeeTime = ({
           return;
         }
       }
-      void router.replace(
+      void router.push(
         `/${course?.id}/checkout?listingId=${listingId}&playerCount=${selectedPlayers}`
       );
     }
