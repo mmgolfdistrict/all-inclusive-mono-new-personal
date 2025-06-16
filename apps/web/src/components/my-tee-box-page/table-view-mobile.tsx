@@ -50,8 +50,8 @@ export const TableViewMobile = () => {
     value: "transaction-history",
     label: "Transaction History",
   }, {
-    value: "cashouts",
-    label: "Cashouts",
+    value: "withdrawal",
+    label: "Withdrawal",
   }];
 
   if (course?.supportsOffers) {
@@ -132,7 +132,7 @@ export const TableViewMobile = () => {
               </>
             ) : null}
             {selected === "transaction-history" && <MobileTransactionHistory />}
-            {selected === "cashouts" && <MobileCashouts />}
+            {selected === "withdrawal" && <MobileCashouts />}
           </>
         )}
       </div>

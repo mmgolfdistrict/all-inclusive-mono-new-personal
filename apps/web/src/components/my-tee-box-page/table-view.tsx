@@ -30,7 +30,7 @@ export const TableView = () => {
     : "owned";
   const { user } = useUserContext();
   const pathname = usePathname();
-  const { setPrevPath,setActivePage } = useAppContext();
+  const { setPrevPath, setActivePage } = useAppContext();
   setActivePage("my-tee-box")
 
   const { data: unreadOffers, refetch } =
@@ -95,8 +95,8 @@ export const TableView = () => {
         <TabTrigger id="sell-transaction-history" value={"transaction-history"}>
           Transaction History
         </TabTrigger>
-        <TabTrigger id="sell-cash-out-history" value={"cashouts"}>
-          Cash out History
+        <TabTrigger id="sell-cash-out-history" value={"withdrawal"}>
+          Withdrawal History
         </TabTrigger>
       </Tabs.List>
       {!session ? (
@@ -157,7 +157,7 @@ export const TableView = () => {
             <TransactionHistory />
           </Tabs.Content>
           <Tabs.Content
-            value="cashouts"
+            value="withdrawal"
             className="bg-white p-2"
             id="sell-cash-out-history"
           >
