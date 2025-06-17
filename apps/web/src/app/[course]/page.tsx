@@ -32,7 +32,7 @@ import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 import Weekday from "dayjs/plugin/weekday";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { ViewportList } from "react-viewport-list";
 import { useMediaQuery } from "usehooks-ts";
@@ -688,6 +688,24 @@ export default function CourseHomePage() {
     }
   };
 
+  const [selectedDate, setSelectedDate] = useState<string | null>(startDate);
+
+  const handleDateSelect = (date: string) => {
+    setSelectedDate(date);
+  };
+
+  const displayDatesArr = useMemo(() => {
+    const arr: string[] = [];
+    const start = dayjs(startDate);
+    const end = dayjs(endDate);
+
+    for (let d = start; d.isSameOrBefore(end); d = d.add(1, "day")) {
+      arr.push(d.toDate().toUTCString());
+    }
+
+    return arr;
+  }, [startDate, endDate]);
+
   return (
     <main className={`bg-secondary-white py-4 md:py-6`}>
       <LoadingContainer
@@ -764,7 +782,51 @@ export default function CourseHomePage() {
           <FilterSort toggleFilters={toggleFilters} toggleSort={toggleSort} />
         </div>
         <div className="flex w-full flex-col gap-1 md:gap-4 overflow-x-hidden pr-0p md:pr-6">
-          {/* TODO: scrollable dates  */}
+          {/* scrollable dates  */}
+          {isMobile && <div style={{
+            top: (courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
+              ? `${divHeight && divHeight * 1}px`
+              : "auto",
+          }}
+            className={`w-full flex items-center overflow-x-auto justify-between ${(courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
+              ? `fixed left-0 w-full z-10 bg-secondary-white pt-2  px-4 pb-3 shadow-md`
+              : "relative"
+              }`}
+          >
+            <div className="flex gap-2 min-w-max px-2">
+              {displayDatesArr.map((dateStr) => {
+                const dateObj = dayjs(dateStr);
+                const isSelected = selectedDate === dateStr;
+
+                return (
+                  <button
+                    key={dayjs(selectedDate).format("YYYY-MM-DD") === dayjs(dateStr).format("YYYY-MM-DD") ? selectedDate : dateStr}
+                    onClick={() => handleDateSelect(dateStr)}
+                    className={`flex flex-col items-center justify-center rounded-lg px-2 text-sm border transition-all shadow-sm
+                     ${isSelected
+                        ? "text-white font-semibold"
+                        : "bg-white text-primary-black border-gray-300 hover:bg-gray-100"
+                      }`}
+                    style={{
+                      borderColor: isSelected ? entity?.color1 : "rgb(255 255 255)",
+                      backgroundColor: isSelected ? entity?.color1 : "rgb(255 255 255)",
+                    }}
+                  >
+                    <span className="text-[11px] uppercase tracking-wide">
+                      {dateObj.format("MMM")}
+                    </span>
+                    <span className="text-xl font-bold leading-tight">
+                      {dateObj.format("D")}
+                    </span>
+                    <span className="text-[13px] font-medium">
+                      {dateObj.format("ddd")}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>}
+
           {error ? (
             <div className="flex justify-center items-center h-[200px]">
               <div className="text-center">Error: {error}</div>
@@ -789,7 +851,7 @@ export default function CourseHomePage() {
                         }}
                         courseException={getCourseException(date as string)}
                         key={idx}
-                        date={date}
+                        date={selectedDate || date}
                         minDate={startDate.toString()}
                         maxDate={endDate.toString()}
                         handleLoading={handleLoading}
@@ -799,7 +861,7 @@ export default function CourseHomePage() {
                         divHeight={divHeight}
                         isLoadingTeeTimeDate={isLoadingTeeTimeDate}
                         // datesWithData={datesWithData}
-                        allDatesArr={datesArr}
+                        allDatesArr={displayDatesArr}
                         toggleFilters={toggleFilters}
                       />
                     )}

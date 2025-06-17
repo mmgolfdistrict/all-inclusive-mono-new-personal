@@ -203,15 +203,12 @@ export const DailyTeeTimesMobileV2 = ({
           <div className="h-8 min-w-[150px] w-[20%] bg-gray-200 rounded-md  animate-pulse unmask-time" />
         ) : (
           <div className="w-full flex items-center gap-3 flex-col">
-            <div className={`w-full flex items-center justify-between ${(courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
-              ? `fixed bg-white left-0 w-full z-10 bg-secondary-white pt-2  px-4 pb-3 shadow-md`
-              : "relative"
-              }`}
-              style={{
-                top: (courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
-                  ? `${divHeight && divHeight * 1}px`
-                  : "auto",
-              }}
+            <div
+              className={`w-full flex items-center justify-between
+               ${(courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
+                  ? `bg-white left-0 w-full z-10 bg-secondary-white pt-2  px-4 pb-3 shadow-md`
+                  : "relative"
+                }`}
             >
               {!isAtStart ?
                 <ChevronUp fill="#000" className="-rotate-90" onClick={pageDown} /> : <div></div>
@@ -348,6 +345,6 @@ export const DailyTeeTimesMobileV2 = ({
         </div>
 
       </div>
-    </div>
+    </div >
   );
 };
