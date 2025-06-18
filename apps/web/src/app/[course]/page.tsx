@@ -546,18 +546,41 @@ export default function CourseHomePage() {
   };
 
   const pageUp = () => {
-    if (pageNumber === amountOfPage) return;
-    setPageNumber((prev) => prev + 1);
-    setTake((prev) => prev + TAKE);
-    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+    setSelectedDate((prev) => {
+      if (!prev) return null;
+
+      const nextDate = dayjs(prev).add(1, "day");
+      const end = dayjs(endDate);
+
+      if (nextDate.isAfter(end, "day")) return prev; // don't exceed endDate
+
+      // update state
+      setPageNumber((prevPage) => prevPage + 1);
+      setTake((prevTake) => prevTake + TAKE);
+      scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+
+      return nextDate.toDate().toUTCString();
+    });
   };
 
   const pageDown = () => {
-    if (pageNumber === 1) return;
-    setPageNumber((prev) => prev - 1);
-    setTake((prev) => prev - TAKE);
-    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+    setSelectedDate((prev) => {
+      if (!prev) return null;
+
+      const prevDate = dayjs(prev).subtract(1, "day");
+      const start = dayjs(startDate);
+
+      if (prevDate.isBefore(start, "day")) return prev; // don't go before startDate
+
+      // update state
+      setPageNumber((prevPage) => prevPage - 1);
+      setTake((prevTake) => prevTake - TAKE);
+      scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+
+      return prevDate.toDate().toUTCString();
+    });
   };
+
 
   const handleLoading = (val: boolean) => {
     setIsLoading(val);
@@ -689,6 +712,13 @@ export default function CourseHomePage() {
   };
 
   const [selectedDate, setSelectedDate] = useState<string | null>(startDate);
+
+  useEffect(() => {
+    if (selectedDate && startDate) {
+      const diff = dayjs(selectedDate).diff(dayjs(startDate), 'day');
+      setPageNumber(diff + 1); // Assuming page 1 is the startDate
+    }
+  }, [selectedDate, startDate]);
 
   const handleDateSelect = (date: string) => {
     setSelectedDate(date);
