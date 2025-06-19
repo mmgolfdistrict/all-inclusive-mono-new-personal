@@ -889,8 +889,8 @@ export class Lightspeed extends BaseProvider {
           const customersObject = customers.data;
 
           const existingCustomer = customersObject.find((customer: LightspeedGetCustomerResponse) =>
-            customer.attributes.first_name === firstName &&
-            customer.attributes.last_name === lastName
+            customer.attributes.first_name.toLowerCase() === firstName.toLowerCase() &&
+            customer.attributes.last_name.toLowerCase() === lastName.toLowerCase()
           );
 
           if (existingCustomer) {
