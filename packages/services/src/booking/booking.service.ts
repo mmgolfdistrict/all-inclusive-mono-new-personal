@@ -742,10 +742,10 @@ export class BookingService {
       if (!combinedData[teeTime.providerBookingId]) {
         const slotData = !teeTime.providerBookingId
           ? Array.from({ length: teeTime.playerCount - 1 }, (_, i) => ({
-              name: "",
-              slotId: "",
-              customerId: "",
-            }))
+            name: "",
+            slotId: "",
+            customerId: "",
+          }))
           : [];
 
         combinedData[teeTime.providerBookingId] = {
@@ -1013,10 +1013,10 @@ export class BookingService {
       if (!combinedGroupData[teeTime.groupId!]) {
         const slotData = !teeTime.providerBookingId
           ? Array.from({ length: teeTime.playerCount - 1 }, (_, i) => ({
-              name: "",
-              slotId: "",
-              customerId: "",
-            }))
+            name: "",
+            slotId: "",
+            customerId: "",
+          }))
           : [];
 
         combinedGroupData[teeTime.groupId!] = {
@@ -3563,13 +3563,13 @@ export class BookingService {
     const primaryData = {
       primaryGreenFeeCharge: isNaN(
         slotInfo[0].price -
-          cartFeeCharge * (slotInfo[0]?.product_data?.metadata?.number_of_bookings || 0) -
-          markupCharge1
+        cartFeeCharge * (slotInfo[0]?.product_data?.metadata?.number_of_bookings || 0) -
+        markupCharge1
       )
         ? slotInfo[0].price - markupCharge1
         : slotInfo[0].price -
-          cartFeeCharge * (slotInfo[0]?.product_data?.metadata?.number_of_bookings ?? 0) -
-          markupCharge1, //slotInfo[0].price- cartFeeCharge*slotInfo[0]?.product_data?.metadata?.number_of_bookings,
+        cartFeeCharge * (slotInfo[0]?.product_data?.metadata?.number_of_bookings ?? 0) -
+        markupCharge1, //slotInfo[0].price- cartFeeCharge*slotInfo[0]?.product_data?.metadata?.number_of_bookings,
       teeTimeId: slotInfo[0].product_data.metadata.tee_time_id,
       playerCount:
         slotInfo[0].product_data.metadata.number_of_bookings === undefined
@@ -4343,9 +4343,8 @@ export class BookingService {
               url: "/confirmBooking",
               userAgent: "",
               message: "ERROR CONFIRMING BOOKING",
-              stackTrace: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${
-                booking?.teeTimeId ?? ""
-              }`,
+              stackTrace: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${booking?.teeTimeId ?? ""
+                }`,
               additionalDetailsJSON: err,
             });
           });
@@ -5195,6 +5194,9 @@ export class BookingService {
       firstTeeTime.providerCourseConfiguration!
     );
     for (const teeTime of tempTeeTimes) {
+      // if (teeTime.id !== tempTeeTimes[0]!.id) {
+      //   throw new Error("TEST ERROR");
+      // }
       try {
         bookingStage = "Finding or creating customer";
         console.log(
@@ -5266,7 +5268,7 @@ export class BookingService {
         });
         bookingStage = "Creating Booking on Provider";
         const booking = await provider
-          .createBooking(token, teeTime.providerCourseId!, teeTime.providerTeeSheetId!, bookingData, userId)
+          .createBooking(token, teeTime.id !== tempTeeTimes[0]!.id ? "" : teeTime.providerCourseId!, teeTime.providerTeeSheetId!, bookingData, userId)
           .catch((err) => {
             this.logger.error(`first hand booking at provider failed for teetime ${teeTime.id}: ${err}`);
             loggerService.errorLog({
