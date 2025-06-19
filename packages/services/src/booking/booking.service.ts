@@ -641,8 +641,17 @@ export class BookingService {
       });
 
     const timezoneOffset = courseTimezoneISO[0]?.timezoneISO ?? "America/Los_Angeles";
-    // const nowInCourseTimezone = dayjs().utc().tz(timezoneOffset).format("YYYY-MM-DD HH:mm:ss");
-    const nowInCourseTimezone = dayjs().tz(timezoneOffset).format("YYYY-MM-DDTHH:mm:ssZ");
+    let nowInCourseTimezone = dayjs().utc().tz(timezoneOffset).format("YYYY-MM-DDTHH:mm:ss");
+    const currentTime = dayjs(new Date()).format("YYYY-MM-DDTHH:mm:ss");
+
+    // compare nowInCourseTimezone with currentTime
+    if (dayjs(nowInCourseTimezone).isBefore(currentTime)) {
+      // If nowInCourseTimezone is before currentTime, set it to currentTime
+      nowInCourseTimezone = currentTime;
+    } else {
+      // If nowInCourseTimezone is after currentTime, keep it as is
+      nowInCourseTimezone = dayjs().utc().tz(timezoneOffset).format("YYYY-MM-DDTHH:mm:ss");
+    }
 
     console.log("nowInCourseTimezone-----currentTime----->", nowInCourseTimezone);
 
@@ -699,7 +708,7 @@ export class BookingService {
           eq(bookings.ownerId, userId),
           eq(bookings.isActive, true),
           eq(teeTimes.courseId, courseId),
-          gte(teeTimes.date, nowInCourseTimezone),
+          gte(teeTimes.providerDate, nowInCourseTimezone),
           or(eq(bookings.status, "RESERVED"), eq(bookings.status, "CONFIRMED")),
           isNull(bookings.groupId)
         )
@@ -982,7 +991,7 @@ export class BookingService {
           eq(bookings.ownerId, userId),
           eq(bookings.isActive, true),
           eq(teeTimes.courseId, courseId),
-          gte(teeTimes.date, nowInCourseTimezone),
+          gte(teeTimes.providerDate, nowInCourseTimezone),
           or(eq(bookings.status, "RESERVED"), eq(bookings.status, "CONFIRMED")),
           not(isNull(bookings.groupId))
         )
