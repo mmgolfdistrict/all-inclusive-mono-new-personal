@@ -42,8 +42,8 @@ export const ProfileDetails = ({
             <div className="flex flex-col items-center md:justify-start justify-center gap-1 text-[22px] md:flex-row md:gap-4 md:text-[32px]">
               <div className="text-secondary-black">
                 {!isThirdPartyProfile ||
-                (isThirdPartyProfile &&
-                  userData?.profileVisibility !== "PRIVATE")
+                  (isThirdPartyProfile &&
+                    userData?.profileVisibility !== "PRIVATE")
                   ? userData?.name
                   : ""}
               </div>
@@ -51,7 +51,7 @@ export const ProfileDetails = ({
                 {userData?.handle ?? ""}
               </div>
             </div>
-            <div className="flex items-center md:justify-start justify-center gap-1 text-primary-gray">
+            {/* <div className="flex items-center md:justify-start justify-center gap-1 text-primary-gray">
               {!isThirdPartyProfile ||
               (isThirdPartyProfile &&
                 userData?.city &&
@@ -61,7 +61,7 @@ export const ProfileDetails = ({
                   <div>{userData?.city}</div>
                 </>
               ) : null}
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

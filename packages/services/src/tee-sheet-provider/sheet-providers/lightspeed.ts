@@ -109,9 +109,8 @@ export class Lightspeed extends BaseProvider {
         throw new Error(`Error fetching tee times fail to get token: ${token}`);
       }
 
-      const url = `${BASE_ENDPOINT}/partner_api/v2/organizations/${ORGANIZATION_ID}/teetimes?custom_params[player_count]=4&custom_params[holes]=18&custom_params[with_pricing]=true&filter[course]=${courseId}&page[size]=100&page[number]=${page}&filter[date]=${date}${
-        DEFAULT_PLAYER_TYPE_ID ? `&custom_params[player_types][]=${DEFAULT_PLAYER_TYPE_ID}` : ""
-      }`;
+      const url = `${BASE_ENDPOINT}/partner_api/v2/organizations/${ORGANIZATION_ID}/teetimes?custom_params[player_count]=4&custom_params[holes]=18&custom_params[with_pricing]=true&filter[course]=${courseId}&page[size]=100&page[number]=${page}&filter[date]=${date}${DEFAULT_PLAYER_TYPE_ID ? `&custom_params[player_types][]=${DEFAULT_PLAYER_TYPE_ID}` : ""
+        }`;
       const headers = {
         Authorization: `Bearer ${token}`,
         "Content-Type": CONTENT_TYPE,
@@ -205,20 +204,20 @@ export class Lightspeed extends BaseProvider {
     if (!reservationRequestResponse.ok) {
       const responseData = await reservationRequestResponse.json();
       if (reservationRequestResponse.status === 403) {
-        this.logger.error(`Error creating booking: ${reservationRequestResponse.statusText}`);
+        this.logger.error(`Error creating reservation_requests: ${reservationRequestResponse.statusText}`);
       }
       loggerService.errorLog({
         userId,
         url: "/Lightspeed/createBooking",
         userAgent: "",
-        message: "ERROR_CREATING_BOOKING",
+        message: "ERROR_CREATING_RESERVATION_REQUESTS",
         stackTrace: ``,
         additionalDetailsJSON: JSON.stringify({
           data,
           responseData,
         }),
       });
-      throw new Error(`Error creating booking: ${JSON.stringify(responseData)}`);
+      throw new Error(`Error creating reservation_requests: ${JSON.stringify(responseData)}`);
     }
 
     const reservationRequest =
@@ -282,15 +281,15 @@ export class Lightspeed extends BaseProvider {
       });
       if (!roundRequestResponse.ok) {
         const responseData = await roundRequestResponse.json();
-        this.logger.error(`Error creating booking: ${roundRequestResponse.statusText}`);
+        this.logger.error(`Error creating round_requests: ${roundRequestResponse.statusText}`);
         if (roundRequestResponse.status === 403) {
-          this.logger.error(`Error creating booking: ${JSON.stringify(responseData)}`);
+          this.logger.error(`Error creating round_requests: ${JSON.stringify(responseData)}`);
         }
         loggerService.errorLog({
           userId,
           url: "/Lightspeed/createBooking",
           userAgent: "",
-          message: "ERROR_CREATING_BOOKING",
+          message: "ERROR_CREATING_ROUND_REQUESTS",
           stackTrace: ``,
           additionalDetailsJSON: JSON.stringify({
             data,
@@ -298,7 +297,7 @@ export class Lightspeed extends BaseProvider {
             payload,
           }),
         });
-        throw new Error(`Error creating booking: ${JSON.stringify(responseData)}`);
+        throw new Error(`Error creating booking round_requests: ${JSON.stringify(responseData)}`);
       }
     }
     // create reservation
@@ -325,20 +324,20 @@ export class Lightspeed extends BaseProvider {
     if (!reservationResponse.ok) {
       const responseData = await reservationResponse.json();
       if (reservationResponse.status === 403) {
-        this.logger.error(`Error creating booking: ${reservationResponse.statusText}`);
+        this.logger.error(`Error creating reservations: ${reservationResponse.statusText}`);
       }
       loggerService.errorLog({
         userId,
         url: "/Lightspeed/createBooking",
         userAgent: "",
-        message: "ERROR_CREATING_BOOKING",
+        message: "ERROR_CREATING_RESERVATION",
         stackTrace: ``,
         additionalDetailsJSON: JSON.stringify({
           data,
           responseData,
         }),
       });
-      throw new Error(`Error creating booking: ${JSON.stringify(responseData)}`);
+      throw new Error(`Error creating reservations: ${JSON.stringify(responseData)}`);
     }
 
     const bookingResponse = (await reservationResponse.json()) as LightSpeedBookingResponse;
@@ -734,7 +733,7 @@ export class Lightspeed extends BaseProvider {
           options,
         }),
       });
-      throw new Error(`Error adding sales data: ${JSON.stringify(error.message)}`);
+      // throw new Error(`Error adding sales data: ${JSON.stringify(error.message)}`);
     }
   };
 
@@ -819,7 +818,7 @@ export class Lightspeed extends BaseProvider {
     const { BASE_ENDPOINT, CONTENT_TYPE, ORGANIZATION_ID, ACCEPT } = JSON.parse(
       this.providerConfiguration ?? "{}"
     );
-    const { email } = customerDetails;
+    const { email, firstName, lastName } = customerDetails;
     if (!token) {
       token = (await this.getToken()) ?? "";
       if (!token) {
@@ -863,11 +862,47 @@ export class Lightspeed extends BaseProvider {
 
     const customers = await response.json();
 
-    if (customers.data.length === 0) {
-      return undefined;
-    }
-
     const customer = customers.data[0];
+
+    try {
+      if (!customer) {
+        const url = `${BASE_ENDPOINT}/partner_api/v2/organizations/${ORGANIZATION_ID}/customers?filter[phone]=${customerDetails.phone}`;
+
+        const headers = {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": CONTENT_TYPE,
+          Accept: ACCEPT,
+        };
+
+        console.log(`getCustomer - ${url}`);
+
+        const response = await fetch(url, {
+          method: "GET",
+          headers: headers,
+        });
+
+        if (response.ok) {
+          const customers = await response.json();
+          if (customers.data.length === 0) {
+            return undefined;
+          }
+          const customersObject = customers.data;
+
+          const existingCustomer = customersObject.find((customer: LightspeedGetCustomerResponse) =>
+            customer.attributes.first_name === firstName &&
+            customer.attributes.last_name === lastName
+          );
+
+          if (existingCustomer) {
+            console.log("EXISTING CUSTOMER", existingCustomer);
+            return { includePhone: false } as LightspeedGetCustomerResponse;
+          }
+          return undefined;
+        }
+      }
+    } catch (error) {
+      this.logger.error(`Error fetching customer by phone number: ${JSON.stringify(error)}`);
+    }
 
     return customer as LightspeedGetCustomerResponse;
   }
@@ -884,7 +919,7 @@ export class Lightspeed extends BaseProvider {
     const salesDataOptions: LightspeedSaleDataOptions = {
       token: bookingDetails.token,
       roundIds: data.data.relationships.rounds.data,
-      amount: bookingDetails.totalAmountPaid,
+      amount: (bookingDetails.greenFeeCharge * bookingDetails.playerCount) + (bookingDetails.cartFeeCharge * Math.ceil(bookingDetails.playerCount / 2)),
     };
     return salesDataOptions;
   }
@@ -895,12 +930,21 @@ export class Lightspeed extends BaseProvider {
 
   getCustomerCreationData(buyerData: BuyerData): LightspeedCustomerCreationData {
     const [firstName, lastName] = buyerData.name ? buyerData.name.split(" ") : ["", ""];
-    const data = {
-      firstName,
-      lastName,
-      email: buyerData.email,
-      phone: buyerData.phone,
-    } as LightspeedCustomerCreationData;
+    let data: LightspeedCustomerCreationData
+    if (buyerData.includePhone) {
+      data = {
+        firstName,
+        lastName,
+        email: buyerData.email,
+        phone: buyerData.phone
+      } as LightspeedCustomerCreationData;
+    } else {
+      data = {
+        firstName,
+        lastName,
+        email: buyerData.email,
+      } as LightspeedCustomerCreationData;
+    }
     return data;
   }
 

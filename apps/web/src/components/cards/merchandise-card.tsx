@@ -91,7 +91,7 @@ const MerchandiseCard: React.FC<MerchandiseCardProps> = ({ item, onQuantityChang
                         {item.caption}
                     </h2>
                     <Tooltip className='text-start flex-[2]' delay={1000} content={item.description} trigger={
-                        <p className="w-full text-sm text-gray-600 overflow-hidden">
+                        <p className="text-justify w-full text-sm text-gray-600 overflow-hidden">
                             {!isExpanded
                                 ? `${item.description?.slice(0, 50)}`
                                 : item.description}

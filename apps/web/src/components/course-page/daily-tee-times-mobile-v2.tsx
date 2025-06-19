@@ -16,6 +16,7 @@ import { Tooltip } from "../tooltip";
 import { ChevronUp } from "../icons/chevron-up";
 import { TeeTimeV2 } from "../cards/tee-time-v2";
 import { TeeTimeSkeletonV2 } from "./tee-time-skeleton-v2";
+import { OutlineButton } from "../buttons/outline-button";
 
 export const DailyTeeTimesMobileV2 = ({
   date,
@@ -29,8 +30,9 @@ export const DailyTeeTimesMobileV2 = ({
   scrollY,
   divHeight,
   isLoadingTeeTimeDate,
-  allDatesArr
+  allDatesArr,
   // datesWithData
+  toggleFilters
 }: {
   date: string;
   minDate: string;
@@ -43,8 +45,9 @@ export const DailyTeeTimesMobileV2 = ({
   scrollY: number,
   divHeight?: number,
   isLoadingTeeTimeDate: boolean,
-  allDatesArr: string[]
+  allDatesArr: string[],
   // datesWithData:string[]
+  toggleFilters?: () => void;
 }) => {
   const overflowRef = useRef<HTMLDivElement>(null);
   const nextPageRef = useRef<HTMLDivElement>(null);
@@ -200,13 +203,13 @@ export const DailyTeeTimesMobileV2 = ({
           <div className="h-8 min-w-[150px] w-[20%] bg-gray-200 rounded-md  animate-pulse unmask-time" />
         ) : (
           <div className="w-full flex items-center gap-3 flex-col">
-            <div className={`w-full flex items-center justify-between ${(courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
-              ? `fixed bg-white left-0 w-full z-10 bg-secondary-white pt-2  px-4 pb-3 shadow-md`
-              : "relative"
-              }`} style={{
-                top: (courseImages?.length > 0 ? scrollY > 333 : scrollY > 45) ? `${divHeight && divHeight + 54}px` : 'auto',
-
-              }}>
+            <div
+              className={`w-full flex items-center justify-between
+               ${(courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
+                  ? `bg-white left-0 w-full z-10 bg-secondary-white pt-2  px-4 pb-3 shadow-md`
+                  : "relative"
+                }`}
+            >
               {!isAtStart ?
                 <ChevronUp fill="#000" className="-rotate-90" onClick={pageDown} /> : <div></div>
               }
@@ -216,7 +219,12 @@ export const DailyTeeTimesMobileV2 = ({
                 data-testid="date-group-id"
                 data-qa={dayMonthDate(date)}
               >
-                {dayMonthDate(date)}
+                <OutlineButton
+                  className="!px-3 !py-1"
+                  onClick={toggleFilters}
+                >
+                  {dayMonthDate(date)}
+                </OutlineButton>
               </div>
               {isLoadingWeather && !weather ? (
                 <div className="h-8 w-[30%] bg-gray-200 rounded-md  animate-pulse" />
@@ -337,6 +345,6 @@ export const DailyTeeTimesMobileV2 = ({
         </div>
 
       </div>
-    </div>
+    </div >
   );
 };

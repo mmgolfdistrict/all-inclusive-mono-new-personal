@@ -91,7 +91,7 @@ export const TransactionDetails = ({
   return isMobile ? (
     <Modal
       isOpen={isReceiptOpen}
-      title="Cash out Reciept"
+      title="Withdrawal Reciept"
       onClose={() => setIsReceiptOpen(false)}
     >
       <TransactionDetailData
@@ -102,7 +102,7 @@ export const TransactionDetails = ({
     </Modal>
   ) : (
     <Flyout
-      title="Cash out Reciept"
+      title="Withdrawal Reciept"
       isOpen={isReceiptOpen}
       setIsOpen={setIsReceiptOpen}
     >

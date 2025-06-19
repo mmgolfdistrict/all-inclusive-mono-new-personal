@@ -32,7 +32,7 @@ import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 import Weekday from "dayjs/plugin/weekday";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { ViewportList } from "react-viewport-list";
 import { useMediaQuery } from "usehooks-ts";
@@ -546,18 +546,41 @@ export default function CourseHomePage() {
   };
 
   const pageUp = () => {
-    if (pageNumber === amountOfPage) return;
-    setPageNumber((prev) => prev + 1);
-    setTake((prev) => prev + TAKE);
-    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+    setSelectedDate((prev) => {
+      if (!prev) return null;
+
+      const nextDate = dayjs(prev).add(1, "day");
+      const end = dayjs(endDate);
+
+      if (nextDate.isAfter(end, "day")) return prev; // don't exceed endDate
+
+      // update state
+      setPageNumber((prevPage) => prevPage + 1);
+      setTake((prevTake) => prevTake + TAKE);
+      scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+
+      return nextDate.toDate().toUTCString();
+    });
   };
 
   const pageDown = () => {
-    if (pageNumber === 1) return;
-    setPageNumber((prev) => prev - 1);
-    setTake((prev) => prev - TAKE);
-    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+    setSelectedDate((prev) => {
+      if (!prev) return null;
+
+      const prevDate = dayjs(prev).subtract(1, "day");
+      const start = dayjs(startDate);
+
+      if (prevDate.isBefore(start, "day")) return prev; // don't go before startDate
+
+      // update state
+      setPageNumber((prevPage) => prevPage - 1);
+      setTake((prevTake) => prevTake - TAKE);
+      scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+
+      return prevDate.toDate().toUTCString();
+    });
   };
+
 
   const handleLoading = (val: boolean) => {
     setIsLoading(val);
@@ -688,6 +711,31 @@ export default function CourseHomePage() {
     }
   };
 
+  const [selectedDate, setSelectedDate] = useState<string | null>(startDate);
+
+  useEffect(() => {
+    if (selectedDate && startDate) {
+      const diff = dayjs(selectedDate).diff(dayjs(startDate), 'day');
+      setPageNumber(diff + 1); // Assuming page 1 is the startDate
+    }
+  }, [selectedDate, startDate]);
+
+  const handleDateSelect = (date: string) => {
+    setSelectedDate(date);
+  };
+
+  const displayDatesArr = useMemo(() => {
+    const arr: string[] = [];
+    const start = dayjs(startDate);
+    const end = dayjs(endDate);
+
+    for (let d = start; d.isSameOrBefore(end); d = d.add(1, "day")) {
+      arr.push(d.toDate().toUTCString());
+    }
+
+    return arr;
+  }, [startDate, endDate]);
+
   return (
     <main className={`bg-secondary-white py-4 md:py-6`}>
       <LoadingContainer
@@ -712,23 +760,23 @@ export default function CourseHomePage() {
               setValue={handleCourseSwitch}
             />
               : entity?.redirectToCourseFlag ? null : (
-                <GoBack href="/" text={`Back to all ${entity?.name} Courses`} />
+                <GoBack href="/" text={`Back to All Courses`} />
               )}
           </div>
           <div className="flex items-center justify-between w-full">
             <div className="flex justify-between gap-4  px-4 md:px-0">
               <div className="text-secondary-black">
                 {/* Showing {count?.toLocaleString() ?? "0"} tee times{" "} */}
-                <span className="text-sm text-primary-gray">
+                <span className="text-justify text-sm text-primary-gray">
                   All times shown in course time zone
                 </span>
               </div>
             </div>
-            <Select
+            {/* <Select
               value={sortValue}
               setValue={handleSetSortValue}
               values={SortOptions}
-            />
+            /> */}
           </div>
         </div>
       }
@@ -759,45 +807,55 @@ export default function CourseHomePage() {
             <Filters openForecastModal={openForecastModal} />
           </div>
         </div>
-        <div className={`fixed ${isNavExpanded ? "bottom-32" : "bottom-16"} left-1/2 z-10 -translate-x-1/2 md:hidden`}>
+        <div className={`fixed ${isNavExpanded ? "bottom-[9.6rem]" : "bottom-[4.8rem]"} left-1/2 z-10 -translate-x-1/2 md:hidden`}>
           {/* mobile  for filter/sort */}
           <FilterSort toggleFilters={toggleFilters} toggleSort={toggleSort} />
         </div>
         <div className="flex w-full flex-col gap-1 md:gap-4 overflow-x-hidden pr-0p md:pr-6">
-
-          <div
-            className={`flex space-x-2 md:hidden px-4 ${(courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
-              ? `fixed left-0 w-full z-10 bg-secondary-white pt-2 pb-3 shadow-md`
+          {/* scrollable dates  */}
+          {isMobile && <div style={{
+            top: (courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
+              ? `${divHeight && divHeight * 1}px`
+              : "auto",
+          }}
+            className={`w-full flex items-center overflow-x-auto justify-between ${(courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
+              ? `fixed left-0 w-full z-10 bg-secondary-white pt-2  px-4 pb-3 shadow-md`
               : "relative"
               }`}
-            style={{
-              top: (courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
-                ? `${divHeight && divHeight * 1}px`
-                : "auto",
-            }}
           >
-            <div className="w-[50%] flex items-center justify-around">
-              <button
-                onClick={toggleFilters}
-                className="p-2 text-xs flex items-center space-x-2 flex items-center gap-1 rounded-full border-b border-r border-t border-l border-stroke"
-              >
-                <FiltersIcon className="h-[14px] w-[14px]" />
-                All Filters
-              </button>
-              <button
-                onClick={toggleDates}
-                className="p-2 text-xs flex items-center space-x-2 flex items-center gap-1 rounded-full border-b border-r border-t border-l border-stroke"
-              >
-                <Calendar className="h-[14px] w-[14px]" /> Date
-              </button>
+            <div className="flex gap-2 min-w-max px-2">
+              {displayDatesArr.map((dateStr) => {
+                const dateObj = dayjs(dateStr);
+                const isSelected = selectedDate === dateStr;
+
+                return (
+                  <button
+                    key={dayjs(selectedDate).format("YYYY-MM-DD") === dayjs(dateStr).format("YYYY-MM-DD") ? selectedDate : dateStr}
+                    onClick={() => handleDateSelect(dateStr)}
+                    className={`flex flex-col items-center justify-center rounded-lg px-2 text-sm border transition-all shadow-sm
+                     ${isSelected
+                        ? "text-white font-semibold"
+                        : "bg-white text-primary-black border-gray-300 hover:bg-gray-100"
+                      }`}
+                    style={{
+                      borderColor: isSelected ? entity?.color1 : "rgb(255 255 255)",
+                      backgroundColor: isSelected ? entity?.color1 : "rgb(255 255 255)",
+                    }}
+                  >
+                    <span className="text-[11px] uppercase tracking-wide">
+                      {dateObj.format("MMM")}
+                    </span>
+                    <span className="text-xl font-bold leading-tight">
+                      {dateObj.format("D")}
+                    </span>
+                    <span className="text-[13px] font-medium">
+                      {dateObj.format("ddd")}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
-            <div className="text-secondary-black w-[50%] text-center">
-              {/* Showing {count?.toLocaleString() ?? "0"} tee times{" "} */}
-              <span className="text-sm text-primary-gray">
-                All times shown in course time zone
-              </span>
-            </div>
-          </div>
+          </div>}
 
           {error ? (
             <div className="flex justify-center items-center h-[200px]">
@@ -823,7 +881,7 @@ export default function CourseHomePage() {
                         }}
                         courseException={getCourseException(date as string)}
                         key={idx}
-                        date={date}
+                        date={selectedDate || date}
                         minDate={startDate.toString()}
                         maxDate={endDate.toString()}
                         handleLoading={handleLoading}
@@ -833,7 +891,8 @@ export default function CourseHomePage() {
                         divHeight={divHeight}
                         isLoadingTeeTimeDate={isLoadingTeeTimeDate}
                         // datesWithData={datesWithData}
-                        allDatesArr={datesArr}
+                        allDatesArr={displayDatesArr}
+                        toggleFilters={toggleFilters}
                       />
                     )}
                   </ViewportList>
@@ -906,34 +965,40 @@ export default function CourseHomePage() {
         </div>
       </section>
 
-      {showSort && (
+      {/* {showSort && (
         <MobileSort
           setShowSort={setShowSort}
           toggleSort={toggleSort}
           setSortValue={handleSetSortValue}
           sortValue={sortValue}
         />
-      )}
-      {showFilters && (
-        <MobileFilters
-          setShowFilters={setShowFilters}
-          toggleFilters={toggleFilters}
-          openForecastModal={openForecastModal}
-        />
-      )}
-      {showDates && (
-        <MobileDates
-          setShowFilters={setShowDates}
-          toggleFilters={toggleDates}
-        />
-      )}
-      {isForecastModalOpen && (
-        <ForecastModal
-          closeForecastModal={closeForecastModal}
-          startDate={startDate}
-          endDate={endDate}
-        />
-      )}
-    </main>
+      )} */}
+      {
+        showFilters && (
+          <MobileFilters
+            setShowFilters={setShowFilters}
+            toggleFilters={toggleFilters}
+            openForecastModal={openForecastModal}
+          />
+        )
+      }
+      {
+        showDates && (
+          <MobileDates
+            setShowFilters={setShowDates}
+            toggleFilters={toggleDates}
+          />
+        )
+      }
+      {
+        isForecastModalOpen && (
+          <ForecastModal
+            closeForecastModal={closeForecastModal}
+            startDate={startDate}
+            endDate={endDate}
+          />
+        )
+      }
+    </main >
   );
 }

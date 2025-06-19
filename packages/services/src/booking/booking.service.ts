@@ -4025,6 +4025,8 @@ export class BookingService {
             providerCourseId: teeTime.providerCourseId!,
             providerTeeSheetId: teeTime.providerTeeSheetId!,
             totalAmountPaid: (pricePerGolfer / 100 + taxCharge - markupCharge) * playerCount,
+            greenFeeCharge: teeTime.greenFees / 100,
+            cartFeeCharge: teeTime.cartFees / 100,
             token: token,
           };
           const addSalesOptions = provider.getSalesDataOptions(booking, bookingsDetails);
@@ -5296,6 +5298,8 @@ export class BookingService {
               providerCourseId: teeTime.providerCourseId!,
               providerTeeSheetId: teeTime.providerTeeSheetId!,
               totalAmountPaid: (pricePerGolfer / 100 + taxCharge - markupCharge) * requiredSpots,
+              greenFeeCharge: teeTime.greenFees / 100,
+              cartFeeCharge: teeTime.cartFees / 100,
               token: token,
             };
             const addSalesOptions = provider.getSalesDataOptions(booking, bookingsDetails);

@@ -557,12 +557,12 @@ export const CollectPayment = ({
                       </p>
                     ) : (
                       <input
-                      className="outline-none bg-secondary-white focus:outline-white px-3 py-1 rounded-md w-full "
-                      type="text"
-                      placeholder="Enter the email"
-                      onChange={(e) => handleEmailChange(index, e.target.value)}
-                      value={player.email}
-                    />
+                        className="outline-none bg-secondary-white focus:outline-white px-3 py-1 rounded-md w-full "
+                        type="text"
+                        placeholder="Enter the email"
+                        onChange={(e) => handleEmailChange(index, e.target.value)}
+                        value={player.email}
+                      />
                     )}
                     {(selectedOption === "equalSplit" || player.isPaid === 1) ? (
                       <p className="px-4">
@@ -705,7 +705,7 @@ export const CollectPayment = ({
                   <h4 className="text-primary-gray">Total Amount</h4>
                   <Tooltip
                     trigger={<Info className="h-[14px] w-[14px]" />}
-                    content="This is total amount Including payment processing charges"
+                    content={<div className="max-w-[220px] text-sm break-words">This is total amount Including payment processing charges</div>}
                   />
                 </div>
                 <div>
@@ -739,7 +739,7 @@ export const CollectPayment = ({
                   <h4 className="text-primary-gray" >Your Payout</h4>
                   <Tooltip
                     trigger={<Info className="h-[14px] w-[14px]" />}
-                    content="This Amount you will received in Cashout"
+                    content={<div className="max-w-[220px] text-sm break-words">This Amount you will received in Cashout</div>}
                   />
                 </div>
                 <div>
