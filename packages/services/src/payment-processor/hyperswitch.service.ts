@@ -13,6 +13,7 @@ import type {
   CustomerPaymentMethod,
   CustomerPaymentMethodsResponse,
 } from "./types/hyperSwitch.types";
+import type { InsertFailedBooking } from "@golf-district/database/schema/failedBookings";
 import { failedBooking } from "@golf-district/database/schema/failedBookings";
 import { bookingSplitPayment } from "@golf-district/database/schema/bookingSplitPayment";
 import { appSettingService } from "../app-settings/initialized";
@@ -557,25 +558,37 @@ export class HyperSwitchService {
     paymentId
   }: {
     userId: string | null | undefined;
-    teeTimeId: string | null | undefined;
+    teeTimeId: string | string[] | null | undefined;
     cartId: string | null | undefined;
     weatherGuaranteeQuoteId: string | null | undefined;
     paymentId: string;
   }) => {
     try {
-      const failedBookingData = {
-        id: randomUUID(),
-        cartId: cartId ?? "",
-        teeTimeId: teeTimeId ?? "",
-        userId: userId ?? "",
-        weatherGuaranteeQuoteId: weatherGuaranteeQuoteId ?? "",
-        providerPaymentId: paymentId
+      let failedBookingData: InsertFailedBooking[];
+      if (Array.isArray(teeTimeId)) {
+        failedBookingData = teeTimeId.map((teeTimeId) => ({
+          id: randomUUID(),
+          cartId: cartId ?? "",
+          teeTimeId: teeTimeId,
+          userId: userId ?? "",
+          weatherGuaranteeQuoteId: weatherGuaranteeQuoteId ?? "",
+          providerPaymentId: paymentId
+        }))
+      } else {
+        failedBookingData = [{
+          id: randomUUID(),
+          cartId: cartId ?? "",
+          teeTimeId: teeTimeId ?? "",
+          userId: userId ?? "",
+          weatherGuaranteeQuoteId: weatherGuaranteeQuoteId ?? "",
+          providerPaymentId: paymentId
+        }]
       }
       await this.database
         .insert(failedBooking)
         .values(failedBookingData)
         .execute();
-      this.logger.info(`Failed booking saved on database with id: ${failedBookingData.id}`);
+      this.logger.info(`Failed booking saved on database with id: ${JSON.stringify(failedBookingData.map((booking) => booking.id))}`);
     } catch (error: any) {
       this.logger.error(`Error saving failed booking on database: ${JSON.stringify(error)}`);
       void loggerService.errorLog({
@@ -602,7 +615,7 @@ export class HyperSwitchService {
     sensibleQuoteId: string,
     userId: string,
     bookingStage: string,
-    teeTimeId: string,
+    teeTimeId: string | string[],
     otherDetails?: {
       userName: string;
       userEmail: string;
@@ -1153,7 +1166,7 @@ Thank you for choosing us.`;
           .from(bookingSplitPayment)
           .where(eq(bookingSplitPayment.paymentId, paymentId));
         // email send the payment completed user
-        const message: string = `Your payment of $${(Number(result?.collectedAmount) / 100)} has been successfully processed. Thank you for your payment.`;
+        const message = `Your payment of $${(Number(result?.collectedAmount) / 100)} has been successfully processed. Thank you for your payment.`;
         const emailSend = await this.notificationService.sendEmail(
           result?.email ?? "",
           "Payment Successful",
@@ -1161,7 +1174,7 @@ Thank you for choosing us.`;
         )
         // email send the admins after payment completed of the user
 
-        const messageAdmin: string = `Payment of  $${(Number(result?.collectedAmount) / 100)} has been successfully processed for the user ${result?.email}. Thank you for your payment.`;
+        const messageAdmin = `Payment of  $${(Number(result?.collectedAmount) / 100)} has been successfully processed for the user ${result?.email}. Thank you for your payment.`;
         const adminEmails = process.env.ADMIN_EMAIL_LIST!.split(",");
 
         for (const email of adminEmails) {
@@ -1242,7 +1255,7 @@ Thank you for choosing us.`;
           .where(eq(bookingSplitPayment.id, referencePaymentId));
         // email send the payment completed user
 
-        const message: string = `Your payment of$${Number(result?.collectedAmount) / 100} has been successfully processed. Thank you for your payment.`;
+        const message = `Your payment of$${Number(result?.collectedAmount) / 100} has been successfully processed. Thank you for your payment.`;
         const emailSend = await this.notificationService.sendEmail(
           result?.email ?? "",
           "Payment Successful",
@@ -1250,7 +1263,7 @@ Thank you for choosing us.`;
         )
         // email send the admins after payment completed of the user
 
-        const messageAdmin: string = `Payment of $${Number(result?.collectedAmount) / 100} has been successfully processed for the user ${result?.email}. Thank you for your payment.`;
+        const messageAdmin = `Payment of $${Number(result?.collectedAmount) / 100} has been successfully processed for the user ${result?.email}. Thank you for your payment.`;
         const adminEmails = process.env.ADMIN_EMAIL_LIST!.split(",");
 
         for (const email of adminEmails) {
