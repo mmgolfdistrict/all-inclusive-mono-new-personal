@@ -823,37 +823,46 @@ export default function CourseHomePage() {
               : "relative"
               }`}
           >
-            <div className="flex gap-2 min-w-max px-2">
-              {displayDatesArr.map((dateStr) => {
-                const dateObj = dayjs(dateStr);
-                const isSelected = selectedDate === dateStr;
+            <div
+              className="flex gap-2 overflow-x-auto overflow-y-hidden px-2"
+              style={{
+                maxWidth: "100%",
+                WebkitOverflowScrolling: "touch",
+                scrollbarWidth: "none", // Firefox
+                msOverflowStyle: "none", // IE/Edge
+              }}
+            >
+              <div
+                className="flex gap-2 min-w-max"
+                style={{
+                  display: "flex",
+                }}
+              >
+                {displayDatesArr.map((dateStr) => {
+                  const dateObj = dayjs(dateStr);
+                  const isSelected = selectedDate === dateStr;
 
-                return (
-                  <button
-                    key={dayjs(selectedDate).format("YYYY-MM-DD") === dayjs(dateStr).format("YYYY-MM-DD") ? selectedDate : dateStr}
-                    onClick={() => handleDateSelect(dateStr)}
-                    className={`flex flex-col items-center justify-center rounded-lg px-2 text-sm border transition-all shadow-sm
-                     ${isSelected
-                        ? "text-white font-semibold"
-                        : "bg-white text-primary-black border-gray-300 hover:bg-gray-100"
-                      }`}
-                    style={{
-                      borderColor: isSelected ? entity?.color1 : "rgb(255 255 255)",
-                      backgroundColor: isSelected ? entity?.color1 : "rgb(255 255 255)",
-                    }}
-                  >
-                    <span className="text-[11px] uppercase tracking-wide">
-                      {dateObj.format("MMM")}
-                    </span>
-                    <span className="text-xl font-bold leading-tight">
-                      {dateObj.format("D")}
-                    </span>
-                    <span className="text-[13px] font-medium">
-                      {dateObj.format("ddd")}
-                    </span>
-                  </button>
-                );
-              })}
+                  return (
+                    <button
+                      key={dateStr}
+                      onClick={() => handleDateSelect(dateStr)}
+                      className={`flex flex-col items-center justify-center rounded-lg px-2 text-sm border transition-all shadow-sm
+            ${isSelected
+                          ? "text-white font-semibold"
+                          : "bg-white text-primary-black border-gray-300 hover:bg-gray-100"
+                        }`}
+                      style={{
+                        borderColor: isSelected ? entity?.color1 : "rgb(255 255 255)",
+                        backgroundColor: isSelected ? entity?.color1 : "rgb(255 255 255)",
+                      }}
+                    >
+                      <span className="text-[11px] uppercase tracking-wide">{dateObj.format("MMM")}</span>
+                      <span className="text-xl font-bold leading-tight">{dateObj.format("D")}</span>
+                      <span className="text-[13px] font-medium">{dateObj.format("ddd")}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>}
 
