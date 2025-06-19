@@ -869,7 +869,7 @@ export class HyperSwitchWebhookService {
         needRentals: bookings.needClubRental,
         timezoneCorrection: courses.timezoneCorrection,
         groupId: bookings.groupId,
-        totalMerchandiseAmount: bookings.totalMerchandiseAmount 
+        totalMerchandiseAmount: bookings.totalMerchandiseAmount
       })
       .from(bookings)
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -1098,6 +1098,8 @@ export class HyperSwitchWebhookService {
               providerCourseId: firstBooking.providerCourseId!,
               providerTeeSheetId: firstBooking.providerTeeSheetId!,
               totalAmountPaid: totalAmountPaid,
+              greenFeeCharge: (existingTeeTime?.greenFee ?? 0) / 100,
+              cartFeeCharge: (existingTeeTime?.cartFee ?? 0) / 100,
               token: token,
             };
             const addSalesOptions = provider.getSalesDataOptions(newBooking, bookingsDetails);
@@ -1273,6 +1275,8 @@ export class HyperSwitchWebhookService {
               providerCourseId: firstBooking.providerCourseId!,
               providerTeeSheetId: firstBooking.providerTeeSheetId!,
               totalAmountPaid: totalAmountPaid,
+              greenFeeCharge: (existingTeeTime?.greenFee ?? 0) / 100,
+              cartFeeCharge: (existingTeeTime?.cartFee ?? 0) / 100,
               token: token,
             };
             const addSalesOptions = provider.getSalesDataOptions(newBookingSecond, bookingsDetails);
@@ -1976,7 +1980,7 @@ export class HyperSwitchWebhookService {
       this.logger.warn("paymentId is here", paymentId);
       this.logger.warn("payment state is here", paymentState);
       if (entityType === "updated" && entity === "payment_link" && paymentState === "COMPLETED") {
-        const updateStatus = await this.database.update(bookingSplitPayment).set({ isPaid:1,webhookStatus: paymentState }).where(eq(bookingSplitPayment.paymentId, paymentId));
+        const updateStatus = await this.database.update(bookingSplitPayment).set({ isPaid: 1, webhookStatus: paymentState }).where(eq(bookingSplitPayment.paymentId, paymentId));
         return {
           message: "Payment Webhook status successFully",
           error: false
@@ -1990,30 +1994,30 @@ export class HyperSwitchWebhookService {
       }
     }
   }
-  updateTrackStatusOfOpenedEmail = async (id:string)=>{
+  updateTrackStatusOfOpenedEmail = async (id: string) => {
     try {
-     this.logger.warn("","email open successFully");
-     const result =   await this.database
-      .update(bookingSplitPayment)
-      .set({
-        isEmailOpened:1
-      })
-      .where(eq(bookingSplitPayment.id,id))
-      .execute().catch(async (e: any) => {
-        await loggerService.errorLog({
-          message: "ERROR_UPDATING_HYPERSWITCH_PAYMENT_STATUS",
-          userId: "",
-          url: "/auth",
-          userAgent: "",
-          stackTrace: `${JSON.stringify(e)}`,
-          additionalDetailsJSON: JSON.stringify({
-          }),
+      this.logger.warn("", "email open successFully");
+      const result = await this.database
+        .update(bookingSplitPayment)
+        .set({
+          isEmailOpened: 1
+        })
+        .where(eq(bookingSplitPayment.id, id))
+        .execute().catch(async (e: any) => {
+          await loggerService.errorLog({
+            message: "ERROR_UPDATING_HYPERSWITCH_PAYMENT_STATUS",
+            userId: "",
+            url: "/auth",
+            userAgent: "",
+            stackTrace: `${JSON.stringify(e)}`,
+            additionalDetailsJSON: JSON.stringify({
+            }),
+          });
         });
-      });
-      if(result){
-        return {success:true,message:"Email Opened"}
+      if (result) {
+        return { success: true, message: "Email Opened" }
       }
-    } catch (error:any) {
+    } catch (error: any) {
       console.log(error.message);
       throw new Error("Error while updating split payment status")
     }

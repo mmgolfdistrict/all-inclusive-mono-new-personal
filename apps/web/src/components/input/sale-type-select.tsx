@@ -68,7 +68,7 @@ export const SaleTypeSelector: React.FC<SaleTypeSelectorProps> = ({
                         disabled={disabled}
                     >
                         <div className="flex items-center justify-center gap-1.5">
-                            <span>{option.caption}</span>
+                            <span className="text-justify">{option.caption}</span>
                             <button
                                 type="button"
                                 onClick={(e) => e.stopPropagation()}
@@ -83,7 +83,7 @@ export const SaleTypeSelector: React.FC<SaleTypeSelectorProps> = ({
                                 />
                             </button>
                         </div>
-                        <div className="text-start text-sm text-gray-600 dark:text-gray-400 group-data-[state=on]:text-white group-data-[state=on]:opacity-[75%]">
+                        <div className="text-justify text-sm text-gray-600 dark:text-gray-400 group-data-[state=on]:text-white group-data-[state=on]:opacity-[75%]">
                             {option.description}
                         </div>
                     </ToggleGroup.Item>

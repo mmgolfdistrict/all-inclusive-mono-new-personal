@@ -87,13 +87,13 @@ export const Cashouts = () => {
       </div>
     );
   }
-  
+
   const downloadCashoutReceipt = () => {
     const amount = (selectedReceipt?.amount || 0) / 100;
     const datetime = selectedReceipt?.createdDateTime || '';
     const docDefinition = {
       content: [
-        { text: "Cash out Reciept", style: "header", alignment: "center" },
+        { text: "Withdrawal Reciept", style: "header", alignment: "center" },
         { canvas: [{ type: "line", x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 1 }] },
         {
           table: {
@@ -136,8 +136,8 @@ export const Cashouts = () => {
         }
       }
     };
-  
-    pdfMake.createPdf(docDefinition).download("cashout-receipt.pdf");
+
+    pdfMake.createPdf(docDefinition).download("withdrawal-receipt.pdf");
   };
 
   return (
@@ -152,21 +152,21 @@ export const Cashouts = () => {
         <tbody className={`max-h-[300px] w-full flex-col overflow-scroll`}>
           {isLoading
             ? Array(3)
-                .fill(null)
-                .map((_, idx) => <SkeletonRow key={idx} />)
+              .fill(null)
+              .map((_, idx) => <SkeletonRow key={idx} />)
             : txnHistory?.map((i, idx) => (
-                <TableRow
-                  key={idx}
-                  amount={formatMoney((i?.amount ?? 0) / 100)}
-                  status={i.externalStatus ?? ""}
-                  time={formatTime(
-                    i.createdDateTime ?? "",
-                    false,
-                    course?.timezoneCorrection
-                  )}
-                  openReceipt={() => openReceipt(i)}
-                />
-              ))}
+              <TableRow
+                key={idx}
+                amount={formatMoney((i?.amount ?? 0) / 100)}
+                status={i.externalStatus ?? ""}
+                time={formatTime(
+                  i.createdDateTime ?? "",
+                  false,
+                  course?.timezoneCorrection
+                )}
+                openReceipt={() => openReceipt(i)}
+              />
+            ))}
         </tbody>
       </table>
 

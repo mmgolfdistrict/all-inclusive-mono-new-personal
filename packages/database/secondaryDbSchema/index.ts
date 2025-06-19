@@ -1,23 +1,23 @@
+import * as clarityDimensions from "./clarityDimension";
+import * as clarityMetrics from "./clarityMetric";
+import * as clarityMetricData from "./clarityMetricData";
 import * as coursePayout from "./coursePayout";
 import { coursePayoutDetail } from "./coursePayoutDetail";
 import { coursePayoutLog } from "./coursePayoutLog";
 import { courseTeeSheetBooking } from "./courseTeeSheetBooking";
 import { courseTeeSheetBookingLog } from "./courseTeeSheetBookingLog";
+import * as finixPaymentDispute from "./finixPaymentDispute";
 import { foreupBooking } from "./foreupBooking";
 import { foreupBookingPeople } from "./foreupBookingPeople";
 import { foreupBookingPlayer } from "./foreupBookingPlayer";
 import { foreupBookingSale } from "./foreupBookingSale";
 import { foreupBookingSaleItem } from "./foreupBookingSaleItem";
+import * as hyperswitchPayment from "./hyperswitchPayment";
 import * as teeTimeIndexLogs from "./teeTimeIndexLogs";
 import * as userPhoneCall from "./userPhoneCall";
+import { userReminderNotificationAuditLogs } from "./userReminderNotificationAuditLogs";
 import * as userWaitlistAuditLogs from "./userWaitlistAuditLogs";
 import * as userWaitlistRecords from "./userWaitlistRecords";
-import { userReminderNotificationAuditLogs } from "./userReminderNotificationAuditLogs"
-import * as finixPaymentDispute from "./finixPaymentDispute";
-import * as hyperswitchPayment from "./hyperswitchPayment";
-import * as clarityMetrics from "./clarityMetric";
-import * as clarityDimensions from "./clarityDimension";
-import * as clarityMetricData from "./clarityMetricData";
 
 export const schema = {
   ...teeTimeIndexLogs,
@@ -34,7 +34,7 @@ export const schema = {
   ...courseTeeSheetBooking,
   ...courseTeeSheetBookingLog,
   ...userPhoneCall,
-  ...userReminderNotificationAuditLogs
+  ...userReminderNotificationAuditLogs,
   ...finixPaymentDispute,
   ...hyperswitchPayment,
   ...clarityMetrics,

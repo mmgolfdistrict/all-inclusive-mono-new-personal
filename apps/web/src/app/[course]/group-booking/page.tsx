@@ -243,7 +243,7 @@ function GroupBooking({ params }: { params: { course: string } }) {
                 <h2 className="text-[14px] md:text-[18px] font-semibold">
                   Set Your Preferences
                 </h2>
-                <p className="text-[12px] md:text-[16px] text-gray-600">
+                <p className="text-justify text-[12px] md:text-[16px] text-gray-600">
                   Choose your ideal play date, time range, and number of
                   players.
                 </p>
@@ -259,7 +259,7 @@ function GroupBooking({ params }: { params: { course: string } }) {
                 <h2 className="text-[14px] md:text-[18px] font-semibold">
                   Visual Time Breakdown
                 </h2>
-                <p className="text-[12px] md:text-[16px] text-gray-600">
+                <p className="text-justify text-[12px] md:text-[16px] text-gray-600">
                   See your times visually how they are spread apart.
                 </p>
               </div>
@@ -274,7 +274,7 @@ function GroupBooking({ params }: { params: { course: string } }) {
                 <h2 className="text-[14px] md:text-[18px] font-semibold">
                   Book in Seconds
                 </h2>
-                <p className="text-[12px] md:text-[16px] text-gray-600">
+                <p className="text-justify text-[12px] md:text-[16px] text-gray-600">
                   Act fast to lock in your spots before someone else does!
                 </p>
               </div>
@@ -289,7 +289,7 @@ function GroupBooking({ params }: { params: { course: string } }) {
                 <h2 className="text-[14px] md:text-[18px] font-semibold">
                   Enjoy Your Round
                 </h2>
-                <p className="text-[12px] md:text-[16px] text-gray-600">
+                <p className="text-justify text-[12px] md:text-[16px] text-gray-600">
                   Confirm your bookings, hit the greens, and make the most of
                   your day!
                 </p>
@@ -336,7 +336,7 @@ function GroupBooking({ params }: { params: { course: string } }) {
                       onClick={() => setIsDatePickerOpen(false)}
                     />
                     <h1 className="text-[20px] md:text-2xl">Select Your Date</h1>
-                    <p className="text-[14px] mb-4 md:text-md">
+                    <p className="text-justify text-[14px] mb-4 md:text-md">
                       *Schedule your notifications for the rest of the year
                     </p>
                     <Calendar
@@ -474,7 +474,7 @@ function GroupBooking({ params }: { params: { course: string } }) {
               See Available Times
             </FilledButton>
           </div>
-          <div className="flex justify-center items-center mt-2 italic text-primary-gray text-[12px] md:text-[16px] px-4 py-2 md:px-8 md:py-6">
+          <div className="text-justify flex justify-center items-center mt-2 italic text-primary-gray text-[12px] md:text-[16px] px-4 py-2 md:px-8 md:py-6">
             <p>
               Bookings are paid in advance and non-refundable. If plans change
               simply list your time for sale, and easily cash out.

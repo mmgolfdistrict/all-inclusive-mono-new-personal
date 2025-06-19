@@ -209,7 +209,7 @@ const MerchandiseInfoPopup: React.FC<MerchandiseInfoPopupProps> = ({
                         ) : null
                     }
                     <div className='flex flex-col gap-1'>
-                        <h3 className="text-md font-semibold text-gray-800 line-clamp-1">{item.caption}</h3>
+                        <h3 className="text-justify text-md font-semibold text-gray-800 line-clamp-1">{item.caption}</h3>
                         <p className="text-sm text-gray-600">
                             {item.tooltip}
                         </p>

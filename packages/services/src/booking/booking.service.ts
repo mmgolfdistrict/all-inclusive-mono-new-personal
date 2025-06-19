@@ -27,7 +27,12 @@ import timezone from "dayjs/plugin/timezone";
 import UTC from "dayjs/plugin/utc";
 import { alias } from "drizzle-orm/mysql-core";
 import { appSettingService } from "../app-settings/initialized";
-import type { CustomerCart, MerchandiseProduct, MerchandiseWithTaxOverride, ProductData } from "../checkout/types";
+import type {
+  CustomerCart,
+  MerchandiseProduct,
+  MerchandiseWithTaxOverride,
+  ProductData,
+} from "../checkout/types";
 import type { NotificationService } from "../notification/notification.service";
 import type { HyperSwitchService } from "../payment-processor/hyperswitch.service";
 import type { SensibleService } from "../sensible/sensible.service";
@@ -636,7 +641,17 @@ export class BookingService {
       });
 
     const timezoneOffset = courseTimezoneISO[0]?.timezoneISO ?? "America/Los_Angeles";
-    const nowInCourseTimezone = dayjs().utc().tz(timezoneOffset).format("YYYY-MM-DD HH:mm:ss");
+    let nowInCourseTimezone = dayjs().utc().tz(timezoneOffset).format("YYYY-MM-DDTHH:mm:ss");
+    const currentTime = dayjs(new Date()).format("YYYY-MM-DDTHH:mm:ss");
+
+    // compare nowInCourseTimezone with currentTime
+    if (dayjs(nowInCourseTimezone).isBefore(currentTime)) {
+      // If nowInCourseTimezone is before currentTime, set it to currentTime
+      nowInCourseTimezone = currentTime;
+    } else {
+      // If nowInCourseTimezone is after currentTime, keep it as is
+      nowInCourseTimezone = dayjs().utc().tz(timezoneOffset).format("YYYY-MM-DDTHH:mm:ss");
+    }
 
     console.log("nowInCourseTimezone-----currentTime----->", nowInCourseTimezone);
 
@@ -674,7 +689,7 @@ export class BookingService {
         playerCount: bookings.playerCount,
         bookingStatus: bookings.status,
         allowSplit: lists.allowSplit,
-        totalMerchandiseAmount: bookings.totalMerchandiseAmount
+        totalMerchandiseAmount: bookings.totalMerchandiseAmount,
       })
       .from(teeTimes)
       .innerJoin(bookings, eq(bookings.teeTimeId, teeTimes.id))
@@ -693,7 +708,7 @@ export class BookingService {
           eq(bookings.ownerId, userId),
           eq(bookings.isActive, true),
           eq(teeTimes.courseId, courseId),
-          gte(teeTimes.date, nowInCourseTimezone),
+          gte(teeTimes.providerDate, nowInCourseTimezone),
           or(eq(bookings.status, "RESERVED"), eq(bookings.status, "CONFIRMED")),
           isNull(bookings.groupId)
         )
@@ -956,7 +971,7 @@ export class BookingService {
         playerCount: bookings.playerCount,
         bookingStatus: bookings.status,
         groupId: bookings.groupId,
-        totalMerchandiseAmount: bookings.totalMerchandiseAmount
+        totalMerchandiseAmount: bookings.totalMerchandiseAmount,
       })
       .from(teeTimes)
       .innerJoin(bookings, eq(bookings.teeTimeId, teeTimes.id))
@@ -976,7 +991,7 @@ export class BookingService {
           eq(bookings.ownerId, userId),
           eq(bookings.isActive, true),
           eq(teeTimes.courseId, courseId),
-          gte(teeTimes.date, nowInCourseTimezone),
+          gte(teeTimes.providerDate, nowInCourseTimezone),
           or(eq(bookings.status, "RESERVED"), eq(bookings.status, "CONFIRMED")),
           not(isNull(bookings.groupId))
         )
@@ -1047,7 +1062,7 @@ export class BookingService {
           bookingStatus: teeTime.bookingStatus,
           isGroupBooking: true,
           groupId: teeTime.groupId ?? "",
-          totalMerchandiseAmount: teeTime.totalMerchandiseAmount ?? 0
+          totalMerchandiseAmount: teeTime.totalMerchandiseAmount ?? 0,
         };
       } else {
         const currentEntry = combinedGroupData[teeTime.groupId!];
@@ -1456,7 +1471,6 @@ export class BookingService {
     endTime: Date,
     allowSplit: boolean
   ) => {
-
     if (new Date().getTime() >= endTime.getTime()) {
       this.logger.warn("End time cannot be before current time");
       loggerService.errorLog({
@@ -3601,12 +3615,16 @@ export class BookingService {
 
     const merchandiseWithTaxOverrideCharge =
       customerCartData?.cart?.cart
-        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "merchandiseWithTaxOverride")
+        ?.filter(
+          ({ product_data }: ProductData) => product_data.metadata.type === "merchandiseWithTaxOverride"
+        )
         ?.reduce((acc: number, i: any) => acc + i.product_data.metadata.priceWithoutTax, 0) / 100;
 
     const merchandiseOverriddenTaxAmount =
       customerCartData?.cart?.cart
-        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "merchandiseWithTaxOverride")
+        ?.filter(
+          ({ product_data }: ProductData) => product_data.metadata.type === "merchandiseWithTaxOverride"
+        )
         ?.reduce((acc: number, i: any) => acc + i.product_data.metadata.taxAmount, 0) / 100;
 
     const advancedBookingAmount =
@@ -3821,7 +3839,7 @@ export class BookingService {
         weatherGuaranteeTaxPercent: courses.weatherGuaranteeTaxPercent,
         markupTaxPercent: courses.markupTaxPercent,
         timezoneCorrection: courses.timezoneCorrection,
-        merchandiseTaxPercent: courses.merchandiseTaxPercent
+        merchandiseTaxPercent: courses.merchandiseTaxPercent,
       })
       .from(teeTimes)
       .leftJoin(courses, eq(teeTimes.courseId, courses.id))
@@ -3892,12 +3910,15 @@ export class BookingService {
       (sensibleCharge / 100) * ((teeTime?.weatherGuaranteeTaxPercent ?? 0) / 100);
     const cartFeeTaxPercentTotal =
       (((cartFeeCharge / 100) * ((teeTime?.cartFeeTaxPercent ?? 0) / 100)) / 100) * playerCount;
-    const merchandiseTaxTotal =
-      (merchandiseCharge / 100) * ((teeTime?.merchandiseTaxPercent ?? 0) / 100);
+    const merchandiseTaxTotal = (merchandiseCharge / 100) * ((teeTime?.merchandiseTaxPercent ?? 0) / 100);
 
     const additionalTaxes =
-      greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal + merchandiseTaxTotal;
-    const merchandiseTotalCharge = merchandiseCharge + merchandiseWithTaxOverrideCharge
+      greenFeeTaxTotal +
+      markupTaxTotal +
+      weatherGuaranteeTaxTotal +
+      cartFeeTaxPercentTotal +
+      merchandiseTaxTotal;
+    const merchandiseTotalCharge = merchandiseCharge + merchandiseWithTaxOverrideCharge;
 
     if (!teeTime) {
       this.logger.fatal(`tee time not found id: ${teeTimeId}`);
@@ -3957,7 +3978,7 @@ export class BookingService {
       }
 
       if (merchandiseTotalCharge > 0) {
-        details = `${details} - Merchandise has been purchased`
+        details = `${details} - Merchandise has been purchased`;
       }
 
       if (additionalNoteFromUser) {
@@ -4012,6 +4033,8 @@ export class BookingService {
             providerCourseId: teeTime.providerCourseId!,
             providerTeeSheetId: teeTime.providerTeeSheetId!,
             totalAmountPaid: (pricePerGolfer / 100 + taxCharge - markupCharge) * playerCount,
+            greenFeeCharge: teeTime.greenFees / 100,
+            cartFeeCharge: teeTime.cartFees / 100,
             token: token,
           };
           const addSalesOptions = provider.getSalesDataOptions(booking, bookingsDetails);
@@ -4034,27 +4057,26 @@ export class BookingService {
         }
       }
       if (additionalNoteFromUser || needRentals || merchandiseTotalCharge > 0) {
-        const merchandiseDetails: { caption: string, qty: number }[] = [];
+        const merchandiseDetails: { caption: string; qty: number }[] = [];
         const merchandiseData = cart?.cart?.filter(
           (item: ProductData) => item.product_data.metadata.type === "merchandise"
         ) as MerchandiseProduct[];
         const merchandiseItems = merchandiseData[0]!.product_data.metadata.merchandiseItems ?? [];
         const merchandiseItemIds = merchandiseItems.map((item) => item.id);
-        const merchandiseWithTaxOverrideData = (cart?.cart?.filter(
+        const merchandiseWithTaxOverrideData = cart?.cart?.filter(
           (item: ProductData) => item.product_data.metadata.type === "merchandiseWithTaxOverride"
-        ) as MerchandiseWithTaxOverride[])
-        const merchandiseWithTaxOverrideItems = (merchandiseWithTaxOverrideData[0]?.product_data.metadata.merchandiseItems) ?? [];
+        ) as MerchandiseWithTaxOverride[];
+        const merchandiseWithTaxOverrideItems =
+          merchandiseWithTaxOverrideData[0]?.product_data.metadata.merchandiseItems ?? [];
         merchandiseItemIds.push(...merchandiseWithTaxOverrideItems.map((item) => item.id));
         purchasedMerchandise = await db
           .select({
             id: courseMerchandise.id,
             caption: courseMerchandise.caption,
-            qoh: courseMerchandise.qoh
+            qoh: courseMerchandise.qoh,
           })
           .from(courseMerchandise)
-          .where(
-            inArray(courseMerchandise.id, merchandiseItemIds)
-          )
+          .where(inArray(courseMerchandise.id, merchandiseItemIds))
           .execute()
           .catch((error) => {
             void loggerService.errorLog({
@@ -4071,13 +4093,13 @@ export class BookingService {
               })}`,
             });
             throw error;
-          })
+          });
         for (const merchandise of purchasedMerchandise) {
           const merchandiseItem = merchandiseItems.find((item) => item.id === merchandise.id);
           merchandiseDetails.push({
             caption: merchandise.caption,
-            qty: merchandiseItem?.qty ?? 0
-          })
+            qty: merchandiseItem?.qty ?? 0,
+          });
         }
 
         const courseContactsList = await this.database
@@ -4124,7 +4146,7 @@ export class BookingService {
                 HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
                 CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${teeTime.cdnKey}.${teeTime.extension}`,
                 PurchasedMerchandise: purchasedMerchandise?.length > 0 ? true : false,
-                MerchandiseDetails: merchandiseDetails
+                MerchandiseDetails: merchandiseDetails,
               },
               []
             );
@@ -4238,7 +4260,7 @@ export class BookingService {
         needRentals,
         courseMembershipId: courseMembershipId,
         playerCountForMemberShip,
-        purchasedMerchandise
+        purchasedMerchandise,
       })
       .catch(async (err) => {
         this.logger.error(`Error creating booking, ${err}`);
@@ -4670,7 +4692,7 @@ export class BookingService {
         transferedFromBookingId: transfers.fromUserId,
         groupId: bookings.groupId,
         playerCount: bookings.playerCount,
-        courseId: teeTimes.courseId
+        courseId: teeTimes.courseId,
       })
       .from(bookings)
       .innerJoin(transfers, eq(transfers.bookingId, bookings.id))
@@ -5073,7 +5095,7 @@ export class BookingService {
         markupTaxPercent: courses.markupTaxPercent,
         timezoneCorrection: courses.timezoneCorrection,
         firstHandSpotsAvailable: teeTimes.availableFirstHandSpots,
-        merchandiseTaxPercent: courses.merchandiseTaxPercent
+        merchandiseTaxPercent: courses.merchandiseTaxPercent,
       })
       .from(teeTimes)
       .leftJoin(courses, eq(teeTimes.courseId, courses.id))
@@ -5151,8 +5173,12 @@ export class BookingService {
       (merchandiseCharge / 100) * ((firstTeeTime?.merchandiseTaxPercent ?? 0) / 100);
 
     const additionalTaxes =
-      greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal + merchandiseTaxTotal;
-    const merchandiseTotalCharge = merchandiseCharge + merchandiseWithTaxOverrideCharge
+      greenFeeTaxTotal +
+      markupTaxTotal +
+      weatherGuaranteeTaxTotal +
+      cartFeeTaxPercentTotal +
+      merchandiseTaxTotal;
+    const merchandiseTotalCharge = merchandiseCharge + merchandiseWithTaxOverrideCharge;
 
     if (!firstTeeTime) {
       this.logger.fatal(`tee time not found id: ${teeTimeIdsAsString}`);
@@ -5187,6 +5213,9 @@ export class BookingService {
       firstTeeTime.providerCourseConfiguration!
     );
     for (const teeTime of tempTeeTimes) {
+      // if (teeTime.id !== tempTeeTimes[0]!.id) {
+      //   throw new Error("TEST ERROR");
+      // }
       try {
         bookingStage = "Finding or creating customer";
         console.log(
@@ -5226,7 +5255,7 @@ export class BookingService {
         }
 
         if (merchandiseTotalCharge > 0) {
-          details = `${details} - Merchandise has been purchased`
+          details = `${details} - Merchandise has been purchased`;
         }
 
         if (additionalNoteFromUser) {
@@ -5258,7 +5287,7 @@ export class BookingService {
         });
         bookingStage = "Creating Booking on Provider";
         const booking = await provider
-          .createBooking(token, teeTime.providerCourseId!, teeTime.providerTeeSheetId!, bookingData, userId)
+          .createBooking(token, teeTime.id !== tempTeeTimes[0]!.id ? "" : teeTime.providerCourseId!, teeTime.providerTeeSheetId!, bookingData, userId)
           .catch((err) => {
             this.logger.error(`first hand booking at provider failed for teetime ${teeTime.id}: ${err}`);
             loggerService.errorLog({
@@ -5281,6 +5310,8 @@ export class BookingService {
               providerCourseId: teeTime.providerCourseId!,
               providerTeeSheetId: teeTime.providerTeeSheetId!,
               totalAmountPaid: (pricePerGolfer / 100 + taxCharge - markupCharge) * requiredSpots,
+              greenFeeCharge: teeTime.greenFees / 100,
+              cartFeeCharge: teeTime.cartFees / 100,
               token: token,
             };
             const addSalesOptions = provider.getSalesDataOptions(booking, bookingsDetails);
@@ -5302,30 +5333,32 @@ export class BookingService {
             });
           }
         }
-        if (firstTeeTime.id === teeTime.id && (additionalNoteFromUser || needRentals || merchandiseTotalCharge > 0)) {
-          const merchandiseDetails: { caption: string, qty: number }[] = [];
+        if (
+          firstTeeTime.id === teeTime.id &&
+          (additionalNoteFromUser || needRentals || merchandiseTotalCharge > 0)
+        ) {
+          const merchandiseDetails: { caption: string; qty: number }[] = [];
           const merchandiseData = cart?.cart?.filter(
             (item: ProductData) => item.product_data.metadata.type === "merchandise"
           ) as MerchandiseProduct[];
 
           const merchandiseItems = merchandiseData[0]!.product_data.metadata.merchandiseItems ?? [];
           const merchandiseItemIds = merchandiseItems.map((item) => item.id);
-          const merchandiseWithTaxOverrideData = (cart?.cart?.filter(
+          const merchandiseWithTaxOverrideData = cart?.cart?.filter(
             (item: ProductData) => item.product_data.metadata.type === "merchandiseWithTaxOverride"
-          ) as MerchandiseWithTaxOverride[])
-          const merchandiseWithTaxOverrideItems = (merchandiseWithTaxOverrideData[0]?.product_data.metadata.merchandiseItems) ?? [];
+          ) as MerchandiseWithTaxOverride[];
+          const merchandiseWithTaxOverrideItems =
+            merchandiseWithTaxOverrideData[0]?.product_data.metadata.merchandiseItems ?? [];
           merchandiseItemIds.push(...merchandiseWithTaxOverrideItems.map((item) => item.id));
 
           purchasedMerchandise = await db
             .select({
               id: courseMerchandise.id,
               caption: courseMerchandise.caption,
-              qoh: courseMerchandise.qoh
+              qoh: courseMerchandise.qoh,
             })
             .from(courseMerchandise)
-            .where(
-              inArray(courseMerchandise.id, merchandiseItemIds)
-            )
+            .where(inArray(courseMerchandise.id, merchandiseItemIds))
             .execute()
             .catch((error) => {
               void loggerService.errorLog({
@@ -5338,17 +5371,17 @@ export class BookingService {
                   merchandiseItemIds,
                   merchandiseItems,
                   merchandiseData,
-                  cart
+                  cart,
                 })}`,
               });
               throw error;
-            })
+            });
           for (const merchandise of purchasedMerchandise) {
             const merchandiseItem = merchandiseItems.find((item) => item.id === merchandise.id);
             merchandiseDetails.push({
               caption: merchandise.caption,
-              qty: merchandiseItem?.qty ?? 0
-            })
+              qty: merchandiseItem?.qty ?? 0,
+            });
           }
 
           const courseContactsList = await this.database
@@ -5395,7 +5428,7 @@ export class BookingService {
                   HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
                   CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${teeTime.cdnKey}.${teeTime.extension}`,
                   PurchasedMerchandise: purchasedMerchandise?.length > 0 ? true : false,
-                  MerchandiseDetails: merchandiseDetails
+                  MerchandiseDetails: merchandiseDetails,
                 },
                 []
               );
@@ -5513,7 +5546,7 @@ export class BookingService {
         playerCountForMemberShip,
         isFirstHandGroupBooking: true,
         providerBookings,
-        purchasedMerchandise
+        purchasedMerchandise,
       })
       .catch(async (err) => {
         this.logger.error(`Error creating booking, ${err}`);

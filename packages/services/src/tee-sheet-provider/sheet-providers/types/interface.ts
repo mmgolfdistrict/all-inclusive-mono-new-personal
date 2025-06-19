@@ -59,6 +59,7 @@ export interface BuyerData {
   emailNotification: boolean | null;
   handel: string | null;
   accountNumber: number;
+  includePhone?: boolean;
 }
 
 export interface TeeTimeData {
@@ -98,6 +99,8 @@ export type BookingDetails = {
   playerCount: number;
   totalAmountPaid: number;
   token: string;
+  greenFeeCharge: number;
+  cartFeeCharge: number;
 };
 
 export type NameChangeCustomerDetails = {

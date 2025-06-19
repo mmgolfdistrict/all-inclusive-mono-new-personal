@@ -50,7 +50,7 @@ const InvitedTeeTime = () => {
                   >
                     <td className="flex items-center gap-2 px-4 py-3">
                       <Avatar src={course?.logo} />
-                      <div className="whitespace-nowrap underline text-secondary-black">
+                      <div className="whitespace-nowrap text-secondary-black">
                         {item?.courseName}
                       </div>
                     </td>
