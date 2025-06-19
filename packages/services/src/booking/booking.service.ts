@@ -4040,11 +4040,12 @@ export class BookingService {
         }
       }
       if (additionalNoteFromUser || needRentals || merchandiseTotalCharge > 0) {
+        bookingStage = "Preparing and sending course operatior email"
         const merchandiseDetails: { caption: string; qty: number }[] = [];
         const merchandiseData = cart?.cart?.filter(
           (item: ProductData) => item.product_data.metadata.type === "merchandise"
         ) as MerchandiseProduct[];
-        const merchandiseItems = merchandiseData[0]!.product_data.metadata.merchandiseItems ?? [];
+        const merchandiseItems = merchandiseData[0]?.product_data.metadata.merchandiseItems ?? [];
         const merchandiseItemIds = merchandiseItems.map((item) => item.id);
         const merchandiseWithTaxOverrideData = cart?.cart?.filter(
           (item: ProductData) => item.product_data.metadata.type === "merchandiseWithTaxOverride"
@@ -4052,31 +4053,33 @@ export class BookingService {
         const merchandiseWithTaxOverrideItems =
           merchandiseWithTaxOverrideData[0]?.product_data.metadata.merchandiseItems ?? [];
         merchandiseItemIds.push(...merchandiseWithTaxOverrideItems.map((item) => item.id));
-        purchasedMerchandise = await db
-          .select({
-            id: courseMerchandise.id,
-            caption: courseMerchandise.caption,
-            qoh: courseMerchandise.qoh,
-          })
-          .from(courseMerchandise)
-          .where(inArray(courseMerchandise.id, merchandiseItemIds))
-          .execute()
-          .catch((error) => {
-            void loggerService.errorLog({
-              userId: userId,
-              url: "/TokenizeService/tokenizeBooking",
-              userAgent: "",
-              message: "COURSE MERCHANDISE ERROR",
-              stackTrace: `${error.stack}`,
-              additionalDetailsJSON: `${JSON.stringify({
-                merchandiseItemIds,
-                merchandiseItems,
-                merchandiseData,
-                cart,
-              })}`,
+        if (merchandiseItemIds.length > 0) {
+          purchasedMerchandise = await db
+            .select({
+              id: courseMerchandise.id,
+              caption: courseMerchandise.caption,
+              qoh: courseMerchandise.qoh,
+            })
+            .from(courseMerchandise)
+            .where(inArray(courseMerchandise.id, merchandiseItemIds))
+            .execute()
+            .catch((error) => {
+              void loggerService.errorLog({
+                userId: userId,
+                url: "/TokenizeService/tokenizeBooking",
+                userAgent: "",
+                message: "COURSE MERCHANDISE ERROR",
+                stackTrace: `${error.stack}`,
+                additionalDetailsJSON: `${JSON.stringify({
+                  merchandiseItemIds,
+                  merchandiseItems,
+                  merchandiseData,
+                  cart,
+                })}`,
+              });
+              throw error;
             });
-            throw error;
-          });
+        }
         for (const merchandise of purchasedMerchandise) {
           const merchandiseItem = merchandiseItems.find((item) => item.id === merchandise.id);
           merchandiseDetails.push({
@@ -5318,12 +5321,13 @@ export class BookingService {
           firstTeeTime.id === teeTime.id &&
           (additionalNoteFromUser || needRentals || merchandiseTotalCharge > 0)
         ) {
+          bookingStage = "Preparing and sending course operatior email"
           const merchandiseDetails: { caption: string; qty: number }[] = [];
           const merchandiseData = cart?.cart?.filter(
             (item: ProductData) => item.product_data.metadata.type === "merchandise"
           ) as MerchandiseProduct[];
 
-          const merchandiseItems = merchandiseData[0]!.product_data.metadata.merchandiseItems ?? [];
+          const merchandiseItems = merchandiseData[0]?.product_data.metadata.merchandiseItems ?? [];
           const merchandiseItemIds = merchandiseItems.map((item) => item.id);
           const merchandiseWithTaxOverrideData = cart?.cart?.filter(
             (item: ProductData) => item.product_data.metadata.type === "merchandiseWithTaxOverride"
@@ -5332,31 +5336,33 @@ export class BookingService {
             merchandiseWithTaxOverrideData[0]?.product_data.metadata.merchandiseItems ?? [];
           merchandiseItemIds.push(...merchandiseWithTaxOverrideItems.map((item) => item.id));
 
-          purchasedMerchandise = await db
-            .select({
-              id: courseMerchandise.id,
-              caption: courseMerchandise.caption,
-              qoh: courseMerchandise.qoh,
-            })
-            .from(courseMerchandise)
-            .where(inArray(courseMerchandise.id, merchandiseItemIds))
-            .execute()
-            .catch((error) => {
-              void loggerService.errorLog({
-                userId: userId,
-                url: "/TokenizeService/tokenizeBooking",
-                userAgent: "",
-                message: "COURSE MERCHANDISE ERROR",
-                stackTrace: `${error.stack}`,
-                additionalDetailsJSON: `${JSON.stringify({
-                  merchandiseItemIds,
-                  merchandiseItems,
-                  merchandiseData,
-                  cart,
-                })}`,
+          if (merchandiseItemIds.length > 0) {
+            purchasedMerchandise = await db
+              .select({
+                id: courseMerchandise.id,
+                caption: courseMerchandise.caption,
+                qoh: courseMerchandise.qoh,
+              })
+              .from(courseMerchandise)
+              .where(inArray(courseMerchandise.id, merchandiseItemIds))
+              .execute()
+              .catch((error) => {
+                void loggerService.errorLog({
+                  userId: userId,
+                  url: "/TokenizeService/tokenizeBooking",
+                  userAgent: "",
+                  message: "COURSE MERCHANDISE ERROR",
+                  stackTrace: `${error.stack}`,
+                  additionalDetailsJSON: `${JSON.stringify({
+                    merchandiseItemIds,
+                    merchandiseItems,
+                    merchandiseData,
+                    cart,
+                  })}`,
+                });
+                throw error;
               });
-              throw error;
-            });
+          }
           for (const merchandise of purchasedMerchandise) {
             const merchandiseItem = merchandiseItems.find((item) => item.id === merchandise.id);
             merchandiseDetails.push({
