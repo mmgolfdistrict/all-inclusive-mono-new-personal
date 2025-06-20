@@ -916,8 +916,8 @@ export default function CourseHomePage() {
                     display: "flex",
                   }}
                 >
-                  {datesArr.map((dateStr, idx) => {
-                    const dateObj = dayjs(dateStr);
+                  {datesArr.map((dateStr: string, idx: number) => {
+                    const dateObj = dayjs(dateStr as string | number | Date | Dayjs | null | undefined);
                     const isSelected =
                       selectedDate &&
                       dayjs(selectedDate).format("YYYY-MM-DD") === dateObj.format("YYYY-MM-DD");
