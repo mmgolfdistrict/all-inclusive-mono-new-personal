@@ -190,7 +190,11 @@ const TabTrigger = ({
     >
       <Tabs.Trigger
         value={value}
-        className="flex items-center gap-2 whitespace-nowrap pb-4 text-[16px] text-secondary-black data-[state=active]:text-primary outline-none data-[state=active]:border-b-2 data-[state=active]:border-primary md:text-[24px]"
+        className="flex items-center gap-2 whitespace-nowrap px-4 py-2 text-[16px] text-secondary-black
+             data-[state=active]:border data-[state=active]:border-primary
+             data-[state=active]:rounded-lg data-[state=active]:text-primary
+             data-[state=active]:-mt-1
+             outline-none md:text-[24px]"
       >
         {children}
       </Tabs.Trigger>
