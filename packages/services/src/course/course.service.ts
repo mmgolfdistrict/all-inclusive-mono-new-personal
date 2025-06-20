@@ -34,7 +34,6 @@ import { courseSetting } from "@golf-district/database/schema/courseSetting";
 import { appSettingService } from "../app-settings/initialized";
 import { parseSettingValue } from "../../helpers";
 import { courseMerchandise } from "@golf-district/database/schema/courseMerchandise";
-import { courseMarkup } from "@golf-district/database/schema/courseMarkup";
 
 dayjs.extend(utc);
 dayjs.extend(customParseFormat);
@@ -248,36 +247,12 @@ export class CourseService extends DomainService {
     //Cache if possible
     const primarySaleTeeTimePriceQuery = this.database
       .select({
-        highestPrimarySaleTeeTime:
-          sql`max(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + 
-          CASE 
-            WHEN ${courseMarkup.fromDay} IS NOT NULL 
-              AND ${courseMarkup.toDay} IS NOT NULL 
-              AND DATEDIFF(${teeTimes.providerDate}, CURDATE()) >= ${courseMarkup.fromDay}
-              AND DATEDIFF(${teeTimes.providerDate}, CURDATE()) <= ${courseMarkup.toDay}
-            THEN COALESCE(${courseMarkup.markUp}, ${courses.markupFeesFixedPerPlayer}) + COALESCE(${courseMarkup.advancedBookingFeePerPlayer}, 0)
-            ELSE ${courses.markupFeesFixedPerPlayer}
-          END)`,
-        lowestPrimarySaleTeeTime:
-          sql`min(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + 
-          CASE 
-            WHEN ${courseMarkup.fromDay} IS NOT NULL 
-              AND ${courseMarkup.toDay} IS NOT NULL 
-              AND DATEDIFF(${teeTimes.providerDate}, CURDATE()) >= ${courseMarkup.fromDay}
-              AND DATEDIFF(${teeTimes.providerDate}, CURDATE()) <= ${courseMarkup.toDay}
-            THEN COALESCE(${courseMarkup.markUp}, ${courses.markupFeesFixedPerPlayer}) + COALESCE(${courseMarkup.advancedBookingFeePerPlayer}, 0)
-            ELSE ${courses.markupFeesFixedPerPlayer}
-          END)`
+        highestPrimarySaleTeeTime: sql`max(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})`,
+        lowestPrimarySaleTeeTime: sql`min(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})`,
       })
       .from(teeTimes)
       .innerJoin(courses, eq(courses.id, teeTimes.courseId))
-      .leftJoin(courseMarkup, eq(courseMarkup.courseId, teeTimes.courseId))
-      .where(
-        and(
-          eq(teeTimes.courseId, courseId),
-          gte(teeTimes.providerDate, currentUtcTimestamp())
-        )
-      )
+      .where(and(eq(teeTimes.courseId, courseId), gte(teeTimes.providerDate, currentUtcTimestamp())))
       .limit(1)
       .execute();
 
