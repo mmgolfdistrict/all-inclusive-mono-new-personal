@@ -5280,7 +5280,7 @@ export class BookingService {
         });
         bookingStage = "Creating Booking on Provider";
         const booking = await provider
-          .createBooking(token, teeTime.id !== tempTeeTimes[0]!.id ? "" : teeTime.providerCourseId!, teeTime.providerTeeSheetId!, bookingData, userId)
+          .createBooking(token, teeTime.providerCourseId!, teeTime.providerTeeSheetId!, bookingData, userId)
           .catch((err) => {
             this.logger.error(`first hand booking at provider failed for teetime ${teeTime.id}: ${err}`);
             loggerService.errorLog({

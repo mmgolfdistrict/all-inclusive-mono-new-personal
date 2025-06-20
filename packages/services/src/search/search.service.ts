@@ -1920,6 +1920,7 @@ export class SearchService extends CacheService {
           fixedMarkup: courses.markupFeesFixedPerPlayer,
           timeZoneCorrection: courses.timezoneCorrection,
           courseOpenTime: courses.courseOpenTime,
+          groupBookingFeePerPlayer: courses.groupBookingFeePerPlayer
         })
         .from(courseSetting)
         .innerJoin(courses, eq(courseSetting.courseId, courses.id))
@@ -1984,13 +1985,12 @@ export class SearchService extends CacheService {
           ) {
             filteredDate.push(el);
             return;
-          } else {
           }
         });
 
-        const markupFeesFinal = filteredDate.length
-          ? filteredDate[0]?.markUpFees
-          : courseSettingResponse?.fixedMarkup;
+        const markupFeesFinal = courseSettingResponse?.groupBookingFeePerPlayer !== null
+          ? courseSettingResponse?.groupBookingFeePerPlayer
+          : (filteredDate.length ? filteredDate[0]?.markUpFees : courseSettingResponse?.fixedMarkup);
         const markupFeesToBeUsed = (markupFeesFinal ?? 0) / 100;
 
         console.log("fetching tee times for date", date);
@@ -2150,6 +2150,7 @@ export class SearchService extends CacheService {
         weatherGuaranteeTaxPercent: courses.weatherGuaranteeTaxPercent,
         markupTaxPercent: courses.markupTaxPercent,
         merchandiseTaxPercent: courses.merchandiseTaxPercent,
+        groupBookingFeePerPlayer: courses.groupBookingFeePerPlayer
       })
       .from(teeTimes)
       .where(inArray(teeTimes.id, teeTimeIds))
@@ -2199,9 +2200,7 @@ export class SearchService extends CacheService {
           }
         });
 
-        const markupFeesFinal = filteredDate.length
-          ? filteredDate[0].markUpFees
-          : tee.markupFeesFixedPerPlayer;
+        const markupFeesFinal = tee.groupBookingFeePerPlayer ?? (filteredDate.length ? filteredDate[0].markUpFees : tee.markupFeesFixedPerPlayer);
         const markupFeesToBeUsed = markupFeesFinal / 100;
         const watchers = await this.database
           .select({
