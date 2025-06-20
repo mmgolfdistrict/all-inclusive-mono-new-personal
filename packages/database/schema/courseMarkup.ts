@@ -17,7 +17,6 @@ export const courseMarkup = mySqlTable(
     lastUpdatedDateTime: datetime("lastUpdatedDateTime", { mode: "string", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)`)
       .notNull(),
-    advancedBookingFeePerPlayer: int("advancedBookingFeePerPlayer").notNull().default(0),
   },
   (table) => ({
     courseIdIdx: index("CourseMarkup_courseId_idx").on(table.courseId),

@@ -138,8 +138,7 @@ export type CartProduct = {
     | FirstHandGroupProduct
     | MerchandiseProduct
     | MerchandiseTaxPercentMetaData
-    | MerchandiseWithTaxOverride
-    | AdvancedBookingFees;
+    | MerchandiseWithTaxOverride;
   };
 };
 
@@ -231,10 +230,6 @@ interface MerchandiseItem {
 
 interface MerchandiseItemWithTax extends MerchandiseItem {
   merchandiseTaxPercent: number;
-}
-
-export interface AdvancedBookingFees {
-  type: "advanced_booking_fees_per_player";
 }
 
 export type MaxReservationResponse =

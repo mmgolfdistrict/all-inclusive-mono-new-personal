@@ -15,7 +15,6 @@ import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
 import { formatMoney, getPromoCodePrice } from "~/utils/formatters";
 import type {
-  AdvancedBookingFees,
   AuctionProduct,
   CartFeeMetaData,
   CartProduct,
@@ -251,8 +250,7 @@ export default function Checkout({
       | FirstHandGroupProduct
       | MerchandiseProduct
       | MerchandiseTaxPercentMetaData
-      | MerchandiseWithTaxOverride
-      | AdvancedBookingFees =
+      | MerchandiseWithTaxOverride =
       saleType === "first_hand"
         ? {
           type: "first_hand",
@@ -579,22 +577,6 @@ export default function Checkout({
           },
         });
       }
-    }
-
-    if (teeTimeData?.advancedBookingFeesPerPlayer) {
-      localCart.push({
-        name: "Golf District Tee Time",
-        id: teeTimeId ?? data?.teeTimeId,
-        price: teeTimeData.advancedBookingFeesPerPlayer,
-        image: "",
-        currency: "USD", //USD
-        display_price: formatMoney(teeTimeData.advancedBookingFeesPerPlayer),
-        product_data: {
-          metadata: {
-            type: "advanced_booking_fees_per_player",
-          },
-        },
-      });
     }
 
     return localCart;
