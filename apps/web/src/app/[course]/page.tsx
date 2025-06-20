@@ -294,8 +294,36 @@ export default function CourseHomePage() {
 
         return formatDateString(currentTimePlus30);
       }
-      case "This Week":
-      case "This Month":
+      case "This Week": {
+        const currentTime = dayjs(new Date());
+        const currentTimePlus30 = currentTime.add(30, 'minute');
+
+        const closingHour = Math.floor(startTime[1] / 100);
+        const closingMinute = startTime[1] % 100;
+
+        const closingTime = currentTime.set('hour', closingHour).set('minute', closingMinute).set('second', 0);
+
+        if (currentTimePlus30.isAfter(closingTime)) {
+          return formatDateString(currentTime.add(1, 'day').startOf('day'))
+        }
+
+        return formatDateString(currentTimePlus30);
+      }
+      case "This Month": {
+        const currentTime = dayjs(new Date());
+        const currentTimePlus30 = currentTime.add(30, 'minute');
+
+        const closingHour = Math.floor(startTime[1] / 100);
+        const closingMinute = startTime[1] % 100;
+
+        const closingTime = currentTime.set('hour', closingHour).set('minute', closingMinute).set('second', 0);
+
+        if (currentTimePlus30.isAfter(closingTime)) {
+          return formatDateString(currentTime.add(1, 'day').startOf('day'))
+        }
+
+        return formatDateString(currentTimePlus30);
+      }
       case "Furthest Day Out To Book":
         return formatDateString(dayjs(new Date()).add(30, "minute"));
       case "Today": {
@@ -313,15 +341,29 @@ export default function CourseHomePage() {
 
         return formatDateString(currentTimePlus30);
       }
-      case "This Weekend":
-        {
-          const today = dayjs().startOf("day");
-          const weekend = dayjs().day(5);
-          if (weekend.isSame(today, "day") || weekend.isBefore(today, "day")) {
-            return formatDateString(dayjs(new Date()).add(30, "minute").toDate());
+      case "This Weekend": {
+        const today = dayjs().startOf("day");
+        const weekend = dayjs().day(5); // This Friday
+
+        const currentTime = dayjs();
+        const currentTimePlus30 = currentTime.add(30, "minute");
+
+        const closingHour = Math.floor(startTime[1] / 100);
+        const closingMinute = startTime[1] % 100;
+
+        const closingTime = currentTime.set("hour", closingHour).set("minute", closingMinute).set("second", 0);
+
+        // If today is Friday or later
+        if (weekend.isSame(today, "day") || weekend.isBefore(today, "day")) {
+          if (currentTimePlus30.isAfter(closingTime)) {
+            return formatDateString(currentTime.add(1, "day").startOf("day"));
           }
-          return formatDateString(weekend.startOf("day").toDate());
+          return formatDateString(currentTimePlus30);
         }
+
+        // Weekend is in the future
+        return formatDateString(weekend.startOf("day").toDate());
+      }
       case "Custom": {
         if (!selectedDay.from) return formatDateString(new Date());
         const customDate = dayjs(
@@ -546,39 +588,75 @@ export default function CourseHomePage() {
   };
 
   const pageUp = () => {
-    setSelectedDate((prev) => {
-      if (!prev) return null;
+    if (dateType === "Furthest Day Out To Book") {
+      setSelectedDate((prev) => {
+        if (!prev) return null;
 
-      const nextDate = dayjs(prev).add(1, "day");
-      const end = dayjs(endDate);
+        const prevDate = dayjs(prev).subtract(1, "day");
+        const start = dayjs(startDate);
 
-      if (nextDate.isAfter(end, "day")) return prev; // don't exceed endDate
+        if (prevDate.isBefore(start, "day")) return prev; // don't go before startDate
 
-      // update state
-      setPageNumber((prevPage) => prevPage + 1);
-      setTake((prevTake) => prevTake + TAKE);
-      scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+        // update state
+        setPageNumber((prevPage) => prevPage - 1);
+        setTake((prevTake) => prevTake - TAKE);
+        scrollRef.current?.scrollIntoView({ behavior: "smooth" });
 
-      return nextDate.toDate().toUTCString();
-    });
+        return prevDate.toDate().toUTCString();
+      });
+    } else {
+      setSelectedDate((prev) => {
+        if (!prev) return null;
+
+        const nextDate = dayjs(prev).add(1, "day");
+        const end = dayjs(endDate);
+
+        if (nextDate.isAfter(end, "day")) return prev; // don't exceed endDate
+
+        // update state
+        setPageNumber((prevPage) => prevPage + 1);
+        setTake((prevTake) => prevTake + TAKE);
+        scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+
+        return nextDate.toDate().toUTCString();
+      });
+    }
   };
 
   const pageDown = () => {
-    setSelectedDate((prev) => {
-      if (!prev) return null;
+    if (dateType === "Furthest Day Out To Book") {
+      setSelectedDate((prev) => {
+        if (!prev) return null;
 
-      const prevDate = dayjs(prev).subtract(1, "day");
-      const start = dayjs(startDate);
+        const nextDate = dayjs(prev).add(1, "day");
+        const end = dayjs(endDate);
 
-      if (prevDate.isBefore(start, "day")) return prev; // don't go before startDate
+        if (nextDate.isAfter(end, "day")) return prev; // don't exceed endDate
 
-      // update state
-      setPageNumber((prevPage) => prevPage - 1);
-      setTake((prevTake) => prevTake - TAKE);
-      scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+        // update state
+        setPageNumber((prevPage) => prevPage + 1);
+        setTake((prevTake) => prevTake + TAKE);
+        scrollRef.current?.scrollIntoView({ behavior: "smooth" });
 
-      return prevDate.toDate().toUTCString();
-    });
+        return nextDate.toDate().toUTCString();
+      });
+    } else {
+      setSelectedDate((prev) => {
+        if (!prev) return null;
+
+        const prevDate = dayjs(prev).subtract(1, "day");
+        const start = dayjs(startDate);
+
+        if (prevDate.isBefore(start, "day")) return prev; // don't go before startDate
+
+        // update state
+        setPageNumber((prevPage) => prevPage - 1);
+        setTake((prevTake) => prevTake - TAKE);
+        scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+
+        return prevDate.toDate().toUTCString();
+      });
+    }
   };
 
 
@@ -720,21 +798,19 @@ export default function CourseHomePage() {
     }
   }, [selectedDate, startDate]);
 
+  useEffect(() => {
+    if (dateType === "Furthest Day Out To Book") {
+      const formattedEndDate = dayjs.utc(endDate).format("ddd, DD MMM YYYY 00:00:00 [GMT]");
+      setSelectedDate(formattedEndDate);
+    }
+    else if (startDate) {
+      setSelectedDate(startDate);
+    }
+  }, [startDate, dateType, endDate]);
+
   const handleDateSelect = (date: string) => {
     setSelectedDate(date);
   };
-
-  const displayDatesArr = useMemo(() => {
-    const arr: string[] = [];
-    const start = dayjs(startDate);
-    const end = dayjs(endDate);
-
-    for (let d = start; d.isSameOrBefore(end); d = d.add(1, "day")) {
-      arr.push(d.toDate().toUTCString());
-    }
-
-    return arr;
-  }, [startDate, endDate]);
 
   return (
     <main className={`bg-secondary-white py-4 md:py-6`}>
@@ -813,58 +889,75 @@ export default function CourseHomePage() {
         </div>
         <div className="flex w-full flex-col gap-1 md:gap-4 overflow-x-hidden pr-0p md:pr-6">
           {/* scrollable dates  */}
-          {isMobile && <div style={{
-            top: (courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
-              ? `${divHeight && divHeight * 1}px`
-              : "auto",
-          }}
-            className={`w-full flex items-center overflow-x-auto justify-between ${(courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
-              ? `fixed left-0 w-full z-10 bg-secondary-white pt-2  px-4 pb-3 shadow-md`
-              : "relative"
-              }`}
-          >
+          {isMobile && (
             <div
-              className="flex gap-2 overflow-x-auto overflow-y-hidden px-2"
+              className={`w-full overflow-x-auto ${(courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
+                ? "fixed left-0 z-10 bg-secondary-white pt-2 px-4 pb-3 shadow-md"
+                : "relative"
+                }`}
               style={{
-                maxWidth: "100%",
-                WebkitOverflowScrolling: "touch",
-                scrollbarWidth: "none", // Firefox
-                msOverflowStyle: "none", // IE/Edge
+                top: (courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
+                  ? `${divHeight || 0}px`
+                  : "auto",
               }}
             >
               <div
-                className="flex gap-2 min-w-max"
+                className="flex gap-2 overflow-x-auto overflow-y-hidden px-2"
                 style={{
-                  display: "flex",
+                  maxWidth: "100%",
+                  WebkitOverflowScrolling: "touch",
+                  scrollbarWidth: "none", // Firefox
+                  msOverflowStyle: "none", // IE/Edge
                 }}
               >
-                {displayDatesArr.map((dateStr) => {
-                  const dateObj = dayjs(dateStr);
-                  const isSelected = selectedDate === dateStr;
+                <div
+                  className="flex gap-2 min-w-max"
+                  style={{
+                    display: "flex",
+                  }}
+                >
+                  {datesArr.map((dateStr, idx) => {
+                    const dateObj = dayjs(dateStr);
+                    const isSelected =
+                      selectedDate &&
+                      dayjs(selectedDate).format("YYYY-MM-DD") === dateObj.format("YYYY-MM-DD");
 
-                  return (
-                    <button
-                      key={dateStr}
-                      onClick={() => handleDateSelect(dateStr)}
-                      className={`flex flex-col items-center justify-center rounded-lg px-2 text-sm border transition-all shadow-sm
-            ${isSelected
-                          ? "text-white font-semibold"
-                          : "bg-white text-primary-black border-gray-300 hover:bg-gray-100"
-                        }`}
-                      style={{
-                        borderColor: isSelected ? entity?.color1 : "rgb(255 255 255)",
-                        backgroundColor: isSelected ? entity?.color1 : "rgb(255 255 255)",
-                      }}
-                    >
-                      <span className="text-[11px] uppercase tracking-wide">{dateObj.format("MMM")}</span>
-                      <span className="text-xl font-bold leading-tight">{dateObj.format("D")}</span>
-                      <span className="text-[13px] font-medium">{dateObj.format("ddd")}</span>
-                    </button>
-                  );
-                })}
+                    return (
+                      (isLoadingTeeTimeDate || isLoading || specialEventsLoading || allCoursesDataLoading)
+                        ? Array.from({ length: 7 }).map((_, idx) => (
+                          <div
+                            key={`skeleton-${idx}`}
+                            className="w-12 h-20 bg-gray-200 rounded-lg animate-pulse"
+                          />
+                        )) : <button
+                          key={idx} // unique index-based key
+                          onClick={() => handleDateSelect(dateStr)}
+                          className={`flex flex-col items-center justify-center rounded-lg px-2 text-sm border transition-all shadow-sm
+              ${isSelected
+                              ? "text-white font-semibold"
+                              : "bg-white text-primary-black border-gray-300 hover:bg-gray-100"
+                            }`}
+                          style={{
+                            borderColor: isSelected ? entity?.color1 : "rgb(255 255 255)",
+                            backgroundColor: isSelected ? entity?.color1 : "rgb(255 255 255)",
+                          }}
+                        >
+                          <span className="text-[11px] uppercase tracking-wide">
+                            {dateObj.format("MMM")}
+                          </span>
+                          <span className="text-xl font-bold leading-tight">
+                            {dateObj.format("D")}
+                          </span>
+                          <span className="text-[13px] font-medium">
+                            {dateObj.format("ddd")}
+                          </span>
+                        </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
-          </div>}
+          )}
 
           {error ? (
             <div className="flex justify-center items-center h-[200px]">
@@ -900,7 +993,7 @@ export default function CourseHomePage() {
                         divHeight={divHeight}
                         isLoadingTeeTimeDate={isLoadingTeeTimeDate}
                         // datesWithData={datesWithData}
-                        allDatesArr={displayDatesArr}
+                        allDatesArr={datesArr}
                         toggleFilters={toggleFilters}
                       />
                     )}
