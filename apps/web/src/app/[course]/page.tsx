@@ -798,6 +798,25 @@ export default function CourseHomePage() {
     }
   }, [selectedDate, startDate]);
 
+  const dateRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (selectedDate) {
+        const ref = dateRefs.current[dayjs(selectedDate).format("YYYY-MM-DD")];
+        if (ref) {
+          ref.scrollIntoView({
+            behavior: "smooth",
+            inline: "center",
+            block: "nearest",
+          });
+        }
+      }
+    }, 100); // Waits 100ms to ensure rendering is done
+
+    return () => clearTimeout(timeout);
+  }, [selectedDate, isLoadingTeeTimeDate, isLoading, specialEventsLoading, allCoursesDataLoading]);
+
   useEffect(() => {
     if (dateType === "Furthest Day Out To Book") {
       const formattedEndDate = dayjs.utc(endDate).format("ddd, DD MMM YYYY 00:00:00 [GMT]");
@@ -930,6 +949,9 @@ export default function CourseHomePage() {
                             className="w-12 h-20 bg-gray-200 rounded-lg animate-pulse"
                           />
                         )) : <button
+                          ref={(el) => {
+                            if (el) dateRefs.current[dateObj.format("YYYY-MM-DD")] = el;
+                          }}
                           key={idx} // unique index-based key
                           onClick={() => handleDateSelect(dateStr)}
                           className={`flex flex-col items-center justify-center rounded-lg px-2 text-sm border transition-all shadow-sm
