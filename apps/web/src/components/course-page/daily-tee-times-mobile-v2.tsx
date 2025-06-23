@@ -17,6 +17,7 @@ import { ChevronUp } from "../icons/chevron-up";
 import { TeeTimeV2 } from "../cards/tee-time-v2";
 import { TeeTimeSkeletonV2 } from "./tee-time-skeleton-v2";
 import { OutlineButton } from "../buttons/outline-button";
+import dayjs from "dayjs";
 
 export const DailyTeeTimesMobileV2 = ({
   date,
@@ -193,8 +194,8 @@ export const DailyTeeTimesMobileV2 = ({
     if (type === "WARNING") return "primary-gray";
   };
 
-  const isAtStart = allDatesArr[0] === date
-  const isAtEnd = allDatesArr[allDatesArr.length - 1] === date
+  const isAtStart = dayjs(allDatesArr[0]).format("YYYY-MM-DD") === dayjs(date).format("YYYY-MM-DD")
+  const isAtEnd = dayjs(allDatesArr[allDatesArr.length - 1]).format("YYYY-MM-DD") === dayjs(date).format("YYYY-MM-DD")
 
   return (
     <div className="flex flex-col gap-1 md:gap-4 bg-white px-4 py-2 md:rounded-xl md:px-8 md:py-6">
@@ -203,15 +204,12 @@ export const DailyTeeTimesMobileV2 = ({
           <div className="h-8 min-w-[150px] w-[20%] bg-gray-200 rounded-md  animate-pulse unmask-time" />
         ) : (
           <div className="w-full flex items-center gap-3 flex-col">
-            <div className={`w-full flex items-center justify-between ${(courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
-              ? `fixed bg-white left-0 w-full z-10 bg-secondary-white pt-2  px-4 pb-3 shadow-md`
-              : "relative"
-              }`}
-              style={{
-                top: (courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
-                  ? `${divHeight && divHeight * 1}px`
-                  : "auto",
-              }}
+            <div
+              className={`w-full flex items-center justify-between
+               ${(courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
+                  ? `bg-white left-0 w-full z-10 bg-secondary-white pt-2  px-4 pb-3 shadow-md`
+                  : "relative"
+                }`}
             >
               {!isAtStart ?
                 <ChevronUp fill="#000" className="-rotate-90" onClick={pageDown} /> : <div></div>

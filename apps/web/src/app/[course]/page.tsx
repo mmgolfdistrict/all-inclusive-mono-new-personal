@@ -931,7 +931,81 @@ export default function CourseHomePage() {
           <FilterSort toggleFilters={toggleFilters} toggleSort={toggleSort} />
         </div>
         <div className="flex w-full flex-col gap-1 md:gap-4 overflow-x-hidden pr-0p md:pr-6">
-          {/* TODO: scrollable dates  */}
+          {/* scrollable dates  */}
+
+          {isMobile && (
+            <div
+              className={`w-full overflow-x-auto ${(courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
+                ? "fixed left-0 z-10 bg-secondary-white pt-2 px-4 pb-3 shadow-md"
+                : "relative"
+                }`}
+              style={{
+                top: (courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
+                  ? `${divHeight || 0}px`
+                  : "auto",
+              }}
+            >
+              <div
+                className="flex gap-2 overflow-x-auto overflow-y-hidden px-2"
+                style={{
+                  maxWidth: "100%",
+                  WebkitOverflowScrolling: "touch",
+                  scrollbarWidth: "none", // Firefox
+                  msOverflowStyle: "none", // IE/Edge
+                }}
+              >
+                <div
+                  className="flex gap-2 min-w-max"
+                  style={{
+                    display: "flex",
+                  }}
+                >
+                  {datesArr.map((dateStr: string, idx: number) => {
+                    const dateObj = dayjs(dateStr as string | number | Date | Dayjs | null | undefined);
+                    const isSelected =
+                      selectedDate &&
+                      dayjs(selectedDate).format("YYYY-MM-DD") === dateObj.format("YYYY-MM-DD");
+
+                    return (
+                      (isLoadingTeeTimeDate || isLoading || specialEventsLoading || allCoursesDataLoading)
+                        ? Array.from({ length: 7 }).map((_, idx) => (
+                          <div
+                            key={`skeleton-${idx}`}
+                            className="w-12 h-20 bg-gray-200 rounded-lg animate-pulse"
+                          />
+                        )) : <button
+                          ref={(el) => {
+                            if (el) dateRefs.current[dateObj.format("YYYY-MM-DD")] = el;
+                          }}
+                          key={idx} // unique index-based key
+                          onClick={() => handleDateSelect(dateStr)}
+                          className={`flex flex-col items-center justify-center rounded-lg px-2 text-sm border transition-all shadow-sm
+              ${isSelected
+                              ? "text-white font-semibold"
+                              : "bg-white text-primary-black border-gray-300 hover:bg-gray-100"
+                            }`}
+                          style={{
+                            borderColor: isSelected ? entity?.color1 : "rgb(255 255 255)",
+                            backgroundColor: isSelected ? entity?.color1 : "rgb(255 255 255)",
+                          }}
+                        >
+                          <span className="text-[11px] uppercase tracking-wide">
+                            {dateObj.format("MMM")}
+                          </span>
+                          <span className="text-xl font-bold leading-tight">
+                            {dateObj.format("D")}
+                          </span>
+                          <span className="text-[13px] font-medium">
+                            {dateObj.format("ddd")}
+                          </span>
+                        </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
           {error ? (
             <div className="flex justify-center items-center h-[200px]">
               <div className="text-center">Error: {error}</div>
@@ -956,7 +1030,7 @@ export default function CourseHomePage() {
                         }}
                         courseException={getCourseException(date as string)}
                         key={idx}
-                        date={date}
+                        date={selectedDate || date}
                         minDate={startDate.toString()}
                         maxDate={endDate.toString()}
                         handleLoading={handleLoading}
