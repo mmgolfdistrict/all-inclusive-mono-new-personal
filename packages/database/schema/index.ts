@@ -69,7 +69,8 @@ import * as bookingRefund from './bookingRefund';
 import * as entityGlobalNotification from "./entityGlobalNotification";
 import * as failedBookings from "./failedBookings";
 import * as courseMerchandise from "./courseMerchandise";
-import * as bookingMerchandise from "./bookingMerchandise"
+import * as bookingMerchandise from "./bookingMerchandise";
+import * as courseAdvancedBookingFee from "./courseAdvancedBookingFee";
 
 export const schema = {
   ...accounts,
@@ -144,4 +145,5 @@ export const schema = {
   ...failedBookings,
   ...courseMerchandise,
   ...bookingMerchandise,
+  ...courseAdvancedBookingFee
 };
