@@ -295,35 +295,41 @@ export default function CourseHomePage() {
         return formatDateString(currentTimePlus30);
       }
       case "This Week": {
-        const currentTime = dayjs(new Date());
-        const currentTimePlus30 = currentTime.add(30, 'minute');
+        if (isMobile) {
+          const currentTime = dayjs(new Date());
+          const currentTimePlus30 = currentTime.add(30, 'minute');
 
-        const closingHour = Math.floor(startTime[1] / 100);
-        const closingMinute = startTime[1] % 100;
+          const closingHour = Math.floor(startTime[1] / 100);
+          const closingMinute = startTime[1] % 100;
 
-        const closingTime = currentTime.set('hour', closingHour).set('minute', closingMinute).set('second', 0);
+          const closingTime = currentTime.set('hour', closingHour).set('minute', closingMinute).set('second', 0);
 
-        if (currentTimePlus30.isAfter(closingTime)) {
-          return formatDateString(currentTime.add(1, 'day').startOf('day'))
+          if (currentTimePlus30.isAfter(closingTime)) {
+            return formatDateString(currentTime.add(1, 'day').startOf('day'))
+          }
+
+          return formatDateString(currentTimePlus30);
         }
-
-        return formatDateString(currentTimePlus30);
       }
+      // eslint-disable-next-line no-fallthrough
       case "This Month": {
-        const currentTime = dayjs(new Date());
-        const currentTimePlus30 = currentTime.add(30, 'minute');
+        if (isMobile) {
+          const currentTime = dayjs(new Date());
+          const currentTimePlus30 = currentTime.add(30, 'minute');
 
-        const closingHour = Math.floor(startTime[1] / 100);
-        const closingMinute = startTime[1] % 100;
+          const closingHour = Math.floor(startTime[1] / 100);
+          const closingMinute = startTime[1] % 100;
 
-        const closingTime = currentTime.set('hour', closingHour).set('minute', closingMinute).set('second', 0);
+          const closingTime = currentTime.set('hour', closingHour).set('minute', closingMinute).set('second', 0);
 
-        if (currentTimePlus30.isAfter(closingTime)) {
-          return formatDateString(currentTime.add(1, 'day').startOf('day'))
+          if (currentTimePlus30.isAfter(closingTime)) {
+            return formatDateString(currentTime.add(1, 'day').startOf('day'))
+          }
+
+          return formatDateString(currentTimePlus30);
         }
-
-        return formatDateString(currentTimePlus30);
       }
+      // eslint-disable-next-line no-fallthrough
       case "Furthest Day Out To Book":
         return formatDateString(dayjs(new Date()).add(30, "minute"));
       case "Today": {
@@ -342,28 +348,31 @@ export default function CourseHomePage() {
         return formatDateString(currentTimePlus30);
       }
       case "This Weekend": {
-        const today = dayjs().startOf("day");
-        const weekend = dayjs().day(5); // This Friday
+        if (isMobile) {
+          const today = dayjs().startOf("day");
+          const weekend = dayjs().day(5); // This Friday
 
-        const currentTime = dayjs();
-        const currentTimePlus30 = currentTime.add(30, "minute");
+          const currentTime = dayjs();
+          const currentTimePlus30 = currentTime.add(30, "minute");
 
-        const closingHour = Math.floor(startTime[1] / 100);
-        const closingMinute = startTime[1] % 100;
+          const closingHour = Math.floor(startTime[1] / 100);
+          const closingMinute = startTime[1] % 100;
 
-        const closingTime = currentTime.set("hour", closingHour).set("minute", closingMinute).set("second", 0);
+          const closingTime = currentTime.set("hour", closingHour).set("minute", closingMinute).set("second", 0);
 
-        // If today is Friday or later
-        if (weekend.isSame(today, "day") || weekend.isBefore(today, "day")) {
-          if (currentTimePlus30.isAfter(closingTime)) {
-            return formatDateString(currentTime.add(1, "day").startOf("day"));
+          // If today is Friday or later
+          if (weekend.isSame(today, "day") || weekend.isBefore(today, "day")) {
+            if (currentTimePlus30.isAfter(closingTime)) {
+              return formatDateString(currentTime.add(1, "day").startOf("day"));
+            }
+            return formatDateString(currentTimePlus30);
           }
-          return formatDateString(currentTimePlus30);
-        }
 
-        // Weekend is in the future
-        return formatDateString(weekend.startOf("day").toDate());
+          // Weekend is in the future
+          return formatDateString(weekend.startOf("day").toDate());
+        }
       }
+      // eslint-disable-next-line no-fallthrough
       case "Custom": {
         if (!selectedDay.from) return formatDateString(new Date());
         const customDate = dayjs(
@@ -588,74 +597,88 @@ export default function CourseHomePage() {
   };
 
   const pageUp = () => {
-    if (dateType === "Furthest Day Out To Book") {
-      setSelectedDate((prev) => {
-        if (!prev) return null;
+    if (isMobile) {
+      if (dateType === "Furthest Day Out To Book") {
+        setSelectedDate((prev) => {
+          if (!prev) return null;
 
-        const prevDate = dayjs(prev).subtract(1, "day");
-        const start = dayjs(startDate);
+          const prevDate = dayjs(prev).subtract(1, "day");
+          const start = dayjs(startDate);
 
-        if (prevDate.isBefore(start, "day")) return prev; // don't go before startDate
+          if (prevDate.isBefore(start, "day")) return prev; // don't go before startDate
 
-        // update state
-        setPageNumber((prevPage) => prevPage - 1);
-        setTake((prevTake) => prevTake - TAKE);
-        scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+          // update state
+          setPageNumber((prevPage) => prevPage - 1);
+          setTake((prevTake) => prevTake - TAKE);
+          scrollRef.current?.scrollIntoView({ behavior: "smooth" });
 
-        return prevDate.toDate().toUTCString();
-      });
+          return prevDate.toDate().toUTCString();
+        });
+      } else {
+        setSelectedDate((prev) => {
+          if (!prev) return null;
+
+          const nextDate = dayjs(prev).add(1, "day");
+          const end = dayjs(endDate);
+
+          if (nextDate.isAfter(end, "day")) return prev; // don't exceed endDate
+
+          // update state
+          setPageNumber((prevPage) => prevPage + 1);
+          setTake((prevTake) => prevTake + TAKE);
+          scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+
+          return nextDate.toDate().toUTCString();
+        });
+      }
     } else {
-      setSelectedDate((prev) => {
-        if (!prev) return null;
-
-        const nextDate = dayjs(prev).add(1, "day");
-        const end = dayjs(endDate);
-
-        if (nextDate.isAfter(end, "day")) return prev; // don't exceed endDate
-
-        // update state
-        setPageNumber((prevPage) => prevPage + 1);
-        setTake((prevTake) => prevTake + TAKE);
-        scrollRef.current?.scrollIntoView({ behavior: "smooth" });
-
-        return nextDate.toDate().toUTCString();
-      });
+      if (pageNumber === amountOfPage) return;
+      setPageNumber((prev) => prev + 1);
+      setTake((prev) => prev + TAKE);
+      scrollRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   };
 
   const pageDown = () => {
-    if (dateType === "Furthest Day Out To Book") {
-      setSelectedDate((prev) => {
-        if (!prev) return null;
+    if (isMobile) {
+      if (dateType === "Furthest Day Out To Book") {
+        setSelectedDate((prev) => {
+          if (!prev) return null;
 
-        const nextDate = dayjs(prev).add(1, "day");
-        const end = dayjs(endDate);
+          const nextDate = dayjs(prev).add(1, "day");
+          const end = dayjs(endDate);
 
-        if (nextDate.isAfter(end, "day")) return prev; // don't exceed endDate
+          if (nextDate.isAfter(end, "day")) return prev; // don't exceed endDate
 
-        // update state
-        setPageNumber((prevPage) => prevPage + 1);
-        setTake((prevTake) => prevTake + TAKE);
-        scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+          // update state
+          setPageNumber((prevPage) => prevPage + 1);
+          setTake((prevTake) => prevTake + TAKE);
+          scrollRef.current?.scrollIntoView({ behavior: "smooth" });
 
-        return nextDate.toDate().toUTCString();
-      });
+          return nextDate.toDate().toUTCString();
+        });
+      } else {
+        setSelectedDate((prev) => {
+          if (!prev) return null;
+
+          const prevDate = dayjs(prev).subtract(1, "day");
+          const start = dayjs(startDate);
+
+          if (prevDate.isBefore(start, "day")) return prev; // don't go before startDate
+
+          // update state
+          setPageNumber((prevPage) => prevPage - 1);
+          setTake((prevTake) => prevTake - TAKE);
+          scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+
+          return prevDate.toDate().toUTCString();
+        });
+      }
     } else {
-      setSelectedDate((prev) => {
-        if (!prev) return null;
-
-        const prevDate = dayjs(prev).subtract(1, "day");
-        const start = dayjs(startDate);
-
-        if (prevDate.isBefore(start, "day")) return prev; // don't go before startDate
-
-        // update state
-        setPageNumber((prevPage) => prevPage - 1);
-        setTake((prevTake) => prevTake - TAKE);
-        scrollRef.current?.scrollIntoView({ behavior: "smooth" });
-
-        return prevDate.toDate().toUTCString();
-      });
+      if (pageNumber === 1) return;
+      setPageNumber((prev) => prev - 1);
+      setTake((prev) => prev - TAKE);
+      scrollRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   };
 
@@ -818,12 +841,14 @@ export default function CourseHomePage() {
   }, [selectedDate, isLoadingTeeTimeDate, isLoading, specialEventsLoading, allCoursesDataLoading]);
 
   useEffect(() => {
-    if (dateType === "Furthest Day Out To Book") {
-      const formattedEndDate = dayjs.utc(endDate).format("ddd, DD MMM YYYY 00:00:00 [GMT]");
-      setSelectedDate(formattedEndDate);
-    }
-    else if (startDate) {
-      setSelectedDate(startDate);
+    if (isMobile) {
+      if (dateType === "Furthest Day Out To Book") {
+        const formattedEndDate = dayjs.utc(endDate).format("ddd, DD MMM YYYY 00:00:00 [GMT]");
+        setSelectedDate(formattedEndDate);
+      }
+      else if (startDate) {
+        setSelectedDate(startDate);
+      }
     }
   }, [startDate, dateType, endDate]);
 
