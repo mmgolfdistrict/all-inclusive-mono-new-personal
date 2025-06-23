@@ -521,7 +521,7 @@ export class TokenizeService {
           listId: null,
           cartId: normalizedCartData.cartId,
           playerCount: courseMembershipId ? Number(playerCountForMemberShip) : booking.playerCount ?? 0,
-          greenFeePerPlayer: teeTimeData.greenFee || 0,
+          greenFeePerPlayer: teeTimeData.greenFee + (normalizedCartData.advancedBookingAmount * 100) || 0,
           totalTaxesAmount: additionalTaxes.additionalTaxes * 100, // normalizedCartData.taxCharge * 100 || 0,
           charityId: normalizedCartData.charityId || null,
           totalCharityAmount: normalizedCartData.charityCharge * 100 || 0,
@@ -628,7 +628,7 @@ export class TokenizeService {
         // entityId: existingTeeTime.entityId,
         cartId: normalizedCartData.cartId,
         playerCount: courseMembershipId ? Number(playerCountForMemberShip) : players ?? 0,
-        greenFeePerPlayer: (isFirstHandBooking ? existingTeeTime.greenFee : purchasePrice) || 0,
+        greenFeePerPlayer: (isFirstHandBooking ? existingTeeTime.greenFee + (normalizedCartData.advancedBookingAmount * 100) : purchasePrice) || 0,
         totalTaxesAmount: additionalTaxes.additionalTaxes * 100, // normalizedCartData.taxCharge * 100 || 0,
         charityId: normalizedCartData.charityId || null,
         totalCharityAmount: normalizedCartData.charityCharge * 100 || 0,
@@ -957,8 +957,8 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
         NumberOfHoles: existingTeeTime.numberOfHoles,
         GreenFeesPerPlayer:
           `$${(
-            (existingTeeTime.greenFee + Number(cartFeeCharge) + (normalizedCartData?.markupCharge ?? 0) * 100) /
-            100
+            ((existingTeeTime.greenFee + Number(cartFeeCharge) + (normalizedCartData?.markupCharge ?? 0) * 100) /
+              100) + normalizedCartData.advancedBookingAmount
           ).toLocaleString("en-US", {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
@@ -967,7 +967,8 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
           `$${(
             ((existingTeeTime.greenFee +
               Number(cartFeeCharge) +
-              (normalizedCartData?.markupCharge ?? 0) * 100) *
+              ((normalizedCartData?.markupCharge ?? 0) * 100) +
+              normalizedCartData.advancedBookingAmount * 100) *
               players) /
             100
           ).toLocaleString("en-US", {

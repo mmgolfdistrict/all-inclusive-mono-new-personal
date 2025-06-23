@@ -86,6 +86,7 @@ interface TeeTimeSearchObject {
   markupTaxPercent: number;
   pricePerGolferForGroup?: number;
   merchandiseTaxPercent: number;
+  advancedBookingFeesPerPlayer?: number;
 }
 
 interface MarkupData {
@@ -634,11 +635,11 @@ export class SearchService extends CacheService {
         ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${tee.logo.key}.${tee.logo.extension}`
         : "/defaults/default-profile.webp",
       availableSlots: tee.firstPartySlots,
-      pricePerGolfer: tee.greenFee / 100 + tee.cartFee / 100 + markupFeesToBeUsed,
+      pricePerGolfer: tee.greenFee / 100 + tee.cartFee / 100 + markupFeesToBeUsed + advancedBookingFeesPerPlayerDecimal,
       markupFees: markupFeesToBeUsed * 100,
       greenFeeTaxPerPlayer: tee.greenFeeTax,
       cartFeeTaxPerPlayer: tee.cartFeeTax,
-      greenFee: tee.greenFee,
+      greenFee: tee.greenFee + advancedBookingFeesPerPlayer,
       cartFee: tee.cartFee,
       teeTimeId: tee.id,
       userWatchListed: tee.favorites ? true : false,
@@ -662,7 +663,8 @@ export class SearchService extends CacheService {
       cartFeeTaxPercent: tee.cartFeeTaxPercent,
       weatherGuaranteeTaxPercent: tee.weatherGuaranteeTaxPercent,
       markupTaxPercent: tee.markupTaxPercent,
-      merchandiseTaxPercent: tee.merchandiseTaxPercent ?? 0
+      merchandiseTaxPercent: tee.merchandiseTaxPercent ?? 0,
+      advancedBookingFeesPerPlayer: advancedBookingFeesPerPlayer ?? 0
     };
     return res;
   };
@@ -1623,11 +1625,13 @@ export class SearchService extends CacheService {
         firstOrSecondHandTeeTime: TeeTimeType.FIRST_HAND,
         isListed: false,
         minimumOfferPrice: teeTime.greenFee / 100, //add more fees?
-        pricePerGolfer: teeTime.greenFee / 100 + teeTime.cartFee / 100 + markupFeesToBeUsed, //add more fees?
+        pricePerGolfer: teeTime.greenFee / 100 + teeTime.cartFee / 100 + markupFeesToBeUsed + advancedBookingFeesPerPlayerDecimal, //add more fees?
         isOwned: false,
         firstHandPurchasePrice: 0,
         bookingIds: [],
         listingId: undefined,
+        greenFee: teeTime.greenFee + advancedBookingFeesPerPlayer,
+        advancedBookingFeesPerPlayer: advancedBookingFeesPerPlayer ?? 0,
       };
     });
 
@@ -2188,7 +2192,7 @@ export class SearchService extends CacheService {
             pricePerGolfer = window.reduce((acc, teeTime) => {
               return Math.max(
                 acc,
-                (teeTime.greenFeePerPlayer + teeTime.cartFeePerPlayer) / 100 + markupFeesToBeUsed
+                (teeTime.greenFeePerPlayer + teeTime.cartFeePerPlayer) / 100 + markupFeesToBeUsed + advancedBookingFeesPerPlayerDecimal
               );
             }, 0);
           } else if (groupBookingPriceSelectionMethod === "SUM") {
@@ -2196,7 +2200,7 @@ export class SearchService extends CacheService {
               const players = Math.min(remainingPlayers, teeTime.availableFirstHandSpots);
               remainingPlayers -= players;
               return (
-                acc + (((teeTime.greenFeePerPlayer + teeTime.cartFeePerPlayer) / 100 + markupFeesToBeUsed) * players)
+                acc + (((teeTime.greenFeePerPlayer + teeTime.cartFeePerPlayer) / 100 + markupFeesToBeUsed + advancedBookingFeesPerPlayerDecimal) * players)
               );
             }, 0);
             pricePerGolfer = totalPrice / golferCount;
@@ -2377,11 +2381,11 @@ export class SearchService extends CacheService {
             ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${tee.logo.key}.${tee.logo.extension}`
             : "/defaults/default-profile.webp",
           availableSlots: tee.firstPartySlots,
-          pricePerGolfer: tee.greenFee / 100 + tee.cartFee / 100 + markupFeesToBeUsed,
+          pricePerGolfer: tee.greenFee / 100 + tee.cartFee / 100 + markupFeesToBeUsed + advancedBookingFeesPerPlayerDecimal,
           markupFees: markupFeesToBeUsed * 100,
           greenFeeTaxPerPlayer: tee.greenFeeTax,
           cartFeeTaxPerPlayer: tee.cartFeeTax,
-          greenFee: tee.greenFee,
+          greenFee: tee.greenFee + advancedBookingFeesPerPlayer,
           cartFee: tee.cartFee,
           teeTimeId: tee.id,
           userWatchListed: tee.favorites ? true : false,
@@ -2406,6 +2410,7 @@ export class SearchService extends CacheService {
           weatherGuaranteeTaxPercent: tee.weatherGuaranteeTaxPercent,
           markupTaxPercent: tee.markupTaxPercent,
           merchandiseTaxPercent: tee.merchandiseTaxPercent ?? 0,
+          advancedBookingFeesPerPlayer: advancedBookingFeesPerPlayer ?? 0,
         };
         return res;
       })
