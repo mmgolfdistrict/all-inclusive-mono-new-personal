@@ -35,6 +35,7 @@ import { appSettingService } from "../app-settings/initialized";
 import { parseSettingValue } from "../../helpers";
 import { courseMerchandise } from "@golf-district/database/schema/courseMerchandise";
 import { courseMarkup } from "@golf-district/database/schema/courseMarkup";
+import { courseAdvancedBookingFee } from "@golf-district/database/schema/courseAdvancedBookingFee";
 
 dayjs.extend(utc);
 dayjs.extend(customParseFormat);
@@ -253,25 +254,42 @@ export class CourseService extends DomainService {
           CASE 
             WHEN ${courseMarkup.fromDay} IS NOT NULL 
               AND ${courseMarkup.toDay} IS NOT NULL 
-              AND DATEDIFF(${teeTimes.providerDate}, CURDATE()) >= ${courseMarkup.fromDay}
-              AND DATEDIFF(${teeTimes.providerDate}, CURDATE()) <= ${courseMarkup.toDay}
-            THEN COALESCE(${courseMarkup.markUp}, ${courses.markupFeesFixedPerPlayer}) + COALESCE(${courseMarkup.advancedBookingFeePerPlayer}, 0)
+              AND DATEDIFF(${teeTimes.providerDate}, CURDATE()) BETWEEN ${courseMarkup.fromDay} AND ${courseMarkup.toDay}
+            THEN COALESCE(${courseMarkup.markUp}, ${courses.markupFeesFixedPerPlayer})
             ELSE ${courses.markupFeesFixedPerPlayer}
-          END)`,
+          END + 
+          COALESCE(
+            CASE 
+              WHEN ${courseAdvancedBookingFee.fromDay} IS NOT NULL 
+                AND ${courseAdvancedBookingFee.toDay} IS NOT NULL 
+                AND DATEDIFF(${teeTimes.providerDate}, CURDATE()) BETWEEN ${courseAdvancedBookingFee.fromDay} AND ${courseAdvancedBookingFee.toDay}
+              THEN ${courseAdvancedBookingFee.advancedBookingFeePerPlayer}
+              ELSE 0
+            END, 0)
+          )`,
         lowestPrimarySaleTeeTime:
           sql`min(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + 
           CASE 
             WHEN ${courseMarkup.fromDay} IS NOT NULL 
               AND ${courseMarkup.toDay} IS NOT NULL 
-              AND DATEDIFF(${teeTimes.providerDate}, CURDATE()) >= ${courseMarkup.fromDay}
-              AND DATEDIFF(${teeTimes.providerDate}, CURDATE()) <= ${courseMarkup.toDay}
-            THEN COALESCE(${courseMarkup.markUp}, ${courses.markupFeesFixedPerPlayer}) + COALESCE(${courseMarkup.advancedBookingFeePerPlayer}, 0)
+              AND DATEDIFF(${teeTimes.providerDate}, CURDATE()) BETWEEN ${courseMarkup.fromDay} AND ${courseMarkup.toDay}
+            THEN COALESCE(${courseMarkup.markUp}, ${courses.markupFeesFixedPerPlayer})
             ELSE ${courses.markupFeesFixedPerPlayer}
-          END)`
+          END + 
+          COALESCE(
+            CASE 
+              WHEN ${courseAdvancedBookingFee.fromDay} IS NOT NULL 
+                AND ${courseAdvancedBookingFee.toDay} IS NOT NULL 
+                AND DATEDIFF(${teeTimes.providerDate}, CURDATE()) BETWEEN ${courseAdvancedBookingFee.fromDay} AND ${courseAdvancedBookingFee.toDay}
+              THEN ${courseAdvancedBookingFee.advancedBookingFeePerPlayer}
+              ELSE 0
+            END, 0)
+          )`,
       })
       .from(teeTimes)
       .innerJoin(courses, eq(courses.id, teeTimes.courseId))
       .leftJoin(courseMarkup, eq(courseMarkup.courseId, teeTimes.courseId))
+      .leftJoin(courseAdvancedBookingFee, eq(courseAdvancedBookingFee.courseId, teeTimes.courseId))
       .where(
         and(
           eq(teeTimes.courseId, courseId),
