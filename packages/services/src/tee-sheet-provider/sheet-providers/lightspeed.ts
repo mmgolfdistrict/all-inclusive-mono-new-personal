@@ -864,8 +864,8 @@ export class Lightspeed extends BaseProvider {
 
     const customer = customers.data[0];
 
-    try {
-      if (!customer) {
+    if (!customer && customerDetails.phone) {
+      try {
         const url = `${BASE_ENDPOINT}/partner_api/v2/organizations/${ORGANIZATION_ID}/customers?filter[phone]=${customerDetails.phone}`;
 
         const headers = {
@@ -899,9 +899,9 @@ export class Lightspeed extends BaseProvider {
           }
           return undefined;
         }
+      } catch (error) {
+        this.logger.error(`Error fetching customer by phone number: ${JSON.stringify(error)}`);
       }
-    } catch (error) {
-      this.logger.error(`Error fetching customer by phone number: ${JSON.stringify(error)}`);
     }
 
     return customer as LightspeedGetCustomerResponse;
