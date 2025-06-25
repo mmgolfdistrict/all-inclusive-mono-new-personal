@@ -617,7 +617,13 @@ export class BookingService {
     return data.map((booking) => booking.id);
   };
 
-  getOwnedTeeTimes = async (userId: string, courseId: string, _limit = 10, _cursor: string | undefined) => {
+  getOwnedTeeTimes = async (
+    userId: string,
+    courseId: string,
+    userTime: string | undefined,
+    _limit = 10,
+    _cursor: string | undefined
+  ) => {
     const courseTimezoneISO = await this.database
       .select({
         timezoneISO: courses.timezoneISO,
@@ -641,21 +647,16 @@ export class BookingService {
       });
 
     const timezoneOffset = courseTimezoneISO[0]?.timezoneISO ?? "America/Los_Angeles";
-    // Get course timezone time
-    const courseTime = dayjs().utc().tz(timezoneOffset);
 
-    // Get user's local time
-    const userTime = dayjs(); // This is in the server's local timezone, so we assume it's the user's time
+    // ✅ Get current time in course's timezone
+    const courseTime = dayjs.utc().tz(timezoneOffset);
 
-    // Choose the later one
-    const finalTime = courseTime.isAfter(userTime)
-      ? courseTime.format("YYYY-MM-DDTHH:mm:ss")
-      : userTime.format("YYYY-MM-DDTHH:mm:ss");
+    // Compare: take the later time
+    const finalTime = courseTime.isAfter(userTime) ? userTime : courseTime.format("YYYY-MM-DDTHH:mm:ss");
 
-    console.log("nowInCourseTimezone-----finalTime----->", finalTime);
+    console.log("nowInCourseTimezone-----finalTime----->", courseTime.isAfter(userTime), finalTime);
     console.log("courseTime----->", courseTime);
     console.log("userTime----->", userTime);
-    console.log("timezoneOffset----->", timezoneOffset);
 
     const data = await this.database
       .select({
@@ -710,7 +711,7 @@ export class BookingService {
           eq(bookings.ownerId, userId),
           eq(bookings.isActive, true),
           eq(teeTimes.courseId, courseId),
-          gte(teeTimes.providerDate, finalTime),
+          gte(teeTimes.providerDate, finalTime ?? ""),
           or(eq(bookings.status, "RESERVED"), eq(bookings.status, "CONFIRMED")),
           isNull(bookings.groupId)
         )
@@ -993,7 +994,7 @@ export class BookingService {
           eq(bookings.ownerId, userId),
           eq(bookings.isActive, true),
           eq(teeTimes.courseId, courseId),
-          gte(teeTimes.providerDate, finalTime),
+          gte(teeTimes.providerDate, finalTime ?? ""),
           or(eq(bookings.status, "RESERVED"), eq(bookings.status, "CONFIRMED")),
           not(isNull(bookings.groupId))
         )
