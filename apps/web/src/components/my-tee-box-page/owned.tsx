@@ -17,6 +17,7 @@ import { SkeletonRow } from "./skeleton-row";
 import { CollectPayment } from "./collect-payment";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
+import dayjs from "dayjs";
 export type OwnedTeeTime = {
   courseName: string;
   courseLogo: string;
@@ -51,12 +52,14 @@ export const Owned = () => {
   const router = useRouter();
   const paramBookingId = params.get("bookingId");
   const collectPayment = params.get("collectPayment") === "true";
-  const [userTime, setUserTime] = useState<string>("");
 
-  useEffect(() => {
-    const currentLocalTime = new Date().toISOString(); // browser's current time in ISO format
-    setUserTime(currentLocalTime);
+  const userTime = useMemo(() => {
+    const currentLocalTime = dayjs(new Date()).format("YYYY-MM-DDTHH:mm:ss"); // browser's current time in ISO format
+    return currentLocalTime;
   }, []);
+
+  console.log("userTime", userTime);
+
 
   const courseId = course?.id;
   const [isListTeeTimeOpen, setIsListTeeTimeOpen] = useState<boolean>(false);

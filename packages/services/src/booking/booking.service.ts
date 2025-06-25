@@ -647,17 +647,16 @@ export class BookingService {
       });
 
     const timezoneOffset = courseTimezoneISO[0]?.timezoneISO ?? "America/Los_Angeles";
-    const courseTime = dayjs().tz(timezoneOffset); // Get current time in course's timezone
-    const browserUserTime = dayjs(userTime); // Already from browser, no need to convert
 
-    // Compare the two and select the later one
-    const finalTime = courseTime.isAfter(browserUserTime)
-      ? courseTime.format("YYYY-MM-DDTHH:mm:ss")
-      : browserUserTime.format("YYYY-MM-DDTHH:mm:ss");
+    // ✅ Get current time in course's timezone
+    const courseTime = dayjs.utc().tz(timezoneOffset);
 
-    console.log("nowInCourseTimezone-----finalTime----->", finalTime);
-    console.log("courseTime----->", courseTime.toISOString());
-    console.log("userTime----->", browserUserTime.toISOString());
+    // Compare: take the later time
+    const finalTime = courseTime.isAfter(userTime) ? userTime : courseTime.format("YYYY-MM-DDTHH:mm:ss");
+
+    console.log("nowInCourseTimezone-----finalTime----->", courseTime.isAfter(userTime), finalTime);
+    console.log("courseTime----->", courseTime);
+    console.log("userTime----->", userTime);
 
     const data = await this.database
       .select({
