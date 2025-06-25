@@ -641,19 +641,18 @@ export class BookingService {
       });
 
     const timezoneOffset = courseTimezoneISO[0]?.timezoneISO ?? "America/Los_Angeles";
-    let nowInCourseTimezone = dayjs().utc().tz(timezoneOffset).format("YYYY-MM-DDTHH:mm:ss");
-    const currentTime = dayjs(new Date()).format("YYYY-MM-DDTHH:mm:ss");
+    // Get course timezone time
+    const courseTime = dayjs().utc().tz(timezoneOffset);
 
-    // compare nowInCourseTimezone with currentTime
-    if (dayjs(nowInCourseTimezone).isBefore(currentTime)) {
-      // If nowInCourseTimezone is before currentTime, set it to currentTime
-      nowInCourseTimezone = currentTime;
-    } else {
-      // If nowInCourseTimezone is after currentTime, keep it as is
-      nowInCourseTimezone = dayjs().utc().tz(timezoneOffset).format("YYYY-MM-DDTHH:mm:ss");
-    }
+    // Get user's local time
+    const userTime = dayjs(); // This is in the server's local timezone, so we assume it's the user's time
 
-    console.log("nowInCourseTimezone-----currentTime----->", nowInCourseTimezone);
+    // Choose the later one
+    const finalTime = courseTime.isAfter(userTime)
+      ? courseTime.format("YYYY-MM-DDTHH:mm:ss")
+      : userTime.format("YYYY-MM-DDTHH:mm:ss");
+
+    console.log("nowInCourseTimezone-----currentTime----->", finalTime);
 
     const data = await this.database
       .select({
@@ -708,7 +707,7 @@ export class BookingService {
           eq(bookings.ownerId, userId),
           eq(bookings.isActive, true),
           eq(teeTimes.courseId, courseId),
-          gte(teeTimes.providerDate, nowInCourseTimezone),
+          gte(teeTimes.providerDate, finalTime),
           or(eq(bookings.status, "RESERVED"), eq(bookings.status, "CONFIRMED")),
           isNull(bookings.groupId)
         )
@@ -751,10 +750,10 @@ export class BookingService {
       if (!combinedData[teeTime.providerBookingId]) {
         const slotData = !teeTime.providerBookingId
           ? Array.from({ length: teeTime.playerCount - 1 }, (_, i) => ({
-            name: "",
-            slotId: "",
-            customerId: "",
-          }))
+              name: "",
+              slotId: "",
+              customerId: "",
+            }))
           : [];
 
         combinedData[teeTime.providerBookingId] = {
@@ -991,7 +990,7 @@ export class BookingService {
           eq(bookings.ownerId, userId),
           eq(bookings.isActive, true),
           eq(teeTimes.courseId, courseId),
-          gte(teeTimes.providerDate, nowInCourseTimezone),
+          gte(teeTimes.providerDate, finalTime),
           or(eq(bookings.status, "RESERVED"), eq(bookings.status, "CONFIRMED")),
           not(isNull(bookings.groupId))
         )
@@ -1022,10 +1021,10 @@ export class BookingService {
       if (!combinedGroupData[teeTime.groupId!]) {
         const slotData = !teeTime.providerBookingId
           ? Array.from({ length: teeTime.playerCount - 1 }, (_, i) => ({
-            name: "",
-            slotId: "",
-            customerId: "",
-          }))
+              name: "",
+              slotId: "",
+              customerId: "",
+            }))
           : [];
 
         combinedGroupData[teeTime.groupId!] = {
@@ -3572,13 +3571,13 @@ export class BookingService {
     const primaryData = {
       primaryGreenFeeCharge: isNaN(
         slotInfo[0].price -
-        cartFeeCharge * (slotInfo[0]?.product_data?.metadata?.number_of_bookings || 0) -
-        markupCharge1
+          cartFeeCharge * (slotInfo[0]?.product_data?.metadata?.number_of_bookings || 0) -
+          markupCharge1
       )
         ? slotInfo[0].price - markupCharge1
         : slotInfo[0].price -
-        cartFeeCharge * (slotInfo[0]?.product_data?.metadata?.number_of_bookings ?? 0) -
-        markupCharge1, //slotInfo[0].price- cartFeeCharge*slotInfo[0]?.product_data?.metadata?.number_of_bookings,
+          cartFeeCharge * (slotInfo[0]?.product_data?.metadata?.number_of_bookings ?? 0) -
+          markupCharge1, //slotInfo[0].price- cartFeeCharge*slotInfo[0]?.product_data?.metadata?.number_of_bookings,
       teeTimeId: slotInfo[0].product_data.metadata.tee_time_id,
       playerCount:
         slotInfo[0].product_data.metadata.number_of_bookings === undefined
@@ -4049,7 +4048,7 @@ export class BookingService {
         }
       }
       if (additionalNoteFromUser || needRentals || merchandiseTotalCharge > 0) {
-        bookingStage = "Preparing and sending course operatior email"
+        bookingStage = "Preparing and sending course operatior email";
         const merchandiseDetails: { caption: string; qty: number }[] = [];
         const merchandiseData = cart?.cart?.filter(
           (item: ProductData) => item.product_data.metadata.type === "merchandise"
@@ -4355,8 +4354,9 @@ export class BookingService {
               url: "/confirmBooking",
               userAgent: "",
               message: "ERROR CONFIRMING BOOKING",
-              stackTrace: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${booking?.teeTimeId ?? ""
-                }`,
+              stackTrace: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${
+                booking?.teeTimeId ?? ""
+              }`,
               additionalDetailsJSON: err,
             });
           });
@@ -5327,7 +5327,7 @@ export class BookingService {
           firstTeeTime.id === teeTime.id &&
           (additionalNoteFromUser || needRentals || merchandiseTotalCharge > 0)
         ) {
-          bookingStage = "Preparing and sending course operatior email"
+          bookingStage = "Preparing and sending course operatior email";
           const merchandiseDetails: { caption: string; qty: number }[] = [];
           const merchandiseData = cart?.cart?.filter(
             (item: ProductData) => item.product_data.metadata.type === "merchandise"
