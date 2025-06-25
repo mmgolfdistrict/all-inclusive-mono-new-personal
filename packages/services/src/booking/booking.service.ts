@@ -652,7 +652,10 @@ export class BookingService {
       ? courseTime.format("YYYY-MM-DDTHH:mm:ss")
       : userTime.format("YYYY-MM-DDTHH:mm:ss");
 
-    console.log("nowInCourseTimezone-----currentTime----->", finalTime);
+    console.log("nowInCourseTimezone-----finalTime----->", finalTime);
+    console.log("courseTime----->", courseTime);
+    console.log("userTime----->", userTime);
+    console.log("timezoneOffset----->", timezoneOffset);
 
     const data = await this.database
       .select({
