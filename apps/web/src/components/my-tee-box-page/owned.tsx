@@ -58,9 +58,6 @@ export const Owned = () => {
     return currentLocalTime;
   }, []);
 
-  console.log("userTime", userTime);
-
-
   const courseId = course?.id;
   const [isListTeeTimeOpen, setIsListTeeTimeOpen] = useState<boolean>(false);
   const [sideBarClose, setIsSideBarClose] = useState<boolean>(false)

@@ -16,6 +16,7 @@ import { SkeletonRow } from "../skeleton-row";
 import { type OwnedTeeTime } from "../owned";
 import Link from "next/link";
 import { CollectPayment } from "../collect-payment";
+import dayjs from "dayjs";
 
 export const MobileOwned = () => {
   const { course } = useCourseContext();
@@ -28,11 +29,10 @@ export const MobileOwned = () => {
   const [isManageOwnedTeeTimeOpen, setIsManageOwnedTeeTimeOpen] =
     useState<boolean>(false);
   const [sideBarClose, setIsSideBarClose] = useState<boolean>(false);
-  const [userTime, setUserTime] = useState<string>("");
 
-  useEffect(() => {
-    const currentLocalTime = new Date().toISOString(); // browser's current time in ISO format
-    setUserTime(currentLocalTime);
+  const userTime = useMemo(() => {
+    const currentLocalTime = dayjs(new Date()).format("YYYY-MM-DDTHH:mm:ss"); // browser's current time in ISO format
+    return currentLocalTime;
   }, []);
 
   const { data, isLoading, isError, error, refetch } =
