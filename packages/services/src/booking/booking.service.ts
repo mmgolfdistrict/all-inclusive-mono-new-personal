@@ -4091,10 +4091,20 @@ export class BookingService {
         }
         for (const merchandise of purchasedMerchandise) {
           const merchandiseItem = merchandiseItems.find((item) => item.id === merchandise.id);
-          merchandiseDetails.push({
-            caption: merchandise.caption,
-            qty: merchandiseItem?.qty ?? 0,
-          });
+          const merchandiseWithTaxOverrideItem = merchandiseWithTaxOverrideItems.find(
+            (item) => item.id === merchandise.id
+          );
+          if (merchandiseItem) {
+            merchandiseDetails.push({
+              caption: merchandise.caption,
+              qty: merchandiseItem?.qty ?? 0,
+            });
+          } else if (merchandiseWithTaxOverrideItem) {
+            merchandiseDetails.push({
+              caption: merchandise.caption,
+              qty: merchandiseWithTaxOverrideItem?.qty ?? 0,
+            })
+          }
         }
 
         const courseContactsList = await this.database

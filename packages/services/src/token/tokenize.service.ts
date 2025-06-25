@@ -429,7 +429,7 @@ export class TokenizeService {
             courseMerchandiseId: merchandise.id,
             qty: merchandise.qty,
             merchandiseAmountPerItem: merchandise.pricePerItem,
-            totalMerchandiseItemTaxAmount: merchandise.taxAmountPerItem
+            totalMerchandiseItemTaxAmount: Number(merchandise.taxAmountPerItem * merchandise.qty)
           })
         }
 
@@ -463,7 +463,7 @@ export class TokenizeService {
             courseMerchandiseId: merchandise.id,
             qty: merchandise.qty,
             merchandiseAmountPerItem: merchandise.pricePerItem,
-            totalMerchandiseItemTaxAmount: merchandise.taxAmountPerItem
+            totalMerchandiseItemTaxAmount: Number(merchandise.taxAmountPerItem * merchandise.qty)
           })
         }
 

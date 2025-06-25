@@ -996,6 +996,8 @@ export class CheckoutService {
           break;
         case "merchandiseTaxPercent":
           break;
+        case "merchandiseWithTaxOverride":
+          break;
         default:
           this.logger.error(`Unknown product type: ${JSON.stringify(item.product_data.metadata)}`);
           loggerService.errorLog({
