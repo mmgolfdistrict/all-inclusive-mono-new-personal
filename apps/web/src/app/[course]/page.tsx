@@ -961,10 +961,12 @@ export default function CourseHomePage() {
                   }}
                 >
                   {datesArr.map((dateStr: string, idx: number) => {
-                    const dateObj = dayjs(dateStr as string | number | Date | Dayjs | null | undefined);
+                    // const dateObj = dayjs(dateStr as string | number | Date | Dayjs | null | undefined);
+                    const dateObj = dayjs.utc(dateStr as string | number | Date | Dayjs | null | undefined);
+
                     const isSelected =
                       selectedDate &&
-                      dayjs(selectedDate).format("YYYY-MM-DD") === dateObj.format("YYYY-MM-DD");
+                      dayjs(selectedDate).utc().format("YYYY-MM-DD") === dateObj.format("YYYY-MM-DD");
 
                     return (
                       (isLoadingTeeTimeDate || isLoading || specialEventsLoading || allCoursesDataLoading)
