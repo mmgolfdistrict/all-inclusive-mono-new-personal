@@ -51,6 +51,12 @@ export const Owned = () => {
   const router = useRouter();
   const paramBookingId = params.get("bookingId");
   const collectPayment = params.get("collectPayment") === "true";
+  const [userTime, setUserTime] = useState<string>("");
+
+  useEffect(() => {
+    const currentLocalTime = new Date().toISOString(); // browser's current time in ISO format
+    setUserTime(currentLocalTime);
+  }, []);
 
   const courseId = course?.id;
   const [isListTeeTimeOpen, setIsListTeeTimeOpen] = useState<boolean>(false);
@@ -66,8 +72,11 @@ export const Owned = () => {
     api.teeBox.getOwnedTeeTimes.useQuery(
       {
         courseId: courseId ?? "",
+        userTime: userTime ?? "",
       },
-      { enabled: !!courseId }
+      {
+        enabled: !!courseId && !!userTime // ensure userTime is set before triggering query
+      }
     );
 
   const [selectedTeeTime, setSelectedTeeTime] = useState<

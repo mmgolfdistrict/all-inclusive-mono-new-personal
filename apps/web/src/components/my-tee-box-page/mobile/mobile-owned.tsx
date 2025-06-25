@@ -5,7 +5,7 @@ import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
 import { formatTime } from "~/utils/formatters";
 import { type InviteFriend } from "~/utils/types";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Avatar } from "../../avatar";
 import { FilledButton } from "../../buttons/filled-button";
 import { OutlineButton } from "../../buttons/outline-button";
@@ -27,14 +27,25 @@ export const MobileOwned = () => {
     useState<boolean>(false);
   const [isManageOwnedTeeTimeOpen, setIsManageOwnedTeeTimeOpen] =
     useState<boolean>(false);
-  const [sideBarClose, setIsSideBarClose] = useState<boolean>(false)
+  const [sideBarClose, setIsSideBarClose] = useState<boolean>(false);
+  const [userTime, setUserTime] = useState<string>("");
+
+  useEffect(() => {
+    const currentLocalTime = new Date().toISOString(); // browser's current time in ISO format
+    setUserTime(currentLocalTime);
+  }, []);
+
   const { data, isLoading, isError, error, refetch } =
     api.teeBox.getOwnedTeeTimes.useQuery(
       {
         courseId: courseId ?? "",
+        userTime: userTime ?? "",
       },
-      { enabled: !!courseId }
+      {
+        enabled: !!courseId && !!userTime // ensure userTime is set before triggering query
+      }
     );
+
 
   const [selectedTeeTime, setSelectedTeeTime] = useState<
     OwnedTeeTime | undefined

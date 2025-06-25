@@ -64,6 +64,7 @@ export const bookingRouter = createTRPCRouter({
     .input(
       z.object({
         courseId: z.string(),
+        userTime: z.string().optional(),
         limit: z.number().optional(),
         cursor: z.string().optional(),
       })
@@ -71,7 +72,7 @@ export const bookingRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       return ctx.serviceFactory
         .getBookingService()
-        .getOwnedTeeTimes(ctx.session.user.id, input.courseId, input.limit, input.cursor);
+        .getOwnedTeeTimes(ctx.session.user.id, input.courseId, input.userTime, input.limit, input.cursor);
     }),
   getOffersForBooking: protectedProcedure
     .input(
@@ -129,7 +130,7 @@ export const bookingRouter = createTRPCRouter({
         updatedSlots: z.number(),
         bookingIds: z.array(z.string()),
         endTime: z.date(),
-        allowSplit: z.boolean()
+        allowSplit: z.boolean(),
       })
     )
     .mutation(async ({ ctx, input }) => {

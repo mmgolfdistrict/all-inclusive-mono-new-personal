@@ -617,7 +617,13 @@ export class BookingService {
     return data.map((booking) => booking.id);
   };
 
-  getOwnedTeeTimes = async (userId: string, courseId: string, _limit = 10, _cursor: string | undefined) => {
+  getOwnedTeeTimes = async (
+    userId: string,
+    courseId: string,
+    userTime: string | undefined,
+    _limit = 10,
+    _cursor: string | undefined
+  ) => {
     const courseTimezoneISO = await this.database
       .select({
         timezoneISO: courses.timezoneISO,
@@ -641,21 +647,17 @@ export class BookingService {
       });
 
     const timezoneOffset = courseTimezoneISO[0]?.timezoneISO ?? "America/Los_Angeles";
-    // Get course timezone time
-    const courseTime = dayjs().utc().tz(timezoneOffset);
+    const courseTime = dayjs().tz(timezoneOffset); // Get current time in course's timezone
+    const browserUserTime = dayjs(userTime); // Already from browser, no need to convert
 
-    // Get user's local time
-    const userTime = dayjs(); // This is in the server's local timezone, so we assume it's the user's time
-
-    // Choose the later one
-    const finalTime = courseTime.isAfter(userTime)
+    // Compare the two and select the later one
+    const finalTime = courseTime.isAfter(browserUserTime)
       ? courseTime.format("YYYY-MM-DDTHH:mm:ss")
-      : userTime.format("YYYY-MM-DDTHH:mm:ss");
+      : browserUserTime.format("YYYY-MM-DDTHH:mm:ss");
 
     console.log("nowInCourseTimezone-----finalTime----->", finalTime);
-    console.log("courseTime----->", courseTime);
-    console.log("userTime----->", userTime);
-    console.log("timezoneOffset----->", timezoneOffset);
+    console.log("courseTime----->", courseTime.toISOString());
+    console.log("userTime----->", browserUserTime.toISOString());
 
     const data = await this.database
       .select({
