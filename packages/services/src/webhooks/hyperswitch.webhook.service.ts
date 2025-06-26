@@ -1197,6 +1197,7 @@ export class HyperSwitchWebhookService {
             }
           }
           if (bookingDetails?.additionalNoteFromCustomer || bookingDetails?.needsRentals) {
+            bookingStage = "Sending email for additional note from customer or needs rentals";
             this.logger.info("Additional note from customer or needs rentals sending email");
             const courseContactsList = await this.database
               .select({
@@ -1540,6 +1541,7 @@ export class HyperSwitchWebhookService {
           }
         }
         if (bookingsToCreate.length) {
+          bookingStage = "Creating Bookings on Golf District";
           await this.database.transaction(async (tx) => {
             //create each booking
             await tx
@@ -1613,6 +1615,7 @@ export class HyperSwitchWebhookService {
           json: "Tee time purchased",
         });
 
+        bookingStage = "Sending customer emails";
         const event: Event = {
           startDate: existingTeeTime?.date ?? "",
           endDate: existingTeeTime?.date ?? "",
