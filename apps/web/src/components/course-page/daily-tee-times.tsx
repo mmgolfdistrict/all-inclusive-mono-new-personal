@@ -32,15 +32,15 @@ export const DailyTeeTimes = ({
   setError: (t: string | null) => void;
   handleLoading?: (val: boolean) => void;
   courseException: NotificationObject | null;
-  dateType:string
+  dateType: string
 }) => {
   const overflowRef = useRef<HTMLDivElement>(null);
   const nextPageRef = useRef<HTMLDivElement>(null);
   const { onMouseDown } = useDraggableScroll(overflowRef, {
     direction: "horizontal",
   });
-  const [isAtStart, setIsAtStart] = useState(true);  
-  const [isAtEnd, setIsAtEnd] = useState(false);  
+  const [isAtStart, setIsAtStart] = useState(true);
+  const [isAtEnd, setIsAtEnd] = useState(false);
   const entry = useIntersectionObserver(nextPageRef, {});
   const isVisible = !!entry?.isIntersecting;
   const [sizeRef] = useElementSize();
@@ -49,11 +49,11 @@ export const DailyTeeTimes = ({
   const handleScroll = () => {
     const container = overflowRef.current;
     if (!container) return;
-  
-    const isAtStart = container.scrollLeft  === 0;
+
+    const isAtStart = container.scrollLeft === 0;
     const isAtEnd =
       container.scrollLeft + container.clientWidth + 150 >= container.scrollWidth;
-  
+
     setIsAtStart(isAtStart);
     setIsAtEnd(isAtEnd);
   };
@@ -63,7 +63,7 @@ export const DailyTeeTimes = ({
     if (container) {
       container.addEventListener('scroll', handleScroll);
     }
-  
+
     return () => {
       if (container) {
         container.removeEventListener('scroll', handleScroll);
@@ -128,14 +128,14 @@ export const DailyTeeTimes = ({
         sortValue === "Sort by time - Early to Late"
           ? "asc"
           : sortValue === "Sort by time - Late to Early"
-          ? "desc"
-          : "",
+            ? "desc"
+            : "",
       sortPrice:
         sortValue === "Sort by price - Low to High"
           ? "asc"
           : sortValue === "Sort by price - High to Low"
-          ? "desc"
-          : "",
+            ? "desc"
+            : "",
       timezoneCorrection: course?.timezoneCorrection,
       take: TAKE,
     },
@@ -158,7 +158,7 @@ export const DailyTeeTimes = ({
 
 
   const allTeeTimes =
-    teeTimeData?.pages[teeTimeData?.pages?.length - 1]?.results ?? [];    
+    teeTimeData?.pages[teeTimeData?.pages?.length - 1]?.results ?? [];
 
   const isScrolling = useRef(false);
 
@@ -235,12 +235,6 @@ export const DailyTeeTimes = ({
     }
   }, [overflowRef]);
 
-  const getTextColor = (type) => {
-    if (type === "FAILURE") return "red";
-    if (type === "SUCCESS") return "primary";
-    if (type === "WARNING") return "primary-gray";
-  };
-
   if (!isLoading && isFetchedAfterMount && allTeeTimes.length === 0) {
     return null;
   }
@@ -263,9 +257,11 @@ export const DailyTeeTimes = ({
         {courseException && (
           <div className="flex-1 flex items-center gap-1">
             <p
-              className={`text-${getTextColor(
-                courseException.displayType
-              )} inline text-left text-[13px] md:text-lg`}
+              style={{
+                backgroundColor: courseException.bgColor,
+                color: courseException.color,
+              }}
+              className={`inline text-left text-[13px] md:text-lg rounded px-2`}
             >
               {courseException.shortMessage}
             </p>
@@ -315,7 +311,7 @@ export const DailyTeeTimes = ({
             className={`flex h-fit items-center justify-center rounded-full bg-white p-2 shadow-overflow-indicator ${isAtStart ? 'hidden' : 'flex'}`}
             data-testid="tee-time-left-chevron-id"
             data-qa={dayMonthDate(date)}
-            // disabled={isAtStart}
+          // disabled={isAtStart}
           >
             <LeftChevron fill="#40942A" className="w-[21px]" />
           </button>
@@ -395,8 +391,8 @@ export const DailyTeeTimes = ({
 
             {isLoading || isFetchingNextPage || !isFetchedAfterMount
               ? Array(TAKE)
-                  .fill(null)
-                  .map((_, idx) => <TeeTimeSkeleton key={idx} />)
+                .fill(null)
+                .map((_, idx) => <TeeTimeSkeleton key={idx} />)
               : null}
           </ul>
         </div>
