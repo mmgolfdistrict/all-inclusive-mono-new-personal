@@ -41,7 +41,6 @@ import type { Forecast } from "../weather/types";
 import type { WeatherService } from "../weather/weather.service";
 import { loggerService } from "../webhooks/logging.service";
 import { courseSetting } from "@golf-district/database/schema/courseSetting";
-import { courseAdvancedBookingFee } from "@golf-district/database/schema/courseAdvancedBookingFee";
 
 dayjs.extend(UTC);
 dayjs.extend(customParseFormat);
@@ -86,19 +85,12 @@ interface TeeTimeSearchObject {
   markupTaxPercent: number;
   pricePerGolferForGroup?: number;
   merchandiseTaxPercent: number;
-  advancedBookingFeesPerPlayer?: number;
 }
 
 interface MarkupData {
   toDay: number;
   fromDay: number;
   markUp: number;
-}
-
-interface AdvancedBookingFeeData {
-  toDay: number;
-  fromDay: number;
-  advancedBookingFeePerPlayer: number;
 }
 
 interface CheckTeeTimesAvailabilityParams {
@@ -542,13 +534,13 @@ export class SearchService extends CacheService {
     if (!tee) {
       return null;
     }
-    const date = this.formatDateToAppropriateFormat(tee?.providerDate);
     const priceAccordingToDate: any[] = await this.getTeeTimesPriceWithRange(
       tee?.courseId,
       tee?.timezoneCorrection
     );
     const filteredDate: any[] = [];
 
+    const date = this.formatDateToAppropriateFormat(tee?.providerDate);
     priceAccordingToDate.forEach((el) => {
       if (
         dayjs(el.toDayFormatted).isAfter(date) &&
@@ -556,23 +548,6 @@ export class SearchService extends CacheService {
         !filteredDate.length
       ) {
         filteredDate.push(el);
-        return;
-      }
-    });
-
-    const advancedBookingFeeAccordingToDate: any[] = await this.getTeeTimesAdvancedFeeWithRange(
-      tee?.courseId,
-      tee?.timezoneCorrection
-    );
-    const filteredAdvancedFees: any[] = [];
-
-    advancedBookingFeeAccordingToDate.forEach((el) => {
-      if (
-        dayjs(el.toDayFormatted).isAfter(date) &&
-        dayjs(el.fromDayFormatted).isBefore(date) &&
-        !filteredAdvancedFees.length
-      ) {
-        filteredAdvancedFees.push(el);
         return;
       }
     });
@@ -591,9 +566,6 @@ export class SearchService extends CacheService {
     // });
 
     const markupFeesFinal = filteredDate.length ? filteredDate[0].markUpFees : tee.markupFeesFixedPerPlayer;
-    const advancedBookingFeesPerPlayer = (filteredAdvancedFees.length ?
-      filteredAdvancedFees[0].advancedBookingFeePerPlayer : 0);
-    const advancedBookingFeesPerPlayerDecimal = advancedBookingFeesPerPlayer / 100;
     const markupFeesToBeUsed = markupFeesFinal / 100;
     const watchers = await this.database
       .select({
@@ -635,11 +607,11 @@ export class SearchService extends CacheService {
         ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${tee.logo.key}.${tee.logo.extension}`
         : "/defaults/default-profile.webp",
       availableSlots: tee.firstPartySlots,
-      pricePerGolfer: tee.greenFee / 100 + tee.cartFee / 100 + markupFeesToBeUsed + advancedBookingFeesPerPlayerDecimal,
+      pricePerGolfer: tee.greenFee / 100 + tee.cartFee / 100 + markupFeesToBeUsed,
       markupFees: markupFeesToBeUsed * 100,
       greenFeeTaxPerPlayer: tee.greenFeeTax,
       cartFeeTaxPerPlayer: tee.cartFeeTax,
-      greenFee: tee.greenFee + advancedBookingFeesPerPlayer,
+      greenFee: tee.greenFee,
       cartFee: tee.cartFee,
       teeTimeId: tee.id,
       userWatchListed: tee.favorites ? true : false,
@@ -663,8 +635,7 @@ export class SearchService extends CacheService {
       cartFeeTaxPercent: tee.cartFeeTaxPercent,
       weatherGuaranteeTaxPercent: tee.weatherGuaranteeTaxPercent,
       markupTaxPercent: tee.markupTaxPercent,
-      merchandiseTaxPercent: tee.merchandiseTaxPercent ?? 0,
-      advancedBookingFeesPerPlayer: advancedBookingFeesPerPlayer ?? 0
+      merchandiseTaxPercent: tee.merchandiseTaxPercent ?? 0
     };
     return res;
   };
@@ -1084,56 +1055,7 @@ export class SearchService extends CacheService {
         // fromDayFormatted: fromDay.toString(),
         toDayFormatted: toDay.format("ddd, DD MMM YYYY HH:mm:ss [GMT]"),
         fromDayFormatted: fromDay.format("ddd, DD MMM YYYY HH:mm:ss [GMT]"),
-        markUpFees: el.markUp
-      });
-    });
-
-    return priceAccordingToDate;
-  };
-
-  getTeeTimesAdvancedFeeWithRange = async (
-    courseId: string,
-    timeZoneCorrection: number
-  ): Promise<{ toDayFormatted: string; fromDayFormatted: string; advancedBookingFeePerPlayer: number }[]> => {
-    const advancedBookingFeeCacheKey = `${courseId}-advancedBookingFees`;
-
-    let advancedBookingFeeData: AdvancedBookingFeeData[] | null = await cacheManager.get(advancedBookingFeeCacheKey);
-
-    if (!advancedBookingFeeData) {
-      const dbResult = await this.database
-        .select({
-          toDay: courseAdvancedBookingFee.toDay,
-          fromDay: courseAdvancedBookingFee.fromDay,
-          advancedBookingFeePerPlayer: courseAdvancedBookingFee.advancedBookingFeePerPlayer
-        })
-        .from(courseAdvancedBookingFee)
-        .where(eq(courseAdvancedBookingFee.courseId, courseId))
-        .execute();
-
-      // Assuming dbResult is an array of AdvancedBookingFeesData
-      advancedBookingFeeData = dbResult as AdvancedBookingFeeData[];
-      await cacheManager.set(advancedBookingFeeCacheKey, advancedBookingFeeData, 600000);
-    }
-
-    if (!Array.isArray(advancedBookingFeeData)) {
-      throw new Error("Invalid advanced booking data format");
-    }
-
-    const currentDate = dayjs();
-    const currentdateWithTimeZone = currentDate.add(timeZoneCorrection ?? 0, "hour");
-    const priceAccordingToDate: { toDayFormatted: string; fromDayFormatted: string; advancedBookingFeePerPlayer: number }[] =
-      [];
-
-    advancedBookingFeeData.forEach((el) => {
-      const toDay = currentDate.add(el.toDay, "day");
-      const fromDay = currentDate.add(el.fromDay, "day").set("hours", 0).set("minutes", 0).set("seconds", 0);
-
-      priceAccordingToDate.push({
-        // toDayFormatted: toDay.toString(),
-        // fromDayFormatted: fromDay.toString(),
-        toDayFormatted: toDay.format("ddd, DD MMM YYYY HH:mm:ss [GMT]"),
-        fromDayFormatted: fromDay.format("ddd, DD MMM YYYY HH:mm:ss [GMT]"),
-        advancedBookingFeePerPlayer: el.advancedBookingFeePerPlayer
+        markUpFees: el.markUp,
       });
     });
 
@@ -1583,30 +1505,10 @@ export class SearchService extends CacheService {
       } else {
       }
     });
-
-    const advancedBookingFeeAccordingToDate: any[] = await this.getTeeTimesAdvancedFeeWithRange(
-      courseId,
-      courseDataIfAvailable?.timeZoneCorrection ?? 0
-    );
-    const filteredAdvancedFees: any[] = [];
-
-    advancedBookingFeeAccordingToDate.forEach((el) => {
-      if (
-        ((dayjs(el.toDayFormatted).isAfter(date) && dayjs(el.fromDayFormatted).isBefore(date)) ||
-          dayjs(date).isSame(dayjs(el.fromDayFormatted))) &&
-        !filteredAdvancedFees.length
-      ) {
-        filteredAdvancedFees.push(el);
-        return;
-      }
-    });
     const markupFeesFinal = filteredDate.length
       ? filteredDate[0].markUpFees
       : courseDataIfAvailable.markupFees;
     const markupFeesToBeUsed = markupFeesFinal / 100;
-    const advancedBookingFeesPerPlayer = (filteredAdvancedFees.length ?
-      filteredAdvancedFees[0].advancedBookingFeePerPlayer : 0);
-    const advancedBookingFeesPerPlayerDecimal = advancedBookingFeesPerPlayer / 100;
     const firstHandResults = teeTimesData.map((teeTime) => {
       return {
         ...teeTime,
@@ -1625,13 +1527,11 @@ export class SearchService extends CacheService {
         firstOrSecondHandTeeTime: TeeTimeType.FIRST_HAND,
         isListed: false,
         minimumOfferPrice: teeTime.greenFee / 100, //add more fees?
-        pricePerGolfer: teeTime.greenFee / 100 + teeTime.cartFee / 100 + markupFeesToBeUsed + advancedBookingFeesPerPlayerDecimal, //add more fees?
+        pricePerGolfer: teeTime.greenFee / 100 + teeTime.cartFee / 100 + markupFeesToBeUsed, //add more fees?
         isOwned: false,
         firstHandPurchasePrice: 0,
         bookingIds: [],
         listingId: undefined,
-        greenFee: teeTime.greenFee + advancedBookingFeesPerPlayer,
-        advancedBookingFeesPerPlayer: advancedBookingFeesPerPlayer ?? 0,
       };
     });
 
@@ -2062,10 +1962,6 @@ export class SearchService extends CacheService {
         courseId,
         courseSettingResponse?.timeZoneCorrection ?? 0
       );
-      const advancedBookingFeeAccordingToDate = await this.getTeeTimesAdvancedFeeWithRange(
-        courseId,
-        courseSettingResponse?.timeZoneCorrection ?? 0
-      );
 
       const groupBookingPriceSelectionMethod = courseSettingResponse?.value ?? "MAX";
 
@@ -2080,11 +1976,10 @@ export class SearchService extends CacheService {
 
       for (const date of dates) {
         const filteredDate = [] as typeof priceAccordingToDate;
-        const formattedDate = this.formatDateToAppropriateFormat(date);
         priceAccordingToDate.forEach((el) => {
           if (
-            ((dayjs.utc(el.toDayFormatted).isAfter(formattedDate) && dayjs.utc(el.fromDayFormatted).isBefore(formattedDate)) ||
-              dayjs(formattedDate).isSame(dayjs.utc(el.fromDayFormatted), 'day')) &&
+            ((dayjs.utc(el.toDayFormatted).isAfter(date) && dayjs.utc(el.fromDayFormatted).isBefore(date)) ||
+              dayjs(date).isSame(dayjs.utc(el.fromDayFormatted), 'day')) &&
             !filteredDate.length
           ) {
             filteredDate.push(el);
@@ -2092,25 +1987,11 @@ export class SearchService extends CacheService {
           } else {
           }
         });
-        const filteredAdvancedFees = [] as typeof advancedBookingFeeAccordingToDate;
-        advancedBookingFeeAccordingToDate.forEach((el) => {
-          if (
-            ((dayjs.utc(el.toDayFormatted).isAfter(formattedDate) && dayjs.utc(el.fromDayFormatted).isBefore(formattedDate)) ||
-              dayjs(formattedDate).isSame(dayjs.utc(el.fromDayFormatted), 'day')) &&
-            !filteredAdvancedFees.length
-          ) {
-            filteredAdvancedFees.push(el);
-            return;
-          }
-        });
 
         const markupFeesFinal = filteredDate.length
           ? filteredDate[0]?.markUpFees
           : courseSettingResponse?.fixedMarkup;
         const markupFeesToBeUsed = (markupFeesFinal ?? 0) / 100;
-        const advancedBookingFeesPerPlayer = (filteredAdvancedFees.length ?
-          (filteredAdvancedFees[0]?.advancedBookingFeePerPlayer ?? 0) : 0);
-        const advancedBookingFeesPerPlayerDecimal = advancedBookingFeesPerPlayer / 100;
 
         console.log("fetching tee times for date", date);
         const teeTimesResponse = await teeTimesQuery
@@ -2192,7 +2073,7 @@ export class SearchService extends CacheService {
             pricePerGolfer = window.reduce((acc, teeTime) => {
               return Math.max(
                 acc,
-                (teeTime.greenFeePerPlayer + teeTime.cartFeePerPlayer) / 100 + markupFeesToBeUsed + advancedBookingFeesPerPlayerDecimal
+                (teeTime.greenFeePerPlayer + teeTime.cartFeePerPlayer) / 100 + markupFeesToBeUsed
               );
             }, 0);
           } else if (groupBookingPriceSelectionMethod === "SUM") {
@@ -2200,7 +2081,7 @@ export class SearchService extends CacheService {
               const players = Math.min(remainingPlayers, teeTime.availableFirstHandSpots);
               remainingPlayers -= players;
               return (
-                acc + (((teeTime.greenFeePerPlayer + teeTime.cartFeePerPlayer) / 100 + markupFeesToBeUsed + advancedBookingFeesPerPlayerDecimal) * players)
+                acc + (((teeTime.greenFeePerPlayer + teeTime.cartFeePerPlayer) / 100 + markupFeesToBeUsed) * players)
               );
             }, 0);
             pricePerGolfer = totalPrice / golferCount;
@@ -2317,30 +2198,11 @@ export class SearchService extends CacheService {
             return;
           }
         });
-        const advancedBookingFeeAccordingToDate: any[] = await this.getTeeTimesAdvancedFeeWithRange(
-          tee?.courseId,
-          tee?.timezoneCorrection
-        );
-        const filteredAdvancedFees: any[] = [];
-
-        advancedBookingFeeAccordingToDate.forEach((el) => {
-          if (
-            dayjs(el.toDayFormatted).isAfter(dateWithTimezone) &&
-            dayjs(el.fromDayFormatted).isBefore(dateWithTimezone) &&
-            !filteredAdvancedFees.length
-          ) {
-            filteredAdvancedFees.push(el);
-            return;
-          }
-        });
 
         const markupFeesFinal = filteredDate.length
           ? filteredDate[0].markUpFees
           : tee.markupFeesFixedPerPlayer;
         const markupFeesToBeUsed = markupFeesFinal / 100;
-        const advancedBookingFeesPerPlayer = (filteredAdvancedFees.length ?
-          filteredAdvancedFees[0].advancedBookingFeePerPlayer : 0);
-        const advancedBookingFeesPerPlayerDecimal = advancedBookingFeesPerPlayer / 100;
         const watchers = await this.database
           .select({
             userId: favorites.userId,
@@ -2381,11 +2243,11 @@ export class SearchService extends CacheService {
             ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${tee.logo.key}.${tee.logo.extension}`
             : "/defaults/default-profile.webp",
           availableSlots: tee.firstPartySlots,
-          pricePerGolfer: tee.greenFee / 100 + tee.cartFee / 100 + markupFeesToBeUsed + advancedBookingFeesPerPlayerDecimal,
+          pricePerGolfer: tee.greenFee / 100 + tee.cartFee / 100 + markupFeesToBeUsed,
           markupFees: markupFeesToBeUsed * 100,
           greenFeeTaxPerPlayer: tee.greenFeeTax,
           cartFeeTaxPerPlayer: tee.cartFeeTax,
-          greenFee: tee.greenFee + advancedBookingFeesPerPlayer,
+          greenFee: tee.greenFee,
           cartFee: tee.cartFee,
           teeTimeId: tee.id,
           userWatchListed: tee.favorites ? true : false,
@@ -2410,7 +2272,6 @@ export class SearchService extends CacheService {
           weatherGuaranteeTaxPercent: tee.weatherGuaranteeTaxPercent,
           markupTaxPercent: tee.markupTaxPercent,
           merchandiseTaxPercent: tee.merchandiseTaxPercent ?? 0,
-          advancedBookingFeesPerPlayer: advancedBookingFeesPerPlayer ?? 0,
         };
         return res;
       })

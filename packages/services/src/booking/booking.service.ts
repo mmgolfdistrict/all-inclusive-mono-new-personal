@@ -3630,11 +3630,6 @@ export class BookingService {
         )
         ?.reduce((acc: number, i: any) => acc + i.product_data.metadata.taxAmount, 0) / 100;
 
-    const advancedBookingAmount =
-      customerCartData?.cart?.cart
-        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "advanced_booking_fees_per_player")
-        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
-
     const charityId = customerCartData?.cart?.cart?.find(
       ({ product_data }: ProductData) => product_data.metadata.type === "charity"
     )?.product_data.metadata.charity_id;
@@ -3652,7 +3647,6 @@ export class BookingService {
       "weatherGuaranteeTaxPercent",
       "markupTaxPercent",
       "merchandiseTaxPercent",
-      "advanced_booking_fees_per_player"
     ];
     const total = customerCartData?.cart?.cart
       .filter(({ product_data }: ProductData) => {
@@ -3680,7 +3674,6 @@ export class BookingService {
       merchandiseCharge,
       merchandiseWithTaxOverrideCharge,
       merchandiseOverriddenTaxAmount,
-      advancedBookingAmount
     };
   };
 
@@ -3777,8 +3770,7 @@ export class BookingService {
         merchandiseCharge,
         merchandiseWithTaxOverrideCharge,
         merchandiseOverriddenTaxAmount,
-        advancedBookingAmount
-    } = await this.normalizeCartData({
+      } = await this.normalizeCartData({
         cartId,
         userId,
       })
@@ -3963,7 +3955,7 @@ export class BookingService {
       // Calculate additional taxes
 
       const greenFeeTaxTotal =
-        (((teeTime?.greenFees ?? 0) / 100) + advancedBookingAmount) * ((teeTime?.greenFeeTaxPercent ?? 0) / 100 / 100) * playerCount;
+        ((teeTime?.greenFees ?? 0) / 100) * ((teeTime?.greenFeeTaxPercent ?? 0) / 100 / 100) * playerCount;
       const markupTaxTotal = (markupCharge / 100) * ((teeTime?.markupTaxPercent ?? 0) / 100) * playerCount;
       const weatherGuaranteeTaxTotal =
         (sensibleCharge / 100) * ((teeTime?.weatherGuaranteeTaxPercent ?? 0) / 100);
@@ -4057,7 +4049,7 @@ export class BookingService {
           teeTimeId: teeTime.id,
           providerTeeTimeId: teeTime.providerTeeTimeId,
           startTime: teeTime.providerDate,
-          greenFees: (teeTime.greenFees / 100) + advancedBookingAmount,
+          greenFees: teeTime.greenFees / 100,
           cartFees: teeTime.cartFees / 100,
           providerCustomerId: providerCustomer.customerId?.toString() ?? null,
           providerAccountNumber: providerCustomer.playerNumber,
@@ -4320,8 +4312,7 @@ export class BookingService {
             cartId,
             markupCharge,
             merchandiseCharge: merchandiseTotalCharge,
-            advancedBookingAmount
-        },
+          },
           isWebhookAvailable: teeTime?.isWebhookAvailable ?? false,
           providerBookingIds,
           cartFeeCharge: cartFeeCharge,
@@ -5152,8 +5143,7 @@ export class BookingService {
         merchandiseCharge,
         merchandiseWithTaxOverrideCharge,
         merchandiseOverriddenTaxAmount,
-        advancedBookingAmount
-    } = await this.normalizeCartData({
+      } = await this.normalizeCartData({
         cartId,
         userId,
       });
@@ -5342,7 +5332,7 @@ export class BookingService {
       // Calculate additional taxes
 
       const greenFeeTaxTotal =
-        (((firstTeeTime?.greenFees ?? 0) / 100) + advancedBookingAmount) *
+        ((firstTeeTime?.greenFees ?? 0) / 100) *
         ((firstTeeTime?.greenFeeTaxPercent ?? 0) / 100 / 100) *
         playerCount;
       const markupTaxTotal = (markupCharge / 100) * ((firstTeeTime?.markupTaxPercent ?? 0) / 100) * playerCount;
@@ -5468,7 +5458,7 @@ export class BookingService {
             teeTimeId: teeTime.id,
             providerTeeTimeId: teeTime.providerTeeTimeId,
             startTime: teeTime.providerDate,
-            greenFees: (teeTime.greenFees / 100) + advancedBookingAmount,
+            greenFees: teeTime.greenFees / 100,
             cartFees: teeTime.cartFees / 100,
             providerCustomerId: providerCustomer.customerId?.toString() ?? null,
             providerAccountNumber: providerCustomer.playerNumber,
@@ -5730,8 +5720,7 @@ export class BookingService {
             cartId,
             markupCharge,
             merchandiseCharge: merchandiseTotalCharge,
-            advancedBookingAmount
-        },
+          },
           isWebhookAvailable: firstTeeTime?.isWebhookAvailable ?? false,
           providerBookingIds,
           cartFeeCharge: cartFeeCharge,
