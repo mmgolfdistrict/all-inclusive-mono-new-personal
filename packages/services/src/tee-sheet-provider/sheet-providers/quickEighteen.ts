@@ -60,6 +60,7 @@ export class QuickEighteen extends BaseProvider {
         const { PRICE_GROUP, FACILITY_ID } = JSON.parse(this.providerConfiguration ?? "{}");
 
         const url = `${baseEndpoint}/facility/${FACILITY_ID}/teetime?teedate=${date}&pricegroup=${PRICE_GROUP}&courseid=${courseId}`;
+        this.logger.info(`getTeeTimes - ${url}`);
         const headers = this.getHeaders(token);
         const response = await fetch(url, {
             method: 'GET',
@@ -90,8 +91,8 @@ export class QuickEighteen extends BaseProvider {
 
         const headers = this.getHeaders(token);
 
-        console.log("createBooking - ", url);
-        console.log(data, JSON.stringify(data));
+        this.logger.info(`createBooking - ${url}`);
+        this.logger.info(`payload - ${JSON.stringify(data)}`);
 
         const response = await fetch(url, {
             method: "POST",
@@ -106,7 +107,7 @@ export class QuickEighteen extends BaseProvider {
                 this.logger.error(`Error creating booking: ${JSON.stringify(responseData)}`);
                 await this.getToken();
             }
-            loggerService.errorLog({
+            void loggerService.errorLog({
                 userId,
                 url: "/QuickEighteen/createBooking",
                 userAgent: "",
@@ -162,7 +163,7 @@ export class QuickEighteen extends BaseProvider {
         const url = `${endpoint}/facility/${FACILITY_ID}/reservation/${bookingId}`;
         const headers = this.getHeaders(token);
 
-        console.log(`deleteBooking - ${url}`);
+        this.logger.info(`deleteBooking - ${url}`);
 
         const response = await fetch(url, {
             method: "POST",
@@ -187,7 +188,7 @@ export class QuickEighteen extends BaseProvider {
             const reservation = await bookingResponse.json();
 
             this.logger.info(`Reservation: ${JSON.stringify(reservation)}`);
-            loggerService.errorLog({
+            void loggerService.errorLog({
                 userId: "",
                 url: "/QuickEighteen/deleteBooking",
                 userAgent: "",
@@ -220,7 +221,8 @@ export class QuickEighteen extends BaseProvider {
         const endpoint = this.getBasePoint();
         const url = `${endpoint}/facility/${FACILITY_ID}/customer?type=BaseCustomer`;
 
-        console.log(`createCustomer - ${url}`);
+        this.logger.info(`createCustomer - ${url}`);
+        this.logger.info(`createCustomerData - ${JSON.stringify(customerData)}`);
 
         const response = await fetch(url, {
             method: "POST",
@@ -234,7 +236,7 @@ export class QuickEighteen extends BaseProvider {
             if (response.status === 403) {
                 this.logger.error(`Error response from quick-eighteen: ${JSON.stringify(responseData)}`);
             }
-            loggerService.errorLog({
+            void loggerService.errorLog({
                 userId: "",
                 url: "/QuickEighteen/createCustomer",
                 userAgent: "",
@@ -324,7 +326,8 @@ export class QuickEighteen extends BaseProvider {
 
         const headers = this.getHeaders(token);
 
-        console.log(`getCustomer - ${url}`);
+        this.logger.info(`getCustomer - ${url}`);
+        this.logger.info(`customerData - ${JSON.stringify(customerData)}`);
 
         const response = await fetch(url, {
             method: "POST",
@@ -336,7 +339,7 @@ export class QuickEighteen extends BaseProvider {
             this.logger.error(`Error fetching customer: ${response.statusText}`);
             const responseData = await response.json();
             this.logger.error(`Error response from quick-eighteen: ${JSON.stringify(JSON.stringify(responseData))}`);
-            loggerService.errorLog({
+            void loggerService.errorLog({
                 userId: "",
                 url: "/QuickEighteen/getCustomer",
                 userAgent: "",
@@ -454,7 +457,7 @@ export class QuickEighteen extends BaseProvider {
                 .execute()
                 .catch((err: Error) => {
                     this.logger.error(err);
-                    loggerService.errorLog({
+                    void loggerService.errorLog({
                         userId: "",
                         url: "/QuickEighteen/indexTeeTime",
                         userAgent: "",
@@ -525,7 +528,7 @@ export class QuickEighteen extends BaseProvider {
                         .execute()
                         .catch((err) => {
                             this.logger.error(err);
-                            loggerService.errorLog({
+                            void loggerService.errorLog({
                                 userId: "",
                                 url: "/QuickEighteen/indexTeeTime",
                                 userAgent: "",
@@ -543,7 +546,7 @@ export class QuickEighteen extends BaseProvider {
             }
         } catch (error) {
             this.logger.error(error);
-            loggerService.errorLog({
+            void loggerService.errorLog({
                 userId: "",
                 url: "/QuickEighteen/indexTeeTime",
                 userAgent: "",
