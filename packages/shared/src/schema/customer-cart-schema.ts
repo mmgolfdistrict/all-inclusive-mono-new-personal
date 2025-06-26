@@ -178,6 +178,14 @@ export const MerchandiseWithTaxOverrideProductSchema = BaseProductSchema.extend(
   }),
 });
 
+// Advanced booking fees schema
+export const AdvancedBookingFeeSchema = BaseProductSchema.extend({
+  product_data: z.object({
+    metadata: z.object({
+      type: z.literal("advanced_booking_fees_per_player"),
+    }),
+  }),
+})
 
 
 // ProductData schema
@@ -198,7 +206,8 @@ export const ProductDataSchema = z.union([
   FirstHandGroupProductSchema,
   MerchandiseProductSchema,
   MerchandiseTaxPercentSchema,
-  MerchandiseWithTaxOverrideProductSchema
+  MerchandiseWithTaxOverrideProductSchema,
+  AdvancedBookingFeeSchema
 ]);
 
 // CustomerCart schema
