@@ -3,7 +3,7 @@ import { auth } from "@golf-district/auth";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 
 // overriding default function timeout
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 //edge api
 //export const runtime = "edge";
