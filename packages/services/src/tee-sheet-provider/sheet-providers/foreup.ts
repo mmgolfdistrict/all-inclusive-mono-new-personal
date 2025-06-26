@@ -68,7 +68,7 @@ export class foreUp extends BaseProvider {
         this.logger.error(`Error response from foreup: ${JSON.stringify(responseData)}`);
         await this.getToken();
       }
-      loggerService.errorLog({
+      void loggerService.errorLog({
         userId: "",
         url: "/Foreup/getTeeTimes",
         userAgent: "",
@@ -113,7 +113,7 @@ export class foreUp extends BaseProvider {
         this.logger.error(`Error response from foreup: ${JSON.stringify(responseData)}`);
         await this.getToken();
       }
-      loggerService.errorLog({
+      void loggerService.errorLog({
         userId: "",
         url: "/Foreup/deleteBooking",
         userAgent: "",
@@ -142,11 +142,13 @@ export class foreUp extends BaseProvider {
     const { totalAmountPaid, ...bookingData } = data;
     const endpoint = this.getBasePoint();
     const url = `${endpoint}/courses/${courseId}/teesheets/${teesheetId}/bookings`;
-    console.log(`createBooking - ${url}`);
+    this.logger.info(`createBooking - ${url}`);
+
 
     bookingData.data.attributes.booking_class_id = defaultBookingClassID;
     const headers = this.getHeaders(token);
 
+    this.logger.info(`payload - ${JSON.stringify(bookingData)}`);
     const response = await fetch(url, {
       method: "POST",
       headers: headers,
@@ -163,7 +165,7 @@ export class foreUp extends BaseProvider {
         response.status === 404 &&
         responseData.title.includes(data.data.attributes.bookedPlayers[0]?.accountNumber)
       ) {
-        loggerService.errorLog({
+        void loggerService.errorLog({
           userId,
           url: "/Foreup/createBooking",
           userAgent: "",
@@ -248,7 +250,8 @@ export class foreUp extends BaseProvider {
           });
         if (bookingData.data.attributes.bookedPlayers[0]) {
           bookingData.data.attributes.bookedPlayers[0].accountNumber = accountNumber;
-          console.dir(bookingData, { depth: null });
+          this.logger.info(`retry create booking - ${url}`);
+          this.logger.info(`payload - ${JSON.stringify(bookingData)}`);
 
           const response = await fetch(url, {
             method: "POST",
@@ -259,7 +262,7 @@ export class foreUp extends BaseProvider {
           if (!response.ok) {
             this.logger.error(`Error creating booking: ${response.statusText}`);
             const responseData = await response.json();
-            loggerService.errorLog({
+            void loggerService.errorLog({
               userId,
               url: "/Foreup/createBooking",
               userAgent: "",
@@ -284,7 +287,7 @@ export class foreUp extends BaseProvider {
           this.logger.error(`Error response from foreup: ${JSON.stringify(responseData)}`);
           await this.getToken();
         }
-        loggerService.errorLog({
+        void loggerService.errorLog({
           userId,
           url: "/Foreup/createBooking",
           userAgent: "",
@@ -317,16 +320,16 @@ export class foreUp extends BaseProvider {
     const endpoint = this.getBasePoint();
     const { defaultPriceClassID } = JSON.parse(this.providerConfiguration ?? "{}");
     // https://api.foreupsoftware.com/api_rest/index.php/courses/courseId/teesheets/teesheetId/bookings/bookingId/bookedPlayers/bookedPlayerId
-    const url = `${endpoint}/courses/${courseId}/teesheets/${teesheetId}/bookings/${bookingId}/bookedPlayers/${
-      slotId ? slotId : bookingId
-    }`;
+    const url = `${endpoint}/courses/${courseId}/teesheets/${teesheetId}/bookings/${bookingId}/bookedPlayers/${slotId ? slotId : bookingId
+      }`;
     const headers = this.getHeaders(token);
 
     if (options) {
       options.data.attributes.priceClassId = defaultPriceClassID;
     }
 
-    console.log(`updateTeeTime - ${url}`);
+    this.logger.info(`updateTeeTime - ${url}`);
+    this.logger.info(`payload - ${JSON.stringify(options)}`);
 
     const response = await fetch(url, {
       method: "PUT",
@@ -371,7 +374,7 @@ export class foreUp extends BaseProvider {
     // Fetch required fields for the course
     const requiredFieldsUrl = `${this.getBasePoint()}/courses/${courseId}/settings/customerFieldSettings`;
 
-    console.log(`createCustomer - ${requiredFieldsUrl}`);
+    console.log(`getting Required Fields - ${requiredFieldsUrl}`);
 
     const requiredFieldsResponse = await fetch(requiredFieldsUrl, {
       method: "GET",
@@ -381,7 +384,7 @@ export class foreUp extends BaseProvider {
     if (!requiredFieldsResponse.ok) {
       const responseData = await requiredFieldsResponse.json();
       this.logger.error(`Error response from foreup: ${JSON.stringify(responseData)}`);
-      loggerService.errorLog({
+      void loggerService.errorLog({
         userId: "",
         url: "/Foreup/createCustomer",
         userAgent: "",
@@ -401,7 +404,7 @@ export class foreUp extends BaseProvider {
     //Validate required fields in customerData
     for (const field in requiredFields) {
       if (requiredFields[field].required && !customerData.attributes.contact_info.hasOwnProperty(field)) {
-        loggerService.errorLog({
+        void loggerService.errorLog({
           userId: "",
           url: "/Foreup/createCustomer",
           userAgent: "",
@@ -421,9 +424,10 @@ export class foreUp extends BaseProvider {
     const endpoint = this.getBasePoint();
     const url = `${endpoint}/courses/${courseId}/customers`;
 
-    console.log(`createCustomer - ${url}`);
+    this.logger.info(`createCustomer - ${url}`);
 
     customerData.attributes.price_class = defaultPriceClassID;
+    this.logger.info(`payload - ${JSON.stringify(customerData)}`);
     const response = await fetch(url, {
       method: "POST",
       headers: this.getHeaders(token),
@@ -438,7 +442,7 @@ export class foreUp extends BaseProvider {
       if (response.status === 403) {
         this.logger.error(`Error response from foreup: ${JSON.stringify(responseData)}`);
       }
-      loggerService.errorLog({
+      void loggerService.errorLog({
         userId: "",
         url: "/Foreup/createCustomer",
         userAgent: "",
@@ -477,7 +481,7 @@ export class foreUp extends BaseProvider {
       this.logger.error(`Error fetching customer: ${response.statusText}`);
       const responseData = await response.json();
       this.logger.error(`Error response from foreup: ${JSON.stringify(responseData)}`);
-      loggerService.errorLog({
+      void loggerService.errorLog({
         userId: "",
         url: "/Foreup/getCustomer",
         userAgent: "",
@@ -537,8 +541,7 @@ export class foreUp extends BaseProvider {
       });
       if (!checkInResponse.ok) {
         throw new Error(
-          `Error doing booking checkin for booking: ${bookingId}, status code: ${
-            checkInResponse.status
+          `Error doing booking checkin for booking: ${bookingId}, status code: ${checkInResponse.status
           }, status text: ${checkInResponse.statusText}, response: ${JSON.stringify(
             await checkInResponse.json()
           )}`
@@ -577,8 +580,7 @@ export class foreUp extends BaseProvider {
       });
       if (!addPaymentsResponse.ok) {
         throw new Error(
-          `Error adding payment to cart for booking: ${bookingId}, status code: ${
-            addPaymentsResponse.status
+          `Error adding payment to cart for booking: ${bookingId}, status code: ${addPaymentsResponse.status
           }, status text: ${addPaymentsResponse.statusText}, response: ${JSON.stringify(addPaymentsResponse)}`
         );
       }
@@ -587,8 +589,7 @@ export class foreUp extends BaseProvider {
       const completeCartUrl = `${endpoint}/courses/${courseId}/carts/${cartData.data.id}`;
       this.logger.info(`Complete cart url - ${completeCartUrl}`);
       this.logger.info(
-        `Completing cart for provider booking: ${bookingId}, cart id: ${
-          cartData.data.id
+        `Completing cart for provider booking: ${bookingId}, cart id: ${cartData.data.id
         }, with paymentData: ${JSON.stringify(paymentData)}`
       );
       const completeCartResponse = await fetch(completeCartUrl, {
@@ -606,8 +607,7 @@ export class foreUp extends BaseProvider {
       });
       if (!completeCartResponse.ok) {
         throw new Error(
-          `Error completing cart for booking: ${bookingId}, status code: ${
-            completeCartResponse.status
+          `Error completing cart for booking: ${bookingId}, status code: ${completeCartResponse.status
           }, status text: ${completeCartResponse.statusText}, response: ${JSON.stringify(
             await completeCartResponse.json()
           )}`
@@ -649,7 +649,7 @@ export class foreUp extends BaseProvider {
       this.logger.error(`Error fetching token: ${response.statusText}`);
       const responseData = await response.json();
       this.logger.error(`Error response from foreup: ${JSON.stringify(responseData)}`);
-      loggerService.errorLog({
+      void loggerService.errorLog({
         userId: "",
         url: "/Foreup/getToken",
         userAgent: "",
@@ -667,7 +667,7 @@ export class foreUp extends BaseProvider {
       }
     } catch (error: any) {
       this.logger.error(`Error parsing token response: ${error}`);
-      loggerService.errorLog({
+      void loggerService.errorLog({
         userId: "",
         url: "/Foreup/getToken",
         userAgent: "",
@@ -867,7 +867,7 @@ export class foreUp extends BaseProvider {
         .execute()
         .catch((err: Error) => {
           this.logger.error(err);
-          loggerService.errorLog({
+          void loggerService.errorLog({
             userId: "",
             url: "/Foreup/indexTeeTime",
             userAgent: "",
@@ -892,7 +892,7 @@ export class foreUp extends BaseProvider {
 
         if (!attributes) {
           this.logger.error(`No TeeTimeSlotAttributes available for: ${JSON.stringify(teeTimeResponse)}`);
-          loggerService.errorLog({
+          void loggerService.errorLog({
             userId: "",
             url: "/Foreup/indexTeeTime",
             userAgent: "",
@@ -960,7 +960,7 @@ export class foreUp extends BaseProvider {
             .execute()
             .catch((err) => {
               this.logger.error(err);
-              loggerService.errorLog({
+              void loggerService.errorLog({
                 userId: "",
                 url: "/Foreup/indexTeeTime",
                 userAgent: "",
@@ -982,7 +982,7 @@ export class foreUp extends BaseProvider {
       }
     } catch (error: any) {
       this.logger.error(error);
-      loggerService.errorLog({
+      void loggerService.errorLog({
         userId: "",
         url: "/Foreup/indexTeeTime",
         userAgent: "",
