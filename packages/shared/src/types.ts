@@ -240,8 +240,6 @@ export type NotificationObject = {
   displayType: string;
   startDate: string;
   endDate: string;
-  bgColor: string;
-  color: string;
 };
 
 export enum AuthenticationMethodEnum {
