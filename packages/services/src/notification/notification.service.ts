@@ -197,7 +197,13 @@ export class NotificationService {
     template: EmailParams,
     attachments: Attachment[]
   ) => {
-    this.logger.info(`Sending email to ${email.toString()}`);
+    let emailList = email;
+    if (email instanceof Array) {
+      const emailListLowercase = email.map((email) => email.toLowerCase());
+      const emailListSet = new Set(emailListLowercase);
+      emailList = Array.from(emailListSet);
+    }
+    this.logger.info(`Sending email to ${emailList.toString()}`);
     const appSettingService = new AppSettingsService(
       this.database,
       process.env.REDIS_URL!,
@@ -210,7 +216,7 @@ export class NotificationService {
     if (appSettings?.ENABLE_ICS_ATTACHMENT === "false") {
       const response = await this.sendGridClient
         .send({
-          to: email,
+          to: emailList,
           from: this.sendGrid_email,
           subject,
           templateId,
@@ -227,7 +233,7 @@ export class NotificationService {
             message: "ERROR_SENDING_EMAIL_BY_TEMPLATE",
             stackTrace: `${err.stack}`,
             additionalDetailsJSON: JSON.stringify({
-              email,
+              emailList,
               subject,
               template,
               templateId,
@@ -235,13 +241,13 @@ export class NotificationService {
             }),
           });
           throw new Error(
-            `Failed to send email to: ${email.toString()}, Response: ${JSON.stringify(response)}`
+            `Failed to send email to: ${emailList.toString()}, Response: ${JSON.stringify(response)}`
           );
         });
     } else {
       const response = await this.sendGridClient
         .send({
-          to: email,
+          to: emailList,
           from: this.sendGrid_email,
           subject,
           templateId,
@@ -259,7 +265,7 @@ export class NotificationService {
             message: "ERROR_SENDING_EMAIL_BY_TEMPLATE",
             stackTrace: `${err.stack}`,
             additionalDetailsJSON: JSON.stringify({
-              email,
+              emailList,
               subject,
               template,
               templateId,
@@ -267,7 +273,7 @@ export class NotificationService {
             }),
           });
           throw new Error(
-            `Failed to send email to: ${email.toString()}, Response: ${JSON.stringify(response)}`
+            `Failed to send email to: ${emailList.toString()}, Response: ${JSON.stringify(response)}`
           );
         });
     }
