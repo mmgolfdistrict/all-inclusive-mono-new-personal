@@ -45,32 +45,32 @@ export const DailyTeeTimesDesktopV2 = ({
     const courseId = course?.id;
     useEffect(() => {
         setDate(dates[0] ?? '')
-    }, [dateType ,minDate])
+    }, [dateType, minDate])
 
     const { data: courseException } =
-    api.courseException.getCourseException.useQuery({
-      courseId: courseId ?? "",
-    });
+        api.courseException.getCourseException.useQuery({
+            courseId: courseId ?? "",
+        });
 
-  const getCourseException = (playDate: string): null | NotificationObject => {
-    let flag = false;
-    let msg: NotificationObject | null = null;
-    courseException?.forEach((ce) => {
-      const startDate = new Date(ce.startDate);
-      const endDate = new Date(ce.endDate);
-      const dateToCheck = new Date(playDate);
-      if (dateToCheck > startDate && dateToCheck < endDate) {
-        flag = true;
-        msg = ce;
-      }
-    });
-    if (flag) {
-      return msg;
-    }
-    return null;
-  };
+    const getCourseException = (playDate: string): null | NotificationObject => {
+        let flag = false;
+        let msg: NotificationObject | null = null;
+        courseException?.forEach((ce) => {
+            const startDate = new Date(ce.startDate);
+            const endDate = new Date(ce.endDate);
+            const dateToCheck = new Date(playDate);
+            if (dateToCheck > startDate && dateToCheck < endDate) {
+                flag = true;
+                msg = ce;
+            }
+        });
+        if (flag) {
+            return msg;
+        }
+        return null;
+    };
 
- const courseExceptions = getCourseException(date)
+    const courseExceptions = getCourseException(date)
 
     const {
         showUnlisted,
@@ -221,15 +221,6 @@ export const DailyTeeTimesDesktopV2 = ({
         }
     }, [overflowRef]);
 
-    const getTextColor = (type) => {
-        if (type === "FAILURE") return "red";
-        if (type === "SUCCESS") return "primary";
-        if (type === "WARNING") return "primary-gray";
-    };
-    // if (!isLoading && isFetchedAfterMount && allTeeTimes.length === 0) {
-    //   return null;
-    // }
-
     return (
         <div className="flex flex-col gap-1 md:gap-4 bg-white px-4 py-2 md:rounded-xl md:px-8 md:py-6">
             <div className="relative" >
@@ -285,7 +276,7 @@ export const DailyTeeTimesDesktopV2 = ({
                                         key={idx}
                                         className={`p-4 min-w-[160px] border rounded-lg text-center cursor-pointer ${isSelected ? "bg-primary text-white" : ""
                                             }`}
-                                            onClick={() => setDate(elm)}
+                                        onClick={() => setDate(elm)}
                                     >
                                         <div className={`text-gray-700 ${isSelected ? "text-white" : ""}`}>
                                             {dayMonthDateV2(elm)}
@@ -298,7 +289,7 @@ export const DailyTeeTimesDesktopV2 = ({
                 <div className="absolute z-[2] md:block top-1/2 -translate-y-1/2 flex items-center justify-center -right-1 md:-right-6">
                     <button
                         onClick={scrollRight}
-                        className={`flex h-fit items-center justify-center rounded-full bg-white p-2 shadow-overflow-indicator ${isAtEnd || dates.length <= 5 ?'hidden' : ""}`}
+                        className={`flex h-fit items-center justify-center rounded-full bg-white p-2 shadow-overflow-indicator ${isAtEnd || dates.length <= 5 ? 'hidden' : ""}`}
                         data-testid="tee-time-right-chevron-id"
                         aria-label="Scroll Right"
                     >
@@ -321,27 +312,29 @@ export const DailyTeeTimesDesktopV2 = ({
                 )}
 
                 {courseExceptions && (
-          <div className="flex-1 flex items-center gap-1">
-            <p
-              className={`text-${getTextColor(
-                courseExceptions.displayType
-              )} inline text-left text-[13px] md:text-lg`}
-            >
-              {courseExceptions.shortMessage}
-            </p>
+                    <div className="flex-1 flex items-center gap-1">
+                        <p
+                            style={{
+                                backgroundColor: courseExceptions.bgColor,
+                                color: courseExceptions.color,
+                            }}
+                            className="inline text-left text-[13px] md:text-lg"
+                        >
+                            {courseExceptions.shortMessage}
+                        </p>
 
-            {courseExceptions.longMessage && (
-              <Tooltip
-                className="text-left"
-                trigger={
-                  <span className="cursor-pointer" title="More Info">
-                    <Info className="h-4 md:h-5" />
-                  </span>
-                }
-                content={courseExceptions.longMessage}
-              />
-            )}
-          </div>
+                        {courseExceptions.longMessage && (
+                            <Tooltip
+                                className="text-left"
+                                trigger={
+                                    <span className="cursor-pointer" title="More Info">
+                                        <Info className="h-4 md:h-5" />
+                                    </span>
+                                }
+                                content={courseExceptions.longMessage}
+                            />
+                        )}
+                    </div>
                 )}
 
                 {isLoadingWeather && !weather ? (
