@@ -141,7 +141,7 @@ export class SensibleService extends CacheService {
     if (!bearerToken) {
       try {
         await this.getToken();
-        // this.logger.info(`getQuote retrieved access token from SensibleWeather API.`);
+        this.logger.info(`getQuote retrieved access token from SensibleWeather API.`);
         bearerToken = await this.getCache("sensible_access_token");
       } catch (err: any) {
         this.logger.error(`Error getting access token: ${err}`);
@@ -213,7 +213,7 @@ export class SensibleService extends CacheService {
     if (!bearerToken) {
       try {
         await this.getToken();
-        // this.logger.info(`getQuote retrieved access token from SensibleWeather API.`);
+        this.logger.info(`getQuote retrieved access token from SensibleWeather API.`);
         bearerToken = await this.getCache("sensible_access_token");
       } catch (err: any) {
         this.logger.error(`Error getting access token: ${err}`);
@@ -256,12 +256,12 @@ export class SensibleService extends CacheService {
    * @throws Will throw an error if the API call fails.
    */
   getGuarantee = async (params: GetGuaranteeParams): Promise<Guarantee[] | string> => {
-    // this.logger.info(`getGuarantee called with params: ${JSON.stringify(params)}`);
+    this.logger.info(`getGuarantee called with params: ${JSON.stringify(params)}`);
     let bearerToken = await this.getCache("sensible_access_token");
     if (!bearerToken) {
       try {
         await this.getToken();
-        // this.logger.info(`getQuote retrieved access token from SensibleWeather API.`);
+        this.logger.info(`getQuote retrieved access token from SensibleWeather API.`);
         bearerToken = await this.getCache("sensible_access_token");
       } catch (err: any) {
         this.logger.error(`Error getting access token: ${err}`);
@@ -308,12 +308,12 @@ export class SensibleService extends CacheService {
    * @throws Will throw an error if the API call fails or cancellation is unsuccessful.
    */
   cancelGuarantee = async (guaranteeId: string): Promise<void> => {
-    this.(`cancelGuarantee called with guaranteeId: ${guaranteeId}`);
+    this.logger.info(`cancelGuarantee called with guaranteeId: ${guaranteeId}`);
     let bearerToken = await this.getCache("sensible_access_token");
     if (!bearerToken) {
       try {
         await this.getToken();
-        // this.logger.info(`getQuote retrieved access token from SensibleWeather API.`);
+        this.logger.info(`getQuote retrieved access token from SensibleWeather API.`);
         bearerToken = await this.getCache("sensible_access_token");
       } catch (err: any) {
         this.logger.error(`Error getting access token: ${err}`);
@@ -357,12 +357,12 @@ export class SensibleService extends CacheService {
    * @returns The response from the API.
    */
   createQuote = async (params: CreateQuoteParams): Promise<CreateQuoteSuccessResponse> => {
-    // this.logger.info(`createQuote called with params: ${JSON.stringify(params)}`);
+    this.logger.info(`createQuote called with params: ${JSON.stringify(params)}`);
     let bearerToken = await this.getCache("sensible_access_token");
     if (!bearerToken) {
       try {
         await this.getToken();
-        // this.logger.info(`getQuote retrieved access token from SensibleWeather API.`);
+        this.logger.info(`getQuote retrieved access token from SensibleWeather API.`);
         bearerToken = await this.getCache("sensible_access_token");
       } catch (err: any) {
         this.logger.error(`Error getting access token: ${err}`);
@@ -409,12 +409,12 @@ export class SensibleService extends CacheService {
    * @throws Will throw an error if the API call fails.
    */
   getGuaranteeById = async (guaranteeId: string): Promise<Guarantee> => {
-    // this.logger.info(`getGuaranteeById called with guaranteeId: ${guaranteeId}`);
+    this.logger.info(`getGuaranteeById called with guaranteeId: ${guaranteeId}`);
     let bearerToken = await this.getCache("sensible_access_token");
     if (!bearerToken) {
       try {
         await this.getToken();
-        // this.logger.info(`getQuote retrieved access token from SensibleWeather API.`);
+        this.logger.info(`getQuote retrieved access token from SensibleWeather API.`);
         bearerToken = await this.getCache("sensible_access_token");
       } catch (err: any) {
         this.logger.error(`Error getting access token: ${err}`);
@@ -459,12 +459,12 @@ export class SensibleService extends CacheService {
    * @returns The response from the API.
    */
   acceptQuote = async (params: AcceptQuoteParams): Promise<AcceptQuoteSuccessResponse> => {
-    // this.logger.info(`acceptQuote called with params: ${JSON.stringify(params)}`);
+    this.logger.info(`acceptQuote called with params: ${JSON.stringify(params)}`);
     let bearerToken: string | null = await this.getCache("sensible_access_token");
     if (!bearerToken) {
       try {
         await this.getToken();
-        // this.logger.info(`getQuote retrieved access token from SensibleWeather API.`);
+        this.logger.info(`getQuote retrieved access token from SensibleWeather API.`);
         bearerToken = await this.getCache("sensible_access_token");
       } catch (err: any) {
         this.logger.error(`Error getting access token: ${err}`);
@@ -567,7 +567,7 @@ export class SensibleService extends CacheService {
     if (!bearerToken) {
       try {
         await this.getToken();
-        // this.logger.info(`getQuote retrieved access token from SensibleWeather API.`);
+        this.logger.info(`getQuote retrieved access token from SensibleWeather API.`);
         bearerToken = await this.getCache("sensible_access_token");
       } catch (err: any) {
         this.logger.error(`Error getting access token: ${err}`);

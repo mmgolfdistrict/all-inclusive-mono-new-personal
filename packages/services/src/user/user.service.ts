@@ -144,7 +144,7 @@ export class UserService {
    *   });
    */
   createUser = async (courseId: string | undefined, data: UserCreationData) => {
-    // this.logger.info(`createUser called`);
+    this.logger.info(`createUser called`);
     if (!isValidEmail(data.email)) {
       this.logger.warn(`Invalid email format: ${data.email}`);
       throw new Error("Invalid email format");
@@ -593,7 +593,7 @@ export class UserService {
     token: string,
     redirectHref: string
   ) => {
-    // this.logger.info(`verifyUserEmail called with userId: ${userId} and token: ${token}`);
+    this.logger.info(`verifyUserEmail called with userId: ${userId} and token: ${token}`);
     const [user] = await this.database.select().from(users).where(eq(users.id, userId));
     if (!user) {
       this.logger.warn(`User not found: ${userId}`);
@@ -723,7 +723,7 @@ export class UserService {
    *   });
    */
   updateUser = async (userId: string, data: UserUpdateData) => {
-    // this.logger.info(`updateUser called for user: ${userId}`);
+    this.logger.info(`updateUser called for user: ${userId}`);
 
     if (data.handle) {
       const isValid = await this.isValidHandle(data.handle);
@@ -966,7 +966,7 @@ export class UserService {
    * @see {@link generateUtcTimestamp} for generating the verification token expiration timestamp.
    */
   requestEmailUpdate = async (userId: string, email: string): Promise<void> => {
-    // this.logger.info(`requestEmailUpdate called with userId: ${userId}`);
+    this.logger.info(`requestEmailUpdate called with userId: ${userId}`);
     if (!isValidEmail(email)) {
       this.logger.warn(`Invalid email format: ${email}`);
       throw new Error("Invalid email format");
@@ -1368,7 +1368,7 @@ export class UserService {
     token: string,
     newPassword: string
   ): Promise<void> => {
-    // this.logger.info(`executeForgotPassword called with userId: ${userId}`);
+    this.logger.info(`executeForgotPassword called with userId: ${userId}`);
     if (isValidPassword(newPassword).score < 8) {
       this.logger.warn(`Invalid password format: ${newPassword}`);
       throw new Error("Invalid password format");
@@ -1620,7 +1620,7 @@ export class UserService {
    * @see {@link containsBadWords} for the bad words filter logic.
    */
   isValidHandle = async (handle: string): Promise<boolean> => {
-    // this.logger.info(`isValidHandle called with handle: ${handle}`);
+    this.logger.info(`isValidHandle called with handle: ${handle}`);
     if (handle.length < 6 || handle.length > 64) {
       this.logger.debug(`Handle length is invalid: ${handle}`);
       //throw new Error("Handle length is invalid");

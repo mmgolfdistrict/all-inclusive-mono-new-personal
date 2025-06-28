@@ -6607,9 +6607,9 @@ export class BookingService {
             });
             throw new Error("Error creating listing");
           });
-        // this.logger.info(
-        //   `Listing created successfully. for groupId ${groupId} teeTimeId ${lastBooking.teeTimeId}`
-        // );
+        this.logger.info(
+          `Listing created successfully. for groupId ${groupId} teeTimeId ${lastBooking.teeTimeId}`
+        );
 
         const [date, time] = lastBooking.providerDate!.split("T");
 
