@@ -85,7 +85,7 @@ export class DomainService {
    * console.log(result);
    */
   addDomainToVercel = async (domain: string) => {
-    // this.logger.info(`addDomainToVercel called with domain: ${domain}`);
+    this.logger.info(`addDomainToVercel called with domain: ${domain}`);
     return await fetch(
       `https://api.vercel.com/v9/projects/${this.PROJECT_ID_VERCEL}/domains?teamId=${this.TEAM_ID_VERCEL}`,
       {
@@ -113,7 +113,7 @@ export class DomainService {
    * console.log(result);
    */
   removeDomainFromVercelProject = async (domain: string) => {
-    // this.logger.info(`removeDomainFromVercelProject called with domain: ${domain}`);
+    this.logger.info(`removeDomainFromVercelProject called with domain: ${domain}`);
     return await fetch(
       `https://api.vercel.com/v9/projects/${this.PROJECT_ID_VERCEL}/domains/${domain}?teamId=${this.TEAM_ID_VERCEL}`,
       {
@@ -139,7 +139,7 @@ export class DomainService {
    * console.log(result);
    */
   removeDomainFromVercelTeam = async (domain: string) => {
-    // this.logger.info(`removeDomainFromVercelTeam called with domain: ${domain}`);
+    this.logger.info(`removeDomainFromVercelTeam called with domain: ${domain}`);
     return await fetch(`https://api.vercel.com/v6/domains/${domain}?teamId=${this.TEAM_ID_VERCEL}`, {
       headers: {
         Authorization: `Bearer ${this.AUTH_BEARER_TOKEN}`,
@@ -163,7 +163,7 @@ export class DomainService {
   private getDomainResponse = async (
     domain: string
   ): Promise<DomainResponse & { error: { code: string; message: string } }> => {
-    // this.logger.info(`getDomainResponse called with domain: ${domain}`);
+    this.logger.info(`getDomainResponse called with domain: ${domain}`);
     return await fetch(
       `https://api.vercel.com/v9/projects/${this.PROJECT_ID_VERCEL}/domains/${domain}?teamId=${this.TEAM_ID_VERCEL}`,
       {
@@ -191,7 +191,7 @@ export class DomainService {
    * console.log(configResponse);
    */
   getConfigResponse = async (domain: string): Promise<DomainConfigResponse> => {
-    // this.logger.info(`getConfigResponse called with domain: ${domain}`);
+    this.logger.info(`getConfigResponse called with domain: ${domain}`);
     return await fetch(`https://api.vercel.com/v6/domains/${domain}/config?teamId=${this.TEAM_ID_VERCEL}`, {
       method: "GET",
       headers: {
@@ -214,7 +214,7 @@ export class DomainService {
    * console.log(verificationResult);
    */
   private verifyDomain = async (domain: string): Promise<DomainVerificationResponse> => {
-    // this.logger.info(`verifyDomain called with domain: ${domain}`);
+    this.logger.info(`verifyDomain called with domain: ${domain}`);
     return await fetch(
       `https://api.vercel.com/v9/projects/${this.PROJECT_ID_VERCEL}/domains/${domain}/verify?teamId=${this.TEAM_ID_VERCEL}`,
       {

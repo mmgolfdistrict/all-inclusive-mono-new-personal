@@ -30,7 +30,7 @@ export class UserWaitlistService {
     private readonly database: Db,
     private readonly notificationService: NotificationService,
     private readonly appSettingService: AppSettingsService
-  ) { }
+  ) {}
 
   getWaitlist = async (userId: string, courseId: string) => {
     try {
@@ -440,7 +440,7 @@ export class UserWaitlistService {
     );
 
     if (res.ok) {
-      // this.logger.info(`message sent successfully for user: ${data.userId} and course: ${data.courseId}`);
+      this.logger.info(`message sent successfully for user: ${data.userId} and course: ${data.courseId}`);
     } else {
       this.logger.error(`error sending message for user: ${data.userId} and course: ${data.courseId}`);
       loggerService.errorLog({
