@@ -472,18 +472,15 @@ export const CheckoutForm = ({
 
   const isValidUsername = useMemo(() => {
     if (isLoadingUser) {
-      console.log("RETURNING FALSE BECAUSE USER DATA IS LOADING");
       return false;
     }
     if (!userData) {
-      console.log("RETURNING TRUE BECAUSE USER DATA IS EMPTY");
       return true;
     }
     if (!isLoadingUser && userData.name && !NAME_VALIDATION_REGEX.test(userData.name) && !message.length) {
       setMessage("Your name contains foreign characters. Please update it from Account Settings before checkout.");
       return false;
     }
-    console.log("RETURNING TRUE BECAUSE NOTHING IS MATCHING");
     return true;
   }, [userData, isLoadingUser])
 
