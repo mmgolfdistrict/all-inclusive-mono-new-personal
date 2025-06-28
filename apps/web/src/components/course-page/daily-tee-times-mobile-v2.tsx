@@ -188,12 +188,6 @@ export const DailyTeeTimesMobileV2 = ({
     scrollLeft(width);
   }, [isLoading]);
 
-  const getTextColor = (type) => {
-    if (type === "FAILURE") return "red";
-    if (type === "SUCCESS") return "primary";
-    if (type === "WARNING") return "primary-gray";
-  };
-
   const isAtStart = dayjs(allDatesArr[0]).format("YYYY-MM-DD") === dayjs(date).format("YYYY-MM-DD")
   const isAtEnd = dayjs(allDatesArr[allDatesArr.length - 1]).format("YYYY-MM-DD") === dayjs(date).format("YYYY-MM-DD")
 
@@ -257,9 +251,11 @@ export const DailyTeeTimesMobileV2 = ({
             {courseException && (
               <div className="flex-1 flex items-center gap-1">
                 <p
-                  className={`text-${getTextColor(
-                    courseException.displayType
-                  )} inline text-left text-[13px] md:text-lg`}
+                  style={{
+                    backgroundColor: courseException.bgColor,
+                    color: courseException.color,
+                  }}
+                  className="inline text-left text-[13px] md:text-lg"
                 >
                   {courseException.shortMessage}
                 </p>
