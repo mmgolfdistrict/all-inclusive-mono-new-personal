@@ -572,7 +572,11 @@ export class CourseService extends DomainService {
       // .innerJoin(courses, eq(assets.courseId, courses.id))
       // .where(and(eq(assets.courseId, courseId), eq(assets.courseAssetId, courseAssets.id)))
       .innerJoin(courses, eq(courseAssets.courseId, courses.id))
-      .where(eq(courses.id, courseId))
+      .where(and(
+        eq(courses.id, courseId),
+        eq(courseAssets.isDeleted, false),
+        eq(assets.isDeleted, false)
+      ))
       .orderBy(asc(courseAssets.order))
       .execute()
       .catch((err) => {
