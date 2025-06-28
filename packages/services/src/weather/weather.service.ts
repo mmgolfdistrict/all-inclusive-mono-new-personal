@@ -101,7 +101,7 @@ export class WeatherService extends CacheService {
       this.logger.fatal(`No forecast for Course with ID ${courseId} not found`);
       return [];
     }
-    this.logger.info(`getForecast called with forecastEndpoint: ${forecastEndpoint}`);
+    // this.logger.info(`getForecast called with forecastEndpoint: ${forecastEndpoint}`);
     return await this.withCache(`forecast:${forecastEndpoint}`, async () => {
       this.logger.debug(`Cache miss ${forecastEndpoint}`);
       return await this.fetchForecastData(forecastEndpoint);
@@ -122,7 +122,7 @@ export class WeatherService extends CacheService {
    * ```
    */
   private async fetchForecastData(forecastEndpoint: string) {
-    this.logger.info(`fetchForecastData called with forecastEndpoint: ${forecastEndpoint}`);
+    // this.logger.info(`fetchForecastData called with forecastEndpoint: ${forecastEndpoint}`);
     const response = await fetch(forecastEndpoint);
     if (!response.ok) {
       this.logger.warn(`fetchForecastData failed to fetch forecast data: ${response.statusText}`);
@@ -162,7 +162,7 @@ export class WeatherService extends CacheService {
    * @throws Error - Throws an error if the weather data fetching fails.
    */
   getForecastEndpoint = async (latitude: string, longitude: string): Promise<string> => {
-    this.logger.info(`getForecastEndpoint called with latitude: ${latitude}, longitude: ${longitude}`);
+    // this.logger.info(`getForecastEndpoint called with latitude: ${latitude}, longitude: ${longitude}`);
     const weatherEndpoint = `https://api.weather.gov/points/${latitude},${longitude}`;
     const response = await fetch(weatherEndpoint);
     if (!response.ok) {
