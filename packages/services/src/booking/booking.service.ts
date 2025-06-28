@@ -4162,10 +4162,20 @@ export class BookingService {
               (item) => item.id === merchandise.id
             );
             if (merchandiseItem) {
-              merchandiseDetails.push({
-                caption: merchandise.caption,
-                qty: merchandiseItem?.qty ?? 0,
-              });
+              const merchandiseWithTaxOverrideItem = merchandiseWithTaxOverrideItems.find(
+                (item) => item.id === merchandise.id
+              );
+              if (merchandiseItem) {
+                merchandiseDetails.push({
+                  caption: merchandise.caption,
+                  qty: merchandiseItem?.qty ?? 0,
+                });
+              } else if (merchandiseWithTaxOverrideItem) {
+                merchandiseDetails.push({
+                  caption: merchandise.caption,
+                  qty: merchandiseWithTaxOverrideItem?.qty ?? 0,
+                })
+              }
             } else if (merchandiseWithTaxOverrideItem) {
               merchandiseDetails.push({
                 caption: merchandise.caption,
