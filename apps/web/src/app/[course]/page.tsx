@@ -840,16 +840,18 @@ export default function CourseHomePage() {
   }, [selectedDate, isLoadingTeeTimeDate, isLoading, specialEventsLoading, allCoursesDataLoading]);
 
   useEffect(() => {
-    if (isMobile) {
-      if (dateType === "Furthest Day Out To Book") {
+    if (dateType === "Furthest Day Out To Book") {
+      if (isMobile) {
         const formattedEndDate = dayjs.utc(endDate).format("ddd, DD MMM YYYY 00:00:00 [GMT]");
         setSelectedDate(formattedEndDate);
+      } else {
+        setSelectedDate(startDate); // use swapped logic for desktop
       }
-      else if (startDate) {
-        setSelectedDate(startDate);
-      }
+    } else if (startDate) {
+      setSelectedDate(startDate);
     }
-  }, [startDate, dateType, endDate]);
+  }, [startDate, endDate, dateType, isMobile]);
+
 
   const handleDateSelect = (date: string) => {
     setSelectedDate(date);
@@ -991,7 +993,7 @@ export default function CourseHomePage() {
                             backgroundColor: isSelected ? entity?.color1 : "rgb(255 255 255)",
                           }}
                         >
-                          <span className="text-[11px] uppercase tracking-wide">
+                          <span className="text-md font-med tracking-wide">
                             {dateObj.format("MMM")}
                           </span>
                           <span className="text-xl font-bold leading-tight">

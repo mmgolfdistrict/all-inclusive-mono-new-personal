@@ -188,6 +188,10 @@ export const DailyTeeTimesMobileV2 = ({
     scrollLeft(width);
   }, [isLoading]);
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [date]);
+
   const isAtStart = dayjs(allDatesArr[0]).format("YYYY-MM-DD") === dayjs(date).format("YYYY-MM-DD")
   const isAtEnd = dayjs(allDatesArr[allDatesArr.length - 1]).format("YYYY-MM-DD") === dayjs(date).format("YYYY-MM-DD")
 
@@ -201,7 +205,7 @@ export const DailyTeeTimesMobileV2 = ({
             <div
               className={`w-full flex items-center justify-between
                ${(courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
-                  ? `bg-white left-0 w-full z-10 bg-secondary-white pt-2  px-4 pb-3 shadow-md`
+                  ? `bg-white left-0 w-full bg-secondary-white pt-2  px-4 pb-3 shadow-md`
                   : "relative"
                 }`}
             >
