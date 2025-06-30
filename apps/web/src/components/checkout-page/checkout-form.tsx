@@ -78,6 +78,7 @@ export const CheckoutForm = ({
   playerCount,
   roundOffStatus,
   setRoundOffStatus,
+  updateBuildSession,
 }: {
   isBuyNowAuction: boolean;
   teeTimeId: string;
@@ -90,6 +91,7 @@ export const CheckoutForm = ({
   playerCount: string | undefined;
   roundOffStatus: string;
   setRoundOffStatus: Dispatch<SetStateAction<string>>;
+  updateBuildSession?: any;
 }) => {
   const MAX_CHARITY_AMOUNT = 1000;
   const { course } = useCourseContext();
@@ -312,7 +314,7 @@ export const CheckoutForm = ({
 
   const merchandiseWithTaxOverrideCharge = (cartData
     ?.filter(({ product_data }) => product_data.metadata.type === "merchandiseWithTaxOverride")
-    ?.reduce((acc: number, i) => acc + (i.product_data.metadata as unknown as MerchandiseWithTaxOverride).priceWithoutTax, 0) / 100) ?? 0;
+    ?.reduce((acc: number, i) => acc + (i.product_data.metadata as unknown as MerchandiseWithTaxOverride).priceWithoutTax, 0) / 100) || 0;
 
   const merchandiseTotalCharge = merchandiseCharge + merchandiseWithTaxOverrideCharge;
 
@@ -691,7 +693,7 @@ export const CheckoutForm = ({
     }
     setCharityAmountError("");
 
-    const response = await hyper.confirmPayment({
+    const response: any = await hyper.confirmPayment({
       widgets,
       confirmParams: {
         // Make sure to change this to your payment completion page
@@ -707,7 +709,7 @@ export const CheckoutForm = ({
         toast.error("Price too low to sell.");
       } else {
         if (response) {
-          if (response.status === "processing") {
+          if (response?.status === "processing") {
             void sendEmailForFailedPayment.mutateAsync({
               paymentId: response?.payment_id as string,
               teeTimeId: teeTimeId,
@@ -1148,6 +1150,34 @@ export const CheckoutForm = ({
       setIsLoadingTotalAmount(false);
     }, 800);
   }, [TotalAmt]);
+
+  // Add state to track if payment intent needs updating
+  const [lastUpdatedAmount, setLastUpdatedAmount] = useState<string>();
+
+  const updatePaymentIntent = async () => {
+    let clientSecretId = '';
+    try {
+      hyper.initiateUpdateIntent();
+      setLastUpdatedAmount(TotalAmt);
+      clientSecretId = await updateBuildSession();
+    } catch (error) {
+      setMessage(error.message);
+    } finally {
+      const response = await hyper.completeUpdateIntent(clientSecretId);
+      console.log("updatePaymentIntent - response", response)
+    }
+  };
+
+  // Update payment intent when total amount changes
+  useEffect(() => {
+    if (hyper && widgets && Total > 0) {
+      if (lastUpdatedAmount === TotalAmt || Number(playerCount) !== Number(amountOfPlayers)) {
+        return; // Skip if already updating with the same amount
+      }
+      void updatePaymentIntent();
+    }
+  }, [TotalAmt, playerCount, amountOfPlayers]);
+
   return (
     <form onSubmit={handleSubmit} className="">
       <div id="card-detail-form-checkout">

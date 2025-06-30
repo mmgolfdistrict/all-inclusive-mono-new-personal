@@ -35,14 +35,14 @@ type Options = {
   };
 };
 
-let hyperPromise: Promise<unknown> | undefined = undefined;
+let hyperPromise: Promise<HyperInstance> | undefined = undefined;
 
 if (typeof window !== "undefined") {
   console.log(
     "Hyperswitch - publishable key",
     process.env.NEXT_PUBLIC_HYPERSWITCH_PUBLISHABLE_KEY
   );
-  hyperPromise = loadHyper(process.env.NEXT_PUBLIC_HYPERSWITCH_PUBLISHABLE_KEY);
+  hyperPromise = loadHyper(process.env.NEXT_PUBLIC_HYPERSWITCH_PUBLISHABLE_KEY || "");
 }
 
 export const HyperSwitch = ({
@@ -99,14 +99,10 @@ export const HyperSwitch = ({
 
   const buildSession = async () => {
     initialLoad = false;
-    if (!user) return;
+    let clientSecret: string | null = null;
+    if (!user) return clientSecret;
     try {
       setError(undefined);
-      // setIsLoadingSession(true);
-
-      if (Number(playerCount ?? 0) !== amountOfPlayers) {
-        return;
-      }
 
       const data = (await checkout({
         userId: user.id,
@@ -143,6 +139,7 @@ export const HyperSwitch = ({
       if (data?.error) {
         toast.error(data?.error);
       }
+      clientSecret = data?.client_secret;
 
       if (data?.next_action) {
         setNextaction(data?.next_action);
@@ -167,6 +164,7 @@ export const HyperSwitch = ({
         "An error occurred building checkout seesion."
       );
     }
+    return clientSecret;
   };
 
   useEffect(() => {
@@ -198,7 +196,7 @@ export const HyperSwitch = ({
     setShowCheckout(false);
 
     setTimeout(() => {
-      void buildSession()
+      buildSession()
         .then(() => {
           setShowCheckout(true);
         })
@@ -244,7 +242,7 @@ export const HyperSwitch = ({
             playerCount={playerCount}
             roundOffStatus={roundOffStatus}
             setRoundOffStatus={setRoundOffStatus}
-          // maxReservation={maxReservation}
+            updateBuildSession={buildSession}
           />
         </HyperElements>
       ) : nextaction ? (
