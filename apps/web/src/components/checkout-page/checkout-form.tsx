@@ -1170,12 +1170,12 @@ export const CheckoutForm = ({
   // Update payment intent when total amount changes
   useEffect(() => {
     if (hyper && widgets && Total > 0) {
-      if (lastUpdatedAmount === TotalAmt || Number(playerCount) !== Number(amountOfPlayers)) {
+      if (Number(playerCount) !== Number(amountOfPlayers)) {
         return; // Skip if already updating with the same amount
       }
       void updatePaymentIntent();
     }
-  }, [TotalAmt, playerCount, amountOfPlayers]);
+  }, [TotalAmt, playerCount, amountOfPlayers, cartData]);
 
   return (
     <form onSubmit={handleSubmit} className="">
