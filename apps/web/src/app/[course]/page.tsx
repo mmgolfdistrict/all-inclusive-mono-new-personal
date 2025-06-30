@@ -295,35 +295,41 @@ export default function CourseHomePage() {
         return formatDateString(currentTimePlus30);
       }
       case "This Week": {
-        const currentTime = dayjs(new Date());
-        const currentTimePlus30 = currentTime.add(30, 'minute');
+        if (isMobile) {
+          const currentTime = dayjs(new Date());
+          const currentTimePlus30 = currentTime.add(30, 'minute');
 
-        const closingHour = Math.floor(startTime[1] / 100);
-        const closingMinute = startTime[1] % 100;
+          const closingHour = Math.floor(startTime[1] / 100);
+          const closingMinute = startTime[1] % 100;
 
-        const closingTime = currentTime.set('hour', closingHour).set('minute', closingMinute).set('second', 0);
+          const closingTime = currentTime.set('hour', closingHour).set('minute', closingMinute).set('second', 0);
 
-        if (currentTimePlus30.isAfter(closingTime)) {
-          return formatDateString(currentTime.add(1, 'day').startOf('day'))
+          if (currentTimePlus30.isAfter(closingTime)) {
+            return formatDateString(currentTime.add(1, 'day').startOf('day'))
+          }
+
+          return formatDateString(currentTimePlus30);
         }
-
-        return formatDateString(currentTimePlus30);
       }
+      // eslint-disable-next-line no-fallthrough
       case "This Month": {
-        const currentTime = dayjs(new Date());
-        const currentTimePlus30 = currentTime.add(30, 'minute');
+        if (isMobile) {
+          const currentTime = dayjs(new Date());
+          const currentTimePlus30 = currentTime.add(30, 'minute');
 
-        const closingHour = Math.floor(startTime[1] / 100);
-        const closingMinute = startTime[1] % 100;
+          const closingHour = Math.floor(startTime[1] / 100);
+          const closingMinute = startTime[1] % 100;
 
-        const closingTime = currentTime.set('hour', closingHour).set('minute', closingMinute).set('second', 0);
+          const closingTime = currentTime.set('hour', closingHour).set('minute', closingMinute).set('second', 0);
 
-        if (currentTimePlus30.isAfter(closingTime)) {
-          return formatDateString(currentTime.add(1, 'day').startOf('day'))
+          if (currentTimePlus30.isAfter(closingTime)) {
+            return formatDateString(currentTime.add(1, 'day').startOf('day'))
+          }
+
+          return formatDateString(currentTimePlus30);
         }
-
-        return formatDateString(currentTimePlus30);
       }
+      // eslint-disable-next-line no-fallthrough
       case "Furthest Day Out To Book":
         return formatDateString(dayjs(new Date()).add(30, "minute"));
       case "Today": {
@@ -976,7 +982,7 @@ export default function CourseHomePage() {
                           key={idx} // unique index-based key
                           onClick={() => handleDateSelect(dateStr)}
                           className={`flex flex-col items-center justify-center rounded-lg px-2 text-sm border transition-all shadow-sm
-                            ${isSelected
+              ${isSelected
                               ? "text-white font-semibold"
                               : "bg-white text-primary-black border-gray-300 hover:bg-gray-100"
                             }`}
