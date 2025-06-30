@@ -205,11 +205,11 @@ export const HyperSwitch = ({
         });
     }, 100);
   };
-  // useEffect(() => {
-  //   if (isAppleWidgetReload) {
-  //     reloadCheckout();
-  //   }
-  // }, [amountOfPlayers, shouldAddSensible]);
+  useEffect(() => {
+    if (isAppleWidgetReload) {
+      reloadCheckout();
+    }
+  }, [amountOfPlayers, shouldAddSensible]);
 
   if (
     setIsLoading &&
@@ -230,7 +230,7 @@ export const HyperSwitch = ({
   }
   return (
     <div className="w-full md:min-w-[370px] px-2 md:px-0">
-      {options !== undefined && hyperPromise !== undefined ? (
+      {showCheckout && options !== undefined && hyperPromise !== undefined ? (
         <HyperElements options={options} hyper={hyperPromise}>
           <CheckoutForm
             teeTimeId={teeTimeId}
