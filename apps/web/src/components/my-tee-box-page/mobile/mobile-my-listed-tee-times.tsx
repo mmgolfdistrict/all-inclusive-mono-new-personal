@@ -143,23 +143,18 @@ const TableCard = ({
           <tr className="border-b border-gray-300">
             <th scope="col" className="px-2 py-1">Course</th>
             <td>
-              <Link
-                href={`/${courseId}/${teeTimeId}/listing/${listingId}`}
-                className="flex items-center gap-2"
-                data-testid="course-listing-id"
-                data-test={listingId}
-                data-qa={teeTimeId}
+              <div className="flex items-center gap-2"
               >
                 <Avatar src={iconSrc} />
                 <div className="flex flex-col">
-                  <div className="whitespace-normal overflow-y-auto underline text-secondary-black">
+                  <div className="whitespace-normal overflow-y-auto text-secondary-black">
                     {course}
                   </div>
                   <div className="text-primary-gray unmask-time">
                     {formatTime(date, false, timezoneCorrection)}
                   </div>
                 </div>
-              </Link>
+              </div>
             </td>
           </tr>
           <tr className="border-b border-gray-300">

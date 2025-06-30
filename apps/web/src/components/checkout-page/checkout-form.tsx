@@ -12,7 +12,7 @@ import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
 import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
-import type { CartProduct, CountryData, FirstHandGroupProduct } from "~/utils/types";
+import type { CartProduct, CountryData, FirstHandGroupProduct, MerchandiseWithTaxOverride } from "~/utils/types";
 import { useParams, useRouter } from "next/navigation";
 import type { ChangeEvent, Dispatch, SetStateAction } from "react";
 import { Fragment, useEffect, useState, type FormEvent, useRef, useMemo } from "react";
@@ -37,6 +37,7 @@ import { useUser } from "~/hooks/useUser";
 import { PhoneNumberUtil } from "google-libphonenumber";
 import { NAME_VALIDATION_REGEX } from "@golf-district/shared";
 import MerchandiseCarousel from "./merchandise-carousel";
+import Link from "next/link";
 
 type charityData = {
   charityDescription: string | undefined;
@@ -305,9 +306,15 @@ export const CheckoutForm = ({
       ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
 
   const merchandiseCharge =
-    cartData
+    (cartData
       ?.filter(({ product_data }) => product_data.metadata.type === "merchandise")
-      ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
+      ?.reduce((acc: number, i) => acc + i.price, 0) / 100);
+
+  const merchandiseWithTaxOverrideCharge = (cartData
+    ?.filter(({ product_data }) => product_data.metadata.type === "merchandiseWithTaxOverride")
+    ?.reduce((acc: number, i) => acc + (i.product_data.metadata as unknown as MerchandiseWithTaxOverride).priceWithoutTax, 0) / 100) ?? 0;
+
+  const merchandiseTotalCharge = merchandiseCharge + merchandiseWithTaxOverrideCharge;
 
   const greenFeeTaxPercent =
     cartData
@@ -348,6 +355,10 @@ export const CheckoutForm = ({
       )
       ?.reduce((acc: number, i) => acc + i.price, 0) / 100;
 
+  const merchandiseOverriddenTaxCharge = (cartData
+    ?.filter(({ product_data }) => product_data.metadata.type === "merchandiseWithTaxOverride")
+    ?.reduce((acc: number, i) => acc + (i.product_data.metadata as unknown as MerchandiseWithTaxOverride).taxAmount, 0)) ?? 0;
+
   // const cartFeeCharge =
   //   cartData
   //     ?.filter(({ product_data }) => product_data.metadata.type === "cart_fee");
@@ -372,7 +383,7 @@ export const CheckoutForm = ({
   const hyper = useHyper();
   const widgets = useWidgets();
 
-
+  const [isChecked, setIsChecked] = useState(false);
   const [donateValue, setDonateValue] = useState(5);
   // const [roundOffClick, setRoundOffClick] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -460,15 +471,18 @@ export const CheckoutForm = ({
   };
 
   const isValidUsername = useMemo(() => {
+    if (isLoadingUser) {
+      return false;
+    }
     if (!userData) {
       return true;
     }
-    if (userData.name && !NAME_VALIDATION_REGEX.test(userData.name) && !message.length) {
+    if (!isLoadingUser && userData.name && !NAME_VALIDATION_REGEX.test(userData.name) && !message.length) {
       setMessage("Your name contains foreign characters. Please update it from Account Settings before checkout.");
       return false;
     }
     return true;
-  }, [userData])
+  }, [userData, isLoadingUser])
 
   useEffect(() => {
     void fetchData();
@@ -974,7 +988,7 @@ export const CheckoutForm = ({
   const cartFeeTaxAmount = cartFeeCharge * cartFeeTaxPercent * playersInNumber;
   const markupFeesTaxAmount = markupFee * markupTaxPercent * playersInNumber;
   const weatherGuaranteeTaxAmount = sensibleCharge * weatherGuaranteeTaxPercent;
-  const merchandiseTaxAmount = merchandiseCharge * merchandiseTaxPercent;
+  const merchandiseTaxAmount = (merchandiseCharge * merchandiseTaxPercent) + merchandiseOverriddenTaxCharge;
 
   const additionalTaxes =
     (greenFeeTaxAmount +
@@ -991,7 +1005,7 @@ export const CheckoutForm = ({
     (!roundUpCharityId ? charityCharge : 0) +
     convenienceCharge +
     (!roundUpCharityId ? 0 : Number(donateValue)) +
-    (!course?.supportsSellingMerchandise ? 0 : (merchandiseCharge));
+    (!course?.supportsSellingMerchandise ? 0 : (merchandiseTotalCharge));
 
   const TotalAmt = Total.toLocaleString("en-US", {
     minimumFractionDigits: 2,
@@ -1011,16 +1025,16 @@ export const CheckoutForm = ({
   const totalBeforeRoundOff = primaryGreenFeeCharge + TaxCharge;
   const decimalPart = totalBeforeRoundOff % 1;
   const subTotal = primaryGreenFeeCharge +
-    (!course?.supportsSellingMerchandise ? 0 : (merchandiseCharge))
+    (!course?.supportsSellingMerchandise ? 0 : (merchandiseTotalCharge))
   const [hasUserSelectedDonation, setHasUserSelectedDonation] = useState(false);
 
-  const handleMerchandiseUpdate = (itemId: string, newQuantity: number, price: number) => {
+  const handleMerchandiseUpdate = (itemId: string, newQuantity: number, price: number, merchandiseTaxPercent?: number | null) => {
     if (newQuantity === 0) {
       setMerchandiseData((prevItems) => prevItems.filter((item) => item.id !== itemId));
     } else {
       const isNewItem = !merchandiseData.some((item) => item.id === itemId);
       if (isNewItem) {
-        setMerchandiseData((prevItems) => [...prevItems, { id: itemId, qty: newQuantity, price: price }]);
+        setMerchandiseData((prevItems) => [...prevItems, { id: itemId, qty: newQuantity, price: price, merchandiseTaxPercent: merchandiseTaxPercent }]);
       } else {
         setMerchandiseData((prevItems) =>
           prevItems.map((item) => {
@@ -1397,12 +1411,12 @@ export const CheckoutForm = ({
                     </div>
                   </div>
                   {
-                    course?.supportsSellingMerchandise && merchandiseCharge > 0 ? (
+                    course?.supportsSellingMerchandise && merchandiseTotalCharge > 0 ? (
                       <div className="flex justify-between">
                         <div className="px-8">Merchandise</div>
                         <div className="unmask-price">
                           $
-                          {merchandiseCharge.toLocaleString("en-US", {
+                          {merchandiseTotalCharge.toLocaleString("en-US", {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
                           })}
@@ -1509,14 +1523,10 @@ export const CheckoutForm = ({
                     </div>
                   ) : null}
                   {
-                    course?.supportsSellingMerchandise && merchandiseCharge > 0 ? (
+                    course?.supportsSellingMerchandise && merchandiseTotalCharge > 0 ? (
                       <div className="flex justify-between">
                         <div className="px-8">
                           Merchandise Tax
-                          {`($${merchandiseCharge.toLocaleString("en-US", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })} @ ${merchandiseTaxPercent}%)`}
                         </div>
                         <div className="unmask-price">
                           ${" "}
@@ -1577,7 +1587,7 @@ export const CheckoutForm = ({
                 />
               </h2>
 
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 text-justify">
                 {isMobile && !isExpanded
                   ? `${charityData?.charityDescription?.slice(0, 50)}...`
                   : charityData?.charityDescription}
@@ -1704,6 +1714,34 @@ export const CheckoutForm = ({
             />
           </div>
         </section>}
+      <label
+        htmlFor="terms-of-service-checkbox"
+        className={`ml-2 mb-2 flex items-start rounded-md p-2 border 
+          bg-gray-100 transition-all duration-300`}
+        style={{ borderColor: isChecked ? "transparent" : "red" }}
+      >
+        <input
+          id="terms-of-service-checkbox"
+          name="terms-of-service-checkbox"
+          data-testid="terms-of-service-checkbox-id"
+          className={`cursor-pointer ${isMobile ? "w-12 h-6" : "w-6 h-6"}  `}
+          type="checkbox"
+          checked={isChecked}
+          onChange={() => setIsChecked(!isChecked)}
+        />
+        <div className="cursor-pointer ml-2 text-[14px] font-bold">
+          By checking the box and completing this reservation, I agree to the{" "}
+          <Link
+            href="/terms-of-service"
+            className="text-blue-600 underline"
+            data-testid="terms-of-service-id"
+            target="_blank"
+          >
+            Terms of Service
+          </Link>.
+        </div>
+      </label>
+
       {!maxReservation?.success && (
         <div className="md:hidden bg-alert-red text-white p-1 pl-2 my-2  w-full rounded">
           {maxReservation?.message}
@@ -1728,7 +1766,7 @@ export const CheckoutForm = ({
         <Fragment>
           <FilledButton
             className={`w-full rounded-full disabled:opacity-60`}
-            disabled={!hyper || !widgets || callingRef}
+            disabled={!hyper || !widgets || callingRef || !isChecked}
             onClick={() => {
               if (nextAction?.redirect_to_url) {
                 window.location.href = nextAction?.redirect_to_url;
@@ -1745,7 +1783,7 @@ export const CheckoutForm = ({
           type="submit"
           className={`w-full rounded-full disabled:opacity-60`}
           disabled={
-            isLoading || !hyper || !widgets || message === "Payment Successful" || !isValidUsername
+            isLoading || !hyper || !widgets || message === "Payment Successful" || !isValidUsername || !isChecked
           }
           data-testid="pay-now-id"
         >

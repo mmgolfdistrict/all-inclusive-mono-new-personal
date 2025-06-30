@@ -510,7 +510,7 @@ export const Filters = forwardRef<ChildComponentRef, FiltersProps>(
         </div> */}
         </section>
 
-        <section className="flex flex-col gap-2" id="holes-filter">
+        {/* <section className="flex flex-col gap-2" id="holes-filter">
           <div>Holes</div>
           <ToggleGroup.Root
             type="single"
@@ -543,7 +543,7 @@ export const Filters = forwardRef<ChildComponentRef, FiltersProps>(
               />
             ))}
           </ToggleGroup.Root>
-        </section>
+        </section> */}
 
         <section className="flex flex-col gap-2" id="golfers-filter">
           <div>Golfers</div>
@@ -584,7 +584,7 @@ export const Filters = forwardRef<ChildComponentRef, FiltersProps>(
           </ToggleGroup.Root>
         </section>
 
-        <section className="flex flex-col gap-2" id="price-filter">
+        {/* <section className="flex flex-col gap-2" id="price-filter">
           <div className="flex items-center justify-between">
             <div>
               Price Range <span className="font-[300]">(per golfer)</span>
@@ -619,7 +619,7 @@ export const Filters = forwardRef<ChildComponentRef, FiltersProps>(
                 : `${localPriceRange?.[0]}-${localPriceRange?.[1]}`
             }
           />
-        </section>
+        </section> */}
       </div>
     );
   }

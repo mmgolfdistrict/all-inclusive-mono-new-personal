@@ -238,7 +238,7 @@ export const TeeTime = ({
       return;
     }
     if (status === "FIRST_HAND") {
-      void router.replace(
+      void router.push(
         `/${course?.id}/checkout?teeTimeId=${teeTimeId}&playerCount=${selectedPlayers}`
       );
     }
@@ -264,7 +264,7 @@ export const TeeTime = ({
           return;
         }
       }
-      void router.replace(
+      void router.push(
         `/${course?.id}/checkout?listingId=${listingId}&playerCount=${selectedPlayers}`
       );
     }
@@ -518,8 +518,8 @@ export const TeeTime = ({
               </div>
             ) : null}
 
-            <div className="flex items-center gap-1">
-              <Link
+            {/* <div className="flex items-center gap-1"> */}
+            {/* <Link
                 href={href}
                 data-testid="details-button-id"
                 data-test={teeTimeId}
@@ -530,19 +530,21 @@ export const TeeTime = ({
                 <OutlineButton className="!py-[.28rem] md:py-1.5">
                   Details
                 </OutlineButton>
-              </Link>
-              <div id="share-tee-time-button">
-                <OutlineButton
-                  onClick={() => void share()}
-                  className="w-full whitespace-nowrap"
-                  data-testid="share-button-id"
-                >
-                  <div className="flex items-center justify-center gap-2">
-                    {isCopied ? <>Copied</> : <>Share</>}
-                  </div>
-                </OutlineButton>
-              </div>
+              </Link> */}
+            <div id="share-tee-time-button" style={{
+              width: "190%"
+            }}>
+              <OutlineButton
+                onClick={() => void share()}
+                className="w-full whitespace-nowrap"
+                data-testid="share-button-id"
+              >
+                <div className="flex items-center justify-center gap-2">
+                  {isCopied ? <>Copied</> : <>Share</>}
+                </div>
+              </OutlineButton>
             </div>
+            {/* </div> */}
           </div>
           {isMakeAnOfferOpen && (
             <MakeAnOffer
@@ -579,7 +581,7 @@ export const TeeTime = ({
                 listedSlotsCount: listedSlots ?? 1,
                 groupId: groupId ?? "",
                 totalMerchandiseAmount: 0
-            }}
+              }}
               refetch={refetch}
             />
           )}

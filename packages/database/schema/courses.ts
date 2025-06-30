@@ -6,6 +6,7 @@ import { adminUsers } from "./adminUsers";
 import { assets } from "./assets";
 import { courseAssets } from "./courseAssets";
 import { coursePromoCodeLink } from "./coursePromoCodeLink";
+import { courseSwitch } from "./courseSwitch";
 import { entities } from "./entities";
 import { favorites } from "./favorites";
 import { providers } from "./providers";
@@ -73,13 +74,17 @@ export const courses = mySqlTable(
     supportsProviderMembership: tinyint("supportsProviderMembership").default(0).notNull(),
     supportsGroupBooking: tinyint("supportsGroupBooking").default(0).notNull(),
     daysToWithHoldPayment: int("daysToWithHoldPayment").default(0).notNull(),
-    primaryMarketSellLeftoverSinglePlayer: boolean("primaryMarketSellLeftoverSinglePlayer").default(true).notNull(),
+    primaryMarketSellLeftoverSinglePlayer: boolean("primaryMarketSellLeftoverSinglePlayer")
+      .default(true)
+      .notNull(),
     internalID: varchar("internalID", { length: 25 }),
     friendlyCourseURLPath: varchar("friendlyCourseURLPath", { length: 50 }),
     groupStartTime: int("groupStartTime"),
     groupEndTime: int("groupEndTime"),
     supportsSellingMerchandise: boolean("supportsSellingMerchandise").default(false),
     merchandiseTaxPercent: int("merchandiseTaxPercent").default(0),
+    phoneNumber: varchar("phoneNumber", { length: 20 }),
+    groupBookingFeePerPlayer: int("groupBookingFeePerPlayer"),
   },
   (table) => {
     return {
@@ -110,6 +115,7 @@ export const coursesRelations = relations(courses, ({ one, many }) => ({
   }),
   userWaitlists: many(userWaitlists),
   adminUsers: many(adminUsers),
+  courseSwitch: many(courseSwitch),
 }));
 
 export type SelectCourses = InferSelectModel<typeof courses>;

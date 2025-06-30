@@ -121,23 +121,25 @@ export type CartProduct = {
   display_price: string; //$4.00
   product_data: {
     metadata:
-      | FirstHandProduct
-      | SecondHandProduct
-      | SensibleProduct
-      | AuctionProduct
-      | CharityProduct
-      | Offer
-      | MarkupProduct
-      | ConvenienceFeeProduct
-      | TaxProduct
-      | CartFeeMetaData
-      | WeatherGuaranteeTaxPercentMetaData
-      | MarkupTaxPercentMetaData
-      | GreenFeeTaxPercentMetaData
-      | CartFeeTaxPercentMetaData
+    | FirstHandProduct
+    | SecondHandProduct
+    | SensibleProduct
+    | AuctionProduct
+    | CharityProduct
+    | Offer
+    | MarkupProduct
+    | ConvenienceFeeProduct
+    | TaxProduct
+    | CartFeeMetaData
+    | WeatherGuaranteeTaxPercentMetaData
+    | MarkupTaxPercentMetaData
+    | GreenFeeTaxPercentMetaData
+    | CartFeeTaxPercentMetaData
     | FirstHandGroupProduct
     | MerchandiseProduct
-    | MerchandiseTaxPercentMetaData;
+    | MerchandiseTaxPercentMetaData
+    | MerchandiseWithTaxOverride
+    | AdvancedBookingFees;
   };
 };
 
@@ -213,16 +215,33 @@ export interface MerchandiseProduct {
   merchandiseItems: MerchandiseItem[];
 }
 
+export interface MerchandiseWithTaxOverride {
+  type: "merchandiseWithTaxOverride";
+  merchandiseItems: MerchandiseItemWithTax[];
+  priceWithoutTax: number;
+  taxAmount: number;
+}
+
 interface MerchandiseItem {
   id: string;
   qty: number;
+  pricePerItem: number;
+  taxAmountPerItem: number;
+}
+
+interface MerchandiseItemWithTax extends MerchandiseItem {
+  merchandiseTaxPercent: number;
+}
+
+export interface AdvancedBookingFees {
+  type: "advanced_booking_fees_per_player";
 }
 
 export type MaxReservationResponse =
   | {
-      success: boolean;
-      message?: string;
-    }
+    success: boolean;
+    message?: string;
+  }
   | undefined;
 
 export type CountryData = {

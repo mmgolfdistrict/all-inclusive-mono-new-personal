@@ -5,7 +5,7 @@ import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
 import { formatTime } from "~/utils/formatters";
 import { type InviteFriend } from "~/utils/types";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Avatar } from "../../avatar";
 import { FilledButton } from "../../buttons/filled-button";
 import { OutlineButton } from "../../buttons/outline-button";
@@ -16,6 +16,7 @@ import { SkeletonRow } from "../skeleton-row";
 import { type OwnedTeeTime } from "../owned";
 import Link from "next/link";
 import { CollectPayment } from "../collect-payment";
+import dayjs from "dayjs";
 
 export const MobileOwned = () => {
   const { course } = useCourseContext();
@@ -27,14 +28,24 @@ export const MobileOwned = () => {
     useState<boolean>(false);
   const [isManageOwnedTeeTimeOpen, setIsManageOwnedTeeTimeOpen] =
     useState<boolean>(false);
-  const [sideBarClose, setIsSideBarClose] = useState<boolean>(false)
+  const [sideBarClose, setIsSideBarClose] = useState<boolean>(false);
+
+  const userTime = useMemo(() => {
+    const currentLocalTime = dayjs(new Date()).format("YYYY-MM-DDTHH:mm:ss"); // browser's current time in ISO format
+    return currentLocalTime;
+  }, []);
+
   const { data, isLoading, isError, error, refetch } =
     api.teeBox.getOwnedTeeTimes.useQuery(
       {
         courseId: courseId ?? "",
+        userTime: userTime ?? "",
       },
-      { enabled: !!courseId }
+      {
+        enabled: !!courseId && !!userTime // ensure userTime is set before triggering query
+      }
     );
+
 
   const [selectedTeeTime, setSelectedTeeTime] = useState<
     OwnedTeeTime | undefined
@@ -230,7 +241,7 @@ const TableCard = ({
                   <div className="flex items-center gap-2">
                     <Avatar src={iconSrc} />
                     <div className="flex flex-col">
-                      <div className="whitespace-nowrap underline text-secondary-black">
+                      <div className="whitespace-nowrap text-secondary-black">
                         {course}
                       </div>
                       <div className="text-primary-gray unmask-time">
@@ -239,23 +250,18 @@ const TableCard = ({
                     </div>
                   </div>
                 ) : (
-                  <Link
-                    href={href}
-                    className="flex items-center gap-2"
-                    data-testid="course-tee-time-listing-id"
-                    data-test={teeTimeId}
-                    data-qa={courseId}
+                  <div className="flex items-center gap-2"
                   >
                     <Avatar src={iconSrc} />
                     <div className="flex flex-col">
-                      <div className="whitespace-normal overflow-y-auto underline text-secondary-black">
+                      <div className="whitespace-normal overflow-y-auto text-secondary-black">
                         {course}
                       </div>
                       <div className="text-primary-gray unmask-time">
                         {formatTime(date, false, timezoneCorrection)}
                       </div>
                     </div>
-                  </Link>
+                  </div>
                 )}
               </td>
             </tr>

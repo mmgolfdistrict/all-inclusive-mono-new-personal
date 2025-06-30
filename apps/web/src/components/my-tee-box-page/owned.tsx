@@ -17,6 +17,7 @@ import { SkeletonRow } from "./skeleton-row";
 import { CollectPayment } from "./collect-payment";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
+import dayjs from "dayjs";
 export type OwnedTeeTime = {
   courseName: string;
   courseLogo: string;
@@ -52,6 +53,11 @@ export const Owned = () => {
   const paramBookingId = params.get("bookingId");
   const collectPayment = params.get("collectPayment") === "true";
 
+  const userTime = useMemo(() => {
+    const currentLocalTime = dayjs(new Date()).format("YYYY-MM-DDTHH:mm:ss"); // browser's current time in ISO format
+    return currentLocalTime;
+  }, []);
+
   const courseId = course?.id;
   const [isListTeeTimeOpen, setIsListTeeTimeOpen] = useState<boolean>(false);
   const [sideBarClose, setIsSideBarClose] = useState<boolean>(false)
@@ -66,8 +72,11 @@ export const Owned = () => {
     api.teeBox.getOwnedTeeTimes.useQuery(
       {
         courseId: courseId ?? "",
+        userTime: userTime ?? "",
       },
-      { enabled: !!courseId }
+      {
+        enabled: !!courseId && !!userTime // ensure userTime is set before triggering query
+      }
     );
 
   const [selectedTeeTime, setSelectedTeeTime] = useState<
@@ -117,7 +126,7 @@ export const Owned = () => {
 
   useEffect(() => {
     const handlePopState = () => {
-      console.log("Back button pressed");
+      console.log("Back button pressed>>>>>>", courseId);
       void router.push(`/${courseId}`);
     };
     window.addEventListener('popstate', handlePopState);
@@ -304,12 +313,12 @@ const TableRow = ({
   isGroupBooking: boolean;
   isCollectPaymentEnabled?: boolean;
 }) => {
-  const href = useMemo(() => {
-    if (isListed) {
-      return `/${courseId}/${teeTimeId}/listing/${listingId}`;
-    }
-    return `/${courseId}/${teeTimeId}/owner/${ownerId}`;
-  }, [courseId, teeTimeId, listingId, ownerId, isListed]);
+  // const href = useMemo(() => {
+  //   if (isListed) {
+  //     return `/${courseId}/${teeTimeId}/listing/${listingId}`;
+  //   }
+  //   return `/${courseId}/${teeTimeId}/owner/${ownerId}`;
+  // }, [courseId, teeTimeId, listingId, ownerId, isListed]);
 
   return (
     <tr className="w-full border-b border-stroke text-primary-gray">
@@ -318,7 +327,7 @@ const TableRow = ({
           <div className="flex items-center gap-2">
             <Avatar src={iconSrc} />
             <div className="flex flex-col">
-              <div className="whitespace-nowrap underline text-secondary-black">
+              <div className="whitespace-nowrap text-secondary-black">
                 {course}
               </div>
               <div className="text-primary-gray unmask-time">
@@ -327,23 +336,17 @@ const TableRow = ({
             </div>
           </div>
         ) : (
-          <Link
-            href={href}
-            className="flex items-center gap-2"
-            data-testid="course-tee-time-listing-id"
-            data-test={teeTimeId}
-            data-qa={courseId}
-          >
+          <div className="flex items-center gap-2">
             <Avatar src={iconSrc} />
             <div className="flex flex-col">
-              <div className="whitespace-nowrap underline text-secondary-black">
+              <div className="whitespace-nowrap text-secondary-black">
                 {course}
               </div>
               <div className="text-primary-gray unmask-time">
                 {formatTime(date, false, timezoneCorrection)}
               </div>
             </div>
-          </Link>
+          </div>
         )}
       </td>
       {/* <td className="whitespace-nowrap px-4 py-3">

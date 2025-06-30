@@ -30,7 +30,7 @@ export const TableView = () => {
     : "owned";
   const { user } = useUserContext();
   const pathname = usePathname();
-  const { setPrevPath,setActivePage } = useAppContext();
+  const { setPrevPath, setActivePage } = useAppContext();
   setActivePage("my-tee-box")
 
   const { data: unreadOffers, refetch } =
@@ -95,8 +95,8 @@ export const TableView = () => {
         <TabTrigger id="sell-transaction-history" value={"transaction-history"}>
           Transaction History
         </TabTrigger>
-        <TabTrigger id="sell-cash-out-history" value={"cashouts"}>
-          Cash out History
+        <TabTrigger id="sell-cash-out-history" value={"withdrawal"}>
+          Withdrawal History
         </TabTrigger>
       </Tabs.List>
       {!session ? (
@@ -157,7 +157,7 @@ export const TableView = () => {
             <TransactionHistory />
           </Tabs.Content>
           <Tabs.Content
-            value="cashouts"
+            value="withdrawal"
             className="bg-white p-2"
             id="sell-cash-out-history"
           >
@@ -190,7 +190,11 @@ const TabTrigger = ({
     >
       <Tabs.Trigger
         value={value}
-        className="flex items-center gap-2 whitespace-nowrap pb-4 text-[16px] text-secondary-black outline-none data-[state=active]:border-b-2 data-[state=active]:border-black md:text-[24px]"
+        className="flex items-center gap-2 whitespace-nowrap px-4 py-2 text-[16px] text-secondary-black
+             data-[state=active]:border data-[state=active]:border-primary
+             data-[state=active]:rounded-lg data-[state=active]:text-primary
+             data-[state=active]:-mt-1
+             outline-none md:text-[24px]"
       >
         {children}
       </Tabs.Trigger>

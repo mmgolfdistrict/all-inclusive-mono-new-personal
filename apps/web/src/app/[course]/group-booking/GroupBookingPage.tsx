@@ -93,7 +93,7 @@ const GroupBookingPage = ({ teeTimesData, isTeeTimesLoading, playerCount }: {
       void router.push(`/${course?.id}/login`);
       return;
     }
-    void router.push(
+    void router.replace(
       `/${course?.id}/checkout-group?teeTimeIds=${teeTimeIds}&playerCount=${playerCount}`
     );
   };

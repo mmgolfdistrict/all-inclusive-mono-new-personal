@@ -52,7 +52,7 @@ export const NotificationSettings = () => {
       setIsMutating(false);
       toast.error(
         (error as Error).message ??
-          "An error occurred updating phone notifications"
+        "An error occurred updating phone notifications"
       );
     }
   };
@@ -74,7 +74,7 @@ export const NotificationSettings = () => {
       setIsMutating(false);
       toast.error(
         (error as Error).message ??
-          "An error occurred updating email notifications"
+        "An error occurred updating email notifications"
       );
     }
   };
@@ -87,7 +87,7 @@ export const NotificationSettings = () => {
     >
       <div>
         <h3 className="text-[18px] md:text-[24px]">Notifications</h3>
-        <p className=" text-[14px] text-primary-gray md:text-[16px]">
+        <p className="text-justify text-[14px] text-primary-gray md:text-[16px]">
           Set how you&apos;d like your receive notifications about your tee
           times.
         </p>
@@ -98,7 +98,7 @@ export const NotificationSettings = () => {
           setValue={updatePhoneNotifications}
           data-testid={`update-phone-not-notification-id`}
         />
-        <div className="text-[12px] text-primary-gray md:text-[14px]">
+        <div className="text-justify text-[12px] text-primary-gray md:text-[14px]">
           By phone (messaging rates may apply)
         </div>
       </div>
@@ -127,9 +127,8 @@ export const Item = ({
   return (
     <ToggleGroup.Item
       value={value}
-      className={`bg-white px-4 py-2 text-left text-[14px] text-primary-gray transition-colors data-[state=on]:bg-primary data-[state=on]:text-white ${
-        className ?? ""
-      }`}
+      className={`bg-white px-4 py-2 text-left text-[14px] text-primary-gray transition-colors data-[state=on]:bg-primary data-[state=on]:text-white ${className ?? ""
+        }`}
     >
       {value}
     </ToggleGroup.Item>

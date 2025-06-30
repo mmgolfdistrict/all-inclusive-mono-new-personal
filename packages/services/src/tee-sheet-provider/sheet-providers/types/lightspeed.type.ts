@@ -362,4 +362,5 @@ export interface LightspeedGetCustomerResponse {
       }[];
     };
   };
+  includePhone?: boolean;
 }

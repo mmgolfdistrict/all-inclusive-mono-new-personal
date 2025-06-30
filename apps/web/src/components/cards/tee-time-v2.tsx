@@ -438,7 +438,7 @@ export const TeeTimeV2 = ({
                                 </OutlineButton>
                             ) : null}
 
-                            <Link
+                            {/* <Link
                                 href={href}
                                 data-testid="details-button-id"
                                 data-test={teeTimeId}
@@ -448,7 +448,7 @@ export const TeeTimeV2 = ({
                                 <OutlineButton className="!py-[.28rem] md:py-1.5">
                                     Details
                                 </OutlineButton>
-                            </Link>
+                            </Link> */}
                             <OutlineButton
                                 onClick={() => void share()}
                                 className="w-full whitespace-nowrap"

@@ -37,19 +37,25 @@ export const Confirmation = ({
   const { course } = useCourseContext();
   const params = useParams();
   const router = useRouter();
+  const courseId = course?.id;  
   useEffect(() => {
-    const handlePopState = () => {
-      // console.log(params.course);
-      // void router.replace(`/${params.course}`);
-      // console.log("button pressed");
-      if (typeof params.course === 'string') {
-      console.log(params.course);
-      void router.replace(`/${params.course}`);
-      console.log("button pressed");
-    } else {
-      console.log("Course param missing or invalid");
-      void router.replace('/dashboard'); // fallback route
-    }
+    // const handlePopState = () => {
+    //   // console.log(params.course);
+    //   // void router.replace(`/${params.course}`);
+    //   // console.log("button pressed");
+    //      router.push(`/${params.course}`);
+    //   if (typeof params.course === 'string') {
+    //   console.log(params.course);
+    //   void router.replace(`/${params.course}`);
+    //   console.log("button pressed");
+    // } else {
+    //   console.log("Course param missing or invalid");
+    //   void router.replace('/');
+    // }
+    // };
+     const handlePopState = () => {
+      console.log("Back button pressed>>>>>>",courseId);
+       router.push(`/${courseId}`);
     };
     window.addEventListener('popstate', handlePopState);
     return () => {

@@ -19,6 +19,9 @@ import type {
   TeeTimeResponse,
 } from "./sheet-providers/types/interface";
 import { QuickEighteen } from "./sheet-providers/quickEighteen";
+import type {
+  LightspeedGetCustomerResponse,
+} from "./sheet-providers/types/lightspeed.type";
 
 export interface Customer {
   playerNumber: number | null;
@@ -315,17 +318,21 @@ export class ProviderService extends CacheService {
         throw new Error(`Error finding user id`);
       }
       const userProviderCourseLinkId: string = randomUUID();
+      let includePhone = true;
       //Try to find customer on provider
       try {
         const [firstName, lastName] = buyer.name.split(" ");
         const customerDetails: FetchCustomerDetails = {
           firstName: firstName ?? "",
           lastName: lastName ?? "",
-          email: buyer.email,
+          email: buyer.email.toLowerCase(),
           phone: buyer.phone ?? ""
         }
         const customerResponse = await provider.getCustomer(token, providerCourseId, customerDetails);
-        if (customerResponse) {
+        if (Object.hasOwn(customerResponse ?? {}, "includePhone")) {
+          includePhone = (customerResponse as LightspeedGetCustomerResponse)?.includePhone ?? true
+        }
+        if (customerResponse && !Object.hasOwn(customerResponse, "includePhone")) {
           const customerIds = provider.getCustomerIdFromGetCustomerResponse(customerResponse);
           if (customerIds.customerId) {
             await this.updateCustomer({
@@ -362,7 +369,7 @@ export class ProviderService extends CacheService {
       }
 
       let customer: CustomerCreationData;
-      customer = provider.getCustomerCreationData({ ...buyer, accountNumber });
+      customer = provider.getCustomerCreationData({ ...buyer, email: buyer.email.toLowerCase(), accountNumber, includePhone: includePhone ? true : false });
       if (!customer) {
         this.logger.fatal(`Course internal Id doesn't match for user: ${userId}`);
         throw new Error(`Error matching provider Internal Id`);
