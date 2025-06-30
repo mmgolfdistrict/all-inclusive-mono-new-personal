@@ -45,12 +45,19 @@ export const DailyTeeTimesDesktopV2 = ({
     const courseId = course?.id;
     useEffect(() => {
         setDate(dates[0] ?? '')
-    }, [dateType, minDate])
+    }, [dateType, minDate, maxDate]);
 
     const { data: courseException } =
         api.courseException.getCourseException.useQuery({
             courseId: courseId ?? "",
         });
+
+    useEffect(() => {
+        if (dateType === "Furthest Day Out To Book") {
+            const formattedEndDate = dayjs.utc(maxDate).format("ddd, DD MMM YYYY 00:00:00 [GMT]");
+            setDate(formattedEndDate);
+        }
+    }, [minDate, dateType, maxDate]);
 
     const getCourseException = (playDate: string): null | NotificationObject => {
         let flag = false;
@@ -274,11 +281,11 @@ export const DailyTeeTimesDesktopV2 = ({
                                 return (
                                     <button
                                         key={idx}
-                                        className={`p-4 min-w-[160px] border rounded-lg text-center cursor-pointer ${isSelected ? "bg-primary text-white" : ""
+                                        className={`p-4 min-w-[140px] border rounded-lg text-center cursor-pointer ${isSelected ? "bg-primary text-white" : ""
                                             }`}
                                         onClick={() => setDate(elm)}
                                     >
-                                        <div className={`text-gray-700 ${isSelected ? "text-white" : ""}`}>
+                                        <div className={`text-black text-[16px] font-bold ${isSelected ? "text-white font-bold" : ""}`}>
                                             {dayMonthDateV2(elm)}
                                         </div>
                                     </button>

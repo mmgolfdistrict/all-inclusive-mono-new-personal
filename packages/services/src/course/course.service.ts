@@ -249,8 +249,7 @@ export class CourseService extends DomainService {
     //Cache if possible
     const primarySaleTeeTimePriceQuery = this.database
       .select({
-        highestPrimarySaleTeeTime:
-          sql`max(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + 
+        highestPrimarySaleTeeTime: sql`max(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + 
           CASE 
             WHEN ${courseMarkup.fromDay} IS NOT NULL 
               AND ${courseMarkup.toDay} IS NOT NULL 
@@ -267,8 +266,7 @@ export class CourseService extends DomainService {
               ELSE 0
             END, 0)
           )`,
-        lowestPrimarySaleTeeTime:
-          sql`min(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + 
+        lowestPrimarySaleTeeTime: sql`min(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + 
           CASE 
             WHEN ${courseMarkup.fromDay} IS NOT NULL 
               AND ${courseMarkup.toDay} IS NOT NULL 
@@ -290,12 +288,7 @@ export class CourseService extends DomainService {
       .innerJoin(courses, eq(courses.id, teeTimes.courseId))
       .leftJoin(courseMarkup, eq(courseMarkup.courseId, teeTimes.courseId))
       .leftJoin(courseAdvancedBookingFee, eq(courseAdvancedBookingFee.courseId, teeTimes.courseId))
-      .where(
-        and(
-          eq(teeTimes.courseId, courseId),
-          gte(teeTimes.providerDate, currentUtcTimestamp())
-        )
-      )
+      .where(and(eq(teeTimes.courseId, courseId), gte(teeTimes.providerDate, currentUtcTimestamp())))
       .limit(1)
       .execute();
 
@@ -572,11 +565,7 @@ export class CourseService extends DomainService {
       // .innerJoin(courses, eq(assets.courseId, courses.id))
       // .where(and(eq(assets.courseId, courseId), eq(assets.courseAssetId, courseAssets.id)))
       .innerJoin(courses, eq(courseAssets.courseId, courses.id))
-      .where(and(
-        eq(courses.id, courseId),
-        eq(courseAssets.isDeleted, false),
-        eq(assets.isDeleted, false)
-      ))
+      .where(and(eq(courses.id, courseId), eq(courseAssets.isDeleted, false), eq(assets.isDeleted, false)))
       .orderBy(asc(courseAssets.order))
       .execute()
       .catch((err) => {
@@ -1298,7 +1287,7 @@ export class CourseService extends DomainService {
       (setting) => setting.internalName === "DESKTOP_VIEW_VERSION"
     )?.value;
 
-    return desktopViewVersion ?? "v1";
+    return desktopViewVersion ?? "v2";
   };
 
   getPhoneNumberMandatoryAtCheckout = async (courseId: string) => {
