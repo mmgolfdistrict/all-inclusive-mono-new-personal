@@ -64,6 +64,8 @@ export class clubprophet extends BaseProvider {
       rateCode: RATECODE,
     });
 
+    this.logger.info(`getTeeTimes - ${url}`);
+    this.logger.info(`getTeeTimesData - ${data}`);
     const config = {
       method: "GET",
       maxBodyLength: Infinity,
@@ -88,8 +90,8 @@ export class clubprophet extends BaseProvider {
 
     const headers = this.getHeaders(token);
 
-    console.log("createBooking - ", url);
-    console.log(data, JSON.stringify(data));
+    this.logger.info(`createBooking - ${url}`);
+    this.logger.info(`createBookingData - ${JSON.stringify(data)}`);
 
     const response = await fetch(url, {
       method: "POST",
@@ -104,7 +106,7 @@ export class clubprophet extends BaseProvider {
         this.logger.error(`Error creating booking: ${JSON.stringify(responseData)}`);
         await this.getToken();
       }
-      loggerService.errorLog({
+      void loggerService.errorLog({
         userId,
         url: "/Clubprophet/createBooking",
         userAgent: "",
@@ -155,7 +157,7 @@ export class clubprophet extends BaseProvider {
       }
     } catch (error: any) {
       this.logger.error(`Error parsing token response: ${error}`);
-      loggerService.errorLog({
+      void loggerService.errorLog({
         userId: "",
         url: "/Clubprophet/getToken",
         userAgent: "",
@@ -208,7 +210,8 @@ export class clubprophet extends BaseProvider {
     const url = `${endpoint}/thirdpartyapi/api/v1/TeeSheet/CancelReservation`;
     const headers = this.getHeaders(token);
 
-    console.log(`deleteBooking - ${url}`);
+    this.logger.info(`deleteBooking - ${url}`);
+    this.logger.info(`payload - ${JSON.stringify({ reservationId: bookingId })}`);
 
     const response = await fetch(url, {
       method: "POST",
@@ -233,7 +236,7 @@ export class clubprophet extends BaseProvider {
       const reservation = await bookingResponse.json();
 
       this.logger.info(`Reservation: ${JSON.stringify(reservation)}`);
-      loggerService.errorLog({
+      void loggerService.errorLog({
         userId: "",
         url: "/Clubprophet/deleteBooking",
         userAgent: "",
@@ -265,7 +268,8 @@ export class clubprophet extends BaseProvider {
     const endpoint = this.getBasePoint();
     const url = `${endpoint}/thirdpartyapi/api/v1/Customer/Customer`;
 
-    console.log(`createCustomer - ${url}`);
+    this.logger.info(`createCustomer - ${url}`);
+    this.logger.info(`createCustomerData - ${JSON.stringify(customerData)}`);
 
     const response = await fetch(url, {
       method: "POST",
@@ -279,7 +283,7 @@ export class clubprophet extends BaseProvider {
       if (response.status === 403) {
         this.logger.error(`Error response from club-prophet: ${JSON.stringify(responseData)}`);
       }
-      loggerService.errorLog({
+      void loggerService.errorLog({
         userId: "",
         url: "/Clubprophet/createCustomer",
         userAgent: "",
@@ -410,7 +414,7 @@ export class clubprophet extends BaseProvider {
       this.logger.error(`Error fetching customer: ${response.statusText}`);
       const responseData = await response.json();
       this.logger.error(`Error response from club-prophet: ${JSON.stringify(JSON.stringify(responseData))}`);
-      loggerService.errorLog({
+      void loggerService.errorLog({
         userId: "",
         url: "/Clubprophet/getCustomer",
         userAgent: "",
@@ -530,7 +534,7 @@ export class clubprophet extends BaseProvider {
         .execute()
         .catch((err: Error) => {
           this.logger.error(err);
-          loggerService.errorLog({
+          void loggerService.errorLog({
             userId: "",
             url: "/Clubprophet/indexTeeTime",
             userAgent: "",
@@ -598,7 +602,7 @@ export class clubprophet extends BaseProvider {
             .execute()
             .catch((err) => {
               this.logger.error(err);
-              loggerService.errorLog({
+              void loggerService.errorLog({
                 userId: "",
                 url: "/Clubprophet/indexTeeTime",
                 userAgent: "",
@@ -616,7 +620,7 @@ export class clubprophet extends BaseProvider {
       }
     } catch (error) {
       this.logger.error(error);
-      loggerService.errorLog({
+      void loggerService.errorLog({
         userId: "",
         url: "/Clubprophet/indexTeeTime",
         userAgent: "",

@@ -471,15 +471,18 @@ export const CheckoutForm = ({
   };
 
   const isValidUsername = useMemo(() => {
+    if (isLoadingUser) {
+      return false;
+    }
     if (!userData) {
       return true;
     }
-    if (userData.name && !NAME_VALIDATION_REGEX.test(userData.name) && !message.length) {
+    if (!isLoadingUser && userData.name && !NAME_VALIDATION_REGEX.test(userData.name) && !message.length) {
       setMessage("Your name contains foreign characters. Please update it from Account Settings before checkout.");
       return false;
     }
     return true;
-  }, [userData])
+  }, [userData, isLoadingUser])
 
   useEffect(() => {
     void fetchData();

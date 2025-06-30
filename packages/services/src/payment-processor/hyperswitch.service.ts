@@ -621,6 +621,7 @@ export class HyperSwitchService {
       userEmail: string;
       teeTimeDate: string;
       courseName: string;
+      errMessage?: string;
     }
   ) => {
     await this.saveFailedBookingOnDatabase({ userId, teeTimeId, cartId, weatherGuaranteeQuoteId: sensibleQuoteId, paymentId })
@@ -631,10 +632,10 @@ export class HyperSwitchService {
         await this.notificationService.sendEmail(
           email,
           `A booking has failed - (${bookingStage})`,
-          `Hello Admin, A booking with payment id ${paymentId} failed, Course Name: ${otherDetails?.courseName}, CourseId: ${courseId}, CartId: ${cartId}, SensibleQuoteId: ${sensibleQuoteId}, UserId: ${userId}, User Name: ${otherDetails?.userName}, User Email: ${otherDetails?.userEmail}, Tee Time Date: ${otherDetails?.teeTimeDate}, Tee Time Id: ${teeTimeId}`
+          `Hello Admin, A booking with payment id ${paymentId} failed, Course Name: ${otherDetails?.courseName}, CourseId: ${courseId}, CartId: ${cartId}, SensibleQuoteId: ${sensibleQuoteId}, UserId: ${userId}, User Name: ${otherDetails?.userName}, User Email: ${otherDetails?.userEmail}, Tee Time Date: ${otherDetails?.teeTimeDate}, Tee Time Id: ${teeTimeId}, Error Message: ${otherDetails?.errMessage}`
         );
       } catch (error) {
-        console.log(`Error sending email to ${email}: ${JSON.stringify(error)}`);
+        this.logger.error(`Error sending email to ${email}: ${JSON.stringify(error)}`);
       }
     });
     return { status: "success" };
