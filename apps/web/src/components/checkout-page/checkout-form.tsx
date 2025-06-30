@@ -91,7 +91,7 @@ export const CheckoutForm = ({
   playerCount: string | undefined;
   roundOffStatus: string;
   setRoundOffStatus: Dispatch<SetStateAction<string>>;
-  updateBuildSession?: any;
+  updateBuildSession?: () => Promise<string | null>;
 }) => {
   const MAX_CHARITY_AMOUNT = 1000;
   const { course } = useCourseContext();
@@ -522,10 +522,10 @@ export const CheckoutForm = ({
       return;
     }
 
-    hyper.retrievePaymentIntent(clientSecret).then((resp) => {
+    void hyper.retrievePaymentIntent(clientSecret).then((resp) => {
       const status = resp?.paymentIntent?.status;
       if (status) {
-        handlePaymentStatus(resp?.paymentIntent?.status as string);
+        handlePaymentStatus(status);
       }
     });
   });
@@ -693,7 +693,7 @@ export const CheckoutForm = ({
     }
     setCharityAmountError("");
 
-    const response: any = await hyper.confirmPayment({
+    const response = await hyper.confirmPayment({
       widgets,
       confirmParams: {
         // Make sure to change this to your payment completion page
@@ -702,7 +702,7 @@ export const CheckoutForm = ({
           : `${window.location.origin}/${course?.id}/checkout/processing?teeTimeId=${teeTimeId}&cart_id=${cartId}&listing_id=${listingId}&need_rentals=${needRentals}`,
       },
       redirect: "if_required",
-    });
+    }) as { status: string; payment_id?: string; error_code?: string };
 
     try {
       if (greenFeeChargePerPlayer * (Number(blockCheckoutValue)) <= markupFee) {
@@ -711,7 +711,7 @@ export const CheckoutForm = ({
         if (response) {
           if (response?.status === "processing") {
             void sendEmailForFailedPayment.mutateAsync({
-              paymentId: response?.payment_id as string,
+              paymentId: response?.payment_id ?? "",
               teeTimeId: teeTimeId,
               cartId: cartId,
               userId: user?.id,
@@ -720,7 +720,7 @@ export const CheckoutForm = ({
               courseId: courseId!,
             });
             setMessage(
-              getErrorMessageById((response?.error_code ?? "") as string)
+              getErrorMessageById((response?.error_code ?? ""))
             );
             setIsLoading(false);
           } else if (response.status === "succeeded") {
@@ -735,7 +735,7 @@ export const CheckoutForm = ({
               try {
                 bookingResponse = await reserveBookingFirstHand(
                   cartId,
-                  response?.payment_id as string,
+                  response?.payment_id ?? "",
                   sensibleData?.id ?? ""
                 );
                 setReservationData({
@@ -750,7 +750,7 @@ export const CheckoutForm = ({
                   error.name === "TRPCClientError"
                 ) {
                   void sendEmailForBookingFailedByTimeout.mutateAsync({
-                    paymentId: response?.payment_id as string,
+                    paymentId: response?.payment_id ?? "",
                     teeTimeId: teeTimeId,
                     cartId: cartId,
                     userId: user?.id ?? "",
@@ -785,7 +785,7 @@ export const CheckoutForm = ({
               try {
                 bookingResponse = await reserveBookingFirstHandGroup(
                   cartId,
-                  response?.payment_id as string,
+                  response?.payment_id ?? "",
                   sensibleData?.id ?? ""
                 );
                 setReservationData({
@@ -800,7 +800,7 @@ export const CheckoutForm = ({
                   error.name === "TRPCClientError"
                 ) {
                   void sendEmailForBookingFailedByTimeout.mutateAsync({
-                    paymentId: response?.payment_id as string,
+                    paymentId: response?.payment_id ?? "",
                     teeTimeId: teeTimeId,
                     cartId: cartId,
                     userId: user?.id ?? "",
@@ -836,7 +836,7 @@ export const CheckoutForm = ({
                 bookingResponse = await reserveSecondHandBooking(
                   cartId,
                   listingId,
-                  response?.payment_id as string
+                  response?.payment_id ?? ""
                 );
               } catch (error) {
                 setMessage(
@@ -862,12 +862,12 @@ export const CheckoutForm = ({
             }
           } else if (response.status === "failed") {
             setMessage(
-              getErrorMessageById((response?.error_code ?? "") as string)
+              getErrorMessageById(response?.error_code ?? "")
             );
             setIsLoading(false);
           } else {
             setMessage(
-              getErrorMessageById((response?.error_code ?? "") as string)
+              getErrorMessageById(response?.error_code ?? "")
             );
           }
         }
@@ -1157,14 +1157,13 @@ export const CheckoutForm = ({
   const updatePaymentIntent = async () => {
     let clientSecretId = '';
     try {
-      hyper.initiateUpdateIntent();
+      await hyper.initiateUpdateIntent();
       setLastUpdatedAmount(TotalAmt);
-      clientSecretId = await updateBuildSession();
+      clientSecretId = await updateBuildSession?.() ?? '';
     } catch (error) {
       setMessage(error.message);
     } finally {
-      const response = await hyper.completeUpdateIntent(clientSecretId);
-      console.log("updatePaymentIntent - response", response)
+      await hyper.completeUpdateIntent(clientSecretId);
     }
   };
 
