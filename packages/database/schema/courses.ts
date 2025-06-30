@@ -83,7 +83,8 @@ export const courses = mySqlTable(
     groupEndTime: int("groupEndTime"),
     supportsSellingMerchandise: boolean("supportsSellingMerchandise").default(false),
     merchandiseTaxPercent: int("merchandiseTaxPercent").default(0),
-    phoneNumber:varchar("phoneNumber",{length:20})
+    phoneNumber: varchar("phoneNumber", { length: 20 }),
+    groupBookingFeePerPlayer: int("groupBookingFeePerPlayer"),
   },
   (table) => {
     return {

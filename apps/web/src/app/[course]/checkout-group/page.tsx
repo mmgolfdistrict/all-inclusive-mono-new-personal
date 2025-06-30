@@ -300,8 +300,8 @@ export default function CheckoutGroupBooking({
                 image: "", //
                 currency: "USD", //USD
                 display_price: formatMoney(
-                    course?.markupFeesFixedPerPlayer
-                        ? course?.markupFeesFixedPerPlayer / 100
+                    firstTeeTime?.markupFees
+                        ? firstTeeTime?.markupFees / 100
                         : 0
                 ),
                 product_data: {
