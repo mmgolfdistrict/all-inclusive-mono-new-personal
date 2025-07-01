@@ -78,6 +78,7 @@ export const CheckoutForm = ({
   playerCount,
   roundOffStatus,
   setRoundOffStatus,
+  updateBuildSession,
 }: {
   isBuyNowAuction: boolean;
   teeTimeId: string;
@@ -90,6 +91,7 @@ export const CheckoutForm = ({
   playerCount: string | undefined;
   roundOffStatus: string;
   setRoundOffStatus: Dispatch<SetStateAction<string>>;
+  updateBuildSession?: () => Promise<string | null>;
 }) => {
   const MAX_CHARITY_AMOUNT = 1000;
   const { course } = useCourseContext();
@@ -312,7 +314,7 @@ export const CheckoutForm = ({
 
   const merchandiseWithTaxOverrideCharge = (cartData
     ?.filter(({ product_data }) => product_data.metadata.type === "merchandiseWithTaxOverride")
-    ?.reduce((acc: number, i) => acc + (i.product_data.metadata as unknown as MerchandiseWithTaxOverride).priceWithoutTax, 0) / 100) ?? 0;
+    ?.reduce((acc: number, i) => acc + (i.product_data.metadata as unknown as MerchandiseWithTaxOverride).priceWithoutTax, 0) / 100) || 0;
 
   const merchandiseTotalCharge = merchandiseCharge + merchandiseWithTaxOverrideCharge;
 
@@ -520,10 +522,10 @@ export const CheckoutForm = ({
       return;
     }
 
-    hyper.retrievePaymentIntent(clientSecret).then((resp) => {
+    void hyper.retrievePaymentIntent(clientSecret).then((resp) => {
       const status = resp?.paymentIntent?.status;
       if (status) {
-        handlePaymentStatus(resp?.paymentIntent?.status as string);
+        handlePaymentStatus(status);
       }
     });
   });
@@ -700,16 +702,16 @@ export const CheckoutForm = ({
           : `${window.location.origin}/${course?.id}/checkout/processing?teeTimeId=${teeTimeId}&cart_id=${cartId}&listing_id=${listingId}&need_rentals=${needRentals}`,
       },
       redirect: "if_required",
-    });
+    }) as { status: string; payment_id?: string; error_code?: string };
 
     try {
       if (greenFeeChargePerPlayer * (Number(blockCheckoutValue)) <= markupFee) {
         toast.error("Price too low to sell.");
       } else {
         if (response) {
-          if (response.status === "processing") {
+          if (response?.status === "processing") {
             void sendEmailForFailedPayment.mutateAsync({
-              paymentId: response?.payment_id as string,
+              paymentId: response?.payment_id ?? "",
               teeTimeId: teeTimeId,
               cartId: cartId,
               userId: user?.id,
@@ -718,7 +720,7 @@ export const CheckoutForm = ({
               courseId: courseId!,
             });
             setMessage(
-              getErrorMessageById((response?.error_code ?? "") as string)
+              getErrorMessageById((response?.error_code ?? ""))
             );
             setIsLoading(false);
           } else if (response.status === "succeeded") {
@@ -733,7 +735,7 @@ export const CheckoutForm = ({
               try {
                 bookingResponse = await reserveBookingFirstHand(
                   cartId,
-                  response?.payment_id as string,
+                  response?.payment_id ?? "",
                   sensibleData?.id ?? ""
                 );
                 setReservationData({
@@ -748,7 +750,7 @@ export const CheckoutForm = ({
                   error.name === "TRPCClientError"
                 ) {
                   void sendEmailForBookingFailedByTimeout.mutateAsync({
-                    paymentId: response?.payment_id as string,
+                    paymentId: response?.payment_id ?? "",
                     teeTimeId: teeTimeId,
                     cartId: cartId,
                     userId: user?.id ?? "",
@@ -783,7 +785,7 @@ export const CheckoutForm = ({
               try {
                 bookingResponse = await reserveBookingFirstHandGroup(
                   cartId,
-                  response?.payment_id as string,
+                  response?.payment_id ?? "",
                   sensibleData?.id ?? ""
                 );
                 setReservationData({
@@ -798,7 +800,7 @@ export const CheckoutForm = ({
                   error.name === "TRPCClientError"
                 ) {
                   void sendEmailForBookingFailedByTimeout.mutateAsync({
-                    paymentId: response?.payment_id as string,
+                    paymentId: response?.payment_id ?? "",
                     teeTimeId: teeTimeId,
                     cartId: cartId,
                     userId: user?.id ?? "",
@@ -834,7 +836,7 @@ export const CheckoutForm = ({
                 bookingResponse = await reserveSecondHandBooking(
                   cartId,
                   listingId,
-                  response?.payment_id as string
+                  response?.payment_id ?? ""
                 );
               } catch (error) {
                 setMessage(
@@ -860,12 +862,12 @@ export const CheckoutForm = ({
             }
           } else if (response.status === "failed") {
             setMessage(
-              getErrorMessageById((response?.error_code ?? "") as string)
+              getErrorMessageById(response?.error_code ?? "")
             );
             setIsLoading(false);
           } else {
             setMessage(
-              getErrorMessageById((response?.error_code ?? "") as string)
+              getErrorMessageById(response?.error_code ?? "")
             );
           }
         }
@@ -1148,6 +1150,33 @@ export const CheckoutForm = ({
       setIsLoadingTotalAmount(false);
     }, 800);
   }, [TotalAmt]);
+
+  // Add state to track if payment intent needs updating
+  const [lastUpdatedAmount, setLastUpdatedAmount] = useState<string>();
+
+  const updatePaymentIntent = async () => {
+    let clientSecretId = '';
+    try {
+      await hyper.initiateUpdateIntent();
+      setLastUpdatedAmount(TotalAmt);
+      clientSecretId = await updateBuildSession?.() ?? '';
+    } catch (error) {
+      setMessage(error.message);
+    } finally {
+      await hyper.completeUpdateIntent(clientSecretId);
+    }
+  };
+
+  // Update payment intent when total amount changes
+  useEffect(() => {
+    if (hyper && widgets && Total > 0) {
+      if (Number(playerCount) !== Number(amountOfPlayers)) {
+        return; // Skip if already updating with the same amount
+      }
+      void updatePaymentIntent();
+    }
+  }, [TotalAmt, playerCount, amountOfPlayers, cartData]);
+
   return (
     <form onSubmit={handleSubmit} className="">
       <div id="card-detail-form-checkout">

@@ -65,7 +65,7 @@ interface EmailParams {
   SUBJECT_LINE?: string;
   LOGO_URL?: string;
   ADDITIONAL_MESSAGE?: string;
-  PurchasedMerchandise?: boolean,
+  PurchasedMerchandise?: boolean;
   MerchandiseDetails?: {
     caption: string;
     qty: number;
@@ -166,19 +166,19 @@ export class NotificationService {
         trackingSettings: { subscriptionTracking: { enable: false } },
       })
       .catch((err) => {
-        this.logger.error(err);
-        loggerService.errorLog({
-          userId: "",
-          url: "/NotificationService/sendEmail",
-          userAgent: "",
-          message: "ERROR_SENDING_EMAIL",
-          stackTrace: `${err.stack}`,
-          additionalDetailsJSON: JSON.stringify({
-            email,
-            subject,
-            body,
-          }),
-        });
+      this.logger.error(err);
+      loggerService.errorLog({
+        userId: "",
+        url: "/NotificationService/sendEmail",
+        userAgent: "",
+        message: "ERROR_SENDING_EMAIL",
+        stackTrace: `${err.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          email,
+          subject,
+          body,
+        }),
+      });
         throw new Error(`Failed to send email to: ${email}, Response: ${JSON.stringify(response)}`);
       });
     // } else {
@@ -213,7 +213,7 @@ export class NotificationService {
     const bccEmails = bccEmailsList.split(",");
 
     const appSettings = await appSettingService.getMultiple("ENABLE_ICS_ATTACHMENT");
-    if (appSettings?.ENABLE_ICS_ATTACHMENT === "false") {
+      if (appSettings?.ENABLE_ICS_ATTACHMENT === "false") {
       const response = await this.sendGridClient
         .send({
           to: emailList,
@@ -244,7 +244,7 @@ export class NotificationService {
             `Failed to send email to: ${emailList.toString()}, Response: ${JSON.stringify(response)}`
           );
         });
-    } else {
+      } else {
       const response = await this.sendGridClient
         .send({
           to: emailList,
@@ -257,21 +257,21 @@ export class NotificationService {
           trackingSettings: { subscriptionTracking: { enable: false } },
         })
         .catch((err) => {
-          this.logger.error(err);
-          loggerService.errorLog({
-            userId: "",
-            url: "/NotificationService/sendEmailByTemplate",
-            userAgent: "",
-            message: "ERROR_SENDING_EMAIL_BY_TEMPLATE",
-            stackTrace: `${err.stack}`,
-            additionalDetailsJSON: JSON.stringify({
+      this.logger.error(err);
+      loggerService.errorLog({
+        userId: "",
+        url: "/NotificationService/sendEmailByTemplate",
+        userAgent: "",
+        message: "ERROR_SENDING_EMAIL_BY_TEMPLATE",
+        stackTrace: `${err.stack}`,
+        additionalDetailsJSON: JSON.stringify({
               emailList,
-              subject,
-              template,
-              templateId,
-              attachments,
-            }),
-          });
+          subject,
+          template,
+          templateId,
+          attachments,
+        }),
+      });
           throw new Error(
             `Failed to send email to: ${emailList.toString()}, Response: ${JSON.stringify(response)}`
           );
