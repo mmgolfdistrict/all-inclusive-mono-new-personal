@@ -24,8 +24,8 @@ import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import { courses } from "@golf-district/database/schema/courses";
 import { entities } from "@golf-district/database/schema/entities";
 import dayjs from "dayjs";
-import utc from 'dayjs/plugin/utc';
-import timezone from 'dayjs/plugin/timezone';
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
 import { formatTime } from "@golf-district/shared";
 import { assets } from "@golf-district/database/schema/assets";
 /**
@@ -36,20 +36,20 @@ import { assets } from "@golf-district/database/schema/assets";
 interface PaymentRequest {
   merchant_id?: string;
   application_id?: string;
-  payment_frequency?: 'ONE_TIME' | 'RECURRING';
+  payment_frequency?: "ONE_TIME" | "RECURRING";
   is_multiple_use?: boolean;
-  allowed_payment_methods?: ('PAYMENT_CARD' | 'BANK_ACCOUNT')[];
+  allowed_payment_methods?: ("PAYMENT_CARD" | "BANK_ACCOUNT")[];
   nickname?: string;
   items?: Item[];
   amount_details?: AmountDetails;
   additional_details?: AdditionalDetails;
   branding?: Branding;
-  tags?: object
+  tags?: object;
 }
 
 interface Item {
   name?: string;
-  description?: string,
+  description?: string;
   quantity?: string;
   image_details?: {
     primary_image_url?: string;
@@ -61,7 +61,7 @@ interface Item {
 }
 
 interface AmountDetails {
-  amount_type?: 'FIXED' | 'VARIABLE';
+  amount_type?: "FIXED" | "VARIABLE";
   total_amount?: number;
   currency?: string;
 }
@@ -82,7 +82,7 @@ interface AdditionalDetails {
 }
 
 interface ReceiptDeliveryMethod {
-  type?: 'EMAIL' | 'SMS';
+  type?: "EMAIL" | "SMS";
   destinations?: string[];
 }
 
@@ -101,7 +101,6 @@ type RequestOptions = {
   body?: string;
   redirect: RequestRedirect;
 };
-
 
 /**=========================================================================== */
 export class HyperSwitchService {
@@ -555,7 +554,7 @@ export class HyperSwitchService {
     teeTimeId,
     cartId,
     weatherGuaranteeQuoteId,
-    paymentId
+    paymentId,
   }: {
     userId: string | null | undefined;
     teeTimeId: string | string[] | null | undefined;
@@ -572,17 +571,19 @@ export class HyperSwitchService {
           teeTimeId: teeTimeId,
           userId: userId ?? "",
           weatherGuaranteeQuoteId: weatherGuaranteeQuoteId ?? "",
-          providerPaymentId: paymentId
-        }))
+          providerPaymentId: paymentId,
+        }));
       } else {
-        failedBookingData = [{
-          id: randomUUID(),
-          cartId: cartId ?? "",
-          teeTimeId: teeTimeId ?? "",
-          userId: userId ?? "",
-          weatherGuaranteeQuoteId: weatherGuaranteeQuoteId ?? "",
-          providerPaymentId: paymentId
-        }]
+        failedBookingData = [
+          {
+            id: randomUUID(),
+            cartId: cartId ?? "",
+            teeTimeId: teeTimeId ?? "",
+            userId: userId ?? "",
+            weatherGuaranteeQuoteId: weatherGuaranteeQuoteId ?? "",
+            providerPaymentId: paymentId,
+          },
+        ];
       }
       await this.database
         .insert(failedBooking)
@@ -602,11 +603,11 @@ export class HyperSwitchService {
           teeTimeId,
           cartId,
           weatherGuaranteeQuoteId,
-          paymentId
+          paymentId,
         }),
-      })
+      });
     }
-  }
+  };
 
   sendEmailForBookingFailed = async (
     paymentId: string,
@@ -624,7 +625,13 @@ export class HyperSwitchService {
       errMessage?: string;
     }
   ) => {
-    await this.saveFailedBookingOnDatabase({ userId, teeTimeId, cartId, weatherGuaranteeQuoteId: sensibleQuoteId, paymentId })
+    await this.saveFailedBookingOnDatabase({
+      userId,
+      teeTimeId,
+      cartId,
+      weatherGuaranteeQuoteId: sensibleQuoteId,
+      paymentId,
+    });
     const adminEmail: string = process.env.ADMIN_EMAIL_LIST || "nara@golfdistrict.com";
     const emailAterSplit = adminEmail.split(",");
     emailAterSplit.map(async (email) => {
@@ -655,7 +662,13 @@ export class HyperSwitchService {
       courseName: string;
     }
   ) => {
-    await this.saveFailedBookingOnDatabase({ userId, teeTimeId, cartId, weatherGuaranteeQuoteId: sensibleQuoteId, paymentId })
+    await this.saveFailedBookingOnDatabase({
+      userId,
+      teeTimeId,
+      cartId,
+      weatherGuaranteeQuoteId: sensibleQuoteId,
+      paymentId,
+    });
     const adminEmail: string = process.env.ADMIN_EMAIL_LIST || "nara@golfdistrict.com";
     const emailAterSplit = adminEmail.split(",");
     emailAterSplit.map(async (email) => {
@@ -729,7 +742,7 @@ export class HyperSwitchService {
 
   formatDateForMySQL(isoDateString: string): string {
     const date = new Date(isoDateString);
-    const pad = (n: number) => n.toString().padStart(2, '0');
+    const pad = (n: number) => n.toString().padStart(2, "0");
 
     const year = date.getUTCFullYear();
     const month = pad(date.getUTCMonth() + 1);
@@ -740,7 +753,8 @@ export class HyperSwitchService {
 
     return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
   }
-  createPaymentLink = async (amount: number,
+  createPaymentLink = async (
+    amount: number,
     email: string,
     bookingId: string,
     origin: string,
@@ -755,14 +769,14 @@ export class HyperSwitchService {
       if (amount === 0) {
         return {
           error: true,
-          message: "Amount Cannot be zero or empty"
-        }
+          message: "Amount Cannot be zero or empty",
+        };
       }
       if (email === "") {
         return {
           error: true,
-          message: "Email is required"
-        }
+          message: "Email is required",
+        };
       }
 
       // if (email === userEmail) {
@@ -772,16 +786,17 @@ export class HyperSwitchService {
       //   }
       // }
 
-
-      const [bookingResult] = await this.database.select({
-        userName: users.name,
-        bookingProviderId: bookings.providerBookingId,
-        courseName: courses.name,
-        courseTimeZone: courses.timezoneCorrection,
-        facilityName: entities.name,
-        bookingDateTime: teeTimes.providerDate,
-        cdn: assets.cdn,
-      }).from(bookings)
+      const [bookingResult] = await this.database
+        .select({
+          userName: users.name,
+          bookingProviderId: bookings.providerBookingId,
+          courseName: courses.name,
+          courseTimeZone: courses.timezoneCorrection,
+          facilityName: entities.name,
+          bookingDateTime: teeTimes.providerDate,
+          cdn: assets.cdn,
+        })
+        .from(bookings)
         .leftJoin(users, eq(bookings.ownerId, users.id))
         .leftJoin(teeTimes, eq(bookings.teeTimeId, teeTimes.id))
         .leftJoin(courses, eq(teeTimes.courseId, courses.id))
@@ -792,7 +807,7 @@ export class HyperSwitchService {
       const username = bookingResult ? bookingResult?.userName : "Golf district user";
       const paymentProcessor = String(process.env.SPLIT_PAYMENT_PROCESSOR);
       console.log("payementProcessor", paymentProcessor);
-      const originalUserSplitAmount = (amount * 100) - collectPaymentProcessorCharge;
+      const originalUserSplitAmount = amount * 100 - collectPaymentProcessorCharge;
       const splitPaymentEmailTemplateId = String(process.env.SPLIT_PAYMENT_EMAIL_TEMPLATE_ID);
       const paymentExpirationTime = await appSettingService.get("PAYMENT_EXPIRATION_TIME_IN_MINS");
       if (paymentProcessor === "finix") {
@@ -806,8 +821,8 @@ export class HyperSwitchService {
           nickname: "Test account",
           amount_details: {
             amount_type: "FIXED",
-            total_amount: (amount * 100),
-            currency: "USD"
+            total_amount: amount * 100,
+            currency: "USD",
           },
           items: [
             {
@@ -818,13 +833,13 @@ export class HyperSwitchService {
             `,
               quantity: "1",
               image_details: {
-                primary_image_url: `${courseLogo}`
+                primary_image_url: `${courseLogo}`,
               },
               price_details: {
-                sale_amount: (amount * 100),
-                currency: "USD"
-              }
-            }
+                sale_amount: amount * 100,
+                currency: "USD",
+              },
+            },
           ],
           branding: {
             brand_color: "#40942B",
@@ -832,7 +847,7 @@ export class HyperSwitchService {
             logo: "https://golfdistrict.com/wp-content/uploads/2024/07/Primary-Logo-Single-Line.svg",
             icon: "https://golfdistrict.com/wp-content/uploads/2024/07/Primary-Logo-Single-Line.svg",
             logo_alternative_text: "Golfdistrict",
-            button_font_color: "#FFF"
+            button_font_color: "#FFF",
           },
           additional_details: {
             collect_name: true,
@@ -849,21 +864,21 @@ export class HyperSwitchService {
             receipt_requested_delivery_methods: [
               {
                 type: "EMAIL",
-                destinations: [`${email}`]
+                destinations: [`${email}`],
               },
-            ]
+            ],
           },
           tags: {
-            message: `this payment is requested from ${email}`
-          }
-        }
+            message: `this payment is requested from ${email}`,
+          },
+        };
         const finixPaymentData = await this.createPaymentLinkForFinix(paymentData);
         const finix_link_url = finixPaymentData?.link_url;
         const paymentId = finixPaymentData?.id;
         if (finix_link_url) {
           const now = new Date();
           const addedMins = new Date(now.getTime() + Number(paymentExpirationTime) * 60000);
-          const newexpireDate = addedMins.toISOString().slice(0, 19).replace('T', ' ');
+          const newexpireDate = addedMins.toISOString().slice(0, 19).replace("T", " ");
           //(amount * 100)
           await this.database
             .insert(bookingSplitPayment)
@@ -874,12 +889,13 @@ export class HyperSwitchService {
               bookingId: bookingId,
               paymentId: paymentId,
               paymentLink: finix_link_url,
-              collectedAmount: (totalPayoutAmount * 100),
+              collectedAmount: totalPayoutAmount * 100,
               paymentProcessorPercent: collectPaymentProcessorCharge,
               expirationDateTime: newexpireDate,
-              savedIndex: index
+              savedIndex: index,
             })
-            .execute().catch(async (e: any) => {
+            .execute()
+            .catch(async (e: any) => {
               console.log(e);
               await loggerService.errorLog({
                 message: "ERROR_INSERTING_FININX_PAYMENT_LINK",
@@ -890,7 +906,7 @@ export class HyperSwitchService {
                 additionalDetailsJSON: JSON.stringify({
                   paymentId: "",
                   referencePaymentId: "",
-                  provider: "finix"
+                  provider: "finix",
                 }),
               });
             });
@@ -905,18 +921,22 @@ export class HyperSwitchService {
                 USERNAME: `${username}`,
                 PAYMENT_URL: `${newUrl}/${paymentId}`,
                 COURSE_NAME: bookingResult?.courseName || "",
-                AMOUNT: `${(amount).toFixed(2)}`,
-                PLAY_TIME: formatTime(bookingResult?.bookingDateTime ?? "", false, bookingResult?.courseTimeZone ?? 0),
+                AMOUNT: `${amount.toFixed(2)}`,
+                PLAY_TIME: formatTime(
+                  bookingResult?.bookingDateTime ?? "",
+                  false,
+                  bookingResult?.courseTimeZone ?? 0
+                ),
                 FACILITY: `${bookingResult?.facilityName}`,
                 COURSE_RESERVATION_ID: `${bookingResult?.bookingProviderId}`,
                 //TRACKING_URL: `https://webhook.site/tracking-email?id=${referencePaymentId}`
                 TRACKING_URL: `${origin}/api/trackemail/?id=${referencePaymentId}`,
                 SUBJECT_LINE: `Payment Requested for Your Golf Tee Time by ${username}`,
                 LOGO_URL: courseLogo,
-                ADDITIONAL_MESSAGE: additonalMessge
+                ADDITIONAL_MESSAGE: additonalMessge,
               },
               []
-            )
+            );
             console.log("Email Send successFully");
           } else {
             const message = `This payment has been requested on behalf of ${username}.
@@ -929,11 +949,7 @@ Amount Due: \`₹${amount.toFixed(2)}\`
 Please proceed with the payment by clicking the link below:
 \`${newUrl}/${paymentId}\`
 Thank you for choosing us.`;
-            const emailSend = await this.notificationService.sendEmail(
-              email,
-              "Payment Link",
-              message
-            )
+            const emailSend = await this.notificationService.sendEmail(email, "Payment Link", message);
           }
           return {
             error: false,
@@ -969,13 +985,13 @@ Thank you for choosing us.`;
               sdk_layout: "tabs",
             },
             return_url: return_url,
-            session_expiry: (Number(paymentExpirationTime) * 60)
+            session_expiry: Number(paymentExpirationTime) * 60,
           }),
         };
         const result = await fetch(`${this.hyperSwitchBaseUrl}/payments`, options);
         const response = await result.json();
         console.log("response_payment_link", response);
-        Math.round(amount * 100)
+        Math.round(amount * 100);
         if (response?.payment_link?.link) {
           const hyperswitchUUID = randomUUID();
           await this.database
@@ -987,12 +1003,13 @@ Thank you for choosing us.`;
               bookingId: bookingId,
               paymentId: response?.payment_id,
               paymentLink: response?.payment_link?.link,
-              collectedAmount: (totalPayoutAmount * 100),
+              collectedAmount: totalPayoutAmount * 100,
               paymentProcessorPercent: collectPaymentProcessorCharge,
               expirationDateTime: this.formatDateForMySQL(response?.expires_on),
-              savedIndex: index
+              savedIndex: index,
             })
-            .execute().catch(async (e: any) => {
+            .execute()
+            .catch(async (e: any) => {
               console.log(e);
               await loggerService.errorLog({
                 message: "ERROR_INSERTING_HYPERSWITCH_PAYMENT_LINK",
@@ -1003,7 +1020,7 @@ Thank you for choosing us.`;
                 additionalDetailsJSON: JSON.stringify({
                   paymentId: response?.payment_id,
                   referencePaymentId: "",
-                  provider: "hyperswitch"
+                  provider: "hyperswitch",
                 }),
               });
             });
@@ -1017,18 +1034,22 @@ Thank you for choosing us.`;
                 USERNAME: `${username}`,
                 PAYMENT_URL: `${newUrl}/${response?.payment_id}`,
                 COURSE_NAME: `${bookingResult?.courseName}` || "",
-                AMOUNT: `${(amount).toFixed(2)}`,
-                PLAY_TIME: formatTime(bookingResult?.bookingDateTime ?? "", false, bookingResult?.courseTimeZone ?? 0),
+                AMOUNT: `${amount.toFixed(2)}`,
+                PLAY_TIME: formatTime(
+                  bookingResult?.bookingDateTime ?? "",
+                  false,
+                  bookingResult?.courseTimeZone ?? 0
+                ),
                 FACILITY: `${bookingResult?.facilityName}`,
                 COURSE_RESERVATION_ID: `${bookingResult?.bookingProviderId}`,
                 TRACKING_URL: `${origin}/trackemail/?id=${hyperswitchUUID}`,
                 //TRACKING_URL: `https://webhook.site/tracking-email?id=${hyperswitchUUID}`
                 SUBJECT_LINE: `Payment Requested for Your Golf Tee Time by ${username}`,
                 LOGO_URL: courseLogo,
-                ADDITIONAL_MESSAGE: additonalMessge
+                ADDITIONAL_MESSAGE: additonalMessge,
               },
               []
-            )
+            );
             console.log("Email Send successFully");
           } else {
             const message = `This payment has been requested on behalf of ${username}.
@@ -1041,12 +1062,7 @@ Amount Due: \`₹${amount.toFixed(2)}\`
 Please proceed with the payment by clicking the link below:
 \`${newUrl}/${response?.payment_id}\`
 Thank you for choosing us.`;
-            const emailSend = await this.notificationService.sendEmail(
-              email,
-              "Payment Link",
-              message
-            )
-
+            const emailSend = await this.notificationService.sendEmail(email, "Payment Link", message);
           }
           return {
             error: false,
@@ -1062,7 +1078,7 @@ Thank you for choosing us.`;
             additionalDetailsJSON: JSON.stringify({
               paymentId: response?.payment_id,
               referencePaymentId: "",
-              provider: "hyperswitch"
+              provider: "hyperswitch",
             }),
           });
           return {
@@ -1083,7 +1099,7 @@ Thank you for choosing us.`;
           paymentId: "",
           referencePaymentId: "",
           provider: "",
-          message: error.message
+          message: error.message,
         }),
       });
       throw new Error("Problem creating payment link");
@@ -1112,12 +1128,12 @@ Thank you for choosing us.`;
         additionalDetailsJSON: JSON.stringify({
           paymentData: paymentData,
           referencePaymentId: "",
-          provider: "finix"
+          provider: "finix",
         }),
       });
       throw new Error("error while creating the payment");
     }
-  }
+  };
 
   updateSplitPaymentStatus = async (paymentId: string, referencePaymentId: string) => {
     try {
@@ -1139,10 +1155,11 @@ Thank you for choosing us.`;
           .update(bookingSplitPayment)
           .set({
             isPaid: 1,
-            isActive: 1
+            isActive: 1,
           })
           .where(eq(bookingSplitPayment.paymentId, paymentId))
-          .execute().catch(async (e: any) => {
+          .execute()
+          .catch(async (e: any) => {
             await loggerService.errorLog({
               message: "ERROR_UPDATING_HYPERSWITCH_PAYMENT_STATUS",
               userId: "",
@@ -1152,7 +1169,7 @@ Thank you for choosing us.`;
               additionalDetailsJSON: JSON.stringify({
                 paymentId: paymentId,
                 referencePaymentId: referencePaymentId,
-                provider: "finix"
+                provider: "finix",
               }),
             });
           });
@@ -1162,20 +1179,22 @@ Thank you for choosing us.`;
             bookingId: bookingSplitPayment.bookingId,
             amount: bookingSplitPayment.payoutAmount,
             paymentId: bookingSplitPayment.paymentId,
-            collectedAmount: bookingSplitPayment.collectedAmount
+            collectedAmount: bookingSplitPayment.collectedAmount,
           })
           .from(bookingSplitPayment)
           .where(eq(bookingSplitPayment.paymentId, paymentId));
         // email send the payment completed user
-        const message = `Your payment of $${(Number(result?.collectedAmount) / 100)} has been successfully processed. Thank you for your payment.`;
+        const message = `Your payment of $${Number(result?.collectedAmount) / 100
+          } has been successfully processed. Thank you for your payment.`;
         const emailSend = await this.notificationService.sendEmail(
           result?.email ?? "",
           "Payment Successful",
           message
-        )
+        );
         // email send the admins after payment completed of the user
 
-        const messageAdmin = `Payment of  $${(Number(result?.collectedAmount) / 100)} has been successfully processed for the user ${result?.email}. Thank you for your payment.`;
+        const messageAdmin = `Payment of  $${Number(result?.collectedAmount) / 100
+          } has been successfully processed for the user ${result?.email}. Thank you for your payment.`;
         const adminEmails = process.env.ADMIN_EMAIL_LIST!.split(",");
 
         for (const email of adminEmails) {
@@ -1198,7 +1217,7 @@ Thank you for choosing us.`;
             referencePaymentId,
             amount: result?.amount,
             email: result?.email,
-            provider: "hyperswitch"
+            provider: "hyperswitch",
           }),
         });
 
@@ -1221,7 +1240,7 @@ Thank you for choosing us.`;
             email: "",
             bookingId: "",
             error: true,
-            amount: ""
+            amount: "",
           };
         }
         await this.database
@@ -1230,7 +1249,8 @@ Thank you for choosing us.`;
             isPaid: 1,
           })
           .where(eq(bookingSplitPayment.id, referencePaymentId))
-          .execute().catch(async (e: any) => {
+          .execute()
+          .catch(async (e: any) => {
             await loggerService.errorLog({
               message: "ERROR_UPDATING_FINIX_PAYMENT_STATUS",
               userId: "",
@@ -1240,7 +1260,7 @@ Thank you for choosing us.`;
               additionalDetailsJSON: JSON.stringify({
                 paymentId: paymentId,
                 referencePaymentId: referencePaymentId,
-                provider: "finix"
+                provider: "finix",
               }),
             });
           });
@@ -1250,21 +1270,23 @@ Thank you for choosing us.`;
             bookingId: bookingSplitPayment.bookingId,
             amount: bookingSplitPayment.payoutAmount,
             paymentId: bookingSplitPayment.paymentId,
-            collectedAmount: bookingSplitPayment.collectedAmount
+            collectedAmount: bookingSplitPayment.collectedAmount,
           })
           .from(bookingSplitPayment)
           .where(eq(bookingSplitPayment.id, referencePaymentId));
         // email send the payment completed user
 
-        const message = `Your payment of$${Number(result?.collectedAmount) / 100} has been successfully processed. Thank you for your payment.`;
+        const message = `Your payment of$${Number(result?.collectedAmount) / 100
+          } has been successfully processed. Thank you for your payment.`;
         const emailSend = await this.notificationService.sendEmail(
           result?.email ?? "",
           "Payment Successful",
           message
-        )
+        );
         // email send the admins after payment completed of the user
 
-        const messageAdmin = `Payment of $${Number(result?.collectedAmount) / 100} has been successfully processed for the user ${result?.email}. Thank you for your payment.`;
+        const messageAdmin = `Payment of $${Number(result?.collectedAmount) / 100
+          } has been successfully processed for the user ${result?.email}. Thank you for your payment.`;
         const adminEmails = process.env.ADMIN_EMAIL_LIST!.split(",");
 
         for (const email of adminEmails) {
@@ -1287,7 +1309,7 @@ Thank you for choosing us.`;
             referencePaymentId,
             amount: result?.amount,
             email: result?.email,
-            provider: "finix"
+            provider: "finix",
           }),
         });
         return {
@@ -1307,7 +1329,7 @@ Thank you for choosing us.`;
           additionalDetailsJSON: JSON.stringify({
             paymentId: paymentId,
             referencePaymentId: referencePaymentId,
-            provider: "finix"
+            provider: "finix",
           }),
         });
         return {
@@ -1328,7 +1350,7 @@ Thank you for choosing us.`;
         additionalDetailsJSON: JSON.stringify({
           paymentId: paymentId,
           referencePaymentId: referencePaymentId,
-          provider: "finix"
+          provider: "finix",
         }),
       });
       throw new Error("Error while updating status");
@@ -1336,7 +1358,7 @@ Thank you for choosing us.`;
   };
 
   hasTimeExpired(utcTimeString: string) {
-    const utcTime = new Date(utcTimeString.replace(' ', 'T') + 'Z');
+    const utcTime = new Date(utcTimeString.replace(" ", "T") + "Z");
     return utcTime.getTime() < Date.now();
   }
 
@@ -1350,7 +1372,7 @@ Thank you for choosing us.`;
           userAgent: "",
           stackTrace: ``,
           additionalDetailsJSON: JSON.stringify({
-            MESSAGE: "bookingID is not there"
+            MESSAGE: "bookingID is not there",
           }),
         });
         return [];
@@ -1369,16 +1391,11 @@ Thank you for choosing us.`;
         })
         .from(bookingSplitPayment)
         .where(
-          and(
-            eq(bookingSplitPayment.bookingId, bookingId),
-            eq(bookingSplitPayment.isActive, 1)
-          )
+          and(eq(bookingSplitPayment.bookingId, bookingId), eq(bookingSplitPayment.isActive, 1))
           //eq(splitPayments.bookingId, bookingId)
         );
       const newResult = result.map((item) => {
-        const isLinkExpired = item?.expireTime
-          ? this.hasTimeExpired(item.expireTime)
-          : null;
+        const isLinkExpired = item?.expireTime ? this.hasTimeExpired(item.expireTime) : null;
         return { ...item, isLinkExpired };
       });
       this.logger.warn(newResult, "the new updated response with expired time");
@@ -1392,7 +1409,7 @@ Thank you for choosing us.`;
         userAgent: "",
         stackTrace: ``,
         additionalDetailsJSON: JSON.stringify({
-          MESSAGE: "INTERNAL SERVER ERROR"
+          MESSAGE: "INTERNAL SERVER ERROR",
         }),
       });
       throw new Error(error.message);
@@ -1413,18 +1430,17 @@ Thank you for choosing us.`;
     index: number,
     paymentId: string
   ) => {
-
     if (amount === 0) {
       return {
         error: true,
-        message: "Amount Cannot be zero or empty"
-      }
+        message: "Amount Cannot be zero or empty",
+      };
     }
     if (email === "") {
       return {
         error: true,
-        message: "Email is required"
-      }
+        message: "Email is required",
+      };
     }
 
     // if (email === userEmail) {
@@ -1454,12 +1470,11 @@ Thank you for choosing us.`;
         );
       if (paymentProcessor === "finix") {
         if (result?.email && result?.bookingId) {
-
           const updatedResult = await this.database
             .update(bookingSplitPayment)
             .set({
               isActive: 0,
-              isEmailOpened: 0
+              isEmailOpened: 0,
             })
             .where(
               and(
@@ -1469,7 +1484,8 @@ Thank you for choosing us.`;
                 eq(bookingSplitPayment.paymentId, result?.paymentId)
               )
             )
-            .execute().catch(async (e: any) => {
+            .execute()
+            .catch(async (e: any) => {
               await loggerService.errorLog({
                 message: "ERROR_UPDATING_FINIX_PAYMENT_STATUS",
                 userId: "",
@@ -1479,11 +1495,22 @@ Thank you for choosing us.`;
                 additionalDetailsJSON: JSON.stringify({
                   paymentId: result?.paymentId,
                   id: result?.id,
-                  provider: "finix"
+                  provider: "finix",
                 }),
               });
             });
-          const resultPaymentLink = await this.createPaymentLink(amount, email, bookingId, origin, amount, collectPaymentProcessorCharge, courseLogo, additonalMessge, userEmail, index);
+          const resultPaymentLink = await this.createPaymentLink(
+            amount,
+            email,
+            bookingId,
+            origin,
+            amount,
+            collectPaymentProcessorCharge,
+            courseLogo,
+            additonalMessge,
+            userEmail,
+            index
+          );
           return resultPaymentLink;
         }
       } else {
@@ -1492,7 +1519,7 @@ Thank you for choosing us.`;
             .update(bookingSplitPayment)
             .set({
               isActive: 0,
-              isEmailOpened: 0
+              isEmailOpened: 0,
             })
             .where(
               eq(bookingSplitPayment.id, result?.id)
@@ -1503,7 +1530,8 @@ Thank you for choosing us.`;
               //   eq(bookingSplitPayment.paymentId, result?.paymentId),
               // )
             )
-            .execute().catch(async (e: any) => {
+            .execute()
+            .catch(async (e: any) => {
               await loggerService.errorLog({
                 message: "ERROR_UPDATING_FINIX_PAYMENT_STATUS",
                 userId: "",
@@ -1513,12 +1541,23 @@ Thank you for choosing us.`;
                 additionalDetailsJSON: JSON.stringify({
                   paymentId: result?.paymentId,
                   id: result?.id,
-                  provider: "hyperswitch"
+                  provider: "hyperswitch",
                 }),
               });
             });
           //await this.cancelPaymentIntent(result.paymentId);
-          const resultPaymentLink = await this.createPaymentLink(amount, email, bookingId, origin, totalPayoutAmount, collectPaymentProcessorCharge, courseLogo, additonalMessge, userEmail, index);
+          const resultPaymentLink = await this.createPaymentLink(
+            amount,
+            email,
+            bookingId,
+            origin,
+            totalPayoutAmount,
+            collectPaymentProcessorCharge,
+            courseLogo,
+            additonalMessge,
+            userEmail,
+            index
+          );
           console.log("resultPaymentLink", resultPaymentLink);
           return resultPaymentLink;
         }
@@ -1534,7 +1573,7 @@ Thank you for choosing us.`;
         additionalDetailsJSON: JSON.stringify({
           paymentId: "",
           referencePaymentId: "",
-          provider: ""
+          provider: "",
         }),
       });
       throw new Error(e.message);
@@ -1583,7 +1622,7 @@ Thank you for choosing us.`;
         stackTrace: `${JSON.stringify(error)}`,
         additionalDetailsJSON: JSON.stringify({
           paymentId: paymentId,
-          provider: ""
+          provider: "",
         }),
       });
       throw new Error("Error while fetching for payment link");
@@ -1609,7 +1648,11 @@ Thank you for choosing us.`;
   saveSplitPaymentAmountIntoCashOut = async (bookingId: string, amount: number) => {
     try {
       const [result] = await this.database
-        .select({ ownerId: bookings.ownerId, originalAmountBeforeAddingCharges: bookingSplitPayment.payoutAmount, isPaid: bookingSplitPayment.isPaid })
+        .select({
+          ownerId: bookings.ownerId,
+          originalAmountBeforeAddingCharges: bookingSplitPayment.payoutAmount,
+          isPaid: bookingSplitPayment.isPaid,
+        })
         .from(bookings)
         .leftJoin(bookingSplitPayment, eq(bookingSplitPayment.bookingId, bookingId))
         .where(eq(bookings.id, bookingId));
@@ -1656,7 +1699,7 @@ Thank you for choosing us.`;
         stackTrace: `${err.stack}`,
         additionalDetailsJSON: JSON.stringify({
           bookingId: bookingId,
-          amount: amount
+          amount: amount,
         }),
       });
       throw new Error("Error while saving split payment amount");
@@ -1665,24 +1708,27 @@ Thank you for choosing us.`;
   getSplitPaymentUsersByBookingId = async (bookingId: string) => {
     try {
       const result = await this.database
-        .select({ email: bookingSplitPayment.email, amount: bookingSplitPayment.payoutAmount, isPaid: bookingSplitPayment.isPaid, index: bookingSplitPayment.savedIndex })
+        .select({
+          email: bookingSplitPayment.email,
+          amount: bookingSplitPayment.payoutAmount,
+          isPaid: bookingSplitPayment.isPaid,
+          index: bookingSplitPayment.savedIndex,
+        })
         .from(bookingSplitPayment)
         .where(and(eq(bookingSplitPayment.bookingId, bookingId), eq(bookingSplitPayment.isActive, 1)));
       return result;
     } catch (err: any) {
       await loggerService.errorLog({
         userId: "",
-        url: '',
+        url: "",
         userAgent: "",
         message: "INTERNAL SERVER ERROR",
         stackTrace: `${err.stack}`,
         additionalDetailsJSON: JSON.stringify({
-          bookingId: bookingId
+          bookingId: bookingId,
         }),
       });
       throw new Error("Error while fetching split payment users");
     }
-
-  }
-
+  };
 }

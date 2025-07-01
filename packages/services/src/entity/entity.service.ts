@@ -104,7 +104,7 @@ export class EntityService {
    */
   getEntityFromDomain = async (domain: string, rootDomain: string) => {
     const subdomain = domain.endsWith(`.${rootDomain}`) ? domain.replace(`.${rootDomain}`, "") : null;
-    //const subdomain = "demo.golfdistrict.in";
+    // const subdomain = "demo.golfdistrict.in";
 
     const query = this.database
       .select({
