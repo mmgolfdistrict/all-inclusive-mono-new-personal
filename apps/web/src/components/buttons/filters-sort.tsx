@@ -2,6 +2,8 @@ import { useCourseContext } from "~/contexts/CourseContext";
 import { FiltersIcon } from "../icons/filters";
 import { SortIcon } from "../icons/sort";
 import { useAppContext } from "~/contexts/AppContext";
+import { CancelIcon } from "../icons/cancel";
+import { useFiltersContext, type DateType } from "~/contexts/FiltersContext";
 
 export const FilterSort = ({
   toggleFilters,
@@ -11,6 +13,10 @@ export const FilterSort = ({
   toggleSort: () => void;
 }) => {
   const { entity } = useAppContext();
+  const {
+    dateType,
+    setDateType,
+  } = useFiltersContext();
 
   return (
     <div className="flex text-[12px] text-secondary-black transition-colors">
@@ -20,6 +26,16 @@ export const FilterSort = ({
         data-testid="toggle-filter-id"
       >
         <FiltersIcon className="h-[14px] w-[14px]" primaryColor={entity?.color1} /> Filters
+        {dateType !== ("All" as DateType) && (
+          <CancelIcon
+            width={16}
+            height={16}
+            onClick={(e) => {
+              e.stopPropagation(); // prevent triggering parent button click
+              setDateType("All");  // your function to reset
+            }}
+          />
+        )}
       </button>
       {/* <button
         onClick={toggleSort}

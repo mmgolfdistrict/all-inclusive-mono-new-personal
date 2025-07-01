@@ -5,7 +5,7 @@ import {
 } from "@golf-district/shared";
 import { WeatherIcons } from "~/constants/weather-icons";
 import { useCourseContext } from "~/contexts/CourseContext";
-import { useFiltersContext } from "~/contexts/FiltersContext";
+import { DateType, useFiltersContext } from "~/contexts/FiltersContext";
 import { api } from "~/utils/api";
 import { dayMonthDate } from "~/utils/formatters";
 import { useEffect, useMemo, useRef } from "react";
@@ -18,6 +18,7 @@ import { TeeTimeV2 } from "../cards/tee-time-v2";
 import { TeeTimeSkeletonV2 } from "./tee-time-skeleton-v2";
 import { OutlineButton } from "../buttons/outline-button";
 import dayjs from "dayjs";
+import { CancelIcon } from "../icons/cancel";
 
 export const DailyTeeTimesMobileV2 = ({
   date,
@@ -55,6 +56,11 @@ export const DailyTeeTimesMobileV2 = ({
   const { onMouseDown } = useDraggableScroll(overflowRef, {
     direction: "horizontal",
   });
+
+  const {
+    dateType,
+    setDateType,
+  } = useFiltersContext();
 
   const entry = useIntersectionObserver(nextPageRef, {});
   const isVisible = !!entry?.isIntersecting;
@@ -219,10 +225,20 @@ export const DailyTeeTimesMobileV2 = ({
                 data-qa={dayMonthDate(date)}
               >
                 <OutlineButton
-                  className="!px-3 !py-1"
+                  className="!px-3 !py-1 w-full flex items-center justify-between gap-2"
                   onClick={toggleFilters}
                 >
                   {dayMonthDate(date)}
+                  {dateType !== ("All" as DateType) && (
+                    <CancelIcon
+                      width={16}
+                      height={16}
+                      onClick={(e) => {
+                        e.stopPropagation(); // prevent triggering parent button click
+                        setDateType("All");  // your function to reset
+                      }}
+                    />
+                  )}
                 </OutlineButton>
               </div>
               {isLoadingWeather && !weather ? (
