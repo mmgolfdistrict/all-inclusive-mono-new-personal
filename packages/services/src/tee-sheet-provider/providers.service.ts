@@ -73,7 +73,7 @@ export class ProviderService extends CacheService {
     courseId: string,
     providerCourseConfiguration?: string
   ): Promise<{ provider: ProviderAPI; token: string }> => {
-    this.logger.info(`getProvider called with providerId: ${internalProviderIdentifier}`);
+    // this.logger.info(`getProvider called with providerId: ${internalProviderIdentifier}`);
 
     const provider = this.teeSheetProviders.find((p) => p.providerId === internalProviderIdentifier);
     if (!provider) {
@@ -123,7 +123,7 @@ export class ProviderService extends CacheService {
         }
       } catch (error) {
         this.logger.error(`Error fetching token: ${error}`);
-        this.logger.info("Token needs to be generated locally");
+        // this.logger.info("Token needs to be generated locally");
         tokenNeedsLocalGeneration = true;
       } finally {
         if (tokenNeedsLocalGeneration) {
@@ -172,7 +172,7 @@ export class ProviderService extends CacheService {
     endTime: string,
     date: string
   ): Promise<TeeTimeResponse[]> {
-    this.logger.info(`getTeeTimes called with courseId: ${courseId}`);
+    // this.logger.info(`getTeeTimes called with courseId: ${courseId}`);
     const { provider, token } = await this.getProviderAndKey(providerId, courseId);
 
     return provider.getTeeTimes(token, courseId, teeSheetId, startTime, endTime, date);
@@ -192,7 +192,7 @@ export class ProviderService extends CacheService {
     options: { data: any },
     userId: string
   ): Promise<BookingResponse> {
-    this.logger.info(`createBooking called with courseId: ${courseId}`);
+    // this.logger.info(`createBooking called with courseId: ${courseId}`);
     const { provider, token } = await this.getProviderAndKey(providerId, courseId);
 
     return provider.createBooking(token, courseId, teeTimeId, options, userId);
@@ -213,7 +213,7 @@ export class ProviderService extends CacheService {
     options: any,
     slotId: string
   ): Promise<BookingResponse> {
-    this.logger.info(`updateTeeTime called with courseId: ${courseId}`);
+    // this.logger.info(`updateTeeTime called with courseId: ${courseId}`);
     const { provider, token } = await this.getProviderAndKey(providerId, courseId);
 
     return provider.updateTeeTime(token, courseId, teeTimeId, bookingId, options, slotId);

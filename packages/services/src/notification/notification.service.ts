@@ -150,7 +150,7 @@ export class NotificationService {
    * @returns A promise that resolves when the email is successfully sent.
    */
   sendEmail = async (email: string, subject: string, body: string) => {
-    this.logger.info(`Sending email to ${email}`);
+    // this.logger.info(`Sending email to ${email}`);
 
     const bccEmailsList = process.env.BCC_CUSTOMER_EMAIL_LIST ? process.env.BCC_CUSTOMER_EMAIL_LIST : "";
     const bccEmails = bccEmailsList.split(",");
@@ -203,7 +203,7 @@ export class NotificationService {
       const emailListSet = new Set(emailListLowercase);
       emailList = Array.from(emailListSet);
     }
-    this.logger.info(`Sending email to ${emailList.toString()}`);
+    // this.logger.info(`Sending email to ${emailList.toString()}`);
     const appSettingService = new AppSettingsService(
       this.database,
       process.env.REDIS_URL!,
@@ -292,7 +292,7 @@ export class NotificationService {
    * await sendSMS('+1234567890', 'Hello, this is the SMS body.');
    */
   sendSMS = async (phoneNumber: string, body: string) => {
-    this.logger.info(`Sending SMS to ${phoneNumber}`);
+    // this.logger.info(`Sending SMS to ${phoneNumber}`);
     if (process.env.NODE_ENV === "production") {
       this.twilioClient.messages
         .create({

@@ -64,7 +64,7 @@ export class GeoService {
    * ```
    */
   async geoCodeAddress(address: string): Promise<{ lat: number; lng: number }> {
-    this.logger.info(`geoCodeAddress called with address: ${address}`);
+    // this.logger.info(`geoCodeAddress called with address: ${address}`);
     const client = new LocationClient(this.config);
     const command = new SearchPlaceIndexForTextCommand({
       IndexName: GeoService.PLACE_INDEX_NAME,
@@ -72,7 +72,7 @@ export class GeoService {
       MaxResults: 1,
     });
     const data = await client.send(command).catch((err) => {
-      this.logger.error(`Error geocoding address: ${err}`);
+      // this.logger.error(`Error geocoding address: ${err}`);
       loggerService.errorLog({
         userId: "",
         url: "/GeoService/geoCodeAddress",

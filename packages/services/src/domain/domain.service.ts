@@ -214,7 +214,7 @@ export class DomainService {
    * console.log(verificationResult);
    */
   private verifyDomain = async (domain: string): Promise<DomainVerificationResponse> => {
-    this.logger.info(`verifyDomain called with domain: ${domain}`);
+    // this.logger.info(`verifyDomain called with domain: ${domain}`);
     return await fetch(
       `https://api.vercel.com/v9/projects/${this.PROJECT_ID_VERCEL}/domains/${domain}/verify?teamId=${this.TEAM_ID_VERCEL}`,
       {

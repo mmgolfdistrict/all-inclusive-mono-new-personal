@@ -505,7 +505,7 @@ export class HyperSwitchService {
       };
       const deletePaymentMethodResponse = await fetch(url, options);
       const deletedMethod = await deletePaymentMethodResponse.json();
-      this.logger.info("Payment method deleted: ", deletedMethod);
+      // this.logger.info("Payment method deleted: ", deletedMethod);
       console.log("Payment method deleted", deletedMethod);
     } catch (error: any) {
       this.logger.error(`Error removing payment method: ${error}`);
@@ -588,7 +588,7 @@ export class HyperSwitchService {
         .insert(failedBooking)
         .values(failedBookingData)
         .execute();
-      this.logger.info(`Failed booking saved on database with id: ${JSON.stringify(failedBookingData.map((booking) => booking.id))}`);
+      // this.logger.info(`Failed booking saved on database with id: ${JSON.stringify(failedBookingData.map((booking) => booking.id))}`);
     } catch (error: any) {
       this.logger.error(`Error saving failed booking on database: ${JSON.stringify(error)}`);
       void loggerService.errorLog({
