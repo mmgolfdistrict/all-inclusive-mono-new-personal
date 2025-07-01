@@ -937,8 +937,8 @@ export default function CourseHomePage() {
 
           {isMobile && (
             <div
-              className={`w-full overflow-x-auto left-0 top-0 z-10 bg-secondary-white pt-2 px-4 pb-3 shadow-md ${(courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
-                ? "fixed"
+              className={`w-full overflow-x-auto left-0 top-0 z-10 bg-secondary-white pt-2 pb-2 ${(courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
+                ? "fixed shadow-md"
                 : ""
                 }`}
               style={{

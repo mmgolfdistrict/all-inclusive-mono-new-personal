@@ -203,7 +203,7 @@ export const DailyTeeTimesMobileV2 = ({
         ) : (
           <div className="w-full flex items-center gap-3 flex-col">
             <div
-              className={`w-full flex items-center justify-between bg-white bg-secondary-white pt-2 px-4 pb-3 
+              className={`w-full flex items-center justify-between bg-white bg-secondary-white px-4 pb-3 
                ${(courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
                   ? `sticky shadow-md`
                   : "relative"
