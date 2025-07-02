@@ -840,16 +840,18 @@ export default function CourseHomePage() {
   }, [selectedDate, isLoadingTeeTimeDate, isLoading, specialEventsLoading, allCoursesDataLoading]);
 
   useEffect(() => {
-    if (isMobile) {
-      if (dateType === "Furthest Day Out To Book") {
+    if (dateType === "Furthest Day Out To Book") {
+      if (isMobile) {
         const formattedEndDate = dayjs.utc(endDate).format("ddd, DD MMM YYYY 00:00:00 [GMT]");
         setSelectedDate(formattedEndDate);
+      } else {
+        setSelectedDate(startDate); // use swapped logic for desktop
       }
-      else if (startDate) {
-        setSelectedDate(startDate);
-      }
+    } else if (startDate) {
+      setSelectedDate(startDate);
     }
-  }, [startDate, dateType, endDate]);
+  }, [startDate, endDate, dateType, isMobile]);
+
 
   const handleDateSelect = (date: string) => {
     setSelectedDate(date);
@@ -935,9 +937,9 @@ export default function CourseHomePage() {
 
           {isMobile && (
             <div
-              className={`w-full overflow-x-auto ${(courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
-                ? "fixed left-0 z-10 bg-secondary-white pt-2 px-4 pb-3 shadow-md"
-                : "relative"
+              className={`w-full overflow-x-auto left-0 top-0 z-10 bg-secondary-white pt-2 pb-2 ${(courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
+                ? "fixed shadow-md"
+                : ""
                 }`}
               style={{
                 top: (courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
@@ -991,7 +993,7 @@ export default function CourseHomePage() {
                             backgroundColor: isSelected ? entity?.color1 : "rgb(255 255 255)",
                           }}
                         >
-                          <span className="text-[11px] uppercase tracking-wide">
+                          <span className="text-md font-med tracking-wide">
                             {dateObj.format("MMM")}
                           </span>
                           <span className="text-xl font-bold leading-tight">

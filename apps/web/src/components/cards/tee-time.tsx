@@ -165,7 +165,7 @@ export const TeeTime = ({
       document.body.classList.remove("overflow-hidden");
     }
   }, [isMakeAnOfferOpen, isManageOpen]);
-  const { setPrevPath } = useAppContext();
+  const { entity, setPrevPath } = useAppContext();
 
   const toggleWatchlist = api.watchlist.toggleWatchlist.useMutation();
   const [optimisticLike, setOptimisticLike] = useState(isLiked);
@@ -512,7 +512,8 @@ export const TeeTime = ({
                 >
                   <Heart
                     className={`w-[13px] md:w-[18px]`}
-                    fill={optimisticLike ? "#40942A" : undefined}
+                    fill={optimisticLike ? entity?.color1 : undefined}
+                    stroke={entity?.color1}
                   />
                 </OutlineButton>
               </div>

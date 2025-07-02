@@ -82,6 +82,7 @@ export const TeeTimeV2 = ({
     allowSplit: boolean;
 }) => {
     const [, copy] = useCopyToClipboard();
+    const { entity } = useAppContext();
     const [isCopied, setIsCopied] = useState<boolean>(false);
     const { course } = useCourseContext();
     const courseId = course?.id;
@@ -433,7 +434,8 @@ export const TeeTimeV2 = ({
                                 >
                                     <Heart
                                         className={`w-[13px] md:w-[18px]`}
-                                        fill={optimisticLike ? "#40942A" : undefined}
+                                        fill={optimisticLike ? entity?.color1 : undefined}
+                                        stroke={entity?.color1}
                                     />
                                 </OutlineButton>
                             ) : null}
