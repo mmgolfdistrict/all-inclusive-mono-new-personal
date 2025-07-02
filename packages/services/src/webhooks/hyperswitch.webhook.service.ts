@@ -92,7 +92,7 @@ export class HyperSwitchWebhookService {
     private readonly bookingService: BookingService,
     private readonly sensibleService: SensibleService,
     upStashClientToken: string,
-    private readonly hyperSwitchService: HyperSwitchService,
+    private readonly hyperSwitchService: HyperSwitchService
   ) {
     this.qStashClient = new Client({
       token: upStashClientToken,
@@ -2143,16 +2143,107 @@ export class HyperSwitchWebhookService {
   //   return referrer?.startsWith(validHost) || false;
   // };
 
-  finixWebhookService = async (entityType: string, entity: string, paymentId: string, paymentState: string) => {
+  saveSplitPaymentAmountIntoCashOut = async (bookingId: string, amount: number) => {
+    try {
+      const [result] = await this.database
+        .select({
+          ownerId: bookings.ownerId,
+          originalAmountBeforeAddingCharges: bookingSplitPayment.payoutAmount,
+          isPaid: bookingSplitPayment.isPaid,
+        })
+        .from(bookings)
+        .leftJoin(bookingSplitPayment, eq(bookingSplitPayment.bookingId, bookingId))
+        .where(eq(bookings.id, bookingId));
+      if (!result) {
+        throw new Error("Error while fetching for booking");
+      }
+      const currentDate = new Date();
+      const radeemAfterMinutes = await appSettingService.get("CASH_OUT_AFTER_MINUTES");
+      const redeemAfterDate = this.addMinutes(currentDate, Number(radeemAfterMinutes));
+      const customerRecievableData = [
+        {
+          id: randomUUID(),
+          userId: result?.ownerId,
+          amount: result?.originalAmountBeforeAddingCharges ?? 0,
+          type: "SPLIT_PAYMENT",
+          transferId: "",
+          sensibleAmount: 0,
+          createdDateTime: this.formatCurrentDateTime(currentDate),
+          redeemAfter: this.formatCurrentDateTime(redeemAfterDate),
+        },
+      ];
+      await this.database
+        .insert(customerRecievable)
+        .values(customerRecievableData)
+        .catch(async (err: any) => {
+          this.logger.error(err);
+          await loggerService.errorLog({
+            userId: "",
+            url: `/HyperSwitchWebhookService/handleSecondHandItem`,
+            userAgent: "",
+            message: "ERROR_CREATING_CUSTOMER_RECEIVABLE_FOR_TEE_TIME",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              customerRecievableData,
+            }),
+          });
+        });
+      return {
+        message:"customer receviable amount added successfully"
+      }
+    } catch (err: any) {
+      await loggerService.errorLog({
+        userId: "",
+        url: `/HyperSwitchWebhookService/handleSecondHandItem`,
+        userAgent: "",
+        message: "INTERNAL SERVER ERROR",
+        stackTrace: `${err.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          bookingId: bookingId,
+          amount: amount,
+        }),
+      });
+      throw new Error("Error while saving split payment amount");
+    }
+  };
+
+  finixWebhookService = async (
+    entityType: string,
+    entity: string,
+    paymentId: string,
+    paymentState: string
+  ) => {
     try {
       this.logger.warn("paymentId is here", paymentId);
       this.logger.warn("payment state is here", paymentState);
       if (entityType === "updated" && entity === "payment_link" && paymentState === "COMPLETED") {
-        const updateStatus = await this.database.update(bookingSplitPayment).set({ isPaid: 1, webhookStatus: paymentState }).where(eq(bookingSplitPayment.paymentId, paymentId));
+        const updateStatus = await this.database
+            .update(bookingSplitPayment)
+            .set({ webhookStatus: paymentState })
+            .where(eq(bookingSplitPayment.paymentId, paymentId));
+        const [result] = await this.database
+          .select({
+            email: bookingSplitPayment.email,
+            bookingId: bookingSplitPayment.bookingId,
+            amount: bookingSplitPayment.payoutAmount,
+            paymentId: bookingSplitPayment.paymentId,
+            collectedAmount: bookingSplitPayment.collectedAmount,
+            isPaid: bookingSplitPayment.isPaid,
+            webhookStatus: bookingSplitPayment.webhookStatus,
+          })
+          .from(bookingSplitPayment)
+          .where(eq(bookingSplitPayment.paymentId, paymentId));
+        if (result?.webhookStatus === "COMPLETED") {
+          const saveToProcessfunds = await this.saveSplitPaymentAmountIntoCashOut(
+            result.bookingId,
+            Number(result?.amount)
+          );
+           this.logger.warn("insert successfully",saveToProcessfunds);
+        }
         return {
           message: "Payment Webhook status successFully",
-          error: false
-        }
+          error: false,
+        };
       }
     } catch (error) {
       console.log(error);
@@ -2187,7 +2278,7 @@ export class HyperSwitchWebhookService {
       }
     } catch (error: any) {
       console.log(error.message);
-      throw new Error("Error while updating split payment status")
+      throw new Error("Error while updating split payment status");
     }
-  }
+  };
 }

@@ -1230,11 +1230,11 @@ Thank you for choosing us.`;
         };
       } else if (referencePaymentId) {
         const [isUserAlreadyPaid] = await this.database
-          .select({ isPaid: bookingSplitPayment.isPaid })
+          .select({ isPaid: bookingSplitPayment.isPaid,webHookstatus:bookingSplitPayment.webhookStatus })
           .from(bookingSplitPayment)
           .where(eq(bookingSplitPayment.id, referencePaymentId));
-
-        if (isUserAlreadyPaid?.isPaid === 1) {
+          console.warn("isUserAlreadyPaid",isUserAlreadyPaid)
+        if (isUserAlreadyPaid?.isPaid === 1 && isUserAlreadyPaid.webHookstatus === "COMPLETED") {
           return {
             message: "This payment is already paid",
             email: "",
@@ -1243,7 +1243,8 @@ Thank you for choosing us.`;
             amount: "",
           };
         }
-        await this.database
+        if(isUserAlreadyPaid?.webHookstatus === "COMPLETED" && isUserAlreadyPaid?.isPaid === 0){
+          await this.database
           .update(bookingSplitPayment)
           .set({
             isPaid: 1,
@@ -1264,6 +1265,29 @@ Thank you for choosing us.`;
               }),
             });
           });
+        }else{
+          await this.database
+          .update(bookingSplitPayment)
+          .set({
+            isPaid: 1,
+            // webhookStatus: "COMPLETED"
+          })
+          .where(eq(bookingSplitPayment.id, referencePaymentId))
+          .execute().catch(async (e: any) => {
+            await loggerService.errorLog({
+              message: "ERROR_UPDATING_FINIX_PAYMENT_STATUS",
+              userId: "",
+              url: "/auth",
+              userAgent: "",
+              stackTrace: `${JSON.stringify(e)}`,
+              additionalDetailsJSON: JSON.stringify({
+                paymentId: paymentId,
+                referencePaymentId: referencePaymentId,
+                provider: "finix"
+              }),
+            });
+          });
+        }
         const [result] = await this.database
           .select({
             email: bookingSplitPayment.email,
