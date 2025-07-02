@@ -25,7 +25,7 @@ export class CourseSEOService {
         .from(courseSEOs)
         .where(eq(courseSEOs.courseId, courseId));
 
-      this.logger.info(`Course render settings fetched: ${courseId}, ${JSON.stringify(courseSEO)}`);
+      // this.logger.info(`Course render settings fetched: ${courseId}, ${JSON.stringify(courseSEO)}`);
       return courseSEO;
     } catch (error: any) {
       this.logger.error(error);

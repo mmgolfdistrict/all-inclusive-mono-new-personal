@@ -736,7 +736,7 @@ export class BookingService {
       .orderBy(asc(teeTimes.date), asc(bookingslots.slotPosition))
       .execute();
     if (!data.length) {
-      this.logger.info(`No tee times found for user: ${userId}`);
+      // this.logger.info(`No tee times found for user: ${userId}`);
       loggerService.errorLog({
         applicationName: "golfdistrict-foreup",
         clientIP: "",
@@ -4184,7 +4184,7 @@ export class BookingService {
             }
           }
 
-          this.logger.info("Fetching course contacts list");
+          // this.logger.info("Fetching course contacts list");
           const courseContactsList = await this.database
             .select({
               email: courseContacts.email,
@@ -4212,11 +4212,11 @@ export class BookingService {
               return [];
             });
 
-          this.logger.info("Fetching user details");
+          // this.logger.info("Fetching user details");
           const [user] = await this.database.select().from(users).where(eq(users.id, userId)).execute();
           const emailList = courseContactsList.map((contact) => contact.email);
           if (emailList.length > 0) {
-            this.logger.info("Sending email to course contacts");
+            // this.logger.info("Sending email to course contacts");
             emailList.map(async (email) => {
               await this.notificationService.sendEmailByTemplate(
                 email,
@@ -4302,7 +4302,7 @@ export class BookingService {
         this.logger.error(`No booking id found in response from provider: ${JSON.stringify(booking)}`);
         throw new Error("No booking id found in response from provider");
       }
-      this.logger.info(`Creating tokenized booking`);
+      // this.logger.info(`Creating tokenized booking`);
       const bookingId = await this.tokenizeService
         .tokenizeBooking({
           redirectHref,
@@ -5556,7 +5556,7 @@ export class BookingService {
             merchandiseItemIds.push(...merchandiseWithTaxOverrideItems.map((item) => item.id));
 
             if (merchandiseItemIds.length > 0) {
-              this.logger.info("Fetching purchased merchandise");
+              // this.logger.info("Fetching purchased merchandise");
               purchasedMerchandise = await db
                 .select({
                   id: courseMerchandise.id,
@@ -5584,7 +5584,7 @@ export class BookingService {
                 });
             }
             for (const merchandise of purchasedMerchandise) {
-              this.logger.info("Preparing merchandise details");
+              // this.logger.info("Preparing merchandise details");
               const merchandiseItem = merchandiseItems.find((item) => item.id === merchandise.id);
               merchandiseDetails.push({
                 caption: merchandise.caption,
@@ -5592,7 +5592,7 @@ export class BookingService {
               });
             }
 
-            this.logger.info("Fetching course contacts list");
+            // this.logger.info("Fetching course contacts list");
             const courseContactsList = await this.database
               .select({
                 email: courseContacts.email,
@@ -5620,11 +5620,11 @@ export class BookingService {
                 return [];
               });
 
-            this.logger.info("Fetching user details");
+            // this.logger.info("Fetching user details");
             const [user] = await this.database.select().from(users).where(eq(users.id, userId)).execute();
             const emailList = courseContactsList.map((contact) => contact.email);
             if (emailList.length > 0) {
-              this.logger.info("Sending email to course contacts");
+              // this.logger.info("Sending email to course contacts");
               emailList.map(async (email) => {
                 await this.notificationService.sendEmailByTemplate(
                   email,
@@ -5709,7 +5709,7 @@ export class BookingService {
         }
       }
 
-      this.logger.info(`Creating tokenized booking`);
+      // this.logger.info(`Creating tokenized booking`);
 
       //create tokenized bookings
 
@@ -6607,9 +6607,9 @@ export class BookingService {
             });
             throw new Error("Error creating listing");
           });
-        this.logger.info(
-          `Listing created successfully. for groupId ${groupId} teeTimeId ${lastBooking.teeTimeId}`
-        );
+        // this.logger.info(
+        //   `Listing created successfully. for groupId ${groupId} teeTimeId ${lastBooking.teeTimeId}`
+        // );
 
         const [date, time] = lastBooking.providerDate!.split("T");
 

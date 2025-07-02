@@ -24,7 +24,7 @@ export class AuctionService {
    *
    * @param database - The database client used to perform auction-related operations.
    */
-  constructor(private readonly database: Db, private readonly hyperSwitch: HyperSwitchService) {}
+  constructor(private readonly database: Db, private readonly hyperSwitch: HyperSwitchService) { }
 
   /**
    * Creates a new auction for a specified course ID.
@@ -60,7 +60,7 @@ export class AuctionService {
       this.logger.error("Starting bid time cannot be after end bid time");
       throw new Error("Starting bid time cannot be after end bid time");
     }
-    this.logger.info(`Creating auction for course ${courseId}`);
+    // this.logger.info(`Creating auction for course ${courseId}`);
     const auction = {
       id: randomUUID(),
       createdById,
@@ -131,7 +131,7 @@ export class AuctionService {
     cursor?: string,
     limit = 10
   ): Promise<{ auctions: SelectAuctions[]; nextCursor: string | null }> => {
-    this.logger.info(`Getting auctions for course ${courseId}`);
+    // this.logger.info(`Getting auctions for course ${courseId}`);
 
     const query = this.database
       .select()
@@ -179,7 +179,7 @@ export class AuctionService {
     bidAmount: number,
     paymentMethodId?: string
   ): Promise<void> => {
-    this.logger.info(`Placing bid for auction ${auctionId}`);
+    // this.logger.info(`Placing bid for auction ${auctionId}`);
     const auction = await this.database
       .select()
       .from(auctions)
@@ -292,7 +292,7 @@ export class AuctionService {
    * @throws Will throw an error if the purchase is invalid or if there are issues recording the purchase.
    */
   buyNow = async (userId: string, auctionId: string): Promise<{ clientSecret: string | null }> => {
-    this.logger.info(`Buying now for auction ${auctionId}`);
+    // this.logger.info(`Buying now for auction ${auctionId}`);
     const [auction] = await this.database
       .select({ buyNowPrice: auctions.buyNowPrice })
       .from(auctions)
@@ -354,7 +354,7 @@ export class AuctionService {
    * @throws Will throw an error if the auction cannot be finalized or if there are issues determining the winning bid.
    */
   finalizeAuction = async (auctionId: string) => {
-    this.logger.info(`Finalizing auction ${auctionId}`);
+    // this.logger.info(`Finalizing auction ${auctionId}`);
     const auction = await this.database
       .select()
       .from(auctions)
