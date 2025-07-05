@@ -1009,7 +1009,7 @@ export const CheckoutForm = ({
     (!roundUpCharityId ? 0 : Number(donateValue)) +
     (!course?.supportsSellingMerchandise ? 0 : (merchandiseTotalCharge));
 
-  const TotalAmt = Total.toLocaleString("en-US", {
+  const TotalAmt = (Math.ceil(Total * 100) / 100).toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });

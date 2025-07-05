@@ -417,13 +417,13 @@ export class CheckoutService {
         const merchandiseTaxTotal = (merchandiseCharge * ((teeTime?.merchandiseTaxPercent ?? 0) / 100)) / 100;
         const additionalTaxes = Number(
           greenFeeTaxTotal +
-            markupTaxTotal +
-            weatherGuaranteeTaxTotal +
-            cartFeeTaxPercentTotal +
-            merchandiseTaxTotal +
-            merchandiseOverriddenTaxAmount
+          markupTaxTotal +
+          weatherGuaranteeTaxTotal +
+          cartFeeTaxPercentTotal +
+          merchandiseTaxTotal +
+          merchandiseOverriddenTaxAmount
         );
-        total = total + additionalTaxes * 100;
+        total = Number(total.toFixed(2)) + additionalTaxes * 100;
       }
     }
 
@@ -503,15 +503,17 @@ export class CheckoutService {
             cartFeeTaxPercentTotal +
             merchandiseTaxTotal +
             merchandiseOverriddenTaxAmount
-          ).toFixed(2)
+          )
         );
-        total = total + merchandiseWithTaxOverrideCharge + additionalTaxes * 100;
+        total = Number(total.toFixed(2)) + merchandiseWithTaxOverrideCharge + additionalTaxes * 100;
       }
     }
     // const tax = await this.stripeService.getTaxRate(customerCart.cart).catch((err) => {
     //   this.logger.error(`Error calculating tax: ${err}`);
     //   throw new Error(`Error calculating tax: ${err}`);
     // });
+    // ceil the total
+    total = Math.ceil(total);
     //@TODO: metadata to include sensible
     //@TODO: update total form discount
     const [record] = await this.database
@@ -750,9 +752,9 @@ export class CheckoutService {
             cartFeeTaxPercentTotal +
             merchandiseTaxTotal +
             merchandiseOverriddenTaxAmount
-          ).toFixed(2)
+          )
         );
-        total = total + merchandiseWithTaxOverrideCharge + additionalTaxes * 100;
+        total = Number(total.toFixed(2)) + merchandiseWithTaxOverrideCharge + additionalTaxes * 100;
       }
     }
     if (isFirstHandGroup.length) {
@@ -831,9 +833,9 @@ export class CheckoutService {
             cartFeeTaxPercentTotal +
             merchandiseTaxTotal +
             merchandiseOverriddenTaxAmount
-          ).toFixed(2)
+          )
         );
-        total = total + merchandiseWithTaxOverrideCharge + additionalTaxes * 100;
+        total = Number(total.toFixed(2)) + merchandiseWithTaxOverrideCharge + additionalTaxes * 100;
       }
     }
     console.log(`paymentId = ${paymentId}`);
@@ -852,6 +854,10 @@ export class CheckoutService {
       .innerJoin(providers, eq(providers.id, providerCourseLink.providerId))
       .where(eq(providerCourseLink.courseId, customerCart.courseId))
       .execute();
+
+    // ceil the total
+    total = Math.ceil(total);
+
     console.log("====>>>> manavtest", parseInt(total.toString()));
     const intentData = {
       currency: "USD",

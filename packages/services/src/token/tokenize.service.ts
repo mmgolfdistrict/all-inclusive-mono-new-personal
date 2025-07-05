@@ -486,7 +486,8 @@ export class TokenizeService {
     }
 
     if (isFirstHandGroupBooking && providerBookings) {
-      let remainingAmount = Math.round((normalizedCartData.total || 0) + additionalTaxes.additionalTaxes * 100);
+      let remainingAmount = Math.ceil((normalizedCartData.total || 0) + additionalTaxes.additionalTaxes * 100);
+
       for (const booking of providerBookings) {
         const isLastBooking = (providerBookings.length - bookingIds.length) === 1;
         const teeTimeData = existingTeeTimes.find((existingTeeTime) => existingTeeTime.id === booking.teeTimeId);
@@ -632,7 +633,7 @@ export class TokenizeService {
         totalTaxesAmount: additionalTaxes.additionalTaxes * 100, // normalizedCartData.taxCharge * 100 || 0,
         charityId: normalizedCartData.charityId || null,
         totalCharityAmount: normalizedCartData.charityCharge * 100 || 0,
-        totalAmount: (normalizedCartData.total || 0) + additionalTaxes.additionalTaxes * 100,
+        totalAmount: Math.ceil((normalizedCartData.total || 0) + additionalTaxes.additionalTaxes * 100),
         providerPaymentId: paymentId,
         weatherQuoteId: normalizedCartData.weatherQuoteId ?? null,
         weatherGuaranteeId: acceptedQuote?.id ? acceptedQuote?.id : null,
