@@ -79,6 +79,8 @@ export const DailyTeeTimesMobileV2 = ({
     priceRange,
     startTime,
     sortValue,
+    setGolfers,
+    setStartTime,
   } = useFiltersContext();
   const teeTimeStartTime = startTime[0];
   const teeTimeEndTime = startTime[1];
@@ -229,16 +231,19 @@ export const DailyTeeTimesMobileV2 = ({
                   onClick={toggleFilters}
                 >
                   {dayMonthDate(date)}
-                  {dateType !== ("All" as DateType) && (
-                    <CancelIcon
-                      width={16}
-                      height={16}
-                      onClick={(e) => {
-                        e.stopPropagation(); // prevent triggering parent button click
-                        setDateType("All");  // your function to reset
-                      }}
-                    />
-                  )}
+                  {(dateType !== ("All" as DateType) || golfers !== "Any" || course?.courseOpenTime !== startTime[0] || course?.courseCloseTime !== startTime[1])
+                    && (
+                      <CancelIcon
+                        width={16}
+                        height={16}
+                        onClick={(e) => {
+                          e.stopPropagation(); // prevent triggering parent button click
+                          setDateType("All");  // your function to reset
+                          setGolfers("Any"); // your function to reset
+                          setStartTime([course?.courseOpenTime ?? 0, course?.courseCloseTime ?? 0]); // reset to default open and close times
+                        }}
+                      />
+                    )}
                 </OutlineButton>
               </div>
               {isLoadingWeather && !weather ? (

@@ -13,9 +13,14 @@ export const FilterSort = ({
   toggleSort: () => void;
 }) => {
   const { entity } = useAppContext();
+  const { course } = useCourseContext();
   const {
     dateType,
     setDateType,
+    golfers,
+    startTime,
+    setGolfers,
+    setStartTime
   } = useFiltersContext();
 
   return (
@@ -26,13 +31,15 @@ export const FilterSort = ({
         data-testid="toggle-filter-id"
       >
         <FiltersIcon className="h-[14px] w-[14px]" primaryColor={entity?.color1} /> Filters
-        {dateType !== ("All" as DateType) && (
+        {(dateType !== "All" as DateType || golfers !== "Any" || course?.courseOpenTime !== startTime[0] || course?.courseCloseTime !== startTime[1]) && (
           <CancelIcon
             width={16}
             height={16}
             onClick={(e) => {
               e.stopPropagation(); // prevent triggering parent button click
               setDateType("All");  // your function to reset
+              setGolfers("Any"); // your function to reset
+              setStartTime([course?.courseOpenTime ?? 0, course?.courseCloseTime ?? 0]); // reset to default open and close times
             }}
           />
         )}
