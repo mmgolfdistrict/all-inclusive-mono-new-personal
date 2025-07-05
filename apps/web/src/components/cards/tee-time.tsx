@@ -25,6 +25,7 @@ import { Spinner } from "../loading/spinner";
 import { ManageTeeTimeListing } from "../my-tee-box-page/manage-tee-time-listing";
 import { Tooltip } from "../tooltip";
 import { MakeAnOffer } from "../watchlist-page/make-an-offer";
+import { Share } from "../icons/share";
 
 const PlayersOptions = ["1", "2", "3", "4"];
 
@@ -461,47 +462,9 @@ export const TeeTime = ({
             )}
           </div>
 
-          {soldById === user?.id && session ? (
-            <FilledButton
-              onClick={openManage}
-              className="whitespace-nowrap"
-              data-testid="sell-button-id"
-              data-test={teeTimeId}
-              data-qa="Buy"
-              data-cy={time}
-            >
-              {status === "UNLISTED" ? "Sell" : "Manage"}
-            </FilledButton>
-          ) : (
-            <>
-              {isSuggested ? (
-                <FilledButton
-                  className="whitespace-nowrap !px-3 !min-w-[82px] md:min-w-[110px]"
-                  onClick={makeAnOffer}
-                  data-testid="make-an-offer-id"
-                  data-test={teeTimeId}
-                  data-qa="Make an Offer"
-                  data-cy={time}
-                >
-                  Make an Offer
-                </FilledButton>
-              ) : (
-                <FilledButton
-                  className="whitespace-nowrap !min-w-[82px] md:min-w-[110px] !py-[.28rem] md:py-1.5"
-                  onClick={buyTeeTime}
-                  data-testid="buy-tee-time-id"
-                  data-test={teeTimeId}
-                  data-qa="Buy"
-                  data-cy={time}
-                  id="buy-button"
-                >
-                  Buy
-                </FilledButton>
-              )}
-            </>
-          )}
-          <div className={`flex items-center justify-between gap-1`}>
-            {course?.supportsWatchlist ? (
+          <div className="flex items-center gap-2">
+            {/* Watchlist (Left of main button) */}
+            {course?.supportsWatchlist && (
               <div id="add-to-watchlist">
                 <OutlineButton
                   className="md:px-[.5rem] px-[0.375rem] py-[0.375rem] md:py-2"
@@ -511,41 +474,64 @@ export const TeeTime = ({
                   data-qa={optimisticLike}
                 >
                   <Heart
-                    className={`w-[13px] md:w-[18px]`}
+                    className="w-[13px] md:w-[18px]"
                     fill={optimisticLike ? entity?.color1 : undefined}
                     stroke={entity?.color1}
                   />
                 </OutlineButton>
               </div>
-            ) : null}
+            )}
 
-            {/* <div className="flex items-center gap-1"> */}
-            {/* <Link
-                href={href}
-                data-testid="details-button-id"
+            {/* Main Action Button */}
+            {soldById === user?.id && session ? (
+              <FilledButton
+                onClick={openManage}
+                className="whitespace-nowrap"
+                data-testid="sell-button-id"
                 data-test={teeTimeId}
-                data-qa={"Details"}
+                data-qa="Buy"
                 data-cy={time}
-                id="tee-time-details-button"
               >
-                <OutlineButton className="!py-[.28rem] md:py-1.5">
-                  Details
-                </OutlineButton>
-              </Link> */}
-            <div id="share-tee-time-button" style={{
-              width: "190%"
-            }}>
+                {status === "UNLISTED" ? "Sell" : "Manage"}
+              </FilledButton>
+            ) : isSuggested ? (
+              <FilledButton
+                className="whitespace-nowrap !px-3 !min-w-[82px] md:min-w-[110px]  w-full"
+                onClick={makeAnOffer}
+                data-testid="make-an-offer-id"
+                data-test={teeTimeId}
+                data-qa="Make an Offer"
+                data-cy={time}
+              >
+                Make an Offer
+              </FilledButton>
+            ) : (
+              <FilledButton
+                className="whitespace-nowrap !min-w-[82px] w-full md:min-w-[110px] !py-[.28rem] md:py-1.5"
+                onClick={buyTeeTime}
+                data-testid="buy-tee-time-id"
+                data-test={teeTimeId}
+                data-qa="Buy"
+                data-cy={time}
+                id="buy-button"
+              >
+                Buy
+              </FilledButton>
+            )}
+
+            {/* Share (Right of main button) */}
+            <div id="share-tee-time-button">
               <OutlineButton
                 onClick={() => void share()}
-                className="w-full whitespace-nowrap"
+                className={isCopied ? "whitespace-nowrap" : "md:px-[.5rem] px-[0.375rem] py-[0.375rem] md:py-2"}
                 data-testid="share-button-id"
               >
-                <div className="flex items-center justify-center gap-2">
-                  {isCopied ? <>Copied</> : <>Share</>}
-                </div>
+                {/* <div className="flex items-center justify-center gap-2">
+                  {isCopied ? "Copied" : "Share"}
+                </div> */}
+                {isCopied ? "Copied" : <Share fill={entity?.color1} />}
               </OutlineButton>
             </div>
-            {/* </div> */}
           </div>
           {isMakeAnOfferOpen && (
             <MakeAnOffer
