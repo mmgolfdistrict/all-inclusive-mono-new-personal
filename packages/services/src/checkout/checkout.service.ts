@@ -423,7 +423,7 @@ export class CheckoutService {
           merchandiseTaxTotal +
           merchandiseOverriddenTaxAmount
         );
-        total = Number(total.toFixed(2)) + additionalTaxes * 100;
+        total = total + additionalTaxes * 100;
       }
     }
 
@@ -505,7 +505,7 @@ export class CheckoutService {
             merchandiseOverriddenTaxAmount
           )
         );
-        total = Number(total.toFixed(2)) + merchandiseWithTaxOverrideCharge + additionalTaxes * 100;
+        total = total + merchandiseWithTaxOverrideCharge + additionalTaxes * 100;
       }
     }
     // const tax = await this.stripeService.getTaxRate(customerCart.cart).catch((err) => {
@@ -754,7 +754,7 @@ export class CheckoutService {
             merchandiseOverriddenTaxAmount
           )
         );
-        total = Number(total.toFixed(2)) + merchandiseWithTaxOverrideCharge + additionalTaxes * 100;
+        total = total + merchandiseWithTaxOverrideCharge + additionalTaxes * 100;
       }
     }
     if (isFirstHandGroup.length) {
@@ -835,7 +835,7 @@ export class CheckoutService {
             merchandiseOverriddenTaxAmount
           )
         );
-        total = Number(total.toFixed(2)) + merchandiseWithTaxOverrideCharge + additionalTaxes * 100;
+        total = total + merchandiseWithTaxOverrideCharge + additionalTaxes * 100;
       }
     }
     console.log(`paymentId = ${paymentId}`);

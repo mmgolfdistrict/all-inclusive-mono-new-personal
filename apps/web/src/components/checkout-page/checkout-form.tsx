@@ -1024,8 +1024,8 @@ export const CheckoutForm = ({
     sensibleCharge +
     (!roundUpCharityId ? charityCharge : 0) +
     convenienceCharge;
-  const totalBeforeRoundOff = primaryGreenFeeCharge + TaxCharge;
-  const decimalPart = totalBeforeRoundOff % 1;
+  const totalBeforeRoundOff = Math.ceil((primaryGreenFeeCharge + TaxCharge + merchandiseTotalCharge) * 100) / 100;
+  const decimalPart = Number((totalBeforeRoundOff % 1).toFixed(2));
   const subTotal = primaryGreenFeeCharge +
     (!course?.supportsSellingMerchandise ? 0 : (merchandiseTotalCharge))
   const [hasUserSelectedDonation, setHasUserSelectedDonation] = useState(false);
@@ -1089,6 +1089,7 @@ export const CheckoutForm = ({
         donation = value;
         break;
     }
+    donation = Number(donation.toFixed(2));
     setDonateValue(donation);
     setOtherDonateValue(String(donation));
     setRoundOffStatus(status);
