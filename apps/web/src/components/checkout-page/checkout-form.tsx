@@ -959,10 +959,12 @@ export const CheckoutForm = ({
   };
 
   const handleDonateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value.trim();
+    setCharityAmountError("");
+    const value = event.target.value.replace(/\$/g, "").replace(/,/g, "");
     if (value === "") {
       setOtherDonateValue("");
       setDonateValue(0);
+      handleSelectedCharityAmount(0);
       return;
     }
     if (!/^\d+$/.test(value)) return;
@@ -1154,8 +1156,10 @@ export const CheckoutForm = ({
 
   // Add state to track if payment intent needs updating
   const [lastUpdatedAmount, setLastUpdatedAmount] = useState<string>();
+  const [isUpdatingPaymentIntent, setIsUpdatingPaymentIntent] = useState(false);
 
   const updatePaymentIntent = async () => {
+    setIsUpdatingPaymentIntent(true);
     let clientSecretId = '';
     try {
       await hyper.initiateUpdateIntent();
@@ -1165,6 +1169,9 @@ export const CheckoutForm = ({
       setMessage(error.message);
     } finally {
       await hyper.completeUpdateIntent(clientSecretId);
+      setTimeout(() => {
+        setIsUpdatingPaymentIntent(false);
+      }, 10);
     }
   };
 
@@ -1176,7 +1183,7 @@ export const CheckoutForm = ({
       }
       void updatePaymentIntent();
     }
-  }, [TotalAmt, playerCount, amountOfPlayers, cartData]);
+  }, [TotalAmt, playerCount, amountOfPlayers, cartData, donateValue]);
 
   return (
     <form onSubmit={handleSubmit} className="">
@@ -1719,8 +1726,7 @@ export const CheckoutForm = ({
                   placeholder="Enter Donation Amount"
                   value={otherDonateValue}
                   onChange={handleDonateChange}
-                  className={`p-2 border rounded-md ${donateError ? "border-red" : "border-primary"
-                    }`}
+                  className={`p-2 border rounded-md ${donateError ? "border-red" : "border-primary"}`}
                 />
               )}
 
@@ -1813,11 +1819,15 @@ export const CheckoutForm = ({
           type="submit"
           className={`w-full rounded-full disabled:opacity-60`}
           disabled={
-            isLoading || !hyper || !widgets || message === "Payment Successful" || !isValidUsername || !isChecked
+            isLoading || !hyper || !widgets || message === "Payment Successful" || !isValidUsername || !isChecked || isUpdatingPaymentIntent
           }
           data-testid="pay-now-id"
         >
-          {isLoading ? "Processing..." : <>Pay Now</>}
+          {isLoading
+            ? "Processing..."
+            : isUpdatingPaymentIntent
+              ? <>Updating Payment...</>
+              : <>Pay Now</>}
         </FilledButton>
       )}
       <LoadingContainer
