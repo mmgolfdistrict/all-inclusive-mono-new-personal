@@ -1170,7 +1170,7 @@ export const CheckoutForm = ({
       await hyper.completeUpdateIntent(clientSecretId);
       setTimeout(() => {
         setIsUpdatingPaymentIntent(false);
-      }, 500);
+      }, 10);
     }
   };
 
