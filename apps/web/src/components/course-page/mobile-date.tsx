@@ -165,7 +165,7 @@ export const MobileDates = ({
           </ToggleGroup.Root>
         </section>
         <div className="fixed bottom-10 left-1/2 z-10 flex w-full -translate-x-1/2 gap-2 px-4">
-          <OutlineButton className="min-w-[40%]" onClick={toggleFilters}>
+          <OutlineButton className="w-full" onClick={toggleFilters}>
             Cancel
           </OutlineButton>
           <FilledButton className="w-full" onClick={toggleFilters}>
